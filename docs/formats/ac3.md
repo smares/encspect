@@ -23,10 +23,10 @@ Dolby Digital and Dolby Digital Plus, as raw files and in [MP4](mp4.md).
   - audfrm (E-AC-3): exponent and snr offset strategies, the frame's exponent strategies (Table E2.10) or each block's, converter exponent strategies, AHT flags, transient pre-noise processing and spectral extension attenuation, and the block start information.
   - Mixing data that runs past its mixdeflen ends where mixdeflen says, with a finding at the group.
 - **Audio blocks:** every block up to its mantissas. The parser steps over the mantissas by running the bit allocation itself; liba52 confirms where every block of the AC-3 fixtures ends, delta bit allocation sent in block 0 (and reused by the blocks after it) included (`derived-ffmpeg-stereo-192k-delta-block0`).
-  - Every block: block switching, dither, dynamic range gain, spectral extension with its band structure and coordinates (E-AC-3), coupling (strategy, channels in coupling, band structure, phase flags, coordinates), rematrixing with each band's left/right or sum/difference, exponent strategies, bandwidth, the exponents (the groups are checked, not kept), the bit allocation parameters, snr offsets, coupling leak, delta bit allocation, the skip field, and the mantissas as one field.
-  - The bit allocation is A/52 7.2 (masking curve, delta bit allocation, the bap tables), and the mantissas are counted by their grouping (7.3.5), without dequantizing or transforming.
+  - Every block: block switching, dither, dynamic range gain, spectral extension with its band structure and coordinates (E-AC-3), coupling (strategy, channels in coupling, band structure, phase flags, coordinates), rematrixing with each band's left/right or sum/difference, exponent strategies, bandwidth, the exponents (the groups are checked, not kept), the bit allocation parameters, snr offsets, coupling leak, delta bit allocation, the skip field, and the mantissas as one field (its codes are read as well, see "Decoding").
+  - The bit allocation is A/52 7.2 (masking curve, delta bit allocation, the bap tables), and the mantissas are counted by their grouping (7.3.5); their codes are read in every analysis (the entropy pass), and where a session decodes they are stored for the decoder.
   - The checks of 7.10.2 are findings. A block that reuses what no earlier block of the frame set is read on with what it has (a warning); an undefined value, such as a bandwidth code above 60 or a reserved strategy, stops the reading of the frame's blocks there (also a warning).
-  - Checks 1 to 17 and 21 to 28 are made; 18 to 20 concern mantissa values, which are not read. An E-AC-3 block 0 that sends no bit allocation parameters where bamode is 1 breaks check 12 as an AC-3 block does.
+  - Checks 1 to 28 are made; 18 to 20, a grouped mantissa code that no quantizer has (above 26 for the 3-level, 124 for the 5-level and 120 for the 11-level quantizer), are `ac3.block-inconsistent` at the block's mantissas, and the codes Tables 7.21 and 7.23 have no value for (7 in the 7-level and 15 in the 15-level quantizer, which 7.10.2 does not list) are `ac3.mantissa-code-invalid`, a warning that names the table. An E-AC-3 block 0 that sends no bit allocation parameters where bamode is 1 breaks check 12 as an AC-3 block does.
   - Fields that run past the frame's end are named by the part they are in: `ac3.block-overrun` for an audio block, `ac3.header-overrun` for the bit stream information or audfrm.
   - Auxiliary data (auxdatal, auxdatae) is read from the frame's end, and the error check holds crc2 (and crcrsv).
     - AC-3's crc1 covers the first 5/8 of the frame and crc2 the rest (7.10.1); E-AC-3's one CRC the whole frame after the sync word.
@@ -77,9 +77,28 @@ A program frame is the unit of every series: an AC-3 syncframe, or an E-AC-3 ind
 - **Not graphed:** per-channel block switching, exponent strategies, dynamic range gain and delta bit allocation (design: later).
 - **Spectral extension's band structure** is the default (A/52:2018 Annex E, Table E2.11; TS 102 366 E.1.10) at the first block of a frame that uses spectral extension without sending one (TS 102 366 E.1.3.3.7), as the analyzer reads it. FFmpeg 6.1.1 loads it only in block 0 (`ac3dec.c`, `decode_band_structure`, 812-813), so it misreads a frame whose spectral extension starts later without a structure of its own; `coding-eac3-spx-default` holds such frames.
 
+## Decoding
+
+The decoder (`src/Encspect.Formats.Ac3/Decoding`) is written from ATSC A/52:2018 alone (sections 5 to 7), with no other source; the design is [lossy-decoders.md](../design/lossy-decoders.md#as-built-ac-3). It decodes AC-3 (bsid up to 8, Annex D's syntax included); E-AC-3 is the next step.
+
+- **Which frames:** the independent frames of an AC-3 program, whether in a raw file or handed over by a container (MP4, Matroska, ASF, WAV). A program is one run of frames with one configuration, as for the report's streams; it gets one session, started at its first frame, and a change of configuration starts another. A frame of bsid 9 or 10, E-AC-3 frames and the dependent substreams after an AC-3 core are not decoded: a program that starts with a bsid above 8 has no session, and a core with dependent frames outputs the core's channels only.
+- **What the parser hands over:** the walk of every audio block (`FrameSyntax`) reads the mantissa codes with the same code in every analysis and, where a session decodes, writes each block's side information (block switching and dither flags, coupling with its band structure and coordinates, the rematrixing flags) and the exponent, bit allocation pointer and mantissa code of every bin into the buffers the session lends. The decoder reads no coded bit.
+- **Reconstruction** (A/52 7.3 to 7.5, 7.9):
+  - the mantissas are dequantized (the symmetric quantizers of Tables 7.19 to 7.23 and the two's complement fractions of the asymmetric ones) and shifted by their exponents;
+  - a zero-bit mantissa of a channel whose dither flag is set becomes noise of a generator with a fixed seed (a 32-bit linear congruential generator, uniform between -0.707 and 0.707, A/52 7.3.4), reset at the start of the stream and after each gap; a coupled channel dithers its own copy of the coupling channel's zero-bit bins after the coordinate has scaled them;
+  - coupling is expanded with each channel's coordinates (7.4.3: the mantissa and exponent with the master coordinate, times 8) and the phase flags of the 2/0 mode;
+  - rematrixing turns the bands that set their flag from sum and difference into left and right (7.5.4, with the band edges of Tables 7.25 to 7.28 for the coupling state);
+  - each channel goes through the inverse transform of 512 points, or the two of 256 for a block switched channel (7.9.4), with the window of Table 7.33 (a Kaiser-Bessel derived window with the parameter 5, computed with `DetMath` and compared with every value of the table by a test), and the overlap with the block before (a factor of 2 undoes the encoder's headroom scaling).
+- **What it leaves out:** dynamic range control (`dynrng` and `compr`), dialogue normalization and every downmix (decision 9 of the design): the samples are the coded channels at full scale, 256 for each block, unclipped and in the coded order (left, center, right, surround channels, then the LFE), the order of the stream's channel layout.
+- **Checksums:** crc1 (the first 5/8 of the frame) and crc2 (the whole frame) are declared as the stream's checksums, compared in every analysis, and read "verified (lossy stream)" where every frame passes both and none is missing (decision 2 of the design). They cover coded data, so `--verify` alone decodes nothing for AC-3 and `--measure` and the front ends' output do.
+- **Damage:** a frame the parser counts as lost (cut by the end of the data or the next sync word, or one whose syntax breaks so that its blocks are not read) gets no output; the host counts its 1,536 samples as lost. A frame after one, or after junk between frames, resets the overlap and the dither generator and withholds its first block, 256 samples ("after a gap"): its first half-transform's overlap is the lost frame's. A frame whose CRC fails is still decoded, because the parser counts it as read and not lost: its audio is whatever its bytes say, and the failed CRC is the finding. A mantissa code that no quantizer has is limited to the quantizer's highest value, and is reported (`ac3.block-inconsistent` for the grouped codes, `ac3.mantissa-code-invalid` for the others).
+- **Trims:** none. The syntax states no priming or padding (decision 8), and the edit lists of MP4 are not applied, so the measurements keep every sample, which equals the stream's Samples less the lost and withheld ones (`Ac3SamplesTests`).
+- **Accuracy** ([development.md](../development.md#ac-3-decoding)): every fixture liba52 decodes agrees with it to 2.4 x 10^-7 of full scale once the dither flags are cleared, and with FFmpeg's float decoder to 2 x 10^-5 except in one block of `external-aften-stereo-192k-blocksw.ac3`, where FFmpeg differs from liba52 and the analyzer. The dithered files agree by the energy of bands.
+- **Cost:** the decoder charges 44 units for each sample of each channel (the floor of 22 and 22 more for the dequantization, the transform and the window), which `DecoderWorkTests` holds to at most 1.02 times the FLAC reference's time per unit; the declared allowance is 2,048 units a byte.
+
 ## Channel layout
 
-From the audio coding mode and the LFE flag. E-AC-3's dependent substreams add their channels to their program's layout.
+From the audio coding mode and the LFE flag. The decoder declares the layout of the channels it outputs (the coded channels, the LFE last, dual mono as two discrete channels), so loudness weights them as MPEG's dual channel is. E-AC-3's dependent substreams add their channels to their program's layout.
 
 ## Object audio
 
@@ -116,7 +135,7 @@ Dolby Atmos in Dolby Digital Plus adds object audio to an ordinary E-AC-3 stream
 
 ## Not yet covered
 
-- E-AC-3 frames that use the adaptive hybrid transform or enhanced coupling are read only up to that point (planned: entropy pass).
+- E-AC-3 frames that use the adaptive hybrid transform or enhanced coupling are read only up to that point (planned: entropy pass). No E-AC-3 frame is decoded (the next step of the lossy decoders, [plan](../plan.md#03-lossy-formats-measured)).
 - E-AC-3 frames at a reduced sample rate (fscod2) and AC-3 frames with bsid 9 or 10 (half and quarter rate): only their headers are read, not their audio blocks (planned: entropy pass).
 - Object audio: the payloads after the JOC and OAMD fields named above (the per-object parameters, the program assignment, the object properties), the protection bits (their calculation is the implementation's, TS 102 366 H.2.2.4.3), TS 103 420's requirement that the container is in the last dependent substream, and Dolby Atmos in TrueHD.
 
@@ -136,6 +155,6 @@ No encoder is named from the frames, since no fixture confirms anything that ide
 
 ## Articles
 
-- **Articles:** `ac3-frames-and-bsi`, `ac3-audio-blocks`, `ac3-coupling`, `ac3-rematrixing`, `dialogue-normalization`, `eac3-substreams`, `eac3-spectral-extension`.
+- **Articles:** `ac3-frames-and-bsi`, `ac3-audio-blocks`, `ac3-mantissas`, `ac3-coupling`, `ac3-rematrixing`, `dialogue-normalization`, `eac3-substreams`, `eac3-spectral-extension`.
 - **Shared with other formats:** `channel-layouts`, `crc`, `encoder-detection`, `intensity-stereo`, `mid-side-stereo`.
 - `ac3-coupling` links to `intensity-stereo`, `ac3-rematrixing` to `mid-side-stereo`.

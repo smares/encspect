@@ -30,6 +30,7 @@ internal enum Issue : byte
     ObjectAudioIncomplete,
     EmdfLimit,
     DownmixModeReserved,
+    MantissaNoValue,
 }
 
 // Reads one syncframe field by field: the syncinfo and bit stream information of AC-3 (ATSC
@@ -200,6 +201,7 @@ internal sealed partial class FrameSyntax
         _blocks = header.Blocks;
         _frameWords = header.FrameSizeWords;
         _r.Reset(_blocks);
+        _lent?.Clear();
         string part = "the bit stream information";
         try
         {

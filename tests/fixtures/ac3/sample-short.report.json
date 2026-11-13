@@ -8378,6 +8378,29 @@
         "averageBitrate": 192,
         "isVbr": false,
         "playbackGroup": 1,
+        "verification": {
+          "isLossy": true,
+          "decoding": "notRequested",
+          "decodedSamples": 0,
+          "checksums": [
+            {
+              "name": "CRC1",
+              "covers": "codedData",
+              "coversAllAudio": false,
+              "stored": 6,
+              "checked": 5,
+              "failed": 0
+            },
+            {
+              "name": "CRC2",
+              "covers": "codedData",
+              "coversAllAudio": false,
+              "stored": 6,
+              "checked": 5,
+              "failed": 0
+            }
+          ]
+        },
         "series": [
           {
             "name": "Bitrate",

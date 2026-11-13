@@ -1791,6 +1791,12 @@ Step L2 of [lossy-decoders.md, "Order"](lossy-decoders.md#order): `Encspect.Form
   - The first run (22 for SILK, no per-frame units) gave 1.06, 1.65, 1.12, 1.26, 1.34 and 1.18 (the same order).
 - **Margin:** the largest ratio is 1.26 against the limit of 2.0; the TrueHD case reached 2.10 on the ARM runner, a platform where a float-heavy decoder may take more per unit than the integer FLAC reference, so the weights are left at the margin rather than lowered; a failure there raises them.
 
+## As built: the AC-3 decoder's work weights
+
+- **Charge:** per frame, 44 units for each sample of each channel: the floor of 22 (`DecodeWork.ForSample(4)`) and 22 more for the dequantization (2 a coefficient), the inverse transform (about 10 a sample for the 128-point complex transform and its twiddles, as the 256 coefficients make 256 samples), and the window and overlap (2), charged for the whole frame before the first block. Nothing is charged per coded byte (the walk reads the codes, and `WorkPerInputByte` stays 2,048: a stereo frame of 32 kbps needs about 1,100 units a byte and a mono one 550; frames of more channels at that rate exceed it, which the floor of the budget covers).
+- **Measured** (`DecoderWorkTests`, `ac3-*` cases, each an encoder's file repeated; the time per unit against the FLAC reference's on the development machine, linux-x64, shared with other work): `ac3-stereo-192k` 0.71, `ac3-surround-51-ffmpeg` 0.67, `ac3-surround-51-aften` 0.65, `ac3-block-switching` 0.80, `ac3-mono-96k` 0.68, `ac3-stereo-32k-320k` 1.02 (the file whose 32 kHz frames are the cheapest per unit), `ac3-silent` 0.19 (the hand-built frames with no mantissa bits, whose transforms are skipped).
+- **Margin:** the largest ratio is 1.02 against the limit of 2.0, a margin for the ARM runner like Opus's; a silent stream still charges its frames in full, as the design's text says an all-zero transform would not.
+
 ## Open risks and unverified claims
 
 - **Unverified:** whether Dolby patents cover TrueHD (decision 10). No legal conclusion is drawn here.

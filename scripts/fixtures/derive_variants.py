@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Derived damage variants of the encoder-written fixtures (docs/design/official-decoder-crosschecks.md, "Fixtures").
 
-  derive_variants.py ogg|tta|aac --out DIR [--manifest FILE] [FILE...]
+  derive_variants.py ogg|tta|aac|ac3 --out DIR [--manifest FILE] [FILE...]
 
 One script writes the variants, by fixed rules and without randomness, so that every job of the official-decoder workflow (Linux, the
 comparison, later macOS and Windows) decodes the same bytes. Each variant's SHA-256 is recorded in the manifest, and the comparison matches
@@ -62,6 +62,18 @@ MP4 files with one AAC sound track (the samples are the extractor's, in file ord
                      the file cut in the middle of the first, middle or last sample, only for a file whose box tables come before its samples and whose last
                      sample ends at the end of the file (so that the cut leaves the tables intact and the samples are what is cut)
 
+AC-3 (the raw files named external-* of tests/fixtures/ac3 that an encoder wrote, one AC-3 stream of syncframes from the first byte to the last: the rules of docs/design/official-decoder-crosschecks.md,
+for the comparison of the AC-3 decoder's PCM with Core Audio's and, on the lead's notebook, Dolby's decoder). The units are those of unit_list.py (the syncframes); a file with fewer than three
+units has no variants. With U the units, first = U[0], last = U[-1] and middle = U[len(U) // 2]:
+
+  cut-first-frame    the file cut in the middle of the first frame
+  cut-middle-frame   the file cut in the middle of the middle frame
+  cut-last-frame     the file cut in the middle of the last frame
+  flip-byte          the byte in the middle of the middle frame's audio data changed (XOR 0x55), so the frame fails crc2 (and crc1 where the byte is in the first 5/8)
+  flip-crc           the last byte of the middle frame (crc2) changed (XOR 0x55), so the audio data are intact and crc2 fails
+  drop-frame         the middle frame removed
+  repeat-frame       the middle frame written twice in a row
+
 A variant that equals an earlier one is not written.
 """
 
@@ -83,6 +95,8 @@ AAC_DIRECTORIES = (ROOT / "tests" / "fixtures" / "aac", ROOT / "tests" / "fixtur
 AAC_EXTENSIONS = (".aac", ".m4a", ".mp4", ".m4b", ".3gp")
 TTA_RULES = ("cut-first-frame", "cut-middle-frame", "cut-last-frame", "flip-byte", "flip-crc", "drop-frame", "drop-frame-table", "repeat-frame", "samples-plus-one", "samples-minus-one")
 AAC_RULES = ("cut-first-frame", "cut-middle-frame", "cut-last-frame", "flip-byte", "flip-crc", "drop-frame", "repeat-frame", "cut-first-sample", "cut-middle-sample", "cut-last-sample")
+AC3_DIRECTORY = ROOT / "tests" / "fixtures" / "ac3"
+AC3_RULES = ("cut-first-frame", "cut-middle-frame", "cut-last-frame", "flip-byte", "flip-crc", "drop-frame", "repeat-frame")
 OGG_RULES = ("cut-first-page", "cut-middle-page", "cut-last-page", "flip-byte", "drop-page", "repeat-page", "drop-packet", "repeat-packet")
 
 
@@ -313,6 +327,41 @@ def aac_sources():
     return sorted((p for directory in AAC_DIRECTORIES for p in directory.iterdir() if p.is_file() and p.suffix.lower() in AAC_EXTENSIONS), key=lambda p: (p.name, str(p)))
 
 
+def ac3_variants(data):
+    """{rule: bytes} for the bytes of one raw AC-3 file; empty when the extractor finds fewer than three units or the file is no run of AC-3 syncframes."""
+    found = unit_list.extract_bytes(data)
+    units = found["units"]
+    if found.get("kind") != "ac3" or found.get("codec") != "ac-3" or len(units) < 3:
+        return {}
+    first, middle, last = units[0], units[len(units) // 2], units[-1]
+    if middle[2] < 12:
+        return {}
+    flipped = bytearray(data)
+    flipped[middle[0] + 5 + (middle[2] - 5) // 2] ^= 0x55
+    crc = bytearray(data)
+    crc[middle[0] + middle[2] - 1] ^= 0x55
+    variants = {
+        "cut-first-frame": data[:first[0] + first[2] // 2],
+        "cut-middle-frame": data[:middle[0] + middle[2] // 2],
+        "cut-last-frame": data[:last[0] + last[2] // 2],
+        "flip-byte": bytes(flipped),
+        "flip-crc": bytes(crc),
+        "drop-frame": data[:middle[0]] + data[middle[0] + middle[2]:],
+        "repeat-frame": data[:middle[0] + middle[2]] + data[middle[0]:middle[0] + middle[2]] + data[middle[0] + middle[2]:],
+    }
+    seen, unique = set(), {}
+    for rule, content in variants.items():
+        if content not in seen and content != data and unit_list.extract_bytes(content)["units"]:
+            seen.add(content)
+            unique[rule] = content
+    return unique
+
+
+def ac3_sources():
+    """The fixtures the rules apply to: the raw AC-3 files an encoder wrote (external-*.ac3, not the E-AC-3 files)."""
+    return sorted(p for p in AC3_DIRECTORY.iterdir() if p.is_file() and p.name.startswith("external-") and p.suffix.lower() == ".ac3")
+
+
 def write_variants(out, sources, variants):
     """Writes the variants into out; returns the manifest entries (name, file written, source path and SHA-256, rule, SHA-256, size)."""
     out = pathlib.Path(out)
@@ -344,16 +393,20 @@ def write_aac(out, sources=None):
     return write_variants(out, sources or aac_sources(), aac_variants)
 
 
+def write_ac3(out, sources=None):
+    return write_variants(out, sources or ac3_sources(), ac3_variants)
+
+
 def main(argv):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("format", choices=["ogg", "tta", "aac"])
+    parser.add_argument("format", choices=["ogg", "tta", "aac", "ac3"])
     parser.add_argument("--out", required=True)
     parser.add_argument("--manifest")
     parser.add_argument("files", nargs="*")
     args = parser.parse_args(argv)
-    write = {"ogg": write_ogg, "tta": write_tta, "aac": write_aac}[args.format]
+    write = {"ogg": write_ogg, "tta": write_tta, "aac": write_aac, "ac3": write_ac3}[args.format]
     entries = write(args.out, [pathlib.Path(f) for f in args.files] or None)
-    manifest = json.dumps({"format": args.format, "rules": list({"ogg": OGG_RULES, "tta": TTA_RULES, "aac": AAC_RULES}[args.format]), "variants": entries}, indent=1) + "\n"
+    manifest = json.dumps({"format": args.format, "rules": list({"ogg": OGG_RULES, "tta": TTA_RULES, "aac": AAC_RULES, "ac3": AC3_RULES}[args.format]), "variants": entries}, indent=1) + "\n"
     if args.manifest:
         pathlib.Path(args.manifest).write_text(manifest, encoding="utf-8")
     print("%d variants of %d files" % (len(entries), len({e["source"] for e in entries})))

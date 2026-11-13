@@ -200,7 +200,9 @@ internal static class ChunkFixtureChecks
         string path = Fixtures.MpegCompanion(name, ".decode.json");
         if (stream.ValueKind != JsonValueKind.Object || !stream.TryGetProperty("pcm", out _))
         {
-            Assert.False(File.Exists(path), $"{path} exists for a fixture whose stream the decoder does not take.");
+            // AC-3 in a WAVE file is decoded by the AC-3 decoder, whose golden Ac3DecoderFixtureTests owns.
+            bool isAc3 = Fixtures.AnalyzeMpeg(name).Streams.Any(s => s.Codec == "AC-3" && s.Verification is not null);
+            Assert.True(isAc3 == File.Exists(path), $"{path} {(isAc3 ? "is missing for" : "exists for")} a fixture whose stream the decoder {(isAc3 ? "decodes" : "does not take")}.");
             return;
         }
 

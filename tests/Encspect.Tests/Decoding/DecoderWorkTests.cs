@@ -1,6 +1,7 @@
 using System.Buffers.Binary;
 using System.Diagnostics;
 using Encspect.Core;
+using Encspect.Formats.Ac3.Decoding;
 using Encspect.Formats.Flac;
 using Encspect.Formats.Flac.Decoding;
 using Encspect.Formats.MonkeysAudio.Decoding;
@@ -197,6 +198,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         _ when name.StartsWith("mpeg", StringComparison.Ordinal) => new MpegDecoder(),
         _ when name.StartsWith("vorbis", StringComparison.Ordinal) => new VorbisDecoder(),
         _ when name.StartsWith("opus", StringComparison.Ordinal) => new OpusDecoder(),
+        _ when name.StartsWith("ac3", StringComparison.Ordinal) => new Ac3Decoder(),
         _ when name.StartsWith("truehd", StringComparison.Ordinal) => TrueHdDecoder.TrueHd,
         _ when name.StartsWith("mlp", StringComparison.Ordinal) => TrueHdDecoder.Mlp,
         _ => new WavPackDecoder(),
@@ -214,6 +216,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         _ when name.StartsWith("mpeg", StringComparison.Ordinal) => ".mp3",
         _ when name.StartsWith("vorbis", StringComparison.Ordinal) => ".ogg",
         _ when name.StartsWith("opus", StringComparison.Ordinal) => ".opus",
+        _ when name.StartsWith("ac3", StringComparison.Ordinal) => ".ac3",
         _ when name.StartsWith("truehd", StringComparison.Ordinal) => ".thd",
         _ when name.StartsWith("mlp", StringComparison.Ordinal) => ".mlp",
         _ when name.StartsWith("pcm-aiff", StringComparison.Ordinal) => ".aiff",
@@ -365,6 +368,22 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         })
         {
             Add("vorbis-" + label, () => new Case("vorbis-" + label, VorbisCases.Repeated(file, blockExponent)));
+        }
+
+        // AC-3: stereo with coupling and rematrixing, 5.1 from two encoders, block switching, mono, a variable bitrate at 32 kHz and a stream of frames with no mantissa bits (silence). Each case
+        // repeats the whole file of an encoder, which continues as one stream.
+        foreach ((string label, string file) in new[]
+        {
+            ("stereo-192k", "external-ffmpeg-stereo-192k.ac3"),
+            ("surround-51-ffmpeg", "external-ffmpeg-5.1-448k.ac3"),
+            ("surround-51-aften", "external-aften-5.1-448k.ac3"),
+            ("block-switching", "external-aften-stereo-192k-blocksw.ac3"),
+            ("mono-96k", "external-ffmpeg-mono-96k.ac3"),
+            ("stereo-32k-320k", "external-ffmpeg-stereo-32k-320k.ac3"),
+            ("silent", "coding-ac3-stereo.ac3"),
+        })
+        {
+            Add("ac3-" + label, () => new Case("ac3-" + label, Ac3Cases.Repeated(file)));
         }
 
         // Opus: SILK speech, CELT music at 96 kbps and in 5 ms frames, 5.1, mono at 24 kbps, hybrid and silence. Each case repeats the audio packets of an encoder's file in one stream.
@@ -944,6 +963,27 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             var analyzer = new Analyzer(DefaultParsers.Tags, DefaultParsers.Formats, DefaultParsers.Codecs, [counting]);
             using var stream = new MemoryStream(file, writable: false);
             analyzer.Analyze("probe.opus", stream, new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = long.MaxValue, Output = _ => new NullSink() } });
+            return counting.Units;
+        }
+    }
+
+    // The bytes of an AC-3 fixture repeated until the decoding charges about Target units.
+    internal static class Ac3Cases
+    {
+        public static byte[] Repeated(string fixture, long target = Target)
+        {
+            byte[] one = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "ac3", fixture));
+            long perCopy = Math.Max(1, Units(one));
+            int copies = (int)Math.Clamp(target / perCopy, 2, 1 << 20);
+            return Unpooled.Repeat(one, copies);
+        }
+
+        public static long Units(byte[] file)
+        {
+            var counting = new CountingDecoder(new Ac3Decoder());
+            var analyzer = new Analyzer(DefaultParsers.Tags, DefaultParsers.Formats, DefaultParsers.Codecs, [counting]);
+            using var stream = new MemoryStream(file, writable: false);
+            analyzer.Analyze("probe.ac3", stream, new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = long.MaxValue, Output = _ => new NullSink() } });
             return counting.Units;
         }
     }

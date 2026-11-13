@@ -20,10 +20,22 @@ public sealed class Ac3CodecParser(string id) : ICodecParser
     public void Parse(CodecContext context)
     {
         Node parent = context.Parent;
-        var analysis = new Ac3Analysis(context, RecordMismatch);
+        var analysis = new Ac3Analysis(context, RecordMismatch, parent);
         var region = new Ac3Analysis.Region(0);
         analysis.Regions.Add(region);
         var observed = new Observed();
+        int count = 0;
+        FrameRecords records = analysis.Records;
+        bool isEncrypted = context.Configuration is { AreSamplesEncrypted: true };
+        Node MakeNode(bool encrypted, bool hasEac3) => parent.Add(new Node(hasEac3 || (encrypted && id == Eac3) ? "E-AC-3" : "AC-3", parent.Offset, parent.Length, null,
+            () => new BlockedChildren(region.Leading, count, i => records.FrameNode(i)))
+        {
+            Kind = NodeKind.Stream,
+            Ranges = parent.Ranges,
+            Description = Explain.Stream,
+            Topic = Topics.FramesAndBsi,
+        });
+        analysis.RegionNodeFactory = header => MakeNode(isEncrypted, header.IsEac3);
         if (context.Payload is { } payload)
         {
             ReadPayload(analysis, region, payload, observed);
@@ -44,18 +56,16 @@ public sealed class Ac3CodecParser(string id) : ICodecParser
 
         observed.StartSample();
         region.End = analysis.Frames.Count;
-        int count = region.End.Value;
-        FrameRecords records = analysis.Records;
+        count = region.End.Value;
         bool encrypted = context.Configuration is { AreSamplesEncrypted: true };
-        region.Node = parent.Add(new Node(observed.HasEac3 || (encrypted && id == Eac3) ? "E-AC-3" : "AC-3", parent.Offset, parent.Length,
-            encrypted ? NodeValue.Text("frames not read: encrypted") : NodeValue.Integer(analysis.Frames.Count, "frames", "frame"),
-            () => new BlockedChildren(region.Leading, count, i => records.FrameNode(i)))
+        region.Node ??= MakeNode(encrypted, observed.HasEac3);
+        if (observed.HasEac3 && region.Node.Name != "E-AC-3")
         {
-            Kind = NodeKind.Stream,
-            Ranges = parent.Ranges,
-            Description = Explain.Stream,
-            Topic = Topics.FramesAndBsi,
-        });
+            // The session started at an AC-3 frame, which named the node; E-AC-3 frames (a core's dependent frames, or frames before it) make the stream E-AC-3.
+            region.Node.Rename("E-AC-3");
+        }
+
+        region.Node.Value = encrypted ? NodeValue.Text("frames not read: encrypted") : NodeValue.Integer(analysis.Frames.Count, "frames", "frame");
 
         if (context.Configuration is { } configuration)
         {
@@ -111,6 +121,7 @@ public sealed class Ac3CodecParser(string id) : ICodecParser
                 }
 
                 analysis.Frames.Add(Ac3Analysis.Frame.Gap(offset, bytes.Length - position));
+                analysis.NoteGap();
                 return;
             }
 

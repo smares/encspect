@@ -1,33 +1,15 @@
 {
   "goldens": [
-    "tests/fixtures/matroska/external-ffmpeg-encoding-tool.report.json",
-    "tests/fixtures/matroska/external-ffmpeg-live.report.json",
-    "tests/fixtures/matroska/external-ffmpeg-metadata.report.json",
-    "tests/fixtures/matroska/external-ffmpeg-no-crc.report.json",
-    "tests/fixtures/matroska/external-ffmpeg-opus-webm.report.json",
-    "tests/fixtures/matroska/external-ffmpeg-opus.report.json",
-    "tests/fixtures/matroska/external-ffmpeg-small-clusters.report.json",
-    "tests/fixtures/matroska/external-ffmpeg-video.report.json",
-    "tests/fixtures/matroska/external-mkvmerge-metadata.report.json",
-    "tests/fixtures/matroska/external-mkvmerge-no-cues.report.json",
-    "tests/fixtures/matroska/external-mkvmerge-opus-webm.report.json",
-    "tests/fixtures/matroska/external-mkvmerge-opus.report.json",
-    "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json",
-    "tests/fixtures/matroska/opus-stereo-clusters.report.json",
-    "tests/fixtures/matroska/two-audio-tracks.report.json",
-    "tests/fixtures/matroska/two-segments.report.json",
-    "tests/fixtures/matroska/unknown-size-then-segment.report.json",
-    "tests/fixtures/matroska/writer-apps-differ.report.json",
-    "tests/fixtures/matroska/writer-two-segments.report.json"
+    "tests/fixtures/matroska/ac3-codec-private.report.json",
+    "tests/fixtures/matroska/external-ffmpeg-ac3-51.report.json",
+    "tests/fixtures/matroska/external-mkvmerge-ac3.report.json",
+    "tests/fixtures/matroska/external-mkvmerge-timestamp-scale.report.json",
+    "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json"
   ],
-  "changed": [
+  "added": [
     {
       "scope": "stream",
-      "array": "series",
-      "name": "Intensity Stereo Bound",
-      "fields": [
-        "quantity"
-      ]
+      "key": "verification"
     }
   ]
 }

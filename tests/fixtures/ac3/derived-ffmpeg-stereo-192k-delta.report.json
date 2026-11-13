@@ -34364,6 +34364,30 @@
         "duration": 0.512,
         "averageBitrate": 224,
         "isVbr": false,
+        "verification": {
+          "isVerified": true,
+          "isLossy": true,
+          "decoding": "notRequested",
+          "decodedSamples": 0,
+          "checksums": [
+            {
+              "name": "CRC1",
+              "covers": "codedData",
+              "coversAllAudio": false,
+              "stored": 16,
+              "checked": 16,
+              "failed": 0
+            },
+            {
+              "name": "CRC2",
+              "covers": "codedData",
+              "coversAllAudio": true,
+              "stored": 16,
+              "checked": 16,
+              "failed": 0
+            }
+          ]
+        },
         "series": [
           {
             "name": "Bitrate",
@@ -34683,6 +34707,35 @@
         ]
       }
     ],
-    "findings": []
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "ac3.block-inconsistent",
+        "message": "An audio block breaks a rule that A/52 7.10.2 lists among the errors a decoder may check for: a compositely coded 3-level mantissa value is above 26 (check 18). First in the frame at 0x0 (11 times).",
+        "offset": 746,
+        "length": 16,
+        "path": [
+          0,
+          1,
+          7,
+          19
+        ],
+        "count": 11
+      },
+      {
+        "severity": "Warning",
+        "code": "ac3.mantissa-code-invalid",
+        "message": "An audio block holds a mantissa code that its quantizer has no value for: the code 7 of the 7-level quantizer, which Table 7.21 (A/52 7.3.3) has no value for. The decoder limits it to the quantizer's highest value. First in the frame at 0xA80 (6 times).",
+        "offset": 3360,
+        "length": 34,
+        "path": [
+          0,
+          4,
+          7,
+          18
+        ],
+        "count": 6
+      }
+    ]
   }
 ]

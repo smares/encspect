@@ -246,6 +246,8 @@ GUID_AC3 = bytes.fromhex("2c806de046dbcf11b4d100805f6cbbea")  # MEDIASUBTYPE_DOL
 GUID_MPEG2 = bytes.fromhex("2b806de046dbcf11b4d100805f6cbbea")  # MEDIASUBTYPE_MPEG2_AUDIO e06d802b-...
 GUID_DDPLUS = bytes.fromhex("af87fba7022dfb42a4d405cd93843bdd")  # MFAudioFormat_Dolby_DDPlus a7fb87af-2d02-42fb-a4d4-05cd93843bdd
 fixture("built-extensible-dolby-ac3", riff([chunk("fmt ", extensible_guid(GUID_AC3)), chunk("fact", struct.pack("<I", 1536)), chunk("data", AC3)]))
+# An AC-3 core with E-AC-3 dependent frames, which the stream is named E-AC-3 for even though its session starts at an AC-3 frame.
+fixture("built-extensible-ac3-core-dependent", riff([chunk("fmt ", extensible_guid(GUID_AC3, channels=4, mask=0x33)), chunk("fact", struct.pack("<I", 1536)), chunk("data", payload("ac3/coding-ac3-core-dependent.ac3"))]))
 fixture("built-extensible-dolby-digital-plus", riff([chunk("fmt ", extensible_guid(GUID_DDPLUS)), chunk("fact", struct.pack("<I", 1536)), chunk("data", EAC3)]))
 fixture("built-extensible-mpeg2-audio", riff([chunk("fmt ", extensible_guid(GUID_MPEG2)), chunk("fact", struct.pack("<I", 1152)), chunk("data", MP2)]))
 fixture("built-dts-format-tag-0008", riff([chunk("fmt ", fmt_body(0x0008, 2, 48000, 0, 1, 48000)), chunk("fact", struct.pack("<I", 3072)), chunk("data", DTS_14LE)]))

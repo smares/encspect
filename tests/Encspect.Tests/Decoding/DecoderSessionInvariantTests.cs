@@ -10,7 +10,7 @@ namespace Encspect.Tests;
 public class DecoderSessionInvariantTests
 {
     // The directories of the fixtures of each registered decoder's codec, and of the containers that may carry it.
-    private static readonly string[] Directories = ["flac", "wavpack", "monkeys-audio", "truehd", "wav", "aiff", "matroska", "mp4", "ogg", "measurement", "tta", "alac", "mpeg"];
+    private static readonly string[] Directories = ["flac", "wavpack", "monkeys-audio", "truehd", "wav", "aiff", "matroska", "mp4", "ogg", "measurement", "tta", "alac", "mpeg", "ac3"];
 
     // The codec name each registered decoder's parser reports, by the decoder's ID.
     private static readonly Dictionary<string, string> DecoderOfCodec = new(StringComparer.Ordinal)
@@ -26,6 +26,7 @@ public class DecoderSessionInvariantTests
         ["MLP"] = "mlp",
         ["Vorbis"] = "vorbis",
         ["Opus"] = "opus",
+        ["AC-3"] = "ac-3",
         ["MPEG-1 Layer I"] = "mpeg-audio",
         ["MPEG-1 Layer II"] = "mpeg-audio",
         ["MPEG-1 Layer III"] = "mpeg-audio",
@@ -88,6 +89,11 @@ public class DecoderSessionInvariantTests
         ["matroska/same-order-over-encryption.mka"] = "the container hands over no audio packet the Opus session can read (its frames are encrypted or compressed in a way the container does not undo), and the Opus session starts at the first audio packet",
         ["matroska/same-order-stray-encryption.mka"] = "the container hands over no audio packet the Opus session can read (its frames are encrypted or compressed in a way the container does not undo), and the Opus session starts at the first audio packet",
         ["matroska/same-order-two-compressions.mka"] = "the container hands over no audio packet the Opus session can read (its frames are encrypted or compressed in a way the container does not undo), and the Opus session starts at the first audio packet",
+        ["matroska/external-mkvmerge-zlib.mka"] = "the container hands over no audio frame the AC-3 session can read (its frames are compressed in a way the container does not undo), and the AC-3 session starts at the first frame",
+        ["mp4/cenc-ac3.m4a"] = "the samples are encrypted, so the container hands over the header and no frame, and the AC-3 session starts at the first frame",
+        ["mp4/ffmpeg-cenc-ac3.mp4"] = "the samples are encrypted, so the container hands over the header and no frame, and the AC-3 session starts at the first frame",
+        ["ac3/bsid-9.ac3"] = "a bit stream ID of 9, which A/52 does not define: only its header is read, so the stream is parsed and not decoded",
+        ["ac3/bsid-10.ac3"] = "a bit stream ID of 10, which A/52 does not define: only its header is read, so the stream is parsed and not decoded",
         ["ogg/opus-ambisonics-family-3.opus"] = "mapping family 3 (the demixing matrix), which the decoder does not apply, so the stream is parsed and not decoded",
         ["ogg/opus-head-invalid.opus"] = "an identification header the decoder refuses, so the stream is parsed and not decoded",
         ["mp4/ffmpeg-cenc-opus.mp4"] = "the samples are encrypted, so the container hands over the header and no audio packet, and the Opus session starts at the first audio packet",

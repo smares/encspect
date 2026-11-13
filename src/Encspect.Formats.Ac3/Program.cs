@@ -28,6 +28,9 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
 
     public int FirstFrame => firstFrame;
 
+    // The decoder's feed, for an AC-3 program that has one.
+    public DecodeFeed? Feed { get; set; }
+
     public HashSet<Ac3Analysis.Region> Regions { get; } = [];
 
     public StreamFigures Figures { get; } = new(key.SampleRate);
@@ -342,6 +345,9 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
     // replacement and adds nothing. With a rear pair, the surround pair is the side pair (architecture.md,
     // "Streams and series"). Lts/Rts are the top back pair and the surround direct pair the side
     // pair, as ffmpeg maps them (libavcodec/ac3tab.c, ff_eac3_custom_channel_map_locations).
+    // The channels the decoder outputs for an audio coding mode and LFE flag, in the coded order (no dependent substream's channels).
+    internal static IReadOnlyList<Speaker> LayoutOf(int acmod, bool lfeon) => Speakers(AcmodTokens(acmod, lfeon), []);
+
     private static IReadOnlyList<Speaker> Speakers(List<Token> independent, List<Token> dependents)
     {
         var tokens = new List<Token>(independent);

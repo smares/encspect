@@ -36,13 +36,22 @@ internal sealed class Ac3Analysis
     private long _frameOffset;
     private int _frameLength;
     private AccessUnit _unit = new();
+    private readonly IntWriter _writer = new();
+    private readonly Node? _streamNode;
+    private bool _pendingGap;
 
-    public Ac3Analysis(AnalysisContext context, Action<long, int, int>? recordMismatch = null)
+    // streamNode: the node findings of a decoding point to where the stream has none of its own yet (a raw file's root, a container's track).
+    public Ac3Analysis(AnalysisContext context, Action<long, int, int>? recordMismatch = null, Node? streamNode = null)
     {
         _context = context;
+        _streamNode = streamNode;
         Records = new FrameRecords(Frames, Store, recordMismatch);
-        _syntax = new FrameSyntax(_bits) { IssueFound = OnIssue, IssueCounted = issue => Findings.CountIfKnown(CodeOf(issue)) };
+        _syntax = new FrameSyntax(_bits) { IssueFound = OnIssue, IssueCounted = issue => Findings.CountIfKnown(CodeOf(issue)), Lent = _writer };
     }
+
+    // Makes the node of a region that has none when its stream starts a session: the session's stream node must be the one StreamInfo.Nodes names first, or the host
+    // finds no measurements for the stream (a container's region node is otherwise made after its frames are read).
+    public Func<SyncFrame, Node>? RegionNodeFactory { get; set; }
 
     public ChunkedList<Frame> Frames { get; } = new();
 
@@ -70,6 +79,8 @@ internal sealed class Ac3Analysis
         _frameIndex = index;
         _frameOffset = offset;
         bool shortened = available < header.FrameLength;
+        DecodeFeed? feed = PrepareFeed(region, offset, header);
+        _writer.IsEnabled = feed is { Session.IsDecoding: true };
         CrcState crc1 = CrcState.NotChecked;
         CrcState crc2 = CrcState.NotChecked;
         if (!shortened)
@@ -152,6 +163,17 @@ internal sealed class Ac3Analysis
         Program? program = Assign(region, index, header, result);
         if (program is not null)
         {
+            if (feed is not null && program.Feed is null && program.FirstFrame == index)
+            {
+                program.Feed = feed;
+            }
+
+            if (program.Feed is { } fed && !header.IsDependent)
+            {
+                bool isReadable = !shortened && !cut && result.Stop == StopReason.None && header.Bsid <= 8;
+                fed.Feed(_writer, offset, _buffer.AsMemory(0, available), header, isReadable, crc1, crc2);
+            }
+
             program.Cover(region, offset, available);
             if (program.Add(index, offset, available, header, result, crc1 == CrcState.Mismatch || crc2 == CrcState.Mismatch,
                     shortened || cut || result.Stop is StopReason.Invalid or StopReason.Overrun, shortened || cut) && !Findings.CountIfKnown("ac3.dependent-excess"))
@@ -163,8 +185,45 @@ internal sealed class Ac3Analysis
         }
     }
 
+    // The program in progress follows a gap: what lies between its frames is no frame.
+    public void NoteGap() => _pendingGap = true;
+
+    // The feed an AC-3 frame goes to: the one of the program it continues, or a new one (with its session) where it starts a program, as Assign will decide. E-AC-3 and the
+    // frames of bsid 9 and 10 start none.
+    private DecodeFeed? PrepareFeed(Region region, long offset, SyncFrame header)
+    {
+        if (header.IsEac3 || header.IsDependent)
+        {
+            return null;
+        }
+
+        var key = new ProgramKey(0, header.SampleRate, false, header.Acmod, header.Lfeon);
+        DecodeFeed? feed;
+        if (_lastKeys.TryGetValue(0, out ProgramKey last) && last == key)
+        {
+            feed = _active.TryGetValue(0, out Program? program) ? program?.Feed : null;
+            if (feed is not null && _pendingGap)
+            {
+                feed.PendingGap = true;
+            }
+        }
+        else if (_programs.Count < MaxStreams && header.Bsid <= 8)
+        {
+            region.Node ??= RegionNodeFactory?.Invoke(header);
+            feed = new DecodeFeed(_context, region.Node ?? _streamNode ?? throw new InvalidOperationException("A decoding needs a node for the stream"), header, _buffer, offset);
+        }
+        else
+        {
+            feed = null;
+        }
+
+        _pendingGap = false;
+        return feed;
+    }
+
     public void AddGap(Region region, long start, long end, bool leading, bool trailing, BlockCache cache)
     {
+        _pendingGap |= !leading && !trailing;
         Frames.Add(Frame.Gap(start, end - start));
         var node = new Node("Gap", start, end - start, NodeValue.Integer(end - start, "bytes")) { Description = Explain.Gap };
         long length = end - start;
@@ -215,6 +274,7 @@ internal sealed class Ac3Analysis
         Issue.ObjectAudioIncomplete => "ac3.object-audio-incomplete",
         Issue.EmdfLimit => "ac3.emdf-limit",
         Issue.DownmixModeReserved => "ac3.dmixmod-reserved",
+        Issue.MantissaNoValue => "ac3.mantissa-code-invalid",
         _ => "ac3.auxiliary-length",
     };
 
@@ -312,6 +372,10 @@ internal sealed class Ac3Analysis
             case Issue.DownmixModeReserved:
                 Findings.Add(Severity.Info, CodeOf(issue), Field, count =>
                     $"dmixmod is 3, which A/52 Annex D Table D2.2 reserves (E-AC-3's mixing metadata has the same field and no table of its own). The decoder should still reproduce audio and may read it as not indicated; encoders use it to indicate Dolby Pro Logic II, as ffmpeg's ac3defs.h notes, and Dolby's own files write it. First in {at} ({Times(count)}).");
+                break;
+            case Issue.MantissaNoValue:
+                Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
+                    $"An audio block holds a mantissa code that its quantizer has no value for: {detail}. The decoder limits it to the quantizer's highest value. First in {at} ({Times(count)}).");
                 break;
             case Issue.EmdfLimit:
                 Findings.Add(Severity.Info, CodeOf(issue), Field, count =>
@@ -575,6 +639,7 @@ internal sealed class Ac3Analysis
             Series = series,
             CategorySeries = categories,
             PlaybackGroup = group,
+            Verification = program.Feed?.Finish(program.LostSamples),
         });
     }
 

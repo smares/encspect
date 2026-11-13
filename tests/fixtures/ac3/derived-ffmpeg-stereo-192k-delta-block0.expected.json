@@ -93,7 +93,16 @@
   "AC-3/Frame/Audio Block[0]/Delta Bit Allocation/Delta Bit Allocation Segments (coupling)/Offset": "31 bands",
   "AC-3/Frame/Audio Block[0]/Delta Bit Allocation/Delta Bit Allocation Segments (left)/Offset": "3 bands"
  },
- "findings": [],
+ "findings": [
+  [
+   "ac3.block-inconsistent",
+   "compositely coded"
+  ],
+  [
+   "ac3.mantissa-code-invalid",
+   "Table 7.2"
+  ]
+ ],
  "crosscheck": {
   "ffprobe": true,
   "decode": false,

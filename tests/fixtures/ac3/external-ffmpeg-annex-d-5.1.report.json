@@ -50688,6 +50688,30 @@
         "duration": 0.512,
         "averageBitrate": 384,
         "isVbr": false,
+        "verification": {
+          "isVerified": true,
+          "isLossy": true,
+          "decoding": "notRequested",
+          "decodedSamples": 0,
+          "checksums": [
+            {
+              "name": "CRC1",
+              "covers": "codedData",
+              "coversAllAudio": false,
+              "stored": 16,
+              "checked": 16,
+              "failed": 0
+            },
+            {
+              "name": "CRC2",
+              "covers": "codedData",
+              "coversAllAudio": true,
+              "stored": 16,
+              "checked": 16,
+              "failed": 0
+            }
+          ]
+        },
         "series": [
           {
             "name": "Bitrate",

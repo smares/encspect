@@ -1357,6 +1357,38 @@ public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
         Assert.True(heldPerFrame < DecodingFrameBound, $"Decoding held {heldPerFrame:F2} more bytes per further frame at the last frame than the analysis ends with. {RuntimeSettings()}");
     }
 
+    // The decoding of an AC-3 file holds one frame's records and the overlap of each channel, so what it holds does not grow with the frames. Measured as the FLAC test does, with one
+    // frame of ffmpeg's stereo file (blocks with coupling and rematrixing) repeated 50,000 and 200,000 times.
+    [Fact]
+    public void DecodingManyAc3FramesHoldsNothingPerFrame()
+    {
+        const int fewer = 50_000;
+        const int frames = 200_000;
+        byte[] file = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "ac3", "external-ffmpeg-stereo-192k.ac3"));
+        byte[] frame = file[(5 * 768)..(6 * 768)];
+        byte[] Repeat(int count)
+        {
+            var bytes = new byte[count * frame.Length];
+            for (int i = 0; i < count; i++)
+            {
+                frame.CopyTo(bytes, i * frame.Length);
+            }
+
+            return bytes;
+        }
+
+        Analyzer.CreateDefault().Analyze("warm-up", new MemoryStream(Repeat(100)), new AnalysisOptions { Decoding = new DecodeOptions() });
+
+        (long fewerHeld, long fewerKept) = LastFrameReading("frames.ac3", Repeat(fewer), fewer, 1536);
+        (long held, long kept) = LastFrameReading("frames.ac3", Repeat(frames), frames, 1536);
+        (_, long plainKept) = LastFrameReading("frames.ac3", Repeat(frames), frames, 1536, isDecoding: false);
+
+        double heldPerFrame = (held - fewerHeld) / (double)(frames - fewer);
+        output.WriteLine($"{kept} bytes kept with decoding and {plainKept} without; held above the end state at the last frame: {fewerHeld} at {fewer} frames and {held} at {frames} ({Hundredths(heldPerFrame)} per further frame)");
+        Assert.True(kept < plainKept + 1_000_000, $"Decoding made the report keep {(kept - plainKept) / (double)frames:F2} bytes more per frame.");
+        Assert.True(heldPerFrame < DecodingFrameBound, $"Decoding held {heldPerFrame:F2} more bytes per further frame at the last frame than the analysis ends with. {RuntimeSettings()}");
+    }
+
     // The same reading for ALAC, whose frames are one sample each here (the walk lends one frame's buffers and the decoder keeps nothing per frame).
     [Fact]
     public void DecodingManyAlacFramesHoldsNothingPerFrame()

@@ -370,7 +370,9 @@ def main():
                 "gaps": [],
                 "streams": stream,
                 "fields": DERIVED_FIELDS[kind],
-                "findings": [],
+                # The delta bit allocation changes how many mantissa bits a block has, and the bits that fill them are the original's, so the
+                # grouped mantissas hold codes that no quantizer has (checks 18 to 20 of A/52 7.10.2).
+                "findings": [["ac3.block-inconsistent", "compositely coded"], ["ac3.mantissa-code-invalid", "Table 7.2"]],
                 "crosscheck": {"ffprobe": True, "decode": True, **({"liba52": True} if extension == ".ac3" else {"skip_insertion": True})},
             }
             if kind in ("ac3-delta", "ac3-delta-block0"):
