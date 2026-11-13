@@ -88,7 +88,15 @@ internal sealed class DecodeRun : IDisposable
 
     public void AddRecord(Node stream, StreamMeasurements record) => _records.TryAdd(stream, record);
 
-    public StreamMeasurements? RecordFor(IReadOnlyList<Node> nodes) => nodes.Count > 0 && _records.TryGetValue(nodes[0], out StreamMeasurements? record) ? record : null;
+    // The streams of a file whose configuration changes share one node (a parser's session names the node of the stream it starts in, and several streams start in the one region), so the
+    // record of a session is also kept by the verification its parser put on its stream: that object is the session's own.
+    private readonly Dictionary<StreamVerification, StreamMeasurements> _recordsBySession = new(ReferenceEqualityComparer.Instance);
+
+    public void LinkRecord(StreamVerification verification, StreamMeasurements record) => _recordsBySession.TryAdd(verification, record);
+
+    public StreamMeasurements? RecordFor(StreamInfo stream) =>
+        stream.Verification is { } verification && _recordsBySession.TryGetValue(verification, out StreamMeasurements? own) ? own
+        : stream.Nodes.Count > 0 && _records.TryGetValue(stream.Nodes[0], out StreamMeasurements? record) ? record : null;
 
     public bool IsStopRequested => Options.Stop.IsCancellationRequested;
 
