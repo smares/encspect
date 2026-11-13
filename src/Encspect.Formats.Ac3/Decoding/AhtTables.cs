@@ -1016,4 +1016,22 @@ internal static class AhtTables
         [0.238710401f, 0.056982656f, 0.013602353f],
         [0.227930622f, 0.051952369f, 0.011841536f],
     ];
+
+    // Table E.2.6, the constants of the remapping y = x + a x + b of the large mantissas, as 16-bit fractions (divide by 32768), by hebap 8 to 19 (index hebap - 8): a for the gain 1, then for the gain 2 a, b where x is 0 or
+    // more, b where it is negative, then the same three for the gain 4 (zero where the table has no entry).
+    public static readonly short[][] Remap =
+    [
+        [4681, -10923, 16384, -5461, -4681, 8192, -1170],
+        [2185, -14043, 16384, -11703, -6554, 8192, -4915],
+        [1057, -15292, 16384, -14199, -7399, 8192, -6606],
+        [520, -15855, 16384, -15327, -7802, 8192, -7412],
+        [258, -16124, 16384, -15864, -7998, 8192, -7805],
+        [129, -16255, 16384, -16126, -8096, 8192, -7999],
+        [64, -16320, 16384, -16255, -8144, 8192, -8096],
+        [32, -16352, 16384, -16320, -8168, 8192, -8144],
+        [16, -16368, 16384, -16352, -8180, 8192, -8168],
+        [8, 0, 0, 0, 0, 0, 0],
+        [2, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0],
+    ];
 }

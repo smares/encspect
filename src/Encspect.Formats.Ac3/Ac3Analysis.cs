@@ -38,7 +38,7 @@ internal sealed class Ac3Analysis
     private AccessUnit _unit = new();
     private readonly IntWriter _writer = new();
     private readonly Node? _streamNode;
-    private bool _pendingGap;
+    private int _gaps;
 
     // streamNode: the node findings of a decoding point to where the stream has none of its own yet (a raw file's root, a container's track).
     public Ac3Analysis(AnalysisContext context, Action<long, int, int>? recordMismatch = null, Node? streamNode = null)
@@ -170,7 +170,7 @@ internal sealed class Ac3Analysis
 
             if (program.Feed is { } fed && !header.IsDependent)
             {
-                bool isReadable = !shortened && !cut && result.Stop == StopReason.None && header.Bsid <= 8;
+                bool isReadable = !shortened && !cut && result.Stop == StopReason.None && (header.IsEac3 || header.Bsid <= 8);
                 fed.Feed(_writer, offset, _buffer.AsMemory(0, available), header, isReadable, crc1, crc2);
             }
 
@@ -186,44 +186,48 @@ internal sealed class Ac3Analysis
     }
 
     // The program in progress follows a gap: what lies between its frames is no frame.
-    public void NoteGap() => _pendingGap = true;
+    public void NoteGap() => _gaps++;
 
-    // The feed an AC-3 frame goes to: the one of the program it continues, or a new one (with its session) where it starts a program, as Assign will decide. E-AC-3 and the
-    // frames of bsid 9 and 10 start none.
+    // The feed a frame goes to: the one of the program it continues, or a new one (with its session) where it starts a program, as Assign will decide. Dependent frames,
+    // E-AC-3 at a reduced sample rate and the frames of bsid 9 and 10 start none.
     private DecodeFeed? PrepareFeed(Region region, long offset, SyncFrame header)
     {
-        if (header.IsEac3 || header.IsDependent)
+        if (header.IsDependent)
         {
             return null;
         }
 
-        var key = new ProgramKey(0, header.SampleRate, false, header.Acmod, header.Lfeon);
+        int id = header.IsEac3 ? header.SubstreamId : 0;
+        var key = new ProgramKey(id, header.SampleRate, header.IsEac3, header.Acmod, header.Lfeon);
         DecodeFeed? feed;
-        if (_lastKeys.TryGetValue(0, out ProgramKey last) && last == key)
+        if (_lastKeys.TryGetValue(id, out ProgramKey last) && last == key)
         {
-            feed = _active.TryGetValue(0, out Program? program) ? program?.Feed : null;
-            if (feed is not null && _pendingGap)
+            feed = _active.TryGetValue(id, out Program? program) ? program?.Feed : null;
+            if (feed is not null && feed.GapsSeen != _gaps)
             {
                 feed.PendingGap = true;
+                feed.GapsSeen = _gaps;
             }
         }
-        else if (_programs.Count < MaxStreams && header.Bsid <= 8)
+        else if (_programs.Count < MaxStreams && (header.IsEac3 ? header.Fscod != 3 : header.Bsid <= 8))
         {
             region.Node ??= RegionNodeFactory?.Invoke(header);
-            feed = new DecodeFeed(_context, region.Node ?? _streamNode ?? throw new InvalidOperationException("A decoding needs a node for the stream"), header, _buffer, offset);
+            feed = new DecodeFeed(_context, region.Node ?? _streamNode ?? throw new InvalidOperationException("A decoding needs a node for the stream"), header, _buffer, offset)
+            {
+                GapsSeen = _gaps,
+            };
         }
         else
         {
             feed = null;
         }
 
-        _pendingGap = false;
         return feed;
     }
 
     public void AddGap(Region region, long start, long end, bool leading, bool trailing, BlockCache cache)
     {
-        _pendingGap |= !leading && !trailing;
+        _gaps += !leading && !trailing ? 1 : 0;
         Frames.Add(Frame.Gap(start, end - start));
         var node = new Node("Gap", start, end - start, NodeValue.Integer(end - start, "bytes")) { Description = Explain.Gap };
         long length = end - start;

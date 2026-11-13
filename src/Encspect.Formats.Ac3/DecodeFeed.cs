@@ -2,7 +2,7 @@ using Encspect.Core;
 
 namespace Encspect.Formats.Ac3;
 
-// The feeding of the AC-3 decoder (docs/design/lossy-decoders.md, "The parser and decoder split"): one session for each AC-3 program (a run of syncframes with one
+// The feeding of the AC-3 decoder (docs/design/lossy-decoders.md, "The parser and decoder split"): one session for each AC-3 or E-AC-3 program (a run of syncframes of one independent substream with one
 // configuration), which gets the program's independent frames in order. The syntax walk of FrameSyntax fills the buffers the session lends, and the decoder reads no coded
 // bit; the feed also keeps the tallies of the two CRCs, which the stream declares as its checksums (decision 2 of the design: crc1 and crc2 cover coded data, so a stream
 // whose frames all pass them reads "verified (lossy stream)").
@@ -21,7 +21,7 @@ internal sealed class DecodeFeed
 
     public DecodeFeed(AnalysisContext context, Node stream, SyncFrame first, ReadOnlySpan<byte> firstBytes, long offset)
     {
-        Session = context.StartDecoding(Ac3CodecParser.Ac3, new DecodeSetup
+        Session = context.StartDecoding(first.IsEac3 ? Ac3CodecParser.Eac3 : Ac3CodecParser.Ac3, new DecodeSetup
         {
             Stream = stream,
             Channels = ChannelCount(first),
@@ -35,6 +35,9 @@ internal sealed class DecodeFeed
 
     // Set where the data between two frames is no frame (a gap, which the next frame follows).
     public bool PendingGap { get; set; }
+
+    // The gaps of the analysis this program has seen, so that each independent substream of a file notes a gap, not only the first frame after it.
+    public int GapsSeen { get; set; }
 
     // Whether any frame of the program lay between a gap: the CRC2 of the frames then does not vouch for all of the program's audio.
     public bool HadGap { get; private set; }

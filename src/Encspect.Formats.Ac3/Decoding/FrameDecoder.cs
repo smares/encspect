@@ -198,7 +198,7 @@ internal sealed class FrameDecoder : IFrameDecoder
             {
                 if (((chincpl >> ch) & 1) != 0)
                 {
-                    ExpandCoupling(_spectrum[ch], coordinates.Slice(ch * 18, 18), cplbegf, subbands, combined, phsflg, bands2, ch == 1 && _acmod == 2, ((dither >> ch) & 1) != 0);
+                    ExpandCoupling(_spectrum[ch], _coupling, _couplingDither, ref _noise, coordinates.Slice(ch * 18, 18), cplbegf, subbands, combined, phsflg, bands2, ch == 1 && _acmod == 2, ((dither >> ch) & 1) != 0);
                 }
             }
         }
@@ -226,7 +226,7 @@ internal sealed class FrameDecoder : IFrameDecoder
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static bool IsSilent(float[] spectrum)
+    internal static bool IsSilent(float[] spectrum)
     {
         foreach (float value in spectrum)
         {
@@ -241,7 +241,7 @@ internal sealed class FrameDecoder : IFrameDecoder
 
     // pcm[n] = 2 * (x[n] + delay[n]); delay[n] = x[256 + n] (7.9.4.1, step 6).
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static void Overlap(ReadOnlySpan<float> x, float[] delay, Span<float> pcm)
+    internal static void Overlap(ReadOnlySpan<float> x, float[] delay, Span<float> pcm)
     {
         for (int n = 0; n < BlockSamples; n++)
         {
@@ -263,7 +263,7 @@ internal sealed class FrameDecoder : IFrameDecoder
             int bap = (packed >> 5) & 15;
             if (bap == 0)
             {
-                spectrum[start + i] = dither ? Noise() * Quantizers.Shift[packed & 31] : 0;
+                spectrum[start + i] = dither ? Noise(ref _noise) * Quantizers.Shift[packed & 31] : 0;
             }
             else
             {
@@ -299,7 +299,7 @@ internal sealed class FrameDecoder : IFrameDecoder
 
     // The value of a coded mantissa shifted by its exponent: the quantizer's value for bap 1 to 5 (Tables 7.19 to 7.23), the two's complement fraction for bap 6 to 15.
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static float Dequantize(int packed)
+    internal static float Dequantize(int packed)
     {
         int exponent = packed & 31;
         int bap = (packed >> 5) & 15;
@@ -314,15 +314,15 @@ internal sealed class FrameDecoder : IFrameDecoder
 
     // A dither value: uniform between -0.707 and 0.707 (7.3.4, "the optimum scaling"), from a linear congruential generator whose top 24 bits are the integer part.
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private float Noise()
+    internal static float Noise(ref uint state)
     {
-        _noise = unchecked((_noise * 1664525u) + 1013904223u);
-        return ((int)_noise >> 8) * (1.0f / 8388608.0f) * 0.707f;
+        state = unchecked((state * 1664525u) + 1013904223u);
+        return ((int)state >> 8) * (1.0f / 8388608.0f) * 0.707f;
     }
 
     // 7.5.4: the bands the flags name hold sum and difference, from the table of the coupling state (Tables 7.25 to 7.28).
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static void Rematrix(float[] left, float[] right, int bands, int flags, int cplbegf, int limit)
+    internal static void Rematrix(float[] left, float[] right, int bands, int flags, int cplbegf, int limit)
     {
         for (int band = 0; band < bands; band++)
         {
@@ -347,7 +347,7 @@ internal sealed class FrameDecoder : IFrameDecoder
     // 7.4.3: a coupled channel's bins above its own bandwidth are the coupling channel's times the channel's coordinate of the band, times 8; where the coupling channel has no
     // bits for a bin the channel's dither stands in for it, scaled the same way. With phase flags the right channel is negated in the bands that set them.
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private void ExpandCoupling(float[] spectrum, ReadOnlySpan<int> coordinates, int cplbegf, int subbands, int combined, int phsflg, int bands, bool isRight, bool dither)
+    internal static void ExpandCoupling(float[] spectrum, float[] coupling, float[] couplingDither, ref uint noise, ReadOnlySpan<int> coordinates, int cplbegf, int subbands, int combined, int phsflg, int bands, bool isRight, bool dither)
     {
         int band = -1;
         for (int sub = 0; sub < subbands; sub++)
@@ -369,14 +369,14 @@ internal sealed class FrameDecoder : IFrameDecoder
             for (int bin = first; bin < first + 12; bin++)
             {
                 float value;
-                float shift = _couplingDither[bin];
+                float shift = couplingDither[bin];
                 if (shift != 0)
                 {
-                    value = dither ? Noise() * shift * scale : 0;
+                    value = dither ? Noise(ref noise) * shift * scale : 0;
                 }
                 else
                 {
-                    value = _coupling[bin] * scale;
+                    value = coupling[bin] * scale;
                 }
 
                 spectrum[bin] = negate ? -value : value;
