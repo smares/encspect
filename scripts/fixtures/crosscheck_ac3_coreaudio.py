@@ -19,6 +19,7 @@ Exit status 0 where every file passes, 1 where one fails, 2 for a usage error.
 import argparse
 import array
 import json
+import math
 import pathlib
 import shlex
 import subprocess
@@ -28,6 +29,7 @@ import traceback
 
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
+import compare_pcm  # noqa: E402
 import crosscheck_ac3_pcm as x  # noqa: E402
 import derive_variants  # noqa: E402
 
@@ -262,9 +264,17 @@ OURS_WITHOUT = {"eac3-signal-transient": "eac3-signal-transient-off"}
 FLOOR_DB = -90.0
 FINE_BANDS = "400,800,1600,3200,5700,6400,8000,10200,12500,12800,20000"
 CURRENT = {"stem": ""}
-# Files whose bands from 6,400 Hz up hold spectral extension's noise blend: each decoder draws its own noise, so the bands agree within the spread of two independent noises (2.5 dB).
+# Files whose bands from 6,400 Hz up hold spectral extension's noise blend: each decoder draws its own noise, so a band's energy agrees only within the spread of two independent
+# noise draws. compare_pcm.py gives each band the standard deviation of that difference (sigmaDb: the power of a noise bin is exponentially distributed, the mean over the band's
+# frames and bins has a relative spread of 4.34 / sqrt(bins x frames) dB, the difference of two draws sqrt(2) times that, and 1.5 covers the correlation of neighboring bins), and the
+# tolerance is z of them, z the normal quantile at which equal noise fails with probability FALSE_FAILURE over the band's windows (3 at least), as compare_pcm.py sizes its windows.
 NOISE_BLEND_FILES = {"eac3-signal-spx-noise"}
-NOISE_BLEND_DB = 2.5
+
+
+def noise_spread_db(band):
+    windows = max(1, band.get("windows", 1))
+    z = max(3.0, math.sqrt(2 * math.log(windows / compare_pcm.FALSE_FAILURE)))
+    return z * band.get("sigmaDb", 0.0)
 # Files Core Audio does not open: the status it gives, recorded and not counted as a failure of the analyzer.
 UNOPENABLE = {"casablanca_aht_mono_64": "!dat (560226676) when Core Audio opens the file"}
 # Files of dither alone (no signal): the channels have no identity to find by correlation, so Core Audio's are paired with the analyzer's by level.
@@ -390,7 +400,7 @@ def compare(dump, reference, channels, label, first, extra):
                 edges = [int(e) for e in extra[extra.index("--bands") + 1].split(",")]
                 if band.get("analyzerDb", 0) < DITHER_ONLY_DB and DITHER_RANGE_DB[0] <= band.get("signedDifferenceDb", 99) <= DITHER_RANGE_DB[1]:
                     band["status"] = "ok (dither range)"
-                elif CURRENT["stem"] in NOISE_BLEND_FILES and edges[band["band"]] >= 6400 and abs(band.get("signedDifferenceDb", 99)) <= NOISE_BLEND_DB:
+                elif CURRENT["stem"] in NOISE_BLEND_FILES and edges[band["band"]] >= 6400 and abs(band.get("signedDifferenceDb", 99)) <= noise_spread_db(band):
                     band["status"] = "ok (noise blend)"
                 else:
                     outside += 1
