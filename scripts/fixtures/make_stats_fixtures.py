@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Writes the stream statistics fixtures in tests/fixtures/mpeg/stats.
+"""Writes the stream statistics fixtures in tests/fixtures/mpeg-audio/stats.
 
 Every hand-built manifest lists each MPEG Audio region's statistics and each stream's figures (see
 stream_stats.py for the definitions); these fixtures are the ones built for them: several seconds of VBR audio for the
@@ -21,7 +21,7 @@ import make_mpeg_fixtures as mpeg
 from make_mpeg_fixtures import Frame
 from make_vbr_fixtures import LAME_CBR, LAME_VBR, VbrFixture, encoder, vbr_audio, vbri_frame, xing_frame
 
-OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "mpeg" / "stats"
+OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "mpeg-audio" / "stats"
 
 
 class StatsFixture(VbrFixture):
@@ -106,7 +106,7 @@ def sample_rate_change():
                      "the duration adds both, and the reservoir starts again with the new stream.", crosscheck=False)
     f.add_frames(mpeg.stream(20, bitrate=128, rate=44100, mode="Joint stereo"))
     f.add_frames(mpeg.stream(20, bitrate=160, rate=48000, mode="Joint stereo"))
-    f.finding("mpeg.stream-changed", "44100 Hz")
+    f.finding("mpeg-audio.stream-changed", "44100 Hz")
     return f
 
 
@@ -117,7 +117,7 @@ def free_format_statistics():
                      "counts the frames.", crosscheck="mpg123", silent=False)
     padding = [0, 1] * 20
     f.add_frames([Frame(bitrate=None, free_length=500, padding=p, rate=44100, mode="Stereo") for p in padding])
-    f.finding("mpeg.free-format", "500 bytes")
+    f.finding("mpeg-audio.free-format", "500 bytes")
     return f
 
 

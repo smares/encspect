@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Writes the byte-exact MPEG Layer III side-information and bit-reservoir fixtures in tests/fixtures/mpeg/layer3.
+"""Writes the byte-exact MPEG Layer III side-information and bit-reservoir fixtures in tests/fixtures/mpeg-audio/layer3.
 
 Each Layer III frame here carries explicit side information (ISO/IEC 11172-3 2.4.1.7 and
 2.4.2.7, ISO/IEC 13818-3 2.4.1.7) and main data that is a valid Huffman coding of all-zero
@@ -51,7 +51,7 @@ import make_mpeg_fixtures as mpeg
 import stream_stats
 from make_mpeg_fixtures import Fixture, Frame, cbr_padding, junk, side_info_size
 
-OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "mpeg" / "layer3"
+OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "mpeg-audio" / "layer3"
 
 BLOCK_TYPES = ["Normal", "Start", "Short", "Stop"]
 SHORT = 2
@@ -422,17 +422,17 @@ class Layer3Fixture(Fixture):
                     entry["fields"]["Side Info/Reservoir Fill"] = bytes_text(min(entry['reservoir'], reach))
                     entry["side_info"] = frame.raw_side_info()
                     if begin < 0:
-                        self.finding("mpeg.main-data-before-stream", f"0x{entry['offset']:X}")
+                        self.finding("mpeg-audio.main-data-before-stream", f"0x{entry['offset']:X}")
                     elif frame.main_data_begin > entry["reservoir"]:
-                        self.finding("mpeg.main-data-overlap", f"0x{entry['offset']:X}")
+                        self.finding("mpeg-audio.main-data-overlap", f"0x{entry['offset']:X}")
                     elif begin < area_start and crosses_gap(chain, starts, begin, k):
-                        self.finding("mpeg.reservoir-across-gap", f"0x{entry['offset']:X}")
+                        self.finding("mpeg-audio.reservoir-across-gap", f"0x{entry['offset']:X}")
                     elif begin < area_start and any(is_header(f) and begin < starts[j] + area_length(f) for j, (f, _) in enumerate(chain[:k])):
-                        self.finding("mpeg.main-data-in-vbr-header-frame", f"0x{entry['offset']:X}")
+                        self.finding("mpeg-audio.main-data-in-vbr-header-frame", f"0x{entry['offset']:X}")
                     if frame.mpeg1() and 0 < frame.main_data_begin and frame.main_data_begin + frame.length() > iso_buffer(frame):
-                        self.finding("mpeg.main-data-begin-exceeds-buffer", f"0x{entry['offset']:X}")
+                        self.finding("mpeg-audio.main-data-begin-exceeds-buffer", f"0x{entry['offset']:X}")
                 if end > area_end:
-                    self.finding("mpeg.main-data-overflow", f"0x{entry['offset']:X}")
+                    self.finding("mpeg-audio.main-data-overflow", f"0x{entry['offset']:X}")
                 for p in range(max(begin, previous_end, 0), min(end, area_end)):
                     owner[p] = k
                 if k:
@@ -567,7 +567,7 @@ class Layer3Fixture(Fixture):
                     fields[name] = enhancement
                     fields[f"{name}/Ancillary Data"] = bytes_text(total)
                     fields[f"{name}/Data Rate"] = stream_stats.kbps_tenths_text(total * 8, ticks)
-                    code = "mpeg.mp3pro" if enhancement == ancillary_scan.MP3PRO else "mpeg.mp3-surround"
+                    code = "mpeg-audio.mp3pro" if enhancement == ancillary_scan.MP3PRO else "mpeg-audio.mp3-surround"
                     self.finding(code, f"{total} bytes")
                 if block:
                     delay, length, kind = block
@@ -580,7 +580,7 @@ class Layer3Fixture(Fixture):
                     fields[f"{name}/Duration"] = stream_stats.duration_text(length * (stream_stats.CLOCK // rate))
                     samples = sum(stream_stats.samples_per_frame(mpeg.VERSION_NAMES[f.version], "III") for f in audio) * (rate // first.rate)
                     if delay + length > samples:
-                        self.finding("mpeg.ofl-exceeds-stream", f"{delay + length} samples")
+                        self.finding("mpeg-audio.ofl-exceeds-stream", f"{delay + length} samples")
             if fields:
                 region["ancillary"] = fields
 
@@ -823,12 +823,12 @@ def invalid_side_info():
         dict(granules=ok(111)),
     ]
     f.add_frames(pack(frames_with_padding(specs, 128, 44100, mode="Joint stereo")))
-    f.finding("mpeg.big-values-too-large", "300")
-    f.finding("mpeg.block-type-reserved", "block type 0")
-    f.finding("mpeg.huffman-table-undefined", "table")
-    f.finding("mpeg.scalefactors-exceed-granule", "scalefactor")
-    f.finding("mpeg.scfsi-with-short-blocks", "scfsi")
-    f.finding("mpeg.stereo-block-types-differ", "block type")
+    f.finding("mpeg-audio.big-values-too-large", "300")
+    f.finding("mpeg-audio.block-type-reserved", "block type 0")
+    f.finding("mpeg-audio.huffman-table-undefined", "table")
+    f.finding("mpeg-audio.scalefactors-exceed-granule", "scalefactor")
+    f.finding("mpeg-audio.scfsi-with-short-blocks", "scfsi")
+    f.finding("mpeg-audio.stereo-block-types-differ", "block type")
     return f
 
 
@@ -926,7 +926,7 @@ def reservoir_gap():
     f.add_frames(frames[:4])
     f.gap(junk(40, 61))
     f.add_frames(frames[4:])
-    return f.finding("mpeg.sync-lost", "40 bytes")
+    return f.finding("mpeg-audio.sync-lost", "40 bytes")
 
 
 @fixture
@@ -941,7 +941,7 @@ def reservoir_stream_change():
     f.add_frames(reservoir_chain([(100, 0), (200, 0), (300, 100), (50, 0)]))
     second = reservoir_chain([(0, 0), (200, 0), (300, 120), (100, 50), (60, 0)], rate=48000)
     f.add_frames(second[2:])
-    return f.finding("mpeg.stream-changed", "48000 Hz")
+    return f.finding("mpeg-audio.stream-changed", "48000 Hz")
 
 
 @fixture
@@ -973,8 +973,8 @@ def reservoir_free_to_fixed():
     fixed = reservoir_chain([(50, 100), (50, 0), (50, 0), (50, 0)], ancillary=b"\x00")
     pack(free)
     f.add_frames(free + fixed)
-    f.finding("mpeg.free-format", "400 bytes")
-    return f.finding("mpeg.stream-changed", "free format to MPEG-1 Layer III, 44100 Hz")
+    f.finding("mpeg-audio.free-format", "400 bytes")
+    return f.finding("mpeg-audio.stream-changed", "free format to MPEG-1 Layer III, 44100 Hz")
 
 
 @fixture
@@ -1056,7 +1056,7 @@ def free_format_no_main_data():
         frames.append(Layer3Frame(bitrate=None, free_length=36, padding=i % 3 == 2, rate=44100, mode="Stereo",
                                   granules=[[Granule(global_gain=i), Granule()], [Granule(), Granule()]]))
     f.add_frames(pack(frames, b"\x00"))
-    return f.finding("mpeg.free-format", "36 bytes")
+    return f.finding("mpeg-audio.free-format", "36 bytes")
 
 
 @fixture
@@ -1070,7 +1070,7 @@ def ancillary_streams_apart():
         guessenc=False,
     )
     f.add_frames(enhanced_chain([b"\xff\xff"] * 5, **MP3PRO) + enhanced_chain([b"\xff\xff"] * 5, **SURROUND))
-    return f.finding("mpeg.stream-changed", "44100 Hz")
+    return f.finding("mpeg-audio.stream-changed", "44100 Hz")
 
 
 @fixture
@@ -1084,7 +1084,7 @@ def mp3pro_then_mpeg1():
     )
     f.add_frames(enhanced_chain(signatures(12, 0xC0, 0x08), **MP3PRO) + enhanced_chain([b"\x00\x00"] * 6, **SURROUND))
     f.extra = {"detected_encoder": {"name": "mp3PRO encoder", "confidence": "Medium"}}
-    return f.finding("mpeg.stream-changed", "44100 Hz")
+    return f.finding("mpeg-audio.stream-changed", "44100 Hz")
 
 
 @fixture
@@ -1105,7 +1105,7 @@ def ofl_in_each_stream():
     # mp3guessenc reads only the first stream's block.
     f.extra = {"detected_encoder": {"name": "mp3PRO encoder", "confidence": "Medium"},
                "mp3guessenc_ofl": {"delay": 1500, "length": 6000}}
-    return f.finding("mpeg.stream-changed", "44100 Hz")
+    return f.finding("mpeg-audio.stream-changed", "44100 Hz")
 
 
 # --- mp3PRO, MP3 Surround and OFL -------------------------------------------------------------------

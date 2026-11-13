@@ -9,10 +9,10 @@ public class MeasurementPerStreamTests
 {
     public static TheoryData<string> Files => new()
     {
-        "mpeg/cut-frame-stream-change.mp3",
-        "mpeg/layer3/reservoir-free-to-fixed.mp3",
-        "mpeg/layer3/ancillary-streams-apart.mp3",
-        "mpeg/layer3/reservoir-stream-change.mp3",
+        "mpeg-audio/cut-frame-stream-change.mp3",
+        "mpeg-audio/layer3/reservoir-free-to-fixed.mp3",
+        "mpeg-audio/layer3/ancillary-streams-apart.mp3",
+        "mpeg-audio/layer3/reservoir-stream-change.mp3",
     };
 
     [Theory]

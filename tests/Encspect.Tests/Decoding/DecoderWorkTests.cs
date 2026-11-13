@@ -5,7 +5,7 @@ using Encspect.Formats.Ac3.Decoding;
 using Encspect.Formats.Flac;
 using Encspect.Formats.Flac.Decoding;
 using Encspect.Formats.MonkeysAudio.Decoding;
-using Encspect.Formats.Mpeg.Decoding;
+using Encspect.Formats.MpegAudio.Decoding;
 using Encspect.Formats.Opus.Decoding;
 using Encspect.Formats.Tta.Decoding;
 using Encspect.Formats.Vorbis.Decoding;
@@ -1010,7 +1010,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
     {
         public static byte[] Repeated(string fixture, long target = Target)
         {
-            byte[] one = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "mpeg", fixture));
+            byte[] one = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "mpeg-audio", fixture));
             long perCopy = Math.Max(1, Units(one));
             int copies = (int)Math.Clamp(target / perCopy, 2, 1 << 20);
             return Unpooled.Repeat(one, copies);

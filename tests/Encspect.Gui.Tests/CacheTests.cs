@@ -83,7 +83,7 @@ public sealed class CacheTests : IDisposable
     [InlineData(false)]
     public void No_verification_verdict_is_cached(bool verdict)
     {
-        string file = _folder.Copy(Path.Combine(Fixtures.Directory, "mpeg", "external-lame-tagged.mp3"), "verified.mp3");
+        string file = _folder.Copy(Path.Combine(Fixtures.Directory, "mpeg-audio", "external-lame-tagged.mp3"), "verified.mp3");
         FileSummary summary = Summarize(file);
         summary = summary with { Summary = summary.Summary with { IsVerified = verdict } };
         using (SummaryCache cache = Cache())

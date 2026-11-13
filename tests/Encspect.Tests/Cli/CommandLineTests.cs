@@ -8,10 +8,10 @@ namespace Encspect.Tests;
 
 public class CommandLineTests
 {
-    private static readonly string Tagged = Path.Combine(Fixtures.FixtureDirectory, "mpeg", "external-lame-tagged.mp3");
+    private static readonly string Tagged = Path.Combine(Fixtures.FixtureDirectory, "mpeg-audio", "external-lame-tagged.mp3");
 
     // BladeEnc 0.80 writes frames whose main data overflows: three warnings, no errors.
-    private static readonly string Broken = Path.Combine(Fixtures.FixtureDirectory, "mpeg", "external-blade080-stereo.mp3");
+    private static readonly string Broken = Path.Combine(Fixtures.FixtureDirectory, "mpeg-audio", "external-blade080-stereo.mp3");
 
     // How long a run that could block on a FIFO or loop through links gets before the test fails.
     private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(60);
@@ -740,7 +740,7 @@ public class ReportSummaryTests
     [Fact]
     public void SummaryReadsTheFirstStream()
     {
-        ReportSummary summary = ReportSummary.From(Fixtures.AnalyzeMpeg("mpeg/external-lame-tagged.mp3"));
+        ReportSummary summary = ReportSummary.From(Fixtures.AnalyzeMpeg("mpeg-audio/external-lame-tagged.mp3"));
 
         Assert.Equal("MPEG Audio", summary.Format);
         Assert.Equal(1, summary.Streams);
@@ -785,7 +785,7 @@ public class ReportSummaryTests
     {
         var analyzer = Analyzer.CreateDefault();
 
-        Assert.Equal("MPEG Audio", analyzer.DetectFormat(Path.Combine(Fixtures.FixtureDirectory, "mpeg", "external-lame-tagged.mp3")));
+        Assert.Equal("MPEG Audio", analyzer.DetectFormat(Path.Combine(Fixtures.FixtureDirectory, "mpeg-audio", "external-lame-tagged.mp3")));
     }
 
     [Fact]

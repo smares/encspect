@@ -138,7 +138,7 @@ public sealed class ExplanationTests : IDisposable
     [AvaloniaFact]
     public void The_channel_layout_column_names_the_layout_and_lists_its_speakers()
     {
-        _folder.Copy(Path.Combine(Fixtures.Directory, "mpeg", "layer2", "mc-3-2-lfe.mp2"), "surround.mp2");
+        _folder.Copy(Path.Combine(Fixtures.Directory, "mpeg-audio", "layer2", "mc-3-2-lfe.mp2"), "surround.mp2");
         var main = new MainWindow(Analyzer.CreateDefault(), new Settings(), new MainViewModel(Analyzer.CreateDefault(), roots: []));
         main.Show();
         main.Model.Open(FileSource.ForFolder(_folder.Path));

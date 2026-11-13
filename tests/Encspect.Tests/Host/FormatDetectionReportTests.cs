@@ -10,7 +10,7 @@ public class FormatDetectionReportTests
     [Fact]
     public void TheWritersShowTheAlternativesAndTheForcedFormat()
     {
-        string path = Path.Combine(Fixtures.FixtureDirectory, "mpeg", "external-lame-cbr128-joint.mp3");
+        string path = Path.Combine(Fixtures.FixtureDirectory, "mpeg-audio", "external-lame-cbr128-joint.mp3");
         Report forced = Analyzer.CreateDefault().AnalyzeFile(path, new AnalysisOptions { ForcedFormat = "aac" });
         Report plain = Analyzer.CreateDefault().AnalyzeFile(path);
 

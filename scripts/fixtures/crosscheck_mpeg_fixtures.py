@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Checks the MPEG fixtures' expected results against independent decoders.
 
-For every fixture in tests/fixtures/mpeg, layer3, layer2 and vbr whose manifest has
+For every fixture in tests/fixtures/mpeg-audio, layer3, layer2 and vbr whose manifest has
 "crosscheck": true, ffprobe must report exactly the frames the manifest lists (offset and length
 of each), and for protected frames libmad (madplay) must report a CRC failure for exactly the
 frames the manifest expects one for. libmad is used for CRCs because ffmpeg 6.1 rejects every
@@ -123,7 +123,7 @@ import vbr_tags
 from conformance_mpeg_audio import guessenc as guessenc_multichannel
 
 ROOT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures"
-DIRECTORIES = [ROOT / "mpeg", ROOT / "mpeg" / "layer3", ROOT / "mpeg" / "layer2", ROOT / "mpeg" / "vbr", ROOT / "mpeg" / "stats"]
+DIRECTORIES = [ROOT / "mpeg-audio", ROOT / "mpeg-audio" / "layer3", ROOT / "mpeg-audio" / "layer2", ROOT / "mpeg-audio" / "vbr", ROOT / "mpeg-audio" / "stats"]
 TAGS = ROOT / "tags"
 CHANNELS = {"Mono": 1}
 GUESSENC_MODES = {"Simple stereo": "0", "Intensity stereo": "1", "Mid-side stereo": "2", "Intensity and mid-side stereo": "3"}
@@ -671,9 +671,9 @@ def decoded_samples(path, channels):
 
 
 # Findings about frames mp3guessenc skips or reads differently; the others leave its counts alone.
-GUESSENC_NEUTRAL = ("mpeg.vbr-", "mpeg.lame-", "mpeg.music-", "mpeg.xing-", "mpeg.gapless-")
+GUESSENC_NEUTRAL = ("mpeg-audio.vbr-", "mpeg-audio.lame-", "mpeg-audio.music-", "mpeg-audio.xing-", "mpeg-audio.gapless-")
 # mp3guessenc reads free format, but takes every frame to be as long as the first.
-GUESSENC_NEUTRAL_CODES = ("mpeg.free-format",)
+GUESSENC_NEUTRAL_CODES = ("mpeg-audio.free-format",)
 VARIABLE_HEADER_FIELDS = {"Header/Bitrate", "Header/HasPadding", "Header/Mode Extension"}
 
 
@@ -703,9 +703,9 @@ def check_statistics(path, manifest):
         problems += guessenc_problems(guessenc_stream(path), regions[0]["statistics"], stream_stats.exact(region_infos(manifest, regions[0])))
     # Decoders play the frames of a joined stream too, and differ on a truncated last frame, which
     # ffmpeg decodes as far as it goes and mpg123 leaves out.
-    consistent = not any(f["code"] in ("mpeg.vbr-frame-count-mismatch", "mpeg.vbr-header-mid-stream", "mpeg.stream-changed")
+    consistent = not any(f["code"] in ("mpeg-audio.vbr-frame-count-mismatch", "mpeg-audio.vbr-header-mid-stream", "mpeg-audio.stream-changed")
                          for f in manifest["findings"])
-    truncated = any(f["code"] == "mpeg.frame-truncated" for f in manifest["findings"])
+    truncated = any(f["code"] == "mpeg-audio.frame-truncated" for f in manifest["findings"])
     for region in regions:
         count = region["statistics"].get("Statistics/Gapless/Sample Count")
         padding = int(region["statistics"].get("Statistics/Gapless/Encoder Padding", "0 samples").split()[0])
@@ -817,9 +817,9 @@ def is_layer3(manifest):
 # Findings in whose files mp3guessenc reads other frames or other main data than the analyzer, though
 # it may count as many frames, and why.
 GUESSENC_READS_OTHERWISE = {
-    "mpeg.frame-cut": "mp3guessenc reads a frame whose header is damaged at the length that header gives",
-    "mpeg.free-format-length-changed": "mp3guessenc takes every free-format frame to be as long as the first",
-    "mpeg.main-data-in-vbr-header-frame": "mp3guessenc skips the VBR header frame, so it does not find main data that begins there "
+    "mpeg-audio.frame-cut": "mp3guessenc reads a frame whose header is damaged at the length that header gives",
+    "mpeg-audio.free-format-length-changed": "mp3guessenc takes every free-format frame to be as long as the first",
+    "mpeg-audio.main-data-in-vbr-header-frame": "mp3guessenc skips the VBR header frame, so it does not find main data that begins there "
                                           "and leaves out the ancillary segments next to it",
 }
 
@@ -839,10 +839,10 @@ def guessenc_frames_differ(path, manifest, counted, ours):
         return GUESSENC_READS_OTHERWISE[code]
     if counted == ours:
         return None
-    if counted == ours + 1 and "mpeg.frame-truncated" in codes:
+    if counted == ours + 1 and "mpeg-audio.frame-truncated" in codes:
         return "mp3guessenc also counts the truncated last frame, whose main data is all there"
     if "frames" in manifest:
-        kept = dict(manifest, findings=[f for f in manifest["findings"] if f["code"] != "mpeg.frame-truncated"])
+        kept = dict(manifest, findings=[f for f in manifest["findings"] if f["code"] != "mpeg-audio.frame-truncated"])
         if not guessenc_counts_like_us(path, kept):
             return "mp3guessenc skips or resyncs at frames the analyzer keeps (guessenc_counts_like_us)"
     return f"mp3guessenc counts {counted} frames, the statistics {ours}, for no known reason"
@@ -1079,7 +1079,7 @@ def fixture_frames(manifest):
         return [f["offset"] for f in manifest["frames"]
                 if not f.get("truncated") and "Xing" not in f["fields"] and not any(k.startswith("VBRI") for k in f["fields"])]
     packets = [offset for offset, _ in manifest["ffprobe_packets"]]
-    return packets[:-1] if "mpeg.frame-truncated" in manifest.get("findings", []) else packets
+    return packets[:-1] if "mpeg-audio.frame-truncated" in manifest.get("findings", []) else packets
 
 
 # Encoders EncSpot names for encoder-written fixtures where the analyzer names another one or none:
@@ -1439,15 +1439,15 @@ MEDIAINFO_LONE = ("MediaInfo takes a single frame for a stream where it ends exa
                   "where the analyzer needs a chain of frames")
 # Fixtures on which MediaInfo reads a field differently, with the evidence.
 MEDIAINFO_READS_OTHERWISE = {
-    "mpeg/lone-frame-overflow": {"format": MEDIAINFO_LONE},
-    "mpeg/lone-frames-forbidden-allocation": {"format": MEDIAINFO_LONE},
+    "mpeg-audio/lone-frame-overflow": {"format": MEDIAINFO_LONE},
+    "mpeg-audio/lone-frames-forbidden-allocation": {"format": MEDIAINFO_LONE},
     "layer3/lone-frame-invalid-side-info": {"format": MEDIAINFO_LONE},
-    "mpeg/protected-weak-chain": {"format": "observed with MediaInfo 26.01 (CI run 43113298773): it takes the six protected Layer III frames after 300 bytes of data for MPEG Audio "
+    "mpeg-audio/protected-weak-chain": {"format": "observed with MediaInfo 26.01 (CI run 43113298773): it takes the six protected Layer III frames after 300 bytes of data for MPEG Audio "
                                             "although none of their CRCs holds, where the analyzer leaves a protected chain further in than the start of the data with no CRC that "
                                             "holds unidentified (SniffResult.WeakClass, format.weak-candidate)"},
-    "mpeg/tagged-stream": {"stream size": "MediaInfo sizes the 52-byte APE tag, which has no header, as 84 bytes (Tag/File__Tags.cpp, DetectBeginOfEndTags_Test: ApeTag_Size+=32 for version 2000, whatever the header flag; its trace: \"ApeTag (84 bytes)\"), and its byte count falls those 84 bytes short of the frames' 3343"},
+    "mpeg-audio/tagged-stream": {"stream size": "MediaInfo sizes the 52-byte APE tag, which has no header, as 84 bytes (Tag/File__Tags.cpp, DetectBeginOfEndTags_Test: ApeTag_Size+=32 for version 2000, whatever the header flag; its trace: \"ApeTag (84 bytes)\"), and its byte count falls those 84 bytes short of the frames' 3343"},
     "vbr/lame-before-joined-frames": dict.fromkeys(["bitrate mode", "samples", "bitrate"], "MediaInfo reports the two streams as one (File_Mpega.cpp): their frames' two bitrates without a VBR header in the first frames make it VBR (Streams_Fill, BitRate_Count), so it gives no bitrate or sample count, and it counts the frames of both"),
-    "mpeg/channel-mode-change": {"stream's mode": "the channel mode changes within the stream (mpeg.channel-mode-changed): MediaInfo gives the last frame's, mono, and the analyzer the stream's first audio frame's, joint stereo"},
+    "mpeg-audio/channel-mode-change": {"stream's mode": "the channel mode changes within the stream (mpeg-audio.channel-mode-changed): MediaInfo gives the last frame's, mono, and the analyzer the stream's first audio frame's, joint stereo"},
     "vbr/xing-in-layer2": {"bitrate mode": "MediaInfo reads \"Xing\" as a VBR header in any layer (File_Mpega.cpp, Header_Xing), where Layer II frames carry none and the bytes are ancillary data"},
     "vbr/xing-truncated": dict.fromkeys(["frames", "samples", "bitrate", "stream size"], "MediaInfo drops a Xing header whose announced fields do not fit its frame (File_Mpega.cpp, Header_Xing: \"Error tag size\"), the counts before the TOC too, and counts its frame as audio"),
 }

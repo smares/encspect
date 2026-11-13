@@ -329,7 +329,7 @@ public class VerificationOutputTests
         return (code, Encoding.UTF8.GetString(stdout.ToArray()), stderr.ToString());
     }
 
-    private static string Fixture() => Path.Combine(Fixtures.FixtureDirectory, "mpeg", "external-lame-tagged.mp3");
+    private static string Fixture() => Path.Combine(Fixtures.FixtureDirectory, "mpeg-audio", "external-lame-tagged.mp3");
 
     [Fact]
     public void VerifyIsAnOptionOfTheUsageAndRunsTheAnalysisWithDecodingOn()

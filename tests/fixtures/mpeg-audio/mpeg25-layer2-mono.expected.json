@@ -1,0 +1,139 @@
+{
+ "description": "MPEG-2.5 Layer II mono at 8000 Hz and 64 kbps. MPEG 2.5 is Fraunhofer's extension of Layer III only, so no standard defines these frames; decoders play them, and they are reported.",
+ "length": 6912,
+ "crosscheck": "madplay",
+ "regions": [
+  {
+   "name": "MPEG Audio",
+   "offset": 0,
+   "length": 6912,
+   "statistics": {
+    "Statistics": "6 frames, 0.864 s",
+    "Statistics/Frames": "6",
+    "Statistics/Samples": "6912",
+    "Statistics/Duration": "0.864 s",
+    "Statistics/Bitrate Mode": "constant",
+    "Statistics/Average Bitrate": "64.0 kbps",
+    "Statistics/Minimum Bitrate": "64 kbps",
+    "Statistics/Maximum Bitrate": "64 kbps",
+    "Statistics/Bitrate Distribution": "1 bitrate",
+    "Statistics/Bitrate Distribution/64 kbps": "6 frames (100.0%)",
+    "Statistics/Channel Modes": "1 mode",
+    "Statistics/Channel Modes/Mono": "6 frames (100.0%)",
+    "Statistics/Stereo Coding": "6 frames",
+    "Statistics/Stereo Coding/Mono": "6 frames (100.0%)",
+    "Statistics/Bitrate Distribution/64 kbps/Unpadded": "6 frames of 1152 bytes",
+    "Statistics/Coded Bandwidth/Lowest": "0 Hz",
+    "Statistics/Coded Bandwidth/Most Common": "0 Hz",
+    "Statistics/Coded Bandwidth/Highest": "0 Hz",
+    "Statistics/Ancillary Data": "6828 bytes",
+    "Statistics/Ancillary Data/Share": "98.8 %",
+    "Statistics/Ancillary Data/Data Rate": "63.2 kbps",
+    "Statistics/Ancillary Data/Smallest Nonzero Amount": "1138 bytes",
+    "Statistics/Ancillary Data/Largest Amount": "1138 bytes",
+    "Statistics/UsesPadding": "false"
+   }
+  }
+ ],
+ "frames": [
+  {
+   "offset": 0,
+   "length": 1152,
+   "fields": {
+    "Header/Version": "MPEG-2.5",
+    "Header/Layer": "II",
+    "Header/Bitrate": "64 kbps",
+    "Header/Sample Rate": "8000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 1152,
+   "length": 1152,
+   "fields": {
+    "Header/Version": "MPEG-2.5",
+    "Header/Layer": "II",
+    "Header/Bitrate": "64 kbps",
+    "Header/Sample Rate": "8000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 2304,
+   "length": 1152,
+   "fields": {
+    "Header/Version": "MPEG-2.5",
+    "Header/Layer": "II",
+    "Header/Bitrate": "64 kbps",
+    "Header/Sample Rate": "8000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 3456,
+   "length": 1152,
+   "fields": {
+    "Header/Version": "MPEG-2.5",
+    "Header/Layer": "II",
+    "Header/Bitrate": "64 kbps",
+    "Header/Sample Rate": "8000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 4608,
+   "length": 1152,
+   "fields": {
+    "Header/Version": "MPEG-2.5",
+    "Header/Layer": "II",
+    "Header/Bitrate": "64 kbps",
+    "Header/Sample Rate": "8000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 5760,
+   "length": 1152,
+   "fields": {
+    "Header/Version": "MPEG-2.5",
+    "Header/Layer": "II",
+    "Header/Bitrate": "64 kbps",
+    "Header/Sample Rate": "8000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  }
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "MPEG-2.5 Layer II",
+   "sample_rate": 8000,
+   "samples": 6912,
+   "duration": "0.864 s",
+   "channel_layout": [
+    "front center"
+   ],
+   "average_bitrate": "64.0 kbps",
+   "is_vbr": false,
+   "bitrate_over_time": "64"
+  }
+ ],
+ "findings": [
+  {
+   "code": "mpeg-audio.mpeg25-layer",
+   "contains": "Layer II"
+  }
+ ]
+}

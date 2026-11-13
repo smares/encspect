@@ -12,21 +12,21 @@ public partial class ContainerTests
     // The RIFF header and the chunk header before the first chunk's data.
     private const long FirstChunkData = 20;
 
-    private static readonly byte[] Blade = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "mpeg", "external-blade-flags.mp3"));
+    private static readonly byte[] Blade = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "mpeg-audio", "external-blade-flags.mp3"));
 
     [GeneratedRegex("0x[0-9A-F]+")]
     private static partial Regex HexNumber();
 
     [Theory]
-    [InlineData("mpeg/external-blade-flags.mp3")]
-    [InlineData("mpeg/mpeg1-layer3-crc-mismatch.mp3")]
-    [InlineData("mpeg/damaged-bitrate.mp3")]
-    [InlineData("mpeg/channel-mode-change.mp3")]
-    [InlineData("mpeg/truncated-last-frame.mp3")]
-    [InlineData("mpeg/trailing-garbage.mp3")]
-    [InlineData("mpeg/stream-change-after-gap.mp3")]
-    [InlineData("mpeg/leading-junk.mp3")]
-    [InlineData("mpeg/layer2/crc-mismatch.mp2")]
+    [InlineData("mpeg-audio/external-blade-flags.mp3")]
+    [InlineData("mpeg-audio/mpeg1-layer3-crc-mismatch.mp3")]
+    [InlineData("mpeg-audio/damaged-bitrate.mp3")]
+    [InlineData("mpeg-audio/channel-mode-change.mp3")]
+    [InlineData("mpeg-audio/truncated-last-frame.mp3")]
+    [InlineData("mpeg-audio/trailing-garbage.mp3")]
+    [InlineData("mpeg-audio/stream-change-after-gap.mp3")]
+    [InlineData("mpeg-audio/leading-junk.mp3")]
+    [InlineData("mpeg-audio/layer2/crc-mismatch.mp2")]
     public void MpegPayloadIsAnalyzedAsTheSameBytesInAFile(string fixture)
     {
         byte[] audio = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, fixture));
@@ -113,7 +113,7 @@ public partial class ContainerTests
 
         Report report = TestFiles.Analyze(file, new ChunkedContainer());
 
-        Finding differs = Assert.Single(report.Findings, f => f.Code == "mpeg.encoder-claim-differs");
+        Finding differs = Assert.Single(report.Findings, f => f.Code == "mpeg-audio.encoder-claim-differs");
         Node frame = TestFiles.Follow(report.Root, differs.Path!);
         Assert.Equal("TSSE", frame.Name);
         Node chunk = Chunk(report, "id3 ");
@@ -360,7 +360,7 @@ public partial class ContainerTests
         Report report = TestFiles.Analyze(PagedContainer.Build(4, new byte[10]).File, new PagedContainer("mpeg-audio"));
 
         Finding finding = Assert.Single(report.Findings);
-        Assert.Equal(("mpeg.packets-not-analyzed", "Pages"), (finding.Code, finding.Node?.Name));
+        Assert.Equal(("mpeg-audio.packets-not-analyzed", "Pages"), (finding.Code, finding.Node?.Name));
         Assert.Empty(report.Streams);
     }
 

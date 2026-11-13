@@ -1122,7 +1122,7 @@ internal sealed partial class FrameSyntax
 
         if (!_b.IsBuildingNodes && !walked)
         {
-            WriteBlock(start, blk);
+            WriteBlock(start, blk, start + bits);
         }
 
         _b.Skip(bits);
@@ -1149,11 +1149,14 @@ internal sealed partial class FrameSyntax
     //   then, for every full bandwidth channel in order, the coupling channel where coupling is in use and the LFE channel where there is one, the number of bins and per bin
     //   exp | bap << 5 | code << 9, where the code is the quantizer's index for bap 1 to 5 and the two's complement mantissa for bap 6 to 15 (sign extended).
     // It also reads the mantissa codes, which is where checks 18 to 20 of 7.10.2 are made.
-    private int WriteBlock(int start, int blk)
+    // end: where the block's Mantissas field ends, which the findings name: the codes read can stop short of it (coupling in use with no channel in it has its coupling channel's
+    // bits counted but no channel to read them after), and a finding must point at a node of the tree, equal in offset and length. Where the length is not known before the walk (an
+    // adaptive hybrid transform in block 0), end is -1 and the findings end where the codes read end.
+    private int WriteBlock(int start, int blk, int end = -1)
     {
         if (_eac3 && (IsLending || HasAhtInBlock0(blk)))
         {
-            return WriteBlockEac3(start, blk);
+            return WriteBlockEac3(start, blk, end);
         }
 
         bool lend = IsLending;
@@ -1228,38 +1231,38 @@ internal sealed partial class FrameSyntax
             ReadChannelMantissas(Lfe, 0, 7, w);
         }
 
-        ReportMantissaFaults(start);
+        ReportMantissaFaults(start, end < 0 ? _mantissaBit : end);
         return _mantissaBit - start;
     }
 
-    private void ReportMantissaFaults(int start)
+    private void ReportMantissaFaults(int start, int end)
     {
         if ((_groupFaults & 1) != 0 && !Counted(Issue.BlockInconsistent))
         {
-            Report(Issue.BlockInconsistent, "Mantissas", start, _mantissaBit, "a compositely coded 3-level mantissa value is above 26 (check 18)");
+            Report(Issue.BlockInconsistent, "Mantissas", start, end, "a compositely coded 3-level mantissa value is above 26 (check 18)");
         }
 
         if ((_groupFaults & 2) != 0 && !Counted(Issue.BlockInconsistent))
         {
-            Report(Issue.BlockInconsistent, "Mantissas", start, _mantissaBit, "a compositely coded 5-level mantissa value is above 124 (check 19)");
+            Report(Issue.BlockInconsistent, "Mantissas", start, end, "a compositely coded 5-level mantissa value is above 124 (check 19)");
         }
 
         if ((_groupFaults & 4) != 0 && !Counted(Issue.BlockInconsistent))
         {
-            Report(Issue.BlockInconsistent, "Mantissas", start, _mantissaBit, "a compositely coded 11-level mantissa value is above 120 (check 20)");
+            Report(Issue.BlockInconsistent, "Mantissas", start, end, "a compositely coded 11-level mantissa value is above 120 (check 20)");
         }
 
         // The codes of the 7 and 15 level quantizers that Tables 7.21 and 7.23 have no value for: not among the checks of 7.10.2, so a finding of their own.
         if ((_groupFaults & 24) != 0 && !Counted(Issue.MantissaNoValue))
         {
-            Report(Issue.MantissaNoValue, "Mantissas", start, _mantissaBit, (_groupFaults & 8) != 0
+            Report(Issue.MantissaNoValue, "Mantissas", start, end, (_groupFaults & 8) != 0
                 ? "the code 7 of the 7-level quantizer, which Table 7.21 (A/52 7.3.3) has no value for"
                 : "the code 15 of the 15-level quantizer, which Table 7.23 (A/52 7.3.3) has no value for");
         }
 
         if ((_groupFaults & 32) != 0 && !Counted(Issue.BlockInconsistent))
         {
-            Report(Issue.BlockInconsistent, "Mantissas", start, _mantissaBit, "a compositely coded gain word of the adaptive hybrid transform is above 26, which holds three gains of at most 2 each (A/52 Annex E 3.4.4)");
+            Report(Issue.BlockInconsistent, "Mantissas", start, end, "a compositely coded gain word of the adaptive hybrid transform is above 26, which holds three gains of at most 2 each (A/52 Annex E 3.4.4)");
         }
     }
 

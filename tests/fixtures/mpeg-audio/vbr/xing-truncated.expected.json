@@ -1,0 +1,179 @@
+{
+ "description": "MPEG-2.5 Layer III mono, 8000 Hz, 8 kbps: the frame holding the Xing header is 72 bytes long, so the TOC its flags announce does not fit; the frame and byte counts before it do.",
+ "length": 648,
+ "crosscheck": true,
+ "regions": [
+  {
+   "name": "MPEG Audio",
+   "offset": 0,
+   "length": 648,
+   "statistics": {
+    "Statistics": "5 frames, 0.360 s",
+    "Statistics/Frames": "5",
+    "Statistics/Samples": "2880",
+    "Statistics/Duration": "0.360 s",
+    "Statistics/Bitrate Mode": "variable",
+    "Statistics/Average Bitrate": "12.8 kbps",
+    "Statistics/Minimum Bitrate": "8 kbps",
+    "Statistics/Maximum Bitrate": "24 kbps",
+    "Statistics/Bitrate Distribution": "3 bitrates",
+    "Statistics/Bitrate Distribution/8 kbps": "3 frames (60.0%)",
+    "Statistics/Bitrate Distribution/16 kbps": "1 frame (20.0%)",
+    "Statistics/Bitrate Distribution/24 kbps": "1 frame (20.0%)",
+    "Statistics/Maximum Reservoir Fill": "203 bytes",
+    "Statistics/Average Reservoir Fill": "102.2 bytes",
+    "Statistics/Channel Modes": "1 mode",
+    "Statistics/Channel Modes/Mono": "5 frames (100.0%)",
+    "Statistics/Stereo Coding": "5 frames",
+    "Statistics/Stereo Coding/Mono": "5 frames (100.0%)",
+    "Statistics/Bitrate Distribution/8 kbps/Unpadded": "3 frames of 72 bytes",
+    "Statistics/Bitrate Distribution/16 kbps/Unpadded": "1 frame of 144 bytes",
+    "Statistics/Bitrate Distribution/24 kbps/Unpadded": "1 frame of 216 bytes",
+    "Statistics/Block Usage": "5 granules",
+    "Statistics/Block Usage/Long": "5 granules (100.0%)",
+    "Statistics/Block Sizes": "5 granules",
+    "Statistics/Block Sizes/Long, start and stop": "5 granules (100.0%)",
+    "Statistics/Global Gain/Channel 0/Minimum": "0",
+    "Statistics/Global Gain/Channel 0/Maximum": "0",
+    "Statistics/Ancillary Data": "511 bytes",
+    "Statistics/Ancillary Data/Share": "88.7 %",
+    "Statistics/Ancillary Data/Data Rate": "11.4 kbps",
+    "Statistics/Ancillary Data/Smallest Nonzero Amount": "59 bytes",
+    "Statistics/Ancillary Data/Largest Amount": "203 bytes",
+    "Statistics/UsesPadding": "false",
+    "Statistics/UsesScfsi": "false",
+    "Statistics/UsesScalefactorScaling": "false",
+    "Statistics/Scalefactor Scaling": "0.0 %",
+    "Statistics/Average Main Data Begin": "0.0 bytes",
+    "Statistics/Maximum Main Data Begin": "0 bytes",
+    "Statistics/VBR Header/Claimed Frames": "5",
+    "Statistics/VBR Header/Counted Frames": "5",
+    "Statistics/VBR Header/Claimed Bytes": "648",
+    "Statistics/VBR Header/Counted Bytes": "648"
+   }
+  }
+ ],
+ "frames": [
+  {
+   "offset": 0,
+   "length": 72,
+   "fields": {
+    "Header/Version": "MPEG-2.5",
+    "Header/Layer": "III",
+    "Header/Bitrate": "8 kbps",
+    "Header/Sample Rate": "8000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false",
+    "Xing": "Xing",
+    "Xing/Flags": "0x0000000F",
+    "Xing/Flags/HasFrameCount": "true",
+    "Xing/Flags/HasByteCount": "true",
+    "Xing/Flags/HasToc": "true",
+    "Xing/Flags/HasQuality": "true",
+    "Xing/Frame Count": "5",
+    "Xing/Byte Count": "648"
+   }
+  },
+  {
+   "offset": 72,
+   "length": 72,
+   "fields": {
+    "Header/Version": "MPEG-2.5",
+    "Header/Layer": "III",
+    "Header/Bitrate": "8 kbps",
+    "Header/Sample Rate": "8000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 144,
+   "length": 144,
+   "fields": {
+    "Header/Version": "MPEG-2.5",
+    "Header/Layer": "III",
+    "Header/Bitrate": "16 kbps",
+    "Header/Sample Rate": "8000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 288,
+   "length": 72,
+   "fields": {
+    "Header/Version": "MPEG-2.5",
+    "Header/Layer": "III",
+    "Header/Bitrate": "8 kbps",
+    "Header/Sample Rate": "8000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 360,
+   "length": 216,
+   "fields": {
+    "Header/Version": "MPEG-2.5",
+    "Header/Layer": "III",
+    "Header/Bitrate": "24 kbps",
+    "Header/Sample Rate": "8000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 576,
+   "length": 72,
+   "fields": {
+    "Header/Version": "MPEG-2.5",
+    "Header/Layer": "III",
+    "Header/Bitrate": "8 kbps",
+    "Header/Sample Rate": "8000 Hz",
+    "Header/Channel Mode": "Mono",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  }
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "MPEG-2.5 Layer III",
+   "sample_rate": 8000,
+   "samples": 2880,
+   "duration": "0.360 s",
+   "channel_layout": [
+    "front center"
+   ],
+   "average_bitrate": "12.8 kbps",
+   "is_vbr": true,
+   "bitrate_over_time": "13",
+   "reservoir_fill_over_time": "102"
+  }
+ ],
+ "findings": [
+  {
+   "code": "mpeg-audio.vbr-header-truncated",
+   "contains": "0x0"
+  }
+ ],
+ "silent": true,
+ "vbr_header": {
+  "type": "Xing",
+  "offset": 13,
+  "truncated": true,
+  "flags": 15,
+  "frames": 5,
+  "bytes": 648,
+  "toc": null,
+  "quality": null,
+  "frame_offset": 0
+ },
+ "detected_encoder": null
+}

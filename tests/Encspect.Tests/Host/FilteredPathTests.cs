@@ -66,7 +66,7 @@ public class FilteredPathTests
     [Fact]
     public void AStreamBehindAHiddenTagKeepsItsIndex()
     {
-        Report report = Fixtures.AnalyzeMpeg("mpeg/id3v22-tss-names-encoder.mp3");
+        Report report = Fixtures.AnalyzeMpeg("mpeg-audio/id3v22-tss-names-encoder.mp3");
         JsonElement full = Write(report, ReportSections.None);
         JsonElement filtered = Write(report, ReportSections.Tags);
 

@@ -164,7 +164,7 @@ internal sealed partial class FrameSyntax
     //   with the mantissas of the frame's six blocks, 2 adaptive hybrid transform with the mantissas of block 0), the number of its bins and, for kind 0, per bin exp | bap << 5 | code << 9
     //   as AC-3's, and for kind 1 per bin exp | hebap << 5 | gain << 10 (0, 1 and 2 for the gains 1, 2 and 4) followed by the vector's index (hebap 1 to 7) or by six values
     //   code << 1 | isLarge (hebap 8 to 19).
-    private int WriteBlockEac3(int start, int blk)
+    private int WriteBlockEac3(int start, int blk, int end)
     {
         IntWriter w = _lent ?? throw new InvalidOperationException("The block record needs a writer");
         if (blk == 0)
@@ -309,7 +309,7 @@ internal sealed partial class FrameSyntax
             ReadEac3Channel(Lfe, 0, 7, blk, w);
         }
 
-        ReportMantissaFaults(start);
+        ReportMantissaFaults(start, end < 0 ? _mantissaBit : end);
         return _mantissaBit - start;
     }
 

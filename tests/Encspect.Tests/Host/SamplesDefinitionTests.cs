@@ -425,10 +425,10 @@ public class SamplesDefinitionTests
     {
         #region MPEG audio
         // Rule 2: a frame cut by the end of the data or by the next frame counts its declared 1,152 samples and is lost.
-        { "mpeg/truncated-last-frame.mp3", 6912, 1152 },
-        { "mpeg/vbr/lame-truncated-last-frame.mp3", 9216, 1152 },
-        { "mpeg/cut-frame-stream-change.mp3", 6912, 1152 },
-        { "mpeg/damaged-bitrate.mp3", 9216, 1152 },
+        { "mpeg-audio/truncated-last-frame.mp3", 6912, 1152 },
+        { "mpeg-audio/vbr/lame-truncated-last-frame.mp3", 9216, 1152 },
+        { "mpeg-audio/cut-frame-stream-change.mp3", 6912, 1152 },
+        { "mpeg-audio/damaged-bitrate.mp3", 9216, 1152 },
         #endregion
 
         #region AC-3 and E-AC-3
@@ -608,7 +608,7 @@ public class SamplesDefinitionTests
     [Fact]
     public void AStreamChangeAfterACutFrameLeavesTheNextStreamWhole()
     {
-        Report report = Analyzer.CreateDefault().AnalyzeFile(Path.Combine(Fixtures.FixtureDirectory, "mpeg", "cut-frame-stream-change.mp3"));
+        Report report = Analyzer.CreateDefault().AnalyzeFile(Path.Combine(Fixtures.FixtureDirectory, "mpeg-audio", "cut-frame-stream-change.mp3"));
         Assert.Equal([(6912L, 1152L), (11520L, 0L)], report.Streams.Select(s => (s.Samples, s.LostSamples)));
     }
 

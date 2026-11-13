@@ -2270,7 +2270,7 @@
    "copy"
   ],
   "inputs": [
-   "mpeg/external-ffmpeg-mp2.mp2"
+   "mpeg-audio/external-ffmpeg-mp2.mp2"
   ]
  },
  "streams": [
@@ -2282,7 +2282,7 @@
  ],
  "findings": [
   {
-   "code": "mpeg.packets-not-analyzed",
+   "code": "mpeg-audio.packets-not-analyzed",
    "contains": "only one contiguous payload"
   }
  ],

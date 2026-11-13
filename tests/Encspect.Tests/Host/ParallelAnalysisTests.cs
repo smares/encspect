@@ -13,8 +13,8 @@ public class ParallelAnalysisTests
     // and CSV writers mixed, with collections going on in the background, writes what one thread writes. One
     // fixture of each format and tag.
     [Theory]
-    [InlineData("mpeg/external-blade-flags.mp3")]
-    [InlineData("mpeg/layer2/ancillary-not-multichannel.mp2")]
+    [InlineData("mpeg-audio/external-blade-flags.mp3")]
+    [InlineData("mpeg-audio/layer2/ancillary-not-multichannel.mp2")]
     [InlineData("tags/ape-131-collision.mp3")]
     [InlineData("aac/adts/stereo.aac")]
     [InlineData("aac/ffmpeg-lc.m4a")]

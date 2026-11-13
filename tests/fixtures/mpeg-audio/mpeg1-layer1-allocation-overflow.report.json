@@ -1,0 +1,1075 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "mpeg1-layer1-allocation-overflow.mp1",
+    "root": {
+      "name": "File",
+      "value": "MPEG Audio",
+      "offset": 0,
+      "length": 192,
+      "children": [
+        {
+          "name": "MPEG Audio",
+          "kind": "Stream",
+          "value": 6,
+          "unit": "frames",
+          "offset": 0,
+          "length": 192,
+          "children": [
+            {
+              "name": "Statistics",
+              "kind": "Statistics",
+              "value": "6 frames, 0.048 s",
+              "offset": 0,
+              "length": 192,
+              "children": [
+                {
+                  "name": "Frames",
+                  "value": 6,
+                  "offset": 0,
+                  "length": 192
+                },
+                {
+                  "name": "Samples",
+                  "value": 2304,
+                  "offset": 0,
+                  "length": 192
+                },
+                {
+                  "name": "Duration",
+                  "value": 0.048,
+                  "unit": "s",
+                  "offset": 0,
+                  "length": 192
+                },
+                {
+                  "name": "Bitrate Mode",
+                  "value": "constant",
+                  "offset": 0,
+                  "length": 192
+                },
+                {
+                  "name": "Average Bitrate",
+                  "value": 32,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 192
+                },
+                {
+                  "name": "Minimum Bitrate",
+                  "value": 32,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 192
+                },
+                {
+                  "name": "Maximum Bitrate",
+                  "value": 32,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 192
+                },
+                {
+                  "name": "Bitrate Distribution",
+                  "value": 1,
+                  "unit": "bitrates",
+                  "offset": 0,
+                  "length": 192,
+                  "children": [
+                    {
+                      "name": "32 kbps",
+                      "value": "6 frames (100.0%)",
+                      "offset": 0,
+                      "length": 192,
+                      "children": [
+                        {
+                          "name": "Unpadded",
+                          "value": "6 frames of 32 bytes",
+                          "offset": 0,
+                          "length": 192
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Channel Modes",
+                  "value": 1,
+                  "unit": "modes",
+                  "offset": 0,
+                  "length": 192,
+                  "children": [
+                    {
+                      "name": "Stereo",
+                      "value": "6 frames (100.0%)",
+                      "offset": 0,
+                      "length": 192
+                    }
+                  ]
+                },
+                {
+                  "name": "Stereo Coding",
+                  "value": 6,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 192,
+                  "children": [
+                    {
+                      "name": "Left/right stereo",
+                      "value": "6 frames (100.0%)",
+                      "offset": 0,
+                      "length": 192
+                    }
+                  ]
+                },
+                {
+                  "name": "Ancillary Data",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 192,
+                  "children": [
+                    {
+                      "name": "Share",
+                      "value": 0,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 192
+                    },
+                    {
+                      "name": "Data Rate",
+                      "value": 0,
+                      "unit": "kbps",
+                      "offset": 0,
+                      "length": 192
+                    }
+                  ]
+                },
+                {
+                  "name": "UsesPadding",
+                  "value": false,
+                  "offset": 0,
+                  "length": 192
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "MPEG-1 Layer I, 32 kbps, 48000 Hz, Stereo",
+              "offset": 0,
+              "length": 32,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 0,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "Version",
+                      "value": "MPEG-1",
+                      "offset": 1,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Layer",
+                      "value": "I",
+                      "offset": 1,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "IsProtected",
+                      "value": false,
+                      "offset": 1,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Bitrate",
+                      "value": 32,
+                      "unit": "kbps",
+                      "offset": 2,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 48000,
+                      "unit": "Hz",
+                      "offset": 2,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "HasPadding",
+                      "value": false,
+                      "offset": 2,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsPrivate",
+                      "value": false,
+                      "offset": 2,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Channel Mode",
+                      "value": "Stereo",
+                      "offset": 3,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Mode Extension",
+                      "value": "Not used",
+                      "offset": 3,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "IsCopyrighted",
+                      "value": false,
+                      "offset": 3,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsOriginal",
+                      "value": false,
+                      "offset": 3,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Emphasis",
+                      "value": "None",
+                      "offset": 3,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Data",
+                  "value": 28,
+                  "unit": "bytes",
+                  "offset": 4,
+                  "length": 28
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "MPEG-1 Layer I, 32 kbps, 48000 Hz, Stereo",
+              "offset": 32,
+              "length": 32,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 32,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "Version",
+                      "value": "MPEG-1",
+                      "offset": 33,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Layer",
+                      "value": "I",
+                      "offset": 33,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "IsProtected",
+                      "value": false,
+                      "offset": 33,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Bitrate",
+                      "value": 32,
+                      "unit": "kbps",
+                      "offset": 34,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 48000,
+                      "unit": "Hz",
+                      "offset": 34,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "HasPadding",
+                      "value": false,
+                      "offset": 34,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsPrivate",
+                      "value": false,
+                      "offset": 34,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Channel Mode",
+                      "value": "Stereo",
+                      "offset": 35,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Mode Extension",
+                      "value": "Not used",
+                      "offset": 35,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "IsCopyrighted",
+                      "value": false,
+                      "offset": 35,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsOriginal",
+                      "value": false,
+                      "offset": 35,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Emphasis",
+                      "value": "None",
+                      "offset": 35,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Data",
+                  "value": 28,
+                  "unit": "bytes",
+                  "offset": 36,
+                  "length": 28
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "MPEG-1 Layer I, 32 kbps, 48000 Hz, Stereo",
+              "offset": 64,
+              "length": 32,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 64,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "Version",
+                      "value": "MPEG-1",
+                      "offset": 65,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Layer",
+                      "value": "I",
+                      "offset": 65,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "IsProtected",
+                      "value": false,
+                      "offset": 65,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Bitrate",
+                      "value": 32,
+                      "unit": "kbps",
+                      "offset": 66,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 48000,
+                      "unit": "Hz",
+                      "offset": 66,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "HasPadding",
+                      "value": false,
+                      "offset": 66,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsPrivate",
+                      "value": false,
+                      "offset": 66,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Channel Mode",
+                      "value": "Stereo",
+                      "offset": 67,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Mode Extension",
+                      "value": "Not used",
+                      "offset": 67,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "IsCopyrighted",
+                      "value": false,
+                      "offset": 67,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsOriginal",
+                      "value": false,
+                      "offset": 67,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Emphasis",
+                      "value": "None",
+                      "offset": 67,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Data",
+                  "value": 28,
+                  "unit": "bytes",
+                  "offset": 68,
+                  "length": 28
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "MPEG-1 Layer I, 32 kbps, 48000 Hz, Stereo",
+              "offset": 96,
+              "length": 32,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 96,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "Version",
+                      "value": "MPEG-1",
+                      "offset": 97,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Layer",
+                      "value": "I",
+                      "offset": 97,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "IsProtected",
+                      "value": false,
+                      "offset": 97,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Bitrate",
+                      "value": 32,
+                      "unit": "kbps",
+                      "offset": 98,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 48000,
+                      "unit": "Hz",
+                      "offset": 98,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "HasPadding",
+                      "value": false,
+                      "offset": 98,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsPrivate",
+                      "value": false,
+                      "offset": 98,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Channel Mode",
+                      "value": "Stereo",
+                      "offset": 99,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Mode Extension",
+                      "value": "Not used",
+                      "offset": 99,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "IsCopyrighted",
+                      "value": false,
+                      "offset": 99,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsOriginal",
+                      "value": false,
+                      "offset": 99,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Emphasis",
+                      "value": "None",
+                      "offset": 99,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Data",
+                  "value": 28,
+                  "unit": "bytes",
+                  "offset": 100,
+                  "length": 28
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "MPEG-1 Layer I, 32 kbps, 48000 Hz, Stereo",
+              "offset": 128,
+              "length": 32,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 128,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "Version",
+                      "value": "MPEG-1",
+                      "offset": 129,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Layer",
+                      "value": "I",
+                      "offset": 129,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "IsProtected",
+                      "value": false,
+                      "offset": 129,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Bitrate",
+                      "value": 32,
+                      "unit": "kbps",
+                      "offset": 130,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 48000,
+                      "unit": "Hz",
+                      "offset": 130,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "HasPadding",
+                      "value": false,
+                      "offset": 130,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsPrivate",
+                      "value": false,
+                      "offset": 130,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Channel Mode",
+                      "value": "Stereo",
+                      "offset": 131,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Mode Extension",
+                      "value": "Not used",
+                      "offset": 131,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "IsCopyrighted",
+                      "value": false,
+                      "offset": 131,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsOriginal",
+                      "value": false,
+                      "offset": 131,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Emphasis",
+                      "value": "None",
+                      "offset": 131,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Data",
+                  "value": 28,
+                  "unit": "bytes",
+                  "offset": 132,
+                  "length": 28
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "MPEG-1 Layer I, 32 kbps, 48000 Hz, Stereo",
+              "offset": 160,
+              "length": 32,
+              "children": [
+                {
+                  "name": "Header",
+                  "offset": 160,
+                  "length": 4,
+                  "children": [
+                    {
+                      "name": "Version",
+                      "value": "MPEG-1",
+                      "offset": 161,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Layer",
+                      "value": "I",
+                      "offset": 161,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "IsProtected",
+                      "value": false,
+                      "offset": 161,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Bitrate",
+                      "value": 32,
+                      "unit": "kbps",
+                      "offset": 162,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 4
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 48000,
+                      "unit": "Hz",
+                      "offset": 162,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "HasPadding",
+                      "value": false,
+                      "offset": 162,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsPrivate",
+                      "value": false,
+                      "offset": 162,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Channel Mode",
+                      "value": "Stereo",
+                      "offset": 163,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "Mode Extension",
+                      "value": "Not used",
+                      "offset": 163,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 2
+                    },
+                    {
+                      "name": "IsCopyrighted",
+                      "value": false,
+                      "offset": 163,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "IsOriginal",
+                      "value": false,
+                      "offset": 163,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1
+                    },
+                    {
+                      "name": "Emphasis",
+                      "value": "None",
+                      "offset": 163,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "Data",
+                  "value": 28,
+                  "unit": "bytes",
+                  "offset": 164,
+                  "length": 28
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0
+          ]
+        ],
+        "codec": "MPEG-1 Layer I",
+        "sampleRate": 48000,
+        "channels": 2,
+        "channelMode": "Stereo",
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
+        "samples": 2304,
+        "duration": 0.048,
+        "averageBitrate": 32,
+        "isVbr": false,
+        "verification": {
+          "isLossy": true,
+          "decoding": "notRequested",
+          "decodedSamples": 0,
+          "checksums": [
+            {
+              "name": "frame CRC-16",
+              "covers": "header",
+              "coversAllAudio": false,
+              "stored": 0,
+              "checked": 0,
+              "failed": 0
+            }
+          ]
+        },
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Bitrate",
+            "declaredRange": {
+              "steps": [
+                32,
+                64,
+                96,
+                128,
+                160,
+                192,
+                224,
+                256,
+                288,
+                320,
+                352,
+                384,
+                416,
+                448
+              ]
+            },
+            "x": [
+              0,
+              32,
+              64,
+              96,
+              128,
+              160
+            ],
+            "values": [
+              32,
+              32,
+              32,
+              32,
+              32,
+              32
+            ]
+          },
+          {
+            "name": "Bitrate Over Time",
+            "unit": "kbps",
+            "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Bitrate",
+            "x": [
+              0
+            ],
+            "values": [
+              32
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Channel Modes",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Stereo",
+                "count": 6
+              },
+              {
+                "name": "Joint stereo",
+                "count": 0
+              },
+              {
+                "name": "Dual channel",
+                "count": 0
+              },
+              {
+                "name": "Mono",
+                "count": 0
+              }
+            ],
+            "total": 6,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                0,
+                6
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 6
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 0
+              },
+              {
+                "name": "Intensity stereo",
+                "count": 0
+              },
+              {
+                "name": "Mid/side and intensity stereo",
+                "count": 0
+              },
+              {
+                "name": "Dual channel",
+                "count": 0
+              },
+              {
+                "name": "Mono",
+                "count": 0
+              }
+            ],
+            "total": 6,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                0,
+                6
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          }
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "mpeg-audio.audio-data-overflow",
+        "message": "6 frames need more bits for their Layer I audio data than they hold, the first at 0x0.",
+        "offset": 0,
+        "length": 32,
+        "path": [
+          0,
+          1
+        ],
+        "count": 6
+      }
+    ]
+  }
+]
