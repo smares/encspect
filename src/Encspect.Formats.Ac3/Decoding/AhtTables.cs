@@ -1,7 +1,7 @@
 namespace Encspect.Formats.Ac3.Decoding;
 
 // Format data of ETSI TS 102 366 V1.4.1 Annex E, extracted from the specification's text by scripts/fixtures/extract_eac3_tables.py (which checks the committed file against a fresh extraction):
-// Tables E.3.1 to E.3.7, the vectors of the adaptive hybrid transform's vector quantizer, and Table E.2.12, the attenuation of spectral extension's notch filter.
+// Tables E.3.1 to E.3.7, the vectors of the adaptive hybrid transform's vector quantizer, Table E.2.6, the remapping constants of its gain adaptive quantizer, and Table E.2.12, the attenuation of spectral extension's notch filter.
 internal static class AhtTables
 {
     // The vectors of hebap 1 to 7 (Tables E.3.1 to E.3.7: 4, 8, 16, 32, 128, 256 and 512 vectors), as signed 16-bit values, six to a vector.

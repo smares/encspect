@@ -1797,6 +1797,12 @@ Step L2 of [lossy-decoders.md, "Order"](lossy-decoders.md#order): `Encspect.Form
 - **Measured** (`DecoderWorkTests`, `ac3-*` cases, each an encoder's file repeated; the time per unit against the FLAC reference's on the development machine, linux-x64, shared with other work): `ac3-stereo-192k` 0.71, `ac3-surround-51-ffmpeg` 0.67, `ac3-surround-51-aften` 0.65, `ac3-block-switching` 0.80, `ac3-mono-96k` 0.68, `ac3-stereo-32k-320k` 1.02 (the file whose 32 kHz frames are the cheapest per unit), `ac3-silent` 0.19 (the hand-built frames with no mantissa bits, whose transforms are skipped).
 - **Margin:** the largest ratio is 1.02 against the limit of 2.0, a margin for the ARM runner like Opus's; a silent stream still charges its frames in full, as the design's text says an all-zero transform would not.
 
+## As built: the E-AC-3 decoder's work weights
+
+- **Charge:** per frame the AC-3 decoder's 44 units for each sample of each channel (the floor of 22 and 22 more for the dequantization, the transform and the window), and on top of it 40 units for each bin of a channel that uses the adaptive hybrid transform (the inverse DCT across the six blocks and the table lookups, charged in block 0 where the values are read) and, for each block with enhanced coupling, 8,192 units and 192 for each bin of its range and each coupled channel (the transform of the coupling channel, the complex transform and the sines and cosines of the angles). Spectral extension is charged nothing extra (its copy, filter and blend cost less than the dequantization they stand in for). `WorkPerInputByte` stays 2,048.
+- **Measured** (`DecoderWorkTests`, `eac3-*` cases, each file repeated; the time per unit against the FLAC reference's on the development machine, linux-x64, shared with other work, two runs): `eac3-surround-51-ffmpeg` 0.57 and 0.98, `eac3-stereo-ffmpeg` 0.49 and 0.79, `eac3-aht` 1.12 and 1.41 (every bin of the hand-built file has mantissa bits and the block 0 of each frame holds all six blocks' values), `eac3-spectral-extension` 0.57 and 1.11, `eac3-enhanced-coupling` 2.19 before its charge and 0.80 after it, `eac3-silent` 0.66 and 0.73. The runs differ by the reference's own time (0.40 to 0.64 ns a unit).
+- **Margin:** the largest ratio is 1.41 against the limit of 2.0.
+
 ## Open risks and unverified claims
 
 - **Unverified:** whether Dolby patents cover TrueHD (decision 10). No legal conclusion is drawn here.
