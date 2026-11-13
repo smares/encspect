@@ -42,6 +42,14 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
     private readonly EnhancedCoupling _enhanced = new();
     private readonly float[] _previousX = new float[512];
     private bool _hasPreviousX;
+
+    // The last block of a frame that has enhanced coupling needs the next block's coupling channel, which is the next frame's first block: it waits here, with its own output, until
+    // that frame is read (or a gap, or the end of the stream, says there is none). Its samples are written then, at their own position.
+    private BlockState? _pending;
+    private long _pendingFirst;
+    private readonly float[] _pendingPcm = new float[6 * BlockSamples];
+    private readonly float[] _pendingPreviousX = new float[512];
+    private bool _hasPendingPreviousX;
     private readonly float[][][] _aht = [.. Enumerable.Range(0, 7).Select(_ => new float[][] { new float[256], new float[256], new float[256], new float[256], new float[256], new float[256] })];
     private readonly float[][] _ahtShift = [.. Enumerable.Range(0, 7).Select(_ => new float[256])];
     private float[] _planar = [];
@@ -51,6 +59,7 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
     private uint _spxNoise = SpxSeed;
     private long _withheldUntil;
     private bool _lostBefore;
+    private long _frameFirst;
 
     public Eac3FrameDecoder(DecodeContext context, SyncFrame header)
     {
@@ -77,6 +86,31 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
         _enhanced.Reset();
     }
 
+    private void EnsureSink() =>
+        _sink ??= _context.DeclareOutput(new PcmFormat(_rate, _channels, 32, SampleFormat.Float32) { ChannelLayout = Program.LayoutOf(_acmod, _hasLfe) });
+
+    // Finishes the block that waited for its next block, which is next (the first block of the frame just read) or absent, and writes its 256 samples.
+    private void FlushPending(BlockState? next)
+    {
+        if (_pending is not { } state)
+        {
+            return;
+        }
+
+        _pending = null;
+        Span<float> previous = _hasPendingPreviousX ? _pendingPreviousX : default;
+        FinishState(state, previous, next is { Mode: 2 } ? CouplingTransform(next) : default, _pendingPcm, BlockSamples, 0);
+        // The block's output is the previous frame's last 256 samples; the next frame's first block continues from it.
+        _hasPreviousX = true;
+        CouplingTransform(state).CopyTo(_previousX);
+        if (_pendingFirst + BlockSamples > _withheldUntil)
+        {
+            EnsureSink();
+            int skip = (int)Math.Max(0, _withheldUntil - _pendingFirst);
+            _sink!.Write(new PcmBlock(_pendingFirst + skip, BlockSamples - skip, _channels, BlockSamples, _pendingPcm.AsSpan(skip)));
+        }
+    }
+
     public int Decode(in CodedFrame frame)
     {
         SampleBuffers lent = _context.LentBuffers;
@@ -99,6 +133,7 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
 
         if (frame.FollowsGap || _lostBefore)
         {
+            FlushPending(null);
             _lostBefore = false;
             Reset();
             _context.Withhold(frame.FirstSample, BlockSamples, WithholdReason.AfterGap);
@@ -106,6 +141,7 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
         }
 
         int samples = frame.Samples;
+        _frameFirst = frame.FirstSample;
         EnsureBuffers(samples);
         _context.AddWork(DecodeWork.ForSample(4) * samples * _channels);
         _context.AddWork((long)ExtraUnits * samples * _channels);
@@ -117,6 +153,7 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
                 ParseBlock(ref r, block, _states[block]);
             }
 
+            FlushPending(_states[0]);
             for (int block = 0; block < blocks; block++)
             {
                 FinishBlock(block, blocks);
@@ -137,12 +174,22 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
             return 0;
         }
 
-        _sink ??= _context.DeclareOutput(new PcmFormat(_rate, _channels, 32, SampleFormat.Float32) { ChannelLayout = Program.LayoutOf(_acmod, _hasLfe) });
-        _sink.Write(new PcmBlock(first, count, _channels, _stride, _planar.AsSpan(skip)));
+        // A deferred last block is written when it is finished; the frame counts its samples as decoded now.
+        int written = _pending is null ? count : Math.Max(0, count - BlockSamples);
+        if (written > 0)
+        {
+            EnsureSink();
+            _sink!.Write(new PcmBlock(first, written, _channels, _stride, _planar.AsSpan(skip)));
+        }
+
         return count;
     }
 
-    public IReadOnlyList<ChecksumResult> Finish(DecodeEnd end) => [];
+    public IReadOnlyList<ChecksumResult> Finish(DecodeEnd end)
+    {
+        FlushPending(null);
+        return [];
+    }
 
     private void EnsureBuffers(int samples)
     {
@@ -182,6 +229,7 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
         public readonly float[] Coupling = new float[256];
         public readonly float[] CouplingX = new float[512];
         public bool HasCouplingX;
+        public readonly int[] Attenuation = new int[5];
         public readonly float[][] Spectrum = [.. Enumerable.Range(0, 6).Select(_ => new float[256])];
     }
 
@@ -349,6 +397,7 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
         }
 
         state.HasCouplingX = false;
+        Array.Copy(_attenuation, state.Attenuation, 5);
     }
 
     // The steps of a block that need its neighbors or all of its channels' coefficients: enhanced coupling (the coupling channel of the blocks before and after, the next frame's
@@ -356,10 +405,34 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
     private void FinishBlock(int block, int blocks)
     {
         BlockState state = _states[block];
+        Span<float> previous = block > 0 ? (_states[block - 1].Mode == 2 ? CouplingTransform(_states[block - 1]) : default) : _hasPreviousX ? _previousX : default;
+        if (block == blocks - 1 && state.Mode == 2)
+        {
+            // Wait for the next frame's first block: keep this block's state (the array slot gets the object that is free), its previous block's transform and the position of its output.
+            _hasPendingPreviousX = !previous.IsEmpty;
+            previous.CopyTo(_pendingPreviousX);
+            CouplingTransform(state);
+            _pending = state;
+            _states[block] = new BlockState();
+            _pendingFirst = _frameFirst + ((long)block * BlockSamples);
+            return;
+        }
+
+        Span<float> next = block + 1 < blocks && _states[block + 1].Mode == 2 ? CouplingTransform(_states[block + 1]) : default;
+        FinishState(state, previous, next, _planar, _stride, block * BlockSamples);
+        if (block == blocks - 1)
+        {
+            // The next frame's first block sees this one as its previous block.
+            _hasPreviousX = false;
+        }
+    }
+
+    // The steps of a block that need its neighbors or all of its channels' coefficients: enhanced coupling (the coupling channel of the blocks before and after), spectral extension, and
+    // each channel's inverse transform, window and overlap into dest (channel c at c * stride + offset).
+    private void FinishState(BlockState state, Span<float> previous, Span<float> next, float[] dest, int stride, int offset)
+    {
         if (state.Mode == 2)
         {
-            Span<float> previous = block > 0 ? (_states[block - 1].Mode == 2 ? CouplingTransform(_states[block - 1]) : default) : _hasPreviousX ? _previousX : default;
-            Span<float> next = block + 1 < blocks && _states[block + 1].Mode == 2 ? CouplingTransform(_states[block + 1]) : default;
             Span<float> current = CouplingTransform(state);
             int coupled = System.Numerics.BitOperations.PopCount((uint)state.EcplChannels);
             int bins = Tables.EnhancedCouplingSubBandStart[state.EcplEnd] - Tables.EnhancedCouplingSubBandStart[state.EcplBegin];
@@ -382,7 +455,7 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
                 if (((state.SpxChannels >> ch) & 1) != 0)
                 {
                     SpectralExtension(state.Spectrum[ch], 25 + (12 * state.SpxStart), 25 + (12 * state.SpxBegin), 25 + (12 * state.SpxEnd), state.SpxSizes.AsSpan(0, state.SpxBands),
-                        state.SpxBlend[ch], state.SpxMaster[ch], state.SpxCoordinates.AsSpan(ch * 17, 17), _attenuation[ch]);
+                        state.SpxBlend[ch], state.SpxMaster[ch], state.SpxCoordinates.AsSpan(ch * 17, 17), state.Attenuation[ch]);
                 }
             }
         }
@@ -405,17 +478,7 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
                 _transform.Long(spectrum, x);
             }
 
-            FrameDecoder.Overlap(x, _delay[ch], _planar.AsSpan((ch * _stride) + (block * BlockSamples), BlockSamples));
-        }
-
-        if (block == blocks - 1)
-        {
-            // The next frame's first block sees this one as its previous block.
-            _hasPreviousX = state.Mode == 2;
-            if (_hasPreviousX)
-            {
-                CouplingTransform(state).CopyTo(_previousX);
-            }
+            FrameDecoder.Overlap(x, _delay[ch], dest.AsSpan((ch * stride) + offset, BlockSamples));
         }
     }
 
