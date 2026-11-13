@@ -94,6 +94,24 @@ def map_reference(raw, info, dump):
     return reduced.tobytes(), lines
 
 
+def subset_dump(dump, keep):
+    """The analyzer's dump cut down to the channels in keep (their indexes), written beside it."""
+    manifest = json.loads(dump.read_text(encoding="utf-8"))
+    stream = manifest["streams"][0]
+    names = stream.get("channelLayout") or []
+    our_count = stream["channels"]
+    mine = floats((dump.parent / stream["pcm"]).read_bytes())
+    cut = array.array("f")
+    for n in range(len(mine) // our_count):
+        for i in keep:
+            cut.append(mine[n * our_count + i])
+    (dump.parent / "common.s0.pcm").write_bytes(cut.tobytes())
+    manifest["streams"][0] = {**stream, "channels": len(keep), "channelLayout": [names[i] for i in keep] if names else [], "pcm": "common.s0.pcm"}
+    common = dump.parent / "common.pcm.json"
+    common.write_text(json.dumps(manifest), encoding="utf-8")
+    return common
+
+
 def common_speakers(raw, info, dump):
     """Where Core Audio's labels name only some of the analyzer's speakers (an AC-3 core whose dependent substreams it does not decode comes back as the core's channels): the
     analyzer's dump cut down to the speakers both have, and Core Audio's output for them in the same order, with the lines that say which speakers are missing; None where none is shared."""
@@ -104,24 +122,15 @@ def common_speakers(raw, info, dump):
     keep = [i for i, name in enumerate(names) if name in reference_names]
     if not keep or len(keep) == len(names) or len(reference_names) != info["channels"]:
         return None
-    count, our_count = info["channels"], stream["channels"]
-    mine = floats((dump.parent / stream["pcm"]).read_bytes())
-    cut = array.array("f")
-    for n in range(len(mine) // our_count):
-        for i in keep:
-            cut.append(mine[n * our_count + i])
-    (dump.parent / "common.s0.pcm").write_bytes(cut.tobytes())
-    stream = {**stream, "channels": len(keep), "channelLayout": [names[i] for i in keep], "pcm": "common.s0.pcm"}
-    manifest["streams"][0] = stream
-    common = dump.parent / "common.pcm.json"
-    common.write_text(json.dumps(manifest), encoding="utf-8")
+    count = info["channels"]
+    common = subset_dump(dump, keep)
     values = floats(raw)
     picks = [reference_names.index(names[i]) for i in keep]
     reduced = array.array("f")
     for n in range(len(values) // count):
         for pick in picks:
             reduced.append(values[n * count + pick])
-    lines = [f"  Core Audio's output has only {', '.join(reference_names)}: the analyzer's {', '.join(names[i] for i in range(len(names)) if i not in keep)} are not in it, so only {', '.join(stream['channelLayout'])} are compared"]
+    lines = [f"  Core Audio's output has only {', '.join(reference_names)}: the analyzer's {', '.join(names[i] for i in range(len(names)) if i not in keep)} are not in it, so only {', '.join(names[i] for i in keep)} are compared"]
     return common, reduced.tobytes(), lines
 
 
@@ -165,6 +174,37 @@ def energy_map(ours, our_channels, reference, reference_channels):
     lines = ["  channel RMS, analyzer: " + " ".join(f"{v:.3g}" for v in mine), "  channel RMS, Core Audio: " + " ".join(f"{v:.3g}" for v in theirs),
              f"  a file of dither alone: channels paired by level, analyzer channel i = Core Audio channel {picks}"]
     return (picks if our_channels == reference_channels else None), lines
+
+
+def partial_map(ours, our_channels, reference, reference_channels, first, window=4096):
+    """Where Core Audio gives no labels and does not decode some of the analyzer's channels (the channels of dependent substreams: its output has them silent): the analyzer's channels
+    that correlate (0.3 or more) with a reference channel each, as (their indexes, the reference channels), or None where none or all do; with the lines that say which are left out."""
+    picks, lines = correlation_map(ours, our_channels, reference, reference_channels, first, window)
+    if picks is not None:
+        return None
+    frames = len(ours) // our_channels
+    start = max(first, frames // 2 - window)
+    keep, chosen = [], []
+    for i in range(our_channels):
+        x = [ours[(start + n) * our_channels + i] for n in range(window)]
+        xx = sum(v * v for v in x)
+        best, best_j = 0.0, None
+        for j in range(reference_channels):
+            at = start - first
+            if at < 0 or (at + window) * reference_channels > len(reference):
+                continue
+            y = [reference[(at + n) * reference_channels + j] for n in range(window)]
+            yy = sum(v * v for v in y)
+            value = abs(sum(p * q for p, q in zip(x, y)) / (xx * yy) ** 0.5) if xx and yy else 0.0
+            if value > best:
+                best, best_j = value, j
+        if best >= 0.3 and best_j not in chosen:
+            keep.append(i)
+            chosen.append(best_j)
+    if not keep or len(keep) == our_channels:
+        return None
+    left = [i for i in range(our_channels) if i not in keep]
+    return keep, chosen, lines + [f"  Core Audio's output correlates with analyzer channels {keep} (as its channels {chosen}) and has nothing of channels {left} (the dependent substreams': not decoded by Core Audio): only the first are compared"]
 
 
 def pick_channels(raw, count, picks):
@@ -441,7 +481,7 @@ def judge(dump, raw, info, work, variant, extra, name):
         # The analyzer's float output is not clipped; Core Audio's may be, which no comparison of levels or correlations survives.
         lines.append(f"  note: the analyzer's output peaks at {peak:.1f} of full scale; a reference that clips or saturates differs by gain and correlation whatever the decoders do")
     label, detail = first_passing(attempt(dump, raw, reference_channels, work, f"ca-{variant}", extra, name))
-    if label is None and reference_channels > 2:
+    if label is None and (reference_channels > 2 or reference_channels < sample["channels"]):
         # Core Audio's channel order is not known (the labels are missing): place its channels by correlation and try again.
         ours = floats((dump.parent / sample["pcm"]).read_bytes())
         picks, mapping_lines = correlation_map(ours, sample["channels"], floats(raw), reference_channels, FIRST_POSITION)
@@ -449,6 +489,14 @@ def judge(dump, raw, info, work, variant, extra, name):
             picks, level_lines = energy_map(ours, sample["channels"], floats(raw), reference_channels)
             mapping_lines += level_lines
         lines += mapping_lines
+        if picks is None:
+            partial = partial_map(ours, sample["channels"], floats(raw), reference_channels, FIRST_POSITION)
+            if partial is not None:
+                keep, chosen, partial_lines = partial
+                lines += partial_lines[-1:]
+                cut = subset_dump(dump, keep)
+                label, detail = first_passing(attempt(cut, pick_channels(raw, reference_channels, chosen), len(keep), work, f"ca-{variant}-partial", extra, name))
+                return label, detail, lines
         if picks is not None:
             lines.append(f"  mapped by correlation: analyzer channel i = Core Audio channel {picks}")
             mapped_label, mapped_detail = first_passing(attempt(dump, pick_channels(raw, reference_channels, picks), len(picks), work, f"ca-{variant}-mapped", extra, name))
@@ -554,7 +602,7 @@ def variants_report(args, root):
     return lines
 
 
-CORE_AUDIO_SIGNAL_FILES = ["eac3-signal-aht.eac3", "eac3-signal-aht-hebap4.eac3", "eac3-signal-ecpl.eac3", "eac3-signal-ecpl-flat.eac3", "eac3-signal-ecpl-flat-explicit.eac3", "eac3-signal-ecpl-flat-new.eac3", "eac3-signal-spx.eac3", "eac3-signal-spx-noise.eac3", "eac3-signal-transient.eac3", "eac3-signal-dependent.eac3", "substreams.eac3", "coding-ac3-core-dependent.ac3"]
+CORE_AUDIO_SIGNAL_FILES = ["eac3-signal-aht.eac3", "eac3-signal-aht-hebap4.eac3", "eac3-signal-ecpl.eac3", "eac3-signal-ecpl-flat.eac3", "eac3-signal-ecpl-quiet.eac3", "eac3-signal-ecpl-flat-quiet.eac3", "eac3-signal-ecpl-flat-explicit.eac3", "eac3-signal-ecpl-flat-new.eac3", "eac3-signal-spx.eac3", "eac3-signal-spx-noise.eac3", "eac3-signal-transient.eac3", "eac3-signal-dependent.eac3", "substreams.eac3", "coding-ac3-core-dependent.ac3"]
 
 
 # Files whose analyzer streams follow one another (a program frame with dependent frames, one without): each stream is cut out as a file of its own and compared with Core Audio's

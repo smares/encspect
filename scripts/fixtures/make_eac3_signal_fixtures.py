@@ -280,7 +280,8 @@ def spx_frame(seed, explicit_structure, attenuation, new_coordinates, blend=None
     return finish(b)
 
 
-def ecpl_frame(seed, explicit_structure, new_parameters, flat=False):
+def ecpl_frame(seed, explicit_structure, new_parameters, flat=False, shift=None):
+    shift = ECPL_SHIFT if shift is None else shift
     rng = random.Random(seed)
     b = Bits()
     bsi(b)
@@ -338,13 +339,13 @@ def ecpl_frame(seed, explicit_structure, new_parameters, flat=False):
         else:
             b.put(0, 1)
         if block == 0:
-            first, groups, exp = d45(rng, low, high, 4 + ECPL_SHIFT, 14 + ECPL_SHIFT, coupling=True)
+            first, groups, exp = d45(rng, low, high, 4 + shift, 14 + shift, coupling=True)
             b.put(first, 4)
             for g in groups:
                 b.put(g, 7)
             sets["cpl"] = exp
             for ch in range(2):
-                first, groups, exp = d45(rng, 0, low, 2 + ECPL_SHIFT, 12 + ECPL_SHIFT)
+                first, groups, exp = d45(rng, 0, low, 2 + shift, 12 + shift)
                 b.put(first, 4)
                 for g in groups:
                     b.put(g, 7)
@@ -386,6 +387,8 @@ FILES = {
     "eac3-signal-transient-off.eac3": lambda: b"".join(spx_frame(900 + i, i % 2 == 1, (2 * i) % 32, False, blend=31, shift=TRANSIENT_SHIFT) for i in range(FRAMES)),
     "eac3-signal-spx-noise.eac3": lambda: b"".join(spx_frame(600 + i, i % 2 == 1, (5 * i) % 32, i % 3 == 2) for i in range(FRAMES)),
     "eac3-signal-ecpl.eac3": lambda: b"".join(ecpl_frame(500 + i, i % 2 == 1, i % 3 == 2) for i in range(FRAMES)),
+    "eac3-signal-ecpl-quiet.eac3": lambda: b"".join(ecpl_frame(500 + i, i % 2 == 1, i % 3 == 2, shift=ECPL_SHIFT + 4) for i in range(FRAMES)),
+    "eac3-signal-ecpl-flat-quiet.eac3": lambda: b"".join(ecpl_frame(500 + i, False, False, flat=True, shift=ECPL_SHIFT + 4) for i in range(FRAMES)),
     "eac3-signal-ecpl-flat.eac3": lambda: b"".join(ecpl_frame(500 + i, False, False, flat=True) for i in range(FRAMES)),
     "eac3-signal-ecpl-flat-explicit.eac3": lambda: b"".join(ecpl_frame(500 + i, True, False, flat=True) for i in range(FRAMES)),
     "eac3-signal-ecpl-flat-new.eac3": lambda: b"".join(ecpl_frame(500 + i, False, True, flat=True) for i in range(FRAMES)),
@@ -405,6 +408,8 @@ DESCRIPTIONS = {
                                   "some transients in the next frame (A/52 Annex E 3.7).",
     "eac3-signal-transient-off.eac3": "The frames of eac3-signal-transient without the transient pre-noise processing data (the same audio otherwise), so that a decoder that applies the processing can be compared with one that does not.",
     "eac3-signal-spx-noise.eac3": "The same twelve 2/0 E-AC-3 frames with other seeds and a random blend in every set of coordinates, so that the extension blends in noise (A/52 Annex E 3.6.4.2).",
+    "eac3-signal-ecpl-quiet.eac3": "The frames of eac3-signal-ecpl with the exponents 4 higher (24 dB quieter): the same parameters and structure, to see whether a decoder's differences from the analyzer depend on the level.",
+    "eac3-signal-ecpl-flat-quiet.eac3": "The frames of eac3-signal-ecpl-flat with the exponents 4 higher (24 dB quieter).",
     "eac3-signal-ecpl-flat.eac3": "The frames of eac3-signal-ecpl (default band structure, no new parameters) with every amplitude at 0 dB, no angle, no chaos and no transient: each channel is the coupling channel itself, "
                                   "so a decoder's output must equal the coupling channel's coefficients in every block (A/52 Annex E 3.5.5).",
     "eac3-signal-ecpl-flat-explicit.eac3": "As eac3-signal-ecpl-flat with the explicit band structure (alternate sub-bands joined) in every frame.",
@@ -417,6 +422,8 @@ DESCRIPTIONS = {
 NO_REFERENCE = {
     "eac3-signal-ecpl.eac3": "FFmpeg does not decode enhanced coupling.",
     "eac3-signal-ecpl-flat.eac3": "FFmpeg does not decode enhanced coupling.",
+    "eac3-signal-ecpl-quiet.eac3": "FFmpeg does not decode enhanced coupling.",
+    "eac3-signal-ecpl-flat-quiet.eac3": "FFmpeg does not decode enhanced coupling.",
     "eac3-signal-ecpl-flat-explicit.eac3": "FFmpeg does not decode enhanced coupling.",
     "eac3-signal-ecpl-flat-new.eac3": "FFmpeg does not decode enhanced coupling.",
     "eac3-signal-aht-hebap4.eac3": "FFmpeg 6.1.1 reads the vector of a hebap 4 bin from the next row of Table E.3.4 (docs/development.md, \"E-AC-3 decoding\"), so its samples are no reference here.",
