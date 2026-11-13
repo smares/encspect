@@ -70,9 +70,11 @@ internal sealed partial class FrameSyntax
         Array.Clear(_fixedBits);
         Array.Fill(_deltbae, 2);
         _phsflg = 0;
+        _phsflginu = false;
         foreach (int[] bands in _cplco)
         {
-            Array.Clear(bands);
+            // A coordinate never sent reads exponent 15 and mantissa 0: 0, so a band of a channel that reuses coordinates it never had stays silent.
+            Array.Fill(bands, 15);
         }
 
         if (IsLending)
@@ -1116,7 +1118,7 @@ internal sealed partial class FrameSyntax
                 w.Add(_cplendf);
                 w.Add(chincpl);
                 w.Add(combined);
-                w.Add(_phsflg);
+                w.Add(_phsflginu ? _phsflg : 0);
                 for (int ch = 0; ch < _nfchans; ch++)
                 {
                     if (_chincpl[ch])
