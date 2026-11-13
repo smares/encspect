@@ -670,7 +670,7 @@ def main(argv=None):
         import check_eac3_samples
         manifest = json.loads(check_eac3_samples.MANIFEST.read_text(encoding="utf-8"))
         check_eac3_samples.fetch(manifest, args.real_samples)
-        files = [*files, *[args.real_samples / s["file"] for s in manifest["samples"] if (args.real_samples / s["file"]).suffix == ".eac3"]]
+        files = [*files, *[args.real_samples / s["file"] for s in manifest["samples"] if (args.real_samples / s["file"]).suffix in (".eac3", ".ac3")]]
     failures = []
     with tempfile.TemporaryDirectory() as temporary:
         root = args.keep or pathlib.Path(temporary)
