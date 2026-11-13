@@ -190,6 +190,21 @@ jobs:
           retention-days: 30
           if-no-files-found: error
 
+      # The AC-3 decoder's PCM against Core Audio's (ExtAudioFile through the harness's pcm mode), strict on a copy of each encoder-written file with its dither
+      # flags cleared and by band energy otherwise, and the AC-3 damage variants of derive_variants.py decoded with it. A failing file prints every channel order
+      # and first position it tried and by how much each missed (scripts/fixtures/crosscheck_ac3_coreaudio.py).
+      - uses: ./.github/actions/setup-dotnet
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build the CLI and the PCM dump
+        run: |
+          dotnet build --configuration Release src/Encspect.Cli
+          dotnet build --configuration Release tests/Encspect.PcmDump
+
+      - name: Compare the AC-3 decoder's PCM with Core Audio's
+        run: python3 scripts/fixtures/crosscheck_ac3_coreaudio.py --probe build/audiotoolbox_probe --encspect src/Encspect.Cli/bin/Release/net10.0/encspect
+
   windows:
     name: Media Foundation on windows-2025
     runs-on: windows-2025

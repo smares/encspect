@@ -10,6 +10,9 @@
          AudioConverter: one unit of the unit list (unit_list.py --tsv) per call, with the file's magic cookie; the prime method
          is left at the converter's default or set to none (kConverterPrimeMethod_None)
 
+     audiotoolbox_probe pcm <file> <out.f32>
+         ExtAudioFile read to the end as interleaved floats, written raw (the AC-3 PCM comparison)
+
    Every result is one JSON line, written and flushed before the next call, so a killed child leaves what it did. A cut unit is fed
    from its first byte to the last byte the file holds and never padded. */
 #include <AudioToolbox/AudioToolbox.h>
@@ -600,6 +603,69 @@ static int convert(const char *path, const char *tsv_path, const char *prime) {
     return 0;
 }
 
+/* pcm <file> <out.f32>: ExtAudioFile reads the file to the end with a client format of interleaved 32-bit floats at the file's rate and channels, and the
+   samples are written raw, for the comparison of the AC-3 decoder's PCM (scripts/fixtures/crosscheck_ac3_coreaudio.py). One JSON line says the format
+   and the frames read, and the channel layout tag Core Audio gives the file (0 where it gives none). */
+static int pcm(const char *path, const char *out_path) {
+    CFURLRef url = CFURLCreateFromFileSystemRepresentation(NULL, (const UInt8 *)path, (CFIndex)strlen(path), false);
+    ExtAudioFileRef file = NULL;
+    OSStatus s = ExtAudioFileOpenURL(url, &file);
+    CFRelease(url);
+    if (s != 0) {
+        printf("{\"type\":\"pcm\",\"status\":%d,\"stage\":\"open\"}\n", (int)s);
+        return 1;
+    }
+    AudioStreamBasicDescription in;
+    UInt32 size = sizeof in;
+    ExtAudioFileGetProperty(file, kExtAudioFileProperty_FileDataFormat, &size, &in);
+    AudioStreamBasicDescription client;
+    memset(&client, 0, sizeof client);
+    client.mFormatID = kAudioFormatLinearPCM;
+    client.mSampleRate = in.mSampleRate;
+    client.mChannelsPerFrame = in.mChannelsPerFrame;
+    client.mFormatFlags = kAudioFormatFlagsNativeFloatPacked;
+    client.mBitsPerChannel = 32;
+    client.mFramesPerPacket = 1;
+    client.mBytesPerFrame = client.mBytesPerPacket = 4 * client.mChannelsPerFrame;
+    s = ExtAudioFileSetProperty(file, kExtAudioFileProperty_ClientDataFormat, sizeof client, &client);
+    if (s != 0) {
+        printf("{\"type\":\"pcm\",\"status\":%d,\"stage\":\"client-format\"}\n", (int)s);
+        return 1;
+    }
+    AudioChannelLayout layout;
+    UInt32 layout_size = sizeof layout;
+    UInt32 tag = 0;
+    if (ExtAudioFileGetProperty(file, kExtAudioFileProperty_FileChannelLayout, &layout_size, &layout) == 0) {
+        tag = layout.mChannelLayoutTag;
+    }
+    FILE *out = fopen(out_path, "wb");
+    if (!out) {
+        return 1;
+    }
+    enum { frames = 4096 };
+    float *buffer = malloc((size_t)frames * client.mBytesPerFrame);
+    long long total = 0;
+    for (;;) {
+        AudioBufferList list;
+        list.mNumberBuffers = 1;
+        list.mBuffers[0].mNumberChannels = client.mChannelsPerFrame;
+        list.mBuffers[0].mDataByteSize = frames * client.mBytesPerFrame;
+        list.mBuffers[0].mData = buffer;
+        UInt32 n = frames;
+        s = ExtAudioFileRead(file, &n, &list);
+        if (s != 0 || n == 0) {
+            break;
+        }
+        fwrite(buffer, client.mBytesPerFrame, n, out);
+        total += n;
+    }
+    fclose(out);
+    free(buffer);
+    ExtAudioFileDispose(file);
+    printf("{\"type\":\"pcm\",\"status\":%d,\"rate\":%.0f,\"channels\":%u,\"frames\":%lld,\"layoutTag\":%u}\n", (int)s, client.mSampleRate, (unsigned)client.mChannelsPerFrame, total, (unsigned)tag);
+    return 0;
+}
+
 int main(int argc, char **argv) {
     if (argc >= 2 && !strcmp(argv[1], "inventory")) {
         return inventory();
@@ -607,9 +673,12 @@ int main(int argc, char **argv) {
     if (argc == 3 && !strcmp(argv[1], "reader")) {
         return reader(argv[2]);
     }
+    if (argc == 4 && !strcmp(argv[1], "pcm")) {
+        return pcm(argv[2], argv[3]);
+    }
     if (argc == 5 && !strcmp(argv[1], "convert")) {
         return convert(argv[2], argv[3], argv[4]);
     }
-    fprintf(stderr, "usage: audiotoolbox_probe inventory | reader file | convert file units.tsv default|none\n");
+    fprintf(stderr, "usage: audiotoolbox_probe inventory | reader file | pcm file out.f32 | convert file units.tsv default|none\n");
     return 2;
 }
