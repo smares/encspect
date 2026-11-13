@@ -366,6 +366,18 @@ def build():
                                                    "of substream 1. The stream is valid E-AC-3 (ETSI TS 102 366 E.1.2.1 allows substream IDs 0 to 7).",
                                  "ffprobe_bitrate": "ffprobe gives no bitrate (N/A) for the stream it cannot read the parameters of."}})
 
+    # The same four access units with one byte of the first dependent frame changed: the frame fails its CRC, and the stream (whose rear surround pair it carries)
+    # must not read as verified.
+    flipped = bytearray(data)
+    first_dependent = len(eac3(acmod=7, lfeon=1, words=400, bsmod=0))
+    flipped[first_dependent + 40] ^= 0x55
+    data = bytes(flipped)
+    fixture("substreams-dependent-crc", ".eac3", "The access units of substreams.eac3 with one byte of the first dependent frame changed, so that frame fails its CRC.", data, frames_of(data),
+            [stream("E-AC-3", 48000, 7, 1, 4 * 1536, layout=seven_one), stream("E-AC-3", 48000, 2, 0, 4 * 1536)],
+            [("ac3.crc-mismatch", "fails in 1 frame")],
+            crosscheck={"ffprobe": False, "decode": False,
+                        "skip": {"ffprobe": "ffmpeg reads substream 0 only, which the change does not touch.", "decode": "ffmpeg decodes substream 0 only, which the change does not touch."}})
+
     # A dependent substream before any independent one.
     data = eac3(strmtyp=1, acmod=2, chanmap=LRS_RRS, words=160) + eac3(acmod=2, words=200) * 3
     fixture("dependent-first", ".eac3", "A dependent frame, then three independent 2/0 frames.", data, frames_of(data),

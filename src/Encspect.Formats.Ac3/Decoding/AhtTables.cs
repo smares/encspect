@@ -1,10 +1,10 @@
 namespace Encspect.Formats.Ac3.Decoding;
 
 // Format data of ETSI TS 102 366 V1.4.1 Annex E, extracted from the specification's text by scripts/fixtures/extract_eac3_tables.py (which checks the committed file against a fresh extraction):
-// Tables E.3.1 to E.3.7, the vectors of the adaptive hybrid transform's vector quantizer, Table E.2.6, the remapping constants of its gain adaptive quantizer, and Table E.2.12, the attenuation of spectral extension's notch filter.
+// The vectors of the adaptive hybrid transform's vector quantizer (A/52:2018 Tables E4.1 to E4.7; ETSI Tables E.3.1 to E.3.7), the remapping constants of its gain adaptive quantizer (A/52 Table E3.6; ETSI E.2.6) and the attenuation of spectral extension's notch filter (A/52 Table E3.14; ETSI E.2.12). 
 internal static class AhtTables
 {
-    // The vectors of hebap 1 to 7 (Tables E.3.1 to E.3.7: 4, 8, 16, 32, 128, 256 and 512 vectors), as signed 16-bit values, six to a vector.
+    // The vectors of hebap 1 to 7 (A/52 Tables E4.1 to E4.7: 4, 8, 16, 32, 128, 256 and 512 vectors), as signed 16-bit values, six to a vector.
     public static readonly short[][] Vectors =
     [
         [],
@@ -980,7 +980,7 @@ internal static class AhtTables
         ],
     ];
 
-    // Table E.2.12: the attenuation of the notch filter by spxattencod (rows) and distance from its center (columns 0 to 2).
+    // A/52 Table E3.14 (ETSI E.2.12): the attenuation of the notch filter by spxattencod (rows) and distance from its center (columns 0 to 2).
     public static readonly float[][] Attenuation =
     [
         [0.954841604f, 0.911722489f, 0.870550563f],
@@ -1017,7 +1017,7 @@ internal static class AhtTables
         [0.227930622f, 0.051952369f, 0.011841536f],
     ];
 
-    // Table E.2.6, the constants of the remapping y = x + a x + b of the large mantissas, as 16-bit fractions (divide by 32768), by hebap 8 to 19 (index hebap - 8): a for the gain 1, then for the gain 2 a, b where x is 0 or
+    // A/52 Table E3.6 (ETSI E.2.6), the constants of the remapping y = x + a x + b of the large mantissas, as 16-bit fractions (divide by 32768), by hebap 8 to 19 (index hebap - 8): a for the gain 1, then for the gain 2 a, b where x is 0 or
     // more, b where it is negative, then the same three for the gain 4 (zero where the table has no entry).
     public static readonly short[][] Remap =
     [

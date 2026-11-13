@@ -80,9 +80,9 @@ internal sealed class Ac3Analysis
         _frameOffset = offset;
         bool shortened = available < header.FrameLength;
         DecodeFeed? feed = PrepareFeed(region, offset, header);
-        // A dependent frame's records go to the unit of the program in progress (E-AC-3: Annex E 2.3.1.2); AC-3 core frames with dependent frames keep their core's output only.
-        DecodeFeed? dependentFeed = header.IsDependent && _current?.Feed is { IsEac3: true } current ? current : null;
-        _writer.IsEnabled = (feed ?? dependentFeed) is { Session.IsDecoding: true };
+        // A dependent frame's records go to the unit of the program in progress (E-AC-3: Annex E 2.3.1.2); a dependent frame after an AC-3 core is not decoded, but its CRC joins the core's crc2 tally.
+        DecodeFeed? dependentFeed = header.IsDependent && _current?.Feed is { } current ? current : null;
+        _writer.IsEnabled = feed is { Session.IsDecoding: true } || dependentFeed is { Session.IsDecoding: true, IsEac3: true };
         CrcState crc1 = CrcState.NotChecked;
         CrcState crc2 = CrcState.NotChecked;
         if (!shortened)
@@ -177,7 +177,7 @@ internal sealed class Ac3Analysis
             }
             else if (dependentFeed is not null && program == _current)
             {
-                dependentFeed.AddDependent(_writer, header, result, _buffer.AsMemory(0, available), isReadable);
+                dependentFeed.AddDependent(_writer, header, result, _buffer.AsMemory(0, available), isReadable, crc2);
             }
 
             program.Cover(region, offset, available);

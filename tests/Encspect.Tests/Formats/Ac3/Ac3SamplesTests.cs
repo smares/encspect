@@ -24,9 +24,27 @@ public class Ac3SamplesTests
             MeasurementStatus expected = info.LostSamples > 0 ? MeasurementStatus.Incomplete : MeasurementStatus.Complete;
             Assert.True(info.Measurements is { } measured && measured.Status == expected, $"{name}: the stream decodes and its measurements are {info.Measurements?.Status.ToString() ?? "missing"}, not {expected}");
             StreamMeasurements m = info.Measurements!;
+            // A measurement belongs to the stream it hangs on: with several substreams in a file a mixed-up record would show in another stream's channels or rate.
+            // An AC-3 core's dependent frames are not decoded, so such a stream has more channels than its measurements.
+            Assert.True(m.SampleRate == info.SampleRate && (m.Channels == info.Channels || (name.Contains("core-dependent") && m.Channels < info.Channels)), $"{name}: the stream has {info.Channels} channels at {info.SampleRate} Hz, its measurements {m.Channels} at {m.SampleRate}");
             Assert.Equal(0, m.LeadingTrimmedSamples + m.TrailingTrimmedSamples + m.InnerTrimmedSamples);
             Assert.True(info.Samples == m.Samples + m.LostSamples + m.WithheldSamples, $"{name}: the report states {info.Samples}, the measurements keep {m.Samples} + lost {m.LostSamples} + withheld {m.WithheldSamples}");
             Assert.True(m.LostSamples >= info.LostSamples, $"{name}: the measurements count {m.LostSamples} lost, the report {info.LostSamples}");
         }
+    }
+
+    [Fact]
+    public void The_text_report_gives_each_substream_its_verdict_and_measurements_and_a_failed_dependent_frame_fails_its_stream()
+    {
+        using FileStream stream = File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, "ac3/substreams-dependent-crc.eac3"));
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions() } };
+        Report report = Analyzer.CreateDefault().Analyze("substreams-dependent-crc.eac3", stream, options);
+        using var writer = new StringWriter();
+        ReportTextWriter.Write(report, writer, showOffsets: false);
+        string text = writer.ToString();
+        Assert.Contains("Verified (stream 1): no (CRC 1 of 8 differ)", text);
+        Assert.Contains("Verified (stream 2): yes", text);
+        Assert.Contains("Measured (stream 1)", text);
+        Assert.Contains("Measured (stream 2)", text);
     }
 }

@@ -46,6 +46,7 @@ internal sealed class DecodeFeed
 
     // Whether any frame of the program lay between a gap: the CRC2 of the frames then does not vouch for all of the program's audio.
     public bool HadGap { get; private set; }
+    private bool HasUndecodedDependents { get; set; }
 
     public static int ChannelCount(SyncFrame header) => Acmod[header.Acmod] + (header.Lfeon ? 1 : 0);
 
@@ -94,16 +95,31 @@ internal sealed class DecodeFeed
         Send(offset, first, samples, followsGap, damaged, isReadable, frame, written.Written);
     }
 
-    // A dependent frame after the independent frame of the unit: its records, and its bytes for the budget. A frame that is not read to its end adds no channels.
-    public void AddDependent(IntWriter written, SyncFrame header, FrameResult result, ReadOnlyMemory<byte> frame, bool isReadable)
+    // A dependent frame after the independent frame of the unit: its records, and its bytes for the budget. A frame that is not read to its end makes the whole program frame unreadable.
+    public void AddDependent(IntWriter written, SyncFrame header, FrameResult result, ReadOnlyMemory<byte> frame, bool isReadable, Ac3Analysis.CrcState crc2)
     {
-        if (_unit is not { } unit)
+        // The dependent frame's one CRC (Annex E 2.2.6) is part of the program's tally; after an AC-3 core its channels are not decoded, so the tally cannot vouch for all the audio.
+        _crc2Stored++;
+        if (crc2 != Ac3Analysis.CrcState.NotChecked)
+        {
+            _crc2Checked++;
+            _crc2Failed += crc2 == Ac3Analysis.CrcState.Mismatch ? 1 : 0;
+        }
+
+        HasUndecodedDependents |= !_isEac3;
+        if (!_isEac3 || _unit is not { } unit)
         {
             return;
         }
 
         unit.Bytes = [.. unit.Bytes, .. frame.ToArray()];
-        if (isReadable)
+        // A dependent frame that is lost or damaged leaves channels of the program frame without audio: the whole program frame is then lost, not output with silent channels.
+        unit.IsDamaged |= crc2 == Ac3Analysis.CrcState.Mismatch;
+        if (!isReadable)
+        {
+            unit.IsReadable = false;
+        }
+        else
         {
             unit.Substreams.Add(new Substream(1 + header.SubstreamId, Program.TokensOf(header, result), written.Written.ToArray()));
         }
@@ -118,8 +134,8 @@ internal sealed class DecodeFeed
         public long First { get; } = first;
         public int Samples { get; } = samples;
         public bool FollowsGap { get; } = followsGap;
-        public bool IsDamaged { get; } = isDamaged;
-        public bool IsReadable { get; } = isReadable;
+        public bool IsDamaged { get; set; } = isDamaged;
+        public bool IsReadable { get; set; } = isReadable;
         public byte[] Bytes { get; set; } = bytes;
         public List<Substream> Substreams { get; } = [];
     }
@@ -189,7 +205,7 @@ internal sealed class DecodeFeed
     public StreamVerification Finish(long lostSamples)
     {
         FlushUnit();
-        bool coversAll = lostSamples == 0 && !HadGap;
+        bool coversAll = lostSamples == 0 && !HadGap && !HasUndecodedDependents;
         if (_isEac3)
         {
             // E-AC-3 has the one CRC, over the frame (Annex E 2.2.6), whose tally is kept as crc2's.

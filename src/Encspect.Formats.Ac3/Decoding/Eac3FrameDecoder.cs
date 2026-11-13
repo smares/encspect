@@ -67,6 +67,7 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
             }
 
             WriteReady(force: true);
+            _pre?.Flush();
             _lostBefore = false;
             foreach (Eac3Substream substream in _substreams.Values)
             {
@@ -114,6 +115,13 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
 
             _slotsOf[id] = slots;
             substream.DecodeUnit(ref r, frame.FirstSample, blocks);
+            foreach ((int channel, int location, int length) in substream.Transients)
+            {
+                if (channel < slots.Length && slots[channel] >= 0)
+                {
+                    (_pre ??= NewPreNoise()).Add(slots[channel], frame.FirstSample + location, length);
+                }
+            }
         }
 
         // A substream with no frame in this unit has lost its overlap.
@@ -218,8 +226,17 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
             }
         }
 
+        (_pre ??= NewPreNoise()).Append(run[from + skipBlocks].First, planar, length);
+    }
+
+    private PreNoise? _pre;
+
+    private PreNoise NewPreNoise() => new(_channels, Output, _context.AddWork);
+
+    private void Output(long first, float[] planar, int length)
+    {
         _sink ??= _context.DeclareOutput(new PcmFormat(_rate, _channels, 32, SampleFormat.Float32) { ChannelLayout = Program.SpeakersOf(_layout!) });
-        _sink.Write(new PcmBlock(run[from + skipBlocks].First, length, _channels, length, planar));
+        _sink.Write(new PcmBlock(first, length, _channels, length, planar));
     }
 
     public IReadOnlyList<ChecksumResult> Finish(DecodeEnd end)
@@ -230,6 +247,7 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
         }
 
         WriteReady(force: true);
+        _pre?.Flush();
         return [];
     }
 }

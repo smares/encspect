@@ -1,0 +1,193 @@
+{
+ "description": "The access units of substreams.eac3 with one byte of the first dependent frame changed, so that frame fails its CRC.",
+ "length": 6080,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   800
+  ],
+  [
+   800,
+   320
+  ],
+  [
+   1120,
+   400
+  ],
+  [
+   1520,
+   800
+  ],
+  [
+   2320,
+   320
+  ],
+  [
+   2640,
+   400
+  ],
+  [
+   3040,
+   800
+  ],
+  [
+   3840,
+   320
+  ],
+  [
+   4160,
+   400
+  ],
+  [
+   4560,
+   800
+  ],
+  [
+   5360,
+   320
+  ],
+  [
+   5680,
+   400
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "E-AC-3",
+   "sample_rate": 48000,
+   "channels": 8,
+   "channel_mode": "3/2",
+   "channel_layout": [
+    "front left",
+    "front center",
+    "front right",
+    "side left",
+    "side right",
+    "LFE",
+    "back left",
+    "back right"
+   ],
+   "samples": 6144,
+   "is_vbr": false
+  },
+  {
+   "codec": "E-AC-3",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 6144,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "ac3.crc-mismatch",
+   "fails in 1 frame"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": false,
+  "skip": {
+   "ffprobe": "ffmpeg reads substream 0 only, which the change does not touch.",
+   "decode": "ffmpeg decodes substream 0 only, which the change does not touch."
+  }
+ },
+ "block_ends": {
+  "0": [
+   474,
+   477,
+   480,
+   483,
+   486,
+   489
+  ],
+  "1120": [
+   243,
+   247,
+   251,
+   255,
+   259,
+   263
+  ],
+  "1520": [
+   474,
+   477,
+   480,
+   483,
+   486,
+   489
+  ],
+  "2320": [
+   238,
+   241,
+   244,
+   247,
+   250,
+   253
+  ],
+  "2640": [
+   243,
+   247,
+   251,
+   255,
+   259,
+   263
+  ],
+  "3040": [
+   474,
+   477,
+   480,
+   483,
+   486,
+   489
+  ],
+  "3840": [
+   238,
+   241,
+   244,
+   247,
+   250,
+   253
+  ],
+  "4160": [
+   243,
+   247,
+   251,
+   255,
+   259,
+   263
+  ],
+  "4560": [
+   474,
+   477,
+   480,
+   483,
+   486,
+   489
+  ],
+  "5360": [
+   238,
+   241,
+   244,
+   247,
+   250,
+   253
+  ],
+  "5680": [
+   243,
+   247,
+   251,
+   255,
+   259,
+   263
+  ]
+ }
+}

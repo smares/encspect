@@ -5,7 +5,7 @@ related: ac3-coupling, eac3-spectral-extension, ac3-rematrixing
 references: ATSC A/52:2018 Annex E 2.3.3.14 to 2.3.3.26, 3.3.2, 3.5
 ---
 
-**The problem.** Standard coupling begins no lower than 3.42 kHz at 48 kHz and gives each channel only a level per band. At low bitrates an encoder wants to couple lower, and to keep the stereo image, which also depends on the phase between channels.
+**The problem.** Standard coupling begins no lower than about 3.4 kHz at 48 kHz and gives each channel only a level per band. At low bitrates an encoder wants to couple lower, and to keep the stereo image, which also depends on the phase between channels.
 
 **How it works.** Enhanced coupling codes the coupling channel once, as standard coupling does, from a begin sub-band as low as the first of 22 sub-bands of 6 or 12 coefficients, 1.17 kHz at 48 kHz. Each coupled channel then gets, for every enhanced coupling band, an amplitude, an angle and a chaos value. The amplitude scales the coupling channel in steps of about 1.5 dB. The angle rotates its phase, in steps of 2 pi / 64. The chaos value says how much random phase the decoder adds, so that the channels are less alike; a transient flag asks for new random values in every block. The first coupled channel has no angle or chaos.
 

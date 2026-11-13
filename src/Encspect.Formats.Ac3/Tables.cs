@@ -164,19 +164,19 @@ internal static class Tables
         [3, 3, 3, 3, 3, 3],
     ];
 
-    // Annex E, Table E2.11 and Table E2.12: the default spectral extension and coupling band
+    // A/52:2018 Annex E, Table E2.11 and Table E2.13: the default spectral extension and coupling band
     // structures, by sub-band number.
     public static readonly byte[] DefaultSpxBandStructure = [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1];
 
     public static readonly byte[] DefaultCouplingBandStructure = [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1];
 
-    // Annex E Table E.1.13: the default enhanced coupling band structure, by sub-band.
+    // A/52:2018 Table E2.14 (ETSI TS 102 366 Table E.1.13): the default enhanced coupling band structure, by sub-band.
     public static readonly byte[] DefaultEnhancedCouplingBandStructure = [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1];
 
-    // Annex E Table E.2.9: the first bin of each enhanced coupling sub-band, and the bin after the last (index 22).
+    // A/52:2018 Table E3.9 (ETSI Table E.2.9): the first bin of each enhanced coupling sub-band, and the bin after the last (index 22).
     public static readonly byte[] EnhancedCouplingSubBandStart = [13, 19, 25, 31, 37, 49, 61, 73, 85, 97, 109, 121, 133, 145, 157, 169, 181, 193, 205, 217, 229, 241, 253];
 
-    // Annex E Table E.2.1: the high efficiency bit allocation pointer of each address (psd - mask) >> 5.
+    // A/52:2018 Table E3.1 (ETSI Table E.2.1): the high efficiency bit allocation pointer of each address (psd - mask) >> 5.
     public static readonly byte[] HebapTab =
     [
         0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 8, 8, 9, 9, 9, 10,
@@ -185,7 +185,7 @@ internal static class Tables
         18, 18, 18, 18, 18, 18, 18, 19, 19, 19, 19, 19, 19, 19, 19, 19,
     ];
 
-    // Annex E Table E.2.2: the mantissa bits of a gain adaptive quantizer by hebap 8 to 19 (index hebap - 8), and of a vector quantizer's index by hebap 1 to 7 (index hebap - 1) for the
+    // A/52:2018 Table E3.2 (ETSI Table E.2.2): the mantissa bits of a gain adaptive quantizer by hebap 8 to 19 (index hebap - 8), and of a vector quantizer's index by hebap 1 to 7 (index hebap - 1) for the
     // six mantissas it stands for.
     public static readonly byte[] GainAdaptiveBits = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16];
 

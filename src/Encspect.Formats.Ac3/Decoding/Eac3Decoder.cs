@@ -6,8 +6,8 @@ namespace Encspect.Formats.Ac3.Decoding;
 // coupling. The parser's entropy pass (FrameSyntax) reads each audio block's side information, exponents, bit allocation and mantissa codes, including the adaptive hybrid
 // transform's vectors and gain adaptive values, enhanced coupling's parameters and spectral extension's coordinates, into the buffers the session lends; this decoder adds the
 // reconstruction: the inverse DCT across the six blocks of the adaptive hybrid transform, standard and enhanced coupling, rematrixing, spectral extension with its noise blend,
-// and the inverse transforms with the window and the overlap. It applies no dynamic range control, dialogue normalization, downmix or transient pre-noise processing (whose
-// cross-fade windows A/52 3.7.2 leaves open) and decodes the independent substream's own channels, not those of dependent substreams, which add channels to a program (3.8).
+// and the inverse transforms with the window and the overlap. It applies no dynamic range control, dialogue normalization or downmix. Transient pre-noise processing (3.7) is
+// applied with the Hanning windows 3.7.2 names, and the dependent substreams' channels join the program's (3.8).
 public sealed class Eac3Decoder : IDecoder
 {
     public string Id => Ac3CodecParser.Eac3;

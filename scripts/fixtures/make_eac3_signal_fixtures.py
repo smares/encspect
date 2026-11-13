@@ -143,9 +143,9 @@ def bsi(b, strmtyp=0, chanmap=None):
     b.put(0, 1)  # addbsie (strmtyp 0 with six blocks has no convsync)
 
 
-def audfrm_head(b, ahte=0, spxattene=0):
+def audfrm_head(b, ahte=0, spxattene=0, transproce=0):
     b.put(1, 1).put(ahte, 1).put(0, 2)  # expstre, ahte, snroffststr 0
-    b.put(0, 1).put(0, 1).put(1, 1).put(0, 1).put(0, 1).put(0, 1).put(0, 1).put(spxattene, 1)  # transproce, blkswe, dithflage, bamode, frmfgaincode, dbaflde, skipflde, spxattene
+    b.put(transproce, 1).put(0, 1).put(1, 1).put(0, 1).put(0, 1).put(0, 1).put(0, 1).put(spxattene, 1)  # transproce, blkswe, dithflage, bamode, frmfgaincode, dbaflde, skipflde, spxattene
 
 
 def finish(b):
@@ -208,11 +208,11 @@ def aht_frame_of(seed, mode, csnr, narrow):
     return finish(b)
 
 
-def spx_frame(seed, explicit_structure, attenuation, new_coordinates, blend=None, strmtyp=0, chanmap=None):
+def spx_frame(seed, explicit_structure, attenuation, new_coordinates, blend=None, strmtyp=0, chanmap=None, transients=None):
     rng = random.Random(seed)
     b = Bits()
     bsi(b, strmtyp, chanmap)
-    audfrm_head(b, spxattene=1)
+    audfrm_head(b, spxattene=1, transproce=int(transients is not None))
     b.put(0, 1)
     for _ in range(5):
         b.put(0, 1)
@@ -223,6 +223,11 @@ def spx_frame(seed, explicit_structure, attenuation, new_coordinates, blend=None
         for _ in range(2):
             b.put(0, 5)
     b.put(CSNR, 6).put(FSNR, 4)
+    for transient in transients or ():  # chintransproc, transprocloc and transproclen of each channel
+        if transient is None:
+            b.put(0, 1)
+        else:
+            b.put(1, 1).put(transient[0], 10).put(transient[1], 8)
     b.put(0, 1).put(1, 1).put(attenuation, 5)  # chinspxatten of channel 0 off and of channel 1 on, with its code
     b.put(0, 1)  # blkstrtinfoe
     spxbegf, spxendf, spxstrtf = 2, 4, 1  # begin sub-band 4 (bin 73), end sub-band 11 (bin 157), copy from bin 37
@@ -350,11 +355,18 @@ def ecpl_frame(seed, explicit_structure, new_parameters):
     return finish(b)
 
 
+def transients(i):
+    """Frame i's transient pre-noise data of the two channels: a location in steps of 4 samples (a few lie in the next frame) and a length."""
+    first = ((150 + (47 * i)) % 230 + 150, (20 + (11 * i)) % 200) if i % 5 != 4 else (400 + i, 90)
+    return [first, ((260 + (13 * i)) % 120 + 130, 60 + i) if i % 2 == 1 else None]
+
+
 FILES = {
     "eac3-signal-aht.eac3": lambda: b"".join(aht_frame(300 + i, i % 4, 28 if i % 4 == 3 else CSNR, i % 4 == 3) for i in range(FRAMES)),
     "eac3-signal-spx.eac3": lambda: b"".join(spx_frame(400 + i, i % 2 == 1, (7 * i) % 32, i % 3 == 2, blend=31) for i in range(FRAMES)),
     "eac3-signal-dependent.eac3": lambda: b"".join(spx_frame(700 + i, i % 2 == 1, (3 * i) % 32, False, blend=31) + spx_frame(800 + i, False, 5, False, blend=31, strmtyp=1, chanmap=0x0200)
                                                     for i in range(FRAMES)),
+    "eac3-signal-transient.eac3": lambda: b"".join(spx_frame(900 + i, i % 2 == 1, (2 * i) % 32, False, blend=31, transients=transients(i)) for i in range(FRAMES)),
     "eac3-signal-spx-noise.eac3": lambda: b"".join(spx_frame(600 + i, i % 2 == 1, (5 * i) % 32, i % 3 == 2) for i in range(FRAMES)),
     "eac3-signal-ecpl.eac3": lambda: b"".join(ecpl_frame(500 + i, i % 2 == 1, i % 3 == 2) for i in range(FRAMES)),
 }
@@ -365,10 +377,10 @@ DESCRIPTIONS = {
     "eac3-signal-spx.eac3": "Twelve 2/0 E-AC-3 frames at 48 kHz with spectral extension from bin 73 to 157 in both channels, the default band structure or an explicit one, new coordinates in "
                             "block 3 of some frames, the attenuation filter in the right channel and rematrixing below the extension, with mantissas in every bin and the blend 31, so that "
                             "only the copy and its filter and scaling remain and the decoded samples are comparable one by one (A/52 Annex E 3.6).",
-    "eac3-signal-dependent.eac3": lambda: b"".join(spx_frame(700 + i, i % 2 == 1, (3 * i) % 32, False, blend=31) + spx_frame(800 + i, False, 5, False, blend=31, strmtyp=1, chanmap=0x0200)
-                                                    for i in range(FRAMES)),
     "eac3-signal-dependent.eac3": "Twelve access units of a 2/0 independent substream (spectral extension, no noise) and a dependent substream with the channel map of the back left and back right pair, also 2/0: "
                                   "a program of four channels, which decoders that read dependent substreams give in the order front left, front right, back left, back right (A/52 Annex E 3.8).",
+    "eac3-signal-transient.eac3": "Twelve 2/0 E-AC-3 frames at 48 kHz like the spectral extension ones, with transient pre-noise processing data for the left channel of every frame and the right channel of every second one, "
+                                  "some transients in the next frame (A/52 Annex E 3.7).",
     "eac3-signal-spx-noise.eac3": "The same twelve 2/0 E-AC-3 frames with other seeds and a random blend in every set of coordinates, so that the extension blends in noise (A/52 Annex E 3.6.4.2).",
     "eac3-signal-ecpl.eac3": "Twelve 2/0 E-AC-3 frames at 48 kHz with enhanced coupling from bin 61 to 133, the default band structure or an explicit one, new amplitudes, angles and chaos "
                              "values in block 3 of some frames, and mantissas in every bin (A/52 Annex E 3.5).",
@@ -377,8 +389,7 @@ DESCRIPTIONS = {
 
 NO_REFERENCE = {
     "eac3-signal-ecpl.eac3": "FFmpeg does not decode enhanced coupling.",
-    "eac3-signal-dependent.eac3": lambda: b"".join(spx_frame(700 + i, i % 2 == 1, (3 * i) % 32, False, blend=31) + spx_frame(800 + i, False, 5, False, blend=31, strmtyp=1, chanmap=0x0200)
-                                                    for i in range(FRAMES)),
+    "eac3-signal-transient.eac3": "FFmpeg does not apply transient pre-noise processing, whose cross-fade windows the specification leaves open.",
     "eac3-signal-spx-noise.eac3": "The noise of spectral extension comes from a generator of each decoder, so the samples differ; the level of the noise equals FFmpeg's (docs/development.md, \"E-AC-3 decoding\").",
 }
 

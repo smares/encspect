@@ -132,9 +132,9 @@ internal sealed class EnhancedCoupling
 
     // The coefficients of one coupled channel in the enhanced coupling range, from the spectrum Analyze made and the channel's parameters per band: amplitude code, angle code and
     // chaos code (ecplamp | ecplangle << 5 | ecplchaos << 11), whether the channel is the first in coupling and has a transient, and the band structure (a bit per sub-band, set
-    // where it joins the band before).
+    // where it joins the band before), and the dither of the bins the coupling channel codes with no bits (already drawn, zero elsewhere), which is scaled by the bin's amplitude.
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public void Channel(Span<float> spectrum, ReadOnlySpan<int> parameters, int channel, bool isFirst, bool hasTransient, bool interpolate, int begin, int end, int joined)
+    public void Channel(Span<float> spectrum, ReadOnlySpan<int> parameters, int channel, bool isFirst, bool hasTransient, bool interpolate, int begin, int end, int joined, ReadOnlySpan<float> dither)
     {
         int bands = 0;
         int lastBin = 0;
@@ -199,7 +199,7 @@ internal sealed class EnhancedCoupling
             float sin = (float)DetMath.Sin(radians) * _amplitude[bin];
             float zr = (_zr[bin] * cos) - (_zi[bin] * sin);
             float zi = (_zi[bin] * cos) + (_zr[bin] * sin);
-            spectrum[bin] = -2.0f * ((_y[bin] * zr) + (_y[(N / 2) - 1 - bin] * zi));
+            spectrum[bin] = (-2.0f * ((_y[bin] * zr) + (_y[(N / 2) - 1 - bin] * zi))) + (dither[bin] * _amplitude[bin]);
         }
     }
 

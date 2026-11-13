@@ -153,7 +153,7 @@ internal sealed partial class FrameSyntax
     }
 
     // The block's record of an E-AC-3 frame for the decoder, in integers (the differences from FrameSyntax.WriteBlock's layout for AC-3):
-    //   the frame's first block: acmod, lfeon, the number of blocks, and for every full bandwidth channel its spectral extension attenuation code plus 1 (0 for none);
+    //   the frame's first block: acmod, lfeon, the number of blocks, and for every full bandwidth channel its spectral extension attenuation code plus 1 (0 for none), and for each its transient pre-noise processing: the location in steps of 4 samples plus 1 (0 for none) and, where there is one, the length;
     //   every block: the block switching flags and the dither flags;
     //   spxinu and with it the channels in spectral extension (a bit each), spxstrtf, the begin and end sub-bands, the band structure (a bit per sub-band, set where joined to the band
     //   below) and for each channel in spectral extension its blend, master coordinate and per band exp | mant << 4;
@@ -172,6 +172,15 @@ internal sealed partial class FrameSyntax
             for (int ch = 0; ch < _nfchans; ch++)
             {
                 w.Add(_spxattencod[ch] + 1);
+            }
+
+            for (int ch = 0; ch < _nfchans; ch++)
+            {
+                w.Add(_transloc[ch] + 1);
+                if (_transloc[ch] >= 0)
+                {
+                    w.Add(_translen[ch]);
+                }
             }
         }
 

@@ -34,7 +34,7 @@ public class EnhancedCouplingTests
         var spectrum = new float[256];
         int[] parameters = new int[22];
         Array.Fill(parameters, amplitude | (angle << 5));
-        enhanced.Channel(spectrum, parameters, 0, isFirst, false, false, begin, end, 0);
+        enhanced.Channel(spectrum, parameters, 0, isFirst, false, false, begin, end, 0, new float[256]);
         return spectrum;
     }
 
@@ -75,7 +75,7 @@ public class EnhancedCouplingTests
         enhanced.Analyze([], Transform(transform, current), []);
         var spectrum = new float[256];
         int[] parameters = new int[22];
-        enhanced.Channel(spectrum, parameters, 0, true, false, false, 4, 10, 0);
+        enhanced.Channel(spectrum, parameters, 0, true, false, false, 4, 10, 0, new float[256]);
 
         // Without the neighbors the result is not the block's coefficients, but it stays finite and of their order.
         Assert.All(spectrum, v => Assert.True(float.IsFinite(v)));

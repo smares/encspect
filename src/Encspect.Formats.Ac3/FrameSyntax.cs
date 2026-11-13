@@ -88,6 +88,8 @@ internal sealed partial class FrameSyntax
     private bool _cplahtinu;
     private bool _lfeahtinu;
     private readonly int[] _spxattencod = new int[5];
+    private readonly int[] _transloc = new int[5];
+    private readonly int[] _translen = new int[5];
     private int _frmcsnroffst;
     private int _frmfsnroffst;
 
@@ -994,14 +996,15 @@ internal sealed partial class FrameSyntax
             _frmfsnroffst = F("Frame Fine SNR Offset", 4, Explain.Frmfsnroffst, FineSnr, Topics.AudioBlocks);
         }
 
+        Array.Fill(_transloc, -1);
         if (transproce)
         {
             for (int ch = 0; ch < _nfchans; ch++)
             {
                 if (FC("IsInTransientProcessing", ch, 1, Explain.Chintransproc, BooleanValue) != 0)
                 {
-                    F("Transient Location", 10, Explain.Transprocloc, v => NodeValue.Integer(v * 4, "samples"));
-                    F("Transient Processing Length", 8, Explain.Transproclen, v => NodeValue.Integer(v, "samples"));
+                    _transloc[ch] = F("Transient Location", 10, Explain.Transprocloc, v => NodeValue.Integer(v * 4, "samples"));
+                    _translen[ch] = F("Transient Processing Length", 8, Explain.Transproclen, v => NodeValue.Integer(v, "samples"));
                 }
             }
         }

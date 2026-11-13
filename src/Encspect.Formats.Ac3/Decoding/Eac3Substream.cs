@@ -33,7 +33,6 @@ internal sealed class Eac3Substream
     private readonly int _fullChannels;
     private readonly InverseTransform _transform = new();
     private readonly float[][] _delay;
-    private readonly float[][] _spectrum;
     private readonly float[] _coupling = new float[256];
     private readonly float[] _couplingDither = new float[256];
     private readonly float[] _x = new float[512];
@@ -69,7 +68,6 @@ internal sealed class Eac3Substream
         _fullChannels = DecodeFeed.ChannelOf(acmod);
         _channels = _fullChannels + (hasLfe ? 1 : 0);
         _delay = [.. Enumerable.Range(0, _channels).Select(_ => new float[BlockSamples])];
-        _spectrum = [.. Enumerable.Range(0, _channels).Select(_ => new float[256])];
     }
 
     public int Channels => _channels;
@@ -111,6 +109,7 @@ internal sealed class Eac3Substream
     // Decodes the substream's frame whose record header (acmod, lfeon, the number of blocks) the caller has read, and delivers its blocks.
     public void DecodeUnit(ref IntReader r, long firstSample, int blocks)
     {
+        Transients.Clear();
         int samples = blocks * BlockSamples;
         _frameFirst = firstSample;
         EnsureBuffers(samples);
@@ -135,6 +134,9 @@ internal sealed class Eac3Substream
             _deliver(firstSample + ((long)block * BlockSamples), _planar, _stride, block * BlockSamples);
         }
     }
+
+    // The transient pre-noise processing data of the frame last decoded: channel, location from the frame's first sample, and length (3.7.2).
+    public List<(int Channel, int Location, int Length)> Transients { get; } = [];
 
     private void EnsureBuffers(int samples)
     {
@@ -173,6 +175,7 @@ internal sealed class Eac3Substream
         public readonly bool[] EcplTransient = new bool[5];
         public readonly float[] Coupling = new float[256];
         public readonly float[] CouplingX = new float[512];
+        public readonly float[] EcplDither = new float[5 * 256];
         public bool HasCouplingX;
         public readonly int[] Attenuation = new int[5];
         public readonly float[][] Spectrum = [.. Enumerable.Range(0, 6).Select(_ => new float[256])];
@@ -187,6 +190,15 @@ internal sealed class Eac3Substream
             for (int ch = 0; ch < _fullChannels; ch++)
             {
                 _attenuation[ch] = r.Next() - 1;
+            }
+
+            for (int ch = 0; ch < _fullChannels; ch++)
+            {
+                int location = r.Next() - 1;
+                if (location >= 0)
+                {
+                    Transients.Add((ch, location * 4, r.Next()));
+                }
             }
         }
 
@@ -339,6 +351,24 @@ internal sealed class Eac3Substream
         else if (mode == 2)
         {
             Array.Copy(_coupling, state.Coupling, 256);
+            // The zero-bit bins of the coupling channel take dither in each coupled channel that has dithflag set (A/52 7.3.4), drawn here in block order and added after the channel
+            // is extracted from the coupling channel (FinishState), scaled by the band's amplitude as standard coupling scales it by the coordinate.
+            Array.Clear(state.EcplDither);
+            int ecplStart = Tables.EnhancedCouplingSubBandStart[state.EcplBegin];
+            int ecplStop = Tables.EnhancedCouplingSubBandStart[state.EcplEnd];
+            for (int ch = 0; ch < _fullChannels; ch++)
+            {
+                if (((state.EcplChannels >> ch) & 1) != 0 && ((dither >> ch) & 1) != 0)
+                {
+                    for (int bin = ecplStart; bin < ecplStop; bin++)
+                    {
+                        if (_couplingDither[bin] != 0)
+                        {
+                            state.EcplDither[(ch * 256) + bin] = FrameDecoder.Noise(ref _noise) * _couplingDither[bin];
+                        }
+                    }
+                }
+            }
         }
 
         state.HasCouplingX = false;
@@ -346,7 +376,7 @@ internal sealed class Eac3Substream
     }
 
     // The steps of a block that need its neighbors or all of its channels' coefficients: enhanced coupling (the coupling channel of the blocks before and after, the next frame's
-    // first block being taken as absent), spectral extension, and each channel's inverse transform, window and overlap.
+    // first block, which waits for it), spectral extension, and each channel's inverse transform, window and overlap.
     private void FinishBlock(int block, int blocks)
     {
         BlockState state = _states[block];
@@ -388,7 +418,7 @@ internal sealed class Eac3Substream
             {
                 if (((state.EcplChannels >> ch) & 1) != 0)
                 {
-                    _enhanced.Channel(state.Spectrum[ch], state.EcplParameters.AsSpan(ch * 22, 22), ch, ch == first, state.EcplTransient[ch], state.EcplInterpolates, state.EcplBegin, state.EcplEnd, state.EcplJoined);
+                    _enhanced.Channel(state.Spectrum[ch], state.EcplParameters.AsSpan(ch * 22, 22), ch, ch == first, state.EcplTransient[ch], state.EcplInterpolates, state.EcplBegin, state.EcplEnd, state.EcplJoined, state.EcplDither.AsSpan(ch * 256, 256));
                 }
             }
         }
@@ -594,7 +624,7 @@ internal sealed class Eac3Substream
         return matrix;
     }
 
-    // A value of gain adaptive quantization (Annex E 3.4.4.2, Tables E.2.5 and E.2.6): a small mantissa of the gains 2 and 4 is its code times the step of Table E.2.5, which is
+    // A value of gain adaptive quantization (Annex E 3.4.4.2, A/52 Tables E3.5 and E3.6): a small mantissa of the gains 2 and 4 is its code times the step of Table E.2.5, which is
     // the output's, not the amplified value's; large ones and those of the gain 1 are the codeword as a two's complement fraction remapped as y = x + a x + b.
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static float GainAdaptiveValue(int hebap, int gain, int packed)

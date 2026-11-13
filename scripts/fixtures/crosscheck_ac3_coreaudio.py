@@ -298,6 +298,9 @@ def variants_report(args, root):
     return lines
 
 
+CORE_AUDIO_SIGNAL_FILES = ["eac3-signal-aht.eac3", "eac3-signal-ecpl.eac3", "eac3-signal-spx.eac3", "eac3-signal-spx-noise.eac3", "eac3-signal-transient.eac3", "eac3-signal-dependent.eac3", "substreams.eac3"]
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("files", nargs="*", type=pathlib.Path)
@@ -306,7 +309,10 @@ def main(argv=None):
     parser.add_argument("--encspect", default=x.DEFAULT_ENCSPECT)
     parser.add_argument("--keep", type=pathlib.Path)
     args = parser.parse_args(argv)
-    files = args.files or [p for p in x.default_files() if p.name.startswith("external-")]  # the AC-3 files with a liba52 reference and the encoder-written E-AC-3 files
+    # The AC-3 files with a liba52 reference and the encoder-written E-AC-3 files, and the hand-built E-AC-3 files that use what FFmpeg does not decode or decodes differently
+    # (the adaptive hybrid transform with hebap 4, enhanced coupling, spectral extension, transient pre-noise processing, dependent substreams): Core Audio is the independent decoder
+    # that can say who is right. The three real files of check_eac3_samples.py can be given on the command line.
+    files = args.files or [p for p in x.default_files() if p.name.startswith("external-")] + [x.FIXTURES / name for name in CORE_AUDIO_SIGNAL_FILES]
     failures = []
     with tempfile.TemporaryDirectory() as temporary:
         root = args.keep or pathlib.Path(temporary)
