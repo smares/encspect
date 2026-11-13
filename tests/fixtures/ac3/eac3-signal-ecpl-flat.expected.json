@@ -1,0 +1,83 @@
+{
+ "description": "The frames of eac3-signal-ecpl (default band structure, no new parameters) with every amplitude at 0 dB, no angle, no chaos and no transient: each channel is the coupling channel itself, so a decoder's output must equal the coupling channel's coefficients in every block (A/52 Annex E 3.5.5).",
+ "length": 49152,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   4096
+  ],
+  [
+   4096,
+   4096
+  ],
+  [
+   8192,
+   4096
+  ],
+  [
+   12288,
+   4096
+  ],
+  [
+   16384,
+   4096
+  ],
+  [
+   20480,
+   4096
+  ],
+  [
+   24576,
+   4096
+  ],
+  [
+   28672,
+   4096
+  ],
+  [
+   32768,
+   4096
+  ],
+  [
+   36864,
+   4096
+  ],
+  [
+   40960,
+   4096
+  ],
+  [
+   45056,
+   4096
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "E-AC-3",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 18432,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "ffprobe_bitrate": false,
+  "decode": false,
+  "skip_insertion": false,
+  "skip": {
+   "skip_insertion": "The check rewrites E-AC-3 frames with skip fields.",
+   "decode": "FFmpeg does not decode enhanced coupling.",
+   "ffprobe_bitrate": "FFmpeg gives no bitrate for frames it cannot decode."
+  }
+ }
+}

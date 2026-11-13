@@ -184,7 +184,7 @@ internal static partial class Explain
     public const string Ecplinu = "ecplinu: whether enhanced coupling is in use instead of standard coupling (A/52 Annex E 2.3.3.14, 3.5).";
     public const string Ecplbegf = "ecplbegf: the first sub-band of enhanced coupling, where coupled channels stop coding their own coefficients (A/52 Annex E 2.3.3.16, Table E3.8).";
     public const string Ecplendf = "ecplendf: the sub-band after the last one of enhanced coupling, minus 7 (A/52 Annex E 2.3.3.17, Table E3.8).";
-    public const string Ecplbndstrce = "ecplbndstrce: whether an enhanced coupling band structure follows; otherwise the default or the previous one holds (A/52 Annex E 2.3.3.18, Table E2.14).";
+    public const string Ecplbndstrce = "ecplbndstrce: whether an enhanced coupling band structure follows; otherwise the default or the previous one holds (A/52 Annex E 2.3.3.18, Table E2.13).";
     public const string Ecplbndstrc = "ecplbndstrc: for each enhanced coupling sub-band from the ninth on, 1 joins it to the band before, so one set of parameters covers both (A/52 Annex E 2.3.3.19).";
     public const string EnhancedCouplingParameters = "Enhanced coupling parameters of a channel: per band an amplitude, an angle and a chaos value, which place the channel's copy of the coupling channel (A/52 Annex E 2.3.3.20 to 2.3.3.26, 3.5.4).";
     public const string Ecplangleintrp = "ecplangleintrp: whether the decoder interpolates the angles between the bands' centers instead of holding each band's angle (A/52 Annex E 2.3.3.20).";

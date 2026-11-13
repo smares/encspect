@@ -164,13 +164,13 @@ internal static class Tables
         [3, 3, 3, 3, 3, 3],
     ];
 
-    // A/52:2018 Annex E, Table E2.11 and Table E2.13: the default spectral extension and coupling band
+    // A/52:2018 Annex E, Table E2.11 and Table E2.12 (E2.13 in its list of tables; the body numbers the two coupling tables E2.12 and E2.13): the default spectral extension and coupling band
     // structures, by sub-band number.
     public static readonly byte[] DefaultSpxBandStructure = [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1];
 
     public static readonly byte[] DefaultCouplingBandStructure = [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1];
 
-    // A/52:2018 Table E2.14 (ETSI TS 102 366 Table E.1.13): the default enhanced coupling band structure, by sub-band.
+    // A/52:2018 Table E2.13 in its body, E2.14 in its list of tables (ETSI TS 102 366 Table E.1.13): the default enhanced coupling band structure, by sub-band.
     public static readonly byte[] DefaultEnhancedCouplingBandStructure = [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1];
 
     // A/52:2018 Table E3.9 (ETSI Table E.2.9): the first bin of each enhanced coupling sub-band, and the bin after the last (index 22).
