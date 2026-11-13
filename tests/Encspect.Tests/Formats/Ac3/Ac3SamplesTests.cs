@@ -18,7 +18,7 @@ public class Ac3SamplesTests
     {
         using FileStream stream = File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, name));
         var options = new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions() } };
-        foreach (StreamInfo info in Analyzer.CreateDefault().Analyze(Path.GetFileName(name), stream, options).Streams.Where(s => s.Codec == "AC-3" && s.Verification is not null))
+        foreach (StreamInfo info in Analyzer.CreateDefault().Analyze(Path.GetFileName(name), stream, options).Streams.Where(s => s.Codec is "AC-3" or "E-AC-3" && s.Verification is not null))
         {
             // A frame the parser counts lost (cut, broken) is not decoded, so the measurement of a stream that has one is Incomplete by definition; every other stream is Complete.
             MeasurementStatus expected = info.LostSamples > 0 ? MeasurementStatus.Incomplete : MeasurementStatus.Complete;

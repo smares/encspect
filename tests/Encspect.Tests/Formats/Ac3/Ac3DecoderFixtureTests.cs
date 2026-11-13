@@ -36,7 +36,7 @@ public class Ac3DecoderFixtureTests
 
     private static bool IsMedia(string path) => Path.GetExtension(path) is ".ac3" or ".eac3" or ".ec3" or ".mka" or ".mkv" or ".webm" or ".m4a" or ".mp4" or ".asf" or ".wma" or ".wav" or ".w64" or ".rf64";
 
-    private static bool HasAc3(string name) => Fixtures.AnalyzeMpeg(name).Streams.Any(s => s.Codec == "AC-3" && s.Verification is not null);
+    private static bool HasAc3(string name) => Fixtures.AnalyzeMpeg(name).Streams.Any(s => s.Codec is "AC-3" or "E-AC-3" && s.Verification is not null);
 
     private static (Report Report, List<PcmHashSink> Sinks) Decode(string name)
     {
@@ -99,7 +99,8 @@ public class Ac3DecoderFixtureTests
             StreamVerification verification = stream.Verification!;
             Assert.Equal(DecodeStatus.Decoded, verification.Decoding);
             Assert.True(verification.IsLossy);
-            Assert.Equal(stream.Codec == "AC-3" ? ["CRC1", "CRC2"] : [], verification.Checksums.Select(c => c.Name));
+            string[] names = [.. verification.Checksums.Select(c => c.Name)];
+            Assert.True(stream.Codec is "AC-3" or "E-AC-3" ? names is ["CRC1", "CRC2"] or ["CRC"] : names.Length == 0, $"{name}: the stream declares {string.Join(", ", names)}");
         }
 
         Assert.Equal(report.Streams.Sum(s => s.Verification?.DecodedSamples ?? 0), sinks.Sum(s => s.Samples));

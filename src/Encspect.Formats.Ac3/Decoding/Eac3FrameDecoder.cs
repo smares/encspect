@@ -96,10 +96,19 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
         EnsureBuffers(samples);
         _context.AddWork(DecodeWork.ForSample(4) * samples * _channels);
         _context.AddWork((long)ExtraUnits * samples * _channels);
-        for (int block = 0; block < blocks; block++)
+        try
         {
-            _context.CancellationToken.ThrowIfCancellationRequested();
-            DecodeBlock(ref r, block);
+            for (int block = 0; block < blocks; block++)
+            {
+                _context.CancellationToken.ThrowIfCancellationRequested();
+                DecodeBlock(ref r, block);
+            }
+        }
+        catch (InvalidDataException)
+        {
+            // The frame is not decoded: the blocks it left half done must not be overlapped into the next one.
+            _lostBefore = true;
+            throw;
         }
 
         long first = Math.Max(frame.FirstSample, _withheldUntil);

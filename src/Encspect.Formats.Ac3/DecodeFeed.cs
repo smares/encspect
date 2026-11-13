@@ -10,7 +10,9 @@ internal sealed class DecodeFeed
 {
     internal const string Crc1 = "CRC1";
     internal const string Crc2 = "CRC2";
+    internal const string Crc = "CRC";
 
+    private readonly bool _isEac3;
     private long _position;
     private long _crc1Stored;
     private long _crc1Checked;
@@ -21,6 +23,7 @@ internal sealed class DecodeFeed
 
     public DecodeFeed(AnalysisContext context, Node stream, SyncFrame first, ReadOnlySpan<byte> firstBytes, long offset)
     {
+        _isEac3 = first.IsEac3;
         Session = context.StartDecoding(first.IsEac3 ? Ac3CodecParser.Eac3 : Ac3CodecParser.Ac3, new DecodeSetup
         {
             Stream = stream,
@@ -99,6 +102,15 @@ internal sealed class DecodeFeed
     public StreamVerification Finish(long lostSamples)
     {
         bool coversAll = lostSamples == 0 && !HadGap;
+        if (_isEac3)
+        {
+            // E-AC-3 has the one CRC, over the frame (Annex E 2.2.6), whose tally is kept as crc2's.
+            return Session.Finish(
+            [
+                new ChecksumTally { Name = Crc, Covers = ChecksumCoverage.CodedData, CoversAllAudio = coversAll, Stored = _crc2Stored, Checked = _crc2Checked, Failed = _crc2Failed },
+            ]);
+        }
+
         return Session.Finish(
         [
             new ChecksumTally { Name = Crc1, Covers = ChecksumCoverage.CodedData, Stored = _crc1Stored, Checked = _crc1Checked, Failed = _crc1Failed },

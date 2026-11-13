@@ -370,7 +370,9 @@ public class Ac3CodingSeriesTests
 
         bool coupling = false;
         bool spectral = false;
-        int beginCode = 0, endCode = 0, spxBegin = 0;
+        int beginCode = 0, endCode = 0, spxBegin = 0, spxCode = 0, ecplBegin = 0, ecplEnd = 0;
+        bool enhanced = false;
+        int[] enhancedBins = [13, 19, 25, 31, 37, 49, 61, 73, 85, 97, 109, 121, 133, 145, 157, 169, 181, 193, 205, 217, 229, 241, 253];
         var coupled = new bool[labels.Length];
         var inSpectral = new bool[labels.Length];
         var widths = new int[labels.Length];
@@ -411,6 +413,18 @@ public class Ac3CodingSeriesTests
                 {
                     endCode = Number(end.Value!.ToString());
                 }
+
+                if (fields.FirstOrDefault(c => c.Name == "IsEnhancedCouplingInUse") is { } use)
+                {
+                    enhanced = use.Value!.AsBoolean() == true;
+                }
+
+                if (fields.FirstOrDefault(c => c.Name == "Enhanced Coupling Begin Code") is { } enhancedBegin)
+                {
+                    int code = Number(enhancedBegin.Value!.ToString());
+                    ecplBegin = code < 3 ? code * 2 : code < 13 ? code + 2 : (code * 2) - 10;
+                    ecplEnd = fields.FirstOrDefault(c => c.Name == "Enhanced Coupling End Code") is { } enhancedEnd ? Number(enhancedEnd.Value!.ToString()) + 7 : spxCode < 6 ? spxCode + 5 : spxCode * 2;
+                }
             }
             else
             {
@@ -430,6 +444,7 @@ public class Ac3CodingSeriesTests
                         }
 
                         int code = Number(fields.First(c => c.Name == "Spectral Extension Begin Code").Value!.ToString());
+                        spxCode = code;
                         spxBegin = code < 6 ? code + 2 : (code * 2) - 3;
                     }
                     else
@@ -463,12 +478,12 @@ public class Ac3CodingSeriesTests
             int top = 0;
             for (int ch = 0; ch < labels.Length; ch++)
             {
-                top = Math.Max(top, coupled[ch] ? 37 + (12 * beginCode) : eac3 && inSpectral[ch] ? 25 + (12 * spxBegin) : 37 + (3 * (widths[ch] + 12)));
+                top = Math.Max(top, coupled[ch] ? enhanced ? enhancedBins[ecplBegin] : 37 + (12 * beginCode) : eac3 && inSpectral[ch] ? 25 + (12 * spxBegin) : 37 + (3 * (widths[ch] + 12)));
             }
 
             if (coupling)
             {
-                top = Math.Max(top, 37 + (12 * (endCode + 3)));
+                top = Math.Max(top, enhanced ? enhancedBins[ecplEnd] : 37 + (12 * (endCode + 3)));
             }
 
             result.Add(new Block(fields.Any(c => c.Name.StartsWith("IsBlockSwitched", StringComparison.Ordinal) && c.Value!.AsBoolean() == true),

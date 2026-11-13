@@ -130,8 +130,8 @@ def ac3(**options):
 def eac3(**options):
     ends = []
     frame = m.eac3_frame(ends=ends, **options)
-    # Nor does it read past the adaptive hybrid transform, enhanced coupling or at a reduced rate.
-    if options.get("fscod", 0) != 3 and not options.get("ecpl") and not options.get("aht_channel"):
+    # Nor does it read the blocks of a reduced rate.
+    if options.get("fscod", 0) != 3:
         ENDS[frame] = ends
     return frame
 
@@ -409,14 +409,14 @@ def build():
 
     build_coding()
 
-    # Where the analyzer stops: the adaptive hybrid transform, enhanced coupling, a reduced rate.
+    # The adaptive hybrid transform and enhanced coupling, with every bin at no bits (the frame's SNR offsets are 0), and a reduced rate.
     data = eac3(acmod=2, ahte=1, aht_channel=1, words=200) * 3
-    fixture("aht", ".eac3", "Three 2/0 frames whose left channel uses the adaptive hybrid transform; the blocks are read up to its mantissas.",
-            data, frames_of(data), [stream("E-AC-3", 48000, 2, 0, 3 * 1536)], [("ac3.aht-not-read", "adaptive hybrid transform")],
-            crosscheck={"ffprobe": True, "decode": False, "skip": {"decode": "The frames hold no valid AHT mantissas, so decoders play noise or reject them."}})
+    fixture("aht", ".eac3", "Three 2/0 frames whose left channel uses the adaptive hybrid transform, with no bits for its mantissas.",
+            data, frames_of(data), [stream("E-AC-3", 48000, 2, 0, 3 * 1536)], [],
+            crosscheck={"ffprobe": True, "decode": True, "skip": {}})
     data = eac3(acmod=7, cplinu=True, ecpl=True, words=320) * 3
-    fixture("enhanced-coupling", ".eac3", "Three 3/2 frames with enhanced coupling in block 0; the blocks are read up to it.", data, frames_of(data),
-            [stream("E-AC-3", 48000, 7, 0, 3 * 1536)], [("ac3.enhanced-coupling-not-read", "enhanced coupling")],
+    fixture("enhanced-coupling", ".eac3", "Three 3/2 frames with enhanced coupling from block 0 on, with no bits for the mantissas.", data, frames_of(data),
+            [stream("E-AC-3", 48000, 7, 0, 3 * 1536)], [],
             crosscheck={"ffprobe": True, "ffprobe_bitrate": False, "decode": False,
                         "skip": {"decode": "ffmpeg does not decode enhanced coupling.", "ffprobe_bitrate": "ffmpeg gives no bitrate for frames it cannot decode."}})
     data = eac3(acmod=2, fscod=3, fscod2=0, words=128) * 3
@@ -537,17 +537,15 @@ def build_object_audio():
            lambda r: m.dec3(r, base, extension=(1, 16, 0x55)), [("ac3.config-differs", "gives flag_ec3_extension_type_a 1"), ("ac3.config-reserved", "Reserved bits")],
            unit_=eac3(acmod=7, lfeon=1, words=1024, bsmod=0), objects=None)
 
-    # Frames whose audio blocks are not read (the adaptive hybrid transform) still carry the flag and the
-    # container, which sits in the bits after block 0, and dec3 agrees with them.
+    # Frames with the adaptive hybrid transform carry the flag and the container, which sits in the bits after the last block, and dec3 agrees with them.
     aht = eac3(acmod=2, ahte=1, aht_channel=1, words=300, addbsi=emdf.addbsi(4), tail=emdf.object_audio(objects=4, size=24))
-    mp4_of("joc-aht", "Four 2/0 frames in MP4 whose left channel uses the adaptive hybrid transform, so their audio blocks are not read, with the extension flag "
-           "and a container for 4 objects after block 0, and a dec3 box that sets the extension with complexity index 4.",
-           lambda r: m.dec3(r, [(0, 16, 0, 0, 2, 0, 0, 0)], extension=(1, 4)), [("ac3.aht-not-read", "adaptive hybrid transform")], unit_=aht, objects=4, acmod=2,
+    mp4_of("joc-aht", "Four 2/0 frames in MP4 whose left channel uses the adaptive hybrid transform, with the extension flag "
+           "and a container for 4 objects after the last block, and a dec3 box that sets the extension with complexity index 4.",
+           lambda r: m.dec3(r, [(0, 16, 0, 0, 2, 0, 0, 0)], extension=(1, 4)), [], unit_=aht, objects=4, acmod=2,
            lfeon=0, channels=2,
            fields={"MP4/moov/trak/mdia/minf/stbl/stsd/ec-3/dec3/Complexity Index Type A": "4"})
     fixtures_aht = FIXTURES["joc-aht.mp4"][1]
-    fixtures_aht["crosscheck"] = {"ffprobe": True, "decode": False,
-                                  "skip": {"decode": "The frames hold no valid AHT mantissas, so decoders play noise or reject them."}}
+    fixtures_aht["crosscheck"] = {"ffprobe": True, "decode": True, "skip": {}}
 
     # 7.1: a 5.1 core and a dependent substream with the rear surround pair; the container follows the
     # dependent substream's last block, and only that substream sets the extension (TS 103 420 8.2).
