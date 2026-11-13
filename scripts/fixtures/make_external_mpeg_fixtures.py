@@ -99,7 +99,7 @@ from conformance_mpeg_audio import guessenc as guessenc_multichannel
 from crosscheck_mpeg_fixtures import (decoded_onset, decoded_samples, guessenc_guess, guessenc_ofl, guessenc_stream, guessenc_summary,
                                       guessenc_tag_lines)
 
-OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "mpeg"
+OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "mpeg-audio"
 LAME_VERSION = "LAME 64bits version 3.100"
 CHANNELS = {"Mono": 1}
 TWOLAME_VERSION = "TwoLAME version 0.4.0"

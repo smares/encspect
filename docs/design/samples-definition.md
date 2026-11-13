@@ -85,7 +85,7 @@ WMA has no public specification, so "declared samples" for an undamaged stream m
   | Fixture | Frames | Samples | Average bitrate | Basis today |
   |---|---|---|---|---|
   | `ac3/truncated.ac3` | 6 | 9,216 | 179.5 kbps | cut frame in both; (5 × 768 + 468) bytes over 9,216 samples |
-  | `mpeg/truncated-last-frame.mp3` | 5 | 5,760 | 128.0 kbps | cut frame in neither |
+  | `mpeg-audio/truncated-last-frame.mp3` | 5 | 5,760 | 128.0 kbps | cut frame in neither |
   | `flac/built-cut-mid-frame.flac` | 4 (cut in) | 12,288 | 265.8 kbps | count includes it, samples do not |
   | `tta/built-cut-mid-frame.tta` | 1 (cut out) | 46,080 | 1.56 kbps | cut frame in neither |
   | `truehd/built-unit-cut.thd` | 80 (cut in) | 3,160 | 1,059.1 kbps | count includes it, samples do not |
@@ -152,7 +152,7 @@ WMA has no public specification, so "declared samples" for an undamaged stream m
 Every format gains `LostSamples`; goldens change only where it is above 0 or `samples` changes. Each entry's commit also changes its generator or model ([Rollout](#rollout)).
 
 - **MPEG audio.** A cut frame counts 1,152 and is lost. Eight goldens, none in `layer2`/`layer3`:
-  - `mpeg/truncated-last-frame.mp3` 5,760 → 6,912; `cut-frame-stream-change.mp3` first stream 5,760 → 6,912; `mpeg/vbr/lame-truncated-last-frame.mp3` 8,064 → 9,216;
+  - `mpeg-audio/truncated-last-frame.mp3` 5,760 → 6,912; `cut-frame-stream-change.mp3` first stream 5,760 → 6,912; `mpeg-audio/vbr/lame-truncated-last-frame.mp3` 8,064 → 9,216;
   - `external-blade080-stereo.mp3` and `blade082` (405 of 418 bytes), `external-shine-joint.mp3` (522 of 523), `external-shine-music.mp3` (415 of 418): 87,552 → 88,704;
   - `damaged-bitrate.mp3` (418 of the 627 bytes its damaged index declares): 8,064 → 9,216, which the fixture's description calls no loss ([question 4](#open-questions)).
 - **ADTS, ADIF, AAC.** `truncated.aac` 12,288, lost 1,024; `damaged-length.aac` 30,720, lost 1,024; `sbr-in-truncated-frame.aac` 4,096 at 22,050 Hz, lost 2,048. A header destroyed by damage is a gap and counts nothing (`damaged-header.aac` 29,696). `blocks-missing.aac` stays 10,240 ([question 5](#open-questions)). Broken-syntax blocks by [question 8](#open-questions).
@@ -269,7 +269,7 @@ One pull request, `fix/samples-declared-positions`.
    - `built-frame-data-bytes-too-large.ape` and `built-seek-first-entry-off-by-two.ape`, flagged `monkeys-audio.frame-cut` on frame 2 from the descriptor's size or the seek table, which decode in full (160,000), so the invariant fails on them by design;
    - the four SV5 files with `musepack.last-frame-unwritten`, on every file from that encoder;
    - the DTS-HD last frames, if the core is whole (**unverified**);
-   - three files where only the declaration is wrong (`mpeg/damaged-bitrate.mp3`, `aac/adts/damaged-length.aac`, `dts/fsize-too-large.dts`), which a parser cannot tell from `cut-frame-stream-change.mp3`.
+   - three files where only the declaration is wrong (`mpeg-audio/damaged-bitrate.mp3`, `aac/adts/damaged-length.aac`, `dts/fsize-too-large.dts`), which a parser cannot tell from `cut-frame-stream-change.mp3`.
 
    (a) Cut means lost; the description says "cut" and claims nothing about the audio. (b) Refine per format where the parser reads far enough (the Layer III main data end, the AAC END element, FLAC subframes, an ALAC element) or where Encspect's decoder decodes the unit in full; this changes the four encoder-written MPEG files and the Monkey's Audio and Musepack cases above. Monkey's Audio can use its decoder as evidence now. *Recommendation:* (a) in this pull request, (b) later per format with its own goldens; the named files are exceptions of the invariant.
 5. **A declaration the bytes contradict** (`aac.blocks-missing`; a Speex packet with `speex.missing-frames`). (a) Trust the declaration: `blocks-missing.aac` becomes 40,960 with 30,720 lost, 75% of a file whose frames are whole, against FDK's 10,240. (b) A declaration contradicted by complete bytes counts what the bytes hold and is not lost; a unit cut by the end counts its declared samples and is lost. (c) Never count a cut unit. *Recommendation:* (b).

@@ -50,7 +50,7 @@ public class ApeEncoderClaimTests
     [InlineData("ENCODER")]
     public void MpegAudioTakesTheItemAsTheWriter(string key)
     {
-        Report report = Analyze("claim.mp3", [.. Fixture("mpeg/external-lame-cbr128-joint.mp3"), .. Text(key, "Shine 3.1")]);
+        Report report = Analyze("claim.mp3", [.. Fixture("mpeg-audio/external-lame-cbr128-joint.mp3"), .. Text(key, "Shine 3.1")]);
 
         StreamInfo stream = Assert.Single(report.Streams);
         Assert.StartsWith("LAME", stream.Encoder, StringComparison.Ordinal);
@@ -62,7 +62,7 @@ public class ApeEncoderClaimTests
     public void TwoWritersThatNameDifferentSoftwareAreAConflict()
     {
         byte[] id3 = TestFiles.Id3v23(("TSSE", "Lavf60.16.100"));
-        Report report = Analyze("claim.mp3", [.. id3, .. Fixture("mpeg/external-lame-cbr128-joint.mp3"), .. Text("Encoder", "Shine 3.1")]);
+        Report report = Analyze("claim.mp3", [.. id3, .. Fixture("mpeg-audio/external-lame-cbr128-joint.mp3"), .. Text("Encoder", "Shine 3.1")]);
 
         StreamInfo stream = Assert.Single(report.Streams);
         Assert.Equal("FFmpeg (Lavf60.16.100)", stream.Writer);

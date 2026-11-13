@@ -19,7 +19,7 @@ internal static class LongInputs
 
     public static byte[] Build(string name) => name switch
     {
-        "mpeg-layer3-lame" => Repeat("mpeg/external-lame-cbr128-joint.mp3", 94),
+        "mpeg-layer3-lame" => Repeat("mpeg-audio/external-lame-cbr128-joint.mp3", 94),
         "mpeg-layer3-frames" => Layer3Frames(2060),
         "adts" => Repeat("aac/adts/stereo.aac", 345),
         "ac3" => Repeat("ac3/external-ffmpeg-stereo-192k.ac3", 129),

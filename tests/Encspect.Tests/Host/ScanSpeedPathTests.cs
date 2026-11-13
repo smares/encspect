@@ -1,7 +1,7 @@
 using System.Buffers;
 using Encspect.Core;
 using Encspect.Formats.Dts;
-using Encspect.Formats.Mpeg;
+using Encspect.Formats.MpegAudio;
 
 namespace Encspect.Tests;
 

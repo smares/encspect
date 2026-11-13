@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Checks the MPEG fixtures' expected results against independent decoders.
 
-For every fixture in tests/fixtures/mpeg, layer3, layer2 and vbr whose manifest has
+For every fixture in tests/fixtures/mpeg-audio, layer3, layer2 and vbr whose manifest has
 "crosscheck": true, ffprobe must report exactly the frames the manifest lists (offset and length
 of each), and for protected frames libmad (madplay) must report a CRC failure for exactly the
 frames the manifest expects one for. libmad is used for CRCs because ffmpeg 6.1 rejects every
@@ -123,7 +123,7 @@ import vbr_tags
 from conformance_mpeg_audio import guessenc as guessenc_multichannel
 
 ROOT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures"
-DIRECTORIES = [ROOT / "mpeg", ROOT / "mpeg" / "layer3", ROOT / "mpeg" / "layer2", ROOT / "mpeg" / "vbr", ROOT / "mpeg" / "stats"]
+DIRECTORIES = [ROOT / "mpeg-audio", ROOT / "mpeg-audio" / "layer3", ROOT / "mpeg-audio" / "layer2", ROOT / "mpeg-audio" / "vbr", ROOT / "mpeg-audio" / "stats"]
 TAGS = ROOT / "tags"
 CHANNELS = {"Mono": 1}
 GUESSENC_MODES = {"Simple stereo": "0", "Intensity stereo": "1", "Mid-side stereo": "2", "Intensity and mid-side stereo": "3"}
@@ -1439,15 +1439,15 @@ MEDIAINFO_LONE = ("MediaInfo takes a single frame for a stream where it ends exa
                   "where the analyzer needs a chain of frames")
 # Fixtures on which MediaInfo reads a field differently, with the evidence.
 MEDIAINFO_READS_OTHERWISE = {
-    "mpeg/lone-frame-overflow": {"format": MEDIAINFO_LONE},
-    "mpeg/lone-frames-forbidden-allocation": {"format": MEDIAINFO_LONE},
+    "mpeg-audio/lone-frame-overflow": {"format": MEDIAINFO_LONE},
+    "mpeg-audio/lone-frames-forbidden-allocation": {"format": MEDIAINFO_LONE},
     "layer3/lone-frame-invalid-side-info": {"format": MEDIAINFO_LONE},
-    "mpeg/protected-weak-chain": {"format": "observed with MediaInfo 26.01 (CI run 43113298773): it takes the six protected Layer III frames after 300 bytes of data for MPEG Audio "
+    "mpeg-audio/protected-weak-chain": {"format": "observed with MediaInfo 26.01 (CI run 43113298773): it takes the six protected Layer III frames after 300 bytes of data for MPEG Audio "
                                             "although none of their CRCs holds, where the analyzer leaves a protected chain further in than the start of the data with no CRC that "
                                             "holds unidentified (SniffResult.WeakClass, format.weak-candidate)"},
-    "mpeg/tagged-stream": {"stream size": "MediaInfo sizes the 52-byte APE tag, which has no header, as 84 bytes (Tag/File__Tags.cpp, DetectBeginOfEndTags_Test: ApeTag_Size+=32 for version 2000, whatever the header flag; its trace: \"ApeTag (84 bytes)\"), and its byte count falls those 84 bytes short of the frames' 3343"},
+    "mpeg-audio/tagged-stream": {"stream size": "MediaInfo sizes the 52-byte APE tag, which has no header, as 84 bytes (Tag/File__Tags.cpp, DetectBeginOfEndTags_Test: ApeTag_Size+=32 for version 2000, whatever the header flag; its trace: \"ApeTag (84 bytes)\"), and its byte count falls those 84 bytes short of the frames' 3343"},
     "vbr/lame-before-joined-frames": dict.fromkeys(["bitrate mode", "samples", "bitrate"], "MediaInfo reports the two streams as one (File_Mpega.cpp): their frames' two bitrates without a VBR header in the first frames make it VBR (Streams_Fill, BitRate_Count), so it gives no bitrate or sample count, and it counts the frames of both"),
-    "mpeg/channel-mode-change": {"stream's mode": "the channel mode changes within the stream (mpeg.channel-mode-changed): MediaInfo gives the last frame's, mono, and the analyzer the stream's first audio frame's, joint stereo"},
+    "mpeg-audio/channel-mode-change": {"stream's mode": "the channel mode changes within the stream (mpeg.channel-mode-changed): MediaInfo gives the last frame's, mono, and the analyzer the stream's first audio frame's, joint stereo"},
     "vbr/xing-in-layer2": {"bitrate mode": "MediaInfo reads \"Xing\" as a VBR header in any layer (File_Mpega.cpp, Header_Xing), where Layer II frames carry none and the bytes are ancillary data"},
     "vbr/xing-truncated": dict.fromkeys(["frames", "samples", "bitrate", "stream size"], "MediaInfo drops a Xing header whose announced fields do not fit its frame (File_Mpega.cpp, Header_Xing: \"Error tag size\"), the counts before the TOC too, and counts its frame as audio"),
 }

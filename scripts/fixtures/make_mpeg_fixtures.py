@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Writes the byte-exact MPEG audio fixtures in tests/fixtures/mpeg.
+"""Writes the byte-exact MPEG audio fixtures in tests/fixtures/mpeg-audio.
 
 Every frame has a zero payload, which every decoder treats as a valid silent frame, so the
 headers, CRCs and the layout of frames, gaps and tags are fully under control. Each fixture is a
@@ -45,7 +45,7 @@ import sys
 
 import stream_stats
 
-OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "mpeg"
+OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "mpeg-audio"
 
 VERSION_BITS = {"1": 0b11, "2": 0b10, "2.5": 0b00}
 VERSION_NAMES = {"1": "MPEG-1", "2": "MPEG-2", "2.5": "MPEG-2.5"}

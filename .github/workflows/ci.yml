@@ -115,7 +115,7 @@ jobs:
             /src/Encspect.Formats.Matroska/Elements.cs
             /README.md
             /CLAUDE.md
-            /tests/fixtures/mpeg/channel-mode-change.report.json
+            /tests/fixtures/mpeg-audio/channel-mode-change.report.json
             /tests/conformance/
             /.github/workflows/sources.yml
           sparse-checkout-cone-mode: false
@@ -274,7 +274,7 @@ jobs:
       - name: Run the published CLI
         shell: bash
         run: |
-          publish/${{ matrix.rid }}/encspect --csv tests/fixtures/mpeg/external-lame-tagged.mp3 | tee "$RUNNER_TEMP/out.csv"
+          publish/${{ matrix.rid }}/encspect --csv tests/fixtures/mpeg-audio/external-lame-tagged.mp3 | tee "$RUNNER_TEMP/out.csv"
           grep -q 'LAME 3.100' "$RUNNER_TEMP/out.csv"
 
       # What the CLI needs of the system: glibc 2.27 and the libraries glibc ships, nothing else (the version references and
@@ -301,7 +301,7 @@ jobs:
         if: endsWith(matrix.rid, '-x64') && (matrix.rid == 'linux-x64' || github.event_name != 'pull_request')
         shell: bash
         run: |
-          publish/${{ matrix.rid }}-v3/encspect --csv tests/fixtures/mpeg/external-lame-tagged.mp3 | tee "$RUNNER_TEMP/out-v3.csv"
+          publish/${{ matrix.rid }}-v3/encspect --csv tests/fixtures/mpeg-audio/external-lame-tagged.mp3 | tee "$RUNNER_TEMP/out-v3.csv"
           grep -q 'LAME 3.100' "$RUNNER_TEMP/out-v3.csv"
 
       - name: Check the glibc the x86-64-v3 CLI needs
@@ -323,7 +323,7 @@ jobs:
       - name: Run the published GUI's self-check
         shell: bash
         run: |
-          publish/gui-${{ matrix.rid }}/encspect-gui --self-check tests/fixtures/mpeg/external-lame-tagged.mp3 | tee "$RUNNER_TEMP/gui.txt"
+          publish/gui-${{ matrix.rid }}/encspect-gui --self-check tests/fixtures/mpeg-audio/external-lame-tagged.mp3 | tee "$RUNNER_TEMP/gui.txt"
           grep -q 'Skia and HarfBuzz loaded' "$RUNNER_TEMP/gui.txt"
           grep -q 'Platform backend' "$RUNNER_TEMP/gui.txt"
           grep -q 'LAME 3.100' "$RUNNER_TEMP/gui.txt"
@@ -349,7 +349,7 @@ jobs:
           for _ in $(seq 50); do test -S "$XDG_RUNTIME_DIR/encspect-wl" && break; sleep 0.2; done
           test -S "$XDG_RUNTIME_DIR/encspect-wl" || { cat "$RUNNER_TEMP/weston.log"; exit 1; }
           gui=publish/gui-${{ matrix.rid }}/encspect-gui
-          fixture=tests/fixtures/mpeg/external-lame-tagged.mp3
+          fixture=tests/fixtures/mpeg-audio/external-lame-tagged.mp3
 
           # Wayland is opt-in.
           env -u DISPLAY WAYLAND_DISPLAY=encspect-wl ENCSPECT_GUI_BACKEND=wayland timeout 120 $gui --self-check $fixture | tee "$RUNNER_TEMP/wayland.txt"

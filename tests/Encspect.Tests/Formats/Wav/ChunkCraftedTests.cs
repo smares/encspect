@@ -299,7 +299,7 @@ public class ChunkCraftedTests
     [Fact]
     public void WrappedFormatsAreStillDetectedAsTheirOwn()
     {
-        byte[] mp3 = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "mpeg/external-lame-cbr128-joint.mp3"));
+        byte[] mp3 = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "mpeg-audio/external-lame-cbr128-joint.mp3"));
         byte[] wrapped = [.. "RIFF"u8, .. BitConverter.GetBytes(mp3.Length + 12), .. "RMP3"u8, .. "data"u8, .. BitConverter.GetBytes(mp3.Length), .. mp3];
 
         Report report = Analyze(wrapped, "wrapped.mp3");

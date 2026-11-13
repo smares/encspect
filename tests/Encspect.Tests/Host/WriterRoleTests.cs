@@ -380,7 +380,7 @@ public partial class WriterRoleTests
     {
         Finding Only(Report report, string code) => Assert.Single(report.Findings, f => f.Code == code);
 
-        Finding mpeg = Only(WithApe("mpeg/external-lame-cbr128-joint.mp3", "a.mp3", "Encoder", "FAAC 1.30"), "mpeg.writer-other-format");
+        Finding mpeg = Only(WithApe("mpeg-audio/external-lame-cbr128-joint.mp3", "a.mp3", "Encoder", "FAAC 1.30"), "mpeg.writer-other-format");
         Assert.Equal("The APE Encoder item names \"FAAC 1.30\", which writes AAC, not MPEG audio.", mpeg.Message);
         Assert.NotNull(mpeg.Path);
         // the finding points at the tag item that states the claim, not at the encoder's evidence
@@ -401,7 +401,7 @@ public partial class WriterRoleTests
         Only(WithApe("wavpack/external-lossless-16-stereo.wv", "a.wv", "Encoder", "LAME 3.100"), "wavpack.writer-other-format");
 
         // matching format, FFmpeg and unknown software raise nothing
-        Assert.DoesNotContain(WithApe("mpeg/external-lame-cbr128-joint.mp3", "b.mp3", "Encoder", "LAME 3.100").Findings, f => f.Code.EndsWith("other-format", StringComparison.Ordinal));
+        Assert.DoesNotContain(WithApe("mpeg-audio/external-lame-cbr128-joint.mp3", "b.mp3", "Encoder", "LAME 3.100").Findings, f => f.Code.EndsWith("other-format", StringComparison.Ordinal));
         Assert.DoesNotContain(WithApe("wavpack/external-lossless-16-stereo.wv", "b.wv", "Encoder", "Lavf60.16.100").Findings, f => f.Code.EndsWith("other-format", StringComparison.Ordinal));
         Assert.DoesNotContain(WithApe("wavpack/external-lossless-16-stereo.wv", "c.wv", "Encoder", "Foo Muxer 1.0").Findings, f => f.Code.EndsWith("other-format", StringComparison.Ordinal));
         Assert.DoesNotContain(Analyze("d.m4a", Fixture("aac/mp4box-mux.m4a")).Findings, f => f.Code.EndsWith("other-format", StringComparison.Ordinal));
@@ -423,11 +423,11 @@ public partial class WriterRoleTests
     [Fact]
     public void AnFfmpegStyleLameTagNamesTheMuxerAsTheWriterWithoutAVersion()
     {
-        StreamInfo bitExact = Assert.Single(Analyze("bitexact.mp3", Fixture("mpeg/external-ffmpeg-bitexact.mp3")).Streams);
+        StreamInfo bitExact = Assert.Single(Analyze("bitexact.mp3", Fixture("mpeg-audio/external-ffmpeg-bitexact.mp3")).Streams);
         Assert.Equal(("LAME 3.100", "FFmpeg", Confidence.Low), (bitExact.Encoder, bitExact.Writer, bitExact.WriterConfidence));
 
         // ffmpeg's tag CRC over the frame's first 190 bytes is the muxer's layout, whatever the encoder string says
-        StreamInfo quirk = Assert.Single(Fixtures.AnalyzeMpeg("mpeg/vbr/lame-ffmpeg-crc.mp3").Streams);
+        StreamInfo quirk = Assert.Single(Fixtures.AnalyzeMpeg("mpeg-audio/vbr/lame-ffmpeg-crc.mp3").Streams);
         Assert.Equal(("FFmpeg", Confidence.Low), (quirk.Writer, quirk.WriterConfidence));
         Assert.StartsWith("FFmpeg (Lavc", quirk.Encoder, StringComparison.Ordinal);
     }

@@ -12,21 +12,21 @@ public partial class ContainerTests
     // The RIFF header and the chunk header before the first chunk's data.
     private const long FirstChunkData = 20;
 
-    private static readonly byte[] Blade = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "mpeg", "external-blade-flags.mp3"));
+    private static readonly byte[] Blade = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "mpeg-audio", "external-blade-flags.mp3"));
 
     [GeneratedRegex("0x[0-9A-F]+")]
     private static partial Regex HexNumber();
 
     [Theory]
-    [InlineData("mpeg/external-blade-flags.mp3")]
-    [InlineData("mpeg/mpeg1-layer3-crc-mismatch.mp3")]
-    [InlineData("mpeg/damaged-bitrate.mp3")]
-    [InlineData("mpeg/channel-mode-change.mp3")]
-    [InlineData("mpeg/truncated-last-frame.mp3")]
-    [InlineData("mpeg/trailing-garbage.mp3")]
-    [InlineData("mpeg/stream-change-after-gap.mp3")]
-    [InlineData("mpeg/leading-junk.mp3")]
-    [InlineData("mpeg/layer2/crc-mismatch.mp2")]
+    [InlineData("mpeg-audio/external-blade-flags.mp3")]
+    [InlineData("mpeg-audio/mpeg1-layer3-crc-mismatch.mp3")]
+    [InlineData("mpeg-audio/damaged-bitrate.mp3")]
+    [InlineData("mpeg-audio/channel-mode-change.mp3")]
+    [InlineData("mpeg-audio/truncated-last-frame.mp3")]
+    [InlineData("mpeg-audio/trailing-garbage.mp3")]
+    [InlineData("mpeg-audio/stream-change-after-gap.mp3")]
+    [InlineData("mpeg-audio/leading-junk.mp3")]
+    [InlineData("mpeg-audio/layer2/crc-mismatch.mp2")]
     public void MpegPayloadIsAnalyzedAsTheSameBytesInAFile(string fixture)
     {
         byte[] audio = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, fixture));

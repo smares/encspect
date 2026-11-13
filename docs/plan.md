@@ -173,6 +173,7 @@ The common lossy formats are decoded, so their files get the spectrum, cutoff, l
 5. **Small fixes queued with the intensity stereo bound** (the lead, 2026-11-12; the first from parallel local runs of the tests, the second from the Opus decoder's MP4 route):
    - `MemoryTests`' `SharedPoolGuard` fails `DecodingManyVorbisPacketsHoldsNothingPerPacket`, `ManyEmptyVorbisCommentsStayBounded` and an MP4 memory test in parallel local runs; each passes alone, so the guard sees another test's pool use.
    - Opus in MP4 takes no ©too writer claim from the container, as AC-3 and AAC in MP4 do.
+6. **Rename of the MPEG audio project (done,** the lead, 2026-11-13): `Encspect.Formats.Mpeg` is now `Encspect.Formats.MpegAudio`, with its tests in `Formats/MpegAudio` and its fixtures in `tests/fixtures/mpeg-audio`, so that the project names match the format name used elsewhere. Codec IDs, node names, finding codes (`mpeg.*`) and the `mpeg` format filter of the command line are the analyzer's vocabulary and are unchanged.
 
 ### 0.4: Free decoders and routes complete
 

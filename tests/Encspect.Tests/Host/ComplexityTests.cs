@@ -545,13 +545,13 @@ public class ComplexityTests
         Report report = Timed(data.ToArray());
 
         Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
-        Assert.Equal(Encspect.Formats.Mpeg.MpegAudioParser.MaxStreams, report.Streams.Count);
+        Assert.Equal(Encspect.Formats.MpegAudio.MpegAudioParser.MaxStreams, report.Streams.Count);
         Finding changed = Assert.Single(report.Findings, f => f.Code == "mpeg.stream-changed");
         Assert.Equal(Severity.Info, changed.Severity);
         Assert.Equal(runs - 1, changed.Count);
         Finding limited = Assert.Single(report.Findings, f => f.Code == "mpeg.streams-limited");
         Assert.Equal(Severity.Warning, limited.Severity);
-        Assert.Equal(3 * (runs - Encspect.Formats.Mpeg.MpegAudioParser.MaxStreams), limited.Count);
+        Assert.Equal(3 * (runs - Encspect.Formats.MpegAudio.MpegAudioParser.MaxStreams), limited.Count);
         Assert.All(report.Findings, f => Assert.NotNull(f.Path));
     }
 

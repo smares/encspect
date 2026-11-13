@@ -210,9 +210,9 @@ public class CategorySummaryTests
     }
 
     [Theory]
-    [InlineData("mpeg/ape-encoder-lavc.mp3")]
-    [InlineData("mpeg/external-lame-cbr128-joint.mp3")]
-    [InlineData("mpeg/external-fhg-stereo-vbr.mp3")]
+    [InlineData("mpeg-audio/ape-encoder-lavc.mp3")]
+    [InlineData("mpeg-audio/external-lame-cbr128-joint.mp3")]
+    [InlineData("mpeg-audio/external-fhg-stereo-vbr.mp3")]
     public void A_real_tally_with_text_entries_and_omitted_zero_entries_is_read(string fixture)
     {
         (Report report, Node tally, _) = FromFixture(fixture);

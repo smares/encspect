@@ -82,7 +82,7 @@ public class DtsTests
     [Fact]
     public void MpegAudioFollowedByDtsStaysMpegAudio()
     {
-        byte[] mp3 = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "mpeg", "external-blade-stereo.mp3"));
+        byte[] mp3 = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "mpeg-audio", "external-blade-stereo.mp3"));
         foreach (string name in new[] { "external-ffmpeg-stereo-44k-256k.dts", "core-16be.dts" })
         {
             Assert.Equal("MPEG Audio", FormatOf([.. mp3, .. Fixture(name)]));
@@ -294,7 +294,7 @@ public class DtsTests
     [Fact]
     public void SyncWordsOfTheOtherFormatsAreNotDts()
     {
-        foreach (string name in new[] { "ac3/external-ffmpeg-5.1-448k.ac3", "mpeg/external-blade-flags.mp3" })
+        foreach (string name in new[] { "ac3/external-ffmpeg-5.1-448k.ac3", "mpeg-audio/external-blade-flags.mp3" })
         {
             Assert.Equal(0, Sniff(File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, name))));
         }

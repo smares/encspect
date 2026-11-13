@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Writes the byte-exact MPEG Layer III side-information and bit-reservoir fixtures in tests/fixtures/mpeg/layer3.
+"""Writes the byte-exact MPEG Layer III side-information and bit-reservoir fixtures in tests/fixtures/mpeg-audio/layer3.
 
 Each Layer III frame here carries explicit side information (ISO/IEC 11172-3 2.4.1.7 and
 2.4.2.7, ISO/IEC 13818-3 2.4.1.7) and main data that is a valid Huffman coding of all-zero
@@ -51,7 +51,7 @@ import make_mpeg_fixtures as mpeg
 import stream_stats
 from make_mpeg_fixtures import Fixture, Frame, cbr_padding, junk, side_info_size
 
-OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "mpeg" / "layer3"
+OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "mpeg-audio" / "layer3"
 
 BLOCK_TYPES = ["Normal", "Start", "Short", "Stop"]
 SHORT = 2

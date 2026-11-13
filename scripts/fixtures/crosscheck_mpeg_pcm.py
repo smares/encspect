@@ -5,7 +5,7 @@
     crosscheck_mpeg_pcm.py [--pcmdump CMD] [--ffmpeg PATH] [--keep DIR] [FILE ...]
 
 CMD runs a built tests/Encspect.PcmDump, for example "dotnet tests/Encspect.PcmDump/bin/Release/net10.0/Encspect.PcmDump.dll" (the default is that path
-relative to the repository). With no FILE the script takes every MPEG audio fixture of tests/fixtures/mpeg that its reference can decode as a whole (see EXPLAINED).
+relative to the repository). With no FILE the script takes every MPEG audio fixture of tests/fixtures/mpeg-audio that its reference can decode as a whole (see EXPLAINED).
 
 For each file:
 
@@ -101,7 +101,7 @@ def mixed_variant(source, directory, binary):
 
 def default_files():
     skip = ("external-mp3pro", "ape-", "id3")
-    return [p for p in sorted(FIXTURES.glob("mpeg/**/*.mp3")) + sorted(FIXTURES.glob("mpeg/**/*.mp2")) + sorted(FIXTURES.glob("mpeg/**/*.mp1")) if not p.name.startswith(skip)]
+    return [p for p in sorted(FIXTURES.glob("mpeg-audio/**/*.mp3")) + sorted(FIXTURES.glob("mpeg-audio/**/*.mp2")) + sorted(FIXTURES.glob("mpeg-audio/**/*.mp1")) if not p.name.startswith(skip)]
 
 
 def is_header_frame(data, offset, length):
@@ -240,7 +240,7 @@ def main(argv=None):
     failed = compared = 0
     mixed_directory = pathlib.Path(tempfile.mkdtemp(prefix="mixed-"))
     if not args.files:
-        files = files + [m for name in MIXED_SOURCES if (m := mixed_variant(FIXTURES / "mpeg" / name, mixed_directory, binary))]
+        files = files + [m for name in MIXED_SOURCES if (m := mixed_variant(FIXTURES / "mpeg-audio" / name, mixed_directory, binary))]
     with tempfile.TemporaryDirectory() as temporary:
         base = args.keep or pathlib.Path(temporary)
         base.mkdir(parents=True, exist_ok=True)

@@ -16,7 +16,7 @@ file covers fails. Names below are node names, as a path from the report's root 
 every child of that name. A change file:
 
     {
-      "goldens": ["tests/fixtures/mpeg/", "tests/fixtures/mp4/some.report.json"],   # files or folders it covers
+      "goldens": ["tests/fixtures/mpeg-audio/", "tests/fixtures/mp4/some.report.json"],   # files or folders it covers
       "added":   [{"scope": "stream", "key": "categorySeries"},                      # a key of every stream
                   {"scope": "stream", "array": "series", "name": "Coded Bandwidth"}, # elements of a stream's array; "streams": [0] limits it to those streams
                   {"scope": "stream", "array": "series", "name": "Bitrate", "key": "concept"},  # a key of those elements
@@ -29,7 +29,7 @@ every child of that name. A change file:
       "moved":   [{"name": "Long Blocks", "from": ["Ogg", "Statistics"], "fromPosition": 4,
                    "to": ["Ogg", "Statistics", "Block Sizes"], "position": 0}],
       "changed": [{"path": ["MPEG Audio", "Statistics", "Channel Pairs"], "fields": ["value"],
-                   "goldens": ["tests/fixtures/mpeg/some.report.json"]},   # an entry may name the goldens it applies to, else it applies to all
+                   "goldens": ["tests/fixtures/mpeg-audio/some.report.json"]},   # an entry may name the goldens it applies to, else it applies to all
                   {"scope": "stream", "fields": ["samples", "duration"]},  # fields of every stream whose values may differ
                   {"scope": "stream", "array": "series", "name": "Intensity Stereo Bound", "fields": ["quantity"]},  # fields of a stream's series of that name
                   {"scope": "finding", "code": "vorbis.end-trimming-large", "fields": ["message"]}],  # fields of every finding of the code

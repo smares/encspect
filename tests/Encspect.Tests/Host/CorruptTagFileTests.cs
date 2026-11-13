@@ -16,40 +16,40 @@ public class CorruptTagFileTests
     public void RandomFilesProduceReports() => CorruptFiles.RandomFilesProduceReports();
 }
 
-// The fixtures in tests/fixtures/mpeg that LAME wrote.
+// The fixtures in tests/fixtures/mpeg-audio that LAME wrote.
 public class CorruptLameFileTests
 {
-    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("mpeg/external-lame-", StringComparison.Ordinal));
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("mpeg-audio/external-lame-", StringComparison.Ordinal));
 
     [Theory]
     [MemberData(nameof(Names))]
     public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
 }
 
-// The other fixtures in tests/fixtures/mpeg.
+// The other fixtures in tests/fixtures/mpeg-audio.
 public class CorruptMpegFileTests
 {
-    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("mpeg/", StringComparison.Ordinal) && n.IndexOf('/', 5) < 0 && !n.StartsWith("mpeg/external-lame-", StringComparison.Ordinal));
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("mpeg-audio/", StringComparison.Ordinal) && n.IndexOf('/', 5) < 0 && !n.StartsWith("mpeg-audio/external-lame-", StringComparison.Ordinal));
 
     [Theory]
     [MemberData(nameof(Names))]
     public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
 }
 
-// The fixtures in tests/fixtures/mpeg/layer2 and mpeg/layer3.
+// The fixtures in tests/fixtures/mpeg-audio/layer2 and mpeg-audio/layer3.
 public class CorruptLayerFileTests
 {
-    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("mpeg/layer2/", StringComparison.Ordinal) || n.StartsWith("mpeg/layer3/", StringComparison.Ordinal));
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("mpeg-audio/layer2/", StringComparison.Ordinal) || n.StartsWith("mpeg-audio/layer3/", StringComparison.Ordinal));
 
     [Theory]
     [MemberData(nameof(Names))]
     public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
 }
 
-// The fixtures in tests/fixtures/mpeg/vbr and mpeg/stats.
+// The fixtures in tests/fixtures/mpeg-audio/vbr and mpeg-audio/stats.
 public class CorruptVbrFileTests
 {
-    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("mpeg/vbr/", StringComparison.Ordinal) || n.StartsWith("mpeg/stats/", StringComparison.Ordinal));
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("mpeg-audio/vbr/", StringComparison.Ordinal) || n.StartsWith("mpeg-audio/stats/", StringComparison.Ordinal));
 
     [Theory]
     [MemberData(nameof(Names))]

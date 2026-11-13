@@ -50,7 +50,7 @@ public class SingularFindingTests
     [InlineData("aac/adts/stereo.aac", "aac")]
     [InlineData("ac3/external-ffmpeg-mono-96k.ac3", "ac3")]
     [InlineData("dts/external-ffmpeg-mono-8k-64k.dts", "dts")]
-    [InlineData("mpeg/external-lame-cbr128-joint.mp3", "mpeg")]
+    [InlineData("mpeg-audio/external-lame-cbr128-joint.mp3", "mpeg")]
     public void OneByteOfJunkBeforeAndAfterTheFramesReadsInTheSingular(string fixture, string prefix)
     {
         byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, fixture));

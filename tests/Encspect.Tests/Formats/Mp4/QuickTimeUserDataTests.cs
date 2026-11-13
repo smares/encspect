@@ -237,7 +237,7 @@ public class QuickTimeUserDataTests
     public void ABlockedTagAndAHostWrappedTagAreBuiltOnDemand()
     {
         Node blocked = Fixtures.AnalyzeMpeg("ogg/packet-spanning-pages.spx").Root.Children.Single().Children.Single(c => c.Name == "Logical Stream").Children.Single(c => c.Kind == NodeKind.Tag);
-        Node wrapped = Fixtures.AnalyzeMpeg("mpeg/external-lame-tagged.mp3").Root.Children.First(c => c.Kind == NodeKind.Tag);
+        Node wrapped = Fixtures.AnalyzeMpeg("mpeg-audio/external-lame-tagged.mp3").Root.Children.First(c => c.Kind == NodeKind.Tag);
 
         Assert.True(blocked.AreChildrenBuiltOnDemand);
         Assert.True(wrapped.AreChildrenBuiltOnDemand);

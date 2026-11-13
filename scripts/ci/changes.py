@@ -34,8 +34,8 @@ FIXTURE_SCRIPTS = "scripts/fixtures"
 # scripts/fixtures) belong to the job, "globs" are the rest (C, C++ and PHP sources, the manifests).
 AREAS = {
     "mpeg-crosscheck": {
-        "projects": ["Encspect.Formats.Mpeg", "Encspect.Tags.Id3", "Encspect.Tags.Ape", "Encspect.Tags.Lyrics3"],
-        "fixtures": ["mpeg", "tags"],
+        "projects": ["Encspect.Formats.MpegAudio", "Encspect.Tags.Id3", "Encspect.Tags.Ape", "Encspect.Tags.Lyrics3"],
+        "fixtures": ["mpeg-audio", "tags"],
         "scripts": ["crosscheck_mpeg_fixtures.py", "conformance_mpeg_audio.py", "check_mp3pro_samples.py", "crosscheck_mpeg_pcm.py", "conformance_mpeg_pcm.py", "compare_pcm.py",
                     "mpeg_tables.py", "minimp3_tool.py", "crosscheck_mpeg_bandwidth.py", "minimp3_coded.py"],
         "globs": ["scripts/fixtures/*.c", "scripts/fixtures/*.php", "scripts/fixtures/make_*mpeg*", "scripts/fixtures/make_layer*",
@@ -120,7 +120,7 @@ AREAS = {
                   "tests/conformance/wma-samples.json"],
     },
     "matroska-crosscheck": {
-        "projects": ["Encspect.Formats.Matroska", "Encspect.Formats.Aac", "Encspect.Formats.Ac3", "Encspect.Formats.Dts", "Encspect.Formats.Mpeg",
+        "projects": ["Encspect.Formats.Matroska", "Encspect.Formats.Aac", "Encspect.Formats.Ac3", "Encspect.Formats.Dts", "Encspect.Formats.MpegAudio",
                      "Encspect.Formats.Opus", "Encspect.Formats.Vorbis"],
         "fixtures": ["matroska"],
         "scripts": ["crosscheck_matroska_fixtures.py", "matroska_tables.py"],

@@ -10,7 +10,7 @@ namespace Encspect.Tests;
 public class DecoderSessionInvariantTests
 {
     // The directories of the fixtures of each registered decoder's codec, and of the containers that may carry it.
-    private static readonly string[] Directories = ["flac", "wavpack", "monkeys-audio", "truehd", "wav", "aiff", "matroska", "mp4", "ogg", "measurement", "tta", "alac", "mpeg", "ac3"];
+    private static readonly string[] Directories = ["flac", "wavpack", "monkeys-audio", "truehd", "wav", "aiff", "matroska", "mp4", "ogg", "measurement", "tta", "alac", "mpeg-audio", "ac3"];
 
     // The codec name each registered decoder's parser reports, by the decoder's ID.
     private static readonly Dictionary<string, string> DecoderOfCodec = new(StringComparer.Ordinal)

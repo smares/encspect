@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Writes the byte-exact MPEG Layer II fixtures in tests/fixtures/mpeg/layer2.
+"""Writes the byte-exact MPEG Layer II fixtures in tests/fixtures/mpeg-audio/layer2.
 
 Each Layer II frame here carries explicit audio data (ISO/IEC 11172-3 2.4.1.6 and 2.4.2.6): a bit
 allocation per subband and channel from one of the allocation tables (Annex B, Table B.2a to
@@ -36,7 +36,7 @@ import sys
 import make_mpeg_fixtures as mpeg
 from make_mpeg_fixtures import Fixture, Frame, cbr_padding
 
-OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "mpeg" / "layer2"
+OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "mpeg-audio" / "layer2"
 
 # Quantization levels per allocation index for each group of subbands; None is no allocation.
 A0 = [None, 3, 7, 15, 31, 63, 127, 255, 511, 1023, 2047, 4095, 8191, 16383, 32767, 65535]
