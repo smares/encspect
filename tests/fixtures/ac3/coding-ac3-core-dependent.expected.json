@@ -45,15 +45,41 @@
     "back left",
     "back right"
    ],
-   "samples": 6144,
-   "is_vbr": true
+   "samples": 1536,
+   "is_vbr": false
+  },
+  {
+   "codec": "AC-3",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 1536,
+   "is_vbr": false
+  },
+  {
+   "codec": "E-AC-3",
+   "sample_rate": 48000,
+   "channels": 4,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right",
+    "back left",
+    "back right"
+   ],
+   "samples": 3072,
+   "is_vbr": false
   }
  ],
  "fields": {},
  "findings": [
   [
-   "ac3.dependent-layout-changed",
-   "add other channels in 1 of its frames than in its first"
+   "ac3.stream-changed",
+   "the streams change 2 times in the file"
   ]
  ],
  "crosscheck": {
@@ -169,7 +195,9 @@
      true
     ],
     "bandwidth": 18094
-   },
+   }
+  ],
+  [
    {
     "switching": [
      false,
@@ -196,7 +224,9 @@
      true
     ],
     "bandwidth": 6844
-   },
+   }
+  ],
+  [
    {
     "switching": [
      true,

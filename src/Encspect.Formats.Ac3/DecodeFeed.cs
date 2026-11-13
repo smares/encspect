@@ -46,7 +46,11 @@ internal sealed class DecodeFeed
 
     // Whether any frame of the program lay between a gap: the CRC2 of the frames then does not vouch for all of the program's audio.
     public bool HadGap { get; private set; }
-    private bool HasUndecodedDependents { get; set; }
+
+    // An AC-3 core with E-AC-3 dependent substreams: the program's frames go to the decoder as units (the core and its dependents), as an E-AC-3 program's do.
+    public bool HasDependents { get; set; }
+
+    private bool UsesUnits => _isEac3 || HasDependents;
 
     public static int ChannelCount(SyncFrame header) => Acmod[header.Acmod] + (header.Lfeon ? 1 : 0);
 
@@ -56,7 +60,7 @@ internal sealed class DecodeFeed
 
     // One independent frame of the program: its bytes as far as the data holds them, the walk's records in written, and how it ended. An E-AC-3 program frame is the independent
     // frame and the dependent frames after it, so its unit is handed to the session when the next independent frame comes, or at the end (FlushUnit).
-    public void Feed(IntWriter written, long offset, ReadOnlyMemory<byte> frame, SyncFrame header, bool isReadable, Ac3Analysis.CrcState crc1, Ac3Analysis.CrcState crc2)
+    public void Feed(int[] written, long offset, ReadOnlyMemory<byte> frame, SyncFrame header, bool isReadable, Ac3Analysis.CrcState crc1, Ac3Analysis.CrcState crc2)
     {
         FlushUnit();
         long first = _position;
@@ -85,18 +89,18 @@ internal sealed class DecodeFeed
         }
 
         bool damaged = crc1 == Ac3Analysis.CrcState.Mismatch || crc2 == Ac3Analysis.CrcState.Mismatch;
-        if (_isEac3)
+        if (UsesUnits)
         {
             _unit = new Unit(offset, first, samples, followsGap, damaged, isReadable, frame.ToArray());
-            _unit.Substreams.Add(new Substream(0, Program.TokensOf(header, new FrameResult()), written.Written.ToArray()));
+            _unit.Substreams.Add(new Substream(_isEac3 ? 0 : 0x100, Program.TokensOf(header, new FrameResult()), written));
             return;
         }
 
-        Send(offset, first, samples, followsGap, damaged, isReadable, frame, written.Written);
+        Send(offset, first, samples, followsGap, damaged, isReadable, frame, written);
     }
 
     // A dependent frame after the independent frame of the unit: its records, and its bytes for the budget. A frame that is not read to its end makes the whole program frame unreadable.
-    public void AddDependent(IntWriter written, SyncFrame header, FrameResult result, ReadOnlyMemory<byte> frame, bool isReadable, Ac3Analysis.CrcState crc2)
+    public void AddDependent(int[] written, SyncFrame header, FrameResult result, ReadOnlyMemory<byte> frame, bool isReadable, Ac3Analysis.CrcState crc2)
     {
         // The dependent frame's one CRC (Annex E 2.2.6) is part of the program's tally; after an AC-3 core its channels are not decoded, so the tally cannot vouch for all the audio.
         _crc2Stored++;
@@ -106,8 +110,7 @@ internal sealed class DecodeFeed
             _crc2Failed += crc2 == Ac3Analysis.CrcState.Mismatch ? 1 : 0;
         }
 
-        HasUndecodedDependents |= !_isEac3;
-        if (!_isEac3 || _unit is not { } unit)
+        if (!UsesUnits || _unit is not { } unit)
         {
             return;
         }
@@ -121,7 +124,7 @@ internal sealed class DecodeFeed
         }
         else
         {
-            unit.Substreams.Add(new Substream(1 + header.SubstreamId, Program.TokensOf(header, result), written.Written.ToArray()));
+            unit.Substreams.Add(new Substream(1 + header.SubstreamId, Program.TokensOf(header, result), written));
         }
     }
 
@@ -159,7 +162,13 @@ internal sealed class DecodeFeed
         }
 
         _layout ??= Program.Merge(unit.Substreams[0].Tokens, unit.Substreams.Skip(1).SelectMany(s => s.Tokens));
-        var ints = new List<int> { _layout.Count };
+        var ints = new List<int>();
+        if (!_isEac3)
+        {
+            ints.Add(-1);
+        }
+
+        ints.Add(_layout.Count);
         ints.AddRange(_layout.Select(t => (int)t));
         ints.Add(unit.Substreams.Count);
         foreach (Substream sub in unit.Substreams)
@@ -205,7 +214,7 @@ internal sealed class DecodeFeed
     public StreamVerification Finish(long lostSamples)
     {
         FlushUnit();
-        bool coversAll = lostSamples == 0 && !HadGap && !HasUndecodedDependents;
+        bool coversAll = lostSamples == 0 && !HadGap;
         if (_isEac3)
         {
             // E-AC-3 has the one CRC, over the frame (Annex E 2.2.6), whose tally is kept as crc2's.

@@ -114,6 +114,50 @@ internal sealed class FrameResult
 
     public int JocEnd { get; set; }
 
+    public FrameResult Clone()
+    {
+        var c = new FrameResult
+        {
+            Stop = Stop,
+            StopBit = StopBit,
+            BlocksRead = BlocksRead,
+            Blocks = Blocks,
+            BlockSwitchBlocks = BlockSwitchBlocks,
+            DynamicRangeBlocks = DynamicRangeBlocks,
+            CouplingBlocks = CouplingBlocks,
+            RematrixingBlocks = RematrixingBlocks,
+            RematrixedBands = RematrixedBands,
+            RematrixingBands = RematrixingBands,
+            SpectralExtensionBlocks = SpectralExtensionBlocks,
+            DeltaBitAllocationBlocks = DeltaBitAllocationBlocks,
+            SkipBytes = SkipBytes,
+            MantissaBits = MantissaBits,
+            AuxiliaryBits = AuxiliaryBits,
+            HasAuxiliaryLength = HasAuxiliaryLength,
+            Dialnorm = Dialnorm,
+            Bsmod = Bsmod,
+            HasCompression = HasCompression,
+            DolbySurroundMode = DolbySurroundMode,
+            ChannelMap = ChannelMap,
+            HasChannelMap = HasChannelMap,
+            ExtensionFlag = ExtensionFlag,
+            ComplexityIndex = ComplexityIndex,
+            EmdfContainers = EmdfContainers,
+            HasJoc = HasJoc,
+            HasOamd = HasOamd,
+            JocObjects = JocObjects,
+            OamdObjects = OamdObjects,
+            ExtensionStart = ExtensionStart,
+            ExtensionEnd = ExtensionEnd,
+            JocStart = JocStart,
+            JocEnd = JocEnd,
+        };
+        BlockFlags.CopyTo(c.BlockFlags, 0);
+        BlockEnds.CopyTo(c.BlockEnds, 0);
+        ExponentStrategies.CopyTo(c.ExponentStrategies, 0);
+        return c;
+    }
+
     public void Reset(int blocks)
     {
         Stop = StopReason.None;

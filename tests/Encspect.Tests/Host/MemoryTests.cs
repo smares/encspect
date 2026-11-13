@@ -475,8 +475,12 @@ public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
     {
         const int fewer = 10_000;
         const int units = 20_000;
-        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "ac3", "coding-eac3-dependent.eac3"));
-        int perCopy = 4;
+        // The fixture's first program frame (an independent frame and a dependent frame of six blocks): a stream holds the same dependent substreams in all its
+        // program frames, so the program frames of the fixture with other configurations would be streams of their own.
+        byte[] whole = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "ac3", "coding-eac3-dependent.eac3"));
+        int firstLength = Encspect.Formats.Ac3.SyncFrame.Read(whole).FrameLength;
+        byte[] source = whole[..(firstLength + Encspect.Formats.Ac3.SyncFrame.Read(whole.AsSpan(firstLength)).FrameLength)];
+        int perCopy = 1;
 
         (Report few, long fewerKept) = MeasureKept("few.eac3", Unpooled.Repeat(source, fewer / perCopy), source);
         (Report many, long kept) = MeasureKept("many.eac3", Unpooled.Repeat(source, units / perCopy), source);
@@ -489,9 +493,9 @@ public sealed class MemoryTests(ITestOutputHelper output) : IDisposable
             categoryBytes: (int)Math.Ceiling(perUnit) + 1, numericBytes: 8);
         double keptPerUnit = (kept - fewerKept) / (double)(units - fewer);
         output.WriteLine($"{Hundredths(keptPerUnit)} bytes kept per further program frame");
-        // 158 bytes measured on linux-x64 (a 16-byte record, the kept bits, the bitrate series' two points and 35 bytes of series for each program frame); the
-        // bound leaves a quarter for the other platforms.
-        Assert.True(keptPerUnit < 190, $"The report keeps {keptPerUnit:F2} bytes per further program frame.");
+        // 208 bytes measured on linux-x64 (a 16-byte record, the kept bits, the bitrate series' two points and 52 bytes of series for each program frame of 12
+        // blocks); the bound leaves a quarter for the other platforms.
+        Assert.True(keptPerUnit < 260, $"The report keeps {keptPerUnit:F2} bytes per further program frame.");
         GC.KeepAlive(few);
         GC.KeepAlive(many);
     }

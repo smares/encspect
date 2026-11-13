@@ -778,12 +778,13 @@ def build_coding():
         units.append(coding_unit(48000, frames, True))
     data = b"".join(chunks)
     fixture("coding-eac3-dependent", ".eac3", "Four E-AC-3 program frames: an independent 2/0 frame with a dependent 2/0 frame, with a dependent mono frame that adds the center "
-            "channel, alone with one block, and with a dependent frame again, the number of blocks changing between them.", data, frames_of(data),
-            [stream("E-AC-3", 48000, 2, 0, sum(256 * [1, 2, 3, 6][p[0]["numblkscod"]] for p in program), layout=[m.FL, m.FR, m.BL, m.BR], vbr=True)],
-            [("ac3.dependent-layout-changed", "add other channels in 2 of its frames than in its first")],
+            "channel, alone with one block, and with a dependent frame again, the number of blocks changing between them (each dependent configuration is a stream of its own).", data, frames_of(data),
+            [stream("E-AC-3", 48000, 2, 0, 256 * [1, 2, 3, 6][p[0]["numblkscod"]], layout=layout)
+             for p, layout in zip(program, ([m.FL, m.FR, m.BL, m.BR], [m.FL, m.FR, m.FC], None, [m.FL, m.FR, m.BL, m.BR]))],
+            [("ac3.stream-changed", "the streams change 3 times in the file")],
             crosscheck={"ffprobe": False, "decode": True, "skip_insertion": True, "skip_control": False,
                         "skip": {"ffprobe": "Dependent substreams of different layouts make what ffmpeg's parser reports of the channels differ from the analyzer's first-frame layout.",
-                                 "skip_control": "The last block's mantissas take no bits (SNR offsets 0), so moving its skip field changes no sample."}}, coding=[units])
+                                 "skip_control": "The last block's mantissas take no bits (SNR offsets 0), so moving its skip field changes no sample."}}, coding=[[unit] for unit in units])
 
     # An AC-3 core with E-AC-3 dependent frames, the form ETSI TS 102 366 J.1.5.2.2 gives a program of more than 5.1 channels (the AC-3 bit stream is
     # independent substream 0 of the Enhanced AC-3 bit stream): the program frame has the core's six blocks and the dependent frame's, 12 values in each
@@ -810,11 +811,11 @@ def build_coding():
     data = b"".join(chunks)
     fixture("coding-ac3-core-dependent", ".ac3", "Four program frames of an AC-3 2/0 frame, three of them followed by an E-AC-3 dependent frame that adds the rear pair: 12 values in each "
             "series where there is a dependent frame, 6 where there is none.", data, frames_of(data),
-            [stream("E-AC-3", 48000, 2, 0, 4 * 1536, layout=[m.FL, m.FR, m.BL, m.BR], vbr=True)],
-            [("ac3.dependent-layout-changed", "add other channels in 1 of its frames than in its first")],
+            [stream("E-AC-3", 48000, 2, 0, 1536, layout=[m.FL, m.FR, m.BL, m.BR]), stream("AC-3", 48000, 2, 0, 1536), stream("E-AC-3", 48000, 2, 0, 2 * 1536, layout=[m.FL, m.FR, m.BL, m.BR])],
+            [("ac3.stream-changed", "the streams change 2 times in the file")],
             crosscheck={"ffprobe": False, "decode": True, "skip_insertion": False,
                         "skip": {"ffprobe": "ffmpeg's parser takes the AC-3 core and the E-AC-3 frames as two codecs; what it reports of the stream is no reference for the analyzer's.",
-                                 "skip_insertion": "The core is AC-3, whose frames the check does not rewrite."}}, coding=[units])
+                                 "skip_insertion": "The core is AC-3, whose frames the check does not rewrite."}}, coding=[units[:1], units[1:2], units[2:]])
 
     # Spectral extension that starts after a block without it, with the default band structure the specification loads at the first block that
     # uses spectral extension (ETSI TS 102 366 E.1.3.3.7), which ffmpeg loads only in block 0 (libavcodec/ac3dec.c, decode_band_structure:
@@ -854,12 +855,12 @@ def build_coding():
     shapes = [nine(6, 8, 0), nine(6, 8, 1), nine(3, 4, 0), nine(1, 8, 1)]
     data = b"".join(f for f, _ in shapes)
     fixture("coding-eac3-nine-frames", ".eac3", "Four E-AC-3 program frames of an independent 2/0 frame and 8, 8, 4 and 8 dependent 2/0 frames of 6, 6, 3 and 1 blocks: 54, 54, 15 and 9 "
-            "values in each series.", data, frames_of(data), [stream("E-AC-3", 48000, 2, 0, 256 * (6 + 6 + 3 + 1), vbr=True)],
-            [("ac3.dependent-layout-changed", "add other channels in 1 of its frames than in its first")],
+            "values in each series.", data, frames_of(data), [stream("E-AC-3", 48000, 2, 0, 256 * (6 + 6)), stream("E-AC-3", 48000, 2, 0, 256 * 3), stream("E-AC-3", 48000, 2, 0, 256)],
+            [("ac3.stream-changed", "the streams change 2 times in the file")],
             crosscheck={"ffprobe": False, "decode": False, "skip_insertion": False,
                         "skip": {"ffprobe": "ffmpeg's parser joins the dependent frames to their independent frame and reports the channels of the stream it decodes, which the check does not compare for a program of nine frames.",
                                  "decode": "ffmpeg decodes the independent substream only and the check decodes each packet; the dependent frames' content is no reference here.",
-                                 "skip_insertion": "The dependent frames are not decoded by ffmpeg, so a moved skip field there changes no sample."}}, coding=[[u for _, u in shapes]])
+                                 "skip_insertion": "The dependent frames are not decoded by ffmpeg, so a moved skip field there changes no sample."}}, coding=[[shapes[0][1], shapes[1][1]], [shapes[2][1]], [shapes[3][1]]])
 
 
 def sample_rows(track, chunks, split=False):

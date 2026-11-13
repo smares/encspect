@@ -41,8 +41,6 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
     // The declared samples of the program frames that are cut, or whose syntax breaks so that the rest of the frame is not read.
     public long LostSamples { get; private set; }
 
-    public int LayoutChanges { get; private set; }
-
     public bool HasEac3 { get; private set; } = key.IsEac3;
 
     public string Codec => HasEac3 ? "E-AC-3" : "AC-3";
@@ -265,10 +263,6 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
             _dependentTokens = [.. _pendingDependents];
             Layout = Speakers(IndependentTokens(), _dependentTokens);
             _firstProgramFrame = false;
-        }
-        else if (!_pendingDependents.SequenceEqual(_dependentTokens!))
-        {
-            LayoutChanges++;
         }
 
         _pendingDependents.Clear();

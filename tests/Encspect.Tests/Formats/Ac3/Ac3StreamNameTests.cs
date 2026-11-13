@@ -11,8 +11,8 @@ public class Ac3StreamNameTests
     {
         Report report = Fixtures.AnalyzeMpeg("wav/built-extensible-ac3-core-dependent.wav");
 
-        StreamInfo stream = Assert.Single(report.Streams);
-        Assert.Equal("E-AC-3", stream.Nodes[0].Name);
-        Assert.Equal("E-AC-3", stream.Codec);
+        // The fixture's program frames with and without a dependent frame are streams of their own: the core with its dependent frames is E-AC-3, the core alone AC-3.
+        Assert.Equal(["E-AC-3", "AC-3", "E-AC-3"], report.Streams.Select(s => s.Codec));
+        Assert.Equal("E-AC-3", report.Streams[0].Nodes[0].Name);
     }
 }

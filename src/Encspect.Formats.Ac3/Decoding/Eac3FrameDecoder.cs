@@ -12,7 +12,7 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
 
     private readonly DecodeContext _context;
     private readonly int _rate;
-    private readonly Dictionary<int, Eac3Substream> _substreams = [];
+    private readonly Dictionary<int, IProgramSubstream> _substreams = [];
     private readonly SortedDictionary<long, Block> _slots = [];
     private IPcmSink? _sink;
     private List<Program.Token>? _layout;
@@ -46,6 +46,11 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
 
         _context.CancellationToken.ThrowIfCancellationRequested();
         var r = new IntReader(lent.Narrow);
+        if (lent.Narrow.Length > 0 && lent.Narrow[0] == -1)
+        {
+            r.Next();
+        }
+
         int layoutCount = r.Next();
         var layout = new List<Program.Token>(layoutCount);
         for (int i = 0; i < layoutCount; i++)
@@ -61,7 +66,7 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
 
         if (frame.FollowsGap || _lostBefore)
         {
-            foreach (Eac3Substream substream in _substreams.Values)
+            foreach (IProgramSubstream substream in _substreams.Values)
             {
                 substream.FlushPending();
             }
@@ -69,7 +74,7 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
             WriteReady(force: true);
             _pre?.Flush();
             _lostBefore = false;
-            foreach (Eac3Substream substream in _substreams.Values)
+            foreach (IProgramSubstream substream in _substreams.Values)
             {
                 substream.Reset();
             }
@@ -89,7 +94,9 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
 
         for (int i = 0; i < substreams; i++)
         {
-            int id = r.Next();
+            int key = r.Next();
+            int id = key & 0xFF;
+            bool isCore = (key & 0x100) != 0;
             int count = r.Next();
             int[] slots = [.. r.Take(count).ToArray()];
             int acmod = r.Next();
@@ -100,10 +107,11 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
                 throw new InvalidDataException("A dependent substream has another number of blocks than the independent one");
             }
 
-            if (!_substreams.TryGetValue(id, out Eac3Substream? substream) || substream.Acmod != acmod || substream.HasLfe != lfe)
+            if (!_substreams.TryGetValue(id, out IProgramSubstream? substream) || substream.Acmod != acmod || substream.HasLfe != lfe)
             {
                 substream?.FlushPending();
-                substream = new Eac3Substream(_context, acmod, lfe, (first, planar, stride, offset) => Deliver(id, first, planar, stride, offset));
+                Action<long, float[], int, int> deliver = (first, planar, stride, offset) => Deliver(id, first, planar, stride, offset);
+                substream = isCore ? new Ac3Substream(_context, acmod, lfe, _rate, deliver) : new Eac3Substream(_context, acmod, lfe, deliver);
                 _substreams[id] = substream;
             }
 
@@ -125,7 +133,7 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
         }
 
         // A substream with no frame in this unit has lost its overlap.
-        foreach ((int id, Eac3Substream substream) in _substreams)
+        foreach ((int id, IProgramSubstream substream) in _substreams)
         {
             if (!present.Contains(id))
             {
@@ -241,7 +249,7 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
 
     public IReadOnlyList<ChecksumResult> Finish(DecodeEnd end)
     {
-        foreach (Eac3Substream substream in _substreams.Values)
+        foreach (IProgramSubstream substream in _substreams.Values)
         {
             substream.FlushPending();
         }

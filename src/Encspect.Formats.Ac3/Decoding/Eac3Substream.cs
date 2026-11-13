@@ -6,7 +6,7 @@ namespace Encspect.Formats.Ac3.Decoding;
 // The decoding state of one E-AC-3 substream (an independent one or a dependent one): the overlap of each channel's last block, the two noise generators (the dither of zero-bit
 // mantissas and spectral extension's blend) and the adaptive hybrid transform's six blocks of coefficients per channel. The blocks it finishes go to the program's decoder
 // (Eac3FrameDecoder), which merges the substreams' channels, withholds after a gap and writes the samples.
-internal sealed class Eac3Substream
+internal sealed class Eac3Substream : IProgramSubstream
 {
     private const int BlockSamples = 256;
     private const int Cpl = 5;
@@ -90,7 +90,9 @@ internal sealed class Eac3Substream
     }
 
     // Finishes the block that waited for its next block, which is next (the first block of the frame just read) or absent, and delivers its 256 samples.
-    public void FlushPending(BlockState? next = null)
+    public void FlushPending() => FlushPending(null);
+
+    public void FlushPending(BlockState? next)
     {
         if (_pending is not { } state)
         {

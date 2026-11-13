@@ -47,6 +47,39 @@ internal sealed class FrameDecoder : IFrameDecoder
         _spectrum = [.. Enumerable.Range(0, _channels).Select(_ => new float[256])];
     }
 
+    // The decoder as one substream of a program with dependent substreams (an AC-3 core): its blocks go to the merger, not to a sink.
+    internal FrameDecoder(DecodeContext context, int acmod, bool hasLfe, int rate)
+    {
+        _context = context;
+        _acmod = acmod;
+        _rate = rate;
+        _hasLfe = hasLfe;
+        _fullChannels = DecodeFeed.ChannelOf(acmod);
+        _channels = _fullChannels + (hasLfe ? 1 : 0);
+        _delay = [.. Enumerable.Range(0, _channels).Select(_ => new float[BlockSamples])];
+        _spectrum = [.. Enumerable.Range(0, _channels).Select(_ => new float[256])];
+    }
+
+    internal float[] Planar => _planar;
+
+    internal int Stride => _stride;
+
+    internal void ResetState() => Reset();
+
+    // The blocks of a frame whose record header the caller has read.
+    internal void DecodeBlocks(ref IntReader r, int blocks)
+    {
+        int samples = blocks * BlockSamples;
+        EnsureBuffers(samples);
+        _context.AddWork(DecodeWork.ForSample(4) * samples * _channels);
+        _context.AddWork((long)ExtraUnits * samples * _channels);
+        for (int block = 0; block < blocks; block++)
+        {
+            _context.CancellationToken.ThrowIfCancellationRequested();
+            DecodeBlock(ref r, block);
+        }
+    }
+
     private void Reset()
     {
         foreach (float[] delay in _delay)
