@@ -31,6 +31,10 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
     private readonly float[] _couplingDither = new float[256];
     private readonly float[] _x = new float[512];
     private readonly int[] _attenuation = new int[5];
+    private readonly BlockState[] _states = [.. Enumerable.Range(0, 6).Select(_ => new BlockState())];
+    private readonly EnhancedCoupling _enhanced = new();
+    private readonly float[] _previousX = new float[512];
+    private bool _hasPreviousX;
     private readonly float[][][] _aht = [.. Enumerable.Range(0, 7).Select(_ => new float[][] { new float[256], new float[256], new float[256], new float[256], new float[256], new float[256] })];
     private readonly float[][] _ahtShift = [.. Enumerable.Range(0, 7).Select(_ => new float[256])];
     private float[] _planar = [];
@@ -62,6 +66,8 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
 
         _noise = NoiseSeed;
         _spxNoise = SpxSeed;
+        _hasPreviousX = false;
+        _enhanced.Reset();
     }
 
     public int Decode(in CodedFrame frame)
@@ -101,7 +107,12 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
             for (int block = 0; block < blocks; block++)
             {
                 _context.CancellationToken.ThrowIfCancellationRequested();
-                DecodeBlock(ref r, block);
+                ParseBlock(ref r, block, _states[block]);
+            }
+
+            for (int block = 0; block < blocks; block++)
+            {
+                FinishBlock(block, blocks);
             }
         }
         catch (InvalidDataException)
@@ -137,8 +148,39 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
         _planar = new float[_channels * _stride];
     }
 
-    // One audio block: the coefficients of every channel from the records, coupling, rematrixing and spectral extension, then each channel's inverse transform, window and overlap.
-    private void DecodeBlock(ref IntReader r, int block)
+    // What one audio block's record states and its coefficients, up to the steps that need the blocks around it.
+    private sealed class BlockState
+    {
+        public int Blksw;
+        public int Dither;
+        public bool Spx;
+        public int SpxChannels;
+        public int SpxStart;
+        public int SpxBegin;
+        public int SpxEnd;
+        public int SpxBands;
+        public readonly int[] SpxSizes = new int[17];
+        public readonly int[] SpxBlend = new int[5];
+        public readonly int[] SpxMaster = new int[5];
+        public readonly int[] SpxCoordinates = new int[5 * 17];
+        public int Mode;
+        public int EcplBegin;
+        public int EcplEnd;
+        public int EcplJoined;
+        public int EcplChannels;
+        public bool EcplInterpolates;
+        public int EcplBands;
+        public readonly int[] EcplParameters = new int[5 * 22];
+        public readonly bool[] EcplTransient = new bool[5];
+        public readonly float[] Coupling = new float[256];
+        public readonly float[] CouplingX = new float[512];
+        public bool HasCouplingX;
+        public readonly float[][] Spectrum = [.. Enumerable.Range(0, 6).Select(_ => new float[256])];
+    }
+
+    // One audio block's record read into the block's state: the coefficients of every channel, rematrixing and standard coupling. Enhanced coupling, spectral extension and the
+    // inverse transforms wait for FinishBlock, which has the blocks before and after.
+    private void ParseBlock(ref IntReader r, int block, BlockState state)
     {
         if (block == 0)
         {
@@ -148,55 +190,45 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
             }
         }
 
-        int blksw = r.Next();
-        int dither = r.Next();
-
-        bool spx = r.Next() != 0;
-        int spxChannels = 0;
-        int spxStart = 0;
-        int spxBegin = 0;
-        int spxEnd = 0;
-        int spxBands = 0;
-        Span<int> spxSizes = stackalloc int[17];
-        Span<int> spxBlend = stackalloc int[5];
-        Span<int> spxMaster = stackalloc int[5];
-        Span<int> spxCoordinates = stackalloc int[5 * 17];
-        if (spx)
+        state.Blksw = r.Next();
+        int dither = state.Dither = r.Next();
+        state.Spx = r.Next() != 0;
+        if (state.Spx)
         {
-            spxChannels = r.Next();
-            spxStart = r.Next();
-            spxBegin = r.Next();
-            spxEnd = r.Next();
+            state.SpxChannels = r.Next();
+            state.SpxStart = r.Next();
+            state.SpxBegin = r.Next();
+            state.SpxEnd = r.Next();
             int joined = r.Next();
-            spxBands = 1;
-            spxSizes[0] = 12;
-            for (int sub = spxBegin + 1; sub < spxEnd; sub++)
+            state.SpxBands = 1;
+            state.SpxSizes[0] = 12;
+            for (int sub = state.SpxBegin + 1; sub < state.SpxEnd; sub++)
             {
                 if (((joined >> sub) & 1) == 0)
                 {
-                    spxSizes[spxBands++] = 12;
+                    state.SpxSizes[state.SpxBands++] = 12;
                 }
                 else
                 {
-                    spxSizes[spxBands - 1] += 12;
+                    state.SpxSizes[state.SpxBands - 1] += 12;
                 }
             }
 
             for (int ch = 0; ch < _fullChannels; ch++)
             {
-                if (((spxChannels >> ch) & 1) != 0)
+                if (((state.SpxChannels >> ch) & 1) != 0)
                 {
-                    spxBlend[ch] = r.Next();
-                    spxMaster[ch] = r.Next();
-                    for (int band = 0; band < spxBands; band++)
+                    state.SpxBlend[ch] = r.Next();
+                    state.SpxMaster[ch] = r.Next();
+                    for (int band = 0; band < state.SpxBands; band++)
                     {
-                        spxCoordinates[(ch * 17) + band] = r.Next();
+                        state.SpxCoordinates[(ch * 17) + band] = r.Next();
                     }
                 }
             }
         }
 
-        int mode = r.Next();
+        int mode = state.Mode = r.Next();
         int cplbegf = 0;
         int subbands = 0;
         int chincpl = 0;
@@ -235,7 +267,32 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
         }
         else if (mode == 2)
         {
-            throw new InvalidDataException("Enhanced coupling is not decoded");
+            state.EcplBegin = r.Next();
+            state.EcplEnd = r.Next();
+            chincpl = state.EcplChannels = r.Next();
+            state.EcplInterpolates = r.Next() != 0;
+            state.EcplJoined = r.Next();
+            int bands = state.EcplEnd - state.EcplBegin;
+            for (int sub = state.EcplBegin + 1; sub < state.EcplEnd; sub++)
+            {
+                bands -= (state.EcplJoined >> sub) & 1;
+            }
+
+            state.EcplBands = bands;
+            for (int ch = 0; ch < _fullChannels; ch++)
+            {
+                if (((chincpl >> ch) & 1) != 0)
+                {
+                    for (int band = 0; band < bands; band++)
+                    {
+                        state.EcplParameters[(ch * 22) + band] = r.Next();
+                    }
+
+                    state.EcplTransient[ch] = r.Next() != 0;
+                }
+            }
+
+            cplStart = Tables.EnhancedCouplingSubBandStart[state.EcplBegin];
         }
 
         int rematBands = 0;
@@ -250,7 +307,7 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
         Span<int> ends = stackalloc int[5];
         for (int ch = 0; ch < _fullChannels; ch++)
         {
-            ends[ch] = Channel(ref r, ch, _spectrum[ch], 0, ((dither >> ch) & 1) != 0, block, false);
+            ends[ch] = Channel(ref r, ch, state.Spectrum[ch], 0, ((dither >> ch) & 1) != 0, block, false);
             if (mode != 0 && ((chincpl >> ch) & 1) != 0 && !gotCoupling)
             {
                 Channel(ref r, Cpl, _coupling, cplStart, false, block, true);
@@ -260,12 +317,12 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
 
         if (_hasLfe)
         {
-            Channel(ref r, Lfe, _spectrum[_fullChannels], 0, false, block, false);
+            Channel(ref r, Lfe, state.Spectrum[_fullChannels], 0, false, block, false);
         }
 
         if (_acmod == 2 && rematBands > 0)
         {
-            FrameDecoder.Rematrix(_spectrum[0], _spectrum[1], rematBands, rematFlags, mode == 1 ? cplbegf : -1, Math.Min(ends[0], ends[1]));
+            FrameDecoder.Rematrix(state.Spectrum[0], state.Spectrum[1], rematBands, rematFlags, mode == 1 ? cplbegf : -1, Math.Min(ends[0], ends[1]));
         }
 
         if (mode == 1)
@@ -274,29 +331,57 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
             {
                 if (((chincpl >> ch) & 1) != 0)
                 {
-                    FrameDecoder.ExpandCoupling(_spectrum[ch], _coupling, _couplingDither, ref _noise, coordinates.Slice(ch * 18, 18), cplbegf, subbands, combined, phsflg, bands2,
+                    FrameDecoder.ExpandCoupling(state.Spectrum[ch], _coupling, _couplingDither, ref _noise, coordinates.Slice(ch * 18, 18), cplbegf, subbands, combined, phsflg, bands2,
                         ch == 1 && _acmod == 2, ((dither >> ch) & 1) != 0);
                 }
             }
         }
+        else if (mode == 2)
+        {
+            Array.Copy(_coupling, state.Coupling, 256);
+        }
 
-        if (spx)
+        state.HasCouplingX = false;
+    }
+
+    // The steps of a block that need its neighbors or all of its channels' coefficients: enhanced coupling (the coupling channel of the blocks before and after, the next frame's
+    // first block being taken as absent), spectral extension, and each channel's inverse transform, window and overlap.
+    private void FinishBlock(int block, int blocks)
+    {
+        BlockState state = _states[block];
+        if (state.Mode == 2)
+        {
+            Span<float> previous = block > 0 ? (_states[block - 1].Mode == 2 ? CouplingTransform(_states[block - 1]) : default) : _hasPreviousX ? _previousX : default;
+            Span<float> next = block + 1 < blocks && _states[block + 1].Mode == 2 ? CouplingTransform(_states[block + 1]) : default;
+            Span<float> current = CouplingTransform(state);
+            _enhanced.Analyze(previous, current, next);
+            int first = System.Numerics.BitOperations.TrailingZeroCount(state.EcplChannels);
+            for (int ch = 0; ch < _fullChannels; ch++)
+            {
+                if (((state.EcplChannels >> ch) & 1) != 0)
+                {
+                    _enhanced.Channel(state.Spectrum[ch], state.EcplParameters.AsSpan(ch * 22, 22), ch, ch == first, state.EcplTransient[ch], state.EcplInterpolates, state.EcplBegin, state.EcplEnd, state.EcplJoined);
+                }
+            }
+        }
+
+        if (state.Spx)
         {
             for (int ch = 0; ch < _fullChannels; ch++)
             {
-                if (((spxChannels >> ch) & 1) != 0)
+                if (((state.SpxChannels >> ch) & 1) != 0)
                 {
-                    SpectralExtension(_spectrum[ch], 25 + (12 * spxStart), 25 + (12 * spxBegin), 25 + (12 * spxEnd), spxSizes[..spxBands], spxBlend[ch], spxMaster[ch],
-                        spxCoordinates.Slice(ch * 17, 17), _attenuation[ch]);
+                    SpectralExtension(state.Spectrum[ch], 25 + (12 * state.SpxStart), 25 + (12 * state.SpxBegin), 25 + (12 * state.SpxEnd), state.SpxSizes.AsSpan(0, state.SpxBands),
+                        state.SpxBlend[ch], state.SpxMaster[ch], state.SpxCoordinates.AsSpan(ch * 17, 17), _attenuation[ch]);
                 }
             }
         }
 
         for (int ch = 0; ch < _channels; ch++)
         {
-            bool isShort = ch < _fullChannels && ((blksw >> ch) & 1) != 0;
+            bool isShort = ch < _fullChannels && ((state.Blksw >> ch) & 1) != 0;
             Span<float> x = _x;
-            float[] spectrum = _spectrum[ch];
+            float[] spectrum = state.Spectrum[ch];
             if (FrameDecoder.IsSilent(spectrum))
             {
                 x.Clear();
@@ -312,6 +397,28 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
 
             FrameDecoder.Overlap(x, _delay[ch], _planar.AsSpan((ch * _stride) + (block * BlockSamples), BlockSamples));
         }
+
+        if (block == blocks - 1)
+        {
+            // The next frame's first block sees this one as its previous block.
+            _hasPreviousX = state.Mode == 2;
+            if (_hasPreviousX)
+            {
+                CouplingTransform(state).CopyTo(_previousX);
+            }
+        }
+    }
+
+    // The windowed output of the inverse transform of an enhanced coupling block's coupling channel (7.9.4.1, steps 1 to 5), made once for the block.
+    private Span<float> CouplingTransform(BlockState state)
+    {
+        if (!state.HasCouplingX)
+        {
+            _transform.Long(state.Coupling, state.CouplingX);
+            state.HasCouplingX = true;
+        }
+
+        return state.CouplingX;
     }
 
     // One channel's coefficients (or the coupling channel's, in _coupling with the shifts of its zero-bit bins in _couplingDither) from its record: coded in this block (kind 0), the

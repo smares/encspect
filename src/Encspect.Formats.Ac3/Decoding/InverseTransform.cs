@@ -64,7 +64,7 @@ internal sealed class InverseTransform
         BitReversal(_reverse64);
     }
 
-    private static void BitReversal(int[] table)
+    internal static void BitReversal(int[] table)
     {
         int bits = System.Numerics.BitOperations.Log2((uint)table.Length);
         for (int i = 0; i < table.Length; i++)
@@ -170,7 +170,7 @@ internal sealed class InverseTransform
 
     // z[n] = sum over k of Z[k] (cos(2 pi k n / size) + j sin(2 pi k n / size)), in place on bit-reversed input, radix 2.
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static void Fft(float[] re, float[] im, int size, float[] cos, float[] sin)
+    internal static void Fft(float[] re, float[] im, int size, float[] cos, float[] sin)
     {
         for (int length = 2; length <= size; length <<= 1)
         {
