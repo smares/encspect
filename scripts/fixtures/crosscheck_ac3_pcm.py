@@ -235,7 +235,7 @@ def check(args, lib, path, work):
             continue
         found, result = compare(dump, ffmpeg, channels, f"ffmpeg-{variant}", extra)
         if path.name in FFMPEG_DIFFERS:
-            lines.append(f"  ffmpeg {variant}: {'agrees' if not found else 'differs, as pinned: ' + FFMPEG_DIFFERS[path.name]}")
+            lines.append(f"  ffmpeg {variant}: {'agrees' if not found else 'differs, as pinned: ' + FFMPEG_DIFFERS[path.name]}{band_summary(result)}")
         else:
             problems += found
             lines.append(f"  ffmpeg {variant}: {'ok' if not found else 'OUTSIDE THE BOUND'}{band_summary(result)}")
@@ -243,10 +243,12 @@ def check(args, lib, path, work):
 
 
 def band_summary(result):
-    if not result or "bands" not in result:
+    if not result:
         return ""
-    channels = result["bands"]["channels"]
-    return f" ({sum(c['bandsCompared'] for c in channels)} bands compared, {sum(c['bandsOutside'] for c in channels)} outside, largest {max(c['largestDifferenceDb'] for c in channels):.2f} dB)"
+    if "bands" in result:
+        channels = result["bands"]["channels"]
+        return f" ({sum(c['bandsCompared'] for c in channels)} bands compared, {sum(c['bandsOutside'] for c in channels)} outside, largest {max(c['largestDifferenceDb'] for c in channels):.2f} dB)"
+    return f" (largest {max(c['max'] for c in result['channels']):.2g}, RMS {max(c['rms'] for c in result['channels']):.2g} of full scale)"
 
 
 def main(argv=None):

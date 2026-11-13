@@ -1171,25 +1171,82 @@ internal sealed partial class FrameSyntax
         }
     }
 
+    // The bits of a mantissa of each bap, apart from the grouped ones (1, 2 and 4), which take their bits at the first value of a group (7.3, Table 7.18).
+    private static readonly int[] FixedWidth = [0, 0, 0, 3, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16];
+
     private void ReadChannelMantissas(int ch, int start, int end, IntWriter? w)
     {
-        if (w is not null)
-        {
-            w.Add(Math.Max(0, end - start));
-        }
-
         byte[] exp = _exp[ch];
         byte[] bap = _bap[ch];
+        if (w is null)
+        {
+            // Without a decoder only the grouped codes are validated, for checks 18 to 20; the others are stepped over.
+            int bit = _mantissaBit;
+            int left1 = _groupLeft1;
+            int left2 = _groupLeft2;
+            int left4 = _groupLeft4;
+            for (int bin = start; bin < end; bin++)
+            {
+                int pointer = bap[bin];
+                if (pointer == 0)
+                {
+                    continue;
+                }
+
+                if (pointer == 1)
+                {
+                    if (left1 == 0)
+                    {
+                        _groupFaults |= _b.Peek(bit, 5) > 26 ? 1 : 0;
+                        bit += 5;
+                        left1 = 3;
+                    }
+
+                    left1--;
+                }
+                else if (pointer == 2)
+                {
+                    if (left2 == 0)
+                    {
+                        _groupFaults |= _b.Peek(bit, 7) > 124 ? 2 : 0;
+                        bit += 7;
+                        left2 = 3;
+                    }
+
+                    left2--;
+                }
+                else if (pointer == 4)
+                {
+                    if (left4 == 0)
+                    {
+                        _groupFaults |= _b.Peek(bit, 7) > 120 ? 4 : 0;
+                        bit += 7;
+                        left4 = 2;
+                    }
+
+                    left4--;
+                }
+                else
+                {
+                    bit += FixedWidth[pointer];
+                }
+            }
+
+            (_mantissaBit, _groupLeft1, _groupLeft2, _groupLeft4) = (bit, left1, left2, left4);
+            return;
+        }
+
+        w.Add(Math.Max(0, end - start));
         for (int bin = start; bin < end; bin++)
         {
             int pointer = bap[bin];
             int code = 0;
             if (pointer != 0)
             {
-                code = ReadCode(pointer, w is not null);
+                code = ReadCode(pointer, true);
             }
 
-            w?.Add(exp[bin] | (pointer << 5) | (code << 9));
+            w.Add(exp[bin] | (pointer << 5) | (code << 9));
         }
     }
 
