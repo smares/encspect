@@ -9,8 +9,10 @@
 // ({A7FB87AF-2D02-42FB-A4D4-05CD93843BDD}), which MFInitMediaTypeFromWaveFormatEx turns into MFAudioFormat_Dolby_DDPlus; the rate, the channel count and the lfe flag are those of the
 // first unit's independent frame (Annex E 2.2.2). Not run when written either; the first run's setInput and offeredOutputs lines say what the MFT accepts.
 //
-// Not run when written: the input type below (the AC-3 WAVE tag 0x2000 with the first frame's rate and channels) and the output types the MFT offers are the first run's
-// findings. If SetInputType refuses, the line says so with the HRESULT and the types the MFT offers as input. The decoder is a black box; nothing of it is linked into Encspect.
+// First run: Windows 10 22H2 (19045.7846) with DolbyDecMFT.dll 10.0.19041.7844. The MFT accepted both input types and offers full channel layouts only as a WAVEFORMATEXTENSIBLE
+// output type, so the probe picks the full-channel 32-bit float type over the stereo 16-bit downmix, renegotiates the output type on MF_E_TRANSFORM_STREAM_CHANGE (most files gave
+// no frames before) and records the HRESULTs of ProcessInput and ProcessOutput. If SetInputType refuses, the line says so with the HRESULT and the types the MFT offers as input.
+// The decoder is a black box; nothing of it is linked into Encspect.
 using System.Runtime.InteropServices;
 using System.Text.Json;
 
@@ -19,6 +21,7 @@ namespace WmaDecodeProbe;
 public static class Ac3Mft
 {
     private const int NeedMoreInput = unchecked((int)0xC00D6D72);
+    private const int StreamChange = unchecked((int)0xC00D6D61);
     private const uint ProvidesSamples = 0x100;
     private static readonly Guid Clsid = new("177c0afe-900b-48d4-9e4c-57add250b3d4");
 
@@ -109,12 +112,15 @@ public static class Ac3Mft
                 return 1;
             }
 
-            // Prefer 32-bit floats, then 16-bit integers.
-            int bytesPerSample = 0;
+            // The output with the most channels, as 32-bit floats, then 32-bit integers, then 16-bit integers: the MFT offers its stereo downmix first and full
+            // layouts as WAVEFORMATEXTENSIBLE (tag 0xFFFE), whose subformat (offset 24) says float (3) or integer (1). Chosen again when the MFT signals a stream change.
+            int bytesPerSample = 0, outChannels = 0;
             bool isFloat = false;
             var offered = new List<object>();
-            for (int pass = 0; pass < 2 && bytesPerSample == 0; pass++)
+            var events = new List<string>();
+            bool ChooseOutput()
             {
+                var types = new List<(IMFMediaType Type, int Channels, int Bps, bool Float, object Info)>();
                 for (uint i = 0; i < 64 && mft.GetOutputAvailableType(0, i, out var t) == 0 && t != null; i++)
                 {
                     if (Native.MFCreateWaveFormatExFromMFMediaType(t, out var pointer, out uint size, 0) < 0)
@@ -125,30 +131,41 @@ public static class Ac3Mft
                     var bytes = new byte[size];
                     Marshal.Copy(pointer, bytes, 0, (int)size);
                     Native.CoTaskMemFree(pointer);
-                    int tag = BitConverter.ToUInt16(bytes, 0), bps = BitConverter.ToUInt16(bytes, 14);
-                    if (pass == 0)
+                    int tag = BitConverter.ToUInt16(bytes, 0), bps = BitConverter.ToUInt16(bytes, 14), count = BitConverter.ToUInt16(bytes, 2);
+                    int sub = tag == 0xFFFE && size >= 40 ? BitConverter.ToInt32(bytes, 24) : tag;
+                    uint mask = tag == 0xFFFE && size >= 40 ? BitConverter.ToUInt32(bytes, 20) : 0;
+                    var info = new { tag, sub, channels = count, mask = "0x" + mask.ToString("X"), rate = BitConverter.ToInt32(bytes, 4), bps };
+                    offered.Add(info);
+                    if ((sub == 3 && bps == 32) || (sub == 1 && (bps == 32 || bps == 16)))
                     {
-                        offered.Add(new { tag, channels = BitConverter.ToUInt16(bytes, 2), rate = BitConverter.ToInt32(bytes, 4), bps });
-                    }
-
-                    bool wanted = pass == 0 ? tag == 3 && bps == 32 : tag == 1 && bps == 16;
-                    if (wanted && mft.SetOutputType(0, t, 0) >= 0)
-                    {
-                        bytesPerSample = bps / 8;
-                        isFloat = pass == 0;
-                        record["output"] = new { tag, bps, channels = BitConverter.ToUInt16(bytes, 2), rate = BitConverter.ToInt32(bytes, 4) };
-                        break;
+                        types.Add((t, count, bps, sub == 3, info));
                     }
                 }
+
+                foreach (var c in types.OrderByDescending(c => c.Channels).ThenByDescending(c => c.Float).ThenByDescending(c => c.Bps))
+                {
+                    if (mft.SetOutputType(0, c.Type, 0) >= 0)
+                    {
+                        bytesPerSample = c.Bps / 8;
+                        isFloat = c.Float;
+                        outChannels = c.Channels;
+                        record["output"] = c.Info;
+                        return true;
+                    }
+                }
+
+                return false;
             }
 
-            record["offeredOutputs"] = offered;
-            if (bytesPerSample == 0)
+            if (!ChooseOutput())
             {
-                record["error"] = "no float or 16-bit output type accepted";
+                record["offeredOutputs"] = offered;
+                record["error"] = "no float or integer output type accepted";
                 return 1;
             }
 
+            record["offeredOutputs"] = offered.ToList();
+            record["events"] = events;
             mft.GetOutputStreamInfo(0, out var info);
             bool provides = (info.Flags & ProvidesSamples) != 0;
             mft.ProcessMessage(0x10000000, IntPtr.Zero);
@@ -170,6 +187,20 @@ public static class Ac3Mft
                     }
 
                     int result = mft.ProcessOutput(0, 1, ref buffer, out _);
+                    if (result == StreamChange)
+                    {
+                        offered.Clear();
+                        events.Add(ChooseOutput() ? "streamChange at frame " + frames : "streamChange: no output type accepted");
+                        mft.GetOutputStreamInfo(0, out info);
+                        provides = (info.Flags & ProvidesSamples) != 0;
+                        continue;
+                    }
+
+                    if (result != NeedMoreInput && result < 0 && events.Count < 32)
+                    {
+                        events.Add("ProcessOutput " + Format.Hr(result));
+                    }
+
                     if (result == NeedMoreInput || result < 0 || buffer.Sample == IntPtr.Zero)
                     {
                         return;
@@ -185,6 +216,13 @@ public static class Ac3Mft
                     {
                         output.Write(raw);
                     }
+                    else if (bytesPerSample == 4)
+                    {
+                        for (int i = 0; i + 3 < raw.Length; i += 4)
+                        {
+                            output.Write(BitConverter.GetBytes((float)(BitConverter.ToInt32(raw, i) / 2147483648.0)));
+                        }
+                    }
                     else
                     {
                         for (int i = 0; i + 1 < raw.Length; i += 2)
@@ -193,7 +231,7 @@ public static class Ac3Mft
                         }
                     }
 
-                    frames += length / (bytesPerSample * channels);
+                    frames += length / (bytesPerSample * outChannels);
                 }
             }
 
@@ -211,7 +249,11 @@ public static class Ac3Mft
                 mb.Unlock();
                 mb.SetCurrentLength((uint)received);
                 sample.AddBuffer(mb);
-                mft.ProcessInput(0, sample, 0);
+                int fed = mft.ProcessInput(0, sample, 0);
+                if (fed < 0 && events.Count < 32)
+                {
+                    events.Add("ProcessInput " + Format.Hr(fed) + " at offset " + offset);
+                }
                 Pull();
             }
 
@@ -219,7 +261,7 @@ public static class Ac3Mft
             mft.ProcessMessage(1, IntPtr.Zero);
             Pull();
             record["frames"] = frames;
-            record["channels"] = channels;
+            record["channels"] = outChannels;
             return 0;
         }
         catch (Exception e)

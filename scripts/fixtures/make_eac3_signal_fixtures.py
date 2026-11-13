@@ -280,7 +280,7 @@ def spx_frame(seed, explicit_structure, attenuation, new_coordinates, blend=None
     return finish(b)
 
 
-def ecpl_frame(seed, explicit_structure, new_parameters, flat=False, shift=None):
+def ecpl_frame(seed, explicit_structure, new_parameters, flat=False, shift=None, angles_only=False):
     shift = ECPL_SHIFT if shift is None else shift
     rng = random.Random(seed)
     b = Bits()
@@ -331,9 +331,9 @@ def ecpl_frame(seed, explicit_structure, new_parameters, flat=False, shift=None)
                     b.put(0 if flat else rng.randrange(0, 30), 5)  # flat: every amplitude 0 dB
                 if ch > 0:
                     for _ in range(nb):
-                        b.put(0 if flat else rng.randrange(64), 6).put(0 if flat else rng.randrange(8), 3)  # flat: no angle, no chaos
+                        b.put(0 if flat else rng.randrange(64), 6).put(0 if flat or angles_only else rng.randrange(8), 3)  # flat: no angle, no chaos; angles only: no chaos
             if ch > 0:
-                b.put(0 if flat else (rng.randrange(2) if fresh else 0), 1)  # ecpltrans
+                b.put(0 if flat or angles_only else (rng.randrange(2) if fresh else 0), 1)  # ecpltrans
         if block == 0:
             b.put(0b101, 3)  # rematflg: three bands for ecplbegf 4
         else:
@@ -389,6 +389,7 @@ FILES = {
     "eac3-signal-ecpl.eac3": lambda: b"".join(ecpl_frame(500 + i, i % 2 == 1, i % 3 == 2) for i in range(FRAMES)),
     "eac3-signal-ecpl-quiet.eac3": lambda: b"".join(ecpl_frame(500 + i, i % 2 == 1, i % 3 == 2, shift=ECPL_SHIFT + 4) for i in range(FRAMES)),
     "eac3-signal-ecpl-flat-quiet.eac3": lambda: b"".join(ecpl_frame(500 + i, False, False, flat=True, shift=ECPL_SHIFT + 4) for i in range(FRAMES)),
+    "eac3-signal-ecpl-angle.eac3": lambda: b"".join(ecpl_frame(500 + i, i % 2 == 1, i % 3 == 2, angles_only=True) for i in range(FRAMES)),
     "eac3-signal-ecpl-flat.eac3": lambda: b"".join(ecpl_frame(500 + i, False, False, flat=True) for i in range(FRAMES)),
     "eac3-signal-ecpl-flat-explicit.eac3": lambda: b"".join(ecpl_frame(500 + i, True, False, flat=True) for i in range(FRAMES)),
     "eac3-signal-ecpl-flat-new.eac3": lambda: b"".join(ecpl_frame(500 + i, False, True, flat=True) for i in range(FRAMES)),
@@ -412,6 +413,7 @@ DESCRIPTIONS = {
     "eac3-signal-ecpl-flat-quiet.eac3": "The frames of eac3-signal-ecpl-flat with the exponents 4 higher (24 dB quieter).",
     "eac3-signal-ecpl-flat.eac3": "The frames of eac3-signal-ecpl (default band structure, no new parameters) with every amplitude at 0 dB, no angle, no chaos and no transient: each channel is the coupling channel itself, "
                                   "so a decoder's output must equal the coupling channel's coefficients in every block (A/52 Annex E 3.5.5).",
+    "eac3-signal-ecpl-angle.eac3": "The frames of eac3-signal-ecpl with chaos 0 and no transient, so that nothing in them is random: the amplitudes and the angles (A/52 Annex E 3.5.5) decide the output, which two decoders must give alike.",
     "eac3-signal-ecpl-flat-explicit.eac3": "As eac3-signal-ecpl-flat with the explicit band structure (alternate sub-bands joined) in every frame.",
     "eac3-signal-ecpl-flat-new.eac3": "As eac3-signal-ecpl-flat with parameters sent again in block 3 of every frame (the same flat values).",
     "eac3-signal-ecpl.eac3": "Twelve 2/0 E-AC-3 frames at 48 kHz with enhanced coupling from bin 61 to 133, the default band structure or an explicit one, new amplitudes, angles and chaos "
@@ -422,6 +424,7 @@ DESCRIPTIONS = {
 NO_REFERENCE = {
     "eac3-signal-ecpl.eac3": "FFmpeg does not decode enhanced coupling.",
     "eac3-signal-ecpl-flat.eac3": "FFmpeg does not decode enhanced coupling.",
+    "eac3-signal-ecpl-angle.eac3": "FFmpeg does not decode enhanced coupling.",
     "eac3-signal-ecpl-quiet.eac3": "FFmpeg does not decode enhanced coupling.",
     "eac3-signal-ecpl-flat-quiet.eac3": "FFmpeg does not decode enhanced coupling.",
     "eac3-signal-ecpl-flat-explicit.eac3": "FFmpeg does not decode enhanced coupling.",

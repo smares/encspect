@@ -33,7 +33,7 @@ BANDS = "400,800,1600,3200,5700,6400,8000,10200,12500,12800,20000"
 FLOOR_DB = -90
 # The fixtures that hold what oxideav-ac3 decodes: the transform, spectral extension, enhanced coupling. Its rematrixing reads differently from the analyzer's and from
 # Core Audio's in bins 25 to 72 (about 0.5 to 1.7 kHz), so a file with rematrixing there is not a reference for that range.
-DEFAULT = ["eac3-signal-aht", "eac3-signal-aht-hebap4", "eac3-signal-spx", "eac3-signal-ecpl", "eac3-signal-ecpl-flat", "eac3-signal-ecpl-quiet", "eac3-signal-ecpl-flat-quiet"]
+DEFAULT = ["eac3-signal-aht", "eac3-signal-aht-hebap4", "eac3-signal-spx", "eac3-signal-ecpl", "eac3-signal-ecpl-angle", "eac3-signal-ecpl-flat", "eac3-signal-ecpl-quiet", "eac3-signal-ecpl-flat-quiet"]
 
 
 def checkout():

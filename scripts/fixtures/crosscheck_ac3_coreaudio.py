@@ -605,7 +605,7 @@ def variants_report(args, root):
     return lines
 
 
-CORE_AUDIO_SIGNAL_FILES = ["eac3-signal-aht.eac3", "eac3-signal-aht-hebap4.eac3", "eac3-signal-ecpl.eac3", "eac3-signal-ecpl-flat.eac3", "eac3-signal-ecpl-quiet.eac3", "eac3-signal-ecpl-flat-quiet.eac3", "eac3-signal-ecpl-flat-explicit.eac3", "eac3-signal-ecpl-flat-new.eac3", "eac3-signal-spx.eac3", "eac3-signal-spx-noise.eac3", "eac3-signal-transient.eac3", "eac3-signal-dependent.eac3", "substreams.eac3", "coding-ac3-core-dependent.ac3"]
+CORE_AUDIO_SIGNAL_FILES = ["eac3-signal-aht.eac3", "eac3-signal-aht-hebap4.eac3", "eac3-signal-ecpl.eac3", "eac3-signal-ecpl-flat.eac3", "eac3-signal-ecpl-quiet.eac3", "eac3-signal-ecpl-angle.eac3", "eac3-signal-ecpl-flat-quiet.eac3", "eac3-signal-ecpl-flat-explicit.eac3", "eac3-signal-ecpl-flat-new.eac3", "eac3-signal-spx.eac3", "eac3-signal-spx-noise.eac3", "eac3-signal-transient.eac3", "eac3-signal-dependent.eac3", "substreams.eac3", "coding-ac3-core-dependent.ac3"]
 
 
 # Files whose analyzer streams follow one another (a program frame with dependent frames, one without): each stream is cut out as a file of its own and compared with Core Audio's
@@ -681,7 +681,7 @@ def main(argv=None):
         for path in files:
             work = root / path.stem
             work.mkdir(exist_ok=True)
-            if args.save and path.suffix == ".eac3":
+            if args.save and path.suffix in (".eac3", ".ac3"):
                 try:
                     save_decodes(args, path, args.save / path.stem)
                 except Exception as error:  # the saved files are for looking at, not part of the verdict
