@@ -6,10 +6,9 @@ docs/design/official-decoder-crosschecks.md), and decodes the damage variants of
 
 The probe's `pcm` mode reads a file with ExtAudioFile as interleaved floats. As crosscheck_ac3_pcm.py does, each encoder-written file is compared twice with
 compare_pcm.py: sample by sample on a copy with its dither flags cleared (the design's bounds), and, if that fails, by the energy of bands on the file repeated
-(whatever Core Audio's dither is, bands of noise are compared by energy). What the documents do not fix and the first runs record: Core Audio's channel order
-for 5.1 and whether it drops the first 288 samples (the converter outputs 288 fewer than the coded stage, "Reference for sample counts" in docs/formats/ac3.md),
-so each attempt is made for the candidate orders and first positions in CANDIDATES, and the first that passes counts; the output lists every attempt, so a
-failing file shows what was tried and by how much each missed. The variants (cut, flipped, dropped, repeated frames) are only decoded and their frame counts
+(whatever Core Audio's dither is, bands of noise are compared by energy). The first run found Core Audio's output at the coded stage's position 256, in the coded channel order
+at gain 1, so that alignment is fixed (FIRST_POSITION) and both passes must hold; where one fails, the lines add the correlation diagnostics, the blocks that miss most (strict) or the
+bands (dithered), so that a difference at one block, such as FFmpeg's in block 47 of the block switching file, shows as that block's errors. A file is ok only if every pass holds. The variants (cut, flipped, dropped, repeated frames) are only decoded and their frame counts
 listed beside the analyzer's: Core Audio conceals damage, the analyzer does not, so no bound applies (the lead's rule of 2026-11-01).
 
 Exit status 0 where every file passes, 1 where one fails, 2 for a usage error.
@@ -130,27 +129,53 @@ def correlations(ours, reference, channels, first, window=2048):
     return rows
 
 
+# Core Audio's output starts 256 samples into the coded stage (one block: the first block's overlap), in the coded channel order, at the coded gain: the first
+# run's diagnostics found every file at position 256, gain 1.0000, correlation 1.0000 (the 288 of the converter's totals is a different path's figure).
+FIRST_POSITION = 256
+
+
+def block_errors(ours, reference, channels, first, count=5):
+    """The blocks of 256 samples where the reference differs most from the analyzer after alignment: [(block, [largest error of each channel])], worst first."""
+    rows = []
+    blocks = (len(reference) // channels) // 256
+    for block in range(blocks):
+        worst = []
+        for c in range(channels):
+            error = 0.0
+            for n in range(256):
+                k = first + block * 256 + n
+                if k * channels + c >= len(ours):
+                    break
+                error = max(error, abs(ours[k * channels + c] - reference[(block * 256 + n) * channels + c]))
+            worst.append(error)
+        rows.append((block + first // 256, worst))
+    rows.sort(key=lambda r: -max(r[1]))
+    return rows[:count]
+
+
 def attempt(dump, raw, channels, work, tag, extra):
-    results = []
+    """The comparison at the fixed alignment; where it fails the lines also say where the signals are and which blocks and bands miss."""
     sample = json.loads(dump.read_text(encoding="utf-8"))["streams"][0]
     ours = floats((dump.parent / sample["pcm"]).read_bytes())
-    found = estimate(ours, floats(raw), channels)
-    extras = []
-    if found:
-        p0, gain, correlation = found
-        results.append((f"diagnostic: the reference lies at position {p0}, its samples times {gain:.4f} give the analyzer's, correlation {correlation:.4f}", ["not a comparison"]))
-        extras = [(f"aligned by correlation at {p0}, gain {gain:.4f}, {name} order", order, p0, gain) for name, order in ORDERS.get(channels, {"coded": list(range(channels))}).items()]
-        for line in correlations(ours, floats(raw), channels, p0):
+    reference = floats(raw)
+    coded = ORDERS.get(channels, {"coded": list(range(channels))})["coded"]
+    problems, result = compare(dump, reorder(raw, channels, coded), channels, f"{tag}-fixed", FIRST_POSITION, extra)
+    results = [(f"coded order, first position {FIRST_POSITION}", problems)]
+    if problems:
+        found = estimate(ours, reference, channels)
+        if found:
+            p0, gain, correlation = found
+            results.append((f"diagnostic: correlation puts the reference at position {p0} with gain {gain:.4f} (correlation {correlation:.4f}; a tonal file can be ambiguous)", ["not a comparison"]))
+        for line in correlations(ours, reference, channels, FIRST_POSITION):
             results.append((f"channel correlations (analyzer rows, reference columns) {line}", ["not a comparison"]))
-    for label, order, first, *gain in [*extras, *[(l, o, f) for l, o, f in candidates(channels)]]:
-        reference = reorder(raw, channels, order)
-        if gain and abs(gain[0] - 1) > 1e-9:
-            scaled = floats(reference)
-            reference = array.array("f", [v * gain[0] for v in scaled]).tobytes()
-        problems, _ = compare(dump, reference, channels, f"{tag}-{len(results)}", first, extra)
-        results.append((label, problems))
-        if not problems:
-            break
+        if "--no-sample-bounds" not in extra:
+            for block, worst in block_errors(ours, reference, channels, FIRST_POSITION):
+                results.append((f"block {block} (a file of 96 blocks repeats): largest errors per channel {' '.join(f'{w:.4g}' for w in worst)}", ["not a comparison"]))
+        elif result and "bands" in result:
+            for number, channel in enumerate(result["bands"]["channels"]):
+                for band in channel["bands"]:
+                    if band["status"] == "outside":
+                        results.append((f"channel {number} band {band['band']} ({x.BANDS.split(',')[band['band']]} Hz up): {band['differenceDb']} dB over {band['windowFrames']} frames", ["outside"]))
     return results
 
 
@@ -179,6 +204,7 @@ def check_file(args, path, work):
     long_data, long_frames = x.repeated(path.read_bytes(), frames, max(2, x.REPEATED_SAMPLES // (6 * 256 * len(frames))))
     long_path = work / (path.stem + ".repeated.ac3")
     long_path.write_bytes(long_data)
+    holds = True
     for variant, source, extra in (("strict", stripped, []), ("dithered", long_path, ["--bands", x.BANDS, "--no-sample-bounds"])):
         folder = work / variant
         folder.mkdir()
@@ -186,15 +212,14 @@ def check_file(args, path, work):
         raw, info = decode(args.probe, source, folder / "coreaudio.f32")
         if raw is None:
             lines.append(f"  {variant}: Core Audio does not decode the file: {info}")
+            holds = False
             continue
-        channels = info["channels"]
-        label, detail = first_passing(attempt(dump, raw, channels, work, f"ca-{variant}", extra))
-        lines.append(f"  {variant}: {'ok, ' + label if label else 'OUTSIDE THE BOUND, attempts:'} ({info['frames']} frames, layout tag {info.get('layoutTag')})")
+        label, detail = first_passing(attempt(dump, raw, info["channels"], work, f"ca-{variant}", extra))
+        lines.append(f"  {variant}: {'ok' if label else 'OUTSIDE THE BOUND'} ({info['frames']} frames, layout tag {info.get('layoutTag')}, drc status {info.get('drcStatus')})")
         if label is None:
             lines += detail
-        else:
-            return True, lines
-    return False, lines
+            holds = False
+    return holds, lines
 
 
 def variants_report(args, root):

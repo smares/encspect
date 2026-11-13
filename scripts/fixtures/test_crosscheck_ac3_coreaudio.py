@@ -49,6 +49,13 @@ class ComparisonLogic(unittest.TestCase):
         reference = array.array("f", [v for x in left[100:] for v in (x, 1.0)])
         self.assertEqual(c.estimate(ours, reference, 2)[0], 100)
 
+    def test_block_errors_names_the_block_that_differs_most(self):
+        ours = array.array("f", [0.0] * (256 * 8))
+        reference = array.array("f", [0.0] * (256 * 8 - 256))
+        reference[3 * 256 + 5] = 0.25
+        rows = c.block_errors(ours, reference, 1, 256)
+        self.assertEqual(rows[0], (4, [0.25]))
+
 
 if __name__ == "__main__":
     unittest.main()
