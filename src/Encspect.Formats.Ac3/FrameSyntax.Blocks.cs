@@ -163,7 +163,7 @@ internal sealed partial class FrameSyntax
             _dithMask = 0;
             for (int ch = 0; ch < _nfchans; ch++)
             {
-                if (FC("IsDithered", ch, 1, Explain.Dithflag, BooleanValue) != 0)
+                if (FC("IsDithered", ch, 1, Explain.Dithflag, BooleanValue, Topics.Mantissas) != 0)
                 {
                     _dithMask |= 1 << ch;
                 }
@@ -1047,7 +1047,7 @@ internal sealed partial class FrameSyntax
         {
             int end = _b.Limit;
             bool truncated = _b.FrameBitCount < blocksEnd && start + bits <= blocksEnd;
-            _t?.Field("Mantissas", start, Math.Max(start, end), NodeValue.Integer(bits, "bits"), Explain.Mantissas, Topics.AudioBlocks);
+            _t?.Field("Mantissas", start, Math.Max(start, end), NodeValue.Integer(bits, "bits"), Explain.Mantissas, Topics.Mantissas);
             _r.Stop = truncated ? StopReason.DataEnds : StopReason.Overrun;
             _r.StopBit = start;
             if (!truncated && !Counted(Issue.Overrun))
@@ -1066,7 +1066,7 @@ internal sealed partial class FrameSyntax
         }
 
         _b.Skip(bits);
-        _t?.Field("Mantissas", start, _b.Position, NodeValue.Integer(bits, "bits"), Explain.Mantissas, Topics.AudioBlocks);
+        _t?.Field("Mantissas", start, _b.Position, NodeValue.Integer(bits, "bits"), Explain.Mantissas, Topics.Mantissas);
         _r.MantissaBits += bits;
         return true;
     }

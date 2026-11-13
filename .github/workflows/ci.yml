@@ -1629,6 +1629,14 @@ jobs:
       - name: Cross-check the AC-3 fixtures
         run: python3 scripts/fixtures/crosscheck_ac3_fixtures.py --analyzer src/Encspect.Cli/bin/Release/net10.0/encspect
 
+      # The decoder's samples against liba52's (called as a library, its source unread) and FFmpeg's: sample by sample on a copy of each
+      # file with its dither flags cleared, by the energy of bands on the file as it is (docs/development.md, "AC-3 decoding").
+      - name: Build the PCM dump
+        run: dotnet build --configuration Release tests/Encspect.PcmDump
+
+      - name: Cross-check the AC-3 decoder's PCM
+        run: python3 scripts/fixtures/crosscheck_ac3_pcm.py --encspect src/Encspect.Cli/bin/Release/net10.0/encspect
+
       # Dolby's joint object coding test files (Dolby Digital Plus Online Delivery Kit v1.4.1) are for testing
       # playback products and are not ours to redistribute, so they are fetched and checked against their
       # SHA-256 rather than committed, with three files from the FFmpeg sample archive (two with the

@@ -7,6 +7,7 @@ internal static class Topics
     public const string AudioBlocks = "ac3-audio-blocks";
     public const string Coupling = "ac3-coupling";
     public const string Rematrixing = "ac3-rematrixing";
+    public const string Mantissas = "ac3-mantissas";
     public const string DialogueNormalization = "dialogue-normalization";
     public const string Eac3Substreams = "eac3-substreams";
     public const string SpectralExtension = "eac3-spectral-extension";

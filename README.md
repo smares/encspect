@@ -62,7 +62,7 @@ Formats read so far ([details](docs/formats/README.md)):
 - AAC in MP4, ADTS and ADIF, including HE-AAC, HE-AAC v2 and xHE-AAC
 - Ogg, with Speex, Vorbis and Opus; Vorbis and Opus are decoded for `--measure`
 - Musepack SV4 to SV8
-- AC-3 and E-AC-3, raw and in MP4, with the object audio (JOC) that Dolby Atmos adds
+- AC-3 and E-AC-3, raw and in MP4, with the object audio (JOC) that Dolby Atmos adds; AC-3 is decoded for `--measure`
 - DTS (core, XCh, X96, XXCH and the DTS-HD extension substreams with the lossless extension's channel sets and the DTS:X signal), raw and in MP4
 - DTS-HD files (`.dtshd`)
 - WavPack (lossless, hybrid and DSD), `.wv` and `.wvc`, with an optional decode that verifies the CRCs and the MD5 of the audio
@@ -83,7 +83,7 @@ Protection: streams that a container encrypts or locks are reported with their s
 
 Measurements: with `--measure`, the formats that have a decoder (FLAC, WavPack, Monkey's Audio, ALAC, TTA, Dolby TrueHD and MLP, MPEG audio Layers I to III, Vorbis, and the samples of WAV, Wave64 and AIFF) get the average spectrum and the spectral cutoff of their decoded audio, the spectrogram and waveform behind them, the levels (sample peak, RMS level, DC offset, clipping runs, digital silence and bit-depth usage), the loudness (integrated, range, maxima; ITU-R BS.1770-5 and EBU R 128) and the true peak ([details](docs/cli.md)). The GUI's detail window decodes and measures a file with Decode Audio and draws the waveform, the spectrogram, the spectrum and the loudness under the heading Audio of its Graphs tab ([details](docs/gui.md)).
 
-Version 0.2 completes the lossless formats with their decoders and the measurements. Next: 0.3, the lossy decoders (MPEG audio, Vorbis and Opus are built; AC-3 and E-AC-3 follow), so lossy files are measured too ([plan](docs/plan.md#milestones); what each format reads by depth is in [formats](docs/formats/README.md#depth-by-format)).
+Version 0.2 completes the lossless formats with their decoders and the measurements. Next: 0.3, the lossy decoders (MPEG audio, Vorbis, Opus and AC-3 are built; E-AC-3 follows), so lossy files are measured too ([plan](docs/plan.md#milestones); what each format reads by depth is in [formats](docs/formats/README.md#depth-by-format)).
 
 The decoders exist for analysis only: Encspect does not play or convert audio, and users are responsible for the laws where they live ([details](docs/cli.md#what-the-decoders-are-for)).
 

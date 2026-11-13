@@ -220,12 +220,21 @@ internal sealed class FrameBits
             throw new EndOfStreamException();
         }
 
-        int value = 0;
-        for (int bit = start; bit < start + width; bit++)
+        if (width == 0)
         {
-            value = (value << 1) | ((data[bit >> 3] >> (7 - (bit & 7))) & 1);
+            return 0;
         }
 
-        return value;
+        // At most five bytes hold the bits: 32 and the seven before the first.
+        int first = start >> 3;
+        int last = (start + width - 1) >> 3;
+        ulong accumulated = 0;
+        for (int i = first; i <= last; i++)
+        {
+            accumulated = (accumulated << 8) | data[i];
+        }
+
+        int shift = ((last + 1) * 8) - (start + width);
+        return (int)(uint)((accumulated >> shift) & ((1UL << width) - 1));
     }
 }

@@ -129,7 +129,7 @@ AREAS = {
     "ac3-crosscheck": {
         "projects": ["Encspect.Formats.Ac3", "Encspect.Formats.Mp4"],
         "fixtures": ["ac3"],
-        "scripts": ["crosscheck_ac3_fixtures.py", "check_eac3_samples.py"],
+        "scripts": ["crosscheck_ac3_fixtures.py", "crosscheck_ac3_pcm.py", "check_eac3_samples.py"],
         "globs": ["scripts/fixtures/*.c", "scripts/fixtures/make_*ac3*", "scripts/fixtures/emdf_model.py", "tests/conformance/eac3-samples.json"],
     },
     "dts-crosscheck": {
