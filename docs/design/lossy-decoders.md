@@ -691,6 +691,7 @@ The project lead decided all of them on 2026-11-08: every recommendation as list
 17. **Patents** (the lead's answer): no format waits for advice.
     - A short note in [`README.md`](../../README.md) and [cli.md](../cli.md) says that the decoders exist for analysis only (no playback or conversion) and that users are responsible for complying with the laws where they live.
     - Before the HE-AAC, USAC, E-AC-3 and WMA Professional decoders are built, the lead decides whether they ship as source only or stay out of the release binaries.
+    - **Decided (the lead, 2026-11-13):** the E-AC-3, HE-AAC, USAC and WMA Professional decoders are built and included in the release binaries, like the others.
 18. **Opus's units per byte:** 8,192, from its coded audio at the lowest bitrates, with silence covered by the floor (about 3.3 hours of stereo) and a crafted 100 MB file stopping after about 8 minutes, as for Monkey's Audio.
     - Considered: 16,384, which doubles that worst case and still does not cover silence.
     - Considered: 32,768, which covers silence in full at about 33 minutes for a crafted 100 MB file.
