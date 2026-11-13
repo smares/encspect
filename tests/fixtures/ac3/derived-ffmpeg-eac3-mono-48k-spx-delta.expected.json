@@ -92,7 +92,12 @@
   "AC-3/Frame/Audio Block/Spectral Extension Begin Code": "2 (sub-band 4)",
   "AC-3/Frame/Audio Block[4]/Delta Bit Allocation/Delta Bit Allocation Segments (center)/Offset": "5 bands"
  },
- "findings": [],
+ "findings": [
+  [
+   "ac3.block-inconsistent",
+   "compositely coded"
+  ]
+ ],
  "crosscheck": {
   "ffprobe": true,
   "decode": true,
