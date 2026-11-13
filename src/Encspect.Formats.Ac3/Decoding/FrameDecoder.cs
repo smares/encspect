@@ -273,6 +273,7 @@ internal sealed class FrameDecoder : IFrameDecoder
 
     // The coupling channel's bins from the first bin it codes: the values of the coded ones, and for each zero-bit one the shift of its exponent, since every coupled channel
     // dithers those with noise of its own once it has been scaled by its coordinates (7.4.3, 7.3.4).
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void CouplingChannel(ref IntReader r, int start)
     {
         int count = r.Next();
@@ -317,6 +318,7 @@ internal sealed class FrameDecoder : IFrameDecoder
     }
 
     // 7.5.4: the bands the flags name hold sum and difference, from the table of the coupling state (Tables 7.25 to 7.28).
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void Rematrix(float[] left, float[] right, int bands, int flags, int cplbegf)
     {
         for (int band = 0; band < bands; band++)
@@ -340,6 +342,7 @@ internal sealed class FrameDecoder : IFrameDecoder
 
     // 7.4.3: a coupled channel's bins above its own bandwidth are the coupling channel's times the channel's coordinate of the band, times 8; where the coupling channel has no
     // bits for a bin the channel's dither stands in for it, scaled the same way. With phase flags the right channel is negated in the bands that set them.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void ExpandCoupling(float[] spectrum, ReadOnlySpan<int> coordinates, int cplbegf, int subbands, int combined, int phsflg, int bands, bool isRight, bool dither)
     {
         int band = -1;

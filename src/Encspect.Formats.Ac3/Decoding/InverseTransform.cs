@@ -169,6 +169,7 @@ internal sealed class InverseTransform
     }
 
     // z[n] = sum over k of Z[k] (cos(2 pi k n / size) + j sin(2 pi k n / size)), in place on bit-reversed input, radix 2.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void Fft(float[] re, float[] im, int size, float[] cos, float[] sin)
     {
         for (int length = 2; length <= size; length <<= 1)
