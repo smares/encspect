@@ -632,6 +632,15 @@ static int pcm(const char *path, const char *out_path) {
         printf("{\"type\":\"pcm\",\"status\":%d,\"stage\":\"client-format\"}\n", (int)s);
         return 1;
     }
+    /* Core Audio's AC-3 decoder applies dynamic range control by default; the comparison wants the coded channels without it ('mdrc': 0 is none). The status of the
+       attempt is in the JSON line, so a run records whether the property exists on the converter ExtAudioFile built. */
+    OSStatus drc = -1;
+    AudioConverterRef converter = NULL;
+    UInt32 converter_size = sizeof converter;
+    if (ExtAudioFileGetProperty(file, kExtAudioFileProperty_AudioConverter, &converter_size, &converter) == 0 && converter) {
+        UInt32 none = 0;
+        drc = AudioConverterSetProperty(converter, 'mdrc', sizeof none, &none);
+    }
     AudioChannelLayout layout;
     UInt32 layout_size = sizeof layout;
     UInt32 tag = 0;
@@ -662,7 +671,7 @@ static int pcm(const char *path, const char *out_path) {
     fclose(out);
     free(buffer);
     ExtAudioFileDispose(file);
-    printf("{\"type\":\"pcm\",\"status\":%d,\"rate\":%.0f,\"channels\":%u,\"frames\":%lld,\"layoutTag\":%u}\n", (int)s, client.mSampleRate, (unsigned)client.mChannelsPerFrame, total, (unsigned)tag);
+    printf("{\"type\":\"pcm\",\"status\":%d,\"rate\":%.0f,\"channels\":%u,\"frames\":%lld,\"layoutTag\":%u,\"drcStatus\":%d}\n", (int)s, client.mSampleRate, (unsigned)client.mChannelsPerFrame, total, (unsigned)tag, (int)drc);
     return 0;
 }
 

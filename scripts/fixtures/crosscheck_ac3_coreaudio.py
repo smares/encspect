@@ -77,10 +77,76 @@ def decode(probe, path, out):
     return out.read_bytes(), info
 
 
+def floats(raw):
+    values = array.array("f")
+    values.frombytes(raw)
+    return values
+
+
+def estimate(ours, reference, channels, window=1024, reach=2400):
+    """Where the reference's samples lie against the analyzer's, and with what gain, from channel 0 over one window of loud samples: (p0, gain, correlation) where the
+    reference's sample k is the analyzer's sample p0 + k times about 1/gain; None where a window cannot be taken. Core Audio's priming (288 samples at the coded stage) and any gain
+    it applies by default (dynamic range control, dialogue normalization) show here; a correlation near 1 says the signals are the same and only aligned and scaled."""
+    a = ours[0::channels]
+    r = reference[0::channels]
+    start = max(0, min(len(a) // 2, len(a) - window - reach))
+    if len(a) < window + reach or len(r) < window + 2 * reach:
+        return None
+    x = a[start:start + window]
+    energy = sum(v * v for v in x)
+    if energy == 0:
+        return None
+    best = None
+    for lag in range(-reach, reach + 1):
+        origin = start + lag
+        if origin < 0 or origin + window > len(r):
+            continue
+        y = r[origin:origin + window]
+        dot = sum(p * q for p, q in zip(x, y))
+        if best is None or dot > best[0]:
+            best = (dot, lag, sum(q * q for q in y))
+    if best is None or best[2] == 0:
+        return None
+    dot, lag, ry = best
+    return -lag, dot / ry, dot / (energy * ry) ** 0.5
+
+
+def correlations(ours, reference, channels, first, window=2048):
+    """Matrix of correlation coefficients, the analyzer's channel i against the reference's channel j at the aligned position: which reference channel is which."""
+    start = max(0, len(ours) // channels // 2 - window)
+    rows = []
+    for i in range(channels):
+        x = [ours[(start + n) * channels + i] for n in range(window)]
+        row = []
+        for j in range(channels):
+            at = start - first
+            y = [reference[(at + n) * channels + j] for n in range(window)] if at >= 0 and (at + window) * channels <= len(reference) else None
+            if y is None:
+                row.append(float("nan"))
+                continue
+            xx, yy = sum(v * v for v in x), sum(v * v for v in y)
+            row.append(sum(p * q for p, q in zip(x, y)) / (xx * yy) ** 0.5 if xx and yy else 0.0)
+        rows.append(" ".join(f"{v:5.2f}" for v in row))
+    return rows
+
+
 def attempt(dump, raw, channels, work, tag, extra):
     results = []
-    for label, order, first in candidates(channels):
+    sample = json.loads(dump.read_text(encoding="utf-8"))["streams"][0]
+    ours = floats((dump.parent / sample["pcm"]).read_bytes())
+    found = estimate(ours, floats(raw), channels)
+    extras = []
+    if found:
+        p0, gain, correlation = found
+        results.append((f"diagnostic: the reference lies at position {p0}, its samples times {gain:.4f} give the analyzer's, correlation {correlation:.4f}", ["not a comparison"]))
+        extras = [(f"aligned by correlation at {p0}, gain {gain:.4f}, {name} order", order, p0, gain) for name, order in ORDERS.get(channels, {"coded": list(range(channels))}).items()]
+        for line in correlations(ours, floats(raw), channels, p0):
+            results.append((f"channel correlations (analyzer rows, reference columns) {line}", ["not a comparison"]))
+    for label, order, first, *gain in [*extras, *[(l, o, f) for l, o, f in candidates(channels)]]:
         reference = reorder(raw, channels, order)
+        if gain and abs(gain[0] - 1) > 1e-9:
+            scaled = floats(reference)
+            reference = array.array("f", [v * gain[0] for v in scaled]).tobytes()
         problems, _ = compare(dump, reference, channels, f"{tag}-{len(results)}", first, extra)
         results.append((label, problems))
         if not problems:

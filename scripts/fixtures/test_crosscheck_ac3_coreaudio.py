@@ -31,6 +31,24 @@ class ComparisonLogic(unittest.TestCase):
         self.assertIsNone(label)
         self.assertEqual(lines, ["    a: x", "    b: y"])
 
+    def test_estimate_finds_the_priming_and_the_gain(self):
+        import random
+        r = random.Random(1)
+        ours = array.array("f", [r.uniform(-1, 1) for _ in range(20000)])
+        reference = array.array("f", [0.5 * v for v in ours[288:]])
+        p0, gain, correlation = c.estimate(ours, reference, 1)
+        self.assertEqual(p0, 288)
+        self.assertAlmostEqual(gain, 2.0, places=4)
+        self.assertAlmostEqual(correlation, 1.0, places=4)
+
+    def test_estimate_on_two_channels_reads_channel_0(self):
+        import random
+        r = random.Random(2)
+        left = [r.uniform(-1, 1) for _ in range(20000)]
+        ours = array.array("f", [v for x in left for v in (x, 0.0)])
+        reference = array.array("f", [v for x in left[100:] for v in (x, 1.0)])
+        self.assertEqual(c.estimate(ours, reference, 2)[0], 100)
+
 
 if __name__ == "__main__":
     unittest.main()
