@@ -47,7 +47,8 @@ DEFAULT_ENCSPECT = "dotnet " + str(ROOT / "src" / "Encspect.Cli" / "bin" / "Rele
 # The edges, in hertz, of the bands of the energy comparison: octave-wide steps above 400 Hz, which the exponent bands of A/52 7.2.2.3 are about as wide as.
 BANDS = "400,800,1600,3200,6400,12800,20000"
 
-# Files FFmpeg decodes differently from liba52 and the analyzer, by file: what is known. Not an explanation of the cause (FFmpeg's source is not read): the blocks are the ones the
+# Files FFmpeg decodes differently from liba52 and the analyzer, by file: what is known. FFmpeg's source is not read, so its cause is not known; the evidence is that against the
+# encoder's input signal the analyzer and liba52 are within 0.0021 in the block and FFmpeg is off by 0.0243, and A/52 7.5.4 has no condition on block switching. The blocks are the ones the
 # analyzer's tree names, block 47 of the file below (its left channel is block switched, its right is not, and the rematrixing flags of block 42 are in force), where FFmpeg's
 # right channel differs by up to 0.025 of full scale and its left channel agrees with the others to 2e-6.
 FFMPEG_DIFFERS = {

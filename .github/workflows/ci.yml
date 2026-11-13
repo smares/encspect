@@ -646,6 +646,7 @@ jobs:
       - name: Regenerate the hand-built AC-3 fixtures and the encoder-made ones' manifests
         run: |
           python3 scripts/fixtures/make_ac3_fixtures.py
+          python3 scripts/fixtures/make_ac3_signal_fixtures.py
           python3 scripts/fixtures/make_external_ac3_fixtures.py --manifests-only
 
       - name: Regenerate the hand-built DTS fixtures and the encoder-made ones' manifests
