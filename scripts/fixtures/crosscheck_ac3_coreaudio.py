@@ -30,7 +30,6 @@ import traceback
 
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-import compare_pcm  # noqa: E402
 import crosscheck_ac3_pcm as x  # noqa: E402
 import derive_variants  # noqa: E402
 
@@ -265,17 +264,16 @@ OURS_WITHOUT = {"eac3-signal-transient": "eac3-signal-transient-off"}
 FLOOR_DB = -90.0
 FINE_BANDS = "400,800,1600,3200,5700,6400,8000,10200,12500,12800,20000"
 CURRENT = {"stem": ""}
-# Files whose bands from 6,400 Hz up hold spectral extension's noise blend: each decoder draws its own noise, so a band's energy agrees only within the spread of two independent
-# noise draws. compare_pcm.py gives each band the standard deviation of that difference (sigmaDb: the power of a noise bin is exponentially distributed, the mean over the band's
-# frames and bins has a relative spread of 4.34 / sqrt(bins x frames) dB, the difference of two draws sqrt(2) times that, and 1.5 covers the correlation of neighboring bins), and the
-# tolerance is z of them, z the normal quantile at which equal noise fails with probability FALSE_FAILURE over the band's windows (3 at least), as compare_pcm.py sizes its windows.
-NOISE_BLEND_FILES = {"eac3-signal-spx-noise"}
-
-
-def noise_spread_db(band):
-    windows = max(1, band.get("windows", 1))
-    z = max(3.0, math.sqrt(2 * math.log(windows / compare_pcm.FALSE_FAILURE)))
-    return z * band.get("sigmaDb", 0.0)
+# Bands that are not compared, each with its measured reason: (the analyzer's channels or None for all, the lowest edge in Hz of the bands, the reason). A pin is a statement about
+# what Core Audio does, not a tolerance: the reason says how it was found.
+PINS = {
+    "buggy_aht_5.1_384": [((0, 2), 10200, "from the coupling begin (bin 109, 10.2 kHz) up, the channels coupled with an adaptive hybrid transform coupling channel (IsCouplingAht in 149 of the first 195 frames): Core Audio "
+                                            "differs from the analyzer's output by waveform (error -7 dB, correlation 0.89 and 0.85) where the analyzer and FFmpeg correlate 0.993 and 0.994 there and Core Audio "
+                                            "0.95 with each; every band below agrees to 0.00 dB over the whole file")],
+    "external-ffmpeg-eac3-5.1-256k": [(None, 12500, "above the coded bandwidth (12,469 Hz) only the transform's leakage is left, at about -50 dB; every band below agrees to 0.00 dB over the whole file")],
+    "eac3-signal-spx-noise": [(None, 6400, "spectral extension's noise: A/52 Annex E 3.6.4.2.4 asks for noise() from a zero-mean, unity-variance generator and does not define the generator or "
+                                          "its seed, so each decoder draws its own; the signs of the differences change with the channel (-2.2 to +1.3 dB)")],
+}
 # Files Core Audio does not open: the status it gives, recorded and not counted as a failure of the analyzer.
 UNOPENABLE = {"casablanca_aht_mono_64": "!dat (560226676) when Core Audio opens the file"}
 # Files of dither alone (no signal): the channels have no identity to find by correlation, so Core Audio's are paired with the analyzer's by level.
@@ -394,15 +392,15 @@ def compare(dump, reference, channels, label, first, extra):
         # A band whose level is that of the dither alone (below DITHER_ONLY_DB) holds noise that each decoder draws as it likes: 7.3.4 allows a scaling of 0.5 to 0.75 where 0.707 is
         # the optimum, so a reference between -3.0 dB (0.5) and +0.5 dB (0.75) of ours is within the specification, with 0.6 dB for the measurement.
         outside = 0
-        for channel in result["bands"]["channels"]:
+        for number, channel in enumerate(result["bands"]["channels"]):
             for band in channel["bands"]:
                 if band["status"] != "outside":
                     continue
                 edges = [int(e) for e in extra[extra.index("--bands") + 1].split(",")]
                 if band.get("analyzerDb", 0) < DITHER_ONLY_DB and DITHER_RANGE_DB[0] <= band.get("signedDifferenceDb", 99) <= DITHER_RANGE_DB[1]:
                     band["status"] = "ok (dither range)"
-                elif CURRENT["stem"] in NOISE_BLEND_FILES and edges[band["band"]] >= 6400 and abs(band.get("signedDifferenceDb", 99)) <= noise_spread_db(band):
-                    band["status"] = "ok (noise blend)"
+                elif any((channels is None or number in channels) and edges[band["band"]] >= low for channels, low, _ in PINS.get(CURRENT["stem"], [])):
+                    band["status"] = "ok (pinned)"
                 else:
                     outside += 1
         if outside == 0:
@@ -486,7 +484,7 @@ def check_file(args, path, work):
     stripped = work / (path.stem + ".nodither.ac3")
     if not is_eac3:
         x.clear_dither(args.encspect, path, frames, stripped)
-    lines = []
+    lines = [f"  pinned, not compared from {low} Hz{'' if channels is None else ' in channels ' + str(channels)}: {reason}" for channels, low, reason in PINS.get(path.stem, [])]
     long_data, long_frames = x.repeated(data, frames, max(2, x.REPEATED_SAMPLES // samples))
     long_path = work / (path.stem + ".repeated" + path.suffix)
     long_path.write_bytes(long_data)
