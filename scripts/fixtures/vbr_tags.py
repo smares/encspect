@@ -426,29 +426,29 @@ def findings(tag, frame_offset, cut=True):
     result = []
     at = f"0x{frame_offset:X}"
     if tag["truncated"]:
-        result.append(("mpeg.vbr-header-truncated", at))
+        result.append(("mpeg-audio.vbr-header-truncated", at))
     if tag.get("entry_size_invalid"):
-        result.append(("mpeg.vbri-entry-size-invalid", f"{tag['entry_size']} bytes long"))
+        result.append(("mpeg-audio.vbri-entry-size-invalid", f"{tag['entry_size']} bytes long"))
     if tag["type"] == "VBRI" and tag.get("version", 1) != 1:
-        result.append(("mpeg.vbri-version-unknown", f"version {tag['version']}"))
+        result.append(("mpeg-audio.vbri-version-unknown", f"version {tag['version']}"))
     if tag["type"] != "VBRI" and tag.get("toc") and any(b < a for a, b in zip(tag["toc"], tag["toc"][1:])):
-        result.append(("mpeg.xing-toc-decreasing", at))
+        result.append(("mpeg-audio.xing-toc-decreasing", at))
     lame = tag.get("lame")
     if lame:
         if lame["tag_crc"] != lame["tag_crc_computed"]:
             if lame["tag_crc"] == lame["tag_crc_ffmpeg"]:
-                result.append(("mpeg.lame-tag-crc-ffmpeg", at))
+                result.append(("mpeg-audio.lame-tag-crc-ffmpeg", at))
             else:
-                result.append(("mpeg.lame-tag-crc-mismatch", at))
+                result.append(("mpeg-audio.lame-tag-crc-mismatch", at))
         if lame["music_length"] == 0:
-            result.append(("mpeg.music-length-not-set", at))
+            result.append(("mpeg-audio.music-length-not-set", at))
         elif lame["music_length_short"]:
-            result.append(("mpeg.music-length-short", f"music length of {lame['music_length']} bytes"))
+            result.append(("mpeg-audio.music-length-short", f"music length of {lame['music_length']} bytes"))
         elif lame["music_crc_computed"] is None:
-            result.append(("mpeg.music-crc-not-verified", at) if cut else ("mpeg.music-length-long", f"music length of {lame['music_length']} bytes"))
+            result.append(("mpeg-audio.music-crc-not-verified", at) if cut else ("mpeg-audio.music-length-long", f"music length of {lame['music_length']} bytes"))
         elif lame["music_crc"] != lame["music_crc_computed"]:
             # With --nogap, LAME continues the music CRC from the previous file.
-            result.append(("mpeg.music-crc-nogap" if lame["flags"] & 0x80 else "mpeg.music-crc-mismatch", at))
+            result.append(("mpeg-audio.music-crc-nogap" if lame["flags"] & 0x80 else "mpeg-audio.music-crc-mismatch", at))
     return result
 
 

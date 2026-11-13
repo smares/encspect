@@ -186,7 +186,7 @@ A stream of a coding that declares its checksums has a verification, with or wit
 
 ### `--only-format`
 
-`--only-format mpeg` (or `mp4`, `aac`, `ogg`, `musepack`, `wavpack`, `flac`, `monkeys-audio`, `tta`, `truehd`, `ac-3`, `asf`, `dts`, `dts-hd`, `matroska`, `wav`, `wave64`, `aiff`, several separated by commas) analyzes only files whose detected format starts with that name and skips the rest. Detection looks at the bytes, not the extension. A name that starts no known format is wrong usage, as is a missing list (`--only-format` followed by a file or folder).
+`--only-format mpeg-audio` (or `mp4`, `aac`, `ogg`, `musepack`, `wavpack`, `flac`, `monkeys-audio`, `tta`, `truehd`, `ac-3`, `asf`, `dts`, `dts-hd`, `matroska`, `wav`, `wave64`, `aiff`, several separated by commas) analyzes only files whose detected format starts with that name and skips the rest. Detection looks at the bytes, not the extension. A name that starts no known format is wrong usage, as is a missing list (`--only-format` followed by a file or folder).
 
 - **Names:** the same as for `--as` (see below), so `ac3` is `ac-3`. A prefix several formats share (`a`) selects all of them. `dts` is the DTS parser's own name, so `--only-format dts` selects raw DTS files and not `.dtshd` files, which are `dts-hd`.
 
@@ -194,7 +194,7 @@ A stream of a coding that declares its checksums has a verification, with or wit
 
 `--as aac` skips format detection and analyzes every file as that format, for a file whose format detection does not find (a damaged one) or finds wrongly. The format is named like this, ignoring case, spaces, hyphens, underscores and apostrophes; one that fits no format, or several (`a`), is wrong usage, as is a missing name (`--as` followed by a file or folder).
 
-- **The formats and the start of their names:** `mpeg` (MPEG Audio), `mp4`, `aac`, `ogg`, `musepack`, `wavpack`, `flac`, `monkeys-audio`, `tta`, `truehd`, `ac-3` (also `ac3`), `asf`, `dts`, `dts-hd`, `matroska`, `wav`, `wave64`, `aiff`.
+- **The formats and the start of their names:** `mpeg-audio` (MPEG Audio; `mpeg` still works, as the start of the name), `mp4`, `aac`, `ogg`, `musepack`, `wavpack`, `flac`, `monkeys-audio`, `tta`, `truehd`, `ac-3` (also `ac3`), `asf`, `dts`, `dts-hd`, `matroska`, `wav`, `wave64`, `aiff`.
 - **Other names a format goes by:** `mp1`, `mp2`, `mp3` for MPEG Audio; `m4a`, `m4b`, `mov`, `3gp` for MP4; `adts`, `adif` for AAC; `eac3`, `ec3` for AC-3; `vorbis`, `opus`, `speex`, `spx`, `oga` for Ogg; `wma` for ASF; `mkv`, `mka`, `webm` for Matroska; `mpc` for Musepack; `wv` for WavPack; `ape` for Monkey's Audio; `thd`, `mlp`, `dolbytruehd` for TrueHD (`dolbytruehd` is "Dolby TrueHD", the name the stream's codec goes by, with its space dropped); `wave`, `rf64`, `bw64` for WAV; `w64` for Wave64; `aif`, `aifc` for AIFF. `dtshd` is the name of DTS-HD itself (ignoring the hyphen), so `--as dtshd` analyzes a file as a DTS-HD file, with its chunks; before the DTS-HD parser existed it meant DTS. `--as dts` reads the same file as a raw DTS stream.
 
 - **Tags:** found as always; only the format parser changes. The forced format's declared size decides which signatures inside the data are no tags only where the format matches the data; otherwise the detected format's does, so forcing a format that is not there leaves the tags as detection finds them.
@@ -247,7 +247,7 @@ A JSON report (schema version 1) is an object:
       "channelLayout": ["front left", "front right"], "channelLayoutName": "stereo", "samples": 11520, "duration": 0.26122448979591836, "averageBitrate": 138.97, "isVbr": true, "encoder": "LAME 3.100", "encoderConfidence": "High", "writer": "FFmpeg (Lavf60.16.100)", "writerConfidence": "Low",
       "series": [ { "name": "Bitrate", "unit": "kbps", "axis": "frameOffset", "x": [0, 417, …], "values": [128, 160, …] } ] } ],
   "findings": [
-    { "severity": "Warning", "code": "mpeg.crc-mismatch", "message": "2 frames fail the CRC check, …", "offset": 421, "length": 2, "path": [0, 4, 1], "count": 2 } ]
+    { "severity": "Warning", "code": "mpeg-audio.crc-mismatch", "message": "2 frames fail the CRC check, …", "offset": 421, "length": 2, "path": [0, 4, 1], "count": 2 } ]
 }
 ```
 

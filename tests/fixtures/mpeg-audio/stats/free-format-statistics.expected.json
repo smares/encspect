@@ -1,0 +1,597 @@
+{
+ "description": "Forty free-format frames of 500 bytes plus padding at 44100 Hz: the distribution has one bitrate, free, and the average comes from the frame lengths. ffmpeg does not read free format, so mpg123 counts the frames.",
+ "length": 20020,
+ "crosscheck": "mpg123",
+ "regions": [
+  {
+   "name": "MPEG Audio",
+   "offset": 0,
+   "length": 20020,
+   "statistics": {
+    "Statistics": "40 frames, 1.045 s",
+    "Statistics/Frames": "40",
+    "Statistics/Samples": "46080",
+    "Statistics/Duration": "1.045 s",
+    "Statistics/Bitrate Mode": "constant",
+    "Statistics/Average Bitrate": "153.3 kbps",
+    "Statistics/Bitrate Distribution": "1 bitrate",
+    "Statistics/Bitrate Distribution/free (153 kbps)": "40 frames (100.0%)",
+    "Statistics/Maximum Reservoir Fill": "465 bytes",
+    "Statistics/Average Reservoir Fill": "452.9 bytes",
+    "Statistics/Channel Modes": "1 mode",
+    "Statistics/Channel Modes/Stereo": "40 frames (100.0%)",
+    "Statistics/Stereo Coding": "40 frames",
+    "Statistics/Stereo Coding/Left/right stereo": "40 frames (100.0%)",
+    "Statistics/Bitrate Distribution/free (153 kbps)/Unpadded": "20 frames of 500 bytes",
+    "Statistics/Bitrate Distribution/free (153 kbps)/Padded": "20 frames of 501 bytes",
+    "Statistics/Block Usage": "160 granules",
+    "Statistics/Block Usage/Long": "160 granules (100.0%)",
+    "Statistics/Block Sizes": "160 granules",
+    "Statistics/Block Sizes/Long, start and stop": "160 granules (100.0%)",
+    "Statistics/Global Gain/Channel 0/Minimum": "0",
+    "Statistics/Global Gain/Channel 0/Maximum": "0",
+    "Statistics/Global Gain/Channel 1/Minimum": "0",
+    "Statistics/Global Gain/Channel 1/Maximum": "0",
+    "Statistics/Ancillary Data": "18580 bytes",
+    "Statistics/Ancillary Data/Share": "92.8 %",
+    "Statistics/Ancillary Data/Data Rate": "142.3 kbps",
+    "Statistics/Ancillary Data/Smallest Nonzero Amount": "464 bytes",
+    "Statistics/Ancillary Data/Largest Amount": "465 bytes",
+    "Statistics/UsesPadding": "true",
+    "Statistics/UsesScfsi": "false",
+    "Statistics/UsesScalefactorScaling": "false",
+    "Statistics/Scalefactor Scaling": "0.0 %",
+    "Statistics/Average Main Data Begin": "0.0 bytes",
+    "Statistics/Maximum Main Data Begin": "0 bytes"
+   }
+  }
+ ],
+ "frames": [
+  {
+   "offset": 0,
+   "length": 500,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 500,
+   "length": 501,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 1001,
+   "length": 500,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 1501,
+   "length": 501,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 2002,
+   "length": 500,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 2502,
+   "length": 501,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 3003,
+   "length": 500,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 3503,
+   "length": 501,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 4004,
+   "length": 500,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 4504,
+   "length": 501,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 5005,
+   "length": 500,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 5505,
+   "length": 501,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 6006,
+   "length": 500,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 6506,
+   "length": 501,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 7007,
+   "length": 500,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 7507,
+   "length": 501,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 8008,
+   "length": 500,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 8508,
+   "length": 501,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 9009,
+   "length": 500,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 9509,
+   "length": 501,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 10010,
+   "length": 500,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 10510,
+   "length": 501,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 11011,
+   "length": 500,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 11511,
+   "length": 501,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 12012,
+   "length": 500,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 12512,
+   "length": 501,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 13013,
+   "length": 500,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 13513,
+   "length": 501,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 14014,
+   "length": 500,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 14514,
+   "length": 501,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 15015,
+   "length": 500,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 15515,
+   "length": 501,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 16016,
+   "length": 500,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 16516,
+   "length": 501,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 17017,
+   "length": 500,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 17517,
+   "length": 501,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 18018,
+   "length": 500,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 18518,
+   "length": 501,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 19019,
+   "length": 500,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "false",
+    "Header/IsProtected": "false"
+   }
+  },
+  {
+   "offset": 19519,
+   "length": 501,
+   "fields": {
+    "Header/Version": "MPEG-1",
+    "Header/Layer": "III",
+    "Header/Bitrate": "free",
+    "Header/Sample Rate": "44100 Hz",
+    "Header/Channel Mode": "Stereo",
+    "Header/HasPadding": "true",
+    "Header/IsProtected": "false"
+   }
+  }
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "MPEG-1 Layer III",
+   "sample_rate": 44100,
+   "samples": 46080,
+   "duration": "1.045 s",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "average_bitrate": "153.3 kbps",
+   "is_vbr": false,
+   "bitrate_over_time": "153,153",
+   "reservoir_fill_over_time": "453,464"
+  }
+ ],
+ "findings": [
+  {
+   "code": "mpeg-audio.free-format",
+   "contains": "500 bytes"
+  }
+ ],
+ "silent": false,
+ "vbr_header": null,
+ "detected_encoder": null
+}

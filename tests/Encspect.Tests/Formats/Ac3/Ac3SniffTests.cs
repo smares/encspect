@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Formats.Aac;
 using Encspect.Formats.Ac3;
-using Encspect.Formats.Mpeg;
+using Encspect.Formats.MpegAudio;
 using Encspect.Host;
 
 namespace Encspect.Tests;
@@ -178,7 +178,7 @@ public class Ac3SniffTests
     [Fact]
     public void AProtectedMpegChainWhoseCrcsHoldKeeps90()
     {
-        byte[] mp3 = Fixture("mpeg/external-lame-crc.mp3");
+        byte[] mp3 = Fixture("mpeg-audio/external-lame-crc.mp3");
         var parser = new MpegAudioParser();
         Assert.Equal(90, parser.Sniff(Context(mp3)).Class);
         Assert.Equal(90, parser.Sniff(Context([.. Junk(30).Select(b => (byte)(b & 0x7F)), .. mp3])).Class);

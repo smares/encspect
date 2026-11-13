@@ -32,7 +32,7 @@ OLD_STATS = [node("Frames", value=10), node("Bandwidth", value=16000), node("Ste
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-REAL = ROOT / "tests" / "fixtures" / "mpeg" / "channel-mode-change.report.json"
+REAL = ROOT / "tests" / "fixtures" / "mpeg-audio" / "channel-mode-change.report.json"
 
 
 class CheckTests(unittest.TestCase):
@@ -356,8 +356,8 @@ class CheckTests(unittest.TestCase):
         self.assertTrue(golden_additions.check_golden(old, new, change))
 
     def test_covers_matches_files_and_folders(self):
-        change = {"goldens": ["tests/fixtures/mpeg/", "tests/fixtures/mp4/a.report.json"]}
-        self.assertTrue(golden_additions.covers(change, "tests/fixtures/mpeg/x.report.json"))
+        change = {"goldens": ["tests/fixtures/mpeg-audio/", "tests/fixtures/mp4/a.report.json"]}
+        self.assertTrue(golden_additions.covers(change, "tests/fixtures/mpeg-audio/x.report.json"))
         self.assertTrue(golden_additions.covers(change, "tests/fixtures/mp4/a.report.json"))
         self.assertFalse(golden_additions.covers(change, "tests/fixtures/mp4/b.report.json"))
         self.assertFalse(golden_additions.covers(change, "tests/fixtures/mpeg2/x.report.json"))
@@ -378,8 +378,8 @@ class RepositoryTests(unittest.TestCase):
         self._tmp = tempfile.TemporaryDirectory()
         self.dir = self._tmp.name
         self.git("init", "-q", "-b", "main")
-        self.write("tests/fixtures/mpeg/a.report.json", [report(OLD_STATS)])
-        self.write("tests/fixtures/mpeg/b.report.json", [report(OLD_STATS)])
+        self.write("tests/fixtures/mpeg-audio/a.report.json", [report(OLD_STATS)])
+        self.write("tests/fixtures/mpeg-audio/b.report.json", [report(OLD_STATS)])
         self.git("add", "-A")
         self.git("commit", "-qm", "base")
         self.git("checkout", "-qb", "pr")
@@ -472,64 +472,64 @@ class RepositoryTests(unittest.TestCase):
         self.assertEqual(golden_additions.run(self.dir, "main", "HEAD", ["tests/fixtures/measurement/golden-changes.json"]), 1)
 
     def test_without_a_change_file_the_check_is_not_asked_for(self):
-        self.write("tests/fixtures/mpeg/a.report.json", [report([node("Frames", value=99)])])
+        self.write("tests/fixtures/mpeg-audio/a.report.json", [report([node("Frames", value=99)])])
         self.commit()
         self.assertEqual(self.run_check(), 0)
 
     def test_a_covered_addition_passes_and_an_uncovered_change_fails(self):
         added = report([*OLD_STATS, node("Added", value=1)])
-        self.write("tests/fixtures/mpeg/a.report.json", [added])
-        self.write("tests/fixtures/mpeg/golden-changes.json", {
-            "goldens": ["tests/fixtures/mpeg/a.report.json"],
+        self.write("tests/fixtures/mpeg-audio/a.report.json", [added])
+        self.write("tests/fixtures/mpeg-audio/golden-changes.json", {
+            "goldens": ["tests/fixtures/mpeg-audio/a.report.json"],
             "added": [{"scope": "node", "parent": ["MPEG Audio", "Statistics"], "name": "Added"}]})
         self.commit()
         self.assertEqual(self.run_check(), 0)
 
-        self.write("tests/fixtures/mpeg/b.report.json", [report([node("Frames", value=99)])])
+        self.write("tests/fixtures/mpeg-audio/b.report.json", [report([node("Frames", value=99)])])
         self.commit()
         self.assertEqual(self.run_check(), 1)
 
     def test_a_change_the_file_does_not_list_fails(self):
-        self.write("tests/fixtures/mpeg/a.report.json", [report([node("Frames", value=99), *OLD_STATS[1:]])])
-        self.write("tests/fixtures/mpeg/golden-changes.json", {"goldens": ["tests/fixtures/mpeg/"], "added": []})
+        self.write("tests/fixtures/mpeg-audio/a.report.json", [report([node("Frames", value=99), *OLD_STATS[1:]])])
+        self.write("tests/fixtures/mpeg-audio/golden-changes.json", {"goldens": ["tests/fixtures/mpeg-audio/"], "added": []})
         self.commit()
         self.assertEqual(self.run_check(), 1)
 
     def test_a_changed_entry_that_names_goldens_applies_to_those_only(self):
         # a.report.json and b.report.json both change Frames; the entry names a, so b's change is not allowed.
-        self.write("tests/fixtures/mpeg/a.report.json", [report([node("Frames", value=99), *OLD_STATS[1:]])])
-        self.write("tests/fixtures/mpeg/b.report.json", [report([node("Frames", value=98), *OLD_STATS[1:]])])
-        self.write("tests/fixtures/mpeg/golden-changes.json", {
-            "goldens": ["tests/fixtures/mpeg/"],
-            "changed": [{"path": ["MPEG Audio", "Statistics", "Frames"], "fields": ["value"], "goldens": ["tests/fixtures/mpeg/a.report.json"]}]})
+        self.write("tests/fixtures/mpeg-audio/a.report.json", [report([node("Frames", value=99), *OLD_STATS[1:]])])
+        self.write("tests/fixtures/mpeg-audio/b.report.json", [report([node("Frames", value=98), *OLD_STATS[1:]])])
+        self.write("tests/fixtures/mpeg-audio/golden-changes.json", {
+            "goldens": ["tests/fixtures/mpeg-audio/"],
+            "changed": [{"path": ["MPEG Audio", "Statistics", "Frames"], "fields": ["value"], "goldens": ["tests/fixtures/mpeg-audio/a.report.json"]}]})
         self.commit()
         self.assertEqual(self.run_check(), 1)
 
-        self.write("tests/fixtures/mpeg/b.report.json", [report(OLD_STATS)])
+        self.write("tests/fixtures/mpeg-audio/b.report.json", [report(OLD_STATS)])
         self.commit()
         self.assertEqual(self.run_check(), 0)
 
     def test_goldens_and_change_files_moved_unchanged_are_neither_deleted_nor_added(self):
-        self.write("tests/fixtures/mpeg/golden-changes.json", {"goldens": ["tests/fixtures/mpeg/"], "added": []})
+        self.write("tests/fixtures/mpeg-audio/golden-changes.json", {"goldens": ["tests/fixtures/mpeg-audio/"], "added": []})
         self.commit()
         self.git("checkout", "-qb", "move")
-        pathlib.Path(self.dir, "tests/fixtures/mpeg/deeper").mkdir()
-        self.git("mv", "tests/fixtures/mpeg/a.report.json", "tests/fixtures/mpeg/deeper/a.report.json")
-        self.git("mv", "tests/fixtures/mpeg/golden-changes.json", "tests/fixtures/mpeg/deeper/golden-changes.json")
+        pathlib.Path(self.dir, "tests/fixtures/mpeg-audio/deeper").mkdir()
+        self.git("mv", "tests/fixtures/mpeg-audio/a.report.json", "tests/fixtures/mpeg-audio/deeper/a.report.json")
+        self.git("mv", "tests/fixtures/mpeg-audio/golden-changes.json", "tests/fixtures/mpeg-audio/deeper/golden-changes.json")
         self.commit()
         self.assertEqual(golden_additions.run(self.dir, "pr", "HEAD", []), 0)
 
     def test_a_copy_of_a_real_golden_goes_through_git(self):
         real = json.loads(REAL.read_text())
         real[0]["streams"][0].pop("categorySeries", None)
-        self.write("tests/fixtures/mpeg/real.report.json", real)
+        self.write("tests/fixtures/mpeg-audio/real.report.json", real)
         self.git("add", "-A")
         self.git("commit", "-qm", "real")
         self.git("checkout", "-qb", "pr2")
         changed = json.loads(json.dumps(real))
         changed[0]["streams"][0]["categorySeries"] = []
-        self.write("tests/fixtures/mpeg/real.report.json", changed)
-        self.write("tests/fixtures/mpeg/golden-changes.json", {"goldens": ["tests/fixtures/mpeg/real.report.json"], "added": [{"scope": "stream", "key": "categorySeries"}]})
+        self.write("tests/fixtures/mpeg-audio/real.report.json", changed)
+        self.write("tests/fixtures/mpeg-audio/golden-changes.json", {"goldens": ["tests/fixtures/mpeg-audio/real.report.json"], "added": [{"scope": "stream", "key": "categorySeries"}]})
         self.commit()
         self.assertEqual(golden_additions.run(self.dir, "pr", "HEAD", []), 0)
 

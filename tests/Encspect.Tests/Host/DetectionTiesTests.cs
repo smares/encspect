@@ -31,7 +31,7 @@ public class DetectionTiesTests
                     // A WavPack block header whose block runs past the end of the data (class 90), followed by MPEG frames (class 90): the
                     // header is first.
                     byte[] wavpack = Fixture("wavpack/built-ape-and-id3v1.wv");
-                    byte[] mp3 = Fixture("mpeg/external-lame-cbr128-joint.mp3");
+                    byte[] mp3 = Fixture("mpeg-audio/external-lame-cbr128-joint.mp3");
                     int sync = Array.FindIndex(mp3, i => i != 0);
                     while (mp3[sync] != 0xFF || (mp3[sync + 1] & 0xE0) != 0xE0)
                     {

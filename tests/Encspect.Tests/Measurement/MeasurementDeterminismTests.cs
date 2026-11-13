@@ -675,7 +675,7 @@ public class MeasurementDeterminismTests
     // <project>.Decoding.Lossless, which the scan leaves out so that it may use Vector<T>.
     internal static readonly string[] LossyAssemblies =
     [
-        "Encspect.Formats.Mpeg", "Encspect.Formats.Vorbis", "Encspect.Formats.Opus", "Encspect.Formats.Ac3", "Encspect.Formats.Musepack",
+        "Encspect.Formats.MpegAudio", "Encspect.Formats.Vorbis", "Encspect.Formats.Opus", "Encspect.Formats.Ac3", "Encspect.Formats.Musepack",
         "Encspect.Formats.Dts", "Encspect.Formats.Speex", "Encspect.Formats.Aac", "Encspect.Formats.Wma",
     ];
 

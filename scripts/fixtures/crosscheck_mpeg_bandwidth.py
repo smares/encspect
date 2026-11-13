@@ -24,7 +24,7 @@ EXPLAINED = {
     "side-info-long-blocks.mp3": "the private bits are 111, which minimp3 reads as scfsi bits of the first granule, so its Huffman data of the second channel start 35 bits early",
 }
 
-FIXTURES = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "mpeg"
+FIXTURES = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "mpeg-audio"
 
 
 def top(granule):

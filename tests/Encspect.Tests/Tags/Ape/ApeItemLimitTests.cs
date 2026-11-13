@@ -122,7 +122,7 @@ public class ApeItemLimitTests
         Report report = Analyze(data);
 
         Assert.Equal("FFmpeg (Lavf60.16.100)", Assert.Single(report.Streams).Writer);
-        Assert.Equal(16, Assert.Single(report.Findings, f => f.Code == "mpeg.writer-claim-differs").Count);
+        Assert.Equal(16, Assert.Single(report.Findings, f => f.Code == "mpeg-audio.writer-claim-differs").Count);
     }
 
     // The merged finding names the first few cases, so the second duplicate key is still shown.

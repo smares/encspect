@@ -672,7 +672,7 @@
   "tool": "mkvmerge mkvmerge v82.0",
   "arguments": [],
   "inputs": [
-   "mpeg/external-ffmpeg-cbr.mp3"
+   "mpeg-audio/external-ffmpeg-cbr.mp3"
   ]
  },
  "streams": [
@@ -684,7 +684,7 @@
  ],
  "findings": [
   {
-   "code": "mpeg.packets-not-analyzed",
+   "code": "mpeg-audio.packets-not-analyzed",
    "contains": "only one contiguous payload"
   }
  ],

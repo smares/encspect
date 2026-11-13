@@ -175,7 +175,7 @@ Effect: no existing golden report, test or conformance figure changes; the fixtu
 
 ### Checks
 
-- Golden reports and manifests of `tests/fixtures/mpeg/layer2/mc-*` (prediction in `mc-3-2-lfe`, phantom center, second programme, reserved center, and the `mc-*-crosstalk-*` fixtures), through `MpegFixtureTests` and the golden-report comparison (`dotnet test tests/Encspect.Tests -c Release --filter "FullyQualifiedName~Mpeg|FullyQualifiedName~ChannelLayout"`).
+- Golden reports and manifests of `tests/fixtures/mpeg-audio/layer2/mc-*` (prediction in `mc-3-2-lfe`, phantom center, second programme, reserved center, and the `mc-*-crosstalk-*` fixtures), through `MpegFixtureTests` and the golden-report comparison (`dotnet test tests/Encspect.Tests -c Release --filter "FullyQualifiedName~Mpeg|FullyQualifiedName~ChannelLayout"`).
 - The 35 ISO/IEC 13818-4 conformance streams: `python3 scripts/fixtures/conformance_mpeg_audio.py --analyzer <encspect>` (downloads them; test08, test18, test19 and test20 use dynamic crosstalk, test09, test15 and test16 prediction, test04 and test13 phantom coding, test06 and test07 the second programme). For test18 the analyzer must verify 27 of 27 frames.
 - mctoolamed as a black box: the same script checks that it decodes every multichannel stream without a CRC error; it runs no Encspect code.
 - Record the tables' sources (13818-3 and the conformance check) in [`docs/development.md`](../development.md), as [`CLAUDE.md`](../../CLAUDE.md) asks for format tables.
@@ -204,7 +204,7 @@ This lookup gives the same table as the removed code for every sampling frequenc
 
 ### Checks
 
-- `tests/fixtures/mpeg/layer2/table-b2a` to `table-b2d`, `table-mpeg2-*`, `free-format-*` and every other Layer II golden (the "Bit Allocation" node's value names the table), through `MpegFixtureTests` and the golden comparison.
+- `tests/fixtures/mpeg-audio/layer2/table-b2a` to `table-b2d`, `table-mpeg2-*`, `free-format-*` and every other Layer II golden (the "Bit Allocation" node's value names the table), through `MpegFixtureTests` and the golden comparison.
 - `scripts/fixtures/stream_stats.py` uses the writer's `table_for` for the statistics fixtures; `python3 scripts/fixtures/make_layer2_fixtures.py` must regenerate the committed fixtures byte for byte.
 - `crosscheck_mpeg_fixtures.py` (ffprobe, madplay, mpg123 and mp3guessenc decode the fixtures).
 
@@ -234,7 +234,7 @@ Every row comes from a committed fixture: an encode of the "music" signal of `ma
 - Builds: 3.90.1 (writes `LAME3.90`), 3.91 and 3.92 from source (`old_lame_tool.py`), and the Windows builds of 3.91 and HydrogenAudio's 3.90.3 (`lame_win_tool.py`, under Wine).
 - Presets the 3.90 to 3.92 builds list (`lame --preset help`, `lame --alt-preset help`): `--alt-preset standard`, `extreme`, `insane`, `fast standard`, `fast extreme`, `<bitrate>` and `cbr <bitrate>`; `--r3mix` (same as `--preset r3mix`); and the basic presets phone, phon+, lw, mw-eu, sw, mw-us, voice, fm, radio, tape, hifi, cd and studio.
 - Encoded on 2026-10-29 for this description: the three source builds wrote the same fields for every preset. The two Windows builds wrote some lowpasses 100 Hz higher (extreme, fast extreme, insane, r3mix, mw-us). 3.90.3 also wrote noise shaping 1 for standard and extreme. Phone, phon+, lw, mw-eu, sw and voice wrote no Xing header with these builds, so they have no row.
-- Already committed (`tests/fixtures/mpeg`): 3.90.1 standard, extreme (at 48 kHz), insane, `128` (ABR), r3mix and cd; 3.92 fast standard; 3.90.3 standard, extreme and insane; Windows 3.91 extreme.
+- Already committed (`tests/fixtures/mpeg-audio`): 3.90.1 standard, extreme (at 48 kHz), insane, `128` (ABR), r3mix and cd; 3.92 fast standard; 3.90.3 standard, extreme and insane; Windows 3.91 extreme.
 - To add, one per preset and build whose fields differ from the committed ones: with 3.90.1 fast extreme, studio, hifi, tape, radio, fm, mw-us and `cbr 128`; with Windows 3.91 fast extreme, r3mix and mw-us (its higher lowpasses). Add them to `make_external_mpeg_fixtures.py` with their manifests and goldens.
 - ABR and CBR alt-presets name a bitrate, so they get no row each. The rule stays: VBR method 2 (ABR) or 1 (CBR), Xing quality 58, noise shaping 2, joint stereo (stereo mode 3), ATH type 2 and a bitrate field between 1 and 254 give `--alt-preset <bitrate>` or `--alt-preset cbr <bitrate>`. The committed `128` encode and the new `cbr 128` encode back it.
 - The comment over the table names the fixtures each row comes from, and [`docs/development.md`](../development.md) names the source of the table: these encodes, not getID3. getID3 stays a cross-check (`check_getid3` in `crosscheck_mpeg_fixtures.py`).
@@ -296,7 +296,7 @@ Run `python3 scripts/fixtures/crosscheck_mpeg_fixtures.py` (needs mpg123, ffprob
 
 These failed while the members were stubbed and pass with the rewrite:
 
-- Every Layer II fixture and golden: `tests/fixtures/mpeg/layer2`, the Layer II files in `tests/fixtures/mpeg/stats` and `mpeg`, and the tests that read them (`MpegFixtureTests`, `ChannelLayoutTests`, `DescriptionTests`, `FindingCoverageTests`, `MemoryTests`).
+- Every Layer II fixture and golden: `tests/fixtures/mpeg-audio/layer2`, the Layer II files in `tests/fixtures/mpeg-audio/stats` and `mpeg-audio`, and the tests that read them (`MpegFixtureTests`, `ChannelLayoutTests`, `DescriptionTests`, `FindingCoverageTests`, `MemoryTests`).
 - The 11 goldens with "Settings Match".
 - `make_layer2_fixtures.py`, `stream_stats.py` and `conformance_mpeg_audio.py --analyzer` (35 streams, no problem). `crosscheck_mpeg_fixtures.py` needs tools that CI installs.
 

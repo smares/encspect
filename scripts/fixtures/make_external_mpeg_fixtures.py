@@ -99,7 +99,7 @@ from conformance_mpeg_audio import guessenc as guessenc_multichannel
 from crosscheck_mpeg_fixtures import (decoded_onset, decoded_samples, guessenc_guess, guessenc_ofl, guessenc_stream, guessenc_summary,
                                       guessenc_tag_lines)
 
-OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "mpeg"
+OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "mpeg-audio"
 LAME_VERSION = "LAME 64bits version 3.100"
 CHANNELS = {"Mono": 1}
 TWOLAME_VERSION = "TwoLAME version 0.4.0"
@@ -742,17 +742,17 @@ def main_data_findings(path, packets, rows):
         start = position
         if offset in sizes:
             if main_data_begin > start:
-                findings.append("mpeg.main-data-before-stream")
+                findings.append("mpeg-audio.main-data-before-stream")
             elif main_data_begin > start - previous_end:
-                findings.append("mpeg.main-data-overlap")
+                findings.append("mpeg-audio.main-data-overlap")
             top = frame_length(header[:2] + bytes([(header[2] & 0x0D) | 0xE0]) + header[3:])
             # ISO/IEC 11172-3's decoder buffer, checked for MPEG-1 only (version bits 11).
             if (header[1] >> 3) & 3 == 3 and 0 < main_data_begin and main_data_begin + frame_length(header) > top:
-                findings.append("mpeg.main-data-begin-exceeds-buffer")
+                findings.append("mpeg-audio.main-data-begin-exceeds-buffer")
         end = start - main_data_begin + (part2_3 + 7) // 8
         truncated = k == len(offsets) - 1 and truncated_last(path, packets)
         if offset in sizes and end > start + area and not truncated:
-            findings.append("mpeg.main-data-overflow")
+            findings.append("mpeg-audio.main-data-overflow")
         previous_end = max(previous_end, min(end, start + area)) if offset in sizes else previous_end
         position = start + area
     return sorted(set(findings))
@@ -825,7 +825,7 @@ def layer1_findings(path, packets):
                                                                   text=True).stderr
     if rejected != (forbidden > 0):
         raise SystemExit(f"{path.name}: libmad {'rejects' if rejected else 'accepts'} the allocations, {forbidden} frames use 15")
-    return (["mpeg.allocation-forbidden"] if forbidden else []) + (["mpeg.scalefactor-undefined"] if undefined else [])
+    return (["mpeg-audio.allocation-forbidden"] if forbidden else []) + (["mpeg-audio.scalefactor-undefined"] if undefined else [])
 
 
 SLEN1 = [0, 0, 0, 0, 3, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4]
@@ -1053,9 +1053,9 @@ def describe_tag(path, command, manifest):
         packets = manifest.get("ffprobe_packets")
         if tag.get("lame") and packets and tag.get("frames") == len(packets) + 1:
             samples = 1152 if manifest["encoder"]["version"] == "1" else 576
-            manifest["vbr_findings"].append({"code": "mpeg.vbr-frame-count-includes-header", "contains": f"play {samples} samples more"})
+            manifest["vbr_findings"].append({"code": "mpeg-audio.vbr-frame-count-includes-header", "contains": f"play {samples} samples more"})
         if tag.get("lame") and vbr_tags.tag_and_ancillary_name(tag["lame"]["encoder"], guessenc_tag_lines(path).get("Encoder string"))[1]:
-            manifest["vbr_findings"].append({"code": "mpeg.lame-version-differs", "contains": "the version LAME wrote into the ancillary data"})
+            manifest["vbr_findings"].append({"code": "mpeg-audio.lame-version-differs", "contains": "the version LAME wrote into the ancillary data"})
     manifest["vbr_header"] = tag
     manifest["detected_encoder"] = weigh_tsse(detected_encoder(command, tag, manifest["encoder"], manifest.get("minimp3_side_info", []), path), tsse(path))
     manifest["mp3guessenc_encoder_string"] = guessenc_tag_lines(path).get("Encoder string")
@@ -1133,7 +1133,7 @@ def write_manifest(name, path, rate, channels, command, settings, dumper):
     else:
         manifest["ffprobe_packets"] = ffprobe_packets(path)
         # Findings beyond the VBR header's that the analyzer must report.
-        manifest["findings"] = ["mpeg.frame-truncated"] if truncated_last(path, manifest["ffprobe_packets"]) else []
+        manifest["findings"] = ["mpeg-audio.frame-truncated"] if truncated_last(path, manifest["ffprobe_packets"]) else []
         if settings["layer"] == 1:
             manifest["findings"] += layer1_findings(path, manifest["ffprobe_packets"])
     if "+bitexact" in command and "findings" in manifest:
@@ -1142,7 +1142,7 @@ def write_manifest(name, path, rate, channels, command, settings, dumper):
     if settings["layer"] in (2, 3):
         manifest["minimp3_side_info"] = minimp3_tool.side_info(dumper, path)
     if settings["layer"] == 3 and settings["version"] == "1" and scalefactors_exceed(manifest["minimp3_side_info"], channels):
-        manifest.setdefault("findings", []).append("mpeg.scalefactors-exceed-granule")
+        manifest.setdefault("findings", []).append("mpeg-audio.scalefactors-exceed-granule")
     if settings["layer"] == 3 and "ffprobe_packets" in manifest:
         manifest["findings"] += main_data_findings(path, manifest["ffprobe_packets"], manifest["minimp3_side_info"])
     if settings["layer"] == 3:

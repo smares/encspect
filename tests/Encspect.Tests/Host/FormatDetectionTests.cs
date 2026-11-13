@@ -252,7 +252,7 @@ public class FormatDetectionTests
         Assert.Equal(60, musepack.Sniff(Context("MP+"u8.ToArray())).Class);
 
         // Another format's stream that happens to follow the three bytes wins over it.
-        byte[] mp3 = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "mpeg", "external-lame-cbr128-joint.mp3"));
+        byte[] mp3 = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "mpeg-audio", "external-lame-cbr128-joint.mp3"));
         Assert.Equal("MPEG Audio", new Analyzer(DefaultParsers.Tags, DefaultParsers.Formats, DefaultParsers.Codecs).DetectFormat("x.bin", new MemoryStream([.. "MP+"u8.ToArray(), .. mp3[..2000]])) is { } f ? f : "");
     }
 
@@ -315,7 +315,7 @@ public class FormatDetectionTests
     [Fact]
     public void ForcedFilesAreAnalyzedAsTheFormatAndKeepTheirTags()
     {
-        string path = Path.Combine(Fixtures.FixtureDirectory, "mpeg", "external-lame-cbr128-joint.mp3");
+        string path = Path.Combine(Fixtures.FixtureDirectory, "mpeg-audio", "external-lame-cbr128-joint.mp3");
         Analyzer analyzer = Analyzer.CreateDefault();
 
         Report plain = analyzer.AnalyzeFile(path);
