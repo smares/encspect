@@ -47,7 +47,15 @@ public sealed class Node
         _source = build;
     }
 
-    public string Name { get; }
+    // Settable only through Rename, for a parser that learns what its node is called after the node was made and handed out (a codec parser whose stream's session starts at
+    // the first frame, before the frames that name the stream have been read).
+    public string Name { get; private set; }
+
+    public void Rename(string name)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(name);
+        Name = name;
+    }
 
     public long Offset { get; }
 

@@ -1946,6 +1946,21 @@
      "verdict": "finding, decoder decodes",
      "status": "noted",
      "statusSource": "rule"
+    },
+    {
+     "index": null,
+     "offset": 186,
+     "length": 7,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.mantissa-code-invalid",
+     "findings": [
+      "ac3.mantissa-code-invalid"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
     }
    ],
    "unitList": {
@@ -2033,7 +2048,8 @@
      "samples": null,
      "finding": "ac3.block-inconsistent",
      "findings": [
-      "ac3.block-inconsistent"
+      "ac3.block-inconsistent",
+      "ac3.mantissa-code-invalid"
      ],
      "verdict": "finding, decoder decodes",
      "status": "noted",
@@ -2126,6 +2142,21 @@
      "finding": "ac3.block-inconsistent",
      "findings": [
       "ac3.block-inconsistent"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    },
+    {
+     "index": null,
+     "offset": 3360,
+     "length": 34,
+     "ranges": null,
+     "decoder": "decoded",
+     "samples": null,
+     "finding": "ac3.mantissa-code-invalid",
+     "findings": [
+      "ac3.mantissa-code-invalid"
      ],
      "verdict": "finding, decoder decodes",
      "status": "noted",

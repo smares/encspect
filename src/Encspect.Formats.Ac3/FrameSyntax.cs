@@ -30,6 +30,7 @@ internal enum Issue : byte
     ObjectAudioIncomplete,
     EmdfLimit,
     DownmixModeReserved,
+    MantissaNoValue,
 }
 
 // Reads one syncframe field by field: the syncinfo and bit stream information of AC-3 (ATSC

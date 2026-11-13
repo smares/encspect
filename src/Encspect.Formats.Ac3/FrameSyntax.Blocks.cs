@@ -1172,12 +1172,12 @@ internal sealed partial class FrameSyntax
             Report(Issue.BlockInconsistent, "Mantissas", start, _mantissaBit, "a compositely coded 11-level mantissa value is above 120 (check 20)");
         }
 
-        // The codes of the 7 and 15 level quantizers that Tables 7.21 and 7.23 have no value for (not among the numbered checks of 7.10.2).
-        if ((_groupFaults & 24) != 0 && !Counted(Issue.BlockInconsistent))
+        // The codes of the 7 and 15 level quantizers that Tables 7.21 and 7.23 have no value for: not among the checks of 7.10.2, so a finding of their own.
+        if ((_groupFaults & 24) != 0 && !Counted(Issue.MantissaNoValue))
         {
-            Report(Issue.BlockInconsistent, "Mantissas", start, _mantissaBit, (_groupFaults & 8) != 0
-                ? "a mantissa code of the 7-level quantizer is 7, for which Table 7.21 has no value"
-                : "a mantissa code of the 15-level quantizer is 15, for which Table 7.23 has no value");
+            Report(Issue.MantissaNoValue, "Mantissas", start, _mantissaBit, (_groupFaults & 8) != 0
+                ? "the code 7 of the 7-level quantizer, which Table 7.21 (A/52 7.3.3) has no value for"
+                : "the code 15 of the 15-level quantizer, which Table 7.23 (A/52 7.3.3) has no value for");
         }
     }
 

@@ -59,6 +59,12 @@ public sealed class Ac3CodecParser(string id) : ICodecParser
         count = region.End.Value;
         bool encrypted = context.Configuration is { AreSamplesEncrypted: true };
         region.Node ??= MakeNode(encrypted, observed.HasEac3);
+        if (observed.HasEac3 && region.Node.Name != "E-AC-3")
+        {
+            // The session started at an AC-3 frame, which named the node; E-AC-3 frames (a core's dependent frames, or frames before it) make the stream E-AC-3.
+            region.Node.Rename("E-AC-3");
+        }
+
         region.Node.Value = encrypted ? NodeValue.Text("frames not read: encrypted") : NodeValue.Integer(analysis.Frames.Count, "frames", "frame");
 
         if (context.Configuration is { } configuration)

@@ -274,6 +274,7 @@ internal sealed class Ac3Analysis
         Issue.ObjectAudioIncomplete => "ac3.object-audio-incomplete",
         Issue.EmdfLimit => "ac3.emdf-limit",
         Issue.DownmixModeReserved => "ac3.dmixmod-reserved",
+        Issue.MantissaNoValue => "ac3.mantissa-code-invalid",
         _ => "ac3.auxiliary-length",
     };
 
@@ -371,6 +372,10 @@ internal sealed class Ac3Analysis
             case Issue.DownmixModeReserved:
                 Findings.Add(Severity.Info, CodeOf(issue), Field, count =>
                     $"dmixmod is 3, which A/52 Annex D Table D2.2 reserves (E-AC-3's mixing metadata has the same field and no table of its own). The decoder should still reproduce audio and may read it as not indicated; encoders use it to indicate Dolby Pro Logic II, as ffmpeg's ac3defs.h notes, and Dolby's own files write it. First in {at} ({Times(count)}).");
+                break;
+            case Issue.MantissaNoValue:
+                Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
+                    $"An audio block holds a mantissa code that its quantizer has no value for: {detail}. The decoder limits it to the quantizer's highest value. First in {at} ({Times(count)}).");
                 break;
             case Issue.EmdfLimit:
                 Findings.Add(Severity.Info, CodeOf(issue), Field, count =>

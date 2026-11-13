@@ -34701,7 +34701,7 @@
       {
         "severity": "Warning",
         "code": "ac3.block-inconsistent",
-        "message": "An audio block breaks a rule that A/52 7.10.2 lists among the errors a decoder may check for: a compositely coded 3-level mantissa value is above 26 (check 18). First in the frame at 0x0 (96 times).",
+        "message": "An audio block breaks a rule that A/52 7.10.2 lists among the errors a decoder may check for: a compositely coded 3-level mantissa value is above 26 (check 18). First in the frame at 0x0 (65 times).",
         "offset": 76,
         "length": 112,
         "path": [
@@ -34710,7 +34710,21 @@
           2,
           35
         ],
-        "count": 96
+        "count": 65
+      },
+      {
+        "severity": "Warning",
+        "code": "ac3.mantissa-code-invalid",
+        "message": "An audio block holds a mantissa code that its quantizer has no value for: the code 7 of the 7-level quantizer, which Table 7.21 (A/52 7.3.3) has no value for. The decoder limits it to the quantizer's highest value. First in the frame at 0x0 (31 times).",
+        "offset": 76,
+        "length": 112,
+        "path": [
+          0,
+          1,
+          2,
+          35
+        ],
+        "count": 31
       }
     ]
   }

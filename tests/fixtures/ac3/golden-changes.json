@@ -45,6 +45,15 @@
         "tests/fixtures/ac3/derived-ffmpeg-stereo-192k-delta-block0.report.json",
         "tests/fixtures/ac3/derived-ffmpeg-stereo-192k-delta.report.json"
       ]
+    },
+    {
+      "scope": "finding",
+      "code": "ac3.mantissa-code-invalid",
+      "goldens": [
+        "tests/fixtures/ac3/derived-ffmpeg-eac3-mono-48k-spx-delta.report.json",
+        "tests/fixtures/ac3/derived-ffmpeg-stereo-192k-delta-block0.report.json",
+        "tests/fixtures/ac3/derived-ffmpeg-stereo-192k-delta.report.json"
+      ]
     }
   ]
 }
