@@ -187,7 +187,7 @@ internal sealed class Ac3Analysis
     private readonly List<PendingFrame> _pending = [];
 
     private sealed record PendingFrame(Region Region, int Index, long Offset, int Available, SyncFrame Header, FrameResult Result, CrcState Crc1, CrcState Crc2, bool Shortened, bool Cut,
-        bool IsReadable, DecodeFeed? Feed, byte[] HeaderBytes, byte[] Bytes, int[] Records);
+        bool IsReadable, DecodeFeed? Feed, byte[] HeaderBytes, byte[] Bytes, int[] Records, bool DependentsLost = false);
 
     // Decides the program of the access unit held back (an independent frame and the dependent frames after it): the dependent substreams' configuration is part of the program's key, so
     // a dependent substream that appears, disappears or changes starts a new stream as an independent one does.
@@ -205,7 +205,7 @@ internal sealed class Ac3Analysis
             $"{f.Header.SubstreamId}:{(f.Result.HasChannelMap ? f.Result.ChannelMap.ToString("X4", System.Globalization.CultureInfo.InvariantCulture) : "-")}:{f.Header.Acmod}:{(f.Header.Lfeon ? 1 : 0)}"));
         bool lost = false;
         if (endsAtGap && !frames[0].Header.IsDependent && _active.TryGetValue(frames[0].Header.IsEac3 ? frames[0].Header.SubstreamId : 0, out Program? current) && current is not null
-            && current.Key.Dependents.Length > 0 && current.Key.SampleRate == frames[0].Header.SampleRate)
+            && current.Key.Dependents.Length > 0 && current.Key.Independent() == new ProgramKey(current.Key.Id, frames[0].Header.SampleRate, frames[0].Header.IsEac3, frames[0].Header.Acmod, frames[0].Header.Lfeon))
         {
             // A program frame cut by a gap or the end of the data has lost dependent frames, not changed its configuration: it stays in its program, which counts its samples lost.
             HashSet<string> wanted = [.. current.Key.Dependents.Split(';')];
@@ -216,10 +216,13 @@ internal sealed class Ac3Analysis
             }
         }
 
+        // A dependent frame of another block count or rate than its independent frame makes the program frame lost too.
+        bool differs = !frames[0].Header.IsDependent && frames.Any(f => f.Header.IsDependent && (f.Header.Blocks != frames[0].Header.Blocks || f.Header.SampleRate != frames[0].Header.SampleRate));
         for (int i = 0; i < frames.Length; i++)
         {
             PendingFrame frame = frames[i];
-            PendingFrame given = lost && i == 0 ? frame with { IsReadable = false } : frame;
+            // The program frame lost is counted in the program's lost samples as well as in the decoder's, so the stream's verdict does not vouch for it.
+            PendingFrame given = (lost || differs) && i == 0 ? frame with { IsReadable = false, DependentsLost = true } : frame;
             if (frame.Header.IsDependent && !frames[0].Header.IsDependent && (frame.Header.Blocks != frames[0].Header.Blocks || frame.Header.SampleRate != frames[0].Header.SampleRate))
             {
                 // A dependent frame of another length or rate cannot be merged with its independent frame (Annex E 2.3.1.2): the program frame is not decoded.
@@ -280,7 +283,7 @@ internal sealed class Ac3Analysis
 
         program.Cover(p.Region, offset, available);
         if (program.Add(p.Index, offset, available, header, result, p.Crc1 == CrcState.Mismatch || p.Crc2 == CrcState.Mismatch,
-                p.Shortened || p.Cut || result.Stop is StopReason.Invalid or StopReason.Overrun, p.Shortened || p.Cut) && !Findings.CountIfKnown("ac3.dependent-excess"))
+                p.Shortened || p.Cut || p.DependentsLost || result.Stop is StopReason.Invalid or StopReason.Overrun, p.Shortened || p.Cut) && !Findings.CountIfKnown("ac3.dependent-excess"))
         {
             int id = header.SubstreamId;
             Findings.Add(Severity.Warning, "ac3.dependent-excess", FrameAt, count =>
@@ -562,7 +565,7 @@ internal sealed class Ac3Analysis
                 }
 
                 Findings.Add(Severity.Warning, "ac3.dependent-without-independent", () => FrameAt(),
-                    count => $"{Count(count)} of a dependent substream {Counts.Agree(count, "comes", "come")} before any independent substream they could belong to (A/52 Annex E 2.3.1.2); the first is at 0x{frameOffset:X}.");
+                    count => $"{Count(count)} of a dependent substream {Counts.Agree(count, "comes", "come")} before any independent frame they could belong to, or after a gap that took it (A/52 Annex E 2.3.1.2); the first is at 0x{frameOffset:X}.");
                 return null;
             }
 

@@ -440,9 +440,12 @@ def build():
         damaged[original[k][0]] = 0
         return bytes(damaged), [r for i, r in enumerate(original) if i != k], [tuple(original[k])]
 
+    data = dependent_file[:original[-1][0]]  # cut cleanly before the last dependent frame
+    fixture("eac3-dependent-cut", ".eac3", "eac3-signal-dependent cut cleanly before its last dependent frame: the last program frame has none, counts lost and the stream is not verified.",
+            data, original[:-1], [stream("E-AC-3", 48000, 2, 0, 12 * 1536, layout=[m.FL, m.FR, m.BL, m.BR], vbr=True, lost=1536)], [], crosscheck=variant_crosscheck)
     data, rows, gap = broken(2 * 5 + 1)  # the sixth dependent frame
     fixture("eac3-dependent-lost", ".eac3", "eac3-signal-dependent with the sync word of its sixth dependent frame broken: that program frame loses its dependent frame, counts lost and stays in the stream.",
-            data, rows, [stream("E-AC-3", 48000, 2, 0, 12 * 1536, layout=[m.FL, m.FR, m.BL, m.BR], vbr=True)], [("ac3.sync-lost", "Sync is lost")], gaps=gap, crosscheck=variant_crosscheck)
+            data, rows, [stream("E-AC-3", 48000, 2, 0, 12 * 1536, layout=[m.FL, m.FR, m.BL, m.BR], vbr=True, lost=1536)], [("ac3.sync-lost", "Sync is lost")], gaps=gap, crosscheck=variant_crosscheck)
     data, rows, gap = broken(2 * 5)  # the sixth independent frame
     fixture("eac3-independent-lost", ".eac3", "eac3-signal-dependent with the sync word of its sixth independent frame broken: its dependent frame is an orphan after the gap, left out of the decoding.",
             data, rows, [stream("E-AC-3", 48000, 2, 0, 11 * 1536, layout=[m.FL, m.FR, m.BL, m.BR])], [("ac3.sync-lost", "Sync is lost"), ("ac3.dependent-without-independent", "dependent substream")], gaps=gap,
@@ -453,12 +456,12 @@ def build():
     rate[at:at + length] = sealed(bytes(rate[at:at + length]))
     data = bytes(rate)
     fixture("eac3-dependent-blocks", ".eac3", "eac3-signal-dependent whose sixth dependent frame states three audio blocks where its independent frame has six.", data, frames_of(data),
-            [stream("E-AC-3", 48000, 2, 0, 12 * 1536, layout=[m.FL, m.FR, m.BL, m.BR])], [("ac3.dependent-format-differs", "3 audio blocks"), ("ac3.block-inconsistent", "check 8")], crosscheck=variant_crosscheck)
+            [stream("E-AC-3", 48000, 2, 0, 12 * 1536, layout=[m.FL, m.FR, m.BL, m.BR], lost=1536)], [("ac3.dependent-format-differs", "3 audio blocks"), ("ac3.block-inconsistent", "check 8")], crosscheck=variant_crosscheck)
 
     # A dependent substream before any independent one.
     data = eac3(strmtyp=1, acmod=2, chanmap=LRS_RRS, words=160) + eac3(acmod=2, words=200) * 3
     fixture("dependent-first", ".eac3", "A dependent frame, then three independent 2/0 frames.", data, frames_of(data),
-            [stream("E-AC-3", 48000, 2, 0, 3 * 1536)], [("ac3.dependent-without-independent", "before any independent substream")],
+            [stream("E-AC-3", 48000, 2, 0, 3 * 1536)], [("ac3.dependent-without-independent", "before any independent frame")],
             crosscheck={"ffprobe": True, "ffprobe_bitrate": False, "decode": True, "damaged": [0],
                         "skip": {"ffprobe_bitrate": "ffmpeg gives the bitrate of the first frame it decodes, not of the dependent frame before it."}})
 

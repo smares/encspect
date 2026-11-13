@@ -87,4 +87,16 @@ public class Eac3DependentTests
         Assert.Equal(4, stream.Measurements!.ChannelsMeasured);
         Assert.Equal(stream.Samples, stream.Measurements.Samples + stream.Measurements.LostSamples + stream.Measurements.WithheldSamples);
     }
+
+    // A file cut cleanly before its last dependent frame lost that program frame: the report counts it, and the CRCs that all pass do not vouch for the whole stream.
+    [Fact]
+    public void A_file_cut_before_its_last_dependent_frame_counts_the_program_frame_lost_and_is_not_verified()
+    {
+        Report report = Measure("eac3-dependent-cut.eac3");
+
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal(1536, stream.LostSamples);
+        Assert.NotEqual(true, stream.Verification!.IsVerified);
+        Assert.Equal(1536, stream.Measurements!.LostSamples);
+    }
 }

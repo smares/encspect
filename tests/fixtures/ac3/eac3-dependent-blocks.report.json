@@ -41,6 +41,13 @@
                   "length": 98304
                 },
                 {
+                  "name": "Lost Samples",
+                  "value": 1536,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 98304
+                },
+                {
                   "name": "Duration",
                   "value": 0.384,
                   "unit": "s",
@@ -30596,11 +30603,11 @@
         ],
         "channelLayoutName": "quadraphonic",
         "samples": 18432,
+        "lostSamples": 1536,
         "duration": 0.384,
         "averageBitrate": 2048,
         "isVbr": false,
         "verification": {
-          "isVerified": true,
           "isLossy": true,
           "decoding": "notRequested",
           "decodedSamples": 0,
@@ -30608,7 +30615,7 @@
             {
               "name": "CRC",
               "covers": "codedData",
-              "coversAllAudio": true,
+              "coversAllAudio": false,
               "stored": 24,
               "checked": 24,
               "failed": 0

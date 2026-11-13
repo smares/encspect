@@ -20,8 +20,8 @@ public class Ac3SamplesTests
         var options = new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions() } };
         foreach (StreamInfo info in Analyzer.CreateDefault().Analyze(Path.GetFileName(name), stream, options).Streams.Where(s => s.Codec is "AC-3" or "E-AC-3" && s.Verification is not null))
         {
-            // A frame the parser counts lost (cut, broken) or the decoder is not given whole (a dependent frame the data lost) is not decoded, so the measurement of a stream that has one is Incomplete by definition; every other stream is Complete.
-            MeasurementStatus expected = info.LostSamples > 0 || info.Measurements?.LostSamples > 0 ? MeasurementStatus.Incomplete : MeasurementStatus.Complete;
+            // A frame the parser counts lost (cut, broken) (a program frame that lost a dependent frame included) is not decoded, so the measurement of a stream that has one is Incomplete by definition; every other stream is Complete.
+            MeasurementStatus expected = info.LostSamples > 0 ? MeasurementStatus.Incomplete : MeasurementStatus.Complete;
             Assert.True(info.Measurements is { } measured && measured.Status == expected, $"{name}: the stream decodes and its measurements are {info.Measurements?.Status.ToString() ?? "missing"}, not {expected}");
             StreamMeasurements m = info.Measurements!;
             // A measurement belongs to the stream it hangs on: with several substreams in a file a mixed-up record would show in another stream's channels or rate.
