@@ -1,102 +1,38 @@
 {
   "goldens": [
-    "tests/fixtures/wav/"
+    "tests/fixtures/wav/built-extensible-dolby-ac3.report.json",
+    "tests/fixtures/wav/built-iec61937-ac3-after-silence.report.json",
+    "tests/fixtures/wav/built-iec61937-ac3-fmt-tag-0092.report.json",
+    "tests/fixtures/wav/built-iec61937-ac3-fmt-tag-0240.report.json",
+    "tests/fixtures/wav/built-iec61937-ac3-fmt-tag-0241.report.json",
+    "tests/fixtures/wav/built-iec61937-ac3-leading-pause-bursts.report.json",
+    "tests/fixtures/wav/built-iec61937-ac3-pause-bursts.report.json",
+    "tests/fixtures/wav/built-iec61937-ac3-pause-gap.report.json",
+    "tests/fixtures/wav/built-iec61937-ac3-silence-between.report.json",
+    "tests/fixtures/wav/built-iec61937-ac3-three-bursts.report.json",
+    "tests/fixtures/wav/built-iec61937-ac3.report.json",
+    "tests/fixtures/wav/built-iec61937-burst-missing.report.json",
+    "tests/fixtures/wav/built-iec61937-burst-spacing.report.json",
+    "tests/fixtures/wav/built-iec61937-cut-in-payload.report.json",
+    "tests/fixtures/wav/built-iec61937-cut-odd-payload.report.json",
+    "tests/fixtures/wav/built-iec61937-data-after-bursts.report.json",
+    "tests/fixtures/wav/built-iec61937-error-flag.report.json",
+    "tests/fixtures/wav/built-iec61937-length-invalid.report.json",
+    "tests/fixtures/wav/built-iec61937-length-zero.report.json",
+    "tests/fixtures/wav/built-iec61937-other-bitstream.report.json",
+    "tests/fixtures/wav/built-iec61937-rate-mismatch.report.json",
+    "tests/fixtures/wav/built-iec61937-type-changed.report.json",
+    "tests/fixtures/wav/built-w64-ac3.report.json",
+    "tests/fixtures/wav/built-w64-iec61937-ac3.report.json",
+    "tests/fixtures/wav/external-ac3-in-wav.report.json",
+    "tests/fixtures/wav/external-iec61937-ac3-5.1-448k.report.json",
+    "tests/fixtures/wav/external-iec61937-ac3-stereo-192k.report.json",
+    "tests/fixtures/wav/external-w64-ac3.report.json"
   ],
   "added": [
     {
       "scope": "stream",
-      "key": "verification",
-      "goldens": [
-        "tests/fixtures/wav/built-extensible-mpeg2-audio.report.json",
-        "tests/fixtures/wav/built-w64-mp2.report.json",
-        "tests/fixtures/wav/external-mp2-in-wav.report.json",
-        "tests/fixtures/wav/external-mp3-in-wav-mono.report.json",
-        "tests/fixtures/wav/external-mp3-in-wav-stereo.report.json",
-        "tests/fixtures/wav/external-w64-mp2.report.json"
-      ]
-    },
-    {
-      "scope": "stream",
-      "array": "series",
-      "name": "Coded Bandwidth",
-      "goldens": [
-        "tests/fixtures/wav/external-mp3-in-wav-mono.report.json",
-        "tests/fixtures/wav/external-mp3-in-wav-stereo.report.json"
-      ],
-      "streams": [
-        0
-      ]
-    },
-    {
-      "scope": "stream",
-      "array": "series",
-      "name": "Coded Bandwidth Over Time",
-      "goldens": [
-        "tests/fixtures/wav/external-mp3-in-wav-mono.report.json",
-        "tests/fixtures/wav/external-mp3-in-wav-stereo.report.json"
-      ],
-      "streams": [
-        0
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "RIFF",
-        "Data Chunk",
-        "MPEG Audio",
-        "Statistics"
-      ],
-      "name": "Coded Bandwidth",
-      "goldens": [
-        "tests/fixtures/wav/external-mp3-in-wav-mono.report.json",
-        "tests/fixtures/wav/external-mp3-in-wav-stereo.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "RIFF",
-        "Data Chunk",
-        "MPEG Audio",
-        "Statistics",
-        "Coded Bandwidth"
-      ],
-      "name": "Lowest",
-      "goldens": [
-        "tests/fixtures/wav/external-mp3-in-wav-mono.report.json",
-        "tests/fixtures/wav/external-mp3-in-wav-stereo.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "RIFF",
-        "Data Chunk",
-        "MPEG Audio",
-        "Statistics",
-        "Coded Bandwidth"
-      ],
-      "name": "Most Common",
-      "goldens": [
-        "tests/fixtures/wav/external-mp3-in-wav-mono.report.json",
-        "tests/fixtures/wav/external-mp3-in-wav-stereo.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "RIFF",
-        "Data Chunk",
-        "MPEG Audio",
-        "Statistics",
-        "Coded Bandwidth"
-      ],
-      "name": "Highest",
-      "goldens": [
-        "tests/fixtures/wav/external-mp3-in-wav-mono.report.json",
-        "tests/fixtures/wav/external-mp3-in-wav-stereo.report.json"
-      ]
+      "key": "verification"
     }
   ]
 }

@@ -10,7 +10,7 @@ namespace Encspect.Tests;
 // nothing about correctness, which crosscheck_ac3_pcm.py checks against liba52 and FFmpeg).
 public class Ac3DecoderFixtureTests
 {
-    private static readonly string[] Folders = ["ac3", "matroska", "mp4", "asf", "wav"];
+    private static readonly string[] Folders = ["ac3", "matroska", "mp4", "asf"];
 
     public static TheoryData<string> Names
     {

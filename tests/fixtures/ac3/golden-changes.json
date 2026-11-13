@@ -1,15 +1,49 @@
 {
   "goldens": [
-    "tests/fixtures/ac3/"
+    "tests/fixtures/ac3/annex-d.report.json",
+    "tests/fixtures/ac3/bad-blocks.report.json",
+    "tests/fixtures/ac3/bsi-fields.report.json",
+    "tests/fixtures/ac3/coding-ac3-core-dependent.report.json",
+    "tests/fixtures/ac3/coding-ac3-coupling.report.json",
+    "tests/fixtures/ac3/coding-ac3-dual-mono.report.json",
+    "tests/fixtures/ac3/coding-ac3-stereo.report.json",
+    "tests/fixtures/ac3/coding-ac3-surround.report.json",
+    "tests/fixtures/ac3/crc-damaged.report.json",
+    "tests/fixtures/ac3/cut-frame.report.json",
+    "tests/fixtures/ac3/dac3-differs.report.json",
+    "tests/fixtures/ac3/derived-ffmpeg-eac3-mono-48k-spx-delta.report.json",
+    "tests/fixtures/ac3/derived-ffmpeg-stereo-192k-delta-block0.report.json",
+    "tests/fixtures/ac3/derived-ffmpeg-stereo-192k-delta.report.json",
+    "tests/fixtures/ac3/dmixmod-reserved.report.json",
+    "tests/fixtures/ac3/external-aften-5.1-448k.report.json",
+    "tests/fixtures/ac3/external-aften-stereo-192k-blocksw.report.json",
+    "tests/fixtures/ac3/external-ffmpeg-5.1-448k.report.json",
+    "tests/fixtures/ac3/external-ffmpeg-annex-d-5.1.report.json",
+    "tests/fixtures/ac3/external-ffmpeg-fixed-stereo-128k.report.json",
+    "tests/fixtures/ac3/external-ffmpeg-mono-96k.report.json",
+    "tests/fixtures/ac3/external-ffmpeg-mp4-5.1-448k.report.json",
+    "tests/fixtures/ac3/external-ffmpeg-stereo-192k.report.json",
+    "tests/fixtures/ac3/external-ffmpeg-stereo-32k-320k.report.json",
+    "tests/fixtures/ac3/external-ffmpeg-stereo-44k-64k.report.json",
+    "tests/fixtures/ac3/junk-around.report.json",
+    "tests/fixtures/ac3/junk-mpeg-in-frames.report.json",
+    "tests/fixtures/ac3/reserved-values.report.json",
+    "tests/fixtures/ac3/sample-short.report.json",
+    "tests/fixtures/ac3/stream-changes.report.json",
+    "tests/fixtures/ac3/truncated.report.json"
   ],
-  "changed": [
+  "added": [
     {
       "scope": "stream",
-      "fields": [
-        "isVbr"
-      ],
+      "key": "verification"
+    },
+    {
+      "scope": "finding",
+      "code": "ac3.block-inconsistent",
       "goldens": [
-        "tests/fixtures/ac3/coding-eac3-blocks.report.json"
+        "tests/fixtures/ac3/derived-ffmpeg-eac3-mono-48k-spx-delta.report.json",
+        "tests/fixtures/ac3/derived-ffmpeg-stereo-192k-delta-block0.report.json",
+        "tests/fixtures/ac3/derived-ffmpeg-stereo-192k-delta.report.json"
       ]
     }
   ]
