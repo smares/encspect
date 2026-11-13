@@ -40,6 +40,7 @@ internal sealed class DecodeSession : IDecodeSession
     private long _codedEnd;
     private long _work;
     private StreamVerification? _verification;
+    private StreamMeasurements? _record;
     private string? _notPossible;
     private bool _hasTrim;
     private long _trimFirst;
@@ -294,13 +295,19 @@ internal sealed class DecodeSession : IDecodeSession
             tallies.Add(tally.Covers == ChecksumCoverage.DecodedAudio ? tally with { Checked = result?.Checked ?? 0, Failed = result?.Failed ?? 0 } : tally);
         }
 
-        return _verification = new StreamVerification
+        _verification = new StreamVerification
         {
             Decoding = _status,
             DecodedSamples = _decodedSamples,
             IsLossy = _setup.IsLossy,
             Checksums = tallies,
         };
+        if (_record is not null)
+        {
+            _run?.LinkRecord(_verification, _record);
+        }
+
+        return _verification;
     }
 
     // The route or the format parser returned without Finish: the decoder still reports what it counted once per stream,
@@ -462,6 +469,7 @@ internal sealed class DecodeSession : IDecodeSession
             record = new StreamMeasurements { Status = MeasurementStatus.Stopped };
         }
 
+        _record = record;
         run.AddRecord(_setup.Stream, record);
     }
 
