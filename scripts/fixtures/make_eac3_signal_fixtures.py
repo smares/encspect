@@ -17,6 +17,7 @@ the dither flags are 0. FFmpeg decodes all but the last (it does not decode enha
 
 import json
 import pathlib
+import itertools
 import random
 import sys
 
@@ -92,7 +93,7 @@ def twos(value, width):
     return value & ((1 << width) - 1)
 
 
-def write_aht_channel(b, rng, hebap, end, mode):
+def write_aht_channel(b, rng, hebap, end, mode, rows=None):
     """gaqmod, the gains and the vectors and values of one channel (Annex E 2.2.4, 3.4.2, 3.4.4)."""
     b.put(mode, 2)
     endbap = 12 if mode < 2 else 17
@@ -114,7 +115,8 @@ def write_aht_channel(b, rng, hebap, end, mode):
         if h == 0:
             continue
         if h < 8:
-            b.put(rng.randrange(1 << VECTOR_BITS[h]), VECTOR_BITS[h])
+            # With rows, the vectors of hebap 4 take the rows of Table E.3.4 in turn, so that every row is used.
+            b.put(next(rows) % 32 if (rows is not None and h == 4) else rng.randrange(1 << VECTOR_BITS[h]), VECTOR_BITS[h])
             continue
         mbits = BITS_OF_HEBAP[h]
         g = gains.get(bin_, 1)
@@ -158,16 +160,17 @@ def finish(b):
 AHT_SHIFT, SPX_SHIFT, TRANSIENT_SHIFT, ECPL_SHIFT = 7, 7, 6, 3
 
 
-def aht_frame(seed, mode, csnr=CSNR, narrow=False):
-    """One frame; seeds whose exponents give a bin the pointer 4 are skipped, whose vectors FFmpeg 6.1.1 reads from the next row of Table E.3.4 (docs/development.md, "E-AC-3 decoding")."""
+def aht_frame(seed, mode, csnr=CSNR, narrow=False, rows=None):
+    """One frame; seeds whose exponents give a bin the pointer 4 are skipped, whose vectors FFmpeg 6.1.1 reads from the next row of Table E.3.4 (docs/development.md, "E-AC-3 decoding"),
+    unless rows is given: then only seeds with a hebap 4 bin are taken, and the vectors of those bins are the rows in turn."""
     while True:
-        frame = aht_frame_of(seed, mode, csnr, narrow)
+        frame = aht_frame_of(seed, mode, csnr, narrow, rows)
         if frame is not None:
             return frame
         seed += 1000
 
 
-def aht_frame_of(seed, mode, csnr, narrow):
+def aht_frame_of(seed, mode, csnr, narrow, rows=None):
     rng = random.Random(seed)
     snr = (((csnr - 15) << 4) + FSNR) << 2
     b = Bits()
@@ -204,10 +207,10 @@ def aht_frame_of(seed, mode, csnr, narrow):
         b.put(0, 1)  # convsnroffste
         if block == 0:
             pointers = [allocate_hebap(exp, end, snr) for exp, end in sets]
-            if any(4 in p.values() for p in pointers):
+            if any(4 in p.values() for p in pointers) != (rows is not None):
                 return None
             for (exp, end), hebap in zip(sets, pointers):
-                write_aht_channel(b, rng, hebap, end, mode)
+                write_aht_channel(b, rng, hebap, end, mode, rows)
     return finish(b)
 
 
@@ -365,9 +368,18 @@ def transients(i):
     return [first, ((260 + (13 * i)) % 120 + 130, 60 + i) if i % 2 == 1 else None]
 
 
+def aht_hebap4_frames():
+    """Twelve frames whose hebap 4 bins use every row of Table E.3.4 (A/52 Table E4.4), row 30 included."""
+    rows = itertools.count()
+    frames = [aht_frame(1300 + i, i % 4, 28 if i % 4 == 3 else CSNR, i % 4 == 3, rows) for i in range(FRAMES)]
+    assert next(rows) >= 32, "the hebap 4 bins of the frames do not cover the 32 rows"
+    return b"".join(frames)
+
+
 FILES = {
     "eac3-signal-aht.eac3": lambda: b"".join(aht_frame(300 + i, i % 4, 28 if i % 4 == 3 else CSNR, i % 4 == 3) for i in range(FRAMES)),
     "eac3-signal-spx.eac3": lambda: b"".join(spx_frame(400 + i, i % 2 == 1, (7 * i) % 32, i % 3 == 2, blend=31) for i in range(FRAMES)),
+    "eac3-signal-aht-hebap4.eac3": aht_hebap4_frames,
     "eac3-signal-dependent.eac3": lambda: b"".join(spx_frame(700 + i, i % 2 == 1, (3 * i) % 32, False, blend=31) + spx_frame(800 + i, False, 5, False, blend=31, strmtyp=1, chanmap=0x0200)
                                                     for i in range(FRAMES)),
     "eac3-signal-transient.eac3": lambda: b"".join(spx_frame(900 + i, i % 2 == 1, (2 * i) % 32, False, blend=31, transients=transients(i), shift=TRANSIENT_SHIFT) for i in range(FRAMES)),
@@ -378,6 +390,8 @@ FILES = {
 DESCRIPTIONS = {
     "eac3-signal-aht.eac3": "Twelve 2/0 E-AC-3 frames at 48 kHz whose two channels use the adaptive hybrid transform with every gain adaptive quantization mode in turn, vector quantization, "
                             "gains of 1, 2 and 4, tags and large values, and mantissas in every bin (A/52 Annex E 3.4).",
+    "eac3-signal-aht-hebap4.eac3": "Twelve 2/0 E-AC-3 frames at 48 kHz like those of eac3-signal-aht, whose bins of the pointer 4 (vector quantization with the 32 vectors of Table E.3.4) use every row of the table at "
+                                   "least once, row 30 included (A/52 Annex E 3.4.2).",
     "eac3-signal-spx.eac3": "Twelve 2/0 E-AC-3 frames at 48 kHz with spectral extension from bin 73 to 157 in both channels, the default band structure or an explicit one, new coordinates in "
                             "block 3 of some frames, the attenuation filter in the right channel and rematrixing below the extension, with mantissas in every bin and the blend 31, so that "
                             "only the copy and its filter and scaling remain and the decoded samples are comparable one by one (A/52 Annex E 3.6).",
@@ -393,6 +407,7 @@ DESCRIPTIONS = {
 
 NO_REFERENCE = {
     "eac3-signal-ecpl.eac3": "FFmpeg does not decode enhanced coupling.",
+    "eac3-signal-aht-hebap4.eac3": "FFmpeg 6.1.1 reads the vector of a hebap 4 bin from the next row of Table E.3.4 (docs/development.md, \"E-AC-3 decoding\"), so its samples are no reference here.",
     "eac3-signal-transient.eac3": "FFmpeg does not apply transient pre-noise processing, whose cross-fade windows the specification leaves open.",
     "eac3-signal-spx-noise.eac3": "The noise of spectral extension comes from a generator of each decoder, so the samples differ; the level of the noise equals FFmpeg's (docs/development.md, \"E-AC-3 decoding\").",
 }

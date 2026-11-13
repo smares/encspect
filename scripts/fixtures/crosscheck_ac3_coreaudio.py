@@ -352,7 +352,7 @@ def variants_report(args, root):
     return lines
 
 
-CORE_AUDIO_SIGNAL_FILES = ["eac3-signal-aht.eac3", "eac3-signal-ecpl.eac3", "eac3-signal-spx.eac3", "eac3-signal-spx-noise.eac3", "eac3-signal-transient.eac3", "eac3-signal-dependent.eac3", "substreams.eac3", "coding-ac3-core-dependent.ac3"]
+CORE_AUDIO_SIGNAL_FILES = ["eac3-signal-aht.eac3", "eac3-signal-aht-hebap4.eac3", "eac3-signal-ecpl.eac3", "eac3-signal-spx.eac3", "eac3-signal-spx-noise.eac3", "eac3-signal-transient.eac3", "eac3-signal-dependent.eac3", "substreams.eac3", "coding-ac3-core-dependent.ac3"]
 
 
 def main(argv=None):

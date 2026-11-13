@@ -1,0 +1,82 @@
+{
+ "description": "Twelve 2/0 E-AC-3 frames at 48 kHz like those of eac3-signal-aht, whose bins of the pointer 4 (vector quantization with the 32 vectors of Table E.3.4) use every row of the table at least once, row 30 included (A/52 Annex E 3.4.2).",
+ "length": 49152,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   4096
+  ],
+  [
+   4096,
+   4096
+  ],
+  [
+   8192,
+   4096
+  ],
+  [
+   12288,
+   4096
+  ],
+  [
+   16384,
+   4096
+  ],
+  [
+   20480,
+   4096
+  ],
+  [
+   24576,
+   4096
+  ],
+  [
+   28672,
+   4096
+  ],
+  [
+   32768,
+   4096
+  ],
+  [
+   36864,
+   4096
+  ],
+  [
+   40960,
+   4096
+  ],
+  [
+   45056,
+   4096
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "E-AC-3",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 18432,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "ffprobe_bitrate": true,
+  "decode": false,
+  "skip_insertion": false,
+  "skip": {
+   "skip_insertion": "The check rewrites E-AC-3 frames with skip fields.",
+   "decode": "FFmpeg 6.1.1 reads the vector of a hebap 4 bin from the next row of Table E.3.4 (docs/development.md, \"E-AC-3 decoding\"), so its samples are no reference here."
+  }
+ }
+}
