@@ -311,6 +311,9 @@ PINS = {
                                             "differs from the analyzer's output by waveform (error -7 dB, correlation 0.89 and 0.85) where the analyzer and FFmpeg correlate 0.993 and 0.994 there and Core Audio "
                                             "0.95 with each; every band below agrees to 0.00 dB over the whole file")],
     "external-ffmpeg-eac3-5.1-256k": [(None, 12500, "above the coded bandwidth (12,469 Hz) only the transform's leakage is left, at about -50 dB; every band below agrees to 0.00 dB over the whole file")],
+    "csi_miami_stereo_128_spx": [(None, 12800, "spectral extension's noise region (extension begin and end in the stream; the notch and the blend are in use): Core Audio's band is 1.5 dB louder than the analyzer's, "
+                                               "which FFmpeg matches to 0.0 dB in every band; the noise is unit variance and scaled by the RMS of the translated coefficients before the notch (A/52 Annex E 3.6.4.2.4), "
+                                               "no reading of those steps that was tried gives 1.5 dB, so the cause is unresolved")],
     "eac3-signal-spx-noise": [(None, 6400, "spectral extension's noise: A/52 Annex E 3.6.4.2.4 asks for noise() from a zero-mean, unity-variance generator and does not define the generator or "
                                           "its seed, so each decoder draws its own; the signs of the differences change with the channel (-2.2 to +1.3 dB)")],
 }
