@@ -168,6 +168,14 @@ def clicks_source(rate=48000, channels=2):
 
 SOURCES = {"external-aften-stereo-192k-blocksw": clicks_source}
 
+# Blocks Core Audio decodes differently from the analyzer, liba52 and FFmpeg, by file (run 43367433212): in external-aften-stereo-192k-blocksw.ac3 the two blocks of its clicks that
+# send new rematrixing flags and bit allocation parameters, block 48 (left channel, 0.1117 of full scale) and block 36 (right channel, 0.0072), where the analyzer, liba52 and FFmpeg
+# agree to 2.4e-7 and Core Audio agrees with them to 2e-6 everywhere else (block 47, the file's one block switched block, included). Against the signal the encoder was given the
+# analyzer's and Core Audio's largest errors are equal in every one of these blocks (0.2612 and 0.1289: the codec's own error at a click), so Core Audio is not closer and
+# nothing says the analyzer is wrong; the cause on Core Audio's side is not known. Both blocks (every block of that number in the repeated file, both channels) are left out of the
+# comparison and listed in its output.
+PINNED_BLOCKS = {"external-aften-stereo-192k-blocksw": [36, 48]}
+
 
 def source_errors(ours, reference, channels, blocks, name):
     """For the blocks that miss, the largest error of the analyzer and of the reference against the signal the encoder was given (the codec's own error at a click is large, so only
@@ -178,14 +186,17 @@ def source_errors(ours, reference, channels, blocks, name):
     rows = []
     for block, worst in blocks:
         for c in range(channels):
-            a = r = 0.0
+            a = r = sa = sr = 0.0
+            count = 0
             for n in range(256):
                 k = (block - 1) * 256 + n  # the encoder's delay is one block: the output at position p is the source at p - 256, and the reference starts at 256
                 if k < 0 or (k * channels + c) >= len(source) or ((k + 256) * channels + c) >= len(ours) or (k * channels + c) >= len(reference):
                     break
-                a = max(a, abs(ours[(k + 256) * channels + c] - source[k * channels + c]))
-                r = max(r, abs(reference[k * channels + c] - source[k * channels + c]))
-            rows.append((block, c, a, r))
+                ea = ours[(k + 256) * channels + c] - source[k * channels + c]
+                er = reference[k * channels + c] - source[k * channels + c]
+                a, r = max(a, abs(ea)), max(r, abs(er))
+                sa, sr, count = sa + ea * ea, sr + er * er, count + 1
+            rows.append((block, c, a, r, (sa / count) ** 0.5 if count else 0.0, (sr / count) ** 0.5 if count else 0.0))
     return rows
 
 
@@ -208,8 +219,8 @@ def attempt(dump, raw, channels, work, tag, extra, name=""):
             missing = block_errors(ours, reference, channels, FIRST_POSITION)
             for block, worst in missing:
                 results.append((f"block {block} (a file of 96 blocks repeats): largest errors per channel {' '.join(f'{w:.4g}' for w in worst)}", ["not a comparison"]))
-            for block, c, a, r in source_errors(ours, reference, channels, missing, name):
-                results.append((f"block {block} channel {c} against the encoder's input: analyzer {a:.4f}, Core Audio {r:.4f}", ["not a comparison"]))
+            for block, c, a, r, arms, rrms in source_errors(ours, reference, channels, missing, name):
+                results.append((f"block {block} channel {c} against the encoder's input: largest error analyzer {a:.4f}, Core Audio {r:.4f}; RMS analyzer {arms:.5f}, Core Audio {rrms:.5f}", ["not a comparison"]))
         elif result and "bands" in result:
             for number, channel in enumerate(result["bands"]["channels"]):
                 for band in channel["bands"]:
@@ -244,9 +255,17 @@ def check_file(args, path, work):
     long_path = work / (path.stem + ".repeated.ac3")
     long_path.write_bytes(long_data)
     holds = True
+    pinned = PINNED_BLOCKS.get(path.stem, [])
+    if pinned:
+        lines.append(f"  pinned, left out of both passes: blocks {pinned} (see PINNED_BLOCKS)")
     for variant, source, extra in (("strict", stripped, []), ("dithered", long_path, ["--bands", x.BANDS, "--no-sample-bounds"])):
         folder = work / variant
         folder.mkdir()
+        copies = 1 if variant == "strict" else max(2, x.REPEATED_SAMPLES // (6 * 256 * len(frames)))
+        for copy in range(copies):
+            for block in pinned:
+                first = (block + copy * 96) * 256
+                extra = [*extra, "--exclude", f"{first}:{first + 256}"]
         dump = x.pcmdump(args.pcmdump, source, folder)
         raw, info = decode(args.probe, source, folder / "coreaudio.f32")
         if raw is None:
