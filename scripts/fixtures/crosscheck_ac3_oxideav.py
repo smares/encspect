@@ -6,7 +6,7 @@
 Not part of CI (it needs a Rust toolchain and a clone of github.com/OxideAV/oxideav-ac3); docs/development.md ("oxideav-ac3") says what it is for and where it is
 not a reference. The clone is made into the download cache (.cache/oxideav-ac3, or ENCSPECT_DOWNLOAD_CACHE) and checked out at COMMIT, which is its own pin: a
 commit ID names its content, so a moved branch or a rewritten history cannot change what runs (downloads.py pins files by SHA-256; a git checkout has no
-single file to pin, and GitHub's archive of a commit is not byte-stable). None of its code is used here: `oxideav/dump_pcm.rs` is this repository's own harness,
+single file to pin, and GitHub's archive of a commit is not byte-stable). None of its code is used here: `oxideav_dump_pcm.rs` is this repository's own harness,
 which calls the crate's public decode function and writes 16-bit samples, so no notice is needed.
 
 Each fixture is repeated to about a million samples and compared with the analyzer's PCM by the energy of bands (compare_pcm.py --bands, the bands and the floor
@@ -46,7 +46,7 @@ def checkout():
         subprocess.run(["git", "-C", str(cache), "checkout", "--quiet", "--detach", COMMIT], check=True)
     examples = cache / "examples"
     examples.mkdir(exist_ok=True)
-    shutil.copy(HERE / "oxideav" / "dump_pcm.rs", examples / "dump_pcm.rs")
+    shutil.copy(HERE / "oxideav_dump_pcm.rs", examples / "dump_pcm.rs")
     subprocess.run(["cargo", "build", "--quiet", "--release", "--example", "dump_pcm"], cwd=cache, check=True)
     return cache / "target" / "release" / "examples" / "dump_pcm"
 
