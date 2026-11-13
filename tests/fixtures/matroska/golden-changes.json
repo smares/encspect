@@ -1,235 +1,32 @@
 {
   "goldens": [
-    "tests/fixtures/matroska/"
+    "tests/fixtures/matroska/external-ffmpeg-encoding-tool.report.json",
+    "tests/fixtures/matroska/external-ffmpeg-live.report.json",
+    "tests/fixtures/matroska/external-ffmpeg-metadata.report.json",
+    "tests/fixtures/matroska/external-ffmpeg-no-crc.report.json",
+    "tests/fixtures/matroska/external-ffmpeg-opus-webm.report.json",
+    "tests/fixtures/matroska/external-ffmpeg-opus.report.json",
+    "tests/fixtures/matroska/external-ffmpeg-small-clusters.report.json",
+    "tests/fixtures/matroska/external-ffmpeg-video.report.json",
+    "tests/fixtures/matroska/external-mkvmerge-metadata.report.json",
+    "tests/fixtures/matroska/external-mkvmerge-no-cues.report.json",
+    "tests/fixtures/matroska/external-mkvmerge-opus-webm.report.json",
+    "tests/fixtures/matroska/external-mkvmerge-opus.report.json",
+    "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json",
+    "tests/fixtures/matroska/opus-stereo-clusters.report.json",
+    "tests/fixtures/matroska/two-audio-tracks.report.json",
+    "tests/fixtures/matroska/two-segments.report.json",
+    "tests/fixtures/matroska/unknown-size-then-segment.report.json",
+    "tests/fixtures/matroska/writer-apps-differ.report.json",
+    "tests/fixtures/matroska/writer-two-segments.report.json"
   ],
-  "added": [
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 1 Frames",
-        "Statistics"
-      ],
-      "name": "Coded Bandwidth",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-pcm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis.report.json",
-        "tests/fixtures/matroska/vorbis-private-zlib.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 1 Frames",
-        "Statistics",
-        "Coded Bandwidth"
-      ],
-      "name": "Highest",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-pcm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis.report.json",
-        "tests/fixtures/matroska/vorbis-private-zlib.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 1 Frames",
-        "Statistics",
-        "Coded Bandwidth"
-      ],
-      "name": "Lowest",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-pcm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis.report.json",
-        "tests/fixtures/matroska/vorbis-private-zlib.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 1 Frames",
-        "Statistics",
-        "Coded Bandwidth"
-      ],
-      "name": "Most Common",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-pcm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis.report.json",
-        "tests/fixtures/matroska/vorbis-private-zlib.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 2 Frames",
-        "Statistics"
-      ],
-      "name": "Coded Bandwidth",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 2 Frames",
-        "Statistics",
-        "Coded Bandwidth"
-      ],
-      "name": "Highest",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 2 Frames",
-        "Statistics",
-        "Coded Bandwidth"
-      ],
-      "name": "Lowest",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 2 Frames",
-        "Statistics",
-        "Coded Bandwidth"
-      ],
-      "name": "Most Common",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "WebM",
-        "Track 1 Frames",
-        "Statistics"
-      ],
-      "name": "Coded Bandwidth",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "WebM",
-        "Track 1 Frames",
-        "Statistics",
-        "Coded Bandwidth"
-      ],
-      "name": "Highest",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "WebM",
-        "Track 1 Frames",
-        "Statistics",
-        "Coded Bandwidth"
-      ],
-      "name": "Lowest",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "WebM",
-        "Track 1 Frames",
-        "Statistics",
-        "Coded Bandwidth"
-      ],
-      "name": "Most Common",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json"
-      ]
-    },
+  "changed": [
     {
       "scope": "stream",
       "array": "series",
-      "name": "Coded Bandwidth",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json"
-      ],
-      "streams": [
-        1
-      ]
-    },
-    {
-      "scope": "stream",
-      "array": "series",
-      "name": "Coded Bandwidth",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-pcm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis.report.json",
-        "tests/fixtures/matroska/vorbis-private-zlib.report.json"
-      ],
-      "streams": [
-        0
-      ]
-    },
-    {
-      "scope": "stream",
-      "array": "series",
-      "name": "Coded Bandwidth Over Time",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-two-audio.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json"
-      ],
-      "streams": [
-        1
-      ]
-    },
-    {
-      "scope": "stream",
-      "array": "series",
-      "name": "Coded Bandwidth Over Time",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-vorbis-webm.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-vorbis.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-aac.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis-pcm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-vorbis.report.json",
-        "tests/fixtures/matroska/vorbis-private-zlib.report.json"
-      ],
-      "streams": [
-        0
+      "name": "Intensity Stereo Bound",
+      "fields": [
+        "quantity"
       ]
     }
   ]

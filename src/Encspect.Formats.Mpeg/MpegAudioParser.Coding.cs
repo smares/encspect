@@ -107,6 +107,8 @@ public sealed partial class MpegAudioParser
 
         public Node? IntensityStereoBounds { get; set; }
 
+        public Node? IntensityStereoBoundHz { get; set; }
+
         public Node? BlockUsage { get; set; }
 
         public Node? BlockSizes { get; set; }
@@ -123,7 +125,7 @@ public sealed partial class MpegAudioParser
         switch (frame.DataKind)
         {
             case FrameData.SideInfo:
-                return FrameFigures.Layer3(build.Store.Span(frame.Data, frame.DataLength), header, frame.CodedLines);
+                return FrameFigures.Layer3(build.Store.Span(frame.Data, frame.DataLength), header, frame.CodedLines, frame.IntensityLine);
             case FrameData.Layer1:
                 return FrameFigures.Layer1(build.Store.Span(frame.Data, frame.DataLength), header);
             case FrameData.Layer2:
@@ -153,6 +155,7 @@ public sealed partial class MpegAudioParser
         private readonly int _channels;
         private readonly Numeric? _bandwidth;
         private readonly Numeric? _share;
+        private readonly Numeric? _intensityBound;
         private int _unit;
 
         public StreamCoding(BuildContext build, double[] offsets, int count, IReadOnlyList<RegionState> regions, MpegHeader header, bool hasTwoChannels, bool hasJointStereo)
@@ -179,6 +182,7 @@ public sealed partial class MpegAudioParser
             }
 
             _share = hasTwoChannels ? new Numeric(count, offsets) : null;
+            _intensityBound = hasJointStereo && Has(r => r.Nodes.IntensityStereoBoundHz) ? new Numeric(count, offsets, keepSeconds: false) : null;
         }
 
         private bool Has(Func<RegionState, Node?> node) => _regions.Any(r => node(r) is not null);
@@ -196,9 +200,10 @@ public sealed partial class MpegAudioParser
                 AddBlocks(frame, header);
             }
 
-            if (_bandwidth is not null || _share is not null)
+            if (_bandwidth is not null || _share is not null || _intensityBound is not null)
             {
                 FrameFigures.Figure figure = FigureOf(_build, frame, header);
+                _intensityBound?.Add(_unit, second, figure.HasIntensityBound ? figure.IntensityBound : null, 0);
                 if (_bandwidth is not null)
                 {
                     _bandwidth.Add(_unit, second, figure.HasBandwidth ? figure.Bandwidth : null, 0);
@@ -255,6 +260,12 @@ public sealed partial class MpegAudioParser
                 categories.Add(usage.Group("Block Sizes", SizeCategories, SizeOfKind, Anchor(r => r.Nodes.BlockSizes), SeriesText.BlockSizesSeries, Topics.BlockSwitching));
             }
 
+            if (_intensityBound?.Count > 0)
+            {
+                series.Add(_intensityBound.PerFrame("Intensity Stereo Bound", "Hz", SeriesText.IntensityStereoBound, GraphConcept.StereoCoding, "Intensity Stereo Bound",
+                    Anchor(r => r.Nodes.IntensityStereoBoundHz), _intensityBound.X));
+            }
+
             Series? bandwidthSeries = null;
             if (_bandwidth?.Count > 0)
             {
@@ -291,13 +302,16 @@ public sealed partial class MpegAudioParser
     // while every frame has one, and the frames' own once one has none.
     private sealed class Numeric
     {
+        private readonly bool _keepSeconds;
         private readonly double[] _offsets;
         private readonly double[] _values;
         private double[]? _own;
         private readonly List<(double Max, long First, long Both)> _seconds = [];
 
-        public Numeric(int count, double[] offsets)
+        // keepSeconds is false for a series without a per-second form.
+        public Numeric(int count, double[] offsets, bool keepSeconds = true)
         {
+            _keepSeconds = keepSeconds;
             _offsets = offsets;
             _values = new double[count];
         }
@@ -307,7 +321,7 @@ public sealed partial class MpegAudioParser
         // The unit-th frame has the value, or none; first and both are the bits of a share.
         public void Add(int unit, int second, double? value, long first, long both = 0)
         {
-            while (_seconds.Count <= second)
+            while (_keepSeconds && _seconds.Count <= second)
             {
                 _seconds.Add((double.NaN, 0, 0));
             }
@@ -329,8 +343,11 @@ public sealed partial class MpegAudioParser
             }
 
             _values[Count++] = v;
-            (double max, long f, long b) = _seconds[second];
-            _seconds[second] = (double.IsNaN(max) || v > max ? v : max, f + first, b + both);
+            if (_keepSeconds)
+            {
+                (double max, long f, long b) = _seconds[second];
+                _seconds[second] = (double.IsNaN(max) || v > max ? v : max, f + first, b + both);
+            }
         }
 
         public ReadOnlyMemory<double> X => _own is null && Count == _values.Length ? _offsets : (_own ?? _offsets).AsSpan(0, Count).ToArray();

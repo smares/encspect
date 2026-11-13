@@ -47,7 +47,8 @@ For every fixture in tests/fixtures/mp4, tests/fixtures/aac/adts and tests/fixtu
   stereo coding of every channel pair (intensity stereo where the second channel has a band of codebook 14 or 15, whether or not the pair has a
   common window; mid/side stereo where a band that is no intensity stereo band has its ms_used flag set, ms_mask_present 2 setting every band; computed from the
   trace's flags and codebooks by the rule of ISO/IEC 14496-3 4.6.8, not read from the analyzer) and the coded bandwidth (the top of band max_sfb of the highest
-  channel stream, in whole hertz from the band tables of aac_tables.py), for the units of a file with one stream. A unit holds the raw data blocks of
+  channel stream, in whole hertz from the band tables of aac_tables.py) and the intensity stereo bound (the lowest lower edge, in whole hertz, of a band of codebook 14
+  or 15 in a pair's second channel, from the same tables; a unit without such a band has no point), for the units of a file with one stream. A unit holds the raw data blocks of
   an ADTS frame, and a block of "faad_trace_skip" or one the analyzer could not read leaves its unit out.
 - "decode": ffmpeg must decode every access unit without printing an error (ffmpeg -v error ... -f null -).
 - "skip": the tools that are not run on the fixture, each with the reason.
@@ -408,9 +409,10 @@ def core_rate(report):
 
 def trace_unit(blocks, rate, is960=False):
     """The coding values of a unit that faad2's trace states for its raw data blocks: the window sequence of each channel stream, the stereo
-    coding of each channel pair and the highest top of a band, in whole hertz (None for a unit without a channel stream)."""
+    coding of each channel pair, the highest top of a band, in whole hertz (None for a unit without a channel stream) and the lowest lower edge of a band
+    of a pair's second channel with codebook 14 or 15, the intensity stereo bound (None where the unit has none)."""
     index = aac_tables_index(rate)
-    windows, pairs, top = [], [], None
+    windows, pairs, top, bound = [], [], None, None
     for block in blocks:
         records = block["records"]
         decisions = iter(r for r in records if r[0] == "MS")      # in the order of the pairs that have ms_mask_present 1 or 2
@@ -441,8 +443,17 @@ def trace_unit(blocks, rate, is960=False):
                 if record[0] == "CPE" and len(streams) == 2:
                     decision = next(decisions, None) if common and mask in (1, 2) else None
                     pairs.append(trace_pair(streams[1][11], decision[2] if decision and len(decision) > 2 else ""))
+                    second = streams[1]
+                    short = int(second[1]) == 2
+                    table = (aac_tables.SWB_SHORT_120 if is960 else aac_tables.SWB_SHORT) if short else (aac_tables.SWB_LONG_960 if is960 else aac_tables.SWB_LONG)
+                    lines = (120 if is960 else 128) if short else (960 if is960 else 1024)
+                    max_sfb = int(second[3])
+                    for band, book in enumerate(second[11]):
+                        if book in "ef":
+                            hertz = round_half_even(table[index][band % max_sfb] * rate, 2 * lines)
+                            bound = hertz if bound is None else min(bound, hertz)
             i += 1
-    return windows, pairs, top
+    return windows, pairs, top, bound
 
 
 def trace_pair(books, applied):
@@ -509,7 +520,9 @@ def check_series(ours, theirs, report, problems, skipped=()):
         return 0, "the series' units have no x values in the report"
     bandwidth = next((s for s in stream["series"] if s["name"] == "Coded Bandwidth"), None)
     points = dict(zip(bandwidth["x"], bandwidth["values"])) if bandwidth else {}
-    expected_windows, expected_pairs, expected_top = [[] for _ in xs], [[] for _ in xs], [None] * len(xs)
+    expected_windows, expected_pairs, expected_top, expected_bound = [[] for _ in xs], [[] for _ in xs], [None] * len(xs), [None] * len(xs)
+    bound_series = next((s for s in stream["series"] if s["name"] == "Intensity Stereo Bound"), None)
+    bound_points = dict(zip(bound_series["x"], bound_series["values"])) if bound_series else {}
     damaged = set()
     blocks = [[] for _ in xs]
     for index, (mine, faad) in enumerate(zip(ours, theirs)):
@@ -522,7 +535,7 @@ def check_series(ours, theirs, report, problems, skipped=()):
     for unit, group in enumerate(blocks):
         if unit in damaged or not group:
             continue
-        expected_windows[unit], expected_pairs[unit], expected_top[unit] = trace_unit(group, rate, is960)
+        expected_windows[unit], expected_pairs[unit], expected_top[unit], expected_bound[unit] = trace_unit(group, rate, is960)
         compared += 1
         if unit_windows[unit] != expected_windows[unit]:
             problems.append(f"unit {unit}: window sequences {unit_windows[unit]}, faad2 reads {expected_windows[unit]}")
@@ -530,6 +543,8 @@ def check_series(ours, theirs, report, problems, skipped=()):
             problems.append(f"unit {unit}: stereo codings {unit_pairs[unit]}, faad2's decisions give {expected_pairs[unit]}")
         if points.get(xs[unit]) != expected_top[unit]:
             problems.append(f"unit {unit}: coded bandwidth {points.get(xs[unit])} Hz, faad2's max_sfb gives {expected_top[unit]} Hz")
+        if bound_points.get(xs[unit]) != expected_bound[unit]:
+            problems.append(f"unit {unit}: intensity stereo bound {bound_points.get(xs[unit])} Hz, faad2's codebooks give {expected_bound[unit]} Hz")
         if len(problems) > 5:
             break
     return compared, (None if compared else "every unit holds a block the manifest skips or the analyzer could not read")

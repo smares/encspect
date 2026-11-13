@@ -78,8 +78,8 @@ How far into each coding Encspect sees today, on the depth levels of the [plan](
 
 | Coding | Entropy-coded data | Decoded audio | Graphs of coding choices |
 |---|---|---|---|
-| MPEG audio | Layer III scalefactors and Huffman data (the entropy pass, every analysis); Layers I and II up to the samples, and their samples where decoded | measured (Layers I to III) | Stereo Coding, Channel Modes, Joint Stereo Modes, Intensity Stereo Bounds, Block Usage, Block Sizes, Coded Bandwidth, Channel Bit Share |
-| AAC | Main, LC, SSR and LTP: every raw data block with its spectral data; ER, ELD and USAC not read (0.5) | no (0.5) | Block Usage, Block Sizes, Stereo Coding, Coded Bandwidth |
+| MPEG audio | Layer III scalefactors and Huffman data (the entropy pass, every analysis); Layers I and II up to the samples, and their samples where decoded | measured (Layers I to III) | Stereo Coding, Channel Modes, Joint Stereo Modes, Intensity Stereo Bounds, Intensity Stereo Bound, Block Usage, Block Sizes, Coded Bandwidth, Channel Bit Share |
+| AAC | Main, LC, SSR and LTP: every raw data block with its spectral data; ER, ELD and USAC not read (0.5) | no (0.5) | Block Usage, Block Sizes, Stereo Coding, Intensity Stereo Bound, Coded Bandwidth |
 | AC-3, E-AC-3 | every audio block up to its mantissas; the adaptive hybrid transform and enhanced coupling not read (0.3); the audio blocks at the reduced rates not read (not planned) | no (0.3) | Blocks With Block Switching, Blocks With Coupling, Blocks With Rematrixing, Blocks With Spectral Extension (E-AC-3), Coded Bandwidth ([ac3.md](ac3.md#what-is-graphed)) |
 | DTS | core subframes not read (0.4); the extensions' data not read (follow-ups after 0.5) | no (core: 0.4; extensions: follow-ups after 0.5) | Stereo Coding of the core |
 | Vorbis | floors and residues of every packet (the entropy pass, every analysis) | measured | Block Sizes, Coded Bandwidth |

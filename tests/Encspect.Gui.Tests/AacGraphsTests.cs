@@ -51,6 +51,7 @@ public class AacGraphsTests
             [
                 ("Summary", "Coding Summary"),
                 ("Stereo Coding", "Stereo Coding"),
+                ("Stereo Coding", "Intensity Stereo Bound"),
                 ("Block Switching", "Block Usage"),
                 ("Block Switching", "Block Sizes"),
                 ("Coded Bandwidth", "Coded Bandwidth"),

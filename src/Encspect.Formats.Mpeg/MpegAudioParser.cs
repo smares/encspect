@@ -461,10 +461,10 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         feed.Previous = header;
         if (vbr is null && !feed.IsLimited)
         {
-            (int codedLines, int overruns) = feed.Feed(state, index, position, available, length, isComplete, header, placement, runsBefore);
+            (int codedLines, int overruns, int intensityLine) = feed.Feed(state, index, position, available, length, isComplete, header, placement, runsBefore);
             if (codedLines >= 0)
             {
-                frame = frame with { CodedLines = codedLines };
+                frame = frame with { CodedLines = codedLines, IntensityLine = intensityLine };
             }
 
             if (overruns > 0)
@@ -1475,6 +1475,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         private readonly ushort _earlier;
         private readonly ushort _reservoirFill;
         private readonly ushort _codedLines;
+        private readonly ushort _intensityLine;
         private readonly byte _flags;
 
         public Entry(long offset, long length, uint header)
@@ -1538,6 +1539,9 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
 
         // The lines of a Layer III frame's granules that the entropy pass found coded, in the 576-line scale of the highest of them, or -1 where it did not walk the frame.
         public int CodedLines { get => _codedLines - 1; init => _codedLines = (ushort)(value + 1); }
+
+        // The lowest line, in the same scale, from which the right channel of the frame's granules codes intensity positions, or -1 where none does or the frame was not walked.
+        public int IntensityLine { get => _intensityLine - 1; init => _intensityLine = (ushort)(value + 1); }
 
         public bool HasSideInfo => DataKind == FrameData.SideInfo;
 

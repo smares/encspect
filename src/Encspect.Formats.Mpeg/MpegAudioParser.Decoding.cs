@@ -44,9 +44,9 @@ public sealed partial class MpegAudioParser
             (Session, StreamStart, StreamNode, Position, PendingGap) = (null, index, node, 0, false);
         }
 
-        // One audio frame of the current stream: the coded lines of a walked Layer III frame (-1 where the frame was not walked) and the granules and channels whose
-        // Huffman data ran past their part2_3_length.
-        public (int CodedLines, int Overruns) Feed(StreamState state, int index, long position, long available, int length, bool isComplete, MpegHeader header, MainDataPlacement? placement, int runsBefore)
+        // One audio frame of the current stream: the coded lines of a walked Layer III frame (-1 where the frame was not walked), the lowest line from which its right channel
+        // codes intensity positions (-1 where none does) and the granules and channels whose Huffman data ran past their part2_3_length.
+        public (int CodedLines, int Overruns, int IntensityLine) Feed(StreamState state, int index, long position, long available, int length, bool isComplete, MpegHeader header, MainDataPlacement? placement, int runsBefore)
         {
             if (Session is null)
             {
@@ -69,6 +69,7 @@ public sealed partial class MpegAudioParser
             long first0 = Position;
             Position += samples;
             int codedLines = -1;
+            int intensityLine = -1;
             int overruns = 0;
             if (!isComplete || length > _frame.Length)
             {
@@ -78,7 +79,7 @@ public sealed partial class MpegAudioParser
                 }
 
                 PendingGap = false;
-                return (codedLines, overruns);
+                return (codedLines, overruns, intensityLine);
             }
 
             // Without a decoder a Layer III frame is read as far as its side information; the main data come through the reservoir's runs.
@@ -124,6 +125,7 @@ public sealed partial class MpegAudioParser
                 if (isAvailable && !isUnreadable)
                 {
                     codedLines = facts.CodedLines;
+                    intensityLine = facts.IntensityLine;
                     overruns = facts.Overruns;
                 }
 
@@ -158,7 +160,7 @@ public sealed partial class MpegAudioParser
             }
 
             PendingGap = false;
-            return (codedLines, overruns);
+            return (codedLines, overruns, intensityLine);
         }
 
         // The frame's main data: the runs the reservoir placed for it, in file order, read into one buffer (claimed bytes), then the bytes of the frame after the last run.

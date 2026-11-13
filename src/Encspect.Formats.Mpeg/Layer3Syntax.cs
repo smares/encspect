@@ -187,6 +187,9 @@ internal struct WalkFacts
 
     // Granules and channels whose Huffman data ran past their part2_3_length.
     public int Overruns;
+
+    // The lowest line, in the 576-line scale, from which the right channel of any granule codes intensity positions (-1 where no granule does).
+    public int IntensityLine;
 }
 
 // The syntax of a Layer III frame past its header: side information, scalefactors and the Huffman-coded spectrum, read once by the entropy pass of

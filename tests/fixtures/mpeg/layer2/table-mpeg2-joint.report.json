@@ -167,6 +167,27 @@
                   ]
                 },
                 {
+                  "name": "Intensity Stereo Bound",
+                  "offset": 0,
+                  "length": 3072,
+                  "children": [
+                    {
+                      "name": "Lowest",
+                      "value": 1500,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 3072
+                    },
+                    {
+                      "name": "Highest",
+                      "value": 6000,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 3072
+                    }
+                  ]
+                },
+                {
                   "name": "Coded Bandwidth",
                   "offset": 0,
                   "length": 3072,
@@ -9755,6 +9776,33 @@
             ],
             "values": [
               64
+            ]
+          },
+          {
+            "name": "Intensity Stereo Bound",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "stereoCoding",
+            "quantity": "Intensity Stereo Bound",
+            "x": [
+              0,
+              384,
+              768,
+              1152,
+              1536,
+              1920,
+              2304,
+              2688
+            ],
+            "values": [
+              1500,
+              3000,
+              4500,
+              6000,
+              1500,
+              3000,
+              4500,
+              6000
             ]
           },
           {

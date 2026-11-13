@@ -31,6 +31,7 @@ every child of that name. A change file:
       "changed": [{"path": ["MPEG Audio", "Statistics", "Channel Pairs"], "fields": ["value"],
                    "goldens": ["tests/fixtures/mpeg/some.report.json"]},   # an entry may name the goldens it applies to, else it applies to all
                   {"scope": "stream", "fields": ["samples", "duration"]},  # fields of every stream whose values may differ
+                  {"scope": "stream", "array": "series", "name": "Intensity Stereo Bound", "fields": ["quantity"]},  # fields of a stream's series of that name
                   {"scope": "finding", "code": "vorbis.end-trimming-large", "fields": ["message"]}],  # fields of every finding of the code
       "removed": [{"parent": ["ASF", "Data Object", "Windows Media Audio Voice", "Statistics"], "name": "Lost Samples",     # a node only the old report has;
                    "goldens": ["tests/fixtures/asf/voice-truncated.report.json"]},                                        # an entry may name the goldens it applies to
@@ -219,6 +220,12 @@ def drop_changed(report, changed):
     for entry in changed:
         if entry.get("scope") == "stream":
             for stream in report.get("streams", []):
+                if "array" in entry:
+                    for element in stream.get(entry["array"], []):
+                        if element.get("name") == entry["name"]:
+                            for field in entry["fields"]:
+                                element.pop(field, None)
+                    continue
                 for field in entry["fields"]:
                     stream.pop(field, None)
             continue
@@ -337,6 +344,8 @@ def validate(change):
         "removed": {"finding": ("code",), "node": ("parent", "name")},
     }
     for entry in change.get("changed", []):
+        if entry.get("scope") == "stream" and "array" in entry and "name" not in entry:
+            raise ChangeError(f"changed: an entry with the scope stream and an array needs name: {json.dumps(entry)}")
         if entry.get("scope") == "measurement":
             for field in ("path", "fields", "to"):
                 if field not in entry:

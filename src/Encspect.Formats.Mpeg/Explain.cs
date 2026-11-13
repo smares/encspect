@@ -241,6 +241,9 @@ internal static class Explain
     public const string ChannelModeCount = "The frames in this channel mode, with their share.";
     public const string JointStereoModes = "Of the joint stereo frames, how many use each Layer III stereo coding.";
     public const string JointStereoMode = "The joint stereo frames coded this way, with their share.";
+    public const string IntensityStereoBound = "The lowest frequency from which the joint stereo frames code intensity stereo, in whole hertz: the lower edge of the bound subband, the first that the mode_extension codes in intensity stereo (Layers I and II, ISO/IEC 11172-3 2.4.2.3), or of the first scalefactor band of the right channel's intensity positions (Layer III, 11172-3 2.4.3.4.9.3 and, for MPEG-2 and 2.5, ISO/IEC 13818-3). The figure is what the coded frame states, not a measurement of the sound.";
+    public const string BoundLowest = "The lowest intensity stereo bound of any frame.";
+    public const string BoundHighest = "The highest intensity stereo bound of any frame.";
     public const string IntensityBounds = "Of the joint stereo frames, how many start intensity stereo at each subband (Layers I and II).";
     public const string IntensityBound = "The joint stereo frames with this intensity stereo bound, with their share.";
     public const string BlockUsage = "Granules by block type, counted for each channel as mp3guessenc and EncSpot count them.";
@@ -321,6 +324,7 @@ internal static class SeriesText
     public const string StereoCodingSeries = "How each complete audio frame codes its channels, whatever its channel mode: left/right stereo, mid/side stereo, intensity stereo, both tools, dual channel or mono (ISO/IEC 11172-3 2.4.2.3). A joint stereo frame of Layer I or II counts as intensity stereo, which is all its mode_extension selects, even where a Layer II bound lies at or above the highest coded subband.";
     public const string JointStereoModesSeries = "The Layer III stereo coding of each joint stereo frame, which its mode_extension selects (ISO/IEC 11172-3 2.4.2.3); frames of the other channel modes have no value.";
     public const string IntensityStereoBoundsSeries = "The subband from which each joint stereo frame of Layer I or II codes intensity stereo, which its mode_extension selects (ISO/IEC 11172-3 2.4.2.3); frames of the other channel modes have no value.";
+    public const string IntensityStereoBound = "The lowest frequency from which each joint stereo frame codes intensity stereo, in whole hertz: in Layers I and II the lower edge of the bound subband, the first that its mode_extension codes in intensity stereo (ISO/IEC 11172-3 2.4.2.3), in Layer III the lower edge of the first scalefactor band, in any granule, whose right channel carries intensity positions (2.4.3.4.9.3; ISO/IEC 13818-3 for MPEG-2 and 2.5). A frame without such a band has none.";
     public const string BlockUsageSeries = "The block type of each granule and channel of every complete Layer III audio frame, counted per channel as the Block Usage statistics count them (ISO/IEC 11172-3 2.4.2.7); the second channel of a mono frame has no value.";
     public const string BlockSizesSeries = "The granules of Block Usage grouped by the size of their transform, as EncSpot counts them: long with start and stop blocks, short, mixed, and the reserved block type apart.";
 }
