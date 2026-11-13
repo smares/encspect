@@ -20,13 +20,13 @@ public class Ac3SamplesTests
         var options = new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions() } };
         foreach (StreamInfo info in Analyzer.CreateDefault().Analyze(Path.GetFileName(name), stream, options).Streams.Where(s => s.Codec is "AC-3" or "E-AC-3" && s.Verification is not null))
         {
-            // A frame the parser counts lost (cut, broken) is not decoded, so the measurement of a stream that has one is Incomplete by definition; every other stream is Complete.
-            MeasurementStatus expected = info.LostSamples > 0 ? MeasurementStatus.Incomplete : MeasurementStatus.Complete;
+            // A frame the parser counts lost (cut, broken) or the decoder is not given whole (a dependent frame the data lost) is not decoded, so the measurement of a stream that has one is Incomplete by definition; every other stream is Complete.
+            MeasurementStatus expected = info.LostSamples > 0 || info.Measurements?.LostSamples > 0 ? MeasurementStatus.Incomplete : MeasurementStatus.Complete;
             Assert.True(info.Measurements is { } measured && measured.Status == expected, $"{name}: the stream decodes and its measurements are {info.Measurements?.Status.ToString() ?? "missing"}, not {expected}");
             StreamMeasurements m = info.Measurements!;
             // A measurement belongs to the stream it hangs on: with several substreams in a file a mixed-up record would show in another stream's channels or rate.
-            // An AC-3 core's dependent frames are not decoded, so such a stream has more channels than its measurements.
-            Assert.True(m.SampleRate == info.SampleRate && (m.Channels == info.Channels || (name.Contains("core-dependent") && m.Channels < info.Channels)), $"{name}: the stream has {info.Channels} channels at {info.SampleRate} Hz, its measurements {m.Channels} at {m.SampleRate}");
+            // A channel map that names more locations than the frame codes (ac3.channel-map-count) gives the stream more channels than are decoded.
+            Assert.True(m.SampleRate == info.SampleRate && (m.Channels == info.Channels || (name.Contains("chanmap-more") && m.Channels < info.Channels)), $"{name}: the stream has {info.Channels} channels at {info.SampleRate} Hz, its measurements {m.Channels} at {m.SampleRate}");
             Assert.Equal(0, m.LeadingTrimmedSamples + m.TrailingTrimmedSamples + m.InnerTrimmedSamples);
             Assert.True(info.Samples == m.Samples + m.LostSamples + m.WithheldSamples, $"{name}: the report states {info.Samples}, the measurements keep {m.Samples} + lost {m.LostSamples} + withheld {m.WithheldSamples}");
             Assert.True(m.LostSamples >= info.LostSamples, $"{name}: the measurements count {m.LostSamples} lost, the report {info.LostSamples}");

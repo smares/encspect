@@ -1,0 +1,141 @@
+{
+ "description": "eac3-signal-dependent with the sync word of its sixth independent frame broken: its dependent frame is an orphan after the gap, left out of the decoding.",
+ "length": 98304,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   4096
+  ],
+  [
+   4096,
+   4096
+  ],
+  [
+   8192,
+   4096
+  ],
+  [
+   12288,
+   4096
+  ],
+  [
+   16384,
+   4096
+  ],
+  [
+   20480,
+   4096
+  ],
+  [
+   24576,
+   4096
+  ],
+  [
+   28672,
+   4096
+  ],
+  [
+   32768,
+   4096
+  ],
+  [
+   36864,
+   4096
+  ],
+  [
+   45056,
+   4096
+  ],
+  [
+   49152,
+   4096
+  ],
+  [
+   53248,
+   4096
+  ],
+  [
+   57344,
+   4096
+  ],
+  [
+   61440,
+   4096
+  ],
+  [
+   65536,
+   4096
+  ],
+  [
+   69632,
+   4096
+  ],
+  [
+   73728,
+   4096
+  ],
+  [
+   77824,
+   4096
+  ],
+  [
+   81920,
+   4096
+  ],
+  [
+   86016,
+   4096
+  ],
+  [
+   90112,
+   4096
+  ],
+  [
+   94208,
+   4096
+  ]
+ ],
+ "gaps": [
+  [
+   40960,
+   4096
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "E-AC-3",
+   "sample_rate": 48000,
+   "channels": 4,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right",
+    "back left",
+    "back right"
+   ],
+   "samples": 16896,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "ac3.sync-lost",
+   "Sync is lost"
+  ],
+  [
+   "ac3.dependent-without-independent",
+   "dependent substream"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": false,
+  "skip_insertion": false,
+  "skip": {
+   "ffprobe": "Hand-built variant; ffmpeg reads independent substream 0 only.",
+   "decode": "ffmpeg decodes independent substream 0 only, which is not what the variant tests."
+  }
+ }
+}

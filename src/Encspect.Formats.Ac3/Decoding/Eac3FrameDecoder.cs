@@ -26,6 +26,10 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
         public float[] Samples { get; } = new float[channels * BlockSamples];
         public int Expected { get; set; }
         public int Got { get; set; }
+
+        // The substream that wrote each output channel: a later substream replaces an earlier one's channel (3.8.2), whatever the order the blocks arrive in (a block that waits for its
+        // next block is delivered a frame late).
+        public int[] Owner { get; } = [.. Enumerable.Repeat(-1, channels)];
     }
 
     public Eac3FrameDecoder(DecodeContext context, SyncFrame header)
@@ -86,6 +90,8 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
         int substreams = r.Next();
         int blocks = frame.Samples / BlockSamples;
         var present = new HashSet<int>();
+        var transients = new List<(int Id, int Slot, long Location, int Length)>();
+        var lastOwner = new Dictionary<int, int>();
         // Each substream's records are read in turn; the slots of the unit's blocks expect every substream that has a frame in it.
         for (int i = 0; i < blocks; i++)
         {
@@ -127,8 +133,25 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
             {
                 if (channel < slots.Length && slots[channel] >= 0)
                 {
-                    (_pre ??= NewPreNoise()).Add(slots[channel], frame.FirstSample + location, length);
+                    transients.Add((id, slots[channel], frame.FirstSample + location, length));
                 }
+            }
+
+            foreach (int slotOfChannel in slots)
+            {
+                if (slotOfChannel >= 0)
+                {
+                    lastOwner[slotOfChannel] = Math.Max(lastOwner.GetValueOrDefault(slotOfChannel, -1), id);
+                }
+            }
+        }
+
+        // A channel a later substream replaces takes that substream's pre-noise processing data, not the earlier one's.
+        foreach ((int id, int outputSlot, long location, int length) in transients)
+        {
+            if (lastOwner[outputSlot] == id)
+            {
+                (_pre ??= NewPreNoise()).Add(outputSlot, location, length);
             }
         }
 
@@ -167,8 +190,9 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
         int[] slots = _slotsOf[id];
         for (int c = 0; c < slots.Length; c++)
         {
-            if (slots[c] >= 0)
+            if (slots[c] >= 0 && id >= slot.Owner[slots[c]])
             {
+                slot.Owner[slots[c]] = id;
                 Array.Copy(planar, (c * stride) + offset, slot.Samples, slots[c] * BlockSamples, BlockSamples);
             }
         }

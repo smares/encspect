@@ -188,7 +188,7 @@ internal sealed class Ac3Analysis
 
     // Decides the program of the access unit held back (an independent frame and the dependent frames after it): the dependent substreams' configuration is part of the program's key, so
     // a dependent substream that appears, disappears or changes starts a new stream as an independent one does.
-    private void CommitUnit()
+    private void CommitUnit(bool endsAtGap = false)
     {
         if (_pending.Count == 0)
         {
@@ -200,9 +200,35 @@ internal sealed class Ac3Analysis
         // A program frame holds each dependent substream ID once (Annex E 2.3.1.2): a repeated ID is left out of the figures and of the configuration.
         string dependents = string.Join(';', frames.Where(f => f.Header.IsDependent).DistinctBy(f => f.Header.SubstreamId).Select(f =>
             $"{f.Header.SubstreamId}:{(f.Result.HasChannelMap ? f.Result.ChannelMap.ToString("X4", System.Globalization.CultureInfo.InvariantCulture) : "-")}:{f.Header.Acmod}:{(f.Header.Lfeon ? 1 : 0)}"));
-        foreach (PendingFrame frame in frames)
+        bool lost = false;
+        if (endsAtGap && !frames[0].Header.IsDependent && _active.TryGetValue(frames[0].Header.IsEac3 ? frames[0].Header.SubstreamId : 0, out Program? current) && current is not null
+            && current.Key.Dependents.Length > 0 && current.Key.SampleRate == frames[0].Header.SampleRate)
         {
-            Process(frame, frame.Header.IsDependent ? string.Empty : dependents);
+            // A program frame cut by a gap or the end of the data has lost dependent frames, not changed its configuration: it stays in its program, which counts its samples lost.
+            HashSet<string> wanted = [.. current.Key.Dependents.Split(';')];
+            if (dependents.Length == 0 || !dependents.Split(';').ToHashSet().SetEquals(wanted))
+            {
+                lost = wanted.IsSupersetOf(dependents.Length == 0 ? [] : dependents.Split(';'));
+                dependents = lost ? current.Key.Dependents : dependents;
+            }
+        }
+
+        for (int i = 0; i < frames.Length; i++)
+        {
+            PendingFrame frame = frames[i];
+            PendingFrame given = lost && i == 0 ? frame with { IsReadable = false } : frame;
+            if (frame.Header.IsDependent && !frames[0].Header.IsDependent && (frame.Header.Blocks != frames[0].Header.Blocks || frame.Header.SampleRate != frames[0].Header.SampleRate))
+            {
+                // A dependent frame of another length or rate cannot be merged with its independent frame (Annex E 2.3.1.2): the program frame is not decoded.
+                SyncFrame dependentHeader = frame.Header;
+                SyncFrame independentHeader = frames[0].Header;
+                long at = frame.Offset;
+                Findings.Add(Severity.Warning, "ac3.dependent-format-differs", () => new Node("Frame", at, frame.Available) { Kind = NodeKind.Frame }, count =>
+                    $"{Count(count)} of a dependent substream {Counts.Agree(count, "has", "have")} {dependentHeader.Blocks} audio blocks at {dependentHeader.SampleRate} Hz where the independent frame before {Counts.Agree(count, "has", "have")} {independentHeader.Blocks} at {independentHeader.SampleRate} Hz (A/52 Annex E 2.3.1.2 gives a program frame one block count and sample rate); the first is at 0x{at:X}, and the program frame is not decoded.");
+                given = frame with { IsReadable = false };
+            }
+
+            Process(given, frame.Header.IsDependent ? string.Empty : dependents);
         }
     }
 
@@ -301,7 +327,9 @@ internal sealed class Ac3Analysis
 
     public void AddGap(Region region, long start, long end, bool leading, bool trailing, BlockCache cache)
     {
-        CommitUnit();
+        CommitUnit(endsAtGap: true);
+        // The dependent frames after a gap belong to an independent frame the gap took.
+        _current = null;
         _gaps += !leading && !trailing ? 1 : 0;
         Frames.Add(Frame.Gap(start, end - start));
         var node = new Node("Gap", start, end - start, NodeValue.Integer(end - start, "bytes")) { Description = Explain.Gap };
@@ -614,7 +642,7 @@ internal sealed class Ac3Analysis
     // region it spans.
     public void Finish(IReadOnlyList<EncoderClaim> claims)
     {
-        CommitUnit();
+        CommitUnit(endsAtGap: true);
         FinishUnit();
         List<Program> programs = _programs;
         int ids = programs.Select(p => p.Key.Id).Distinct().Count();
@@ -765,6 +793,14 @@ internal sealed class Ac3Analysis
     {
         public ProgramKey Independent() => this with { Dependents = string.Empty };
 
-        public string Describe() => $"{(IsEac3 ? "E-AC-3" : "AC-3")}, {SampleRate} Hz, {Ac3Names.CodingModeShort(Acmod)}{(Lfeon ? " + LFE" : string.Empty)}{(Dependents.Length == 0 ? string.Empty : $", dependent substreams {Dependents}")}";
+        public string Describe() => $"{(IsEac3 ? "E-AC-3" : "AC-3")}, {SampleRate} Hz, {Ac3Names.CodingModeShort(Acmod)}{(Lfeon ? " + LFE" : string.Empty)}{(Dependents.Length == 0 ? string.Empty : ", " + DescribeDependents())}";
+
+        // Each dependent substream as it was keyed (ID:channel map or -:coding mode:LFE), written out.
+        private string DescribeDependents() => string.Join(", ", Dependents.Split(';').Select(entry =>
+        {
+            string[] parts = entry.Split(':');
+            string map = parts[1] == "-" ? "no channel map" : $"channel map 0x{parts[1]}";
+            return $"dependent substream {parts[0]} ({map}, {Ac3Names.CodingModeShort(int.Parse(parts[2], System.Globalization.CultureInfo.InvariantCulture))}{(parts[3] == "1" ? " + LFE" : string.Empty)})";
+        }));
     }
 }

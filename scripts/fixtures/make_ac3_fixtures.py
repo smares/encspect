@@ -378,6 +378,83 @@ def build():
             crosscheck={"ffprobe": False, "decode": False,
                         "skip": {"ffprobe": "ffmpeg reads substream 0 only, which the change does not touch.", "decode": "ffmpeg decodes substream 0 only, which the change does not touch."}})
 
+    # Variants of the hand-built E-AC-3 files with a dependent substream (eac3-signal-ecpl and eac3-signal-dependent, made by make_eac3_signal_fixtures.py), one defect each.
+    def crc16(data):
+        value = 0
+        for byte in data:
+            value ^= byte << 8
+            for _ in range(8):
+                value = ((value << 1) ^ 0x8005) & 0xFFFF if value & 0x8000 else (value << 1) & 0xFFFF
+        return value
+
+    def sealed(frame):
+        """An E-AC-3 frame with its CRC (the last two bytes, over the frame after the sync word) recomputed."""
+        frame = bytearray(frame)
+        frame[-2:] = crc16(bytes(frame[2:-2])).to_bytes(2, "big")
+        return bytes(frame)
+
+    def put_bits(frame, position, width, value):
+        for i in range(width):
+            bit = (value >> (width - 1 - i)) & 1
+            at = position + i
+            frame[at // 8] = (frame[at // 8] | (0x80 >> (at % 8))) if bit else (frame[at // 8] & ~(0x80 >> (at % 8)) & 0xFF)
+
+    def split(data):
+        independent, dependent = [], []
+        for offset, length in frames_of(data):
+            (dependent if m.header(data, offset)["strmtyp"] == 1 else independent).append(data[offset:offset + length])
+        return independent, dependent
+
+    def chanmap_of(frame, value):
+        frame = bytearray(frame)
+        position = 50 + 1  # after the sync word, strmtyp, substreamid, frmsiz, fscod, numblkscod, acmod, lfeon, bsid, dialnorm and compre (no compr)
+        put_bits(frame, position + 1, 16, value)  # chanmape stays 1, the map follows
+        return sealed(frame)
+
+    signal = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "ac3"
+    dependent_file = (signal / "eac3-signal-dependent.eac3").read_bytes()
+    ecpl_file = (signal / "eac3-signal-ecpl.eac3").read_bytes()
+    plain_independent, dependents = split(dependent_file)
+    ecpl_independent, _ = split(ecpl_file)
+    replacing = [chanmap_of(frame, 0xA000) for frame in dependents]  # the left and right channels
+    count = min(len(replacing), len(ecpl_independent))
+    both_channels = [m.FL, m.FR]
+    variant_crosscheck = {"ffprobe": False, "decode": False, "skip_insertion": False,
+                          "skip": {"ffprobe": "Hand-built variant; ffmpeg reads independent substream 0 only.", "decode": "ffmpeg decodes independent substream 0 only, which is not what the variant tests."}}
+    data = b"".join(ecpl_independent[i] + replacing[i] for i in range(count))
+    fixture("eac3-splice-ecpl", ".eac3", "Enhanced coupling independent frames with dependent frames whose channel map (0xA000) replaces both channels: the output is the dependent frames' alone, "
+            "the held last block of enhanced coupling included (A/52 Annex E 3.8.2).", data, frames_of(data), [stream("E-AC-3", 48000, 2, 0, count * 1536, layout=both_channels)], [],
+            crosscheck=variant_crosscheck)
+    data = b"".join(plain_independent[i] + replacing[i] for i in range(count))
+    fixture("eac3-splice-plain", ".eac3", "The same dependent frames after independent frames without enhanced coupling: its output equals that of eac3-splice-ecpl.", data, frames_of(data),
+            [stream("E-AC-3", 48000, 2, 0, count * 1536, layout=both_channels)], [], crosscheck=variant_crosscheck)
+    unit = [plain_independent[i] + dependents[i] for i in range(len(dependents))]
+    data = b"".join(plain_independent[i] + chanmap_of(dependents[i], 0x0220) for i in range(len(dependents)))
+    fixture("eac3-chanmap-more", ".eac3", "eac3-signal-dependent with a channel map of four locations (Lrs/Rrs and two more) for a dependent frame that codes two channels.", data, frames_of(data),
+            [stream("E-AC-3", 48000, 2, 0, len(dependents) * 1536, layout=[m.FL, m.FR, m.BL, m.BR, "front left wide", "front right wide"])], [("ac3.channel-map-count", "names")], crosscheck=variant_crosscheck)
+    original = frames_of(dependent_file)
+
+    def broken(k):
+        """The file with the sync word of frame k broken: the frames that are left and the gap the broken frame makes."""
+        damaged = bytearray(dependent_file)
+        damaged[original[k][0]] = 0
+        return bytes(damaged), [r for i, r in enumerate(original) if i != k], [tuple(original[k])]
+
+    data, rows, gap = broken(2 * 5 + 1)  # the sixth dependent frame
+    fixture("eac3-dependent-lost", ".eac3", "eac3-signal-dependent with the sync word of its sixth dependent frame broken: that program frame loses its dependent frame, counts lost and stays in the stream.",
+            data, rows, [stream("E-AC-3", 48000, 2, 0, 12 * 1536, layout=[m.FL, m.FR, m.BL, m.BR], vbr=True)], [("ac3.sync-lost", "Sync is lost")], gaps=gap, crosscheck=variant_crosscheck)
+    data, rows, gap = broken(2 * 5)  # the sixth independent frame
+    fixture("eac3-independent-lost", ".eac3", "eac3-signal-dependent with the sync word of its sixth independent frame broken: its dependent frame is an orphan after the gap, left out of the decoding.",
+            data, rows, [stream("E-AC-3", 48000, 2, 0, 11 * 1536, layout=[m.FL, m.FR, m.BL, m.BR])], [("ac3.sync-lost", "Sync is lost"), ("ac3.dependent-without-independent", "dependent substream")], gaps=gap,
+            crosscheck=variant_crosscheck)
+    rate = bytearray(dependent_file)
+    at, length = original[2 * 5 + 1]
+    put_bits(rate, at * 8 + 34, 2, 2)  # numblkscod 2: three blocks
+    rate[at:at + length] = sealed(bytes(rate[at:at + length]))
+    data = bytes(rate)
+    fixture("eac3-dependent-blocks", ".eac3", "eac3-signal-dependent whose sixth dependent frame states three audio blocks where its independent frame has six.", data, frames_of(data),
+            [stream("E-AC-3", 48000, 2, 0, 12 * 1536, layout=[m.FL, m.FR, m.BL, m.BR])], [("ac3.dependent-format-differs", "3 audio blocks"), ("ac3.block-inconsistent", "check 8")], crosscheck=variant_crosscheck)
+
     # A dependent substream before any independent one.
     data = eac3(strmtyp=1, acmod=2, chanmap=LRS_RRS, words=160) + eac3(acmod=2, words=200) * 3
     fixture("dependent-first", ".eac3", "A dependent frame, then three independent 2/0 frames.", data, frames_of(data),

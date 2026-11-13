@@ -72,8 +72,14 @@ public class PreNoiseTests
             }
         }
 
-        // The fades move between the two without a jump larger than the signal's.
-        Assert.NotEqual(signal[start + 10], output[start + 10]);
+        // The fade in is the Hanning window 0.5 * (1 - cos(pi * (n + 0.5) / 256)) between the decoded sample and the copy, the fade out its complement over the last 128 samples.
+        const int first = 10;
+        float fadeIn = (float)(0.5 * (1.0 - Math.Cos(Math.PI * (first + 0.5) / 256)));
+        Assert.Equal((signal[start + first] * (1 - fadeIn)) + (signal[source + first] * fadeIn), output[start + first], 5);
+        const int tail = 20;
+        float fadeInEnd = (float)(0.5 * (1.0 - Math.Cos(Math.PI * (tail + 0.5) / 128)));
+        long last = start + total - 128 + tail;
+        Assert.Equal((signal[last] * fadeInEnd) + (signal[source + (last - start)] * (1 - fadeInEnd)), output[last], 5);
     }
 
     [Fact]

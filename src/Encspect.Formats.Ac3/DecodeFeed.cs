@@ -92,7 +92,7 @@ internal sealed class DecodeFeed
         if (UsesUnits)
         {
             _unit = new Unit(offset, first, samples, followsGap, damaged, isReadable, frame.ToArray());
-            _unit.Substreams.Add(new Substream(_isEac3 ? 0 : 0x100, Program.TokensOf(header, new FrameResult()), written));
+            _unit.Substreams.Add(new Substream(_isEac3 ? 0 : 0x100, Coded(Program.TokensOf(header, new FrameResult()), written), written));
             return;
         }
 
@@ -102,7 +102,7 @@ internal sealed class DecodeFeed
     // A dependent frame after the independent frame of the unit: its records, and its bytes for the budget. A frame that is not read to its end makes the whole program frame unreadable.
     public void AddDependent(int[] written, SyncFrame header, FrameResult result, ReadOnlyMemory<byte> frame, bool isReadable, Ac3Analysis.CrcState crc2)
     {
-        // The dependent frame's one CRC (Annex E 2.2.6) is part of the program's tally; after an AC-3 core its channels are not decoded, so the tally cannot vouch for all the audio.
+        // The dependent frame's one CRC (Annex E 2.2.6) is part of the program's tally, an AC-3 core's crc2 tally included.
         _crc2Stored++;
         if (crc2 != Ac3Analysis.CrcState.NotChecked)
         {
@@ -115,6 +115,12 @@ internal sealed class DecodeFeed
             return;
         }
 
+        if (unit.Substreams.Any(s => s.Id == 1 + header.SubstreamId))
+        {
+            // A repeated substream ID is left out of the figures and of the decoding (Annex E 2.3.1.2 gives each ID one frame in a program frame).
+            return;
+        }
+
         unit.Bytes = [.. unit.Bytes, .. frame.ToArray()];
         // A dependent frame that is lost or damaged leaves channels of the program frame without audio: the whole program frame is then lost, not output with silent channels.
         unit.IsDamaged |= crc2 == Ac3Analysis.CrcState.Mismatch;
@@ -124,7 +130,7 @@ internal sealed class DecodeFeed
         }
         else
         {
-            unit.Substreams.Add(new Substream(1 + header.SubstreamId, Program.TokensOf(header, result), written));
+            unit.Substreams.Add(new Substream(1 + header.SubstreamId, Coded(Program.TokensOf(header, result), written), written));
         }
     }
 
@@ -142,6 +148,11 @@ internal sealed class DecodeFeed
         public byte[] Bytes { get; set; } = bytes;
         public List<Substream> Substreams { get; } = [];
     }
+
+    // The locations of the channels a frame codes: a channel map that names more locations than the frame has channels (ac3.channel-map-count) gives the coded channels their
+    // locations and leaves the others out.
+    private static List<Program.Token> Coded(List<Program.Token> tokens, int[] records) =>
+        records.Length >= 2 ? [.. tokens.Take(ChannelOf(records[0]) + (records[1] != 0 ? 1 : 0))] : tokens;
 
     private sealed record Substream(int Id, List<Program.Token> Tokens, int[] Records);
 

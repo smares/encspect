@@ -626,7 +626,7 @@ internal sealed class Eac3Substream : IProgramSubstream
         return matrix;
     }
 
-    // A value of gain adaptive quantization (Annex E 3.4.4.2, A/52 Tables E3.5 and E3.6): a small mantissa of the gains 2 and 4 is its code times the step of Table E.2.5, which is
+    // A value of gain adaptive quantization (Annex E 3.4.4.2, A/52 Tables E3.5 and E3.6): a small mantissa of the gains 2 and 4 is its code times the step of A/52 Table E3.5, which is
     // the output's, not the amplified value's; large ones and those of the gain 1 are the codeword as a two's complement fraction remapped as y = x + a x + b.
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static float GainAdaptiveValue(int hebap, int gain, int packed)
