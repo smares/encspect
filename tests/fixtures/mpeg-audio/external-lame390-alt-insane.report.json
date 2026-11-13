@@ -49767,7 +49767,7 @@
     "findings": [
       {
         "severity": "Warning",
-        "code": "mpeg.main-data-begin-exceeds-buffer",
+        "code": "mpeg-audio.main-data-begin-exceeds-buffer",
         "message": "78 frames reach back further for main data than the decoder buffer of ISO/IEC 11172-3 allows, which holds one frame at the highest bitrate: the first at 0x828 has a main_data_begin of 56 bytes where at most 0 are allowed. Encoders such as LAME exceed it, and decoders accept it.",
         "offset": 2092,
         "length": 2,

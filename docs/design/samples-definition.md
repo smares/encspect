@@ -106,7 +106,7 @@ WMA has no public specification, so "declared samples" for an undamaged stream m
 
 ### What counts
 
-- **Cut:** `mpeg.frame-cut`, `mpeg.frame-truncated`, `ac3.frame-damaged`, `ac3.frame-truncated`, `aac.frame-damaged`, `aac.frame-truncated`, `dts.frame-damaged`, `dts.frame-truncated`, `flac.frame-cut`, `tta.frame-cut`, `truehd.unit-cut`, `wavpack.block-truncated`, `monkeys-audio.frame-cut`, `musepack.frame-truncated`, and the packets the containers flag.
+- **Cut:** `mpeg-audio.frame-cut`, `mpeg-audio.frame-truncated`, `ac3.frame-damaged`, `ac3.frame-truncated`, `aac.frame-damaged`, `aac.frame-truncated`, `dts.frame-damaged`, `dts.frame-truncated`, `flac.frame-cut`, `tta.frame-cut`, `truehd.unit-cut`, `wavpack.block-truncated`, `monkeys-audio.frame-cut`, `musepack.frame-truncated`, and the packets the containers flag.
 - **Unreadable:** `CodedFrame.IsUnreadable` units (`flac.subframe-invalid`, WavPack's refused blocks, ALAC's unreadable frames), Opus parts that break RFC 6716 section 3.4 (`opus.packet-r1` to `-r7`, `opus.self-delimiting`), AAC blocks with the codes of [question 8](#open-questions), WMA invalid frames.
 - **Checksums:** a failing checksum alone does not make a unit lost; a unit is lost when the parser refuses to read it.
   - The TrueHD major sync CRC-16 and the unit parity nibble guard syntax the parser needs and it stops after a failure (`built-sync-crc-mismatch.thd`, `built-parity-mismatch.thd`): lost.

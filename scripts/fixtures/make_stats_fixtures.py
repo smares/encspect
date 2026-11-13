@@ -106,7 +106,7 @@ def sample_rate_change():
                      "the duration adds both, and the reservoir starts again with the new stream.", crosscheck=False)
     f.add_frames(mpeg.stream(20, bitrate=128, rate=44100, mode="Joint stereo"))
     f.add_frames(mpeg.stream(20, bitrate=160, rate=48000, mode="Joint stereo"))
-    f.finding("mpeg.stream-changed", "44100 Hz")
+    f.finding("mpeg-audio.stream-changed", "44100 Hz")
     return f
 
 
@@ -117,7 +117,7 @@ def free_format_statistics():
                      "counts the frames.", crosscheck="mpg123", silent=False)
     padding = [0, 1] * 20
     f.add_frames([Frame(bitrate=None, free_length=500, padding=p, rate=44100, mode="Stereo") for p in padding])
-    f.finding("mpeg.free-format", "500 bytes")
+    f.finding("mpeg-audio.free-format", "500 bytes")
     return f
 
 

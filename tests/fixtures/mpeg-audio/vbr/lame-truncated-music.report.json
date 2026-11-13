@@ -5364,7 +5364,7 @@
     "findings": [
       {
         "severity": "Info",
-        "code": "mpeg.music-crc-not-verified",
+        "code": "mpeg-audio.music-crc-not-verified",
         "message": "The LAME tag of 1 frame covers more music than the file holds after it, which is cut short, so the music CRC is not verified; the first at 0x0.",
         "offset": 0,
         "length": 417,
@@ -5376,7 +5376,7 @@
       },
       {
         "severity": "Warning",
-        "code": "mpeg.vbr-frame-count-mismatch",
+        "code": "mpeg-audio.vbr-frame-count-mismatch",
         "message": "The Info header of 1 frame claims a frame count the stream after it does not have, the first at 0x0: 10 claimed, 6 counted.",
         "offset": 0,
         "length": 417,
@@ -5388,7 +5388,7 @@
       },
       {
         "severity": "Warning",
-        "code": "mpeg.vbr-byte-count-mismatch",
+        "code": "mpeg-audio.vbr-byte-count-mismatch",
         "message": "The Info header of 1 frame claims a byte count the stream after it does not have, the first at 0x0: 4596 claimed, 2924 counted.",
         "offset": 0,
         "length": 417,

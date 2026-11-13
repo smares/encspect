@@ -380,7 +380,7 @@ public partial class WriterRoleTests
     {
         Finding Only(Report report, string code) => Assert.Single(report.Findings, f => f.Code == code);
 
-        Finding mpeg = Only(WithApe("mpeg-audio/external-lame-cbr128-joint.mp3", "a.mp3", "Encoder", "FAAC 1.30"), "mpeg.writer-other-format");
+        Finding mpeg = Only(WithApe("mpeg-audio/external-lame-cbr128-joint.mp3", "a.mp3", "Encoder", "FAAC 1.30"), "mpeg-audio.writer-other-format");
         Assert.Equal("The APE Encoder item names \"FAAC 1.30\", which writes AAC, not MPEG audio.", mpeg.Message);
         Assert.NotNull(mpeg.Path);
         // the finding points at the tag item that states the claim, not at the encoder's evidence

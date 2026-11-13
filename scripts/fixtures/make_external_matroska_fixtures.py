@@ -38,7 +38,7 @@ MKVMERGE = "mkvmerge"
 # between the output and the inputs for mkvmerge, which takes its options per file where they apply.
 NOT_READ = ("matroska.codec-not-analyzed", "frames are not analyzed yet")
 VORBIS_VENDOR = ("vorbis.writer-claim-differs", "Lavf60.16.100")
-MPEG_PACKETS = ("mpeg.packets-not-analyzed", "only one contiguous payload")
+MPEG_PACKETS = ("mpeg-audio.packets-not-analyzed", "only one contiguous payload")
 
 FIXTURES = {
     "external-ffmpeg-aac-lc": ("ffmpeg", ["aac/faac-1.50.m4a"], ["-c", "copy"], [("AAC", 44100, 2)], [], "mka"),

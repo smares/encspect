@@ -7113,7 +7113,7 @@
     "findings": [
       {
         "severity": "Warning",
-        "code": "mpeg.main-data-overlap",
+        "code": "mpeg-audio.main-data-overlap",
         "message": "1 frame has main data that overlaps the previous frame's, the first at 0x829; frames are probably missing.",
         "offset": 2089,
         "length": 417,
@@ -7125,7 +7125,7 @@
       },
       {
         "severity": "Info",
-        "code": "mpeg.channel-mode-changed",
+        "code": "mpeg-audio.channel-mode-changed",
         "message": "The channel mode changes once, first from Stereo to Mono at 0x829.",
         "offset": 2089,
         "length": 417,
@@ -7137,7 +7137,7 @@
       },
       {
         "severity": "Warning",
-        "code": "mpeg.sync-lost",
+        "code": "mpeg-audio.sync-lost",
         "message": "Sync is lost for 3 bytes at 0x9CA.",
         "offset": 2506,
         "length": 3,

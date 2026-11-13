@@ -47199,7 +47199,7 @@
     "findings": [
       {
         "severity": "Warning",
-        "code": "mpeg.main-data-overflow",
+        "code": "mpeg-audio.main-data-overflow",
         "message": "2 frames have more main data than the bit reservoir and the frame hold, the first at 0x61F6.",
         "offset": 25078,
         "length": 418,
@@ -47211,7 +47211,7 @@
       },
       {
         "severity": "Warning",
-        "code": "mpeg.main-data-overlap",
+        "code": "mpeg-audio.main-data-overlap",
         "message": "2 frames have main data that overlaps the previous frame's, the first at 0x6398; frames are probably missing.",
         "offset": 25496,
         "length": 418,
@@ -47223,7 +47223,7 @@
       },
       {
         "severity": "Warning",
-        "code": "mpeg.frame-truncated",
+        "code": "mpeg-audio.frame-truncated",
         "message": "The last frame at 0x7C15 has 405 of its 418 bytes.",
         "offset": 31765,
         "length": 405,

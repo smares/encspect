@@ -333138,7 +333138,7 @@
     "findings": [
       {
         "severity": "Warning",
-        "code": "mpeg.allocation-forbidden",
+        "code": "mpeg-audio.allocation-forbidden",
         "message": "138 frames use the bit allocation 15, which ISO/IEC 11172-3 forbids for Layer I and libmad rejects, the first at 0x4E4.",
         "offset": 1256,
         "length": 1,
@@ -333153,7 +333153,7 @@
       },
       {
         "severity": "Warning",
-        "code": "mpeg.scalefactor-undefined",
+        "code": "mpeg-audio.scalefactor-undefined",
         "message": "22 frames use scalefactor index 63, which Table B.1 of ISO/IEC 11172-3 does not define but decoders accept, the first at 0x4E4.",
         "offset": 1303,
         "length": 1,

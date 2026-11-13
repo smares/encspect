@@ -36,7 +36,7 @@ The formats not read yet, in the order they are planned, are on [planned.md](pla
 Which container hands which codec to its codec parser, and which codecs are decoded. A container routes only the combinations that writers in the wild produce; a combination nobody writes stays at container level, with the track named and a `codec-not-analyzed` finding.
 
 - **routed:** the container hands the codec's data to its parser, which reads it as in the codec's own file.
-- **packets, not analyzed:** handed over, but the MPEG audio parser reads only one contiguous payload (`mpeg.packets-not-analyzed`).
+- **packets, not analyzed:** handed over, but the MPEG audio parser reads only one contiguous payload (`mpeg-audio.packets-not-analyzed`).
 - **planned:** a combination a known writer produces (named where known), not routed yet.
 - **later:** waits for a real file to commit as a fixture.
 - **not planned:** a combination no known writer produces.

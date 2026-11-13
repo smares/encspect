@@ -79,7 +79,7 @@ public class MpegDecoderTests
 
         (Report report, CollectingSink sink) = Decode([.. data]);
 
-        Assert.Contains(report.Findings, f => f.Code == "mpeg.huffman-overrun");
+        Assert.Contains(report.Findings, f => f.Code == "mpeg-audio.huffman-overrun");
         Assert.Equal(4, sink.Blocks.Count);
         Assert.All(sink.Blocks, b => Assert.All(b.Samples, s => Assert.Equal(0f, s)));
     }
@@ -188,7 +188,7 @@ public class MpegDecoderTests
 
         Report report = Analyzer.CreateDefault().Analyze("overrun.mp3", new MemoryStream(data));
 
-        Finding finding = Assert.Single(report.Findings, f => f.Code == "mpeg.huffman-overrun");
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "mpeg-audio.huffman-overrun");
         Assert.Equal(6, finding.Count);
         Assert.Equal(Severity.Warning, finding.Severity);
     }

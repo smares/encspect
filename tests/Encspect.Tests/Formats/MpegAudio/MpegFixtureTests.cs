@@ -40,7 +40,7 @@ public class MpegFixtureTests
     public void OnlyFreeFormatAudioFramesShowTheBitrateTheirLengthGives(string fileName)
     {
         Report report = Fixtures.AnalyzeMpeg(fileName);
-        HashSet<long> truncated = report.Findings.Where(f => f.Code == "mpeg.frame-truncated").Select(f => f.Node!.Offset).ToHashSet();
+        HashSet<long> truncated = report.Findings.Where(f => f.Code == "mpeg-audio.frame-truncated").Select(f => f.Node!.Offset).ToHashSet();
         foreach (Node frame in Streams(report).SelectMany(s => s.Children).Where(c => c.Name == "Frame" && !IsVbrHeaderFrame(c) && !truncated.Contains(c.Offset)))
         {
             string? computed = Fixtures.Resolve(frame, "Computed Bitrate").FirstOrDefault()?.Value?.ToString();
@@ -288,7 +288,7 @@ public class MpegFixtureTests
         Assert.Equal(encoder.GetProperty("channel_mode").GetString(), report.Streams.Single().ChannelMode);
         Assert.Equal(
             audioFrames.Select(f => Fixtures.Resolve(f, "Header/Channel Mode").FirstOrDefault()?.Value?.ToString()).Distinct().Count() > 1,
-            report.Findings.Any(f => f.Code == "mpeg.channel-mode-changed"));
+            report.Findings.Any(f => f.Code == "mpeg-audio.channel-mode-changed"));
 
         // An encoder-written multichannel stream: the configuration and the LFE flag of the encoder's settings are the ones every frame's multichannel node
         // reads, and the stream has as many channels as the decoder derived from the ISO software writes.
@@ -326,7 +326,7 @@ public class MpegFixtureTests
             }
         }
 
-        HashSet<long> truncated = report.Findings.Where(f => f.Code == "mpeg.frame-truncated").Select(f => f.Node!.Offset).ToHashSet();
+        HashSet<long> truncated = report.Findings.Where(f => f.Code == "mpeg-audio.frame-truncated").Select(f => f.Node!.Offset).ToHashSet();
         if (manifest.TryGetProperty("minimp3_side_info", out JsonElement minimp3))
         {
             Dictionary<long, Node> byOffset = frames.ToDictionary(f => f.Offset);
@@ -389,16 +389,16 @@ public class MpegFixtureTests
 
         // Scalefactor index 63, which TwoLAME writes, shows in minimp3's output as the value it gives
         // that index; minimp3 does not dump Layer I, whose manifest lists the finding itself.
-        bool listed63 = expectedFindings.Contains("mpeg.scalefactor-undefined");
+        bool listed63 = expectedFindings.Contains("mpeg-audio.scalefactor-undefined");
         bool hasIndex63 = listed63 || manifest.TryGetProperty("minimp3_side_info", out JsonElement rows) && rows.EnumerateArray()
             .Where(r => r.TryGetProperty("layer", out _))
             .SelectMany(r => r.GetProperty("subbands").EnumerateArray().SelectMany(sb => sb.EnumerateArray()))
             .Any(ch => ch.GetProperty("class").GetInt32() > 0 && ch.GetProperty("scalefactors").EnumerateArray()
                 .Any(sf => HexFloat(sf.GetString()!) == Minimp3Scalefactor(ch.GetProperty("class").GetInt32(), 63)));
-        Assert.Equal(hasIndex63, report.Findings.Any(f => f.Code == "mpeg.scalefactor-undefined"));
+        Assert.Equal(hasIndex63, report.Findings.Any(f => f.Code == "mpeg-audio.scalefactor-undefined"));
         if (hasIndex63 && !listed63)
         {
-            expectedFindings.Add("mpeg.scalefactor-undefined");
+            expectedFindings.Add("mpeg-audio.scalefactor-undefined");
         }
 
         Finding[] serious = report.Findings.Where(f => f.Severity != Severity.Info && !expectedFindings.Contains(f.Code)).ToArray();
@@ -757,13 +757,13 @@ public class MpegFixtureTests
         Node region = Streams(report).Single();
         Node statistics = region.Children.Single(c => c.Name == "Statistics");
         // The statistics count complete frames only.
-        HashSet<long> truncated = report.Findings.Where(f => f.Code == "mpeg.frame-truncated").Select(f => f.Node!.Offset).ToHashSet();
+        HashSet<long> truncated = report.Findings.Where(f => f.Code == "mpeg-audio.frame-truncated").Select(f => f.Node!.Offset).ToHashSet();
         Node[] audio = region.Children.Where(c => c.Name == "Frame" && !IsVbrHeaderFrame(c) && !truncated.Contains(c.Offset)).ToArray();
         long ticks = audio.Sum(f => SamplesOf(f) * (clock / long.Parse(Field(f, "Header/Sample Rate")!.Split(' ')[0], CultureInfo.InvariantCulture)));
         long bits = audio.Sum(f => f.Length * 8);
         Assert.True(Agrees(Field(statistics, "Average Bitrate")!.Split(' ')[0], (Int128)bits * clock, (Int128)ticks * 1000, 10, allowTie: false));
 
-        string[] neutral = ["mpeg.vbr-", "mpeg.lame-", "mpeg.music-", "mpeg.xing-", "mpeg.gapless-", "mpeg.free-format"];
+        string[] neutral = ["mpeg-audio.vbr-", "mpeg-audio.lame-", "mpeg-audio.music-", "mpeg-audio.xing-", "mpeg-audio.gapless-", "mpeg-audio.free-format"];
         if (manifest.TryGetProperty("mp3guessenc_stream", out JsonElement guessenc)
             && report.Findings.All(f => neutral.Any(n => f.Code.StartsWith(n, StringComparison.Ordinal))))
         {
@@ -790,7 +790,7 @@ public class MpegFixtureTests
             if (ffmpeg == decoded.GetProperty("mpg123").GetInt64() && padding >= 529)
             {
                 // Both take the length from a frame count that includes the header, and play a frame more.
-                long extra = report.Findings.Any(f => f.Code == "mpeg.vbr-frame-count-includes-header") ? SamplesOf(audio[0]) : 0;
+                long extra = report.Findings.Any(f => f.Code == "mpeg-audio.vbr-frame-count-includes-header") ? SamplesOf(audio[0]) : 0;
                 Assert.Equal((ffmpeg - extra).ToString(CultureInfo.InvariantCulture), Field(statistics, "Gapless/Sample Count"));
             }
         }
@@ -821,8 +821,8 @@ public class MpegFixtureTests
     private static bool IsVbrHeaderFrame(Node frame) => frame.Children.Any(c => c.Name is "Xing" or "VBRI");
 
     private static bool IsVbrFinding(string code) =>
-        code.StartsWith("mpeg.vbr-", StringComparison.Ordinal) || code.StartsWith("mpeg.xing-", StringComparison.Ordinal)
-        || code.StartsWith("mpeg.lame-", StringComparison.Ordinal) || code.StartsWith("mpeg.music-", StringComparison.Ordinal);
+        code.StartsWith("mpeg-audio.vbr-", StringComparison.Ordinal) || code.StartsWith("mpeg-audio.xing-", StringComparison.Ordinal)
+        || code.StartsWith("mpeg-audio.lame-", StringComparison.Ordinal) || code.StartsWith("mpeg-audio.music-", StringComparison.Ordinal);
 
     private static string Describe(IEnumerable<Finding> findings) =>
         string.Join("; ", findings.Select(f => $"[{f.Severity}] {f.Code}: {f.Message}"));

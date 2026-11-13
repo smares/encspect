@@ -6736,7 +6736,7 @@
     "findings": [
       {
         "severity": "Info",
-        "code": "mpeg.free-format",
+        "code": "mpeg-audio.free-format",
         "message": "The stream is free format: frames of 500 bytes plus padding.",
         "offset": 0,
         "length": 5500,
@@ -6745,7 +6745,7 @@
       },
       {
         "severity": "Warning",
-        "code": "mpeg.free-format-length-changed",
+        "code": "mpeg-audio.free-format-length-changed",
         "message": "The free-format frame length changes once, first from 500 to 600 bytes plus padding at 0x9C4; ISO/IEC 11172-3 requires a fixed bitrate.",
         "offset": 2500,
         "length": 600,

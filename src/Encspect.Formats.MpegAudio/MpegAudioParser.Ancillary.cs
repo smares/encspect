@@ -81,7 +81,7 @@ public sealed partial class MpegAudioParser
             string message = name == "mp3PRO"
                 ? $"The stream is mp3PRO: {Counts.Of(stream.Bytes, "byte", "bytes")} of ancillary data carry its spectral band replication data. Decoders without mp3PRO support play only the MP3 core at {header.SampleRate} Hz, without the high frequencies."
                 : $"The stream is MP3 Surround: {Counts.Of(stream.Bytes, "byte", "bytes")} of ancillary data carry the spatial data of its 5.1 channels. Decoders without MP3 Surround support play the stereo downmix.";
-            state.Findings.AddNow(Severity.Info, name == "mp3PRO" ? "mpeg.mp3pro" : "mpeg.mp3-surround", message, node);
+            state.Findings.AddNow(Severity.Info, name == "mp3PRO" ? "mpeg-audio.mp3pro" : "mpeg-audio.mp3-surround", message, node);
         }
 
         if (stream.Ofl is { } ofl)
@@ -107,7 +107,7 @@ public sealed partial class MpegAudioParser
             long streamSamples = stream.Samples * (rate / header.SampleRate);
             if (ofl.Delay + ofl.Samples > streamSamples)
             {
-                state.Findings.AddNow(Severity.Warning, "mpeg.ofl-exceeds-stream",
+                state.Findings.AddNow(Severity.Warning, "mpeg-audio.ofl-exceeds-stream",
                     $"The Original File Length block at 0x{ofl.Offset:X} gives a delay of {Number(ofl.Delay)} and {Counts.Of(ofl.Samples, "sample", "samples")} of audio, {Number(ofl.Delay + ofl.Samples)} samples, more than the {Number(streamSamples)} of the stream.",
                     node);
             }

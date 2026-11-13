@@ -71,7 +71,7 @@ internal sealed class Layer3Walker
             int limit = bits.Position + gr.Part23Length;
             Layer3Syntax.ReadScalefactors(ref bits, header, gr, channel, isIntensity, _scalefactors[channel], _positions[channel]);
 
-            // Scalefactors that already exceed part2_3_length are the side information's fault (mpeg.scalefactors-exceed-granule), not the Huffman data's.
+            // Scalefactors that already exceed part2_3_length are the side information's fault (mpeg-audio.scalefactors-exceed-granule), not the Huffman data's.
             bool scalefactorsFit = bits.Position <= limit;
             for (int i = 0; i < LentLayout.Scalefactors; i++)
             {

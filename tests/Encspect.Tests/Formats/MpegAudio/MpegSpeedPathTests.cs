@@ -37,32 +37,32 @@ public class MpegSpeedPathTests
                 Layer3Granule g = info.Granules[gr][ch];
                 if (g.BigValues.Value > 288)
                 {
-                    yield return ("mpeg.big-values-too-large", Field("Big Values", g.BigValues), count =>
+                    yield return ("mpeg-audio.big-values-too-large", Field("Big Values", g.BigValues), count =>
                         $"{Frames(count, "has", "have")} more than 288 big_values pairs, the first {g.BigValues.Value} at 0x{position:X}.");
                 }
 
                 if (g.IsSwitched && g.BlockType.Value == 0)
                 {
-                    yield return ("mpeg.block-type-reserved", Layer3SideInfo.BlockTypeSpan(offset, g), count =>
+                    yield return ("mpeg-audio.block-type-reserved", Layer3SideInfo.BlockTypeSpan(offset, g), count =>
                         $"{Frames(count, "switches", "switch")} windows with block type 0, which is reserved, the first at 0x{position:X}.");
                 }
 
                 foreach (BitField table in g.TableSelect.Where(t => t.Value is 4 or 14))
                 {
-                    yield return ("mpeg.huffman-table-undefined", Layer3SideInfo.TableSelectSpan(offset, g), count =>
+                    yield return ("mpeg-audio.huffman-table-undefined", Layer3SideInfo.TableSelectSpan(offset, g), count =>
                         $"{Frames(count, "selects", "select")} a Huffman table that does not exist, the first table {table.Value} at 0x{position:X}.");
                 }
 
                 int part2 = info.Part2Bits(gr, ch);
                 if (part2 > g.Part23Length.Value)
                 {
-                    yield return ("mpeg.scalefactors-exceed-granule", Field("Part 2 and 3 Length", g.Part23Length), count =>
+                    yield return ("mpeg-audio.scalefactors-exceed-granule", Field("Part 2 and 3 Length", g.Part23Length), count =>
                         $"{Frames(count, "has", "have")} scalefactors longer than part2_3_length, the first {part2} of {Encspect.Core.Counts.Of(g.Part23Length.Value, "bit", "bits")} at 0x{position:X}.");
                 }
 
                 if (header.IsMpeg1 && g.IsShort && info.Scfsi[ch].Value != 0)
                 {
-                    yield return ("mpeg.scfsi-with-short-blocks", Field($"Channel {ch}", info.Scfsi[ch]), count =>
+                    yield return ("mpeg-audio.scfsi-with-short-blocks", Field($"Channel {ch}", info.Scfsi[ch]), count =>
                         $"{Frames(count, "sets", "set")} scfsi for a channel with short blocks, which libmad rejects, the first at 0x{position:X}.");
                 }
             }
@@ -73,7 +73,7 @@ public class MpegSpeedPathTests
         {
             if (row[0].BlockTypeValue != row[1].BlockTypeValue || row[0].IsMixed != row[1].IsMixed)
             {
-                yield return ("mpeg.stereo-block-types-differ", Layer3SideInfo.BlockTypeSpan(offset, row[1]), count =>
+                yield return ("mpeg-audio.stereo-block-types-differ", Layer3SideInfo.BlockTypeSpan(offset, row[1]), count =>
                     $"{Frames(count, "uses", "use")} mid/side or intensity stereo with a different block type in each channel, which libmad rejects, the first at 0x{position:X}.");
             }
         }
@@ -113,7 +113,7 @@ public class MpegSpeedPathTests
             without += expected.Count == 0 ? 1 : 0;
         }
 
-        foreach (string code in new[] { "mpeg.big-values-too-large", "mpeg.block-type-reserved", "mpeg.huffman-table-undefined", "mpeg.scalefactors-exceed-granule", "mpeg.scfsi-with-short-blocks", "mpeg.stereo-block-types-differ" })
+        foreach (string code in new[] { "mpeg-audio.big-values-too-large", "mpeg-audio.block-type-reserved", "mpeg-audio.huffman-table-undefined", "mpeg-audio.scalefactors-exceed-granule", "mpeg-audio.scfsi-with-short-blocks", "mpeg-audio.stereo-block-types-differ" })
         {
             Assert.True(seen.GetValueOrDefault(code) > 100, $"{code} occurred {seen.GetValueOrDefault(code)} times");
         }

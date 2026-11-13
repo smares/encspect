@@ -39,7 +39,7 @@ public class MpegFreeFormatDetectionTests
     public void TheFirstFrameWithABadCrcIsReported()
     {
         Report report = Analyzer.CreateDefault().Analyze("damaged.mp2", new MemoryStream(Bytes("mpeg-audio/layer2", "free-format-44100-crc-mismatch.mp2")));
-        Assert.Contains(report.Findings, f => f.Code == "mpeg.crc-mismatch");
+        Assert.Contains(report.Findings, f => f.Code == "mpeg-audio.crc-mismatch");
     }
 
     // A chain of free-format headers that hold nothing a frame holds is what DTS data with junk in front makes: it ranks below DTS's 50.

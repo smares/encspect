@@ -375,7 +375,7 @@ def lame_mid_stream():
                    encoder=encoder("LAME 3.100", "High"))
     f.add_stream(xing_frame(first, tag_id="Info", lame=LAME_CBR), first)
     f.add_stream(xing_frame(second, tag_id="Info", lame=LAME_CBR), second)
-    return f.finding("mpeg.vbr-header-mid-stream", f"0x{f.frames[6]['offset']:X}")
+    return f.finding("mpeg-audio.vbr-header-mid-stream", f"0x{f.frames[6]['offset']:X}")
 
 
 @fixture
@@ -412,7 +412,7 @@ def lame_truncated_last_frame():
                    "it; bytes are missing, so the byte count does not match and the music CRC is not verified.",
                    encoder=encoder("LAME 3.100", "High"), crosscheck=False)
     f.add_stream(xing_frame(audio, tag_id="Info", lame=LAME_CBR), audio, truncate_last=100)
-    return f.finding("mpeg.frame-truncated", "100 of")
+    return f.finding("mpeg-audio.frame-truncated", "100 of")
 
 
 @fixture
@@ -435,9 +435,9 @@ def lame_after_gap():
     f.add_stream(xing_frame(first, tag_id="Info", lame=LAME_CBR), first)
     junk = bytes(range(1, 256))[:300] + bytes(range(1, 46))
     f.gap(junk)
-    f.finding("mpeg.sync-lost", f"{len(junk)} bytes")
+    f.finding("mpeg-audio.sync-lost", f"{len(junk)} bytes")
     f.add_stream(xing_frame(second, tag_id="Info", lame=LAME_CBR), second)
-    return f.finding("mpeg.vbr-header-mid-stream", f"0x{f.frames[6]['offset']:X}")
+    return f.finding("mpeg-audio.vbr-header-mid-stream", f"0x{f.frames[6]['offset']:X}")
 
 
 @fixture
@@ -450,8 +450,8 @@ def lame_after_joined_frames():
                    encoder=encoder("LAME 3.100", "Low"))
     f.add_frames(first)
     f.add_stream(xing_frame(second, tag_id="Info", lame=LAME_CBR), second)
-    f.finding("mpeg.stream-changed", "48000 Hz")
-    return f.finding("mpeg.vbr-header-mid-stream", f"0x{f.frames[6]['offset']:X}")
+    f.finding("mpeg-audio.stream-changed", "48000 Hz")
+    return f.finding("mpeg-audio.vbr-header-mid-stream", f"0x{f.frames[6]['offset']:X}")
 
 
 @fixture
@@ -463,7 +463,7 @@ def lame_before_joined_frames():
                    "and its gapless figures say which frames they cover.", encoder=encoder("LAME 3.100", "Medium"))
     f.add_stream(xing_frame(first, tag_id="Info", lame=LAME_CBR), first)
     f.add_frames(second)
-    return f.finding("mpeg.stream-changed", "44100 Hz")
+    return f.finding("mpeg-audio.stream-changed", "44100 Hz")
 
 
 @fixture
@@ -475,7 +475,7 @@ def lame_joined_other_version():
                    encoder=encoder("LAME 3.100", "Medium"))
     f.add_stream(xing_frame(first, tag_id="Info", lame=LAME_CBR), first)
     f.add_stream(xing_frame(second, tag_id="Info", lame=dict(LAME_CBR, encoder="LAME3.99r")), second)
-    return f.finding("mpeg.vbr-header-mid-stream", f"0x{f.frames[6]['offset']:X}")
+    return f.finding("mpeg-audio.vbr-header-mid-stream", f"0x{f.frames[6]['offset']:X}")
 
 
 @fixture
@@ -671,7 +671,7 @@ def lame_tsse_differs():
                    encoder=encoder("LAME 3.100", "High"))
     f.tag("ID3v2", mpeg.id3v2("Re-encoded", extra_frames=mpeg.tsse_frame("BladeEnc 0.94.2")))
     f.add_stream(xing_frame(audio, tag_id="Info", lame=LAME_CBR), audio)
-    return f.finding("mpeg.encoder-claim-differs", "\"BladeEnc 0.94.2\", but the stream points to LAME 3.100")
+    return f.finding("mpeg-audio.encoder-claim-differs", "\"BladeEnc 0.94.2\", but the stream points to LAME 3.100")
 
 
 @fixture
@@ -710,7 +710,7 @@ def lame_signature_tsse_flame():
     f.extra["mp3guessenc_encoder_string"] = "LAME3.100"
     f.tag("ID3v2", mpeg.id3v2("Flamed", extra_frames=mpeg.tsse_frame("Flame 2.5")))
     f.add_frames(signature_frames(6, b"LAME3.100", 2))
-    return f.finding("mpeg.encoder-claim-differs", "\"Flame 2.5\", but the stream points to LAME 3.100")
+    return f.finding("mpeg-audio.encoder-claim-differs", "\"Flame 2.5\", but the stream points to LAME 3.100")
 
 
 @fixture
@@ -743,7 +743,7 @@ def lame_version_differs():
                    "report says so.", encoder=encoder("LAME 3.99.x", "High"))
     f.extra["mp3guessenc_encoder_string"] = "LAME3.98 (beta 8)"
     f.add_stream(xing_frame(frames, tag_id="Info", lame=dict(LAME_CBR, encoder="LAME3.99r")), frames)
-    return f.finding("mpeg.lame-version-differs", "LAME 3.99.x, but the version LAME wrote into the ancillary data names LAME 3.98 (beta 8)")
+    return f.finding("mpeg-audio.lame-version-differs", "LAME 3.99.x, but the version LAME wrote into the ancillary data names LAME 3.98 (beta 8)")
 
 
 def main():

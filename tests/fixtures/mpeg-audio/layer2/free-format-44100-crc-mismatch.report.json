@@ -8856,7 +8856,7 @@
     "findings": [
       {
         "severity": "Info",
-        "code": "mpeg.free-format",
+        "code": "mpeg-audio.free-format",
         "message": "The stream is free format: frames of 555 bytes plus padding.",
         "offset": 0,
         "length": 3330,
@@ -8865,7 +8865,7 @@
       },
       {
         "severity": "Warning",
-        "code": "mpeg.crc-mismatch",
+        "code": "mpeg-audio.crc-mismatch",
         "message": "1 frame fails the CRC check, the first at 0x0.",
         "offset": 4,
         "length": 2,

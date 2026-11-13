@@ -722,7 +722,7 @@ def crc_mismatch():
     frames = stream(6, 192, 48000, mode="Stereo", protected=True)
     frames[2].bad_crc = True
     f.add_frames(frames)
-    return f.finding("mpeg.crc-mismatch", "1 frame")
+    return f.finding("mpeg-audio.crc-mismatch", "1 frame")
 
 
 @fixture
@@ -733,7 +733,7 @@ def undefined_scalefactor():
     first = next((ch, sb) for sb in range(frames[3].sblimit) for ch in range(2) if frames[3].alloc(ch, sb))
     frames[3].scalefactor_override = (first, 63)
     f.add_frames(frames)
-    return f.finding("mpeg.scalefactor-undefined", "63")
+    return f.finding("mpeg-audio.scalefactor-undefined", "63")
 
 
 @fixture
@@ -755,8 +755,8 @@ def scalefactor_overflow():
         del entry["scale_info"]
         entry["fields"] = mpeg.Frame.fields(frame)
         entry["fields"]["Data"] = bytes_text(frame.length() - 6)
-    f.finding("mpeg.crc-mismatch", "1 frame fails")
-    return f.finding("mpeg.audio-data-overflow", "6 frames need more bits for their Layer II audio data")
+    f.finding("mpeg-audio.crc-mismatch", "1 frame fails")
+    return f.finding("mpeg-audio.audio-data-overflow", "6 frames need more bits for their Layer II audio data")
 
 
 # --- Multichannel -------------------------------------------------------------------------------------
@@ -830,7 +830,7 @@ def mc_configuration_change():
     )
     f.add_frames(mc_stream(6, 384, 48000, lambda i: Multichannel(center=1 if i < 3 else 0, surround=2 if i < 3 else 3, tc_alloc=(i % 4 if i < 3 else 0,),
                                                                   seed=i + 6)))
-    return f.finding("mpeg.multichannel-configuration-changes", "from 3/2 to 2/0 + 2/0")
+    return f.finding("mpeg-audio.multichannel-configuration-changes", "from 3/2 to 2/0 + 2/0")
 
 
 @fixture
@@ -861,7 +861,7 @@ def mc_unverified():
     f.add_frames(mc_stream(6, 128, 48000, lambda i: Multichannel(center=1, surround=2, lfe=1, lfe_alloc=2, n_ad_bytes=255, seed=i,
                                                                   continues=True), ancillary=bytes(i % 251 for i in range(255)),
                            allocation=sparse))
-    return f.finding("mpeg.multichannel-unverified", "3/2 + LFE")
+    return f.finding("mpeg-audio.multichannel-unverified", "3/2 + LFE")
 
 
 @fixture
@@ -888,7 +888,7 @@ def mc_ancillary_overflow():
     mc_start = frame.offsets[4][0]
     crc_end = mc_start + 24 + 16
     fields["Ancillary Data"] = bytes_text(frame.length() - 4 - (crc_end + 7) // 8)
-    return f.finding("mpeg.multichannel-ancillary-overflow", "1 frame declares more MPEG-1 ancillary bytes")
+    return f.finding("mpeg-audio.multichannel-ancillary-overflow", "1 frame declares more MPEG-1 ancillary bytes")
 
 
 @fixture
@@ -900,7 +900,7 @@ def mc_crc_mismatch():
         mctoolamed={"crc_errors": 1}, guessenc=guessenc(False, False, 3, 0, "3/2"),
     )
     f.add_frames(mc_stream(6, 384, 48000, lambda i: Multichannel(center=1, surround=2, seed=i, bad_crc=i == 3)))
-    return f.finding("mpeg.multichannel-crc-mismatch", "1 frame")
+    return f.finding("mpeg-audio.multichannel-crc-mismatch", "1 frame")
 
 
 @fixture
@@ -911,7 +911,7 @@ def mc_center_reserved():
         "multichannel CRCs: read as no center, so 2/2, and reported.",
     )
     f.add_frames(mc_stream(6, 384, 48000, lambda i: Multichannel(center=2, surround=2, seed=i)))
-    return f.finding("mpeg.multichannel-center-reserved", "6 frames")
+    return f.finding("mpeg-audio.multichannel-center-reserved", "6 frames")
 
 
 @fixture
@@ -1034,7 +1034,7 @@ def mc_center_reserved_second_stereo():
     f.add_frames(mc_stream(6, 384, 48000, lambda i: Multichannel(
         center=2, surround=3, tc_alloc=(0,), seed=i + 1,
         dynamic=Dynamic(second=[(g + i) % 2 for g in range(12)]))))
-    return f.finding("mpeg.multichannel-center-reserved", "6 frames")
+    return f.finding("mpeg-audio.multichannel-center-reserved", "6 frames")
 
 
 @fixture
@@ -1047,7 +1047,7 @@ def free_format_48000():
         crosscheck="madplay",
     )
     f.add_frames([Layer2Frame(bitrate=None, free_length=240, rate=48000, mode="Stereo", protected=True, seed=i) for i in range(6)])
-    return f.finding("mpeg.free-format", "240")
+    return f.finding("mpeg-audio.free-format", "240")
 
 
 @fixture
@@ -1059,7 +1059,7 @@ def free_format_44100():
         crosscheck="madplay",
     )
     f.add_frames([Layer2Frame(bitrate=None, free_length=555, rate=44100, mode="Stereo", protected=True, seed=i) for i in range(6)])
-    return f.finding("mpeg.free-format", "555")
+    return f.finding("mpeg-audio.free-format", "555")
 
 
 @fixture
@@ -1074,8 +1074,8 @@ def free_format_first_crc_mismatch():
     frames = [Layer2Frame(bitrate=None, free_length=555, rate=44100, mode="Stereo", protected=True, seed=i) for i in range(6)]
     frames[0].bad_crc = True
     f.add_frames(frames)
-    f.finding("mpeg.free-format", "555")
-    return f.finding("mpeg.crc-mismatch", "1 frame")
+    f.finding("mpeg-audio.free-format", "555")
+    return f.finding("mpeg-audio.crc-mismatch", "1 frame")
 
 
 @fixture

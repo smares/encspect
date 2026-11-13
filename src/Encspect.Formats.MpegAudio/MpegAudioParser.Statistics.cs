@@ -236,7 +236,7 @@ public sealed partial class MpegAudioParser
         Node node = FindingNode(frame);
         if (header.FrameCount is { } claimedFrames && claimedFrames != covered.Frames && claimedFrames != covered.Frames + 1)
         {
-            findings.Add(Severity.Warning, "mpeg.vbr-frame-count-mismatch", node, count =>
+            findings.Add(Severity.Warning, "mpeg-audio.vbr-frame-count-mismatch", node, count =>
                 $"The {header.Type} header of {Frames(count)} claims a frame count the stream after it does not have, the first at 0x{position:X}: {Number(claimedFrames)} claimed, {Number(covered.Frames)} counted.");
         }
 
@@ -245,21 +245,21 @@ public sealed partial class MpegAudioParser
         if (header.HasLameTag && header.FrameCount is { } counted && counted == covered.Frames + 1 && covered.Frames > 0)
         {
             int frameSamples = new MpegHeader(state.Build.Frames[covered.FirstFrame].Header).Samples;
-            findings.Add(Severity.Warning, "mpeg.vbr-frame-count-includes-header", node, count =>
+            findings.Add(Severity.Warning, "mpeg-audio.vbr-frame-count-includes-header", node, count =>
                 $"The Xing header of {Frames(count)} counts its own frame, though the LAME tag after it counts its delay and padding from the frames that follow; decoders that take the length from the count, such as ffmpeg and mpg123, play {Number(frameSamples)} samples more than were encoded. The first at 0x{position:X}.");
         }
 
         long bytes = frame.Length + covered.Bytes;
         if (header.ByteCount is { } claimedBytes && claimedBytes != bytes && claimedBytes != bytes - frame.Length)
         {
-            findings.Add(Severity.Warning, "mpeg.vbr-byte-count-mismatch", node, count =>
+            findings.Add(Severity.Warning, "mpeg-audio.vbr-byte-count-mismatch", node, count =>
                 $"The {header.Type} header of {Frames(count)} claims a byte count the stream after it does not have, the first at 0x{position:X}: {Number(claimedBytes)} claimed, {Number(bytes)} counted.");
         }
 
         long samples = covered.Samples;
         if (header.HasLameTag && header.EncoderDelay + header.EncoderPadding > samples)
         {
-            findings.Add(Severity.Warning, "mpeg.gapless-exceeds-stream", node, count =>
+            findings.Add(Severity.Warning, "mpeg-audio.gapless-exceeds-stream", node, count =>
                 $"The LAME tag of {Frames(count)} gives an encoder delay and padding of {Counts.Of(header.EncoderDelay + header.EncoderPadding, "sample", "samples")}, more than the {Number(samples)} of the stream after it; the first at 0x{position:X}.");
         }
     }

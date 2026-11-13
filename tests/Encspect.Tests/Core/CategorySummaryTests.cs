@@ -12,7 +12,7 @@ public class CategorySummaryTests
           "series": {
             "Block Usage": { "form": "entries", "anchor": "Block Usage", "denominator": "Block Usage" },
             "Blocks With Coupling": { "form": "flag", "anchor": "Blocks With Coupling", "denominator": "Audio Blocks Read" },
-            "Joint Stereo Modes": { "form": "entries", "anchor": "Joint Stereo Modes", "denominator": "Frames", "findings": ["mpeg.streams-limited"] }
+            "Joint Stereo Modes": { "form": "entries", "anchor": "Joint Stereo Modes", "denominator": "Frames", "findings": ["mpeg-audio.streams-limited"] }
           }
         }
         """;
@@ -124,7 +124,7 @@ public class CategorySummaryTests
         (Report report, _) = Build([10, 2, 2], tally: [10, 2, 3], granules: 15, "Joint Stereo Modes", "Frames");
         Assert.NotEmpty(CategorySummary.Parse(Table).Check(report));
 
-        Report allowed = new(report.Source, report.Root, [new Finding(Severity.Warning, "mpeg.streams-limited", "Frames belong to no stream.")], report.Streams);
+        Report allowed = new(report.Source, report.Root, [new Finding(Severity.Warning, "mpeg-audio.streams-limited", "Frames belong to no stream.")], report.Streams);
         Assert.Empty(CategorySummary.Parse(Table).Check(allowed));
     }
 

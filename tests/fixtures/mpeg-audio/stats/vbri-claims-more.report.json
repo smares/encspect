@@ -4687,7 +4687,7 @@
     "findings": [
       {
         "severity": "Warning",
-        "code": "mpeg.vbr-frame-count-mismatch",
+        "code": "mpeg-audio.vbr-frame-count-mismatch",
         "message": "The VBRI header of 1 frame claims a frame count the stream after it does not have, the first at 0x0: 13 claimed, 6 counted.",
         "offset": 0,
         "length": 417,
@@ -4699,7 +4699,7 @@
       },
       {
         "severity": "Warning",
-        "code": "mpeg.vbr-byte-count-mismatch",
+        "code": "mpeg-audio.vbr-byte-count-mismatch",
         "message": "The VBRI header of 1 frame claims a byte count the stream after it does not have, the first at 0x0: 5737 claimed, 3077 counted.",
         "offset": 0,
         "length": 417,

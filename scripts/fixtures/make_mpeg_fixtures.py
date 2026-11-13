@@ -414,7 +414,7 @@ class Fixture:
             fields = stream_stats.region_fields(inside, infos)
             if fields:
                 region["statistics"] = fields
-        # The analyzer keeps at most 64 streams; the frames after the 64th are in no stream (mpeg.streams-limited).
+        # The analyzer keeps at most 64 streams; the frames after the 64th are in no stream (mpeg-audio.streams-limited).
         self.streams = stream_stats.streams(infos)[:64]
         for info in infos:
             if info.header is not None:
@@ -539,7 +539,7 @@ def reserved_emphasis():
     frames = stream(6)
     frames[2].emphasis = 2
     f.add_frames(frames)
-    return f.finding("mpeg.emphasis-reserved", "reserved")
+    return f.finding("mpeg-audio.emphasis-reserved", "reserved")
 
 
 @fixture
@@ -551,7 +551,7 @@ def layer2_mode_not_allowed():
         "kept, reported once.",
     )
     f.add_frames(stream(6, version="1", layer=2, bitrate=32, rate=48000, mode="Stereo"))
-    return f.finding("mpeg.bitrate-mode-not-allowed", "32 kbps")
+    return f.finding("mpeg-audio.bitrate-mode-not-allowed", "32 kbps")
 
 
 @fixture
@@ -564,7 +564,7 @@ def free_format():
         crosscheck="mpg123",
     )
     f.add_frames([Frame(bitrate=None, rate=48000, free_length=1440) for _ in range(6)])
-    return f.finding("mpeg.free-format", "1440")
+    return f.finding("mpeg-audio.free-format", "1440")
 
 
 @fixture
@@ -577,7 +577,7 @@ def free_format_layer1_unprotected():
         crosscheck="mpg123",
     )
     f.add_frames([Frame(layer=1, bitrate=None, rate=48000, free_length=1000, protected=True) for _ in range(6)])
-    return f.finding("mpeg.free-format", "1000")
+    return f.finding("mpeg-audio.free-format", "1000")
 
 
 @fixture
@@ -589,7 +589,7 @@ def free_format_mpeg2_layer3():
         crosscheck="mpg123",
     )
     f.add_frames([Frame(version="2", bitrate=None, rate=22050, free_length=480, padding=i % 3 == 0) for i in range(6)])
-    return f.finding("mpeg.free-format", "480")
+    return f.finding("mpeg-audio.free-format", "480")
 
 
 @fixture
@@ -601,7 +601,7 @@ def free_format_mpeg25_layer3():
         crosscheck="mpg123",
     )
     f.add_frames([Frame(version="2.5", bitrate=None, rate=11025, free_length=300, padding=i % 3 == 0) for i in range(6)])
-    return f.finding("mpeg.free-format", "300")
+    return f.finding("mpeg-audio.free-format", "300")
 
 
 @fixture
@@ -613,7 +613,7 @@ def free_format_layer1_padded():
         crosscheck="mpg123",
     )
     f.add_frames([Frame(layer=1, bitrate=None, rate=44100, free_length=1000, padding=i % 2, protected=True) for i in range(6)])
-    return f.finding("mpeg.free-format", "1000")
+    return f.finding("mpeg-audio.free-format", "1000")
 
 
 @fixture
@@ -626,7 +626,7 @@ def mpeg25_layer2():
         crosscheck="madplay",
     )
     f.add_frames(stream(6, version="2.5", layer=2, bitrate=64, rate=8000, mode="Mono"))
-    return f.finding("mpeg.mpeg25-layer", "Layer II")
+    return f.finding("mpeg-audio.mpeg25-layer", "Layer II")
 
 
 @fixture
@@ -705,7 +705,7 @@ def layer1_audio_data():
         frames.append(Frame(layer=1, bitrate=256, rate=48000, mode="Joint stereo", mode_ext=1, protected=True,
                             payload=Layer1Audio(allocation, scalefactors, b"Layer I ancillary data.")))
     f.add_frames(frames)
-    return f.finding("mpeg.scalefactor-undefined", "1 frame")
+    return f.finding("mpeg-audio.scalefactor-undefined", "1 frame")
 
 
 @fixture
@@ -720,7 +720,7 @@ def layer1_forbidden_allocation():
     allocation = [[15] + [0] * 31]
     f.add_frames([Frame(layer=1, bitrate=128, rate=44100, mode="Mono", protected=True, payload=Layer1Audio(allocation))
                   for _ in range(6)])
-    return f.finding("mpeg.allocation-forbidden", "6 frames")
+    return f.finding("mpeg-audio.allocation-forbidden", "6 frames")
 
 
 @fixture
@@ -736,7 +736,7 @@ def layer1_overflow():
     f.add_frames(frames)
     for entry in f.frames:
         entry["fields"]["Samples"] = f"{(136 - 4) * 8 - 128 - 32 * 6} bits"
-    return f.finding("mpeg.audio-data-overflow", "Layer I")
+    return f.finding("mpeg-audio.audio-data-overflow", "Layer I")
 
 
 @fixture
@@ -752,7 +752,7 @@ def layer1_allocation_overflow():
     f.add_frames(stream(6, layer=1, bitrate=32, rate=48000, mode="Stereo"))
     for entry in f.frames:
         entry["fields"]["Data"] = "28 bytes"
-    return f.finding("mpeg.audio-data-overflow", "6 frames need more bits for their Layer I audio data")
+    return f.finding("mpeg-audio.audio-data-overflow", "6 frames need more bits for their Layer I audio data")
 
 
 # --- CRC ---------------------------------------------------------------------------------------
@@ -782,7 +782,7 @@ def crc_mismatch():
     frames = stream(6, mode="Stereo", protected=True)
     frames[2].bad_crc = True
     f.add_frames(frames)
-    return f.finding("mpeg.crc-mismatch", "1 frame")
+    return f.finding("mpeg-audio.crc-mismatch", "1 frame")
 
 
 # --- Sync, junk and damage ---------------------------------------------------------------------
@@ -801,7 +801,7 @@ def leading_junk():
     data[120:124] = LONE_HEADER
     f.gap(bytes(data))
     f.add_frames(stream(8))
-    return f.finding("mpeg.leading-junk", "300 bytes")
+    return f.finding("mpeg-audio.leading-junk", "300 bytes")
 
 
 @fixture
@@ -810,7 +810,7 @@ def leading_zeros():
     f.tag("ID3v2", id3v2("Zero Padded"))
     f.gap(bytes(512))
     f.add_frames(stream(8))
-    return f.finding("mpeg.leading-junk", "zero")
+    return f.finding("mpeg-audio.leading-junk", "zero")
 
 
 @fixture
@@ -826,7 +826,7 @@ def two_header_false_chain():
     data = bytearray(junk(50, 21)) + fake + fake + junk(80, 22)
     f.gap(bytes(data))
     f.add_frames(stream(8))
-    return f.finding("mpeg.leading-junk", f"{len(data)} bytes")
+    return f.finding("mpeg-audio.leading-junk", f"{len(data)} bytes")
 
 
 @fixture
@@ -835,7 +835,7 @@ def sync_lost():
     f.add_frames(stream(5))
     f.gap(junk(37, 31))
     f.add_frames(stream(5))
-    return f.finding("mpeg.sync-lost", "37 bytes")
+    return f.finding("mpeg-audio.sync-lost", "37 bytes")
 
 
 @fixture
@@ -856,7 +856,7 @@ def false_sync_in_payload():
 def truncated_last_frame():
     f = Fixture("truncated-last-frame", ".mp3", "Six frames; the file ends 100 bytes into the sixth.", crosscheck=False)
     f.add_frames(stream(6), truncate_last=100)
-    return f.finding("mpeg.frame-truncated", "100 of")
+    return f.finding("mpeg-audio.frame-truncated", "100 of")
 
 
 @fixture
@@ -864,7 +864,7 @@ def trailing_garbage():
     f = Fixture("trailing-garbage", ".mp3", "Eight frames followed by 50 bytes that are neither a frame nor a tag.", crosscheck=False)
     f.add_frames(stream(8))
     f.gap(junk(50, 41))
-    return f.finding("mpeg.trailing-data", "50 bytes")
+    return f.finding("mpeg-audio.trailing-data", "50 bytes")
 
 
 @fixture
@@ -895,7 +895,7 @@ def lone_frame_after_junk():
     )
     f.gap(junk(500, 52))
     f.add_frames(stream(1))
-    return f.finding("mpeg.leading-junk", "500 bytes")
+    return f.finding("mpeg-audio.leading-junk", "500 bytes")
 
 
 @fixture
@@ -943,8 +943,8 @@ def cut_frame():
     cut.cut_to = 200
     f.add_frames([cut])
     f.add_frames(stream(10, rate=48000))
-    f.finding("mpeg.frame-cut", "200 of its 417 bytes")
-    return f.finding("mpeg.stream-changed", "48000 Hz")
+    f.finding("mpeg-audio.frame-cut", "200 of its 417 bytes")
+    return f.finding("mpeg-audio.stream-changed", "48000 Hz")
 
 
 @fixture
@@ -961,7 +961,7 @@ def damaged_bitrate():
     frames[3].bitrate = 192
     frames[3].cut_to = real
     f.add_frames(frames)
-    return f.finding("mpeg.frame-cut", f"{real} of its {frames[3].length()} bytes")
+    return f.finding("mpeg-audio.frame-cut", f"{real} of its {frames[3].length()} bytes")
 
 
 @fixture
@@ -975,8 +975,8 @@ def free_format_length_change():
     )
     f.add_frames([Frame(bitrate=None, free_length=500) for _ in range(5)])
     f.add_frames([Frame(bitrate=None, free_length=600) for _ in range(5)])
-    f.finding("mpeg.free-format", "500 bytes")
-    return f.finding("mpeg.free-format-length-changed", "from 500 to 600 bytes")
+    f.finding("mpeg-audio.free-format", "500 bytes")
+    return f.finding("mpeg-audio.free-format-length-changed", "from 500 to 600 bytes")
 
 
 @fixture
@@ -1005,9 +1005,9 @@ def sync_inside_header():
     f.data += data[:length]
     f.gap(data[length:])
     f.add_frames(following[1:])
-    f.finding("mpeg.channel-mode-changed", "once, first from Stereo to Mono")
-    f.finding("mpeg.main-data-overlap", f"0x{f.frames[5]['offset']:X}")
-    return f.finding("mpeg.sync-lost", f"{len(data) - length} bytes")
+    f.finding("mpeg-audio.channel-mode-changed", "once, first from Stereo to Mono")
+    f.finding("mpeg-audio.main-data-overlap", f"0x{f.frames[5]['offset']:X}")
+    return f.finding("mpeg-audio.sync-lost", f"{len(data) - length} bytes")
 
 
 # --- Stream changes ----------------------------------------------------------------------------
@@ -1018,7 +1018,7 @@ def sample_rate_change():
     f = Fixture("sample-rate-change", ".mp3", "Five frames at 44100 Hz directly followed by five at 48000 Hz: a new stream starts, no bytes are lost.")
     f.add_frames(stream(5))
     f.add_frames(stream(5, rate=48000))
-    return f.finding("mpeg.stream-changed", "48000 Hz")
+    return f.finding("mpeg-audio.stream-changed", "48000 Hz")
 
 
 @fixture
@@ -1026,7 +1026,7 @@ def layer_change():
     f = Fixture("layer-change", ".mp3", "Five MPEG-1 Layer III frames directly followed by five Layer II frames.")
     f.add_frames(stream(5, rate=48000))
     f.add_frames(stream(5, layer=2, bitrate=192, rate=48000, mode="Stereo"))
-    return f.finding("mpeg.stream-changed", "Layer II")
+    return f.finding("mpeg-audio.stream-changed", "Layer II")
 
 
 @fixture
@@ -1041,8 +1041,8 @@ def streams_limited():
     f.golden_hides = ["frames"]
     for run in range(66):
         f.add_frames(stream(3, bitrate=32, rate=48000 if run % 2 else 44100))
-    f.finding("mpeg.stream-changed", "The stream changes 65 times")
-    return f.finding("mpeg.streams-limited", "6 frames are in no stream")
+    f.finding("mpeg-audio.stream-changed", "The stream changes 65 times")
+    return f.finding("mpeg-audio.streams-limited", "6 frames are in no stream")
 
 
 @fixture
@@ -1057,8 +1057,8 @@ def stream_change_after_gap():
     f.add_frames(stream(5))
     f.gap(junk(37, 61))
     f.add_frames(stream(5, version="2", layer=2, bitrate=64, rate=24000, mode="Mono"))
-    f.finding("mpeg.sync-lost", "37 bytes")
-    return f.finding("mpeg.stream-changed", "MPEG-2 Layer II, 24000 Hz")
+    f.finding("mpeg-audio.sync-lost", "37 bytes")
+    return f.finding("mpeg-audio.stream-changed", "MPEG-2 Layer II, 24000 Hz")
 
 
 @fixture
@@ -1072,8 +1072,8 @@ def free_to_fixed():
     )
     f.add_frames([Frame(bitrate=None, free_length=500) for _ in range(5)])
     f.add_frames(stream(5))
-    f.finding("mpeg.free-format", "500 bytes")
-    return f.finding("mpeg.stream-changed", "44100 Hz, free format to MPEG-1 Layer III, 44100 Hz at")
+    f.finding("mpeg-audio.free-format", "500 bytes")
+    return f.finding("mpeg-audio.stream-changed", "44100 Hz, free format to MPEG-1 Layer III, 44100 Hz at")
 
 
 @fixture
@@ -1081,7 +1081,7 @@ def channel_mode_change():
     f = Fixture("channel-mode-change", ".mp3", "Joint stereo frames followed by mono frames within one stream.")
     f.add_frames(stream(4))
     f.add_frames(stream(4, mode="Mono"))
-    return f.finding("mpeg.channel-mode-changed", "Mono")
+    return f.finding("mpeg-audio.channel-mode-changed", "Mono")
 
 
 # --- Streams with tags ------------------------------------------------------------------------
@@ -1171,7 +1171,7 @@ def concatenated_files():
     f.gap(id3v1("First") + id3v2("Second"))
     f.add_frames(stream(5))
     f.tag("ID3v1", id3v1("Second"))
-    return f.finding("mpeg.sync-lost", "bytes")
+    return f.finding("mpeg-audio.sync-lost", "bytes")
 
 
 def main():

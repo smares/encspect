@@ -730,7 +730,7 @@ def mp3_gap():
         [{"codec": "MPEG-1 audio", "sample_rate": 44100, "channels": 2, "channel_mode": None, "channel_layout": [], "samples": 12 * 1152, "is_vbr": False,
                      # The stream is described by its sample entry, which states no layout; ffprobe reads the frames and gives stereo.
                      "ffprobe_channels": 2}], [],
-        [["mpeg.packets-not-analyzed", "packets"]], fields={ESDS: "0x6B (MPEG-1 audio)"},
+        [["mpeg-audio.packets-not-analyzed", "packets"]], fields={ESDS: "0x6B (MPEG-1 audio)"},
         crosscheck={"ffprobe": True, "mp4box": True, "faad": None, "skip": {"faad": "faad2 reads AAC only."}})
     # The frames are not read, so ffprobe's packets are compared with the samples.
     result[2]["samples"] = unit_list([offsets[0][0], second + 16], frames, 6)
@@ -1355,7 +1355,7 @@ def adts_fixtures():
         "streams": [{"codec": "MPEG-1 Layer III", "sample_rate": 44100, "channels": 2, "channel_mode": "Stereo", "channel_layout": SPEAKERS[2],
                      "samples": 10 * 1152, "is_vbr": False}],
         "units": [[i * 417 + (len(adts) if i >= 5 else 0), 417] for i in range(10)], "fields": {},
-        "findings": [["mpeg.sync-lost", f"Sync is lost for {len(adts)} bytes"]],
+        "findings": [["mpeg-audio.sync-lost", f"Sync is lost for {len(adts)} bytes"]],
         "crosscheck": {"ffprobe": False, "faad": None, "skip": {"ffprobe": "the MPEG fixtures' cross-check covers MPEG audio; ffmpeg resyncs inside the gap its own way."}},
     }))
     return out

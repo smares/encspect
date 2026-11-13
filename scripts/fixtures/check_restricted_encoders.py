@@ -105,7 +105,7 @@ def analyze(cli, path):
     """The encoder the analyzer names with its confidence, and whether every frame fails its CRC."""
     report = json.loads(subprocess.run([cli, "--json", str(path)], capture_output=True, text=True, check=True).stdout)[0]
     frames = sum(1 for region in report["root"]["children"] for node in region.get("children", []) if node.get("kind") == "Frame")
-    failing = next((f["count"] for f in report["findings"] if f["code"] == "mpeg.crc-mismatch"), 0)
+    failing = next((f["count"] for f in report["findings"] if f["code"] == "mpeg-audio.crc-mismatch"), 0)
     stream = next((s for s in report["streams"] if s.get("encoder") is not None), {})
     return (stream.get("encoder"), stream.get("encoderConfidence")), failing == frames
 
@@ -203,7 +203,7 @@ def check_mp3pro(cli, directory):
     expected = guessenc_ofl(path)
     good = (nodes.get("Enhancement", {}).get("value") == "mp3PRO" and ofl is not None and expected is not None
             and fields["Delay"] == expected["delay"] and fields["Original Length"] == expected["length"]
-            and not any(f["code"] == "mpeg.ofl-exceeds-stream" for f in report["findings"]))
+            and not any(f["code"] == "mpeg-audio.ofl-exceeds-stream" for f in report["findings"]))
     print(f"mp3PRO Audio Player 1.1 with OFL on {source.stem}: enhancement {nodes.get('Enhancement', {}).get('value')}, "
           f"OFL {fields or None}, mp3guessenc OFL {expected}{'' if good else '  <- unexpected'}")
     return not good

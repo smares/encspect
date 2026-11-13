@@ -19,8 +19,8 @@ public class MpegAncillaryStreamTests
 
         Report report = Analyze(file);
 
-        Assert.Contains(report.Findings, f => f.Code == "mpeg.stream-changed");
-        Assert.DoesNotContain(report.Findings, f => f.Code == "mpeg.mp3pro");
+        Assert.Contains(report.Findings, f => f.Code == "mpeg-audio.stream-changed");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "mpeg-audio.mp3pro");
         Assert.DoesNotContain(Region(report).Children, c => c.Name == "Enhancement");
     }
 
@@ -36,7 +36,7 @@ public class MpegAncillaryStreamTests
         Assert.Equal(0, enhancement.Offset - Region(report).Offset);
         Assert.Equal(12 * 208, enhancement.Length);
         Assert.Equal($"{12 * Mpeg2Data - 12 * 100} bytes", Fixtures.Resolve(enhancement, "Ancillary Data").Single().Value?.ToString());
-        Assert.Single(report.Findings, f => f.Code == "mpeg.mp3pro");
+        Assert.Single(report.Findings, f => f.Code == "mpeg-audio.mp3pro");
     }
 
     [Fact]

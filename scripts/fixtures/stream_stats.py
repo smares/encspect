@@ -359,13 +359,13 @@ def header_findings(header_frame, all_frames):
     at = f"0x{header_frame.offset:X}"
     result = []
     if tag.get("frames") is not None and tag["frames"] not in (len(frames), len(frames) + 1):
-        result.append(("mpeg.vbr-frame-count-mismatch", at))
+        result.append(("mpeg-audio.vbr-frame-count-mismatch", at))
     counted = header_frame.length + sum(f.length for f in frames)
     if tag.get("bytes") is not None and tag["bytes"] not in (counted, counted - header_frame.length):
-        result.append(("mpeg.vbr-byte-count-mismatch", at))
+        result.append(("mpeg-audio.vbr-byte-count-mismatch", at))
     lame = tag.get("lame")
     if lame is not None and lame["delay"] + lame["padding"] > sum(f.samples for f in frames):
-        result.append(("mpeg.gapless-exceeds-stream", at))
+        result.append(("mpeg-audio.gapless-exceeds-stream", at))
     return result
 
 

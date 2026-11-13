@@ -380,7 +380,7 @@ public class FindingPathTests
     {
         Report report = Fixtures.AnalyzeMpeg("mpeg-audio/mpeg1-layer3-reserved-emphasis.mp3");
 
-        Finding emphasis = report.Findings.Single(f => f.Code == "mpeg.emphasis-reserved");
+        Finding emphasis = report.Findings.Single(f => f.Code == "mpeg-audio.emphasis-reserved");
         Assert.Equal("Emphasis", emphasis.Node!.Name);
         Assert.Equal(["MPEG Audio", "Frame", "Header", "Emphasis"], Names(report.Root, emphasis.Path!));
     }
@@ -390,7 +390,7 @@ public class FindingPathTests
     {
         Report report = Fixtures.AnalyzeMpeg("mpeg-audio/layer3/side-info-invalid.mp3");
 
-        Finding huffman = report.Findings.Single(f => f.Code == "mpeg.huffman-table-undefined");
+        Finding huffman = report.Findings.Single(f => f.Code == "mpeg-audio.huffman-table-undefined");
         Assert.Equal(2, huffman.Count);
         Assert.Contains("2 frames", huffman.Message, StringComparison.Ordinal);
         Assert.Equal("Table Select", Names(report.Root, huffman.Path!)[^1]);

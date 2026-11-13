@@ -200,14 +200,14 @@ public class ComplexityTests
     public void ManyLameTagsWithOverlappingMusicCrcs()
     {
         Report report = Timed(LameFrames(16_000, toEnd: true, musicCrcs: false));
-        Assert.Contains(report.Findings, f => f.Code == "mpeg.music-crc-mismatch");
+        Assert.Contains(report.Findings, f => f.Code == "mpeg-audio.music-crc-mismatch");
     }
 
     [Fact]
     public void ManyVbrHeaderFrames()
     {
         Report report = Timed(LameFrames(80_000, toEnd: false, musicCrcs: true));
-        Assert.DoesNotContain(report.Findings, f => f.Code is "mpeg.music-crc-mismatch" or "mpeg.lame-tag-crc-mismatch");
+        Assert.DoesNotContain(report.Findings, f => f.Code is "mpeg-audio.music-crc-mismatch" or "mpeg-audio.lame-tag-crc-mismatch");
     }
 
     // The music CRCs of overlapping ranges come from one pass over the file; with the right CRCs
@@ -216,7 +216,7 @@ public class ComplexityTests
     public void OverlappingMusicCrcsAreVerified()
     {
         Report report = Analyzer.CreateDefault().Analyze("crcs.mp3", new MemoryStream(LameFrames(300, toEnd: true, musicCrcs: true)));
-        Assert.DoesNotContain(report.Findings, f => f.Code is "mpeg.music-crc-mismatch" or "mpeg.lame-tag-crc-mismatch" or "mpeg.music-crc-not-verified");
+        Assert.DoesNotContain(report.Findings, f => f.Code is "mpeg-audio.music-crc-mismatch" or "mpeg-audio.lame-tag-crc-mismatch" or "mpeg-audio.music-crc-not-verified");
     }
 
     // Free-format MPEG-1 Layer III stereo frames of 36 bytes, the header and zero side information:
@@ -546,10 +546,10 @@ public class ComplexityTests
 
         Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
         Assert.Equal(Encspect.Formats.MpegAudio.MpegAudioParser.MaxStreams, report.Streams.Count);
-        Finding changed = Assert.Single(report.Findings, f => f.Code == "mpeg.stream-changed");
+        Finding changed = Assert.Single(report.Findings, f => f.Code == "mpeg-audio.stream-changed");
         Assert.Equal(Severity.Info, changed.Severity);
         Assert.Equal(runs - 1, changed.Count);
-        Finding limited = Assert.Single(report.Findings, f => f.Code == "mpeg.streams-limited");
+        Finding limited = Assert.Single(report.Findings, f => f.Code == "mpeg-audio.streams-limited");
         Assert.Equal(Severity.Warning, limited.Severity);
         Assert.Equal(3 * (runs - Encspect.Formats.MpegAudio.MpegAudioParser.MaxStreams), limited.Count);
         Assert.All(report.Findings, f => Assert.NotNull(f.Path));

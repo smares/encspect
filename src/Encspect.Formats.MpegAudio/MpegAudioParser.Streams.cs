@@ -8,7 +8,7 @@ namespace Encspect.Formats.MpegAudio;
 public sealed partial class MpegAudioParser
 {
     // At most MaxStreams streams: the frames from the change that would start the next one on are in no stream
-    // (mpeg.streams-limited), and a configuration that returns starts a stream of its own.
+    // (mpeg-audio.streams-limited), and a configuration that returns starts a stream of its own.
     private static void AddStreams(StreamState state, ParseContext context)
     {
         ChunkedList<Entry> frames = state.Build.Frames;
@@ -37,7 +37,7 @@ public sealed partial class MpegAudioParser
             if (isLimited)
             {
                 long offset = frames[i].Offset;
-                state.Findings.Add(Severity.Warning, "mpeg.streams-limited", FindingNode(frames[i]), count =>
+                state.Findings.Add(Severity.Warning, "mpeg-audio.streams-limited", FindingNode(frames[i]), count =>
                     $"{(count == 1 ? "One frame is" : $"{count} frames are")} in no stream: the analyzer keeps at most {MaxStreams} streams, one per run of one version, layer, sample rate and free format or not, and the frame at 0x{offset:X} is the first to start another.");
                 continue;
             }
@@ -205,7 +205,7 @@ public sealed partial class MpegAudioParser
             {
                 Layer2Multichannel from = first;
                 long offset = frame.Offset;
-                state.Findings.Add(Severity.Info, "mpeg.multichannel-configuration-changes", FindingNode(frames[firstIndex]), _ =>
+                state.Findings.Add(Severity.Info, "mpeg-audio.multichannel-configuration-changes", FindingNode(frames[firstIndex]), _ =>
                     $"The multichannel configuration changes within the stream, from {from.Configuration} to {mc.Configuration} at 0x{offset:X}, so the stream reports the channels of its stereo base.");
                 return (layout, 0);
             }

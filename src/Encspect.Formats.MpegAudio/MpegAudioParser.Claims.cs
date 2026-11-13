@@ -82,7 +82,7 @@ public sealed partial class MpegAudioParser
             else
             {
                 string name = encoder.Value!.ToString();
-                state.Findings.Add(Severity.Info, "mpeg.encoder-claim-differs", claim.Source, _ =>
+                state.Findings.Add(Severity.Info, "mpeg-audio.encoder-claim-differs", claim.Source, _ =>
                     $"The {claim.Description} names \"{text}\", but the stream points to {name}; the tag may have been written by other software, or kept when the audio was re-encoded.");
             }
         }

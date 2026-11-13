@@ -135,7 +135,7 @@ def analyzer_problems(analyzer, path, stream):
     mc = stream.get("multichannel")
     nodes = [n for f in frames for n in [child(f, "Multichannel")] if n is not None]
     if mc and mc.get("verified") is False:
-        found = [f for f in report["findings"] if f["code"] == "mpeg.multichannel-unverified" and mc["configuration"] in f["message"]]
+        found = [f for f in report["findings"] if f["code"] == "mpeg-audio.multichannel-unverified" and mc["configuration"] in f["message"]]
         if nodes or not found:
             problems.append(f"expected an unverified {mc['configuration']} extension and no multichannel nodes")
         return problems

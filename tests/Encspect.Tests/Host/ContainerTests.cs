@@ -113,7 +113,7 @@ public partial class ContainerTests
 
         Report report = TestFiles.Analyze(file, new ChunkedContainer());
 
-        Finding differs = Assert.Single(report.Findings, f => f.Code == "mpeg.encoder-claim-differs");
+        Finding differs = Assert.Single(report.Findings, f => f.Code == "mpeg-audio.encoder-claim-differs");
         Node frame = TestFiles.Follow(report.Root, differs.Path!);
         Assert.Equal("TSSE", frame.Name);
         Node chunk = Chunk(report, "id3 ");
@@ -360,7 +360,7 @@ public partial class ContainerTests
         Report report = TestFiles.Analyze(PagedContainer.Build(4, new byte[10]).File, new PagedContainer("mpeg-audio"));
 
         Finding finding = Assert.Single(report.Findings);
-        Assert.Equal(("mpeg.packets-not-analyzed", "Pages"), (finding.Code, finding.Node?.Name));
+        Assert.Equal(("mpeg-audio.packets-not-analyzed", "Pages"), (finding.Code, finding.Node?.Name));
         Assert.Empty(report.Streams);
     }
 

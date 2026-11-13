@@ -55,7 +55,7 @@ public class ApeEncoderClaimTests
         StreamInfo stream = Assert.Single(report.Streams);
         Assert.StartsWith("LAME", stream.Encoder, StringComparison.Ordinal);
         Assert.Equal(("Shine 3.1", Confidence.Low), (stream.Writer, stream.WriterConfidence));
-        Assert.DoesNotContain(report.Findings, f => f.Code is "mpeg.encoder-claim-differs" or "mpeg.writer-claim-differs");
+        Assert.DoesNotContain(report.Findings, f => f.Code is "mpeg-audio.encoder-claim-differs" or "mpeg-audio.writer-claim-differs");
     }
 
     [Fact]
@@ -66,9 +66,9 @@ public class ApeEncoderClaimTests
 
         StreamInfo stream = Assert.Single(report.Streams);
         Assert.Equal("FFmpeg (Lavf60.16.100)", stream.Writer);
-        Finding finding = Assert.Single(report.Findings, f => f.Code == "mpeg.writer-claim-differs");
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "mpeg-audio.writer-claim-differs");
         Assert.Contains("APE Encoder item names \"Shine 3.1\"", finding.Message, StringComparison.Ordinal);
-        Assert.DoesNotContain(report.Findings, f => f.Code == "mpeg.encoder-claim-differs");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "mpeg-audio.encoder-claim-differs");
     }
 
     [Fact]

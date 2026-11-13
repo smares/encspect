@@ -62,7 +62,7 @@ public class DecoderSessionInvariantTests
         ["wav/built-wavl-list-without-fact.wav"] = NotDescribable,
         ["wav/built-wavl-list.wav"] = NotDescribable,
         ["wav/built-zero-bits.wav"] = NotDescribable,
-        ["wav/external-iec61937-mp2-lsf-24000.wav"] = "MPEG audio in IEC 61937 bursts reaches the MPEG audio parser as packets, which it does not analyze (mpeg.packets-not-analyzed), so the stream is the container's own",
+        ["wav/external-iec61937-mp2-lsf-24000.wav"] = "MPEG audio in IEC 61937 bursts reaches the MPEG audio parser as packets, which it does not analyze (mpeg-audio.packets-not-analyzed), so the stream is the container's own",
         ["matroska/encrypted-vorbis.mka"] = "the container hands over the headers and no audio packet (its samples are encrypted), and the Vorbis session starts at the first audio packet",
         ["matroska/vorbis-private-zlib-framing.mka"] = "a header libvorbis refuses (the framing bit of a header in the CodecPrivate), so the stream is parsed and not decoded",
         ["matroska/compression-bzlib.mka"] = "the container hands over no audio packet the Opus session can read (its frames are encrypted or compressed in a way the container does not undo), and the Opus session starts at the first audio packet",

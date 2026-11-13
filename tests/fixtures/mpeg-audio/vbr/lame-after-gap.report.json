@@ -8849,7 +8849,7 @@
     "findings": [
       {
         "severity": "Warning",
-        "code": "mpeg.sync-lost",
+        "code": "mpeg-audio.sync-lost",
         "message": "Sync is lost for 300 bytes at 0x9CA.",
         "offset": 2506,
         "length": 300,
@@ -8861,7 +8861,7 @@
       },
       {
         "severity": "Warning",
-        "code": "mpeg.vbr-header-mid-stream",
+        "code": "mpeg-audio.vbr-header-mid-stream",
         "message": "1 frame in the middle of a stream holds an Info header, probably where files were joined; players that only look at the first frame play it as silence. The first at 0xAF6.",
         "offset": 2806,
         "length": 417,

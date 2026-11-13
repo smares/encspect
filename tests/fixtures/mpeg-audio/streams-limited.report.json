@@ -22815,7 +22815,7 @@
     "findings": [
       {
         "severity": "Info",
-        "code": "mpeg.stream-changed",
+        "code": "mpeg-audio.stream-changed",
         "message": "The stream changes 65 times, first from MPEG-1 Layer III, 44100 Hz to MPEG-1 Layer III, 48000 Hz at 0x139.",
         "offset": 313,
         "length": 96,
@@ -22823,7 +22823,7 @@
       },
       {
         "severity": "Warning",
-        "code": "mpeg.streams-limited",
+        "code": "mpeg-audio.streams-limited",
         "message": "6 frames are in no stream: the analyzer keeps at most 64 streams, one per run of one version, layer, sample rate and free format or not, and the frame at 0x4B20 is the first to start another.",
         "offset": 19232,
         "length": 104,

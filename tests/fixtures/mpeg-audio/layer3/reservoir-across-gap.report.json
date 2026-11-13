@@ -8050,7 +8050,7 @@
     "findings": [
       {
         "severity": "Warning",
-        "code": "mpeg.sync-lost",
+        "code": "mpeg-audio.sync-lost",
         "message": "Sync is lost for 40 bytes at 0x687.",
         "offset": 1671,
         "length": 40,
@@ -8062,7 +8062,7 @@
       },
       {
         "severity": "Warning",
-        "code": "mpeg.reservoir-across-gap",
+        "code": "mpeg-audio.reservoir-across-gap",
         "message": "2 frames take main data from before a gap, the first at 0x6AF; decoders differ on whether it is still there.",
         "offset": 1711,
         "length": 418,

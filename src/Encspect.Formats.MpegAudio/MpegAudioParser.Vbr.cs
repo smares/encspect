@@ -36,25 +36,25 @@ public sealed partial class MpegAudioParser
         Node node = FindingNode(frame);
         if (vbr.IsTruncated)
         {
-            findings.Add(Severity.Warning, "mpeg.vbr-header-truncated", node, count =>
+            findings.Add(Severity.Warning, "mpeg-audio.vbr-header-truncated", node, count =>
                 $"{Frames(count, "holds", "hold")} {Article(vbr.Type)} {vbr.Type} header that does not fit the frame, the first at 0x{position:X}.");
         }
 
         if (vbr.InvalidEntrySize is { } entrySize)
         {
-            findings.Add(Severity.Warning, "mpeg.vbri-entry-size-invalid", node, count =>
+            findings.Add(Severity.Warning, "mpeg-audio.vbri-entry-size-invalid", node, count =>
                 $"{Frames(count, "holds", "hold")} a VBRI header whose TOC entries are {Counts.Of(entrySize, "byte", "bytes")} long, where only 1 to 4 bytes are defined, so its TOC is not read; the first at 0x{position:X}.");
         }
 
         if (vbr.VbriVersion is { } version and not 1)
         {
-            findings.Add(Severity.Warning, "mpeg.vbri-version-unknown", node, count =>
+            findings.Add(Severity.Warning, "mpeg-audio.vbri-version-unknown", node, count =>
                 $"{Frames(count, "holds", "hold")} a VBRI header of version {version}, where only version 1 is known; ffmpeg ignores the header. The first at 0x{position:X}.");
         }
 
         if (vbr.IsTocDecreasing)
         {
-            findings.Add(Severity.Warning, "mpeg.xing-toc-decreasing", node, count =>
+            findings.Add(Severity.Warning, "mpeg-audio.xing-toc-decreasing", node, count =>
                 $"{Frames(count, "holds", "hold")} a Xing TOC that decreases, so seeking by it goes backwards; the first at 0x{position:X}.");
         }
 
@@ -63,19 +63,19 @@ public sealed partial class MpegAudioParser
             if (vbr.StoredTagCrc == vbr.FfmpegTagCrc)
             {
                 // The encoder's fault, not damage, but the CRC is still wrong and readers act on it.
-                findings.Add(Severity.Warning, "mpeg.lame-tag-crc-ffmpeg", node, count =>
+                findings.Add(Severity.Warning, "mpeg-audio.lame-tag-crc-ffmpeg", node, count =>
                     $"The LAME tag CRC of {Frames(count)} covers the frame's first 190 bytes, as ffmpeg writes it, instead of the bytes before the CRC; LAME and ffmpeg itself reject it, so readers that check it ignore the tag's encoder string and ReplayGain. The first at 0x{position:X}.");
             }
             else
             {
-                findings.Add(Severity.Warning, "mpeg.lame-tag-crc-mismatch", node, count =>
+                findings.Add(Severity.Warning, "mpeg-audio.lame-tag-crc-mismatch", node, count =>
                     $"The LAME tag of {Frames(count)} fails its CRC check, so its fields may be damaged; the first at 0x{position:X}.");
             }
         }
 
         if (midStream)
         {
-            findings.Add(Severity.Warning, "mpeg.vbr-header-mid-stream", node, count =>
+            findings.Add(Severity.Warning, "mpeg-audio.vbr-header-mid-stream", node, count =>
                 $"{Frames(count)} in the middle of a stream {(count == 1 ? "holds" : "hold")} {Article(vbr.Type)} {vbr.Type} header, probably where files were joined; players that only look at the first frame play {(count == 1 ? "it" : "them")} as silence. The first at 0x{position:X}.");
         }
 
@@ -98,7 +98,7 @@ public sealed partial class MpegAudioParser
             Node node = FindingNode(frame);
             if (vbr.MusicLength == 0)
             {
-                state.Findings.Add(Severity.Info, "mpeg.music-length-not-set", node, count =>
+                state.Findings.Add(Severity.Info, "mpeg-audio.music-length-not-set", node, count =>
                     $"The LAME tag of {Frames(count)} leaves the music length unset, which the tag's specification allows, so the music CRC is not verified; the first at 0x{position:X}.");
                 continue;
             }
@@ -106,7 +106,7 @@ public sealed partial class MpegAudioParser
             if (end < frame.End)
             {
                 long musicLength = vbr.MusicLength;
-                state.Findings.Add(Severity.Warning, "mpeg.music-length-short", node, count =>
+                state.Findings.Add(Severity.Warning, "mpeg-audio.music-length-short", node, count =>
                     $"The LAME tag of {Frames(count)} gives a music length of {Counts.Of(musicLength, "byte", "bytes")}, shorter than its own frame, so the music CRC is not verified; the first at 0x{position:X}.");
                 continue;
             }
@@ -116,13 +116,13 @@ public sealed partial class MpegAudioParser
                 // A stream cut short is reported by its own findings; otherwise the tag is wrong.
                 if (IsCutShort(frame, vbr, Covered(state, index)))
                 {
-                    state.Findings.Add(Severity.Info, "mpeg.music-crc-not-verified", node, count =>
+                    state.Findings.Add(Severity.Info, "mpeg-audio.music-crc-not-verified", node, count =>
                         $"The LAME tag of {Frames(count)} covers more music than the file holds after it, which is cut short, so the music CRC is not verified; the first at 0x{position:X}.");
                 }
                 else
                 {
                     long musicLength = vbr.MusicLength;
-                    state.Findings.Add(Severity.Warning, "mpeg.music-length-long", node, count =>
+                    state.Findings.Add(Severity.Warning, "mpeg-audio.music-length-long", node, count =>
                         $"The LAME tag of {Frames(count)} gives a music length of {Counts.Of(musicLength, "byte", "bytes")}, more than the file holds after it, though the stream holds every frame its header counts; the music CRC is not verified. The first at 0x{position:X}.");
                 }
 
@@ -140,12 +140,12 @@ public sealed partial class MpegAudioParser
             {
                 // Likely LAME's doing, but the CRC is wrong all the same, and an edit of the audio
                 // after encoding would look no different.
-                state.Findings.Add(Severity.Warning, "mpeg.music-crc-nogap", node, count =>
+                state.Findings.Add(Severity.Warning, "mpeg-audio.music-crc-nogap", node, count =>
                     $"The music CRC in the LAME tag of {Frames(count)} does not match. The file continues a gapless (--nogap) sequence, and LAME continues the previous file's CRC there, so the CRC is probably wrong from encoding; either way it cannot confirm that the audio is unchanged. The first at 0x{position:X}.");
             }
             else
             {
-                state.Findings.Add(Severity.Warning, "mpeg.music-crc-mismatch", node, count =>
+                state.Findings.Add(Severity.Warning, "mpeg-audio.music-crc-mismatch", node, count =>
                     $"The audio after the LAME tag of {Frames(count)} no longer matches the tag's music CRC: it changed after encoding, as MP3Gain and other editors change it. The first at 0x{position:X}.");
             }
         }
@@ -349,7 +349,7 @@ public sealed partial class MpegAudioParser
                 {
                     string tagName = tagged.Name;
                     long position = header.Frame.Offset;
-                    context.State.Findings.Add(Severity.Warning, "mpeg.lame-version-differs", FindingNode(header.Frame), count =>
+                    context.State.Findings.Add(Severity.Warning, "mpeg-audio.lame-version-differs", FindingNode(header.Frame), count =>
                         $"The LAME tag at 0x{position:X} names {tagName}, but the version LAME wrote into the ancillary data names {drained.Name}: the frames and the tag may come from different encoders. The tag's version is shown.");
                 }
             }
@@ -444,8 +444,8 @@ public sealed partial class MpegAudioParser
         long offset = region.AudioStart;
         long length = region.AudioEnd - offset;
         return WriterDetection.Detect(all, (name, value, description) => new Node(name, offset, length, value) { Description = description, Topic = ClaimRoles.TopicOf(name) },
-            (claim, text, name) => state.Findings.Add(Severity.Info, "mpeg.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
-            format: new WriterDetection.StreamFormat(KnownWriters.MpegAudio, "MPEG audio", (claim, message, node) => state.Findings.Add(Severity.Info, "mpeg.writer-other-format", node, _ => message)));
+            (claim, text, name) => state.Findings.Add(Severity.Info, "mpeg-audio.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
+            format: new WriterDetection.StreamFormat(KnownWriters.MpegAudio, "MPEG audio", (claim, message, node) => state.Findings.Add(Severity.Info, "mpeg-audio.writer-other-format", node, _ => message)));
     }
 
     // The encoder named by the stream's own evidence, without its VBR headers.

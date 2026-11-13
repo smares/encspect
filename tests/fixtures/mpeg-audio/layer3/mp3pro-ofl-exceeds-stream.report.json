@@ -5087,7 +5087,7 @@
     "findings": [
       {
         "severity": "Info",
-        "code": "mpeg.mp3pro",
+        "code": "mpeg-audio.mp3pro",
         "message": "The stream is mp3PRO: 1055 bytes of ancillary data carry its spectral band replication data. Decoders without mp3PRO support play only the MP3 core at 22050 Hz, without the high frequencies.",
         "offset": 0,
         "length": 2507,
@@ -5099,7 +5099,7 @@
       },
       {
         "severity": "Warning",
-        "code": "mpeg.ofl-exceeds-stream",
+        "code": "mpeg-audio.ofl-exceeds-stream",
         "message": "The Original File Length block at 0x79 gives a delay of 1500 and 13000 samples of audio, 14500 samples, more than the 13824 of the stream.",
         "offset": 121,
         "length": 20,
