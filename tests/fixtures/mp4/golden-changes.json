@@ -1,94 +1,15 @@
 {
   "goldens": [
-    "tests/fixtures/mp4/"
+    "tests/fixtures/mp4/opus-51-in-mp4.report.json",
+    "tests/fixtures/mp4/opus-edit-list-in-mp4.report.json"
   ],
-  "added": [
-    {
-      "scope": "stream",
-      "key": "verification",
-      "goldens": [
-        "tests/fixtures/mp4/mp3-in-mp4.report.json"
-      ]
-    },
+  "changed": [
     {
       "scope": "stream",
       "array": "series",
-      "name": "Coded Bandwidth",
-      "goldens": [
-        "tests/fixtures/mp4/mp3-in-mp4.report.json"
-      ],
-      "streams": [
-        0
-      ]
-    },
-    {
-      "scope": "stream",
-      "array": "series",
-      "name": "Coded Bandwidth Over Time",
-      "goldens": [
-        "tests/fixtures/mp4/mp3-in-mp4.report.json"
-      ],
-      "streams": [
-        0
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "MPEG Audio",
-        "Statistics"
-      ],
-      "name": "Coded Bandwidth",
-      "goldens": [
-        "tests/fixtures/mp4/mp3-in-mp4.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "MPEG Audio",
-        "Statistics",
-        "Coded Bandwidth"
-      ],
-      "name": "Lowest",
-      "goldens": [
-        "tests/fixtures/mp4/mp3-in-mp4.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "MPEG Audio",
-        "Statistics",
-        "Coded Bandwidth"
-      ],
-      "name": "Most Common",
-      "goldens": [
-        "tests/fixtures/mp4/mp3-in-mp4.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "MPEG Audio",
-        "Statistics",
-        "Coded Bandwidth"
-      ],
-      "name": "Highest",
-      "goldens": [
-        "tests/fixtures/mp4/mp3-in-mp4.report.json"
+      "name": "Intensity Stereo Bound",
+      "fields": [
+        "quantity"
       ]
     }
   ]

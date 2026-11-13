@@ -133,6 +133,16 @@ class CheckTests(unittest.TestCase):
             self.assertEqual(1, len(problems), change)
             self.assertIn(words, problems[0])
 
+    def test_a_changed_field_of_a_named_series_is_ignored_in_that_series_only(self):
+        def with_series(quantity, other):
+            return report(OLD_STATS, streams=[{"nodes": [[1]], "codec": "Opus", "series": [
+                {"name": "Intensity Stereo Bound", "unit": "Hz", "quantity": quantity},
+                {"name": "Coded Bandwidth", "unit": "Hz", "quantity": other}]}])
+        old = with_series("Coded Bandwidth", "Coded Bandwidth")
+        change = {"changed": [{"scope": "stream", "array": "series", "name": "Intensity Stereo Bound", "fields": ["quantity"]}]}
+        self.assertEqual(self.check(old, with_series("Intensity Stereo Bound", "Coded Bandwidth"), change), [])
+        self.assertTrue(self.check(old, with_series("Intensity Stereo Bound", "Bandwidth"), change))
+
     def test_an_average_bitrate_that_differs_needs_lost_samples_or_a_reason(self):
         old = report(OLD_STATS, streams=[{"nodes": [[1]], "codec": "MPEG-1 Layer III", "series": [], "averageBitrate": 128.0}])
         new = report(OLD_STATS, streams=[{"nodes": [[1]], "codec": "MPEG-1 Layer III", "series": [], "averageBitrate": 127.0}])
