@@ -435,7 +435,7 @@ public sealed partial class OpusParser
                 {
                     Description = SeriesText.IntensityStereoBound,
                     Concept = GraphConcept.StereoCoding,
-                    Quantity = "Coded Bandwidth",
+                    Quantity = "Intensity Stereo Bound",
                 });
             }
 
