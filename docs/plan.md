@@ -108,6 +108,7 @@ The project lead, 2026-11-08:
 - Every parked item has a milestone, or sits under [Not planned](#not-planned) with the trigger that would bring it back.
 - A pause the lead asks for keeps the item's place and priority, and the item resumes first.
 - A format's `pending` differences from the official decoders go to the lead with the pull request that commits its `official-decoders.json`; the analyzer changes that follow are their own pull requests, each with its goldens ([official-decoder-crosschecks.md](design/official-decoder-crosschecks.md#rollout), step 8). A total that is no reference is `keep`, never `pending`.
+- When a format's decoder starts, check whether the OxideAV project ([github.com/OxideAV](https://github.com/OxideAV), MIT, written from the specifications under a clean-room rule stricter than ours) has a crate for the format. Its notes' measurements against other decoders are input for the design, and its decoder can serve as one more black-box cross-check. Agreement with it is weak evidence, since it is also written with Claude and can share a misreading; a disagreement points to a passage to reread. Code that follows it closely carries its MIT notice (the lead, 2026-11-13).
 
 ## Milestones
 

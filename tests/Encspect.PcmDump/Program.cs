@@ -21,12 +21,6 @@ internal static class Program
             return isHelp ? 0 : 2;
         }
 
-        if (Environment.GetEnvironmentVariable("ENCSPECT_DITHER_SCALE") is { } scale)
-        {
-            // A comparison with a decoder that dithers less (7.3.4 allows 0.5 to 0.75); the library's scale stays 0.707 everywhere else.
-            Encspect.Formats.Ac3.Decoding.FrameDecoder.DitherScale = float.Parse(scale, System.Globalization.CultureInfo.InvariantCulture);
-        }
-
         Directory.CreateDirectory(args[0]);
         int failures = 0;
         int input = 0;

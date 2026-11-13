@@ -345,16 +345,12 @@ internal sealed class FrameDecoder : IFrameDecoder
         return code * Quantizers.Shift[Quantizers.AsymmetricBits[bap] - 1 + exponent];
     }
 
-    // The scaling of the dither (7.3.4: 0.707 is the optimum, 0.75 close enough, 0.5 acceptable). Only the cross-check tool tests/Encspect.PcmDump changes it (from the environment
-    // variable ENCSPECT_DITHER_SCALE), to compare with a decoder that dithers less; no decoding code does.
-    internal static float DitherScale = 0.707f;
-
     // A dither value: uniform between -0.707 and 0.707 (7.3.4, "the optimum scaling"), from a linear congruential generator whose top 24 bits are the integer part.
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     internal static float Noise(ref uint state)
     {
         state = unchecked((state * 1664525u) + 1013904223u);
-        return ((int)state >> 8) * (1.0f / 8388608.0f) * DitherScale;
+        return ((int)state >> 8) * (1.0f / 8388608.0f) * 0.707f;
     }
 
     // 7.5.4: the bands the flags name hold sum and difference, from the table of the coupling state (Tables 7.25 to 7.28).

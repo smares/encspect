@@ -461,13 +461,6 @@ def compare(dump, reference, channels, label, first, extra):
     return [f"largest {worst['max']:.3g}, RMS {worst['rms']:.3g}"], result
 
 
-def dump_with_dither(command, path, folder, scale):
-    """The analyzer's PCM of a file with its dither at scale (the test-only hook of tests/Encspect.PcmDump)."""
-    environment = {**os.environ, "ENCSPECT_DITHER_SCALE": str(scale)}
-    subprocess.run([*shlex.split(command), str(folder), str(path)], check=True, capture_output=True, env=environment)
-    return sorted(folder.glob("*.pcm.json"))[0]
-
-
 def judge(dump, raw, info, work, variant, extra, name):
     """One comparison of the analyzer's PCM with Core Audio's, by the channel mapping that fits: (the label that passed or None, the lines of the misses, the lines that say how the
     channels were placed)."""
@@ -581,19 +574,6 @@ def check_file(args, path, work):
         label, detail, pre = judge(dump, raw, info, work, variant, extra, path.stem)
         lines += pre
         status = ""
-        if label is None:
-            # Core Audio's dither may be scaled 0.5, which 7.3.4 allows as well as the optimum 0.707 the analyzer uses: the same comparison against the analyzer's output with its
-            # dither at 0.5 (a test-only hook of the PCM dump, ENCSPECT_DITHER_SCALE) says whether that is all that differs.
-            folder05 = folder / "dither05"
-            folder05.mkdir()
-            dump05 = dump_with_dither(args.pcmdump, ours_path if source == long_path else source, folder05, 0.5)
-            label05, detail05, pre05 = judge(dump05, raw, info, work, variant + "-d05", extra, path.stem)
-            status = f"; with the analyzer's dither at 0.5 (7.3.4, also acceptable): {'ok' if label05 else 'still outside'}"
-            if label05 is not None:
-                label = label05
-                status += " (the file passes only against that output)"
-            else:
-                detail = detail + ["    with the analyzer's dither at 0.5:"] + detail05
         lines.append(f"  {variant}: {'ok' if label else 'OUTSIDE THE BOUND'} ({info['frames']} frames, layout tag {info.get('layoutTag')}, drc status {info.get('drcStatus')}){status}")
         if label is None:
             lines += detail
@@ -653,13 +633,9 @@ def save_decodes(args, path, folder):
     folder.mkdir(parents=True, exist_ok=True)
     raw, info = decode(args.probe, path, folder / "coreaudio.f32")
     (folder / "coreaudio.json").write_text(json.dumps(info), encoding="utf-8")
-    for tag, scale in (("analyzer", None), ("analyzer-dither05", 0.5)):
-        target = folder / tag
-        target.mkdir(exist_ok=True)
-        if scale is None:
-            x.pcmdump(args.pcmdump, path, target)
-        else:
-            dump_with_dither(args.pcmdump, path, target, scale)
+    target = folder / "analyzer"
+    target.mkdir(exist_ok=True)
+    x.pcmdump(args.pcmdump, path, target)
 
 
 def main(argv=None):
