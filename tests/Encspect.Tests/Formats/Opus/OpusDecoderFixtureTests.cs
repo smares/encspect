@@ -94,7 +94,7 @@ public class OpusDecoderFixtureTests
         (Report report, List<PcmHashSink> sinks) = Decode(name);
 
         Assert.DoesNotContain(report.Findings, f => f.Code is "decode.failed" or "parse.failed" or "decode.frame-invalid" or "decode.frame-too-large");
-        foreach (StreamInfo stream in report.Streams.Where(s => s.Verification is not null))
+        foreach (StreamInfo stream in report.Streams.Where(s => s.Codec == "Opus" && s.Verification is not null))
         {
             StreamVerification verification = stream.Verification!;
             Assert.Equal(DecodeStatus.Decoded, verification.Decoding);
