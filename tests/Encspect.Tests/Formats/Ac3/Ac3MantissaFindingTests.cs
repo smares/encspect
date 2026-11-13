@@ -46,6 +46,20 @@ public class Ac3MantissaFindingTests
         Assert.Contains(report.Findings, f => f.Code == "ac3.block-inconsistent" && f.Message.Contains("check 2", StringComparison.Ordinal));
     }
 
+    // The second input of the same kind (seed 725919085, iteration 66646): the finding named 50 bytes at 5120 where the field has 99.
+    [Fact]
+    public void A_second_fuzz_input_has_the_finding_in_the_tree_too()
+    {
+        byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "fuzz", "ac3-mantissa-finding-extent-2.bin"));
+
+        Report report = Analyzer.CreateDefault().Analyze("fuzz.ac3", new MemoryStream(data));
+
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "ac3.mantissa-code-invalid");
+        Assert.NotNull(finding.Path);
+        Assert.Equal("Mantissas", finding.Node!.Name);
+        Assert.Equal((5120L, 99L), (finding.Node.Offset, finding.Node.Length));
+    }
+
     private static IEnumerable<Node> Find(Node node, string name)
     {
         if (node.Name == name)
