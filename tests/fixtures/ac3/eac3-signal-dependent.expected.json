@@ -121,13 +121,11 @@
  "findings": [],
  "crosscheck": {
   "ffprobe": true,
-  "ffprobe_fields": "channels",
   "ffprobe_bitrate": false,
   "decode": false,
   "skip_insertion": false,
   "skip": {
    "decode": "FFmpeg decodes the independent substream only (its 2 channels); Core Audio's output is the reference for the four (macOS job).",
-   "ffprobe_fields": "FFmpeg reports the independent substream's channels.",
    "ffprobe_bitrate": "FFmpeg gives no bitrate for frames it cannot decode.",
    "skip_insertion": "The check rewrites E-AC-3 frames with skip fields."
   }

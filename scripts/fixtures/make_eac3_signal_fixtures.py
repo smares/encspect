@@ -449,9 +449,9 @@ def manifest(name, data):
             "streams": [{"codec": "E-AC-3", "sample_rate": 48000, "channels": 4, "channel_mode": "2/0", "channel_layout": ["front left", "front right", "back left", "back right"],
                          "samples": 1536 * len(independent), "is_vbr": False}],
             "fields": {}, "findings": [],
-            "crosscheck": {"ffprobe": True, "ffprobe_fields": "channels", "ffprobe_bitrate": False, "decode": False, "skip_insertion": False,
+            "crosscheck": {"ffprobe": True, "ffprobe_bitrate": False, "decode": False, "skip_insertion": False,
                            "skip": {"decode": "FFmpeg decodes the independent substream only (its 2 channels); Core Audio's output is the reference for the four (macOS job).",
-                                    "ffprobe_fields": "FFmpeg reports the independent substream's channels.", "ffprobe_bitrate": "FFmpeg gives no bitrate for frames it cannot decode.",
+                                    "ffprobe_bitrate": "FFmpeg gives no bitrate for frames it cannot decode.",
                                     "skip_insertion": "The check rewrites E-AC-3 frames with skip fields."}},
         }
     return {

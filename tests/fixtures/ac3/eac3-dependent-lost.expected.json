@@ -132,7 +132,8 @@
   "skip_insertion": false,
   "skip": {
    "ffprobe": "Hand-built variant; ffmpeg reads independent substream 0 only.",
-   "decode": "ffmpeg decodes independent substream 0 only, which is not what the variant tests."
+   "decode": "ffmpeg decodes independent substream 0 only, which is not what the variant tests.",
+   "skip_insertion": "The variants test the analyzer's handling of dependent frames, which ffmpeg does not decode, so a change at a mantissa position would not show."
   }
  }
 }

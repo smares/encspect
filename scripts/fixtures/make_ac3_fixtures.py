@@ -420,7 +420,8 @@ def build():
     count = min(len(replacing), len(ecpl_independent))
     both_channels = [m.FL, m.FR]
     variant_crosscheck = {"ffprobe": False, "decode": False, "skip_insertion": False,
-                          "skip": {"ffprobe": "Hand-built variant; ffmpeg reads independent substream 0 only.", "decode": "ffmpeg decodes independent substream 0 only, which is not what the variant tests."}}
+                          "skip": {"ffprobe": "Hand-built variant; ffmpeg reads independent substream 0 only.", "decode": "ffmpeg decodes independent substream 0 only, which is not what the variant tests.",
+                                   "skip_insertion": "The variants test the analyzer's handling of dependent frames, which ffmpeg does not decode, so a change at a mantissa position would not show."}}
     data = b"".join(ecpl_independent[i] + replacing[i] for i in range(count))
     fixture("eac3-splice-ecpl", ".eac3", "Enhanced coupling independent frames with dependent frames whose channel map (0xA000) replaces both channels: the output is the dependent frames' alone, "
             "the held last block of enhanced coupling included (A/52 Annex E 3.8.2).", data, frames_of(data), [stream("E-AC-3", 48000, 2, 0, count * 1536, layout=both_channels)], [],
