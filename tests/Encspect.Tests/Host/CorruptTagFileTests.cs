@@ -29,7 +29,7 @@ public class CorruptLameFileTests
 // The other fixtures in tests/fixtures/mpeg-audio.
 public class CorruptMpegFileTests
 {
-    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("mpeg-audio/", StringComparison.Ordinal) && n.IndexOf('/', 5) < 0 && !n.StartsWith("mpeg-audio/external-lame-", StringComparison.Ordinal));
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("mpeg-audio/", StringComparison.Ordinal) && n.IndexOf('/', "mpeg-audio/".Length) < 0 && !n.StartsWith("mpeg-audio/external-lame-", StringComparison.Ordinal));
 
     [Theory]
     [MemberData(nameof(Names))]
