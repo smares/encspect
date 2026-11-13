@@ -980,7 +980,7 @@ internal static class AhtTables
         ],
     ];
 
-    // Table E.2.12: the attenuation of the notch filter by spxattencod (rows) and distance from its centre (columns 0 to 2).
+    // Table E.2.12: the attenuation of the notch filter by spxattencod (rows) and distance from its center (columns 0 to 2).
     public static readonly float[][] Attenuation =
     [
         [0.954841604f, 0.911722489f, 0.870550563f],

@@ -694,13 +694,14 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
         }
     }
 
-    private static void Notch(float[] tc, int centre, float[] attenuation)
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void Notch(float[] tc, int center, float[] attenuation)
     {
-        tc[centre - 2] *= attenuation[0];
-        tc[centre - 1] *= attenuation[1];
-        tc[centre] *= attenuation[2];
-        tc[centre + 1] *= attenuation[1];
-        tc[centre + 2] *= attenuation[0];
+        tc[center - 2] *= attenuation[0];
+        tc[center - 1] *= attenuation[1];
+        tc[center] *= attenuation[2];
+        tc[center + 1] *= attenuation[1];
+        tc[center + 2] *= attenuation[0];
     }
 
     // A value of zero mean and unit variance, uniform between -sqrt(3) and sqrt(3), from a linear congruential generator whose top 24 bits are the integer part (Annex E 3.6.4.2).

@@ -240,10 +240,10 @@ public class ObjectAudioTests
     }
 
     [Fact]
-    public void FramesWhoseBlocksAreNotReadStillShowTheirContainerAndAgreeWithDec3()
+    public void FramesWithTheAdaptiveHybridTransformShowTheirContainerAndAgreeWithDec3()
     {
         Report report = Analyze("joc-aht.mp4");
-        Assert.Equal(["ac3.aht-not-read"], report.Findings.Select(f => f.Code));
+        Assert.Empty(report.Findings);
         Node statistics = Assert.Single(report.Streams).Nodes[0].Children.Single(c => c.Name == "Statistics");
         Assert.Equal("4 containers", statistics.Children.Single(c => c.Name == "EMDF Containers").Value?.ToString());
         Assert.Equal("4 frames", statistics.Children.Single(c => c.Name == "Frames With Object Audio").Value?.ToString());

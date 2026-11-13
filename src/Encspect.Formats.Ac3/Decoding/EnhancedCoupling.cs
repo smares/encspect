@@ -74,6 +74,7 @@ internal sealed class EnhancedCoupling
     // Restarts the generator of the transients' angles, as after a gap.
     public void Reset() => _noise = 0x3C6EF35F;
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static float Uniform(ref uint state)
     {
         state = unchecked((state * 1664525u) + 1013904223u);
@@ -205,6 +206,7 @@ internal sealed class EnhancedCoupling
     private readonly int[] _bandIndexOfBin = new int[256];
 
     // Band angles to bin angles by linear interpolation between the bands' centers (3.5.5.3), wrapped to -1 to 1 (pi radians) as the pseudo code does.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void Interpolate(int bands, int start)
     {
         if (bands < 2)
@@ -287,6 +289,7 @@ internal sealed class EnhancedCoupling
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static float Wrap(float value)
     {
         while (value > 1.0f)

@@ -88,7 +88,7 @@ def build(etsi):
             out.append("            " + ", ".join(str(signed(v)) for v in row) + ",")
         out.append("        ],")
     out += ["    ];", "",
-            "    // Table E.2.12: the attenuation of the notch filter by spxattencod (rows) and distance from its centre (columns 0 to 2).",
+            "    // Table E.2.12: the attenuation of the notch filter by spxattencod (rows) and distance from its center (columns 0 to 2).",
             "    public static readonly float[][] Attenuation =", "    ["]
     out += [f"        [{', '.join(a + 'f' for a in attenuation[i])}]," for i in range(32)]
     out += ["    ];", "",

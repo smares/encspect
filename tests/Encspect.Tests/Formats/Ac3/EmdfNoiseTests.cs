@@ -3,8 +3,8 @@ using Encspect.Host;
 
 namespace Encspect.Tests;
 
-// Random bytes after the audio blocks (the unread bits of AHT frames, the unused bits and auxiliary data
-// of plain ones) with the EMDF sync word planted at random bit positions are no container: the structural
+// Random bytes after the audio blocks (the unused bits and auxiliary data of frames with the adaptive hybrid
+// transform and of plain ones) with the EMDF sync word planted at random bit positions are no container: the structural
 // test accepts nothing here, so no object audio and no finding about a container is reported. Frames are
 // the fixtures' own (ac3/aht.eac3, ac3/frame-exponents.eac3) with their tails replaced and the CRC written
 // again.
@@ -13,13 +13,13 @@ public class EmdfNoiseTests
     private const int KeepBytes = 64;
 
     [Theory]
-    [InlineData("aht.eac3", 1, true)]
-    [InlineData("aht.eac3", 2, true)]
-    [InlineData("aht.eac3", 3, true)]
-    [InlineData("frame-exponents.eac3", 4, false)]
-    [InlineData("frame-exponents.eac3", 5, false)]
-    [InlineData("frame-exponents.eac3", 6, false)]
-    public void RandomBytesWithPlantedSyncWordsAreNoContainers(string template, int seed, bool aht)
+    [InlineData("aht.eac3", 1)]
+    [InlineData("aht.eac3", 2)]
+    [InlineData("aht.eac3", 3)]
+    [InlineData("frame-exponents.eac3", 4)]
+    [InlineData("frame-exponents.eac3", 5)]
+    [InlineData("frame-exponents.eac3", 6)]
+    public void RandomBytesWithPlantedSyncWordsAreNoContainers(string template, int seed)
     {
         byte[] data = Noise(Path.Combine(Fixtures.FixtureDirectory, "ac3", template), new Random(seed), 2000);
         Report report = Analyzer.CreateDefault().Analyze("noise.eac3", new MemoryStream(data));
@@ -27,8 +27,7 @@ public class EmdfNoiseTests
         StreamInfo stream = Assert.Single(report.Streams);
         Assert.False(stream.HasObjectAudio);
         Assert.Null(stream.JocObjectCount);
-        Assert.All(report.Findings, f => Assert.Equal("ac3.aht-not-read", f.Code));
-        Assert.Equal(aht, report.Findings.Count > 0);
+        Assert.Empty(report.Findings);
         Node statistics = stream.Nodes[0].Children.Single(c => c.Name == "Statistics");
         Assert.DoesNotContain(statistics.Children, c => c.Name is "EMDF Containers" or "Frames With Object Audio");
     }
