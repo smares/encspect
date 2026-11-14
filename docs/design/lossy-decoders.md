@@ -754,6 +754,18 @@ Item 8 of 0.3 in [plan.md](../plan.md#03-lossy-formats-measured): the decoder of
 - **Conformance streams:** `conformance_mpeg_pcm.py` compares the 14 streams of the 22 that have no extension bitstream with their dematrixed reference (`testNN_l.pcm`, `_r`, `_c`, `_ls`, `_rs`, `_lfe`, 16-bit samples), with mctoolamed run as a black box as a second column. The other eight have an extension bitstream (test07, 08, 10, 12, 13, 17, 20 and 21): their base channels are checked as far as the reference allows.
 - **Fixtures:** the crafted and encoder-written fixtures of `layer2/mc-*` and `layer2/external-mctoolame-*` and `external-philips-*` gain their decode reports; the PCM of one is pinned in `DecoderDeterminismTests`.
 
+### As built
+
+What the pull request did differently from the design above, or added to it:
+
+- **Feeding:** `DecodeDeferred` (`MpegAudioParser.Decoding.cs`) feeds every stream of MPEG-1 Layer II, mono and plain stereo ones too, after `DecideMultichannel`, from the frame records and the file. Their `.decode.json` goldens are unchanged but for the multichannel fixtures'.
+- **The plan** (`MultichannelPlan`, passed as `DecodeSetup.Shared`) exists where `DecideMultichannel` accepted the file, the stream's configuration does not change and no accepted frame sets `ext_bit_stream_present`.
+- **De-normalization applies to the base channels of a 2/0 stream too** (with or without an LFE): the factor table of 2.5.3.2.5 names no configuration, and mctoolamed does so; a second stereo program is not scaled.
+- **The LFE** is scaled by 2, which is what the reference output of test01 holds; the text gives no output scale.
+- **What it unlocks:** the measurements of every channel of a surround stream (the combined figures leave out the LFE as they do for other formats). No new entropy-pass figure or coding graph: the transmission channels' statistics (bits per transmission channel, the use of dynamic crosstalk and prediction) are not built and wait for the lead's decision, the same way as the gap items of the multichannel formats.
+- **Cost:** `DecoderWorkTests` holds the 5.1 fixture `external-mctoolame-5-1-music.mp2` within twice the FLAC reference's time per unit at 8 units of `MultichannelStageUnits`.
+- **Checked against:** the 14 conformance streams without an extension bitstream (within 1 LSB, `test35` within 7 x 10^-7 of full scale), mctoolamed on the 46 multichannel fixtures that decode to more than two channels and on 54 variants with other dematrix procedures and channel allocations ([development.md](../development.md#mpeg-audio-decoding)).
+
 ## As built: Vorbis
 
 What the Vorbis pull request (rollout step 2) did differently from the text above, or added to it. The decoder is `src/Encspect.Formats.Vorbis/Decoding`; the entropy pass (`PacketWalker`, `SetupModel`, `Codebook`, `PacketBits`) is in the parser's own namespace.
