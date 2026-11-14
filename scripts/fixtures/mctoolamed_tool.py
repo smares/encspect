@@ -80,3 +80,18 @@ def decode_all(binary, path, extension=None):
     multilingual = re.search(r"There are (\d+) multilingual channels", output)
     shutil.rmtree(work, ignore_errors=True)
     return output.count("ERROR in MC-CRC"), silent, len(channels), int(multilingual.group(1)) if multilingual else 0
+
+
+def decode_pcm(binary, path, extension=None):
+    """Decodes path as decode_all does and returns the samples it wrote: one bytes object per channel file, in the order of the files (little-endian 16-bit samples, without
+    the 44-byte header), and the low frequency channel's, or None where it writes none. A black box: only its output files are read."""
+    work = pathlib.Path(tempfile.mkdtemp(prefix="mctoolamed-run-"))
+    (work / "stream.mp2").write_bytes(pathlib.Path(path).read_bytes())
+    if extension is not None:
+        (work / "stream.ext").write_bytes(pathlib.Path(extension).read_bytes())
+    subprocess.run([str(binary), "-a", "stream", "stream.dec"], cwd=work, capture_output=True, text=True, timeout=300)
+    files = sorted(work.glob("channel*.wav"), key=lambda f: int(re.search(r"(\d+)", f.stem).group(1)))
+    channels = [f.read_bytes()[44:] for f in files]
+    lfe = next((f.read_bytes() for f in sorted(work.glob("*_lfe.dec"))), None)
+    shutil.rmtree(work, ignore_errors=True)
+    return channels, lfe

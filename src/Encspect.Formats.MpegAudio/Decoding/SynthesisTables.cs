@@ -6,7 +6,7 @@ namespace Encspect.Formats.MpegAudio.Decoding;
 // The window and transform constants of the Layer III and polyphase stages, exactly as minimp3 states them.
 internal static class SynthesisTables
 {
-    // The integer coefficients of the polyphase synthesis window (240 entries, ISO/IEC 11172-3 Table 3-B.3 scaled by 2^16 and folded as minimp3 lays them out).
+    // The integer coefficients of the polyphase synthesis window (240 entries, ISO/IEC 11172-3 Table B.3 scaled by 2^16 and folded as minimp3 lays them out).
     internal static readonly int[] Window =
     [
         -1, 26, -31, 208, 218, 401, -519, 2063, 2000, 4788, -5517, 7134, 5959, 35640, -39336, 74992, -1, 24, -35, 202, 222, 347, -581, 2080,
@@ -21,7 +21,7 @@ internal static class SynthesisTables
         402, 545, -9416, 9916, -7154, 12980, -61289, 66494, -5, 6, -97, 111, 163, -127, -1498, 1634, 185, 288, -9585, 9838, -8540, 11455, -62684, 65290,
     ];
 
-    // The antialias butterfly coefficients: cs[0..7], then ca[0..7] (ISO/IEC 11172-3 Table 3-B.9).
+    // The antialias butterfly coefficients: cs[0..7], then ca[0..7] (ISO/IEC 11172-3 Table B.9).
     internal static readonly float[] Antialias =
     [
         0.85749293f, 0.88174200f, 0.94962865f, 0.98331459f, 0.99551782f, 0.99916056f, 0.99989920f, 0.99999316f,

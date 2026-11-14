@@ -171,9 +171,10 @@ internal readonly record struct MpegHeader(uint Raw)
         4 + (IsProtected ? 2 : 0) + (Layer == 2 ? (Layer2AudioData.AllocationBits(this) + 7) / 8 : CrcCoverage);
 
     // Bytes after the CRC that the CRC covers, or -1 when not known here. Layer III: the side
-    // information (ISO/IEC 11172-3 2.4.1.7, 13818-3 2.4.1.7). Layer I: the bit allocation, 4 bits
-    // per subband and channel up to the intensity stereo bound and per subband after it
-    // (11172-3 2.4.2.3). Layer II needs the allocation tables and is not covered yet.
+    // information (ISO/IEC 11172-3 2.4.1.7 and Table B.5, 13818-3 2.4.2.4). Layer I: the bit allocation,
+    // 4 bits per subband and channel up to the intensity stereo bound and per subband after it
+    // (11172-3 2.4.2.5, 2.4.2.3 for the bound, Table B.5). Layer II depends on the allocation table and is
+    // computed from it (Layer2AudioData), so it is -1 here.
     public int CrcCoverage
     {
         get
@@ -198,8 +199,8 @@ internal readonly record struct MpegHeader(uint Raw)
         }
     }
 
-    // ISO/IEC 11172-3 table 3-B.2: Layer II bitrates that are only allowed with or without a
-    // single channel.
+    // ISO/IEC 11172-3 2.4.2.3, the table of Layer II bitrates and the modes allowed with them: some bitrates are only
+    // allowed with a single channel, others only without.
     public bool IsLayer2BitrateModeAllowed
     {
         get

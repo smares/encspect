@@ -2,10 +2,10 @@
 id: bitrate-modes
 title: CBR, VBR and ABR
 related: tta-stream, dts-extension-substream, wavpack-hybrid-mode, bit-reservoir, xing-header, lame-tag, padding, adts, musepack-subband-coding
-references: ISO/IEC 11172-3 2.4.2.3; LAME documentation; ISO/IEC 14496-3 1.A.3.2.1; ISO/IEC 14496-1 7.2.6.6; ETSI TS 102 114 5.4.2 Table 5-7
+references: ISO/IEC 11172-3 2.4.2.3, 2.4.3.1; LAME documentation; ISO/IEC 14496-3 1.A.3.2.1; ISO/IEC 14496-1 7.2.6.6; ETSI TS 102 114 5.4.2 Table 5-7
 ---
 
-Every MPEG audio frame states its own bitrate, so a stream can use one bitrate throughout or change it from frame to frame.
+Every MPEG audio frame states its own bitrate, so a stream can use one bitrate throughout or change it from frame to frame. ISO/IEC 11172-3 does not require a decoder to support a continuously variable bitrate in Layers I and II; Layer III supports it by switching the bitrate index.
 
 **CBR**, constant bitrate, uses the same bitrate in every frame. Frames have nearly the same size, the file's size grows evenly with time, and a player can find any point by simple arithmetic. In Layer III the [bit reservoir](bit-reservoir) still moves bits between frames, so the audio inside a CBR stream is not coded at a constant rate.
 

@@ -351,6 +351,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             ("layer3-free-format", "external-lame-free-format.mp3"),
             ("layer3-silent", "external-shine-silence.mp3"),
             ("layer2-stereo", "external-twolame-music.mp2"),
+            ("layer2-multichannel", "layer2/external-mctoolame-5-1-music.mp2"),
             ("layer1-stereo", "external-xing-layer1.mp1"),
         })
         {

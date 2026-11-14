@@ -2,7 +2,7 @@
 id: padding
 title: The padding bit
 related: frame-header, bitrate-modes
-references: ISO/IEC 11172-3 2.4.2.3
+references: ISO/IEC 11172-3 2.4.2.3, 2.4.3.1; ISO/IEC 13818-3 2.4.3.2
 ---
 
 **The problem.** A frame's length in bytes follows from its bitrate and the sample rate. At 44.1 kHz the result is not a whole number: a Layer III frame at 128 kbps would need 417.96 bytes. Frames can only have whole bytes.
@@ -11,4 +11,4 @@ references: ISO/IEC 11172-3 2.4.2.3
 
 **What you see.** HasPadding in each frame header, UsesPadding in the statistics, and, under each bitrate of the bitrate distribution, how many frames have each length with and without padding. A CBR file at 44.1 kHz normally mixes padded and unpadded frames. Some encoders pad differently, which the frame sizes show.
 
-The padding slot is part of the frame; it usually holds audio data like the rest of the frame, not filler.
+The padding slot is part of the frame: ISO/IEC 11172-3 counts it with the bits available to the frame, so in Layers I and II it is ancillary data unless the encoder fills it, and in Layer III it is one more byte for the frame's data.

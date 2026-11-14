@@ -114,6 +114,39 @@ public sealed partial class MpegAudioParser
             region.Nodes.ChannelBitShare = share;
         }
 
+        if (tally.McFrames > 0)
+        {
+            int mcFrames = tally.McFrames;
+            Node transmission = node.Add("Transmission Channel Coding", start, length, NodeValue.Integer(mcFrames, "frames", "frame"), Explain.TransmissionChannelCoding, Topics.Multichannel);
+            Node Use(string name, int[] uses, long groups, int per, string description)
+            {
+                Node use = transmission.Add(name, start, length, Share($"{Number((int)groups)} of {Number(mcFrames * per)} subband groups", groups, (long)mcFrames * per), description, Topics.Multichannel);
+                for (int category = 0; category < UseCategories.Length; category++)
+                {
+                    if (uses[category] > 0)
+                    {
+                        use.Add(UseCategories[category].Name, start, length, Share(FramesText(uses[category]), uses[category], mcFrames), UseCategories[category].Description);
+                    }
+                }
+
+                return use;
+            }
+
+            region.Nodes.DynamicCrosstalk = Use("Dynamic Crosstalk", tally.CrosstalkUse, tally.CrosstalkGroups, FrameFigures.McFigure.CrosstalkGroupCount, Explain.TransmissionCrosstalk);
+            region.Nodes.Prediction = Use("Prediction", tally.PredictionUse, tally.PredictionGroups, FrameFigures.McFigure.PredictionGroupCount, Explain.TransmissionPrediction);
+            Node bits = transmission.Add("Bits per Transmission Channel", start, length, null, Explain.TransmissionBits, Topics.Multichannel);
+            for (int i = 0; i < tally.HasChannel.Length; i++)
+            {
+                if (tally.HasChannel[i])
+                {
+                    bits.Add(TransmissionChannelNames[i], start, length, NodeValue.Decimal(RoundHalfEven(tally.ChannelBits[i] * 1000, tally.McBits) / 10.0, 1, "%"), Explain.TransmissionChannelBits[i]);
+                }
+            }
+
+            region.Nodes.TransmissionChannelCoding = transmission;
+            region.Nodes.TransmissionChannelBits = bits;
+        }
+
         // Layer III's ancillary segments are counted by AncillaryScan (R1, R5), Layers I and II by
         // the bytes after the audio data (L1); both match mp3guessenc's output.
         AncillaryScan? scan = region.Ancillary;
@@ -262,7 +295,7 @@ public sealed partial class MpegAudioParser
             }
             else if (header.Layer != 3 && audioEnd <= length * 8)
             {
-                // The padding slot is left out by convention (L1); ISO/IEC 11172-3 counts it as ancillary data.
+                // The padding slot is left out by convention (L1); ISO/IEC 11172-3 counts it as ancillary data (2.4.2.8).
                 int bytes = (length * 8 - audioEnd) / 8 - (header.Padding == 1 ? (header.Layer == 1 ? 4 : 1) : 0);
                 if (bytes > 0)
                 {
@@ -280,8 +313,44 @@ public sealed partial class MpegAudioParser
 
         public int HighestIntensityBound { get; private set; } = -1;
 
+        // Frames with a multichannel figure, those that use dynamic crosstalk and prediction and the subband groups that do, and the bits of each transmission channel.
+        public int McFrames { get; private set; }
+
+        // Frames by CodingCategories.UseCategories.
+        public int[] CrosstalkUse { get; } = new int[3];
+
+        public int[] PredictionUse { get; } = new int[3];
+
+        public long CrosstalkGroups { get; private set; }
+
+        public long PredictionGroups { get; private set; }
+
+        public long[] ChannelBits { get; } = new long[FrameFigures.McFigure.Channels];
+
+        public bool[] HasChannel { get; } = new bool[FrameFigures.McFigure.Channels];
+
+        public long McBits { get; private set; }
+
         public void AddFigure(FrameFigures.Figure figure)
         {
+            if (figure.Multichannel is { } mc)
+            {
+                McFrames++;
+                CrosstalkUse[UseOf(mc.CrosstalkGroups, FrameFigures.McFigure.CrosstalkGroupCount)]++;
+                CrosstalkGroups += mc.CrosstalkGroups;
+                PredictionUse[UseOf(mc.PredictionGroups, FrameFigures.McFigure.PredictionGroupCount)]++;
+                PredictionGroups += mc.PredictionGroups;
+                McBits += mc.Total;
+                for (int i = 0; i < mc.Bits.Length; i++)
+                {
+                    if (mc.Bits[i] >= 0)
+                    {
+                        ChannelBits[i] += mc.Bits[i];
+                        HasChannel[i] = true;
+                    }
+                }
+            }
+
             if (figure.HasIntensityBound)
             {
                 IntensityBounds++;

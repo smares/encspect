@@ -45,7 +45,7 @@ Status: approved by the project lead on 2026-11-08, with every recommendation of
 
 | Decoder (codec ID) | Covers | Leaves out, with the reason |
 | --- | --- | --- |
-| `mpeg-audio` | MPEG-1, MPEG-2 and MPEG-2.5, Layers I, II and III, free format | the MPEG-2 multichannel extension: the base channels (the MPEG-1 compatible stereo) are decoded; the rest waits for item 15 of 0.4 in [plan.md](../plan.md#04-free-decoders-and-routes-complete) ([mpeg-clean-room-rules.md](mpeg-clean-room-rules.md)) |
+| `mpeg-audio` | MPEG-1, MPEG-2 and MPEG-2.5, Layers I, II and III, free format | the multilingual channels of the MPEG-2 multichannel extension, and its additional channels where an extension bitstream, a separate file the analysis never sees, holds part of them (the decoder then outputs the base stereo); the extension is otherwise decoded in full ([MPEG-2 multichannel](#mpeg-2-multichannel)) |
 | `vorbis` | Vorbis I: floors 0 and 1, residues 0 to 2 | nothing |
 | `opus` | SILK, CELT and hybrid, mono, stereo and the multistream mappings of RFC 7845, output at 48 kHz | packet loss concealment and forward error correction (the lead's rule); the transitions of decision 6 |
 | `ac-3` and `e-ac-3` | step 1: AC-3 (A/52); step 2: E-AC-3 (spectral extension, adaptive hybrid transform, enhanced coupling; the independent substreams, [as built](#as-built-e-ac-3)) | E-AC-3 frames at a reduced sample rate (fscod2) and AC-3 with bsid 9 and 10 (half and quarter rate): the parser notes that A/52 does not specify their bit allocation (`Ac3Analysis.cs` line 262), and no free source for it is known; the decoder-side gains of decision 9 |
@@ -87,7 +87,7 @@ Each license was read from its own text on 2026-11-07, as noted. This is a readi
 
 | Format | Specification | Permissive reference code | License read | Path |
 | --- | --- | --- | --- | --- |
-| MPEG audio | ISO/IEC 11172-3 and 13818-3: not free; at hand since 2026-11-14 (item 15 of 0.4 in [plan.md](../plan.md#04-free-decoders-and-routes-complete)) | minimp3 at `ea99364f`, vendored in `third_party/minimp3` (Layers I to III, float) | CC0 1.0 (`third_party/minimp3/LICENSE`) | follow minimp3 closely; the Layer III Huffman tables (Annex B) and the band tables come from it as format data |
+| MPEG audio | ISO/IEC 11172-3 and 13818-3: not free; at hand since 2026-11-14 (item 8 of 0.3 in [plan.md](../plan.md#03-lossy-formats-measured)) | minimp3 at `ea99364f`, vendored in `third_party/minimp3` (Layers I to III, float) | CC0 1.0 (`third_party/minimp3/LICENSE`) | follow minimp3 closely; the Layer III Huffman tables (Annex B) and the band tables come from it as format data |
 | Vorbis | the Vorbis I specification, free | libvorbis 1.3.7 | BSD-3-Clause (Ubuntu's `libvorbis0a` copyright file) | the specification first, libvorbis for what it leaves open |
 | Opus | RFC 6716, whose normative part is the reference decoder of Appendix A, updated by RFC 8251 | the RFC's code; libopus 1.5.2 | the RFC's code: Simplified BSD (the RFC's copyright notice); libopus 1.5.2's `COPYING`: BSD-3-Clause (release tarball, SHA-256 `65c1d2f7…`) | follow the RFC's decoder as RFC 8251 updates it, with libopus 1.5.2 where the RFC calls its repository current |
 | AC-3, E-AC-3 | ATSC A/52:2018 and ETSI TS 102 366, both free | none needed; liba52 (GPL-2+, Ubuntu's copyright file) is not read | | the specifications alone |
@@ -215,7 +215,7 @@ The session lends the parser its sample buffers ([decoders.md](decoders.md#the-s
   - The integer Speex decoder writes 16-bit `Integer` blocks.
 - **Scale:** full scale is ±1.0. A decoder never clips, saturates or dithers, so the measurements count overs ("Samples Over Full Scale").
 - **Rate:** the stream's output rate as the parser reports it: twice the core rate for HE-AAC, 48 kHz for Opus whatever the header's input rate, the core rate for DTS.
-- **Channels:** every coded channel in the format's order, with the parser's `ChannelLayout`, and no downmix. MPEG-2 Layer II multichannel streams output their two base channels, the MPEG-1 compatible stereo, and the measurement's reason says so.
+- **Channels:** every coded channel in the format's order, with the parser's `ChannelLayout`, and no downmix. MPEG-2 Layer II multichannel streams output the configuration's channels, left, right, center, the surround channels or the second stereo program, then the LFE held for 96 samples; a stream whose extension bitstream is a separate file outputs its two base channels, the MPEG-1 compatible stereo, and the measurement's reason says so.
 - **Channel changes inside a stream:** the decoder outputs the stream's channel count. A mono frame goes to both channels and a stereo frame in a mono stream is averaged, as RFC 6716 section 2.1.2 describes for Opus.
   - Opus's units may differ from the stream's channel count by design.
   - MPEG streams split only on version, layer, sample rate and free format (`MpegAudioParser.Streams.cs`), so a joined recording can mix channel modes. Decision 13 applies the Opus rule there.
@@ -317,9 +317,9 @@ The `--measure` goldens compare figures byte for byte on all six CI platforms an
 **MPEG's material, counted** (`tests/conformance/mpeg2-audio.json`, and ISO's site as listed on 2026-11-07):
 
 - The 35 ISO/IEC 13818-4 streams are 22 MPEG-1 Layer II streams with the multichannel extension, 10 MPEG-2 Layer II, one each of MPEG-1 Layer I, MPEG-1 Layer III and MPEG-2 Layer I. Their reference output is 16-bit PCM per channel (`test01_l.pcm`: 66,816 bytes, 29 frames of 1,152 samples of 2 bytes).
-- **The 22 multichannel streams are left out of the comparison.** Their reference is the dematrixed L, R, C, Ls, Rs and LFE (`test01.txt`: matrix 3, 3/2), while the decoder outputs the base channels. Rebuilding those from the reference channels needs 13818-3's matrix coefficients, which come with the multichannel decoder (item 15 of 0.4 in [plan.md](../plan.md#04-free-decoders-and-routes-complete)).
+- **The 22 multichannel streams:** their reference is the dematrixed L, R, C, Ls, Rs and LFE (`test01.txt`: matrix 3, 3/2). The 14 without an extension bitstream are compared with it channel by channel, mctoolamed as a second column; the other eight (test07, 08, 10, 12, 13, 17, 20 and 21) keep part of their channels in a separate extension file, so only mctoolamed, given both files, is compared.
 - **`test22`, the MPEG-1 Layer I stream with an extension, is left out too:** its archive holds only the dematrixed channels, not the base stereo.
-- **So the conformance comparison covers 12 streams:** 10 MPEG-2 Layer II, the MPEG-2 Layer I stream and the single MPEG-1 Layer III stream with an extension (`test23`, whose base stereo is `test23.pcm`).
+- **So the conformance comparison covers 26 streams:** the 14 multichannel streams above, 10 MPEG-2 Layer II, the MPEG-2 Layer I stream and the single MPEG-1 Layer III stream with an extension (`test23`, whose base stereo is `test23.pcm`).
 - **ISO/IEC 14496-26's DVD1** holds 37 Layer III streams (`compressedMpeg12/add-opt/l3_*.mpg`), whose names suggest MPEG-1, MPEG-2 and MPEG-2.5 (**unverified**). The folder is informative by its `README_audio.txt`, and no Layer III reference output was found in DVD1's `referencesWav` (DVD2 and DVD3 were not searched).
 - **References for MPEG-2 and MPEG-2.5 Layer III,** and for Layer III beyond the one stream:
   - minimp3 with float output: the decoder follows it closely, so it catches porting errors but not an error the two share;
@@ -713,6 +713,58 @@ What the MPEG audio pull request (rollout step 1) did differently from the text 
 - **Cost, measured** ([development.md](../development.md#mpeg-audio-decoding)): the structure pass with the entropy pass is 1.35 times `origin/main`'s on a 300 s MP3 of pink noise at 128 kbps (the bound is 1.5; the first version was 1.9 to 2.4 times); decoding is about 1.5 to 2 times minimp3's tool, inside 2.5. The weights are 22 units a sample plus 41 (Layer III) or 29 (Layers I and II); `DecoderWorkTests` gives 0.55 to 1.17 against the FLAC reference's time per unit, so they are generous. The declared 2,048 units a byte holds for the smallest Layer III frames (about 500 units a byte in MPEG-2.5 at 8 kHz) and not for tiny free-format frames, which the 2^35 floor covers for hours. Memory: 200,000 frames of silence hold nothing per frame.
 - **The intensity stereo bound** (the 0.3 follow-up, built): "Intensity Stereo Bound" in Hz for all layers, from the walk for Layer III ([coding-graphs.md](coding-graphs.md)).
 - **Not built:** the inverse transform of an all-zero spectrum is not skipped, so silence is charged in full.
+
+## MPEG-2 multichannel
+
+Item 8 of 0.3 in [plan.md](../plan.md#03-lossy-formats-measured): the decoder of the MPEG-2 multichannel extension of Layer II (ISO/IEC 13818-3 2.5), written from the standard's text (2.5.1.12 to 2.5.1.17, 2.5.2.12 to 2.5.2.18 and 2.5.3.2), the rules of [mpeg-clean-room-rules.md](mpeg-clean-room-rules.md) and the conformance streams of ISO/IEC 13818-4. It adds to the Layer II decoder; nothing of Layers I and III changes.
+
+### Scope
+
+- **Decoded:** a Layer II stream of MPEG-1 whose frames carry the extension in their ancillary data and no extension bitstream. The output is the configuration's channels in the order the parser reports (`Layer2Multichannel.Layout`): left and right, the center, the surround channels or the two channels of a second stereo program, then the LFE.
+- **Not decoded, the base channels stay:**
+  - a stream whose frames set `ext_bit_stream_present`: the rest of its multichannel data is in a separate file the analysis never sees (13818-3 2.5.1.12.3), so the decoder outputs the two base channels as before and the measurement says that only those were measured;
+  - the multilingual channels (2.5.1.18): their data follows the multichannel data, and no stream without an extension bitstream holds any. They are read as far as the CRC needs and counted apart, as the parser does;
+  - Layers I and III with the extension (test22 and test23): the parser does not read them yet.
+- **A frame that cannot be decoded** (its multichannel CRC fails, its side information or samples run past the frame, its configuration differs from the stream's) is handed unreadable: it counts as not decoded, the next frame follows a gap, and the parser has reported the cause already.
+
+### Where the decision is made
+
+- The parser knows that a file carries the extension only after every frame is read (`DecideMultichannel`), and the decoder's channel count is fixed when it starts. So the frames of an MPEG-1 Layer II stream that is not mono are fed to the decoder after that decision, from the frame records and the file, in the order and with the gap marks the frame loop used to give them. Other streams are fed as before.
+- The decision gives the session its plan: the speakers and the configuration, or none, which is the stereo decoding as it was.
+
+### Reconstruction, per frame
+
+1. **Base channels** T0 and T1: as in the Layer II decoder, scaled subband samples.
+2. **Additional channels** T2 to T4: the allocation, scfsi and scalefactors the side information gave, and the sample codes read by the parser into the lent buffers. A channel that dynamic crosstalk leaves out takes the quantized, unscaled samples of its source (the channel `Layer2Multichannel` resolved for the allocation) and its own scalefactors (2.5.3.2.1.2).
+3. **Prediction** (2.5.3.2.1.3): for each subband group of 0 to 7 with `mc_prediction` set, a channel whose samples are transmitted alone adds to its samples the sum of the predictors over T0 and T1, with coefficients (`pred_coef` - 127) / 32, up to three taps at `delay_comp` + 0 to 2 subband samples back. The last nine scaled samples of T0 and T1 in subbands 0 to 7 are kept from frame to frame.
+4. **Dematrixing** (2.5.3.2.1.1): per subband group, the equations of its `tc_allocation` for the configuration and `dematrix_procedure` (0 and 1 share them; 2 adds the phase-shifted surround terms, whose phase shift the standard leaves to the reproduction; 3 needs none). They are held as the standard's statements, in its order of evaluation, and a test checks that they invert the encoder's matrix.
+5. **De-normalization** (2.5.3.2.5): the factors of the standard's table per procedure and channel. A second stereo program is neither dematrixed nor de-normalized.
+6. **LFE** (2.5.3.2.4): twelve samples a frame at 1/96 of the sample rate, requantized as Layer I without grouping, with the scalefactor of `lf_scalefactor`. The decoder outputs them at the stream's rate by holding each for 96 samples, which needs no filter and can be undone exactly; the 125 Hz low-pass the standard recommends for reproduction is not applied.
+7. **Synthesis:** the polyphase filter bank per output channel, in pairs, each pair with its own history.
+
+### Rules it follows
+
+- **Determinism:** the lossy-decoder rules of [CLAUDE.md](../../CLAUDE.md). The matrices are statements over floats in a fixed order; the prediction sums its taps in tap order, T0 before T1; the constants come from `Math.Sqrt`; every kernel has the aggressive-optimization attribute.
+- **Work units:** the frame's charge is that of the Layer II decoder for every output channel, plus 8 units per sample for each output channel (copies, prediction, dematrixing and de-normalization), charged before the frame is decoded. `DecoderWorkTests` holds it to the usual bound; the weight is an estimate until measured.
+- **Memory:** the history of the filter banks (one per pair of channels) and nine samples of T0 and T1, whatever the stream's length.
+- **Checksums:** the multichannel CRC covers side information only, so the decoder declares nothing new; the parser's frame CRC-16 stays the stream's only checksum.
+
+### Verification
+
+- **Conformance streams:** `conformance_mpeg_pcm.py` compares the 14 streams of the 22 that have no extension bitstream with their dematrixed reference (`testNN_l.pcm`, `_r`, `_c`, `_ls`, `_rs`, `_lfe`, 16-bit samples), with mctoolamed run as a black box as a second column. The other eight have an extension bitstream (test07, 08, 10, 12, 13, 17, 20 and 21): their base channels are checked as far as the reference allows.
+- **Fixtures:** the crafted and encoder-written fixtures of `layer2/mc-*` and `layer2/external-mctoolame-*` and `external-philips-*` gain their decode reports; the PCM of one is pinned in `DecoderDeterminismTests`.
+
+### As built
+
+What the pull request did differently from the design above, or added to it:
+
+- **Feeding:** `DecodeDeferred` (`MpegAudioParser.Decoding.cs`) feeds every stream of MPEG-1 Layer II, mono and plain stereo ones too, after `DecideMultichannel`, from the frame records and the file. Their `.decode.json` goldens are unchanged but for the multichannel fixtures'.
+- **The plan** (`MultichannelPlan`, passed as `DecodeSetup.Shared`) exists where `DecideMultichannel` accepted the file, the stream's configuration does not change and no accepted frame sets `ext_bit_stream_present`.
+- **De-normalization applies to the base channels of a 2/0 stream too** (with or without an LFE): the factor table of 2.5.3.2.5 names no configuration, and mctoolamed does so; a second stereo program is not scaled.
+- **The LFE** is scaled by 2, which is what the reference output of test01 holds; the text gives no output scale.
+- **What it unlocks:** the measurements of every channel of a surround stream (the combined figures leave out the LFE as they do for other formats), and the transmission channel figures the lead decided on 2026-11-14: the "Transmission Channel Coding" tally ("Dynamic Crosstalk", "Prediction", "Bits per Transmission Channel"), the category series "Dynamic Crosstalk Use" and "Prediction Use" and the numeric series "Transmission Channel Bit Share T0" to "LFE" (%, `bitDistribution`). "Channel Bit Share" keeps its two-channel meaning ([coding-graphs.md](coding-graphs.md#as-built-the-mpeg-2-multichannel-extension-2026-11-14)). They are read from the extension's side information, so they exist for every frame whose multichannel CRC holds, with or without an extension bitstream.
+- **Cost:** `DecoderWorkTests` holds the 5.1 fixture `external-mctoolame-5-1-music.mp2` within twice the FLAC reference's time per unit at 8 units of `MultichannelStageUnits`.
+- **Checked against:** the 14 conformance streams without an extension bitstream (within 1 LSB, `test35` within 7 x 10^-7 of full scale), mctoolamed on the 46 multichannel fixtures that decode to more than two channels and on 54 variants with other dematrix procedures and channel allocations ([development.md](../development.md#mpeg-audio-decoding)).
 
 ## As built: Vorbis
 

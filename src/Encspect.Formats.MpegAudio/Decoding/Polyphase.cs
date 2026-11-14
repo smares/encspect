@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 
 namespace Encspect.Formats.MpegAudio.Decoding;
 
-// The polyphase synthesis filterbank (ISO/IEC 11172-3 2.4.3.2 and Annex C): a 32-point DCT-II over the subbands of each time slot, then the 512-tap window over the
+// The polyphase synthesis filterbank (ISO/IEC 11172-3 2.4.3.2.2, 2.4.3.3.5 and 2.4.3.4.10, Figure A.2 and Table B.3): a 32-point DCT-II over the subbands of each time slot, then the 512-tap window over the
 // last sixteen slots. It follows minimp3's mp3d_DCT_II and mp3d_synth (CC0 1.0, third_party/minimp3), whose window is the standard's scaled to integers and
 // whose output is full scale 32768, here scaled by 1 / 32768 to the sample range of +-1.0. Time slots go in pairs, two channels in four lanes, as minimp3 lays them out, so
 // the sums of every lane are the ones minimp3's vector code makes. The history is 15 rows of 64 floats.

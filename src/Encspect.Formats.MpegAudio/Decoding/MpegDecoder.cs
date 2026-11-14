@@ -31,6 +31,6 @@ public sealed class MpegDecoder : IDecoder
             throw new InvalidDataException("The stream's first frame header is not valid");
         }
 
-        return new FrameDecoder(context, header, context.Setup.Channels);
+        return new FrameDecoder(context, header, context.Setup.Channels, context.Setup.Shared as MultichannelPlan);
     }
 }

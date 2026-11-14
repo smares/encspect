@@ -2,7 +2,7 @@
 id: mpeg-layers
 title: Layers I, II and III
 related: subband-coding, filter-bank, huffman-coding, bit-reservoir, mpeg-versions
-references: ISO/IEC 11172-3 2.4; ISO/IEC 13818-3
+references: ISO/IEC 11172-3 2.4.1.5 to 2.4.1.7, 2.4.2.3; ISO/IEC 13818-3 2.4
 ---
 
 MPEG audio defines three layers, three codings of increasing complexity that share the frame header and the filterbank.

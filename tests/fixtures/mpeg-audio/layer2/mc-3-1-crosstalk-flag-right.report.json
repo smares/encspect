@@ -183,6 +183,78 @@
                   ]
                 },
                 {
+                  "name": "Transmission Channel Coding",
+                  "value": 6,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 6912,
+                  "children": [
+                    {
+                      "name": "Dynamic Crosstalk",
+                      "value": "72 of 72 subband groups (100.0%)",
+                      "offset": 0,
+                      "length": 6912,
+                      "children": [
+                        {
+                          "name": "In more than half of the subband groups",
+                          "value": "6 frames (100.0%)",
+                          "offset": 0,
+                          "length": 6912
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Prediction",
+                      "value": "0 of 48 subband groups (0.0%)",
+                      "offset": 0,
+                      "length": 6912,
+                      "children": [
+                        {
+                          "name": "In no subband group",
+                          "value": "6 frames (100.0%)",
+                          "offset": 0,
+                          "length": 6912
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Bits per Transmission Channel",
+                      "offset": 0,
+                      "length": 6912,
+                      "children": [
+                        {
+                          "name": "T0",
+                          "value": 52.5,
+                          "unit": "%",
+                          "offset": 0,
+                          "length": 6912
+                        },
+                        {
+                          "name": "T1",
+                          "value": 20.2,
+                          "unit": "%",
+                          "offset": 0,
+                          "length": 6912
+                        },
+                        {
+                          "name": "T2",
+                          "value": 17.9,
+                          "unit": "%",
+                          "offset": 0,
+                          "length": 6912
+                        },
+                        {
+                          "name": "T3",
+                          "value": 9.4,
+                          "unit": "%",
+                          "offset": 0,
+                          "length": 6912
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
                   "name": "Ancillary Data",
                   "value": 5257,
                   "unit": "bytes",
@@ -2009,17 +2081,7 @@
                           "offset": 284,
                           "length": 5,
                           "bitOffset": 0,
-                          "bitLength": 36,
-                          "children": [
-                            {
-                              "name": "Base Channel Source",
-                              "value": "Named by the flag",
-                              "offset": 284,
-                              "length": 5,
-                              "bitOffset": 0,
-                              "bitLength": 36
-                            }
-                          ]
+                          "bitLength": 36
                         }
                       ]
                     },
@@ -4432,17 +4494,7 @@
                           "offset": 1436,
                           "length": 6,
                           "bitOffset": 6,
-                          "bitLength": 36,
-                          "children": [
-                            {
-                              "name": "Base Channel Source",
-                              "value": "Named by the flag",
-                              "offset": 1436,
-                              "length": 6,
-                              "bitOffset": 6,
-                              "bitLength": 36
-                            }
-                          ]
+                          "bitLength": 36
                         }
                       ]
                     },
@@ -6983,17 +7035,7 @@
                           "offset": 2589,
                           "length": 5,
                           "bitOffset": 4,
-                          "bitLength": 36,
-                          "children": [
-                            {
-                              "name": "Base Channel Source",
-                              "value": "Named by the flag",
-                              "offset": 2589,
-                              "length": 5,
-                              "bitOffset": 4,
-                              "bitLength": 36
-                            }
-                          ]
+                          "bitLength": 36
                         }
                       ]
                     },
@@ -9395,17 +9437,7 @@
                           "offset": 3740,
                           "length": 6,
                           "bitOffset": 6,
-                          "bitLength": 36,
-                          "children": [
-                            {
-                              "name": "Base Channel Source",
-                              "value": "Named by the flag",
-                              "offset": 3740,
-                              "length": 6,
-                              "bitOffset": 6,
-                              "bitLength": 36
-                            }
-                          ]
+                          "bitLength": 36
                         }
                       ]
                     },
@@ -11792,17 +11824,7 @@
                           "offset": 4892,
                           "length": 5,
                           "bitOffset": 0,
-                          "bitLength": 36,
-                          "children": [
-                            {
-                              "name": "Base Channel Source",
-                              "value": "Named by the flag",
-                              "offset": 4892,
-                              "length": 5,
-                              "bitOffset": 0,
-                              "bitLength": 36
-                            }
-                          ]
+                          "bitLength": 36
                         }
                       ]
                     },
@@ -14334,17 +14356,7 @@
                           "offset": 6044,
                           "length": 6,
                           "bitOffset": 6,
-                          "bitLength": 36,
-                          "children": [
-                            {
-                              "name": "Base Channel Source",
-                              "value": "Named by the flag",
-                              "offset": 6044,
-                              "length": 6,
-                              "bitOffset": 6,
-                              "bitLength": 36
-                            }
-                          ]
+                          "bitLength": 36
                         }
                       ]
                     },
@@ -15091,6 +15103,114 @@
             ]
           },
           {
+            "name": "Transmission Channel Bit Share T0",
+            "unit": "%",
+            "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Transmission Channel Bit Share T0",
+            "declaredRange": {
+              "minimum": 0,
+              "maximum": 100
+            },
+            "x": [
+              0,
+              1152,
+              2304,
+              3456,
+              4608,
+              5760
+            ],
+            "values": [
+              49.1,
+              51.8,
+              54,
+              51.6,
+              54.4,
+              54.3
+            ]
+          },
+          {
+            "name": "Transmission Channel Bit Share T1",
+            "unit": "%",
+            "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Transmission Channel Bit Share T1",
+            "declaredRange": {
+              "minimum": 0,
+              "maximum": 100
+            },
+            "x": [
+              0,
+              1152,
+              2304,
+              3456,
+              4608,
+              5760
+            ],
+            "values": [
+              18.8,
+              20,
+              21.1,
+              20,
+              20.8,
+              21
+            ]
+          },
+          {
+            "name": "Transmission Channel Bit Share T2",
+            "unit": "%",
+            "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Transmission Channel Bit Share T2",
+            "declaredRange": {
+              "minimum": 0,
+              "maximum": 100
+            },
+            "x": [
+              0,
+              1152,
+              2304,
+              3456,
+              4608,
+              5760
+            ],
+            "values": [
+              23.3,
+              18.9,
+              15.3,
+              19.2,
+              15,
+              15
+            ]
+          },
+          {
+            "name": "Transmission Channel Bit Share T3",
+            "unit": "%",
+            "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Transmission Channel Bit Share T3",
+            "declaredRange": {
+              "minimum": 0,
+              "maximum": 100
+            },
+            "x": [
+              0,
+              1152,
+              2304,
+              3456,
+              4608,
+              5760
+            ],
+            "values": [
+              8.8,
+              9.3,
+              9.6,
+              9.2,
+              9.7,
+              9.7
+            ]
+          },
+          {
             "name": "Channel Bit Share",
             "unit": "%",
             "axis": "frameOffset",
@@ -15210,10 +15330,83 @@
             "seconds": [
               0
             ]
+          },
+          {
+            "name": "Dynamic Crosstalk Use",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "In no subband group",
+                "count": 0
+              },
+              {
+                "name": "In up to half of the subband groups",
+                "count": 0
+              },
+              {
+                "name": "In more than half of the subband groups",
+                "count": 6
+              }
+            ],
+            "total": 6,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                2,
+                6
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Prediction Use",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "In no subband group",
+                "count": 6
+              },
+              {
+                "name": "In up to half of the subband groups",
+                "count": 0
+              },
+              {
+                "name": "In more than half of the subband groups",
+                "count": 0
+              }
+            ],
+            "total": 6,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                0,
+                6
+              ]
+            ],
+            "seconds": [
+              0
+            ]
           }
         ]
       }
     ],
-    "findings": []
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "mpeg-audio.multichannel-reference-software-reading",
+        "message": "6 frames follow the reading of the ISO reference software, not ISO/IEC 13818-3 2.5.2.15: their multichannel CRC holds only where dyn_cross_LR names the base channel of every copied channel, the first at 0x0.",
+        "offset": 0,
+        "length": 1152,
+        "path": [
+          0,
+          1
+        ],
+        "count": 6
+      }
+    ]
   }
 ]

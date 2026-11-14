@@ -51,6 +51,19 @@ internal static class CodingCategories
         .. Enumerable.Range(0, 4).Select(e => new Category($"Bands {(e + 1) * 4} to 31", Explain.IntensityBound) { Topic = Topics.IntensityStereo }),
     ];
 
+    // The transmission channels of a multichannel frame in the order of McFigure.Bits.
+    public static readonly string[] TransmissionChannelNames = ["T0", "T1", "T2", "T3", "T4", "LFE"];
+
+    // The use of dynamic crosstalk and of prediction by a frame, by the share of its subband groups.
+    public static readonly Category[] UseCategories =
+    [
+        new("In no subband group", Explain.UseNone) { Topic = Topics.Multichannel },
+        new("In up to half of the subband groups", Explain.UseSome) { Topic = Topics.Multichannel },
+        new("In more than half of the subband groups", Explain.UseMost) { Topic = Topics.Multichannel },
+    ];
+
+    public static byte UseOf(int groups, int total) => groups == 0 ? (byte)0 : groups * 2 <= total ? (byte)1 : (byte)2;
+
     // By block kind: long, start, short, mixed, stop, reserved, as the tally lists them.
     public static readonly string[] BlockKindNames = ["Long", "Start", "Short", "Mixed", "Stop", "Reserved"];
 
@@ -116,6 +129,14 @@ public sealed partial class MpegAudioParser
         public Node? CodedBandwidth { get; set; }
 
         public Node? ChannelBitShare { get; set; }
+
+        public Node? TransmissionChannelCoding { get; set; }
+
+        public Node? DynamicCrosstalk { get; set; }
+
+        public Node? Prediction { get; set; }
+
+        public Node? TransmissionChannelBits { get; set; }
     }
 
     // The figure of an audio frame (FrameFigures) from the bytes its record keeps; empty where it keeps none or the layer has
@@ -129,7 +150,13 @@ public sealed partial class MpegAudioParser
             case FrameData.Layer1:
                 return FrameFigures.Layer1(build.Store.Span(frame.Data, frame.DataLength), header);
             case FrameData.Layer2:
-                return FrameFigures.Layer2(build.Store.Span(frame.Data, frame.DataLength), header);
+                FrameFigures.Figure figure = FrameFigures.Layer2(build.Store.Span(frame.Data, frame.DataLength), header);
+                if (build.HasMultichannel && frame.IsMultichannelCandidate)
+                {
+                    figure = figure with { Multichannel = FrameFigures.Multichannel(ReadMultichannel(build, frame, header).Mc, figure) };
+                }
+
+                return figure;
             default:
                 return FrameFigures.Figure.Empty;
         }
@@ -156,6 +183,9 @@ public sealed partial class MpegAudioParser
         private readonly Numeric? _bandwidth;
         private readonly Numeric? _share;
         private readonly Numeric? _intensityBound;
+        private readonly CategorySeriesBuilder? _crosstalk;
+        private readonly CategorySeriesBuilder? _prediction;
+        private readonly Numeric[] _channelBits = [];
         private int _unit;
 
         public StreamCoding(BuildContext build, double[] offsets, int count, IReadOnlyList<RegionState> regions, MpegHeader header, bool hasTwoChannels, bool hasJointStereo)
@@ -181,6 +211,13 @@ public sealed partial class MpegAudioParser
                 _bandwidth = new Numeric(count, offsets);
             }
 
+            if (_layer == 2 && Has(r => r.Nodes.TransmissionChannelCoding))
+            {
+                _crosstalk = new("Dynamic Crosstalk Use", UseCategories, "frame", 1, isOrdered: true, concept: GraphConcept.StereoCoding);
+                _prediction = new("Prediction Use", UseCategories, "frame", 1, isOrdered: true, concept: GraphConcept.StereoCoding);
+                _channelBits = [.. Enumerable.Range(0, FrameFigures.McFigure.Channels).Select(_ => new Numeric(count, offsets, keepSeconds: false))];
+            }
+
             _share = hasTwoChannels ? new Numeric(count, offsets) : null;
             _intensityBound = hasJointStereo && Has(r => r.Nodes.IntensityStereoBoundHz) ? new Numeric(count, offsets, keepSeconds: false) : null;
         }
@@ -203,6 +240,17 @@ public sealed partial class MpegAudioParser
             if (_bandwidth is not null || _share is not null || _intensityBound is not null)
             {
                 FrameFigures.Figure figure = FigureOf(_build, frame, header);
+                if (_crosstalk is not null)
+                {
+                    FrameFigures.McFigure? mc = figure.Multichannel;
+                    _crosstalk.Add(mc is null ? CategorySeries.None : UseOf(mc.CrosstalkGroups, FrameFigures.McFigure.CrosstalkGroupCount));
+                    _prediction!.Add(mc is null ? CategorySeries.None : UseOf(mc.PredictionGroups, FrameFigures.McFigure.PredictionGroupCount));
+                    for (int i = 0; i < _channelBits.Length; i++)
+                    {
+                        _channelBits[i].Add(_unit, second, mc is not null && mc.Bits[i] >= 0 ? ShareTenths(mc.Bits[i], mc.Total) / 10.0 : null, 0);
+                    }
+                }
+
                 _intensityBound?.Add(_unit, second, figure.HasIntensityBound ? figure.IntensityBound : null, 0);
                 if (_bandwidth is not null)
                 {
@@ -276,6 +324,7 @@ public sealed partial class MpegAudioParser
                     anchor, share: false));
             }
 
+            BuildTransmission(x, bitrate, time, series, categories);
             if (_share?.Count > 0)
             {
                 Node? anchor = Anchor(r => r.Nodes.ChannelBitShare);
@@ -289,6 +338,26 @@ public sealed partial class MpegAudioParser
                 series.Add(_share.PerFrame("Channel Bit Share", "%", SeriesText.ChannelBitShare, GraphConcept.BitDistribution, "Channel Bit Share", null, shareX, ShareRange));
                 series.Add(_share.PerSecond("Channel Bit Share Over Time", "%", SeriesText.ChannelBitShareOverTime, GraphConcept.BitDistribution, "Channel Bit Share", secondStarts,
                     anchor, share: true, ShareRange));
+            }
+        }
+
+        private void BuildTransmission(ReadOnlyMemory<double> x, Series bitrate, TimeIndex time, List<Series> series, List<CategorySeries> categories)
+        {
+            if (_crosstalk is null)
+            {
+                return;
+            }
+
+            categories.Add(_crosstalk.Build(x, bitrate, Anchor(r => r.Nodes.DynamicCrosstalk), SeriesText.DynamicCrosstalkUse, Topics.Multichannel, time));
+            categories.Add(_prediction!.Build(x, bitrate, Anchor(r => r.Nodes.Prediction), SeriesText.PredictionUse, Topics.Multichannel, time));
+            for (int i = 0; i < _channelBits.Length; i++)
+            {
+                if (_channelBits[i].Count > 0)
+                {
+                    string name = $"Transmission Channel Bit Share {TransmissionChannelNames[i]}";
+                    series.Add(_channelBits[i].PerFrame(name, "%", SeriesText.TransmissionChannelBitShare[i], GraphConcept.BitDistribution, name,
+                        Anchor(r => r.Nodes.TransmissionChannelBits), _channelBits[i].X, ShareRange));
+                }
             }
         }
 

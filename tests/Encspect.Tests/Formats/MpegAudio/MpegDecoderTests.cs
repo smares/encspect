@@ -84,18 +84,57 @@ public class MpegDecoderTests
         Assert.All(sink.Blocks, b => Assert.All(b.Samples, s => Assert.Equal(0f, s)));
     }
 
-    [Fact]
-    public void AMultichannelStreamMeasuredAsItsBaseStereoSaysSo()
+    private static StreamMeasurements MeasureLayer2(string fixture)
     {
-        string path = Path.Combine(Fixtures.FixtureDirectory, "mpeg-audio", "layer2", "mc-3-2-lfe.mp2");
+        string path = Path.Combine(Fixtures.FixtureDirectory, "mpeg-audio", "layer2", fixture);
         var options = new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions() } };
         using FileStream file = File.OpenRead(path);
-        Report report = Analyzer.CreateDefault().Analyze("mc-3-2-lfe.mp2", file, options);
+        Report report = Analyzer.CreateDefault().Analyze(fixture, file, options);
 
-        StreamMeasurements m = Assert.Single(report.Streams).Measurements!;
+        return Assert.Single(report.Streams).Measurements!;
+    }
+
+    [Fact]
+    public void AMultichannelStreamWhoseExtensionIsInItsFramesMeasuresEveryChannel()
+    {
+        StreamMeasurements m = MeasureLayer2("mc-3-2-lfe.mp2");
+
+        Assert.Equal(6, m.Channels);
+        Assert.Null(m.Reason);
+    }
+
+    // The LFE channel is coded at 1/96 of the sample rate (ISO/IEC 13818-3 2.5.3.2.4), so a frame's twelve samples come out held for 96 samples each, last in the layout; the
+    // fixture is a 5.1 stream of mctoolame, written with music, whose LFE is not silent.
+    [Fact]
+    public void AnLfeChannelIsHeldFor96Samples()
+    {
+        byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "mpeg-audio", "layer2", "external-mctoolame-5-1-music.mp2"));
+        (Report report, CollectingSink sink) = Decode(data);
+
+        Assert.Equal(6, Assert.Single(report.Streams).Channels);
+        bool isMoving = false;
+        foreach ((long _, int length, float[] samples) in sink.Blocks)
+        {
+            Assert.Equal(6 * length, samples.Length);
+            float[] lfe = samples.AsSpan(5 * length, length).ToArray();
+            for (int n = 0; n + 96 <= length; n += 96)
+            {
+                Assert.All(lfe[n..(n + 96)], s => Assert.Equal(lfe[n], s));
+            }
+
+            isMoving |= lfe.Distinct().Count() > 1;
+        }
+
+        Assert.True(isMoving);
+    }
+
+    [Fact]
+    public void AMultichannelStreamWithAnExtensionBitstreamMeasuredAsItsBaseStereoSaysSo()
+    {
+        StreamMeasurements m = MeasureLayer2("mc-extension-header.mp2");
 
         Assert.Equal(2, m.Channels);
-        Assert.Equal("the decoder outputs 2 channels of the stream's 6, and only those were measured", m.Reason);
+        Assert.Equal("the decoder outputs 2 channels of the stream's 5, and only those were measured", m.Reason);
     }
 
     [Fact]

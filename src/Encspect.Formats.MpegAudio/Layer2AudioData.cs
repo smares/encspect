@@ -20,7 +20,7 @@ internal sealed class Layer2AudioData
     private static readonly int[] L4 = [0, 3, 5, 9, 15, 31, 63, 127];
     private static readonly int[] L11 = [0, 3, 5, 9];
 
-    // ISO/IEC 11172-3 Table B.2a to B.2d, and ISO/IEC 13818-3 Table B.1 for the lower sample rates.
+    // ISO/IEC 11172-3 Tables B.2a to B.2d, and ISO/IEC 13818-3 Table B.1 for the lower sample rates; 2.4.3.3.1 and 13818-3 2.4.3.1 select among them.
     private static readonly int[][][] Tables =
     [
         [.. Repeat(A0, 3), .. Repeat(A3, 8), .. Repeat(A11, 12), .. Repeat(A23, 4)],
@@ -84,7 +84,7 @@ internal sealed class Layer2AudioData
     public static int SubbandCount(int table) => Tables[table].Length;
 
     // The frame does not name its table: the sampling frequency and the bitrate per channel select it
-    // (ISO/IEC 11172-3 2.4.3.3.1 and the captions of Tables 3-B.2a to 3-B.2d). The classes extend the
+    // (ISO/IEC 11172-3 2.4.3.3.1 and the captions of Tables B.2a to B.2d). The classes extend the
     // captions to the bitrate and mode combinations the standard does not allow.
     public static int TableFor(MpegHeader header)
     {
@@ -208,6 +208,19 @@ internal sealed class Layer2AudioData
 
         audio.End = audio.SampleStart + (12 * granule);
         return audio;
+    }
+
+    // The allocation index of the two base channels in each subband, which the multichannel extension copies from.
+    public int[,] BaseAllocation()
+    {
+        var allocation = new int[2, Subbands];
+        for (int sb = 0; sb < Subbands; sb++)
+        {
+            allocation[0, sb] = Allocation[0, sb];
+            allocation[1, sb] = Allocation[1, sb];
+        }
+
+        return allocation;
     }
 
     public IEnumerable<(int Channel, int Subband, int Index)> UndefinedScalefactors()

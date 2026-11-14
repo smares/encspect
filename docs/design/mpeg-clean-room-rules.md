@@ -9,7 +9,7 @@ The four items:
 3. The table of LAME 3.90 to 3.92 preset settings (`VbrHeader.cs`: `OldPresets`, `OldPreset`; `vbr_tags.py`: `OLD_PRESETS`, `old_preset`).
 4. The models of mpg123's and mp3guessenc's printed output in `crosscheck_mpeg_fixtures.py` (`expected_mpg123`, `expected_guessenc`, `guessenc_strategy`, `guessenc_preset`, `guessenc_lame_recognized`, `GUESSENC_MODES_BY_MISC`, `frames_after_tag`, and the Quality special cases that `check_vbr_header` held).
 
-No copy of ISO/IEC 11172-3 or 13818-3 is in the repository or was available while writing this. Where this document names a clause or table, the name is the one the repository already cites or the syntax element name; clause numbers for 13818-3 were not checked against the text and must be confirmed when a copy is at hand. Copies of both have been at hand since 2026-11-14; the check is item 15 of 0.4 in [plan.md](../plan.md#04-free-decoders-and-routes-complete). Everything here was checked against the black-box evidence named in each section.
+No copy of ISO/IEC 11172-3 or 13818-3 is in the repository or was available while writing this. Where this document names a clause or table, the name is the one the repository already cites or the syntax element name; clause numbers for 13818-3 were not checked against the text and must be confirmed when a copy is at hand. Copies of both have been at hand since 2026-11-14; the check is item 8 of 0.3 in [plan.md](../plan.md#03-lossy-formats-measured). Everything here was checked against the black-box evidence named in each section.
 
 ## 1. Multichannel bit allocation
 
@@ -28,7 +28,7 @@ Output: an allocation index for T2, T3 and T4 in the subband, and the fields rea
 
 ### Configuration parameters
 
-The standard fixes, per configuration, how many additional channels there are and how many bits `tc_allocation` and `dyn_cross_mode` take (13818-3, the syntax of `mc_composite_status_info`). The rewrite needs this table in place of `Shapes`:
+The standard fixes, per configuration, how many additional channels there are and how many bits `tc_allocation` and `dyn_cross_mode` take (13818-3 2.5.1.15 and 2.5.2.15, `mc_composite_status_info`). The rewrite needs this table in place of `Shapes`:
 
 | surround | center | Configuration | Additional channels | `tc_allocation` bits | `dyn_cross_mode` bits |
 |---|---|---|---|---|---|
@@ -45,7 +45,7 @@ The standard fixes, per configuration, how many additional channels there are an
 
 ### Subband groups
 
-Twelve subband groups (13818-3 defines them for `tc_allocation`, `dyn_cross_mode` and prediction): subbands 0 to 7 are groups 0 to 7, subbands 8 and 9 group 8, 10 and 11 group 9, 12 to 15 group 10, and 16 and above group 11.
+Twelve subband groups (13818-3 2.5.2.15, the table of `tc_sbgr_select`, which `tc_allocation`, `dyn_cross_mode` and prediction use): subbands 0 to 7 are groups 0 to 7, subbands 8 and 9 group 8, 10 and 11 group 9, 12 to 15 group 10, and 16 and above group 11.
 
 ### Prediction coefficients
 
@@ -62,7 +62,7 @@ A cross-check of the table: it is two per additional channel that carries its ow
 
 ### What each transmission channel carries
 
-`tc_allocation` names what T2 to T4 carry (13818-3, semantics of `tc_allocation`, a table per configuration). The rewrite needs it only to decide where a channel that dynamic crosstalk leaves out copies its allocation from.
+`tc_allocation` names what T2 to T4 carry (13818-3 2.5.2.15, a table per configuration; in 3/1 the value 5 is only possible for dematrix_procedure 2). The rewrite needs it only to decide where a channel that dynamic crosstalk leaves out copies its allocation from.
 
 | Configuration | `tc_allocation`: T2, T3, T4 |
 |---|---|
@@ -122,56 +122,34 @@ Configurations with a 3-bit mode (3/1, 2/2):
 
 Source rule for "base channel": the channel copies the base channel on the side of what it carries (by the table above): L or Ls copies T0, R or Rs copies T1, and C, S or a value the table does not assign copies the base channel `dyn_cross_LR` names (0 T0, 1 T1). In 3/2 this gives T3 always T0 and T4 always T1, as the mode table says.
 
-### Where this differs from the removed code
+### The base channel of a copy, as the text says
 
-The removed code applied the same rule for 3/0, 2/1, 3/0 + 2/0 and 3/2. For 3/1 and 2/2 it followed a condition chain of the reference software as mctoolamed edited it. That chain makes `dyn_cross_LR` choose the source for most channels that carry a left or right channel. Without mctoolamed's edit, the chain is the ISO reference software's, and it fails 4 of the 27 multichannel CRCs of conformance stream test18 (3/1 with dynamic crosstalk): it takes T1 for a T2 that carries C. Both the removed code and the rule above verify all 27.
+13818-3 2.5.2.15 settles it. A channel that dynamic crosstalk leaves out and whose mode names no source ("for all other cases") copies by side: Lw and LSw from Lo, Rw and RSw from Ro, and Cw and Sw from Lo if `dyn_cross_LR` is 0 and from Ro if it is 1. That is the rule above, for every configuration, every `tc_allocation` and both values of `dyn_cross_LR`. The text also says that the bit allocation of such a subband is copied from the channel the samples come from, and that where the copied allocation is 0 no scfsi and scalefactors are sent. The mode tables of 2.5.2.15 (3/2, 3/1 and 2/2, 3/0 and 2/1) are the ones above, where "Tij" names a copy of Ti into Tj.
 
-The conformance streams decide only some of the cases. Every dynamic crosstalk frame in them has `dyn_cross_LR` 0, and no stream uses 2/2 with dynamic crosstalk. In test18 (`tc_allocation` 0 to 4), swapping the source of one case at a time breaks CRCs for these, so they are decided as above:
+The ISO reference software was observed to read `dyn_cross_LR` differently: it names the base channel of every copy in 3/1 and 2/2, whatever the copied channel's side. The text does not say so, but encoders likely follow the software, so `Read` keeps a fallback (the lead's decision, 2026-11-14):
 
-- T2 carrying C (tc 0, 3, 4) copies T0.
-- T2 carrying R (tc 2) copies T1.
-- T3 carrying S (tc 1, 2) copies T0.
-- T3 carrying L (tc 3) copies T0.
+- It reads a 3/1 or 2/2 frame with dynamic crosstalk by the text first. If its multichannel CRC holds, that is the reading.
+- Otherwise it reads the frame again with the software's source for the copies the conformance streams leave open (any copy under `dyn_cross_LR` 1, 3/1 with T3 carrying R under 0, all of 2/2; the others agree with the text). If that CRC holds, the frame keeps it and a warning, `mpeg-audio.multichannel-reference-software-reading`, says the frame follows the software, not 13818-3 2.5.2.15.
+- If neither holds, it keeps the text's reading and reports the CRC mismatch.
 
-Every other case is undecided: the conformance streams do not settle it. Either the streams do not reach it (every dynamic crosstalk frame in them has `dyn_cross_LR` 0, and no stream uses 2/2 with dynamic crosstalk), or both sources give the same zero and nonzero pattern of allocations there, which is all the CRC sees.
+The removed code's chain for 3/1 and 2/2 differed from the text in these cases:
 
-### Two readings of the undecided cases
-
-The rule above is this document's reading of the standard: a copy takes the base channel on the side of what the channel carries. A second reading exists, observed as the behavior of the ISO reference software: `dyn_cross_LR` 0 copies every copied channel from the left transmission channel (T0) and 1 from the right one (T1), in 3/1 and 2/2, whatever the copied channel's side. Real encoders likely follow it, so the analyzer must not fail a valid stream's multichannel CRC for the choice. The undecided cases, where the two readings can differ, are:
-
-- every copied channel under `dyn_cross_LR` 1 (in 3/1: T2 carrying L with `tc_allocation` 1 or 5, T3 carrying L with 3, and 6 and 7, which assign nothing; the readings agree where the channel carries C, S or R);
-- 3/1 T3 carrying R (`tc_allocation` 4 or 5) under `dyn_cross_LR` 0;
-- all of 2/2, under either value.
-
-The decided cases above stay on the first reading under both.
-
-Behavior of `Read` for a 3/1 or 2/2 frame with dynamic crosstalk:
-
-- It reads the frame under the first reading (the side). If the multichannel CRC holds, that is the reading.
-- If it does not hold, it reads the frame again under the second (the flag), changing only the source of the copies in the undecided cases. If that CRC holds, the frame keeps that reading.
-- If neither holds, it keeps the first and reports the mismatch as before. A mismatch that the other reading resolves is never reported.
-- Only the copies' source changes, so the same fields are read in both; what differs is which copied channels have an allocation, hence how many scfsi fields the CRC covers. A frame whose two readings have the same number of such channels reads the same under both.
-- The reading used is a node, "Base Channel Source", under "Dynamic Crosstalk Modes" in the composite status of such a frame, with the value "On the channel's side" or "Named by the flag". The parser keeps no multichannel CRC statistics, so there is nothing to count.
-
-Fixtures: `mc-3-1-crosstalk-decided` (`dyn_cross_LR` 0, decided cases only), `mc-3-1-crosstalk-side` and `mc-3-1-crosstalk-flag` (`dyn_cross_LR` 1), `mc-3-1-crosstalk-flag-right` (T3 carrying R under 0, flag reading), `mc-2-2-crosstalk-side` and `-flag` (`dyn_cross_LR` alternating), `mc-second-stereo-crosstalk` and `mc-center-reserved-second-stereo` (`dyn_second_stereo` with a coded and with a reserved center). The writer asserts that the two readings of each undecided fixture differ in the number of copied channels with an allocation, so its CRC verifies under its own reading only.
-
-It must still be confirmed against the 13818-3 text (the semantics of `dyn_cross_LR` and of `tc_allocation`) when a copy is available. The cases where the first reading differs from the removed code:
-
-| Configuration | `tc_allocation` | `dyn_cross_LR` | Channel | Removed code | This rule |
+| Configuration | `tc_allocation` | `dyn_cross_LR` | Channel | Removed code | The text |
 |---|---|---|---|---|---|
 | 3/1 | 1, 5 | 1 | T2 (L) | T1 | T0 |
 | 3/1 | 4, 5 | 0 | T3 (R) | T0 | T1 |
-| 3/1 | 6, 7 | 1 | T3 (not assigned) | T0 | T1 |
 | 2/2 | any | 0 | T3 (Rs or R) | T0 | T1 |
 | 2/2 | any | 1 | T2 (Ls or L) | T1 | T0 |
 
-One more difference: the removed code let the reserved center value 2 count as a coded center in the second-programme copy of mode 0. With center 2 and surround 3 the shape is 2/0 + 2/0, so it never copied and read T3. This document treats center 2 as no center throughout, so T3 copies T2 when `dyn_second_stereo` is 1.
+The text is silent on what a `tc_allocation` value carries that assigns no channel (3/1: 6 and 7; 3/0 and 2/1: 3); such a copy follows the flag, as a center or surround channel does.
 
-Effect: no existing golden report, test or conformance figure changes; the fixtures with center 2 use surround 2, and the new fixtures above are the only ones with dynamic crosstalk. A scratch model of this section reproduces the manifest's `crc_verified_frames` for all 22 multichannel conformance streams.
+One more difference: the removed code let the reserved center value 2 count as a coded center in the second-programme copy of mode 0. With center 2 and surround 3 the shape is 2/0 + 2/0, so it never copied and read T3. This document treats center 2 as no center throughout (13818-3 2.5.2.13 calls the value "not defined"), so T3 copies T2 when `dyn_second_stereo` is 1.
+
+Fixtures: `mc-3-1-crosstalk-decided` (`dyn_cross_LR` 0, channel allocations 0 to 3), `mc-3-1-crosstalk-side` (`dyn_cross_LR` 1, 0 to 7), `mc-2-2-crosstalk-side` (`dyn_cross_LR` alternating), all by the text, and `mc-3-1-crosstalk-flag`, `mc-3-1-crosstalk-flag-right` and `mc-2-2-crosstalk-flag` by the software's reading, with the warning, `mc-second-stereo-crosstalk` and `mc-center-reserved-second-stereo` (`dyn_second_stereo` with a coded and with a reserved center). In the two "side" fixtures the base channels carry different allocations, so a copy from the wrong base channel changes the number of scfsi fields and fails the multichannel CRC.
 
 ### The fixture writer
 
-`make_layer2_fixtures.py` needs, per configuration (surround, center coded), the additional channels, the `tc_allocation` bits and the number of `predsi` fields at mode 0, all from the tables above. It writes dynamic crosstalk for 3/1, 2/2 and the second stereo programme (`Dynamic`, `Multichannel.allocate`), following the tables above and, for the undecided cases, either reading; without dynamic crosstalk its output is unchanged.
+`make_layer2_fixtures.py` needs, per configuration (surround, center coded), the additional channels, the `tc_allocation` bits and the number of `predsi` fields at mode 0, all from the tables above. It writes dynamic crosstalk for 3/1, 2/2 and the second stereo programme (`Dynamic`, `Multichannel.allocate`), following the tables above and, for the open cases, either reading; without dynamic crosstalk its output is unchanged.
 
 ### Checks
 
@@ -184,12 +162,12 @@ Effect: no existing golden report, test or conformance figure changes; the fixtu
 
 ### What it does
 
-A Layer II frame's bit allocation follows one of four tables in MPEG-1 (ISO/IEC 11172-3, Annex B, Tables 3-B.2a to 3-B.2d) and one table at the MPEG-2 and MPEG 2.5 rates (ISO/IEC 13818-3, the table the code cites as B.1). The frame does not name the table; the sampling frequency and the bitrate per channel select it (11172-3 2.4.3.3.1 and the tables' captions). `TableFor` returns the index used everywhere else: 0 to 3 for B.2a to B.2d, 4 for the MPEG-2 table. The writer's `table_for(version, rate, bitrate, channels)` returns the same, with `bitrate` None for free format.
+A Layer II frame's bit allocation follows one of four tables in MPEG-1 (ISO/IEC 11172-3, Annex B, Tables B.2a to B.2d) and one table at the MPEG-2 and MPEG 2.5 rates (ISO/IEC 13818-3, Table B.1, selected by 2.4.3.1). The frame does not name the table; the sampling frequency and the bitrate per channel select it (11172-3 2.4.3.3.1 and the tables' captions). `TableFor` returns the index used everywhere else: 0 to 3 for B.2a to B.2d, 4 for the MPEG-2 table. The writer's `table_for(version, rate, bitrate, channels)` returns the same, with `bitrate` None for free format.
 
 ### Rule
 
 - Not MPEG-1 (MPEG-2 or 2.5): table 4.
-- Free format: B.2a at 48 kHz, B.2b at 44.1 and 32 kHz (the captions of Tables 3-B.2a and 3-B.2b list free format so).
+- Free format: B.2a at 48 kHz, B.2b at 44.1 and 32 kHz (the captions of Tables B.2a and B.2b list free format so).
 - Otherwise the bitrate per channel is the header's bitrate in kbps over the channels (1 for mono, 2 for every other mode). Its class and the sampling frequency give the table:
 
 | Bitrate per channel | 48 kHz | 44.1 kHz | 32 kHz |
