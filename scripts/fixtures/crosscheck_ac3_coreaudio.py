@@ -214,6 +214,17 @@ def partial_map(ours, our_channels, reference, reference_channels, first, window
     return keep, chosen, lines + [f"  Core Audio's output correlates with analyzer channels {keep} (as its channels {chosen}) and has nothing of channels {left} (the dependent substreams': not decoded by Core Audio): only the first are compared"]
 
 
+def silent_pair(dump, raw):
+    """Where the analyzer's channels of a dump and the reference's are all exactly zero (a file whose independent substream is silent: a band comparison has no band to compare), the line
+    that says so; else None."""
+    manifest = json.loads(dump.read_text(encoding="utf-8"))
+    mine = floats((dump.parent / manifest["streams"][0]["pcm"]).read_bytes())
+    theirs = floats(raw)
+    if any(mine) or any(abs(v) > 1e-9 for v in theirs):
+        return None
+    return "  both silent: the analyzer's and the reference's channels are all zero, so there is no band to compare"
+
+
 def pick_channels(raw, count, picks):
     values = floats(raw)
     reduced = array.array("f")
@@ -498,6 +509,9 @@ def judge(dump, raw, info, work, variant, extra, name):
                 keep, chosen, partial_lines = partial
                 lines += partial_lines[-1:]
                 cut = subset_dump(dump, keep)
+                quiet = silent_pair(cut, pick_channels(raw, reference_channels, chosen))
+                if quiet:
+                    return "both silent", [], lines + [quiet]
                 label, detail = first_passing(attempt(cut, pick_channels(raw, reference_channels, chosen), len(keep), work, f"ca-{variant}-partial", extra, name))
                 return label, detail, lines
         if picks is not None:
@@ -647,6 +661,7 @@ def main(argv=None):
     parser.add_argument("--keep", type=pathlib.Path)
     parser.add_argument("--save", type=pathlib.Path, help="a directory: Core Audio's decode (float32) of each E-AC-3 file as it is, the probe's line and the analyzer's PCM with its manifest, for analysis off the runner")
     parser.add_argument("--real-samples", type=pathlib.Path, help="a cache directory: the real E-AC-3 files of tests/conformance/eac3-samples.json are fetched into it and compared as well")
+    parser.add_argument("--real-samples-only", action="store_true", help="with --real-samples: only the real files, not the fixtures and not the damage variants (a separate step of the workflow, which has the time the long files need)")
     args = parser.parse_args(argv)
     # The AC-3 files with a liba52 reference and the encoder-written E-AC-3 files, and the hand-built E-AC-3 files that use what FFmpeg does not decode or decodes differently
     # (the adaptive hybrid transform with hebap 4, enhanced coupling, spectral extension, transient pre-noise processing, dependent substreams): Core Audio is the independent decoder
@@ -656,7 +671,7 @@ def main(argv=None):
         import check_eac3_samples
         manifest = json.loads(check_eac3_samples.MANIFEST.read_text(encoding="utf-8"))
         check_eac3_samples.fetch(manifest, args.real_samples)
-        files = [*files, *[args.real_samples / s["file"] for s in manifest["samples"] if (args.real_samples / s["file"]).suffix in (".eac3", ".ac3")]]
+        files = [*([] if args.real_samples_only else files), *[args.real_samples / s["file"] for s in manifest["samples"] if (args.real_samples / s["file"]).suffix in (".eac3", ".ac3")]]
     failures = []
     with tempfile.TemporaryDirectory() as temporary:
         root = args.keep or pathlib.Path(temporary)
@@ -686,8 +701,9 @@ def main(argv=None):
             print("\n".join(lines))
             if not ok:
                 failures.append(path.name)
-        print("damage variants decoded by Core Audio (frame counts, no bound):")
-        print("\n".join(variants_report(args, root)))
+        if not args.real_samples_only:
+            print("damage variants decoded by Core Audio (frame counts, no bound):")
+            print("\n".join(variants_report(args, root)))
     print(f"{len(files)} files, {len(failures)} failing: {', '.join(failures) if failures else 'none'}")
     return 1 if failures else 0
 
