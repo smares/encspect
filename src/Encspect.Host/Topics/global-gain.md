@@ -2,7 +2,7 @@
 id: global-gain
 title: Global gain
 related: scalefactors, scalefac-scale-and-preflag, huffman-coding
-references: ISO/IEC 11172-3 2.4.2.7, 2.4.3.4
+references: ISO/IEC 11172-3 2.4.2.7, 2.4.3.4.7.1
 ---
 
 **What it is.** Every granule and channel of a Layer III frame has an 8-bit global_gain, the step size of the quantizer for all its frequency lines. Each step up makes the decoded sound 1.5 dB louder relative to the coded values. The [scalefactors](scalefactors) then adjust the level band by band, and short windows can be lowered further with subblock_gain, 12 dB per step.

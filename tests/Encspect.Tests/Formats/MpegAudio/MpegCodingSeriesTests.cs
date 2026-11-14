@@ -303,7 +303,7 @@ public class MpegCodingSeriesTests
         Assert.Equal(unit, share.Values.Length);
     }
 
-    // The bits of a codeword of three samples (ISO/IEC 11172-3 Annex B): 5, 7 or 10 for the grouped 3, 5 and 9 levels, else three samples of
+    // The bits of a codeword of three samples (ISO/IEC 11172-3 Table B.4): 5, 7 or 10 for the grouped 3, 5 and 9 levels, else three samples of
     // as many bits as the levels need.
     private static int Layer2SampleBits(int levels) => levels switch { 3 => 5, 5 => 7, 9 => 10, _ => 3 * (32 - int.LeadingZeroCount(levels)) };
 
@@ -455,7 +455,7 @@ public class MpegCodingSeriesTests
             && System.Runtime.InteropServices.MemoryMarshal.TryGetArray(share.X, out ArraySegment<double> second) && ReferenceEquals(first.Array, second.Array));
     }
 
-    // The bitrate tables of ISO/IEC 11172-3 (Table 3-B.2) and 13818-3 as the specifications print them, apart from the parser's.
+    // The bitrate_index tables of ISO/IEC 11172-3 and 13818-3 (both 2.4.2.3) as the specifications print them, apart from the parser's.
     private static readonly Dictionary<string, double[]> BitrateTables = new()
     {
         ["MPEG-1 Layer I"] = [32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448],
@@ -604,7 +604,7 @@ public class FrameFiguresTests
     [Fact]
     public void A_layer_II_frame_gives_its_bandwidth_and_each_channels_own_bits()
     {
-        // 44,100 Hz, 160 kbps stereo: table B.2a, whose 27 subbands take 88 bits of allocation per channel. Subband 0 allocates index
+        // 44,100 Hz, 160 kbps stereo: Table B.2a (ISO/IEC 11172-3), whose 27 subbands take 88 bits of allocation per channel. Subband 0 allocates index
         // 3 (15 levels, a codeword of 12 bits for three samples) in the first channel only, with three scalefactors (scfsi 0).
         byte[] frame = [0xFF, 0xFD, 0x90, 0x00, 0x30, .. new byte[100]];
 

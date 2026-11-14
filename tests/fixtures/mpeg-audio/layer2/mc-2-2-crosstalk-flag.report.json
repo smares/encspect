@@ -2007,17 +2007,7 @@
                           "offset": 282,
                           "length": 5,
                           "bitOffset": 4,
-                          "bitLength": 36,
-                          "children": [
-                            {
-                              "name": "Base Channel Source",
-                              "value": "Named by the flag",
-                              "offset": 282,
-                              "length": 5,
-                              "bitOffset": 4,
-                              "bitLength": 36
-                            }
-                          ]
+                          "bitLength": 36
                         }
                       ]
                     },
@@ -4518,17 +4508,7 @@
                           "offset": 1435,
                           "length": 5,
                           "bitOffset": 2,
-                          "bitLength": 36,
-                          "children": [
-                            {
-                              "name": "Base Channel Source",
-                              "value": "Named by the flag",
-                              "offset": 1435,
-                              "length": 5,
-                              "bitOffset": 2,
-                              "bitLength": 36
-                            }
-                          ]
+                          "bitLength": 36
                         }
                       ]
                     },
@@ -6889,17 +6869,7 @@
                           "offset": 2588,
                           "length": 5,
                           "bitOffset": 0,
-                          "bitLength": 36,
-                          "children": [
-                            {
-                              "name": "Base Channel Source",
-                              "value": "Named by the flag",
-                              "offset": 2588,
-                              "length": 5,
-                              "bitOffset": 0,
-                              "bitLength": 36
-                            }
-                          ]
+                          "bitLength": 36
                         }
                       ]
                     },
@@ -9280,17 +9250,7 @@
                           "offset": 3739,
                           "length": 5,
                           "bitOffset": 2,
-                          "bitLength": 36,
-                          "children": [
-                            {
-                              "name": "Base Channel Source",
-                              "value": "Named by the flag",
-                              "offset": 3739,
-                              "length": 5,
-                              "bitOffset": 2,
-                              "bitLength": 36
-                            }
-                          ]
+                          "bitLength": 36
                         }
                       ]
                     },
@@ -11459,17 +11419,7 @@
                           "offset": 4890,
                           "length": 5,
                           "bitOffset": 4,
-                          "bitLength": 36,
-                          "children": [
-                            {
-                              "name": "Base Channel Source",
-                              "value": "Named by the flag",
-                              "offset": 4890,
-                              "length": 5,
-                              "bitOffset": 4,
-                              "bitLength": 36
-                            }
-                          ]
+                          "bitLength": 36
                         }
                       ]
                     },
@@ -13865,17 +13815,7 @@
                           "offset": 6043,
                           "length": 5,
                           "bitOffset": 2,
-                          "bitLength": 36,
-                          "children": [
-                            {
-                              "name": "Base Channel Source",
-                              "value": "Named by the flag",
-                              "offset": 6043,
-                              "length": 5,
-                              "bitOffset": 2,
-                              "bitLength": 36
-                            }
-                          ]
+                          "bitLength": 36
                         }
                       ]
                     },
@@ -14693,6 +14633,19 @@
         ]
       }
     ],
-    "findings": []
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "mpeg-audio.multichannel-reference-software-reading",
+        "message": "6 frames follow the reading of the ISO reference software, not ISO/IEC 13818-3 2.5.2.15: their multichannel CRC holds only where dyn_cross_LR names the base channel of every copied channel, the first at 0x0.",
+        "offset": 0,
+        "length": 1152,
+        "path": [
+          0,
+          1
+        ],
+        "count": 6
+      }
+    ]
   }
 ]

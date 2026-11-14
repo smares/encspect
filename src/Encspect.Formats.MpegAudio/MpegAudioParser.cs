@@ -989,6 +989,11 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
                 state.Findings.Add(Severity.Warning, "mpeg-audio.multichannel-ancillary-overflow", node, count =>
                     $"{Frames(count, "declares", "declare")} more MPEG-1 ancillary bytes in {(count == 1 ? "its" : "their")} multichannel header than the frame holds after the header and its CRC, the first {Counts.Of(mc.AncillaryBytes, "byte", "bytes")} at 0x{frame.Offset:X}.");
             }
+            else if (mc.UsesFlagReading)
+            {
+                state.Findings.Add(Severity.Warning, "mpeg-audio.multichannel-reference-software-reading", node, count =>
+                    $"{Frames(count, "follows", "follow")} the reading of the ISO reference software, not ISO/IEC 13818-3 2.5.2.15: {(count == 1 ? "its" : "their")} multichannel CRC holds only where dyn_cross_LR names the base channel of every copied channel, the first at 0x{frame.Offset:X}.");
+            }
             else if (mc.Fits && !mc.IsCrcValid)
             {
                 state.Findings.Add(Severity.Warning, "mpeg-audio.multichannel-crc-mismatch", node, count =>
@@ -1336,7 +1341,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
     // A free-format chain is only four bytes of header repeating at one distance, which data with a header-like word at a fixed period
     // (the 0xFFFF that ends a DTS subframe, in frames of one size) makes as well. Real free-format frames hold what their headers
     // promise, and those with a CRC pass it: the chain's frames that fit in the data must be well-formed, and in Layers I and II, where
-    // free format is a curiosity, one of them must be protected and have the CRC its header says (ISO/IEC 11172-3 2.4.1.4).
+    // free format is a curiosity, one of them must be protected and have the CRC its header says (ISO/IEC 11172-3 2.4.1.4, 2.4.3.1).
     private static bool IsCredibleFreeFormat(BlockReader blocks, long position, MpegHeader first, int freeLength, long end)
     {
         var protectedFrames = new List<bool>();
