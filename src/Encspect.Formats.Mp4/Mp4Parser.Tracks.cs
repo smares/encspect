@@ -121,7 +121,7 @@ public sealed partial class Mp4Parser
             {
                 // The layout claim is about this track: the codec parser sees it, no other track does.
                 IReadOnlyList<EncoderClaim> layout = codec == "aac" ? AppleEvidence(state, entry) : [];
-                configuration = new CodecConfiguration(data, state.Findings.Resolve(node)) { IsVbr = IsVbr(state, entry, first), Claims = layout };
+                configuration = new CodecConfiguration(data, state.Findings.Resolve(node)) { IsVbr = IsVbr(state, entry, first), Claims = layout, IsWriterFromContainer = codec == "opus" };
 
                 // Opus in MP4 trims the end by its edit list (the encapsulation, 4.4): what the track's samples hold after the edit is the end trimming, which the parser takes as the
                 // padding of the last packets. The start is the pre-skip of the dOps box.

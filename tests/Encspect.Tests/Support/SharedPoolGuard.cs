@@ -4,11 +4,12 @@ namespace Encspect.Tests;
 
 // The memory tests add what the shared array pools drop back into their readings (PoolAccounting), so a drop does not move them. This
 // guard, made for each memory test, first registers the pools of the assemblies loaded since the last test (so that registering never
-// allocates inside a test), then fails the test
-// - when a pool PoolAccounting cannot size dropped an array during it (an element type not known; an ID that several element sizes share
+// allocates inside a test), then fails the test. It sees only the test's own use of the pools (PoolAccounting.Watch): what the test host, another
+// test's leftover thread or another process under memory pressure does with pools the test never made an array in is not the test's, so a parallel run does not fail it
+// - when a pool PoolAccounting cannot size, and the test used, dropped an array during it (an element type not known; an ID that several element sizes share
 //   is sized by the largest, a bound, and does not fail), with where that pool's first array was allocated;
 // - when registering an assembly's pools failed;
-// - when a trim ran under high memory pressure during it, where a pool can drop an array inside the reading after the one it was returned
+// - when a pool the test used was trimmed under high memory pressure during it, where a pool can drop an array inside the reading after the one it was returned
 //   before, which the accounting would count without its having been in the earlier reading;
 // - when a shared pool made an array of more than 8,216 bytes on the test's thread (its code or the analysis it runs), or one of a pool
 //   that cannot be sized;
@@ -46,6 +47,7 @@ internal sealed class SharedPoolGuard
         PoolAccounting.Start();
         _registrationFailures = PoolAccounting.RegistrationFailureCount;
         PoolAccounting.RegisterLoaded();
+        PoolAccounting.Watch(_thread);
         _unknownDrops = PoolAccounting.UnknownDropCount;
         _highPressureTrims = PoolAccounting.HighPressureTrims;
         PoolAccounting.OnAllocated = Allocated;

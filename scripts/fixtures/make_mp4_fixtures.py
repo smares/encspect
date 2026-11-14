@@ -683,6 +683,23 @@ def opus_edit_list():
     })]
 
 
+def opus_too_lavf():
+    """Opus in MP4 with a tool atom of ffmpeg's muxer version, which names the writer as it does for AAC and AC-3 in MP4 (the Opus encapsulation has no comment header)."""
+    packets = ogg_opus_packets("external-libopus-stereo-silk-20ms-fec.opus", 10)
+    durations = [opus_packet_samples(p) for p in packets]
+    entry = mp4a(2, 48000, dops(2, 312, 48000), format=b"Opus")
+    track = Track(1, packets, 48000, 2, entry, durations=durations, chunk=10)
+    data, records, offsets = movie([track], moov_extra=[udta(ilst_meta(text_item(b"\xa9too", "Lavf60.16.100")))])
+    return [("opus-too-lavf-in-mp4", data, {
+        "description": "Opus in MP4 with a tool atom that holds ffmpeg's muxer version: the atom names the writer, as it does for AAC and AC-3 in MP4.",
+        "length": len(data), "format": "MP4", "boxes": boxes_of(records, len(data)),
+        "streams": [stream("Opus", 48000, 2, "Stereo", sum(durations) - 312, vbr=True, writer=("FFmpeg (Lavf60.16.100)", "Low"))],
+        "units": unit_list(offsets[0], packets, 10),
+        "fields": {"MP4/moov/trak/mdia/minf/stbl/stsd/Opus/dOps/Opus Head/Pre-skip": "312 samples"},
+        "findings": [], "crosscheck": {"ffprobe": True, "mp4box": True, "faad": None, "skip": {"faad": "faad2 reads AAC only."}},
+    })]
+
+
 def opus_version():
     """An Opus specific box of version 1, which the encapsulation does not define: the track is not read."""
     packets = ogg_opus_packets("external-libopus-stereo-silk-20ms-fec.opus", 10)
@@ -1374,7 +1391,7 @@ def write_fixture(directory, name, data, manifest):
 def main():
     import aac_block_fixtures
 
-    fixtures = he_aac_configs() + [xhe(), eld()] + xhe_layouts() + layout_variants() + channel_layouts() + gapless() + too_lavc() + metadata() + id32() + mp3_in_mp4() + opus_in_mp4() + opus_edit_list() + opus_version() + quicktime() + chapters() + fragmented() + structure() + mp3_gap() + corrupt() + trailing_tags()
+    fixtures = he_aac_configs() + [xhe(), eld()] + xhe_layouts() + layout_variants() + channel_layouts() + gapless() + too_lavc() + metadata() + id32() + mp3_in_mp4() + opus_in_mp4() + opus_edit_list() + opus_too_lavf() + opus_version() + quicktime() + chapters() + fragmented() + structure() + mp3_gap() + corrupt() + trailing_tags()
     for name, data, manifest in fixtures:
         write_fixture(MP4, name, data, manifest)
     for name, data, manifest in adts_fixtures():

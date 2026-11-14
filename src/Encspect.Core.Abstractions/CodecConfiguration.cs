@@ -31,6 +31,10 @@ public sealed record CodecConfiguration
     // only through the host's router. What the container states about the stream itself, not the coding, goes in the route's claims. Record equality compares this list by reference.
     public IReadOnlyList<EncoderClaim> Claims { get; init; } = [];
 
+    // True where the stream has no comment header of its own to name a writer, and the container's claims about the file name it (MP4's ©too atom for
+    // Opus, as for AAC and AC-3). Matroska resolves the writer of such a stream itself, so it leaves this false.
+    public bool IsWriterFromContainer { get; init; }
+
     // The WAVEFORMATEX the container states for the stream (WAV, AVI, ASF), or null: its figures
     // come with the configuration, whose Data then holds the bytes after the structure.
     public AudioFormat? Format { get; init; }
