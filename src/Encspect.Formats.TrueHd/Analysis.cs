@@ -554,6 +554,11 @@ internal sealed class Analysis
                 });
                 _isDecodeResumed = false;
             }
+            else if (Session is { IsDecoding: true } paused && outSamples > 0)
+            {
+                // The decoder does not follow a change of the stream's format: the stretch is handed as unreadable units, so that its samples are lost ones of the measurements.
+                paused.Decode(new CodedFrame(new MappedBytes(ReadOnlyMemory<byte>.Empty, offset), Nodes.UnitName, FirstSample, outSamples) { IsUnreadable = true });
+            }
 
             if (current is { } counting)
             {
@@ -588,7 +593,7 @@ internal sealed class Analysis
         LostSamples += samples;
         Samples += samples;
         _samplesByRate[counting.SampleRate] = _samplesByRate.GetValueOrDefault(counting.SampleRate) + samples;
-        if (Session is { IsDecoding: true } session && !_isDecodePaused)
+        if (Session is { IsDecoding: true } session)
         {
             session.Decode(new CodedFrame(new MappedBytes(memory, offset), Nodes.UnitName, FirstSample, samples) { IsUnreadable = true, IsDamaged = true });
         }
