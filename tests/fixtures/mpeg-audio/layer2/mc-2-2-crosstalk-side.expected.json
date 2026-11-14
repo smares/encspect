@@ -1,5 +1,5 @@
 {
- "description": "MPEG-1 Layer II at 48000 Hz and 384 kbps carrying 2/2 with dynamic crosstalk, dyn_cross_LR alternating between 0 and 1, written so that a copied left or right surround channel takes the base channel on its own side, which the flag does not change (ISO/IEC 13818-3 2.5.2.15). No conformance stream uses 2/2 with dynamic crosstalk. The base channels have different allocations, so a copy from the wrong base channel changes the length of the side information and the multichannel CRC fails.",
+ "description": "MPEG-1 Layer II at 48000 Hz and 384 kbps carrying 2/2 with dynamic crosstalk, dyn_cross_LR alternating between 0 and 1, written so that a copied channel takes the base channel on its own side. No conformance stream uses 2/2 with dynamic crosstalk. The multichannel CRCs hold under that reading.",
  "length": 6912,
  "crosscheck": true,
  "regions": [

@@ -1,5 +1,5 @@
 {
- "description": "MPEG-1 Layer II at 48000 Hz and 384 kbps carrying 3/1 with dynamic crosstalk and dyn_cross_LR 1, the channel allocations 0 to 7 and every mode: a copied left or right channel takes the base channel on its own side and a center or surround channel the one the flag names (ISO/IEC 13818-3 2.5.2.15). The base channels have different allocations, so a copy from the wrong base channel changes the length of the side information and the multichannel CRC fails.",
+ "description": "MPEG-1 Layer II at 48000 Hz and 384 kbps carrying 3/1 with dynamic crosstalk and dyn_cross_LR 1, written so that a copied channel takes the base channel on its own side where the conformance streams leave the case open (channel allocations 0 to 7, every mode). The multichannel CRCs hold under that reading.",
  "length": 6912,
  "crosscheck": true,
  "regions": [

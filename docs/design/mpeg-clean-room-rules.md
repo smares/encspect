@@ -126,7 +126,13 @@ Source rule for "base channel": the channel copies the base channel on the side 
 
 13818-3 2.5.2.15 settles it. A channel that dynamic crosstalk leaves out and whose mode names no source ("for all other cases") copies by side: Lw and LSw from Lo, Rw and RSw from Ro, and Cw and Sw from Lo if `dyn_cross_LR` is 0 and from Ro if it is 1. That is the rule above, for every configuration, every `tc_allocation` and both values of `dyn_cross_LR`. The text also says that the bit allocation of such a subband is copied from the channel the samples come from, and that where the copied allocation is 0 no scfsi and scalefactors are sent. The mode tables of 2.5.2.15 (3/2, 3/1 and 2/2, 3/0 and 2/1) are the ones above, where "Tij" names a copy of Ti into Tj.
 
-Two readings were held before the text was at hand. The ISO reference software was observed to let `dyn_cross_LR` name the base channel of every copy in 3/1 and 2/2, whatever the copied channel's side; the text does not say so, so it is not read: the CRC fallback to it, the "Base Channel Source" node and the fixtures written under it (`mc-3-1-crosstalk-flag`, `mc-3-1-crosstalk-flag-right`, `mc-2-2-crosstalk-flag`) are gone. The removed code's chain for 3/1 and 2/2 differed from the text in these cases:
+The ISO reference software was observed to read `dyn_cross_LR` differently: it names the base channel of every copy in 3/1 and 2/2, whatever the copied channel's side. The text does not say so, but encoders likely follow the software, so `Read` keeps a fallback (the lead's decision, 2026-11-14):
+
+- It reads a 3/1 or 2/2 frame with dynamic crosstalk by the text first. If its multichannel CRC holds, that is the reading.
+- Otherwise it reads the frame again with the software's source for the copies the conformance streams leave open (any copy under `dyn_cross_LR` 1, 3/1 with T3 carrying R under 0, all of 2/2; the others agree with the text). If that CRC holds, the frame keeps it and a warning, `mpeg-audio.multichannel-reference-software-reading`, says the frame follows the software, not 13818-3 2.5.2.15.
+- If neither holds, it keeps the text's reading and reports the CRC mismatch.
+
+The removed code's chain for 3/1 and 2/2 differed from the text in these cases:
 
 | Configuration | `tc_allocation` | `dyn_cross_LR` | Channel | Removed code | The text |
 |---|---|---|---|---|---|
@@ -139,11 +145,11 @@ The text is silent on what a `tc_allocation` value carries that assigns no chann
 
 One more difference: the removed code let the reserved center value 2 count as a coded center in the second-programme copy of mode 0. With center 2 and surround 3 the shape is 2/0 + 2/0, so it never copied and read T3. This document treats center 2 as no center throughout (13818-3 2.5.2.13 calls the value "not defined"), so T3 copies T2 when `dyn_second_stereo` is 1.
 
-Fixtures: `mc-3-1-crosstalk-decided` (`dyn_cross_LR` 0, channel allocations 0 to 3), `mc-3-1-crosstalk-side` (`dyn_cross_LR` 1, 0 to 7), `mc-2-2-crosstalk-side` (`dyn_cross_LR` alternating), `mc-second-stereo-crosstalk` and `mc-center-reserved-second-stereo` (`dyn_second_stereo` with a coded and with a reserved center). In the two "side" fixtures the base channels carry different allocations, so a copy from the wrong base channel changes the number of scfsi fields and fails the multichannel CRC.
+Fixtures: `mc-3-1-crosstalk-decided` (`dyn_cross_LR` 0, channel allocations 0 to 3), `mc-3-1-crosstalk-side` (`dyn_cross_LR` 1, 0 to 7), `mc-2-2-crosstalk-side` (`dyn_cross_LR` alternating), all by the text, and `mc-3-1-crosstalk-flag`, `mc-3-1-crosstalk-flag-right` and `mc-2-2-crosstalk-flag` by the software's reading, with the warning, `mc-second-stereo-crosstalk` and `mc-center-reserved-second-stereo` (`dyn_second_stereo` with a coded and with a reserved center). In the two "side" fixtures the base channels carry different allocations, so a copy from the wrong base channel changes the number of scfsi fields and fails the multichannel CRC.
 
 ### The fixture writer
 
-`make_layer2_fixtures.py` needs, per configuration (surround, center coded), the additional channels, the `tc_allocation` bits and the number of `predsi` fields at mode 0, all from the tables above. It writes dynamic crosstalk for 3/1, 2/2 and the second stereo programme (`Dynamic`, `Multichannel.allocate`), following the tables above; without dynamic crosstalk its output is unchanged.
+`make_layer2_fixtures.py` needs, per configuration (surround, center coded), the additional channels, the `tc_allocation` bits and the number of `predsi` fields at mode 0, all from the tables above. It writes dynamic crosstalk for 3/1, 2/2 and the second stereo programme (`Dynamic`, `Multichannel.allocate`), following the tables above and, for the open cases, either reading; without dynamic crosstalk its output is unchanged.
 
 ### Checks
 

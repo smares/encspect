@@ -141,6 +141,13 @@ internal sealed class Layer2Multichannel
 
     public bool HasLfe { get; private set; }
 
+    // Whether dynamic crosstalk is on in 3/1 or 2/2, the configurations where the reference software's reading can differ from the text's.
+    public bool HasCrosstalkChoice { get; private set; }
+
+    // Whether the frame reads under the reference software's reading instead of ISO/IEC 13818-3 2.5.2.15: dyn_cross_LR names the base channel of
+    // every copy in the cases the conformance streams leave open. Set only where the text's reading fails the multichannel CRC and this one holds it.
+    public bool UsesFlagReading { get; private set; }
+
     public int DematrixProcedure { get; private set; }
 
     public int MultilingualChannels { get; private set; }
@@ -317,7 +324,24 @@ internal sealed class Layer2Multichannel
         int table = rate == 48000 ? 0 : 1;
         mc.AllocationStart = bits.Position;
 
-        mc.ReadAllocation(data, start, statusStart, headerEnd, table, channels, dynMode, secondStereo, tc, dynLeftRight, baseAllocation);
+        mc.HasCrosstalkChoice = dynamic == 1 && channels == 2 && mc.Surround != 3;
+        void ReadAs(bool flagReading)
+        {
+            mc.UsesFlagReading = flagReading;
+            mc.ReadAllocation(data, start, statusStart, headerEnd, table, channels, dynMode, secondStereo, tc, dynLeftRight, baseAllocation);
+        }
+
+        // The text's reading (13818-3 2.5.2.15) first; the reference software's only where the text's fails the CRC and it holds.
+        ReadAs(false);
+        if (mc.HasCrosstalkChoice && mc.StoredCrc != mc.ComputedCrc)
+        {
+            ReadAs(true);
+            if (mc.StoredCrc != mc.ComputedCrc)
+            {
+                ReadAs(false);
+            }
+        }
+
         return mc;
     }
 
@@ -367,6 +391,11 @@ internal sealed class Layer2Multichannel
         ComputedCrc = Crc16.ComputeBits(data, statusStart, SideInfoEnd - statusStart, Crc16.ComputeBits(data, start, headerEnd - start));
     }
 
+    // Whether the channel at index i copies a base channel in a case the conformance streams of ISO/IEC 13818-4 leave open (they decide the others for the text's
+    // reading): any copy under dyn_cross_LR 1, 3/1 with T3 carrying R under 0, and all of 2/2.
+    private static bool IsUndecided(Layer2Multichannel mc, string[] carries, int i, int tc, int fromRight) =>
+        mc.HasCrosstalkChoice && (fromRight == 1 || mc.Surround == 2 || (i == 1 && carries[1][tc] == 'R'));
+
     // Decides the allocation index of T2 to T4 in one subband, reading the fields the bitstream
     // carries in channel order; the rules are those of section 1 of
     // docs/design/mpeg-clean-room-rules.md.
@@ -408,7 +437,7 @@ internal sealed class Layer2Multichannel
                 value = plan[i] switch
                 {
                     Source.Read => transmit(2 + i),
-                    Source.Base => carries[i][tc] switch
+                    Source.Base => mc.UsesFlagReading && IsUndecided(mc, carries, i, tc, fromRight) ? (fromRight == 1 ? right : left) : carries[i][tc] switch
                     {
                         'L' => left,
                         'R' => right,
