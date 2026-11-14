@@ -199,6 +199,9 @@ internal sealed class State(Source source, CancellationToken cancellation, Analy
     // info in the blocks up to it or from that block's flags.
     public bool IsConfigured { get; set; }
 
+    // Whether the open set began without the initial block flag, so that libwavpack decodes none of its blocks.
+    public bool SetIsOrphan { get; set; }
+
     // The header of the block that settled them.
     public BlockHeader ConfigHeader { get; set; }
 
