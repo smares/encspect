@@ -44,6 +44,14 @@ DEFAULT_PCMDUMP = "dotnet " + str(ROOT / "tests" / "Encspect.PcmDump" / "bin" / 
 # Fixtures a reference decodes differently, by reference ("minimp3" or "ffmpeg"), with what is known. An entry is a pending item for the lead, not an explanation: the
 # bound is not widened for it (docs/design/lossy-decoders.md, "The PCM cross-checks").
 EXPLAINED = {
+    "mc-3-1-crosstalk-decided.mp2": {"mctoolamed": "dyn_cross_mode 5 to 7, which 13818-3 2.5.2.15 forbids in 3/1, are in the fixture and read differently by the two decoders; the allowed modes of 3/1, 3/2, 3/0, 2/1 and the second stereo program agree within 1 LSB (see development.md, \"Multichannel extension\")"},
+    "mc-3-1-crosstalk-side.mp2": {"mctoolamed": "forbidden dyn_cross_mode values (5 to 7) and the copy sources the text and the reference software read differently (13818-3 2.5.2.15, the base channel of a copy)"},
+    "mc-3-1-crosstalk-flag.mp2": {"mctoolamed": "forbidden dyn_cross_mode values (5 to 7)"},
+    "mc-3-1-crosstalk-flag-right.mp2": {"mctoolamed": "forbidden dyn_cross_mode values (5 to 7)"},
+    "mc-2-2-crosstalk-side.mp2": {"mctoolamed": "2/2 with dynamic crosstalk: the cases the text and the reference software read differently, and the forbidden dyn_cross_mode values 5 to 7"},
+    "mc-2-2-crosstalk-flag.mp2": {"mctoolamed": "2/2 with dynamic crosstalk: the cases the text and the reference software read differently, and the forbidden dyn_cross_mode values 5 to 7"},
+    "mc-second-stereo-crosstalk.mp2": {"mctoolamed": "tc_allocation 3, which 13818-3 2.5.2.15 leaves unassigned in 3/0 + 2/0, is in the fixture"},
+    "mc-center-reserved-second-stereo.mp2": {"mctoolamed": "the reserved center value 2 (13818-3 2.5.2.13: not defined), which the analyzer reads as no center"},
     "external-xing-mpeg2.mp3": {
         "ffmpeg": "the references disagree: in the granules of frames 61 to 64 of this tompg file (MPEG-2 joint stereo, intensity and mid/side stereo, a transient after near silence) the largest "
                   "differences are 0.0236 of full scale between minimp3 and FFmpeg 6.1.1 (mp3float and mp3 agree to 3e-5), 0.0221 between minimp3 and mpg123 1.32.5 and 0.0174 between FFmpeg and "
@@ -274,7 +282,7 @@ def main(argv=None):
         print("no MPEG audio file")
         return 2
     binary = minimp3_tool.build_pcm()
-    failed = compared = 0
+    failed = compared = multichannel = 0
     decoder = None
     mixed_directory = pathlib.Path(tempfile.mkdtemp(prefix="mixed-"))
     if not args.files:
@@ -303,9 +311,15 @@ def main(argv=None):
                 decoder = decoder or mctoolamed_tool.build()
                 reference = mctoolamed_reference(decoder, path, streams[0])
                 problems = [f"mctoolamed writes other channels than the analyzer's {streams[0]['channels']}"] if reference is None else compare_multichannel(manifest, streams[0], reference)
-                compared += 0 if problems else 1
+                note = f"mctoolamed, {streams[0]['channels']} channels"
+                for name, reason in EXPLAINED.get(path.name, {}).items():
+                    listed = [p for p in problems if p.startswith(name + ":")]
+                    if listed:
+                        problems = [p for p in problems if p not in listed]
+                        note += f"; {name} listed: {reason}"
+                multichannel += 1
                 failed += 1 if problems else 0
-                print(f"FAIL {path.name}: " + "; ".join(problems) if problems else f"ok   {path.name} (mctoolamed, {streams[0]['channels']} channels)")
+                print(f"FAIL {path.name}: " + "; ".join(problems) if problems else f"ok   {path.name} ({note})")
                 continue
             reference = minimp3_reference(binary, path, work)
             layer = reference[3] if reference is not None else None
@@ -348,7 +362,7 @@ def main(argv=None):
                 print(f"FAIL {path.name}: " + "; ".join(problems))
             else:
                 print(f"ok   {path.name}" + (f" ({note})" if note else ""))
-    print(f"{compared} files compared with minimp3, {failed} failed")
+    print(f"{compared} files compared with minimp3, {multichannel} with mctoolamed, {failed} failed")
     return 1 if failed else 0
 
 

@@ -245,12 +245,12 @@ internal sealed class MultichannelDecoder
         }
     }
 
-    // Dematrixing and de-normalization, subband by subband with the transmission channel allocation of its group; a second stereo program comes through as it is.
+    // Dematrixing and de-normalization, subband by subband with the transmission channel allocation of its group; a second stereo program comes through as it is. The base
+    // channels of a stream without additional channels (2/0) are de-normalized too, as the ISO reference software does and the text's table, which names no configuration, says.
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void ApplyMatrix(Layer2Multichannel mc)
     {
         float[] factors = Dematrix.Factors(mc.DematrixProcedure);
-        bool dematrixes = mc.AdditionalChannels > 0 && !(mc.Surround == 3 && !_plan.HasCenter);
         int front = _plan.HasCenter ? 1 : 0;
         for (int part = 0; part < 3; part++)
         {
@@ -263,24 +263,24 @@ internal sealed class MultichannelDecoder
                     _signals[v].AsSpan(offset, 12).CopyTo(_variables.AsSpan(v * 12, 12));
                 }
 
-                Dematrix.Program program = Dematrix.Get(_configuration, dematrixes || _plan.HasCenter ? mc.DematrixProcedure : 3, mc.ChannelAllocation[group]);
+                Dematrix.Program program = Dematrix.Get(_configuration, mc.DematrixProcedure, mc.ChannelAllocation[group]);
                 Dematrix.Run(program, _variables);
                 int output = 0;
-                Emit(output++, Dematrix.L, factors[0], dematrixes, offset);
-                Emit(output++, Dematrix.R, factors[1], dematrixes, offset);
+                Emit(output++, Dematrix.L, factors[0], offset);
+                Emit(output++, Dematrix.R, factors[1], offset);
                 if (_plan.HasCenter)
                 {
-                    Emit(output++, Dematrix.C, factors[2], dematrixes, offset);
+                    Emit(output++, Dematrix.C, factors[2], offset);
                 }
 
                 if (mc.Surround == 1)
                 {
-                    Emit(output++, Dematrix.LS, factors[3], dematrixes, offset);
+                    Emit(output++, Dematrix.LS, factors[3], offset);
                 }
                 else if (mc.Surround == 2)
                 {
-                    Emit(output++, Dematrix.LS, factors[3], dematrixes, offset);
-                    Emit(output++, Dematrix.RS, factors[4], dematrixes, offset);
+                    Emit(output++, Dematrix.LS, factors[3], offset);
+                    Emit(output++, Dematrix.RS, factors[4], offset);
                 }
                 else if (mc.Surround == 3)
                 {
@@ -292,13 +292,13 @@ internal sealed class MultichannelDecoder
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private void Emit(int output, int variable, float factor, bool isScaled, int offset)
+    private void Emit(int output, int variable, float factor, int offset)
     {
         Span<float> destination = _outputs[output].AsSpan(offset, 12);
         ReadOnlySpan<float> source = _variables.AsSpan(variable * 12, 12);
         for (int k = 0; k < 12; k++)
         {
-            destination[k] = isScaled ? source[k] * factor : source[k];
+            destination[k] = source[k] * factor;
         }
     }
 
