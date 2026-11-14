@@ -57,9 +57,9 @@ internal static class Explain
     public const string CountFrames = "How many frames the packet holds, 1 to 48, at most 120 ms in all (RFC 6716, section 3.2.5).";
     public const string PaddingLength = "The length of the padding in bytes, as the bytes at this position code it: each byte of 255 adds 254 and continues, the last byte adds its value (RFC 6716, section 3.2.5).";
     public const string FrameLengths = "The frame lengths the packet states, one or two bytes each (RFC 6716, section 3.2.1); a self-delimited part adds its last frame's.";
-    public const string Frame = "A compressed frame, which the analyzer does not decode (RFC 6716, section 3).";
+    public const string Frame = "A compressed frame of SILK, CELT or both, coded with the range coder (RFC 6716, sections 3 and 4).";
     public const string EmptyFrame = "A frame of no bytes, which tells the decoder there is no data for it, as in discontinuous transmission (RFC 6716, section 3.2.1).";
-    public const string Padding = "Padding after the frames, which decoders ignore; CBR encoders pad to keep every packet the same size (RFC 6716, section 3.2.5).";
+    public const string Padding = "Padding after the frames, which decoders ignore; libopus pads in CBR mode to keep every packet the same size (RFC 6716, section 3.2.5).";
     public const string Unparsed = "The rest of a packet whose framing breaks RFC 6716, section 3.4, so its frames cannot be told apart.";
 
     public const string Statistics = "Figures over the stream's audio packets, counted from their TOC bytes and framing and from the granule positions.";

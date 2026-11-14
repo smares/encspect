@@ -11,4 +11,4 @@ references: Vorbis I specification, sections 1.3.2, 4.2.4 and 4.3.5
 
 **Order matters.** Steps are undone in reverse order, so a channel may take part in several steps, which is how surround mappings couple more than two channels.
 
-**What you see.** Each mapping's coupling steps with their magnitude and angle channels. Whether a packet really uses coupling, and how coarsely, sits in its residue, which the analyzer does not decode.
+**What you see.** Each mapping's coupling steps with their magnitude and angle channels. Whether a packet really uses coupling, and how coarsely, sits in its residue: the analyzer reads every packet's residue but reports no figure for the coupling, and with `--measure` its decoder undoes the coupling steps.
