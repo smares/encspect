@@ -165,15 +165,15 @@ def allocate_full(exp, end, snr):
     return bap
 
 
-def exponent_set(rng, bins, base):
-    """Slowly varying exponents of `bins` bins for D45 coding: the first one and differences of -2..2 per group of four bins."""
-    first = base
+def exponent_set(rng, bins, base, shift=0):
+    """Slowly varying exponents of `bins` bins for D45 coding: the first one and differences of -2..2 per group of four bins; `shift` raises all of them (6 dB each)."""
+    first = base + shift
     deltas = [rng.choice([-1, 0, 0, 1]) for _ in range(bins)]
     exp, groups, value = [first], [], first
     for g in range(0, (bins - 1 + 9) // 12 * 3, 3):
         triple = []
         for d in deltas[g:g + 3]:
-            value = min(max(value + d, 3), 12)
+            value = min(max(value + d, 3 + shift), 12 + shift)
             triple.append(value)
         groups.append(triple)
     previous, codes = first, []
@@ -235,14 +235,17 @@ def write_mantissas(bits, rng, channels):
 CSNROFFST = 22
 
 
-def frame(kind, seed):
+def frame(kind, seed, compr=None, shift=0):
     rng = random.Random(seed)
     fscod, frmsizecod = 0, 34  # 48 kHz, 1,152 words: 448 kbps
     words = m.WORDS[fscod][frmsizecod]
     b = Bits()
     b.put(m.SYNC, 16).put(0, 16).put(fscod, 2).put(frmsizecod, 6)
     b.put(8, 5).put(0, 3).put(2, 3).put(0, 2).put(0, 1)  # bsid 8, bsmod 0, acmod 2, dsurmod 0, lfeon 0
-    b.put(27, 5).put(0, 1).put(0, 1).put(0, 1)  # dialnorm, compre, langcode, audprodie
+    b.put(27, 5).put(compr is not None, 1)  # dialnorm, compre
+    if compr is not None:
+        b.put(compr, 8)  # compr: X (4 bits, two's complement) and Y (4 bits), A/52 7.7.2
+    b.put(0, 1).put(0, 1)  # langcode, audprodie
     b.put(0, 1).put(1, 1).put(0, 1).put(0, 1).put(0, 1)  # copyrightb, origbs, timecod1e, timecod2e, addbsie
     widths = [20, 50] if kind == "unequal" else [None, None]
     # (cplbegf, cplendf, phsflginu, phase flags) of a coupling strategy sent in the block; None sends none
@@ -302,7 +305,7 @@ def frame(kind, seed):
             exps["cpl"] = (exp, start, end)
         for ch in range(2):
             end = 37 + 12 * cplstate[0] if cplstate else (widths[ch] + 12) * 3 + 37
-            first, codes, exp = exponent_set(rng, end, rng.randrange(6, 10))
+            first, codes, exp = exponent_set(rng, end, rng.randrange(6, 10), shift)
             b.put(first, 4)
             for c in codes:
                 b.put(c, 7)
@@ -331,11 +334,24 @@ def frame(kind, seed):
     return m.fix_crc2(m.fix_crc1(b.bytes()))
 
 
-def build(kind, seed):
-    return b"".join(frame(kind, seed + i) for i in range(12))
+COMPR_SHIFT = 6  # exponents 6 higher (36 dB quieter): the peak is about -23 dBFS, so that the +13.6 dB of a decoder's RF mode (+7 dB for the dialogue level, +6.02 dB compr, 0.27 dB) stays under full scale
+
+
+def build(kind, seed, compr=False, switch=False):
+    # +6.02 dB (X = 1, Y = 0: 2^(1 + 1) * 0.5) in the first six frames, -6.02 dB (X = -1, Y = 0) in the last six; the switch variant has compre 1 with 0 dB (X = 0, Y = 0) in the first six
+    # frames and compre 0 in the last six
+    def word(i):
+        if switch:
+            return 0x00 if i < 6 else None
+        return (0x10 if i < 6 else 0xF0) if compr else None
+    return b"".join(frame(kind, seed + i, word(i), COMPR_SHIFT if compr or switch else 0) for i in range(12))
 
 
 DESCRIPTIONS = {
+    "ac3-signal-compr-switch.ac3": "The audio of ac3-signal-compr (exponents 6 higher than ac3-signal-unequal-bandwidth's, so 36 dB quieter) with compre set and a compr word of 0 dB (0x00) in the first six frames and compre 0 "
+                                   "in the last six, dialnorm 27: to see whether a decoder that picks its output mode by the presence of compr changes its gain at the step, with no compr gain to confuse the steps.",
+    "ac3-signal-compr.ac3": "The frames of ac3-signal-unequal-bandwidth with the exponents 6 higher (36 dB quieter, so that the gain of a decoder's RF mode stays under full scale), compre set and a compr word that is +6.02 dB (0x10) in the first six frames and -6.02 dB (0xF0) in the last six, dialnorm 27 "
+                            "(A/52 5.4.2.9, 5.4.2.10 and 7.7.2): to see whether a decoder that picks its output mode by the presence of compr changes its gain at the step.",
     "ac3-signal-unequal-bandwidth.ac3": "Twelve 2/0 frames at 48 kHz whose two channels have different bandwidths (chbwcod 20 and 50), all four rematrixing flags set and mantissas in every bin, so that "
                                        "rematrixing must stop at the lower bandwidth (A/52 7.5.4).",
     "ac3-signal-phase-flags.ac3": "Twelve 2/0 frames at 48 kHz with coupling, phase flags in use in two coupling ranges and not in use in a third (phsflginu 0 after a block that had flags), "
@@ -362,7 +378,8 @@ def manifest(name, data):
 
 def main(argv):
     import json
-    files = {"ac3-signal-unequal-bandwidth.ac3": build("unequal", 100), "ac3-signal-phase-flags.ac3": build("phase", 200)}
+    files = {"ac3-signal-unequal-bandwidth.ac3": build("unequal", 100), "ac3-signal-phase-flags.ac3": build("phase", 200), "ac3-signal-compr.ac3": build("unequal", 100, compr=True),
+             "ac3-signal-compr-switch.ac3": build("unequal", 100, switch=True)}
     check = "--check" in argv
     for name, data in files.items():
         path = OUT / name

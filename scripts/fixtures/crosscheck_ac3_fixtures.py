@@ -592,7 +592,9 @@ def check_mediainfo(path, tally):
     tally.compare("dialnorm", extra.get("dialnorm"), str(dialnorms[0]))
     tally.compare("dialnorm minimum and maximum", (extra.get("dialnorm_Minimum"), extra.get("dialnorm_Maximum")), (str(min(dialnorms)), str(max(dialnorms))))
     compr = mi.value(bsi, "Compression Gain")
-    tally.compare("compr", None if extra.get("compr") is None else round(float(extra["compr"]), 1), compr)
+    # MediaInfo gives compr to one decimal (6.0 for the code 0x10, 6.02 dB), so both sides are compared at that precision.
+    tally.compare("compr", None if extra.get("compr") is None else round(float(extra["compr"]), 1),
+                  None if mi.leading_number(compr) is None else round(float(mi.leading_number(compr)), 1))
     surround = mi.leading_number(mi.value(bsi, "Dolby Surround Mode"))
     if field(first, "Audio Coding Mode") != 2:
         pass

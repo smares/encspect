@@ -1,0 +1,81 @@
+{
+ "description": "The frames of eac3-signal-spx 18 dB quieter (so that the gain of a decoder's RF mode stays under full scale) with compre set and a compr word that is +6.02 dB (0x10) in the first six frames and -6.02 dB (0xF0) in the last six, dialnorm 27 (A/52 5.4.2.9, 5.4.2.10 and 7.7.2): to see whether a decoder that picks its output mode by the presence of compr changes its gain at the step.",
+ "length": 49152,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   4096
+  ],
+  [
+   4096,
+   4096
+  ],
+  [
+   8192,
+   4096
+  ],
+  [
+   12288,
+   4096
+  ],
+  [
+   16384,
+   4096
+  ],
+  [
+   20480,
+   4096
+  ],
+  [
+   24576,
+   4096
+  ],
+  [
+   28672,
+   4096
+  ],
+  [
+   32768,
+   4096
+  ],
+  [
+   36864,
+   4096
+  ],
+  [
+   40960,
+   4096
+  ],
+  [
+   45056,
+   4096
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "E-AC-3",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 18432,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "ffprobe_bitrate": true,
+  "decode": true,
+  "skip_insertion": false,
+  "skip": {
+   "skip_insertion": "The check rewrites E-AC-3 frames with skip fields."
+  }
+ }
+}
