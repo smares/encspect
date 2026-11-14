@@ -15,6 +15,11 @@ The model follows the design's text:
   transition and the frames that show an own step of 15 dB at the step's row (the 1 % reference level and the ten levels of 3 dB below it),
   found where the step is 25 dB or more and half of the frames with signal show it.
 
+- the spectral bandwidth (step 7): the floor of the band of W rows that ends at row 506, the run down while the band that ends at a row is within 3 dB of it,
+  found where the band under the run is 20 dB above; the partial cutoff: a third counter, the frames whose band under a row stands 25 dB above the mean
+  power of every row above it (up to row 506), the row with the most frames showing, the walk down while half of that maximum shows, found from a fifth of
+  the frames with signal.
+
 What is independent of the analyzer is the FFT, the rows (the window, the scale and the normalization), the waveform and the stream figures.
 The cutoff's rules are checked against the construction of the signals (a brickwall at a known edge, none for noise, rolloff and mixed
 content) and against the printed bands of the lossy files, not against a second reading of the rules.

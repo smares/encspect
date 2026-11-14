@@ -324,7 +324,7 @@ public sealed class CapitalizationTests
         AudioPanelTests.Choose(window, "Figures");
         labels.AddRange(window.Model.Graphs.Figures!.Select(l => l.Name));
 
-        foreach (string expected in new[] { "Audio", "Waveform", "Spectrogram", "Spectrum", "Figures", "Combined", "Per Channel", "Spectral Cutoff", "Sample Peak" })
+        foreach (string expected in new[] { "Audio", "Waveform", "Spectrogram", "Spectrum", "Figures", "Combined", "Per Channel", "Spectral Cutoff", "Spectral Bandwidth", "Sample Peak" })
         {
             Assert.Contains(expected, labels);
         }

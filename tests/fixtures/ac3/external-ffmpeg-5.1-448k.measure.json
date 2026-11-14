@@ -160,7 +160,67 @@
           "framesShowing": 11,
           "framesWithSignal": 11
         }
-      ]
+      ],
+      "bandwidth": {
+        "isFound": true,
+        "frequency": {
+          "value": 21234,
+          "unit": "Hz"
+        },
+        "floor": {
+          "value": -150.4,
+          "unit": "dB"
+        }
+      },
+      "channelBandwidths": [
+        {
+          "isFound": false,
+          "reason": "slope"
+        },
+        {
+          "isFound": true,
+          "frequency": {
+            "value": 21375,
+            "unit": "Hz"
+          },
+          "floor": {
+            "value": -152.7,
+            "unit": "dB"
+          }
+        },
+        {
+          "isFound": false,
+          "reason": "slope"
+        },
+        {
+          "isFound": true,
+          "frequency": {
+            "value": 21469,
+            "unit": "Hz"
+          },
+          "floor": {
+            "value": -151,
+            "unit": "dB"
+          }
+        },
+        {
+          "isFound": false,
+          "reason": "slope"
+        },
+        {
+          "isFound": false,
+          "reason": "slope"
+        }
+      ],
+      "partialCutoff": {
+        "isFound": true,
+        "frequency": {
+          "value": 20391,
+          "unit": "Hz"
+        },
+        "framesShowing": 11,
+        "framesWithSignal": 11
+      }
     },
     "levels": {
       "format": "float32",

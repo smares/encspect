@@ -1,7 +1,7 @@
 ---
 id: measurements
 title: Measurements of decoded audio
-related: samples-and-lost-samples, withheld-samples, lossy-decoding, spectral-cutoff, spectrogram, levels, loudness, loudness-range, sample-peak-and-true-peak, verification, pcm-samples, lowpass, coded-bandwidth, bwf-broadcast-extension, replaygain
+related: samples-and-lost-samples, withheld-samples, lossy-decoding, spectral-cutoff, spectral-bandwidth, spectrogram, levels, loudness, loudness-range, sample-peak-and-true-peak, verification, pcm-samples, lowpass, coded-bandwidth, bwf-broadcast-extension, replaygain
 references: P. D. Welch, The use of fast Fourier transform for the estimation of power spectra, IEEE Trans. Audio Electroacoust. 15(2), 1967; F. J. Harris, On the use of windows for harmonic analysis with the discrete Fourier transform, Proc. IEEE 66(1), 1978
 ---
 

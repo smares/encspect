@@ -81,6 +81,15 @@ public class MeasurementFixtureTests
             {
                 AssertCutoff(cutoff, m.Spectrum.ChannelCutoffs[channel++], m.SampleRate, m.Spectrum.FftSize);
             }
+
+            AssertBandwidth(model.GetProperty("bandwidth"), m.Spectrum.Bandwidth, m.SampleRate, m.Spectrum.FftSize);
+            channel = 0;
+            foreach (JsonElement bandwidth in model.GetProperty("channel_bandwidths").EnumerateArray().Take(m.ChannelsMeasured))
+            {
+                AssertBandwidth(bandwidth, m.Spectrum.ChannelBandwidths[channel++], m.SampleRate, m.Spectrum.FftSize);
+            }
+
+            AssertPartial(model.GetProperty("partial_cutoff"), m.Spectrum.PartialCutoff, m.SampleRate, m.Spectrum.FftSize);
         }
 
         // The levels: every count and the DC offset exact, the tenths of a dB exactly (the model works them out in 60 decimal digits).
@@ -440,6 +449,164 @@ public class MeasurementFixtureTests
             Assert.InRange(actual.TransitionStart, model.GetProperty("transition_start").GetInt32() - rowHertz, model.GetProperty("transition_start").GetInt32() + rowHertz);
         }
 
+    }
+
+    // The model's bandwidth from its own FFT: the rows differ by a tenth of a dB, so the run may end a row away and the floor differ by a tenth.
+    private static void AssertBandwidth(JsonElement model, SpectralBandwidth actual, int rate, int size)
+    {
+        if (!model.GetProperty("is_searched").GetBoolean())
+        {
+            Assert.False(actual.IsSearched);
+            return;
+        }
+
+        int rowHertz = (int)Math.Ceiling((double)rate * (size / 1024) / size);
+        Assert.Equal(model.GetProperty("is_found").GetBoolean(), actual.IsFound);
+        if (actual.IsFound)
+        {
+            Assert.InRange(actual.Frequency, model.GetProperty("frequency").GetInt32() - rowHertz, model.GetProperty("frequency").GetInt32() + rowHertz);
+            Assert.InRange(actual.FloorTenthsOfDb, model.GetProperty("floor_tenths").GetInt32() - 2, model.GetProperty("floor_tenths").GetInt32() + 2);
+        }
+        else
+        {
+            Assert.Equal(model.GetProperty("reason").GetString() == "reaches_top" ? SpectralBandwidthReason.ReachesTop : SpectralBandwidthReason.Slope, actual.Reason);
+        }
+    }
+
+    private static void AssertPartial(JsonElement model, PartialCutoff actual, int rate, int size)
+    {
+        if (!model.GetProperty("is_searched").GetBoolean())
+        {
+            Assert.False(actual.IsSearched);
+            return;
+        }
+
+        int rowHertz = (int)Math.Ceiling((double)rate * (size / 1024) / size);
+        Assert.Equal(model.GetProperty("is_found").GetBoolean(), actual.IsFound);
+        Assert.InRange(actual.FramesWithSignal, model.GetProperty("frames_with_signal").GetInt32() - 1, model.GetProperty("frames_with_signal").GetInt32() + 1);
+        Assert.InRange(actual.FramesShowing, model.GetProperty("frames_showing").GetInt32() - 1, model.GetProperty("frames_showing").GetInt32() + 1);
+        Assert.InRange(actual.Frequency, model.GetProperty("frequency").GetInt32() - (2 * rowHertz), model.GetProperty("frequency").GetInt32() + (2 * rowHertz));
+    }
+
+    // The spectral bandwidth of the signals built to have a flat floor from a known frequency: lines (an exact brickwall, one row of the analyzer's
+    // spectrum either side) and noise upsampled by a windowed-sinc filter, whose edge lies in the filter's transition band; and none for white noise,
+    // whose spectrum reaches the top, and for pink noise through a lowpass, which has no floor in a spectrum that falls without a flat run.
+    // docs/design/spectral-analysis.md, "As built: step 7, first change".
+    [Theory]
+    [InlineData("synthetic-lines-11000-44100", 11000, 11000)]
+    [InlineData("synthetic-lines-16000-44100", 16000, 16000)]
+    [InlineData("synthetic-lines-19000-44100", 19000, 19000)]
+    [InlineData("synthetic-lines-20500-44100", 20500, 20500)]
+    [InlineData("synthetic-lines-16000-48000", 16000, 16000)]
+    [InlineData("synthetic-lines-8000-22050", 8000, 8000)]
+    [InlineData("synthetic-lines-20000-192000", 20000, 20000)]
+    [InlineData("synthetic-upsampled-44100-to-48000", 20000, 22050)]
+    [InlineData("synthetic-upsampled-44100-to-96000", 20000, 22050)]
+    [InlineData("synthetic-upsampled-22050-to-44100", 9500, 11025)]
+    [InlineData("synthetic-upsampled-44100-to-48000-24-bit", 20000, 22050)]
+    public void TheBandwidthIsWhereTheContentMeetsTheFloor(string name, int lowest, int highest)
+    {
+        StreamMeasurements m = Analyze(name, new MeasureOptions()).Streams.Single().Measurements!;
+        SpectralBandwidth bandwidth = m.Spectrum!.Bandwidth;
+        int rowHertz = (int)Math.Ceiling((double)m.SampleRate * (m.Spectrum.FftSize / 1024) / m.Spectrum.FftSize);
+
+        Assert.True(bandwidth.IsFound, name);
+        Assert.InRange(bandwidth.Frequency, lowest - rowHertz, highest + (2 * rowHertz));
+        Assert.True(bandwidth.FloorTenthsOfDb < -1000, $"{name}: a floor of {bandwidth.FloorTenthsOfDb} tenths");
+        Assert.All(m.Spectrum.ChannelBandwidths, c => Assert.True(c.IsFound));
+    }
+
+    [Theory]
+    [InlineData("synthetic-white-44100", SpectralBandwidthReason.ReachesTop)]
+    [InlineData("synthetic-rolloff-1", SpectralBandwidthReason.Slope)]
+    [InlineData("lossy-lame-v0", SpectralBandwidthReason.Slope)]
+    [InlineData("lossy-oggenc-q8", SpectralBandwidthReason.Slope)]
+    public void ASpectrumWithoutAFlatFloorHasNoBandwidth(string name, SpectralBandwidthReason reason)
+    {
+        SpectralBandwidth bandwidth = Analyze(name, new MeasureOptions()).Streams.Single().Measurements!.Spectrum!.Bandwidth;
+
+        Assert.False(bandwidth.IsFound);
+        Assert.Equal(reason, bandwidth.Reason);
+    }
+
+    // Every lossy-derived file with a cutoff has the floor of the 16-bit decoder's output above it, except the two AAC files at the lowest bitrates
+    // (FFmpeg's aac encoder, whose output has no flat floor above its edge); where found, the bandwidth lies within two rows and 250 Hz of the cutoff.
+    [Theory]
+    [MemberData(nameof(LossyNames))]
+    public void TheBandwidthOfALossyDerivedFileLiesAtItsCutoff(string name)
+    {
+        SpectrumFigures spectrum = Analyze(name, new MeasureOptions()).Streams.Single().Measurements!.Spectrum!;
+        if (!spectrum.Cutoff.IsFound || !spectrum.Bandwidth.IsFound)
+        {
+            Assert.True(!spectrum.Cutoff.IsFound || name is "lossy-aac-48k" or "lossy-aac-64k", name);
+            return;
+        }
+
+        Assert.InRange(spectrum.Bandwidth.Frequency, spectrum.Cutoff.Frequency - 250, spectrum.Cutoff.Frequency + 750);
+    }
+
+    // The partial cutoff on content that is band-limited in part of the stream: frames of lines (the first 20, 50 and 80 % of one second, at a hop of
+    // 2,048 samples, so a frame that reaches the white noise does not count) next to white noise at the same level. A fifth of the frames with signal is
+    // the threshold: 3 of 20 (the 20 % file) is under it.
+    [Theory]
+    [InlineData("synthetic-mixed-lines-20-percent", 3, false)]
+    [InlineData("synthetic-mixed-half-and-half", 10, true)]
+    [InlineData("synthetic-mixed-lines-80-percent", 16, true)]
+    [InlineData("synthetic-lines-16000-44100", 20, true)]
+    public void ThePartialCutoffCountsTheFramesThatHaveTheEdge(string name, int showing, bool isFound)
+    {
+        SpectrumFigures spectrum = Analyze(name, new MeasureOptions()).Streams.Single().Measurements!.Spectrum!;
+        PartialCutoff partial = spectrum.PartialCutoff;
+
+        Assert.Equal(showing, partial.FramesShowing);
+        Assert.Equal(20, partial.FramesWithSignal);
+        Assert.Equal(isFound, partial.IsFound);
+        Assert.InRange(partial.Frequency, 15900, 16100);
+        Assert.False(spectrum.Cutoff.IsFound && name.Contains("mixed", StringComparison.Ordinal));
+    }
+
+    // Where the cutoff is found the partial cutoff lies between the start of its transition and the cutoff (a brickwall: the same row, in the same
+    // frames; LAME's gentler lowpass: the ceiling shows where the transition starts, 16,408 Hz for -b 64 against a cutoff of 16,796 Hz).
+    [Theory]
+    [InlineData("synthetic-lines-16000-44100")]
+    [InlineData("synthetic-lines-19000-44100")]
+    [InlineData("synthetic-lines-16000-then-silence")]
+    [InlineData("lossy-lame-b64")]
+    [InlineData("lossy-oggenc-q2")]
+    public void ThePartialCutoffLiesAtTheCutoffWhereBothAreFound(string name)
+    {
+        StreamMeasurements m = Analyze(name, new MeasureOptions()).Streams.Single().Measurements!;
+        SpectrumFigures spectrum = m.Spectrum!;
+        int rowHertz = (int)Math.Ceiling((double)m.SampleRate * (spectrum.FftSize / 1024) / spectrum.FftSize);
+
+        Assert.True(spectrum.Cutoff.IsFound, name);
+        Assert.True(spectrum.PartialCutoff.IsFound, name);
+        Assert.InRange(spectrum.PartialCutoff.Frequency, spectrum.Cutoff.TransitionStart - (2 * rowHertz) - 150, spectrum.Cutoff.Frequency + (2 * rowHertz));
+        Assert.True(spectrum.PartialCutoff.FramesShowing >= spectrum.Cutoff.FramesShowing - 1, name);
+    }
+
+    // Noise without an edge shows no ceiling; a rate under 8,000 Hz is not searched.
+    [Theory]
+    [InlineData("synthetic-white-44100")]
+    [InlineData("lossy-lame-v0")]
+    [InlineData("lossy-oggenc-q8")]
+    [InlineData("synthetic-impulse-silence-44100")]
+    public void NoiseWithoutAnEdgeShowsNoCeiling(string name)
+    {
+        PartialCutoff partial = Analyze(name, new MeasureOptions()).Streams.Single().Measurements!.Spectrum!.PartialCutoff;
+
+        Assert.False(partial.IsFound);
+        Assert.Equal(0, partial.FramesShowing);
+    }
+
+    [Fact]
+    public void AStreamUnder8000HertzSearchesNeitherFigure()
+    {
+        SpectrumFigures spectrum = Analyze("synthetic-white-2000", new MeasureOptions()).Streams.Single().Measurements!.Spectrum!;
+
+        Assert.False(spectrum.Bandwidth.IsSearched);
+        Assert.False(spectrum.PartialCutoff.IsSearched);
+        Assert.All(spectrum.ChannelBandwidths, c => Assert.False(c.IsSearched));
     }
 
     [Theory]

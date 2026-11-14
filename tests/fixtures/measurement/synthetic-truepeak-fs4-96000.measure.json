@@ -76,7 +76,30 @@
           "framesShowing": 0,
           "framesWithSignal": 2
         }
-      ]
+      ],
+      "bandwidth": {
+        "isFound": false,
+        "reason": "slope"
+      },
+      "channelBandwidths": [
+        {
+          "isFound": false,
+          "reason": "slope"
+        },
+        {
+          "isFound": false,
+          "reason": "reachesTop"
+        }
+      ],
+      "partialCutoff": {
+        "isFound": true,
+        "frequency": {
+          "value": 24094,
+          "unit": "Hz"
+        },
+        "framesShowing": 2,
+        "framesWithSignal": 2
+      }
     },
     "levels": {
       "format": "integer",

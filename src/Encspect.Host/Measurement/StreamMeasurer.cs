@@ -204,6 +204,9 @@ internal sealed class StreamMeasurer
         Array.Fill(_maximum, double.MinValue);
     }
 
+    // The counters of each measured channel and, last, of the combined spectrum (the tests pin their raw output).
+    internal IReadOnlyList<CutoffCounters> CounterSets => _counters;
+
     // The state of a stream of this format, in bytes, for the memory bound (decided before anything is allocated).
     public static long EstimateBytes(PcmFormat format, MeasureOptions options)
     {

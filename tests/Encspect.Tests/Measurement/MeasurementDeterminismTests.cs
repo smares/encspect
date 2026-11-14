@@ -273,6 +273,48 @@ public class MeasurementDeterminismTests
         Assert.True(RowsHash == HashBits(all), "RowsHash = " + HashBits(all));
     }
 
+    private static string HashCounts(IEnumerable<int[]> arrays)
+    {
+        using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        foreach (int[] array in arrays)
+        {
+            hash.AppendData(System.Runtime.InteropServices.MemoryMarshal.AsBytes(array.AsSpan()));
+        }
+
+        return Convert.ToHexStringLower(hash.GetHashAndReset());
+    }
+
+    // The counters of the cutoff and of the partial cutoff's ceiling (integers) for the synthetic signal at 44.1 kHz, the average spectrum they sit
+    // beside, and the figures read from them: the bandwidth and the partial cutoff are integers too, and everything hashes to a constant on every platform.
+    // The counters do not depend on how the stream is cut into blocks.
+    [Fact]
+    public void TheCountersAndTheBandwidthAndPartialCutoffOfASyntheticSignalHashToConstants()
+    {
+        int[] samples = MeasurementSignals.ToIntegers(Signal(), 16);
+        string[] hashes = new string[2];
+        string figures = string.Empty;
+        for (int pass = 0; pass < 2; pass++)
+        {
+            var measurer = new StreamMeasurer(new PcmFormat(44100, 1, 16, SampleFormat.Integer), new MeasureOptions { Include = MeasurementKinds.Spectrum }, CancellationToken.None, _ => true);
+            int block = pass == 0 ? 4096 : 7777;
+            for (int start = 0; start < samples.Length; start += block)
+            {
+                int n = Math.Min(block, samples.Length - start);
+                measurer.Write(new PcmBlock(start, n, 1, n, samples.AsSpan(start, n).ToArray()));
+            }
+
+            StreamMeasurements m = measurer.Result(MeasurementStatus.Complete, null);
+            CutoffCounters combined = measurer.CounterSets[^1];
+            hashes[pass] = HashCounts([combined.All, combined.Show, combined.Ceiling!]);
+            SpectrumFigures spectrum = m.Spectrum!;
+            figures = $"{spectrum.Cutoff.IsFound},{spectrum.Cutoff.Frequency},{spectrum.Cutoff.StepTenthsOfDb},{spectrum.Cutoff.FramesShowing},{spectrum.Cutoff.FramesWithSignal};{spectrum.Bandwidth.IsFound},{spectrum.Bandwidth.Frequency},{spectrum.Bandwidth.FloorTenthsOfDb},{spectrum.Bandwidth.Reason};{spectrum.PartialCutoff.IsFound},{spectrum.PartialCutoff.Frequency},{spectrum.PartialCutoff.FramesShowing},{spectrum.PartialCutoff.FramesWithSignal}";
+        }
+
+        Assert.True(hashes[0] == hashes[1], "the counters differ between blocks of 4,096 and 7,777 samples");
+        string all = hashes[0] + "|" + Convert.ToHexStringLower(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(figures)));
+        Assert.True(CountersHash == all, $"CountersHash = {all} ({figures})");
+    }
+
     [Theory]
     [InlineData(1024, "")]
     [InlineData(32768, "")]
@@ -761,6 +803,7 @@ public class MeasurementDeterminismTests
     private const string RowsHash = "f3b5f53bd0bc966cd84a42188592bd0e525b699b681ec7ebc06df6f0a3d1fc41";
     private const string Rows1024Hash = "7b9f9a01c21fcdb6c2e71db025b77d5ed5bacae23ff1b5aea23500e15f67bd83";
     private const string Rows32768Hash = "2dc1e2f59ef7e098f0fe240d9e135e79620e30793f6bacbfaaf2986babec6236";
+    private const string CountersHash = "pending";
     private const string LevelsHash = "a49171a81aeb8ad635eab6462075ed9b9cb95c07c78541b77b7ac741119e0a80";
     private const string LowBitsPerSpanHash = "ea09e332c5c4afca329c637317fa945f31ffb6e645748a782a29bfb7175e3018";
     private const string KWeightingHash = "f6048a6ea38eab1d0c9da05b4f9590e11f6090e6ad1942b442b98b24b94e44f6";
