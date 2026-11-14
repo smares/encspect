@@ -17,6 +17,9 @@ internal sealed class DecodeFeed
     private bool _channelsAreKnown;
     private int _heldBytes;
     private long _firstPosition = -1;
+    private long _skippedStart = long.MaxValue;
+    private long _skippedEnd;
+    private long _skippedOffset;
 
     public IDecodeSession? Session { get; private set; }
 
@@ -25,6 +28,12 @@ internal sealed class DecodeFeed
         // The decoder's own reading of the block says whether libwavpack refuses it, so the parser and the decoder cannot differ.
         bool isRefused = (status & (BlockStatus.Truncated | BlockStatus.Malformed)) == 0 && Refuses(header, bytes.Span, Session is not null || !header.HasAudio || s.IsConfigured);
         if (isRefused)
+        {
+            status |= BlockStatus.Refused;
+        }
+
+        // libwavpack reads on to the next block that starts a set, so the blocks of a set that begins without the initial block flag are never decoded.
+        if (header.HasAudio && s.SetIsOrphan)
         {
             status |= BlockStatus.Refused;
         }
@@ -60,6 +69,13 @@ internal sealed class DecodeFeed
             // refuses to open it.
             if (!s.IsConfigured)
             {
+                // The audio before it is not decoded, but its positions are handed over once the session starts, so that it counts as lost.
+                if (_skippedStart > header.BlockIndex)
+                {
+                    (_skippedStart, _skippedOffset) = (header.BlockIndex, offset);
+                }
+
+                _skippedEnd = Math.Max(_skippedEnd, header.BlockIndex + header.Samples);
                 return;
             }
 
@@ -71,9 +87,23 @@ internal sealed class DecodeFeed
 
             _held.Clear();
             _heldBytes = 0;
+            HandSkipped(s);
         }
 
         Hand(s, offset, header, bytes, status, followsGap);
+    }
+
+    private void HandSkipped(State s)
+    {
+        if (_skippedStart >= _skippedEnd || Session is not { IsDecoding: true } session)
+        {
+            return;
+        }
+
+        _firstPosition = _firstPosition < 0 ? Math.Max(0, s.FirstIndex) : _firstPosition;
+        long first = Math.Max(0, _skippedStart - _firstPosition);
+        long samples = Math.Min(int.MaxValue, _skippedEnd - _skippedStart);
+        session.Decode(new CodedFrame(new MappedBytes(ReadOnlyMemory<byte>.Empty, _skippedOffset), "Block", first, (int)samples) { IsUnreadable = true });
     }
 
     private void Hold(long offset, ReadOnlyMemory<byte> bytes, in BlockHeader header, bool isRefused)

@@ -1000,6 +1000,7 @@ internal static class Reader
             }
 
             s.SetOpen = true;
+            s.SetIsOrphan = !header.IsInitial;
             s.SetSawFinal = false;
             s.SetCapped = false;
             s.SetOffset = offset;
