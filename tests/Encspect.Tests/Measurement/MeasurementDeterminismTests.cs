@@ -805,7 +805,7 @@ public class MeasurementDeterminismTests
     private const string RowsHash = "f3b5f53bd0bc966cd84a42188592bd0e525b699b681ec7ebc06df6f0a3d1fc41";
     private const string Rows1024Hash = "7b9f9a01c21fcdb6c2e71db025b77d5ed5bacae23ff1b5aea23500e15f67bd83";
     private const string Rows32768Hash = "2dc1e2f59ef7e098f0fe240d9e135e79620e30793f6bacbfaaf2986babec6236";
-    private const string CountersHash = "8eca990b8bc22eb88e574ef0d547361bf8ad99258e8197d37bf6530685fec2e2|95dc65030dcd00896b3f1a8083b8cb780f21ace6420224706db8431f4b84eb42";
+    private const string CountersHash = "4f5426dc2722f4934c96217ecbb4d6353b3774a7101d98267310015205a46751|6bbb4daa9b23cc7b5e00c5b611f94fe3e9bb463c35d133bade76c969902e0c26";
     private const string LevelsHash = "a49171a81aeb8ad635eab6462075ed9b9cb95c07c78541b77b7ac741119e0a80";
     private const string LowBitsPerSpanHash = "ea09e332c5c4afca329c637317fa945f31ffb6e645748a782a29bfb7175e3018";
     private const string KWeightingHash = "f6048a6ea38eab1d0c9da05b4f9590e11f6090e6ad1942b442b98b24b94e44f6";

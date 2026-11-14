@@ -16,8 +16,8 @@ The model follows the design's text:
   found where the step is 25 dB or more and half of the frames with signal show it.
 
 - the spectral bandwidth (step 7): the floor of the band of W rows that ends at row 506, the run down while the band that ends at a row is within 3 dB of it,
-  found where the band under the run is 20 dB above; the partial cutoff: a third counter, the frames whose band under a row stands 25 dB above the mean
-  power of every row above it (up to row 506), the row with the most frames showing, the walk down while half of that maximum shows, found from a fifth of
+  found where the band under the run is 20 dB above; the partial cutoff: a third counter, the frames whose band under a row stands 30 dB above the mean
+  power of every row above it (up to row 506), the row with the most frames showing, the walk down while half of that maximum shows, found from a tenth of
   the frames with signal.
 
 What is independent of the analyzer is the FFT, the rows (the window, the scale and the normalization), the waveform and the stream figures.
@@ -136,7 +136,7 @@ def hertz(boundary, rate, size, bins):
     return (2 * boundary * bins * rate + size) // (2 * size)
 
 
-CEILING_RATIO = 10 ** 2.5
+CEILING_RATIO = 1000.0
 
 
 class Counters:
@@ -261,7 +261,7 @@ def find_bandwidth(level_tenths, rate, size):
 
 def find_partial(counters, rate, size):
     """The partial cutoff: the candidate row at which the most frames with signal show a ceiling (the lowest on a tie), then the lowest row below it
-    whose count stays at least half of that maximum, which gives the frequency; the count is the maximum (at its own row); found where at least 20 % of the
+    whose count stays at least half of that maximum, which gives the frequency; the count is the maximum (at its own row); found where at least 10 % of the
     frames with signal at that row show one."""
     if rate < 8000:
         return {"is_searched": False}
@@ -275,7 +275,7 @@ def find_partial(counters, rate, size):
     while row - 1 >= first and showing[best] > 0 and 2 * showing[row - 1] >= showing[best]:
         row -= 1
     with_signal, shown = frames_at(counters, best, counters.ceiling)
-    return {"is_searched": True, "is_found": with_signal > 0 and 5 * shown >= with_signal, "frequency": hertz(row + 1, rate, size, bins) if shown > 0 else 0,
+    return {"is_searched": True, "is_found": with_signal > 0 and 10 * shown >= with_signal, "frequency": hertz(row + 1, rate, size, bins) if shown > 0 else 0,
             "frames_showing": shown, "frames_with_signal": with_signal}
 
 

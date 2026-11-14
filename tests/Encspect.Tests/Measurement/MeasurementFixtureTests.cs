@@ -546,10 +546,10 @@ public class MeasurementFixtureTests
     }
 
     // The partial cutoff on content that is band-limited in part of the stream: frames of lines (the first 20, 50 and 80 % of one second, at a hop of
-    // 2,048 samples, so a frame that reaches the white noise does not count) next to white noise at the same level. A fifth of the frames with signal is
-    // the threshold: 3 of 20 (the 20 % file) is under it.
+    // 2,048 samples, so a frame that reaches the white noise does not count) next to white noise at the same level. A tenth of the frames with signal is
+    // the threshold: 3 of 20 (the 20 % file) is above it.
     [Theory]
-    [InlineData("synthetic-mixed-lines-20-percent", 3, false)]
+    [InlineData("synthetic-mixed-lines-20-percent", 3, true)]
     [InlineData("synthetic-mixed-half-and-half", 10, true)]
     [InlineData("synthetic-mixed-lines-80-percent", 16, true)]
     [InlineData("synthetic-lines-16000-44100", 20, true)]
@@ -588,6 +588,9 @@ public class MeasurementFixtureTests
     // Noise without an edge shows no ceiling; a rate under 8,000 Hz is not searched.
     [Theory]
     [InlineData("synthetic-white-44100")]
+    [InlineData("synthetic-rolloff-1")]
+    [InlineData("synthetic-rolloff-2")]
+    [InlineData("synthetic-rolloff-4")]
     [InlineData("lossy-lame-v0")]
     [InlineData("lossy-oggenc-q8")]
     [InlineData("synthetic-impulse-silence-44100")]

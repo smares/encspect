@@ -17,13 +17,13 @@ internal sealed class CutoffCounters
 
     public readonly int[] Show = new int[MeasurementLimits.Rows * Levels];
 
-    // Frames whose band under the row stands 25 dB above the mean power of everything above it, up to the top of the search; kept for
+    // Frames whose band under the row stands 30 dB above the mean power of everything above it, up to the top of the search; kept for
     // the combined spectrum only (the partial cutoff, docs/design/spectral-analysis.md, Step 7 (b)). At the cell of All.
     public readonly int[]? Ceiling;
 
-    // 10^(25 / 10): a frame shows a ceiling at a row when the mean power of the band under it is at least this times the mean power of
+    // 10^(30 / 10): a frame shows a ceiling at a row when the mean power of the band under it is at least this times the mean power of
     // every row above it.
-    public const double CeilingRatio = 316.22776601683796;
+    public const double CeilingRatio = 1000.0;
 
     public CutoffCounters(bool hasCeiling = false)
     {
@@ -239,7 +239,7 @@ internal static class CutoffFinder
 
     // The partial cutoff of Step 7 (b): over the candidate rows, the one at which the most frames with signal show a ceiling (the lowest
     // on a tie), then the lowest row below it, walking down, whose count stays at least half of that maximum, which gives the frequency (so
-    // it lands on the edge and not up to W - 1 rows above it); the count is that maximum, and the figure is found where at least 20 % of the
+    // it lands on the edge and not up to W - 1 rows above it); the count is that maximum, and the figure is found where at least 10 % of the
     // frames with signal at the row that has it show a ceiling.
     public static PartialCutoff FindPartial(CutoffCounters? counters, CutoffGeometry geometry)
     {
@@ -269,7 +269,7 @@ internal static class CutoffFinder
 
         // The frequency is the walk's row; the count is the most frames, at the row that has them.
         (int withSignal, int shown) = Frames(counters, best, ceiling);
-        bool isFound = withSignal > 0 && 5L * shown >= withSignal;
+        bool isFound = withSignal > 0 && 10L * shown >= withSignal;
         return new PartialCutoff { IsFound = isFound, Frequency = shown > 0 ? geometry.Hertz(row + 1) : 0, FramesShowing = shown, FramesWithSignal = withSignal };
     }
 

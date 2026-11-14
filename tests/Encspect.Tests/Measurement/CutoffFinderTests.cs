@@ -239,11 +239,11 @@ public class CutoffFinderTests
         Assert.Equal(Geometry.Hertz(372), stops.Frequency);
     }
 
-    // 20 % of the frames with signal is enough, 15 % is not; the row and the count of the closest are still given.
+    // 10 % of the frames with signal is enough, 5 % is not; the row and the count of the closest are still given.
     [Theory]
-    [InlineData(4, true)]
-    [InlineData(3, false)]
-    public void ThePartialCutoffIsFoundFromAFifthOfTheFramesWithSignal(int showing, bool isFound)
+    [InlineData(2, true)]
+    [InlineData(1, false)]
+    public void ThePartialCutoffIsFoundFromATenthOfTheFramesWithSignal(int showing, bool isFound)
     {
         PartialCutoff partial = CutoffFinder.FindPartial(Ceilings(20, (400, showing)), Geometry);
 

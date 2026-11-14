@@ -47,7 +47,7 @@ public static class MeasurementText
 
     public const string SpectralBandwidthDescription = "The highest frequency at which the average spectrum stands at least 20 dB above a flat floor that reaches the top of the search (99 % of Nyquist) and is at least 1 kHz wide, with the floor's level. The cutoff measures an edge, a step between two bands; the bandwidth measures where the spectrum meets a floor, steep or gentle. It is not the bandwidth a coder codes or the lowpass frequency an encoder states.";
 
-    public const string PartialCutoffDescription = "The frequency at which the most frames with signal show a ceiling of their own: the band under it at least 25 dB above the mean power of everything above it, up to 99 % of Nyquist. It finds an edge that only part of the stream has (lossy tracks joined with others, a lossy intro), which the average spectrum hides. It is a count of frames, not a verdict.";
+    public const string PartialCutoffDescription = "The frequency at which the most frames with signal show a ceiling of their own: the band under it at least 30 dB above the mean power of everything above it, up to 99 % of Nyquist. It finds an edge that only part of the stream has (lossy tracks joined with others, a lossy intro), which the average spectrum hides. It is a count of frames, not a verdict.";
 
     public const string MeasuredTopic = Topics.Measurements;
 
