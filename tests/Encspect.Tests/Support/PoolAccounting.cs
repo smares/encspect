@@ -54,6 +54,7 @@ internal sealed class PoolAccounting : EventListener
     private readonly PoolElementSizes _elementSizes = new();
     private readonly ConcurrentDictionary<int, string> _origins = new();
     private readonly ConcurrentQueue<string> _unknownDrops = new();
+    private readonly ConcurrentDictionary<int, byte> _ownPools = new();
     private readonly ConcurrentQueue<Assembly> _loaded = new();
     private readonly ConcurrentQueue<string> _registrationFailures = new();
 
@@ -63,7 +64,9 @@ internal sealed class PoolAccounting : EventListener
     private int _recentNext;
 
     private long _dropped;
-    private int _highPressureTrims;
+    private int _ownHighPressureDrops;
+    private int _watchedThread;
+    private volatile bool _isHighPressure;
     private volatile Action<int, long?, int>? _onAllocated;
     private volatile bool _isReady;
 
@@ -105,9 +108,20 @@ internal sealed class PoolAccounting : EventListener
 
     public static long Dropped => Volatile.Read(ref Instance.Value._dropped);
 
-    public static int HighPressureTrims => Volatile.Read(ref Instance.Value._highPressureTrims);
+    // Drops that fell under high memory pressure from a pool the watched test used (see Watch).
+    public static int HighPressureTrims => Volatile.Read(ref Instance.Value._ownHighPressureDrops);
 
     public static int UnknownDropCount => Instance.Value._unknownDrops.Count;
+
+    // Makes the failures attributable to one test: the drops of pools that test's thread made an array in or dropped an array into since this call, and nothing the test
+    // host or another thread did with its own pools (the tests run in one process, and a test host's or a leftover analysis's pools are none of the test's). A pool the test
+    // only reuses arrays of, never making one during the test, is not seen: the check is a detector of the test's own use, not a bound.
+    public static void Watch(int thread)
+    {
+        PoolAccounting accounting = Instance.Value;
+        accounting._ownPools.Clear();
+        Volatile.Write(ref accounting._watchedThread, thread);
+    }
 
     // Called on the allocating thread for each array a pool makes: its pool, its bytes (null for a pool not sized) and its length.
     public static Action<int, long?, int>? OnAllocated
@@ -142,11 +156,16 @@ internal sealed class PoolAccounting : EventListener
             case ("BufferDropped", [_, int length, int pool, _, var reason, ..]) when Convert.ToInt32(reason, System.Globalization.CultureInfo.InvariantCulture) == 0:
                 Drop(pool, null, length);
                 break;
-            case ("BufferTrimPoll", [_, var pressure, ..]) when Convert.ToInt32(pressure, System.Globalization.CultureInfo.InvariantCulture) == HighPressure:
-                Interlocked.Increment(ref _highPressureTrims);
+            case ("BufferTrimPoll", [_, var pressure, ..]):
+                _isHighPressure = Convert.ToInt32(pressure, System.Globalization.CultureInfo.InvariantCulture) == HighPressure;
                 break;
             case ("BufferAllocated", [_, int length, int pool, ..]):
                 long? bytes = Bytes(pool, length);
+                if (Environment.CurrentManagedThreadId == Volatile.Read(ref _watchedThread))
+                {
+                    _ownPools.TryAdd(pool, 0);
+                }
+
                 if (bytes is null && !_origins.ContainsKey(pool))
                 {
                     _origins.TryAdd(pool, "by " + Callers(5));
@@ -159,8 +178,19 @@ internal sealed class PoolAccounting : EventListener
 
     private void Drop(int pool, int? array, int length)
     {
+        bool isOwn = Environment.CurrentManagedThreadId == Volatile.Read(ref _watchedThread) || _ownPools.ContainsKey(pool);
+        if (isOwn && _isHighPressure)
+        {
+            Interlocked.Increment(ref _ownHighPressureDrops);
+        }
+
         if (Bytes(pool, length) is not { } bytes)
         {
+            if (!isOwn)
+            {
+                return;
+            }
+
             _unknownDrops.Enqueue($"pool {pool} (its element type is not known) dropped an array of {length} elements; its first array was allocated {(_origins.TryGetValue(pool, out string? origin) ? origin : "before the accounting started")}");
             return;
         }
