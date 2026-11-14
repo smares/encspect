@@ -126,7 +126,7 @@ public sealed partial class OpusParser
             long start = _audioStart;
             long length = _audioEnd - _audioStart;
             // Packets that lie in several places (MP4's chunks with other data between them): the nodes spread over them as the samples' node does.
-            IReadOnlyList<ByteRange>? spread = _parent.Ranges;
+            IReadOnlyList<ByteRange>? spread = AudioRanges();
             Node node = _parent.Add(new Node("Statistics", start, length, $"{Count(_packets, "packet", "packets")}, {(samples / (double)Rate).ToString("F3", CultureInfo.InvariantCulture)} s")
             {
                 Ranges = spread,
@@ -314,6 +314,29 @@ public sealed partial class OpusParser
         private static string Share(long count, long total, string singular, string plural) =>
             $"{Count(count, singular, plural)} ({Math.Round(count * 100.0 / total, 1, MidpointRounding.ToEven).ToString("F1", CultureInfo.InvariantCulture)}%)";
 
+        // The parent's ranges cut to the span of the audio packets: the stream's own nodes cover the headers too, and the ranges
+        // of a node must reach from its first byte to its last.
+        private IReadOnlyList<ByteRange>? AudioRanges()
+        {
+            if (_parent.Ranges is not { } ranges)
+            {
+                return null;
+            }
+
+            var cut = new List<ByteRange>(ranges.Count);
+            foreach (ByteRange range in ranges)
+            {
+                long from = Math.Max(range.Offset, _audioStart);
+                long to = Math.Min(range.End, _audioEnd);
+                if (to > from)
+                {
+                    cut.Add(new ByteRange(from, to - from));
+                }
+            }
+
+            return cut.Count > 1 && cut[0].Offset == _audioStart && cut[^1].End == _audioEnd ? cut : null;
+        }
+
         private Node? AddPackets()
         {
             if (_packets == 0)
@@ -324,7 +347,7 @@ public sealed partial class OpusParser
             Records records = _records;
             return _parent.Add(new Node("Audio Packets", _audioStart, _audioEnd - _audioStart, NodeValue.Integer(_packets, "packets", "packet"), () => new BlockedChildren([], records.Count, i => PacketNode(records, i)))
             {
-                Ranges = _parent.Ranges,
+                Ranges = AudioRanges(),
                 Kind = NodeKind.Stream,
                 Description = Explain.AudioPackets,
                 Topic = Topics.OpusToc,

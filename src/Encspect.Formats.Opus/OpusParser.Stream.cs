@@ -434,7 +434,7 @@ public sealed partial class OpusParser
                 _largest = Math.Max(_largest, packet.Length);
             }
 
-            _audioStart = _audioStart < 0 ? packet.FileStart : _audioStart;
+            _audioStart = _audioStart < 0 ? packet.FileStart : Math.Min(_audioStart, packet.FileStart);
             _audioEnd = Math.Max(_audioEnd, packet.FileEnd);
             _afterGap |= packet.FollowsGap;
 
