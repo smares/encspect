@@ -13,7 +13,7 @@ namespace Encspect.Tests;
 //   before, which the accounting would count without its having been in the earlier reading;
 // - when a shared pool made an array of more than 8,216 bytes on the test's thread (its code or the analysis it runs), or one of a pool
 //   that cannot be sized;
-// - when a reading (MemoryTests.Live) ran on another thread than the one the guard watches, which would leave the check above blind.
+// - when a reading (MemoryTestBase.Live) ran on another thread than the one the guard watches, which would leave the check above blind.
 //
 // The check of made arrays is a detector of new sources, not a bound: it sees a pool miss, an array the pool makes because it has none of
 // that size, which on the test's thread is deterministic only for the first rent of a size in the process; a large array the test rents
@@ -54,7 +54,7 @@ internal sealed class SharedPoolGuard
         Volatile.Write(ref s_current, this);
     }
 
-    // Called by every reading on the test's side (MemoryTests.Live) with its thread.
+    // Called by every reading on the test's side (MemoryTestBase.Live) with its thread.
     public static void ReadOn(int thread)
     {
         if (Volatile.Read(ref s_current) is { } guard && thread != guard._thread)
