@@ -237,6 +237,12 @@ Every coding with a free source is decoded, the DTS extensions aside, and every 
    - **Generated:** `docs/reference-tool-differences.md`, written by a script from those entries and checked in CI to match them, grouped by tool and version.
    - **A kind per entry:** the tool breaks a specification (FFmpeg 6.1.1 applying a Matroska block's DiscardPadding to every laced frame, RFC 9559), the tool reads otherwise within what the specification allows (MediaInfo taking the LAME tag's ABR target as the bitrate), or open (the cause not established).
    - **What it is for:** the starting point for reporting the violations upstream, which stays the lead's decision per report.
+15. **Inter-channel coherence of decoded audio** (the lead, 2026-11-14, in place of decision S10's "Not planned" for it), after the mid/side spectra of 0.3 item 2, whose pair it uses. Per frequency row, the magnitude-squared coherence of the pair (front left and right, or the two channels of a stream without a layout): the averaged cross-spectrum, squared, over the product of the two power spectra, from 0 to 1.
+   - **What it shows:** above an intensity stereo bound the decoder rebuilds both channels from one signal, so their coherence is about 1 there, where real stereo recordings stay well below it. The figure is where the coherence rises to near 1 and stays there, and the share of frames that show it, with a unit and a basis, never a verdict about the audio.
+   - **For lossy streams** it cross-checks the parsers' "Intensity Stereo Bound"; **for decoded lossless streams** it is evidence that the audio passed through intensity stereo coding, worded as the spectral cutoff is.
+   - **Cost:** one running cross-spectrum per row (512 complex accumulators) from the bins the mid/side spectra already hold, under the measurements' determinism rules.
+   - **First a design section** in [spectral-analysis.md](design/spectral-analysis.md), with fixtures that show it: intensity-coded MP3 (LAME), AAC and Opus streams, and lossless files made from them.
+
 ### 0.5: AAC and WMA
 
 The most common formats without a free specification are decoded, on clean-room sources ([lossy-decoders.md](design/lossy-decoders.md#the-clean-room)).
@@ -275,7 +281,6 @@ The more formats of [planned.md](formats/planned.md#after-05-more-formats), as l
 Parked items carry the trigger that would bring them back. The formats at the end were never planned and carry the reason they stay out.
 
 - **Parallel decoding** ([parallel-decoding.md](design/parallel-decoding.md), approved 2026-10-26 and deferred the same day): deferred in favor of new formats and deeper analysis. Not planned unless decoding speed becomes a problem: a decoder that still misses its speed target after its speed pass ([lossy-decoders.md, "Speed targets"](design/lossy-decoders.md#speed-targets)), or analysis times users report; the measurer on its own thread comes with it.
-- **Inter-channel coherence of decoded audio** (decision S10 of [spectral-analysis.md](design/spectral-analysis.md#decisions-for-the-lead-1), 2026-11-14): the pair's bins of the mid/side spectra would give the coherence that shows intensity stereo above its bound, which the parsers' "Intensity Stereo Bound" could cross-check. Not planned unless a user or a review asks for a figure of intensity stereo in decoded audio.
 - **The detection pre-check** ([detection-precheck.md](design/detection-precheck.md)): recorded, not to be built (the lead, 2026-10-26). The design stays as a record for when detection becomes a bottleneck.
 - **Offering the library** as packages: not planned yet; it waits for a contract the milestones no longer extend ([library.md](library.md)).
 - **Sequenced formats** (MIDI, tracker modules and chiptunes): dropped by the lead on 2026-11-08, as a different domain from bitstream and encoder analysis ([history.md](history.md#dropped-plans)).
