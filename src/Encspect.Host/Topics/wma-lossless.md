@@ -7,7 +7,7 @@ references: Encspect's format description docs/design/wma-lossless-format.md (Mi
 
 **The problem.** A lossless coder has to give back every sample, so it cannot discard what the ear misses the way the transform codecs ([Windows Media Audio Professional](wma-pro), AAC, MP3) do. Instead it predicts each sample from the ones before and stores only the error, the residual.
 
-**How a stream is laid out.** Windows Media Audio Lossless (format tag 0x0163) uses the packets, frames, tile headers and subframes of Professional ([packets](wma-packets), [subframes](wma-subframes)). The codec-specific data has the same 18 bytes: the sample size, 16 or 24 bits, the channel mask and the decode flags. Bit 8 of the flags says that subframes carry an LPC flag.
+**How a stream is laid out.** Windows Media Audio Lossless (format tag 0x0163) uses the packets, frames, tile headers and subframes of Professional ([packets](wma-packets), [subframes](wma-subframes)). The codec-specific data has the same 18 bytes: the sample size, 16 or 24 bits, the channel mask and the decode flags. Bit 8 of the flags says that subframes carry an LPC flag, and changes how the cascaded filters adapt.
 
 **What a frame holds.** A subframe is either raw, with the samples as they are, or it holds residuals for the channels it codes ([subframe coding](wma-lossless-subframes)). A subframe that is seekable states every filter parameter and resets the state, so a decoder can start at it. A coded subframe is read only after a seekable one; a raw subframe can be read at any time.
 
