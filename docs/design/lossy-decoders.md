@@ -87,7 +87,7 @@ Each license was read from its own text on 2026-11-07, as noted. This is a readi
 
 | Format | Specification | Permissive reference code | License read | Path |
 | --- | --- | --- | --- | --- |
-| MPEG audio | ISO/IEC 11172-3 and 13818-3: not free; 11172-3 not at hand, 13818-3 at hand since 2026-11-14 (item 15 of 0.4 in [plan.md](../plan.md#04-free-decoders-and-routes-complete)) | minimp3 at `ea99364f`, vendored in `third_party/minimp3` (Layers I to III, float) | CC0 1.0 (`third_party/minimp3/LICENSE`) | follow minimp3 closely; the Layer III Huffman tables (Annex B) and the band tables come from it as format data |
+| MPEG audio | ISO/IEC 11172-3 and 13818-3: not free; at hand since 2026-11-14 (item 15 of 0.4 in [plan.md](../plan.md#04-free-decoders-and-routes-complete)) | minimp3 at `ea99364f`, vendored in `third_party/minimp3` (Layers I to III, float) | CC0 1.0 (`third_party/minimp3/LICENSE`) | follow minimp3 closely; the Layer III Huffman tables (Annex B) and the band tables come from it as format data |
 | Vorbis | the Vorbis I specification, free | libvorbis 1.3.7 | BSD-3-Clause (Ubuntu's `libvorbis0a` copyright file) | the specification first, libvorbis for what it leaves open |
 | Opus | RFC 6716, whose normative part is the reference decoder of Appendix A, updated by RFC 8251 | the RFC's code; libopus 1.5.2 | the RFC's code: Simplified BSD (the RFC's copyright notice); libopus 1.5.2's `COPYING`: BSD-3-Clause (release tarball, SHA-256 `65c1d2f7…`) | follow the RFC's decoder as RFC 8251 updates it, with libopus 1.5.2 where the RFC calls its repository current |
 | AC-3, E-AC-3 | ATSC A/52:2018 and ETSI TS 102 366, both free | none needed; liba52 (GPL-2+, Ubuntu's copyright file) is not read | | the specifications alone |

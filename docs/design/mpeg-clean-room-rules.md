@@ -9,7 +9,7 @@ The four items:
 3. The table of LAME 3.90 to 3.92 preset settings (`VbrHeader.cs`: `OldPresets`, `OldPreset`; `vbr_tags.py`: `OLD_PRESETS`, `old_preset`).
 4. The models of mpg123's and mp3guessenc's printed output in `crosscheck_mpeg_fixtures.py` (`expected_mpg123`, `expected_guessenc`, `guessenc_strategy`, `guessenc_preset`, `guessenc_lame_recognized`, `GUESSENC_MODES_BY_MISC`, `frames_after_tag`, and the Quality special cases that `check_vbr_header` held).
 
-No copy of ISO/IEC 11172-3 or 13818-3 is in the repository or was available while writing this. Where this document names a clause or table, the name is the one the repository already cites or the syntax element name; clause numbers for 13818-3 were not checked against the text and must be confirmed when a copy is at hand. A copy of 13818-3 has been at hand since 2026-11-14; the check is item 15 of 0.4 in [plan.md](../plan.md#04-free-decoders-and-routes-complete). Everything here was checked against the black-box evidence named in each section.
+No copy of ISO/IEC 11172-3 or 13818-3 is in the repository or was available while writing this. Where this document names a clause or table, the name is the one the repository already cites or the syntax element name; clause numbers for 13818-3 were not checked against the text and must be confirmed when a copy is at hand. Copies of both have been at hand since 2026-11-14; the check is item 15 of 0.4 in [plan.md](../plan.md#04-free-decoders-and-routes-complete). Everything here was checked against the black-box evidence named in each section.
 
 ## 1. Multichannel bit allocation
 
