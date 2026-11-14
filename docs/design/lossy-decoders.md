@@ -714,6 +714,46 @@ What the MPEG audio pull request (rollout step 1) did differently from the text 
 - **The intensity stereo bound** (the 0.3 follow-up, built): "Intensity Stereo Bound" in Hz for all layers, from the walk for Layer III ([coding-graphs.md](coding-graphs.md)).
 - **Not built:** the inverse transform of an all-zero spectrum is not skipped, so silence is charged in full.
 
+## MPEG-2 multichannel
+
+Item 8 of 0.3 in [plan.md](../plan.md#03-lossy-formats-measured): the decoder of the MPEG-2 multichannel extension of Layer II (ISO/IEC 13818-3 2.5), written from the standard's text (2.5.1.12 to 2.5.1.17, 2.5.2.12 to 2.5.2.18 and 2.5.3.2), the rules of [mpeg-clean-room-rules.md](mpeg-clean-room-rules.md) and the conformance streams of ISO/IEC 13818-4. It adds to the Layer II decoder; nothing of Layers I and III changes.
+
+### Scope
+
+- **Decoded:** a Layer II stream of MPEG-1 whose frames carry the extension in their ancillary data and no extension bitstream. The output is the configuration's channels in the order the parser reports (`Layer2Multichannel.Layout`): left and right, the center, the surround channels or the two channels of a second stereo program, then the LFE.
+- **Not decoded, the base channels stay:**
+  - a stream whose frames set `ext_bit_stream_present`: the rest of its multichannel data is in a separate file the analysis never sees (13818-3 2.5.1.12.3), so the decoder outputs the two base channels as before and the measurement says that only those were measured;
+  - the multilingual channels (2.5.1.18): their data follows the multichannel data, and no stream without an extension bitstream holds any. They are read as far as the CRC needs and counted apart, as the parser does;
+  - Layers I and III with the extension (test22 and test23): the parser does not read them yet.
+- **A frame that cannot be decoded** (its multichannel CRC fails, its side information or samples run past the frame, its configuration differs from the stream's) is handed unreadable: it counts as not decoded, the next frame follows a gap, and the parser has reported the cause already.
+
+### Where the decision is made
+
+- The parser knows that a file carries the extension only after every frame is read (`DecideMultichannel`), and the decoder's channel count is fixed when it starts. So the frames of an MPEG-1 Layer II stream that is not mono are fed to the decoder after that decision, from the frame records and the file, in the order and with the gap marks the frame loop used to give them. Other streams are fed as before.
+- The decision gives the session its plan: the speakers and the configuration, or none, which is the stereo decoding as it was.
+
+### Reconstruction, per frame
+
+1. **Base channels** T0 and T1: as in the Layer II decoder, scaled subband samples.
+2. **Additional channels** T2 to T4: the allocation, scfsi and scalefactors the side information gave, and the sample codes read by the parser into the lent buffers. A channel that dynamic crosstalk leaves out takes the quantized, unscaled samples of its source (the channel `Layer2Multichannel` resolved for the allocation) and its own scalefactors (2.5.3.2.1.2).
+3. **Prediction** (2.5.3.2.1.3): for each subband group of 0 to 7 with `mc_prediction` set, a channel whose samples are transmitted alone adds to its samples the sum of the predictors over T0 and T1, with coefficients (`pred_coef` - 127) / 32, up to three taps at `delay_comp` + 0 to 2 subband samples back. The last nine scaled samples of T0 and T1 in subbands 0 to 7 are kept from frame to frame.
+4. **Dematrixing** (2.5.3.2.1.1): per subband group, the equations of its `tc_allocation` for the configuration and `dematrix_procedure` (0 and 1 share them; 2 adds the phase-shifted surround terms, whose phase shift the standard leaves to the reproduction; 3 needs none). They are held as the standard's statements, in its order of evaluation, and a test checks that they invert the encoder's matrix.
+5. **De-normalization** (2.5.3.2.5): the factors of the standard's table per procedure and channel. A second stereo program is neither dematrixed nor de-normalized.
+6. **LFE** (2.5.3.2.4): twelve samples a frame at 1/96 of the sample rate, requantized as Layer I without grouping, with the scalefactor of `lf_scalefactor`. The decoder outputs them at the stream's rate by holding each for 96 samples, which needs no filter and can be undone exactly; the 125 Hz low-pass the standard recommends for reproduction is not applied.
+7. **Synthesis:** the polyphase filter bank per output channel, in pairs, each pair with its own history.
+
+### Rules it follows
+
+- **Determinism:** the lossy-decoder rules of CLAUDE.md. The matrices are statements over floats in a fixed order; the prediction sums its taps in tap order, T0 before T1; the constants come from `Math.Sqrt`; every kernel has the aggressive-optimization attribute.
+- **Work units:** the frame's charge is that of the Layer II decoder for every output channel, plus 8 units per sample for each output channel (copies, prediction, dematrixing and de-normalization), charged before the frame is decoded. `DecoderWorkTests` holds it to the usual bound; the weight is an estimate until measured.
+- **Memory:** the history of the filter banks (one per pair of channels) and nine samples of T0 and T1, whatever the stream's length.
+- **Checksums:** the multichannel CRC covers side information only, so the decoder declares nothing new; the parser's frame CRC-16 stays the stream's only checksum.
+
+### Verification
+
+- **Conformance streams:** `conformance_mpeg_pcm.py` compares the 14 streams of the 22 that have no extension bitstream with their dematrixed reference (`testNN_l.pcm`, `_r`, `_c`, `_ls`, `_rs`, `_lfe`, 16-bit samples), with mctoolamed run as a black box as a second column. The other eight have an extension bitstream (test07, 08, 10, 12, 13, 17, 20 and 21): their base channels are checked as far as the reference allows.
+- **Fixtures:** the crafted and encoder-written fixtures of `layer2/mc-*` and `layer2/external-mctoolame-*` and `external-philips-*` gain their decode reports; the PCM of one is pinned in `DecoderDeterminismTests`.
+
 ## As built: Vorbis
 
 What the Vorbis pull request (rollout step 2) did differently from the text above, or added to it. The decoder is `src/Encspect.Formats.Vorbis/Decoding`; the entropy pass (`PacketWalker`, `SetupModel`, `Codebook`, `PacketBits`) is in the parser's own namespace.
