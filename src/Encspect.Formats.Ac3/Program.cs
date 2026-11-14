@@ -41,8 +41,6 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
     // The declared samples of the program frames that are cut, or whose syntax breaks so that the rest of the frame is not read.
     public long LostSamples { get; private set; }
 
-    public int LayoutChanges { get; private set; }
-
     public bool HasEac3 { get; private set; } = key.IsEac3;
 
     public string Codec => HasEac3 ? "E-AC-3" : "AC-3";
@@ -266,10 +264,6 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
             Layout = Speakers(IndependentTokens(), _dependentTokens);
             _firstProgramFrame = false;
         }
-        else if (!_pendingDependents.SequenceEqual(_dependentTokens!))
-        {
-            LayoutChanges++;
-        }
 
         _pendingDependents.Clear();
         _pendingOffset = -1;
@@ -300,6 +294,9 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
 
         return tokens;
     }
+
+    // The channel locations of a substream's coded channels, in coded order: an independent substream's acmod and lfeon, a dependent one's custom channel map or else its acmod and lfeon.
+    internal static List<Token> TokensOf(SyncFrame header, FrameResult result) => header.IsDependent ? DependentTokens(header, result) : AcmodTokens(header.Acmod, header.Lfeon);
 
     private static List<Token> DependentTokens(SyncFrame header, FrameResult result)
     {
@@ -348,7 +345,8 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
     // The channels the decoder outputs for an audio coding mode and LFE flag, in the coded order (no dependent substream's channels).
     internal static IReadOnlyList<Speaker> LayoutOf(int acmod, bool lfeon) => Speakers(AcmodTokens(acmod, lfeon), []);
 
-    private static IReadOnlyList<Speaker> Speakers(List<Token> independent, List<Token> dependents)
+    // The program's locations: the independent substream's, then those a dependent substream adds.
+    internal static List<Token> Merge(List<Token> independent, IEnumerable<Token> dependents)
     {
         var tokens = new List<Token>(independent);
         foreach (Token token in dependents)
@@ -359,6 +357,13 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
             }
         }
 
+        return tokens;
+    }
+
+    private static IReadOnlyList<Speaker> Speakers(List<Token> independent, List<Token> dependents) => SpeakersOf(Merge(independent, dependents));
+
+    internal static IReadOnlyList<Speaker> SpeakersOf(List<Token> tokens)
+    {
         bool rear = tokens.Contains(Token.Lrs);
         var speakers = new List<Speaker>();
         foreach (Token token in tokens)
@@ -504,7 +509,7 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
     private static NodeValue Range(int low, int high, string? unit, string? singular) =>
         low == high ? (unit is null ? NodeValue.Integer(low) : NodeValue.Integer(low, unit, singular!)) : $"{low} to {high}{(unit is null ? string.Empty : " " + unit)}";
 
-    private enum Token
+    internal enum Token
     {
         Channel1,
         Channel2,

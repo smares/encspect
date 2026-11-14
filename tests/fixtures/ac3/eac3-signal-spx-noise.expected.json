@@ -1,0 +1,82 @@
+{
+ "description": "The same twelve 2/0 E-AC-3 frames with other seeds and a random blend in every set of coordinates, so that the extension blends in noise (A/52 Annex E 3.6.4.2).",
+ "length": 49152,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   4096
+  ],
+  [
+   4096,
+   4096
+  ],
+  [
+   8192,
+   4096
+  ],
+  [
+   12288,
+   4096
+  ],
+  [
+   16384,
+   4096
+  ],
+  [
+   20480,
+   4096
+  ],
+  [
+   24576,
+   4096
+  ],
+  [
+   28672,
+   4096
+  ],
+  [
+   32768,
+   4096
+  ],
+  [
+   36864,
+   4096
+  ],
+  [
+   40960,
+   4096
+  ],
+  [
+   45056,
+   4096
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "E-AC-3",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 18432,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "ffprobe_bitrate": true,
+  "decode": false,
+  "skip_insertion": false,
+  "skip": {
+   "skip_insertion": "The check rewrites E-AC-3 frames with skip fields.",
+   "decode": "The noise of spectral extension comes from a generator of each decoder, so the samples differ; the level of the noise equals FFmpeg's (docs/development.md, \"E-AC-3 decoding\")."
+  }
+ }
+}

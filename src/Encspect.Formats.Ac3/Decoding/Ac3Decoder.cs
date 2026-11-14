@@ -32,6 +32,6 @@ public sealed class Ac3Decoder : IDecoder
             throw new InvalidDataException("The first frame is not an AC-3 syncframe of a bit stream ID up to 8");
         }
 
-        return new FrameDecoder(context, header);
+        return new Ac3ProgramDecoder(context, header);
     }
 }

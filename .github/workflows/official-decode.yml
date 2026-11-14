@@ -153,7 +153,8 @@ jobs:
   macos:
     name: Core Audio on macos-15
     runs-on: macos-15
-    timeout-minutes: 60
+    # The comparison of the real E-AC-3 files (7.1 and the long ones) takes most of the time: 60 minutes were not enough with it in the one step.
+    timeout-minutes: 150
     steps:
       - uses: actions/checkout@v5
 
@@ -203,7 +204,24 @@ jobs:
           dotnet build --configuration Release tests/Encspect.PcmDump
 
       - name: Compare the AC-3 decoder's PCM with Core Audio's
-        run: python3 scripts/fixtures/crosscheck_ac3_coreaudio.py --probe build/audiotoolbox_probe --encspect src/Encspect.Cli/bin/Release/net10.0/encspect
+        timeout-minutes: 40
+        run: python3 scripts/fixtures/crosscheck_ac3_coreaudio.py --probe build/audiotoolbox_probe --encspect src/Encspect.Cli/bin/Release/net10.0/encspect --save out-ac3-coreaudio
+
+      # The real E-AC-3 files of tests/conformance/eac3-samples.json (downloaded and checked against their SHA-256 into build/eac3-samples), in a step of their own so that their time
+      # does not take the fixtures'; the output of both is in the one artifact.
+      - name: Compare the AC-3 decoder's PCM with Core Audio's, real files
+        if: ${{ !cancelled() }}
+        timeout-minutes: 80
+        run: python3 scripts/fixtures/crosscheck_ac3_coreaudio.py --probe build/audiotoolbox_probe --encspect src/Encspect.Cli/bin/Release/net10.0/encspect --real-samples build/eac3-samples --real-samples-only --save out-ac3-coreaudio
+
+      # Core Audio's decode of each E-AC-3 file and the analyzer's (at its dither of 0.707 and of 0.5), to look at the spectra of the files that miss off the runner.
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: ac3-coreaudio-pcm
+          path: out-ac3-coreaudio
+          retention-days: 14
+          if-no-files-found: ignore
 
   windows:
     name: Media Foundation on windows-2025

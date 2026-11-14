@@ -26,7 +26,7 @@ public class Ac3DecoderRobustnessTests
         }
     }
 
-    private sealed class FiniteSink : IPcmSink
+    internal sealed class FiniteSink : IPcmSink
     {
         public long Samples { get; private set; }
 
@@ -94,7 +94,7 @@ public class Ac3DecoderRobustnessTests
         Decode(name, data);
     }
 
-    private static void Decode(string name, byte[] data)
+    internal static void Decode(string name, byte[] data)
     {
         var sinks = new List<FiniteSink>();
         var options = new AnalysisOptions { Decoding = new DecodeOptions { Output = _ => { var sink = new FiniteSink(); sinks.Add(sink); return sink; } } };
@@ -109,7 +109,7 @@ public class Ac3DecoderRobustnessTests
         }
     }
 
-    private static IEnumerable<Node> Find(Node node, string name)
+    internal static IEnumerable<Node> Find(Node node, string name)
     {
         if (node.Name == name)
         {

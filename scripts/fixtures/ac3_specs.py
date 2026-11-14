@@ -22,7 +22,7 @@ import downloads
 
 SPECS = [
     ("A52-2018.pdf", "4580b631f5ac1aafdd31034f28d5fc9c29bce72a3d3f6367e3d9746906e0ffa1",
-     ["https://www.atsc.org/wp-content/uploads/2015/03/A52-2018.pdf"]),
+     ["https://www.atsc.org/wp-content/uploads/2015/03/A52-2018.pdf", "https://www.atsc.org/wp-content/uploads/2021/04/A52-2018.pdf"]),
     ("ts_102366v010401p.pdf", "0229e151dfd9f8cec427f234798cac679a66fdec096feecc4d5ce455bbe3cadf",
      ["https://www.etsi.org/deliver/etsi_ts/102300_102399/102366/01.04.01_60/ts_102366v010401p.pdf"]),
     ("ts_103420v010201p.pdf", "e532bfc4f8be4a97c7c9cdd9f6bcc40634ecf8ef93a1dc490fcb15c16265daa7",

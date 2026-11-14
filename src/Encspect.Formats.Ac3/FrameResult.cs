@@ -17,12 +17,6 @@ internal enum StopReason : byte
     // E-AC-3 at a reduced sample rate (fscod2), whose bit allocation A/52 does not specify.
     ReducedRate,
 
-    // E-AC-3's adaptive hybrid transform codes mantissas the analyzer does not step over.
-    Aht,
-
-    // E-AC-3's enhanced coupling, whose parameters the analyzer does not step over.
-    EnhancedCoupling,
-
     // A value that makes the rest of the frame unreadable: chbwcod above 60, a coupling or spectral
     // extension range that is empty, exponents outside 0 to 24, a reserved delta bit allocation or
     // SNR offset strategy.
@@ -119,6 +113,50 @@ internal sealed class FrameResult
     public int JocStart { get; set; }
 
     public int JocEnd { get; set; }
+
+    public FrameResult Clone()
+    {
+        var c = new FrameResult
+        {
+            Stop = Stop,
+            StopBit = StopBit,
+            BlocksRead = BlocksRead,
+            Blocks = Blocks,
+            BlockSwitchBlocks = BlockSwitchBlocks,
+            DynamicRangeBlocks = DynamicRangeBlocks,
+            CouplingBlocks = CouplingBlocks,
+            RematrixingBlocks = RematrixingBlocks,
+            RematrixedBands = RematrixedBands,
+            RematrixingBands = RematrixingBands,
+            SpectralExtensionBlocks = SpectralExtensionBlocks,
+            DeltaBitAllocationBlocks = DeltaBitAllocationBlocks,
+            SkipBytes = SkipBytes,
+            MantissaBits = MantissaBits,
+            AuxiliaryBits = AuxiliaryBits,
+            HasAuxiliaryLength = HasAuxiliaryLength,
+            Dialnorm = Dialnorm,
+            Bsmod = Bsmod,
+            HasCompression = HasCompression,
+            DolbySurroundMode = DolbySurroundMode,
+            ChannelMap = ChannelMap,
+            HasChannelMap = HasChannelMap,
+            ExtensionFlag = ExtensionFlag,
+            ComplexityIndex = ComplexityIndex,
+            EmdfContainers = EmdfContainers,
+            HasJoc = HasJoc,
+            HasOamd = HasOamd,
+            JocObjects = JocObjects,
+            OamdObjects = OamdObjects,
+            ExtensionStart = ExtensionStart,
+            ExtensionEnd = ExtensionEnd,
+            JocStart = JocStart,
+            JocEnd = JocEnd,
+        };
+        BlockFlags.CopyTo(c.BlockFlags, 0);
+        BlockEnds.CopyTo(c.BlockEnds, 0);
+        ExponentStrategies.CopyTo(c.ExponentStrategies, 0);
+        return c;
+    }
 
     public void Reset(int blocks)
     {

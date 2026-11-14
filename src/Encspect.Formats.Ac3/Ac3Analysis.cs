@@ -38,7 +38,7 @@ internal sealed class Ac3Analysis
     private AccessUnit _unit = new();
     private readonly IntWriter _writer = new();
     private readonly Node? _streamNode;
-    private bool _pendingGap;
+    private int _gaps;
 
     // streamNode: the node findings of a decoding point to where the stream has none of its own yet (a raw file's root, a container's track).
     public Ac3Analysis(AnalysisContext context, Action<long, int, int>? recordMismatch = null, Node? streamNode = null)
@@ -73,6 +73,12 @@ internal sealed class Ac3Analysis
     // Reads one frame of length bytes from bytes, which hold available of them.
     public void AddFrame(Region region, long offset, ReadOnlySpan<byte> bytes, SyncFrame header, bool cut = false, bool truncated = false, bool inSample = false)
     {
+        if (!header.IsDependent)
+        {
+            // The previous access unit is complete: its configuration, dependent substreams included, decides its program.
+            CommitUnit();
+        }
+
         int available = Math.Min(bytes.Length, header.FrameLength);
         bytes[..available].CopyTo(_buffer);
         int index = Frames.Count;
@@ -80,7 +86,9 @@ internal sealed class Ac3Analysis
         _frameOffset = offset;
         bool shortened = available < header.FrameLength;
         DecodeFeed? feed = PrepareFeed(region, offset, header);
-        _writer.IsEnabled = feed is { Session.IsDecoding: true };
+        // A dependent frame's records go to the unit of the program in progress (E-AC-3: Annex E 2.3.1.2); a dependent frame after an AC-3 core is not decoded, but its CRC joins the core's crc2 tally.
+        DecodeFeed? dependentFeed = header.IsDependent ? (_pending.Count > 0 && !_pending[0].Header.IsDependent ? _pending[0].Feed : _current?.Feed) : null;
+        _writer.IsEnabled = feed is { Session.IsDecoding: true } || dependentFeed is { Session.IsDecoding: true };
         CrcState crc1 = CrcState.NotChecked;
         CrcState crc2 = CrcState.NotChecked;
         if (!shortened)
@@ -160,70 +168,175 @@ internal sealed class Ac3Analysis
         }
 
         _unit.Add(offset, result);
-        Program? program = Assign(region, index, header, result);
-        if (program is not null)
+        bool isReadable = !shortened && !cut && result.Stop == StopReason.None && (header.IsEac3 || header.Bsid <= 8);
+        bool keeps = _writer.IsEnabled || (feed is not null && feed.Session.IsDecoding);
+        _pending.Add(new PendingFrame(region, index, offset, available, header, result.Clone(), crc1, crc2, shortened, cut, isReadable, feed, _buffer.AsSpan(0, SyncFrame.Length).ToArray(),
+            keeps ? _buffer.AsSpan(0, available).ToArray() : [], _writer.IsEnabled ? _writer.Written.ToArray() : []));
+        if (_pending.Count >= MaxPendingFrames)
         {
-            if (feed is not null && program.Feed is null && program.FirstFrame == index)
+            CommitUnit();
+        }
+    }
+
+    // The most frames of an access unit held back for their program's decision; a unit with more is decided on these (its dependent substream IDs repeat, which is reported).
+    private const int MaxPendingFrames = 16;
+
+    // The held frames keep copies of their bytes (only where a decoding is running) and records: AddFrame is given a span of its caller's buffer, which the caller refills with
+    // the next frame (a raw file's read buffer, a container's packet), so a range into it cannot outlive the call, and the parser has no mapping of the input to point into. The cost
+    // against main's structure pass is within noise (a repeated 11 MB AC-3 file 1.92 s on main, 1.89 s here; 9.8 MB of E-AC-3 1.82 s and 1.91 s; the bound was 1.5).
+    private readonly List<PendingFrame> _pending = [];
+
+    private sealed record PendingFrame(Region Region, int Index, long Offset, int Available, SyncFrame Header, FrameResult Result, CrcState Crc1, CrcState Crc2, bool Shortened, bool Cut,
+        bool IsReadable, DecodeFeed? Feed, byte[] HeaderBytes, byte[] Bytes, int[] Records, bool DependentsLost = false);
+
+    // Decides the program of the access unit held back (an independent frame and the dependent frames after it): the dependent substreams' configuration is part of the program's key, so
+    // a dependent substream that appears, disappears or changes starts a new stream as an independent one does.
+    private void CommitUnit(bool endsAtGap = false)
+    {
+        if (_pending.Count == 0)
+        {
+            return;
+        }
+
+        PendingFrame[] frames = [.. _pending];
+        _pending.Clear();
+        // A program frame holds each dependent substream ID once (Annex E 2.3.1.2): a repeated ID is left out of the figures and of the configuration.
+        string dependents = string.Join(';', frames.Where(f => f.Header.IsDependent).DistinctBy(f => f.Header.SubstreamId).Select(f =>
+            $"{f.Header.SubstreamId}:{(f.Result.HasChannelMap ? f.Result.ChannelMap.ToString("X4", System.Globalization.CultureInfo.InvariantCulture) : "-")}:{f.Header.Acmod}:{(f.Header.Lfeon ? 1 : 0)}"));
+        bool lost = false;
+        if (endsAtGap && !frames[0].Header.IsDependent && _active.TryGetValue(frames[0].Header.IsEac3 ? frames[0].Header.SubstreamId : 0, out Program? current) && current is not null
+            && current.Key.Dependents.Length > 0 && current.Key.Independent() == new ProgramKey(current.Key.Id, frames[0].Header.SampleRate, frames[0].Header.IsEac3, frames[0].Header.Acmod, frames[0].Header.Lfeon))
+        {
+            // A program frame cut by a gap or the end of the data has lost dependent frames, not changed its configuration: it stays in its program, which counts its samples lost.
+            HashSet<string> wanted = [.. current.Key.Dependents.Split(';')];
+            if (dependents.Length == 0 || !dependents.Split(';').ToHashSet().SetEquals(wanted))
             {
-                program.Feed = feed;
+                lost = wanted.IsSupersetOf(dependents.Length == 0 ? [] : dependents.Split(';'));
+                dependents = lost ? current.Key.Dependents : dependents;
+            }
+        }
+
+        // A dependent frame of another block count or rate than its independent frame makes the program frame lost too.
+        bool differs = !frames[0].Header.IsDependent && frames.Any(f => f.Header.IsDependent && (f.Header.Blocks != frames[0].Header.Blocks || f.Header.SampleRate != frames[0].Header.SampleRate));
+        for (int i = 0; i < frames.Length; i++)
+        {
+            PendingFrame frame = frames[i];
+            // The program frame lost is counted in the program's lost samples as well as in the decoder's, so the stream's verdict does not vouch for it.
+            PendingFrame given = (lost || differs) && i == 0 ? frame with { IsReadable = false, DependentsLost = true } : frame;
+            if (frame.Header.IsDependent && !frames[0].Header.IsDependent && (frame.Header.Blocks != frames[0].Header.Blocks || frame.Header.SampleRate != frames[0].Header.SampleRate))
+            {
+                // A dependent frame of another length or rate cannot be merged with its independent frame (Annex E 2.3.1.2): the program frame is not decoded.
+                SyncFrame dependentHeader = frame.Header;
+                SyncFrame independentHeader = frames[0].Header;
+                long at = frame.Offset;
+                Findings.Add(Severity.Warning, "ac3.dependent-format-differs", () => new Node("Frame", at, frame.Available) { Kind = NodeKind.Frame }, count =>
+                    $"{Count(count)} of a dependent substream {Counts.Agree(count, "has", "have")} {dependentHeader.Blocks} audio blocks at {dependentHeader.SampleRate} Hz where the independent frame before {Counts.Agree(count, "has", "have")} {independentHeader.Blocks} at {independentHeader.SampleRate} Hz (A/52 Annex E 2.3.1.2 gives a program frame one block count and sample rate); the first is at 0x{at:X}, and the program frame is not decoded.");
+                given = frame with { IsReadable = false };
             }
 
-            if (program.Feed is { } fed && !header.IsDependent)
+            Process(given, frame.Header.IsDependent ? string.Empty : dependents);
+        }
+    }
+
+    private void Process(PendingFrame p, string dependents)
+    {
+        SyncFrame header = p.Header;
+        FrameResult result = p.Result;
+        _frameIndex = p.Index;
+        _frameOffset = p.Offset;
+        _frameLength = p.Available;
+        long offset = p.Offset;
+        int available = p.Available;
+        Node FrameAt() => new("Frame", offset, available) { Kind = NodeKind.Frame };
+        Program? program = Assign(p.Region, p.Index, header, result, dependents);
+        if (program is null)
+        {
+            return;
+        }
+
+        DecodeFeed? feed = p.Feed;
+        if (!header.IsDependent && program.FirstFrame == p.Index && program.Feed is null)
+        {
+            if (feed is not null && _programs.Any(o => o != program && ReferenceEquals(o.Feed, feed)))
             {
-                bool isReadable = !shortened && !cut && result.Stop == StopReason.None && header.Bsid <= 8;
-                fed.Feed(_writer, offset, _buffer.AsMemory(0, available), header, isReadable, crc1, crc2);
+                // Only the dependent substreams differ from the program this feed belongs to: the new program is a new decoding session.
+                p.Region.Node ??= RegionNodeFactory?.Invoke(header);
+                feed = new DecodeFeed(_context, p.Region.Node ?? _streamNode ?? throw new InvalidOperationException("A decoding needs a node for the stream"), header, p.HeaderBytes, offset) { GapsSeen = _gaps };
             }
 
-            program.Cover(region, offset, available);
-            if (program.Add(index, offset, available, header, result, crc1 == CrcState.Mismatch || crc2 == CrcState.Mismatch,
-                    shortened || cut || result.Stop is StopReason.Invalid or StopReason.Overrun, shortened || cut) && !Findings.CountIfKnown("ac3.dependent-excess"))
-            {
-                int id = header.SubstreamId;
-                Findings.Add(Severity.Warning, "ac3.dependent-excess", FrameAt, count =>
-                    $"{(count == 1 ? "1 dependent frame is" : $"{count} dependent frames are")} left out of the figures and statistics after a dependent substream ID repeats within a program frame (A/52 Annex E 2.3.1.2 allows each ID once, at most 8, after an independent frame); the first is of substream {id} at 0x{offset:X}.");
-            }
+            program.Feed = feed;
+        }
+
+        if (!header.IsDependent && dependents.Length > 0 && program.Feed is { IsEac3: false } core)
+        {
+            core.HasDependents = true;
+        }
+
+        if (program.Feed is { } fed && !header.IsDependent)
+        {
+            fed.Feed(p.Records, offset, p.Bytes, header, p.IsReadable, p.Crc1, p.Crc2);
+        }
+        else if (header.IsDependent && program == _current && program.Feed is { } dependentFeed)
+        {
+            dependentFeed.AddDependent(p.Records, header, result, p.Bytes, p.IsReadable, p.Crc2);
+        }
+
+        program.Cover(p.Region, offset, available);
+        if (program.Add(p.Index, offset, available, header, result, p.Crc1 == CrcState.Mismatch || p.Crc2 == CrcState.Mismatch,
+                p.Shortened || p.Cut || p.DependentsLost || result.Stop is StopReason.Invalid or StopReason.Overrun, p.Shortened || p.Cut) && !Findings.CountIfKnown("ac3.dependent-excess"))
+        {
+            int id = header.SubstreamId;
+            Findings.Add(Severity.Warning, "ac3.dependent-excess", FrameAt, count =>
+                $"{(count == 1 ? "1 dependent frame is" : $"{count} dependent frames are")} left out of the figures and statistics after a dependent substream ID repeats within a program frame (A/52 Annex E 2.3.1.2 allows each ID once, at most 8, after an independent frame); the first is of substream {id} at 0x{offset:X}.");
         }
     }
 
     // The program in progress follows a gap: what lies between its frames is no frame.
-    public void NoteGap() => _pendingGap = true;
+    public void NoteGap() => _gaps++;
 
-    // The feed an AC-3 frame goes to: the one of the program it continues, or a new one (with its session) where it starts a program, as Assign will decide. E-AC-3 and the
-    // frames of bsid 9 and 10 start none.
+    // The feed a frame goes to: the one of the program it continues, or a new one (with its session) where it starts a program, as Assign will decide. Dependent frames,
+    // E-AC-3 at a reduced sample rate and the frames of bsid 9 and 10 start none.
     private DecodeFeed? PrepareFeed(Region region, long offset, SyncFrame header)
     {
-        if (header.IsEac3 || header.IsDependent)
+        if (header.IsDependent)
         {
             return null;
         }
 
-        var key = new ProgramKey(0, header.SampleRate, false, header.Acmod, header.Lfeon);
+        int id = header.IsEac3 ? header.SubstreamId : 0;
+        var key = new ProgramKey(id, header.SampleRate, header.IsEac3, header.Acmod, header.Lfeon);
         DecodeFeed? feed;
-        if (_lastKeys.TryGetValue(0, out ProgramKey last) && last == key)
+        if (_lastKeys.TryGetValue(id, out ProgramKey last) && last.Independent() == key)
         {
-            feed = _active.TryGetValue(0, out Program? program) ? program?.Feed : null;
-            if (feed is not null && _pendingGap)
+            feed = _active.TryGetValue(id, out Program? program) ? program?.Feed : null;
+            if (feed is not null && feed.GapsSeen != _gaps)
             {
                 feed.PendingGap = true;
+                feed.GapsSeen = _gaps;
             }
         }
-        else if (_programs.Count < MaxStreams && header.Bsid <= 8)
+        else if (_programs.Count < MaxStreams && (header.IsEac3 ? header.Fscod != 3 : header.Bsid <= 8))
         {
             region.Node ??= RegionNodeFactory?.Invoke(header);
-            feed = new DecodeFeed(_context, region.Node ?? _streamNode ?? throw new InvalidOperationException("A decoding needs a node for the stream"), header, _buffer, offset);
+            feed = new DecodeFeed(_context, region.Node ?? _streamNode ?? throw new InvalidOperationException("A decoding needs a node for the stream"), header, _buffer, offset)
+            {
+                GapsSeen = _gaps,
+            };
         }
         else
         {
             feed = null;
         }
 
-        _pendingGap = false;
         return feed;
     }
 
     public void AddGap(Region region, long start, long end, bool leading, bool trailing, BlockCache cache)
     {
-        _pendingGap |= !leading && !trailing;
+        CommitUnit(endsAtGap: true);
+        // The dependent frames after a gap belong to an independent frame the gap took.
+        _current = null;
+        _gaps += !leading && !trailing ? 1 : 0;
         Frames.Add(Frame.Gap(start, end - start));
         var node = new Node("Gap", start, end - start, NodeValue.Integer(end - start, "bytes")) { Description = Explain.Gap };
         long length = end - start;
@@ -260,8 +373,6 @@ internal sealed class Ac3Analysis
         Issue.HeaderOverrun => "ac3.header-overrun",
         Issue.UndefinedBsid => "ac3.bsid-undefined",
         Issue.ReducedRate => "ac3.reduced-rate-not-read",
-        Issue.Aht => "ac3.aht-not-read",
-        Issue.EnhancedCoupling => "ac3.enhanced-coupling-not-read",
         Issue.MixDataOverrun => "ac3.mix-data-overrun",
         Issue.ChannelMapCount => "ac3.channel-map-count",
         Issue.EmdfTruncated => "ac3.emdf-truncated",
@@ -320,14 +431,6 @@ internal sealed class Ac3Analysis
             case Issue.ReducedRate:
                 Findings.Add(Severity.Info, CodeOf(issue), Field, count =>
                     $"The frame is coded at a reduced sample rate (fscod2), for which A/52 does not specify the bit allocation, so its audio blocks are not read. First in {at} ({Times(count)}).");
-                break;
-            case Issue.Aht:
-                Findings.Add(Severity.Info, CodeOf(issue), Field, count =>
-                    $"The frame codes channels with the adaptive hybrid transform (A/52 Annex E 3.4), whose mantissas the analyzer does not step over, so its audio blocks are read up to the first of them. First in {at} ({Times(count)}).");
-                break;
-            case Issue.EnhancedCoupling:
-                Findings.Add(Severity.Info, CodeOf(issue), Field, count =>
-                    $"The frame uses enhanced coupling (A/52 Annex E 3.5), whose parameters the analyzer does not read, so its audio blocks are read up to there. First in {at} ({Times(count)}).");
                 break;
             case Issue.MixDataOverrun:
                 Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
@@ -446,7 +549,7 @@ internal sealed class Ac3Analysis
 
     // Independent substreams (and AC-3 frames) start a program frame; dependent substreams join the
     // program of the independent frame before them.
-    private Program? Assign(Region region, int index, SyncFrame header, FrameResult result)
+    private Program? Assign(Region region, int index, SyncFrame header, FrameResult result, string dependents)
     {
         long frameOffset = _frameOffset;
         int frameLength = _frameLength;
@@ -462,7 +565,7 @@ internal sealed class Ac3Analysis
                 }
 
                 Findings.Add(Severity.Warning, "ac3.dependent-without-independent", () => FrameAt(),
-                    count => $"{Count(count)} of a dependent substream {Counts.Agree(count, "comes", "come")} before any independent substream they could belong to (A/52 Annex E 2.3.1.2); the first is at 0x{frameOffset:X}.");
+                    count => $"{Count(count)} of a dependent substream {Counts.Agree(count, "comes", "come")} before any independent frame they could belong to, or after a gap that took it (A/52 Annex E 2.3.1.2); the first is at 0x{frameOffset:X}.");
                 return null;
             }
 
@@ -490,7 +593,7 @@ internal sealed class Ac3Analysis
                 count => $"{Count(count)} of independent substream {id} hold {blocks} audio blocks where substream 0's hold {expected} (A/52 Annex E 2.3.1.2 requires the same number); the first is at 0x{frameOffset:X}.");
         }
 
-        var key = new ProgramKey(id, header.SampleRate, header.IsEac3, header.Acmod, header.Lfeon);
+        var key = new ProgramKey(id, header.SampleRate, header.IsEac3, header.Acmod, header.Lfeon, dependents);
         Program? program;
         if (!_lastKeys.TryGetValue(id, out ProgramKey lastKey) || lastKey != key)
         {
@@ -545,6 +648,7 @@ internal sealed class Ac3Analysis
     // region it spans.
     public void Finish(IReadOnlyList<EncoderClaim> claims)
     {
+        CommitUnit(endsAtGap: true);
         FinishUnit();
         List<Program> programs = _programs;
         int ids = programs.Select(p => p.Key.Id).Distinct().Count();
@@ -606,12 +710,6 @@ internal sealed class Ac3Analysis
         }
 
         first.Leading.Add(statistics);
-        if (program.LayoutChanges > 0)
-        {
-            Findings.AddNow(Severity.Info, "ac3.dependent-layout-changed",
-                $"The dependent substreams of {program.Name} add other channels in {program.LayoutChanges} of its frames than in its first; the report gives the first frame's layout.", statistics);
-        }
-
         (string? encoderName, Confidence? encoderConfidence) = ClaimRoles.Resolved(encoder);
         (string? writerName, Confidence? writerConfidence) = ClaimRoles.Resolved(writer);
         List<Series> series = program.Figures.Series(bitrate, Cancellation);
@@ -697,8 +795,18 @@ internal sealed class Ac3Analysis
         public List<Node> Leading { get; } = [];
     }
 
-    internal readonly record struct ProgramKey(int Id, int SampleRate, bool IsEac3, int Acmod, bool Lfeon)
+    internal readonly record struct ProgramKey(int Id, int SampleRate, bool IsEac3, int Acmod, bool Lfeon, string Dependents = "")
     {
-        public string Describe() => $"{(IsEac3 ? "E-AC-3" : "AC-3")}, {SampleRate} Hz, {Ac3Names.CodingModeShort(Acmod)}{(Lfeon ? " + LFE" : string.Empty)}";
+        public ProgramKey Independent() => this with { Dependents = string.Empty };
+
+        public string Describe() => $"{(IsEac3 ? "E-AC-3" : "AC-3")}, {SampleRate} Hz, {Ac3Names.CodingModeShort(Acmod)}{(Lfeon ? " + LFE" : string.Empty)}{(Dependents.Length == 0 ? string.Empty : ", " + DescribeDependents())}";
+
+        // Each dependent substream as it was keyed (ID:channel map or -:coding mode:LFE), written out.
+        private string DescribeDependents() => string.Join(", ", Dependents.Split(';').Select(entry =>
+        {
+            string[] parts = entry.Split(':');
+            string map = parts[1] == "-" ? "no channel map" : $"channel map 0x{parts[1]}";
+            return $"dependent substream {parts[0]} ({map}, {Ac3Names.CodingModeShort(int.Parse(parts[2], System.Globalization.CultureInfo.InvariantCulture))}{(parts[3] == "1" ? " + LFE" : string.Empty)})";
+        }));
     }
 }

@@ -524,8 +524,9 @@ public sealed class CacheTests : IDisposable
         Assert.Equal(expected.Summary.ChannelLayout, actual.Summary.ChannelLayout);
         Assert.Equal(expected.Summary.ProtectionSchemes, actual.Summary.ProtectionSchemes);
         Assert.Equal(expected.Summary.DrmSystems, actual.Summary.DrmSystems);
-        Assert.Equal(expected.Summary with { Tags = [], ChannelLayout = null, ProtectionSchemes = [], DrmSystems = [] },
-            actual.Summary with { Tags = [], ChannelLayout = null, ProtectionSchemes = [], DrmSystems = [] });
+        // The store keeps no verification verdict (version 7 dropped it), so an AC-3 or E-AC-3 stream, which is verified from its frames' CRCs in every analysis, reads back without one.
+        Assert.Equal(expected.Summary with { Tags = [], ChannelLayout = null, ProtectionSchemes = [], DrmSystems = [], IsVerified = null },
+            actual.Summary with { Tags = [], ChannelLayout = null, ProtectionSchemes = [], DrmSystems = [], IsVerified = null });
     }
 
     private static FileId? IdOf(string path)

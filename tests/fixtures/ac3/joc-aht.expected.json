@@ -1,5 +1,5 @@
 {
- "description": "Four 2/0 frames in MP4 whose left channel uses the adaptive hybrid transform, so their audio blocks are not read, with the extension flag and a container for 4 objects after block 0, and a dec3 box that sets the extension with complexity index 4.",
+ "description": "Four 2/0 frames in MP4 whose left channel uses the adaptive hybrid transform, with the extension flag and a container for 4 objects after the last block, and a dec3 box that sets the extension with complexity index 4.",
  "length": 2980,
  "format": "MP4",
  "frames": [
@@ -40,18 +40,11 @@
  "fields": {
   "MP4/moov/trak/mdia/minf/stbl/stsd/ec-3/dec3/Complexity Index Type A": "4"
  },
- "findings": [
-  [
-   "ac3.aht-not-read",
-   "adaptive hybrid transform"
-  ]
- ],
+ "findings": [],
  "crosscheck": {
   "ffprobe": true,
-  "decode": false,
-  "skip": {
-   "decode": "The frames hold no valid AHT mantissas, so decoders play noise or reject them."
-  }
+  "decode": true,
+  "skip": {}
  },
  "boxes": [
   [
@@ -164,5 +157,39 @@
    572,
    2408
   ]
- ]
+ ],
+ "block_ends": {
+  "580": [
+   258,
+   262,
+   266,
+   270,
+   274,
+   278
+  ],
+  "1180": [
+   258,
+   262,
+   266,
+   270,
+   274,
+   278
+  ],
+  "1780": [
+   258,
+   262,
+   266,
+   270,
+   274,
+   278
+  ],
+  "2380": [
+   258,
+   262,
+   266,
+   270,
+   274,
+   278
+  ]
+ }
 }

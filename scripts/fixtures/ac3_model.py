@@ -22,6 +22,8 @@ WORDS = {
         1344, 1344, 1536, 1536, 1728, 1728, 1920, 1920],
 }
 NFCHANS = [2, 1, 2, 3, 3, 4, 4, 5]
+ECPL_BINS = [13, 19, 25, 31, 37, 49, 61, 73, 85, 97, 109, 121, 133, 145, 157, 169, 181, 193, 205, 217, 229, 241, 253]
+DEFAULT_ECPL_BANDS = [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1]
 DEFAULT_CPL_BANDS = [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1]
 DEFAULT_SPX_BANDS = [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
 
@@ -314,7 +316,7 @@ def ac3_frame(acmod=2, lfeon=0, fscod=0, frmsizecod=20, bsid=8, bsmod=0, dialnor
 
 def eac3_frame(strmtyp=0, substream=0, acmod=2, lfeon=0, numblkscod=3, fscod=0, fscod2=0, bsid=16, dialnorm=27, chanmap=None, bsmod=None, words=256,
                expstre=1, ahte=0, aht_channel=0, spx=False, cplinu=False, ecpl=False, ends=None, addbsi=None, aux=None, skips=None, tail=None,
-               blksw=None, remat=None, spx_blocks=None, spx_range=(2, 2), spx_structure=False):
+               blksw=None, remat=None, spx_blocks=None, spx_range=(2, 2), spx_structure=False, ecplbegf=3, ecplendf=3):
     nf = NFCHANS[acmod]
     blocks = 6 if fscod == 3 else [1, 2, 3, 6][numblkscod]
     b = Bits()
@@ -394,6 +396,10 @@ def eac3_frame(strmtyp=0, substream=0, acmod=2, lfeon=0, numblkscod=3, fscod=0, 
         b.put(0, 1)
     strategy = 3 if expstre else 1
     cplbegf, cplendf = 3, 10
+    ecpl_begin = ecplbegf * 2 if ecplbegf < 3 else ecplbegf + 2 if ecplbegf < 13 else ecplbegf * 2 - 10
+    ecpl_end = ecplendf + 7
+    # The enhanced coupling bands: every sub-band from the begin sub-band on is its own band but those from the ninth on that the default structure joins (Table E1.13).
+    ecpl_bands = sum(1 for sub in range(ecpl_begin, ecpl_end) if sub == ecpl_begin or DEFAULT_ECPL_BANDS[sub] == 0)
     begin_band = spx_range[0] + 2 if spx_range[0] < 6 else spx_range[0] * 2 - 3
     end_band = spx_range[1] + 5 if spx_range[1] < 3 else spx_range[1] * 2 + 3
     # The band structure: the default of Table E2.11 (TS 102 366 E.1.10) where the strategy does not send one (E.1.3.3.7: "the default spectral extension band structure
@@ -437,18 +443,38 @@ def eac3_frame(strmtyp=0, substream=0, acmod=2, lfeon=0, numblkscod=3, fscod=0, 
                 if acmod != 2:
                     b.put((1 << nf) - 1, nf)
                 if ecpl:
-                    break
-                if acmod == 2:
+                    # Enhanced coupling (A/52 Annex E 2.2.4): the range and the default band structure (the sub-bands from the ninth on are the only ones that can join), then in this first
+                    # block every coupled channel's amplitudes and, but for the first, angles, chaos values and the transient flag.
+                    b.put(ecplbegf, 4)
+                    if not spx:
+                        b.put(ecplendf, 4)
                     b.put(0, 1)
-                b.put(cplbegf, 4)
-                if not spx:
-                    b.put(cplendf, 4)
+                    b.put(0, 1)
+                    for ch in range(nf):
+                        for band in range(ecpl_bands):
+                            b.put((7 * ch + 3 * band) % 30, 5)
+                        if ch > 0:
+                            for band in range(ecpl_bands):
+                                b.put((5 * ch + 7 * band) % 64, 6).put((ch + band) % 8, 3)
+                            b.put(ch % 2, 1)
+                else:
+                    if acmod == 2:
+                        b.put(0, 1)
+                    b.put(cplbegf, 4)
+                    if not spx:
+                        b.put(cplendf, 4)
+                    b.put(0, 1)
+                    bands = 3 + cplendf - cplbegf - sum(DEFAULT_CPL_BANDS[cplbegf + 1:cplendf + 3])
+                    for _ in range(nf):
+                        b.put(0, 2)
+                        for _ in range(bands):
+                            b.put(0, 4).put(0, 4)
+            elif ecpl:
                 b.put(0, 1)
-                bands = 3 + cplendf - cplbegf - sum(DEFAULT_CPL_BANDS[cplbegf + 1:cplendf + 3])
-                for _ in range(nf):
-                    b.put(0, 2)
-                    for _ in range(bands):
-                        b.put(0, 4).put(0, 4)
+                for ch in range(nf):
+                    b.put(0, 1)
+                    if ch > 0:
+                        b.put(0, 1).put(0, 1)
             else:
                 for _ in range(nf):
                     b.put(0, 1)
@@ -465,10 +491,11 @@ def eac3_frame(strmtyp=0, substream=0, acmod=2, lfeon=0, numblkscod=3, fscod=0, 
             if not cplinu and not use[block]:
                 for _ in range(nf):
                     b.put(0, 6)
-            end = 37 + 12 * cplbegf if cplinu else 25 + 12 * begin_band if use[block] else 73
+            cpl_lo, cpl_hi = (ECPL_BINS[ecpl_begin], ECPL_BINS[ecpl_end]) if ecpl else (37 + 12 * cplbegf, 37 + 12 * (cplendf + 3))
+            end = cpl_lo if cplinu else 25 + 12 * begin_band if use[block] else 73
             if cplinu:
                 b.put(0, 4)
-                for _ in range((37 + 12 * (cplendf + 3) - end) // ((3, 6, 12)[strategy - 1])):
+                for _ in range((cpl_hi - end) // ((3, 6, 12)[strategy - 1])):
                     b.put(62, 7)
             for _ in range(nf):
                 exponents(b, end, strategy=strategy)
@@ -489,8 +516,9 @@ def eac3_frame(strmtyp=0, substream=0, acmod=2, lfeon=0, numblkscod=3, fscod=0, 
                 b.put(len(piece), 9)
                 for byte in piece:
                     b.put(byte, 8)
-        if ahte and aht_channel:
-            break
+        if block == 0 and ahte and aht_channel:
+            # The adaptive hybrid transform channel's gain adaptive quantization mode (mode 0: none); the frame's SNR offsets of 0 give every bin no bits.
+            b.put(0, 2)
         if ends is not None:
             ends.append(b.count)
     return finish(b, words, crc1=False, aux=aux, tail=tail)

@@ -8,8 +8,8 @@ using it.
 The Dolby files are the one source of object audio that no hand-built fixture can stand in for: they
 show where Dolby's encoder puts the EMDF container (at the start of a skip field, here in block 2 of each
 frame), that emdf_container_length counts the bytes after its own field, that the payload list ends with
-a bare 5-bit ID 0 and that codecdatae is 0. The AHT files, whose audio blocks the analyzer does not read
-to their end, must give no object audio and no finding about it.
+a bare 5-bit ID 0 and that codecdatae is 0. The AHT files, whose audio blocks the analyzer reads to their end
+(the adaptive hybrid transform's values included), must give no object audio and no finding about the transform.
 
 Per file, ffprobe and MediaInfo must agree with the manifest, with their words mapped to the analyzer's as
 crosscheck_ac3_fixtures.py does (ffprobe's profile "Dolby Digital Plus + Dolby Atmos" is the frames'

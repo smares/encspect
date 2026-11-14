@@ -1,0 +1,81 @@
+{
+ "description": "Twelve 2/0 E-AC-3 frames at 48 kHz whose two channels use the adaptive hybrid transform with every gain adaptive quantization mode in turn, vector quantization, gains of 1, 2 and 4, tags and large values, and mantissas in every bin (A/52 Annex E 3.4).",
+ "length": 49152,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   4096
+  ],
+  [
+   4096,
+   4096
+  ],
+  [
+   8192,
+   4096
+  ],
+  [
+   12288,
+   4096
+  ],
+  [
+   16384,
+   4096
+  ],
+  [
+   20480,
+   4096
+  ],
+  [
+   24576,
+   4096
+  ],
+  [
+   28672,
+   4096
+  ],
+  [
+   32768,
+   4096
+  ],
+  [
+   36864,
+   4096
+  ],
+  [
+   40960,
+   4096
+  ],
+  [
+   45056,
+   4096
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "E-AC-3",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 18432,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "ffprobe_bitrate": true,
+  "decode": true,
+  "skip_insertion": false,
+  "skip": {
+   "skip_insertion": "The check rewrites E-AC-3 frames with skip fields."
+  }
+ }
+}

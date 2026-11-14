@@ -18,6 +18,7 @@
 #include <AudioToolbox/AudioToolbox.h>
 #include <CoreFoundation/CoreFoundation.h>
 #include <inttypes.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -647,6 +648,56 @@ static int pcm(const char *path, const char *out_path) {
     if (ExtAudioFileGetProperty(file, kExtAudioFileProperty_FileChannelLayout, &layout_size, &layout) == 0) {
         tag = layout.mChannelLayoutTag;
     }
+    /* The channels the layout names, as the labels of kAudioChannelLabel_* in order (the layout's own descriptions where it has them, else those the tag stands for), and the
+       layout's name, so that the comparison can place Core Audio's channels by speaker instead of by position. */
+    char labels[512] = "[]";
+    char layout_name[256] = "";
+    {
+        AudioChannelLayout *described = NULL;
+        UInt32 described_size = 0;
+        if (ExtAudioFileGetPropertyInfo(file, kExtAudioFileProperty_FileChannelLayout, &described_size, NULL) == 0 && described_size >= sizeof(AudioChannelLayout)) {
+            described = malloc(described_size);
+            if (described && ExtAudioFileGetProperty(file, kExtAudioFileProperty_FileChannelLayout, &described_size, described) != 0) {
+                free(described);
+                described = NULL;
+            }
+        }
+        if (described && described->mNumberChannelDescriptions == 0 && described->mChannelLayoutTag != kAudioChannelLayoutTag_UseChannelDescriptions) {
+            AudioChannelLayoutTag for_tag = described->mChannelLayoutTag;
+            UInt32 tag_size = 0;
+            free(described);
+            described = NULL;
+            if (AudioFormatGetPropertyInfo(kAudioFormatProperty_ChannelLayoutForTag, sizeof for_tag, &for_tag, &tag_size) == 0 && tag_size >= sizeof(AudioChannelLayout)) {
+                described = malloc(tag_size);
+                if (described && AudioFormatGetProperty(kAudioFormatProperty_ChannelLayoutForTag, sizeof for_tag, &for_tag, &tag_size, described) != 0) {
+                    free(described);
+                    described = NULL;
+                }
+            }
+        }
+        if (described) {
+            size_t at = (size_t)snprintf(labels, sizeof labels, "[");
+            for (UInt32 i = 0; i < described->mNumberChannelDescriptions && at + 16 < sizeof labels; i++) {
+                at += (size_t)snprintf(labels + at, sizeof labels - at, "%s%u", i ? "," : "", (unsigned)described->mChannelDescriptions[i].mChannelLabel);
+            }
+            snprintf(labels + at, sizeof labels - at, "]");
+            CFStringRef cf_name = NULL;
+            UInt32 name_size = sizeof cf_name;
+            UInt32 layout_bytes = (UInt32)(offsetof(AudioChannelLayout, mChannelDescriptions) + described->mNumberChannelDescriptions * sizeof(AudioChannelDescription));
+            if (AudioFormatGetProperty(kAudioFormatProperty_ChannelLayoutName, layout_bytes, described, &name_size, &cf_name) == 0 && cf_name) {
+                if (!CFStringGetCString(cf_name, layout_name, sizeof layout_name, kCFStringEncodingUTF8)) {
+                    layout_name[0] = 0;
+                }
+                CFRelease(cf_name);
+            }
+            for (char *c = layout_name; *c; c++) {
+                if (*c == '"' || *c == '\\' || (unsigned char)*c < 32) {
+                    *c = ' ';
+                }
+            }
+            free(described);
+        }
+    }
     FILE *out = fopen(out_path, "wb");
     if (!out) {
         return 1;
@@ -671,7 +722,7 @@ static int pcm(const char *path, const char *out_path) {
     fclose(out);
     free(buffer);
     ExtAudioFileDispose(file);
-    printf("{\"type\":\"pcm\",\"status\":%d,\"rate\":%.0f,\"channels\":%u,\"frames\":%lld,\"layoutTag\":%u,\"drcStatus\":%d}\n", (int)s, client.mSampleRate, (unsigned)client.mChannelsPerFrame, total, (unsigned)tag, (int)drc);
+    printf("{\"type\":\"pcm\",\"status\":%d,\"rate\":%.0f,\"channels\":%u,\"frames\":%lld,\"layoutTag\":%u,\"drcStatus\":%d,\"labels\":%s,\"layoutName\":\"%s\"}\n", (int)s, client.mSampleRate, (unsigned)client.mChannelsPerFrame, total, (unsigned)tag, (int)drc, labels, layout_name);
     return 0;
 }
 

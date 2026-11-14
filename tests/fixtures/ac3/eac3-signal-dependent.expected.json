@@ -1,0 +1,133 @@
+{
+ "description": "Twelve access units of a 2/0 independent substream (spectral extension, no noise) and a dependent substream with the channel map of the back left and back right pair, also 2/0: a program of four channels, which decoders that read dependent substreams give in the order front left, front right, back left, back right (A/52 Annex E 3.8).",
+ "length": 98304,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   4096
+  ],
+  [
+   4096,
+   4096
+  ],
+  [
+   8192,
+   4096
+  ],
+  [
+   12288,
+   4096
+  ],
+  [
+   16384,
+   4096
+  ],
+  [
+   20480,
+   4096
+  ],
+  [
+   24576,
+   4096
+  ],
+  [
+   28672,
+   4096
+  ],
+  [
+   32768,
+   4096
+  ],
+  [
+   36864,
+   4096
+  ],
+  [
+   40960,
+   4096
+  ],
+  [
+   45056,
+   4096
+  ],
+  [
+   49152,
+   4096
+  ],
+  [
+   53248,
+   4096
+  ],
+  [
+   57344,
+   4096
+  ],
+  [
+   61440,
+   4096
+  ],
+  [
+   65536,
+   4096
+  ],
+  [
+   69632,
+   4096
+  ],
+  [
+   73728,
+   4096
+  ],
+  [
+   77824,
+   4096
+  ],
+  [
+   81920,
+   4096
+  ],
+  [
+   86016,
+   4096
+  ],
+  [
+   90112,
+   4096
+  ],
+  [
+   94208,
+   4096
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "E-AC-3",
+   "sample_rate": 48000,
+   "channels": 4,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right",
+    "back left",
+    "back right"
+   ],
+   "samples": 18432,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "ffprobe_bitrate": false,
+  "decode": false,
+  "skip_insertion": false,
+  "skip": {
+   "decode": "FFmpeg decodes the independent substream only (its 2 channels); Core Audio's output is the reference for the four (macOS job).",
+   "ffprobe_bitrate": "FFmpeg gives no bitrate for frames it cannot decode.",
+   "skip_insertion": "The check rewrites E-AC-3 frames with skip fields."
+  }
+ }
+}

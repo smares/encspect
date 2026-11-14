@@ -228,12 +228,13 @@ public class Ac3CodingSeriesTests
     [Fact]
     public void The_blocks_of_a_dependent_frame_join_the_program_frame_and_a_block_that_is_not_2_0_has_no_rematrixing()
     {
-        StreamInfo stream = Assert.Single(Fixtures.AnalyzeMpeg("ac3/coding-eac3-dependent.eac3").Streams);
-        CategorySeries rematrixing = stream.CategorySeries.Single(s => s.Name == "Blocks With Rematrixing");
+        // Each configuration of the dependent substreams is a stream of its own, so the four program frames are four streams of one unit each.
+        IReadOnlyList<StreamInfo> streams = Fixtures.AnalyzeMpeg("ac3/coding-eac3-dependent.eac3").Streams;
+        CategorySeries[] rematrixing = [.. streams.Select(stream => stream.CategorySeries.Single(s => s.Name == "Blocks With Rematrixing"))];
 
-        Assert.Equal([12, 6, 1, 12], Enumerable.Range(0, 4).Select(rematrixing.ValueCount));
-        Assert.Equal(31, rematrixing.Total);
-        Assert.Equal([1, 1, 1], Enumerable.Range(0, 3).Select(v => (int)rematrixing[1, 3 + v]));
+        Assert.Equal([12, 6, 1, 12], rematrixing.Select(s => s.ValueCount(0)));
+        Assert.Equal(31, rematrixing.Sum(s => s.Total));
+        Assert.Equal([1, 1, 1], Enumerable.Range(0, 3).Select(v => (int)rematrixing[1][0, 3 + v]));
     }
 
     // An AC-3 core with E-AC-3 dependent frames (ETSI TS 102 366 J.1.5.2.2) has the blocks of both in a program frame, 12 values, which no fixed layout of
@@ -242,28 +243,39 @@ public class Ac3CodingSeriesTests
     public void An_ac3_core_with_dependent_frames_has_a_variable_layout_and_series_equal_to_their_tallies()
     {
         Report report = Fixtures.AnalyzeMpeg("ac3/coding-ac3-core-dependent.ac3");
-        StreamInfo stream = Assert.Single(report.Streams);
-        Node statistics = StatisticsOf(report, stream);
+        // The program frame without a dependent frame is an AC-3 stream, the others E-AC-3 streams (the first alone, the last two together).
+        Assert.Equal(["E-AC-3", "AC-3", "E-AC-3"], report.Streams.Select(s => s.Codec));
+        int[][] expected = [[12], [6], [12, 12]];
+        long[] switched = [0, 0, 0];
+        for (int i = 0; i < 3; i++)
+        {
+            StreamInfo stream = report.Streams[i];
+            Node statistics = StatisticsOf(report, stream);
+            Assert.Equal(["Blocks With Block Switching", "Blocks With Coupling", "Blocks With Rematrixing"], stream.CategorySeries.Select(s => s.Name));
+            // The AC-3 stream has the fixed layout of six, the E-AC-3 streams a variable one.
+            Assert.All(stream.CategorySeries, s => Assert.Equal(i == 1 ? 6 : 0, s.ValuesPerUnit));
+            Assert.All(stream.CategorySeries, s => Assert.Equal(expected[i], Enumerable.Range(0, expected[i].Length).Select(s.ValueCount)));
+            Assert.All(stream.CategorySeries, s => Assert.Equal(CountOf(Child(statistics, "Audio Blocks Read")!), s.Total));
+            Assert.Equal(CountOf(Child(statistics, "Blocks With Block Switching")!), stream.CategorySeries[0].Counts[0]);
+            switched[i] = stream.CategorySeries[0].Counts[0];
+        }
 
-        Assert.Equal("E-AC-3", stream.Codec);
-        Assert.Equal(["Blocks With Block Switching", "Blocks With Coupling", "Blocks With Rematrixing"], stream.CategorySeries.Select(s => s.Name));
-        Assert.All(stream.CategorySeries, s => Assert.Equal(0, s.ValuesPerUnit));
-        Assert.All(stream.CategorySeries, s => Assert.Equal([12, 6, 12, 12], Enumerable.Range(0, 4).Select(s.ValueCount)));
-        Assert.All(stream.CategorySeries, s => Assert.Equal(CountOf(Child(statistics, "Audio Blocks Read")!), s.Total));
-        Assert.Equal(CountOf(Child(statistics, "Blocks With Block Switching")!), stream.CategorySeries[0].Counts[0]);
-        Assert.Equal(20, stream.CategorySeries[0].Counts[0]);
+        Assert.Equal(20, switched.Sum());
     }
 
     // The largest program frame: an independent frame and eight dependent frames of six blocks, 54 values in each series.
     [Fact]
     public void A_program_frame_of_nine_frames_has_54_values()
     {
-        StreamInfo stream = Assert.Single(Fixtures.AnalyzeMpeg("ac3/coding-eac3-nine-frames.eac3").Streams);
+        // The first two program frames have eight dependent frames of six blocks and are one stream; the other two (4 and 8 dependent frames) are streams of their own.
+        IReadOnlyList<StreamInfo> streams = Fixtures.AnalyzeMpeg("ac3/coding-eac3-nine-frames.eac3").Streams;
+        Assert.Equal(3, streams.Count);
 
-        Assert.All(stream.CategorySeries, s => Assert.Equal([54, 54, 15, 9], Enumerable.Range(0, 4).Select(s.ValueCount)));
-        Assert.All(stream.CategorySeries, s => Assert.Equal(132, s.Total));
-        Assert.Equal([123L, 9L], stream.CategorySeries[0].Counts);
-        Assert.Equal(54, Enumerable.Range(0, 54).Count(v => stream.CategorySeries[0][0, v] != CategorySeries.None));
+        Assert.All(streams[0].CategorySeries, s => Assert.Equal([54, 54], Enumerable.Range(0, 2).Select(s.ValueCount)));
+        Assert.All(streams[1].CategorySeries, s => Assert.Equal([15], Enumerable.Range(0, 1).Select(s.ValueCount)));
+        Assert.All(streams[2].CategorySeries, s => Assert.Equal([9], Enumerable.Range(0, 1).Select(s.ValueCount)));
+        Assert.Equal(132, streams.Sum(x => x.CategorySeries[0].Total));
+        Assert.Equal(54, Enumerable.Range(0, 54).Count(v => streams[0].CategorySeries[0][0, v] != CategorySeries.None));
     }
 
     // A frame that stops before its end reports the blocks read to their end only, in the tally and in the series alike.
@@ -370,7 +382,9 @@ public class Ac3CodingSeriesTests
 
         bool coupling = false;
         bool spectral = false;
-        int beginCode = 0, endCode = 0, spxBegin = 0;
+        int beginCode = 0, endCode = 0, spxBegin = 0, spxCode = 0, ecplBegin = 0, ecplEnd = 0;
+        bool enhanced = false;
+        int[] enhancedBins = [13, 19, 25, 31, 37, 49, 61, 73, 85, 97, 109, 121, 133, 145, 157, 169, 181, 193, 205, 217, 229, 241, 253];
         var coupled = new bool[labels.Length];
         var inSpectral = new bool[labels.Length];
         var widths = new int[labels.Length];
@@ -411,6 +425,18 @@ public class Ac3CodingSeriesTests
                 {
                     endCode = Number(end.Value!.ToString());
                 }
+
+                if (fields.FirstOrDefault(c => c.Name == "IsEnhancedCouplingInUse") is { } use)
+                {
+                    enhanced = use.Value!.AsBoolean() == true;
+                }
+
+                if (fields.FirstOrDefault(c => c.Name == "Enhanced Coupling Begin Code") is { } enhancedBegin)
+                {
+                    int code = Number(enhancedBegin.Value!.ToString());
+                    ecplBegin = code < 3 ? code * 2 : code < 13 ? code + 2 : (code * 2) - 10;
+                    ecplEnd = fields.FirstOrDefault(c => c.Name == "Enhanced Coupling End Code") is { } enhancedEnd ? Number(enhancedEnd.Value!.ToString()) + 7 : spxCode < 6 ? spxCode + 5 : spxCode * 2;
+                }
             }
             else
             {
@@ -430,6 +456,7 @@ public class Ac3CodingSeriesTests
                         }
 
                         int code = Number(fields.First(c => c.Name == "Spectral Extension Begin Code").Value!.ToString());
+                        spxCode = code;
                         spxBegin = code < 6 ? code + 2 : (code * 2) - 3;
                     }
                     else
@@ -463,12 +490,12 @@ public class Ac3CodingSeriesTests
             int top = 0;
             for (int ch = 0; ch < labels.Length; ch++)
             {
-                top = Math.Max(top, coupled[ch] ? 37 + (12 * beginCode) : eac3 && inSpectral[ch] ? 25 + (12 * spxBegin) : 37 + (3 * (widths[ch] + 12)));
+                top = Math.Max(top, coupled[ch] ? enhanced ? enhancedBins[ecplBegin] : 37 + (12 * beginCode) : eac3 && inSpectral[ch] ? 25 + (12 * spxBegin) : 37 + (3 * (widths[ch] + 12)));
             }
 
             if (coupling)
             {
-                top = Math.Max(top, 37 + (12 * (endCode + 3)));
+                top = Math.Max(top, enhanced ? enhancedBins[ecplEnd] : 37 + (12 * (endCode + 3)));
             }
 
             result.Add(new Block(fields.Any(c => c.Name.StartsWith("IsBlockSwitched", StringComparison.Ordinal) && c.Value!.AsBoolean() == true),

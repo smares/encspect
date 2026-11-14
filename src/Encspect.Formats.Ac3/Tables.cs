@@ -164,11 +164,32 @@ internal static class Tables
         [3, 3, 3, 3, 3, 3],
     ];
 
-    // Annex E, Table E2.11 and Table E2.12: the default spectral extension and coupling band
+    // A/52:2018 Annex E, Table E2.11 and Table E2.12 (E2.13 in its list of tables; the body numbers the two coupling tables E2.12 and E2.13): the default spectral extension and coupling band
     // structures, by sub-band number.
     public static readonly byte[] DefaultSpxBandStructure = [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1];
 
     public static readonly byte[] DefaultCouplingBandStructure = [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1];
+
+    // A/52:2018 Table E2.13 in its body, E2.14 in its list of tables (ETSI TS 102 366 Table E.1.13): the default enhanced coupling band structure, by sub-band.
+    public static readonly byte[] DefaultEnhancedCouplingBandStructure = [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1];
+
+    // A/52:2018 Table E3.9 (ETSI Table E.2.9): the first bin of each enhanced coupling sub-band, and the bin after the last (index 22).
+    public static readonly byte[] EnhancedCouplingSubBandStart = [13, 19, 25, 31, 37, 49, 61, 73, 85, 97, 109, 121, 133, 145, 157, 169, 181, 193, 205, 217, 229, 241, 253];
+
+    // A/52:2018 Table E3.1 (ETSI Table E.2.1): the high efficiency bit allocation pointer of each address (psd - mask) >> 5.
+    public static readonly byte[] HebapTab =
+    [
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 8, 8, 9, 9, 9, 10,
+        10, 10, 10, 11, 11, 11, 11, 12, 12, 12, 12, 13, 13, 13, 13, 14,
+        14, 14, 14, 15, 15, 15, 15, 16, 16, 16, 16, 17, 17, 17, 17, 18,
+        18, 18, 18, 18, 18, 18, 18, 19, 19, 19, 19, 19, 19, 19, 19, 19,
+    ];
+
+    // A/52:2018 Table E3.2 (ETSI Table E.2.2): the mantissa bits of a gain adaptive quantizer by hebap 8 to 19 (index hebap - 8), and of a vector quantizer's index by hebap 1 to 7 (index hebap - 1) for the
+    // six mantissas it stands for.
+    public static readonly byte[] GainAdaptiveBits = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16];
+
+    public static readonly byte[] VectorBits = [2, 3, 4, 5, 7, 8, 9];
 
     // The gains dynrng and compr stand for, in hundredths of a dB, per code (A/52 7.7.1.2 and 7.7.2.2):
     // dynrng's three high bits X are a signed integer and its five low bits Y a fraction 0.1Y in

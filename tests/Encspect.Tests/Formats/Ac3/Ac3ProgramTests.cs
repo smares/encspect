@@ -180,7 +180,7 @@ public class Ac3ProgramTests
         source.AsSpan(400, 320).CopyTo(dependent);
         dependent[2] = (byte)((dependent[2] & 0xF8) | 0x07);
         dependent[3] = 0xFF;
-        byte[] data = [.. independent, .. Enumerable.Range(0, 40).SelectMany(_ => dependent), .. independent, .. independent, .. independent];
+        byte[] data = [.. independent, .. Enumerable.Range(0, 40).SelectMany(_ => dependent), .. Enumerable.Range(0, 3).SelectMany(_ => independent.Concat(source.AsSpan(400, 320).ToArray()))];
 
         Report report = Analyze(data, "many-dependents.eac3");
 
@@ -189,7 +189,7 @@ public class Ac3ProgramTests
         Finding excess = Assert.Single(report.Findings, f => f.Code == "ac3.dependent-excess");
         Assert.Equal(39, excess.Count);
         Node statistics = Descendants(report.Root).Single(n => n.Kind == NodeKind.Statistics);
-        Assert.Equal(NodeValue.Integer(1, "frames", "frame"), statistics.Children.Single(c => c.Name == "Dependent Frames").Value);
+        Assert.Equal(NodeValue.Integer(4, "frames", "frame"), statistics.Children.Single(c => c.Name == "Dependent Frames").Value);
     }
 
     // The independent substreams of one E-AC-3 stream play at the same time: the summary counts the longest once.

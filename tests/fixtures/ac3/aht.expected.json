@@ -1,5 +1,5 @@
 {
- "description": "Three 2/0 frames whose left channel uses the adaptive hybrid transform; the blocks are read up to its mantissas.",
+ "description": "Three 2/0 frames whose left channel uses the adaptive hybrid transform, with no bits for its mantissas.",
  "length": 1200,
  "format": "AC-3",
  "frames": [
@@ -32,17 +32,36 @@
   }
  ],
  "fields": {},
- "findings": [
-  [
-   "ac3.aht-not-read",
-   "adaptive hybrid transform"
-  ]
- ],
+ "findings": [],
  "crosscheck": {
   "ffprobe": true,
-  "decode": false,
-  "skip": {
-   "decode": "The frames hold no valid AHT mantissas, so decoders play noise or reject them."
-  }
+  "decode": true,
+  "skip": {}
+ },
+ "block_ends": {
+  "0": [
+   236,
+   240,
+   244,
+   248,
+   252,
+   256
+  ],
+  "400": [
+   236,
+   240,
+   244,
+   248,
+   252,
+   256
+  ],
+  "800": [
+   236,
+   240,
+   244,
+   248,
+   252,
+   256
+  ]
  }
 }

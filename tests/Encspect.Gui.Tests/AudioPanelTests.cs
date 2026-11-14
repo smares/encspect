@@ -105,8 +105,8 @@ public class AudioPanelTests
     [AvaloniaFact]
     public void A_stream_the_analysis_does_not_decode_says_so_with_the_codec_and_never_that_no_decoder_exists()
     {
-        // E-AC-3 has no decoder (its AC-3 core is decoded, E-AC-3 comes with the next step); WavPack has one, but Matroska does not hand zlib-compressed WavPack frames to its codec parser.
-        foreach ((string path, string codec) in new[] { (Fixtures.Ac3("external-ffmpeg-eac3-stereo-96k.eac3"), "E-AC-3"), (Fixtures.Matroska("external-mkvmerge-zlib-wavpack.mka"), "WavPack") })
+        // DTS has no decoder; WavPack has one, but Matroska does not hand zlib-compressed WavPack frames to its codec parser.
+        foreach ((string path, string codec) in new[] { (Fixtures.Dts("core-16le.dts"), "DTS"), (Fixtures.Matroska("external-mkvmerge-zlib-wavpack.mka"), "WavPack") })
         {
             DetailWindow window = Open(path, decode: false);
             AudioCaption caption = window.Model.Graphs.SelectedStream!.Caption!;
@@ -191,13 +191,13 @@ public class AudioPanelTests
         window.Close();
     }
 
-    // An E-AC-3 stream has no verification (its parser starts no session); the NoDecoder caption is covered by the synthetic test above.
+    // A DTS stream has no verification (its parser starts no session); the NoDecoder caption is covered by the synthetic test above.
     [AvaloniaFact]
     public void A_stream_without_a_decoder_offers_no_command_and_is_not_decoded()
     {
-        DetailWindow window = Open(Fixtures.Ac3("external-ffmpeg-eac3-stereo-96k.eac3"));
+        DetailWindow window = Open(Fixtures.Dts("core-16le.dts"));
         Assert.False(window.Model.CanDecodeAudio);
-        Assert.Equal("The audio of this E-AC-3 stream is not decoded here.", window.Model.Graphs.SelectedStream!.Caption!.Text);
+        Assert.Equal("The audio of this DTS stream is not decoded here.", window.Model.Graphs.SelectedStream!.Caption!.Text);
         Assert.Null(window.Model.Report!.Streams.Single().Measurements);
         window.Close();
     }

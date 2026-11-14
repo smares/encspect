@@ -62,8 +62,8 @@ MP4 files with one AAC sound track (the samples are the extractor's, in file ord
                      the file cut in the middle of the first, middle or last sample, only for a file whose box tables come before its samples and whose last
                      sample ends at the end of the file (so that the cut leaves the tables intact and the samples are what is cut)
 
-AC-3 (the raw files named external-* of tests/fixtures/ac3 that an encoder wrote, one AC-3 stream of syncframes from the first byte to the last: the rules of docs/design/official-decoder-crosschecks.md,
-for the comparison of the AC-3 decoder's PCM with Core Audio's and, on the lead's notebook, Dolby's decoder). The units are those of unit_list.py (the syncframes); a file with fewer than three
+AC-3 and E-AC-3 (the raw files named external-* of tests/fixtures/ac3 that an encoder wrote, one stream of syncframes from the first byte to the last: the rules of docs/design/official-decoder-crosschecks.md,
+for the comparison of the AC-3 and E-AC-3 decoders' PCM with Core Audio's and, on the lead's notebook, Dolby's decoder). The units are those of unit_list.py (the syncframes); a file with fewer than three
 units has no variants. With U the units, first = U[0], last = U[-1] and middle = U[len(U) // 2]:
 
   cut-first-frame    the file cut in the middle of the first frame
@@ -331,7 +331,7 @@ def ac3_variants(data):
     """{rule: bytes} for the bytes of one raw AC-3 file; empty when the extractor finds fewer than three units or the file is no run of AC-3 syncframes."""
     found = unit_list.extract_bytes(data)
     units = found["units"]
-    if found.get("kind") != "ac3" or found.get("codec") != "ac-3" or len(units) < 3:
+    if found.get("kind") not in ("ac3", "eac3") or found.get("codec") not in ("ac-3", "ec-3") or len(units) < 3:
         return {}
     first, middle, last = units[0], units[len(units) // 2], units[-1]
     if middle[2] < 12:
@@ -358,8 +358,8 @@ def ac3_variants(data):
 
 
 def ac3_sources():
-    """The fixtures the rules apply to: the raw AC-3 files an encoder wrote (external-*.ac3, not the E-AC-3 files)."""
-    return sorted(p for p in AC3_DIRECTORY.iterdir() if p.is_file() and p.name.startswith("external-") and p.suffix.lower() == ".ac3")
+    """The fixtures the rules apply to: the raw AC-3 and E-AC-3 files an encoder wrote (external-*.ac3 and external-*.eac3)."""
+    return sorted(p for p in AC3_DIRECTORY.iterdir() if p.is_file() and p.name.startswith("external-") and p.suffix.lower() in (".ac3", ".eac3"))
 
 
 def write_variants(out, sources, variants):

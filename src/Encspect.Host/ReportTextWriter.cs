@@ -48,18 +48,37 @@ public static class ReportTextWriter
             }
         }
 
-        Dictionary<Node, string> verified = new(ReferenceEqualityComparer.Instance);
-        foreach (StreamInfo stream in report.Streams.Where(s => s.Verification is { HasChecksums: true } && s.Nodes.Count > 0))
+        // Streams that share a node (the substreams of one file, or the runs of one configuration after another) each get their lines under it, told apart by their numbers.
+        Dictionary<Node, List<(int Stream, string Text)>> verified = new(ReferenceEqualityComparer.Instance);
+        for (int i = 0; i < report.Streams.Count; i++)
         {
-            verified.TryAdd(stream.Nodes[0], VerificationText.Describe(stream.Verification!));
+            StreamInfo stream = report.Streams[i];
+            if (stream.Verification is { HasChecksums: true } && stream.Nodes.Count > 0)
+            {
+                if (!verified.TryGetValue(stream.Nodes[0], out List<(int, string)>? list))
+                {
+                    verified[stream.Nodes[0]] = list = [];
+                }
+
+                list.Add((i + 1, VerificationText.Describe(stream.Verification)));
+            }
         }
 
-        Dictionary<Node, IReadOnlyList<MeasurementLine>> measured = new(ReferenceEqualityComparer.Instance);
+        Dictionary<Node, List<(int Stream, IReadOnlyList<MeasurementLine> Lines)>> measured = new(ReferenceEqualityComparer.Instance);
         if (filter.ShowsMeasurements)
         {
-            foreach (StreamInfo stream in report.Streams.Where(s => s.Measurements is not null && s.Nodes.Count > 0))
+            for (int i = 0; i < report.Streams.Count; i++)
             {
-                measured.TryAdd(stream.Nodes[0], MeasurementText.Lines(stream.Measurements!, stream.Verification?.IsLossy == true));
+                StreamInfo stream = report.Streams[i];
+                if (stream.Measurements is not null && stream.Nodes.Count > 0)
+                {
+                    if (!measured.TryGetValue(stream.Nodes[0], out List<(int, IReadOnlyList<MeasurementLine>)>? list))
+                    {
+                        measured[stream.Nodes[0]] = list = [];
+                    }
+
+                    list.Add((i + 1, MeasurementText.Lines(stream.Measurements, stream.Verification?.IsLossy == true)));
+                }
             }
         }
 
@@ -123,25 +142,31 @@ public static class ReportTextWriter
             WriteExplanation(node.Description, node.Topic, writer, depth);
         }
 
-        if (options.Verified.TryGetValue(node, out string? verification))
+        if (options.Verified.TryGetValue(node, out List<(int Stream, string Text)>? verifications))
         {
-            Indent(writer, depth + 1);
-            writer.Write("Verified: ");
-            writer.WriteLine(Escape(verification));
+            foreach ((int stream, string verification) in verifications)
+            {
+                Indent(writer, depth + 1);
+                writer.Write(verifications.Count > 1 ? $"Verified (stream {stream}): " : "Verified: ");
+                writer.WriteLine(Escape(verification));
+            }
         }
 
-        if (options.Measured.TryGetValue(node, out IReadOnlyList<MeasurementLine>? lines))
+        if (options.Measured.TryGetValue(node, out List<(int Stream, IReadOnlyList<MeasurementLine> Lines)>? measurements))
         {
-            for (int i = 0; i < lines.Count; i++)
+            foreach ((int stream, IReadOnlyList<MeasurementLine> lines) in measurements)
             {
-                int lineDepth = i == 0 ? depth + 1 : depth + 2;
-                Indent(writer, lineDepth);
-                writer.Write(lines[i].Name);
-                writer.Write(": ");
-                writer.WriteLine(Escape(lines[i].Text));
-                if (options.Explain)
+                for (int i = 0; i < lines.Count; i++)
                 {
-                    WriteExplanation(lines[i].Description, lines[i].Topic, writer, lineDepth);
+                    int lineDepth = i == 0 ? depth + 1 : depth + 2;
+                    Indent(writer, lineDepth);
+                    writer.Write(measurements.Count > 1 && i == 0 ? $"{lines[i].Name} (stream {stream})" : lines[i].Name);
+                    writer.Write(": ");
+                    writer.WriteLine(Escape(lines[i].Text));
+                    if (options.Explain)
+                    {
+                        WriteExplanation(lines[i].Description, lines[i].Topic, writer, lineDepth);
+                    }
                 }
             }
         }
@@ -303,9 +328,9 @@ public static class ReportTextWriter
         }
     }
 
-    private sealed record Options(bool ShowOffsets, bool Explain, ReportFilter Filter, Dictionary<Node, string> Verified, Dictionary<Node, List<(CategorySeries Series, int Stream)>> Shares)
+    private sealed record Options(bool ShowOffsets, bool Explain, ReportFilter Filter, Dictionary<Node, List<(int Stream, string Text)>> Verified, Dictionary<Node, List<(CategorySeries Series, int Stream)>> Shares)
     {
-        public Dictionary<Node, IReadOnlyList<MeasurementLine>> Measured { get; init; } = new(ReferenceEqualityComparer.Instance);
+        public Dictionary<Node, List<(int Stream, IReadOnlyList<MeasurementLine> Lines)>> Measured { get; init; } = new(ReferenceEqualityComparer.Instance);
     }
 
     // Values from the file are text and escaped; numbers are written without a string per node.
