@@ -48,8 +48,8 @@ EXPLAINED = {
     "mc-3-1-crosstalk-side.mp2": {"mctoolamed": "forbidden dyn_cross_mode values (5 to 7) and the copy sources the text and the reference software read differently (13818-3 2.5.2.15, the base channel of a copy)"},
     "mc-3-1-crosstalk-flag.mp2": {"mctoolamed": "forbidden dyn_cross_mode values (5 to 7)"},
     "mc-3-1-crosstalk-flag-right.mp2": {"mctoolamed": "forbidden dyn_cross_mode values (5 to 7)"},
-    "mc-2-2-crosstalk-side.mp2": {"mctoolamed": "2/2 with dynamic crosstalk: the cases the text and the reference software read differently, and the forbidden dyn_cross_mode values 5 to 7"},
-    "mc-2-2-crosstalk-flag.mp2": {"mctoolamed": "2/2 with dynamic crosstalk: the cases the text and the reference software read differently, and the forbidden dyn_cross_mode values 5 to 7"},
+    "mc-2-2-crosstalk-side.mp2": {"mctoolamed": "2/2 with dynamic crosstalk written for the text's reading, which mctoolamed reads differently, and the forbidden dyn_cross_mode values 5 to 7"},
+    "mc-2-2-crosstalk-flag.mp2": {"mctoolamed": "the forbidden dyn_cross_mode values 5 to 7 of 2/2"},
     "mc-second-stereo-crosstalk.mp2": {"mctoolamed": "tc_allocation 3, which 13818-3 2.5.2.15 leaves unassigned in 3/0 + 2/0, is in the fixture"},
     "mc-center-reserved-second-stereo.mp2": {"mctoolamed": "the reserved center value 2 (13818-3 2.5.2.13: not defined), which the analyzer reads as no center"},
     "external-xing-mpeg2.mp3": {

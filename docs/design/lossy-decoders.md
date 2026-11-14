@@ -744,7 +744,7 @@ Item 8 of 0.3 in [plan.md](../plan.md#03-lossy-formats-measured): the decoder of
 
 ### Rules it follows
 
-- **Determinism:** the lossy-decoder rules of CLAUDE.md. The matrices are statements over floats in a fixed order; the prediction sums its taps in tap order, T0 before T1; the constants come from `Math.Sqrt`; every kernel has the aggressive-optimization attribute.
+- **Determinism:** the lossy-decoder rules of [CLAUDE.md](../../CLAUDE.md). The matrices are statements over floats in a fixed order; the prediction sums its taps in tap order, T0 before T1; the constants come from `Math.Sqrt`; every kernel has the aggressive-optimization attribute.
 - **Work units:** the frame's charge is that of the Layer II decoder for every output channel, plus 8 units per sample for each output channel (copies, prediction, dematrixing and de-normalization), charged before the frame is decoded. `DecoderWorkTests` holds it to the usual bound; the weight is an estimate until measured.
 - **Memory:** the history of the filter banks (one per pair of channels) and nine samples of T0 and T1, whatever the stream's length.
 - **Checksums:** the multichannel CRC covers side information only, so the decoder declares nothing new; the parser's frame CRC-16 stays the stream's only checksum.
