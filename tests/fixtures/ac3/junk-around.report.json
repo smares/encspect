@@ -7489,7 +7489,7 @@
     "findings": [
       {
         "severity": "Warning",
-        "code": "ac3.leading-junk",
+        "code": "ac-3.leading-junk",
         "message": "30 bytes before the first frame are not audio.",
         "offset": 0,
         "length": 30,
@@ -7501,7 +7501,7 @@
       },
       {
         "severity": "Warning",
-        "code": "ac3.sync-lost",
+        "code": "ac-3.sync-lost",
         "message": "Sync is lost for 50 bytes at 0x91E.",
         "offset": 2334,
         "length": 50,
@@ -7513,7 +7513,7 @@
       },
       {
         "severity": "Warning",
-        "code": "ac3.trailing-data",
+        "code": "ac-3.trailing-data",
         "message": "20 bytes after the last frame at 0x1250 are not a frame.",
         "offset": 4688,
         "length": 20,

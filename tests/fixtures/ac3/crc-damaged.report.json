@@ -9807,7 +9807,7 @@
     "findings": [
       {
         "severity": "Warning",
-        "code": "ac3.crc1-mismatch",
+        "code": "ac-3.crc1-mismatch",
         "message": "crc1, which covers the first 5/8 of a frame (A/52 7.10.1), fails in 1 frame, first at 0x600; decoders that check it drop the frame.",
         "offset": 1538,
         "length": 2,
@@ -9821,7 +9821,7 @@
       },
       {
         "severity": "Warning",
-        "code": "ac3.crc2-mismatch",
+        "code": "ac-3.crc2-mismatch",
         "message": "crc2, which covers the whole frame (A/52 7.10.1), fails in 2 frames, first at 0x600; decoders that check it drop the frame.",
         "offset": 2302,
         "length": 2,

@@ -4421,7 +4421,7 @@
     "findings": [
       {
         "severity": "Warning",
-        "code": "ac3.extension-without-joc",
+        "code": "ac-3.extension-without-joc",
         "message": "1 access unit (an independent frame and its dependent frames): the additional bit stream information of a frame sets flag_ec3_extension_type_a, but no EMDF container in the frames holds a joint object coding payload (ETSI TS 103 420 8.3); the first is at 0x258.",
         "offset": 608,
         "length": 1,
@@ -4436,7 +4436,7 @@
       },
       {
         "severity": "Warning",
-        "code": "ac3.emdf-payload-size",
+        "code": "ac-3.emdf-payload-size",
         "message": "An EMDF payload runs past its container: the payload with ID 14 is 200 bytes, but only 39 bytes remain in the container (ETSI TS 102 366 H.2.2.2.5). The rest of the container is not read. First in the frame at 0x258 (once).",
         "offset": 657,
         "length": 2,

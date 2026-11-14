@@ -190,7 +190,7 @@
     "findings": [
       {
         "severity": "Warning",
-        "code": "dtshd.no-stream-data",
+        "code": "dts-hd.no-stream-data",
         "message": "The file has no STRMDATA chunk, so it holds no audio.",
         "offset": 0,
         "length": 56,
@@ -199,7 +199,7 @@
       },
       {
         "severity": "Warning",
-        "code": "dtshd.chunk-truncated",
+        "code": "dts-hd.chunk-truncated",
         "message": "The CORESSMD chunk at 0x20 has a size of 12 bytes, but the file has 8 after its header.",
         "offset": 32,
         "length": 24,

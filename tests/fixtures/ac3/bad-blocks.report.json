@@ -4959,7 +4959,7 @@
     "findings": [
       {
         "severity": "Warning",
-        "code": "ac3.block-inconsistent",
+        "code": "ac-3.block-inconsistent",
         "message": "An audio block breaks a rule that A/52 7.10.2 lists among the errors a decoder may check for: rematstr is 0 in block 0 (check 5). First in the frame at 0x0 (6 times).",
         "offset": 9,
         "length": 1,
@@ -4973,7 +4973,7 @@
       },
       {
         "severity": "Warning",
-        "code": "ac3.block-invalid",
+        "code": "ac-3.block-invalid",
         "message": "An audio block holds what A/52 does not allow: chbwcod is above 60 (check 11). Decoders cannot decode the rest of such a frame, and its remaining audio blocks are not read. First in the frame at 0x900 (3 times).",
         "offset": 2314,
         "length": 2,

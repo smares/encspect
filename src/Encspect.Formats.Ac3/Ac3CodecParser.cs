@@ -111,12 +111,12 @@ public sealed class Ac3CodecParser(string id) : ICodecParser
                 int rest = bytes.Length - position;
                 if (bytes.Length - position >= 2 && bytes[position] == 0x77 && bytes[position + 1] == 0x0B)
                 {
-                    analysis.Findings.Add(Severity.Info, "ac3.little-endian", () => new Node("Gap", offset, rest), count =>
+                    analysis.Findings.Add(Severity.Info, "ac-3.little-endian", () => new Node("Gap", offset, rest), count =>
                         $"{(count == 1 ? "A sample holds" : $"{count} samples hold")} AC-3 in little-endian byte order (sync word 0x770B), which ETSI TS 102 366 F.1 allows but recommends against; it is not analyzed. The first is at 0x{offset:X}.");
                 }
                 else
                 {
-                    analysis.Findings.Add(Severity.Warning, "ac3.sample-not-frame", () => new Node("Gap", offset, rest), count =>
+                    analysis.Findings.Add(Severity.Warning, "ac-3.sample-not-frame", () => new Node("Gap", offset, rest), count =>
                         $"{(count == 1 ? "A sample holds" : $"{count} samples hold")} bytes that are no syncframe where one should start, first at 0x{offset:X}.");
                 }
 
@@ -155,7 +155,7 @@ public sealed class Ac3CodecParser(string id) : ICodecParser
         };
         if (eac3 != entryIsEac3)
         {
-            analysis.Findings.AddNow(Severity.Warning, "ac3.config-box-type",
+            analysis.Findings.AddNow(Severity.Warning, "ac-3.config-box-type",
                 $"An {(entryIsEac3 ? "ec-3" : "ac-3")} sample entry holds a {box.Name} box, where ETSI TS 102 366 Annex F gives it {(entryIsEac3 ? "dec3" : "dac3")}.", box);
         }
 
@@ -179,13 +179,13 @@ public sealed class Ac3CodecParser(string id) : ICodecParser
 
         Node Last() => box.Children[^1];
         void Differs(string field, object stated, object coded) =>
-            analysis.Findings.AddNow(Severity.Warning, "ac3.config-differs",
+            analysis.Findings.AddNow(Severity.Warning, "ac-3.config-differs",
                 $"The {(eac3 ? "dec3" : "dac3")} box gives {field} {stated}, but the frames hold {coded}; players that set up their decoder from the box and those that read the frames differ.", Last());
         void Reserved(int value)
         {
             if (value != 0)
             {
-                analysis.Findings.AddNow(Severity.Warning, "ac3.config-reserved", $"Reserved bits of the {(eac3 ? "dec3" : "dac3")} box are not 0, as ETSI TS 102 366 Annex F requires.", Last());
+                analysis.Findings.AddNow(Severity.Warning, "ac-3.config-reserved", $"Reserved bits of the {(eac3 ? "dec3" : "dac3")} box are not 0, as ETSI TS 102 366 Annex F requires.", Last());
             }
         }
 
@@ -268,7 +268,7 @@ public sealed class Ac3CodecParser(string id) : ICodecParser
             }
             else if (observed.HasJoc || observed.HasExtension)
             {
-                analysis.Findings.AddNow(Severity.Warning, "ac3.config-differs",
+                analysis.Findings.AddNow(Severity.Warning, "ac-3.config-differs",
                     "The dec3 box ends after its substreams and so does not give flag_ec3_extension_type_a (ETSI TS 103 420 C.3.1), but the frames set the flag or hold joint object coding payloads; players that set up their decoder from the box and those that read the frames differ.", box);
             }
 
@@ -279,7 +279,7 @@ public sealed class Ac3CodecParser(string id) : ICodecParser
         }
         catch (EndOfStreamException)
         {
-            analysis.Findings.AddNow(Severity.Warning, "ac3.config-truncated", $"The {(eac3 ? "dec3" : "dac3")} box ends inside a field.", box);
+            analysis.Findings.AddNow(Severity.Warning, "ac-3.config-truncated", $"The {(eac3 ? "dec3" : "dac3")} box ends inside a field.", box);
         }
 
         void Compare(string field, int stated, int? coded, bool hex = false)

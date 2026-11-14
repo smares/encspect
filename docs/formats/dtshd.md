@@ -12,7 +12,7 @@ The `.dtshd` container of DTS-HD: chunks of metadata around a DTS stream. Writte
 - **FILEINFO** and **AUPRINFO** (E.2.5, E.2.9): their text, null terminated.
 - **CORESSMD** and **EXTSS_MD** (E.2.6, E.2.7): the core's maximum sampling frequency, bit rate, channel mask and frame payload; the extension substreams' average bit rate and, by the variable bit rate flag, the peak rate and smoothing buffer or the frame payload.
 - **AUPR-HDR** (E.2.8): the presentation's flags (Table E.12), maximum sampling frequency, number of frames, samples per frame, original samples, channel mask with its speakers (Table E.9), codec delay, and, where the flags say so, the backward compatible core's figures and the LSB trim.
-- **NAVI-TBL**, **BITSHVTB** and **BRANCHPT** (E.2.10, E.2.11, E.2.16): the counts, interval and entry size; the entries are shown as bytes. A count that the chunk's size cannot hold is `dtshd.table-size`.
+- **NAVI-TBL**, **BITSHVTB** and **BRANCHPT** (E.2.10, E.2.11, E.2.16): the counts, interval and entry size; the entries are shown as bytes. A count that the chunk's size cannot hold is `dts-hd.table-size`.
 - **TIMECODE** (E.2.13): the clock, frame rate, start and reference positions and their residuals.
 - **BLACKOUT** (E.2.15) and chunks the standard does not define: their size, no more. A reader skips what it does not know (E.2).
 - **STRMDATA** (E.2.12): the payload goes to the DTS codec parser through the host's route, which reads it as a `.dts` file: frames, units, extension substreams, gaps, findings and the stream's statistics are the same, under the chunk's node.
@@ -26,7 +26,7 @@ The `.dtshd` container of DTS-HD: chunks of metadata around a DTS stream. Writte
 
 ## Metadata against the stream
 
-- The presentation header's maximum sampling frequency and the number of channels of its channel mask are compared with the stream the file holds when the file has one AUPR-HDR chunk: FFmpeg sets up its decoder from them. A difference is `dtshd.metadata-differs`. The frame count, length and codec delay are shown and not compared.
+- The presentation header's maximum sampling frequency and the number of channels of its channel mask are compared with the stream the file holds when the file has one AUPR-HDR chunk: FFmpeg sets up its decoder from them. A difference is `dts-hd.metadata-differs`. The frame count, length and codec delay are shown and not compared.
 
 ## Detection
 
@@ -36,8 +36,8 @@ The `.dtshd` container of DTS-HD: chunks of metadata around a DTS stream. Writte
 
 ## Findings
 
-- `dtshd.chunk-truncated` (the data ends inside a chunk), `dtshd.chunk-size` (a size under 4, which FFmpeg refuses, or too small for the chunk's fields), `dtshd.chunk-header` (bytes where a chunk should start that are no header, or a size beyond 2^61: the rest is not read), `dtshd.chunk-misaligned` (a chunk off a 32-bit boundary), `dtshd.trailing-data` (fewer than 16 bytes after the last chunk), `dtshd.header-first` (the first chunk is not DTSHDHDR, reachable by forcing the format), `dtshd.header-repeated`, `dtshd.stream-repeated`, `dtshd.no-stream-data`, `dtshd.reserved-value` (the reference clock code 3, a frame rate above 7, reserved flags), `dtshd.table-size`, `dtshd.metadata-differs`, `dtshd.stream-not-analyzed`, `dtshd.chunk-count` (more than 1,024 chunks: the rest is not read).
-- Findings that can occur at every chunk (`dtshd.chunk-size`, `dtshd.chunk-misaligned`, `dtshd.reserved-value`, `dtshd.table-size`, `dtshd.header-repeated`, `dtshd.stream-repeated`) are reported once for each field or cause, with a count, pointing at the first case ("First case: ... (N times in the file.)"). The report orders findings by the offset of their node, so these stay in file order.
+- `dts-hd.chunk-truncated` (the data ends inside a chunk), `dts-hd.chunk-size` (a size under 4, which FFmpeg refuses, or too small for the chunk's fields), `dts-hd.chunk-header` (bytes where a chunk should start that are no header, or a size beyond 2^61: the rest is not read), `dts-hd.chunk-misaligned` (a chunk off a 32-bit boundary), `dts-hd.trailing-data` (fewer than 16 bytes after the last chunk), `dts-hd.header-first` (the first chunk is not DTSHDHDR, reachable by forcing the format), `dts-hd.header-repeated`, `dts-hd.stream-repeated`, `dts-hd.no-stream-data`, `dts-hd.reserved-value` (the reference clock code 3, a frame rate above 7, reserved flags), `dts-hd.table-size`, `dts-hd.metadata-differs`, `dts-hd.stream-not-analyzed`, `dts-hd.chunk-count` (more than 1,024 chunks: the rest is not read).
+- Findings that can occur at every chunk (`dts-hd.chunk-size`, `dts-hd.chunk-misaligned`, `dts-hd.reserved-value`, `dts-hd.table-size`, `dts-hd.header-repeated`, `dts-hd.stream-repeated`) are reported once for each field or cause, with a count, pointing at the first case ("First case: ... (N times in the file.)"). The report orders findings by the offset of their node, so these stay in file order.
 
 ## Not covered
 

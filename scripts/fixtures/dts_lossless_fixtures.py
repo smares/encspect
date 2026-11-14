@@ -292,33 +292,33 @@ def build_dtshd(api):
     data, rows_ = build_file([header, presentation, ("STRMDATA", None)], parts)
     cut = len(data) - 100
     file("dtshd-stream-truncated", "A .dtshd file that ends 100 bytes inside the last unit of its STRMDATA chunk.", [header, presentation, ("STRMDATA", None)], parts,
-         lossless_cut, findings=[("dtshd.chunk-truncated", "STRMDATA chunk"), ("dts.frame-truncated", "The last frame")], cut=cut,
+         lossless_cut, findings=[("dts-hd.chunk-truncated", "STRMDATA chunk"), ("dts.frame-truncated", "The last frame")], cut=cut,
          frames=rows_[:-1] + [[rows_[-1][0], rows_[-1][1] - 100]],
          crosscheck=cc_hd(cc, ffprobe=False, decode=False, skip={"ffprobe": "ffmpeg's demuxer skips the STRMDATA chunk by its size and fails at the end of the cut file (dtshddec.c: avio_skip: 'End of file')", "decode": "no container"}))
     data, _ = build_file([header, ("CORESSMD", m.dtshd_core_metadata(48000, 384, 0x0003, 512)), ("STRMDATA", None)], parts)
     file("dtshd-metadata-truncated", "A .dtshd file that ends inside its CORESSMD chunk, before any audio.", [header, ("CORESSMD", m.dtshd_core_metadata(48000, 384, 0x0003, 512)), ("STRMDATA", None)],
-         parts, [], findings=[("dtshd.chunk-truncated", "CORESSMD chunk"), ("dtshd.no-stream-data", "no STRMDATA")], cut=16 + 16 + 16 + 8, frames=[],
+         parts, [], findings=[("dts-hd.chunk-truncated", "CORESSMD chunk"), ("dts-hd.no-stream-data", "no STRMDATA")], cut=16 + 16 + 16 + 8, frames=[],
          crosscheck=cc(ffprobe=False, decode=False, libdca=False, skip={"ffprobe": "ffmpeg's demuxer finds no STRMDATA chunk in the cut file (dtshddec.c: end of file before the stream data)", "decode": "no stream", "libdca": "libdca reads raw DTS only."}))
     file("dtshd-chunk-size-too-small", "A .dtshd file whose FILEINFO chunk states a size of 0 bytes, less than the 4 that FFmpeg's demuxer accepts.",
          [header, ("FILEINFO", b"", 0), ("STRMDATA", None)], parts, lossless,
-         findings=[("dtshd.chunk-size", "FILEINFO chunk")], frames=None,
+         findings=[("dts-hd.chunk-size", "FILEINFO chunk")], frames=None,
          crosscheck=cc(ffprobe=False, decode=False, libdca=False, skip={"ffprobe": "ffmpeg's demuxer refuses a chunk size under 4 (dtshddec.c: 'chunk size too small')", "decode": "no container", "libdca": "libdca reads raw DTS only."}))
     # Padding that does not bring the next chunk to a 32-bit boundary.
     misaligned = [header, ("FILEINFO", m.dtshd_text("odds"), 5), ("STRMDATA", None)]
     data = m.dtshd_chunk("DTSHDHDR", header[1]) + m.dtshd_chunk("FILEINFO", m.dtshd_text("odds"), pad=False)
     rows_ = [[len(data) + 16 + o, n] for o, n in rows(parts)]
     fixture("dtshd-chunk-misaligned", ".dtshd", "A .dtshd file whose FILEINFO chunk is not padded, so STRMDATA starts off a 32-bit boundary.",
-            data + m.dtshd_chunk("STRMDATA", b"".join(parts)), rows_, lossless, [("dtshd.chunk-misaligned", "STRMDATA chunk")], crosscheck=cc_hd(cc), fmt="DTS-HD")
+            data + m.dtshd_chunk("STRMDATA", b"".join(parts)), rows_, lossless, [("dts-hd.chunk-misaligned", "STRMDATA chunk")], crosscheck=cc_hd(cc), fmt="DTS-HD")
     # A STRMDATA size that is less than the stream: the bytes after it are not a chunk.
     short = sum(n for _, n in rows(parts)) - 100
     frames = [[16 + 16 + 16 + o, n] for o, n in rows(parts)]
     file("dtshd-stream-size-wrong", "A .dtshd file whose STRMDATA chunk states a size 100 bytes short of the stream, so the end of the last unit is read as a chunk.",
          [header, ("STRMDATA", None, short)], parts, lossless_cut,
-         findings=[("dtshd.chunk-header", "are not a chunk header"), ("dts.frame-truncated", "The last frame")],
+         findings=[("dts-hd.chunk-header", "are not a chunk header"), ("dts.frame-truncated", "The last frame")],
          frames=frames[:-1] + [[frames[-1][0], frames[-1][1] - 100]],
          crosscheck=cc_hd(cc, ffprobe=False, decode=False, skip={"ffprobe": "ffmpeg's demuxer reads the bytes after the chunk as a chunk header and refuses its size (dtshddec.c: 'chunk size too small' or 'chunk size too big')", "decode": "no container"}))
     file("dtshd-trailing-data", "A .dtshd file with five bytes after its last chunk.", [header, ("STRMDATA", None)], parts, lossless,
-         findings=[("dtshd.trailing-data", "5 bytes after the last chunk")], extra=b"\x01\x02\x03\x04\x05", crosscheck=cc_hd(cc))
+         findings=[("dts-hd.trailing-data", "5 bytes after the last chunk")], extra=b"\x01\x02\x03\x04\x05", crosscheck=cc_hd(cc))
     # An ID3v1 tag after the last chunk: its first sixteen bytes read as a chunk ID and, with a title of five characters padded with nulls, as a size of
     # zero. It is a tag, not a chunk: the chain of chunks ends at the tag (the tag owns the bytes), so the file is not cut short by it.
     for title, label in (("Intro", "five"), ("Intros", "six")):
@@ -327,24 +327,24 @@ def build_dtshd(api):
         file(f"dtshd-id3v1-{label}-char-title", f"A .dtshd file with an ID3v1 tag whose title has {label} characters after its last chunk.", [header, ("STRMDATA", None)], parts, lossless,
              extra=tag, regions=[["ID3v1", size, 128]],
              crosscheck=cc_hd(cc, ffprobe=False, decode=False, skip={"ffprobe": "ffmpeg's demuxer reads the tag as a chunk header and refuses its size (dtshddec.c: 'chunk size too small' or 'chunk size too big')", "decode": "no container"}))
-    file("dtshd-no-stream-data", "A .dtshd file with a header and metadata, but no STRMDATA chunk.", [header, presentation], [], [], findings=[("dtshd.no-stream-data", "no STRMDATA")], frames=[],
+    file("dtshd-no-stream-data", "A .dtshd file with a header and metadata, but no STRMDATA chunk.", [header, presentation], [], [], findings=[("dts-hd.no-stream-data", "no STRMDATA")], frames=[],
          crosscheck=cc(ffprobe=False, decode=False, libdca=False, skip={"ffprobe": "ffmpeg's demuxer finds no STRMDATA chunk (dtshddec.c: end of file)", "decode": "no stream", "libdca": "libdca reads raw DTS only."}))
 
     # Reserved values, metadata that differs from the stream, chunks the standard does not define, tables that do not fit.
     reserved = ("DTSHDHDR", m.dtshd_header(clock_code=3, tc_rate=9, reserved_flags=0x0100, core=True, extension=True))
     file("dtshd-reserved-values", "A .dtshd file whose header has a reserved reference clock code, a reserved time code frame rate and a reserved flag, and whose presentation has a reserved flag.",
          [reserved, ("AUPR-HDR", m.dtshd_presentation(48000, 4, 512, 2048, 0x0F, lossless=True, core=True, reserved_flags=0x0100)), ("STRMDATA", None)], parts, lossless,
-         findings=[("dtshd.reserved-value", "reference clock code of the time code is 3"), ("dtshd.reserved-value", "time code frame rate 9 is reserved"),
-                   ("dtshd.reserved-value", "Bitw_Stream_Metadata has the reserved flags"), ("dtshd.reserved-value", "Bitw_Aupres_Metadata has the reserved flags")],
+         findings=[("dts-hd.reserved-value", "reference clock code of the time code is 3"), ("dts-hd.reserved-value", "time code frame rate 9 is reserved"),
+                   ("dts-hd.reserved-value", "Bitw_Stream_Metadata has the reserved flags"), ("dts-hd.reserved-value", "Bitw_Aupres_Metadata has the reserved flags")],
          crosscheck=cc_hd(cc))
     file("dtshd-metadata-differs", "A .dtshd file whose AUPR-HDR gives 96,000 Hz and the channels of a 7.1 mask for a 48 kHz 5.1 stream.",
          [header, ("AUPR-HDR", m.dtshd_presentation(96000, 4, 1024, 4096, 0x84B, lossless=True, core=True)), ("STRMDATA", None)], parts, lossless,
-         findings=[("dtshd.metadata-differs", "Max_Sample_Rate_Hz 96000"), ("dtshd.metadata-differs", "Channel_Mask names 8 channels")],
+         findings=[("dts-hd.metadata-differs", "Max_Sample_Rate_Hz 96000"), ("dts-hd.metadata-differs", "Channel_Mask names 8 channels")],
          crosscheck=cc(ffprobe=False, libdca=False, skip={"ffprobe": "ffmpeg's demuxer takes the sampling frequency and the channels from AUPR-HDR, which the decoder then overrides, so the stream it reports is not the file's metadata", "libdca": "libdca reads raw DTS only."}))
     file("dtshd-unknown-chunk", "A .dtshd file with a chunk of an ID the standard does not define between the header and STRMDATA.", [header, ("XTRACHNK", bytes(range(16))), ("STRMDATA", None)],
          parts, lossless, crosscheck=cc_hd(cc))
     file("dtshd-table-size", "A .dtshd file whose NAVI-TBL states 1,000 entries of 4 bytes and holds one.", [header, ("NAVI-TBL", m.dtshd_table(1000, 4, interval=2, data=bytes(4))), ("STRMDATA", None)],
-         parts, lossless, findings=[("dtshd.table-size", "1000 entries of 4 bytes")], crosscheck=cc_hd(cc))
+         parts, lossless, findings=[("dts-hd.table-size", "1000 entries of 4 bytes")], crosscheck=cc_hd(cc))
     file("dtshd-cbr", "A .dtshd file with the metadata of a constant bit rate stream: the extension substreams' frame payload, no peak rate.",
          [("DTSHDHDR", m.dtshd_header(vbr=False)), ("CORESSMD", m.dtshd_core_metadata(48000, 384, 0x0003, 512)), ("EXTSS_MD", m.dtshd_extension_metadata(500, False, payload=192)), presentation, ("STRMDATA", None)],
          parts, lossless, fields={"EXTSS_MD/Frame Payload": "192 bytes"}, crosscheck=cc_hd(cc))

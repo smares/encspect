@@ -83,7 +83,7 @@ public class DtsHdTests
         Assert.Equal(data.Length - 128, new DtsHdParser().DeclaredEnd(new SniffContext(new ByteReader(new MemoryStream(data)))));
         Report report = Analyzer.CreateDefault().Analyze(name + ".dtshd", new MemoryStream(data));
         Assert.Contains(report.Root.Children, c => c.Kind == NodeKind.Tag && c.Offset == data.Length - 128);
-        Assert.DoesNotContain(report.Findings, f => f.Code is "tag.near-miss" or "dtshd.trailing-data" or "dtshd.chunk-size");
+        Assert.DoesNotContain(report.Findings, f => f.Code is "tag.near-miss" or "dts-hd.trailing-data" or "dts-hd.chunk-size");
     }
 
     // A chunk of under 4 bytes that is the last one of the file is still a chunk.
@@ -171,10 +171,10 @@ public class DtsHdTests
         var analyzer = new Analyzer(DefaultParsers.Tags, DefaultParsers.Formats, DefaultParsers.Codecs);
         var options = new AnalysisOptions { ForcedFormat = "DTS-HD" };
         Report first = analyzer.Analyze("first.dtshd", new MemoryStream([.. Chunk("FILEINFO", "abc\0"u8.ToArray()), .. Header]), options);
-        Assert.Contains(first.Findings, f => f.Code == "dtshd.header-first");
-        Assert.Contains(first.Findings, f => f.Code == "dtshd.no-stream-data");
+        Assert.Contains(first.Findings, f => f.Code == "dts-hd.header-first");
+        Assert.Contains(first.Findings, f => f.Code == "dts-hd.no-stream-data");
         Report huge = analyzer.Analyze("huge.dtshd", new MemoryStream([.. Header, .. Chunk("STRMDATA", new byte[8], 1UL << 62)]), options);
-        Assert.Contains(huge.Findings, f => f.Code == "dtshd.chunk-header");
+        Assert.Contains(huge.Findings, f => f.Code == "dts-hd.chunk-header");
         foreach (byte[] other in new[] { Fixture("core-16be.dts"), new byte[3], new byte[300], "DTSHDHDR"u8.ToArray(), [.. Header, 1, 2, 3] })
         {
             Report report = analyzer.Analyze("other.bin", new MemoryStream(other), options);
@@ -188,7 +188,7 @@ public class DtsHdTests
     {
         var analyzer = new Analyzer(DefaultParsers.Tags, [new DtsHdParser()], []);
         Report report = analyzer.Analyze("lonely.dtshd", new MemoryStream(Fixture("dtshd-core.dtshd")));
-        Assert.Contains(report.Findings, f => f.Code == "dtshd.stream-not-analyzed");
+        Assert.Contains(report.Findings, f => f.Code == "dts-hd.stream-not-analyzed");
         Assert.Empty(report.Streams);
     }
 
@@ -198,10 +198,10 @@ public class DtsHdTests
     {
         byte[] data = [.. Header, .. Enumerable.Range(0, 3000).SelectMany(_ => Chunk("UNKNOWN_", new byte[4])), .. Chunk("STRMDATA", Fixture("core-16be.dts"))];
         Report report = Analyzer.CreateDefault().Analyze("many.dtshd", new MemoryStream(data));
-        Assert.Contains(report.Findings, f => f.Code == "dtshd.chunk-count");
+        Assert.Contains(report.Findings, f => f.Code == "dts-hd.chunk-count");
         Assert.True(report.Root.Children.Count <= DtsHdParser.MaxChunks + 1);
         // The stream chunk lies beyond the limit: the report says the limit was reached, not that the file holds no audio.
-        Assert.DoesNotContain(report.Findings, f => f.Code == "dtshd.no-stream-data");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "dts-hd.no-stream-data");
         Assert.Equal("DTS-HD", report.Root.Value?.ToString());
     }
 
@@ -212,9 +212,9 @@ public class DtsHdTests
         byte[] stream = Fixture("core-16be.dts");
         byte[] data = [.. Header, .. Enumerable.Range(0, 500).SelectMany(_ => Chunk("STRMDATA", stream)), .. Enumerable.Range(0, 500).SelectMany(_ => Chunk("FILEINFO", [], 0))];
         Report report = Analyzer.CreateDefault().Analyze("repeated.dtshd", new MemoryStream(data));
-        Finding repeated = report.Findings.Single(f => f.Code == "dtshd.stream-repeated");
+        Finding repeated = report.Findings.Single(f => f.Code == "dts-hd.stream-repeated");
         Assert.Equal(499, repeated.Count);
-        Assert.Equal(500, report.Findings.Single(f => f.Code == "dtshd.chunk-size").Count);
+        Assert.Equal(500, report.Findings.Single(f => f.Code == "dts-hd.chunk-size").Count);
         Assert.True(report.Findings.Count < 12);
     }
 
@@ -229,7 +229,7 @@ public class DtsHdTests
         var presentation = new byte[24];
         presentation[1] = 0x01;
         Report report = Analyzer.CreateDefault().Analyze("reserved.dtshd", new MemoryStream([.. Chunk("DTSHDHDR", header), .. Chunk("AUPR-HDR", presentation), .. Chunk("STRMDATA", Fixture("core-16be.dts"))]));
-        string[] messages = [.. report.Findings.Where(f => f.Code == "dtshd.reserved-value").Select(f => f.Message)];
+        string[] messages = [.. report.Findings.Where(f => f.Code == "dts-hd.reserved-value").Select(f => f.Message)];
         Assert.Equal(4, messages.Length);
         foreach (string wanted in new[] { "reference clock code of the time code is 3", "time code frame rate 9 is reserved", "Bitw_Stream_Metadata has the reserved flags 0x0100", "Bitw_Aupres_Metadata has the reserved flags 0x0100" })
         {
@@ -243,7 +243,7 @@ public class DtsHdTests
     {
         byte[] data = [.. Header, .. Chunk("FILEINFO", [], 0), .. Chunk("TIMECODE", new byte[8]), .. Chunk("STRMDATA", Fixture("core-16be.dts"))];
         Report report = Analyzer.CreateDefault().Analyze("causes.dtshd", new MemoryStream(data));
-        Assert.True(report.Findings.Count(f => f.Code == "dtshd.chunk-size") >= 2);
+        Assert.True(report.Findings.Count(f => f.Code == "dts-hd.chunk-size") >= 2);
     }
 
     [Fact]
@@ -252,8 +252,8 @@ public class DtsHdTests
         byte[] stream = Fixture("core-16be.dts");
         byte[] data = [.. Header, .. Header, .. Chunk("STRMDATA", stream), .. Chunk("STRMDATA", stream)];
         Report report = Analyzer.CreateDefault().Analyze("twice.dtshd", new MemoryStream(data));
-        Assert.Contains(report.Findings, f => f.Code == "dtshd.header-repeated");
-        Assert.Contains(report.Findings, f => f.Code == "dtshd.stream-repeated");
+        Assert.Contains(report.Findings, f => f.Code == "dts-hd.header-repeated");
+        Assert.Contains(report.Findings, f => f.Code == "dts-hd.stream-repeated");
         Assert.Single(report.Streams);
     }
 

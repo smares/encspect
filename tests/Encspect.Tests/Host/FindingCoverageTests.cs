@@ -339,7 +339,7 @@ public partial class FindingCoverageTests
         Assert.True(missing.Length == 0, $"No fixture's manifest lists: {string.Join(", ", missing)}");
     }
 
-    [GeneratedRegex("\"(dtshd\\.[a-z0-9]+(?:-[a-z0-9]+)*)\"")]
+    [GeneratedRegex("\"(dts-hd\\.[a-z0-9]+(?:-[a-z0-9]+)*)\"")]
     private static partial Regex DtsHdCode();
 
     // Every code the DTS-HD file parser emits is listed by a fixture's manifest, or asserted present by DtsHdTests (the codes a fixture cannot

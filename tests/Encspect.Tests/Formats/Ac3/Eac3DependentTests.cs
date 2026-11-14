@@ -33,7 +33,7 @@ public class Eac3DependentTests
     {
         Report report = Measure("eac3-chanmap-more.eac3");
 
-        Assert.Contains(report.Findings, f => f.Code == "ac3.channel-map-count");
+        Assert.Contains(report.Findings, f => f.Code == "ac-3.channel-map-count");
         Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("decode.", StringComparison.Ordinal));
         StreamInfo stream = Assert.Single(report.Streams);
         Assert.Equal(MeasurementStatus.Complete, stream.Measurements!.Status);
@@ -50,7 +50,7 @@ public class Eac3DependentTests
         Assert.Equal(1536, stream.Measurements!.LostSamples);
         Assert.Equal(MeasurementStatus.Incomplete, stream.Measurements.Status);
         Assert.Equal(stream.Samples, stream.Measurements.Samples + stream.Measurements.LostSamples + stream.Measurements.WithheldSamples);
-        Assert.DoesNotContain(report.Findings, f => f.Code is "ac3.stream-changed" or "ac3.dependent-excess");
+        Assert.DoesNotContain(report.Findings, f => f.Code is "ac-3.stream-changed" or "ac-3.dependent-excess");
     }
 
     // The orphan dependent frame after a lost independent frame belongs to no program frame: it is not decoded into the one before, and no repeated ID is claimed.
@@ -60,8 +60,8 @@ public class Eac3DependentTests
         Report report = Measure("eac3-independent-lost.eac3");
 
         StreamInfo stream = Assert.Single(report.Streams);
-        Assert.Contains(report.Findings, f => f.Code == "ac3.dependent-without-independent");
-        Assert.DoesNotContain(report.Findings, f => f.Code == "ac3.dependent-excess");
+        Assert.Contains(report.Findings, f => f.Code == "ac-3.dependent-without-independent");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "ac-3.dependent-excess");
         Assert.Equal(stream.Samples, stream.Measurements!.Samples + stream.Measurements.LostSamples + stream.Measurements.WithheldSamples);
         Assert.Equal(11, stream.CategorySeries[0].Count);
     }
@@ -71,7 +71,7 @@ public class Eac3DependentTests
     {
         Report report = Measure("eac3-dependent-blocks.eac3");
 
-        Assert.Contains(report.Findings, f => f.Code == "ac3.dependent-format-differs");
+        Assert.Contains(report.Findings, f => f.Code == "ac-3.dependent-format-differs");
         Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("decode.", StringComparison.Ordinal));
         StreamInfo stream = Assert.Single(report.Streams);
         Assert.Equal(1536, stream.Measurements!.LostSamples);

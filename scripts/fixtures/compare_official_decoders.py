@@ -1810,7 +1810,7 @@ CORE_AUDIO_AC3_SHORT = 288
 
 
 def ac3_unit_finding(finding):
-    return finding["code"].startswith("ac3.") and finding["severity"] != "Info" and finding["offset"] is not None
+    return finding["code"].startswith("ac-3.") and finding["severity"] != "Info" and finding["offset"] is not None
 
 
 def ac3_analyzer(report):

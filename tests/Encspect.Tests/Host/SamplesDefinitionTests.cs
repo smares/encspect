@@ -439,7 +439,7 @@ public class SamplesDefinitionTests
         { "ac3/bad-blocks.ac3", 9216, 4608 },
         { "ac3/crc-damaged.ac3", 12288, 0 },
         { "ac3/aht.eac3", 4608, 0 },
-        // A frame whose audio blocks run past its end (ac3.block-overrun) is lost like an invalid one.
+        // A frame whose audio blocks run past its end (ac-3.block-overrun) is lost like an invalid one.
         { "fuzz/ac3-blocks-past-frame-end.bin", 13824, 1536 },
         { "fuzz/ac3-overrun-after-first-exponent.bin", 23040, 3072 },
         { "fuzz/eac3-blocks-past-frame-end.bin", 27648, 4608 },

@@ -198,7 +198,7 @@ def build():
     data = b"".join(bytes(f) for f in frames)
     fixture("crc-damaged", ".ac3", "Eight 2/0 frames; frame 3 has a bit flipped in its first 5/8, frame 6 one in its last 3/8.",
             data, frames_of(data), [stream("AC-3", 48000, 2, 0, 8 * 1536)],
-            [("ac3.crc1-mismatch", "fails in 1 frame"), ("ac3.crc2-mismatch", "fails in 2 frames")],
+            [("ac-3.crc1-mismatch", "fails in 1 frame"), ("ac-3.crc2-mismatch", "fails in 2 frames")],
             fields={"AC-3/Frame[2]/Sync Information/CRC1/Check": "mismatch", "AC-3/Frame[5]/Sync Information/CRC1/Check": "verified",
                     "AC-3/Frame[5]/Error Check/CRC2/Check": "mismatch"},
             crosscheck={"ffprobe": True, "decode": True, "liba52": True, "damaged": [len(frames[0]) * 2, len(frames[0]) * 5]})
@@ -206,7 +206,7 @@ def build():
     # A truncated last frame.
     data = silent(6)[:-300]
     fixture("truncated", ".ac3", "Six 2/0 frames, the last cut 300 bytes short.", data, frames_of(data), [stream("AC-3", 48000, 2, 0, 6 * 1536, lost=1536)],
-            [("ac3.frame-truncated", "of its 768 bytes")],
+            [("ac-3.frame-truncated", "of its 768 bytes")],
             crosscheck={"ffprobe": False, "decode": False, "liba52": False,
                         "skip": {"ffprobe": "ffmpeg drops the truncated frame.", "decode": "ffmpeg drops the truncated frame.",
                                  "liba52": "liba52's tool reads whole frames only."}})
@@ -218,7 +218,7 @@ def build():
     rows = frames_of(data, 30, 30 + 3 * 768) + frames_of(data, 30 + 3 * 768 + 50, len(data) - 20)
     fixture("junk-around", ".ac3", "30 bytes of junk, three frames, 50 bytes of junk, three frames, 20 bytes of junk.", data, rows,
             [stream("AC-3", 48000, 2, 0, 6 * 1536)],
-            [("ac3.leading-junk", "30 bytes before the first frame"), ("ac3.sync-lost", "Sync is lost for 50 bytes"), ("ac3.trailing-data", "20 bytes after")],
+            [("ac-3.leading-junk", "30 bytes before the first frame"), ("ac-3.sync-lost", "Sync is lost for 50 bytes"), ("ac-3.trailing-data", "20 bytes after")],
             gaps=[(0, 30), (30 + 3 * 768, 50), (len(data) - 20, 20)],
             crosscheck={"ffprobe": False, "decode": True, "liba52": True,
                         "skip": {"ffprobe": "ffmpeg's parser counts the junk into the packets around it."}})
@@ -239,7 +239,7 @@ def build():
     data = junk + b"".join(frames)
     data_adts = data
     fixture("junk-adts-in-frames", ".eac3", "100 bytes of junk, then eight 2/0 E-AC-3 frames of 512 bytes, each with the bytes of an ADTS header of 512 bytes at its offset 300.",
-            data, frames_of(data, 100), [stream("E-AC-3", 48000, 2, 0, 8 * 1536)], [("ac3.leading-junk", "100 bytes before the first frame")],
+            data, frames_of(data, 100), [stream("E-AC-3", 48000, 2, 0, 8 * 1536)], [("ac-3.leading-junk", "100 bytes before the first frame")],
             gaps=[(0, 100)], read=False,
             crosscheck={"ffprobe": False, "decode": True, "liba52": False,
                         "skip": {"ffprobe": "ffmpeg's parser counts the junk into the packets around it.",
@@ -250,7 +250,7 @@ def build():
     # wins because its seven frames pass their CRCs and the look-alike's do not exist.
     cut = data_adts[110:]
     fixture("junk-adts-in-frames-cut", ".eac3", "The file junk-adts-in-frames with its first 110 bytes cut off: the partial first frame holds the ADTS look-alike, which starts before the seven whole E-AC-3 frames.",
-            cut, frames_of(cut, 502), [stream("E-AC-3", 48000, 2, 0, 7 * 1536)], [("ac3.leading-junk", "502 bytes before the first frame")],
+            cut, frames_of(cut, 502), [stream("E-AC-3", 48000, 2, 0, 7 * 1536)], [("ac-3.leading-junk", "502 bytes before the first frame")],
             gaps=[(0, 502)], read=False,
             crosscheck={"ffprobe": False, "decode": True, "liba52": False,
                         "skip": {"ffprobe": "ffmpeg's parser counts the leading bytes into the packets around it.",
@@ -271,7 +271,7 @@ def build():
     assert b"\xFF" not in junk
     data = junk + b"".join(frames)
     fixture("junk-mpeg-in-frames", ".ac3", "100 bytes of junk, then eight 2/0 AC-3 frames of 768 bytes, each with the bytes of a protected MPEG-2.5 Layer I header of 768 bytes at its offset 500.",
-            data, frames_of(data, 100), [stream("AC-3", 48000, 2, 0, 8 * 1536)], [("ac3.leading-junk", "100 bytes before the first frame")],
+            data, frames_of(data, 100), [stream("AC-3", 48000, 2, 0, 8 * 1536)], [("ac-3.leading-junk", "100 bytes before the first frame")],
             gaps=[(0, 100)], read=False,
             crosscheck={"ffprobe": False, "decode": True, "liba52": True,
                         "skip": {"ffprobe": "ffmpeg's parser counts the junk into the packets around it."}})
@@ -281,7 +281,7 @@ def build():
     data = frame * 2 + frame[:400] + frame * 3
     rows = [[0, 768], [768, 768], [1536, 400], [1936, 768], [2704, 768], [3472, 768]]
     fixture("cut-frame", ".ac3", "Six 2/0 frames, the third cut to its first 400 bytes.", data, rows, [stream("AC-3", 48000, 2, 0, 6 * 1536, lost=1536)],
-            [("ac3.frame-damaged", "cut short by the next frame's sync word")],
+            [("ac-3.frame-damaged", "cut short by the next frame's sync word")],
             crosscheck={"ffprobe": False, "decode": True, "liba52": False,
                         "skip": {"ffprobe": "ffmpeg's parser keeps the cut frame's bytes in a packet with the next frame.",
                                  "liba52": "liba52's tool reads frames by their sizes, so it does not resync after the cut frame."},
@@ -291,7 +291,7 @@ def build():
     data = silent(2) + silent(2, acmod=1) + silent(2)
     fixture("stream-changes", ".ac3", "Two 2/0 frames, two mono frames, two 2/0 frames: the configuration changes twice and each run is its own stream.", data, frames_of(data),
             [stream("AC-3", 48000, 2, 0, 2 * 1536), stream("AC-3", 48000, 1, 0, 2 * 1536), stream("AC-3", 48000, 2, 0, 2 * 1536)],
-            [("ac3.stream-changed", "from AC-3, 48000 Hz, 2/0 to AC-3, 48000 Hz, 1/0; the streams change 2 times")],
+            [("ac-3.stream-changed", "from AC-3, 48000 Hz, 2/0 to AC-3, 48000 Hz, 1/0; the streams change 2 times")],
             crosscheck={"ffprobe": False, "decode": False, "liba52": True,
                         "skip": {"ffprobe": "ffprobe reports the first stream's parameters only.",
                                  "decode": "ffmpeg's decoder takes the first frame's channel layout and drops the frames that differ."}})
@@ -299,12 +299,12 @@ def build():
     # bsid 9 and 10: AC-3 syntax at half and a quarter of the sample rate, which A/52 does not define.
     data = silent(4, bsid=9, frmsizecod=10)
     fixture("bsid-9", ".ac3", "Four frames with bsid 9, which ffmpeg and liba52 decode at half the rate.", data, frames_of(data),
-            [stream("AC-3", 24000, 2, 0, 4 * 1536)], [("ac3.bsid-undefined", "bsid 9 or 10")],
+            [stream("AC-3", 24000, 2, 0, 4 * 1536)], [("ac-3.bsid-undefined", "bsid 9 or 10")],
             crosscheck={"ffprobe": True, "decode": True, "liba52": False,
                         "skip": {"liba52": "The frames' audio blocks are not read, so there are no block positions to confirm."}})
     data = silent(4, bsid=10, frmsizecod=10)
     fixture("bsid-10", ".ac3", "Four frames with bsid 10, which ffmpeg and liba52 decode at a quarter of the rate.", data, frames_of(data),
-            [stream("AC-3", 12000, 2, 0, 4 * 1536)], [("ac3.bsid-undefined", "bsid 9 or 10")],
+            [stream("AC-3", 12000, 2, 0, 4 * 1536)], [("ac-3.bsid-undefined", "bsid 9 or 10")],
             crosscheck={"ffprobe": True, "decode": True, "liba52": False,
                         "skip": {"liba52": "The frames' audio blocks are not read, so there are no block positions to confirm."}})
 
@@ -312,7 +312,7 @@ def build():
     # level and nonzero xbsi2 bits.
     data = silent(4, bsid=6, acmod=7, lfeon=1, frmsizecod=28, xbsi1=(1, 3, 1, 4, 5), xbsi2=(2, 0, 1, 0x5A, 1))
     fixture("annex-d", ".ac3", "Four 3/2 + LFE frames with bsid 6: xbsi1 with a reserved Lt/Rt surround level, xbsi2 with reserved bits set.",
-            data, frames_of(data), [stream("AC-3", 48000, 7, 1, 4 * 1536)], [("ac3.reserved-value", "reserves")],
+            data, frames_of(data), [stream("AC-3", 48000, 7, 1, 4 * 1536)], [("ac-3.reserved-value", "reserves")],
             fields={"AC-3/Frame/Bit Stream Information/Extended Information 1/Preferred Downmix": "1 (Lt/Rt downmix preferred)",
                     "AC-3/Frame/Bit Stream Information/Extended Information 1/Lt/Rt Center Mix Level": "-1.5 dB",
                     "AC-3/Frame/Bit Stream Information/Extended Information 1/Lt/Rt Surround Mix Level": "1 (reserved)",
@@ -323,7 +323,7 @@ def build():
     # dmixmod 3: reserved in Table D2.2, though encoders (Dolby's among them) write it for Dolby Pro Logic II.
     data = silent(4, bsid=6, acmod=7, lfeon=1, frmsizecod=28, xbsi1=(3, 2, 4, 2, 4))
     fixture("dmixmod-reserved", ".ac3", "Four 3/2 + LFE frames with bsid 6 whose xbsi1 sets dmixmod 3, which Table D2.2 reserves.",
-            data, frames_of(data), [stream("AC-3", 48000, 7, 1, 4 * 1536)], [("ac3.dmixmod-reserved", "dmixmod is 3")],
+            data, frames_of(data), [stream("AC-3", 48000, 7, 1, 4 * 1536)], [("ac-3.dmixmod-reserved", "dmixmod is 3")],
             fields={"AC-3/Frame/Bit Stream Information/Extended Information 1/Preferred Downmix": "3 (reserved)"},
             crosscheck={"ffprobe": True, "decode": True, "liba52": True})
 
@@ -331,7 +331,7 @@ def build():
     data = silent(4, acmod=7, frmsizecod=28, cmixlev=3, surmixlev=3, dialnorm=0, langcod=0x41, audprod=(10, 3))
     fixture("reserved-values", ".ac3", "Four 3/2 frames with the reserved cmixlev, surmixlev and roomtyp, dialnorm 0 and a language code.",
             data, frames_of(data), [stream("AC-3", 48000, 7, 0, 4 * 1536)],
-            [("ac3.reserved-value", "reserves"), ("ac3.dialnorm-reserved", "dialnorm is 0"), ("ac3.language-code", "langcod is not 0xFF")],
+            [("ac-3.reserved-value", "reserves"), ("ac-3.dialnorm-reserved", "dialnorm is 0"), ("ac-3.language-code", "langcod is not 0xFF")],
             fields={"AC-3/Frame/Bit Stream Information/Center Mix Level": "3 (reserved)",
                     "AC-3/Frame/Bit Stream Information/Dialogue Normalization": "0 (reserved, read as -31 dB)"},
             crosscheck={"ffprobe": True, "decode": True, "liba52": True})
@@ -340,7 +340,7 @@ def build():
     data = silent(3, rematstr0=0) + silent(3, chbwcod=61)
     fixture("bad-blocks", ".ac3", "Three 2/0 frames without rematrixing flags in block 0, three with chbwcod 61.", data, frames_of(data),
             [stream("AC-3", 48000, 2, 0, 6 * 1536, lost=3 * 1536)],
-            [("ac3.block-inconsistent", "rematstr is 0 in block 0"), ("ac3.block-invalid", "chbwcod is above 60")],
+            [("ac-3.block-inconsistent", "rematstr is 0 in block 0"), ("ac-3.block-invalid", "chbwcod is above 60")],
             crosscheck={"ffprobe": True, "decode": False, "liba52": False,
                         "skip": {"decode": "ffmpeg rejects the frames with chbwcod 61, as A/52 5.4.3.24 says to.",
                                  "liba52": "liba52 reads chbwcod 61 past the bins it has, so its block ends say nothing."}})
@@ -374,7 +374,7 @@ def build():
     data = bytes(flipped)
     fixture("substreams-dependent-crc", ".eac3", "The access units of substreams.eac3 with one byte of the first dependent frame changed, so that frame fails its CRC.", data, frames_of(data),
             [stream("E-AC-3", 48000, 7, 1, 4 * 1536, layout=seven_one), stream("E-AC-3", 48000, 2, 0, 4 * 1536)],
-            [("ac3.crc-mismatch", "fails in 1 frame")],
+            [("ac-3.crc-mismatch", "fails in 1 frame")],
             crosscheck={"ffprobe": False, "decode": False,
                         "skip": {"ffprobe": "ffmpeg reads substream 0 only, which the change does not touch.", "decode": "ffmpeg decodes substream 0 only, which the change does not touch."}})
 
@@ -432,7 +432,7 @@ def build():
     unit = [plain_independent[i] + dependents[i] for i in range(len(dependents))]
     data = b"".join(plain_independent[i] + chanmap_of(dependents[i], 0x0220) for i in range(len(dependents)))
     fixture("eac3-chanmap-more", ".eac3", "eac3-signal-dependent with a channel map of four locations (Lrs/Rrs and two more) for a dependent frame that codes two channels.", data, frames_of(data),
-            [stream("E-AC-3", 48000, 2, 0, len(dependents) * 1536, layout=[m.FL, m.FR, m.BL, m.BR, "front left wide", "front right wide"])], [("ac3.channel-map-count", "names")], crosscheck=variant_crosscheck)
+            [stream("E-AC-3", 48000, 2, 0, len(dependents) * 1536, layout=[m.FL, m.FR, m.BL, m.BR, "front left wide", "front right wide"])], [("ac-3.channel-map-count", "names")], crosscheck=variant_crosscheck)
     original = frames_of(dependent_file)
 
     def broken(k):
@@ -446,10 +446,10 @@ def build():
             data, original[:-1], [stream("E-AC-3", 48000, 2, 0, 12 * 1536, layout=[m.FL, m.FR, m.BL, m.BR], vbr=True, lost=1536)], [], crosscheck=variant_crosscheck)
     data, rows, gap = broken(2 * 5 + 1)  # the sixth dependent frame
     fixture("eac3-dependent-lost", ".eac3", "eac3-signal-dependent with the sync word of its sixth dependent frame broken: that program frame loses its dependent frame, counts lost and stays in the stream.",
-            data, rows, [stream("E-AC-3", 48000, 2, 0, 12 * 1536, layout=[m.FL, m.FR, m.BL, m.BR], vbr=True, lost=1536)], [("ac3.sync-lost", "Sync is lost")], gaps=gap, crosscheck=variant_crosscheck)
+            data, rows, [stream("E-AC-3", 48000, 2, 0, 12 * 1536, layout=[m.FL, m.FR, m.BL, m.BR], vbr=True, lost=1536)], [("ac-3.sync-lost", "Sync is lost")], gaps=gap, crosscheck=variant_crosscheck)
     data, rows, gap = broken(2 * 5)  # the sixth independent frame
     fixture("eac3-independent-lost", ".eac3", "eac3-signal-dependent with the sync word of its sixth independent frame broken: its dependent frame is an orphan after the gap, left out of the decoding.",
-            data, rows, [stream("E-AC-3", 48000, 2, 0, 11 * 1536, layout=[m.FL, m.FR, m.BL, m.BR])], [("ac3.sync-lost", "Sync is lost"), ("ac3.dependent-without-independent", "dependent substream")], gaps=gap,
+            data, rows, [stream("E-AC-3", 48000, 2, 0, 11 * 1536, layout=[m.FL, m.FR, m.BL, m.BR])], [("ac-3.sync-lost", "Sync is lost"), ("ac-3.dependent-without-independent", "dependent substream")], gaps=gap,
             crosscheck=variant_crosscheck)
     rate = bytearray(dependent_file)
     at, length = original[2 * 5 + 1]
@@ -457,12 +457,12 @@ def build():
     rate[at:at + length] = sealed(bytes(rate[at:at + length]))
     data = bytes(rate)
     fixture("eac3-dependent-blocks", ".eac3", "eac3-signal-dependent whose sixth dependent frame states three audio blocks where its independent frame has six.", data, frames_of(data),
-            [stream("E-AC-3", 48000, 2, 0, 12 * 1536, layout=[m.FL, m.FR, m.BL, m.BR], lost=1536)], [("ac3.dependent-format-differs", "3 audio blocks"), ("ac3.block-inconsistent", "check 8")], crosscheck=variant_crosscheck)
+            [stream("E-AC-3", 48000, 2, 0, 12 * 1536, layout=[m.FL, m.FR, m.BL, m.BR], lost=1536)], [("ac-3.dependent-format-differs", "3 audio blocks"), ("ac-3.block-inconsistent", "check 8")], crosscheck=variant_crosscheck)
 
     # A dependent substream before any independent one.
     data = eac3(strmtyp=1, acmod=2, chanmap=LRS_RRS, words=160) + eac3(acmod=2, words=200) * 3
     fixture("dependent-first", ".eac3", "A dependent frame, then three independent 2/0 frames.", data, frames_of(data),
-            [stream("E-AC-3", 48000, 2, 0, 3 * 1536)], [("ac3.dependent-without-independent", "before any independent frame")],
+            [stream("E-AC-3", 48000, 2, 0, 3 * 1536)], [("ac-3.dependent-without-independent", "before any independent frame")],
             crosscheck={"ffprobe": True, "ffprobe_bitrate": False, "decode": True, "damaged": [0],
                         "skip": {"ffprobe_bitrate": "ffmpeg gives the bitrate of the first frame it decodes, not of the dependent frame before it."}})
 
@@ -472,7 +472,7 @@ def build():
     data = unit * 3
     fixture("dependent-repeated", ".eac3", "Three access units of an independent 2/0 frame and three dependent frames, all of dependent substream 0, with the rear surround pair.",
             data, frames_of(data), [stream("E-AC-3", 48000, 2, 0, 3 * 1536, layout=[m.FL, m.FR, m.BL, m.BR])],
-            [("ac3.dependent-excess", "6 dependent frames are left out of the figures and statistics after a dependent substream ID repeats")],
+            [("ac-3.dependent-excess", "6 dependent frames are left out of the figures and statistics after a dependent substream ID repeats")],
             crosscheck={"ffprobe": False, "decode": False,
                         "skip": {"ffprobe": "The stream breaks Annex E 2.3.1.2, so what ffmpeg's parser makes of the repeated substream IDs says nothing about the figures.",
                                  "decode": "ffmpeg decodes the repeated dependent substreams as it likes; the check says nothing about the figures."}})
@@ -514,7 +514,7 @@ def build():
                         "skip": {"decode": "ffmpeg does not decode enhanced coupling.", "ffprobe_bitrate": "ffmpeg gives no bitrate for frames it cannot decode."}})
     data = eac3(acmod=2, fscod=3, fscod2=0, words=128) * 3
     fixture("reduced-rate", ".eac3", "Three 2/0 frames at 24 kHz (fscod2 0).", data, frames_of(data), [stream("E-AC-3", 24000, 2, 0, 3 * 1536)],
-            [("ac3.reduced-rate-not-read", "reduced sample rate")],
+            [("ac-3.reduced-rate-not-read", "reduced sample rate")],
             crosscheck={"ffprobe": True, "ffprobe_fields": "channels", "ffprobe_bitrate": False, "decode": False,
                         "skip": {"ffprobe_fields": "FFmpeg 8.0.1's AC-3 parser takes the sample rate from the header (24000 Hz, ac3_parser.c, eac3_parse_header) and the packets from the frame "
                                                    "sizes, but leaves the channels of an E-AC-3 stream to the E-AC-3 decoder (aac_ac3_parser.c:132), which refuses a reduced sample rate "
@@ -529,8 +529,8 @@ def build():
     data, boxes, chunks = mp4.movie([track])
     fixture("dac3-differs", ".mp4", "Six 2/0 frames in MP4 whose dac3 box gives 3/2 + LFE at 384 kbps and sets its reserved bits.", data,
             sample_rows(track, chunks), [stream("AC-3", 48000, 2, 0, 6 * 1536)],
-            [("ac3.config-differs", "gives acmod 7"), ("ac3.config-differs", "gives lfeon 1"), ("ac3.config-differs", "gives bit_rate_code 14"),
-             ("ac3.config-reserved", "Reserved bits")],
+            [("ac-3.config-differs", "gives acmod 7"), ("ac-3.config-differs", "gives lfeon 1"), ("ac-3.config-differs", "gives bit_rate_code 14"),
+             ("ac-3.config-reserved", "Reserved bits")],
             fmt="MP4", boxes=[[p, o, s] for p, o, s in boxes],
             crosscheck={"ffprobe": True, "decode": True})
     # A sample that ends inside its frame.
@@ -540,7 +540,7 @@ def build():
     data, boxes, chunks = mp4.movie([track])
     fixture("sample-short", ".mp4", "Six 2/0 frames in MP4 with a matching dac3 box, the first sample 68 bytes short of its frame.", data,
             sample_rows(track, chunks), [stream("AC-3", 48000, 2, 0, 6 * 1536, lost=1536)],
-            [("ac3.frame-truncated", "A sample ends inside its frame")], fmt="MP4", boxes=[[p, o, s] for p, o, s in boxes], read=False,
+            [("ac-3.frame-truncated", "A sample ends inside its frame")], fmt="MP4", boxes=[[p, o, s] for p, o, s in boxes], read=False,
             crosscheck={"ffprobe": False, "decode": False,
                         "skip": {"ffprobe": "ffmpeg's AC-3 parser drops the sample that ends inside its frame, so ffprobe lists five packets where the file has six samples.",
                                  "decode": "ffmpeg drops the short sample's frame."}})
@@ -599,7 +599,7 @@ def build_object_audio():
     # The file ends inside block 2's skip field, which fits its frame: the frame is truncated, not overrun.
     cut = 3 * len(atmos_frame()) + 264
     fixture("truncated-in-skip", ".eac3", "Three 5.1 frames of joc-atmos and a fourth cut in the middle of block 2's skip field.", data[:cut], frames_of(data[:cut]),
-            [stream("E-AC-3", 48000, 7, 1, 4 * 1536, objects=15, lost=1536)], [("ac3.frame-truncated", "of its 2048 bytes")],
+            [stream("E-AC-3", 48000, 7, 1, 4 * 1536, objects=15, lost=1536)], [("ac-3.frame-truncated", "of its 2048 bytes")],
             crosscheck={"ffprobe": False, "decode": False, "skip_insertion": False,
                         "skip": {"ffprobe": "ffmpeg drops the truncated frame.", "decode": "ffmpeg drops the truncated frame.",
                                  "skip_insertion": "The frames already hold skip fields, which the rewrite does not combine with its own."}})
@@ -621,13 +621,13 @@ def build_object_audio():
            fields={"MP4/moov/trak/mdia/minf/stbl/stsd/ec-3/dec3/HasExtensionTypeA": "true",
                    "MP4/moov/trak/mdia/minf/stbl/stsd/ec-3/dec3/Complexity Index Type A": "16"})
     mp4_of("joc-dec3-absent", "The frames of joc-atmos in MP4 whose dec3 box ends after its substreams.",
-           lambda r: m.dec3(r, base), [("ac3.config-differs", "ends after its substreams")])
+           lambda r: m.dec3(r, base), [("ac-3.config-differs", "ends after its substreams")])
     mp4_of("joc-dec3-clear", "The frames of joc-atmos in MP4 whose dec3 box clears flag_ec3_extension_type_a.",
-           lambda r: m.dec3(r, base, extension=(0, 0)), [("ac3.config-differs", "gives flag_ec3_extension_type_a 0")])
+           lambda r: m.dec3(r, base, extension=(0, 0)), [("ac-3.config-differs", "gives flag_ec3_extension_type_a 0")])
     mp4_of("joc-dec3-complexity", "The frames of joc-atmos in MP4 whose dec3 box gives complexity index 12, where the frames give 16.",
-           lambda r: m.dec3(r, base, extension=(1, 12)), [("ac3.config-differs", "gives complexity_index_type_a 12")])
+           lambda r: m.dec3(r, base, extension=(1, 12)), [("ac-3.config-differs", "gives complexity_index_type_a 12")])
     mp4_of("joc-dec3-unmatched", "Four 5.1 frames without object audio in MP4 whose dec3 box sets flag_ec3_extension_type_a and has reserved bits set.",
-           lambda r: m.dec3(r, base, extension=(1, 16, 0x55)), [("ac3.config-differs", "gives flag_ec3_extension_type_a 1"), ("ac3.config-reserved", "Reserved bits")],
+           lambda r: m.dec3(r, base, extension=(1, 16, 0x55)), [("ac-3.config-differs", "gives flag_ec3_extension_type_a 1"), ("ac-3.config-reserved", "Reserved bits")],
            unit_=eac3(acmod=7, lfeon=1, words=1024, bsmod=0), objects=None)
 
     # Frames with the adaptive hybrid transform carry the flag and the container, which sits in the bits after the last block, and dec3 agrees with them.
@@ -711,8 +711,8 @@ def build_object_audio():
     data = eac3(acmod=2, words=300, addbsi=emdf.addbsi(16)) * 3 + eac3(acmod=2, words=300, tail=container) * 3
     fixture("joc-flag-mismatch", ".eac3", "Three 2/0 frames that set the addbsi extension without a container, then three with a container and no "
             "addbsi.", data, frames_of(data), [stream("E-AC-3", 48000, 2, 0, 6 * 1536, objects=15)],
-            [("ac3.extension-without-joc", "no EMDF container in the frames holds a joint object coding payload"),
-             ("ac3.joc-without-extension", "none of the frames sets flag_ec3_extension_type_a")],
+            [("ac-3.extension-without-joc", "no EMDF container in the frames holds a joint object coding payload"),
+             ("ac-3.joc-without-extension", "none of the frames sets flag_ec3_extension_type_a")],
             crosscheck={"ffprobe": True, "decode": True, "skip_insertion": False,
                         "skip": {"skip_insertion": "The frames' auxiliary data would move with the rewritten sizes; the check adds nothing for them."}})
 
@@ -720,27 +720,27 @@ def build_object_audio():
     good = emdf.object_audio(objects=4, size=24)
     cases = [
         ("emdf-truncated", "an emdf_container_length of 900 bytes, past the auxiliary data", emdf.object_audio(objects=4, size=24, length=900),
-         [("ac3.emdf-truncated", "gives 900 bytes")]),
+         [("ac-3.emdf-truncated", "gives 900 bytes")]),
         ("emdf-length-long", "6 bytes after its last field that emdf_container_length counts", emdf.object_audio(objects=4, size=24, trailing=bytes(6)),
-         [("ac3.emdf-length", "fields end after")]),
+         [("ac-3.emdf-length", "fields end after")]),
         ("emdf-length-short", "an emdf_container_length one byte short of its protection bits", emdf.object_audio(objects=4, size=24, length=len(good) - 4 - 1),
-         [("ac3.emdf-length", "run past the")]),
+         [("ac-3.emdf-length", "run past the")]),
         ("emdf-payload-size", "a JOC payload size of 200 bytes in a container that holds fewer",
          emdf.cut(emdf.container([(emdf.OAMD, emdf.oamd_payload(4, size=12)), (emdf.JOC, emdf.joc_payload(4, size=200))]), 60),
-         [("ac3.emdf-payload-size", "the payload with ID 14"), ("ac3.extension-without-joc", "no EMDF container")]),
+         [("ac-3.emdf-payload-size", "the payload with ID 14"), ("ac-3.extension-without-joc", "no EMDF container")]),
         ("emdf-reserved", "protection_length_primary 0, which is reserved", emdf.object_audio(objects=4, size=24, protection=(0, 0)),
-         [("ac3.emdf-reserved", "protection_length_primary is 0")]),
+         [("ac-3.emdf-reserved", "protection_length_primary is 0")]),
         ("emdf-padding", "bits in its last byte after the last field that are not 0",
          emdf.container([(emdf.OAMD, emdf.oamd_payload(4, size=12)), (emdf.JOC, emdf.joc_payload(4, size=12))], key=7, pad_bits=0x5),
-         [("ac3.emdf-reserved", "fill the last byte")]),
+         [("ac-3.emdf-reserved", "fill the last byte")]),
         ("emdf-version", "emdf_version 5 (3 and an extension of 2), which Annex H does not define", emdf.container([(emdf.OAMD, emdf.oamd_payload(4))], version=5),
-         [("ac3.emdf-version-not-read", "version Annex H does not define"), ("ac3.extension-without-joc", "no EMDF container")]),
+         [("ac-3.emdf-version-not-read", "version Annex H does not define"), ("ac-3.extension-without-joc", "no EMDF container")]),
         ("joc-reserved", "a reserved joc_dmx_config_idx", emdf.container([(emdf.OAMD, emdf.oamd_payload(4)), (emdf.JOC, emdf.joc_payload(4, dmx=6))]),
-         [("ac3.joc-reserved", "joc_dmx_config_idx is 6")]),
+         [("ac-3.joc-reserved", "joc_dmx_config_idx is 6")]),
         ("joc-short", "a JOC payload of one byte, shorter than its header",
-         emdf.container([(emdf.OAMD, emdf.oamd_payload(4)), (emdf.JOC, b"\x20")]), [("ac3.object-payload-short", "shorter than the 12 bits")]),
+         emdf.container([(emdf.OAMD, emdf.oamd_payload(4)), (emdf.JOC, b"\x20")]), [("ac-3.object-payload-short", "shorter than the 12 bits")]),
         ("joc-incomplete", "a JOC payload and no OAMD payload", emdf.container([(emdf.JOC, emdf.joc_payload(4))]),
-         [("ac3.object-audio-incomplete", "no OAMD payload")]),
+         [("ac-3.object-audio-incomplete", "no OAMD payload")]),
     ]
     for name, what, damaged, findings in cases:
         good_frame = eac3(acmod=2, words=300, tail=good, addbsi=emdf.addbsi(4))
@@ -862,7 +862,7 @@ def build_coding():
             "channel, alone with one block, and with a dependent frame again, the number of blocks changing between them (each dependent configuration is a stream of its own).", data, frames_of(data),
             [stream("E-AC-3", 48000, 2, 0, 256 * [1, 2, 3, 6][p[0]["numblkscod"]], layout=layout)
              for p, layout in zip(program, ([m.FL, m.FR, m.BL, m.BR], [m.FL, m.FR, m.FC], None, [m.FL, m.FR, m.BL, m.BR]))],
-            [("ac3.stream-changed", "the streams change 3 times in the file")],
+            [("ac-3.stream-changed", "the streams change 3 times in the file")],
             crosscheck={"ffprobe": False, "decode": True, "skip_insertion": True, "skip_control": False,
                         "skip": {"ffprobe": "Dependent substreams of different layouts make what ffmpeg's parser reports of the channels differ from the analyzer's first-frame layout.",
                                  "skip_control": "The last block's mantissas take no bits (SNR offsets 0), so moving its skip field changes no sample."}}, coding=[[unit] for unit in units])
@@ -893,7 +893,7 @@ def build_coding():
     fixture("coding-ac3-core-dependent", ".ac3", "Four program frames of an AC-3 2/0 frame, three of them followed by an E-AC-3 dependent frame that adds the rear pair: 12 values in each "
             "series where there is a dependent frame, 6 where there is none.", data, frames_of(data),
             [stream("E-AC-3", 48000, 2, 0, 1536, layout=[m.FL, m.FR, m.BL, m.BR]), stream("AC-3", 48000, 2, 0, 1536), stream("E-AC-3", 48000, 2, 0, 2 * 1536, layout=[m.FL, m.FR, m.BL, m.BR])],
-            [("ac3.stream-changed", "the streams change 2 times in the file")],
+            [("ac-3.stream-changed", "the streams change 2 times in the file")],
             crosscheck={"ffprobe": False, "decode": True, "skip_insertion": False,
                         "skip": {"ffprobe": "ffmpeg's parser takes the AC-3 core and the E-AC-3 frames as two codecs; what it reports of the stream is no reference for the analyzer's.",
                                  "skip_insertion": "The core is AC-3, whose frames the check does not rewrite."}}, coding=[units[:1], units[1:2], units[2:]])
@@ -937,7 +937,7 @@ def build_coding():
     data = b"".join(f for f, _ in shapes)
     fixture("coding-eac3-nine-frames", ".eac3", "Four E-AC-3 program frames of an independent 2/0 frame and 8, 8, 4 and 8 dependent 2/0 frames of 6, 6, 3 and 1 blocks: 54, 54, 15 and 9 "
             "values in each series.", data, frames_of(data), [stream("E-AC-3", 48000, 2, 0, 256 * (6 + 6)), stream("E-AC-3", 48000, 2, 0, 256 * 3), stream("E-AC-3", 48000, 2, 0, 256)],
-            [("ac3.stream-changed", "the streams change 2 times in the file")],
+            [("ac-3.stream-changed", "the streams change 2 times in the file")],
             crosscheck={"ffprobe": False, "decode": False, "skip_insertion": False,
                         "skip": {"ffprobe": "ffmpeg's parser joins the dependent frames to their independent frame and reports the channels of the stream it decodes, which the check does not compare for a program of nine frames.",
                                  "decode": "ffmpeg decodes the independent substream only and the check decodes each packet; the dependent frames' content is no reference here.",

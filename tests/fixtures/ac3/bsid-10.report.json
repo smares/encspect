@@ -1104,7 +1104,7 @@
     "findings": [
       {
         "severity": "Info",
-        "code": "ac3.bsid-undefined",
+        "code": "ac-3.bsid-undefined",
         "message": "bsid 9 or 10 is not defined by A/52, whose Annex E 2.3.1.6 says decoders mute it; ffmpeg and liba52 decode it as AC-3 at half or a quarter of the sample rate, as the report does. Its audio blocks are not read. First in the frame at 0x0 (4 times).",
         "offset": 8,
         "length": 1,
