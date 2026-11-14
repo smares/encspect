@@ -57,7 +57,7 @@ internal static class Explain
     public const string IsProtected = "Whether a 16-bit CRC follows the header so decoders can detect damaged frames; the stored protection_bit is 0 when it does (ISO/IEC 11172-3 2.4.2.3).";
     public const string Bitrate = "The bitrate bitrate_index gives; with the sample rate and the padding bit it sets the frame's length (ISO/IEC 11172-3 2.4.2.3).";
     public const string FreeBitrate = "bitrate_index 0, free format: the stream has a fixed bitrate that the table does not list, so the frame's length comes from the distance to the next frame.";
-    public const string ComputedBitrate = "The bitrate this frame's length gives: its bytes, padding included, times 8, over the duration of its samples. Derived from the frame length, not a header field; ISO/IEC 11172-3 2.4.2.3 gives the frame length formula this reverses, and ISO/IEC 13818-3 the one for the 576 samples of a frame at the lower sampling frequencies.";
+    public const string ComputedBitrate = "The bitrate this frame's length gives: its bytes, padding included, times 8, over the duration of its samples. Derived from the frame length, not a header field; ISO/IEC 11172-3 2.4.3.1 gives the frame length formula this reverses, and ISO/IEC 13818-3 2.4.3.2 the one for the 576 samples of a Layer III frame at the lower sampling frequencies.";
     public const string SampleRate = "Samples per second in each channel, from sampling_frequency and the version (ISO/IEC 11172-3 2.4.2.3).";
     public const string HasPadding = "Whether the frame carries one extra slot (a byte, or 4 bytes in Layer I), which keeps the average bitrate exact where the frame length is not a whole number of slots, as at 44.1 kHz.";
     public const string IsPrivate = "A bit left to applications; the standard gives it no meaning and decoders ignore it.";
@@ -72,7 +72,7 @@ internal static class Explain
     public const string IsOriginal = "The original bit: set for an original, clear for a copy. Encoders set it as they are configured, so it says little about where the file came from.";
     public const string Emphasis = "Whether the audio was pre-emphasized before encoding and the decoder must de-emphasize it. 'None' is almost universal.";
 
-    public const string Crc = "The CRC-16 the encoder stored over the last 16 bits of the header and the side information or bit allocation after it, so decoders can detect damage (ISO/IEC 11172-3 2.4.3.1).";
+    public const string Crc = "The CRC-16 the encoder stored over the last 16 bits of the header and the side information or bit allocation after it, so decoders can detect damage (ISO/IEC 11172-3 2.4.3.1, Table B.5).";
     public const string ComputedCrc = "The CRC the analyzer computed over the same bits. Where it differs from the stored one, those bits changed after encoding.";
 
     public const string SideInfo = "Layer III side information: where the frame's main data starts and, for each granule and channel, how its spectrum is coded (ISO/IEC 11172-3 2.4.1.7, 2.4.2.7).";
@@ -110,13 +110,13 @@ internal static class Explain
     public const string HeaderFrameUnused = "Bytes of the VBR header frame after the header, which hold no audio.";
 
     public const string Layer1Allocation = "Bit allocation: how many bits the samples of each subband take, per channel, with one value for both channels above the intensity stereo bound; 0 means the subband is not coded (ISO/IEC 11172-3 2.4.2.5).";
-    public const string Layer2Allocation = "Bit allocation: for each subband and channel an index into the allocation table the value names, which the bitrate and sample rate select (ISO/IEC 11172-3 2.4.2.6, Annex B).";
+    public const string Layer2Allocation = "Bit allocation: for each subband and channel an index into the allocation table the value names, which the bitrate and sample rate select (ISO/IEC 11172-3 2.4.2.6 and 2.4.3.3.1, Tables B.2a to B.2d; ISO/IEC 13818-3 Table B.1 at the lower sampling frequencies).";
     public const string Subband = "One of the 32 subbands of the polyphase filterbank, each an equal slice of the frequency range; subband 0 is the lowest.";
-    public const string Layer1ChannelAllocation = "This channel's allocation in the subband: the bits per sample, or None when the subband is not coded. ISO/IEC 11172-3 forbids the value 15.";
+    public const string Layer1ChannelAllocation = "This channel's allocation in the subband: the bits per sample, or None when the subband is not coded. ISO/IEC 11172-3 2.4.2.5 forbids the value 15.";
     public const string Layer2ChannelAllocation = "This channel's allocation in the subband, as the number of quantization levels its samples use, or None when the subband is not coded.";
     public const string SharedAllocation = "Above the intensity stereo bound one allocation serves both channels, which share their samples and keep their own scalefactors.";
     public const string Layer1Scalefactors = "A 6-bit scalefactor for each coded subband and channel, the factor its samples are scaled by, in steps of 2 dB (ISO/IEC 11172-3 Table B.1).";
-    public const string Layer1Scalefactor = "This channel's scalefactor index in the subband; each step up scales the samples down by 2 dB. Table B.1 leaves 63 undefined.";
+    public const string Layer1Scalefactor = "This channel's scalefactor index in the subband; each step up scales the samples down by 2 dB. Table B.1 of ISO/IEC 11172-3 leaves 63 undefined.";
     public const string Layer2Scfsi = "Scalefactor selection information for each coded subband and channel: how many scalefactors it sends for the frame's three parts of 12 samples (ISO/IEC 11172-3 2.4.2.6).";
     public const string Layer2ScfsiChannel = "0: three scalefactors, one for each part; 1: two, the first for parts 1 and 2; 2: one for all three; 3: two, the second for parts 2 and 3.";
     public const string Layer2Scalefactors = "The 6-bit scalefactors of each coded subband and channel, one to three as scfsi says, in steps of 2 dB (ISO/IEC 11172-3 Table B.1).";
@@ -124,23 +124,23 @@ internal static class Explain
     public const string Layer1Samples = "The quantized subband samples: 12 for each coded subband and channel, one set for both channels above the intensity stereo bound.";
     public const string Layer2Samples = "The quantized subband samples: 36 for each coded subband and channel in three parts of 12, one set for both channels above the intensity stereo bound.";
 
-    public const string Multichannel = "The MPEG-2 multichannel extension in this MPEG-1 Layer II frame's ancillary data: the channels that, with the stereo base, make up the configuration in the value (ISO/IEC 13818-3).";
-    public const string McHeader = "The multichannel header: which channels the extension adds and how the programme was mixed into the stereo base.";
+    public const string Multichannel = "The MPEG-2 multichannel extension in this MPEG-1 Layer II frame's ancillary data: the channels that, with the stereo base, make up the configuration in the value (ISO/IEC 13818-3 2.5.1.12, 2.5.2.12).";
+    public const string McHeader = "The multichannel header: which channels the extension adds and how the programme was mixed into the stereo base (ISO/IEC 13818-3 2.5.1.13, 2.5.2.13).";
     public const string McHasExtension = "ext_bit_stream_present: whether the multichannel data continues in an extension bitstream, a separate stream for what the base frames cannot hold.";
     public const string McAncillaryBytes = "n_ad_bytes: how many bytes at the end of the base frame remain MPEG-1 ancillary data instead of multichannel data.";
     public const string McCenter = "center: whether a center channel is coded. Phantom: its high subbands are left out and carried in the left and right channels.";
     public const string McSurround = "surround: which surround channels are coded: none, one, two, or a second stereo programme instead of surround.";
     public const string McHasLfe = "lfe: whether a low-frequency effects channel is coded.";
-    public const string McAudioMix = "audio_mix: which kind of listening room, large or small, the programme was mixed for, as ISO/IEC 13818-3 defines the bit.";
+    public const string McAudioMix = "audio_mix: which kind of listening room, large or small, the programme was mixed for, as ISO/IEC 13818-3 2.5.2.13 defines the bit, which decoders ignore.";
     public const string McDematrix = "dematrix_procedure: which matrix mixed the added channels into the stereo base, so the decoder can undo it.";
     public const string McMultilingualChannels = "no_of_multi_lingual_ch: how many additional commentary or language channels the frames carry.";
     public const string McMultilingualRate = "multi_lingual_fs: whether the multilingual channels use the main sample rate or half of it.";
     public const string McMultilingualLayer = "multi_lingual_layer: the layer the multilingual channels are coded in.";
     public const string McCopyrightBit = "copyright_identification_bit: one bit of a copyright identifier that the frames carry a bit at a time.";
     public const string McCopyrightStart = "copyright_identification_start: whether the copyright identifier starts with this frame's bit.";
-    public const string McCrc = "The multichannel CRC-16 over the multichannel header and the side information after it, which tells a real extension from random ancillary data.";
+    public const string McCrc = "The multichannel CRC-16 over the multichannel header and the side information after it, which tells a real extension from random ancillary data (ISO/IEC 13818-3 2.5.2.14).";
     public const string McDataContinued = "This frame's part of the multichannel data. Its side information continues in the extension bitstream, a separate file, so it is not read here.";
-    public const string McStatus = "The composite status information: how the added channels share data with the base channels in this frame (ISO/IEC 13818-3).";
+    public const string McStatus = "The composite status information: how the added channels share data with the base channels in this frame (ISO/IEC 13818-3 2.5.1.15, 2.5.2.15).";
     public const string McHasDynamicCrosstalk = "dyn_cross_on: whether dynamic crosstalk is on, so some subband groups of a channel reuse the samples of another channel instead of carrying their own.";
     public const string McHasPrediction = "mc_prediction_on: whether the added channels are predicted from the base channels, so only the difference is coded.";
     public const string McChannelAllocation = "tc_allocation: which channels the transmission channels after the base pair carry, for all 12 subband groups at once or for each.";

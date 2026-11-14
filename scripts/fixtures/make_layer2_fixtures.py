@@ -2,7 +2,7 @@
 """Writes the byte-exact MPEG Layer II fixtures in tests/fixtures/mpeg-audio/layer2.
 
 Each Layer II frame here carries explicit audio data (ISO/IEC 11172-3 2.4.1.6 and 2.4.2.6): a bit
-allocation per subband and channel from one of the allocation tables (Annex B, Table B.2a to
+allocation per subband and channel from one of the allocation tables (Tables B.2a to
 B.2d, and ISO/IEC 13818-3 Table B.1 for the lower sample rates), scfsi and scalefactors, and
 samples that are all coded as zero, so every decoder outputs pure silence and any disagreement
 about where the allocation, scalefactors or samples end makes it decode noise. The bytes after the
@@ -53,7 +53,7 @@ TABLES = [
     [A0] * 3 + [A3] * 8 + [A11] * 12 + [A23] * 7,  # B.2b
     [C0] * 2 + [C2] * 6,  # B.2c
     [C0] * 2 + [C2] * 10,  # B.2d
-    [L0] * 4 + [L4] * 7 + [L11] * 19,  # ISO/IEC 13818-3 B.1
+    [L0] * 4 + [L4] * 7 + [L11] * 19,  # ISO/IEC 13818-3 Table B.1
 ]
 TABLE_NAMES = ["B.2a", "B.2b", "B.2c", "B.2d", "B.1 (MPEG-2)"]
 NBAL = {16: 4, 8: 3, 4: 2}
@@ -63,7 +63,7 @@ SCALEFACTORS_PER_SCFSI = {0: 3, 1: 2, 2: 1, 3: 2}
 CENTER = ["None", "Present", "Reserved", "Phantom"]
 SURROUND = ["None", "Mono", "Stereo", "Second stereo programme"]
 # (surround, center coded) -> (additional channels, tc_allocation bits, dyn_cross_mode bits, 2-bit
-# predsi fields per group at dyn_cross_mode 0); ISO/IEC 13818-3, the syntax of mc_composite_status_info.
+# predsi fields per group at dyn_cross_mode 0); ISO/IEC 13818-3 2.5.1.15 and 2.5.2.15, mc_composite_status_info.
 MC_SHAPE = {
     (0, 0): (0, 0, 0, 0),
     (0, 1): (1, 2, 1, 2),
@@ -102,7 +102,7 @@ class Dynamic:
 def table_for(version, rate, bitrate, channels):
     """The allocation table index: 0 to 3 for B.2a to B.2d, 4 for the MPEG-2 table.
 
-    The sampling frequency and the bitrate per channel select it (ISO/IEC 11172-3 2.4.3.3.1);
+    The sampling frequency and the bitrate per channel select it (ISO/IEC 11172-3 2.4.3.3.1 and the captions of Tables B.2a to B.2d);
     bitrate is None for free format.
     """
     if version != "1":
@@ -557,7 +557,7 @@ class Layer2Frame(Frame):
         assert len(data) + len(self.ancillary) <= body_length, f"{len(data)} + {len(self.ancillary)} > {body_length}"
         data += bytes(body_length - len(data) - len(self.ancillary)) + self.ancillary
         if self.protected:
-            # CRC-16 over the last two header bytes, the bit allocation and scfsi (2.4.3.1).
+            # CRC-16 over the last two header bytes, the bit allocation and scfsi (2.4.3.1, Table B.5).
             covered = [((header[2 + i // 8] >> (7 - i % 8)) & 1) for i in range(16)] + bits.bits[16:scfsi_end]
             self.crc = crc16(covered) ^ (0x0001 if self.bad_crc else 0)
             data[0:2] = self.crc.to_bytes(2, "big")

@@ -1,7 +1,7 @@
 namespace Encspect.Formats.MpegAudio;
 
 // The MPEG audio error check: CRC-16 with polynomial 0x8005 (x^16 + x^15 + x^2 + 1), initial value
-// 0xFFFF, most significant bit first (ISO/IEC 11172-3 annex A.2).
+// 0xFFFF, most significant bit first (ISO/IEC 11172-3 2.4.3.1: generator polynomial x^16 + x^15 + x^2 + 1, Figure A.9, Table B.5).
 internal static class Crc16
 {
     public static ushort Compute(ReadOnlySpan<byte> data, ushort crc = 0xFFFF)

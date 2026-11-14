@@ -1336,7 +1336,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
     // A free-format chain is only four bytes of header repeating at one distance, which data with a header-like word at a fixed period
     // (the 0xFFFF that ends a DTS subframe, in frames of one size) makes as well. Real free-format frames hold what their headers
     // promise, and those with a CRC pass it: the chain's frames that fit in the data must be well-formed, and in Layers I and II, where
-    // free format is a curiosity, one of them must be protected and have the CRC its header says (ISO/IEC 11172-3 2.4.1.4).
+    // free format is a curiosity, one of them must be protected and have the CRC its header says (ISO/IEC 11172-3 2.4.1.4, 2.4.3.1).
     private static bool IsCredibleFreeFormat(BlockReader blocks, long position, MpegHeader first, int freeLength, long end)
     {
         var protectedFrames = new List<bool>();

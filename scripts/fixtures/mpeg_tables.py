@@ -74,29 +74,29 @@ def emit_floats(name, values, comment, per_line=8):
 def parser_file(text):
     tabs = array(text, "tabs")
     out = [NOTICE, "", "namespace Encspect.Formats.MpegAudio;", "",
-           "// The Layer III tables of the entropy pass (ISO/IEC 11172-3 Annex B and 2.4.3.4), in minimp3's compact form.", "internal static partial class Layer3Tables", "{"]
+           "// The Layer III tables of the entropy pass (ISO/IEC 11172-3 Tables B.7 and B.8 and 2.4.3.4, ISO/IEC 13818-3 Table B.2 and 2.4.3.2), in minimp3's compact form.", "internal static partial class Layer3Tables", "{"]
     out.append(emit_ints("Codebooks", tabs, "short", f"The Huffman tables 1 to 31 as minimp3 packs them: a leaf is (code length << 8) | the two values (4 bits each); a negative entry points to a second level ({len(tabs)} entries)."))
     out.append("")
-    out.append(emit_ints("Count1Table0", array(text, "tab32"), "byte", "The count1 table A (ISO/IEC 11172-3 Table B.7, tab32)."))
+    out.append(emit_ints("Count1Table0", array(text, "tab32"), "byte", "The count1 table A (ISO/IEC 11172-3 Table B.7, quadruples (A), tab32)."))
     out.append("")
-    out.append(emit_ints("Count1Table1", array(text, "tab33"), "byte", "The count1 table B (Table B.8, tab33): four-bit codes of the inverted values."))
+    out.append(emit_ints("Count1Table1", array(text, "tab33"), "byte", "The count1 table B (Table B.7, quadruples (B), tab33): four-bit codes of the inverted values."))
     out.append("")
     out.append(emit_ints("TableOffsets", array(text, "tabindex"), "short", "Where the codebook of each of the 32 table_select values starts in Codebooks."))
     out.append("")
     out.append(emit_ints("LinBits", array(text, "g_linbits"), "byte", "The extra bits (linbits) of each table_select value."))
     out.append("")
     scf_long = array(text, "g_scf_long")
-    out.append(emit_ints("LongBands", scf_long, "byte", "The widths of the long-block scalefactor bands (Table B.8 of ISO/IEC 11172-3 and 13818-3) of the eight sample rate rows, 23 entries each, a 0 ends a row.", 23))
+    out.append(emit_ints("LongBands", scf_long, "byte", "The widths of the long-block scalefactor bands (Table B.8 of ISO/IEC 11172-3 at 32, 44.1 and 48 kHz, Table B.2 of ISO/IEC 13818-3 at 16, 22.05 and 24 kHz; the MPEG 2.5 rows are in neither) of the eight sample rate rows, 23 entries each, a 0 ends a row.", 23))
     out.append("")
     out.append(emit_ints("ShortBands", array(text, "g_scf_short"), "byte", "The short-block bands, each width three times (one per window), 40 entries a row.", 40))
     out.append("")
     out.append(emit_ints("MixedBands", padded_rows(text, "g_scf_mixed", 40), "byte", "The mixed-block bands: the long bands below the switch point, then the short ones, 40 entries a row.", 40))
     out.append("")
-    out.append(emit_ints("Partitions", array(text, "g_scf_partitions"), "byte", "The scalefactor band partitions of MPEG-2 and 2.5 (ISO/IEC 13818-3 Table nr_of_sfb_block), 28 entries a row.", 28))
+    out.append(emit_ints("Partitions", array(text, "g_scf_partitions"), "byte", "The scalefactor band partitions, 28 entries a row for long, mixed and short blocks: first the MPEG-1 split into slen1 and slen2 bands (ISO/IEC 11172-3 2.4.2.7), then the six of MPEG-2 and 2.5 (ISO/IEC 13818-3 2.4.3.2, nr_of_sfb1 to nr_of_sfb4).", 28))
     out.append("")
     out.append(emit_ints("Moduli", array(text, "g_mod"), "byte", "The moduli that split an MPEG-2 scalefac_compress into slen values, four per partition set.", 12))
     out.append("")
-    out.append(emit_ints("Mpeg1SlenCode", array(text, "g_scfc_decode"), "byte", "MPEG-1 scalefac_compress as slen1 * 4 + slen2 (ISO/IEC 11172-3 Table 3-B.6 style code)."))
+    out.append(emit_ints("Mpeg1SlenCode", array(text, "g_scfc_decode"), "byte", "MPEG-1 scalefac_compress as slen1 * 4 + slen2 (ISO/IEC 11172-3 2.4.2.7)."))
     out.append("}")
     return "\n".join(out) + "\n"
 
@@ -105,9 +105,9 @@ def decoder_file(text):
     out = [NOTICE, "", "namespace Encspect.Formats.MpegAudio.Decoding;", "",
            "// The window and transform constants of the Layer III and polyphase stages, exactly as minimp3 states them.", "internal static class SynthesisTables", "{"]
     window = array(text, "g_win")
-    out.append(emit_ints("Window", window, "int", f"The integer coefficients of the polyphase synthesis window ({len(window)} entries, ISO/IEC 11172-3 Table 3-B.3 scaled by 2^16 and folded as minimp3 lays them out)."))
+    out.append(emit_ints("Window", window, "int", f"The integer coefficients of the polyphase synthesis window ({len(window)} entries, ISO/IEC 11172-3 Table B.3 scaled by 2^16 and folded as minimp3 lays them out)."))
     out.append("")
-    out.append(emit_floats("Antialias", array(text, "g_aa"), "The antialias butterfly coefficients: cs[0..7], then ca[0..7] (ISO/IEC 11172-3 Table 3-B.9)."))
+    out.append(emit_floats("Antialias", array(text, "g_aa"), "The antialias butterfly coefficients: cs[0..7], then ca[0..7] (ISO/IEC 11172-3 Table B.9)."))
     out.append("")
     out.append(emit_floats("Twiddle9", array(text, "g_twid9"), "The 36-point inverse transform's twiddle factors."))
     out.append("")

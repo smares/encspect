@@ -8,7 +8,7 @@ namespace Encspect.Formats.MpegAudio;
 // are walked into the session's buffers only where it decodes.
 public sealed partial class MpegAudioParser
 {
-    // The checksum the frames store (ISO/IEC 11172-3 2.4.1.3): it covers the header and the side information, or the allocation and scfsi, and no sample.
+    // The checksum the frames store (ISO/IEC 11172-3 2.4.1.4, 2.4.3.1 and Table B.5): it covers the header and the side information, or the allocation and scfsi, and no sample.
     internal const string FrameCrc = "frame CRC-16";
 
     // What the feeding of one stream keeps.
