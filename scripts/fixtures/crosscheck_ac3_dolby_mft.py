@@ -52,9 +52,6 @@ PINS = {
 }
 c.PINS = {**c.PINS, **PINS}
 c.FIRST_POSITION = 0
-# Dolby's dither lies 3.0 to 3.7 dB under the analyzer's (the bands of substreams.eac3 and the channels' RMS): a scaling of 0.5, which 7.3.4 allows, is 3.01 dB under 0.707; the two bands
-# that the range of the Core Audio script (-3.6) missed are at -3.63 and -3.66 dB.
-c.DITHER_RANGE_DB = (-3.8, c.DITHER_RANGE_DB[1])
 
 
 def first_frame(data):

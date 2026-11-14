@@ -134,11 +134,11 @@ def common_speakers(raw, info, dump):
     return common, reduced.tobytes(), lines
 
 
-def correlation_map(ours, our_channels, reference, reference_channels, first, window=4096):
+def correlation_map(ours, our_channels, reference, reference_channels, first, window=4096, where=0.5):
     """For each of the analyzer's channels the reference channel it correlates with most at the aligned position, where Core Audio gives no usable labels: (the picks, the
     lines that print the matrix and the choice), or None where a channel correlates with nothing (below 0.3) or two take the same reference channel."""
     frames = len(ours) // our_channels
-    start = max(first, frames // 2 - window)
+    start = max(first, int(frames * where) - window)
     lines, picks = [], []
     for i in range(our_channels):
         x = [ours[(start + n) * our_channels + i] for n in range(window)]
@@ -176,14 +176,14 @@ def energy_map(ours, our_channels, reference, reference_channels):
     return (picks if our_channels == reference_channels else None), lines
 
 
-def partial_map(ours, our_channels, reference, reference_channels, first, window=4096):
+def partial_map(ours, our_channels, reference, reference_channels, first, window=4096, where=0.5):
     """Where Core Audio gives no labels and does not decode some of the analyzer's channels (the channels of dependent substreams: its output has them silent): the analyzer's channels
     that correlate (0.3 or more) with a reference channel each, as (their indexes, the reference channels), or None where none or all do; with the lines that say which are left out."""
-    picks, lines = correlation_map(ours, our_channels, reference, reference_channels, first, window)
+    picks, lines = correlation_map(ours, our_channels, reference, reference_channels, first, window, where)
     if picks is not None:
         return None
     frames = len(ours) // our_channels
-    start = max(first, frames // 2 - window)
+    start = max(first, int(frames * where) - window)
     keep, chosen = [], []
     for i in range(our_channels):
         x = [ours[(start + n) * our_channels + i] for n in range(window)]
@@ -322,12 +322,21 @@ OURS_WITHOUT = {"eac3-signal-transient": "eac3-signal-transient-off"}
 FLOOR_DB = -90.0
 FINE_BANDS = "400,800,1600,3200,5700,6400,8000,10200,12500,12800,20000"
 CURRENT = {"stem": ""}
+# Where in the file (as a fraction of its length) the channels are matched by correlation: the middle first, which is the join of a file repeated twice, then the middle of its first copy and of the first half of that.
+WINDOWS = (0.5, 0.375, 0.25)
 # Bands that are not compared, each with its measured reason: (the analyzer's channels or None for all, the lowest edge in Hz of the bands, the reason). A pin is a statement about
 # what Core Audio does, not a tolerance: the reason says how it was found.
+ECPL_PIN = [(None, 5700, "enhanced coupling's region (bin 61, 5.7 kHz, up): Dolby's decoder and oxideav-ac3 both agree with the analyzer there and Core Audio differs, by waveform and not by level "
+                         "(per output block, correlation 0.79 to 0.98 in `eac3-signal-ecpl-flat`, growing through the frame, and the same at 24 dB lower level in the `-quiet` files); the bands below the begin, which are coded "
+                         "as in any file, stay compared")]
 PINS = {
+    **dict.fromkeys(["eac3-signal-ecpl", "eac3-signal-ecpl-flat", "eac3-signal-ecpl-quiet", "eac3-signal-ecpl-angle", "eac3-signal-ecpl-flat-quiet", "eac3-signal-ecpl-flat-explicit", "eac3-signal-ecpl-flat-new"], ECPL_PIN),
     "buggy_aht_5.1_384": [((0, 2), 10200, "from the coupling begin (bin 109, 10.2 kHz) up, the channels coupled with an adaptive hybrid transform coupling channel (IsCouplingAht in 149 of the first 195 frames): Core Audio "
                                             "differs from the analyzer's output by waveform (error -7 dB, correlation 0.89 and 0.85) where the analyzer and FFmpeg correlate 0.993 and 0.994 there and Core Audio "
-                                            "0.95 with each; every band below agrees to 0.00 dB over the whole file")],
+                                            "0.95 with each; every band below agrees to 0.00 dB over the whole file"),
+                          (None, 8000, "8,000 to 10,200 Hz: the zero-bit bins of the adaptive hybrid transform at the dither's level (-82 to -89 dB): Core Audio is 0.7 to 3.2 dB louder in the channels that miss "
+                                       "(0, 2, 3 and 4), which is its noise added in the transform's domain at a scale of 0.5, where the analyzer adds the dither to the coefficients (docs/development.md, "
+                                       "\"Where the zero-bit noise of an adaptive hybrid transform channel goes\")", 10200)],
     "external-ffmpeg-eac3-5.1-256k": [(None, 12500, "above the coded bandwidth (12,469 Hz) only the transform's leakage is left, at about -50 dB; every band below agrees to 0.00 dB over the whole file")],
     "csi_miami_stereo_128_spx": [(None, 12800, "spectral extension's noise region (extension begin and end in the stream; the notch and the blend are in use): Core Audio's band is 1.5 dB louder than the analyzer's, "
                                                "which FFmpeg matches to 0.0 dB in every band; the noise is unit variance and scaled by the RMS of the translated coefficients before the notch (A/52 Annex E 3.6.4.2.4), "
@@ -335,12 +344,24 @@ PINS = {
     "eac3-signal-spx-noise": [(None, 6400, "spectral extension's noise: A/52 Annex E 3.6.4.2.4 asks for noise() from a zero-mean, unity-variance generator and does not define the generator or "
                                           "its seed, so each decoder draws its own; the signs of the differences change with the channel (-2.2 to +1.3 dB)")],
 }
+
+
+def is_pinned(stem, number, edge):
+    """Whether the band of the analyzer's channel `number` that begins at `edge` Hz is pinned: a pin is (channels or None, lowest edge, reason) and optionally the edge it stops below."""
+    for pin in PINS.get(stem, []):
+        channels, low = pin[0], pin[1]
+        high = pin[3] if len(pin) > 3 else None
+        if (channels is None or number in channels) and edge >= low and (high is None or edge < high):
+            return True
+    return False
+
+
 # Files Core Audio does not open: the status it gives, recorded and not counted as a failure of the analyzer.
 UNOPENABLE = {"casablanca_aht_mono_64": "!dat (560226676) when Core Audio opens the file"}
 # Files of dither alone (no signal): the channels have no identity to find by correlation, so Core Audio's are paired with the analyzer's by level.
 DITHER_ONLY_FILES = {"substreams"}
 DITHER_ONLY_DB = -70.0
-DITHER_RANGE_DB = (-3.6, 0.6)
+DITHER_RANGE_DB = (-3.8, 0.6)
 
 
 def block_errors(ours, reference, channels, first, count=5):
@@ -451,7 +472,7 @@ def compare(dump, reference, channels, label, first, extra):
         return [], result
     if "--no-sample-bounds" in extra and result and "bands" in result:
         # A band whose level is that of the dither alone (below DITHER_ONLY_DB) holds noise that each decoder draws as it likes: 7.3.4 allows a scaling of 0.5 to 0.75 where 0.707 is
-        # the optimum, so a reference between -3.0 dB (0.5) and +0.5 dB (0.75) of ours is within the specification, with 0.6 dB for the measurement.
+        # the optimum, so a reference between -3.0 dB (0.5) and +0.5 dB (0.75) of ours is within the specification, with 0.6 dB for the measurement (0.8 dB under: Core Audio's bands of substreams.eac3 lie at -3.6 to -3.7 dB, Dolby's at -3.63 and -3.66 dB).
         outside = 0
         for number, channel in enumerate(result["bands"]["channels"]):
             for band in channel["bands"]:
@@ -460,7 +481,7 @@ def compare(dump, reference, channels, label, first, extra):
                 edges = [int(e) for e in extra[extra.index("--bands") + 1].split(",")]
                 if band.get("analyzerDb", 0) < DITHER_ONLY_DB and DITHER_RANGE_DB[0] <= band.get("signedDifferenceDb", 99) <= DITHER_RANGE_DB[1]:
                     band["status"] = "ok (dither range)"
-                elif any((channels is None or number in channels) and edges[band["band"]] >= low for channels, low, _ in PINS.get(CURRENT["stem"], [])):
+                elif is_pinned(CURRENT["stem"], number, edges[band["band"]]):
                     band["status"] = "ok (pinned)"
                 else:
                     outside += 1
@@ -498,13 +519,21 @@ def judge(dump, raw, info, work, variant, extra, name):
     if label is None and (reference_channels > 2 or reference_channels < sample["channels"]):
         # Core Audio's channel order is not known (the labels are missing): place its channels by correlation and try again.
         ours = floats((dump.parent / sample["pcm"]).read_bytes())
-        picks, mapping_lines = correlation_map(ours, sample["channels"], floats(raw), reference_channels, FIRST_POSITION)
+        # A window in the middle of a repeated file lies on the join of its copies, where a decoder that loses samples there is out of step: the mapping is tried at other places too.
+        for where in WINDOWS:
+            picks, mapping_lines = correlation_map(ours, sample["channels"], floats(raw), reference_channels, FIRST_POSITION, where=where)
+            if picks is not None:
+                break
         if picks is None and name in DITHER_ONLY_FILES:
             picks, level_lines = energy_map(ours, sample["channels"], floats(raw), reference_channels)
             mapping_lines += level_lines
         lines += mapping_lines
         if picks is None:
-            partial = partial_map(ours, sample["channels"], floats(raw), reference_channels, FIRST_POSITION)
+            partial = None
+            for where in WINDOWS:
+                partial = partial_map(ours, sample["channels"], floats(raw), reference_channels, FIRST_POSITION, where=where)
+                if partial is not None and len(partial[0]) == min(sample["channels"], reference_channels):
+                    break
             if partial is not None:
                 keep, chosen, partial_lines = partial
                 lines += partial_lines[-1:]
@@ -549,7 +578,7 @@ def check_file(args, path, work):
     stripped = work / (path.stem + ".nodither.ac3")
     if not is_eac3:
         x.clear_dither(args.encspect, path, frames, stripped)
-    lines = [f"  pinned, not compared from {low} Hz{'' if channels is None else ' in channels ' + str(channels)}: {reason}" for channels, low, reason in PINS.get(path.stem, [])]
+    lines = [f"  pinned, not compared from {pin[1]} Hz{'' if len(pin) < 4 else ' up to ' + str(pin[3]) + ' Hz'}{'' if pin[0] is None else ' in channels ' + str(pin[0])}: {pin[2]}" for pin in PINS.get(path.stem, [])]
     long_data, long_frames = x.repeated(data, frames, max(2, x.REPEATED_SAMPLES // samples))
     long_path = work / (path.stem + ".repeated" + path.suffix)
     long_path.write_bytes(long_data)
