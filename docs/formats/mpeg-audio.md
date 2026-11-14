@@ -61,7 +61,7 @@ MP1, MP2 and MP3 (MPEG-1, MPEG-2 and MPEG-2.5, Layers I to III).
 - **Side-information checks:** big_values above 288, the reserved block type, Huffman tables 4 and 14, scalefactors longer than part2_3_length, scfsi on a channel with short blocks, and mid/side or intensity stereo with different block types in the two channels. libmad rejects the last two.
 - **The decoder buffer** of ISO/IEC 11172-3 holds one frame at the highest bitrate (bitrate_index 14) at the stream's sample rate:
   - so main_data_begin plus the frame's length may not exceed that frame's length, and main_data_begin is 0 at 320 kbps;
-  - only MPEG-1 is checked: LAME's `--strictly-enforce-ISO` applies the rule to MPEG-2 with its top bitrate of 160 kbps, but that reading of ISO/IEC 13818-3 has not been confirmed against its text;
+  - only MPEG-1 is checked: LAME's `--strictly-enforce-ISO` applies the rule to MPEG-2 with its top bitrate of 160 kbps, but that reading of ISO/IEC 13818-3 has not been confirmed against its text yet ([plan.md](../plan.md#04-free-decoders-and-routes-complete), item 15 of 0.4);
   - breaking it is a warning, which says that encoders such as LAME exceed the limit and that decoders accept it; Encspect's LAME test files show it in VBR and ABR streams of releases from 3.20 to 4.0.
 
 ### Layer II audio data and multichannel
@@ -353,6 +353,6 @@ The decoder (`mpeg-audio`, codec ID of the parser) follows minimp3 (CC0 1.0, `th
 
 ## Not yet covered
 
-- The MPEG-2 multichannel extension of Layer II is not decoded: the decoder outputs the two base channels, and the stream's measurements say in their reason that only those were measured. ISO/IEC 13818-3 is not at hand.
+- The MPEG-2 multichannel extension of Layer II is not decoded: the decoder outputs the two base channels, and the stream's measurements say in their reason that only those were measured. Decoding the rest is item 15 of 0.4 in [plan.md](../plan.md#04-free-decoders-and-routes-complete).
 - Layer II samples and Layer III Huffman values are not shown as nodes; the report holds figures from them (Coded Bandwidth), not the values.
 - The Layer III intensity stereo bound is the frame's lowest intensity band in any granule: which granule or how many granules use intensity stereo is not reported, and the bound is read from the walk's quantized values, not from decoded audio.

@@ -232,6 +232,10 @@ Every coding with a free source is decoded, the DTS extensions aside, and every 
    - **Generated:** `docs/reference-tool-differences.md`, written by a script from those entries and checked in CI to match them, grouped by tool and version.
    - **A kind per entry:** the tool breaks a specification (FFmpeg 6.1.1 applying a Matroska block's DiscardPadding to every laced frame, RFC 9559), the tool reads otherwise within what the specification allows (MediaInfo taking the LAME tag's ABR target as the bitrate), or open (the cause not established).
    - **What it is for:** the starting point for reporting the violations upstream, which stays the lead's decision per report.
+15. **ISO/IEC 13818-3 against its text** (the lead, 2026-11-14). A copy of the standard's text (second edition, 1997) is at hand as a private reference: it stays out of the repository and the downloads, and the docs cite its clauses only. It brings back the item that waited under "Not planned" for it.
+   - **The multichannel decoder:** the MPEG-2 multichannel extension of Layer II decoded in full (the transmission channels, dematrixing, dynamic crosstalk, prediction and the LFE), where today only the MPEG-1 compatible base channels are; with the 22 multichannel conformance streams of ISO/IEC 13818-4 in the PCM cross-check against their dematrixed reference, and mctoolamed as a second column.
+   - **The extension's parser against the text:** the clause numbers that [mpeg-clean-room-rules.md](design/mpeg-clean-room-rules.md) and [development.md](development.md#mpeg-audio-decoding) cite unchecked, and the `dyn_cross_LR` cases the conformance streams leave undecided ([development.md](development.md#mpeg-audio-decoding), "Multichannel extension"); where the text settles one, the analyzer takes that reading and the CRC fallback goes.
+   - **The decoder buffer rule for MPEG-2 and 2.5,** which [mpeg-audio.md](formats/mpeg-audio.md) checks for MPEG-1 only.
 
 ### 0.5: AAC and WMA
 
@@ -275,7 +279,6 @@ Parked items carry the trigger that would bring them back. The formats at the en
 - **Offering the library** as packages: not planned yet; it waits for a contract the milestones no longer extend ([library.md](library.md)).
 - **Sequenced formats** (MIDI, tracker modules and chiptunes): dropped by the lead on 2026-11-08, as a different domain from bitstream and encoder analysis ([history.md](history.md#dropped-plans)).
 - **What the lossy decoders leave out,** by the signed-off design ([lossy-decoders.md, "Scope" and "What each decoder covers"](design/lossy-decoders.md#what-each-decoder-covers)), each with the condition the design states:
-  - the MPEG-2 multichannel extension of Layer II: only its MPEG-1 compatible base channels are decoded, since ISO/IEC 13818-3 is not at hand;
   - E-AC-3 at a reduced sample rate (fscod2) and AC-3 with bsid 9 and 10: A/52 does not specify their bit allocation, and no free source for it is known;
   - AAC SSR gain control, which FDK AAC refuses; MPEG Surround beyond USAC's 2-1-2; DRC and loudness normalization, and every other decoder-side gain but Opus's output gain (decision 9);
   - Opus packet loss concealment and forward error correction, which the gap rule excludes;

@@ -9,7 +9,7 @@ and `testNN_r.pcm`). They are downloaded into CACHE (default .cache/conformance,
 conformance_mpeg_audio.py uses) and never committed (ISO's license lets them be used unmodified for the purpose of the standard).
 
 The decoder outputs the two channels of the MPEG-1 compatible base, so the 22 MPEG-1 Layer II streams with the multichannel extension are left out: their
-reference is the dematrixed 5.1 and the matrix coefficients are in ISO/IEC 13818-3, which is not at hand. test22 (MPEG-1 Layer I) is out too: its archive holds only dematrixed channels. That leaves 12 streams: MPEG-1
+reference is the dematrixed 5.1 and the matrix coefficients are in ISO/IEC 13818-3; the multichannel decoder that needs them is item 15 of 0.4 in docs/plan.md. test22 (MPEG-1 Layer I) is out too: its archive holds only dematrixed channels. That leaves 12 streams: MPEG-1
 Layer III (test23), MPEG-2 Layer I (test33) and ten of MPEG-2 Layer II (test24 to test32 and test34).
 
 Each stream is dumped by tests/Encspect.PcmDump and compared by compare_pcm.py against the interleaved 16-bit reference: the analyzer's floats are rounded
