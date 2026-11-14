@@ -1,5 +1,5 @@
 {
- "description": "MPEG-1 Layer II at 48000 Hz and 384 kbps carrying 2/2 with dynamic crosstalk, dyn_cross_LR alternating between 0 and 1, written so that every copied channel takes the base channel the flag names. The multichannel CRCs hold under that reading only.",
+ "description": "MPEG-1 Layer II at 48000 Hz and 384 kbps carrying 2/2 with dynamic crosstalk, dyn_cross_LR alternating between 0 and 1, written so that every copied channel takes the base channel the flag names. The multichannel CRCs hold under that reading only, which is reported.",
  "length": 6912,
  "crosscheck": true,
  "regions": [
@@ -68,7 +68,6 @@
     "Multichannel/Composite Status/HasDynamicCrosstalk": "true",
     "Multichannel/Composite Status/IsDynamicCrosstalkFromRight": "false",
     "Multichannel/Composite Status/Dynamic Crosstalk Modes": "0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3",
-    "Multichannel/Composite Status/Dynamic Crosstalk Modes/Base Channel Source": "Named by the flag",
     "Multichannel/Composite Status/HasPrediction": "false",
     "Multichannel/Bit Allocation/Subband 0/Channel 2": "3 levels",
     "Multichannel/Bit Allocation/Subband 0/Channel 3": "7 levels",
@@ -647,7 +646,6 @@
     "Multichannel/Composite Status/HasDynamicCrosstalk": "true",
     "Multichannel/Composite Status/IsDynamicCrosstalkFromRight": "true",
     "Multichannel/Composite Status/Dynamic Crosstalk Modes": "1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4",
-    "Multichannel/Composite Status/Dynamic Crosstalk Modes/Base Channel Source": "Named by the flag",
     "Multichannel/Composite Status/HasPrediction": "false",
     "Multichannel/Bit Allocation/Subband 0/Channel 2": "None",
     "Multichannel/Bit Allocation/Subband 1/Channel 3": "None",
@@ -1213,7 +1211,6 @@
     "Multichannel/Composite Status/HasDynamicCrosstalk": "true",
     "Multichannel/Composite Status/IsDynamicCrosstalkFromRight": "false",
     "Multichannel/Composite Status/Dynamic Crosstalk Modes": "2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5",
-    "Multichannel/Composite Status/Dynamic Crosstalk Modes/Base Channel Source": "Named by the flag",
     "Multichannel/Composite Status/HasPrediction": "false",
     "Multichannel/Bit Allocation/Subband 0/Channel 3": "None",
     "Multichannel/Bit Allocation/Subband 2/Channel 2": "3 levels",
@@ -1784,7 +1781,6 @@
     "Multichannel/Composite Status/HasDynamicCrosstalk": "true",
     "Multichannel/Composite Status/IsDynamicCrosstalkFromRight": "true",
     "Multichannel/Composite Status/Dynamic Crosstalk Modes": "3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6",
-    "Multichannel/Composite Status/Dynamic Crosstalk Modes/Base Channel Source": "Named by the flag",
     "Multichannel/Composite Status/HasPrediction": "false",
     "Multichannel/Bit Allocation/Subband 1/Channel 2": "3 levels",
     "Multichannel/Bit Allocation/Subband 5/Channel 2": "3 levels",
@@ -2341,7 +2337,6 @@
     "Multichannel/Composite Status/HasDynamicCrosstalk": "true",
     "Multichannel/Composite Status/IsDynamicCrosstalkFromRight": "false",
     "Multichannel/Composite Status/Dynamic Crosstalk Modes": "4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7",
-    "Multichannel/Composite Status/Dynamic Crosstalk Modes/Base Channel Source": "Named by the flag",
     "Multichannel/Composite Status/HasPrediction": "false",
     "Multichannel/Bit Allocation/Subband 0/Channel 2": "3 levels",
     "Multichannel/Bit Allocation/Subband 4/Channel 2": "3 levels",
@@ -2915,7 +2910,6 @@
     "Multichannel/Composite Status/HasDynamicCrosstalk": "true",
     "Multichannel/Composite Status/IsDynamicCrosstalkFromRight": "true",
     "Multichannel/Composite Status/Dynamic Crosstalk Modes": "5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7, 0",
-    "Multichannel/Composite Status/Dynamic Crosstalk Modes/Base Channel Source": "Named by the flag",
     "Multichannel/Composite Status/HasPrediction": "false",
     "Multichannel/Bit Allocation/Subband 3/Channel 2": "3 levels",
     "Multichannel/Bit Allocation/Subband 3/Channel 3": "5 levels",
@@ -3477,6 +3471,11 @@
    "bitrate_over_time": "384"
   }
  ],
- "findings": [],
+ "findings": [
+  {
+   "code": "mpeg-audio.multichannel-reference-software-reading",
+   "contains": "the reading of the ISO reference software"
+  }
+ ],
  "silent": true
 }

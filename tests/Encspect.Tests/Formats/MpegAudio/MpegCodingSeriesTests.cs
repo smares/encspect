@@ -303,7 +303,7 @@ public class MpegCodingSeriesTests
         Assert.Equal(unit, share.Values.Length);
     }
 
-    // The bits of a codeword of three samples (ISO/IEC 11172-3 Annex B): 5, 7 or 10 for the grouped 3, 5 and 9 levels, else three samples of
+    // The bits of a codeword of three samples (ISO/IEC 11172-3 Table B.4): 5, 7 or 10 for the grouped 3, 5 and 9 levels, else three samples of
     // as many bits as the levels need.
     private static int Layer2SampleBits(int levels) => levels switch { 3 => 5, 5 => 7, 9 => 10, _ => 3 * (32 - int.LeadingZeroCount(levels)) };
 
@@ -455,7 +455,7 @@ public class MpegCodingSeriesTests
             && System.Runtime.InteropServices.MemoryMarshal.TryGetArray(share.X, out ArraySegment<double> second) && ReferenceEquals(first.Array, second.Array));
     }
 
-    // The bitrate tables of ISO/IEC 11172-3 (Table 3-B.2) and 13818-3 as the specifications print them, apart from the parser's.
+    // The bitrate_index tables of ISO/IEC 11172-3 and 13818-3 (both 2.4.2.3) as the specifications print them, apart from the parser's.
     private static readonly Dictionary<string, double[]> BitrateTables = new()
     {
         ["MPEG-1 Layer I"] = [32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448],
@@ -488,16 +488,51 @@ public class MpegCodingSeriesTests
             }
 
             Assert.Null(stream.Series.First(s => s.Name == "Bitrate Over Time").DeclaredRange);
-            foreach (Series other in stream.Series.Where(s => s.Name is not ("Bitrate" or "Channel Bit Share" or "Channel Bit Share Over Time")))
+            foreach (Series other in stream.Series.Where(s => s.Name is not ("Bitrate" or "Channel Bit Share" or "Channel Bit Share Over Time") && !s.Name.StartsWith("Transmission Channel Bit Share", StringComparison.Ordinal)))
             {
                 Assert.Null(other.DeclaredRange);
             }
 
-            foreach (Series share in stream.Series.Where(s => s.Name.StartsWith("Channel Bit Share", StringComparison.Ordinal)))
+            foreach (Series share in stream.Series.Where(s => s.Name.StartsWith("Channel Bit Share", StringComparison.Ordinal) || s.Name.StartsWith("Transmission Channel Bit Share", StringComparison.Ordinal)))
             {
                 Assert.False(share.DeclaredRange!.HasSteps);
                 Assert.Equal(0, share.DeclaredRange.Minimum);
                 Assert.Equal(100, share.DeclaredRange.Maximum);
+            }
+        }
+    }
+
+    // A 5.1 stream of mctoolame with prediction: the transmission channel shares of each frame add to 100 percent, the series exist for exactly the channels of the
+    // configuration, and the tally node of the bits states the shares of the whole stream.
+    [Fact]
+    public void The_transmission_channels_share_every_frame_and_the_tally_states_the_whole()
+    {
+        Report report = Fixtures.AnalyzeMpeg("mpeg-audio/layer2/external-mctoolame-5-1-prediction.mp2");
+        StreamInfo stream = Assert.Single(report.Streams);
+        Series[] shares = [.. stream.Series.Where(s => s.Name.StartsWith("Transmission Channel Bit Share ", StringComparison.Ordinal))];
+
+        Assert.Equal(["T0", "T1", "T2", "T3", "T4", "LFE"], shares.Select(s => s.Name["Transmission Channel Bit Share ".Length..]));
+        Assert.All(shares, s => Assert.Equal(GraphConcept.BitDistribution, s.Concept));
+        int frames = shares[0].Values.Length;
+        for (int frame = 0; frame < frames; frame++)
+        {
+            Assert.InRange(shares.Sum(s => s.Values.Span[frame]), 99.4, 100.6);
+        }
+
+        Node bits = Assert.Single(Flatten(report.Root), n => n.Name == "Bits per Transmission Channel");
+        Assert.Equal(["T0", "T1", "T2", "T3", "T4", "LFE"], bits.Children.Select(c => c.Name));
+        Assert.Contains(stream.CategorySeries, c => c.Name == "Dynamic Crosstalk Use");
+        Assert.Contains(stream.CategorySeries, c => c.Name == "Prediction Use");
+    }
+
+    private static IEnumerable<Node> Flatten(Node node)
+    {
+        yield return node;
+        foreach (Node child in node.Children.Where(c => c.Kind != NodeKind.Frame))
+        {
+            foreach (Node below in Flatten(child))
+            {
+                yield return below;
             }
         }
     }
@@ -604,7 +639,7 @@ public class FrameFiguresTests
     [Fact]
     public void A_layer_II_frame_gives_its_bandwidth_and_each_channels_own_bits()
     {
-        // 44,100 Hz, 160 kbps stereo: table B.2a, whose 27 subbands take 88 bits of allocation per channel. Subband 0 allocates index
+        // 44,100 Hz, 160 kbps stereo: Table B.2a (ISO/IEC 11172-3), whose 27 subbands take 88 bits of allocation per channel. Subband 0 allocates index
         // 3 (15 levels, a codeword of 12 bits for three samples) in the first channel only, with three scalefactors (scfsi 0).
         byte[] frame = [0xFF, 0xFD, 0x90, 0x00, 0x30, .. new byte[100]];
 

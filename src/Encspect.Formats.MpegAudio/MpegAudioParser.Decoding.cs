@@ -8,7 +8,7 @@ namespace Encspect.Formats.MpegAudio;
 // are walked into the session's buffers only where it decodes.
 public sealed partial class MpegAudioParser
 {
-    // The checksum the frames store (ISO/IEC 11172-3 2.4.1.3): it covers the header and the side information, or the allocation and scfsi, and no sample.
+    // The checksum the frames store (ISO/IEC 11172-3 2.4.1.4, 2.4.3.1 and Table B.5): it covers the header and the side information, or the allocation and scfsi, and no sample.
     internal const string FrameCrc = "frame CRC-16";
 
     // What the feeding of one stream keeps.
@@ -37,17 +37,33 @@ public sealed partial class MpegAudioParser
 
         public long Position { get; private set; }
 
-        public void StartStream(int index, Node? node)
+        // The streams of MPEG-1 Layer II, which may carry the multichannel extension: they are fed after the whole file is read (DecodeDeferred), when the parser knows
+        // whether it does, as their decoder's channel count is fixed when it starts.
+        public List<(int Index, Node? Node)> Deferred { get; } = [];
+
+        public bool IsDeferred { get; private set; }
+
+        public void StartStream(int index, Node? node, MpegHeader header)
         {
             Streams++;
             IsLimited = Streams > MaxStreams;
+            IsDeferred = header.Layer == 2 && header.IsMpeg1;
             (Session, StreamStart, StreamNode, Position, PendingGap) = (null, index, node, 0, false);
+            if (IsDeferred && !IsLimited)
+            {
+                Deferred.Add((index, node));
+            }
         }
 
         // One audio frame of the current stream: the coded lines of a walked Layer III frame (-1 where the frame was not walked), the lowest line from which its right channel
         // codes intensity positions (-1 where none does) and the granules and channels whose Huffman data ran past their part2_3_length.
         public (int CodedLines, int Overruns, int IntensityLine) Feed(StreamState state, int index, long position, long available, int length, bool isComplete, MpegHeader header, MainDataPlacement? placement, int runsBefore)
         {
+            if (IsDeferred)
+            {
+                return (-1, 0, -1);
+            }
+
             if (Session is null)
             {
                 var first = new byte[4];
@@ -161,6 +177,128 @@ public sealed partial class MpegAudioParser
 
             PendingGap = false;
             return (codedLines, overruns, intensityLine);
+        }
+
+        // Feeds the streams of MPEG-1 Layer II once the file is read, from the frame records, in the order and with the gap marks the frame loop would have given them.
+        // A stream that carries the multichannel extension in full decodes to its configuration's channels (MultichannelPlan), any other as it always did.
+        public void DecodeDeferred(StreamState state)
+        {
+            ChunkedList<Entry> frames = state.Build.Frames;
+            foreach ((int start, Node? node) in Deferred)
+            {
+                int end = start;
+                MpegHeader? previous = null;
+                for (int i = start; i < frames.Count; i++)
+                {
+                    if (frames[i].IsGap)
+                    {
+                        continue;
+                    }
+
+                    var header = new MpegHeader(frames[i].Header);
+                    if (previous is { } last && !header.IsSameStream(last))
+                    {
+                        break;
+                    }
+
+                    previous = header;
+                    end = i + 1;
+                }
+
+                MultichannelPlan? plan = PlanFor(state, start, end);
+                IDecodeSession? session = null;
+                bool isPending = false;
+                long position = 0;
+                for (int i = start; i < end; i++)
+                {
+                    state.CheckCancellation(i - start);
+                    ref readonly Entry entry = ref frames[i];
+                    if (entry.IsGap)
+                    {
+                        isPending = true;
+                        continue;
+                    }
+
+                    if (entry.IsVbrHeader)
+                    {
+                        continue;
+                    }
+
+                    var header = new MpegHeader(entry.Header);
+                    if (session is null)
+                    {
+                        var first = new byte[4];
+                        state.Blocks.ReadInto(entry.Offset, first);
+                        session = state.Context!.StartDecoding(CodecId, new DecodeSetup
+                        {
+                            Stream = node ?? state.Context.Root,
+                            Channels = plan?.Channels ?? (header.IsMono ? 1 : 2),
+                            BitsPerSample = 32,
+                            Configuration = new MappedBytes(first, entry.Offset),
+                            IsLossy = true,
+                            Shared = plan,
+                        });
+                        Sessions[start] = session;
+                    }
+
+                    if (!session.IsDecoding)
+                    {
+                        break;
+                    }
+
+                    long firstSample = position;
+                    position += header.Samples;
+                    FeedLayer2(session, state, entry, header, plan, firstSample, isPending);
+                    isPending = false;
+                }
+            }
+        }
+
+        private void FeedLayer2(IDecodeSession session, StreamState state, in Entry entry, MpegHeader header, MultichannelPlan? plan, long firstSample, bool isPending)
+        {
+            int length = (int)entry.Length;
+            bool isComplete = !entry.IsTruncated;
+            if (!isComplete || length > _frame.Length)
+            {
+                session.Decode(new CodedFrame(new MappedBytes(ReadOnlyMemory<byte>.Empty, entry.Offset), "Frame", firstSample, header.Samples) { IsUnreadable = true });
+                return;
+            }
+
+            state.Blocks.ReadInto(entry.Offset, _frame.AsSpan(0, length));
+            int channels = plan is null ? (header.IsMono ? 1 : 2) : 6;
+            SampleBuffers lent = session.Lend(LentLayout.PerChannel, channels);
+            bool isReadable = !lent.IsEmpty && _scale.Read(header, _frame.AsSpan(0, length));
+            if (isReadable)
+            {
+                lent.Narrow.Clear();
+                isReadable = _scale.ReadSamples(header, _frame.AsSpan(0, length), lent.Narrow, lent.Stride);
+            }
+
+            if (isReadable && plan is not null)
+            {
+                isReadable = !header.IsMono && ReadMultichannelData(header, _frame.AsSpan(0, length).ToArray(), plan, lent);
+            }
+
+            session.Decode(new CodedFrame(new MappedBytes(_frame.AsMemory(0, length), entry.Offset), "Frame", firstSample, header.Samples)
+            {
+                IsWalked = isReadable,
+                IsUnreadable = !isReadable,
+                FollowsGap = isPending,
+            });
+        }
+
+        // Reads the sample codes of the additional channels and the LFE into the lent planes; false where the extension is not the stream's, fails its CRC or runs past the frame.
+        private static bool ReadMultichannelData(MpegHeader header, byte[] bytes, MultichannelPlan plan, SampleBuffers lent)
+        {
+            var audio = Layer2AudioData.Read(bytes, header);
+            var mc = Layer2Multichannel.Read(bytes, audio.End, bytes.Length * 8, audio.BaseAllocation(), header.SampleRate);
+            if (!mc.HeaderFits || !mc.IsCrcValid || mc.ChannelKey != plan.Key)
+            {
+                return false;
+            }
+
+            mc.ReadData(bytes, lent.Narrow, lent.Stride);
+            return mc.DataFits;
         }
 
         // The frame's main data: the runs the reservoir placed for it, in file order, read into one buffer (claimed bytes), then the bytes of the frame after the last run.

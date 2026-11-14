@@ -2,7 +2,7 @@
 """Writes the byte-exact MPEG Layer II fixtures in tests/fixtures/mpeg-audio/layer2.
 
 Each Layer II frame here carries explicit audio data (ISO/IEC 11172-3 2.4.1.6 and 2.4.2.6): a bit
-allocation per subband and channel from one of the allocation tables (Annex B, Table B.2a to
+allocation per subband and channel from one of the allocation tables (Tables B.2a to
 B.2d, and ISO/IEC 13818-3 Table B.1 for the lower sample rates), scfsi and scalefactors, and
 samples that are all coded as zero, so every decoder outputs pure silence and any disagreement
 about where the allocation, scalefactors or samples end makes it decode noise. The bytes after the
@@ -53,7 +53,7 @@ TABLES = [
     [A0] * 3 + [A3] * 8 + [A11] * 12 + [A23] * 7,  # B.2b
     [C0] * 2 + [C2] * 6,  # B.2c
     [C0] * 2 + [C2] * 10,  # B.2d
-    [L0] * 4 + [L4] * 7 + [L11] * 19,  # ISO/IEC 13818-3 B.1
+    [L0] * 4 + [L4] * 7 + [L11] * 19,  # ISO/IEC 13818-3 Table B.1
 ]
 TABLE_NAMES = ["B.2a", "B.2b", "B.2c", "B.2d", "B.1 (MPEG-2)"]
 NBAL = {16: 4, 8: 3, 4: 2}
@@ -63,7 +63,7 @@ SCALEFACTORS_PER_SCFSI = {0: 3, 1: 2, 2: 1, 3: 2}
 CENTER = ["None", "Present", "Reserved", "Phantom"]
 SURROUND = ["None", "Mono", "Stereo", "Second stereo programme"]
 # (surround, center coded) -> (additional channels, tc_allocation bits, dyn_cross_mode bits, 2-bit
-# predsi fields per group at dyn_cross_mode 0); ISO/IEC 13818-3, the syntax of mc_composite_status_info.
+# predsi fields per group at dyn_cross_mode 0); ISO/IEC 13818-3 2.5.1.15 and 2.5.2.15, mc_composite_status_info.
 MC_SHAPE = {
     (0, 0): (0, 0, 0, 0),
     (0, 1): (1, 2, 1, 2),
@@ -89,7 +89,8 @@ MC_MODES_31 = ["RR", "RB", "BR", "BB", "R2", "BB", "BB", "BB"]
 class Dynamic:
     """Dynamic crosstalk of one frame: dyn_cross_LR, the mode and dyn_second_stereo of each subband group, and
     which reading of the base channel of a copy the encoder follows ("side": the base channel on the copied
-    channel's side, "flag": the one dyn_cross_LR names, in the cases the conformance streams leave open)."""
+    channel's side, as ISO/IEC 13818-3 2.5.2.15 says; "flag": the one dyn_cross_LR names, in the cases the
+    conformance streams leave open, which the reference software was observed to follow)."""
 
     def __init__(self, lr=0, modes=(0,) * 12, second=(0,) * 12, reading="side", differ=False):
         assert reading in ("side", "flag") and len(modes) == 12 and len(second) == 12
@@ -102,7 +103,7 @@ class Dynamic:
 def table_for(version, rate, bitrate, channels):
     """The allocation table index: 0 to 3 for B.2a to B.2d, 4 for the MPEG-2 table.
 
-    The sampling frequency and the bitrate per channel select it (ISO/IEC 11172-3 2.4.3.3.1);
+    The sampling frequency and the bitrate per channel select it (ISO/IEC 11172-3 2.4.3.3.1 and the captions of Tables B.2a to B.2d);
     bitrate is None for free format.
     """
     if version != "1":
@@ -383,9 +384,6 @@ class Multichannel:
         if self.dynamic:
             fields[node + "Composite Status/IsDynamicCrosstalkFromRight"] = "true" if self.dynamic.lr else "false"
             fields[node + "Composite Status/Dynamic Crosstalk Modes"] = ", ".join(map(str, self.dynamic.modes))
-            if self.has_crosstalk_choice():
-                fields[node + "Composite Status/Dynamic Crosstalk Modes/Base Channel Source"] = (
-                    "Named by the flag" if reading == "flag" else "On the channel's side")
         fields[node + "Composite Status/HasPrediction"] = "true" if self.prediction else "false"
         if self.prediction:
             fields[node + "Composite Status/Prediction"] = ", ".join("1" if g is not None else "0" for g in self.prediction)
@@ -557,7 +555,7 @@ class Layer2Frame(Frame):
         assert len(data) + len(self.ancillary) <= body_length, f"{len(data)} + {len(self.ancillary)} > {body_length}"
         data += bytes(body_length - len(data) - len(self.ancillary)) + self.ancillary
         if self.protected:
-            # CRC-16 over the last two header bytes, the bit allocation and scfsi (2.4.3.1).
+            # CRC-16 over the last two header bytes, the bit allocation and scfsi (2.4.3.1, Table B.5).
             covered = [((header[2 + i // 8] >> (7 - i % 8)) & 1) for i in range(16)] + bits.bits[16:scfsi_end]
             self.crc = crc16(covered) ^ (0x0001 if self.bad_crc else 0)
             data[0:2] = self.crc.to_bytes(2, "big")
@@ -939,6 +937,10 @@ def mc_chance_crc():
 UNEVEN_BASE = [[1 if sb < 20 else 0 for sb in range(27)], [1 if sb < 20 and sb % 3 == 0 else 0 for sb in range(27)]]
 
 
+FLAG_FINDING = "mpeg-audio.multichannel-reference-software-reading"
+FLAG_TEXT = "the reading of the ISO reference software"
+
+
 def crosstalk_stream(center, surround, tc, modes, reading, lr, differ, second=lambda i, g: 0, bitrate=384, count=6):
     return mc_stream(count, bitrate, 48000, lambda i: Multichannel(
         center=center, surround=surround, tc_alloc=[tc(i, g) for g in range(12)], seed=i + 1,
@@ -974,9 +976,11 @@ def mc_31_crosstalk_flag():
         "mc-3-1-crosstalk-flag",
         "MPEG-1 Layer II at 48000 Hz and 384 kbps carrying 3/1 with dynamic crosstalk and dyn_cross_LR 1, written so "
         "that every copied channel takes the base channel the flag names where the conformance streams leave the case "
-        "open (channel allocations 0 to 7, every mode). The multichannel CRCs hold under that reading only.",
+        "open (channel allocations 0 to 7, every mode). The multichannel CRCs hold under that reading only, which is "
+        "reported.",
     )
-    return f.add_frames(crosstalk_stream(1, 1, lambda i, g: (g + i) % 8, lambda i, g: (g + i) % 8, "flag", lambda i: 1, True))
+    f.add_frames(crosstalk_stream(1, 1, lambda i, g: (g + i) % 8, lambda i, g: (g + i) % 8, "flag", lambda i: 1, True))
+    return f.finding(FLAG_FINDING, FLAG_TEXT)
 
 
 @fixture
@@ -985,9 +989,10 @@ def mc_31_crosstalk_flag_right():
         "mc-3-1-crosstalk-flag-right",
         "MPEG-1 Layer II at 48000 Hz and 384 kbps carrying 3/1 with dynamic crosstalk and dyn_cross_LR 0, the channel "
         "allocations 4 and 5 (T3 carries the right channel) in the subband groups, written so that the copy takes "
-        "the left base channel the flag names. The multichannel CRCs hold under that reading only.",
+        "the left base channel the flag names. The multichannel CRCs hold under that reading only, which is reported.",
     )
-    return f.add_frames(crosstalk_stream(1, 1, lambda i, g: 4 + (g + i) % 2, lambda i, g: (1, 3, 5)[(g + i) % 3], "flag", lambda i: 0, True))
+    f.add_frames(crosstalk_stream(1, 1, lambda i, g: 4 + (g + i) % 2, lambda i, g: (1, 3, 5)[(g + i) % 3], "flag", lambda i: 0, True))
+    return f.finding(FLAG_FINDING, FLAG_TEXT)
 
 
 @fixture
@@ -1007,9 +1012,10 @@ def mc_22_crosstalk_flag():
         "mc-2-2-crosstalk-flag",
         "MPEG-1 Layer II at 48000 Hz and 384 kbps carrying 2/2 with dynamic crosstalk, dyn_cross_LR alternating between "
         "0 and 1, written so that every copied channel takes the base channel the flag names. The multichannel CRCs "
-        "hold under that reading only.",
+        "hold under that reading only, which is reported.",
     )
-    return f.add_frames(crosstalk_stream(0, 2, lambda i, g: (g + i) % 4, lambda i, g: (g + i) % 8, "flag", lambda i: i % 2, True))
+    f.add_frames(crosstalk_stream(0, 2, lambda i, g: (g + i) % 4, lambda i, g: (g + i) % 8, "flag", lambda i: i % 2, True))
+    return f.finding(FLAG_FINDING, FLAG_TEXT)
 
 
 @fixture

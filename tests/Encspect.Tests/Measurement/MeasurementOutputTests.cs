@@ -22,10 +22,10 @@ public class MeasurementOutputTests
     [Fact]
     public void AMultichannelStreamMeasuredAsItsBaseStereoSaysSoInTheText()
     {
-        (int code, string output, _) = Run("--measure", "--hide", "frames,tags", Path.Combine(Fixtures.FixtureDirectory, "mpeg-audio", "layer2", "mc-3-2-lfe.mp2"));
+        (int code, string output, _) = Run("--measure", "--hide", "frames,tags", Path.Combine(Fixtures.FixtureDirectory, "mpeg-audio", "layer2", "mc-extension-header.mp2"));
 
         Assert.Equal(CommandLine.Success, code);
-        Assert.Matches(@"Measured: [\d.]+ s \(lossy stream\) of 2 channels; the decoder outputs 2 channels of the stream's 6, and only those were measured", output);
+        Assert.Matches(@"Measured: [\d.]+ s \(lossy stream\) of 2 channels; the decoder outputs 2 channels of the stream's 5, and only those were measured", output);
     }
 
     [Fact]

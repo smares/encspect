@@ -858,7 +858,7 @@ internal sealed partial class FrameSyntax
         }
 
         _snroffststr = F("SNR Offset Strategy", 2, Explain.Snroffststr, v => $"{v} ({Ac3Names.SnrOffsetStrategy(v)})");
-        bool transproce = Flag("HasTransientProcessing", Explain.Transproce);
+        bool transproce = Flag("HasTransientProcessing", Explain.Transproce, Topics.TransientPreNoise);
         _blkswe = Flag("HasBlockSwitchFlags", Explain.Blkswe, Topics.AudioBlocks);
         _dithflage = Flag("HasDitherFlags", Explain.Dithflage);
         _bamode = Flag("HasBitAllocationFields", Explain.Bamode, Topics.AudioBlocks);
@@ -1001,10 +1001,10 @@ internal sealed partial class FrameSyntax
         {
             for (int ch = 0; ch < _nfchans; ch++)
             {
-                if (FC("IsInTransientProcessing", ch, 1, Explain.Chintransproc, BooleanValue) != 0)
+                if (FC("IsInTransientProcessing", ch, 1, Explain.Chintransproc, BooleanValue, Topics.TransientPreNoise) != 0)
                 {
-                    _transloc[ch] = F("Transient Location", 10, Explain.Transprocloc, v => NodeValue.Integer(v * 4, "samples"));
-                    _translen[ch] = F("Transient Processing Length", 8, Explain.Transproclen, v => NodeValue.Integer(v, "samples"));
+                    _transloc[ch] = F("Transient Location", 10, Explain.Transprocloc, v => NodeValue.Integer(v * 4, "samples"), Topics.TransientPreNoise);
+                    _translen[ch] = F("Transient Processing Length", 8, Explain.Transproclen, v => NodeValue.Integer(v, "samples"), Topics.TransientPreNoise);
                 }
             }
         }

@@ -8,6 +8,7 @@
   the reference is the plain C code RFC 6716's decoder is: the intrinsics sum in another order and with fused multiply-adds, which moves the concealment of a mode change (a
   few 10^-3 of full scale in the 5 ms it covers) and nothing else.
 - rfc6716.txt and rfc8251.txt: the specifications, pinned (the RFC's code is Simplified BSD under its copyright notice).
+- rfc7845.txt and rfc8486.txt: the Ogg encapsulation of Opus and its ambisonics channel mapping families, pinned, which the parser's descriptions and articles cite.
 - opus_testvectors-rfc8251.tar.gz and opus_testvectors.tar.gz: the test vectors of RFC 8251 and of RFC 6716, downloaded and never committed (their license is unverified,
   docs/design/lossy-decoders.md): per vector the packets with the encoder's final range coder state (testvectorNN.bit, the opus_demo format) and the reference output
   (testvectorNN.dec, and the mono decode testvectorNNm.dec).
@@ -37,6 +38,14 @@ RFC8251_NAME = "rfc8251.txt"
 RFC8251_SHA256 = "86abdb8c0fa1b0b6e1b9c1f324163ca152a8d2d9debd10461da3d56438489ecd"
 RFC8251_ADDRESSES = ["https://www.rfc-editor.org/rfc/rfc8251.txt", downloads.archived("https://www.rfc-editor.org/rfc/rfc8251.txt", "2026")]
 
+RFC7845_NAME = "rfc7845.txt"
+RFC7845_SHA256 = "c2e6041543a315c4944a8cdf47be7c701fae70f380868d8d538f35b6edb08edd"
+RFC7845_ADDRESSES = ["https://www.rfc-editor.org/rfc/rfc7845.txt", downloads.archived("https://www.rfc-editor.org/rfc/rfc7845.txt", "2026")]
+
+RFC8486_NAME = "rfc8486.txt"
+RFC8486_SHA256 = "8e8b557c5bfc6b521da863414db0b7af556ff27164ff4ef78c73fb5951342974"
+RFC8486_ADDRESSES = ["https://www.rfc-editor.org/rfc/rfc8486.txt", downloads.archived("https://www.rfc-editor.org/rfc/rfc8486.txt", "2026")]
+
 VECTORS_8251_NAME = "opus_testvectors-rfc8251.tar.gz"
 VECTORS_8251_SHA256 = "6b26a22f9ba87b2b836906a9bb7afec5f8e54d49553b1200382520ee6fedfa55"
 VECTORS_8251_ADDRESSES = [
@@ -57,6 +66,8 @@ def sources():
     yield LIBOPUS_NAME, LIBOPUS_SHA256, LIBOPUS_ADDRESSES
     yield RFC6716_NAME, RFC6716_SHA256, RFC6716_ADDRESSES
     yield RFC8251_NAME, RFC8251_SHA256, RFC8251_ADDRESSES
+    yield RFC7845_NAME, RFC7845_SHA256, RFC7845_ADDRESSES
+    yield RFC8486_NAME, RFC8486_SHA256, RFC8486_ADDRESSES
     yield VECTORS_8251_NAME, VECTORS_8251_SHA256, VECTORS_8251_ADDRESSES
     yield VECTORS_6716_NAME, VECTORS_6716_SHA256, VECTORS_6716_ADDRESSES
 

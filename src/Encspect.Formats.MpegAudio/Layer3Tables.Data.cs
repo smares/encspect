@@ -3,7 +3,7 @@
 
 namespace Encspect.Formats.MpegAudio;
 
-// The Layer III tables of the entropy pass (ISO/IEC 11172-3 Annex B and 2.4.3.4), in minimp3's compact form.
+// The Layer III tables of the entropy pass (ISO/IEC 11172-3 Tables B.7 and B.8 and 2.4.3.4, ISO/IEC 13818-3 Table B.2 and 2.4.3.2), in minimp3's compact form.
 internal static partial class Layer3Tables
 {
     // The Huffman tables 1 to 31 as minimp3 packs them: a leaf is (code length << 8) | the two values (4 bits each); a negative entry points to a second level (2164 entries).
@@ -102,14 +102,14 @@ internal static partial class Layer3Tables
         290, 290, 288, 258,
     ];
 
-    // The count1 table A (ISO/IEC 11172-3 Table B.7, tab32).
+    // The count1 table A (ISO/IEC 11172-3 Table B.7, quadruples (A), tab32).
     internal static readonly byte[] Count1Table0 =
     [
         130, 162, 193, 209, 44, 28, 76, 140, 9, 9, 9, 9, 9, 9, 9, 9, 190, 254, 222, 238, 126, 94, 157, 157,
         109, 61, 173, 205,
     ];
 
-    // The count1 table B (Table B.8, tab33): four-bit codes of the inverted values.
+    // The count1 table B (Table B.7, quadruples (B), tab33): four-bit codes of the inverted values.
     internal static readonly byte[] Count1Table1 =
     [
         252, 236, 220, 204, 188, 172, 156, 140, 124, 108, 92, 76, 60, 44, 28, 12,
@@ -129,7 +129,7 @@ internal static partial class Layer3Tables
         4, 5, 6, 7, 8, 9, 11, 13,
     ];
 
-    // The widths of the long-block scalefactor bands (Table B.8 of ISO/IEC 11172-3 and 13818-3) of the eight sample rate rows, 23 entries each, a 0 ends a row.
+    // The widths of the long-block scalefactor bands (Table B.8 of ISO/IEC 11172-3 at 32, 44.1 and 48 kHz, Table B.2 of ISO/IEC 13818-3 at 16, 22.05 and 24 kHz; the MPEG 2.5 rows are in neither) of the eight sample rate rows, 23 entries each, a 0 ends a row.
     internal static readonly byte[] LongBands =
     [
         6, 6, 6, 6, 6, 6, 8, 10, 12, 14, 16, 20, 24, 28, 32, 38, 46, 52, 60, 68, 58, 54, 0,
@@ -168,7 +168,7 @@ internal static partial class Layer3Tables
         4, 4, 4, 4, 4, 4, 6, 6, 4, 4, 4, 6, 6, 6, 8, 8, 8, 12, 12, 12, 16, 16, 16, 20, 20, 20, 26, 26, 26, 34, 34, 34, 42, 42, 42, 12, 12, 12, 0, 0,
     ];
 
-    // The scalefactor band partitions of MPEG-2 and 2.5 (ISO/IEC 13818-3 Table nr_of_sfb_block), 28 entries a row.
+    // The scalefactor band partitions, 28 entries a row for long, mixed and short blocks: first the MPEG-1 split into slen1 and slen2 bands (ISO/IEC 11172-3 2.4.2.7), then the six of MPEG-2 and 2.5 (ISO/IEC 13818-3 2.4.3.2, nr_of_sfb1 to nr_of_sfb4).
     internal static readonly byte[] Partitions =
     [
         6, 5, 5, 5, 6, 5, 5, 5, 6, 5, 7, 3, 11, 10, 0, 0, 7, 7, 7, 0, 6, 6, 6, 3, 8, 8, 5, 0,
@@ -183,7 +183,7 @@ internal static partial class Layer3Tables
         5, 6, 6, 1, 4, 4, 4, 1, 4, 3, 1, 1,
     ];
 
-    // MPEG-1 scalefac_compress as slen1 * 4 + slen2 (ISO/IEC 11172-3 Table 3-B.6 style code).
+    // MPEG-1 scalefac_compress as slen1 * 4 + slen2 (ISO/IEC 11172-3 2.4.2.7).
     internal static readonly byte[] Mpeg1SlenCode =
     [
         0, 1, 2, 3, 12, 5, 6, 7, 9, 10, 11, 13, 14, 15, 18, 19,

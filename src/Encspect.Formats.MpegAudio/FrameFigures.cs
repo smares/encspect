@@ -24,6 +24,72 @@ internal static class FrameFigures
         public bool HasBandwidth => Bandwidth >= 0;
 
         public static Figure Empty { get; } = new(None, None, None);
+
+        // What the multichannel extension adds, or null.
+        public McFigure? Multichannel { get; init; }
+    }
+
+    // The coding of a frame's multichannel extension: the subband groups (of 12; of 8 for prediction) that use dynamic crosstalk and prediction, and the bits of each
+    // transmission channel T0 to T4 and the LFE (index 0 to 5), or None where the configuration has no such channel.
+    public sealed record McFigure(int CrosstalkGroups, int PredictionGroups, long[] Bits)
+    {
+        public const int Channels = 6;
+
+        public const int CrosstalkGroupCount = 12;
+
+        public const int PredictionGroupCount = 8;
+
+        public long Total => Bits.Where(b => b >= 0).Sum();
+    }
+
+    // The multichannel figure of a frame whose extension reads and holds its CRC (ISO/IEC 13818-3 2.5.1.15, 2.5.1.17, 2.5.2.15): T0 and T1 are the base channels' bits as
+    // Layer2 counts them; an additional channel counts the allocation fields it transmits, and its scfsi, scalefactors and samples where it has an allocation (a channel
+    // that dynamic crosstalk leaves out has no allocation field and no samples of its own, but its scalefactors); the LFE its 4-bit allocation, scalefactor and samples.
+    // The composite status information and the predictors, which belong to no channel, are left out.
+    public static McFigure? Multichannel(Layer2Multichannel mc, Figure baseFigure)
+    {
+        if (!baseFigure.HasShare || !mc.IsCrcValid)
+        {
+            return null;
+        }
+
+        var bits = new long[McFigure.Channels];
+        Array.Fill(bits, (long)None);
+        bits[0] = baseFigure.FirstBits;
+        bits[1] = baseFigure.SecondBits;
+        ReadOnlySpan<int> scalefactorCounts = [3, 2, 1, 2];
+        for (int ch = 0; ch < mc.AdditionalChannels; ch++)
+        {
+            long total = 0;
+            for (int sb = 0; sb < mc.Subbands; sb++)
+            {
+                int[] levels = Layer2AudioData.Levels(mc.Table, sb);
+                int index = mc.AllocationIndex(2 + ch, sb);
+                bool isOwn = mc.SampleSource(2 + ch, sb) == 2 + ch;
+                total += isOwn ? Layer2AudioData.AllocationWidth(levels) : 0;
+                if (index != 0)
+                {
+                    total += 2 + (6 * scalefactorCounts[mc.ScfsiValue(2 + ch, sb)]);
+                    total += isOwn ? 12 * Layer2AudioData.SampleBits(levels[index]) : 0;
+                }
+            }
+
+            bits[2 + ch] = total;
+        }
+
+        if (mc.HasLfe)
+        {
+            bits[5] = 4 + (mc.LfeAllocation == 0 ? 0 : 6 + (12 * (mc.LfeAllocation + 1)));
+        }
+
+        int crosstalk = 0;
+        for (int g = 0; g < McFigure.CrosstalkGroupCount; g++)
+        {
+            crosstalk += (mc.HasDynamicCrosstalk && (mc.DynamicMode[g] != 0 || mc.SecondStereo[g] != 0)) ? 1 : 0;
+        }
+
+        int prediction = mc.HasPrediction ? mc.HasPredictionInGroup.Count(p => p) : 0;
+        return new McFigure(crosstalk, prediction, bits);
     }
 
     // Layer III: part2_3_length of every granule and channel, summed per channel (2.4.1.7, 2.4.2.7). It counts the

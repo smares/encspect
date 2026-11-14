@@ -2,7 +2,7 @@
 id: block-switching
 title: Block types and block switching
 related: filter-bank, granules-and-frames, scfsi
-references: ISO/IEC 11172-3 2.4.2.7, 2.4.3.4; ATSC A/52:2018 5.4.3.1
+references: ISO/IEC 11172-3 2.4.2.7, 2.4.3.4.10.2, 2.4.3.4.10.3; ATSC A/52:2018 5.4.3.1
 ---
 
 **The problem: pre-echo.** Layer III transforms each granule of 576 samples, about 13 milliseconds at 44.1 kHz, into frequency lines. Quantization noise then spreads over the whole length of the transform. Where a quiet passage ends in a sudden attack, the noise the attack's bits cause spreads to before the attack, into the quiet part, where the ear hears it as a soft smear that precedes the sound: pre-echo.

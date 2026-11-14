@@ -2,10 +2,10 @@
 id: free-format
 title: Free format
 related: frame-header, bitrate-modes, frame-sync
-references: ISO/IEC 11172-3 2.4.2.3
+references: ISO/IEC 11172-3 2.4.2.3, 2.4.3.1; ISO/IEC 13818-3 2.4.2.3
 ---
 
-**What it is.** The bitrate index 0 in a frame header means free format: the stream has a fixed bitrate that is not one of the table's values. Free format exists for applications that need a bitrate in between, or above the table's highest; LAME, for example, can write free-format streams up to 640 kbps.
+**What it is.** The bitrate index 0 in a frame header means free format: the stream has a fixed bitrate that is not one of the table's values. Free format exists for applications that need a bitrate the table does not list; ISO/IEC 11172-3 does not require a decoder to support free-format bitrates above 448, 384 and 320 kbps for Layers I, II and III (256, 160 and 160 kbps in MPEG-2). LAME, for example, can write free-format streams up to 640 kbps.
 
 **How a decoder copes.** The header does not give a free-format frame's length, so a decoder finds it from the distance to the next frame's header, once, and then expects every frame of the stream to have that length, plus the padding slot where it is set. ISO/IEC 11172-3 requires the bitrate to stay fixed within a free-format stream. Not every decoder supports free format, and some support it only up to a limit.
 

@@ -731,8 +731,10 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      - name: Build the PCM dump tool
-        run: dotnet build --configuration Release tests/Encspect.PcmDump
+      - name: Build the PCM dump tool and the analyzer
+        run: |
+          dotnet build --configuration Release tests/Encspect.PcmDump
+          dotnet build --configuration Release src/Encspect.Cli
 
       # The generated tables equal what mpeg_tables.py writes from the minimp3 in third_party.
       - name: Check the generated MPEG audio tables
@@ -741,6 +743,10 @@ jobs:
       # The analyzer's decoded samples equal minimp3's and FFmpeg's within the bounds of docs/development.md ("MPEG audio decoding"), fixture by fixture.
       - name: Compare the decoded PCM of the MPEG fixtures
         run: python3 scripts/fixtures/crosscheck_mpeg_pcm.py
+
+      # The multichannel decoder's dematrixing and de-normalization equal mctoolamed's for every dematrix procedure and tc_allocation, on the mctoolame fixtures with those fields rewritten.
+      - name: Compare the dematrixing of the multichannel fixtures
+        run: python3 -I scripts/fixtures/crosscheck_mpeg_dematrix.py
 
       # Layer III Coded Bandwidth per frame equals what minimp3's Huffman loop decodes, apart from the differences the script lists.
       - name: Compare the Coded Bandwidth of the MPEG fixtures

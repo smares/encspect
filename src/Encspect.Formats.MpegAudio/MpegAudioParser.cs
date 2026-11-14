@@ -124,6 +124,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         }
 
         DecideMultichannel(stream);
+        stream.Feed.DecodeDeferred(stream);
         CheckMusicCrcs(stream);
         foreach (RegionState region in stream.Regions)
         {
@@ -455,7 +456,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         DecodeFeed feed = state.Feed;
         if (feed.Previous is not { } previousHeader || !header.IsSameStream(previousHeader))
         {
-            feed.StartStream(index, region.Node);
+            feed.StartStream(index, region.Node, header);
         }
 
         feed.Previous = header;
@@ -877,7 +878,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             return new Layer2Record(audioBytes, null, undefined);
         }
 
-        int[,] baseAllocation = BaseAllocation(audio);
+        int[,] baseAllocation = audio.BaseAllocation();
         var mc = Layer2Multichannel.Read(bytes, audio.End, bytes.Length * 8, baseAllocation, header.SampleRate);
         if (!mc.HeaderFits)
         {
@@ -893,18 +894,6 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
                 $"{Frames(count, "needs", "need")} more bits for {(count == 1 ? "its" : "their")} Layer {header.LayerName} audio data than {(count == 1 ? "it holds" : "they hold")}, the first at 0x{position:X}.");
     }
 
-    private static int[,] BaseAllocation(Layer2AudioData audio)
-    {
-        var allocation = new int[2, audio.Subbands];
-        for (int sb = 0; sb < audio.Subbands; sb++)
-        {
-            allocation[0, sb] = audio.Allocation[0, sb];
-            allocation[1, sb] = audio.Allocation[1, sb];
-        }
-
-        return allocation;
-    }
-
     // A Layer II frame's multichannel candidate, read again from the bytes its record keeps: those
     // of the audio data up to the samples, which give the base allocation and where the candidate
     // starts, then the candidate's.
@@ -913,7 +902,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         var audio = Layer2AudioData.Read(build.Store.Span(frame.Data, frame.DataLength).ToArray(), header);
         int first = audio.End / 8;
         byte[] bytes = build.Store.Span(frame.Data + (uint)frame.DataLength, frame.MultichannelLength).ToArray();
-        var mc = Layer2Multichannel.Read(bytes, audio.End - (first * 8), (int)(frame.Length - first) * 8, BaseAllocation(audio), header.SampleRate);
+        var mc = Layer2Multichannel.Read(bytes, audio.End - (first * 8), (int)(frame.Length - first) * 8, audio.BaseAllocation(), header.SampleRate);
         return (mc, frame.Offset + first);
     }
 
@@ -988,6 +977,11 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             {
                 state.Findings.Add(Severity.Warning, "mpeg-audio.multichannel-ancillary-overflow", node, count =>
                     $"{Frames(count, "declares", "declare")} more MPEG-1 ancillary bytes in {(count == 1 ? "its" : "their")} multichannel header than the frame holds after the header and its CRC, the first {Counts.Of(mc.AncillaryBytes, "byte", "bytes")} at 0x{frame.Offset:X}.");
+            }
+            else if (mc.UsesFlagReading)
+            {
+                state.Findings.Add(Severity.Warning, "mpeg-audio.multichannel-reference-software-reading", node, count =>
+                    $"{Frames(count, "follows", "follow")} the reading of the ISO reference software, not ISO/IEC 13818-3 2.5.2.15: {(count == 1 ? "its" : "their")} multichannel CRC holds only where dyn_cross_LR names the base channel of every copied channel, the first at 0x{frame.Offset:X}.");
             }
             else if (mc.Fits && !mc.IsCrcValid)
             {
@@ -1336,7 +1330,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
     // A free-format chain is only four bytes of header repeating at one distance, which data with a header-like word at a fixed period
     // (the 0xFFFF that ends a DTS subframe, in frames of one size) makes as well. Real free-format frames hold what their headers
     // promise, and those with a CRC pass it: the chain's frames that fit in the data must be well-formed, and in Layers I and II, where
-    // free format is a curiosity, one of them must be protected and have the CRC its header says (ISO/IEC 11172-3 2.4.1.4).
+    // free format is a curiosity, one of them must be protected and have the CRC its header says (ISO/IEC 11172-3 2.4.1.4, 2.4.3.1).
     private static bool IsCredibleFreeFormat(BlockReader blocks, long position, MpegHeader first, int freeLength, long end)
     {
         var protectedFrames = new List<bool>();
