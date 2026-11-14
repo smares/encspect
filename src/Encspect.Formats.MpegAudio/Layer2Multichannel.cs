@@ -38,7 +38,7 @@ internal sealed class Layer2Multichannel
     ];
 
     // The subband group of each subband (13818-3 2.5.2.15, tc_sbgr_select): 0 to 7 alone, 8 and 9, 10 and 11, 12 to 15, then 16 and above.
-    private static readonly int[] Groups =
+    internal static readonly int[] Groups =
         [.. Enumerable.Range(0, 30).Select(sb => sb < 8 ? sb : sb < 10 ? 8 : sb < 12 ? 9 : sb < 16 ? 10 : 11)];
 
     // How a mode fills an additional channel: read from the bitstream, copied from a base channel
@@ -122,6 +122,9 @@ internal sealed class Layer2Multichannel
     private readonly List<(string Name, int Bit, int Length, NodeValue Value, string Description)> _status = [];
     private readonly List<(int Subband, int Channel, int Bit, int Index)> _allocation = [];
     private readonly List<(int Subband, int Channel, int Bit, int Value)> _scfsi = [];
+    private int[,] _indexes = new int[5, 30];
+    private int[,] _sources = new int[5, 30];
+    private int[,] _scfsiValues = new int[5, 30];
 
     private Layer2Multichannel()
     {
@@ -149,6 +152,55 @@ internal sealed class Layer2Multichannel
     public bool UsesFlagReading { get; private set; }
 
     public int DematrixProcedure { get; private set; }
+
+    // What the decoder needs of the side information (docs/design/lossy-decoders.md, "MPEG-2 multichannel"): the allocation table, the number of additional
+    // channels T2 to T4, the composite status information per subband group and the predictor selection of groups 0 to 7 (by predictor, 2 bits each).
+    public int Table { get; private set; }
+
+    public int AdditionalChannels { get; private set; }
+
+    public int Subbands => Layer2AudioData.SubbandCount(Table);
+
+    public bool HasDynamicCrosstalk { get; private set; }
+
+    public int DynamicLeftRight { get; private set; }
+
+    public int[] ChannelAllocation { get; private set; } = new int[12];
+
+    public int[] DynamicMode { get; private set; } = new int[12];
+
+    public int[] SecondStereo { get; private set; } = new int[12];
+
+    public bool HasPrediction { get; private set; }
+
+    public bool[] HasPredictionInGroup { get; } = new bool[8];
+
+    public int[] PredictorCount { get; } = new int[8];
+
+    public int[][] PredictorSelect { get; } = Enumerable.Range(0, 8).Select(_ => new int[6]).ToArray();
+
+    // The allocation index of channel ch (0 and 1 the base channels, 2 to 4 the additional ones) in a subband, after copying, and the channel whose quantized
+    // samples it takes: itself where they are transmitted, another channel where dynamic crosstalk copies them, -1 where it has none.
+    public int AllocationIndex(int channel, int subband) => _indexes[channel, subband];
+
+    public int SampleSource(int channel, int subband) => _sources[channel, subband];
+
+    public int ScfsiValue(int channel, int subband) => _scfsiValues[channel, subband];
+
+    // What ReadData read, in bits from the frame's start: the end of the multichannel data and whether it lies within the base frame.
+    public int DataEnd { get; private set; }
+
+    public bool DataFits => DataEnd <= End;
+
+    // Prediction: the delay compensation and the coefficients (already (value - 127) / 32) of predictor px of a subband group, three taps each.
+    public int[,] PredictionDelay { get; } = new int[8, 6];
+
+    public float[,,] PredictionCoefficient { get; } = new float[8, 6, 3];
+
+    // The scalefactor index of the LFE channel, and of each additional channel in each subband for each of three parts, plus one (0 for none).
+    public int LfeScalefactor { get; private set; }
+
+    public byte[,,] Scalefactor { get; } = new byte[3, 30, 3];
 
     public int MultilingualChannels { get; private set; }
 
@@ -272,6 +324,7 @@ internal sealed class Layer2Multichannel
         mc.End = Math.Max(end - (8 * mc.AncillaryBytes), Math.Min(statusStart, end));
 
         (int channels, int tcBits, int dynBits, int predictionRow) = Shapes[mc.Surround][mc.Center & 1];
+        mc.AdditionalChannels = channels;
         int tcSelect = bits.Read(1);
         int dynamic = Field(mc._status, "HasDynamicCrosstalk", 1, Bool, Explain.McHasDynamicCrosstalk);
         int prediction = Field(mc._status, "HasPrediction", 1, Bool, Explain.McHasPrediction);
@@ -283,9 +336,15 @@ internal sealed class Layer2Multichannel
         int[] dynMode = new int[12];
         int[] secondStereo = new int[12];
         int dynLeftRight = 0;
+        mc.ChannelAllocation = tc;
+        mc.DynamicMode = dynMode;
+        mc.SecondStereo = secondStereo;
+        mc.HasDynamicCrosstalk = dynamic == 1;
+        mc.HasPrediction = prediction == 1;
         if (dynamic == 1)
         {
             dynLeftRight = Field(mc._status, "IsDynamicCrosstalkFromRight", 1, Bool, Explain.McFromRight);
+            mc.DynamicLeftRight = dynLeftRight;
             int bit = bits.Position;
             for (int g = 0; g < 12; g++)
             {
@@ -306,9 +365,11 @@ internal sealed class Layer2Multichannel
             for (int g = 0; g < 8; g++)
             {
                 flags[g] = bits.Read(1);
-                for (int p = 0; p < (flags[g] == 1 ? Predictors[predictionRow][dynMode[g]] : 0); p++)
+                mc.HasPredictionInGroup[g] = flags[g] == 1;
+                mc.PredictorCount[g] = flags[g] == 1 ? Predictors[predictionRow][dynMode[g]] : 0;
+                for (int p = 0; p < mc.PredictorCount[g]; p++)
                 {
-                    bits.Read(2);
+                    mc.PredictorSelect[g][p] = bits.Read(2);
                 }
             }
 
@@ -322,6 +383,7 @@ internal sealed class Layer2Multichannel
         }
 
         int table = rate == 48000 ? 0 : 1;
+        mc.Table = table;
         mc.AllocationStart = bits.Position;
 
         mc.HasCrosstalkChoice = dynamic == 1 && channels == 2 && mc.Surround != 3;
@@ -350,6 +412,7 @@ internal sealed class Layer2Multichannel
     {
         _allocation.Clear();
         _scfsi.Clear();
+        Array.Clear(_scfsiValues);
         var bits = new BitReader(data);
         for (int skipped = 0; skipped < AllocationStart; skipped += 31)
         {
@@ -357,12 +420,21 @@ internal sealed class Layer2Multichannel
         }
 
         var allocation = new int[5, 30];
+        var sources = new int[5, 30];
+        for (int sb = 0; sb < 30; sb++)
+        {
+            sources[1, sb] = 1;
+            sources[2, sb] = sources[3, sb] = sources[4, sb] = -1;
+        }
+
         for (int sb = 0; sb < Layer2AudioData.SubbandCount(table); sb++)
         {
             int width = Layer2AudioData.AllocationWidth(Layer2AudioData.Levels(table, sb));
             int g = Groups[sb];
             int left = sb < baseAllocation.GetLength(1) ? baseAllocation[0, sb] : 0;
             int right = sb < baseAllocation.GetLength(1) ? baseAllocation[1, sb] : 0;
+            allocation[0, sb] = left;
+            allocation[1, sb] = right;
 
             int Transmit(int ch)
             {
@@ -372,8 +444,11 @@ internal sealed class Layer2Multichannel
                 return value;
             }
 
-            Allocate(this, allocation, sb, channels, dynMode[g], secondStereo[g], tc[g], dynLeftRight, left, right, Transmit);
+            Allocate(this, allocation, sources, sb, channels, dynMode[g], secondStereo[g], tc[g], dynLeftRight, Transmit);
         }
+
+        _indexes = allocation;
+        _sources = sources;
 
         ScfsiStart = bits.Position;
         for (int sb = 0; sb < Layer2AudioData.SubbandCount(table); sb++)
@@ -382,7 +457,9 @@ internal sealed class Layer2Multichannel
             {
                 if (allocation[ch, sb] != 0)
                 {
-                    _scfsi.Add((sb, ch, bits.Position, bits.Read(2)));
+                    int value = bits.Read(2);
+                    _scfsiValues[ch, sb] = value;
+                    _scfsi.Add((sb, ch, bits.Position - 2, value));
                 }
             }
         }
@@ -398,9 +475,10 @@ internal sealed class Layer2Multichannel
 
     // Decides the allocation index of T2 to T4 in one subband, reading the fields the bitstream
     // carries in channel order; the rules are those of section 1 of
-    // docs/design/mpeg-clean-room-rules.md.
-    private static void Allocate(Layer2Multichannel mc, int[,] a, int sb, int channels, int mode, int second,
-        int tc, int fromRight, int left, int right, Func<int, int> transmit)
+    // docs/design/mpeg-clean-room-rules.md. a holds the base channels' indexes in rows 0 and 1;
+    // sources gets the channel whose quantized samples each additional channel takes.
+    private static void Allocate(Layer2Multichannel mc, int[,] a, int[,] sources, int sb, int channels, int mode, int second,
+        int tc, int fromRight, Func<int, int> transmit)
     {
         bool centerCoded = mc.Center is 1 or 3;
         Source[] plan;
@@ -427,31 +505,178 @@ internal sealed class Layer2Multichannel
         string[] carries = Carries(mc.Surround, centerCoded);
         for (int i = 0; i < channels; i++)
         {
-            int value;
+            int from = -1;
             if (i == 0 && mc.Center == 3 && sb >= 12)
             {
-                value = 0;
-            }
-            else
-            {
-                value = plan[i] switch
-                {
-                    Source.Read => transmit(2 + i),
-                    Source.Base => mc.UsesFlagReading && IsUndecided(mc, carries, i, tc, fromRight) ? (fromRight == 1 ? right : left) : carries[i][tc] switch
-                    {
-                        'L' => left,
-                        'R' => right,
-                        _ => fromRight == 1 ? right : left,
-                    },
-                    Source.T0 => left,
-                    Source.T1 => right,
-                    Source.T2 => a[2, sb],
-                    Source.T3 => a[3, sb],
-                    _ => 0,
-                };
+                a[2, sb] = 0;
+                continue;
             }
 
-            a[2 + i, sb] = value;
+            switch (plan[i])
+            {
+                case Source.Read:
+                    a[2 + i, sb] = transmit(2 + i);
+                    sources[2 + i, sb] = 2 + i;
+                    continue;
+                case Source.Base:
+                    from = mc.UsesFlagReading && IsUndecided(mc, carries, i, tc, fromRight) ? fromRight : carries[i][tc] switch
+                    {
+                        'L' => 0,
+                        'R' => 1,
+                        _ => fromRight,
+                    };
+                    break;
+                case Source.T0:
+                    from = 0;
+                    break;
+                case Source.T1:
+                    from = 1;
+                    break;
+                case Source.T2:
+                    from = 2;
+                    break;
+                case Source.T3:
+                    from = 3;
+                    break;
+            }
+
+            a[2 + i, sb] = from < 0 ? 0 : a[from, sb];
+            sources[2 + i, sb] = from < 0 ? -1 : sources[from, sb];
+        }
+    }
+
+    // The quantizer of an allocation's level count as the Layer I and II decoder numbers them: 2 to 16 the bits of each sample, 17 to 19 the grouped codes of 3, 5 and 9 levels.
+    public static int Quantizer(int levels) => levels switch
+    {
+        3 => 17,
+        5 => 18,
+        9 => 19,
+        _ => 32 - int.LeadingZeroCount(levels),
+    };
+
+    // Reads what follows the side information (ISO/IEC 13818-3 2.5.1.17, 2.5.2.17): the predictors, the LFE and the scalefactors, and where the samples end. With planes
+    // (one per channel of stride entries, as Layer12Scale.ReadSamples lays them out: channels 2 to 4 the additional ones, 5 the LFE's twelve samples) it also reads
+    // the sample codes, as the signed integers the decoder scales, provided that the data fit the base frame.
+    public void ReadData(byte[] data, Span<int> planes = default, int stride = 0)
+    {
+        var bits = new BitReader(data);
+        for (int skipped = 0; skipped < SideInfoEnd; skipped += 31)
+        {
+            bits.Read(Math.Min(31, SideInfoEnd - skipped));
+        }
+
+        Array.Clear(PredictionDelay);
+        Array.Clear(PredictionCoefficient);
+        Array.Clear(Scalefactor);
+        LfeScalefactor = 0;
+        if (HasPrediction)
+        {
+            for (int g = 0; g < 8; g++)
+            {
+                for (int px = 0; px < PredictorCount[g]; px++)
+                {
+                    int taps = PredictorSelect[g][px];
+                    if (taps == 0)
+                    {
+                        continue;
+                    }
+
+                    PredictionDelay[g, px] = bits.Read(3);
+                    for (int pci = 0; pci < taps; pci++)
+                    {
+                        PredictionCoefficient[g, px, pci] = (bits.Read(8) - 127) / 32f;
+                    }
+                }
+            }
+        }
+
+        if (LfeAllocation != 0)
+        {
+            LfeScalefactor = bits.Read(6);
+        }
+
+        int limit = Subbands;
+        for (int sb = 0; sb < limit; sb++)
+        {
+            for (int ch = 0; ch < AdditionalChannels; ch++)
+            {
+                if (_indexes[2 + ch, sb] == 0)
+                {
+                    continue;
+                }
+
+                int mask = 4 + ((19 >> _scfsiValues[2 + ch, sb]) & 3);
+                int current = 0;
+                for (int part = 0, m = 4; m != 0; m >>= 1, part++)
+                {
+                    if ((mask & m) != 0)
+                    {
+                        current = bits.Read(6) + 1;
+                    }
+
+                    Scalefactor[ch, sb, part] = (byte)current;
+                }
+            }
+        }
+
+        int start = bits.Position;
+        long total = LfeAllocation != 0 ? 12 * (LfeAllocation + 1) : 0;
+        for (int sb = 0; sb < limit; sb++)
+        {
+            for (int ch = 0; ch < AdditionalChannels; ch++)
+            {
+                if (_indexes[2 + ch, sb] != 0 && _sources[2 + ch, sb] == 2 + ch)
+                {
+                    total += 12 * Layer2AudioData.SampleBits(Layer2AudioData.Levels(Table, sb)[_indexes[2 + ch, sb]]);
+                }
+            }
+        }
+
+        DataEnd = (int)Math.Min(int.MaxValue, start + total);
+        if (planes.IsEmpty || !DataFits || bits.IsOverrun)
+        {
+            return;
+        }
+
+        // Each of the twelve granules holds three samples of each channel and one LFE sample.
+        for (int gr = 0; gr < 12; gr++)
+        {
+            if (LfeAllocation != 0)
+            {
+                int width = LfeAllocation + 1;
+                planes[(5 * stride) + gr] = bits.Read(width) - ((1 << (width - 1)) - 1);
+            }
+
+            for (int sb = 0; sb < limit; sb++)
+            {
+                for (int ch = 0; ch < AdditionalChannels; ch++)
+                {
+                    int index = _indexes[2 + ch, sb];
+                    if (index == 0 || _sources[2 + ch, sb] != 2 + ch)
+                    {
+                        continue;
+                    }
+
+                    int levels = Layer2AudioData.Levels(Table, sb)[index];
+                    Span<int> destination = planes.Slice(((2 + ch) * stride) + ((((gr / 4) * 32) + sb) * 12) + ((gr % 4) * 3), 3);
+                    if (levels is 3 or 5 or 9)
+                    {
+                        int code = bits.Read(Layer2AudioData.SampleBits(levels));
+                        for (int k = 0; k < 3; k++, code /= levels)
+                        {
+                            destination[k] = (code % levels) - (levels / 2);
+                        }
+                    }
+                    else
+                    {
+                        int width = Layer2AudioData.SampleBits(levels) / 3;
+                        for (int k = 0; k < 3; k++)
+                        {
+                            destination[k] = bits.Read(width) - ((1 << (width - 1)) - 1);
+                        }
+                    }
+                }
+            }
         }
     }
 

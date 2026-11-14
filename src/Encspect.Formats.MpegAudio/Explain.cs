@@ -273,6 +273,22 @@ internal static class Explain
     public const string BandwidthMostCommon = "The coded bandwidth most frames have; the lowest of them where several are equally common.";
     public const string BandwidthHighest = "The highest coded bandwidth of any frame.";
     public const string ChannelBitShare = "How the audio bits of stereo, joint stereo and dual channel frames divide between the two channels, as the first channel's share. Layer III counts part2_3_length of every granule and channel; Layers I and II count each channel's allocation, scalefactor selection information (scfsi), scalefactors and samples, leaving out the allocation and samples above the intensity stereo bound that both channels share. The first channel is left in left/right stereo, dual channel and intensity stereo frames and mid in mid/side frames (in a frame with both tools, only below the intensity stereo region), so a stream that switches between them mixes the two.";
+    public const string TransmissionChannelCoding = "How the frames with the multichannel extension code the additional channels: how many use dynamic crosstalk and prediction, and how the audio bits divide between the transmission channels (ISO/IEC 13818-3 2.5.2.15, 2.5.2.17). Counted over the frames whose multichannel CRC holds.";
+    public const string TransmissionCrosstalk = "The subband groups (12 a frame) of the frames that use dynamic crosstalk, and how many frames use it in none, up to half or more than half of them: a channel that crosstalk leaves out sends no allocation or samples of its own and copies those of another channel (2.5.2.15, dyn_cross_mode; a second stereo program's dyn_second_stereo counts too).";
+    public const string TransmissionPrediction = "The subband groups of the first eight (8 a frame) that use prediction, and how many frames use it in none, up to half or more than half of them: an additional channel is then coded as its difference from a prediction from the two base channels (2.5.3.2.1.3, mc_prediction).";
+    public const string TransmissionBits = "The share of the audio bits of the frames with the extension that each transmission channel takes, in percent. T0 and T1 are the base channels, counted as the channel bit share counts them; T2 to T4 count the allocation fields they transmit, scfsi, scalefactors and samples; the LFE its allocation, scalefactor and samples. The composite status information and the predictors belong to no channel and are left out.";
+    public static readonly string[] TransmissionChannelBits =
+    [
+        "The share of the bits taken by T0, the base channel that carries Lo (the left channel, or the matrix of the left, center and left surround channels).",
+        "The share of the bits taken by T1, the base channel that carries Ro.",
+        "The share of the bits taken by T2, the first additional transmission channel.",
+        "The share of the bits taken by T3, the second additional transmission channel.",
+        "The share of the bits taken by T4, the third additional transmission channel.",
+        "The share of the bits taken by the LFE channel.",
+    ];
+    public const string UseNone = "No subband group of the frame uses it.";
+    public const string UseSome = "Up to half of the frame's subband groups use it.";
+    public const string UseMost = "More than half of the frame's subband groups use it.";
     public const string ShareLowest = "The smallest first channel share of any frame.";
     public const string ShareOverall = "The first channel's bits over both channels' bits in all frames.";
     public const string ShareHighest = "The largest first channel share of any frame.";
@@ -316,6 +332,17 @@ internal static class SeriesText
     public const string ReservoirFillOverTime = "The mean bit reservoir fill of the frames that start in each second of audio.";
     public const string CodedBandwidth = "The coded bandwidth of each frame in whole hertz: in Layers I and II the upper edge of the highest subband with a bit allocation other than 0 in either channel (ISO/IEC 11172-3 2.4.2.5, 2.4.2.6), in Layer III the upper edge of the highest line that the big-values and count1 regions of its granules code (2.4.2.7). It is the bound the frame's own data states, read without reconstructing audio; a band below it may still be quiet, and it is not the encoder's lowpass setting.";
     public const string CodedBandwidthOverTime = "The highest coded bandwidth of the frames that start in each second of audio.";
+    public const string DynamicCrosstalkUse = "How many of each frame's 12 subband groups use dynamic crosstalk, in the frames with the multichannel extension: none, up to half or more than half. A channel that crosstalk leaves out copies another channel's samples and sends only its scalefactors.";
+    public const string PredictionUse = "How many of each frame's 8 subband groups that can use prediction do so, in the frames with the multichannel extension: none, up to half or more than half. A predicted channel sends only its difference from a prediction from the two base channels.";
+    public static readonly string[] TransmissionChannelBitShare =
+    [
+        "Each frame's share of its audio bits that T0 takes, in percent, among the transmission channels T0 to T4 and the LFE; the base channel that carries Lo.",
+        "Each frame's share of its audio bits that T1 takes, in percent, among the transmission channels; the base channel that carries Ro.",
+        "Each frame's share of its audio bits that T2 takes, in percent: allocation, scfsi, scalefactors and samples of the first additional channel.",
+        "Each frame's share of its audio bits that T3 takes, in percent: allocation, scfsi, scalefactors and samples of the second additional channel.",
+        "Each frame's share of its audio bits that T4 takes, in percent: allocation, scfsi, scalefactors and samples of the third additional channel.",
+        "Each frame's share of its audio bits that the LFE channel takes, in percent.",
+    ];
     public const string ChannelBitShare = "The first channel's share of the audio bits of each stereo, joint stereo or dual channel frame, in percent; the second channel has the rest. Layer III counts part2_3_length of every granule and channel, the scalefactors and the Huffman-coded values (ISO/IEC 11172-3 2.4.2.7). Layers I and II count each channel's allocation, scalefactor selection information (scfsi), scalefactors and samples; above the intensity stereo bound both channels share the allocation and the samples, and those bits count toward neither channel nor the total. The first channel is left in left/right stereo, dual channel and intensity stereo frames and mid in mid/side frames (in a frame with both tools, only below the intensity stereo region).";
     public const string ChannelBitShareOverTime = "The first channel's share of the audio bits of the frames that start in each second of audio, bits over bits, in percent; seconds without a stereo frame have no point. A stream that switches between left/right and mid/side frames mixes the two in one share.";
 

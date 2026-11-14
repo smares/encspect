@@ -183,6 +183,85 @@
                   ]
                 },
                 {
+                  "name": "Transmission Channel Coding",
+                  "value": 5,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 6912,
+                  "children": [
+                    {
+                      "name": "Dynamic Crosstalk",
+                      "value": "0 of 60 subband groups (0.0%)",
+                      "offset": 0,
+                      "length": 6912,
+                      "children": [
+                        {
+                          "name": "In no subband group",
+                          "value": "5 frames (100.0%)",
+                          "offset": 0,
+                          "length": 6912
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Prediction",
+                      "value": "0 of 40 subband groups (0.0%)",
+                      "offset": 0,
+                      "length": 6912,
+                      "children": [
+                        {
+                          "name": "In no subband group",
+                          "value": "5 frames (100.0%)",
+                          "offset": 0,
+                          "length": 6912
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Bits per Transmission Channel",
+                      "offset": 0,
+                      "length": 6912,
+                      "children": [
+                        {
+                          "name": "T0",
+                          "value": 22.7,
+                          "unit": "%",
+                          "offset": 0,
+                          "length": 6912
+                        },
+                        {
+                          "name": "T1",
+                          "value": 12.7,
+                          "unit": "%",
+                          "offset": 0,
+                          "length": 6912
+                        },
+                        {
+                          "name": "T2",
+                          "value": 21.1,
+                          "unit": "%",
+                          "offset": 0,
+                          "length": 6912
+                        },
+                        {
+                          "name": "T3",
+                          "value": 22,
+                          "unit": "%",
+                          "offset": 0,
+                          "length": 6912
+                        },
+                        {
+                          "name": "T4",
+                          "value": 21.5,
+                          "unit": "%",
+                          "offset": 0,
+                          "length": 6912
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
                   "name": "Ancillary Data",
                   "value": 5636,
                   "unit": "bytes",
@@ -16658,6 +16737,131 @@
             ]
           },
           {
+            "name": "Transmission Channel Bit Share T0",
+            "unit": "%",
+            "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Transmission Channel Bit Share T0",
+            "declaredRange": {
+              "minimum": 0,
+              "maximum": 100
+            },
+            "x": [
+              0,
+              1152,
+              2304,
+              4608,
+              5760
+            ],
+            "values": [
+              23.9,
+              21.9,
+              22.4,
+              21.6,
+              23.7
+            ]
+          },
+          {
+            "name": "Transmission Channel Bit Share T1",
+            "unit": "%",
+            "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Transmission Channel Bit Share T1",
+            "declaredRange": {
+              "minimum": 0,
+              "maximum": 100
+            },
+            "x": [
+              0,
+              1152,
+              2304,
+              4608,
+              5760
+            ],
+            "values": [
+              11.5,
+              13,
+              13.1,
+              13,
+              12.8
+            ]
+          },
+          {
+            "name": "Transmission Channel Bit Share T2",
+            "unit": "%",
+            "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Transmission Channel Bit Share T2",
+            "declaredRange": {
+              "minimum": 0,
+              "maximum": 100
+            },
+            "x": [
+              0,
+              1152,
+              2304,
+              4608,
+              5760
+            ],
+            "values": [
+              20.8,
+              21.4,
+              21.7,
+              21,
+              20.8
+            ]
+          },
+          {
+            "name": "Transmission Channel Bit Share T3",
+            "unit": "%",
+            "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Transmission Channel Bit Share T3",
+            "declaredRange": {
+              "minimum": 0,
+              "maximum": 100
+            },
+            "x": [
+              0,
+              1152,
+              2304,
+              4608,
+              5760
+            ],
+            "values": [
+              22.3,
+              21.9,
+              21.9,
+              22.6,
+              21.3
+            ]
+          },
+          {
+            "name": "Transmission Channel Bit Share T4",
+            "unit": "%",
+            "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Transmission Channel Bit Share T4",
+            "declaredRange": {
+              "minimum": 0,
+              "maximum": 100
+            },
+            "x": [
+              0,
+              1152,
+              2304,
+              4608,
+              5760
+            ],
+            "values": [
+              21.6,
+              21.9,
+              20.9,
+              21.8,
+              21.3
+            ]
+          },
+          {
             "name": "Channel Bit Share",
             "unit": "%",
             "axis": "frameOffset",
@@ -16772,6 +16976,82 @@
               [
                 0,
                 6
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Dynamic Crosstalk Use",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "In no subband group",
+                "count": 5
+              },
+              {
+                "name": "In up to half of the subband groups",
+                "count": 0
+              },
+              {
+                "name": "In more than half of the subband groups",
+                "count": 0
+              }
+            ],
+            "total": 5,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                0,
+                3
+              ],
+              [
+                null,
+                1
+              ],
+              [
+                0,
+                2
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Prediction Use",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "In no subband group",
+                "count": 5
+              },
+              {
+                "name": "In up to half of the subband groups",
+                "count": 0
+              },
+              {
+                "name": "In more than half of the subband groups",
+                "count": 0
+              }
+            ],
+            "total": 5,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                0,
+                3
+              ],
+              [
+                null,
+                1
+              ],
+              [
+                0,
+                2
               ]
             ],
             "seconds": [

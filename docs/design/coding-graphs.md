@@ -67,6 +67,18 @@ What the MPEG pull request built, and where it differs from what is written abov
 - **Fixtures:** `external-lame-dual-music`, `external-lame-joint-music` and `external-lame-stereo-music` (LAME 3.100, 128 kbps constant, `-t`, six seconds of different content in each channel at 44,100 Hz) and `external-twolame-dual-music` (TwoLAME 0.4.0, Layer II, 192 kbps, dual channel); the manifests hide the frames from the golden (`golden_hides`), which also makes the MediaInfo comparison skip them. The hand-built and encoder-made manifests hold the statistics' new nodes from `stream_stats.py`.
 - **Verification:** `MpegCodingSeriesTests` (per frame, from the frames' own nodes), `FrameFiguresTests`, the manifests' statistics, mp3guessenc's mode extension counts and sum and its block counts, and EncSpot's counting (an emulation of `ProcessNextFrame`, since the console port does not print its counts) in `crosscheck_mpeg_fixtures.py`.
 
+## As built: the MPEG-2 multichannel extension (2026-11-14)
+
+The lead decided on 2026-11-14, with the multichannel decoder ([lossy-decoders.md](lossy-decoders.md#mpeg-2-multichannel)), how the extension's transmission channels show in the figures. The concept exists in no other format, so it has names of its own, and "Channel Bit Share" keeps its two-channel meaning.
+
+- **Tally node** "Transmission Channel Coding" (frames whose multichannel CRC holds), with the children:
+  - "Dynamic Crosstalk" and "Prediction": the value gives the subband groups that use it of all (12 a frame for crosstalk, 8 for prediction), and its children count the frames that use it in no group, up to half or more than half of them ("In no subband group", "In up to half of the subband groups", "In more than half of the subband groups");
+  - "Bits per Transmission Channel": the share of each of T0 to T4 and the LFE of the frames' audio bits, in percent.
+- **Category series** "Dynamic Crosstalk Use" and "Prediction Use" (concept `stereoCoding`, ordered): the same three categories per frame, held equal to the tally by `CategorySummaryTests`.
+- **Numeric series** "Transmission Channel Bit Share T0" to "T4" and "LFE" (%, concept `bitDistribution`, per frame only, one for each channel the configuration has), so the Graphs tab lists them under Bit Distribution with no change to the GUI.
+- **Bits** of a channel: T0 and T1 as "Channel Bit Share" counts them; T2 to T4 the allocation fields they transmit, scfsi, scalefactors and samples (a channel that dynamic crosstalk leaves out has no field or samples of its own, but its scfsi and scalefactors); the LFE its allocation, scalefactor and samples. The composite status information and the predictors belong to no channel and are not counted.
+- **Not covered:** no other format has transmission channels, crosstalk between them or prediction between channels, so there is no counterpart to name. Layers I and III with the extension are not read.
+
 ## As built: AAC
 
 What the AAC pull request built, and where it differs from what is written above:

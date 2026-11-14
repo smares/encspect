@@ -210,6 +210,19 @@ internal sealed class Layer2AudioData
         return audio;
     }
 
+    // The allocation index of the two base channels in each subband, which the multichannel extension copies from.
+    public int[,] BaseAllocation()
+    {
+        var allocation = new int[2, Subbands];
+        for (int sb = 0; sb < Subbands; sb++)
+        {
+            allocation[0, sb] = Allocation[0, sb];
+            allocation[1, sb] = Allocation[1, sb];
+        }
+
+        return allocation;
+    }
+
     public IEnumerable<(int Channel, int Subband, int Index)> UndefinedScalefactors()
     {
         for (int sb = 0; sb < Subbands; sb++)

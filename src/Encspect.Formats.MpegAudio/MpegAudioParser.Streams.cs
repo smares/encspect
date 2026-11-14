@@ -179,9 +179,31 @@ public sealed partial class MpegAudioParser
             return (layout, 0);
         }
 
+        (Layer2Multichannel? first, _, bool isChanged) = ScanMultichannel(state, start, end, isReporting: true);
+        return first is null || isChanged ? (layout, 0) : (first.Layout, first.MultilingualChannels);
+    }
+
+    // What the decoder is told of a stream whose frames carry the multichannel extension in full: the speakers and the configuration, or null where the file carries none, its
+    // configuration changes, or an extension bitstream holds part of the data, which the analysis never sees.
+    private static MultichannelPlan? PlanFor(StreamState state, int start, int end)
+    {
+        if (!state.Build.HasMultichannel)
+        {
+            return null;
+        }
+
+        (Layer2Multichannel? first, bool hasExtension, bool isChanged) = ScanMultichannel(state, start, end, isReporting: false);
+        return first is null || isChanged || hasExtension ? null : new MultichannelPlan(first.Layout, first.ChannelKey, first.Center is 1 or 3, first.Surround, first.HasLfe);
+    }
+
+    // The first frame of the stream among the records start to end whose multichannel extension is verified or continues in an extension bitstream, whether any such
+    // frame has an extension bitstream, and whether a later one states other channels (reported once, where reporting).
+    private static (Layer2Multichannel? First, bool HasExtension, bool IsChanged) ScanMultichannel(StreamState state, int start, int end, bool isReporting)
+    {
         ChunkedList<Entry> frames = state.Build.Frames;
         Layer2Multichannel? first = null;
         int firstIndex = -1;
+        bool hasExtension = false;
         for (int i = start; i < end; i++)
         {
             state.CheckCancellation(i - start);
@@ -197,21 +219,26 @@ public sealed partial class MpegAudioParser
                 continue;
             }
 
+            hasExtension |= mc.HasExtension;
             if (first is null)
             {
                 (first, firstIndex) = (mc, i);
             }
             else if (mc.ChannelKey != first.ChannelKey)
             {
-                Layer2Multichannel from = first;
-                long offset = frame.Offset;
-                state.Findings.Add(Severity.Info, "mpeg-audio.multichannel-configuration-changes", FindingNode(frames[firstIndex]), _ =>
-                    $"The multichannel configuration changes within the stream, from {from.Configuration} to {mc.Configuration} at 0x{offset:X}, so the stream reports the channels of its stereo base.");
-                return (layout, 0);
+                if (isReporting)
+                {
+                    Layer2Multichannel from = first;
+                    long offset = frame.Offset;
+                    state.Findings.Add(Severity.Info, "mpeg-audio.multichannel-configuration-changes", FindingNode(frames[firstIndex]), _ =>
+                        $"The multichannel configuration changes within the stream, from {from.Configuration} to {mc.Configuration} at 0x{offset:X}, so the stream reports the channels of its stereo base.");
+                }
+
+                return (first, hasExtension, true);
             }
         }
 
-        return first is null ? (layout, 0) : (first.Layout, first.MultilingualChannels);
+        return (first, hasExtension, false);
     }
 
     // The region that holds a record: the last that starts at or before it.

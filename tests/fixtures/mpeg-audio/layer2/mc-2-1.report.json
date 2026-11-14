@@ -189,6 +189,71 @@
                   ]
                 },
                 {
+                  "name": "Transmission Channel Coding",
+                  "value": 6,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 5015,
+                  "children": [
+                    {
+                      "name": "Dynamic Crosstalk",
+                      "value": "0 of 72 subband groups (0.0%)",
+                      "offset": 0,
+                      "length": 5015,
+                      "children": [
+                        {
+                          "name": "In no subband group",
+                          "value": "6 frames (100.0%)",
+                          "offset": 0,
+                          "length": 5015
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Prediction",
+                      "value": "0 of 48 subband groups (0.0%)",
+                      "offset": 0,
+                      "length": 5015,
+                      "children": [
+                        {
+                          "name": "In no subband group",
+                          "value": "6 frames (100.0%)",
+                          "offset": 0,
+                          "length": 5015
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Bits per Transmission Channel",
+                      "offset": 0,
+                      "length": 5015,
+                      "children": [
+                        {
+                          "name": "T0",
+                          "value": 40.8,
+                          "unit": "%",
+                          "offset": 0,
+                          "length": 5015
+                        },
+                        {
+                          "name": "T1",
+                          "value": 21.9,
+                          "unit": "%",
+                          "offset": 0,
+                          "length": 5015
+                        },
+                        {
+                          "name": "T2",
+                          "value": 37.3,
+                          "unit": "%",
+                          "offset": 0,
+                          "length": 5015
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
                   "name": "Ancillary Data",
                   "value": 3725,
                   "unit": "bytes",
@@ -13713,6 +13778,87 @@
             ]
           },
           {
+            "name": "Transmission Channel Bit Share T0",
+            "unit": "%",
+            "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Transmission Channel Bit Share T0",
+            "declaredRange": {
+              "minimum": 0,
+              "maximum": 100
+            },
+            "x": [
+              0,
+              835,
+              1671,
+              2507,
+              3343,
+              4179
+            ],
+            "values": [
+              42.5,
+              38.9,
+              39.1,
+              43.8,
+              38.7,
+              41.3
+            ]
+          },
+          {
+            "name": "Transmission Channel Bit Share T1",
+            "unit": "%",
+            "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Transmission Channel Bit Share T1",
+            "declaredRange": {
+              "minimum": 0,
+              "maximum": 100
+            },
+            "x": [
+              0,
+              835,
+              1671,
+              2507,
+              3343,
+              4179
+            ],
+            "values": [
+              20.5,
+              23.1,
+              23,
+              19.3,
+              23.5,
+              22.4
+            ]
+          },
+          {
+            "name": "Transmission Channel Bit Share T2",
+            "unit": "%",
+            "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Transmission Channel Bit Share T2",
+            "declaredRange": {
+              "minimum": 0,
+              "maximum": 100
+            },
+            "x": [
+              0,
+              835,
+              1671,
+              2507,
+              3343,
+              4179
+            ],
+            "values": [
+              37,
+              37.9,
+              37.9,
+              36.9,
+              37.7,
+              36.3
+            ]
+          },
+          {
             "name": "Channel Bit Share",
             "unit": "%",
             "axis": "frameOffset",
@@ -13818,6 +13964,66 @@
               },
               {
                 "name": "Mono",
+                "count": 0
+              }
+            ],
+            "total": 6,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                0,
+                6
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Dynamic Crosstalk Use",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "In no subband group",
+                "count": 6
+              },
+              {
+                "name": "In up to half of the subband groups",
+                "count": 0
+              },
+              {
+                "name": "In more than half of the subband groups",
+                "count": 0
+              }
+            ],
+            "total": 6,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                0,
+                6
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Prediction Use",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "In no subband group",
+                "count": 6
+              },
+              {
+                "name": "In up to half of the subband groups",
+                "count": 0
+              },
+              {
+                "name": "In more than half of the subband groups",
                 "count": 0
               }
             ],
