@@ -299,8 +299,8 @@ class PartialTests(unittest.TestCase):
 
 class UnitVerdictTests(unittest.TestCase):
     analyzer = {"findings": [{"code": "aac.crc-mismatch", "severity": "Warning", "offset": 10, "length": 2, "count": 1},
-                             {"code": "ac3.crc1-mismatch", "severity": "Warning", "offset": 10, "length": 2, "count": 1},
-                             {"code": "ac3.leading-junk", "severity": "Warning", "offset": 500, "length": 4, "count": 1}]}
+                             {"code": "ac-3.crc1-mismatch", "severity": "Warning", "offset": 10, "length": 2, "count": 1},
+                             {"code": "ac-3.leading-junk", "severity": "Warning", "offset": 500, "length": 4, "count": 1}]}
 
     def conv(self, units, runs=True):
         return {"stoppedBy": "end", "runs": [{"rate": 44100, "channels": 2, "samples": 1}] if runs else [], "unitCount": 10, "units": units}

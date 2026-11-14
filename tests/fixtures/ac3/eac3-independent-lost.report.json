@@ -29981,7 +29981,7 @@
     "findings": [
       {
         "severity": "Warning",
-        "code": "ac3.sync-lost",
+        "code": "ac-3.sync-lost",
         "message": "Sync is lost for 4096 bytes at 0xA000.",
         "offset": 40960,
         "length": 4096,
@@ -29993,7 +29993,7 @@
       },
       {
         "severity": "Warning",
-        "code": "ac3.dependent-without-independent",
+        "code": "ac-3.dependent-without-independent",
         "message": "1 frame of a dependent substream comes before any independent frame they could belong to, or after a gap that took it (A/52 Annex E 2.3.1.2); the first is at 0xB000.",
         "offset": 45056,
         "length": 4096,

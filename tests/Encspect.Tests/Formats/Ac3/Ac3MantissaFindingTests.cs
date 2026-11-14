@@ -24,7 +24,7 @@ public class Ac3MantissaFindingTests
 
         Report report = Analyzer.CreateDefault().Analyze("mantissas.ac3", new MemoryStream(data));
 
-        Finding finding = Assert.Single(report.Findings, f => f.Code == "ac3.mantissa-code-invalid");
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "ac-3.mantissa-code-invalid");
         Assert.Equal(Severity.Warning, finding.Severity);
         Assert.Contains("Table 7.21", finding.Message, StringComparison.Ordinal);
         Assert.DoesNotContain("7.10.2", finding.Message, StringComparison.Ordinal);
@@ -39,11 +39,11 @@ public class Ac3MantissaFindingTests
 
         Report report = Analyzer.CreateDefault().Analyze("fuzz.ac3", new MemoryStream(data));
 
-        Finding finding = Assert.Single(report.Findings, f => f.Code == "ac3.mantissa-code-invalid");
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "ac-3.mantissa-code-invalid");
         Assert.NotNull(finding.Path);
         Assert.Equal("Mantissas", finding.Node!.Name);
         Assert.Equal((0x3670L, 4, 1419), (finding.Node.Offset, finding.Node.BitOffset, finding.Node.BitLength));
-        Assert.Contains(report.Findings, f => f.Code == "ac3.block-inconsistent" && f.Message.Contains("check 2", StringComparison.Ordinal));
+        Assert.Contains(report.Findings, f => f.Code == "ac-3.block-inconsistent" && f.Message.Contains("check 2", StringComparison.Ordinal));
     }
 
     // The second input of the same kind (seed 725919085, iteration 66646): the finding named 50 bytes at 5120 where the field has 99.
@@ -54,7 +54,7 @@ public class Ac3MantissaFindingTests
 
         Report report = Analyzer.CreateDefault().Analyze("fuzz.ac3", new MemoryStream(data));
 
-        Finding finding = Assert.Single(report.Findings, f => f.Code == "ac3.mantissa-code-invalid");
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "ac-3.mantissa-code-invalid");
         Assert.NotNull(finding.Path);
         Assert.Equal("Mantissas", finding.Node!.Name);
         Assert.Equal((5120L, 99L), (finding.Node.Offset, finding.Node.Length));

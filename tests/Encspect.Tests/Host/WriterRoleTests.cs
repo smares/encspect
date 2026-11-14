@@ -265,12 +265,12 @@ public partial class WriterRoleTests
     {
         byte[] ac3 = Fixture("ac3/annex-d.ac3");
         Report apart = Analyze("apart.ac3", [.. TestFiles.Id3v23(("TSSE", "Aften 0.0.8")), .. ac3, .. TestFiles.ApeText("Encoder", "Foo Muxer 1.0")]);
-        Assert.DoesNotContain(apart.Findings, f => f.Code is "ac3.encoder-claim" or "ac3.writer-claim-differs");
+        Assert.DoesNotContain(apart.Findings, f => f.Code is "ac-3.encoder-claim" or "ac-3.writer-claim-differs");
         StreamInfo stream = Assert.Single(apart.Streams);
         Assert.Equal(("Aften 0.0.8", "Foo Muxer 1.0"), (stream.Encoder, stream.Writer));
 
         Report conflict = Analyze("conflict.ac3", [.. TestFiles.Id3v23(("TSSE", "Lavf60.16.100")), .. ac3, .. TestFiles.ApeText("Encoder", "Foo Muxer 1.0")]);
-        Finding finding = Assert.Single(conflict.Findings, f => f.Code == "ac3.writer-claim-differs");
+        Finding finding = Assert.Single(conflict.Findings, f => f.Code == "ac-3.writer-claim-differs");
         Assert.Contains("APE Encoder item names \"Foo Muxer 1.0\"", finding.Message, StringComparison.Ordinal);
         Assert.NotNull(finding.Path);
     }
@@ -397,7 +397,7 @@ public partial class WriterRoleTests
         Assert.Equal("APE", pointed.Root.Children[other.Path![0]].Name);
         Assert.Equal(Severity.Info, mpeg.Severity);
         Only(WithApe("musepack/external-mpcenc-standard.mpc", "a.mpc", "Encoder", "LAME 3.100"), "musepack.writer-other-format");
-        Only(WithApe("ac3/annex-d.ac3", "a.ac3", "Encoder", "LAME 3.100"), "ac3.writer-other-format");
+        Only(WithApe("ac3/annex-d.ac3", "a.ac3", "Encoder", "LAME 3.100"), "ac-3.writer-other-format");
         Only(WithApe("wavpack/external-lossless-16-stereo.wv", "a.wv", "Encoder", "LAME 3.100"), "wavpack.writer-other-format");
 
         // matching format, FFmpeg and unknown software raise nothing

@@ -9506,7 +9506,7 @@
     "findings": [
       {
         "severity": "Warning",
-        "code": "dtshd.metadata-differs",
+        "code": "dts-hd.metadata-differs",
         "message": "AUPR-HDR gives Max_Sample_Rate_Hz 96000, but the stream's sampling frequency is 48000 Hz; FFmpeg sets up its decoder from the chunk.",
         "offset": 32,
         "length": 40,
@@ -9517,7 +9517,7 @@
       },
       {
         "severity": "Warning",
-        "code": "dtshd.metadata-differs",
+        "code": "dts-hd.metadata-differs",
         "message": "AUPR-HDR's Channel_Mask names 8 channels, but the stream has 6; FFmpeg sets up its decoder from the chunk.",
         "offset": 32,
         "length": 40,

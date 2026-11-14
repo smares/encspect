@@ -149,7 +149,7 @@ internal sealed class DecodeFeed
         public List<Substream> Substreams { get; } = [];
     }
 
-    // The locations of the channels a frame codes: a channel map that names more locations than the frame has channels (ac3.channel-map-count) gives the coded channels their
+    // The locations of the channels a frame codes: a channel map that names more locations than the frame has channels (ac-3.channel-map-count) gives the coded channels their
     // locations and leaves the others out.
     private static List<Program.Token> Coded(List<Program.Token> tokens, int[] records) =>
         records.Length >= 2 ? [.. tokens.Take(ChannelOf(records[0]) + (records[1] != 0 ? 1 : 0))] : tokens;

@@ -22,7 +22,7 @@ internal sealed class Ac3Analysis
     // A stream is a run of the frames of one independent substream (id 0 for AC-3) with one configuration; a change
     // ends it and starts another, and a returning configuration starts a new one. The number of streams is capped so that
     // a file which changes all the time cannot grow the report: a frame that would start a stream past the cap is in no
-    // stream (ac3.streams-limited), and so is every later frame of its substream, which never gets a stream. The other
+    // stream (ac-3.streams-limited), and so is every later frame of its substream, which never gets a stream. The other
     // substreams keep theirs, as they play at the same time.
     private readonly Dictionary<int, Program?> _active = [];
     private readonly Dictionary<int, ProgramKey> _lastKeys = [];
@@ -134,29 +134,29 @@ internal sealed class Ac3Analysis
             // Any sample of a container can end inside its frame, so these are counted.
             int have = available;
             int need = header.FrameLength;
-            Findings.Add(Severity.Warning, "ac3.frame-truncated", FrameAt, count =>
+            Findings.Add(Severity.Warning, "ac-3.frame-truncated", FrameAt, count =>
                 $"{(count == 1 ? "A sample ends inside its frame" : $"{count} samples end inside their frames")}, first the frame at 0x{offset:X} with {have} of its {need} bytes.");
         }
         else if (truncated)
         {
-            Findings.AddNow(Severity.Warning, "ac3.frame-truncated", $"The last frame at 0x{offset:X} has {available} of its {Counts.Of(header.FrameLength, "byte", "bytes")}.", FrameAt());
+            Findings.AddNow(Severity.Warning, "ac-3.frame-truncated", $"The last frame at 0x{offset:X} has {available} of its {Counts.Of(header.FrameLength, "byte", "bytes")}.", FrameAt());
         }
 
         if (cut)
         {
-            Findings.Add(Severity.Warning, "ac3.frame-damaged", FrameAt, count =>
+            Findings.Add(Severity.Warning, "ac-3.frame-damaged", FrameAt, count =>
                 $"{(count == 1 ? "A frame is" : $"{count} frames are")} cut short by the next frame's sync word, first at 0x{offset:X}: their header or data is damaged, or bytes are missing.");
         }
 
         if (crc1 == CrcState.Mismatch)
         {
-            Findings.Add(Severity.Warning, "ac3.crc1-mismatch", () => new Node("CRC1", offset + 2, 2), count =>
+            Findings.Add(Severity.Warning, "ac-3.crc1-mismatch", () => new Node("CRC1", offset + 2, 2), count =>
                 $"crc1, which covers the first 5/8 of a frame (A/52 7.10.1), fails in {Count(count)}, first at 0x{offset:X}; decoders that check it drop the frame.");
         }
 
         if (crc2 == CrcState.Mismatch)
         {
-            Findings.Add(Severity.Warning, header.IsEac3 ? "ac3.crc-mismatch" : "ac3.crc2-mismatch", () => new Node("CRC2", offset + available - 2, 2), count =>
+            Findings.Add(Severity.Warning, header.IsEac3 ? "ac-3.crc-mismatch" : "ac-3.crc2-mismatch", () => new Node("CRC2", offset + available - 2, 2), count =>
                 header.IsEac3
                     ? $"The CRC that covers the whole frame (A/52 Annex E 3.2) fails in {Count(count)}, first at 0x{offset:X}; E-AC-3 decoders drop the frame."
                     : $"crc2, which covers the whole frame (A/52 7.10.1), fails in {Count(count)}, first at 0x{offset:X}; decoders that check it drop the frame.");
@@ -229,7 +229,7 @@ internal sealed class Ac3Analysis
                 SyncFrame dependentHeader = frame.Header;
                 SyncFrame independentHeader = frames[0].Header;
                 long at = frame.Offset;
-                Findings.Add(Severity.Warning, "ac3.dependent-format-differs", () => new Node("Frame", at, frame.Available) { Kind = NodeKind.Frame }, count =>
+                Findings.Add(Severity.Warning, "ac-3.dependent-format-differs", () => new Node("Frame", at, frame.Available) { Kind = NodeKind.Frame }, count =>
                     $"{Count(count)} of a dependent substream {Counts.Agree(count, "has", "have")} {dependentHeader.Blocks} audio blocks at {dependentHeader.SampleRate} Hz where the independent frame before {Counts.Agree(count, "has", "have")} {independentHeader.Blocks} at {independentHeader.SampleRate} Hz (A/52 Annex E 2.3.1.2 gives a program frame one block count and sample rate); the first is at 0x{at:X}, and the program frame is not decoded.");
                 given = frame with { IsReadable = false };
             }
@@ -283,10 +283,10 @@ internal sealed class Ac3Analysis
 
         program.Cover(p.Region, offset, available);
         if (program.Add(p.Index, offset, available, header, result, p.Crc1 == CrcState.Mismatch || p.Crc2 == CrcState.Mismatch,
-                p.Shortened || p.Cut || p.DependentsLost || result.Stop is StopReason.Invalid or StopReason.Overrun, p.Shortened || p.Cut) && !Findings.CountIfKnown("ac3.dependent-excess"))
+                p.Shortened || p.Cut || p.DependentsLost || result.Stop is StopReason.Invalid or StopReason.Overrun, p.Shortened || p.Cut) && !Findings.CountIfKnown("ac-3.dependent-excess"))
         {
             int id = header.SubstreamId;
-            Findings.Add(Severity.Warning, "ac3.dependent-excess", FrameAt, count =>
+            Findings.Add(Severity.Warning, "ac-3.dependent-excess", FrameAt, count =>
                 $"{(count == 1 ? "1 dependent frame is" : $"{count} dependent frames are")} left out of the figures and statistics after a dependent substream ID repeats within a program frame (A/52 Annex E 2.3.1.2 allows each ID once, at most 8, after an independent frame); the first is of substream {id} at 0x{offset:X}.");
         }
     }
@@ -348,15 +348,15 @@ internal sealed class Ac3Analysis
                 zeros = cache.ByteAt(at) == 0;
             }
 
-            Findings.AddNow(Severity.Warning, "ac3.leading-junk", $"{Counts.Of(length, "byte", "bytes")} before the first frame {Counts.Agree(length, "is", "are")} not audio{(zeros ? " (all zero bytes)" : string.Empty)}.", node);
+            Findings.AddNow(Severity.Warning, "ac-3.leading-junk", $"{Counts.Of(length, "byte", "bytes")} before the first frame {Counts.Agree(length, "is", "are")} not audio{(zeros ? " (all zero bytes)" : string.Empty)}.", node);
         }
         else if (trailing)
         {
-            Findings.AddNow(Severity.Warning, "ac3.trailing-data", $"{Counts.Of(length, "byte", "bytes")} after the last frame at 0x{start:X} {Counts.Agree(length, "is", "are")} not a frame.", node);
+            Findings.AddNow(Severity.Warning, "ac-3.trailing-data", $"{Counts.Of(length, "byte", "bytes")} after the last frame at 0x{start:X} {Counts.Agree(length, "is", "are")} not a frame.", node);
         }
         else
         {
-            Findings.AddNow(Severity.Warning, "ac3.sync-lost", $"Sync is lost for {Counts.Of(length, "byte", "bytes")} at 0x{start:X}.", node);
+            Findings.AddNow(Severity.Warning, "ac-3.sync-lost", $"Sync is lost for {Counts.Of(length, "byte", "bytes")} at 0x{start:X}.", node);
         }
     }
 
@@ -364,29 +364,29 @@ internal sealed class Ac3Analysis
 
     private static string CodeOf(Issue issue) => issue switch
     {
-        Issue.ReservedValue => "ac3.reserved-value",
-        Issue.DialnormReserved => "ac3.dialnorm-reserved",
-        Issue.LanguageCode => "ac3.language-code",
-        Issue.BlockInconsistent => "ac3.block-inconsistent",
-        Issue.BlockInvalid => "ac3.block-invalid",
-        Issue.Overrun => "ac3.block-overrun",
-        Issue.HeaderOverrun => "ac3.header-overrun",
-        Issue.UndefinedBsid => "ac3.bsid-undefined",
-        Issue.ReducedRate => "ac3.reduced-rate-not-read",
-        Issue.MixDataOverrun => "ac3.mix-data-overrun",
-        Issue.ChannelMapCount => "ac3.channel-map-count",
-        Issue.EmdfTruncated => "ac3.emdf-truncated",
-        Issue.EmdfLength => "ac3.emdf-length",
-        Issue.EmdfPayloadSize => "ac3.emdf-payload-size",
-        Issue.EmdfReserved => "ac3.emdf-reserved",
-        Issue.EmdfVersion => "ac3.emdf-version-not-read",
-        Issue.PayloadShort => "ac3.object-payload-short",
-        Issue.JocReserved => "ac3.joc-reserved",
-        Issue.ObjectAudioIncomplete => "ac3.object-audio-incomplete",
-        Issue.EmdfLimit => "ac3.emdf-limit",
-        Issue.DownmixModeReserved => "ac3.dmixmod-reserved",
-        Issue.MantissaNoValue => "ac3.mantissa-code-invalid",
-        _ => "ac3.auxiliary-length",
+        Issue.ReservedValue => "ac-3.reserved-value",
+        Issue.DialnormReserved => "ac-3.dialnorm-reserved",
+        Issue.LanguageCode => "ac-3.language-code",
+        Issue.BlockInconsistent => "ac-3.block-inconsistent",
+        Issue.BlockInvalid => "ac-3.block-invalid",
+        Issue.Overrun => "ac-3.block-overrun",
+        Issue.HeaderOverrun => "ac-3.header-overrun",
+        Issue.UndefinedBsid => "ac-3.bsid-undefined",
+        Issue.ReducedRate => "ac-3.reduced-rate-not-read",
+        Issue.MixDataOverrun => "ac-3.mix-data-overrun",
+        Issue.ChannelMapCount => "ac-3.channel-map-count",
+        Issue.EmdfTruncated => "ac-3.emdf-truncated",
+        Issue.EmdfLength => "ac-3.emdf-length",
+        Issue.EmdfPayloadSize => "ac-3.emdf-payload-size",
+        Issue.EmdfReserved => "ac-3.emdf-reserved",
+        Issue.EmdfVersion => "ac-3.emdf-version-not-read",
+        Issue.PayloadShort => "ac-3.object-payload-short",
+        Issue.JocReserved => "ac-3.joc-reserved",
+        Issue.ObjectAudioIncomplete => "ac-3.object-audio-incomplete",
+        Issue.EmdfLimit => "ac-3.emdf-limit",
+        Issue.DownmixModeReserved => "ac-3.dmixmod-reserved",
+        Issue.MantissaNoValue => "ac-3.mantissa-code-invalid",
+        _ => "ac-3.auxiliary-length",
     };
 
     private void OnIssue(Issue issue, string field, int start, int end, string detail)
@@ -501,12 +501,12 @@ internal sealed class Ac3Analysis
         _unit = new();
         if (unit.ExtensionOffset >= 0 && unit.JocOffset < 0 && unit.AllRead)
         {
-            Findings.Add(Severity.Warning, "ac3.extension-without-joc", () => Node.FromBits("HasExtensionTypeA", unit.ExtensionOffset, unit.ExtensionStart, unit.ExtensionEnd), count =>
+            Findings.Add(Severity.Warning, "ac-3.extension-without-joc", () => Node.FromBits("HasExtensionTypeA", unit.ExtensionOffset, unit.ExtensionStart, unit.ExtensionEnd), count =>
                 $"{Units(count)}: the additional bit stream information of a frame sets flag_ec3_extension_type_a, but no EMDF container in the frames holds a joint object coding payload (ETSI TS 103 420 8.3); the first is at 0x{unit.ExtensionOffset:X}.");
         }
         else if (unit.JocOffset >= 0 && unit.ExtensionOffset < 0)
         {
-            Findings.Add(Severity.Warning, "ac3.joc-without-extension", () => Node.FromBits("Payload", unit.JocOffset, unit.JocStart, unit.JocEnd), count =>
+            Findings.Add(Severity.Warning, "ac-3.joc-without-extension", () => Node.FromBits("Payload", unit.JocOffset, unit.JocStart, unit.JocEnd), count =>
                 $"{Units(count)}: a frame holds a joint object coding payload, but none of the frames sets flag_ec3_extension_type_a in its additional bit stream information (ETSI TS 103 420 8.3.1); the first is at 0x{unit.JocOffset:X}.");
         }
     }
@@ -560,18 +560,18 @@ internal sealed class Ac3Analysis
             {
                 if (_isIgnoring)
                 {
-                    Findings.CountIfKnown("ac3.streams-limited");
+                    Findings.CountIfKnown("ac-3.streams-limited");
                     return null;
                 }
 
-                Findings.Add(Severity.Warning, "ac3.dependent-without-independent", () => FrameAt(),
+                Findings.Add(Severity.Warning, "ac-3.dependent-without-independent", () => FrameAt(),
                     count => $"{Count(count)} of a dependent substream {Counts.Agree(count, "comes", "come")} before any independent frame they could belong to, or after a gap that took it (A/52 Annex E 2.3.1.2); the first is at 0x{frameOffset:X}.");
                 return null;
             }
 
             if (_currentType == 2)
             {
-                Findings.Add(Severity.Warning, "ac3.dependent-after-converted", () => FrameAt(),
+                Findings.Add(Severity.Warning, "ac-3.dependent-after-converted", () => FrameAt(),
                     count => $"{Count(count)} of a dependent substream {Counts.Agree(count, "follows", "follow")} an independent substream of stream type 2, converted from AC-3, which may have none (A/52 Annex E 2.3.1.1); the first is at 0x{frameOffset:X}.");
             }
 
@@ -589,7 +589,7 @@ internal sealed class Ac3Analysis
         {
             int blocks = header.Blocks;
             int expected = _blocksOfSubstream0;
-            Findings.Add(Severity.Warning, "ac3.substream-blocks-differ", () => FrameAt(),
+            Findings.Add(Severity.Warning, "ac-3.substream-blocks-differ", () => FrameAt(),
                 count => $"{Count(count)} of independent substream {id} hold {blocks} audio blocks where substream 0's hold {expected} (A/52 Annex E 2.3.1.2 requires the same number); the first is at 0x{frameOffset:X}.");
         }
 
@@ -611,12 +611,12 @@ internal sealed class Ac3Analysis
 
             _active[id] = program;
 
-            if (changed && !Findings.CountIfKnown("ac3.stream-changed"))
+            if (changed && !Findings.CountIfKnown("ac-3.stream-changed"))
             {
                 string substream = header.IsEac3 ? $" of independent substream {id}" : string.Empty;
                 string from = lastKey.Describe();
                 string to = key.Describe();
-                Findings.Add(Severity.Info, "ac3.stream-changed", FrameAt,
+                Findings.Add(Severity.Info, "ac-3.stream-changed", FrameAt,
                     count => $"The stream{substream} changes at 0x{frameOffset:X} from {from} to {to}{(count > 1 ? $"; the streams change {Counts.Of(count, "time", "times")} in the file" : string.Empty)}.");
             }
         }
@@ -627,9 +627,9 @@ internal sealed class Ac3Analysis
 
         if (program is null)
         {
-            if (!Findings.CountIfKnown("ac3.streams-limited"))
+            if (!Findings.CountIfKnown("ac-3.streams-limited"))
             {
-                Findings.Add(Severity.Warning, "ac3.streams-limited", FrameAt,
+                Findings.Add(Severity.Warning, "ac-3.streams-limited", FrameAt,
                     count => $"{Count(count)}, dependent frames included, are in no stream: the analyzer keeps at most {MaxStreams} streams, one per run of an independent substream with one configuration, and these frames start another; the first is at 0x{frameOffset:X}.");
             }
 
@@ -686,7 +686,7 @@ internal sealed class Ac3Analysis
             new(name, coverStart, coverLength, value) { Kind = kind, Ranges = first.Node.Ranges, Description = description, Topic = topic };
 
         Node? encoder = Ac3Encoder.Detect(claims, (name, value, description) => Cover(name, value, NodeKind.Detail, description, ClaimRoles.TopicOf(name)),
-            (claim, text) => Findings.Add(Severity.Info, "ac3.encoder-claim", () => claim.Source, _ =>
+            (claim, text) => Findings.Add(Severity.Info, "ac-3.encoder-claim", () => claim.Source, _ =>
                 $"The {claim.Description} names \"{text}\"; nothing in the stream confirms or contradicts it."));
         if (encoder is not null)
         {
@@ -694,8 +694,8 @@ internal sealed class Ac3Analysis
         }
 
         Node? writer = WriterDetection.Detect(claims, (name, value, description) => Cover(name, value, NodeKind.Detail, description, ClaimRoles.TopicOf(name)),
-            (claim, text, name) => Findings.Add(Severity.Info, "ac3.writer-claim-differs", () => claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
-            format: new WriterDetection.StreamFormat(KnownWriters.Ac3, "AC-3", (claim, message, node) => Findings.Add(Severity.Info, "ac3.writer-other-format", () => node, _ => message)));
+            (claim, text, name) => Findings.Add(Severity.Info, "ac-3.writer-claim-differs", () => claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
+            format: new WriterDetection.StreamFormat(KnownWriters.Ac3, "AC-3", (claim, message, node) => Findings.Add(Severity.Info, "ac-3.writer-other-format", () => node, _ => message)));
         if (writer is not null)
         {
             first.Leading.Add(writer);

@@ -255,5 +255,5 @@ public sealed class Ac3OfficialDecodersTests(ITestOutputHelper output)
     }
 
     private static bool IsUnitFinding(Finding finding) =>
-        finding.Node is not null && finding.Severity != Severity.Info && finding.Code.StartsWith("ac3.", StringComparison.Ordinal);
+        finding.Node is not null && finding.Severity != Severity.Info && finding.Code.StartsWith("ac-3.", StringComparison.Ordinal);
 }

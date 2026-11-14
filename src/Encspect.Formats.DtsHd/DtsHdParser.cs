@@ -148,7 +148,7 @@ public sealed class DtsHdParser : IFormatParser
             context.CancellationToken.ThrowIfCancellationRequested();
             if (count++ >= MaxChunks)
             {
-                Trailing(state, position, reader.End, "dtshd.chunk-count", $"The file has more than {Counts.Of(MaxChunks, "chunk", "chunks")}; the bytes from 0x{position:X} are not read, so the file may hold more than was found.");
+                Trailing(state, position, reader.End, "dts-hd.chunk-count", $"The file has more than {Counts.Of(MaxChunks, "chunk", "chunks")}; the bytes from 0x{position:X} are not read, so the file may hold more than was found.");
                 capped = true;
                 position = reader.End;
                 break;
@@ -157,7 +157,7 @@ public sealed class DtsHdParser : IFormatParser
             long remaining = reader.End - position;
             if (remaining < ChunkHeader)
             {
-                Trailing(state, position, reader.End, "dtshd.trailing-data", $"{Counts.Of(remaining, "byte", "bytes")} after the last chunk {Counts.Agree(remaining, "is", "are")} too few for a chunk header.");
+                Trailing(state, position, reader.End, "dts-hd.trailing-data", $"{Counts.Of(remaining, "byte", "bytes")} after the last chunk {Counts.Agree(remaining, "is", "are")} too few for a chunk header.");
                 position = reader.End;
                 break;
             }
@@ -167,7 +167,7 @@ public sealed class DtsHdParser : IFormatParser
             ulong size = BinaryPrimitives.ReadUInt64BigEndian(header.AsSpan(8));
             if (!printable || size > MaxSize)
             {
-                Trailing(state, position, reader.End, "dtshd.chunk-header", printable
+                Trailing(state, position, reader.End, "dts-hd.chunk-header", printable
                     ? $"The chunk at 0x{position:X} has a size of {Counts.Of(size, "byte", "bytes")}, more than FFmpeg reads (2^61); the bytes from there are not read."
                     : $"The bytes at 0x{position:X} are not a chunk header (an ID of eight printable characters); the bytes from there are not read.");
                 position = reader.End;
@@ -187,22 +187,22 @@ public sealed class DtsHdParser : IFormatParser
             chunk.Add(new Node("Chunk Size", position + 8, 8, NodeValue.Integer((long)size, "bytes", "byte")) { Description = Explain.ChunkSize, Topic = Topics.File });
             if (truncated)
             {
-                state.Context.AddFinding(Severity.Warning, "dtshd.chunk-truncated", $"The {id} chunk at 0x{position:X} has a size of {Counts.Of(size, "byte", "bytes")}, but the file has {available} after its header.", chunk);
+                state.Context.AddFinding(Severity.Warning, "dts-hd.chunk-truncated", $"The {id} chunk at 0x{position:X} has a size of {Counts.Of(size, "byte", "bytes")}, but the file has {available} after its header.", chunk);
             }
 
             if (size < 4)
             {
-                state.Note("dtshd.chunk-size", "small", $"The {id} chunk at 0x{position:X} has a size of {Counts.Of(size, "byte", "bytes")}; FFmpeg refuses a size under 4.", chunk);
+                state.Note("dts-hd.chunk-size", "small", $"The {id} chunk at 0x{position:X} has a size of {Counts.Of(size, "byte", "bytes")}; FFmpeg refuses a size under 4.", chunk);
             }
 
             if ((position - reader.Start) % 4 != 0)
             {
-                state.Note("dtshd.chunk-misaligned", "misaligned", $"The {id} chunk starts at 0x{position:X}, not on a 32-bit boundary; the standard pads every chunk to one (A/103 E.2.1).", chunk);
+                state.Note("dts-hd.chunk-misaligned", "misaligned", $"The {id} chunk starts at 0x{position:X}, not on a 32-bit boundary; the standard pads every chunk to one (A/103 E.2.1).", chunk);
             }
 
             if (state.Chunks.Count == 0 && id != "DTSHDHDR")
             {
-                state.Context.AddFinding(Severity.Warning, "dtshd.header-first", $"The first chunk is {id}, but DTSHDHDR shall be the first chunk of the file (A/103 E.2.2).", chunk);
+                state.Context.AddFinding(Severity.Warning, "dts-hd.header-first", $"The first chunk is {id}, but DTSHDHDR shall be the first chunk of the file (A/103 E.2.2).", chunk);
             }
 
             ChunkReader.Read(state, reader, chunk, id, position + ChunkHeader, end, truncated);
@@ -216,7 +216,7 @@ public sealed class DtsHdParser : IFormatParser
         }
         else if (!capped)
         {
-            context.AddFinding(Severity.Warning, "dtshd.no-stream-data", "The file has no STRMDATA chunk, so it holds no audio.", root);
+            context.AddFinding(Severity.Warning, "dts-hd.no-stream-data", "The file has no STRMDATA chunk, so it holds no audio.", root);
         }
 
         state.Flush();
@@ -224,9 +224,9 @@ public sealed class DtsHdParser : IFormatParser
 
     private static void Trailing(State state, long start, long end, string code, string message)
     {
-        var node = new Node(code == "dtshd.trailing-data" ? "Trailing Data" : "Unread Data", start, end - start, NodeValue.Integer(end - start, "bytes", "byte"))
+        var node = new Node(code == "dts-hd.trailing-data" ? "Trailing Data" : "Unread Data", start, end - start, NodeValue.Integer(end - start, "bytes", "byte"))
         {
-            Description = code == "dtshd.trailing-data" ? Explain.TrailingData : Explain.UnreadData,
+            Description = code == "dts-hd.trailing-data" ? Explain.TrailingData : Explain.UnreadData,
         };
         state.Context.Root.Add(node);
         state.Context.AddFinding(Severity.Warning, code, message, node);
@@ -324,7 +324,7 @@ internal sealed class State(ParseContext context)
         ByteReader payload = reader.Slice(StreamStart, StreamEnd - StreamStart);
         if (!context.ParseStream("dts", Stream, payload))
         {
-            context.AddFinding(Severity.Info, "dtshd.stream-not-analyzed", "The STRMDATA chunk holds a DTS-HD stream, which no parser here reads.", Stream);
+            context.AddFinding(Severity.Info, "dts-hd.stream-not-analyzed", "The STRMDATA chunk holds a DTS-HD stream, which no parser here reads.", Stream);
             return;
         }
 
@@ -342,13 +342,13 @@ internal sealed record Presentation(Node Chunk, int MaxRate, int Channels, bool 
     {
         if (MaxRate > 0 && stream.SampleRate > 0 && MaxRate != stream.SampleRate)
         {
-            state.Context.AddFinding(Severity.Warning, "dtshd.metadata-differs",
+            state.Context.AddFinding(Severity.Warning, "dts-hd.metadata-differs",
                 $"AUPR-HDR gives Max_Sample_Rate_Hz {MaxRate.ToString(CultureInfo.InvariantCulture)}, but the stream's sampling frequency is {stream.SampleRate.ToString(CultureInfo.InvariantCulture)} Hz; FFmpeg sets up its decoder from the chunk.", Chunk);
         }
 
         if (HasChannels && Channels > 0 && stream.Channels > 0 && Channels != stream.Channels)
         {
-            state.Context.AddFinding(Severity.Warning, "dtshd.metadata-differs",
+            state.Context.AddFinding(Severity.Warning, "dts-hd.metadata-differs",
                 $"AUPR-HDR's Channel_Mask names {Counts.Of(Channels, "channel", "channels")}, but the stream has {stream.Channels}; FFmpeg sets up its decoder from the chunk.", Chunk);
         }
     }

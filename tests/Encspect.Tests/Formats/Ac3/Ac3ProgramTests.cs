@@ -46,8 +46,8 @@ public class Ac3ProgramTests
 
         Assert.Equal(Encspect.Formats.Ac3.Ac3Analysis.MaxStreams, report.Streams.Count);
         Assert.Equal(64 * 1536L, report.Streams.Sum(s => s.Samples));
-        Assert.Equal(frames - 64, Assert.Single(report.Findings, f => f.Code == "ac3.streams-limited").Count);
-        Finding changed = Assert.Single(report.Findings, f => f.Code == "ac3.stream-changed");
+        Assert.Equal(frames - 64, Assert.Single(report.Findings, f => f.Code == "ac-3.streams-limited").Count);
+        Finding changed = Assert.Single(report.Findings, f => f.Code == "ac-3.stream-changed");
         Assert.Equal(frames - 1, changed.Count);
         Assert.Equal(Encspect.Formats.Ac3.Ac3Analysis.MaxStreams, CountNodes(report.Root, NodeKind.Statistics));
     }
@@ -84,10 +84,10 @@ public class Ac3ProgramTests
         // starts a new stream, which is past the cap, and so do the frames of substreams 4 to 7: all are in no stream.
         Assert.Equal(64 * 1536L, report.Streams.Sum(s => s.Samples));
         Assert.All(report.Streams, s => Assert.Equal(1536L, s.Samples));
-        Finding left = Assert.Single(report.Findings, f => f.Code == "ac3.streams-limited");
+        Finding left = Assert.Single(report.Findings, f => f.Code == "ac-3.streams-limited");
         Assert.Equal(Severity.Warning, left.Severity);
         Assert.Equal(3 * 128 - 64, left.Count);
-        Assert.Single(report.Findings, f => f.Code == "ac3.stream-changed");
+        Assert.Single(report.Findings, f => f.Code == "ac-3.stream-changed");
         Assert.Equal(Encspect.Formats.Ac3.Ac3Analysis.MaxStreams, CountNodes(report.Root, NodeKind.Statistics));
     }
 
@@ -116,7 +116,7 @@ public class Ac3ProgramTests
         Assert.Equal(Encspect.Formats.Ac3.Ac3Analysis.MaxStreams, report.Streams.Count);
         Assert.All(report.Streams, s => Assert.Equal(48000, s.SampleRate));
         Assert.Equal(64 * 1536L, report.Streams.Sum(s => s.Samples));
-        Finding left = Assert.Single(report.Findings, f => f.Code == "ac3.streams-limited");
+        Finding left = Assert.Single(report.Findings, f => f.Code == "ac-3.streams-limited");
         Assert.Equal(Severity.Warning, left.Severity);
         Assert.Equal(16 + 200, left.Count);
     }
@@ -152,7 +152,7 @@ public class Ac3ProgramTests
         Assert.Equal(Encspect.Formats.Ac3.Ac3Analysis.MaxStreams, report.Streams.Count);
         Assert.Equal(64 * 1536L, report.Streams.Sum(s => s.Samples));
         Assert.All(report.Streams, s => Assert.True(s.Channels is 1 or 2));
-        Finding left = Assert.Single(report.Findings, f => f.Code == "ac3.streams-limited");
+        Finding left = Assert.Single(report.Findings, f => f.Code == "ac-3.streams-limited");
         Assert.Equal(16 + 200, left.Count);
     }
 
@@ -186,7 +186,7 @@ public class Ac3ProgramTests
 
         Assert.Single(report.Streams);
         Assert.Equal(4 * 1536, report.Streams[0].Samples);
-        Finding excess = Assert.Single(report.Findings, f => f.Code == "ac3.dependent-excess");
+        Finding excess = Assert.Single(report.Findings, f => f.Code == "ac-3.dependent-excess");
         Assert.Equal(39, excess.Count);
         Node statistics = Descendants(report.Root).Single(n => n.Kind == NodeKind.Statistics);
         Assert.Equal(NodeValue.Integer(4, "frames", "frame"), statistics.Children.Single(c => c.Name == "Dependent Frames").Value);

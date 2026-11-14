@@ -59,7 +59,7 @@
    "dynamic_objects": 15,
    "findings": [],
    "info_findings": [
-    "ac3.dmixmod-reserved"
+    "ac-3.dmixmod-reserved"
    ],
    "archived": false
   },
@@ -73,7 +73,7 @@
    "codec": "E-AC-3",
    "object_audio": false,
    "findings": [
-    "ac3.frame-truncated"
+    "ac-3.frame-truncated"
    ],
    "info_findings": [],
    "note": "the file ends 32 bytes into its last 256-byte frame (6013664 is not a multiple of 256, ffprobe lists the partial packet too)"
@@ -88,10 +88,10 @@
    "codec": "E-AC-3",
    "object_audio": false,
    "findings": [
-    "ac3.dialnorm-reserved"
+    "ac-3.dialnorm-reserved"
    ],
    "info_findings": [
-    "ac3.dmixmod-reserved"
+    "ac-3.dmixmod-reserved"
    ],
    "note": "dialnorm is 0 in every frame, which A/52 5.4.2.8 reserves (MediaInfo reads it as -31 dB too); dmixmod is 3"
   },
@@ -105,7 +105,7 @@
    "codec": "E-AC-3",
    "object_audio": false,
    "findings": [
-    "ac3.leading-junk"
+    "ac-3.leading-junk"
    ],
    "info_findings": [],
    "note": "352 bytes of junk precede the first frame, and the E-AC-3 frame headers' own bytes (from offset 6 of each frame) read as an ADTS header whose chain of three frames exists at several places; the file is E-AC-3 because the ADTS sniff asks eight frames of a chain further in and the CRC-checked E-AC-3 chain ranks 55 (ffprobe's packet count includes the junk, so no frame count is listed)"
