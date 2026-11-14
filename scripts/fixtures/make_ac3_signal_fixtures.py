@@ -235,14 +235,17 @@ def write_mantissas(bits, rng, channels):
 CSNROFFST = 22
 
 
-def frame(kind, seed):
+def frame(kind, seed, compr=None):
     rng = random.Random(seed)
     fscod, frmsizecod = 0, 34  # 48 kHz, 1,152 words: 448 kbps
     words = m.WORDS[fscod][frmsizecod]
     b = Bits()
     b.put(m.SYNC, 16).put(0, 16).put(fscod, 2).put(frmsizecod, 6)
     b.put(8, 5).put(0, 3).put(2, 3).put(0, 2).put(0, 1)  # bsid 8, bsmod 0, acmod 2, dsurmod 0, lfeon 0
-    b.put(27, 5).put(0, 1).put(0, 1).put(0, 1)  # dialnorm, compre, langcode, audprodie
+    b.put(27, 5).put(compr is not None, 1)  # dialnorm, compre
+    if compr is not None:
+        b.put(compr, 8)  # compr: X (4 bits, two's complement) and Y (4 bits), A/52 7.7.2
+    b.put(0, 1).put(0, 1)  # langcode, audprodie
     b.put(0, 1).put(1, 1).put(0, 1).put(0, 1).put(0, 1)  # copyrightb, origbs, timecod1e, timecod2e, addbsie
     widths = [20, 50] if kind == "unequal" else [None, None]
     # (cplbegf, cplendf, phsflginu, phase flags) of a coupling strategy sent in the block; None sends none
@@ -331,11 +334,14 @@ def frame(kind, seed):
     return m.fix_crc2(m.fix_crc1(b.bytes()))
 
 
-def build(kind, seed):
-    return b"".join(frame(kind, seed + i) for i in range(12))
+def build(kind, seed, compr=False):
+    # +6.02 dB (X = 1, Y = 0: 2^(1 + 1) * 0.5) in the first six frames, -6.02 dB (X = -1, Y = 0) in the last six
+    return b"".join(frame(kind, seed + i, (0x10 if i < 6 else 0xF0) if compr else None) for i in range(12))
 
 
 DESCRIPTIONS = {
+    "ac3-signal-compr.ac3": "The frames of ac3-signal-unequal-bandwidth with compre set and a compr word that is +6.02 dB (0x10) in the first six frames and -6.02 dB (0xF0) in the last six, dialnorm 27 "
+                            "(A/52 5.4.2.9, 5.4.2.10 and 7.7.2): to see whether a decoder that picks its output mode by the presence of compr changes its gain at the step.",
     "ac3-signal-unequal-bandwidth.ac3": "Twelve 2/0 frames at 48 kHz whose two channels have different bandwidths (chbwcod 20 and 50), all four rematrixing flags set and mantissas in every bin, so that "
                                        "rematrixing must stop at the lower bandwidth (A/52 7.5.4).",
     "ac3-signal-phase-flags.ac3": "Twelve 2/0 frames at 48 kHz with coupling, phase flags in use in two coupling ranges and not in use in a third (phsflginu 0 after a block that had flags), "
@@ -362,7 +368,7 @@ def manifest(name, data):
 
 def main(argv):
     import json
-    files = {"ac3-signal-unequal-bandwidth.ac3": build("unequal", 100), "ac3-signal-phase-flags.ac3": build("phase", 200)}
+    files = {"ac3-signal-unequal-bandwidth.ac3": build("unequal", 100), "ac3-signal-phase-flags.ac3": build("phase", 200), "ac3-signal-compr.ac3": build("unequal", 100, compr=True)}
     check = "--check" in argv
     for name, data in files.items():
         path = OUT / name

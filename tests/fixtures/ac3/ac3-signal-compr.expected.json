@@ -1,0 +1,81 @@
+{
+ "description": "The frames of ac3-signal-unequal-bandwidth with compre set and a compr word that is +6.02 dB (0x10) in the first six frames and -6.02 dB (0xF0) in the last six, dialnorm 27 (A/52 5.4.2.9, 5.4.2.10 and 7.7.2): to see whether a decoder that picks its output mode by the presence of compr changes its gain at the step.",
+ "length": 27648,
+ "format": "AC-3",
+ "frames": [
+  [
+   0,
+   2304
+  ],
+  [
+   2304,
+   2304
+  ],
+  [
+   4608,
+   2304
+  ],
+  [
+   6912,
+   2304
+  ],
+  [
+   9216,
+   2304
+  ],
+  [
+   11520,
+   2304
+  ],
+  [
+   13824,
+   2304
+  ],
+  [
+   16128,
+   2304
+  ],
+  [
+   18432,
+   2304
+  ],
+  [
+   20736,
+   2304
+  ],
+  [
+   23040,
+   2304
+  ],
+  [
+   25344,
+   2304
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "AC-3",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 18432,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "liba52": true,
+  "skip_insertion": false,
+  "skip": {
+   "skip_insertion": "The check rewrites E-AC-3 frames with skip fields."
+  }
+ }
+}

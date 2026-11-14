@@ -134,9 +134,11 @@ def write_aht_channel(b, rng, hebap, end, mode, rows=None):
     return gains
 
 
-def bsi(b, strmtyp=0, chanmap=None):
+def bsi(b, strmtyp=0, chanmap=None, compr=None):
     b.put(m.SYNC, 16).put(strmtyp, 2).put(0, 3).put(WORDS - 1, 11).put(0, 2).put(3, 2).put(2, 3).put(0, 1).put(16, 5)
-    b.put(27, 5).put(0, 1)  # dialnorm, compre
+    b.put(27, 5).put(compr is not None, 1)  # dialnorm, compre
+    if compr is not None:
+        b.put(compr, 8)  # compr: X (4 bits, two's complement) and Y (4 bits), A/52 7.7.2
     if strmtyp == 1:
         b.put(chanmap is not None, 1)  # chanmape
         if chanmap is not None:
@@ -214,11 +216,11 @@ def aht_frame_of(seed, mode, csnr, narrow, rows=None):
     return finish(b)
 
 
-def spx_frame(seed, explicit_structure, attenuation, new_coordinates, blend=None, strmtyp=0, chanmap=None, transients=None, shift=None):
+def spx_frame(seed, explicit_structure, attenuation, new_coordinates, blend=None, strmtyp=0, chanmap=None, transients=None, shift=None, compr=None):
     shift = SPX_SHIFT if shift is None else shift
     rng = random.Random(seed)
     b = Bits()
-    bsi(b, strmtyp, chanmap)
+    bsi(b, strmtyp, chanmap, compr)
     audfrm_head(b, spxattene=1, transproce=int(transients is not None))
     b.put(0, 1)
     for _ in range(5):
@@ -377,10 +379,18 @@ def aht_hebap4_frames():
     return b"".join(frames)
 
 
+COMPR_UP, COMPR_DOWN = 0x10, 0xF0  # X = 1, Y = 0: 2^(1 + 1) * 0.5 = 2 (+6.02 dB); X = -1, Y = 0: 2^0 * 0.5 (-6.02 dB)
+
+
+def compr_of(i):
+    return COMPR_UP if i < FRAMES // 2 else COMPR_DOWN
+
+
 FILES = {
     "eac3-signal-aht.eac3": lambda: b"".join(aht_frame(300 + i, i % 4, 28 if i % 4 == 3 else CSNR, i % 4 == 3) for i in range(FRAMES)),
     "eac3-signal-spx.eac3": lambda: b"".join(spx_frame(400 + i, i % 2 == 1, (7 * i) % 32, i % 3 == 2, blend=31) for i in range(FRAMES)),
     "eac3-signal-aht-hebap4.eac3": aht_hebap4_frames,
+    "eac3-signal-compr.eac3": lambda: b"".join(spx_frame(400 + i, i % 2 == 1, (7 * i) % 32, i % 3 == 2, blend=31, compr=compr_of(i)) for i in range(FRAMES)),
     "eac3-signal-dependent.eac3": lambda: b"".join(spx_frame(700 + i, i % 2 == 1, (3 * i) % 32, False, blend=31) + spx_frame(800 + i, False, 5, False, blend=31, strmtyp=1, chanmap=0x0200)
                                                     for i in range(FRAMES)),
     "eac3-signal-transient.eac3": lambda: b"".join(spx_frame(900 + i, i % 2 == 1, (2 * i) % 32, False, blend=31, transients=transients(i), shift=TRANSIENT_SHIFT) for i in range(FRAMES)),
@@ -403,6 +413,8 @@ DESCRIPTIONS = {
     "eac3-signal-spx.eac3": "Twelve 2/0 E-AC-3 frames at 48 kHz with spectral extension from bin 73 to 157 in both channels, the default band structure or an explicit one, new coordinates in "
                             "block 3 of some frames, the attenuation filter in the right channel and rematrixing below the extension, with mantissas in every bin and the blend 31, so that "
                             "only the copy and its filter and scaling remain and the decoded samples are comparable one by one (A/52 Annex E 3.6).",
+    "eac3-signal-compr.eac3": "The frames of eac3-signal-spx with compre set and a compr word that is +6.02 dB (0x10) in the first six frames and -6.02 dB (0xF0) in the last six, dialnorm 27 (A/52 5.4.2.9, "
+                              "5.4.2.10 and 7.7.2): to see whether a decoder that picks its output mode by the presence of compr changes its gain at the step.",
     "eac3-signal-dependent.eac3": "Twelve access units of a 2/0 independent substream (spectral extension, no noise) and a dependent substream with the channel map of the back left and back right pair, also 2/0: "
                                   "a program of four channels, which decoders that read dependent substreams give in the order front left, front right, back left, back right (A/52 Annex E 3.8).",
     "eac3-signal-transient.eac3": "Twelve 2/0 E-AC-3 frames at 48 kHz like the spectral extension ones, with transient pre-noise processing data for the left channel of every frame and the right channel of every second one, "
@@ -441,7 +453,7 @@ def manifest(name, data):
         h = m.header(data, at)
         frames.append([at, h["length"]])
         at += h["length"]
-    decodes = name in ("eac3-signal-aht.eac3", "eac3-signal-spx.eac3", "eac3-signal-transient-off.eac3")
+    decodes = name in ("eac3-signal-aht.eac3", "eac3-signal-spx.eac3", "eac3-signal-transient-off.eac3", "eac3-signal-compr.eac3")
     if name == "eac3-signal-dependent.eac3":
         independent = [f for f in frames if m.header(data, f[0])["strmtyp"] == 0]
         return {
