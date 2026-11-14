@@ -1,29 +1,20 @@
 {
   "goldens": [
-    "tests/fixtures/wavpack/"
+    "tests/fixtures/wavpack/built-leading-block-without-set-md5.report.json",
+    "tests/fixtures/wavpack/built-set-without-final-limit.report.json",
+    "tests/fixtures/wavpack/built-set-without-initial.report.json"
   ],
-  "renamed": [
+  "added": [
     {
       "parent": [
         "WavPack",
-        "Block",
-        "RIFF Header",
-        "Data"
+        "Statistics"
       ],
-      "from": "fact Chunk",
-      "to": "Fact Chunk"
-    }
-  ],
-  "changed": [
+      "name": "Lost Samples"
+    },
     {
-      "path": [
-        "WavPack",
-        "Processor",
-        "Evidence"
-      ],
-      "fields": [
-        "value"
-      ]
+      "scope": "stream",
+      "key": "lostSamples"
     }
   ]
 }
