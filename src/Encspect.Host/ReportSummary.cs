@@ -56,6 +56,11 @@ public sealed record ReportSummary(
     // The spectral cutoff in hertz of the first audio stream's combined spectrum, where measurements found one; null otherwise.
     public int? SpectralCutoff { get; init; }
 
+    // The spectral bandwidth and the partial cutoff in hertz of the same stream, where measurements found one; null otherwise.
+    public int? SpectralBandwidth { get; init; }
+
+    public int? PartialCutoff { get; init; }
+
     // The sample peak in tenths of a dB relative to full scale, the highest over the channels of the first audio stream, where
     // measurements found one (a stream whose samples are all 0 has none); null otherwise.
     public int? SamplePeakTenths { get; init; }
@@ -147,6 +152,8 @@ public sealed record ReportSummary(
             LossyPartConfidence = lossyPart?.Confidence,
             LostSamples = lost,
             SpectralCutoff = first?.Measurements?.Spectrum?.Cutoff is { IsFound: true } cutoff ? cutoff.Frequency : null,
+            SpectralBandwidth = first?.Measurements?.Spectrum?.Bandwidth is { IsFound: true } bandwidth ? bandwidth.Frequency : null,
+            PartialCutoff = first?.Measurements?.Spectrum?.PartialCutoff is { IsFound: true } partial ? partial.Frequency : null,
             SamplePeakTenths = first?.Measurements?.Levels?.Stream.SamplePeakTenths is { } peak && peak != MeasurementLimits.NoLevel ? peak : null,
             ClippingRuns = first?.Measurements?.Levels?.Stream.ClippingRuns,
             SilentStretches = first?.Measurements?.Levels is { MinimumSilentStretch: > 0 } silence ? silence.Stream.SilentStretches : null,

@@ -204,6 +204,9 @@ internal sealed class StreamMeasurer
         Array.Fill(_maximum, double.MinValue);
     }
 
+    // The counters of each measured channel and, last, of the combined spectrum (the tests pin their raw output).
+    internal IReadOnlyList<CutoffCounters> CounterSets => _counters;
+
     // The state of a stream of this format, in bytes, for the memory bound (decided before anything is allocated).
     public static long EstimateBytes(PcmFormat format, MeasureOptions options)
     {
@@ -249,7 +252,7 @@ internal sealed class StreamMeasurer
         bytes += 2L * (measured + 1) * rows * 8 * 2;
         if (format.SampleRate >= CutoffGeometry.MinimumRate)
         {
-            bytes += (measured + 1) * CutoffCounters.Bytes;
+            bytes += ((measured + 1) * CutoffCounters.Bytes) + CutoffCounters.CeilingBytes;
         }
 
         bytes += 4L * MeasurementLimits.MaxColumns * rows;
@@ -983,7 +986,7 @@ internal sealed class StreamMeasurer
             _counters = new CutoffCounters[_measured + 1];
             for (int i = 0; i < _counters.Length; i++)
             {
-                _counters[i] = new CutoffCounters();
+                _counters[i] = new CutoffCounters(hasCeiling: i == _measured);
             }
         }
 
@@ -1091,6 +1094,9 @@ internal sealed class StreamMeasurer
         ref int show = ref MemoryMarshal.GetArrayDataReference(counters.Show);
         ref int highs = ref MemoryMarshal.GetArrayDataReference(_highs);
         ref double aboveRows = ref MemoryMarshal.GetArrayDataReference(_aboveRows);
+        int[]? ceilingCounts = counters.Ceiling;
+        ref int ceiling = ref ceilingCounts is null ? ref Unsafe.NullRef<int>() : ref MemoryMarshal.GetArrayDataReference(ceilingCounts);
+        double ceilingRatio = CutoffCounters.CeilingRatio * w;
         for (int r = first; r <= last; r++)
         {
             double under = Unsafe.Add(ref sfx, r - w + 1) - Unsafe.Add(ref sfx, r + 1);
@@ -1103,6 +1109,12 @@ internal sealed class StreamMeasurer
             if (lhs > 0 && lhs >= ratio * over)
             {
                 Unsafe.Add(ref show, cell)++;
+            }
+
+            // The ceiling: the band under the row against the mean of every row above it, up to the top of the search (rows r + 1 to 506).
+            if (ceilingCounts is not null && under > 0 && under * (CutoffGeometry.TopRow - r) >= ceilingRatio * Unsafe.Add(ref sfx, r + 1))
+            {
+                Unsafe.Add(ref ceiling, cell)++;
             }
         }
     }
@@ -1119,7 +1131,7 @@ internal sealed class StreamMeasurer
                 bytes += 2L * channel.Length;
             }
 
-            bytes += 64L * (1 + spectrum.ChannelCutoffs.Count);
+            bytes += (64L * (1 + spectrum.ChannelCutoffs.Count)) + (32L * (2 + spectrum.ChannelBandwidths.Count));
         }
 
         bytes += record.Levels is { } levels ? (256L * (levels.Channels.Count + 1)) + (levels.Spans is { } spans ? 256L + (8L * spans.Distribution.Count) : 0) : 0;
@@ -1226,10 +1238,12 @@ internal sealed class StreamMeasurer
         int rows = MeasurementLimits.Rows;
         short[][] perChannel = new short[_measured][];
         var cutoffs = new List<SpectralCutoff>();
+        var bandwidths = new List<SpectralBandwidth>();
         for (int c = 0; c < _measured; c++)
         {
             perChannel[c] = Levels(_average.AsSpan(c * rows, rows));
             cutoffs.Add(CutoffFinder.Find(perChannel[c], _counters.Length > 0 ? _counters[c] : null, _geometry));
+            bandwidths.Add(CutoffFinder.FindBandwidth(perChannel[c], _geometry));
         }
 
         short[] combined = Levels(_average.AsSpan(_measured * rows, rows));
@@ -1244,6 +1258,9 @@ internal sealed class StreamMeasurer
                 PerChannel = perChannel.Select(p => (ReadOnlyMemory<short>)p).ToList(),
                 Cutoff = cutoff,
                 ChannelCutoffs = cutoffs,
+                Bandwidth = CutoffFinder.FindBandwidth(combined, _geometry),
+                ChannelBandwidths = bandwidths,
+                PartialCutoff = CutoffFinder.FindPartial(_counters.Length > 0 ? _counters[_measured] : null, _geometry),
             },
             Spectrogram = Grid(),
             Waveform = Wave(),

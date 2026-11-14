@@ -1,5 +1,6 @@
 using System.Globalization;
 using Encspect.Core;
+using Encspect.Host.Measurement;
 
 namespace Encspect.Host;
 
@@ -11,6 +12,8 @@ public enum MeasurementFigure
 {
     Measured,
     SpectralCutoff,
+    SpectralBandwidth,
+    PartialCutoff,
     Loudness,
     IntegratedLoudness,
     LoudnessRange,
@@ -42,7 +45,13 @@ public static class MeasurementText
 
     public const string SpectralCutoffDescription = "The frequency where the frames' own steps end, found by walking up from the largest step of the average spectrum: never below that step, and equal to it on a sharp edge. It comes with the size of the step, where the transition to it starts and how many of the frames with signal show a step there. It is a measured edge, not the lowpass frequency an encoder states.";
 
+    public const string SpectralBandwidthDescription = "The highest frequency at which the average spectrum stands at least 20 dB above a flat floor that reaches the top of the search (99 % of Nyquist) and is at least 1 kHz wide, with the floor's level. The cutoff measures an edge, a step between two bands; the bandwidth measures where the spectrum meets a floor, steep or gentle. It is not the bandwidth a coder codes or the lowpass frequency an encoder states.";
+
+    public const string PartialCutoffDescription = "The frequency at which the most frames with signal show a ceiling of their own: the band under it at least 30 dB above the mean power of everything above it, up to 99 % of Nyquist. It finds an edge that only part of the stream has (lossy tracks joined with others, a lossy intro), which the average spectrum hides. It is a count of frames, not a verdict.";
+
     public const string MeasuredTopic = Topics.Measurements;
+
+    public const string SpectralBandwidthTopic = Topics.SpectralBandwidth;
 
     public const string SpectralCutoffTopic = Topics.SpectralCutoff;
 
@@ -125,6 +134,11 @@ public static class MeasurementText
         if (m.Spectrum is { } spectrum && m.Status != MeasurementStatus.Failed)
         {
             lines.Add(new MeasurementLine(MeasurementFigure.SpectralCutoff, "Spectral Cutoff", Cutoff(spectrum.Cutoff), SpectralCutoffDescription, SpectralCutoffTopic));
+            lines.Add(new MeasurementLine(MeasurementFigure.SpectralBandwidth, "Spectral Bandwidth", Bandwidth(spectrum.Bandwidth), SpectralBandwidthDescription, SpectralBandwidthTopic));
+            if (ShowsPartialCutoff(spectrum, m.SampleRate))
+            {
+                lines.Add(new MeasurementLine(MeasurementFigure.PartialCutoff, "Partial Cutoff", PartialCutoff(spectrum.PartialCutoff), PartialCutoffDescription, SpectralCutoffTopic));
+            }
         }
 
         if (m.Levels is { } levels && m.Status != MeasurementStatus.Failed)
@@ -441,6 +455,56 @@ public static class MeasurementText
         return cutoff.FramesWithSignal == 0 && cutoff.StepFrequency == 0
             ? "none found (no frame with signal)"
             : $"none found (largest step {Tenths(cutoff.StepTenthsOfDb)} dB, at {Hertz(cutoff.StepFrequency)})";
+    }
+
+    public static string Bandwidth(SpectralBandwidth bandwidth)
+    {
+        if (!bandwidth.IsSearched)
+        {
+            return "not searched (the sample rate is below 8,000 Hz)";
+        }
+
+        if (bandwidth.IsFound)
+        {
+            return $"{Hertz(bandwidth.Frequency)}, 20 dB or more above a floor of {Tenths(bandwidth.FloorTenthsOfDb)} dB from there to the top";
+        }
+
+        return bandwidth.Reason == SpectralBandwidthReason.ReachesTop
+            ? "none found (the spectrum reaches the top of the search)"
+            : "none found (the level under the floor is less than 20 dB above it: a slope, not a floor)";
+    }
+
+    public static string PartialCutoff(PartialCutoff partial)
+    {
+        if (!partial.IsSearched)
+        {
+            return "not searched (the sample rate is below 8,000 Hz)";
+        }
+
+        string frames = $"{partial.FramesShowing.ToString("N0", CultureInfo.InvariantCulture)} of {partial.FramesWithSignal.ToString("N0", CultureInfo.InvariantCulture)} frames with signal";
+        if (partial.IsFound)
+        {
+            return $"{Hertz(partial.Frequency)}, in {frames}";
+        }
+
+        return partial.FramesShowing == 0 ? "none found (no frame shows a ceiling)" : $"none found (most frames: {frames}, at {Hertz(partial.Frequency)})";
+    }
+
+    // The text prints the partial cutoff only where the cutoff is not found or lies elsewhere by more than one band (1 kHz); the JSON always holds it.
+    private static bool ShowsPartialCutoff(SpectrumFigures spectrum, int sampleRate)
+    {
+        if (!spectrum.PartialCutoff.IsSearched)
+        {
+            return false;
+        }
+
+        if (!spectrum.Cutoff.IsFound)
+        {
+            return true;
+        }
+
+        var geometry = new CutoffGeometry(sampleRate, spectrum.FftSize);
+        return spectrum.PartialCutoff.IsFound && Math.Abs(spectrum.PartialCutoff.Frequency - spectrum.Cutoff.Frequency) > geometry.Hertz(geometry.BandRows);
     }
 
     public static string Hertz(int hertz) => hertz.ToString("N0", CultureInfo.InvariantCulture) + " Hz";

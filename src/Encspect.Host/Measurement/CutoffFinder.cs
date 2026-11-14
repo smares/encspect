@@ -17,7 +17,25 @@ internal sealed class CutoffCounters
 
     public readonly int[] Show = new int[MeasurementLimits.Rows * Levels];
 
+    // Frames whose band under the row stands 30 dB above the mean power of everything above it, up to the top of the search; kept for
+    // the combined spectrum only (the partial cutoff, docs/design/spectral-analysis.md, Step 7 (b)). At the cell of All.
+    public readonly int[]? Ceiling;
+
+    // 10^(30 / 10): a frame shows a ceiling at a row when the mean power of the band under it is at least this times the mean power of
+    // every row above it.
+    public const double CeilingRatio = 1000.0;
+
+    public CutoffCounters(bool hasCeiling = false)
+    {
+        if (hasCeiling)
+        {
+            Ceiling = new int[MeasurementLimits.Rows * Levels];
+        }
+    }
+
     public static long Bytes => 2L * MeasurementLimits.Rows * Levels * sizeof(int);
+
+    public static long CeilingBytes => (long)MeasurementLimits.Rows * Levels * sizeof(int);
 }
 
 // The geometry the search needs, from the sample rate and the FFT size, in integers.
@@ -68,6 +86,11 @@ internal static class CutoffFinder
 
     private const int StepThresholdTenths = 250;
 
+    // The floor's run stays within 3 dB of the floor; the band under it must be 20 dB above it.
+    private const int BandwidthToleranceTenths = 30;
+
+    private const int BandwidthStepTenths = 200;
+
     public static SpectralCutoff Find(ReadOnlySpan<short> rows, CutoffCounters? counters, CutoffGeometry geometry)
     {
         if (!geometry.IsSearched || counters is null)
@@ -113,7 +136,7 @@ internal static class CutoffFinder
 
         int stepTenths = (int)FloorDivide((2 * bestNumerator) + bestDenominator, 2 * bestDenominator);
 
-        (int withSignal, int showing) = Frames(counters, best);
+        (int withSignal, int showing) = Frames(counters, best, counters.Show);
 
         int stepHertz = geometry.Hertz(best + 1);
         bool isFound = stepTenths >= StepThresholdTenths && withSignal > 0 && 2L * showing >= withSignal;
@@ -129,7 +152,7 @@ internal static class CutoffFinder
         int last = best;
         while (last < CutoffGeometry.LastCandidate)
         {
-            (int signalNext, int showingNext) = Frames(counters, last + 1);
+            (int signalNext, int showingNext) = Frames(counters, last + 1, counters.Show);
             if (signalNext == 0 || 2L * showingNext < signalNext)
             {
                 break;
@@ -160,9 +183,99 @@ internal static class CutoffFinder
         };
     }
 
+    // The spectral bandwidth of docs/design/spectral-analysis.md, Step 7 (a): the floor is the mean level of the band of W rows that ends at
+    // the top row of the search; the run goes down while the band that ends at the row has a mean within 3 dB of the floor, and the
+    // bandwidth is the run's lowest row where the band of W rows under it is at least 20 dB above the floor. Sums of W integers are
+    // compared, so it is exact.
+    public static SpectralBandwidth FindBandwidth(ReadOnlySpan<short> rows, CutoffGeometry geometry)
+    {
+        if (!geometry.IsSearched)
+        {
+            return new SpectralBandwidth { IsSearched = false };
+        }
+
+        int rowCount = MeasurementLimits.Rows;
+        int w = geometry.BandRows;
+        int top = CutoffGeometry.TopRow;
+        Span<long> prefix = stackalloc long[rowCount + 1];
+        for (int r = 0; r < rowCount; r++)
+        {
+            prefix[r + 1] = prefix[r] + (rows[r] == MeasurementLimits.NoPower ? SilentTenths : rows[r]);
+        }
+
+        long floorSum = prefix[top + 1] - prefix[top - w + 1];
+        int end = top;
+        while (end - 1 >= w - 1)
+        {
+            long band = prefix[end] - prefix[end - w];
+            if (Math.Abs(band - floorSum) > BandwidthToleranceTenths * w)
+            {
+                break;
+            }
+
+            end--;
+        }
+
+        // The run's lowest row is the lowest row of the lowest band within the tolerance: the shift by W - 1 rows of the cutoff's edge.
+        int lowest = end - w + 1;
+        if (lowest < geometry.FirstCandidate || lowest < w)
+        {
+            return new SpectralBandwidth { Reason = SpectralBandwidthReason.ReachesTop };
+        }
+
+        long under = prefix[lowest] - prefix[lowest - w];
+        if (under < floorSum + (BandwidthStepTenths * w))
+        {
+            return new SpectralBandwidth { Reason = SpectralBandwidthReason.Slope };
+        }
+
+        return new SpectralBandwidth
+        {
+            IsFound = true,
+            Frequency = geometry.Hertz(lowest),
+            FloorTenthsOfDb = (int)FloorDivide((2 * floorSum) + w, 2L * w),
+        };
+    }
+
+    // The partial cutoff of Step 7 (b): over the candidate rows, the one at which the most frames with signal show a ceiling (the lowest
+    // on a tie), then the lowest row below it, walking down, whose count stays at least half of that maximum, which gives the frequency (so
+    // it lands on the edge and not up to W - 1 rows above it); the count is that maximum, and the figure is found where at least 10 % of the
+    // frames with signal at the row that has it show a ceiling.
+    public static PartialCutoff FindPartial(CutoffCounters? counters, CutoffGeometry geometry)
+    {
+        if (!geometry.IsSearched || counters?.Ceiling is not { } ceiling)
+        {
+            return new PartialCutoff { IsSearched = false };
+        }
+
+        int first = geometry.FirstCandidate;
+        int last = CutoffGeometry.LastCandidate;
+        var showing = new int[last + 1];
+        int best = first;
+        for (int r = first; r <= last; r++)
+        {
+            showing[r] = Frames(counters, r, ceiling).Showing;
+            if (showing[r] > showing[best])
+            {
+                best = r;
+            }
+        }
+
+        int row = best;
+        while (row - 1 >= first && showing[best] > 0 && 2L * showing[row - 1] >= showing[best])
+        {
+            row--;
+        }
+
+        // The frequency is the walk's row; the count is the most frames, at the row that has them.
+        (int withSignal, int shown) = Frames(counters, best, ceiling);
+        bool isFound = withSignal > 0 && 10L * shown >= withSignal;
+        return new PartialCutoff { IsFound = isFound, Frequency = shown > 0 ? geometry.Hertz(row + 1) : 0, FramesShowing = shown, FramesWithSignal = withSignal };
+    }
+
     // The frames at a row: the reference level is the highest level that at least 1 % of the row's frames reach; frames with signal are
     // those at most ten levels (30.1 dB) below it; the second figure counts those that show their own step there.
-    private static (int WithSignal, int Showing) Frames(CutoffCounters counters, int row)
+    private static (int WithSignal, int Showing) Frames(CutoffCounters counters, int row, int[] shows)
     {
         int baseIndex = row * CutoffCounters.Levels;
         long total = 0;
@@ -190,7 +303,7 @@ internal static class CutoffFinder
             for (int l = Math.Max(0, reference - 10); l < CutoffCounters.Levels; l++)
             {
                 withSignal += counters.All[baseIndex + l];
-                showing += counters.Show[baseIndex + l];
+                showing += shows[baseIndex + l];
             }
         }
 

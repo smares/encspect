@@ -1,7 +1,7 @@
 ---
 id: coded-bandwidth
 title: Coded bandwidth
-related: vorbis-floors-and-residues, opus-toc, lowpass, spectral-cutoff, subband-coding, filter-bank, mpeg-layers, huffman-coding, aac-windows-and-blocks, ac3-audio-blocks
+related: vorbis-floors-and-residues, opus-toc, lowpass, spectral-cutoff, spectral-bandwidth, subband-coding, filter-bank, mpeg-layers, huffman-coding, aac-windows-and-blocks, ac3-audio-blocks
 references: RFC 6716 section 2, table 1; section 3.1; ISO/IEC 11172-3 2.4.1.5, 2.4.1.6, 2.4.2.5, 2.4.2.6, 2.4.2.7; ISO/IEC 14496-3 4.5.2, 4.6.11; ATSC A/52:2018 5.4.3.24, 7.2.2.1; Annex E 3.3.3
 ---
 **The problem.** Encoders spend no bits on frequencies they filtered out or chose not to code. The coded data says where coding stopped.
@@ -20,4 +20,4 @@ references: RFC 6716 section 2, table 1; section 3.1; ISO/IEC 11172-3 2.4.1.5, 2
 
 **A bound the data states.** The value is what the syntax declares, not a measurement of the sound: a band below it can carry very little, noise substitution and intensity stereo bands count, and SBR or spectral extension adds content above.
 
-**What you see.** The lowest, most common and highest value, and a graph. It is neither the [lowpass frequency](lowpass), the setting a LAME tag states, nor the [spectral cutoff](spectral-cutoff), measured from decoded audio: the three can differ.
+**What you see.** The lowest, most common and highest value, and a graph. It is neither the [lowpass frequency](lowpass), the setting a LAME tag states, nor the [spectral cutoff](spectral-cutoff) or the [spectral bandwidth](spectral-bandwidth), measured from decoded audio: the four can differ.
