@@ -131,10 +131,14 @@ def hertz(boundary, rate, size, bins):
     return (2 * boundary * bins * rate + size) // (2 * size)
 
 
+CEILING_RATIO = 10 ** 2.5
+
+
 class Counters:
     def __init__(self):
         self.all = [[0] * 72 for _ in range(ROWS)]
         self.show = [[0] * 72 for _ in range(ROWS)]
+        self.ceiling = [[0] * 72 for _ in range(ROWS)]
 
 
 def count_frame(rows, counters, w, first):
@@ -153,14 +157,19 @@ def count_frame(rows, counters, w, first):
         lhs = under * above_rows
         if lhs > 0 and lhs >= OWN_STEP_RATIO * over * w:
             counters.show[r][level] += 1
+        # The ceiling: the band under the row against the mean power of every row above it, up to the top of the search.
+        if under > 0 and under * (TOP_ROW - r) >= CEILING_RATIO * w * suffix[r + 1]:
+            counters.ceiling[r][level] += 1
 
 
 def floor_div(a, b):
     return a // b
 
 
-def frames_at(counters, r):
-    """(frames with signal, frames that show an own step) at a row: signal is within ten levels of the level 1 % of the frames reach."""
+def frames_at(counters, r, shows=None):
+    """(frames with signal, frames that show an own step) at a row: signal is within ten levels of the level 1 % of the frames reach. shows: the
+    counter array to read the second figure from (the own steps by default; the ceilings for the partial cutoff)."""
+    shows = counters.show if shows is None else shows
     total = sum(counters.all[r])
     with_signal = showing = 0
     if total:
@@ -173,7 +182,7 @@ def frames_at(counters, r):
                 break
         for l in range(max(0, reference - 10), 72):
             with_signal += counters.all[r][l]
-            showing += counters.show[r][l]
+            showing += shows[r][l]
     return with_signal, showing
 
 
@@ -217,6 +226,52 @@ def find_cutoff(level_tenths, counters, rate, size):
             i -= 1
         result.update(is_found=True, frequency=hertz(edge + 1, rate, size, bins), transition_start=hertz(start, rate, size, bins))
     return result
+
+
+def find_bandwidth(level_tenths, rate, size):
+    """The spectral bandwidth of a spectrum given as 512 tenths of a dB: the floor is the mean level of the band of W rows that ends at row 506;
+    the run goes down while the band that ends at the row has a mean within 3 dB of the floor; found where the band of W rows under the run's
+    lowest row (the lowest row of the lowest such band) is at least 20 dB above the floor. Sums of W integers are compared."""
+    if rate < 8000:
+        return {"is_searched": False}
+    w, first, bins = band_rows(rate, size)
+    level = [-2000 if v is None else v for v in level_tenths]
+    prefix = [0]
+    for v in level:
+        prefix.append(prefix[-1] + v)
+    floor_sum = prefix[TOP_ROW + 1] - prefix[TOP_ROW - w + 1]
+    end = TOP_ROW
+    while end >= w and abs(prefix[end] - prefix[end - w] - floor_sum) <= 30 * w:
+        end -= 1
+    lowest = end - w + 1
+    result = {"is_searched": True, "is_found": False, "frequency": 0, "floor_tenths": 0, "reason": "none"}
+    if lowest < first or lowest < w:
+        result["reason"] = "reaches_top"
+    elif prefix[lowest] - prefix[lowest - w] < floor_sum + 200 * w:
+        result["reason"] = "slope"
+    else:
+        result.update(is_found=True, frequency=hertz(lowest, rate, size, bins), floor_tenths=(2 * floor_sum + w) // (2 * w))
+    return result
+
+
+def find_partial(counters, rate, size):
+    """The partial cutoff: the candidate row at which the most frames with signal show a ceiling (the lowest on a tie), then the lowest row below it
+    whose count stays at least half of that maximum, which gives the frequency; the count is the maximum (at its own row); found where at least 20 % of the
+    frames with signal at that row show one."""
+    if rate < 8000:
+        return {"is_searched": False}
+    w, first, bins = band_rows(rate, size)
+    showing = {r: frames_at(counters, r, counters.ceiling)[1] for r in range(first, 506)}
+    best = first
+    for r in range(first, 506):
+        if showing[r] > showing[best]:
+            best = r
+    row = best
+    while row - 1 >= first and showing[best] > 0 and 2 * showing[row - 1] >= showing[best]:
+        row -= 1
+    with_signal, shown = frames_at(counters, best, counters.ceiling)
+    return {"is_searched": True, "is_found": with_signal > 0 and 5 * shown >= with_signal, "frequency": hertz(row + 1, rate, size, bins) if shown > 0 else 0,
+            "frames_showing": shown, "frames_with_signal": with_signal}
 
 
 decimal.getcontext().prec = 60
@@ -607,6 +662,8 @@ def measure(data, layout=None):
 
     levels = [[None if sums[c][r] <= 0 or frames == 0 else tenths(sums[c][r] / frames) for r in range(ROWS)] for c in range(measured + 1)]
     cutoffs = [find_cutoff(levels[c], counters[c], rate, size) for c in range(measured + 1)]
+    bandwidths = [find_bandwidth(levels[c], rate, size) for c in range(measured + 1)]
+    partial = find_partial(counters[measured], rate, size)
 
     last_hop = max(h for _, h in mins) if mins else 0
     shift = 0
@@ -632,6 +689,7 @@ def measure(data, layout=None):
     return {
         "sample_rate": rate, "channels": channels, "channels_measured": measured, "bits": bits, "samples": samples, "first_position": first_position or 0,
         "lost_samples": lost, "gaps": gaps, "fft_size": size, "frames": frames, "combined": levels[measured], "per_channel": levels[:measured],
-        "cutoff": cutoffs[measured], "channel_cutoffs": cutoffs[:measured], "levels": levels_of(runs, measured, bits, rate),
+        "cutoff": cutoffs[measured], "channel_cutoffs": cutoffs[:measured], "bandwidth": bandwidths[measured],
+        "channel_bandwidths": bandwidths[:measured], "partial_cutoff": partial, "levels": levels_of(runs, measured, bits, rate),
         "loudness": loudness_of(runs, measured, bits, rate, layout), "true_peak": true_peak_of(runs, measured, bits, rate), "spectrogram_columns": columns, "hops_per_column": 1 << shift, "waveform": waveform,
     }

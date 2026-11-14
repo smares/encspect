@@ -31,6 +31,7 @@ import json
 import math
 import pathlib
 import struct
+import sys
 
 import aiff_model as aiff
 import flac_model as m
@@ -142,6 +143,53 @@ def biquad_lowpass(values, rate, hertz, sections):
             out.append(y)
         values = out
     return values
+
+
+def resample(values, rate_in, rate_out, cutoff_hz, half_width=115):
+    """The values at rate_in resampled to rate_out (an upsampling, so rate_out is at least rate_in) by a windowed-sinc filter, in doubles: the
+    kernel is a sinc of cutoff cutoff_hz under a four-term Blackman-Harris window of 2 * half_width + 1 input samples (the transition from the
+    pass band to the stop band is about 8 / (2 * half_width + 1) of rate_in wide), and each output sample is a sum over the input samples that
+    lie under it, in a fixed order, so the result is the same on every machine. Each phase of the output (rate_out / gcd(rate_in, rate_out)
+    of them) has its own taps."""
+    divisor = math.gcd(rate_in, rate_out)
+    step_in, step_out = rate_in // divisor, rate_out // divisor
+    fc = cutoff_hz / rate_in
+    taps = {}
+    count = len(values)
+    out = []
+    for j in range(count * step_out // step_in):
+        position, phase = divmod(j * step_in, step_out)
+        if phase not in taps:
+            fraction = phase / step_out
+            row = []
+            for k in range(-half_width, half_width + 2):
+                x = k - fraction
+                if abs(x) >= half_width + 1:
+                    row.append(0.0)
+                    continue
+                u = math.pi * x / (half_width + 1)
+                window = 0.35875 + 0.48829 * math.cos(u) + 0.14128 * math.cos(2 * u) + 0.01168 * math.cos(3 * u)
+                arg = 2 * math.pi * fc * x
+                row.append(2 * fc * (math.sin(arg) / arg if arg else 1.0) * window)
+            taps[phase] = row
+        total = 0.0
+        row = taps[phase]
+        for t, k in enumerate(range(position - half_width, position + half_width + 2)):
+            if 0 <= k < count:
+                total += row[t] * values[k]
+        out.append(total)
+    return out
+
+
+def harmonics(rate, fundamental_hz, highest_hz, rms_db, seed, length):
+    """Sines at the multiples of fundamental_hz up to highest_hz, the n-th with amplitude 1 / n and a fixed random phase, at the given RMS level: a
+    sparse spectrum (the gaps between the harmonics hold nothing but the window's leakage)."""
+    rng = Lcg(seed)
+    parts = [(n * fundamental_hz, 1.0 / n, rng.uniform() * 2 * math.pi) for n in range(1, int(highest_hz // fundamental_hz) + 1)]
+    out = [sum(a * math.sin(2 * math.pi * f * i / rate + ph) for f, a, ph in parts) for i in range(length)]
+    rms = math.sqrt(sum(v * v for v in out) / length)
+    gain = 10 ** (rms_db / 20) / rms
+    return [v * gain for v in out]
 
 
 def sine_bin(rate, bin_numerator, bin_denominator, length, amplitude):
@@ -298,6 +346,28 @@ def build():
     with_silence = lines_q(rate44, 16000, -20.0, 33, int(rate44 * 0.5)) + [0] * int(rate44 * 0.5)
     add("lines-16000-then-silence", "Half a second of 16 kHz lines and as much digital silence: the silent frames count as without signal.", [with_silence], rate44, 16,
         {"cutoff_hz": 16000})
+
+    # Mixed content with a smaller and a larger part from the band-limited source (the half is above).
+    for percent in (20, 80):
+        part = n44 * percent // 100
+        add(f"mixed-lines-{percent}-percent", f"{percent} % of the stream (the first {part} samples) is 16 kHz lines and the rest white noise at the same level: part of the stream has the edge.",
+            [lines_q(rate44, 16000, -20.0, 31, part) + quantize(white(n44 - part, 32, -20.0), 16)], rate44, 16, {"cutoff_hz": None, "no_cutoff": True, "partial_percent": percent})
+
+    # Upsampled content: pink noise with a 330 Hz tone at the source's rate, resampled by the windowed-sinc filter of resample() with its cutoff 1 kHz
+    # under the source's Nyquist rate, then quantized with TPDF dither of one least significant bit.
+    for source, target, bits in ((rate44, rate48, 16), (rate44, 96000, 16), (22050, rate44, 16), (rate44, rate48, 24)):
+        base = pink(source, 21, -20.0, rate=source)
+        add(f"upsampled-{source}-to-{target}" + ("-24-bit" if bits == 24 else ""), f"Pink noise with a 330 Hz tone at {source} Hz, -20 dBFS RMS, resampled to {target} Hz by a windowed-sinc filter (cutoff {(source // 2 - 1000) / 1000:g} kHz) and "
+            f"quantized to {bits} bits with TPDF dither of one least significant bit: no content above the old Nyquist rate less the filter's transition.",
+            [quantize(resample(base, source, target, source // 2 - 1000), bits, dither_seed=23)], target, bits,
+            {"cutoff_hz": None, "unspecified": True, "source_rate": source, "resampler_cutoff_hz": source // 2 - 1000})
+
+    # Sparse spectra: a harmonic tone of 440 Hz with harmonics up to 20 kHz (the gaps between them are not a ceiling) and one whose harmonics end at 8 kHz
+    # (a ceiling at 8 kHz in every frame, which the cutoff finds as well).
+    add("harmonic-440-20000", "Harmonics of 440 Hz up to 20 kHz (amplitude 1 / n, fixed random phases), -20 dBFS RMS, with TPDF dither of one least significant bit: a sparse spectrum.",
+        [quantize(harmonics(rate44, 440.0, 20000.0, -20.0, 81, n44), 16, dither_seed=82)], rate44, 16, {"cutoff_hz": None, "unspecified": True, "harmonics_to_hz": 20000})
+    add("harmonic-440-8000", "Harmonics of 440 Hz up to 8 kHz (amplitude 1 / n, fixed random phases), -20 dBFS RMS, with TPDF dither of one least significant bit: the band of an instrument.",
+        [quantize(harmonics(rate44, 440.0, 8000.0, -20.0, 83, n44), 16, dither_seed=84)], rate44, 16, {"cutoff_hz": None, "unspecified": True, "harmonics_to_hz": 8000})
 
     # Silence after an impulse.
     for rate in (rate44, rate48):
@@ -806,7 +876,10 @@ def wav_only():
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     build()
+    only = sys.argv[1:]
     for name, (description, channels, rate, bits, construction, block, layout, options) in FIXTURES.items():
+        if only and not any(o in name for o in only):
+            continue
         data = flac_file(channels, rate, bits, block=block, numbers=options.get("numbers"), drop=options.get("drop", ()), wasted=options.get("wasted", False),
                          verbatim=options.get("verbatim", False))
         stem = OUT / f"synthetic-{name}"
@@ -822,6 +895,8 @@ def main():
         if name == "sine-24-bits":
             stem.with_suffix(".aiff").write_bytes(aiff_file(channels, rate, bits))
     for name, description, data, construction in wav_only():
+        if only and not any(o in name for o in only):
+            continue
         stem = OUT / f"synthetic-{name}"
         stem.with_suffix(".wav").write_bytes(data)
         stem.with_suffix(".expected.json").write_text(mm.dumps({"description": description, "length": len(data), "construction": construction}))
