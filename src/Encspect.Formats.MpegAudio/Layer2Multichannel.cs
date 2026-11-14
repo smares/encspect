@@ -3,8 +3,8 @@ using Encspect.Core;
 
 namespace Encspect.Formats.MpegAudio;
 
-// The MPEG-2 multichannel extension (ISO/IEC 13818-3) as an MPEG-1 Layer II frame carries it, in
-// the bits after its samples: the multichannel header, a CRC, the composite status information,
+// The MPEG-2 multichannel extension (ISO/IEC 13818-3 2.5) as an MPEG-1 Layer II frame carries it, in
+// the bits after its samples (mc_extension, 2.5.1.12.1, mc_audio_data, 2.5.1.17): the multichannel header, a CRC, the composite status information,
 // the LFE allocation, the bit allocation of the additional transmission channels T2 to T4 and
 // their scfsi, which the CRC covers, then their scalefactors and samples and any multilingual
 // channels. With an extension bitstream the data continues in that separate stream, after the
@@ -16,8 +16,8 @@ internal sealed class Layer2Multichannel
     private static readonly string[] SurroundNames = ["None", "Mono", "Stereo", "Second stereo programme"];
 
     // By surround, then whether a center is coded: the additional channels, the bits of
-    // tc_allocation and of dyn_cross_mode, and the row of Predictors (ISO/IEC 13818-3, the syntax
-    // of mc_composite_status_info). The tables below follow the standard and the conformance
+    // tc_allocation and of dyn_cross_mode, and the row of Predictors (ISO/IEC 13818-3 2.5.1.15 and
+    // 2.5.2.15, mc_composite_status_info). The tables below follow the standard and the conformance
     // streams of ISO/IEC 13818-4; docs/development.md names the check.
     private static readonly (int Channels, int TcBits, int DynBits, int Prediction)[][] Shapes =
     [
@@ -27,7 +27,7 @@ internal sealed class Layer2Multichannel
         [(2, 0, 0, 3), (3, 2, 1, 2)],
     ];
 
-    // The number of 2-bit predsi fields of a subband group with prediction, by dyn_cross_mode: rows
+    // The number of 2-bit predsi fields (npred, 13818-3 2.5.2.15) of a subband group with prediction, by dyn_cross_mode: rows
     // for 3/2, for 3/1 and 2/2, for 3/0, 2/1 and 3/0 + 2/0, and for 2/0 and 2/0 + 2/0.
     private static readonly int[][] Predictors =
     [
@@ -37,7 +37,7 @@ internal sealed class Layer2Multichannel
         [0],
     ];
 
-    // The subband group of each subband: 0 to 7 alone, 8 and 9, 10 and 11, 12 to 15, then 16 and above.
+    // The subband group of each subband (13818-3 2.5.2.15, tc_sbgr_select): 0 to 7 alone, 8 and 9, 10 and 11, 12 to 15, then 16 and above.
     private static readonly int[] Groups =
         [.. Enumerable.Range(0, 30).Select(sb => sb < 8 ? sb : sb < 10 ? 8 : sb < 12 ? 9 : sb < 16 ? 10 : 11)];
 
@@ -97,7 +97,7 @@ internal sealed class Layer2Multichannel
     private static readonly string[] CarriesMonoSurround = ["SLR-"];
     private static readonly string[] CarriesOther = ["CLR-"];
 
-    // What T2 and T3 carry for each tc_allocation (13818-3, semantics of tc_allocation): L for a left
+    // What T2 and T3 carry for each tc_allocation (13818-3 2.5.2.15, tc_allocation): L for a left
     // or left surround channel, R for the right ones, any other letter for a channel that is neither
     // (center, surround, not assigned).
     private static string[] Carries(int surround, bool centerCoded) => (surround, centerCoded) switch
@@ -140,13 +140,6 @@ internal sealed class Layer2Multichannel
     public int Surround { get; private set; }
 
     public bool HasLfe { get; private set; }
-
-    // Whether dynamic crosstalk is on in 3/1 or 2/2, where a copied channel's base channel has two readings.
-    public bool HasCrosstalkChoice { get; private set; }
-
-    // Whether the frame reads under the flag reading, in which dyn_cross_LR names the base channel of
-    // every copy in the cases the conformance streams leave open, instead of the channel's side.
-    public bool UsesFlagReading { get; private set; }
 
     public int DematrixProcedure { get; private set; }
 
@@ -194,10 +187,10 @@ internal sealed class Layer2Multichannel
         }
     }
 
-    // The speaker channels of the configuration, as the decoder outputs them (ISO/IEC 13818-3): the
-    // base frame's left and right, the center (a reserved center value reads as none), the
-    // surround channels or the second stereo program, whose two channels feed no speakers of the
-    // first, then the LFE.
+    // The speaker channels of the configuration, in the order Encspect reports them (the standard
+    // fixes none): the base frame's left and right, the center (a reserved center value reads as
+    // none, 13818-3 2.5.2.13), the surround channels or the second stereo program, whose two
+    // channels feed no speakers of the first, then the LFE.
     public IReadOnlyList<Speaker> Layout
     {
         get
@@ -324,28 +317,7 @@ internal sealed class Layer2Multichannel
         int table = rate == 48000 ? 0 : 1;
         mc.AllocationStart = bits.Position;
 
-        // In 3/1 and 2/2 with dynamic crosstalk the standard's text and the ISO reference software
-        // differ in which base channel a copied channel takes in some cases that no conformance
-        // stream decides (docs/design/mpeg-clean-room-rules.md, section 1). The frame is read under
-        // the text first; if its CRC does not hold, under the flag reading, which stays only if
-        // its CRC holds.
-        mc.HasCrosstalkChoice = dynamic == 1 && channels == 2 && mc.Surround != 3;
-        void ReadAs(bool flagReading)
-        {
-            mc.UsesFlagReading = flagReading;
-            mc.ReadAllocation(data, start, statusStart, headerEnd, table, channels, dynMode, secondStereo, tc, dynLeftRight, baseAllocation);
-        }
-
-        ReadAs(false);
-        if (mc.HasCrosstalkChoice && mc.StoredCrc != mc.ComputedCrc)
-        {
-            ReadAs(true);
-            if (mc.StoredCrc != mc.ComputedCrc)
-            {
-                ReadAs(false);
-            }
-        }
-
+        mc.ReadAllocation(data, start, statusStart, headerEnd, table, channels, dynMode, secondStereo, tc, dynLeftRight, baseAllocation);
         return mc;
     }
 
@@ -395,11 +367,6 @@ internal sealed class Layer2Multichannel
         ComputedCrc = Crc16.ComputeBits(data, statusStart, SideInfoEnd - statusStart, Crc16.ComputeBits(data, start, headerEnd - start));
     }
 
-    // Whether the channel at index i copies a base channel in a case the conformance streams leave
-    // open: any copy under dyn_cross_LR 1, 3/1 with T3 carrying R under 0, and all of 2/2.
-    private static bool IsUndecided(Layer2Multichannel mc, string[] carries, int i, int tc, int fromRight) =>
-        mc.HasCrosstalkChoice && (fromRight == 1 || mc.Surround == 2 || (i == 1 && carries[1][tc] == 'R'));
-
     // Decides the allocation index of T2 to T4 in one subband, reading the fields the bitstream
     // carries in channel order; the rules are those of section 1 of
     // docs/design/mpeg-clean-room-rules.md.
@@ -441,7 +408,7 @@ internal sealed class Layer2Multichannel
                 value = plan[i] switch
                 {
                     Source.Read => transmit(2 + i),
-                    Source.Base => mc.UsesFlagReading && IsUndecided(mc, carries, i, tc, fromRight) ? (fromRight == 1 ? right : left) : carries[i][tc] switch
+                    Source.Base => carries[i][tc] switch
                     {
                         'L' => left,
                         'R' => right,
@@ -486,11 +453,7 @@ internal sealed class Layer2Multichannel
         Node status = node.Add(Span("Composite Status", fileOffset, CrcBit + 16, HasLfe ? LfeBit : AllocationStart, null, Explain.McStatus));
         foreach ((string name, int bit, int length, NodeValue value, string description) in _status.OrderBy(s => s.Bit))
         {
-            Node field = status.Add(Span(name, fileOffset, bit, bit + length, value, description));
-            if (HasCrosstalkChoice && name == "Dynamic Crosstalk Modes")
-            {
-                field.Add(Span("Base Channel Source", fileOffset, bit, bit + length, UsesFlagReading ? "Named by the flag" : "On the channel's side", Explain.McCrosstalkSource));
-            }
+            status.Add(Span(name, fileOffset, bit, bit + length, value, description));
         }
 
         if (HasLfe)
