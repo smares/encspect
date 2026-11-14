@@ -14,7 +14,7 @@ How Dolby's output is read (decode() below):
 - It fills the 5.1 layout it was asked for (WAVE order: left, right, center, LFE, left surround, right surround); the channels of the input's layout are taken from it in the
   coded order, and a channel that is all zero is left out unless every channel is (a silent input). It does not decode a dependent substream's channels into that layout.
 - It applies dialogue normalization (A/52 5.4.2.8): the output is 2^((dialnorm - 31) / 6) times the decoded audio, which is undone with the first frame's dialnorm. It also applies
-  more gain than that on the two real files with dynamic range words (csi_miami_stereo_128_spx, casablanca_aht_mono_64), which is not understood: they are pinned.
+  more gain than that on the three real files from Dolby's encoder (buggy_aht_5.1_384, csi_miami_stereo_128_spx, casablanca_aht_mono_64), which is not understood: they are pinned.
 """
 
 import array
@@ -39,6 +39,8 @@ LFE_SLOT = 3
 PINS = {
     "casablanca_aht_mono_64": [(None, 0, "Dolby's output is 9.67 dB louder than the analyzer's (dialnorm -27 alone would be 4 dB quieter), constant over the first 48 blocks and between 6.6 and 12.4 dB over "
                                          "the frames, with a correlation of 0.998 after the best constant gain; the cause is not found (the stream's dynamic range gains are 1.26 to 2.77 dB)")],
+    "buggy_aht_5.1_384": [(None, 0, "Dolby's output is 11 to 17 dB louder than the analyzer's in every band although the dialnorm is 31 (no gain), with each channel correlating 1.00 with its own channel "
+                                    "(0.0 to 0.7 with the others): the same unexplained gain as the two files below")],
     "csi_miami_stereo_128_spx": [(None, 0, "Dolby's output is 6.96 dB louder than the analyzer's (dialnorm -27 alone would be 4 dB quieter), constant over the blocks to 0.03 dB, with a correlation of 0.9997; "
                                            "the stream's dynamic range gains are only -0.28 to 1.49 dB, and the cause is not found")],
     "eac3-signal-ecpl": [((1,), 6400, "enhanced coupling's chaos values scale random values added to each bin's angle (A/52 Annex E 3.5.5), which each decoder draws as it likes; channel 0, whose "

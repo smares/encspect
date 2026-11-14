@@ -7,6 +7,29 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import crosscheck_ac3_coreaudio as c  # noqa: E402
 
 
+class DolbyReading(unittest.TestCase):
+    def test_the_first_frames_dialnorm_is_read_for_ac3_and_eac3(self):
+        import ac3_model
+        import crosscheck_ac3_dolby_mft as d
+        self.assertEqual(d.dialnorm(ac3_model.ac3_frame(dialnorm=27)), 27)
+        self.assertEqual(d.dialnorm(ac3_model.eac3_frame(dialnorm=24, words=200)), 24)
+        self.assertEqual(d.dialnorm(ac3_model.ac3_frame(dialnorm=0)), 31)
+
+    def test_the_slots_follow_the_input_layout_and_a_silent_input_keeps_its_channels(self):
+        import tempfile
+        import crosscheck_ac3_dolby_mft as d
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "out.f32"
+            frames = d.DELAY + 100
+            values = array.array("f", [0.0] * (frames * 6))
+            for n in range(frames):
+                values[n * 6 + 2] = 0.5  # the center slot
+                values[n * 6 + 4] = 0.25  # the left surround slot
+            path.write_bytes(values.tobytes())
+            self.assertEqual(d.slots_of(path, 6, {"acmod": 7, "lfeon": 1}), [2, 4])
+            self.assertEqual(d.slots_of(path, 6, {"acmod": 2, "lfeon": 0}), [0, 1])
+
+
 class ComparisonLogic(unittest.TestCase):
     def test_partial_map_takes_the_independent_channels_where_nothing_correlates(self):
         import random
