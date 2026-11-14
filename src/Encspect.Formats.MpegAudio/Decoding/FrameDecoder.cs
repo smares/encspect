@@ -11,6 +11,9 @@ internal sealed class FrameDecoder : IFrameDecoder
     internal const long Layer3StageUnits = 41;
     internal const long Layer12StageUnits = 29;
 
+    // Per output sample of each channel of a multichannel stream, besides the Layer II stages: the copies, prediction, dematrixing and de-normalization.
+    internal const long MultichannelStageUnits = 8;
+
     // The samples withheld after a gap: the first granule and 480 samples of the next in Layer III (the overlap and the synthesis history), 480 in Layers I and II.
     internal const int Layer3WithheldAfterGap = 576 + 480;
     internal const int Layer12WithheldAfterGap = 480;
@@ -41,16 +44,20 @@ internal sealed class FrameDecoder : IFrameDecoder
     private readonly byte[] _positions = new byte[40];
     private readonly float[] _interleaved = new float[2 * MaxFrameSamples];
     private readonly float[] _planar;
+    private readonly MultichannelPlan? _plan;
+    private readonly MultichannelDecoder? _multichannel;
     private readonly Layer12Scale _layer12 = new();
     private State _state = State.Fresh;
     private int _withheldLeft;
     private IPcmSink? _sink;
 
-    public FrameDecoder(DecodeContext context, MpegHeader stream, int channels)
+    public FrameDecoder(DecodeContext context, MpegHeader stream, int channels, MultichannelPlan? plan)
     {
         _context = context;
         _stream = stream;
-        _channels = Math.Clamp(channels, 1, 2);
+        _plan = plan;
+        _multichannel = plan is null ? null : new MultichannelDecoder(plan);
+        _channels = plan?.Channels ?? Math.Clamp(channels, 1, 2);
         _sampleRate = stream.SampleRate;
         _planar = new float[_channels * MaxFrameSamples];
     }
@@ -71,7 +78,12 @@ internal sealed class FrameDecoder : IFrameDecoder
 
         SampleBuffers lent = _context.LentBuffers;
         int frameChannels = header.IsMono ? 1 : 2;
-        if (lent.IsEmpty || lent.Channels < frameChannels || lent.Stride < LentLayout.PerChannel)
+        if (_plan is not null && (header.Layer != 2 || !header.IsMpeg1 || header.IsMono))
+        {
+            throw new InvalidDataException("The frame is not a Layer II frame of MPEG-1 stereo, which the multichannel extension needs");
+        }
+
+        if (lent.IsEmpty || lent.Channels < (_plan is null ? frameChannels : 6) || lent.Stride < LentLayout.PerChannel)
         {
             throw new InvalidDataException("The frame was not walked into the lent buffers");
         }
@@ -86,7 +98,7 @@ internal sealed class FrameDecoder : IFrameDecoder
 
         bool isLayer3 = header.Layer == 3;
         int unavailable = isLayer3 ? lent.Narrow[LentLayout.FlagsIndex] & LentLayout.MainDataUnavailable : 0;
-        _context.AddWork(checked((DecodeWork.ForSample(4) + (isLayer3 ? Layer3StageUnits : Layer12StageUnits)) * samples * _channels));
+        _context.AddWork(checked((DecodeWork.ForSample(4) + (isLayer3 ? Layer3StageUnits : Layer12StageUnits) + (_plan is null ? 0 : MultichannelStageUnits)) * samples * _channels));
         if (unavailable != 0)
         {
             // The frame's main data are not available: nothing is decoded, and the output after it depends on state it would have left, also at the start of a stream
@@ -108,7 +120,11 @@ internal sealed class FrameDecoder : IFrameDecoder
             _state = State.Valid;
         }
 
-        if (isLayer3)
+        if (_multichannel is not null)
+        {
+            _multichannel.Decode(header, bytes, lent.Narrow, lent.Stride, _planar, MaxFrameSamples);
+        }
+        else if (isLayer3)
         {
             DecodeLayer3(header, bytes, lent, frameChannels);
         }
@@ -126,6 +142,7 @@ internal sealed class FrameDecoder : IFrameDecoder
     {
         Array.Clear(_overlap);
         Array.Clear(_history);
+        _multichannel?.Reset();
         _withheldLeft = 0;
     }
 
@@ -245,7 +262,7 @@ internal sealed class FrameDecoder : IFrameDecoder
         }
 
         int stride = MaxFrameSamples;
-        for (int n = 0; n < samples; n++)
+        for (int n = 0; n < samples && _multichannel is null; n++)
         {
             if (_channels == frameChannels)
             {
@@ -276,7 +293,7 @@ internal sealed class FrameDecoder : IFrameDecoder
 
         _sink ??= _context.DeclareOutput(new PcmFormat(_sampleRate, _channels, 32, SampleFormat.Float32)
         {
-            ChannelLayout = _channels == 1 ? ChannelLayouts.Mono : _stream.ChannelModeBits == 2 ? ChannelLayouts.Discrete(2) : ChannelLayouts.Stereo,
+            ChannelLayout = _plan?.Layout ?? (_channels == 1 ? ChannelLayouts.Mono : _stream.ChannelModeBits == 2 ? ChannelLayouts.Discrete(2) : ChannelLayouts.Stereo),
         });
         _sink.Write(new PcmBlock(frame.FirstSample + withheld, count, _channels, stride, _planar));
         return count;
