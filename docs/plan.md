@@ -157,9 +157,9 @@ The common lossy formats are decoded, so their files get the spectrum, cutoff, l
    - **The patent question** (decision 17 of [lossy-decoders.md](design/lossy-decoders.md#decisions)) is decided (the lead, 2026-11-13): the E-AC-3, HE-AAC, USAC and WMA Professional decoders are built and included in the release binaries.
    - **The official-decoder cross-checks of AC-3 and E-AC-3** that rollout steps 5 and 7 left open ([official-decoder-crosschecks.md](design/official-decoder-crosschecks.md)) come with these decoders: the AC-3 variants (rules in `derive_variants.py`), the downloaded E-AC-3 samples (`eac3-samples.json`), Core Audio's independent substream 1 and dependent substreams (`substreams.eac3`), and the comparison of the PCM.
    - **Rollout step 7, AC-3 and E-AC-3 against Dolby's decoder on Windows,** comes with them too (the lead, 2026-11-11). The runner images have no Dolby decoder, but the lead's Windows 10 22H2 notebook has "Microsoft Dolby Digital Plus Decoder MFT" (`DolbyDecMFT.dll` 10.0.19041.7844, input AC-3, the AC-3 WAVE tag and E-AC-3; the probe's inventory created it). The probe and the files are run there by hand, and the record states that machine's build and DLL versions in place of a runner image's.
-2. **The measurements' later steps** (step 6 of [spectral-analysis.md](design/spectral-analysis.md#rollout)), each its own change after the decoders above:
-   - mid/side spectra and spectral holes, the lossy coders' finer marks, which need lossy streams and fixtures that show each mark;
-   - the bandwidth figure for upsampled content, and a cutoff for mixed content from the frame counters.
+2. **The measurements' later steps** (step 6 of [spectral-analysis.md](design/spectral-analysis.md#rollout)), designed in [Step 7](design/spectral-analysis.md#step-7-spectral-bandwidth-partial-cutoff-midside-spectra-and-spectral-holes) (approved by the lead, 2026-11-14), in two changes after the decoders above:
+   - first the spectral bandwidth (the figure for upsampled content) and the partial cutoff (a cutoff for mixed content, from a per-frame ceiling counter);
+   - then the mid/side spectra and spectral holes, the lossy coders' finer marks, with stereo encoder fixtures that show each mark.
    - The step's other items have places of their own: the two level figures and the TTA decoder are in 0.2, and the measurer on its own thread waits with parallel decoding under [Not planned](#not-planned).
 3. **Encoder-written MPEG fixtures and a survey of old encoders** (the lead, 2026-11-11, started at once beside the decoders):
    - **mctoolame,** the multichannel Layer II encoder (2003) whose decoder mctoolamed already cross-checks the multichannel extension: built when the fixtures are made (CI builds only mctoolamed) and run as a black box, so the MPEG-2 multichannel fixtures include files a real encoder wrote, not only hand-built frames. The project site's real 5-channel stream states no license and is fetched in CI at a pinned hash, not committed.
@@ -245,7 +245,7 @@ The most common formats without a free specification are decoded, on clean-room 
 The scope is confirmed when 0.4 is done. The decoders follow steps 9 to 15 of [lossy-decoders.md, "Order"](design/lossy-decoders.md#order), with the definition of done of 0.3:
 
 1. **AAC LC,** after its clean-room description. Its decoder needs the Vorbis parser's feed delay for a Matroska DiscardPadding (the padding is per block and the decoder must be told before the frames it takes samples from; see the Opus item of 0.3).
-2. **HE-AAC** (SBR and parametric stereo).
+2. **HE-AAC** (SBR and parametric stereo), with the replicated bands as a measurement of the decoded audio (SBR, E-AC-3's spectral extension, CELT's folding), whose fixtures it brings (decision S10 of [spectral-analysis.md](design/spectral-analysis.md#decisions-for-the-lead-1)).
 3. **WMA standard, Professional and Lossless,** each after its clean-room supplement, with Microsoft's decoder as the reference.
 4. **AAC Main, LTP and ER AAC.**
 5. **USAC** (xHE-AAC).
@@ -276,6 +276,7 @@ The more formats of [planned.md](formats/planned.md#after-05-more-formats), as l
 Parked items carry the trigger that would bring them back. The formats at the end were never planned and carry the reason they stay out.
 
 - **Parallel decoding** ([parallel-decoding.md](design/parallel-decoding.md), approved 2026-10-26 and deferred the same day): deferred in favor of new formats and deeper analysis. Not planned unless decoding speed becomes a problem: a decoder that still misses its speed target after its speed pass ([lossy-decoders.md, "Speed targets"](design/lossy-decoders.md#speed-targets)), or analysis times users report; the measurer on its own thread comes with it.
+- **Inter-channel coherence of decoded audio** (decision S10 of [spectral-analysis.md](design/spectral-analysis.md#decisions-for-the-lead-1), 2026-11-14): the pair's bins of the mid/side spectra would give the coherence that shows intensity stereo above its bound, which the parsers' "Intensity Stereo Bound" could cross-check. Not planned unless a user or a review asks for a figure of intensity stereo in decoded audio.
 - **The detection pre-check** ([detection-precheck.md](design/detection-precheck.md)): recorded, not to be built (the lead, 2026-10-26). The design stays as a record for when detection becomes a bottleneck.
 - **Offering the library** as packages: not planned yet; it waits for a contract the milestones no longer extend ([library.md](library.md)).
 - **Sequenced formats** (MIDI, tracker modules and chiptunes): dropped by the lead on 2026-11-08, as a different domain from bitstream and encoder analysis ([history.md](history.md#dropped-plans)).

@@ -1321,7 +1321,7 @@ Same machine and method as the earlier steps (`MeasurementWorkTests` under `floc
 
 ## Step 7: spectral bandwidth, partial cutoff, mid/side spectra and spectral holes
 
-Status: draft for the lead, not approved. It designs the spectral items of item 2 of [plan.md, 0.3](../plan.md#03-lossy-formats-measured): the bandwidth figure for upsampled content, a cutoff for mixed content from the frame counters, and the mid/side spectra and spectral holes that lossy coders leave. All four are host code in the measurer (`StreamMeasurer`, `CutoffFinder`, `FftPlan`); no parser, decoder or session changes, and no finding (decision 6). The decisions are at the end of the section, each with options and a recommendation.
+Status: approved by the lead on 2026-11-14, every decision as recommended (S1 to S10). It designs the spectral items of item 2 of [plan.md, 0.3](../plan.md#03-lossy-formats-measured): the bandwidth figure for upsampled content, a cutoff for mixed content from the frame counters, and the mid/side spectra and spectral holes that lossy coders leave. All four are host code in the measurer (`StreamMeasurer`, `CutoffFinder`, `FftPlan`); no parser, decoder or session changes, and no finding (decision 6). The decisions are at the end of the section, each with options and a recommendation.
 
 - **What exists:** the average spectrum (512 rows, combined and per channel), the cutoff from the largest step and the frame counters (`CutoffCounters.All` and `Show`, 512 rows by 72 levels), and the grids (see [Spectral cutoff](#spectral-cutoff)).
 - **What step 1 left open,** in its own words: upsampling "needs a second figure, the highest frequency whose level stays a set distance above the noise floor"; mixed content "is not found" although the counters hold it; mid/side and holes "wait for fixtures that show it".
@@ -1441,6 +1441,8 @@ What each mark needs, against what is committed (names under `tests/fixtures/mea
 - Each brings its articles, docs, model and "As built" notes, and runs the checks of [CLAUDE.md](../../CLAUDE.md) for the host and the measurement tests (golden, description, topic, CSV and finding-coverage tests included).
 
 ### Decisions for the lead
+
+The lead approved the recommendation of each decision on 2026-11-14: S1(a) to S10(a). The options are kept for the record.
 
 - **S1. Changes and order.** (a) Recommended: two changes, the spectral bandwidth with the partial cutoff first, then mid/side with holes; two regenerations of the goldens. (b) Four changes, one per figure: four regenerations and four reviews. (c) One change: one regeneration, but the largest review, and the encoder-made fixtures hold back the figures that do not need them.
 - **S2. The bandwidth's floor.** (a) Recommended: the band at the top of the search, a run within 3 dB of it at least 1 kHz wide, and 20 dB above it under the run (thresholds fixed by the fixtures). (b) The quietest 1 kHz band anywhere above 2 kHz as the floor: finds a floor that does not reach the top, but a notch in mid-band would then be the floor. (c) A floor from the bit depth (the quantization noise of 16 or 24 bits): fails for floats, dither and noise shaping.
