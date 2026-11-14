@@ -353,6 +353,6 @@ The decoder (`mpeg-audio`, codec ID of the parser) follows minimp3 (CC0 1.0, `th
 
 ## Not yet covered
 
-- The MPEG-2 multichannel extension of Layer II is not decoded: the decoder outputs the two base channels, and the stream's measurements say in their reason that only those were measured. Decoding the rest is item 15 of 0.4 in [plan.md](../plan.md#04-free-decoders-and-routes-complete).
+- The MPEG-2 multichannel extension of Layer II is not decoded: the decoder outputs the two base channels, and the stream's measurements say in their reason that only those were measured. Decoding the rest is item 8 of 0.3 in [plan.md](../plan.md#03-lossy-formats-measured).
 - Layer II samples and Layer III Huffman values are not shown as nodes; the report holds figures from them (Coded Bandwidth), not the values.
 - The Layer III intensity stereo bound is the frame's lowest intensity band in any granule: which granule or how many granules use intensity stereo is not reported, and the bound is read from the walk's quantized values, not from decoded audio.
