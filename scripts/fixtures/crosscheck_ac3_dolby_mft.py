@@ -14,7 +14,8 @@ How Dolby's output is read (decode() below):
 - It fills the 5.1 layout it was asked for (WAVE order: left, right, center, LFE, left surround, right surround); the channels of the input's layout are taken from it in the
   coded order, and a channel that is all zero is left out unless every channel is (a silent input). It does not decode a dependent substream's channels into that layout.
 - It applies dialogue normalization (A/52 5.4.2.8): the output is 2^((dialnorm - 31) / 6) times the decoded audio, which is undone with the first frame's dialnorm. It also applies
-  more gain than that on the three real files from Dolby's encoder (buggy_aht_5.1_384, csi_miami_stereo_128_spx, casablanca_aht_mono_64), which is not understood: they are pinned.
+  a different gain on the three real files from Dolby's encoder (buggy_aht_5.1_384, csi_miami_stereo_128_spx, casablanca_aht_mono_64), which carry compr in every frame: -20 dBFS as the
+  dialogue level plus the frame's compr (docs/development.md, "Dolby's decoder"). They are pinned.
 """
 
 import array
@@ -37,17 +38,17 @@ LFE_SLOT = 3
 
 # Bands that are not compared, each with its measured reason (the structure of crosscheck_ac3_coreaudio.PINS).
 PINS = {
-    "casablanca_aht_mono_64": [(None, 0, "Dolby's output is 9.67 dB louder than the analyzer's (dialnorm -27 alone would be 4 dB quieter), constant over the first 48 blocks and between 6.6 and 12.4 dB over "
-                                         "the frames, with a correlation of 0.998 after the best constant gain; the cause is not found (the stream's dynamic range gains are 1.26 to 2.77 dB)")],
-    "buggy_aht_5.1_384": [(None, 0, "Dolby's output is 11 to 17 dB louder than the analyzer's in every band although the dialnorm is 31 (no gain), with each channel correlating 1.00 with its own channel "
-                                    "(0.0 to 0.7 with the others): the same unexplained gain as the two files below")],
-    "csi_miami_stereo_128_spx": [(None, 0, "Dolby's output is 6.96 dB louder than the analyzer's (dialnorm -27 alone would be 4 dB quieter), constant over the blocks to 0.03 dB, with a correlation of 0.9997; "
-                                           "the stream's dynamic range gains are only -0.28 to 1.49 dB, and the cause is not found")],
+    "casablanca_aht_mono_64": [(None, 0, "these files carry compr (compre) in every frame, and Dolby's gain follows it: -20 dBFS as the dialogue level (dialnorm -27 gives +7 dB, not the -4 dB of the dialnorm rule) plus "
+                                         "the frame's compr within 0.35 dB, 6.66 to 12.35 dB over the file (docs/development.md, \"Dolby's decoder\"), where the analyzer applies no dynamic range control")],
+    "csi_miami_stereo_128_spx": [(None, 0, "these files carry compr (compre) in every frame, and Dolby's gain follows it: -20 dBFS as the dialogue level (dialnorm -27 gives +7 dB, not the -4 dB of the dialnorm rule) plus "
+                                           "the frame's compr within 0.35 dB, 6.15 to 8.23 dB over the file (docs/development.md, \"Dolby's decoder\"), where the analyzer applies no dynamic range control")],
+    "buggy_aht_5.1_384": [(None, 0, "these files carry compr (compre) in every frame, and Dolby's gain follows it: -20 dBFS as the dialogue level (dialnorm 31 gives +11 dB, not 0) plus the frame's compr "
+                                    "within 0.35 dB, 10.98 to 17.31 dB over the file (docs/development.md, \"Dolby's decoder\"), where the analyzer applies no dynamic range control")],
     "eac3-signal-ecpl": [((1,), 6400, "enhanced coupling's chaos values scale random values added to each bin's angle (A/52 Annex E 3.5.5), which each decoder draws as it likes; channel 0, whose "
                                       "amplitudes the chaos values change alike, agrees")],
-    "eac3-signal-transient": [((0,), 8000, "Dolby applies transient pre-noise processing, which the analyzer's twin without it leaves out: in channel 0 it changes 6 runs of 650 to 725 samples "
-                                           "where the analyzer's changes 8, five of them the same runs 256 samples later; channel 1, with the same data in every second frame, is not changed "
-                                           "(equal to the twin to -109 dB)")],
+    "eac3-signal-transient": [((0,), 8000, "Dolby applies transient pre-noise processing at 5 of the first 10 transients of channel 0 (those whose location, 656 to 1,636 samples, lies late in the frame or in the next one) "
+                                           "and none of channel 1; where it does, with the analyzer's windows and with the locations 256 samples (one block) later the output equals Dolby's to -59 to -77 dB. "
+                                           "A/52 3.7.2 counts the location from the first decoded PCM sample of the frame and says nothing of a delay, so this is not taken over (docs/development.md)")],
 }
 c.PINS = {**c.PINS, **PINS}
 c.FIRST_POSITION = 0
