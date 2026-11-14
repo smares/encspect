@@ -11,7 +11,7 @@ MP1, MP2 and MP3 (MPEG-1, MPEG-2 and MPEG-2.5, Layers I to III).
   - It is the value of the stream's "Bitrate" series at that frame, from the same function. Frames with a fixed bitrate have no such node, and neither has a truncated frame, whose length is not the frame's.
 - **Layer III:** the side information of every granule and the bit reservoir. Each frame's bytes are split into its own main data, other frames' main data and ancillary data. The scalefactors and the Huffman-coded values of every complete frame are decoded in every analysis (see "Layer III entropy pass").
 - **Layer II:** the bit allocation, scfsi and scalefactors, and the MPEG-2 multichannel extension in the ancillary data.
-  - **Dynamic crosstalk in 3/1 and 2/2:** which base channel a copied channel takes its allocation from has two readings in cases the ISO conformance streams do not decide: the base channel on the copied channel's side (the description's rule), or the one `dyn_cross_LR` names (the behavior observed of the ISO reference software). The analyzer reads a frame the first way and, only where its multichannel CRC then fails and holds the second way, the second. The "Base Channel Source" node under "Dynamic Crosstalk Modes" says which was used, and a CRC mismatch that the other reading resolves is not reported. The cases are listed in [`docs/design/mpeg-clean-room-rules.md`](../design/mpeg-clean-room-rules.md), section 1.
+  - **Dynamic crosstalk:** a channel that dynamic crosstalk leaves out and whose mode names no source copies the base channel on its own side, as ISO/IEC 13818-3 2.5.2.15 says: a left or left surround channel the left one, a right or right surround channel the right one, and a center or surround channel the one `dyn_cross_LR` names. The multichannel CRC checks it, since the number of scfsi fields it covers depends on which base channel a copy took its allocation from.
 - **VBR headers:** Xing, Info, LAME and VBRI. The LAME tag's CRC and its music CRC are verified.
 - **mp3PRO and MP3 Surround:** detected from the signature their encoders put into the ancillary data of every frame.
 - **Fraunhofer's Original File Length block.**
@@ -38,7 +38,7 @@ MP1, MP2 and MP3 (MPEG-1, MPEG-2 and MPEG-2.5, Layers I to III).
 
 ### Layer I audio data
 
-- Bit allocation per subband and channel (one above the joint stereo bound), the scalefactors, the length of the samples and the ancillary data after them (ISO/IEC 11172-3 2.4.1.5).
+- Bit allocation per subband and channel (one above the joint stereo bound), the scalefactors, the length of the samples and the ancillary data after them (ISO/IEC 11172-3 2.4.1.5 and 2.4.2.5).
 - Warnings:
   - the forbidden allocation 15: libmad rejects the frame, mpg123 reads 16-bit samples, as the report does;
   - scalefactor index 63;
@@ -59,20 +59,20 @@ MP1, MP2 and MP3 (MPEG-1, MPEG-2 and MPEG-2.5, Layers I to III).
   - mpg123 and ffmpeg skip it, so main data that begins in it is a warning, as after `ffmpeg -ss -c copy`. The header frame's unused bytes show which frame's main data they hold.
   - The header frame does not count as the stream's first frame, so main data that reaches back past it begins before the stream.
 - **Side-information checks:** big_values above 288, the reserved block type, Huffman tables 4 and 14, scalefactors longer than part2_3_length, scfsi on a channel with short blocks, and mid/side or intensity stereo with different block types in the two channels. libmad rejects the last two.
-- **The decoder buffer** of ISO/IEC 11172-3 holds one frame at the highest bitrate (bitrate_index 14) at the stream's sample rate:
-  - so main_data_begin plus the frame's length may not exceed that frame's length, and main_data_begin is 0 at 320 kbps;
-  - only MPEG-1 is checked: LAME's `--strictly-enforce-ISO` applies the rule to MPEG-2 with its top bitrate of 160 kbps, but that reading of ISO/IEC 13818-3 has not been confirmed against its text yet ([plan.md](../plan.md#04-free-decoders-and-routes-complete), item 15 of 0.4);
-  - breaking it is a warning, which says that encoders such as LAME exceed the limit and that decoders accept it; Encspect's LAME test files show it in VBR and ABR streams of releases from 3.20 to 4.0.
+- **The decoder buffer** (ISO/IEC 11172-3 2.4.3.4.4): the text sets a buffer of 7,680 bits, the length of a frame at the highest bitrate (bitrate_index 14, 320 kbps) at 48 kHz, and says that main_data_begin is always 0 at bitrate_index 14. For the lower sampling frequencies it says only that the buffer "should be constrained" so that the same physical buffer size is sufficient.
+  - **The check:** main_data_begin plus the frame's length may not exceed the length of a frame at bitrate_index 14 at the stream's own sample rate (960 bytes at 48 kHz, 1,044 at 44.1 kHz, 1,440 at 32 kHz), and main_data_begin is 0 at 320 kbps. At 48 kHz this is the text's rule. At 44.1 and 32 kHz it is looser than a literal 960 bytes, which 26 of the 210 MPEG-1 Layer III fixtures at those rates would break (among them the encodes of LAME 3.90's constant bitrate presets fm, hifi, cd and studio); the text says "should", and encoders and decoders go beyond it.
+  - **MPEG-2 and 2.5 are not checked:** ISO/IEC 13818-3 states no buffer rule. Its 2.4.3.2 (Layer III at the lower sampling frequencies) changes the frame length constants, the intensity stereo rule and the scalefactor decoding and takes the rest from 11172-3 2.4.3.4, whose rule is set in MPEG-1 terms (bitrate_index 14 is 320 kbps). LAME's `--strictly-enforce-ISO` applies it to MPEG-2 with its top bitrate of 160 kbps; the text does not say so, so there is no finding and no fixture for it.
+  - Breaking it is a warning, which says that encoders such as LAME exceed the limit and that decoders accept it; Encspect's LAME test files show it in VBR and ABR streams of releases from 3.20 to 4.0.
 
 ### Layer II audio data and multichannel
 
-- **Bit allocation** per subband and channel from the allocation tables: ISO/IEC 11172-3 Annex B, and ISO/IEC 13818-3 for the lower sampling rates.
+- **Bit allocation** per subband and channel from the allocation tables: ISO/IEC 11172-3 Tables B.2a to B.2d (2.4.3.3.1 selects among them), and Table B.1 of ISO/IEC 13818-3 (2.4.3.1) for the lower sampling rates.
   - Free format takes Table B.2a at 48 kHz and B.2b at the other rates, as their captions say and libmad reads it; mpg123 takes B.2a at every rate.
   - Also read: scfsi and scalefactors, the length of the sample data and where the ancillary data starts. The same tables let Layer II CRCs be verified.
 - **Warnings:**
   - audio data longer than the frame, also where the allocation, scfsi or scalefactors already run past it; the CRC is still verified wherever the allocation and scfsi it covers fit;
   - scalefactor index 63, which Table B.1 of ISO/IEC 11172-3 leaves undefined, although TwoLAME writes it and ffmpeg, mpg123 and libmad decode it.
-- **The MPEG-2 multichannel extension** (ISO/IEC 13818-3) rides in the ancillary data of an MPEG-1 Layer II frame, so the stereo base stays playable.
+- **The MPEG-2 multichannel extension** (ISO/IEC 13818-3 2.5) rides in the ancillary data of an MPEG-1 Layer II frame, so the stereo base stays playable.
   - Read: the multichannel header (center, surround and LFE channels, audio mix, dematrix procedure, multilingual channels with their layer and sampling rate, whether an extension bitstream exists), the channel configuration such as 3/2 plus LFE, its CRC, and how many bytes the multichannel data takes.
   - The frame header has no flag for it, so it is detected by structure and consistency across frames, like a tag, never by a single match.
   - A file carries it once the multichannel CRC holds in at least two frames and in at least half of the frames whose multichannel side information fits the frame. Random ancillary data passes the 16-bit CRC about once in 65,536 frames, so a long recording passes it a few times by chance; mp3guessenc likewise wants a share of the stream.

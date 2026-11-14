@@ -77,7 +77,7 @@ internal static class Explain
 
     public const string SideInfo = "Layer III side information: where the frame's main data starts and, for each granule and channel, how its spectrum is coded (ISO/IEC 11172-3 2.4.1.7, 2.4.2.7).";
     public const string HeaderFrameSideInfo = "The zero side information of the VBR header frame: it declares no main data, so a decoder that does not know the header plays the frame as silence.";
-    public const string MainDataBegin = "How many bytes before this frame's header its main data starts, in earlier frames' unused space, the bit reservoir. 0 means the frame does not borrow.";
+    public const string MainDataBegin = "How many bytes back from this frame's header its main data starts, not counting the bytes of headers and side information in between, in earlier frames' unused space, the bit reservoir. 0 means the frame does not borrow (ISO/IEC 11172-3 2.4.2.7).";
     public const string ReservoirFill = "The free bytes in the bit reservoir when this frame starts: what earlier frames left unused and main_data_begin can reach. Computed, not stored, so it points at main_data_begin, which it bounds.";
     public const string PrivateBits = "Bits left to the encoder's own use; the standard gives them no meaning.";
     public const string Scfsi = "Scalefactor selection information, four bits per channel: for each of four groups of scalefactor bands, whether granule 1 reuses granule 0's scalefactors (ISO/IEC 11172-3 2.4.2.7).";
@@ -105,7 +105,7 @@ internal static class Explain
     public const string MainData = "This frame's main data: the scalefactors and Huffman-coded spectrum of its granules. Where main_data_begin is above 0, part of it lies in earlier frames.";
     public const string ReservoirBytes = "Bytes here that hold main data of a later frame, which reaches back into this frame through the bit reservoir.";
     public const string Layer3Ancillary = "Bytes that no frame's main data uses. Encoders may fill them with their own data, such as their name or an extension like mp3PRO; decoders skip them.";
-    public const string Layer12Ancillary = "Bytes after the samples that the audio does not use, including the padding slot of a padded frame, which ISO/IEC 11172-3 counts as ancillary data and the statistics leave out. Encoders may fill them with their own data; decoders skip them.";
+    public const string Layer12Ancillary = "Bytes after the samples that the audio does not use, including the padding slot of a padded frame, which ISO/IEC 11172-3 2.4.2.8 counts as ancillary data and the statistics leave out. Encoders may fill them with their own data; decoders skip them.";
     public const string FrameData = "The frame's bytes after its header and CRC, which the analyzer does not break down further here.";
     public const string HeaderFrameUnused = "Bytes of the VBR header frame after the header, which hold no audio.";
 

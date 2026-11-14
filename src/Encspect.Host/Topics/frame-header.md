@@ -2,7 +2,7 @@
 id: frame-header
 title: The MPEG audio frame header
 related: frame-sync, mpeg-versions, mpeg-layers, channel-modes, crc
-references: ISO/IEC 11172-3 2.4.1.3, 2.4.2.3; ISO/IEC 13818-3
+references: ISO/IEC 11172-3 2.4.1.3, 2.4.2.3; ISO/IEC 13818-3 2.4.2.3
 ---
 
 Each MPEG audio frame starts with a 4-byte header that tells the decoder everything it needs to read the frame:
@@ -17,4 +17,4 @@ Each MPEG audio frame starts with a 4-byte header that tells the decoder everyth
 - the copyright and original bits, which nothing enforces;
 - the [emphasis](emphasis) the audio was given before encoding.
 
-From the bitrate, the sample rate and the padding bit, the frame's length follows, so the decoder knows where the next frame starts. Because every frame carries a full header, a decoder can start anywhere in the stream, and the bitrate, channel mode and even the sample rate can change from frame to frame; the analyzer reports such changes.
+From the bitrate, the sample rate and the padding bit, the frame's length follows, so the decoder knows where the next frame starts. Because every frame carries a full header, a decoder can start anywhere in the stream, and the bitrate and channel mode can change from frame to frame (ISO/IEC 11172-3 says a reset of the decoder may be required to change the sample rate or the layer); the analyzer reports such changes.

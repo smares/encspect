@@ -2,7 +2,7 @@
 id: granules-and-frames
 title: Frames and granules
 related: mpeg-layers, filter-bank, frame-header, bit-reservoir
-references: ISO/IEC 11172-3 2.4.1.7, 2.4.2.7; ISO/IEC 13818-3
+references: ISO/IEC 11172-3 2.4.1.7, 2.4.2.7, 2.4.3.1; ISO/IEC 13818-3 2.4.1.7, 2.4.3.2
 ---
 
 **Frames.** MPEG audio is cut into frames, each a fixed number of samples: 384 in Layer I, 1152 in Layers II and III, and 576 in Layer III at the lower sample rates of MPEG-2 and 2.5. At 44.1 kHz a Layer III frame lasts about 26 milliseconds. Every frame has its own header, so a decoder can start at any frame.

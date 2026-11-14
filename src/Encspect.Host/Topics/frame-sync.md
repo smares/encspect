@@ -2,12 +2,12 @@
 id: frame-sync
 title: Frame sync and gaps
 related: frame-header, tag-placement, granules-and-frames
-references: ISO/IEC 11172-3 2.4.1.3, 2.4.2.3
+references: ISO/IEC 11172-3 2.4.1.3, 2.4.2.3, 2.4.3.1
 ---
 
 **The problem.** An MPEG audio file has no table of contents and no container around its frames: it is just frames, one after another. A decoder has to find where each frame starts.
 
-**How it works.** Every frame starts with a sync word of 11 or 12 set bits, followed by header fields from which the frame's length follows. Once the decoder has found one frame, it knows where the next one starts. The sync word is short, though, and any data can contain it by chance, so a decoder that finds one cannot be sure it found a frame.
+**How it works.** Every frame starts with a sync word of 12 set bits (11 in MPEG 2.5, which takes one for a version bit), followed by header fields from which the frame's length follows. ISO/IEC 11172-3 suggests a decoder that already knows the layer and protection treat the first 16 header bits as the sync word, and use the frame length to check the next one. Once the decoder has found one frame, it knows where the next one starts. The sync word is short, though, and any data can contain it by chance, so a decoder that finds one cannot be sure it found a frame.
 
 **How the analyzer decides.** A header only counts when a chain of consistent frames follows it: two more frames of the same version, layer and sample rate exactly where the lengths predict, or, for a very short file, frames whose content checks out to the end of the data. Once in sync, frames are followed by their lengths, not searched for.
 

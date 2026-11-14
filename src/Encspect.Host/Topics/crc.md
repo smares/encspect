@@ -2,10 +2,10 @@
 id: crc
 title: The frame CRC
 related: verification, monkeys-audio-frames, tta-stream, flac-frames, dts-core-frames, dts-extension-substream, wavpack-sub-blocks, frame-header, lame-tag, granules-and-frames, adts, ac3-frames-and-bsi, musepack-sv8-packets
-references: ISO/IEC 11172-3 2.4.3.1; ISO/IEC 14496-3 1.A.2.2.2; ATSC A/52:2018 7.10.1; ETSI TS 102 114 5.4.2, Annex B; RFC 9639 (FLAC), sections 9.1.8 and 9.3; TTA format description
+references: ISO/IEC 11172-3 2.4.3.1, Table B.5; ISO/IEC 13818-3 2.4.2.4, 2.5.2.14; ISO/IEC 14496-3 1.A.2.2.2; ATSC A/52:2018 7.10.1; ETSI TS 102 114 5.4.2, Annex B; RFC 9639 (FLAC), sections 9.1.8 and 9.3; TTA format description
 ---
 
-**What it is.** A frame may carry a 16-bit cyclic redundancy check right after its header. The protection bit of the header says whether it does. The encoder computes the CRC over the last 16 bits of the header and the bits after the CRC that matter most for decoding the rest: the side information in Layer III, the bit allocation in Layer I, and the bit allocation and scfsi in Layer II. A decoder computes it again and, where it differs, knows those bits were damaged and can conceal the frame instead of producing loud errors.
+**What it is.** A frame may carry a 16-bit cyclic redundancy check right after its header. The protection bit of the header says whether it does. The encoder computes the CRC over the last 16 bits of the header and the bits after the CRC that matter most for decoding the rest: the side information in Layer III (the first 17 or 32 bytes of MPEG-1 audio data, 9 or 17 in MPEG-2 and 2.5), the bit allocation in Layer I, and the bit allocation and scfsi in Layer II. The generator polynomial is x^16 + x^15 + x^2 + 1 and the register starts at all ones. A decoder computes it again and, where it differs, knows those bits were damaged and can conceal the frame instead of producing loud errors.
 
 **What it does not cover.** The CRC does not protect the audio data itself, such as Layer III's main data, which may lie in earlier frames. A matching CRC says the frame's control data is intact, not that every bit is.
 
