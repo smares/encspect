@@ -241,7 +241,7 @@ Every coding with a free source is decoded, the DTS extensions aside, and every 
    - **What it shows:** above an intensity stereo bound the decoder rebuilds both channels from one signal, so their coherence is about 1 there, where real stereo recordings stay well below it. The figure is where the coherence rises to near 1 and stays there, and the share of frames that show it, with a unit and a basis, never a verdict about the audio.
    - **For lossy streams** it cross-checks the parsers' "Intensity Stereo Bound"; **for decoded lossless streams** it is evidence that the audio passed through intensity stereo coding, worded as the spectral cutoff is.
    - **Cost:** one running cross-spectrum per row (512 complex accumulators) from the bins the mid/side spectra already hold, under the measurements' determinism rules.
-   - **First a design section** in [spectral-analysis.md](design/spectral-analysis.md), with fixtures that show it: intensity-coded MP3 (LAME), AAC and Opus streams, and lossless files made from them.
+   - **First a design section** in [spectral-analysis.md](design/spectral-analysis.md), with fixtures that show it, and lossless files made from them: Layer II from TwoLAME's joint stereo (in Layers I and II joint stereo is intensity stereo), AAC from FFmpeg's encoder (`-aac_is`, on by default), Opus from libopus at a low bitrate, and MP3 from an encoder that writes intensity stereo (the conformance stream written by tompg, or the Fraunhofer codecs of item 13); LAME 3.100 offers left/right and mid/side stereo only.
 
 ### 0.5: AAC and WMA
 
