@@ -97,16 +97,19 @@ public sealed partial class OpusParser
         // string that is a muxer's version.
         private Node? AddWriter()
         {
-            List<EncoderClaim> claims = CommentClaims();
-            if (_comment is not { } tag || !ClaimRoles.Writers(claims).Any())
+            // Without a comment (Opus in MP4 has none) the claims are the container's, as for AC-3 and AAC in MP4: the stream's own node is where the writer goes.
+            bool isFromContainer = _comment is null && context.Configuration is { IsWriterFromContainer: true };
+            List<EncoderClaim> claims = isFromContainer ? [.. context.EncoderClaims] : CommentClaims();
+            if ((_comment is null && !isFromContainer) || !ClaimRoles.Writers(claims).Any())
             {
                 return null;
             }
 
-            Node? writer = WriterDetection.Detect(claims, (name, value, description) => new Node(name, tag.Offset, tag.Length, value) { Description = description, Topic = ClaimRoles.TopicOf(name) },
+            (long at, long length) = _comment is { } tag ? (tag.Offset, tag.Length) : (_parent.Offset, _parent.Length);
+            Node? writer = WriterDetection.Detect(claims, (name, value, description) => new Node(name, at, length, value) { Description = description, Topic = ClaimRoles.TopicOf(name) },
                 (claim, text, name) => _findings.Add(Severity.Info, "opus.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
                 text => OpusencEncoder().Match(text) is { Success: true } opusenc ? $"opusenc {opusenc.Groups[1].Value}" : ClaimRoles.WriterName(text),
-                isEvidenceAtSource: true,
+                isEvidenceAtSource: !isFromContainer,
                 format: new WriterDetection.StreamFormat(KnownWriters.Opus, "Opus", (claim, message, node) => _findings.Add(Severity.Info, "opus.writer-other-format", node, _ => message)));
             return writer is null ? null : _parent.Add(writer);
         }
