@@ -255,10 +255,7 @@ public class SamplesDefinitionTests
         #region WavPack
         ["wavpack/built-block-size-too-large.decode.json"] = Reasons.wavpack,
         ["wavpack/built-channel-info-after-bad-block.decode.json"] = Reasons.wavpack,
-        ["wavpack/built-leading-block-without-set-md5.decode.json"] = Reasons.wavpack,
         ["wavpack/built-set-channels-missing.decode.json"] = Reasons.wavpack,
-        ["wavpack/built-set-without-final-limit.decode.json"] = Reasons.wavpack,
-        ["wavpack/built-set-without-initial.decode.json"] = Reasons.wavpack,
         #endregion
 
         #region WavPack DSD
