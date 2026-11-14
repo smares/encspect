@@ -34,6 +34,7 @@ import tempfile
 
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
+import mctoolamed_tool  # noqa: E402
 import minimp3_tool  # noqa: E402
 
 ROOT = HERE.parents[1]
@@ -225,6 +226,42 @@ def compare(manifest, reference, channels, label, extra=()):
     return result, problems
 
 
+def mctoolamed_reference(decoder, path, stream):
+    """The multichannel decoder's output (a black box derived from the ISO reference software) as one raw file of interleaved little-endian 16-bit samples in the analyzer's channel
+    order, or None: the full-bandwidth channels in the order of its channel files, which the layout follows, then the LFE, which the analyzer holds for 96 samples (the decoder
+    writes twelve a frame)."""
+    channels, lfe = mctoolamed_tool.decode_pcm(decoder, path)
+    layout = stream["channelLayout"]
+    wide = [c for speaker, c in zip((x for x in layout if x != "LFE"), channels)]
+    if len(wide) != sum(1 for x in layout if x != "LFE") or ("LFE" in layout) != (lfe is not None):
+        return None
+    samples = stream["samples"]
+    planes = [c[:2 * samples] for c in wide]
+    if lfe is not None:
+        planes.append(b"".join(lfe[i:i + 2] * 96 for i in range(0, len(lfe), 2))[:2 * samples])
+    if any(len(p) != 2 * samples for p in planes):
+        return None
+    out = bytearray(2 * samples * len(planes))
+    for c, plane in enumerate(planes):
+        out[2 * c::2 * len(planes)] = plane[0::2]
+        out[2 * c + 1::2 * len(planes)] = plane[1::2]
+    return bytes(out)
+
+
+def compare_multichannel(manifest, stream, reference):
+    raw = manifest.parent / "mctoolamed.s16"
+    raw.write_bytes(reference)
+    output = subprocess.run([sys.executable, str(HERE / "compare_pcm.py"), str(manifest), "--reference", str(raw), "--reference-format", "int16",
+                             "--reference-channels", str(stream["channels"]), "--json"], capture_output=True, text=True)
+    if output.returncode == 2:
+        return [f"mctoolamed: {output.stderr.strip()}"]
+    result = json.loads(output.stdout)
+    if output.returncode != 0:
+        worst = max(result["channels"], key=lambda c: c["max"])
+        return [f"mctoolamed: outside the bound (largest {worst['max']:.3g} {result['unit']}, RMS {worst['rms']:.3g} {result['unit']})"]
+    return []
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("files", nargs="*", type=pathlib.Path)
@@ -238,6 +275,7 @@ def main(argv=None):
         return 2
     binary = minimp3_tool.build_pcm()
     failed = compared = 0
+    decoder = None
     mixed_directory = pathlib.Path(tempfile.mkdtemp(prefix="mixed-"))
     if not args.files:
         files = files + [m for name in MIXED_SOURCES if (m := mixed_variant(FIXTURES / "mpeg-audio" / name, mixed_directory, binary))]
@@ -260,6 +298,15 @@ def main(argv=None):
             work.mkdir(exist_ok=True)
             problems = []
             notes = []
+            if streams[0]["channels"] > 2:
+                # The multichannel extension: minimp3 and FFmpeg decode the base stereo only, so mctoolamed is the reference.
+                decoder = decoder or mctoolamed_tool.build()
+                reference = mctoolamed_reference(decoder, path, streams[0])
+                problems = [f"mctoolamed writes other channels than the analyzer's {streams[0]['channels']}"] if reference is None else compare_multichannel(manifest, streams[0], reference)
+                compared += 0 if problems else 1
+                failed += 1 if problems else 0
+                print(f"FAIL {path.name}: " + "; ".join(problems) if problems else f"ok   {path.name} (mctoolamed, {streams[0]['channels']} channels)")
+                continue
             reference = minimp3_reference(binary, path, work)
             layer = reference[3] if reference is not None else None
             if reference is None:

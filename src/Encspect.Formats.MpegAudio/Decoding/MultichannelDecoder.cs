@@ -97,6 +97,7 @@ internal sealed class MultichannelDecoder
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void ScaleBase(ReadOnlySpan<int> lent, int stride)
     {
         for (int ch = 0; ch < 2; ch++)
@@ -121,6 +122,7 @@ internal sealed class MultichannelDecoder
     }
 
     // T2 to T4: the quantized samples of the channel they come from (their own, or the source of a dynamic crosstalk copy) with their own scalefactors.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void ScaleAdditional(Layer2Multichannel mc, ReadOnlySpan<int> lent, int stride)
     {
         for (int ch = 0; ch < mc.AdditionalChannels; ch++)
@@ -157,6 +159,7 @@ internal sealed class MultichannelDecoder
 
     // The prediction of 2.5.3.2.1.3: in each of the subband groups 0 to 7 that use it, a channel transmitted alone gets the sum of up to three taps of T0 and of T1, which
     // already carry their scalefactors, added to its prediction error; the predictors go to the channels in the order T2, T3, T4, two each (T0's, then T1's).
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void Predict(Layer2Multichannel mc)
     {
         if (!mc.HasPrediction)
@@ -226,6 +229,7 @@ internal sealed class MultichannelDecoder
     private float Earlier(int channel, int sb, int n) =>
         n >= 0 ? _signals[channel][((n / 12) * 384) + (sb * 12) + (n % 12)] : _predictionHistory[(((channel * 8) + sb) * PredictionHistory) + (-n - 1)];
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void SaveHistory()
     {
         for (int channel = 0; channel < 2; channel++)
@@ -242,6 +246,7 @@ internal sealed class MultichannelDecoder
     }
 
     // Dematrixing and de-normalization, subband by subband with the transmission channel allocation of its group; a second stereo program comes through as it is.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void ApplyMatrix(Layer2Multichannel mc)
     {
         float[] factors = Dematrix.Factors(mc.DematrixProcedure);
@@ -286,6 +291,7 @@ internal sealed class MultichannelDecoder
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void Emit(int output, int variable, float factor, bool isScaled, int offset)
     {
         Span<float> destination = _outputs[output].AsSpan(offset, 12);
@@ -297,6 +303,7 @@ internal sealed class MultichannelDecoder
     }
 
     // The polyphase filter bank of every full-bandwidth channel, in pairs that share a call and a history.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void Synthesize(Span<float> planar, int planarStride)
     {
         for (int pair = 0; pair < _histories.Length; pair++)
@@ -328,6 +335,7 @@ internal sealed class MultichannelDecoder
     }
 
     // The LFE channel (2.5.3.2.4): twelve samples a frame, requantized as Layer I and scaled by lf_scalefactor, at 1/96 of the sample rate, each held for 96 samples.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void Lfe(Layer2Multichannel mc, ReadOnlySpan<int> codes, Span<float> destination)
     {
         if (mc.LfeAllocation == 0)
