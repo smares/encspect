@@ -488,16 +488,51 @@ public class MpegCodingSeriesTests
             }
 
             Assert.Null(stream.Series.First(s => s.Name == "Bitrate Over Time").DeclaredRange);
-            foreach (Series other in stream.Series.Where(s => s.Name is not ("Bitrate" or "Channel Bit Share" or "Channel Bit Share Over Time")))
+            foreach (Series other in stream.Series.Where(s => s.Name is not ("Bitrate" or "Channel Bit Share" or "Channel Bit Share Over Time") && !s.Name.StartsWith("Transmission Channel Bit Share", StringComparison.Ordinal)))
             {
                 Assert.Null(other.DeclaredRange);
             }
 
-            foreach (Series share in stream.Series.Where(s => s.Name.StartsWith("Channel Bit Share", StringComparison.Ordinal)))
+            foreach (Series share in stream.Series.Where(s => s.Name.StartsWith("Channel Bit Share", StringComparison.Ordinal) || s.Name.StartsWith("Transmission Channel Bit Share", StringComparison.Ordinal)))
             {
                 Assert.False(share.DeclaredRange!.HasSteps);
                 Assert.Equal(0, share.DeclaredRange.Minimum);
                 Assert.Equal(100, share.DeclaredRange.Maximum);
+            }
+        }
+    }
+
+    // A 5.1 stream of mctoolame with prediction: the transmission channel shares of each frame add to 100 percent, the series exist for exactly the channels of the
+    // configuration, and the tally node of the bits states the shares of the whole stream.
+    [Fact]
+    public void The_transmission_channels_share_every_frame_and_the_tally_states_the_whole()
+    {
+        Report report = Fixtures.AnalyzeMpeg("mpeg-audio/layer2/external-mctoolame-5-1-prediction.mp2");
+        StreamInfo stream = Assert.Single(report.Streams);
+        Series[] shares = [.. stream.Series.Where(s => s.Name.StartsWith("Transmission Channel Bit Share ", StringComparison.Ordinal))];
+
+        Assert.Equal(["T0", "T1", "T2", "T3", "T4", "LFE"], shares.Select(s => s.Name["Transmission Channel Bit Share ".Length..]));
+        Assert.All(shares, s => Assert.Equal(GraphConcept.BitDistribution, s.Concept));
+        int frames = shares[0].Values.Length;
+        for (int frame = 0; frame < frames; frame++)
+        {
+            Assert.InRange(shares.Sum(s => s.Values.Span[frame]), 99.4, 100.6);
+        }
+
+        Node bits = Assert.Single(Flatten(report.Root), n => n.Name == "Bits per Transmission Channel");
+        Assert.Equal(["T0", "T1", "T2", "T3", "T4", "LFE"], bits.Children.Select(c => c.Name));
+        Assert.Contains(stream.CategorySeries, c => c.Name == "Dynamic Crosstalk Use");
+        Assert.Contains(stream.CategorySeries, c => c.Name == "Prediction Use");
+    }
+
+    private static IEnumerable<Node> Flatten(Node node)
+    {
+        yield return node;
+        foreach (Node child in node.Children.Where(c => c.Kind != NodeKind.Frame))
+        {
+            foreach (Node below in Flatten(child))
+            {
+                yield return below;
             }
         }
     }
