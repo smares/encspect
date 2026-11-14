@@ -284,13 +284,15 @@ public class MeasurementDeterminismTests
         return Convert.ToHexStringLower(hash.GetHashAndReset());
     }
 
-    // The counters of the cutoff and of the partial cutoff's ceiling (integers) for the synthetic signal at 44.1 kHz, the average spectrum they sit
+    // The counters of the cutoff and of the partial cutoff's ceiling (integers) for a synthetic signal that is band-limited in part of the stream at 44.1 kHz, the average spectrum they sit
     // beside, and the figures read from them: the bandwidth and the partial cutoff are integers too, and everything hashes to a constant on every platform.
     // The counters do not depend on how the stream is cut into blocks.
     [Fact]
     public void TheCountersAndTheBandwidthAndPartialCutoffOfASyntheticSignalHashToConstants()
     {
-        int[] samples = MeasurementSignals.ToIntegers(Signal(), 16);
+        // Lines up to bin 1,500 (16.1 kHz) for the first 400,000 samples and white noise for the rest: a ceiling in the frames of the first part.
+        double[] mixed = [.. BandLimited.Lines(400_000, 44100, 1500, 0.004), .. MeasurementSignals.Noise(300_000, 17).Select(v => v * 0.2)];
+        int[] samples = MeasurementSignals.ToIntegers(mixed, 16);
         string[] hashes = new string[2];
         string figures = string.Empty;
         for (int pass = 0; pass < 2; pass++)
@@ -803,7 +805,7 @@ public class MeasurementDeterminismTests
     private const string RowsHash = "f3b5f53bd0bc966cd84a42188592bd0e525b699b681ec7ebc06df6f0a3d1fc41";
     private const string Rows1024Hash = "7b9f9a01c21fcdb6c2e71db025b77d5ed5bacae23ff1b5aea23500e15f67bd83";
     private const string Rows32768Hash = "2dc1e2f59ef7e098f0fe240d9e135e79620e30793f6bacbfaaf2986babec6236";
-    private const string CountersHash = "pending";
+    private const string CountersHash = "8eca990b8bc22eb88e574ef0d547361bf8ad99258e8197d37bf6530685fec2e2|95dc65030dcd00896b3f1a8083b8cb780f21ace6420224706db8431f4b84eb42";
     private const string LevelsHash = "a49171a81aeb8ad635eab6462075ed9b9cb95c07c78541b77b7ac741119e0a80";
     private const string LowBitsPerSpanHash = "ea09e332c5c4afca329c637317fa945f31ffb6e645748a782a29bfb7175e3018";
     private const string KWeightingHash = "f6048a6ea38eab1d0c9da05b4f9590e11f6090e6ad1942b442b98b24b94e44f6";
