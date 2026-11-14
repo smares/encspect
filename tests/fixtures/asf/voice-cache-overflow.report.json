@@ -6117,7 +6117,7 @@
       {
         "severity": "Info",
         "code": "wma.voice-music",
-        "message": "3 superframes' first bit is clear: they hold music, Windows Media Audio Professional data inside Voice superframes, which FFmpeg's decoder does not support (wmavoice.c) and this analysis does not read; a decoder drops each, and with one that lies in a packet the rest of its media object.",
+        "message": "3 superframes' first bit is clear: they hold music, which FFmpeg's decoder takes for Windows Media Audio Professional data and does not decode, and which this analysis does not read; a decoder drops each, and with one that lies in a packet the rest of its media object.",
         "offset": 1757,
         "length": 1,
         "path": [
