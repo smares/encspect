@@ -214,6 +214,34 @@ def partial_map(ours, our_channels, reference, reference_channels, first, window
     return keep, chosen, lines + [f"  Core Audio's output correlates with analyzer channels {keep} (as its channels {chosen}) and has nothing of channels {left} (the dependent substreams': not decoded by Core Audio): only the first are compared"]
 
 
+# The locations of ETSI TS 102 366 Table E2.5 / A/52 Annex E that a dependent substream's channel map can name among the analyzer's channels, by the bit of the map (the first bit is 0x8000).
+CHANMAP_NAMES = {0x8000: "front left", 0x4000: "front center", 0x2000: "front right", 0x1000: "side left", 0x0800: "side right", 0x0001: "LFE"}
+ACMOD_NAMES = {1: ["front center"], 2: ["front left", "front right"], 3: ["front left", "front center", "front right"], 6: ["front left", "front right", "side left", "side right"],
+               7: ["front left", "front center", "front right", "side left", "side right"]}
+
+
+def replaced_names(encspect, path, data, frames):
+    """The analyzer's channel names that a dependent substream of the file replaces (A/52 Annex E 3.8.2: its channel map names a channel that the independent substream has), which a decoder that
+    does not decode dependent substreams gives from the independent substream alone; [] where the file has no dependent substream."""
+    headers = [x.m.header(data, offset) for offset, _ in frames]
+    if not any(h and h.get("strmtyp") == 1 for h in headers):
+        return []
+    first = next(h for h in headers if h and h.get("strmtyp", 0) != 1)
+    own = list(ACMOD_NAMES.get(first["acmod"], [])) + (["LFE"] if first["lfeon"] else [])
+    out = subprocess.run([str(encspect), "--ndjson", str(path)], capture_output=True, text=True, check=True).stdout
+    names = set()
+
+    def walk(node):
+        if node.get("name") == "Channel Map" and str(node.get("value", "")).startswith("0x"):
+            bits = int(str(node["value"]).split()[0], 16)
+            names.update(name for bit, name in CHANMAP_NAMES.items() if bits & bit)
+        for child in node.get("children") or []:
+            walk(child)
+
+    walk(json.loads(out)["root"])
+    return [name for name in own if name in names]
+
+
 def silent_pair(dump, raw):
     """Where the analyzer's channels of a dump and the reference's are all exactly zero (a file whose independent substream is silent: a band comparison has no band to compare), the line
     that says so; else None."""
@@ -321,7 +349,7 @@ OURS_WITHOUT = {"eac3-signal-transient": "eac3-signal-transient-off"}
 # at -90 to -99 dB) says nothing about the decoder.
 FLOOR_DB = -90.0
 FINE_BANDS = "400,800,1600,3200,5700,6400,8000,10200,12500,12800,20000"
-CURRENT = {"stem": ""}
+CURRENT = {"stem": "", "replaced": []}
 # Where in the file (as a fraction of its length) the channels are matched by correlation: the middle first, which is the join of a file repeated twice, then the middle of its first copy and of the first half of that.
 WINDOWS = (0.5, 0.375, 0.25)
 # Bands that are not compared, each with its measured reason: (the analyzer's channels or None for all, the lowest edge in Hz of the bands, the reason). A pin is a statement about
@@ -341,6 +369,8 @@ PINS = {
     "csi_miami_stereo_128_spx": [(None, 12800, "spectral extension's noise region (extension begin and end in the stream; the notch and the blend are in use): Core Audio's band is 1.5 dB louder than the analyzer's, "
                                                "which FFmpeg matches to 0.0 dB in every band; the noise is unit variance and scaled by the RMS of the translated coefficients before the notch (A/52 Annex E 3.6.4.2.4), "
                                                "no reading of those steps that was tried gives 1.5 dB, so the cause is unresolved")],
+    "00007": [((0, 2), 12800, "12.8 kHz up in the front channels, where the coded content is quiet and the dither of the zero-bit mantissas is a share of the band: Core Audio's dither is 3 dB under the analyzer's "
+                              "(a scale of 0.5, as in the dither-only center channel, -2.3 to -3.3 dB), so the band is -1.3 dB in its quietest quarter of frames and -0.2 dB in its loudest (channel 0, -69 dB over the file)")],
     "eac3-signal-spx-noise": [(None, 6400, "spectral extension's noise: A/52 Annex E 3.6.4.2.4 asks for noise() from a zero-mean, unity-variance generator and does not define the generator or "
                                           "its seed, so each decoder draws its own; the signs of the differences change with the channel (-2.2 to +1.3 dB)")],
 }
@@ -537,6 +567,12 @@ def judge(dump, raw, info, work, variant, extra, name):
             if partial is not None:
                 keep, chosen, partial_lines = partial
                 lines += partial_lines[-1:]
+                names = sample.get("channelLayout") or []
+                replaced = [i for i in keep if i < len(names) and names[i] in CURRENT["replaced"]]
+                if replaced:
+                    lines.append(f"  channels {replaced} ({', '.join(names[i] for i in replaced)}) are replaced by a dependent substream that Core Audio does not decode: not compared")
+                    chosen = [pick for i, pick in zip(keep, chosen) if i not in replaced]
+                    keep = [i for i in keep if i not in replaced]
                 cut = subset_dump(dump, keep)
                 quiet = silent_pair(cut, pick_channels(raw, reference_channels, chosen))
                 if quiet:
@@ -597,6 +633,7 @@ def check_file(args, path, work):
         lines.append(f"  pinned, left out of both passes: blocks {pinned} (see PINNED_BLOCKS)")
     passes = (("dithered", long_path, ["--bands", FINE_BANDS, "--no-sample-bounds", "--band-floor-db", str(FLOOR_DB)]),) if is_eac3 else (("strict", stripped, []), ("dithered", long_path, ["--bands", x.BANDS, "--no-sample-bounds"]))
     CURRENT["stem"] = path.stem
+    CURRENT["replaced"] = replaced_names(args.encspect, path, data, frames)
     for variant, source, extra in passes:
         folder = work / variant
         folder.mkdir()

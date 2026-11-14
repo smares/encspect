@@ -30,6 +30,24 @@ class DolbyReading(unittest.TestCase):
             self.assertEqual(d.slots_of(path, 6, {"acmod": 2, "lfeon": 0}), [0, 1])
 
 
+class Replacement(unittest.TestCase):
+    def test_the_channels_a_dependent_substream_replaces_are_those_its_map_names_that_the_independent_one_has(self):
+        import json
+        import os
+        import stat
+        import tempfile
+        import ac3_model
+        data = ac3_model.eac3_frame(acmod=7, lfeon=1, words=200) + ac3_model.eac3_frame(strmtyp=1, acmod=2, chanmap=0x1A00, words=160)
+        report = {"root": {"children": [{"name": "Channel Map", "value": "0x1A00 (left surround, right surround, left/right rear surround)"}]}}
+        with tempfile.TemporaryDirectory() as folder:
+            tool = Path(folder) / "tool"
+            tool.write_text("#!/bin/sh\ncat <<'EOF'\n" + json.dumps(report) + "\nEOF\n")
+            os.chmod(tool, os.stat(tool).st_mode | stat.S_IXUSR)
+            frames = [(0, len(ac3_model.eac3_frame(acmod=7, lfeon=1, words=200))), (len(ac3_model.eac3_frame(acmod=7, lfeon=1, words=200)), 0)]
+            self.assertEqual(c.replaced_names(tool, Path("x.eac3"), data, frames), ["side left", "side right"])
+            self.assertEqual(c.replaced_names(tool, Path("x.eac3"), data[:frames[1][0]], frames[:1]), [])
+
+
 class ComparisonLogic(unittest.TestCase):
     def test_partial_map_takes_the_independent_channels_where_nothing_correlates(self):
         import random
