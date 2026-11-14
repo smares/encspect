@@ -293,7 +293,7 @@ public sealed partial class SpeexParser
                 _sizes[packet.Length] = _sizes.GetValueOrDefault(packet.Length) + 1;
             }
 
-            _audioStart = _audioStart < 0 ? packet.FileStart : _audioStart;
+            _audioStart = _audioStart < 0 ? packet.FileStart : Math.Min(_audioStart, packet.FileStart);
             _audioEnd = Math.Max(_audioEnd, packet.FileEnd);
 
             // A packet counts the samples its header's frames per packet declare, empty or damaged included (design question 11); one that holds

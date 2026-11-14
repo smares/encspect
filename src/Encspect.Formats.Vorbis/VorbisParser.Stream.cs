@@ -539,7 +539,7 @@ public sealed partial class VorbisParser
                 _sizes.Add(packet.Length);
             }
 
-            _audioStart = _audioStart < 0 ? packet.FileStart : _audioStart;
+            _audioStart = _audioStart < 0 ? packet.FileStart : Math.Min(_audioStart, packet.FileStart);
             _audioEnd = Math.Max(_audioEnd, packet.FileEnd);
             _afterGap |= packet.FollowsGap;
 
