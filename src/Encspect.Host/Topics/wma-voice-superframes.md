@@ -2,12 +2,12 @@
 id: wma-voice-superframes
 title: Windows Media Audio Voice packets and superframes
 related: wma-voice, wma-voice-frames, asf-packets
-references: FFmpeg 6.1.1 libavcodec/wmavoice.c
+references: Encspect's format description docs/design/wma-voice-format.md (Microsoft has published no specification)
 ---
 
 **The problem.** A superframe of speech takes a varying number of bits, while the container carries packets of one size, the block alignment.
 
-**How a packet is laid out.** A packet starts with a 4-bit sequence number, a flag for residual LSPs, the number of superframes that begin in it, and the spillover: how many bits after the header finish the superframe that began in the packet before. The count is a sum of 6-bit values, each 63 saying that another follows; the spillover field is 3 bits wider than the base-2 logarithm of the block alignment. Whole superframes then follow one another bit by bit. The last of the counted superframes goes on to the end of the packet, and the next packet's spillover bits finish it. At the end of the stream a decoder reads the last one from the last packet's bits alone.
+**How a packet is laid out.** A packet starts with a 4-bit sequence number, a flag for residual LSPs, the number of superframes that begin in it, and the spillover: how many bits after the header finish the superframe that began in the packet before. The count is a sum of 6-bit values, each 63 saying that another follows; the spillover field is 3 bits wider than the base-2 logarithm of the block alignment, rounded up. Whole superframes then follow one another bit by bit. The last of the counted superframes goes on to the end of the packet, and the next packet's spillover bits finish it. At the end of the stream a decoder reads the last one from the last packet's bits alone.
 
 **What a superframe holds.** A speech bit, an optional sample count of at most 480, the LSPs of all three frames if the packet sets the residual flag, three frames and optional additional data, which a decoder skips. Nothing states a superframe's size: it follows from reading it.
 

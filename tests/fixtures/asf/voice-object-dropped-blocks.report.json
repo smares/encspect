@@ -6712,7 +6712,7 @@
       {
         "severity": "Info",
         "code": "wma.voice-music",
-        "message": "A superframe's first bit is clear: it holds music, Windows Media Audio Professional data inside Voice superframes, which FFmpeg's decoder does not support (wmavoice.c) and this analysis does not read; a decoder drops it and the rest of its media object.",
+        "message": "A superframe's first bit is clear: it holds music, which FFmpeg's decoder takes for Windows Media Audio Professional data and does not decode, and which this analysis does not read; a decoder drops it and the rest of its media object.",
         "offset": 772,
         "length": 1,
         "path": [

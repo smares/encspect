@@ -88,7 +88,7 @@ internal static class VoiceExplain
 
     public const string Superframes = "The superframes the analysis read, each of three frames and 480 samples or fewer.";
     public const string Superframe = "480 samples of speech in three frames of 160. A superframe states no size: it ends where its last frame and its additional data end.";
-    public const string IsSpeech = "Whether the superframe holds speech. A clear bit means music, Windows Media Audio Professional data inside the superframe, which FFmpeg's decoder does not support.";
+    public const string IsSpeech = "Whether the superframe holds speech. A clear bit means music, which FFmpeg's decoder takes for Windows Media Audio Professional data inside the superframe and does not decode.";
     public const string HasSampleCount = "Whether the superframe states how many samples it outputs; without a count it outputs 480.";
     public const string SampleCount = "How many samples the superframe outputs, 0 to 480. It does not say where the superframe ends.";
     public const string Lsps = "The line spectral pairs that describe the filter of the sound. Their values are not decoded.";
@@ -101,7 +101,7 @@ internal static class VoiceExplain
     public const string Block = "One block of the frame: its pitch field where the frame has a pitch per block, and its excitation fields. Their values are not decoded.";
     public const string AdditionalData = "A flag, and where it is set a count and groups of 10 bits that a decoder skips.";
 
-    public const string ProfessionalHeader = "The first 18 bytes of the codec-specific data, laid out as Windows Media Audio Professional's. FFmpeg's decoder does not read them.";
+    public const string ProfessionalHeader = "The first 18 bytes of the codec-specific data, which FFmpeg's comments call Windows Media Audio Professional's codec data. FFmpeg's decoder does not read them.";
     public const string Flags = "The flags of the codec-specific data (bytes 18 to 21): the postfilter, the denoise settings and the LSP form, as FFmpeg's decoder reads them.";
     public const string FlagPostfilter = "Whether the decoder's postfilter is on. It shapes the audio only.";
     public const string FlagUnread = "A bit of the flags that FFmpeg's decoder does not read.";

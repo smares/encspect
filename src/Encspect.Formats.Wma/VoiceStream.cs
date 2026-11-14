@@ -691,8 +691,8 @@ internal sealed class VoiceStream
             return outcome switch
             {
                 VoiceOutcome.Music => one
-                    ? $"A superframe's first bit is clear: it holds music, Windows Media Audio Professional data inside Voice superframes, which FFmpeg's decoder does not support (wmavoice.c) and this analysis does not read; a decoder drops {x}."
-                    : $"{count} superframes' first bit is clear: they hold music, Windows Media Audio Professional data inside Voice superframes, which FFmpeg's decoder does not support (wmavoice.c) and this analysis does not read; a decoder drops {x}.",
+                    ? $"A superframe's first bit is clear: it holds music, which FFmpeg's decoder takes for Windows Media Audio Professional data and does not decode, and which this analysis does not read; a decoder drops {x}."
+                    : $"{count} superframes' first bit is clear: they hold music, which FFmpeg's decoder takes for Windows Media Audio Professional data and does not decode, and which this analysis does not read; a decoder drops {x}.",
                 VoiceOutcome.SampleCount => one
                     ? $"A superframe states more samples than the 480 it holds; a decoder drops {x}."
                     : $"{count} superframes state more samples than the 480 it holds; a decoder drops {x}.",

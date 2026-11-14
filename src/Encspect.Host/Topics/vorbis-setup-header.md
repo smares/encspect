@@ -15,6 +15,6 @@ references: Vorbis I specification, sections 3.2.1, 4.2.4, 6.2.1, 7.2.2 and 8.6.
 - **Mappings:** which channels are coupled, by [square polar coupling](square-polar-coupling), and which floor and residue each channel uses.
 - **Modes:** the block size and mapping a packet may choose.
 
-**Checks.** The specification and libvorbis refuse a setup header whose codebooks have codeword lengths that do not form a complete prefix code, that names codebooks, floors or residues it does not have, or that sets reserved fields.
+**Checks.** The specification and libvorbis refuse a setup header whose codebooks have codeword lengths that do not form a complete prefix code (a codebook with a single used entry excepted, which an erratum of 2015 allows), that names codebooks, floors or residues it does not have, or that sets reserved fields.
 
 **What you see.** Each codebook's dimensions, entries and codeword lengths, each floor, residue, mapping and mode with its key figures, every field at its bits, and findings for what decoders refuse.
