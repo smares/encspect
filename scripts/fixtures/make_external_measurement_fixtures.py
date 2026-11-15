@@ -51,6 +51,14 @@ STEREO = {
     "stereo-aac-64k": ("aac", 44100, "-b:a 64k", ["64k"]),
     "stereo-opus-48k": ("opus", 48000, "--bitrate 48", ["48"]),
 }
+# The same six runs with a side signal as loud as the mid ("stereo-equal-<tool>"): a pink mid and a pink side, both at -20 dBFS RMS, from two generators. The first set's side is
+# 12 dB lower; the two together show what a side cutoff under the mid's and the holes follow (the coder or the side's level).
+SIDE_DB = {"stereo-": -32.0, "stereo-equal-": -20.0}
+STEREO = {**STEREO, **{k.replace("stereo-", "stereo-equal-", 1): v for k, v in STEREO.items()}}
+
+
+def side_db_of(name):
+    return SIDE_DB["stereo-equal-"] if name.startswith("stereo-equal-") else SIDE_DB["stereo-"]
 
 # name: (input rate, settings text, arguments, expected: "found" or "none"). The bitrates are those of a mono stream: half the stereo ones the
 # design's table used (-b 64 for its -b 128), so a channel gets the same bits.
@@ -80,11 +88,11 @@ def write_input(path, rate, seconds=SECONDS):
         w.writeframes(b"".join(struct.pack("<h", v) for v in samples))
 
 
-def write_stereo_input(path, rate, seconds=STEREO_SECONDS):
-    """Stereo pink noise, 16 bits: left is mid + side and right mid - side, the mid signal at -20 dBFS RMS and the side signal 12 dB lower, from two generators."""
+def write_stereo_input(path, rate, side_db=-32.0, seconds=STEREO_SECONDS):
+    """Stereo pink noise, 16 bits: left is mid + side and right mid - side, the mid signal at -20 dBFS RMS and the side signal at side_db (12 dB lower, or equal), from two generators."""
     count = rate * seconds
     mid = pink(count, 201, -20.0, tone_db=-200.0, rate=rate)
-    side = pink(count, 202, -32.0, tone_db=-200.0, rate=rate)
+    side = pink(count, 202, side_db, tone_db=-200.0, rate=rate)
     clamp = lambda v: max(-32768, min(32767, math.floor(v * 32768 + 0.5)))
     with wave.open(str(path), "wb") as w:
         w.setnchannels(2)
@@ -207,36 +215,38 @@ def encode_all(names):
         for name, (tool, rate, settings, args) in STEREO.items():
             if names and name not in names:
                 continue
-            if rate not in stereo_inputs:
-                stereo_inputs[rate] = temp / f"stereo-in-{rate}.wav"
-                write_stereo_input(stereo_inputs[rate], rate)
-            source, decoded = stereo_inputs[rate], temp / f"{name}.wav"
+            side_db = side_db_of(name)
+            if (rate, side_db) not in stereo_inputs:
+                stereo_inputs[(rate, side_db)] = temp / f"stereo-in-{rate}-{side_db:g}.wav"
+                write_stereo_input(stereo_inputs[(rate, side_db)], rate, side_db)
+            source, decoded = stereo_inputs[(rate, side_db)], temp / f"{name}.wav"
+            level = "a side signal 12 dB lower" if side_db < -20 else "a side signal as loud as the mid"
             if tool == "lame":
                 mp3 = temp / f"{name}.mp3"
                 result = run("lame", "--verbose", *args, source, mp3)
                 run("lame", "--decode", mp3, decoded)
-                entry = {"description": f"LAME 3.100 {settings} on 2 s of stereo pink noise (a mid signal and a side signal 12 dB lower) at {rate} Hz, decoded with lame --decode.",
+                entry = {"description": f"LAME 3.100 {settings} on 2 s of stereo pink noise (a mid signal and {level}) at {rate} Hz, decoded with lame --decode.",
                          "encoder": {"name": "LAME", "version": "3.100", "settings": settings, "command": f"lame --verbose {settings} in.wav out.mp3; lame --decode out.mp3 out.wav"},
                          "stated": lame_info(mp3, result.stderr + result.stdout)}
             elif tool == "oggenc":
                 ogg = temp / f"{name}.ogg"
                 run("oggenc", "-Q", "-q", args[0], "-o", ogg, source)
                 run("oggdec", "-Q", "-b", "16", "-e", "0", "-s", "1", "-o", decoded, ogg)
-                entry = {"description": f"oggenc (vorbis-tools 1.4.2) {settings} on 2 s of stereo pink noise (a mid signal and a side signal 12 dB lower) at {rate} Hz, decoded with oggdec.",
+                entry = {"description": f"oggenc (vorbis-tools 1.4.2) {settings} on 2 s of stereo pink noise (a mid signal and {level}) at {rate} Hz, decoded with oggdec.",
                          "encoder": {"name": "oggenc", "version": "vorbis-tools 1.4.2", "settings": settings, "command": f"oggenc -Q {settings} in.wav -o out.ogg; oggdec -b 16 out.ogg"},
                          "stated": None}
             elif tool == "aac":
                 m4a = temp / f"{name}.m4a"
                 run("ffmpeg", "-v", "error", "-y", "-i", source, "-c:a", "aac", "-b:a", args[0], m4a)
                 run("ffmpeg", "-v", "error", "-y", "-i", m4a, "-c:a", "pcm_s16le", decoded)
-                entry = {"description": f"FFmpeg 6.1.1's aac encoder at {args[0]}bps on 2 s of stereo pink noise (a mid signal and a side signal 12 dB lower) at {rate} Hz, decoded with FFmpeg.",
+                entry = {"description": f"FFmpeg 6.1.1's aac encoder at {args[0]}bps on 2 s of stereo pink noise (a mid signal and {level}) at {rate} Hz, decoded with FFmpeg.",
                          "encoder": {"name": "FFmpeg aac", "version": "6.1.1", "settings": settings, "command": f"ffmpeg -i in.wav -c:a aac {settings} out.m4a; ffmpeg -i out.m4a -c:a pcm_s16le out.wav"},
                          "stated": None}
             else:
                 opus = temp / f"{name}.opus"
                 run("opusenc", "--quiet", "--bitrate", args[0], source, opus)
                 run("opusdec", "--quiet", "--rate", str(rate), opus, decoded)
-                entry = {"description": f"opusenc (opus-tools 0.2, libopus 1.4) at {args[0]} kbit/s on 2 s of stereo pink noise (a mid signal and a side signal 12 dB lower) at {rate} Hz, decoded with opusdec.",
+                entry = {"description": f"opusenc (opus-tools 0.2, libopus 1.4) at {args[0]} kbit/s on 2 s of stereo pink noise (a mid signal and {level}) at {rate} Hz, decoded with opusdec.",
                          "encoder": {"name": "opusenc", "version": "opus-tools 0.2, libopus 1.4", "settings": settings, "command": f"opusenc {settings} in.wav out.opus; opusdec --rate {rate} out.opus out.wav"},
                          "stated": None}
             entry["expect_cutoff"] = "any"

@@ -183,6 +183,55 @@ public class MeasurementMidSideFixtureTests
         Assert.InRange(Spectrum("lossy-stereo-lame-s-b128").MidSide!.SideHoles.ShareTenths, 0, 5);
     }
 
+    // The same six runs with a side signal as loud as the mid (lossy-stereo-equal-*): the side cutoff of LAME's joint stereo is the mid's, so the 12 dB set's lower side
+    // cutoff followed the side's level; oggenc's 44 Hz stayed; opusenc's side has no cutoff found (a step of 23.8 dB) where the 12 dB set had one 187 Hz under.
+    [Theory]
+    [InlineData("lossy-stereo-equal-lame-j-b64")]
+    [InlineData("lossy-stereo-equal-lame-j-b128")]
+    [InlineData("lossy-stereo-equal-lame-s-b128")]
+    [InlineData("lossy-stereo-equal-aac-64k")]
+    public void WithASideAsLoudAsTheMidTheTwoCutoffsAreTheSame(string name)
+    {
+        MidSideFigures pair = Spectrum(name).MidSide!;
+
+        Assert.True(pair.MidCutoff.IsFound && pair.SideCutoff.IsFound, name);
+        Assert.InRange(pair.MidCutoff.Frequency - pair.SideCutoff.Frequency, -50, 50);
+    }
+
+    [Theory]
+    [InlineData("lossy-stereo-oggenc-q0")]
+    [InlineData("lossy-stereo-equal-oggenc-q0")]
+    public void OggencsSideCutoffIsARowUnderTheMidsAtBothSideLevels(string name)
+    {
+        MidSideFigures pair = Spectrum(name).MidSide!;
+
+        Assert.InRange(pair.MidCutoff.Frequency - pair.SideCutoff.Frequency, 20, 70);
+    }
+
+    [Fact]
+    public void OpusencsSideHasNoCutoffFoundWithASideAsLoudAsTheMid()
+    {
+        MidSideFigures pair = Spectrum("lossy-stereo-equal-opus-48k").MidSide!;
+
+        Assert.True(pair.MidCutoff.IsFound);
+        Assert.False(pair.SideCutoff.IsFound);
+        Assert.InRange(pair.SideCutoff.StepTenthsOfDb, 200, 249);
+    }
+
+    // The holes with an equal side: LAME -m j -b 64 has them in the mid spectrum too (2.4 and 2.7 %), where the 12 dB set had 12.2 % in the side alone; the rest read 0.0 to 0.7 %.
+    [Fact]
+    public void WithASideAsLoudAsTheMidLamesJointStereoLeavesHolesInBothSpectra()
+    {
+        MidSideFigures pair = Spectrum("lossy-stereo-equal-lame-j-b64").MidSide!;
+
+        Assert.InRange(pair.MidHoles.ShareTenths, 15, 35);
+        Assert.InRange(pair.SideHoles.ShareTenths, 15, 35);
+        Assert.InRange(Spectrum("lossy-stereo-equal-lame-j-b128").MidSide!.SideHoles.ShareTenths, 0, 5);
+        Assert.InRange(Spectrum("lossy-stereo-equal-lame-s-b128").MidSide!.SideHoles.ShareTenths, 0, 5);
+        Assert.InRange(Spectrum("lossy-stereo-equal-oggenc-q0").MidSide!.SideHoles.ShareTenths, 3, 12);
+        Assert.InRange(Spectrum("lossy-stereo-equal-aac-64k").MidSide!.SideHoles.ShareTenths, 0, 5);
+    }
+
     [Theory]
     [InlineData("lossy-stereo-lame-j-b64")]
     [InlineData("lossy-stereo-lame-j-b128")]
@@ -190,6 +239,8 @@ public class MeasurementMidSideFixtureTests
     [InlineData("lossy-stereo-oggenc-q0")]
     [InlineData("lossy-stereo-aac-64k")]
     [InlineData("lossy-stereo-opus-48k")]
+    [InlineData("lossy-stereo-equal-lame-j-b64")]
+    [InlineData("lossy-stereo-equal-oggenc-q0")]
     public void TheEncoderMadeStereoFilesHaveAPairWithBothCutoffsFound(string name)
     {
         SpectrumFigures spectrum = Spectrum(name);

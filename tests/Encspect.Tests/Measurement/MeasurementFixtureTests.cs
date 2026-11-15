@@ -584,7 +584,7 @@ public class MeasurementFixtureTests
         SpectrumFigures spectrum = Analyze(name, new MeasureOptions()).Streams.Single().Measurements!.Spectrum!;
         if (!spectrum.Cutoff.IsFound || !spectrum.Bandwidth.IsFound)
         {
-            Assert.True(!spectrum.Cutoff.IsFound || name is "lossy-aac-48k" or "lossy-aac-64k", name);
+            Assert.True(!spectrum.Cutoff.IsFound || name is "lossy-aac-48k" or "lossy-aac-64k" or "lossy-stereo-equal-aac-64k", name);
             return;
         }
 
