@@ -236,6 +236,7 @@ public class AudioPanelTests
         Assert.False(window.Graph.IsEffectivelyVisible);
         string[] names = [.. window.Model.Graphs.Figures!.Select(l => l.Name)];
         Assert.Contains("Spectral Cutoff", names);
+        Assert.Contains("Spectral Bandwidth", names);
         Assert.Contains("Sample Peak", names);
         Assert.All(window.Model.Graphs.Figures!, l => Assert.False(string.IsNullOrEmpty(l.Description)));
         window.Close();

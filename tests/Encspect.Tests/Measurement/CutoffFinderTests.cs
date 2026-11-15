@@ -113,4 +113,165 @@ public class CutoffFinderTests
         Assert.True(splattered.IsFound);
         Assert.Equal(plain.Frequency, splattered.Frequency);
     }
+
+    // The average spectrum in tenths of a dB of a stand-in: a level for each row.
+    private static short[] Rows(Func<int, int> tenths) => [.. Enumerable.Range(0, MeasurementLimits.Rows).Select(r => (short)tenths(r))];
+
+    // A floor that reaches the top of the search: the bandwidth is the lowest row of the run within 3 dB of it, which is the edge of the content
+    // (the run's lowest band ends one band above the edge: the shift by W - 1 rows of the cutoff's edge), and the floor is the mean of the top band.
+    [Fact]
+    public void AContentEdgeOnAFlatFloorIsTheBandwidth()
+    {
+        SpectralBandwidth bandwidth = CutoffFinder.FindBandwidth(Rows(r => r < 400 ? -300 : -1300), Geometry);
+
+        Assert.True(bandwidth.IsFound);
+        Assert.Equal(Geometry.Hertz(400), bandwidth.Frequency);
+        Assert.Equal(-1300, bandwidth.FloorTenthsOfDb);
+        Assert.Equal(SpectralBandwidthReason.None, bandwidth.Reason);
+    }
+
+    // A tone above the content lifts a band of 23 rows by a twenty-third of its height in dB: it does not end the run.
+    [Fact]
+    public void AToneInTheFloorDoesNotEndTheRun()
+    {
+        SpectralBandwidth plain = CutoffFinder.FindBandwidth(Rows(r => r < 400 ? -300 : -1300), Geometry);
+        SpectralBandwidth toned = CutoffFinder.FindBandwidth(Rows(r => r < 400 ? -300 : r == 450 ? -800 : -1300), Geometry);
+
+        Assert.True(toned.IsFound);
+        Assert.Equal(plain.Frequency, toned.Frequency);
+    }
+
+    [Fact]
+    public void AnEdgeIsFoundWhateverTheFloorsLevel()
+    {
+        foreach (int floor in new[] { -1900, -1300, -700 })
+        {
+            Assert.True(CutoffFinder.FindBandwidth(Rows(r => r < 300 ? floor + 400 : floor), Geometry).IsFound, floor.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        }
+
+        // Rows without power read -200 dB.
+        SpectralBandwidth silent = CutoffFinder.FindBandwidth(Rows(r => r < 300 ? -300 : MeasurementLimits.NoPower), Geometry);
+        Assert.True(silent.IsFound);
+        Assert.Equal(-2000, silent.FloorTenthsOfDb);
+    }
+
+    // A spectrum flat from the top down to the start of the search has no edge: it reaches the top.
+    [Fact]
+    public void AFlatSpectrumReachesTheTop()
+    {
+        SpectralBandwidth bandwidth = CutoffFinder.FindBandwidth(Rows(_ => -500), Geometry);
+
+        Assert.False(bandwidth.IsFound);
+        Assert.Equal(SpectralBandwidthReason.ReachesTop, bandwidth.Reason);
+        Assert.Equal(0, bandwidth.Frequency);
+    }
+
+    // A slope of 0.1 dB a row (pink noise falls about 3 dB an octave): the run within 3 dB of the top band is shorter than the slope, and the band under
+    // it is not 20 dB above the floor.
+    [Fact]
+    public void ASlopeIsNotAFloor()
+    {
+        SpectralBandwidth bandwidth = CutoffFinder.FindBandwidth(Rows(r => -1 * r), Geometry);
+
+        Assert.False(bandwidth.IsFound);
+        Assert.Equal(SpectralBandwidthReason.Slope, bandwidth.Reason);
+    }
+
+    // The thresholds are 3 dB for the run and 20 dB for the step, both inclusive, in sums of integers: exact.
+    [Fact]
+    public void TheStepThresholdOf20DbIsInclusive()
+    {
+        Assert.True(CutoffFinder.FindBandwidth(Rows(r => r < 300 ? -1100 : -1300), Geometry).IsFound);
+        Assert.Equal(SpectralBandwidthReason.Slope, CutoffFinder.FindBandwidth(Rows(r => r < 300 ? -1101 : -1300), Geometry).Reason);
+    }
+
+    [Fact]
+    public void ARateUnder8000HertzIsNotSearchedForABandwidthOrAPartialCutoff()
+    {
+        var low = new CutoffGeometry(4000, 1024);
+
+        Assert.False(CutoffFinder.FindBandwidth(Rows(_ => -500), low).IsSearched);
+        Assert.False(CutoffFinder.FindPartial(new CutoffCounters(hasCeiling: true), low).IsSearched);
+        Assert.False(CutoffFinder.FindPartial(null, Geometry).IsSearched);
+    }
+
+    // Counters with the frames of each row: frames at the level of the row's signal, of which some show a ceiling.
+    private static CutoffCounters Ceilings(int frames, params (int Row, int Showing)[] rows)
+    {
+        var counters = new CutoffCounters(hasCeiling: true);
+        for (int r = Geometry.FirstCandidate; r <= CutoffGeometry.LastCandidate; r++)
+        {
+            counters.All[(r * CutoffCounters.Levels) + 40] = frames;
+        }
+
+        foreach ((int row, int showing) in rows)
+        {
+            counters.Ceiling![(row * CutoffCounters.Levels) + 40] = showing;
+        }
+
+        return counters;
+    }
+
+    // The row with the most frames showing, the lowest on a tie; the count is that maximum, the frequency the upper edge of the row.
+    [Fact]
+    public void ThePartialCutoffIsTheRowWithTheMostFramesTheLowestOnATie()
+    {
+        PartialCutoff partial = CutoffFinder.FindPartial(Ceilings(20, (370, 10), (371, 10), (372, 10), (373, 9)), Geometry);
+
+        Assert.True(partial.IsFound);
+        Assert.Equal(Geometry.Hertz(371), partial.Frequency);
+        Assert.Equal(10, partial.FramesShowing);
+        Assert.Equal(20, partial.FramesWithSignal);
+    }
+
+    // Walking down from the row with the most frames while the count stays at least half of it: the figure lands on the edge, which a plateau
+    // that starts a row lower than its top has. The count stays the maximum, not the walked row's.
+    [Fact]
+    public void ThePartialCutoffWalksDownWhileAtLeastHalfOfTheMaximumShow()
+    {
+        PartialCutoff partial = CutoffFinder.FindPartial(Ceilings(20, (369, 4), (370, 5), (371, 10), (372, 10)), Geometry);
+
+        Assert.Equal(Geometry.Hertz(371), partial.Frequency);
+        Assert.Equal(10, partial.FramesShowing);
+        Assert.True(partial.IsFound);
+
+        PartialCutoff stops = CutoffFinder.FindPartial(Ceilings(20, (369, 4), (370, 4), (371, 10)), Geometry);
+        Assert.Equal(Geometry.Hertz(372), stops.Frequency);
+    }
+
+    // 10 % of the frames with signal is enough, 5 % is not; the row and the count of the closest are still given.
+    [Theory]
+    [InlineData(2, true)]
+    [InlineData(1, false)]
+    public void ThePartialCutoffIsFoundFromATenthOfTheFramesWithSignal(int showing, bool isFound)
+    {
+        PartialCutoff partial = CutoffFinder.FindPartial(Ceilings(20, (400, showing)), Geometry);
+
+        Assert.Equal(isFound, partial.IsFound);
+        Assert.Equal(Geometry.Hertz(401), partial.Frequency);
+        Assert.Equal(showing, partial.FramesShowing);
+    }
+
+    [Fact]
+    public void WithoutACeilingNothingIsFound()
+    {
+        PartialCutoff partial = CutoffFinder.FindPartial(Ceilings(20), Geometry);
+
+        Assert.False(partial.IsFound);
+        Assert.Equal(0, partial.Frequency);
+        Assert.Equal(0, partial.FramesShowing);
+    }
+
+    // Frames without signal (more than ten levels under the one 1 % of them reach) are not counted against the ceiling, as for the cutoff.
+    [Fact]
+    public void FramesWithoutSignalAreNotCounted()
+    {
+        CutoffCounters counters = Ceilings(10, (400, 10));
+        counters.All[(400 * CutoffCounters.Levels) + 5] = 100;
+
+        PartialCutoff partial = CutoffFinder.FindPartial(counters, Geometry);
+
+        Assert.Equal(10, partial.FramesWithSignal);
+        Assert.True(partial.IsFound);
+    }
 }

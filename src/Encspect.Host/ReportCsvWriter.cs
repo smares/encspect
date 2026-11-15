@@ -10,12 +10,12 @@ public static class ReportCsvWriter
     [
         "Path", "Format", "Streams", "Codec", "Duration (s)", "Samples", "Lost Samples", "Average Bitrate (kbps)", "Sample Rate (Hz)", "Channel Mode",
         "Channel Layout", "Encoder", "Encoder Confidence", "Writer", "Writer Confidence", "Processor", "Processor Confidence", "Lossy Part", "Lossy Part Confidence", "Tags", "Errors", "Warnings", "Infos", "Has Object Audio", "JOC Object Count",
-        "Is Protected", "Protection Scheme", "DRM Systems", "Is Verified", "Spectral Cutoff (Hz)", "Sample Peak (dBFS)", "Maximum True Peak Level (dBTP)", "Clipping Runs",
+        "Is Protected", "Protection Scheme", "DRM Systems", "Is Verified", "Spectral Cutoff (Hz)", "Spectral Bandwidth (Hz)", "Partial Cutoff (Hz)", "Sample Peak (dBFS)", "Maximum True Peak Level (dBTP)", "Clipping Runs",
         "Integrated Loudness (LUFS)", "Loudness Range (LU)", "Digital Silence Stretches", "Changes of Low Bits Unused", "Grid of the Changes (samples)",
     ];
 
     // The columns the writer formats from numbers: counts, durations, rates and the measured figures; they skip the guard against formulas.
-    private static readonly int[] NumericColumns = [.. new[] { "Streams", "Duration (s)", "Samples", "Average Bitrate (kbps)", "Sample Rate (Hz)", "Errors", "Warnings", "Infos", "JOC Object Count", "Spectral Cutoff (Hz)", "Sample Peak (dBFS)", "Clipping Runs", "Digital Silence Stretches", "Changes of Low Bits Unused", "Grid of the Changes (samples)", "Maximum True Peak Level (dBTP)", "Integrated Loudness (LUFS)", "Loudness Range (LU)", "Lost Samples" }.Select(n => Array.IndexOf(Columns, n))];
+    private static readonly int[] NumericColumns = [.. new[] { "Streams", "Duration (s)", "Samples", "Average Bitrate (kbps)", "Sample Rate (Hz)", "Errors", "Warnings", "Infos", "JOC Object Count", "Spectral Cutoff (Hz)", "Spectral Bandwidth (Hz)", "Partial Cutoff (Hz)", "Sample Peak (dBFS)", "Clipping Runs", "Digital Silence Stretches", "Changes of Low Bits Unused", "Grid of the Changes (samples)", "Maximum True Peak Level (dBTP)", "Integrated Loudness (LUFS)", "Loudness Range (LU)", "Lost Samples" }.Select(n => Array.IndexOf(Columns, n))];
 
     public static void Write(IEnumerable<Report> reports, TextWriter writer) => Write(reports, writer, isVerifying: false);
 
@@ -40,6 +40,7 @@ public static class ReportCsvWriter
                 s.Streams == 0 ? null : s.HasObjectAudio ? "true" : "false", s.JocObjectCount?.ToString(CultureInfo.InvariantCulture),
                 s.Streams == 0 ? null : s.IsProtected ? "true" : "false",
                 string.Join("; ", s.ProtectionSchemes), string.Join("; ", s.DrmSystems), isVerifying && s.IsVerified is { } verified ? (verified ? "true" : "false") : null, s.SpectralCutoff?.ToString(CultureInfo.InvariantCulture),
+                s.SpectralBandwidth?.ToString(CultureInfo.InvariantCulture), s.PartialCutoff?.ToString(CultureInfo.InvariantCulture),
                 s.SamplePeakTenths is { } peak ? MeasurementText.Tenths(peak) : null, s.TruePeakTenths is { } truePeak ? MeasurementText.Tenths(truePeak) : null, s.ClippingRuns?.ToString(CultureInfo.InvariantCulture),
                 s.IntegratedLoudnessTenths is { } loudness ? MeasurementText.Tenths(loudness) : null, s.LoudnessRangeTenths is { } range ? MeasurementText.Tenths(range) : null,
                 s.SilentStretches?.ToString(CultureInfo.InvariantCulture), s.LowBitsChanges?.ToString(CultureInfo.InvariantCulture), s.LowBitsGrid?.ToString(CultureInfo.InvariantCulture),

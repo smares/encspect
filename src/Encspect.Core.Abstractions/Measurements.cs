@@ -305,6 +305,63 @@ public sealed record SpectrumFigures
     public required SpectralCutoff Cutoff { get; init; }
 
     public IReadOnlyList<SpectralCutoff> ChannelCutoffs { get; init; } = [];
+
+    // Where the combined spectrum meets a flat floor that reaches the top of the search, and the same for each channel (see the
+    // spectral-bandwidth topic).
+    public SpectralBandwidth Bandwidth { get; init; } = new();
+
+    public IReadOnlyList<SpectralBandwidth> ChannelBandwidths { get; init; } = [];
+
+    // The frequency at which the most frames show a ceiling of their own, on the combined spectrum (see the spectral-cutoff topic).
+    public PartialCutoff PartialCutoff { get; init; } = new();
+}
+
+// Why no spectral bandwidth is found.
+public enum SpectralBandwidthReason
+{
+    None,
+
+    // The floor's run reaches down to the start of the search or leaves no band under it: the spectrum is flat from the top down.
+    ReachesTop,
+
+    // The band under the floor's run is less than 20 dB above the floor: a slope, not a floor.
+    Slope,
+}
+
+// The spectral bandwidth of one spectrum: the highest frequency at which the average spectrum stands at least 20 dB above a flat floor
+// that reaches the top of the search and is at least 1 kHz wide. Frequencies are whole hertz at the lower edge of a row, the level in
+// tenths of a dB.
+public sealed record SpectralBandwidth
+{
+    // False for a rate under 8,000 Hz, where nothing is searched.
+    public bool IsSearched { get; init; } = true;
+
+    public bool IsFound { get; init; }
+
+    // The lower edge of the floor's run; 0 where none is found.
+    public int Frequency { get; init; }
+
+    // The floor's mean level: the band that ends at the top of the search (row 506); 0 where none is found.
+    public int FloorTenthsOfDb { get; init; }
+
+    public SpectralBandwidthReason Reason { get; init; }
+}
+
+// The partial cutoff: the row at which the most frames with signal show a ceiling of their own, which finds an edge that only part
+// of the stream has. Where none is found the figures are those of the row that came closest.
+public sealed record PartialCutoff
+{
+    // False for a rate under 8,000 Hz, where nothing is searched.
+    public bool IsSearched { get; init; } = true;
+
+    public bool IsFound { get; init; }
+
+    // Whole hertz at the upper edge of the row; 0 where no frame showed a ceiling.
+    public int Frequency { get; init; }
+
+    public int FramesShowing { get; init; }
+
+    public int FramesWithSignal { get; init; }
 }
 
 // The spectral cutoff of one spectrum (see the spectral-cutoff topic). All frequencies are whole hertz at the upper edge of a row,

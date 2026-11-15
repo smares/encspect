@@ -21,7 +21,7 @@ namespace Encspect.Host;
 // concept also has concept, and a numeric series that is a form of a quantity has quantity. A stream of an analysis that
 // asked for measurements has measurements after verification: status, samples, firstPosition, lostSamples, gaps, sampleRate,
 // channels, channelsMeasured, the spectrum (rows in tenths of a dB, the cutoff in whole hertz and tenths of a dB as
-// {value, unit}), the levels (samplePeak, rms, dcOffset and dcOffsetLevel as {value, unit, perChannel}, null for minus infinity;
+// {value, unit}; the bandwidth, its floor, and the partialCutoff), the levels (samplePeak, rms, dcOffset and dcOffsetLevel as {value, unit, perChannel}, null for minus infinity;
 // clipping, digitalSilence and bitDepth as counts, bare, with perChannel objects), the loudness (integratedLoudness, loudnessRange,
 // maximumMomentaryLoudness and maximumShortTermLoudness as {value, unit}, or the unit and an absence where there is no value; the
 // channel weights, the gating blocks and the short-term series) and the truePeak (oversampling and maximumTruePeakLevel as
@@ -817,6 +817,17 @@ public static class ReportJsonWriter
             }
 
             writer.WriteEndArray();
+            WriteBandwidth(writer, "bandwidth", spectrum.Bandwidth, explain);
+            writer.WriteStartArray("channelBandwidths");
+            foreach (SpectralBandwidth channel in spectrum.ChannelBandwidths)
+            {
+                writer.WriteStartObject();
+                WriteBandwidthFields(writer, channel);
+                writer.WriteEndObject();
+            }
+
+            writer.WriteEndArray();
+            WritePartialCutoff(writer, "partialCutoff", spectrum.PartialCutoff, explain);
             writer.WriteEndObject();
         }
 
@@ -1296,6 +1307,66 @@ public static class ReportJsonWriter
         }
 
         WriteCutoffFields(writer, cutoff);
+        writer.WriteEndObject();
+    }
+
+    private static void WriteBandwidth(Utf8JsonWriter writer, string name, SpectralBandwidth bandwidth, bool explain)
+    {
+        writer.WriteStartObject(name);
+        if (explain)
+        {
+            writer.WriteString("description", MeasurementText.SpectralBandwidthDescription);
+            writer.WriteString("topic", MeasurementText.SpectralBandwidthTopic);
+        }
+
+        WriteBandwidthFields(writer, bandwidth);
+        writer.WriteEndObject();
+    }
+
+    private static void WriteBandwidthFields(Utf8JsonWriter writer, SpectralBandwidth bandwidth)
+    {
+        if (!bandwidth.IsSearched)
+        {
+            writer.WriteBoolean("isSearched", false);
+            return;
+        }
+
+        writer.WriteBoolean("isFound", bandwidth.IsFound);
+        if (bandwidth.IsFound)
+        {
+            WriteQuantity(writer, "frequency", bandwidth.Frequency, "Hz");
+            writer.WriteStartObject("floor");
+            writer.WriteNumber("value", bandwidth.FloorTenthsOfDb / 10m);
+            writer.WriteString("unit", "dB");
+            writer.WriteEndObject();
+        }
+        else
+        {
+            writer.WriteString("reason", bandwidth.Reason == SpectralBandwidthReason.ReachesTop ? "reachesTop" : "slope");
+        }
+    }
+
+    private static void WritePartialCutoff(Utf8JsonWriter writer, string name, PartialCutoff partial, bool explain)
+    {
+        writer.WriteStartObject(name);
+        if (explain)
+        {
+            writer.WriteString("description", MeasurementText.PartialCutoffDescription);
+            writer.WriteString("topic", MeasurementText.SpectralCutoffTopic);
+        }
+
+        if (!partial.IsSearched)
+        {
+            writer.WriteBoolean("isSearched", false);
+        }
+        else
+        {
+            writer.WriteBoolean("isFound", partial.IsFound);
+            WriteQuantity(writer, "frequency", partial.Frequency, "Hz");
+            writer.WriteNumber("framesShowing", partial.FramesShowing);
+            writer.WriteNumber("framesWithSignal", partial.FramesWithSignal);
+        }
+
         writer.WriteEndObject();
     }
 

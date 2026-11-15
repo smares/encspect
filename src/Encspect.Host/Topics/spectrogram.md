@@ -1,7 +1,7 @@
 ---
 id: spectrogram
 title: Spectrogram and average spectrum
-related: measurements, spectral-cutoff, lowpass
+related: measurements, spectral-cutoff, spectral-bandwidth, lowpass
 references: P. D. Welch, The use of fast Fourier transform for the estimation of power spectra, IEEE Trans. Audio Electroacoust. 15(2), 1967; F. J. Harris, On the use of windows for harmonic analysis with the discrete Fourier transform, Proc. IEEE 66(1), 1978; G. Heinzel, A. Rudiger and R. Schilling, Spectrum and spectral density estimation by the discrete Fourier transform, 2002
 ---
 
@@ -11,4 +11,4 @@ references: P. D. Welch, The use of fast Fourier transform for the estimation of
 
 **What you see.** The average spectrum is the mean power of each row over all frames, in tenths of a decibel. The spectrogram is the same rows over time: at most 1,024 columns, each a whole number of hops, which doubles whenever the stream would need more columns, so any length ends with 512 to 1,024 columns. A cell is a byte, the level in whole decibels plus 200 and limited to 1 to 220, and 0 means no data, as where frames were lost. Column 0 starts at sample floor(firstPosition / hopSamples) × hopSamples, the start of the hop that holds the stream's first sample. The waveform keeps the smallest and largest sample of each channel in each column, in 16-bit sample codes.
 
-A tone shows as a line, a sweep as a slope, noise as a band, and a lowpass as a flat ceiling, which [spectral cutoff](spectral-cutoff) measures.
+A tone shows as a line, a sweep as a slope, noise as a band, and a lowpass as a flat ceiling, which [spectral cutoff](spectral-cutoff) and [spectral bandwidth](spectral-bandwidth) measure.

@@ -56,9 +56,9 @@ public class ObjectAudioTests
         var writer = new StringWriter();
         ReportCsvWriter.Write([Analyze("joc-atmos.eac3"), Fixtures.AnalyzeMpeg("ac3/substreams.eac3")], writer);
         string[] lines = writer.ToString().Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
-        Assert.EndsWith(",Has Object Audio,JOC Object Count,Is Protected,Protection Scheme,DRM Systems,Is Verified,Spectral Cutoff (Hz),Sample Peak (dBFS),Maximum True Peak Level (dBTP),Clipping Runs,Integrated Loudness (LUFS),Loudness Range (LU),Digital Silence Stretches,Changes of Low Bits Unused,Grid of the Changes (samples)", lines[0], StringComparison.Ordinal);
-        Assert.EndsWith(",true,15,false,,,,,,,,,,,,", lines[1], StringComparison.Ordinal);
-        Assert.EndsWith(",false,,false,,,,,,,,,,,,", lines[2], StringComparison.Ordinal);
+        Assert.EndsWith(",Has Object Audio,JOC Object Count,Is Protected,Protection Scheme,DRM Systems,Is Verified,Spectral Cutoff (Hz),Spectral Bandwidth (Hz),Partial Cutoff (Hz),Sample Peak (dBFS),Maximum True Peak Level (dBTP),Clipping Runs,Integrated Loudness (LUFS),Loudness Range (LU),Digital Silence Stretches,Changes of Low Bits Unused,Grid of the Changes (samples)", lines[0], StringComparison.Ordinal);
+        Assert.EndsWith(",true,15,false,,,,,,,,,,,,,,", lines[1], StringComparison.Ordinal);
+        Assert.EndsWith(",false,,false,,,,,,,,,,,,,,", lines[2], StringComparison.Ordinal);
     }
 
     [Fact]
