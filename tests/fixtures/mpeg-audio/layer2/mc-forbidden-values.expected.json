@@ -1,5 +1,5 @@
 {
- "description": "MPEG-1 Layer II at 48000 Hz and 384 kbps carrying 3/2 + LFE whose frames hold values that ISO/IEC 13818-3 forbids: lfe_allocation 15, a nonzero tc_allocation with dematrix_procedure 3, dyn_cross_mode 15, and the LFE scalefactor index 63; the fifth and sixth frames are clean. The multichannel CRCs hold.",
+ "description": "MPEG-1 Layer II at 48000 Hz and 384 kbps carrying 3/2 + LFE whose frames hold values that ISO/IEC 13818-3 forbids: a nonzero tc_allocation with dematrix_procedure 3, dyn_cross_mode 15, and the LFE scalefactor index 63; the first frame's lfe_allocation 15 (16-bit LFE samples) is valid, and the fifth and sixth frames are clean. The multichannel CRCs hold.",
  "length": 6912,
  "crosscheck": true,
  "regions": [
@@ -3266,7 +3266,7 @@
  "findings": [
   {
    "code": "mpeg-audio.multichannel-value-forbidden",
-   "contains": "4 frames"
+   "contains": "3 frames"
   }
  ],
  "silent": true,

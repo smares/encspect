@@ -3,7 +3,8 @@ using Encspect.Host;
 
 namespace Encspect.Tests;
 
-// The values of the multichannel side information that ISO/IEC 13818-3 forbids or leaves unassigned (2.5.2.15, 2.5.3.2.4) are a warning on the frames that hold them.
+// The values of the multichannel side information that ISO/IEC 13818-3 forbids or leaves unassigned (2.5.2.15) are a warning on the frames that hold them;
+// lfe_allocation 15 is valid (16-bit samples), as the conformance streams test01 and test17 use it.
 public class MpegMultichannelValueTests
 {
     private const string Code = "mpeg-audio.multichannel-value-forbidden";
@@ -14,15 +15,14 @@ public class MpegMultichannelValueTests
         Report report = Fixtures.AnalyzeMpeg("mpeg-audio/layer2/mc-forbidden-values.mp2");
 
         Finding finding = Assert.Single(report.Findings, f => f.Code == Code);
-        Assert.Equal(4, finding.Count);
+        Assert.Equal(3, finding.Count);
         Assert.Equal(Severity.Warning, finding.Severity);
-        Assert.Contains("lfe_allocation 15", finding.Message, StringComparison.Ordinal);
-        Assert.Equal(0, finding.Node!.Offset);
+        Assert.Contains("dematrix_procedure 3", finding.Message, StringComparison.Ordinal);
+        Assert.Equal(1152, finding.Node!.Offset);
     }
 
-    // Each of the four frames alone is the one the finding counts: the fixture's other frames are clean, so dropping a frame drops one count.
+    // Each of the three frames alone is the one the finding counts: the fixture's other frames are clean, so dropping a frame drops one count.
     [Theory]
-    [InlineData(0, "lfe_allocation 15")]
     [InlineData(1, "dematrix_procedure 3")]
     [InlineData(2, "dyn_cross_mode 15")]
     [InlineData(3, "scalefactor index of 63")]
@@ -48,6 +48,18 @@ public class MpegMultichannelValueTests
     public void EncoderOutputHoldsNoForbiddenValue(string name)
     {
         Report report = Fixtures.AnalyzeMpeg(name);
+
+        Assert.DoesNotContain(report.Findings, f => f.Code == Code);
+    }
+
+    // The first frame's lfe_allocation 15 reads 16-bit LFE samples and is no finding.
+    [Fact]
+    public void AnLfeAllocationOf15IsValid()
+    {
+        byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "mpeg-audio/layer2/mc-forbidden-values.mp2"));
+        const int length = 1152;
+        byte[] kept = [.. data[..length], .. data[(4 * length)..]];
+        Report report = Analyzer.CreateDefault().Analyze("one.mp2", new MemoryStream(kept));
 
         Assert.DoesNotContain(report.Findings, f => f.Code == Code);
     }

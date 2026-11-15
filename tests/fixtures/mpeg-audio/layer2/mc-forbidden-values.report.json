@@ -17118,14 +17118,14 @@
       {
         "severity": "Warning",
         "code": "mpeg-audio.multichannel-value-forbidden",
-        "message": "4 frames have a value in their multichannel side information that ISO/IEC 13818-3 forbids or leaves unassigned, which decoders read in their own way (the first: lfe_allocation 15, at 0x0).",
-        "offset": 0,
+        "message": "3 frames have a value in their multichannel side information that ISO/IEC 13818-3 forbids or leaves unassigned, which decoders read in their own way (the first: tc_allocation 1 with dematrix_procedure 3, which implies 0, at 0x480).",
+        "offset": 1152,
         "length": 1152,
         "path": [
           0,
-          1
+          2
         ],
-        "count": 4
+        "count": 3
       }
     ]
   }

@@ -788,8 +788,9 @@ def mc_32_lfe():
 def mc_forbidden_values():
     f = Layer2Fixture(
         "mc-forbidden-values",
-        "MPEG-1 Layer II at 48000 Hz and 384 kbps carrying 3/2 + LFE whose frames hold values that ISO/IEC 13818-3 forbids: lfe_allocation 15, "
-        "a nonzero tc_allocation with dematrix_procedure 3, dyn_cross_mode 15, and the LFE scalefactor index 63; the fifth and sixth frames are clean. "
+        "MPEG-1 Layer II at 48000 Hz and 384 kbps carrying 3/2 + LFE whose frames hold values that ISO/IEC 13818-3 forbids: "
+        "a nonzero tc_allocation with dematrix_procedure 3, dyn_cross_mode 15, and the LFE scalefactor index 63; the first frame's lfe_allocation 15 "
+        "(16-bit LFE samples) is valid, and the fifth and sixth frames are clean. "
         "The multichannel CRCs hold.",
         # No mctoolamed check: it reads dyn_cross_mode 15 and a tc_allocation under dematrix_procedure 3 differently (the PCM cross-check's
         # EXPLAINED entry), reports one multichannel CRC error where the analyzer finds none, and does not decode the file to silence.
@@ -797,7 +798,7 @@ def mc_forbidden_values():
     )
     specs = [dict(lfe_alloc=15), dict(dematrix=3, tc_alloc=(1,)), dict(dynamic=Dynamic(modes=[15] + [0] * 11)), dict(lfe_alloc=2, lfe_scalefactor=63), dict(lfe_alloc=2), dict(lfe_alloc=3)]
     f.add_frames(mc_stream(6, 384, 48000, lambda i: Multichannel(center=1, surround=2, lfe=1, seed=i, **specs[i])))
-    return f.finding("mpeg-audio.multichannel-value-forbidden", "4 frames")
+    return f.finding("mpeg-audio.multichannel-value-forbidden", "3 frames")
 
 
 @fixture

@@ -155,8 +155,8 @@ internal sealed class Layer2Multichannel
 
     // The first value of the multichannel side information that ISO/IEC 13818-3 2.5.2.15 forbids or leaves unassigned, as a field and its value, or null: a
     // dyn_cross_mode outside the configuration's modes, a tc_allocation the tables leave unassigned (or that dematrix_procedure 3 rules out, or that moves the phantom
-    // center out of T2), and lfe_allocation 15 (2.5.3.2.4, as in Layer I). The decoder reads such values as the
-    // docs/formats/mpeg-audio.md says; it never rejects the frame for them.
+    // center out of T2). lfe_allocation 15 is not among them: 2.5.2.x gives it 16 bits a sample and 65,535 levels, and conformance streams test01 and test17
+    // of ISO/IEC 13818-4 use it. The decoder reads such values as the docs/formats/mpeg-audio.md says; it never rejects the frame for them.
     public string? ForbiddenValue { get; private set; }
 
     // Whether ReadData read a scalefactor index of 63 (Table B.1 of ISO/IEC 11172-3 leaves it undefined), in the additional channels or the LFE channel.
@@ -453,7 +453,7 @@ internal sealed class Layer2Multichannel
             }
         }
 
-        return HasLfe && LfeAllocation == 15 ? "lfe_allocation 15" : null;
+        return null;
     }
 
     private void ReadAllocation(byte[] data, int start, int statusStart, int headerEnd, int table, int channels, int[] dynMode,
