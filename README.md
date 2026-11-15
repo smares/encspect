@@ -46,10 +46,10 @@ The waveform of the same file, one lane per channel.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/readme-coding-summary-dark.png">
-  <img src="docs/images/readme-coding-summary-light.png" alt="The Coding Summary of an MP3 file with bars for channel modes, joint stereo modes, block sizes and block usage" width="800">
+  <img src="docs/images/readme-coding-summary-light.png" alt="The Coding Summary of an MP3 file with bars for channel modes, joint stereo modes, stereo coding, block sizes and block usage" width="800">
 </picture>
 
-The Coding Summary: the count and share of channel modes, stereo coding, block types and block sizes.
+The Coding Summary: the count and share of channel modes, joint stereo modes, stereo coding, block sizes and block usage.
 
 ## Status
 
@@ -57,7 +57,7 @@ Version 0.2.0, a pre-release in development. Download builds for Windows, macOS 
 
 Formats read so far ([details](docs/formats/README.md)):
 
-- MPEG audio: MP1, MP2 and MP3, with VBR headers, mp3PRO, MP3 Surround and MPEG-2 multichannel; decoded for `--measure` (Layers I to III; the base stereo of multichannel streams)
+- MPEG audio: MP1, MP2 and MP3, with VBR headers, mp3PRO, MP3 Surround and MPEG-2 multichannel; decoded for `--measure` (Layers I to III, and the MPEG-2 multichannel extension where it rides in the base frames)
 - MP4, M4A, M4B, 3GP and QuickTime files
 - AAC in MP4, ADTS and ADIF, including HE-AAC, HE-AAC v2 and xHE-AAC
 - Ogg, with Speex, Vorbis and Opus; Vorbis and Opus are decoded for `--measure`

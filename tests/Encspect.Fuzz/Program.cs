@@ -9,7 +9,7 @@ namespace Encspect.Fuzz;
 // Mutates the fixtures for a fixed time and analyzes every mutant, so each CI run tries inputs the
 // deterministic corrupt-file tests do not. An exception, a hang, a parser exception that the host
 // caught (parse.failed, or children that could not be built) or a report whose nodes leave the
-// file fails the run; the input is saved, and the seed and iteration reproduce it.
+// file fails the run; the input is saved, and --input replays it (the seed and iteration do while the fixtures are unchanged).
 internal static class Program
 {
     private const int MaxCorpusFileSize = 256 * 1024;
@@ -85,8 +85,9 @@ internal static class Program
             return result is null ? 0 : 1;
         }
 
+        // Every fixture but the manifests and reports (.json), so a format added later is fuzzed without a list to extend.
         byte[][] corpus = Directory.EnumerateFiles(fixtures, "*", SearchOption.AllDirectories)
-            .Where(f => Path.GetExtension(f) is ".mp3" or ".mp2" or ".mp1" or ".bin" or ".m4a" or ".mp4" or ".mov" or ".aac" or ".ogg" or ".spx" or ".opus" or ".mpc" or ".ac3" or ".eac3" or ".wma" or ".asf" or ".wv" or ".wvc" or ".flac" or ".tta" or ".thd" or ".mlp" or ".dts" or ".dtshd" or ".mka" or ".mkv" or ".webm" or ".wav" or ".w64" or ".aiff" or ".aifc" or ".ape" && new FileInfo(f).Length <= MaxCorpusFileSize)
+            .Where(f => !Path.GetExtension(f).Equals(".json", StringComparison.OrdinalIgnoreCase) && new FileInfo(f).Length <= MaxCorpusFileSize)
             .Order(StringComparer.Ordinal)
             .Select(File.ReadAllBytes)
             .ToArray();
@@ -112,7 +113,7 @@ internal static class Program
                 string path = Path.Combine(output, $"seed{seed}-iteration{iteration}.bin");
                 File.WriteAllBytes(path, input);
                 Console.Error.WriteLine($"Iteration {iteration}: {failure}");
-                Console.Error.WriteLine($"Input saved to {path}; replay with --seed {seed} --iteration {iteration}.");
+                Console.Error.WriteLine($"Input saved to {path}; replay with --input {path}, or with --seed {seed} --iteration {iteration} while the fixtures are as they are.");
                 return 1;
             }
         }
