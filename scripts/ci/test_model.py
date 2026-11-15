@@ -4,6 +4,7 @@ import sys
 sys.dont_write_bytecode = True
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "fixtures"))
 from matroska_encodings_model import expected
+import measurement_model
 
 def enc(order=0, scope=1, type=0, comp=None, crypt=None):
     return {"order": order, "scope": scope, "type": type, "compression": comp, "encryption": crypt}
@@ -234,6 +235,13 @@ def aes_settings_without_cipher_mode():  # AESSettings present, mode element abs
 @case
 def aes_cipher_mode_zero():  # Table 56: 0 not valid, named by number
     assert tr([enc(type=1, crypt=aes(0))])["scheme"] == S+", AES, mode 0"
+
+@case
+def slope_run_stops_at_the_first_candidate():  # spectral-analysis.md 7b: the run goes down to the first candidate row, not one below it
+    rate, size = 44100, 4096
+    w, first, bins = measurement_model.band_rows(rate, size)
+    slope = measurement_model.find_slope([-100 - 5 * r for r in range(512)], rate, size)  # falls 0.5 dB a row from row 0 to the top
+    assert slope["is_found"] and slope["from_frequency"] == measurement_model.hertz(first + 1, rate, size, bins) == 2024
 
 if __name__ == "__main__":
     for f in CASES:

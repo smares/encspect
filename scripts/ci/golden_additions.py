@@ -44,7 +44,9 @@ compared the same way, with two kinds of entry: {"scope": "measurement", "path":
 at the path under "measurements" (a step that names an array goes into each of its elements, so "perChannel" reaches every channel), and
 {"scope": "measurement", "path": ["levels", "digitalSilence"], "fields": ["atStart", "atEnd"], "to": 0, "goldens": [...]} under "changed" lets those fields
 differ from the old golden, but only to the value "to" (an unchanged field is fine), and with "below": "minimumLength" only where the old value was under the golden's
-levels.digitalSilence.minimumLength; the rest must equal the old golden.
+levels.digitalSilence.minimumLength; the rest must equal the old golden. A key renamed in an object of a measurement golden is listed under "renamedKeys":
+{"path": ["spectrum", "slope"], "from": "from", "to": "fromFrequency"} (the path as for added: a step that names an array goes into each element); the new
+golden has the key under the new name and the old golden under the old one, with the same value.
 
 Paths and names are those of the new report, except "from" of renamed and moved, which are the old names. A rename counts only
 where the old report has a node of the old name under the parent; where it has none, the node of the new name is an addition and the
@@ -458,6 +460,13 @@ def check_measurement_golden(old, new, change):
     except ChangeError as error:
         return [str(error)]
     expected = copy.deepcopy(new)
+    for entry in change.get("renamedKeys", []):
+        for field in ("path", "from", "to"):
+            if field not in entry:
+                return [f"renamedKeys: an entry needs {field}: {json.dumps(entry)}"]
+        for target in measurement_targets(expected.get("measurements"), entry["path"]):
+            if entry["to"] in target and entry["from"] not in target:
+                target[entry["from"]] = target.pop(entry["to"])
     for entry in change.get("added", []):
         if entry.get("scope") == "measurement":
             for target in measurement_targets(expected.get("measurements"), entry["path"]):
@@ -487,7 +496,7 @@ def scoped(change, path):
     """The change as it applies to one golden: an entry of added, renamed, moved or changed that names "goldens" (files or folders, as the change
     file does) applies only to those, so a value that changes in one file is not allowed to change in the others."""
     out = dict(change)
-    for key in ("added", "renamed", "renamedSeries", "moved", "changed", "removed", "bitrate"):
+    for key in ("added", "renamed", "renamedKeys", "renamedSeries", "moved", "changed", "removed", "bitrate"):
         if key in change:
             out[key] = [e for e in change[key] if "goldens" not in e or covers(e, path)]
     return out

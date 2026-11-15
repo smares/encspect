@@ -443,6 +443,29 @@ class RepositoryTests(unittest.TestCase):
         self.commit()
         self.assertEqual(golden_additions.run(self.dir, "main", "HEAD", ["tests/fixtures/measurement/golden-changes.json"]), 1)
 
+    def test_a_measurement_golden_may_rename_a_key_the_change_file_lists(self):
+        def golden(start, key, extra=0):
+            return {"measurements": {"status": "complete", "spectrum": {"slope": {key: start}, "channelSlopes": [{key: start + extra}]}}, "findings": []}
+        self.write("tests/fixtures/measurement/m.measure.json", golden(7, "from"))
+        self.git("add", "-A")
+        self.git("commit", "-qm", "measurement base")
+        self.git("checkout", "-q", "main")
+        self.git("merge", "-q", "--ff-only", "pr")
+        self.git("checkout", "-qb", "pr5")
+        change = {"goldens": ["tests/fixtures/measurement/"],
+                  "renamedKeys": [{"path": ["spectrum", "slope"], "from": "from", "to": "fromFrequency"},
+                                  {"path": ["spectrum", "channelSlopes"], "from": "from", "to": "fromFrequency"}]}
+        self.write("tests/fixtures/measurement/golden-changes.json", change)
+        self.write("tests/fixtures/measurement/m.measure.json", golden(7, "fromFrequency"))
+        self.commit()
+        self.git("branch", "-f", "pr", "HEAD")
+        self.assertEqual(golden_additions.run(self.dir, "main", "HEAD", ["tests/fixtures/measurement/golden-changes.json"]), 0)
+
+        # A renamed key whose value also changed is not covered.
+        self.write("tests/fixtures/measurement/m.measure.json", golden(8, "fromFrequency"))
+        self.commit()
+        self.assertEqual(golden_additions.run(self.dir, "main", "HEAD", ["tests/fixtures/measurement/golden-changes.json"]), 1)
+
     def test_a_stretch_may_vanish_only_where_it_was_under_the_minimum(self):
         def silence(start):
             return {"digitalSilence": {"minimumLength": 441, "atStart": start}}

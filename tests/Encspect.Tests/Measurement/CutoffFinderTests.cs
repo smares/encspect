@@ -240,6 +240,19 @@ public class CutoffFinderTests
         Assert.Equal(expected.TopStepTenthsOfDb, actual.TopStepTenthsOfDb);
     }
 
+    // A fall of 0.5 dB a row stands over the 3 dB test at every row, so the run goes down to the first candidate row (2 kHz) and stops there.
+    [Fact]
+    public void ARunThatReachesTheFirstCandidateStopsAtIt()
+    {
+        short[] rows = Rows(r => -100 - (5 * r));
+        SpectralSlope found = CutoffFinder.FindSlope(rows, Geometry);
+
+        Assert.True(found.IsFound);
+        Assert.Equal(Geometry.Hertz(Geometry.FirstCandidate + 1), found.FromFrequency);
+        Assert.Equal(2024, found.FromFrequency);
+        AssertSlope(ReferenceSlope(rows, Geometry), found);
+    }
+
     [Fact]
     public void AFlatTopHasNoSlopeAndATopStepOfZero()
     {
