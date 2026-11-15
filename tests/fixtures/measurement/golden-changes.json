@@ -6,28 +6,21 @@
     "tests/fixtures/matroska/",
     "tests/fixtures/ac3/"
   ],
-  "reason": "Step 7, first change (docs/design/spectral-analysis.md, \"As built: step 7, first change\"): spectrum gains bandwidth (the spectral bandwidth), channelBandwidths (one for each channel measured) and partialCutoff; no existing figure changes. The same keys are added to the ALAC, TTA, Matroska and AC-3 measurement goldens, which this one file covers (the change files of earlier pull requests in those folders stay as they were).",
+  "reason": "Step 7, second change (docs/design/spectral-analysis.md, \"As built: step 7, second change\"): spectrum gains holes (the spectral holes of the combined spectrum) and midSide (the mid and side spectra of the pair of channels, null without a pair); no existing figure changes. The same keys are added to the ALAC, TTA, Matroska and AC-3 measurement goldens, which this one file covers (the change files of earlier pull requests in those folders stay as they were).",
   "added": [
     {
       "scope": "measurement",
       "path": [
         "spectrum"
       ],
-      "key": "bandwidth"
+      "key": "holes"
     },
     {
       "scope": "measurement",
       "path": [
         "spectrum"
       ],
-      "key": "channelBandwidths"
-    },
-    {
-      "scope": "measurement",
-      "path": [
-        "spectrum"
-      ],
-      "key": "partialCutoff"
+      "key": "midSide"
     }
   ]
 }

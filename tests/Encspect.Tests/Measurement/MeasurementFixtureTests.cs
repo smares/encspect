@@ -721,7 +721,9 @@ public class MeasurementFixtureTests
         SpectralCutoff cutoff = m.Spectrum!.Cutoff;
         int rowHertz = (int)Math.Ceiling((double)m.SampleRate * (m.Spectrum.FftSize / 1024) / m.Spectrum.FftSize);
 
-        Assert.Equal(manifest.GetProperty("expect_cutoff").GetString() == "found", cutoff.IsFound);
+        // "any" is the stereo files', whose cutoffs are found as well (the checks of MeasurementMidSideFixtureTests); the others say found or none.
+        string expect = manifest.GetProperty("expect_cutoff").GetString()!;
+        Assert.Equal(expect != "none", cutoff.IsFound);
         if (cutoff.IsFound)
         {
             Assert.True(cutoff.StepTenthsOfDb >= 330, $"{name}: a step of {cutoff.StepTenthsOfDb} tenths");

@@ -375,11 +375,11 @@ public class MeasurementMidSideTests
         Assert.NotNull(m.Spectrum!.MidSide);
         Assert.True(allocated < estimate, $"allocated {allocated:N0}, estimated {estimate:N0}");
 
-        // The pair adds the stored bins (16 N bytes), the mid and side rows and the counters of three spectra: about 1.2 MB (the design's estimate).
+        // The pair adds the stored bins (16 N bytes), the mid and side rows and the counters of three spectra: about 1 MB (the design's estimate: 1.2 MB with the combined spectrum's holes).
         var unpaired = new PcmFormat(Rate, 2, 16, SampleFormat.Integer) { ChannelLayout = [Speaker.Discrete, Speaker.Discrete] };
         var spectrumOnly = new MeasureOptions { Include = MeasurementKinds.Spectrum };
         long added = StreamMeasurer.EstimateBytes(format, spectrumOnly) - StreamMeasurer.EstimateBytes(unpaired, spectrumOnly);
-        Assert.InRange(added, 1_000_000, 1_500_000);
+        Assert.InRange(added, 900_000, 1_500_000);
     }
 
     // The text, the JSON and the CSV carry the figures.

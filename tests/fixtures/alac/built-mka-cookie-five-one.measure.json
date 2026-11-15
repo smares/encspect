@@ -151,6 +151,105 @@
         },
         "framesShowing": 2,
         "framesWithSignal": 3
+      },
+      "holes": {
+        "holeCells": 8,
+        "cellsWithSignal": 520,
+        "share": {
+          "value": 1.5,
+          "unit": "%"
+        },
+        "fromFrequency": {
+          "value": 1969,
+          "unit": "Hz"
+        },
+        "toFrequency": {
+          "value": 23719,
+          "unit": "Hz"
+        },
+        "rowShares": {
+          "unit": "%",
+          "valuesPerUnit": 10,
+          "values": "sha256:a5224a9f569521bb85df0ca21d7a002800adefbe258de9345a0dcbf58855c838"
+        }
+      },
+      "midSide": {
+        "leftChannel": 1,
+        "rightChannel": 2,
+        "rows": {
+          "unit": "dB",
+          "valuesPerUnit": 10,
+          "mid": "sha256:5000b24cf0b39e1a320c831dfd0165de4d637661b6d2f98caecc312fa8aea2ec",
+          "side": "sha256:e321c963159e057d9d03750df4a340f4b389ed983310e9a35f779294588c115d"
+        },
+        "midCutoff": {
+          "isFound": false,
+          "stepFrequency": {
+            "value": 23719,
+            "unit": "Hz"
+          },
+          "step": {
+            "value": 7.3,
+            "unit": "dB"
+          },
+          "framesShowing": 0,
+          "framesWithSignal": 1
+        },
+        "sideCutoff": {
+          "isFound": false,
+          "stepFrequency": {
+            "value": 2203,
+            "unit": "Hz"
+          },
+          "step": {
+            "value": 8.6,
+            "unit": "dB"
+          },
+          "framesShowing": 3,
+          "framesWithSignal": 3
+        },
+        "midHoles": {
+          "holeCells": 0,
+          "cellsWithSignal": 494,
+          "share": {
+            "value": 0,
+            "unit": "%"
+          },
+          "fromFrequency": {
+            "value": 1969,
+            "unit": "Hz"
+          },
+          "toFrequency": {
+            "value": 23719,
+            "unit": "Hz"
+          },
+          "rowShares": {
+            "unit": "%",
+            "valuesPerUnit": 10,
+            "values": "sha256:871ebb7e2274799fb3046840b4f500ad0a67a9393498784d0c993f5240dcc3cb"
+          }
+        },
+        "sideHoles": {
+          "holeCells": 0,
+          "cellsWithSignal": 495,
+          "share": {
+            "value": 0,
+            "unit": "%"
+          },
+          "fromFrequency": {
+            "value": 1969,
+            "unit": "Hz"
+          },
+          "toFrequency": {
+            "value": 23719,
+            "unit": "Hz"
+          },
+          "rowShares": {
+            "unit": "%",
+            "valuesPerUnit": 10,
+            "values": "sha256:871ebb7e2274799fb3046840b4f500ad0a67a9393498784d0c993f5240dcc3cb"
+          }
+        }
       }
     },
     "levels": {
