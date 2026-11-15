@@ -18,6 +18,10 @@ internal sealed class FrameDecoder : IFrameDecoder
     internal const int Layer3WithheldAfterGap = 576 + 480;
     internal const int Layer12WithheldAfterGap = 480;
 
+    // A multichannel stream's prediction (13818-3 2.5.3.2.1.3) reads subband samples up to 9 slots before the first frame's start (delay compensation 7 and prediction offset 2),
+    // which a reset clears; a subband slot reaches the output for 16 slots of the synthesis window, so 9 slots of 32 samples are withheld beyond the Layer II span (768 in all).
+    internal const int MultichannelWithheldAfterGap = Layer12WithheldAfterGap + 9 * 32;
+
     private enum State
     {
         // Nothing has been decoded: the state is the start of a stream's, and nothing is withheld.
@@ -112,7 +116,7 @@ internal sealed class FrameDecoder : IFrameDecoder
 
         if (_state == State.Lost)
         {
-            _withheldLeft = isLayer3 ? Layer3WithheldAfterGap : Layer12WithheldAfterGap;
+            _withheldLeft = isLayer3 ? Layer3WithheldAfterGap : _plan is null ? Layer12WithheldAfterGap : MultichannelWithheldAfterGap;
             _state = State.Valid;
         }
         else
@@ -146,6 +150,7 @@ internal sealed class FrameDecoder : IFrameDecoder
         _withheldLeft = 0;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void DecodeLayer3(MpegHeader header, ReadOnlySpan<byte> bytes, SampleBuffers lent, int channels)
     {
         int count = Layer3Syntax.ReadSideInfo(bytes, header, _granules, out int granuleChannels, out _);
@@ -210,6 +215,7 @@ internal sealed class FrameDecoder : IFrameDecoder
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void DecodeLayer12(MpegHeader header, ReadOnlySpan<byte> bytes, SampleBuffers lent, int channels)
     {
         if (!_layer12.Read(header, bytes))

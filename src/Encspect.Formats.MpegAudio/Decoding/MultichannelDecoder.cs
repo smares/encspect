@@ -14,7 +14,9 @@ internal sealed class MultichannelDecoder
     // The last subband samples of T0 and T1 a predictor can reach: 7 samples of delay compensation and two of tap.
     private const int PredictionHistory = 9;
 
-    // The standard gives the LFE channel no output scale; the reference output of test01 of ISO/IEC 13818-4 is twice the requantized and scaled samples.
+    // The decoder's subband samples are half of the requantized values of ISO/IEC 11172-3 (and its synthesis window carries the 2 back), and the LFE skips the filter bank,
+    // so its samples take the 2, which is the standard's own requantized scale (13818-3 2.5.3.2.4 points to the Layer I requantization); the reference output of test01 of
+    // ISO/IEC 13818-4 confirms it.
     private const float LfeGain = 2f;
 
     private readonly MultichannelPlan _plan;
@@ -136,7 +138,15 @@ internal sealed class MultichannelDecoder
                     continue;
                 }
 
-                int quantizer = Layer2Multichannel.Quantizer(Layer2AudioData.Levels(mc.Table, sb)[index]);
+                // The copied codes keep the quantizer they were coded with: the base channel's own (its table follows the base frame's bitrate, 2.4.3.3.1), or the multichannel table's.
+                int quantizer = source < 2
+                    ? (sb < _base.TotalBands ? _base.ScalefactorAllocation[(2 * sb) + source] : 0)
+                    : Layer2Multichannel.Quantizer(Layer2AudioData.Levels(mc.Table, sb)[mc.AllocationIndex(source, sb)]);
+                if (quantizer == 0)
+                {
+                    continue;
+                }
+
                 for (int part = 0; part < 3; part++)
                 {
                     int factor = mc.Scalefactor[ch, sb, part];

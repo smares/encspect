@@ -17058,6 +17058,19 @@
         ]
       }
     ],
-    "findings": []
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "mpeg-audio.multichannel-value-forbidden",
+        "message": "1 frame has a value in its multichannel side information that ISO/IEC 13818-3 forbids or leaves unassigned, which decoders read in their own way (the first: tc_allocation 3, which 13818-3 2.5.2.15 leaves unassigned in 3/0 + 2/0, at 0xD80).",
+        "offset": 3456,
+        "length": 1152,
+        "path": [
+          0,
+          4
+        ],
+        "count": 1
+      }
+    ]
   }
 ]

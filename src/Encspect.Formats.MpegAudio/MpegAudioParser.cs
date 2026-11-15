@@ -440,6 +440,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
                 DataLength = layer2.Audio.Length,
                 MultichannelLength = layer2.Multichannel?.Length ?? 0,
                 IsMultichannelCandidate = layer2.Multichannel is not null,
+                HasMultichannelUndefinedScalefactor = layer2.HasMultichannelUndefinedScalefactor,
             };
             if (isComplete)
             {
@@ -887,7 +888,14 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
 
         int first = audio.End / 8;
         int last = Math.Min(bytes.Length, (Math.Max(mc.SideInfoEnd, mc.CrcBit + 16) + 7) / 8);
-        return new Layer2Record(audioBytes, bytes[first..last], undefined);
+        bool isUndefined = false;
+        if (mc.IsCrcValid)
+        {
+            mc.ReadData(bytes);
+            isUndefined = mc.HasUndefinedScalefactor;
+        }
+
+        return new Layer2Record(audioBytes, bytes[first..last], undefined, isUndefined);
 
         void ReportOverflow() =>
             findings.Add(Severity.Warning, "mpeg-audio.audio-data-overflow", new Node("Frame", position, available), count =>
@@ -967,6 +975,15 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             Entry frame = frames[i];
             Layer2Multichannel mc = ReadMultichannel(state.Build, frame, new MpegHeader(frame.Header)).Mc;
             Node node = FindingNode(frame);
+            if (mc.IsCrcValid)
+            {
+                if ((mc.ForbiddenValue ?? (frame.HasMultichannelUndefinedScalefactor ? "a scalefactor index of 63" : null)) is { } forbidden)
+                {
+                    state.Findings.Add(Severity.Warning, "mpeg-audio.multichannel-value-forbidden", node, count =>
+                        $"{Frames(count, "has", "have")} a value in {(count == 1 ? "its" : "their")} multichannel side information that ISO/IEC 13818-3 forbids or leaves unassigned, which decoders read in their own way (the first: {forbidden}, at 0x{frame.Offset:X}).");
+                }
+            }
+
             if (mc.Center == 2)
             {
                 state.Findings.Add(Severity.Warning, "mpeg-audio.multichannel-center-reserved", node, count =>
@@ -1459,6 +1476,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         private const byte HasComputedCrcFlag = 2;
         private const byte TruncatedFlag = 4;
         private const byte CandidateFlag = 8;
+        private const byte UndefinedScalefactorFlag = 16;
 
         private readonly ushort _crc;
         private readonly ushort _computedCrc;
@@ -1517,6 +1535,13 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         {
             get => (_flags & CandidateFlag) != 0;
             init => _flags = value ? (byte)(_flags | CandidateFlag) : _flags;
+        }
+
+        // Whether the frame's multichannel data hold a scalefactor index of 63.
+        public bool HasMultichannelUndefinedScalefactor
+        {
+            get => (_flags & UndefinedScalefactorFlag) != 0;
+            init => _flags = value ? (byte)(_flags | UndefinedScalefactorFlag) : _flags;
         }
 
         public int DataLength { get => _dataLength; init => _dataLength = (ushort)value; }
@@ -1685,7 +1710,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
     // A Layer II frame's bytes up to its samples, the bytes of a multichannel candidate, from the
     // byte its first bit is in, and the first scalefactor with index 63, which Table B.1 leaves
     // undefined, if any.
-    private sealed record Layer2Record(byte[] Audio, byte[]? Multichannel, Node? UndefinedScalefactor);
+    private sealed record Layer2Record(byte[] Audio, byte[]? Multichannel, Node? UndefinedScalefactor, bool HasMultichannelUndefinedScalefactor = false);
 
     // Findings of one kind are reported once per stream with a count, pointing at the first case.
     private sealed class FindingCollector

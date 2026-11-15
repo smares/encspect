@@ -184,7 +184,7 @@ class Multichannel:
 
     def __init__(self, center=1, surround=2, lfe=0, audio_mix=0, dematrix=0, ml=0, ml_fs=0, ml_layer=0,
                  copyright_bit=0, copyright_start=0, n_ad_bytes=None, tc_alloc=(0,), prediction=None,
-                 lfe_alloc=0, seed=1, bad_crc=False, continues=False, declared_ad_bytes=None, empty=False, dynamic=None):
+                 lfe_alloc=0, seed=1, bad_crc=False, continues=False, declared_ad_bytes=None, empty=False, dynamic=None, lfe_scalefactor=30):
         self.center, self.surround, self.lfe, self.audio_mix, self.dematrix = center, surround, lfe, audio_mix, dematrix
         self.ml, self.ml_fs, self.ml_layer = ml, ml_fs, ml_layer
         self.copyright_bit, self.copyright_start = copyright_bit, copyright_start
@@ -192,6 +192,7 @@ class Multichannel:
         self.tc_alloc = tc_alloc  # one value for all subband groups, or twelve
         self.prediction = prediction  # eight entries: None or a list of predsi values
         self.lfe_alloc, self.seed, self.bad_crc = lfe_alloc if lfe else 0, seed, bad_crc
+        self.lfe_scalefactor = lfe_scalefactor
         # The side information continues in the extension bitstream: the frame keeps only the bits
         # that fit before its n_ad_bytes of MPEG-1 ancillary data.
         self.continues = continues
@@ -343,7 +344,7 @@ class Multichannel:
                         for _ in range(predsi):
                             bits.put(127, 8)  # coefficient index 127 is 0.0
         if self.lfe_alloc:
-            bits.put(30, 6)
+            bits.put(self.lfe_scalefactor, 6)
         for sb in range(len(table)):
             for ch in range(2, 2 + self.channels):
                 if alloc.get((ch, sb)):
@@ -784,6 +785,23 @@ def mc_32_lfe():
 
 
 @fixture
+def mc_forbidden_values():
+    f = Layer2Fixture(
+        "mc-forbidden-values",
+        "MPEG-1 Layer II at 48000 Hz and 384 kbps carrying 3/2 + LFE whose frames hold values that ISO/IEC 13818-3 forbids: "
+        "a nonzero tc_allocation with dematrix_procedure 3, dyn_cross_mode 15, and the LFE scalefactor index 63; the first frame's lfe_allocation 15 "
+        "(16-bit LFE samples) is valid, and the fifth and sixth frames are clean. "
+        "The multichannel CRCs hold.",
+        # No mctoolamed check: it reads dyn_cross_mode 15 and a tc_allocation under dematrix_procedure 3 differently (the PCM cross-check's
+        # EXPLAINED entry), reports one multichannel CRC error where the analyzer finds none, and does not decode the file to silence.
+        guessenc=guessenc(False, True, 3, 0, "3/2"),
+    )
+    specs = [dict(lfe_alloc=15), dict(dematrix=3, tc_alloc=(1,)), dict(dynamic=Dynamic(modes=[15] + [0] * 11)), dict(lfe_alloc=2, lfe_scalefactor=63), dict(lfe_alloc=2), dict(lfe_alloc=3)]
+    f.add_frames(mc_stream(6, 384, 48000, lambda i: Multichannel(center=1, surround=2, lfe=1, seed=i, **specs[i])))
+    return f.finding("mpeg-audio.multichannel-value-forbidden", "3 frames")
+
+
+@fixture
 def mc_21():
     f = Layer2Fixture(
         "mc-2-1",
@@ -1094,6 +1112,15 @@ def not_multichannel():
     return f.add_frames(stream(6, 384, 48000, mode="Stereo", ancillary=text(700)))
 
 
+# Fixtures whose multichannel side information holds values that ISO/IEC 13818-3 2.5.2.15 forbids or leaves unassigned (dyn_cross_mode 5 to 7 in 3/1 and 2/2,
+# tc_allocation 3 in 2/1 and 3/0 + 2/0, a phantom center allocation that leaves T2), with the frames that hold them.
+FORBIDDEN_VALUE = {
+    "mc-2-1": "6 frames", "mc-second-stereo": "1 frame", "mc-phantom-center": "2 frames", "mc-second-stereo-crosstalk": "6 frames",
+    "mc-3-1-crosstalk-decided": "6 frames", "mc-3-1-crosstalk-side": "6 frames", "mc-3-1-crosstalk-flag": "6 frames", "mc-3-1-crosstalk-flag-right": "6 frames",
+    "mc-2-2-crosstalk-side": "6 frames", "mc-2-2-crosstalk-flag": "6 frames",
+}
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     for path in OUT.glob("*"):
@@ -1106,6 +1133,8 @@ def main():
         f = build()
         assert f.name not in names, f.name
         names.add(f.name)
+        if f.name in FORBIDDEN_VALUE:
+            f.finding("mpeg-audio.multichannel-value-forbidden", FORBIDDEN_VALUE[f.name])
         f.write()
     print(f"Wrote {len(names)} fixtures to {OUT}", file=sys.stderr)
 

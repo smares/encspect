@@ -393,6 +393,7 @@ The lead's rule of 2026-11-01: a unit the decoder cannot decode is a gap, never 
 | --- | --- | --- |
 | MPEG Layer III | the hybrid transform's overlap (one granule) and the synthesis history (480 samples) | 576 + 480 = 1,056: the first granule, then 480 samples of the next |
 | MPEG Layers I and II | the synthesis history | 480 |
+| MPEG-2 multichannel Layer II | the synthesis history and the prediction's subband samples (up to 9 slots back) | 480 + 9 x 32 = 768 |
 | AAC LC | overlap (one frame) | 1,024 |
 | AAC LTP | overlap and LTP's history of two frames | 3,072 **estimate** |
 | AAC Main | backward-adaptive prediction over every earlier frame | until a frame whose predictor resets have reached every group, as the specification's resets intend |
@@ -503,7 +504,7 @@ The unit of [decoders.md](decoders.md) applies unchanged: one predictor or filte
 
 | Decoder | Cheapest legitimate frames | Units per byte they need | Declared |
 | --- | --- | --- | --- |
-| MPEG audio | constant-bitrate frames: 8 kbps MPEG-2.5 at 8 kHz; a silent frame costs as much as any other at that rate | about 600 | 2,048 |
+| MPEG audio | constant-bitrate frames at the lowest bitrate and the highest sample rate of a version, since bytes per sample fall with bitrate over rate: MPEG-2 Layer III at 8 kbps and 24 kHz (24-byte frames of 576 samples; (22 + 41) × 576 × 2 / 24 = 3,024 units a byte in stereo, 1,512 in mono), MPEG-2 Layer II at 8 kbps and 24 kHz in stereo (48-byte frames, 2,448), and a 5.1 Layer II stream at 64 kbps and 48 kHz (192-byte frames of a silent extension: (22 + 29 + 8) × 1,152 × 6 / 192 = 2,124); a silent frame costs as much as any other at that rate | about 3,000 | 4,096 |
 | AAC (one decoder for LC and HE-AAC) | silence: 6 bytes per 1,024 stereo samples (an AAC LC file of 60 s of stereo silence in `scratchpad/lossy/sil`, 2,574 of its 2,585 frames; its encoder is not recorded), transforms skipped; HE-AAC v2 at 16 kbps with 48 kHz output | about 8,200 for silence (2,048 × 24 / 6), 4,800 for HE-AAC v2 | 8,192 |
 | Vorbis | coded audio at about 32 kbps, 44.1 kHz stereo; silence: oggenc 1.4.2 at `-q 3` writes 60 s of stereo silence as 2,586 packets of 1 byte, one per long block returning 1,024 samples (the review's measurement, confirmed on its file) | about 1,300 for coded audio; about 49,000 for silence (1,024 × 2 × 24) | 2,048 |
 | Opus | 6 kbps at 48 kHz output, about 2,800 mono and 4,200 stereo at 8 kbps; silence: opusenc's defaults write 60 s of stereo silence as 3,001 packets of 3 bytes (the review's measurement, confirmed) | about 19,200 for silence (960 × 2 × 30 / 3) | 8,192 (decision 18) |
@@ -515,7 +516,7 @@ The unit of [decoders.md](decoders.md) applies unchanged: one predictor or filte
   - Longer silence in a small file stops with `decode.limit`, as [decoders.md](decoders.md) says of digital silence in any coding.
   - A crafted file of 100 MB stops after about 2 minutes at 2,048 units a byte and about 8 minutes at 8,192, as Monkey's Audio's does; Opus at 16,384 would double that (decision 18).
 - **The floor alone** covers anything under 16 MiB at 2,048 units a byte and under 4 MiB at 8,192. Opus frames of 0 bytes are not decoded (decision 5), so DTX costs nothing.
-- **Free-format MPEG** frames can be smaller than any listed bitrate; the MPEG pull request checks the free-format fixtures against the 2,048.
+- **Free-format MPEG** frames can be smaller than any listed bitrate; the MPEG pull request checks the free-format fixtures against the declared allowance (4,096 for MPEG audio).
 
 ### Memory per stream
 
@@ -761,7 +762,7 @@ What the pull request did differently from the design above, or added to it:
 - **Feeding:** `DecodeDeferred` (`MpegAudioParser.Decoding.cs`) feeds every stream of MPEG-1 Layer II, mono and plain stereo ones too, after `DecideMultichannel`, from the frame records and the file. Their `.decode.json` goldens are unchanged but for the multichannel fixtures'.
 - **The plan** (`MultichannelPlan`, passed as `DecodeSetup.Shared`) exists where `DecideMultichannel` accepted the file, the stream's configuration does not change and no accepted frame sets `ext_bit_stream_present`.
 - **De-normalization applies to the base channels of a 2/0 stream too** (with or without an LFE): the factor table of 2.5.3.2.5 names no configuration, and mctoolamed does so; a second stereo program is not scaled.
-- **The LFE** is scaled by 2, which is what the reference output of test01 holds; the text gives no output scale.
+- **The LFE** is scaled by 2, the requantized scale of ISO/IEC 11172-3 itself: the decoder's subband samples are half of the requantized values (as in minimp3 and Table B.1's scalefactors) and its synthesis window carries the 2 back, and the LFE skips the filter bank. 2.5.3.2.4 points to the Layer I requantization, and the reference output of test01 confirms it.
 - **What it unlocks:** the measurements of every channel of a surround stream (the combined figures leave out the LFE as they do for other formats), and the transmission channel figures the lead decided on 2026-11-14: the "Transmission Channel Coding" tally ("Dynamic Crosstalk", "Prediction", "Bits per Transmission Channel"), the category series "Dynamic Crosstalk Use" and "Prediction Use" and the numeric series "Transmission Channel Bit Share T0" to "LFE" (%, `bitDistribution`). "Channel Bit Share" keeps its two-channel meaning ([coding-graphs.md](coding-graphs.md#as-built-the-mpeg-2-multichannel-extension-2026-11-14)). They are read from the extension's side information, so they exist for every frame whose multichannel CRC holds, with or without an extension bitstream.
 - **Cost:** `DecoderWorkTests` holds the 5.1 fixture `external-mctoolame-5-1-music.mp2` within twice the FLAC reference's time per unit at 8 units of `MultichannelStageUnits`.
 - **Checked against:** the 14 conformance streams without an extension bitstream (within 1 LSB, `test35` within 7 x 10^-7 of full scale), mctoolamed on the 46 multichannel fixtures that decode to more than two channels and on 54 variants with other dematrix procedures and channel allocations ([development.md](../development.md#mpeg-audio-decoding)).

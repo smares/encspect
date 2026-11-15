@@ -533,6 +533,11 @@ FIXTURES = [
     ("layer2/external-mctoolame-5-1-128", ".mp2", 44100, 6, ["mctoolame", "-L", "-b", "128"],
      dict(version="1", layer=2, sample_rate=44100, channel_mode="Stereo", bitrate=128, info_frame=False,
           multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6))),
+    # A base of 96 kbps is Table B.2c (48 kbps for each base channel) while the multichannel allocation is Table B.2b: the dynamic crosstalk of -y copies base samples
+    # coded with the base table's quantizers.
+    ("layer2/external-mctoolame-5-1-crosstalk-96", ".mp2", 44100, 6, ["mctoolame", "-L", "-y", "1", "-b", "96"],
+     dict(version="1", layer=2, sample_rate=44100, channel_mode="Stereo", bitrate=96, info_frame=False,
+          multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6), signal="music")),
     ("layer2/external-mctoolame-5-1-flags", ".mp2", 44100, 6, ["mctoolame", "-L", "-e", "-c", "-o", "-d", "5"],
      dict(version="1", layer=2, sample_rate=44100, channel_mode="Stereo", bitrate=192, info_frame=False,
           multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6), protected=True, copyright=True, original=True, emphasis="50/15 µs")),

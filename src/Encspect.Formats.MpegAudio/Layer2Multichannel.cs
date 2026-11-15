@@ -153,6 +153,15 @@ internal sealed class Layer2Multichannel
 
     public int DematrixProcedure { get; private set; }
 
+    // The first value of the multichannel side information that ISO/IEC 13818-3 2.5.2.15 forbids or leaves unassigned, as a field and its value, or null: a
+    // dyn_cross_mode outside the configuration's modes, a tc_allocation the tables leave unassigned (or that dematrix_procedure 3 rules out, or that moves the phantom
+    // center out of T2). lfe_allocation 15 is not among them: 2.5.2.x gives it 16 bits a sample and 65,535 levels, and conformance streams test01 and test17
+    // of ISO/IEC 13818-4 use it. The decoder reads such values as the docs/formats/mpeg-audio.md says; it never rejects the frame for them.
+    public string? ForbiddenValue { get; private set; }
+
+    // Whether ReadData read a scalefactor index of 63 (Table B.1 of ISO/IEC 11172-3 leaves it undefined), in the additional channels or the LFE channel.
+    public bool HasUndefinedScalefactor { get; private set; }
+
     // What the decoder needs of the side information (docs/design/lossy-decoders.md, "MPEG-2 multichannel"): the allocation table, the number of additional
     // channels T2 to T4, the composite status information per subband group and the predictor selection of groups 0 to 7 (by predictor, 2 bits each).
     public int Table { get; private set; }
@@ -404,7 +413,47 @@ internal sealed class Layer2Multichannel
             }
         }
 
+        mc.ForbiddenValue = mc.FindForbiddenValue(channels, tcBits);
         return mc;
+    }
+
+    private string? FindForbiddenValue(int channels, int tcBits)
+    {
+        if (HasDynamicCrosstalk && Surround != 3)
+        {
+            foreach (int mode in DynamicMode)
+            {
+                if ((channels == 3 && mode == 15) || (channels == 2 && mode >= 5))
+                {
+                    return $"dyn_cross_mode {mode}";
+                }
+            }
+        }
+
+        if (channels > 0 && tcBits > 0)
+        {
+            bool centerCoded = Center is 1 or 3;
+            string[] carries = Carries(Surround, centerCoded);
+            foreach (int tc in ChannelAllocation)
+            {
+                if (carries.Any(row => row[tc] == '-') || (Surround == 1 && centerCoded && tc == 5 && DematrixProcedure != 2))
+                {
+                    return $"tc_allocation {tc}, which 13818-3 2.5.2.15 leaves unassigned in {Configuration}";
+                }
+
+                if (tc != 0 && DematrixProcedure == 3)
+                {
+                    return $"tc_allocation {tc} with dematrix_procedure 3, which implies 0";
+                }
+
+                if (Center == 3 && Surround == 2 && tc is not (0 or 3 or 4 or 5))
+                {
+                    return $"tc_allocation {tc}, which takes the center out of T2 in phantom center coding";
+                }
+            }
+        }
+
+        return null;
     }
 
     private void ReadAllocation(byte[] data, int start, int statusStart, int headerEnd, int table, int channels, int[] dynMode,
@@ -593,6 +642,10 @@ internal sealed class Layer2Multichannel
         if (LfeAllocation != 0)
         {
             LfeScalefactor = bits.Read(6);
+            if (LfeScalefactor == 63)
+            {
+                HasUndefinedScalefactor = true;
+            }
         }
 
         int limit = Subbands;
@@ -612,6 +665,10 @@ internal sealed class Layer2Multichannel
                     if ((mask & m) != 0)
                     {
                         current = bits.Read(6) + 1;
+                        if (current == 64)
+                        {
+                            HasUndefinedScalefactor = true;
+                        }
                     }
 
                     Scalefactor[ch, sb, part] = (byte)current;
