@@ -347,4 +347,58 @@ public class MpegDecoderTests
         Assert.Equal(0, damaged.Measurements.WithheldByReason.MainDataUnavailable);
         Assert.Equal(576 + 480, damaged.Measurements.WithheldByReason.AfterGap);
     }
+
+    // A multichannel stream predicts the third to fifth channels' subband samples from earlier slots of the first two: a reset clears them, and the output that depends on
+    // them is withheld with the synthesis memory (13818-3 2.5.3.2.1.3).
+    [Fact]
+    public void AGapInAPredictingMultichannelStreamLeavesTheAudioAfterTheWithheldSpanExact()
+    {
+        byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "mpeg-audio/layer2/external-philips-5-1-prediction.mp2"));
+        const int frameLength = 1152;
+        (float[][] intact, _, _) = WrittenChannels(data, 5);
+
+        // The header of frame 8 is zero: its bytes are junk, and the audio after it is the intact file's, one frame on.
+        byte[] damagedData = (byte[])data.Clone();
+        Array.Clear(damagedData, 8 * frameLength, 4);
+        (float[][] damaged, bool[] written, StreamMeasurements measurements) = WrittenChannels(damagedData, 5);
+
+        Assert.Equal(480 + 9 * 32, measurements.WithheldByReason.AfterGap);
+        int compared = 0;
+        for (int p = 0; p < written.Length; p++)
+        {
+            if (!written[p])
+            {
+                continue;
+            }
+
+            long source = p >= 8 * 1152 ? p + 1152 : p;
+            for (int c = 0; c < 5; c++)
+            {
+                Assert.True(intact[c][source] == damaged[c][p], $"position {p} channel {c}: {damaged[c][p]}, the intact file has {intact[c][source]}");
+            }
+
+            compared++;
+        }
+
+        Assert.True(compared > 5 * 1152, $"only {compared} samples were compared");
+    }
+
+    private static (float[][] Samples, bool[] Written, StreamMeasurements Measurements) WrittenChannels(byte[] data, int channels)
+    {
+        (Report report, CollectingSink sink) = Decode(data);
+        long end = sink.Blocks.Max(b => b.Position + b.Length);
+        float[][] samples = [.. Enumerable.Range(0, channels).Select(_ => new float[end])];
+        bool[] written = new bool[end];
+        foreach ((long position, int length, float[] values) in sink.Blocks)
+        {
+            for (int c = 0; c < channels; c++)
+            {
+                Array.Copy(values, c * length, samples[c], position, length);
+            }
+
+            Array.Fill(written, true, (int)position, length);
+        }
+
+        return (samples, written, report.Streams[0].Measurements!);
+    }
 }

@@ -393,6 +393,7 @@ The lead's rule of 2026-11-01: a unit the decoder cannot decode is a gap, never 
 | --- | --- | --- |
 | MPEG Layer III | the hybrid transform's overlap (one granule) and the synthesis history (480 samples) | 576 + 480 = 1,056: the first granule, then 480 samples of the next |
 | MPEG Layers I and II | the synthesis history | 480 |
+| MPEG-2 multichannel Layer II | the synthesis history and the prediction's subband samples (up to 9 slots back) | 480 + 9 x 32 = 768 |
 | AAC LC | overlap (one frame) | 1,024 |
 | AAC LTP | overlap and LTP's history of two frames | 3,072 **estimate** |
 | AAC Main | backward-adaptive prediction over every earlier frame | until a frame whose predictor resets have reached every group, as the specification's resets intend |
