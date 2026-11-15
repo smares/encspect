@@ -337,7 +337,7 @@ internal static class CutoffFinder
         long cells = 0;
         for (int r = first; r <= CutoffGeometry.LastCandidate; r++)
         {
-            (int withSignal, int count) = Frames(counters, r, holes);
+            (int withSignal, int count) = Frames(counters, r, holes, countsSilence: false);
             if (withSignal > 0)
             {
                 shares[r] = (short)(((2000L * count) + withSignal) / (2L * withSignal));
@@ -363,7 +363,9 @@ internal static class CutoffFinder
 
     // The frames at a row: the reference level is the highest level that at least 1 % of the row's frames reach; frames with signal are
     // those at most ten levels (30.1 dB) below it; the second figure counts those that show their own step there.
-    private static (int WithSignal, int Showing) Frames(CutoffCounters counters, int row, int[] shows)
+    // countsSilence false (the holes): a row whose reference level is the lowest cell (no power, or less than 2^-63) has no frames with signal, as a side signal that is
+    // exactly 0 has none; the cutoff and the partial cutoff keep counting them.
+    private static (int WithSignal, int Showing) Frames(CutoffCounters counters, int row, int[] shows, bool countsSilence = true)
     {
         int baseIndex = row * CutoffCounters.Levels;
         long total = 0;
@@ -386,6 +388,11 @@ internal static class CutoffFinder
                     reference = l;
                     break;
                 }
+            }
+
+            if (reference == 0 && !countsSilence)
+            {
+                return (0, 0);
             }
 
             for (int l = Math.Max(0, reference - 10); l < CutoffCounters.Levels; l++)

@@ -76,10 +76,11 @@ def quantize(values, bits, dither_seed=None, level=1.0):
     return out
 
 
-def lines(rate, highest_hz, rms_db, seed, length, lowest_hz=40.0, slope=None):
+def lines(rate, highest_hz, rms_db, seed, length, lowest_hz=40.0, slope=None, gaps=()):
     """Lines at the centers of the bins of the frame the analyzer uses at this rate, from lowest_hz to highest_hz, with fixed random
     phases, repeated to length samples, at the given RMS level in dB relative to full scale. slope=(pass_hz, stop_db): the lines above pass_hz
-    fall linearly in dB to stop_db at highest_hz (a sloped lowpass, as a long FIR filter makes); none lie above highest_hz."""
+    fall linearly in dB to stop_db at highest_hz (a sloped lowpass, as a long FIR filter makes); none lie above highest_hz. gaps: (first bin, bins)
+    pairs of bins that hold no line (the phase of each is still drawn, so the other lines are the same as without the gaps)."""
     n = mm.fft_size(rate)
     low = math.ceil(lowest_hz * n / rate)
     high = math.floor(highest_hz * n / rate)
@@ -90,6 +91,8 @@ def lines(rate, highest_hz, rms_db, seed, length, lowest_hz=40.0, slope=None):
         gain = 1.0
         if slope is not None and k * rate / n > slope[0]:
             gain = 10 ** (slope[1] * ((k * rate / n) - slope[0]) / (highest_hz - slope[0]) / 20)
+        if any(first <= k < first + count for first, count in gaps):
+            continue
         spectrum[k] = gain * complex(math.cos(phase), math.sin(phase))
         spectrum[n - k] = spectrum[k].conjugate()
     period = [v.real for v in mm.fft([c.conjugate() for c in spectrum])]
@@ -368,6 +371,32 @@ def build():
         [quantize(harmonics(rate44, 440.0, 20000.0, -20.0, 81, n44), 16, dither_seed=82)], rate44, 16, {"cutoff_hz": None, "unspecified": True, "harmonics_to_hz": 20000})
     add("harmonic-440-8000", "Harmonics of 440 Hz up to 8 kHz (amplitude 1 / n, fixed random phases), -20 dBFS RMS, with TPDF dither of one least significant bit: the band of an instrument.",
         [quantize(harmonics(rate44, 440.0, 8000.0, -20.0, 83, n44), 16, dither_seed=84)], rate44, 16, {"cutoff_hz": None, "unspecified": True, "harmonics_to_hz": 8000})
+
+    # Stereo, for the mid and side spectra (docs/design/spectral-analysis.md, Step 7 (c)): mid lines to 16 kHz and side lines to 11 kHz 10 dB lower (left is
+    # mid + side, right mid - side, so the mid spectrum has the edge at 16 kHz and the side spectrum at 11 kHz), identical channels (a side of no
+    # power), and independent noise in each channel (mid and side alike).
+    mid_lines, side_lines = lines(rate44, 16000, -23.0, 91, n44), lines(rate44, 11000, -33.0, 92, n44)
+    add("stereo-mid-16000-side-11000", "Stereo: left is mid + side and right mid - side, the mid signal lines at the bin centers from 40 Hz to 16 kHz (-23 dBFS RMS) and the side signal lines up to 11 kHz, 10 dB lower, "
+        "each channel with TPDF dither of one least significant bit: a mid cutoff of 16 kHz and a side cutoff of 11 kHz.",
+        [quantize([a + b for a, b in zip(mid_lines, side_lines)], 16, dither_seed=93), quantize([a - b for a, b in zip(mid_lines, side_lines)], 16, dither_seed=94)], rate44, 16,
+        {"cutoff_hz": None, "unspecified": True, "mid_cutoff_hz": 16000, "side_cutoff_hz": 11000})
+    shared = pink(n44, 97, -20.0)
+    add("stereo-identical-channels", "Stereo with the same pink noise (and 330 Hz tone) in both channels, without dither: the side signal has no power at all.",
+        [quantize(shared, 16), quantize(shared, 16)], rate44, 16, {"cutoff_hz": None, "unspecified": True, "side_has_power": False})
+    add("stereo-independent-noise", "Stereo with white noise from two generators in the channels, -20 dBFS RMS each: the mid and side spectra are alike.",
+        [quantize(white(n44, 95, -20.0), 16), quantize(white(n44, 96, -20.0), 16)], rate44, 16, {"cutoff_hz": None, "no_cutoff": True, "mid_and_side_alike": True})
+
+    # Spectral holes (Step 7 (d)): lines at every bin center to 20 kHz with bands of 2, 4, 8 and 16 rows (4 bins a row at 4,096 points) left out in every frame, at rows 80, 160, 240 and 360;
+    # a row of a band that is next to content reads the window's leakage, so only the inner rows are holes (none for the band of 2 rows). And one band of 8 rows at row 200 left out in the second half of the stream only.
+    bands = [(80 * 4, 2 * 4), (160 * 4, 4 * 4), (240 * 4, 8 * 4), (360 * 4, 16 * 4)]
+    add("holes-bands-2-4-8-16", "Lines at every bin center from 40 Hz to 20 kHz, -20 dBFS RMS, with TPDF dither of one least significant bit, with bands of 2, 4, 8 and 16 rows (8, 16, 32 and 64 bins) left out "
+        "in every frame at rows 80, 160, 240 and 360: holes in the inner rows of each band.",
+        [quantize(lines(rate44, 20000, -20.0, 71, n44, gaps=bands), 16, dither_seed=72)], rate44, 16,
+        {"cutoff_hz": 20000, "hole_bands": [{"first_row": 80, "rows": 2}, {"first_row": 160, "rows": 4}, {"first_row": 240, "rows": 8}, {"first_row": 360, "rows": 16}]})
+    first_half = lines(rate44, 20000, -20.0, 73, half)
+    second_half = lines(rate44, 20000, -20.0, 73, n44 - half, gaps=[(200 * 4, 8 * 4)])
+    add("holes-band-in-half-of-the-frames", "The same lines at -20 dBFS RMS with a band of 8 rows left out at row 200 in the second half of the stream only: the band is a hole in the frames of the second half.",
+        [quantize(first_half + second_half, 16, dither_seed=74)], rate44, 16, {"cutoff_hz": 20000, "hole_bands": [{"first_row": 200, "rows": 8, "second_half_only": True}]})
 
     # Silence after an impulse.
     for rate in (rate44, rate48):
