@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 namespace Encspect.Tests;
 
 // The bytes the shared array pools (ArrayPool<T>.Shared) have dropped since the accounting started (with the first memory test), which the
-// memory tests add to every reading of the live heap (MemoryTests.Collected): a dropped array reads as if it were still there, so the
+// memory tests add to every reading of the live heap (MemoryTestBase.Collected): a dropped array reads as if it were still there, so the
 // difference of two readings does not depend on when a pool drops one. A pool keeps the arrays returned to it and drops them at a full
 // collection when its clock says so (System.Private.CoreLib's SharedArrayPool<T>.Trim, .NET 10: an array kept for a thread 30 s after the
 // first full collection that saw it, 15 s under medium memory pressure, at every full collection under high; one kept for all threads 60 s,
