@@ -40,6 +40,29 @@ public class MpegMultichannelValueTests
         Assert.Contains(text, finding.Message, StringComparison.Ordinal);
     }
 
+    // Phantom center coding keeps the center in the additional channels (13818-3 2.5.2.15): 0, 3 and 4 in 3/1. The first three frames of the fixture hold a tc_allocation outside them; the others are clean.
+    [Theory]
+    [InlineData("mc-forbidden-phantom-3-1", 3, "tc_allocation 1")]
+    public void APhantomCenterOutsideTheAllowedAllocationsIsFound(string name, int count, string text)
+    {
+        Report report = Fixtures.AnalyzeMpeg($"mpeg-audio/layer2/{name}.mp2");
+
+        Finding finding = Assert.Single(report.Findings, f => f.Code == Code);
+        Assert.Equal(count, finding.Count);
+        Assert.Contains(text, finding.Message, StringComparison.Ordinal);
+        Assert.Contains("phantom center", finding.Message, StringComparison.Ordinal);
+    }
+
+    // The 3/1 allocations that keep a phantom center (0, 3 and 4) are the fixture's last three frames.
+    [Fact]
+    public void ThePhantomAllocationsOf31ThatKeepTheCenterAreClean()
+    {
+        byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "mpeg-audio/layer2/mc-forbidden-phantom-3-1.mp2"));
+        Report report = Analyzer.CreateDefault().Analyze("clean.mp2", new MemoryStream(data[(3 * 1152)..]));
+
+        Assert.DoesNotContain(report.Findings, f => f.Code == Code);
+    }
+
     [Theory]
     [InlineData("mpeg-audio/layer2/external-mctoolame-5-1.mp2")]
     [InlineData("mpeg-audio/layer2/external-mctoolame-5-1-crosstalk-96.mp2")]
