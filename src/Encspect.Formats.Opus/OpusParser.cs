@@ -7,7 +7,7 @@ namespace Encspect.Formats.Opus;
 // Vorbis comment, which the "Vorbis Comment" tag parser reads, then optional extra data), then the
 // audio packets, each one Opus packet per stream (RFC 6716; all but the last stream's
 // self-delimited, appendix B). Every packet's TOC byte and framing are read and checked against
-// section 3.4, so the report counts frames by mode, bandwidth and size without decoding the audio.
+// section 3.4, so the report counts frames by mode, bandwidth and size; the audio is decoded apart, by the decoder the host starts.
 // Granule positions count samples at 48 kHz, whatever the input's rate, including the pre-skip the
 // decoder drops at the start (RFC 7845, section 4).
 public sealed partial class OpusParser : ICodecParser

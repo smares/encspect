@@ -96,17 +96,14 @@ internal static class Explain
     public const string CeltBlocks = "How many CELT frames code their spectrum as one long block and how many as several short blocks, which an encoder chooses for a transient (the frame's transient flag, RFC 6716, section 4.3.1). Frames of the SILK layer have no such choice.";
     public const string UsageLong = "CELT frames whose transient flag is clear: one transform for the whole frame (RFC 6716, section 4.3.1).";
     public const string UsageShort = "CELT frames whose transient flag is set: the frame is coded as 2, 4 or 8 short transforms, which follow a sudden onset more closely in time (RFC 6716, section 4.3.1).";
-    public const string BlockShare = "CELT frames of this kind, and their share of all CELT frames.";
     public const string CeltStereo = "How the stereo CELT frames code their bands, each frame once: the bands below its intensity bound as left and right (dual stereo) or as mid and side with an angle (the default), and the bands from the bound up, if there are any, as intensity stereo, which shares one channel with a gain for each (RFC 6716, section 4.3.4).";
     public const string StereoAngle = "Stereo CELT frames whose bands are all coded as mid and side with an angle (RFC 6716, section 4.3.4).";
     public const string StereoDual = "Stereo CELT frames whose bands are all coded as left and right, each channel on its own (dual stereo, RFC 6716, section 4.3.4).";
     public const string StereoIntensity = "Stereo CELT frames with bands coded as intensity stereo, from the intensity bound up, and left and right (dual stereo) below it, if anything is below (RFC 6716, section 4.3.4).";
     public const string StereoAngleIntensity = "Stereo CELT frames with bands coded as intensity stereo, from the intensity bound up, and mid and side with an angle below it (RFC 6716, section 4.3.4).";
-    public const string StereoShareOfFrames = "Stereo CELT frames that use this coding, and their share of all stereo CELT frames; a frame counts once for each coding it uses.";
     public const string IntensityBound = "The lowest frequency from which the stereo CELT frames code intensity stereo, in whole hertz: the lower edge of the first intensity band (RFC 6716, section 4.3.3, table 55). The figure is the frame's coded intensity band, not a measurement of the sound.";
     public const string BoundLowest = "The lowest intensity stereo bound of any frame.";
     public const string BoundHighest = "The highest intensity stereo bound of any frame.";
-    public const string CodedFrames = "How many frames carry range-coded data: SILK, CELT or hybrid frames the analyzer read to their end (RFC 6716, section 4); the frames of no bytes are not counted.";
     public const string RedundantFrames = "Frames that end with a redundant CELT frame, which smooths the change between SILK and CELT (RFC 6716, section 4.5.1).";
     public const string PaddingTotal = "The padding bytes of all audio packets, which decoders ignore (RFC 6716, section 3.2.5).";
 

@@ -32,7 +32,7 @@ public sealed partial class VorbisParser
     }
 
     // The fields section 4.3.1 reads before the floors: the packet type, the mode and, in a long
-    // block, the window flags; then the rest, which this analyzer does not decode.
+    // block, the window flags; then the rest, which these nodes do not list (the decoder reads it).
     private static List<Node> PacketFields(Records records, int index)
     {
         PacketRecord packet = records.Packets[index];

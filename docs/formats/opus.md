@@ -72,7 +72,7 @@ From mapping family 0 or 1, in the Vorbis channel order, with the speakers named
 - Mapping family 3 (the demixing matrix of Ambisonics) and families this analyzer does not know: the matrix is read and reported, not applied; the decoder runs only where its channel mapping is one it can apply.
 - Packet loss concealment of lost frames and in-band forward error correction (the LBRR frames of SILK are read and dropped): a lost or empty frame resets the decoder instead (see Gaps and empty frames).
 - The deep PLC, OSCE and DRED extensions of libopus 1.5, which are off in its default build, and the fixed-point decoder.
-- After an empty frame or a gap, the decoded state differs from libopus's concealed state for about 1,920 samples, which fall in the withheld 80 ms and a little beyond.
+- After an empty frame or a gap, the decoded state differs from libopus's concealed state for about 1,920 samples after the withheld 80 ms (up to 1.9 x 10^-3 of full scale), which are measured.
 
 ## Articles
 

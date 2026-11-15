@@ -80,7 +80,6 @@ From the channel count, in the order of the Vorbis I specification, section 4.3.
 
 - Floor 0 has no committed fixture with audio; only the cross-check's randomized packets exercise it (finite samples only, relative to their peak).
 - A setup header that states more codebook entries than 4,096 plus 64 for each byte of the header (an ordered codebook states millions in a few bytes) is not decoded or walked, and says so in `vorbis.setup-too-large` (Info, on the setup header); libvorbis accepts it. A packet whose partitions outrun its bits (1,024 visits plus 16 for each bit) is read as ended where the budget runs out, and `vorbis.walk-capped` (Warning, on the first such packet, counted) says so.
-- The mid-stream gap trimming and a container's end padding are not trimmed ranges of the measurements; a follow-up in 0.3 ([plan](../plan.md#03-lossy-formats-measured)) adds them.
 - A codebook setup of more than 4 Mi entries, or vectors of more than 2^23 values, is refused where libvorbis accepts up to 8 Mi entries a book: such a stream is not decoded.
 
 ## Articles
