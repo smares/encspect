@@ -127,7 +127,7 @@ public sealed partial class Mp4Parser
                 // padding of the last packets. The start is the pre-skip of the dOps box.
                 if (codec == "opus" && EditPadding(state, track) is { } padding)
                 {
-                    configuration = configuration with { DiscardPadding = padding, DiscardPaddingFrames = 256 };
+                    configuration = configuration with { DiscardPadding = padding, DiscardPaddingFrames = 256, IsDiscardPaddingFromEditList = true };
                 }
             }
 

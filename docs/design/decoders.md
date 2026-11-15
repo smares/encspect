@@ -1795,6 +1795,10 @@ Step L2 of [lossy-decoders.md, "Order"](lossy-decoders.md#order): `Encspect.Form
   - On the development machine the same cases had come to read 1.18 to 2.05 with the weights above (`opus-music-5ms` 2.05, `opus-music` 1.80, `opus-ffmpeg` 1.72).
   - CELT now charges 44 units a sample and channel (22 before) and 12,000 a frame (8,000 before); a hybrid frame charges 68. The development machine then read `opus-surround-51` 0.96, `opus-music-5ms` 1.29, `opus-ffmpeg` 1.29, `opus-music` 1.08, `opus-speech` 1.36 and `opus-mono-24` 0.71. SILK's 24 is unchanged.
   - A CELT stream at 32 kbps in stereo now charges about 1,600 units a byte, under the 8,192 its decoder declares.
+- **Cases added at the 0.3 gate** (the weights above, measured alone under the exclusive lock on the development machine, 2026-11-15; limit 1.5 times the reference for raising a weight, none came near it):
+  - `opus-hybrid-20ms` (the libopus hybrid fixture repeated, 68 units a sample and channel) 0.82, `opus-hybrid-120ms` (six of its frames in one packet of 120 ms, code 3) 0.70, `opus-silk-120ms` (two SILK frames of 60 ms in one packet) 1.04.
+  - `opus-silent` (200 packets of 20 ms CELT frames whose first data byte sets the silence flag, repeated) 0.46: a silent frame is still charged in full and costs less per unit.
+  - `vorbis-255-channels-blocks-of-8192` (the minimal mono stream's setup with 255 channels and both block sizes at 8,192, long blocks whose every channel codes a floor 1 of two values, so that all 255 are inverse transformed) 0.55 over 2.2 billion units: the overlaps and spectra of 255 channels leaving the cache did not raise the time per unit. The other Vorbis cases read 0.27 to 0.86 in the same run, and the Opus ones 0.46 to 1.23.
 
 ## As built: the AC-3 decoder's work weights
 

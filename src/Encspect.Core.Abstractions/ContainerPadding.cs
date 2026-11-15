@@ -11,5 +11,9 @@ public static class ContainerPadding
     public static string LargeMessage(long padding, long held, int frames) =>
         $"The DiscardPadding of the last block is {Count(padding)}, more than the {Count(held)} its {(frames == 1 ? "frame holds" : $"{frames} frames hold")} (RFC 9559, section 5.1.3.5.7); the end trimming is taken as {held}.";
 
+    // The same for an end trimming that an edit list states: the packets the analyzer holds back are the last `frames` of the track, whatever blocks there are.
+    public static string LargeEditMessage(long padding, long held, int frames) =>
+        $"The edit list leaves {Count(padding)} at the end of the track unpresented, more than the {Count(held)} its last {frames} packets hold, which the analyzer keeps to trim; the end trimming is taken as {held}.";
+
     private static string Count(long samples) => samples == long.MaxValue ? "at least 9223372036854775807 samples" : samples == 1 ? "1 sample" : $"{samples} samples";
 }

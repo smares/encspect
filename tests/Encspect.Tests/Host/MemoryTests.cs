@@ -1613,9 +1613,9 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
     }
 
     // An Opus stream keeps a 24-byte record per stream of each packet, 2 bytes per frame and its
-    // per-packet series (16 bytes), plus its share of the page records: 40 bytes in all on
-    // linux-x64, and a peak of 41. The bounds leave about twice that, and for the peak room for
-    // macOS on arm64, as the Vorbis one does.
+    // per-packet series, including those of the entropy pass, plus its share of the page records:
+    // 62 bytes in all on linux-x64, and a peak of 67 (measured 2026-11-15). The bounds leave
+    // room for macOS on arm64, as the Vorbis one does.
     [Fact]
     public void ManyOpusPacketsStayCompact()
     {

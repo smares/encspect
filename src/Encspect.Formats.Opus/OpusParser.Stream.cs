@@ -710,10 +710,12 @@ public sealed partial class OpusParser
                 if (samples > held)
                 {
                     _findings.Add(Severity.Warning, "opus.discard-padding-large", _parent, _ =>
-                        ContainerPadding.LargeMessage(samples, held, Math.Max(1, context.Configuration?.DiscardPaddingFrames ?? 1)));
+                        context.Configuration is { IsDiscardPaddingFromEditList: true }
+                            ? ContainerPadding.LargeEditMessage(samples, held, Math.Max(1, context.Configuration?.DiscardPaddingFrames ?? 1))
+                            : ContainerPadding.LargeMessage(samples, held, Math.Max(1, context.Configuration?.DiscardPaddingFrames ?? 1)));
                 }
 
-                return Math.Min(Math.Min(samples, held), Math.Max(0, _decoded - (_head?.PreSkip ?? 0)));
+                return Math.Min(Math.Min(Math.Min(samples, held), Math.Max(0, _decoded - (_head?.PreSkip ?? 0))), _session is null ? long.MaxValue : _heldSamples);
             }
 
             if (_lastPosition is not { } position || _offset is not { } offset || !_lastIsEnd)
@@ -730,13 +732,17 @@ public sealed partial class OpusParser
                 return 0;
             }
 
+            // The analyzer can trim only the packets it still holds back (HeldSamples); it keeps that many and trims no more, whatever the page states.
+            long kept = _session is null ? long.MaxValue : _heldSamples;
             if (trim > _lastPacketSamples)
             {
+                long stated = trim;
                 _findings.Add(Severity.Warning, "opus.end-trimming-large", field, _ =>
-                    $"The last granule position, {position} at 0x{field.Offset:X}, trims {Count(trim, "sample", "samples")} from the end, more than the {_lastPacketSamples} of the last packet, which RFC 7845 asks trimming not to exceed (section 4.4).");
+                    $"The last granule position, {position} at 0x{field.Offset:X}, trims {Count(stated, "sample", "samples")} from the end, more than the {_lastPacketSamples} of the last packet, which RFC 7845 asks trimming not to exceed (section 4.4)."
+                    + (stated > kept ? $" The analyzer trims at most the {kept} samples of the packets it holds back." : ""));
             }
 
-            return trim;
+            return Math.Min(trim, kept);
         }
     }
 }

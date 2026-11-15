@@ -64,4 +64,7 @@ public sealed record CodecConfiguration
     // The frames (packets) of the block that carries the DiscardPadding: the most samples the padding can take, with the frames before it of the same block (RFC 9559
     // section 5.1.3.5.7 gives it per Block, and a laced Block holds several frames). Null when it is not known.
     public int? DiscardPaddingFrames { get; init; }
+
+    // Whether the DiscardPadding is what an edit list leaves unpresented at the end of the track (MP4), not a Matroska block's element; only the finding's wording differs.
+    public bool IsDiscardPaddingFromEditList { get; init; }
 }

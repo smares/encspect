@@ -11,9 +11,9 @@ internal sealed class FrameDecoder : IFrameDecoder
     private const int Preroll = 3840;
     private const int Rate = 48000;
 
-    // The units a sample of a channel costs on top of the floor of the budget: CELT's dequantization, inverse transform and window about 2 + 2 * log2 of the frame's length + 2,
-    // its postfilter and de-emphasis 6; SILK's synthesis (the order and the long-term predictor) and its resampler about 16 per output sample.
-    // CELT's units were 22 until the nightly runs of 2026-11-13 and 2026-11-15 read its cases at up to 2.31 times the reference on macos-15-intel.
+    // The units a sample of a channel costs on top of the floor of the budget: CELT's 44 and SILK's 24 are measured (docs/design/decoders.md, "Opus"); SILK's synthesis (the order and the long-term
+    // predictor) and its resampler dominate its figure. CELT's units were 22 until the nightly runs of 2026-11-13 and 2026-11-15 read its cases at up to 2.31 times the reference on
+    // macos-15-intel.
     private const int CeltUnits = 44;
     private const int SilkUnits = 24;
 
