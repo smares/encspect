@@ -1785,11 +1785,16 @@ Step L2 of [lossy-decoders.md, "Order"](lossy-decoders.md#order): `Encspect.Form
 
 ## As built: the Opus decoder's work weights
 
-- **Charge:** per frame of each stream, `size * channels * units` with 24 units for SILK, 22 for CELT and 46 for a hybrid frame, plus 8,000 for each CELT or hybrid frame whatever its length, on top of the floor of 22 units a sample and channel.
+- **Charge:** per frame of each stream, `size * channels * units` with 24 units for SILK, 44 for CELT and 68 for a hybrid frame, plus 12,000 for each CELT or hybrid frame whatever its length, on top of the floor of 22 units a sample and channel (22 for CELT and 8,000 a frame until 2026-11-15; see below).
 - **Measured** (`DecoderWorkTests`, `opus-*` cases, the 5 ms frames' per-frame cost fitted first: 1.65 times the FLAC reference before the 8,000 units): the time per unit against the FLAC reference's on the development machine (linux-x64, shared with other work), at 8,000 and 24:
   - `opus-surround-51` 1.14, `opus-music-5ms` 1.22, `opus-ffmpeg` 1.26, `opus-music` 1.21, `opus-speech` 1.26, `opus-mono-24` 0.80.
   - The first run (22 for SILK, no per-frame units) gave 1.06, 1.65, 1.12, 1.26, 1.34 and 1.18 (the same order).
 - **Margin:** the largest ratio is 1.26 against the limit of 2.0; the TrueHD case reached 2.10 on the ARM runner, a platform where a float-heavy decoder may take more per unit than the integer FLAC reference, so the weights are left at the margin rather than lowered; a failure there raises them.
+- **Raised after the nightly runs (2026-11-15):**
+  - The CELT cases failed on the nightly runs of 2026-11-13 and 2026-11-15, at 2.00 to 2.31 times the reference: `opus-music-5ms` on `ubuntu-26.04-arm` (2.11, then 2.02) and `windows-11-arm` (2.00); `opus-ffmpeg` on `macos-latest` (2.00); and `opus-music-5ms` (failed), `opus-ffmpeg` (2.13) and `opus-music` (2.31) on `macos-15-intel`.
+  - On the development machine the same cases had come to read 1.18 to 2.05 with the weights above (`opus-music-5ms` 2.05, `opus-music` 1.80, `opus-ffmpeg` 1.72).
+  - CELT now charges 44 units a sample and channel (22 before) and 12,000 a frame (8,000 before); a hybrid frame charges 68. The development machine then read `opus-surround-51` 0.96, `opus-music-5ms` 1.29, `opus-ffmpeg` 1.29, `opus-music` 1.08, `opus-speech` 1.36 and `opus-mono-24` 0.71. SILK's 24 is unchanged.
+  - A CELT stream at 32 kbps in stereo now charges about 1,600 units a byte, under the 8,192 its decoder declares.
 
 ## As built: the AC-3 decoder's work weights
 
