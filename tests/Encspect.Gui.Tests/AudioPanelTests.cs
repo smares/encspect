@@ -504,7 +504,7 @@ public class AudioPanelTests
 
         Choose(window, "Spectrum");
         Assert.True(window.Model.Graphs.HasForms);
-        Assert.Equal(["Combined", "Per Channel"], window.Model.Graphs.Forms.Select(f => f.Title));
+        Assert.Equal(["Combined", "Per Channel", "Mid/Side"], window.Model.Graphs.Forms.Select(f => f.Title));
         Choose(window, "Spectrum", GraphForm.PerChannel);
         var spectrum = (SpectrumGraph)window.Graph.Graph!;
         Assert.Equal(6, spectrum.Lines);
@@ -526,6 +526,40 @@ public class AudioPanelTests
         Assert.True(dots.Select(d => d.Y).Distinct().Count() > 1);
         Assert.Contains("Legend: front left, front right", AutomationProperties.GetHelpText(window.Graph), StringComparison.Ordinal);
 
+        window.Close();
+    }
+
+    // The pair of channels the layout names front left and front right has a mid and a side line, each with a legend entry, a dot and, where one is found, a cutoff.
+    [AvaloniaFact]
+    public void A_stream_with_a_pair_of_channels_has_a_mid_and_a_side_line()
+    {
+        DetailWindow window = Open(Fixtures.Flac("external-16-stereo-l5.flac"));
+        Choose(window, "Spectrum");
+        Assert.Equal(["Combined", "Per Channel", "Mid/Side"], window.Model.Graphs.Forms.Select(f => f.Title));
+        Choose(window, "Spectrum", GraphForm.MidSide);
+        var spectrum = (SpectrumGraph)window.Graph.Graph!;
+
+        Assert.Equal(2, spectrum.Lines);
+        Assert.Equal(["mid", "side"], Enumerable.Range(0, 2).Select(spectrum.LineName));
+        Assert.True(spectrum.Line(0).Span.SequenceEqual(spectrum.Spectrum.MidSide!.Mid.Span));
+        Assert.True(spectrum.Line(1).Span.SequenceEqual(spectrum.Spectrum.MidSide!.Side.Span));
+        window.MouseMove(Window(window, window.Graph.PointOfCell(40)));
+        Assert.Contains("mid ", window.Graph.HoverText, StringComparison.Ordinal);
+        Assert.Contains("side ", window.Graph.HoverText, StringComparison.Ordinal);
+        Assert.Equal(2, window.Graph.SpectrumDotsOf(40)!.Count);
+        Assert.Contains("Legend: mid, side", AutomationProperties.GetHelpText(window.Graph), StringComparison.Ordinal);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void The_figures_name_the_mid_and_side_cutoffs_and_the_holes()
+    {
+        DetailWindow window = Open(Fixtures.Flac("external-16-stereo-l5.flac"));
+        Choose(window, "Figures");
+        string[] names = [.. window.Model.Graphs.Figures!.Select(l => l.Name)];
+
+        Assert.Contains("Mid/Side", names);
+        Assert.Contains("Spectral Holes", names);
         window.Close();
     }
 

@@ -104,10 +104,18 @@ def hann(n):
     return [0.5 - 0.5 * math.cos(2 * math.pi * i / n) for i in range(n)]
 
 
+def spectrum_of(samples, window):
+    """The complex bins of one windowed frame of samples (in full scale +-1): the DFT of the whole frame."""
+    return fft([complex(s * w, 0.0) for s, w in zip(samples, window)])
+
+
 def rows_of(samples, window):
     """The 512 rows of mean power of one frame of samples (in full scale +-1), relative to a full-scale sine centered on a bin."""
-    n = len(window)
-    spectrum = fft([complex(s * w, 0.0) for s, w in zip(samples, window)])
+    return rows_from_bins(spectrum_of(samples, window), len(window))
+
+
+def rows_from_bins(spectrum, n):
+    """The 512 rows of mean power of the bins of one frame (bins 0 to n / 2 - 1 are read)."""
     scale = 16.0 / (n * n)
     bins = n // (ROWS * 2)
     rows = []
@@ -144,6 +152,10 @@ class Counters:
         self.all = [[0] * 72 for _ in range(ROWS)]
         self.show = [[0] * 72 for _ in range(ROWS)]
         self.ceiling = [[0] * 72 for _ in range(ROWS)]
+        self.holes = [[0] * 72 for _ in range(ROWS)]
+
+
+HOLE_RATIO = 1000.0
 
 
 def count_frame(rows, counters, w, first):
@@ -165,13 +177,19 @@ def count_frame(rows, counters, w, first):
         # The ceiling: the band under the row against the mean power of every row above it, up to the top of the search.
         if under > 0 and under * (TOP_ROW - r) >= CEILING_RATIO * w * suffix[r + 1]:
             counters.ceiling[r][level] += 1
+        # A hole: the row's power at most a thousandth of the mean power of the W rows under it and of the rows over it (r + 1 up to row 506), both with power.
+        if r >= max(first, w):
+            own = rows[r] * HOLE_RATIO
+            below = suffix[r - w] - suffix[r]
+            if below > 0 and over > 0 and own * w <= below and own * above_rows <= over:
+                counters.holes[r][level] += 1
 
 
 def floor_div(a, b):
     return a // b
 
 
-def frames_at(counters, r, shows=None):
+def frames_at(counters, r, shows=None, counts_silence=True):
     """(frames with signal, frames that show an own step) at a row: signal is within ten levels of the level 1 % of the frames reach. shows: the
     counter array to read the second figure from (the own steps by default; the ceilings for the partial cutoff)."""
     shows = counters.show if shows is None else shows
@@ -185,6 +203,8 @@ def frames_at(counters, r, shows=None):
             if cumulative * 100 >= total:
                 reference = l
                 break
+        if reference == 0 and not counts_silence:
+            return 0, 0
         for l in range(max(0, reference - 10), 72):
             with_signal += counters.all[r][l]
             showing += shows[r][l]
@@ -257,6 +277,35 @@ def find_bandwidth(level_tenths, rate, size):
     else:
         result.update(is_found=True, frequency=hertz(lowest, rate, size, bins), floor_tenths=(2 * floor_sum + w) // (2 * w))
     return result
+
+
+def find_holes(counters, rate, size, cutoff, bandwidth):
+    """The spectral holes: per row the share of the frames with signal in which the row is a hole (tenths of a percent, None for a row that is
+    not tested or has no frame with signal), and the hole cells over the cells with signal from the first tested row to the last row of content:
+    the cutoff's edge where found, else the bandwidth's lower edge less a row where found, else row 505."""
+    if rate < 8000:
+        return {"is_searched": False}
+    w, first, bins = band_rows(rate, size)
+    first = max(first, w)
+    last = 505
+    for figure in (cutoff, bandwidth):
+        if figure["is_found"]:
+            edge = [r for r in range(ROWS) if hertz(r + 1, rate, size, bins) == figure["frequency"]]
+            if edge:
+                last = min(last, edge[0])
+            break
+    shares = [None] * ROWS
+    hole_cells = cells = 0
+    for r in range(first, 506):
+        with_signal, count = frames_at(counters, r, counters.holes, counts_silence=False)
+        if with_signal:
+            shares[r] = (2000 * count + with_signal) // (2 * with_signal)
+        if r <= last:
+            hole_cells += count
+            cells += with_signal
+    empty = last < first
+    return {"is_searched": True, "hole_cells": hole_cells, "cells_with_signal": cells, "from_frequency": 0 if empty else hertz(first, rate, size, bins),
+            "to_frequency": 0 if empty else hertz(last + 1, rate, size, bins), "row_shares": shares}
 
 
 def find_partial(counters, rate, size):
@@ -583,6 +632,17 @@ def segments(stream):
     return out
 
 
+def find_pair(layout, measured):
+    """The channels of the mid and side spectra: the first channels the layout names front left and front right, or channels 0 and 1 of a stream of
+    two channels without a layout; None where there is no pair."""
+    if not layout:
+        return (0, 1) if measured == 2 else None
+    names = list(layout)[:measured]
+    if "front left" in names and "front right" in names:
+        return names.index("front left"), names.index("front right")
+    return None
+
+
 def measure(data, layout=None):
     """The model's figures for a FLAC file: stream figures, the average spectrum rows (tenths of a dB, None for a row without power), the
     cutoff of the combined spectrum and of each channel, and the waveform's columns. layout: the speakers by channel (default: the
@@ -601,8 +661,10 @@ def measure(data, layout=None):
     w, first_candidate, bins = band_rows(rate, size)
     searched = rate >= 8000
 
-    sums = [[0.0] * ROWS for _ in range(measured + 1)]
-    counters = [Counters() for _ in range(measured + 1)]
+    pair = find_pair(layout, measured)
+    sets = measured + 1 + (2 if pair else 0)
+    sums = [[0.0] * ROWS for _ in range(sets)]
+    counters = [Counters() for _ in range(sets)]
     frames = 0
     samples = lost = gaps = 0
     first_position = None
@@ -615,7 +677,8 @@ def measure(data, layout=None):
 
     def process(frame_samples):
         nonlocal frames
-        per = [rows_of([v * scale for v in frame_samples[c]], window) for c in range(measured)]
+        bins = [spectrum_of([v * scale for v in frame_samples[c]], window) for c in range(measured)] if pair else None
+        per = [rows_from_bins(bins[c], size) if pair else rows_of([v * scale for v in frame_samples[c]], window) for c in range(measured)]
         combined = [sum(per[c][r] for c in combined_channels) / len(combined_channels) for r in range(ROWS)]
         for c in range(measured):
             for r in range(ROWS):
@@ -626,6 +689,16 @@ def measure(data, layout=None):
             sums[measured][r] += combined[r]
         if searched:
             count_frame(combined, counters[measured], w, first_candidate)
+        if pair:
+            left, right = bins[pair[0]], bins[pair[1]]
+            # The mid bin is (L + R) / 2 and the side bin (L - R) / 2, per bin, so identical channels give a side of exactly 0.
+            for offset, sign in ((1, 1), (2, -1)):
+                derived = [(a + sign * b) * 0.5 for a, b in zip(left[:size // 2], right[:size // 2])]
+                derived_rows = rows_from_bins(derived, size)
+                for r in range(ROWS):
+                    sums[measured + offset][r] += derived_rows[r]
+                if searched:
+                    count_frame(derived_rows, counters[measured + offset], w, first_candidate)
         frames += 1
 
     for position, block in segments(stream):
@@ -665,10 +738,17 @@ def measure(data, layout=None):
     if frames == 0 and buffers and buffers[0]:
         process([b + [0] * (size - len(b)) for b in buffers])
 
-    levels = [[None if sums[c][r] <= 0 or frames == 0 else tenths(sums[c][r] / frames) for r in range(ROWS)] for c in range(measured + 1)]
-    cutoffs = [find_cutoff(levels[c], counters[c], rate, size) for c in range(measured + 1)]
-    bandwidths = [find_bandwidth(levels[c], rate, size) for c in range(measured + 1)]
+    levels = [[None if sums[c][r] <= 0 or frames == 0 else tenths(sums[c][r] / frames) for r in range(ROWS)] for c in range(sets)]
+    cutoffs = [find_cutoff(levels[c], counters[c], rate, size) for c in range(sets)]
+    bandwidths = [find_bandwidth(levels[c], rate, size) for c in range(sets)]
     partial = find_partial(counters[measured], rate, size)
+    holes = find_holes(counters[measured], rate, size, cutoffs[measured], bandwidths[measured])
+    mid_side = None
+    if pair:
+        mid_side = {"left_channel": pair[0], "right_channel": pair[1], "mid": levels[measured + 1], "side": levels[measured + 2],
+                    "mid_cutoff": cutoffs[measured + 1], "side_cutoff": cutoffs[measured + 2],
+                    "mid_holes": find_holes(counters[measured + 1], rate, size, cutoffs[measured + 1], bandwidths[measured + 1]),
+                    "side_holes": find_holes(counters[measured + 2], rate, size, cutoffs[measured + 2], bandwidths[measured + 2])}
 
     last_hop = max(h for _, h in mins) if mins else 0
     shift = 0
@@ -695,6 +775,6 @@ def measure(data, layout=None):
         "sample_rate": rate, "channels": channels, "channels_measured": measured, "bits": bits, "samples": samples, "first_position": first_position or 0,
         "lost_samples": lost, "gaps": gaps, "fft_size": size, "frames": frames, "combined": levels[measured], "per_channel": levels[:measured],
         "cutoff": cutoffs[measured], "channel_cutoffs": cutoffs[:measured], "bandwidth": bandwidths[measured],
-        "channel_bandwidths": bandwidths[:measured], "partial_cutoff": partial, "levels": levels_of(runs, measured, bits, rate),
+        "channel_bandwidths": bandwidths[:measured], "partial_cutoff": partial, "holes": holes, "mid_side": mid_side, "levels": levels_of(runs, measured, bits, rate),
         "loudness": loudness_of(runs, measured, bits, rate, layout), "true_peak": true_peak_of(runs, measured, bits, rate), "spectrogram_columns": columns, "hops_per_column": 1 << shift, "waveform": waveform,
     }

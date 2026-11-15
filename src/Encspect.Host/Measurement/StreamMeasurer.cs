@@ -13,6 +13,10 @@ internal sealed class StreamMeasurer
     // The work per sample of a measured channel, in the decoders' unit (about 0.6 ns), by FFT size 1,024 to 32,768 points.
     private static readonly int[] SpectrumWeights = [29, 24, 23, 27, 27, 30];
 
+    // The work per sample of a channel of the pair for the stored bins, the mid and side rows and their counters (docs/design/spectral-analysis.md,
+    // Step 7, "Cost, memory and determinism": about 6 units of 0.6 ns, 3.6 ns, a sample of each channel of the pair).
+    internal const int PairWeight = 6;
+
     private const int CheckEvery = 1 << 16;
 
     // The work per sample of a measured channel for the levels, in the decoders' unit: 5 for integers, with the low bits unused per span (2 to 3 ns; the FLAC reference runs at 0.38 ns a unit on Windows ARM, where 32-bit stereo takes 3.06 ns), 14 for floats, which are converted
@@ -64,6 +68,10 @@ internal sealed class StreamMeasurer
     private readonly double[] _re = [];
     private readonly double[] _im = [];
     private readonly double[] _rows = [];
+    private readonly int _pairLeft = -1;
+    private readonly int _pairRight = -1;
+    private readonly double[][] _bins = [];
+    private readonly long _pairUnits;
     private readonly double[] _suffix = new double[MeasurementLimits.Rows + 1];
     private readonly int[] _highs = new int[MeasurementLimits.Rows];
     private readonly double[] _aboveRows = new double[MeasurementLimits.Rows];
@@ -176,10 +184,17 @@ internal sealed class StreamMeasurer
             return;
         }
 
+        (_pairLeft, _pairRight) = FindPair(format.ChannelLayout, _measured);
         _plan = new FftPlan(FftPlan.SizeFor(format.SampleRate));
         _geometry = new CutoffGeometry(format.SampleRate, _plan.Size);
         _hop = _plan.Size / 2;
-        _weight = SpectrumWeights[BitOperationsLog2(_plan.Size) - 10];
+        _weight = SpectrumWeights[BitOperationsLog2(_plan.Size) - 10] + 1;
+        int sets = _measured + 1 + (HasPair ? 2 : 0);
+        if (HasPair)
+        {
+            _pairUnits = 2L * PairWeight;
+            _bins = [new double[_plan.Half], new double[_plan.Half], new double[_plan.Half], new double[_plan.Half]];
+        }
         _buffers = new double[_measured][];
         for (int c = 0; c < _measured; c++)
         {
@@ -196,15 +211,43 @@ internal sealed class StreamMeasurer
         _ratioTimesBand = CutoffCounters.OwnStepRatio * _geometry.BandRows;
         _re = _plan.NewScratch();
         _im = _plan.NewScratch();
-        _rows = new double[(_measured + 1) * MeasurementLimits.Rows];
-        _average = new double[(_measured + 1) * MeasurementLimits.Rows];
+        _rows = new double[sets * MeasurementLimits.Rows];
+        _average = new double[sets * MeasurementLimits.Rows];
         _minimum = new double[_measured * MeasurementLimits.MaxColumns];
         _maximum = new double[_measured * MeasurementLimits.MaxColumns];
         Array.Fill(_minimum, double.MaxValue);
         Array.Fill(_maximum, double.MinValue);
     }
 
-    // The counters of each measured channel and, last, of the combined spectrum (the tests pin their raw output).
+    private bool HasPair => _pairLeft >= 0;
+
+    // The pair the mid and side spectra are made of: the first channels the layout names front left and front right, or channels 0 and 1 of a
+    // stream of two channels without a layout; (-1, -1) where there is none. Channels past the cap are not measured and so not paired.
+    internal static (int Left, int Right) FindPair(IReadOnlyList<Speaker>? layout, int measured)
+    {
+        if (layout is null)
+        {
+            return measured == 2 ? (0, 1) : (-1, -1);
+        }
+
+        int left = -1;
+        int right = -1;
+        for (int c = 0; c < Math.Min(layout.Count, measured); c++)
+        {
+            if (layout[c] == Speaker.FrontLeft && left < 0)
+            {
+                left = c;
+            }
+            else if (layout[c] == Speaker.FrontRight && right < 0)
+            {
+                right = c;
+            }
+        }
+
+        return left >= 0 && right >= 0 ? (left, right) : (-1, -1);
+    }
+
+    // The counters of each measured channel, then of the combined spectrum, then of the mid and of the side spectrum where there is a pair (the tests pin their raw output).
     internal IReadOnlyList<CutoffCounters> CounterSets => _counters;
 
     // The state of a stream of this format, in bytes, for the memory bound (decided before anything is allocated).
@@ -250,9 +293,22 @@ internal sealed class StreamMeasurer
         bytes += (long)measured * size * 8;
         bytes += 8L * size * 6;
         bytes += 2L * (measured + 1) * rows * 8 * 2;
+        (int pairLeft, _) = FindPair(format.ChannelLayout, measured);
+        bool hasPair = pairLeft >= 0;
+        if (hasPair)
+        {
+            // The stored bins of the two channels of the pair (16 N bytes), and the mid and side rows and averages.
+            bytes += 16L * size;
+            bytes += 2L * 2 * rows * 8 * 2;
+        }
+
         if (format.SampleRate >= CutoffGeometry.MinimumRate)
         {
-            bytes += ((measured + 1) * CutoffCounters.Bytes) + CutoffCounters.CeilingBytes;
+            bytes += ((measured + 1) * CutoffCounters.Bytes) + CutoffCounters.CeilingBytes + CutoffCounters.HolesBytes;
+            if (hasPair)
+            {
+                bytes += 2 * (CutoffCounters.Bytes + CutoffCounters.HolesBytes);
+            }
         }
 
         bytes += 4L * MeasurementLimits.MaxColumns * rows;
@@ -263,6 +319,13 @@ internal sealed class StreamMeasurer
         bytes += (long)MeasurementLimits.MaxColumns * rows;
         bytes += 4L * MeasurementLimits.MaxColumns * measured;
         bytes += 2L * (measured + 1) * rows;
+        if (hasPair)
+        {
+            // The mid and side rows and three more figures, and the shares of the holes of the three spectra.
+            bytes += 2L * 2 * rows;
+            bytes += 2L * 3 * rows;
+        }
+
         return bytes;
     }
 
@@ -549,7 +612,7 @@ internal sealed class StreamMeasurer
             return;
         }
 
-        if (!_charge(((long)_measured * BlockUnitsPerChannel) + ((long)keep * _measured * Math.Max(1, (_isMeasuringSpectrum ? _weight : 0) + (_levels is null ? 0 : _format.Format == SampleFormat.Integer ? IntegerLevelsWeight : FloatLevelsWeight) + (_loudness is null ? 0 : LoudnessWeight) + (_truePeak is null ? 0 : TruePeakWeights[BitOperationsLog2(_truePeak.Oversampling)])))))
+        if (!_charge(((long)_measured * BlockUnitsPerChannel) + ((long)keep * _pairUnits) + ((long)keep * _measured * Math.Max(1, (_isMeasuringSpectrum ? _weight : 0) + (_levels is null ? 0 : _format.Format == SampleFormat.Integer ? IntegerLevelsWeight : FloatLevelsWeight) + (_loudness is null ? 0 : LoudnessWeight) + (_truePeak is null ? 0 : TruePeakWeights[BitOperationsLog2(_truePeak.Oversampling)])))))
         {
             IsLimited = true;
             _isStopped = true;
@@ -983,10 +1046,10 @@ internal sealed class StreamMeasurer
 
         if (_geometry.IsSearched)
         {
-            _counters = new CutoffCounters[_measured + 1];
+            _counters = new CutoffCounters[_measured + 1 + (HasPair ? 2 : 0)];
             for (int i = 0; i < _counters.Length; i++)
             {
-                _counters[i] = new CutoffCounters(hasCeiling: i == _measured);
+                _counters[i] = new CutoffCounters(hasCeiling: i == _measured, hasHoles: i >= _measured);
             }
         }
 
@@ -1009,7 +1072,18 @@ internal sealed class StreamMeasurer
         for (int c = 0; c < _measured; c++)
         {
             Span<double> channelRows = _rows.AsSpan(c * rows, rows);
-            plan.Rows(_buffers[c], _re, _im, channelRows);
+            if (c == _pairLeft || c == _pairRight)
+            {
+                // The bins of the pair are kept for the mid and side rows; the rows are summed from them in the order Rows sums them.
+                int slot = c == _pairLeft ? 0 : 2;
+                plan.Bins(_buffers[c], _re, _im, _bins[slot], _bins[slot + 1]);
+                plan.RowsFromBins(_bins[slot], _bins[slot + 1], channelRows);
+            }
+            else
+            {
+                plan.Rows(_buffers[c], _re, _im, channelRows);
+            }
+
             Span<double> sums = _average.AsSpan(c * rows, rows);
             for (int r = 0; r < rows; r++)
             {
@@ -1049,6 +1123,27 @@ internal sealed class StreamMeasurer
         if (_geometry.IsSearched)
         {
             Count(combined, _counters[_measured]);
+        }
+
+        if (HasPair)
+        {
+            Span<double> mid = _rows.AsSpan((_measured + 1) * rows, rows);
+            Span<double> side = _rows.AsSpan((_measured + 2) * rows, rows);
+            plan.MidSideRows(_bins[0], _bins[1], _bins[2], _bins[3], mid, side);
+            for (int set = _measured + 1; set <= _measured + 2; set++)
+            {
+                ReadOnlySpan<double> setRows = _rows.AsSpan(set * rows, rows);
+                Span<double> setSums = _average.AsSpan(set * rows, rows);
+                for (int r = 0; r < rows; r++)
+                {
+                    setSums[r] += setRows[r];
+                }
+
+                if (_geometry.IsSearched)
+                {
+                    Count(setRows, _counters[set]);
+                }
+            }
         }
 
         long hopIndex = (_bufferStart - _origin) / _hop;
@@ -1097,6 +1192,10 @@ internal sealed class StreamMeasurer
         int[]? ceilingCounts = counters.Ceiling;
         ref int ceiling = ref ceilingCounts is null ? ref Unsafe.NullRef<int>() : ref MemoryMarshal.GetArrayDataReference(ceilingCounts);
         double ceilingRatio = CutoffCounters.CeilingRatio * w;
+        int[]? holeCounts = counters.Holes;
+        ref int holes = ref holeCounts is null ? ref Unsafe.NullRef<int>() : ref MemoryMarshal.GetArrayDataReference(holeCounts);
+        int firstHole = _geometry.FirstHoleRow;
+        double holeRatio = CutoffCounters.HoleRatio;
         for (int r = first; r <= last; r++)
         {
             double under = Unsafe.Add(ref sfx, r - w + 1) - Unsafe.Add(ref sfx, r + 1);
@@ -1116,6 +1215,18 @@ internal sealed class StreamMeasurer
             {
                 Unsafe.Add(ref ceiling, cell)++;
             }
+
+            // A hole: the row's power at most a thousandth of the mean power of the W rows under it (r - W to r - 1) and of the rows over it (r + 1 up,
+            // clipped at the top row), both with power.
+            if (holeCounts is not null && r >= firstHole)
+            {
+                double own = (Unsafe.Add(ref sfx, r) - Unsafe.Add(ref sfx, r + 1)) * holeRatio;
+                double below = Unsafe.Add(ref sfx, r - w) - Unsafe.Add(ref sfx, r);
+                if (below > 0 && over > 0 && own * w <= below && own * Unsafe.Add(ref aboveRows, r) <= over)
+                {
+                    Unsafe.Add(ref holes, cell)++;
+                }
+            }
         }
     }
 
@@ -1132,6 +1243,11 @@ internal sealed class StreamMeasurer
             }
 
             bytes += (64L * (1 + spectrum.ChannelCutoffs.Count)) + (32L * (2 + spectrum.ChannelBandwidths.Count));
+            bytes += 2L * spectrum.Holes.RowShares.Length;
+            if (spectrum.MidSide is { } midSide)
+            {
+                bytes += 2L * (midSide.Mid.Length + midSide.Side.Length + midSide.MidHoles.RowShares.Length + midSide.SideHoles.RowShares.Length) + 256;
+            }
         }
 
         bytes += record.Levels is { } levels ? (256L * (levels.Channels.Count + 1)) + (levels.Spans is { } spans ? 256L + (8L * spans.Distribution.Count) : 0) : 0;
@@ -1248,6 +1364,30 @@ internal sealed class StreamMeasurer
 
         short[] combined = Levels(_average.AsSpan(_measured * rows, rows));
         SpectralCutoff cutoff = CutoffFinder.Find(combined, _counters.Length > 0 ? _counters[_measured] : null, _geometry);
+        SpectralBandwidth combinedBandwidth = CutoffFinder.FindBandwidth(combined, _geometry);
+        MidSideFigures? midSide = null;
+        if (HasPair)
+        {
+            // The mid and side spectra have a cutoff and holes of their own; the bandwidth only bounds their holes.
+            short[] mid = Levels(_average.AsSpan((_measured + 1) * rows, rows));
+            short[] side = Levels(_average.AsSpan((_measured + 2) * rows, rows));
+            CutoffCounters? midCounters = _counters.Length > 0 ? _counters[_measured + 1] : null;
+            CutoffCounters? sideCounters = _counters.Length > 0 ? _counters[_measured + 2] : null;
+            SpectralCutoff midCutoff = CutoffFinder.Find(mid, midCounters, _geometry);
+            SpectralCutoff sideCutoff = CutoffFinder.Find(side, sideCounters, _geometry);
+            midSide = new MidSideFigures
+            {
+                LeftChannel = _pairLeft,
+                RightChannel = _pairRight,
+                Mid = mid,
+                Side = side,
+                MidCutoff = midCutoff,
+                SideCutoff = sideCutoff,
+                MidHoles = CutoffFinder.FindHoles(midCounters, _geometry, midCutoff, CutoffFinder.FindBandwidth(mid, _geometry)),
+                SideHoles = CutoffFinder.FindHoles(sideCounters, _geometry, sideCutoff, CutoffFinder.FindBandwidth(side, _geometry)),
+            };
+        }
+
         return record with
         {
             Spectrum = new SpectrumFigures
@@ -1258,9 +1398,11 @@ internal sealed class StreamMeasurer
                 PerChannel = perChannel.Select(p => (ReadOnlyMemory<short>)p).ToList(),
                 Cutoff = cutoff,
                 ChannelCutoffs = cutoffs,
-                Bandwidth = CutoffFinder.FindBandwidth(combined, _geometry),
+                Bandwidth = combinedBandwidth,
                 ChannelBandwidths = bandwidths,
                 PartialCutoff = CutoffFinder.FindPartial(_counters.Length > 0 ? _counters[_measured] : null, _geometry),
+                Holes = CutoffFinder.FindHoles(_counters.Length > 0 ? _counters[_measured] : null, _geometry, cutoff, combinedBandwidth),
+                MidSide = midSide,
             },
             Spectrogram = Grid(),
             Waveform = Wave(),

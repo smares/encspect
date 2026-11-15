@@ -14,6 +14,8 @@ public enum MeasurementFigure
     SpectralCutoff,
     SpectralBandwidth,
     PartialCutoff,
+    MidSide,
+    SpectralHoles,
     Loudness,
     IntegratedLoudness,
     LoudnessRange,
@@ -49,7 +51,15 @@ public static class MeasurementText
 
     public const string PartialCutoffDescription = "The frequency at which the most frames with signal show a ceiling of their own: the band under it at least 30 dB above the mean power of everything above it, up to 99 % of Nyquist. It finds an edge that only part of the stream has (lossy tracks joined with others, a lossy intro), which the average spectrum hides. It is a count of frames, not a verdict.";
 
+    public const string MidSideDescription = "The spectral cutoff of the average spectra of the mid signal ((left + right) / 2) and the side signal ((left - right) / 2) of the pair of channels the layout names front left and front right, or of the two channels of a stream without a layout, worked out from the complex bins of each frame. The frames with signal are those of each spectrum itself. They are views of the pair, not channels: the combined spectrum and the other figures do not include them.";
+
+    public const string SpectralHolesDescription = "The share of the cells with signal in which a row reads at most 30 dB under both the 1 kHz of rows under it and the 1 kHz over it. A cell is a row in one frame, counted where the frame has signal at that row, from 2 kHz up to the cutoff's edge where one is found, else to where the spectral bandwidth's floor starts, else to 99 % of Nyquist. It counts what the audio shows and says nothing about where a gap came from; the mid and side spectra have shares of their own.";
+
     public const string MeasuredTopic = Topics.Measurements;
+
+    public const string MidSideTopic = Topics.MidSideSpectra;
+
+    public const string SpectralHolesTopic = Topics.SpectralHoles;
 
     public const string SpectralBandwidthTopic = Topics.SpectralBandwidth;
 
@@ -138,6 +148,16 @@ public static class MeasurementText
             if (ShowsPartialCutoff(spectrum, m.SampleRate))
             {
                 lines.Add(new MeasurementLine(MeasurementFigure.PartialCutoff, "Partial Cutoff", PartialCutoff(spectrum.PartialCutoff), PartialCutoffDescription, SpectralCutoffTopic));
+            }
+
+            if (spectrum.MidSide is { } midSide)
+            {
+                lines.Add(new MeasurementLine(MeasurementFigure.MidSide, "Mid/Side", $"mid cutoff {PairCutoff(midSide.MidCutoff)}, side cutoff {PairCutoff(midSide.SideCutoff)}", MidSideDescription, MidSideTopic));
+            }
+
+            if (spectrum.Holes.IsSearched)
+            {
+                lines.Add(new MeasurementLine(MeasurementFigure.SpectralHoles, "Spectral Holes", Holes(spectrum.Holes, spectrum.MidSide), SpectralHolesDescription, SpectralHolesTopic));
             }
         }
 
@@ -489,6 +509,43 @@ public static class MeasurementText
 
         return partial.FramesShowing == 0 ? "none found (no frame shows a ceiling)" : $"none found (most frames: {frames}, at {Hertz(partial.Frequency)})";
     }
+
+    // "16,021 Hz (step 60.4 dB, 644 of 644 frames)" or "none found (largest step 4.1 dB)".
+    private static string PairCutoff(SpectralCutoff cutoff)
+    {
+        if (!cutoff.IsSearched)
+        {
+            return "not searched";
+        }
+
+        return cutoff.IsFound
+            ? $"{Hertz(cutoff.Frequency)} (step {Tenths(cutoff.StepTenthsOfDb)} dB, {cutoff.FramesShowing.ToString("N0", CultureInfo.InvariantCulture)} of {cutoff.FramesWithSignal.ToString("N0", CultureInfo.InvariantCulture)} frames)"
+            : $"none found (largest step {Tenths(cutoff.StepTenthsOfDb)} dB)";
+    }
+
+    // "2.4 % of the cells with signal from 2,003 to 16,021 Hz; mid 1.1 %, side 9.8 %".
+    public static string Holes(SpectralHoles holes, MidSideFigures? midSide)
+    {
+        if (!holes.IsSearched)
+        {
+            return "not searched (the sample rate is below 8,000 Hz)";
+        }
+
+        string text = holes.CellsWithSignal == 0
+            ? "no cells with signal in the range searched"
+            : $"{Percent(holes.ShareTenths)} of the cells with signal from {holes.FromFrequency.ToString("N0", CultureInfo.InvariantCulture)} to {Hertz(holes.ToFrequency)}";
+        if (midSide is not null)
+        {
+            text += $"; mid {HoleShare(midSide.MidHoles)}, side {HoleShare(midSide.SideHoles)}";
+        }
+
+        return text;
+    }
+
+    private static string HoleShare(SpectralHoles holes) => holes.CellsWithSignal == 0 ? "none with signal" : Percent(holes.ShareTenths);
+
+    // Tenths of a percent as "2.4 %".
+    public static string Percent(int tenths) => Tenths(tenths) + " %";
 
     // The text prints the partial cutoff only where the cutoff is not found or lies elsewhere by more than one band (1 kHz); the JSON always holds it.
     private static bool ShowsPartialCutoff(SpectrumFigures spectrum, int sampleRate)

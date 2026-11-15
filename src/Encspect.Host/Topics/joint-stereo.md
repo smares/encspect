@@ -1,7 +1,7 @@
 ---
 id: joint-stereo
 title: Joint stereo
-related: mid-side-stereo, intensity-stereo, channel-modes
+related: mid-side-stereo, mid-side-spectra, intensity-stereo, channel-modes
 references: ISO/IEC 11172-3 2.4.2.3
 ---
 

@@ -47,6 +47,35 @@ public class MpegDecoderFixtureTests
         return (Analyzer.CreateDefault().Analyze(Path.GetFileName(name), stream, options), sinks);
     }
 
+    // The measurements of the encoder-written stereo streams, which show what the mid and side spectra and the holes read for LAME's joint stereo, its forced
+    // mid/side stereo and its plain stereo, and for Shine's joint stereo (docs/design/spectral-analysis.md, "As built: step 7, second change").
+    public static TheoryData<string> MeasuredNames => new()
+    {
+        "mpeg-audio/external-lame-joint-music.mp3",
+        "mpeg-audio/external-lame-stereo-music.mp3",
+        "mpeg-audio/external-lame-forced-ms.mp3",
+        "mpeg-audio/external-shine-joint.mp3",
+    };
+
+    [Theory]
+    [MemberData(nameof(MeasuredNames))]
+    public void MeasuringAddsWhatTheMeasureGoldenHolds(string name)
+    {
+        using FileStream stream = File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, name));
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions() } };
+        Report report = Analyzer.CreateDefault().Analyze(Path.GetFileName(name), stream, options);
+        string actual = Encspect.Tests.Measurement.MeasurementFixtureTests.Golden(report, Path.GetFileNameWithoutExtension(name));
+        string path = Fixtures.MpegCompanion(name, ".measure.json");
+        if (Fixtures.UpdateGolden)
+        {
+            File.WriteAllText(path, actual);
+            return;
+        }
+
+        Assert.True(File.Exists(path), $"Missing golden file {path}; run the tests with ENCSPECT_UPDATE_GOLDEN=1 to create it.");
+        Assert.Equal(File.ReadAllText(path).ReplaceLineEndings("\n"), actual);
+    }
+
     [Theory]
     [MemberData(nameof(Names))]
     public void DecodingChangesNoNode(string name)

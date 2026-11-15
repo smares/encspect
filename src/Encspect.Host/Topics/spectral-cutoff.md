@@ -1,7 +1,7 @@
 ---
 id: spectral-cutoff
 title: Spectral cutoff
-related: spectrogram, spectral-bandwidth, measurements, lowpass, coded-bandwidth, noise-shaping
+related: spectrogram, spectral-bandwidth, spectral-holes, mid-side-spectra, measurements, lowpass, coded-bandwidth, noise-shaping
 references: Encspect design, docs/design/spectral-analysis.md
 ---
 

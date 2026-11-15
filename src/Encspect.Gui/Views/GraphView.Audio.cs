@@ -214,11 +214,11 @@ public sealed partial class GraphView
         {
             WaveformGraph waveform => $"{Format.Count(waveform.Channels, "channel", "channels")} over {Format.Timestamp(waveform.EndSeconds - waveform.StartSeconds)}, in 16-bit sample codes",
             SpectrogramGraph spectrogram => $"Time from {Format.Timestamp(spectrogram.StartSeconds)} to {Format.Timestamp(spectrogram.EndSeconds)}, frequency from 0 Hz to {AudioGraph.Hertz(spectrogram.NyquistHertz)}, level from {RampBottomDb} to {RampTopDb} dB",
-            SpectrumGraph spectrum => $"Level in dB from 0 Hz to {AudioGraph.Hertz(spectrum.NyquistHertz)}" + (spectrum.View == GraphForm.PerChannel ? "; Legend: " + string.Join(", ", Enumerable.Range(0, spectrum.Lines).Select(spectrum.LineName)) : string.Empty),
+            SpectrumGraph spectrum => $"Level in dB from 0 Hz to {AudioGraph.Hertz(spectrum.NyquistHertz)}" + (spectrum.HasLegend ? "; Legend: " + string.Join(", ", Enumerable.Range(0, spectrum.Lines).Select(spectrum.LineName)) : string.Empty),
             LoudnessGraph loudness => $"Short-term loudness in LUFS from {Format.Timestamp(loudness.StartSeconds)} to {Format.Timestamp(loudness.EndSeconds)}",
             _ => string.Empty,
         };
-        return string.Join(". ", new[] { what, graph is LoudnessGraph figures ? string.Join(", ", figures.Figures.Select(f => $"{f.Name} {f.Text}")) : string.Empty, graph is WaveformGraph or SpectrogramGraph or SpectrumGraph ? graph.CutoffText ?? string.Empty : string.Empty, HoverText ?? string.Empty }.Where(t => t.Length > 0));
+        return string.Join(". ", new[] { what, graph is LoudnessGraph figures ? string.Join(", ", figures.Figures.Select(f => $"{f.Name} {f.Text}")) : string.Empty, graph is WaveformGraph or SpectrogramGraph or SpectrumGraph ? graph.CutoffText ?? string.Empty : string.Empty, graph is SpectrumGraph { View: GraphForm.MidSide } pair ? pair.LineCutoffText ?? string.Empty : string.Empty, HoverText ?? string.Empty }.Where(t => t.Length > 0));
     }
 
     private void ResetAudio()
@@ -568,7 +568,7 @@ public sealed partial class GraphView
             context.DrawText(label, new Point(Within(x - (label.Width / 2), plot.Left - 4, plot.Right - label.Width), plot.Bottom + 4));
         }
 
-        bool isPerChannel = graph.View == GraphForm.PerChannel;
+        bool isPerChannel = graph.HasLegend;
         IReadOnlyList<Color> hues = IsDark ? CategoryColors.Dark : CategoryColors.Light;
         for (int line = 0; line < graph.Lines; line++)
         {
@@ -656,13 +656,29 @@ public sealed partial class GraphView
             context.DrawGeometry(null, pen, path);
         }
 
-        if (graph.Cutoff is { } cutoff)
+        if (graph.View != GraphForm.MidSide && graph.Cutoff is { } cutoff)
         {
             double x = Math.Round(plot.Left + (cutoff.Frequency / (double)Math.Max(1, graph.NyquistHertz) * plot.Width)) + 0.5;
             context.DrawLine(new Pen(Palette.Foreground(this), 1.25, new DashStyle([4, 3], 0)), new Point(x, plot.Top), new Point(x, plot.Bottom));
             FormattedText label = Text(AudioGraph.Hertz(cutoff.Frequency), AxisSize, Palette.Foreground(this));
             double start = x + 6 + label.Width <= plot.Right ? x + 6 : x - 6 - label.Width;
             context.DrawText(label, new Point(start, plot.Top + 2));
+        }
+
+        // The mid and side view draws the cutoff of each line, in the line's color, the second label under the first.
+        for (int line = 0; graph.View == GraphForm.MidSide && line < graph.Lines; line++)
+        {
+            if (graph.LineCutoff(line) is not { } lineCutoff)
+            {
+                continue;
+            }
+
+            double x = Math.Round(plot.Left + (lineCutoff.Frequency / (double)Math.Max(1, graph.NyquistHertz) * plot.Width)) + 0.5;
+            Color color = hues[line];
+            context.DrawLine(new Pen(new ImmutableSolidColorBrush(color), 1.25, new DashStyle([4, 3], 0)), new Point(x, plot.Top), new Point(x, plot.Bottom));
+            FormattedText label = Text(AudioGraph.Hertz(lineCutoff.Frequency), AxisSize, Palette.Foreground(this));
+            double start = x + 6 + label.Width <= plot.Right ? x + 6 : x - 6 - label.Width;
+            context.DrawText(label, new Point(start, plot.Top + 2 + (line * (label.Height + 2))));
         }
 
         if (isPerChannel)
@@ -734,7 +750,7 @@ public sealed partial class GraphView
                     context.DrawLine(new Pen(Palette.Grid(this, 0.45), 1), new Point(Math.Round(at.X) + 0.5, plot.Top), new Point(Math.Round(at.X) + 0.5, plot.Bottom));
                     for (int line = 0; line < dots.Count; line++)
                     {
-                        Color color = spectrum.View == GraphForm.PerChannel ? LineColor(line) : Palette.Accent(this);
+                        Color color = spectrum.HasLegend ? LineColor(line) : Palette.Accent(this);
                         context.DrawEllipse(new ImmutableSolidColorBrush(color), new Pen(Palette.Surface(this), 2), dots[line], 4.5, 4.5);
                     }
 

@@ -1,0 +1,237 @@
+{
+ "description": "Stereo with the same pink noise (and 330 Hz tone) in both channels, without dither: the side signal has no power at all.",
+ "length": 146048,
+ "construction": {
+  "cutoff_hz": null,
+  "unspecified": true,
+  "side_has_power": false
+ },
+ "model": {
+  "sample_rate": 44100,
+  "channels": 2,
+  "channels_measured": 2,
+  "bits": 16,
+  "samples": 44100,
+  "first_position": 0,
+  "lost_samples": 0,
+  "gaps": 0,
+  "fft_size": 4096,
+  "frames": 20,
+  "combined": [-270, -323, -332, -354, -365, -382, -378, -307, -384, -404, -402, -413, -409, -419, -408, -420, -424, -429, -439, -428, -446, -449, -449, -450, -437, -439, -447, -452, -453, -459, -468, -478, -467, -462, -459, -460, -469, -468, -464, -469, -468, -466, -467, -466, -470, -476, -470, -474, -476, -466, -479, -477, -468, -482, -472, -467, -473, -479, -491, -478, -474, -484, -486, -475, -498, -479, -479, -491, -490, -483, -480, -488, -480, -477, -495, -493, -478, -486, -490, -504, -493, -488, -489, -487, -493, -490, -492, -491, -501, -491, -496, -499, -487, -501, -496, -498, -497, -502, -494, -517, -501, -512, -493, -504, -499, -504, -512, -504, -516, -507, -493, -501, -515, -517, -511, -506, -509, -499, -492, -505, -492, -515, -514, -505, -514, -518, -509, -518, -516, -516, -528, -517, -520, -529, -515, -521, -518, -524, -510, -512, -518, -511, -514, -515, -514, -522, -505, -526, -511, -518, -524, -515, -524, -521, -525, -519, -535, -522, -528, -530, -518, -524, -533, -529, -527, -529, -535, -524, -531, -526, -528, -530, -527, -534, -534, -527, -546, -546, -538, -537, -527, -535, -534, -530, -532, -527, -527, -528, -530, -527, -525, -531, -522, -534, -540, -548, -525, -531, -533, -543, -530, -529, -528, -547, -546, -539, -536, -539, -551, -529, -534, -534, -534, -547, -539, -541, -545, -535, -539, -537, -542, -541, -555, -529, -533, -545, -544, -534, -537, -547, -548, -549, -552, -532, -533, -540, -549, -543, -541, -540, -544, -546, -563, -552, -545, -545, -540, -536, -543, -542, -551, -557, -555, -556, -554, -547, -550, -546, -540, -545, -552, -544, -551, -541, -540, -557, -549, -551, -547, -563, -548, -545, -565, -564, -558, -556, -554, -549, -541, -549, -560, -556, -543, -546, -552, -554, -554, -552, -558, -555, -565, -557, -558, -555, -561, -564, -550, -559, -556, -561, -547, -561, -562, -560, -559, -569, -557, -571, -545, -566, -561, -562, -559, -560, -562, -560, -557, -554, -556, -552, -570, -559, -565, -563, -555, -565, -560, -565, -568, -559, -563, -568, -571, -572, -573, -552, -564, -557, -565, -566, -554, -569, -556, -563, -565, -560, -575, -576, -572, -566, -560, -555, -564, -579, -560, -568, -559, -555, -552, -558, -558, -557, -577, -569, -564, -567, -566, -577, -566, -574, -563, -557, -558, -562, -569, -566, -569, -560, -566, -575, -563, -574, -576, -573, -559, -563, -565, -567, -565, -575, -567, -563, -563, -570, -568, -566, -565, -573, -568, -556, -559, -567, -572, -566, -569, -560, -568, -572, -576, -580, -560, -566, -559, -584, -561, -566, -582, -577, -569, -560, -572, -572, -573, -568, -570, -584, -571, -561, -574, -564, -577, -585, -587, -582, -571, -564, -569, -578, -574, -572, -572, -569, -569, -572, -569, -566, -569, -565, -565, -569, -572, -564, -571, -567, -572, -571, -564, -580, -570, -573, -579, -569, -568, -571, -567, -573, -558, -559, -574, -566, -574, -559, -566, -573, -560, -572, -584, -558, -568, -564, -580, -575, -570, -561, -568, -578, -569, -580, -564, -568, -572, -573, -567, -581, -576, -570, -574, -566, -565, -566, -564, -576, -571, -563, -581, -565, -568, -577, -561, -573, -572, -581],
+  "per_channel": [
+   [-270, -323, -332, -354, -365, -382, -378, -307, -384, -404, -402, -413, -409, -419, -408, -420, -424, -429, -439, -428, -446, -449, -449, -450, -437, -439, -447, -452, -453, -459, -468, -478, -467, -462, -459, -460, -469, -468, -464, -469, -468, -466, -467, -466, -470, -476, -470, -474, -476, -466, -479, -477, -468, -482, -472, -467, -473, -479, -491, -478, -474, -484, -486, -475, -498, -479, -479, -491, -490, -483, -480, -488, -480, -477, -495, -493, -478, -486, -490, -504, -493, -488, -489, -487, -493, -490, -492, -491, -501, -491, -496, -499, -487, -501, -496, -498, -497, -502, -494, -517, -501, -512, -493, -504, -499, -504, -512, -504, -516, -507, -493, -501, -515, -517, -511, -506, -509, -499, -492, -505, -492, -515, -514, -505, -514, -518, -509, -518, -516, -516, -528, -517, -520, -529, -515, -521, -518, -524, -510, -512, -518, -511, -514, -515, -514, -522, -505, -526, -511, -518, -524, -515, -524, -521, -525, -519, -535, -522, -528, -530, -518, -524, -533, -529, -527, -529, -535, -524, -531, -526, -528, -530, -527, -534, -534, -527, -546, -546, -538, -537, -527, -535, -534, -530, -532, -527, -527, -528, -530, -527, -525, -531, -522, -534, -540, -548, -525, -531, -533, -543, -530, -529, -528, -547, -546, -539, -536, -539, -551, -529, -534, -534, -534, -547, -539, -541, -545, -535, -539, -537, -542, -541, -555, -529, -533, -545, -544, -534, -537, -547, -548, -549, -552, -532, -533, -540, -549, -543, -541, -540, -544, -546, -563, -552, -545, -545, -540, -536, -543, -542, -551, -557, -555, -556, -554, -547, -550, -546, -540, -545, -552, -544, -551, -541, -540, -557, -549, -551, -547, -563, -548, -545, -565, -564, -558, -556, -554, -549, -541, -549, -560, -556, -543, -546, -552, -554, -554, -552, -558, -555, -565, -557, -558, -555, -561, -564, -550, -559, -556, -561, -547, -561, -562, -560, -559, -569, -557, -571, -545, -566, -561, -562, -559, -560, -562, -560, -557, -554, -556, -552, -570, -559, -565, -563, -555, -565, -560, -565, -568, -559, -563, -568, -571, -572, -573, -552, -564, -557, -565, -566, -554, -569, -556, -563, -565, -560, -575, -576, -572, -566, -560, -555, -564, -579, -560, -568, -559, -555, -552, -558, -558, -557, -577, -569, -564, -567, -566, -577, -566, -574, -563, -557, -558, -562, -569, -566, -569, -560, -566, -575, -563, -574, -576, -573, -559, -563, -565, -567, -565, -575, -567, -563, -563, -570, -568, -566, -565, -573, -568, -556, -559, -567, -572, -566, -569, -560, -568, -572, -576, -580, -560, -566, -559, -584, -561, -566, -582, -577, -569, -560, -572, -572, -573, -568, -570, -584, -571, -561, -574, -564, -577, -585, -587, -582, -571, -564, -569, -578, -574, -572, -572, -569, -569, -572, -569, -566, -569, -565, -565, -569, -572, -564, -571, -567, -572, -571, -564, -580, -570, -573, -579, -569, -568, -571, -567, -573, -558, -559, -574, -566, -574, -559, -566, -573, -560, -572, -584, -558, -568, -564, -580, -575, -570, -561, -568, -578, -569, -580, -564, -568, -572, -573, -567, -581, -576, -570, -574, -566, -565, -566, -564, -576, -571, -563, -581, -565, -568, -577, -561, -573, -572, -581],
+   [-270, -323, -332, -354, -365, -382, -378, -307, -384, -404, -402, -413, -409, -419, -408, -420, -424, -429, -439, -428, -446, -449, -449, -450, -437, -439, -447, -452, -453, -459, -468, -478, -467, -462, -459, -460, -469, -468, -464, -469, -468, -466, -467, -466, -470, -476, -470, -474, -476, -466, -479, -477, -468, -482, -472, -467, -473, -479, -491, -478, -474, -484, -486, -475, -498, -479, -479, -491, -490, -483, -480, -488, -480, -477, -495, -493, -478, -486, -490, -504, -493, -488, -489, -487, -493, -490, -492, -491, -501, -491, -496, -499, -487, -501, -496, -498, -497, -502, -494, -517, -501, -512, -493, -504, -499, -504, -512, -504, -516, -507, -493, -501, -515, -517, -511, -506, -509, -499, -492, -505, -492, -515, -514, -505, -514, -518, -509, -518, -516, -516, -528, -517, -520, -529, -515, -521, -518, -524, -510, -512, -518, -511, -514, -515, -514, -522, -505, -526, -511, -518, -524, -515, -524, -521, -525, -519, -535, -522, -528, -530, -518, -524, -533, -529, -527, -529, -535, -524, -531, -526, -528, -530, -527, -534, -534, -527, -546, -546, -538, -537, -527, -535, -534, -530, -532, -527, -527, -528, -530, -527, -525, -531, -522, -534, -540, -548, -525, -531, -533, -543, -530, -529, -528, -547, -546, -539, -536, -539, -551, -529, -534, -534, -534, -547, -539, -541, -545, -535, -539, -537, -542, -541, -555, -529, -533, -545, -544, -534, -537, -547, -548, -549, -552, -532, -533, -540, -549, -543, -541, -540, -544, -546, -563, -552, -545, -545, -540, -536, -543, -542, -551, -557, -555, -556, -554, -547, -550, -546, -540, -545, -552, -544, -551, -541, -540, -557, -549, -551, -547, -563, -548, -545, -565, -564, -558, -556, -554, -549, -541, -549, -560, -556, -543, -546, -552, -554, -554, -552, -558, -555, -565, -557, -558, -555, -561, -564, -550, -559, -556, -561, -547, -561, -562, -560, -559, -569, -557, -571, -545, -566, -561, -562, -559, -560, -562, -560, -557, -554, -556, -552, -570, -559, -565, -563, -555, -565, -560, -565, -568, -559, -563, -568, -571, -572, -573, -552, -564, -557, -565, -566, -554, -569, -556, -563, -565, -560, -575, -576, -572, -566, -560, -555, -564, -579, -560, -568, -559, -555, -552, -558, -558, -557, -577, -569, -564, -567, -566, -577, -566, -574, -563, -557, -558, -562, -569, -566, -569, -560, -566, -575, -563, -574, -576, -573, -559, -563, -565, -567, -565, -575, -567, -563, -563, -570, -568, -566, -565, -573, -568, -556, -559, -567, -572, -566, -569, -560, -568, -572, -576, -580, -560, -566, -559, -584, -561, -566, -582, -577, -569, -560, -572, -572, -573, -568, -570, -584, -571, -561, -574, -564, -577, -585, -587, -582, -571, -564, -569, -578, -574, -572, -572, -569, -569, -572, -569, -566, -569, -565, -565, -569, -572, -564, -571, -567, -572, -571, -564, -580, -570, -573, -579, -569, -568, -571, -567, -573, -558, -559, -574, -566, -574, -559, -566, -573, -560, -572, -584, -558, -568, -564, -580, -575, -570, -561, -568, -578, -569, -580, -564, -568, -572, -573, -567, -581, -576, -570, -574, -566, -565, -566, -564, -576, -571, -563, -581, -565, -568, -577, -561, -573, -572, -581]
+  ],
+  "cutoff": {
+   "is_searched": true,
+   "is_found": false,
+   "frequency": 0,
+   "transition_start": 0,
+   "step_frequency": 2024,
+   "step_tenths": 17,
+   "frames_showing": 0,
+   "frames_with_signal": 20
+  },
+  "channel_cutoffs": [
+   {
+    "is_searched": true,
+    "is_found": false,
+    "frequency": 0,
+    "transition_start": 0,
+    "step_frequency": 2024,
+    "step_tenths": 17,
+    "frames_showing": 0,
+    "frames_with_signal": 20
+   },
+   {
+    "is_searched": true,
+    "is_found": false,
+    "frequency": 0,
+    "transition_start": 0,
+    "step_frequency": 2024,
+    "step_tenths": 17,
+    "frames_showing": 0,
+    "frames_with_signal": 20
+   }
+  ],
+  "bandwidth": {
+   "is_searched": true,
+   "is_found": false,
+   "frequency": 0,
+   "floor_tenths": 0,
+   "reason": "slope"
+  },
+  "channel_bandwidths": [
+   {
+    "is_searched": true,
+    "is_found": false,
+    "frequency": 0,
+    "floor_tenths": 0,
+    "reason": "slope"
+   },
+   {
+    "is_searched": true,
+    "is_found": false,
+    "frequency": 0,
+    "floor_tenths": 0,
+    "reason": "slope"
+   }
+  ],
+  "partial_cutoff": {
+   "is_searched": true,
+   "is_found": false,
+   "frequency": 0,
+   "frames_showing": 0,
+   "frames_with_signal": 20
+  },
+  "holes": {
+   "is_searched": true,
+   "hole_cells": 0,
+   "cells_with_signal": 9200,
+   "from_frequency": 1981,
+   "to_frequency": 21792,
+   "row_shares": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, null, null, null, null, null, null]
+  },
+  "mid_side": {
+   "left_channel": 0,
+   "right_channel": 1,
+   "mid": [-270, -323, -332, -354, -365, -382, -378, -307, -384, -404, -402, -413, -409, -419, -408, -420, -424, -429, -439, -428, -446, -449, -449, -450, -437, -439, -447, -452, -453, -459, -468, -478, -467, -462, -459, -460, -469, -468, -464, -469, -468, -466, -467, -466, -470, -476, -470, -474, -476, -466, -479, -477, -468, -482, -472, -467, -473, -479, -491, -478, -474, -484, -486, -475, -498, -479, -479, -491, -490, -483, -480, -488, -480, -477, -495, -493, -478, -486, -490, -504, -493, -488, -489, -487, -493, -490, -492, -491, -501, -491, -496, -499, -487, -501, -496, -498, -497, -502, -494, -517, -501, -512, -493, -504, -499, -504, -512, -504, -516, -507, -493, -501, -515, -517, -511, -506, -509, -499, -492, -505, -492, -515, -514, -505, -514, -518, -509, -518, -516, -516, -528, -517, -520, -529, -515, -521, -518, -524, -510, -512, -518, -511, -514, -515, -514, -522, -505, -526, -511, -518, -524, -515, -524, -521, -525, -519, -535, -522, -528, -530, -518, -524, -533, -529, -527, -529, -535, -524, -531, -526, -528, -530, -527, -534, -534, -527, -546, -546, -538, -537, -527, -535, -534, -530, -532, -527, -527, -528, -530, -527, -525, -531, -522, -534, -540, -548, -525, -531, -533, -543, -530, -529, -528, -547, -546, -539, -536, -539, -551, -529, -534, -534, -534, -547, -539, -541, -545, -535, -539, -537, -542, -541, -555, -529, -533, -545, -544, -534, -537, -547, -548, -549, -552, -532, -533, -540, -549, -543, -541, -540, -544, -546, -563, -552, -545, -545, -540, -536, -543, -542, -551, -557, -555, -556, -554, -547, -550, -546, -540, -545, -552, -544, -551, -541, -540, -557, -549, -551, -547, -563, -548, -545, -565, -564, -558, -556, -554, -549, -541, -549, -560, -556, -543, -546, -552, -554, -554, -552, -558, -555, -565, -557, -558, -555, -561, -564, -550, -559, -556, -561, -547, -561, -562, -560, -559, -569, -557, -571, -545, -566, -561, -562, -559, -560, -562, -560, -557, -554, -556, -552, -570, -559, -565, -563, -555, -565, -560, -565, -568, -559, -563, -568, -571, -572, -573, -552, -564, -557, -565, -566, -554, -569, -556, -563, -565, -560, -575, -576, -572, -566, -560, -555, -564, -579, -560, -568, -559, -555, -552, -558, -558, -557, -577, -569, -564, -567, -566, -577, -566, -574, -563, -557, -558, -562, -569, -566, -569, -560, -566, -575, -563, -574, -576, -573, -559, -563, -565, -567, -565, -575, -567, -563, -563, -570, -568, -566, -565, -573, -568, -556, -559, -567, -572, -566, -569, -560, -568, -572, -576, -580, -560, -566, -559, -584, -561, -566, -582, -577, -569, -560, -572, -572, -573, -568, -570, -584, -571, -561, -574, -564, -577, -585, -587, -582, -571, -564, -569, -578, -574, -572, -572, -569, -569, -572, -569, -566, -569, -565, -565, -569, -572, -564, -571, -567, -572, -571, -564, -580, -570, -573, -579, -569, -568, -571, -567, -573, -558, -559, -574, -566, -574, -559, -566, -573, -560, -572, -584, -558, -568, -564, -580, -575, -570, -561, -568, -578, -569, -580, -564, -568, -572, -573, -567, -581, -576, -570, -574, -566, -565, -566, -564, -576, -571, -563, -581, -565, -568, -577, -561, -573, -572, -581],
+   "side": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
+   "mid_cutoff": {
+    "is_searched": true,
+    "is_found": false,
+    "frequency": 0,
+    "transition_start": 0,
+    "step_frequency": 2024,
+    "step_tenths": 17,
+    "frames_showing": 0,
+    "frames_with_signal": 20
+   },
+   "side_cutoff": {
+    "is_searched": true,
+    "is_found": false,
+    "frequency": 0,
+    "transition_start": 0,
+    "step_frequency": 2024,
+    "step_tenths": 0,
+    "frames_showing": 0,
+    "frames_with_signal": 20
+   },
+   "mid_holes": {
+    "is_searched": true,
+    "hole_cells": 0,
+    "cells_with_signal": 9200,
+    "from_frequency": 1981,
+    "to_frequency": 21792,
+    "row_shares": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, null, null, null, null, null, null]
+   },
+   "side_holes": {
+    "is_searched": true,
+    "hole_cells": 0,
+    "cells_with_signal": 0,
+    "from_frequency": 1981,
+    "to_frequency": 21792,
+    "row_shares": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null]
+   }
+  },
+  "levels": {
+   "bits": 16,
+   "bits_in_use": 16,
+   "minimum_silent_stretch": 441,
+   "stream": {
+    "sample_peak_tenths": -78,
+    "rms_tenths": -196,
+    "dc_micropercent": -288067,
+    "dc_tenths": -508,
+    "clipping_runs": 0,
+    "clipped_samples": 0,
+    "longest_clipping_run": 0,
+    "silent_at_start": 0,
+    "silent_at_end": 0,
+    "zero_samples": 3,
+    "silent_stretches": 0,
+    "silent_samples": 0,
+    "longest_silent_stretch": 0,
+    "low_bits_unused": 0,
+    "highest_magnitude": 13420
+   },
+   "channels": [
+    {
+     "sample_peak_tenths": -78,
+     "rms_tenths": -196,
+     "dc_micropercent": -288067,
+     "dc_tenths": -508,
+     "clipping_runs": 0,
+     "clipped_samples": 0,
+     "longest_clipping_run": 0,
+     "silent_at_start": 0,
+     "silent_at_end": 0,
+     "zero_samples": 3,
+     "silent_stretches": 0,
+     "silent_samples": 0,
+     "longest_silent_stretch": 0,
+     "low_bits_unused": 0,
+     "highest_magnitude": 13420
+    },
+    {
+     "sample_peak_tenths": -78,
+     "rms_tenths": -196,
+     "dc_micropercent": -288067,
+     "dc_tenths": -508,
+     "clipping_runs": 0,
+     "clipped_samples": 0,
+     "longest_clipping_run": 0,
+     "silent_at_start": 0,
+     "silent_at_end": 0,
+     "zero_samples": 3,
+     "silent_stretches": 0,
+     "silent_samples": 0,
+     "longest_silent_stretch": 0,
+     "low_bits_unused": 0,
+     "highest_magnitude": 13420
+    }
+   ]
+  },
+  "loudness": {
+   "weights": [100, 100],
+   "blocks": 7,
+   "momentary": {
+    "tenths": -164,
+    "absence": "none"
+   },
+   "short_term": {
+    "tenths": null,
+    "absence": "too_short"
+   },
+   "blocks_above_absolute_gate": 7,
+   "blocks_above_relative_gate": 7,
+   "integrated": {
+    "tenths": -165,
+    "absence": "none"
+   },
+   "range": {
+    "tenths": null,
+    "absence": "too_short"
+   },
+   "short_term_values": 0,
+   "short_term_first_tenths": null
+  },
+  "true_peak": {
+   "oversampling": 4,
+   "channels": [-77, -77],
+   "stream": -77
+  },
+  "spectrogram_columns": 22,
+  "hops_per_column": 1,
+  "waveform": [
+   {
+    "minimum": [-9568, -9018, -9379, -11036, -9505, -8986, -10322, -10102, -11082, -10664, -10001, -10042, -12438, -9755, -11034, -9381, -8443, -10775, -9324, -10093, -10543, -10446],
+    "maximum": [8446, 11771, 9693, 10324, 10858, 10044, 13420, 11005, 9866, 8335, 7945, 9859, 7137, 8992, 7722, 10670, 12616, 8906, 10488, 11978, 8254, 7647]
+   },
+   {
+    "minimum": [-9568, -9018, -9379, -11036, -9505, -8986, -10322, -10102, -11082, -10664, -10001, -10042, -12438, -9755, -11034, -9381, -8443, -10775, -9324, -10093, -10543, -10446],
+    "maximum": [8446, 11771, 9693, 10324, 10858, 10044, 13420, 11005, 9866, 8335, 7945, 9859, 7137, 8992, 7722, 10670, 12616, 8906, 10488, 11978, 8254, 7647]
+   }
+  ]
+ }
+}

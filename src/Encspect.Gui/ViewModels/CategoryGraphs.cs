@@ -27,9 +27,10 @@ public enum GraphForm
     // The one form of a panel drawn from the measurements of the decoded audio (the waveform, the spectrogram, the figures).
     Audio,
 
-    // The average spectrum of all channels together (all but the LFE), or one line for each channel.
+    // The average spectrum of all channels together (all but the LFE), one line for each channel, or the mid and the side line of the pair.
     Combined,
     PerChannel,
+    MidSide,
 
     // Every unit of a series as a square, in rows like text (FrameMapGraph).
     Map,

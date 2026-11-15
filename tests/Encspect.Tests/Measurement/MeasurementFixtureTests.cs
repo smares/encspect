@@ -92,6 +92,29 @@ public class MeasurementFixtureTests
             AssertPartial(model.GetProperty("partial_cutoff"), m.Spectrum.PartialCutoff, m.SampleRate, m.Spectrum.FftSize);
         }
 
+        // The holes of the combined spectrum and the mid and side spectra of the pair, as the model's own FFT and its own reading of the rules give them.
+        AssertHoles(model.GetProperty("holes"), m.Spectrum.Holes, name, reliable);
+        JsonElement midSide = model.GetProperty("mid_side");
+        if (midSide.ValueKind == JsonValueKind.Null)
+        {
+            Assert.Null(m.Spectrum.MidSide);
+        }
+        else
+        {
+            MidSideFigures pair = m.Spectrum.MidSide!;
+            Assert.Equal(midSide.GetProperty("left_channel").GetInt32(), pair.LeftChannel);
+            Assert.Equal(midSide.GetProperty("right_channel").GetInt32(), pair.RightChannel);
+            AssertRows(midSide.GetProperty("mid"), pair.Mid.Span, name + " (mid)");
+            AssertRows(midSide.GetProperty("side"), pair.Side.Span, name + " (side)");
+            AssertHoles(midSide.GetProperty("mid_holes"), pair.MidHoles, name + " (mid)", reliable);
+            AssertHoles(midSide.GetProperty("side_holes"), pair.SideHoles, name + " (side)", reliable);
+            if (reliable)
+            {
+                AssertCutoff(midSide.GetProperty("mid_cutoff"), pair.MidCutoff, m.SampleRate, m.Spectrum.FftSize);
+                AssertCutoff(midSide.GetProperty("side_cutoff"), pair.SideCutoff, m.SampleRate, m.Spectrum.FftSize);
+            }
+        }
+
         // The levels: every count and the DC offset exact, the tenths of a dB exactly (the model works them out in 60 decimal digits).
         JsonElement levels = model.GetProperty("levels");
         Assert.Equal(levels.GetProperty("bits").GetInt32(), m.Levels!.BitsPerSample);
@@ -473,6 +496,29 @@ public class MeasurementFixtureTests
         }
     }
 
+    // The cells are counts of tests of the model's rows against the analyzer's, which differ by about 1e-12 relative: a cell at the edge of a level of the
+    // counters (a coherent signal's power can sit on a power of two) or of a threshold can fall on the other side, so a few percent of the cells may differ (3 %, 6 % for a pure tone)
+    // (a pure tone at 8,000 Hz with 3.2 %); the range is exact where the cutoff and the bandwidth it comes from are (a signal that is not unspecified).
+    private static void AssertHoles(JsonElement model, SpectralHoles actual, string name, bool isReliable)
+    {
+        if (!model.GetProperty("is_searched").GetBoolean())
+        {
+            Assert.False(actual.IsSearched);
+            return;
+        }
+
+        long cells = model.GetProperty("cells_with_signal").GetInt64();
+        long allowed = 1 + (cells * (isReliable ? 3 : 6) / 100);
+        Assert.True(Math.Abs(actual.CellsWithSignal - cells) <= allowed, $"{name}: {actual.CellsWithSignal} cells with signal, the model {cells}");
+        long holes = model.GetProperty("hole_cells").GetInt64();
+        Assert.True(Math.Abs(actual.HoleCells - holes) <= allowed, $"{name}: {actual.HoleCells} hole cells, the model {holes}");
+        if (isReliable)
+        {
+            Assert.Equal(model.GetProperty("from_frequency").GetInt32(), actual.FromFrequency);
+            Assert.Equal(model.GetProperty("to_frequency").GetInt32(), actual.ToFrequency);
+        }
+    }
+
     private static void AssertPartial(JsonElement model, PartialCutoff actual, int rate, int size)
     {
         if (!model.GetProperty("is_searched").GetBoolean())
@@ -538,7 +584,7 @@ public class MeasurementFixtureTests
         SpectrumFigures spectrum = Analyze(name, new MeasureOptions()).Streams.Single().Measurements!.Spectrum!;
         if (!spectrum.Cutoff.IsFound || !spectrum.Bandwidth.IsFound)
         {
-            Assert.True(!spectrum.Cutoff.IsFound || name is "lossy-aac-48k" or "lossy-aac-64k", name);
+            Assert.True(!spectrum.Cutoff.IsFound || name is "lossy-aac-48k" or "lossy-aac-64k" or "lossy-stereo-equal-aac-64k", name);
             return;
         }
 
@@ -675,7 +721,9 @@ public class MeasurementFixtureTests
         SpectralCutoff cutoff = m.Spectrum!.Cutoff;
         int rowHertz = (int)Math.Ceiling((double)m.SampleRate * (m.Spectrum.FftSize / 1024) / m.Spectrum.FftSize);
 
-        Assert.Equal(manifest.GetProperty("expect_cutoff").GetString() == "found", cutoff.IsFound);
+        // "any" is the stereo files', whose cutoffs are found as well (the checks of MeasurementMidSideFixtureTests); the others say found or none.
+        string expect = manifest.GetProperty("expect_cutoff").GetString()!;
+        Assert.Equal(expect != "none", cutoff.IsFound);
         if (cutoff.IsFound)
         {
             Assert.True(cutoff.StepTenthsOfDb >= 330, $"{name}: a step of {cutoff.StepTenthsOfDb} tenths");
@@ -752,6 +800,21 @@ public class MeasurementFixtureTests
             {
                 rows["combined"] = HashRow(rows["combined"]!.AsArray());
                 rows["perChannel"] = new JsonArray([.. rows["perChannel"]!.AsArray().Select(r => (JsonNode)HashRow(r!.AsArray()))]);
+            }
+
+            // The mid and side rows and the shares of the holes of each spectrum are 512 values as well.
+            if (measurements["spectrum"]?["midSide"] is JsonObject midSide)
+            {
+                midSide["rows"]!["mid"] = HashRow(midSide["rows"]!["mid"]!.AsArray());
+                midSide["rows"]!["side"] = HashRow(midSide["rows"]!["side"]!.AsArray());
+            }
+
+            foreach (JsonObject? holes in new[] { measurements["spectrum"]?["holes"], measurements["spectrum"]?["midSide"]?["midHoles"], measurements["spectrum"]?["midSide"]?["sideHoles"] }.OfType<JsonObject>())
+            {
+                if (holes["rowShares"] is JsonObject shares)
+                {
+                    shares["values"] = HashRow(shares["values"]!.AsArray());
+                }
             }
 
             if (measurements["spectrogram"] is JsonObject grid)

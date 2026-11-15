@@ -828,6 +828,35 @@ public static class ReportJsonWriter
 
             writer.WriteEndArray();
             WritePartialCutoff(writer, "partialCutoff", spectrum.PartialCutoff, explain);
+            WriteHoles(writer, "holes", spectrum.Holes, explain ? MeasurementText.SpectralHolesDescription : null);
+            if (spectrum.MidSide is { } midSide)
+            {
+                writer.WriteStartObject("midSide");
+                if (explain)
+                {
+                    writer.WriteString("description", MeasurementText.MidSideDescription);
+                    writer.WriteString("topic", MeasurementText.MidSideTopic);
+                }
+
+                writer.WriteNumber("leftChannel", midSide.LeftChannel);
+                writer.WriteNumber("rightChannel", midSide.RightChannel);
+                writer.WriteStartObject("rows");
+                writer.WriteString("unit", "dB");
+                writer.WriteNumber("valuesPerUnit", 10);
+                WriteRow(writer, "mid", midSide.Mid.Span);
+                WriteRow(writer, "side", midSide.Side.Span);
+                writer.WriteEndObject();
+                WriteCutoff(writer, "midCutoff", midSide.MidCutoff, false);
+                WriteCutoff(writer, "sideCutoff", midSide.SideCutoff, false);
+                WriteHoles(writer, "midHoles", midSide.MidHoles, null);
+                WriteHoles(writer, "sideHoles", midSide.SideHoles, null);
+                writer.WriteEndObject();
+            }
+            else
+            {
+                writer.WriteNull("midSide");
+            }
+
             writer.WriteEndObject();
         }
 
@@ -1307,6 +1336,42 @@ public static class ReportJsonWriter
         }
 
         WriteCutoffFields(writer, cutoff);
+        writer.WriteEndObject();
+    }
+
+    private static void WriteHoles(Utf8JsonWriter writer, string name, SpectralHoles holes, string? description)
+    {
+        writer.WriteStartObject(name);
+        if (description is not null)
+        {
+            writer.WriteString("description", description);
+            writer.WriteString("topic", MeasurementText.SpectralHolesTopic);
+        }
+
+        if (!holes.IsSearched)
+        {
+            writer.WriteBoolean("isSearched", false);
+            writer.WriteEndObject();
+            return;
+        }
+
+        writer.WriteNumber("holeCells", holes.HoleCells);
+        writer.WriteNumber("cellsWithSignal", holes.CellsWithSignal);
+        if (holes.CellsWithSignal > 0)
+        {
+            writer.WriteStartObject("share");
+            writer.WriteNumber("value", holes.ShareTenths / 10m);
+            writer.WriteString("unit", "%");
+            writer.WriteEndObject();
+        }
+
+        WriteQuantity(writer, "fromFrequency", holes.FromFrequency, "Hz");
+        WriteQuantity(writer, "toFrequency", holes.ToFrequency, "Hz");
+        writer.WriteStartObject("rowShares");
+        writer.WriteString("unit", "%");
+        writer.WriteNumber("valuesPerUnit", 10);
+        WriteRow(writer, "values", holes.RowShares.Span);
+        writer.WriteEndObject();
         writer.WriteEndObject();
     }
 

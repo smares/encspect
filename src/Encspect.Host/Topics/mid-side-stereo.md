@@ -1,7 +1,7 @@
 ---
 id: mid-side-stereo
 title: Mid/side stereo
-related: wma-frames-and-blocks, flac-channel-assignment, wavpack-decorrelation, monkeys-audio-prediction, joint-stereo, intensity-stereo, channel-modes, square-polar-coupling, opus-modes, musepack-subband-coding
+related: mid-side-spectra, wma-frames-and-blocks, flac-channel-assignment, wavpack-decorrelation, monkeys-audio-prediction, joint-stereo, intensity-stereo, channel-modes, square-polar-coupling, opus-modes, musepack-subband-coding
 references: ISO/IEC 11172-3 2.4.2.3 (mode_extension), 2.4.3.4 (Layer III decoding); ISO/IEC 13818-3; ISO/IEC 14496-3 4.6.8.1; RFC 6716, sections 4.2 and 4.3; RFC 9639 (FLAC), section 9.2
 ---
 

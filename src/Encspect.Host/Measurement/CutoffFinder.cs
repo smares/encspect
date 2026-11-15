@@ -25,17 +25,31 @@ internal sealed class CutoffCounters
     // every row above it.
     public const double CeilingRatio = 1000.0;
 
-    public CutoffCounters(bool hasCeiling = false)
+    // Frames in which the row's power is at most a thousandth of the mean power of the W rows under it and of the W rows over it (the
+    // spectral holes, docs/design/spectral-analysis.md, Step 7 (d)); kept for the combined, mid and side spectra. At the cell of All.
+    public readonly int[]? Holes;
+
+    // 10^(30 / 10): a row is a hole when its power times this is at most the mean power of the band on each side.
+    public const double HoleRatio = 1000.0;
+
+    public CutoffCounters(bool hasCeiling = false, bool hasHoles = false)
     {
         if (hasCeiling)
         {
             Ceiling = new int[MeasurementLimits.Rows * Levels];
+        }
+
+        if (hasHoles)
+        {
+            Holes = new int[MeasurementLimits.Rows * Levels];
         }
     }
 
     public static long Bytes => 2L * MeasurementLimits.Rows * Levels * sizeof(int);
 
     public static long CeilingBytes => (long)MeasurementLimits.Rows * Levels * sizeof(int);
+
+    public static long HolesBytes => (long)MeasurementLimits.Rows * Levels * sizeof(int);
 }
 
 // The geometry the search needs, from the sample rate and the FFT size, in integers.
@@ -74,6 +88,29 @@ internal readonly struct CutoffGeometry
     public int FirstCandidate { get; }
 
     public bool IsSearched => SampleRate >= MinimumRate;
+
+    // The first row tested for a hole: the first candidate, and one with a full band under it.
+    public int FirstHoleRow => Math.Max(FirstCandidate, BandRows);
+
+    // The last row whose upper edge is the frequency (a cutoff's or a spectral bandwidth's), or -1 where none is.
+    public int RowOfUpperEdge(int hertz)
+    {
+        for (int r = 0; r < MeasurementLimits.Rows; r++)
+        {
+            int edge = Hertz(r + 1);
+            if (edge == hertz)
+            {
+                return r;
+            }
+
+            if (edge > hertz)
+            {
+                break;
+            }
+        }
+
+        return -1;
+    }
 
     // The frequency in whole hertz of the boundary above row (boundary - 1): boundary * BinsPerRow * SampleRate / FftSize, rounded.
     public int Hertz(int boundary) => (int)(((2L * boundary * BinsPerRow * SampleRate) + FftSize) / (2L * FftSize));
@@ -273,9 +310,62 @@ internal static class CutoffFinder
         return new PartialCutoff { IsFound = isFound, Frequency = shown > 0 ? geometry.Hertz(row + 1) : 0, FramesShowing = shown, FramesWithSignal = withSignal };
     }
 
+    // The spectral holes of Step 7 (d), from the counters: per row, the hole cells over the frames with signal, and the figure over the rows from the
+    // first hole row to the last row of content, which is the cutoff's edge where found, else the spectral bandwidth's lower edge less a row where
+    // found, else row 505. The frames with signal at a row are the cutoff's (Frames).
+    public static SpectralHoles FindHoles(CutoffCounters? counters, CutoffGeometry geometry, SpectralCutoff cutoff, SpectralBandwidth bandwidth)
+    {
+        if (!geometry.IsSearched || counters?.Holes is not { } holes)
+        {
+            return new SpectralHoles { IsSearched = false };
+        }
+
+        int first = geometry.FirstHoleRow;
+        int last = CutoffGeometry.LastCandidate;
+        if (cutoff.IsFound && geometry.RowOfUpperEdge(cutoff.Frequency) is >= 0 and var edge)
+        {
+            last = Math.Min(last, edge);
+        }
+        else if (bandwidth.IsFound && geometry.RowOfUpperEdge(bandwidth.Frequency) is >= 0 and var content)
+        {
+            last = Math.Min(last, content);
+        }
+
+        var shares = new short[MeasurementLimits.Rows];
+        Array.Fill(shares, MeasurementLimits.NoPower);
+        long holeCells = 0;
+        long cells = 0;
+        for (int r = first; r <= CutoffGeometry.LastCandidate; r++)
+        {
+            (int withSignal, int count) = Frames(counters, r, holes, countsSilence: false);
+            if (withSignal > 0)
+            {
+                shares[r] = (short)(((2000L * count) + withSignal) / (2L * withSignal));
+            }
+
+            if (r <= last)
+            {
+                holeCells += count;
+                cells += withSignal;
+            }
+        }
+
+        bool isEmpty = last < first;
+        return new SpectralHoles
+        {
+            HoleCells = holeCells,
+            CellsWithSignal = cells,
+            FromFrequency = isEmpty ? 0 : geometry.Hertz(first),
+            ToFrequency = isEmpty ? 0 : geometry.Hertz(last + 1),
+            RowShares = shares,
+        };
+    }
+
     // The frames at a row: the reference level is the highest level that at least 1 % of the row's frames reach; frames with signal are
     // those at most ten levels (30.1 dB) below it; the second figure counts those that show their own step there.
-    private static (int WithSignal, int Showing) Frames(CutoffCounters counters, int row, int[] shows)
+    // countsSilence false (the holes): a row whose reference level is the lowest cell (no power, or less than 2^-63) has no frames with signal, as a side signal that is
+    // exactly 0 has none; the cutoff and the partial cutoff keep counting them.
+    private static (int WithSignal, int Showing) Frames(CutoffCounters counters, int row, int[] shows, bool countsSilence = true)
     {
         int baseIndex = row * CutoffCounters.Levels;
         long total = 0;
@@ -298,6 +388,11 @@ internal static class CutoffFinder
                     reference = l;
                     break;
                 }
+            }
+
+            if (reference == 0 && !countsSilence)
+            {
+                return (0, 0);
             }
 
             for (int l = Math.Max(0, reference - 10); l < CutoffCounters.Levels; l++)

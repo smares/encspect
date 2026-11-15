@@ -273,6 +273,93 @@ public class MeasurementDeterminismTests
         Assert.True(RowsHash == HashBits(all), "RowsHash = " + HashBits(all));
     }
 
+    // The channels of a pair are summed into rows from stored bins: the same bits as the one-step transform's, so the hash of the raw rows of left and right does not move
+    // (RowsHash above is the same constant); and the raw rows of the mid and the side of a synthetic stereo signal.
+    [Fact]
+    public void TheRowsFromTheStoredBinsKeepTheRawRowsHashAndTheMidAndSideRowsHashToAConstant()
+    {
+        var plan = new FftPlan(4096);
+        double[] left = Signal();
+        double[] right = [.. left.Select((v, i) => (0.5 * v) + (0.3 * MeasurementSignals.Noise(1, (uint)i + 7)[0]))];
+        double[] re = plan.NewScratch();
+        double[] im = plan.NewScratch();
+        double[][] bins = [new double[plan.Half], new double[plan.Half], new double[plan.Half], new double[plan.Half]];
+        double[] rows = new double[512];
+        double[] mid = new double[512];
+        double[] side = new double[512];
+        var leftRows = new List<double>();
+        var midSideRows = new List<double>();
+        for (int start = 0; start + 4096 <= left.Length; start += 2048)
+        {
+            plan.Bins(left.AsSpan(start, 4096), re, im, bins[0], bins[1]);
+            plan.RowsFromBins(bins[0], bins[1], rows);
+            leftRows.AddRange(rows);
+            plan.Bins(right.AsSpan(start, 4096), re, im, bins[2], bins[3]);
+            plan.MidSideRows(bins[0], bins[1], bins[2], bins[3], mid, side);
+            midSideRows.AddRange(mid);
+            midSideRows.AddRange(side);
+        }
+
+        Assert.True(RowsHash == HashBits(leftRows), "the rows of the left channel from the stored bins differ from RowsHash: " + HashBits(leftRows));
+        Assert.True(MidSideRowsHash == HashBits(midSideRows), "MidSideRowsHash = " + HashBits(midSideRows));
+    }
+
+    // The counters of the mid and the side spectrum and the holes of the three spectra of a stereo signal (lines in the mid to bin 1,500, in the side to bin 1,000, then white
+    // noise in both), which do not depend on how the stream is cut into blocks.
+    [Fact]
+    public void TheMidAndSideCountersAndTheHoleCountersOfASyntheticStereoSignalHashToConstants()
+    {
+        double[] mid = [.. LinesWithGap(300_000, 1500, 0.004, 3, 700, 740), .. MeasurementSignals.Noise(100_000, 17).Select(v => v * 0.2)];
+        double[] side = [.. LinesWithGap(300_000, 1000, 0.0012, 4, 400, 440), .. MeasurementSignals.Noise(100_000, 18).Select(v => v * 0.1)];
+        int[] left = MeasurementSignals.ToIntegers([.. mid.Zip(side, (a, b) => a + b)], 16);
+        int[] right = MeasurementSignals.ToIntegers([.. mid.Zip(side, (a, b) => a - b)], 16);
+        string[] hashes = new string[2];
+        string figures = string.Empty;
+        for (int pass = 0; pass < 2; pass++)
+        {
+            var measurer = new StreamMeasurer(new PcmFormat(44100, 2, 16, SampleFormat.Integer), new MeasureOptions { Include = MeasurementKinds.Spectrum }, CancellationToken.None, _ => true);
+            int block = pass == 0 ? 4096 : 7777;
+            for (int start = 0; start < left.Length; start += block)
+            {
+                int n = Math.Min(block, left.Length - start);
+                measurer.Write(new PcmBlock(start, n, 2, n, [.. left.AsSpan(start, n), .. right.AsSpan(start, n)]));
+            }
+
+            StreamMeasurements m = measurer.Result(MeasurementStatus.Complete, null);
+            IReadOnlyList<CutoffCounters> sets = measurer.CounterSets;
+            hashes[pass] = HashCounts([sets[3].All, sets[3].Show, sets[3].Holes!, sets[4].All, sets[4].Show, sets[4].Holes!, sets[2].Holes!]);
+            MidSideFigures pair = m.Spectrum!.MidSide!;
+            figures = $"{pair.MidCutoff.Frequency},{pair.MidCutoff.StepTenthsOfDb},{pair.MidCutoff.FramesShowing},{pair.MidCutoff.FramesWithSignal};{pair.SideCutoff.Frequency},{pair.SideCutoff.StepTenthsOfDb},{pair.SideCutoff.FramesShowing},{pair.SideCutoff.FramesWithSignal};"
+                + $"{m.Spectrum.Holes.HoleCells},{m.Spectrum.Holes.CellsWithSignal};{pair.MidHoles.HoleCells},{pair.MidHoles.CellsWithSignal};{pair.SideHoles.HoleCells},{pair.SideHoles.CellsWithSignal}";
+        }
+
+        Assert.True(hashes[0] == hashes[1], "the counters differ between blocks of 4,096 and 7,777 samples");
+        string all = hashes[0] + "|" + Convert.ToHexStringLower(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(figures)));
+        Assert.True(MidSideCountersHash == all, $"MidSideCountersHash = {all} ({figures})");
+    }
+
+    // BandLimited.Lines with the bins from gapFrom to gapTo - 1 left out: holes of 10 rows in every frame.
+    private static double[] LinesWithGap(int length, int highestBin, double amplitude, uint seed, int gapFrom, int gapTo)
+    {
+        double[] period = new double[4096];
+        double[] phases = MeasurementSignals.Noise(highestBin + 1, seed);
+        for (int bin = 20; bin <= highestBin; bin++)
+        {
+            if (bin >= gapFrom && bin < gapTo)
+            {
+                continue;
+            }
+
+            double phase = phases[bin] * Math.PI;
+            for (int n = 0; n < period.Length; n++)
+            {
+                period[n] += amplitude * Math.Cos((2 * Math.PI * ((long)bin * n % 4096) / 4096) + phase);
+            }
+        }
+
+        return [.. Enumerable.Range(0, length).Select(i => period[i % 4096])];
+    }
+
     private static string HashCounts(IEnumerable<int[]> arrays)
     {
         using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
@@ -805,6 +892,8 @@ public class MeasurementDeterminismTests
     private const string RowsHash = "f3b5f53bd0bc966cd84a42188592bd0e525b699b681ec7ebc06df6f0a3d1fc41";
     private const string Rows1024Hash = "7b9f9a01c21fcdb6c2e71db025b77d5ed5bacae23ff1b5aea23500e15f67bd83";
     private const string Rows32768Hash = "2dc1e2f59ef7e098f0fe240d9e135e79620e30793f6bacbfaaf2986babec6236";
+    private const string MidSideRowsHash = "84882138a074dfcaedf5056831c9f6d39eae5e8f887877a60f3a25ca7339645a";
+    private const string MidSideCountersHash = "a8c32911289b3666eaa26a92b7c4af09a801486b034ab251eaeff902b8e2e39a|36eda7f42111bbb6cef5ed2c64ce6dd58a584515d14a64da4f4085a4bc72c971";
     private const string CountersHash = "4f5426dc2722f4934c96217ecbb4d6353b3774a7101d98267310015205a46751|6bbb4daa9b23cc7b5e00c5b611f94fe3e9bb463c35d133bade76c969902e0c26";
     private const string LevelsHash = "a49171a81aeb8ad635eab6462075ed9b9cb95c07c78541b77b7ac741119e0a80";
     private const string LowBitsPerSpanHash = "ea09e332c5c4afca329c637317fa945f31ffb6e645748a782a29bfb7175e3018";
