@@ -20,7 +20,7 @@ internal static class Topics
     public const string SpectralCutoff = "spectral-cutoff";
     public const string SpectralBandwidth = "spectral-bandwidth";
     public const string SpectralHoles = "spectral-holes";
-    public const string MidSideSpectra = "mid-side-stereo";
+    public const string MidSideSpectra = "mid-side-spectra";
     public const string Levels = "levels";
     public const string Clipping = "clipping";
     public const string DcOffset = "dc-offset";

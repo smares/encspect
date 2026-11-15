@@ -252,7 +252,13 @@ public sealed class SpectrumGraph : AudioGraph
         View = view;
         short? high = null;
         short? low = null;
-        foreach (ReadOnlyMemory<short> series in view == GraphForm.PerChannel ? Spectrum.PerChannel : [Spectrum.Combined])
+        IEnumerable<ReadOnlyMemory<short>> drawn = view switch
+        {
+            GraphForm.PerChannel => Spectrum.PerChannel,
+            GraphForm.MidSide when Spectrum.MidSide is { } pair => [pair.Mid, pair.Side],
+            _ => [Spectrum.Combined],
+        };
+        foreach (ReadOnlyMemory<short> series in drawn)
         {
             foreach (short value in series.Span)
             {
@@ -289,11 +295,21 @@ public sealed class SpectrumGraph : AudioGraph
 
     public override double Maximum => _top;
 
-    public int Lines => View == GraphForm.PerChannel ? Spectrum.PerChannel.Count : 1;
+    // Whether the graph draws more than the one line of the combined spectrum, each in its own color with a legend.
+    public bool HasLegend => View is GraphForm.PerChannel or GraphForm.MidSide;
 
-    public ReadOnlyMemory<short> Line(int index) => View == GraphForm.PerChannel ? Spectrum.PerChannel[index] : Spectrum.Combined;
+    public int Lines => View == GraphForm.PerChannel ? Spectrum.PerChannel.Count : View == GraphForm.MidSide ? 2 : 1;
 
-    public string LineName(int index) => View == GraphForm.PerChannel ? Names[Math.Min(index, Names.Count - 1)] : "all channels but the LFE";
+    public ReadOnlyMemory<short> Line(int index) => View == GraphForm.PerChannel ? Spectrum.PerChannel[index] : View == GraphForm.MidSide ? (index == 0 ? Spectrum.MidSide!.Mid : Spectrum.MidSide!.Side) : Spectrum.Combined;
+
+    public string LineName(int index) => View == GraphForm.PerChannel ? Names[Math.Min(index, Names.Count - 1)] : View == GraphForm.MidSide ? (index == 0 ? "mid" : "side") : "all channels but the LFE";
+
+    // The cutoff of a line of the mid and side view where one is found; the other views draw the combined spectrum's (AudioGraph.Cutoff).
+    public SpectralCutoff? LineCutoff(int index) =>
+        View == GraphForm.MidSide && (index == 0 ? Spectrum.MidSide!.MidCutoff : Spectrum.MidSide!.SideCutoff) is { IsFound: true, Frequency: > 0 } cutoff ? cutoff : null;
+
+    // "mid cutoff 16,021 Hz (step 60.4 dB, 644 of 644 frames)" for each line of the mid and side view that has one, else null.
+    public string? LineCutoffText => View == GraphForm.MidSide && Enumerable.Range(0, 2).Select(i => LineCutoff(i) is { } c ? $"{LineName(i)} cutoff: {MeasurementText.Cutoff(c)}" : null).OfType<string>().ToList() is { Count: > 0 } parts ? string.Join(", ", parts) : null;
 
     // The row's level in dB, or NaN for a row with no power.
     public override double ValueAt(int index) => ValueAt(0, index);
@@ -313,14 +329,21 @@ public sealed class SpectrumGraph : AudioGraph
         {
             short tenths = Line(i).Span[index];
             string level = tenths == MeasurementLimits.NoPower ? "no power" : Level(tenths);
-            levels.Add(View == GraphForm.PerChannel ? $"{LineName(i)} {level}" : level);
+            levels.Add(HasLegend ? $"{LineName(i)} {level}" : level);
         }
 
         string text = $"{Hertz(RowCenterHertz(index))} · {string.Join(", ", levels)}";
+        if (View == GraphForm.MidSide)
+        {
+            return string.Concat(Enumerable.Range(0, 2).Where(i => IsOnLineCutoff(i, index)).Select(i => $" · {LineName(i)} cutoff: {MeasurementText.Cutoff(LineCutoff(i)!)}")) is { Length: > 0 } onCutoff ? text + onCutoff : text;
+        }
+
         return IsOnCutoff(index) && CutoffText is { } cutoff ? text + " · " + cutoff : text;
     }
 
     public bool IsOnCutoff(int row) => Cutoff is { } cutoff && Math.Abs(row - RowOfHertz(Math.Max(0, cutoff.Frequency - 1))) <= 2;
+
+    public bool IsOnLineCutoff(int line, int row) => LineCutoff(line) is { } cutoff && Math.Abs(row - RowOfHertz(Math.Max(0, cutoff.Frequency - 1))) <= 2;
 }
 
 // The short-term loudness over time as one line (the loudness series of the measurements), with the integrated loudness as a reference
@@ -518,6 +541,11 @@ public static class AudioPanels
             if (m.Spectrum.PerChannel.Count > 1)
             {
                 forms.Add(new GraphFormChoice(GraphForm.PerChannel, "Per Channel", "The average spectrum of each channel", new SpectrumGraph(stream, m, GraphForm.PerChannel)));
+            }
+
+            if (m.Spectrum.MidSide is not null)
+            {
+                forms.Add(new GraphFormChoice(GraphForm.MidSide, "Mid/Side", "The average spectrum of the mid and the side signal of the front left and right channels", new SpectrumGraph(stream, m, GraphForm.MidSide)));
             }
 
             entries.Add(new GraphChoice(SpectrumTitle, GraphHeadings.Audio, combined.Description, forms));

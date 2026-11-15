@@ -310,6 +310,61 @@ public class MeasurementOutputTests
         Assert.Equal([1.0m, 1.0m, 1.0m, 0m, 1.41m, 1.41m], weights.EnumerateArray().Select(w => w.GetDecimal()));
     }
 
+    // The JSON always writes the holes and the midSide object (null without a pair), each row of shares with its unit and values per unit, and with --explain the descriptions and topics.
+    [Fact]
+    public void TheJsonCarriesTheHolesAndTheMidAndSideSpectra()
+    {
+        (_, string json, _) = Run("--measure=spectrum", "--json", "--explain", Fixture("synthetic-stereo-mid-16000-side-11000.flac"));
+        JsonElement spectrum = JsonDocument.Parse(json).RootElement[0].GetProperty("streams")[0].GetProperty("measurements").GetProperty("spectrum");
+
+        JsonElement holes = spectrum.GetProperty("holes");
+        Assert.True(holes.GetProperty("holeCells").GetInt64() >= 0);
+        Assert.True(holes.GetProperty("cellsWithSignal").GetInt64() > 0);
+        Assert.Equal("%", holes.GetProperty("share").GetProperty("unit").GetString());
+        Assert.Equal("Hz", holes.GetProperty("toFrequency").GetProperty("unit").GetString());
+        Assert.Equal(512, holes.GetProperty("rowShares").GetProperty("values").GetArrayLength());
+        Assert.Equal(10, holes.GetProperty("rowShares").GetProperty("valuesPerUnit").GetInt32());
+        Assert.Equal("spectral-holes", holes.GetProperty("topic").GetString());
+        Assert.False(string.IsNullOrEmpty(holes.GetProperty("description").GetString()));
+
+        JsonElement pair = spectrum.GetProperty("midSide");
+        Assert.Equal(0, pair.GetProperty("leftChannel").GetInt32());
+        Assert.Equal(1, pair.GetProperty("rightChannel").GetInt32());
+        Assert.Equal(512, pair.GetProperty("rows").GetProperty("mid").GetArrayLength());
+        Assert.Equal(512, pair.GetProperty("rows").GetProperty("side").GetArrayLength());
+        Assert.True(pair.GetProperty("midCutoff").GetProperty("isFound").GetBoolean());
+        Assert.InRange(pair.GetProperty("sideCutoff").GetProperty("frequency").GetProperty("value").GetInt32(), 10900, 11150);
+        Assert.Equal(512, pair.GetProperty("sideHoles").GetProperty("rowShares").GetProperty("values").GetArrayLength());
+        Assert.Equal("mid-side-spectra", pair.GetProperty("topic").GetString());
+        Assert.False(string.IsNullOrEmpty(pair.GetProperty("description").GetString()));
+
+        (_, string mono, _) = Run("--measure=spectrum", "--json", Fixture("synthetic-white-44100.flac"));
+        JsonElement monoSpectrum = JsonDocument.Parse(mono).RootElement[0].GetProperty("streams")[0].GetProperty("measurements").GetProperty("spectrum");
+        Assert.Equal(JsonValueKind.Null, monoSpectrum.GetProperty("midSide").ValueKind);
+        Assert.True(monoSpectrum.TryGetProperty("holes", out _));
+    }
+
+    [Fact]
+    public void TheTextAndTheCsvCarryTheMidSideAndHolesFigures()
+    {
+        (_, string text, _) = Run("--measure", "--hide", "frames,tags,statistics", Fixture("synthetic-stereo-mid-16000-side-11000.flac"));
+        Assert.Contains("Mid/Side: mid cutoff 16,0", text, StringComparison.Ordinal);
+        Assert.Contains(", side cutoff 11,0", text, StringComparison.Ordinal);
+        Assert.Contains("Spectral Holes: ", text, StringComparison.Ordinal);
+
+        (_, string csv, _) = Run("--measure", "--csv", Fixture("synthetic-stereo-mid-16000-side-11000.flac"));
+        string[] lines = csv.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
+        string[] header = lines[0].Split(',');
+        string[] row = lines[1].Split(',');
+        int cutoff = Array.IndexOf(header, "Spectral Cutoff (Hz)");
+        Assert.Equal(["Spectral Bandwidth (Hz)", "Partial Cutoff (Hz)", "Side Cutoff (Hz)", "Spectral Holes (%)"], header[(cutoff + 1)..(cutoff + 5)]);
+
+        // Quoted fields before the figures hold commas, so the columns are counted from the end.
+        string FromEnd(string column) => row[row.Length - (header.Length - Array.IndexOf(header, column))];
+        Assert.InRange(int.Parse(FromEnd("Side Cutoff (Hz)"), System.Globalization.CultureInfo.InvariantCulture), 10900, 11150);
+        Assert.Matches(@"^\d+\.\d$", FromEnd("Spectral Holes (%)"));
+    }
+
     [Fact]
     public void TheLevelsLinesAndJsonCarryTheirDescriptionsAndTopics()
     {

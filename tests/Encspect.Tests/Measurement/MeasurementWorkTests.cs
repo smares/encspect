@@ -49,6 +49,34 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
         Assert.True(ratio <= Factor, $"The spectrum takes {ratio:F2} times the reference's time per unit, at most {Factor} are allowed. A weight is too low.");
     }
 
+    // A stream of 32 channels with a pair (front left and front right, the 30 others unplaced): the pair's bins, mid and side rows and counters come on top of
+    // the 32 channels' transforms, which the per-channel weight does not carry. The channels repeat two noise signals to keep the memory of the test small.
+    [Theory]
+    [InlineData(44100)]
+    [InlineData(8000)]
+    [InlineData(352800)]
+    public void ATimePerUnitWithinTwiceTheFlacReferenceForAPairAmong32Channels(int rate)
+    {
+        Speaker[] layout = [Speaker.FrontLeft, Speaker.FrontRight, .. Enumerable.Repeat(Speaker.Discrete, 30)];
+        (double ratio, double perUnit, double perSample) = Compare(rate, 32, Signal.Noise, layout: layout);
+        output.WriteLine($"{rate} Hz, {FftPlan.SizeFor(rate)} points, 32 channels with a pair: {perSample:F2} ns a sample of a channel, {perUnit:F3} ns a unit; ratio to the reference {ratio:F2}");
+        Assert.True(ratio <= Factor, $"The spectrum takes {ratio:F2} times the reference's time per unit, at most {Factor} are allowed. A weight is too low.");
+    }
+
+    // The same stereo stream with and without a pair (the layout names no front pair): what the pair adds per sample of a channel of it, against its charge.
+    [Theory]
+    [InlineData(44100)]
+    [InlineData(8000)]
+    [InlineData(352800)]
+    public void ThePairAddsAtMostTheUnitsItIsCharged(int rate)
+    {
+        (double paired, _, _) = Compare(rate, 2, Signal.Noise, layout: [Speaker.FrontLeft, Speaker.FrontRight]);
+        (double unpaired, _, _) = Compare(rate, 2, Signal.Noise, layout: [Speaker.Discrete, Speaker.Discrete]);
+        output.WriteLine($"{rate} Hz: ratio to the reference {paired:F2} with the pair, {unpaired:F2} without");
+        Assert.True(paired <= Factor);
+        Assert.True(paired / unpaired <= 1 + (4.0 * StreamMeasurer.PairWeight / 25), $"The pair makes the run {paired / unpaired:F2} times as slow.");
+    }
+
     // The sort of the loudness range's short-term values, the most it ever sorts, against the units it is charged (LoudnessMeter.SortUnits) at
     // the reference's time per unit of the same round.
     [Fact]
@@ -319,6 +347,13 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
         var data = new int[channels][];
         for (int c = 0; c < channels; c++)
         {
+            // Beyond 8 channels the signals repeat, to keep the test's memory small.
+            if (c >= 8)
+            {
+                data[c] = data[c % 8];
+                continue;
+            }
+
             data[c] = signal switch
             {
                 Signal.Noise => MeasurementSignals.ToIntegers(MeasurementSignals.Noise(Length, (uint)(c + 1)), bits),
@@ -336,7 +371,7 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
     }
 
     // The median of the rounds' ratios of the case's time per unit to the reference's of the same round, and the median time per unit and per sample.
-    private static (double Ratio, double PerUnit, double PerSample) Compare(int rate, int channels, Signal signal, MeasurementKinds? kinds = null, int bits = 16, int block = 4096)
+    private static (double Ratio, double PerUnit, double PerSample) Compare(int rate, int channels, Signal signal, MeasurementKinds? kinds = null, int bits = 16, int block = 4096, Speaker[]? layout = null)
     {
         int[][] data = Data(channels, signal, bits);
         DecoderWorkTests.ReferenceRoundNanosecondsPerUnit();
@@ -346,7 +381,7 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
         double warmSeconds = 0;
         for (int warm = 0; warm < 3; warm++)
         {
-            warmSeconds = RunOnce(rate, channels, data, kinds, bits, block: block).Seconds;
+            warmSeconds = RunOnce(rate, channels, data, kinds, bits, block: block, layout: layout).Seconds;
         }
 
         // A run of a few milliseconds (the levels) is decided by one scheduler hiccup or a collection, so each timed run covers the signal as
@@ -359,7 +394,7 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
         for (int round = 0; round < Rounds; round++)
         {
             double reference = DecoderWorkTests.ReferenceRoundNanosecondsPerUnit();
-            (double seconds, long units, long samples) = RunOnce(rate, channels, data, kinds, bits, passes, block);
+            (double seconds, long units, long samples) = RunOnce(rate, channels, data, kinds, bits, passes, block, layout);
             double perUnit = seconds * 1e9 / units;
             ratios.Add(perUnit / reference);
             perUnits.Add(perUnit);
@@ -376,10 +411,10 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
         return sorted[sorted.Length / 2];
     }
 
-    private static (double Seconds, long Units, long Samples) RunOnce(int rate, int channels, int[][] data, MeasurementKinds? kinds = null, int bits = 16, int passes = 1, int block = 4096)
+    private static (double Seconds, long Units, long Samples) RunOnce(int rate, int channels, int[][] data, MeasurementKinds? kinds = null, int bits = 16, int passes = 1, int block = 4096, Speaker[]? layout = null)
     {
         long units = 0;
-        var format = new PcmFormat(rate, channels, bits, SampleFormat.Integer);
+        var format = new PcmFormat(rate, channels, bits, SampleFormat.Integer) { ChannelLayout = layout };
         var measurer = new StreamMeasurer(format, new MeasureOptions { Include = kinds }, CancellationToken.None, u =>
         {
             units += u;
