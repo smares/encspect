@@ -404,7 +404,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             Add("eac3-" + label, () => new Case("eac3-" + label, Ac3Cases.Repeated(file)));
         }
 
-        // Opus: SILK speech, CELT music at 96 kbps and in 5 ms frames, 5.1, mono at 24 kbps, hybrid and silence. Each case repeats the audio packets of an encoder's file in one stream.
+        // Opus: SILK speech, CELT music at 96 kbps and in 5 ms frames, 5.1, mono at 24 kbps and hybrid. Each case repeats the audio packets of an encoder's file in one stream.
         foreach ((string label, string file) in new[]
         {
             ("speech", "external-opusenc-speech.opus"),
@@ -413,10 +413,20 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             ("surround-51", "external-opusenc-51.opus"),
             ("mono-24", "external-opusenc-24-mono.opus"),
             ("ffmpeg", "external-ffmpeg-libopus.opus"),
+            ("hybrid-20ms", "external-libopus-stereo-hybrid-20ms.opus"),
         })
         {
             Add("opus-" + label, () => new Case("opus-" + label, OpusCases.Repeated(file)));
         }
+
+        // Opus packets of 120 ms (the longest a packet holds: six hybrid frames of 20 ms, or two SILK frames of 60 ms, the frames of the fixtures repeated in one packet) and a stream of
+        // CELT frames that code silence (the silence flag set by the first byte of the range coder's data).
+        Add("opus-hybrid-120ms", () => new Case("opus-hybrid-120ms", OpusCases.Repeated(OpusCases.Packed("external-libopus-stereo-hybrid-20ms.opus", 6))));
+        Add("opus-silk-120ms", () => new Case("opus-silk-120ms", OpusCases.Repeated(OpusCases.Packed("external-libopus-stereo-silk-60ms-fec.opus", 2))));
+        Add("opus-silent", () => new Case("opus-silent", OpusCases.Repeated(OpusCases.Silent("external-opusenc-96.opus"))));
+
+        // Vorbis in 255 channels, the most a stream has, in blocks of 8,192 samples: 255 overlaps and spectra of 4,096 floats leave the cache that the stereo case stays in.
+        Add("vorbis-255-channels-blocks-of-8192", () => new Case("vorbis-255-channels-blocks-of-8192", VorbisCases.Repeated(VorbisCases.WideChannels())));
 
         // TTA in Matroska without the header (as FFmpeg and mkvmerge store it): the parser counts the last frame's codes, the decoder takes the track's figures.
         Add("tta-matroska-silent-stereo", () => new Case("tta-matroska-silent-stereo", TtaCases.MatroskaSilence(2)));
@@ -892,6 +902,34 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
                 packets[0][28] = (byte)((blockExponent << 4) | (packets[0][28] & 0x0F));
             }
 
+            return Repeated(packets, target);
+        }
+
+        // The minimal mono stream's headers made 255 channels (its setup does not depend on the count: no coupling, one submap) with both block sizes 8,192, and 20 long blocks
+        // whose every channel codes a floor 1 of two values (multiplier 1: 8 bits each), so that every channel is inverse transformed.
+        public static List<byte[]> WideChannels()
+        {
+            List<byte[]> packets = VorbisStreams.Packets("ogg/vorbis-minimal-mono.ogg");
+            packets.RemoveRange(3, packets.Count - 3);
+            packets[0] = [.. packets[0]];
+            packets[0][11] = 255;
+            packets[0][28] = 0xDD;
+            for (int i = 0; i < 20; i++)
+            {
+                var bits = new VorbisStreams.Bits().Put(0, 1).Put(1, 1).Put(1, 1).Put(1, 1);
+                for (int c = 0; c < 255; c++)
+                {
+                    bits.Put(1, 1).Put(100 + (i % 7), 8).Put(120 - (c % 5), 8);
+                }
+
+                packets.Add(bits.Bytes());
+            }
+
+            return packets;
+        }
+
+        public static byte[] Repeated(List<byte[]> packets, long target = Target)
+        {
             long perCopy = Math.Max(1, Units(Build(packets, 1)));
 
             // At most about 400,000 packets, whatever they cost: a silent stream reaches its figure with the work the budget's floor covers and the packets it can hold.
@@ -941,9 +979,56 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
     // The audio packets of an Opus fixture repeated in one logical stream until the decoding charges about Target units.
     internal static class OpusCases
     {
-        public static byte[] Repeated(string fixture, long target = Target)
+        public static byte[] Repeated(string fixture, long target = Target) => Repeated(VorbisStreams.Packets("ogg/" + fixture), target);
+
+        // The same packets again with the frames of each one made into a packet of the count of frames (code 3, frames of different sizes, RFC 6716 section 3.2.5).
+        public static List<byte[]> Packed(string fixture, int frames)
         {
             List<byte[]> packets = VorbisStreams.Packets("ogg/" + fixture);
+            for (int i = 2; i < packets.Count; i++)
+            {
+                byte[] packet = packets[i];
+                var packed = new List<byte> { (byte)(packet[0] | 3), (byte)(0x80 | frames) };
+                for (int f = 0; f < frames - 1; f++)
+                {
+                    int length = packet.Length - 1;
+                    if (length < 252)
+                    {
+                        packed.Add((byte)length);
+                    }
+                    else
+                    {
+                        packed.Add((byte)(252 + (length & 3)));
+                        packed.Add((byte)((length - (252 + (length & 3))) >> 2));
+                    }
+                }
+
+                for (int f = 0; f < frames; f++)
+                {
+                    packed.AddRange(packet.AsSpan(1).ToArray());
+                }
+
+                packets[i] = [.. packed];
+            }
+
+            return packets;
+        }
+
+        // The headers of a stereo file and 200 packets of 20 ms CELT frames (fullband, stereo) whose data starts with 0xFF: the silence flag, decoded with a probability of 1 in 32,768.
+        public static List<byte[]> Silent(string fixture)
+        {
+            List<byte[]> packets = VorbisStreams.Packets("ogg/" + fixture);
+            packets.RemoveRange(2, packets.Count - 2);
+            for (int i = 0; i < 200; i++)
+            {
+                packets.Add([0xFC, 0xFF, 0xFF, 0xFF, 0xFF]);
+            }
+
+            return packets;
+        }
+
+        public static byte[] Repeated(List<byte[]> packets, long target = Target)
+        {
             long perCopy = Math.Max(1, Units(Build(packets, 1)));
             int copies = (int)Math.Clamp(Math.Min(target / perCopy, 400_000 / Math.Max(1, packets.Count - 2)), 2, 1 << 20);
             return Build(packets, copies);
