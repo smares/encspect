@@ -267,15 +267,15 @@ public sealed class CiWorkflowTests
     public void EveryTestClassAWorkflowFiltersOnExists()
     {
         string root = FindRepositoryRoot();
-        HashSet<string> testClasses = [.. typeof(CiWorkflowTests).Assembly.GetTypes().Select(t => t.Name)];
+        string[] testClasses = [.. typeof(CiWorkflowTests).Assembly.GetTypes().Select(t => t.FullName ?? t.Name)];
         int found = 0;
         foreach (string file in Directory.EnumerateFiles(Path.Combine(root, ".github", "workflows"), "*.yml"))
         {
             foreach (Match m in Regex.Matches(File.ReadAllText(file), @"FullyQualifiedName~([A-Za-z0-9_.]+)"))
             {
                 found++;
-                string name = m.Groups[1].Value.Split('.')[^1];
-                Assert.True(testClasses.Contains(name), $"{Path.GetFileName(file)} filters on {name}, which is no test class");
+                string name = m.Groups[1].Value;
+                Assert.True(testClasses.Any(c => c.Contains(name, StringComparison.Ordinal)), $"{Path.GetFileName(file)} filters on {name}, which no test class matches");
             }
         }
 
