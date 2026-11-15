@@ -303,7 +303,7 @@ def find_slope(level_tenths, rate, size):
     result = {"is_searched": True, "is_found": False, "from_frequency": 0, "to_frequency": 0, "fall_tenths": 0, "tenths_per_kilohertz": 0, "top_step_tenths": top_step}
     if band(row) - top_sum < 50 * w:
         return result
-    fc = max(w - 1, first - 1)
+    fc = first
     while row - 1 >= fc and band(row - 1) - band(row - 1 + w) >= 30 * w:
         row -= 1
     fall = band(row) - top_sum
