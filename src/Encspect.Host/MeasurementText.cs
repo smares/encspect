@@ -56,7 +56,7 @@ public static class MeasurementText
 
     public const string SpectralSlopeDescription = "Where the average spectrum is still falling at the top of the search (99 % of Nyquist): the run of 1 kHz bands, from the top band down, that each stand 3 dB or more above the band over them, started where the top band is at least 5 dB under the band below it, with how far the spectrum falls over it and how fast. A fall that ends in a floor is the spectral bandwidth's and an edge is the cutoff's; this is the case that meets neither before the search ends. It is measured at the top of the search, not a line fitted over the whole spectrum.";
 
-    public const string SpectralHolesDescription = "The share of the cells with signal in which a row reads at most 30 dB under both the 1 kHz of rows under it and the 1 kHz over it. A cell is a row in one frame, counted where the frame has signal at that row, from 2 kHz up to the cutoff's edge where one is found, else to where the spectral bandwidth's floor starts, else to 99 % of Nyquist. It counts what the audio shows and says nothing about where a gap came from; the mid and side spectra have shares of their own.";
+    public const string SpectralHolesDescription = "The share of the cells with signal in which a row reads at least 30 dB under both the 1 kHz of rows under it and the 1 kHz over it. A cell is a row in one frame, counted where the frame has signal at that row, from 2 kHz up to the cutoff's edge where one is found, else to where the spectral bandwidth's floor starts, else to 99 % of Nyquist. It counts what the audio shows and says nothing about where a gap came from; the mid and side spectra have shares of their own.";
 
     public const string MeasuredTopic = Topics.Measurements;
 
