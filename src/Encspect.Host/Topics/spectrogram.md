@@ -1,7 +1,7 @@
 ---
 id: spectrogram
 title: Spectrogram and average spectrum
-related: measurements, spectral-cutoff, spectral-bandwidth, spectral-holes, mid-side-spectra, lowpass
+related: measurements, spectral-cutoff, spectral-bandwidth, spectral-slope, spectral-holes, mid-side-spectra, lowpass
 references: P. D. Welch, The use of fast Fourier transform for the estimation of power spectra, IEEE Trans. Audio Electroacoust. 15(2), 1967; F. J. Harris, On the use of windows for harmonic analysis with the discrete Fourier transform, Proc. IEEE 66(1), 1978; G. Heinzel, A. Rudiger and R. Schilling, Spectrum and spectral density estimation by the discrete Fourier transform, 2002
 ---
 

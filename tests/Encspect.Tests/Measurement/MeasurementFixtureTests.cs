@@ -89,6 +89,13 @@ public class MeasurementFixtureTests
                 AssertBandwidth(bandwidth, m.Spectrum.ChannelBandwidths[channel++], m.SampleRate, m.Spectrum.FftSize);
             }
 
+            AssertSlope(model.GetProperty("slope"), m.Spectrum.Slope);
+            channel = 0;
+            foreach (JsonElement slope in model.GetProperty("channel_slopes").EnumerateArray().Take(m.ChannelsMeasured))
+            {
+                AssertSlope(slope, m.Spectrum.ChannelSlopes[channel++]);
+            }
+
             AssertPartial(model.GetProperty("partial_cutoff"), m.Spectrum.PartialCutoff, m.SampleRate, m.Spectrum.FftSize);
         }
 
@@ -474,6 +481,26 @@ public class MeasurementFixtureTests
 
     }
 
+    // The model's slope from its own rows, in integers as the analyzer's: the rows differ by a tenth of a dB at most, so a figure may differ by a few tenths.
+    private static void AssertSlope(JsonElement model, SpectralSlope actual)
+    {
+        if (!model.GetProperty("is_searched").GetBoolean())
+        {
+            Assert.False(actual.IsSearched);
+            return;
+        }
+
+        Assert.Equal(model.GetProperty("is_found").GetBoolean(), actual.IsFound);
+        Assert.InRange(actual.TopStepTenthsOfDb, model.GetProperty("top_step_tenths").GetInt32() - 2, model.GetProperty("top_step_tenths").GetInt32() + 2);
+        if (actual.IsFound)
+        {
+            Assert.Equal(model.GetProperty("from_frequency").GetInt32(), actual.FromFrequency);
+            Assert.Equal(model.GetProperty("to_frequency").GetInt32(), actual.ToFrequency);
+            Assert.InRange(actual.FallTenthsOfDb, model.GetProperty("fall_tenths").GetInt32() - 2, model.GetProperty("fall_tenths").GetInt32() + 2);
+            Assert.InRange(actual.TenthsOfDbPerKilohertz, model.GetProperty("tenths_per_kilohertz").GetInt32() - 2, model.GetProperty("tenths_per_kilohertz").GetInt32() + 2);
+        }
+    }
+
     // The model's bandwidth from its own FFT: the rows differ by a tenth of a dB, so the run may end a row away and the floor differ by a tenth.
     private static void AssertBandwidth(JsonElement model, SpectralBandwidth actual, int rate, int size)
     {
@@ -560,6 +587,45 @@ public class MeasurementFixtureTests
         Assert.InRange(bandwidth.Frequency, lowest - rowHertz, highest + (2 * rowHertz));
         Assert.True(bandwidth.FloorTenthsOfDb < -1000, $"{name}: a floor of {bandwidth.FloorTenthsOfDb} tenths");
         Assert.All(m.Spectrum.ChannelBandwidths, c => Assert.True(c.IsFound));
+    }
+
+    // Step 7b: the spectra built to fall to the top of the search (the lines that fall linearly in dB to the top, FFmpeg's resampler, the natural rolloffs and a full-scale
+    // square wave), with the figures of the model (the design's text); none of them has a cutoff.
+    [Theory]
+    [InlineData("synthetic-lines-slope-21000-23900-48000", 20953, 23766, 156, 67)]
+    [InlineData("synthetic-lines-slope-18000-22000-44100", 17829, 21835, 334, 95)]
+    [InlineData("synthetic-lines-slope-20000-22000-44100", 20026, 21835, 79, 60)]
+    [InlineData("resampled-ffmpeg-44100-to-48000", 21328, 23766, 133, 68)]
+    public void AFallToTheTopOfTheSearchHasASlope(string name, int from, int to, int fall, int perKilohertz)
+    {
+        SpectrumFigures spectrum = Analyze(name, new MeasureOptions()).Streams.Single().Measurements!.Spectrum!;
+
+        Assert.False(spectrum.Cutoff.IsFound, name);
+        Assert.True(spectrum.Slope.IsFound, name);
+        Assert.InRange(spectrum.Slope.FromFrequency, from - 50, from + 50);
+        Assert.Equal(to, spectrum.Slope.ToFrequency);
+        Assert.InRange(spectrum.Slope.FallTenthsOfDb, fall - 2, fall + 2);
+        Assert.InRange(spectrum.Slope.TenthsOfDbPerKilohertz, perKilohertz - 2, perKilohertz + 2);
+    }
+
+    // A fall under 5 dB at the top, an incidental one, a skirt above an edge and an edge or a floor in the search find none.
+    [Theory]
+    [InlineData("synthetic-lines-slope-19000-22000-44100")]
+    [InlineData("lossy-aac-48k")]
+    [InlineData("lossy-aac-64k")]
+    [InlineData("lossy-stereo-equal-aac-64k")]
+    [InlineData("synthetic-lines-16000-then-silence")]
+    [InlineData("synthetic-truepeak-fs4-192000")]
+    [InlineData("synthetic-levels-dc-offset")]
+    [InlineData("resampled-ffmpeg-48000-to-44100")]
+    [InlineData("resampled-ffmpeg-soxr-44100-to-48000")]
+    [InlineData("resampled-ffmpeg-44100-to-96000")]
+    public void ASpectrumWithoutAFallAtTheTopHasNoSlope(string name)
+    {
+        SpectralSlope slope = Analyze(name, new MeasureOptions()).Streams.Single().Measurements!.Spectrum!.Slope;
+
+        Assert.False(slope.IsFound, name);
+        Assert.Equal(0, slope.TenthsOfDbPerKilohertz);
     }
 
     [Theory]

@@ -324,7 +324,7 @@ def build():
         add(f"lines-slope-{pass_hz}-{top_hz}-{rate}", f"Lines at the bin centers from 40 Hz to {top_hz:,} Hz at {rate:,} Hz, flat to {pass_hz:,} Hz and falling linearly to {stop_db:g} dB at {top_hz:,} Hz "
             f"({-stop_db / ((top_hz - pass_hz) / 1000):.1f} dB per kHz), with TPDF dither of one least significant bit: a spectrum still falling at the top of the search.",
             [quantize(lines(rate, top_hz, -20.0, 31, rate, slope=(pass_hz, stop_db)), 16, dither_seed=32)], rate, 16,
-            {"cutoff_hz": None, "pass_hz": pass_hz, "stop_hz": top_hz, "stop_db": stop_db})
+            {"cutoff_hz": None, "no_cutoff": True, "slope_from_hz": pass_hz, "slope_to_hz": top_hz, "stop_db": stop_db})
     base = lines(rate44, 16000, -20.0, 7, n44)
     add("lines-16000-44100-dithered", "The 16 kHz lines with TPDF dither of one least significant bit.", [quantize(base, 16, dither_seed=11)], rate44, 16, {"cutoff_hz": 16000})
     for db in (30, 45, 60):

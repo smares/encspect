@@ -256,6 +256,25 @@ public class MeasurementDeterminismTests
         Assert.True(TruePeakHash == HashBits(peaks), "TruePeakHash = " + HashBits(peaks));
     }
 
+    // The figures of the spectral slope (integers) of the combined spectrum and each channel of the synthetic fixtures that fall to the top of the search, and of one
+    // that does not: a hash of their text, which a change of arithmetic or of the rows moves.
+    [Fact]
+    public void TheSpectralSlopeOfTheSlopeFixturesHashesToAConstant()
+    {
+        var text = new System.Text.StringBuilder();
+        foreach (string name in new[] { "synthetic-lines-slope-21000-23900-48000", "synthetic-lines-slope-18000-22000-44100", "synthetic-lines-slope-20000-22000-44100", "synthetic-lines-slope-19000-22000-44100", "resampled-ffmpeg-44100-to-48000", "synthetic-rolloff-1" })
+        {
+            SpectrumFigures spectrum = MeasurementFixtureTests.Analyze(name, new MeasureOptions()).Streams.Single().Measurements!.Spectrum!;
+            foreach (SpectralSlope slope in spectrum.ChannelSlopes.Prepend(spectrum.Slope))
+            {
+                text.Append(System.Globalization.CultureInfo.InvariantCulture, $"{name}:{slope.IsFound}:{slope.FromFrequency}:{slope.ToFrequency}:{slope.FallTenthsOfDb}:{slope.TenthsOfDbPerKilohertz}:{slope.TopStepTenthsOfDb};");
+            }
+        }
+
+        string hash = Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(text.ToString())));
+        Assert.True(SlopeHash == hash, "SlopeHash = " + hash);
+    }
+
     [Fact]
     public void TheRawRowsOfASyntheticSignalHashToAConstant()
     {
@@ -889,6 +908,7 @@ public class MeasurementDeterminismTests
     }
 
     // The pinned constants. A platform or a change to the arithmetic that differs fails the tests above; the new values print in the message.
+    private const string SlopeHash = "9b686666f706248d14743ebf59c96f79db20f3bee8ece79bf59440098106e5d4";
     private const string RowsHash = "f3b5f53bd0bc966cd84a42188592bd0e525b699b681ec7ebc06df6f0a3d1fc41";
     private const string Rows1024Hash = "7b9f9a01c21fcdb6c2e71db025b77d5ed5bacae23ff1b5aea23500e15f67bd83";
     private const string Rows32768Hash = "2dc1e2f59ef7e098f0fe240d9e135e79620e30793f6bacbfaaf2986babec6236";
