@@ -53,8 +53,8 @@ public class ProtectionTests
 
         string[] lines = writer.ToString().Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
         Assert.EndsWith(",Is Protected,Protection Scheme,DRM Systems,Is Verified,Spectral Cutoff (Hz),Spectral Bandwidth (Hz),Partial Cutoff (Hz),Side Cutoff (Hz),Spectral Holes (%),Sample Peak (dBFS),Maximum True Peak Level (dBTP),Clipping Runs,Integrated Loudness (LUFS),Loudness Range (LU),Digital Silence Stretches,Changes of Low Bits Unused,Grid of the Changes (samples)", lines[0], StringComparison.Ordinal);
-        Assert.EndsWith(",false,,true,\"Common Encryption, AES-CTR (cenc)\",Widevine Content Protection; Microsoft PlayReady; 01234567-89ab-cdef-0123-456789abcdef,,,,,,,,,,,,", lines[1], StringComparison.Ordinal);
-        Assert.EndsWith(",false,,false,,,,,,,,,,,,,,", lines[2], StringComparison.Ordinal);
+        Assert.EndsWith(",false,,true,\"Common Encryption, AES-CTR (cenc)\",Widevine Content Protection; Microsoft PlayReady; 01234567-89ab-cdef-0123-456789abcdef,,,,,,,,,,,,,,", lines[1], StringComparison.Ordinal);
+        Assert.EndsWith(",false,,false,,,,,,,,,,,,,,,,", lines[2], StringComparison.Ordinal);
 
         // A file without a stream says nothing about protection.
         Assert.EndsWith(",,,,,,,,,,,,", lines[3], StringComparison.Ordinal);
