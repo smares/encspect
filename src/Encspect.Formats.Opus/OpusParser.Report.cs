@@ -105,8 +105,9 @@ public sealed partial class OpusParser
                 return null;
             }
 
-            (long at, long length) = _comment is { } tag ? (tag.Offset, tag.Length) : (_parent.Offset, _parent.Length);
-            Node? writer = WriterDetection.Detect(claims, (name, value, description) => new Node(name, at, length, value) { Description = description, Topic = ClaimRoles.TopicOf(name) },
+            // On the stream's own node, the nodes take its ranges too: the samples of a track in MP4 need not be contiguous.
+            (long at, long length, IReadOnlyList<ByteRange>? ranges) = _comment is { } tag ? (tag.Offset, tag.Length, null) : (_parent.Offset, _parent.Length, _parent.Ranges);
+            Node? writer = WriterDetection.Detect(claims, (name, value, description) => new Node(name, at, length, value) { Ranges = ranges, Description = description, Topic = ClaimRoles.TopicOf(name) },
                 (claim, text, name) => _findings.Add(Severity.Info, "opus.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
                 text => OpusencEncoder().Match(text) is { Success: true } opusenc ? $"opusenc {opusenc.Groups[1].Value}" : ClaimRoles.WriterName(text),
                 isEvidenceAtSource: !isFromContainer,

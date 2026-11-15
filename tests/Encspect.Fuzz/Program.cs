@@ -77,6 +77,14 @@ internal static class Program
         int seed = int.Parse(Option(args, "--seed") ?? Environment.TickCount.ToString(CultureInfo.InvariantCulture), CultureInfo.InvariantCulture);
         long? only = Option(args, "--iteration") is { } i ? long.Parse(i, CultureInfo.InvariantCulture) : null;
 
+        // A saved input replays without the fixture set it was mutated from, which changes as fixtures are added.
+        if (Option(args, "--input") is { } saved)
+        {
+            string? result = Check(Analyzer.CreateDefault(), File.ReadAllBytes(saved), checksCollection: true);
+            Console.WriteLine(result ?? "No failure.");
+            return result is null ? 0 : 1;
+        }
+
         byte[][] corpus = Directory.EnumerateFiles(fixtures, "*", SearchOption.AllDirectories)
             .Where(f => Path.GetExtension(f) is ".mp3" or ".mp2" or ".mp1" or ".bin" or ".m4a" or ".mp4" or ".mov" or ".aac" or ".ogg" or ".spx" or ".opus" or ".mpc" or ".ac3" or ".eac3" or ".wma" or ".asf" or ".wv" or ".wvc" or ".flac" or ".tta" or ".thd" or ".mlp" or ".dts" or ".dtshd" or ".mka" or ".mkv" or ".webm" or ".wav" or ".w64" or ".aiff" or ".aifc" or ".ape" && new FileInfo(f).Length <= MaxCorpusFileSize)
             .Order(StringComparer.Ordinal)
