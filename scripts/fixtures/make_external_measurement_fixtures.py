@@ -39,6 +39,19 @@ OUT = ROOT / "tests" / "fixtures" / "measurement"
 TOOLS = "LAME 3.100, vorbis-tools 1.4.2 (oggenc, oggdec), FFmpeg 6.1.1-3ubuntu5 (aac), opus-tools 0.2 with libopus 1.4 (opusenc, opusdec), flac 1.4.3 (Ubuntu 24.04)"
 SECONDS = 1
 
+# The stereo files (docs/design/spectral-analysis.md, Step 7 (c) and (d)): 2 s of a pink mid signal and a pink side signal 12 dB lower, from two generators, as left = mid + side
+# and right = mid - side, encoded and decoded by the same tools; "stereo-<tool>" in the name. Which of them shows a side cutoff under the mid's or holes is what the
+# manifests record; "expect_cutoff" is "any" for them.
+STEREO_SECONDS = 2
+STEREO = {
+    "stereo-lame-j-b64": ("lame", 44100, "-m j -b 64", ["-m", "j", "-b", "64"]),
+    "stereo-lame-j-b128": ("lame", 44100, "-m j -b 128", ["-m", "j", "-b", "128"]),
+    "stereo-lame-s-b128": ("lame", 44100, "-m s -b 128", ["-m", "s", "-b", "128"]),
+    "stereo-oggenc-q0": ("oggenc", 44100, "-q 0", ["0"]),
+    "stereo-aac-64k": ("aac", 44100, "-b:a 64k", ["64k"]),
+    "stereo-opus-48k": ("opus", 48000, "--bitrate 48", ["48"]),
+}
+
 # name: (input rate, settings text, arguments, expected: "found" or "none"). The bitrates are those of a mono stream: half the stereo ones the
 # design's table used (-b 64 for its -b 128), so a channel gets the same bits.
 LAME = {
@@ -65,6 +78,19 @@ def write_input(path, rate, seconds=SECONDS):
         w.setsampwidth(2)
         w.setframerate(rate)
         w.writeframes(b"".join(struct.pack("<h", v) for v in samples))
+
+
+def write_stereo_input(path, rate, seconds=STEREO_SECONDS):
+    """Stereo pink noise, 16 bits: left is mid + side and right mid - side, the mid signal at -20 dBFS RMS and the side signal 12 dB lower, from two generators."""
+    count = rate * seconds
+    mid = pink(count, 201, -20.0, tone_db=-200.0, rate=rate)
+    side = pink(count, 202, -32.0, tone_db=-200.0, rate=rate)
+    clamp = lambda v: max(-32768, min(32767, math.floor(v * 32768 + 0.5)))
+    with wave.open(str(path), "wb") as w:
+        w.setnchannels(2)
+        w.setsampwidth(2)
+        w.setframerate(rate)
+        w.writeframes(b"".join(struct.pack("<hh", clamp(a + b), clamp(a - b)) for a, b in zip(mid, side)))
 
 
 def run(*args):
@@ -177,6 +203,44 @@ def encode_all(names):
                 "description": f"Pink noise at 44,100 Hz, 2 s: the first second encoded with LAME 3.100 {settings} and decoded with lame --decode, the second the source itself: half of the stream is from a lossy encode.",
                 "encoder": {"name": "LAME", "version": "3.100", "settings": settings, "command": f"lame {settings} in.wav out.mp3; lame --decode out.mp3 part.wav; the first 44,100 samples of part.wav then the last 44,100 of in.wav"},
                 "stated": None, "expect_cutoff": "none"})
+        stereo_inputs = {}
+        for name, (tool, rate, settings, args) in STEREO.items():
+            if names and name not in names:
+                continue
+            if rate not in stereo_inputs:
+                stereo_inputs[rate] = temp / f"stereo-in-{rate}.wav"
+                write_stereo_input(stereo_inputs[rate], rate)
+            source, decoded = stereo_inputs[rate], temp / f"{name}.wav"
+            if tool == "lame":
+                mp3 = temp / f"{name}.mp3"
+                result = run("lame", "--verbose", *args, source, mp3)
+                run("lame", "--decode", mp3, decoded)
+                entry = {"description": f"LAME 3.100 {settings} on 2 s of stereo pink noise (a mid signal and a side signal 12 dB lower) at {rate} Hz, decoded with lame --decode.",
+                         "encoder": {"name": "LAME", "version": "3.100", "settings": settings, "command": f"lame --verbose {settings} in.wav out.mp3; lame --decode out.mp3 out.wav"},
+                         "stated": lame_info(mp3, result.stderr + result.stdout)}
+            elif tool == "oggenc":
+                ogg = temp / f"{name}.ogg"
+                run("oggenc", "-Q", "-q", args[0], "-o", ogg, source)
+                run("oggdec", "-Q", "-b", "16", "-e", "0", "-s", "1", "-o", decoded, ogg)
+                entry = {"description": f"oggenc (vorbis-tools 1.4.2) {settings} on 2 s of stereo pink noise (a mid signal and a side signal 12 dB lower) at {rate} Hz, decoded with oggdec.",
+                         "encoder": {"name": "oggenc", "version": "vorbis-tools 1.4.2", "settings": settings, "command": f"oggenc -Q {settings} in.wav -o out.ogg; oggdec -b 16 out.ogg"},
+                         "stated": None}
+            elif tool == "aac":
+                m4a = temp / f"{name}.m4a"
+                run("ffmpeg", "-v", "error", "-y", "-i", source, "-c:a", "aac", "-b:a", args[0], m4a)
+                run("ffmpeg", "-v", "error", "-y", "-i", m4a, "-c:a", "pcm_s16le", decoded)
+                entry = {"description": f"FFmpeg 6.1.1's aac encoder at {args[0]}bps on 2 s of stereo pink noise (a mid signal and a side signal 12 dB lower) at {rate} Hz, decoded with FFmpeg.",
+                         "encoder": {"name": "FFmpeg aac", "version": "6.1.1", "settings": settings, "command": f"ffmpeg -i in.wav -c:a aac {settings} out.m4a; ffmpeg -i out.m4a -c:a pcm_s16le out.wav"},
+                         "stated": None}
+            else:
+                opus = temp / f"{name}.opus"
+                run("opusenc", "--quiet", "--bitrate", args[0], source, opus)
+                run("opusdec", "--quiet", "--rate", str(rate), opus, decoded)
+                entry = {"description": f"opusenc (opus-tools 0.2, libopus 1.4) at {args[0]} kbit/s on 2 s of stereo pink noise (a mid signal and a side signal 12 dB lower) at {rate} Hz, decoded with opusdec.",
+                         "encoder": {"name": "opusenc", "version": "opus-tools 0.2, libopus 1.4", "settings": settings, "command": f"opusenc {settings} in.wav out.opus; opusdec --rate {rate} out.opus out.wav"},
+                         "stated": None}
+            entry["expect_cutoff"] = "any"
+            finish(name, decoded, entry)
         for name, kbps in OPUS.items():
             if names and name not in names:
                 continue
@@ -198,11 +262,15 @@ def write_manifest(name, entry):
     entry["length"] = len(data)
     entry["model"] = mm.measure(data)
     found = entry["model"]["cutoff"]["is_found"]
-    if (entry["expect_cutoff"] == "found") != found:
+    if entry["expect_cutoff"] != "any" and (entry["expect_cutoff"] == "found") != found:
         sys.exit(f"{name}: expected {entry['expect_cutoff']}, the model says {'found' if found else 'none'}")
     (OUT / f"{prefix}-{name}.expected.json").write_text(mm.dumps(entry))
     cutoff = entry["model"]["cutoff"]
     print(name, len(data), cutoff.get("frequency"), cutoff.get("step_tenths"), cutoff.get("frames_showing"), cutoff.get("frames_with_signal"), entry["stated"])
+    side = entry["model"].get("mid_side")
+    if side:
+        print("   mid", side["mid_cutoff"].get("frequency"), side["mid_cutoff"]["step_tenths"], "side", side["side_cutoff"].get("frequency"), side["side_cutoff"]["step_tenths"],
+              "holes", entry["model"]["holes"]["hole_cells"], entry["model"]["holes"]["cells_with_signal"], side["mid_holes"]["hole_cells"], side["side_holes"]["hole_cells"])
 
 
 def main():
