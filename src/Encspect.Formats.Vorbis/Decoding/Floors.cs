@@ -124,7 +124,8 @@ internal sealed class Floor0Curve(Floor0Model model, float[][] vectors, int[] di
         double[] cosines = _cosines ??= new double[order];
         for (int i = 0; i < order; i++)
         {
-            cosines[i] = 2 * DetMath.Cos(Math.Clamp(coefficients[i], 0, Math.PI));
+            // The cosine of the value itself (lsp.c, specification section 6.2.3); the clamp only keeps huge values inside the range DetMath.Cos reduces.
+            cosines[i] = 2 * DetMath.Cos(Math.Clamp(coefficients[i], -1e6, 1e6));
         }
 
         // vorbis_lsp_to_curve as libvorbis 1.3.7 compiles it (lsp.c leaves FLOAT_LOOKUP and INT_LOOKUP undefined): the exact version, whose gain is not clamped above 0 dB.
