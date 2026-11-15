@@ -318,6 +318,13 @@ def build():
     sloped = quantize(lines(rate44, 17000, -20.0, 21, n44, slope=(15000, -90.0)), 16, dither_seed=22)
     add("lines-slope-15000-17000", "Lines at the bin centers from 40 Hz to 17 kHz, flat to 15 kHz and falling linearly to -90 dB at 17 kHz (a sloped lowpass), with TPDF dither of one least significant bit.",
         [sloped], rate44, 16, {"cutoff_hz": None, "pass_hz": 15000, "stop_hz": 17000})
+    # Step 7b: lines flat to a frequency and falling linearly in dB to the stop level at the top, 1 s of mono, TPDF dither of one least significant bit;
+    # the construction states the fall per kilohertz and that the spectrum falls to the top of the search.
+    for pass_hz, top_hz, stop_db, rate in ((21000, 23900, -20.0, 48000), (18000, 22000, -40.0, rate44), (20000, 22000, -12.0, rate44), (19000, 22000, -6.0, rate44)):
+        add(f"lines-slope-{pass_hz}-{top_hz}-{rate}", f"Lines at the bin centers from 40 Hz to {top_hz:,} Hz at {rate:,} Hz, flat to {pass_hz:,} Hz and falling linearly to {stop_db:g} dB at {top_hz:,} Hz "
+            f"({-stop_db / ((top_hz - pass_hz) / 1000):.1f} dB per kHz), with TPDF dither of one least significant bit: a spectrum still falling at the top of the search.",
+            [quantize(lines(rate, top_hz, -20.0, 31, rate, slope=(pass_hz, stop_db)), 16, dither_seed=32)], rate, 16,
+            {"cutoff_hz": None, "pass_hz": pass_hz, "stop_hz": top_hz, "stop_db": stop_db})
     base = lines(rate44, 16000, -20.0, 7, n44)
     add("lines-16000-44100-dithered", "The 16 kHz lines with TPDF dither of one least significant bit.", [quantize(base, 16, dither_seed=11)], rate44, 16, {"cutoff_hz": 16000})
     for db in (30, 45, 60):

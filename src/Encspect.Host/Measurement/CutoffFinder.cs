@@ -128,6 +128,11 @@ internal static class CutoffFinder
 
     private const int BandwidthStepTenths = 200;
 
+    // The slope starts where the top band is 5 dB under the band below it and goes on while a band is 3 dB under the W rows over it.
+    private const int SlopeStartTenths = 50;
+
+    private const int SlopeContinueTenths = 30;
+
     public static SpectralCutoff Find(ReadOnlySpan<short> rows, CutoffCounters? counters, CutoffGeometry geometry)
     {
         if (!geometry.IsSearched || counters is null)
@@ -271,6 +276,61 @@ internal static class CutoffFinder
             IsFound = true,
             Frequency = geometry.Hertz(lowest),
             FloorTenthsOfDb = (int)FloorDivide((2 * floorSum) + w, 2L * w),
+        };
+    }
+
+    // The spectral slope of docs/design/spectral-analysis.md, Step 7b, in integers: the top band is the band of W rows that ends at the top
+    // row; the figure is found where the band under it is at least 5 dB above it; the run goes down from there while the cutoff's step at the
+    // row is at least 3 dB, and stops at the first candidate.
+    public static SpectralSlope FindSlope(ReadOnlySpan<short> rows, CutoffGeometry geometry)
+    {
+        if (!geometry.IsSearched)
+        {
+            return new SpectralSlope { IsSearched = false };
+        }
+
+        int rowCount = MeasurementLimits.Rows;
+        int w = geometry.BandRows;
+        int top = CutoffGeometry.TopRow;
+        Span<long> prefix = stackalloc long[rowCount + 1];
+        for (int r = 0; r < rowCount; r++)
+        {
+            prefix[r + 1] = prefix[r] + (rows[r] == MeasurementLimits.NoPower ? SilentTenths : rows[r]);
+        }
+
+        // The sum of the band of W rows that ends at row e.
+        long topSum = prefix[top + 1] - prefix[top - w + 1];
+        int start = top - w;
+        long startSum = prefix[start + 1] - prefix[start - w + 1];
+        int topStep = (int)FloorDivide((2 * (startSum - topSum)) + w, 2L * w);
+        if (startSum - topSum < SlopeStartTenths * w)
+        {
+            return new SpectralSlope { TopStepTenthsOfDb = topStep };
+        }
+
+        int row = start;
+        while (row - 1 >= geometry.FirstCandidate && row - 1 - w + 1 >= 0)
+        {
+            long band = prefix[row] - prefix[row - w];
+            long over = prefix[row + w] - prefix[row];
+            if (band - over < SlopeContinueTenths * w)
+            {
+                break;
+            }
+
+            row--;
+        }
+
+        long fallSum = (prefix[row + 1] - prefix[row - w + 1]) - topSum;
+        long distance = (2L * (top - row)) - w;
+        return new SpectralSlope
+        {
+            IsFound = true,
+            FromFrequency = geometry.Hertz(row + 1),
+            ToFrequency = geometry.Hertz(top + 1),
+            FallTenthsOfDb = (int)FloorDivide((2 * fallSum) + w, 2L * w),
+            TenthsOfDbPerKilohertz = (int)FloorDivide((2 * fallSum * 2_048_000L) + (w * distance * geometry.SampleRate), 2 * w * distance * geometry.SampleRate),
+            TopStepTenthsOfDb = topStep,
         };
     }
 

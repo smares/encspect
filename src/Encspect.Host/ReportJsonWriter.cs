@@ -827,6 +827,16 @@ public static class ReportJsonWriter
             }
 
             writer.WriteEndArray();
+            WriteSlope(writer, "slope", spectrum.Slope, explain);
+            writer.WriteStartArray("channelSlopes");
+            foreach (SpectralSlope channel in spectrum.ChannelSlopes)
+            {
+                writer.WriteStartObject();
+                WriteSlopeFields(writer, channel);
+                writer.WriteEndObject();
+            }
+
+            writer.WriteEndArray();
             WritePartialCutoff(writer, "partialCutoff", spectrum.PartialCutoff, explain);
             WriteHoles(writer, "holes", spectrum.Holes, explain ? MeasurementText.SpectralHolesDescription : null);
             if (spectrum.MidSide is { } midSide)
@@ -1409,6 +1419,44 @@ public static class ReportJsonWriter
         {
             writer.WriteString("reason", bandwidth.Reason == SpectralBandwidthReason.ReachesTop ? "reachesTop" : "slope");
         }
+    }
+
+    private static void WriteSlope(Utf8JsonWriter writer, string name, SpectralSlope slope, bool explain)
+    {
+        writer.WriteStartObject(name);
+        if (explain)
+        {
+            writer.WriteString("description", MeasurementText.SpectralSlopeDescription);
+            writer.WriteString("topic", MeasurementText.SpectralSlopeTopic);
+        }
+
+        WriteSlopeFields(writer, slope);
+        writer.WriteEndObject();
+    }
+
+    // The same keys whether or not one is found, so the shape does not depend on the audio.
+    private static void WriteSlopeFields(Utf8JsonWriter writer, SpectralSlope slope)
+    {
+        if (!slope.IsSearched)
+        {
+            writer.WriteBoolean("isSearched", false);
+            return;
+        }
+
+        writer.WriteBoolean("isFound", slope.IsFound);
+        WriteQuantity(writer, "from", slope.FromFrequency, "Hz");
+        WriteQuantity(writer, "to", slope.ToFrequency, "Hz");
+        WriteDecibels(writer, "fall", slope.FallTenthsOfDb, "dB");
+        WriteDecibels(writer, "topStep", slope.TopStepTenthsOfDb, "dB");
+        WriteDecibels(writer, "slope", slope.TenthsOfDbPerKilohertz, "dB/kHz");
+    }
+
+    private static void WriteDecibels(Utf8JsonWriter writer, string name, int tenths, string unit)
+    {
+        writer.WriteStartObject(name);
+        writer.WriteNumber("value", tenths / 10m);
+        writer.WriteString("unit", unit);
+        writer.WriteEndObject();
     }
 
     private static void WritePartialCutoff(Utf8JsonWriter writer, string name, PartialCutoff partial, bool explain)

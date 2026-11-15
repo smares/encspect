@@ -15,6 +15,8 @@ The model follows the design's text:
   transition and the frames that show an own step of 15 dB at the step's row (the 1 % reference level and the ten levels of 3 dB below it),
   found where the step is 25 dB or more and half of the frames with signal show it.
 
+- the spectral slope (step 7b): the top band of W rows that ends at row 506, found where the band under it is 5 dB above it, the run down from there
+  while the band that ends at a row is 3 dB above the W rows over it, the fall between the band means and the fall per kilohertz to the middle of the top band;
 - the spectral bandwidth (step 7): the floor of the band of W rows that ends at row 506, the run down while the band that ends at a row is within 3 dB of it,
   found where the band under the run is 20 dB above; the partial cutoff: a third counter, the frames whose band under a row stands 30 dB above the mean
   power of every row above it (up to row 506), the row with the most frames showing, the walk down while half of that maximum shows, found from a tenth of
@@ -276,6 +278,39 @@ def find_bandwidth(level_tenths, rate, size):
         result["reason"] = "slope"
     else:
         result.update(is_found=True, frequency=hertz(lowest, rate, size, bins), floor_tenths=(2 * floor_sum + w) // (2 * w))
+    return result
+
+
+def find_slope(level_tenths, rate, size):
+    """The spectral slope of a spectrum given as 512 tenths of a dB, worked out in its own code: the top band is the band of W rows that ends at
+    row 506; found where the band of W rows under it is at least 5 dB above it; the run goes down one row at a time while the band that ends at the
+    row is at least 3 dB above the W rows over it, down to the first candidate. The fall is the mean of the band that ends at the run's lowest row
+    less the top band's, the slope that fall over the distance from the row's upper edge to the middle of the top band (a row is rate / 1,024 Hz)."""
+    if rate < 8000:
+        return {"is_searched": False}
+    w, first, bins = band_rows(rate, size)
+    level = [-2000 if v is None else v for v in level_tenths]
+    prefix = [0]
+    for v in level:
+        prefix.append(prefix[-1] + v)
+
+    def band(end):
+        return prefix[end + 1] - prefix[end - w + 1]
+
+    top_sum = band(TOP_ROW)
+    row = TOP_ROW - w
+    top_step = (2 * (band(row) - top_sum) + w) // (2 * w)
+    result = {"is_searched": True, "is_found": False, "from_frequency": 0, "to_frequency": 0, "fall_tenths": 0, "tenths_per_kilohertz": 0, "top_step_tenths": top_step}
+    if band(row) - top_sum < 50 * w:
+        return result
+    fc = max(w - 1, first - 1)
+    while row - 1 >= fc and band(row - 1) - band(row - 1 + w) >= 30 * w:
+        row -= 1
+    fall = band(row) - top_sum
+    distance = 2 * (TOP_ROW - row) - w
+    result.update(is_found=True, from_frequency=hertz(row + 1, rate, size, bins), to_frequency=hertz(TOP_ROW + 1, rate, size, bins),
+                  fall_tenths=(2 * fall + w) // (2 * w),
+                  tenths_per_kilohertz=(2 * fall * 2048000 + w * distance * rate) // (2 * w * distance * rate))
     return result
 
 
@@ -741,6 +776,7 @@ def measure(data, layout=None):
     levels = [[None if sums[c][r] <= 0 or frames == 0 else tenths(sums[c][r] / frames) for r in range(ROWS)] for c in range(sets)]
     cutoffs = [find_cutoff(levels[c], counters[c], rate, size) for c in range(sets)]
     bandwidths = [find_bandwidth(levels[c], rate, size) for c in range(sets)]
+    slopes = [find_slope(levels[c], rate, size) for c in range(sets)]
     partial = find_partial(counters[measured], rate, size)
     holes = find_holes(counters[measured], rate, size, cutoffs[measured], bandwidths[measured])
     mid_side = None
@@ -775,6 +811,6 @@ def measure(data, layout=None):
         "sample_rate": rate, "channels": channels, "channels_measured": measured, "bits": bits, "samples": samples, "first_position": first_position or 0,
         "lost_samples": lost, "gaps": gaps, "fft_size": size, "frames": frames, "combined": levels[measured], "per_channel": levels[:measured],
         "cutoff": cutoffs[measured], "channel_cutoffs": cutoffs[:measured], "bandwidth": bandwidths[measured],
-        "channel_bandwidths": bandwidths[:measured], "partial_cutoff": partial, "holes": holes, "mid_side": mid_side, "levels": levels_of(runs, measured, bits, rate),
+        "channel_bandwidths": bandwidths[:measured], "slope": slopes[measured], "channel_slopes": slopes[:measured], "partial_cutoff": partial, "holes": holes, "mid_side": mid_side, "levels": levels_of(runs, measured, bits, rate),
         "loudness": loudness_of(runs, measured, bits, rate, layout), "true_peak": true_peak_of(runs, measured, bits, rate), "spectrogram_columns": columns, "hops_per_column": 1 << shift, "waveform": waveform,
     }

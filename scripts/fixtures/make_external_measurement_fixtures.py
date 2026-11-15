@@ -134,7 +134,13 @@ def lame_info(mp3, verbose_text):
 
 # The files that are not a lossy encode on their own: pink noise resampled by FFmpeg's default resampler (swr; the upsampled content that the step
 # finder misses, docs/design/spectral-analysis.md, Step 7 (a)), and a mixed one (LAME for the first half of 2 s, the source for the rest, Step 7 (b)).
-RESAMPLED = {"ffmpeg-44100-to-48000": (44100, 48000)}
+# Step 7b adds the other direction, a target above the old Nyquist rate and the soxr engine (the figures and the expected cutoff of each are in the manifests).
+RESAMPLED = {
+    "ffmpeg-44100-to-48000": (44100, 48000, [], "none"),
+    "ffmpeg-48000-to-44100": (48000, 44100, [], "none"),
+    "ffmpeg-44100-to-96000": (44100, 96000, [], "found"),
+    "ffmpeg-soxr-44100-to-48000": (44100, 48000, ["-af", "aresample=resampler=soxr"], "found"),
+}
 MIXED = {"lame-b64-then-source": ("-b 64", ["-b", "64"])}
 
 
@@ -185,15 +191,17 @@ def encode_all(names):
                 "description": f"FFmpeg 6.1.1's aac encoder at {bitrate}bps on pink noise at 44,100 Hz, decoded with FFmpeg.",
                 "encoder": {"name": "FFmpeg aac", "version": "6.1.1", "settings": f"-b:a {bitrate}", "command": f"ffmpeg -i in.wav -c:a aac -b:a {bitrate} out.m4a; ffmpeg -i out.m4a -c:a pcm_s16le out.wav"},
                 "stated": None, "expect_cutoff": "found"})
-        for name, (source, target) in RESAMPLED.items():
+        for name, (source, target, extra, expect) in RESAMPLED.items():
             if names and name not in names:
                 continue
             decoded = temp / f"{name}.wav"
-            run("ffmpeg", "-v", "error", "-y", "-i", inputs[source], "-ar", target, "-c:a", "pcm_s16le", decoded)
+            run("ffmpeg", "-v", "error", "-y", "-i", inputs[source], *extra, "-ar", target, "-c:a", "pcm_s16le", decoded)
+            engine = "soxr resampler (libsoxr, -af aresample=resampler=soxr)" if extra else "default resampler (libswresample)"
+            settings = f"{' '.join(extra)} -ar {target}".strip()
             finish(name, decoded, {
-                "description": f"The pink noise at {source} Hz resampled to {target} Hz by FFmpeg 6.1.1's default resampler (libswresample), 16 bits, no dither option.",
-                "encoder": {"name": "FFmpeg swresample", "version": "6.1.1", "settings": f"-ar {target}", "command": f"ffmpeg -i in.wav -ar {target} -c:a pcm_s16le out.wav"},
-                "stated": None, "expect_cutoff": "none"})
+                "description": f"The pink noise at {source} Hz resampled to {target} Hz by FFmpeg 6.1.1's {engine}, 16 bits, no dither option.",
+                "encoder": {"name": "FFmpeg swresample", "version": "6.1.1", "settings": settings, "command": f"ffmpeg -i in.wav {settings} -c:a pcm_s16le out.wav"},
+                "stated": None, "expect_cutoff": expect})
         for name, (settings, args) in MIXED.items():
             if names and name not in names:
                 continue
