@@ -7,21 +7,27 @@
     "tests/fixtures/ac3/",
     "tests/fixtures/mpeg-audio/"
   ],
-  "reason": "Step 7b, spectral slope (docs/design/spectral-analysis.md, \"As built: step 7b\"): spectrum gains slope (the spectral slope of the combined spectrum) and channelSlopes (one for each measured channel), always written; no existing figure changes. The same keys are added to the ALAC, TTA, Matroska, AC-3 and MPEG audio measurement goldens, which this one file covers (the change files of earlier pull requests in those folders stay as they were).",
-  "added": [
+  "reason": "Gate 0.3 fix: the slope's two frequencies are named fromFrequency and toFrequency, as the holes' are (they were from and to); no value changes. The same renames are in the ALAC, TTA, Matroska, AC-3 and MPEG audio measurement goldens, which this one file covers.",
+  "renamedKeys": [
     {
-      "scope": "measurement",
-      "path": [
-        "spectrum"
-      ],
-      "key": "slope"
+      "path": ["spectrum", "slope"],
+      "from": "from",
+      "to": "fromFrequency"
     },
     {
-      "scope": "measurement",
-      "path": [
-        "spectrum"
-      ],
-      "key": "channelSlopes"
+      "path": ["spectrum", "slope"],
+      "from": "to",
+      "to": "toFrequency"
+    },
+    {
+      "path": ["spectrum", "channelSlopes"],
+      "from": "from",
+      "to": "fromFrequency"
+    },
+    {
+      "path": ["spectrum", "channelSlopes"],
+      "from": "to",
+      "to": "toFrequency"
     }
   ]
 }
