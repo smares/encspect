@@ -20,7 +20,10 @@ The model follows the design's text:
 - the spectral bandwidth (step 7): the floor of the band of W rows that ends at row 506, the run down while the band that ends at a row is within 3 dB of it,
   found where the band under the run is 20 dB above; the partial cutoff: a third counter, the frames whose band under a row stands 30 dB above the mean
   power of every row above it (up to row 506), the row with the most frames showing, the walk down while half of that maximum shows, found from a tenth of
-  the frames with signal.
+  the frames with signal;
+- the mid and side spectra (step 7): the rows of (left + right) / 2 and (left - right) / 2 from the pair's bins, each with its own cutoff counters;
+- the spectral holes (step 7): the share of the cells with signal in which a row stands at least 30 dB under both the W rows under it and the W rows over it,
+  per row and over the cells from the first candidate to the cutoff's edge, else the bandwidth's, else row 505.
 
 What is independent of the analyzer is the FFT, the rows (the window, the scale and the normalization), the waveform and the stream figures.
 The cutoff's rules are checked against the construction of the signals (a brickwall at a known edge, none for noise, rolloff and mixed
@@ -179,7 +182,7 @@ def count_frame(rows, counters, w, first):
         # The ceiling: the band under the row against the mean power of every row above it, up to the top of the search.
         if under > 0 and under * (TOP_ROW - r) >= CEILING_RATIO * w * suffix[r + 1]:
             counters.ceiling[r][level] += 1
-        # A hole: the row's power at most a thousandth of the mean power of the W rows under it and of the rows over it (r + 1 up to row 506), both with power.
+        # A hole: the row's power at most a thousandth of the mean power of the W rows under it and of the rows over it (the W rows from r + 1 up, clipped at row 506), both with power.
         if r >= max(first, w):
             own = rows[r] * HOLE_RATIO
             below = suffix[r - w] - suffix[r]

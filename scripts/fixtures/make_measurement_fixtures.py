@@ -12,6 +12,8 @@ decoded audio of a twin equal its FLAC file's), and fixtures that only WAV can h
       with dither), and at 8, 11.025 and 192 kHz; white noise at 2 kHz (the cutoff is not searched under 8 kHz);
     - natural rolloff: white noise through one, two and four cascaded biquad lowpass sections at 16 kHz;
     - mixed content (half band-limited, half wideband), band-limited noise followed by digital silence, an impulse then silence;
+    - lines falling in a sloped lowpass (`lines-slope-*`) and pink noise upsampled by a windowed-sinc filter (`upsampled-*`, the spectral bandwidth and slope);
+    - harmonics of 440 Hz (sparse spectra), stereo pairs with the side under the mid or equal to it (mid/side spectra) and lines with bins left out (holes);
     - 5.1 with a wideband LFE that must not set the cutoff;
     - a stream shorter than one frame, and one of more than 1,024 hops (the grids merge columns);
     - gaps: frames removed, and a jump of 2^40 samples; and the same audio at two block sizes;

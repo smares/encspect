@@ -4,8 +4,9 @@
 A pinned input (generated here: 1 s of mono pink noise with a 330 Hz tone at -20 dBFS RMS, 16 bits, from fixed generators) is encoded with
 LAME, oggenc, FFmpeg's aac encoder and opusenc, decoded again with the encoder's own decoder where it has one (lame --decode, oggdec, opusdec;
 FFmpeg for aac), and written as a FLAC file by flac -8: a lossless file made from a lossy encode, which is the use case of the spectral cutoff
-(docs/design/spectral-analysis.md, "Lossless files from lossy encodes"). The files are 1 s of mono, for the size of the repository. Two files are not
-lossy encodes alone: `resampled-ffmpeg-44100-to-48000` (the input resampled by FFmpeg) and `lossy-lame-b64-then-source` (2 s: the first second encoded, the second the input).
+(docs/design/spectral-analysis.md, "Lossless files from lossy encodes"). Most files are 1 s of mono, for the size of the repository; the stereo ones (`lossy-stereo-*`, 12 files) are 2 s of pink noise with a side signal 12 dB under the mid or as loud
+as it (the mid/side spectra and the holes). Some files are not lossy encodes alone: the resampled ones (`resampled-ffmpeg-*`, the input resampled by FFmpeg),
+and `lossy-lame-b64-then-source` (2 s: the first second encoded, the second the input). LAME -m j at -b 64 decodes at 24,000 Hz (LAME's own resampling), not at the input's rate.
 
 The files are committed because the encoders' output depends on their versions (LAME 3.100, vorbis-tools 1.4.2 with libvorbis, FFmpeg 6.1.1
 of Ubuntu 24.04, opus-tools 0.2 with libopus 1.4, flac 1.4.3: the tools that wrote the committed files; CI's Ubuntu 26.04 has newer ones and

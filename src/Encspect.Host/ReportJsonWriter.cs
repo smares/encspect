@@ -21,7 +21,7 @@ namespace Encspect.Host;
 // concept also has concept, and a numeric series that is a form of a quantity has quantity. A stream of an analysis that
 // asked for measurements has measurements after verification: status, samples, firstPosition, lostSamples, gaps, sampleRate,
 // channels, channelsMeasured, the spectrum (rows in tenths of a dB, the cutoff in whole hertz and tenths of a dB as
-// {value, unit}; the bandwidth, its floor, and the partialCutoff), the levels (samplePeak, rms, dcOffset and dcOffsetLevel as {value, unit, perChannel}, null for minus infinity;
+// {value, unit}; the bandwidth and its floor, the slope, the partialCutoff, the holes with their row shares, and the midSide spectra with their cutoffs and holes), the levels (samplePeak, rms, dcOffset and dcOffsetLevel as {value, unit, perChannel}, null for minus infinity;
 // clipping, digitalSilence and bitDepth as counts, bare, with perChannel objects), the loudness (integratedLoudness, loudnessRange,
 // maximumMomentaryLoudness and maximumShortTermLoudness as {value, unit}, or the unit and an absence where there is no value; the
 // channel weights, the gating blocks and the short-term series) and the truePeak (oversampling and maximumTruePeakLevel as
@@ -1444,8 +1444,8 @@ public static class ReportJsonWriter
         }
 
         writer.WriteBoolean("isFound", slope.IsFound);
-        WriteQuantity(writer, "from", slope.FromFrequency, "Hz");
-        WriteQuantity(writer, "to", slope.ToFrequency, "Hz");
+        WriteQuantity(writer, "fromFrequency", slope.FromFrequency, "Hz");
+        WriteQuantity(writer, "toFrequency", slope.ToFrequency, "Hz");
         WriteDecibels(writer, "fall", slope.FallTenthsOfDb, "dB");
         WriteDecibels(writer, "topStep", slope.TopStepTenthsOfDb, "dB");
         WriteDecibels(writer, "slope", slope.TenthsOfDbPerKilohertz, "dB/kHz");

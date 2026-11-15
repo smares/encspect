@@ -545,7 +545,7 @@ public static class AudioPanels
 
             if (m.Spectrum.MidSide is not null)
             {
-                forms.Add(new GraphFormChoice(GraphForm.MidSide, "Mid/Side", "The average spectrum of the mid and the side signal of the front left and right channels", new SpectrumGraph(stream, m, GraphForm.MidSide)));
+                forms.Add(new GraphFormChoice(GraphForm.MidSide, "Mid/Side", "The average spectrum of the mid and the side signal of the pair of channels (front left and right, or the two channels of a stream without a layout)", new SpectrumGraph(stream, m, GraphForm.MidSide)));
             }
 
             entries.Add(new GraphChoice(SpectrumTitle, GraphHeadings.Audio, combined.Description, forms));
