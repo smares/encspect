@@ -1574,7 +1574,7 @@ Status: built ([as built](#as-built-step-7b)); decided by the lead (2026-11-15),
 
 ### The figure
 
-- **The figure:** where the average spectrum is still falling at the top of the search, how far it falls and from where: "Spectral Slope: falls 13.3 dB from 21,328 to 23,766 Hz, 6.8 dB per kHz". A fall that ends in a floor below the top is the bandwidth's; an edge is the cutoff's; the slope is the third case, a spectrum that meets neither before the search ends.
+- **The figure:** where the average spectrum is still falling at the top of the search, how far it falls and from where: "Spectral Slope: falls 13.3 dB from 21,328 to 23,766 Hz, 6.8 dB per kHz". The slope is found wherever the spectrum still falls at the top, whether or not the cutoff or the bandwidth is found (a fall that runs into a floor narrower than the top band has both); the text line shows it only where no cutoff is found.
 - **How, on the 512 quantized rows,** at the end of the stream, in integer tenths of a dB as `FindBandwidth` works (a row without power is -200 dB), with bands of W rows (1 kHz, the cutoff's band):
   1. **The top band** is the band of W rows that ends at row 506, the bandwidth's floor band.
   2. **Found** where the band of W rows under it is at least 5 dB above it (`S(506 - W) - S(506) ≥ 50 W`, S the sum of the band that ends at a row). Otherwise "none found", with that difference as the **top step** (signed, rounded halves up), as the cutoff gives its largest step.
