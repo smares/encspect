@@ -93,7 +93,8 @@ public class ComplexityTests
 
     // The search for the first stream of the next link, once per stream that never ends, was quadratic (40,000 streams took 7.8 s).
     // The stream limit keeps a whole file far below the counts that show it, so the closing pass is run on a region of 400,000
-    // streams (the old search made 8 * 10^10 comparisons).
+    // streams (the old search made 8 * 10^10 comparisons, about 13 minutes at the 40,000 streams' rate). The pass took 5.9 s on
+    // macos-15-intel in the nightly run of 2026-11-15, so it is held to the class's bound, far under the quadratic time.
     [Fact]
     public void ClosingHundredsOfThousandsOfOpenStreamsIsLinear()
     {
@@ -109,7 +110,7 @@ public class ComplexityTests
         Encspect.Formats.Ogg.OggParser.CloseStreams(region);
         watch.Stop();
 
-        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(5), $"Took {watch.Elapsed.TotalSeconds:F1} s");
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
     }
 
     private static Report TimedOgg(byte[] data)
