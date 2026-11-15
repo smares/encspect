@@ -250,6 +250,38 @@ public sealed class CiWorkflowTests
         Assert.Contains("scripts/ci/check_shards.py", File.ReadAllText(Path.Combine(FindRepositoryRoot(), ".github", "workflows", "ci.yml")), StringComparison.Ordinal);
     }
 
+    // A script's own tests that no workflow runs never fail anything.
+    [Fact]
+    public void EveryPythonTestScriptIsRunByAWorkflow()
+    {
+        string root = FindRepositoryRoot();
+        string workflows = string.Concat(Directory.EnumerateFiles(Path.Combine(root, ".github", "workflows"), "*.yml").Order(StringComparer.Ordinal).Select(File.ReadAllText));
+        string[] scripts = [.. Directory.EnumerateFiles(Path.Combine(root, "scripts"), "test_*.py", SearchOption.AllDirectories)
+            .Select(f => Path.GetRelativePath(root, f).Replace('\\', '/'))];
+        Assert.NotEmpty(scripts);
+        Assert.All(scripts, f => Assert.True(workflows.Contains(f, StringComparison.Ordinal), $"{f} is run by no workflow"));
+    }
+
+    // VSTest exits 0 when a filter matches no test, so a class a workflow step filters on must exist.
+    [Fact]
+    public void EveryTestClassAWorkflowFiltersOnExists()
+    {
+        string root = FindRepositoryRoot();
+        HashSet<string> testClasses = [.. typeof(CiWorkflowTests).Assembly.GetTypes().Select(t => t.Name)];
+        int found = 0;
+        foreach (string file in Directory.EnumerateFiles(Path.Combine(root, ".github", "workflows"), "*.yml"))
+        {
+            foreach (Match m in Regex.Matches(File.ReadAllText(file), @"FullyQualifiedName~([A-Za-z0-9_.]+)"))
+            {
+                found++;
+                string name = m.Groups[1].Value.Split('.')[^1];
+                Assert.True(testClasses.Contains(name), $"{Path.GetFileName(file)} filters on {name}, which is no test class");
+            }
+        }
+
+        Assert.True(found > 0, "no workflow filters on a test class; the check has nothing to read");
+    }
+
     private static Dictionary<string, string[]> ReadJobs()
     {
         string[] lines = File.ReadAllLines(Path.Combine(FindRepositoryRoot(), ".github", "workflows", "ci.yml"));

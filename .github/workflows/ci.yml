@@ -140,6 +140,7 @@ jobs:
           python3 scripts/ci/test_alac_model.py
           python3 scripts/ci/test_official_decoders.py
           python3 scripts/ci/test_compare_pcm.py
+          python3 scripts/fixtures/test_crosscheck_ac3_coreaudio.py
 
   build-test:
     name: build and test (${{ matrix.os }})
@@ -387,16 +388,16 @@ jobs:
           test "$status" = 1
           grep -q 'ENCSPECT_GUI_BACKEND' "$RUNNER_TEMP/no-x11.err"
 
-  # Encspect.Tests in shards (scripts/ci/shards.json), each on every platform of the event, so a platform's
-  # tests take as long as its slowest shard. check_shards.py proves in shard-guard that the shards together
-  # run every test exactly once.
-
       - name: Save the NuGet packages
         if: github.event_name != 'pull_request' && steps.nuget.outputs.cache-hit != 'true'
         uses: actions/cache/save@v6
         with:
           path: ~/.nuget/packages
           key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
+
+  # Encspect.Tests in shards (scripts/ci/shards.json), each on every platform of the event, so a platform's
+  # tests take as long as its slowest shard. check_shards.py proves in shard-guard that the shards together
+  # run every test exactly once.
 
   unit-tests:
     name: unit tests (${{ matrix.os }}, ${{ matrix.shard }})
