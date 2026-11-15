@@ -352,7 +352,16 @@ internal sealed class Eac3Substream : IProgramSubstream
         }
         else if (mode == 2)
         {
-            Array.Copy(_coupling, state.Coupling, 256);
+            // Without a coupled channel (damaged input) the coupling channel is not read: the block gets an empty one, not the previous block's.
+            if (gotCoupling)
+            {
+                Array.Copy(_coupling, state.Coupling, 256);
+            }
+            else
+            {
+                Array.Clear(state.Coupling, 0, 256);
+            }
+
             // The zero-bit bins of the coupling channel take dither in each coupled channel that has dithflag set (A/52 7.3.4), drawn here in block order and added after the channel
             // is extracted from the coupling channel (FinishState), scaled by the band's amplitude as standard coupling scales it by the coordinate.
             Array.Clear(state.EcplDither);

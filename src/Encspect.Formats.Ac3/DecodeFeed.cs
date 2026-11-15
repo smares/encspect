@@ -122,7 +122,8 @@ internal sealed class DecodeFeed
         }
 
         unit.Bytes = [.. unit.Bytes, .. frame.ToArray()];
-        // A dependent frame that is lost or damaged leaves channels of the program frame without audio: the whole program frame is then lost, not output with silent channels.
+        // A dependent frame that is lost (not read to its end) leaves channels of the program frame without audio: the whole program frame is then lost, not output with silent
+        // channels. One whose CRC fails is read and decoded, and marks the unit damaged.
         unit.IsDamaged |= crc2 == Ac3Analysis.CrcState.Mismatch;
         if (!isReadable)
         {
