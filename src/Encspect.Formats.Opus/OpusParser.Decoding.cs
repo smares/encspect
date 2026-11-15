@@ -95,6 +95,7 @@ public sealed partial class OpusParser
             bool unreadable = packet.IsCut || isMalformed || samples == 0;
             bool follows = packet.FollowsGap;
             bool restarts = follows || _areWalkersStale;
+            _session ??= StartSession();
             if (!unreadable)
             {
                 if (restarts)
@@ -105,7 +106,6 @@ public sealed partial class OpusParser
                     }
                 }
 
-                _session ??= StartSession();
                 _writer.IsEnabled = false;
                 _writer.Clear();
                 if (!WalkPacket(packet, index, out bool isOverrun))
