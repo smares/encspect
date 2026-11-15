@@ -60,7 +60,7 @@ Formats read so far ([details](docs/formats/README.md)):
 - MPEG audio: MP1, MP2 and MP3, with VBR headers, mp3PRO, MP3 Surround and MPEG-2 multichannel; decoded for `--measure` (Layers I to III, and the MPEG-2 multichannel extension where it rides in the base frames)
 - MP4, M4A, M4B, 3GP and QuickTime files
 - AAC in MP4, ADTS and ADIF, including HE-AAC, HE-AAC v2 and xHE-AAC
-- Ogg, with Speex, Vorbis and Opus; Vorbis and Opus are decoded for `--measure`
+- Ogg, with Speex, Vorbis and Opus (Opus also in MP4 and Matroska); Vorbis and Opus are decoded for `--measure`
 - Musepack SV4 to SV8
 - AC-3 and E-AC-3, raw and in MP4, with the object audio (JOC) that Dolby Atmos adds; both are decoded for `--measure`
 - DTS (core, XCh, X96, XXCH and the DTS-HD extension substreams with the lossless extension's channel sets and the DTS:X signal), raw and in MP4
