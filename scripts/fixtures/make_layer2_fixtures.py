@@ -791,7 +791,9 @@ def mc_forbidden_values():
         "MPEG-1 Layer II at 48000 Hz and 384 kbps carrying 3/2 + LFE whose frames hold values that ISO/IEC 13818-3 forbids: lfe_allocation 15, "
         "a nonzero tc_allocation with dematrix_procedure 3, dyn_cross_mode 15, and the LFE scalefactor index 63; the fifth and sixth frames are clean. "
         "The multichannel CRCs hold.",
-        mctoolamed={"crc_errors": 0}, guessenc=guessenc(False, True, 3, 0, "3/2"),
+        # No mctoolamed check: it reads dyn_cross_mode 15 and a tc_allocation under dematrix_procedure 3 differently (the PCM cross-check's
+        # EXPLAINED entry), reports one multichannel CRC error where the analyzer finds none, and does not decode the file to silence.
+        guessenc=guessenc(False, True, 3, 0, "3/2"),
     )
     specs = [dict(lfe_alloc=15), dict(dematrix=3, tc_alloc=(1,)), dict(dynamic=Dynamic(modes=[15] + [0] * 11)), dict(lfe_alloc=2, lfe_scalefactor=63), dict(lfe_alloc=2), dict(lfe_alloc=3)]
     f.add_frames(mc_stream(6, 384, 48000, lambda i: Multichannel(center=1, surround=2, lfe=1, seed=i, **specs[i])))
