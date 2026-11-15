@@ -6,6 +6,10 @@ namespace Encspect.Tests;
 // manifest: a code that no input is known to raise is a code nobody knows still works.
 public partial class FindingCoverageTests
 {
+    // The lines of the memory test classes, which pass the codes they expect to MemoryTestBase.Bounded.
+    private static string[] MemoryTestLines(string tests) =>
+        [.. new[] { "Host/MemoryTests.cs", "Host/MusepackAndContainerMemoryTests.cs" }.SelectMany(name => File.ReadAllLines(Path.Combine(tests, name)))];
+
     [GeneratedRegex("\"((?:asf|wma)\\.[a-z0-9]+(?:-[a-z0-9]+)*)\"")]
     private static partial Regex Code();
 
@@ -47,8 +51,8 @@ public partial class FindingCoverageTests
             }
         }
 
-        // MemoryTests.Bounded asserts the code it is given is present.
-        foreach (string line in File.ReadAllLines(Path.Combine(root, "tests", "Encspect.Tests", "Host/MemoryTests.cs")).Where(l => l.Contains("Bounded(\"", StringComparison.Ordinal) && !l.Contains("expectFinding: false", StringComparison.Ordinal)))
+        // MemoryTestBase.Bounded asserts the code it is given is present.
+        foreach (string line in MemoryTestLines(Path.Combine(root, "tests", "Encspect.Tests")).Where(l => l.Contains("Bounded(\"", StringComparison.Ordinal) && !l.Contains("expectFinding: false", StringComparison.Ordinal)))
         {
             foreach (Match m in WavPackBoundedCode().Matches(line))
             {
@@ -391,8 +395,8 @@ public partial class FindingCoverageTests
         string text = string.Concat(new[] { "Formats/Asf/AsfFindingTests.cs", "Formats/Wma/WmaFindingTests.cs" }.Select(name => File.ReadAllText(Path.Combine(tests, name))));
         var asserted = Table().Matches(text).Select(m => m.Groups[1].Value).ToHashSet();
 
-        // MemoryTests.Bounded asserts the code it is given is present, except where told not to expect it.
-        foreach (string line in File.ReadAllLines(Path.Combine(tests, "Host/MemoryTests.cs")).Where(l => l.Contains("Bounded(\"", StringComparison.Ordinal) && !l.Contains("expectFinding: false", StringComparison.Ordinal)))
+        // MemoryTestBase.Bounded asserts the code it is given is present, except where told not to expect it.
+        foreach (string line in MemoryTestLines(tests).Where(l => l.Contains("Bounded(\"", StringComparison.Ordinal) && !l.Contains("expectFinding: false", StringComparison.Ordinal)))
         {
             foreach (Match m in BoundedCode().Matches(line))
             {
