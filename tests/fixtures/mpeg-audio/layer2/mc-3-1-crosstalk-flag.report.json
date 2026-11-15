@@ -14162,6 +14162,18 @@
     "findings": [
       {
         "severity": "Warning",
+        "code": "mpeg-audio.multichannel-value-forbidden",
+        "message": "6 frames have a value in their multichannel side information that ISO/IEC 13818-3 forbids or leaves unassigned, which decoders read in their own way (the first: dyn_cross_mode 5, at 0x0).",
+        "offset": 0,
+        "length": 1152,
+        "path": [
+          0,
+          1
+        ],
+        "count": 6
+      },
+      {
+        "severity": "Warning",
         "code": "mpeg-audio.multichannel-reference-software-reading",
         "message": "6 frames follow the reading of the ISO reference software, not ISO/IEC 13818-3 2.5.2.15: their multichannel CRC holds only where dyn_cross_LR names the base channel of every copied channel, the first at 0x0.",
         "offset": 0,

@@ -14550,6 +14550,19 @@
         ]
       }
     ],
-    "findings": []
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "mpeg-audio.multichannel-value-forbidden",
+        "message": "6 frames have a value in their multichannel side information that ISO/IEC 13818-3 forbids or leaves unassigned, which decoders read in their own way (the first: dyn_cross_mode 5, at 0x0).",
+        "offset": 0,
+        "length": 1152,
+        "path": [
+          0,
+          1
+        ],
+        "count": 6
+      }
+    ]
   }
 ]

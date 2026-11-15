@@ -16339,6 +16339,19 @@
         ]
       }
     ],
-    "findings": []
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "mpeg-audio.multichannel-value-forbidden",
+        "message": "2 frames have a value in their multichannel side information that ISO/IEC 13818-3 forbids or leaves unassigned, which decoders read in their own way (the first: tc_allocation 1, which takes the center out of T2 in phantom center coding, at 0x480).",
+        "offset": 1152,
+        "length": 1152,
+        "path": [
+          0,
+          2
+        ],
+        "count": 2
+      }
+    ]
   }
 ]
