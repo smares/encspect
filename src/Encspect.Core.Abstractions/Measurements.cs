@@ -314,6 +314,62 @@ public sealed record SpectrumFigures
 
     // The frequency at which the most frames show a ceiling of their own, on the combined spectrum (see the spectral-cutoff topic).
     public PartialCutoff PartialCutoff { get; init; } = new();
+
+    // How often a row reads far below both of its neighbors in a frame that has signal there, on the combined spectrum (see the
+    // spectral-holes topic).
+    public SpectralHoles Holes { get; init; } = new();
+
+    // The mid and side spectra of one pair of channels; null where the stream has no pair (see the mid-side-spectra topic).
+    public MidSideFigures? MidSide { get; init; }
+}
+
+// The mid and side spectra of the pair of channels the layout names front left and front right, or of channels 0 and 1 of a stream of two
+// channels without a layout: the average spectra of (L + R) / 2 and (L - R) / 2 worked out from the complex bins of each frame, with a
+// cutoff and the holes of each. Not channels: the combined spectrum, the grids and the levels do not include them.
+public sealed record MidSideFigures
+{
+    // The indices of the channels of the pair, in the stream's channel order.
+    public int LeftChannel { get; init; }
+
+    public int RightChannel { get; init; }
+
+    // The average level of each of the 512 rows, as SpectrumFigures.Combined.
+    public required ReadOnlyMemory<short> Mid { get; init; }
+
+    public required ReadOnlyMemory<short> Side { get; init; }
+
+    public required SpectralCutoff MidCutoff { get; init; }
+
+    public required SpectralCutoff SideCutoff { get; init; }
+
+    public SpectralHoles MidHoles { get; init; } = new();
+
+    public SpectralHoles SideHoles { get; init; } = new();
+}
+
+// The spectral holes of one spectrum: the cells (a row in a frame with signal at that row) in which the row's power is at most a
+// thousandth of the mean power of the W rows under it and of the W rows over it, counted from the first candidate row (2 kHz) to the
+// edge of the content (the cutoff's where found, else the spectral bandwidth's where found, else row 505).
+public sealed record SpectralHoles
+{
+    // False for a rate under 8,000 Hz, where nothing is searched.
+    public bool IsSearched { get; init; } = true;
+
+    public long HoleCells { get; init; }
+
+    public long CellsWithSignal { get; init; }
+
+    // Whole hertz: the lower edge of the first row counted and the upper edge of the last; 0 where no row is counted.
+    public int FromFrequency { get; init; }
+
+    public int ToFrequency { get; init; }
+
+    // For each of the 512 rows, the share of the frames with signal in which the row is a hole, in tenths of a percent;
+    // MeasurementLimits.NoPower for a row that is not a candidate or has no frame with signal. Empty where nothing is searched.
+    public ReadOnlyMemory<short> RowShares { get; init; }
+
+    // The share of the cells with signal that are holes, in tenths of a percent, rounded to the nearest (halves up); 0 where there are none.
+    public int ShareTenths => CellsWithSignal == 0 ? 0 : (int)(((HoleCells * 2000) + CellsWithSignal) / (2 * CellsWithSignal));
 }
 
 // Why no spectral bandwidth is found.

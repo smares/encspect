@@ -120,7 +120,90 @@ internal sealed class FftPlan
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public void Rows(ReadOnlySpan<double> samples, double[] re, double[] im, Span<double> rows)
     {
-        if (samples.Length < Size || re.Length < Half || im.Length < Half || rows.Length < MeasurementLimits.Rows)
+        if (rows.Length < MeasurementLimits.Rows)
+        {
+            throw new ArgumentException("The buffers are too short for the transform.");
+        }
+
+        Transform(samples, re, im);
+        SplitRows(ref MemoryMarshal.GetArrayDataReference(re), ref MemoryMarshal.GetArrayDataReference(im), rows);
+    }
+
+    // As Rows, but writes the bins X[k] (k from 0 to N / 2 - 1, the real and imaginary parts of twice the transform, as the rows sum them) before they are
+    // summed into rows; RowsFromBins then gives the same bits as Rows. The pair of channels of the mid and side spectra needs the bins.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public void Bins(ReadOnlySpan<double> samples, double[] re, double[] im, double[] binsRe, double[] binsIm)
+    {
+        if (binsRe.Length < Half || binsIm.Length < Half)
+        {
+            throw new ArgumentException("The buffers are too short for the transform.");
+        }
+
+        Transform(samples, re, im);
+        ref double zr = ref MemoryMarshal.GetArrayDataReference(re);
+        ref double zi = ref MemoryMarshal.GetArrayDataReference(im);
+        ref double splitCos = ref MemoryMarshal.GetArrayDataReference(_splitCos);
+        ref double splitSin = ref MemoryMarshal.GetArrayDataReference(_splitSin);
+        int m = Half;
+        for (int k = 0; k < m; k++)
+        {
+            Split(ref zr, ref zi, ref splitCos, ref splitSin, m, k, out double xr, out double xi);
+            binsRe[k] = xr;
+            binsIm[k] = xi;
+        }
+    }
+
+    // The 512 rows from stored bins: the sum of |X|^2 over the bins of a row in bin order, scaled, as SplitRows does.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public void RowsFromBins(double[] binsRe, double[] binsIm, Span<double> rows)
+    {
+        int bins = BinsPerRow;
+        for (int row = 0; row < MeasurementLimits.Rows; row++)
+        {
+            double sum = 0;
+            int first = row * bins;
+            for (int k = first; k < first + bins; k++)
+            {
+                double xr = binsRe[k];
+                double xi = binsIm[k];
+                sum += (xr * xr) + (xi * xi);
+            }
+
+            rows[row] = sum * _scale;
+        }
+    }
+
+    // The rows of the mid and side spectra of two channels, from their bins: the mid bin is (L + R) * 0.5 and the side bin (L - R) * 0.5 (the
+    // scaling is exact), summed into rows as a channel's are. Identical channels give a side of exactly 0.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public void MidSideRows(double[] leftRe, double[] leftIm, double[] rightRe, double[] rightIm, Span<double> mid, Span<double> side)
+    {
+        int bins = BinsPerRow;
+        for (int row = 0; row < MeasurementLimits.Rows; row++)
+        {
+            double midSum = 0;
+            double sideSum = 0;
+            int first = row * bins;
+            for (int k = first; k < first + bins; k++)
+            {
+                double mr = (leftRe[k] + rightRe[k]) * 0.5;
+                double mi = (leftIm[k] + rightIm[k]) * 0.5;
+                double sr = (leftRe[k] - rightRe[k]) * 0.5;
+                double si = (leftIm[k] - rightIm[k]) * 0.5;
+                midSum += (mr * mr) + (mi * mi);
+                sideSum += (sr * sr) + (si * si);
+            }
+
+            mid[row] = midSum * _scale;
+            side[row] = sideSum * _scale;
+        }
+    }
+
+    // Windows N samples and runs the complex transform of N / 2 in place in re and im (the input z[n] = x[2n] + i x[2n + 1]).
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private void Transform(ReadOnlySpan<double> samples, double[] re, double[] im)
+    {
+        if (samples.Length < Size || re.Length < Half || im.Length < Half)
         {
             throw new ArgumentException("The buffers are too short for the transform.");
         }
@@ -160,8 +243,6 @@ internal sealed class FftPlan
         {
             Stage(ref reRef, ref imRef, ref Unsafe.Add(ref stageCos, h - 1), ref Unsafe.Add(ref stageSin, h - 1), m, h, UsesVectors && Vector128.IsHardwareAccelerated);
         }
-
-        SplitRows(ref reRef, ref imRef, rows);
     }
 
     // The butterflies of one stage with the half-size h >= 2: j runs over the contiguous twiddles of the stage. Two lanes at a time in
@@ -228,23 +309,30 @@ internal sealed class FftPlan
             int first = row * bins;
             for (int k = first; k < first + bins; k++)
             {
-                int other = k == 0 ? 0 : m - k;
-                double zr1 = Unsafe.Add(ref re, k);
-                double zi1 = Unsafe.Add(ref im, k);
-                double zr2 = Unsafe.Add(ref re, other);
-                double zi2 = Unsafe.Add(ref im, other);
-                double a = zr1 + zr2;
-                double b = zi1 - zi2;
-                double c = zi1 + zi2;
-                double d = zr2 - zr1;
-                double cos = Unsafe.Add(ref splitCos, k);
-                double sin = Unsafe.Add(ref splitSin, k);
-                double xr = a + ((cos * c) + (sin * d));
-                double xi = b + ((cos * d) - (sin * c));
+                Split(ref re, ref im, ref splitCos, ref splitSin, m, k, out double xr, out double xi);
                 sum += (xr * xr) + (xi * xi);
             }
 
             rows[row] = sum * _scale;
         }
+    }
+
+    // Bin k of the real signal's transform (twice X) from Z: the one split step both the rows and the stored bins use.
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void Split(ref double re, ref double im, ref double splitCos, ref double splitSin, int m, int k, out double xr, out double xi)
+    {
+        int other = k == 0 ? 0 : m - k;
+        double zr1 = Unsafe.Add(ref re, k);
+        double zi1 = Unsafe.Add(ref im, k);
+        double zr2 = Unsafe.Add(ref re, other);
+        double zi2 = Unsafe.Add(ref im, other);
+        double a = zr1 + zr2;
+        double b = zi1 - zi2;
+        double c = zi1 + zi2;
+        double d = zr2 - zr1;
+        double cos = Unsafe.Add(ref splitCos, k);
+        double sin = Unsafe.Add(ref splitSin, k);
+        xr = a + ((cos * c) + (sin * d));
+        xi = b + ((cos * d) - (sin * c));
     }
 }
