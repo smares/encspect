@@ -1647,7 +1647,9 @@ The committed fixtures by the draft's rule (the model's rows; cutoff and bandwid
 
 - **One change:** the figure for the combined spectrum and each channel, the model, the seven fixtures, one regeneration of the goldens, the article and the docs, with the checks of [CLAUDE.md](../../CLAUDE.md) for the host and the measurement tests (golden, topic, CSV and determinism tests included). No change to the weights or the memory bound.
 
-### Decisions for the lead
+### Decided by the lead (2026-11-15)
+
+All seven as recommended, option (a) each; S12 after the trade-off was explained (FFmpeg's default 48 to 44.1 kHz resampling stays "none found" with its top step of 3.7 dB, and its fixture records that).
 
 - **S11. What the figure is.** (a) Recommended: a run from the top band down by 1 kHz steps, with its start, its fall between band means and the fall per kHz to the middle of the top band; robust on sparse spectra (the square wave: 16.4 dB/kHz). (b) The same run, with a least-squares line over its rows for the slope: exact on dense spectra (6.9, 10.0, 5.9 dB/kHz on the synthetic slopes), but 0.4 dB/kHz on the square wave for a fall of 10.2 dB. (c) The frequency where the average falls X dB under a reference band: no reference works across contents and rates (the highest frequency at which FFmpeg's resampled pink noise stands 20 dB above its top band is 7,219 Hz, because pink noise rises toward the bass; a band an octave under the top lies in the floor of content upsampled from half the rate).
 - **S12. The thresholds.** (a) Recommended: 5 dB between the top band and the band under it to start, 3 dB a band to go on: no incidental top step (at most 4.5 dB) is found, FFmpeg's 48 to 44.1 kHz resampling (3.7 dB) is not. (b) 3 dB for both: finds the 48 to 44.1 kHz case, and six files whose top band is 3.0 to 4.5 dB under (two A-law files, a DC offset, an 8 kHz loudness tone, the true-peak sines at 96 and 192 kHz), so the figure would be printed for tones. (c) 5 dB for both: the run stops higher (FFmpeg's from 22,031 Hz, 11.4 dB, in an earlier run of the draft), further from where the fall begins.
