@@ -61,6 +61,9 @@ public sealed record ReportSummary(
 
     public int? PartialCutoff { get; init; }
 
+    // The spectral slope in tenths of a dB per kilohertz of the same stream, where measurements found one; null otherwise.
+    public int? SpectralSlopeTenths { get; init; }
+
     // The spectral cutoff in hertz of the side spectrum of the same stream (null without a pair of channels or where none was found), and the
     // share of the cells with signal that are spectral holes, in tenths of a percent (null where there are none with signal).
     public int? SideCutoff { get; init; }
@@ -159,6 +162,7 @@ public sealed record ReportSummary(
             LostSamples = lost,
             SpectralCutoff = first?.Measurements?.Spectrum?.Cutoff is { IsFound: true } cutoff ? cutoff.Frequency : null,
             SpectralBandwidth = first?.Measurements?.Spectrum?.Bandwidth is { IsFound: true } bandwidth ? bandwidth.Frequency : null,
+            SpectralSlopeTenths = first?.Measurements?.Spectrum?.Slope is { IsFound: true } slope ? slope.TenthsOfDbPerKilohertz : null,
             PartialCutoff = first?.Measurements?.Spectrum?.PartialCutoff is { IsFound: true } partial ? partial.Frequency : null,
             SideCutoff = first?.Measurements?.Spectrum?.MidSide?.SideCutoff is { IsFound: true } side ? side.Frequency : null,
             SpectralHolesTenths = first?.Measurements?.Spectrum?.Holes is { CellsWithSignal: > 0 } holes ? holes.ShareTenths : null,

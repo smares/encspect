@@ -357,12 +357,41 @@ public class MeasurementOutputTests
         string[] header = lines[0].Split(',');
         string[] row = lines[1].Split(',');
         int cutoff = Array.IndexOf(header, "Spectral Cutoff (Hz)");
-        Assert.Equal(["Spectral Bandwidth (Hz)", "Partial Cutoff (Hz)", "Side Cutoff (Hz)", "Spectral Holes (%)"], header[(cutoff + 1)..(cutoff + 5)]);
+        Assert.Equal(["Spectral Bandwidth (Hz)", "Spectral Slope (dB/kHz)", "Partial Cutoff (Hz)", "Side Cutoff (Hz)", "Spectral Holes (%)"], header[(cutoff + 1)..(cutoff + 6)]);
 
         // Quoted fields before the figures hold commas, so the columns are counted from the end.
         string FromEnd(string column) => row[row.Length - (header.Length - Array.IndexOf(header, column))];
         Assert.InRange(int.Parse(FromEnd("Side Cutoff (Hz)"), System.Globalization.CultureInfo.InvariantCulture), 10900, 11150);
         Assert.Matches(@"^\d+\.\d$", FromEnd("Spectral Holes (%)"));
+    }
+
+    // Step 7b: the text prints the slope where the cutoff is not found, the JSON always, and the CSV column holds dB per kHz.
+    [Fact]
+    public void TheSlopeIsInTheTextTheJsonAndTheCsv()
+    {
+        string path = Fixture("resampled-ffmpeg-44100-to-48000.flac");
+        (_, string text, _) = Run("--measure", "--explain", "--hide", "frames,tags,statistics", path);
+        (_, string json, _) = Run("--measure", "--json", "--explain", path);
+        (_, string csv, _) = Run("--measure", "--csv", path);
+
+        Assert.Contains("Spectral Slope: falls 13.3 dB from 21,3", text, StringComparison.Ordinal);
+        Assert.Contains(" to 23,766 Hz, 6.8 dB per kHz", text, StringComparison.Ordinal);
+        JsonElement spectrum = JsonDocument.Parse(json).RootElement[0].GetProperty("streams")[0].GetProperty("measurements").GetProperty("spectrum");
+        JsonElement slope = spectrum.GetProperty("slope");
+        Assert.True(slope.GetProperty("isFound").GetBoolean());
+        Assert.Equal("dB/kHz", slope.GetProperty("slope").GetProperty("unit").GetString());
+        Assert.Equal("spectral-slope", slope.GetProperty("topic").GetString());
+        Assert.Equal(1, spectrum.GetProperty("channelSlopes").GetArrayLength());
+        string[] lines = csv.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
+        Assert.Equal("6.8", lines[1].Split(',')[Array.IndexOf(lines[0].Split(','), "Spectral Slope (dB/kHz)")]);
+
+        // Where a cutoff is found the line is left out, the JSON keeps its keys with zeros where none is found.
+        (_, string other, _) = Run("--measure", "--json", Fixture("lossy-aac-48k.flac"));
+        JsonElement none = JsonDocument.Parse(other).RootElement[0].GetProperty("streams")[0].GetProperty("measurements").GetProperty("spectrum").GetProperty("slope");
+        Assert.False(none.GetProperty("isFound").GetBoolean());
+        Assert.Equal(0m, none.GetProperty("fall").GetProperty("value").GetDecimal());
+        (_, string otherText, _) = Run("--measure", Fixture("lossy-aac-48k.flac"));
+        Assert.DoesNotContain("Spectral Slope", otherText, StringComparison.Ordinal);
     }
 
     [Fact]

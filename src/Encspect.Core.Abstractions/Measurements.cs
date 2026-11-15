@@ -312,6 +312,11 @@ public sealed record SpectrumFigures
 
     public IReadOnlyList<SpectralBandwidth> ChannelBandwidths { get; init; } = [];
 
+    // Where the combined spectrum is still falling at the top of the search, and the same for each channel (see the spectral-slope topic).
+    public SpectralSlope Slope { get; init; } = new();
+
+    public IReadOnlyList<SpectralSlope> ChannelSlopes { get; init; } = [];
+
     // The frequency at which the most frames show a ceiling of their own, on the combined spectrum (see the spectral-cutoff topic).
     public PartialCutoff PartialCutoff { get; init; } = new();
 
@@ -401,6 +406,31 @@ public sealed record SpectralBandwidth
     public int FloorTenthsOfDb { get; init; }
 
     public SpectralBandwidthReason Reason { get; init; }
+}
+
+// The spectral slope of one spectrum: where the average spectrum is still falling at the top of the search, from the lowest row of a run of
+// 1 kHz bands that each fall at least 3 dB, started where the top band is at least 5 dB under the band below it. Frequencies are whole hertz,
+// levels in tenths of a dB.
+public sealed record SpectralSlope
+{
+    // False for a rate under 8,000 Hz, where nothing is searched.
+    public bool IsSearched { get; init; } = true;
+
+    public bool IsFound { get; init; }
+
+    // The upper edge of the run's lowest row, and the top of the search; 0 where none is found.
+    public int FromFrequency { get; init; }
+
+    public int ToFrequency { get; init; }
+
+    // The mean of the band that ends at the run's lowest row less the mean of the top band; 0 where none is found.
+    public int FallTenthsOfDb { get; init; }
+
+    // The fall per kilohertz from FromFrequency to the middle of the top band; 0 where none is found.
+    public int TenthsOfDbPerKilohertz { get; init; }
+
+    // The mean of the band under the top band less the mean of the top band, signed, rounded halves up.
+    public int TopStepTenthsOfDb { get; init; }
 }
 
 // The partial cutoff: the row at which the most frames with signal show a ceiling of their own, which finds an edge that only part

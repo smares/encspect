@@ -1242,7 +1242,7 @@ internal sealed class StreamMeasurer
                 bytes += 2L * channel.Length;
             }
 
-            bytes += (64L * (1 + spectrum.ChannelCutoffs.Count)) + (32L * (2 + spectrum.ChannelBandwidths.Count));
+            bytes += (64L * (1 + spectrum.ChannelCutoffs.Count)) + (32L * (2 + spectrum.ChannelBandwidths.Count)) + (32L * (1 + spectrum.ChannelSlopes.Count));
             bytes += 2L * spectrum.Holes.RowShares.Length;
             if (spectrum.MidSide is { } midSide)
             {
@@ -1355,11 +1355,13 @@ internal sealed class StreamMeasurer
         short[][] perChannel = new short[_measured][];
         var cutoffs = new List<SpectralCutoff>();
         var bandwidths = new List<SpectralBandwidth>();
+        var slopes = new List<SpectralSlope>();
         for (int c = 0; c < _measured; c++)
         {
             perChannel[c] = Levels(_average.AsSpan(c * rows, rows));
             cutoffs.Add(CutoffFinder.Find(perChannel[c], _counters.Length > 0 ? _counters[c] : null, _geometry));
             bandwidths.Add(CutoffFinder.FindBandwidth(perChannel[c], _geometry));
+            slopes.Add(CutoffFinder.FindSlope(perChannel[c], _geometry));
         }
 
         short[] combined = Levels(_average.AsSpan(_measured * rows, rows));
@@ -1400,6 +1402,8 @@ internal sealed class StreamMeasurer
                 ChannelCutoffs = cutoffs,
                 Bandwidth = combinedBandwidth,
                 ChannelBandwidths = bandwidths,
+                Slope = CutoffFinder.FindSlope(combined, _geometry),
+                ChannelSlopes = slopes,
                 PartialCutoff = CutoffFinder.FindPartial(_counters.Length > 0 ? _counters[_measured] : null, _geometry),
                 Holes = CutoffFinder.FindHoles(_counters.Length > 0 ? _counters[_measured] : null, _geometry, cutoff, combinedBandwidth),
                 MidSide = midSide,

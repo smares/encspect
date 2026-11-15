@@ -185,6 +185,188 @@ public class CutoffFinderTests
         Assert.Equal(SpectralBandwidthReason.Slope, CutoffFinder.FindBandwidth(Rows(r => r < 300 ? -1101 : -1300), Geometry).Reason);
     }
 
+    // The mean of the W rows that end at a row, in tenths of a dB, as a fraction over W: the sum (the reference of the slope tests, written with loops and no prefix sums).
+    private static long BandSum(short[] rows, int end, int w)
+    {
+        long sum = 0;
+        for (int r = end - w + 1; r <= end; r++)
+        {
+            sum += rows[r] == MeasurementLimits.NoPower ? -2000 : rows[r];
+        }
+
+        return sum;
+    }
+
+    // The slope worked out by the design's text in integers on rationals (Step 7b), for the shapes below.
+    private static SpectralSlope ReferenceSlope(short[] rows, CutoffGeometry geometry)
+    {
+        int w = geometry.BandRows;
+        long top = BandSum(rows, 506, w);
+        int row = 506 - w;
+        long startSum = BandSum(rows, row, w);
+        int topStep = (int)Math.Floor(((double)(startSum - top) / w) + 0.5);
+        if (startSum - top < 50 * w)
+        {
+            return new SpectralSlope { TopStepTenthsOfDb = topStep };
+        }
+
+        while (row - 1 >= geometry.FirstCandidate && BandSum(rows, row - 1, w) - BandSum(rows, row - 1 + w, w) >= 30 * w)
+        {
+            row--;
+        }
+
+        long fall = BandSum(rows, row, w) - top;
+        long distance = (2L * (506 - row)) - w;
+        decimal perKilohertz = (decimal)fall * 2048000m / ((decimal)w * distance * geometry.SampleRate);
+        return new SpectralSlope
+        {
+            IsFound = true,
+            FromFrequency = geometry.Hertz(row + 1),
+            ToFrequency = geometry.Hertz(507),
+            FallTenthsOfDb = (int)Math.Floor((fall / (decimal)w) + 0.5m),
+            TenthsOfDbPerKilohertz = (int)Math.Floor(perKilohertz + 0.5m),
+            TopStepTenthsOfDb = topStep,
+        };
+    }
+
+    private static void AssertSlope(SpectralSlope expected, SpectralSlope actual)
+    {
+        Assert.True(actual.IsSearched);
+        Assert.Equal(expected.IsFound, actual.IsFound);
+        Assert.Equal(expected.FromFrequency, actual.FromFrequency);
+        Assert.Equal(expected.ToFrequency, actual.ToFrequency);
+        Assert.Equal(expected.FallTenthsOfDb, actual.FallTenthsOfDb);
+        Assert.Equal(expected.TenthsOfDbPerKilohertz, actual.TenthsOfDbPerKilohertz);
+        Assert.Equal(expected.TopStepTenthsOfDb, actual.TopStepTenthsOfDb);
+    }
+
+    [Fact]
+    public void AFlatTopHasNoSlopeAndATopStepOfZero()
+    {
+        SpectralSlope slope = CutoffFinder.FindSlope(Rows(_ => -500), Geometry);
+
+        Assert.True(slope.IsSearched);
+        Assert.False(slope.IsFound);
+        Assert.Equal(0, slope.TopStepTenthsOfDb);
+        Assert.Equal(0, slope.FromFrequency);
+        Assert.Equal(0, slope.TenthsOfDbPerKilohertz);
+    }
+
+    // The top band is the 23 rows 484 to 506 at this size. A band of 5.0 dB under it starts the run (inclusive, in sums of integers); 4.9 dB does not.
+    // The run then goes down while the band under a row stands 3 dB over the 23 rows above it, which it does until 14 of those rows are in the
+    // lower level (14 x 5.0 / 23 = 3.04 dB), at row 474: the fall of 5.0 dB from the band of rows 452 to 474 to the top band over 41 rows less 23 / 2.
+    [Fact]
+    public void AFallStartsAtExactlyFiveDecibels()
+    {
+        SpectralSlope found = CutoffFinder.FindSlope(Rows(r => r < 484 ? -500 : -550), Geometry);
+
+        Assert.True(found.IsFound);
+        Assert.Equal(Geometry.Hertz(475), found.FromFrequency);
+        Assert.Equal(Geometry.Hertz(507), found.ToFrequency);
+        Assert.Equal(50, found.FallTenthsOfDb);
+        Assert.Equal(50, found.TopStepTenthsOfDb);
+        AssertSlope(ReferenceSlope(Rows(r => r < 484 ? -500 : -550), Geometry), found);
+
+        SpectralSlope under = CutoffFinder.FindSlope(Rows(r => r < 484 ? -500 : -549), Geometry);
+
+        Assert.False(under.IsFound);
+        Assert.Equal(49, under.TopStepTenthsOfDb);
+        Assert.Equal(0, under.FallTenthsOfDb);
+    }
+
+    // A linear fall from a knee: the fall at the middle of the top band is the construction's, 1 dB a row from row 400.
+    [Fact]
+    public void ALinearFallFromAKneeGivesItsFallAndSlope()
+    {
+        short[] rows = Rows(r => r < 400 ? -300 : -300 - (10 * (r - 400)));
+        SpectralSlope slope = CutoffFinder.FindSlope(rows, Geometry);
+
+        Assert.True(slope.IsFound);
+        AssertSlope(ReferenceSlope(rows, Geometry), slope);
+
+        // 1 dB a row is 1 / 0.04307 kHz = 23.2 dB per kHz; the band means measure it from the knee to the top band, less the knee's share.
+        Assert.InRange(slope.TenthsOfDbPerKilohertz, 200, 232);
+        Assert.InRange(slope.FromFrequency, Geometry.Hertz(380), Geometry.Hertz(402));
+    }
+
+    public static TheoryData<string> Shapes() => new()
+    {
+        "flat", "tilt", "knee", "dip", "reaches-first-candidate", "skirt", "rise", "edge-near-top", "edge-within-a-band", "steep-ramp", "silent-top", "sparse",
+    };
+
+    private static short[] Shape(string name) => name switch
+    {
+        "flat" => Rows(_ => -500),
+        // Pink noise falls about 0.2 dB per kHz at 20 kHz: 0.01 dB a row, which is far under the start.
+        "tilt" => Rows(r => -300 - (r / 4)),
+        "knee" => Rows(r => r < 440 ? -300 : -300 - (7 * (r - 440))),
+        // A run that dips under 3 dB and resumes: a plateau of 30 rows in the middle of the fall ends it.
+        "dip" => Rows(r => r < 300 ? -300 : r < 380 ? -300 - (8 * (r - 300)) : r < 420 ? -940 : -940 - (9 * (r - 420))),
+        // A fall from the first row: the run reaches the first candidate.
+        "reaches-first-candidate" => Rows(r => -(6 * r)),
+        // A skirt: a fast fall above an edge that flattens toward the floor.
+        "skirt" => Rows(r => r < 400 ? -300 : r < 410 ? -300 - (50 * (r - 400)) : -800 - ((r - 410) / 8)),
+        // A rise at the top: a negative top step.
+        "rise" => Rows(r => r < 484 ? -500 : -450),
+        // An edge within 1 kHz of the top, and within one band of the start.
+        "edge-near-top" => Rows(r => r < 490 ? -300 : -1300),
+        "edge-within-a-band" => Rows(r => r < 470 ? -300 : -1300),
+        "steep-ramp" => Rows(r => r < 400 ? -300 : -300 - (40 * (r - 400))),
+        "silent-top" => Rows(r => r < 470 ? -300 : MeasurementLimits.NoPower),
+        "sparse" => Rows(r => r % 8 == 0 && r < 480 ? -200 : MeasurementLimits.NoPower),
+        _ => throw new ArgumentOutOfRangeException(nameof(name)),
+    };
+
+    [Theory]
+    [MemberData(nameof(Shapes))]
+    public void TheSlopeEqualsTheReferenceAtEveryFrameSize(string shape)
+    {
+        short[] rows = Shape(shape);
+        foreach ((int rate, int size) in new[] { (8000, 1024), (22050, 2048), (44100, 4096), (48000, 4096), (96000, 8192), (192000, 16384) })
+        {
+            var geometry = new CutoffGeometry(rate, size);
+            AssertSlope(ReferenceSlope(rows, geometry), CutoffFinder.FindSlope(rows, geometry));
+        }
+    }
+
+    [Fact]
+    public void ARiseAtTheTopHasANegativeTopStep()
+    {
+        SpectralSlope slope = CutoffFinder.FindSlope(Shape("rise"), Geometry);
+
+        Assert.False(slope.IsFound);
+        Assert.Equal(-50, slope.TopStepTenthsOfDb);
+    }
+
+    // A fall that reaches the first candidate (2 kHz) goes no lower: its start is the upper edge of that row.
+    [Fact]
+    public void ARunStopsAtTheFirstCandidate()
+    {
+        SpectralSlope slope = CutoffFinder.FindSlope(Shape("reaches-first-candidate"), Geometry);
+
+        Assert.True(slope.IsFound);
+        Assert.Equal(Geometry.Hertz(Geometry.FirstCandidate + 1), slope.FromFrequency);
+    }
+
+    // A plateau in the middle of a fall ends the run at the plateau: nothing under it is counted.
+    [Fact]
+    public void ARunThatDipsUnderThreeDecibelsStopsAtTheDip()
+    {
+        SpectralSlope slope = CutoffFinder.FindSlope(Shape("dip"), Geometry);
+
+        Assert.True(slope.IsFound);
+        Assert.True(slope.FromFrequency > Geometry.Hertz(380), $"from {slope.FromFrequency}");
+    }
+
+    [Fact]
+    public void ARateUnder8000HertzIsNotSearchedForASlope()
+    {
+        SpectralSlope slope = CutoffFinder.FindSlope(Rows(r => -(6 * r)), new CutoffGeometry(4000, 1024));
+
+        Assert.False(slope.IsSearched);
+        Assert.False(slope.IsFound);
+    }
+
     [Fact]
     public void ARateUnder8000HertzIsNotSearchedForABandwidthOrAPartialCutoff()
     {
