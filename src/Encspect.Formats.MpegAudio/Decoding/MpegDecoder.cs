@@ -13,8 +13,9 @@ public sealed class MpegDecoder : IDecoder
 
     public bool DeclaresChecksums => false;
 
-    // The cheapest legitimate frames are those of 8 kbps MPEG-2.5 at 8 kHz, which need about 600 units a byte (docs/design/lossy-decoders.md, "Per-byte allowance").
-    public long WorkPerInputByte => 2048;
+    // Bytes per sample fall with the bitrate over the sample rate, so the cheapest frames are the lowest bitrate at the highest rate of a version: MPEG-2 Layer III at 8 kbps and
+    // 24 kHz in stereo needs about 3,000 units a byte (docs/design/lossy-decoders.md, "Per-byte allowance").
+    public long WorkPerInputByte => 4096;
 
     public IFrameDecoder Open(DecodeContext context)
     {

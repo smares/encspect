@@ -150,6 +150,7 @@ internal sealed class FrameDecoder : IFrameDecoder
         _withheldLeft = 0;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void DecodeLayer3(MpegHeader header, ReadOnlySpan<byte> bytes, SampleBuffers lent, int channels)
     {
         int count = Layer3Syntax.ReadSideInfo(bytes, header, _granules, out int granuleChannels, out _);
@@ -214,6 +215,7 @@ internal sealed class FrameDecoder : IFrameDecoder
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void DecodeLayer12(MpegHeader header, ReadOnlySpan<byte> bytes, SampleBuffers lent, int channels)
     {
         if (!_layer12.Read(header, bytes))

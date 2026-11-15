@@ -504,7 +504,7 @@ The unit of [decoders.md](decoders.md) applies unchanged: one predictor or filte
 
 | Decoder | Cheapest legitimate frames | Units per byte they need | Declared |
 | --- | --- | --- | --- |
-| MPEG audio | constant-bitrate frames: 8 kbps MPEG-2.5 at 8 kHz; a silent frame costs as much as any other at that rate | about 600 | 2,048 |
+| MPEG audio | constant-bitrate frames at the lowest bitrate and the highest sample rate of a version, since bytes per sample fall with bitrate over rate: MPEG-2 Layer III at 8 kbps and 24 kHz (24-byte frames of 576 samples; (22 + 41) × 576 × 2 / 24 = 3,024 units a byte in stereo, 1,512 in mono), MPEG-2 Layer II at 8 kbps and 24 kHz in stereo (48-byte frames, 2,448), and a 5.1 Layer II stream at 64 kbps and 48 kHz (192-byte frames of a silent extension: (22 + 29 + 8) × 1,152 × 6 / 192 = 2,124); a silent frame costs as much as any other at that rate | about 3,000 | 4,096 |
 | AAC (one decoder for LC and HE-AAC) | silence: 6 bytes per 1,024 stereo samples (an AAC LC file of 60 s of stereo silence in `scratchpad/lossy/sil`, 2,574 of its 2,585 frames; its encoder is not recorded), transforms skipped; HE-AAC v2 at 16 kbps with 48 kHz output | about 8,200 for silence (2,048 × 24 / 6), 4,800 for HE-AAC v2 | 8,192 |
 | Vorbis | coded audio at about 32 kbps, 44.1 kHz stereo; silence: oggenc 1.4.2 at `-q 3` writes 60 s of stereo silence as 2,586 packets of 1 byte, one per long block returning 1,024 samples (the review's measurement, confirmed on its file) | about 1,300 for coded audio; about 49,000 for silence (1,024 × 2 × 24) | 2,048 |
 | Opus | 6 kbps at 48 kHz output, about 2,800 mono and 4,200 stereo at 8 kbps; silence: opusenc's defaults write 60 s of stereo silence as 3,001 packets of 3 bytes (the review's measurement, confirmed) | about 19,200 for silence (960 × 2 × 30 / 3) | 8,192 (decision 18) |
@@ -516,7 +516,7 @@ The unit of [decoders.md](decoders.md) applies unchanged: one predictor or filte
   - Longer silence in a small file stops with `decode.limit`, as [decoders.md](decoders.md) says of digital silence in any coding.
   - A crafted file of 100 MB stops after about 2 minutes at 2,048 units a byte and about 8 minutes at 8,192, as Monkey's Audio's does; Opus at 16,384 would double that (decision 18).
 - **The floor alone** covers anything under 16 MiB at 2,048 units a byte and under 4 MiB at 8,192. Opus frames of 0 bytes are not decoded (decision 5), so DTX costs nothing.
-- **Free-format MPEG** frames can be smaller than any listed bitrate; the MPEG pull request checks the free-format fixtures against the 2,048.
+- **Free-format MPEG** frames can be smaller than any listed bitrate; the MPEG pull request checks the free-format fixtures against the declared allowance (4,096 for MPEG audio).
 
 ### Memory per stream
 

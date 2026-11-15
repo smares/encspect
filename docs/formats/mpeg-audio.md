@@ -363,7 +363,7 @@ The decoder (`mpeg-audio`, codec ID of the parser) follows minimp3 (CC0 1.0, `th
   - **LFE:** twelve samples a frame at 1/96 of the sample rate, output at the stream's rate by holding each sample for 96 samples, scaled by 2, which is the requantized scale of ISO/IEC 11172-3 itself: the decoder's other subband samples are half of it, and the LFE skips the filter bank that makes up the difference (ISO's reference output of test01 confirms it). The 125 Hz low-pass the standard recommends for reproduction is not applied.
   - **A frame that cannot be decoded** (the multichannel CRC fails, the data run past the base frame, another configuration) counts as not decoded, and the output after it is withheld like after a gap.
 - **Accuracy:** the output agrees with minimp3's float output and with FFmpeg's float decoders within the bounds of [development.md](../development.md#mpeg-audio-decoding); neither is claimed bit-exact.
-- **Cost:** 2,048 work units are allowed per byte of the file. A frame charges 22 units per sample of each channel plus the stages (Layer III 41, Layers I and II 29, and 8 more in a multichannel stream).
+- **Cost:** 4,096 work units are allowed per byte of the file. A frame charges 22 units per sample of each channel plus the stages (Layer III 41, Layers I and II 29, and 8 more in a multichannel stream).
 
 ## Not yet covered
 
