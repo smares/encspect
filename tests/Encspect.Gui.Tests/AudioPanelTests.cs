@@ -551,7 +551,7 @@ public class AudioPanelTests
         window.Close();
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void The_figures_name_the_mid_and_side_cutoffs_and_the_holes()
     {
         DetailWindow window = Open(Fixtures.Flac("external-16-stereo-l5.flac"));
