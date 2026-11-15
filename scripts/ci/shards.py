@@ -9,7 +9,7 @@ inside the fully qualified one (".Name."), so a class whose name starts with ano
     shards.py filter <name>          # the --filter expression of a shard, every test of it
     shards.py filter <name> --skip-nightly   # the same without the tests of the nightly run only
 
-A test of the nightly run only (DecoderWorkTests, which times the decoders) carries the trait Category=Nightly; the pull request and the push
+A test of the nightly run only (DecoderWorkTests and MeasurementWorkTests, which time the decoders and the measurements) carries the trait Category=Nightly; the pull request and the push
 to main add NIGHTLY_EXCLUSION to every shard's filter, the nightly schedule and a manual run do not (changes.py).
 """
 
