@@ -1532,13 +1532,13 @@ The model (`measurement_model.py`, its own FFT, mid and side from the full-frame
 | `synthetic-stereo-mid-16000-side-11000` | 16,021 Hz | 16,021 Hz (20/20) | 11,025 Hz (20/20) | 0.0, 0.0, 0.0 % |
 | `synthetic-stereo-identical-channels` | none | none (0 of 20) | side without power in all 512 rows, 0 cells with signal | 0.0 %, 0.0 %, no cells |
 | `synthetic-stereo-independent-noise` | none | none | none (the test allows 6 dB between the rows at a row and 0.5 dB on average) | 0.0, 0.0, 0.0 % |
-| `lossy-stereo-lame-j-b64` (LAME 3.100 `-m j -b 64`, tag Lowpass 11,000 Hz) | 11,016 Hz | 11,016 Hz (45/45, step 67.3 dB) | **10,875 Hz** (33/33, 49.7 dB) | 0.0, 0.0, **12.2 %** (2,013 of 16,449 cells) |
+| `lossy-stereo-lame-j-b64` (LAME 3.100 `-m j -b 64`, tag Lowpass 11,000 Hz, decoded at 24,000 Hz) | 11,016 Hz | 11,016 Hz (45/45, step 67.3 dB) | **10,875 Hz** (33/33, 49.7 dB) | 0.0, 0.0, **12.2 %** (2,013 of 16,449 cells) |
 | `lossy-stereo-lame-j-b128` (`-m j -b 128`, tag Lowpass 17,000 Hz) | 16,839 Hz | 16,839 Hz (42/42) | **16,451 Hz** (41/41, 49.7 dB) | 0.0, 0.0, **3.2 %** (458 of 14,108) |
 | `lossy-stereo-lame-s-b128` (`-m s -b 128`) | 16,839 Hz | 16,839 Hz (42/42) | 16,796 Hz (42/42) | 0.0, 0.0, 0.0 % |
 | `lossy-stereo-oggenc-q0` (oggenc 1.4.2) | 15,246 Hz | 15,246 Hz (42/42) | 15,202 Hz (42/42) | 0.1, 0.1, 0.9 % (116 of 12,705) |
 | `lossy-stereo-aac-64k` (FFmpeg 6.1.1) | 12,489 Hz | 12,489 Hz (42/42) | 12,489 Hz (42/42) | 0.0, 0.0, 0.7 % (75 of 10,248) |
 | `lossy-stereo-opus-48k` (opusenc 0.2, libopus 1.4) | 20,203 Hz | 20,250 Hz (45/45) | **20,063 Hz** (31/36, 25.2 dB) | 0.0, 0.0, 0.0 % |
-| **Side as loud as the mid** (`lossy-stereo-equal-*`, same runs): LAME `-m j -b 64` | 10,992 Hz | 10,992 Hz (45/45) | 10,992 Hz (45/45) | 0.5, 2.4, **2.7 %** (472 of 17,264) |
+| **Side as loud as the mid** (`lossy-stereo-equal-*`, same runs): LAME `-m j -b 64` (decoded at 24,000 Hz) | 10,992 Hz | 10,992 Hz (45/45) | 10,992 Hz (45/45) | 0.5, 2.4, **2.7 %** (472 of 17,264) |
 | LAME `-m j -b 128` | 16,839 Hz | 16,839 Hz (42/42) | 16,839 Hz (42/42) | 0.0, 0.0, 0.1 % |
 | LAME `-m s -b 128` | 16,839 Hz | 16,839 Hz | 16,839 Hz | 0.0, 0.0, 0.0 % |
 | oggenc `-q 0` | 15,246 Hz | 15,246 Hz | 15,202 Hz (42/42, 51.6 dB) | 0.1, 0.1, 0.7 % (89 of 12,850) |
