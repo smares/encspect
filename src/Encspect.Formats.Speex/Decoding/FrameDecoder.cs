@@ -12,9 +12,10 @@ internal sealed class FrameDecoder : IFrameDecoder
     // (docs/design/decoders.md, "As built: the Speex decoder's work weights").
     internal const long SynthesisUnits = 40;
 
-    // After a gap the output that depends on the lost frames' state is withheld: the excitation history of the pitch predictor and the synthesis filters settle within a frame
-    // (docs/design/lossy-decoders.md, "As built: Speex").
-    internal const int WithheldFrames = 1;
+    // After a gap the output that depends on the lost frames' state is withheld: the excitation history of the pitch predictor and the synthesis filters settle slowly. A decoder
+    // that starts over, cut at every packet of the fixtures' speech, is within 16 least significant bits of the one that went on from the 21st frame of 20 ms in 90 % of the cuts
+    // (narrowband 18, wideband and ultra-wideband 21), and from the 25th in 99 % (scripts/fixtures/speex_convergence.py, docs/design/lossy-decoders.md, "As built: Speex").
+    internal const int WithheldFrames = 20;
 
     private enum State
     {

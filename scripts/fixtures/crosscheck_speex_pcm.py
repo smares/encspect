@@ -37,8 +37,23 @@ ROOT = HERE.parents[1]
 FIXTURES = ROOT / "tests" / "fixtures" / "ogg"
 DEFAULT_PCMDUMP = "dotnet " + str(ROOT / "tests" / "Encspect.PcmDump" / "bin" / "Release" / "net10.0" / "Encspect.PcmDump.dll")
 
-# The positions (first, end) that one side has and the other does not, by file and stream: {"only-analyzer": [...], "only-reference": [...]}.
-EXPECTED = {}
+# The positions [first, end) that one side has and the other does not, by file and stream index: {"only-analyzer": [...], "only-reference": [...]}. Each is a decision of the
+# analyzer's, not of the decoder:
+# - After a gap the analyzer starts its decoder over and withholds the next 20 frames (docs/design/lossy-decoders.md, "As built: Speex"); libspeex goes on from the state it has.
+# - A packet the analyzer's parser calls corrupt is lost whole, including the frames before the fault, which libspeex decodes.
+# - libogg, which speexdec reads with, drops a page whose checksum fails or that follows garbage, and a page that ends the file short, which the analyzer's Ogg parser keeps.
+# - speex_pcm starts one decoder for a serial number, so a chain whose second link repeats it is decoded as the first link's audio.
+EXPECTED = {
+    "bad-crc.spx#0": {"only-analyzer": [[1600, 4800]]},
+    "garbage-between-pages.spx#0": {"only-analyzer": [[1600, 4800]]},
+    "chained-same-serial.ogg#0": {"only-reference": [[3360, 6720]]},
+    "continuation-errors.spx#0": {"only-reference": [[800, 3200]]},
+    "sequence-gap.spx#0": {"only-reference": [[1600, 4800]]},
+    "frames-corrupt.spx#0": {"only-reference": [[640, 1120], [1280, 1760], [2080, 3040]]},
+    "speex-wideband-layer-skip.spx#0": {"only-reference": [[800, 960]]},
+    "truncated-page-empty-packet.spx#0": {"only-analyzer": [[0, 640]]},
+    "truncated-page.spx#0": {"only-analyzer": [[6400, 6720]]},
+}
 
 
 def reference_runs(prefix, index, header):
