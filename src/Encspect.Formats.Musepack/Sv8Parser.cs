@@ -73,10 +73,23 @@ internal static class Sv8Parser
 
     public static void Parse(ByteReader reader, Node parent, AnalysisContext context, IReadOnlyList<EncoderClaim> claims)
     {
+        var state = new State(reader.Start, reader.End, context.CancellationToken, context);
+        try
+        {
+            Parse(reader, parent, context, claims, state);
+        }
+        finally
+        {
+            state.Context = null;
+            state.Feed = null;
+        }
+    }
+
+    private static void Parse(ByteReader reader, Node parent, AnalysisContext context, IReadOnlyList<EncoderClaim> claims, State state)
+    {
         long start = reader.Start;
         long end = reader.End;
         var cache = new BlockCache(reader);
-        var state = new State(start, end, context.CancellationToken, context);
         Node node = new("Musepack SV8", start, end - start, null, () => new BlockedChildren(state.Leading, state.Packets.Count + (state.Trailing is null ? 0 : 1), i => PacketNode(state, i)))
         {
             Kind = NodeKind.Stream,
@@ -370,7 +383,7 @@ internal static class Sv8Parser
         {
             state.FeedChecked = true;
             int rate = Sv7Parser.SampleRates[header.RateIndex!.Value];
-            state.Feed = new SubbandFeed(state.Context, new MusepackConfiguration(8, header.MaxBands, header.MidSide, header.Channels!.Value, rate), state.Stream!, true, true);
+            state.Feed = new SubbandFeed(state.Context!, new MusepackConfiguration(8, header.MaxBands, header.MidSide, header.Channels!.Value, rate), state.Stream!, true, true);
             state.Feed.Trim(Sv7Parser.SynthesisDelay + header.Silence, Sv7Parser.SynthesisDelay + header.Samples);
         }
 
@@ -1562,7 +1575,8 @@ internal static class Sv8Parser
 
     private sealed class State(long start, long end, CancellationToken cancellation, AnalysisContext context)
     {
-        public AnalysisContext Context => context;
+        // Released when the parse ends (with the feed, which holds the decode session), since the stream node's children capture this state and the report outlives the input.
+        public AnalysisContext? Context { get; set; } = context;
 
         // The stream's node, which the session's findings point to; built before the packets are read, its children when asked for.
         public Node? Stream { get; set; }
