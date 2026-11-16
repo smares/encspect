@@ -14,7 +14,7 @@ references: RFC 6716 section 2, table 1; section 3.1; ISO/IEC 11172-3 2.4.1.5, 2
 
 **In AC-3 and E-AC-3.** A channel that codes its own exponents sends chbwcod, and its coefficients end at bin 37 + 3 × (chbwcod + 12); a bin is a 512th of the sample rate wide, so chbwcod 60 ends at 23,719 Hz at 48,000 Hz. Coupling and, in E-AC-3, [spectral extension](eac3-spectral-extension) change where a range ends. The figure is the highest end over the [audio blocks](ac3-audio-blocks), the LFE channel left out.
 
-**In DTS.** The core splits the audio into 32 subbands each 1/64 of the sampling frequency wide ([subframes](dts-subframes)). The side information of each subframe gives every subband of every channel a bit allocation index (ABITS), a vector quantization address or, with joint intensity coding, a copy from another channel. The figure is the upper edge of the highest subband that has any of these, over the subframes and channels of a frame, the LFE channel left out.
+**In DTS.** The top of the highest of the 32 subbands with bits, a vector quantization address or a joint intensity copy ([subframes](dts-subframes)).
 
 **In Vorbis.** The end of the last [residue partition](vorbis-floors-and-residues) that reads an entry.
 

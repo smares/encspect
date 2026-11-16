@@ -21,4 +21,4 @@ references: ISO/IEC 11172-3 2.4.2.7, 2.4.3.4.10.2, 2.4.3.4.10.3; ATSC A/52:2018 
 
 **In AC-3.** blksw splits a channel's transform of 512 points into two of 256 for one audio block ([audio blocks](ac3-audio-blocks)), which is AC-3's short block; it signals no other window types. Blocks With Block Switching counts the blocks in which any channel switches, and its graph shows each block of a frame.
 
-**In DTS.** The core does not switch its filter bank of 32 subbands. A transient mode (TMODE) splits a subband's scale factors in two instead ([transient modes](dts-transient-mode)). Subframes With Block Switching counts the subframes in which any subband of any channel has one, and its graph shows each subframe of a frame.
+**In DTS.** A transient mode splits scale factors, not the transform ([transient modes](dts-transient-mode)).

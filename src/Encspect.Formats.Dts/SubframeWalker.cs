@@ -89,10 +89,6 @@ internal sealed class SubframeWalker
 
     private void Fail(SubframeWalk walk, WalkProblem problem, string detail, int subframe)
     {
-        if (Environment.GetEnvironmentVariable("DTSDBG") != null)
-        {
-            Console.Error.WriteLine($"FAIL {problem} {detail} at {_pos}");
-        }
 
         walk.Problem = problem;
         walk.ProblemDetail = detail;
@@ -105,10 +101,6 @@ internal sealed class SubframeWalker
         int channels = a.Channels;
         int ssc = (int)Read(2) + 1;
         int psc = (int)Read(3);
-        if (Environment.GetEnvironmentVariable("DTSDBG") != null)
-        {
-            Console.Error.WriteLine($"sf{sf} pos={_pos} ssc={ssc} psc={psc} ch={a.Channels} subs=[{string.Join(',', a.Subs)}] vq=[{string.Join(',', a.VqSub)}] joinx=[{string.Join(',', a.Joinx)}] thuff=[{string.Join(',', a.Thuff)}] shuff=[{string.Join(',', a.Shuff)}] bhuff=[{string.Join(',', a.Bhuff)}] sel0=[{string.Join(',', a.Sel[0])}] lff={a.Lff} dyn={a.HasDynamicRange} aspf={a.SyncPerSubsubframe} crc={a.HasCrc}");
-        }
 
         if (psc != 0)
         {
