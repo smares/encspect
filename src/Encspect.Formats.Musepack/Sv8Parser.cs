@@ -350,9 +350,9 @@ internal static class Sv8Parser
     }
 
     // Whether libmpcdec accepts the stream header and so decodes the stream: a verified header of version 8 with a defined sample rate, at most 31 used bands (it counts
-    // the bands from 0 and refuses 32), one or two channels, and a sample count that leaves room for the synthesis filter's delay.
+    // the bands from 0 and refuses 32), one or two channels, a sample count that leaves room for the synthesis filter's delay and a beginning silence that fits the 32 bits libmpcdec skips it in.
     private static bool IsDecodable(StreamHeaderInfo header) =>
-        header is { CrcVerified: true, Version: 8, RateIndex: < 4, Channels: 1 or 2, MaxBands: >= 1 and < 32 } && !header.OverflowsDecoder;
+        header is { CrcVerified: true, Version: 8, RateIndex: < 4, Channels: 1 or 2, MaxBands: >= 1 and < 32, Silence: >= 0 and <= int.MaxValue } && !header.OverflowsDecoder;
 
     // The entropy pass over an audio packet's frames, which have no length of their own: each is read to its end, the next one starts there. The frames are walked in every
     // analysis, for the coded bandwidth and the stereo coding, and lent to the decoder where one runs (docs/design/lossy-decoders.md, "The parser and decoder split"). The
