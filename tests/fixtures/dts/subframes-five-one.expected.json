@@ -46,6 +46,9 @@
  "crosscheck": {
   "ffprobe": true,
   "decode": true,
-  "libdca": true
+  "libdca": false,
+  "skip": {
+   "libdca": "libdca 0.0.7 does not decode joint intensity coding: it prints 'Joint stereo coding not supported' and rejects every frame (measured with Ubuntu's libdca 0.0.7); ffmpeg decodes the frames"
+  }
  }
 }

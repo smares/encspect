@@ -114,6 +114,8 @@ def cc(ffprobe=True, decode=True, libdca=True, skip=None, **extra):
     return result
 
 
+JOINT_INTENSITY_LIBDCA = ("libdca 0.0.7 does not decode joint intensity coding: it prints 'Joint stereo coding not supported' and rejects every frame "
+                          "(measured with Ubuntu's libdca 0.0.7); ffmpeg decodes the frames")
 LOSSLESS_BITRATE = "ffmpeg's lossless decoder sets the bit rate to 0 (dca_xll.c: avctx->bit_rate = 0), so ffprobe lists none"
 
 
@@ -386,13 +388,13 @@ def build_coded():
                 "DTS/Statistics/Coded Bandwidth/Highest": f"{hertz(max(bands))} Hz", "DTS/Statistics/Subframes Read": f"{read} subframes",
                 "DTS/Statistics/Subframes With Block Switching": f"{switched} {'subframe' if switched == 1 else 'subframes'}"}
 
-    def coded(name, description, count, form="16be", layout=STEREO, mode="2/0", rate=48000, extra=None, **options):
+    def coded(name, description, count, form="16be", layout=STEREO, mode="2/0", rate=48000, extra=None, check=None, **options):
         options = {"coded": True, "rate": 29, **options}
         opts = [{**options, "seed": 1 + i} for i in range(count)]
         parts = [m.to_form(m.core_frame(**o), form) for o in opts]
         facts = [m.facts_of(**{k: v for k, v in o.items() if k not in ("rate", "size")}) for o in opts]
         fixture(name, ".dts", description, b"".join(parts), rows(parts), [stream("DTS", rate, layout, mode, count * 32 * (options.get("nblks", 15) + 1), vbr=True)], extra or [],
-                fields=figures(facts, rate), crosscheck={"ffprobe": True, "decode": True, "libdca": True})
+                fields=figures(facts, rate), crosscheck=check or cc())
 
     coded("subframes-huffman", "Three stereo core frames with Huffman codes everywhere: bit allocation (BHUFF 0 and 3), transient modes, scale factors (SHUFF 1 and 4), quantization indexes "
           "(SEL 0 to 6, block codes and no further encoding), ADJ, subband prediction, vector quantization from subband 28, two subframes of different lengths.", 3,
@@ -400,7 +402,7 @@ def build_coded():
     coded("subframes-linear", "Three stereo core frames with linear codes: 4-bit and 5-bit bit allocation, 6-bit and 7-bit scale factors, quantizers of up to 26 bits, a transient mode in one book.", 3,
           subs=[22, 30], vqsub=[21, 31], bhuff=[5, 6], shuff=[5, 6], thuff=[3, 0], sel=[[0] * 10, [1, 3, 3, 3, 3, 7, 7, 7, 7, 7]], ssc=[2, 2], nblks=31, scale_range=(5, 30))
     coded("subframes-five-one", "Three 3/2 core frames with an LFE channel of the 64 times interpolation, joint intensity coding (channels 4 and 5 copy channels 1 and 2 above their own bandwidth), "
-          "a sync word after every subsubframe, dynamic range coefficients and four subframes of 2, 1, 3 and 2 subsubframes.", 3, layout=SURROUND_5_1, mode="3/2",
+          "a sync word after every subsubframe, dynamic range coefficients and four subframes of 2, 1, 3 and 2 subsubframes.", 3, check=cc(libdca=False, skip={"libdca": JOINT_INTENSITY_LIBDCA}), layout=SURROUND_5_1, mode="3/2",
           amode=9, lff=2, aspf=1, dynf=1, joinx=[0, 0, 0, 1, 2], subs=[30, 30, 30, 18, 18], vqsub=[27, 27, 27, 17, 17], bhuff=[1, 2, 5, 6, 0], shuff=[0, 2, 3, 4, 1], thuff=[0, 1, 2, 3, 0],
           sel=[sel_a[0], sel_a[1], sel_a[0], sel_a[1], sel_a[0]], ssc=[2, 1, 3, 2], nblks=63, extra=[], scale_range=(5, 30))
     # Without prediction or vector quantization, so that a decoder without the tables of Annex D.10 reconstructs them; scale factors below the range where a frame clips.
@@ -409,7 +411,7 @@ def build_coded():
           scale_range=(5, 30))
     coded("subframes-reconstruct-five-one", "Three 3/2 core frames with an LFE channel of the 128 times interpolation, sum/difference front and surround channels, joint intensity coding (the surround "
           "channels copy the front ones above their own bandwidth), a sync word after every subsubframe and subframes of 2, 1, 3 and 2 subsubframes, without prediction or vector quantization.", 3,
-          layout=SURROUND_5_1, mode="3/2", amode=9, lff=1, aspf=1, sumf=1, sums=1, joinx=[0, 0, 0, 2, 3], subs=[30, 30, 30, 18, 18], vqsub=[31, 31, 31, 19, 19],
+          check=cc(libdca=False, skip={"libdca": JOINT_INTENSITY_LIBDCA}), layout=SURROUND_5_1, mode="3/2", amode=9, lff=1, aspf=1, sumf=1, sums=1, joinx=[0, 0, 0, 2, 3], subs=[30, 30, 30, 18, 18], vqsub=[31, 31, 31, 19, 19],
           bhuff=[1, 2, 5, 6, 0], shuff=[0, 2, 3, 4, 1], thuff=[0, 1, 2, 3, 0], sel=[sel_a[0], sel_a[1], sel_a[0], sel_a[1], sel_a[0]], ssc=[2, 1, 3, 2], nblks=63, scale_range=(5, 30))
     coded("14le-subframes", "Two stereo core frames with coded subframes in the 14-bit little endian form.", 2, form="14le", subs=[30, 30], vqsub=[27, 27], bhuff=[1, 0], shuff=[2, 3], thuff=[0, 1],
           sel=sel_a, ssc=[2, 2], nblks=31, size=1400, scale_range=(5, 30))
