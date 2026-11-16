@@ -226,7 +226,7 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
 
         (Report report, long kept, long peak) = Measure("speex.spx", Stream(packets, frame), Stream(1_000, frame), options);
 
-        Assert.Equal(packets * 160L - 40, report.Streams.Single().Verification!.DecodedSamples);
+        Assert.Equal(packets * 160L, report.Streams.Single().Verification!.DecodedSamples);
         Output.WriteLine($"{kept / packets} bytes kept and {peak / packets} bytes peak per packet with decoding");
         Assert.True(kept < packets * 80L, $"The report keeps {kept / packets} bytes per packet.");
         Assert.True(peak < packets * 110L, $"The live heap grew by {peak / packets} bytes per packet.");
