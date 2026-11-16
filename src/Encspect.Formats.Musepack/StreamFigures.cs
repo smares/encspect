@@ -16,6 +16,11 @@ internal sealed class StreamFigures(int sampleRate)
     private readonly ChunkedList<(long Second, long Bits, long Samples)> _seconds = new();
     private readonly SortedDictionary<int, int> _bins = [];
 
+    // The coded bandwidth of the units that have one: where each starts, its subbands, and per second of audio the highest of the units that start in it.
+    private readonly ChunkedList<(double Offset, byte Bands)> _bandwidth = new();
+    private readonly ChunkedList<(long Second, byte Bands)> _bandwidthSeconds = new();
+    private readonly SortedDictionary<byte, int> _bandwidthCounts = [];
+
     public int Count => _points.Count;
 
     public long Units { get; private set; }
@@ -37,8 +42,14 @@ internal sealed class StreamFigures(int sampleRate)
 
     // inSeries false leaves the unit out of the per-unit series: a frame without data (a damaged
     // length of 0) would cost a point per 20 bits of input.
-    public void Add(long offset, long bits, long samples, bool inSeries = true)
+    // bands: the subbands from the lowest that the unit codes (the highest of its frames), or -1 where it has none (a unit that is cut or damaged).
+    public void Add(long offset, long bits, long samples, bool inSeries = true, int bands = -1)
     {
+        if (bands >= 0)
+        {
+            AddBandwidth(offset, (byte)bands, sampleRate > 0 ? CodedSamples / sampleRate : 0);
+        }
+
         double bitrate = samples > 0 && sampleRate > 0 ? bits * (double)sampleRate / samples / 1000 : 0;
         if (inSeries)
         {
@@ -69,6 +80,30 @@ internal sealed class StreamFigures(int sampleRate)
         MinimumBitrate = Math.Min(MinimumBitrate, bitrate);
         MaximumBitrate = Math.Max(MaximumBitrate, bitrate);
     }
+
+    private void AddBandwidth(long offset, byte bands, long second)
+    {
+        _bandwidth.Add((offset, bands));
+        _bandwidthCounts[bands] = _bandwidthCounts.GetValueOrDefault(bands) + 1;
+        if (sampleRate > 0)
+        {
+            if (_bandwidthSeconds.Count > 0 && _bandwidthSeconds[_bandwidthSeconds.Count - 1].Second == second)
+            {
+                (long _, byte highest) = _bandwidthSeconds[_bandwidthSeconds.Count - 1];
+                _bandwidthSeconds.SetLast((second, Math.Max(highest, bands)));
+            }
+            else
+            {
+                _bandwidthSeconds.Add((second, bands));
+            }
+        }
+    }
+
+    // The upper edge of the highest subband the unit codes in whole hertz: the subbands are 1/64 of the sample rate wide, rounded half up.
+    public long Bandwidth(int bands) => ((bands * (long)sampleRate) + 32) / 64;
+
+    // The node of the coded bandwidth figures, once AddTo has made it.
+    public Node? BandwidthNode { get; private set; }
 
     // Per unit, its bitrate at its offset; per second of audio that a unit starts in, the bits of the
     // units that start in it over their duration, rounded half to even.
@@ -117,6 +152,46 @@ internal sealed class StreamFigures(int sampleRate)
             series.Add(new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, values, anchor) { Description = Explain.BitrateOverTimeSeries });
         }
 
+        if (_bandwidth.Count > 0 && BandwidthNode is not null)
+        {
+            var x = new double[_bandwidth.Count];
+            var hertz = new double[_bandwidth.Count];
+            for (int i = 0; i < x.Length; i++)
+            {
+                if (i % 4096 == 0)
+                {
+                    cancellation.ThrowIfCancellationRequested();
+                }
+
+                x[i] = _bandwidth[i].Offset;
+                hertz[i] = Bandwidth(_bandwidth[i].Bands);
+            }
+
+            series.Add(new Series("Coded Bandwidth", "Hz", SeriesAxis.FrameOffset, x, hertz)
+            {
+                Description = Explain.CodedBandwidthSeries,
+                Concept = GraphConcept.CodedBandwidth,
+                Quantity = "Coded Bandwidth",
+            });
+            if (_bandwidthSeconds.Count > 0)
+            {
+                var secondX = new double[_bandwidthSeconds.Count];
+                var secondValues = new double[_bandwidthSeconds.Count];
+                for (int i = 0; i < secondX.Length; i++)
+                {
+                    secondX[i] = _bandwidthSeconds[i].Second;
+                    secondValues[i] = Bandwidth(_bandwidthSeconds[i].Bands);
+                }
+
+                series.Add(new Series("Coded Bandwidth Over Time", "Hz", SeriesAxis.Seconds, secondX, secondValues, BandwidthNode)
+                {
+                    Description = Explain.CodedBandwidthOverTimeSeries,
+                    Concept = GraphConcept.CodedBandwidth,
+                    Quantity = "Coded Bandwidth",
+                });
+            }
+        }
+
         return series;
     }
 
@@ -139,6 +214,15 @@ internal sealed class StreamFigures(int sampleRate)
         foreach ((int bin, int count) in _bins)
         {
             distribution.Add(cover($"{bin * BinWidth} to {(bin * BinWidth) + BinWidth - 1} kbps", $"{Counted(count, unitName, unitPlural)} ({Share(count, Units)})", Explain.DistributionBin));
+        }
+
+        if (_bandwidthCounts.Count > 0)
+        {
+            Node bandwidth = statistics.Add(new Node("Coded Bandwidth", statistics.Offset, statistics.Length) { Description = Explain.CodedBandwidth, Topic = Topics.CodedBandwidth });
+            bandwidth.Add(cover("Lowest", NodeValue.Integer(Bandwidth(_bandwidthCounts.Keys.First()), "Hz"), Explain.BandwidthLowest));
+            bandwidth.Add(cover("Most Common", NodeValue.Integer(Bandwidth(_bandwidthCounts.MaxBy(b => b.Value).Key), "Hz"), Explain.BandwidthMostCommon));
+            bandwidth.Add(cover("Highest", NodeValue.Integer(Bandwidth(_bandwidthCounts.Keys.Last()), "Hz"), Explain.BandwidthHighest));
+            BandwidthNode = bandwidth;
         }
     }
 

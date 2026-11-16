@@ -333,7 +333,7 @@ internal static class Sv7Parser
     private static WalkFacts WalkFrame(SubbandFeed feed, WordStream words, long dataBit, int frameLength, int maxBand, bool midSide)
     {
         int startBit = (int)(dataBit & 31);
-        int bytes = Math.Min(SubbandFeed.WindowBytes, (((startBit + frameLength + 31) >> 5) + 2) << 2);
+        int bytes = Math.Min(SubbandFeed.FrameWindowBytes, (((startBit + frameLength + 31) >> 5) + 2) << 2);
         words.CopyWords(dataBit >> 5, feed.Buffer.AsSpan(0, bytes));
         feed.Begin(bytes, startBit, startBit + frameLength);
         var facts = new WalkFacts();
@@ -626,7 +626,8 @@ internal static class Sv7Parser
 
             complete++;
             lostFrames += (frame.Flags & (Flags.BadResolution | Flags.Overrun | Flags.Mismatch)) != 0 ? 1 : 0;
-            figures.Add(state.Layout.WordStart(frame.Bit), frame.End - frame.Bit, FrameSamples, inSeries: frame.Length > 0);
+            figures.Add(state.Layout.WordStart(frame.Bit), frame.End - frame.Bit, FrameSamples, inSeries: frame.Length > 0,
+                bands: frame.Length > 0 && (frame.Flags & (Flags.Overrun | Flags.BadResolution | Flags.Mismatch)) == 0 ? frame.UsedBands : -1);
             if (frame.Length > 0)
             {
                 state.Stereo.Add(System.Numerics.BitOperations.PopCount(frame.MidSide) > 0 ? 1 : 0);

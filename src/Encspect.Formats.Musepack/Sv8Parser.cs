@@ -73,7 +73,14 @@ internal static class Sv8Parser
         long start = reader.Start;
         long end = reader.End;
         var cache = new BlockCache(reader);
-        var state = new State(start, end, context.CancellationToken);
+        var state = new State(start, end, context.CancellationToken, context);
+        Node node = new("Musepack SV8", start, end - start, null, () => new BlockedChildren(state.Leading, state.Packets.Count + (state.Trailing is null ? 0 : 1), i => PacketNode(state, i)))
+        {
+            Kind = NodeKind.Stream,
+            Description = Explain.Sv8Stream,
+            Topic = Topics.Sv8Packets,
+        };
+        state.Stream = node;
         state.Leading.Add(new Node("Magic", start, 4, "MPCK") { Description = Explain.Sv8Magic, Topic = Topics.Sv8Packets });
 
         long position = start + 4;
@@ -172,13 +179,6 @@ internal static class Sv8Parser
                 GapNode(position, end));
         }
 
-        int count = state.Packets.Count + (state.Trailing is null ? 0 : 1);
-        var node = new Node("Musepack SV8", start, end - start, null, () => new BlockedChildren(state.Leading, count, i => PacketNode(state, i)))
-        {
-            Kind = NodeKind.Stream,
-            Description = Explain.Sv8Stream,
-            Topic = Topics.Sv8Packets,
-        };
         parent.Add(node);
         Check(state, ended);
         AddStream(state, node, context, claims);
@@ -267,6 +267,7 @@ internal static class Sv8Parser
                     $"The audio packet at 0x{packet.Offset:X} declares {Counts.Of(packet.Size, "byte", "bytes")}; the data holds {packet.Length}: the stream is cut short.", PacketShell(state, index));
             }
 
+            WalkAudio(state, cache, index, packet);
             return;
         }
 
@@ -343,6 +344,129 @@ internal static class Sv8Parser
         }
 
         state.Detailed[index] = node;
+    }
+
+    // Whether libmpcdec accepts the stream header and so decodes the stream: a verified header of version 8 with a defined sample rate, at most 31 used bands (it counts
+    // the bands from 0 and refuses 32), one or two channels, and a sample count that leaves room for the synthesis filter's delay.
+    private static bool IsDecodable(StreamHeaderInfo header) =>
+        header is { CrcVerified: true, Version: 8, RateIndex: < 4, Channels: 1 or 2, MaxBands: >= 1 and < 32 } && !header.OverflowsDecoder;
+
+    // The entropy pass over an audio packet's frames, which have no length of their own: each is read to its end, the next one starts there. The frames are walked in every
+    // analysis, for the coded bandwidth and the stereo coding, and lent to the decoder where one runs (docs/design/lossy-decoders.md, "The parser and decoder split"). The
+    // packet must end within 7 bits of its last frame's end where libmpcdec decodes all its frames (mpc_demux_decode_inner), and a frame that runs past the packet is lost with the
+    // frames after it, since their start is unknown.
+    private static void WalkAudio(State state, BlockCache cache, int index, Packet packet)
+    {
+        StreamHeaderInfo? header = state.Header;
+        if (header is null || !IsDecodable(header))
+        {
+            return;
+        }
+
+        if (!state.FeedChecked)
+        {
+            state.FeedChecked = true;
+            int rate = Sv7Parser.SampleRates[header.RateIndex!.Value];
+            state.Feed = new SubbandFeed(state.Context, new MusepackConfiguration(8, header.MaxBands, header.MidSide, header.Channels!.Value, rate), state.Stream!, true);
+            state.Feed.Trim(Sv7Parser.SynthesisDelay + header.Silence, Sv7Parser.SynthesisDelay + header.Samples);
+        }
+
+        SubbandFeed feed = state.Feed!;
+        long perPacket = header.FramesPerPacket;
+        long position = Sv7Parser.FrameSamples * (state.FedFrames + state.CutFrames);
+        if (packet.IsTruncated)
+        {
+            // A packet the data cuts short is lost whole (AddStream counts its frames as cut).
+            long declared = state.FramesIn(index);
+            long cut = header.Samples > 0 ? Math.Min(declared, Math.Max(0, header.ExpectedFrames - state.FedFrames - state.CutFrames)) : declared;
+            if (cut > 0)
+            {
+                state.CutFrames += cut;
+                feed.Feed(position, default, true, packet.Offset, packet.Offset + packet.Length, "Audio Packet", (int)cut);
+            }
+
+            return;
+        }
+
+        long count = header.Samples > 0 ? Math.Min(perPacket, Math.Max(0, header.ExpectedFrames - state.FedFrames)) : perPacket;
+        if (count == 0)
+        {
+            return;
+        }
+
+        state.FedFrames += count;
+        long payloadStart = packet.Offset + packet.HeaderLength;
+        long payloadBytes = packet.Length - packet.HeaderLength;
+        long payloadBits = payloadBytes * 8;
+        long windowFirst = -1;
+        int windowLength = 0;
+        long bit = 0;
+        int highest = -1;
+        int frames = 0;
+        for (long frame = 0; frame < count; frame++)
+        {
+            if ((frame & 1023) == 0)
+            {
+                state.Cancellation.ThrowIfCancellationRequested();
+            }
+
+            long byteIndex = bit >> 3;
+            if (windowFirst < 0 || byteIndex < windowFirst || (byteIndex + SubbandFeed.FrameWindowBytes > windowFirst + windowLength && windowFirst + windowLength < payloadBytes))
+            {
+                windowFirst = byteIndex;
+                windowLength = (int)Math.Min(SubbandFeed.PacketWindowBytes, Math.Max(0, payloadBytes - byteIndex));
+                cache.Read(payloadStart + byteIndex, feed.Buffer.AsSpan(0, windowLength));
+            }
+
+            int at = (int)(bit - (windowFirst * 8));
+            feed.Begin(windowLength, at, (int)Math.Min(payloadBits - (windowFirst * 8), windowLength * 8L));
+            var facts = new WalkFacts();
+            Sv8Syntax.Walk(feed.State, feed.Bits, frame == 0, header.MaxBands, header.MidSide, ref facts);
+            long end = (windowFirst * 8) + feed.Bits.Position;
+            if (facts.Problems == WalkProblems.None && frame == perPacket - 1 && payloadBits - end > 7)
+            {
+                facts.Problems |= WalkProblems.DataShort;
+            }
+
+            if (facts.Problems == WalkProblems.None && feed.Bits.IsOverrun)
+            {
+                facts.Problems |= WalkProblems.DataOverrun;
+            }
+
+            if (facts.Problems != WalkProblems.None)
+            {
+                // The frame is damaged, and the frames after it have no known start.
+                long lost = count - frame;
+                state.LostFrames += lost;
+                state.MismatchPackets++;
+                state.FirstMismatch ??= (index, frame);
+                if (feed.IsDecoding)
+                {
+                    feed.Feed(position + (frame * Sv7Parser.FrameSamples), facts, true, packet.Offset, packet.Offset + packet.Length, "Audio Packet", (int)lost);
+                }
+                else
+                {
+                    feed.Feed(0, facts, true, 0, 0);
+                }
+
+                break;
+            }
+
+            if (feed.IsDecoding)
+            {
+                feed.Feed(position + (frame * Sv7Parser.FrameSamples), facts, false, packet.Offset, packet.Offset + packet.Length, "Audio Packet");
+            }
+
+            highest = Math.Max(highest, facts.UsedBands);
+            feed.Codes[frames++] = facts.MidSide != 0 ? (byte)1 : (byte)0;
+            state.MidSideBands += System.Numerics.BitOperations.PopCount(facts.MidSide);
+            state.FlaggedBands += facts.Flagged;
+            state.NoiseChannels += facts.Noise;
+            bit = end;
+        }
+
+        state.Stereo.AddAll(feed.Codes.AsSpan(0, frames));
+        state.Bandwidths.Add(highest);
     }
 
     // Whether the packet is left out of the detailed ones: past MaxDetailedPackets of them, every
@@ -1114,6 +1238,7 @@ internal static class Sv8Parser
         var figures = new StreamFigures(rate);
         long frames = 0;
         long cut = 0;
+        int walked = 0;
         for (int i = 0; i < state.AudioPackets.Count; i++)
         {
             if (i % 4096 == 0)
@@ -1142,7 +1267,7 @@ internal static class Sv8Parser
             }
 
             frames += count;
-            figures.Add(packet.Offset, packet.Length * 8, count * Sv7Parser.FrameSamples);
+            figures.Add(packet.Offset, packet.Length * 8, count * Sv7Parser.FrameSamples, bands: walked < state.Bandwidths.Count ? state.Bandwidths[walked++] : -1);
         }
 
         // libmpcdec r495 outputs the header's samples less the beginning silence, and no more than
@@ -1156,7 +1281,7 @@ internal static class Sv8Parser
 
         long silence = header?.Silence ?? 0;
         long coded = frames + cut;
-        long lost = cut * Sv7Parser.FrameSamples;
+        long lost = (cut + state.LostFrames) * Sv7Parser.FrameSamples;
         long samples = header is null || header.OverflowsDecoder ? 0 : Math.Max(0, Math.Min(header.Samples, (coded * Sv7Parser.FrameSamples) - Sv7Parser.SynthesisDelay) - silence);
         double duration = rate > 0 ? samples / (double)rate : 0;
 
@@ -1204,8 +1329,40 @@ internal static class Sv8Parser
             }
         }
 
+        Node? stereoNode = null;
+        if (state.Feed is not null)
+        {
+            stereoNode = state.Stereo.AddTo(statistics, (name, value, description, topic) => new Node(name, node.Offset, node.Length, value) { Description = description, Topic = topic }, Explain.StatStereoCoding, Topics.MidSideStereo, "Frame", "Frames");
+            Node use = statistics.Add(new Node("Subband Stereo Coding", node.Offset, node.Length, NodeValue.Integer(state.FlaggedBands, "subbands", "subband"))
+            {
+                Description = Explain.MidSideUse,
+                Topic = Topics.MidSideStereo,
+            });
+            use.Add(Cover("Mid/Side", $"{StreamFigures.Counted(state.MidSideBands, "Subband", "subbands")} ({StreamFigures.Share(state.MidSideBands, state.FlaggedBands)})", Explain.MidSideCount));
+            use.Add(Cover("Left/Right", $"{StreamFigures.Counted(state.FlaggedBands - state.MidSideBands, "Subband", "subbands")} ({StreamFigures.Share(state.FlaggedBands - state.MidSideBands, state.FlaggedBands)})", Explain.LeftRightCount));
+            statistics.Add(new Node("Noise-Substituted Channels", node.Offset, node.Length, NodeValue.Integer(state.NoiseChannels, "subband channels", "subband channel"))
+            {
+                Description = Explain.NoiseCount,
+                Topic = Topics.NoiseSubstitution,
+            });
+        }
+
         state.Leading.Add(statistics);
 
+        if (state.FirstMismatch is { } first)
+        {
+            Node packetNode = WithoutChildren(PacketNode(state, state.AudioPackets[first.Index]));
+            state.Findings.AddNow(Severity.Warning, "musepack.packet-length-mismatch",
+                $"{(state.MismatchPackets == 1 ? "1 audio packet's" : $"{state.MismatchPackets} audio packets'")} frames break the syntax or take other bits than the packet's size states, first at frame {first.Frame} of the packet at 0x{packetNode.Offset:X}: libmpcdec stops decoding at the frame, and the analyzer counts it and the frames after it in the packet as lost.", packetNode);
+        }
+
+        List<Series> series = figures.Series(bitrate, state.Cancellation);
+        if (state.Feed is { } feed)
+        {
+            feed.Trim(Sv7Parser.SynthesisDelay + silence, Sv7Parser.SynthesisDelay + silence + samples);
+        }
+
+        StreamVerification? verification = state.Feed?.Finish();
         int channels = header?.Channels ?? 0;
         context.AddStream(new StreamInfo
         {
@@ -1234,7 +1391,9 @@ internal static class Sv8Parser
             EncoderConfidence = MusepackEncoder.ConfidenceOf(encoder),
             Writer = ClaimRoles.Resolved(writer).Name,
             WriterConfidence = ClaimRoles.Resolved(writer).Confidence,
-            Series = figures.Series(bitrate, state.Cancellation),
+            Series = series,
+            CategorySeries = stereoNode is not null && series.Count > 0 && state.Stereo.Build(series[0], stereoNode, Explain.StereoCodingSeries, Topics.MidSideStereo, null) is { } stereoSeries ? [stereoSeries] : [],
+            Verification = verification,
         });
     }
 
@@ -1351,8 +1510,40 @@ internal static class Sv8Parser
         }
     }
 
-    private sealed class State(long start, long end, CancellationToken cancellation)
+    private sealed class State(long start, long end, CancellationToken cancellation, AnalysisContext context)
     {
+        public AnalysisContext Context => context;
+
+        // The stream's node, which the session's findings point to; built before the packets are read, its children when asked for.
+        public Node? Stream { get; set; }
+
+        // The entropy pass of the audio packets and the decoder's feed, once the stream header says the stream can be decoded.
+        public SubbandFeed? Feed { get; set; }
+
+        public bool FeedChecked { get; set; }
+
+        // The frames of the audio packets walked so far, as the counts of AddStream add them up, and those the walk could not read or the data cut.
+        public long FedFrames { get; set; }
+
+        public long CutFrames { get; set; }
+
+        public long LostFrames { get; set; }
+
+        public int MismatchPackets { get; set; }
+
+        public (int Index, long Frame)? FirstMismatch { get; set; }
+
+        // The coded bandwidth of each audio packet that was walked and has one, in subbands, in the order of the packets (-1 where its frames could not be read).
+        public List<int> Bandwidths { get; } = [];
+
+        public UnitCategoryTally Stereo { get; } = new("Stereo Coding", Sv7Parser.StereoCodings, "frame", GraphConcept.StereoCoding, isVariable: true);
+
+        public long MidSideBands { get; set; }
+
+        public long FlaggedBands { get; set; }
+
+        public long NoiseChannels { get; set; }
+
         public long Start => start;
 
         public long End => end;

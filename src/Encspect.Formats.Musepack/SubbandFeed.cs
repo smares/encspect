@@ -7,7 +7,10 @@ namespace Encspect.Formats.Musepack;
 internal sealed class SubbandFeed
 {
     // The most bytes of a frame the walkers hold. libmpcdec holds 4,352 (MAX_FRAME_SIZE); the largest frame its encoders write is about 5,600 bits per channel.
-    public const int WindowBytes = 8192;
+    public const int FrameWindowBytes = 8192;
+
+    // The bytes of an SV8 audio packet the walker holds at once: it moves on when fewer than FrameWindowBytes are left in front of a frame.
+    public const int PacketWindowBytes = 65536;
 
     // Zero bytes after the window, which reads past a frame's end land in before the walk notices (a resolution's 36 values of up to 19 bits).
     private const int Slack = 256;
@@ -38,7 +41,10 @@ internal sealed class SubbandFeed
 
     public MsbBits Bits { get; } = new();
 
-    public byte[] Buffer { get; } = new byte[WindowBytes + Slack];
+    public byte[] Buffer { get; } = new byte[PacketWindowBytes + Slack];
+
+    // The coding of each frame of the audio packet being walked (0 left/right, 1 mid/side), for the stereo coding series.
+    public byte[] Codes { get; } = new byte[1 << 14];
 
     public bool IsDecoding => _session is { IsDecoding: true };
 
@@ -64,8 +70,9 @@ internal sealed class SubbandFeed
     }
 
     // Hands a frame to the decoder: walked from the values the state holds, or unreadable. node names the frame in a finding the host builds for it.
-    public void Feed(long firstSample, WalkFacts facts, bool isUnreadable, long fileStart, long fileEnd, string name = "Frame")
+    public void Feed(long firstSample, WalkFacts facts, bool isUnreadable, long fileStart, long fileEnd, string name = "Frame", int frames = 1)
     {
+        int samples = frames * Sv7Parser.FrameSamples;
         if (_session is not { IsDecoding: true } session)
         {
             PendingGap |= isUnreadable;
@@ -75,7 +82,7 @@ internal sealed class SubbandFeed
         MappedBytes bytes = MappedBytes.Opaque(ReadOnlyMemory<byte>.Empty, fileStart, fileEnd);
         if (isUnreadable)
         {
-            session.Decode(new CodedFrame(bytes, name, firstSample, Sv7Parser.FrameSamples) { IsUnreadable = true });
+            session.Decode(new CodedFrame(bytes, name, firstSample, samples) { IsUnreadable = true });
             PendingGap = true;
             return;
         }
@@ -83,14 +90,14 @@ internal sealed class SubbandFeed
         SampleBuffers lent = session.Lend(LentLayout.PerChannel, 2);
         if (lent.IsEmpty)
         {
-            session.Decode(new CodedFrame(bytes, name, firstSample, Sv7Parser.FrameSamples) { IsUnreadable = true });
+            session.Decode(new CodedFrame(bytes, name, firstSample, samples) { IsUnreadable = true });
             PendingGap = true;
             return;
         }
 
         LentLayout.Store(State, 0, lent.Channel(0));
         LentLayout.Store(State, 1, lent.Channel(1));
-        session.Decode(new CodedFrame(bytes, name, firstSample, Sv7Parser.FrameSamples) { IsWalked = true, FollowsGap = PendingGap });
+        session.Decode(new CodedFrame(bytes, name, firstSample, samples) { IsWalked = true, FollowsGap = PendingGap });
         PendingGap = false;
     }
 

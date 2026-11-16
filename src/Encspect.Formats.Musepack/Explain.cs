@@ -15,6 +15,7 @@ internal static class Topics
     public const string GaplessPlayback = "gapless-playback";
     public const string EncoderDetection = "encoder-detection";
     public const string BitrateModes = "bitrate-modes";
+    public const string CodedBandwidth = "coded-bandwidth";
     public const string Crc = "crc";
     public const string ApeTag = "ape-tag";
 }
@@ -170,6 +171,12 @@ internal static class Explain
     public const string StereoCodingSeries = "How each frame codes its channels, as the tally of Stereo Coding counts them.";
     public const string StereoLeftRight = "Frames that code no subband as mid and side, with their share.";
     public const string StereoMidSide = "Frames that code at least one subband as mid and side, with their share.";
+    public const string CodedBandwidth = "The upper edge of the highest subband that a frame codes anything for in either channel: the subbands from the lowest up to the highest one with a resolution other than 0, noise-substituted subbands included, times the subband width of 1/64 of the sample rate (libmpcdec r495, mpc_decoder_read_bitstream_sv7). It is a bound the frame's own data states, not the encoder's lowpass setting and not a measurement of decoded audio.";
+    public const string BandwidthLowest = "The lowest coded bandwidth of any frame that has one.";
+    public const string BandwidthMostCommon = "The coded bandwidth most frames have; the lowest of them where several are equally common.";
+    public const string BandwidthHighest = "The highest coded bandwidth of any frame that has one.";
+    public const string CodedBandwidthSeries = "The coded bandwidth of each frame (SV8: of each audio packet, the highest of its frames) in whole hertz: the upper edge of the highest subband with a resolution other than 0 in either channel. A frame the data cuts short or that cannot be read has none.";
+    public const string CodedBandwidthOverTimeSeries = "The highest coded bandwidth of the frames or packets that start in each second of audio.";
     public const string NoiseCount = "Subband channels filled with noise (resolution -1) across all frames.";
 
     public const string BitrateSeries = "The bitrate of each frame or audio packet: its bits over the time its samples last.";

@@ -446,7 +446,7 @@ internal static class Sv8Syntax
             return false;
         }
 
-        int code = bits.Read(length - 1);
+        int code = bits.ReadLong(length - 1);
         int lost = MusepackTables.EnumerationLost[row + n - 1];
         if (code >= lost)
         {
