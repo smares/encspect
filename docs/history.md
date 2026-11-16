@@ -53,7 +53,7 @@ MP3 came first, then the other lossy formats, then the lossless ones. Each phase
   - Release 0.2.0 follows it.
 - **Gate 0.3** (2026-11-16, 752cd3f9): five independent reviews on 2026-11-15, then a review of their fixes.
   - Areas: MPEG audio; Vorbis and Opus; AC-3 and E-AC-3; the measurements; CI, the fuzz corpus and the documents.
-  - Every finding was fixed in #310 to #314, one pull request per area, and the fix review's findings in #316; #315 recorded the fifth run of Dolby's decoder (the 7.1 real samples) and the lead's decision on `lame_enc.dll`.
+  - Every finding was fixed in #310 to #314, one pull request per area, and the fix review's findings in #316; #315 recorded the fifth run of Dolby's decoder (the 7.1 real samples) and the lead's decision on `lame_enc.dll`. #318 fixed what the push run of #316 fuzzed (an Opus header from another codec's box in MP4).
   - The full suite with the nightly-only tests ran green on every platform (a manual run on 2026-11-15, after the fixes of #309 for the red nightly runs of 2026-11-12 to 2026-11-15).
   - Release 0.3.0 follows it.
 - Each gate's push run and nightly run were green on every platform.
