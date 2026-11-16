@@ -28,9 +28,13 @@ internal sealed class DtsAnalysis
     // The static fields in force for each extension substream index (7.5.2): the last header that carried them.
     private readonly StaticState?[] _staticStates = new StaticState?[4];
 
-    public DtsAnalysis(AnalysisContext context)
+    // The node a stream's findings point to where its region has none yet (a container's samples are read before the stream's node is made).
+    private readonly Node? _fallbackStream;
+
+    public DtsAnalysis(AnalysisContext context, Node? fallbackStream = null)
     {
         _context = context;
+        _fallbackStream = fallbackStream;
         Records = new DtsRecords(Frames, Store);
     }
 
@@ -55,11 +59,13 @@ internal sealed class DtsAnalysis
     public void AddUnit(Region region, UnitLayout layout, ISource source)
     {
         var view = new UnitView();
+        byte[]? packed = null;
         if (layout.CoreLength > 0)
         {
             var file = new byte[layout.CoreLength];
             int read = source.Read(layout.Offset, file);
-            var packed = new byte[read + 2];
+            // Spare bytes after the frame, which the walk over the subframes reads ahead into.
+            packed = new byte[read + 8];
             int packedLength = Forms.Unpack(file.AsSpan(0, read), layout.Form, packed);
             view.Add(0, packed, packedLength);
         }
@@ -86,11 +92,57 @@ internal sealed class DtsAnalysis
                 $"{(count == 1 ? "A frame is" : $"{count} frames are")} cut short by the next frame's sync word, first at 0x{layout.Offset:X}: their header or data is damaged, or bytes are missing.");
         }
 
-        Assign(region, index, facts, layout);
+        Assign(region, index, facts, layout, packed);
+    }
+
+    private readonly SubframeWalker _walker = new();
+
+    // The entropy pass over the subframes of the unit's core frame, in every analysis; what it finds wrong is a finding on the core's audio data.
+    private void WalkSubframes(UnitFacts facts, byte[]? packed, UnitLayout layout, Region region)
+    {
+        DtsStream stream = _current!;
+        if (stream.Feed is null && stream.Key.HasCore && facts.HasCore)
+        {
+            // The session starts with the stream's first core frame, whether or not its header can be read: the channels are those of the key.
+            int primary = Tables.CoreChannels(stream.Key.Amode) is > 0 and var channels ? channels : Math.Max(1, facts.PrimaryChannels);
+            stream.Feed = new DecodeFeed(_context, region.Node ?? _fallbackStream ?? new Node("DTS", layout.Offset, layout.Length) { Kind = NodeKind.Stream }, stream.Key.Amode, Math.Min(primary, 8), stream.Key.HasLfe, stream.Key.SampleRate);
+        }
+
+        if (packed is null || facts.Audio is not { } audio || facts.CoreDataEnd <= facts.CoreDataStart)
+        {
+            // A core frame the walk cannot start (the header runs past the data) is lost to the decoder; a unit without a core has no audio to decode.
+            if (facts.HasCore)
+            {
+                stream.Feed?.Frame(layout.Offset, layout.Length, facts.Core.Samples, false);
+            }
+
+            return;
+        }
+
+        DecodeFeed? feed = stream.Feed;
+        SampleBuffers lent = feed is { IsDecoding: true } && !layout.IsCut && !layout.IsTruncated ? feed.Lend(audio) : default;
+        SubframeWalk walk = _walker.Walk(packed, facts.CoreDataStart, facts.CoreDataEnd, audio, lent, Cancellation);
+        facts.Walk = walk;
+        // The decoder reads what the walk stored, whole frames only: the subframes' samples must be those the header counts.
+        feed?.Frame(layout.Offset, layout.Length, facts.Core.Samples, !lent.IsEmpty && walk.IsComplete && walk.Samples == audio.Blocks && !layout.IsCut && !layout.IsTruncated);
+        if (walk.Problem == WalkProblem.None || layout.IsCut || layout.IsTruncated)
+        {
+            return;
+        }
+
+        (Issue issue, string what) = walk.Problem switch
+        {
+            WalkProblem.Sync => (Issue.SubframeSync, "a synchronization word is wrong"),
+            WalkProblem.Overrun => (Issue.SubframeOverrun, "the subframes run past the core's data"),
+            WalkProblem.Partial => (Issue.SubframePartial, "a partial subsubframe"),
+            _ => (Issue.SubframeInvalid, "a field cannot be used"),
+        };
+        OnIssue(issue, "Core Audio Data", facts.CoreDataStart, facts.CoreDataEnd, $"subframe {walk.ProblemSubframe + 1}: {walk.ProblemDetail}", false);
     }
 
     public void AddGap(long start, long end, bool leading, bool trailing, ISource source)
     {
+        _current?.Feed?.Gap();
         Frames.Add(Frame.Gap(start, end - start));
         var node = new Node("Gap", start, end - start, NodeValue.Integer(end - start, "bytes")) { Description = Explain.Gap };
         long length = end - start;
@@ -225,6 +277,22 @@ internal sealed class DtsAnalysis
                 Findings.Add(Severity.Warning, "dts.lossless-inconsistent", Field, count =>
                     $"The lossless extension contradicts itself: {detail}. First in {at} ({Times(count)}).");
                 break;
+            case Issue.SubframeSync:
+                Findings.Add(Severity.Warning, "dts.subframe-sync", Field, count =>
+                    $"A subframe does not end with the synchronization word 0xFFFF that 5.6 puts at the end of every subframe (and of every subsubframe when ASPF is set): {detail}. The frame's samples are not read. First in {at} ({Times(count)}).");
+                break;
+            case Issue.SubframeOverrun:
+                Findings.Add(Severity.Warning, "dts.subframe-overrun", Field, count =>
+                    $"The subframes of a core frame run past the end of its data: {detail}. The frame's samples are not read. First in {at} ({Times(count)}).");
+                break;
+            case Issue.SubframeInvalid:
+                Findings.Add(Severity.Warning, "dts.subframe-invalid", Field, count =>
+                    $"A subframe holds a value the syntax of 5.5 and 5.6 cannot use: {detail}. The frame's samples are not read. First in {at} ({Times(count)}).");
+                break;
+            case Issue.SubframePartial:
+                Findings.Add(Severity.Info, "dts.subframe-partial", Field, count =>
+                    $"A subframe ends with a partial subsubframe (5.5.1, PSC above 0), whose coding the specification does not give: {detail}. The frame's samples are not read. First in {at} ({Times(count)}).");
+                break;
             case Issue.CodingModeAuxiliary:
                 Findings.Add(Severity.Info, "dts.coding-mode-auxiliary", Field, count =>
                     $"An asset has coding mode 3, auxiliary, which 7.5.3.4 reserves for the future; its data is not read. First in {at} ({Times(count)}).");
@@ -237,7 +305,7 @@ internal sealed class DtsAnalysis
     // (dts.streams-limited), while the changes are still counted. A unit whose assets have no figures yet (before any header with
     // static fields) matches a configuration of the same core and structure, which the stream then takes: it joins the stream after
     // it, or one before it that has the same structure, and any other structure is a change.
-    private void Assign(Region region, int index, UnitFacts facts, UnitLayout layout)
+    private void Assign(Region region, int index, UnitFacts facts, UnitLayout layout, byte[]? packed)
     {
         StreamKey key = StreamKey.Of(facts);
         bool changed = _previousKey is { } previous && !previous.Matches(key);
@@ -276,6 +344,7 @@ internal sealed class DtsAnalysis
         }
 
         _current.Regions.Add(region);
+        WalkSubframes(facts, packed, layout, region);
         _current.Add(layout.Offset, layout.Length, Samples(facts), facts, layout);
     }
 
@@ -392,7 +461,8 @@ internal sealed class DtsAnalysis
             Writer = writerName,
             WriterConfidence = writerConfidence,
             Series = series,
-            CategorySeries = series.Count > 0 && stream.StereoCodingNode is { } stereo ? stream.Figures.Categories(series[0], stereo) : [],
+            Verification = stream.Feed?.Finish(),
+            CategorySeries = series.Count > 0 ? stream.Figures.Categories(series[0], stream.StereoCodingNode) : [],
         });
     }
 

@@ -10,7 +10,7 @@ namespace Encspect.Tests;
 public class DecoderSessionInvariantTests
 {
     // The directories of the fixtures of each registered decoder's codec, and of the containers that may carry it.
-    private static readonly string[] Directories = ["flac", "wavpack", "monkeys-audio", "truehd", "wav", "aiff", "matroska", "mp4", "ogg", "measurement", "tta", "alac", "mpeg-audio", "ac3", "musepack"];
+    private static readonly string[] Directories = ["flac", "wavpack", "monkeys-audio", "truehd", "wav", "aiff", "matroska", "mp4", "ogg", "measurement", "tta", "alac", "mpeg-audio", "ac3", "musepack", "dts"];
 
     // The codec name each registered decoder's parser reports, by the decoder's ID.
     private static readonly Dictionary<string, string> DecoderOfCodec = new(StringComparer.Ordinal)
@@ -45,6 +45,9 @@ public class DecoderSessionInvariantTests
         ["Musepack SV6"] = "musepack",
         ["Musepack SV7"] = "musepack",
         ["Musepack SV8"] = "musepack",
+        ["DTS"] = "dts",
+        ["DTS-ES"] = "dts",
+        ["DTS 96/24"] = "dts",
         ["PCM"] = "pcm",
         ["PCM (floating-point)"] = "pcm",
         [CodecNames.ALaw] = "pcm",
@@ -104,6 +107,7 @@ public class DecoderSessionInvariantTests
         ["matroska/external-mkvmerge-zlib.mka"] = "the container hands over no audio frame the AC-3 session can read (its frames are compressed in a way the container does not undo), and the AC-3 session starts at the first frame",
         ["mp4/cenc-ac3.m4a"] = "the samples are encrypted, so the container hands over the header and no frame, and the AC-3 session starts at the first frame",
         ["mp4/ffmpeg-cenc-ac3.mp4"] = "the samples are encrypted, so the container hands over the header and no frame, and the AC-3 session starts at the first frame",
+        ["mp4/cenc-dts.m4a"] = "the samples are encrypted, so the container hands over the header and no frame, and the DTS session starts at the first core frame",
         ["ac3/bsid-9.ac3"] = "a bit stream ID of 9, which A/52 does not define: only its header is read, so the stream is parsed and not decoded",
         ["ac3/bsid-10.ac3"] = "a bit stream ID of 10, which A/52 does not define: only its header is read, so the stream is parsed and not decoded",
         ["ogg/opus-ambisonics-family-3.opus"] = "mapping family 3 (the demixing matrix), which the decoder does not apply, so the stream is parsed and not decoded",

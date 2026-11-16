@@ -135,7 +135,7 @@ AREAS = {
     "dts-crosscheck": {
         "projects": ["Encspect.Formats.Dts", "Encspect.Formats.DtsHd", "Encspect.Formats.Mp4"],
         "fixtures": ["dts"],
-        "scripts": ["crosscheck_dts_fixtures.py", "check_dts_hd_samples.py"],
+        "scripts": ["crosscheck_dts_fixtures.py", "crosscheck_dts_pcm.py", "compare_pcm.py", "check_dts_hd_samples.py"],
         "globs": ["scripts/fixtures/*.c", "scripts/fixtures/make_*dts*", "scripts/fixtures/dts_*", "tests/conformance/dts-hd-samples.json"],
     },
     "truehd-crosscheck": {

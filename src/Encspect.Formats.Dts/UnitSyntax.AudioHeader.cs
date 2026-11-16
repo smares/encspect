@@ -9,6 +9,9 @@ internal sealed partial class UnitSyntax
     private static readonly int[] AdjGroup = [1, 3, 3, 3, 3, 7, 7, 7, 7, 7];
     private static readonly double[] Adjustment = [1.0, 1.125, 1.25, 1.4375];
 
+    // The ADJ index of each channel and quantizer (ABITS - 1), 0 where none is sent (an adjustment of 1).
+    private readonly int[][] _adj = [new int[10], new int[10], new int[10], new int[10], new int[10], new int[10], new int[10], new int[10]];
+
     // 5.4.3 Table 5-21: the primary audio coding header, or 6.4.3 Table 6-18: XCh's audio header, which has no SUBFS. Returns
     // the number of channels it codes.
     private int ReadAudioHeader(bool isCore, CoreHeader header)
@@ -50,6 +53,11 @@ internal sealed partial class UnitSyntax
             throw new EndOfStreamException();
         }
 
+        foreach (int[] row in _adj)
+        {
+            Array.Clear(row);
+        }
+
         PerChannel("Subband Activity Count", 5, Explain.Subs, channels, _subs, v => NodeValue.Integer(v + 2, "subbands", "subband"), Topics.CoreCodingHeader,
             (ch, v) => v + 2 > 32 ? $"channel {ch + 1} has {v + 2} active subbands, where there are 32" : null, Issue.SubbandCount);
         PerChannel("High Frequency VQ Start Subband", 5, Explain.Vqsub, channels, _vqsub, v => NodeValue.Integer(v + 1, "subbands", "subband"), Topics.CoreCodingHeader);
@@ -81,6 +89,11 @@ internal sealed partial class UnitSyntax
         if (hasCrc)
         {
             Crc("Audio Header CRC", Explain.Ahcrc, 2, "not verified: 5.4.3 says the CRC value test shall not be applied");
+        }
+
+        if (isCore && !_isBuilding)
+        {
+            Facts.Audio = CoreAudioHeader.Of(channels, subframes, _subs, _vqsub, _joinx, _thuff, _shuff, _bhuff, _sel, _adj, header, Facts);
         }
 
         _tree?.Close(Here);
@@ -128,6 +141,7 @@ internal sealed partial class UnitSyntax
 
                 int at = _pos;
                 int adj = (int)Read(2);
+                _adj[ch][n] = adj;
                 _tree?.Field($"Channel {ch + 1}", at, _pos, NodeValue.Decimal(Adjustment[adj], 4), Explain.Adj, Topics.CoreCodingHeader);
             }
 

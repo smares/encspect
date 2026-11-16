@@ -1,7 +1,7 @@
 ---
 id: dts-core-frames
 title: DTS core frames
-related: dts-audio-coding-header, dts-bitstream-forms, dts-core-extensions, dts-extension-substream, frame-sync, crc
+related: dts-audio-coding-header, dts-subframes, dts-bitstream-forms, dts-core-extensions, dts-extension-substream, frame-sync, crc
 references: ETSI TS 102 114 V1.6.1 (2019-08), 5.2 to 5.7; FFmpeg 6.1.1 libavcodec/dca_core.c
 ---
 

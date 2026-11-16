@@ -114,6 +114,8 @@ def cc(ffprobe=True, decode=True, libdca=True, skip=None, **extra):
     return result
 
 
+JOINT_INTENSITY_LIBDCA = ("libdca 0.0.7 does not decode joint intensity coding: it prints 'Joint stereo coding not supported' and rejects every frame "
+                          "(measured with Ubuntu's libdca 0.0.7); ffmpeg decodes the frames")
 LOSSLESS_BITRATE = "ffmpeg's lossless decoder sets the bit rate to 0 (dca_xll.c: avctx->bit_rate = 0), so ffprobe lists none"
 
 
@@ -275,7 +277,7 @@ def build_damage():
     parts = run(4, "16be", 512, fixed=1, lff=3, pcmr=7, shuff=[7, 7], bhuff=[7, 7], aspf=1)
     data = b"".join(parts)
     fixture("reserved-values", ".dts", "Four stereo core frames with FixedBit set, LFF 3, PCMR 7 and SHUFF and BHUFF 7.", data, rows(parts),
-            [stream("DTS", 48000, STEREO, "2/0", 4 * 512)], [("dts.reserved-value", "reserves")],
+            [stream("DTS", 48000, STEREO, "2/0", 4 * 512)], [("dts.reserved-value", "reserves"), ("dts.subframe-invalid", "LFF 3 is reserved")],
             crosscheck=cc(ffprobe=False, decode=False, decode_error="Reserved bit set", libdca=False, skip={"ffprobe": "ffmpeg's decoder rejects the frames ('Reserved bit set': FixedBit), so ffprobe gets no sampling frequency or channels", "decode": "ffmpeg rejects the set FixedBit, the first invalid field it reads (dca.c, ff_dca_parse_core_frame_header)", "libdca": "libdca stops at the invalid tables."}))
     parts = run(4, "16be", 512, amode=20, nch=2)
     data = b"".join(parts)
@@ -370,6 +372,70 @@ def build_stereo_coding():
     coded("stereo-coding-single-surround", "Two 2/1 core frames, one with SUMS set, which counts for nothing without a surround pair, and one with SUMF.", 6, [{"sums": 1}, {"sumf": 1}], {"Left/right stereo": 1, "Mid/side stereo": 1}, SURROUND_2_1, "2/1")
 
 
+def build_coded():
+    """Core frames whose subframes have content (dts_coded.py): every coding of the samples, the scale factors and the bit allocation, with the figures the analyzer reports from them."""
+    sel_a = [[0, 1, 0, 2, 1, 0, 3, 5, 7, 1], [1, 3, 2, 0, 3, 7, 7, 6, 2, 7]]
+    adj = {(0, 0): 1, (0, 2): 2, (1, 3): 3, (1, 7): 1}
+
+    def figures(frames, rate=48000):
+        """The statistics fields the facts of the frames give: Coded Bandwidth and the subframes."""
+        bands = [f.subbands for f in frames]
+        hertz = lambda b: (b * rate + 32) // 64
+        common = max(set(bands), key=lambda b: (bands.count(b), -b))
+        read = sum(len(f.transient_mask) for f in frames)
+        switched = sum(sum(f.transient_mask) for f in frames)
+        return {"DTS/Statistics/Coded Bandwidth/Lowest": f"{hertz(min(bands))} Hz", "DTS/Statistics/Coded Bandwidth/Most Common": f"{hertz(common)} Hz",
+                "DTS/Statistics/Coded Bandwidth/Highest": f"{hertz(max(bands))} Hz", "DTS/Statistics/Subframes Read": f"{read} subframes",
+                "DTS/Statistics/Subframes With Block Switching": f"{switched} {'subframe' if switched == 1 else 'subframes'}"}
+
+    def coded(name, description, count, form="16be", layout=STEREO, mode="2/0", rate=48000, extra=None, check=None, **options):
+        options = {"coded": True, "rate": 29, **options}
+        opts = [{**options, "seed": 1 + i} for i in range(count)]
+        parts = [m.to_form(m.core_frame(**o), form) for o in opts]
+        facts = [m.facts_of(**{k: v for k, v in o.items() if k not in ("rate", "size")}) for o in opts]
+        fixture(name, ".dts", description, b"".join(parts), rows(parts), [stream("DTS", rate, layout, mode, count * 32 * (options.get("nblks", 15) + 1), vbr=True)], extra or [],
+                fields=figures(facts, rate), crosscheck=check or cc())
+
+    coded("subframes-huffman", "Three stereo core frames with Huffman codes everywhere: bit allocation (BHUFF 0 and 3), transient modes, scale factors (SHUFF 1 and 4), quantization indexes "
+          "(SEL 0 to 6, block codes and no further encoding), ADJ, subband prediction, vector quantization from subband 28, two subframes of different lengths.", 3,
+          subs=[30, 30], vqsub=[27, 27], bhuff=[0, 3], shuff=[1, 4], thuff=[2, 1], sel=sel_a, adj=adj, adpcm=True, ssc=[3, 1], nblks=31, scale_range=(5, 30))
+    coded("subframes-linear", "Three stereo core frames with linear codes: 4-bit and 5-bit bit allocation, 6-bit and 7-bit scale factors, quantizers of up to 26 bits, a transient mode in one book.", 3,
+          subs=[22, 30], vqsub=[21, 31], bhuff=[5, 6], shuff=[5, 6], thuff=[3, 0], sel=[[0] * 10, [1, 3, 3, 3, 3, 7, 7, 7, 7, 7]], ssc=[2, 2], nblks=31, scale_range=(5, 30))
+    coded("subframes-five-one", "Three 3/2 core frames with an LFE channel of the 64 times interpolation, joint intensity coding (channels 4 and 5 copy channels 1 and 2 above their own bandwidth), "
+          "a sync word after every subsubframe, dynamic range coefficients and four subframes of 2, 1, 3 and 2 subsubframes.", 3, check=cc(libdca=False, skip={"libdca": JOINT_INTENSITY_LIBDCA}), layout=SURROUND_5_1, mode="3/2",
+          amode=9, lff=2, aspf=1, dynf=1, joinx=[0, 0, 0, 1, 2], subs=[30, 30, 30, 18, 18], vqsub=[27, 27, 27, 17, 17], bhuff=[1, 2, 5, 6, 0], shuff=[0, 2, 3, 4, 1], thuff=[0, 1, 2, 3, 0],
+          sel=[sel_a[0], sel_a[1], sel_a[0], sel_a[1], sel_a[0]], ssc=[2, 1, 3, 2], nblks=63, extra=[], scale_range=(5, 30))
+    # Without prediction or vector quantization, so that a decoder without the tables of Annex D.10 reconstructs them; scale factors below the range where a frame clips.
+    coded("subframes-reconstruct-stereo", "Three stereo core frames that decoders reconstruct without Annex D.10's vectors: sum/difference front channels, Huffman bit allocation and quantization indexes, "
+          "transient modes and ADJ, subframes of 3 and 1 subsubframes.", 3, subs=[30, 30], vqsub=[31, 31], sumf=1, bhuff=[1, 0], shuff=[2, 3], thuff=[0, 1], sel=sel_a, adj=adj, ssc=[3, 1], nblks=31,
+          scale_range=(5, 30))
+    coded("subframes-reconstruct-five-one", "Three 3/2 core frames with an LFE channel of the 128 times interpolation, sum/difference front and surround channels, joint intensity coding (the surround "
+          "channels copy the front ones above their own bandwidth), a sync word after every subsubframe and subframes of 2, 1, 3 and 2 subsubframes, without prediction or vector quantization.", 3,
+          check=cc(libdca=False, skip={"libdca": JOINT_INTENSITY_LIBDCA}), layout=SURROUND_5_1, mode="3/2", amode=9, lff=1, aspf=1, sumf=1, sums=1, joinx=[0, 0, 0, 2, 3], subs=[30, 30, 30, 18, 18], vqsub=[31, 31, 31, 19, 19],
+          bhuff=[1, 2, 5, 6, 0], shuff=[0, 2, 3, 4, 1], thuff=[0, 1, 2, 3, 0], sel=[sel_a[0], sel_a[1], sel_a[0], sel_a[1], sel_a[0]], ssc=[2, 1, 3, 2], nblks=63, scale_range=(5, 30))
+    coded("14le-subframes", "Two stereo core frames with coded subframes in the 14-bit little endian form.", 2, form="14le", subs=[30, 30], vqsub=[27, 27], bhuff=[1, 0], shuff=[2, 3], thuff=[0, 1],
+          sel=sel_a, ssc=[2, 2], nblks=31, size=1400, scale_range=(5, 30))
+    # The damage the walk finds in subframes (5.5, 5.6).
+    parts = run(3, "16be", 512) + [core("16be", 512, dsync=0xFFFE)] + run(2, "16be", 512)
+    fixture("subframe-sync", ".dts", "Six stereo core frames, the fourth with 0xFFFE at the end of its subframe where 5.6 puts 0xFFFF.", b"".join(parts), rows(parts),
+            [stream("DTS", 48000, STEREO, "2/0", 6 * 512)], [("dts.subframe-sync", "does not end with the word 0xFFFF")],
+            crosscheck=cc(decode=False, libdca=False, skip={"decode": "ffmpeg rejects the frame ('DSYNC check failed')", "libdca": "libdca's reading of the damaged frame says nothing"}))
+    # A frame whose FSIZE ends it inside its second subframe.
+    short = m.core_frame(coded=True, rate=29, fsize=95)[:96]
+    parts = run(2, "16be", 512) + [short] + run(2, "16be", 512)
+    fixture("subframe-overrun", ".dts", "Five stereo core frames, the third of 96 bytes (FSIZE 95): its subframes run past its end.", b"".join(parts), [[0, 512], [512, 512], [1024, 96], [1120, 512], [1632, 512]],
+            [stream("DTS", 48000, STEREO, "2/0", 5 * 512, vbr=True)], [("dts.subframe-overrun", "the data ends inside it")],
+            crosscheck=cc(ffprobe=False, decode=False, libdca=False, skip={"ffprobe": "ffmpeg's parser sizes the frames from the sync words it finds, so its packets differ from the short frame's", "decode": "ffmpeg rejects the short frame ('Invalid data found when processing input')", "libdca": "libdca's reading of the damaged frame says nothing"}))
+    parts = run(3, "16be", 512, bhuff=[6, 6], invalid_abits=True)
+    fixture("subframe-invalid", ".dts", "Three stereo core frames whose first subband of the first channel has ABITS 31, which Table 5-26 marks invalid.", b"".join(parts), rows(parts),
+            [stream("DTS", 48000, STEREO, "2/0", 3 * 512)], [("dts.subframe-invalid", "ABITS 31 is invalid")],
+            crosscheck=cc(ffprobe=False, decode=False, libdca=False, skip={"ffprobe": "ffmpeg finds no stream parameters in frames whose first quantizer is invalid", "decode": "ffmpeg rejects the invalid quantizer", "libdca": "libdca's reading of the damaged frame says nothing"}))
+    parts = run(3, "16be", 512, psc=1)
+    fixture("subframe-partial", ".dts", "Three stereo core frames whose subframe says it has a partial subsubframe (PSC 1), whose coding 5.5.1 does not give.", b"".join(parts), rows(parts),
+            [stream("DTS", 48000, STEREO, "2/0", 3 * 512)], [("dts.subframe-partial", "PSC is 1")],
+            crosscheck=cc(libdca=False, skip={"libdca": "libdca's reading of a partial subsubframe says nothing: the specification gives none"}))
+
+
 def build_invalid_fields():
     same6 = [[i * 512, 512] for i in range(6)]
     parts = [core(ftype=1, short=5), core(nblks=19), core(subfs=3), core(**channels(3, amode=2)), core(subs=[31, 31]), core(joinx=[1, 0])]
@@ -378,7 +444,8 @@ def build_invalid_fields():
             "3 primary channels for 2/0, 33 active subbands, and a joint source that comes after its channel.", data, same6,
             [stream("DTS", 48000, STEREO, "2/0", 5 * 512 + 640, vbr=True)],
             [("dts.frame-type", "SHORT is 5"), ("dts.block-count", "20 blocks"), ("dts.subframe-count", "4 subframes"), ("dts.channel-count", "3 primary channels"),
-             ("dts.subband-count", "33 active subbands"), ("dts.joint-source", "channel 1 copies channel 1")],
+             ("dts.subband-count", "33 active subbands"), ("dts.joint-source", "channel 1 copies channel 1"),
+             ("dts.subframe-sync", "does not end with the word 0xFFFF")],
             crosscheck=cc(ffprobe_packets=False, decode=False, decode_errors=INVALID_FIELDS_ERRORS, libdca=False, skip={"ffprobe_packets": "ffmpeg's parser takes a sync word as a frame only when the bits after it are those of a normal frame, FTYPE 1 and SHORT 31 (dca_parser.c, IS_CORE_MARKER), so it skips the first frame and reports the first packet at position 0", "decode": "ffmpeg rejects five of the six frames, each with its own error (decode_errors), and accepts the joint source after its channel", "libdca": "libdca reads the frames with 3 primary channels, 33 subbands and the others as it can; its reading of invalid fields says nothing"}))
     # An extension the header announces and the frame does not hold.
     parts = run(4, "16be", 512, ext_id=0, ext=1)
@@ -699,6 +766,7 @@ def main():
     build()
     build_gate2()
     build_stereo_coding()
+    build_coded()
     import dts_lossless_fixtures
     api = dict(fixture=fixture, rows=rows, cc=cc, stream=stream)
     dts_lossless_fixtures.build(api)

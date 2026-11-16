@@ -18,7 +18,7 @@ public class SpeexGapTests
     }
 
     // The first change of one byte at a multiple of 61 from the second tenth of the file that loses samples without losing the whole stream.
-    private static byte[] Damaged(string name, string finding)
+    private static byte[] Damaged(string name)
     {
         byte[] original = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "ogg", name));
         for (int at = original.Length / 10; at < original.Length / 2; at += 61)
@@ -26,13 +26,13 @@ public class SpeexGapTests
             byte[] variant = [.. original];
             variant[at] ^= 0xA5;
             StreamInfo info = Measure(variant, out IReadOnlyList<Finding> findings);
-            if (findings.Any(f => f.Code == finding) && info.LostSamples > 0 && info.LostSamples < info.Samples / 8)
+            if (findings.Any(f => f.Code is "speex.frame-invalid" or "speex.frame-overrun") && info.LostSamples > 0 && info.LostSamples < info.Samples / 8)
             {
                 return variant;
             }
         }
 
-        throw new InvalidOperationException($"No change of one byte of {name} gives {finding}.");
+        throw new InvalidOperationException($"No change of one byte of {name} makes a packet corrupt.");
     }
 
     [Theory]
@@ -41,7 +41,7 @@ public class SpeexGapTests
     [InlineData("external-speexenc-uwb.spx", 640)]
     public void A_corrupt_packet_is_lost_and_the_20_frames_after_it_are_withheld(string name, int frameSize)
     {
-        StreamInfo info = Measure(Damaged(name, "speex.frame-invalid"), out IReadOnlyList<Finding> findings);
+        StreamInfo info = Measure(Damaged(name), out IReadOnlyList<Finding> findings);
 
         StreamMeasurements m = info.Measurements!;
         Assert.DoesNotContain(findings, f => f.Code is "parse.failed" or "decode.failed");

@@ -1,8 +1,8 @@
 ---
 id: block-switching
 title: Block types and block switching
-related: filter-bank, granules-and-frames, scfsi
-references: ISO/IEC 11172-3 2.4.2.7, 2.4.3.4.10.2, 2.4.3.4.10.3; ATSC A/52:2018 5.4.3.1
+related: filter-bank, granules-and-frames, scfsi, dts-transient-mode
+references: ISO/IEC 11172-3 2.4.2.7, 2.4.3.4.10.2, 2.4.3.4.10.3; ATSC A/52:2018 5.4.3.1; ETSI TS 102 114 V1.6.1 5.5.1
 ---
 
 **The problem: pre-echo.** Layer III transforms each granule of 576 samples, about 13 milliseconds at 44.1 kHz, into frequency lines. Quantization noise then spreads over the whole length of the transform. Where a quiet passage ends in a sudden attack, the noise the attack's bits cause spreads to before the attack, into the quiet part, where the ear hears it as a soft smear that precedes the sound: pre-echo.
@@ -20,3 +20,5 @@ references: ISO/IEC 11172-3 2.4.2.7, 2.4.3.4.10.2, 2.4.3.4.10.3; ATSC A/52:2018 
 **In AAC.** The four window sequences of [AAC](aac-windows-and-blocks) correspond to Layer III's: only long to normal, long start to start, eight short to short, long stop to stop; there are no mixed blocks. In AAC, Block Usage and Block Sizes count every channel stream; in Layer III they count every granule and channel.
 
 **In AC-3.** blksw splits a channel's transform of 512 points into two of 256 for one audio block ([audio blocks](ac3-audio-blocks)), which is AC-3's short block; it signals no other window types. Blocks With Block Switching counts the blocks in which any channel switches, and its graph shows each block of a frame.
+
+**In DTS.** A transient mode splits scale factors, not the transform ([transient modes](dts-transient-mode)).

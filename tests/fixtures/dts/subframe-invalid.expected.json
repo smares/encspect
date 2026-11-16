@@ -1,0 +1,51 @@
+{
+ "description": "Three stereo core frames whose first subband of the first channel has ABITS 31, which Table 5-26 marks invalid.",
+ "length": 1536,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   512
+  ],
+  [
+   512,
+   512
+  ],
+  [
+   1024,
+   512
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 1536,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "dts.subframe-invalid",
+   "ABITS 31 is invalid"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": false,
+  "libdca": false,
+  "skip": {
+   "ffprobe": "ffmpeg finds no stream parameters in frames whose first quantizer is invalid",
+   "decode": "ffmpeg rejects the invalid quantizer",
+   "libdca": "libdca's reading of the damaged frame says nothing"
+  }
+ }
+}

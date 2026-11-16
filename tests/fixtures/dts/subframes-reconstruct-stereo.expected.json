@@ -1,0 +1,47 @@
+{
+ "description": "Three stereo core frames that decoders reconstruct without Annex D.10's vectors: sum/difference front channels, Huffman bit allocation and quantization indexes, transient modes and ADJ, subframes of 3 and 1 subsubframes.",
+ "length": 4096,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   1332
+  ],
+  [
+   1332,
+   1340
+  ],
+  [
+   2672,
+   1424
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 3072,
+   "is_vbr": true
+  }
+ ],
+ "fields": {
+  "DTS/Statistics/Coded Bandwidth/Lowest": "24000 Hz",
+  "DTS/Statistics/Coded Bandwidth/Most Common": "24000 Hz",
+  "DTS/Statistics/Coded Bandwidth/Highest": "24000 Hz",
+  "DTS/Statistics/Subframes Read": "6 subframes",
+  "DTS/Statistics/Subframes With Block Switching": "3 subframes"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": true
+ }
+}

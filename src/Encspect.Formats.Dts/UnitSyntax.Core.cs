@@ -120,7 +120,14 @@ internal sealed partial class UnitSyntax
         _tree?.CloseTo(depth + 1, Here);
         if (!inSubstream && headerEnd > baseBit)
         {
-            AddCoreData(headerEnd, extension is { } found ? found.Byte * 8 : endBit);
+            int dataEnd = extension is { } placed ? placed.Byte * 8 : endBit;
+            if (facts.HasAudioHeader)
+            {
+                facts.CoreDataStart = headerEnd;
+                facts.CoreDataEnd = dataEnd;
+            }
+
+            AddCoreData(headerEnd, dataEnd);
             if (extension is { } present)
             {
                 ReadExtension(header, present, endBit);
@@ -261,7 +268,7 @@ internal sealed partial class UnitSyntax
             Crc("Header CRC", Explain.Hcrc, 2, "not verified: 5.4.2 says the CRC value test shall not be applied");
         }
 
-        Flag("HasPerfectReconstructionFilter", Explain.Filts, Topics.FilterBank);
+        bool filts = Flag("HasPerfectReconstructionFilter", Explain.Filts, Topics.FilterBank);
         start = _pos;
         int vernum = Num("Encoder Revision", 4, Explain.Vernum, Topics.CoreFrames);
         if (vernum > 7)
@@ -300,6 +307,7 @@ internal sealed partial class UnitSyntax
         _tree?.Close(Here);
         if (!inSubstream)
         {
+            facts.IsPerfectReconstruction = filts;
             facts.EncoderRevision = vernum;
             facts.Pcmr = pcmr;
             facts.IsSumDifferenceFront = sumf;

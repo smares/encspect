@@ -324,6 +324,48 @@
                           "length": 24576
                         },
                         {
+                          "name": "Coded Bandwidth",
+                          "offset": 92,
+                          "length": 24576,
+                          "children": [
+                            {
+                              "name": "Lowest",
+                              "value": 24000,
+                              "unit": "Hz",
+                              "offset": 92,
+                              "length": 24576
+                            },
+                            {
+                              "name": "Most Common",
+                              "value": 24000,
+                              "unit": "Hz",
+                              "offset": 92,
+                              "length": 24576
+                            },
+                            {
+                              "name": "Highest",
+                              "value": 24000,
+                              "unit": "Hz",
+                              "offset": 92,
+                              "length": 24576
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Subframes Read",
+                          "value": 24,
+                          "unit": "subframes",
+                          "offset": 92,
+                          "length": 24576
+                        },
+                        {
+                          "name": "Subframes With Block Switching",
+                          "value": 0,
+                          "unit": "subframes",
+                          "offset": 92,
+                          "length": 24576
+                        },
+                        {
                           "name": "Stereo Coding",
                           "value": 24,
                           "unit": "frames",
@@ -20977,6 +21019,78 @@
             "values": [
               768
             ]
+          },
+          {
+            "name": "Coded Bandwidth",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              92,
+              1116,
+              2140,
+              3164,
+              4188,
+              5212,
+              6236,
+              7260,
+              8284,
+              9308,
+              10332,
+              11356,
+              12380,
+              13404,
+              14428,
+              15452,
+              16476,
+              17500,
+              18524,
+              19548,
+              20572,
+              21596,
+              22620,
+              23644
+            ],
+            "values": [
+              24000,
+              24000,
+              24000,
+              24000,
+              24000,
+              24000,
+              24000,
+              24000,
+              24000,
+              24000,
+              24000,
+              24000,
+              24000,
+              24000,
+              24000,
+              24000,
+              24000,
+              24000,
+              24000,
+              24000,
+              24000,
+              24000,
+              24000,
+              24000
+            ]
+          },
+          {
+            "name": "Coded Bandwidth Over Time",
+            "unit": "Hz",
+            "axis": "seconds",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              0
+            ],
+            "values": [
+              24000
+            ]
           }
         ],
         "categorySeries": [
@@ -21007,6 +21121,38 @@
             "runs": [
               [
                 0,
+                24
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Subframes With Block Switching",
+            "concept": "blockSwitching",
+            "valueLabel": "subframe",
+            "categories": [
+              {
+                "name": "With block switching",
+                "count": 0
+              },
+              {
+                "name": "Without block switching",
+                "count": 24
+              }
+            ],
+            "total": 24,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                24
+              ]
+            ],
+            "runs": [
+              [
+                1,
                 24
               ]
             ],

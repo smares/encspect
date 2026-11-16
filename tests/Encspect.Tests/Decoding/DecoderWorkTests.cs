@@ -202,6 +202,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         _ when name.StartsWith("opus", StringComparison.Ordinal) => new OpusDecoder(),
         _ when name.StartsWith("musepack", StringComparison.Ordinal) => new MusepackDecoder(),
         _ when name.StartsWith("speex", StringComparison.Ordinal) => new SpeexDecoder(),
+        _ when name.StartsWith("dts", StringComparison.Ordinal) => new Encspect.Formats.Dts.Decoding.DtsDecoder(),
         _ when name.StartsWith("ac3", StringComparison.Ordinal) => new Ac3Decoder(),
         _ when name.StartsWith("eac3", StringComparison.Ordinal) => new Eac3Decoder(),
         _ when name.StartsWith("truehd", StringComparison.Ordinal) => TrueHdDecoder.TrueHd,
@@ -223,6 +224,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         _ when name.StartsWith("opus", StringComparison.Ordinal) => ".opus",
         _ when name.StartsWith("musepack", StringComparison.Ordinal) => ".mpc",
         _ when name.StartsWith("speex", StringComparison.Ordinal) => ".spx",
+        _ when name.StartsWith("dts", StringComparison.Ordinal) => ".dts",
         _ when name.StartsWith("ac3", StringComparison.Ordinal) => ".ac3",
         _ when name.StartsWith("eac3", StringComparison.Ordinal) => ".eac3",
         _ when name.StartsWith("truehd", StringComparison.Ordinal) => ".thd",
@@ -377,6 +379,20 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         })
         {
             Add("musepack-" + label, () => new Case("musepack-" + label, MusepackCases.Repeated(file)));
+        }
+
+        // DTS core: FFmpeg's encoder files (Huffman codes and plain quantizers, mono to 5.1 with the LFE channel, from 8 to 48 kHz) and the hand-built files with transient modes, joint intensity
+        // coding and sum/difference decoding. Each case repeats the whole file as one stream; frames with prediction or vector quantization are not decoded.
+        foreach ((string label, string file) in new[]
+        {
+            ("mono-8k", "external-ffmpeg-mono-8k-64k.dts"),
+            ("stereo-44k", "external-ffmpeg-stereo-44k-256k.dts"),
+            ("surround-51", "external-ffmpeg-5.1-48k-768k.dts"),
+            ("reconstruct-stereo", "subframes-reconstruct-stereo.dts"),
+            ("reconstruct-surround-51", "subframes-reconstruct-five-one.dts"),
+        })
+        {
+            Add("dts-" + label, () => new Case("dts-" + label, DtsCases.Repeated(file)));
         }
 
         // Vorbis: stereo and mono music, 5.1, high quality, long blocks of 8,192 samples (the stereo file with its long block size raised, which its floors then do not fit but still
@@ -1174,6 +1190,27 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             var analyzer = new Analyzer(DefaultParsers.Tags, DefaultParsers.Formats, DefaultParsers.Codecs, [counting]);
             using var stream = new MemoryStream(file, writable: false);
             analyzer.Analyze("probe.ac3", stream, new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = long.MaxValue, Output = _ => new NullSink() } });
+            return counting.Units;
+        }
+    }
+
+    // The bytes of a DTS fixture repeated until the decoding charges about Target units.
+    internal static class DtsCases
+    {
+        public static byte[] Repeated(string fixture, long target = Target)
+        {
+            byte[] one = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "dts", fixture));
+            long perCopy = Math.Max(1, Units(one));
+            int copies = (int)Math.Clamp(target / perCopy, 2, 1 << 20);
+            return Unpooled.Repeat(one, copies);
+        }
+
+        public static long Units(byte[] file)
+        {
+            var counting = new CountingDecoder(new Encspect.Formats.Dts.Decoding.DtsDecoder());
+            var analyzer = new Analyzer(DefaultParsers.Tags, DefaultParsers.Formats, DefaultParsers.Codecs, [counting]);
+            using var stream = new MemoryStream(file, writable: false);
+            analyzer.Analyze("probe.dts", stream, new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = long.MaxValue, Output = _ => new NullSink() } });
             return counting.Units;
         }
     }

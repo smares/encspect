@@ -87,7 +87,7 @@ public class DecodeAudioTests
     {
         var ui = new TestDispatcher();
         using var model = new DetailViewModel(Analyzer.CreateDefault(), ui.Post);
-        Task load = model.LoadAsync(Fixtures.Dts("core-16le.dts"));
+        Task load = model.LoadAsync(Fixtures.Aac("faac-1.40-adts.aac"));
         ui.Until(() => load.IsCompleted);
 
         Assert.False(model.CanDecodeAudio);
@@ -243,7 +243,7 @@ public class DecodeAudioTests
         Assert.False(stop.IsEnabled);
         window.Close();
 
-        window = FrameMapViewTests.Open(Fixtures.Dts("core-16le.dts"), 900, 600);
+        window = FrameMapViewTests.Open(Fixtures.Aac("faac-1.40-adts.aac"), 900, 600);
         decode = NativeMenu.GetMenu(window)!.Items.OfType<NativeMenuItem>().First(i => i.Header == "File").Menu!.Items.OfType<NativeMenuItem>().Single(i => i.Header == "Decode Audio");
         Assert.False(decode.IsEnabled);
         window.Close();

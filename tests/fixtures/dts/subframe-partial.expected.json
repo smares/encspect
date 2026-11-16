@@ -1,0 +1,49 @@
+{
+ "description": "Three stereo core frames whose subframe says it has a partial subsubframe (PSC 1), whose coding 5.5.1 does not give.",
+ "length": 1536,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   512
+  ],
+  [
+   512,
+   512
+  ],
+  [
+   1024,
+   512
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 1536,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "dts.subframe-partial",
+   "PSC is 1"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": false,
+  "skip": {
+   "libdca": "libdca's reading of a partial subsubframe says nothing: the specification gives none"
+  }
+ }
+}

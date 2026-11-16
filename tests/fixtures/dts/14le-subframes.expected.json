@@ -1,0 +1,43 @@
+{
+ "description": "Two stereo core frames with coded subframes in the 14-bit little endian form.",
+ "length": 3200,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   1600
+  ],
+  [
+   1600,
+   1600
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 2048,
+   "is_vbr": true
+  }
+ ],
+ "fields": {
+  "DTS/Statistics/Coded Bandwidth/Lowest": "24000 Hz",
+  "DTS/Statistics/Coded Bandwidth/Most Common": "24000 Hz",
+  "DTS/Statistics/Coded Bandwidth/Highest": "24000 Hz",
+  "DTS/Statistics/Subframes Read": "4 subframes",
+  "DTS/Statistics/Subframes With Block Switching": "4 subframes"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": true
+ }
+}

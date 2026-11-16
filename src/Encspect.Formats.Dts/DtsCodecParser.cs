@@ -20,7 +20,8 @@ public sealed class DtsCodecParser : ICodecParser
     public void Parse(CodecContext context)
     {
         Node parent = context.Parent;
-        var analysis = new DtsAnalysis(context);
+        // The stream's node does not exist until the packets are read; the decoder's findings point to one equal to it.
+        var analysis = new DtsAnalysis(context, new Node("DTS", parent.Offset, parent.Length) { Kind = NodeKind.Stream, Ranges = parent.Ranges });
         if (context.Payload is { Length: > 0 } stream)
         {
             // A DTS stream in one piece (a .dtshd file's STRMDATA chunk) is read as a .dts file is: frames, gaps and the search for sync.
