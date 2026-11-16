@@ -110,7 +110,7 @@ public class DtsSubframeTests
     [InlineData("subframes-huffman.dts")]
     [InlineData("subframes-linear.dts")]
     [InlineData("subframes-five-one.dts")]
-    [InlineData("subframes-14le.dts")]
+    [InlineData("14le-subframes.dts")]
     public void CodedFixturesAreReadToTheEnd(string name)
     {
         Report report = Analyzer.CreateDefault().Analyze(name, new MemoryStream(Fixture(name)));
