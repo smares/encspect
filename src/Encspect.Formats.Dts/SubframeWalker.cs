@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Encspect.Core;
 
 namespace Encspect.Formats.Dts;
@@ -29,9 +30,15 @@ internal sealed class SubframeWalker
         ["A129", "B129", "C129", "D129", "E129", "F129", "G129"],
     ];
 
-    private static readonly string[] TransientBooks = ["A4", "B4", "C4", "D4"];
-    private static readonly string[] ScaleBooks = ["SA129", "SB129", "SC129", "SD129", "SE129"];
-    private static readonly string[] AbitsBooks = ["A12", "B12", "C12", "D12", "E12"];
+    private static readonly string[] TransientNames = ["A4", "B4", "C4", "D4"];
+    private static readonly string[] ScaleNames = ["SA129", "SB129", "SC129", "SD129", "SE129"];
+    private static readonly string[] AbitsNames = ["A12", "B12", "C12", "D12", "E12"];
+
+    // The books of the tables above, resolved once.
+    private static readonly HuffmanBook[][] Quantizer = [.. QuantizerBooks.Select(row => row.Select(HuffmanBook.Get).ToArray())];
+    private static readonly HuffmanBook[] TransientBooks = [.. TransientNames.Select(HuffmanBook.Get)];
+    private static readonly HuffmanBook[] ScaleBooks = [.. ScaleNames.Select(HuffmanBook.Get)];
+    private static readonly HuffmanBook[] AbitsBooks = [.. AbitsNames.Select(HuffmanBook.Get)];
 
     private readonly int[][] _abits = NewRows(CoreAudioHeader.MaxChannels, 32);
     private readonly int[][] _pmode = NewRows(CoreAudioHeader.MaxChannels, 32);
@@ -101,6 +108,7 @@ internal sealed class SubframeWalker
         walk.ProblemBit = _pos;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private bool Subframe(SubframeWalk walk, CoreAudioHeader a, int sf, SampleBuffers lent)
     {
         int channels = a.Channels;
@@ -155,7 +163,7 @@ internal sealed class SubframeWalker
                 {
                     5 => (int)Read(4),
                     6 => (int)Read(5),
-                    _ => AbitsOfSymbol(HuffmanBook.Get(AbitsBooks[select])),
+                    _ => AbitsOfSymbol(AbitsBooks[select]),
                 };
                 if (abits > 26)
                 {
@@ -173,7 +181,7 @@ internal sealed class SubframeWalker
             Array.Clear(_tmode[ch]);
             if (ssc > 1)
             {
-                HuffmanBook book = HuffmanBook.Get(TransientBooks[a.Thuff[ch]]);
+                HuffmanBook book = TransientBooks[a.Thuff[ch]];
                 int vq = Math.Min(a.VqSub[ch], 32);
                 for (int n = 0; n < vq; n++)
                 {
@@ -258,7 +266,7 @@ internal sealed class SubframeWalker
                 {
                     5 => SignExtend((int)Read(6), 6),
                     6 => SignExtend((int)Read(7), 7),
-                    _ => Symbol(HuffmanBook.Get(ScaleBooks[select])),
+                    _ => Symbol(ScaleBooks[select]),
                 };
                 index += 64;
                 if (index is < 0 or > 128)
@@ -409,6 +417,7 @@ internal sealed class SubframeWalker
     }
 
     // The quantization indexes of one subband's subsubframe in _samples.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private bool Samples(SubframeWalk walk, CoreAudioHeader a, int ch, int abits, int sf)
     {
         if (abits >= 11)
@@ -426,7 +435,7 @@ internal sealed class SubframeWalker
         int sel = a.Sel[ch][abits - 1];
         if (sel < books.Length)
         {
-            HuffmanBook book = HuffmanBook.Get(books[sel]);
+            HuffmanBook book = Quantizer[abits - 1][sel];
             for (int m = 0; m < 8; m++)
             {
                 _samples[m] = Symbol(book);
@@ -477,7 +486,7 @@ internal sealed class SubframeWalker
         {
             5 => (int)Read(6),
             6 => (int)Read(7),
-            _ => Symbol(HuffmanBook.Get(ScaleBooks[select])),
+            _ => Symbol(ScaleBooks[select]),
         };
         sum = select < 5 ? sum + code : code;
         ReadOnlySpan<int> table = select == 6 ? SubframeTables.ScaleFactor7 : SubframeTables.ScaleFactor6;
@@ -550,6 +559,7 @@ internal sealed class SubframeWalker
     }
 
     // A symbol of the book at the next bits.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private int Symbol(HuffmanBook book)
     {
         int symbol = book.Decode(Peek32(), out int length);
@@ -567,20 +577,22 @@ internal sealed class SubframeWalker
 
     private static int SignExtend(int value, int bits) => (value << (32 - bits)) >> (32 - bits);
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private uint Peek32()
     {
         int index = _pos >> 3;
-        if (index + 5 > _data.Length)
+        if (index + 8 > _data.Length)
         {
             _isOverrun = true;
             return 0;
         }
 
-        ulong window = ((ulong)_data[index] << 32) | ((ulong)_data[index + 1] << 24) | ((ulong)_data[index + 2] << 16) | ((ulong)_data[index + 3] << 8) | _data[index + 4];
-        return (uint)(window >> (8 - (_pos & 7)));
+        ulong window = System.Buffers.Binary.BinaryPrimitives.ReadUInt64BigEndian(_data.AsSpan(index));
+        return (uint)(window >> (32 - (_pos & 7)));
     }
 
     // Up to 24 bits.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private uint Read(int count)
     {
         if (count == 0)

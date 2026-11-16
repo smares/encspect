@@ -37,6 +37,7 @@ internal sealed class HuffmanBook
     public int Longest { get; }
 
     // The symbol the next Longest bits start with and the bits the code takes.
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
     public int Decode(uint window, out int length)
     {
         ushort entry = _table[window >> (32 - Longest)];
