@@ -4,6 +4,7 @@ namespace Encspect.Formats.Speex;
 internal static class Topics
 {
     public const string SpeexModes = "speex-modes";
+    public const string SpeexExcitation = "speex-excitation";
     public const string GranulePosition = "granule-position";
     public const string BitrateModes = "bitrate-modes";
     public const string EncoderDetection = "encoder-detection";
