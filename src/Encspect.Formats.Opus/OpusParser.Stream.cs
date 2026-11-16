@@ -231,8 +231,11 @@ public sealed partial class OpusParser
         {
             _head = OpusHead.Read(packet.Span);
 
-            // A header the container puts together from its own fields (MP4's dOps box) has no bytes of its own: its nodes go under the box.
-            Node headParent = packet.IsOpaque && context.Configuration is { } configuration ? configuration.Parent : _parent;
+            // A header the container puts together from its own fields (MP4's dOps box) has no bytes of its own: its nodes go under the box. So does one the
+            // container hands over from its configuration whose bytes lie outside the stream's node (another codec's box in a damaged MP4 sample entry).
+            Node headParent = context.Configuration is { } configuration && (packet.IsOpaque || packet.FileStart < _parent.Offset || packet.FileEnd > _parent.End)
+                ? configuration.Parent
+                : _parent;
             if (_head is not { } head)
             {
                 Node node = headParent.Add(Node.FromMapped("Opus Head", packet, 0, packet.Length, NodeValue.Integer(packet.Length, "bytes", "byte"), description: Explain.HeadShort,
