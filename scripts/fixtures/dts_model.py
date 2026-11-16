@@ -18,6 +18,7 @@ rate (LBR), an extended bit rate (XBR), a 96 kHz (X96) and an extra channels (XX
 component's sync word at the place the descriptor's sizes give.
 """
 
+import dts_coded
 from mp4_boxes import Bits
 
 SYNC = 0x7FFE8001
@@ -88,8 +89,8 @@ def silent_subframes(bits, p, nch, subs, vqsub, joinx, bhuff, shuff, ssc, header
                 bits.put(0, 1)
         for ch in range(nch):
             width = bhuff[ch] - 1
-            for _ in range(vqsub[ch]):
-                bits.put(0, width)
+            for n in range(vqsub[ch]):
+                bits.put(31 if p.get("invalid_abits") and ch == 0 and n == 0 and bhuff[ch] == 6 else 0, width)
         # ABITS 0 everywhere: no transient mode, no scale factor below the VQ start.
         for ch in range(nch):
             for _ in range(max(0, subs[ch] - vqsub[ch])):
@@ -116,7 +117,7 @@ def silent_subframes(bits, p, nch, subs, vqsub, joinx, bhuff, shuff, ssc, header
             bits.put(0, 8)
         for ssf in range(count):
             if ssf == count - 1 or p["aspf"]:
-                bits.put(0xFFFF, 16)
+                bits.put(p.get("dsync", 0xFFFF), 16)
 
 
 def audio_header(bits, p, nch, header="core"):
@@ -161,6 +162,21 @@ def defaults(**o):
     return p
 
 
+def write_subframes(bits, p, nch):
+    """The core's subframes: silent ones, or with content where the frame asks for it (coded=True; seed, adpcm, rich and transients shape it, dts_coded.py)."""
+    subs, vqsub = [s + 2 for s in p["subs"]], [v + 1 for v in p["vqsub"]]
+    if p.get("coded"):
+        return dts_coded.write_subframes(bits, p, nch, subs, vqsub, p["joinx"], p["bhuff"], p["shuff"], p["thuff"], p["sel"], p["ssc"], seed=p.get("seed", 1))
+    silent_subframes(bits, p, nch, subs, vqsub, p["joinx"], p["bhuff"], p["shuff"], p["ssc"])
+    return None
+
+
+def facts_of(**o):
+    """What the subframes of a coded core frame hold that the analyzer's figures report: the highest subband and the subframes with a transient."""
+    p = defaults(**o)
+    return write_subframes(Bits(), p, p["nch"])
+
+
 def core_body(p):
     """The core frame's bits up to the end of the optional information, in the bit-packed domain."""
     bits = Bits()
@@ -177,7 +193,7 @@ def core_body(p):
     bits.put(p["dialnorm"], 4)
     nch = p["nch"]
     audio_header(bits, p, nch)
-    silent_subframes(bits, p, nch, [s + 2 for s in p["subs"]], [v + 1 for v in p["vqsub"]], p["joinx"], p["bhuff"], p["shuff"], p["ssc"])
+    write_subframes(bits, p, nch)
     if p["timef"]:
         bits.put(p["times"], 32)
     return bits

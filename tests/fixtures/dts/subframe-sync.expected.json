@@ -1,0 +1,62 @@
+{
+ "description": "Six stereo core frames, the fourth with 0xFFFE at the end of its subframe where 5.6 puts 0xFFFF.",
+ "length": 3072,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   512
+  ],
+  [
+   512,
+   512
+  ],
+  [
+   1024,
+   512
+  ],
+  [
+   1536,
+   512
+  ],
+  [
+   2048,
+   512
+  ],
+  [
+   2560,
+   512
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 3072,
+   "is_vbr": false
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "dts.subframe-sync",
+   "does not end with the word 0xFFFF"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "libdca": false,
+  "skip": {
+   "decode": "ffmpeg rejects the frame ('DSYNC check failed')",
+   "libdca": "libdca's reading of the damaged frame says nothing"
+  }
+ }
+}

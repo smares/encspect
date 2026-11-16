@@ -1,7 +1,7 @@
 ---
 id: dts-audio-coding-header
 title: DTS primary audio coding header
-related: dts-core-frames, dts-channel-arrangements, subband-coding, huffman-coding
+related: dts-core-frames, dts-subframes, dts-channel-arrangements, subband-coding, huffman-coding
 references: ETSI TS 102 114 V1.6.1 (2019-08), 5.4.3 and Tables 5-21 to 5-27
 ---
 

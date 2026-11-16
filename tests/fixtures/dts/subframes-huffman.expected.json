@@ -1,0 +1,47 @@
+{
+ "description": "Three stereo core frames with Huffman codes everywhere: bit allocation (BHUFF 0 and 3), transient modes, scale factors (SHUFF 1 and 4), quantization indexes (SEL 0 to 6, block codes and no further encoding), ADJ, subband prediction, vector quantization from subband 28, two subframes of different lengths.",
+ "length": 3900,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   1280
+  ],
+  [
+   1280,
+   1348
+  ],
+  [
+   2628,
+   1272
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 3072,
+   "is_vbr": true
+  }
+ ],
+ "fields": {
+  "DTS/Statistics/Coded Bandwidth/Lowest": "24000 Hz",
+  "DTS/Statistics/Coded Bandwidth/Most Common": "24000 Hz",
+  "DTS/Statistics/Coded Bandwidth/Highest": "24000 Hz",
+  "DTS/Statistics/Subframes Read": "6 subframes",
+  "DTS/Statistics/Subframes With Block Switching": "3 subframes"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": true
+ }
+}

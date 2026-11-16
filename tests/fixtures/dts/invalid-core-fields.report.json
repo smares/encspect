@@ -113,6 +113,48 @@
                   "length": 3072
                 },
                 {
+                  "name": "Coded Bandwidth",
+                  "offset": 0,
+                  "length": 3072,
+                  "children": [
+                    {
+                      "name": "Lowest",
+                      "value": 24000,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 3072
+                    },
+                    {
+                      "name": "Most Common",
+                      "value": 24000,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 3072
+                    },
+                    {
+                      "name": "Highest",
+                      "value": 24000,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 3072
+                    }
+                  ]
+                },
+                {
+                  "name": "Subframes Read",
+                  "value": 4,
+                  "unit": "subframes",
+                  "offset": 0,
+                  "length": 3072
+                },
+                {
+                  "name": "Subframes With Block Switching",
+                  "value": 0,
+                  "unit": "subframes",
+                  "offset": 0,
+                  "length": 3072
+                },
+                {
                   "name": "Stereo Coding",
                   "value": 6,
                   "unit": "frames",
@@ -4760,6 +4802,38 @@
             "values": [
               369
             ]
+          },
+          {
+            "name": "Coded Bandwidth",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              0,
+              512,
+              1536,
+              2560
+            ],
+            "values": [
+              24000,
+              24000,
+              24000,
+              24000
+            ]
+          },
+          {
+            "name": "Coded Bandwidth Over Time",
+            "unit": "Hz",
+            "axis": "seconds",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              0
+            ],
+            "values": [
+              24000
+            ]
           }
         ],
         "categorySeries": [
@@ -4791,6 +4865,54 @@
               [
                 0,
                 6
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Subframes With Block Switching",
+            "concept": "blockSwitching",
+            "valueLabel": "subframe",
+            "categories": [
+              {
+                "name": "With block switching",
+                "count": 0
+              },
+              {
+                "name": "Without block switching",
+                "count": 4
+              }
+            ],
+            "total": 4,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                2
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                4
               ]
             ],
             "seconds": [
@@ -4845,6 +4967,20 @@
           0
         ],
         "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "dts.subframe-sync",
+        "message": "A subframe does not end with the synchronization word 0xFFFF that 5.6 puts at the end of every subframe (and of every subsubframe when ASPF is set): subframe 2: the subframe does not end with the word 0xFFFF. The frame's samples are not read. First in the frame at 0x400 (2 times).",
+        "offset": 1049,
+        "length": 487,
+        "path": [
+          0,
+          3,
+          0,
+          3
+        ],
+        "count": 2
       },
       {
         "severity": "Warning",

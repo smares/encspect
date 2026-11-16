@@ -11,6 +11,12 @@ internal sealed class StreamFigures(int sampleRate)
     private readonly List<(long Bits, long Samples)> _seconds = [];
     private readonly List<int> _firstUnits = [];
     private CategorySeriesBuilder? _stereo;
+    private CategorySeriesBuilder? _switching;
+
+    // The coded bandwidth of the units whose subframes were read: where each starts, its subbands, and per second of audio the highest of the units that start in it.
+    private readonly ChunkedList<(double Offset, byte Bands)> _bandwidth = new();
+    private readonly ChunkedList<(long Second, byte Bands)> _bandwidthSeconds = new();
+    private readonly SortedDictionary<byte, int> _bandwidthCounts = [];
 
     // The units of each stereo coding (StereoCodings), and the units that have none.
     public int[] StereoCounts { get; } = new int[StereoCodings.Length];
@@ -45,20 +51,121 @@ internal sealed class StreamFigures(int sampleRate)
         }
     }
 
-    public IReadOnlyList<CategorySeries> Categories(Series bitrate, Node anchor)
+    public static readonly Category[] BlockSwitchingCategories =
+    [
+        new("With block switching", Explain.CategoryBlockSwitched) { Topic = Topics.TransientMode },
+        new("Without block switching", Explain.CategoryBlockLong) { Topic = Topics.TransientMode },
+    ];
+
+    // Subframes read to their end, and those of them with a transient.
+    public long SubframesRead { get; private set; }
+
+    public long SubframesSwitched { get; private set; }
+
+    // The node of the coded bandwidth figures and of the block switching tally, once Statistics has made them.
+    public Node? BandwidthNode { get; private set; }
+
+    public Node? SwitchingNode { get; set; }
+
+    // What the walk over the subframes of the unit Add is about to count found (null for a unit without a walk, or one that did not read to its end); call it only for a unit
+    // that gets a point, before Add.
+    public void AddCoding(long offset, SubframeWalk? walk)
     {
-        if (_stereo is null || StereoUnits == 0)
+        while (_switching is not null && _switching.Count < _points.Count)
         {
-            return [];
+            _switching.Add(ReadOnlySpan<byte>.Empty);
         }
 
-        while (_stereo.Count < _points.Count)
+        bool isRead = walk is { IsComplete: true, Subframes: > 0 };
+        if (isRead)
         {
-            _stereo.Add(CategorySeries.None);
+            if (walk!.Subbands > 0 && sampleRate > 0)
+            {
+                byte bands = (byte)walk.Subbands;
+                _bandwidth.Add((offset, bands));
+                _bandwidthCounts[bands] = _bandwidthCounts.GetValueOrDefault(bands) + 1;
+                long second = _samples / sampleRate;
+                if (_bandwidthSeconds.Count > 0 && _bandwidthSeconds[^1].Second == second)
+                {
+                    if (_bandwidthSeconds[^1].Bands < bands)
+                    {
+                        _bandwidthSeconds.RemoveLast();
+                        _bandwidthSeconds.Add((second, bands));
+                    }
+                }
+                else
+                {
+                    _bandwidthSeconds.Add((second, bands));
+                }
+            }
+
+            _switching ??= new CategorySeriesBuilder("Subframes With Block Switching", BlockSwitchingCategories, "subframe", 0, concept: GraphConcept.BlockSwitching);
+            while (_switching.Count < _points.Count)
+            {
+                _switching.Add(ReadOnlySpan<byte>.Empty);
+            }
+
+            Span<byte> codes = stackalloc byte[walk.Subframes];
+            for (int i = 0; i < codes.Length; i++)
+            {
+                bool isSwitched = (walk.TransientMask & (1 << i)) != 0;
+                codes[i] = isSwitched ? (byte)0 : (byte)1;
+                SubframesSwitched += isSwitched ? 1 : 0;
+            }
+
+            SubframesRead += codes.Length;
+            _switching.Add(codes);
+        }
+        else if (_switching is not null)
+        {
+            _switching.Add(ReadOnlySpan<byte>.Empty);
+        }
+    }
+
+    // The upper edge of the highest subband the unit codes in whole hertz: the subbands are 1/64 of the sample rate wide, rounded half up.
+    public long Bandwidth(int bands) => ((bands * (long)sampleRate) + 32) / 64;
+
+    // The coded bandwidth figures as the statistics' children: the lowest, the most common and the highest.
+    public Node? AddBandwidthTo(Node statistics, Func<string, NodeValue?, NodeKind, string, string?, Node> cover)
+    {
+        if (_bandwidthCounts.Count == 0)
+        {
+            return null;
         }
 
+        Node bandwidth = statistics.Add(cover("Coded Bandwidth", null, NodeKind.Detail, Explain.StatCodedBandwidth, Topics.CodedBandwidth));
+        bandwidth.Add(cover("Lowest", NodeValue.Integer(Bandwidth(_bandwidthCounts.Keys.First()), "Hz"), NodeKind.Detail, Explain.BandwidthLowest, null));
+        bandwidth.Add(cover("Most Common", NodeValue.Integer(Bandwidth(_bandwidthCounts.MaxBy(b => b.Value).Key), "Hz"), NodeKind.Detail, Explain.BandwidthMostCommon, null));
+        bandwidth.Add(cover("Highest", NodeValue.Integer(Bandwidth(_bandwidthCounts.Keys.Last()), "Hz"), NodeKind.Detail, Explain.BandwidthHighest, null));
+        BandwidthNode = bandwidth;
+        return bandwidth;
+    }
+
+    public IReadOnlyList<CategorySeries> Categories(Series bitrate, Node? stereoAnchor)
+    {
         TimeIndex? time = _seconds.Count == 0 ? null : new TimeIndex(Enumerable.Range(0, _seconds.Count).Select(s => (double)s).ToArray(), _firstUnits.ToArray());
-        return [_stereo.Build(bitrate.X, bitrate, anchor, Explain.StereoCodingSeries, Topics.MidSideStereo, time)];
+        var categories = new List<CategorySeries>();
+        if (_stereo is not null && StereoUnits > 0 && stereoAnchor is not null)
+        {
+            while (_stereo.Count < _points.Count)
+            {
+                _stereo.Add(CategorySeries.None);
+            }
+
+            categories.Add(_stereo.Build(bitrate.X, bitrate, stereoAnchor, Explain.StereoCodingSeries, Topics.MidSideStereo, time));
+        }
+
+        if (_switching is not null && SwitchingNode is not null && SubframesRead > 0)
+        {
+            while (_switching.Count < _points.Count)
+            {
+                _switching.Add(ReadOnlySpan<byte>.Empty);
+            }
+
+            categories.Add(_switching.Build(bitrate.X, bitrate, SwitchingNode, Explain.BlockSwitchingSeries, Topics.TransientMode, time));
+        }
+
+        return categories;
     }
 
     public int SampleRate => sampleRate;
@@ -194,6 +301,43 @@ internal sealed class StreamFigures(int sampleRate)
             double[] starts = Enumerable.Range(0, _seconds.Count).Select(s => (double)s).ToArray();
             double[] values = _seconds.Select(s => s.Samples > 0 ? Math.Round(s.Bits * (double)sampleRate / s.Samples / 1000, MidpointRounding.ToEven) : 0).ToArray();
             series.Add(new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, values, anchor) { Description = Explain.BitrateOverTimeSeries });
+        }
+
+        if (_bandwidth.Count > 0 && BandwidthNode is not null)
+        {
+            var x = new double[_bandwidth.Count];
+            var hertz = new double[_bandwidth.Count];
+            for (int i = 0; i < x.Length; i++)
+            {
+                if (i % 4096 == 0)
+                {
+                    cancellation.ThrowIfCancellationRequested();
+                }
+
+                x[i] = _bandwidth[i].Offset;
+                hertz[i] = Bandwidth(_bandwidth[i].Bands);
+            }
+
+            series.Add(new Series("Coded Bandwidth", "Hz", SeriesAxis.FrameOffset, x, hertz)
+            {
+                Description = Explain.CodedBandwidthSeries,
+                Concept = GraphConcept.CodedBandwidth,
+                Quantity = "Coded Bandwidth",
+            });
+            var secondX = new double[_bandwidthSeconds.Count];
+            var secondValues = new double[_bandwidthSeconds.Count];
+            for (int i = 0; i < secondX.Length; i++)
+            {
+                secondX[i] = _bandwidthSeconds[i].Second;
+                secondValues[i] = Bandwidth(_bandwidthSeconds[i].Bands);
+            }
+
+            series.Add(new Series("Coded Bandwidth Over Time", "Hz", SeriesAxis.Seconds, secondX, secondValues, BandwidthNode)
+            {
+                Description = Explain.CodedBandwidthOverTimeSeries,
+                Concept = GraphConcept.CodedBandwidth,
+                Quantity = "Coded Bandwidth",
+            });
         }
 
         return series;

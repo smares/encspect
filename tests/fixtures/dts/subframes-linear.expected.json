@@ -1,0 +1,47 @@
+{
+ "description": "Three stereo core frames with linear codes: 4-bit and 5-bit bit allocation, 6-bit and 7-bit scale factors, quantizers of up to 26 bits, a transient mode in one book.",
+ "length": 3724,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   1152
+  ],
+  [
+   1152,
+   1260
+  ],
+  [
+   2412,
+   1312
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 3072,
+   "is_vbr": true
+  }
+ ],
+ "fields": {
+  "DTS/Statistics/Coded Bandwidth/Lowest": "24000 Hz",
+  "DTS/Statistics/Coded Bandwidth/Most Common": "24000 Hz",
+  "DTS/Statistics/Coded Bandwidth/Highest": "24000 Hz",
+  "DTS/Statistics/Subframes Read": "6 subframes",
+  "DTS/Statistics/Subframes With Block Switching": "6 subframes"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": true
+ }
+}

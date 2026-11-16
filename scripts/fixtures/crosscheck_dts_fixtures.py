@@ -405,6 +405,9 @@ def check_mediainfo(path, tally):
     if path.suffix == ".dtshd":
         tally.skip("bitrate", "MediaInfo gives a .dtshd file's bit rate from the stream chunk's size over the duration (measured with MediaInfo 26.01: 2,944 bytes in 43 ms are 547,721 bit/s); "
                               "its nominal and maximum bit rates are compared with the chunks")
+    elif core is not None and next((n.get("value") for n in mi.walk(core) if n["name"] == "Bit Rate"), None) == "open":
+        # RATE 29, Table 5-7's open rate, in the first core frame: MediaInfo states the bit rate as "Open" (measured with MediaInfo 26.01 on the subframes fixtures).
+        tally.compare("bitrate", audio.get("BitRate"), "Open")
     else:
         tally.compare("bitrate", audio.get("BitRate"), None if expected is None else str(round(expected)))
     if core is not None:

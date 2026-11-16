@@ -27,6 +27,10 @@ internal enum Issue
     CodingModeAuxiliary,
     SubstreamMisaligned,
     LosslessInconsistent,
+    SubframeSync,
+    SubframeOverrun,
+    SubframeInvalid,
+    SubframePartial,
 }
 
 // isGroup: the node the finding points to is a group of fields (Tree.Close, Locator.Group), not a single field (Locator.Field); in the

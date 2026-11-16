@@ -1009,6 +1009,48 @@
                           "length": 20488
                         },
                         {
+                          "name": "Coded Bandwidth",
+                          "offset": 70,
+                          "length": 20488,
+                          "children": [
+                            {
+                              "name": "Lowest",
+                              "value": 24000,
+                              "unit": "Hz",
+                              "offset": 70,
+                              "length": 20488
+                            },
+                            {
+                              "name": "Most Common",
+                              "value": 24000,
+                              "unit": "Hz",
+                              "offset": 70,
+                              "length": 20488
+                            },
+                            {
+                              "name": "Highest",
+                              "value": 24000,
+                              "unit": "Hz",
+                              "offset": 70,
+                              "length": 20488
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Subframes Read",
+                          "value": 10,
+                          "unit": "subframes",
+                          "offset": 70,
+                          "length": 20488
+                        },
+                        {
+                          "name": "Subframes With Block Switching",
+                          "value": 0,
+                          "unit": "subframes",
+                          "offset": 70,
+                          "length": 20488
+                        },
+                        {
                           "name": "Stereo Coding",
                           "value": 10,
                           "unit": "frames",
@@ -9805,6 +9847,50 @@
             "values": [
               768
             ]
+          },
+          {
+            "name": "Coded Bandwidth",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              86,
+              2134,
+              4182,
+              6230,
+              8278,
+              10326,
+              12374,
+              14422,
+              16470,
+              18518
+            ],
+            "values": [
+              24000,
+              24000,
+              24000,
+              24000,
+              24000,
+              24000,
+              24000,
+              24000,
+              24000,
+              24000
+            ]
+          },
+          {
+            "name": "Coded Bandwidth Over Time",
+            "unit": "Hz",
+            "axis": "seconds",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              0
+            ],
+            "values": [
+              24000
+            ]
           }
         ],
         "categorySeries": [
@@ -9835,6 +9921,38 @@
             "runs": [
               [
                 0,
+                10
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Subframes With Block Switching",
+            "concept": "blockSwitching",
+            "valueLabel": "subframe",
+            "categories": [
+              {
+                "name": "With block switching",
+                "count": 0
+              },
+              {
+                "name": "Without block switching",
+                "count": 10
+              }
+            ],
+            "total": 10,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                10
+              ]
+            ],
+            "runs": [
+              [
+                1,
                 10
               ]
             ],
