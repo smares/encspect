@@ -113,6 +113,48 @@
                   "length": 2304
                 },
                 {
+                  "name": "Coded Bandwidth",
+                  "offset": 0,
+                  "length": 2304,
+                  "children": [
+                    {
+                      "name": "Lowest",
+                      "value": 24000,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 2304
+                    },
+                    {
+                      "name": "Most Common",
+                      "value": 24000,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 2304
+                    },
+                    {
+                      "name": "Highest",
+                      "value": 24000,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 2304
+                    }
+                  ]
+                },
+                {
+                  "name": "Subframes Read",
+                  "value": 4,
+                  "unit": "subframes",
+                  "offset": 0,
+                  "length": 2304
+                },
+                {
+                  "name": "Subframes With Block Switching",
+                  "value": 0,
+                  "unit": "subframes",
+                  "offset": 0,
+                  "length": 2304
+                },
+                {
                   "name": "Stereo Coding",
                   "value": 4,
                   "unit": "frames",
@@ -2984,6 +3026,38 @@
             "values": [
               494
             ]
+          },
+          {
+            "name": "Coded Bandwidth",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              0,
+              576,
+              1152,
+              1728
+            ],
+            "values": [
+              24000,
+              24000,
+              24000,
+              24000
+            ]
+          },
+          {
+            "name": "Coded Bandwidth Over Time",
+            "unit": "Hz",
+            "axis": "seconds",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              0
+            ],
+            "values": [
+              24000
+            ]
           }
         ],
         "categorySeries": [
@@ -3014,6 +3088,38 @@
             "runs": [
               [
                 0,
+                4
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Subframes With Block Switching",
+            "concept": "blockSwitching",
+            "valueLabel": "subframe",
+            "categories": [
+              {
+                "name": "With block switching",
+                "count": 0
+              },
+              {
+                "name": "Without block switching",
+                "count": 4
+              }
+            ],
+            "total": 4,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                4
+              ]
+            ],
+            "runs": [
+              [
+                1,
                 4
               ]
             ],
