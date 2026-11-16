@@ -9,6 +9,9 @@ namespace Encspect.Formats.Musepack;
 // packet (DeclaredEnd), so a tag signature inside the audio is not taken for a tag.
 public sealed class MusepackParser : IFormatParser
 {
+    // The codec ID of the stream's decoder (MusepackDecoder), for every stream version.
+    public const string CodecId = "musepack";
+
     public string Name => "Musepack";
 
     // A magic number is certain, as long as the header after "MP+" is one an encoder writes
