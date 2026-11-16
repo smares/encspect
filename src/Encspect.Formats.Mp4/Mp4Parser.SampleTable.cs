@@ -55,7 +55,7 @@ public sealed partial class Mp4Parser
         int version = FullBox(node, f).Version;
         uint count = f.U32(node, "Entries", Explain.SampleEntryCount);
         ReadChildren(state, node, f.Position, header.End, depth + 1, custom: (s, n, h, fields, d) => SampleEntryBox(s, n, h, fields, d, version),
-            naming: h => new BoxName(h.Type, NodeKind.Detail, Explain.SampleEntry(h.Type), Topics.SampleTables));
+            naming: h => new BoxName(h.Type, NodeKind.Detail, Explain.SampleEntry(h.Type), Topics.OfEntry(h.Type)));
         int read = node.Children.Count(c => c.Children.Any(k => k.Name == "Data Reference Index"));
         if (read != count && !HasHiddenChild(node) && !state.Findings.IsDetaching)
         {

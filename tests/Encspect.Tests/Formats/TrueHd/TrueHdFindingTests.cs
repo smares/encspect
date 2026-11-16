@@ -167,6 +167,22 @@ public class TrueHdFindingTests
         Assert.Contains(report.Findings, f => f.Code == "truehd.codec-id-mismatch");
     }
 
+    // "truehd.dmlp-differs" and "truehd.dmlp-short": the dmlp box of an MP4 sample entry (the hand-built fixtures of tests/fixtures/mp4 hold the same tracks as ffmpeg's file, one with
+    // another peak data rate in the box and one with a box of 6 bytes), which only a container can hand over.
+    [Theory]
+    [InlineData("mp4/truehd-entry-differs-in-mp4.m4a", "truehd.dmlp-differs", "a peak data rate of")]
+    [InlineData("mp4/truehd-dmlp-short-in-mp4.m4a", "truehd.dmlp-short", "holds 6 bytes")]
+    public void ADmlpBoxThatDisagreesWithTheStreamOrIsShortIsReported(string name, string code, string text)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+
+        Finding finding = Assert.Single(report.Findings, f => f.Code == code);
+        Assert.Equal(Severity.Warning, finding.Severity);
+        Assert.Contains(text, finding.Message, StringComparison.Ordinal);
+        Assert.Equal("dmlp", finding.Node!.Name);
+        Assert.NotNull(finding.Path);
+    }
+
     private static Analyzer With(Func<TrueHdParser> parser) =>
         new(DefaultParsers.Tags, [.. DefaultParsers.Formats.Select(f => f is TrueHdParser ? parser() : f)], DefaultParsers.Codecs, DefaultParsers.Decoders);
 

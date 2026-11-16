@@ -1,0 +1,242 @@
+{
+ "description": "32-bit floating-point PCM in MP4 as ffmpeg's muxer writes it: an fpcm sample entry with a pcmC box.",
+ "encoder": {
+  "tool": "ffmpeg version 6.1.1-3ubuntu5 (ffmpeg package of Ubuntu 24.04)",
+  "command": [
+   "ffmpeg",
+   "-v",
+   "error",
+   "-y",
+   "-f",
+   "lavfi",
+   "-i",
+   "aevalsrc=0.5*sin(2*PI*440*t)|0.3*sin(2*PI*660*t):s=8000:d=0.1:c=stereo",
+   "-c:a",
+   "pcm_f32le",
+   "-strict",
+   "-2",
+   "{out}"
+  ]
+ },
+ "length": 7147,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "free",
+   28,
+   8
+  ],
+  [
+   "mdat",
+   36,
+   6408
+  ],
+  [
+   "moov",
+   6444,
+   703
+  ],
+  [
+   "moov/mvhd",
+   6452,
+   108
+  ],
+  [
+   "moov/trak",
+   6560,
+   489
+  ],
+  [
+   "moov/trak/tkhd",
+   6568,
+   92
+  ],
+  [
+   "moov/trak/edts",
+   6660,
+   36
+  ],
+  [
+   "moov/trak/edts/elst",
+   6668,
+   28
+  ],
+  [
+   "moov/trak/mdia",
+   6696,
+   353
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   6704,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   6736,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   6781,
+   268
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   6789,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   6805,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   6813,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   6829,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   6841,
+   208
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   6849,
+   108
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/fpcm",
+   6865,
+   92
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/fpcm/chnl",
+   6901,
+   22
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/fpcm/pcmC",
+   6923,
+   14
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/fpcm/btrt",
+   6937,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   6957,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   6981,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   7009,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   7029,
+   20
+  ],
+  [
+   "moov/udta",
+   7049,
+   98
+  ],
+  [
+   "moov/udta/meta",
+   7057,
+   90
+  ],
+  [
+   "moov/udta/meta/hdlr",
+   7069,
+   33
+  ],
+  [
+   "moov/udta/meta/ilst",
+   7102,
+   45
+  ],
+  [
+   "moov/udta/meta/ilst/©too",
+   7110,
+   37
+  ],
+  [
+   "moov/udta/meta/ilst/©too/data",
+   7118,
+   29
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "PCM (floating-point)",
+   "sample_rate": 8000,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 800,
+   "is_vbr": false,
+   "writer": [
+    "FFmpeg (Lavf60.16.100)",
+    "Low"
+   ]
+  }
+ ],
+ "units": [],
+ "fields": {
+  "MP4/moov/mvhd/Timescale": "1000 units per second",
+  "MP4/moov/mvhd/Duration": "100 (0.100 s)",
+  "MP4/moov/trak/tkhd/Track ID": "1",
+  "MP4/moov/trak/tkhd/Duration": "100 (0.100 s)",
+  "MP4/moov/trak/mdia/mdhd/Timescale": "8000 units per second",
+  "MP4/moov/trak/mdia/mdhd/Duration": "800 (0.100 s)",
+  "MP4/moov/trak/edts/elst/Edit/Segment Duration": "100 (0.100 s)",
+  "MP4/moov/trak/edts/elst/Edit/Media Time": "0 units of the media's timescale"
+ },
+ "pcm": {
+  "samples": 800,
+  "bits": 32,
+  "format": "float",
+  "md5": "64bdda86170967ba53fff72ed03571a0"
+ },
+ "findings": [
+  [
+   "mp4.moov-after-mdat",
+   "not optimized for streaming"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "faad": null,
+  "decode": true,
+  "skip": {
+   "faad": "faad2 reads AAC only.",
+   "ffprobe_packets": "ffmpeg's demuxer lists a PCM track's samples as packets of its own size, not as the sample table's one-frame samples"
+  },
+  "ffprobe_packets": false
+ }
+}

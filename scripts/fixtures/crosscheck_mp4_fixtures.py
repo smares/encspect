@@ -580,7 +580,7 @@ def check_trace(path, report, problems, skipped=()):
 
 LAYERS = {"I": "1", "II": "2", "III": "3"}
 # MediaInfo's format and its AAC profile (Format_AdditionalFeatures) for each of the analyzer's codecs.
-MEDIAINFO_FORMATS = {"AAC LC": ("AAC", "LC"), "HE-AAC": ("AAC", "LC SBR"), "HE-AAC v2": ("AAC", "LC SBR PS"), "AAC Main": ("AAC", "Main"),
+MEDIAINFO_FORMATS = {"Dolby TrueHD": ("MLP FBA", None), "AAC LC": ("AAC", "LC"), "HE-AAC": ("AAC", "LC SBR"), "HE-AAC v2": ("AAC", "LC SBR PS"), "AAC Main": ("AAC", "Main"),
                      "AAC LTP": ("AAC", "LTP"), "AAC SSR": ("AAC", "SSR"), "xHE-AAC (USAC)": ("USAC", None), "ER AAC ELD": ("ER AAC ELD", None),
                      "ER AAC ELD with SBR": ("ER AAC ELD", None)}
 # MediaInfo's format of the streams whose frames the analyzer does not read; the analyzer's name for the others is MediaInfo's.
@@ -747,11 +747,24 @@ def milliseconds(seconds):
     return f"{math.floor(seconds * 1000 + 0.5) / 1000:.3f}"
 
 
+def check_mediainfo_pcm(tally, track, node):
+    """The format and byte order MediaInfo reads from a PCM sample entry. Its fpcm (floating-point PCM of MP4), alaw and ulaw entries are named by their codes or as ADPCM in the
+    version run here (24.01), so only the integer and the QuickTime float entries, which it names PCM, are compared; 8-bit samples have no byte order."""
+    if track.get("CodecID") in ("fpcm", "alaw", "ulaw"):
+        return
+    tally.compare("format", track.get("Format"), "PCM")
+    statistics = mi.child(node, "Statistics")
+    if mi.value(statistics, "Bits Per Sample") != 8:
+        tally.compare("byte order", track.get("Format_Settings_Endianness"), "Little" if mi.value(statistics, "Byte Order") == "little-endian" else "Big")
+
+
 def check_mediainfo(path, tally, check=None):
     """MediaInfo must report each audio track's format and AAC profile, ADTS's MPEG version, sample
     rate, channels and layout, SBR and PS signaling, bitrate mode, access units and stream size, and
     for MP4 the duration, the encoding tool and the iTunes metadata's title, artist and album."""
     problems = tally.start(f"{path.parent.name}/{path.stem}")
+    if "mediainfo" in (check or {}).get("skip", {}):
+        return problems
     report = json.loads((path.parent / (path.stem + ".report.json")).read_text(encoding="utf-8"))[0]
     info = tally.read(path)
     audio = info["Audio"] if info else []
@@ -779,7 +792,11 @@ def check_mediainfo(path, tally, check=None):
             version, layer = codec.split()[0][5:], LAYERS[codec.split()[-1]]
             tally.compare("format", (track.get("Format"), track.get("Format_Version"), track.get("Format_Profile")), ("MPEG Audio", version, f"Layer {layer}"))
             continue
-        tally.compare("format", (track.get("Format"), track.get("Format_AdditionalFeatures")), MEDIAINFO_FORMATS.get(codec, (codec, None)))
+        is_pcm = codec.startswith("PCM") or codec in ("A-law", "Mu-law")
+        if is_pcm:
+            check_mediainfo_pcm(tally, track, node)
+        else:
+            tally.compare("format", (track.get("Format"), track.get("Format_AdditionalFeatures")), MEDIAINFO_FORMATS.get(codec, (codec, None)))
         frame = next((n for n in mi.walk(node) if n.get("kind") == "Frame"), None)
         if node["name"] == "ADTS" and frame is not None:
             tally.compare("MPEG version", track.get("Format_Version"), mi.value(frame, "Version").removeprefix("MPEG-"))
@@ -809,10 +826,14 @@ def check_mediainfo(path, tally, check=None):
                           ("1", f"{duration / 1000:.3f}", str(math.floor(bitrate * duration / 8000 + 0.5))) if duration else ("1", None, None))
             continue
         statistics = mi.child(node, "Statistics")
+        if is_pcm:
+            # A PCM track has no frames or access units: MediaInfo gives a frame count of 0 or none, and the analyzer counts sample frames. The bytes of its samples are compared.
+            tally.compare("stream size", track.get("Source_StreamSize", track.get("StreamSize")), str(mi.byte_count(node)))
         # An Opus MP4 sample is one packet, which holds the frames of every stream of a multistream file: the packets are the access units, not the frames.
-        units = mi.value(statistics, "Access Units") or (mi.value(statistics, "Packets") if codec == "Opus" else None) or mi.value(statistics, "Frames")
-        tally.compare("access units", track.get("Source_FrameCount", track.get("FrameCount")), str(units))
-        tally.compare("stream size", track.get("Source_StreamSize", track.get("StreamSize")), str(mi.byte_count(node)))
+        if not is_pcm:
+            units = mi.value(statistics, "Access Units") or (mi.value(statistics, "Packets") if codec == "Opus" else None) or mi.value(statistics, "Frames")
+            tally.compare("access units", track.get("Source_FrameCount", track.get("FrameCount")), str(units))
+            tally.compare("stream size", track.get("Source_StreamSize", track.get("StreamSize")), str(mi.byte_count(node)))
         if node["name"] == "ADTS":
             # MediaInfo gives an ADTS stream's duration only at parse speed 1 or from its risky
             # bitrate estimate, both off by default (File_Aac.cpp, Streams_Update and Streams_Finish).

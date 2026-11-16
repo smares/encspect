@@ -1,0 +1,219 @@
+{
+ "description": "16-bit little-endian PCM of 5.1 channels in a QuickTime file: a sowt sample entry with a chan box.",
+ "encoder": {
+  "tool": "ffmpeg version 6.1.1-3ubuntu5 (ffmpeg package of Ubuntu 24.04)",
+  "command": [
+   "ffmpeg",
+   "-v",
+   "error",
+   "-y",
+   "-f",
+   "lavfi",
+   "-i",
+   "aevalsrc=0.4*sin(2*PI*440*t)|0.4*sin(2*PI*550*t)|0.4*sin(2*PI*660*t)|0.2*sin(2*PI*80*t)|0.3*sin(2*PI*770*t)|0.3*sin(2*PI*880*t):s=8000:d=0.05:c=5.1",
+   "-c:a",
+   "pcm_s16le",
+   "{out}"
+  ]
+ },
+ "length": 5486,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   20
+  ],
+  [
+   "wide",
+   20,
+   8
+  ],
+  [
+   "mdat",
+   28,
+   4808
+  ],
+  [
+   "moov",
+   4836,
+   650
+  ],
+  [
+   "moov/mvhd",
+   4844,
+   108
+  ],
+  [
+   "moov/trak",
+   4952,
+   501
+  ],
+  [
+   "moov/trak/tkhd",
+   4960,
+   92
+  ],
+  [
+   "moov/trak/edts",
+   5052,
+   36
+  ],
+  [
+   "moov/trak/edts/elst",
+   5060,
+   28
+  ],
+  [
+   "moov/trak/mdia",
+   5088,
+   365
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   5096,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   5128,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   5173,
+   280
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   5181,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/hdlr",
+   5197,
+   44
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   5241,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   5249,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   5265,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   5277,
+   176
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   5285,
+   76
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/sowt",
+   5301,
+   60
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/sowt/chan",
+   5337,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   5361,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   5385,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   5413,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   5433,
+   20
+  ],
+  [
+   "moov/udta",
+   5453,
+   33
+  ],
+  [
+   "moov/udta/©swr",
+   5461,
+   25
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "PCM",
+   "sample_rate": 8000,
+   "channels": 6,
+   "channel_mode": "Multichannel",
+   "channel_layout": [
+    "front left",
+    "front right",
+    "front center",
+    "LFE",
+    "back left",
+    "back right"
+   ],
+   "samples": 400,
+   "is_vbr": false,
+   "writer": [
+    "FFmpeg (Lavf60.16.100)",
+    "Low"
+   ]
+  }
+ ],
+ "units": [],
+ "fields": {
+  "MP4/moov/mvhd/Timescale": "1000 units per second",
+  "MP4/moov/mvhd/Duration": "50 (0.050 s)",
+  "MP4/moov/trak/tkhd/Track ID": "1",
+  "MP4/moov/trak/tkhd/Duration": "50 (0.050 s)",
+  "MP4/moov/trak/mdia/mdhd/Timescale": "8000 units per second",
+  "MP4/moov/trak/mdia/mdhd/Duration": "400 (0.050 s)",
+  "MP4/moov/trak/edts/elst/Edit/Segment Duration": "50 (0.050 s)",
+  "MP4/moov/trak/edts/elst/Edit/Media Time": "0 units of the media's timescale"
+ },
+ "pcm": {
+  "samples": 400,
+  "bits": 16,
+  "format": "integer",
+  "md5": "7c6895ae590aee54005579efabf71f76"
+ },
+ "findings": [
+  [
+   "mp4.moov-after-mdat",
+   "not optimized for streaming"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "faad": null,
+  "decode": true,
+  "skip": {
+   "faad": "faad2 reads AAC only.",
+   "ffprobe_packets": "ffmpeg's demuxer lists a PCM track's samples as packets of its own size, not as the sample table's one-frame samples"
+  },
+  "ffprobe_packets": false
+ }
+}

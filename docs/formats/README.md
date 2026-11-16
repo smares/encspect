@@ -16,13 +16,13 @@ What each format parser reads, checks and reports. Tags have their own pages und
 | DTS (core, XCh, X96, XXCH and DTS-HD extension substreams, raw and in MP4) | [dts.md](dts.md) |
 | DTS-HD files (`.dtshd`: the chunks around a DTS stream) | [dtshd.md](dtshd.md) |
 | WavPack (lossless, hybrid and DSD, with correction files, and with decoding for verification) | [wavpack.md](wavpack.md) |
-| FLAC (native and in Ogg, with decoding for verification) | [flac.md](flac.md) |
+| FLAC (native, in Ogg, in MP4 and in Matroska, with decoding for verification) | [flac.md](flac.md) |
 | Monkey's Audio (all versions parsed; versions 3.80 to 3.99 and 4.11 decoded for verification) | [monkeys-audio.md](monkeys-audio.md) |
 | TTA (True Audio, verified by its CRC-32s and decoded for measurements; the frames of a Matroska track) | [tta.md](tta.md) |
 | OptimFROG (`.ofr`: the blocks, the stored WAV header, the encoder's mode and the CRC-32 of every data block; no decoder) | [optimfrog.md](optimfrog.md) |
 | TAK (`.tak`: the metadata objects with their CRC-24s, the stream info, the encoder's preset and the stored WAV header; no frame walk, no decoder) | [tak.md](tak.md) |
 | Apple Lossless (ALAC) frame by frame in MP4 and Matroska (the "alac" codec parser; CAF waits for a CAF parser) | [alac.md](alac.md) |
-| Dolby TrueHD and MLP (raw `.thd` and `.mlp` files, with decoding for verification) | [truehd.md](truehd.md) |
+| Dolby TrueHD and MLP (raw `.thd` and `.mlp` files and the tracks of MP4 and Matroska, with decoding for verification) | [truehd.md](truehd.md) |
 | ASF and WMA (versions 1 and 2, Professional, Lossless and Voice frame by frame) | [asf-wma.md](asf-wma.md) |
 | WAV (RIFF, RIFX, RF64 and BW64; PCM, floating point and the compressed formats at header level; MPEG audio, AC-3, E-AC-3 and DTS routed to their parsers, and AC-3, E-AC-3, DTS and AAC also as IEC 61937 bursts in the samples; PCM, float, A-law and mu-law samples decoded for measurements) | [wav.md](wav.md) |
 | Wave64 (Sony's 64-bit WAVE, `.w64`; the chunks of a WAVE file in GUID-named chunks, and the same decoding) | [wav.md](wav.md#wave64) |
@@ -50,17 +50,17 @@ Which container hands which codec to its codec parser, and which codecs are deco
 | Vorbis | not planned | routed | routed | not planned | not planned | no | yes (measured) |
 | Opus | routed | routed | routed | not planned | not planned | no | yes (measured) |
 | Speex | not planned | not planned | routed | not planned | not planned | no | yes (measured) |
-| FLAC | planned (FFmpeg) | routed | routed | not planned | not planned | yes | yes |
+| FLAC | routed | routed | routed | not planned | not planned | yes | yes |
 | ALAC | routed | routed | not planned | not planned | not planned | no (CAF is planned after 0.5) | yes |
 | WavPack | not planned | routed | not planned | not planned | not planned | yes | yes |
 | TTA | not planned | routed | not planned | not planned | not planned | yes | yes |
 | OptimFROG | not planned | not planned | not planned | not planned | not planned | yes | no |
 | TAK | not planned | not planned | not planned | not planned | not planned | yes | no |
-| Dolby TrueHD, MLP | planned (FFmpeg, `mlpa`) | routed | not planned | not planned | not planned, the lead's decision of 2026-11-07 (IEC 61937 MAT bursts are named and timed) | yes | yes |
+| Dolby TrueHD, MLP | routed (`mlpa`; an unprotected track) | routed | not planned | not planned | not planned, the lead's decision of 2026-11-07 (IEC 61937 MAT bursts are named and timed) | yes | yes |
 | WMA (versions 1 and 2, Professional, Lossless, Voice) | not planned | later, through `A_MS/ACM` | not planned | routed | not planned | ASF | no |
 | Monkey's Audio | not planned | not planned | not planned | not planned | not planned | yes | yes |
 | Musepack | not planned | not planned | not planned | not planned | not planned | yes | yes (measured) |
-| PCM | planned (FFmpeg) | planned (FFmpeg, mkvmerge) | not planned | named, not analyzed (`asf.codec-not-analyzed`) | the container's own stream | AIFF and AIFF-C too | in WAV, Wave64 and AIFF |
+| PCM | routed (`ipcm`, `fpcm` and QuickTime's `sowt`, `twos`, `in24`, `in32`, `fl32`, `fl64`, `raw `, `alaw`, `ulaw` and `lpcm`) | planned (FFmpeg, mkvmerge) | not planned | named, not analyzed (`asf.codec-not-analyzed`) | the container's own stream | AIFF and AIFF-C too | in WAV, Wave64, AIFF and MP4 |
 
 - **AIFF and AIFF-C** route no codec; their uncompressed, float, A-law and mu-law samples are decoded for measurements.
 - **`A_MS/ACM`** in older Matroska files holds a WAVEFORMATEX; routing it by its format tag, which reaches every codec parser the format tag names, comes once a real file from a muxer that writes it is committed as a fixture.

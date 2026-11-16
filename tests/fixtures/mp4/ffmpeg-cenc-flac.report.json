@@ -880,6 +880,8 @@
                                         },
                                         {
                                           "name": "dfLa",
+                                          "value": 38,
+                                          "unit": "bytes",
                                           "offset": 37066,
                                           "length": 50,
                                           "children": [
@@ -897,11 +899,16 @@
                                               "length": 4
                                             },
                                             {
-                                              "name": "Data",
-                                              "value": 42,
-                                              "unit": "bytes",
+                                              "name": "Version",
+                                              "value": 0,
                                               "offset": 37074,
-                                              "length": 42
+                                              "length": 1
+                                            },
+                                            {
+                                              "name": "Flags",
+                                              "value": 0,
+                                              "offset": 37075,
+                                              "length": 3
                                             }
                                           ]
                                         },

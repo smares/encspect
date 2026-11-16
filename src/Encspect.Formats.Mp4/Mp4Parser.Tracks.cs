@@ -124,7 +124,7 @@ public sealed partial class Mp4Parser
         }
         else if (codec == PcmSamples)
         {
-            RoutePcm(state, entry, samples, ranges);
+            RoutePcm(state, track, entry, samples, ranges);
         }
         else if (codec == "mpeg-audio" && ranges.Count == 1)
         {
@@ -280,10 +280,21 @@ public sealed partial class Mp4Parser
 
     // PCM samples are no packets: the track's bytes go to the codec parser for PCM in slices of whole sample frames, read only if its decoder runs, and the parser
     // counts the samples from the bytes the track holds. The layout comes from the sample entry.
-    private static void RoutePcm(State state, SampleEntry entry, Node samples, List<ByteRange> ranges)
+    private static void RoutePcm(State state, Track track, SampleEntry entry, Node samples, List<ByteRange> ranges)
     {
         PcmCoding coding = PcmOf(entry)!;
         long frameBytes = coding.FrameBytes(entry.Channels);
+
+        // Every sample of one size that is not a whole number of sample frames: the entry's layout is not the one the samples have (ffmpeg 6.1.1 writes 24-bit samples in 3 bytes
+        // and a pcmC box of 32 bits).
+        long size = track.SampleSize != 0 ? track.SampleSize : track.Sizes is { Length: > 0 } sizes && sizes.All(s => s == sizes[0]) ? sizes[0] : 0;
+        if (size > 0 && size % frameBytes != 0)
+        {
+            state.Findings.AddNow(Severity.Warning, "mp4.pcm-sample-size-differs",
+                $"The samples of track {track.Id} are {Counts.Of(size, "byte", "bytes")} each, which is not a whole number of the {Counts.Of(frameBytes, "byte", "bytes")} that a sample frame of "
+                + $"{Counts.Of(entry.Channels, "channel", "channels")} of {coding.ContainerBits} bits takes; the entry states that layout, so the samples are read as it says and their sample frames do not line up.", entry.Node);
+        }
+
         long step = Math.Max(1, PcmFeed.SliceBytes / frameBytes) * frameBytes;
         IEnumerable<MappedBytes> Slices()
         {

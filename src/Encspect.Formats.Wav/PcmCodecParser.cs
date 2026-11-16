@@ -79,7 +79,7 @@ public sealed class PcmCodecParser : ICodecParser
         if (leftover > 0)
         {
             context.AddFinding(Severity.Warning, "pcm.partial-sample-frame",
-                $"The samples end with {Counts.Of(leftover, "byte", "bytes")} that do not fill a sample frame of {Counts.Of(frameBytes, "byte", "bytes")} ({Counts.Of(channels, "channel", "channels")} of {coding.ContainerBits} bits); they are not counted as samples.", node);
+                $"The track's {Counts.Of(bytes, "byte", "bytes")} are not a whole number of sample frames of {Counts.Of(frameBytes, "byte", "bytes")}; {Counts.Of(leftover, "byte", "bytes")} {(leftover == 1 ? "is" : "are")} left over.", node);
         }
 
         // The decoder runs only where a front end asks for measurements or output; the packets are not read before.

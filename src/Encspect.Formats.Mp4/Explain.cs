@@ -17,6 +17,18 @@ internal static class Topics
     public const string CommonEncryption = "common-encryption";
     public const string ItunesAndAudibleProtection = "itunes-and-audible-protection";
     public const string Alac = "alac";
+    public const string FlacInMp4 = "flac-in-mp4";
+    public const string TrueHdInMp4 = "truehd-in-mp4";
+    public const string PcmInMp4 = "pcm-in-mp4";
+
+    // The article of a sample entry of a coding with its own, or the sample tables'.
+    public static string OfEntry(string type) => type switch
+    {
+        "fLaC" => FlacInMp4,
+        "mlpa" => TrueHdInMp4,
+        "ipcm" or "fpcm" or "sowt" or "twos" or "in24" or "in32" or "fl32" or "fl64" or "raw " or "lpcm" or "alaw" or "ulaw" => PcmInMp4,
+        _ => SampleTables,
+    };
 }
 
 // What each MP4 node is, in the words the report shows next to it. Constants only, picked per box
@@ -508,6 +520,9 @@ internal static class Explain
 
     public static string? BoxTopic(string type) => type switch
     {
+        "dfLa" => Topics.FlacInMp4,
+        "dmlp" => Topics.TrueHdInMp4,
+        "pcmC" or "enda" => Topics.PcmInMp4,
         "ftyp" or "styp" or "moov" or "mvhd" or "trak" or "tkhd" or "mdia" or "mdhd" or "hdlr" or "minf" or "mdat" or "free" or "skip" or "wide" or "udta" or "iods" or "uuid" => Topics.IsoBaseMediaFormat,
         "stbl" or "stsd" or "stts" or "ctts" or "stsc" or "stsz" or "stz2" or "stco" or "co64" or "stss" or "sdtp" or "dinf" or "dref" or "url " or "urn " or "smhd" => Topics.SampleTables,
         "edts" or "elst" or "sgpd" or "sbgp" or "csgp" => Topics.EditListsAndPriming,
