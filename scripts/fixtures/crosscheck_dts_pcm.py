@@ -137,7 +137,7 @@ def compare_libdca(path, dump_command, tool, work):
 
 
 def scan_frames(kind):
-    """One frame for each ADPCM coefficient vector (a coded subband with prediction) or each high-frequency vector (a vector quantized subband), mono, 512 samples, FILTS 0."""
+    """One frame for each ADPCM coefficient vector (a coded subband with prediction) or each high-frequency vector (a vector quantized subband), mono, FILTS 0 (the vector quantized frames have 4 subsubframes, 1,024 samples, so all 32 elements of a vector count)."""
     sys.path.insert(0, str(HERE))
     import dts_coded as coded
     import dts_model as model
@@ -167,8 +167,10 @@ def scan_frames(kind):
                 bits.put(0, 1)
             for _ in range(vqsub[0]):
                 bits.put(0, 4)
-            bits.put(30, 6)
-            bits.put(index[0], 10)
+            for _ in range(subs[0] - vqsub[0]):
+                bits.put(30, 6)
+            for _ in range(subs[0] - vqsub[0]):
+                bits.put(index[0], 10)
             for sub in range(ssc[0]):
                 if sub == ssc[0] - 1:
                     bits.put(0xFFFF, 16)
@@ -183,7 +185,7 @@ def scan_frames(kind):
             if kind == "adpcm":
                 frames.append(model.core_frame(size=256, rate=29, amode=0, nch=1, subs=[0], vqsub=[31], joinx=[0], thuff=[0], shuff=[5], bhuff=[5], sel=[[0] * 10], nblks=15, hflag=1, filts=0))
             else:
-                frames.append(model.core_frame(size=256, rate=29, amode=0, nch=1, subs=[30], vqsub=[29], joinx=[0], thuff=[0], shuff=[5], bhuff=[5], sel=[[0] * 10], nblks=15, hflag=1, filts=0))
+                frames.append(model.core_frame(size=256, rate=29, amode=0, nch=1, subs=[30], vqsub=[30], joinx=[0], thuff=[0], shuff=[5], bhuff=[5], sel=[[0] * 10], nblks=31, hflag=1, filts=0))
         return b"".join(frames), count
     finally:
         model.silent_subframes = original
@@ -199,7 +201,7 @@ def scan_libdca(kind, dump_command, tool, work):
     out = work / f"scan-{kind}.f32"
     subprocess.run([str(tool), str(path), str(out)], capture_output=True)
     theirs = read_floats(out.read_bytes())
-    frame = 512
+    frame = 512 if kind == "adpcm" else 1024
     worst = 0.0
     bad = []
     for i in range(count):
