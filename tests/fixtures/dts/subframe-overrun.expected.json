@@ -1,0 +1,59 @@
+{
+ "description": "Five stereo core frames, the third of 96 bytes (FSIZE 95): its subframes run past its end.",
+ "length": 2144,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   512
+  ],
+  [
+   512,
+   512
+  ],
+  [
+   1024,
+   96
+  ],
+  [
+   1120,
+   512
+  ],
+  [
+   1632,
+   512
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 2560,
+   "is_vbr": true
+  }
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "dts.subframe-overrun",
+   "the data ends inside it"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": false,
+  "libdca": false,
+  "skip": {
+   "ffprobe": "ffmpeg's parser sizes the frames from the sync words it finds, so its packets differ from the short frame's",
+   "decode": "ffmpeg rejects the short frame ('Invalid data found when processing input')",
+   "libdca": "libdca's reading of the damaged frame says nothing"
+  }
+ }
+}
