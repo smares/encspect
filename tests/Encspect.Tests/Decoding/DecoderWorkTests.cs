@@ -8,6 +8,7 @@ using Encspect.Formats.MonkeysAudio.Decoding;
 using Encspect.Formats.MpegAudio.Decoding;
 using Encspect.Formats.Musepack.Decoding;
 using Encspect.Formats.Opus.Decoding;
+using Encspect.Formats.Speex.Decoding;
 using Encspect.Formats.Tta.Decoding;
 using Encspect.Formats.Vorbis.Decoding;
 using Encspect.Formats.WavPack.Decoding;
@@ -200,6 +201,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         _ when name.StartsWith("vorbis", StringComparison.Ordinal) => new VorbisDecoder(),
         _ when name.StartsWith("opus", StringComparison.Ordinal) => new OpusDecoder(),
         _ when name.StartsWith("musepack", StringComparison.Ordinal) => new MusepackDecoder(),
+        _ when name.StartsWith("speex", StringComparison.Ordinal) => new SpeexDecoder(),
         _ when name.StartsWith("dts", StringComparison.Ordinal) => new Encspect.Formats.Dts.Decoding.DtsDecoder(),
         _ when name.StartsWith("ac3", StringComparison.Ordinal) => new Ac3Decoder(),
         _ when name.StartsWith("eac3", StringComparison.Ordinal) => new Eac3Decoder(),
@@ -221,6 +223,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         _ when name.StartsWith("vorbis", StringComparison.Ordinal) => ".ogg",
         _ when name.StartsWith("opus", StringComparison.Ordinal) => ".opus",
         _ when name.StartsWith("musepack", StringComparison.Ordinal) => ".mpc",
+        _ when name.StartsWith("speex", StringComparison.Ordinal) => ".spx",
         _ when name.StartsWith("dts", StringComparison.Ordinal) => ".dts",
         _ when name.StartsWith("ac3", StringComparison.Ordinal) => ".ac3",
         _ when name.StartsWith("eac3", StringComparison.Ordinal) => ".eac3",
@@ -455,6 +458,24 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
 
         // Opus packets of 120 ms (the longest a packet holds: six hybrid frames of 20 ms, or two SILK frames of 60 ms, the frames of the fixtures repeated in one packet) and a stream of
         // CELT frames that code silence (the silence flag set by the first byte of the range coder's data).
+        // Speex: every mode at its largest bit allocations (narrowband submode 5, wideband with submode 6 under submode 3, ultra-wideband with submode 7 under submode 3 and a layer of
+        // submode 1), the cheapest (narrowband at 6 kbps, the wideband layer without excitation), a variable bitrate stream with discontinuous transmission and stereo. Each case
+        // repeats the audio packets of an encoder's file in one stream.
+        foreach ((string label, string file) in new[]
+        {
+            ("nb-15k", "external-speexenc-nb.spx"),
+            ("nb-6k", "external-speexenc-nb-q2.spx"),
+            ("nb-vbr-dtx", "external-speexenc-nb-vbr-dtx.spx"),
+            ("wb-28k", "external-speexenc-wb.spx"),
+            ("wb-12k", "external-speexenc-wb-q4.spx"),
+            ("wb-stereo", "external-speexenc-wb-stereo.spx"),
+            ("uwb-36k", "external-speexenc-uwb.spx"),
+            ("uwb-vbr", "external-speexenc-uwb-vbr-q10.spx"),
+        })
+        {
+            Add("speex-" + label, () => new Case("speex-" + label, SpeexCases.Repeated(file)));
+        }
+
         Add("opus-hybrid-120ms", () => new Case("opus-hybrid-120ms", OpusCases.Repeated(OpusCases.Packed("external-libopus-stereo-hybrid-20ms.opus", 6))));
         Add("opus-silk-120ms", () => new Case("opus-silk-120ms", OpusCases.Repeated(OpusCases.Packed("external-libopus-stereo-silk-60ms-fec.opus", 2))));
         Add("opus-silent", () => new Case("opus-silent", OpusCases.Repeated(OpusCases.Silent("external-opusenc-96.opus"))));
@@ -1105,6 +1126,54 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
     }
 
     // The bytes of an AC-3 fixture repeated until the decoding charges about Target units.
+    // The audio packets of a Speex fixture repeated in one Ogg stream whose granule positions are all -1 (the decoder assumes libspeex's lookahead), until the decoding charges about
+    // Target units.
+    internal static class SpeexCases
+    {
+        public static byte[] Repeated(string fixture, long target = Target)
+        {
+            List<byte[]> packets = VorbisStreams.Packets("ogg/" + fixture);
+            long perCopy = Math.Max(1, Units(Build(packets, 1)));
+            int copies = (int)Math.Clamp(Math.Min(target / perCopy, 400_000 / Math.Max(1, packets.Count - 2)), 2, 1 << 20);
+            return Build(packets, copies);
+        }
+
+        private static byte[] Build(List<byte[]> packets, int copies)
+        {
+            var builder = new OggBuilder().Page(1, 0, 2, packets[0]).Page(1, 0, 0, packets[1]);
+            var page = new List<byte[]>();
+            int segments = 0;
+            for (int copy = 0; copy < copies; copy++)
+            {
+                foreach (byte[] packet in packets.Skip(2))
+                {
+                    int needed = (packet.Length / 255) + 1;
+                    if (segments + needed > 250)
+                    {
+                        builder.Page(1, -1, 0, [.. page]);
+                        page.Clear();
+                        segments = 0;
+                    }
+
+                    page.Add(packet);
+                    segments += needed;
+                }
+            }
+
+            builder.Page(1, -1, 4, [.. page]);
+            return builder.Bytes;
+        }
+
+        public static long Units(byte[] file)
+        {
+            var counting = new CountingDecoder(new SpeexDecoder());
+            var analyzer = new Analyzer(DefaultParsers.Tags, DefaultParsers.Formats, DefaultParsers.Codecs, [counting]);
+            using var stream = new MemoryStream(file, writable: false);
+            analyzer.Analyze("probe.spx", stream, new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = long.MaxValue, Output = _ => new NullSink() } });
+            return counting.Units;
+        }
+    }
+
     internal static class Ac3Cases
     {
         public static byte[] Repeated(string fixture, long target = Target)

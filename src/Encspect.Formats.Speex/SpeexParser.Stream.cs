@@ -154,6 +154,7 @@ public sealed partial class SpeexParser
             }
 
             _headerNode = _parent.Add(header.ToNode(packet));
+            NoteHeader(packet);
             _records.Mode = Mode;
             if (packet.Length > SpeexHeader.Length)
             {
@@ -299,6 +300,7 @@ public sealed partial class SpeexParser
             // A packet counts the samples its header's frames per packet declare, empty or damaged included (design question 11); one that holds
             // fewer frames than that without a fault counts the frames present (question 5). An empty, a corrupt or a cut packet is lost.
             long samples = SamplesPerPacket;
+            long firstSample = _coded;
             bool isLost = packet.IsCut;
             if (packet.Length == 0)
             {
@@ -323,7 +325,9 @@ public sealed partial class SpeexParser
                 _lost += samples;
             }
 
+            // The first delay is known from the packet's position on, which the decoder's trim waits for.
             TrackPosition(packet);
+            Hand(packet, firstSample, (int)samples, isLost);
         }
 
         // Returns the frames the packet holds and whether it is corrupt (a frame that is invalid or overruns the packet before the frames the header gives).
@@ -445,6 +449,7 @@ public sealed partial class SpeexParser
             CheckPackets();
             long trim = EndTrimming();
             long samples = HasTime ? Math.Clamp(_coded - Math.Max(0, _firstDelay ?? 0) - trim, 0, _coded) : 0;
+            StreamVerification? verification = FinishDecoding(samples);
             Node? encoder = AddEncoder();
             Node? writer = AddWriter();
             ClaimRoles.CompleteVersion(encoder, CommentClaims());
@@ -471,6 +476,7 @@ public sealed partial class SpeexParser
                     Writer = ClaimRoles.Resolved(writer).Name,
                     WriterConfidence = ClaimRoles.Resolved(writer).Confidence,
                     Series = Series(distribution, packets),
+                    Verification = verification,
                 });
             }
 

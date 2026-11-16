@@ -1824,6 +1824,12 @@ Step L2 of [lossy-decoders.md, "Order"](lossy-decoders.md#order): `Encspect.Form
 - **Measured** (`DecoderWorkTests`, `dts-*` cases, each file repeated; the time per unit against the FLAC reference's on the development machine, linux-x64, run alone under the exclusive lock, 2026-11-16): `dts-mono-8k` 1.42, `dts-stereo-44k` 1.48, `dts-surround-51` 1.34, `dts-reconstruct-stereo` 1.46 and `dts-reconstruct-surround-51` 1.39. With the synthesis at 32 units (the first estimate) they read 2.28 to 2.48, over the limit of 2.0, so the weight was raised to 56.
 - **Margin:** the largest ratio is 1.48 against the limit of 2.0, a thin margin: the filter bank's time is the whole of the decoding, and a runner without the vector units the JIT uses here may take more per unit. The cases do not use prediction or vector quantization.
 
+## As built: the Speex decoder's work weights
+
+- **Charge:** per packet, charged before it is decoded, for each output channel 16 units a sample (the floor, `DecodeWork.ForSample(2)`) and, per sample of the decoded band, 84 in narrowband, 76 in wideband and 68 in ultra-wideband for the synthesis and the enhancer ([lossy-decoders.md](lossy-decoders.md#work-units-per-format) estimated 40 for all). A narrowband layer costs more per output sample than a sub-band mode, since it decodes 8,000 samples a second where the output has 16,000 or 32,000.
+- **Measured** (`DecoderWorkTests`, `speex-*` cases, an encoder's audio packets repeated in one stream; the time per unit against the FLAC reference's on the development machine, linux-x64, run alone under the exclusive lock, 2026-11-16): `speex-nb-15k` 1.43, `speex-nb-6k` 1.52, `speex-nb-vbr-dtx` 1.27, `speex-wb-28k` 1.68, `speex-wb-12k` 1.39, `speex-wb-stereo` 1.36, `speex-uwb-36k` 1.64 and `speex-uwb-vbr` 1.58. With the synthesis at 40 units (the first estimate) they read 2.12 to 2.83, over the limit of 2.0.
+- **Margin:** the largest ratio is 1.68 against the limit of 2.0: the decoder is integer code whose time per unit is a little over the reference's, and a runner without the vector units the JIT uses may take more per unit.
+
 ## Open risks and unverified claims
 
 - **Unverified:** whether Dolby patents cover TrueHD (decision 10). No legal conclusion is drawn here.

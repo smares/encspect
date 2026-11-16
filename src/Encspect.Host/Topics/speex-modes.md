@@ -1,7 +1,7 @@
 ---
 id: speex-modes
 title: Speex modes and submodes
-related: granule-position, bitrate-modes, vorbis-comments, ogg-pages
+related: granule-position, bitrate-modes, vorbis-comments, ogg-pages, speex-excitation, line-spectral-pairs, speex-enhancer
 references: Speex manual, sections 2.1, 5.5, 7.3, 9.3 and 10.4; libspeex 1.2.1 (speex_mode_query)
 ---
 

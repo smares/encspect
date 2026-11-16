@@ -129,7 +129,7 @@ public sealed partial class SpeexParser
         layer.Add(at.Node("Submode", start + 1, start + 1 + submodeBits, NodeValue.Integer(submode), kind.Submode));
         if (bits > 1 + submodeBits)
         {
-            layer.Add(at.Node("Coded Data", start + 1 + submodeBits, start + bits, NodeValue.Integer(bits - 1 - submodeBits, "bits", "bit"), kind.Coded));
+            layer.Add(at.Node("Coded Data", start + 1 + submodeBits, start + bits, NodeValue.Integer(bits - 1 - submodeBits, "bits", "bit"), kind.Coded, Topics.SpeexExcitation));
         }
 
         frame.Add(layer);
@@ -140,8 +140,8 @@ public sealed partial class SpeexParser
     // through its ranges when it spans pages.
     private sealed class BitPlace(long offset, MappedBytes? mapped)
     {
-        public Node Node(string name, long start, long end, NodeValue? value, string description) => mapped is null
-            ? Core.Node.FromBits(name, offset, start, end, value, description: description)
-            : Core.Node.FromBits(name, mapped, start, end, value, description: description);
+        public Node Node(string name, long start, long end, NodeValue? value, string description, string? topic = null) => mapped is null
+            ? Core.Node.FromBits(name, offset, start, end, value, description: description, topic: topic)
+            : Core.Node.FromBits(name, mapped, start, end, value, description: description, topic: topic);
     }
 }
