@@ -698,6 +698,18 @@ def name_of(data):
     return f"Musepack SV{m.Words(data).read(11, 10)}"
 
 
+# The frames the entropy pass finds damaged beyond those whose resolutions run past their length: the frame after a frame whose length these fixtures change
+# starts at the right bit but states a length its data do not take, so libmpcdec fails at it too.
+WALK_LOST = {"sv7-damaged-length": (1, "musepack.frame-length-mismatch", "1 frame's scalefactors and samples"),
+             "sv5-band-overrun": (1, "musepack.frame-length-mismatch", "1 frame's scalefactors and samples"),
+             "sv6-band-overrun": (1, "musepack.frame-length-mismatch", "1 frame's scalefactors and samples"),
+             # The audio packets of these hold fewer frames than the stream header states (the header says 64 frames a packet, the one packet holds 58; the last
+             # packet of the 5-packet stream holds 2 of its 4).
+             "sv8-sample-count-large": (6, "musepack.packet-frames-missing", "1 audio packet holds fewer frames"),
+             "sv8-sample-count-unknown": (6, "musepack.packet-frames-missing", "1 audio packet holds fewer frames"),
+             "sv8-samples-beyond-packets": (2, "musepack.packet-frames-missing", "1 audio packet holds fewer frames")}
+
+
 def main():
     for name, (build, layout, findings) in FIXTURES.items():
         data = build()
@@ -713,11 +725,13 @@ def main():
             start, end = 0, len(data)
             regions = [{"name": name_of(data), "offset": 0, "length": len(data)}]
         expected = DAMAGED if findings is None else findings
+        if name in WALK_LOST:
+            expected = [*expected, (WALK_LOST[name][1], WALK_LOST[name][2])]
         extra = {"regions": regions, "findings": [{"code": c, "contains": t} for c, t in expected], "crosscheck": {"valid": name in DERIVED}}
         if name in DERIVED:
             extra["derived"] = {"from": DERIVED[name][0], "mppdec": DERIVED[name][1], "note": "Not an encoder's output: no SV6 encoder was found. The SV5 encoder's stream relabeled as version 6, "
                                 "its frame count lowered and 11 bits written after the new last frame."}
-        result = m.manifest(data, start, end, extra)
+        result = m.manifest(data, start, end, extra, WALK_LOST.get(name, (0,))[0])
         (OUT / f"{name}.mpc").write_bytes(data)
         (OUT / f"{name}.expected.json").write_text(json.dumps(result, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"Wrote {len(FIXTURES)} fixtures to {OUT}")

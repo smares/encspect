@@ -19,11 +19,11 @@ internal sealed class SubbandFeed
     private long _trimFirst = -1;
     private long _trimEnd = -1;
 
-    public SubbandFeed(AnalysisContext context, MusepackConfiguration setup, Node stream, bool canDecode)
+    public SubbandFeed(AnalysisContext context, MusepackConfiguration setup, Node stream, bool canWalk, bool startsSession)
     {
         Setup = setup;
-        CanWalk = canDecode;
-        if (canDecode)
+        CanWalk = canWalk;
+        if (startsSession)
         {
             _session = context.StartDecoding(MusepackParser.CodecId, new DecodeSetup
             {
@@ -122,5 +122,5 @@ internal sealed class SubbandFeed
         Feed(firstSample, default, false, fileStart, fileEnd, "Frame");
     }
 
-    public StreamVerification? Finish() => _session?.Finish([]);
+    public StreamVerification? Finish(IReadOnlyList<ChecksumTally>? stored = null) => _session?.Finish(stored ?? []);
 }

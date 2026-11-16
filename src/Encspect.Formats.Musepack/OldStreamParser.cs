@@ -141,7 +141,7 @@ internal static class OldStreamParser
             Description = Explain.OldStream,
             Topic = Topics.OldStreams,
         };
-        var feed = new SubbandFeed(context, new MusepackConfiguration(h.Version, Math.Min(h.MaxBand, 31), h.MidSide, 2, 44100), node, h.IsReadable && h.Frames > 0);
+        var feed = new SubbandFeed(context, new MusepackConfiguration(h.Version, Math.Min(h.MaxBand, 31), h.MidSide, 2, 44100), node, h.IsReadable && h.Frames > 0, h.IsReadable && h.Frames > 0);
         if (h.IsReadable)
         {
             Walk(words, h, state, feed);
@@ -544,7 +544,9 @@ internal static class OldStreamParser
         var figures = new StreamFigures(sampleRate);
         long decoded = 0;
         Frame? firstOverrun = null;
+        Frame? firstMismatch = null;
         int overruns = 0;
+        int mismatches = 0;
         long cut = 0;
         long lastFrames = 0;
         long lostLast = 0;
@@ -589,6 +591,12 @@ internal static class OldStreamParser
                 overruns++;
                 firstOverrun ??= frame;
             }
+
+            if ((frame.Flags & FrameFlags.Mismatch) != 0)
+            {
+                mismatches++;
+                firstMismatch ??= frame;
+            }
         }
 
         WordLayout w = state.Layout;
@@ -598,6 +606,12 @@ internal static class OldStreamParser
         {
             state.Findings.AddNow(Severity.Warning, "musepack.band-header-overrun",
                 $"{(overruns == 1 ? "1 frame's" : $"{overruns} frames'")} subband resolutions run past the frame's length, first at 0x{FrameAt(o).Offset:X}: the frame is damaged.", FrameAt(o));
+        }
+
+        if (firstMismatch is { } m)
+        {
+            state.Findings.AddNow(Severity.Warning, "musepack.frame-length-mismatch",
+                $"{(mismatches == 1 ? "1 frame's" : $"{mismatches} frames'")} scalefactors and samples take other bits than the frame's length states, or break the syntax, first at 0x{FrameAt(m).Offset:X}: libmpcdec stops decoding at the frame, and the analyzer counts its samples as lost.", FrameAt(m));
         }
 
         Node header = state.Leading[0];
@@ -669,9 +683,12 @@ internal static class OldStreamParser
         }
 
         List<Series> series = h.IsReadable ? figures.Series(bitrate, state.Cancellation) : [];
+        feed.Trim(Sv7Parser.SynthesisDelay, Sv7Parser.SynthesisDelay + samples);
+        StreamVerification? verification = feed.Finish();
         context.AddStream(new StreamInfo
         {
             Nodes = [node],
+            Verification = verification,
             Codec = $"Musepack SV{h.Version}",
 
             // libmpcdec 1.2.6: "used by all files up to SV7".

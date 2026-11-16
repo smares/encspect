@@ -165,7 +165,7 @@ internal static class Sv7Parser
 
         // libmpcdec refuses a stream of another version, with no frames, a max band of 0 or 32 and more, or a last frame of more samples than a frame holds: nothing is decoded then.
         bool isReadable = h.Version == 7 && h.Frames > 0 && h.MaxBand is > 0 and < 32 && h.LastSamples <= FrameSamples;
-        var feed = new SubbandFeed(context, new MusepackConfiguration(7, Math.Min(h.MaxBand, 31), h.MidSide, 2, SampleRates[h.RateIndex]), node, isReadable);
+        var feed = new SubbandFeed(context, new MusepackConfiguration(7, Math.Min(h.MaxBand, 31), h.MidSide, 2, SampleRates[h.RateIndex]), node, isReadable, isReadable);
         Walk(reader, words, state, feed, isReadable);
 
         long streamEnd = layout.WordEnd(state.EndBit);

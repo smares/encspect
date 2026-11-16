@@ -25,6 +25,11 @@ public sealed class MusepackDecoder : IDecoder
             throw new InvalidDataException("The stream gives no configuration to start the decoder with");
         }
 
+        if (setup.IsRefused)
+        {
+            throw new InvalidDataException("libmpcdec refuses the stream: its header breaks a rule libmpcdec checks, so it decodes no sample");
+        }
+
         if (setup.Channels is < 1 or > 2)
         {
             throw new InvalidDataException("libmpcdec decodes streams of 1 or 2 channels only");

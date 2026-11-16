@@ -13,6 +13,9 @@ namespace Encspect.Formats.Musepack;
 // frames have no length of their own.
 internal static class Sv8Parser
 {
+    // The checksum the stream header stores (SV8 specification, Stream Header Packet): a CRC-32 over the rest of the header's bytes, which covers no audio.
+    internal const string HeaderCrc = "stream header CRC-32";
+
     private const int MaxSizeBytes = 9;
     private const int MaxStoredPayload = 1 << 20;
     private const int MaxDetailedPackets = 4096;
@@ -367,7 +370,7 @@ internal static class Sv8Parser
         {
             state.FeedChecked = true;
             int rate = Sv7Parser.SampleRates[header.RateIndex!.Value];
-            state.Feed = new SubbandFeed(state.Context, new MusepackConfiguration(8, header.MaxBands, header.MidSide, header.Channels!.Value, rate), state.Stream!, true);
+            state.Feed = new SubbandFeed(state.Context, new MusepackConfiguration(8, header.MaxBands, header.MidSide, header.Channels!.Value, rate), state.Stream!, true, true);
             state.Feed.Trim(Sv7Parser.SynthesisDelay + header.Silence, Sv7Parser.SynthesisDelay + header.Samples);
         }
 
@@ -410,6 +413,13 @@ internal static class Sv8Parser
                 state.Cancellation.ThrowIfCancellationRequested();
             }
 
+            // A packet that holds fewer frames than the stream header states ends at a frame boundary: its missing frames are declared and not there, so they are lost.
+            if (bit >= payloadBits)
+            {
+                MissingFrames(state, feed, index, packet, position + (frame * Sv7Parser.FrameSamples), count - frame);
+                break;
+            }
+
             long byteIndex = bit >> 3;
             if (windowFirst < 0 || byteIndex < windowFirst || (byteIndex + SubbandFeed.FrameWindowBytes > windowFirst + windowLength && windowFirst + windowLength < payloadBytes))
             {
@@ -431,6 +441,14 @@ internal static class Sv8Parser
             if (facts.Problems == WalkProblems.None && feed.Bits.IsOverrun)
             {
                 facts.Problems |= WalkProblems.DataOverrun;
+            }
+
+            // A frame that starts in the padding bits at the end of a packet which holds fewer frames than the stream header states is no frame (libmpcdec fails at it, as at the
+            // end of any packet): the packet ends there.
+            if (facts.Problems != WalkProblems.None && frame > 0 && payloadBits - bit < 8 && (facts.Problems & (WalkProblems.DataOverrun | WalkProblems.HeaderOverrun | WalkProblems.Syntax)) != 0)
+            {
+                MissingFrames(state, feed, index, packet, position + (frame * Sv7Parser.FrameSamples), count - frame);
+                break;
             }
 
             if (facts.Problems != WalkProblems.None)
@@ -467,6 +485,21 @@ internal static class Sv8Parser
 
         state.Stereo.AddAll(feed.Codes.AsSpan(0, frames));
         state.Bandwidths.Add(highest);
+    }
+
+    private static void MissingFrames(State state, SubbandFeed feed, int index, Packet packet, long firstSample, long missing)
+    {
+        state.LostFrames += missing;
+        state.MissingFramePackets++;
+        state.FirstMissing ??= (index, missing);
+        if (feed.IsDecoding)
+        {
+            feed.Feed(firstSample, default, true, packet.Offset, packet.Offset + packet.Length, "Audio Packet", (int)missing);
+        }
+        else
+        {
+            feed.Feed(0, default, true, 0, 0);
+        }
     }
 
     // Whether the packet is left out of the detailed ones: past MaxDetailedPackets of them, every
@@ -1351,9 +1384,16 @@ internal static class Sv8Parser
 
         if (state.FirstMismatch is { } first)
         {
-            Node packetNode = WithoutChildren(PacketNode(state, state.AudioPackets[first.Index]));
+            Node packetNode = WithoutChildren(PacketNode(state, first.Index));
             state.Findings.AddNow(Severity.Warning, "musepack.packet-length-mismatch",
                 $"{(state.MismatchPackets == 1 ? "1 audio packet's" : $"{state.MismatchPackets} audio packets'")} frames break the syntax or take other bits than the packet's size states, first at frame {first.Frame} of the packet at 0x{packetNode.Offset:X}: libmpcdec stops decoding at the frame, and the analyzer counts it and the frames after it in the packet as lost.", packetNode);
+        }
+
+        if (state.FirstMissing is { } missing)
+        {
+            Node packetNode = WithoutChildren(PacketNode(state, missing.Index));
+            state.Findings.AddNow(Severity.Info, "musepack.packet-frames-missing",
+                $"{(state.MissingFramePackets == 1 ? "1 audio packet holds" : $"{state.MissingFramePackets} audio packets hold")} fewer frames than the stream header states, the first {Counts.Of(missing.Frames, "frame", "frames")} fewer at 0x{packetNode.Offset:X}: libmpcdec stops decoding at the end of the packet's data, and the analyzer counts the missing frames as lost.", packetNode);
         }
 
         List<Series> series = figures.Series(bitrate, state.Cancellation);
@@ -1362,7 +1402,16 @@ internal static class Sv8Parser
             feed.Trim(Sv7Parser.SynthesisDelay + silence, Sv7Parser.SynthesisDelay + silence + samples);
         }
 
-        StreamVerification? verification = state.Feed?.Finish();
+        if (state.Feed is null && header is { RateIndex: not null, Channels: not null })
+        {
+            state.Feed = new SubbandFeed(context, new MusepackConfiguration(8, header.MaxBands, header.MidSide, header.Channels.Value, rate, IsRefused: true), node, false, true);
+        }
+
+        // The stream header's CRC-32, which covers the header and no audio, where the packet holds all of it.
+        List<ChecksumTally> checksums = header is { CrcVerified: true } or { CrcFailed: true }
+            ? [new ChecksumTally { Name = HeaderCrc, Covers = ChecksumCoverage.Header, Stored = 1, Checked = 1, Failed = header.CrcFailed ? 1 : 0 }]
+            : [];
+        StreamVerification? verification = state.Feed?.Finish(checksums);
         int channels = header?.Channels ?? 0;
         context.AddStream(new StreamInfo
         {
@@ -1530,6 +1579,10 @@ internal static class Sv8Parser
         public long LostFrames { get; set; }
 
         public int MismatchPackets { get; set; }
+
+        public int MissingFramePackets { get; set; }
+
+        public (int Index, long Frames)? FirstMissing { get; set; }
 
         public (int Index, long Frame)? FirstMismatch { get; set; }
 
