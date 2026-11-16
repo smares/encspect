@@ -234,7 +234,10 @@ def encode_all(names):
                 mp3 = temp / f"{name}.mp3"
                 result = run("lame", "--verbose", *args, source, mp3)
                 run("lame", "--decode", mp3, decoded)
-                entry = {"description": f"LAME 3.100 {settings} on 2 s of stereo pink noise (a mid signal and {level}) at {rate} Hz, decoded with lame --decode.",
+                with wave.open(str(decoded), "rb") as w:
+                    decoded_rate = w.getframerate()
+                at = f" at {decoded_rate} Hz" if decoded_rate != rate else ""
+                entry = {"description": f"LAME 3.100 {settings} on 2 s of stereo pink noise (a mid signal and {level}) at {rate} Hz, decoded with lame --decode{at}.",
                          "encoder": {"name": "LAME", "version": "3.100", "settings": settings, "command": f"lame --verbose {settings} in.wav out.mp3; lame --decode out.mp3 out.wav"},
                          "stated": lame_info(mp3, result.stderr + result.stdout)}
             elif tool == "oggenc":
