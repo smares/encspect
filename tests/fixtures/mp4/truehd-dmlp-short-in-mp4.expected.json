@@ -617,11 +617,13 @@
   ]
  ],
  "crosscheck": {
-  "ffprobe": true,
-  "mp4box": true,
+  "ffprobe": false,
+  "mp4box": false,
   "faad": null,
   "skip": {
    "faad": "faad2 reads AAC only.",
+   "ffprobe": "ffmpeg refuses a track whose dmlp box is shorter than its fields",
+   "mp4box": "MP4Box (GPAC 2.2.1) refuses the file (\"Invalid IsoMedia File\")",
    "mediainfo": "MediaInfo gives a Dolby TrueHD track whose dmlp box is short no channels, and names the format TrueHD"
   }
  }

@@ -236,9 +236,10 @@
   "ffprobe": true,
   "mp4box": true,
   "faad": null,
-  "decode": true,
+  "decode": false,
   "skip": {
    "faad": "faad2 reads AAC only.",
+   "decode": "ffmpeg reads the 3-byte samples as the 32-bit samples the pcmC box states, so their packets are not whole sample frames and its decoder may say so",
    "ffprobe_packets": "ffmpeg's demuxer lists a PCM track's samples as packets of its own size, not as the sample table's one-frame samples"
   },
   "ffprobe_packets": false

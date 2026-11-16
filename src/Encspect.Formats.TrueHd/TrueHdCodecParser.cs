@@ -62,6 +62,7 @@ public sealed class TrueHdCodecParser(string id) : ICodecParser
 
             Node stream = new(isMlp ? "MLP" : "Dolby TrueHD", parent.Offset, parent.Length, null, () => new BlockedChildren(leading, records.Entries.Count, i => Nodes.Entry(records, i)))
             {
+                Ranges = parent.Ranges,
                 Kind = NodeKind.Stream,
                 Description = isMlp ? Explain.MlpStream : Explain.TrueHdStream,
                 Topic = Topics.AccessUnits,

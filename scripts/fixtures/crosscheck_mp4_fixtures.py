@@ -52,6 +52,9 @@ For every fixture in tests/fixtures/mp4, tests/fixtures/aac/adts and tests/fixtu
   an ADTS frame, and a block of "faad_trace_skip" or one the analyzer could not read leaves its unit out.
 - "decode": ffmpeg must decode every access unit without printing an error (ffmpeg -v error ... -f null -).
 - "skip": the tools that are not run on the fixture, each with the reason.
+- the PCM, FLAC and Dolby TrueHD tracks of the external-ffmpeg-* fixtures (make_external_mp4_fixtures.py) are held to the same tools: ffprobe's packets for FLAC and Dolby TrueHD (not for
+  PCM, which ffmpeg's demuxer cuts into packets of its own size), and MediaInfo's format, byte order, rate, channels and stream size for PCM, with "ffprobe_channels" set where ffmpeg names
+  the six channels of FLAC and Dolby TrueHD 5.1(side). Their decoded samples are held to ffmpeg's by Mp4RouteTests, from the "pcm" MD5 of each manifest.
 - MediaInfo 26.01 (mediainfo_tool.py, check_mediainfo), on every fixture, against its golden
   report: each track's format and AAC profile, ADTS's MPEG version, sample rate, channels and
   layout, SBR and parametric stereo signaling (implicit, explicit or hierarchical), access units

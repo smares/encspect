@@ -861,8 +861,9 @@ def route_fixtures():
         "description": "Dolby TrueHD in MP4 whose dmlp box holds 6 bytes, fewer than the format information, peak data rate and reserved bits it needs: the box is not read.",
         "length": len(data), "format": "MP4", "boxes": boxes_of(records, len(data)), "streams": [thd_stream],
         "units": unit_list(offsets[0], units, 10), "fields": {}, "findings": [["truehd.dmlp-short", "holds 6 bytes of fields"]],
-        "crosscheck": {"ffprobe": True, "mp4box": True, "faad": None, "skip": {
-            "faad": "faad2 reads AAC only.", "mediainfo": "MediaInfo gives a Dolby TrueHD track whose dmlp box is short no channels, and names the format TrueHD"}}}))
+        "crosscheck": {"ffprobe": False, "mp4box": False, "faad": None, "skip": {
+            "faad": "faad2 reads AAC only.", "ffprobe": "ffmpeg refuses a track whose dmlp box is shorter than its fields", "mp4box": "MP4Box (GPAC 2.2.1) refuses the file (\"Invalid IsoMedia File\")",
+            "mediainfo": "MediaInfo gives a Dolby TrueHD track whose dmlp box is short no channels, and names the format TrueHD"}}}))
 
     # Integer PCM of 16 bits, 100 sample frames and 3 bytes more, which do not fill a sample frame.
     pcm = b"".join(struct.pack("<hh", (i * 300) % 20000 - 10000, (i * 170) % 16000 - 8000) for i in range(100))
@@ -900,8 +901,10 @@ def route_fixtures():
     out.append(("quicktime-lpcm-float", data, {
         "description": "A QuickTime movie with a linear PCM sample entry of sound description version 2: 32-bit floats, little-endian, packed, 2 channels at 8,000 Hz, 200 sample frames.",
         "length": len(data), "format": "MP4", "boxes": boxes_of(records, len(data)),
-        "streams": [stream("PCM (floating-point)", 8000, 2, "Stereo", 200)], "units": [], "fields": {}, "findings": [],
-        "crosscheck": {"ffprobe": True, "ffprobe_packets": False, "mp4box": True, "faad": None, "skip": {
+        "streams": [dict(stream("PCM (floating-point)", 8000, 2, "Stereo", 200), ffprobe_channels=2)], "units": [], "fields": {}, "findings": [],
+        "crosscheck": {"ffprobe": True, "ffprobe_packets": False, "mp4box": False, "faad": None, "skip": {
+            "mp4box": "MP4Box (GPAC 2.2.1) lists the lpcm entry of sound description version 2 with the size 0",
+            "ffprobe_layout": "ffmpeg gives a track of this entry no channel layout",
             "faad": "faad2 reads AAC only.", "ffprobe_packets": "ffmpeg's demuxer lists a PCM track's samples as packets of its own size",
             "mediainfo": "MediaInfo 24.01 reads no byte order from a linear PCM entry of sound description version 2"}}}))
     return out

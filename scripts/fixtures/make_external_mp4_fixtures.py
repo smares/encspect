@@ -248,6 +248,12 @@ def manifest_for(name, spec, path, command):
         stream["ffprobe_channels"] = 6
         crosscheck_skip = "ffmpeg names the layout of six FLAC or Dolby TrueHD channels 5.1(side) (its decoders' maps); the analyzer follows the formats' own tables (back left and right)"
     crosscheck = {"ffprobe": True, "mp4box": True, "faad": None, "decode": True, "skip": {"faad": "faad2 reads AAC only."}}
+    if name in SIZE_DIFFERS:
+        crosscheck["decode"] = False
+        crosscheck["skip"]["decode"] = "ffmpeg reads the 3-byte samples as the 32-bit samples the pcmC box states, so their packets are not whole sample frames and its decoder may say so"
+    if name.startswith("external-ffmpeg-fpcm"):
+        crosscheck["skip"]["mediainfo"] = ("MediaInfo 24.01 names an fpcm entry by its code and reads no channels from it; the version of the cross-check jobs (26.01) was not at hand "
+                                           "when the fixtures were written, so this skip is to be checked against it")
     if crosscheck_skip:
         crosscheck["skip"]["ffprobe_layout"] = crosscheck_skip
     if mp4box_boxes(path) is None:

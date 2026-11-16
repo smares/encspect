@@ -235,6 +235,7 @@
   "decode": true,
   "skip": {
    "faad": "faad2 reads AAC only.",
+   "mediainfo": "MediaInfo 24.01 names an fpcm entry by its code and reads no channels from it; the version of the cross-check jobs (26.01) was not at hand when the fixtures were written, so this skip is to be checked against it",
    "ffprobe_packets": "ffmpeg's demuxer lists a PCM track's samples as packets of its own size, not as the sample table's one-frame samples"
   },
   "ffprobe_packets": false

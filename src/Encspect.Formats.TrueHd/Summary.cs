@@ -123,8 +123,8 @@ internal static class Summary
             return null;
         }
 
-        Node Cover(string name, NodeValue? value, string description, string? topic = null) => new(name, start, end - start, value) { Description = description, Topic = topic };
-        var statistics = new Node("Statistics", start, end - start) { Kind = NodeKind.Statistics, Description = Explain.Statistics };
+        Node Cover(string name, NodeValue? value, string description, string? topic = null) => new(name, start, end - start, value) { Ranges = a.Stream.Ranges, Description = description, Topic = topic };
+        var statistics = new Node("Statistics", start, end - start) { Ranges = a.Stream.Ranges, Kind = NodeKind.Statistics, Description = Explain.Statistics };
         int rate = followed.SampleRate;
         double duration = a.Duration;
         int top = read - 1;

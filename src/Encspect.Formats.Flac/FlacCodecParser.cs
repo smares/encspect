@@ -72,7 +72,7 @@ public sealed class FlacCodecParser : ICodecParser
 
         public void Add(MappedBytes packet, int index)
         {
-            _start = _start < 0 ? packet.FileStart : _start;
+            _start = _start < 0 ? packet.FileStart : Math.Min(_start, packet.FileStart);
             _end = Math.Max(_end, packet.FileEnd);
             if (_isBroken)
             {
@@ -131,8 +131,9 @@ public sealed class FlacCodecParser : ICodecParser
 
             if (_start >= 0)
             {
-                // Blocks that lie outside the stream's node (MP4's dfLa box) are no part of its extent.
-                bool isApart = _start < s.Stream.Offset || _end > s.Stream.End;
+                // Blocks that lie outside the stream's node (MP4's dfLa box) are no part of its extent, and a node that has the ranges of several stretches (MP4's samples)
+                // is the stream's extent whole.
+                bool isApart = _start < s.Stream.Offset || _end > s.Stream.End || s.Stream.Ranges is not null;
                 Summary.Finish(s, isApart ? s.Stream.Offset : _start, isApart ? s.Stream.End : _end);
             }
         }

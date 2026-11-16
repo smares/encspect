@@ -120,7 +120,8 @@
     "front right"
    ],
    "samples": 200,
-   "is_vbr": false
+   "is_vbr": false,
+   "ffprobe_channels": 2
   }
  ],
  "units": [],
@@ -129,9 +130,11 @@
  "crosscheck": {
   "ffprobe": true,
   "ffprobe_packets": false,
-  "mp4box": true,
+  "mp4box": false,
   "faad": null,
   "skip": {
+   "mp4box": "MP4Box (GPAC 2.2.1) lists the lpcm entry of sound description version 2 with the size 0",
+   "ffprobe_layout": "ffmpeg gives a track of this entry no channel layout",
    "faad": "faad2 reads AAC only.",
    "ffprobe_packets": "ffmpeg's demuxer lists a PCM track's samples as packets of its own size",
    "mediainfo": "MediaInfo 24.01 reads no byte order from a linear PCM entry of sound description version 2"
