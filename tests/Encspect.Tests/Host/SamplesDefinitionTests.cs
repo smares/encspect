@@ -508,8 +508,9 @@ public class SamplesDefinitionTests
         // A frame cut by the end of the data counts 1,152 in Coded Samples and is lost (SV8: the 4 frames, 4,608, of the cut packet); samples compose as before.
         { "musepack/sv7-truncated.mpc", 46751, 1152 },
         { "musepack/sv8-truncated.mpc", 45599, 4608 },
-        // A damaged frame (resolutions past its length or out of range) is lost; the cap of the header's count leaves the samples.
-        { "musepack/sv6-band-overrun.mpc", 32256, 1152 },
+        // A damaged frame (resolutions past its length or out of range, or scalefactors and samples that take other bits than the length states) is lost; the cap of the header's count leaves the samples.
+        // The frame after the one whose length the fixture changes states a length its data do not take.
+        { "musepack/sv6-band-overrun.mpc", 32256, 2304 },
         { "musepack/sv7-resolution-invalid.mpc", 66150, 1152 },
         // The SV4 and SV5 last frame is coded, trimmed from the samples and lost only where the data cut it.
         { "musepack/sv5-seek-tag.mpc", 31775, 1152 },

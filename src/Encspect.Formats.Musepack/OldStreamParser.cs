@@ -141,7 +141,8 @@ internal static class OldStreamParser
             Description = Explain.OldStream,
             Topic = Topics.OldStreams,
         };
-        var feed = new SubbandFeed(context, new MusepackConfiguration(h.Version, Math.Min(h.MaxBand, 31), h.MidSide, 2, 44100), node, h.IsReadable && h.Frames > 0, h.IsReadable && h.Frames > 0);
+        bool isDecodable = h.IsReadable && h.Frames > 0;
+        var feed = new SubbandFeed(context, new MusepackConfiguration(Math.Clamp(h.Version, 4, 6), Math.Min(h.MaxBand, 31), h.MidSide, 2, 44100, !isDecodable), node, isDecodable, true);
         if (h.IsReadable)
         {
             Walk(words, h, state, feed);

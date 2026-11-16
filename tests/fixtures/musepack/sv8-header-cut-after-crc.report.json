@@ -298,6 +298,22 @@
         "samples": 0,
         "duration": 0,
         "isVbr": true,
+        "verification": {
+          "isVerified": false,
+          "isLossy": true,
+          "decoding": "notRequested",
+          "decodedSamples": 0,
+          "checksums": [
+            {
+              "name": "stream header CRC-32",
+              "covers": "header",
+              "coversAllAudio": false,
+              "stored": 1,
+              "checked": 1,
+              "failed": 1
+            }
+          ]
+        },
         "series": [
           {
             "name": "Bitrate",

@@ -1402,9 +1402,10 @@ internal static class Sv8Parser
             feed.Trim(Sv7Parser.SynthesisDelay + silence, Sv7Parser.SynthesisDelay + silence + samples);
         }
 
-        if (state.Feed is null && header is { RateIndex: not null, Channels: not null })
+        if (state.Feed is null)
         {
-            state.Feed = new SubbandFeed(context, new MusepackConfiguration(8, header.MaxBands, header.MidSide, header.Channels.Value, rate, IsRefused: true), node, false, true);
+            // A stream libmpcdec refuses, or that has no audio packet or no complete header: a session that says it cannot be decoded, which also states the header's checksum.
+            state.Feed = new SubbandFeed(context, new MusepackConfiguration(8, Math.Clamp(header?.MaxBands ?? 0, 0, 32), header?.MidSide ?? false, header?.Channels ?? 0, rate, IsRefused: true), node, false, true);
         }
 
         // The stream header's CRC-32, which covers the header and no audio, where the packet holds all of it.
