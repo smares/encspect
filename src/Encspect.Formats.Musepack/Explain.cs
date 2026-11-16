@@ -5,6 +5,7 @@ internal static class Topics
 {
     public const string SamplesAndLostSamples = "samples-and-lost-samples";
     public const string SubbandCoding = "musepack-subband-coding";
+    public const string FrameCoding = "musepack-frame-coding";
     public const string Sv7Stream = "musepack-sv7-stream";
     public const string OldStreams = "musepack-sv4-to-sv6";
     public const string Sv8Packets = "musepack-sv8-packets";
@@ -133,7 +134,7 @@ internal static class Explain
     public const string SeekEntries = "The entries: the first two as sizes, the others as Golomb codes (M = 4096) of the change in the step from the entry before, each an offset from the magic number (SV8 specification, Seek Table Packet).";
     public const string SeekEntry = "An entry of the table: the offset of an audio packet from the magic number.";
     public const string AudioPacket = "An audio packet (AP): the number of frames the stream header gives, or fewer in the last packet; the first is a key frame, where decoding can start (SV8 specification, Audio Packet).";
-    public const string AudioFrames = "The packet's frames, back to back without a length of their own, which the analyzer does not read: where one ends is known only by decoding it.";
+    public const string AudioFrames = "The packet's frames, back to back without a length of their own: where one ends is known only by reading its resolutions, scalefactors and samples, which the analyzer does with libmpcdec's syntax. The frames must end within 7 bits of the packet's end.";
     public const string Chapter = "A chapter-tag packet (CT): where a chapter starts, its loudness and peak, and an APEv2 tag of its own without the preamble (SV8 specification, Chapter-Tag Packet, [beta]).";
     public const string ChapterSample = "Where the chapter starts, in samples from the start of the stream (SV8 specification).";
     public const string ChapterGain = "The chapter's loudness in dB (Q8.8), 0 when not computed (SV8 specification).";

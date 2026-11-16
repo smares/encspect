@@ -537,7 +537,7 @@ internal static class Sv7Parser
             w.Field("Frame Length", frame.Bit, frame.Bit + 20, NodeValue.Integer(frame.Length, "bits", "bit"), Explain.FrameLength),
         };
         long dataEnd = Math.Min(limit, frame.Bit + 20 + frame.Length);
-        Node data = w.Field("Frame Data", frame.Bit + 20, Math.Max(dataEnd, frame.Bit + 20), null, Explain.FrameData, Topics.SubbandCoding);
+        Node data = w.Field("Frame Data", frame.Bit + 20, Math.Max(dataEnd, frame.Bit + 20), null, Explain.FrameData, Topics.FrameCoding);
 
         // In a last word the data cuts short, the bits of a field may lie only in bytes past the end.
         if (data.Length == 0)

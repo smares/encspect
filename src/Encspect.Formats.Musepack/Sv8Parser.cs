@@ -651,7 +651,7 @@ internal static class Sv8Parser
             node.Add(new Node("Audio Frames", packet.Offset + packet.HeaderLength, packet.Length - packet.HeaderLength, NodeValue.Integer(state.FramesIn(index), "frames", "frame"))
             {
                 Description = Explain.AudioFrames,
-                Topic = Topics.SubbandCoding,
+                Topic = Topics.FrameCoding,
             });
         }
 
@@ -741,7 +741,7 @@ internal static class Sv8Parser
                 ? new Node("Audio Frames", packet.Offset + packet.HeaderLength, packet.Length - packet.HeaderLength, NodeValue.Integer(state.FramesIn(index), "frames", "frame"))
                 {
                     Description = Explain.AudioFrames,
-                    Topic = Topics.SubbandCoding,
+                    Topic = Topics.FrameCoding,
                 }
                 : new Node("Payload", packet.Offset + packet.HeaderLength, packet.Length - packet.HeaderLength, NodeValue.Integer(packet.Length - packet.HeaderLength, "bytes"))
                 {

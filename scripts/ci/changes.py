@@ -59,7 +59,7 @@ AREAS = {
     "musepack-crosscheck": {
         "projects": ["Encspect.Formats.Musepack", "Encspect.Tags.Ape"],
         "fixtures": ["musepack"],
-        "scripts": ["crosscheck_musepack_fixtures.py"],
+        "scripts": ["crosscheck_musepack_fixtures.py", "crosscheck_musepack_pcm.py", "compare_pcm.py", "musepack_tables.py"],
         "globs": ["scripts/fixtures/*.c", "scripts/fixtures/*.cpp", "scripts/fixtures/make_*musepack*"],
     },
     "wavpack-crosscheck": {

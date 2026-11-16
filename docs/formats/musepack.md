@@ -37,12 +37,12 @@ Musepack SV8, SV7, and SV4 to SV6.
 
 ## Entropy pass
 
-- **Every analysis** walks the coded data of the frames, with or without a decoder (docs/design/lossy-decoders.md, "The parser and decoder split"), for the figures below and for damage the headers cannot show:
+- **Every analysis** walks the coded data of the frames, with or without a decoder ([The parser and decoder split](../design/lossy-decoders.md#the-parser-and-decoder-split)), for the figures below and for damage the headers cannot show:
   - **SV7:** the subband resolutions, the scalefactor selections, the scalefactors (each a difference from the one before it, or 6 bits) and the 36 samples of each subband and channel, as libmpcdec r495 reads them (`mpc_decoder_read_bitstream_sv7`). Resolution -1 codes no samples (the decoder fills the subband with noise).
   - **SV4 to SV6:** the same, as libmpcdec 1.2.6 reads them (`mpc_decoder_read_bitstream_sv6`): resolutions per subband region, a scalefactor bundle per coded subband, and the samples of the left and the right channel one after the other.
   - **SV8:** the frames inside an audio packet, one after the other, with no length of their own (`mpc_decoder_read_bitstream_sv8`): the number of used subbands (absolute in a packet's first frame, a change after it), the resolutions from the highest subband down, the mid/side flags as a count and an enumerative code, the scalefactors (absolute in the first frame, differences after it), and the samples in the canonical Huffman codes of libmpcdec's tables.
 - **Damage:** a frame must take exactly the bits its length states (SV4 to SV7), and the frames of an audio packet must end within 7 bits of the packet's end where the packet holds all its frames; libmpcdec stops decoding where they do not. The analyzer reports `musepack.frame-length-mismatch` (a frame) or `musepack.packet-length-mismatch` (a packet: the frame where the walk fails and the frames after it, whose start is unknown) and counts the samples of those frames as lost. A frame whose subband resolutions run past its length keeps `musepack.band-header-overrun`, and one with a resolution outside -1 to 17 `musepack.resolution-invalid`.
-- **Tables:** the Huffman codes, the enumerative coding tables, the requantization coefficients and the synthesis window are format data taken from libmpcdec's sources by `scripts/fixtures/musepack_tables.py` (docs/development.md, "Where the format tables come from").
+- **Tables:** the Huffman codes, the enumerative coding tables, the requantization coefficients and the synthesis window are format data taken from libmpcdec's sources by `scripts/fixtures/musepack_tables.py` ([Where the format tables come from](../development.md#where-the-format-tables-come-from)).
 - **A cut SV8 packet** is lost whole: libmpcdec decodes the whole frames it holds, which the analyzer does not.
 
 ## Decoding
@@ -51,7 +51,7 @@ Musepack SV8, SV7, and SV4 to SV6.
 - **Output:** planar floats at full scale, in the stream's rate, as libmpcdec's floating-point build computes them (requantization, mid/side, the 32-band polyphase synthesis of 36 slots a frame, each single-precision operation in libmpcdec's order). Mono SV8 streams decode their left channel, as libmpcdec does; the noise of resolution -1 comes from libmpcdec's generator.
 - **Priming and trims (decision 8):** positions are untrimmed. The stream's own syntax trims the first 481 samples (the synthesis filter's delay) and, in SV8, the beginning silence, and the end at the header's sample count (SV7 with true gapless: the last frame's samples; SV6: the 11 bits after the last frame, with the filter's decay decoded from a frame of no coded subband).
 - **Gaps and withheld output (decision 4):** a frame the walk cannot read is lost, and the decoder starts again. After a gap it withholds 32 frames in SV4 to SV7 (the scalefactors are differences from the frame before, libmpcdec's seeking window, decision 15) and 480 samples in SV8 (the synthesis filter's history: a packet's first frame codes its scalefactors absolutely, so only the filter depends on what was lost), with the reason "after a gap". The noise generator restarts at its seed.
-- **Accuracy:** bit for bit equal to libmpcdec's float output on every fixture libmpcdec decodes (docs/development.md, "Musepack decoding").
+- **Accuracy:** bit for bit equal to libmpcdec's float output on every fixture libmpcdec decodes ([Musepack decoding](../development.md#musepack-decoding)).
 
 ## Memory and time
 

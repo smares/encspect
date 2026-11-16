@@ -472,7 +472,7 @@ internal static class OldStreamParser
         long limit = (w.End - w.Start) * 8;
         var nodes = new List<Node> { w.Field("Frame Length", frame.Bit, frame.Bit + 20, NodeValue.Integer(frame.Length, "bits", "bit"), Explain.FrameLength) };
         long dataEnd = Math.Min(limit, frame.DataEnd);
-        Node data = w.Field("Frame Data", frame.Bit + 20, Math.Max(dataEnd, frame.Bit + 20), null, Explain.FrameData, Topics.SubbandCoding);
+        Node data = w.Field("Frame Data", frame.Bit + 20, Math.Max(dataEnd, frame.Bit + 20), null, Explain.FrameData, Topics.FrameCoding);
         if (data.Length > 0)
         {
             Node Cover(string name, NodeValue value, string description, string topic) =>

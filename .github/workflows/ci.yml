@@ -1084,6 +1084,22 @@ jobs:
         env:
           ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
 
+      - uses: ./.github/actions/setup-dotnet
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build the PCM dump tool
+        run: dotnet build --configuration Release tests/Encspect.PcmDump
+
+      # The tables of the Musepack entropy pass and decoder equal libmpcdec's (the r495 and 1.2.6 archives pinned in musepack_tool.py).
+      - name: Check the generated Musepack tables
+        run: python3 scripts/fixtures/musepack_tables.py --check
+
+      # The analyzer's decoded samples equal libmpcdec's float output (r495 for versions 7 and 8, 1.2.6 for 4 to 6) and FFmpeg's second column
+      # (docs/development.md, "Musepack decoding").
+      - name: Compare the decoded PCM of the Musepack fixtures
+        run: python3 scripts/fixtures/crosscheck_musepack_pcm.py
+
       # What a job downloaded is kept whether it passes or not. A passing job saves the week's key (unless that key was restored
       # exactly); a failing or canceled one, which would otherwise lose its downloads, saves under a key of its own with the run ID
       # and attempt, because a key cannot be overwritten. The next run restores either through the prefix. Entries are addressed by
