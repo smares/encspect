@@ -33,6 +33,23 @@ internal sealed class WordStream(ByteReader reader, long start, long end)
         return (uint)((both << (int)(bit & 31)) >> (64 - count));
     }
 
+    // Copies the words from firstWord on into destination (a multiple of 4 bytes) with each word's bytes reversed, so that its bits most significant first lie in stream order;
+    // bytes past the data are zero.
+    public void CopyWords(long firstWord, Span<byte> destination)
+    {
+        long offset = start + (firstWord << 2);
+        int available = (int)Math.Clamp(end - offset, 0, destination.Length);
+        if (available > 0)
+        {
+            reader.Position = offset;
+            reader.Read(destination[..available]);
+        }
+
+        destination[available..].Clear();
+        Span<uint> words = System.Runtime.InteropServices.MemoryMarshal.Cast<byte, uint>(destination);
+        BinaryPrimitives.ReverseEndianness(words, words);
+    }
+
     private uint Word(long index)
     {
         long offset = start + (index << 2);

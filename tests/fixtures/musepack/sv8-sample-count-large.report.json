@@ -66,6 +66,13 @@
                   "length": 14277
                 },
                 {
+                  "name": "Lost Samples",
+                  "value": 6912,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 14277
+                },
+                {
                   "name": "Duration",
                   "value": 1.6609297052154195,
                   "unit": "s",
@@ -127,9 +134,80 @@
                   ]
                 },
                 {
+                  "name": "Coded Bandwidth",
+                  "offset": 0,
+                  "length": 14277,
+                  "children": [
+                    {
+                      "name": "Lowest",
+                      "value": 13092,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 14277
+                    },
+                    {
+                      "name": "Most Common",
+                      "value": 13092,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 14277
+                    },
+                    {
+                      "name": "Highest",
+                      "value": 13092,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 14277
+                    }
+                  ]
+                },
+                {
                   "name": "Verified Header Checksums",
                   "value": 1,
                   "unit": "headers",
+                  "offset": 0,
+                  "length": 14277
+                },
+                {
+                  "name": "Stereo Coding",
+                  "value": 58,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 14277,
+                  "children": [
+                    {
+                      "name": "Mid/side stereo",
+                      "value": "58 frames (100.0%)",
+                      "offset": 0,
+                      "length": 14277
+                    }
+                  ]
+                },
+                {
+                  "name": "Subband Stereo Coding",
+                  "value": 540,
+                  "unit": "subbands",
+                  "offset": 0,
+                  "length": 14277,
+                  "children": [
+                    {
+                      "name": "Mid/Side",
+                      "value": "357 subbands (66.1%)",
+                      "offset": 0,
+                      "length": 14277
+                    },
+                    {
+                      "name": "Left/Right",
+                      "value": "183 subbands (33.9%)",
+                      "offset": 0,
+                      "length": 14277
+                    }
+                  ]
+                },
+                {
+                  "name": "Noise-Substituted Channels",
+                  "value": 134,
+                  "unit": "subband channels",
                   "offset": 0,
                   "length": 14277
                 }
@@ -358,9 +436,25 @@
         ],
         "channelLayoutName": "stereo",
         "samples": 73247,
+        "lostSamples": 6912,
         "duration": 1.6609297052154195,
         "averageBitrate": 68.1310546875,
         "isVbr": true,
+        "verification": {
+          "isLossy": true,
+          "decoding": "notRequested",
+          "decodedSamples": 0,
+          "checksums": [
+            {
+              "name": "stream header CRC-32",
+              "covers": "header",
+              "coversAllAudio": false,
+              "stored": 1,
+              "checked": 1,
+              "failed": 0
+            }
+          ]
+        },
         "series": [
           {
             "name": "Bitrate",
@@ -383,6 +477,63 @@
             "values": [
               68
             ]
+          },
+          {
+            "name": "Coded Bandwidth",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              36
+            ],
+            "values": [
+              13092
+            ]
+          },
+          {
+            "name": "Coded Bandwidth Over Time",
+            "unit": "Hz",
+            "axis": "seconds",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              0
+            ],
+            "values": [
+              13092
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 0
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 58
+              }
+            ],
+            "total": 58,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                58,
+                1
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                58
+              ]
+            ]
           }
         ]
       }
@@ -397,6 +548,18 @@
         "path": [
           0,
           0
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Info",
+        "code": "musepack.packet-frames-missing",
+        "message": "1 audio packet holds fewer frames than the stream header states, the first 6 frames fewer at 0x24: libmpcdec stops decoding at the end of the packet's data, and the analyzer counts the missing frames as lost.",
+        "offset": 36,
+        "length": 14238,
+        "path": [
+          0,
+          4
         ],
         "count": 1
       }

@@ -5,6 +5,7 @@ internal static class Topics
 {
     public const string SamplesAndLostSamples = "samples-and-lost-samples";
     public const string SubbandCoding = "musepack-subband-coding";
+    public const string FrameCoding = "musepack-frame-coding";
     public const string Sv7Stream = "musepack-sv7-stream";
     public const string OldStreams = "musepack-sv4-to-sv6";
     public const string Sv8Packets = "musepack-sv8-packets";
@@ -15,6 +16,7 @@ internal static class Topics
     public const string GaplessPlayback = "gapless-playback";
     public const string EncoderDetection = "encoder-detection";
     public const string BitrateModes = "bitrate-modes";
+    public const string CodedBandwidth = "coded-bandwidth";
     public const string Crc = "crc";
     public const string ApeTag = "ape-tag";
 }
@@ -132,7 +134,7 @@ internal static class Explain
     public const string SeekEntries = "The entries: the first two as sizes, the others as Golomb codes (M = 4096) of the change in the step from the entry before, each an offset from the magic number (SV8 specification, Seek Table Packet).";
     public const string SeekEntry = "An entry of the table: the offset of an audio packet from the magic number.";
     public const string AudioPacket = "An audio packet (AP): the number of frames the stream header gives, or fewer in the last packet; the first is a key frame, where decoding can start (SV8 specification, Audio Packet).";
-    public const string AudioFrames = "The packet's frames, back to back without a length of their own, which the analyzer does not read: where one ends is known only by decoding it.";
+    public const string AudioFrames = "The packet's frames, back to back without a length of their own: where one ends is known only by reading its resolutions, scalefactors and samples, which the analyzer does with libmpcdec's syntax. The frames must end within 7 bits of the packet's end.";
     public const string Chapter = "A chapter-tag packet (CT): where a chapter starts, its loudness and peak, and an APEv2 tag of its own without the preamble (SV8 specification, Chapter-Tag Packet, [beta]).";
     public const string ChapterSample = "Where the chapter starts, in samples from the start of the stream (SV8 specification).";
     public const string ChapterGain = "The chapter's loudness in dB (Q8.8), 0 when not computed (SV8 specification).";
@@ -170,6 +172,12 @@ internal static class Explain
     public const string StereoCodingSeries = "How each frame codes its channels, as the tally of Stereo Coding counts them.";
     public const string StereoLeftRight = "Frames that code no subband as mid and side, with their share.";
     public const string StereoMidSide = "Frames that code at least one subband as mid and side, with their share.";
+    public const string CodedBandwidth = "The upper edge of the highest subband that a frame codes anything for in either channel: the subbands from the lowest up to the highest one with a resolution other than 0, noise-substituted subbands included, times the subband width of 1/64 of the sample rate (libmpcdec r495, mpc_decoder_read_bitstream_sv7). It is a bound the frame's own data states, not the encoder's lowpass setting and not a measurement of decoded audio.";
+    public const string BandwidthLowest = "The lowest coded bandwidth of any frame that has one.";
+    public const string BandwidthMostCommon = "The coded bandwidth most frames have; the lowest of them where several are equally common.";
+    public const string BandwidthHighest = "The highest coded bandwidth of any frame that has one.";
+    public const string CodedBandwidthSeries = "The coded bandwidth of each frame (SV8: of each audio packet, the highest of its frames) in whole hertz: the upper edge of the highest subband with a resolution other than 0 in either channel. A frame the data cuts short or that cannot be read has none.";
+    public const string CodedBandwidthOverTimeSeries = "The highest coded bandwidth of the frames or packets that start in each second of audio.";
     public const string NoiseCount = "Subband channels filled with noise (resolution -1) across all frames.";
 
     public const string BitrateSeries = "The bitrate of each frame or audio packet: its bits over the time its samples last.";

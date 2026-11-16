@@ -315,11 +315,13 @@ def libmpcdec_name(version):
     return f"Alpha {version // 100}.{version % 100:02d}"
 
 
-def manifest(data, start, end, extra=None):
+def manifest(data, start, end, extra=None, walk_lost=0):
     """The manifest of the Musepack stream in data[start:end]: its kind, header fields, frames or
     packets, and the stream info; extra adds regions, findings and cross-check notes."""
     stream = data[start:end]
     result = {"length": len(data)}
+    # walk_lost: frames beyond those the model flags that the entropy pass finds damaged (their scalefactors and samples take other bits than the length states), which
+    # only the generator of a fixture that damages a frame's length knows.
     if stream[:4] == b"MPCK":
         s = sv8(stream)
         sh = s["sh"]
@@ -348,6 +350,7 @@ def manifest(data, start, end, extra=None):
         coded = s["frames"] * FRAME
         info = {"codec": "Musepack SV8", "sample_rate": s["rate"], "channels": sh["channels"] if s["complete"] else 0, "samples": s["samples"],
                 "average_bitrate": s["audio_bytes"] * 8 * s["rate"] / coded / 1000 if coded and s["rate"] else None}
+        s["lost"] += walk_lost * FRAME
         if s["lost"]:
             info["lost_samples"] = s["lost"]
             result["coded_samples"] = (s["frames"] + s["cut"]) * FRAME
@@ -378,6 +381,7 @@ def manifest(data, start, end, extra=None):
         coded = len(s["frames"]) * FRAME
         info = {"codec": "Musepack SV7", "sample_rate": s["rate"], "channels": 2, "samples": s["samples"],
                 "average_bitrate": s["frame_bits"] * s["rate"] / coded / 1000 if coded else None}
+        s["lost"] += walk_lost * FRAME
         if s["lost"]:
             info["lost_samples"] = s["lost"]
             result["coded_samples"] = (len(s["frames"]) + s["cut"]) * FRAME
@@ -395,6 +399,7 @@ def manifest(data, start, end, extra=None):
         coded = len(s["frames"]) * FRAME
         info = {"codec": f"Musepack SV{h['version']}", "sample_rate": 44100, "channels": 2, "samples": s["samples"],
                 "average_bitrate": s["frame_bits"] * 44100 / coded / 1000 if s["readable"] and coded else None}
+        s["lost"] += walk_lost * FRAME
         if s["lost"]:
             info["lost_samples"] = s["lost"]
         if s["lost"] or s["last_coded"]:

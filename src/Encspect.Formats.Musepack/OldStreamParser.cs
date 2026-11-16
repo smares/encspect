@@ -135,9 +135,17 @@ internal static class OldStreamParser
         state.Leading.Add(header);
         Node version = header.Children.First(c => c.Name == "Stream Version");
 
+        Node node = new(name, reader.Start, reader.Length, null, () => new BlockedChildren(state.Leading, state.Frames.Count + (state.PaddingStart is null ? 0 : 1), i => FrameNode(state, i)))
+        {
+            Kind = NodeKind.Stream,
+            Description = Explain.OldStream,
+            Topic = Topics.OldStreams,
+        };
+        bool isDecodable = h.IsReadable && h.Frames > 0;
+        var feed = new SubbandFeed(context, new MusepackConfiguration(Math.Clamp(h.Version, 4, 6), Math.Min(h.MaxBand, 31), h.MidSide, 2, 44100, !isDecodable), node, isDecodable, true);
         if (h.IsReadable)
         {
-            Walk(words, h, state);
+            Walk(words, h, state, feed);
         }
         else
         {
@@ -187,18 +195,12 @@ internal static class OldStreamParser
             }
         }
 
-        var node = new Node(name, reader.Start, reader.Length, null, () => new BlockedChildren(state.Leading, count, i => FrameNode(state, i)))
-        {
-            Kind = NodeKind.Stream,
-            Description = Explain.OldStream,
-            Topic = Topics.OldStreams,
-        };
         parent.Add(node);
-        AddStream(state, h, node, context);
+        AddStream(state, h, node, context, feed);
         state.Findings.Flush(context);
     }
 
-    private static void Walk(WordStream words, OldHeader h, State state)
+    private static void Walk(WordStream words, OldHeader h, State state, SubbandFeed feed)
     {
         long bit = h.DataBit;
         long length = words.BitLength;
@@ -244,7 +246,22 @@ internal static class OldStreamParser
                 break;
             }
 
-            Bands bands = ReadBands(words, bit + 20, Math.Min(end, length), maxBand, h.MidSide);
+            Bands bands;
+            WalkFacts facts = default;
+            if (feed.CanWalk && (flags & FrameFlags.Truncated) == 0)
+            {
+                facts = WalkFrame(feed, words, bit + 20, frameLength, maxBand, h.MidSide);
+                bands = new Bands(facts.UsedBands, facts.MidSide, facts.Flagged, (facts.Problems & WalkProblems.HeaderOverrun) != 0);
+                if ((facts.Problems & (WalkProblems.DataOverrun | WalkProblems.DataShort | WalkProblems.Syntax)) != 0 && !bands.Overrun)
+                {
+                    flags |= FrameFlags.Mismatch;
+                }
+            }
+            else
+            {
+                bands = ReadBands(words, bit + 20, Math.Min(end, length), maxBand, h.MidSide);
+            }
+
             if (bands.Overrun)
             {
                 flags |= FrameFlags.Overrun;
@@ -252,14 +269,42 @@ internal static class OldStreamParser
 
             var frame = new Frame(bit, frameLength, flags) { MidSide = bands.MidSide, UsedBands = (byte)bands.Used, FlaggedBands = (byte)bands.Flagged };
             state.Frames.Add(frame);
+            if (isFinal && (flags & FrameFlags.Truncated) == 0)
+            {
+                state.FinalSamples = (int)words.Read(end, 11);
+            }
+
+            if (feed.CanWalk)
+            {
+                if (i == 0)
+                {
+                    feed.Trim(Sv7Parser.SynthesisDelay, h.KeepsLastFrame ? (h.Frames * Sv7Parser.FrameSamples) + Sv7Parser.SynthesisDelay + Sv7Parser.FrameSamples : (h.Frames - 1) * Sv7Parser.FrameSamples);
+                }
+
+                if (isFinal && state.FinalSamples is { } given)
+                {
+                    feed.Trim(Sv7Parser.SynthesisDelay, ((h.Frames - 1) * Sv7Parser.FrameSamples) + LastFrameOutput(given));
+                }
+
+                bool unreadable = (flags & (FrameFlags.Truncated | FrameFlags.Overrun | FrameFlags.Mismatch)) != 0;
+                if (feed.IsDecoding)
+                {
+                    List<ByteRange> ranges = state.Layout.Ranges(frame.Bit, Math.Min(frame.End, length));
+                    feed.Feed(i * Sv7Parser.FrameSamples, facts, unreadable, ranges[0].Offset, ranges[^1].End);
+                    if (isFinal && !unreadable && state.FinalSamples is { } samples && (samples == 0 ? Sv7Parser.FrameSamples : samples) + Sv7Parser.SynthesisDelay >= Sv7Parser.FrameSamples)
+                    {
+                        feed.FeedSilent((i + 1) * Sv7Parser.FrameSamples, ranges[^1].End, ranges[^1].End);
+                    }
+                }
+                else
+                {
+                    feed.Feed(0, facts, unreadable, 0, 0);
+                }
+            }
+
             if ((flags & FrameFlags.Truncated) != 0)
             {
                 break;
-            }
-
-            if (isFinal)
-            {
-                state.FinalSamples = (int)words.Read(end, 11);
             }
 
             state.Count(frame);
@@ -282,6 +327,29 @@ internal static class OldStreamParser
     }
 
     private readonly record struct Bands(int Used, uint MidSide, int Flagged, bool Overrun);
+
+    // Walks one frame whose data start at dataBit and take frameLength bits (libmpcdec 1.2.6 stops decoding at a frame whose bits differ from its length).
+    private static WalkFacts WalkFrame(SubbandFeed feed, WordStream words, long dataBit, int frameLength, int maxBand, bool midSide)
+    {
+        int startBit = (int)(dataBit & 31);
+        int bytes = Math.Min(SubbandFeed.FrameWindowBytes, (((startBit + frameLength + 31) >> 5) + 2) << 2);
+        words.CopyWords(dataBit >> 5, feed.Buffer.AsSpan(0, bytes));
+        feed.Begin(bytes, startBit, startBit + frameLength);
+        var facts = new WalkFacts();
+        Sv6Syntax.ReadHeader(feed.State, feed.Bits, maxBand, midSide, ref facts);
+        if (facts.Problems == WalkProblems.None)
+        {
+            Sv6Syntax.ReadBody(feed.State, feed.Bits, ref facts);
+        }
+
+        if (facts.Problems == WalkProblems.None)
+        {
+            facts.Problems |= feed.Bits.Position < startBit + frameLength ? WalkProblems.DataShort : feed.Bits.IsOverrun ? WalkProblems.DataOverrun : WalkProblems.None;
+        }
+
+        facts.Bits = feed.Bits.Position - startBit;
+        return facts;
+    }
 
     // The resolutions and mid/side flags at the start of a frame (libmpcdec 1.2.6
     // mpc_decoder_read_bitstream_sv6, "HEADER"): per subband, the left resolution's code, the
@@ -404,7 +472,7 @@ internal static class OldStreamParser
         long limit = (w.End - w.Start) * 8;
         var nodes = new List<Node> { w.Field("Frame Length", frame.Bit, frame.Bit + 20, NodeValue.Integer(frame.Length, "bits", "bit"), Explain.FrameLength) };
         long dataEnd = Math.Min(limit, frame.DataEnd);
-        Node data = w.Field("Frame Data", frame.Bit + 20, Math.Max(dataEnd, frame.Bit + 20), null, Explain.FrameData, Topics.SubbandCoding);
+        Node data = w.Field("Frame Data", frame.Bit + 20, Math.Max(dataEnd, frame.Bit + 20), null, Explain.FrameData, Topics.FrameCoding);
         if (data.Length > 0)
         {
             Node Cover(string name, NodeValue value, string description, string topic) =>
@@ -471,13 +539,15 @@ internal static class OldStreamParser
         return text.ToString();
     }
 
-    private static void AddStream(State state, OldHeader h, Node node, AnalysisContext context)
+    private static void AddStream(State state, OldHeader h, Node node, AnalysisContext context, SubbandFeed feed)
     {
         const int sampleRate = 44100;
         var figures = new StreamFigures(sampleRate);
         long decoded = 0;
         Frame? firstOverrun = null;
+        Frame? firstMismatch = null;
         int overruns = 0;
+        int mismatches = 0;
         long cut = 0;
         long lastFrames = 0;
         long lostLast = 0;
@@ -509,8 +579,9 @@ internal static class OldStreamParser
             }
 
             decoded++;
-            lostFrames += (frame.Flags & FrameFlags.Overrun) != 0 ? 1 : 0;
-            figures.Add(state.Layout.WordStart(frame.Bit), frame.End - frame.Bit, Sv7Parser.FrameSamples, inSeries: frame.Length > 0);
+            lostFrames += (frame.Flags & (FrameFlags.Overrun | FrameFlags.Mismatch)) != 0 ? 1 : 0;
+            figures.Add(state.Layout.WordStart(frame.Bit), frame.End - frame.Bit, Sv7Parser.FrameSamples, inSeries: frame.Length > 0,
+                bands: frame.Length > 0 && (frame.Flags & (FrameFlags.Overrun | FrameFlags.Mismatch)) == 0 ? frame.UsedBands : -1);
             if (frame.Length > 0)
             {
                 state.Stereo.Add(System.Numerics.BitOperations.PopCount(frame.MidSide) > 0 ? 1 : 0);
@@ -521,6 +592,12 @@ internal static class OldStreamParser
                 overruns++;
                 firstOverrun ??= frame;
             }
+
+            if ((frame.Flags & FrameFlags.Mismatch) != 0)
+            {
+                mismatches++;
+                firstMismatch ??= frame;
+            }
         }
 
         WordLayout w = state.Layout;
@@ -530,6 +607,12 @@ internal static class OldStreamParser
         {
             state.Findings.AddNow(Severity.Warning, "musepack.band-header-overrun",
                 $"{(overruns == 1 ? "1 frame's" : $"{overruns} frames'")} subband resolutions run past the frame's length, first at 0x{FrameAt(o).Offset:X}: the frame is damaged.", FrameAt(o));
+        }
+
+        if (firstMismatch is { } m)
+        {
+            state.Findings.AddNow(Severity.Warning, "musepack.frame-length-mismatch",
+                $"{(mismatches == 1 ? "1 frame's" : $"{mismatches} frames'")} scalefactors and samples take other bits than the frame's length states, or break the syntax, first at 0x{FrameAt(m).Offset:X}: libmpcdec stops decoding at the frame, and the analyzer counts its samples as lost.", FrameAt(m));
         }
 
         Node header = state.Leading[0];
@@ -601,9 +684,12 @@ internal static class OldStreamParser
         }
 
         List<Series> series = h.IsReadable ? figures.Series(bitrate, state.Cancellation) : [];
+        feed.Trim(Sv7Parser.SynthesisDelay, Sv7Parser.SynthesisDelay + samples);
+        StreamVerification? verification = feed.Finish();
         context.AddStream(new StreamInfo
         {
             Nodes = [node],
+            Verification = verification,
             Codec = $"Musepack SV{h.Version}",
 
             // libmpcdec 1.2.6: "used by all files up to SV7".
@@ -628,6 +714,9 @@ internal static class OldStreamParser
         Overrun = 2,
         Last = 4,
         Final = 8,
+
+        // The frame's scalefactors and samples take other bits than its length states, or break the syntax.
+        Mismatch = 16,
     }
 
     // A frame in 24 bytes, as an SV7 frame is kept.

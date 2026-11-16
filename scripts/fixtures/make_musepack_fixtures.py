@@ -120,6 +120,14 @@ def sv8_samples_beyond():
     return with_sh(data, lambda p: p.__setitem__(slice(5, after), new))
 
 
+def sv8_packet_damaged():
+    """A byte of the last frame of an audio packet changed (the 3620th, found by trying every 509th byte of the second quarter of the stream): its scalefactors and samples take
+    other bits than the packet's size states, so libmpcdec stops at the frame and the analyzer counts it as lost."""
+    data = bytearray(external("mpcenc-packets"))
+    data[3620] ^= 0xA5
+    return bytes(data)
+
+
 def sv8_no_end():
     data = external("mpcenc-standard")
     return data[:find(data, "SE")[0]]
@@ -587,6 +595,7 @@ FIXTURES = {
     "sv8-bad-crc": (sv8_bad_crc, None, [("musepack.header-crc-mismatch", "the header is damaged")]),
     "sv8-rate-reserved": (sv8_rate_reserved, None, [("musepack.sample-rate-reserved", "index is 5")]),
     "sv8-samples-beyond-packets": (sv8_samples_beyond, None, [("musepack.audio-packets-missing", "need 78 frames in 20 audio packets; the stream holds 15")]),
+    "sv8-packet-damaged": (sv8_packet_damaged, None, []),
     "sv8-no-end": (sv8_no_end, None, [("musepack.end-missing", "no stream end packet")]),
     "sv8-truncated": (sv8_truncated, None, [("musepack.packet-truncated", "the stream is cut short"), ("musepack.end-missing", "no stream end packet"),
                                             ("musepack.seek-offset-invalid", "no seek table packet starts")]),
@@ -698,6 +707,19 @@ def name_of(data):
     return f"Musepack SV{m.Words(data).read(11, 10)}"
 
 
+# The frames the entropy pass finds damaged beyond those whose resolutions run past their length: the frame after a frame whose length these fixtures change
+# starts at the right bit but states a length its data do not take, so libmpcdec fails at it too.
+WALK_LOST = {"sv7-damaged-length": (1, "musepack.frame-length-mismatch", "1 frame's scalefactors and samples"),
+             "sv5-band-overrun": (1, "musepack.frame-length-mismatch", "1 frame's scalefactors and samples"),
+             "sv6-band-overrun": (1, "musepack.frame-length-mismatch", "1 frame's scalefactors and samples"),
+             # The audio packets of these hold fewer frames than the stream header states (the header says 64 frames a packet, the one packet holds 58; the last
+             # packet of the 5-packet stream holds 2 of its 4).
+             "sv8-sample-count-large": (6, "musepack.packet-frames-missing", "1 audio packet holds fewer frames"),
+             "sv8-sample-count-unknown": (6, "musepack.packet-frames-missing", "1 audio packet holds fewer frames"),
+             "sv8-packet-damaged": (1, "musepack.packet-length-mismatch", "1 audio packet's frames"),
+             "sv8-samples-beyond-packets": (2, "musepack.packet-frames-missing", "1 audio packet holds fewer frames")}
+
+
 def main():
     for name, (build, layout, findings) in FIXTURES.items():
         data = build()
@@ -713,11 +735,13 @@ def main():
             start, end = 0, len(data)
             regions = [{"name": name_of(data), "offset": 0, "length": len(data)}]
         expected = DAMAGED if findings is None else findings
+        if name in WALK_LOST:
+            expected = [*expected, (WALK_LOST[name][1], WALK_LOST[name][2])]
         extra = {"regions": regions, "findings": [{"code": c, "contains": t} for c, t in expected], "crosscheck": {"valid": name in DERIVED}}
         if name in DERIVED:
             extra["derived"] = {"from": DERIVED[name][0], "mppdec": DERIVED[name][1], "note": "Not an encoder's output: no SV6 encoder was found. The SV5 encoder's stream relabeled as version 6, "
                                 "its frame count lowered and 11 bits written after the new last frame."}
-        result = m.manifest(data, start, end, extra)
+        result = m.manifest(data, start, end, extra, WALK_LOST.get(name, (0,))[0])
         (OUT / f"{name}.mpc").write_bytes(data)
         (OUT / f"{name}.expected.json").write_text(json.dumps(result, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"Wrote {len(FIXTURES)} fixtures to {OUT}")

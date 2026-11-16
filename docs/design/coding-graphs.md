@@ -310,7 +310,7 @@ The AAC codec parser serves every container that routes AAC to it. There is no L
 | Coded bandwidth, SV4 to SV7 | used subbands: the highest subband with a resolution other than 0 in either channel, plus 1 (libmpcdec r495 `mpc_decoder_read_bitstream_sv7`, 1.2.6 for SV4 to SV6); 32 subbands of fs/64. Resolution -1 is noise substitution and is not 0, so a noise-substituted subband counts as coded | yes, `UsedBands` in the 24-byte frame record | no | 8 bytes per frame in the series, derived | code | 1 |
 | Mid/side stereo, SV4 to SV7 | the mid/side flag of each coded subband | yes, `MidSide` mask in the record | "Frames With Mid/Side", a value node; "Subband Stereo Coding" | 1 byte per frame, derived; a flag series | code | 1 |
 | Noise substitution, SV7 | subband channels at resolution -1 | yes, `NoiseChannels` | "Noise-Substituted Channels" total | 8 bytes per frame as a numeric series | code | 2 |
-| SV8 | the frames inside audio packets | no: audio packets are not read | no | | code | later |
+| Coded bandwidth, mid/side stereo and noise substitution, SV8 | the used subbands, mid/side flags and resolutions of the frames inside audio packets, read by the entropy pass (libmpcdec r495 `mpc_decoder_read_bitstream_sv8`) | yes, with the decoder (every analysis), in the same figures as SV4 to SV7 | "Coded Bandwidth" (every version), "Stereo Coding", "Subband Stereo Coding", "Noise-Substituted Channels" | 1 byte per frame (the coding) and 1 byte per packet (the bandwidth), derived | built (0.4) | later |
 
 - The header's maximum band is a bound for the whole stream; the per-frame used subbands are the coded bandwidth over time, at the resolution of one subband (689 Hz at 44.1 kHz).
 

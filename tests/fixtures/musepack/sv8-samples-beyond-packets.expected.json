@@ -108,6 +108,7 @@
    "SE"
   ]
  ],
+ "coded_samples": 69120,
  "header": {
   "Sample Count": "89190 samples",
   "Beginning Silence": "0 samples",
@@ -124,6 +125,7 @@
    "channels": 2,
    "samples": 68639,
    "average_bitrate": 73.5153125,
+   "lost_samples": 2304,
    "duration": 1.5564399092970522
   }
  ],
@@ -138,6 +140,10 @@
   {
    "code": "musepack.audio-packets-missing",
    "contains": "need 78 frames in 20 audio packets; the stream holds 15"
+  },
+  {
+   "code": "musepack.packet-frames-missing",
+   "contains": "1 audio packet holds fewer frames"
   }
  ],
  "crosscheck": {

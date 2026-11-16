@@ -6,6 +6,7 @@ using Encspect.Formats.Flac;
 using Encspect.Formats.Flac.Decoding;
 using Encspect.Formats.MonkeysAudio.Decoding;
 using Encspect.Formats.MpegAudio.Decoding;
+using Encspect.Formats.Musepack.Decoding;
 using Encspect.Formats.Opus.Decoding;
 using Encspect.Formats.Tta.Decoding;
 using Encspect.Formats.Vorbis.Decoding;
@@ -198,6 +199,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         _ when name.StartsWith("mpeg", StringComparison.Ordinal) => new MpegDecoder(),
         _ when name.StartsWith("vorbis", StringComparison.Ordinal) => new VorbisDecoder(),
         _ when name.StartsWith("opus", StringComparison.Ordinal) => new OpusDecoder(),
+        _ when name.StartsWith("musepack", StringComparison.Ordinal) => new MusepackDecoder(),
         _ when name.StartsWith("ac3", StringComparison.Ordinal) => new Ac3Decoder(),
         _ when name.StartsWith("eac3", StringComparison.Ordinal) => new Eac3Decoder(),
         _ when name.StartsWith("truehd", StringComparison.Ordinal) => TrueHdDecoder.TrueHd,
@@ -217,6 +219,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         _ when name.StartsWith("mpeg", StringComparison.Ordinal) => ".mp3",
         _ when name.StartsWith("vorbis", StringComparison.Ordinal) => ".ogg",
         _ when name.StartsWith("opus", StringComparison.Ordinal) => ".opus",
+        _ when name.StartsWith("musepack", StringComparison.Ordinal) => ".mpc",
         _ when name.StartsWith("ac3", StringComparison.Ordinal) => ".ac3",
         _ when name.StartsWith("eac3", StringComparison.Ordinal) => ".eac3",
         _ when name.StartsWith("truehd", StringComparison.Ordinal) => ".thd",
@@ -356,6 +359,21 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         })
         {
             Add("mpeg-" + label, () => new Case("mpeg-" + label, MpegCases.Repeated(file)));
+        }
+
+        // Musepack SV8: stereo at the standard profile and at the highest (the largest resolutions, 36 samples in 14 bits), mono, noise substitution, 32 and 48 kHz, and a stream
+        // of frames that code no subband. Each case repeats the audio packets of an encoder's file in one stream whose header states no length.
+        foreach ((string label, string file) in new[]
+        {
+            ("standard", "external-mpcenc-standard.mpc"),
+            ("braindead", "external-mpcenc-braindead.mpc"),
+            ("mono", "external-mpcenc-telephone-mono.mpc"),
+            ("noise", "external-mpcenc-pns.mpc"),
+            ("insane-32k", "external-mpcenc-insane-32k.mpc"),
+            ("radio-48k", "external-mpcenc-radio-48k.mpc"),
+        })
+        {
+            Add("musepack-" + label, () => new Case("musepack-" + label, MusepackCases.Repeated(file)));
         }
 
         // Vorbis: stereo and mono music, 5.1, high quality, long blocks of 8,192 samples (the stereo file with its long block size raised, which its floors then do not fit but still
@@ -1108,6 +1126,90 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             var analyzer = new Analyzer(DefaultParsers.Tags, DefaultParsers.Formats, DefaultParsers.Codecs, [counting]);
             using var stream = new MemoryStream(file, writable: false);
             analyzer.Analyze("probe.mp3", stream, new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = long.MaxValue, Output = _ => new NullSink() } });
+            return counting.Units;
+        }
+    }
+
+    // The audio packets of an SV8 fixture repeated in one stream until the decoding charges about Target units. The stream header states a sample count of 0 (which libmpcdec
+    // decodes every frame under, and outputs none for), so the copies need no count that fits.
+    internal static class MusepackCases
+    {
+        public static byte[] Repeated(string fixture, long target = Target)
+        {
+            byte[] one = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "musepack", fixture));
+            long perCopy = Math.Max(1, Units(Build(one, 1)));
+            int copies = (int)Math.Clamp(target / perCopy, 2, 1 << 20);
+            return Build(one, copies);
+        }
+
+        // The magic number, the stream header with a sample count and a beginning silence of 0 and a new CRC, the audio packets of the fixture copies times, and the stream end.
+        private static byte[] Build(byte[] file, int copies)
+        {
+            var audio = new List<byte[]>();
+            byte[]? header = null;
+            for (int at = 4; at + 3 <= file.Length;)
+            {
+                int length = 0;
+                int size = 0;
+                int i = at + 2;
+                do
+                {
+                    size = (size << 7) | (file[i] & 0x7F);
+                }
+                while ((file[i++] & 0x80) != 0 && i < file.Length);
+                length = size;
+                byte[] packet = file[at..(at + length)];
+                string key = System.Text.Encoding.ASCII.GetString(packet, 0, 2);
+                if (key == "SH")
+                {
+                    header = packet;
+                }
+                else if (key == "AP")
+                {
+                    audio.Add(packet);
+                }
+
+                at += length;
+            }
+
+            // The payload after the CRC: the version, the sample count and the beginning silence (sizes of 1 to 9 bytes), then the two bytes of rate, bands and channels.
+            int payload = 3;
+            byte[] data = header![payload..];
+            int position = 4 + 1;
+            while ((data[position++] & 0x80) != 0)
+            {
+            }
+
+            while ((data[position++] & 0x80) != 0)
+            {
+            }
+
+            byte[] body = [data[4], 0, 0, .. data[position..]];
+            uint crc = Encspect.Formats.Musepack.Crc32.Compute(body);
+            var stream = new List<byte>("MPCK"u8.ToArray());
+            stream.AddRange("SH"u8.ToArray());
+            stream.Add((byte)(3 + 4 + body.Length));
+            stream.AddRange(BitConverter.GetBytes(System.Buffers.Binary.BinaryPrimitives.ReverseEndianness(crc)));
+            stream.AddRange(body);
+            for (int copy = 0; copy < copies; copy++)
+            {
+                foreach (byte[] packet in audio)
+                {
+                    stream.AddRange(packet);
+                }
+            }
+
+            stream.AddRange("SE"u8.ToArray());
+            stream.Add(3);
+            return [.. stream];
+        }
+
+        public static long Units(byte[] file)
+        {
+            var counting = new CountingDecoder(new MusepackDecoder());
+            var analyzer = new Analyzer(DefaultParsers.Tags, DefaultParsers.Formats, DefaultParsers.Codecs, [counting]);
+            using var stream = new MemoryStream(file, writable: false);
+            analyzer.Analyze("probe.mpc", stream, new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = long.MaxValue, Output = _ => new NullSink() } });
             return counting.Units;
         }
     }

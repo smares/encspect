@@ -262,6 +262,39 @@ def build_frames_126(directory=None):
     return binary
 
 
+def build_pcm(directory=None):
+    """The path of musepack_pcm (musepack_pcm.c over libmpcdec of musepack_src r495, stream versions 7 and 8), built in directory (a new temporary one by default). The
+    program writes the floats libmpcdec decodes; the cross-check of the decoder's PCM (crosscheck_musepack_pcm.py) compares with them."""
+    directory = pathlib.Path(directory or tempfile.mkdtemp(prefix="libmpcdec-pcm-"))
+    directory.mkdir(parents=True, exist_ok=True)
+    extract(fetch(LIBMPC, directory), directory)
+    source = directory / "musepack_src_r495"
+    library = source / "libmpcdec"
+    files = ["huffman.c", "mpc_bits_reader.c", "mpc_decoder.c", "mpc_demux.c", "mpc_reader.c", "requant.c", "streaminfo.c", "synth_filter.c"]
+    binary = directory / "musepack_pcm"
+    subprocess.run(["gcc", "-O2", "-w", "-ffp-contract=off", "-I", str(source / "include"), "-I", str(library), "-o", str(binary), str(HERE / "musepack_pcm.c"),
+                    *(str(library / f) for f in files), str(source / "common" / "crc32.c"), "-lm"], check=True)
+    return binary
+
+
+def build_pcm_126(directory=None):
+    """The path of musepack_pcm126, the same program over libmpcdec 1.2.6, which decodes stream versions 4 to 6."""
+    directory = pathlib.Path(directory or tempfile.mkdtemp(prefix="libmpcdec126-pcm-"))
+    directory.mkdir(parents=True, exist_ok=True)
+    extract(fetch(LIBMPCDEC_126, directory), directory)
+    source = directory / "libmpcdec-1.2.6"
+    template = (source / "include" / "mpcdec" / "config_types.h.in").read_text()
+    for marker, value in (("@INTTYPES_H@", "#include <stdint.h>"), ("@SIZE16@", "int16_t"), ("@USIZE16@", "uint16_t"), ("@SIZE32@", "int32_t"),
+                          ("@USIZE32@", "uint32_t"), ("@SIZE64@", "int64_t")):
+        template = template.replace(marker, value)
+    (source / "include" / "mpcdec" / "config_types.h").write_text(template)
+    files = ["mpc_decoder.c", "huffsv46.c", "huffsv7.c", "mpc_reader.c", "requant.c", "synth_filter.c", "idtag.c"]
+    binary = directory / "musepack_pcm126"
+    subprocess.run(["gcc", "-O1", "-w", "-ffp-contract=off", "-DLIBMPCDEC_126", "-DMPC_SUPPORT_SV456", "-DMPC_LITTLE_ENDIAN", "-I", str(source / "include"), "-I", str(source / "src"), "-o",
+                    str(binary), str(HERE / "musepack_pcm.c"), *(str(source / "src" / f) for f in files), "-lm"], check=True)
+    return binary
+
+
 def build_portable(directory=None):
     """The paths of mpcdec_frames_portable and mpcdec_portable, built in directory (a new temporary one
     by default) from the patched archive."""

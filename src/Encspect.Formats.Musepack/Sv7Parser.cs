@@ -156,7 +156,17 @@ internal static class Sv7Parser
         state.Leading.Add(headerNode);
         HeaderFindings(state, h, headerNode);
 
-        Walk(reader, words, state);
+        Node node = new("Musepack SV7", start, end - start, null, () => new BlockedChildren(state.Leading, state.Frames.Count + (state.TrailingStart is null ? 0 : 1), i => FrameNode(state, i)))
+        {
+            Kind = NodeKind.Stream,
+            Description = Explain.Sv7Stream,
+            Topic = Topics.Sv7Stream,
+        };
+
+        // libmpcdec refuses a stream of another version, with no frames, a max band of 0 or 32 and more, or a last frame of more samples than a frame holds: nothing is decoded then.
+        bool isReadable = h.Version == 7 && h.Frames > 0 && h.MaxBand is > 0 and < 32 && h.LastSamples <= FrameSamples;
+        var feed = new SubbandFeed(context, new MusepackConfiguration(7, Math.Min(h.MaxBand, 31), h.MidSide, 2, SampleRates[h.RateIndex], !isReadable), node, isReadable, true);
+        Walk(reader, words, state, feed, isReadable);
 
         long streamEnd = layout.WordEnd(state.EndBit);
         if (state.Truncated || state.DamagedFrom is not null)
@@ -172,19 +182,12 @@ internal static class Sv7Parser
                 $"{Counts.Of(end - streamEnd, "byte", "bytes")} after the stream's last frame, from 0x{streamEnd:X}, {Counts.Agree(end - streamEnd, "is", "are")} not part of it.", gap);
         }
 
-        int count = state.Frames.Count + (state.TrailingStart is null ? 0 : 1);
-        Node node = new("Musepack SV7", start, end - start, null, () => new BlockedChildren(state.Leading, count, i => FrameNode(state, i)))
-        {
-            Kind = NodeKind.Stream,
-            Description = Explain.Sv7Stream,
-            Topic = Topics.Sv7Stream,
-        };
         parent.Add(node);
-        AddStream(state, node, context, claims);
+        AddStream(state, node, context, claims, feed);
         state.Findings.Flush(context);
     }
 
-    private static void Walk(ByteReader reader, WordStream words, State state)
+    private static void Walk(ByteReader reader, WordStream words, State state, SubbandFeed feed, bool isReadable)
     {
         Sv7Header h = state.Header;
         long bit = DataBit;
@@ -228,7 +231,23 @@ internal static class Sv7Parser
                 state.Truncated = true;
             }
 
-            Bands bands = ReadBands(words, bit + 20, Math.Min(dataEnd, length), maxBand, h.MidSide);
+            // A frame the data cuts short is read as far as its resolutions, as before; the others are walked to their end where the stream is decodable.
+            Bands bands;
+            WalkFacts facts = default;
+            if (isReadable && (flags & Flags.Truncated) == 0)
+            {
+                facts = WalkFrame(feed, words, bit + 20, frameLength, maxBand, h.MidSide);
+                bands = new Bands(facts.UsedBands, facts.MidSide, facts.Flagged, facts.Noise, (facts.Problems & WalkProblems.HeaderOverrun) != 0, (facts.Problems & WalkProblems.BadResolution) != 0);
+                if ((facts.Problems & (WalkProblems.DataOverrun | WalkProblems.DataShort | WalkProblems.Syntax)) != 0 && !bands.Overrun && !bands.Invalid)
+                {
+                    flags |= Flags.Mismatch;
+                }
+            }
+            else
+            {
+                bands = ReadBands(words, bit + 20, Math.Min(dataEnd, length), maxBand, h.MidSide);
+            }
+
             if (bands.Overrun)
             {
                 flags |= Flags.Overrun;
@@ -241,6 +260,35 @@ internal static class Sv7Parser
 
             var frame = new Frame(bit, frameLength, flags) { MidSide = bands.MidSide, UsedBands = (byte)bands.Used, NoiseChannels = (byte)bands.Noise, FlaggedBands = (byte)bands.Flagged };
             state.Frames.Add(frame);
+            if (isFinal && !state.Truncated)
+            {
+                state.FinalSamples = (int)words.Read(dataEnd, 11);
+            }
+
+            if (isReadable)
+            {
+                if (i == 0)
+                {
+                    feed.Trim(SynthesisDelay, SynthesisDelay + Math.Max(0, Announced(h, null)));
+                }
+
+                if (isFinal && h.Gapless && state.FinalSamples is { } finalSamples)
+                {
+                    feed.Trim(SynthesisDelay, SynthesisDelay + Math.Max(0, Announced(h, finalSamples)));
+                }
+
+                bool unreadable = state.Truncated || (flags & (Flags.Overrun | Flags.BadResolution | Flags.Mismatch)) != 0;
+                if (feed.IsDecoding)
+                {
+                    List<ByteRange> ranges = state.Layout.Ranges(frame.Bit, Math.Min(frame.End, length));
+                    feed.Feed(i * FrameSamples, facts, unreadable, ranges[0].Offset, ranges[^1].End);
+                }
+                else
+                {
+                    feed.Feed(i * FrameSamples, facts, unreadable, 0, 0);
+                }
+            }
+
             if (state.Truncated)
             {
                 break;
@@ -264,11 +312,6 @@ internal static class Sv7Parser
             }
 
             state.Count(frame, bands);
-            if (isFinal)
-            {
-                state.FinalSamples = (int)words.Read(dataEnd, 11);
-            }
-
             bit = frameEnd;
             state.EndBit = bit;
         }
@@ -280,6 +323,34 @@ internal static class Sv7Parser
     }
 
     private readonly record struct Bands(int Used, uint MidSide, int Flagged, int Noise, bool Overrun, bool Invalid);
+
+    // The samples libmpcdec r495 outputs for the counted frames: with true gapless up to the last frame's samples, otherwise the frames less the synthesis filter's delay.
+    private static long Announced(Sv7Header h, int? final) =>
+        h.Frames == 0 ? 0 : h.Gapless ? (h.Frames * FrameSamples) - FrameSamples + LastFrameSamples(h, final) : (h.Frames * FrameSamples) - SynthesisDelay;
+
+    // Walks one frame whose data start at dataBit and take frameLength bits: its resolutions, scalefactors and samples, which must take exactly the bits the length states (libmpcdec
+    // stops decoding at a frame where they differ, mpc_demux_decode_inner).
+    private static WalkFacts WalkFrame(SubbandFeed feed, WordStream words, long dataBit, int frameLength, int maxBand, bool midSide)
+    {
+        int startBit = (int)(dataBit & 31);
+        int bytes = Math.Min(SubbandFeed.FrameWindowBytes, (((startBit + frameLength + 31) >> 5) + 2) << 2);
+        words.CopyWords(dataBit >> 5, feed.Buffer.AsSpan(0, bytes));
+        feed.Begin(bytes, startBit, startBit + frameLength);
+        var facts = new WalkFacts();
+        Sv7Syntax.ReadHeader(feed.State, feed.Bits, maxBand, midSide, ref facts);
+        if (facts.Problems == WalkProblems.None)
+        {
+            Sv7Syntax.ReadBody(feed.State, feed.Bits, ref facts);
+        }
+
+        if (facts.Problems == WalkProblems.None)
+        {
+            facts.Problems |= feed.Bits.Position < startBit + frameLength ? WalkProblems.DataShort : feed.Bits.IsOverrun ? WalkProblems.DataOverrun : WalkProblems.None;
+        }
+
+        facts.Bits = feed.Bits.Position - startBit;
+        return facts;
+    }
 
     // The resolutions and mid/side flags at the start of a frame (libmpcdec r495
     // mpc_decoder_read_bitstream_sv7, "Header"): subband 0 in 4 bits per channel, the others as a
@@ -466,7 +537,7 @@ internal static class Sv7Parser
             w.Field("Frame Length", frame.Bit, frame.Bit + 20, NodeValue.Integer(frame.Length, "bits", "bit"), Explain.FrameLength),
         };
         long dataEnd = Math.Min(limit, frame.Bit + 20 + frame.Length);
-        Node data = w.Field("Frame Data", frame.Bit + 20, Math.Max(dataEnd, frame.Bit + 20), null, Explain.FrameData, Topics.SubbandCoding);
+        Node data = w.Field("Frame Data", frame.Bit + 20, Math.Max(dataEnd, frame.Bit + 20), null, Explain.FrameData, Topics.FrameCoding);
 
         // In a last word the data cuts short, the bits of a field may lie only in bytes past the end.
         if (data.Length == 0)
@@ -524,7 +595,7 @@ internal static class Sv7Parser
         return text.ToString();
     }
 
-    private static void AddStream(State state, Node node, AnalysisContext context, IReadOnlyList<EncoderClaim> claims)
+    private static void AddStream(State state, Node node, AnalysisContext context, IReadOnlyList<EncoderClaim> claims, SubbandFeed feed)
     {
         Sv7Header h = state.Header;
         int rate = SampleRates[h.RateIndex];
@@ -534,8 +605,10 @@ internal static class Sv7Parser
         long lostFrames = 0;
         Frame? firstBad = null;
         Frame? firstOverrun = null;
+        Frame? firstMismatch = null;
         int bad = 0;
         int overrun = 0;
+        int mismatch = 0;
         for (int i = 0; i < state.Frames.Count; i++)
         {
             if (i % 4096 == 0)
@@ -552,8 +625,9 @@ internal static class Sv7Parser
             }
 
             complete++;
-            lostFrames += (frame.Flags & (Flags.BadResolution | Flags.Overrun)) != 0 ? 1 : 0;
-            figures.Add(state.Layout.WordStart(frame.Bit), frame.End - frame.Bit, FrameSamples, inSeries: frame.Length > 0);
+            lostFrames += (frame.Flags & (Flags.BadResolution | Flags.Overrun | Flags.Mismatch)) != 0 ? 1 : 0;
+            figures.Add(state.Layout.WordStart(frame.Bit), frame.End - frame.Bit, FrameSamples, inSeries: frame.Length > 0,
+                bands: frame.Length > 0 && (frame.Flags & (Flags.Overrun | Flags.BadResolution | Flags.Mismatch)) == 0 ? frame.UsedBands : -1);
             if (frame.Length > 0)
             {
                 state.Stereo.Add(System.Numerics.BitOperations.PopCount(frame.MidSide) > 0 ? 1 : 0);
@@ -570,6 +644,12 @@ internal static class Sv7Parser
                 overrun++;
                 firstOverrun ??= frame;
             }
+
+            if ((frame.Flags & Flags.Mismatch) != 0)
+            {
+                mismatch++;
+                firstMismatch ??= frame;
+            }
         }
 
         Node FrameAt(Frame frame) => WithoutChildren(state.Layout.Field("Frame", frame.Bit, Math.Min(frame.End, (state.Layout.End - state.Layout.Start) * 8),
@@ -579,6 +659,12 @@ internal static class Sv7Parser
         {
             state.Findings.AddNow(Severity.Warning, "musepack.band-header-overrun",
                 $"{(overrun == 1 ? "1 frame's" : $"{overrun} frames'")} subband resolutions run past the frame's length, first at 0x{FrameAt(o).Offset:X}: the frame is damaged.", FrameAt(o));
+        }
+
+        if (firstMismatch is { } m)
+        {
+            state.Findings.AddNow(Severity.Warning, "musepack.frame-length-mismatch",
+                $"{(mismatch == 1 ? "1 frame's" : $"{mismatch} frames'")} scalefactors and samples take other bits than the frame's length states, or break the syntax, first at 0x{FrameAt(m).Offset:X}: libmpcdec stops decoding at the frame, and the analyzer counts its samples as lost.", FrameAt(m));
         }
 
         if (firstBad is { } b)
@@ -689,9 +775,12 @@ internal static class Sv7Parser
         state.Leading.Add(statistics);
 
         List<Series> series = figures.Series(bitrate, state.Cancellation);
+        feed.Trim(SynthesisDelay, SynthesisDelay + samples);
+        StreamVerification? verification = feed.Finish();
         context.AddStream(new StreamInfo
         {
             Nodes = [node],
+            Verification = verification,
             Codec = "Musepack SV7",
             SampleRate = rate,
             Channels = 2,
@@ -723,6 +812,9 @@ internal static class Sv7Parser
         Extra = 8,
         Final = 16,
         LengthCut = 32,
+
+        // The frame's scalefactors and samples take other bits than its length states, or break the syntax.
+        Mismatch = 64,
     }
 
     // A frame in 24 bytes: where it starts in the bitstream, its length and what its subband

@@ -339,6 +339,25 @@ public sealed class MusepackAndContainerMemoryTests(ITestOutputHelper output) : 
         GC.KeepAlive(report);
     }
 
+    // Decoding an SV8 stream holds one frame's values, the synthesis history and the output block, whatever the frames' count, and keeps nothing per frame: the report keeps
+    // what it keeps without decoding and the heap grows by no more per frame. The stream is the audio packets of an encoder's file, 2,000 times (about 100,000 frames).
+    [Fact]
+    public void DecodingManyMusepackFramesHoldsNothingPerFrame()
+    {
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { Output = _ => new DecoderWorkTests.NullSink() } };
+        byte[] data = DecoderWorkTests.MusepackCases.Repeated("external-mpcenc-standard.mpc", 12_000_000_000);
+
+        (Report report, long kept, long peak) = Measure("frames.mpc", data, DecoderWorkTests.MusepackCases.Repeated("external-mpcenc-standard.mpc", 100_000_000), options);
+
+        long samples = report.Streams.Single().Verification!.DecodedSamples;
+        long frames = samples / 1152;
+        Assert.True(frames > 50_000, $"Only {frames} frames were decoded.");
+        Output.WriteLine($"{kept / frames} bytes kept and {peak / frames} bytes peak per frame with decoding");
+        Assert.True(kept < frames * MusepackKeptBound, $"The report keeps {kept / frames} bytes per frame.");
+        Assert.True(peak < frames * MusepackPeakBound, $"The live heap grew by {peak / frames} bytes per frame.");
+        GC.KeepAlive(report);
+    }
+
     // An SV5 stream keeps the same 24-byte record per frame as SV7, so it is held to the same bounds.
     [Fact]
     public void ManyOldMusepackFramesStayCompact()
