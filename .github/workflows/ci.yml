@@ -1727,10 +1727,10 @@ jobs:
 
       # ffmpeg 8.0.1, libdca 0.0.7 and MediaInfo 26.01 from Ubuntu 26.04, the versions the scripts assert (the
       # manifests were checked with ffmpeg 6.1.1 and MediaInfo 24.01); dca_frames.c is built against libdca. The cross-check stops on another MediaInfo.
-      - name: Install ffmpeg, libdca and mediainfo
+      - name: Install ffmpeg, libdca, mediainfo and pdftotext
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg libdca-dev mediainfo build-essential
+          sudo apt-get install -y ffmpeg libdca-dev mediainfo build-essential poppler-utils
 
       - uses: ./.github/actions/setup-dotnet
         with:
@@ -1740,10 +1740,14 @@ jobs:
       - name: Build the CLI
         run: dotnet build --configuration Release src/Encspect.Cli
 
+      # The generated tables equal what dts_tables.py writes from ETSI TS 102 114 Annex D and, for D.10, from FFmpeg 6.1.1's dcadata.c.
+      - name: Check the generated DTS tables
+        run: python3 scripts/fixtures/dts_tables.py --check
+
       - name: Cross-check the DTS fixtures, the .dtshd files and DTS:X
         run: python3 scripts/fixtures/crosscheck_dts_fixtures.py
 
-      # The decoder's PCM against FFmpeg's decoder for the files it decodes (FFmpeg's encoder files and the hand-built subframes-reconstruct files).
+      # The decoder's PCM against FFmpeg's decoder: FFmpeg's encoder files, the hand-built subframes fixtures and the cores of the real DTS-HD Master Audio files.
       - name: Build the PCM dump
         run: dotnet build --configuration Release tests/Encspect.PcmDump
 
