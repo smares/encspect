@@ -17,22 +17,15 @@ public class SpeexGapTests
         return report.Streams.Single(s => s.Codec.StartsWith("Speex", StringComparison.Ordinal));
     }
 
-    // The first change of one byte at a multiple of 61 from the second tenth of the file that loses samples without losing the whole stream.
+    // The first byte of the tenth audio packet becomes the start of a narrowband layer of submode 9, which Speex does not define: the packet is corrupt.
     private static byte[] Damaged(string name)
     {
-        byte[] original = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "ogg", name));
-        for (int at = original.Length / 10; at < original.Length / 2; at += 61)
-        {
-            byte[] variant = [.. original];
-            variant[at] ^= 0xA5;
-            StreamInfo info = Measure(variant, out IReadOnlyList<Finding> findings);
-            if (findings.Any(f => f.Code is "speex.frame-invalid" or "speex.frame-overrun") && info.LostSamples > 0 && info.LostSamples < info.Samples / 8)
-            {
-                return variant;
-            }
-        }
-
-        throw new InvalidOperationException($"No change of one byte of {name} makes a packet corrupt.");
+        byte[] file = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "ogg", name));
+        Report report = Analyzer.CreateDefault().Analyze(name, new MemoryStream(file));
+        Node packets = report.Streams.Single().Nodes[0].Children.Single(c => c.Name == "Audio Packets");
+        long at = packets.Children[10].Offset;
+        file[at] = (byte)(0x48 | (file[at] & 0x07));
+        return file;
     }
 
     [Theory]
