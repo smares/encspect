@@ -5,4 +5,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Encspect.Core.Abstractions\Encspect.Core.Abstractions.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Encspect.Tests" />
+  </ItemGroup>
 </Project>

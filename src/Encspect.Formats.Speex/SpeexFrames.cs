@@ -71,9 +71,14 @@ internal static class SpeexFrames
 
     // mode: 0 narrowband, 1 wideband, 2 ultra-wideband. At most maxFrames frames are read. Wideband layers are counted as stray
     // only before the first countedFrames frames are complete: a decoder reads no further.
-    public static PacketWalk Walk(ReadOnlySpan<byte> data, int mode, int maxFrames, ChunkedList<FrameRecord> frames, int countedFrames = int.MaxValue)
+    //
+    // The parameters of each frame are read as well (SpeexSyntax), into destination, FrameInts integers a frame; where it holds fewer than maxFrames frames, they are read
+    // and dropped.
+    public static PacketWalk Walk(ReadOnlySpan<byte> data, int mode, int maxFrames, ChunkedList<FrameRecord>? frames, int countedFrames = int.MaxValue, Span<int> destination = default)
     {
-        var bits = new Bits(data);
+        var bits = new SpeexBits(data);
+        Span<int> scratch = destination.Length >= maxFrames * SpeexLayout.FrameInts ? default : stackalloc int[SpeexLayout.FrameInts];
+        int stereoRequest = 0;
         int total = data.Length * 8;
         int count = 0;
         int inBand = 0;
@@ -142,8 +147,17 @@ internal static class SpeexFrames
                 {
                     int id = bits.Read(4);
                     inBand++;
-                    stereo += id == StereoRequest ? 1 : 0;
-                    bits.Advance(InBandBits[id]);
+                    if (id == StereoRequest)
+                    {
+                        stereo++;
+                        int sign = bits.Read(1);
+                        int exponent = bits.Read(5);
+                        stereoRequest = 1 | (sign << 1) | (exponent << 2) | (bits.Read(2) << 7);
+                    }
+                    else
+                    {
+                        bits.Advance(InBandBits[id]);
+                    }
                 }
                 else if (m == 13)
                 {
@@ -173,28 +187,36 @@ internal static class SpeexFrames
                 return Fail(count, frameStart, frameStart, "more in-band data comes before the frame than the walk follows", inBand, stereo, stray);
             }
 
-            bits.Advance(NarrowbandBits[m] - 5);
+            Span<int> fields = scratch.IsEmpty ? destination.Slice(count * SpeexLayout.FrameInts, SpeexLayout.FrameInts) : scratch;
+            fields.Clear();
+            fields[SpeexLayout.Stereo] = stereoRequest;
+            stereoRequest = 0;
+            fields[SpeexLayout.NarrowbandSubmode] = m;
+            SpeexSyntax.ReadNarrowband(ref bits, m, fields.Slice(SpeexLayout.Narrowband));
             int wideband = FrameRecord.Absent;
             int ultra = FrameRecord.Absent;
             if (mode >= 1 && !bits.IsOverrun)
             {
-                if (PeekLayer(ref bits, total, WidebandBits, out wideband) is { } error)
+                if (ReadLayer(ref bits, total, WidebandBits, out wideband, fields.Slice(SpeexLayout.Wideband)) is { } error)
                 {
                     return Fail(count, frameStart, bits.Position - 4, $"wideband submode {wideband} is not defined", inBand, stereo, stray, error);
                 }
 
-                if (mode >= 2 && !bits.IsOverrun && PeekLayer(ref bits, total, UltraWidebandBits, out ultra) is { } uwb)
+                if (mode >= 2 && !bits.IsOverrun && ReadLayer(ref bits, total, UltraWidebandBits, out ultra, fields.Slice(SpeexLayout.UltraWideband)) is { } uwb)
                 {
                     return Fail(count, frameStart, bits.Position - 4, $"ultra-wideband submode {ultra} is not defined", inBand, stereo, stray, uwb);
                 }
             }
+
+            fields[SpeexLayout.WidebandSubmode] = wideband;
+            fields[SpeexLayout.UltraWidebandSubmode] = ultra;
 
             if (bits.IsOverrun)
             {
                 return new PacketWalk(count, frameStart, WalkEnd.Overrun, frameStart, "the frame runs past the end of the packet", inBand, stereo, stray);
             }
 
-            frames.Add(new FrameRecord((ushort)prefix, (byte)m, (byte)(wideband | (ultra << 4))));
+            frames?.Add(new FrameRecord((ushort)prefix, (byte)m, (byte)(wideband | (ultra << 4))));
             count++;
         }
     }
@@ -203,7 +225,7 @@ internal static class SpeexFrames
     // wb_skip_table {0, 36, 112, 192, 352, 0, 0, 0} and then steps back over the 4 bits it has read, so a submode of 0, 5, 6 or 7
     // puts it back before the layer's marker bit, which it reads again as a wideband layer, until "More than two wideband layers
     // found. The stream is corrupted." (nb_celp.c, 1.2.1; the commented-out speex_mode_query would have skipped submode 0).
-    private static string? SkipLayer(ref Bits bits, ReadOnlySpan<int> table)
+    private static string? SkipLayer(ref SpeexBits bits, ReadOnlySpan<int> table)
     {
         int submode = bits.Read(3);
         if (submode is 0 or > 4)
@@ -216,8 +238,8 @@ internal static class SpeexFrames
     }
 
     // sb_decode: a 1 bit next means a layer of this kind follows; anything else, or no bits left,
-    // means the frame has none.
-    private static string? PeekLayer(ref Bits bits, int total, ReadOnlySpan<int> table, out int submode)
+    // means the frame has none. A layer's parameters are read into d.
+    private static string? ReadLayer(ref SpeexBits bits, int total, ReadOnlySpan<int> table, out int submode, scoped Span<int> d)
     {
         submode = FrameRecord.Absent;
         if (total - bits.Position <= 0)
@@ -238,39 +260,10 @@ internal static class SpeexFrames
             return "undefined";
         }
 
-        bits.Advance(table[submode] - 4);
+        SpeexSyntax.ReadHigh(ref bits, submode, d);
         return null;
     }
 
     private static PacketWalk Fail(int count, int frameStart, int errorBit, string error, int inBand, int stereo, int stray, string? _ = null) =>
         new(count, frameStart, WalkEnd.Invalid, errorBit, error, inBand, stereo, stray);
-
-    // Most significant bit first, zero bits past the end, as speex_bits_unpack_unsigned reads them
-    // once the data has overflowed.
-    private ref struct Bits(ReadOnlySpan<byte> data)
-    {
-        private readonly ReadOnlySpan<byte> _data = data;
-
-        public int Position { get; private set; }
-
-        public readonly bool IsOverrun => Position > _data.Length * 8;
-
-        public readonly int Peek() => Bit(Position);
-
-        public int Read(int count)
-        {
-            int value = 0;
-            for (int i = 0; i < count; i++)
-            {
-                value = (value << 1) | Bit(Position + i);
-            }
-
-            Position += count;
-            return value;
-        }
-
-        public void Advance(int count) => Position += count;
-
-        private readonly int Bit(int position) => position < _data.Length * 8 ? (_data[position >> 3] >> (7 - (position & 7))) & 1 : 0;
-    }
 }
