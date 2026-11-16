@@ -46,6 +46,19 @@ EXPECTED = {
     "sv8-truncated.mpc": [[41472, 43776]],
 }
 
+# Files FFmpeg's decoder decodes differently from libmpcdec and the analyzer: none known. (FFmpeg fills the subbands of resolution -1 with a generator of its own,
+# so a stream with noise-substituted subbands cannot agree sample by sample and is not compared with it; the stream's report says whether it has any.)
+FFMPEG_DIFFERS = {}
+
+
+def has_noise(path):
+    """Whether the committed report of the file counts noise-substituted subband channels (the first "Noise-Substituted Channels" value in it)."""
+    report = path.with_suffix(".report.json")
+    if not report.exists():
+        return False
+    found = re.search(r'"name": "Noise-Substituted Channels",\s*"value": (\d+)', report.read_text(encoding="utf-8"))
+    return bool(found and int(found.group(1)) > 0)
+
 # Files where the analyzer decodes samples and libmpcdec none (or the reverse): the reason.
 NOT_COMPARED = {}
 
@@ -69,9 +82,9 @@ def reference(binary, path, target):
     return tuple(int(g) for g in found.groups())
 
 
-def compare(manifest, raw, channels, first, label):
+def compare(manifest, raw, channels, first, label, extra=()):
     output = subprocess.run([sys.executable, str(HERE / "compare_pcm.py"), str(manifest), "--reference", str(raw), "--reference-format", "float32",
-                             "--reference-channels", str(channels), "--reference-first-position", str(first), "--json"], capture_output=True, text=True)
+                             "--reference-channels", str(channels), "--reference-first-position", str(first), "--json", *extra], capture_output=True, text=True)
     if output.returncode == 2:
         return None, [f"{label}: {output.stderr.strip()}"]
     result = json.loads(output.stdout)
@@ -140,12 +153,21 @@ def main(argv=None):
                             # FFmpeg drops no delay: it outputs every frame from position 0 (and stops at the header's sample count in SV8 and at the last frame's samples in SV7).
                             count = len(second.stdout) // (4 * channels)
                             start = first if count == samples else 0 if count == streams[0]["samples"] else None
-                            if start is None:
+                            if has_noise(path):
+                                notes.append("ffmpeg fills the noise-substituted subbands with a generator of its own: not compared sample by sample")
+                            elif start is None:
                                 notes.append(f"ffmpeg outputs {count} samples, libmpcdec {samples}: not compared sample by sample")
                             else:
                                 (base / f"{path.stem}.ffmpeg.f32").write_bytes(second.stdout)
-                                _, bad = compare(manifest, base / f"{path.stem}.ffmpeg.f32", channels, start, "ffmpeg")
-                                problems += bad
+                                # FFmpeg's decoders are not libmpcdec's: their window and sums are not the same single-precision code, so the bound is that of a 16-bit reference
+                                # (2 LSB largest, 1 LSB RMS of 16 bits), and the samples at full scale, which a 16-bit decoder clips, are left out.
+                                outcome, bad = compare(manifest, base / f"{path.stem}.ffmpeg.f32", channels, start, "ffmpeg", ["--max-abs", str(2 / 32768), "--rms", str(1 / 32768), "--skip-full-scale"])
+                                if name in FFMPEG_DIFFERS:
+                                    if not bad:
+                                        problems.append(f"ffmpeg now agrees: {FFMPEG_DIFFERS[name]}")
+                                    notes.append(f"ffmpeg differs: {FFMPEG_DIFFERS[name]}")
+                                else:
+                                    problems += bad
             note = "; ".join(notes)
             if problems:
                 failed += 1
