@@ -157,6 +157,7 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
         {
             if (samples != 0)
             {
+                Figures.AddCoding(offset, facts.Walk);
                 Figures.AddStereo(facts is { HasCore: true, HasAudioHeader: true, PrimaryChannels: >= 2 }
                     ? (Tables.IsSumDifferenceArrangement(facts.Core.Amode)
                         || (facts.IsSumDifferenceFront && Tables.HasFrontPair(facts.Core.Amode))
@@ -317,6 +318,12 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
         NodeValue Counted(int count) => NodeValue.Integer(count, "frames", "frame");
 
         Add("Core Frames", Counted(CoreFrames), Explain.StatCoreFrames, Topics.CoreFrames);
+        Figures.AddBandwidthTo(statistics, cover);
+        if (Figures.SubframesRead > 0)
+        {
+            Add("Subframes Read", NodeValue.Integer(Figures.SubframesRead, "subframes", "subframe"), Explain.StatSubframesRead, Topics.Subframes);
+            Figures.SwitchingNode = Add("Subframes With Block Switching", NodeValue.Integer(Figures.SubframesSwitched, "subframes", "subframe"), Explain.StatBlockSwitching, Topics.TransientMode);
+        }
         if (Figures.StereoUnits > 0)
         {
             Node stereo = Add("Stereo Coding", Counted(Figures.StereoUnits), Explain.StatStereoCoding, Topics.MidSideStereo);

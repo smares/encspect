@@ -19,6 +19,10 @@ internal static class Topics
     public const string FilterBank = "dts-core-frames";
     public const string EncoderDetection = "encoder-detection";
     public const string Lossless = "dts-lossless-extension";
+    public const string CodedBandwidth = "coded-bandwidth";
+    public const string BlockSwitching = "block-switching";
+    public const string Subframes = "dts-subframes";
+    public const string TransientMode = "dts-transient-mode";
 }
 
 // What each DTS node is, in the words the report shows next to it, citing ETSI TS 102 114 V1.6.1 by its clauses and tables
@@ -351,6 +355,17 @@ internal static class Explain
     public const string StereoIntensity = "Frames in which a channel copies subbands from an earlier channel by joint intensity coding (a JOINX above 0 that names a channel before it, 5.4.3), with their share.";
     public const string StereoMidSideIntensity = "Frames with both sum/difference coding and a joint intensity source, with their share.";
     public const string StereoCodingSeries = "How each core frame with two or more primary channels codes them, as the tally of Stereo Coding counts them; a frame without a core audio header or with one channel has none.";
+    public const string StatCodedBandwidth = "The upper edge of the highest subband that carries audio in each core frame, in whole hertz: a subband carries audio where bits are allocated to it (ABITS above 0), where its samples are vector quantized, or where joint intensity coding copies it from another channel (5.4.3, 5.5.1). Read from the side information without decoding; it is the bound the stream states, not a measurement of the sound.";
+    public const string BandwidthLowest = "The lowest coded bandwidth of any core frame whose subframes were read.";
+    public const string BandwidthMostCommon = "The coded bandwidth most core frames have; the lowest of them where several are equally common.";
+    public const string BandwidthHighest = "The highest coded bandwidth of any core frame whose subframes were read.";
+    public const string CodedBandwidthSeries = "The coded bandwidth of each core frame whose subframes were read: the upper edge of the highest subband that carries audio in any of its subframes and channels, in whole hertz. The 32 subbands are each 1/64 of the core's sampling frequency wide (5.4.3); the LFE channel is left out. A frame the data cuts short or that cannot be read has none.";
+    public const string CodedBandwidthOverTimeSeries = "The highest coded bandwidth of the core frames that start in each second of audio.";
+    public const string StatSubframesRead = "Subframes of core frames that were read to their end, each ending with the synchronization word 5.6 requires (5.5, 5.6).";
+    public const string StatBlockSwitching = "Subframes read to their end in which some subband of some channel has a transient (TMODE above 0, 5.5.1): its scale factor changes at a subsubframe, which is DTS's way of limiting pre-echo.";
+    public const string BlockSwitchingSeries = "Whether each subframe read has a transient in any subband of any channel, as the Subframes With Block Switching statistics count them (5.5.1). A frame the analyzer does not read has no values.";
+    public const string CategoryBlockSwitched = "A subframe in which at least one subband of one channel has TMODE above 0: two scale factors, one for the subsubframes before the transient and one from it (5.5.1).";
+    public const string CategoryBlockLong = "A subframe in which no subband has a transient: one scale factor for each subband (5.5.1), or transients are not coded because the subframe has a single subsubframe.";
     public const string StatStoredChecksums = "The core frames whose header sets CPF, so that they store CRC words (5.4.2); the analyzer does not test these words (see Header CRCs).";
     public const string StatFlags = "How many frames set each optional feature of the core's header: dynamic range coefficients, a time stamp, auxiliary data, a CRC (5.4.2).";
     public const string StatCrcErrors = "How many frames have a CRC that fails, in an extension substream's or an extension's header (Annex B).";

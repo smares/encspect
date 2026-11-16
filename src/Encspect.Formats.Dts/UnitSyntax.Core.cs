@@ -120,7 +120,14 @@ internal sealed partial class UnitSyntax
         _tree?.CloseTo(depth + 1, Here);
         if (!inSubstream && headerEnd > baseBit)
         {
-            AddCoreData(headerEnd, extension is { } found ? found.Byte * 8 : endBit);
+            int dataEnd = extension is { } placed ? placed.Byte * 8 : endBit;
+            if (facts.HasAudioHeader)
+            {
+                facts.CoreDataStart = headerEnd;
+                facts.CoreDataEnd = dataEnd;
+            }
+
+            AddCoreData(headerEnd, dataEnd);
             if (extension is { } present)
             {
                 ReadExtension(header, present, endBit);

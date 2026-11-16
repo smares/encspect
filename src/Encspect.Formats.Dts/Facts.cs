@@ -33,6 +33,17 @@ internal sealed class UnitFacts
     // The primary audio coding header was read to its end.
     public bool HasAudioHeader { get; set; }
 
+    // What the subframes' syntax needs of the headers (the analysis only), and the bit range of the core's audio data in the unit: from the end of the
+    // audio coding header to the extension or the end of the frame.
+    public CoreAudioHeader? Audio { get; set; }
+
+    public int CoreDataStart { get; set; }
+
+    public int CoreDataEnd { get; set; }
+
+    // What the walk over the subframes found; null where the frame has no audio header or the walk was not made.
+    public SubframeWalk? Walk { get; set; }
+
     public int PrimaryChannels { get; set; }
 
     public int Subframes { get; set; }

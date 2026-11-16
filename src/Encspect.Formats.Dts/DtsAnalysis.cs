@@ -55,11 +55,13 @@ internal sealed class DtsAnalysis
     public void AddUnit(Region region, UnitLayout layout, ISource source)
     {
         var view = new UnitView();
+        byte[]? packed = null;
         if (layout.CoreLength > 0)
         {
             var file = new byte[layout.CoreLength];
             int read = source.Read(layout.Offset, file);
-            var packed = new byte[read + 2];
+            // Spare bytes after the frame, which the walk over the subframes reads ahead into.
+            packed = new byte[read + 8];
             int packedLength = Forms.Unpack(file.AsSpan(0, read), layout.Form, packed);
             view.Add(0, packed, packedLength);
         }
@@ -72,6 +74,7 @@ internal sealed class DtsAnalysis
         syntax.Run();
         UnitFacts facts = syntax.Facts;
         LastFacts = facts;
+        WalkSubframes(facts, packed, layout);
         uint store = UnitRecord.Write(Store, layout, syntax.Verdicts, view, out int kept);
         Frames.Add(Frame.Of(layout.Offset, store, layout.Length, kept));
         Node UnitAt() => new("Frame", layout.Offset, layout.Length) { Kind = NodeKind.Frame };
@@ -87,6 +90,33 @@ internal sealed class DtsAnalysis
         }
 
         Assign(region, index, facts, layout);
+    }
+
+    private readonly SubframeWalker _walker = new();
+
+    // The entropy pass over the subframes of the unit's core frame, in every analysis; what it finds wrong is a finding on the core's audio data.
+    private void WalkSubframes(UnitFacts facts, byte[]? packed, UnitLayout layout)
+    {
+        if (packed is null || facts.Audio is not { } audio || facts.CoreDataEnd <= facts.CoreDataStart)
+        {
+            return;
+        }
+
+        SubframeWalk walk = _walker.Walk(packed, facts.CoreDataStart, facts.CoreDataEnd, audio, default, Cancellation);
+        facts.Walk = walk;
+        if (walk.Problem == WalkProblem.None || layout.IsCut || layout.IsTruncated)
+        {
+            return;
+        }
+
+        (Issue issue, string what) = walk.Problem switch
+        {
+            WalkProblem.Sync => (Issue.SubframeSync, "a synchronization word is wrong"),
+            WalkProblem.Overrun => (Issue.SubframeOverrun, "the subframes run past the core's data"),
+            WalkProblem.Partial => (Issue.SubframePartial, "a partial subsubframe"),
+            _ => (Issue.SubframeInvalid, "a field cannot be used"),
+        };
+        OnIssue(issue, "Core Audio Data", facts.CoreDataStart, facts.CoreDataEnd, $"subframe {walk.ProblemSubframe + 1}: {walk.ProblemDetail}", false);
     }
 
     public void AddGap(long start, long end, bool leading, bool trailing, ISource source)
@@ -224,6 +254,22 @@ internal sealed class DtsAnalysis
             case Issue.LosslessInconsistent:
                 Findings.Add(Severity.Warning, "dts.lossless-inconsistent", Field, count =>
                     $"The lossless extension contradicts itself: {detail}. First in {at} ({Times(count)}).");
+                break;
+            case Issue.SubframeSync:
+                Findings.Add(Severity.Warning, "dts.subframe-sync", Field, count =>
+                    $"A subframe does not end with the synchronization word 0xFFFF that 5.6 puts at the end of every subframe (and of every subsubframe when ASPF is set): {detail}. The frame's samples are not read. First in {at} ({Times(count)}).");
+                break;
+            case Issue.SubframeOverrun:
+                Findings.Add(Severity.Warning, "dts.subframe-overrun", Field, count =>
+                    $"The subframes of a core frame run past the end of its data: {detail}. The frame's samples are not read. First in {at} ({Times(count)}).");
+                break;
+            case Issue.SubframeInvalid:
+                Findings.Add(Severity.Warning, "dts.subframe-invalid", Field, count =>
+                    $"A subframe holds a value the syntax of 5.5 and 5.6 cannot use: {detail}. The frame's samples are not read. First in {at} ({Times(count)}).");
+                break;
+            case Issue.SubframePartial:
+                Findings.Add(Severity.Info, "dts.subframe-partial", Field, count =>
+                    $"A subframe ends with a partial subsubframe (5.5.1, PSC above 0), whose coding the specification does not give: {detail}. The frame's samples are not read. First in {at} ({Times(count)}).");
                 break;
             case Issue.CodingModeAuxiliary:
                 Findings.Add(Severity.Info, "dts.coding-mode-auxiliary", Field, count =>
@@ -392,7 +438,7 @@ internal sealed class DtsAnalysis
             Writer = writerName,
             WriterConfidence = writerConfidence,
             Series = series,
-            CategorySeries = series.Count > 0 && stream.StereoCodingNode is { } stereo ? stream.Figures.Categories(series[0], stereo) : [],
+            CategorySeries = series.Count > 0 ? stream.Figures.Categories(series[0], stream.StereoCodingNode) : [],
         });
     }
 
