@@ -836,6 +836,20 @@ def mc_phantom():
 
 
 @fixture
+def mc_forbidden_phantom_3_1():
+    f = Layer2Fixture(
+        "mc-forbidden-phantom-3-1",
+        "MPEG-1 Layer II at 48000 Hz and 384 kbps carrying 3/1 with phantom center coding, whose first three frames hold a tc_allocation "
+        "(1, 2 and 5) that 13818-3 2.5.2.15 does not allow there (only 0, 3 and 4 keep the center in the additional transmission channels); "
+        "the last three (0, 3 and 4) are clean. The multichannel CRCs hold.",
+        guessenc=guessenc(False, False, 2, 0, "3/1"),
+    )
+    tcs = [1, 2, 5, 0, 3, 4]
+    f.add_frames(mc_stream(6, 384, 48000, lambda i: Multichannel(center=3, surround=1, tc_alloc=(tcs[i],), seed=i + 8)))
+    return f.finding("mpeg-audio.multichannel-value-forbidden", "3 frames")
+
+
+@fixture
 def mc_configuration_change():
     f = Layer2Fixture(
         "mc-configuration-change",

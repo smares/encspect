@@ -155,7 +155,7 @@ internal sealed class Layer2Multichannel
 
     // The first value of the multichannel side information that ISO/IEC 13818-3 2.5.2.15 forbids or leaves unassigned, as a field and its value, or null: a
     // dyn_cross_mode outside the configuration's modes, a tc_allocation the tables leave unassigned (or that dematrix_procedure 3 rules out, or that moves the phantom
-    // center out of T2). lfe_allocation 15 is not among them: 2.5.2.x gives it 16 bits a sample and 65,535 levels, and conformance streams test01 and test17
+    // center out of T2). lfe_allocation 15 is not among them: 2.5.2.17 gives it 16 bits a sample and 65,535 levels, and conformance streams test01 and test17
     // of ISO/IEC 13818-4 use it. The decoder reads such values as the docs/formats/mpeg-audio.md says; it never rejects the frame for them.
     public string? ForbiddenValue { get; private set; }
 
@@ -446,7 +446,9 @@ internal sealed class Layer2Multichannel
                     return $"tc_allocation {tc} with dematrix_procedure 3, which implies 0";
                 }
 
-                if (Center == 3 && Surround == 2 && tc is not (0 or 3 or 4 or 5))
+                // Phantom center coding keeps the center in the additional transmission channels: 0, 3, 4 and 5 in 3/2, 0, 3 and 4 in 3/1 (13818-3 2.5.2.15).
+                // The text limits 3/0 and 3/0 + 2/0 to 0 as well, but conformance stream test04 (3/0, phantom center) uses 2, so those two are not checked.
+                if (Center == 3 && Surround is 1 or 2 && !(Surround == 2 ? tc is 0 or 3 or 4 or 5 : tc is 0 or 3 or 4))
                 {
                     return $"tc_allocation {tc}, which takes the center out of T2 in phantom center coding";
                 }
