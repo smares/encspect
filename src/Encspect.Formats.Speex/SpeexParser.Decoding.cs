@@ -14,6 +14,9 @@ public sealed partial class SpeexParser
 
     private const int HoldBeforeDelay = 512;
 
+    // The largest position a trim is stated at: a delay a corrupt granule position makes absurd trims everything.
+    private const long MaxPosition = long.MaxValue / 8;
+
     private sealed partial class StreamState
     {
         private sealed record HeldPacket(MappedBytes Packet, bool IsUnreadable, long First, int Samples, bool FollowsGap);
@@ -76,7 +79,7 @@ public sealed partial class SpeexParser
         private void StateLeadingTrim(long delay)
         {
             _isTrimStated = true;
-            _session!.Trim(Math.Max(0, delay), long.MaxValue / 4);
+            _session!.Trim(Math.Clamp(delay, 0, MaxPosition), long.MaxValue / 4);
         }
 
         private void Feed(HeldPacket held)
@@ -110,7 +113,7 @@ public sealed partial class SpeexParser
 
             if (HasTime)
             {
-                long first = Math.Max(0, _isTrimStated ? _firstDelay ?? SpeexHeader.Lookahead[Mode] : _firstDelay ?? 0);
+                long first = Math.Clamp(_isTrimStated ? _firstDelay ?? SpeexHeader.Lookahead[Mode] : _firstDelay ?? 0, 0, MaxPosition);
                 _session.Trim(first, first + samples);
                 _isTrimStated = true;
             }

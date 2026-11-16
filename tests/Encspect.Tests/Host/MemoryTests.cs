@@ -201,6 +201,38 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         GC.KeepAlive(report);
     }
 
+    // Decoding a Speex stream holds the packets it keeps back (the last four, and those before the first granule position), one frame's decoder state and the output block,
+    // whatever the packets' count, and keeps nothing per packet: the report keeps what it keeps without decoding and the heap grows by no more per packet. A frame of
+    // narrowband submode 7 with zero parameters, 200,000 times.
+    [Fact]
+    public void DecodingManySpeexPacketsHoldsNothingPerPacket()
+    {
+        const int packets = 200_000;
+        byte[] frame = [0x38, .. new byte[60], 0x07, 0x80];
+        static byte[] Stream(int count, byte[] frame)
+        {
+            var builder = new OggBuilder()
+                .Page(9, 0, 2, OggBuilder.SpeexHeader(8000, 0))
+                .Page(9, 0, 0, OggBuilder.VorbisComment("Encoded with Speex 1.2.1"));
+            for (int done = 0; done < count; done += 250)
+            {
+                builder.Page(9, ((done + 250) * 160L) - 40, done + 250 == count ? (byte)4 : (byte)0, [.. Enumerable.Repeat(frame, 250)]);
+            }
+
+            return builder.Bytes;
+        }
+
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { Output = _ => new DecoderWorkTests.NullSink() } };
+
+        (Report report, long kept, long peak) = Measure("speex.spx", Stream(packets, frame), Stream(1_000, frame), options);
+
+        Assert.Equal(packets * 160L - 40, report.Streams.Single().Verification!.DecodedSamples);
+        Output.WriteLine($"{kept / packets} bytes kept and {peak / packets} bytes peak per packet with decoding");
+        Assert.True(kept < packets * 80L, $"The report keeps {kept / packets} bytes per packet.");
+        Assert.True(peak < packets * 110L, $"The live heap grew by {peak / packets} bytes per packet.");
+        GC.KeepAlive(report);
+    }
+
     // An AC-3 stream keeps a 16-byte record per frame (offset, store position, kept bits and CRC
     // verdicts), the fields its nodes are built from without the exponent groups and mantissas,
     // and its per-frame series, with the coding series (14 bytes for a mono frame): the frames repeat a committed mono fixture of 384-byte frames at

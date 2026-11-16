@@ -1014,6 +1014,14 @@ jobs:
       - name: Compare the trimmed sample counts of the Vorbis fixtures
         run: python3 scripts/fixtures/crosscheck_vorbis_trims.py
 
+      # The codebooks of the Speex decoder equal libspeex 1.2.1's (the archive pinned in speex_tool.py).
+      - name: Check the generated Speex tables
+        run: python3 scripts/fixtures/speex_tables.py --check
+
+      # The analyzer's decoded samples equal libspeex 1.2.1's fixed-point decoder, bit for bit (docs/development.md, "Speex decoding").
+      - name: Compare the decoded PCM of the Speex fixtures
+        run: python3 scripts/fixtures/crosscheck_speex_pcm.py
+
       # What a job downloaded is kept whether it passes or not. A passing job saves the week's key (unless that key was restored
       # exactly); a failing or canceled one, which would otherwise lose its downloads, saves under a key of its own with the run ID
       # and attempt, because a key cannot be overwritten. The next run restores either through the prefix. Entries are addressed by
