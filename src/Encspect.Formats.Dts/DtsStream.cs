@@ -82,6 +82,9 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
 
     public StreamKey Key => key;
 
+    // The decoder's feed, once the stream's first core frame has an audio header.
+    public DecodeFeed? Feed { get; set; }
+
     public int FirstFrame => firstFrame;
 
     public HashSet<DtsAnalysis.Region> Regions { get; } = [];

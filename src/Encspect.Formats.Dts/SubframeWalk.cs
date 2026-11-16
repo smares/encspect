@@ -38,7 +38,23 @@ internal sealed class CoreAudioHeader
 
     public int Blocks { get; private init; }
 
-    public static CoreAudioHeader Of(int channels, int subframes, int[] subs, int[] vqsub, int[] joinx, int[] thuff, int[] shuff, int[] bhuff, int[][] sel, int[][] adj, CoreHeader header) => new()
+    // AMODE, SFREQ and RATE, FILTS (the perfect reconstruction filter bank), HFLAG (the previous frame's prediction history holds) and the sum/difference flags: what the
+    // reconstruction needs of the frame header.
+    public int Amode { get; private init; }
+
+    public int Sfreq { get; private init; }
+
+    public int Rate { get; private init; }
+
+    public bool IsPerfectReconstruction { get; private init; }
+
+    public bool HasPredictorHistory { get; private init; }
+
+    public bool IsSumDifferenceFront { get; private init; }
+
+    public bool IsSumDifferenceSurround { get; private init; }
+
+    public static CoreAudioHeader Of(int channels, int subframes, int[] subs, int[] vqsub, int[] joinx, int[] thuff, int[] shuff, int[] bhuff, int[][] sel, int[][] adj, CoreHeader header, UnitFacts facts) => new()
     {
         Channels = channels,
         Subframes = subframes,
@@ -55,6 +71,13 @@ internal sealed class CoreAudioHeader
         SyncPerSubsubframe = header.SyncPerSubsubframe,
         Lff = header.Lff,
         Blocks = header.Blocks,
+        Amode = header.Amode,
+        Sfreq = header.Sfreq,
+        Rate = header.Rate,
+        IsPerfectReconstruction = facts.IsPerfectReconstruction,
+        HasPredictorHistory = header.HasPredictorHistory,
+        IsSumDifferenceFront = facts.IsSumDifferenceFront,
+        IsSumDifferenceSurround = facts.IsSumDifferenceSurround,
     };
 }
 

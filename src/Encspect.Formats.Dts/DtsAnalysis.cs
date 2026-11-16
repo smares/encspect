@@ -28,9 +28,13 @@ internal sealed class DtsAnalysis
     // The static fields in force for each extension substream index (7.5.2): the last header that carried them.
     private readonly StaticState?[] _staticStates = new StaticState?[4];
 
-    public DtsAnalysis(AnalysisContext context)
+    // The node a stream's findings point to where its region has none yet (a container's samples are read before the stream's node is made).
+    private readonly Node? _fallbackStream;
+
+    public DtsAnalysis(AnalysisContext context, Node? fallbackStream = null)
     {
         _context = context;
+        _fallbackStream = fallbackStream;
         Records = new DtsRecords(Frames, Store);
     }
 
@@ -74,7 +78,6 @@ internal sealed class DtsAnalysis
         syntax.Run();
         UnitFacts facts = syntax.Facts;
         LastFacts = facts;
-        WalkSubframes(facts, packed, layout);
         uint store = UnitRecord.Write(Store, layout, syntax.Verdicts, view, out int kept);
         Frames.Add(Frame.Of(layout.Offset, store, layout.Length, kept));
         Node UnitAt() => new("Frame", layout.Offset, layout.Length) { Kind = NodeKind.Frame };
@@ -89,21 +92,39 @@ internal sealed class DtsAnalysis
                 $"{(count == 1 ? "A frame is" : $"{count} frames are")} cut short by the next frame's sync word, first at 0x{layout.Offset:X}: their header or data is damaged, or bytes are missing.");
         }
 
-        Assign(region, index, facts, layout);
+        Assign(region, index, facts, layout, packed);
     }
 
     private readonly SubframeWalker _walker = new();
 
     // The entropy pass over the subframes of the unit's core frame, in every analysis; what it finds wrong is a finding on the core's audio data.
-    private void WalkSubframes(UnitFacts facts, byte[]? packed, UnitLayout layout)
+    private void WalkSubframes(UnitFacts facts, byte[]? packed, UnitLayout layout, Region region)
     {
+        DtsStream stream = _current!;
+        if (stream.Feed is null && stream.Key.HasCore && facts.HasCore)
+        {
+            // The session starts with the stream's first core frame, whether or not its header can be read: the channels are those of the key.
+            int primary = Tables.CoreChannels(stream.Key.Amode) is > 0 and var channels ? channels : Math.Max(1, facts.PrimaryChannels);
+            stream.Feed = new DecodeFeed(_context, region.Node ?? _fallbackStream ?? new Node("DTS", layout.Offset, layout.Length) { Kind = NodeKind.Stream }, stream.Key.Amode, Math.Min(primary, 8), stream.Key.HasLfe, stream.Key.SampleRate);
+        }
+
         if (packed is null || facts.Audio is not { } audio || facts.CoreDataEnd <= facts.CoreDataStart)
         {
+            // A core frame the walk cannot start (the header runs past the data) is lost to the decoder; a unit without a core has no audio to decode.
+            if (facts.HasCore)
+            {
+                stream.Feed?.Frame(layout.Offset, layout.Length, facts.Core.Samples, false);
+            }
+
             return;
         }
 
-        SubframeWalk walk = _walker.Walk(packed, facts.CoreDataStart, facts.CoreDataEnd, audio, default, Cancellation);
+        DecodeFeed? feed = stream.Feed;
+        SampleBuffers lent = feed is { IsDecoding: true } && !layout.IsCut && !layout.IsTruncated ? feed.Lend(audio) : default;
+        SubframeWalk walk = _walker.Walk(packed, facts.CoreDataStart, facts.CoreDataEnd, audio, lent, Cancellation);
         facts.Walk = walk;
+        // The decoder reads what the walk stored, whole frames only: the subframes' samples must be those the header counts.
+        feed?.Frame(layout.Offset, layout.Length, facts.Core.Samples, !lent.IsEmpty && walk.IsComplete && walk.Samples == audio.Blocks && !layout.IsCut && !layout.IsTruncated);
         if (walk.Problem == WalkProblem.None || layout.IsCut || layout.IsTruncated)
         {
             return;
@@ -121,6 +142,7 @@ internal sealed class DtsAnalysis
 
     public void AddGap(long start, long end, bool leading, bool trailing, ISource source)
     {
+        _current?.Feed?.Gap();
         Frames.Add(Frame.Gap(start, end - start));
         var node = new Node("Gap", start, end - start, NodeValue.Integer(end - start, "bytes")) { Description = Explain.Gap };
         long length = end - start;
@@ -283,7 +305,7 @@ internal sealed class DtsAnalysis
     // (dts.streams-limited), while the changes are still counted. A unit whose assets have no figures yet (before any header with
     // static fields) matches a configuration of the same core and structure, which the stream then takes: it joins the stream after
     // it, or one before it that has the same structure, and any other structure is a change.
-    private void Assign(Region region, int index, UnitFacts facts, UnitLayout layout)
+    private void Assign(Region region, int index, UnitFacts facts, UnitLayout layout, byte[]? packed)
     {
         StreamKey key = StreamKey.Of(facts);
         bool changed = _previousKey is { } previous && !previous.Matches(key);
@@ -322,6 +344,7 @@ internal sealed class DtsAnalysis
         }
 
         _current.Regions.Add(region);
+        WalkSubframes(facts, packed, layout, region);
         _current.Add(layout.Offset, layout.Length, Samples(facts), facts, layout);
     }
 
@@ -438,6 +461,7 @@ internal sealed class DtsAnalysis
             Writer = writerName,
             WriterConfidence = writerConfidence,
             Series = series,
+            Verification = stream.Feed?.Finish(),
             CategorySeries = series.Count > 0 ? stream.Figures.Categories(series[0], stream.StereoCodingNode) : [],
         });
     }

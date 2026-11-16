@@ -403,6 +403,14 @@ def build_coded():
           "a sync word after every subsubframe, dynamic range coefficients and four subframes of 2, 1, 3 and 2 subsubframes.", 3, layout=SURROUND_5_1, mode="3/2",
           amode=9, lff=2, aspf=1, dynf=1, joinx=[0, 0, 0, 1, 2], subs=[30, 30, 30, 18, 18], vqsub=[27, 27, 27, 17, 17], bhuff=[1, 2, 5, 6, 0], shuff=[0, 2, 3, 4, 1], thuff=[0, 1, 2, 3, 0],
           sel=[sel_a[0], sel_a[1], sel_a[0], sel_a[1], sel_a[0]], ssc=[2, 1, 3, 2], nblks=63, extra=[])
+    # Without prediction or vector quantization, so that a decoder without the tables of Annex D.10 reconstructs them; scale factors below the range where a frame clips.
+    coded("subframes-reconstruct-stereo", "Three stereo core frames that decoders reconstruct without Annex D.10's vectors: sum/difference front channels, Huffman bit allocation and quantization indexes, "
+          "transient modes and ADJ, subframes of 3 and 1 subsubframes.", 3, subs=[30, 30], vqsub=[31, 31], sumf=1, bhuff=[1, 0], shuff=[2, 3], thuff=[0, 1], sel=sel_a, adj=adj, ssc=[3, 1], nblks=31,
+          scale_range=(5, 30))
+    coded("subframes-reconstruct-five-one", "Three 3/2 core frames with an LFE channel of the 128 times interpolation, sum/difference front and surround channels, joint intensity coding (the surround "
+          "channels copy the front ones above their own bandwidth), a sync word after every subsubframe and subframes of 2, 1, 3 and 2 subsubframes, without prediction or vector quantization.", 3,
+          layout=SURROUND_5_1, mode="3/2", amode=9, lff=1, aspf=1, sumf=1, sums=1, joinx=[0, 0, 0, 2, 3], subs=[30, 30, 30, 18, 18], vqsub=[31, 31, 31, 19, 19],
+          bhuff=[1, 2, 5, 6, 0], shuff=[0, 2, 3, 4, 1], thuff=[0, 1, 2, 3, 0], sel=[sel_a[0], sel_a[1], sel_a[0], sel_a[1], sel_a[0]], ssc=[2, 1, 3, 2], nblks=63, scale_range=(5, 30))
     coded("subframes-14le", "Two stereo core frames with coded subframes in the 14-bit little endian form.", 2, form="14le", subs=[30, 30], vqsub=[27, 27], bhuff=[1, 0], shuff=[2, 3], thuff=[0, 1],
           sel=sel_a, ssc=[2, 2], nblks=31)
     # The damage the walk finds in subframes (5.5, 5.6).

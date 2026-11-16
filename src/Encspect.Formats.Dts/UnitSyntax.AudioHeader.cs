@@ -93,7 +93,7 @@ internal sealed partial class UnitSyntax
 
         if (isCore && !_isBuilding)
         {
-            Facts.Audio = CoreAudioHeader.Of(channels, subframes, _subs, _vqsub, _joinx, _thuff, _shuff, _bhuff, _sel, _adj, header);
+            Facts.Audio = CoreAudioHeader.Of(channels, subframes, _subs, _vqsub, _joinx, _thuff, _shuff, _bhuff, _sel, _adj, header, Facts);
         }
 
         _tree?.Close(Here);

@@ -66,6 +66,11 @@ internal sealed class SubframeWalker
             return walk;
         }
 
+        if (!lent.IsEmpty)
+        {
+            StoreHeader(lent, a);
+        }
+
         for (int sf = 0; sf < a.Subframes; sf++)
         {
             cancellation.ThrowIfCancellationRequested();
@@ -485,6 +490,34 @@ internal sealed class SubframeWalker
 
         value = table[sum];
         return true;
+    }
+
+    // The frame's header values in every plane (LentLayout).
+    private static void StoreHeader(SampleBuffers lent, CoreAudioHeader a)
+    {
+        int planes = a.Channels + (a.Lff > 0 ? 1 : 0);
+        for (int plane = 0; plane < Math.Min(planes, lent.Channels); plane++)
+        {
+            Span<int> p = lent.Channel(plane);
+            bool isPrimary = plane < a.Channels;
+            int source = isPrimary ? a.Joinx[plane] - 1 : -1;
+            p[0] = a.Channels;
+            p[1] = a.Subframes;
+            p[2] = isPrimary ? a.Subs[plane] : 0;
+            p[3] = isPrimary ? a.VqSub[plane] : 0;
+            p[4] = isPrimary ? a.Joinx[plane] : 0;
+            p[5] = a.IsPerfectReconstruction ? 1 : 0;
+            p[6] = a.IsSumDifferenceFront ? 1 : 0;
+            p[7] = a.IsSumDifferenceSurround ? 1 : 0;
+            p[8] = a.Amode;
+            p[9] = a.Lff;
+            p[10] = a.HasPredictorHistory ? 1 : 0;
+            p[11] = a.Sfreq;
+            p[12] = a.Rate;
+            p[13] = source >= 0 && source < a.Channels ? a.Subs[source] : 0;
+            p[14] = a.Lff > 0 ? 1 : 0;
+            p[15] = 0;
+        }
     }
 
     private void StoreSide(SampleBuffers lent, CoreAudioHeader a, int sf, int ssc, int range)

@@ -1743,6 +1743,13 @@ jobs:
       - name: Cross-check the DTS fixtures, the .dtshd files and DTS:X
         run: python3 scripts/fixtures/crosscheck_dts_fixtures.py
 
+      # The decoder's PCM against FFmpeg's decoder for the files it decodes (FFmpeg's encoder files and the hand-built subframes-reconstruct files).
+      - name: Build the PCM dump
+        run: dotnet build --configuration Release tests/Encspect.PcmDump
+
+      - name: Compare the DTS core decoder's PCM with FFmpeg's
+        run: python3 scripts/fixtures/crosscheck_dts_pcm.py
+
       # Real DTS-HD Master Audio files (a 7.1 stream of two channel sets, a 96 kHz 5.0 stream, a 16-bit stereo stream) from the FFmpeg sample
       # archive, which allows downloading and states no license for redistribution, so they are fetched and checked against their SHA-256
       # rather than committed. The download cache keeps them; every address is public. No real DTS:X or .dtshd file could be found.

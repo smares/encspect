@@ -127,7 +127,8 @@ def write_subframes(bits, p, nch, subs, vqsub, joinx, bhuff, shuff, thuff, sel, 
 
             def scale():
                 nonlocal total
-                index = rng.randrange(0, 63 if shuff[ch] != 6 else 125)
+                low, high = p.get("scale_range", (0, 62))
+                index = rng.randrange(low, high + 1)
                 if shuff[ch] < 5:
                     put_huffman(bits, SCALE_BOOKS[shuff[ch]], index - total)
                     total = index
@@ -159,7 +160,8 @@ def write_subframes(bits, p, nch, subs, vqsub, joinx, bhuff, shuff, thuff, sel, 
         if p.get("lff"):
             for _ in range(2 * p["lff"] * count):
                 bits.put(rng.randrange(256), 8)
-            bits.put(rng.randrange(125), 8)
+            low, high = p.get("scale_range", (0, 124))
+            bits.put(rng.randrange(low, high + 1), 8)
         for ssf in range(count):
             for ch in range(nch):
                 for n in range(vqsub[ch]):

@@ -20,6 +20,8 @@ internal sealed class UnitFacts
 
     public int Pcmr { get; set; }
 
+    public bool IsPerfectReconstruction { get; set; }
+
     public bool IsSumDifferenceFront { get; set; }
 
     public bool IsSumDifferenceSurround { get; set; }
