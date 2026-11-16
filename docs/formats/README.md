@@ -59,7 +59,7 @@ Which container hands which codec to its codec parser, and which codecs are deco
 | Dolby TrueHD, MLP | planned (FFmpeg, `mlpa`) | routed | not planned | not planned | not planned, the lead's decision of 2026-11-07 (IEC 61937 MAT bursts are named and timed) | yes | yes |
 | WMA (versions 1 and 2, Professional, Lossless, Voice) | not planned | later, through `A_MS/ACM` | not planned | routed | not planned | ASF | no |
 | Monkey's Audio | not planned | not planned | not planned | not planned | not planned | yes | yes |
-| Musepack | not planned | not planned | not planned | not planned | not planned | yes | no |
+| Musepack | not planned | not planned | not planned | not planned | not planned | yes | yes (measured) |
 | PCM | planned (FFmpeg) | planned (FFmpeg, mkvmerge) | not planned | named, not analyzed (`asf.codec-not-analyzed`) | the container's own stream | AIFF and AIFF-C too | in WAV, Wave64 and AIFF |
 
 - **AIFF and AIFF-C** route no codec; their uncompressed, float, A-law and mu-law samples are decoded for measurements.
@@ -85,7 +85,7 @@ How far into each coding Encspect sees today, on the depth levels of the [plan](
 | Vorbis | floors and residues of every packet (the entropy pass, every analysis) | measured | Block Sizes, Coded Bandwidth |
 | Opus | every SILK and CELT frame to its final range coder state (the entropy pass, every analysis) | measured | Coded Bandwidth (from the TOC bytes), Block Sizes, Stereo Coding, Intensity Stereo Bound (CELT) |
 | Speex | the coded frame data not read (0.4) | no (0.4) | none |
-| Musepack | SV4 to SV7 subband layout per frame; the frames inside SV8 packets not read (0.4) | no (0.4) | Stereo Coding (SV4 to SV7) |
+| Musepack | every frame's resolutions, scalefactors and samples (the entropy pass, every analysis); the SV4 to SV6 streams libmpcdec 1.2.6 refuses not read | measured (SV7 and SV8; SV4 to SV6 as libmpcdec 1.2.6 decodes them) | Stereo Coding, Coded Bandwidth |
 | WMA versions 1 and 2 | walked to the end of every frame, with the run-level coefficients | no (0.5) | Stereo Coding |
 | WMA Professional | walked to the end of every frame | no (0.5) | Stereo Coding |
 | WMA Voice | the sizes that end a frame | no (0.5, if the lead wants it) | none |

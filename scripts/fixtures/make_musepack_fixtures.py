@@ -120,6 +120,14 @@ def sv8_samples_beyond():
     return with_sh(data, lambda p: p.__setitem__(slice(5, after), new))
 
 
+def sv8_packet_damaged():
+    """A byte of the last frame of an audio packet changed (the 3620th, found by trying every 509th byte of the second quarter of the stream): its scalefactors and samples take
+    other bits than the packet's size states, so libmpcdec stops at the frame and the analyzer counts it as lost."""
+    data = bytearray(external("mpcenc-packets"))
+    data[3620] ^= 0xA5
+    return bytes(data)
+
+
 def sv8_no_end():
     data = external("mpcenc-standard")
     return data[:find(data, "SE")[0]]
@@ -587,6 +595,7 @@ FIXTURES = {
     "sv8-bad-crc": (sv8_bad_crc, None, [("musepack.header-crc-mismatch", "the header is damaged")]),
     "sv8-rate-reserved": (sv8_rate_reserved, None, [("musepack.sample-rate-reserved", "index is 5")]),
     "sv8-samples-beyond-packets": (sv8_samples_beyond, None, [("musepack.audio-packets-missing", "need 78 frames in 20 audio packets; the stream holds 15")]),
+    "sv8-packet-damaged": (sv8_packet_damaged, None, []),
     "sv8-no-end": (sv8_no_end, None, [("musepack.end-missing", "no stream end packet")]),
     "sv8-truncated": (sv8_truncated, None, [("musepack.packet-truncated", "the stream is cut short"), ("musepack.end-missing", "no stream end packet"),
                                             ("musepack.seek-offset-invalid", "no seek table packet starts")]),
@@ -707,6 +716,7 @@ WALK_LOST = {"sv7-damaged-length": (1, "musepack.frame-length-mismatch", "1 fram
              # packet of the 5-packet stream holds 2 of its 4).
              "sv8-sample-count-large": (6, "musepack.packet-frames-missing", "1 audio packet holds fewer frames"),
              "sv8-sample-count-unknown": (6, "musepack.packet-frames-missing", "1 audio packet holds fewer frames"),
+             "sv8-packet-damaged": (1, "musepack.packet-length-mismatch", "1 audio packet's frames"),
              "sv8-samples-beyond-packets": (2, "musepack.packet-frames-missing", "1 audio packet holds fewer frames")}
 
 

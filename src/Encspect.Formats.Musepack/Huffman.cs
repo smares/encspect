@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace Encspect.Formats.Musepack;
 
 // The Huffman codes of SV7 and SV8 (libmpcdec r495 huffman.c and mpc_bits_reader.h, BSD 3-clause, THIRD-PARTY-NOTICES.md). Each table lists its codes from the highest
@@ -46,6 +48,7 @@ internal sealed class CanonicalCode
     }
 
     // Decodes one code; false where it names a symbol the table does not hold (damaged data), with nothing consumed.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public bool TryDecode(MsbBits bits, out int value)
     {
         int code = bits.Peek16();
@@ -124,6 +127,7 @@ internal sealed class WideCode
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public int Decode(MsbBits bits)
     {
         uint code = bits.Peek32();

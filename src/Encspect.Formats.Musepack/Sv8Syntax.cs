@@ -1,6 +1,8 @@
 // Reading derived from libmpcdec r495 (mpc_decoder.c, mpc_decoder_read_bitstream_sv8, and mpc_bits_reader.c), Copyright (c) 2005-2009 The Musepack Development Team, under the BSD 3-clause
 // license. The license text is in THIRD-PARTY-NOTICES.md.
 
+using System.Runtime.CompilerServices;
+
 namespace Encspect.Formats.Musepack;
 
 // The syntax of an SV8 frame, which an audio packet holds one after the other with no length of their own (libmpcdec r495 mpc_decoder_read_bitstream_sv8):
@@ -37,6 +39,7 @@ internal static class Sv8Syntax
 
     // The frame: isKey for the first frame of a packet; maxBand the stream header's value (libmpcdec's d->max_band); midSide whether the stream header allows mid/side.
     // Stops at the first problem; the facts are the frame's as far as they were read.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static void Walk(SubbandState state, MsbBits bits, bool isKey, int maxBand, bool midSide, ref WalkFacts facts)
     {
         int used;
@@ -173,6 +176,7 @@ internal static class Sv8Syntax
     }
 
     // The resolutions from the highest used subband down (the left and the right channel's code of each subband one after the other) and then the mid/side flags.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static bool ReadResolutions(SubbandState state, MsbBits bits, int used, bool midSide, out uint mask, out int flagged)
     {
         mask = 0;
@@ -256,6 +260,7 @@ internal static class Sv8Syntax
 
     // Reads the scalefactors of one subband and channel: the first absolute (7 bits less 6) in a packet's first frame and a difference from the last scalefactor of the frame
     // before after it; the second and third, unless the selection repeats the one before, differences from it. Differences wrap in 7 bits.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static bool ReadScalefactors(SubbandState state, int channel, int band, MsbBits bits)
     {
         Span<int> scalefactor = state.Scalefactor[channel].AsSpan(band * 3, 3);
@@ -305,6 +310,7 @@ internal static class Sv8Syntax
         return true;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static bool ReadSamples(Span<int> values, int resolution, MsbBits bits)
     {
         switch (resolution)
@@ -431,6 +437,7 @@ internal static class Sv8Syntax
     }
 
     // libmpcdec's mpc_bits_enum_dec: which k of n positions are set, as a bit mask, from an enumerative code. False where the code names no combination.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static bool TryEnumerate(MsbBits bits, int k, int n, out uint mask)
     {
         mask = 0;

@@ -1,6 +1,8 @@
 // Reading derived from libmpcdec 1.2.6 (mpc_decoder.c, mpc_decoder_read_bitstream_sv6, and huffsv46.c), Copyright (c) 2005-2009 The Musepack Development Team, under the BSD 3-clause
 // license. The license text is in THIRD-PARTY-NOTICES.md.
 
+using System.Runtime.CompilerServices;
+
 namespace Encspect.Formats.Musepack;
 
 // The syntax of a frame of stream versions 4 to 6, which libmpcdec 1.2.6 reads with one function (mpc_decoder_read_bitstream_sv6), after the frame's 20-bit length:
@@ -23,6 +25,7 @@ internal static class Sv6Syntax
     ];
 
     // The resolutions and mid/side flags; used is the number of subbands up to the highest that carries data.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static void ReadHeader(SubbandState state, MsbBits bits, int maxBand, bool midSide, ref WalkFacts facts)
     {
         int[] left = state.Resolution[0];
@@ -62,6 +65,7 @@ internal static class Sv6Syntax
         facts.Flagged = flagged;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static void ReadBody(SubbandState state, MsbBits bits, ref WalkFacts facts)
     {
         int used = facts.UsedBands;

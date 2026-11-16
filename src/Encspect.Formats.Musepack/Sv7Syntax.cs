@@ -1,6 +1,8 @@
 // Reading derived from libmpcdec r495 (mpc_decoder.c, mpc_decoder_read_bitstream_sv7), Copyright (c) 2005-2009 The Musepack Development Team, under the BSD 3-clause license.
 // The license text is in THIRD-PARTY-NOTICES.md.
 
+using System.Runtime.CompilerServices;
+
 namespace Encspect.Formats.Musepack;
 
 // The syntax of an SV7 frame's data after its 20-bit length, in the order libmpcdec r495 reads it (mpc_decoder_read_bitstream_sv7):
@@ -34,6 +36,7 @@ internal static class Sv7Syntax
 
     // The resolutions and mid/side flags at the start of the frame. Reports the highest subband that carries data and the facts the figures use; stops at the first overrun
     // (bits.Position past bits.Limit). Where a resolution is out of range the header is read on, so the facts are the frame's, and the problem is reported.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static void ReadHeader(SubbandState state, MsbBits bits, int maxBand, bool midSide, ref WalkFacts facts)
     {
         int[] left = state.Resolution[0];
@@ -95,6 +98,7 @@ internal static class Sv7Syntax
     }
 
     // The scalefactor selections, scalefactors and samples, after ReadHeader found no problem.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static void ReadBody(SubbandState state, MsbBits bits, ref WalkFacts facts)
     {
         int used = facts.UsedBands;
@@ -149,6 +153,7 @@ internal static class Sv7Syntax
 
     // Each scalefactor of a subband and channel: after a selection of 1, the first and the second follow the one before them and the third repeats the second; 3, one value
     // repeated; 2, the first repeated and a third; 0, three.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void ReadScalefactors(Span<int> scalefactor, int selection, MsbBits bits)
     {
         switch (selection)
@@ -186,6 +191,7 @@ internal static class Sv7Syntax
         return change != 8 ? previous + change : bits.Read(6);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void ReadSamples(Span<int> values, int resolution, MsbBits bits)
     {
         switch (resolution)
