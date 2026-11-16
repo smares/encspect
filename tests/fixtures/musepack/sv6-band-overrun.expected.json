@@ -189,7 +189,7 @@
    "channels": 2,
    "samples": 32256,
    "average_bitrate": 96.066796875,
-   "lost_samples": 1152,
+   "lost_samples": 2304,
    "duration": 0.7314285714285714
   }
  ],
@@ -204,6 +204,10 @@
   {
    "code": "musepack.band-header-overrun",
    "contains": "1 frame's subband resolutions run past"
+  },
+  {
+   "code": "musepack.frame-length-mismatch",
+   "contains": "1 frame's scalefactors and samples"
   }
  ],
  "crosscheck": {

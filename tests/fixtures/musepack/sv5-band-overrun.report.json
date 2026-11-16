@@ -112,7 +112,7 @@
                 },
                 {
                   "name": "Lost Samples",
-                  "value": 2304,
+                  "value": 3456,
                   "unit": "samples",
                   "offset": 0,
                   "length": 9276
@@ -203,6 +203,34 @@
                     {
                       "name": "448 to 479 kbps",
                       "value": "1 frame (3.6%)",
+                      "offset": 0,
+                      "length": 9276
+                    }
+                  ]
+                },
+                {
+                  "name": "Coded Bandwidth",
+                  "offset": 0,
+                  "length": 9276,
+                  "children": [
+                    {
+                      "name": "Lowest",
+                      "value": 2067,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 9276
+                    },
+                    {
+                      "name": "Most Common",
+                      "value": 2067,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 9276
+                    },
+                    {
+                      "name": "Highest",
+                      "value": 18605,
+                      "unit": "Hz",
                       "offset": 0,
                       "length": 9276
                     }
@@ -2790,7 +2818,7 @@
         ],
         "channelLayoutName": "stereo",
         "samples": 31775,
-        "lostSamples": 2304,
+        "lostSamples": 3456,
         "duration": 0.7205215419501134,
         "averageBitrate": 96.0517578125,
         "isVbr": true,
@@ -2870,6 +2898,82 @@
             "values": [
               96
             ]
+          },
+          {
+            "name": "Coded Bandwidth",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              8,
+              380,
+              536,
+              1016,
+              1196,
+              1356,
+              1516,
+              1652,
+              1752,
+              1892,
+              2056,
+              2236,
+              2408,
+              2568,
+              2724,
+              2880,
+              3052,
+              3232,
+              4796,
+              5308,
+              5796,
+              6304,
+              6800,
+              7304,
+              7800,
+              8276
+            ],
+            "values": [
+              12403,
+              2067,
+              2067,
+              2067,
+              2067,
+              2067,
+              2067,
+              2067,
+              2067,
+              2067,
+              2067,
+              2067,
+              2067,
+              2067,
+              2067,
+              2067,
+              2067,
+              17916,
+              18605,
+              18605,
+              18605,
+              18605,
+              17916,
+              18605,
+              18605,
+              18605
+            ]
+          },
+          {
+            "name": "Coded Bandwidth Over Time",
+            "unit": "Hz",
+            "axis": "seconds",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              0
+            ],
+            "values": [
+              18605
+            ]
           }
         ],
         "categorySeries": [
@@ -2909,6 +3013,18 @@
         "path": [
           0,
           5
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "musepack.frame-length-mismatch",
+        "message": "1 frame's scalefactors and samples take other bits than the frame's length states, or break the syntax, first at 0x2C0: libmpcdec stops decoding at the frame, and the analyzer counts its samples as lost.",
+        "offset": 704,
+        "length": 316,
+        "path": [
+          0,
+          6
         ],
         "count": 1
       },

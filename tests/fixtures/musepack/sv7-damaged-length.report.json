@@ -262,7 +262,7 @@
                 },
                 {
                   "name": "Lost Samples",
-                  "value": 1152,
+                  "value": 2304,
                   "unit": "samples",
                   "offset": 0,
                   "length": 26240
@@ -335,6 +335,34 @@
                     {
                       "name": "512 to 543 kbps",
                       "value": "1 frame (25.0%)",
+                      "offset": 0,
+                      "length": 26240
+                    }
+                  ]
+                },
+                {
+                  "name": "Coded Bandwidth",
+                  "offset": 0,
+                  "length": 26240,
+                  "children": [
+                    {
+                      "name": "Lowest",
+                      "value": 3445,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 26240
+                    },
+                    {
+                      "name": "Most Common",
+                      "value": 3445,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 26240
+                    },
+                    {
+                      "name": "Highest",
+                      "value": 17227,
+                      "unit": "Hz",
                       "offset": 0,
                       "length": 26240
                     }
@@ -847,7 +875,7 @@
         ],
         "channelLayoutName": "stereo",
         "samples": 5279,
-        "lostSamples": 1152,
+        "lostSamples": 2304,
         "duration": 0.11970521541950113,
         "averageBitrate": 202.9671875,
         "isVbr": true,
@@ -880,6 +908,36 @@
             ],
             "values": [
               203
+            ]
+          },
+          {
+            "name": "Coded Bandwidth",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              24,
+              1764,
+              2064
+            ],
+            "values": [
+              17227,
+              3445,
+              4134
+            ]
+          },
+          {
+            "name": "Coded Bandwidth Over Time",
+            "unit": "Hz",
+            "axis": "seconds",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              0
+            ],
+            "values": [
+              17227
             ]
           }
         ],
@@ -921,6 +979,18 @@
           0,
           0,
           3
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "musepack.frame-length-mismatch",
+        "message": "1 frame's scalefactors and samples take other bits than the frame's length states, or break the syntax, first at 0x948: libmpcdec stops decoding at the frame, and the analyzer counts its samples as lost.",
+        "offset": 2376,
+        "length": 300,
+        "path": [
+          0,
+          6
         ],
         "count": 1
       },

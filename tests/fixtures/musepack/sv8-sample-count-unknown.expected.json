@@ -23,6 +23,7 @@
    "SE"
   ]
  ],
+ "coded_samples": 73728,
  "header": {
   "Sample Count": "0 samples",
   "Beginning Silence": "0 samples",
@@ -39,6 +40,7 @@
    "channels": 2,
    "samples": 0,
    "average_bitrate": 68.1310546875,
+   "lost_samples": 6912,
    "duration": 0.0
   }
  ],
@@ -53,6 +55,10 @@
   {
    "code": "musepack.sample-count-unknown",
    "contains": "64 frames"
+  },
+  {
+   "code": "musepack.packet-frames-missing",
+   "contains": "1 audio packet holds fewer frames"
   }
  ],
  "crosscheck": {
