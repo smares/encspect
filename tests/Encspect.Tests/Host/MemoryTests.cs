@@ -328,6 +328,24 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         GC.KeepAlive(report);
     }
 
+    // Decoding holds one frame's values, the filter banks' history and the output block, whatever the frames' count, and keeps nothing per frame: the report keeps what it keeps
+    // without decoding and the heap grows by no more per frame. The stream is a stereo encoder file repeated, about 100,000 frames.
+    [Fact]
+    public void DecodingManyDtsFramesHoldsNothingPerFrame()
+    {
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { Output = _ => new DecoderWorkTests.NullSink() } };
+        byte[] data = DecoderWorkTests.DtsCases.Repeated("external-ffmpeg-stereo-44k-256k.dts", 12_000_000_000);
+
+        (Report report, long kept, long peak) = Measure("frames.dts", data, DecoderWorkTests.DtsCases.Repeated("external-ffmpeg-stereo-44k-256k.dts", 100_000_000), options);
+
+        long frames = report.Streams.Single().Verification!.DecodedSamples / 512;
+        Assert.True(frames > 50_000, $"Only {frames} frames were decoded.");
+        Output.WriteLine($"{kept / frames} bytes kept and {peak / frames} bytes peak per frame with decoding");
+        Assert.True(kept < frames * DtsKeptBound, $"The report keeps {kept / frames} bytes per frame.");
+        Assert.True(peak < frames * DtsPeakBound, $"The live heap grew by {peak / frames} bytes per frame.");
+        GC.KeepAlive(report);
+    }
+
     // Units with an extension substream keep their header fields and the descriptors' too, and a lossless asset's.
     [Fact]
     public void ManyDtsSubstreamsStayCompact()
