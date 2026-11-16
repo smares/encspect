@@ -82,7 +82,12 @@ def real_files(work):
     return files
 
 
-LIBDCA_GAIN = 1.5e-3
+# The files that get a margin, as a share of the channel's peak and RMS, beyond the float bounds, and why: libdca uses the nominal quantizer step sizes of D.2.1's third column
+# (0.035, 0.019, ... 0.00008, 0.00004, 0.00002, 0.00001, 0.000005 for ABITS 11 to 26) where the table has the integers over 2^22, which differ by 2e-4 at ABITS 19 and 20 and by 0.14% at ABITS 22 to 26
+# (336, 168, 84, 42 and 21 for 0.00008 ... 0.000005). Measured on each file by decoding with the nominal steps: the 2.0 16-bit file (ABITS 22 to 26 only) went from 4.3e-5 RMS and 3.3e-4 at most to
+# 7e-8 and 1.2e-6; the 7.1 core's center channel from 8.8e-6 and 2.2e-4 to 3.4e-6 and 3.3e-5; the 11.025 kHz 5.1 file (ABITS 11 to 26) from 2.7e-5 to 3.4e-5 RMS and 8.5e-5 to 1.5e-4 at most
+# to 2.1e-7 and 2.7e-6. Every other file is held to the plain bounds.
+LIBDCA_STEP_MARGIN = {"real-Master-Audio-2.0-16bit.dts": 1.5e-3, "real-Master-Audio-7.1.dts": 1.5e-3, "external-ffmpeg-5.1-11k-384k.dts": 5e-4}
 FLOAT_RMS = 2.0 ** -15 / math.sqrt(12.0)
 FLOAT_MAX = 2.0 ** -14
 
@@ -129,8 +134,9 @@ def compare_libdca(path, dump_command, tool, work):
         rms_signal = math.sqrt(sum(x * x for x in a) / max(1, count))
         rms = math.sqrt(sum(d * d for d in diff) / max(1, count))
         largest = max((abs(d) for d in diff), default=0.0)
-        ok = rms <= FLOAT_RMS + LIBDCA_GAIN * rms_signal and largest <= FLOAT_MAX + LIBDCA_GAIN * peak
-        print(f"  channel {c}: RMS {rms:.2e} (bound {FLOAT_RMS + LIBDCA_GAIN * rms_signal:.2e}), largest {largest:.2e} (bound {FLOAT_MAX + LIBDCA_GAIN * peak:.2e}) {'ok' if ok else 'OUTSIDE THE BOUND'}")
+        margin = LIBDCA_STEP_MARGIN.get(path.name, 0.0)
+        ok = rms <= FLOAT_RMS + margin * rms_signal and largest <= FLOAT_MAX + margin * peak
+        print(f"  channel {c}: RMS {rms:.2e} (bound {FLOAT_RMS + margin * rms_signal:.2e}), largest {largest:.2e} (bound {FLOAT_MAX + margin * peak:.2e}) {'ok' if ok else 'OUTSIDE THE BOUND'}")
         if not ok:
             problems.append(f"channel {c} is outside the bounds")
     return problems
