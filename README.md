@@ -53,14 +53,14 @@ The Coding Summary: the count and share of channel modes, joint stereo modes, st
 
 ## Status
 
-Version 0.2.0, a pre-release in development. Download builds for Windows, macOS and Linux from the [releases page](https://github.com/smares/encspect/releases); they are not signed (see the release notes). The plan is in [docs/plan.md](docs/plan.md).
+Version 0.3.0, a pre-release in development. Download builds for Windows, macOS and Linux from the [releases page](https://github.com/smares/encspect/releases); they are not signed (see the release notes). The plan is in [docs/plan.md](docs/plan.md).
 
 Formats read so far ([details](docs/formats/README.md)):
 
 - MPEG audio: MP1, MP2 and MP3, with VBR headers, mp3PRO, MP3 Surround and MPEG-2 multichannel; decoded for `--measure` (Layers I to III, and the MPEG-2 multichannel extension where it rides in the base frames)
 - MP4, M4A, M4B, 3GP and QuickTime files
 - AAC in MP4, ADTS and ADIF, including HE-AAC, HE-AAC v2 and xHE-AAC
-- Ogg, with Speex, Vorbis and Opus; Vorbis and Opus are decoded for `--measure`
+- Ogg, with Speex, Vorbis and Opus (Opus also in MP4 and Matroska); Vorbis and Opus are decoded for `--measure`
 - Musepack SV4 to SV8, decoded for `--measure` (SV4 to SV6 as libmpcdec 1.2.6 decodes them)
 - AC-3 and E-AC-3, raw and in MP4, with the object audio (JOC) that Dolby Atmos adds; both are decoded for `--measure`
 - DTS (core, XCh, X96, XXCH and the DTS-HD extension substreams with the lossless extension's channel sets and the DTS:X signal), raw and in MP4
@@ -81,9 +81,9 @@ Tags ([details](docs/tags/README.md)): ID3v1, ID3v2, APE, Lyrics3 and Vorbis com
 
 Protection: streams that a container encrypts or locks are reported with their scheme and DRM systems, without decrypting: Common Encryption in MP4, iTunes protection and Audible entries, Windows Media DRM in ASF, and ContentEncryption in Matroska.
 
-Measurements: with `--measure`, the formats that have a decoder (FLAC, WavPack, Monkey's Audio, ALAC, TTA, Dolby TrueHD and MLP, MPEG audio Layers I to III, Vorbis, Opus, Musepack, AC-3, E-AC-3, and the samples of WAV, Wave64 and AIFF) get the average spectrum and the spectral cutoff of their decoded audio, the spectrogram and waveform behind them, the levels (sample peak, RMS level, DC offset, clipping runs, digital silence and bit-depth usage), the loudness (integrated, range, maxima; ITU-R BS.1770-5 and EBU R 128) and the true peak ([details](docs/cli.md)). The GUI's detail window decodes and measures a file with Decode Audio and draws the waveform, the spectrogram, the spectrum and the loudness under the heading Audio of its Graphs tab ([details](docs/gui.md)).
+Measurements: with `--measure`, the formats that have a decoder (FLAC, WavPack, Monkey's Audio, ALAC, TTA, Dolby TrueHD and MLP, MPEG audio Layers I to III, Vorbis, Opus, Musepack, AC-3, E-AC-3, and the samples of WAV, Wave64 and AIFF) get the average spectrum, the spectral cutoff and its companions (spectral bandwidth, spectral slope, partial cutoff, mid and side spectra and spectral holes) of their decoded audio, the spectrogram and waveform behind them, the levels (sample peak, RMS level, DC offset, clipping runs, digital silence and bit-depth usage), the loudness (integrated, range, maxima; ITU-R BS.1770-5 and EBU R 128) and the true peak ([details](docs/cli.md)). The GUI's detail window decodes and measures a file with Decode Audio and draws the waveform, the spectrogram, the spectrum and the loudness under the heading Audio of its Graphs tab ([details](docs/gui.md)).
 
-Version 0.2 completes the lossless formats with their decoders and the measurements. Next: 0.3, the lossy decoders (MPEG audio, Vorbis, Opus, AC-3, E-AC-3 and Musepack are built), so lossy files are measured too ([plan](docs/plan.md#milestones); what each format reads by depth is in [formats](docs/formats/README.md#depth-by-format)).
+Version 0.3 adds the first lossy decoders (MPEG audio Layers I to III, Vorbis, Opus, AC-3 and E-AC-3), so lossy files are measured too. Next: 0.4, the Musepack (built), DTS core and Speex decoders and the remaining container routes ([plan](docs/plan.md#milestones); what each format reads by depth is in [formats](docs/formats/README.md#depth-by-format)).
 
 The decoders exist for analysis only: Encspect does not play or convert audio, and users are responsible for the laws where they live ([details](docs/cli.md#what-the-decoders-are-for)).
 
@@ -97,7 +97,7 @@ The decoders exist for analysis only: Encspect does not play or convert audio, a
 - [Using Encspect from other programs](docs/library.md): the JSON output today, NuGet packages and a native library later
 - [Plan](docs/plan.md): goals, decisions, the milestones and what is not planned
 - [History](docs/history.md): the phases and gates passed, and what each built
-- [Release notes](docs/releases/0.2.0.md)
+- [Release notes](docs/releases/0.3.0.md)
 
 ## Quick start
 

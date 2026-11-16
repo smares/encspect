@@ -118,6 +118,7 @@ Each milestone is something a user can do that they could not do before. Its ite
 - **The release:** a passed gate is tagged `v0.N.0` and released ([development.md, "Releases"](development.md#releases)).
 - **0.1.0** was released after Gate 2; Gate 3 and the work after it lead into 0.2 ([history.md](history.md)).
 - **0.2.0** follows Gate 0.2, passed on 2026-11-10 ([history.md](history.md#gates-in-detail)); its notes are [releases/0.2.0.md](releases/0.2.0.md).
+- **0.3.0** follows Gate 0.3, passed on 2026-11-16 ([history.md](history.md#gates-in-detail)); its notes are [releases/0.3.0.md](releases/0.3.0.md).
 
 ### 0.2: Lossless complete
 
@@ -145,6 +146,8 @@ Every lossless format with a decoder design is decoded and measured, except WMA 
 ### 0.3: Lossy formats measured
 
 The common lossy formats are decoded, so their files get the spectrum, cutoff, levels and loudness that lossless files have.
+
+**Status:** built; the gate passed on 2026-11-16 at 752cd3f9, with five independent reviews (their fixes #310 to #314), a review of those fixes (its fixes #316) and the full nightly suite green on every platform.
 
 1. **The decoders,** one pull request each, in the order of [lossy-decoders.md](design/lossy-decoders.md#order): MPEG audio (Layers I, II and III), Vorbis, Opus, AC-3, E-AC-3. **Opus in Matroska needs the Vorbis parser's feed delay for its DiscardPadding, and so does AAC in Matroska (item 1 of 0.5)** (the padding is the end trimming of the track's last block and the decoder must be told before the frames it takes samples from); the Vorbis follow-up keeps it in the Vorbis parser, since moving it into the host's session for every codec (the session holds the last frames of a track whose configuration states a padding and its block's frame count) is a design change, to be decided with the Opus decoder.
    - **Definition of done** of each: the decoder, its format's entropy-pass figures, its coding graphs and its gap wave 3 items ([lossy-decoders.md, "Gap wave 3 figures this unlocks"](design/lossy-decoders.md#gap-wave-3-figures-this-unlocks)). Coding graphs and gap wave 3 are no separate threads.
