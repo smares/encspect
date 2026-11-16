@@ -297,8 +297,11 @@ The more formats of [planned.md](formats/planned.md#after-05-more-formats), as l
 10. Shorten
 11. The formats whose only detailed public source is FFmpeg, clean-room: OSQ; ATRAC, ATRAC3 and ATRAC3plus; RealAudio; TwinVQ; QDesign Music; Nellymoser
 12. mp3HD, the lossless extension of MP3 (the lead, 2026-11-11)
+13. Game and console middleware: ADX, HCA, BRSTM, VAG, FSB and Bink (the lead, 2026-11-16)
+14. The older lossless compressors and speech codecs (vocoders) no item above names, each named with its sources when its turn comes (the lead, 2026-11-16)
 
 - **Follow-up decoders:** the DTS extensions (XCh, XXCH, X96, XBR, LBR and DTS-HD's lossless extension XLL), which [lossy-decoders.md](design/lossy-decoders.md#what-each-decoder-covers) leaves as follow-ups of the DTS core decoder. Their place among the formats above is set when 0.5 is done.
+- **The AC-4 and MPEG-H decoders** (the lead, 2026-11-16), after their parsers (items 4 and 8), each after a design of its own as [lossy-decoders.md](design/lossy-decoders.md#scope) requires; AC-4's specification is free, MPEG-H's is not.
 
 ## Not planned
 
@@ -315,11 +318,9 @@ Parked items carry the trigger that would bring them back. The formats at the en
   - Opus packet loss concealment and forward error correction, which the gap rule excludes;
   - the Musepack SV4 to SV6 streams that libmpcdec 1.2.6 refuses;
   - the WMA cases the parsers leave open (version 1 with variable block lengths and scale factor exponents, version 2 at 49,048 Hz and above, Professional frames over three packets or 32,768 bytes, the default channel transform matrices, music superframes inside Voice), until a clean-room supplement closes them (decision 12);
-  - Dolby's object audio, and AC-4 and MPEG-H: the design does not cover their decoders, which wait for a design of their own.
+  - Dolby's object audio: the design does not cover its decoder, which waits for a design of its own (the AC-4 and MPEG-H decoders moved to [After 0.5](#after-05) on 2026-11-16).
 - **The official-decoder runs on the Intel and arm64 Windows images** (the Windows column runs on `windows-2025`, x64, only). Trigger: a difference that depends on the build.
 - **An OptimFROG decoder** (the lead, 2026-11-09): the codec is closed and no open implementation exists, not even under the LGPL; its published `format.txt` covers the container only, which is what the header-level parser reads. Reverse-engineering the binaries is neither allowed by its license nor a source that can be checked. Not planned unless its author publishes the coding or an open implementation appears. Until then OptimFROG streams are checked by their block CRC-32s, and a DualStream pair is judged on headers and checksums alone.
-- Game and console middleware (ADX, HCA, BRSTM, VAG, FSB, Bink), which is reverse-engineered with no public specification.
-- The ancient lossless compressors and obsolete vocoders.
 - Each of the many ADPCM and PCM variants as a format of its own: WAV and the containers name their codings.
 - MXF, and AVI, which is mostly video.
 - Codec and container combinations no known writer produces, and Dolby TrueHD as IEC 61937 MAT bursts in WAV (see the routes decision above).
