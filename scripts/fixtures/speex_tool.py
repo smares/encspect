@@ -42,8 +42,8 @@ def fetch(directory):
     return path
 
 
-def build_pcm(directory=None):
-    """The path of speex_pcm, built in directory (a new temporary one by default) from the pinned libspeex 1.2.1 with FIXED_POINT. Signed overflow wraps (-fwrapv): the
+def build_pcm(directory=None, program="speex_pcm"):
+    """The path of speex_pcm (or of another program of this folder over the same library, such as speex_convergence), built in directory (a new temporary one by default) from the pinned libspeex 1.2.1 with FIXED_POINT. Signed overflow wraps (-fwrapv): the
     fixed-point macros rely on it."""
     directory = pathlib.Path(directory or tempfile.mkdtemp(prefix="libspeex-pcm-"))
     directory.mkdir(parents=True, exist_ok=True)
@@ -55,10 +55,10 @@ def build_pcm(directory=None):
     (include / "speex_config_types.h").write_text(
         "#ifndef __SPEEX_TYPES_H__\n#define __SPEEX_TYPES_H__\n#include <stdint.h>\n"
         "typedef int16_t spx_int16_t;\ntypedef uint16_t spx_uint16_t;\ntypedef int32_t spx_int32_t;\ntypedef uint32_t spx_uint32_t;\n#endif\n")
-    binary = directory / "speex_pcm"
+    binary = directory / program
     library = source / "libspeex"
     subprocess.run(["gcc", "-O2", "-w", "-fwrapv", "-DFIXED_POINT", "-DUSE_ALLOCA", "-DEXPORT=", "-I", str(source / "include"), "-I", str(library), "-o", str(binary),
-                    str(HERE / "speex_pcm.c"), *(str(library / f) for f in LIBRARY), "-logg", "-lm"], check=True)
+                    str(HERE / (program + ".c")), *(str(library / f) for f in LIBRARY), "-logg", "-lm"], check=True)
     return binary
 
 

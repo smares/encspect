@@ -49,7 +49,7 @@ Which container hands which codec to its codec parser, and which codecs are deco
 | DTS | routed | routed | not planned | not planned | routed, by the format tag, as a stream in 16-bit stereo PCM samples, and as IEC 61937 bursts | yes, and `.dtshd` | no |
 | Vorbis | not planned | routed | routed | not planned | not planned | no | yes (measured) |
 | Opus | routed | routed | routed | not planned | not planned | no | yes (measured) |
-| Speex | not planned | not planned | routed | not planned | not planned | no | no |
+| Speex | not planned | not planned | routed | not planned | not planned | no | yes (measured) |
 | FLAC | planned (FFmpeg) | routed | routed | not planned | not planned | yes | yes |
 | ALAC | routed | routed | not planned | not planned | not planned | no (CAF is planned after 0.5) | yes |
 | WavPack | not planned | routed | not planned | not planned | not planned | yes | yes |
@@ -84,7 +84,7 @@ How far into each coding Encspect sees today, on the depth levels of the [plan](
 | DTS | core subframes not read (0.4); the extensions' data not read (follow-ups after 0.5) | no (core: 0.4; extensions: follow-ups after 0.5) | Stereo Coding of the core |
 | Vorbis | floors and residues of every packet (the entropy pass, every analysis) | measured | Block Sizes, Coded Bandwidth |
 | Opus | every SILK and CELT frame to its final range coder state (the entropy pass, every analysis) | measured | Coded Bandwidth (from the TOC bytes), Block Sizes, Stereo Coding, Intensity Stereo Bound (CELT) |
-| Speex | the coded frame data not read (0.4) | no (0.4) | none |
+| Speex | every frame's parameters (the entropy pass, every analysis) | measured (libspeex 1.2.1's fixed-point decoder, bit for bit) | none yet |
 | Musepack | every frame's resolutions, scalefactors and samples (the entropy pass, every analysis); the SV4 to SV6 streams libmpcdec 1.2.6 refuses not read | measured (SV7 and SV8; SV4 to SV6 as libmpcdec 1.2.6 decodes them) | Stereo Coding, Coded Bandwidth |
 | WMA versions 1 and 2 | walked to the end of every frame, with the run-level coefficients | no (0.5) | Stereo Coding |
 | WMA Professional | walked to the end of every frame | no (0.5) | Stereo Coding |
