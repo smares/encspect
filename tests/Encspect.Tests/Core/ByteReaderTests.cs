@@ -144,19 +144,25 @@ public class ByteReaderTests
     {
         ByteReader reader = CreateReader(new byte[128]);
         Span<byte> buffer = stackalloc byte[4];
-        reader.Read(buffer);
+        // Every call runs once before the count, since a first call may allocate once (type loading, the JIT) on some runtimes.
+        ReadEach(reader, buffer);
         reader.Position = 0;
 
         long before = GC.GetAllocatedBytesForCurrentThread();
         for (int i = 0; i < 4; i++)
         {
-            reader.Read(buffer);
-            reader.ReadUInt16LittleEndian();
-            reader.ReadUInt24BigEndian();
-            reader.ReadUInt64BigEndian();
+            ReadEach(reader, buffer);
         }
 
         Assert.Equal(before, GC.GetAllocatedBytesForCurrentThread());
+    }
+
+    private static void ReadEach(ByteReader reader, Span<byte> buffer)
+    {
+        reader.Read(buffer);
+        reader.ReadUInt16LittleEndian();
+        reader.ReadUInt24BigEndian();
+        reader.ReadUInt64BigEndian();
     }
 
     [Fact]
