@@ -38,6 +38,7 @@ Later milestones, in this order.
 - **What:** raw AC-4, and MP4's `ac-4` sample entry with `dac4` in the MP4 routes.
 - **Specification:** ETSI TS 103 190-1 and -2, which are free.
 - **Scope:** the TOC, presentations and substreams.
+- **Decoder:** a follow-up after the parser, with a design of its own (the lead, 2026-11-16).
 
 ### 5. AAC in LATM and LOAS
 
@@ -60,6 +61,7 @@ Later milestones, in this order.
 
 - **What:** MHAS packets and the configuration, and MP4's `mha1` and `mhm1` entries.
 - **Specification:** ISO/IEC 23008-3.
+- **Decoder:** a follow-up after the parser, with a design of its own (the lead, 2026-11-16); the specification is not free.
 
 ### 9. MPEG-4 ALS
 
@@ -91,6 +93,17 @@ Later milestones, in this order.
 - **What:** Fraunhofer's lossless extension of MP3: an ordinary MP3 stream plus a lossless residual in its ID3v2 tag.
 - **Scope:** naming the extension and the residual's size and position; no decoding of the residual.
 - **Fixtures:** Fraunhofer's mp3HD tools 1.5.0, which have a Linux command-line build (Rarewares).
+
+### 13. Game and console middleware
+
+- **What:** ADX and HCA (CRI), BRSTM (Nintendo), VAG (Sony), FSB (FMOD) and Bink Audio.
+- **Sources:** none of them has a public specification; each is reverse-engineered. A reference whose license allows it is followed with its notice, after its license is read; where FFmpeg's LGPL code is the only detailed source, the clean-room split of item 11 applies.
+- **Moved here** from "not planned" by the lead on 2026-11-16: they are coded audio, so they fit the project's domain, and the plan already takes formats whose only source is reverse-engineered.
+
+### 14. Older lossless compressors and speech codecs
+
+- **What:** the lossless compressors and speech codecs (vocoders) no item above names. Each is named, with its sources and fixtures, when its turn comes.
+- **Moved here** from "not planned" by the lead on 2026-11-16: Shorten (item 10), AMR (item 6) and WMA Voice are already planned, so the blanket exclusion no longer held.
 
 ## Not planned
 
