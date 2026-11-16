@@ -23,7 +23,7 @@ public sealed class FlacCodecParser : ICodecParser
             return;
         }
 
-        var state = new State(context, isContained: true) { Stream = context.Parent };
+        var state = new State(context, isContained: true) { Stream = context.Parent, HeaderParent = context.Configuration?.Parent };
         // A container with a configuration (Matroska's CodecPrivate: the "fLaC" marker and the metadata blocks) hands the blocks over as the header packets,
         // with no Ogg mapping header before them.
         bool isMapped = context.Configuration is null;
@@ -131,7 +131,9 @@ public sealed class FlacCodecParser : ICodecParser
 
             if (_start >= 0)
             {
-                Summary.Finish(s, _start, _end);
+                // Blocks that lie outside the stream's node (MP4's dfLa box) are no part of its extent.
+                bool isApart = _start < s.Stream.Offset || _end > s.Stream.End;
+                Summary.Finish(s, isApart ? s.Stream.Offset : _start, isApart ? s.Stream.End : _end);
             }
         }
 

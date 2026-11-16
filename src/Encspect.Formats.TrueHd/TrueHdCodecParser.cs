@@ -68,6 +68,27 @@ public sealed class TrueHdCodecParser(string id) : ICodecParser
             };
             analysis.Stream = stream;
             parent.Add(stream);
+            if (context.Configuration is { } configuration)
+            {
+                // MP4's dmlp box: the stream's format information and peak data rate, which the first major sync is compared with at the end.
+                Node box = configuration.Parent;
+                if (Dmlp.Read(configuration.Data.Span) is { } dmlp)
+                {
+                    foreach (Node field in dmlp.AsNodes(configuration.Data.FileStart))
+                    {
+                        box.Add(field);
+                    }
+
+                    analysis.Dmlp = (dmlp, box);
+                }
+                else
+                {
+                    int length = configuration.Data.Length;
+                    analysis.Findings.AddNow(Severity.Warning, "truehd.dmlp-short",
+                        $"The dmlp box holds {Counts.Of(length, "byte", "bytes")} of fields, fewer than the {Dmlp.Length} it needs for the format information, the peak data rate and the reserved bits; the box is not read.", box);
+                }
+            }
+
             if (isMismatch)
             {
                 string stated = isMlp ? "MLP" : "Dolby TrueHD";

@@ -39,6 +39,25 @@ internal static class Summary
 
     private static void Checks(Analysis a)
     {
+        if (a.Dmlp is { } container && a.FirstSync is { IsTrueHd: true } first)
+        {
+            var differences = new List<string>();
+            if (container.Box.FormatInfo != first.FormatInfo)
+            {
+                differences.Add($"the format information 0x{container.Box.FormatInfo:X8} where the major sync has 0x{first.FormatInfo:X8}");
+            }
+
+            if (container.Box.PeakDataRate != first.PeakDataRate)
+            {
+                differences.Add($"a peak data rate of {container.Box.PeakDataRate} sixteenths of a bit per sample period where the major sync has {first.PeakDataRate}");
+            }
+
+            if (differences.Count > 0)
+            {
+                a.Findings.AddNow(Severity.Warning, "truehd.dmlp-differs", $"The dmlp box states {string.Join(" and ", differences)}; the box repeats the first major sync's fields.", container.Node);
+            }
+        }
+
         if (a.Records.Entries.Count == 0 || a.FirstSync is null)
         {
             return;
