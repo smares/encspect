@@ -100,11 +100,6 @@ internal sealed class FrameDecoder : IFrameDecoder
         _isFresh = false;
         int samples = blocks * 32;
         _context.AddWork(checked(((DecodeWork.ForSample(4) + SynthesisUnits) * samples * primary) + (hasLfe ? (DecodeWork.ForSample(4) + LfeUnits) * samples : 0) + (SubbandSampleUnits * blocks * 32 * primary)));
-        if (!VectorTables.IsAvailable && NeedsVectorTables(lent, primary, subframes))
-        {
-            throw new InvalidDataException("The frame uses subband prediction or high-frequency vector quantization, whose tables (Annex D.10) are not available");
-        }
-
         for (int channel = 0; channel < primary; channel++)
         {
             Reconstruct(lent, channel, subframes, header[10] != 0);
@@ -151,27 +146,6 @@ internal sealed class FrameDecoder : IFrameDecoder
         Array.Clear(_lfeHistory);
     }
 
-    private static bool NeedsVectorTables(SampleBuffers lent, int primary, int subframes)
-    {
-        for (int channel = 0; channel < primary; channel++)
-        {
-            ReadOnlySpan<int> plane = lent.Channel(channel);
-            for (int sf = 0; sf < subframes; sf++)
-            {
-                for (int n = 0; n < 32; n++)
-                {
-                    int meta = LentLayout.MetaAt(sf, n);
-                    if (plane[meta] == LentLayout.Vq || plane[meta + 1] != 0)
-                    {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        return false;
-    }
-
     // The subband samples of one channel: the indexes times the step size of their quantizer, the scale factor of their part of the subframe and ADJ (5.6), then the prediction (C.3.3).
     // The vectors of high-frequency subbands come from Annex D.10.2 (not yet available).
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -186,6 +160,7 @@ internal sealed class FrameDecoder : IFrameDecoder
         }
 
         Span<float> coefficients = stackalloc float[History];
+        Span<float> vector = stackalloc float[32];
         ReadOnlySpan<int> steps = lent.Channel(0)[12] == 31 ? SubframeTables.StepSizeLossless : SubframeTables.StepSizeLossy;
         int start = 0;
         for (int sf = 0; sf < subframes; sf++)
@@ -197,7 +172,17 @@ internal sealed class FrameDecoder : IFrameDecoder
                 int meta = LentLayout.MetaAt(sf, n);
                 int abits = plane[meta];
                 Span<float> samples = subbands.AsSpan((n * MaxBlocks) + start, count);
-                if (abits <= 0)
+                if (abits == LentLayout.Vq)
+                {
+                    // 5.6: the 32 samples of the vector, scaled by the subband's scale factor; the subframe takes the first of them.
+                    VectorTables.HighFrequency(plane[LentLayout.SamplesAt(sf, n)], vector);
+                    float scale = plane[meta + 4];
+                    for (int m = 0; m < count; m++)
+                    {
+                        samples[m] = scale * vector[m];
+                    }
+                }
+                else if (abits <= 0)
                 {
                     samples.Clear();
                 }
@@ -217,7 +202,7 @@ internal sealed class FrameDecoder : IFrameDecoder
 
                 // The history of the subband: its last samples before this subframe, newest first.
                 Span<float> past = history.AsSpan(n * History, History);
-                if (abits > 0 && plane[meta + 1] != 0)
+                if (plane[meta + 1] != 0)
                 {
                     VectorTables.Coefficients(plane[meta + 2], coefficients);
                     for (int m = 0; m < count; m++)

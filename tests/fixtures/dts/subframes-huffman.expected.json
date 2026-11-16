@@ -1,19 +1,19 @@
 {
  "description": "Three stereo core frames with Huffman codes everywhere: bit allocation (BHUFF 0 and 3), transient modes, scale factors (SHUFF 1 and 4), quantization indexes (SEL 0 to 6, block codes and no further encoding), ADJ, subband prediction, vector quantization from subband 28, two subframes of different lengths.",
- "length": 4096,
+ "length": 3900,
  "format": "DTS",
  "frames": [
   [
    0,
-   1344
+   1280
   ],
   [
-   1344,
-   1404
-  ],
-  [
-   2748,
+   1280,
    1348
+  ],
+  [
+   2628,
+   1272
   ]
  ],
  "gaps": [],

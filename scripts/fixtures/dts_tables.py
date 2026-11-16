@@ -28,10 +28,12 @@ import sys
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import dts_specs  # noqa: E402
+import ffmpeg_sources  # noqa: E402
 
 ROOT = HERE.parents[1]
 PARSER_OUTPUT = ROOT / "src" / "Encspect.Formats.Dts" / "SubframeTables.cs"
 DECODER_OUTPUT = ROOT / "src" / "Encspect.Formats.Dts" / "Decoding" / "FilterTables.cs"
+VECTOR_OUTPUT = ROOT / "src" / "Encspect.Formats.Dts" / "Decoding" / "VectorData.cs"
 CACHE = pathlib.Path(os.environ.get("ENCSPECT_DOWNLOAD_CACHE", ROOT / ".cache")) / "dts-specs"
 
 
@@ -303,10 +305,55 @@ def write_decoder(lines):
     return "\n".join(out)
 
 
+def vector_arrays():
+    """The two vector tables of D.10 from FFmpeg 6.1.1's dcadata.c, found by shape: the only two-dimensional arrays with 4,096 x 4 and 1,024 x 32 numbers."""
+    import re as _re
+
+    source = ffmpeg_sources.fetch(CACHE.parent / "ffmpeg-sources")
+    text = (source / "libavcodec" / "dcadata.c").read_text(encoding="utf-8")
+    text = _re.sub(r"/\*.*?\*/", "", text, flags=_re.S)
+    text = _re.sub(r"//[^\n]*", "", text)
+    found = {}
+    for match in _re.finditer(r"((?:\[[^\]]*\]){2})\s*=\s*\{(.*?)\n\};", text, flags=_re.S):
+        numbers = [int(v, 16) if "x" in v else int(v) for v in _re.findall(r"-?0x[0-9a-fA-F]+|-?\d+", match.group(2))]
+        if len(numbers) == 4096 * 4:
+            found["adpcm"] = numbers
+        elif len(numbers) == 1024 * 32:
+            found["vq"] = numbers
+    assert sorted(found) == ["adpcm", "vq"], sorted(found)
+    adpcm, vq = found["adpcm"], found["vq"]
+    # D.10.1: the first entry is 9928, 1.2119140625 in 2^-13; each element is a 16-bit value. D.10.2: each element is an 8-bit value (the specification's 16-bit entries hold two), divided by 2^4.
+    assert adpcm[0] == 9928 and all(-32768 <= v < 32768 for v in adpcm), adpcm[:4]
+    assert all(-128 <= v < 128 for v in vq)
+    return adpcm, vq
+
+
+def check_vector_text(lines):
+    """The facts the generated tables are read by, as D.10 states them: D.10.1's entries are the element times 2^13 (the first, 9928, is 1.2119140625), D.10.2's are 16 bits of two 8-bit elements each divided by 2^4, 16 entries a vector of 32."""
+    section = " ".join(" ".join(l.split()) for l in clause(lines, r"^D\.10\s+VQ Tables", r"^D\.11\s+Look-up Table"))
+    for needle in ("4 096 vectors", "multiplied by 2", "9928", "1.2119140625", "1 024 vectors", "16 bits, representing two vector elements", "16 entries in the table to represent one vector of 32 elements", "divided by 2"):
+        assert needle in section, needle
+
+
+def write_vectors(lines):
+    check_vector_text(lines)
+    adpcm, vq = vector_arrays()
+    out = [HEADER.format(sha=dts_specs.SHA256).replace("from ETSI TS 102 114 V1.6.1 (SHA-256", "from FFmpeg 6.1.1 (ffmpeg_sources.py pins it; SHA-256 of ETSI TS 102 114 V1.6.1 for the rest")]
+    out.append("namespace Encspect.Formats.Dts.Decoding;\n")
+    out.append("// Annex D.10: format data the specification names and does not print (\"Due to its extensive size, this table is not included here\").")
+    out.append("internal static class VectorData\n{")
+    out.append("    // D.10.1: 4,096 vectors of four ADPCM prediction coefficients, each element a multiple of 2^-13.")
+    out.append("    public static ReadOnlySpan<short> Adpcm => new short[]\n    {\n" + format_ints(adpcm, 16) + "\n    };\n")
+    out.append("    // D.10.2: 1,024 vectors of 32 samples of the high-frequency subbands, each element a multiple of 2^-4.")
+    out.append("    public static ReadOnlySpan<sbyte> HighFrequency => new sbyte[]\n    {\n" + format_ints(vq, 32) + "\n    };\n")
+    out.append("}\n")
+    return "\n".join(out)
+
+
 def main():
     mode = sys.argv[1] if len(sys.argv) > 1 else "--check"
     lines = spec_lines()
-    files = {PARSER_OUTPUT: write_parser(lines), DECODER_OUTPUT: write_decoder(lines)}
+    files = {PARSER_OUTPUT: write_parser(lines), DECODER_OUTPUT: write_decoder(lines), VECTOR_OUTPUT: write_vectors(lines)}
     if mode == "--write":
         for path, content in files.items():
             path.parent.mkdir(parents=True, exist_ok=True)

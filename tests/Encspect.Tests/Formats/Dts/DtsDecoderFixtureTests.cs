@@ -8,7 +8,7 @@ namespace Encspect.Tests;
 
 // Decodes the DTS fixtures the core decoder reconstructs with a hashing sink: decoding changes no node, and what it adds to the report (the verification, the decode findings and the
 // hash of the PCM) is compared with <name>.decode.json. The hash pins the analyzer's own output for determinism and says nothing about correctness, which crosscheck_dts_pcm.py checks
-// against FFmpeg's decoder. The fixtures are FFmpeg's encoder files and the hand-built ones without prediction and vector quantization, whose tables the specification's PDF lacks.
+// against FFmpeg's decoder. The fixtures are FFmpeg's encoder files and the hand-built ones, some with prediction and vector quantization.
 public class DtsDecoderFixtureTests
 {
     public static TheoryData<string> Names => new()
@@ -21,6 +21,10 @@ public class DtsDecoderFixtureTests
         "dts/external-ffmpeg-5.1-48k-768k.dts",
         "dts/subframes-reconstruct-stereo.dts",
         "dts/subframes-reconstruct-five-one.dts",
+        "dts/subframes-huffman.dts",
+        "dts/subframes-linear.dts",
+        "dts/subframes-five-one.dts",
+        "dts/14le-subframes.dts",
     };
 
     private static (Report Report, List<PcmHashSink> Sinks) Decode(string name)

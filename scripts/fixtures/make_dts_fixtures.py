@@ -396,13 +396,13 @@ def build_coded():
 
     coded("subframes-huffman", "Three stereo core frames with Huffman codes everywhere: bit allocation (BHUFF 0 and 3), transient modes, scale factors (SHUFF 1 and 4), quantization indexes "
           "(SEL 0 to 6, block codes and no further encoding), ADJ, subband prediction, vector quantization from subband 28, two subframes of different lengths.", 3,
-          subs=[30, 30], vqsub=[27, 27], bhuff=[0, 3], shuff=[1, 4], thuff=[2, 1], sel=sel_a, adj=adj, adpcm=True, ssc=[3, 1], nblks=31)
+          subs=[30, 30], vqsub=[27, 27], bhuff=[0, 3], shuff=[1, 4], thuff=[2, 1], sel=sel_a, adj=adj, adpcm=True, ssc=[3, 1], nblks=31, scale_range=(5, 30))
     coded("subframes-linear", "Three stereo core frames with linear codes: 4-bit and 5-bit bit allocation, 6-bit and 7-bit scale factors, quantizers of up to 26 bits, a transient mode in one book.", 3,
-          subs=[22, 30], vqsub=[21, 31], bhuff=[5, 6], shuff=[5, 6], thuff=[3, 0], sel=[[0] * 10, [1, 3, 3, 3, 3, 7, 7, 7, 7, 7]], ssc=[2, 2], nblks=31)
+          subs=[22, 30], vqsub=[21, 31], bhuff=[5, 6], shuff=[5, 6], thuff=[3, 0], sel=[[0] * 10, [1, 3, 3, 3, 3, 7, 7, 7, 7, 7]], ssc=[2, 2], nblks=31, scale_range=(5, 30))
     coded("subframes-five-one", "Three 3/2 core frames with an LFE channel of the 64 times interpolation, joint intensity coding (channels 4 and 5 copy channels 1 and 2 above their own bandwidth), "
           "a sync word after every subsubframe, dynamic range coefficients and four subframes of 2, 1, 3 and 2 subsubframes.", 3, layout=SURROUND_5_1, mode="3/2",
           amode=9, lff=2, aspf=1, dynf=1, joinx=[0, 0, 0, 1, 2], subs=[30, 30, 30, 18, 18], vqsub=[27, 27, 27, 17, 17], bhuff=[1, 2, 5, 6, 0], shuff=[0, 2, 3, 4, 1], thuff=[0, 1, 2, 3, 0],
-          sel=[sel_a[0], sel_a[1], sel_a[0], sel_a[1], sel_a[0]], ssc=[2, 1, 3, 2], nblks=63, extra=[])
+          sel=[sel_a[0], sel_a[1], sel_a[0], sel_a[1], sel_a[0]], ssc=[2, 1, 3, 2], nblks=63, extra=[], scale_range=(5, 30))
     # Without prediction or vector quantization, so that a decoder without the tables of Annex D.10 reconstructs them; scale factors below the range where a frame clips.
     coded("subframes-reconstruct-stereo", "Three stereo core frames that decoders reconstruct without Annex D.10's vectors: sum/difference front channels, Huffman bit allocation and quantization indexes, "
           "transient modes and ADJ, subframes of 3 and 1 subsubframes.", 3, subs=[30, 30], vqsub=[31, 31], sumf=1, bhuff=[1, 0], shuff=[2, 3], thuff=[0, 1], sel=sel_a, adj=adj, ssc=[3, 1], nblks=31,
@@ -412,7 +412,7 @@ def build_coded():
           layout=SURROUND_5_1, mode="3/2", amode=9, lff=1, aspf=1, sumf=1, sums=1, joinx=[0, 0, 0, 2, 3], subs=[30, 30, 30, 18, 18], vqsub=[31, 31, 31, 19, 19],
           bhuff=[1, 2, 5, 6, 0], shuff=[0, 2, 3, 4, 1], thuff=[0, 1, 2, 3, 0], sel=[sel_a[0], sel_a[1], sel_a[0], sel_a[1], sel_a[0]], ssc=[2, 1, 3, 2], nblks=63, scale_range=(5, 30))
     coded("14le-subframes", "Two stereo core frames with coded subframes in the 14-bit little endian form.", 2, form="14le", subs=[30, 30], vqsub=[27, 27], bhuff=[1, 0], shuff=[2, 3], thuff=[0, 1],
-          sel=sel_a, ssc=[2, 2], nblks=31, size=1400)
+          sel=sel_a, ssc=[2, 2], nblks=31, size=1400, scale_range=(5, 30))
     # The damage the walk finds in subframes (5.5, 5.6).
     parts = run(3, "16be", 512) + [core("16be", 512, dsync=0xFFFE)] + run(2, "16be", 512)
     fixture("subframe-sync", ".dts", "Six stereo core frames, the fourth with 0xFFFE at the end of its subframe where 5.6 puts 0xFFFF.", b"".join(parts), rows(parts),

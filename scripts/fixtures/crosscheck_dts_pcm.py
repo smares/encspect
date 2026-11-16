@@ -4,8 +4,9 @@
     crosscheck_dts_pcm.py [--pcmdump CMD] [--ffmpeg PATH] [--keep DIR] [--work DIR] [FILE ...]
 
 CMD runs a built tests/Encspect.PcmDump, as for crosscheck_musepack_pcm.py. With no FILE the script takes every file of tests/fixtures/dts the decoder decodes: FFmpeg's encoder files
-(external-ffmpeg-*.dts) and the hand-built subframes-reconstruct-* files, which use no prediction and no vector quantization (the tables of Annex D.10 are not in the specification's PDF,
-so a frame that uses either is not decoded).
+(external-ffmpeg-*.dts) and the hand-built subframes-reconstruct-* files, which use no prediction and no vector quantization (frames with prediction and vector quantization decode with the tables of Annex D.10, which dts_tables.py reads from FFmpeg 6.1.1 because the PDF omits them).
+
+The three real DTS-HD Master Audio files of tests/conformance/dts-hd-samples.json, if downloaded to .cache/dts-hd (check_dts_hd_samples.py does it), are compared too, their first 3 MB, as cores (`-core_only 1`): they use vector quantization.
 
 For each file the analyzer's samples (floats at full scale 1.0, in the core's channel order, the LFE channel last) are compared by position with FFmpeg's decoder's (`ffmpeg -f dts`, 32-bit
 float output in WAVE order, which the script puts into the core's order by the names of the speakers) under compare_pcm.py's bounds for a float reference: per channel the RMS of the
@@ -55,7 +56,17 @@ def reorder(reference, layout):
 
 
 def default_files():
-    return sorted(p for p in FIXTURES.glob("*.dts") if p.name.startswith(("external-ffmpeg-", "subframes-reconstruct-")))
+    return sorted(p for p in FIXTURES.glob("*.dts") if p.name.startswith(("external-ffmpeg-", "subframes-reconstruct-", "subframes-")))
+
+
+def real_files(work):
+    """The first 3 MB of each real DTS-HD Master Audio file in the cache, where they are."""
+    files = []
+    for path in sorted((ROOT / ".cache" / "dts-hd").glob("*.dts")):
+        cut = work / ("real-" + path.name.replace(" ", "-"))
+        cut.write_bytes(path.read_bytes()[: 3 * 1024 * 1024])
+        files.append(cut)
+    return files
 
 
 def main():
@@ -66,11 +77,11 @@ def main():
     parser.add_argument("--keep", type=pathlib.Path)
     parser.add_argument("--work", type=pathlib.Path)
     args = parser.parse_args()
-    files = args.files or default_files()
     status = 0
     with tempfile.TemporaryDirectory() as temp:
         work = args.work or pathlib.Path(temp)
         work.mkdir(parents=True, exist_ok=True)
+        files = args.files or default_files() + real_files(work)
         for path in files:
             dump = work / path.stem
             result = subprocess.run(shlex.split(args.pcmdump) + [str(dump), str(path)], capture_output=True)
@@ -80,7 +91,7 @@ def main():
                 continue
             manifest = dump / f"0000-{path.name}.pcm.json"
             info = json.loads(manifest.read_text())["streams"][0]
-            reference = subprocess.run([args.ffmpeg, "-v", "error", "-nostdin", "-f", "dts", "-i", str(path), "-f", "f32le", "-acodec", "pcm_f32le", "-"], capture_output=True)
+            reference = subprocess.run([args.ffmpeg, "-v", "error", "-nostdin", "-f", "dts", "-core_only", "1", "-i", str(path), "-f", "f32le", "-acodec", "pcm_f32le", "-"], capture_output=True)
             if reference.returncode != 0 or not reference.stdout:
                 print(f"{path.name}: FFmpeg did not decode it: {reference.stderr.decode(errors='replace')[:300]}")
                 status = 2
