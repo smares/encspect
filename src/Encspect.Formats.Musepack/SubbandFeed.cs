@@ -22,6 +22,7 @@ internal sealed class SubbandFeed
     public SubbandFeed(AnalysisContext context, MusepackConfiguration setup, Node stream, bool canDecode)
     {
         Setup = setup;
+        CanWalk = canDecode;
         if (canDecode)
         {
             _session = context.StartDecoding(MusepackParser.CodecId, new DecodeSetup
@@ -36,6 +37,9 @@ internal sealed class SubbandFeed
     }
 
     public MusepackConfiguration Setup { get; }
+
+    // Whether the stream's frames are walked: libmpcdec accepts the stream (the caller says so), whether or not a session decodes it.
+    public bool CanWalk { get; }
 
     public SubbandState State { get; } = new();
 
@@ -99,6 +103,23 @@ internal sealed class SubbandFeed
         LentLayout.Store(State, 1, lent.Channel(1));
         session.Decode(new CodedFrame(bytes, name, firstSample, samples) { IsWalked = true, FollowsGap = PendingGap });
         PendingGap = false;
+    }
+
+    // A frame of no coded subband, which libmpcdec 1.2.6 synthesizes after the last frame of an SV6 stream to output the filter's decay (mpc_decoder_decode_internal).
+    public void FeedSilent(long firstSample, long fileStart, long fileEnd)
+    {
+        if (_session is not { IsDecoding: true })
+        {
+            return;
+        }
+
+        foreach (int[] resolution in State.Resolution)
+        {
+            Array.Clear(resolution);
+        }
+
+        Array.Clear(State.MidSideFlag);
+        Feed(firstSample, default, false, fileStart, fileEnd, "Frame");
     }
 
     public StreamVerification? Finish() => _session?.Finish([]);
