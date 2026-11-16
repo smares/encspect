@@ -1818,6 +1818,12 @@ Step L2 of [lossy-decoders.md, "Order"](lossy-decoders.md#order): `Encspect.Form
 - **Measured** (`DecoderWorkTests`, `eac3-*` cases, each file repeated; the time per unit against the FLAC reference's on the development machine, linux-x64, shared with other work, two runs): `eac3-surround-51-ffmpeg` 0.57 and 0.98, `eac3-stereo-ffmpeg` 0.49 and 0.79, `eac3-aht` 1.12 and 1.41 (every bin of the hand-built file has mantissa bits and the block 0 of each frame holds all six blocks' values), `eac3-spectral-extension` 0.57 and 1.11, `eac3-enhanced-coupling` 2.19 before its charge and 0.80 after it, `eac3-silent` 0.66 and 0.73. The runs differ by the reference's own time (0.40 to 0.64 ns a unit).
 - **Margin:** the largest ratio is 1.41 against the limit of 2.0.
 
+## As built: the DTS core decoder's work weights
+
+- **Charge:** per frame, charged before the frame is decoded, for each primary channel 22 units a sample (the floor, `DecodeWork.ForSample(4)`) and 56 for the synthesis filter bank (the cosine modulation of 512 multiplications and additions and the filter's 1,024 per slot of 32 samples, about 48 a sample, as [lossy-decoders.md](lossy-decoders.md#work-units-per-format) estimates 26 for MPEG's 16-tap one), for the LFE channel 22 and 8 for the interpolation, and 5 a subband sample of each primary channel for the inverse quantization, the prediction's four taps and joint intensity and sum/difference decoding.
+- **Measured** (`DecoderWorkTests`, `dts-*` cases, each file repeated; the time per unit against the FLAC reference's on the development machine, linux-x64, run alone under the exclusive lock, 2026-11-16): `dts-mono-8k` 1.42, `dts-stereo-44k` 1.48, `dts-surround-51` 1.34, `dts-reconstruct-stereo` 1.46 and `dts-reconstruct-surround-51` 1.39. With the synthesis at 32 units (the first estimate) they read 2.28 to 2.48, over the limit of 2.0, so the weight was raised to 56.
+- **Margin:** the largest ratio is 1.48 against the limit of 2.0, a thin margin: the filter bank's time is the whole of the decoding, and a runner without the vector units the JIT uses here may take more per unit. Frames with prediction or vector quantization are not decoded yet and are not in the cases.
+
 ## Open risks and unverified claims
 
 - **Unverified:** whether Dolby patents cover TrueHD (decision 10). No legal conclusion is drawn here.
