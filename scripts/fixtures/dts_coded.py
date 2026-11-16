@@ -108,7 +108,7 @@ def write_subframes(bits, p, nch, subs, vqsub, joinx, bhuff, shuff, thuff, sel, 
                 low = 1 if bhuff[ch] < 5 else 0
                 high = 12 if bhuff[ch] < 5 else 15 if bhuff[ch] == 5 else 26
                 value = rng.choice([low, low, low + 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, high]) if p.get("rich", True) else low
-                value = min(value, high)
+                value = min(value, high, p.get("abits_max", 99))
                 row.append(value)
                 if bhuff[ch] < 5:
                     put_huffman(bits, ABITS_BOOKS[bhuff[ch]], value)
