@@ -58,6 +58,37 @@ public class MusepackDecoderFixtureTests
         return (Analyzer.CreateDefault().Analyze(Path.GetFileName(name), stream, options), sinks);
     }
 
+    // A few of the fixtures are measured too: SV4 to SV8, stereo and mono, with noise substitution and a damaged frame.
+    public static TheoryData<string> MeasuredNames => new()
+    {
+        "musepack/external-mppenc-standard.mpc",
+        "musepack/external-mpcenc-standard.mpc",
+        "musepack/external-mpcenc-telephone-mono.mpc",
+        "musepack/external-mpcenc-pns.mpc",
+        "musepack/external-mppsv5-vbr.mpc",
+        "musepack/derived-mppsv5-vbr-as-sv6.mpc",
+        "musepack/sv8-packet-damaged.mpc",
+    };
+
+    [Theory]
+    [MemberData(nameof(MeasuredNames))]
+    public void MeasuringAddsWhatTheMeasureGoldenHolds(string name)
+    {
+        using FileStream stream = File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, name));
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions() } };
+        Report report = Analyzer.CreateDefault().Analyze(Path.GetFileName(name), stream, options);
+        string actual = Encspect.Tests.Measurement.MeasurementFixtureTests.Golden(report, Path.GetFileNameWithoutExtension(name));
+        string path = Fixtures.MpegCompanion(name, ".measure.json");
+        if (Fixtures.UpdateGolden)
+        {
+            File.WriteAllText(path, actual);
+            return;
+        }
+
+        Assert.True(File.Exists(path), $"Missing golden file {path}; run the tests with ENCSPECT_UPDATE_GOLDEN=1 to create it.");
+        Assert.Equal(File.ReadAllText(path).ReplaceLineEndings("\n"), actual);
+    }
+
     [Theory]
     [MemberData(nameof(Names))]
     public void DecodingChangesNoNode(string name)

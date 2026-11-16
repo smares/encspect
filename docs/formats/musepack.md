@@ -129,5 +129,5 @@ The encoder comes from the stream's version fields (below) and an ID3v2 TSSE fra
 
 ## Articles
 
-- **Articles:** `musepack-subband-coding`, `musepack-sv4-to-sv6`, `musepack-sv7-stream`, `musepack-sv8-packets`, `noise-substitution`.
-- **Shared with other formats:** `mid-side-stereo`, `intensity-stereo`, `replaygain`, `gapless-playback`, `encoder-detection`, `bitrate-modes`, `crc`, `ape-tag`.
+- **Articles:** `musepack-subband-coding`, `musepack-frame-coding`, `musepack-sv4-to-sv6`, `musepack-sv7-stream`, `musepack-sv8-packets`, `noise-substitution`, `coded-bandwidth`.
+- **Shared with other formats:** `lossy-decoding`, `withheld-samples`, `mid-side-stereo`, `intensity-stereo`, `replaygain`, `gapless-playback`, `encoder-detection`, `bitrate-modes`, `crc`, `ape-tag`.
