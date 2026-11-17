@@ -316,6 +316,20 @@ internal sealed partial class FileReader
             return;
         }
 
+        // PCM has no CodecPrivate; the Audio element says how its samples are laid out.
+        PcmCoding? pcm = null;
+        if (codec == Codecs.PcmSamples)
+        {
+            pcm = Codecs.PcmOf(codecId, track.BitDepth, track.Channels, track.SamplingFrequency, out string pcmWhy);
+            if (pcm is null)
+            {
+                _findings.AddNow(Severity.Warning, "matroska.pcm-layout-not-read",
+                    $"{label} ({codecId}) {pcmWhy}, so its samples cannot be read.", track.AudioNode ?? anchor);
+                AddContainerStream(segment, track, null, plan.Protection);
+                return;
+            }
+        }
+
         // A TTA frame carries no figures of its own: the mapping takes them from the TrackEntry (SamplingFrequency, Channels and BitDepth), whether or
         // not a CodecPrivate holds the header too. Muxers write none (FFmpeg's, mkvmerge), so the figures also stand in for it.
         if (codec == "tta" && track.SamplingFrequency is { } ttaRate && Codecs.IsRate(ttaRate) && ttaRate <= int.MaxValue
@@ -374,6 +388,17 @@ internal sealed partial class FileReader
         {
             // The MPEG audio parser keeps the packets' ranges and reads them again from the file.
             configuration = (configuration ?? new CodecConfiguration(MappedBytes.Opaque(ReadOnlyMemory<byte>.Empty, node.Offset, node.Offset), node)) with { Source = _context.Reader };
+        }
+
+        if (pcm is not null)
+        {
+            // Channels defaults to 1 (RFC 9559, section 5.1.4.1.29.3). The frames' bytes are counted without reading them.
+            configuration = new CodecConfiguration(MappedBytes.Opaque(ReadOnlyMemory<byte>.Empty, node.Offset, node.Offset), node)
+            {
+                Pcm = pcm,
+                Format = new AudioFormat(0, (int)(track.Channels ?? 1), pcm.SampleRate, 0, 0, pcm.ContainerBits),
+                DataBytes = statistics.Bytes,
+            };
         }
 
         bool routed = _context.ParsePackets(codec, node, packets, configuration, segment.StreamClaims);
