@@ -275,15 +275,15 @@ def data_info(riff):
 IEC_SYNC = b"\x72\xf8\x1f\x4e"  # Pa = F872h, Pb = 4E1Fh as the 16-bit samples they are, little-endian
 # data type (bits 0 to 6 of Pc): (name, repetition period in IEC 60958 frames, unit of Pd, codec route)
 IEC_TYPES = {
-    1: ("AC-3", 1536, "bits", "ac-3"), 4: ("MPEG-1 Layer I", 384, "bits", None),
-    5: ("MPEG-1 Layer II or III", 1152, "bits", None), 6: ("MPEG-2 audio with extension", 1152, "bits", None),
-    7: ("MPEG-2 AAC", 1024, "bits", "aac-adts"), 8: ("MPEG-2 Layer I", 768, "bits", None),
-    9: ("MPEG-2 Layer II", 2304, "bits", None), 10: ("MPEG-2 Layer III", 1152, "bits", None),
+    1: ("AC-3", 1536, "bits", "ac-3"), 4: ("MPEG-1 Layer I", 384, "bits", "mpeg-audio"),
+    5: ("MPEG-1 Layer II or III", 1152, "bits", "mpeg-audio"), 6: ("MPEG-2 audio with extension", 1152, "bits", "mpeg-audio"),
+    7: ("MPEG-2 AAC", 1024, "bits", "aac-adts"), 8: ("MPEG-2 Layer I", 768, "bits", "mpeg-audio"),
+    9: ("MPEG-2 Layer II", 2304, "bits", "mpeg-audio"), 10: ("MPEG-2 Layer III", 1152, "bits", "mpeg-audio"),
     11: ("DTS type I", 512, "bits", "dts"), 12: ("DTS type II", 1024, "bits", "dts"), 13: ("DTS type III", 2048, "bits", "dts"),
-    14: ("ATRAC", 512, "bits", None), 15: ("ATRAC 2/3", 1024, "bits", None), 16: ("ATRAC-X", 2048, "bits", None),
-    48: ("ATRAC-X low latency", 512, "bits", None), 80: ("ATRAC-X low latency", 256, "bits", None), 112: ("ATRAC-X low latency", 128, "bits", None),
-    18: ("WMA Professional type I", 2048, "bits", None), 50: ("WMA Professional type II", 2048, "bits", None),
-    82: ("WMA Professional type III", 1024, "bits", None), 114: ("WMA Professional type IV", 512, "bits", None),
+    14: ("ATRAC", 512, "bits", "mpeg-audio"), 15: ("ATRAC 2/3", 1024, "bits", "mpeg-audio"), 16: ("ATRAC-X", 2048, "bits", "mpeg-audio"),
+    48: ("ATRAC-X low latency", 512, "bits", "mpeg-audio"), 80: ("ATRAC-X low latency", 256, "bits", None), 112: ("ATRAC-X low latency", 128, "bits", None),
+    18: ("WMA Professional type I", 2048, "bits", "mpeg-audio"), 50: ("WMA Professional type II", 2048, "bits", None),
+    82: ("WMA Professional type III", 1024, "bits", None), 114: ("WMA Professional type IV", 512, "bits", "mpeg-audio"),
     19: ("MPEG-2 AAC low sampling frequency", 2048, "bits", "aac-adts"), 51: ("MPEG-2 AAC low sampling frequency", 4096, "bits", "aac-adts"),
     20: ("MPEG-4 AAC", 1024, "bits", "aac-adts"), 52: ("MPEG-4 AAC", 2048, "bits", "aac-adts"), 84: ("MPEG-4 AAC", 4096, "bits", "aac-adts"),
     116: ("MPEG-4 AAC", 512, "bits", "aac-adts"), 21: ("E-AC-3", 6144, "bytes", "e-ac-3"), 22: ("MAT", 15360, "bytes", None),

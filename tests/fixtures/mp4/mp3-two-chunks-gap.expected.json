@@ -1,5 +1,5 @@
 {
- "description": "MPEG-1 Layer III in MP4 (object type 0x6B), 12 frames in two chunks of 6 with 16 bytes between them: the MPEG audio parser reads samples only where they lie in one stretch, so the track is a stream described by its sample entry and its frames are not read.",
+ "description": "MPEG-1 Layer III in MP4 (object type 0x6B), 12 frames in two chunks of 6 with 16 bytes between them: the MPEG audio parser reads the two stretches as one stream, and the bytes between them are no part of it.",
  "length": 5665,
  "format": "MP4",
  "boxes": [
@@ -116,35 +116,19 @@
  ],
  "streams": [
   {
-   "codec": "MPEG-1 audio",
+   "codec": "MPEG-1 Layer III",
    "sample_rate": 44100,
    "channels": 2,
-   "channel_mode": null,
-   "channel_layout": [],
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
    "samples": 13824,
-   "is_vbr": false,
-   "ffprobe_channels": 2
+   "is_vbr": false
   }
  ],
- "units": [],
- "fields": {
-  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor": "0x6B (MPEG-1 audio)"
- },
- "findings": [
-  [
-   "mpeg-audio.packets-not-analyzed",
-   "packets"
-  ]
- ],
- "crosscheck": {
-  "ffprobe": true,
-  "mp4box": true,
-  "faad": null,
-  "skip": {
-   "faad": "faad2 reads AAC only."
-  }
- },
- "samples": [
+ "units": [
   [
    645,
    417
@@ -193,5 +177,17 @@
    5248,
    417
   ]
- ]
+ ],
+ "fields": {
+  "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor": "0x6B (MPEG-1 audio)"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "faad": null,
+  "skip": {
+   "faad": "faad2 reads AAC only."
+  }
+ }
 }
