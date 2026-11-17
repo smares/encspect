@@ -1279,6 +1279,13 @@ The figures were measured with the load average above the 1.5 that earlier steps
 - Their manifests hold the source file and its SHA-256 and what ffprobe says of the remux. `--remuxes-only` writes only these two files (the same bytes with the same ffmpeg); the fixtures job runs `--manifests-only`, which keeps the files.
 - `WmaFixtureTests.AnFFmpegRemuxIsWrittenByFFmpegNotByTheWriterOfTheSource` holds the writer the analyzer names. `crosscheck_asf_fixtures.py` checks them like the other ffmpeg fixtures; MediaInfo states no bit rate mode for them, since ffmpeg writes IsVBR as text.
 
+### MPEG audio and AC-3 in ASF
+
+`make_external_asf_fixtures.py` also writes six files, `external-ffmpeg-mp3-cbr.asf`, `-mp3-mono`, `-mp3-vbr`, `-ac3-51`, `-ac3-stereo` and `-ac3-mono` (plan 0.4 item 2): `ffmpeg -bitexact -i <committed elementary stream> -c copy`, whose muxer writes the format tags 0x0055 and 0x2000 (the extensible format for six channels), one media object per frame and no object fragmented across packets. `--routed-only` writes only these (the same bytes with the same ffmpeg); `--manifests-only` keeps them.
+
+- Their manifests hold the source file and its SHA-256, the stream the analyzer reports, and what ffprobe says of the file. `AsfRouteTests` holds the report to the manifest, each file's decoded audio to its source's (the PCM hash of the elementary file), and the report golden; `Ac3DecoderFixtureTests` and `MpegDecoderFixtureTests` (which list the ASF files with a decodable stream) hold the decode goldens.
+- Hand-built (`make_asf_fixtures.py`): `mpeg-audio-in-asf`, `ac3-in-asf` (frames from the committed MP3 and AC-3 files), `mpeg-audio-object-fragmented` and `ac3-object-fragmented` (one frame split over two packets, `asf.object-not-contiguous`), `mpeg-audio-rate-differs`, `ac3-channels-differ`, and `protected-mpeg-layer3` and `protected-ac3` (the encrypted streams are described from the header). `other-streams` and `protected-mpeg-audio` use format tag 0x0050 (MPEG Layer I and II), which has no parser, as the stand-in for an unparsed coding.
+
 ### Derived ASF fixture
 
 `make_asf_fixtures.py` derives `derived-ffmpeg-wmav2-tool-name-lavc.asf` from `external-ffmpeg-wmav2-mono-44k-48k.wma`: the same stream, packets and File Properties figures, with a WM/ToolName attribute of "Lavc60.31.102 wmav2" added. It is not an encoder's output, and its manifest says so (`derived`). ffprobe reads the same start and duration as for the source.

@@ -1,7 +1,7 @@
 ---
 id: waveformatex
 title: WAVEFORMATEX
-related: asf-container, channel-layouts, wma-standard, wave-format-extensible, wave-compressed-formats, riff-chunks
+related: asf-container, mpeg-audio-and-ac-3-in-asf, channel-layouts, wma-standard, wave-format-extensible, wave-compressed-formats, riff-chunks
 references: Advanced Systems Format (ASF) Specification, revision 01.20.03, sections 9.1 and 11.1; Microsoft Windows SDK, mmreg.h; Microsoft, Multimedia Programming Interface and Data Specifications 1.0, chapter 3 (WAVE format chunk)
 ---
 

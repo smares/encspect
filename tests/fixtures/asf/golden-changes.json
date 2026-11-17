@@ -1,46 +1,43 @@
 {
   "goldens": [
-    "tests/fixtures/asf/"
+    "tests/fixtures/asf/other-streams.report.json",
+    "tests/fixtures/asf/protected-mpeg-audio.report.json"
   ],
   "changed": [
     {
-      "scope": "stream",
+      "path": [
+        "ASF",
+        "Header Object",
+        "Stream Properties Object",
+        "Type-Specific Data",
+        "Format Tag"
+      ],
       "fields": [
-        "isVbr"
+        "value"
       ],
       "goldens": [
-        "tests/fixtures/asf/derived-ffmpeg-wmav2-tool-name-lavc.report.json",
-        "tests/fixtures/asf/external-ffmpeg-wmav1-mono-22k-24k.report.json",
-        "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json",
-        "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-48k.report.json",
-        "tests/fixtures/asf/external-ffmpeg-wmav2-mono-44k-48k.report.json",
-        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-22k-32k.report.json",
-        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-32k-64k.report.json",
-        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-128k.report.json",
-        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-32k.report.json",
-        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-64k.report.json",
-        "tests/fixtures/asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-20-sdk.report.json",
-        "tests/fixtures/asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-32.report.json",
-        "tests/fixtures/asf/voice-11k-two-blocks.report.json",
-        "tests/fixtures/asf/voice-16k-independent.report.json",
-        "tests/fixtures/asf/voice-8k-residual.report.json",
-        "tests/fixtures/asf/voice-cache-overflow.report.json",
-        "tests/fixtures/asf/voice-config-overlap.report.json",
-        "tests/fixtures/asf/voice-config-unreachable.report.json",
-        "tests/fixtures/asf/voice-invalid-superframes.report.json",
-        "tests/fixtures/asf/voice-lsp-flag-changes.report.json",
-        "tests/fixtures/asf/voice-object-dropped-blocks.report.json",
-        "tests/fixtures/asf/voice-object-dropped.report.json",
-        "tests/fixtures/asf/voice-object-headerless-start.report.json",
-        "tests/fixtures/asf/voice-object-not-whole.report.json",
-        "tests/fixtures/asf/voice-object-remainder-first.report.json",
-        "tests/fixtures/asf/voice-object-short.report.json",
-        "tests/fixtures/asf/voice-object-skip-kept.report.json",
-        "tests/fixtures/asf/voice-object-start-in-lead.report.json",
-        "tests/fixtures/asf/voice-object-superframe-in-lead.report.json",
-        "tests/fixtures/asf/voice-spillover.report.json",
-        "tests/fixtures/asf/voice-superframe-exact-fill.report.json",
-        "tests/fixtures/asf/voice-truncated.report.json"
+        "tests/fixtures/asf/other-streams.report.json",
+        "tests/fixtures/asf/protected-mpeg-audio.report.json"
+      ]
+    },
+    {
+      "scope": "finding",
+      "code": "asf.codec-not-analyzed",
+      "fields": [
+        "message"
+      ],
+      "goldens": [
+        "tests/fixtures/asf/other-streams.report.json",
+        "tests/fixtures/asf/protected-mpeg-audio.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "fields": [
+        "codec"
+      ],
+      "goldens": [
+        "tests/fixtures/asf/protected-mpeg-audio.report.json"
       ]
     }
   ]
