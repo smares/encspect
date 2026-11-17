@@ -1,0 +1,82 @@
+using System.Text.Json;
+using Encspect.Core;
+using Encspect.Host;
+
+namespace Encspect.Tests;
+
+// The routes of ASF to MPEG audio (format tag 0x0055) and AC-3 (0x2000): the files ffmpeg's muxer wrote from the committed elementary streams
+// (make_external_asf_fixtures.py) have the stream of their source in the report and decode to the same samples as the source does, whatever
+// the container; the decode and measure goldens of every ASF fixture with a decodable stream are those of the decoders' fixture tests.
+public class AsfRouteTests
+{
+    public static TheoryData<string> Names
+    {
+        get
+        {
+            var data = new TheoryData<string>();
+            string directory = Path.Combine(Fixtures.FixtureDirectory, "asf");
+            foreach (string path in Directory.EnumerateFiles(directory, "external-ffmpeg-*.asf").Order(StringComparer.Ordinal))
+            {
+                data.Add($"asf/{Path.GetFileName(path)}");
+            }
+
+            return data;
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(Names))]
+    public void ReportMatchesGoldenFile(string name)
+    {
+        string actual = Fixtures.ToJson(Fixtures.AnalyzeMpeg(name));
+        string path = Fixtures.MpegCompanion(name, ".report.json");
+        if (Fixtures.UpdateGolden)
+        {
+            File.WriteAllText(path, actual);
+            return;
+        }
+
+        Assert.True(File.Exists(path), $"Missing golden report {path}; run the tests with ENCSPECT_UPDATE_GOLDEN=1 to create it.");
+        Assert.Equal(File.ReadAllText(path).ReplaceLineEndings("\n"), actual);
+    }
+
+    private static (Report Report, PcmHashingSink Sink) Decode(string name)
+    {
+        var sink = new PcmHashingSink();
+        using FileStream file = File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, name));
+        Report report = Analyzer.CreateDefault().Analyze(Path.GetFileName(name), file, new AnalysisOptions { Decoding = new DecodeOptions { Output = sink.Declare } });
+        return (report, sink);
+    }
+
+    [Theory]
+    [MemberData(nameof(Names))]
+    public void TheStreamIsTheOneTheManifestNames(string name)
+    {
+        JsonElement manifest = Fixtures.LoadMpegManifest(name);
+        Report report = Fixtures.AnalyzeMpeg(name);
+
+        Assert.Equal(manifest.GetProperty("streams").EnumerateArray().Select(s => $"{s.GetProperty("codec").GetString()}, {s.GetProperty("sample_rate").GetInt32()} Hz, {s.GetProperty("channels").GetInt32()} channels"),
+            report.Streams.Select(s => $"{s.Codec}, {s.SampleRate} Hz, {s.Channels} channels"));
+
+        // Whatever the stream's own findings are, the source file has them too: the container adds none.
+        string[] sourceCodes = [.. Fixtures.AnalyzeMpeg(manifest.GetProperty("input").GetProperty("file").GetString()!).Findings.Select(f => f.Code)];
+        Assert.All(report.Findings, f => Assert.Contains(f.Code, sourceCodes));
+        Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("asf.", StringComparison.Ordinal));
+        TestFiles.CheckInsideParents(report.Root);
+    }
+
+    [Theory]
+    [MemberData(nameof(Names))]
+    public void TheSamplesAreThoseOfTheElementaryStream(string name)
+    {
+        string source = Fixtures.LoadMpegManifest(name).GetProperty("input").GetProperty("file").GetString()!;
+        (Report wrapped, PcmHashingSink inAsf) = Decode(name);
+        (Report plain, PcmHashingSink inFile) = Decode(source);
+
+        Assert.DoesNotContain(wrapped.Findings, f => f.Code is "decode.failed" or "parse.failed" or "decode.no-decoder");
+        Assert.Equal(DecodeStatus.Decoded, wrapped.Streams.Single().Verification!.Decoding);
+        Assert.Equal(inFile.Samples, inAsf.Samples);
+        Assert.Equal(inFile.Hash(), inAsf.Hash());
+        Assert.Equal(plain.Streams.Single().Channels, wrapped.Streams.Single().Channels);
+    }
+}
