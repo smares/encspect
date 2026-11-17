@@ -919,8 +919,8 @@ internal sealed partial class FileReader
         // What the steps undo, for a finding: "zlib compression", "header stripping" or both.
         public string Kinds => Steps.Any(x => !x.IsStripping) ? (Steps.Any(x => x.IsStripping) ? "zlib compression and header stripping" : "zlib compression") : "header stripping";
 
-        // Only stripped bytes are put back, so the frames map to the file.
-        public bool IsStrippingOnly => Steps.Count > 0 && Steps.All(x => x.IsStripping);
+        // One header stripping and nothing else: the frames map to the file, the stripped bytes to the one ContentCompSettings they come from.
+        public bool IsStrippingOnly => Steps.Count == 1 && Steps[0].IsStripping;
 
         public Decoder? Decoder => Steps.Count == 0 || _problems.Count > 0 ? null : new Decoder(Steps, limit);
 
@@ -973,9 +973,9 @@ internal sealed partial class FileReader
     // Offset: where the ContentCompSettings bytes of a header stripping are in the file (-1 where it has none), which is where the stripped bytes come from.
     private sealed record Step(bool IsStripping, byte[] Prefix, long Offset);
 
-    // Undoes the steps in order: stripped bytes are put back in front of the data, zlib data is inflated. Where only bytes are put back, the result maps to the file: the stripped
-    // bytes to the ContentCompSettings they come from, then the frame's own (the ranges are in file order, which a Tracks element after the Clusters, or the settings of several
-    // encodings in another order, breaks: that frame is opaque, as an inflated one is).
+    // Undoes the steps in order: stripped bytes are put back in front of the data, zlib data is inflated. Where one stripping is all there is and the codec parser takes frames so, the
+    // result maps to the file: the stripped bytes to the ContentCompSettings they come from, then the frame's own (the ranges are in file order, which a Tracks element after the
+    // Clusters breaks: that frame is opaque, as an inflated one is).
     private sealed class Decoder(List<Step> steps, int limit, bool mapsToFile = false)
     {
         // The decoder that maps the frames it puts bytes back in front of to the file (the codec parsers that place their nodes in the bytes a frame is made of take them so).

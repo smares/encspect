@@ -1253,6 +1253,58 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         GC.KeepAlive(largeReport);
     }
 
+    // The frames of Mp3InChunks in an A_MPEG/L3 track of a Matroska file, with the two bytes every header starts with stripped (ContentCompAlgo 3): each frame is the settings' two bytes
+    // and the block's rest, put back from the file where they are, so the parser keeps two segments of the image for each frame and no byte of it.
+    private static byte[] Mp3InMatroska(int frames, bool isStripped)
+    {
+        byte[] plain = Mp3InChunks(frames, true);
+        byte[] settings = [0xFF, 0xFB];
+        byte[] encodings = isStripped ? MatroskaBuilder.Element(0x6D80, MatroskaBuilder.Element(0x6240, MatroskaBuilder.Unsigned(0x5031, 0), MatroskaBuilder.Unsigned(0x5032, 1), MatroskaBuilder.Unsigned(0x5033, 0),
+            MatroskaBuilder.Element(0x5034, MatroskaBuilder.Unsigned(0x4254, 3), MatroskaBuilder.Element(0x4255, settings)))) : [];
+        byte[] rate = BitConverter.GetBytes(44100.0);
+        Array.Reverse(rate);
+        byte[] entry = MatroskaBuilder.Element(0xAE, MatroskaBuilder.Unsigned(0xD7, 1), MatroskaBuilder.Unsigned(0x73C5, 1), MatroskaBuilder.Unsigned(0x83, 2), MatroskaBuilder.Text(0x86, "A_MPEG/L3"),
+            encodings, MatroskaBuilder.Element(0xE1, MatroskaBuilder.Element(0xB5, rate), MatroskaBuilder.Unsigned(0x9F, 2)));
+        var clusters = new List<byte[]>();
+        var blocks = new List<byte[]>();
+        int at = 0;
+        for (int n = 0; n < frames; n++)
+        {
+            int length = new Encspect.Formats.MpegAudio.MpegHeader(System.Buffers.Binary.BinaryPrimitives.ReadUInt32BigEndian(plain.AsSpan(at))).FrameLength();
+            blocks.Add(MatroskaBuilder.SimpleBlock(1, n % 1000, plain[(isStripped ? at + 2 : at)..(at + length)]));
+            at += length;
+            if (blocks.Count == 1000 || n == frames - 1)
+            {
+                clusters.Add(MatroskaBuilder.Cluster((n / 1000) * 1000L, [.. blocks]));
+                blocks.Clear();
+            }
+        }
+
+        return MatroskaBuilder.File([MatroskaBuilder.Info(), MatroskaBuilder.Element(0x1654AE6B, entry), .. clusters]);
+    }
+
+    [Fact]
+    public void TheFramesOfAHeaderStrippedMpegAudioTrackAreReadAgainFromTheFile()
+    {
+        (Report smallReport, long smallKept, long smallPeak) = Measure("small.mka", Mp3InMatroska(2_000, true), Mp3InMatroska(200, true));
+        (Report largeReport, long largeKept, long largePeak) = Measure("large.mka", Mp3InMatroska(20_000, true), Mp3InMatroska(200, true));
+        (_, long plainSmallKept, long plainSmallPeak) = Measure("small-plain.mka", Mp3InMatroska(2_000, false), Mp3InMatroska(200, false));
+        (_, long plainLargeKept, long plainLargePeak) = Measure("large-plain.mka", Mp3InMatroska(20_000, false), Mp3InMatroska(200, false));
+
+        Assert.Equal(2_000 * 1152, smallReport.Streams.Single().Samples);
+        Assert.Equal(20_000 * 1152, largeReport.Streams.Single().Samples);
+        long perFrame = (largeKept - smallKept) / 18_000;
+        long plainPerFrame = (plainLargeKept - plainSmallKept) / 18_000;
+        long peakGrowth = largePeak - smallPeak;
+        long plainPeakGrowth = plainLargePeak - plainSmallPeak;
+        Output.WriteLine($"{perFrame} bytes kept for each further frame ({plainPerFrame} in a track of the same frames, not stripped), the peak grew by {peakGrowth} bytes ({plainPeakGrowth})");
+        // The segments (24 bytes for each of the frame's two pieces), the stretch (16) and the range the region's node lists for the frame's bytes (16) come on top of what the same
+        // track not stripped keeps (the container's own records of the blocks included); a copy of the frames' 440 bytes would add that to every frame.
+        Assert.True(perFrame <= plainPerFrame + 130, $"The report keeps {perFrame} bytes for each further frame, {plainPerFrame} in the same track not stripped.");
+        Assert.True(peakGrowth <= plainPeakGrowth + 5_000_000, $"The live heap grew by {peakGrowth} bytes for the stripped frames, {plainPeakGrowth} for the same track not stripped.");
+        GC.KeepAlive(largeReport);
+    }
+
     // Two MP3 tracks of the same frames, a chunk of one and then a chunk of the other all through the file, so that each track's frames lie in as many stretches as it has frames: the
     // lookups over the stretches are by binary search, so the time follows the frames as an MP3 file's does, and what is kept follows them too.
     private static byte[] TwoMp3TracksInterleaved(int frames)
