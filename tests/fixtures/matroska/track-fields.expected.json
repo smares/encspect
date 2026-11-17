@@ -1,6 +1,6 @@
 {
  "description": "TrackEntries that lack what RFC 9559 requires: no TrackNumber, a TrackNumber of 0, no CodecID, no TrackUID and no TrackType, an audio track with no Audio element, a repeated TrackNumber, and an audio track of 0 channels.",
- "length": 326,
+ "length": 334,
  "format": "Matroska",
  "ebml": {
   "version": 1,
@@ -16,7 +16,7 @@
    "offset": 40,
    "clusters": [
     {
-     "offset": 290,
+     "offset": 298,
      "length": 36,
      "timestamp": 0,
      "size_unknown": false,
@@ -30,8 +30,8 @@
     "muxing_app": "encspect fixtures",
     "writing_app": "encspect fixtures"
    },
-   "length": 286,
-   "declared_end": 326
+   "length": 294,
+   "declared_end": 334
   }
  ],
  "tree": [
@@ -80,7 +80,7 @@
   [
    "Segment",
    40,
-   286,
+   294,
    [
     [
      "Info",
@@ -107,7 +107,7 @@
     [
      "Tracks",
      98,
-     192,
+     200,
      [
       [
        "TrackEntry",
@@ -234,7 +234,7 @@
       [
        "TrackEntry",
        189,
-       42,
+       46,
        [
         [
          "TrackNumber",
@@ -259,7 +259,7 @@
         [
          "Audio",
          216,
-         15,
+         19,
          [
           [
            "SamplingFrequency",
@@ -270,6 +270,11 @@
            "Channels",
            228,
            3
+          ],
+          [
+           "BitDepth",
+           231,
+           4
           ]
          ]
         ]
@@ -277,43 +282,48 @@
       ],
       [
        "TrackEntry",
-       231,
-       42,
+       235,
+       46,
        [
         [
          "TrackNumber",
-         233,
+         237,
          3
         ],
         [
          "TrackUID",
-         236,
+         240,
          4
         ],
         [
          "TrackType",
-         240,
+         244,
          3
         ],
         [
          "CodecID",
-         243,
+         247,
          15
         ],
         [
          "Audio",
-         258,
-         15,
+         262,
+         19,
          [
           [
            "SamplingFrequency",
-           260,
+           264,
            10
           ],
           [
            "Channels",
-           270,
+           274,
            3
+          ],
+          [
+           "BitDepth",
+           277,
+           4
           ]
          ]
         ]
@@ -321,22 +331,22 @@
       ],
       [
        "TrackEntry",
-       273,
+       281,
        17,
        [
         [
          "TrackNumber",
-         275,
+         283,
          3
         ],
         [
          "TrackUID",
-         278,
+         286,
          4
         ],
         [
          "CodecID",
-         282,
+         290,
          8
         ]
        ]
@@ -345,22 +355,22 @@
     ],
     [
      "Cluster",
-     290,
+     298,
      36,
      [
       [
        "Timestamp",
-       295,
+       303,
        3
       ],
       [
        "SimpleBlock",
-       298,
+       306,
        14
       ],
       [
        "SimpleBlock",
-       312,
+       320,
        14
       ]
      ]
@@ -371,7 +381,7 @@
  "blocks": [
   {
    "name": "SimpleBlock",
-   "offset": 298,
+   "offset": 306,
    "length": 14,
    "track": 5,
    "timestamp": 0,
@@ -380,14 +390,14 @@
    "lacing": "none",
    "frames": [
     [
-     304,
+     312,
      8
     ]
    ]
   },
   {
    "name": "SimpleBlock",
-   "offset": 312,
+   "offset": 320,
    "length": 14,
    "track": 5,
    "timestamp": 10,
@@ -396,7 +406,7 @@
    "lacing": "none",
    "frames": [
     [
-     318,
+     326,
      8
     ]
    ]
@@ -463,7 +473,7 @@
    "private": null,
    "channels": 1,
    "rate": 8000.0,
-   "bits": null,
+   "bits": 16,
    "delay": 0,
    "encodings": [],
    "lacing": true
@@ -476,7 +486,7 @@
    "private": null,
    "channels": 1,
    "rate": 8000.0,
-   "bits": null,
+   "bits": 16,
    "delay": 0,
    "encodings": [],
    "lacing": true
@@ -566,10 +576,6 @@
   {
    "code": "matroska.track-empty",
    "contains": "Track 5"
-  },
-  {
-   "code": "matroska.pcm-layout-not-read",
-   "contains": "no BitDepth"
   },
   {
    "code": "matroska.track-not-analyzed",

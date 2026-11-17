@@ -20,18 +20,194 @@
   ],
   "added": [
     {
+      "scope": "stream",
+      "key": "channelLayout",
+      "streams": [
+        0
+      ],
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-pcm.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-one-cluster.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-two-clusters.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-unknown-tail.report.json",
+        "tests/fixtures/matroska/misplaced-values.report.json",
+        "tests/fixtures/matroska/sampling-frequency-invalid.report.json",
+        "tests/fixtures/matroska/track-timestamp-scale.report.json",
+        "tests/fixtures/matroska/tracks-after-clusters.report.json",
+        "tests/fixtures/matroska/webm-not-allowed.report.json",
+        "tests/fixtures/matroska/writer-pcm-ffmpeg.report.json",
+        "tests/fixtures/matroska/writer-pcm-lame.report.json",
+        "tests/fixtures/matroska/writer-tag-without-info.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "key": "channelLayoutName",
+      "streams": [
+        0
+      ],
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-pcm.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-one-cluster.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-two-clusters.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-unknown-tail.report.json",
+        "tests/fixtures/matroska/misplaced-values.report.json",
+        "tests/fixtures/matroska/sampling-frequency-invalid.report.json",
+        "tests/fixtures/matroska/track-timestamp-scale.report.json",
+        "tests/fixtures/matroska/tracks-after-clusters.report.json",
+        "tests/fixtures/matroska/webm-not-allowed.report.json",
+        "tests/fixtures/matroska/writer-pcm-ffmpeg.report.json",
+        "tests/fixtures/matroska/writer-pcm-lame.report.json",
+        "tests/fixtures/matroska/writer-tag-without-info.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "key": "channelMode",
+      "streams": [
+        0
+      ],
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-pcm.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-one-cluster.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-two-clusters.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-unknown-tail.report.json",
+        "tests/fixtures/matroska/misplaced-values.report.json",
+        "tests/fixtures/matroska/sampling-frequency-invalid.report.json",
+        "tests/fixtures/matroska/track-timestamp-scale.report.json",
+        "tests/fixtures/matroska/tracks-after-clusters.report.json",
+        "tests/fixtures/matroska/webm-not-allowed.report.json",
+        "tests/fixtures/matroska/writer-pcm-ffmpeg.report.json",
+        "tests/fixtures/matroska/writer-pcm-lame.report.json",
+        "tests/fixtures/matroska/writer-tag-without-info.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "key": "verification",
+      "streams": [
+        0
+      ],
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-pcm.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-one-cluster.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-two-clusters.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-unknown-tail.report.json",
+        "tests/fixtures/matroska/misplaced-values.report.json",
+        "tests/fixtures/matroska/sampling-frequency-invalid.report.json",
+        "tests/fixtures/matroska/track-timestamp-scale.report.json",
+        "tests/fixtures/matroska/tracks-after-clusters.report.json",
+        "tests/fixtures/matroska/webm-not-allowed.report.json",
+        "tests/fixtures/matroska/writer-pcm-ffmpeg.report.json",
+        "tests/fixtures/matroska/writer-pcm-lame.report.json",
+        "tests/fixtures/matroska/writer-tag-without-info.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "key": "channelLayout",
+      "streams": [
+        1
+      ],
+      "goldens": [
+        "tests/fixtures/matroska/external-mkvmerge-vorbis-pcm.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "key": "channelLayoutName",
+      "streams": [
+        1
+      ],
+      "goldens": [
+        "tests/fixtures/matroska/external-mkvmerge-vorbis-pcm.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "key": "channelMode",
+      "streams": [
+        1
+      ],
+      "goldens": [
+        "tests/fixtures/matroska/external-mkvmerge-vorbis-pcm.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "key": "verification",
+      "streams": [
+        1
+      ],
+      "goldens": [
+        "tests/fixtures/matroska/external-mkvmerge-vorbis-pcm.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska"
+      ],
+      "name": "Track 1 Frames"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska"
+      ],
+      "name": "Track 2 Frames"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska"
+      ],
+      "name": "Track 3 Frames"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska"
+      ],
+      "name": "Track 4 Frames"
+    },
+    {
       "scope": "node",
       "parent": [
         "Matroska",
         "Track 1 Frames"
       ],
       "name": "Statistics"
+    },
+    {
+      "scope": "finding",
+      "code": "pcm.partial-sample-frame"
+    },
+    {
+      "scope": "finding",
+      "code": "pcm.writer-claim-differs"
     }
   ],
   "removed": [
     {
       "scope": "finding",
       "code": "matroska.codec-not-analyzed"
+    },
+    {
+      "scope": "finding",
+      "code": "matroska.writer-other-format"
+    },
+    {
+      "parent": [
+        "Matroska",
+        "Segment",
+        "Info"
+      ],
+      "name": "Writer"
     }
   ],
   "changed": [
