@@ -1,0 +1,41 @@
+{
+ "description": "ffmpeg's -c copy remux of ac3/external-ffmpeg-stereo-192k.ac3 into ASF: the stream's frames are the media objects, under the format tag ffmpeg's muxer gives the coding.",
+ "format": "ASF",
+ "encoder": "ffmpeg version 6.1.1-3ubuntu5",
+ "command": [
+  "ffmpeg",
+  "-i",
+  "ac3/external-ffmpeg-stereo-192k.ac3",
+  "-c",
+  "copy",
+  "-bitexact",
+  "external-ffmpeg-ac3-stereo.asf"
+ ],
+ "input": {
+  "file": "ac3/external-ffmpeg-stereo-192k.ac3",
+  "sha256": "2f2ec19e8185c62c5616bcc60497d4e31d4c33ad8f3bd75bf255d2445d77ec37"
+ },
+ "sha256": "84eda43860a1616c9480dfb86ae4eb79da60a75cbee05c5d3fafe0f4554183d8",
+ "reproducible": true,
+ "streams": [
+  {
+   "codec": "AC-3",
+   "sample_rate": 48000,
+   "channels": 2
+  }
+ ],
+ "ffprobe": {
+  "codec": "ac3",
+  "channels": 2,
+  "rate": 48000,
+  "block_align": null,
+  "bit_rate": 192000,
+  "extradata_size": 0,
+  "packets": 16,
+  "packet_sizes": [
+   768
+  ],
+  "decoded_samples": 24576,
+  "file_bytes": 13296
+ }
+}

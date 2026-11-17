@@ -1,0 +1,41 @@
+{
+ "description": "ffmpeg's -c copy remux of ac3/external-ffmpeg-5.1-448k.ac3 into ASF: the stream's frames are the media objects, under the format tag ffmpeg's muxer gives the coding.",
+ "format": "ASF",
+ "encoder": "ffmpeg version 6.1.1-3ubuntu5",
+ "command": [
+  "ffmpeg",
+  "-i",
+  "ac3/external-ffmpeg-5.1-448k.ac3",
+  "-c",
+  "copy",
+  "-bitexact",
+  "external-ffmpeg-ac3-51.asf"
+ ],
+ "input": {
+  "file": "ac3/external-ffmpeg-5.1-448k.ac3",
+  "sha256": "df8f441d70b7d9cd9dbe968bbd4e52962580b9d921dae96117ba6c3083dfc91a"
+ },
+ "sha256": "311c59f85b1111032308ec6223202aa05209c2c07ff59e7da7690e14057e5502",
+ "reproducible": true,
+ "streams": [
+  {
+   "codec": "AC-3",
+   "sample_rate": 48000,
+   "channels": 6
+  }
+ ],
+ "ffprobe": {
+  "codec": "ac3",
+  "channels": 6,
+  "rate": 48000,
+  "block_align": null,
+  "bit_rate": 448000,
+  "extradata_size": 0,
+  "packets": 16,
+  "packet_sizes": [
+   1792
+  ],
+  "decoded_samples": 24576,
+  "file_bytes": 51718
+ }
+}

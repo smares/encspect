@@ -1,0 +1,42 @@
+{
+ "description": "ffmpeg's -c copy remux of mpeg-audio/external-ffmpeg-cbr.mp3 into ASF: the stream's frames are the media objects, under the format tag ffmpeg's muxer gives the coding.",
+ "format": "ASF",
+ "encoder": "ffmpeg version 6.1.1-3ubuntu5",
+ "command": [
+  "ffmpeg",
+  "-i",
+  "mpeg-audio/external-ffmpeg-cbr.mp3",
+  "-c",
+  "copy",
+  "-bitexact",
+  "external-ffmpeg-mp3-cbr.asf"
+ ],
+ "input": {
+  "file": "mpeg-audio/external-ffmpeg-cbr.mp3",
+  "sha256": "05d3d68c9c6020cd53c238d20dae2ead535585ae8924f00e6630d4705f70e3b8"
+ },
+ "sha256": "9984dee62523dbbdd2ff27ff2caefcef6a19c7827628ed376ef502ed66375f8c",
+ "reproducible": true,
+ "streams": [
+  {
+   "codec": "MPEG-1 Layer III",
+   "sample_rate": 44100,
+   "channels": 2
+  }
+ ],
+ "ffprobe": {
+  "codec": "mp3",
+  "channels": 2,
+  "rate": 44100,
+  "block_align": null,
+  "bit_rate": 128000,
+  "extradata_size": 12,
+  "packets": 21,
+  "packet_sizes": [
+   417,
+   418
+  ],
+  "decoded_samples": 24192,
+  "file_bytes": 10108
+ }
+}
