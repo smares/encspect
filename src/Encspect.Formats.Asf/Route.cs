@@ -184,11 +184,11 @@ public sealed partial class AsfParser
             }
 
             IEnumerable<MappedBytes> objects = MediaObjects(state, stream.Number);
-            if (codec is "mpeg-audio" or "ac-3")
+            if (codec == "mpeg-audio")
             {
-                // These parsers place their nodes at the offsets of contiguous file bytes (the MPEG audio parser reads the packets again from the file): a media object put
-                // together from fragments in several packets is not handed over.
-                objects = ContiguousObjects(state, stream.Number, codec, anchor, objects);
+                // The MPEG audio parser reads the packets again from the file, as the bytes of one stretch of it, and a frame that crosses the gap between two fragments would
+                // read the packet header there: a media object put together from fragments in several packets is not handed over. The AC-3 parser reads the bytes it is given.
+                objects = ContiguousObjects(state, stream.Number, anchor, objects);
                 configuration = configuration with { Source = state.Reader };
             }
 
@@ -206,8 +206,8 @@ public sealed partial class AsfParser
         }
     }
 
-    // The media objects that lie in one piece of the file.
-    private static IEnumerable<MappedBytes> ContiguousObjects(State state, int streamNumber, string codec, Node anchor, IEnumerable<MappedBytes> objects)
+    // The media objects that lie in one piece of the file (MPEG audio).
+    private static IEnumerable<MappedBytes> ContiguousObjects(State state, int streamNumber, Node anchor, IEnumerable<MappedBytes> objects)
     {
         foreach (MappedBytes media in objects)
         {
@@ -219,7 +219,7 @@ public sealed partial class AsfParser
 
             state.Findings.Add(Severity.Info, "asf.object-not-contiguous", streamNumber, anchor, n =>
                 $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} {(n == 1 ? "is" : "are")} put together from fragments in several packets, whose bytes are not one piece of the file, "
-                + $"which the {(codec == "ac-3" ? "AC-3" : "MPEG audio")} parser reads; {(n == 1 ? "it is" : "they are")} not handed to it.");
+                + $"which the MPEG audio parser reads; {(n == 1 ? "it is" : "they are")} not handed to it.");
         }
     }
 

@@ -65,6 +65,20 @@ public class AsfRouteTests
         TestFiles.CheckInsideParents(report.Root);
     }
 
+    // An AC-3 frame that is a media object put together from fragments in two packets is read whole: the file decodes as the one without the fragmentation does.
+    [Fact]
+    public void AnAc3FrameFragmentedAcrossPacketsIsReadWhole()
+    {
+        (Report fragmented, PcmHashingSink inFragments) = Decode("asf/ac3-object-fragmented.asf");
+        (Report whole, PcmHashingSink inPackets) = Decode("asf/ac3-in-asf.asf");
+
+        Assert.Empty(fragmented.Findings);
+        Assert.Equal(whole.Streams.Single().Samples, fragmented.Streams.Single().Samples);
+        Assert.Equal(inPackets.Samples, inFragments.Samples);
+        Assert.Equal(inPackets.Hash(), inFragments.Hash());
+        TestFiles.CheckInsideParents(fragmented.Root);
+    }
+
     [Theory]
     [MemberData(nameof(Names))]
     public void TheSamplesAreThoseOfTheElementaryStream(string name)

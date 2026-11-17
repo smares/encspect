@@ -1,5 +1,5 @@
 {
- "description": "AC-3 whose third syncframe is a media object put together from fragments in two packets: it is not handed to the AC-3 parser.",
+ "description": "AC-3 whose third syncframe is a media object put together from fragments in two packets: the AC-3 parser reads the bytes it is handed, so all six frames are counted and the audio decodes as the unfragmented stream's does.",
  "format": "ASF",
  "length": 7326,
  "objects": [
@@ -236,12 +236,7 @@
   "max_packet": 1400,
   "max_bitrate": 0
  },
- "findings": [
-  {
-   "code": "asf.object-not-contiguous",
-   "contains": "AC-3"
-  }
- ],
+ "findings": [],
  "crosscheck": {
   "ffprobe": true
  }

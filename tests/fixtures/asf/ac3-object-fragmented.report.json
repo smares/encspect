@@ -2343,7 +2343,7 @@
                 {
                   "name": "AC-3",
                   "kind": "Stream",
-                  "value": 5,
+                  "value": 6,
                   "unit": "frames",
                   "offset": 276,
                   "length": 7050,
@@ -2356,21 +2356,21 @@
                       "children": [
                         {
                           "name": "Frames",
-                          "value": 5,
+                          "value": 6,
                           "unit": "frames",
                           "offset": 357,
                           "length": 6368
                         },
                         {
                           "name": "Samples",
-                          "value": 7680,
+                          "value": 9216,
                           "unit": "samples",
                           "offset": 357,
                           "length": 6368
                         },
                         {
                           "name": "Duration",
-                          "value": 0.16,
+                          "value": 0.192,
                           "unit": "s",
                           "offset": 357,
                           "length": 6368
@@ -2423,7 +2423,7 @@
                           "children": [
                             {
                               "name": "192 to 223 kbps",
-                              "value": "5 frames (100.0%)",
+                              "value": "6 frames (100.0%)",
                               "offset": 357,
                               "length": 6368
                             }
@@ -2465,14 +2465,14 @@
                         },
                         {
                           "name": "Audio Blocks",
-                          "value": 30,
+                          "value": 36,
                           "unit": "blocks",
                           "offset": 357,
                           "length": 6368
                         },
                         {
                           "name": "Audio Blocks Read",
-                          "value": 30,
+                          "value": 36,
                           "unit": "blocks",
                           "offset": 357,
                           "length": 6368
@@ -2493,7 +2493,7 @@
                         },
                         {
                           "name": "Blocks With Coupling",
-                          "value": 30,
+                          "value": 36,
                           "unit": "blocks",
                           "offset": 357,
                           "length": 6368
@@ -2507,7 +2507,7 @@
                         },
                         {
                           "name": "Bands Coded as Sum/Difference",
-                          "value": "6 of 120",
+                          "value": "6 of 144",
                           "offset": 357,
                           "length": 6368
                         },
@@ -2520,14 +2520,14 @@
                         },
                         {
                           "name": "Exponent Strategies",
-                          "value": 90,
+                          "value": 108,
                           "unit": "exponent sets",
                           "offset": 357,
                           "length": 6368,
                           "children": [
                             {
                               "name": "D15",
-                              "value": 13,
+                              "value": 16,
                               "unit": "exponent sets",
                               "offset": 357,
                               "length": 6368
@@ -2548,7 +2548,7 @@
                             },
                             {
                               "name": "Reuse",
-                              "value": 61,
+                              "value": 76,
                               "unit": "exponent sets",
                               "offset": 357,
                               "length": 6368
@@ -2564,7 +2564,7 @@
                         },
                         {
                           "name": "Auxiliary Data",
-                          "value": 293,
+                          "value": 372,
                           "unit": "bits",
                           "offset": 357,
                           "length": 6368
@@ -6111,6 +6111,1590 @@
                                   "name": "Check",
                                   "value": "verified",
                                   "offset": 2523,
+                                  "length": 2
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Frame",
+                      "kind": "Frame",
+                      "value": "AC-3, 192 kbps, 2/0",
+                      "offset": 2542,
+                      "length": 768,
+                      "children": [
+                        {
+                          "name": "Sync Information",
+                          "offset": 2542,
+                          "length": 5,
+                          "children": [
+                            {
+                              "name": "Sync Word",
+                              "value": 2935,
+                              "offset": 2542,
+                              "length": 2
+                            },
+                            {
+                              "name": "CRC1",
+                              "value": 3374,
+                              "offset": 2544,
+                              "length": 2,
+                              "children": [
+                                {
+                                  "name": "Check",
+                                  "value": "verified",
+                                  "offset": 2544,
+                                  "length": 2
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Sample Rate Code",
+                              "value": 48000,
+                              "unit": "Hz",
+                              "offset": 2546,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Frame Size Code",
+                              "value": "20 (192 kbps, 768 bytes)",
+                              "offset": 2546,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 6
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Bit Stream Information",
+                          "offset": 2547,
+                          "length": 4,
+                          "bitOffset": 0,
+                          "bitLength": 27,
+                          "children": [
+                            {
+                              "name": "Bit Stream ID",
+                              "value": "8 (AC-3)",
+                              "offset": 2547,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "Bit Stream Mode",
+                              "value": "0 (main audio service: complete main)",
+                              "offset": 2547,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Audio Coding Mode",
+                              "value": "2: 2/0 (left, right)",
+                              "offset": 2548,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Dolby Surround Mode",
+                              "value": "0 (not indicated)",
+                              "offset": 2548,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "HasLfe",
+                              "value": false,
+                              "offset": 2548,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Dialogue Normalization",
+                              "value": -31,
+                              "unit": "dB",
+                              "offset": 2548,
+                              "length": 2,
+                              "bitOffset": 6,
+                              "bitLength": 5
+                            },
+                            {
+                              "name": "HasCompression",
+                              "value": false,
+                              "offset": 2549,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasLanguageCode",
+                              "value": false,
+                              "offset": 2549,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasProductionInfo",
+                              "value": false,
+                              "offset": 2549,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "IsCopyrighted",
+                              "value": false,
+                              "offset": 2549,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "IsOriginal",
+                              "value": true,
+                              "offset": 2549,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasTimeCode1",
+                              "value": false,
+                              "offset": 2550,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasTimeCode2",
+                              "value": false,
+                              "offset": 2550,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasAdditionalInfo",
+                              "value": false,
+                              "offset": 2550,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 1
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Audio Block",
+                          "kind": "SideInfo",
+                          "value": 0,
+                          "offset": 2550,
+                          "length": 224,
+                          "bitOffset": 3,
+                          "bitLength": 1785,
+                          "children": [
+                            {
+                              "name": "IsBlockSwitched (left)",
+                              "value": false,
+                              "offset": 2550,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "IsBlockSwitched (right)",
+                              "value": false,
+                              "offset": 2550,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "IsDithered (left)",
+                              "value": true,
+                              "offset": 2550,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "IsDithered (right)",
+                              "value": true,
+                              "offset": 2550,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasDynamicRange",
+                              "value": false,
+                              "offset": 2550,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasCouplingStrategy",
+                              "value": true,
+                              "offset": 2551,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "IsCouplingInUse",
+                              "value": true,
+                              "offset": 2551,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "IsInCoupling (left)",
+                              "value": true,
+                              "offset": 2551,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "IsInCoupling (right)",
+                              "value": true,
+                              "offset": 2551,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasPhaseFlags",
+                              "value": false,
+                              "offset": 2551,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Coupling Begin Code",
+                              "value": "8 (from bin 133)",
+                              "offset": 2551,
+                              "length": 2,
+                              "bitOffset": 5,
+                              "bitLength": 4
+                            },
+                            {
+                              "name": "Coupling End Code",
+                              "value": "12 (to bin 217)",
+                              "offset": 2552,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 4
+                            },
+                            {
+                              "name": "Coupling Band Structure",
+                              "value": "011011",
+                              "offset": 2552,
+                              "length": 2,
+                              "bitOffset": 5,
+                              "bitLength": 6
+                            },
+                            {
+                              "name": "HasCouplingCoordinates (left)",
+                              "value": true,
+                              "offset": 2553,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Coupling Coordinates (left)",
+                              "value": 3,
+                              "unit": "bands",
+                              "offset": 2553,
+                              "length": 4,
+                              "bitOffset": 4,
+                              "bitLength": 26,
+                              "children": [
+                                {
+                                  "name": "Master Coupling Coordinate",
+                                  "value": "0 (x 2^-0)",
+                                  "offset": 2553,
+                                  "length": 1,
+                                  "bitOffset": 4,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "Coupling Coordinate Exponent",
+                                  "value": 3,
+                                  "offset": 2553,
+                                  "length": 2,
+                                  "bitOffset": 6,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coupling Coordinate Mantissa",
+                                  "value": 6,
+                                  "offset": 2554,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coupling Coordinate Exponent",
+                                  "value": 3,
+                                  "offset": 2554,
+                                  "length": 2,
+                                  "bitOffset": 6,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coupling Coordinate Mantissa",
+                                  "value": 8,
+                                  "offset": 2555,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coupling Coordinate Exponent",
+                                  "value": 3,
+                                  "offset": 2555,
+                                  "length": 2,
+                                  "bitOffset": 6,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coupling Coordinate Mantissa",
+                                  "value": 7,
+                                  "offset": 2556,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 4
+                                }
+                              ]
+                            },
+                            {
+                              "name": "HasCouplingCoordinates (right)",
+                              "value": true,
+                              "offset": 2556,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Coupling Coordinates (right)",
+                              "value": 3,
+                              "unit": "bands",
+                              "offset": 2556,
+                              "length": 5,
+                              "bitOffset": 7,
+                              "bitLength": 26,
+                              "children": [
+                                {
+                                  "name": "Master Coupling Coordinate",
+                                  "value": "0 (x 2^-0)",
+                                  "offset": 2556,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "Coupling Coordinate Exponent",
+                                  "value": 3,
+                                  "offset": 2557,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coupling Coordinate Mantissa",
+                                  "value": 6,
+                                  "offset": 2557,
+                                  "length": 2,
+                                  "bitOffset": 5,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coupling Coordinate Exponent",
+                                  "value": 3,
+                                  "offset": 2558,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coupling Coordinate Mantissa",
+                                  "value": 4,
+                                  "offset": 2558,
+                                  "length": 2,
+                                  "bitOffset": 5,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coupling Coordinate Exponent",
+                                  "value": 3,
+                                  "offset": 2559,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Coupling Coordinate Mantissa",
+                                  "value": 6,
+                                  "offset": 2559,
+                                  "length": 2,
+                                  "bitOffset": 5,
+                                  "bitLength": 4
+                                }
+                              ]
+                            },
+                            {
+                              "name": "HasRematrixing",
+                              "value": true,
+                              "offset": 2560,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Rematrixing Flags",
+                              "value": "left/right, left/right, left/right, left/right",
+                              "offset": 2560,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 4
+                            },
+                            {
+                              "name": "Coupling Exponent Strategy",
+                              "value": "D15",
+                              "offset": 2560,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Exponent Strategy (left)",
+                              "value": "D15",
+                              "offset": 2561,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Exponent Strategy (right)",
+                              "value": "D15",
+                              "offset": 2561,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Coupling Exponents (coupling)",
+                              "value": "D15",
+                              "offset": 2561,
+                              "length": 26,
+                              "bitOffset": 4,
+                              "bitLength": 200,
+                              "children": [
+                                {
+                                  "name": "Absolute Exponent",
+                                  "value": 9,
+                                  "offset": 2561,
+                                  "length": 1,
+                                  "bitOffset": 4,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Exponent Groups",
+                                  "value": 28,
+                                  "unit": "groups",
+                                  "offset": 2562,
+                                  "length": 25,
+                                  "bitOffset": 0,
+                                  "bitLength": 196
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Exponents (left)",
+                              "value": "D15",
+                              "offset": 2586,
+                              "length": 40,
+                              "bitOffset": 4,
+                              "bitLength": 314,
+                              "children": [
+                                {
+                                  "name": "First Exponent",
+                                  "value": 6,
+                                  "offset": 2586,
+                                  "length": 1,
+                                  "bitOffset": 4,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Exponent Groups",
+                                  "value": 44,
+                                  "unit": "groups",
+                                  "offset": 2587,
+                                  "length": 39,
+                                  "bitOffset": 0,
+                                  "bitLength": 308
+                                },
+                                {
+                                  "name": "Gain Range Code",
+                                  "value": 0,
+                                  "offset": 2625,
+                                  "length": 1,
+                                  "bitOffset": 4,
+                                  "bitLength": 2
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Exponents (right)",
+                              "value": "D15",
+                              "offset": 2625,
+                              "length": 40,
+                              "bitOffset": 6,
+                              "bitLength": 314,
+                              "children": [
+                                {
+                                  "name": "First Exponent",
+                                  "value": 7,
+                                  "offset": 2625,
+                                  "length": 2,
+                                  "bitOffset": 6,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Exponent Groups",
+                                  "value": 44,
+                                  "unit": "groups",
+                                  "offset": 2626,
+                                  "length": 39,
+                                  "bitOffset": 2,
+                                  "bitLength": 308
+                                },
+                                {
+                                  "name": "Gain Range Code",
+                                  "value": 0,
+                                  "offset": 2664,
+                                  "length": 1,
+                                  "bitOffset": 6,
+                                  "bitLength": 2
+                                }
+                              ]
+                            },
+                            {
+                              "name": "HasBitAllocationParameters",
+                              "value": true,
+                              "offset": 2665,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Bit Allocation Parameters",
+                              "offset": 2665,
+                              "length": 2,
+                              "bitOffset": 1,
+                              "bitLength": 11,
+                              "children": [
+                                {
+                                  "name": "Slow Decay Code",
+                                  "value": 2,
+                                  "offset": 2665,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "Fast Decay Code",
+                                  "value": 1,
+                                  "offset": 2665,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "Slow Gain Code",
+                                  "value": 1,
+                                  "offset": 2665,
+                                  "length": 1,
+                                  "bitOffset": 5,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "dB per Bit Code",
+                                  "value": 3,
+                                  "offset": 2665,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "Masking Floor Code",
+                                  "value": 7,
+                                  "offset": 2666,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 3
+                                }
+                              ]
+                            },
+                            {
+                              "name": "HasSnrOffsets",
+                              "value": true,
+                              "offset": 2666,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "SNR Offsets",
+                              "offset": 2666,
+                              "length": 4,
+                              "bitOffset": 5,
+                              "bitLength": 27,
+                              "children": [
+                                {
+                                  "name": "Coarse SNR Offset",
+                                  "value": 30,
+                                  "offset": 2666,
+                                  "length": 2,
+                                  "bitOffset": 5,
+                                  "bitLength": 6
+                                },
+                                {
+                                  "name": "Fine SNR Offset (coupling)",
+                                  "value": 14,
+                                  "offset": 2667,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Fast Gain Code (coupling)",
+                                  "value": 4,
+                                  "offset": 2667,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 3
+                                },
+                                {
+                                  "name": "Fine SNR Offset (left)",
+                                  "value": 14,
+                                  "offset": 2668,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Fast Gain Code (left)",
+                                  "value": 4,
+                                  "offset": 2668,
+                                  "length": 2,
+                                  "bitOffset": 6,
+                                  "bitLength": 3
+                                },
+                                {
+                                  "name": "Fine SNR Offset (right)",
+                                  "value": 14,
+                                  "offset": 2669,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Fast Gain Code (right)",
+                                  "value": 4,
+                                  "offset": 2669,
+                                  "length": 1,
+                                  "bitOffset": 5,
+                                  "bitLength": 3
+                                }
+                              ]
+                            },
+                            {
+                              "name": "HasCouplingLeak",
+                              "value": true,
+                              "offset": 2670,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Coupling Fast Leak",
+                              "value": 0,
+                              "offset": 2670,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "Coupling Slow Leak",
+                              "value": 0,
+                              "offset": 2670,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 3
+                            },
+                            {
+                              "name": "HasDeltaBitAllocation",
+                              "value": false,
+                              "offset": 2670,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasSkipField",
+                              "value": false,
+                              "offset": 2671,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Mantissas",
+                              "value": 819,
+                              "unit": "bits",
+                              "offset": 2671,
+                              "length": 103,
+                              "bitOffset": 1,
+                              "bitLength": 819
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Audio Block",
+                          "kind": "SideInfo",
+                          "value": 1,
+                          "offset": 2773,
+                          "length": 106,
+                          "bitOffset": 4,
+                          "bitLength": 839,
+                          "children": [
+                            {
+                              "name": "IsBlockSwitched (left)",
+                              "value": false,
+                              "offset": 2773,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "IsBlockSwitched (right)",
+                              "value": false,
+                              "offset": 2773,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "IsDithered (left)",
+                              "value": true,
+                              "offset": 2773,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "IsDithered (right)",
+                              "value": true,
+                              "offset": 2773,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasDynamicRange",
+                              "value": false,
+                              "offset": 2774,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasCouplingStrategy",
+                              "value": false,
+                              "offset": 2774,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasCouplingCoordinates (left)",
+                              "value": false,
+                              "offset": 2774,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasCouplingCoordinates (right)",
+                              "value": false,
+                              "offset": 2774,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasRematrixing",
+                              "value": false,
+                              "offset": 2774,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Coupling Exponent Strategy",
+                              "value": "reuse",
+                              "offset": 2774,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Exponent Strategy (left)",
+                              "value": "reuse",
+                              "offset": 2774,
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Exponent Strategy (right)",
+                              "value": "reuse",
+                              "offset": 2775,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "HasBitAllocationParameters",
+                              "value": false,
+                              "offset": 2775,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasSnrOffsets",
+                              "value": false,
+                              "offset": 2775,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasCouplingLeak",
+                              "value": false,
+                              "offset": 2775,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasDeltaBitAllocation",
+                              "value": false,
+                              "offset": 2775,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasSkipField",
+                              "value": false,
+                              "offset": 2775,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Mantissas",
+                              "value": 819,
+                              "unit": "bits",
+                              "offset": 2776,
+                              "length": 103,
+                              "bitOffset": 0,
+                              "bitLength": 819
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Audio Block",
+                          "kind": "SideInfo",
+                          "value": 2,
+                          "offset": 2878,
+                          "length": 106,
+                          "bitOffset": 3,
+                          "bitLength": 839,
+                          "children": [
+                            {
+                              "name": "IsBlockSwitched (left)",
+                              "value": false,
+                              "offset": 2878,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "IsBlockSwitched (right)",
+                              "value": false,
+                              "offset": 2878,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "IsDithered (left)",
+                              "value": true,
+                              "offset": 2878,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "IsDithered (right)",
+                              "value": true,
+                              "offset": 2878,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasDynamicRange",
+                              "value": false,
+                              "offset": 2878,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasCouplingStrategy",
+                              "value": false,
+                              "offset": 2879,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasCouplingCoordinates (left)",
+                              "value": false,
+                              "offset": 2879,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasCouplingCoordinates (right)",
+                              "value": false,
+                              "offset": 2879,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasRematrixing",
+                              "value": false,
+                              "offset": 2879,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Coupling Exponent Strategy",
+                              "value": "reuse",
+                              "offset": 2879,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Exponent Strategy (left)",
+                              "value": "reuse",
+                              "offset": 2879,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Exponent Strategy (right)",
+                              "value": "reuse",
+                              "offset": 2880,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "HasBitAllocationParameters",
+                              "value": false,
+                              "offset": 2880,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasSnrOffsets",
+                              "value": false,
+                              "offset": 2880,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasCouplingLeak",
+                              "value": false,
+                              "offset": 2880,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasDeltaBitAllocation",
+                              "value": false,
+                              "offset": 2880,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasSkipField",
+                              "value": false,
+                              "offset": 2880,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Mantissas",
+                              "value": 819,
+                              "unit": "bits",
+                              "offset": 2880,
+                              "length": 104,
+                              "bitOffset": 7,
+                              "bitLength": 819
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Audio Block",
+                          "kind": "SideInfo",
+                          "value": 3,
+                          "offset": 2983,
+                          "length": 106,
+                          "bitOffset": 2,
+                          "bitLength": 839,
+                          "children": [
+                            {
+                              "name": "IsBlockSwitched (left)",
+                              "value": false,
+                              "offset": 2983,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "IsBlockSwitched (right)",
+                              "value": false,
+                              "offset": 2983,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "IsDithered (left)",
+                              "value": true,
+                              "offset": 2983,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "IsDithered (right)",
+                              "value": true,
+                              "offset": 2983,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasDynamicRange",
+                              "value": false,
+                              "offset": 2983,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasCouplingStrategy",
+                              "value": false,
+                              "offset": 2983,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasCouplingCoordinates (left)",
+                              "value": false,
+                              "offset": 2984,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasCouplingCoordinates (right)",
+                              "value": false,
+                              "offset": 2984,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasRematrixing",
+                              "value": false,
+                              "offset": 2984,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Coupling Exponent Strategy",
+                              "value": "reuse",
+                              "offset": 2984,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Exponent Strategy (left)",
+                              "value": "reuse",
+                              "offset": 2984,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Exponent Strategy (right)",
+                              "value": "reuse",
+                              "offset": 2984,
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "HasBitAllocationParameters",
+                              "value": false,
+                              "offset": 2985,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasSnrOffsets",
+                              "value": false,
+                              "offset": 2985,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasCouplingLeak",
+                              "value": false,
+                              "offset": 2985,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasDeltaBitAllocation",
+                              "value": false,
+                              "offset": 2985,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasSkipField",
+                              "value": false,
+                              "offset": 2985,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Mantissas",
+                              "value": 819,
+                              "unit": "bits",
+                              "offset": 2985,
+                              "length": 104,
+                              "bitOffset": 6,
+                              "bitLength": 819
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Audio Block",
+                          "kind": "SideInfo",
+                          "value": 4,
+                          "offset": 3088,
+                          "length": 105,
+                          "bitOffset": 1,
+                          "bitLength": 839,
+                          "children": [
+                            {
+                              "name": "IsBlockSwitched (left)",
+                              "value": false,
+                              "offset": 3088,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "IsBlockSwitched (right)",
+                              "value": false,
+                              "offset": 3088,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "IsDithered (left)",
+                              "value": true,
+                              "offset": 3088,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "IsDithered (right)",
+                              "value": true,
+                              "offset": 3088,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasDynamicRange",
+                              "value": false,
+                              "offset": 3088,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasCouplingStrategy",
+                              "value": false,
+                              "offset": 3088,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasCouplingCoordinates (left)",
+                              "value": false,
+                              "offset": 3088,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasCouplingCoordinates (right)",
+                              "value": false,
+                              "offset": 3089,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasRematrixing",
+                              "value": false,
+                              "offset": 3089,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Coupling Exponent Strategy",
+                              "value": "reuse",
+                              "offset": 3089,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Exponent Strategy (left)",
+                              "value": "reuse",
+                              "offset": 3089,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Exponent Strategy (right)",
+                              "value": "reuse",
+                              "offset": 3089,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "HasBitAllocationParameters",
+                              "value": false,
+                              "offset": 3090,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasSnrOffsets",
+                              "value": false,
+                              "offset": 3090,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasCouplingLeak",
+                              "value": false,
+                              "offset": 3090,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasDeltaBitAllocation",
+                              "value": false,
+                              "offset": 3090,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasSkipField",
+                              "value": false,
+                              "offset": 3090,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Mantissas",
+                              "value": 819,
+                              "unit": "bits",
+                              "offset": 3090,
+                              "length": 103,
+                              "bitOffset": 5,
+                              "bitLength": 819
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Audio Block",
+                          "kind": "SideInfo",
+                          "value": 5,
+                          "offset": 3193,
+                          "length": 105,
+                          "bitOffset": 0,
+                          "bitLength": 839,
+                          "children": [
+                            {
+                              "name": "IsBlockSwitched (left)",
+                              "value": false,
+                              "offset": 3193,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "IsBlockSwitched (right)",
+                              "value": false,
+                              "offset": 3193,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "IsDithered (left)",
+                              "value": true,
+                              "offset": 3193,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "IsDithered (right)",
+                              "value": true,
+                              "offset": 3193,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasDynamicRange",
+                              "value": false,
+                              "offset": 3193,
+                              "length": 1,
+                              "bitOffset": 4,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasCouplingStrategy",
+                              "value": false,
+                              "offset": 3193,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasCouplingCoordinates (left)",
+                              "value": false,
+                              "offset": 3193,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasCouplingCoordinates (right)",
+                              "value": false,
+                              "offset": 3193,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasRematrixing",
+                              "value": false,
+                              "offset": 3194,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Coupling Exponent Strategy",
+                              "value": "reuse",
+                              "offset": 3194,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Exponent Strategy (left)",
+                              "value": "reuse",
+                              "offset": 3194,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "Exponent Strategy (right)",
+                              "value": "reuse",
+                              "offset": 3194,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 2
+                            },
+                            {
+                              "name": "HasBitAllocationParameters",
+                              "value": false,
+                              "offset": 3194,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasSnrOffsets",
+                              "value": false,
+                              "offset": 3195,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasCouplingLeak",
+                              "value": false,
+                              "offset": 3195,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasDeltaBitAllocation",
+                              "value": false,
+                              "offset": 3195,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasSkipField",
+                              "value": false,
+                              "offset": 3195,
+                              "length": 1,
+                              "bitOffset": 3,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Mantissas",
+                              "value": 819,
+                              "unit": "bits",
+                              "offset": 3195,
+                              "length": 103,
+                              "bitOffset": 4,
+                              "bitLength": 819
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Auxiliary Data",
+                          "value": 79,
+                          "unit": "bits",
+                          "offset": 3297,
+                          "length": 11,
+                          "bitOffset": 7,
+                          "bitLength": 79
+                        },
+                        {
+                          "name": "HasAuxiliaryLength",
+                          "value": false,
+                          "offset": 3307,
+                          "length": 1,
+                          "bitOffset": 6,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "Error Check",
+                          "offset": 3307,
+                          "length": 3,
+                          "bitOffset": 7,
+                          "bitLength": 17,
+                          "children": [
+                            {
+                              "name": "CRC Reserved Bit",
+                              "value": 0,
+                              "offset": 3307,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "CRC2",
+                              "value": 46303,
+                              "offset": 3308,
+                              "length": 2,
+                              "children": [
+                                {
+                                  "name": "Check",
+                                  "value": "verified",
+                                  "offset": 3308,
                                   "length": 2
                                 }
                               ]
@@ -11796,8 +13380,8 @@
           "front right"
         ],
         "channelLayoutName": "stereo",
-        "samples": 7680,
-        "duration": 0.16,
+        "samples": 9216,
+        "duration": 0.192,
         "averageBitrate": 192,
         "isVbr": false,
         "playbackGroup": 1,
@@ -11811,16 +13395,16 @@
               "name": "CRC1",
               "covers": "codedData",
               "coversAllAudio": false,
-              "stored": 5,
-              "checked": 5,
+              "stored": 6,
+              "checked": 6,
               "failed": 0
             },
             {
               "name": "CRC2",
               "covers": "codedData",
               "coversAllAudio": true,
-              "stored": 5,
-              "checked": 5,
+              "stored": 6,
+              "checked": 6,
               "failed": 0
             }
           ]
@@ -11835,11 +13419,13 @@
             "x": [
               357,
               1757,
+              2542,
               3558,
               4557,
               5957
             ],
             "values": [
+              192,
               192,
               192,
               192,
@@ -11869,11 +13455,13 @@
             "x": [
               357,
               1757,
+              2542,
               3558,
               4557,
               5957
             ],
             "values": [
+              20344,
               20344,
               20344,
               20344,
@@ -11908,15 +13496,15 @@
               },
               {
                 "name": "Without block switching",
-                "count": 30
+                "count": 36
               }
             ],
-            "total": 30,
+            "total": 36,
             "xSeries": "Bitrate",
             "runs": [
               [
                 1,
-                30
+                36
               ]
             ],
             "seconds": [
@@ -11931,19 +13519,19 @@
             "categories": [
               {
                 "name": "With coupling",
-                "count": 30
+                "count": 36
               },
               {
                 "name": "Without coupling",
                 "count": 0
               }
             ],
-            "total": 30,
+            "total": 36,
             "xSeries": "Bitrate",
             "runs": [
               [
                 0,
-                30
+                36
               ]
             ],
             "seconds": [
@@ -11962,10 +13550,10 @@
               },
               {
                 "name": "Without rematrixing",
-                "count": 25
+                "count": 31
               }
             ],
-            "total": 30,
+            "total": 36,
             "xSeries": "Bitrate",
             "runs": [
               [
@@ -11986,7 +13574,7 @@
               ],
               [
                 1,
-                2
+                8
               ],
               [
                 0,
@@ -12020,20 +13608,6 @@
         ]
       }
     ],
-    "findings": [
-      {
-        "severity": "Info",
-        "code": "asf.object-not-contiguous",
-        "message": "A media object of stream 1 is put together from fragments in several packets, whose bytes are not one piece of the file, which the AC-3 parser reads; it is not handed to it.",
-        "offset": 134,
-        "length": 96,
-        "path": [
-          0,
-          0,
-          6
-        ],
-        "count": 1
-      }
-    ]
+    "findings": []
   }
 ]

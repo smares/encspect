@@ -9,6 +9,6 @@ references: Advanced Systems Format (ASF) Specification, revision 01.20.03, sect
 
 **How it works.** MPEG Layer III is format tag 0x0055, and its WAVEFORMATEX carries twelve more bytes (the MPEGLAYER3WAVEFORMAT of mmreg.h). AC-3 is format tag 0x2000 (mmreg.h calls it WAVE_FORMAT_DVM), or the extensible format (0xFFFE) with the AC-3 sub-format, which ffmpeg writes for six channels. A media object is one or more whole frames, and the analysis hands each to the coding's parser as a packet.
 
-**What you see.** The stream of the coding, as in an MP3 or AC-3 file, under the Data Object. A media object put together from fragments in several packets is not one piece of the file, so it is not handed over and a finding says so. The sample rate and channels of the WAVEFORMATEX are compared with the frames'.
+**What you see.** The stream of the coding, as in an MP3 or AC-3 file, under the Data Object. A media object of MPEG audio put together from fragments in several packets is not one piece of the file, so it is not handed to that parser and a finding says so; an AC-3 frame fragmented the same way is read whole. The sample rate and channels of the WAVEFORMATEX are compared with the frames'.
 
 **In Encspect's test files.** ffmpeg's ASF muxer, copying elementary streams, writes the tags above, each media object a whole frame, and no object is fragmented across packets; the frames decode to the same samples as the source file's.

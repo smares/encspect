@@ -840,8 +840,8 @@ fixture("mpeg-audio-rate-differs", "MPEG audio at 44,100 Hz in a stream whose WA
         {"ffprobe": False, "reason": "ffprobe reads the frames' figures (44,100 Hz), not the WAVEFORMATEX's: that disagreement is what the fixture holds."})
 fixture("ac3-in-asf", "Six AC-3 syncframes as media objects under the format tag 0x2000: the AC-3 parser reads the stream.",
         lambda: routed_file(AC3_FORMAT, ac3_frames(6), size=1400), [])
-fixture("ac3-object-fragmented", "AC-3 whose third syncframe is a media object put together from fragments in two packets: it is not handed to the AC-3 parser.",
-        lambda: routed_file(AC3_FORMAT, ac3_frames(6), split=2, size=1400), [finding("asf.object-not-contiguous", "AC-3")])
+fixture("ac3-object-fragmented", "AC-3 whose third syncframe is a media object put together from fragments in two packets: the AC-3 parser reads the bytes it is handed, so all six frames are counted and the audio decodes as the unfragmented stream's does.",
+        lambda: routed_file(AC3_FORMAT, ac3_frames(6), split=2, size=1400), [])
 fixture("ac3-channels-differ", "Stereo AC-3 in a stream whose WAVEFORMATEX states 6 channels.",
         lambda: routed_file(m.wave_format(0x2000, 6, 48000, 24000, 768, 16), ac3_frames(6), size=1400), [finding("asf.channels-differ", "6 channels")],
         {"ffprobe": False, "reason": "ffprobe reads the frames' figures (2 channels), not the WAVEFORMATEX's: that disagreement is what the fixture holds."})
