@@ -64,6 +64,51 @@ REMUXES = [
 ]
 
 
+# name, the committed elementary stream it wraps, the stream the analyzer reports (codec, rate, channels): MPEG audio (format tag 0x0055) and AC-3 (0x2000, or the
+# extensible format with the AC-3 sub-format for six channels) as ffmpeg's ASF muxer writes them, `-c copy` from the elementary files, bit-exact.
+ROUTED = [
+    ("external-ffmpeg-mp3-cbr", "mpeg-audio/external-ffmpeg-cbr.mp3", "MPEG-1 Layer III", 44100, 2),
+    ("external-ffmpeg-mp3-mono", "mpeg-audio/external-ffmpeg-mono.mp3", "MPEG-1 Layer III", 44100, 1),
+    ("external-ffmpeg-mp3-vbr", "mpeg-audio/external-ffmpeg-vbr.mp3", "MPEG-1 Layer III", 44100, 2),
+    ("external-ffmpeg-ac3-51", "ac3/external-ffmpeg-5.1-448k.ac3", "AC-3", 48000, 6),
+    ("external-ffmpeg-ac3-stereo", "ac3/external-ffmpeg-stereo-192k.ac3", "AC-3", 48000, 2),
+    ("external-ffmpeg-ac3-mono", "ac3/external-ffmpeg-mono-96k.ac3", "AC-3", 48000, 1),
+]
+
+
+def routed_manifest(name, source, codec, rate, channels, path, command, tools):
+    source_path = OUT.parent / source
+    return {
+        "description": f"ffmpeg's -c copy remux of {source} into ASF: the stream's frames are the media objects, under the format tag ffmpeg's muxer gives the coding.",
+        "format": "ASF",
+        "encoder": FFMPEG_VERSION,
+        "command": command,
+        "input": {"file": source, "sha256": hashlib.sha256(source_path.read_bytes()).hexdigest()},
+        "sha256": hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest(),
+        "reproducible": True,
+        "streams": [{"codec": codec, "sample_rate": rate, "channels": channels}],
+        "ffprobe": tools,
+    }
+
+
+def write_routed(manifests_only):
+    for name, source, codec, rate, channels in ROUTED:
+        path = OUT / f"{name}.asf"
+        command = ["ffmpeg", "-i", source, "-c", "copy", "-bitexact", f"{name}.asf"]
+        if not manifests_only:
+            run(["ffmpeg", "-v", "error", "-y", "-bitexact", "-i", str(OUT.parent / source), "-c", "copy", str(path)])
+        elif not path.exists():
+            raise SystemExit(f"{path} is missing.")
+        manifest_path = OUT / f"{name}.expected.json"
+        if manifests_only and manifest_path.exists():
+            tools = json.loads(manifest_path.read_text(encoding="utf-8"))["ffprobe"]
+            tools["file_bytes"] = path.stat().st_size
+        else:
+            tools = probe(path)
+        manifest_path.write_text(json.dumps(routed_manifest(name, source, codec, rate, channels, path, command, tools), indent=1) + "\n", encoding="utf-8")
+        print(f"{name}: {path.stat().st_size} bytes")
+
+
 def run(command):
     return subprocess.run(command, check=True, capture_output=True, text=True).stdout
 
@@ -137,10 +182,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--manifests-only", action="store_true")
     parser.add_argument("--remuxes-only", action="store_true")
+    parser.add_argument("--routed-only", action="store_true", help="write only the MPEG audio and AC-3 files (ffmpeg -c copy of the committed elementary streams)")
     args = parser.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
     if args.remuxes_only:
         write_remuxes(False)
+        return 0
+    if args.routed_only:
+        write_routed(False)
         return 0
     for name, codec, channels, rate, bit_rate in FIXTURES:
         path = OUT / f"{name}.wma"
@@ -162,6 +211,7 @@ def main():
         manifest_path.write_text(json.dumps(manifest(name, codec, channels, rate, bit_rate, path, command, tools), indent=1) + "\n", encoding="utf-8")
         print(f"{name}: {path.stat().st_size} bytes")
     write_remuxes(args.manifests_only)
+    write_routed(args.manifests_only)
     # Microsoft's encoder files (import_windows_wma_fixtures.py): the same figures, from the files
     # and the provenance record the importer wrote next to each.
     for provenance_path in sorted(OUT.glob("external-windows-*.provenance.json")):

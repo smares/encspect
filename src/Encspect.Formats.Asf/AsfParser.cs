@@ -10,7 +10,8 @@ namespace Encspect.Formats.Asf;
 // streams) and the index objects. Every object becomes a node with its fields at their bytes. The
 // media objects of each audio stream are put together from their payloads and go to the codec
 // parser of their coding, WMA through the "wma", "wma-pro", "wma-lossless" and "wma-voice" routes
-// with the stream's WAVEFORMATEX and codec-specific data; the codec reports the stream.
+// with the stream's WAVEFORMATEX and codec-specific data, MPEG audio (format tag 0x0055) and AC-3 (0x2000) through "mpeg-audio" and "ac-3"; the codec
+// reports the stream.
 public sealed partial class AsfParser : IFormatParser
 {
     // The codec parsers' IDs by the format tag of an audio stream (ASF specification, section 11.1).
@@ -21,6 +22,8 @@ public sealed partial class AsfParser : IFormatParser
         [0x0162] = "wma-pro",
         [0x0163] = "wma-lossless",
         [0x000A] = "wma-voice",
+        [0x0055] = "mpeg-audio",
+        [0x2000] = "ac-3",
     };
 
     private readonly IReadOnlyDictionary<int, string> _routes;

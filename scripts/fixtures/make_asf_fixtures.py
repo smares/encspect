@@ -89,7 +89,7 @@ def fixture(name, description, builder, findings=(), crosscheck=None, protection
 
 def unparsed(streams):
     """The info finding for each audio stream whose coding has no parser: PCM and MPEG audio."""
-    names = {0x0001: "PCM", 0x0055: "MPEG Layer III"}
+    names = {0x0001: "PCM", 0x0050: "MPEG Layer I and II"}
     return [finding("asf.codec-not-analyzed", names[s["tag"]]) for s in streams if s.get("tag") in names and not s["encrypted"]]
 
 
@@ -474,13 +474,13 @@ damaged_fixture("derived-windows-wma92lossless-stereo-44k-16-damaged",
 
 def two_codecs():
     return m.asf_file(
-        [m.stream_properties(1, m.wave_format(0x0055, 2, 44100, 16000, 1, 0)),
+        [m.stream_properties(1, m.wave_format(0x0050, 2, 44100, 16000, 1, 0)),
          m.stream_properties(2, b"\x01\x02\x03", stream_type=m.VIDEO_MEDIA),
          m.stream_properties(3, struct.pack("<H", 1), stream_type=m.COMMAND_MEDIA)],
         objects_in([1], 3, 100, 512), 512, file_id=FILE_ID, play=500_000)
 
 
-fixture("other-streams", "An MPEG audio stream, a video stream and a command stream, none of which is analyzed.",
+fixture("other-streams", "An MPEG Layer I and II stream (format tag 0x0050, which has no parser), a video stream and a command stream, none of which is analyzed.",
         two_codecs,
         [finding("asf.stream-not-analyzed", "video"), finding("asf.stream-not-analyzed", "command"),
          finding("asf.stream-without-payloads", "Stream 2"), finding("asf.stream-without-payloads", "Stream 3")],
@@ -589,8 +589,8 @@ fixture("protection-object-ids", "An Advanced Content Encryption Object with an 
 fixture("protection-truncated", "A Content Encryption Object whose secret data length is 5000 bytes, in an object of 40.", 
         protected([wma(1, encrypted=True), m.obj(m.CONTENT_ENCRYPTION, struct.pack("<I", 5000) + b"secret" + struct.pack("<I", 4) + b"DRM\0")]),
         [DRM1_FINDING, ENCRYPTED, finding("asf.object-truncated", "Content Encryption Object")], ENCRYPTED_FFPROBE, scheme("Microsoft Digital Rights Manager version 1"))
-fixture("protected-mpeg-audio", "MPEG Layer III, which has no parser here, in a file with a Content Encryption Object: the stream is still reported, as protected and encrypted.",
-        protected([m.stream_properties(1, m.wave_format(0x0055, 2, 44100, 16000, 1, 0)), m.content_encryption()]), [DRM1_FINDING],
+fixture("protected-mpeg-audio", "MPEG Layer I and II (format tag 0x0050), which has no parser here, in a file with a Content Encryption Object: the stream is still reported, as protected and encrypted.",
+        protected([m.stream_properties(1, m.wave_format(0x0050, 2, 44100, 16000, 1, 0)), m.content_encryption()]), [DRM1_FINDING],
         {"ffprobe": False, "reason": "the MPEG audio payloads are not MPEG audio frames."},
         scheme("Microsoft Digital Rights Manager version 1"))
 fixture("protected-video-only", "A video stream whose Encrypted Content Flag is set, with a Content Encryption Object, and no audio: the stream is reported as protected and encrypted.",
@@ -763,6 +763,94 @@ def overrun_file():
 fixture("payload-overrun", "A payload whose length is 600 bytes in a packet of 256.", overrun_file,
         [finding("asf.payload-overrun", "extends past")],
         {"ffprobe": False, "reason": "the packet is damaged on purpose."})
+
+
+# ---- MPEG audio and AC-3 streams (format tags 0x0055 and 0x2000), whose media objects are the frames of the committed elementary streams ----
+
+FIXTURE_ROOT = OUT.parent
+
+
+def mp3_frames(count):
+    """The first frames of an MPEG-1 Layer III file, each at its length (144 x bit rate / sampling rate, plus the padding bit)."""
+    data = (FIXTURE_ROOT / "mpeg-audio" / "external-ffmpeg-cbr.mp3").read_bytes()
+    rates = [44100, 48000, 32000]
+    bitrates = [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320]
+    frames = []
+    at = 0
+    if data[:3] == b"ID3":
+        at = 10 + ((data[6] << 21) | (data[7] << 14) | (data[8] << 7) | data[9])
+    skip = 1  # the Info frame, which holds no audio
+    while len(frames) < count + skip:
+        header = data[at:at + 4]
+        assert header[0] == 0xFF and header[1] & 0xFE == 0xFA, f"no Layer III frame at {at}"
+        length = 144 * bitrates[header[2] >> 4] * 1000 // rates[(header[2] >> 2) & 3] + ((header[2] >> 1) & 1)
+        frames.append(data[at:at + length])
+        at += length
+    return frames[skip:]
+
+
+def ac3_frames(count):
+    """The first frames of a 192 kbit/s stereo AC-3 file: 768 bytes each."""
+    data = (FIXTURE_ROOT / "ac3" / "external-ffmpeg-stereo-192k.ac3").read_bytes()
+    frames = [data[i * 768:(i + 1) * 768] for i in range(count)]
+    assert all(f[:2] == b"\x0b\x77" for f in frames)
+    return frames
+
+
+MP3_FORMAT = m.wave_format(0x0055, 2, 44100, 16000, 1, 0, struct.pack("<HIHHH", 1, 2, 417, 1, 0))
+AC3_FORMAT = m.wave_format(0x2000, 2, 48000, 24000, 768, 16)
+
+
+def object_packets(frames, split=None, size=1024, step_ms=26):
+    """One media object per frame, two to a packet; the frame at index split starts at the end of a packet and ends in the next (a media object put together from two fragments)."""
+    layout = m.Layout()
+    packets = []
+    batch = []
+    send = 0
+    for i, frame in enumerate(frames):
+        if i == split:
+            cut = len(frame) // 2
+            packets.append(m.packet(batch + [m.Payload(1, i + 1, frame[:cut], 0, len(frame), i * step_ms)], size, layout, send_time=send))
+            batch = [m.Payload(1, i + 1, frame[cut:], cut, len(frame), i * step_ms)]
+            send += step_ms
+            continue
+        batch.append(m.Payload(1, i + 1, frame, 0, len(frame), i * step_ms))
+        try:
+            m.packet(batch, size, layout)
+        except ValueError:
+            batch.pop()
+            packets.append(m.packet(batch, size, layout, send_time=send))
+            send += step_ms
+            batch = [m.Payload(1, i + 1, frame, 0, len(frame), i * step_ms)]
+    if batch:
+        packets.append(m.packet(batch, size, layout, send_time=send))
+    return packets
+
+
+def routed_file(format_bytes, frames, split=None, encrypted=False, children=(), size=1024):
+    return m.asf_file([m.stream_properties(1, format_bytes, encrypted=encrypted), *children], object_packets(frames, split, size), size, file_id=FILE_ID, play=len(frames) * 260_000)
+
+
+fixture("mpeg-audio-in-asf", "Eight frames of MPEG-1 Layer III as media objects under the format tag 0x0055: the MPEG audio parser reads the stream.",
+        lambda: routed_file(MP3_FORMAT, mp3_frames(8)), [])
+fixture("mpeg-audio-object-fragmented", "MPEG audio whose fourth frame is a media object put together from fragments in two packets: its bytes are not one piece of the file, so it is not handed to the MPEG audio parser, and the frame after it, whose main data begins in the lost one, says so.",
+        lambda: routed_file(MP3_FORMAT, mp3_frames(8), split=3), [finding("asf.object-not-contiguous", "MPEG audio"), finding("mpeg-audio.main-data-overlap", "overlaps the previous")])
+fixture("mpeg-audio-rate-differs", "MPEG audio at 44,100 Hz in a stream whose WAVEFORMATEX states 48,000 Hz.",
+        lambda: routed_file(m.wave_format(0x0055, 2, 48000, 16000, 1, 0, struct.pack("<HIHHH", 1, 2, 417, 1, 0)), mp3_frames(8)), [finding("asf.sample-rate-differs", "48000 Hz")],
+        {"ffprobe": False, "reason": "ffprobe reads the frames' figures (44,100 Hz), not the WAVEFORMATEX's: that disagreement is what the fixture holds."})
+fixture("ac3-in-asf", "Six AC-3 syncframes as media objects under the format tag 0x2000: the AC-3 parser reads the stream.",
+        lambda: routed_file(AC3_FORMAT, ac3_frames(6), size=1400), [])
+fixture("ac3-object-fragmented", "AC-3 whose third syncframe is a media object put together from fragments in two packets: the AC-3 parser reads the bytes it is handed, so all six frames are counted and the audio decodes as the unfragmented stream's does.",
+        lambda: routed_file(AC3_FORMAT, ac3_frames(6), split=2, size=1400), [])
+fixture("ac3-channels-differ", "Stereo AC-3 in a stream whose WAVEFORMATEX states 6 channels.",
+        lambda: routed_file(m.wave_format(0x2000, 6, 48000, 24000, 768, 16), ac3_frames(6), size=1400), [finding("asf.channels-differ", "6 channels")],
+        {"ffprobe": False, "reason": "ffprobe reads the frames' figures (2 channels), not the WAVEFORMATEX's: that disagreement is what the fixture holds."})
+fixture("protected-mpeg-layer3", "MPEG Layer III (format tag 0x0055) in a file with a Content Encryption Object: the MPEG audio parser describes nothing of the encrypted media objects, so the stream is reported from the header, as protected.",
+        lambda: routed_file(MP3_FORMAT, mp3_frames(4), encrypted=True, children=[m.content_encryption()]), [DRM1_FINDING, ENCRYPTED], ENCRYPTED_FFPROBE,
+        scheme("Microsoft Digital Rights Manager version 1"))
+fixture("protected-ac3", "AC-3 (format tag 0x2000) in a file with a Content Encryption Object: the stream is described by its header, as protected.",
+        lambda: routed_file(AC3_FORMAT, ac3_frames(4), encrypted=True, size=1400, children=[m.content_encryption()]), [DRM1_FINDING, ENCRYPTED], ENCRYPTED_FFPROBE,
+        scheme("Microsoft Digital Rights Manager version 1"))
 
 
 def main():

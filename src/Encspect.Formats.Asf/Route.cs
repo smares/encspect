@@ -183,11 +183,62 @@ public sealed partial class AsfParser
                 continue;
             }
 
-            bool routed = state.Context.ParsePackets(codec, state.DataNode, MediaObjects(state, stream.Number), configuration);
+            IEnumerable<MappedBytes> objects = MediaObjects(state, stream.Number);
+            if (codec == "mpeg-audio")
+            {
+                // The MPEG audio parser reads the packets again from the file, as the bytes of one stretch of it, and a frame that crosses the gap between two fragments would
+                // read the packet header there: a media object put together from fragments in several packets is not handed over. The AC-3 parser reads the bytes it is given.
+                objects = ContiguousObjects(state, stream.Number, anchor, objects);
+                configuration = configuration with { Source = state.Reader };
+            }
+
+            int streamsBefore = state.Context.Streams.Count;
+            bool routed = state.Context.ParsePackets(codec, state.DataNode, objects, configuration);
             if (!routed)
             {
                 state.Findings.AddNow(Severity.Info, "asf.codec-not-analyzed",
                     $"Stream {stream.Number} is coded as {CodecNameOf(format.EffectiveTag)}, but the analyzer has no parser for the {codec} coding.", anchor);
+            }
+            else if (codec is "mpeg-audio" or "ac-3")
+            {
+                CompareStreams(state, stream, format, streamsBefore, anchor);
+            }
+        }
+    }
+
+    // The media objects that lie in one piece of the file (MPEG audio).
+    private static IEnumerable<MappedBytes> ContiguousObjects(State state, int streamNumber, Node anchor, IEnumerable<MappedBytes> objects)
+    {
+        foreach (MappedBytes media in objects)
+        {
+            if (media.IsOpaque || media.Length == 0 || media.FileRanges(0, media.Length).Count == 1)
+            {
+                yield return media;
+                continue;
+            }
+
+            state.Findings.Add(Severity.Info, "asf.object-not-contiguous", streamNumber, anchor, n =>
+                $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} {(n == 1 ? "is" : "are")} put together from fragments in several packets, whose bytes are not one piece of the file, "
+                + $"which the MPEG audio parser reads; {(n == 1 ? "it is" : "they are")} not handed to it.");
+        }
+    }
+
+    // What the stream's WAVEFORMATEX states against what the codec parser found in the frames: the sample rate and the channels.
+    private static void CompareStreams(State state, StreamEntry entry, WaveFormat format, int streamsBefore, Node anchor)
+    {
+        for (int i = streamsBefore; i < state.Context.Streams.Count; i++)
+        {
+            StreamInfo stream = state.Context.Streams[i];
+            if (stream.SampleRate != 0 && format.SamplesPerSecond != 0 && stream.SampleRate != format.SamplesPerSecond)
+            {
+                state.Findings.AddNow(Severity.Warning, "asf.sample-rate-differs",
+                    $"Stream {entry.Number} states a sampling rate of {format.SamplesPerSecond} Hz in its WAVEFORMATEX, but its {stream.Codec} frames are coded at {stream.SampleRate} Hz.", anchor);
+            }
+
+            if (stream.Channels != 0 && format.Channels != 0 && stream.Channels != format.Channels)
+            {
+                state.Findings.AddNow(Severity.Warning, "asf.channels-differ",
+                    $"Stream {entry.Number} states {Counts.Of(format.Channels, "channel", "channels")} in its WAVEFORMATEX, but its {stream.Codec} frames hold {stream.Channels}.", anchor);
             }
         }
     }
@@ -222,7 +273,7 @@ public sealed partial class AsfParser
         int before = state.Context.Streams.Count;
         if (configuration is not null)
         {
-            state.Context.ParsePackets(codec, state.DataNode!, [], configuration with { AreSamplesEncrypted = true });
+            state.Context.ParsePackets(codec, state.DataNode!, [], configuration with { AreSamplesEncrypted = true, Source = state.Reader });
         }
 
         if (state.Context.Streams.Count == before)

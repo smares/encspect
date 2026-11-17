@@ -44,8 +44,8 @@ Which container hands which codec to its codec parser, and which codecs are deco
 | Codec | MP4 | Matroska | Ogg | ASF | WAV, Wave64, BW64 | Own file | Decoded |
 |---|---|---|---|---|---|---|---|
 | AAC | routed | routed | not planned | not planned | routed, as the ADTS frames of IEC 61937 bursts | ADTS, ADIF | no |
-| MPEG audio | routed, as packets, whatever the number of stretches | routed (`A_MPEG/L1`, `L2`, `L3`) | not planned | planned | routed, by the format tag or the sub-format GUID, and as IEC 61937 bursts | yes | yes (measured) |
-| AC-3, E-AC-3 | routed | routed | not planned | planned (AC-3) | routed, by the format tag or the sub-format GUID, and as IEC 61937 bursts | yes | yes (measured) |
+| MPEG audio | routed, as packets, whatever the number of stretches | routed (`A_MPEG/L1`, `L2`, `L3`) | not planned | routed (format tag 0x0055) | routed, by the format tag or the sub-format GUID, and as IEC 61937 bursts | yes | yes (measured) |
+| AC-3, E-AC-3 | routed | routed | not planned | routed (AC-3, format tag 0x2000; E-AC-3 not planned) | routed, by the format tag or the sub-format GUID, and as IEC 61937 bursts | yes | yes (measured) |
 | DTS | routed | routed | not planned | not planned | routed, by the format tag, as a stream in 16-bit stereo PCM samples, and as IEC 61937 bursts | yes, and `.dtshd` | no |
 | Vorbis | not planned | routed | routed | not planned | not planned | no | yes (measured) |
 | Opus | routed | routed | routed | not planned | not planned | no | yes (measured) |

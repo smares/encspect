@@ -1,0 +1,268 @@
+{
+ "description": "Eight frames of MPEG-1 Layer III as media objects under the format tag 0x0055: the MPEG audio parser reads the stream.",
+ "format": "ASF",
+ "length": 4434,
+ "objects": [
+  [
+   "Header Object",
+   0,
+   288
+  ],
+  [
+   "Data Object",
+   288,
+   4146
+  ]
+ ],
+ "header_objects": [
+  [
+   "File Properties Object",
+   30,
+   104
+  ],
+  [
+   "Stream Properties Object",
+   134,
+   108
+  ],
+  [
+   "Header Extension Object",
+   242,
+   46
+  ]
+ ],
+ "extension_objects": [],
+ "streams": [
+  {
+   "number": 1,
+   "type": "F8699E40-5B4D-11CF-A8FD-00805F5C442B",
+   "error_correction": "20FB5700-5B55-11CF-A8FD-00805F5C442B",
+   "encrypted": false,
+   "type_length": 30,
+   "tag": 85,
+   "channels": 2,
+   "rate": 44100,
+   "avg_bytes": 16000,
+   "block_align": 1,
+   "bits": 0,
+   "codec_data": "010002000000a10101000000"
+  }
+ ],
+ "packets": [
+  [
+   338,
+   1024,
+   2
+  ],
+  [
+   1362,
+   1024,
+   2
+  ],
+  [
+   2386,
+   1024,
+   2
+  ],
+  [
+   3410,
+   1024,
+   2
+  ]
+ ],
+ "payloads": [
+  [
+   0,
+   1,
+   1,
+   0,
+   8,
+   417,
+   false,
+   true
+  ],
+  [
+   0,
+   1,
+   2,
+   0,
+   8,
+   418,
+   false,
+   true
+  ],
+  [
+   1,
+   1,
+   3,
+   0,
+   8,
+   418,
+   false,
+   true
+  ],
+  [
+   1,
+   1,
+   4,
+   0,
+   8,
+   418,
+   false,
+   true
+  ],
+  [
+   2,
+   1,
+   5,
+   0,
+   8,
+   418,
+   false,
+   true
+  ],
+  [
+   2,
+   1,
+   6,
+   0,
+   8,
+   418,
+   false,
+   true
+  ],
+  [
+   3,
+   1,
+   7,
+   0,
+   8,
+   418,
+   false,
+   true
+  ],
+  [
+   3,
+   1,
+   8,
+   0,
+   8,
+   418,
+   false,
+   true
+  ]
+ ],
+ "media_objects": [
+  [
+   1,
+   1,
+   417,
+   0,
+   [
+    [
+     369,
+     417
+    ]
+   ]
+  ],
+  [
+   1,
+   2,
+   418,
+   26,
+   [
+    [
+     803,
+     418
+    ]
+   ]
+  ],
+  [
+   1,
+   3,
+   418,
+   52,
+   [
+    [
+     1393,
+     418
+    ]
+   ]
+  ],
+  [
+   1,
+   4,
+   418,
+   78,
+   [
+    [
+     1828,
+     418
+    ]
+   ]
+  ],
+  [
+   1,
+   5,
+   418,
+   104,
+   [
+    [
+     2417,
+     418
+    ]
+   ]
+  ],
+  [
+   1,
+   6,
+   418,
+   130,
+   [
+    [
+     2852,
+     418
+    ]
+   ]
+  ],
+  [
+   1,
+   7,
+   418,
+   156,
+   [
+    [
+     3441,
+     418
+    ]
+   ]
+  ],
+  [
+   1,
+   8,
+   418,
+   182,
+   [
+    [
+     3876,
+     418
+    ]
+   ]
+  ]
+ ],
+ "file": {
+  "file_size": 4434,
+  "packets": 4,
+  "play_duration": 2080000,
+  "send_duration": 0,
+  "preroll": 0,
+  "flags": 2,
+  "min_packet": 1024,
+  "max_packet": 1024,
+  "max_bitrate": 0
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true
+ }
+}

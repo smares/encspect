@@ -67,7 +67,8 @@ public sealed class Ac3CodecParser(string id) : ICodecParser
 
         region.Node.Value = encrypted ? NodeValue.Text("frames not read: encrypted") : NodeValue.Integer(analysis.Frames.Count, "frames", "frame");
 
-        if (context.Configuration is { } configuration)
+        // A container that states a WAVEFORMATEX (ASF) has no AC3SpecificBox, so there is no configuration to read field by field.
+        if (context.Configuration is { Format: null } configuration)
         {
             Configuration(analysis, configuration, observed, id == Eac3);
         }

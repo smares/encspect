@@ -106,7 +106,8 @@ public partial class CrossFormatNamingTests
         Assert.Equal("MPEG Layer I and II", Formats.Asf.AsfParser.CodecNameOf(0x0050));
         Assert.Equal("PCM (floating-point)", Formats.Asf.AsfParser.CodecNameOf(0x0003));
 
-        Assert.Equal("Other", Formats.Asf.AsfParser.CodecNameOf(0x2000));
+        Assert.Equal("AC-3", Formats.Asf.AsfParser.CodecNameOf(0x2000));
+        Assert.Equal("Other", Formats.Asf.AsfParser.CodecNameOf(0x0002));
         Assert.Equal("AAC LC", Formats.Matroska.Codecs.NameOf("A_AAC/MPEG4/LC"));
         Assert.Equal("HE-AAC", Formats.Matroska.Codecs.NameOf("A_AAC/MPEG2/LC/SBR"));
         Assert.Equal("AAC Main", Formats.Matroska.Codecs.NameOf("A_AAC/MPEG4/MAIN"));

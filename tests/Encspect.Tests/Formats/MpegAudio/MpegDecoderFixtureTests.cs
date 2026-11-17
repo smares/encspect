@@ -23,6 +23,16 @@ public class MpegDecoderFixtureTests
                 data.Add("mpeg-audio/" + Path.GetRelativePath(directory, file).Replace('\\', '/'));
             }
 
+            // The ASF files whose MPEG audio stream a decoder takes (format tag 0x0055).
+            foreach (string file in Directory.EnumerateFiles(Path.Combine(Fixtures.FixtureDirectory, "asf"), "*.asf").Order(StringComparer.Ordinal))
+            {
+                string name = "asf/" + Path.GetFileName(file);
+                if (Fixtures.AnalyzeMpeg(name).Streams.Any(s => s.Codec.StartsWith("MPEG-", StringComparison.Ordinal) && s.Verification is not null))
+                {
+                    data.Add(name);
+                }
+            }
+
             return data;
         }
     }

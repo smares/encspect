@@ -1,0 +1,42 @@
+{
+ "description": "ffmpeg's -c copy remux of mpeg-audio/external-ffmpeg-mono.mp3 into ASF: the stream's frames are the media objects, under the format tag ffmpeg's muxer gives the coding.",
+ "format": "ASF",
+ "encoder": "ffmpeg version 6.1.1-3ubuntu5",
+ "command": [
+  "ffmpeg",
+  "-i",
+  "mpeg-audio/external-ffmpeg-mono.mp3",
+  "-c",
+  "copy",
+  "-bitexact",
+  "external-ffmpeg-mp3-mono.asf"
+ ],
+ "input": {
+  "file": "mpeg-audio/external-ffmpeg-mono.mp3",
+  "sha256": "b57d5d57049644bcebf556e2c02470bd6358e8d1a96580faa63e72f8c0fcd67a"
+ },
+ "sha256": "29b4bd7e2abc972ee8341d0531dbeb1513026b37c1800f5dfc0fef75df801402",
+ "reproducible": true,
+ "streams": [
+  {
+   "codec": "MPEG-1 Layer III",
+   "sample_rate": 44100,
+   "channels": 1
+  }
+ ],
+ "ffprobe": {
+  "codec": "mp3",
+  "channels": 1,
+  "rate": 44100,
+  "block_align": null,
+  "bit_rate": 64000,
+  "extradata_size": 12,
+  "packets": 21,
+  "packet_sizes": [
+   208,
+   209
+  ],
+  "decoded_samples": 24192,
+  "file_bytes": 6908
+ }
+}
