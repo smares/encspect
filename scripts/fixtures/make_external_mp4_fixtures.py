@@ -105,8 +105,8 @@ CODED = {"FLAC", "Dolby TrueHD"}
 MEDIAINFO_FORMAT_NOTE = "MediaInfo 24.01 names an fpcm entry by its code (\"fpcm\") and not as PCM; the cross-check compares the format of the integer PCM entries only."
 
 
-def tables(data):
-    """The sample offsets and sizes of the first track, from stsz, stsc and stco as ISO/IEC 14496-12 8.7 lays them out, the media header's timescale and duration, and the
+def tables(data, track=0):
+    """The sample offsets and sizes of a track (the first by default), from stsz, stsc and stco as ISO/IEC 14496-12 8.7 lays them out, the media header's timescale and duration, and the
     duration of each sample from stts."""
     def children(start, end):
         while start + 8 <= end:
@@ -122,7 +122,8 @@ def tables(data):
                 return find(begin + 8, finish, path[1:]) if len(path) > 1 else (begin, finish)
         return None
 
-    trak = find(0, len(data), ["moov", "trak"])
+    moov = find(0, len(data), ["moov"])
+    trak = [(begin, finish) for kind, begin, finish in children(moov[0] + 8, moov[1]) if kind == "trak"][track]
     stbl = find(trak[0] + 8, trak[1], ["mdia", "minf", "stbl"])
     mdhd = find(trak[0] + 8, trak[1], ["mdia", "mdhd"])
     stsz = find(stbl[0] + 8, stbl[1], ["stsz"])
@@ -151,7 +152,7 @@ def tables(data):
 
 
 CONTAINERS = {"moov", "trak", "mdia", "minf", "stbl", "dinf", "edts", "udta", "wave", "ilst"}
-ENTRIES = {"fLaC", "mlpa", "ipcm", "fpcm", "sowt", "twos", "in24", "in32", "fl32", "fl64", "raw ", "alaw", "ulaw"}
+ENTRIES = {"mp4a", "fLaC", "mlpa", "ipcm", "fpcm", "sowt", "twos", "in24", "in32", "fl32", "fl64", "raw ", "alaw", "ulaw"}
 
 
 def boxes(data):
