@@ -7,9 +7,6 @@ namespace Encspect.Formats.Dts;
 // up. A frame's point is its offset, its length and its samples, 16 bytes; its bitrate follows from them.
 internal sealed class StreamFigures(int sampleRate)
 {
-    // Where a position of the records is in the file, for a stream whose units are in pieces; null where they are positions of the file.
-    public Func<long, long>? OffsetOf { get; set; }
-
     private readonly ChunkedList<Point> _points = new();
     private readonly List<(long Bits, long Samples)> _seconds = [];
     private readonly List<int> _firstUnits = [];
@@ -294,7 +291,7 @@ internal sealed class StreamFigures(int sampleRate)
             }
 
             Point point = _points[i];
-            offsets[i] = OffsetOf is null ? point.Offset : OffsetOf(point.Offset);
+            offsets[i] = point.Offset;
             bitrates[i] = Bitrate(point.Length, point.Samples);
         }
 

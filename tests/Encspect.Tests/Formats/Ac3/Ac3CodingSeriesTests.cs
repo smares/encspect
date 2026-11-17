@@ -21,7 +21,8 @@ public class Ac3CodingSeriesTests
     public static TheoryData<string> Names()
     {
         var data = new TheoryData<string>();
-        foreach (string name in DescriptionTests.FixtureNames().Where(n => n.StartsWith("ac3/", StringComparison.Ordinal) || n.Contains("ac3", StringComparison.Ordinal)))
+        // The frames of a header-stripped track all start in the ContentCompSettings, so no frame is found by its offset, which this test does.
+        foreach (string name in DescriptionTests.FixtureNames().Where(n => (n.StartsWith("ac3/", StringComparison.Ordinal) || n.Contains("ac3", StringComparison.Ordinal)) && !n.Contains("header-stripped", StringComparison.Ordinal)))
         {
             data.Add(name);
         }

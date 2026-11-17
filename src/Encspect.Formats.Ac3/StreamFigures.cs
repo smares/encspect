@@ -8,9 +8,6 @@ namespace Encspect.Formats.Ac3;
 // bytes; its bitrate follows from them.
 internal sealed class StreamFigures(int sampleRate)
 {
-    // Where a position of the records is in the file, for a stream whose frames are in pieces; null where they are positions of the file.
-    public Func<long, long>? OffsetOf { get; set; }
-
     private readonly ChunkedList<ulong> _points = new();
     private readonly List<(long Bits, long Samples)> _seconds = [];
 
@@ -111,7 +108,7 @@ internal sealed class StreamFigures(int sampleRate)
             }
 
             ulong point = _points[i];
-            offsets[i] = OffsetOf is null ? point >> 20 : OffsetOf((long)(point >> 20));
+            offsets[i] = point >> 20;
             bitrates[i] = Bitrate((int)((point >> 3) & 0x1FFFF), (int)(point & 7) * 256);
         }
 

@@ -114,9 +114,6 @@ internal sealed class UnitPieces
         return ranges;
     }
 
-    // The file offset of the unit's first byte at a position of the records.
-    public long FirstFile(long position) => !IsEmpty && TryGet(position, out List<ByteRange> pieces) ? pieces[0].Offset : position;
-
     // The node as the file has it, where it lies in a unit in pieces: at the first piece's bytes it touches, to the end of the last, with Ranges where they are several; its children
     // the same, built when they are read where the node's are.
     public Node Place(Node node)
