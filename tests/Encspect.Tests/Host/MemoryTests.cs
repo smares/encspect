@@ -1253,6 +1253,74 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         GC.KeepAlive(largeReport);
     }
 
+    // Two MP3 tracks of the same frames, a chunk of one and then a chunk of the other all through the file, so that each track's frames lie in as many stretches as it has frames: the
+    // lookups over the stretches are by binary search, so the time follows the frames as an MP3 file's does, and what is kept follows them too.
+    private static byte[] TwoMp3TracksInterleaved(int frames)
+    {
+        byte[] plain = Mp3InChunks(frames, true);
+        var sizes = new List<int>();
+        for (int at = 0; at < plain.Length;)
+        {
+            int length = new Encspect.Formats.MpegAudio.MpegHeader(System.Buffers.Binary.BinaryPrimitives.ReadUInt32BigEndian(plain.AsSpan(at))).FrameLength();
+            sizes.Add(length);
+            at += length;
+        }
+
+        var payload = new List<byte>();
+        var offsets = new List<long>[] { [], [] };
+        for (int i = 0, at = 0; i < sizes.Count; i++)
+        {
+            for (int track = 0; track < 2; track++)
+            {
+                offsets[track].Add(payload.Count);
+                payload.AddRange(plain.AsSpan(at, sizes[i]).ToArray());
+            }
+
+            at += sizes[i];
+        }
+
+        byte[] entry = Mp4Builder.AacEntry();
+        entry[Array.IndexOf(entry, (byte)0x40)] = 0x6B;
+        byte[] Trak(int id, long offset) => Mp4Builder.Trak(id, entry, Mp4Builder.Stts(frames, 1152), Mp4Builder.Stsc(1), Mp4Builder.Sizes(sizes), Mp4Builder.ChunkOffsets(offsets[id - 1].Select(o => o + offset)));
+        byte[] ftyp = Mp4Builder.Ftyp();
+        long moovLength = Mp4Builder.Box("moov", Mp4Builder.Mvhd(), Trak(1, 0), Trak(2, 0)).Length;
+        long start = ftyp.Length + moovLength + 8;
+        return Mp4Builder.Join(ftyp, Mp4Builder.Box("moov", Mp4Builder.Mvhd(), Trak(1, start), Trak(2, start)), Mp4Builder.Box("mdat", [.. payload]));
+    }
+
+    [Fact]
+    public void TheStretchesOfInterleavedMpegAudioTracksCostTimeAndMemoryByTheirFrames()
+    {
+        const int frames = 20_000;
+        byte[] interleaved = TwoMp3TracksInterleaved(frames);
+        byte[] plain = Mp3InChunks(frames, true);
+        Analyzer.CreateDefault().Analyze("warm.mp3", new MemoryStream(Mp3InChunks(200, true)));
+        Analyzer.CreateDefault().Analyze("warm.mp4", new MemoryStream(TwoMp3TracksInterleaved(200)));
+
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        Analyzer.CreateDefault().Analyze("plain.mp3", new MemoryStream(plain));
+        TimeSpan plainTime = watch.Elapsed;
+        watch.Restart();
+        Report report = Analyzer.CreateDefault().Analyze("tracks.mp4", new MemoryStream(interleaved));
+        TimeSpan tracksTime = watch.Elapsed;
+
+        Assert.Equal(2, report.Streams.Count);
+        Assert.All(report.Streams, st => Assert.Equal(frames * 1152, st.Samples));
+        Output.WriteLine($"{plainTime.TotalSeconds:F2} s for the MP3 file, {tracksTime.TotalSeconds:F2} s for two interleaved tracks of the same frames");
+        // Two tracks are twice the frames; a scan of every stretch for every node would be a hundred times that.
+        Assert.True(tracksTime < (plainTime * 6) + TimeSpan.FromSeconds(2), $"{tracksTime} for the tracks, {plainTime} for the file.");
+
+        (_, long kept, long peak) = Measure("tracks.mp4", interleaved, TwoMp3TracksInterleaved(200));
+        (_, long smallKept, long smallPeak) = Measure("tracks-small.mp4", TwoMp3TracksInterleaved(2_000), TwoMp3TracksInterleaved(200));
+        (_, long plainKept, long plainPeak) = Measure("plain.mp3", plain, Mp3InChunks(200, true));
+        (_, long plainSmallKept, long plainSmallPeak) = Measure("plain-small.mp3", Mp3InChunks(2_000, true), Mp3InChunks(200, true));
+        long perFrame = (kept - smallKept) / (2 * 18_000);
+        long plainPerFrame = (plainKept - plainSmallKept) / 18_000;
+        Output.WriteLine($"{perFrame} bytes kept per frame ({plainPerFrame} in a file), the peak grew by {peak - smallPeak} ({plainPeak - plainSmallPeak} in a file)");
+        Assert.True(perFrame <= plainPerFrame + 100, $"The report keeps {perFrame} bytes for each further frame, {plainPerFrame} in a file.");
+        Assert.True(peak - smallPeak <= 2 * (plainPeak - plainSmallPeak) + 8_000_000, $"The live heap grew by {peak - smallPeak} bytes.");
+    }
+
     // A headerless Matroska TTA track whose Channels element states 2^26 channels: nothing is allocated for them (the parser once took 40 bytes for each).
     [Fact]
     public void ATtaTrackWithManyChannelsAllocatesNothingForThem()

@@ -586,13 +586,10 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
     private static List<ByteRange> Pieces(IReadOnlyList<ByteRange> stretches, long start, long end)
     {
         var pieces = new List<ByteRange>();
-        for (int i = 0; i < stretches.Count; i++)
+        for (int i = BlockReader.FirstEndingAfter(stretches, start); i < stretches.Count && stretches[i].Offset < end; i++)
         {
             ByteRange r = stretches[i];
-            if (r.End > start && r.Offset < end)
-            {
-                pieces.Add(new ByteRange(Math.Max(r.Offset, start), Math.Min(r.End, end) - Math.Max(r.Offset, start)));
-            }
+            pieces.Add(new ByteRange(Math.Max(r.Offset, start), Math.Min(r.End, end) - Math.Max(r.Offset, start)));
         }
 
         return pieces;
@@ -604,10 +601,13 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         if (node.Ranges is null)
         {
             List<ByteRange> inside = Pieces(stretches, node.Offset, node.End);
-            if (inside.Count > 1)
+            if (inside.Count <= 1)
             {
-                node.Ranges = inside;
+                // The node lies in one stretch, and so does everything under it.
+                return;
             }
+
+            node.Ranges = inside;
         }
 
         foreach (Node child in node.Children)

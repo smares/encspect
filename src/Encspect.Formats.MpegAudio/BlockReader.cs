@@ -17,17 +17,9 @@ internal sealed class BlockReader(ByteReader reader)
     // of a stretch is the one at the start of the next.
     public IReadOnlyList<ByteRange>? Stretches { get; init; }
 
-    // Where the byte at position continues the stream: the position itself inside a stretch, the start of the next stretch at the end of one or in the container's bytes
-    // between two, and the end of the last stretch past it.
-    public long Hop(long position) => Hop(position, true);
-
-    private long Hop(long position, bool skipsTail)
+    // The index of the first stretch that ends after position, or the count where none does: a binary search, since a stretch is looked up for every node and frame.
+    public static int FirstEndingAfter(IReadOnlyList<ByteRange> stretches, long position)
     {
-        if (Stretches is not { } stretches)
-        {
-            return position;
-        }
-
         int low = 0;
         int high = stretches.Count - 1;
         while (low <= high)
@@ -42,6 +34,22 @@ internal sealed class BlockReader(ByteReader reader)
                 high = middle - 1;
             }
         }
+
+        return low;
+    }
+
+    // Where the byte at position continues the stream: the position itself inside a stretch, the start of the next stretch at the end of one or in the container's bytes
+    // between two, and the end of the last stretch past it.
+    public long Hop(long position) => Hop(position, true);
+
+    private long Hop(long position, bool skipsTail)
+    {
+        if (Stretches is not { } stretches)
+        {
+            return position;
+        }
+
+        int low = FirstEndingAfter(stretches, position);
 
         if (low >= stretches.Count)
         {
@@ -110,20 +118,7 @@ internal sealed class BlockReader(ByteReader reader)
             return true;
         }
 
-        int low = 0;
-        int high = stretches.Count - 1;
-        while (low <= high)
-        {
-            int middle = (low + high) >> 1;
-            if (stretches[middle].End <= offset)
-            {
-                low = middle + 1;
-            }
-            else
-            {
-                high = middle - 1;
-            }
-        }
+        int low = FirstEndingAfter(stretches, offset);
 
         return low < stretches.Count && stretches[low].Offset <= offset && offset + count <= stretches[low].End;
     }
@@ -137,15 +132,8 @@ internal sealed class BlockReader(ByteReader reader)
         }
 
         long at = Hop(position, false);
-        foreach (ByteRange range in stretches)
-        {
-            if (at >= range.Offset && at < range.End)
-            {
-                return range.End;
-            }
-        }
-
-        return reader.End;
+        int index = FirstEndingAfter(stretches, at);
+        return index < stretches.Count && at >= stretches[index].Offset ? stretches[index].End : reader.End;
     }
 
     public long Start => reader.Start;
