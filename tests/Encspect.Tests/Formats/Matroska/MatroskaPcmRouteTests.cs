@@ -9,7 +9,7 @@ namespace Encspect.Tests;
 // the codec ID and the Audio element, and a track's samples are read only where the decoder runs.
 public class MatroskaPcmRouteTests
 {
-    private static readonly string[] HandMade = ["matroska/pcm-three-layouts.mka", "matroska/pcm-default-rate.mka"];
+    private static readonly string[] HandMade = ["matroska/pcm-default-rate.mka"];
 
     public static TheoryData<string> Names
     {
@@ -105,6 +105,20 @@ public class MatroskaPcmRouteTests
     }
 
     private static string Tree(Node node) => $"{node.Name}|{node.Value}|{node.Offset}+{node.Length}({string.Concat(node.Children.Select(Tree))})";
+
+    // Each track of a file of several lays out its samples as its own entry says, and each has a session of its own.
+    [Fact]
+    public void TheTracksOfOneFileAreDecodedEachWithItsOwnLayout()
+    {
+        var sink = new PcmHashingSink();
+        using FileStream file = File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, "matroska/pcm-three-layouts.mka"));
+        Report report = Analyzer.CreateDefault().Analyze("t.mka", file, new AnalysisOptions { Decoding = new DecodeOptions { Output = sink.Declare } });
+
+        Assert.Equal([64, 64, 256], report.Streams.Select(s => s.Samples));
+        Assert.All(report.Streams, s => Assert.Equal(DecodeStatus.Decoded, s.Verification!.Decoding));
+        Assert.Equal([64, 64, 256], report.Streams.Select(s => s.Verification!.DecodedSamples));
+        Assert.Equal(3, sink.Declared);
+    }
 
     // The layout is the codec ID's and the BitDepth's: 8-bit samples are unsigned, the other integers signed, in the byte order the ID names.
     [Theory]
