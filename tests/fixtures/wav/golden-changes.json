@@ -38,31 +38,11 @@
       "key": "verification"
     },
     {
-      "scope": "node",
-      "parent": [
-        "RIFF",
-        "Data Chunk"
-      ],
-      "name": "MPEG Audio"
-    },
-    {
       "scope": "finding",
       "code": "wav.iec61937-in-pcm"
     }
   ],
   "removed": [
-    {
-      "parent": [
-        "RIFF",
-        "Data Chunk"
-      ],
-      "name": "Statistics",
-      "goldens": [
-        "tests/fixtures/wav/external-iec61937-mp2-lsf-24000.report.json",
-        "tests/fixtures/wav/external-iec61937-mp2-stereo-192k.report.json",
-        "tests/fixtures/wav/external-iec61937-mp3-stereo-128k.report.json"
-      ]
-    },
     {
       "scope": "finding",
       "code": "wav.iec61937-payload-not-analyzed",
@@ -118,6 +98,22 @@
         "tests/fixtures/wav/external-iec61937-mp2-stereo-192k.report.json",
         "tests/fixtures/wav/external-iec61937-mp3-stereo-128k.report.json"
       ]
+    },
+    {
+      "path": [
+        "RIFF",
+        "Data Chunk",
+        "MPEG Audio"
+      ],
+      "fields": [
+        "children",
+        "kind",
+        "ranges",
+        "unit",
+        "value",
+        "offset",
+        "length"
+      ]
     }
   ],
   "bitrate": [
@@ -128,6 +124,16 @@
         "tests/fixtures/wav/external-iec61937-mp3-stereo-128k.report.json"
       ],
       "reason": "the frames are read, so the bitrate is the frames' bytes over their samples"
+    }
+  ],
+  "renamed": [
+    {
+      "parent": [
+        "RIFF",
+        "Data Chunk"
+      ],
+      "from": "Statistics",
+      "to": "MPEG Audio"
     }
   ]
 }
