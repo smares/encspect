@@ -21,6 +21,10 @@
         "Track 1 Frames"
       ],
       "name": "MPEG Audio"
+    },
+    {
+      "scope": "finding",
+      "code": "mpeg-audio.writer-claim-differs"
     }
   ],
   "removed": [
@@ -31,6 +35,15 @@
         "Info"
       ],
       "name": "Writer",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-mp2.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-mp3.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-mp3.report.json"
+      ]
+    },
+    {
+      "scope": "finding",
+      "code": "mpeg-audio.packets-not-analyzed",
       "goldens": [
         "tests/fixtures/matroska/external-ffmpeg-mp2.report.json",
         "tests/fixtures/matroska/external-ffmpeg-mp3.report.json",
@@ -72,22 +85,6 @@
         "series",
         "writer",
         "writerConfidence"
-      ],
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-mp2.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-mp3.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-mp3.report.json"
-      ]
-    },
-    {
-      "scope": "finding",
-      "code": "mpeg-audio.packets-not-analyzed",
-      "fields": [
-        "code",
-        "length",
-        "message",
-        "offset",
-        "path"
       ],
       "goldens": [
         "tests/fixtures/matroska/external-ffmpeg-mp2.report.json",
