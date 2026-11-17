@@ -247,7 +247,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             // The region as the file has it; its children are placed as they are built.
             List<ByteRange> extent = map.ToFile(start, end);
             long first = extent.Count > 0 ? extent[0].Offset : map.FileOf(start);
-            region = root.Add(RegionNode(first, extent.Count > 0 ? extent[^1].End - first : 0, regionState, build, extent.Count > 1 ? extent : null));
+            region = root.Add(RegionNode(first, extent.Count > 0 ? extent[^1].End - first : 0, regionState, build, null));
         }
         else
         {

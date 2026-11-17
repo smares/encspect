@@ -132,7 +132,9 @@ internal sealed class ImageMap
     // when they are read, as the node's are). A node of no byte is where its position is.
     public Node Place(Node node) => Place(node, false);
 
-    // The nodes of a region's own figures, placed once and remembered, since the series of its streams are anchored to them: PlacedOf gives the placed node for one of them.
+    // The nodes of a region's own figures, placed once and remembered, since the series of its streams are anchored to them: PlacedOf gives the placed node for one of them. They
+    // span the region's frames, which for a stripped track is a range of the file for each, so they are placed as one extent, without Ranges (as the Frames node of a Matroska track is); a
+    // list of the same ranges for each of dozens of nodes would cost that much for every frame.
     public Node PlaceRecorded(Node node) => Place(node, true);
 
     public Node? PlacedOf(Node? node) => node is not null && _placed.TryGetValue(node, out Node? placed) ? placed : node;
@@ -155,7 +157,7 @@ internal sealed class ImageMap
         }
         else
         {
-            IReadOnlyList<ByteRange>? spread = ranges.Count > 1 ? ranges : null;
+            IReadOnlyList<ByteRange>? spread = ranges.Count > 1 && !isRecorded ? ranges : null;
             placed = build is null
                 ? new Node(node.Name, offset, length, node.Value) { Kind = node.Kind, Description = node.Description, Topic = node.Topic, Ranges = spread }
                 : new Node(node.Name, offset, length, node.Value, build) { Kind = node.Kind, Description = node.Description, Topic = node.Topic, Ranges = spread };
