@@ -826,7 +826,7 @@ def _():
                    ("matroska.track-field", "no TrackUID"), ("matroska.track-field", "no TrackType"), ("matroska.audio-fields", "without an Audio element"),
                    ("matroska.audio-fields", "without an Audio element"), ("matroska.audio-fields", "0 channels"), ("matroska.track-number-duplicate", "first repeated number is 5"),
                    ("matroska.track-empty", "A track without a number"), ("matroska.track-empty", "Track 0"), ("matroska.track-empty", "Track 3"),
-                   ("matroska.track-empty", "Track 4"), ("matroska.track-empty", "Track 5"),
+                   ("matroska.track-empty", "Track 4"), ("matroska.track-empty", "Track 5"), ("matroska.pcm-layout-not-read", "no BitDepth"),
                    ("matroska.track-not-analyzed", "of no stated type")], valid=False)
 def _():
     entries = [
@@ -835,9 +835,9 @@ def _():
         master(ID["TrackEntry"], uint(ID["TrackNumber"], 3), uint(ID["TrackUID"], 3), uint(ID["TrackType"], 2)),
         master(ID["TrackEntry"], uint(ID["TrackNumber"], 4), uint(ID["TrackType"], 2), text(ID["CodecID"], "A_FLAC"), master(ID["Audio"], flt(ID["SamplingFrequency"], 44100.0), uint(ID["Channels"], 0))),
         master(ID["TrackEntry"], uint(ID["TrackNumber"], 5), uint(ID["TrackUID"], 5), uint(ID["TrackType"], 2), text(ID["CodecID"], "A_PCM/INT/LIT"),
-               master(ID["Audio"], flt(ID["SamplingFrequency"], 8000.0), uint(ID["Channels"], 1), uint(ID["BitDepth"], 16))),
+               master(ID["Audio"], flt(ID["SamplingFrequency"], 8000.0), uint(ID["Channels"], 1))),
         master(ID["TrackEntry"], uint(ID["TrackNumber"], 5), uint(ID["TrackUID"], 6), uint(ID["TrackType"], 2), text(ID["CodecID"], "A_PCM/INT/LIT"),
-               master(ID["Audio"], flt(ID["SamplingFrequency"], 8000.0), uint(ID["Channels"], 1), uint(ID["BitDepth"], 16))),
+               master(ID["Audio"], flt(ID["SamplingFrequency"], 8000.0), uint(ID["Channels"], 1))),
         master(ID["TrackEntry"], uint(ID["TrackNumber"], 7), uint(ID["TrackUID"], 7), text(ID["CodecID"], "A_OPUS")),
     ]
     return build([ebml_header(), segment(info(), tracks(*entries), cluster(0, simple_block(5, 0, b"\x00" * 8), simple_block(5, 10, b"\x00" * 8)))])
