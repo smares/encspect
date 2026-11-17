@@ -279,7 +279,7 @@ The order (the lead, 2026-11-17): the milestone's own items first, then cheap it
 12. **A guess at the FLAC compression level** (the lead, 2026-11-08): the frames do not store the level, but each libFLAC level picks a typical block size, maximum predictor order and partition order.
     - Named as the encoder's settings with a confidence, as LAME's presets are, from reference files of each level, across libFLAC versions, and of FFmpeg's encoder, whose defaults differ.
     - Levels that share their settings are named together, never one of them by chance.
-13. **The TAK decoder** (the lead, 2026-11-09), after the TAK header parser of 0.2 and with the frame walk of item 3.
+13. **The TAK decoder** (the lead, 2026-11-09): after the TAK header parser of 0.2 and with the frame walk of item 3.
     - TAK's author publishes only the container source (`takStream.pas`) and a closed decoder library; the only detailed source for the coding is FFmpeg's reverse-engineered TAK decoder (LGPL).
     - So the clean-room split applies, as for TrueHD and TTA: one agent reads it and writes a description without code, another implements from that description.
     - The TAK SDK's decoder library on the Windows runner is the black-box reference for the PCM cross-check, with FFmpeg as a second column.
@@ -331,7 +331,7 @@ The more formats of [planned.md](formats/planned.md#after-05-more-formats), as l
 10. **MPEG-H 3D Audio**
 11. **Shorten**
 12. **mp3HD, the lossless extension of MP3** (the lead, 2026-11-11)
-13. **The formats whose only detailed public source is FFmpeg**: clean-room; OSQ; ATRAC, ATRAC3 and ATRAC3plus; RealAudio; TwinVQ; QDesign Music; Nellymoser.
+13. **The formats whose only detailed public source is FFmpeg** (clean-room): OSQ; ATRAC, ATRAC3 and ATRAC3plus; RealAudio; TwinVQ; QDesign Music; Nellymoser.
 14. **Game and console middleware** (the lead, 2026-11-16): ADX, HCA, BRSTM, VAG, FSB and Bink.
 15. **The older lossless compressors and speech codecs (vocoders) no item above names** (the lead, 2026-11-16): each named with its sources when its turn comes.
 
@@ -345,8 +345,8 @@ Parked items carry the trigger that would bring them back. The formats at the en
 - **Parallel decoding** (the design [parallel-decoding.md](design/parallel-decoding.md) approved and deferred on 2026-10-26): deferred in favor of new formats and deeper analysis. **Trigger:** decoding speed becomes a problem: a decoder that still misses its speed target after its speed pass ([lossy-decoders.md, "Speed targets"](design/lossy-decoders.md#speed-targets)), or analysis times users report; the measurer on its own thread comes with it.
 - **`lame_enc.dll` builds** (the lead, 2026-11-11; moved here by the lead on 2026-11-15; 0.3 item 3): CDex, Audiograbber, dBpoweramp, Exact Audio Copy, Rarewares' bundles. None is a fixture: Rarewares' bundles carry the DLL of 3.99.5, 3.100 and 4.0 only, which the fixtures already cover from source, and the front ends' older DLLs have no stable address. **Trigger:** an archive of a front end's older DLL can be pinned at a stable address and its version string or behavior differs from the releases covered; a host for the BladeEnc-compatible API (built with mingw, run under Wine) would then run it.
 - **The detection pre-check** (the lead, 2026-10-26; [detection-precheck.md](design/detection-precheck.md)): recorded, not to be built. The design stays as a record. **Trigger:** detection becomes a bottleneck.
-- **Offering the library** as packages: not planned yet ([library.md](library.md)). **Trigger:** a contract the milestones no longer extend.
-- **Sequenced formats** (MIDI, tracker modules and chiptunes; the lead, 2026-11-08): dropped, as a different domain from bitstream and encoder analysis ([history.md](history.md#dropped-plans)).
+- **Offering the library as packages:** not planned yet ([library.md](library.md)). **Trigger:** the milestones no longer extend the library's contract.
+- **Sequenced formats** (MIDI, tracker modules and chiptunes; the lead, 2026-11-08): dropped ([history.md](history.md#dropped-plans)). **Reason:** a different domain from bitstream and encoder analysis.
 - **What the lossy decoders leave out** (the signed-off design, [lossy-decoders.md, "Scope" and "What each decoder covers"](design/lossy-decoders.md#what-each-decoder-covers)): each with the condition the design states.
   - E-AC-3 at a reduced sample rate (fscod2) and AC-3 with bsid 9 and 10: A/52 does not specify their bit allocation, and no free source for it is known;
   - AAC SSR gain control, which FDK AAC refuses; MPEG Surround beyond USAC's 2-1-2; DRC and loudness normalization, and every other decoder-side gain but Opus's output gain (decision 9);
@@ -356,6 +356,6 @@ Parked items carry the trigger that would bring them back. The formats at the en
   - Dolby's object audio: the design does not cover its decoder, which waits for a design of its own (the AC-4 and MPEG-H decoders moved to [After 0.5](#after-05) on 2026-11-16).
 - **The official-decoder runs on the Intel and arm64 Windows images:** the Windows column runs on `windows-2025`, x64, only. **Trigger:** a difference that depends on the build.
 - **An OptimFROG decoder** (the lead, 2026-11-09): the codec is closed and no open implementation exists, not even under the LGPL; its published `format.txt` covers the container only, which is what the header-level parser reads. Reverse-engineering the binaries is neither allowed by its license nor a source that can be checked. Until then OptimFROG streams are checked by their block CRC-32s, and a DualStream pair is judged on headers and checksums alone. **Trigger:** its author publishes the coding or an open implementation appears.
-- **Each of the many ADPCM and PCM variants as a format of its own:** **Reason:** WAV and the containers name their codings.
-- **MXF, and AVI:** **Reason:** AVI is mostly video.
-- **Codec and container combinations no known writer produces:** **Reason:** no known writer produces them (see the routes decision above).
+- **Each of the many ADPCM and PCM variants as a format of its own.** **Reason:** WAV and the containers name their codings.
+- **MXF and AVI.** **Reason:** both are video containers: MXF is SMPTE's container for professional video, and AVI holds mostly video.
+- **Codec and container combinations no known writer produces.** **Reason:** routing what nobody writes costs code and fixtures for no file (see the routes decision above).
