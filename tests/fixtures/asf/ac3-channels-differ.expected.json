@@ -234,6 +234,7 @@
   }
  ],
  "crosscheck": {
-  "ffprobe": true
+  "ffprobe": false,
+  "reason": "ffprobe reads the frames' figures (2 channels), not the WAVEFORMATEX's: that disagreement is what the fixture holds."
  }
 }
