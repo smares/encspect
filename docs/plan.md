@@ -214,7 +214,7 @@ Every coding with a free source is decoded, the DTS extensions aside, and every 
    - **Speex (built, not yet merged):** narrowband, wideband and ultra-wideband with in-band stereo, bit for bit libspeex 1.2.1's fixed-point decoder (the perceptual enhancer on, as speexdec decodes); every frame's parameters read by the entropy pass in every analysis; [As built: Speex](design/lossy-decoders.md#as-built-speex).
 2. **The routes that known writers produce,** each its own pull request after the codec parsers it routes to:
    - MP4: FLAC (`fLaC`, FFmpeg), Dolby TrueHD (`mlpa`, FFmpeg), PCM (FFmpeg);
-   - MPEG audio as packets: MP4 tracks whose samples lie in several stretches and Matroska tracks (FFmpeg, mkvmerge), and the MPEG audio bursts of IEC 61937 in WAV (FFmpeg's spdif muxer). The MPEG parser reads one contiguous payload only today;
+   - MPEG audio as packets: MP4 tracks whose samples lie in several stretches and Matroska tracks (FFmpeg, mkvmerge), and the MPEG audio bursts of IEC 61937 in WAV (FFmpeg's spdif muxer) (done, 2026-11-17);
    - Matroska: PCM (FFmpeg, mkvmerge);
    - ASF: MP3 and AC-3 (the lead, 2026-11-07);
    - Matroska header stripping for AAC, AC-3, DTS and MPEG audio (mkvmerge writes it): a two-range `MappedBytes` whose prefix maps to the ContentCompSettings bytes.

@@ -226,7 +226,7 @@ Parsers never reference each other; they reach other parsers only through routes
   - What a codec parser claims itself (the comment of a Vorbis stream) stays with its stream and is not handed to the codec parsers that run after it.
 - **The exception boundary holds on routes:** truncation, invalid data or a parser bug inside the routed data become findings on the container's node (`parse.truncated`, `parse.invalid`, `parse.failed`), and the container carries on; cancellation passes through.
 - **Depth:** routes nest a few levels at most (`parse.too-deep`).
-- **MPEG audio** is the codec `mpeg-audio` for one payload, which it analyzes as it would the same bytes as a file, at their file offsets. `DefaultParsers.Codecs` lists the codecs.
+- **MPEG audio** is the codec `mpeg-audio` for one payload or for packets (an MP4 track's samples, Matroska frames, the payloads of IEC 61937 bursts), which it lays out at their file offsets (`PacketImage`, at most 256 MiB of them kept) with the container's bytes between them left out; it analyzes them as it would the same bytes as a file. `DefaultParsers.Codecs` lists the codecs.
 - **Mapped bytes:** `MappedBytes` holds bytes that a container or tag took apart (a packet put together from its pages, ID3v2 data with unsynchronization undone) with a map of segments back to the file: `OffsetOf`, `FileLength`, `FileRanges`, `Slice`, and opaque bytes (decompressed data) that map to their whole source.
   - A `BitReader` over them maps bit positions to file offsets (`FileOffsetOf`), and `Node.FromMapped` and `Node.FromBits` over mapped bytes build nodes at the file bytes the fields came from.
   - A packet also carries what the container knows about its place in the stream:
