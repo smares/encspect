@@ -1369,7 +1369,7 @@ def _():
 @fixture("writer-unparsed-lame", "A RealAudio track, which no codec parser reads, in a Segment whose MuxingApp names one program and whose WritingApp LAME, which writes MPEG audio: the "
          "WritingApp names the writer, the container reports one finding for the two apps and one for LAME writing MPEG audio, not RealAudio, and the track is not analyzed.",
          findings=[("matroska.writer-claim-differs", "MuxingApp"), ("matroska.writer-other-format", "LAME"), ("matroska.codec-not-analyzed", "A_REAL/28_8")],
-         streams=[("A_REAL/28_8", 48000, 2)], valid=False)
+         streams=[("RealAudio", 48000, 2)], valid=False)
 def _():
     real = audio_track(1, "A_REAL/28_8", 2, 48000.0, bits=16)
     return with_apps("foo 1.0", "LAME 3.100", [real], [simple_block(1, i * 10, bytes(range(16)) * 4, key=True) for i in range(4)])
