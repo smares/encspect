@@ -104,12 +104,15 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         return (frames, verified, next);
     }
 
-    public void Parse(ParseContext context)
+    public void Parse(ParseContext context) => Parse(context, null);
+
+    // stretches: where a container hands the stream over in several pieces, the pieces' file ranges, sorted, apart and inside the reader.
+    private void Parse(ParseContext context, IReadOnlyList<ByteRange>? stretches)
     {
-        var blocks = new BlockReader(context.Reader);
+        var blocks = new BlockReader(context.Reader) { Stretches = stretches };
         var findings = new FindingCollector();
         var build = new BuildContext();
-        var stream = new StreamState(blocks, findings, build, new BitReservoir(build.Runs), [], [], context.CancellationToken) { Context = context };
+        var stream = new StreamState(blocks, findings, build, new BitReservoir(build.Runs, blocks.Hop), [], [], context.CancellationToken) { Context = context };
         long position = context.Reader.Start;
 
         foreach (Node? tag in context.EmbeddedTags.OrderBy(t => t.Offset).Append<Node?>(null))
@@ -151,16 +154,49 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
     // type 0x6B) is parsed as the same bytes in a file would be, under the container's node.
     public void Parse(CodecContext context)
     {
-        if (context.Payload is not { } payload)
+        if (context.Payload is { } payload)
         {
-            context.AddFinding(Severity.Info, "mpeg-audio.packets-not-analyzed", "MPEG audio handed over as packets is not analyzed; only one contiguous payload is.", context.Parent);
+            ParseInner(context, payload, null);
             return;
         }
 
+        // Packets: laid out at their file offsets, with the container's own bytes between them skipped (PacketImage).
+        var image = new PacketImage();
+        int index = 0;
+        foreach (MappedBytes packet in context.Packets ?? [])
+        {
+            if (index++ % 4096 == 0)
+            {
+                context.CancellationToken.ThrowIfCancellationRequested();
+            }
+
+            if (!image.Add(packet) && image.Skipped > 1)
+            {
+                break;
+            }
+        }
+
+        if (image.Skipped > 0)
+        {
+            long skipped = image.Skipped;
+            string why = image.Problem!;
+            context.AddFinding(Severity.Warning, "mpeg-audio.packets-not-analyzed",
+                $"{Counts.Of(skipped, "packet", "packets")} of MPEG audio {Counts.Agree(skipped, "is", "are")} not analyzed: {why}.", context.Parent);
+        }
+
+        if (image.First >= 0)
+        {
+            var reader = new ByteReader(image, context.CancellationToken);
+            ParseInner(context, reader.Slice(image.First, image.Last - image.First), image.Stretches.Count > 1 ? image.Stretches : null);
+        }
+    }
+
+    private void ParseInner(CodecContext context, ByteReader payload, IReadOnlyList<ByteRange>? stretches)
+    {
         var inner = new ParseContext(payload, context.Parent, encoderClaims: context.EncoderClaims, decodingOwner: context);
         try
         {
-            Parse(inner);
+            Parse(inner, stretches);
         }
         finally
         {
@@ -178,9 +214,10 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
 
     // Built in a method of its own so that the node's factory captures these arguments and not the
     // locals of ParseSegment, whose block reader would stay alive with the report, and with it the input.
-    private static Node RegionNode(long start, long length, RegionState regionState, BuildContext build) =>
+    private static Node RegionNode(long start, long length, RegionState regionState, BuildContext build, IReadOnlyList<ByteRange>? ranges) =>
         new("MPEG Audio", start, length, null, () => BuildRegion(regionState, build))
         {
+            Ranges = ranges,
             Kind = NodeKind.Stream,
             Description = Explain.Region,
             Topic = Topics.FrameSync,
@@ -192,8 +229,9 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         BuildContext build = state.Build;
         var regionState = new RegionState(build.Frames.Count);
         state.Regions.Add(regionState);
-        Node region = root.Add(RegionNode(start, end - start, regionState, build));
+        Node region = root.Add(RegionNode(start, end - start, regionState, build, RangesIn(state.Blocks, start, end)));
         regionState.Node = region;
+        regionState.Stretches = state.Blocks.Stretches;
         int frames = 0;
         long position = start;
         MpegHeader? stream = null;
@@ -220,7 +258,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
                     long frameEnd = at + header.FrameLength(freeLength);
                     long frameLimit = end;
                     int? previous = null;
-                    if (frameEnd < end && !StartsFrame(blocks, frameEnd, header, end))
+                    if (blocks.Hop(frameEnd) < end && !StartsFrame(blocks, blocks.Hop(frameEnd), header, end))
                     {
                         if (header.IsFreeFormat && FindStreamStart(blocks, at, at + 1, end, out int changed) == at && changed != freeLength)
                         {
@@ -264,7 +302,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
                         audio = header;
                     }
 
-                    position = frame.End;
+                    position = blocks.Hop(frame.End);
                     stream = header;
                     frames++;
                     continue;
@@ -278,7 +316,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
                     audio = frame.IsVbrHeader ? null : header;
                     StreamChanged(current, header, FindingNode(frame));
                     FreeFormat(header, freeLength);
-                    position = frame.End;
+                    position = blocks.Hop(frame.End);
                     frames++;
                     continue;
                 }
@@ -538,6 +576,36 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         return frame;
     }
 
+    // Gives a node of the region's own figures (its statistics, its encoder) and the nodes under it the ranges of the stretches they span, so that none lies in a gap between them.
+    private static void Spread(Node node, IReadOnlyList<ByteRange> stretches)
+    {
+        if (node.Ranges is null)
+        {
+            List<ByteRange> inside = [.. stretches.Where(r => r.End > node.Offset && r.Offset < node.End).Select(r => new ByteRange(Math.Max(r.Offset, node.Offset), Math.Min(r.End, node.End) - Math.Max(r.Offset, node.Offset)))];
+            if (inside.Count > 1)
+            {
+                node.Ranges = inside;
+            }
+        }
+
+        foreach (Node child in node.Children)
+        {
+            Spread(child, stretches);
+        }
+    }
+
+    // The stretches that lie in [start, end) as the ranges of a node that spans them, or null where they are one run.
+    private static IReadOnlyList<ByteRange>? RangesIn(BlockReader blocks, long start, long end)
+    {
+        if (blocks.Stretches is not { } stretches)
+        {
+            return null;
+        }
+
+        List<ByteRange> inside = [.. stretches.Where(r => r.End > start && r.Offset < end).Select(r => new ByteRange(Math.Max(r.Offset, start), Math.Min(r.End, end) - Math.Max(r.Offset, start)))];
+        return inside.Count > 1 ? inside : null;
+    }
+
     private static IReadOnlyList<Node> BuildRegion(RegionState region, BuildContext build)
     {
         var nodes = new List<Node>();
@@ -565,6 +633,14 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         if (region.Statistics is { } statistics)
         {
             nodes.Add(statistics);
+        }
+
+        if (region.Stretches is { } stretches)
+        {
+            foreach (Node node in nodes)
+            {
+                Spread(node, stretches);
+            }
         }
 
         int first = region.First;
@@ -1319,7 +1395,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         MpegHeader header = first;
         for (int frame = 0; frame < 3; frame++)
         {
-            next += header.FrameLength(freeLength);
+            next = blocks.Hop(next + header.FrameLength(freeLength));
             if (frame == 2)
             {
                 return true;
@@ -1608,6 +1684,9 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
     private sealed class RegionState(int first)
     {
         public int First => first;
+
+        // The stretches of a stream a container hands over in pieces, which the nodes that span the region must have as their ranges; null where the region is one run.
+        public IReadOnlyList<ByteRange>? Stretches { get; set; }
 
         // Null while the region is being read.
         public int? End { get; set; }
