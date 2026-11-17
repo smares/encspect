@@ -1,44 +1,7 @@
 {
   "goldens": [
-    "tests/fixtures/asf/other-streams.report.json",
-    "tests/fixtures/asf/protected-mpeg-audio.report.json"
+    "tests/fixtures/asf/ac3-object-fragmented.report.json",
+    "tests/fixtures/asf/mpeg-audio-object-fragmented.report.json"
   ],
-  "changed": [
-    {
-      "path": [
-        "ASF",
-        "Header Object",
-        "Stream Properties Object",
-        "Type-Specific Data",
-        "Format Tag"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/asf/other-streams.report.json",
-        "tests/fixtures/asf/protected-mpeg-audio.report.json"
-      ]
-    },
-    {
-      "scope": "finding",
-      "code": "asf.codec-not-analyzed",
-      "fields": [
-        "message"
-      ],
-      "goldens": [
-        "tests/fixtures/asf/other-streams.report.json",
-        "tests/fixtures/asf/protected-mpeg-audio.report.json"
-      ]
-    },
-    {
-      "scope": "stream",
-      "fields": [
-        "codec"
-      ],
-      "goldens": [
-        "tests/fixtures/asf/protected-mpeg-audio.report.json"
-      ]
-    }
-  ]
+  "changed": []
 }

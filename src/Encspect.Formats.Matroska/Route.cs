@@ -178,7 +178,9 @@ internal sealed partial class FileReader
         // Vorbis, Opus and FLAC cannot be set up without their CodecPrivate.
         bool needsCodecPrivate = codec is "vorbis" or "opus" or "flac";
         // The parsers of these codecs take frames put together from stripped or inflated bytes; the others place their nodes at contiguous file bytes.
-        bool takesTransformedFrames = needsCodecPrivate || (codec is "mpeg-audio" or "ac-3" or "e-ac-3" or "dts" or "aac" && plan.Frames.IsStrippingOnly);
+        // These parsers place their nodes in the file bytes a frame is made of, so frames with bytes put back (header stripping) go to them mapped to the file.
+        bool mapsStripped = codec is "mpeg-audio" or "ac-3" or "e-ac-3" or "dts" or "aac" && plan.Frames.IsStrippingOnly;
+        bool takesTransformedFrames = needsCodecPrivate || mapsStripped;
         if (problem is null && plan.Frames.Steps.Count > 0 && codec is not null && !takesTransformedFrames)
         {
             // The AAC, AC-3, DTS and MPEG audio parsers place their nodes at the offsets of contiguous file bytes, which frames put together from
@@ -359,7 +361,7 @@ internal sealed partial class FileReader
         }
 
         // Stripped bytes put back come from the ContentCompSettings, which the frames' nodes (and the nodes that span them) lie in as well.
-        if (plan.Frames.IsStrippingOnly)
+        if (mapsStripped)
         {
             foreach (Step step in plan.Frames.Steps.Where(x => x.Offset >= 0 && x.Prefix.Length > 0))
             {
@@ -393,7 +395,7 @@ internal sealed partial class FileReader
 
         // Ciphertext is no valid coding: the codec parser gets the clear configuration (and the headers that come from it) and no frame.
         int streamsBefore = _context.Streams.Count;
-        IEnumerable<MappedBytes> packets = areFramesEncrypted ? headers : Packets(segment, track, segment.BlocksByTrack?.GetValueOrDefault(track.Number ?? 0), headers, plan.Frames.Decoder);
+        IEnumerable<MappedBytes> packets = areFramesEncrypted ? headers : Packets(segment, track, segment.BlocksByTrack?.GetValueOrDefault(track.Number ?? 0), headers, plan.Frames.Decoder?.WithMapping(mapsStripped));
         if (codec == "mpeg-audio")
         {
             // The MPEG audio parser keeps the packets' ranges and reads them again from the file.
@@ -974,8 +976,11 @@ internal sealed partial class FileReader
     // Undoes the steps in order: stripped bytes are put back in front of the data, zlib data is inflated. Where only bytes are put back, the result maps to the file: the stripped
     // bytes to the ContentCompSettings they come from, then the frame's own (the ranges are in file order, which a Tracks element after the Clusters, or the settings of several
     // encodings in another order, breaks: that frame is opaque, as an inflated one is).
-    private sealed class Decoder(List<Step> steps, int limit)
+    private sealed class Decoder(List<Step> steps, int limit, bool mapsToFile = false)
     {
+        // The decoder that maps the frames it puts bytes back in front of to the file (the codec parsers that place their nodes in the bytes a frame is made of take them so).
+        public Decoder WithMapping(bool mapsToFile) => new(steps, limit, mapsToFile);
+
         public MappedBytes Decode(byte[] data, long offset, FileReader owner)
         {
             byte[] current = data;
@@ -984,7 +989,7 @@ internal sealed partial class FileReader
                 current = step.IsStripping ? [.. step.Prefix, .. current] : Inflate(current, limit);
             }
 
-            if (steps.All(s => s.IsStripping))
+            if (mapsToFile && steps.All(s => s.IsStripping))
             {
                 var ranges = new List<ByteRange>();
                 for (int i = steps.Count - 1; i >= 0; i--)
