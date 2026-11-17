@@ -130,12 +130,21 @@ internal sealed class ImageMap
 
     // The node as the file has it: where the image has it at offsets of its own, at the file's, with Ranges where its bytes are in several runs, and its children the same (built
     // when they are read, as the node's are). A node of no byte is where its position is.
-    public Node Place(Node node)
+    public Node Place(Node node) => Place(node, false);
+
+    // The nodes of a region's own figures, placed once and remembered, since the series of its streams are anchored to them: PlacedOf gives the placed node for one of them.
+    public Node PlaceRecorded(Node node) => Place(node, true);
+
+    public Node? PlacedOf(Node? node) => node is not null && _placed.TryGetValue(node, out Node? placed) ? placed : node;
+
+    private readonly Dictionary<Node, Node> _placed = new(ReferenceEqualityComparer.Instance);
+
+    private Node Place(Node node, bool isRecorded)
     {
         List<ByteRange> ranges = node.Length == 0 ? [] : ToFile(node.Offset, node.End);
         long offset = ranges.Count > 0 ? ranges[0].Offset : FileOf(node.Offset);
         long length = ranges.Count > 0 ? ranges[^1].End - ranges[0].Offset : 0;
-        Func<IReadOnlyList<Node>>? build = node.AreChildrenBuiltOnDemand ? () => [.. node.Children.Select(Place)] : null;
+        Func<IReadOnlyList<Node>>? build = node.AreChildrenBuiltOnDemand ? () => [.. node.Children.Select(child => Place(child, false))] : null;
         Node placed;
         if (node.BitOffset is { } bit && node.BitLength is { } bits)
         {
@@ -156,8 +165,13 @@ internal sealed class ImageMap
         {
             foreach (Node child in node.Children)
             {
-                placed.Add(Place(child));
+                placed.Add(Place(child, isRecorded));
             }
+        }
+
+        if (isRecorded)
+        {
+            _placed[node] = placed;
         }
 
         return placed;

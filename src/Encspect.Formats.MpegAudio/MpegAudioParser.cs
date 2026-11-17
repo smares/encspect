@@ -139,6 +139,14 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         }
 
         AddStatistics(stream);
+        if (map is not null)
+        {
+            foreach (RegionState region in stream.Regions)
+            {
+                region.Placed = [.. RegionNodes(region).Select(map.PlaceRecorded)];
+            }
+        }
+
         AddStreams(stream, context);
 
         // The region nodes' factories hold their RegionState; the scan holds the block reader, and
@@ -644,7 +652,8 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         return inside.Count > 1 ? inside : null;
     }
 
-    private static IReadOnlyList<Node> BuildRegion(RegionState region, BuildContext build)
+    // The region's own nodes before its frames: its encoder, writer, ancillary figures and statistics.
+    private static List<Node> RegionNodes(RegionState region)
     {
         var nodes = new List<Node>();
         if (region.Encoder is { } encoder)
@@ -673,9 +682,16 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             nodes.Add(statistics);
         }
 
+        return nodes;
+    }
+
+    private static IReadOnlyList<Node> BuildRegion(RegionState region, BuildContext build)
+    {
+        List<Node> nodes = RegionNodes(region);
         if (region.Map is { } map)
         {
-            nodes = [.. nodes.Select(map.Place)];
+            // Placed once when the stream's series were anchored, so that they point to the nodes of the tree.
+            nodes = region.Placed ?? [.. nodes.Select(map.Place)];
         }
         else if (region.Stretches is { } stretches)
         {
@@ -1749,6 +1765,9 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
 
         // Where the stream's image lies in the file, where it is not at its own offsets: the region's nodes are placed there.
         public ImageMap? Map { get; set; }
+
+        // The region's own nodes as the file has them (RegionNodes placed), where the image is mapped.
+        public List<Node>? Placed { get; set; }
 
         // Null while the region is being read.
         public int? End { get; set; }
