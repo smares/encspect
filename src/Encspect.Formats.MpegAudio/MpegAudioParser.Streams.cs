@@ -299,7 +299,7 @@ public sealed partial class MpegAudioParser
             }
 
             var header = new MpegHeader(frame.Header);
-            offsets[n] = frame.Offset;
+            offsets[n] = state.Build.Map?.FileOf(frame.Offset) ?? frame.Offset;
             bitrates[n] = header.IsFreeFormat ? ComputedBitrate(frame, header) : header.Bitrate;
             fills[n] = frame.ReservoirFill;
             hasSideInfo &= frame.HasSideInfo;

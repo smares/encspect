@@ -104,14 +104,15 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         return (frames, verified, next);
     }
 
-    public void Parse(ParseContext context) => Parse(context, null);
+    public void Parse(ParseContext context) => Parse(context, null, null);
 
     // stretches: where a container hands the stream over in several pieces, the pieces' file ranges, sorted, apart and inside the reader.
-    private void Parse(ParseContext context, IReadOnlyList<ByteRange>? stretches)
+    // map: where the image's bytes lie in the file where that is not the image's own offsets (null where it is).
+    private void Parse(ParseContext context, IReadOnlyList<ByteRange>? stretches, ImageMap? map)
     {
         var blocks = new BlockReader(context.Reader) { Stretches = stretches };
         var findings = new FindingCollector();
-        var build = new BuildContext { Stretches = stretches };
+        var build = new BuildContext { Stretches = stretches, Map = map };
         var stream = new StreamState(blocks, findings, build, new BitReservoir(build.Runs, blocks.Hop), [], [], context.CancellationToken) { Context = context };
         long position = context.Reader.Start;
 
@@ -147,7 +148,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             region.Ancillary = null;
         }
 
-        findings.Flush(context);
+        findings.Flush(context, map);
     }
 
     // MPEG audio that a container holds as one payload (WAV's WAVE_FORMAT_MPEGLAYER3, MP4's object
@@ -156,7 +157,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
     {
         if (context.Payload is { } payload)
         {
-            ParseInner(context, payload, null);
+            ParseInner(context, payload, null, null);
             return;
         }
 
@@ -190,16 +191,16 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         if (image.First >= 0)
         {
             var reader = new ByteReader(image, context.CancellationToken);
-            ParseInner(context, reader.Slice(image.First, image.Last - image.First), image.Stretches.Count > 1 ? image.Stretches : null);
+            ParseInner(context, reader.Slice(image.First, image.Last - image.First), image.Stretches.Count > 1 ? image.Stretches : null, image.Map.IsIdentity ? null : image.Map);
         }
     }
 
-    private void ParseInner(CodecContext context, ByteReader payload, IReadOnlyList<ByteRange>? stretches)
+    private void ParseInner(CodecContext context, ByteReader payload, IReadOnlyList<ByteRange>? stretches, ImageMap? map)
     {
         var inner = new ParseContext(payload, context.Parent, encoderClaims: context.EncoderClaims, decodingOwner: context);
         try
         {
-            Parse(inner, stretches);
+            Parse(inner, stretches, map);
         }
         finally
         {
@@ -232,9 +233,22 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         BuildContext build = state.Build;
         var regionState = new RegionState(build.Frames.Count);
         state.Regions.Add(regionState);
-        Node region = root.Add(RegionNode(start, end - start, regionState, build, RangesIn(state.Blocks, start, end)));
+        Node region;
+        if (build.Map is { } map)
+        {
+            // The region as the file has it; its children are placed as they are built.
+            List<ByteRange> extent = map.ToFile(start, end);
+            long first = extent.Count > 0 ? extent[0].Offset : map.FileOf(start);
+            region = root.Add(RegionNode(first, extent.Count > 0 ? extent[^1].End - first : 0, regionState, build, extent.Count > 1 ? extent : null));
+        }
+        else
+        {
+            region = root.Add(RegionNode(start, end - start, regionState, build, RangesIn(state.Blocks, start, end)));
+        }
+
         regionState.Node = region;
         regionState.Stretches = state.Blocks.Stretches;
+        regionState.Map = build.Map;
         int frames = 0;
         long position = start;
         MpegHeader? stream = null;
@@ -659,7 +673,11 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             nodes.Add(statistics);
         }
 
-        if (region.Stretches is { } stretches)
+        if (region.Map is { } map)
+        {
+            nodes = [.. nodes.Select(map.Place)];
+        }
+        else if (region.Stretches is { } stretches)
         {
             foreach (Node node in nodes)
             {
@@ -1729,6 +1747,9 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         // The stretches of a stream a container hands over in pieces, which the nodes that span the region must have as their ranges; null where the region is one run.
         public IReadOnlyList<ByteRange>? Stretches { get; set; }
 
+        // Where the stream's image lies in the file, where it is not at its own offsets: the region's nodes are placed there.
+        public ImageMap? Map { get; set; }
+
         // Null while the region is being read.
         public int? End { get; set; }
 
@@ -1799,6 +1820,9 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         // The stretches of a stream a container hands over in pieces, or null.
         public IReadOnlyList<ByteRange>? Stretches { get; set; }
 
+        // Where the stream's image lies in the file, where it is not at its own offsets, or null.
+        public ImageMap? Map { get; set; }
+
         // The music CRC computed for each LAME tag, by the offset of its frame.
         public Dictionary<long, int> MusicCrcs { get; } = [];
     }
@@ -1815,7 +1839,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             ref readonly Entry entry = ref build.Frames[index];
             if (entry.IsGap)
             {
-                nodes[i] = GapNode(entry, build.Stretches);
+                nodes[i] = build.Map is { } gapMap ? gapMap.Place(GapNode(entry, null)) : GapNode(entry, build.Stretches);
                 continue;
             }
 
@@ -1824,7 +1848,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
                 summaries[entry.Header] = summary = new MpegHeader(entry.Header).Summary;
             }
 
-            nodes[i] = FrameNode(index, build, summary);
+            nodes[i] = build.Map is { } map ? map.Place(FrameNode(index, build, summary)) : FrameNode(index, build, summary);
         }
 
         return nodes;
@@ -1851,16 +1875,17 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         public void AddNow(Severity severity, string code, string message, Node node) =>
             _immediate.Add(new Finding(severity, code, message, node));
 
-        public void Flush(ParseContext context)
+        // map: where the image lies in the file, for a node of the image's own offsets.
+        public void Flush(ParseContext context, ImageMap? map)
         {
             foreach (Finding finding in _immediate)
             {
-                context.AddFinding(finding.Severity, finding.Code, finding.Message, finding.Node);
+                context.AddFinding(finding.Severity, finding.Code, finding.Message, map is null || finding.Node is null ? finding.Node : map.Place(finding.Node));
             }
 
             foreach ((string code, var entry) in _aggregated)
             {
-                context.AddFinding(entry.Severity, code, entry.Message(entry.Count), entry.Node ?? context.Root, entry.Count);
+                context.AddFinding(entry.Severity, code, entry.Message(entry.Count), entry.Node is { } node ? (map is null ? node : map.Place(node)) : context.Root, entry.Count);
             }
         }
     }
