@@ -105,6 +105,13 @@ Later milestones, in this order.
 - **What:** the lossless compressors and speech codecs (vocoders) no item above names. Each is named, with its sources and fixtures, when its turn comes.
 - **Moved here** from "not planned" by the lead on 2026-11-16: Shorten (item 10), AMR (item 6) and WMA Voice are already planned, so the blanket exclusion no longer held.
 
+### 15. Dolby TrueHD as IEC 61937 MAT bursts in WAV
+
+- **What:** the TrueHD stream that HDMI captures and FFmpeg's spdif muxer write as MAT bursts (data type 22): the MAT frames are unpacked and their access units handed to the TrueHD parser as file ranges, the pieces a MAT code cuts joined again.
+- **Needs:** the walk of the multichannel high-bit-rate carriers that hold MAT bursts; the burst walker reads 16-bit stereo carriers only ([wav.md](wav.md)).
+- **Sources:** no public description of the MAT frame is known; FFmpeg's spdif muxer (LGPL) is the only detailed source, so the clean-room split of item 11 applies. Fixtures come from FFmpeg's spdif muxer, run as a program.
+- **Moved here** from "not planned" by the lead on 2026-11-17: the TrueHD parser and decoder now exist, and the packet routes read payloads as file ranges with their byte pairs swapped back.
+
 ## Not planned
 
 - **Sequenced formats** (MIDI, tracker modules and chiptunes): dropped by the project lead on 2026-11-08, as a different domain from bitstream and encoder analysis. The scope they had is recorded in [history.md](../history.md#dropped-plans).

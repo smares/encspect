@@ -56,7 +56,7 @@ Which container hands which codec to its codec parser, and which codecs are deco
 | TTA | not planned | routed | not planned | not planned | not planned | yes | yes |
 | OptimFROG | not planned | not planned | not planned | not planned | not planned | yes | no |
 | TAK | not planned | not planned | not planned | not planned | not planned | yes | no |
-| Dolby TrueHD, MLP | routed (`mlpa`; an unprotected track) | routed | not planned | not planned | not planned, the lead's decision of 2026-11-07 (IEC 61937 MAT bursts are named and timed) | yes | yes |
+| Dolby TrueHD, MLP | routed (`mlpa`; an unprotected track) | routed | not planned | not planned | planned after 0.5 as IEC 61937 MAT bursts ([plan](../plan.md#after-05), item 15); the bursts are named and timed until then | yes | yes |
 | WMA (versions 1 and 2, Professional, Lossless, Voice) | not planned | later, through `A_MS/ACM` | not planned | routed | not planned | ASF | no |
 | Monkey's Audio | not planned | not planned | not planned | not planned | not planned | yes | yes |
 | Musepack | not planned | not planned | not planned | not planned | not planned | yes | yes (measured) |

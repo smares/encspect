@@ -96,7 +96,7 @@ The stack is C# on .NET with Avalonia for the GUI. The code is checked by tests 
 
 - A combination nobody writes (WavPack in ASF and the like) stays at container level: the track is named, and the `codec-not-analyzed` finding stays.
 - The planned routes are in [0.4](#04-free-decoders-and-routes-complete), each with the muxer that writes it where one is known; `A_MS/ACM` in Matroska waits there for a real file.
-- Dolby TrueHD as IEC 61937 MAT bursts in WAV is not planned. The lead decided so knowing that FFmpeg's spdif muxer writes such bursts and that HDMI captures hold them; the bursts stay named and timed.
+- Dolby TrueHD as IEC 61937 MAT bursts in WAV was not planned at first; the lead moved it to [after 0.5](#after-05), item 15, on 2026-11-17, once the TrueHD parser existed. Until then the bursts stay named and timed.
 - The table of every combination is in [formats/README.md](formats/README.md#codecs-in-containers).
 
 ### Working rules
@@ -300,6 +300,7 @@ The more formats of [planned.md](formats/planned.md#after-05-more-formats), as l
 12. mp3HD, the lossless extension of MP3 (the lead, 2026-11-11)
 13. Game and console middleware: ADX, HCA, BRSTM, VAG, FSB and Bink (the lead, 2026-11-16)
 14. The older lossless compressors and speech codecs (vocoders) no item above names, each named with its sources when its turn comes (the lead, 2026-11-16)
+15. Dolby TrueHD as IEC 61937 MAT bursts in WAV (the lead, 2026-11-17, in place of the routes decision's "not planned"): a clean-room description of the MAT frame first, since FFmpeg's LGPL spdif muxer is the only detailed source known; then the walk of the multichannel high-bit-rate carriers, which hold MAT bursts, and the route that hands the TrueHD access units to the TrueHD parser as file ranges, rejoining the pieces a MAT code cuts. Its fixtures come from FFmpeg's spdif muxer, run as a program.
 
 - **Follow-up decoders:** the DTS extensions (XCh, XXCH, X96, XBR, LBR and DTS-HD's lossless extension XLL), which [lossy-decoders.md](design/lossy-decoders.md#what-each-decoder-covers) leaves as follow-ups of the DTS core decoder. Their place among the formats above is set when 0.5 is done.
 - **The AC-4 and MPEG-H decoders** (the lead, 2026-11-16), after their parsers (items 4 and 8), each after a design of its own as [lossy-decoders.md](design/lossy-decoders.md#scope) requires; AC-4's specification is free, MPEG-H's is not.
