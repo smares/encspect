@@ -4,12 +4,106 @@
     "tests/fixtures/matroska/external-ffmpeg-ac3-51.report.json",
     "tests/fixtures/matroska/external-mkvmerge-ac3.report.json",
     "tests/fixtures/matroska/external-mkvmerge-timestamp-scale.report.json",
-    "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json"
+    "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json",
+    "tests/fixtures/matroska/external-ffmpeg-mp2.report.json",
+    "tests/fixtures/matroska/external-ffmpeg-mp3.report.json",
+    "tests/fixtures/matroska/external-mkvmerge-mp3.report.json"
   ],
   "added": [
     {
       "scope": "stream",
       "key": "verification"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "Matroska",
+        "Track 1 Frames"
+      ],
+      "name": "MPEG Audio"
+    }
+  ],
+  "removed": [
+    {
+      "parent": [
+        "Matroska",
+        "Segment",
+        "Info"
+      ],
+      "name": "Writer",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-mp2.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-mp3.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-mp3.report.json"
+      ]
+    }
+  ],
+  "changed": [
+    {
+      "path": [
+        "Matroska",
+        "Track 1 Frames"
+      ],
+      "fields": [
+        "children"
+      ],
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-mp2.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-mp3.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-mp3.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "fields": [
+        "codec",
+        "channelMode",
+        "channelLayout",
+        "channelLayoutName",
+        "categorySeries",
+        "verification",
+        "encoder",
+        "encoderConfidence",
+        "samples",
+        "duration",
+        "averageBitrate",
+        "nodes",
+        "isVbr",
+        "series",
+        "writer",
+        "writerConfidence"
+      ],
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-mp2.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-mp3.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-mp3.report.json"
+      ]
+    },
+    {
+      "scope": "finding",
+      "code": "mpeg-audio.packets-not-analyzed",
+      "fields": [
+        "code",
+        "length",
+        "message",
+        "offset",
+        "path"
+      ],
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-mp2.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-mp3.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-mp3.report.json"
+      ]
+    }
+  ],
+  "bitrate": [
+    {
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-mp2.report.json",
+        "tests/fixtures/matroska/external-ffmpeg-mp3.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-mp3.report.json"
+      ],
+      "reason": "the frames are read, so the bitrate is the frames' bytes over their samples"
     }
   ]
 }
