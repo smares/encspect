@@ -60,14 +60,6 @@
       ]
     },
     {
-      "scope": "node",
-      "parent": [
-        "Matroska",
-        "Track 1 Frames"
-      ],
-      "name": "Statistics"
-    },
-    {
       "scope": "finding",
       "code": "pcm.partial-sample-frame"
     },
@@ -331,6 +323,16 @@
       "goldens": [
         "tests/fixtures/matroska/sampling-frequency-invalid.report.json"
       ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "WebM"
+      ],
+      "name": "Track 1 Frames",
+      "goldens": [
+        "tests/fixtures/matroska/webm-not-allowed.report.json"
+      ]
     }
   ],
   "removed": [
@@ -348,7 +350,24 @@
         "Segment",
         "Info"
       ],
-      "name": "Writer"
+      "name": "Writer",
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-pcm.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-vorbis-pcm.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-one-cluster.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-two-clusters.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-unknown-tail.report.json",
+        "tests/fixtures/matroska/misplaced-values.report.json",
+        "tests/fixtures/matroska/sampling-frequency-invalid.report.json",
+        "tests/fixtures/matroska/track-timestamp-scale.report.json",
+        "tests/fixtures/matroska/tracks-after-clusters.report.json",
+        "tests/fixtures/matroska/writer-pcm-ffmpeg.report.json",
+        "tests/fixtures/matroska/writer-pcm-lame.report.json",
+        "tests/fixtures/matroska/writer-tag-and-apps.report.json",
+        "tests/fixtures/matroska/writer-tag-conflicts-two-pcm.report.json",
+        "tests/fixtures/matroska/writer-tag-without-info.report.json"
+      ]
     },
     {
       "scope": "finding",
@@ -357,18 +376,32 @@
         "tests/fixtures/matroska/writer-tag-and-apps.report.json",
         "tests/fixtures/matroska/writer-tag-conflicts-two-pcm.report.json"
       ]
+    },
+    {
+      "parent": [
+        "Matroska",
+        "Segment",
+        "Tracks",
+        "TrackEntry"
+      ],
+      "name": "Writer",
+      "goldens": [
+        "tests/fixtures/matroska/writer-tag-without-info.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "WebM",
+        "Segment",
+        "Info"
+      ],
+      "name": "Writer",
+      "goldens": [
+        "tests/fixtures/matroska/webm-not-allowed.report.json"
+      ]
     }
   ],
   "changed": [
-    {
-      "path": [
-        "Matroska",
-        "Track 1 Frames"
-      ],
-      "fields": [
-        "children"
-      ]
-    },
     {
       "scope": "stream",
       "fields": [
@@ -380,6 +413,93 @@
         "nodes",
         "writer",
         "writerConfidence"
+      ]
+    },
+    {
+      "path": [
+        "Matroska",
+        "Track 1 Frames"
+      ],
+      "fields": [
+        "children"
+      ],
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-pcm.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-one-cluster.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-two-clusters.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-unknown-tail.report.json",
+        "tests/fixtures/matroska/misplaced-values.report.json",
+        "tests/fixtures/matroska/track-timestamp-scale.report.json",
+        "tests/fixtures/matroska/tracks-after-clusters.report.json",
+        "tests/fixtures/matroska/writer-pcm-ffmpeg.report.json",
+        "tests/fixtures/matroska/writer-pcm-lame.report.json",
+        "tests/fixtures/matroska/writer-tag-without-info.report.json",
+        "tests/fixtures/matroska/writer-tag-and-apps.report.json",
+        "tests/fixtures/matroska/writer-tag-conflicts-two-pcm.report.json",
+        "tests/fixtures/matroska/sampling-frequency-invalid.report.json"
+      ]
+    },
+    {
+      "path": [
+        "Matroska",
+        "Track 2 Frames"
+      ],
+      "fields": [
+        "children"
+      ],
+      "goldens": [
+        "tests/fixtures/matroska/external-mkvmerge-vorbis-pcm.report.json",
+        "tests/fixtures/matroska/writer-tag-conflicts-two-pcm.report.json",
+        "tests/fixtures/matroska/sampling-frequency-invalid.report.json"
+      ]
+    },
+    {
+      "path": [
+        "Matroska",
+        "Track 3 Frames"
+      ],
+      "fields": [
+        "children"
+      ],
+      "goldens": [
+        "tests/fixtures/matroska/sampling-frequency-invalid.report.json"
+      ]
+    },
+    {
+      "path": [
+        "Matroska",
+        "Track 4 Frames"
+      ],
+      "fields": [
+        "children"
+      ],
+      "goldens": [
+        "tests/fixtures/matroska/sampling-frequency-invalid.report.json"
+      ]
+    },
+    {
+      "path": [
+        "Matroska",
+        "Track 5 Frames"
+      ],
+      "fields": [
+        "children"
+      ],
+      "goldens": [
+        "tests/fixtures/matroska/track-fields.report.json"
+      ]
+    },
+    {
+      "path": [
+        "WebM",
+        "Track 1 Frames"
+      ],
+      "fields": [
+        "children"
+      ],
+      "goldens": [
+        "tests/fixtures/matroska/webm-not-allowed.report.json"
       ]
     }
   ],
