@@ -1652,6 +1652,34 @@ def _():
                                          master(m.TAGS, stray_tag))])
 
 
+@fixture("pcm-three-layouts", "Three PCM tracks that each lay out their samples as the codec ID and the BitDepth say: big-endian 24-bit integers of two channels, 32-bit floating point of one channel "
+         "and 8-bit samples (unsigned, as in WAV) of one channel; each track's blocks are whole sample frames.",
+         streams=[("PCM", 48000, 2), ("PCM (floating-point)", 44100, 1), ("PCM", 8000, 1)])
+def _():
+    tracks_ = [audio_track(1, "A_PCM/INT/BIG", 2, 48000.0, bits=24), audio_track(2, "A_PCM/FLOAT/IEEE", 1, 44100.0, bits=32), audio_track(3, "A_PCM/INT/LIT", 1, 8000.0, bits=8)]
+    items = [simple_block(1, i * 10, bytes(range(24)) * 4, key=True) for i in range(4)] + [simple_block(2, i * 10, bytes(range(32)) * 2, key=True) for i in range(4)] \
+        + [simple_block(3, i * 10, bytes(range(64)), key=True) for i in range(4)]
+    return build(standard(cluster(0, *items), track=tracks_))
+
+
+@fixture("pcm-layouts-unsupported", "Three PCM tracks whose Audio element gives no sample layout the analysis reads: floating-point samples of 24 bits, integers of 12 bits and a track without a "
+         "BitDepth. Each is a finding, and the tracks are reported from their TrackEntries.",
+         findings=[("matroska.pcm-layout-not-read", "BitDepth of 24"), ("matroska.pcm-layout-not-read", "BitDepth of 12"), ("matroska.pcm-layout-not-read", "states no BitDepth")],
+         streams=[("PCM (floating-point)", 48000, 2), ("PCM", 48000, 2), ("PCM", 48000, 2)], valid=False)
+def _():
+    tracks_ = [audio_track(1, "A_PCM/FLOAT/IEEE", 2, 48000.0, bits=24), audio_track(2, "A_PCM/INT/LIT", 2, 48000.0, bits=12), audio_track(3, "A_PCM/INT/BIG", 2, 48000.0)]
+    items = [simple_block(n, i * 10, bytes(range(16)) * 4, key=True) for n in (1, 2, 3) for i in range(3)]
+    return build(standard(cluster(0, *items), track=tracks_))
+
+
+@fixture("pcm-default-rate", "A PCM track whose Audio element states neither a SamplingFrequency nor Channels: they default to 8000 Hz and one channel (RFC 9559 sections 5.1.4.1.29.1 and "
+         "5.1.4.1.29.3), and the samples are 8 bits.", streams=[("PCM", 8000, 1)])
+def _():
+    entry = master(ID["TrackEntry"], uint(ID["TrackNumber"], 1), uint(ID["TrackUID"], 1), uint(ID["TrackType"], 2), text(ID["CodecID"], "A_PCM/INT/LIT"),
+                   master(ID["Audio"], uint(ID["BitDepth"], 8)))
+    return build(standard(cluster(0, *[simple_block(1, i * 10, bytes(range(80)), key=True) for i in range(4)]), track=[entry]))
+
+
 @fixture("string-null", "Strings with a null octet and data after it (RFC 8794 section 13): a CodecID of \"A_OPUS\\0\\0xy\", a DocType of \"matroska\\0xy\" and a Title of \"ab\\0cd\" end at the "
          "first null octet, so the track is routed as Opus, the file is Matroska and none is invalid text.", streams=[OPUS])
 def _():

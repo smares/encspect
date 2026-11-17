@@ -1,0 +1,549 @@
+{
+ "description": "Three PCM tracks whose Audio element gives no sample layout the analysis reads: floating-point samples of 24 bits, integers of 12 bits and a track without a BitDepth. Each is a finding, and the tracks are reported from their TrackEntries.",
+ "length": 894,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 255,
+     "length": 639,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 9
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "duration": 100.0,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "encspect fixtures"
+   },
+   "length": 854,
+   "declared_end": 894
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   854,
+   [
+    [
+     "Info",
+     46,
+     63,
+     [
+      [
+       "TimestampScale",
+       51,
+       7
+      ],
+      [
+       "Duration",
+       58,
+       11
+      ],
+      [
+       "MuxingApp",
+       69,
+       20
+      ],
+      [
+       "WritingApp",
+       89,
+       20
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     109,
+     146,
+     [
+      [
+       "TrackEntry",
+       115,
+       50,
+       [
+        [
+         "TrackNumber",
+         117,
+         3
+        ],
+        [
+         "TrackUID",
+         120,
+         5
+        ],
+        [
+         "TrackType",
+         125,
+         3
+        ],
+        [
+         "CodecID",
+         128,
+         18
+        ],
+        [
+         "Audio",
+         146,
+         19,
+         [
+          [
+           "SamplingFrequency",
+           148,
+           10
+          ],
+          [
+           "Channels",
+           158,
+           3
+          ],
+          [
+           "BitDepth",
+           161,
+           4
+          ]
+         ]
+        ]
+       ]
+      ],
+      [
+       "TrackEntry",
+       165,
+       47,
+       [
+        [
+         "TrackNumber",
+         167,
+         3
+        ],
+        [
+         "TrackUID",
+         170,
+         5
+        ],
+        [
+         "TrackType",
+         175,
+         3
+        ],
+        [
+         "CodecID",
+         178,
+         15
+        ],
+        [
+         "Audio",
+         193,
+         19,
+         [
+          [
+           "SamplingFrequency",
+           195,
+           10
+          ],
+          [
+           "Channels",
+           205,
+           3
+          ],
+          [
+           "BitDepth",
+           208,
+           4
+          ]
+         ]
+        ]
+       ]
+      ],
+      [
+       "TrackEntry",
+       212,
+       43,
+       [
+        [
+         "TrackNumber",
+         214,
+         3
+        ],
+        [
+         "TrackUID",
+         217,
+         5
+        ],
+        [
+         "TrackType",
+         222,
+         3
+        ],
+        [
+         "CodecID",
+         225,
+         15
+        ],
+        [
+         "Audio",
+         240,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           242,
+           10
+          ],
+          [
+           "Channels",
+           252,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     255,
+     639,
+     [
+      [
+       "Timestamp",
+       261,
+       3
+      ],
+      [
+       "SimpleBlock",
+       264,
+       70
+      ],
+      [
+       "SimpleBlock",
+       334,
+       70
+      ],
+      [
+       "SimpleBlock",
+       404,
+       70
+      ],
+      [
+       "SimpleBlock",
+       474,
+       70
+      ],
+      [
+       "SimpleBlock",
+       544,
+       70
+      ],
+      [
+       "SimpleBlock",
+       614,
+       70
+      ],
+      [
+       "SimpleBlock",
+       684,
+       70
+      ],
+      [
+       "SimpleBlock",
+       754,
+       70
+      ],
+      [
+       "SimpleBlock",
+       824,
+       70
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 264,
+   "length": 70,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     270,
+     64
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 334,
+   "length": 70,
+   "track": 1,
+   "timestamp": 10,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     340,
+     64
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 404,
+   "length": 70,
+   "track": 1,
+   "timestamp": 20,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     410,
+     64
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 474,
+   "length": 70,
+   "track": 2,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     480,
+     64
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 544,
+   "length": 70,
+   "track": 2,
+   "timestamp": 10,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     550,
+     64
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 614,
+   "length": 70,
+   "track": 2,
+   "timestamp": 20,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     620,
+     64
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 684,
+   "length": 70,
+   "track": 3,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     690,
+     64
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 754,
+   "length": 70,
+   "track": 3,
+   "timestamp": 10,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     760,
+     64
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 824,
+   "length": 70,
+   "track": 3,
+   "timestamp": 20,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     830,
+     64
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_PCM/FLOAT/IEEE",
+   "private": null,
+   "channels": 2,
+   "rate": 48000.0,
+   "bits": 24,
+   "delay": 0,
+   "encodings": [],
+   "lacing": true
+  },
+  {
+   "number": 2,
+   "uid": 4098,
+   "type": 2,
+   "codec": "A_PCM/INT/LIT",
+   "private": null,
+   "channels": 2,
+   "rate": 48000.0,
+   "bits": 12,
+   "delay": 0,
+   "encodings": [],
+   "lacing": true
+  },
+  {
+   "number": 3,
+   "uid": 4099,
+   "type": 2,
+   "codec": "A_PCM/INT/BIG",
+   "private": null,
+   "channels": 2,
+   "rate": 48000.0,
+   "bits": null,
+   "delay": 0,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "writers": [
+  {
+   "name": "encspect fixtures",
+   "confidence": "Low"
+  }
+ ],
+ "streams": [
+  {
+   "codec": "PCM (floating-point)",
+   "sample_rate": 48000,
+   "channels": 2
+  },
+  {
+   "codec": "PCM",
+   "sample_rate": 48000,
+   "channels": 2
+  },
+  {
+   "codec": "PCM",
+   "sample_rate": 48000,
+   "channels": 2
+  }
+ ],
+ "findings": [
+  {
+   "code": "matroska.pcm-layout-not-read",
+   "contains": "BitDepth of 24"
+  },
+  {
+   "code": "matroska.pcm-layout-not-read",
+   "contains": "BitDepth of 12"
+  },
+  {
+   "code": "matroska.pcm-layout-not-read",
+   "contains": "states no BitDepth"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}
