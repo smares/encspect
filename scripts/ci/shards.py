@@ -10,7 +10,8 @@ inside the fully qualified one (".Name."), so a class whose name starts with ano
     shards.py filter <name> --skip-nightly   # the same without the tests of the nightly run only
 
 A test of the nightly run only (DecoderWorkTests and MeasurementWorkTests, which time the decoders and the measurements) carries the trait Category=Nightly; the pull request and the push
-to main add NIGHTLY_EXCLUSION to every shard's filter, the nightly schedule and a manual run do not (changes.py).
+to main add NIGHTLY_EXCLUSION to every shard's filter, the nightly schedule and a manual run do not (changes.py). A shard with
+"nightly": true holds only such tests and runs in the nightly schedule and a manual run only (runs).
 """
 
 import json
@@ -30,10 +31,17 @@ def load(path=CONFIG):
         raise SystemExit("shards.json: a shard name is used twice")
     if [s["classes"] is None for s in shards] != [False] * (len(shards) - 1) + [True]:
         raise SystemExit("shards.json: exactly the last shard has classes: null")
+    if any(s.get("nightly") and s["classes"] is None for s in shards):
+        raise SystemExit("shards.json: the shard that takes the rest cannot be of the nightly run only")
     classes = [c for s in shards[:-1] for c in s["classes"]]
     if len(set(classes)) != len(classes):
         raise SystemExit("shards.json: a class is listed in two shards")
     return shards
+
+
+def runs(shard, include_nightly):
+    """Whether a shard runs in an event: a shard of the nightly run only runs where the tests of the nightly run only do."""
+    return include_nightly or not shard.get("nightly", False)
 
 
 def filter_for(shards, name, include_nightly=True):

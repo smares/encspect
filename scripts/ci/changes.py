@@ -356,6 +356,11 @@ def decide(event, files, root=ROOT, removed=()):
 NIGHTLY_EVENTS = ("schedule", "workflow_dispatch")
 
 
+def test_matrix(os_list, shards, include_nightly):
+    """One entry per platform and shard the event runs: a shard of the nightly run only is left out of a pull request and a push."""
+    return [{**p, "shard": s["name"], "filter": shard_config.filter_for(shards, s["name"], include_nightly)} for p in os_list for s in shards if shard_config.runs(s, include_nightly)]
+
+
 def platforms(event):
     return PULL_REQUEST_PLATFORMS if event == "pull_request" else FULL_PLATFORMS
 
@@ -402,7 +407,7 @@ def main():
     outputs["reason"] = reason
     outputs["build-matrix"] = json.dumps(os_list, separators=(",", ":"))
     include_nightly = args.event in NIGHTLY_EVENTS
-    outputs["test-matrix"] = json.dumps([{**p, "shard": s["name"], "filter": shard_config.filter_for(shards, s["name"], include_nightly)} for p in os_list for s in shards], separators=(",", ":"))
+    outputs["test-matrix"] = json.dumps(test_matrix(os_list, shards, include_nightly), separators=(",", ":"))
     lines = [f"{k}={v}" for k, v in outputs.items()]
     if args.print or "GITHUB_OUTPUT" not in os.environ:
         print("\n".join(lines))

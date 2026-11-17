@@ -54,7 +54,12 @@ def main():
         problems.append("no test carries the trait Category=Nightly, so the exclusion of the pull request run excludes nothing")
     skipped = collections.Counter()
     for shard in shards:
-        skipped.update(listed(shard_config.filter_for(shards, shard["name"], include_nightly=False)))
+        if shard_config.runs(shard, include_nightly=False):
+            skipped.update(listed(shard_config.filter_for(shards, shard["name"], include_nightly=False)))
+        else:
+            # A shard of the nightly run only is left out of a pull request and a push, so it may hold nothing else.
+            problems += [f"{test} is in the shard {shard['name']} of the nightly run only, but is no test of the nightly run only"
+                         for test in listed(shard_config.filter_for(shards, shard["name"])) if test not in nightly]
     for test in everything:
         if (skipped[test] != 0) == (test in nightly):
             problems.append(f"{test} {'is' if test in nightly else 'is not'} a test of the nightly run only, and the shards without those tests run it {skipped[test]} times")

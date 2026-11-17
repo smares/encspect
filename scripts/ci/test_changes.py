@@ -277,6 +277,18 @@ class ChangesTests(unittest.TestCase):
                 self.assertEqual("Category!=Nightly" in expression, not include, (event, shard["name"]))
         self.assertEqual(changes.NIGHTLY_EVENTS, ("schedule", "workflow_dispatch"))
 
+    def test_a_shard_of_the_nightly_run_only_runs_in_the_nightly_run_and_a_manual_run_only(self):
+        shards = changes.shard_config.load()
+        nightly = [s["name"] for s in shards if s.get("nightly")]
+        self.assertTrue(nightly)
+        for event in ("pull_request", "push", "schedule", "workflow_dispatch"):
+            include = event in changes.NIGHTLY_EVENTS
+            matrix = changes.test_matrix(changes.platforms(event), shards, include)
+            names = {entry["shard"] for entry in matrix}
+            for name in nightly:
+                self.assertEqual(name in names, include, (event, name))
+            self.assertEqual(len(matrix), len(changes.platforms(event)) * len(names), event)
+
     def test_a_shard_filter_without_the_nightly_tests_keeps_its_own_clauses(self):
         shards = changes.shard_config.load()
         first = shards[0]["name"]
