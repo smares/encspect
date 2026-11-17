@@ -27,7 +27,11 @@ internal static class Iec61937Route
     public static bool ParseBursts(State s, WaveFormat format, DataChunk data, BurstChain chain, string codec)
     {
         (BurstRun run, Node container) = Walk(s, data, chain);
-        bool isRouted = s.Context.ParsePackets(codec, data.Node, run.Payloads());
+        // The MPEG audio parser keeps the payloads' ranges and reads them again from the file, with the pairs of bytes swapped back.
+        CodecConfiguration? configuration = codec == "mpeg-audio"
+            ? new CodecConfiguration(MappedBytes.Opaque(ReadOnlyMemory<byte>.Empty, data.Node.Offset, data.Node.Offset), data.Node) { Source = s.Context.Reader, IsWordSwapped = true }
+            : null;
+        bool isRouted = s.Context.ParsePackets(codec, data.Node, run.Payloads(), configuration);
         if (!isRouted)
         {
             // No codec parser: the walk still reads the bursts for their findings.

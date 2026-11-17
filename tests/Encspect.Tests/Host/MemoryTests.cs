@@ -1186,6 +1186,73 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
     // Frames of constant subframes, the smallest there are: 4,096 samples of two channels in 14 bytes.
     private static byte[] FlacFrames(int count) => FlacBuilder.Stream(count);
 
+    // MP3 frames in an MP4 track of one chunk each, with 16 bytes of another track's between them: the MPEG audio parser keeps the frames' file ranges, not their bytes, and reads
+    // them again from the file, so what it keeps and what it holds at its peak do not grow with the bytes of the frames (a copy of them would).
+    private static byte[] Mp3InChunks(int frames, bool isPlainFile = false)
+    {
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "mpeg-audio", "external-ffmpeg-cbr.mp3"));
+        var sizes = new List<int>();
+        int first = source.AsSpan().IndexOf(new byte[] { 0xFF, 0xFB });
+        int[] offsets = new int[40];
+        for (int at = first; sizes.Count < 40 && at + 4 <= source.Length;)
+        {
+            int length = new Encspect.Formats.MpegAudio.MpegHeader(System.Buffers.Binary.BinaryPrimitives.ReadUInt32BigEndian(source.AsSpan(at))).FrameLength();
+            offsets[sizes.Count] = at;
+            sizes.Add(length);
+            at += length;
+        }
+
+        var payload = new List<byte>();
+        var chunkOffsets = new List<long>();
+        var frameSizes = new List<int>();
+        int[] starts = offsets;
+        for (int n = 0; n < frames; n++)
+        {
+            // The first frame holds the Info header, which is no audio.
+            int k = 1 + (n % (sizes.Count - 1));
+            chunkOffsets.Add(payload.Count);
+            payload.AddRange(source.AsSpan(starts[k], sizes[k]).ToArray());
+            frameSizes.Add(sizes[k]);
+            if (!isPlainFile)
+            {
+                payload.AddRange(new byte[16]);
+            }
+        }
+
+        if (isPlainFile)
+        {
+            return [.. payload];
+        }
+
+        byte[] entry = Mp4Builder.AacEntry();
+        int oti = Array.IndexOf(entry, (byte)0x40);
+        entry[oti] = 0x6B;
+        return Mp4Builder.FileWithMoov(offset => Mp4Builder.Trak(1, entry, Mp4Builder.Stts(frames, 1152), Mp4Builder.Stsc(1), Mp4Builder.Sizes(frameSizes),
+            Mp4Builder.ChunkOffsets(chunkOffsets.Select(o => o + offset))), [.. payload]);
+    }
+
+    [Fact]
+    public void TheFramesOfMpegAudioInManyStretchesAreReadAgainFromTheFile()
+    {
+        (Report smallReport, long smallKept, long smallPeak) = Measure("small.mp4", Mp3InChunks(2_000), Mp3InChunks(200));
+        (Report largeReport, long largeKept, long largePeak) = Measure("large.mp4", Mp3InChunks(20_000), Mp3InChunks(200));
+        (_, long plainSmallKept, long plainSmallPeak) = Measure("small.mp3", Mp3InChunks(2_000, true), Mp3InChunks(200, true));
+        (_, long plainLargeKept, long plainLargePeak) = Measure("large.mp3", Mp3InChunks(20_000, true), Mp3InChunks(200, true));
+
+        Assert.Equal(2_000 * 1152, smallReport.Streams.Single().Samples);
+        Assert.Equal(20_000 * 1152, largeReport.Streams.Single().Samples);
+        long perFrame = (largeKept - smallKept) / 18_000;
+        long plainPerFrame = (plainLargeKept - plainSmallKept) / 18_000;
+        long peakGrowth = largePeak - smallPeak;
+        long plainPeakGrowth = plainLargePeak - plainSmallPeak;
+        Output.WriteLine($"{perFrame} bytes kept for each further frame ({plainPerFrame} in an MP3 file of the same frames), the peak grew by {peakGrowth} bytes ({plainPeakGrowth})");
+        // What the parser keeps of a frame (its record and side information) is the same as in a file; the stretches add the ranges (16 bytes each, a few times over, with MP4's own tables)
+        // and no byte of the frames, which are about 440 bytes each: a copy of them would add that to every frame.
+        Assert.True(perFrame <= plainPerFrame + 100, $"The report keeps {perFrame} bytes for each further frame, {plainPerFrame} in a file.");
+        Assert.True(peakGrowth <= plainPeakGrowth + 4_000_000, $"The live heap grew by {peakGrowth} bytes for the stretches, {plainPeakGrowth} for a file of the frames.");
+        GC.KeepAlive(largeReport);
+    }
+
     // A headerless Matroska TTA track whose Channels element states 2^26 channels: nothing is allocated for them (the parser once took 40 bytes for each).
     [Fact]
     public void ATtaTrackWithManyChannelsAllocatesNothingForThem()

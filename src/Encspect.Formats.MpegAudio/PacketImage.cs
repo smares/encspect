@@ -2,20 +2,13 @@ using Encspect.Core;
 
 namespace Encspect.Formats.MpegAudio;
 
-// The packets a container hands over, laid out at their file offsets as a read-only stream, so that the parser reads them as it reads a file: the bytes between packets (a
-// Matroska block's header, the chunks of another track in an MP4 file, the preamble and stuffing of an IEC 61937 burst) are not in the image and read as zeros, and the
-// parser never goes there (BlockReader.Stretches). The packets are kept in memory, at most Limit bytes of them: the parser reads a stream back after its first pass
-// (the bit reservoir, the ancillary data, the decoder), so a packet cannot be dropped once it is read.
-internal sealed class PacketImage : Stream
+// The packets a container hands over, as a read-only stream at their file offsets, so that the parser reads them as it reads a file: the bytes between packets (a Matroska
+// block's header, the chunks of another track in an MP4 file, the preamble and stuffing of an IEC 61937 burst) are not in the image and read as zeros, and the parser
+// never goes there (BlockReader.Stretches). Only the ranges of the packets are kept, merged where they touch; the bytes are read from the container's reader when asked for, and
+// the pair of bytes swapped back for packets that are 16-bit words. The parser reads a stream back after its first pass (the bit reservoir, the ancillary data, the decoder), so
+// memory does not grow with the stream: the stretches are two numbers each.
+internal sealed class PacketImage(ByteReader source, bool isWordSwapped) : Stream
 {
-    // The most bytes of packets that are kept; the packets after that are counted and not analyzed (mpeg-audio.packets-limit).
-    public const long Limit = 256L << 20;
-
-    private const int BlockSize = 1 << 20;
-
-    private readonly List<byte[]> _blocks = [];
-    private readonly List<(long Start, int Length, long Stored)> _packets = [];
-    private long _stored;
     private long _position;
 
     // The stretches of the packets (those that touch are one), the first packet's offset and the end of the last.
@@ -25,7 +18,7 @@ internal sealed class PacketImage : Stream
 
     public long Last { get; private set; }
 
-    // Whether packets were left out, and the first such reason.
+    // How many packets were left out, and the first reason.
     public string? Problem { get; private set; }
 
     public long Skipped { get; private set; }
@@ -44,17 +37,18 @@ internal sealed class PacketImage : Stream
         set => _position = value;
     }
 
-    // Adds a packet; false (with Problem set) when it cannot be placed: its bytes are not file bytes in one piece, it lies before the one before it, or the limit is reached.
+    // Adds a packet's range; false (with Problem set) when it cannot be placed: its bytes are not bytes of the file in one piece (a compressed or stripped block), or it lies
+    // before the one it follows.
     public bool Add(MappedBytes packet)
     {
-        ReadOnlyMemory<byte> data = packet.Data;
-        if (data.Length == 0)
+        int length = packet.Length;
+        if (length == 0)
         {
             return true;
         }
 
-        IReadOnlyList<ByteRange> ranges = packet.FileRanges(0, data.Length);
-        if (packet.IsOpaque || ranges.Count != 1 || ranges[0].Length != data.Length)
+        IReadOnlyList<ByteRange> ranges = packet.FileRanges(0, length);
+        if (packet.IsOpaque || ranges.Count != 1 || ranges[0].Length != length)
         {
             Problem ??= "its bytes are not bytes of the file in one piece (a compressed or stripped block)";
             Skipped++;
@@ -69,46 +63,17 @@ internal sealed class PacketImage : Stream
             return false;
         }
 
-        if (_stored + data.Length > Limit)
-        {
-            Problem ??= $"the packets are more than the {Limit >> 20} MiB the analyzer keeps in memory";
-            Skipped++;
-            return false;
-        }
-
-        int at = (int)(_stored % BlockSize);
-        if (at == 0)
-        {
-            _blocks.Add(new byte[BlockSize]);
-        }
-
-        int done = 0;
-        while (done < data.Length)
-        {
-            at = (int)((_stored + done) % BlockSize);
-            if (at == 0 && _blocks.Count * (long)BlockSize <= _stored + done)
-            {
-                _blocks.Add(new byte[BlockSize]);
-            }
-
-            int count = Math.Min(data.Length - done, BlockSize - at);
-            data.Span.Slice(done, count).CopyTo(_blocks[(int)((_stored + done) / BlockSize)].AsSpan(at));
-            done += count;
-        }
-
-        _packets.Add((start, data.Length, _stored));
-        _stored += data.Length;
         First = First < 0 ? start : First;
         if (Stretches.Count > 0 && Stretches[^1].End == start)
         {
-            Stretches[^1] = Stretches[^1] with { Length = Stretches[^1].Length + data.Length };
+            Stretches[^1] = Stretches[^1] with { Length = Stretches[^1].Length + length };
         }
         else
         {
-            Stretches.Add(new ByteRange(start, data.Length));
+            Stretches.Add(new ByteRange(start, length));
         }
 
-        Last = start + data.Length;
+        Last = start + length;
         return true;
     }
 
@@ -120,11 +85,11 @@ internal sealed class PacketImage : Stream
         buffer = buffer[..total];
         buffer.Clear();
         int low = 0;
-        int high = _packets.Count - 1;
+        int high = Stretches.Count - 1;
         while (low <= high)
         {
             int middle = (low + high) >> 1;
-            if (_packets[middle].Start + _packets[middle].Length <= _position)
+            if (Stretches[middle].End <= _position)
             {
                 low = middle + 1;
             }
@@ -134,27 +99,46 @@ internal sealed class PacketImage : Stream
             }
         }
 
-        for (int i = low; i < _packets.Count && _packets[i].Start < _position + total; i++)
+        // The container's reader is shared with the container, whose reads set the position they need; it is put back all the same.
+        long saved = source.Position;
+        try
         {
-            (long start, int length, long stored) = _packets[i];
-            long from = Math.Max(start, _position);
-            long to = Math.Min(start + length, _position + total);
-            long source = stored + (from - start);
-            long remaining = to - from;
-            long target = from - _position;
-            while (remaining > 0)
+            for (int i = low; i < Stretches.Count && Stretches[i].Offset < _position + total; i++)
             {
-                int at = (int)(source % BlockSize);
-                int count = (int)Math.Min(remaining, BlockSize - at);
-                _blocks[(int)(source / BlockSize)].AsSpan(at, count).CopyTo(buffer[(int)target..]);
-                source += count;
-                target += count;
-                remaining -= count;
+                long from = Math.Max(Stretches[i].Offset, _position);
+                long to = Math.Min(Stretches[i].End, _position + total);
+                Fill(buffer.Slice((int)(from - _position), (int)(to - from)), from);
             }
+        }
+        finally
+        {
+            source.Position = saved;
         }
 
         _position += total;
         return total;
+    }
+
+    // The file's bytes from offset, with the pairs swapped back where the packets are words: a pair is swapped within its two bytes, so an odd extent reads the byte after it.
+    private void Fill(Span<byte> destination, long offset)
+    {
+        if (!isWordSwapped)
+        {
+            source.Position = offset;
+            source.Read(destination);
+            return;
+        }
+
+        long first = offset & ~1L;
+        long last = Math.Min((offset + destination.Length + 1) & ~1L, source.End);
+        byte[] raw = new byte[last - first];
+        source.Position = first;
+        source.Read(raw);
+        for (int i = 0; i < destination.Length; i++)
+        {
+            long index = ((offset + i) ^ 1) - first;
+            destination[i] = index < raw.Length ? raw[index] : (byte)0;
+        }
     }
 
     public override long Seek(long offset, SeekOrigin origin) =>

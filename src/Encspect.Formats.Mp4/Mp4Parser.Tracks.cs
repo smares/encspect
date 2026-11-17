@@ -153,10 +153,16 @@ public sealed partial class Mp4Parser
             IEnumerable<MappedBytes> packets = codec == "opus" && entry.DecoderSpecificInfo is { } head ? Packets(state, track).Prepend(head)
                 : codec == "flac" && entry.DecoderSpecificInfo is { } blocks ? FlacBlocks(blocks).Concat(Packets(state, track))
                 : Packets(state, track);
+            if (codec == "mpeg-audio")
+            {
+                // The MPEG audio parser keeps the packets' ranges and reads them again from the file.
+                configuration = (configuration ?? new CodecConfiguration(MappedBytes.Opaque(ReadOnlyMemory<byte>.Empty, samples.Offset, samples.Offset), samples)) with { Source = state.Reader };
+            }
+
             state.Context.ParsePackets(codec, samples, packets, configuration);
             if (codec == "mpeg-audio" && state.Context.Streams.Count == streams)
             {
-                // MPEG audio is read only where its samples lie in one stretch; the track is still a stream, described by its sample entry.
+                // A track whose samples cannot be placed is still a stream, described by its sample entry.
                 RouteEncrypted(state, track, entry, codec, samples, ranges, first, isEncrypted: false, isScattered: true);
             }
         }

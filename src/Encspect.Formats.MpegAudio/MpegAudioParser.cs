@@ -160,8 +160,14 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             return;
         }
 
-        // Packets: laid out at their file offsets, with the container's own bytes between them skipped (PacketImage).
-        var image = new PacketImage();
+        // Packets: laid out at their file offsets, with the container's own bytes between them skipped (PacketImage), and read from the container's reader.
+        if (context.Configuration?.Source is not { } source)
+        {
+            context.AddFinding(Severity.Warning, "mpeg-audio.packets-not-analyzed", "MPEG audio handed over as packets is not analyzed: the container gives no way to read them again.", context.Parent);
+            return;
+        }
+
+        var image = new PacketImage(source, context.Configuration.IsWordSwapped);
         int index = 0;
         foreach (MappedBytes packet in context.Packets ?? [])
         {
@@ -170,10 +176,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
                 context.CancellationToken.ThrowIfCancellationRequested();
             }
 
-            if (!image.Add(packet) && image.Skipped > 1)
-            {
-                break;
-            }
+            image.Add(packet);
         }
 
         if (image.Skipped > 0)
@@ -579,12 +582,28 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         return frame;
     }
 
+    // The pieces of the stretches that lie in [start, end), by a loop (a long list of stretches must not go through a pooled array).
+    private static List<ByteRange> Pieces(IReadOnlyList<ByteRange> stretches, long start, long end)
+    {
+        var pieces = new List<ByteRange>();
+        for (int i = 0; i < stretches.Count; i++)
+        {
+            ByteRange r = stretches[i];
+            if (r.End > start && r.Offset < end)
+            {
+                pieces.Add(new ByteRange(Math.Max(r.Offset, start), Math.Min(r.End, end) - Math.Max(r.Offset, start)));
+            }
+        }
+
+        return pieces;
+    }
+
     // Gives a node of the region's own figures (its statistics, its encoder) and the nodes under it the ranges of the stretches they span, so that none lies in a gap between them.
     private static void Spread(Node node, IReadOnlyList<ByteRange> stretches)
     {
         if (node.Ranges is null)
         {
-            List<ByteRange> inside = [.. stretches.Where(r => r.End > node.Offset && r.Offset < node.End).Select(r => new ByteRange(Math.Max(r.Offset, node.Offset), Math.Min(r.End, node.End) - Math.Max(r.Offset, node.Offset)))];
+            List<ByteRange> inside = Pieces(stretches, node.Offset, node.End);
             if (inside.Count > 1)
             {
                 node.Ranges = inside;
@@ -607,7 +626,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             return null;
         }
 
-        List<ByteRange> inside = [.. stretches.Where(r => r.End > start && r.Offset < end).Select(r => new ByteRange(Math.Max(r.Offset, start), Math.Min(r.End, end) - Math.Max(r.Offset, start)))];
+        List<ByteRange> inside = Pieces(stretches, start, end);
         return inside.Count > 1 ? inside : null;
     }
 
@@ -660,7 +679,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         IReadOnlyList<ByteRange>? ranges = null;
         if (stretches is not null)
         {
-            List<ByteRange> pieces = [.. stretches.Where(r => r.End > start && r.Offset < end).Select(r => new ByteRange(Math.Max(r.Offset, start), Math.Min(r.End, end) - Math.Max(r.Offset, start)))];
+            List<ByteRange> pieces = Pieces(stretches, start, end);
             if (pieces.Count > 0)
             {
                 start = pieces[0].Offset;
