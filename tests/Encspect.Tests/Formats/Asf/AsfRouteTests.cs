@@ -83,6 +83,18 @@ public class AsfRouteTests
         Assert.Contains(Frames(report.Root), f => f.Ranges is { Count: 2 });
     }
 
+    // A message that quotes where a frame in two fragments is quotes the file offset of its first byte, in the first fragment, and the finding's node starts there.
+    [Fact]
+    public void AMessageQuotesTheFileOffsetOfAFragmentedFramesFirstByte()
+    {
+        Report report = Fixtures.AnalyzeMpeg("asf/mpeg-audio-object-fragmented-cut.asf");
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "mpeg-audio.frame-truncated");
+        Node frame = Frames(report.Root).Last(f => f.Ranges is { Count: 2 });
+
+        Assert.Equal(frame.Ranges![0].Offset, finding.Node!.Offset);
+        Assert.Contains($"0x{frame.Ranges[0].Offset:X}", finding.Message, StringComparison.Ordinal);
+    }
+
     private static IEnumerable<Node> Frames(Node node)
     {
         if (node.Name is "Frame" or "Syncframe")

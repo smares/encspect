@@ -44,7 +44,7 @@ public sealed partial class MpegAudioParser
         {
             string text = claim.Text.Trim();
             HashSet<string> claimed = FamiliesOf(text);
-            string evidence = $"{claim.Description} at 0x{claim.Source.Offset:X} names \"{text}\"";
+            string evidence = $"{claim.Description} at {At(claim.Source.Offset)} names \"{text}\"";
             if (encoder is null)
             {
                 // ffmpeg's muxer writes its own version whatever encoded the stream.

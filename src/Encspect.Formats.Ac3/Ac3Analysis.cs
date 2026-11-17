@@ -59,6 +59,9 @@ internal sealed class Ac3Analysis
     // Where the frames that are not one run of the file lie in it.
     public FramePieces Pieces { get; } = new();
 
+    // "0x" and the file offset of the first byte of what is at a position of the records, as a message quotes it.
+    public string At(long position) => $"0x{Pieces.FirstFile(position):X}";
+
     public ByteStore Store { get; } = new();
 
     // What frame nodes are built from, apart from the analysis, whose syntax and bit reader change
@@ -139,31 +142,31 @@ internal sealed class Ac3Analysis
             int have = available;
             int need = header.FrameLength;
             Findings.Add(Severity.Warning, "ac-3.frame-truncated", FrameAt, count =>
-                $"{(count == 1 ? "A sample ends inside its frame" : $"{count} samples end inside their frames")}, first the frame at 0x{offset:X} with {have} of its {need} bytes.");
+                $"{(count == 1 ? "A sample ends inside its frame" : $"{count} samples end inside their frames")}, first the frame at {At(offset)} with {have} of its {need} bytes.");
         }
         else if (truncated)
         {
-            Findings.AddNow(Severity.Warning, "ac-3.frame-truncated", $"The last frame at 0x{offset:X} has {available} of its {Counts.Of(header.FrameLength, "byte", "bytes")}.", FrameAt());
+            Findings.AddNow(Severity.Warning, "ac-3.frame-truncated", $"The last frame at {At(offset)} has {available} of its {Counts.Of(header.FrameLength, "byte", "bytes")}.", FrameAt());
         }
 
         if (cut)
         {
             Findings.Add(Severity.Warning, "ac-3.frame-damaged", FrameAt, count =>
-                $"{(count == 1 ? "A frame is" : $"{count} frames are")} cut short by the next frame's sync word, first at 0x{offset:X}: their header or data is damaged, or bytes are missing.");
+                $"{(count == 1 ? "A frame is" : $"{count} frames are")} cut short by the next frame's sync word, first at {At(offset)}: their header or data is damaged, or bytes are missing.");
         }
 
         if (crc1 == CrcState.Mismatch)
         {
             Findings.Add(Severity.Warning, "ac-3.crc1-mismatch", () => new Node("CRC1", offset + 2, 2), count =>
-                $"crc1, which covers the first 5/8 of a frame (A/52 7.10.1), fails in {Count(count)}, first at 0x{offset:X}; decoders that check it drop the frame.");
+                $"crc1, which covers the first 5/8 of a frame (A/52 7.10.1), fails in {Count(count)}, first at {At(offset)}; decoders that check it drop the frame.");
         }
 
         if (crc2 == CrcState.Mismatch)
         {
             Findings.Add(Severity.Warning, header.IsEac3 ? "ac-3.crc-mismatch" : "ac-3.crc2-mismatch", () => new Node("CRC2", offset + available - 2, 2), count =>
                 header.IsEac3
-                    ? $"The CRC that covers the whole frame (A/52 Annex E 3.2) fails in {Count(count)}, first at 0x{offset:X}; E-AC-3 decoders drop the frame."
-                    : $"crc2, which covers the whole frame (A/52 7.10.1), fails in {Count(count)}, first at 0x{offset:X}; decoders that check it drop the frame.");
+                    ? $"The CRC that covers the whole frame (A/52 Annex E 3.2) fails in {Count(count)}, first at {At(offset)}; E-AC-3 decoders drop the frame."
+                    : $"crc2, which covers the whole frame (A/52 7.10.1), fails in {Count(count)}, first at {At(offset)}; decoders that check it drop the frame.");
         }
 
         if (!header.IsDependent)
@@ -234,7 +237,7 @@ internal sealed class Ac3Analysis
                 SyncFrame independentHeader = frames[0].Header;
                 long at = frame.Offset;
                 Findings.Add(Severity.Warning, "ac-3.dependent-format-differs", () => new Node("Frame", at, frame.Available) { Kind = NodeKind.Frame }, count =>
-                    $"{Count(count)} of a dependent substream {Counts.Agree(count, "has", "have")} {dependentHeader.Blocks} audio blocks at {dependentHeader.SampleRate} Hz where the independent frame before {Counts.Agree(count, "has", "have")} {independentHeader.Blocks} at {independentHeader.SampleRate} Hz (A/52 Annex E 2.3.1.2 gives a program frame one block count and sample rate); the first is at 0x{at:X}, and the program frame is not decoded.");
+                    $"{Count(count)} of a dependent substream {Counts.Agree(count, "has", "have")} {dependentHeader.Blocks} audio blocks at {dependentHeader.SampleRate} Hz where the independent frame before {Counts.Agree(count, "has", "have")} {independentHeader.Blocks} at {independentHeader.SampleRate} Hz (A/52 Annex E 2.3.1.2 gives a program frame one block count and sample rate); the first is at {At(at)}, and the program frame is not decoded.");
                 given = frame with { IsReadable = false };
             }
 
@@ -291,7 +294,7 @@ internal sealed class Ac3Analysis
         {
             int id = header.SubstreamId;
             Findings.Add(Severity.Warning, "ac-3.dependent-excess", FrameAt, count =>
-                $"{(count == 1 ? "1 dependent frame is" : $"{count} dependent frames are")} left out of the figures and statistics after a dependent substream ID repeats within a program frame (A/52 Annex E 2.3.1.2 allows each ID once, at most 8, after an independent frame); the first is of substream {id} at 0x{offset:X}.");
+                $"{(count == 1 ? "1 dependent frame is" : $"{count} dependent frames are")} left out of the figures and statistics after a dependent substream ID repeats within a program frame (A/52 Annex E 2.3.1.2 allows each ID once, at most 8, after an independent frame); the first is of substream {id} at {At(offset)}.");
         }
     }
 
@@ -356,11 +359,11 @@ internal sealed class Ac3Analysis
         }
         else if (trailing)
         {
-            Findings.AddNow(Severity.Warning, "ac-3.trailing-data", $"{Counts.Of(length, "byte", "bytes")} after the last frame at 0x{start:X} {Counts.Agree(length, "is", "are")} not a frame.", node);
+            Findings.AddNow(Severity.Warning, "ac-3.trailing-data", $"{Counts.Of(length, "byte", "bytes")} after the last frame at {At(start)} {Counts.Agree(length, "is", "are")} not a frame.", node);
         }
         else
         {
-            Findings.AddNow(Severity.Warning, "ac-3.sync-lost", $"Sync is lost for {Counts.Of(length, "byte", "bytes")} at 0x{start:X}.", node);
+            Findings.AddNow(Severity.Warning, "ac-3.sync-lost", $"Sync is lost for {Counts.Of(length, "byte", "bytes")} at {At(start)}.", node);
         }
     }
 
@@ -397,7 +400,7 @@ internal sealed class Ac3Analysis
     {
         long offset = _frameOffset;
         Node Field() => Node.FromBits(field, offset, start, end);
-        string at = $"the frame at 0x{offset:X}";
+        string at = $"the frame at {At(offset)}";
         switch (issue)
         {
             case Issue.ReservedValue:
@@ -506,12 +509,12 @@ internal sealed class Ac3Analysis
         if (unit.ExtensionOffset >= 0 && unit.JocOffset < 0 && unit.AllRead)
         {
             Findings.Add(Severity.Warning, "ac-3.extension-without-joc", () => Node.FromBits("HasExtensionTypeA", unit.ExtensionOffset, unit.ExtensionStart, unit.ExtensionEnd), count =>
-                $"{Units(count)}: the additional bit stream information of a frame sets flag_ec3_extension_type_a, but no EMDF container in the frames holds a joint object coding payload (ETSI TS 103 420 8.3); the first is at 0x{unit.ExtensionOffset:X}.");
+                $"{Units(count)}: the additional bit stream information of a frame sets flag_ec3_extension_type_a, but no EMDF container in the frames holds a joint object coding payload (ETSI TS 103 420 8.3); the first is at {At(unit.ExtensionOffset)}.");
         }
         else if (unit.JocOffset >= 0 && unit.ExtensionOffset < 0)
         {
             Findings.Add(Severity.Warning, "ac-3.joc-without-extension", () => Node.FromBits("Payload", unit.JocOffset, unit.JocStart, unit.JocEnd), count =>
-                $"{Units(count)}: a frame holds a joint object coding payload, but none of the frames sets flag_ec3_extension_type_a in its additional bit stream information (ETSI TS 103 420 8.3.1); the first is at 0x{unit.JocOffset:X}.");
+                $"{Units(count)}: a frame holds a joint object coding payload, but none of the frames sets flag_ec3_extension_type_a in its additional bit stream information (ETSI TS 103 420 8.3.1); the first is at {At(unit.JocOffset)}.");
         }
     }
 
@@ -569,14 +572,14 @@ internal sealed class Ac3Analysis
                 }
 
                 Findings.Add(Severity.Warning, "ac-3.dependent-without-independent", () => FrameAt(),
-                    count => $"{Count(count)} of a dependent substream {Counts.Agree(count, "comes", "come")} before any independent frame they could belong to, or after a gap that took it (A/52 Annex E 2.3.1.2); the first is at 0x{frameOffset:X}.");
+                    count => $"{Count(count)} of a dependent substream {Counts.Agree(count, "comes", "come")} before any independent frame they could belong to, or after a gap that took it (A/52 Annex E 2.3.1.2); the first is at {At(frameOffset)}.");
                 return null;
             }
 
             if (_currentType == 2)
             {
                 Findings.Add(Severity.Warning, "ac-3.dependent-after-converted", () => FrameAt(),
-                    count => $"{Count(count)} of a dependent substream {Counts.Agree(count, "follows", "follow")} an independent substream of stream type 2, converted from AC-3, which may have none (A/52 Annex E 2.3.1.1); the first is at 0x{frameOffset:X}.");
+                    count => $"{Count(count)} of a dependent substream {Counts.Agree(count, "follows", "follow")} an independent substream of stream type 2, converted from AC-3, which may have none (A/52 Annex E 2.3.1.1); the first is at {At(frameOffset)}.");
             }
 
             _current.Regions.Add(region);
@@ -594,7 +597,7 @@ internal sealed class Ac3Analysis
             int blocks = header.Blocks;
             int expected = _blocksOfSubstream0;
             Findings.Add(Severity.Warning, "ac-3.substream-blocks-differ", () => FrameAt(),
-                count => $"{Count(count)} of independent substream {id} hold {blocks} audio blocks where substream 0's hold {expected} (A/52 Annex E 2.3.1.2 requires the same number); the first is at 0x{frameOffset:X}.");
+                count => $"{Count(count)} of independent substream {id} hold {blocks} audio blocks where substream 0's hold {expected} (A/52 Annex E 2.3.1.2 requires the same number); the first is at {At(frameOffset)}.");
         }
 
         var key = new ProgramKey(id, header.SampleRate, header.IsEac3, header.Acmod, header.Lfeon, dependents);
@@ -621,7 +624,7 @@ internal sealed class Ac3Analysis
                 string from = lastKey.Describe();
                 string to = key.Describe();
                 Findings.Add(Severity.Info, "ac-3.stream-changed", FrameAt,
-                    count => $"The stream{substream} changes at 0x{frameOffset:X} from {from} to {to}{(count > 1 ? $"; the streams change {Counts.Of(count, "time", "times")} in the file" : string.Empty)}.");
+                    count => $"The stream{substream} changes at {At(frameOffset)} from {from} to {to}{(count > 1 ? $"; the streams change {Counts.Of(count, "time", "times")} in the file" : string.Empty)}.");
             }
         }
         else
@@ -634,7 +637,7 @@ internal sealed class Ac3Analysis
             if (!Findings.CountIfKnown("ac-3.streams-limited"))
             {
                 Findings.Add(Severity.Warning, "ac-3.streams-limited", FrameAt,
-                    count => $"{Count(count)}, dependent frames included, are in no stream: the analyzer keeps at most {MaxStreams} streams, one per run of an independent substream with one configuration, and these frames start another; the first is at 0x{frameOffset:X}.");
+                    count => $"{Count(count)}, dependent frames included, are in no stream: the analyzer keeps at most {MaxStreams} streams, one per run of an independent substream with one configuration, and these frames start another; the first is at {At(frameOffset)}.");
             }
 
             _current = null;

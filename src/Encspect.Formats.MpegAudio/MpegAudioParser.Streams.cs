@@ -38,7 +38,7 @@ public sealed partial class MpegAudioParser
             {
                 long offset = frames[i].Offset;
                 state.Findings.Add(Severity.Warning, "mpeg-audio.streams-limited", FindingNode(frames[i]), count =>
-                    $"{(count == 1 ? "One frame is" : $"{count} frames are")} in no stream: the analyzer keeps at most {MaxStreams} streams, one per run of one version, layer, sample rate and free format or not, and the frame at 0x{offset:X} is the first to start another.");
+                    $"{(count == 1 ? "One frame is" : $"{count} frames are")} in no stream: the analyzer keeps at most {MaxStreams} streams, one per run of one version, layer, sample rate and free format or not, and the frame at {At(offset)} is the first to start another.");
                 continue;
             }
 
@@ -231,7 +231,7 @@ public sealed partial class MpegAudioParser
                     Layer2Multichannel from = first;
                     long offset = frame.Offset;
                     state.Findings.Add(Severity.Info, "mpeg-audio.multichannel-configuration-changes", FindingNode(frames[firstIndex]), _ =>
-                        $"The multichannel configuration changes within the stream, from {from.Configuration} to {mc.Configuration} at 0x{offset:X}, so the stream reports the channels of its stereo base.");
+                        $"The multichannel configuration changes within the stream, from {from.Configuration} to {mc.Configuration} at {At(offset)}, so the stream reports the channels of its stereo base.");
                 }
 
                 return (first, hasExtension, true);

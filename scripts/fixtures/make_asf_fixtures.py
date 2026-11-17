@@ -838,6 +838,9 @@ fixture("mpeg-audio-object-fragmented", "MPEG audio whose fourth frame is a medi
 fixture("mpeg-audio-rate-differs", "MPEG audio at 44,100 Hz in a stream whose WAVEFORMATEX states 48,000 Hz.",
         lambda: routed_file(m.wave_format(0x0055, 2, 48000, 16000, 1, 0, struct.pack("<HIHHH", 1, 2, 417, 1, 0)), mp3_frames(8)), [finding("asf.sample-rate-differs", "48000 Hz")],
         {"ffprobe": False, "reason": "ffprobe reads the frames' figures (44,100 Hz), not the WAVEFORMATEX's: that disagreement is what the fixture holds."})
+fixture("mpeg-audio-object-fragmented-cut", "mpeg-audio-object-fragmented with its last frame cut to a third (a media object of two fragments in two packets): the finding of a frame cut short quotes "
+        "the file offset of the first fragment.", lambda: routed_file(MP3_FORMAT, mp3_frames(8)[:-1] + [mp3_frames(8)[-1][:139]], split=7),
+        [finding("mpeg-audio.frame-truncated", "last frame at 0x")], {"ffprobe": False, "reason": "ffprobe decodes the cut frame as the file says; the analyzer's finding is what the fixture holds."})
 fixture("ac3-in-asf", "Six AC-3 syncframes as media objects under the format tag 0x2000: the AC-3 parser reads the stream.",
         lambda: routed_file(AC3_FORMAT, ac3_frames(6), size=1400), [])
 fixture("ac3-object-fragmented", "AC-3 whose third syncframe is a media object put together from fragments in two packets: the AC-3 parser reads the bytes it is handed, so all six frames are counted and the audio decodes as the unfragmented stream's does.",

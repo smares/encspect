@@ -78,6 +78,21 @@ public class MatroskaStrippingTests
         TestFiles.CheckInsideParents(report.Root);
     }
 
+    // A message that quotes where a frame is quotes the file offset of the frame's first byte, which for a frame with stripped bytes is a byte of the ContentCompSettings (the
+    // node of the finding starts there too), not a position in the image the frames are read from.
+    [Theory]
+    [InlineData("matroska/mpeg-audio-header-stripped-cut.mka", "mpeg-audio.frame-truncated")]
+    [InlineData("matroska/ac3-header-stripped-cut.mka", "ac-3.frame-truncated")]
+    public void AMessageQuotesTheFileOffsetOfTheFramesFirstByte(string name, string code)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+        Finding finding = Assert.Single(report.Findings, f => f.Code == code);
+        Node settings = Find(report.Root, "ContentCompSettings")!;
+
+        Assert.Equal(settings.End - 2, finding.Node!.Offset);
+        Assert.Contains($"0x{settings.End - 2:X}", finding.Message, StringComparison.Ordinal);
+    }
+
     private static Node? Find(Node node, string name) => FindAll(node, name).FirstOrDefault();
 
     private static IEnumerable<Node> FindAll(Node node, string name)

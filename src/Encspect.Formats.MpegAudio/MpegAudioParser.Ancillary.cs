@@ -108,7 +108,7 @@ public sealed partial class MpegAudioParser
             if (ofl.Delay + ofl.Samples > streamSamples)
             {
                 state.Findings.AddNow(Severity.Warning, "mpeg-audio.ofl-exceeds-stream",
-                    $"The Original File Length block at 0x{ofl.Offset:X} gives a delay of {Number(ofl.Delay)} and {Counts.Of(ofl.Samples, "sample", "samples")} of audio, {Number(ofl.Delay + ofl.Samples)} samples, more than the {Number(streamSamples)} of the stream.",
+                    $"The Original File Length block at {At(ofl.Offset)} gives a delay of {Number(ofl.Delay)} and {Counts.Of(ofl.Samples, "sample", "samples")} of audio, {Number(ofl.Delay + ofl.Samples)} samples, more than the {Number(streamSamples)} of the stream.",
                     node);
             }
         }

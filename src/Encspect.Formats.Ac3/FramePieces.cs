@@ -72,6 +72,51 @@ internal sealed class FramePieces
         return false;
     }
 
+    // The file offset of the first byte of the frame or unit at a position of the records (the position itself where it is one run of the file).
+    public long FirstFile(long position) => FileOf(position);
+
+    // The file offset of the byte at a position of the records: inside a frame in pieces, the byte of the piece it is in (frames of one run are at their file offsets).
+    public long FileOf(long position)
+    {
+        if (IsEmpty)
+        {
+            return position;
+        }
+
+        int low = 0;
+        int high = _positions.Count - 1;
+        while (low <= high)
+        {
+            int middle = (low + high) >> 1;
+            if (_positions[middle] <= position)
+            {
+                low = middle + 1;
+            }
+            else
+            {
+                high = middle - 1;
+            }
+        }
+
+        if (high < 0 || !TryGet(_positions[high], out List<ByteRange> pieces))
+        {
+            return position;
+        }
+
+        long inside = position - _positions[high];
+        foreach (ByteRange piece in pieces)
+        {
+            if (inside < piece.Length)
+            {
+                return piece.Offset + inside;
+            }
+
+            inside -= piece.Length;
+        }
+
+        return position;
+    }
+
     // The node as the file has it, where its position is one of a frame in pieces and its name is the frame's or a gap's: at the first piece, to the end of the last, with Ranges.
     public Node Place(Node node)
     {

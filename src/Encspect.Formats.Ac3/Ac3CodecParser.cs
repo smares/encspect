@@ -113,12 +113,12 @@ public sealed class Ac3CodecParser(string id) : ICodecParser
                 if (bytes.Length - position >= 2 && bytes[position] == 0x77 && bytes[position + 1] == 0x0B)
                 {
                     analysis.Findings.Add(Severity.Info, "ac-3.little-endian", () => new Node("Gap", gapAt, rest), count =>
-                        $"{(count == 1 ? "A sample holds" : $"{count} samples hold")} AC-3 in little-endian byte order (sync word 0x770B), which ETSI TS 102 366 F.1 allows but recommends against; it is not analyzed. The first is at 0x{gapAt:X}.");
+                        $"{(count == 1 ? "A sample holds" : $"{count} samples hold")} AC-3 in little-endian byte order (sync word 0x770B), which ETSI TS 102 366 F.1 allows but recommends against; it is not analyzed. The first is at {analysis.At(gapAt)}.");
                 }
                 else
                 {
                     analysis.Findings.Add(Severity.Warning, "ac-3.sample-not-frame", () => new Node("Gap", gapAt, rest), count =>
-                        $"{(count == 1 ? "A sample holds" : $"{count} samples hold")} bytes that are no syncframe where one should start, first at 0x{gapAt:X}.");
+                        $"{(count == 1 ? "A sample holds" : $"{count} samples hold")} bytes that are no syncframe where one should start, first at {analysis.At(gapAt)}.");
                 }
 
                 analysis.Frames.Add(Ac3Analysis.Frame.Gap(gapAt, bytes.Length - position));

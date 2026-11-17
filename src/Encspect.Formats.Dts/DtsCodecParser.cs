@@ -77,7 +77,7 @@ public sealed class DtsCodecParser : ICodecParser
                 long offset = position;
                 long rest = source.End - position;
                 analysis.Findings.Add(Severity.Warning, "dts.sample-not-frame", () => new Node("Gap", offset, rest), count =>
-                    $"{(count == 1 ? "A sample holds" : $"{count} samples hold")} bytes that are no core frame or extension substream where one should start, first at 0x{offset:X}.");
+                    $"{(count == 1 ? "A sample holds" : $"{count} samples hold")} bytes that are no core frame or extension substream where one should start, first at {analysis.At(offset)}.");
                 if (inPieces is not null)
                 {
                     IReadOnlyList<ByteRange> gapPieces = packet.FileRanges((int)(offset - start), packet.Length);

@@ -1866,6 +1866,23 @@ def _():
     return coded_track("A_DTS", 6, 48000.0, frames, 21.333, strip=common_prefix(frames, 8))
 
 
+def cut_last(frames):
+    """The frames with the last one cut to a third of its length: a finding that quotes where the last frame is."""
+    return frames[:-1] + [frames[-1][:len(frames[-1]) // 3]]
+
+
+@fixture("mpeg-audio-header-stripped-cut", "mpeg-audio-header-stripped with its last frame cut to a third: the finding of a frame cut short quotes the file offset of the frame's first byte, which is a "
+         "stripped byte, so in the ContentCompSettings.", findings=[("mpeg-audio.frame-truncated", "last frame at 0x")], streams=[("MPEG-1 Layer III", 44100, 2)], valid=False)
+def _():
+    return coded_track("A_MPEG/L3", 2, 44100.0, cut_last(mp3_frames(8)), MP3_STEP, strip=b"\xff\xfb")
+
+
+@fixture("ac3-header-stripped-cut", "ac3-header-stripped with its last frame cut to a third: the finding quotes the file offset of the frame's first byte, a stripped one.",
+         findings=[("ac-3.frame-truncated", "frame at 0x")], streams=[("AC-3", 48000, 2)], valid=False)
+def _():
+    return coded_track("A_AC3", 2, 48000.0, cut_last(ac3_stereo_frames(6)), 32, strip=b"\x0b\x77")
+
+
 @fixture("aac-frames", "Six AAC frames in an A_AAC track with a CodecPrivate and no encoding: the control of aac-header-stripped.", streams=[("AAC", 44100, 2)])
 def _():
     config, rate, channels, frames = aac_frames_with_config()
