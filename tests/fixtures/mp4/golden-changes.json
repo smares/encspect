@@ -1,15 +1,8 @@
 {
-  "goldens": [
-    "tests/fixtures/mp4/ffmpeg-cenc-flac.report.json"
-  ],
-  "added": [
-    { "scope": "node", "parent": ["MP4", "moov", "trak", "mdia", "minf", "stbl", "stsd", "enca", "dfLa"], "name": "Version" },
-    { "scope": "node", "parent": ["MP4", "moov", "trak", "mdia", "minf", "stbl", "stsd", "enca", "dfLa"], "name": "Flags" }
-  ],
-  "removed": [
-    { "parent": ["MP4", "moov", "trak", "mdia", "minf", "stbl", "stsd", "enca", "dfLa"], "name": "Data" }
-  ],
+  "goldens": ["tests/fixtures/mp4/mp3-two-chunks-gap.report.json"],
+  "removed": [{ "scope": "finding", "code": "mpeg-audio.packets-not-analyzed" }],
   "changed": [
-    { "path": ["MP4", "moov", "trak", "mdia", "minf", "stbl", "stsd", "enca", "dfLa"], "fields": ["value", "unit"] }
+    { "path": ["MP4", "mdat", "Track 1 Samples", "MPEG Audio"], "fields": ["name", "value", "unit", "children"] },
+    { "scope": "stream", "fields": ["codec", "channelMode", "channelLayout", "channelLayoutName", "categorySeries", "verification", "series", "samples", "duration", "averageBitrate", "isVbr", "encoder", "encoderConfidence", "writer", "writerConfidence"] }
   ]
 }
