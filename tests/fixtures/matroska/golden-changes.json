@@ -23,94 +23,6 @@
       "scope": "stream",
       "key": "channelLayout",
       "streams": [
-        0
-      ],
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-pcm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json",
-        "tests/fixtures/matroska/live-false-ape-items-one-cluster.report.json",
-        "tests/fixtures/matroska/live-false-ape-items-two-clusters.report.json",
-        "tests/fixtures/matroska/live-false-ape-items-unknown-tail.report.json",
-        "tests/fixtures/matroska/misplaced-values.report.json",
-        "tests/fixtures/matroska/sampling-frequency-invalid.report.json",
-        "tests/fixtures/matroska/track-timestamp-scale.report.json",
-        "tests/fixtures/matroska/tracks-after-clusters.report.json",
-        "tests/fixtures/matroska/webm-not-allowed.report.json",
-        "tests/fixtures/matroska/writer-pcm-ffmpeg.report.json",
-        "tests/fixtures/matroska/writer-pcm-lame.report.json",
-        "tests/fixtures/matroska/writer-tag-without-info.report.json"
-      ]
-    },
-    {
-      "scope": "stream",
-      "key": "channelLayoutName",
-      "streams": [
-        0
-      ],
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-pcm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json",
-        "tests/fixtures/matroska/live-false-ape-items-one-cluster.report.json",
-        "tests/fixtures/matroska/live-false-ape-items-two-clusters.report.json",
-        "tests/fixtures/matroska/live-false-ape-items-unknown-tail.report.json",
-        "tests/fixtures/matroska/misplaced-values.report.json",
-        "tests/fixtures/matroska/sampling-frequency-invalid.report.json",
-        "tests/fixtures/matroska/track-timestamp-scale.report.json",
-        "tests/fixtures/matroska/tracks-after-clusters.report.json",
-        "tests/fixtures/matroska/webm-not-allowed.report.json",
-        "tests/fixtures/matroska/writer-pcm-ffmpeg.report.json",
-        "tests/fixtures/matroska/writer-pcm-lame.report.json",
-        "tests/fixtures/matroska/writer-tag-without-info.report.json"
-      ]
-    },
-    {
-      "scope": "stream",
-      "key": "channelMode",
-      "streams": [
-        0
-      ],
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-pcm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json",
-        "tests/fixtures/matroska/live-false-ape-items-one-cluster.report.json",
-        "tests/fixtures/matroska/live-false-ape-items-two-clusters.report.json",
-        "tests/fixtures/matroska/live-false-ape-items-unknown-tail.report.json",
-        "tests/fixtures/matroska/misplaced-values.report.json",
-        "tests/fixtures/matroska/sampling-frequency-invalid.report.json",
-        "tests/fixtures/matroska/track-timestamp-scale.report.json",
-        "tests/fixtures/matroska/tracks-after-clusters.report.json",
-        "tests/fixtures/matroska/webm-not-allowed.report.json",
-        "tests/fixtures/matroska/writer-pcm-ffmpeg.report.json",
-        "tests/fixtures/matroska/writer-pcm-lame.report.json",
-        "tests/fixtures/matroska/writer-tag-without-info.report.json"
-      ]
-    },
-    {
-      "scope": "stream",
-      "key": "verification",
-      "streams": [
-        0
-      ],
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-pcm.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json",
-        "tests/fixtures/matroska/live-false-ape-items-one-cluster.report.json",
-        "tests/fixtures/matroska/live-false-ape-items-two-clusters.report.json",
-        "tests/fixtures/matroska/live-false-ape-items-unknown-tail.report.json",
-        "tests/fixtures/matroska/misplaced-values.report.json",
-        "tests/fixtures/matroska/sampling-frequency-invalid.report.json",
-        "tests/fixtures/matroska/track-timestamp-scale.report.json",
-        "tests/fixtures/matroska/tracks-after-clusters.report.json",
-        "tests/fixtures/matroska/webm-not-allowed.report.json",
-        "tests/fixtures/matroska/writer-pcm-ffmpeg.report.json",
-        "tests/fixtures/matroska/writer-pcm-lame.report.json",
-        "tests/fixtures/matroska/writer-tag-without-info.report.json"
-      ]
-    },
-    {
-      "scope": "stream",
-      "key": "channelLayout",
-      "streams": [
         1
       ],
       "goldens": [
@@ -190,6 +102,170 @@
     {
       "scope": "finding",
       "code": "pcm.writer-claim-differs"
+    },
+    {
+      "scope": "finding",
+      "code": "matroska.pcm-layout-not-read"
+    },
+    {
+      "scope": "stream",
+      "key": "channelLayout",
+      "streams": [
+        0
+      ],
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-pcm.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-one-cluster.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-two-clusters.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-unknown-tail.report.json",
+        "tests/fixtures/matroska/misplaced-values.report.json",
+        "tests/fixtures/matroska/track-timestamp-scale.report.json",
+        "tests/fixtures/matroska/tracks-after-clusters.report.json",
+        "tests/fixtures/matroska/webm-not-allowed.report.json",
+        "tests/fixtures/matroska/writer-pcm-ffmpeg.report.json",
+        "tests/fixtures/matroska/writer-pcm-lame.report.json",
+        "tests/fixtures/matroska/writer-tag-without-info.report.json",
+        "tests/fixtures/matroska/writer-tag-and-apps.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "key": "channelLayout",
+      "goldens": [
+        "tests/fixtures/matroska/sampling-frequency-invalid.report.json",
+        "tests/fixtures/matroska/writer-tag-conflicts-two-pcm.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "key": "channelLayout",
+      "streams": [
+        0
+      ],
+      "goldens": [
+        "tests/fixtures/matroska/track-fields.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "key": "channelLayoutName",
+      "streams": [
+        0
+      ],
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-pcm.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-one-cluster.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-two-clusters.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-unknown-tail.report.json",
+        "tests/fixtures/matroska/misplaced-values.report.json",
+        "tests/fixtures/matroska/track-timestamp-scale.report.json",
+        "tests/fixtures/matroska/tracks-after-clusters.report.json",
+        "tests/fixtures/matroska/webm-not-allowed.report.json",
+        "tests/fixtures/matroska/writer-pcm-ffmpeg.report.json",
+        "tests/fixtures/matroska/writer-pcm-lame.report.json",
+        "tests/fixtures/matroska/writer-tag-without-info.report.json",
+        "tests/fixtures/matroska/writer-tag-and-apps.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "key": "channelLayoutName",
+      "goldens": [
+        "tests/fixtures/matroska/sampling-frequency-invalid.report.json",
+        "tests/fixtures/matroska/writer-tag-conflicts-two-pcm.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "key": "channelLayoutName",
+      "streams": [
+        0
+      ],
+      "goldens": [
+        "tests/fixtures/matroska/track-fields.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "key": "channelMode",
+      "streams": [
+        0
+      ],
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-pcm.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-one-cluster.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-two-clusters.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-unknown-tail.report.json",
+        "tests/fixtures/matroska/misplaced-values.report.json",
+        "tests/fixtures/matroska/track-timestamp-scale.report.json",
+        "tests/fixtures/matroska/tracks-after-clusters.report.json",
+        "tests/fixtures/matroska/webm-not-allowed.report.json",
+        "tests/fixtures/matroska/writer-pcm-ffmpeg.report.json",
+        "tests/fixtures/matroska/writer-pcm-lame.report.json",
+        "tests/fixtures/matroska/writer-tag-without-info.report.json",
+        "tests/fixtures/matroska/writer-tag-and-apps.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "key": "channelMode",
+      "goldens": [
+        "tests/fixtures/matroska/sampling-frequency-invalid.report.json",
+        "tests/fixtures/matroska/writer-tag-conflicts-two-pcm.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "key": "channelMode",
+      "streams": [
+        0
+      ],
+      "goldens": [
+        "tests/fixtures/matroska/track-fields.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "key": "verification",
+      "streams": [
+        0
+      ],
+      "goldens": [
+        "tests/fixtures/matroska/external-ffmpeg-pcm.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-one-cluster.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-two-clusters.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-unknown-tail.report.json",
+        "tests/fixtures/matroska/misplaced-values.report.json",
+        "tests/fixtures/matroska/track-timestamp-scale.report.json",
+        "tests/fixtures/matroska/tracks-after-clusters.report.json",
+        "tests/fixtures/matroska/webm-not-allowed.report.json",
+        "tests/fixtures/matroska/writer-pcm-ffmpeg.report.json",
+        "tests/fixtures/matroska/writer-pcm-lame.report.json",
+        "tests/fixtures/matroska/writer-tag-without-info.report.json",
+        "tests/fixtures/matroska/writer-tag-and-apps.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "key": "verification",
+      "goldens": [
+        "tests/fixtures/matroska/sampling-frequency-invalid.report.json",
+        "tests/fixtures/matroska/writer-tag-conflicts-two-pcm.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "key": "verification",
+      "streams": [
+        0
+      ],
+      "goldens": [
+        "tests/fixtures/matroska/track-fields.report.json"
+      ]
     }
   ],
   "removed": [
@@ -208,6 +284,14 @@
         "Info"
       ],
       "name": "Writer"
+    },
+    {
+      "scope": "finding",
+      "code": "matroska.writer-claim-differs",
+      "goldens": [
+        "tests/fixtures/matroska/writer-tag-and-apps.report.json",
+        "tests/fixtures/matroska/writer-tag-conflicts-two-pcm.report.json"
+      ]
     }
   ],
   "changed": [

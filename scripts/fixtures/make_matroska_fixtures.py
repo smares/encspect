@@ -1382,8 +1382,8 @@ ENCODER_TAG = ape_tag(((b"Encoder", b"bar 2.0"),))
 PCM_BLOCKS = [simple_block(1, i * 10, bytes(range(16)) * 4, key=True) for i in range(4)]
 
 
-@fixture("writer-tag-and-apps", "A PCM track (no codec parser) and an AAC track (the AAC parser) in a Segment whose apps name \"foo 1.0\", and an APEv2 tag whose Encoder item names "
-         "\"bar 2.0\": the tag's claim is weighed first for both tracks, so both name \"bar 2.0\", and the conflict is reported once by the container and once by the AAC parser.",
+@fixture("writer-tag-and-apps", "A PCM track and an AAC track in a Segment whose apps name \"foo 1.0\", and an APEv2 tag whose Encoder item names "
+         "\"bar 2.0\": the tag's claim is weighed first for both tracks, so both name \"bar 2.0\", and the conflict is reported by the PCM parser and by the AAC parser.",
          findings=[("pcm.writer-claim-differs", "MuxingApp"), ("pcm.writer-claim-differs", "WritingApp"), ("aac.writer-claim-differs", "WritingApp")],
          streams=[("PCM", 48000, 2), ("AAC", 44100, 2)], valid=False)
 def _():
@@ -1397,8 +1397,8 @@ def _():
 TAG_WRITERS["writer-tag-and-apps"] = "bar 2.0"
 
 
-@fixture("writer-tag-conflicts-two-pcm", "Two PCM tracks in a Segment whose apps name \"foo 1.0\" and an APEv2 Encoder item \"bar 2.0\": the conflict with the tag is one finding for the "
-         "Segment, not one for each track.",
+@fixture("writer-tag-conflicts-two-pcm", "Two PCM tracks in a Segment whose apps name \"foo 1.0\" and an APEv2 Encoder item \"bar 2.0\": the PCM parser reports the conflict with the tag "
+         "for each track, as the parsers of other codecs do.",
          findings=[("pcm.writer-claim-differs", "MuxingApp"), ("pcm.writer-claim-differs", "WritingApp"), ("pcm.writer-claim-differs", "MuxingApp"), ("pcm.writer-claim-differs", "WritingApp")],
          streams=[("PCM", 48000, 2), ("PCM", 48000, 2)], valid=False)
 def _():
