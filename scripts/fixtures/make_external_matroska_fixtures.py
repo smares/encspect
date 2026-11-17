@@ -25,6 +25,7 @@ import tempfile
 import wave
 
 import matroska_model as m
+import old_mkvmerge_tool
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 OUT = ROOT / "tests" / "fixtures" / "matroska"
@@ -64,6 +65,13 @@ FIXTURES = {
     "external-mkvmerge-truehd-50": ("mkvmerge", ["truehd/external-truehd-50-48k-24.thd"], [], [("Dolby TrueHD", 48000, 5)], [], "mka"),
     "external-mkvmerge-zlib-flac": ("mkvmerge", ["flac/external-16-6ch.flac"], ["--compression", "0:zlib"], [("FLAC", 48000, 6)], [], "mka"),
     "external-mkvmerge-zlib-wavpack": ("mkvmerge", ["wavpack/external-ffmpeg-51-16.wv"], ["--compression", "0:zlib"], [("WavPack", 48000, 6)], [("matroska.track-encoding-not-read", "zlib compression")], "mka"),
+    # Old releases of mkvmerge, run under Wine (old_mkvmerge_tool.py), which strip the headers of MP3 and DTS (4.5.0 to 5.9.0) and of AC-3 (5.4.0 to 5.9.0) by default.
+    "external-mkvmerge450-mp3-header-stripped": ("mkvmerge-4.5.0", ["mpeg-audio/external-ffmpeg-cbr.mp3"], [], [("MPEG-1 Layer III", 44100, 2)], [], "mka"),
+    "external-mkvmerge450-dts-header-stripped": ("mkvmerge-4.5.0", ["dts/external-ffmpeg-5.1-48k-768k.dts"], [], [("DTS", 48000, 6)], [], "mka"),
+    "external-mkvmerge540-ac3-header-stripped": ("mkvmerge-5.4.0", ["ac3/external-ffmpeg-stereo-192k.ac3"], [], [("AC-3", 48000, 2)], [], "mka"),
+    "external-mkvmerge590-mp3-header-stripped": ("mkvmerge-5.9.0", ["mpeg-audio/external-ffmpeg-cbr.mp3"], [], [("MPEG-1 Layer III", 44100, 2)], [], "mka"),
+    "external-mkvmerge590-dts-header-stripped": ("mkvmerge-5.9.0", ["dts/external-ffmpeg-5.1-48k-768k.dts"], [], [("DTS", 48000, 6)], [], "mka"),
+    "external-mkvmerge590-ac3-header-stripped": ("mkvmerge-5.9.0", ["ac3/external-ffmpeg-stereo-192k.ac3"], [], [("AC-3", 48000, 2)], [], "mka"),
     "external-ffmpeg-pcm": ("ffmpeg", ["sine"], ["-c:a", "pcm_s16le"], [("PCM", 44100, 1)], [], "mka"),
     "external-ffmpeg-pcm-s16be": ("ffmpeg", ["sine"], ["-c:a", "pcm_s16be"], [("PCM", 44100, 1)], [], "mka"),
     "external-ffmpeg-pcm-s24le-stereo": ("ffmpeg", ["sine"], ["-ac", "2", "-t", "0.2", "-c:a", "pcm_s24le"], [("PCM", 44100, 2)], [], "mka"),
@@ -164,6 +172,9 @@ def path_of(name, work):
 
 
 def version(tool):
+    if tool.startswith("mkvmerge-"):
+        # An old release run under Wine; its banner names it ("mkvmerge v5.9.0 ('On The Loose') built on ...").
+        return old_mkvmerge_tool.banner(tool.removeprefix("mkvmerge-")).split(" built on")[0] + " (Wine)"
     if tool == "ffmpeg":
         return subprocess.run([FFMPEG, "-version"], capture_output=True, text=True).stdout.split()[2]
     return subprocess.run([MKVMERGE, "--version"], capture_output=True, text=True).stdout.split("\n")[0].split(" (")[0]
@@ -187,6 +198,9 @@ def encode(name, tool, inputs, arguments, extension, work):
         command += [str(target)]
         subprocess.run(command, check=True, cwd=work)
         return {"tool": f"ffmpeg {version('ffmpeg')}", "arguments": arguments, "inputs": inputs}
+    if tool.startswith("mkvmerge-"):
+        old_mkvmerge_tool.mux(tool.removeprefix("mkvmerge-"), target, [path_of(item, work) for item in inputs], arguments)
+        return {"tool": version(tool), "arguments": list(arguments), "inputs": inputs}
     command = [MKVMERGE, "-o", str(target)]
     arguments = list(arguments)
     resolved = [path_of(a, work) if a in ("chapters.txt", "tags.xml", "cover.jpg") else a for a in arguments]
