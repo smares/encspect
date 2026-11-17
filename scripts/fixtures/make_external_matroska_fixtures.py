@@ -253,6 +253,8 @@ def main():
                 previous = json.loads(path.read_text(encoding="utf-8"))
                 encoder = previous["encoder"]
                 pcm = previous.get("pcm")
+                if pcm is None and len(streams) == 1 and streams[0][0].startswith("PCM") and shutil.which(FFMPEG):
+                    pcm = decoded(OUT / f"{name}.{extension}", coded_as(arguments), streams[0][2])
             else:
                 encoder = encode(name, tool, inputs, arguments, extension, work)
                 if len(streams) == 1 and streams[0][0].startswith("PCM"):

@@ -1,54 +1,37 @@
 {
   "goldens": [
-    "tests/fixtures/matroska/ac3-codec-private.report.json",
-    "tests/fixtures/matroska/external-ffmpeg-ac3-51.report.json",
-    "tests/fixtures/matroska/external-mkvmerge-ac3.report.json",
-    "tests/fixtures/matroska/external-mkvmerge-timestamp-scale.report.json",
-    "tests/fixtures/matroska/external-mkvmerge-two-tracks.report.json",
-    "tests/fixtures/matroska/external-ffmpeg-mp2.report.json",
-    "tests/fixtures/matroska/external-ffmpeg-mp3.report.json",
-    "tests/fixtures/matroska/external-mkvmerge-mp3.report.json"
+    "tests/fixtures/matroska/external-ffmpeg-pcm.report.json",
+    "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json",
+    "tests/fixtures/matroska/external-mkvmerge-vorbis-pcm.report.json",
+    "tests/fixtures/matroska/live-false-ape-items-one-cluster.report.json",
+    "tests/fixtures/matroska/live-false-ape-items-two-clusters.report.json",
+    "tests/fixtures/matroska/live-false-ape-items-unknown-tail.report.json",
+    "tests/fixtures/matroska/misplaced-values.report.json",
+    "tests/fixtures/matroska/sampling-frequency-invalid.report.json",
+    "tests/fixtures/matroska/track-fields.report.json",
+    "tests/fixtures/matroska/track-timestamp-scale.report.json",
+    "tests/fixtures/matroska/tracks-after-clusters.report.json",
+    "tests/fixtures/matroska/webm-not-allowed.report.json",
+    "tests/fixtures/matroska/writer-pcm-ffmpeg.report.json",
+    "tests/fixtures/matroska/writer-pcm-lame.report.json",
+    "tests/fixtures/matroska/writer-tag-and-apps.report.json",
+    "tests/fixtures/matroska/writer-tag-conflicts-two-pcm.report.json",
+    "tests/fixtures/matroska/writer-tag-without-info.report.json"
   ],
   "added": [
-    {
-      "scope": "stream",
-      "key": "verification"
-    },
     {
       "scope": "node",
       "parent": [
         "Matroska",
         "Track 1 Frames"
       ],
-      "name": "MPEG Audio"
-    },
-    {
-      "scope": "finding",
-      "code": "mpeg-audio.writer-claim-differs"
+      "name": "Statistics"
     }
   ],
   "removed": [
     {
-      "parent": [
-        "Matroska",
-        "Segment",
-        "Info"
-      ],
-      "name": "Writer",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-mp2.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-mp3.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-mp3.report.json"
-      ]
-    },
-    {
       "scope": "finding",
-      "code": "mpeg-audio.packets-not-analyzed",
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-mp2.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-mp3.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-mp3.report.json"
-      ]
+      "code": "matroska.codec-not-analyzed"
     }
   ],
   "changed": [
@@ -59,48 +42,44 @@
       ],
       "fields": [
         "children"
-      ],
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-mp2.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-mp3.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-mp3.report.json"
       ]
     },
     {
       "scope": "stream",
       "fields": [
-        "codec",
-        "channelMode",
-        "channelLayout",
-        "channelLayoutName",
-        "categorySeries",
         "verification",
-        "encoder",
-        "encoderConfidence",
         "samples",
         "duration",
         "averageBitrate",
+        "bitsPerSample",
         "nodes",
-        "isVbr",
-        "series",
         "writer",
         "writerConfidence"
-      ],
-      "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-mp2.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-mp3.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-mp3.report.json"
       ]
     }
   ],
   "bitrate": [
     {
       "goldens": [
-        "tests/fixtures/matroska/external-ffmpeg-mp2.report.json",
-        "tests/fixtures/matroska/external-ffmpeg-mp3.report.json",
-        "tests/fixtures/matroska/external-mkvmerge-mp3.report.json"
+        "tests/fixtures/matroska/external-ffmpeg-pcm.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-pcm-vorbis.report.json",
+        "tests/fixtures/matroska/external-mkvmerge-vorbis-pcm.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-one-cluster.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-two-clusters.report.json",
+        "tests/fixtures/matroska/live-false-ape-items-unknown-tail.report.json",
+        "tests/fixtures/matroska/misplaced-values.report.json",
+        "tests/fixtures/matroska/sampling-frequency-invalid.report.json",
+        "tests/fixtures/matroska/track-fields.report.json",
+        "tests/fixtures/matroska/track-timestamp-scale.report.json",
+        "tests/fixtures/matroska/tracks-after-clusters.report.json",
+        "tests/fixtures/matroska/webm-not-allowed.report.json",
+        "tests/fixtures/matroska/writer-pcm-ffmpeg.report.json",
+        "tests/fixtures/matroska/writer-pcm-lame.report.json",
+        "tests/fixtures/matroska/writer-tag-and-apps.report.json",
+        "tests/fixtures/matroska/writer-tag-conflicts-two-pcm.report.json",
+        "tests/fixtures/matroska/writer-tag-without-info.report.json"
       ],
-      "reason": "the frames are read, so the bitrate is the frames' bytes over their samples"
+      "reason": "the PCM parser's bitrate is the track's bytes over its samples"
     }
   ]
 }
