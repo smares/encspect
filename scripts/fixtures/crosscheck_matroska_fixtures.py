@@ -19,6 +19,7 @@ For every manifest in tests/fixtures/matroska whose crosscheck says "valid":
   matroska_model.py wrote. MediaInfo 26.01 prints no Encryption field for a Matroska track (File_Mk.cpp fills none; the ContentEncryption elements are only
   named, ATO2), which is compared as absent, so the script fails when a later version starts to report one. A report with another number of streams than the manifest has audio
   tracks is not compared, and the script prints why.
+- the PCM tracks of the ffmpeg-made files: the samples and the MD5 of what ffmpeg decodes them to (as pcm_<format>, the layout the analyzer's decoder outputs), which the manifest holds.
 - ffmpeg decoding to nothing: no error, for the files an encoder or a muxer made (external-*), but the errors listed in check_decode with their reason
   (the Opus flush of FFmpeg 8.0, and TTA_SHORT_LAST_FRAME), each required exactly as listed so that an entry fails once FFmpeg stops printing it.
 - MediaInfo (26.01): the format ("Matroska" or "WebM"), the number of audio tracks, and each track's channels and sampling rate against the
@@ -42,6 +43,7 @@ import subprocess
 import sys
 
 import check_matroska_encodings
+import make_external_matroska_fixtures as generator
 import mediainfo_tool
 import tool_versions
 
@@ -52,11 +54,25 @@ EXTENSIONS = (".mka", ".mkv", ".webm")
 # ffprobe's codec names for the Matroska codec IDs, and MediaInfo's formats for the analyzer's codec names.
 FFPROBE_CODECS = {
     "A_OPUS": "opus", "A_VORBIS": "vorbis", "A_AC3": "ac3", "A_EAC3": "eac3", "A_DTS": "dts", "A_AAC": "aac", "A_MPEG/L3": "mp3", "A_MPEG/L2": "mp2",
-    "A_FLAC": "flac", "A_ALAC": "alac", "A_TTA1": "tta", "A_TRUEHD": "truehd", "A_MLP": "mlp", "A_WAVPACK4": "wavpack", "A_PCM/INT/LIT": "pcm_s16le",
+    "A_FLAC": "flac", "A_ALAC": "alac", "A_TTA1": "tta", "A_TRUEHD": "truehd", "A_MLP": "mlp", "A_WAVPACK4": "wavpack",
 }
+
+
+def pcm_name(track):
+    """ffprobe's name of a PCM track's coding, from the codec ID and the BitDepth (matroskadec.c): 8-bit integers are unsigned, the others signed."""
+    bits = track.get("bits")
+    if track["codec"] == "A_PCM/FLOAT/IEEE":
+        return f"pcm_f{bits}le"
+    if bits == 8:
+        return "pcm_u8"
+    return f"pcm_s{bits}{'be' if track['codec'] == 'A_PCM/INT/BIG' else 'le'}"
+
+
+def expected_codec_of(track):
+    return pcm_name(track) if track["codec"].startswith("A_PCM/") else FFPROBE_CODECS.get(track["codec"])
 MEDIAINFO_FORMATS = {
     "opus": "Opus", "vorbis": "Vorbis", "ac3": "AC-3", "eac3": "E-AC-3", "dts": "DTS", "aac": "AAC", "mp3": "MPEG Audio", "mp2": "MPEG Audio",
-    "flac": "FLAC", "alac": "ALAC", "tta": "TTA", "truehd": "MLP FBA", "mlp": "MLP", "wavpack": "WavPack", "pcm_s16le": "PCM",
+    "flac": "FLAC", "alac": "ALAC", "tta": "TTA", "truehd": "MLP FBA", "mlp": "MLP", "wavpack": "WavPack",
 }
 
 # The analyzer's reading against MediaInfo's, per fixture and field: MediaInfo's own reading with the evidence (MediaInfoLib v26.01,
@@ -193,10 +209,11 @@ def check_ffprobe(manifest, path, problems):
         return
     scale = next((s["info"].get("timestamp_scale", 1_000_000) for s in manifest["segments"] if "info" in s), 1_000_000)
     for stream, track in zip(streams, audio_tracks):
-        expected = FFPROBE_CODECS.get(track["codec"])
-        if expected is not None and stream["codec_name"] != expected and not (track["codec"] == "A_PCM/INT/LIT" and stream["codec_name"].startswith("pcm_")):
+        expected = expected_codec_of(track)
+        if expected is not None and stream["codec_name"] != expected:
             problems.append(f"track {track['number']}: ffprobe says {stream['codec_name']}, the manifest {track['codec']}")
-        rates = {int(round(track["rate"] or 0)), int(round(track.get("output_rate") or 0))}
+        # An absent SamplingFrequency is 8000 Hz (RFC 9559, section 5.1.4.1.29.1).
+        rates = {int(round(8000 if "rate" in track and track["rate"] is None else track["rate"] or 0)), int(round(track.get("output_rate") or 0))}
         if int(stream["sample_rate"]) not in rates and not (track["codec"] == "A_OPUS"):
             problems.append(f"track {track['number']}: ffprobe says {stream['sample_rate']} Hz, the manifest {sorted(rates)}")
         if track["channels"] is not None and int(stream.get("channels", 0)) != track["channels"] and track["codec"] != "A_AAC":
@@ -265,6 +282,18 @@ def check_decode(path, problems, opus_tracks=0):
         problems.append(f"ffmpeg decoding: {lines[:1] or result.returncode}")
 
 
+def check_pcm(manifest, path, problems):
+    """The samples and the MD5 of what ffmpeg decodes the PCM track to, which the manifest holds and the tests hold the analyzer's decoder to."""
+    expected = manifest.get("pcm")
+    if expected is None:
+        return
+    track = next(t for t in manifest["tracks"] if t["type"] == 2)
+    coded = pcm_name(track)
+    got = generator.decoded(path, coded, track["channels"] or 1)
+    if got != expected:
+        problems.append(f"ffmpeg decodes the PCM track to {got}, the manifest holds {expected}")
+
+
 def golden_report(path):
     golden = path.with_name(path.name.rsplit(".", 1)[0] + ".report.json")
     return json.loads(golden.read_text(encoding="utf-8"))[0] if golden.exists() else None
@@ -288,6 +317,9 @@ def check_mediainfo(name, manifest, path, tally, report):
         expected_codec = FFPROBE_CODECS.get(track["codec"])
         if expected_codec in MEDIAINFO_FORMATS:
             tally.compare("codec", info.get("Format"), MEDIAINFO_FORMATS[expected_codec])
+        elif track["codec"].startswith("A_PCM/") and track.get("bits") in (8, 16, 24, 32, 64):
+            tally.compare("codec", info.get("Format"), "PCM")
+            tally.compare("bit depth", info.get("BitDepth"), str(track["bits"]))
         tally.compare("channels", info.get("Channels"), str(stream["channels"]))
         tally.compare("sampling rate", info.get("SamplingRate"), str(stream["sampleRate"]))
 
@@ -314,6 +346,7 @@ def main():
             check_ffprobe(manifest, path, problems)
             if name.startswith("external-"):
                 check_decode(path, problems, sum(1 for t in manifest["tracks"] if t["type"] == 2 and t["codec"] == "A_OPUS"))
+                check_pcm(manifest, path, problems)
             report = golden_report(path)
             if report is not None:
                 check_mediainfo(name, manifest, path, tally, report)
