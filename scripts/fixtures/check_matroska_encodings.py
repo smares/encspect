@@ -114,7 +114,6 @@ def expected_codes(encodings, has_private, codec):  # noqa: C901
         return {"matroska.encoding-order", "matroska.track-encoding-not-read"}
     es, hiders, encrypts, covering, is_read, is_encrypted, has_zlib, steps = _model(encodings, has_private)
     opaque = codec in ("A_OPUS", "A_VORBIS")
-    routed = codec != "A_PCM/INT/LIT"
     codes = set()
     for i, e in enumerate(es):
         if hiders(i):
@@ -134,14 +133,8 @@ def expected_codes(encodings, has_private, codec):  # noqa: C901
         codes.add("matroska.track-encrypted" if is_encrypted(1) else "matroska.track-encoding-not-read")
         if not is_encrypted(1):
             return codes
-    elif routed and not opaque and steps(1):
+    elif not opaque and steps(1):
         codes.add("matroska.track-encoding-not-read")
-        return codes
-    if not routed:
-        # No codec parser takes the track: its frames are only counted, and the CodecPrivate is not looked at.
-        if not is_read(1):
-            return codes
-        codes.add("matroska.codec-not-analyzed")
         return codes
     if has_private and codec not in DEFINES_PRIVATE:
         # A stray CodecPrivate: not read, so none of its findings.
@@ -260,7 +253,7 @@ def write(path, tracks):
     for number, (key, encodings, frames, private) in enumerate(tracks, 1):
         src = source(key)
         enc = f.content_encodings(*[f.content_encoding(**kw) for kw in encodings]) if encodings else None
-        entries.append(f.audio_track(number, src["codec"], src["channels"], src["rate"], private=private, delay=src["delay"], encodings=enc))
+        entries.append(f.audio_track(number, src["codec"], src["channels"], src["rate"], bits=16 if src["codec"].startswith("A_PCM") else None, private=private, delay=src["delay"], encodings=enc))
         items += [f.simple_block(number, t, frame, key=True) for t, frame in zip(src["times"], frames)]
     path.write_bytes(f.build(f.standard(f.cluster(0, *items), track=entries)))
 
