@@ -658,6 +658,7 @@ public sealed partial class AsfParser
         0x000A => "Windows Media Audio Voice",
         0x0050 => CodecNames.MpegAudioLayerIAndII,
         0x0055 => CodecNames.MpegAudioLayerIII,
+        0x2000 => "AC-3",
         0x0160 => "Windows Media Audio 1",
         0x0161 => "Windows Media Audio 2",
         0x0162 => "Windows Media Audio Professional",

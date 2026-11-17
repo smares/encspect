@@ -273,7 +273,7 @@ public sealed partial class AsfParser
         int before = state.Context.Streams.Count;
         if (configuration is not null)
         {
-            state.Context.ParsePackets(codec, state.DataNode!, [], configuration with { AreSamplesEncrypted = true });
+            state.Context.ParsePackets(codec, state.DataNode!, [], configuration with { AreSamplesEncrypted = true, Source = state.Reader });
         }
 
         if (state.Context.Streams.Count == before)

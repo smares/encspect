@@ -1,5 +1,5 @@
 {
- "description": "An MPEG audio stream, a video stream and a command stream, none of which is analyzed.",
+ "description": "An MPEG Layer I and II stream (format tag 0x0050, which has no parser), a video stream and a command stream, none of which is analyzed.",
  "format": "ASF",
  "length": 999,
  "objects": [
@@ -49,7 +49,7 @@
    "error_correction": "20FB5700-5B55-11CF-A8FD-00805F5C442B",
    "encrypted": false,
    "type_length": 18,
-   "tag": 85,
+   "tag": 80,
    "channels": 2,
    "rate": 44100,
    "avg_bytes": 16000,
@@ -163,7 +163,7 @@
  "findings": [
   {
    "code": "asf.codec-not-analyzed",
-   "contains": "MPEG Layer III"
+   "contains": "MPEG Layer I and II"
   },
   {
    "code": "asf.stream-not-analyzed",

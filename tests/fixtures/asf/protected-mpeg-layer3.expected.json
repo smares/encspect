@@ -1,0 +1,191 @@
+{
+ "description": "MPEG Layer III (format tag 0x0055) in a file with a Content Encryption Object: the MPEG audio parser describes nothing of the encrypted media objects, so the stream is reported from the header, as protected.",
+ "format": "ASF",
+ "length": 2471,
+ "objects": [
+  [
+   "Header Object",
+   0,
+   373
+  ],
+  [
+   "Data Object",
+   373,
+   2098
+  ]
+ ],
+ "header_objects": [
+  [
+   "File Properties Object",
+   30,
+   104
+  ],
+  [
+   "Stream Properties Object",
+   134,
+   108
+  ],
+  [
+   "Content Encryption Object",
+   242,
+   85
+  ],
+  [
+   "Header Extension Object",
+   327,
+   46
+  ]
+ ],
+ "extension_objects": [],
+ "streams": [
+  {
+   "number": 1,
+   "type": "F8699E40-5B4D-11CF-A8FD-00805F5C442B",
+   "error_correction": "20FB5700-5B55-11CF-A8FD-00805F5C442B",
+   "encrypted": true,
+   "type_length": 30,
+   "tag": 85,
+   "channels": 2,
+   "rate": 44100,
+   "avg_bytes": 16000,
+   "block_align": 1,
+   "bits": 0,
+   "codec_data": "010002000000a10101000000"
+  }
+ ],
+ "packets": [
+  [
+   423,
+   1024,
+   2
+  ],
+  [
+   1447,
+   1024,
+   2
+  ]
+ ],
+ "payloads": [
+  [
+   0,
+   1,
+   1,
+   0,
+   8,
+   417,
+   false,
+   true
+  ],
+  [
+   0,
+   1,
+   2,
+   0,
+   8,
+   418,
+   false,
+   true
+  ],
+  [
+   1,
+   1,
+   3,
+   0,
+   8,
+   418,
+   false,
+   true
+  ],
+  [
+   1,
+   1,
+   4,
+   0,
+   8,
+   418,
+   false,
+   true
+  ]
+ ],
+ "media_objects": [
+  [
+   1,
+   1,
+   417,
+   0,
+   [
+    [
+     454,
+     417
+    ]
+   ]
+  ],
+  [
+   1,
+   2,
+   418,
+   26,
+   [
+    [
+     888,
+     418
+    ]
+   ]
+  ],
+  [
+   1,
+   3,
+   418,
+   52,
+   [
+    [
+     1478,
+     418
+    ]
+   ]
+  ],
+  [
+   1,
+   4,
+   418,
+   78,
+   [
+    [
+     1913,
+     418
+    ]
+   ]
+  ]
+ ],
+ "file": {
+  "file_size": 2471,
+  "packets": 2,
+  "play_duration": 1040000,
+  "send_duration": 0,
+  "preroll": 0,
+  "flags": 2,
+  "min_packet": 1024,
+  "max_packet": 1024,
+  "max_bitrate": 0
+ },
+ "findings": [
+  {
+   "code": "asf.content-encrypted",
+   "contains": "Digital Rights Manager"
+  },
+  {
+   "code": "asf.codec-not-analyzed",
+   "contains": "is encrypted"
+  }
+ ],
+ "crosscheck": {
+  "ffprobe": true
+ },
+ "protection": [
+  {
+   "scheme": "Microsoft Digital Rights Manager version 1",
+   "is_encrypted": true,
+   "systems": []
+  }
+ ]
+}
