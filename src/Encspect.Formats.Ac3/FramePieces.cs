@@ -72,6 +72,9 @@ internal sealed class FramePieces
         return false;
     }
 
+    // The file offset of the frame's first byte at a position of the records.
+    public long FirstFile(long position) => !IsEmpty && TryGet(position, out List<ByteRange> pieces) ? pieces[0].Offset : position;
+
     // The node as the file has it, where its position is one of a frame in pieces and its name is the frame's or a gap's: at the first piece, to the end of the last, with Ranges.
     public Node Place(Node node)
     {

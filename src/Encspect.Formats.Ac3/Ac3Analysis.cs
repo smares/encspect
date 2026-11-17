@@ -716,6 +716,7 @@ internal sealed class Ac3Analysis
         first.Leading.Add(statistics);
         (string? encoderName, Confidence? encoderConfidence) = ClaimRoles.Resolved(encoder);
         (string? writerName, Confidence? writerConfidence) = ClaimRoles.Resolved(writer);
+        program.Figures.OffsetOf = Pieces.IsEmpty ? null : Pieces.FirstFile;
         List<Series> series = program.Figures.Series(bitrate, Cancellation);
         IReadOnlyList<CategorySeries> categories = program.Recorder.Build(series.Count > 0 ? series[0].X : Array.Empty<double>(), series.Count > 0 ? series[0] : null,
             program.Figures.Time, coding, series, Cancellation);

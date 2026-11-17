@@ -445,6 +445,7 @@ internal sealed class DtsAnalysis
         first.Leading.Add(statistics);
         (string? encoderName, Confidence? encoderConfidence) = ClaimRoles.Resolved(encoder);
         (string? writerName, Confidence? writerConfidence) = ClaimRoles.Resolved(writer);
+        stream.Figures.OffsetOf = Pieces.IsEmpty ? null : Pieces.FirstFile;
         List<Series> series = stream.Figures.Series(bitrate, Cancellation);
         _context.AddStream(new StreamInfo
         {
