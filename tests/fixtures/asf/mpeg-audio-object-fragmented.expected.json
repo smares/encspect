@@ -1,5 +1,5 @@
 {
- "description": "MPEG audio whose fourth frame is a media object put together from fragments in two packets: its bytes are not one piece of the file, so it is not handed to the MPEG audio parser, and the frame after it, whose main data begins in the lost one, says so.",
+ "description": "MPEG audio whose fourth frame is a media object put together from fragments in two packets: the MPEG audio parser reads it as two pieces of the file, so all eight frames are counted and the audio decodes as the unfragmented stream's does.",
  "format": "ASF",
  "length": 5458,
  "objects": [
@@ -280,16 +280,7 @@
   "max_packet": 1024,
   "max_bitrate": 0
  },
- "findings": [
-  {
-   "code": "asf.object-not-contiguous",
-   "contains": "MPEG audio"
-  },
-  {
-   "code": "mpeg-audio.main-data-overlap",
-   "contains": "overlaps the previous"
-  }
- ],
+ "findings": [],
  "crosscheck": {
   "ffprobe": true
  }

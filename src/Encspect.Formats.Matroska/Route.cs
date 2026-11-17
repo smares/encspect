@@ -178,7 +178,7 @@ internal sealed partial class FileReader
         // Vorbis, Opus and FLAC cannot be set up without their CodecPrivate.
         bool needsCodecPrivate = codec is "vorbis" or "opus" or "flac";
         // The parsers of these codecs take frames put together from stripped or inflated bytes; the others place their nodes at contiguous file bytes.
-        bool takesTransformedFrames = needsCodecPrivate || (codec is "mpeg-audio" && plan.Frames.IsStrippingOnly);
+        bool takesTransformedFrames = needsCodecPrivate || (codec is "mpeg-audio" or "ac-3" or "e-ac-3" or "dts" or "aac" && plan.Frames.IsStrippingOnly);
         if (problem is null && plan.Frames.Steps.Count > 0 && codec is not null && !takesTransformedFrames)
         {
             // The AAC, AC-3, DTS and MPEG audio parsers place their nodes at the offsets of contiguous file bytes, which frames put together from

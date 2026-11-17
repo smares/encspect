@@ -186,9 +186,7 @@ public sealed partial class AsfParser
             IEnumerable<MappedBytes> objects = MediaObjects(state, stream.Number);
             if (codec == "mpeg-audio")
             {
-                // The MPEG audio parser reads the packets again from the file, as the bytes of one stretch of it, and a frame that crosses the gap between two fragments would
-                // read the packet header there: a media object put together from fragments in several packets is not handed over. The AC-3 parser reads the bytes it is given.
-                objects = ContiguousObjects(state, stream.Number, anchor, objects);
+                // The MPEG audio parser reads the packets again from the file, a media object fragmented across packets as the pieces of it.
                 configuration = configuration with { Source = state.Reader };
             }
 
@@ -203,23 +201,6 @@ public sealed partial class AsfParser
             {
                 CompareStreams(state, stream, format, streamsBefore, anchor);
             }
-        }
-    }
-
-    // The media objects that lie in one piece of the file (MPEG audio).
-    private static IEnumerable<MappedBytes> ContiguousObjects(State state, int streamNumber, Node anchor, IEnumerable<MappedBytes> objects)
-    {
-        foreach (MappedBytes media in objects)
-        {
-            if (media.IsOpaque || media.Length == 0 || media.FileRanges(0, media.Length).Count == 1)
-            {
-                yield return media;
-                continue;
-            }
-
-            state.Findings.Add(Severity.Info, "asf.object-not-contiguous", streamNumber, anchor, n =>
-                $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} {(n == 1 ? "is" : "are")} put together from fragments in several packets, whose bytes are not one piece of the file, "
-                + $"which the MPEG audio parser reads; {(n == 1 ? "it is" : "they are")} not handed to it.");
         }
     }
 

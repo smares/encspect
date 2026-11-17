@@ -1,0 +1,407 @@
+{
+ "description": "The frames of aac-frames with the first bytes they share stripped by header stripping: put back in front of each frame, which the AAC parser reads as the unstripped one.",
+ "length": 418,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 184,
+     "length": 234,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 6
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "duration": 100.0,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "encspect fixtures"
+   },
+   "length": 378,
+   "declared_end": 418
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   378,
+   [
+    [
+     "Info",
+     46,
+     63,
+     [
+      [
+       "TimestampScale",
+       51,
+       7
+      ],
+      [
+       "Duration",
+       58,
+       11
+      ],
+      [
+       "MuxingApp",
+       69,
+       20
+      ],
+      [
+       "WritingApp",
+       89,
+       20
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     109,
+     75,
+     [
+      [
+       "TrackEntry",
+       114,
+       70,
+       [
+        [
+         "TrackNumber",
+         116,
+         3
+        ],
+        [
+         "TrackUID",
+         119,
+         5
+        ],
+        [
+         "TrackType",
+         124,
+         3
+        ],
+        [
+         "CodecID",
+         127,
+         7
+        ],
+        [
+         "CodecPrivate",
+         134,
+         5
+        ],
+        [
+         "ContentEncodings",
+         139,
+         30,
+         [
+          [
+           "ContentEncoding",
+           142,
+           27,
+           [
+            [
+             "ContentEncodingOrder",
+             145,
+             4
+            ],
+            [
+             "ContentEncodingScope",
+             149,
+             4
+            ],
+            [
+             "ContentEncodingType",
+             153,
+             4
+            ],
+            [
+             "ContentCompression",
+             157,
+             12,
+             [
+              [
+               "ContentCompAlgo",
+               160,
+               4
+              ],
+              [
+               "ContentCompSettings",
+               164,
+               5
+              ]
+             ]
+            ]
+           ]
+          ]
+         ]
+        ],
+        [
+         "Audio",
+         169,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           171,
+           10
+          ],
+          [
+           "Channels",
+           181,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     184,
+     234,
+     [
+      [
+       "Timestamp",
+       190,
+       3
+      ],
+      [
+       "SimpleBlock",
+       193,
+       10
+      ],
+      [
+       "SimpleBlock",
+       203,
+       49
+      ],
+      [
+       "SimpleBlock",
+       252,
+       46
+      ],
+      [
+       "SimpleBlock",
+       298,
+       43
+      ],
+      [
+       "SimpleBlock",
+       341,
+       40
+      ],
+      [
+       "SimpleBlock",
+       381,
+       37
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 193,
+   "length": 10,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     199,
+     4
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 203,
+   "length": 49,
+   "track": 1,
+   "timestamp": 23,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     209,
+     43
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 252,
+   "length": 46,
+   "track": 1,
+   "timestamp": 46,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     258,
+     40
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 298,
+   "length": 43,
+   "track": 1,
+   "timestamp": 70,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     304,
+     37
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 341,
+   "length": 40,
+   "track": 1,
+   "timestamp": 93,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     347,
+     34
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 381,
+   "length": 37,
+   "track": 1,
+   "timestamp": 116,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     387,
+     31
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_AAC",
+   "private": [
+    137,
+    2
+   ],
+   "channels": 2,
+   "rate": 44100.0,
+   "bits": null,
+   "delay": 0,
+   "encodings": [
+    {
+     "order": 0,
+     "scope": 1,
+     "type": 0,
+     "compression": 3,
+     "settings": [
+      167,
+      2
+     ],
+     "encryption": null,
+     "cipher": null,
+     "has_encryption": false
+    }
+   ],
+   "lacing": true
+  }
+ ],
+ "writers": [
+  {
+   "name": "encspect fixtures",
+   "confidence": "Low"
+  }
+ ],
+ "streams": [
+  {
+   "codec": "AAC",
+   "sample_rate": 44100,
+   "channels": 2
+  }
+ ],
+ "findings": [],
+ "crosscheck": {
+  "valid": true
+ }
+}

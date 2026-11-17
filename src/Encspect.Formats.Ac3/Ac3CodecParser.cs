@@ -105,28 +105,29 @@ public sealed class Ac3CodecParser(string id) : ICodecParser
         observed.StartSample();
         while (position < bytes.Length)
         {
-            long offset = packet.OffsetOf(position);
             SyncFrame? header = bytes.Length - position >= SyncFrame.Length ? SyncFrame.Read(bytes[position..]) : null;
             if (header is not { IsValid: true } valid)
             {
                 int rest = bytes.Length - position;
+                long gapAt = Where(analysis, packet, position, bytes.Length);
                 if (bytes.Length - position >= 2 && bytes[position] == 0x77 && bytes[position + 1] == 0x0B)
                 {
-                    analysis.Findings.Add(Severity.Info, "ac-3.little-endian", () => new Node("Gap", offset, rest), count =>
-                        $"{(count == 1 ? "A sample holds" : $"{count} samples hold")} AC-3 in little-endian byte order (sync word 0x770B), which ETSI TS 102 366 F.1 allows but recommends against; it is not analyzed. The first is at 0x{offset:X}.");
+                    analysis.Findings.Add(Severity.Info, "ac-3.little-endian", () => new Node("Gap", gapAt, rest), count =>
+                        $"{(count == 1 ? "A sample holds" : $"{count} samples hold")} AC-3 in little-endian byte order (sync word 0x770B), which ETSI TS 102 366 F.1 allows but recommends against; it is not analyzed. The first is at 0x{gapAt:X}.");
                 }
                 else
                 {
-                    analysis.Findings.Add(Severity.Warning, "ac-3.sample-not-frame", () => new Node("Gap", offset, rest), count =>
-                        $"{(count == 1 ? "A sample holds" : $"{count} samples hold")} bytes that are no syncframe where one should start, first at 0x{offset:X}.");
+                    analysis.Findings.Add(Severity.Warning, "ac-3.sample-not-frame", () => new Node("Gap", gapAt, rest), count =>
+                        $"{(count == 1 ? "A sample holds" : $"{count} samples hold")} bytes that are no syncframe where one should start, first at 0x{gapAt:X}.");
                 }
 
-                analysis.Frames.Add(Ac3Analysis.Frame.Gap(offset, bytes.Length - position));
+                analysis.Frames.Add(Ac3Analysis.Frame.Gap(gapAt, bytes.Length - position));
                 analysis.NoteGap();
                 return;
             }
 
             int length = Math.Min(valid.FrameLength, bytes.Length - position);
+            long offset = Where(analysis, packet, position, position + length);
             analysis.AddFrame(region, offset, bytes.Slice(position, length), valid, truncated: length < valid.FrameLength, inSample: true);
             observed.Add(valid, analysis.LastResult, length, isSampleStart: false);
             if (length < valid.FrameLength)
@@ -136,6 +137,19 @@ public sealed class Ac3CodecParser(string id) : ICodecParser
 
             position += length;
         }
+    }
+
+    // The position of the bytes [start, end) of a packet in the records: their file offset where they are one run of the file, else the position of a frame in pieces (FramePieces), whose
+    // pieces are kept for the next frame or gap to be added.
+    private static long Where(Ac3Analysis analysis, MappedBytes packet, int start, int end)
+    {
+        long position = FramePieces.PositionOf(packet, start, end, out IReadOnlyList<ByteRange>? pieces);
+        if (pieces is not null)
+        {
+            analysis.Pieces.Add(position, pieces);
+        }
+
+        return position;
     }
 
     // ETSI TS 102 366 F.4 (AC3SpecificBox) and F.6 (EC3SpecificBox): read field by field into the

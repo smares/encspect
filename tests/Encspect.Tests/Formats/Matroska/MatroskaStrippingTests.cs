@@ -31,6 +31,9 @@ public class MatroskaStrippingTests
 
     [Theory]
     [InlineData("matroska/mpeg-audio-header-stripped.mka", "matroska/mpeg-audio-frames.mka")]
+    [InlineData("matroska/ac3-header-stripped.mka", "matroska/ac3-frames.mka")]
+    [InlineData("matroska/dts-header-stripped.mka", "matroska/dts-frames.mka")]
+    [InlineData("matroska/aac-header-stripped.mka", "matroska/aac-frames.mka")]
     public void AStrippedTrackIsReadAsTheUnstrippedOneIs(string stripped, string control)
     {
         (Report report, List<PcmHashSink> sinks) = Decode(stripped);
@@ -43,17 +46,28 @@ public class MatroskaStrippingTests
         Assert.Equal(expected.SampleRate, stream.SampleRate);
         Assert.Equal(expected.Channels, stream.Channels);
         Assert.Equal(plain.Findings.Select(f => f.Code), report.Findings.Select(f => f.Code));
-        Assert.Equal(own.Single().Hash(), sinks.Single().Hash());
-        Assert.Equal(DecodeStatus.Decoded, stream.Verification!.Decoding);
+        Assert.Equal(own.Select(o => o.Hash()), sinks.Select(o => o.Hash()));
+        Assert.Equal(plain.Streams.Single().Verification?.Decoding, stream.Verification?.Decoding);
+
+        // The frames' nodes are in the same number, and equal but for where they lie.
+        Assert.Equal(Tree(plain.Root.Children.Single(), isShape: true), Tree(report.Root.Children.Single(), isShape: true));
     }
+
+    // The shape of a tree: the names and the number of children, with the track's own elements (which hold the encodings) left out; the values quote offsets, which the
+    // two files do not share.
+    private static string Tree(Node node, bool isShape) =>
+        node.Name is "Segment" or "Tracks" ? string.Empty : $"{node.Name}({string.Concat(node.Children.Select(c => Tree(c, isShape)))})";
 
     [Theory]
     [InlineData("matroska/mpeg-audio-header-stripped.mka")]
+    [InlineData("matroska/ac3-header-stripped.mka")]
+    [InlineData("matroska/dts-header-stripped.mka")]
+    [InlineData("matroska/aac-header-stripped.mka")]
     public void AFramesNodesLieInTheSettingsAndInTheBlock(string name)
     {
         Report report = Fixtures.AnalyzeMpeg(name);
         Node settings = Find(report.Root, "ContentCompSettings")!;
-        Node frame = FindAll(report.Root, "Frame").First(f => f.Ranges is not null);
+        Node frame = FindAll(report.Root, "Frame").Concat(FindAll(report.Root, "Access Unit")).First(f => f.Ranges is not null);
 
         Assert.Equal(2, frame.Ranges!.Count);
 

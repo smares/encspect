@@ -67,7 +67,8 @@ public sealed class DtsCodecParser : ICodecParser
     // The access unit of one sample, from its start.
     private static void ReadPacket(DtsAnalysis analysis, DtsAnalysis.Region region, MappedBytes packet, Observed observed)
     {
-        var source = new BufferSource(packet.Data.ToArray(), packet.OffsetOf(0));
+        long start = UnitPieces.PositionOf(packet, 0, packet.Length, out IReadOnlyList<ByteRange>? inPieces);
+        var source = new BufferSource(packet.Data.ToArray(), start);
         long position = source.Start;
         while (position < source.End)
         {
@@ -77,11 +78,29 @@ public sealed class DtsCodecParser : ICodecParser
                 long rest = source.End - position;
                 analysis.Findings.Add(Severity.Warning, "dts.sample-not-frame", () => new Node("Gap", offset, rest), count =>
                     $"{(count == 1 ? "A sample holds" : $"{count} samples hold")} bytes that are no core frame or extension substream where one should start, first at 0x{offset:X}.");
+                if (inPieces is not null)
+                {
+                    IReadOnlyList<ByteRange> gapPieces = packet.FileRanges((int)(offset - start), packet.Length);
+                    if (gapPieces.Count > 1)
+                    {
+                        analysis.Pieces.Add(offset, (int)rest, gapPieces);
+                    }
+                }
+
                 analysis.Frames.Add(DtsAnalysis.Frame.Gap(offset, rest));
                 return;
             }
 
             long stop = Math.Min(position + unit.Length, source.End);
+            if (inPieces is not null)
+            {
+                IReadOnlyList<ByteRange> unitPieces = packet.FileRanges((int)(position - start), (int)(stop - start));
+                if (unitPieces.Count > 1)
+                {
+                    analysis.Pieces.Add(position, (int)(stop - position), unitPieces);
+                }
+            }
+
             analysis.AddUnit(region, DtsParser.LayoutOf(position, stop, unit, false, position + unit.Length > source.End), source);
             observed.Add(analysis.LastFacts, (int)(stop - position));
             position = stop;

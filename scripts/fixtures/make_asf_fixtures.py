@@ -833,8 +833,8 @@ def routed_file(format_bytes, frames, split=None, encrypted=False, children=(), 
 
 fixture("mpeg-audio-in-asf", "Eight frames of MPEG-1 Layer III as media objects under the format tag 0x0055: the MPEG audio parser reads the stream.",
         lambda: routed_file(MP3_FORMAT, mp3_frames(8)), [])
-fixture("mpeg-audio-object-fragmented", "MPEG audio whose fourth frame is a media object put together from fragments in two packets: its bytes are not one piece of the file, so it is not handed to the MPEG audio parser, and the frame after it, whose main data begins in the lost one, says so.",
-        lambda: routed_file(MP3_FORMAT, mp3_frames(8), split=3), [finding("asf.object-not-contiguous", "MPEG audio"), finding("mpeg-audio.main-data-overlap", "overlaps the previous")])
+fixture("mpeg-audio-object-fragmented", "MPEG audio whose fourth frame is a media object put together from fragments in two packets: the MPEG audio parser reads it as two pieces of the file, so all eight frames are counted and the audio decodes as the unfragmented stream's does.",
+        lambda: routed_file(MP3_FORMAT, mp3_frames(8), split=3), [])
 fixture("mpeg-audio-rate-differs", "MPEG audio at 44,100 Hz in a stream whose WAVEFORMATEX states 48,000 Hz.",
         lambda: routed_file(m.wave_format(0x0055, 2, 48000, 16000, 1, 0, struct.pack("<HIHHH", 1, 2, 417, 1, 0)), mp3_frames(8)), [finding("asf.sample-rate-differs", "48000 Hz")],
         {"ffprobe": False, "reason": "ffprobe reads the frames' figures (44,100 Hz), not the WAVEFORMATEX's: that disagreement is what the fixture holds."})

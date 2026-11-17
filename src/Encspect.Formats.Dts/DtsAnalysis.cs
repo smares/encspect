@@ -35,12 +35,16 @@ internal sealed class DtsAnalysis
     {
         _context = context;
         _fallbackStream = fallbackStream;
-        Records = new DtsRecords(Frames, Store);
+        Records = new DtsRecords(Frames, Store, Pieces);
+        Findings.Place = Pieces.Place;
     }
 
     // What unit nodes are built from, apart from the analysis, which holds the context and with it
     // the input.
     public DtsRecords Records { get; }
+
+    // Where the units that are not one run of the file lie in it.
+    public UnitPieces Pieces { get; } = new();
 
     public ChunkedList<Frame> Frames { get; } = new();
 

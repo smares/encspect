@@ -65,18 +65,38 @@ public class AsfRouteTests
         TestFiles.CheckInsideParents(report.Root);
     }
 
-    // An AC-3 frame that is a media object put together from fragments in two packets is read whole: the file decodes as the one without the fragmentation does.
-    [Fact]
-    public void AnAc3FrameFragmentedAcrossPacketsIsReadWhole()
+    // A frame that is a media object put together from fragments in two packets is read whole: the file decodes as the one without the fragmentation does, its frames are the same in
+    // number, and the frame's nodes lie in the two pieces of the file it is made of.
+    [Theory]
+    [InlineData("asf/ac3-object-fragmented.asf", "asf/ac3-in-asf.asf")]
+    [InlineData("asf/mpeg-audio-object-fragmented.asf", "asf/mpeg-audio-in-asf.asf")]
+    public void AFrameFragmentedAcrossPacketsIsReadWhole(string fragmented, string control)
     {
-        (Report fragmented, PcmHashingSink inFragments) = Decode("asf/ac3-object-fragmented.asf");
-        (Report whole, PcmHashingSink inPackets) = Decode("asf/ac3-in-asf.asf");
+        (Report report, PcmHashingSink inFragments) = Decode(fragmented);
+        (Report whole, PcmHashingSink inPackets) = Decode(control);
 
-        Assert.Empty(fragmented.Findings);
-        Assert.Equal(whole.Streams.Single().Samples, fragmented.Streams.Single().Samples);
+        Assert.Empty(report.Findings);
+        Assert.Equal(whole.Streams.Single().Samples, report.Streams.Single().Samples);
         Assert.Equal(inPackets.Samples, inFragments.Samples);
         Assert.Equal(inPackets.Hash(), inFragments.Hash());
-        TestFiles.CheckInsideParents(fragmented.Root);
+        TestFiles.CheckInsideParents(report.Root);
+        Assert.Contains(Frames(report.Root), f => f.Ranges is { Count: 2 });
+    }
+
+    private static IEnumerable<Node> Frames(Node node)
+    {
+        if (node.Name is "Frame" or "Syncframe")
+        {
+            yield return node;
+        }
+
+        foreach (Node child in node.Children)
+        {
+            foreach (Node frame in Frames(child))
+            {
+                yield return frame;
+            }
+        }
     }
 
     [Theory]

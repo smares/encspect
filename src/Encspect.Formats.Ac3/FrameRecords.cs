@@ -8,7 +8,7 @@ namespace Encspect.Formats.Ac3;
 // and on several threads, so it holds no reader, decoder or cursor that a build could consume; the
 // analysis that wrote it keeps those. recordMismatch is called where a frame's nodes read another
 // number of bits than the analysis kept (frame offset, kept, read): a check for tests.
-internal sealed class FrameRecords(ChunkedList<Ac3Analysis.Frame> frames, ByteStore store, Action<long, int, int>? recordMismatch)
+internal sealed class FrameRecords(ChunkedList<Ac3Analysis.Frame> frames, ByteStore store, FramePieces pieces, Action<long, int, int>? recordMismatch)
 {
     public int Count => frames.Count;
 
@@ -16,15 +16,21 @@ internal sealed class FrameRecords(ChunkedList<Ac3Analysis.Frame> frames, ByteSt
     public Node FrameNode(int index)
     {
         Ac3Analysis.Frame frame = frames[index];
+        bool isInPieces = pieces.TryGet(frame.Offset, out List<ByteRange> where);
         if (frame.IsGap)
         {
-            return new Node("Gap", frame.Offset, frame.Store, NodeValue.Integer(frame.Store, "bytes")) { Description = Explain.Gap };
+            return isInPieces
+                ? new Node("Gap", where[0].Offset, where[^1].End - where[0].Offset, NodeValue.Integer(frame.Store, "bytes")) { Description = Explain.Gap, Ranges = where }
+                : new Node("Gap", frame.Offset, frame.Store, NodeValue.Integer(frame.Store, "bytes")) { Description = Explain.Gap };
         }
 
         (SyncFrame header, int length, int prefix) = Prefix(store, frame);
-        return new Node("Frame", frame.Offset, length, header.Summary(header.FrameLength), () => FrameChildren(frame, header, length, prefix))
+        MappedBytes? mapped = isInPieces ? new MappedBytes(new byte[where.Sum(r => r.Length)], where) : null;
+        return new Node("Frame", isInPieces ? where[0].Offset : frame.Offset, isInPieces ? where[^1].End - where[0].Offset : length, header.Summary(header.FrameLength),
+            () => FrameChildren(frame, header, length, prefix, mapped))
         {
             Kind = NodeKind.Frame,
+            Ranges = isInPieces ? where : null,
             Description = header.IsEac3 ? Explain.Eac3Frame : Explain.Ac3Frame,
             Topic = Topics.FramesAndBsi,
         };
@@ -50,11 +56,11 @@ internal sealed class FrameRecords(ChunkedList<Ac3Analysis.Frame> frames, ByteSt
         return (header, frame.IsShortened ? length : header.FrameLength, at);
     }
 
-    private List<Node> FrameChildren(Ac3Analysis.Frame frame, SyncFrame header, int length, int prefix)
+    private List<Node> FrameChildren(Ac3Analysis.Frame frame, SyncFrame header, int length, int prefix, MappedBytes? mapped)
     {
         byte[] record = store.Span(frame.Store + (uint)prefix, (frame.KeptBits + 7) >> 3).ToArray();
         var syntax = new FrameSyntax(FrameBits.ForNodes()) { RecordMismatch = recordMismatch };
-        return syntax.Nodes(record, frame.KeptBits, frame.Offset, length, header, Verdict(frame.Crc1, frame.IsShortened), Verdict(frame.Crc2, frame.IsShortened));
+        return syntax.Nodes(record, frame.KeptBits, frame.Offset, length, mapped, header, Verdict(frame.Crc1, frame.IsShortened), Verdict(frame.Crc2, frame.IsShortened));
     }
 
     private static string Verdict(Ac3Analysis.CrcState state, bool truncated) => state switch

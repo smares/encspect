@@ -45,7 +45,8 @@ internal sealed class Ac3Analysis
     {
         _context = context;
         _streamNode = streamNode;
-        Records = new FrameRecords(Frames, Store, recordMismatch);
+        Records = new FrameRecords(Frames, Store, Pieces, recordMismatch);
+        Findings.Place = Pieces.Place;
         _syntax = new FrameSyntax(_bits) { IssueFound = OnIssue, IssueCounted = issue => Findings.CountIfKnown(CodeOf(issue)), Lent = _writer };
     }
 
@@ -54,6 +55,9 @@ internal sealed class Ac3Analysis
     public Func<SyncFrame, Node>? RegionNodeFactory { get; set; }
 
     public ChunkedList<Frame> Frames { get; } = new();
+
+    // Where the frames that are not one run of the file lie in it.
+    public FramePieces Pieces { get; } = new();
 
     public ByteStore Store { get; } = new();
 

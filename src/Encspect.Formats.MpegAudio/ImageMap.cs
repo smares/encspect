@@ -139,11 +139,10 @@ internal sealed class ImageMap
         Node placed;
         if (node.BitOffset is { } bit && node.BitLength is { } bits)
         {
-            placed = Node.FromBits(node.Name, offset, bit, bit + bits, node.Value, node.Kind, node.Description, node.Topic, node.BitOrder);
-            if (ranges.Count > 1)
-            {
-                placed.Ranges = ranges;
-            }
+            // Bits that continue in another piece of the file are placed by the pieces' bytes.
+            placed = ranges.Count > 1
+                ? Node.FromBits(node.Name, new MappedBytes(new byte[ranges.Sum(r => r.Length)], ranges), bit, bit + bits, node.Value, node.Kind, node.Description, node.Topic, node.BitOrder)
+                : Node.FromBits(node.Name, offset, bit, bit + bits, node.Value, node.Kind, node.Description, node.Topic, node.BitOrder);
         }
         else
         {

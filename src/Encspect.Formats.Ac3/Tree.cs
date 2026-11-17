@@ -4,7 +4,7 @@ namespace Encspect.Formats.Ac3;
 
 // Builds the nodes of one frame while FrameSyntax reads it: fields at their bits, and groups that
 // cover the fields read between Open and Close.
-internal sealed class Tree(long frameOffset)
+internal sealed class Tree(long frameOffset, MappedBytes? mapped = null)
 {
     private readonly List<Group> _open = [];
 
@@ -19,7 +19,7 @@ internal sealed class Tree(long frameOffset)
     {
         Group group = _open[^1];
         _open.RemoveAt(_open.Count - 1);
-        Node node = Node.FromBits(group.Name, frameOffset, group.Start, Math.Max(group.Start, end), value, group.Kind, group.Description, group.Topic);
+        Node node = Bits(group.Name, group.Start, Math.Max(group.Start, end), value, group.Kind, group.Description, group.Topic);
         foreach (Node child in group.Children)
         {
             node.Add(child);
@@ -51,10 +51,16 @@ internal sealed class Tree(long frameOffset)
 
     public Node Field(string name, int start, int end, NodeValue? value, string description, string? topic = null)
     {
-        Node node = Node.FromBits(name, frameOffset, start, end, value, description: description, topic: topic);
+        Node node = Bits(name, start, end, value, NodeKind.Detail, description, topic);
         Add(node);
         return node;
     }
+
+    // The field at its bits of the frame: in the pieces of the file the frame is made of where it is in pieces (a field past the frame's own bytes is placed as if they were one run).
+    private Node Bits(string name, int start, int end, NodeValue? value, NodeKind kind, string description, string? topic) =>
+        mapped is not null && end <= mapped.Length * 8L
+            ? Node.FromBits(name, mapped, start, end, value, kind, description, topic)
+            : Node.FromBits(name, frameOffset, start, end, value, kind, description, topic);
 
     public void Add(Node node)
     {
