@@ -207,32 +207,6 @@
                       "value": "0xBCF339DA534C306F901309C4A91F1632",
                       "offset": 4269,
                       "length": 19
-                    },
-                    {
-                      "name": "Writer",
-                      "value": "mkvmerge v82.0 ('I'm The President') 64-bit",
-                      "offset": 4151,
-                      "length": 137,
-                      "children": [
-                        {
-                          "name": "Confidence",
-                          "value": "Low",
-                          "offset": 4151,
-                          "length": 137
-                        },
-                        {
-                          "name": "Evidence",
-                          "value": "Segment WritingApp element at 0x1069 names \"mkvmerge v82.0 ('I'm The President') 64-bit\"",
-                          "offset": 4201,
-                          "length": 46
-                        },
-                        {
-                          "name": "Evidence",
-                          "value": "Segment MuxingApp element at 0x1043 names \"libebml v1.4.5 + libmatroska v1.7.1\"",
-                          "offset": 4163,
-                          "length": 38
-                        }
-                      ]
                     }
                   ]
                 },
@@ -13535,6 +13509,123 @@
                   "length": 101787
                 }
               ]
+            },
+            {
+              "name": "Track 2 Frames",
+              "value": 25,
+              "unit": "frames",
+              "offset": 10569,
+              "length": 91249,
+              "children": [
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 10569,
+                  "length": 91249,
+                  "children": [
+                    {
+                      "name": "Codec",
+                      "value": "PCM",
+                      "offset": 10569,
+                      "length": 91249
+                    },
+                    {
+                      "name": "Sample Frames",
+                      "value": 44100,
+                      "unit": "sample frames",
+                      "offset": 10569,
+                      "length": 91249
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 1,
+                      "unit": "s",
+                      "offset": 10569,
+                      "length": 91249
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 44100,
+                      "unit": "Hz",
+                      "offset": 10569,
+                      "length": 91249
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 1,
+                      "unit": "channels",
+                      "offset": 10569,
+                      "length": 91249
+                    },
+                    {
+                      "name": "Channel Layout",
+                      "value": "mono (front center)",
+                      "offset": 10569,
+                      "length": 91249
+                    },
+                    {
+                      "name": "Bits Per Sample",
+                      "value": 16,
+                      "unit": "bits",
+                      "offset": 10569,
+                      "length": 91249
+                    },
+                    {
+                      "name": "Sample Format",
+                      "value": "signed integer",
+                      "offset": 10569,
+                      "length": 91249
+                    },
+                    {
+                      "name": "Byte Order",
+                      "value": "little-endian",
+                      "offset": 10569,
+                      "length": 91249
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 705.6,
+                      "unit": "kbps",
+                      "offset": 10569,
+                      "length": 91249
+                    }
+                  ]
+                },
+                {
+                  "name": "Writer",
+                  "value": "mkvmerge v82.0 ('I'm The President') 64-bit",
+                  "offset": 10569,
+                  "length": 91249,
+                  "children": [
+                    {
+                      "name": "Confidence",
+                      "value": "Low",
+                      "offset": 10569,
+                      "length": 91249
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "Segment WritingApp element at 0x1069 names \"mkvmerge v82.0 ('I'm The President') 64-bit\"",
+                      "offset": 10569,
+                      "length": 91249
+                    }
+                  ]
+                },
+                {
+                  "name": "Container Duration",
+                  "value": 1.000012902631579,
+                  "unit": "s",
+                  "offset": 10569,
+                  "length": 91249
+                },
+                {
+                  "name": "Container Samples",
+                  "value": 44101,
+                  "unit": "samples",
+                  "offset": 10569,
+                  "length": 91249
+                }
+              ]
             }
           ]
         }
@@ -14072,18 +14163,21 @@
         "nodes": [
           [
             0,
-            1,
-            3,
-            1
+            3
           ]
         ],
         "codec": "PCM",
         "sampleRate": 44100,
         "channels": 1,
+        "channelMode": "Mono",
+        "channelLayout": [
+          "front center"
+        ],
+        "channelLayoutName": "mono",
         "bitsPerSample": 16,
-        "samples": 0,
-        "duration": 1.000012902631579,
-        "averageBitrate": 705.5908960206232,
+        "samples": 44100,
+        "duration": 1,
+        "averageBitrate": 705.6,
         "isVbr": false,
         "playbackGroup": 1,
         "writer": "mkvmerge v82.0 ('I'm The President') 64-bit",
@@ -14103,21 +14197,6 @@
           2,
           2,
           1
-        ],
-        "count": 1
-      },
-      {
-        "severity": "Info",
-        "code": "matroska.codec-not-analyzed",
-        "message": "Track 2 is coded as PCM (A_PCM/INT/LIT), whose frames are not analyzed yet; the track is reported from its TrackEntry.",
-        "offset": 8581,
-        "length": 15,
-        "path": [
-          0,
-          1,
-          3,
-          1,
-          4
         ],
         "count": 1
       }

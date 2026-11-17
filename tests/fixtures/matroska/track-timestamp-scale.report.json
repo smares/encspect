@@ -105,32 +105,6 @@
                       "value": "encspect fixtures",
                       "offset": 89,
                       "length": 20
-                    },
-                    {
-                      "name": "Writer",
-                      "value": "encspect fixtures",
-                      "offset": 46,
-                      "length": 63,
-                      "children": [
-                        {
-                          "name": "Confidence",
-                          "value": "Low",
-                          "offset": 46,
-                          "length": 63
-                        },
-                        {
-                          "name": "Evidence",
-                          "value": "Segment WritingApp element at 0x59 names \"encspect fixtures\"",
-                          "offset": 89,
-                          "length": 20
-                        },
-                        {
-                          "name": "Evidence",
-                          "value": "Segment MuxingApp element at 0x45 names \"encspect fixtures\"",
-                          "offset": 69,
-                          "length": 20
-                        }
-                      ]
                     }
                   ]
                 },
@@ -726,6 +700,129 @@
                   ]
                 }
               ]
+            },
+            {
+              "name": "Track 1 Frames",
+              "value": 6,
+              "unit": "frames",
+              "offset": 188,
+              "length": 434,
+              "children": [
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 188,
+                  "length": 434,
+                  "children": [
+                    {
+                      "name": "Codec",
+                      "value": "PCM",
+                      "offset": 188,
+                      "length": 434
+                    },
+                    {
+                      "name": "Sample Frames",
+                      "value": 96,
+                      "unit": "sample frames",
+                      "offset": 188,
+                      "length": 434
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.002,
+                      "unit": "s",
+                      "offset": 188,
+                      "length": 434
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 48000,
+                      "unit": "Hz",
+                      "offset": 188,
+                      "length": 434
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 2,
+                      "unit": "channels",
+                      "offset": 188,
+                      "length": 434
+                    },
+                    {
+                      "name": "Channel Layout",
+                      "value": "stereo (front left, front right)",
+                      "offset": 188,
+                      "length": 434
+                    },
+                    {
+                      "name": "Bits Per Sample",
+                      "value": 16,
+                      "unit": "bits",
+                      "offset": 188,
+                      "length": 434
+                    },
+                    {
+                      "name": "Sample Format",
+                      "value": "signed integer",
+                      "offset": 188,
+                      "length": 434
+                    },
+                    {
+                      "name": "Byte Order",
+                      "value": "little-endian",
+                      "offset": 188,
+                      "length": 434
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 1536,
+                      "unit": "kbps",
+                      "offset": 188,
+                      "length": 434
+                    }
+                  ]
+                },
+                {
+                  "name": "Writer",
+                  "value": "encspect fixtures",
+                  "offset": 188,
+                  "length": 434,
+                  "children": [
+                    {
+                      "name": "Confidence",
+                      "value": "Low",
+                      "offset": 188,
+                      "length": 434
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "Segment WritingApp element at 0x59 names \"encspect fixtures\"",
+                      "offset": 188,
+                      "length": 434
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "Segment MuxingApp element at 0x45 names \"encspect fixtures\"",
+                      "offset": 188,
+                      "length": 434
+                    }
+                  ]
+                },
+                {
+                  "name": "Container Duration",
+                  "value": 2.424,
+                  "unit": "s",
+                  "offset": 188,
+                  "length": 434
+                },
+                {
+                  "name": "Container Samples",
+                  "value": 116352,
+                  "unit": "samples",
+                  "offset": 188,
+                  "length": 434
+                }
+              ]
             }
           ]
         }
@@ -736,18 +833,22 @@
         "nodes": [
           [
             0,
-            1,
-            1,
-            0
+            2
           ]
         ],
         "codec": "PCM",
         "sampleRate": 48000,
         "channels": 2,
+        "channelMode": "Stereo",
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
         "bitsPerSample": 16,
-        "samples": 0,
-        "duration": 2.424,
-        "averageBitrate": 1.2673267326732673,
+        "samples": 96,
+        "duration": 0.002,
+        "averageBitrate": 1536,
         "isVbr": false,
         "playbackGroup": 1,
         "writer": "encspect fixtures",
@@ -755,22 +856,6 @@
         "series": []
       }
     ],
-    "findings": [
-      {
-        "severity": "Info",
-        "code": "matroska.codec-not-analyzed",
-        "message": "Track 1 is coded as PCM (A_PCM/INT/LIT), whose frames are not analyzed yet; the track is reported from its TrackEntry.",
-        "offset": 127,
-        "length": 15,
-        "path": [
-          0,
-          1,
-          1,
-          0,
-          3
-        ],
-        "count": 1
-      }
-    ]
+    "findings": []
   }
 ]

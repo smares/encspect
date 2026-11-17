@@ -64,7 +64,15 @@ FIXTURES = {
     "external-mkvmerge-truehd-50": ("mkvmerge", ["truehd/external-truehd-50-48k-24.thd"], [], [("Dolby TrueHD", 48000, 5)], [], "mka"),
     "external-mkvmerge-zlib-flac": ("mkvmerge", ["flac/external-16-6ch.flac"], ["--compression", "0:zlib"], [("FLAC", 48000, 6)], [], "mka"),
     "external-mkvmerge-zlib-wavpack": ("mkvmerge", ["wavpack/external-ffmpeg-51-16.wv"], ["--compression", "0:zlib"], [("WavPack", 48000, 6)], [("matroska.track-encoding-not-read", "zlib compression")], "mka"),
-    "external-ffmpeg-pcm": ("ffmpeg", ["sine"], ["-c:a", "pcm_s16le"], [("PCM", 44100, 1)], [NOT_READ], "mka"),
+    "external-ffmpeg-pcm": ("ffmpeg", ["sine"], ["-c:a", "pcm_s16le"], [("PCM", 44100, 1)], [], "mka"),
+    "external-ffmpeg-pcm-s16be": ("ffmpeg", ["sine"], ["-c:a", "pcm_s16be"], [("PCM", 44100, 1)], [], "mka"),
+    "external-ffmpeg-pcm-s24le-stereo": ("ffmpeg", ["sine"], ["-ac", "2", "-t", "0.2", "-c:a", "pcm_s24le"], [("PCM", 44100, 2)], [], "mka"),
+    "external-ffmpeg-pcm-s32le": ("ffmpeg", ["sine"], ["-t", "0.25", "-c:a", "pcm_s32le"], [("PCM", 44100, 1)], [], "mka"),
+    "external-ffmpeg-pcm-f32le": ("ffmpeg", ["sine"], ["-t", "0.25", "-c:a", "pcm_f32le"], [("PCM (floating-point)", 44100, 1)], [], "mka"),
+    "external-ffmpeg-pcm-f64le": ("ffmpeg", ["sine"], ["-t", "0.15", "-c:a", "pcm_f64le"], [("PCM (floating-point)", 44100, 1)], [], "mka"),
+    "external-ffmpeg-pcm-u8": ("ffmpeg", ["sine"], ["-c:a", "pcm_u8"], [("PCM", 44100, 1)], [], "mka"),
+    "external-ffmpeg-pcm-51": ("ffmpeg", ["sine"], ["-ar", "48000", "-ac", "6", "-t", "0.1", "-c:a", "pcm_s16le"], [("PCM", 48000, 6)], [], "mka"),
+    "external-mkvmerge-pcm": ("mkvmerge", ["sine.wav"], [], [("PCM", 44100, 1)], [], "mka"),
     "external-ffmpeg-alac": ("ffmpeg", ["sine"], ["-c:a", "alac"], [("Apple Lossless", 44100, 1)], [], "mka"),
     # The sine ends in near silence: codes of a bit leave the last frame's count to the Segment Duration (docs/formats/tta.md, "TTA in Matroska").
     "external-ffmpeg-tta": ("ffmpeg", ["sine"], ["-c:a", "tta"], [("TTA", 44100, 1)], [("tta.last-frame-samples-ambiguous", "44099 to 44100")], "mka"),
@@ -96,9 +104,9 @@ FIXTURES = {
     "external-mkvmerge-vorbis": ("mkvmerge", ["ogg/external-ffmpeg-libvorbis.ogg"], [], [("Vorbis", 44100, 2)], [VORBIS_VENDOR], "mka"),
     # The Vorbis comment of an ffmpeg-made Ogg file names ffmpeg; the claims of the other tracks must not weigh it, whatever the order.
     "external-mkvmerge-vorbis-pcm": ("mkvmerge", ["ogg/external-ffmpeg-libvorbis.ogg", "sine.wav"], [], [("Vorbis", 44100, 2), ("PCM", 44100, 1)],
-                                     [VORBIS_VENDOR, NOT_READ], "mka"),
+                                     [VORBIS_VENDOR], "mka"),
     "external-mkvmerge-pcm-vorbis": ("mkvmerge", ["sine.wav", "ogg/external-ffmpeg-libvorbis.ogg"], [], [("PCM", 44100, 1), ("Vorbis", 44100, 2)],
-                                     [VORBIS_VENDOR, NOT_READ], "mka"),
+                                     [VORBIS_VENDOR], "mka"),
     "external-mkvmerge-vorbis-aac": ("mkvmerge", ["ogg/external-ffmpeg-libvorbis.ogg", "aac/apple-lc-adts-cbr-st44.aac"], [], [("Vorbis", 44100, 2), ("AAC", 44100, 2)],
                                      [VORBIS_VENDOR], "mka"),
     "external-mkvmerge-opus": ("mkvmerge", ["ogg/external-ffmpeg-libopus.opus"], [], [("Opus", 48000, 2)], [], "mka"),
@@ -189,13 +197,34 @@ def encode(name, tool, inputs, arguments, extension, work):
     return {"tool": f"mkvmerge {version('mkvmerge')}", "arguments": arguments, "inputs": inputs}
 
 
-def manifest(name, encoder, streams, findings, extension):
+# The PCM layout the analyzer's decoder outputs for a coding, as the ffmpeg codec that writes it, its bits and its sample format: the container's value as stored, byte
+# order made little-endian, unsigned 8 bits as signed (docs/design/spectral-analysis.md, "WAV, Wave64 and AIFF: a PCM decoder").
+CANONICAL = {"pcm_s16le": ("pcm_s16le", 16, "integer"), "pcm_s16be": ("pcm_s16le", 16, "integer"), "pcm_s24le": ("pcm_s24le", 24, "integer"),
+             "pcm_s32le": ("pcm_s32le", 32, "integer"), "pcm_f32le": ("pcm_f32le", 32, "float"), "pcm_f64le": ("pcm_f64le", 64, "float"), "pcm_u8": ("pcm_s8", 8, "integer")}
+
+
+def decoded(path, coded, channels):
+    """What ffmpeg decodes the file's PCM track to: its samples and the MD5 of the canonical layout (ffmpeg -c:a pcm_<format> -f md5), which the analyzer's decoder must give back."""
+    codec, bits, kind = CANONICAL[coded]
+    command = [FFMPEG, "-v", "error", "-i", str(path), "-map", "0:a:0", "-c:a", codec]
+    raw = subprocess.run(command + ["-f", "data", "-"], capture_output=True, check=True).stdout
+    result = subprocess.run(command + ["-f", "md5", "-"], capture_output=True, text=True, check=True)
+    return {"samples": len(raw) // (bits // 8 * channels), "bits": bits, "format": kind, "md5": result.stdout.strip().removeprefix("MD5=")}
+
+
+def coded_as(arguments):
+    return arguments[arguments.index("-c:a") + 1] if "-c:a" in arguments else "pcm_s16le"
+
+
+def manifest(name, encoder, streams, findings, extension, pcm=None):
     data = (OUT / f"{name}.{extension}").read_bytes()
     result = {"description": f"{encoder['tool']} {' '.join(encoder['arguments'])}".strip()}
     result.update(m.manifest(data))
     result["encoder"] = encoder
     result["streams"] = [{"codec": c, "sample_rate": r, "channels": n} for c, r, n in streams]
     result["findings"] = [{"code": code, "contains": contains} for code, contains in findings]
+    if pcm is not None:
+        result["pcm"] = pcm
     result["crosscheck"] = {"valid": True}
     return result
 
@@ -219,11 +248,18 @@ def main():
             if wanted and name not in wanted:
                 continue
             path = OUT / f"{name}.expected.json"
+            pcm = None
             if only_manifests:
-                encoder = json.loads(path.read_text(encoding="utf-8"))["encoder"]
+                previous = json.loads(path.read_text(encoding="utf-8"))
+                encoder = previous["encoder"]
+                pcm = previous.get("pcm")
+                if pcm is None and len(streams) == 1 and streams[0][0].startswith("PCM") and shutil.which(FFMPEG):
+                    pcm = decoded(OUT / f"{name}.{extension}", coded_as(arguments), streams[0][2])
             else:
                 encoder = encode(name, tool, inputs, arguments, extension, work)
-            path.write_text(json.dumps(manifest(name, encoder, streams, findings, extension), indent=1, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+                if len(streams) == 1 and streams[0][0].startswith("PCM"):
+                    pcm = decoded(OUT / f"{name}.{extension}", coded_as(arguments), streams[0][2])
+            path.write_text(json.dumps(manifest(name, encoder, streams, findings, extension, pcm), indent=1, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
     print(f"Wrote {len(wanted) if wanted else len(FIXTURES)} {'manifests' if only_manifests else 'fixtures'} to {OUT}")
 
 

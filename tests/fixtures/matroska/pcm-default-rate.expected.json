@@ -1,0 +1,292 @@
+{
+ "description": "A PCM track whose Audio element states neither a SamplingFrequency nor Channels: they default to 8000 Hz and one channel (RFC 9559 sections 5.1.4.1.29.1 and 5.1.4.1.29.3), and the samples are 8 bits.",
+ "length": 500,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 147,
+     "length": 353,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 4
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "duration": 100.0,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "encspect fixtures"
+   },
+   "length": 460,
+   "declared_end": 500
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   460,
+   [
+    [
+     "Info",
+     46,
+     63,
+     [
+      [
+       "TimestampScale",
+       51,
+       7
+      ],
+      [
+       "Duration",
+       58,
+       11
+      ],
+      [
+       "MuxingApp",
+       69,
+       20
+      ],
+      [
+       "WritingApp",
+       89,
+       20
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     109,
+     38,
+     [
+      [
+       "TrackEntry",
+       114,
+       33,
+       [
+        [
+         "TrackNumber",
+         116,
+         3
+        ],
+        [
+         "TrackUID",
+         119,
+         4
+        ],
+        [
+         "TrackType",
+         123,
+         3
+        ],
+        [
+         "CodecID",
+         126,
+         15
+        ],
+        [
+         "Audio",
+         141,
+         6,
+         [
+          [
+           "BitDepth",
+           143,
+           4
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     147,
+     353,
+     [
+      [
+       "Timestamp",
+       153,
+       3
+      ],
+      [
+       "SimpleBlock",
+       156,
+       86
+      ],
+      [
+       "SimpleBlock",
+       242,
+       86
+      ],
+      [
+       "SimpleBlock",
+       328,
+       86
+      ],
+      [
+       "SimpleBlock",
+       414,
+       86
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 156,
+   "length": 86,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     162,
+     80
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 242,
+   "length": 86,
+   "track": 1,
+   "timestamp": 10,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     248,
+     80
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 328,
+   "length": 86,
+   "track": 1,
+   "timestamp": 20,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     334,
+     80
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 414,
+   "length": 86,
+   "track": 1,
+   "timestamp": 30,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     420,
+     80
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 1,
+   "type": 2,
+   "codec": "A_PCM/INT/LIT",
+   "private": null,
+   "channels": null,
+   "rate": null,
+   "bits": 8,
+   "delay": 0,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "writers": [
+  {
+   "name": "encspect fixtures",
+   "confidence": "Low"
+  }
+ ],
+ "streams": [
+  {
+   "codec": "PCM",
+   "sample_rate": 8000,
+   "channels": 1
+  }
+ ],
+ "findings": [],
+ "crosscheck": {
+  "valid": true
+ }
+}

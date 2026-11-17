@@ -1,5 +1,5 @@
 {
- "description": "A live recording of two Clusters of unknown size whose first Cluster's bytes from its Timestamp read as APEv2 items that parse, up to a footer in the last block that places a tag there: the elements run through both Clusters to the end of the data, so the recording keeps its bytes and the footer is a near miss.",
+ "description": "A live recording of two Clusters of unknown size whose first Cluster's bytes from its Timestamp read as APEv2 items that parse, up to a footer in the last block that places a tag there: the elements run through both Clusters to the end of the data, so the recording keeps its bytes and the footer is a near miss. The track's bytes are one more than a whole number of sample frames.",
  "length": 33708,
  "format": "Matroska",
  "ebml": {
@@ -465,16 +465,16 @@
    "contains": "unknown"
   },
   {
-   "code": "matroska.codec-not-analyzed",
-   "contains": "PCM"
-  },
-  {
    "code": "tag.near-miss",
    "contains": "APE signature"
   },
   {
    "code": "matroska.timestamps-backwards",
    "contains": "go back in time"
+  },
+  {
+   "code": "pcm.partial-sample-frame",
+   "contains": "1 byte is left over"
   }
  ],
  "crosscheck": {

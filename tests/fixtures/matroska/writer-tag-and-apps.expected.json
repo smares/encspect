@@ -1,5 +1,5 @@
 {
- "description": "A PCM track (no codec parser) and an AAC track (the AAC parser) in a Segment whose apps name \"foo 1.0\", and an APEv2 tag whose Encoder item names \"bar 2.0\": the tag's claim is weighed first for both tracks, so both name \"bar 2.0\", and the conflict is reported once by the container and once by the AAC parser.",
+ "description": "A PCM track and an AAC track in a Segment whose apps name \"foo 1.0\", and an APEv2 tag whose Encoder item names \"bar 2.0\": the tag's claim is weighed first for both tracks, so both name \"bar 2.0\", and the conflict is reported by the PCM parser and by the AAC parser.",
  "length": 3416,
  "format": "Matroska",
  "ebml": {
@@ -485,20 +485,16 @@
  ],
  "findings": [
   {
-   "code": "matroska.writer-claim-differs",
+   "code": "pcm.writer-claim-differs",
    "contains": "MuxingApp"
   },
   {
-   "code": "matroska.writer-claim-differs",
+   "code": "pcm.writer-claim-differs",
    "contains": "WritingApp"
   },
   {
    "code": "aac.writer-claim-differs",
    "contains": "WritingApp"
-  },
-  {
-   "code": "matroska.codec-not-analyzed",
-   "contains": "PCM"
   }
  ],
  "crosscheck": {

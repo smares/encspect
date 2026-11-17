@@ -60,7 +60,7 @@ Which container hands which codec to its codec parser, and which codecs are deco
 | WMA (versions 1 and 2, Professional, Lossless, Voice) | not planned | later, through `A_MS/ACM` | not planned | routed | not planned | ASF | no |
 | Monkey's Audio | not planned | not planned | not planned | not planned | not planned | yes | yes |
 | Musepack | not planned | not planned | not planned | not planned | not planned | yes | yes (measured) |
-| PCM | routed (`ipcm`, `fpcm` and QuickTime's `sowt`, `twos`, `in24`, `in32`, `fl32`, `fl64`, `raw `, `alaw`, `ulaw` and `lpcm`) | planned (FFmpeg, mkvmerge) | not planned | named, not analyzed (`asf.codec-not-analyzed`) | the container's own stream | AIFF and AIFF-C too | in WAV, Wave64, AIFF and MP4 |
+| PCM | routed (`ipcm`, `fpcm` and QuickTime's `sowt`, `twos`, `in24`, `in32`, `fl32`, `fl64`, `raw `, `alaw`, `ulaw` and `lpcm`) | routed (`A_PCM/INT/LIT`, `A_PCM/INT/BIG` and `A_PCM/FLOAT/IEEE`) | not planned | named, not analyzed (`asf.codec-not-analyzed`) | the container's own stream | AIFF and AIFF-C too | in WAV, Wave64, AIFF, MP4 and Matroska |
 
 - **AIFF and AIFF-C** route no codec; their uncompressed, float, A-law and mu-law samples are decoded for measurements.
 - **`A_MS/ACM`** in older Matroska files holds a WAVEFORMATEX; routing it by its format tag, which reaches every codec parser the format tag names, comes once a real file from a muxer that writes it is committed as a fixture.

@@ -1,7 +1,7 @@
 ---
 id: pcm-samples
 title: PCM samples in WAV and AIFF
-related: wave-format-extensible, channel-layouts, extended-sample-rate, bit-depth-usage, measurements, pcm-in-mp4
+related: wave-format-extensible, channel-layouts, extended-sample-rate, bit-depth-usage, measurements, pcm-in-mp4, pcm-in-matroska
 references: Microsoft, Multimedia Programming Interface and Data Specifications 1.0, "Data Packing for PCM WAVE Files"; Apple, Audio Interchange File Format 1.3, Common Chunk and Sample Points; AIFF-C draft, sound data chunk
 ---
 

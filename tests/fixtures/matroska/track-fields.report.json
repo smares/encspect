@@ -782,17 +782,17 @@
         "count": 1
       },
       {
-        "severity": "Info",
-        "code": "matroska.codec-not-analyzed",
-        "message": "Track 5 is coded as PCM (A_PCM/INT/LIT), whose frames are not analyzed yet; the track is reported from its TrackEntry.",
-        "offset": 201,
+        "severity": "Warning",
+        "code": "matroska.pcm-layout-not-read",
+        "message": "Track 5 (A_PCM/INT/LIT) states no BitDepth, which the samples' width comes from, so its samples cannot be read.",
+        "offset": 216,
         "length": 15,
         "path": [
           0,
           1,
           1,
           4,
-          3
+          4
         ],
         "count": 1
       },

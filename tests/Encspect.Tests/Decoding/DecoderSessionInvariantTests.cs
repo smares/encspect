@@ -117,6 +117,8 @@ public class DecoderSessionInvariantTests
         ["ogg/vorbis-setup-invalid.ogg"] = "a setup header libvorbis refuses, so the stream is parsed and not decoded",
         ["ogg/vorbis-setup-truncated.ogg"] = "a setup header cut short, which libvorbis refuses, so the stream is parsed and not decoded",
         ["alac/built-cookie-missing-mka.mka"] = "the track has no CodecPrivate, so the stream is the container's own and the codec parser reads no frame (alac.cookie-missing)",
+        ["matroska/pcm-layouts-unsupported.mka"] = "the Audio element states no sample layout the PCM parser reads (matroska.pcm-layout-not-read), so the streams are the container's own and no session starts",
+        ["matroska/track-fields.mka"] = "the PCM track states no BitDepth (matroska.pcm-layout-not-read), so its stream is the container's own and no session starts",
         ["aiff/built-chunk-id-invalid.aiff"] = NotDescribable,
         ["aiff/built-chunk-limit.aiff"] = NotDescribable,
         ["aiff/built-no-frames.aiff"] = NotDescribable,

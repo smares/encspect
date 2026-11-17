@@ -713,7 +713,7 @@ def _():
 
 
 @fixture("webm-not-allowed", "A WebM file with a PCM track and a TimestampScale of 500,000 ns, which the WebM Container Guidelines do not allow.",
-         findings=[("matroska.webm-codec", "A_PCM/INT/LIT"), ("matroska.webm-timestamp-scale", "500000"), ("matroska.codec-not-analyzed", "PCM")],
+         findings=[("matroska.webm-codec", "A_PCM/INT/LIT"), ("matroska.webm-timestamp-scale", "500000")],
          streams=[("PCM", 48000, 2)], extension="webm")
 def _():
     pcm = audio_track(1, "A_PCM/INT/LIT", 2, 48000.0, bits=16)
@@ -826,7 +826,7 @@ def _():
                    ("matroska.track-field", "no TrackUID"), ("matroska.track-field", "no TrackType"), ("matroska.audio-fields", "without an Audio element"),
                    ("matroska.audio-fields", "without an Audio element"), ("matroska.audio-fields", "0 channels"), ("matroska.track-number-duplicate", "first repeated number is 5"),
                    ("matroska.track-empty", "A track without a number"), ("matroska.track-empty", "Track 0"), ("matroska.track-empty", "Track 3"),
-                   ("matroska.track-empty", "Track 4"), ("matroska.track-empty", "Track 5"), ("matroska.codec-not-analyzed", "PCM"),
+                   ("matroska.track-empty", "Track 4"), ("matroska.track-empty", "Track 5"), ("matroska.pcm-layout-not-read", "no BitDepth"),
                    ("matroska.track-not-analyzed", "of no stated type")], valid=False)
 def _():
     entries = [
@@ -1346,9 +1346,9 @@ def _():
     return with_apps("muxer 1.0", "writer 2.0", [opus_track(1), opus_track(2, 2)], blocks(1, 2) + blocks(2, 2, channels=2))
 
 
-@fixture("writer-pcm-lame", "A PCM track, which no codec parser reads, in a Segment whose MuxingApp names one program and whose WritingApp LAME, which writes MPEG audio: the "
-         "WritingApp names the writer, the container reports one finding for the two apps and one for LAME writing MPEG audio, not PCM.",
-         findings=[("matroska.writer-claim-differs", "MuxingApp"), ("matroska.writer-other-format", "LAME"), ("matroska.codec-not-analyzed", "PCM")],
+@fixture("writer-pcm-lame", "A PCM track in a Segment whose MuxingApp names one program and whose WritingApp LAME: the WritingApp names the writer and the container reports one "
+         "finding for the two apps; the PCM parser weighs no list of what a program writes, so it says nothing of LAME writing MPEG audio.",
+         findings=[("matroska.writer-claim-differs", "MuxingApp")],
          streams=[("PCM", 48000, 2)], valid=False)
 def _():
     pcm = audio_track(1, "A_PCM/INT/LIT", 2, 48000.0, bits=16)
@@ -1366,8 +1366,17 @@ def _():
                   seg("libebml v1.4.5 + libmatroska v1.7.1", "mkvmerge v82.0 ('I'm The President') 64-bit", opus_track(1, 2), 2, 3)])
 
 
-@fixture("writer-pcm-ffmpeg", "A PCM track written by ffmpeg: the container names FFmpeg as the writer of a stream no codec parser reads.",
-         findings=[("matroska.codec-not-analyzed", "PCM")], streams=[("PCM", 48000, 2)], valid=False)
+@fixture("writer-unparsed-lame", "A RealAudio track, which no codec parser reads, in a Segment whose MuxingApp names one program and whose WritingApp LAME, which writes MPEG audio: the "
+         "WritingApp names the writer, the container reports one finding for the two apps and one for LAME writing MPEG audio, not RealAudio, and the track is not analyzed.",
+         findings=[("matroska.writer-claim-differs", "MuxingApp"), ("matroska.writer-other-format", "LAME"), ("matroska.codec-not-analyzed", "A_REAL/28_8")],
+         streams=[("RealAudio", 48000, 2)], valid=False)
+def _():
+    real = audio_track(1, "A_REAL/28_8", 2, 48000.0, bits=16)
+    return with_apps("foo 1.0", "LAME 3.100", [real], [simple_block(1, i * 10, bytes(range(16)) * 4, key=True) for i in range(4)])
+
+
+@fixture("writer-pcm-ffmpeg", "A PCM track written by ffmpeg: the container names FFmpeg as the writer of the stream.",
+         findings=[], streams=[("PCM", 48000, 2)], valid=False)
 def _():
     pcm = audio_track(1, "A_PCM/INT/LIT", 2, 48000.0, bits=16)
     return with_apps("Lavf60.16.100", "Lavf60.16.100", [pcm], [simple_block(1, i * 10, bytes(range(16)) * 4, key=True) for i in range(4)])
@@ -1382,10 +1391,9 @@ ENCODER_TAG = ape_tag(((b"Encoder", b"bar 2.0"),))
 PCM_BLOCKS = [simple_block(1, i * 10, bytes(range(16)) * 4, key=True) for i in range(4)]
 
 
-@fixture("writer-tag-and-apps", "A PCM track (no codec parser) and an AAC track (the AAC parser) in a Segment whose apps name \"foo 1.0\", and an APEv2 tag whose Encoder item names "
-         "\"bar 2.0\": the tag's claim is weighed first for both tracks, so both name \"bar 2.0\", and the conflict is reported once by the container and once by the AAC parser.",
-         findings=[("matroska.writer-claim-differs", "MuxingApp"), ("matroska.writer-claim-differs", "WritingApp"), ("aac.writer-claim-differs", "WritingApp"),
-                   ("matroska.codec-not-analyzed", "PCM")],
+@fixture("writer-tag-and-apps", "A PCM track and an AAC track in a Segment whose apps name \"foo 1.0\", and an APEv2 tag whose Encoder item names "
+         "\"bar 2.0\": the tag's claim is weighed first for both tracks, so both name \"bar 2.0\", and the conflict is reported by the PCM parser and by the AAC parser.",
+         findings=[("pcm.writer-claim-differs", "MuxingApp"), ("pcm.writer-claim-differs", "WritingApp"), ("aac.writer-claim-differs", "WritingApp")],
          streams=[("PCM", 48000, 2), ("AAC", 44100, 2)], valid=False)
 def _():
     _, rate_index, channels, frames = adts_frames("stereo")
@@ -1398,10 +1406,9 @@ def _():
 TAG_WRITERS["writer-tag-and-apps"] = "bar 2.0"
 
 
-@fixture("writer-tag-conflicts-two-pcm", "Two PCM tracks in a Segment whose apps name \"foo 1.0\" and an APEv2 Encoder item \"bar 2.0\": the conflict with the tag is one finding for the "
-         "Segment, not one for each track.",
-         findings=[("matroska.writer-claim-differs", "MuxingApp"), ("matroska.writer-claim-differs", "WritingApp"), ("matroska.codec-not-analyzed", "Track 1"),
-                   ("matroska.codec-not-analyzed", "Track 2")],
+@fixture("writer-tag-conflicts-two-pcm", "Two PCM tracks in a Segment whose apps name \"foo 1.0\" and an APEv2 Encoder item \"bar 2.0\": the PCM parser reports the conflict with the tag "
+         "for each track, as the parsers of other codecs do.",
+         findings=[("pcm.writer-claim-differs", "MuxingApp"), ("pcm.writer-claim-differs", "WritingApp"), ("pcm.writer-claim-differs", "MuxingApp"), ("pcm.writer-claim-differs", "WritingApp")],
          streams=[("PCM", 48000, 2), ("PCM", 48000, 2)], valid=False)
 def _():
     pcm1, pcm2 = audio_track(1, "A_PCM/INT/LIT", 2, 48000.0, bits=16), audio_track(2, "A_PCM/INT/LIT", 2, 48000.0, bits=16)
@@ -1413,7 +1420,7 @@ TAG_WRITERS["writer-tag-conflicts-two-pcm"] = "bar 2.0"
 
 
 @fixture("writer-tag-without-info", "A Segment with no Info element, so no apps, and an APEv2 Encoder item \"bar 2.0\": the tag still names the writer of the PCM track.",
-         findings=[("matroska.missing-info", "no Info"), ("matroska.codec-not-analyzed", "PCM")], streams=[("PCM", 48000, 2)], valid=False)
+         findings=[("matroska.missing-info", "no Info")], streams=[("PCM", 48000, 2)], valid=False)
 def _():
     pcm = audio_track(1, "A_PCM/INT/LIT", 2, 48000.0, bits=16)
     return build([ebml_header(), segment(tracks(pcm), cluster(0, *PCM_BLOCKS))]), ENCODER_TAG
@@ -1430,7 +1437,7 @@ TS_SCALE_TRACK_EXTRA = (flt(0x23314F, 2.0),)
 
 
 @fixture("track-timestamp-scale", "A PCM track with a TrackTimestampScale of 2.0 and three Clusters at 0, 1000 and 2000 ticks, each with blocks at 0 and 10 Track Ticks: a block's time is "
-         "(Cluster Timestamp + block timestamp times TrackTimestampScale) times TimestampScale (RFC 9559 section 11.2), so the Cluster's Timestamp is not scaled.", findings=[("matroska.codec-not-analyzed", "PCM")], streams=[("PCM", 48000, 2)])
+         "(Cluster Timestamp + block timestamp times TrackTimestampScale) times TimestampScale (RFC 9559 section 11.2), so the Cluster's Timestamp is not scaled.", findings=[], streams=[("PCM", 48000, 2)])
 def _():
     pcm = audio_track(1, "A_PCM/INT/LIT", 2, PCM_RATE, bits=16, extra=TS_SCALE_TRACK_EXTRA)
     clusters = [cluster(t, *[simple_block(1, ts, bytes(range(16)) * 4, key=True) for ts in (0, 10)]) for t in (0, 1000, 2000)]
@@ -1439,7 +1446,7 @@ def _():
 
 @fixture("tracks-after-clusters", "A PCM track with a TrackTimestampScale of 2.0 whose Tracks element comes after the Cluster, which a SeekHead before the Cluster references (RFC 9559 "
          "section 6.1 allows it): the blocks' times are worked out with the scale once the Tracks are read, so the blocks at 0 and 1000 Track Ticks are 2 s apart.",
-         findings=[("matroska.codec-not-analyzed", "PCM")], streams=[("PCM", 48000, 2)])
+         findings=[], streams=[("PCM", 48000, 2)])
 def _():
     def make(p):
         head = seek_head((m.INFO, p.get("info", 0)), (m.CLUSTER, p.get("c0", 0)), (m.TRACKS, p.get("tracks", 0)))
@@ -1580,14 +1587,15 @@ def false_items(variant):
     return bytes(data)
 
 
-FALSE_ITEMS = [("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown"), ("matroska.codec-not-analyzed", "PCM"), ("tag.near-miss", "APE signature")]
+FALSE_ITEMS = [("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown"), ("tag.near-miss", "APE signature")]
 FALSE_ITEMS_BLOCKS = FALSE_ITEMS + [("matroska.timestamps-backwards", "go back in time")]
 PCM_STREAM = [("PCM", 8000, 1)]
 
 
 @fixture("live-false-ape-items-two-clusters", "A live recording of two Clusters of unknown size whose first Cluster's bytes from its Timestamp read as APEv2 items that parse, up to a footer "
-         "in the last block that places a tag there: the elements run through both Clusters to the end of the data, so the recording keeps its bytes and the footer is a near miss.",
-         findings=FALSE_ITEMS_BLOCKS, streams=PCM_STREAM, valid=False)
+         "in the last block that places a tag there: the elements run through both Clusters to the end of the data, so the recording keeps its bytes and the footer is a near miss. "
+         "The track's bytes are one more than a whole number of sample frames.",
+         findings=FALSE_ITEMS_BLOCKS + [("pcm.partial-sample-frame", "1 byte is left over")], streams=PCM_STREAM, valid=False)
 def _():
     return false_items("two-clusters")
 
@@ -1641,7 +1649,7 @@ def _():
 
 @fixture("misplaced-values", "A TimestampScale of 5,000,000 inside Tracks and a WritingApp of \"LAME 3.100\" inside a Tag, both where the schema does not place them, in a file whose Info "
          "states 1,000,000 and the mkvmerge apps: the misplaced values are shown and reported but not used, so the PCM track's four blocks, 40 ms apart, last 0.16 s at the Info's scale and its writer is mkvmerge.",
-         findings=[("matroska.misplaced-element", "2 elements are placed where the schema does not allow"), ("matroska.codec-not-analyzed", "PCM")],
+         findings=[("matroska.misplaced-element", "2 elements are placed where the schema does not allow")],
          streams=[("PCM", 48000, 2)], valid=False)
 def _():
     pcm = audio_track(1, "A_PCM/INT/LIT", 2, PCM_RATE, bits=16)
@@ -1651,6 +1659,34 @@ def _():
                  text(ID["WritingApp"], "mkvmerge v82.0 ('I'm The President') 64-bit"))
     return build([ebml_header(), segment(inf, tracks(pcm, stray_scale), cluster(0, *[simple_block(1, i * 40, bytes(range(16)) * 4, key=True) for i in range(4)]),
                                          master(m.TAGS, stray_tag))])
+
+
+@fixture("pcm-three-layouts", "Three PCM tracks that each lay out their samples as the codec ID and the BitDepth say: big-endian 24-bit integers of two channels, 32-bit floating point of one channel "
+         "and 8-bit samples (unsigned, as in WAV) of one channel; each track's blocks are whole sample frames.",
+         streams=[("PCM", 48000, 2), ("PCM (floating-point)", 44100, 1), ("PCM", 8000, 1)])
+def _():
+    tracks_ = [audio_track(1, "A_PCM/INT/BIG", 2, 48000.0, bits=24), audio_track(2, "A_PCM/FLOAT/IEEE", 1, 44100.0, bits=32), audio_track(3, "A_PCM/INT/LIT", 1, 8000.0, bits=8)]
+    items = [simple_block(1, i * 10, bytes(range(24)) * 4, key=True) for i in range(4)] + [simple_block(2, i * 10, bytes(range(32)) * 2, key=True) for i in range(4)] \
+        + [simple_block(3, i * 10, bytes(range(64)), key=True) for i in range(4)]
+    return build(standard(cluster(0, *items), track=tracks_))
+
+
+@fixture("pcm-layouts-unsupported", "Three PCM tracks whose Audio element gives no sample layout the analysis reads: floating-point samples of 24 bits, integers of 12 bits and a track without a "
+         "BitDepth. Each is a finding, and the tracks are reported from their TrackEntries.",
+         findings=[("matroska.pcm-layout-not-read", "BitDepth of 24"), ("matroska.pcm-layout-not-read", "BitDepth of 12"), ("matroska.pcm-layout-not-read", "states no BitDepth")],
+         streams=[("PCM (floating-point)", 48000, 2), ("PCM", 48000, 2), ("PCM", 48000, 2)], valid=False)
+def _():
+    tracks_ = [audio_track(1, "A_PCM/FLOAT/IEEE", 2, 48000.0, bits=24), audio_track(2, "A_PCM/INT/LIT", 2, 48000.0, bits=12), audio_track(3, "A_PCM/INT/BIG", 2, 48000.0)]
+    items = [simple_block(n, i * 10, bytes(range(16)) * 4, key=True) for n in (1, 2, 3) for i in range(3)]
+    return build(standard(cluster(0, *items), track=tracks_))
+
+
+@fixture("pcm-default-rate", "A PCM track whose Audio element states neither a SamplingFrequency nor Channels: they default to 8000 Hz and one channel (RFC 9559 sections 5.1.4.1.29.1 and "
+         "5.1.4.1.29.3), and the samples are 8 bits.", streams=[("PCM", 8000, 1)])
+def _():
+    entry = master(ID["TrackEntry"], uint(ID["TrackNumber"], 1), uint(ID["TrackUID"], 1), uint(ID["TrackType"], 2), text(ID["CodecID"], "A_PCM/INT/LIT"),
+                   master(ID["Audio"], uint(ID["BitDepth"], 8)))
+    return build(standard(cluster(0, *[simple_block(1, i * 10, bytes(range(80)), key=True) for i in range(4)]), track=[entry]))
 
 
 @fixture("string-null", "Strings with a null octet and data after it (RFC 8794 section 13): a CodecID of \"A_OPUS\\0\\0xy\", a DocType of \"matroska\\0xy\" and a Title of \"ab\\0cd\" end at the "
@@ -1678,8 +1714,7 @@ def _():
 @fixture("sampling-frequency-invalid", "Four PCM tracks whose SamplingFrequency or OutputSamplingFrequency is not above 0 (RFC 9559 sections 5.1.4.1.29.1 and 5.1.4.1.29.2): NaN, "
          "-48000 and infinity for the first three, and a NaN output sampling frequency beside a valid sampling frequency for the fourth. Each is a finding. The streams of "
          "the first three have no sampling rate, and the fourth uses its sampling frequency.",
-         findings=[("matroska.audio-fields", "NaN Hz, which"), ("matroska.audio-fields", "-48000 Hz"), ("matroska.audio-fields", "Infinity Hz"), ("matroska.audio-fields", "output sampling frequency of NaN Hz"),
-                   ("matroska.codec-not-analyzed", "Track 1"), ("matroska.codec-not-analyzed", "Track 2"), ("matroska.codec-not-analyzed", "Track 3"), ("matroska.codec-not-analyzed", "Track 4")],
+         findings=[("matroska.audio-fields", "NaN Hz, which"), ("matroska.audio-fields", "-48000 Hz"), ("matroska.audio-fields", "Infinity Hz"), ("matroska.audio-fields", "output sampling frequency of NaN Hz")],
          streams=[("PCM", 0, 2)] * 3 + [("PCM", 48000, 2)], valid=False)
 def _():
     rates = [float("nan"), -48000.0, float("inf"), 48000.0]

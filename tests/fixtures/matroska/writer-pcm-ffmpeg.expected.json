@@ -1,5 +1,5 @@
 {
- "description": "A PCM track written by ffmpeg: the container names FFmpeg as the writer of a stream no codec parser reads.",
+ "description": "A PCM track written by ffmpeg: the container names FFmpeg as the writer of the stream.",
  "length": 442,
  "format": "Matroska",
  "ebml": {
@@ -295,12 +295,7 @@
    "channels": 2
   }
  ],
- "findings": [
-  {
-   "code": "matroska.codec-not-analyzed",
-   "contains": "PCM"
-  }
- ],
+ "findings": [],
  "crosscheck": {
   "valid": false
  }

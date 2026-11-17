@@ -144,7 +144,14 @@ public class MatroskaFindingTests
 
         Assert.Equal(["Matroska"], report.Root.Children.Select(c => c.Name));
         Assert.Single(report.Findings, f => f.Code == "tag.near-miss");
-        Assert.True(report.Streams.Single().Duration >= minimumDuration, $"{report.Streams.Single().Duration}");
+
+        // The recording is kept to its last block: the length its blocks' timestamps give (the PCM stream's own duration comes from the few bytes the filler blocks hold).
+        double length = WmaStandardStreams.FindAll(report.Root, "Container Duration").Single().Value?.AsDouble() ?? 0;
+        Assert.True(length >= minimumDuration, $"{length}");
+
+        // Both figures come from the blocks read out of the Clusters (ContainerDuration: the span of their timestamps; the count: the frames of the track), not from the Info element:
+        // if the footer were honored and the Clusters lost, there would be no frames node at all.
+        Assert.True(WmaStandardStreams.FindAll(report.Root, "Track 1 Frames").Single().Value?.AsInteger() >= 5);
     }
 
     // A tag the elements do not vouch for wins, damaged or not, and the APE parser reports the damage: it is not dropped.

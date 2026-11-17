@@ -136,26 +136,6 @@
                               "length": 4
                             }
                           ]
-                        },
-                        {
-                          "name": "Writer",
-                          "value": "bar 2.0",
-                          "offset": 51,
-                          "length": 47,
-                          "children": [
-                            {
-                              "name": "Confidence",
-                              "value": "Low",
-                              "offset": 51,
-                              "length": 47
-                            },
-                            {
-                              "name": "Evidence",
-                              "value": "APE Encoder item at 0x1A3 names \"bar 2.0\"",
-                              "offset": 51,
-                              "length": 47
-                            }
-                          ]
                         }
                       ]
                     }
@@ -491,6 +471,123 @@
                   ]
                 }
               ]
+            },
+            {
+              "name": "Track 1 Frames",
+              "value": 4,
+              "unit": "frames",
+              "offset": 113,
+              "length": 274,
+              "children": [
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 113,
+                  "length": 274,
+                  "children": [
+                    {
+                      "name": "Codec",
+                      "value": "PCM",
+                      "offset": 113,
+                      "length": 274
+                    },
+                    {
+                      "name": "Sample Frames",
+                      "value": 64,
+                      "unit": "sample frames",
+                      "offset": 113,
+                      "length": 274
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.0013333333333333333,
+                      "unit": "s",
+                      "offset": 113,
+                      "length": 274
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 48000,
+                      "unit": "Hz",
+                      "offset": 113,
+                      "length": 274
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 2,
+                      "unit": "channels",
+                      "offset": 113,
+                      "length": 274
+                    },
+                    {
+                      "name": "Channel Layout",
+                      "value": "stereo (front left, front right)",
+                      "offset": 113,
+                      "length": 274
+                    },
+                    {
+                      "name": "Bits Per Sample",
+                      "value": 16,
+                      "unit": "bits",
+                      "offset": 113,
+                      "length": 274
+                    },
+                    {
+                      "name": "Sample Format",
+                      "value": "signed integer",
+                      "offset": 113,
+                      "length": 274
+                    },
+                    {
+                      "name": "Byte Order",
+                      "value": "little-endian",
+                      "offset": 113,
+                      "length": 274
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 1536,
+                      "unit": "kbps",
+                      "offset": 113,
+                      "length": 274
+                    }
+                  ]
+                },
+                {
+                  "name": "Writer",
+                  "value": "bar 2.0",
+                  "offset": 113,
+                  "length": 274,
+                  "children": [
+                    {
+                      "name": "Confidence",
+                      "value": "Low",
+                      "offset": 113,
+                      "length": 274
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "APE Encoder item at 0x1A3 names \"bar 2.0\"",
+                      "offset": 113,
+                      "length": 274
+                    }
+                  ]
+                },
+                {
+                  "name": "Container Duration",
+                  "value": 0.04,
+                  "unit": "s",
+                  "offset": 113,
+                  "length": 274
+                },
+                {
+                  "name": "Container Samples",
+                  "value": 1920,
+                  "unit": "samples",
+                  "offset": 113,
+                  "length": 274
+                }
+              ]
             }
           ]
         },
@@ -727,18 +824,22 @@
         "nodes": [
           [
             0,
-            1,
-            0,
-            0
+            2
           ]
         ],
         "codec": "PCM",
         "sampleRate": 48000,
         "channels": 2,
+        "channelMode": "Stereo",
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
         "bitsPerSample": 16,
-        "samples": 0,
-        "duration": 0.04,
-        "averageBitrate": 51.2,
+        "samples": 64,
+        "duration": 0.0013333333333333333,
+        "averageBitrate": 1536,
         "isVbr": false,
         "playbackGroup": 1,
         "writer": "bar 2.0",
@@ -756,21 +857,6 @@
         "path": [
           0,
           1
-        ],
-        "count": 1
-      },
-      {
-        "severity": "Info",
-        "code": "matroska.codec-not-analyzed",
-        "message": "Track 1 is coded as PCM (A_PCM/INT/LIT), whose frames are not analyzed yet; the track is reported from its TrackEntry.",
-        "offset": 64,
-        "length": 15,
-        "path": [
-          0,
-          1,
-          0,
-          0,
-          3
         ],
         "count": 1
       }

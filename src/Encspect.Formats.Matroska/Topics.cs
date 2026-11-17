@@ -10,4 +10,5 @@ internal static class Topics
     public const string ContentEncryption = "matroska-content-encryption";
     public const string Timestamps = "matroska-timestamps";
     public const string Crc = "crc";
+    public const string PcmInMatroska = "pcm-in-matroska";
 }

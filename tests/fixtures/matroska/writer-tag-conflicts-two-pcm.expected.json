@@ -1,5 +1,5 @@
 {
- "description": "Two PCM tracks in a Segment whose apps name \"foo 1.0\" and an APEv2 Encoder item \"bar 2.0\": the conflict with the tag is one finding for the Segment, not one for each track.",
+ "description": "Two PCM tracks in a Segment whose apps name \"foo 1.0\" and an APEv2 Encoder item \"bar 2.0\": the PCM parser reports the conflict with the tag for each track, as the parsers of other codecs do.",
  "length": 757,
  "format": "Matroska",
  "ebml": {
@@ -448,20 +448,20 @@
  ],
  "findings": [
   {
-   "code": "matroska.writer-claim-differs",
+   "code": "pcm.writer-claim-differs",
    "contains": "MuxingApp"
   },
   {
-   "code": "matroska.writer-claim-differs",
+   "code": "pcm.writer-claim-differs",
    "contains": "WritingApp"
   },
   {
-   "code": "matroska.codec-not-analyzed",
-   "contains": "Track 1"
+   "code": "pcm.writer-claim-differs",
+   "contains": "MuxingApp"
   },
   {
-   "code": "matroska.codec-not-analyzed",
-   "contains": "Track 2"
+   "code": "pcm.writer-claim-differs",
+   "contains": "WritingApp"
   }
  ],
  "crosscheck": {

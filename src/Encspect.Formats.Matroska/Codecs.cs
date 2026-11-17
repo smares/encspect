@@ -23,8 +23,47 @@ internal static class Codecs
         "A_WAVPACK4" => "wavpack",
         "A_TRUEHD" => "truehd",
         "A_MLP" => "mlp",
+        "A_PCM/INT/LIT" or "A_PCM/INT/BIG" or "A_PCM/FLOAT/IEEE" => PcmSamples,
         _ => null,
     };
+
+    // The ID of the host's codec parser for PCM samples a container stores as they are.
+    public const string PcmSamples = "pcm-samples";
+
+    // How the samples of a PCM track are laid out, from its codec ID and the Audio element (draft-ietf-cellar-codec, section 3.4): A_PCM/INT/LIT and A_PCM/INT/BIG are
+    // signed integers of BitDepth bits in either byte order, except that 8-bit samples are unsigned as in WAV, and A_PCM/FLOAT/IEEE is IEEE 754 floating point of 32 or 64
+    // bits, read little-endian as its writers store it. Null with the reason where the Audio element states a depth or a channel count that is no sample layout.
+    public static PcmCoding? PcmOf(string codecId, ulong? bitDepth, ulong? channels, double? samplingFrequency, out string why)
+    {
+        why = string.Empty;
+        bool isFloat = codecId == "A_PCM/FLOAT/IEEE";
+        if (bitDepth is null)
+        {
+            why = "states no BitDepth, which the samples' width comes from";
+            return null;
+        }
+
+        if (!(isFloat ? bitDepth is 32 or 64 : bitDepth is 8 or 16 or 24 or 32))
+        {
+            why = $"states a BitDepth of {bitDepth}, which is no sample width the {(isFloat ? "floating-point" : "integer")} coding is read with ({(isFloat ? "32 or 64" : "8, 16, 24 or 32")} bits)";
+            return null;
+        }
+
+        if ((channels ?? 1) is 0 or > int.MaxValue)
+        {
+            why = $"states {channels} channels";
+            return null;
+        }
+
+        return new PcmCoding
+        {
+            Encoding = isFloat ? PcmEncoding.Float : bitDepth == 8 ? PcmEncoding.UnsignedInteger : PcmEncoding.SignedInteger,
+            IsBigEndian = codecId == "A_PCM/INT/BIG",
+            ContainerBits = (int)bitDepth.Value,
+            // The Audio element's SamplingFrequency defaults to 8000 Hz (RFC 9559, section 5.1.4.1.29.1).
+            SampleRate = samplingFrequency is { } rate ? (IsRate(rate) ? (int)Math.Min(Math.Round(rate), int.MaxValue) : 0) : 8000,
+        };
+    }
 
     // The kind of stream KnownWriters knows the codec ID's coding as, or null for a coding no parser reads.
     public static string? WriterKind(string codecId) => RouteOf(codecId) switch

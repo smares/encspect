@@ -1,0 +1,743 @@
+{
+ "description": "mkvmerge mkvmerge v82.0",
+ "length": 94066,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 5435,
+     "length": 67068,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 3
+    },
+    {
+     "offset": 72503,
+     "length": 21188,
+     "timestamp": 33519,
+     "size_unknown": false,
+     "blocks": 1
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 22674,
+    "muxing_app": "libebml v1.4.5 + libmatroska v1.7.1",
+    "writing_app": "mkvmerge v82.0 ('I'm The President') 64-bit",
+    "duration": 44103.0
+   },
+   "length": 94026,
+   "declared_end": 94066
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   94026,
+   [
+    [
+     "SeekHead",
+     52,
+     67,
+     [
+      [
+       "Seek",
+       57,
+       15,
+       [
+        [
+         "SeekID",
+         60,
+         7
+        ],
+        [
+         "SeekPosition",
+         67,
+         5
+        ]
+       ]
+      ],
+      [
+       "Seek",
+       72,
+       15,
+       [
+        [
+         "SeekID",
+         75,
+         7
+        ],
+        [
+         "SeekPosition",
+         82,
+         5
+        ]
+       ]
+      ],
+      [
+       "Seek",
+       87,
+       16,
+       [
+        [
+         "SeekID",
+         90,
+         7
+        ],
+        [
+         "SeekPosition",
+         97,
+         6
+        ]
+       ]
+      ],
+      [
+       "Seek",
+       103,
+       16,
+       [
+        [
+         "SeekID",
+         106,
+         7
+        ],
+        [
+         "SeekPosition",
+         113,
+         6
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Void",
+     119,
+     4032
+    ],
+    [
+     "Info",
+     4151,
+     137,
+     [
+      [
+       "TimestampScale",
+       4157,
+       6
+      ],
+      [
+       "MuxingApp",
+       4163,
+       38
+      ],
+      [
+       "WritingApp",
+       4201,
+       46
+      ],
+      [
+       "Duration",
+       4247,
+       11
+      ],
+      [
+       "DateUTC",
+       4258,
+       11
+      ],
+      [
+       "SegmentUUID",
+       4269,
+       19
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     4288,
+     73,
+     [
+      [
+       "TrackEntry",
+       4293,
+       68,
+       [
+        [
+         "TrackNumber",
+         4295,
+         3
+        ],
+        [
+         "TrackUID",
+         4298,
+         11
+        ],
+        [
+         "TrackType",
+         4309,
+         3
+        ],
+        [
+         "Language",
+         4312,
+         7
+        ],
+        [
+         "CodecID",
+         4319,
+         15
+        ],
+        [
+         "DefaultDuration",
+         4334,
+         8
+        ],
+        [
+         "LanguageBCP47",
+         4342,
+         7
+        ],
+        [
+         "Audio",
+         4349,
+         12,
+         [
+          [
+           "SamplingFrequency",
+           4351,
+           6
+          ],
+          [
+           "BitDepth",
+           4357,
+           4
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Void",
+     4361,
+     1074
+    ],
+    [
+     "Cluster",
+     5435,
+     67068,
+     [
+      [
+       "Timestamp",
+       5442,
+       3
+      ],
+      [
+       "SimpleBlock",
+       5445,
+       28233
+      ],
+      [
+       "SimpleBlock",
+       33678,
+       28233
+      ],
+      [
+       "SimpleBlock",
+       61911,
+       10592
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     72503,
+     21188,
+     [
+      [
+       "Timestamp",
+       72510,
+       4
+      ],
+      [
+       "SimpleBlock",
+       72514,
+       21177
+      ]
+     ]
+    ],
+    [
+     "Cues",
+     93691,
+     41,
+     [
+      [
+       "CuePoint",
+       93696,
+       17,
+       [
+        [
+         "CueTime",
+         93698,
+         3
+        ],
+        [
+         "CueTrackPositions",
+         93701,
+         12,
+         [
+          [
+           "CueTrack",
+           93703,
+           3
+          ],
+          [
+           "CueClusterPosition",
+           93706,
+           4
+          ],
+          [
+           "CueRelativePosition",
+           93710,
+           3
+          ]
+         ]
+        ]
+       ]
+      ],
+      [
+       "CuePoint",
+       93713,
+       19,
+       [
+        [
+         "CueTime",
+         93715,
+         4
+        ],
+        [
+         "CueTrackPositions",
+         93719,
+         13,
+         [
+          [
+           "CueTrack",
+           93721,
+           3
+          ],
+          [
+           "CueClusterPosition",
+           93724,
+           4
+          ],
+          [
+           "CueRelativePosition",
+           93728,
+           4
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Tags",
+     93732,
+     334,
+     [
+      [
+       "Tag",
+       93738,
+       328,
+       [
+        [
+         "Targets",
+         93742,
+         14,
+         [
+          [
+           "TagTrackUID",
+           93745,
+           11
+          ]
+         ]
+        ],
+        [
+         "SimpleTag",
+         93756,
+         18,
+         [
+          [
+           "TagName",
+           93759,
+           6
+          ],
+          [
+           "TagString",
+           93765,
+           9
+          ]
+         ]
+        ],
+        [
+         "SimpleTag",
+         93774,
+         35,
+         [
+          [
+           "TagName",
+           93777,
+           11
+          ],
+          [
+           "TagString",
+           93788,
+           21
+          ]
+         ]
+        ],
+        [
+         "SimpleTag",
+         93809,
+         27,
+         [
+          [
+           "TagName",
+           93812,
+           19
+          ],
+          [
+           "TagString",
+           93831,
+           5
+          ]
+         ]
+        ],
+        [
+         "SimpleTag",
+         93836,
+         29,
+         [
+          [
+           "TagName",
+           93839,
+           18
+          ],
+          [
+           "TagString",
+           93857,
+           8
+          ]
+         ]
+        ],
+        [
+         "SimpleTag",
+         93865,
+         75,
+         [
+          [
+           "TagName",
+           93868,
+           26
+          ],
+          [
+           "TagString",
+           93894,
+           46
+          ]
+         ]
+        ],
+        [
+         "SimpleTag",
+         93940,
+         56,
+         [
+          [
+           "TagName",
+           93943,
+           31
+          ],
+          [
+           "TagString",
+           93974,
+           22
+          ]
+         ]
+        ],
+        [
+         "SimpleTag",
+         93996,
+         70,
+         [
+          [
+           "TagName",
+           93999,
+           19
+          ],
+          [
+           "TagString",
+           94018,
+           48
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 5445,
+   "length": 28233,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 132,
+   "lacing": "fixed",
+   "frames": [
+    [
+     5454,
+     3528
+    ],
+    [
+     8982,
+     3528
+    ],
+    [
+     12510,
+     3528
+    ],
+    [
+     16038,
+     3528
+    ],
+    [
+     19566,
+     3528
+    ],
+    [
+     23094,
+     3528
+    ],
+    [
+     26622,
+     3528
+    ],
+    [
+     30150,
+     3528
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 33678,
+   "length": 28233,
+   "track": 1,
+   "timestamp": 14113,
+   "cluster_timestamp": 0,
+   "flags": 132,
+   "lacing": "fixed",
+   "frames": [
+    [
+     33687,
+     3528
+    ],
+    [
+     37215,
+     3528
+    ],
+    [
+     40743,
+     3528
+    ],
+    [
+     44271,
+     3528
+    ],
+    [
+     47799,
+     3528
+    ],
+    [
+     51327,
+     3528
+    ],
+    [
+     54855,
+     3528
+    ],
+    [
+     58383,
+     3528
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 61911,
+   "length": 10592,
+   "track": 1,
+   "timestamp": 28226,
+   "cluster_timestamp": 0,
+   "flags": 132,
+   "lacing": "fixed",
+   "frames": [
+    [
+     61919,
+     3528
+    ],
+    [
+     65447,
+     3528
+    ],
+    [
+     68975,
+     3528
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 72514,
+   "length": 21177,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 33519,
+   "flags": 132,
+   "lacing": "fixed",
+   "frames": [
+    [
+     72523,
+     3528
+    ],
+    [
+     76051,
+     3528
+    ],
+    [
+     79579,
+     3528
+    ],
+    [
+     83107,
+     3528
+    ],
+    [
+     86635,
+     3528
+    ],
+    [
+     90163,
+     3528
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 8105557462905711290,
+   "type": 2,
+   "codec": "A_PCM/INT/LIT",
+   "private": null,
+   "channels": null,
+   "rate": 44100.0,
+   "bits": 16,
+   "delay": 0,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "writers": [
+  {
+   "name": "mkvmerge v82.0 ('I'm The President') 64-bit",
+   "confidence": "Low"
+  }
+ ],
+ "encoder": {
+  "tool": "mkvmerge mkvmerge v82.0",
+  "arguments": [],
+  "inputs": [
+   "sine.wav"
+  ]
+ },
+ "streams": [
+  {
+   "codec": "PCM",
+   "sample_rate": 44100,
+   "channels": 1
+  }
+ ],
+ "findings": [],
+ "pcm": {
+  "samples": 44100,
+  "bits": 16,
+  "format": "integer",
+  "md5": "1eecbf87931d1cee7568d65bf6dc0fc6"
+ },
+ "crosscheck": {
+  "valid": true
+ }
+}
