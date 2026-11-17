@@ -1,0 +1,1568 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "external-ffmpeg-fl64-big-endian-in-quicktime.mov",
+    "root": {
+      "name": "File",
+      "value": "MP4",
+      "offset": 0,
+      "length": 13540,
+      "children": [
+        {
+          "name": "MP4",
+          "value": "qt (QuickTime)",
+          "offset": 0,
+          "length": 13540,
+          "children": [
+            {
+              "name": "ftyp",
+              "value": "qt (QuickTime)",
+              "offset": 0,
+              "length": 20,
+              "children": [
+                {
+                  "name": "Size",
+                  "value": 20,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 4
+                },
+                {
+                  "name": "Type",
+                  "value": "ftyp",
+                  "offset": 4,
+                  "length": 4
+                },
+                {
+                  "name": "Major Brand",
+                  "value": "qt  ",
+                  "offset": 8,
+                  "length": 4
+                },
+                {
+                  "name": "Minor Version",
+                  "value": 512,
+                  "offset": 12,
+                  "length": 4
+                },
+                {
+                  "name": "Compatible Brand",
+                  "value": "qt  ",
+                  "offset": 16,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "wide",
+              "value": "QuickTime Reserved Space",
+              "offset": 20,
+              "length": 8,
+              "children": [
+                {
+                  "name": "Size",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 20,
+                  "length": 4
+                },
+                {
+                  "name": "Type",
+                  "value": "wide",
+                  "offset": 24,
+                  "length": 4
+                }
+              ]
+            },
+            {
+              "name": "mdat",
+              "value": "Media Data",
+              "offset": 28,
+              "length": 12808,
+              "children": [
+                {
+                  "name": "Size",
+                  "value": 12808,
+                  "unit": "bytes",
+                  "offset": 28,
+                  "length": 4
+                },
+                {
+                  "name": "Type",
+                  "value": "mdat",
+                  "offset": 32,
+                  "length": 4
+                },
+                {
+                  "name": "Data",
+                  "value": 12800,
+                  "unit": "bytes",
+                  "offset": 36,
+                  "length": 12800
+                },
+                {
+                  "name": "Track 1 Samples",
+                  "value": 800,
+                  "unit": "samples",
+                  "offset": 36,
+                  "length": 12800,
+                  "children": [
+                    {
+                      "name": "Statistics",
+                      "kind": "Statistics",
+                      "offset": 36,
+                      "length": 12800,
+                      "children": [
+                        {
+                          "name": "Codec",
+                          "value": "PCM (floating-point)",
+                          "offset": 36,
+                          "length": 12800
+                        },
+                        {
+                          "name": "Sample Frames",
+                          "value": 800,
+                          "unit": "sample frames",
+                          "offset": 36,
+                          "length": 12800
+                        },
+                        {
+                          "name": "Duration",
+                          "value": 0.1,
+                          "unit": "s",
+                          "offset": 36,
+                          "length": 12800
+                        },
+                        {
+                          "name": "Sample Rate",
+                          "value": 8000,
+                          "unit": "Hz",
+                          "offset": 36,
+                          "length": 12800
+                        },
+                        {
+                          "name": "Channels",
+                          "value": 2,
+                          "unit": "channels",
+                          "offset": 36,
+                          "length": 12800
+                        },
+                        {
+                          "name": "Channel Layout",
+                          "value": "stereo (front left, front right)",
+                          "offset": 36,
+                          "length": 12800
+                        },
+                        {
+                          "name": "Bits Per Sample",
+                          "value": 64,
+                          "unit": "bits",
+                          "offset": 36,
+                          "length": 12800
+                        },
+                        {
+                          "name": "Sample Format",
+                          "value": "IEEE 754 floating point",
+                          "offset": 36,
+                          "length": 12800
+                        },
+                        {
+                          "name": "Byte Order",
+                          "value": "big-endian",
+                          "offset": 36,
+                          "length": 12800
+                        },
+                        {
+                          "name": "Average Bitrate",
+                          "value": 1024,
+                          "unit": "kbps",
+                          "offset": 36,
+                          "length": 12800
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Writer",
+                      "value": "FFmpeg (Lavf60.16.100)",
+                      "offset": 36,
+                      "length": 12800,
+                      "children": [
+                        {
+                          "name": "Confidence",
+                          "value": "Low",
+                          "offset": 36,
+                          "length": 12800
+                        },
+                        {
+                          "name": "Evidence",
+                          "value": "QuickTime ©swr atom at 0x34CB names \"Lavf60.16.100\"",
+                          "offset": 36,
+                          "length": 12800
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "moov",
+              "value": "Movie",
+              "offset": 12836,
+              "length": 704,
+              "children": [
+                {
+                  "name": "Size",
+                  "value": 704,
+                  "unit": "bytes",
+                  "offset": 12836,
+                  "length": 4
+                },
+                {
+                  "name": "Type",
+                  "value": "moov",
+                  "offset": 12840,
+                  "length": 4
+                },
+                {
+                  "name": "mvhd",
+                  "value": "Movie Header",
+                  "offset": 12844,
+                  "length": 108,
+                  "children": [
+                    {
+                      "name": "Size",
+                      "value": 108,
+                      "unit": "bytes",
+                      "offset": 12844,
+                      "length": 4
+                    },
+                    {
+                      "name": "Type",
+                      "value": "mvhd",
+                      "offset": 12848,
+                      "length": 4
+                    },
+                    {
+                      "name": "Version",
+                      "value": 0,
+                      "offset": 12852,
+                      "length": 1
+                    },
+                    {
+                      "name": "Flags",
+                      "value": 0,
+                      "offset": 12853,
+                      "length": 3
+                    },
+                    {
+                      "name": "Creation Time",
+                      "value": "0 (not set)",
+                      "offset": 12856,
+                      "length": 4
+                    },
+                    {
+                      "name": "Modification Time",
+                      "value": "0 (not set)",
+                      "offset": 12860,
+                      "length": 4
+                    },
+                    {
+                      "name": "Timescale",
+                      "value": 1000,
+                      "unit": "units per second",
+                      "offset": 12864,
+                      "length": 4
+                    },
+                    {
+                      "name": "Duration",
+                      "value": "100 (0.100 s)",
+                      "offset": 12868,
+                      "length": 4
+                    },
+                    {
+                      "name": "Rate",
+                      "value": 1,
+                      "offset": 12872,
+                      "length": 4
+                    },
+                    {
+                      "name": "Volume",
+                      "value": 1,
+                      "offset": 12876,
+                      "length": 2
+                    },
+                    {
+                      "name": "Matrix",
+                      "value": 36,
+                      "unit": "bytes",
+                      "offset": 12888,
+                      "length": 36
+                    },
+                    {
+                      "name": "Next Track ID",
+                      "value": 2,
+                      "offset": 12948,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "trak",
+                  "value": "Track",
+                  "offset": 12952,
+                  "length": 555,
+                  "children": [
+                    {
+                      "name": "Size",
+                      "value": 555,
+                      "unit": "bytes",
+                      "offset": 12952,
+                      "length": 4
+                    },
+                    {
+                      "name": "Type",
+                      "value": "trak",
+                      "offset": 12956,
+                      "length": 4
+                    },
+                    {
+                      "name": "tkhd",
+                      "value": "Track Header, track 1",
+                      "offset": 12960,
+                      "length": 92,
+                      "children": [
+                        {
+                          "name": "Size",
+                          "value": 92,
+                          "unit": "bytes",
+                          "offset": 12960,
+                          "length": 4
+                        },
+                        {
+                          "name": "Type",
+                          "value": "tkhd",
+                          "offset": 12964,
+                          "length": 4
+                        },
+                        {
+                          "name": "Version",
+                          "value": 0,
+                          "offset": 12968,
+                          "length": 1
+                        },
+                        {
+                          "name": "Flags",
+                          "value": 3,
+                          "offset": 12969,
+                          "length": 3
+                        },
+                        {
+                          "name": "IsEnabled",
+                          "value": true,
+                          "offset": 12971,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1
+                        },
+                        {
+                          "name": "Creation Time",
+                          "value": "0 (not set)",
+                          "offset": 12972,
+                          "length": 4
+                        },
+                        {
+                          "name": "Modification Time",
+                          "value": "0 (not set)",
+                          "offset": 12976,
+                          "length": 4
+                        },
+                        {
+                          "name": "Track ID",
+                          "value": 1,
+                          "offset": 12980,
+                          "length": 4
+                        },
+                        {
+                          "name": "Duration",
+                          "value": "100 (0.100 s)",
+                          "offset": 12988,
+                          "length": 4
+                        },
+                        {
+                          "name": "Layer",
+                          "value": 0,
+                          "offset": 13000,
+                          "length": 2
+                        },
+                        {
+                          "name": "Alternate Group",
+                          "value": 1,
+                          "offset": 13002,
+                          "length": 2
+                        },
+                        {
+                          "name": "Volume",
+                          "value": 1,
+                          "offset": 13004,
+                          "length": 2
+                        },
+                        {
+                          "name": "Matrix",
+                          "value": 36,
+                          "unit": "bytes",
+                          "offset": 13008,
+                          "length": 36
+                        },
+                        {
+                          "name": "Width",
+                          "value": 0,
+                          "offset": 13044,
+                          "length": 4
+                        },
+                        {
+                          "name": "Height",
+                          "value": 0,
+                          "offset": 13048,
+                          "length": 4
+                        }
+                      ]
+                    },
+                    {
+                      "name": "edts",
+                      "value": "Edit",
+                      "offset": 13052,
+                      "length": 36,
+                      "children": [
+                        {
+                          "name": "Size",
+                          "value": 36,
+                          "unit": "bytes",
+                          "offset": 13052,
+                          "length": 4
+                        },
+                        {
+                          "name": "Type",
+                          "value": "edts",
+                          "offset": 13056,
+                          "length": 4
+                        },
+                        {
+                          "name": "elst",
+                          "value": "Edit List",
+                          "offset": 13060,
+                          "length": 28,
+                          "children": [
+                            {
+                              "name": "Size",
+                              "value": 28,
+                              "unit": "bytes",
+                              "offset": 13060,
+                              "length": 4
+                            },
+                            {
+                              "name": "Type",
+                              "value": "elst",
+                              "offset": 13064,
+                              "length": 4
+                            },
+                            {
+                              "name": "Version",
+                              "value": 0,
+                              "offset": 13068,
+                              "length": 1
+                            },
+                            {
+                              "name": "Flags",
+                              "value": 0,
+                              "offset": 13069,
+                              "length": 3
+                            },
+                            {
+                              "name": "Entries",
+                              "value": 1,
+                              "offset": 13072,
+                              "length": 4
+                            },
+                            {
+                              "name": "Edit",
+                              "offset": 13076,
+                              "length": 12,
+                              "children": [
+                                {
+                                  "name": "Segment Duration",
+                                  "value": "100 (0.100 s)",
+                                  "offset": 13076,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Media Time",
+                                  "value": 0,
+                                  "unit": "units of the media's timescale",
+                                  "offset": 13080,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Media Rate",
+                                  "value": 1,
+                                  "offset": 13084,
+                                  "length": 4
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "mdia",
+                      "value": "Media",
+                      "offset": 13088,
+                      "length": 419,
+                      "children": [
+                        {
+                          "name": "Size",
+                          "value": 419,
+                          "unit": "bytes",
+                          "offset": 13088,
+                          "length": 4
+                        },
+                        {
+                          "name": "Type",
+                          "value": "mdia",
+                          "offset": 13092,
+                          "length": 4
+                        },
+                        {
+                          "name": "mdhd",
+                          "value": "Media Header",
+                          "offset": 13096,
+                          "length": 32,
+                          "children": [
+                            {
+                              "name": "Size",
+                              "value": 32,
+                              "unit": "bytes",
+                              "offset": 13096,
+                              "length": 4
+                            },
+                            {
+                              "name": "Type",
+                              "value": "mdhd",
+                              "offset": 13100,
+                              "length": 4
+                            },
+                            {
+                              "name": "Version",
+                              "value": 0,
+                              "offset": 13104,
+                              "length": 1
+                            },
+                            {
+                              "name": "Flags",
+                              "value": 0,
+                              "offset": 13105,
+                              "length": 3
+                            },
+                            {
+                              "name": "Creation Time",
+                              "value": "0 (not set)",
+                              "offset": 13108,
+                              "length": 4
+                            },
+                            {
+                              "name": "Modification Time",
+                              "value": "0 (not set)",
+                              "offset": 13112,
+                              "length": 4
+                            },
+                            {
+                              "name": "Timescale",
+                              "value": 8000,
+                              "unit": "units per second",
+                              "offset": 13116,
+                              "length": 4
+                            },
+                            {
+                              "name": "Duration",
+                              "value": "800 (0.100 s)",
+                              "offset": 13120,
+                              "length": 4
+                            },
+                            {
+                              "name": "Language",
+                              "value": "\u007F\u007F\u007F",
+                              "offset": 13124,
+                              "length": 2
+                            },
+                            {
+                              "name": "Quality",
+                              "value": 0,
+                              "offset": 13126,
+                              "length": 2
+                            }
+                          ]
+                        },
+                        {
+                          "name": "hdlr",
+                          "value": "soun (sound)",
+                          "offset": 13128,
+                          "length": 45,
+                          "children": [
+                            {
+                              "name": "Size",
+                              "value": 45,
+                              "unit": "bytes",
+                              "offset": 13128,
+                              "length": 4
+                            },
+                            {
+                              "name": "Type",
+                              "value": "hdlr",
+                              "offset": 13132,
+                              "length": 4
+                            },
+                            {
+                              "name": "Version",
+                              "value": 0,
+                              "offset": 13136,
+                              "length": 1
+                            },
+                            {
+                              "name": "Flags",
+                              "value": 0,
+                              "offset": 13137,
+                              "length": 3
+                            },
+                            {
+                              "name": "Component Type",
+                              "value": "mhlr",
+                              "offset": 13140,
+                              "length": 4
+                            },
+                            {
+                              "name": "Handler Type",
+                              "value": "soun",
+                              "offset": 13144,
+                              "length": 4
+                            },
+                            {
+                              "name": "Name",
+                              "value": "SoundHandler",
+                              "offset": 13160,
+                              "length": 13
+                            }
+                          ]
+                        },
+                        {
+                          "name": "minf",
+                          "value": "Media Information",
+                          "offset": 13173,
+                          "length": 334,
+                          "children": [
+                            {
+                              "name": "Size",
+                              "value": 334,
+                              "unit": "bytes",
+                              "offset": 13173,
+                              "length": 4
+                            },
+                            {
+                              "name": "Type",
+                              "value": "minf",
+                              "offset": 13177,
+                              "length": 4
+                            },
+                            {
+                              "name": "smhd",
+                              "value": "Sound Media Header",
+                              "offset": 13181,
+                              "length": 16,
+                              "children": [
+                                {
+                                  "name": "Size",
+                                  "value": 16,
+                                  "unit": "bytes",
+                                  "offset": 13181,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Type",
+                                  "value": "smhd",
+                                  "offset": 13185,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Version",
+                                  "value": 0,
+                                  "offset": 13189,
+                                  "length": 1
+                                },
+                                {
+                                  "name": "Flags",
+                                  "value": 0,
+                                  "offset": 13190,
+                                  "length": 3
+                                },
+                                {
+                                  "name": "Balance",
+                                  "value": 0,
+                                  "offset": 13193,
+                                  "length": 2
+                                },
+                                {
+                                  "name": "Reserved",
+                                  "value": 0,
+                                  "offset": 13195,
+                                  "length": 2
+                                }
+                              ]
+                            },
+                            {
+                              "name": "hdlr",
+                              "value": "url  (URL data)",
+                              "offset": 13197,
+                              "length": 44,
+                              "children": [
+                                {
+                                  "name": "Size",
+                                  "value": 44,
+                                  "unit": "bytes",
+                                  "offset": 13197,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Type",
+                                  "value": "hdlr",
+                                  "offset": 13201,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Version",
+                                  "value": 0,
+                                  "offset": 13205,
+                                  "length": 1
+                                },
+                                {
+                                  "name": "Flags",
+                                  "value": 0,
+                                  "offset": 13206,
+                                  "length": 3
+                                },
+                                {
+                                  "name": "Component Type",
+                                  "value": "dhlr",
+                                  "offset": 13209,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Handler Type",
+                                  "value": "url ",
+                                  "offset": 13213,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Name",
+                                  "value": "DataHandler",
+                                  "offset": 13229,
+                                  "length": 12
+                                }
+                              ]
+                            },
+                            {
+                              "name": "dinf",
+                              "value": "Data Information",
+                              "offset": 13241,
+                              "length": 36,
+                              "children": [
+                                {
+                                  "name": "Size",
+                                  "value": 36,
+                                  "unit": "bytes",
+                                  "offset": 13241,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Type",
+                                  "value": "dinf",
+                                  "offset": 13245,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "dref",
+                                  "value": "Data Reference",
+                                  "offset": 13249,
+                                  "length": 28,
+                                  "children": [
+                                    {
+                                      "name": "Size",
+                                      "value": 28,
+                                      "unit": "bytes",
+                                      "offset": 13249,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Type",
+                                      "value": "dref",
+                                      "offset": 13253,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Version",
+                                      "value": 0,
+                                      "offset": 13257,
+                                      "length": 1
+                                    },
+                                    {
+                                      "name": "Flags",
+                                      "value": 0,
+                                      "offset": 13258,
+                                      "length": 3
+                                    },
+                                    {
+                                      "name": "Entries",
+                                      "value": 1,
+                                      "offset": 13261,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "url ",
+                                      "value": "media data in this file",
+                                      "offset": 13265,
+                                      "length": 12,
+                                      "children": [
+                                        {
+                                          "name": "Size",
+                                          "value": 12,
+                                          "unit": "bytes",
+                                          "offset": 13265,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "Type",
+                                          "value": "url ",
+                                          "offset": 13269,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "Version",
+                                          "value": 0,
+                                          "offset": 13273,
+                                          "length": 1
+                                        },
+                                        {
+                                          "name": "Flags",
+                                          "value": 1,
+                                          "offset": 13274,
+                                          "length": 3
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "name": "stbl",
+                              "value": "Sample Table",
+                              "offset": 13277,
+                              "length": 230,
+                              "children": [
+                                {
+                                  "name": "Size",
+                                  "value": 230,
+                                  "unit": "bytes",
+                                  "offset": 13277,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Type",
+                                  "value": "stbl",
+                                  "offset": 13281,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "stsd",
+                                  "value": "Sample Description",
+                                  "offset": 13285,
+                                  "length": 130,
+                                  "children": [
+                                    {
+                                      "name": "Size",
+                                      "value": 130,
+                                      "unit": "bytes",
+                                      "offset": 13285,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Type",
+                                      "value": "stsd",
+                                      "offset": 13289,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Version",
+                                      "value": 0,
+                                      "offset": 13293,
+                                      "length": 1
+                                    },
+                                    {
+                                      "name": "Flags",
+                                      "value": 0,
+                                      "offset": 13294,
+                                      "length": 3
+                                    },
+                                    {
+                                      "name": "Entries",
+                                      "value": 1,
+                                      "offset": 13297,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "fl64",
+                                      "value": "fl64 (PCM)",
+                                      "offset": 13301,
+                                      "length": 114,
+                                      "children": [
+                                        {
+                                          "name": "Size",
+                                          "value": 114,
+                                          "unit": "bytes",
+                                          "offset": 13301,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "Type",
+                                          "value": "fl64",
+                                          "offset": 13305,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "Reserved",
+                                          "value": 6,
+                                          "unit": "bytes",
+                                          "offset": 13309,
+                                          "length": 6
+                                        },
+                                        {
+                                          "name": "Data Reference Index",
+                                          "value": 1,
+                                          "offset": 13315,
+                                          "length": 2
+                                        },
+                                        {
+                                          "name": "Version",
+                                          "value": 1,
+                                          "offset": 13317,
+                                          "length": 2
+                                        },
+                                        {
+                                          "name": "Revision Level",
+                                          "value": 0,
+                                          "offset": 13319,
+                                          "length": 2
+                                        },
+                                        {
+                                          "name": "Vendor",
+                                          "value": "....",
+                                          "offset": 13321,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "Channels",
+                                          "value": 2,
+                                          "offset": 13325,
+                                          "length": 2
+                                        },
+                                        {
+                                          "name": "Sample Size",
+                                          "value": 16,
+                                          "unit": "bits",
+                                          "offset": 13327,
+                                          "length": 2
+                                        },
+                                        {
+                                          "name": "Compression ID",
+                                          "value": 0,
+                                          "offset": 13329,
+                                          "length": 2
+                                        },
+                                        {
+                                          "name": "Packet Size",
+                                          "value": 0,
+                                          "offset": 13331,
+                                          "length": 2
+                                        },
+                                        {
+                                          "name": "Sample Rate",
+                                          "value": 8000,
+                                          "unit": "Hz",
+                                          "offset": 13333,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "Samples Per Packet",
+                                          "value": 1,
+                                          "offset": 13337,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "Bytes Per Packet",
+                                          "value": 8,
+                                          "offset": 13341,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "Bytes Per Frame",
+                                          "value": 16,
+                                          "offset": 13345,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "Bytes Per Sample",
+                                          "value": 2,
+                                          "offset": 13349,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "wave",
+                                          "value": "Sound Decompression Parameters",
+                                          "offset": 13353,
+                                          "length": 38,
+                                          "children": [
+                                            {
+                                              "name": "Size",
+                                              "value": 38,
+                                              "unit": "bytes",
+                                              "offset": 13353,
+                                              "length": 4
+                                            },
+                                            {
+                                              "name": "Type",
+                                              "value": "wave",
+                                              "offset": 13357,
+                                              "length": 4
+                                            },
+                                            {
+                                              "name": "frma",
+                                              "value": "fl64",
+                                              "offset": 13361,
+                                              "length": 12,
+                                              "children": [
+                                                {
+                                                  "name": "Size",
+                                                  "value": 12,
+                                                  "unit": "bytes",
+                                                  "offset": 13361,
+                                                  "length": 4
+                                                },
+                                                {
+                                                  "name": "Type",
+                                                  "value": "frma",
+                                                  "offset": 13365,
+                                                  "length": 4
+                                                },
+                                                {
+                                                  "name": "Format",
+                                                  "value": "fl64",
+                                                  "offset": 13369,
+                                                  "length": 4
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "name": "enda",
+                                              "value": "big-endian",
+                                              "offset": 13373,
+                                              "length": 10,
+                                              "children": [
+                                                {
+                                                  "name": "Size",
+                                                  "value": 10,
+                                                  "unit": "bytes",
+                                                  "offset": 13373,
+                                                  "length": 4
+                                                },
+                                                {
+                                                  "name": "Type",
+                                                  "value": "enda",
+                                                  "offset": 13377,
+                                                  "length": 4
+                                                },
+                                                {
+                                                  "name": "Little-Endian",
+                                                  "value": 0,
+                                                  "offset": 13381,
+                                                  "length": 2
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "name": "....",
+                                              "offset": 13383,
+                                              "length": 8,
+                                              "children": [
+                                                {
+                                                  "name": "Size",
+                                                  "value": 8,
+                                                  "unit": "bytes",
+                                                  "offset": 13383,
+                                                  "length": 4
+                                                },
+                                                {
+                                                  "name": "Type",
+                                                  "value": "....",
+                                                  "offset": 13387,
+                                                  "length": 4
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "name": "chan",
+                                          "value": "stereo (front left, front right)",
+                                          "offset": 13391,
+                                          "length": 24,
+                                          "children": [
+                                            {
+                                              "name": "Size",
+                                              "value": 24,
+                                              "unit": "bytes",
+                                              "offset": 13391,
+                                              "length": 4
+                                            },
+                                            {
+                                              "name": "Type",
+                                              "value": "chan",
+                                              "offset": 13395,
+                                              "length": 4
+                                            },
+                                            {
+                                              "name": "Version",
+                                              "value": 0,
+                                              "offset": 13399,
+                                              "length": 1
+                                            },
+                                            {
+                                              "name": "Flags",
+                                              "value": 0,
+                                              "offset": 13400,
+                                              "length": 3
+                                            },
+                                            {
+                                              "name": "Layout Tag",
+                                              "value": "Stereo: L R (0x00650002)",
+                                              "offset": 13403,
+                                              "length": 4
+                                            },
+                                            {
+                                              "name": "Channel Bitmap",
+                                              "value": 0,
+                                              "offset": 13407,
+                                              "length": 4
+                                            },
+                                            {
+                                              "name": "Channel Descriptions",
+                                              "value": 0,
+                                              "offset": 13411,
+                                              "length": 4
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "stts",
+                                  "value": "800 samples, 800 (0.100 s)",
+                                  "offset": 13415,
+                                  "length": 24,
+                                  "children": [
+                                    {
+                                      "name": "Size",
+                                      "value": 24,
+                                      "unit": "bytes",
+                                      "offset": 13415,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Type",
+                                      "value": "stts",
+                                      "offset": 13419,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Version",
+                                      "value": 0,
+                                      "offset": 13423,
+                                      "length": 1
+                                    },
+                                    {
+                                      "name": "Flags",
+                                      "value": 0,
+                                      "offset": 13424,
+                                      "length": 3
+                                    },
+                                    {
+                                      "name": "Entries",
+                                      "value": 1,
+                                      "offset": 13427,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry",
+                                      "value": "800 × 1",
+                                      "offset": 13431,
+                                      "length": 8,
+                                      "children": [
+                                        {
+                                          "name": "Sample Count",
+                                          "value": 800,
+                                          "offset": 13431,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "Sample Delta",
+                                          "value": 1,
+                                          "offset": 13435,
+                                          "length": 4
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "stsc",
+                                  "value": "Sample to Chunk",
+                                  "offset": 13439,
+                                  "length": 28,
+                                  "children": [
+                                    {
+                                      "name": "Size",
+                                      "value": 28,
+                                      "unit": "bytes",
+                                      "offset": 13439,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Type",
+                                      "value": "stsc",
+                                      "offset": 13443,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Version",
+                                      "value": 0,
+                                      "offset": 13447,
+                                      "length": 1
+                                    },
+                                    {
+                                      "name": "Flags",
+                                      "value": 0,
+                                      "offset": 13448,
+                                      "length": 3
+                                    },
+                                    {
+                                      "name": "Entries",
+                                      "value": 1,
+                                      "offset": 13451,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Entry",
+                                      "value": "from chunk 1: 800 samples, description 1",
+                                      "offset": 13455,
+                                      "length": 12,
+                                      "children": [
+                                        {
+                                          "name": "First Chunk",
+                                          "value": 1,
+                                          "offset": 13455,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "Samples Per Chunk",
+                                          "value": 800,
+                                          "offset": 13459,
+                                          "length": 4
+                                        },
+                                        {
+                                          "name": "Sample Description Index",
+                                          "value": 1,
+                                          "offset": 13463,
+                                          "length": 4
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "stsz",
+                                  "value": "800 samples of 16 bytes",
+                                  "offset": 13467,
+                                  "length": 20,
+                                  "children": [
+                                    {
+                                      "name": "Size",
+                                      "value": 20,
+                                      "unit": "bytes",
+                                      "offset": 13467,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Type",
+                                      "value": "stsz",
+                                      "offset": 13471,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Version",
+                                      "value": 0,
+                                      "offset": 13475,
+                                      "length": 1
+                                    },
+                                    {
+                                      "name": "Flags",
+                                      "value": 0,
+                                      "offset": 13476,
+                                      "length": 3
+                                    },
+                                    {
+                                      "name": "Sample Size",
+                                      "value": 16,
+                                      "unit": "bytes",
+                                      "offset": 13479,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Sample Count",
+                                      "value": 800,
+                                      "offset": 13483,
+                                      "length": 4
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "stco",
+                                  "value": 1,
+                                  "unit": "chunks",
+                                  "offset": 13487,
+                                  "length": 20,
+                                  "children": [
+                                    {
+                                      "name": "Size",
+                                      "value": 20,
+                                      "unit": "bytes",
+                                      "offset": 13487,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Type",
+                                      "value": "stco",
+                                      "offset": 13491,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Version",
+                                      "value": 0,
+                                      "offset": 13495,
+                                      "length": 1
+                                    },
+                                    {
+                                      "name": "Flags",
+                                      "value": 0,
+                                      "offset": 13496,
+                                      "length": 3
+                                    },
+                                    {
+                                      "name": "Entries",
+                                      "value": 1,
+                                      "offset": 13499,
+                                      "length": 4
+                                    },
+                                    {
+                                      "name": "Chunk Offset",
+                                      "value": 36,
+                                      "offset": 13503,
+                                      "length": 4
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Gapless",
+                      "kind": "Statistics",
+                      "offset": 12952,
+                      "length": 555,
+                      "children": [
+                        {
+                          "name": "Container Duration",
+                          "value": 0.1,
+                          "unit": "s",
+                          "offset": 12952,
+                          "length": 555
+                        },
+                        {
+                          "name": "Container Samples",
+                          "value": 800,
+                          "unit": "samples",
+                          "offset": 12952,
+                          "length": 555
+                        },
+                        {
+                          "name": "Encoder Delay (Edit List)",
+                          "value": 0,
+                          "unit": "samples",
+                          "offset": 12952,
+                          "length": 555
+                        },
+                        {
+                          "name": "Samples (Edit List)",
+                          "value": 800,
+                          "unit": "samples",
+                          "offset": 12952,
+                          "length": 555
+                        },
+                        {
+                          "name": "Encoder Padding (Edit List)",
+                          "value": 0,
+                          "unit": "samples",
+                          "offset": 12952,
+                          "length": 555
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "QuickTime User Data",
+                  "kind": "Tag",
+                  "value": "User Data",
+                  "offset": 13507,
+                  "length": 33,
+                  "children": [
+                    {
+                      "name": "Size",
+                      "value": 33,
+                      "unit": "bytes",
+                      "offset": 13507,
+                      "length": 4
+                    },
+                    {
+                      "name": "Type",
+                      "value": "udta",
+                      "offset": 13511,
+                      "length": 4
+                    },
+                    {
+                      "name": "Software",
+                      "value": "Lavf60.16.100",
+                      "offset": 13515,
+                      "length": 25,
+                      "children": [
+                        {
+                          "name": "Size",
+                          "value": 25,
+                          "unit": "bytes",
+                          "offset": 13515,
+                          "length": 4
+                        },
+                        {
+                          "name": "Type",
+                          "value": "©swr",
+                          "offset": 13519,
+                          "length": 4
+                        },
+                        {
+                          "name": "Text Item",
+                          "value": "Lavf60.16.100",
+                          "offset": 13523,
+                          "length": 17,
+                          "children": [
+                            {
+                              "name": "Text Length",
+                              "value": 13,
+                              "unit": "bytes",
+                              "offset": 13523,
+                              "length": 2
+                            },
+                            {
+                              "name": "Language",
+                              "value": "und",
+                              "offset": 13525,
+                              "length": 2
+                            },
+                            {
+                              "name": "Text",
+                              "value": "Lavf60.16.100",
+                              "offset": 13527,
+                              "length": 13
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            2,
+            3
+          ]
+        ],
+        "codec": "PCM (floating-point)",
+        "sampleRate": 8000,
+        "channels": 2,
+        "channelMode": "Stereo",
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
+        "bitsPerSample": 64,
+        "samples": 800,
+        "duration": 0.1,
+        "averageBitrate": 1024,
+        "isVbr": false,
+        "playbackGroup": 1,
+        "writer": "FFmpeg (Lavf60.16.100)",
+        "writerConfidence": "Low",
+        "series": []
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "mp4.moov-after-mdat",
+        "message": "The moov box follows the mdat box, so a player must read to the end of the file before it can play it (not optimized for streaming, no fast start).",
+        "offset": 12836,
+        "length": 704,
+        "path": [
+          0,
+          3
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

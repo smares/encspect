@@ -44,7 +44,7 @@ Box by box:
 - **Bitrate mode:** whether the bitrate varies comes from Encoding Params, else from an avgBitrate of 0 (ISO/IEC 14496-1 7.2.6.6.2).
 - **Where the samples node goes:** into the mdat box that holds all the track's samples, or with its ranges into the MP4 node where they span boxes.
 
-Each audio track's samples go to its codec's parser: [AAC](aac.md), [MPEG audio](mpeg-audio.md) for MP3 in MP4, [AC-3 and E-AC-3](ac3.md), [DTS](dts.md), [Apple Lossless](alac.md) or [Opus](opus.md) (the `Opus` sample entry: its `dOps` box holds the identification header's fields, which are put together as the header and handed to the Opus parser as the first packet; each sample is one packet; the pre-skip is the box's, and what the track's samples hold after its one media edit is the end trimming, as the encapsulation's section 4.4 has the edit list carry it). Other codings, among them FLAC (`fLaC`) and Dolby TrueHD (`mlpa`), are shown as boxes with `mp4.codec-not-analyzed`.
+Each audio track's samples go to its codec's parser: [AAC](aac.md), [MPEG audio](mpeg-audio.md) for MP3 in MP4, [AC-3 and E-AC-3](ac3.md), [DTS](dts.md), [Apple Lossless](alac.md), [FLAC](flac.md), [Dolby TrueHD](truehd.md), [PCM](#pcm) or [Opus](opus.md) (the `Opus` sample entry: its `dOps` box holds the identification header's fields, which are put together as the header and handed to the Opus parser as the first packet; each sample is one packet; the pre-skip is the box's, and what the track's samples hold after its one media edit is the end trimming, as the encapsulation's section 4.4 has the edit list carry it). Other codings are shown as boxes with `mp4.codec-not-analyzed`; so is an `fLaC` entry without a `dfLa` box and an `ipcm` or `fpcm` entry without a `pcmC` box, and so is the protected track of any of the three, whose samples are encrypted.
 
 - **Units counted:** a sample counts when its first byte is in the file; one the file ends inside is handed to the codec parser with the bytes present and flagged as cut (`MappedBytes.IsCut`), so a raw AAC access unit of 1,024 samples counts them and is also reported as lost samples; a sample with no byte in the file or of 0 bytes counts nothing.
 - **MPEG audio is read only where its samples lie in one stretch** of the file (the MPEG audio parser reads the bytes as it would in a file). A track whose samples lie in several stretches is still a stream, described by its sample entry and its sample tables ("frames not read: samples not in one stretch"), and the MPEG audio parser says its packets are not analyzed (`mpeg-audio.packets-not-analyzed`).
@@ -80,6 +80,7 @@ The work and the memory the analysis takes are bounded by the file, not by what 
 - no moov, and moov after mdat (an info: the file does not start playing before it is read to the end);
 - an edit list and iTunSMPB that disagree on the encoder delay or padding, or an iTunSMPB whose total is not the track's duration (Apple Lossless's duration leaves out the padding, which is accepted);
 - a chan or chnl layout that disagrees with the codec's;
+- a sample entry of FLAC or Dolby TrueHD that states another sample rate (`mp4.sample-rate-differs`) or channel count (`mp4.channels-differ`) than the stream, and for FLAC another bit depth (`mp4.bit-depth-differs`); a rate above 65,535 Hz, which the entry's 16.16 field cannot hold, is not compared;
 - an Opus specific box of a version other than 0 (`mp4.opus-version`): the encapsulation defines no other, so none of its fields is read and the track is not analyzed.
 - a text item of a user data atom that states more bytes than the atom holds (`mp4.text-size-invalid`), and bytes at the end of such an atom that are too few for an item's size and language (`mp4.text-item-truncated`).
 
@@ -129,6 +130,24 @@ A protected track is reported on its stream (`StreamInfo.Protection`: the scheme
 - **Media Foundation's AAC decoder** (rollout step 6, run 41558366773) is fed the same samples as FDK and is the third decoder of the rule: 67 totals in this folder, equal to the analyzer's in 59 and to FDK's in 61 of 61. It gives no media type for the eight hand-built `eld-ld-sbr` files, `eld.m4a`, `chan-7-1-rear.m4a` (8 channels; Learn gives at most 6) and `chan-completes-reserved.m4a` (`explained` where a documented limit names it, else `noted`), is not asked for `rate-1-hz.m4a` (the probe builds no input type from its explicit sampling frequency), and outputs nothing for the five hand-built xHE-AAC files and `usac-reserved-rate.m4a`. It equals FDK in `truncated.m4a` (10,240, a frame for the cut sample) and `sample-outside-mdat.m4a` (10,240), where Core Audio's converter and the analyzer (`truncated.m4a`) or the converter alone (11,264) differ. The Source Reader applies neither iTunSMPB nor the edit list and is a witness of the coded stage; it reads 65 files to the end and equals the analyzer's `samples` in 56.
 - The check is `AacOfficialDecodersTests`; the figures, the run and the differences are in `official-decoders.json` (FDK and the comparison in run 41558366773, Core Audio in the same run and Media Foundation in the same run; see "AAC, AC-3 and E-AC-3 decoding by Core Audio" and "AAC decoding by Media Foundation" in [development.md](../development.md)).
 
+## FLAC
+
+An `fLaC` sample entry that holds a `dfLa` box goes to the [FLAC](flac.md) codec parser with the box's metadata blocks as the first packets, one block each, and then the samples, one frame each, as Matroska hands over its CodecPrivate's blocks. The blocks' nodes go under the `dfLa` box in the movie box, and the frames and the statistics under the track's samples. The entry's channel count, bit depth and sample rate are compared with the STREAMINFO block's (see "Findings").
+
+## Dolby TrueHD
+
+An `mlpa` sample entry goes to the [Dolby TrueHD](truehd.md) codec parser with its samples, one access unit each. The `dmlp` box has no version and flags; the codec parser reads its 10 bytes (the format information of the first major sync, the 15-bit peak data rate and 32 reserved bits) as nodes under the box and compares them with the first major sync of the stream (`truehd.dmlp-differs`; a shorter box is `truehd.dmlp-short`). FFmpeg writes the entry's sampling rate as a 32-bit integer, where the field holds a 16.16 fixed-point number: the field reads as a fraction of a hertz, and the entry's rate is taken as the integer when its integer part is 0.
+
+## PCM
+
+A track whose sample entry states how its samples are laid out goes to the codec parser for PCM samples (codec ID `pcm-samples`, in the WAV project; the decoder is `pcm`, as for WAV and AIFF), with the layout as `CodecConfiguration.Pcm` and the bytes the track holds as `DataBytes`:
+
+- **`ipcm` and `fpcm`** (ISO/IEC 23003-5): integers of 16, 24 or 32 bits, and floats of 32 or 64 bits; the `pcmC` box gives the bits and, in bit 0 of its format flags, whether the bytes are little-endian. The entry's own sample size field is not the sample's (ffmpeg writes 16 for every entry), so it is not compared.
+- **QuickTime's entries:** `sowt` (16-bit little-endian), `twos` (8 or 16 bits, big-endian), `raw ` (8-bit unsigned), `in24`, `in32`, `fl32` and `fl64` (big-endian unless an `enda` box in the entry's `wave` box says little-endian), and `alaw` and `ulaw`. `lpcm` of sound description version 2 is read from its format flags (float, big-endian, signed integer) where its samples are packed, interleaved and one sample frame to a packet.
+- **The samples** are counted from the bytes the track holds, whole sample frames of one sample for every channel; the packets are the track's bytes in slices of at most 64 KiB, read only where the decoder runs for measurements or output, so analyzing a file reads none of them. Bytes at the end that do not fill a sample frame are `pcm.partial-sample-frame`.
+- **The stream** has the statistics a WAV file's has (sample frames, duration, rate, channels, layout, bits, sample format, byte order, bitrate); the channels and rate are those of the sample entry, and a `chnl` or `chan` box gives the layout.
+- **Not read:** an entry whose layout is not stated or not whole bytes in packed samples (`ipcm` without a `pcmC` box, `lpcm` with aligned or non-interleaved samples), and the samples of an encrypted track.
+
 ## Apple Lossless
 
 An `alac` sample entry that holds an `alac` box (the magic cookie) goes to the [ALAC](alac.md) codec parser with its samples, which reads them frame by frame. An entry without the box stays at container level (`mp4.codec-not-analyzed`), and an encrypted track hands over the cookie only.
@@ -156,6 +175,6 @@ Apple's writer adds the sbtd box to M4A and M4B files, not to MP4 or 3GP files. 
 
 ## Articles
 
-- **Articles:** `iso-base-media-format`, `mp4-sample-tables`, `fragmented-mp4`, `edit-lists-and-priming`, `itunes-metadata`, `quicktime-user-data`.
+- **Articles:** `iso-base-media-format`, `mp4-sample-tables`, `fragmented-mp4`, `edit-lists-and-priming`, `itunes-metadata`, `quicktime-user-data`, `flac-in-mp4`, `truehd-in-mp4`, `pcm-in-mp4`.
 - **Shared with other formats:** `channel-layouts`, `gapless-playback`, `encoder-detection`, `id3v2`.
 - The chan and chnl boxes point to `channel-layouts`, which MPEG audio and AAC share.

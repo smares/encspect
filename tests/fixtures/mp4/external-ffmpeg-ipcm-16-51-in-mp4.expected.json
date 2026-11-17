@@ -1,0 +1,238 @@
+{
+ "description": "16-bit little-endian integer PCM of 5.1 channels in MP4: an ipcm sample entry with a pcmC box and a chnl box.",
+ "encoder": {
+  "tool": "ffmpeg version 6.1.1-3ubuntu5 (ffmpeg package of Ubuntu 24.04)",
+  "command": [
+   "ffmpeg",
+   "-v",
+   "error",
+   "-y",
+   "-f",
+   "lavfi",
+   "-i",
+   "aevalsrc=0.4*sin(2*PI*440*t)|0.4*sin(2*PI*550*t)|0.4*sin(2*PI*660*t)|0.2*sin(2*PI*80*t)|0.3*sin(2*PI*770*t)|0.3*sin(2*PI*880*t):s=8000:d=0.05:c=5.1",
+   "-c:a",
+   "pcm_s16le",
+   "-strict",
+   "-2",
+   "{out}"
+  ]
+ },
+ "length": 5545,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "free",
+   28,
+   8
+  ],
+  [
+   "mdat",
+   36,
+   4808
+  ],
+  [
+   "moov",
+   4844,
+   701
+  ],
+  [
+   "moov/mvhd",
+   4852,
+   108
+  ],
+  [
+   "moov/trak",
+   4960,
+   487
+  ],
+  [
+   "moov/trak/tkhd",
+   4968,
+   92
+  ],
+  [
+   "moov/trak/edts",
+   5060,
+   36
+  ],
+  [
+   "moov/trak/edts/elst",
+   5068,
+   28
+  ],
+  [
+   "moov/trak/mdia",
+   5096,
+   351
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   5104,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   5136,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   5181,
+   266
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   5189,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   5205,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   5213,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   5229,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   5241,
+   206
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   5249,
+   106
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/ipcm",
+   5265,
+   90
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/ipcm/chnl",
+   5301,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/ipcm/pcmC",
+   5321,
+   14
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/ipcm/btrt",
+   5335,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   5355,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   5379,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   5407,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   5427,
+   20
+  ],
+  [
+   "moov/udta",
+   5447,
+   98
+  ],
+  [
+   "moov/udta/meta",
+   5455,
+   90
+  ],
+  [
+   "moov/udta/meta/hdlr",
+   5467,
+   33
+  ],
+  [
+   "moov/udta/meta/ilst",
+   5500,
+   45
+  ],
+  [
+   "moov/udta/meta/ilst/©too",
+   5508,
+   37
+  ],
+  [
+   "moov/udta/meta/ilst/©too/data",
+   5516,
+   29
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "PCM",
+   "sample_rate": 8000,
+   "channels": 6,
+   "channel_mode": "Multichannel",
+   "channel_layout": [
+    "front left",
+    "front right",
+    "front center",
+    "LFE",
+    "back left",
+    "back right"
+   ],
+   "samples": 400,
+   "is_vbr": false,
+   "writer": [
+    "FFmpeg (Lavf60.16.100)",
+    "Low"
+   ]
+  }
+ ],
+ "units": [],
+ "fields": {},
+ "pcm": {
+  "samples": 400,
+  "bits": 16,
+  "format": "integer",
+  "md5": "7c6895ae590aee54005579efabf71f76"
+ },
+ "findings": [
+  [
+   "mp4.moov-after-mdat",
+   "not optimized for streaming"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": false,
+  "faad": null,
+  "decode": true,
+  "skip": {
+   "faad": "faad2 reads AAC only.",
+   "mp4box": "MP4Box (GPAC 2.2.1) refuses the file (\"Invalid IsoMedia File\") at the sample entry that holds a chnl box",
+   "ffprobe_packets": "ffmpeg's demuxer lists a PCM track's samples as packets of its own size, not as the sample table's one-frame samples"
+  },
+  "ffprobe_packets": false
+ }
+}

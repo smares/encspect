@@ -1,0 +1,178 @@
+{
+ "description": "FLAC in MP4 whose sample entry states 44,100 Hz, 1 channel and samples of 24 bits where the STREAMINFO block in its dfLa box has 22,050 Hz, 2 channels and 16 bits.",
+ "length": 11477,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   591
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   475
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   375
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   290
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   230
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   102
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/fLaC",
+   413,
+   86
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/fLaC/dfLa",
+   449,
+   50
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   499,
+   32
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   531,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   559,
+   40
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   599,
+   20
+  ],
+  [
+   "mdat",
+   619,
+   10858
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "FLAC",
+   "sample_rate": 22050,
+   "channels": 2,
+   "channel_mode": "Joint stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 11025,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   627,
+   1753
+  ],
+  [
+   2380,
+   1755
+  ],
+  [
+   4135,
+   1775
+  ],
+  [
+   5910,
+   1690
+  ],
+  [
+   7600,
+   3877
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "mp4.sample-rate-differs",
+   "states a sample rate of 44100 Hz, but its FLAC stream has 22050 Hz"
+  ],
+  [
+   "mp4.channels-differ",
+   "states 1 channel, but its FLAC stream has 2"
+  ],
+  [
+   "mp4.bit-depth-differs",
+   "states samples of 24 bits, but its FLAC stream has 16"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "faad": null,
+  "ffprobe_streams": false,
+  "skip": {
+   "faad": "faad2 reads AAC only.",
+   "ffprobe_streams": "the sample entry and the STREAMINFO block disagree, and ffmpeg takes the figures of the entry"
+  }
+ }
+}

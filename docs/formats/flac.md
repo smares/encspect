@@ -117,6 +117,14 @@ Native FLAC files (`.flac`, RFC 9639) and FLAC in Ogg (`.oga` and `.ogg`, throug
 - ID3v2 tags before the marker and ID3v1 and APEv2 tags after the last frame are the host's. An ID3v2.4 SEEK frame that points between frames ends the stream there and the bytes after the tag are reported as data (`flac.data-after-tag`).
 - A tag candidate inside the chain of frames belongs to the stream.
 
+## FLAC in MP4
+
+An `fLaC` sample entry whose `dfLa` box holds the metadata blocks goes to the codec parser as MP4 does for Matroska's CodecPrivate: each block is a header packet, and each sample is one frame ([mp4.md](mp4.md#flac)).
+
+- **Where the nodes go:** the blocks' nodes under the `dfLa` box in the movie box, the frames, the statistics and the encoder under the track's samples. A Vorbis comment block in the box is read as in a FLAC file.
+- **The sample entry** states the channels, the bits of a sample and the sample rate, which MP4 compares with STREAMINFO (`mp4.sample-rate-differs`, `mp4.channels-differ`, `mp4.bit-depth-differs`). A sample rate above 65,535 Hz does not fit the entry's field and is not compared.
+- **Fixtures:** `external-ffmpeg-flac-in-mp4.mp4` and `external-ffmpeg-flac-24-bit-51-in-mp4.mp4` (ffmpeg 6.1.1's muxer, which writes a `dfLa` box with the STREAMINFO block alone), and the hand-built `flac-entry-differs-in-mp4` and `flac-vorbis-comment-in-mp4`, in `tests/fixtures/mp4`; `make_external_mp4_fixtures.py` writes the first two, `crosscheck_mp4_fixtures.py` holds them to ffprobe and MediaInfo, and the decoded samples to ffmpeg's.
+
 ## Findings
 
 - Stream: `flac.no-marker`, `flac.no-streaminfo`, `flac.no-frames`, `flac.total-samples-mismatch`, `flac.total-samples-unknown`, `flac.first-sample-not-zero`, `flac.blocking-strategy-changes`, `flac.sample-number-discontinuity`, `flac.data-skipped`, `flac.resync-limit`, `flac.data-after-tag`, `flac.payload-not-analyzed`, `flac.sample-rate-zero`.
@@ -129,6 +137,6 @@ Native FLAC files (`.flac`, RFC 9639) and FLAC in Ogg (`.oga` and `.ogg`, throug
 ## Not covered
 
 - Playback and any output other than the checksum comparison (the PCM sink is for tests and a later export).
-- FLAC in MP4: the container does not route the codec yet (`mp4.codec-not-analyzed`), so such a stream gets no FLAC analysis. `flac.payload-not-analyzed` is the codec parser's answer to a container that hands it a whole payload, which no container does today.
+- A protected FLAC track in MP4 (its samples are encrypted) is named by its sample entry and not analyzed (`mp4.codec-not-analyzed`). `flac.payload-not-analyzed` is the codec parser's answer to a container that hands it a whole payload, which no container does today.
 - The contents of PICTURE data and the audio of an APPLICATION block. The `riff` blocks are read for their chunk ID and size, and for the `fact` text; the other chunks' bodies are not read.
 - Subset conformance (the limits of the FLAC subset) is not judged.

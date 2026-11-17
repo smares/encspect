@@ -1,16 +1,15 @@
 {
   "goldens": [
-    "tests/fixtures/mp4/opus-51-in-mp4.report.json",
-    "tests/fixtures/mp4/opus-edit-list-in-mp4.report.json"
+    "tests/fixtures/mp4/ffmpeg-cenc-flac.report.json"
+  ],
+  "added": [
+    { "scope": "node", "parent": ["MP4", "moov", "trak", "mdia", "minf", "stbl", "stsd", "enca", "dfLa"], "name": "Version" },
+    { "scope": "node", "parent": ["MP4", "moov", "trak", "mdia", "minf", "stbl", "stsd", "enca", "dfLa"], "name": "Flags" }
+  ],
+  "removed": [
+    { "parent": ["MP4", "moov", "trak", "mdia", "minf", "stbl", "stsd", "enca", "dfLa"], "name": "Data" }
   ],
   "changed": [
-    {
-      "scope": "stream",
-      "array": "series",
-      "name": "Intensity Stereo Bound",
-      "fields": [
-        "quantity"
-      ]
-    }
+    { "path": ["MP4", "moov", "trak", "mdia", "minf", "stbl", "stsd", "enca", "dfLa"], "fields": ["value", "unit"] }
   ]
 }

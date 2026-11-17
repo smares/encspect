@@ -46,11 +46,17 @@ public sealed partial class Mp4Parser
         ".mp3" => "mpeg-audio",
         "alac" when entry.DecoderSpecificInfo is not null => "alac",
         "Opus" when entry.DecoderSpecificInfo is not null => "opus",
+        "fLaC" when entry.DecoderSpecificInfo is not null => "flac",
+        "mlpa" => "truehd",
         "ac-3" => "ac-3",
         "ec-3" => "e-ac-3",
         "dtsc" or "dtsh" or "dtsl" or "dtse" => "dts",
+        _ when PcmOf(entry) is not null => PcmSamples,
         _ => null,
     };
+
+    // The codec parser of PCM samples; its ID is not the decoder's ("pcm"), which Ogg's PCM mapping also names.
+    private const string PcmSamples = "pcm-samples";
 
     private static void Route(State state, Track track, bool first)
     {
@@ -64,6 +70,13 @@ public sealed partial class Mp4Parser
         (SampleEntry entry, bool isProtected, bool isEncrypted) = Decide(state, track);
         track.ReadEntry = entry;
         string? codec = CodecOf(entry);
+
+        // The parsers of these codings read no encrypted stream: such a track stays a track named by its sample entry.
+        if (isEncrypted && codec is "flac" or "truehd" or PcmSamples)
+        {
+            codec = null;
+        }
+
         StreamProtection? protection = isProtected ? new StreamProtection { Scheme = SchemeOf(entry), IsEncrypted = isEncrypted, Systems = [.. state.Systems] } : null;
         List<ByteRange> ranges = SampleRanges(state, track);
         if (codec is null)
@@ -109,6 +122,10 @@ public sealed partial class Mp4Parser
         {
             RouteEncrypted(state, track, entry, codec, samples, ranges, first, protection.IsEncrypted, isScattered: false);
         }
+        else if (codec == PcmSamples)
+        {
+            RoutePcm(state, track, entry, samples, ranges);
+        }
         else if (codec == "mpeg-audio" && ranges.Count == 1)
         {
             // MPEG audio in one stretch is read as the same bytes in a file would be.
@@ -131,8 +148,11 @@ public sealed partial class Mp4Parser
                 }
             }
 
-            // Opus's identification header is the first packet, as in Matroska (the dOps box holds it, put together as the header).
-            IEnumerable<MappedBytes> packets = codec == "opus" && entry.DecoderSpecificInfo is { } head ? Packets(state, track).Prepend(head) : Packets(state, track);
+            // Opus's identification header is the first packet, as in Matroska (the dOps box holds it, put together as the header), and FLAC's metadata blocks are
+            // the first packets, one each (the dfLa box holds them).
+            IEnumerable<MappedBytes> packets = codec == "opus" && entry.DecoderSpecificInfo is { } head ? Packets(state, track).Prepend(head)
+                : codec == "flac" && entry.DecoderSpecificInfo is { } blocks ? FlacBlocks(blocks).Concat(Packets(state, track))
+                : Packets(state, track);
             state.Context.ParsePackets(codec, samples, packets, configuration);
             if (codec == "mpeg-audio" && state.Context.Streams.Count == streams)
             {
@@ -150,6 +170,7 @@ public sealed partial class Mp4Parser
         }
 
         CompareLayouts(state, entry, streams, label);
+        CompareEntry(state, entry, codec, streams, label);
 
         // The tracks of one movie play at the same time, and so do the streams of one track that the codec parser reports as playing together
         // (the independent substreams of E-AC-3). Streams of one track that follow one another (a configuration change) are not marked: no one
@@ -160,6 +181,173 @@ public sealed partial class Mp4Parser
         foreach (StreamInfo stream in made)
         {
             state.Context.UpdateStream(stream, WithUnkept(track, stream) with { PlaybackGroup = isTogether ? 1 : null });
+        }
+    }
+
+    // The metadata blocks of a dfLa box, each a 4-byte header and its data, as the packets FLAC in Ogg and Matroska hand over: the last has the last-block flag, a block
+    // the data cuts short is handed over as it is, and bytes after the last block are not metadata.
+    private static IEnumerable<MappedBytes> FlacBlocks(MappedBytes data)
+    {
+        int position = 0;
+        int length = data.Length;
+        while (position < length)
+        {
+            ReadOnlySpan<byte> span = data.Span;
+            if (length - position < 4)
+            {
+                yield return data.Slice(position, length - position);
+                yield break;
+            }
+
+            int size = (int)Math.Min(4L + ((span[position + 1] << 16) | (span[position + 2] << 8) | span[position + 3]), length - position);
+            bool isLast = (span[position] & 0x80) != 0;
+            yield return data.Slice(position, size);
+            if (isLast)
+            {
+                yield break;
+            }
+
+            position += size;
+        }
+    }
+
+    // How the samples of an entry of PCM are laid out, from the entry's own fields: ISO/IEC 23003-5's ipcm and fpcm by their pcmC box, QuickTime's entries by their
+    // four-character code, their sample size and their enda box (QuickTime File Format, Sound sample descriptions), and lpcm by the format flags of its version 2 description.
+    // Null where the entry is none of these or states a layout that cannot be read as samples one after another.
+    private static PcmCoding? PcmOf(SampleEntry entry)
+    {
+        int channels = entry.Channels;
+        if (channels < 1)
+        {
+            return null;
+        }
+
+        bool isBigByEnda = entry.IsLittleEndianByEnda != true;
+        PcmLayout? layout = entry.EffectiveFormat switch
+        {
+            "ipcm" when entry.PcmConfiguration is { Bits: 16 or 24 or 32 } configuration => new PcmLayout(PcmEncoding.SignedInteger, !configuration.IsLittleEndian, configuration.Bits),
+            "fpcm" when entry.PcmConfiguration is { Bits: 32 or 64 } configuration => new PcmLayout(PcmEncoding.Float, !configuration.IsLittleEndian, configuration.Bits),
+            "sowt" when entry.SampleSize == 16 => new PcmLayout(PcmEncoding.SignedInteger, false, 16),
+            "twos" when entry.SampleSize is 8 or 16 => new PcmLayout(PcmEncoding.SignedInteger, true, entry.SampleSize),
+            "in24" => new PcmLayout(PcmEncoding.SignedInteger, isBigByEnda, 24),
+            "in32" => new PcmLayout(PcmEncoding.SignedInteger, isBigByEnda, 32),
+            "fl32" => new PcmLayout(PcmEncoding.Float, isBigByEnda, 32),
+            "fl64" => new PcmLayout(PcmEncoding.Float, isBigByEnda, 64),
+            "raw " when entry.SampleSize == 8 => new PcmLayout(PcmEncoding.UnsignedInteger, true, 8),
+            "alaw" => new PcmLayout(PcmEncoding.ALaw, true, 8),
+            "ulaw" => new PcmLayout(PcmEncoding.MuLaw, true, 8),
+            "lpcm" => LpcmLayout(entry),
+            _ => null,
+        };
+        if (layout is not { } found)
+        {
+            return null;
+        }
+
+        return new PcmCoding
+        {
+            Encoding = found.Encoding,
+            IsBigEndian = found.IsBigEndian,
+            ContainerBits = found.Bits,
+            SampleRate = (int)Math.Min(Math.Max(Math.Round(entry.SampleRate), 0), int.MaxValue),
+            ChannelLayout = entry.Layout is { } speakers && speakers.Count == channels ? speakers : null,
+        };
+    }
+
+    private readonly record struct PcmLayout(PcmEncoding Encoding, bool IsBigEndian, int Bits);
+
+    // Core Audio's flags of a linear PCM description (QuickTime File Format, Sound sample description version 2): float 1, big-endian 2, signed integer 4, packed 8,
+    // aligned high 16, non-interleaved 32. Only samples of whole bytes that follow one another (packed, interleaved, one sample frame to a packet) are read.
+    private static PcmLayout? LpcmLayout(SampleEntry entry)
+    {
+        if (entry.LpcmFormat is not { } format || (format.Flags & (16 | 32)) != 0 || format.FramesPerPacket != 1 || format.Bits is not (8 or 16 or 24 or 32 or 64)
+            || format.BytesPerPacket != (uint)entry.Channels * (format.Bits / 8))
+        {
+            return null;
+        }
+
+        bool isFloat = (format.Flags & 1) != 0;
+        bool isBig = (format.Flags & 2) != 0;
+        bool isSigned = (format.Flags & 4) != 0;
+        int bits = (int)format.Bits;
+        if (isFloat)
+        {
+            return bits is 32 or 64 ? new PcmLayout(PcmEncoding.Float, isBig, bits) : null;
+        }
+
+        return bits == 64 ? null : new PcmLayout(isSigned ? PcmEncoding.SignedInteger : PcmEncoding.UnsignedInteger, isBig, bits);
+    }
+
+    // PCM samples are no packets: the track's bytes go to the codec parser for PCM in slices of whole sample frames, read only if its decoder runs, and the parser
+    // counts the samples from the bytes the track holds. The layout comes from the sample entry.
+    private static void RoutePcm(State state, Track track, SampleEntry entry, Node samples, List<ByteRange> ranges)
+    {
+        PcmCoding coding = PcmOf(entry)!;
+        long frameBytes = coding.FrameBytes(entry.Channels);
+
+        // Every sample of one size that is not a whole number of sample frames: the entry's layout is not the one the samples have (ffmpeg 6.1.1 writes 24-bit samples in 3 bytes
+        // and a pcmC box of 32 bits).
+        long size = track.SampleSize != 0 ? track.SampleSize : track.Sizes is { Length: > 0 } sizes && sizes.All(s => s == sizes[0]) ? sizes[0] : 0;
+        if (size > 0 && size % frameBytes != 0)
+        {
+            state.Findings.AddNow(Severity.Warning, "mp4.pcm-sample-size-differs",
+                $"The samples of track {track.Id} are {Counts.Of(size, "byte", "bytes")} each, which is not a whole number of the {Counts.Of(frameBytes, "byte", "bytes")} that a sample frame of "
+                + $"{Counts.Of(entry.Channels, "channel", "channels")} of {coding.ContainerBits} bits takes; the entry states that layout, so the samples are read as it says and their sample frames do not line up.", entry.Node);
+        }
+
+        long step = Math.Max(1, PcmFeed.SliceBytes / frameBytes) * frameBytes;
+        IEnumerable<MappedBytes> Slices()
+        {
+            foreach (ByteRange range in ranges)
+            {
+                for (long at = range.Offset; at < range.End; at += step)
+                {
+                    state.Context.CancellationToken.ThrowIfCancellationRequested();
+                    yield return MappedBytes.Read(state.Reader, [new ByteRange(at, Math.Min(step, range.End - at))]);
+                }
+            }
+        }
+
+        var configuration = new CodecConfiguration(MappedBytes.Opaque(ReadOnlyMemory<byte>.Empty, samples.Offset, samples.Offset), entry.Node)
+        {
+            Pcm = coding,
+            Format = new AudioFormat(0, entry.Channels, coding.SampleRate, 0, 0, coding.ContainerBits),
+            DataBytes = ranges.Sum(r => r.Length),
+        };
+        state.Context.ParsePackets(PcmSamples, samples, Slices(), configuration);
+    }
+
+    // What the sample entry states against what the codec parser found in the samples, for the codings whose parsers read the stream's own figures: the
+    // sample rate, the channels and, for FLAC, the bits of a sample. A rate the entry's 16.16 field cannot hold (above 65,535 Hz) is not compared.
+    private static void CompareEntry(State state, SampleEntry entry, string? codec, int streamsBefore, string label)
+    {
+        if (codec is not ("flac" or "truehd"))
+        {
+            return;
+        }
+
+        // FFmpeg writes the sampling rate of a Dolby TrueHD entry as a 32-bit integer where the field holds 16.16 fixed-point numbers, so the integer part reads 0.
+        double stated = entry.EffectiveFormat == "mlpa" && entry.SampleRate < 1 ? Math.Round(entry.SampleRate * 65536) : entry.SampleRate;
+        foreach (StreamInfo stream in state.Context.Streams.Skip(streamsBefore).ToList())
+        {
+            if (stated >= 1 && stream.SampleRate is > 0 and <= 65535 && Math.Abs(stated - stream.SampleRate) >= 0.5)
+            {
+                string text = stated.ToString("0.###", CultureInfo.InvariantCulture);
+                state.Findings.AddNow(Severity.Warning, "mp4.sample-rate-differs",
+                    $"The sample entry of {label} states a sample rate of {text} Hz, but its {stream.Codec} stream has {stream.SampleRate} Hz.", entry.Node);
+            }
+
+            if (entry.Channels > 0 && stream.Channels > 0 && entry.Channels != stream.Channels)
+            {
+                state.Findings.AddNow(Severity.Warning, "mp4.channels-differ",
+                    $"The sample entry of {label} states {Counts.Of(entry.Channels, "channel", "channels")}, but its {stream.Codec} stream has {stream.Channels}.", entry.Node);
+            }
+
+            if (codec == "flac" && entry.SampleSize > 0 && stream.BitsPerSample is > 0 and var bits && entry.SampleSize != bits)
+            {
+                state.Findings.AddNow(Severity.Warning, "mp4.bit-depth-differs",
+                    $"The sample entry of {label} states samples of {Counts.Of(entry.SampleSize, "bit", "bits")}, but its {stream.Codec} stream has {bits}.", entry.Node);
+            }
         }
     }
 

@@ -39,6 +39,14 @@ public sealed record CodecConfiguration
     // come with the configuration, whose Data then holds the bytes after the structure.
     public AudioFormat? Format { get; init; }
 
+    // How the container says the samples of a PCM stream are laid out (MP4's pcmC box and QuickTime's sample entries), for the codec parser "pcm"; null for every other
+    // coding. The figures that a WAVEFORMATEX would hold (channels, rate) come in Format.
+    public PcmCoding? Pcm { get; init; }
+
+    // The bytes of the stream's data that the container holds, for a codec parser that counts samples from them without reading the packets (the codec
+    // parser "pcm", whose packets are read only where the decoder runs); null where the container does not state it.
+    public long? DataBytes { get; init; }
+
     // The length of the stream in seconds as the container states it (ASF's play duration less the
     // preroll), for codec parsers that do not read the data far enough to count samples; null when
     // it states none.

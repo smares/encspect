@@ -164,6 +164,10 @@ The samples of a WAVE or Wave64 file are the data, so the decoder `pcm` (`Encspe
 - **Loudness.** The loudness values a `bext` chunk of version 2 states are the file's own, written by its creator and not checked; `--measure` computes the integrated loudness, loudness range, maximum true peak level and maximum momentary and short-term loudness from the samples under the same names, which are other figures (see [spectral-analysis.md](../design/spectral-analysis.md) and `encspect --learn loudness`). The channel weights follow the speakers the file's channel mask gives; a file of three or more channels without a mask has no stated positions and its loudness is `not measured`.
 - **Cross-check.** `scripts/fixtures/crosscheck_wav_fixtures.py` compares the MD5 of the decoded samples with `ffmpeg -i f -c:a pcm_<format> -f md5 -` (see [development.md](../development.md)); the differences it explains are in its table, each flagged if the pinned FFmpeg (8.0.1) stops differing: RIFX (FFmpeg 6.1.1 reads the samples as little-endian; 8.0.1 not yet observed), the data FFmpeg takes for IEC 61937 bursts, 24 valid bits in a 32-bit container, and the files FFmpeg refuses.
 
+## PCM in other containers
+
+The codec parser `pcm-samples` (`PcmCodecParser`, in this project) reads PCM samples that MP4 hands over with the layout of the sample entry, and starts the same decoder `pcm`. The stream has the statistics of a WAV file's, from the entry instead of the `fmt ` chunk; the packets are the track's bytes, read only where the decoder runs. `pcm.partial-sample-frame` is `wav.partial-sample-frame` for such a track. The cases are in [mp4.md](mp4.md#pcm); the Matroska ones follow.
+
 ## What is not covered
 
 - The sub-chunks of `sxml`, the XML of the Audio Definition Model (its IDs against `chna`) and `ubxt`.

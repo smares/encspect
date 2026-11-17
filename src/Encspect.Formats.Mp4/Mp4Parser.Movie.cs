@@ -61,8 +61,17 @@ public sealed partial class Mp4Parser
             case "sbtd":
                 SourceBitDepth(state, node, f);
                 return true;
-            case "dac3" or "dec3" or "ddts":
+            case "dac3" or "dec3" or "ddts" or "dmlp":
                 CodecSpecificBox(state, node, f);
+                return true;
+            case "dfLa" when state.CurrentEntry is not null:
+                FlacSpecificBox(state, node, f);
+                return true;
+            case "pcmC" when state.CurrentEntry is not null:
+                PcmConfigurationBox(state, node, f);
+                return true;
+            case "enda" when state.CurrentEntry is not null:
+                Endianness(state, node, f);
                 return true;
             case "dOps" when state.CurrentEntry is not null:
                 OpusSpecificBox(state, node, f);
@@ -194,6 +203,62 @@ public sealed partial class Mp4Parser
         else if (data.Length > 0)
         {
             node.Add(new Node("Data", start, data.Length, NodeValue.Integer(data.Length, "bytes")) { Description = Explain.UnreadData });
+        }
+    }
+
+    // The FLAC specific box of an fLaC sample entry (Xiph.org's encapsulation of FLAC in ISO base media files): version and flags, then the FLAC stream's metadata blocks as
+    // the FLAC format lays them out, STREAMINFO first, the last with the last-block flag. The codec parser reads the blocks, as it reads those of Matroska's CodecPrivate.
+    private static void FlacSpecificBox(State state, Node node, BoxFields f)
+    {
+        FullBox(node, f);
+        long start = f.Position;
+        byte[] data = f.TakeBytes(f.Remaining);
+        node.Value = NodeValue.Integer(data.Length, "bytes");
+        if (state.CurrentEntry is { DecoderSpecificInfo: null } entry && data.Length > 0)
+        {
+            entry.DecoderSpecificInfo = new MappedBytes(data, start);
+            entry.DecoderSpecificInfoNode = node;
+        }
+        else if (data.Length > 0)
+        {
+            node.Add(new Node("Data", start, data.Length, NodeValue.Integer(data.Length, "bytes")) { Description = Explain.UnreadData });
+        }
+    }
+
+    // The PCM configuration box of an ipcm or fpcm sample entry (ISO/IEC 23003-5): version and flags, the format flags (bit 0 is set for little-endian samples) and the
+    // bits of a sample.
+    private static void PcmConfigurationBox(State state, Node node, BoxFields f)
+    {
+        FullBox(node, f);
+        if (f.Remaining < 2)
+        {
+            return;
+        }
+
+        long flagsAt = f.Position;
+        byte flags = f.U8(node, "Format Flags", Explain.PcmFormatFlags);
+        node.Children[^1].Add(Node.FromBits("IsLittleEndian", flagsAt, 7, 8, NodeValue.Boolean((flags & 1) != 0), description: Explain.PcmIsLittleEndian));
+        byte bits = f.U8(node, "Sample Size", Explain.PcmSampleSize, unit: "bits");
+        if (state.CurrentEntry is { PcmConfiguration: null } entry)
+        {
+            entry.PcmConfiguration = ((flags & 1) != 0, bits);
+        }
+    }
+
+    // QuickTime's endianness box, in the wave box of a sound sample description version 1: 0 for big-endian samples, 1 for little-endian (QuickTime File Format, Sound sample
+    // description extensions).
+    private static void Endianness(State state, Node node, BoxFields f)
+    {
+        if (f.Remaining < 2)
+        {
+            return;
+        }
+
+        ushort value = f.U16(node, "Little-Endian", Explain.Enda);
+        node.Value = value != 0 ? "little-endian" : "big-endian";
+        if (state.CurrentEntry is { IsLittleEndianByEnda: null } entry)
+        {
+            entry.IsLittleEndianByEnda = value != 0;
         }
     }
 

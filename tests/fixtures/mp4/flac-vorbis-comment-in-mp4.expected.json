@@ -1,0 +1,167 @@
+{
+ "description": "FLAC in MP4 whose dfLa box holds a Vorbis comment block after the STREAMINFO block, with libFLAC's vendor string: the tag is read as in a FLAC file and names the encoder.",
+ "length": 11538,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   652
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   536
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   436
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   351
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   291
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   163
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/fLaC",
+   413,
+   147
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/fLaC/dfLa",
+   449,
+   111
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   560,
+   32
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   592,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   620,
+   40
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   660,
+   20
+  ],
+  [
+   "mdat",
+   680,
+   10858
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "FLAC",
+   "sample_rate": 22050,
+   "channels": 2,
+   "channel_mode": "Joint stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 11025,
+   "is_vbr": true,
+   "encoder": [
+    "libFLAC 1.4.3 (20230623)",
+    "High"
+   ]
+  }
+ ],
+ "units": [
+  [
+   688,
+   1753
+  ],
+  [
+   2441,
+   1755
+  ],
+  [
+   4196,
+   1775
+  ],
+  [
+   5971,
+   1690
+  ],
+  [
+   7661,
+   3877
+  ]
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "faad": null,
+  "skip": {
+   "faad": "faad2 reads AAC only."
+  }
+ }
+}

@@ -1,0 +1,143 @@
+{
+ "description": "A QuickTime movie with a linear PCM sample entry of sound description version 2: 32-bit floats, little-endian, packed, 2 channels at 8,000 Hz, 200 sample frames.",
+ "length": 2181,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   20
+  ],
+  [
+   "moov",
+   20,
+   553
+  ],
+  [
+   "moov/mvhd",
+   28,
+   108
+  ],
+  [
+   "moov/trak",
+   136,
+   437
+  ],
+  [
+   "moov/trak/tkhd",
+   144,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   236,
+   337
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   244,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   276,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   321,
+   252
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   329,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   345,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   353,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   369,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   381,
+   192
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   389,
+   88
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/lpcm",
+   405,
+   72
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   477,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   501,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   529,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   553,
+   20
+  ],
+  [
+   "mdat",
+   573,
+   1608
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "PCM (floating-point)",
+   "sample_rate": 8000,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 200,
+   "is_vbr": false,
+   "ffprobe_channels": 2
+  }
+ ],
+ "units": [],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "ffprobe_packets": false,
+  "mp4box": false,
+  "faad": null,
+  "skip": {
+   "mp4box": "MP4Box (GPAC 2.2.1) lists the lpcm entry of sound description version 2 with the size 0",
+   "ffprobe_layout": "ffmpeg gives a track of this entry no channel layout",
+   "faad": "faad2 reads AAC only.",
+   "ffprobe_packets": "ffmpeg's demuxer lists a PCM track's samples as packets of its own size",
+   "mediainfo": "MediaInfo 24.01 reads no byte order from a linear PCM entry of sound description version 2"
+  }
+ }
+}

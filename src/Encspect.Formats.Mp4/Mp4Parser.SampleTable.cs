@@ -55,7 +55,7 @@ public sealed partial class Mp4Parser
         int version = FullBox(node, f).Version;
         uint count = f.U32(node, "Entries", Explain.SampleEntryCount);
         ReadChildren(state, node, f.Position, header.End, depth + 1, custom: (s, n, h, fields, d) => SampleEntryBox(s, n, h, fields, d, version),
-            naming: h => new BoxName(h.Type, NodeKind.Detail, Explain.SampleEntry(h.Type), Topics.SampleTables));
+            naming: h => new BoxName(h.Type, NodeKind.Detail, Explain.SampleEntry(h.Type), Topics.OfEntry(h.Type)));
         int read = node.Children.Count(c => c.Children.Any(k => k.Name == "Data Reference Index"));
         if (read != count && !HasHiddenChild(node) && !state.Findings.IsDetaching)
         {
@@ -99,7 +99,7 @@ public sealed partial class Mp4Parser
             f.U32(node, "Samples Per Packet", Explain.SamplesPerPacket);
             f.U32(node, "Bytes Per Packet", Explain.BytesPerPacket);
             f.U32(node, "Bytes Per Frame", Explain.BytesPerFrame);
-            f.U32(node, "Bytes Per Sample", Explain.BytesPerSample);
+            entry.BytesPerSample = f.U32(node, "Bytes Per Sample", Explain.BytesPerSample);
         }
         else if (quickTime && version == 2 && f.Remaining >= 36)
         {
@@ -110,10 +110,11 @@ public sealed partial class Mp4Parser
             entry.SampleRate = double.IsFinite(rate) ? rate : 0;
             entry.Channels = (int)Math.Min(f.U32(node, "Audio Channels", Explain.AudioChannels), int.MaxValue);
             f.Field(node, "Always 0x7F000000", 4, Explain.AlwaysValue, v => NodeValue.Hex((long)v, 8));
-            f.U32(node, "Bits Per Channel", Explain.BitsPerChannel);
-            f.Field(node, "Format Flags", 4, Explain.FormatFlags, v => NodeValue.Hex((long)v, 8));
-            f.U32(node, "Bytes Per Audio Packet", Explain.BytesPerAudioPacket);
-            f.U32(node, "Frames Per Audio Packet", Explain.FramesPerAudioPacket);
+            uint bits = f.U32(node, "Bits Per Channel", Explain.BitsPerChannel);
+            uint flags = (uint)f.Field(node, "Format Flags", 4, Explain.FormatFlags, v => NodeValue.Hex((long)v, 8));
+            uint bytesPerPacket = f.U32(node, "Bytes Per Audio Packet", Explain.BytesPerAudioPacket);
+            uint framesPerPacket = f.U32(node, "Frames Per Audio Packet", Explain.FramesPerAudioPacket);
+            entry.LpcmFormat = (flags, bits, bytesPerPacket, framesPerPacket);
         }
 
         SampleEntry? outer = state.CurrentEntry;
@@ -129,6 +130,9 @@ public sealed partial class Mp4Parser
         ".mp3" => CodecNames.MpegAudioLayerIII,
         "alac" => CodecNames.AppleLossless,
         "fLaC" => "FLAC",
+        "mlpa" => "Dolby TrueHD",
+        "ipcm" => "integer PCM",
+        "fpcm" => "floating-point PCM",
         "Opus" => "Opus",
         "ac-3" => "AC-3",
         "ec-3" => "E-AC-3",
@@ -136,6 +140,8 @@ public sealed partial class Mp4Parser
         "dtsc" or "dtsh" or "dtsl" or "dtse" => "DTS",
         "lpcm" => "linear PCM",
         "twos" or "sowt" or "in24" or "in32" or "fl32" or "fl64" or "raw " => "PCM",
+        "alaw" => CodecNames.ALaw,
+        "ulaw" => CodecNames.MuLaw,
         "samr" => "AMR",
         "sawb" => "AMR-WB",
         "enca" => "encrypted audio",
@@ -166,8 +172,8 @@ public sealed partial class Mp4Parser
         ".mp3" => CodecNames.MpegAudioLayerIII,
         "dtsl" => CodecNames.DtsHdMasterAudio,
         "dtse" => "DTS Express",
-        "lpcm" or "twos" or "sowt" or "in24" or "in32" or "raw " => CodecNames.Pcm,
-        "fl32" or "fl64" => CodecNames.PcmFloat,
+        "lpcm" or "twos" or "sowt" or "in24" or "in32" or "raw " or "ipcm" => CodecNames.Pcm,
+        "fl32" or "fl64" or "fpcm" => CodecNames.PcmFloat,
         "enca" => CodecNames.EncryptedAudio,
         "encv" => CodecNames.EncryptedVideo,
         _ => FormatName(format) is "other" ? format : FormatName(format),

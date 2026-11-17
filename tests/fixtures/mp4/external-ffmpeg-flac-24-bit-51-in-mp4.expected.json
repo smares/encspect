@@ -1,0 +1,250 @@
+{
+ "description": "24-bit FLAC of 5.1 channels in MP4 as ffmpeg's muxer writes it.",
+ "encoder": {
+  "tool": "ffmpeg version 6.1.1-3ubuntu5 (ffmpeg package of Ubuntu 24.04)",
+  "command": [
+   "ffmpeg",
+   "-v",
+   "error",
+   "-y",
+   "-f",
+   "lavfi",
+   "-i",
+   "aevalsrc=0.4*sin(2*PI*440*t)|0.4*sin(2*PI*550*t)|0.4*sin(2*PI*660*t)|0.2*sin(2*PI*80*t)|0.3*sin(2*PI*770*t)|0.3*sin(2*PI*880*t):s=8000:d=0.05:c=5.1",
+   "-sample_fmt",
+   "s32",
+   "-bits_per_raw_sample",
+   "24",
+   "-c:a",
+   "flac",
+   "-strict",
+   "-2",
+   "{out}"
+  ]
+ },
+ "length": 4369,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "free",
+   28,
+   8
+  ],
+  [
+   "mdat",
+   36,
+   3616
+  ],
+  [
+   "moov",
+   3652,
+   717
+  ],
+  [
+   "moov/mvhd",
+   3660,
+   108
+  ],
+  [
+   "moov/trak",
+   3768,
+   503
+  ],
+  [
+   "moov/trak/tkhd",
+   3776,
+   92
+  ],
+  [
+   "moov/trak/edts",
+   3868,
+   36
+  ],
+  [
+   "moov/trak/edts/elst",
+   3876,
+   28
+  ],
+  [
+   "moov/trak/mdia",
+   3904,
+   367
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   3912,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   3944,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   3989,
+   282
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   3997,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   4013,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   4021,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   4037,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   4049,
+   222
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   4057,
+   122
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/fLaC",
+   4073,
+   106
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/fLaC/dfLa",
+   4109,
+   50
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/fLaC/btrt",
+   4159,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   4179,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   4203,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   4231,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   4251,
+   20
+  ],
+  [
+   "moov/udta",
+   4271,
+   98
+  ],
+  [
+   "moov/udta/meta",
+   4279,
+   90
+  ],
+  [
+   "moov/udta/meta/hdlr",
+   4291,
+   33
+  ],
+  [
+   "moov/udta/meta/ilst",
+   4324,
+   45
+  ],
+  [
+   "moov/udta/meta/ilst/©too",
+   4332,
+   37
+  ],
+  [
+   "moov/udta/meta/ilst/©too/data",
+   4340,
+   29
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "FLAC",
+   "sample_rate": 8000,
+   "channels": 6,
+   "channel_mode": "Multichannel",
+   "channel_layout": [
+    "front left",
+    "front right",
+    "front center",
+    "LFE",
+    "back left",
+    "back right"
+   ],
+   "samples": 400,
+   "is_vbr": false,
+   "writer": [
+    "FFmpeg (Lavf60.16.100)",
+    "Low"
+   ],
+   "ffprobe_channels": 6
+  }
+ ],
+ "units": [
+  [
+   44,
+   3608
+  ]
+ ],
+ "fields": {
+  "MP4/moov/mvhd/Timescale": "1000 units per second",
+  "MP4/moov/mvhd/Duration": "50 (0.050 s)",
+  "MP4/moov/trak/tkhd/Track ID": "1",
+  "MP4/moov/trak/tkhd/Duration": "50 (0.050 s)",
+  "MP4/moov/trak/mdia/mdhd/Timescale": "8000 units per second",
+  "MP4/moov/trak/mdia/mdhd/Duration": "400 (0.050 s)",
+  "MP4/moov/trak/edts/elst/Edit/Segment Duration": "50 (0.050 s)",
+  "MP4/moov/trak/edts/elst/Edit/Media Time": "0 units of the media's timescale"
+ },
+ "pcm": {
+  "samples": 400,
+  "bits": 24,
+  "format": "integer",
+  "md5": "f11f75eae0598c574307aad29f8fd5bb"
+ },
+ "findings": [
+  [
+   "mp4.moov-after-mdat",
+   "not optimized for streaming"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "faad": null,
+  "decode": true,
+  "skip": {
+   "faad": "faad2 reads AAC only.",
+   "ffprobe_layout": "ffmpeg names the layout of six FLAC or Dolby TrueHD channels 5.1(side) (its decoders' maps); the analyzer follows the formats' own tables (back left and right)"
+  }
+ }
+}

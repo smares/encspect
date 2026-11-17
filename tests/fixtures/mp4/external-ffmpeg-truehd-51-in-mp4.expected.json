@@ -1,0 +1,485 @@
+{
+ "description": "Dolby TrueHD of 5.1 channels in MP4 as ffmpeg's muxer writes it.",
+ "encoder": {
+  "tool": "ffmpeg version 6.1.1-3ubuntu5 (ffmpeg package of Ubuntu 24.04)",
+  "command": [
+   "ffmpeg",
+   "-v",
+   "error",
+   "-y",
+   "-f",
+   "lavfi",
+   "-i",
+   "aevalsrc=0.4*sin(2*PI*440*t)|0.4*sin(2*PI*550*t)|0.4*sin(2*PI*660*t)|0.2*sin(2*PI*80*t)|0.3*sin(2*PI*770*t)|0.3*sin(2*PI*880*t):s=48000:d=0.05:c=5.1",
+   "-sample_fmt",
+   "s32p",
+   "-c:a",
+   "truehd",
+   "-strict",
+   "-2",
+   "{out}"
+  ]
+ },
+ "length": 19967,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   32
+  ],
+  [
+   "free",
+   32,
+   8
+  ],
+  [
+   "mdat",
+   40,
+   18970
+  ],
+  [
+   "moov",
+   19010,
+   957
+  ],
+  [
+   "moov/mvhd",
+   19018,
+   108
+  ],
+  [
+   "moov/trak",
+   19126,
+   743
+  ],
+  [
+   "moov/trak/tkhd",
+   19134,
+   92
+  ],
+  [
+   "moov/trak/edts",
+   19226,
+   36
+  ],
+  [
+   "moov/trak/edts/elst",
+   19234,
+   28
+  ],
+  [
+   "moov/trak/mdia",
+   19262,
+   607
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   19270,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   19302,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   19347,
+   522
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   19355,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   19371,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   19379,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   19395,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   19407,
+   462
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   19415,
+   90
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mlpa",
+   19431,
+   74
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mlpa/dmlp",
+   19467,
+   18
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/mlpa/btrt",
+   19485,
+   20
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   19505,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stss",
+   19529,
+   32
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   19561,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   19589,
+   260
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   19849,
+   20
+  ],
+  [
+   "moov/udta",
+   19869,
+   98
+  ],
+  [
+   "moov/udta/meta",
+   19877,
+   90
+  ],
+  [
+   "moov/udta/meta/hdlr",
+   19889,
+   33
+  ],
+  [
+   "moov/udta/meta/ilst",
+   19922,
+   45
+  ],
+  [
+   "moov/udta/meta/ilst/©too",
+   19930,
+   37
+  ],
+  [
+   "moov/udta/meta/ilst/©too/data",
+   19938,
+   29
+  ]
+ ],
+ "streams": [
+  {
+   "codec": "Dolby TrueHD",
+   "sample_rate": 48000,
+   "channels": 6,
+   "channel_mode": "Multichannel",
+   "channel_layout": [
+    "front left",
+    "front right",
+    "front center",
+    "LFE",
+    "back left",
+    "back right"
+   ],
+   "samples": 2400,
+   "is_vbr": true,
+   "ffprobe_channels": 6
+  }
+ ],
+ "units": [
+  [
+   48,
+   566
+  ],
+  [
+   614,
+   298
+  ],
+  [
+   912,
+   300
+  ],
+  [
+   1212,
+   294
+  ],
+  [
+   1506,
+   294
+  ],
+  [
+   1800,
+   294
+  ],
+  [
+   2094,
+   294
+  ],
+  [
+   2388,
+   296
+  ],
+  [
+   2684,
+   290
+  ],
+  [
+   2974,
+   296
+  ],
+  [
+   3270,
+   300
+  ],
+  [
+   3570,
+   294
+  ],
+  [
+   3864,
+   294
+  ],
+  [
+   4158,
+   294
+  ],
+  [
+   4452,
+   296
+  ],
+  [
+   4748,
+   290
+  ],
+  [
+   5038,
+   578
+  ],
+  [
+   5616,
+   306
+  ],
+  [
+   5922,
+   296
+  ],
+  [
+   6218,
+   296
+  ],
+  [
+   6514,
+   300
+  ],
+  [
+   6814,
+   294
+  ],
+  [
+   7108,
+   294
+  ],
+  [
+   7402,
+   290
+  ],
+  [
+   7692,
+   294
+  ],
+  [
+   7986,
+   302
+  ],
+  [
+   8288,
+   294
+  ],
+  [
+   8582,
+   296
+  ],
+  [
+   8878,
+   294
+  ],
+  [
+   9172,
+   296
+  ],
+  [
+   9468,
+   292
+  ],
+  [
+   9760,
+   288
+  ],
+  [
+   10048,
+   580
+  ],
+  [
+   10628,
+   304
+  ],
+  [
+   10932,
+   294
+  ],
+  [
+   11226,
+   294
+  ],
+  [
+   11520,
+   292
+  ],
+  [
+   11812,
+   294
+  ],
+  [
+   12106,
+   292
+  ],
+  [
+   12398,
+   294
+  ],
+  [
+   12692,
+   298
+  ],
+  [
+   12990,
+   294
+  ],
+  [
+   13284,
+   294
+  ],
+  [
+   13578,
+   292
+  ],
+  [
+   13870,
+   294
+  ],
+  [
+   14164,
+   296
+  ],
+  [
+   14460,
+   292
+  ],
+  [
+   14752,
+   298
+  ],
+  [
+   15050,
+   592
+  ],
+  [
+   15642,
+   316
+  ],
+  [
+   15958,
+   304
+  ],
+  [
+   16262,
+   306
+  ],
+  [
+   16568,
+   304
+  ],
+  [
+   16872,
+   308
+  ],
+  [
+   17180,
+   298
+  ],
+  [
+   17478,
+   312
+  ],
+  [
+   17790,
+   304
+  ],
+  [
+   18094,
+   306
+  ],
+  [
+   18400,
+   304
+  ],
+  [
+   18704,
+   306
+  ]
+ ],
+ "fields": {
+  "MP4/moov/mvhd/Timescale": "1000 units per second",
+  "MP4/moov/mvhd/Duration": "50 (0.050 s)",
+  "MP4/moov/trak/tkhd/Track ID": "1",
+  "MP4/moov/trak/tkhd/Duration": "50 (0.050 s)",
+  "MP4/moov/trak/mdia/mdhd/Timescale": "48000 units per second",
+  "MP4/moov/trak/mdia/mdhd/Duration": "2400 (0.050 s)",
+  "MP4/moov/trak/edts/elst/Edit/Segment Duration": "50 (0.050 s)",
+  "MP4/moov/trak/edts/elst/Edit/Media Time": "0 units of the media's timescale"
+ },
+ "pcm": {
+  "samples": 2400,
+  "bits": 24,
+  "format": "integer",
+  "md5": "341e61cff8bfbca2eebafdd837d90685"
+ },
+ "findings": [
+  [
+   "mp4.moov-after-mdat",
+   "not optimized for streaming"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "mp4box": true,
+  "faad": null,
+  "decode": true,
+  "skip": {
+   "faad": "faad2 reads AAC only.",
+   "ffprobe_layout": "ffmpeg names the layout of six FLAC or Dolby TrueHD channels 5.1(side) (its decoders' maps); the analyzer follows the formats' own tables (back left and right)"
+  }
+ }
+}
