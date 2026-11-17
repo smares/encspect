@@ -39,12 +39,16 @@ internal sealed class State
     // The nodes before the frames: the marker, the metadata blocks, then the encoder, the writer and the statistics.
     public List<Node> Leading { get; } = [];
 
-    // Adds a node before the frames: to the stream node's leading nodes, or, in a stream a container holds, to the container's node.
+    // The container's node for the bytes of the metadata blocks where they lie apart from the stream's own node (MP4's dfLa box in moov, the samples in mdat), or null.
+    public Node? HeaderParent { get; set; }
+
+    // Adds a node before the frames: to the stream node's leading nodes, or, in a stream a container holds, to the container's node, or to the node of the box that holds the
+    // metadata blocks where the node's bytes lie outside the stream's.
     public void AddLeading(Node node)
     {
         if (IsContained)
         {
-            Stream.Add(node);
+            (HeaderParent is { } holder && (node.Offset < Stream.Offset || node.End > Stream.End) ? holder : Stream).Add(node);
         }
         else
         {

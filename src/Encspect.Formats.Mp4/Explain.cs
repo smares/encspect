@@ -17,6 +17,18 @@ internal static class Topics
     public const string CommonEncryption = "common-encryption";
     public const string ItunesAndAudibleProtection = "itunes-and-audible-protection";
     public const string Alac = "alac";
+    public const string FlacInMp4 = "flac-in-mp4";
+    public const string TrueHdInMp4 = "truehd-in-mp4";
+    public const string PcmInMp4 = "pcm-in-mp4";
+
+    // The article of a sample entry of a coding with its own, or the sample tables'.
+    public static string OfEntry(string type) => type switch
+    {
+        "fLaC" => FlacInMp4,
+        "mlpa" => TrueHdInMp4,
+        "ipcm" or "fpcm" or "sowt" or "twos" or "in24" or "in32" or "fl32" or "fl64" or "raw " or "lpcm" or "alaw" or "ulaw" => PcmInMp4,
+        _ => SampleTables,
+    };
 }
 
 // What each MP4 node is, in the words the report shows next to it. Constants only, picked per box
@@ -24,6 +36,10 @@ internal static class Topics
 internal static class Explain
 {
     public const string File = "An ISO base media file: a run of boxes, each a size, a four-character type and its contents. MP4, M4A, M4B and QuickTime .mov files share this structure (ISO/IEC 14496-12 4.2).";
+    public const string PcmFormatFlags = "The format flags of the PCM samples; bit 0 is set where they are little-endian (ISO/IEC 23003-5).";
+    public const string PcmIsLittleEndian = "Bit 0 of the format flags: set where the bytes of a sample run from the least significant to the most significant.";
+    public const string PcmSampleSize = "The bits one sample takes in the data: 16, 24 or 32 for integers, 32 or 64 for floating-point samples (ISO/IEC 23003-5).";
+    public const string Enda = "0 where the samples are big-endian, 1 where they are little-endian (QuickTime File Format, Sound sample description extensions).";
     public const string AlacSpecificBox = "ALAC specific box: version and flags, then ALAC's magic cookie, the codec's configuration: the frame length, bit depth, channels, tuning parameters and sample rate, and for more than two channels the channel layout (ALACMagicCookieDescription.txt in Apple's ALAC source).";
     public const string TrailingData = "Bytes after the last box that do not start another box, such as a tag appended to the file or the rest of a damaged box.";
 
@@ -418,6 +434,24 @@ internal static class Explain
         "ec-3" => "E-AC-3 sample entry: Dolby Digital Plus audio, the syncframes of six blocks of every substream per sample, configured by its dec3 box (ETSI TS 102 366 F.5).",
         "dOps" => "OpusSpecificBox: the identification header of the Opus stream as RFC 7845 section 5.1 defines it, in big-endian fields and without the magic: the version, the channel count, the pre-skip, the input sample rate, the output gain and the channel mapping (Xiph.Org's encapsulation of Opus in ISO base media files, 4.3.2).",
         "Opus" => "Opus sample entry: Opus audio, one packet per sample, configured by its dOps box (Xiph.Org's encapsulation of Opus in ISO base media files, 4.3.1).",
+        "fLaC" => "FLAC sample entry: FLAC audio, one frame per sample, configured by its dfLa box (Xiph.org's encapsulation of FLAC in ISO base media files).",
+        "dfLa" => "FLACSpecificBox: version and flags, then the FLAC stream's metadata blocks as the FLAC format lays them out, the STREAMINFO block first (Xiph.org's encapsulation of FLAC in ISO base media files).",
+        "mlpa" => "Dolby TrueHD sample entry: one access unit per sample, configured by its dmlp box; its sampling rate is a 32-bit integer in FFmpeg's files (the MP4 registration authority's mlpa entry, as FFmpeg's muxer writes it).",
+        "dmlp" => "The Dolby TrueHD specific box: the format information of the stream's first major sync, its peak data rate and reserved bits, as FFmpeg's muxer writes it; it has no version and flags.",
+        "ipcm" => "Integer PCM sample entry: the samples stored as they are, whose byte order and sample size its pcmC box gives (ISO/IEC 23003-5).",
+        "fpcm" => "Floating-point PCM sample entry: the samples stored as IEEE 754 numbers, whose byte order and sample size its pcmC box gives (ISO/IEC 23003-5).",
+        "pcmC" => "PCMConfigurationBox: version and flags, the format flags (bit 0 is set for little-endian samples) and the bits of a sample (ISO/IEC 23003-5).",
+        "sowt" => "QuickTime's PCM sample entry for signed 16-bit little-endian samples (QuickTime File Format, Sound sample descriptions).",
+        "twos" => "QuickTime's PCM sample entry for signed big-endian samples of 8 or 16 bits (QuickTime File Format, Sound sample descriptions).",
+        "in24" => "QuickTime's PCM sample entry for signed 24-bit samples, big-endian unless its enda box says little-endian (QuickTime File Format, Sound sample descriptions).",
+        "in32" => "QuickTime's PCM sample entry for signed 32-bit samples, big-endian unless its enda box says little-endian (QuickTime File Format, Sound sample descriptions).",
+        "fl32" => "QuickTime's PCM sample entry for 32-bit floating-point samples, big-endian unless its enda box says little-endian (QuickTime File Format, Sound sample descriptions).",
+        "fl64" => "QuickTime's PCM sample entry for 64-bit floating-point samples, big-endian unless its enda box says little-endian (QuickTime File Format, Sound sample descriptions).",
+        "raw " => "QuickTime's PCM sample entry for unsigned 8-bit samples (QuickTime File Format, Sound sample descriptions).",
+        "lpcm" => "QuickTime's linear PCM sample entry, whose version 2 description gives the samples' format flags, bits and packet sizes (QuickTime File Format, Sound sample description version 2).",
+        "alaw" => "QuickTime's sample entry for A-law samples of 8 bits (QuickTime File Format, Sound sample descriptions; ITU-T G.711).",
+        "ulaw" => "QuickTime's sample entry for mu-law samples of 8 bits (QuickTime File Format, Sound sample descriptions; ITU-T G.711).",
+        "enda" => "Endianness box in a sound sample description of version 1: 0 for big-endian samples, 1 for little-endian ones (QuickTime File Format, Sound sample description extensions).",
         "dac3" => "AC3SpecificBox: the AC-3 stream's sample rate, version, service, channels and bitrate, as its frames hold them (ETSI TS 102 366 F.4).",
         "dec3" => "EC3SpecificBox: the E-AC-3 stream's data rate and, per independent substream, its sample rate, version, service, channels and dependent substreams (ETSI TS 102 366 F.6).",
         "dtsc" => "DTS sample entry: DTS audio of the formats before DTS-HD, one core frame per sample, configured by its ddts box (ETSI TS 102 114 E.2.2).",
@@ -480,12 +514,15 @@ internal static class Explain
     // A sample entry of an stsd box, by its coding.
     public static string SampleEntry(string type) => type switch
     {
-        "Opus" or "mp4a" or ".mp3" or "ac-3" or "ec-3" or "dtsc" or "dtsh" or "dtsl" or "dtse" or "enca" or "encv" or "drms" or "drmi" or "aavd" => Box(type),
+        "Opus" or "fLaC" or "mlpa" or "ipcm" or "fpcm" or "sowt" or "twos" or "in24" or "in32" or "fl32" or "fl64" or "raw " or "lpcm" or "alaw" or "ulaw" or "mp4a" or ".mp3" or "ac-3" or "ec-3" or "dtsc" or "dtsh" or "dtsl" or "dtse" or "enca" or "encv" or "drms" or "drmi" or "aavd" => Box(type),
         _ => "A sample entry: how the track's samples are coded, named by the four-character code of the coding, such as alac or Opus (ISO/IEC 14496-12 8.5.2.2).",
     };
 
     public static string? BoxTopic(string type) => type switch
     {
+        "dfLa" => Topics.FlacInMp4,
+        "dmlp" => Topics.TrueHdInMp4,
+        "pcmC" or "enda" => Topics.PcmInMp4,
         "ftyp" or "styp" or "moov" or "mvhd" or "trak" or "tkhd" or "mdia" or "mdhd" or "hdlr" or "minf" or "mdat" or "free" or "skip" or "wide" or "udta" or "iods" or "uuid" => Topics.IsoBaseMediaFormat,
         "stbl" or "stsd" or "stts" or "ctts" or "stsc" or "stsz" or "stz2" or "stco" or "co64" or "stss" or "sdtp" or "dinf" or "dref" or "url " or "urn " or "smhd" => Topics.SampleTables,
         "edts" or "elst" or "sgpd" or "sbgp" or "csgp" => Topics.EditListsAndPriming,

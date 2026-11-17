@@ -47,14 +47,14 @@ internal static partial class Summary
         Node stream = s.Stream;
         Checks(s);
         Node Cover(string name, NodeValue? value, string description, string? topic = null) =>
-            new(name, start, end - start, value) { Description = description, Topic = topic };
+            new(name, start, end - start, value) { Ranges = stream.Ranges, Description = description, Topic = topic };
         Node? encoder = Encoder(s, Cover);
         if (encoder is not null)
         {
             s.AddLeading(encoder);
         }
 
-        Node? writer = Writer(s, start, end);
+        Node? writer = Writer(s, start, end, stream.Ranges);
         if (writer is not null)
         {
             s.AddLeading(writer);
@@ -85,6 +85,7 @@ internal static partial class Summary
             Records records = s.Records;
             stream.Add(new Node("Frames", start, end - start, NodeValue.Integer(records.Entries.Count, "frames"), () => new BlockedChildren([], records.Entries.Count, i => Nodes.Entry(records, i)))
             {
+                Ranges = stream.Ranges,
                 Kind = NodeKind.Stream,
                 Description = Explain.Stream,
                 Topic = Topics.Stream,
@@ -214,8 +215,8 @@ internal static partial class Summary
 
     private static Node Evidence(Node at, string text) => new("Evidence", at.Offset, at.Length, text) { Description = Explain.Evidence, Ranges = at.Ranges };
 
-    private static Node? Writer(State s, long start, long end) =>
-        WriterDetection.Detect(s.Context.EncoderClaims, (name, value, description) => new Node(name, start, end - start, value) { Description = description, Topic = ClaimRoles.TopicOf(name) },
+    private static Node? Writer(State s, long start, long end, IReadOnlyList<ByteRange>? ranges) =>
+        WriterDetection.Detect(s.Context.EncoderClaims, (name, value, description) => new Node(name, start, end - start, value) { Ranges = ranges, Description = description, Topic = ClaimRoles.TopicOf(name) },
             (claim, text, name) => s.Findings.Add(Severity.Info, "flac.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
             format: new WriterDetection.StreamFormat(KnownWriters.Flac, "FLAC", (claim, message, node) => s.Findings.Add(Severity.Info, "flac.writer-other-format", node, _ => message)));
 
@@ -227,7 +228,7 @@ internal static partial class Summary
         }
 
         Node Cover3(string name, NodeValue? value, string description) => cover(name, value, description, null);
-        var statistics = new Node("Statistics", stream.Offset, stream.Length) { Kind = NodeKind.Statistics, Description = Explain.Statistics };
+        var statistics = new Node("Statistics", stream.Offset, stream.Length) { Ranges = stream.Ranges, Kind = NodeKind.Statistics, Description = Explain.Statistics };
         StreamInfoBlock? info = s.Info;
         int rate = info?.SampleRate is > 0 ? info.Value.SampleRate : s.FirstRate;
         int channels = info?.Channels ?? s.FirstChannels;

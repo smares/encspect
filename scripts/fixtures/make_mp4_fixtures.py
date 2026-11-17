@@ -30,6 +30,7 @@ committed files differ.
 """
 
 import json
+import math
 import pathlib
 import struct
 import sys
@@ -782,6 +783,130 @@ def quicktime():
     return out + quicktime_text()
 
 
+def u16_of(data):
+    return int.from_bytes(data, "big")
+
+
+def route_fixtures():
+    """The tracks of FLAC, Dolby TrueHD and PCM that ffmpeg wrote (make_external_mp4_fixtures.py), put into sample entries that disagree with them or that the analyzer cannot read, and
+    QuickTime's linear PCM entry, which no writer at hand produces."""
+    import make_external_mp4_fixtures as external
+
+    def source(name):
+        data = (MP4 / name).read_bytes()
+        units, _, _, durations = external.tables(data)
+        rows = {path.rsplit("/", 1)[-1]: (offset, size) for path, offset, size in external.boxes(data)}
+        return data, [data[o:o + n] for o, n in units], durations, rows
+
+    def audio_entry(format, channels, bits, rate_field, *children):
+        return box(format, bytes(6) + u16(1) + u16(0) + u16(0) + u32(0) + u16(channels) + u16(bits) + u16(0) + u16(0) + rate_field, *children)
+
+    out = []
+    flac, frames, flac_durations, rows = source("external-ffmpeg-flac-in-mp4.mp4")
+    dfla = flac[rows["dfLa"][0] + 12:rows["dfLa"][0] + rows["dfLa"][1]]
+    flac_stream_entry = stream("FLAC", 22050, 2, external.flac_mode([f[:4] for f in frames]), sum(flac_durations), vbr=True)
+    flac_stream_entry["channel_layout"] = ["front left", "front right"]
+
+    track = Track(1, frames, 22050, 1, audio_entry(b"fLaC", 1, 24, u32(44100 << 16), fullbox("dfLa", 0, 0, dfla)), durations=flac_durations, chunk=10)
+    data, records, offsets = movie([track])
+    out.append(("flac-entry-differs-in-mp4", data, {
+        "description": "FLAC in MP4 whose sample entry states 44,100 Hz, 1 channel and samples of 24 bits where the STREAMINFO block in its dfLa box has 22,050 Hz, 2 channels and 16 bits.",
+        "length": len(data), "format": "MP4", "boxes": boxes_of(records, len(data)), "streams": [flac_stream_entry],
+        "units": unit_list(offsets[0], frames, 10), "fields": {},
+        "findings": [["mp4.sample-rate-differs", "states a sample rate of 44100 Hz, but its FLAC stream has 22050 Hz"], ["mp4.channels-differ", "states 1 channel, but its FLAC stream has 2"],
+                     ["mp4.bit-depth-differs", "states samples of 24 bits, but its FLAC stream has 16"]],
+        "crosscheck": {"ffprobe": True, "mp4box": True, "faad": None, "ffprobe_streams": False, "skip": {
+            "faad": "faad2 reads AAC only.", "ffprobe_streams": "the sample entry and the STREAMINFO block disagree, and ffmpeg takes the figures of the entry"}}}))
+
+    # A Vorbis comment block after STREAMINFO: libFLAC's vendor string and an ENCODER field name the encoder, as in a FLAC file.
+    vendor = b"reference libFLAC 1.4.3 20230623"
+    body = struct.pack("<I", len(vendor)) + vendor + struct.pack("<I", 1) + struct.pack("<I", 13) + b"TITLE=A title"
+    comment = bytes([0x84]) + len(body).to_bytes(3, "big") + body
+    commented = bytes([dfla[0] & 0x7F]) + dfla[1:] + comment
+    track = Track(1, frames, 22050, 2, audio_entry(b"fLaC", 2, 16, u32(22050 << 16), fullbox("dfLa", 0, 0, commented)), durations=flac_durations, chunk=10)
+    data, records, offsets = movie([track])
+    out.append(("flac-vorbis-comment-in-mp4", data, {
+        "description": "FLAC in MP4 whose dfLa box holds a Vorbis comment block after the STREAMINFO block, with libFLAC's vendor string: the tag is read as in a FLAC file and names the encoder.",
+        "length": len(data), "format": "MP4", "boxes": boxes_of(records, len(data)),
+        "streams": [dict(flac_stream_entry, encoder=["libFLAC 1.4.3 (20230623)", "High"])],
+        "units": unit_list(offsets[0], frames, 10), "fields": {}, "findings": [],
+        "crosscheck": {"ffprobe": True, "mp4box": True, "faad": None, "skip": {"faad": "faad2 reads AAC only."}}}))
+
+    truehd, units, truehd_durations, rows = source("external-ffmpeg-truehd-in-mp4.mp4")
+    dmlp = truehd[rows["dmlp"][0] + 8:rows["dmlp"][0] + rows["dmlp"][1]]
+    thd_stream = stream("Dolby TrueHD", 48000, 1, "Mono", sum(truehd_durations), vbr=True)
+
+    def mlpa(channels, rate, *children):
+        # FFmpeg writes the sampling rate as a 32-bit integer where the entry has a 16.16 fixed-point number.
+        return audio_entry(b"mlpa", channels, 16, u32(rate), *children)
+
+    changed = dmlp[:4] + u16(u16_of(dmlp[4:6]) ^ 0x0100) + dmlp[6:]
+    track = Track(1, units, 48000, 2, mlpa(2, 44100, box("dmlp", changed)), durations=truehd_durations, chunk=10)
+    data, records, offsets = movie([track])
+    out.append(("truehd-entry-differs-in-mp4", data, {
+        "description": "Dolby TrueHD in MP4 whose sample entry states 44,100 Hz and 2 channels where the stream has 48,000 Hz and 1 channel, and whose dmlp box states another peak data rate than the first "
+                       "major sync.",
+        "length": len(data), "format": "MP4", "boxes": boxes_of(records, len(data)), "streams": [thd_stream],
+        "units": unit_list(offsets[0], units, 10), "fields": {},
+        "findings": [["mp4.sample-rate-differs", "states a sample rate of 44100 Hz, but its Dolby TrueHD stream has 48000 Hz"], ["mp4.channels-differ", "states 2 channels, but its Dolby TrueHD stream has 1"],
+                     ["truehd.dmlp-differs", "a peak data rate of"]],
+        "crosscheck": {"ffprobe": True, "mp4box": True, "faad": None, "ffprobe_streams": False, "skip": {
+            "faad": "faad2 reads AAC only.", "ffprobe_streams": "the sample entry and the stream disagree, and ffmpeg takes the figures of the entry"}}}))
+    track = Track(1, units, 48000, 1, mlpa(1, 48000, box("dmlp", dmlp[:6])), durations=truehd_durations, chunk=10)
+    data, records, offsets = movie([track])
+    out.append(("truehd-dmlp-short-in-mp4", data, {
+        "description": "Dolby TrueHD in MP4 whose dmlp box holds 6 bytes, fewer than the format information, peak data rate and reserved bits it needs: the box is not read.",
+        "length": len(data), "format": "MP4", "boxes": boxes_of(records, len(data)), "streams": [thd_stream],
+        "units": unit_list(offsets[0], units, 10), "fields": {}, "findings": [["truehd.dmlp-short", "holds 6 bytes of fields"]],
+        "crosscheck": {"ffprobe": False, "mp4box": False, "faad": None, "skip": {
+            "faad": "faad2 reads AAC only.", "ffprobe": "ffmpeg refuses a track whose dmlp box is shorter than its fields", "mp4box": "MP4Box (GPAC 2.2.1) refuses the file (\"Invalid IsoMedia File\")",
+            "mediainfo": "MediaInfo gives a Dolby TrueHD track whose dmlp box is short no channels, and names the format TrueHD"}}}))
+
+    # Integer PCM of 16 bits, 100 sample frames and 3 bytes more, which do not fill a sample frame.
+    pcm = b"".join(struct.pack("<hh", (i * 300) % 20000 - 10000, (i * 170) % 16000 - 8000) for i in range(100))
+    pcmc = fullbox("pcmC", 0, 0, bytes([1, 16]))
+    entry = audio_entry(b"ipcm", 2, 16, u32(8000 << 16), pcmc)
+    track = Track(1, [pcm, b"\x01\x02\x03"], 8000, 2, entry, durations=[100, 1], chunk=10)
+    data, records, offsets = movie([track])
+    pcm_stream = stream("PCM", 8000, 2, "Stereo", 100)
+    out.append(("ipcm-partial-frame-in-mp4", data, {
+        "description": "16-bit stereo integer PCM in MP4 whose samples end with 3 bytes that do not fill a sample frame of 4 bytes: they are not counted.",
+        "length": len(data), "format": "MP4", "boxes": boxes_of(records, len(data)), "streams": [pcm_stream], "units": [], "fields": {},
+        "findings": [["pcm.partial-sample-frame", "are not a whole number of sample frames of 4 bytes; 3 bytes are left over"]],
+        "crosscheck": {"ffprobe": True, "ffprobe_packets": False, "mp4box": True, "faad": None, "ffprobe_streams": False, "skip": {
+            "faad": "faad2 reads AAC only.", "ffprobe_packets": "the samples are not whole sample frames", "ffprobe_streams": "ffmpeg lists the sample entry's figures; the bytes after the frames are no part of them",
+            "mediainfo": "MediaInfo reports 96 samples and 0.012 s for this track, from its two table samples of 100 and 1 time units, where the analyzer counts the 100 sample frames the bytes hold"}}}))
+
+    # An ipcm entry with no pcmC box: nothing says the byte order and the sample size, so the samples are not read.
+    track = Track(1, [pcm], 8000, 2, audio_entry(b"ipcm", 2, 16, u32(8000 << 16)), durations=[100], chunk=10)
+    data, records, offsets = movie([track])
+    out.append(("ipcm-without-pcmc-in-mp4", data, {
+        "description": "Integer PCM in MP4 whose sample entry has no pcmC box, so nothing says the samples' byte order and size: the track is named by its sample entry and its samples are not analyzed.",
+        "length": len(data), "format": "MP4", "boxes": boxes_of(records, len(data)),
+        "streams": [], "units": [], "fields": {},
+        "findings": [["mp4.codec-not-analyzed", "ipcm (integer PCM)"]],
+        "crosscheck": {"ffprobe": False, "mp4box": True, "faad": None, "skip": {
+            "faad": "faad2 reads AAC only.", "ffprobe": "ffmpeg reads no ipcm entry without a pcmC box",
+            "mediainfo": "MediaInfo lists the audio track from its sample entry; the analyzer reports a stream only for a coding it analyzes (mp4.codec-not-analyzed)"}}}))
+
+    # QuickTime's linear PCM entry of version 2: 32-bit little-endian floats, packed, in a movie of brand qt.
+    floats = b"".join(struct.pack("<ff", math.sin(i / 7) * 0.5, math.cos(i / 5) * 0.25) for i in range(200))
+    v2 = Box(b"lpcm", bytes(6) + u16(1) + u16(2) + u16(0) + u32(0) + u16(3) + u16(16) + struct.pack(">h", -2) + u16(0) + u32(0x10000)
+             + u32(72) + struct.pack(">d", 8000.0) + u32(2) + u32(0x7F000000) + u32(32) + u32(1) + u32(8) + u32(1))
+    track = Track(1, [floats], 8000, 2, v2, durations=[200], chunk=10)
+    data, records, offsets = movie([track], ftyp_box=ftyp(b"qt  ", 0x200, (b"qt  ",)))
+    out.append(("quicktime-lpcm-float", data, {
+        "description": "A QuickTime movie with a linear PCM sample entry of sound description version 2: 32-bit floats, little-endian, packed, 2 channels at 8,000 Hz, 200 sample frames.",
+        "length": len(data), "format": "MP4", "boxes": boxes_of(records, len(data)),
+        "streams": [dict(stream("PCM (floating-point)", 8000, 2, "Stereo", 200), ffprobe_channels=2)], "units": [], "fields": {}, "findings": [],
+        "crosscheck": {"ffprobe": True, "ffprobe_packets": False, "mp4box": False, "faad": None, "skip": {
+            "mp4box": "MP4Box (GPAC 2.2.1) lists the lpcm entry of sound description version 2 with the size 0",
+            "ffprobe_layout": "ffmpeg gives a track of this entry no channel layout",
+            "faad": "faad2 reads AAC only.", "ffprobe_packets": "ffmpeg's demuxer lists a PCM track's samples as packets of its own size",
+            "mediainfo": "MediaInfo 24.01 reads no byte order from a linear PCM entry of sound description version 2"}}}))
+    return out
+
+
 def text_atom(kind, *items, tail=b""):
     """A user data text atom (QuickTime File Format, "User data atoms"): items of a 16-bit size, a 16-bit language code and the text."""
     return Box(kind, b"".join(u16(len(text)) + u16(language) + text for language, text in items) + tail)
@@ -1388,7 +1513,7 @@ def write_fixture(directory, name, data, manifest):
 def main():
     import aac_block_fixtures
 
-    fixtures = he_aac_configs() + [xhe(), eld()] + xhe_layouts() + layout_variants() + channel_layouts() + gapless() + too_lavc() + metadata() + id32() + mp3_in_mp4() + opus_in_mp4() + opus_edit_list() + opus_too_lavf() + opus_version() + quicktime() + chapters() + fragmented() + structure() + mp3_gap() + corrupt() + trailing_tags()
+    fixtures = he_aac_configs() + [xhe(), eld()] + xhe_layouts() + layout_variants() + channel_layouts() + gapless() + too_lavc() + metadata() + id32() + mp3_in_mp4() + opus_in_mp4() + opus_edit_list() + opus_too_lavf() + opus_version() + route_fixtures() + quicktime() + chapters() + fragmented() + structure() + mp3_gap() + corrupt() + trailing_tags()
     for name, data, manifest in fixtures:
         write_fixture(MP4, name, data, manifest)
     for name, data, manifest in adts_fixtures():

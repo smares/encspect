@@ -196,11 +196,9 @@ internal static class Nodes
         return children;
     }
 
-    public static Node SyncNode(long offset, in MajorSync s)
+    // The format information of a major sync, which starts 4 bytes after offset (the sync word and the stream type): also the first 4 bytes of an MP4 dmlp box's payload.
+    internal static Node FormatInfoNode(long offset, in MajorSync s)
     {
-        var node = new Node(MajorSyncName, offset, s.Length) { Description = Explain.MajorSync, Topic = Topics.AccessUnits };
-        node.Add(new Node("Sync Word", offset, 3, NodeValue.Hex(MajorSync.SyncWord, 6)) { Description = Explain.SyncWord, Topic = Topics.AccessUnits });
-        node.Add(new Node("Stream Type", offset + 3, 1, NodeValue.Hex(s.IsTrueHd ? 0xBA : 0xBB, 2)) { Description = Explain.StreamType, Topic = Topics.AccessUnits });
         var info = new Node("Format Info", offset + 4, 4, NodeValue.Hex(s.FormatInfo, 8)) { Description = Explain.FormatInfo, Topic = Topics.AccessUnits };
         if (s.IsTrueHd)
         {
@@ -223,6 +221,15 @@ internal static class Nodes
             info.Add(Field("Channel Arrangement", offset, 59, 64, NodeValue.Integer(s.Arrangement), Explain.ChannelArrangement, Topics.Substreams));
         }
 
+        return info;
+    }
+
+    public static Node SyncNode(long offset, in MajorSync s)
+    {
+        var node = new Node(MajorSyncName, offset, s.Length) { Description = Explain.MajorSync, Topic = Topics.AccessUnits };
+        node.Add(new Node("Sync Word", offset, 3, NodeValue.Hex(MajorSync.SyncWord, 6)) { Description = Explain.SyncWord, Topic = Topics.AccessUnits });
+        node.Add(new Node("Stream Type", offset + 3, 1, NodeValue.Hex(s.IsTrueHd ? 0xBA : 0xBB, 2)) { Description = Explain.StreamType, Topic = Topics.AccessUnits });
+        Node info = FormatInfoNode(offset, s);
         node.Add(info);
         node.Add(new Node("Signature", offset + 8, 2, NodeValue.Hex(s.Signature, 4)) { Description = Explain.Signature, Topic = Topics.AccessUnits });
         node.Add(new Node("Flags", offset + 10, 2, NodeValue.Hex(s.Flags, 4)) { Description = Explain.MajorSyncFlags, Topic = Topics.AccessUnits });

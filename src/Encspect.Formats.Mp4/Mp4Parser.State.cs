@@ -253,6 +253,18 @@ public sealed partial class Mp4Parser
         public Node? LayoutNode { get; set; }
 
         public string? LayoutBox { get; set; }
+
+        // The pcmC box (ISO/IEC 23003-5): whether the samples are little-endian and the bits of a sample, or null without the box.
+        public (bool IsLittleEndian, int Bits)? PcmConfiguration { get; set; }
+
+        // QuickTime's enda box (inside the wave box of a version 1 entry): whether the samples are little-endian, or null without the box.
+        public bool? IsLittleEndianByEnda { get; set; }
+
+        // QuickTime's sound sample description version 1 and 2: the bytes of a sample of one channel (version 1), and the format flags, bits per channel, bytes and frames per
+        // audio packet of version 2, which a linear PCM entry (lpcm) describes its samples by.
+        public uint? BytesPerSample { get; set; }
+
+        public (uint Flags, uint Bits, uint BytesPerPacket, uint FramesPerPacket)? LpcmFormat { get; set; }
     }
 
     // What a sinf box says: its node, the original format, the scheme and the track encryption defaults.

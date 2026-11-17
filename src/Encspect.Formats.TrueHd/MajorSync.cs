@@ -131,6 +131,25 @@ internal readonly struct MajorSync
 
     public static bool StartsAt(ReadOnlySpan<byte> data) => data.Length >= 4 && data[0] == 0xF8 && data[1] == 0x72 && data[2] == 0x6F && (data[3] & 0xFE) == 0xBA;
 
+    // The fields of 32 bits of format information read as Dolby TrueHD's (an MP4 dmlp box holds them without a sync); the others are left at 0.
+    public static MajorSync FromTrueHdFormatInfo(uint info)
+    {
+        int rateCode = (int)(info >> 28);
+        return new MajorSync
+        {
+            IsTrueHd = true,
+            FormatInfo = info,
+            RateCode = rateCode,
+            SixChannelType = (info & 0x08000000) != 0,
+            EightChannelType = (info & 0x04000000) != 0,
+            TwoChannelModifier = (int)(info >> 22) & 3,
+            SixChannelModifier = (int)(info >> 20) & 3,
+            EightChannelModifier = (int)(info >> 13) & 3,
+            SixChannelAssignment = (int)(info >> 15) & 0x1F,
+            EightChannelAssignment = (int)(info & 0x1FFF),
+        };
+    }
+
     // Reads the major sync at the start of data. Null when the data is not a major sync (no sync word or stream type) or ends before it does;
     // otherwise the sync with its Problem, and its CRC compared.
     public static MajorSync? Read(ReadOnlySpan<byte> data)

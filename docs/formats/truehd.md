@@ -81,6 +81,14 @@ Six checksums are declared: three cover headers, two the coded data and one, for
 - The first unit of a stream is read by the decoder itself: the decoding session starts when its major sync has been read, so its walk had nothing to lend.
 - A lossless check that differs is reported (`truehd.lossless-check-failed`, on the restart header whose check differs; on the unit where the tree keeps no detail for it, and on the stream for a unit past the limit of records); the verification counts every one that differs.
 
+## Dolby TrueHD in MP4
+
+An `mlpa` sample entry goes to the codec parser with one access unit to a sample ([mp4.md](mp4.md#dolby-truehd)); the stream type comes from the first usable major sync, as in Matroska.
+
+- **The `dmlp` box** (10 bytes: the 32 bits of format information of the first major sync, its 15-bit peak data rate in the top bits of 16, and 32 reserved bits; no version and flags) is the codec parser's configuration. Its fields are shown under the box, the format information as in a major sync, and compared with the first major sync of the stream: a difference in either figure is `truehd.dmlp-differs`, and a box of fewer than 10 bytes is `truehd.dmlp-short` and is not read. The box describes Dolby TrueHD; for an MLP stream it is not compared.
+- **The entry's channels and rate** are compared with the stream's by the container (`mp4.channels-differ`, `mp4.sample-rate-differs`); the sample size field (16 in ffmpeg's files) says nothing about the stream, which states no bit depth, and is not compared.
+- **Fixtures:** `external-ffmpeg-truehd-in-mp4.mp4` and `external-ffmpeg-truehd-51-in-mp4.mp4` (ffmpeg 6.1.1, `-c:a truehd -strict -2`; its muxer writes the sampling rate of the entry as a 32-bit integer), and the hand-built `truehd-entry-differs-in-mp4` and `truehd-dmlp-short-in-mp4`, in `tests/fixtures/mp4`.
+
 ## Memory
 
 - Units are kept as a 16-byte entry each, with a compact record for a unit with a major sync past the first 512; the figures of the series cost a few bytes more: about 50 bytes a unit on linux-x64 (`MemoryTests`).
@@ -102,7 +110,7 @@ Six checksums are declared: three cover headers, two the coded data and one, for
 
 ## Findings
 
-- Stream: `truehd.no-units`, `truehd.data-skipped`, `truehd.data-after-tag`, `truehd.units-before-major-sync`, `truehd.units-after-damage`, `truehd.units-after-end-of-stream`, `truehd.stream-parameters-change`, `truehd.atmos-signaled`, `truehd.units-limit`, `truehd.codec-id-mismatch`.
+- Stream: `truehd.no-units`, `truehd.data-skipped`, `truehd.data-after-tag`, `truehd.units-before-major-sync`, `truehd.units-after-damage`, `truehd.units-after-end-of-stream`, `truehd.stream-parameters-change`, `truehd.atmos-signaled`, `truehd.units-limit`, `truehd.codec-id-mismatch`, `truehd.dmlp-short` and `truehd.dmlp-differs` (MP4's `dmlp` box).
 - `truehd.unexpected-value` (info) also reports what the restart header says that FFmpeg does not check: channels coded past the last matrix channel, and a matrix channel that none of the substreams up to it codes (a matrix may still give it a value).
 - Units: `truehd.unit-cut`, `truehd.unit-short`, `truehd.directory-invalid`, `truehd.parity-mismatch`, `truehd.major-sync-invalid`, `truehd.major-sync-crc-mismatch`, `truehd.unexpected-value`, `truehd.unsupported`.
 - Substreams: `truehd.substream-parity-mismatch`, `truehd.substream-crc-mismatch`, `truehd.substream-end-invalid`, `truehd.substream-without-restart-header`, `truehd.restart-header-invalid`, `truehd.restart-header-crc-mismatch`, `truehd.parameters-invalid`, `truehd.block-invalid`, `truehd.block-size-check`, `truehd.parameters-change-within-unit`, `truehd.channel-assignment`.
@@ -121,7 +129,7 @@ Six checksums are declared: three cover headers, two the coded data and one, for
 ## Not covered
 
 - Stereo coding (how the matrix channels combine, as the "Stereo Coding" series of MPEG audio, AAC and ALAC report channel pairs): not covered yet. It needs the matrix and channel data of the substream blocks, the frame-level parsing that comes with the format's decoder.
-- MP4: the container does not route the codec yet (`mp4.codec-not-analyzed`). Matroska routes `A_TRUEHD` and `A_MLP` to the codec parser (`truehd` and `mlp`), which reads the packets, one access unit each; a track whose frames are zlib-compressed or header-stripped is not routed (`matroska.track-encoding-not-read`).
+- A protected Dolby TrueHD track in MP4 is named by its sample entry and not analyzed. Matroska routes `A_TRUEHD` and `A_MLP` to the codec parser (`truehd` and `mlp`), which reads the packets, one access unit each; a track whose frames are zlib-compressed or header-stripped is not routed (`matroska.track-encoding-not-read`).
 - The fourth (Atmos) substream, and MLP streams whose two channel groups have different sampling rates (`truehd.unsupported`; the units are not read, decoded or counted).
 - A negative output shift, and matrices with more than 5 channels together with noise type 0, which the description marks unsupported in FFmpeg (`truehd.unsupported`).
 - Playback and any output other than the checksum comparison.

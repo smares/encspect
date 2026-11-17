@@ -1,0 +1,131 @@
+{
+ "description": "Integer PCM in MP4 whose sample entry has no pcmC box, so nothing says the samples' byte order and size: the track is named by its sample entry and its samples are not analyzed.",
+ "length": 953,
+ "format": "MP4",
+ "boxes": [
+  [
+   "ftyp",
+   0,
+   28
+  ],
+  [
+   "moov",
+   28,
+   517
+  ],
+  [
+   "moov/mvhd",
+   36,
+   108
+  ],
+  [
+   "moov/trak",
+   144,
+   401
+  ],
+  [
+   "moov/trak/tkhd",
+   152,
+   92
+  ],
+  [
+   "moov/trak/mdia",
+   244,
+   301
+  ],
+  [
+   "moov/trak/mdia/mdhd",
+   252,
+   32
+  ],
+  [
+   "moov/trak/mdia/hdlr",
+   284,
+   45
+  ],
+  [
+   "moov/trak/mdia/minf",
+   329,
+   216
+  ],
+  [
+   "moov/trak/mdia/minf/smhd",
+   337,
+   16
+  ],
+  [
+   "moov/trak/mdia/minf/dinf",
+   353,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref",
+   361,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/dinf/dref/url ",
+   377,
+   12
+  ],
+  [
+   "moov/trak/mdia/minf/stbl",
+   389,
+   156
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd",
+   397,
+   52
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsd/ipcm",
+   413,
+   36
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stts",
+   449,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsc",
+   473,
+   28
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stsz",
+   501,
+   24
+  ],
+  [
+   "moov/trak/mdia/minf/stbl/stco",
+   525,
+   20
+  ],
+  [
+   "mdat",
+   545,
+   408
+  ]
+ ],
+ "streams": [],
+ "units": [],
+ "fields": {},
+ "findings": [
+  [
+   "mp4.codec-not-analyzed",
+   "ipcm (integer PCM)"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "mp4box": true,
+  "faad": null,
+  "skip": {
+   "faad": "faad2 reads AAC only.",
+   "ffprobe": "ffmpeg reads no ipcm entry without a pcmC box",
+   "mediainfo": "MediaInfo lists the audio track from its sample entry; the analyzer reports a stream only for a coding it analyzes (mp4.codec-not-analyzed)"
+  }
+ }
+}

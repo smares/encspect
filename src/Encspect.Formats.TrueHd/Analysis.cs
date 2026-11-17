@@ -162,6 +162,9 @@ internal sealed class Analysis
 
     public MajorSync? FirstSync => _firstSync;
 
+    // The dmlp box of an MP4 sample entry and its node, where the container hands one over.
+    public (Dmlp Box, Node Node)? Dmlp { get; set; }
+
     public MajorSync? Sync => _sync;
 
     public bool IsSynced => _isSynced;
