@@ -19,7 +19,9 @@ internal sealed class BlockReader(ByteReader reader)
 
     // Where the byte at position continues the stream: the position itself inside a stretch, the start of the next stretch at the end of one or in the container's bytes
     // between two, and the end of the last stretch past it.
-    public long Hop(long position)
+    public long Hop(long position) => Hop(position, true);
+
+    private long Hop(long position, bool skipsTail)
     {
         if (Stretches is not { } stretches)
         {
@@ -47,7 +49,7 @@ internal sealed class BlockReader(ByteReader reader)
         }
 
         // The last bytes of a stretch that cannot hold a frame header (the padding word that ends the payload of an IEC 61937 burst of an odd number of bytes) are no frame.
-        if (position >= stretches[low].Offset && stretches[low].End - position < 4 && low + 1 < stretches.Count)
+        if (skipsTail && position >= stretches[low].Offset && stretches[low].End - position < 4 && low + 1 < stretches.Count)
         {
             return stretches[low + 1].Offset;
         }
@@ -67,7 +69,7 @@ internal sealed class BlockReader(ByteReader reader)
         long at = position;
         while (count > 0)
         {
-            at = Hop(at);
+            at = Hop(at, false);
             if (at >= reader.End)
             {
                 return reader.End + count;
@@ -90,14 +92,40 @@ internal sealed class BlockReader(ByteReader reader)
         }
 
         long total = 0;
-        for (long at = Hop(from); at < to;)
+        for (long at = Hop(from, false); at < to;)
         {
             long end = Math.Min(to, StretchEnd(at));
             total += end - at;
-            at = Hop(end);
+            at = Hop(end, false);
         }
 
         return total;
+    }
+
+    // Whether count bytes from offset lie in one stretch (always, for a reader that is one stretch): a frame header does not start in one stretch and end in the next.
+    public bool IsInStretch(long offset, int count)
+    {
+        if (Stretches is not { } stretches)
+        {
+            return true;
+        }
+
+        int low = 0;
+        int high = stretches.Count - 1;
+        while (low <= high)
+        {
+            int middle = (low + high) >> 1;
+            if (stretches[middle].End <= offset)
+            {
+                low = middle + 1;
+            }
+            else
+            {
+                high = middle - 1;
+            }
+        }
+
+        return low < stretches.Count && stretches[low].Offset <= offset && offset + count <= stretches[low].End;
     }
 
     // The end of the stretch that position is in or hops to; the reader's end for a reader that is one stretch.
@@ -108,7 +136,7 @@ internal sealed class BlockReader(ByteReader reader)
             return reader.End;
         }
 
-        long at = Hop(position);
+        long at = Hop(position, false);
         foreach (ByteRange range in stretches)
         {
             if (at >= range.Offset && at < range.End)
@@ -127,7 +155,7 @@ internal sealed class BlockReader(ByteReader reader)
     public bool TryReadUInt32(long offset, out uint value)
     {
         value = 0;
-        if (offset < reader.Start || offset + 4 > reader.End)
+        if (offset < reader.Start || offset + 4 > reader.End || !IsInStretch(offset, 4))
         {
             return false;
         }
@@ -168,7 +196,7 @@ internal sealed class BlockReader(ByteReader reader)
             // Stretch by stretch, so that the container's bytes between them are not searched.
             while (from < limit)
             {
-                from = Hop(from);
+                from = Hop(from, false);
                 if (from >= limit)
                 {
                     return -1;

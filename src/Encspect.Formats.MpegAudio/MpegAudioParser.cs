@@ -111,7 +111,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
     {
         var blocks = new BlockReader(context.Reader) { Stretches = stretches };
         var findings = new FindingCollector();
-        var build = new BuildContext();
+        var build = new BuildContext { Stretches = stretches };
         var stream = new StreamState(blocks, findings, build, new BitReservoir(build.Runs, blocks.Hop), [], [], context.CancellationToken) { Context = context };
         long position = context.Reader.Start;
 
@@ -290,7 +290,9 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
                             $"The free-format frame length changes {Times(count)}, first from {from} to {to} bytes plus padding at 0x{at:X}; ISO/IEC 11172-3 requires a fixed bitrate.");
                     }
 
-                    Entry frame = AddFrame(state, regionState, at, frameLimit, header, freeLength, frameLimit < end);
+                    // A frame does not reach past its stretch: the container's bytes after it are not its own.
+                    frameLimit = Math.Min(frameLimit, blocks.StretchEnd(at));
+                    Entry frame = AddFrame(state, regionState, at, frameLimit, header, freeLength, frameLimit < Math.Min(end, frameEnd));
                     if (!frame.IsVbrHeader)
                     {
                         if (audio is { } last && header.ChannelModeBits != last.ChannelModeBits)
@@ -312,7 +314,8 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
                 {
                     freeLength = newFreeLength;
                     stream = header;
-                    Entry frame = AddFrame(state, regionState, at, end, header, freeLength);
+                    long limit = Math.Min(end, blocks.StretchEnd(at));
+                    Entry frame = AddFrame(state, regionState, at, limit, header, freeLength, limit < Math.Min(end, at + header.FrameLength(freeLength)));
                     audio = frame.IsVbrHeader ? null : header;
                     StreamChanged(current, header, FindingNode(frame));
                     FreeFormat(header, freeLength);
@@ -374,7 +377,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             if (leading && !trailing && gapEnd < end)
             {
                 string what = ZeroRunEnd(blocks, gapStart, gapEnd) == gapEnd ? " (all zero bytes)" : string.Empty;
-                findings.AddNow(Severity.Warning, "mpeg-audio.leading-junk", $"{Counts.Of(length, "byte", "bytes")} before the first frame {Counts.Agree(length, "is", "are")} not audio{what}.", GapNode(gap));
+                findings.AddNow(Severity.Warning, "mpeg-audio.leading-junk", $"{Counts.Of(length, "byte", "bytes")} before the first frame {Counts.Agree(length, "is", "are")} not audio{what}.", GapNode(gap, state.Build.Stretches));
             }
             else if (leading)
             {
@@ -382,11 +385,11 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             }
             else if (trailing)
             {
-                findings.AddNow(Severity.Warning, "mpeg-audio.trailing-data", $"{Counts.Of(length, "byte", "bytes")} after the last frame at 0x{gapStart:X} {Counts.Agree(length, "is", "are")} not a frame.", GapNode(gap));
+                findings.AddNow(Severity.Warning, "mpeg-audio.trailing-data", $"{Counts.Of(length, "byte", "bytes")} after the last frame at 0x{gapStart:X} {Counts.Agree(length, "is", "are")} not a frame.", GapNode(gap, state.Build.Stretches));
             }
             else
             {
-                findings.AddNow(Severity.Warning, "mpeg-audio.sync-lost", $"Sync is lost for {Counts.Of(length, "byte", "bytes")} at 0x{gapStart:X}.", GapNode(gap));
+                findings.AddNow(Severity.Warning, "mpeg-audio.sync-lost", $"Sync is lost for {Counts.Of(length, "byte", "bytes")} at 0x{gapStart:X}.", GapNode(gap, state.Build.Stretches));
             }
         }
     }
@@ -595,9 +598,11 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
     }
 
     // The stretches that lie in [start, end) as the ranges of a node that spans them, or null where they are one run.
-    private static IReadOnlyList<ByteRange>? RangesIn(BlockReader blocks, long start, long end)
+    private static IReadOnlyList<ByteRange>? RangesIn(BlockReader blocks, long start, long end) => Clip(blocks.Stretches, start, end);
+
+    private static IReadOnlyList<ByteRange>? Clip(IReadOnlyList<ByteRange>? stretches, long start, long end)
     {
-        if (blocks.Stretches is not { } stretches)
+        if (stretches is null)
         {
             return null;
         }
@@ -647,8 +652,25 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         return new BlockedChildren(nodes, (region.End ?? build.Frames.Count) - first, (start, length) => RegionBlock(build, first, start, length));
     }
 
-    private static Node GapNode(in Entry gap) =>
-        new("Gap", gap.Offset, gap.Length, Bytes(gap.Length)) { Description = Explain.Gap, Topic = Topics.FrameSync };
+    // A gap that a container's bytes interrupt (junk at the end of one stretch and the start of the next) covers the stretches' pieces of it only.
+    private static Node GapNode(in Entry gap, IReadOnlyList<ByteRange>? stretches)
+    {
+        long start = gap.Offset;
+        long end = gap.Offset + gap.Length;
+        IReadOnlyList<ByteRange>? ranges = null;
+        if (stretches is not null)
+        {
+            List<ByteRange> pieces = [.. stretches.Where(r => r.End > start && r.Offset < end).Select(r => new ByteRange(Math.Max(r.Offset, start), Math.Min(r.End, end) - Math.Max(r.Offset, start)))];
+            if (pieces.Count > 0)
+            {
+                start = pieces[0].Offset;
+                end = pieces[^1].End;
+                ranges = pieces.Count > 1 ? pieces : null;
+            }
+        }
+
+        return new("Gap", start, end - start, Bytes(gap.Length)) { Ranges = ranges, Description = Explain.Gap, Topic = Topics.FrameSync };
+    }
 
     private static Node FrameNode(int index, BuildContext build, NodeValue summary)
     {
@@ -1755,6 +1777,9 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
 
         public bool HasMultichannel { get; set; }
 
+        // The stretches of a stream a container hands over in pieces, or null.
+        public IReadOnlyList<ByteRange>? Stretches { get; set; }
+
         // The music CRC computed for each LAME tag, by the offset of its frame.
         public Dictionary<long, int> MusicCrcs { get; } = [];
     }
@@ -1771,7 +1796,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             ref readonly Entry entry = ref build.Frames[index];
             if (entry.IsGap)
             {
-                nodes[i] = GapNode(entry);
+                nodes[i] = GapNode(entry, build.Stretches);
                 continue;
             }
 

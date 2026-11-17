@@ -201,7 +201,7 @@ public class WavAiffDamageTests
     [Fact]
     public void ABurstStreamWithNoParserIsAStreamNode()
     {
-        Report report = Analyze(Riff(Fmt(), Chunk("data", Bursts(5, 1152, 200, 4))));
+        Report report = Analyze(Riff(Fmt(), Chunk("data", Bursts(14, 512, 200, 4))));
         StreamInfo stream = Assert.Single(report.Streams);
         Assert.Equal(NodeKind.Stream, stream.Nodes[0].Kind);
     }
