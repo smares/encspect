@@ -1,8 +1,57 @@
 {
-  "goldens": ["tests/fixtures/mp4/mp3-two-chunks-gap.report.json"],
-  "removed": [{ "scope": "finding", "code": "mpeg-audio.packets-not-analyzed" }],
+  "goldens": [
+    "tests/fixtures/mp4/mp3-two-chunks-gap.report.json"
+  ],
+  "removed": [
+    {
+      "scope": "finding",
+      "code": "mpeg-audio.packets-not-analyzed"
+    }
+  ],
   "changed": [
-    { "path": ["MP4", "mdat", "Track 1 Samples", "MPEG Audio"], "fields": ["name", "value", "unit", "children"] },
-    { "scope": "stream", "fields": ["codec", "channelMode", "channelLayout", "channelLayoutName", "categorySeries", "verification", "series", "samples", "duration", "averageBitrate", "isVbr", "encoder", "encoderConfidence", "writer", "writerConfidence"] }
+    {
+      "path": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "MPEG Audio"
+      ],
+      "fields": [
+        "value",
+        "unit",
+        "children"
+      ]
+    },
+    {
+      "scope": "stream",
+      "fields": [
+        "codec",
+        "channelMode",
+        "channelLayout",
+        "channelLayoutName",
+        "categorySeries",
+        "verification",
+        "series",
+        "samples",
+        "duration",
+        "averageBitrate",
+        "isVbr",
+        "encoder",
+        "encoderConfidence",
+        "writer",
+        "writerConfidence"
+      ]
+    }
+  ],
+  "renamed": [
+    {
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples"
+      ],
+      "from": "MPEG-1 audio",
+      "to": "MPEG Audio"
+    }
   ]
 }
