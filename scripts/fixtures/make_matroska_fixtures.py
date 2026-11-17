@@ -1763,8 +1763,8 @@ def write(name, builder, description, findings, streams, valid, extension, check
 
 
 # --- Header stripping for codecs that read their frames from the file (RFC 9559 section 5.1.4.1.31.6) ----------------------------------------
-# No writer of the project's tools strips the headers of audio (mkvmerge 82.0's only header removal is for MPEG-4 part 2 video, and ffmpeg's muxer writes none), so these are
-# hand-built from the frames of committed files: the bytes every frame starts with are in ContentCompSettings, and each block holds the rest.
+# The project's current tools do not strip the headers of audio (mkvmerge 82.0's only header removal is for MPEG-4 part 2 video, and ffmpeg's muxer writes none; old mkvmerge
+# releases do, whose files are the external-mkvmerge*-header-stripped ones), so these are hand-built from the frames of committed files: the bytes every frame starts with are in ContentCompSettings, and each block holds the rest.
 
 MPEG_AUDIO = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "mpeg-audio"
 
