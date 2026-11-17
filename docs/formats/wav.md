@@ -167,7 +167,7 @@ The samples of a WAVE or Wave64 file are the data, so the decoder `pcm` (`Encspe
 
 ## PCM in other containers
 
-The codec parser `pcm-samples` (`PcmCodecParser`, in this project) reads PCM samples that MP4 hands over with the layout of the sample entry, and starts the same decoder `pcm`. The stream has the statistics of a WAV file's, from the entry instead of the `fmt ` chunk; the packets are the track's bytes, read only where the decoder runs. `pcm.partial-sample-frame` is `wav.partial-sample-frame` for such a track. The cases are in [mp4.md](mp4.md#pcm); the Matroska ones follow.
+The codec parser `pcm-samples` (`PcmCodecParser`, in this project) reads PCM samples that MP4 hands over with the layout of the sample entry, and starts the same decoder `pcm`. The stream has the statistics of a WAV file's, from the entry instead of the `fmt ` chunk; the packets are the track's bytes, read only where the decoder runs. `pcm.partial-sample-frame` is `wav.partial-sample-frame` for such a track. The cases are in [mp4.md](mp4.md#pcm) and [matroska.md](matroska.md#what-is-routed): Matroska's `A_PCM/INT/LIT`, `A_PCM/INT/BIG` and `A_PCM/FLOAT/IEEE` tracks, whose layout is the codec ID's and the Audio element's BitDepth, so a track without a depth is not read (`matroska.pcm-layout-not-read`).
 
 ## What is not covered
 

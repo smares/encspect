@@ -369,7 +369,7 @@ internal sealed partial class FileReader
             areFramesEncrypted ? NodeValue.Text("frames not read: encrypted") : NodeValue.Integer(statistics.Frames, "frames", "frame"))
         {
             Description = areFramesEncrypted ? Explain.TrackFramesEncrypted : Explain.TrackFrames,
-            Topic = areFramesEncrypted ? Topics.ContentEncryption : Topics.Tracks,
+            Topic = areFramesEncrypted ? Topics.ContentEncryption : codec == Codecs.PcmSamples ? Topics.PcmInMatroska : Topics.Tracks,
         };
         _file.Add(node);
         if (flacTrailing is not null)
