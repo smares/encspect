@@ -147,13 +147,10 @@ internal sealed class ImageMap
         }
         else
         {
-            placed = new Node(node.Name, offset, length, node.Value, build)
-            {
-                Kind = node.Kind,
-                Description = node.Description,
-                Topic = node.Topic,
-                Ranges = ranges.Count > 1 ? ranges : null,
-            };
+            IReadOnlyList<ByteRange>? spread = ranges.Count > 1 ? ranges : null;
+            placed = build is null
+                ? new Node(node.Name, offset, length, node.Value) { Kind = node.Kind, Description = node.Description, Topic = node.Topic, Ranges = spread }
+                : new Node(node.Name, offset, length, node.Value, build) { Kind = node.Kind, Description = node.Description, Topic = node.Topic, Ranges = spread };
         }
 
         if (build is null)
