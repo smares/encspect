@@ -32,7 +32,7 @@ internal readonly record struct MainDataPlacement(long Reservoir, int Earlier, M
 //
 // Every main-data byte is recorded as a run owned by its frame. Where main data overlaps the
 // previous frame's or does not fit its frame, the earlier owner keeps the bytes.
-internal sealed class BitReservoir(ChunkedList<MainDataRun> runs)
+internal sealed class BitReservoir(ChunkedList<MainDataRun> runs, Func<long, long>? hop = null)
 {
     // main_data_begin is at most 511 bytes, so older frames never matter again.
     private const int Reach = 512;
@@ -79,7 +79,7 @@ internal sealed class BitReservoir(ChunkedList<MainDataRun> runs)
         long reservoir = Math.Max(0, start - _previousEnd - _lastLost);
         long begin = start - mainDataBegin;
         long mainEnd = begin + mainDataLength;
-        bool gapBefore = _gapPending || (_frameEnd is { } previousFrameEnd && previousFrameEnd != frameOffset);
+        bool gapBefore = _gapPending || (_frameEnd is { } previousFrameEnd && previousFrameEnd != frameOffset && (hop?.Invoke(previousFrameEnd) ?? previousFrameEnd) != frameOffset);
         int earlierAreas = _recent.Count;
         if (dataLength > 0)
         {

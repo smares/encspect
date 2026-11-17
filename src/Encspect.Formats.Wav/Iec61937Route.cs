@@ -27,7 +27,11 @@ internal static class Iec61937Route
     public static bool ParseBursts(State s, WaveFormat format, DataChunk data, BurstChain chain, string codec)
     {
         (BurstRun run, Node container) = Walk(s, data, chain);
-        bool isRouted = s.Context.ParsePackets(codec, data.Node, run.Payloads());
+        // The MPEG audio parser keeps the payloads' ranges and reads them again from the file, with the pairs of bytes swapped back.
+        CodecConfiguration? configuration = codec == "mpeg-audio"
+            ? new CodecConfiguration(MappedBytes.Opaque(ReadOnlyMemory<byte>.Empty, data.Node.Offset, data.Node.Offset), data.Node) { Source = s.Context.Reader, IsWordSwapped = true }
+            : null;
+        bool isRouted = s.Context.ParsePackets(codec, data.Node, run.Payloads(), configuration);
         if (!isRouted)
         {
             // No codec parser: the walk still reads the bursts for their findings.
@@ -54,9 +58,10 @@ internal static class Iec61937Route
             $"The data holds {Counts.Of(bursts, "data-burst", "data-bursts")} of IEC 61937 with {name} frames, as S/PDIF passthrough writes them, not samples; the fmt chunk describes the carrier ({bits} bits, {Counts.Of(channels, "channel", "channels")} at {rate} Hz), and the stream is read as {stream.Codec}.");
 
         // The link runs at the sampling rate of the coding, and at four times it for E-AC-3 (IEC 61937-1 6.1.5; Microsoft, "Representing Formats for IEC 61937 Transmissions").
-        // For AAC nothing read says how the link rate relates to the sampling rate of the low sampling frequency types or of a stream with SBR, so it is not compared.
+        // For AAC nothing read says how the link rate relates to the sampling rate of the low sampling frequency types or of a stream with SBR, and nothing read says it for
+        // the low sampling frequency types of MPEG audio (data types 8 to 10), so those are not compared.
         long expected = chain.Type.Codec == "e-ac-3" ? 4L * stream.SampleRate : stream.SampleRate;
-        if (chain.Type.Codec != "aac-adts" && stream.SampleRate > 0 && rate > 0 && rate != expected)
+        if (chain.Type.Codec != "aac-adts" && chain.DataType is not (8 or 9 or 10) && stream.SampleRate > 0 && rate > 0 && rate != expected)
         {
             int content = stream.SampleRate;
             s.Findings.Add(Severity.Warning, "wav.iec61937-rate-mismatch", s.FormatChunkNode ?? s.Container, _ =>

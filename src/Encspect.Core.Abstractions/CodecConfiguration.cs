@@ -35,6 +35,15 @@ public sealed record CodecConfiguration
     // Opus, as for AAC and AC-3). Matroska resolves the writer of such a stream itself, so it leaves this false.
     public bool IsWriterFromContainer { get; init; }
 
+    // The container's reader of the whole file, for a codec parser that reads its packets again after a first pass (the MPEG audio parser keeps their file ranges, not their
+    // bytes): it reads the packets' file ranges on demand. A parser that reads from it puts the position back where it was, so the container's own reads go on undisturbed;
+    // null where the container hands over none.
+    public ByteReader? Source { get; init; }
+
+    // Whether the bytes of every packet are the file's bytes of its ranges with each pair of bytes swapped (the 16-bit words of IEC 61937 payloads, which the file holds as
+    // samples); false for packets that are the file's bytes as they are.
+    public bool IsWordSwapped { get; init; }
+
     // The WAVEFORMATEX the container states for the stream (WAV, AVI, ASF), or null: its figures
     // come with the configuration, whose Data then holds the bytes after the structure.
     public AudioFormat? Format { get; init; }

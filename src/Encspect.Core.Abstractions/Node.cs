@@ -22,7 +22,7 @@ public sealed class Node
 
     private const int LeastSignificantFirstFlag = 8;
 
-    private readonly IReadOnlyList<ByteRange>? _ranges;
+    private IReadOnlyList<ByteRange>? _ranges;
 
     public Node(string name, long offset, long length, NodeValue? value = null)
         : this(name, offset, length, value, null)
@@ -81,7 +81,7 @@ public sealed class Node
     public IReadOnlyList<ByteRange>? Ranges
     {
         get => _ranges;
-        init => _ranges = Normalize(value);
+        set => _ranges = Normalize(value);
     }
 
     public NodeValue? Value { get; set; }

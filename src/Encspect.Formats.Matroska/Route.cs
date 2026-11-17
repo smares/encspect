@@ -370,6 +370,12 @@ internal sealed partial class FileReader
         // Ciphertext is no valid coding: the codec parser gets the clear configuration (and the headers that come from it) and no frame.
         int streamsBefore = _context.Streams.Count;
         IEnumerable<MappedBytes> packets = areFramesEncrypted ? headers : Packets(segment, track, segment.BlocksByTrack?.GetValueOrDefault(track.Number ?? 0), headers, plan.Frames.Decoder);
+        if (codec == "mpeg-audio")
+        {
+            // The MPEG audio parser keeps the packets' ranges and reads them again from the file.
+            configuration = (configuration ?? new CodecConfiguration(MappedBytes.Opaque(ReadOnlyMemory<byte>.Empty, node.Offset, node.Offset), node)) with { Source = _context.Reader };
+        }
+
         bool routed = _context.ParsePackets(codec, node, packets, configuration, segment.StreamClaims);
         if (!routed)
         {

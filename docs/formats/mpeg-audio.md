@@ -366,6 +366,16 @@ The decoder (`mpeg-audio`, codec ID of the parser) follows minimp3 (CC0 1.0, `th
 - **Accuracy:** the output agrees with minimp3's float output and with FFmpeg's float decoders within the bounds of [development.md](../development.md#mpeg-audio-decoding); neither is claimed bit-exact.
 - **Cost:** 4,096 work units are allowed per byte of the file. A frame charges 22 units per sample of each channel plus the stages (Layer III 41, Layers I and II 29, and 8 more in a multichannel stream).
 
+## Packets from containers
+
+MP4 (one sample per frame or several), Matroska (`A_MPEG/L1`, `L2`, `L3`) and WAV (the payloads of IEC 61937 bursts) hand the stream over as packets, each the bytes of the file it came from. The parser reads them as the same bytes in a file, in one pass and then again for the figures and the decoder, so it keeps only their file ranges (`PacketImage`) and reads the bytes again from the container's reader (`CodecConfiguration.Source`; for IEC 61937 with the pairs of bytes swapped back): its memory does not grow with the stream, and `MemoryTests` holds what it keeps of a long track to what an MP3 file of the same frames costs plus the ranges.
+
+- **Stretches:** packets that follow one another in the file are one stretch; the bytes between stretches (the other tracks' chunks, a Matroska block's header, a burst's preamble and stuffing) belong to the container. A search for sync skips them, the frame after a stretch's end is the one at the next stretch's start, and no gap, junk or lost-sync finding comes of them.
+- **Continuity:** the bit reservoir (`main_data_begin`) runs on across stretches, as the frames run on; so does the music CRC of a LAME tag, over the stream's bytes (`MusicLength` counts bytes of the stream, not of the file). The last bytes of a stretch that cannot hold a frame header (the padding word of an IEC 61937 burst of an odd frame length) are not a frame.
+- **Nodes:** the stream node and the figures that span it (statistics, encoder, writer) have the stretches as their ranges; frames lie inside one stretch each.
+- **Not read:** packets that are not bytes of the file in one piece (frames of a Matroska track that is compressed or stripped; header stripping is planned in [plan.md](../plan.md)), which are `mpeg-audio.packets-not-analyzed`, and frames that cross a packet boundary.
+- **Fixtures:** `mp3-two-chunks-gap.mp4` (hand-built), `external-ffmpeg-mp3-two-tracks-in-mp4.mp4` (ffmpeg's muxer interleaving two tracks, `make_external_mpeg_in_mp4_fixtures.py`), the Matroska files `external-ffmpeg-mp2.mka`, `external-ffmpeg-mp3.mka` and `external-mkvmerge-mp3.mka`, and the three `external-iec61937-mp*.wav` files (ffmpeg's spdif muxer). `MpegPacketRouteTests` holds each Matroska track's decoded audio equal to that of its own MP2 or MP3 file.
+
 ## Not yet covered
 
 - The multilingual channels of the MPEG-2 multichannel extension are read for the CRC and counted, not decoded: no stream without an extension bitstream holds any.

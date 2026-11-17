@@ -94,7 +94,7 @@ public sealed partial class MpegAudioParser
         {
             Entry frame = state.Build.Frames[index];
             long position = frame.Offset;
-            long end = frame.Offset + vbr.MusicLength;
+            long end = state.Blocks.Advance(frame.Offset, vbr.MusicLength);
             Node node = FindingNode(frame);
             if (vbr.MusicLength == 0)
             {
@@ -129,7 +129,7 @@ public sealed partial class MpegAudioParser
                 continue;
             }
 
-            int crc = running[end] ^ VbrHeader.LameCrcShift(running[frame.End], end - frame.End);
+            int crc = running[end] ^ VbrHeader.LameCrcShift(running[frame.End], state.Blocks.Between(frame.End, end));
             state.Build.MusicCrcs[position] = crc;
             if (crc == vbr.StoredMusicCrc)
             {
@@ -159,7 +159,7 @@ public sealed partial class MpegAudioParser
         foreach ((int index, VbrHeader vbr) in state.LameTags)
         {
             Entry frame = state.Build.Frames[index];
-            long end = frame.Offset + vbr.MusicLength;
+            long end = state.Blocks.Advance(frame.Offset, vbr.MusicLength);
             if (end >= frame.End && end <= state.Blocks.End)
             {
                 positions.Add(frame.End);
@@ -172,9 +172,17 @@ public sealed partial class MpegAudioParser
         long at = positions.Count > 0 ? positions.Min : 0;
         foreach (long position in positions)
         {
-            for (; at < position; at += Math.Min(MusicCrcChunk, position - at))
+            while (at < position)
             {
-                crc = VbrHeader.LameCrc(state.Blocks.Read(at, (int)Math.Min(MusicCrcChunk, position - at)), crc);
+                at = state.Blocks.Hop(at);
+                if (at >= position)
+                {
+                    break;
+                }
+
+                int count = (int)Math.Min(Math.Min(MusicCrcChunk, position - at), state.Blocks.StretchEnd(at) - at);
+                crc = VbrHeader.LameCrc(state.Blocks.Read(at, count), crc);
+                at += count;
             }
 
             running[position] = crc;

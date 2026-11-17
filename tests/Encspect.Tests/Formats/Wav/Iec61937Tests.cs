@@ -83,6 +83,9 @@ public class Iec61937Tests
     [InlineData("wav/external-iec61937-eac3-stereo-192k.wav", "E-AC-3", 48000, 2, 4 * 1536 / 48000.0)]
     [InlineData("wav/external-iec61937-dts-stereo-768k.wav", "DTS", 48000, 2, 10 * 512 / 48000.0)]
     [InlineData("wav/external-iec61937-aac-stereo-128k.wav", "AAC LC", 48000, 2, 6 * 1024 / 48000.0)]
+    [InlineData("wav/external-iec61937-mp2-stereo-192k.wav", "MPEG-1 Layer II", 48000, 2, 5 * 1152 / 48000.0)]
+    [InlineData("wav/external-iec61937-mp2-lsf-24000.wav", "MPEG-2 Layer II", 24000, 2, 6 * 576 / 24000.0)]
+    [InlineData("wav/external-iec61937-mp3-stereo-128k.wav", "MPEG-1 Layer III", 44100, 2, 5 * 1152 / 44100.0)]
     public void TheStreamIsTheCodingsNotTheCarriers(string name, string codec, int rate, int channels, double seconds)
     {
         StreamInfo stream = Assert.Single(Fixtures.AnalyzeMpeg(name).Streams);
@@ -113,8 +116,8 @@ public class Iec61937Tests
     }
 
     [Theory]
-    [InlineData("wav/external-iec61937-mp2-stereo-192k.wav", "MPEG-1 Layer II or III", 5 * 1152 / 48000.0)]
-    [InlineData("wav/external-iec61937-mp2-lsf-24000.wav", "MPEG-2 Layer II", 3 * 2304 / 48000.0)]
+    [InlineData("wav/built-iec61937-atrac.wav", "ATRAC", 4 * 512 / 44100.0)]
+    [InlineData("wav/built-iec61937-atrac-x-low-latency.wav", "ATRAC-X low latency", 5 * 128 / 48000.0)]
     public void ACodingWithoutAParserIsDescribedByItsBursts(string name, string codec, double seconds)
     {
         Report report = Fixtures.AnalyzeMpeg(name);
