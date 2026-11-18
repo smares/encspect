@@ -801,7 +801,7 @@ public sealed partial class AsfParser
                 ushort type = e.Word("Type", Explain.CodecType, v => NodeValue.Text(v switch { 1 => "Video codec", 2 => "Audio codec", 0xFFFF => "Unknown codec", _ => $"0x{v:X4}" }));
                 ushort nameLength = e.Word("Codec Name Length", Explain.CodecNameLength, "characters");
                 string name = e.Unicode("Codec Name", nameLength * 2L, Explain.CodecName);
-                ushort descriptionLength = e.Word("Codec Description Length", Explain.CodecDescriptionLength, "characters");
+                ushort descriptionLength = e.Word("Codec Description Length", Explain.CodecDescriptionLength, v => NodeValue.Integer(v, "characters", "character"));
                 string description = e.Unicode("Codec Description", descriptionLength * 2L, Explain.CodecDescription);
                 ushort infoLength = e.Word("Codec Information Length", Explain.CodecInformationLength, "bytes");
                 if (infoLength > 0)
@@ -825,7 +825,7 @@ public sealed partial class AsfParser
 
     private static void ParseScriptCommand(State state, Node parent, ObjectHeader header, long end)
     {
-        (Node node, Fields f) = Begin(state, parent, header, end, "Script Command Object", Explain.ScriptCommand);
+        (Node node, Fields f) = Begin(state, parent, header, end, "Script Command Object", Explain.ScriptCommand, Topics.AsfScriptsAndMarkers);
         Body(state, node, f, 44, () =>
         {
             f.Guid("Reserved", Explain.ScriptReserved);
@@ -847,7 +847,7 @@ public sealed partial class AsfParser
                     return;
                 }
 
-                ushort length = f.Word("Command Type Name Length", Explain.CommandTypeNameLength, "characters");
+                ushort length = f.Word("Command Type Name Length", Explain.CommandTypeNameLength, v => NodeValue.Integer(v, "characters", "character"));
                 types.Add(f.Unicode("Command Type Name", length * 2L, Explain.CommandTypeName));
             }
 
@@ -870,7 +870,7 @@ public sealed partial class AsfParser
                 var c = new Fields(f.Reader, entry);
                 uint time = c.Dword("Presentation Time", Explain.CommandPresentationTime, "ms");
                 ushort typeIndex = c.Word("Type Index", Explain.CommandTypeIndex);
-                ushort length = c.Word("Command Name Length", Explain.CommandNameLength, "characters");
+                ushort length = c.Word("Command Name Length", Explain.CommandNameLength, v => NodeValue.Integer(v, "characters", "character"));
                 string name = c.Unicode("Command Name", length * 2L, Explain.CommandName);
                 string typeName = typeIndex < types.Count ? types[typeIndex] : "?";
                 var shown = new Node("Command", at, f.Position - at, $"{typeName}: {name} at {time} ms") { Description = Explain.Command };
@@ -890,7 +890,7 @@ public sealed partial class AsfParser
 
     private static void ParseMarker(State state, Node parent, ObjectHeader header, long end)
     {
-        (Node node, Fields f) = Begin(state, parent, header, end, "Marker Object", Explain.Marker);
+        (Node node, Fields f) = Begin(state, parent, header, end, "Marker Object", Explain.Marker, Topics.AsfScriptsAndMarkers);
         Body(state, node, f, 48, () =>
         {
             f.Guid("Reserved", Explain.MarkerReserved);
@@ -926,7 +926,7 @@ public sealed partial class AsfParser
                 ushort entryLength = m.Word("Entry Length", Explain.MarkerEntryLength, "bytes");
                 m.Dword("Send Time", Explain.MarkerSendTime, "ms");
                 m.Dword("Flags", Explain.MarkerFlags, v => NodeValue.Hex(v, 8));
-                uint descriptionLength = m.Dword("Marker Description Length", Explain.MarkerDescriptionLength, "characters");
+                uint descriptionLength = m.Dword("Marker Description Length", Explain.MarkerDescriptionLength, v => NodeValue.Integer(v, "characters", "character"));
                 string description = m.Unicode("Marker Description", descriptionLength * 2L, Explain.MarkerDescription);
                 var shown = new Node("Marker", at, f.Position - at, description) { Description = Explain.MarkerEntry };
                 foreach (Node child in entry.Children)
