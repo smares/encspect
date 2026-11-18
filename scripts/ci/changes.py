@@ -65,7 +65,7 @@ AREAS = {
     "wavpack-crosscheck": {
         "projects": ["Encspect.Formats.WavPack", "Encspect.Tags.Ape"],
         "fixtures": ["wavpack"],
-        "scripts": ["crosscheck_wavpack_fixtures.py"],
+        "scripts": ["crosscheck_wavpack_fixtures.py", "crosscheck_wavpack_legacy_fixtures.py"],
         "globs": ["scripts/fixtures/*.c", "scripts/fixtures/make_*wavpack*", "scripts/fixtures/wavpack_*"],
     },
     "monkeys-audio-crosscheck": {
