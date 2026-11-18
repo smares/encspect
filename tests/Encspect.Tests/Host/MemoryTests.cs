@@ -1505,6 +1505,23 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         Assert.True(heldPerBlock < DecodingFrameBound, $"Decoding held {heldPerBlock:F2} more bytes per further block at the last block than the analysis ends with. {RuntimeSettings()}");
     }
 
+    // A WavPack file of versions 1 to 3 is one bitstream the decoder reads in chunks and decodes in batches of 4,096 samples, so what decoding holds does not grow
+    // with the batches. The files hold zero bits, which decode to a stream of the stated length (the CRC does not hold; the finding is one count).
+    [Fact]
+    public void DecodingALongWavPack1To3StreamHoldsNothingPerBatch()
+    {
+        const int fewer = 200;
+        const int batches = 800;
+        byte[] Build(int count) => DecoderWorkTests.WavPackCases.LegacyZeros("external-wv340-high.wv", (count * 4096 / 2) + 4096, (uint)(count * 4096));
+
+        (long fewerHeld, _) = LastFrameReading("legacy.wv", Build(fewer), fewer, 4096);
+        (long held, _) = LastFrameReading("legacy.wv", Build(batches), batches, 4096);
+
+        double heldPerBatch = (held - fewerHeld) / (double)(batches - fewer);
+        Output.WriteLine($"Held above the end state at the last batch: {fewerHeld} at {fewer} batches and {held} at {batches} ({Hundredths(heldPerBatch)} per further batch)");
+        Assert.True(heldPerBatch < DecodingFrameBound, $"Decoding held {heldPerBatch:F2} more bytes per further batch at the last batch than the analysis ends with. {RuntimeSettings()}");
+    }
+
     // A TrueHD file keeps a 16-byte entry per access unit and the figures of its graphs, 60 bytes a unit in all on linux-x64 (69 at peak). The bounds are
     // about twice that.
     [Fact]

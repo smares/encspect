@@ -1425,10 +1425,10 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         }
 
         // The same with a bitstream of zero bits, the cheapest code there is, which is where a byte of a legitimate file carries the most samples.
-        internal static byte[] LegacyZeros(string fixture, int bytes)
+        internal static byte[] LegacyZeros(string fixture, int bytes, uint samples = int.MaxValue)
         {
             byte[] head = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "wavpack", "legacy", fixture))[..80];
-            BinaryPrimitives.WriteUInt32LittleEndian(head.AsSpan(60), int.MaxValue);
+            BinaryPrimitives.WriteUInt32LittleEndian(head.AsSpan(60), samples);
             return [.. head, .. new byte[bytes]];
         }
 
