@@ -44,7 +44,7 @@ public sealed partial class MpegAudioParser
         {
             string text = claim.Text.Trim();
             HashSet<string> claimed = FamiliesOf(text);
-            string evidence = $"{claim.Description} at {state.Findings.At(claim.Source.Offset)} names \"{text}\"";
+            string evidence = $"{claim.Description} at 0x{claim.Source.Offset:X} names \"{text}\"";
             if (encoder is null)
             {
                 // ffmpeg's muxer writes its own version whatever encoded the stream.
@@ -82,7 +82,7 @@ public sealed partial class MpegAudioParser
             else
             {
                 string name = encoder.Value!.ToString();
-                state.Findings.Add(Severity.Info, "mpeg-audio.encoder-claim-differs", claim.Source, _ =>
+                state.Findings.AddInFile(Severity.Info, "mpeg-audio.encoder-claim-differs", claim.Source, _ =>
                     $"The {claim.Description} names \"{text}\", but the stream points to {name}; the tag may have been written by other software, or kept when the audio was re-encoded.");
             }
         }

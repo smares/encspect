@@ -421,7 +421,7 @@ internal sealed class DtsAnalysis
             new(name, first.Node!.Offset, first.Node.Length, value) { Kind = kind, Ranges = first.Node.Ranges, Description = description, Topic = topic };
 
         Node? encoder = DtsEncoder.Detect(claims, (name, value, description) => Cover(name, value, NodeKind.Detail, description, ClaimRoles.TopicOf(name)),
-            (claim, text) => Findings.Add(Severity.Info, "dts.encoder-claim", () => claim.Source, _ =>
+            (claim, text) => Findings.AddInFile(Severity.Info, "dts.encoder-claim", () => claim.Source, _ =>
                 $"The {claim.Description} names \"{text}\"; nothing in the stream confirms or contradicts it."));
         if (encoder is not null)
         {
@@ -429,8 +429,8 @@ internal sealed class DtsAnalysis
         }
 
         Node? writer = WriterDetection.Detect(claims, (name, value, description) => Cover(name, value, NodeKind.Detail, description, ClaimRoles.TopicOf(name)),
-            (claim, text, name) => Findings.Add(Severity.Info, "dts.writer-claim-differs", () => claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
-            format: new WriterDetection.StreamFormat(KnownWriters.Dts, "DTS", (claim, message, node) => Findings.Add(Severity.Info, "dts.writer-other-format", () => node, _ => message)));
+            (claim, text, name) => Findings.AddInFile(Severity.Info, "dts.writer-claim-differs", () => claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
+            format: new WriterDetection.StreamFormat(KnownWriters.Dts, "DTS", (claim, message, node) => Findings.AddInFile(Severity.Info, "dts.writer-other-format", () => node, _ => message)));
         if (writer is not null)
         {
             first.Leading.Add(writer);

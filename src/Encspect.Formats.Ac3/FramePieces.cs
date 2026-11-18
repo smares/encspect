@@ -133,4 +133,21 @@ internal sealed class FramePieces
             Ranges = pieces,
         };
     }
+
+    // A field of the frame at a position of the records, made at that position, as the frame's tree places it (Tree.Bits): in the frame's pieces where the frame is in pieces and
+    // the field ends inside their bytes, else where it was made. The frame is named rather than looked up, since a field past a frame's pieces lies where the next frame's are.
+    public Node PlaceIn(long position, Node node)
+    {
+        if (IsEmpty || !TryGet(position, out List<ByteRange> pieces))
+        {
+            return node;
+        }
+
+        long total = pieces.Sum(p => (long)p.Length);
+        long start = (node.Offset - position) * 8 + (node.BitOffset ?? 0);
+        long end = node.BitLength is { } bits ? start + bits : (node.End - position) * 8;
+        return start < 0 || end > total * 8
+            ? node
+            : Node.FromBits(node.Name, new MappedBytes(new byte[total], pieces), start, end, node.Value, node.Kind, node.Description, node.Topic, node.BitOrder);
+    }
 }
