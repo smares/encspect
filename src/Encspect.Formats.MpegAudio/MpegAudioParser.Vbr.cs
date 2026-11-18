@@ -452,8 +452,8 @@ public sealed partial class MpegAudioParser
         long offset = region.AudioStart;
         long length = region.AudioEnd - offset;
         return WriterDetection.Detect(all, (name, value, description) => new Node(name, offset, length, value) { Description = description, Topic = ClaimRoles.TopicOf(name) },
-            (claim, text, name) => state.Findings.Add(Severity.Info, "mpeg-audio.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
-            format: new WriterDetection.StreamFormat(KnownWriters.MpegAudio, "MPEG audio", (claim, message, node) => state.Findings.Add(Severity.Info, "mpeg-audio.writer-other-format", node, _ => message)));
+            (claim, text, name) => state.Findings.AddInFile(Severity.Info, "mpeg-audio.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
+            format: new WriterDetection.StreamFormat(KnownWriters.MpegAudio, "MPEG audio", (claim, message, node) => state.Findings.AddInFile(Severity.Info, "mpeg-audio.writer-other-format", node, _ => message)));
     }
 
     // The encoder named by the stream's own evidence, without its VBR headers.
