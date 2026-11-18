@@ -12,9 +12,9 @@ public sealed class SpeexDecoder : IDecoder
 
     public bool DeclaresChecksums => false;
 
-    // The cheapest legitimate packets, the 2.15 kbps vocoder mode and ultra-wideband at about 4 kbps, need about 2,200 to 3,600 units a byte (docs/design/lossy-decoders.md, "Per-byte
-    // allowance").
-    public long WorkPerInputByte => 4096;
+    // The cheapest legitimate packets, the 2.15 kbps vocoder mode and ultra-wideband at about 4 kbps, need about 4,000 to 6,100 units a byte at the weights of FrameDecoder.SynthesisUnits (docs/design/lossy-decoders.md,
+    // "Per-byte allowance").
+    public long WorkPerInputByte => 8192;
 
     public IFrameDecoder Open(DecodeContext context)
     {
