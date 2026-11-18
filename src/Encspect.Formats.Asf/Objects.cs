@@ -13,6 +13,7 @@ public sealed partial class AsfParser
     // Entries of a list inside an object (codecs, encryption records) become nodes up to this count; the rest of
     // the object is left as it is, with a finding.
     private const int MaxListEntries = 1000;
+    private const int MarkerEntryMinimum = 8 + 8 + 2 + 4 + 4 + 4;
 
     // Objects nest at most this deep (header, extension, extended stream properties, stream
     // properties), so the tree stays well within Node.MaxDepth.
@@ -830,18 +831,37 @@ public sealed partial class AsfParser
             f.Guid("Reserved", Explain.ScriptReserved);
             ushort commands = f.Word("Commands Count", Explain.CommandsCount);
             ushort typeCount = f.Word("Command Types Count", Explain.CommandTypesCount);
+            node.Value = NodeValue.Integer(commands, "commands", "command");
             var types = new List<string>();
             for (int i = 0; i < typeCount; i++)
             {
+                if (i == MaxListEntries)
+                {
+                    TooManyEntries(state, node, f, $"{typeCount} command types", "from");
+                    return;
+                }
+
+                if (f.Remaining < 2)
+                {
+                    state.Findings.AddNow(Severity.Warning, "asf.command-count", $"The Script Command Object counts {Counts.Of(typeCount, "command type", "command types")}, but its data holds {i}.", node.Children[^1]);
+                    return;
+                }
+
                 ushort length = f.Word("Command Type Name Length", Explain.CommandTypeNameLength, "characters");
                 types.Add(f.Unicode("Command Type Name", length * 2L, Explain.CommandTypeName));
             }
 
             for (int i = 0; i < commands; i++)
             {
-                if (i == 1000)
+                if (i == MaxListEntries)
                 {
-                    f.Bytes("Further Commands", f.Remaining, Explain.FurtherEntries);
+                    TooManyEntries(state, node, f, $"{commands} commands", "from");
+                    break;
+                }
+
+                if (f.Remaining < 8)
+                {
+                    state.Findings.AddNow(Severity.Warning, "asf.command-count", $"The Script Command Object counts {Counts.Of(commands, "command", "commands")}, but its data holds {i}.", node.Children[^1]);
                     break;
                 }
 
@@ -865,8 +885,6 @@ public sealed partial class AsfParser
                     state.Findings.AddNow(Severity.Warning, "asf.command-type-index", $"A script command at 0x{at:X} names command type {typeIndex}, but the object lists {types.Count}.", shown);
                 }
             }
-
-            node.Value = NodeValue.Integer(commands, "commands", "command");
         });
     }
 
@@ -880,12 +898,23 @@ public sealed partial class AsfParser
             f.Word("Reserved", Explain.MarkerReservedWord);
             ushort nameLength = f.Word("Name Length", Explain.MarkerNameLength, "bytes");
             f.Unicode("Name", nameLength, Explain.MarkerName);
+            if (nameLength % 2 != 0)
+            {
+                state.Findings.AddNow(Severity.Warning, "asf.string-odd-length", $"The name in the Marker Object is {Counts.Of(nameLength, "byte", "bytes")}, not whole UTF-16 characters.", node.Children[^1]);
+            }
+
             node.Value = NodeValue.Integer(count, "markers", "marker");
             for (uint i = 0; i < count; i++)
             {
-                if (i == 1000)
+                if (i == MaxListEntries)
                 {
-                    f.Bytes("Further Markers", f.Remaining, Explain.FurtherEntries);
+                    TooManyEntries(state, node, f, $"{count} markers", "from");
+                    break;
+                }
+
+                if (f.Remaining < MarkerEntryMinimum)
+                {
+                    state.Findings.AddNow(Severity.Warning, "asf.marker-count", $"The Marker Object counts {Counts.Of(count, "marker", "markers")}, but its data holds {i}.", node.Children[^1]);
                     break;
                 }
 
