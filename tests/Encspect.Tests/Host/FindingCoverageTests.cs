@@ -266,7 +266,7 @@ public partial class FindingCoverageTests
     [GeneratedRegex("\"(tak\\.[a-z0-9]+(?:-[a-z0-9]+)*)\"")]
     private static partial Regex TakCode();
 
-    // Every code the TAK parsers emit is listed by a fixture's manifest or raised by a crafted file of TakFindingTests.
+    // Every code the TAK parsers emit is listed by a fixture's manifest or raised by a crafted file of TakFindingTests or TakFrameTests.
     [Fact]
     public void EveryTakCodeIsAsserted()
     {
@@ -277,7 +277,7 @@ public partial class FindingCoverageTests
         Assert.True(emitted.Count > 15, $"Found only {emitted.Count} codes.");
 
         var asserted = new HashSet<string>();
-        foreach (string file in new[] { "Formats/Tak/TakFindingTests.cs" })
+        foreach (string file in new[] { "Formats/Tak/TakFindingTests.cs", "Formats/Tak/TakFrameTests.cs" })
         {
             asserted.UnionWith(TakCode().Matches(File.ReadAllText(Path.Combine(root, "tests", "Encspect.Tests", file))).Select(m => m.Groups[1].Value));
         }
