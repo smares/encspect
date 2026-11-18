@@ -150,7 +150,7 @@ def manifest(name, description, source, data, extra, opens):
 
 def main():
     build_all()
-    for old in DIRECTORY.glob("built-legacy-*"):
+    for old in [*DIRECTORY.glob("built-legacy-*.wv"), *DIRECTORY.glob("built-legacy-*.expected.json")]:
         old.unlink()
     for name, (description, source, change, extra, opens) in FIXTURES.items():
         data = change(base(source))

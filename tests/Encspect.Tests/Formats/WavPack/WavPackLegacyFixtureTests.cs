@@ -273,3 +273,73 @@ public class WavPackLegacyCraftedTests
     }
 }
 
+// Which parser names a file of versions 1 to 3: the WavPack parser's sniff outranks the WAV parser's, which steps back to class 70 where the data chunk starts with
+// the WavPack header and is unchanged otherwise.
+public class WavPackLegacySniffTests
+{
+    public static TheoryData<string> Names
+    {
+        get
+        {
+            var data = new TheoryData<string>();
+            // The ID3v2 tag in front of one file is the host's: the parsers sniff what is left, which the analysis tests cover.
+            foreach (string path in Directory.EnumerateFiles(Path.Combine(Fixtures.FixtureDirectory, "wavpack", "legacy"), "*.wv").Where(p => !p.Contains("id3v2-leading", StringComparison.Ordinal)).Order(StringComparer.Ordinal))
+            {
+                data.Add(Path.GetFileName(path));
+            }
+
+            return data;
+        }
+    }
+
+    private static SniffResult Sniff(IFormatParser parser, string name)
+    {
+        using FileStream stream = File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, "wavpack", "legacy", name));
+        return parser.Sniff(new SniffContext(new ByteReader(stream)));
+    }
+
+    [Theory]
+    [MemberData(nameof(Names))]
+    public void WavPackOutranksWav(string name)
+    {
+        SniffResult wavpack = Sniff(new Encspect.Formats.WavPack.WavPackParser(), name);
+        SniffResult wav = Sniff(new Encspect.Formats.Wav.WavParser(), name);
+        JsonElement manifest = Fixtures.LoadMpegManifest("wavpack/legacy/" + name);
+        bool isRiff = manifest.TryGetProperty("wav", out _);
+
+        Assert.True(wavpack.Class >= 80, $"{name}: {wavpack.Describe()}");
+        if (isRiff)
+        {
+            Assert.Equal(70, wav.Class);
+            Assert.True(wavpack.Class > wav.Class);
+            Assert.Equal(0, wav.VerifiedFrames);
+        }
+        else
+        {
+            Assert.Equal(0, wav.Class);
+        }
+    }
+
+    [Theory]
+    [InlineData("external-wv340-lossless-16-stereo.wv", 100)]
+    [InlineData("external-wv340-raw-stereo.wv", 100)]
+    [InlineData("external-wv100-stereo-16.wv", 100)]
+    [InlineData("built-legacy-version-0.wv", 80)]
+    [InlineData("built-legacy-header-cut-v3.wv", 80)]
+    [InlineData("built-legacy-raw-version-1.wv", 80)]
+    public void TheClassFollowsHowCertainTheHeaderIs(string name, int expected) =>
+        Assert.Equal(expected, Sniff(new Encspect.Formats.WavPack.WavPackParser(), name).Class);
+
+    [Fact]
+    public void AWavFileWhoseDataIsNoWavPackKeepsItsClass()
+    {
+        string path = Path.Combine(Fixtures.FixtureDirectory, "wav");
+        string file = Directory.EnumerateFiles(path, "*.wav").Order(StringComparer.Ordinal).First();
+        using FileStream stream = File.OpenRead(file);
+        var reader = new ByteReader(stream);
+
+        Assert.Equal(100, new Encspect.Formats.Wav.WavParser().Sniff(new SniffContext(reader)).Class);
+        Assert.Equal(0, new Encspect.Formats.WavPack.WavPackParser().Sniff(new SniffContext(reader)).Class);
+    }
+}
+
