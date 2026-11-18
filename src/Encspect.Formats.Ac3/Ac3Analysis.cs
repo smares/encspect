@@ -693,7 +693,7 @@ internal sealed class Ac3Analysis
             new(name, coverStart, coverLength, value) { Kind = kind, Ranges = first.Node.Ranges, Description = description, Topic = topic };
 
         Node? encoder = Ac3Encoder.Detect(claims, (name, value, description) => Cover(name, value, NodeKind.Detail, description, ClaimRoles.TopicOf(name)),
-            (claim, text) => Findings.Add(Severity.Info, "ac-3.encoder-claim", () => claim.Source, _ =>
+            (claim, text) => Findings.AddInFile(Severity.Info, "ac-3.encoder-claim", () => claim.Source, _ =>
                 $"The {claim.Description} names \"{text}\"; nothing in the stream confirms or contradicts it."));
         if (encoder is not null)
         {
@@ -701,8 +701,8 @@ internal sealed class Ac3Analysis
         }
 
         Node? writer = WriterDetection.Detect(claims, (name, value, description) => Cover(name, value, NodeKind.Detail, description, ClaimRoles.TopicOf(name)),
-            (claim, text, name) => Findings.Add(Severity.Info, "ac-3.writer-claim-differs", () => claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
-            format: new WriterDetection.StreamFormat(KnownWriters.Ac3, "AC-3", (claim, message, node) => Findings.Add(Severity.Info, "ac-3.writer-other-format", () => node, _ => message)));
+            (claim, text, name) => Findings.AddInFile(Severity.Info, "ac-3.writer-claim-differs", () => claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
+            format: new WriterDetection.StreamFormat(KnownWriters.Ac3, "AC-3", (claim, message, node) => Findings.AddInFile(Severity.Info, "ac-3.writer-other-format", () => node, _ => message)));
         if (writer is not null)
         {
             first.Leading.Add(writer);

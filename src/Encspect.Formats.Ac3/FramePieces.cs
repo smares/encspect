@@ -117,20 +117,61 @@ internal sealed class FramePieces
         return position;
     }
 
-    // The node as the file has it, where its position is one of a frame in pieces and its name is the frame's or a gap's: at the first piece, to the end of the last, with Ranges.
+    // The node as the file has it, where it lies in a frame in pieces: a frame or gap at the first piece, to the end of the last, with Ranges; a field of such a frame as the
+    // frame's tree places it (Tree.Bits), in the pieces where it ends inside the frame's bytes, else at its position as made.
     public Node Place(Node node)
     {
-        if (IsEmpty || node.Name is not ("Frame" or "Gap") || !TryGet(node.Offset, out List<ByteRange> pieces))
+        if (IsEmpty || Containing(node.Offset) is not (>= 0 and var index) || !TryGet(_positions[index], out List<ByteRange> pieces))
         {
             return node;
         }
 
-        return new Node(node.Name, pieces[0].Offset, pieces[^1].End - pieces[0].Offset, node.Value)
+        long position = _positions[index];
+        if (node.Name is "Frame" or "Gap" && node.Offset == position)
         {
-            Kind = node.Kind,
-            Description = node.Description,
-            Topic = node.Topic,
-            Ranges = pieces,
-        };
+            return new Node(node.Name, pieces[0].Offset, pieces[^1].End - pieces[0].Offset, node.Value)
+            {
+                Kind = node.Kind,
+                Description = node.Description,
+                Topic = node.Topic,
+                Ranges = pieces,
+            };
+        }
+
+        long total = pieces.Sum(p => (long)p.Length);
+        long start = (node.Offset - position) * 8 + (node.BitOffset ?? 0);
+        long end = node.BitLength is { } bits ? start + bits : (node.End - position) * 8;
+        if (end > total * 8)
+        {
+            return node;
+        }
+
+        return Node.FromBits(node.Name, new MappedBytes(new byte[total], pieces), start, end, node.Value, node.Kind, node.Description, node.Topic, node.BitOrder);
+    }
+
+    // The index of the frame in pieces whose bytes hold the position, or -1.
+    private int Containing(long position)
+    {
+        int low = 0;
+        int high = _positions.Count - 1;
+        while (low <= high)
+        {
+            int middle = (low + high) >> 1;
+            if (_positions[middle] <= position)
+            {
+                low = middle + 1;
+            }
+            else
+            {
+                high = middle - 1;
+            }
+        }
+
+        if (high < 0 || !TryGet(_positions[high], out List<ByteRange> pieces) || position >= _positions[high] + pieces.Sum(p => (long)p.Length))
+        {
+            return -1;
+        }
+
+        return high;
     }
 }
