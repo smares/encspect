@@ -47,7 +47,7 @@ public class TakFixtureTests
             CheckObject(expected[i], objects[i], manifest.GetProperty("length").GetInt64(), $"{name}, object {i}");
         }
 
-        Node? audio = stream.Children.SingleOrDefault(c => c.Name == "Audio Data");
+        Node? audio = stream.Children.FirstOrDefault(c => c.Name is "Frame" or "Skipped Data");
         if (manifest.GetProperty("audio_start").ValueKind == JsonValueKind.Null)
         {
             Assert.Null(audio);
@@ -60,6 +60,7 @@ public class TakFixtureTests
         string[] codes = [.. manifest.GetProperty("findings").EnumerateArray().Select(f => f.GetProperty("code").GetString()!).Order(StringComparer.Ordinal)];
         // The host's findings about a tag after the stream (Takc's APEv2 tag lists its items unsorted) are not the parser's.
         Assert.Equal(codes, report.Findings.Select(f => f.Code).Where(c => c.StartsWith("tak.", StringComparison.Ordinal)).Order(StringComparer.Ordinal));
+        CheckFrames(manifest, stream, report.Streams.Single().Verification!, name);
         Assert.All(report.Findings, f => Assert.NotNull(f.Path));
         Assert.Equal(manifest.GetProperty("stream_info_first").GetBoolean(), objects.Length > 0 && objects[0].Name == "Stream Info Object");
         if (!name.StartsWith("tak/external-", StringComparison.Ordinal))
@@ -86,6 +87,8 @@ public class TakFixtureTests
         }
 
         CheckVerification(manifest, report.Streams.Single().Verification!);
+        // Every frame of the files Takc wrote holds, and the stream is verified without decoding unless it stores an MD5, which only a decoder compares.
+        Assert.Equal(md5Expected.ValueKind == JsonValueKind.Null ? true : null, report.Streams.Single().Verification!.IsVerified);
     }
 
     [Theory]
@@ -218,6 +221,45 @@ public class TakFixtureTests
         Assert.Equal(checksums.GetProperty("compared").GetInt64(), tally.Stored);
         Assert.Equal(checksums.GetProperty("compared").GetInt64(), tally.Checked);
         Assert.Equal(checksums.GetProperty("failed").GetInt64(), tally.Failed);
-        Assert.Null(verification.IsVerified);
+    }
+
+    // The frames the manifest lists (tak_model.py's walk_frames, which reads takStream.pas and not the analyzer): where each lies, its number, its flags, and whether its data CRC-24 holds.
+    private static void CheckFrames(JsonElement manifest, Node stream, StreamVerification verification, string name)
+    {
+        JsonElement[] expected = [.. manifest.GetProperty("frames").EnumerateArray()];
+        Node[] frames = [.. stream.Children.Where(c => c.Kind == NodeKind.Frame)];
+        Assert.Equal(expected.Length, frames.Length);
+        for (int i = 0; i < expected.Length; i++)
+        {
+            string where = $"{name}, frame {i}";
+            Node frame = frames[i];
+            JsonElement e = expected[i];
+            Assert.True(e.GetProperty("offset").GetInt64() == frame.Offset, where);
+            Assert.True(e.GetProperty("length").GetInt64() == frame.Length, where);
+            Node header = frame.Children.Single(c => c.Name == "Header");
+            Assert.Equal(e.GetProperty("header_length").GetInt64(), header.Length);
+            Assert.Equal(e.GetProperty("number").GetInt64(), header.Children.Single(c => c.Name == "Frame Number").Value?.AsInteger());
+            Assert.Equal(e.GetProperty("last").GetBoolean(), header.Children.Single(c => c.Name == "IsLastFrame").Value?.ToString() == "true");
+            Assert.Equal(e.GetProperty("info").GetBoolean(), header.Children.Single(c => c.Name == "IsInfoFrame").Value?.ToString() == "true");
+            Assert.Equal("true", header.Children.Single(c => c.Name == "IsCrc24Valid").Value?.ToString());
+            JsonElement dataOk = e.GetProperty("data_crc_ok");
+            Node? valid = frame.Children.SingleOrDefault(c => c.Name == "IsDataCrc24Valid");
+            if (dataOk.ValueKind == JsonValueKind.Null)
+            {
+                Assert.Null(valid);
+            }
+            else
+            {
+                Assert.True(dataOk.GetBoolean() == (valid!.Value?.ToString() == "true"), where);
+            }
+        }
+
+        long headers = expected.Length;
+        long compared = expected.Count(e => e.GetProperty("data_crc_ok").ValueKind != JsonValueKind.Null);
+        long failed = expected.Count(e => e.GetProperty("data_crc_ok").ValueKind == JsonValueKind.False);
+        ChecksumTally header2 = verification.Checksums.Single(c => c.Name == "frame header CRC-24");
+        Assert.Equal((headers, headers, 0), (header2.Stored, header2.Checked, header2.Failed));
+        ChecksumTally data = verification.Checksums.Single(c => c.Name == "frame data CRC-24");
+        Assert.Equal((headers, compared, failed), (data.Stored, data.Checked, data.Failed));
     }
 }

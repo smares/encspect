@@ -1436,6 +1436,40 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         Assert.Equal(true, report.Streams.Single().Verification!.IsVerified);
     }
 
+    // A TAK stream keeps a record of about 64 bytes per frame and 16 bytes of its bitrate graph (and its per-second figures while they are built); its nodes are built in
+    // blocks of 1,024 when read. The frames here are 11 bytes each, a 5-byte header with its CRC-24 and the CRC-24 of no data, the fewest a frame can hold. The bounds
+    // are about twice the 80 bytes kept and at the peak per frame that linux-x64 measures.
+    [Fact]
+    public void ManyTakFramesStayCompact()
+    {
+        const int frames = 200_000;
+        byte[] data = TakBuilder.SmallFrames(frames);
+
+        (Report report, long kept, long peak) = Measure("frames.tak", data, TakBuilder.SmallFrames(100));
+
+        Assert.Equal(((frames - 1) * 512L) + 100, report.Streams.Single().Samples);
+        Output.WriteLine($"{kept / frames} bytes kept and {peak / frames} bytes peak per frame");
+        Assert.True(kept < frames * KeptPerTakFrame, $"The report keeps {kept / frames} bytes per frame.");
+        Assert.True(peak < frames * PeakPerTakFrame, $"The live heap grew by {peak / frames} bytes per frame.");
+        GC.KeepAlive(report);
+    }
+
+    private const long KeptPerTakFrame = 160;
+    private const long PeakPerTakFrame = 160;
+
+    // Frames of a header and a CRC-24 alone, more than the records keep: the rest are counted, their CRC-24s compared, and the heap stays near the cap's.
+    [Fact]
+    public void TakFramesPastTheCapStayBounded()
+    {
+        int count = Encspect.Formats.Tak.FrameFacts.MaxEntries + 1_000;
+        byte[] data = TakBuilder.SmallFrames(count);
+
+        Report report = Bounded("capped.tak", data, 450_000_000, "tak.frames-limit");
+
+        Assert.Equal(((count - 1) * 512L) + 100, Assert.Single(report.Streams).Samples);
+        Assert.Equal(true, report.Streams.Single().Verification!.IsVerified);
+    }
+
     // An ALAC track keeps a record of a few dozen bytes per frame and 16 bytes of its bitrate graph, and nodes only for the first 4,096 frames; the frames
     // here are 6 bytes each, the fewest a frame can hold. The bounds are about twice what linux-x64 measures.
     [Fact]

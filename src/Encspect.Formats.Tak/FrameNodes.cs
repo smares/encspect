@@ -86,9 +86,11 @@ internal static class FrameNodes
         if (isInfo && e.InfoSlot > 0 && FrameHeader.Read(r.Frames.InfoHeaders[e.InfoSlot - 1]) is { Info: { } info } parsed)
         {
             long infoAt = at + parsed.InfoOffset;
-            Node stream = header.Add(Nodes.Bytes("Stream Info", infoAt, (info.BitLength + 7) / 8, NodeValue.Integer((info.BitLength + 7) / 8, "bytes", "byte"), Explain.FrameStreamInfo, Topics.Frames));
+            // The reader counted from the start of the header.
+            int infoBytes = (info.BitLength - (parsed.InfoOffset * 8) + 7) / 8;
+            Node stream = header.Add(Nodes.Bytes("Stream Info", infoAt, infoBytes, NodeValue.Integer(infoBytes, "bytes", "byte"), Explain.FrameStreamInfo, Topics.Frames));
             Nodes.AddStreamInfo(stream, infoAt, info);
-            int bit = (parsed.InfoOffset * 8) + info.BitLength;
+            int bit = info.BitLength;
             header.Add(Nodes.Bits("HasPreviousDistance", at, bit, bit + 1, NodeValue.Boolean(parsed.HasDistance), Explain.HasPreviousDistance, Topics.Frames));
             header.Add(Nodes.Bits("Reserved", at, bit + 1, bit + 6, NodeValue.Integer(0), Explain.FrameReserved, Topics.Frames));
             if (parsed.HasDistance)
