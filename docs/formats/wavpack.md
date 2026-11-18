@@ -1,6 +1,6 @@
 # WavPack
 
-WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correction files of hybrid mode.
+WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correction files of hybrid mode; and, from the same parser, the `.wv` files of WavPack 1 to 3 (see [WavPack 1 to 3](#wavpack-1-to-3)).
 
 ## What is read
 
@@ -130,6 +130,63 @@ WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correctio
 - Decoding: `wavpack.audio-crc-mismatch`, `wavpack.md5-mismatch`, `wavpack.md5-needs-correction-file`, `wavpack.md5-set-too-large`.
 - Matroska: `wavpack.matroska-packet-invalid`, `wavpack.matroska-packet-cut`, `wavpack.matroska-block-invalid`, `wavpack.payload-not-analyzed`.
 
+## WavPack 1 to 3
+
+The files WavPack 1.0 to 3.97 wrote from 1998 to 2003. The design, with the sources and what the fixtures showed, is [wavpack-legacy.md](../design/wavpack-legacy.md); the article is `wavpack-legacy`.
+
+### Detection
+
+- The WavPack parser takes both generations; `--format WavPack` reads either.
+- **A file of these versions** starts with the source WAV file's header up to its data chunk's header, and the WavPack header follows at once: class 100 where a header of version 1 to 3 with the bytes its version needs follows, class 80 for one of another version or one the data cuts short.
+- **A raw file** (version 3, the raw flag, a size of 28) starts with the WavPack header: class 100; class 80 for the other raw headers (a version of 1 or 2, a raw flag that is clear, a size that is not 28, a header the data cuts short).
+- **The WAV parser steps back:** a file whose first data chunk starts with `wvpk` is rated 70 there, below the WavPack parser's, with a note. Its own analysis, forced with `--format WAV`, is unchanged.
+- **Version 4 does not compete:** a stream of version 4 or 5 starts with a block header whose version is 0x402 to 0x410.
+- Tags in front (ID3v2) and behind (APEv2, ID3v1) are the host's; libwavpack's test of the first byte (`R`) is not copied, so a file behind an ID3v2 tag is read.
+
+### What is read
+
+- **The stored WAV header:** the RIFF chunk, every chunk up to the data chunk's header with its ID and size, the format chunk's fields, a lossyWAV `fact` chunk (read with the shared `FactText`) and the size of the source's audio.
+- **The WavPack header:**
+  - the signature, size and version, in 10 bytes (12 in version 2, 36 in version 3);
+  - `bits`, named by what it is: the limit on the bits of a sample in the older lossy mode (Lossy Bit Limit, 0 for a lossless file), or in hybrid mode the target in bits per sample times 256 (Hybrid Target);
+  - in version 3 the 16 flags as typed fields (the three never stored among them), the shift, the total samples, the two checks (`crc`, and `crc2` with a correction file; shown, compared only by a decoder), the source's extension and the bytes after a raw file's last sample.
+- **The bitstream** as one node. Its end is known only to a decoder; without one it ends at the trailer, or at the end of the data.
+- **The trailer:** 16 bytes of 0xFF followed by chunk headers that chain to the end of the data, as 3.4 writes the source's chunks after the audio. The first 64 chunks are listed.
+- **The stream:** codec "WavPack lossless", "WavPack hybrid" (a target and the new high flag) or "WavPack lossy" (a bit limit without it), as for version 4; the rate, channels and bits from the stored WAV header (a raw file: 44,100 Hz, 16 bits, or 24 for 3-byte samples, and the channels from the mono flag); the samples from the header (version 3) or from the data chunk's size (versions 1 and 2); the center for one channel and left/right for two.
+
+### Statistics
+
+The names of version 4 are kept where the concept is the same:
+
+- **Compression Mode:** by the flags, as libwavpack's open does: very fast (fast flag), fast (neither the fast nor the high flag), normal (high), high (high with the extreme decorrelator); a hybrid file is normal, and high with the extreme decorrelator. Versions 1 and 2 have one mode, which the rule calls fast.
+- **Hybrid Target Bitrate** (bits per sample of one channel) and **Hybrid Target Rate** (kbps), **Lossy Bit Limit** (bits), **Stereo Coding**, **Source Extension**, **IsLossless**, **IsHybrid**, **IsNoiseShaped**, **IsRaw**, Average Bitrate over the bitstream.
+- **Stereo Coding** is one value for the stream (there are no blocks to count): "Mid/side stereo" (versions 1 and 2, the lossless fast mode, and joint stereo with the high or hybrid modes), "Left/right stereo" (the lossy and hybrid modes otherwise, and the high mode without joint stereo) or "Adaptive stereo" (the lossless modes that choose sum and difference, left or right sample by sample). The design called the last "Adaptive"; the value is worded like the others.
+- No tally, series or graph is built: one bitstream has no units to vary over.
+
+### Encoder detection
+
+- **Encoder:** "WavPack 1", "WavPack 2" or "WavPack 3", medium confidence, from the version field, which libwavpack reports as the major version of the program that wrote the file. Nothing in a file names the release; the Cool Edit filter of the 3.97 sources writes a version 3 header too.
+- **Processor:** a `fact` chunk with lossyWAV's text in the stored header names lossyWAV at high confidence, as in WAV files.
+- **Writer:** an APEv2 tag's claim, weighed as for version 4.
+- **Verification:** a version 3 file declares its `crc` as a checksum ("audio CRC") that is stored and not compared, since no decoder reads these files yet: "unknown (audio CRC not compared: no decoder handles this coding)".
+
+### Findings
+
+- Reused from version 4: `wavpack.version-unsupported` (a header behind the data chunk's header with a version other than 1 to 3), `wavpack.flags-invalid` (once for each problem libwavpack refuses: a never-stored flag with the extreme flag, a hybrid target with the new high flag and the fast or high flag, a bit limit or target with the cross-channel flag), `wavpack.total-samples-mismatch` (the header against the data chunk's size), `wavpack.wrapper-fact-text-unrecognized`.
+- New: `wavpack.legacy-header-truncated`, `wavpack.legacy-header-size` (a size other than the header's less 8), `wavpack.legacy-wav-format-unsupported` (once for each of: a format chunk under 16 bytes, no format chunk, a chunk before the data over 1 MiB, the format tag, the channels, the rate, the bits, the block align), `wavpack.legacy-channels-mismatch` (the mono flag against the stored header's channels), `wavpack.legacy-bitstream-missing`, `wavpack.legacy-trailer-unrecognized` (16 bytes of 0xFF with no chunk headers after them), `wavpack.legacy-extra-bytes-invalid` (a raw file that says more than 3 bytes follow its last whole sample).
+
+### Where it departs from libwavpack
+
+- libwavpack reads these files only when built with its legacy decoder, which `wvunpack` of the Debian packages of 5.6.0 and 5.9.0 is not.
+- It takes the total samples from the data chunk's size and refuses raw files; this parser reports the header's count (as 3.97's `wvunpack` does) and reads raw files.
+- It decodes no version 1 mono file; the parser reads its header like any other.
+
+### Not covered
+
+- The audio: a decoder is the next pull request of the item ([the design](../design/wavpack-legacy.md#decoding-decision-5)). Until then: the CRC (`wavpack.legacy-crc-mismatch`), the end of a bitstream that is cut or lacks samples (`wavpack.legacy-data-ended`), the bitrate over time, Lost Samples and the measurements.
+- The `.wvc` of version 3 opened alone: it has no header or signature, so it is not recognized. Pairing it with its `.wv` is the correction-file item of 0.4.
+- Self-extracting files (`-e` of 3.97), and files written by 3.97, which no fixture holds: Wine does not run in the container that made the fixtures, so what 3.97 writes is known from its source only.
+
 ## Not covered
 
 - Playback and any output other than the checksum comparison (the PCM sink feeds the measurements and tests, not an export). DSD is decoded to its 1-bit samples for the CRC and the MD5, not to PCM.
@@ -137,10 +194,10 @@ WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correctio
 - WavPack hybrid correction data in Matroska (BlockAdditions, BlockAddIDType 1) is not read; the stream is reported from its main blocks.
 - WavPack in Matroska: Verified Block Checksums is not reported, since the block checksum covers the block's header, which Matroska does not keep; the other figures of a file (Stereo Coding, Wasted Bits and the low-confidence lossyWAV claim, counted from each packet's blocks at the position of the samples before it, the bitrate series and statistics, the block set figures, Bits Per Sample, IsLossless, Decorrelation Passes, the compression mode, Channel Layout, the encoder) are reported from the flags and sub-blocks the packets keep.
 - WavPack in Matroska: the lost samples of a packet are the samples its first four bytes declare, so a packet too short to hold them is not counted, and a packet without a block is not counted in the samples either.
-- The legacy format of WavPack 1 to 3 (`.wv` files without the "wvpk" blocks; planned in 0.4, a separate item).
+- WavPack 1 to 3: the audio is not decoded (the decoder is a separate item of 0.4), so no check of it is made, and the end of the bitstream, Lost Samples, the bitrate over time and the measurements are not reported; see [Not covered under WavPack 1 to 3](#wavpack-1-to-3).
 - Finding the `.wvc` that belongs to a `.wv` (planned in 0.4, needs host access to a companion file).
 
 ## Articles
 
-- **Articles:** `wavpack-blocks`, `wavpack-sub-blocks`, `wavpack-hybrid-mode`, `wavpack-decorrelation`, `wavpack-dsd`, `wavpack-float-and-large-integers`, `wavpack-wrapper`.
+- **Articles:** `wavpack-blocks`, `wavpack-sub-blocks`, `wavpack-hybrid-mode`, `wavpack-decorrelation`, `wavpack-dsd`, `wavpack-float-and-large-integers`, `wavpack-wrapper`, `wavpack-legacy`.
 - **Shared with other formats:** `mid-side-stereo`, `crc`, `bitrate-modes`, `encoder-detection`, `lossywav`.

@@ -15,7 +15,7 @@ What each format parser reads, checks and reports. Tags have their own pages und
 | AC-3 and E-AC-3 | [ac3.md](ac3.md) |
 | DTS (core, XCh, X96, XXCH and DTS-HD extension substreams, raw and in MP4) | [dts.md](dts.md) |
 | DTS-HD files (`.dtshd`: the chunks around a DTS stream) | [dtshd.md](dtshd.md) |
-| WavPack (lossless, hybrid and DSD, with correction files, and with decoding for verification) | [wavpack.md](wavpack.md) |
+| WavPack (lossless, hybrid and DSD, with correction files, and with decoding for verification; the files of WavPack 1 to 3 at header level) | [wavpack.md](wavpack.md) |
 | FLAC (native, in Ogg, in MP4 and in Matroska, with decoding for verification) | [flac.md](flac.md) |
 | Monkey's Audio (all versions parsed; versions 3.80 to 3.99 and 4.11 decoded for verification) | [monkeys-audio.md](monkeys-audio.md) |
 | TTA (True Audio, verified by its CRC-32s and decoded for measurements; the frames of a Matroska track) | [tta.md](tta.md) |
@@ -70,7 +70,7 @@ Which container hands which codec to its codec parser, and which codecs are deco
 
 How far into each coding Encspect sees today, on the depth levels of the [plan](../plan.md#breadth-and-depth); a milestone in parentheses is where the missing level is planned. Each format's page has the detail.
 
-- **Container structure:** every container (MP4, Matroska and WebM, Ogg, ASF, WAV, Wave64, BW64, AIFF, `.dtshd`) is read at its own level, and each raw stream format by its frames, so the table leaves that level out. The exceptions are the contents of ASF script commands and markers, and WavPack 1 to 3, which is not read at all (both 0.4).
+- **Container structure:** every container (MP4, Matroska and WebM, Ogg, ASF, WAV, Wave64, BW64, AIFF, `.dtshd`) is read at its own level, and each raw stream format by its frames, so the table leaves that level out. The exceptions are the contents of ASF script commands and markers (0.4), and WavPack 1 to 3, whose files are read at header level (the stored WAV header, the WavPack header, the bitstream as one region, the trailer and the stream figures) and whose audio waits for its decoder (0.4, [WavPack 1 to 3](wavpack.md#wavpack-1-to-3)).
 - **Codec syntax:** the headers and frame-level fields of every coding are read, so the table leaves that level out too; WMA Voice is read down to the sizes that end a frame and the fields that name it.
 - **Entropy-coded data:** whether the parser or the decoder walks the coded values (Huffman, Golomb, range or run-level codes).
 - **Decoded audio:** verified means a decoder checks a checksum stored over the decoded audio; measured means `--measure` gets the spectrum, levels and loudness.

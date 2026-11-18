@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using Encspect.Core;
+using Encspect.Host;
 
 namespace Encspect.Tests;
 
@@ -203,3 +204,72 @@ public class WavPackLegacyFixtureTests
         _ = name;
     }
 }
+
+// Inputs built from a legacy fixture in memory: the chunk over 1 MiB that libwavpack refuses (a fixture of it would be a megabyte), and runs of 0xFF that must
+// cost time and memory in proportion to the data.
+[Collection(nameof(ComplexityTests))]
+public class WavPackLegacyCraftedTests
+{
+    private const int StoredEnd = 44;
+
+    private static byte[] Fixture() => File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "wavpack", "legacy", "external-wv340-lossless-16-stereo.wv"));
+
+    private static Report Analyze(byte[] data) => Analyzer.CreateDefault().Analyze("crafted.wv", new MemoryStream(data));
+
+    [Fact]
+    public void AChunkBeforeTheDataOverOneMebibyteIsFound()
+    {
+        byte[] original = Fixture();
+        byte[] junk = [.. "JUNK"u8, .. BitConverter.GetBytes((uint)((1 << 20) + 2)), .. new byte[(1 << 20) + 2]];
+        byte[] data = [.. original[..36], .. junk, .. original[36..]];
+        Report report = Analyze(data);
+
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "wavpack.legacy-wav-format-unsupported");
+        Assert.Contains("1 MiB", finding.Message, StringComparison.Ordinal);
+        Assert.NotNull(finding.Path);
+        Assert.Single(report.Streams);
+    }
+
+    [Fact]
+    public void AHeaderFollowedByAVeryLongRunOfFfIsRead()
+    {
+        byte[] original = Fixture();
+        byte[] data = [.. original[..(StoredEnd + 36)], .. Enumerable.Repeat((byte)0xFF, 16 << 20)];
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        Report report = Analyze(data);
+        watch.Stop();
+
+        Assert.Contains(report.Findings, f => f.Code == "wavpack.legacy-trailer-unrecognized");
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(30), $"Took {watch.Elapsed}.");
+    }
+
+    // Each candidate run sits in a chunk body, so the chunks after it chain on to the last bytes, which are no chunk: without a budget every candidate would walk to
+    // the end, and the work would grow with the square of the file.
+    [Fact]
+    public void ManyMarkersThatEachChainToTheEndAreCapped()
+    {
+        byte[] original = Fixture();
+        byte[] chunk = [.. "abcd"u8, .. BitConverter.GetBytes(16u), .. Enumerable.Repeat((byte)0xFF, 16)];
+        byte[] data = [.. original[..(StoredEnd + 36)], .. Enumerable.Repeat(chunk, 60_000).SelectMany(c => c), 1, 2, 3];
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        Report report = Analyze(data);
+        watch.Stop();
+
+        Assert.Single(report.Streams);
+        Assert.Contains(report.Findings, f => f.Code == "wavpack.legacy-trailer-unrecognized");
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(30), $"Took {watch.Elapsed}.");
+    }
+
+    [Fact]
+    public void AStoredHeaderOfManyChunksIsReadToTheDataOrLeftToTheWavParser()
+    {
+        byte[] original = Fixture();
+        byte[] junk = [.. "JUNK"u8, .. new byte[4]];
+        byte[] few = [.. original[..36], .. Enumerable.Repeat(junk, 200).SelectMany(c => c), .. original[36..]];
+        byte[] many = [.. original[..36], .. Enumerable.Repeat(junk, 300).SelectMany(c => c), .. original[36..]];
+
+        Assert.Single(Analyze(few).Streams, s => s.Codec == "WavPack lossless");
+        Assert.DoesNotContain(Analyze(many).Streams, s => s.Codec.StartsWith("WavPack", StringComparison.Ordinal));
+    }
+}
+

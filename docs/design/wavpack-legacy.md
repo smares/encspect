@@ -1,6 +1,6 @@
 # WavPack 1 to 3
 
-Status: signed off by the lead, 2026-11-18; the fixtures (pull request 2) are in, and "What the files show" holds what they showed. Milestone 0.4, item 3 of the [plan](../plan.md#04-free-decoders-and-routes-complete): "WavPack 1 to 3, with encoder fixtures from the builds Rarewares keeps (3.4, 3.97, the first BSD release, and the DOS build of 4.31)". Today these files are not read ([wavpack.md](../formats/wavpack.md#not-covered), [the formats index](../formats/README.md)).
+Status: signed off by the lead, 2026-11-18; the fixtures (pull request 2) and the parser (pull request 3) are in, and "What the files show" holds what the fixtures showed. Milestone 0.4, item 3 of the [plan](../plan.md#04-free-decoders-and-routes-complete): "WavPack 1 to 3, with encoder fixtures from the builds Rarewares keeps (3.4, 3.97, the first BSD release, and the DOS build of 4.31)". The parser reads them at header level ([wavpack.md](../formats/wavpack.md#wavpack-1-to-3)); their audio is not decoded yet.
 
 ## Scope
 
@@ -166,7 +166,7 @@ The fixtures pull request ran the original programs (`wavpack_legacy_tool.py`, `
 
 - **libwavpack 5.6.0 with `ENABLE_LEGACY`** opens every file of versions 1 to 3 that starts with a RIFF header (3 of version 1, 7 of version 2 and 44 of version 3) and unpacks the stated samples with no error counted; the MD5 of the samples equals the original decoder's for every file (a hybrid file with its `.wvc` equals the input, and alone equals the lossy decode of the release's `WVUNPACK`). It refuses a raw file ("not compatible with this version of WavPack file!", the reader of version 4 takes it) and, for version 1 mono (`external-wv100-mono-16.wv`), opens it and unpacks no sample, which the 1.0 decoder restores whole: both departures of "Where libwavpack departs from 3.97" are shown by files.
 - **FFmpeg 6.1.1 and MediaInfo 24.01 read every file that starts with a RIFF header as a WAV file** (the data chunk is the rest of the file) and refuse the raw files; neither names a file WavPack. The cross-check fails if one does, and for `wvunpack` 5.9.0, which has no legacy decoder, if it opens one (run in CI only: wavpack 5.9.0 is not installed here).
-- **The analyzer of this branch** reads the version 1 to 3 files as WAV files with the `wav.truncated` family of findings (the black boxes of the first draft: a crafted header of each version and a raw header gave the same) and has no golden of them: the files are in `tests/fixtures/wavpack/legacy`, which no test enumerates until the parser reads them (pull request 3).
+- **The analyzer before the parser** read the version 1 to 3 files as WAV files with the `wav.truncated` family of findings (the black boxes of the first draft: a crafted header of each version and a raw header gave the same); the parser (pull request 3) reads them as WavPack, and `WavPackLegacyFixtureTests` holds every file to its manifest and a golden.
 
 ## What is read and reported
 
@@ -289,6 +289,6 @@ Decided by the lead, 2026-11-18: every recommendation below, (b) for decision 1 
 ## Pull requests, in order
 
 1. **This design**, signed off.
-2. **Fixtures:** `wavpack_legacy_tool.py` (the pins and the DOSBox runner), `wavpack_legacy_model.py`, `wavpack_legacy.c` and its build in `wavpack_tool.py`, `make_external_wavpack_legacy_fixtures.py`, `crosscheck_wavpack_legacy_fixtures.py`, the encoder-written files with manifests, the 4.31 version 4 files with their goldens; what the files show added to this design. The legacy files' goldens wait for PR 3. **Done**, without 3.97 (Wine does not run in the container).
-3. **Parser:** detection (the legacy sniff and the WAV sniff's step back), the nodes, the stream figures and claims, the findings, the hand-built fixtures, goldens, finding coverage, the cross-check, docs and the article; the plan's line updated.
+2. **Fixtures:** `wavpack_legacy_tool.py` (the pins and the DOSBox runner), `wavpack_legacy_model.py`, `wavpack_legacy.c` and its build in `wavpack_tool.py`, `make_external_wavpack_legacy_fixtures.py`, `crosscheck_wavpack_legacy_fixtures.py`, the encoder-written files with manifests, the 4.31 version 4 files with their goldens; what the files show added to this design. The legacy files' goldens came with PR 3. **Done**, without 3.97 (Wine does not run in the container).
+3. **Parser:** detection (the legacy sniff and the WAV sniff's step back), the nodes, the stream figures and claims, the findings, the hand-built fixtures, goldens, finding coverage, the cross-check, docs and the article; the plan's line updated. **Done.** As built: the findings of the design plus `wavpack.legacy-channels-mismatch`, `wavpack.legacy-bitstream-missing` and `wavpack.legacy-extra-bytes-invalid`, and `wavpack.legacy-header-size` for every version; the stereo coding value is "Adaptive stereo"; the article extends `wavpack-wrapper` and `wavpack-hybrid-mode`, and adds `wavpack-legacy`; the chunk over 1 MiB is crafted in a test, not a fixture.
 4. **Decoder** (decision 5): the decoder, its notice, the decode goldens, the bitrate over time, the work units and timings, the decoder cross-checks; the plan's item marked done.
