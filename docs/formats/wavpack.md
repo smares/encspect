@@ -78,6 +78,7 @@ WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correctio
   - the one `.wv` file from FFmpeg 6.1.1's encoder holds none of the three;
   - the 8 `.wvc` correction files hold a block checksum and neither of the others;
   - the 7 `.wv` files of the DOS build of 4.31 (stream version 0x404, `external-wv431-*`) hold a config block and neither a new config block nor a block checksum, and the one `.wvc` of it holds none of the three.
+  - in them, extra processing sets its flag without a level byte, so the Extra Processing Level reads "not stored" (libwavpack reads the level as 0, unknown); and the high mode is reported as high, as the file's flag and 4.31 name it, where libwavpack's `WavpackGetMode` reports a stream older than 0x405 as very high, the same algorithm under its later name (`common_utils.c`), which `crosscheck_wavpack_fixtures.py` maps.
 - That is one file of FFmpeg's encoder and the files of one libwavpack older than 5.0, so the absence of a config block is not a rule: the analyzer keeps the low-confidence "WavPack 4 stream" and says in its evidence that another encoder may have written it.
 
 ## Decoding
