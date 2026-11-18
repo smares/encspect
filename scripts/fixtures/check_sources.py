@@ -22,6 +22,7 @@ import time
 import a52_trace_tool
 import alac_tool
 import aotuv_tool
+import old_mkvmerge_tool
 import asf_specs
 import blade_tool
 import check_eac3_samples
@@ -113,6 +114,7 @@ def sources():
         yield build["archive"], build["sha256"], build["addresses"]
     for version, digest in old_lame_tool.RELEASES.items():
         yield f"lame-{version}.tar.gz", digest, old_lame_tool.addresses(version)
+    yield from old_mkvmerge_tool.sources()
     for archive, digest in aotuv_tool.SOURCES.values():
         yield archive, digest, aotuv_tool.addresses(archive)
     for archive, digest in aotuv_tool.WINDOWS.values():

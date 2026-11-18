@@ -178,10 +178,10 @@ internal sealed partial class FrameSyntax
     internal Action<long, int, int>? RecordMismatch { get; init; }
 
     // Builds the nodes of a frame from its record. crc1, crc2: the verdicts of its CRCs.
-    public List<Node> Nodes(byte[] record, int keptBits, long offset, int length, SyncFrame header, string crc1, string crc2)
+    public List<Node> Nodes(byte[] record, int keptBits, long offset, int length, MappedBytes? mapped, SyncFrame header, string crc1, string crc2)
     {
         _b.StartNodes(record, keptBits, length);
-        _t = new Tree(offset);
+        _t = new Tree(offset, mapped);
         _crc1Verdict = crc1;
         _crc2Verdict = crc2;
         Read(header);

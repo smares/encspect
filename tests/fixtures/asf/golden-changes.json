@@ -1,44 +1,100 @@
 {
   "goldens": [
-    "tests/fixtures/asf/other-streams.report.json",
-    "tests/fixtures/asf/protected-mpeg-audio.report.json"
+    "tests/fixtures/asf/ac3-object-fragmented.report.json",
+    "tests/fixtures/asf/mpeg-audio-object-fragmented.report.json"
   ],
   "changed": [
     {
       "path": [
         "ASF",
-        "Header Object",
-        "Stream Properties Object",
-        "Type-Specific Data",
-        "Format Tag"
+        "Data Object",
+        "AC-3"
       ],
       "fields": [
-        "value"
+        "children",
+        "offset",
+        "length",
+        "ranges"
       ],
       "goldens": [
-        "tests/fixtures/asf/other-streams.report.json",
-        "tests/fixtures/asf/protected-mpeg-audio.report.json"
+        "tests/fixtures/asf/ac3-object-fragmented.report.json"
       ]
     },
     {
-      "scope": "finding",
-      "code": "asf.codec-not-analyzed",
+      "path": [
+        "ASF",
+        "Data Object",
+        "MPEG Audio"
+      ],
       "fields": [
-        "message"
+        "children",
+        "offset",
+        "length",
+        "ranges"
       ],
       "goldens": [
-        "tests/fixtures/asf/other-streams.report.json",
-        "tests/fixtures/asf/protected-mpeg-audio.report.json"
+        "tests/fixtures/asf/mpeg-audio-object-fragmented.report.json"
       ]
     },
     {
       "scope": "stream",
       "fields": [
-        "codec"
+        "samples",
+        "duration",
+        "averageBitrate",
+        "categorySeries",
+        "series",
+        "nodes"
       ],
       "goldens": [
-        "tests/fixtures/asf/protected-mpeg-audio.report.json"
+        "tests/fixtures/asf/mpeg-audio-object-fragmented.report.json"
       ]
+    },
+    {
+      "path": [
+        "ASF",
+        "Data Object",
+        "MPEG Audio"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/asf/mpeg-audio-object-fragmented.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "fields": [
+        "series"
+      ],
+      "goldens": [
+        "tests/fixtures/asf/ac3-object-fragmented.report.json"
+      ]
+    }
+  ],
+  "removed": [
+    {
+      "scope": "finding",
+      "code": "asf.object-not-contiguous",
+      "goldens": [
+        "tests/fixtures/asf/mpeg-audio-object-fragmented.report.json"
+      ]
+    },
+    {
+      "scope": "finding",
+      "code": "mpeg-audio.main-data-overlap",
+      "goldens": [
+        "tests/fixtures/asf/mpeg-audio-object-fragmented.report.json"
+      ]
+    }
+  ],
+  "bitrate": [
+    {
+      "goldens": [
+        "tests/fixtures/asf/mpeg-audio-object-fragmented.report.json"
+      ],
+      "reason": "the fragmented frame is now read, so the stream's bytes and its bitrate are those of all eight frames"
     }
   ]
 }

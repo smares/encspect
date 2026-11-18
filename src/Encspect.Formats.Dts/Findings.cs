@@ -10,6 +10,9 @@ internal sealed class Findings
     private readonly List<string> _order = [];
     private readonly List<(Finding Finding, Counted? Counted)> _immediate = [];
 
+    // Places a finding's node where the file has it, for a unit in pieces; null where the nodes are as made.
+    public Func<Node, Node>? Place { get; set; }
+
     public void Add(Severity severity, string code, Func<Node> node, Func<int, string> message)
     {
         if (_aggregated.TryGetValue(code, out Entry? existing))
@@ -52,17 +55,17 @@ internal sealed class Findings
         {
             if (counted is not null)
             {
-                context.AddFinding(counted.Severity, counted.Code, counted.Message(counted.Count), counted.Node, counted.Count);
+                context.AddFinding(counted.Severity, counted.Code, counted.Message(counted.Count), Place?.Invoke(counted.Node) ?? counted.Node, counted.Count);
                 continue;
             }
 
-            context.AddFinding(finding.Severity, finding.Code, finding.Message, finding.Node);
+            context.AddFinding(finding.Severity, finding.Code, finding.Message, finding.Node is { } at && Place is { } place ? place(at) : finding.Node);
         }
 
         foreach (string code in _order)
         {
             Entry entry = _aggregated[code];
-            context.AddFinding(entry.Severity, code, entry.Message(entry.Count), entry.Node, entry.Count);
+            context.AddFinding(entry.Severity, code, entry.Message(entry.Count), Place?.Invoke(entry.Node) ?? entry.Node, entry.Count);
         }
 
         _immediate.Clear();

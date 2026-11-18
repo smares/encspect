@@ -234,7 +234,7 @@ public sealed partial class MpegAudioParser
                             Stream = node ?? state.Context.Root,
                             Channels = plan?.Channels ?? (header.IsMono ? 1 : 2),
                             BitsPerSample = 32,
-                            Configuration = new MappedBytes(first, entry.Offset),
+                            Configuration = new MappedBytes(first, state.Build.Map?.FileOf(entry.Offset) ?? entry.Offset),
                             IsLossy = true,
                             Shared = plan,
                         });
@@ -260,7 +260,7 @@ public sealed partial class MpegAudioParser
             bool isComplete = !entry.IsTruncated;
             if (!isComplete || length > _frame.Length)
             {
-                session.Decode(new CodedFrame(new MappedBytes(ReadOnlyMemory<byte>.Empty, entry.Offset), "Frame", firstSample, header.Samples) { IsUnreadable = true });
+                session.Decode(new CodedFrame(new MappedBytes(ReadOnlyMemory<byte>.Empty, state.Build.Map?.FileOf(entry.Offset) ?? entry.Offset), "Frame", firstSample, header.Samples) { IsUnreadable = true });
                 return;
             }
 
@@ -279,7 +279,7 @@ public sealed partial class MpegAudioParser
                 isReadable = !header.IsMono && ReadMultichannelData(header, _frame.AsSpan(0, length).ToArray(), plan, lent);
             }
 
-            session.Decode(new CodedFrame(new MappedBytes(_frame.AsMemory(0, length), entry.Offset), "Frame", firstSample, header.Samples)
+            session.Decode(new CodedFrame(new MappedBytes(_frame.AsMemory(0, length), state.Build.Map?.FileOf(entry.Offset) ?? entry.Offset), "Frame", firstSample, header.Samples)
             {
                 IsWalked = isReadable,
                 IsUnreadable = !isReadable,

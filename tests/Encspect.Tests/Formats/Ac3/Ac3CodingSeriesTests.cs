@@ -299,6 +299,9 @@ public class Ac3CodingSeriesTests
 
     // The program frames of the stream, from the frames' order: an independent frame at one of the series' offsets starts a unit, the dependent
     // frames after it join it once for each substream ID, and the one that repeats an ID ends it (the rest are left out, Annex E 2.3.1.2).
+    // Where the series have the frame: its offset, or for a frame in pieces of the file (fragments, or stripped bytes put back) the offset of its last piece less the bytes before it.
+    private static long Key(Node frame) => frame.Ranges is { Count: > 1 } ranges ? ranges[^1].Offset - ranges.Take(ranges.Count - 1).Sum(r => r.Length) : frame.Offset;
+
     private static Unit[] Units(Report report, StreamInfo stream, Series bitrate)
     {
         var frames = new List<Node>();
@@ -315,12 +318,12 @@ public class Ac3CodingSeriesTests
 
         Unit? current = null;
         int seen = 0;
-        foreach (Node frame in frames.OrderBy(f => f.Offset).DistinctBy(f => f.Offset))
+        foreach (Node frame in frames.OrderBy(Key).DistinctBy(Key))
         {
             bool dependent = Text(frame, "Bit Stream Information", "Stream Type")?.StartsWith('1') == true;
             if (!dependent)
             {
-                current = starts.GetValueOrDefault(frame.Offset);
+                current = starts.GetValueOrDefault(Key(frame));
                 seen = 0;
                 current?.Frames.Add(frame);
                 continue;

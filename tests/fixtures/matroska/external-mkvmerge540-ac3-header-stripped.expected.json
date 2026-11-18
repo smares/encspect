@@ -1,0 +1,487 @@
+{
+ "description": "mkvmerge v5.4.0 ('Piper') (Wine)",
+ "length": 17742,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 2,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 5442,
+     "length": 12281,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 2
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 20832,
+    "muxing_app": "libebml v1.2.3 + libmatroska v1.3.0",
+    "writing_app": "mkvmerge v5.4.0 ('Piper') built on Mar 10 2012 13:34:39",
+    "duration": 24577.0
+   },
+   "length": 17702,
+   "declared_end": 17742
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   17702,
+   [
+    [
+     "SeekHead",
+     52,
+     50,
+     [
+      [
+       "Seek",
+       57,
+       15,
+       [
+        [
+         "SeekID",
+         60,
+         7
+        ],
+        [
+         "SeekPosition",
+         67,
+         5
+        ]
+       ]
+      ],
+      [
+       "Seek",
+       72,
+       15,
+       [
+        [
+         "SeekID",
+         75,
+         7
+        ],
+        [
+         "SeekPosition",
+         82,
+         5
+        ]
+       ]
+      ],
+      [
+       "Seek",
+       87,
+       15,
+       [
+        [
+         "SeekID",
+         90,
+         7
+        ],
+        [
+         "SeekPosition",
+         97,
+         5
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Void",
+     102,
+     4049
+    ],
+    [
+     "Info",
+     4151,
+     149,
+     [
+      [
+       "TimestampScale",
+       4157,
+       6
+      ],
+      [
+       "MuxingApp",
+       4163,
+       38
+      ],
+      [
+       "WritingApp",
+       4201,
+       58
+      ],
+      [
+       "Duration",
+       4259,
+       11
+      ],
+      [
+       "DateUTC",
+       4270,
+       11
+      ],
+      [
+       "SegmentUUID",
+       4281,
+       19
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     4300,
+     71,
+     [
+      [
+       "TrackEntry",
+       4305,
+       66,
+       [
+        [
+         "TrackNumber",
+         4307,
+         3
+        ],
+        [
+         "TrackUID",
+         4310,
+         7
+        ],
+        [
+         "TrackType",
+         4317,
+         3
+        ],
+        [
+         "CodecID",
+         4320,
+         7
+        ],
+        [
+         "DefaultDuration",
+         4327,
+         8
+        ],
+        [
+         "Language",
+         4335,
+         7
+        ],
+        [
+         "Audio",
+         4342,
+         11,
+         [
+          [
+           "SamplingFrequency",
+           4344,
+           6
+          ],
+          [
+           "Channels",
+           4350,
+           3
+          ]
+         ]
+        ],
+        [
+         "ContentEncodings",
+         4353,
+         18,
+         [
+          [
+           "ContentEncoding",
+           4356,
+           15,
+           [
+            [
+             "ContentCompression",
+             4359,
+             12,
+             [
+              [
+               "ContentCompAlgo",
+               4362,
+               4
+              ],
+              [
+               "ContentCompSettings",
+               4366,
+               5
+              ]
+             ]
+            ]
+           ]
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Void",
+     4371,
+     1071
+    ],
+    [
+     "Cluster",
+     5442,
+     12281,
+     [
+      [
+       "Timestamp",
+       5448,
+       3
+      ],
+      [
+       "SimpleBlock",
+       5451,
+       6136
+      ],
+      [
+       "SimpleBlock",
+       11587,
+       6136
+      ]
+     ]
+    ],
+    [
+     "Cues",
+     17723,
+     19,
+     [
+      [
+       "CuePoint",
+       17728,
+       14,
+       [
+        [
+         "CueTime",
+         17730,
+         3
+        ],
+        [
+         "CueTrackPositions",
+         17733,
+         9,
+         [
+          [
+           "CueTrack",
+           17735,
+           3
+          ],
+          [
+           "CueClusterPosition",
+           17738,
+           4
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 5451,
+   "length": 6136,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 132,
+   "lacing": "fixed",
+   "frames": [
+    [
+     5459,
+     766
+    ],
+    [
+     6225,
+     766
+    ],
+    [
+     6991,
+     766
+    ],
+    [
+     7757,
+     766
+    ],
+    [
+     8523,
+     766
+    ],
+    [
+     9289,
+     766
+    ],
+    [
+     10055,
+     766
+    ],
+    [
+     10821,
+     766
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 11587,
+   "length": 6136,
+   "track": 1,
+   "timestamp": 12289,
+   "cluster_timestamp": 0,
+   "flags": 132,
+   "lacing": "fixed",
+   "frames": [
+    [
+     11595,
+     766
+    ],
+    [
+     12361,
+     766
+    ],
+    [
+     13127,
+     766
+    ],
+    [
+     13893,
+     766
+    ],
+    [
+     14659,
+     766
+    ],
+    [
+     15425,
+     766
+    ],
+    [
+     16191,
+     766
+    ],
+    [
+     16957,
+     766
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 1472368059,
+   "type": 2,
+   "codec": "A_AC3",
+   "private": null,
+   "channels": 2,
+   "rate": 48000.0,
+   "bits": null,
+   "delay": 0,
+   "encodings": [
+    {
+     "order": 0,
+     "scope": 1,
+     "type": 0,
+     "compression": 3,
+     "settings": [
+      4369,
+      2
+     ],
+     "encryption": null,
+     "cipher": null,
+     "has_encryption": false
+    }
+   ],
+   "lacing": true
+  }
+ ],
+ "writers": [
+  {
+   "name": "mkvmerge v5.4.0 ('Piper') built on Mar 10 2012 13:34:39",
+   "confidence": "Low"
+  }
+ ],
+ "encoder": {
+  "tool": "mkvmerge v5.4.0 ('Piper') (Wine)",
+  "arguments": [],
+  "inputs": [
+   "ac3/external-ffmpeg-stereo-192k.ac3"
+  ]
+ },
+ "streams": [
+  {
+   "codec": "AC-3",
+   "sample_rate": 48000,
+   "channels": 2
+  }
+ ],
+ "findings": [],
+ "crosscheck": {
+  "valid": true
+ }
+}

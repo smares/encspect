@@ -133,7 +133,8 @@ def expected_codes(encodings, has_private, codec):  # noqa: C901
         codes.add("matroska.track-encrypted" if is_encrypted(1) else "matroska.track-encoding-not-read")
         if not is_encrypted(1):
             return codes
-    elif not opaque and steps(1):
+    elif not opaque and steps(1) and not (codec in STRIP_READ and steps(1) == 1 and not has_zlib(1)):
+        # The codec parsers that read frames with the stripped bytes put back (a header stripping and nothing else) read them; the others take frames of file bytes only.
         codes.add("matroska.track-encoding-not-read")
         return codes
     if has_private and codec not in DEFINES_PRIVATE:
@@ -157,6 +158,8 @@ SOURCES = {
 }
 # The codec IDs whose mapping defines a CodecPrivate; a track of another has none, or a stray one that is not read.
 DEFINES_PRIVATE = ("A_OPUS", "A_VORBIS", "A_AAC")
+# The codec IDs whose parsers read frames that have one header stripping put back.
+STRIP_READ = ("A_MPEG/L3", "A_AC3", "A_DTS", "A_AAC", "A_AAC/MPEG4/LC")
 FRAMES = 4
 _loaded = {}
 

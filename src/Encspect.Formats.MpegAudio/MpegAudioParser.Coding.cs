@@ -364,7 +364,7 @@ public sealed partial class MpegAudioParser
         private static readonly ValueRange ShareRange = ValueRange.Between(0, 100);
 
         // The tally node of the first of the stream's regions that has one.
-        private Node? Anchor(Func<RegionState, Node?> node) => _regions.Select(node).FirstOrDefault(n => n is not null);
+        private Node? Anchor(Func<RegionState, Node?> node) => _regions.Select(node).FirstOrDefault(n => n is not null) is { } found ? _regions[0].Map?.PlacedOf(found) ?? found : null;
     }
 
     // A per-frame figure and its per-second form, for the frames that have a value: the x values are the stream's frame offsets

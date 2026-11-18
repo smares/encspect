@@ -1,0 +1,533 @@
+{
+ "description": "mkvmerge v4.5.0 ('Speed of Light') (Wine)",
+ "length": 14686,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 2,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 5454,
+     "length": 9213,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 3
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 22674,
+    "muxing_app": "libebml v1.2.0 + libmatroska v1.1.0",
+    "writing_app": "mkvmerge v4.5.0 ('Speed of Light') built on Feb  1 2011 02:10:32",
+    "duration": 25346.0
+   },
+   "length": 14646,
+   "declared_end": 14686
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   14646,
+   [
+    [
+     "SeekHead",
+     52,
+     50,
+     [
+      [
+       "Seek",
+       57,
+       15,
+       [
+        [
+         "SeekID",
+         60,
+         7
+        ],
+        [
+         "SeekPosition",
+         67,
+         5
+        ]
+       ]
+      ],
+      [
+       "Seek",
+       72,
+       15,
+       [
+        [
+         "SeekID",
+         75,
+         7
+        ],
+        [
+         "SeekPosition",
+         82,
+         5
+        ]
+       ]
+      ],
+      [
+       "Seek",
+       87,
+       15,
+       [
+        [
+         "SeekID",
+         90,
+         7
+        ],
+        [
+         "SeekPosition",
+         97,
+         5
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Void",
+     102,
+     4049
+    ],
+    [
+     "Info",
+     4151,
+     158,
+     [
+      [
+       "TimestampScale",
+       4157,
+       6
+      ],
+      [
+       "MuxingApp",
+       4163,
+       38
+      ],
+      [
+       "WritingApp",
+       4201,
+       67
+      ],
+      [
+       "Duration",
+       4268,
+       11
+      ],
+      [
+       "DateUTC",
+       4279,
+       11
+      ],
+      [
+       "SegmentUUID",
+       4290,
+       19
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     4309,
+     74,
+     [
+      [
+       "TrackEntry",
+       4314,
+       69,
+       [
+        [
+         "TrackNumber",
+         4316,
+         3
+        ],
+        [
+         "TrackUID",
+         4319,
+         7
+        ],
+        [
+         "TrackType",
+         4326,
+         3
+        ],
+        [
+         "CodecID",
+         4329,
+         11
+        ],
+        [
+         "DefaultDuration",
+         4340,
+         8
+        ],
+        [
+         "Language",
+         4348,
+         7
+        ],
+        [
+         "Audio",
+         4355,
+         11,
+         [
+          [
+           "SamplingFrequency",
+           4357,
+           6
+          ],
+          [
+           "Channels",
+           4363,
+           3
+          ]
+         ]
+        ],
+        [
+         "ContentEncodings",
+         4366,
+         17,
+         [
+          [
+           "ContentEncoding",
+           4369,
+           14,
+           [
+            [
+             "ContentCompression",
+             4372,
+             11,
+             [
+              [
+               "ContentCompAlgo",
+               4375,
+               4
+              ],
+              [
+               "ContentCompSettings",
+               4379,
+               4
+              ]
+             ]
+            ]
+           ]
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Void",
+     4383,
+     1071
+    ],
+    [
+     "Cluster",
+     5454,
+     9213,
+     [
+      [
+       "Timestamp",
+       5460,
+       3
+      ],
+      [
+       "SimpleBlock",
+       5463,
+       3350
+      ],
+      [
+       "SimpleBlock",
+       8813,
+       3344
+      ],
+      [
+       "SimpleBlock",
+       12157,
+       2510
+      ]
+     ]
+    ],
+    [
+     "Cues",
+     14667,
+     19,
+     [
+      [
+       "CuePoint",
+       14672,
+       14,
+       [
+        [
+         "CueTime",
+         14674,
+         3
+        ],
+        [
+         "CueTrackPositions",
+         14677,
+         9,
+         [
+          [
+           "CueTrack",
+           14679,
+           3
+          ],
+          [
+           "CueClusterPosition",
+           14682,
+           4
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 5463,
+   "length": 3350,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 134,
+   "lacing": "ebml",
+   "frames": [
+    [
+     5479,
+     416
+    ],
+    [
+     5895,
+     416
+    ],
+    [
+     6311,
+     417
+    ],
+    [
+     6728,
+     417
+    ],
+    [
+     7145,
+     417
+    ],
+    [
+     7562,
+     417
+    ],
+    [
+     7979,
+     417
+    ],
+    [
+     8396,
+     417
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 8813,
+   "length": 3344,
+   "track": 1,
+   "timestamp": 9217,
+   "cluster_timestamp": 0,
+   "flags": 132,
+   "lacing": "fixed",
+   "frames": [
+    [
+     8821,
+     417
+    ],
+    [
+     9238,
+     417
+    ],
+    [
+     9655,
+     417
+    ],
+    [
+     10072,
+     417
+    ],
+    [
+     10489,
+     417
+    ],
+    [
+     10906,
+     417
+    ],
+    [
+     11323,
+     417
+    ],
+    [
+     11740,
+     417
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 12157,
+   "length": 2510,
+   "track": 1,
+   "timestamp": 18433,
+   "cluster_timestamp": 0,
+   "flags": 132,
+   "lacing": "fixed",
+   "frames": [
+    [
+     12165,
+     417
+    ],
+    [
+     12582,
+     417
+    ],
+    [
+     12999,
+     417
+    ],
+    [
+     13416,
+     417
+    ],
+    [
+     13833,
+     417
+    ],
+    [
+     14250,
+     417
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 3968816001,
+   "type": 2,
+   "codec": "A_MPEG/L3",
+   "private": null,
+   "channels": 2,
+   "rate": 44100.0,
+   "bits": null,
+   "delay": 0,
+   "encodings": [
+    {
+     "order": 0,
+     "scope": 1,
+     "type": 0,
+     "compression": 3,
+     "settings": [
+      4382,
+      1
+     ],
+     "encryption": null,
+     "cipher": null,
+     "has_encryption": false
+    }
+   ],
+   "lacing": true
+  }
+ ],
+ "writers": [
+  {
+   "name": "mkvmerge v4.5.0 ('Speed of Light') built on Feb  1 2011 02:10:32",
+   "confidence": "Low"
+  }
+ ],
+ "encoder": {
+  "tool": "mkvmerge v4.5.0 ('Speed of Light') (Wine)",
+  "arguments": [],
+  "inputs": [
+   "mpeg-audio/external-ffmpeg-cbr.mp3"
+  ]
+ },
+ "streams": [
+  {
+   "codec": "MPEG-1 Layer III",
+   "sample_rate": 44100,
+   "channels": 2
+  }
+ ],
+ "findings": [
+  {
+   "code": "mpeg-audio.writer-claim-differs",
+   "contains": "Lavc60.31"
+  }
+ ],
+ "crosscheck": {
+  "valid": true
+ }
+}

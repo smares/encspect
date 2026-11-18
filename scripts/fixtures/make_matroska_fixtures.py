@@ -1762,6 +1762,140 @@ def write(name, builder, description, findings, streams, valid, extension, check
     (OUT / f"{name}.expected.json").write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
 
 
+# --- Header stripping for codecs that read their frames from the file (RFC 9559 section 5.1.4.1.31.6) ----------------------------------------
+# The project's current tools do not strip the headers of audio (mkvmerge 82.0's only header removal is for MPEG-4 part 2 video, and ffmpeg's muxer writes none; old mkvmerge
+# releases do, whose files are the external-mkvmerge*-header-stripped ones), so these are hand-built from the frames of committed files: the bytes every frame starts with are in ContentCompSettings, and each block holds the rest.
+
+MPEG_AUDIO = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "mpeg-audio"
+
+
+def mp3_frames(count):
+    """The first audio frames of an MPEG-1 Layer III file (the Info frame left out), each at its length."""
+    data = (MPEG_AUDIO / "external-ffmpeg-cbr.mp3").read_bytes()
+    rates = [44100, 48000, 32000]
+    bitrates = [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320]
+    frames = []
+    at = 0
+    if data[:3] == b"ID3":
+        at = 10 + ((data[6] << 21) | (data[7] << 14) | (data[8] << 7) | data[9])
+    while len(frames) < count + 1:
+        header = data[at:at + 4]
+        assert header[0] == 0xFF and header[1] & 0xFE == 0xFA, f"no Layer III frame at {at}"
+        length = 144 * bitrates[header[2] >> 4] * 1000 // rates[(header[2] >> 2) & 3] + ((header[2] >> 1) & 1)
+        frames.append(data[at:at + length])
+        at += length
+    return frames[1:]
+
+
+def common_prefix(frames, limit):
+    """The bytes every frame starts with, up to limit: what a writer that strips headers puts in ContentCompSettings."""
+    prefix = frames[0][:limit]
+    for frame in frames[1:]:
+        while not frame.startswith(prefix):
+            prefix = prefix[:-1]
+    return prefix
+
+
+def coded_track(codec, channels, rate, frames, step_ms, strip=None, **track):
+    """A track of the frames, with the first bytes of each (strip) in ContentCompSettings and left out of the blocks where strip is given."""
+    enc = content_encodings(content_encoding(order=0, scope=1, compression=3, settings=strip)) if strip else None
+    entry = audio_track(1, codec, channels, rate, encodings=enc, **track)
+    items = [simple_block(1, round(i * step_ms), frame[len(strip or b""):], key=True) for i, frame in enumerate(frames)]
+    return build(standard(cluster(0, *items), track=[entry]))
+
+
+def ac3_stereo_frames(count):
+    data = (FIXTURES_ROOT / "ac3" / "external-ffmpeg-stereo-192k.ac3").read_bytes()
+    return [data[i * 768:(i + 1) * 768] for i in range(count)]
+
+
+def dts_frames(count):
+    data = (FIXTURES_ROOT / "dts" / "external-ffmpeg-5.1-48k-768k.dts").read_bytes()
+    frames = []
+    at = 0
+    while len(frames) < count:
+        assert data[at:at + 4] == b"\x7f\xfe\x80\x01"
+        length = (((data[at + 5] & 3) << 12) | (data[at + 6] << 4) | (data[at + 7] >> 4)) + 1
+        frames.append(data[at:at + length])
+        at += length
+    return frames
+
+
+def aac_frames_with_config():
+    object_type, rate_index, channels, frames = adts_frames("cbr")
+    rate = AAC_RATES[rate_index]
+    return struct.pack(">H", (object_type << 11) | (rate_index << 7) | (channels << 3)), rate, channels, frames[:6]
+
+
+FIXTURES_ROOT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures"
+MP3_STEP = 1152 * 1000 / 44100
+
+
+@fixture("mpeg-audio-frames", "Eight frames of MPEG-1 Layer III in an A_MPEG/L3 track with no encoding: the control of mpeg-audio-header-stripped.", streams=[("MPEG-1 Layer III", 44100, 2)])
+def _():
+    return coded_track("A_MPEG/L3", 2, 44100.0, mp3_frames(8), MP3_STEP)
+
+
+@fixture("mpeg-audio-header-stripped", "The frames of mpeg-audio-frames with their first two bytes (the sync word and version of every header) stripped by header stripping: the bytes are put back in front "
+         "of each frame, whose nodes lie in the ContentCompSettings element for them and in the block for the rest, and the audio decodes as the unstripped track's does.",
+         streams=[("MPEG-1 Layer III", 44100, 2)])
+def _():
+    return coded_track("A_MPEG/L3", 2, 44100.0, mp3_frames(8), MP3_STEP, strip=b"\xff\xfb")
+
+
+@fixture("ac3-frames", "Six frames of stereo AC-3 in an A_AC3 track with no encoding: the control of ac3-header-stripped.", streams=[("AC-3", 48000, 2)])
+def _():
+    return coded_track("A_AC3", 2, 48000.0, ac3_stereo_frames(6), 32)
+
+
+@fixture("ac3-header-stripped", "The frames of ac3-frames with their sync word (0x0B77) stripped by header stripping: put back in front of each frame, which the AC-3 parser reads as the unstripped one.",
+         streams=[("AC-3", 48000, 2)])
+def _():
+    return coded_track("A_AC3", 2, 48000.0, ac3_stereo_frames(6), 32, strip=b"\x0b\x77")
+
+
+@fixture("dts-frames", "Six core frames of 5.1 DTS in an A_DTS track with no encoding: the control of dts-header-stripped.", streams=[("DTS", 48000, 6)])
+def _():
+    return coded_track("A_DTS", 6, 48000.0, dts_frames(6), 21.333)
+
+
+@fixture("dts-header-stripped", "The frames of dts-frames with their first eight bytes (the sync word and the header fields all of them share) stripped by header stripping: put back in front of each "
+         "frame, which the DTS parser reads as the unstripped one.", streams=[("DTS", 48000, 6)])
+def _():
+    frames = dts_frames(6)
+    return coded_track("A_DTS", 6, 48000.0, frames, 21.333, strip=common_prefix(frames, 8))
+
+
+def cut_last(frames):
+    """The frames with the last one cut to a third of its length: a finding that quotes where the last frame is."""
+    return frames[:-1] + [frames[-1][:len(frames[-1]) // 3]]
+
+
+@fixture("mpeg-audio-header-stripped-cut", "mpeg-audio-header-stripped with its last frame cut to a third: the finding of a frame cut short quotes the file offset of the frame's first byte, which is a "
+         "stripped byte, so in the ContentCompSettings.", findings=[("mpeg-audio.frame-truncated", "last frame at 0x")], streams=[("MPEG-1 Layer III", 44100, 2)], valid=False)
+def _():
+    return coded_track("A_MPEG/L3", 2, 44100.0, cut_last(mp3_frames(8)), MP3_STEP, strip=b"\xff\xfb")
+
+
+@fixture("ac3-header-stripped-cut", "ac3-header-stripped with its last frame cut to a third: the finding quotes the file offset of the frame's first byte, a stripped one.",
+         findings=[("ac-3.frame-truncated", "frame at 0x")], streams=[("AC-3", 48000, 2)], valid=False)
+def _():
+    return coded_track("A_AC3", 2, 48000.0, cut_last(ac3_stereo_frames(6)), 32, strip=b"\x0b\x77")
+
+
+@fixture("aac-frames", "Six AAC frames in an A_AAC track with a CodecPrivate and no encoding: the control of aac-header-stripped.", streams=[("AAC", 44100, 2)])
+def _():
+    config, rate, channels, frames = aac_frames_with_config()
+    return coded_track("A_AAC", channels, float(rate), frames, 1024 * 1000 / rate, private=config)
+
+
+@fixture("aac-header-stripped", "The frames of aac-frames with the first bytes they share stripped by header stripping: put back in front of each frame, which the AAC parser reads as the unstripped one.",
+         streams=[("AAC", 44100, 2)])
+def _():
+    config, rate, channels, frames = aac_frames_with_config()
+    return coded_track("A_AAC", channels, float(rate), frames, 1024 * 1000 / rate, strip=common_prefix(frames, 2) or None, private=config)
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     for name, spec in FIXTURES.items():

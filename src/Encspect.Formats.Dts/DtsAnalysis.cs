@@ -35,12 +35,19 @@ internal sealed class DtsAnalysis
     {
         _context = context;
         _fallbackStream = fallbackStream;
-        Records = new DtsRecords(Frames, Store);
+        Records = new DtsRecords(Frames, Store, Pieces);
+        Findings.Place = Pieces.Place;
     }
 
     // What unit nodes are built from, apart from the analysis, which holds the context and with it
     // the input.
     public DtsRecords Records { get; }
+
+    // Where the units that are not one run of the file lie in it.
+    public UnitPieces Pieces { get; } = new();
+
+    // "0x" and the file offset of the first byte of what is at a position of the records, as a message quotes it.
+    public string At(long position) => $"0x{Pieces.FirstFile(position):X}";
 
     public ChunkedList<Frame> Frames { get; } = new();
 
@@ -83,13 +90,13 @@ internal sealed class DtsAnalysis
         Node UnitAt() => new("Frame", layout.Offset, layout.Length) { Kind = NodeKind.Frame };
         if (layout.IsTruncated)
         {
-            Findings.AddNow(Severity.Warning, "dts.frame-truncated", $"The last frame at 0x{layout.Offset:X} has {Counts.Of(layout.Length, "byte", "bytes")}, fewer than its header says.", UnitAt());
+            Findings.AddNow(Severity.Warning, "dts.frame-truncated", $"The last frame at {At(layout.Offset)} has {Counts.Of(layout.Length, "byte", "bytes")}, fewer than its header says.", UnitAt());
         }
 
         if (layout.IsCut)
         {
             Findings.Add(Severity.Warning, "dts.frame-damaged", UnitAt, count =>
-                $"{(count == 1 ? "A frame is" : $"{count} frames are")} cut short by the next frame's sync word, first at 0x{layout.Offset:X}: their header or data is damaged, or bytes are missing.");
+                $"{(count == 1 ? "A frame is" : $"{count} frames are")} cut short by the next frame's sync word, first at {At(layout.Offset)}: their header or data is damaged, or bytes are missing.");
         }
 
         Assign(region, index, facts, layout, packed);
@@ -160,11 +167,11 @@ internal sealed class DtsAnalysis
         }
         else if (trailing)
         {
-            Findings.AddNow(Severity.Warning, "dts.trailing-data", $"{Counts.Of(length, "byte", "bytes")} after the last frame at 0x{start:X} {Counts.Agree(length, "is", "are")} not a frame.", node);
+            Findings.AddNow(Severity.Warning, "dts.trailing-data", $"{Counts.Of(length, "byte", "bytes")} after the last frame at {At(start)} {Counts.Agree(length, "is", "are")} not a frame.", node);
         }
         else
         {
-            Findings.AddNow(Severity.Warning, "dts.sync-lost", $"Sync is lost for {Counts.Of(length, "byte", "bytes")} at 0x{start:X}.", node);
+            Findings.AddNow(Severity.Warning, "dts.sync-lost", $"Sync is lost for {Counts.Of(length, "byte", "bytes")} at {At(start)}.", node);
         }
 
     }
@@ -173,7 +180,7 @@ internal sealed class DtsAnalysis
     public void AddInvalidHeader(long offset, long length, string reason)
     {
         Findings.Add(Severity.Warning, "dts.header-invalid", () => new Node("Gap", offset, length), count =>
-            $"{(count == 1 ? "A core frame's header is" : $"{count} core frames' headers are")} invalid, first at 0x{offset:X}: {reason}; the bytes are not read as a frame.");
+            $"{(count == 1 ? "A core frame's header is" : $"{count} core frames' headers are")} invalid, first at {At(offset)}: {reason}; the bytes are not read as a frame.");
     }
 
     private static string Count(int count) => count == 1 ? "1 frame" : $"{count} frames";
@@ -186,7 +193,7 @@ internal sealed class DtsAnalysis
         long offset = _unitOffset;
         Locator locator = _locator;
         Node Field() => isGroup ? locator.Group(field, start, end) : locator.Field(field, start, end);
-        string at = $"the frame at 0x{offset:X}";
+        string at = $"the frame at {At(offset)}";
         switch (issue)
         {
             case Issue.ReservedValue:
@@ -329,7 +336,7 @@ internal sealed class DtsAnalysis
             long offset = layout.Offset;
             long length = layout.Length;
             Findings.Add(Severity.Warning, "dts.streams-limited", () => new Node("Frame", offset, length) { Kind = NodeKind.Frame }, count =>
-                $"{(count == 1 ? "A unit is" : $"{count} units are")} in no stream and left out of the figures: the analyzer keeps at most {MaxStreams} streams, one per run of one configuration, and the unit at 0x{offset:X} is the first to start another.");
+                $"{(count == 1 ? "A unit is" : $"{count} units are")} in no stream and left out of the figures: the analyzer keeps at most {MaxStreams} streams, one per run of one configuration, and the unit at {At(offset)} is the first to start another.");
             return;
         }
 
@@ -375,7 +382,7 @@ internal sealed class DtsAnalysis
         }
 
         _changes = Findings.AddNowCounted(Severity.Info, "dts.stream-changed", new Node("Frame", layout.Offset, layout.Length) { Kind = NodeKind.Frame }, count =>
-            (count == 1 ? $"The stream changes at 0x{offset:X} from {from} to {to}." : $"The stream changes {count} times, first at 0x{offset:X} from {from} to {to}."));
+            (count == 1 ? $"The stream changes at {At(offset)} from {from} to {to}." : $"The stream changes {count} times, first at {At(offset)} from {from} to {to}."));
     }
 
     // The samples a unit holds at the stream's sampling frequency: the core's blocks of 32, or an extension substream's duration.

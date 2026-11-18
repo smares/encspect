@@ -178,7 +178,9 @@ internal sealed partial class FileReader
         // Vorbis, Opus and FLAC cannot be set up without their CodecPrivate.
         bool needsCodecPrivate = codec is "vorbis" or "opus" or "flac";
         // The parsers of these codecs take frames put together from stripped or inflated bytes; the others place their nodes at contiguous file bytes.
-        bool takesTransformedFrames = needsCodecPrivate;
+        // These parsers place their nodes in the file bytes a frame is made of, so frames with bytes put back (header stripping) go to them mapped to the file.
+        bool mapsStripped = codec is "mpeg-audio" or "ac-3" or "e-ac-3" or "dts" or "aac" && plan.Frames.IsStrippingOnly;
+        bool takesTransformedFrames = needsCodecPrivate || mapsStripped;
         if (problem is null && plan.Frames.Steps.Count > 0 && codec is not null && !takesTransformedFrames)
         {
             // The AAC, AC-3, DTS and MPEG audio parsers place their nodes at the offsets of contiguous file bytes, which frames put together from
@@ -358,6 +360,16 @@ internal sealed partial class FileReader
             last = Math.Max(last, header.FileEnd);
         }
 
+        // Stripped bytes put back come from the ContentCompSettings, which the frames' nodes (and the nodes that span them) lie in as well.
+        if (mapsStripped)
+        {
+            foreach (Step step in plan.Frames.Steps.Where(x => x.Offset >= 0 && x.Prefix.Length > 0))
+            {
+                first = Math.Min(first, step.Offset);
+                last = Math.Max(last, step.Offset + step.Prefix.Length);
+            }
+        }
+
         // The FLAC parser also describes the marker in front of the headers, and the route the bytes after the last block.
         if (codec == "flac" && privateData is not null)
         {
@@ -383,7 +395,7 @@ internal sealed partial class FileReader
 
         // Ciphertext is no valid coding: the codec parser gets the clear configuration (and the headers that come from it) and no frame.
         int streamsBefore = _context.Streams.Count;
-        IEnumerable<MappedBytes> packets = areFramesEncrypted ? headers : Packets(segment, track, segment.BlocksByTrack?.GetValueOrDefault(track.Number ?? 0), headers, plan.Frames.Decoder);
+        IEnumerable<MappedBytes> packets = areFramesEncrypted ? headers : Packets(segment, track, segment.BlocksByTrack?.GetValueOrDefault(track.Number ?? 0), headers, plan.Frames.Decoder?.WithMapping(mapsStripped));
         if (codec == "mpeg-audio")
         {
             // The MPEG audio parser keeps the packets' ranges and reads them again from the file.
@@ -832,8 +844,8 @@ internal sealed partial class FileReader
             {
                 step = encoding.CompressionAlgorithm switch
                 {
-                    3 => encoding.SettingsLength is >= 0 and <= 1 << 16 ? new Step(true, encoding.SettingsOffset >= 0 ? ReadAt(encoding.SettingsOffset, (int)encoding.SettingsLength) : []) : null,
-                    0 => new Step(false, []),
+                    3 => encoding.SettingsLength is >= 0 and <= 1 << 16 ? new Step(true, encoding.SettingsOffset >= 0 ? ReadAt(encoding.SettingsOffset, (int)encoding.SettingsLength) : [], encoding.SettingsOffset) : null,
+                    0 => new Step(false, [], -1),
                     _ => null,
                 };
                 if (step is null)
@@ -907,6 +919,9 @@ internal sealed partial class FileReader
         // What the steps undo, for a finding: "zlib compression", "header stripping" or both.
         public string Kinds => Steps.Any(x => !x.IsStripping) ? (Steps.Any(x => x.IsStripping) ? "zlib compression and header stripping" : "zlib compression") : "header stripping";
 
+        // One header stripping and nothing else: the frames map to the file, the stripped bytes to the one ContentCompSettings they come from.
+        public bool IsStrippingOnly => Steps.Count == 1 && Steps[0].IsStripping;
+
         public Decoder? Decoder => Steps.Count == 0 || _problems.Count > 0 ? null : new Decoder(Steps, limit);
 
         public void Apply(bool applies, bool isEncryption, string? problem, Step? step)
@@ -955,17 +970,49 @@ internal sealed partial class FileReader
         public StreamProtection? Protection { get; set; }
     }
 
-    private sealed record Step(bool IsStripping, byte[] Prefix);
+    // Offset: where the ContentCompSettings bytes of a header stripping are in the file (-1 where it has none), which is where the stripped bytes come from.
+    private sealed record Step(bool IsStripping, byte[] Prefix, long Offset);
 
-    // Undoes the steps in order: stripped bytes are put back in front of the data, zlib data is inflated.
-    private sealed class Decoder(List<Step> steps, int limit)
+    // Undoes the steps in order: stripped bytes are put back in front of the data, zlib data is inflated. Where one stripping is all there is and the codec parser takes frames so, the
+    // result maps to the file: the stripped bytes to the ContentCompSettings they come from, then the frame's own (the ranges are in file order, which a Tracks element after the
+    // Clusters breaks: that frame is opaque, as an inflated one is).
+    private sealed class Decoder(List<Step> steps, int limit, bool mapsToFile = false)
     {
+        // The decoder that maps the frames it puts bytes back in front of to the file (the codec parsers that place their nodes in the bytes a frame is made of take them so).
+        public Decoder WithMapping(bool mapsToFile) => new(steps, limit, mapsToFile);
+
         public MappedBytes Decode(byte[] data, long offset, FileReader owner)
         {
             byte[] current = data;
             foreach (Step step in steps)
             {
                 current = step.IsStripping ? [.. step.Prefix, .. current] : Inflate(current, limit);
+            }
+
+            if (mapsToFile && steps.All(s => s.IsStripping))
+            {
+                var ranges = new List<ByteRange>();
+                for (int i = steps.Count - 1; i >= 0; i--)
+                {
+                    if (steps[i].Offset >= 0 && steps[i].Prefix.Length > 0)
+                    {
+                        ranges.Add(new ByteRange(steps[i].Offset, steps[i].Prefix.Length));
+                    }
+                }
+
+                ranges.Add(new ByteRange(offset, data.Length));
+                long previousEnd = -1;
+                bool isOrdered = true;
+                foreach (ByteRange range in ranges.Where(r => r.Length > 0))
+                {
+                    isOrdered &= range.Offset >= previousEnd;
+                    previousEnd = range.End;
+                }
+
+                if (isOrdered)
+                {
+                    return new MappedBytes(current, ranges);
+                }
             }
 
             return MappedBytes.Opaque(current, offset, offset + data.Length);

@@ -1,0 +1,679 @@
+{
+ "description": "mkvmerge v4.5.0 ('Speed of Light') (Wine)",
+ "length": 53469,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 2,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 5452,
+     "length": 47998,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 6
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 20832,
+    "muxing_app": "libebml v1.2.0 + libmatroska v1.1.0",
+    "writing_app": "mkvmerge v4.5.0 ('Speed of Light') built on Feb  1 2011 02:10:32",
+    "duration": 24066.0
+   },
+   "length": 53429,
+   "declared_end": 53469
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   53429,
+   [
+    [
+     "SeekHead",
+     52,
+     50,
+     [
+      [
+       "Seek",
+       57,
+       15,
+       [
+        [
+         "SeekID",
+         60,
+         7
+        ],
+        [
+         "SeekPosition",
+         67,
+         5
+        ]
+       ]
+      ],
+      [
+       "Seek",
+       72,
+       15,
+       [
+        [
+         "SeekID",
+         75,
+         7
+        ],
+        [
+         "SeekPosition",
+         82,
+         5
+        ]
+       ]
+      ],
+      [
+       "Seek",
+       87,
+       15,
+       [
+        [
+         "SeekID",
+         90,
+         7
+        ],
+        [
+         "SeekPosition",
+         97,
+         5
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Void",
+     102,
+     4049
+    ],
+    [
+     "Info",
+     4151,
+     158,
+     [
+      [
+       "TimestampScale",
+       4157,
+       6
+      ],
+      [
+       "MuxingApp",
+       4163,
+       38
+      ],
+      [
+       "WritingApp",
+       4201,
+       67
+      ],
+      [
+       "Duration",
+       4268,
+       11
+      ],
+      [
+       "DateUTC",
+       4279,
+       11
+      ],
+      [
+       "SegmentUUID",
+       4290,
+       19
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     4309,
+     72,
+     [
+      [
+       "TrackEntry",
+       4314,
+       67,
+       [
+        [
+         "TrackNumber",
+         4316,
+         3
+        ],
+        [
+         "TrackUID",
+         4319,
+         7
+        ],
+        [
+         "TrackType",
+         4326,
+         3
+        ],
+        [
+         "CodecID",
+         4329,
+         7
+        ],
+        [
+         "DefaultDuration",
+         4336,
+         7
+        ],
+        [
+         "Language",
+         4343,
+         7
+        ],
+        [
+         "Audio",
+         4350,
+         11,
+         [
+          [
+           "SamplingFrequency",
+           4352,
+           6
+          ],
+          [
+           "Channels",
+           4358,
+           3
+          ]
+         ]
+        ],
+        [
+         "ContentEncodings",
+         4361,
+         20,
+         [
+          [
+           "ContentEncoding",
+           4364,
+           17,
+           [
+            [
+             "ContentCompression",
+             4367,
+             14,
+             [
+              [
+               "ContentCompAlgo",
+               4370,
+               4
+              ],
+              [
+               "ContentCompSettings",
+               4374,
+               7
+              ]
+             ]
+            ]
+           ]
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Void",
+     4381,
+     1071
+    ],
+    [
+     "Cluster",
+     5452,
+     47998,
+     [
+      [
+       "Timestamp",
+       5459,
+       3
+      ],
+      [
+       "SimpleBlock",
+       5462,
+       8168
+      ],
+      [
+       "SimpleBlock",
+       13630,
+       8168
+      ],
+      [
+       "SimpleBlock",
+       21798,
+       8168
+      ],
+      [
+       "SimpleBlock",
+       29966,
+       8168
+      ],
+      [
+       "SimpleBlock",
+       38134,
+       8168
+      ],
+      [
+       "SimpleBlock",
+       46302,
+       7148
+      ]
+     ]
+    ],
+    [
+     "Cues",
+     53450,
+     19,
+     [
+      [
+       "CuePoint",
+       53455,
+       14,
+       [
+        [
+         "CueTime",
+         53457,
+         3
+        ],
+        [
+         "CueTrackPositions",
+         53460,
+         9,
+         [
+          [
+           "CueTrack",
+           53462,
+           3
+          ],
+          [
+           "CueClusterPosition",
+           53465,
+           4
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 5462,
+   "length": 8168,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 132,
+   "lacing": "fixed",
+   "frames": [
+    [
+     5470,
+     1020
+    ],
+    [
+     6490,
+     1020
+    ],
+    [
+     7510,
+     1020
+    ],
+    [
+     8530,
+     1020
+    ],
+    [
+     9550,
+     1020
+    ],
+    [
+     10570,
+     1020
+    ],
+    [
+     11590,
+     1020
+    ],
+    [
+     12610,
+     1020
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 13630,
+   "length": 8168,
+   "track": 1,
+   "timestamp": 4096,
+   "cluster_timestamp": 0,
+   "flags": 132,
+   "lacing": "fixed",
+   "frames": [
+    [
+     13638,
+     1020
+    ],
+    [
+     14658,
+     1020
+    ],
+    [
+     15678,
+     1020
+    ],
+    [
+     16698,
+     1020
+    ],
+    [
+     17718,
+     1020
+    ],
+    [
+     18738,
+     1020
+    ],
+    [
+     19758,
+     1020
+    ],
+    [
+     20778,
+     1020
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 21798,
+   "length": 8168,
+   "track": 1,
+   "timestamp": 8193,
+   "cluster_timestamp": 0,
+   "flags": 132,
+   "lacing": "fixed",
+   "frames": [
+    [
+     21806,
+     1020
+    ],
+    [
+     22826,
+     1020
+    ],
+    [
+     23846,
+     1020
+    ],
+    [
+     24866,
+     1020
+    ],
+    [
+     25886,
+     1020
+    ],
+    [
+     26906,
+     1020
+    ],
+    [
+     27926,
+     1020
+    ],
+    [
+     28946,
+     1020
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 29966,
+   "length": 8168,
+   "track": 1,
+   "timestamp": 12289,
+   "cluster_timestamp": 0,
+   "flags": 132,
+   "lacing": "fixed",
+   "frames": [
+    [
+     29974,
+     1020
+    ],
+    [
+     30994,
+     1020
+    ],
+    [
+     32014,
+     1020
+    ],
+    [
+     33034,
+     1020
+    ],
+    [
+     34054,
+     1020
+    ],
+    [
+     35074,
+     1020
+    ],
+    [
+     36094,
+     1020
+    ],
+    [
+     37114,
+     1020
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 38134,
+   "length": 8168,
+   "track": 1,
+   "timestamp": 16385,
+   "cluster_timestamp": 0,
+   "flags": 132,
+   "lacing": "fixed",
+   "frames": [
+    [
+     38142,
+     1020
+    ],
+    [
+     39162,
+     1020
+    ],
+    [
+     40182,
+     1020
+    ],
+    [
+     41202,
+     1020
+    ],
+    [
+     42222,
+     1020
+    ],
+    [
+     43242,
+     1020
+    ],
+    [
+     44262,
+     1020
+    ],
+    [
+     45282,
+     1020
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 46302,
+   "length": 7148,
+   "track": 1,
+   "timestamp": 20481,
+   "cluster_timestamp": 0,
+   "flags": 132,
+   "lacing": "fixed",
+   "frames": [
+    [
+     46310,
+     1020
+    ],
+    [
+     47330,
+     1020
+    ],
+    [
+     48350,
+     1020
+    ],
+    [
+     49370,
+     1020
+    ],
+    [
+     50390,
+     1020
+    ],
+    [
+     51410,
+     1020
+    ],
+    [
+     52430,
+     1020
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 3567898496,
+   "type": 2,
+   "codec": "A_DTS",
+   "private": null,
+   "channels": 6,
+   "rate": 48000.0,
+   "bits": null,
+   "delay": 0,
+   "encodings": [
+    {
+     "order": 0,
+     "scope": 1,
+     "type": 0,
+     "compression": 3,
+     "settings": [
+      4377,
+      4
+     ],
+     "encryption": null,
+     "cipher": null,
+     "has_encryption": false
+    }
+   ],
+   "lacing": true
+  }
+ ],
+ "writers": [
+  {
+   "name": "mkvmerge v4.5.0 ('Speed of Light') built on Feb  1 2011 02:10:32",
+   "confidence": "Low"
+  }
+ ],
+ "encoder": {
+  "tool": "mkvmerge v4.5.0 ('Speed of Light') (Wine)",
+  "arguments": [],
+  "inputs": [
+   "dts/external-ffmpeg-5.1-48k-768k.dts"
+  ]
+ },
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 6
+  }
+ ],
+ "findings": [],
+ "crosscheck": {
+  "valid": true
+ }
+}

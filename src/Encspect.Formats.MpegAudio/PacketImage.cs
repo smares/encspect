@@ -37,8 +37,15 @@ internal sealed class PacketImage(ByteReader source, bool isWordSwapped) : Strea
         set => _position = value;
     }
 
-    // Adds a packet's range; false (with Problem set) when it cannot be placed: its bytes are not bytes of the file in one piece (a compressed or stripped block), or it lies
-    // before the one it follows.
+    // Where the image's bytes lie in the file.
+    public ImageMap Map { get; } = new();
+
+    // The file offset where the last packet's last piece ends, which the next packet's pieces must not precede.
+    private long _lastFile;
+
+    // Adds a packet; false (with Problem set) when it cannot be placed: its bytes are not bytes of the file (a compressed block, or one with bytes that are put back from nowhere), or
+    // it lies before the one it follows. A packet of one piece is at its file offset in the image. A packet of several is laid out in one run, its pieces one after another and the
+    // last at its file offset; pieces that are stripped bytes put back are read again from the file where they are stored, the same ones for every packet.
     public bool Add(MappedBytes packet)
     {
         int length = packet.Length;
@@ -47,24 +54,36 @@ internal sealed class PacketImage(ByteReader source, bool isWordSwapped) : Strea
             return true;
         }
 
-        IReadOnlyList<ByteRange> ranges = packet.FileRanges(0, length);
-        if (packet.IsOpaque || ranges.Count != 1 || ranges[0].Length != length)
+        IReadOnlyList<ByteRange> pieces = packet.FileRanges(0, length);
+        if (packet.IsOpaque || pieces.Count == 0 || pieces.Sum(r => r.Length) != length)
         {
-            Problem ??= "its bytes are not bytes of the file in one piece (a compressed or stripped block)";
+            Problem ??= "its bytes are not bytes of the file (a compressed or stripped block)";
             Skipped++;
             return false;
         }
 
-        long start = ranges[0].Offset;
-        if (start < Last)
+        // The last piece is where the packet is in the file: the image puts it at its file offset, and the pieces before it (the earlier fragments of a media object, or the stripped
+        // bytes put back, which are stored apart) in front of it, so that a packet of one piece is where it is in the file and a message that quotes a position is near the file's.
+        int anchor = pieces.Count - 1;
+        long before = length - pieces[anchor].Length;
+        if (pieces[anchor].Offset < _lastFile)
         {
             Problem ??= "a packet lies before the one it follows in the stream";
             Skipped++;
             return false;
         }
 
+        long start = Math.Max(Last, pieces[anchor].Offset - before);
+        bool continues = Stretches.Count > 0 && Stretches[^1].End == start && _lastFile == pieces[0].Offset;
         First = First < 0 ? start : First;
-        if (Stretches.Count > 0 && Stretches[^1].End == start)
+        long at = start;
+        foreach (ByteRange piece in pieces)
+        {
+            Map.Add(at, piece.Length, piece.Offset);
+            at += piece.Length;
+        }
+
+        if (continues)
         {
             Stretches[^1] = Stretches[^1] with { Length = Stretches[^1].Length + length };
         }
@@ -74,6 +93,7 @@ internal sealed class PacketImage(ByteReader source, bool isWordSwapped) : Strea
         }
 
         Last = start + length;
+        _lastFile = pieces[^1].End;
         return true;
     }
 
@@ -84,30 +104,17 @@ internal sealed class PacketImage(ByteReader source, bool isWordSwapped) : Strea
         int total = (int)Math.Max(0, Math.Min(buffer.Length, Last - _position));
         buffer = buffer[..total];
         buffer.Clear();
-        int low = 0;
-        int high = Stretches.Count - 1;
-        while (low <= high)
-        {
-            int middle = (low + high) >> 1;
-            if (Stretches[middle].End <= _position)
-            {
-                low = middle + 1;
-            }
-            else
-            {
-                high = middle - 1;
-            }
-        }
+        IReadOnlyList<ImageMap.Segment> segments = Map.Segments;
 
         // The container's reader is shared with the container, whose reads set the position they need; it is put back all the same.
         long saved = source.Position;
         try
         {
-            for (int i = low; i < Stretches.Count && Stretches[i].Offset < _position + total; i++)
+            for (int i = Map.FirstEndingAfter(_position); i < segments.Count && segments[i].Virtual < _position + total; i++)
             {
-                long from = Math.Max(Stretches[i].Offset, _position);
-                long to = Math.Min(Stretches[i].End, _position + total);
-                Fill(buffer.Slice((int)(from - _position), (int)(to - from)), from);
+                long from = Math.Max(segments[i].Virtual, _position);
+                long to = Math.Min(segments[i].VirtualEnd, _position + total);
+                Fill(buffer.Slice((int)(from - _position), (int)(to - from)), segments[i].File + (from - segments[i].Virtual));
             }
         }
         finally
