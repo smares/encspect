@@ -104,36 +104,14 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         return (frames, verified, next);
     }
 
-    // Where the image of the packets being analyzed lies in the file, for a message that quotes a position: it quotes the file's offset (the analysis of one stream runs on one thread, and
-    // the messages are made while it runs; a message made when nodes are built later is given the map it needs).
-    [ThreadStatic]
-    private static ImageMap? _map;
-
-    // "0x" and the file offset of the image position.
-    private static string At(long position) => $"0x{(_map?.FileOf(position) ?? position):X}";
-
     public void Parse(ParseContext context) => Parse(context, null, null);
 
     // stretches: where a container hands the stream over in several pieces, the pieces' file ranges, sorted, apart and inside the reader.
     // map: where the image's bytes lie in the file where that is not the image's own offsets (null where it is).
     private void Parse(ParseContext context, IReadOnlyList<ByteRange>? stretches, ImageMap? map)
     {
-        ImageMap? outer = _map;
-        _map = map;
-        try
-        {
-            ParseImage(context, stretches, map);
-        }
-        finally
-        {
-            _map = outer;
-        }
-    }
-
-    private void ParseImage(ParseContext context, IReadOnlyList<ByteRange>? stretches, ImageMap? map)
-    {
         var blocks = new BlockReader(context.Reader) { Stretches = stretches };
-        var findings = new FindingCollector();
+        var findings = new FindingCollector(map);
         var build = new BuildContext { Stretches = stretches, Map = map };
         var stream = new StreamState(blocks, findings, build, new BitReservoir(build.Runs, blocks.Hop), [], [], context.CancellationToken) { Context = context };
         long position = context.Reader.Start;
@@ -334,7 +312,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
                         int to = freeLength;
                         node ??= new Node("Frame", at, Math.Min(header.FrameLength(freeLength), frameLimit - at), header.Summary) { Kind = NodeKind.Frame };
                         findings.Add(Severity.Warning, "mpeg-audio.free-format-length-changed", node, count =>
-                            $"The free-format frame length changes {Times(count)}, first from {from} to {to} bytes plus padding at {At(at)}; ISO/IEC 11172-3 requires a fixed bitrate.");
+                            $"The free-format frame length changes {Times(count)}, first from {from} to {to} bytes plus padding at {findings.At(at)}; ISO/IEC 11172-3 requires a fixed bitrate.");
                     }
 
                     // A frame does not reach past its stretch: the container's bytes after it are not its own.
@@ -345,7 +323,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
                         if (audio is { } last && header.ChannelModeBits != last.ChannelModeBits)
                         {
                             findings.Add(Severity.Info, "mpeg-audio.channel-mode-changed", FindingNode(frame), count =>
-                                $"The channel mode changes {Times(count)}, first from {last.ChannelMode} to {header.ChannelMode} at {At(at)}.");
+                                $"The channel mode changes {Times(count)}, first from {last.ChannelMode} to {header.ChannelMode} at {findings.At(at)}.");
                         }
 
                         audio = header;
@@ -403,8 +381,8 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         void StreamChanged(MpegHeader from, MpegHeader to, Node node) =>
             findings.Add(Severity.Info, "mpeg-audio.stream-changed", node, count =>
                 count == 1
-                    ? $"The stream changes from {from.StreamName} to {to.StreamName} at {At(node.Offset)}."
-                    : $"The stream changes {count} times, first from {from.StreamName} to {to.StreamName} at {At(node.Offset)}.");
+                    ? $"The stream changes from {from.StreamName} to {to.StreamName} at {findings.At(node.Offset)}."
+                    : $"The stream changes {count} times, first from {from.StreamName} to {to.StreamName} at {findings.At(node.Offset)}.");
 
         void FreeFormat(MpegHeader header, int length)
         {
@@ -432,11 +410,11 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             }
             else if (trailing)
             {
-                findings.AddNow(Severity.Warning, "mpeg-audio.trailing-data", $"{Counts.Of(length, "byte", "bytes")} after the last frame at {At(gapStart)} {Counts.Agree(length, "is", "are")} not a frame.", GapNode(gap, state.Build.Stretches));
+                findings.AddNow(Severity.Warning, "mpeg-audio.trailing-data", $"{Counts.Of(length, "byte", "bytes")} after the last frame at {findings.At(gapStart)} {Counts.Agree(length, "is", "are")} not a frame.", GapNode(gap, state.Build.Stretches));
             }
             else
             {
-                findings.AddNow(Severity.Warning, "mpeg-audio.sync-lost", $"Sync is lost for {Counts.Of(length, "byte", "bytes")} at {At(gapStart)}.", GapNode(gap, state.Build.Stretches));
+                findings.AddNow(Severity.Warning, "mpeg-audio.sync-lost", $"Sync is lost for {Counts.Of(length, "byte", "bytes")} at {findings.At(gapStart)}.", GapNode(gap, state.Build.Stretches));
             }
         }
     }
@@ -561,7 +539,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             {
                 long at = position;
                 findings.Add(Severity.Warning, "mpeg-audio.huffman-overrun", FindingNode(frame), count =>
-                    $"{Frames(count, "has", "have")} Huffman-coded values that run past the part2_3_length of their granule, the first at {At(at)}.");
+                    $"{Frames(count, "has", "have")} Huffman-coded values that run past the part2_3_length of their granule, the first at {findings.At(at)}.");
             }
         }
 
@@ -587,7 +565,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         if (header.EmphasisBits == 2)
         {
             findings.Add(Severity.Warning, "mpeg-audio.emphasis-reserved", HeaderField(position, "Emphasis"), count =>
-                $"{Frames(count, "uses", "use")} the reserved emphasis value, the first at {At(position)}.");
+                $"{Frames(count, "uses", "use")} the reserved emphasis value, the first at {findings.At(position)}.");
         }
 
         // MPEG 2.5 is Fraunhofer's extension of Layer III; mpg123, libmad and ffmpeg decode the
@@ -595,13 +573,13 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         if (header.VersionBits == 0 && header.Layer != 3)
         {
             findings.Add(Severity.Warning, "mpeg-audio.mpeg25-layer", FindingNode(frame), count =>
-                $"{Frames(count, "is", "are")} MPEG-2.5 Layer {header.LayerName}, which no standard defines: MPEG 2.5 extends only Layer III. The first at {At(position)}.");
+                $"{Frames(count, "is", "are")} MPEG-2.5 Layer {header.LayerName}, which no standard defines: MPEG 2.5 extends only Layer III. The first at {findings.At(position)}.");
         }
 
         if (!header.IsLayer2BitrateModeAllowed)
         {
             findings.Add(Severity.Warning, "mpeg-audio.bitrate-mode-not-allowed", FindingNode(frame), count =>
-                $"{Frames(count, "combines", "combine")} Layer II at {header.Bitrate} kbps with {header.ChannelMode}, which ISO/IEC 11172-3 does not allow, the first at {At(position)}.");
+                $"{Frames(count, "combines", "combine")} Layer II at {header.Bitrate} kbps with {header.ChannelMode}, which ISO/IEC 11172-3 does not allow, the first at {findings.At(position)}.");
         }
 
         if (stored >= 0)
@@ -609,18 +587,18 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             if (computed >= 0 && computed != stored)
             {
                 findings.Add(Severity.Warning, "mpeg-audio.crc-mismatch", CrcNode(position, stored), count =>
-                    $"{Frames(count, "fails", "fail")} the CRC check, the first at {At(position)}.");
+                    $"{Frames(count, "fails", "fail")} the CRC check, the first at {findings.At(position)}.");
             }
         }
 
         if (available < length && isCut)
         {
             findings.Add(Severity.Warning, "mpeg-audio.frame-cut", FindingNode(frame), count =>
-                $"{Frames(count, "ends", "end")} where the next frame starts, before the length {(count == 1 ? "its" : "their")} header gives: the frame was cut or its header is damaged. The first at {At(position)} has {available} of its {length} bytes.");
+                $"{Frames(count, "ends", "end")} where the next frame starts, before the length {(count == 1 ? "its" : "their")} header gives: the frame was cut or its header is damaged. The first at {findings.At(position)} has {available} of its {length} bytes.");
         }
         else if (available < length)
         {
-            findings.AddNow(Severity.Warning, "mpeg-audio.frame-truncated", $"The last frame at {At(position)} has {available} of its {Counts.Of(length, "byte", "bytes")}.", FindingNode(frame));
+            findings.AddNow(Severity.Warning, "mpeg-audio.frame-truncated", $"The last frame at {findings.At(position)} has {available} of its {Counts.Of(length, "byte", "bytes")}.", FindingNode(frame));
         }
 
         return frame;
@@ -988,20 +966,20 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         foreach ((int ch, int sb) in audio.Coded().Where(c => hasScalefactors && audio.Allocation[c.Channel, c.Subband] == Layer1AudioData.ForbiddenAllocation).Take(1))
         {
             findings.Add(Severity.Warning, "mpeg-audio.allocation-forbidden", audio.AllocationNode(position, ch, sb), count =>
-                $"{Frames(count, "uses", "use")} the bit allocation 15, which ISO/IEC 11172-3 forbids for Layer I and libmad rejects, the first at {At(position)}.");
+                $"{Frames(count, "uses", "use")} the bit allocation 15, which ISO/IEC 11172-3 forbids for Layer I and libmad rejects, the first at {findings.At(position)}.");
         }
 
         foreach ((int ch, int sb) in Enumerable.Range(0, audio.Channels).SelectMany(ch => Enumerable.Range(0, Layer1AudioData.Subbands).Select(sb => (ch, sb)))
             .Where(c => hasScalefactors && audio.Scalefactor[c.ch, c.sb] == 63).Take(1))
         {
             findings.Add(Severity.Warning, "mpeg-audio.scalefactor-undefined", audio.ScalefactorNode(position, ch, sb), count =>
-                $"{Frames(count, "uses", "use")} scalefactor index 63, which Table B.1 of ISO/IEC 11172-3 does not define but decoders accept, the first at {At(position)}.");
+                $"{Frames(count, "uses", "use")} scalefactor index 63, which Table B.1 of ISO/IEC 11172-3 does not define but decoders accept, the first at {findings.At(position)}.");
         }
 
         if (audio.End > bytes.Length * 8 && available == length)
         {
             findings.Add(Severity.Warning, "mpeg-audio.audio-data-overflow", new Node("Frame", position, available), count =>
-                $"{Frames(count, "needs", "need")} more bits for {(count == 1 ? "its" : "their")} Layer I audio data than {(count == 1 ? "it holds" : "they hold")}, the first at {At(position)}.");
+                $"{Frames(count, "needs", "need")} more bits for {(count == 1 ? "its" : "their")} Layer I audio data than {(count == 1 ? "it holds" : "they hold")}, the first at {findings.At(position)}.");
         }
 
         // Without room for its allocation and scalefactors, the frame shows only its bytes.
@@ -1038,7 +1016,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             undefined = Layer2AudioData.Span("Scalefactors", position, bit, bit + 6);
             // TwoLAME writes it, and ffmpeg, mpg123 and libmad decode it.
             findings.Add(Severity.Warning, "mpeg-audio.scalefactor-undefined", audio.ScalefactorNode(position, ch, sb), count =>
-                $"{Frames(count, "uses", "use")} scalefactor index 63, which Table B.1 of ISO/IEC 11172-3 does not define but decoders accept, the first at {At(position)}.");
+                $"{Frames(count, "uses", "use")} scalefactor index 63, which Table B.1 of ISO/IEC 11172-3 does not define but decoders accept, the first at {findings.At(position)}.");
         }
 
         if (audio.End > bytes.Length * 8 && available == length)
@@ -1072,7 +1050,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
 
         void ReportOverflow() =>
             findings.Add(Severity.Warning, "mpeg-audio.audio-data-overflow", new Node("Frame", position, available), count =>
-                $"{Frames(count, "needs", "need")} more bits for {(count == 1 ? "its" : "their")} Layer {header.LayerName} audio data than {(count == 1 ? "it holds" : "they hold")}, the first at {At(position)}.");
+                $"{Frames(count, "needs", "need")} more bits for {(count == 1 ? "its" : "their")} Layer {header.LayerName} audio data than {(count == 1 ? "it holds" : "they hold")}, the first at {findings.At(position)}.");
     }
 
     // A Layer II frame's multichannel candidate, read again from the bytes its record keeps: those
@@ -1153,40 +1131,40 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
                 if ((mc.ForbiddenValue ?? (frame.HasMultichannelUndefinedScalefactor ? "a scalefactor index of 63" : null)) is { } forbidden)
                 {
                     state.Findings.Add(Severity.Warning, "mpeg-audio.multichannel-value-forbidden", node, count =>
-                        $"{Frames(count, "has", "have")} a value in {(count == 1 ? "its" : "their")} multichannel side information that ISO/IEC 13818-3 forbids or leaves unassigned, which decoders read in their own way (the first: {forbidden}, at {At(frame.Offset)}).");
+                        $"{Frames(count, "has", "have")} a value in {(count == 1 ? "its" : "their")} multichannel side information that ISO/IEC 13818-3 forbids or leaves unassigned, which decoders read in their own way (the first: {forbidden}, at {state.Findings.At(frame.Offset)}).");
                 }
             }
 
             if (mc.Center == 2)
             {
                 state.Findings.Add(Severity.Warning, "mpeg-audio.multichannel-center-reserved", node, count =>
-                    $"{Frames(count, "uses", "use")} the reserved center value in {(count == 1 ? "its" : "their")} multichannel header, read as no center, the first at {At(frame.Offset)}.");
+                    $"{Frames(count, "uses", "use")} the reserved center value in {(count == 1 ? "its" : "their")} multichannel header, read as no center, the first at {state.Findings.At(frame.Offset)}.");
             }
 
             if (mc.HasAncillaryOverflow)
             {
                 state.Findings.Add(Severity.Warning, "mpeg-audio.multichannel-ancillary-overflow", node, count =>
-                    $"{Frames(count, "declares", "declare")} more MPEG-1 ancillary bytes in {(count == 1 ? "its" : "their")} multichannel header than the frame holds after the header and its CRC, the first {Counts.Of(mc.AncillaryBytes, "byte", "bytes")} at {At(frame.Offset)}.");
+                    $"{Frames(count, "declares", "declare")} more MPEG-1 ancillary bytes in {(count == 1 ? "its" : "their")} multichannel header than the frame holds after the header and its CRC, the first {Counts.Of(mc.AncillaryBytes, "byte", "bytes")} at {state.Findings.At(frame.Offset)}.");
             }
             else if (mc.UsesFlagReading)
             {
                 state.Findings.Add(Severity.Warning, "mpeg-audio.multichannel-reference-software-reading", node, count =>
-                    $"{Frames(count, "follows", "follow")} the reading of the ISO reference software, not ISO/IEC 13818-3 2.5.2.15: {(count == 1 ? "its" : "their")} multichannel CRC holds only where dyn_cross_LR names the base channel of every copied channel, the first at {At(frame.Offset)}.");
+                    $"{Frames(count, "follows", "follow")} the reading of the ISO reference software, not ISO/IEC 13818-3 2.5.2.15: {(count == 1 ? "its" : "their")} multichannel CRC holds only where dyn_cross_LR names the base channel of every copied channel, the first at {state.Findings.At(frame.Offset)}.");
             }
             else if (mc.Fits && !mc.IsCrcValid)
             {
                 state.Findings.Add(Severity.Warning, "mpeg-audio.multichannel-crc-mismatch", node, count =>
-                    $"{Frames(count, "fails", "fail")} the multichannel CRC check, the first at {At(frame.Offset)}.");
+                    $"{Frames(count, "fails", "fail")} the multichannel CRC check, the first at {state.Findings.At(frame.Offset)}.");
             }
             else if (!mc.Fits && mc.HasExtension)
             {
                 state.Findings.Add(Severity.Info, "mpeg-audio.multichannel-in-extension", node, count =>
-                    $"{Frames(count, "continues", "continue")} {(count == 1 ? "its" : "their")} multichannel side information in the extension bitstream, a separate file, so {(count == 1 ? "its" : "their")} multichannel CRC is not verified; the first at {At(frame.Offset)}.");
+                    $"{Frames(count, "continues", "continue")} {(count == 1 ? "its" : "their")} multichannel side information in the extension bitstream, a separate file, so {(count == 1 ? "its" : "their")} multichannel CRC is not verified; the first at {state.Findings.At(frame.Offset)}.");
             }
             else if (!mc.Fits)
             {
                 state.Findings.Add(Severity.Warning, "mpeg-audio.multichannel-too-long", node, count =>
-                    $"{Frames(count, "has", "have")} multichannel side information longer than the frame, the first at {At(frame.Offset)}.");
+                    $"{Frames(count, "has", "have")} multichannel side information longer than the frame, the first at {state.Findings.At(frame.Offset)}.");
             }
         }
     }
@@ -1220,7 +1198,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
     {
         if (HasSideInfoProblems(info))
         {
-            foreach ((string code, Node node, Func<int, string> message) in SideInfoProblems(info, position, offset))
+            foreach ((string code, Node node, Func<int, string> message) in SideInfoProblems(info, position, offset, findings.Map))
             {
                 findings.Add(Severity.Warning, code, node, message);
             }
@@ -1238,7 +1216,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         {
             findings.Add(Severity.Warning, "mpeg-audio.main-data-begin-exceeds-buffer",
                 Layer3SideInfo.Span("Main Data Begin", offset, info.MainDataBegin.Bit, info.MainDataBegin.Bit + info.MainDataBegin.Length), count =>
-                    $"{Frames(count, "reaches", "reach")} back further for main data than the decoder buffer of ISO/IEC 11172-3 allows, which holds one frame at the highest bitrate: the first at {At(position)} has a main_data_begin of {Counts.Of(mainDataBegin, "byte", "bytes")} where at most {Math.Max(buffer - frameLength, 0)} {Counts.Agree(Math.Max(buffer - frameLength, 0), "is", "are")} allowed. Encoders such as LAME exceed it, and decoders accept it.");
+                    $"{Frames(count, "reaches", "reach")} back further for main data than the decoder buffer of ISO/IEC 11172-3 allows, which holds one frame at the highest bitrate: the first at {findings.At(position)} has a main_data_begin of {Counts.Of(mainDataBegin, "byte", "bytes")} where at most {Math.Max(buffer - frameLength, 0)} {Counts.Agree(Math.Max(buffer - frameLength, 0), "is", "are")} allowed. Encoders such as LAME exceed it, and decoders accept it.");
         }
     }
 
@@ -1317,7 +1295,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         return false;
     }
 
-    internal static IEnumerable<(string Code, Node Node, Func<int, string> Message)> SideInfoProblems(Layer3SideInfo info, long position, long offset)
+    internal static IEnumerable<(string Code, Node Node, Func<int, string> Message)> SideInfoProblems(Layer3SideInfo info, long position, long offset, ImageMap? map = null)
     {
         for (int gr = 0; gr < info.Granules.Length; gr++)
         {
@@ -1333,13 +1311,13 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
                 if ((problems & GranuleProblems.BigValues) != 0)
                 {
                     yield return ("mpeg-audio.big-values-too-large", Field("Big Values", g.BigValues), count =>
-                        $"{Frames(count, "has", "have")} more than 288 big_values pairs, the first {g.BigValues.Value} at {At(position)}.");
+                        $"{Frames(count, "has", "have")} more than 288 big_values pairs, the first {g.BigValues.Value} at {At(map, position)}.");
                 }
 
                 if ((problems & GranuleProblems.ReservedBlockType) != 0)
                 {
                     yield return ("mpeg-audio.block-type-reserved", Layer3SideInfo.BlockTypeSpan(offset, g), count =>
-                        $"{Frames(count, "switches", "switch")} windows with block type 0, which is reserved, the first at {At(position)}.");
+                        $"{Frames(count, "switches", "switch")} windows with block type 0, which is reserved, the first at {At(map, position)}.");
                 }
 
                 if ((problems & GranuleProblems.UndefinedTable) != 0)
@@ -1347,7 +1325,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
                     foreach (BitField table in g.TableSelect.Where(t => t.Value is 4 or 14))
                     {
                         yield return ("mpeg-audio.huffman-table-undefined", Layer3SideInfo.TableSelectSpan(offset, g), count =>
-                            $"{Frames(count, "selects", "select")} a Huffman table that does not exist, the first table {table.Value} at {At(position)}.");
+                            $"{Frames(count, "selects", "select")} a Huffman table that does not exist, the first table {table.Value} at {At(map, position)}.");
                     }
                 }
 
@@ -1355,13 +1333,13 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
                 {
                     int part2 = info.Part2Bits(gr, ch);
                     yield return ("mpeg-audio.scalefactors-exceed-granule", Field("Part 2 and 3 Length", g.Part23Length), count =>
-                        $"{Frames(count, "has", "have")} scalefactors longer than part2_3_length, the first {part2} of {Counts.Of(g.Part23Length.Value, "bit", "bits")} at {At(position)}.");
+                        $"{Frames(count, "has", "have")} scalefactors longer than part2_3_length, the first {part2} of {Counts.Of(g.Part23Length.Value, "bit", "bits")} at {At(map, position)}.");
                 }
 
                 if ((problems & GranuleProblems.ScfsiWithShortBlocks) != 0)
                 {
                     yield return ("mpeg-audio.scfsi-with-short-blocks", Field($"Channel {ch}", info.Scfsi[ch]), count =>
-                        $"{Frames(count, "sets", "set")} scfsi for a channel with short blocks, which libmad rejects, the first at {At(position)}.");
+                        $"{Frames(count, "sets", "set")} scfsi for a channel with short blocks, which libmad rejects, the first at {At(map, position)}.");
                 }
             }
         }
@@ -1371,7 +1349,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             if (StereoBlockTypesDiffer(info, row))
             {
                 yield return ("mpeg-audio.stereo-block-types-differ", Layer3SideInfo.BlockTypeSpan(offset, row[1]), count =>
-                    $"{Frames(count, "uses", "use")} mid/side or intensity stereo with a different block type in each channel, which libmad rejects, the first at {At(position)}.");
+                    $"{Frames(count, "uses", "use")} mid/side or intensity stereo with a different block type in each channel, which libmad rejects, the first at {At(map, position)}.");
             }
         }
 
@@ -1385,26 +1363,26 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         {
             case MainDataProblem.BeforeStream:
                 findings.Add(Severity.Warning, "mpeg-audio.main-data-before-stream", frame, count =>
-                    $"{Frames(count, "has", "have")} main data that begins before the stream, the first at {At(position)}; the stream was probably cut.");
+                    $"{Frames(count, "has", "have")} main data that begins before the stream, the first at {findings.At(position)}; the stream was probably cut.");
                 break;
             case MainDataProblem.Overlap:
                 findings.Add(Severity.Warning, "mpeg-audio.main-data-overlap", frame, count =>
-                    $"{Frames(count, "has", "have")} main data that overlaps the previous frame's, the first at {At(position)}; frames are probably missing.");
+                    $"{Frames(count, "has", "have")} main data that overlaps the previous frame's, the first at {findings.At(position)}; frames are probably missing.");
                 break;
             case MainDataProblem.InHeaderFrame:
                 findings.Add(Severity.Warning, "mpeg-audio.main-data-in-vbr-header-frame", frame, count =>
-                    $"{Frames(count, "has", "have")} main data that reaches back into the Xing, Info or VBRI header frame before {(count == 1 ? "it" : "them")}, the first at {At(position)}. minimp3 decodes {(count == 1 ? "it" : "them")} from its bytes, mpg123 and ffmpeg skip that frame and decode {(count == 1 ? "it" : "them")} with data missing; the stream was probably cut and the header frame written afterwards.");
+                    $"{Frames(count, "has", "have")} main data that reaches back into the Xing, Info or VBRI header frame before {(count == 1 ? "it" : "them")}, the first at {findings.At(position)}. minimp3 decodes {(count == 1 ? "it" : "them")} from its bytes, mpg123 and ffmpeg skip that frame and decode {(count == 1 ? "it" : "them")} with data missing; the stream was probably cut and the header frame written afterwards.");
                 break;
             case MainDataProblem.AcrossGap:
                 findings.Add(Severity.Warning, "mpeg-audio.reservoir-across-gap", frame, count =>
-                    $"{Frames(count, "takes", "take")} main data from before a gap, the first at {At(position)}; decoders differ on whether it is still there.");
+                    $"{Frames(count, "takes", "take")} main data from before a gap, the first at {findings.At(position)}; decoders differ on whether it is still there.");
                 break;
         }
 
         if (placement.Overflows)
         {
             findings.Add(Severity.Warning, "mpeg-audio.main-data-overflow", frame, count =>
-                $"{Frames(count, "has", "have")} more main data than the bit reservoir and the frame hold, the first at {At(position)}.");
+                $"{Frames(count, "has", "have")} more main data than the bit reservoir and the frame hold, the first at {findings.At(position)}.");
         }
     }
 
@@ -1742,6 +1720,9 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         public static Entry Gap(long offset, long length) => new(offset, length, 0);
     }
 
+    // "0x" and the file offset of the image position; map is where the image lies in the file where that is not its own offsets (null where it is).
+    private static string At(ImageMap? map, long position) => $"0x{(map?.FileOf(position) ?? position):X}";
+
     private static string Frames(int count) => count == 1 ? "1 frame" : $"{count.ToString(CultureInfo.InvariantCulture)} frames";
 
     // The count of frames with the verb that agrees with it.
@@ -1901,10 +1882,15 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
     private sealed record Layer2Record(byte[] Audio, byte[]? Multichannel, Node? UndefinedScalefactor, bool HasMultichannelUndefinedScalefactor = false);
 
     // Findings of one kind are reported once per stream with a count, pointing at the first case.
-    private sealed class FindingCollector
+    private sealed class FindingCollector(ImageMap? map)
     {
         private readonly Dictionary<string, (Severity Severity, Node? Node, int Count, Func<int, string> Message)> _aggregated = [];
         private readonly List<Finding> _immediate = [];
+
+        // "0x" and the file offset of the image position.
+        public ImageMap? Map => map;
+
+        public string At(long position) => MpegAudioParser.At(map, position);
 
         public void Add(Severity severity, string code, Node? node, Func<int, string> message)
         {
