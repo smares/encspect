@@ -4,8 +4,7 @@ for the hybrid ones that have a correction file) and the files of the DOS build 
 (external-wv431-*.wv), as docs/design/wavpack-legacy.md, "Fixtures", lists them.
 
 The encoders are the programs ReallyRareWares keeps (wavpack_legacy_tool.py pins them): 1.0, 2.0, 3.0, 3.2 and 3.4 are real-mode DOS programs, 4.31 is a DOS/32A
-program, and DOSBox runs them. The release 3.97 is a Win32 program and the 32-bit Wine of the container this was written in crashes before it reads a file, so no
-file of 3.97 is among them. The inputs are deterministic signals written by wavpack_signal.py (WAV files whose fmt chunk is the plain PCM one the old encoders
+program, and DOSBox runs them. The release 3.97 is a Win32 program, run directly on Windows (through Wine elsewhere). The inputs are deterministic signals written by wavpack_signal.py (WAV files whose fmt chunk is the plain PCM one the old encoders
 take), the lossyWAV-processed WAV file of tests/fixtures/wav and raw files cut from the same signal.
 
 Each file is decoded by the release's own WVUNPACK in the same run, and the manifest records what it wrote (the MD5 of the PCM, against the encoder's input):
@@ -14,7 +13,9 @@ recomputes the manifests from them without DOSBox: the model (wavpack_legacy_mod
 encoder, its settings and the original decoder's answer come from the manifest already there. crosscheck_wavpack_legacy_fixtures.py confirms them with libwavpack's
 legacy decoder.
 
-    make_external_wavpack_legacy_fixtures.py [--manifests-only] [name ...]
+    make_external_wavpack_legacy_fixtures.py [--manifests-only] [--release=RELEASE] [name ...]
+
+--release=3.97 writes the files of that release only (the others' manifests are recomputed from the committed files).
 """
 
 import hashlib
@@ -40,7 +41,7 @@ LIST_CHUNK = sig.chunk(b"LIST", b"INFOISFT" + (12).to_bytes(4, "little") + b"Tes
 TAIL_CHUNK = sig.chunk(b"id3 ", b"TAG" + bytes(range(100, 125)))
 
 # Release, in the order the design lists them: the name of the program as the files record it.
-NAMES = {"1.0": "wv100", "2.0": "wv200", "3.0": "wv300", "3.2": "wv320", "3.4": "wv340", "4.31": "wv431"}
+NAMES = {"1.0": "wv100", "2.0": "wv200", "3.0": "wv300", "3.2": "wv320", "3.4": "wv340", "3.97": "wv397", "4.31": "wv431"}
 
 
 def fixture(release, topic, spec, arguments="", files=("wv",)):
@@ -72,7 +73,7 @@ FIXTURES = dict([
         ("raw-mono", ("raw", 1, SHORT, 0), "-r1"),
         ("chunks", ("wav", 44100, 2, 16, SHORT, LIST_CHUNK, TAIL_CHUNK), ""),
     ]],
-    *[fixture("3.4", t, s, a, f) for t, s, a, f in [
+    *[fixture(r, t, s, a, f) for r in ("3.4", "3.97") for t, s, a, f in [
         ("lossless-16-stereo", ("wav", 44100, 2, 16, SHORT), "", ("wv",)),
         ("fast", ("wav", 44100, 2, 16, SHORT), "-f", ("wv",)),
         ("very-fast", ("wav", 44100, 2, 16, SHORT), "-ff", ("wv",)),
@@ -108,6 +109,14 @@ FIXTURES = dict([
         ("trailer-only", ("wav", 44100, 2, 16, SHORT, b"", TAIL_CHUNK), "", ("wv",)),
         ("lossywav", ("file", LOSSYWAV), "", ("wv",)),
         ("standard-input", ("wav", 44100, 2, 16, SHORT), "-", ("wv",)),
+    ]],
+    # What 3.97's documentation adds to 3.4's options: the raw and hybrid modes together ("With version 3.96 the raw and hybrid modes are usable together
+    # (with a warning)"), which -y answers. 3.4's limit on 3-byte samples is a question of the DOS build, so one 24-bit file has the full length.
+    *[fixture("3.97", t, s, a, f) for t, s, a, f in [
+        ("raw-stereo-hybrid-320", ("raw", 2, SHORT, 0), "-r2 -b320", ("wv",)),
+        ("raw-stereo-hybrid-320-correction", ("raw", 2, SHORT, 0), "-r2 -b320 -c", ("wv", "wvc")),
+        ("raw-mono-hybrid-320", ("raw", 1, SHORT, 0), "-r1 -b320", ("wv",)),
+        ("lossless-24-stereo-long", ("wav", 44100, 2, 24, SHORT), "", ("wv",)),
     ]],
     *[fixture("4.31", t, s, a, f) for t, s, a, f in [
         ("lossless-16-stereo", ("wav", 44100, 2, 16, SHORT), "", ("wv",)),
@@ -214,7 +223,7 @@ def encode(name, entry, work):
     if "wvc" in produced:
         # The same decoder with the main file alone is lossy where the hybrid file discarded bits.
         _, alone = tool.run(release, {"OUT.WV": produced["wv"]}, [decode_command], redirect=redirect)
-        lossy = wav_pcm(alone["BACK.WAV"])
+        lossy = alone["BACK.BIN"] if spec[0] == "raw" else wav_pcm(alone["BACK.WAV"])
         original = {"tool": original["tool"], "with_correction": {k: v for k, v in original.items() if k != "tool"},
                     "without_correction": {"pcm_md5": md5(lossy), "pcm_bytes": len(lossy), "matches_input": lossy == pcm}}
     encoder = {"tool": encoder_name(release), "arguments": entry["arguments"].split(), "input": dict(description, pcm_md5=md5(pcm), file_md5=md5(data))}
@@ -222,10 +231,14 @@ def encode(name, entry, work):
 
 
 def encoder_name(release):
+    if release in tool.WIN32:
+        return f"WavPack {release} for Win32 (ReallyRareWares: {tool.RELEASES[release][0]}), run on Windows 10"
     return f"WavPack {release} for DOS (ReallyRareWares: {tool.RELEASES[release][0]}), run under DOSBox 0.74-3"
 
 
 def decoder_name(release):
+    if release in tool.WIN32:
+        return f"wvunpack {release} for Win32, run on Windows 10"
     return f"WVUNPACK {release} for DOS, run under DOSBox 0.74-3"
 
 
@@ -257,8 +270,11 @@ def build_manifest(name, kind, path, encoder, original):
 def main():
     only_manifests = "--manifests-only" in sys.argv
     chosen = [a for a in sys.argv[1:] if not a.startswith("--")]
+    releases = [a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--release=")]
+    chosen += [name for name, entry in FIXTURES.items() if entry["release"] in releases]
     if not only_manifests:
-        tool.check_dosbox()
+        for release in sorted({entry["release"] for name, entry in FIXTURES.items() if not chosen or name in chosen}):
+            tool.check_runner(release)
     LEGACY.mkdir(parents=True, exist_ok=True)
     count = 0
     for name, entry in FIXTURES.items():
@@ -281,7 +297,7 @@ def main():
                 path_for(name, kind).write_bytes(content)
         for kind in entry["files"]:
             path = path_for(name, kind)
-            manifest_path(path).write_text(json.dumps(build_manifest(name, kind, path, encoder, original), indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+            manifest_path(path).write_text(json.dumps(build_manifest(name, kind, path, encoder, original), indent=1, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
             count += 1
     print(f"Wrote {count} {'manifests' if only_manifests else 'fixtures'} to {LEGACY} and {VERSION4}")
 

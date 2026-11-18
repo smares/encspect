@@ -176,6 +176,7 @@ def libwavpack(tool, path):
         parts = line.split(" ")
         if parts[0] == "block":
             blocks.append(parts[1:])
+            facts.setdefault("stream_version", parts[3])
         elif parts[0] == "open":
             facts["open_error"] = line
         else:
@@ -265,8 +266,14 @@ def check_libwavpack(name, manifest, path, report, tool, problems):
         pairs.append(("samples", int(facts["samples"]) * (8 if is_dsd else 1), stream["samples"]))
     if statistic(report, "Compression Mode") is not None:
         mode = "very high" if facts["very_high"] == "1" else "high" if facts["high"] == "1" else "fast" if facts["fast"] == "1" else "normal"
+        # WavpackGetMode reports the high mode of a stream older than version 0x405 (WavPack before 4.40) as very high, the same
+        # algorithm under its later name (common_utils.c); the report names the mode as the file's flags and its encoder do.
+        if mode == "very high" and int(facts.get("stream_version", "410"), 16) < 0x405:
+            mode = "high"
         pairs.append(("compression mode", mode, statistic(report, "Compression Mode")))
-        pairs.append(("extra level", facts["extra"] if facts["extra"] != "-1" else "none", str(statistic(report, "Extra Processing Level"))))
+        # A level of 0 is libwavpack's "unknown": the extra flag is set and no level is stored (WavPack before 4.40).
+        extra = "none" if facts["extra"] == "-1" else "not stored" if facts["extra"] == "0" else facts["extra"]
+        pairs.append(("extra level", extra, str(statistic(report, "Extra Processing Level"))))
     md5 = statistic(report, "MD5 Checksum")
     pairs.append(("MD5 digest", facts.get("md5"), md5))
     if statistic(report, "Source Format") is not None:

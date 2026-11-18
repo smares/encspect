@@ -1,0 +1,99 @@
+{
+ "length": 88590,
+ "header": {
+  "offset": 44,
+  "length": 36,
+  "ck_size": 28,
+  "version": 3,
+  "bits": 0,
+  "flags": "fc70",
+  "flag_names": [
+   "high",
+   "bytes-3",
+   "over-20",
+   "new-high",
+   "cancel-extreme",
+   "cross-decorr",
+   "new-decorr",
+   "joint-stereo",
+   "extreme-decorr"
+  ],
+  "shift": 4,
+  "total_samples": 24000,
+  "crc": "9cabd253",
+  "crc2": "00000000",
+  "extension": "WAV",
+  "extra_bc": 0,
+  "extras": "000000"
+ },
+ "wav": {
+  "riff_size": 144036,
+  "chunks": [
+   {
+    "id": "fmt ",
+    "offset": 12,
+    "size": 16
+   },
+   {
+    "id": "data",
+    "offset": 36,
+    "size": 144000
+   }
+  ],
+  "data_size": 144000,
+  "data_offset": 44,
+  "format": {
+   "tag": 1,
+   "channels": 2,
+   "sample_rate": 44100,
+   "byte_rate": 264600,
+   "block_align": 6,
+   "bits_per_sample": 24
+  }
+ },
+ "figures": {
+  "channels": 2,
+  "sample_rate": 44100,
+  "bits_per_sample": 24,
+  "bytes_per_sample": 3,
+  "samples": 24000,
+  "mode": "lossless",
+  "samples_from_data_chunk": 24000,
+  "total_samples_match": true
+ },
+ "bitstream": {
+  "offset": 80,
+  "length": 88510
+ },
+ "encoder": {
+  "tool": "WavPack 3.97 for Win32 (ReallyRareWares: wavpack3.97.zip), run on Windows 10",
+  "arguments": [],
+  "input": {
+   "kind": "wav",
+   "rate": 44100,
+   "channels": 2,
+   "bits": 24,
+   "samples": 24000,
+   "chunks_before_data": false,
+   "chunks_after_data": false,
+   "pcm_md5": "07a90b117634efb316f2121973494f8a",
+   "file_md5": "18169ee4a2a9e80f1f2c6b14ac100e0a"
+  },
+  "file": "main file"
+ },
+ "crosscheck": {
+  "libwavpack_legacy": {
+   "opens": true,
+   "version": 3,
+   "channels": 2,
+   "samples_unpacked": 24000
+  },
+  "original_decoder": {
+   "tool": "wvunpack 3.97 for Win32, run on Windows 10",
+   "pcm_md5": "07a90b117634efb316f2121973494f8a",
+   "pcm_bytes": 144000,
+   "matches_input": true,
+   "file_matches_input": true
+  }
+ }
+}

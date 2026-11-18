@@ -98,6 +98,37 @@ internal static class AsfBuilder
         return Object("86D15240-311D-11D0-A3A4-00A0C90348F6", body.ToArray());
     }
 
+    // A Marker Object of this many markers of 30 bytes (no description), and a Script Command Object of this many commands of 8 bytes.
+    public static byte[] MarkersOf(int markers)
+    {
+        var body = new MemoryStream(24 + (markers * 30));
+        body.Write(Guid.Parse("4CFEDB20-75F6-11CF-9C0F-00A0C90349CB").ToByteArray());
+        body.Write(BitConverter.GetBytes((uint)markers));
+        body.Write(new byte[4]);
+        byte[] entry = new byte[30];
+        entry[16] = 12;
+        for (int i = 0; i < markers; i++)
+        {
+            body.Write(entry);
+        }
+
+        return Object("F487CD01-A951-11CF-8EE6-00C00C205365", body.ToArray());
+    }
+
+    public static byte[] CommandsOf(int commands)
+    {
+        var body = new MemoryStream(20 + (commands * 8));
+        body.Write(Guid.Parse("4B1ACBE3-100B-11D0-A39B-00A0C90348F6").ToByteArray());
+        body.Write(BitConverter.GetBytes((ushort)commands));
+        body.Write(new byte[2]);
+        for (int i = 0; i < commands; i++)
+        {
+            body.Write(new byte[8]);
+        }
+
+        return Object("1EFB1A30-0B62-11D0-A39B-00A0C90348F6", body.ToArray());
+    }
+
     // An Advanced Content Encryption Object of this many records of this many encrypted object records.
     public static byte[] EncryptionRecords(int records, int objects)
     {

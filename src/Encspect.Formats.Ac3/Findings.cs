@@ -25,6 +25,13 @@ internal sealed class Findings
         _order.Add(code);
     }
 
+    // A finding whose node is one of the file's own, such as the container element of a claim, which Place leaves where it is.
+    public void AddInFile(Severity severity, string code, Func<Node> node, Func<int, string> message)
+    {
+        Add(severity, code, node, message);
+        _aggregated[code].IsInFile = true;
+    }
+
     // Counts one more case of a kind already reported; false where none is, so the caller builds
     // the first case's finding.
     public bool CountIfKnown(string code)
@@ -50,7 +57,7 @@ internal sealed class Findings
         foreach (string code in _order)
         {
             Entry entry = _aggregated[code];
-            context.AddFinding(entry.Severity, code, entry.Message(entry.Count), Place?.Invoke(entry.Node) ?? entry.Node, entry.Count);
+            context.AddFinding(entry.Severity, code, entry.Message(entry.Count), entry.IsInFile ? entry.Node : Place?.Invoke(entry.Node) ?? entry.Node, entry.Count);
         }
 
         _immediate.Clear();
@@ -67,5 +74,7 @@ internal sealed class Findings
         public Func<int, string> Message => message;
 
         public int Count { get; set; } = 1;
+
+        public bool IsInFile { get; set; }
     }
 }

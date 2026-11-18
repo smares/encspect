@@ -157,13 +157,13 @@ internal sealed class Ac3Analysis
 
         if (crc1 == CrcState.Mismatch)
         {
-            Findings.Add(Severity.Warning, "ac-3.crc1-mismatch", () => new Node("CRC1", offset + 2, 2), count =>
+            Findings.Add(Severity.Warning, "ac-3.crc1-mismatch", () => Pieces.PlaceIn(offset, new Node("CRC1", offset + 2, 2)), count =>
                 $"crc1, which covers the first 5/8 of a frame (A/52 7.10.1), fails in {Count(count)}, first at {At(offset)}; decoders that check it drop the frame.");
         }
 
         if (crc2 == CrcState.Mismatch)
         {
-            Findings.Add(Severity.Warning, header.IsEac3 ? "ac-3.crc-mismatch" : "ac-3.crc2-mismatch", () => new Node("CRC2", offset + available - 2, 2), count =>
+            Findings.Add(Severity.Warning, header.IsEac3 ? "ac-3.crc-mismatch" : "ac-3.crc2-mismatch", () => Pieces.PlaceIn(offset, new Node("CRC2", offset + available - 2, 2)), count =>
                 header.IsEac3
                     ? $"The CRC that covers the whole frame (A/52 Annex E 3.2) fails in {Count(count)}, first at {At(offset)}; E-AC-3 decoders drop the frame."
                     : $"crc2, which covers the whole frame (A/52 7.10.1), fails in {Count(count)}, first at {At(offset)}; decoders that check it drop the frame.");
@@ -399,7 +399,7 @@ internal sealed class Ac3Analysis
     private void OnIssue(Issue issue, string field, int start, int end, string detail)
     {
         long offset = _frameOffset;
-        Node Field() => Node.FromBits(field, offset, start, end);
+        Node Field() => Pieces.PlaceIn(offset, Node.FromBits(field, offset, start, end));
         string at = $"the frame at {At(offset)}";
         switch (issue)
         {
@@ -508,12 +508,12 @@ internal sealed class Ac3Analysis
         _unit = new();
         if (unit.ExtensionOffset >= 0 && unit.JocOffset < 0 && unit.AllRead)
         {
-            Findings.Add(Severity.Warning, "ac-3.extension-without-joc", () => Node.FromBits("HasExtensionTypeA", unit.ExtensionOffset, unit.ExtensionStart, unit.ExtensionEnd), count =>
+            Findings.Add(Severity.Warning, "ac-3.extension-without-joc", () => Pieces.PlaceIn(unit.ExtensionOffset, Node.FromBits("HasExtensionTypeA", unit.ExtensionOffset, unit.ExtensionStart, unit.ExtensionEnd)), count =>
                 $"{Units(count)}: the additional bit stream information of a frame sets flag_ec3_extension_type_a, but no EMDF container in the frames holds a joint object coding payload (ETSI TS 103 420 8.3); the first is at {At(unit.ExtensionOffset)}.");
         }
         else if (unit.JocOffset >= 0 && unit.ExtensionOffset < 0)
         {
-            Findings.Add(Severity.Warning, "ac-3.joc-without-extension", () => Node.FromBits("Payload", unit.JocOffset, unit.JocStart, unit.JocEnd), count =>
+            Findings.Add(Severity.Warning, "ac-3.joc-without-extension", () => Pieces.PlaceIn(unit.JocOffset, Node.FromBits("Payload", unit.JocOffset, unit.JocStart, unit.JocEnd)), count =>
                 $"{Units(count)}: a frame holds a joint object coding payload, but none of the frames sets flag_ec3_extension_type_a in its additional bit stream information (ETSI TS 103 420 8.3.1); the first is at {At(unit.JocOffset)}.");
         }
     }
@@ -693,7 +693,7 @@ internal sealed class Ac3Analysis
             new(name, coverStart, coverLength, value) { Kind = kind, Ranges = first.Node.Ranges, Description = description, Topic = topic };
 
         Node? encoder = Ac3Encoder.Detect(claims, (name, value, description) => Cover(name, value, NodeKind.Detail, description, ClaimRoles.TopicOf(name)),
-            (claim, text) => Findings.Add(Severity.Info, "ac-3.encoder-claim", () => claim.Source, _ =>
+            (claim, text) => Findings.AddInFile(Severity.Info, "ac-3.encoder-claim", () => claim.Source, _ =>
                 $"The {claim.Description} names \"{text}\"; nothing in the stream confirms or contradicts it."));
         if (encoder is not null)
         {
@@ -701,8 +701,8 @@ internal sealed class Ac3Analysis
         }
 
         Node? writer = WriterDetection.Detect(claims, (name, value, description) => Cover(name, value, NodeKind.Detail, description, ClaimRoles.TopicOf(name)),
-            (claim, text, name) => Findings.Add(Severity.Info, "ac-3.writer-claim-differs", () => claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
-            format: new WriterDetection.StreamFormat(KnownWriters.Ac3, "AC-3", (claim, message, node) => Findings.Add(Severity.Info, "ac-3.writer-other-format", () => node, _ => message)));
+            (claim, text, name) => Findings.AddInFile(Severity.Info, "ac-3.writer-claim-differs", () => claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
+            format: new WriterDetection.StreamFormat(KnownWriters.Ac3, "AC-3", (claim, message, node) => Findings.AddInFile(Severity.Info, "ac-3.writer-other-format", () => node, _ => message)));
         if (writer is not null)
         {
             first.Leading.Add(writer);
