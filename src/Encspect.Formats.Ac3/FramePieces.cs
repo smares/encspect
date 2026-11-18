@@ -117,61 +117,37 @@ internal sealed class FramePieces
         return position;
     }
 
-    // The node as the file has it, where it lies in a frame in pieces: a frame or gap at the first piece, to the end of the last, with Ranges; a field of such a frame as the
-    // frame's tree places it (Tree.Bits), in the pieces where it ends inside the frame's bytes, else at its position as made.
+    // The node as the file has it, where its position is one of a frame in pieces and its name is the frame's or a gap's: at the first piece, to the end of the last, with Ranges.
     public Node Place(Node node)
     {
-        if (IsEmpty || Containing(node.Offset) is not (>= 0 and var index) || !TryGet(_positions[index], out List<ByteRange> pieces))
+        if (IsEmpty || node.Name is not ("Frame" or "Gap") || !TryGet(node.Offset, out List<ByteRange> pieces))
         {
             return node;
         }
 
-        long position = _positions[index];
-        if (node.Name is "Frame" or "Gap" && node.Offset == position)
+        return new Node(node.Name, pieces[0].Offset, pieces[^1].End - pieces[0].Offset, node.Value)
         {
-            return new Node(node.Name, pieces[0].Offset, pieces[^1].End - pieces[0].Offset, node.Value)
-            {
-                Kind = node.Kind,
-                Description = node.Description,
-                Topic = node.Topic,
-                Ranges = pieces,
-            };
+            Kind = node.Kind,
+            Description = node.Description,
+            Topic = node.Topic,
+            Ranges = pieces,
+        };
+    }
+
+    // A field of the frame at a position of the records, made at that position, as the frame's tree places it (Tree.Bits): in the frame's pieces where the frame is in pieces and
+    // the field ends inside their bytes, else where it was made. The frame is named rather than looked up, since a field past a frame's pieces lies where the next frame's are.
+    public Node PlaceIn(long position, Node node)
+    {
+        if (IsEmpty || !TryGet(position, out List<ByteRange> pieces))
+        {
+            return node;
         }
 
         long total = pieces.Sum(p => (long)p.Length);
         long start = (node.Offset - position) * 8 + (node.BitOffset ?? 0);
         long end = node.BitLength is { } bits ? start + bits : (node.End - position) * 8;
-        if (end > total * 8)
-        {
-            return node;
-        }
-
-        return Node.FromBits(node.Name, new MappedBytes(new byte[total], pieces), start, end, node.Value, node.Kind, node.Description, node.Topic, node.BitOrder);
-    }
-
-    // The index of the frame in pieces whose bytes hold the position, or -1.
-    private int Containing(long position)
-    {
-        int low = 0;
-        int high = _positions.Count - 1;
-        while (low <= high)
-        {
-            int middle = (low + high) >> 1;
-            if (_positions[middle] <= position)
-            {
-                low = middle + 1;
-            }
-            else
-            {
-                high = middle - 1;
-            }
-        }
-
-        if (high < 0 || !TryGet(_positions[high], out List<ByteRange> pieces) || position >= _positions[high] + pieces.Sum(p => (long)p.Length))
-        {
-            return -1;
-        }
-
-        return high;
+        return start < 0 || end > total * 8
+            ? node
+            : Node.FromBits(node.Name, new MappedBytes(new byte[total], pieces), start, end, node.Value, node.Kind, node.Description, node.Topic, node.BitOrder);
     }
 }
