@@ -44,16 +44,19 @@ NAMES = {"1.0": "wv100", "2.0": "wv200", "3.0": "wv300", "3.2": "wv320", "3.4": 
 
 
 def fixture(release, topic, spec, arguments="", files=("wv",)):
-    # "-" as the arguments stands for the encoder reading its input from the standard input.
-    stdin = arguments == "-"
-    return (f"{NAMES[release]}-{topic}", {"release": release, "input": spec, "arguments": "" if stdin else arguments, "files": files, "stdin": stdin})
+    # "-" as the arguments stands for the encoder reading its input from the standard input, "<y" for the answer yes to its question (1.0 and 2.0 have no -y):
+    # the encoder reads it from a file on its standard input.
+    stdin, answers = arguments == "-", arguments == "<y"
+    return (f"{NAMES[release]}-{topic}", {"release": release, "input": spec, "arguments": "" if stdin or answers else arguments, "files": files, "stdin": stdin, "answers": answers})
 
 
 FIXTURES = dict([
     fixture("1.0", "stereo-16", ("wav", 44100, 2, 16, SHORT)),
     fixture("1.0", "mono-16", ("wav", 44100, 1, 16, SHORT)),
+    fixture("1.0", "chunks", ("wav", 44100, 2, 16, SHORT, LIST_CHUNK, TAIL_CHUNK), "<y"),
     fixture("2.0", "stereo-16", ("wav", 44100, 2, 16, SHORT)),
     fixture("2.0", "mono-16", ("wav", 44100, 1, 16, SHORT)),
+    fixture("2.0", "chunks", ("wav", 44100, 2, 16, SHORT, LIST_CHUNK, TAIL_CHUNK), "<y"),
     fixture("2.0", "lossy-stereo-b4", ("wav", 44100, 2, 16, SHORT), "-b4"),
     fixture("2.0", "lossy-stereo-b8", ("wav", 44100, 2, 16, SHORT), "-b8"),
     fixture("2.0", "lossy-stereo-b15", ("wav", 44100, 2, 16, SHORT), "-b15"),
@@ -162,7 +165,7 @@ def md5(data):
     return hashlib.md5(data).hexdigest()
 
 
-def dos_commands(release, name, spec, arguments, files, stdin, source_name):
+def dos_commands(release, name, spec, arguments, files, stdin, answers, source_name):
     """The commands of one DOSBox run: the encoder, then the release's decoder over its output."""
     old = release in ("1.0", "2.0")
     yes = "" if old else "-y "
@@ -174,6 +177,8 @@ def dos_commands(release, name, spec, arguments, files, stdin, source_name):
         encode = f"WAVPACK {yes}{arguments} {source} OUT.WV".replace("  ", " ")
         if stdin:
             encode += f" < {source_name}"
+        if answers:
+            encode += " < Y.TXT"
         decode = f"WVUNPACK {yes}OUT.WV BACK.{'BIN' if spec[0] == 'raw' else 'WAV'}".replace("  ", " ")
     return encode, decode
 
@@ -188,9 +193,9 @@ def banner(release):
 def encode(name, entry, work):
     release, spec = entry["release"], entry["input"]
     source_name, data, pcm, description = make_input(spec)
-    encode_command, decode_command = dos_commands(release, name, spec, entry["arguments"], entry["files"], entry["stdin"], source_name)
+    encode_command, decode_command = dos_commands(release, name, spec, entry["arguments"], entry["files"], entry["stdin"], entry["answers"], source_name)
     redirect = release != "3.0"
-    texts, found = tool.run(release, {source_name: data}, [encode_command, decode_command], redirect=redirect)
+    texts, found = tool.run(release, {source_name: data, **({"Y.TXT": b"y\r\ny\r\n"} if entry["answers"] else {})}, [encode_command, decode_command], redirect=redirect)
     if "OUT.WV" not in found:
         raise SystemExit(f"{release}: {encode_command} wrote no file for {name}")
     produced = {"wv": found["OUT.WV"]}
@@ -203,9 +208,12 @@ def encode(name, entry, work):
         raise SystemExit(f"{release}: {decode_command} wrote no file for {name}")
     decoded = back if spec[0] == "raw" else wav_pcm(back)
     original = {"tool": decoder_name(release), "pcm_md5": md5(decoded), "pcm_bytes": len(decoded), "matches_input": decoded == pcm}
+    if spec[0] != "raw":
+        # Whether the whole WAV file comes back: the chunks before the data always, those after it only where the encoder kept them.
+        original["file_matches_input"] = back == data
     if "wvc" in produced:
         # The same decoder with the main file alone is lossy where the hybrid file discarded bits.
-        _, alone = tool.run(release, {"OUT.WV": produced["wv"]}, [decode_command.replace("OUT.WV", "OUT.WV")], redirect=redirect)
+        _, alone = tool.run(release, {"OUT.WV": produced["wv"]}, [decode_command], redirect=redirect)
         lossy = wav_pcm(alone["BACK.WAV"])
         original = {"tool": original["tool"], "with_correction": {k: v for k, v in original.items() if k != "tool"},
                     "without_correction": {"pcm_md5": md5(lossy), "pcm_bytes": len(lossy), "matches_input": lossy == pcm}}
