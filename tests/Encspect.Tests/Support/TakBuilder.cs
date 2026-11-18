@@ -46,7 +46,7 @@ internal static class TakBuilder
     }
 
     // The stream info's bits. speakers adds the extension with a speaker assignment (one value per channel); validBits adds it without one.
-    public static byte[] StreamInfoBits(int codec = 2, int profile = 2, int sizeType = 1, long samples = 44100, int rate = 44100, int bits = 16, int channels = 2, int dataType = 0,
+    public static byte[] StreamInfoBits(int codec = 2, int profile = 2, int sizeType = 1, long samples = 6512, int rate = 44100, int bits = 16, int channels = 2, int dataType = 0,
         int[]? speakers = null, int? validBits = null, int? bitsCode = null)
     {
         BitWriter w = new BitWriter().Put(codec, 6).Put(profile, 4).Put(sizeType, 4).Put(samples & 0xFFFFFF, 24).Put(samples >> 24, 11).Put(dataType, 3).Put(rate - 6000, 18)
@@ -74,7 +74,7 @@ internal static class TakBuilder
         return [.. BitConverter.GetBytes(header), .. data, .. tail];
     }
 
-    public static byte[] StreamInfo(int codec = 2, int profile = 2, int sizeType = 1, long samples = 44100, int rate = 44100, int bits = 16, int channels = 2, int dataType = 0,
+    public static byte[] StreamInfo(int codec = 2, int profile = 2, int sizeType = 1, long samples = 6512, int rate = 44100, int bits = 16, int channels = 2, int dataType = 0,
         int[]? speakers = null, int? validBits = null, int? bitsCode = null, uint? crc = null) =>
         Object(1, StreamInfoBits(codec, profile, sizeType, samples, rate, bits, channels, dataType, speakers, validBits, bitsCode), crc: crc);
 
@@ -115,7 +115,7 @@ internal static class TakBuilder
     }
 
     // A frame: the header (sync, flags, frame number, the sample count of a last frame, and for an info frame the stream info) with its CRC-24, coded bytes and the CRC-24 over them.
-    public static byte[] Frame(int number, int payload, bool isLast = false, bool isInfo = false, int samples = 1000, byte[]? streamInfoBits = null, uint? headerCrc = null, bool hasMetadata = false)
+    public static byte[] Frame(int number, int payload, bool isLast = false, bool isInfo = false, int samples = 1000, byte[]? streamInfoBits = null, uint? headerCrc = null, bool hasMetadata = false, byte[]? coded = null)
     {
         BitWriter w = new BitWriter().Put(0xA0FF, 16).Put(isLast ? 1 : 0, 1).Put(isInfo ? 1 : 0, 1).Put(hasMetadata ? 1 : 0, 1).Put(number, 21);
         if (isLast)
@@ -138,9 +138,9 @@ internal static class TakBuilder
         }
 
         byte[] header = w.ToArray();
-        byte[] body = new byte[payload];
+        byte[] body = coded ?? new byte[payload];
         uint state = (uint)(0x5EED + (number * 7919));
-        for (int i = 0; i < payload; i++)
+        for (int i = 0; coded is null && i < payload; i++)
         {
             state = (state * 1103515245) + 12345;
             body[i] = (byte)(state >> 16);
@@ -162,6 +162,31 @@ internal static class TakBuilder
             .. "tBaK"u8, .. streamInfo ?? StreamInfo(), .. lastFrameInfo ?? LastFrameInfo(first.Length, last.Length), .. encoderInfo ?? EncoderInfo(), .. waveData ?? WaveData(),
             .. extra ?? [], .. hasEnd ? End() : [], .. first, .. last,
         ];
+    }
+
+    // A stream of count frames of 512 samples at 44,100 Hz with no coded data, the fewest bytes a frame can hold: a header of 5 bytes with its CRC-24 and the CRC-24 of no data. The
+    // last frame states 100 samples. The numbers wrap at 21 bits, as a stream of more frames would have to.
+    public static byte[] SmallFrames(int count)
+    {
+        byte[] info = StreamInfo(sizeType: 7, samples: ((count - 1) * 512L) + 100);
+        byte[] footer = Crc24([]);
+        using var stream = new MemoryStream(count * 12);
+        stream.Write("tBaK"u8);
+        stream.Write(info);
+        stream.Write(End());
+        for (int i = 0; i < count; i++)
+        {
+            bool isLast = i == count - 1;
+            int number = i & 0x1FFFFF;
+            byte[] header = isLast
+                ? [0xFF, 0xA0, (byte)(1 | ((number & 31) << 3)), (byte)(number >> 5), (byte)(number >> 13), 99, 0]
+                : [0xFF, 0xA0, (byte)((number & 31) << 3), (byte)(number >> 5), (byte)(number >> 13)];
+            stream.Write(header);
+            stream.Write(Crc24(header));
+            stream.Write(footer);
+        }
+
+        return stream.ToArray();
     }
 
     // The offset where the frames start in Standard() with the default objects.

@@ -50,6 +50,13 @@
                   "length": 10974
                 },
                 {
+                  "name": "Frames",
+                  "value": 0,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 10974
+                },
+                {
                   "name": "Samples",
                   "value": 11024,
                   "unit": "samples",
@@ -100,6 +107,13 @@
                   "name": "Verified Header Checksums",
                   "value": 3,
                   "unit": "headers",
+                  "offset": 0,
+                  "length": 10974
+                },
+                {
+                  "name": "Verified Frame Checksums",
+                  "value": 0,
+                  "unit": "frames",
                   "offset": 0,
                   "length": 10974
                 }
@@ -512,15 +526,15 @@
               "name": "frame header CRC-24",
               "covers": "header",
               "coversAllAudio": false,
-              "stored": 2,
+              "stored": 0,
               "checked": 0,
               "failed": 0
             },
             {
               "name": "frame data CRC-24",
               "covers": "codedData",
-              "coversAllAudio": true,
-              "stored": 2,
+              "coversAllAudio": false,
+              "stored": 0,
               "checked": 0,
               "failed": 0
             }

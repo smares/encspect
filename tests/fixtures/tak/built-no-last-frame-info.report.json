@@ -50,6 +50,13 @@
                   "length": 10959
                 },
                 {
+                  "name": "Frames",
+                  "value": 2,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 10959
+                },
+                {
                   "name": "Samples",
                   "value": 11024,
                   "unit": "samples",
@@ -98,9 +105,69 @@
                   "length": 10959
                 },
                 {
+                  "name": "Bitrate Mode",
+                  "value": "variable",
+                  "offset": 0,
+                  "length": 10959
+                },
+                {
+                  "name": "Smallest Frame",
+                  "value": 4116,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 10959
+                },
+                {
+                  "name": "Largest Frame",
+                  "value": 6750,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 10959
+                },
+                {
+                  "name": "Minimum Bitrate",
+                  "value": 263.44789550072574,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 10959
+                },
+                {
+                  "name": "Maximum Bitrate",
+                  "value": 432.0391872278665,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 10959
+                },
+                {
+                  "name": "Bitrate Distribution",
+                  "offset": 0,
+                  "length": 10959,
+                  "children": [
+                    {
+                      "name": "256 to 287 kbps",
+                      "value": "1 frame (50.0%)",
+                      "offset": 0,
+                      "length": 10959
+                    },
+                    {
+                      "name": "416 to 447 kbps",
+                      "value": "1 frame (50.0%)",
+                      "offset": 0,
+                      "length": 10959
+                    }
+                  ]
+                },
+                {
                   "name": "Verified Header Checksums",
-                  "value": 3,
+                  "value": 5,
                   "unit": "headers",
+                  "offset": 0,
+                  "length": 10959
+                },
+                {
+                  "name": "Verified Frame Checksums",
+                  "value": 2,
+                  "unit": "frames",
                   "offset": 0,
                   "length": 10959
                 }
@@ -541,11 +608,479 @@
               ]
             },
             {
-              "name": "Audio Data",
-              "value": 10866,
-              "unit": "bytes",
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 5512,
+              "unit": "samples",
               "offset": 93,
-              "length": 10866
+              "length": 4116,
+              "children": [
+                {
+                  "name": "Header",
+                  "value": 19,
+                  "unit": "bytes",
+                  "offset": 93,
+                  "length": 19,
+                  "children": [
+                    {
+                      "name": "Sync Word",
+                      "value": 41215,
+                      "offset": 93,
+                      "length": 2
+                    },
+                    {
+                      "name": "IsLastFrame",
+                      "value": false,
+                      "offset": 95,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsInfoFrame",
+                      "value": true,
+                      "offset": 95,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "HasMetadata",
+                      "value": false,
+                      "offset": 95,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Frame Number",
+                      "value": 0,
+                      "offset": 95,
+                      "length": 3,
+                      "bitOffset": 3,
+                      "bitLength": 21,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Stream Info",
+                      "value": 10,
+                      "unit": "bytes",
+                      "offset": 98,
+                      "length": 10,
+                      "children": [
+                        {
+                          "name": "Codec",
+                          "value": "Integer 24 bit (TAK 2.0)",
+                          "offset": 98,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 6,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Profile",
+                          "value": 2,
+                          "offset": 98,
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 4,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Frame Size Type",
+                          "value": "125 ms",
+                          "offset": 99,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 4,
+                          "bitOrder": "leastSignificantFirst",
+                          "children": [
+                            {
+                              "name": "Frame Length",
+                              "value": 5512,
+                              "unit": "samples",
+                              "offset": 99,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 4,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Samples",
+                          "value": 11024,
+                          "unit": "samples",
+                          "offset": 99,
+                          "length": 6,
+                          "bitOffset": 6,
+                          "bitLength": 35,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Data Type",
+                          "value": "PCM",
+                          "offset": 104,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 3,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Sample Rate",
+                          "value": 44100,
+                          "unit": "Hz",
+                          "offset": 104,
+                          "length": 3,
+                          "bitOffset": 4,
+                          "bitLength": 18,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Bits Per Sample",
+                          "value": 16,
+                          "unit": "bits",
+                          "offset": 106,
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 5,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Channels",
+                          "value": 2,
+                          "unit": "channels",
+                          "offset": 107,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 4,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "HasExtension",
+                          "value": false,
+                          "offset": 107,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "HasPreviousDistance",
+                      "value": false,
+                      "offset": 108,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Reserved",
+                      "value": 0,
+                      "offset": 108,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 5,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "CRC-24",
+                      "value": 14265108,
+                      "offset": 109,
+                      "length": 3
+                    },
+                    {
+                      "name": "Computed CRC-24",
+                      "value": 14265108,
+                      "offset": 109,
+                      "length": 3
+                    },
+                    {
+                      "name": "IsCrc24Valid",
+                      "value": true,
+                      "offset": 109,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "value": 4094,
+                  "unit": "bytes",
+                  "offset": 112,
+                  "length": 4094
+                },
+                {
+                  "name": "Data CRC-24",
+                  "value": 12105705,
+                  "offset": 4206,
+                  "length": 3
+                },
+                {
+                  "name": "Computed Data CRC-24",
+                  "value": 12105705,
+                  "offset": 4206,
+                  "length": 3
+                },
+                {
+                  "name": "IsDataCrc24Valid",
+                  "value": true,
+                  "offset": 4206,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 5512,
+              "unit": "samples",
+              "offset": 4209,
+              "length": 6750,
+              "children": [
+                {
+                  "name": "Header",
+                  "value": 21,
+                  "unit": "bytes",
+                  "offset": 4209,
+                  "length": 21,
+                  "children": [
+                    {
+                      "name": "Sync Word",
+                      "value": 41215,
+                      "offset": 4209,
+                      "length": 2
+                    },
+                    {
+                      "name": "IsLastFrame",
+                      "value": true,
+                      "offset": 4211,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsInfoFrame",
+                      "value": true,
+                      "offset": 4211,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "HasMetadata",
+                      "value": false,
+                      "offset": 4211,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Frame Number",
+                      "value": 1,
+                      "offset": 4211,
+                      "length": 3,
+                      "bitOffset": 3,
+                      "bitLength": 21,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Samples",
+                      "value": 5512,
+                      "unit": "samples",
+                      "offset": 4214,
+                      "length": 2,
+                      "bitOffset": 0,
+                      "bitLength": 14,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Reserved",
+                      "value": 0,
+                      "offset": 4215,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Stream Info",
+                      "value": 10,
+                      "unit": "bytes",
+                      "offset": 4216,
+                      "length": 10,
+                      "children": [
+                        {
+                          "name": "Codec",
+                          "value": "Integer 24 bit (TAK 2.0)",
+                          "offset": 4216,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 6,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Profile",
+                          "value": 2,
+                          "offset": 4216,
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 4,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Frame Size Type",
+                          "value": "125 ms",
+                          "offset": 4217,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 4,
+                          "bitOrder": "leastSignificantFirst",
+                          "children": [
+                            {
+                              "name": "Frame Length",
+                              "value": 5512,
+                              "unit": "samples",
+                              "offset": 4217,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 4,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Samples",
+                          "value": 11024,
+                          "unit": "samples",
+                          "offset": 4217,
+                          "length": 6,
+                          "bitOffset": 6,
+                          "bitLength": 35,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Data Type",
+                          "value": "PCM",
+                          "offset": 4222,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 3,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Sample Rate",
+                          "value": 44100,
+                          "unit": "Hz",
+                          "offset": 4222,
+                          "length": 3,
+                          "bitOffset": 4,
+                          "bitLength": 18,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Bits Per Sample",
+                          "value": 16,
+                          "unit": "bits",
+                          "offset": 4224,
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 5,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Channels",
+                          "value": 2,
+                          "unit": "channels",
+                          "offset": 4225,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 4,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "HasExtension",
+                          "value": false,
+                          "offset": 4225,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "HasPreviousDistance",
+                      "value": false,
+                      "offset": 4226,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Reserved",
+                      "value": 0,
+                      "offset": 4226,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 5,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "CRC-24",
+                      "value": 4094551,
+                      "offset": 4227,
+                      "length": 3
+                    },
+                    {
+                      "name": "Computed CRC-24",
+                      "value": 4094551,
+                      "offset": 4227,
+                      "length": 3
+                    },
+                    {
+                      "name": "IsCrc24Valid",
+                      "value": true,
+                      "offset": 4227,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "value": 6726,
+                  "unit": "bytes",
+                  "offset": 4230,
+                  "length": 6726
+                },
+                {
+                  "name": "Data CRC-24",
+                  "value": 16064208,
+                  "offset": 10956,
+                  "length": 3
+                },
+                {
+                  "name": "Computed Data CRC-24",
+                  "value": 16064208,
+                  "offset": 10956,
+                  "length": 3
+                },
+                {
+                  "name": "IsDataCrc24Valid",
+                  "value": true,
+                  "offset": 10956,
+                  "length": 3
+                }
+              ]
             }
           ]
         }
@@ -571,8 +1106,9 @@
         "samples": 11024,
         "duration": 0.24997732426303854,
         "averageBitrate": 347.7435413642961,
-        "isVbr": false,
+        "isVbr": true,
         "verification": {
+          "isVerified": true,
           "decoding": "noDecoder",
           "decodedSamples": 0,
           "checksums": [
@@ -589,7 +1125,7 @@
               "covers": "header",
               "coversAllAudio": false,
               "stored": 2,
-              "checked": 0,
+              "checked": 2,
               "failed": 0
             },
             {
@@ -597,14 +1133,39 @@
               "covers": "codedData",
               "coversAllAudio": true,
               "stored": 2,
-              "checked": 0,
+              "checked": 2,
               "failed": 0
             }
           ]
         },
         "encoder": "TAK 2.3.3",
         "encoderConfidence": "High",
-        "series": []
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "x": [
+              93,
+              4209
+            ],
+            "values": [
+              263.44789550072574,
+              432.0391872278665
+            ]
+          },
+          {
+            "name": "Bitrate Over Time",
+            "unit": "kbps",
+            "axis": "seconds",
+            "x": [
+              0
+            ],
+            "values": [
+              348
+            ]
+          }
+        ]
       }
     ],
     "findings": []

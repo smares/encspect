@@ -7,10 +7,10 @@ internal static class Summary
 {
     public const string CodecName = "TAK";
 
-    // The codec ID a decoder would register under; none exists in 0.2, so the host reports that no decoder handles the coding.
+    // The codec ID a decoder would register under; none exists, so the host reports that no decoder handles the coding.
     public const string CodecId = "tak";
 
-    public static void Finish(State s, long start, long end)
+    public static void Finish(State s, ByteReader reader, long start, long end)
     {
         Records r = s.Records;
         List<Node> body = s.Body;
@@ -22,7 +22,7 @@ internal static class Summary
 
         if (r.AudioStart >= 0 && end > r.AudioStart)
         {
-            body.Add(Nodes.AudioData(r.AudioStart, end - r.AudioStart));
+            FrameWalker.Run(s, reader, end);
         }
         else if (r.LeftoverOffset >= 0 && r.DataEnd > r.LeftoverOffset)
         {
@@ -32,7 +32,8 @@ internal static class Summary
 
         // The leading nodes grow after this (the statistics, the claims), so the children are put together when they are first asked for; the lists hold no context.
         List<Node> leading = s.Leading;
-        Node stream = s.Stream = new Node(CodecName, start, Math.Max(0, end - start), null, () => [.. leading, .. body])
+        FrameFacts frames = r.Frames;
+        Node stream = s.Stream = new Node(CodecName, start, Math.Max(0, end - start), null, () => new BlockedChildren([.. leading, .. body], frames.Entries.Count, i => FrameNodes.Entry(r, i)))
         {
             Kind = NodeKind.Stream,
             Description = Explain.Stream,
@@ -165,6 +166,7 @@ internal static class Summary
             }
         }
 
+        FrameChecks(s, stream, end);
         if (r.Stream is not { } info)
         {
             return;
@@ -243,6 +245,45 @@ internal static class Summary
         }
     }
 
+    // The findings about the frames as a whole; the walk raises those about one frame.
+    private static void FrameChecks(State s, Node stream, long end)
+    {
+        Records r = s.Records;
+        FrameFacts f = r.Frames;
+        if (r.AudioStart < 0)
+        {
+            return;
+        }
+
+        bool isCutInAudio = r.DeclaredEnd > r.DataEnd;
+        if (!f.HasFrames && !isCutInAudio)
+        {
+            s.Findings.Add(Severity.Warning, "tak.no-frames", stream, _ => "The stream holds no frame whose header CRC-24 holds, so it holds no audio.");
+            return;
+        }
+
+        if (!f.HasFrames)
+        {
+            return;
+        }
+
+        if (!f.IsLastFlagged && f.CutFrames == 0 && f.Frames > 0)
+        {
+            long last = Math.Min(f.Listed, FrameFacts.MaxEntries) - 1;
+            Func<Node> at = f.Listed <= FrameFacts.MaxEntries && last >= 0 ? () => FrameNodes.Entry(r, (int)last) : () => stream;
+            s.Findings.Add(Severity.Warning, "tak.frames-missing", at, _ =>
+                "The stream ends after a frame that is not flagged as the last one: the frames after it are missing.");
+        }
+
+        if (r.Stream is { Samples: > 0 } info && f.IsLastFlagged && f.CutFrames == 0 && !f.HasGap && f.SkippedBytes == 0 && f.Samples != info.Samples)
+        {
+            long stated = info.Samples;
+            long counted = f.Samples;
+            s.Findings.Add(Severity.Warning, "tak.total-samples-mismatch", stream, _ =>
+                $"The stream info states {Counts.Of(stated, "sample", "samples")} of each channel, but the frames hold {counted}{(counted < stated ? $", {stated - counted} fewer" : $", {counted - stated} more")}.");
+        }
+    }
+
     private static IReadOnlyList<Speaker>? LayoutOf(StreamInfoFields info, uint? wavMask)
     {
         if (info.HasSpeakerAssignment && Layout.SpeakerMask(info.Speakers) is { } assigned and not 0 && System.Numerics.BitOperations.PopCount(assigned) == info.Channels)
@@ -292,13 +333,14 @@ internal static class Summary
             new() { Name = ChecksumNames.ObjectCrc24, Covers = ChecksumCoverage.Header, Stored = compared.Length, Checked = compared.Length, Failed = failed },
         };
 
-        long? frameCount = info is { Samples: > 0 } && Layout.FrameSamples(info.FrameSizeType, info.SampleRate) is > 0 and int length ? (info.Samples + length - 1) / length : null;
-        if (frameCount is { } frames)
-        {
-            // Every frame stores both; they are declared and not compared, since the frames are not walked.
-            tallies.Add(new ChecksumTally { Name = ChecksumNames.FrameHeaderCrc24, Covers = ChecksumCoverage.Header, Stored = frames });
-            tallies.Add(new ChecksumTally { Name = ChecksumNames.FrameDataCrc24, Covers = ChecksumCoverage.CodedData, CoversAllAudio = true, Stored = frames });
-        }
+        FrameFacts frames = r.Frames;
+        // Every frame's data CRC-24 holds all the audio the stream info counts only where the stream info can be trusted and the frames are all there, in order and whole, up to the one
+        // flagged as the last, and their samples are the ones it states.
+        bool coversAll = info is { Samples: > 0 } counted && r.StreamInfoObject is { IsCrcValid: true } && frames.IsLastFlagged && frames.CutFrames == 0 && frames.SkippedBytes == 0
+            && !frames.HasGap && frames.Samples == counted.Samples;
+        long headers = frames.Frames + frames.CutFrames;
+        tallies.Add(new ChecksumTally { Name = ChecksumNames.FrameHeaderCrc24, Covers = ChecksumCoverage.Header, Stored = headers, Checked = headers, Failed = frames.HeaderFailures });
+        tallies.Add(new ChecksumTally { Name = ChecksumNames.FrameDataCrc24, Covers = ChecksumCoverage.CodedData, CoversAllAudio = coversAll, Stored = headers, Checked = frames.Frames, Failed = frames.DataFailures });
 
         if (r.Md5 is not null)
         {
@@ -331,7 +373,13 @@ internal static class Summary
             statistics.Add(Cover("Frame Length", NodeValue.Integer(frameLength, "samples", "sample"), Explain.StatFrameLength));
         }
 
+        statistics.Add(Cover("Frames", NodeValue.Integer(frames.Frames, "frames", "frame"), Explain.StatFrames, Topics.Frames));
         statistics.Add(Cover("Samples", NodeValue.Integer(info.Samples, "samples", "sample"), Explain.StatSamples));
+        if (frames.LostSamples > 0)
+        {
+            statistics.Add(Cover("Lost Samples", NodeValue.Integer(frames.LostSamples, "samples", "sample"), StreamInfo.LostSamplesDescription, StreamInfo.LostSamplesTopic));
+        }
+
         statistics.Add(Cover("Duration", NodeValue.Decimal(duration, 3, "s"), Explain.StatDuration));
         statistics.Add(Cover("Sample Rate", NodeValue.Integer(rate, "Hz"), Explain.StatRate));
         statistics.Add(Cover("Channels", NodeValue.Integer(info.Channels, "channels", "channel"), Explain.StatChannels));
@@ -341,13 +389,34 @@ internal static class Summary
         }
 
         statistics.Add(Cover("Bits Per Sample", NodeValue.Integer(info.BitsPerSample, "bits", "bit"), Explain.StatBits));
-        long audioBytes = r.AudioStart >= 0 ? Math.Max(0, Math.Min(end, r.DataEnd) - r.AudioStart) : 0;
-        double? bitrate = duration > 0 && audioBytes > 0 ? audioBytes * 8 / duration / 1000 : null;
-        statistics.Add(Cover("Average Bitrate", bitrate is { } average ? NodeValue.Decimal(average, 1, "kbps") : "none", Explain.AverageBitrate));
-        statistics.Add(Cover("Verified Header Checksums", NodeValue.Integer(verified, "headers", "header"), Explain.StatHeaderChecksums, Topics.Crc));
-        if (failed > 0)
+        StreamFigures? figures = frames.Figures is { Units: > 0 } measured ? measured : null;
+        double? bitrate;
+        Node? anchor = null;
+        if (figures is not null)
         {
-            statistics.Add(Cover("Failed Header Checksums", NodeValue.Integer(failed, "headers", "header"), Explain.StatHeaderChecksumsFailed, Topics.Crc));
+            figures.AddTo(statistics, (name, value, description) => Cover(name, value, description), "Frame", "frames", true, out anchor);
+            bitrate = figures.AverageBitrate;
+        }
+        else
+        {
+            long audioBytes = r.AudioStart >= 0 ? Math.Max(0, Math.Min(end, r.DataEnd) - r.AudioStart) : 0;
+            bitrate = duration > 0 && audioBytes > 0 ? audioBytes * 8 / duration / 1000 : null;
+            statistics.Add(Cover("Average Bitrate", bitrate is { } average ? NodeValue.Decimal(average, 1, "kbps") : "none", Explain.AverageBitrate));
+        }
+
+        // The headers are the metadata objects and the frames' headers.
+        long verifiedHeaders = verified + (headers - frames.HeaderFailures);
+        long failedHeaders = failed + frames.HeaderFailures;
+        statistics.Add(Cover("Verified Header Checksums", NodeValue.Integer(verifiedHeaders, "headers", "header"), Explain.StatHeaderChecksums, Topics.Crc));
+        if (failedHeaders > 0)
+        {
+            statistics.Add(Cover("Failed Header Checksums", NodeValue.Integer(failedHeaders, "headers", "header"), Explain.StatHeaderChecksumsFailed, Topics.Crc));
+        }
+
+        statistics.Add(Cover("Verified Frame Checksums", NodeValue.Integer(frames.Frames - frames.DataFailures, "frames", "frame"), Explain.StatFrameChecksums, Topics.Crc));
+        if (frames.DataFailures > 0)
+        {
+            statistics.Add(Cover("Failed Frame Checksums", NodeValue.Integer(frames.DataFailures, "frames", "frame"), Explain.StatFrameChecksumsFailed, Topics.Crc));
         }
 
         s.Leading.Insert(0, statistics);
@@ -369,7 +438,10 @@ internal static class Summary
             WriterConfidence = ClaimRoles.Resolved(writer).Confidence,
             Processor = ClaimRoles.Resolved(processor).Name,
             ProcessorConfidence = ClaimRoles.Resolved(processor).Confidence,
+            LostSamples = frames.LostSamples,
+            IsVbr = figures is { Units: > 0 } f && f.MaximumBitrate > f.MinimumBitrate,
             Verification = verification,
+            Series = figures?.Series(anchor, s.Context.CancellationToken) ?? [],
         });
     }
 

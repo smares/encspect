@@ -50,6 +50,13 @@
                   "length": 10720
                 },
                 {
+                  "name": "Frames",
+                  "value": 22,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 10720
+                },
+                {
                   "name": "Samples",
                   "value": 11024,
                   "unit": "samples",
@@ -98,9 +105,87 @@
                   "length": 10720
                 },
                 {
+                  "name": "Bitrate Mode",
+                  "value": "variable",
+                  "offset": 0,
+                  "length": 10720
+                },
+                {
+                  "name": "Smallest Frame",
+                  "value": 220,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 10720
+                },
+                {
+                  "name": "Largest Frame",
+                  "value": 1111,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 10720
+                },
+                {
+                  "name": "Minimum Bitrate",
+                  "value": 226.0125,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 10720
+                },
+                {
+                  "name": "Maximum Bitrate",
+                  "value": 765.5484375,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 10720
+                },
+                {
+                  "name": "Bitrate Distribution",
+                  "offset": 0,
+                  "length": 10720,
+                  "children": [
+                    {
+                      "name": "224 to 255 kbps",
+                      "value": "14 frames (63.6%)",
+                      "offset": 0,
+                      "length": 10720
+                    },
+                    {
+                      "name": "256 to 287 kbps",
+                      "value": "4 frames (18.2%)",
+                      "offset": 0,
+                      "length": 10720
+                    },
+                    {
+                      "name": "672 to 703 kbps",
+                      "value": "1 frame (4.5%)",
+                      "offset": 0,
+                      "length": 10720
+                    },
+                    {
+                      "name": "704 to 735 kbps",
+                      "value": "1 frame (4.5%)",
+                      "offset": 0,
+                      "length": 10720
+                    },
+                    {
+                      "name": "736 to 767 kbps",
+                      "value": "2 frames (9.1%)",
+                      "offset": 0,
+                      "length": 10720
+                    }
+                  ]
+                },
+                {
                   "name": "Verified Header Checksums",
-                  "value": 4,
+                  "value": 26,
                   "unit": "headers",
+                  "offset": 0,
+                  "length": 10720
+                },
+                {
+                  "name": "Verified Frame Checksums",
+                  "value": 22,
+                  "unit": "frames",
                   "offset": 0,
                   "length": 10720
                 }
@@ -607,11 +692,2559 @@
               ]
             },
             {
-              "name": "Audio Data",
-              "value": 10612,
-              "unit": "bytes",
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 512,
+              "unit": "samples",
               "offset": 108,
-              "length": 10612
+              "length": 1100,
+              "children": [
+                {
+                  "name": "Header",
+                  "value": 19,
+                  "unit": "bytes",
+                  "offset": 108,
+                  "length": 19,
+                  "children": [
+                    {
+                      "name": "Sync Word",
+                      "value": 41215,
+                      "offset": 108,
+                      "length": 2
+                    },
+                    {
+                      "name": "IsLastFrame",
+                      "value": false,
+                      "offset": 110,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsInfoFrame",
+                      "value": true,
+                      "offset": 110,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "HasMetadata",
+                      "value": false,
+                      "offset": 110,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Frame Number",
+                      "value": 0,
+                      "offset": 110,
+                      "length": 3,
+                      "bitOffset": 3,
+                      "bitLength": 21,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Stream Info",
+                      "value": 10,
+                      "unit": "bytes",
+                      "offset": 113,
+                      "length": 10,
+                      "children": [
+                        {
+                          "name": "Codec",
+                          "value": "Integer 24 bit (TAK 2.0)",
+                          "offset": 113,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 6,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Profile",
+                          "value": 2,
+                          "offset": 113,
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 4,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Frame Size Type",
+                          "value": "512 samples",
+                          "offset": 114,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 4,
+                          "bitOrder": "leastSignificantFirst",
+                          "children": [
+                            {
+                              "name": "Frame Length",
+                              "value": 512,
+                              "unit": "samples",
+                              "offset": 114,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 4,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Samples",
+                          "value": 11024,
+                          "unit": "samples",
+                          "offset": 114,
+                          "length": 6,
+                          "bitOffset": 6,
+                          "bitLength": 35,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Data Type",
+                          "value": "PCM",
+                          "offset": 119,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 3,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Sample Rate",
+                          "value": 44100,
+                          "unit": "Hz",
+                          "offset": 119,
+                          "length": 3,
+                          "bitOffset": 4,
+                          "bitLength": 18,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Bits Per Sample",
+                          "value": 16,
+                          "unit": "bits",
+                          "offset": 121,
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 5,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Channels",
+                          "value": 2,
+                          "unit": "channels",
+                          "offset": 122,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 4,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "HasExtension",
+                          "value": false,
+                          "offset": 122,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "HasPreviousDistance",
+                      "value": false,
+                      "offset": 123,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Reserved",
+                      "value": 0,
+                      "offset": 123,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 5,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "CRC-24",
+                      "value": 659482,
+                      "offset": 124,
+                      "length": 3
+                    },
+                    {
+                      "name": "Computed CRC-24",
+                      "value": 659482,
+                      "offset": 124,
+                      "length": 3
+                    },
+                    {
+                      "name": "IsCrc24Valid",
+                      "value": true,
+                      "offset": 124,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "value": 1078,
+                  "unit": "bytes",
+                  "offset": 127,
+                  "length": 1078
+                },
+                {
+                  "name": "Data CRC-24",
+                  "value": 13102940,
+                  "offset": 1205,
+                  "length": 3
+                },
+                {
+                  "name": "Computed Data CRC-24",
+                  "value": 13102940,
+                  "offset": 1205,
+                  "length": 3
+                },
+                {
+                  "name": "IsDataCrc24Valid",
+                  "value": true,
+                  "offset": 1205,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 512,
+              "unit": "samples",
+              "offset": 1208,
+              "length": 367,
+              "children": [
+                {
+                  "name": "Header",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 1208,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "Sync Word",
+                      "value": 41215,
+                      "offset": 1208,
+                      "length": 2
+                    },
+                    {
+                      "name": "IsLastFrame",
+                      "value": false,
+                      "offset": 1210,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsInfoFrame",
+                      "value": false,
+                      "offset": 1210,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "HasMetadata",
+                      "value": false,
+                      "offset": 1210,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Frame Number",
+                      "value": 1,
+                      "offset": 1210,
+                      "length": 3,
+                      "bitOffset": 3,
+                      "bitLength": 21,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "CRC-24",
+                      "value": 12977702,
+                      "offset": 1213,
+                      "length": 3
+                    },
+                    {
+                      "name": "Computed CRC-24",
+                      "value": 12977702,
+                      "offset": 1213,
+                      "length": 3
+                    },
+                    {
+                      "name": "IsCrc24Valid",
+                      "value": true,
+                      "offset": 1213,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "value": 356,
+                  "unit": "bytes",
+                  "offset": 1216,
+                  "length": 356
+                },
+                {
+                  "name": "Data CRC-24",
+                  "value": 12863664,
+                  "offset": 1572,
+                  "length": 3
+                },
+                {
+                  "name": "Computed Data CRC-24",
+                  "value": 12863664,
+                  "offset": 1572,
+                  "length": 3
+                },
+                {
+                  "name": "IsDataCrc24Valid",
+                  "value": true,
+                  "offset": 1572,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 512,
+              "unit": "samples",
+              "offset": 1575,
+              "length": 328,
+              "children": [
+                {
+                  "name": "Header",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 1575,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "Sync Word",
+                      "value": 41215,
+                      "offset": 1575,
+                      "length": 2
+                    },
+                    {
+                      "name": "IsLastFrame",
+                      "value": false,
+                      "offset": 1577,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsInfoFrame",
+                      "value": false,
+                      "offset": 1577,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "HasMetadata",
+                      "value": false,
+                      "offset": 1577,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Frame Number",
+                      "value": 2,
+                      "offset": 1577,
+                      "length": 3,
+                      "bitOffset": 3,
+                      "bitLength": 21,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "CRC-24",
+                      "value": 14463542,
+                      "offset": 1580,
+                      "length": 3
+                    },
+                    {
+                      "name": "Computed CRC-24",
+                      "value": 14463542,
+                      "offset": 1580,
+                      "length": 3
+                    },
+                    {
+                      "name": "IsCrc24Valid",
+                      "value": true,
+                      "offset": 1580,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "value": 317,
+                  "unit": "bytes",
+                  "offset": 1583,
+                  "length": 317
+                },
+                {
+                  "name": "Data CRC-24",
+                  "value": 11549775,
+                  "offset": 1900,
+                  "length": 3
+                },
+                {
+                  "name": "Computed Data CRC-24",
+                  "value": 11549775,
+                  "offset": 1900,
+                  "length": 3
+                },
+                {
+                  "name": "IsDataCrc24Valid",
+                  "value": true,
+                  "offset": 1900,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 512,
+              "unit": "samples",
+              "offset": 1903,
+              "length": 367,
+              "children": [
+                {
+                  "name": "Header",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 1903,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "Sync Word",
+                      "value": 41215,
+                      "offset": 1903,
+                      "length": 2
+                    },
+                    {
+                      "name": "IsLastFrame",
+                      "value": false,
+                      "offset": 1905,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsInfoFrame",
+                      "value": false,
+                      "offset": 1905,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "HasMetadata",
+                      "value": false,
+                      "offset": 1905,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Frame Number",
+                      "value": 3,
+                      "offset": 1905,
+                      "length": 3,
+                      "bitOffset": 3,
+                      "bitLength": 21,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "CRC-24",
+                      "value": 5708399,
+                      "offset": 1908,
+                      "length": 3
+                    },
+                    {
+                      "name": "Computed CRC-24",
+                      "value": 5708399,
+                      "offset": 1908,
+                      "length": 3
+                    },
+                    {
+                      "name": "IsCrc24Valid",
+                      "value": true,
+                      "offset": 1908,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "value": 356,
+                  "unit": "bytes",
+                  "offset": 1911,
+                  "length": 356
+                },
+                {
+                  "name": "Data CRC-24",
+                  "value": 15557744,
+                  "offset": 2267,
+                  "length": 3
+                },
+                {
+                  "name": "Computed Data CRC-24",
+                  "value": 15557744,
+                  "offset": 2267,
+                  "length": 3
+                },
+                {
+                  "name": "IsDataCrc24Valid",
+                  "value": true,
+                  "offset": 2267,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 512,
+              "unit": "samples",
+              "offset": 2270,
+              "length": 366,
+              "children": [
+                {
+                  "name": "Header",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 2270,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "Sync Word",
+                      "value": 41215,
+                      "offset": 2270,
+                      "length": 2
+                    },
+                    {
+                      "name": "IsLastFrame",
+                      "value": false,
+                      "offset": 2272,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsInfoFrame",
+                      "value": false,
+                      "offset": 2272,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "HasMetadata",
+                      "value": false,
+                      "offset": 2272,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Frame Number",
+                      "value": 4,
+                      "offset": 2272,
+                      "length": 3,
+                      "bitOffset": 3,
+                      "bitLength": 21,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "CRC-24",
+                      "value": 15325718,
+                      "offset": 2275,
+                      "length": 3
+                    },
+                    {
+                      "name": "Computed CRC-24",
+                      "value": 15325718,
+                      "offset": 2275,
+                      "length": 3
+                    },
+                    {
+                      "name": "IsCrc24Valid",
+                      "value": true,
+                      "offset": 2275,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "value": 355,
+                  "unit": "bytes",
+                  "offset": 2278,
+                  "length": 355
+                },
+                {
+                  "name": "Data CRC-24",
+                  "value": 6082938,
+                  "offset": 2633,
+                  "length": 3
+                },
+                {
+                  "name": "Computed Data CRC-24",
+                  "value": 6082938,
+                  "offset": 2633,
+                  "length": 3
+                },
+                {
+                  "name": "IsDataCrc24Valid",
+                  "value": true,
+                  "offset": 2633,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 512,
+              "unit": "samples",
+              "offset": 2636,
+              "length": 369,
+              "children": [
+                {
+                  "name": "Header",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 2636,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "Sync Word",
+                      "value": 41215,
+                      "offset": 2636,
+                      "length": 2
+                    },
+                    {
+                      "name": "IsLastFrame",
+                      "value": false,
+                      "offset": 2638,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsInfoFrame",
+                      "value": false,
+                      "offset": 2638,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "HasMetadata",
+                      "value": false,
+                      "offset": 2638,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Frame Number",
+                      "value": 5,
+                      "offset": 2638,
+                      "length": 3,
+                      "bitOffset": 3,
+                      "bitLength": 21,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "CRC-24",
+                      "value": 6451791,
+                      "offset": 2641,
+                      "length": 3
+                    },
+                    {
+                      "name": "Computed CRC-24",
+                      "value": 6451791,
+                      "offset": 2641,
+                      "length": 3
+                    },
+                    {
+                      "name": "IsCrc24Valid",
+                      "value": true,
+                      "offset": 2641,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "value": 358,
+                  "unit": "bytes",
+                  "offset": 2644,
+                  "length": 358
+                },
+                {
+                  "name": "Data CRC-24",
+                  "value": 6591212,
+                  "offset": 3002,
+                  "length": 3
+                },
+                {
+                  "name": "Computed Data CRC-24",
+                  "value": 6591212,
+                  "offset": 3002,
+                  "length": 3
+                },
+                {
+                  "name": "IsDataCrc24Valid",
+                  "value": true,
+                  "offset": 3002,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 512,
+              "unit": "samples",
+              "offset": 3005,
+              "length": 358,
+              "children": [
+                {
+                  "name": "Header",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 3005,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "Sync Word",
+                      "value": 41215,
+                      "offset": 3005,
+                      "length": 2
+                    },
+                    {
+                      "name": "IsLastFrame",
+                      "value": false,
+                      "offset": 3007,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsInfoFrame",
+                      "value": false,
+                      "offset": 3007,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "HasMetadata",
+                      "value": false,
+                      "offset": 3007,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Frame Number",
+                      "value": 6,
+                      "offset": 3007,
+                      "length": 3,
+                      "bitOffset": 3,
+                      "bitLength": 21,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "CRC-24",
+                      "value": 7915103,
+                      "offset": 3010,
+                      "length": 3
+                    },
+                    {
+                      "name": "Computed CRC-24",
+                      "value": 7915103,
+                      "offset": 3010,
+                      "length": 3
+                    },
+                    {
+                      "name": "IsCrc24Valid",
+                      "value": true,
+                      "offset": 3010,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "value": 347,
+                  "unit": "bytes",
+                  "offset": 3013,
+                  "length": 347
+                },
+                {
+                  "name": "Data CRC-24",
+                  "value": 7939836,
+                  "offset": 3360,
+                  "length": 3
+                },
+                {
+                  "name": "Computed Data CRC-24",
+                  "value": 7939836,
+                  "offset": 3360,
+                  "length": 3
+                },
+                {
+                  "name": "IsDataCrc24Valid",
+                  "value": true,
+                  "offset": 3360,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 512,
+              "unit": "samples",
+              "offset": 3363,
+              "length": 369,
+              "children": [
+                {
+                  "name": "Header",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 3363,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "Sync Word",
+                      "value": 41215,
+                      "offset": 3363,
+                      "length": 2
+                    },
+                    {
+                      "name": "IsLastFrame",
+                      "value": false,
+                      "offset": 3365,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsInfoFrame",
+                      "value": false,
+                      "offset": 3365,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "HasMetadata",
+                      "value": false,
+                      "offset": 3365,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Frame Number",
+                      "value": 7,
+                      "offset": 3365,
+                      "length": 3,
+                      "bitOffset": 3,
+                      "bitLength": 21,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "CRC-24",
+                      "value": 15953414,
+                      "offset": 3368,
+                      "length": 3
+                    },
+                    {
+                      "name": "Computed CRC-24",
+                      "value": 15953414,
+                      "offset": 3368,
+                      "length": 3
+                    },
+                    {
+                      "name": "IsCrc24Valid",
+                      "value": true,
+                      "offset": 3368,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "value": 358,
+                  "unit": "bytes",
+                  "offset": 3371,
+                  "length": 358
+                },
+                {
+                  "name": "Data CRC-24",
+                  "value": 16232510,
+                  "offset": 3729,
+                  "length": 3
+                },
+                {
+                  "name": "Computed Data CRC-24",
+                  "value": 16232510,
+                  "offset": 3729,
+                  "length": 3
+                },
+                {
+                  "name": "IsDataCrc24Valid",
+                  "value": true,
+                  "offset": 3729,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 512,
+              "unit": "samples",
+              "offset": 3732,
+              "length": 333,
+              "children": [
+                {
+                  "name": "Header",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 3732,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "Sync Word",
+                      "value": 41215,
+                      "offset": 3732,
+                      "length": 2
+                    },
+                    {
+                      "name": "IsLastFrame",
+                      "value": false,
+                      "offset": 3734,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsInfoFrame",
+                      "value": false,
+                      "offset": 3734,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "HasMetadata",
+                      "value": false,
+                      "offset": 3734,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Frame Number",
+                      "value": 8,
+                      "offset": 3734,
+                      "length": 3,
+                      "bitOffset": 3,
+                      "bitLength": 21,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "CRC-24",
+                      "value": 8587862,
+                      "offset": 3737,
+                      "length": 3
+                    },
+                    {
+                      "name": "Computed CRC-24",
+                      "value": 8587862,
+                      "offset": 3737,
+                      "length": 3
+                    },
+                    {
+                      "name": "IsCrc24Valid",
+                      "value": true,
+                      "offset": 3737,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "value": 322,
+                  "unit": "bytes",
+                  "offset": 3740,
+                  "length": 322
+                },
+                {
+                  "name": "Data CRC-24",
+                  "value": 12681943,
+                  "offset": 4062,
+                  "length": 3
+                },
+                {
+                  "name": "Computed Data CRC-24",
+                  "value": 12681943,
+                  "offset": 4062,
+                  "length": 3
+                },
+                {
+                  "name": "IsDataCrc24Valid",
+                  "value": true,
+                  "offset": 4062,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 512,
+              "unit": "samples",
+              "offset": 4065,
+              "length": 353,
+              "children": [
+                {
+                  "name": "Header",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 4065,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "Sync Word",
+                      "value": 41215,
+                      "offset": 4065,
+                      "length": 2
+                    },
+                    {
+                      "name": "IsLastFrame",
+                      "value": false,
+                      "offset": 4067,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsInfoFrame",
+                      "value": false,
+                      "offset": 4067,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "HasMetadata",
+                      "value": false,
+                      "offset": 4067,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Frame Number",
+                      "value": 9,
+                      "offset": 4067,
+                      "length": 3,
+                      "bitOffset": 3,
+                      "bitLength": 21,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "CRC-24",
+                      "value": 565775,
+                      "offset": 4070,
+                      "length": 3
+                    },
+                    {
+                      "name": "Computed CRC-24",
+                      "value": 565775,
+                      "offset": 4070,
+                      "length": 3
+                    },
+                    {
+                      "name": "IsCrc24Valid",
+                      "value": true,
+                      "offset": 4070,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "value": 342,
+                  "unit": "bytes",
+                  "offset": 4073,
+                  "length": 342
+                },
+                {
+                  "name": "Data CRC-24",
+                  "value": 10236315,
+                  "offset": 4415,
+                  "length": 3
+                },
+                {
+                  "name": "Computed Data CRC-24",
+                  "value": 10236315,
+                  "offset": 4415,
+                  "length": 3
+                },
+                {
+                  "name": "IsDataCrc24Valid",
+                  "value": true,
+                  "offset": 4415,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 512,
+              "unit": "samples",
+              "offset": 4418,
+              "length": 357,
+              "children": [
+                {
+                  "name": "Header",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 4418,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "Sync Word",
+                      "value": 41215,
+                      "offset": 4418,
+                      "length": 2
+                    },
+                    {
+                      "name": "IsLastFrame",
+                      "value": false,
+                      "offset": 4420,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsInfoFrame",
+                      "value": false,
+                      "offset": 4420,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "HasMetadata",
+                      "value": false,
+                      "offset": 4420,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Frame Number",
+                      "value": 10,
+                      "offset": 4420,
+                      "length": 3,
+                      "bitOffset": 3,
+                      "bitLength": 21,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "CRC-24",
+                      "value": 1185311,
+                      "offset": 4423,
+                      "length": 3
+                    },
+                    {
+                      "name": "Computed CRC-24",
+                      "value": 1185311,
+                      "offset": 4423,
+                      "length": 3
+                    },
+                    {
+                      "name": "IsCrc24Valid",
+                      "value": true,
+                      "offset": 4423,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "value": 346,
+                  "unit": "bytes",
+                  "offset": 4426,
+                  "length": 346
+                },
+                {
+                  "name": "Data CRC-24",
+                  "value": 3903295,
+                  "offset": 4772,
+                  "length": 3
+                },
+                {
+                  "name": "Computed Data CRC-24",
+                  "value": 3903295,
+                  "offset": 4772,
+                  "length": 3
+                },
+                {
+                  "name": "IsDataCrc24Valid",
+                  "value": true,
+                  "offset": 4772,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 512,
+              "unit": "samples",
+              "offset": 4775,
+              "length": 339,
+              "children": [
+                {
+                  "name": "Header",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 4775,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "Sync Word",
+                      "value": 41215,
+                      "offset": 4775,
+                      "length": 2
+                    },
+                    {
+                      "name": "IsLastFrame",
+                      "value": false,
+                      "offset": 4777,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsInfoFrame",
+                      "value": false,
+                      "offset": 4777,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "HasMetadata",
+                      "value": false,
+                      "offset": 4777,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Frame Number",
+                      "value": 11,
+                      "offset": 4777,
+                      "length": 3,
+                      "bitOffset": 3,
+                      "bitLength": 21,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "CRC-24",
+                      "value": 10075718,
+                      "offset": 4780,
+                      "length": 3
+                    },
+                    {
+                      "name": "Computed CRC-24",
+                      "value": 10075718,
+                      "offset": 4780,
+                      "length": 3
+                    },
+                    {
+                      "name": "IsCrc24Valid",
+                      "value": true,
+                      "offset": 4780,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "value": 328,
+                  "unit": "bytes",
+                  "offset": 4783,
+                  "length": 328
+                },
+                {
+                  "name": "Data CRC-24",
+                  "value": 14046374,
+                  "offset": 5111,
+                  "length": 3
+                },
+                {
+                  "name": "Computed Data CRC-24",
+                  "value": 14046374,
+                  "offset": 5111,
+                  "length": 3
+                },
+                {
+                  "name": "IsDataCrc24Valid",
+                  "value": true,
+                  "offset": 5111,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 512,
+              "unit": "samples",
+              "offset": 5114,
+              "length": 353,
+              "children": [
+                {
+                  "name": "Header",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 5114,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "Sync Word",
+                      "value": 41215,
+                      "offset": 5114,
+                      "length": 2
+                    },
+                    {
+                      "name": "IsLastFrame",
+                      "value": false,
+                      "offset": 5116,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsInfoFrame",
+                      "value": false,
+                      "offset": 5116,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "HasMetadata",
+                      "value": false,
+                      "offset": 5116,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Frame Number",
+                      "value": 12,
+                      "offset": 5116,
+                      "length": 3,
+                      "bitOffset": 3,
+                      "bitLength": 21,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "CRC-24",
+                      "value": 2588223,
+                      "offset": 5119,
+                      "length": 3
+                    },
+                    {
+                      "name": "Computed CRC-24",
+                      "value": 2588223,
+                      "offset": 5119,
+                      "length": 3
+                    },
+                    {
+                      "name": "IsCrc24Valid",
+                      "value": true,
+                      "offset": 5119,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "value": 342,
+                  "unit": "bytes",
+                  "offset": 5122,
+                  "length": 342
+                },
+                {
+                  "name": "Data CRC-24",
+                  "value": 15193242,
+                  "offset": 5464,
+                  "length": 3
+                },
+                {
+                  "name": "Computed Data CRC-24",
+                  "value": 15193242,
+                  "offset": 5464,
+                  "length": 3
+                },
+                {
+                  "name": "IsDataCrc24Valid",
+                  "value": true,
+                  "offset": 5464,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 512,
+              "unit": "samples",
+              "offset": 5467,
+              "length": 388,
+              "children": [
+                {
+                  "name": "Header",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 5467,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "Sync Word",
+                      "value": 41215,
+                      "offset": 5467,
+                      "length": 2
+                    },
+                    {
+                      "name": "IsLastFrame",
+                      "value": false,
+                      "offset": 5469,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsInfoFrame",
+                      "value": false,
+                      "offset": 5469,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "HasMetadata",
+                      "value": false,
+                      "offset": 5469,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Frame Number",
+                      "value": 13,
+                      "offset": 5469,
+                      "length": 3,
+                      "bitOffset": 3,
+                      "bitLength": 21,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "CRC-24",
+                      "value": 11327078,
+                      "offset": 5472,
+                      "length": 3
+                    },
+                    {
+                      "name": "Computed CRC-24",
+                      "value": 11327078,
+                      "offset": 5472,
+                      "length": 3
+                    },
+                    {
+                      "name": "IsCrc24Valid",
+                      "value": true,
+                      "offset": 5472,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "value": 377,
+                  "unit": "bytes",
+                  "offset": 5475,
+                  "length": 377
+                },
+                {
+                  "name": "Data CRC-24",
+                  "value": 16151110,
+                  "offset": 5852,
+                  "length": 3
+                },
+                {
+                  "name": "Computed Data CRC-24",
+                  "value": 16151110,
+                  "offset": 5852,
+                  "length": 3
+                },
+                {
+                  "name": "IsDataCrc24Valid",
+                  "value": true,
+                  "offset": 5852,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 512,
+              "unit": "samples",
+              "offset": 5855,
+              "length": 1111,
+              "children": [
+                {
+                  "name": "Header",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 5855,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "Sync Word",
+                      "value": 41215,
+                      "offset": 5855,
+                      "length": 2
+                    },
+                    {
+                      "name": "IsLastFrame",
+                      "value": false,
+                      "offset": 5857,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsInfoFrame",
+                      "value": false,
+                      "offset": 5857,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "HasMetadata",
+                      "value": false,
+                      "offset": 5857,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Frame Number",
+                      "value": 14,
+                      "offset": 5857,
+                      "length": 3,
+                      "bitOffset": 3,
+                      "bitLength": 21,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "CRC-24",
+                      "value": 11952758,
+                      "offset": 5860,
+                      "length": 3
+                    },
+                    {
+                      "name": "Computed CRC-24",
+                      "value": 11952758,
+                      "offset": 5860,
+                      "length": 3
+                    },
+                    {
+                      "name": "IsCrc24Valid",
+                      "value": true,
+                      "offset": 5860,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "value": 1100,
+                  "unit": "bytes",
+                  "offset": 5863,
+                  "length": 1100
+                },
+                {
+                  "name": "Data CRC-24",
+                  "value": 3672898,
+                  "offset": 6963,
+                  "length": 3
+                },
+                {
+                  "name": "Computed Data CRC-24",
+                  "value": 3672898,
+                  "offset": 6963,
+                  "length": 3
+                },
+                {
+                  "name": "IsDataCrc24Valid",
+                  "value": true,
+                  "offset": 6963,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 512,
+              "unit": "samples",
+              "offset": 6966,
+              "length": 356,
+              "children": [
+                {
+                  "name": "Header",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 6966,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "Sync Word",
+                      "value": 41215,
+                      "offset": 6966,
+                      "length": 2
+                    },
+                    {
+                      "name": "IsLastFrame",
+                      "value": false,
+                      "offset": 6968,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsInfoFrame",
+                      "value": false,
+                      "offset": 6968,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "HasMetadata",
+                      "value": false,
+                      "offset": 6968,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Frame Number",
+                      "value": 15,
+                      "offset": 6968,
+                      "length": 3,
+                      "bitOffset": 3,
+                      "bitLength": 21,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "CRC-24",
+                      "value": 4049455,
+                      "offset": 6971,
+                      "length": 3
+                    },
+                    {
+                      "name": "Computed CRC-24",
+                      "value": 4049455,
+                      "offset": 6971,
+                      "length": 3
+                    },
+                    {
+                      "name": "IsCrc24Valid",
+                      "value": true,
+                      "offset": 6971,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "value": 345,
+                  "unit": "bytes",
+                  "offset": 6974,
+                  "length": 345
+                },
+                {
+                  "name": "Data CRC-24",
+                  "value": 4123985,
+                  "offset": 7319,
+                  "length": 3
+                },
+                {
+                  "name": "Computed Data CRC-24",
+                  "value": 4123985,
+                  "offset": 7319,
+                  "length": 3
+                },
+                {
+                  "name": "IsDataCrc24Valid",
+                  "value": true,
+                  "offset": 7319,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 512,
+              "unit": "samples",
+              "offset": 7322,
+              "length": 370,
+              "children": [
+                {
+                  "name": "Header",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 7322,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "Sync Word",
+                      "value": 41215,
+                      "offset": 7322,
+                      "length": 2
+                    },
+                    {
+                      "name": "IsLastFrame",
+                      "value": false,
+                      "offset": 7324,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsInfoFrame",
+                      "value": false,
+                      "offset": 7324,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "HasMetadata",
+                      "value": false,
+                      "offset": 7324,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Frame Number",
+                      "value": 16,
+                      "offset": 7324,
+                      "length": 3,
+                      "bitOffset": 3,
+                      "bitLength": 21,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "CRC-24",
+                      "value": 5679830,
+                      "offset": 7327,
+                      "length": 3
+                    },
+                    {
+                      "name": "Computed CRC-24",
+                      "value": 5679830,
+                      "offset": 7327,
+                      "length": 3
+                    },
+                    {
+                      "name": "IsCrc24Valid",
+                      "value": true,
+                      "offset": 7327,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "value": 359,
+                  "unit": "bytes",
+                  "offset": 7330,
+                  "length": 359
+                },
+                {
+                  "name": "Data CRC-24",
+                  "value": 3503198,
+                  "offset": 7689,
+                  "length": 3
+                },
+                {
+                  "name": "Computed Data CRC-24",
+                  "value": 3503198,
+                  "offset": 7689,
+                  "length": 3
+                },
+                {
+                  "name": "IsDataCrc24Valid",
+                  "value": true,
+                  "offset": 7689,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 512,
+              "unit": "samples",
+              "offset": 7692,
+              "length": 1033,
+              "children": [
+                {
+                  "name": "Header",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 7692,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "Sync Word",
+                      "value": 41215,
+                      "offset": 7692,
+                      "length": 2
+                    },
+                    {
+                      "name": "IsLastFrame",
+                      "value": false,
+                      "offset": 7694,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsInfoFrame",
+                      "value": false,
+                      "offset": 7694,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "HasMetadata",
+                      "value": false,
+                      "offset": 7694,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Frame Number",
+                      "value": 17,
+                      "offset": 7694,
+                      "length": 3,
+                      "bitOffset": 3,
+                      "bitLength": 21,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "CRC-24",
+                      "value": 14484111,
+                      "offset": 7697,
+                      "length": 3
+                    },
+                    {
+                      "name": "Computed CRC-24",
+                      "value": 14484111,
+                      "offset": 7697,
+                      "length": 3
+                    },
+                    {
+                      "name": "IsCrc24Valid",
+                      "value": true,
+                      "offset": 7697,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "value": 1022,
+                  "unit": "bytes",
+                  "offset": 7700,
+                  "length": 1022
+                },
+                {
+                  "name": "Data CRC-24",
+                  "value": 8649618,
+                  "offset": 8722,
+                  "length": 3
+                },
+                {
+                  "name": "Computed Data CRC-24",
+                  "value": 8649618,
+                  "offset": 8722,
+                  "length": 3
+                },
+                {
+                  "name": "IsDataCrc24Valid",
+                  "value": true,
+                  "offset": 8722,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 512,
+              "unit": "samples",
+              "offset": 8725,
+              "length": 1009,
+              "children": [
+                {
+                  "name": "Header",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 8725,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "Sync Word",
+                      "value": 41215,
+                      "offset": 8725,
+                      "length": 2
+                    },
+                    {
+                      "name": "IsLastFrame",
+                      "value": false,
+                      "offset": 8727,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsInfoFrame",
+                      "value": false,
+                      "offset": 8727,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "HasMetadata",
+                      "value": false,
+                      "offset": 8727,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Frame Number",
+                      "value": 18,
+                      "offset": 8727,
+                      "length": 3,
+                      "bitOffset": 3,
+                      "bitLength": 21,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "CRC-24",
+                      "value": 13088415,
+                      "offset": 8730,
+                      "length": 3
+                    },
+                    {
+                      "name": "Computed CRC-24",
+                      "value": 13088415,
+                      "offset": 8730,
+                      "length": 3
+                    },
+                    {
+                      "name": "IsCrc24Valid",
+                      "value": true,
+                      "offset": 8730,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "value": 998,
+                  "unit": "bytes",
+                  "offset": 8733,
+                  "length": 998
+                },
+                {
+                  "name": "Data CRC-24",
+                  "value": 6474451,
+                  "offset": 9731,
+                  "length": 3
+                },
+                {
+                  "name": "Computed Data CRC-24",
+                  "value": 6474451,
+                  "offset": 9731,
+                  "length": 3
+                },
+                {
+                  "name": "IsDataCrc24Valid",
+                  "value": true,
+                  "offset": 9731,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 512,
+              "unit": "samples",
+              "offset": 9734,
+              "length": 390,
+              "children": [
+                {
+                  "name": "Header",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 9734,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "Sync Word",
+                      "value": 41215,
+                      "offset": 9734,
+                      "length": 2
+                    },
+                    {
+                      "name": "IsLastFrame",
+                      "value": false,
+                      "offset": 9736,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsInfoFrame",
+                      "value": false,
+                      "offset": 9736,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "HasMetadata",
+                      "value": false,
+                      "offset": 9736,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Frame Number",
+                      "value": 19,
+                      "offset": 9736,
+                      "length": 3,
+                      "bitOffset": 3,
+                      "bitLength": 21,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "CRC-24",
+                      "value": 4988614,
+                      "offset": 9739,
+                      "length": 3
+                    },
+                    {
+                      "name": "Computed CRC-24",
+                      "value": 4988614,
+                      "offset": 9739,
+                      "length": 3
+                    },
+                    {
+                      "name": "IsCrc24Valid",
+                      "value": true,
+                      "offset": 9739,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "value": 379,
+                  "unit": "bytes",
+                  "offset": 9742,
+                  "length": 379
+                },
+                {
+                  "name": "Data CRC-24",
+                  "value": 14043265,
+                  "offset": 10121,
+                  "length": 3
+                },
+                {
+                  "name": "Computed Data CRC-24",
+                  "value": 14043265,
+                  "offset": 10121,
+                  "length": 3
+                },
+                {
+                  "name": "IsDataCrc24Valid",
+                  "value": true,
+                  "offset": 10121,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 512,
+              "unit": "samples",
+              "offset": 10124,
+              "length": 376,
+              "children": [
+                {
+                  "name": "Header",
+                  "value": 8,
+                  "unit": "bytes",
+                  "offset": 10124,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "Sync Word",
+                      "value": 41215,
+                      "offset": 10124,
+                      "length": 2
+                    },
+                    {
+                      "name": "IsLastFrame",
+                      "value": false,
+                      "offset": 10126,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsInfoFrame",
+                      "value": false,
+                      "offset": 10126,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "HasMetadata",
+                      "value": false,
+                      "offset": 10126,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Frame Number",
+                      "value": 20,
+                      "offset": 10126,
+                      "length": 3,
+                      "bitOffset": 3,
+                      "bitLength": 21,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "CRC-24",
+                      "value": 15916735,
+                      "offset": 10129,
+                      "length": 3
+                    },
+                    {
+                      "name": "Computed CRC-24",
+                      "value": 15916735,
+                      "offset": 10129,
+                      "length": 3
+                    },
+                    {
+                      "name": "IsCrc24Valid",
+                      "value": true,
+                      "offset": 10129,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "value": 365,
+                  "unit": "bytes",
+                  "offset": 10132,
+                  "length": 365
+                },
+                {
+                  "name": "Data CRC-24",
+                  "value": 3999351,
+                  "offset": 10497,
+                  "length": 3
+                },
+                {
+                  "name": "Computed Data CRC-24",
+                  "value": 3999351,
+                  "offset": 10497,
+                  "length": 3
+                },
+                {
+                  "name": "IsDataCrc24Valid",
+                  "value": true,
+                  "offset": 10497,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": 272,
+              "unit": "samples",
+              "offset": 10500,
+              "length": 220,
+              "children": [
+                {
+                  "name": "Header",
+                  "value": 21,
+                  "unit": "bytes",
+                  "offset": 10500,
+                  "length": 21,
+                  "children": [
+                    {
+                      "name": "Sync Word",
+                      "value": 41215,
+                      "offset": 10500,
+                      "length": 2
+                    },
+                    {
+                      "name": "IsLastFrame",
+                      "value": true,
+                      "offset": 10502,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsInfoFrame",
+                      "value": true,
+                      "offset": 10502,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "HasMetadata",
+                      "value": false,
+                      "offset": 10502,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Frame Number",
+                      "value": 21,
+                      "offset": 10502,
+                      "length": 3,
+                      "bitOffset": 3,
+                      "bitLength": 21,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Samples",
+                      "value": 272,
+                      "unit": "samples",
+                      "offset": 10505,
+                      "length": 2,
+                      "bitOffset": 0,
+                      "bitLength": 14,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Reserved",
+                      "value": 0,
+                      "offset": 10506,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Stream Info",
+                      "value": 10,
+                      "unit": "bytes",
+                      "offset": 10507,
+                      "length": 10,
+                      "children": [
+                        {
+                          "name": "Codec",
+                          "value": "Integer 24 bit (TAK 2.0)",
+                          "offset": 10507,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 6,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Profile",
+                          "value": 2,
+                          "offset": 10507,
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 4,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Frame Size Type",
+                          "value": "512 samples",
+                          "offset": 10508,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 4,
+                          "bitOrder": "leastSignificantFirst",
+                          "children": [
+                            {
+                              "name": "Frame Length",
+                              "value": 512,
+                              "unit": "samples",
+                              "offset": 10508,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 4,
+                              "bitOrder": "leastSignificantFirst"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Samples",
+                          "value": 11024,
+                          "unit": "samples",
+                          "offset": 10508,
+                          "length": 6,
+                          "bitOffset": 6,
+                          "bitLength": 35,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Data Type",
+                          "value": "PCM",
+                          "offset": 10513,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 3,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Sample Rate",
+                          "value": 44100,
+                          "unit": "Hz",
+                          "offset": 10513,
+                          "length": 3,
+                          "bitOffset": 4,
+                          "bitLength": 18,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Bits Per Sample",
+                          "value": 16,
+                          "unit": "bits",
+                          "offset": 10515,
+                          "length": 2,
+                          "bitOffset": 6,
+                          "bitLength": 5,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "Channels",
+                          "value": 2,
+                          "unit": "channels",
+                          "offset": 10516,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 4,
+                          "bitOrder": "leastSignificantFirst"
+                        },
+                        {
+                          "name": "HasExtension",
+                          "value": false,
+                          "offset": 10516,
+                          "length": 1,
+                          "bitOffset": 7,
+                          "bitLength": 1,
+                          "bitOrder": "leastSignificantFirst"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "HasPreviousDistance",
+                      "value": false,
+                      "offset": 10517,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "Reserved",
+                      "value": 0,
+                      "offset": 10517,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 5,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "CRC-24",
+                      "value": 8370810,
+                      "offset": 10518,
+                      "length": 3
+                    },
+                    {
+                      "name": "Computed CRC-24",
+                      "value": 8370810,
+                      "offset": 10518,
+                      "length": 3
+                    },
+                    {
+                      "name": "IsCrc24Valid",
+                      "value": true,
+                      "offset": 10518,
+                      "length": 3
+                    }
+                  ]
+                },
+                {
+                  "name": "Frame Data",
+                  "value": 196,
+                  "unit": "bytes",
+                  "offset": 10521,
+                  "length": 196
+                },
+                {
+                  "name": "Data CRC-24",
+                  "value": 2443363,
+                  "offset": 10717,
+                  "length": 3
+                },
+                {
+                  "name": "Computed Data CRC-24",
+                  "value": 2443363,
+                  "offset": 10717,
+                  "length": 3
+                },
+                {
+                  "name": "IsDataCrc24Valid",
+                  "value": true,
+                  "offset": 10717,
+                  "length": 3
+                }
+              ]
             }
           ]
         }
@@ -637,8 +3270,9 @@
         "samples": 11024,
         "duration": 0.24997732426303854,
         "averageBitrate": 339.6148040638607,
-        "isVbr": false,
+        "isVbr": true,
         "verification": {
+          "isVerified": true,
           "decoding": "noDecoder",
           "decodedSamples": 0,
           "checksums": [
@@ -655,7 +3289,7 @@
               "covers": "header",
               "coversAllAudio": false,
               "stored": 22,
-              "checked": 0,
+              "checked": 22,
               "failed": 0
             },
             {
@@ -663,14 +3297,79 @@
               "covers": "codedData",
               "coversAllAudio": true,
               "stored": 22,
-              "checked": 0,
+              "checked": 22,
               "failed": 0
             }
           ]
         },
         "encoder": "TAK 2.3.3",
         "encoderConfidence": "High",
-        "series": []
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "x": [
+              108,
+              1208,
+              1575,
+              1903,
+              2270,
+              2636,
+              3005,
+              3363,
+              3732,
+              4065,
+              4418,
+              4775,
+              5114,
+              5467,
+              5855,
+              6966,
+              7322,
+              7692,
+              8725,
+              9734,
+              10124,
+              10500
+            ],
+            "values": [
+              757.96875,
+              252.8859375,
+              226.0125,
+              252.8859375,
+              252.196875,
+              254.2640625,
+              246.684375,
+              254.2640625,
+              229.4578125,
+              243.2390625,
+              245.9953125,
+              233.5921875,
+              243.2390625,
+              267.35625,
+              765.5484375,
+              245.30625,
+              254.953125,
+              711.8015625,
+              695.2640625,
+              268.734375,
+              259.0875,
+              285.3529411764706
+            ]
+          },
+          {
+            "name": "Bitrate Over Time",
+            "unit": "kbps",
+            "axis": "seconds",
+            "x": [
+              0
+            ],
+            "values": [
+              340
+            ]
+          }
+        ]
       }
     ],
     "findings": []

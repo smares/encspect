@@ -22,6 +22,7 @@ internal static class Topics
     public const string WaveFormat = "waveformatex";
     public const string WaveFormatExtensible = "wave-format-extensible";
     public const string Verification = "verification";
+    public const string Frames = "tak-frames";
 }
 
 // One metadata object as the walk read it.
@@ -126,6 +127,9 @@ internal sealed class Records
 
     // The length of the first frame's header, with its CRC-24 (0 where the audio starts with something that is no frame).
     public int FirstFrameHeaderLength { get; set; }
+
+    // The frames the walk found after the metadata.
+    public FrameFacts Frames { get; } = new();
 
     public bool IsStreamInfoFirst => Objects.Count > 0 && Objects[0].Id == Layout.StreamInfo;
 

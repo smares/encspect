@@ -72,6 +72,6 @@ public sealed class TakParser : IFormatParser
         }
 
         long end = r.DeclaredEnd is { } declared ? Math.Min(declared, reader.End) : reader.End;
-        Summary.Finish(state, reader.Start, end);
+        Summary.Finish(state, reader, reader.Start, end);
     }
 }

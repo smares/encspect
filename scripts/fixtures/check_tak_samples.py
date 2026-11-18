@@ -8,8 +8,9 @@ They are the TAK 1.0 and 2.2.0 files the design walked (docs/design/tak-optimfro
   the last frame info and the end it gives, which is the file's end);
 - ffprobe and MediaInfo give the codec, the sample rate, the channels, the bit depth and the duration (MediaInfo also the encoder, for 2.2.0); ffmpeg decodes the TAK 2.0 codec
   (2.2.0) without a CRC error to the PCM of the manifest's MD5, and refuses the TAK 1.0 codec ("Not yet implemented in FFmpeg");
+- the frames, walked by tak_model.py: their count, the info frames, consecutive numbers, the last frame flagged and every data CRC-24 holding;
 - with --analyzer, the analyzer's report (encspect --ndjson --hide frames) must match the manifest instead: the stream, the encoder and its confidence, the header
-  checksums compared and holding, and exactly the findings listed.
+  and frame checksums compared and holding, the stream verified and exactly the findings listed.
 
 Needs curl, ffmpeg, ffprobe and mediainfo. Usage:
 
@@ -59,6 +60,11 @@ def model_problems(path, sample):
         last = result["last_frame"]
         if (last["position"], last["size"]) != (sample["last_frame"]["position"], sample["last_frame"]["size"]) or last["end"] != len(data):
             problems.append(f"the last frame info says {last}, the manifest {sample['last_frame']} and the file ends at {len(data)}")
+    frames = result["frames"]
+    if (len(frames), sum(1 for f in frames if f["info"])) != (sample["frames"], sample["info_frames"]):
+        problems.append(f"the frames are {len(frames)} with {sum(1 for f in frames if f['info'])} info frames, the manifest {sample['frames']} and {sample['info_frames']}")
+    if any(f["data_crc_ok"] is not True for f in frames) or [f["number"] for f in frames] != list(range(len(frames))) or not frames[-1]["last"]:
+        problems.append("a frame's data CRC-24 fails, or the frame numbers are not consecutive, or the last frame is not flagged as the last, under the reading of tak_model.py")
     summary = result["summary"]
     for key in ("codec", "profile", "channels", "samples", "frame_length", "encoder", "preset"):
         if summary[key] != sample[key]:
@@ -108,6 +114,12 @@ def analyzer_problems(analyzer, path, sample):
     compared = sum(1 for o in sample["objects"] if o[0] in (1, 2, 3, 4, 6, 7))
     if crc is None or (crc["stored"], crc["checked"], crc["failed"]) != (compared, compared, 0):
         problems.append(f"the analyzer's metadata CRC-24 tally is {crc}, expected {compared} objects compared and holding")
+    for name in ("frame header CRC-24", "frame data CRC-24"):
+        frames = next((c for c in verification.get("checksums", []) if c["name"] == name), None)
+        if frames is None or (frames["stored"], frames["checked"], frames["failed"]) != (sample["frames"], sample["frames"], 0):
+            problems.append(f"the analyzer's {name} tally is {frames}, expected {sample['frames']} frames compared and holding")
+    if verification.get("isVerified") is not True:
+        problems.append(f"the analyzer's isVerified is {verification.get('isVerified')}, expected true: every checksum holds and the frame data CRC-24 covers all the audio")
     serious = sorted({f["code"] for f in report["findings"] if f["severity"] != "Info"})
     if serious != sorted(sample["findings"]):
         problems.append(f"the analyzer reports {serious}, the manifest {sample['findings']}")
