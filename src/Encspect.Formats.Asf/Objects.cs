@@ -13,6 +13,7 @@ public sealed partial class AsfParser
     // Entries of a list inside an object (codecs, encryption records) become nodes up to this count; the rest of
     // the object is left as it is, with a finding.
     private const int MaxListEntries = 1000;
+    private const int MarkerEntryMinimum = 8 + 8 + 2 + 4 + 4 + 4;
 
     // Objects nest at most this deep (header, extension, extended stream properties, stream
     // properties), so the tree stays well within Node.MaxDepth.
@@ -800,7 +801,7 @@ public sealed partial class AsfParser
                 ushort type = e.Word("Type", Explain.CodecType, v => NodeValue.Text(v switch { 1 => "Video codec", 2 => "Audio codec", 0xFFFF => "Unknown codec", _ => $"0x{v:X4}" }));
                 ushort nameLength = e.Word("Codec Name Length", Explain.CodecNameLength, "characters");
                 string name = e.Unicode("Codec Name", nameLength * 2L, Explain.CodecName);
-                ushort descriptionLength = e.Word("Codec Description Length", Explain.CodecDescriptionLength, "characters");
+                ushort descriptionLength = e.Word("Codec Description Length", Explain.CodecDescriptionLength, v => NodeValue.Integer(v, "characters", "character"));
                 string description = e.Unicode("Codec Description", descriptionLength * 2L, Explain.CodecDescription);
                 ushort infoLength = e.Word("Codec Information Length", Explain.CodecInformationLength, "bytes");
                 if (infoLength > 0)
@@ -824,24 +825,43 @@ public sealed partial class AsfParser
 
     private static void ParseScriptCommand(State state, Node parent, ObjectHeader header, long end)
     {
-        (Node node, Fields f) = Begin(state, parent, header, end, "Script Command Object", Explain.ScriptCommand);
+        (Node node, Fields f) = Begin(state, parent, header, end, "Script Command Object", Explain.ScriptCommand, Topics.AsfScriptsAndMarkers);
         Body(state, node, f, 44, () =>
         {
             f.Guid("Reserved", Explain.ScriptReserved);
             ushort commands = f.Word("Commands Count", Explain.CommandsCount);
             ushort typeCount = f.Word("Command Types Count", Explain.CommandTypesCount);
+            node.Value = NodeValue.Integer(commands, "commands", "command");
             var types = new List<string>();
             for (int i = 0; i < typeCount; i++)
             {
-                ushort length = f.Word("Command Type Name Length", Explain.CommandTypeNameLength, "characters");
+                if (i == MaxListEntries)
+                {
+                    TooManyEntries(state, node, f, $"{typeCount} command types", "from");
+                    return;
+                }
+
+                if (f.Remaining < 2)
+                {
+                    state.Findings.AddNow(Severity.Warning, "asf.command-count", $"The Script Command Object counts {Counts.Of(typeCount, "command type", "command types")}, but its data holds {i}.", node.Children[^1]);
+                    return;
+                }
+
+                ushort length = f.Word("Command Type Name Length", Explain.CommandTypeNameLength, v => NodeValue.Integer(v, "characters", "character"));
                 types.Add(f.Unicode("Command Type Name", length * 2L, Explain.CommandTypeName));
             }
 
             for (int i = 0; i < commands; i++)
             {
-                if (i == 1000)
+                if (i == MaxListEntries)
                 {
-                    f.Bytes("Further Commands", f.Remaining, Explain.FurtherEntries);
+                    TooManyEntries(state, node, f, $"{commands} commands", "from");
+                    break;
+                }
+
+                if (f.Remaining < 8)
+                {
+                    state.Findings.AddNow(Severity.Warning, "asf.command-count", $"The Script Command Object counts {Counts.Of(commands, "command", "commands")}, but its data holds {i}.", node.Children[^1]);
                     break;
                 }
 
@@ -850,7 +870,7 @@ public sealed partial class AsfParser
                 var c = new Fields(f.Reader, entry);
                 uint time = c.Dword("Presentation Time", Explain.CommandPresentationTime, "ms");
                 ushort typeIndex = c.Word("Type Index", Explain.CommandTypeIndex);
-                ushort length = c.Word("Command Name Length", Explain.CommandNameLength, "characters");
+                ushort length = c.Word("Command Name Length", Explain.CommandNameLength, v => NodeValue.Integer(v, "characters", "character"));
                 string name = c.Unicode("Command Name", length * 2L, Explain.CommandName);
                 string typeName = typeIndex < types.Count ? types[typeIndex] : "?";
                 var shown = new Node("Command", at, f.Position - at, $"{typeName}: {name} at {time} ms") { Description = Explain.Command };
@@ -865,14 +885,12 @@ public sealed partial class AsfParser
                     state.Findings.AddNow(Severity.Warning, "asf.command-type-index", $"A script command at 0x{at:X} names command type {typeIndex}, but the object lists {types.Count}.", shown);
                 }
             }
-
-            node.Value = NodeValue.Integer(commands, "commands", "command");
         });
     }
 
     private static void ParseMarker(State state, Node parent, ObjectHeader header, long end)
     {
-        (Node node, Fields f) = Begin(state, parent, header, end, "Marker Object", Explain.Marker);
+        (Node node, Fields f) = Begin(state, parent, header, end, "Marker Object", Explain.Marker, Topics.AsfScriptsAndMarkers);
         Body(state, node, f, 48, () =>
         {
             f.Guid("Reserved", Explain.MarkerReserved);
@@ -880,12 +898,23 @@ public sealed partial class AsfParser
             f.Word("Reserved", Explain.MarkerReservedWord);
             ushort nameLength = f.Word("Name Length", Explain.MarkerNameLength, "bytes");
             f.Unicode("Name", nameLength, Explain.MarkerName);
+            if (nameLength % 2 != 0)
+            {
+                state.Findings.AddNow(Severity.Warning, "asf.string-odd-length", $"The name in the Marker Object is {Counts.Of(nameLength, "byte", "bytes")}, not whole UTF-16 characters.", node.Children[^1]);
+            }
+
             node.Value = NodeValue.Integer(count, "markers", "marker");
             for (uint i = 0; i < count; i++)
             {
-                if (i == 1000)
+                if (i == MaxListEntries)
                 {
-                    f.Bytes("Further Markers", f.Remaining, Explain.FurtherEntries);
+                    TooManyEntries(state, node, f, $"{count} markers", "from");
+                    break;
+                }
+
+                if (f.Remaining < MarkerEntryMinimum)
+                {
+                    state.Findings.AddNow(Severity.Warning, "asf.marker-count", $"The Marker Object counts {Counts.Of(count, "marker", "markers")}, but its data holds {i}.", node.Children[^1]);
                     break;
                 }
 
@@ -897,7 +926,7 @@ public sealed partial class AsfParser
                 ushort entryLength = m.Word("Entry Length", Explain.MarkerEntryLength, "bytes");
                 m.Dword("Send Time", Explain.MarkerSendTime, "ms");
                 m.Dword("Flags", Explain.MarkerFlags, v => NodeValue.Hex(v, 8));
-                uint descriptionLength = m.Dword("Marker Description Length", Explain.MarkerDescriptionLength, "characters");
+                uint descriptionLength = m.Dword("Marker Description Length", Explain.MarkerDescriptionLength, v => NodeValue.Integer(v, "characters", "character"));
                 string description = m.Unicode("Marker Description", descriptionLength * 2L, Explain.MarkerDescription);
                 var shown = new Node("Marker", at, f.Position - at, description) { Description = Explain.MarkerEntry };
                 foreach (Node child in entry.Children)

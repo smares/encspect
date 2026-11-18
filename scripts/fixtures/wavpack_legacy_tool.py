@@ -8,9 +8,10 @@ DOS programs, 4.31 is a DOS/32A program: DOSBox runs them headless (SDL_VIDEODRI
 autoexec, and the output of each command redirected into a file (the programs print to the console only). Names inside DOSBox are 8.3, upper case; run() takes
 and returns the names the caller likes and maps them.
 
-The release 3.97 is a Win32 program (Wine runs it where Wine works; the 32-bit Wine of the Ubuntu 24.04 container this was written in crashes in its loader
-before it reads a file, so no file of 3.97 is committed). Its sources (wpsources.zip, BSD) and the 4.31 sources (WVSRC431.ZIP, BSD) are pinned too, for the
-code they show and for check_sources.py; nothing is built from them.
+The release 3.97 is a Win32 console program: on Windows the tool runs it directly, each command through cmd.exe in a folder of its own, and elsewhere through
+Wine's cmd (the 32-bit Wine of the Ubuntu 24.04 container this was first written in crashes in its loader before it reads a file; its files were written on
+Windows 10). Its sources (wpsources.zip, BSD) and the 4.31 sources (WVSRC431.ZIP, BSD) are pinned too, for the code they show and for check_sources.py;
+nothing is built from them.
 
     python3 wavpack_legacy_tool.py --list      prints each archive and its SHA-256
     python3 wavpack_legacy_tool.py RELEASE     prints the release's program banner (the encoder run without arguments)
@@ -99,11 +100,52 @@ def check_dosbox():
         sys.exit("DOSBox is needed to run the DOS builds of WavPack (apt install dosbox).")
 
 
+WIN32 = ("3.97",)
+
+
+def check_runner(release):
+    if release in WIN32:
+        if sys.platform != "win32" and shutil.which("wine") is None:
+            sys.exit("Windows or Wine is needed to run WavPack 3.97.")
+    else:
+        check_dosbox()
+
+
+def run_win32(release, files, commands, timeout=600):
+    """run() for the Win32 build: each command runs through cmd.exe (Wine's on other systems) in a folder that holds the programs and the files, with its
+    standard output and standard error captured; names keep the spelling the caller gives, and the folder's files come back under upper-case names."""
+    check_runner(release)
+    programs = RELEASES[release][3]
+    source = unpacked(release)
+    with tempfile.TemporaryDirectory(prefix="wavpack-win-") as temporary:
+        folder = pathlib.Path(temporary) / "c"
+        folder.mkdir()
+        for program in programs:
+            shutil.copy(source / program, folder / program)
+        for name, data in files.items():
+            (folder / name).write_bytes(data)
+        # The folder goes first on the path: cmd.exe does not look in the current folder where NoDefaultCurrentDirectoryInExePath is set.
+        environment = dict(os.environ, PATH=str(folder) + os.pathsep + os.environ.get("PATH", ""))
+        prefix = ["cmd", "/d", "/c"]
+        if sys.platform != "win32":
+            environment.update(WINEPREFIX=str(CACHE / "wine"), WINEDEBUG="-all")
+            prefix = ["wine"] + prefix
+        texts = []
+        for command in commands:
+            # The programs ask on the console where an answer is needed; -y answers, and an empty standard input refuses anything else.
+            result = subprocess.run(prefix + [command], cwd=folder, env=environment, stdin=subprocess.DEVNULL, capture_output=True, timeout=timeout, check=False)
+            texts.append((result.stdout + result.stderr).decode("latin-1").replace("\r", "\n"))
+        found = {p.name.upper(): p.read_bytes() for p in folder.iterdir() if p.is_file() and p.name not in programs}
+    return texts, found
+
+
 def run(release, files, commands, redirect=True, timeout=600):
     """Runs commands (lines for the DOS prompt, WAVPACK and WVUNPACK being the release's programs) in a folder that holds files (name: bytes, 8.3 names)
     under DOSBox, and returns (what the programs printed, one text for each command, the files the folder holds afterwards as {upper-case name: bytes}).
     The programs themselves are not returned. The encoder of 3.0 stops when its output is redirected (it has written the header, and nothing more, when the run times out),
-    so redirect=False runs the commands without capturing their text, which then comes back empty."""
+    so redirect=False runs the commands without capturing their text, which then comes back empty. 3.97 runs as run_win32() says, redirect aside."""
+    if release in WIN32:
+        return run_win32(release, files, commands, timeout)
     check_dosbox()
     programs = RELEASES[release][3]
     source = unpacked(release)
@@ -140,7 +182,7 @@ if __name__ == "__main__":
     if "--list" in sys.argv:
         for name, digest, _ in sources():
             print(name, digest)
-    elif len(sys.argv) == 2 and sys.argv[1] in RELEASES and sys.argv[1] != "3.97":
+    elif len(sys.argv) == 2 and sys.argv[1] in RELEASES:
         print(banner(sys.argv[1]))
     else:
         sys.exit(__doc__)

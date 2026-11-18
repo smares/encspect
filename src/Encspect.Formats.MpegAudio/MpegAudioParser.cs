@@ -1884,7 +1884,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
     // Findings of one kind are reported once per stream with a count, pointing at the first case.
     private sealed class FindingCollector(ImageMap? map)
     {
-        private readonly Dictionary<string, (Severity Severity, Node? Node, int Count, Func<int, string> Message)> _aggregated = [];
+        private readonly Dictionary<string, (Severity Severity, Node? Node, int Count, Func<int, string> Message, bool IsInFile)> _aggregated = [];
         private readonly List<Finding> _immediate = [];
 
         // "0x" and the file offset of the image position.
@@ -1892,11 +1892,16 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
 
         public string At(long position) => MpegAudioParser.At(map, position);
 
-        public void Add(Severity severity, string code, Node? node, Func<int, string> message)
+        public void Add(Severity severity, string code, Node? node, Func<int, string> message) => Add(severity, code, node, message, false);
+
+        // A finding whose node is one of the file's own, such as the container element of a claim, which the map leaves where it is.
+        public void AddInFile(Severity severity, string code, Node node, Func<int, string> message) => Add(severity, code, node, message, true);
+
+        private void Add(Severity severity, string code, Node? node, Func<int, string> message, bool isInFile)
         {
             _aggregated[code] = _aggregated.TryGetValue(code, out var existing)
                 ? existing with { Count = existing.Count + 1 }
-                : (severity, node, 1, message);
+                : (severity, node, 1, message, isInFile);
         }
 
         public void AddNow(Severity severity, string code, string message, Node node) =>
@@ -1912,7 +1917,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
 
             foreach ((string code, var entry) in _aggregated)
             {
-                context.AddFinding(entry.Severity, code, entry.Message(entry.Count), entry.Node is { } node ? (map is null ? node : map.Place(node)) : context.Root, entry.Count);
+                context.AddFinding(entry.Severity, code, entry.Message(entry.Count), entry.Node is { } node ? (map is null || entry.IsInFile ? node : map.Place(node)) : context.Root, entry.Count);
             }
         }
     }

@@ -224,6 +224,39 @@ fixture("header-objects", "Every other header object: a codec list, a script com
                     {"scheme": "Microsoft Digital Rights Manager version 1", "is_encrypted": True, "systems": []}])
 
 
+def listed_file():
+    # A script command object with four command types (one of them empty, one without its NUL) and commands of each, and a marker object whose
+    # descriptions include an empty one, one without its NUL and one of non-ASCII text.
+    types = ["URL", "FILENAME", "", "caption"]
+    commands = [(0, 0, "http://example.invalid/a"), (1500, 1, "next.asf"), (1500, 3, "Chorus \u00e9\u4e2d"), (4_000_000_000, 2, "")]
+    body = m.script_command(types, commands)
+    unterminated = body.replace(m.utf16("FILENAME"), m.utf16("FILENAME", False)).replace(struct.pack("<H", 9) + m.utf16("FILENAME", False), struct.pack("<H", 8) + m.utf16("FILENAME", False))
+    unterminated = unterminated[:16] + struct.pack("<Q", len(unterminated)) + unterminated[24:]
+    markers = m.marker("Chapters", [(0, 0, 0, "Intro"), (400, 5_000_000, 500, ""), (800, 12_500_000, 1250, "Verse \u00e9\u4e2d"), (1200, 20_000_000, 2000, "Outro")])
+    return m.asf_file([pcm(), unterminated, markers], objects_in([1], 6, 60, 256), 256, file_id=FILE_ID, play=500_000)
+
+
+fixture("script-commands-markers", "A Script Command Object with four command types (one of them empty, one with no terminating NUL) and four commands, and a Marker Object with four markers, one of which has no description, with names, descriptions, offsets and times in each.",
+        listed_file, [])
+
+
+def damaged_lists_file():
+    # Script commands: a count of 9 for 2 commands, and a command whose type index is 7 of 2 types. Markers: a count of 9 for 2 markers and a name of
+    # 7 bytes, which is no whole UTF-16 character.
+    commands = m.script_command(["URL", "FILENAME"], [(1000, 0, "a"), (2000, 7, "b")])
+    commands = commands[:40] + struct.pack("<H", 9) + commands[42:]
+    markers = m.marker("Marks", [(0, 0, 0, "x"), (400, 5_000_000, 500, "y")])
+    markers = markers[:40] + struct.pack("<I", 9) + markers[44:46] + struct.pack("<H", 11) + markers[48:59] + markers[60:]
+    markers = markers[:16] + struct.pack("<Q", len(markers)) + markers[24:]
+    return m.asf_file([pcm(), commands, markers], objects_in([1], 3, 60, 256), 256, file_id=FILE_ID, play=500_000)
+
+
+fixture("script-marker-findings", "A Script Command Object that counts nine commands for two, one of which names command type 7 of 2, and a Marker Object that counts nine markers for two and states a name length of 11 bytes, which is no whole UTF-16 character.",
+        damaged_lists_file,
+        [finding("asf.command-count", "counts 9 commands, but its data holds 2"), finding("asf.command-type-index", "names command type 7"),
+         finding("asf.marker-count", "counts 9 markers, but its data holds 2"), finding("asf.string-odd-length", "name in the Marker Object")])
+
+
 def extended_file():
     hidden = m.stream_properties(3, m.wave_format(1, 1, 8000, 16000, 2, 16))
     return m.asf_file(

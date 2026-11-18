@@ -322,7 +322,8 @@ internal static partial class Summary
             }
             else
             {
-                statistics.Add(cover("Extra Processing Level", "none", Explain.StatExtraLevel, Topics.Decorrelation));
+                // WavPack before 4.40 sets the extra flag without storing its level (libwavpack reads the level as 0, unknown).
+                statistics.Add(cover("Extra Processing Level", (c.Flags & Decode.ConfigExtraMode) != 0 ? "not stored" : "none", Explain.StatExtraLevel, Topics.Decorrelation));
             }
         }
 
