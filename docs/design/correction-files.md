@@ -171,6 +171,8 @@ The parser walks the companion in step with the main file, as libwavpack's `read
 
 ## Decisions for the lead
 
+Decided by the lead, 2026-11-18: every recommendation below.
+
 1. **The report's shape.** (a) The companion is a report of its own inside the main file's (`Report.Companions`), read in one pass by the main file's parser; (b) the companion as nodes of the main tree, with offsets in another file; (c) two separate reports joined only by the pairing, the companion read twice. Recommended: (a); offsets stay true for the hex view and `--offsets`, the companion's tree equals its tree alone, and WavPack's decoder needs both files in one pass anyway.
 2. **What "consistent" rests on.** (a) The structure and the coded-data checksums of both files (WavPack 4 and OptimFROG), with the decoded-audio checksums in the verification, and decoding for WavPack 3, which has no structure; (b) for WavPack, decoding always, so a pair is unchecked without `--verify`. Recommended: (a); the pairing then reads the same with or without decoding for both formats, the plan's OptimFROG rule is the same rule, and a `.wvc` of another encode still shows as "Verified: no".
 3. **The name rule.** (a) The name without its last extension plus the companion's extension, in the input's case, one name tried; (b) libwavpack's rule, the whole name plus `c`, and `.ofs` to `.ofc` apart. Recommended: (a); one rule for both formats, the same name as libwavpack's for `x.wv`, and a hybrid file under another extension is still paired.
