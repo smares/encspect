@@ -233,6 +233,9 @@ From the encoder-written files: a version of 0 and 4; each refused flag combinat
 
 ## Decisions for the lead
 
+Decided by the lead, 2026-11-18: every recommendation below, (b) for decision 1 and (a) for decisions 2 to 6. For decision 2, the lead allowed the fixture session to run the old encoders: 3.97 under Wine and the DOS builds under DOSBox, from Ubuntu's archive, locally once.
+
+
 1. **Which builds.** (a) The plan's three, 3.4, 3.97 (the first BSD release) and 4.31; (b) every release RRW keeps: 1.0, 2.0, 3.0, 3.2, 3.4, 3.97 and 4.31. Recommended: (b); the version 1 and 2 headers come only from 1.0 and 2.0, and the old lossy mode, the old fast and default modes and the 16-bit-only era from 3.0 and 3.2. They are small DOS programs run the same way.
 2. **Running them.** (a) Wine for 3.97 and DOSBox (`dosbox` from Ubuntu's universe) for the DOS builds, locally once, files committed, manifests recomputed in CI; (b) the same in a CI workflow; (c) 3.97 only, under Wine. Recommended: (a), with the permission to run these binaries given for the fixture session; (b) later if the files are ever written again.
 3. **Detection.** (a) The WAV sniff rates a file whose data chunk payload starts with `wvpk` at 70; (b) the host's ranking adds more frames as a last key for overlapping candidates of one class, and the legacy sniff counts the WavPack header as one more frame; (c) the WAV parser routes the data chunk to a WavPack codec parser, the file staying a WAV. Recommended: (a); four bytes in one place, no change to the ranking every format relies on, and the file is named WavPack as its author and libwavpack name it. (b) fails when the chunk cap or a data chunk that fits gives both the same count; (c) reports a copy of the source's header as a container.
