@@ -139,9 +139,65 @@ internal static partial class Legacy
         bool isMono = layout.IsRaw ? (header.Flags & LegacyHeader.MonoFlag) != 0 : format is { Channels: 1 };
         Check(header, layout, format, dataSize, nodes, wav, findings, out long fromData);
         var leading = new List<Node>();
-        Summarize(context, header, layout, format, fromData, isMono, bitstreamEnd - bitstreamAt, stream, leading, findings, fact, factAt, factLength);
+        var placement = new Placement(reader, bitstream, bitstreamAt, bitstreamEnd, end, trailer.At >= 0, Refusal(header, layout, format));
+        Summarize(context, header, layout, format, fromData, isMono, bitstreamEnd - bitstreamAt, stream, leading, findings, fact, factAt, factLength, placement);
         AddAll(stream, leading, parts);
         findings.Flush(context);
+    }
+
+    // Where the parts of the stream lie, for the decoder's session.
+    private sealed record Placement(ByteReader Reader, Node Bitstream, long BitstreamAt, long BitstreamEnd, long DataEnd, bool HasTrailer, string? Refusal);
+
+    // Why libwavpack's open refuses the file (unpack3_open.c), or null where it opens it: the checks the findings above state, in the order the open makes them. The
+    // decoder of 3.97 reads the raw files libwavpack does not, so a raw file is refused only for what its header says.
+    private static string? Refusal(LegacyHeader header, LegacyLayout layout, Format? format)
+    {
+        if (!layout.IsRaw)
+        {
+            if (format is not { } f)
+            {
+                return "The stored WAV header has no format chunk before the data, so the audio's layout is not stated";
+            }
+
+            if (f.Tag != 1 || f.Channels is 0 or > 2 || f.Rate == 0 || f.Bits is < 16 or > 24 || f.BlockAlign / f.Channels > 3 || f.BlockAlign % f.Channels != 0 || f.BlockAlign / f.Channels < (f.Bits + 7) / 8)
+            {
+                return "The stored WAV header states audio that libwavpack's open refuses (PCM of one or two channels, 16 to 24 bits of at most 3 bytes a sample)";
+            }
+
+            if (layout.Chunks.Any(c => c.Id != "data" && c.Size > MaxChunkBeforeData))
+            {
+                return "A chunk of the stored WAV header is larger than the 1 MiB that libwavpack's open skips";
+            }
+        }
+        else if (!header.IsVersion3)
+        {
+            return $"A raw file has a header of version 3; this one has version {header.Version}";
+        }
+
+        if (header.IsVersion3 && (header.Flags & LegacyHeader.ExtremeDecorrFlag) != 0)
+        {
+            if ((header.Flags & LegacyHeader.NotStoredFlags) != 0)
+            {
+                return "The flags have a bit that is never stored together with the extreme flag";
+            }
+
+            if (header.Bits != 0 && ((header.Flags & LegacyHeader.NewHighFlag) != 0 && (header.Flags & (LegacyHeader.FastFlag | LegacyHeader.HighFlag)) != 0 || (header.Flags & LegacyHeader.CrossDecorrFlag) != 0))
+            {
+                return "The flags combine a bit limit or hybrid target with flags libwavpack's open refuses with the extreme flag";
+            }
+        }
+
+        if (header.Bits > short.MaxValue)
+        {
+            return $"The bit limit or hybrid target of {header.Bits} is more than a signed 16-bit field holds";
+        }
+
+        if (header.IsVersion3 && !layout.IsRaw && format is { } fmt && ((header.Flags & LegacyHeader.MonoFlag) != 0) != (fmt.Channels == 1))
+        {
+            return "The mono flag and the channel count of the stored WAV header disagree";
+        }
+
+        return null;
     }
 
     private static void AddAll(Node stream, List<Node> leading, List<Node> parts)

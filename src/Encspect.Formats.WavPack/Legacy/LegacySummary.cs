@@ -60,7 +60,7 @@ internal static partial class Legacy
     }
 
     private static void Summarize(ParseContext context, LegacyHeader h, LegacyLayout layout, Format? format, long fromData, bool isMono, long bitstreamBytes, Node stream, List<Node> leading, FindingCollector findings,
-        FactText? fact, long factAt, int factLength)
+        FactText? fact, long factAt, int factLength, Placement placement)
     {
         long start = stream.Offset;
         long end = stream.End;
@@ -166,6 +166,29 @@ internal static partial class Legacy
             "Adaptive stereo" => "Stereo, mid/side in some samples",
             _ => "Stereo",
         };
+        var checksums = new List<ChecksumTally>();
+        if (h.IsVersion3)
+        {
+            checksums.Add(new ChecksumTally { Name = ChecksumNames.LegacyCrc, Covers = ChecksumCoverage.DecodedAudio, CoversAllAudio = true, Stored = 1 });
+        }
+
+        bool hasBytes = (h.Flags & LegacyHeader.Bytes3Flag) != 0 && h.IsVersion3;
+        var info = new LegacyDecodeInfo
+        {
+            Header = h,
+            IsRaw = layout.IsRaw,
+            Channels = channels,
+            OutputBits = hasBytes ? 24 : 16,
+            SourceBits = bits,
+            SampleRate = rate,
+            Samples = samples,
+            BitstreamAt = placement.BitstreamAt,
+            BitstreamEnd = placement.BitstreamEnd,
+            DataEnd = placement.DataEnd,
+            HasTrailer = placement.HasTrailer,
+            Refusal = placement.Refusal,
+        };
+        StreamVerification verification = Decode(context, placement.Reader, info, stream, placement.Bitstream, checksums);
         context.AddStream(new StreamInfo
         {
             Nodes = [stream],
@@ -184,12 +207,7 @@ internal static partial class Legacy
             WriterConfidence = ClaimRoles.Resolved(writer).Confidence,
             Processor = ClaimRoles.Resolved(processor).Name,
             ProcessorConfidence = ClaimRoles.Resolved(processor).Confidence,
-            Verification = new StreamVerification
-            {
-                Decoding = DecodeStatus.NoDecoder,
-                IsLossy = h.Bits != 0,
-                Checksums = h.IsVersion3 ? [new ChecksumTally { Name = ChecksumNames.LegacyCrc, Covers = ChecksumCoverage.DecodedAudio, CoversAllAudio = true, Stored = 1 }] : [],
-            },
+            Verification = verification,
         });
     }
 }
