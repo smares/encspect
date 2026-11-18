@@ -1402,6 +1402,13 @@ What the WavPack pull request implements: the decoder (`Encspect.Formats.WavPack
   - The codec parser lists only the first 256 packets, so a decode finding for a later one has no node to point to.
 - **Not verified:** the MediaInfo checks of the new fixtures (the local MediaInfo is 24.01, the cross-check asserts 26.01).
 
+## As built: the WavPack 1 to 3 decoder
+
+- **Charge:** per batch of at most 4,096 samples, before it is decoded, for each channel `DecodeWork.ForSample` (16 at 2 bytes, 19 at 3), `WorkPerWord` 24 for the entropy decoder, the CRC and the copy, and `WorkPerPass` 11 for each decorrelation pass the mode runs (up to 18); and 16 units for each byte of the bitstream as it arrives.
+- **Measured** (`DecoderWorkTests`, `wavpack-legacy-*`: the header of a fixture and a noise bitstream, run alone, Linux x64): high mode stereo 1.60 times the FLAC reference, 24-bit stereo 1.23, hybrid mono 1.27; at most 2 is allowed. `WorkPerWord` 24 was not designed; it is the value that brings these under the factor.
+- **The allowance:** `WorkPerInputByte` stays the default 2,048. The cheapest code is a word of 2 bits (a bitstream of zeros decoded in the extreme mode, 18 passes, stereo), so a byte holds 4 words of 16 + 24 + 18 x 11 = 238 units and 16 more for the byte: 968 units a byte, which `DecoderChargeTests.WavPack1To3StaysUnderTheDefaultAllowanceForItsBytes` holds.
+- **Memory:** the decoder keeps at most the chunk it is given and 128 bytes of the last, the batch of PCM and the state of the passes: `MemoryTests.DecodingALongWavPack1To3StreamHoldsNothingPerBatch`.
+
 ## As built: Monkey's Audio
 
 What the Monkey's Audio pull request implements: the parser (`Encspect.Formats.MonkeysAudio`, "Monkey's Audio"), the decoder (`Encspect.Formats.MonkeysAudio.Decoding`, ID `monkeys-audio`, registered in `DefaultParsers.Decoders`), their fixtures, tests and the `monkeys-audio-crosscheck` job. [monkeys-audio.md](../formats/monkeys-audio.md) describes it from the user's side. The source, when it was built, was the Monkey's Audio SDK 13.42 only (the decoder now follows 13.44: see "Seven channels" below and decision 10); FFmpeg's `apedec.c` and `ape.c` were not read for it, and the figures this document took from them ("the draft") were replaced by the SDK's and by measurement.
