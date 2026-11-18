@@ -92,6 +92,7 @@ FIXTURES = dict([
         ("hybrid-320-96k", ("wav", 96000, 2, 16, SHORT), "-b320", ("wv",)),
         ("hybrid-6", ("wav", 44100, 2, 16, SHORT), "-b6", ("wv",)),
         ("hybrid-6-correction", ("wav", 44100, 2, 16, SHORT), "-b6 -c", ("wv", "wvc")),
+        ("hybrid-6-mono", ("wav", 44100, 1, 16, SHORT), "-b6", ("wv",)),
         ("hybrid-320-mono", ("wav", 44100, 1, 16, SHORT), "-b320", ("wv",)),
         ("hybrid-320-24", ("wav", 44100, 2, 24, SHORT_3), "-b320", ("wv",)),
         ("hybrid-320-24-correction", ("wav", 44100, 2, 24, SHORT_3), "-b320 -c", ("wv", "wvc")),

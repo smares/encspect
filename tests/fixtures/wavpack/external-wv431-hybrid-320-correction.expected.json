@@ -1,0 +1,259 @@
+{
+ "length": 21854,
+ "blocks": [
+  {
+   "offset": 0,
+   "length": 10346,
+   "index": 0,
+   "samples": 12000,
+   "flags": "24bc1e59",
+   "version": "404",
+   "total": 24000,
+   "crc": "ee0a5ec5",
+   "verifies": true,
+   "checksum": null,
+   "status": [],
+   "sub_blocks": [
+    [
+     32,
+     33,
+     44
+    ],
+    [
+     78,
+     66,
+     6
+    ],
+    [
+     86,
+     3,
+     10
+    ],
+    [
+     98,
+     4,
+     8
+    ],
+    [
+     108,
+     5,
+     12
+    ],
+    [
+     122,
+     6,
+     8
+    ],
+    [
+     132,
+     101,
+     4
+    ],
+    [
+     138,
+     138,
+     10204
+    ]
+   ]
+  },
+  {
+   "offset": 10346,
+   "length": 11508,
+   "index": 12000,
+   "samples": 12000,
+   "flags": "24bc1e59",
+   "version": "404",
+   "total": 24000,
+   "crc": "c6df24b1",
+   "verifies": true,
+   "checksum": null,
+   "status": [],
+   "sub_blocks": [
+    [
+     10378,
+     66,
+     6
+    ],
+    [
+     10386,
+     3,
+     10
+    ],
+    [
+     10398,
+     4,
+     8
+    ],
+    [
+     10408,
+     5,
+     12
+    ],
+    [
+     10422,
+     6,
+     8
+    ],
+    [
+     10432,
+     138,
+     11418
+    ]
+   ]
+  }
+ ],
+ "skipped": [],
+ "stream_infos": [
+  {
+   "codec": "WavPack hybrid",
+   "layout": [
+    "front left",
+    "front right"
+   ],
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 24000,
+   "lost_samples": 0,
+   "duration": 0.54421768707483,
+   "bits_per_sample": 16,
+   "average_bitrate": 320.57759999999996,
+   "hybrid": true,
+   "correction": false,
+   "lossless": false,
+   "sets": 2,
+   "declared": 24000
+  }
+ ],
+ "decoded_samples": 24000,
+ "pcm_samples": 24000,
+ "decoded_pcm_md5": "61ec0d46931c0a8020ec774e81304ea3",
+ "verification": {
+  "default": {
+   "isVerified": null,
+   "decoding": "notRequested",
+   "checksums": [
+    {
+     "name": "block checksum",
+     "covers": "codedData",
+     "coversAllAudio": false,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    },
+    {
+     "name": "block header CRC",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 2,
+     "checked": 0,
+     "failed": 0
+    },
+    {
+     "name": "extended CRC",
+     "covers": "decodedAudio",
+     "coversAllAudio": false,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    },
+    {
+     "name": "MD5",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    }
+   ],
+   "isLossy": true
+  },
+  "verify": {
+   "isVerified": true,
+   "decoding": "decoded",
+   "checksums": [
+    {
+     "name": "block checksum",
+     "covers": "codedData",
+     "coversAllAudio": false,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    },
+    {
+     "name": "block header CRC",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 2,
+     "checked": 2,
+     "failed": 0
+    },
+    {
+     "name": "extended CRC",
+     "covers": "decodedAudio",
+     "coversAllAudio": false,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    },
+    {
+     "name": "MD5",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    }
+   ],
+   "isLossy": true
+  }
+ },
+ "decode_findings": [],
+ "regions": [
+  {
+   "name": "WavPack",
+   "offset": 0,
+   "length": 21854
+  }
+ ],
+ "encoder": {
+  "tool": "WavPack 4.31 for DOS (ReallyRareWares: WVDOS431.ZIP), run under DOSBox 0.74-3",
+  "arguments": [
+   "-b320",
+   "-c"
+  ],
+  "input": {
+   "kind": "wav",
+   "rate": 44100,
+   "channels": 2,
+   "bits": 16,
+   "samples": 24000,
+   "chunks_before_data": false,
+   "chunks_after_data": false,
+   "pcm_md5": "33f110d8eb91888849a451b5f07f99a7",
+   "file_md5": "8364e506d4832b55a3121fad876e3c53"
+  },
+  "file": "main file"
+ },
+ "findings": [],
+ "crosscheck": {
+  "valid": true,
+  "decode": {
+   "opens": true,
+   "samples": 24000,
+   "errors": 0
+  },
+  "original_decoder": {
+   "tool": "WVUNPACK 4.31 for DOS, run under DOSBox 0.74-3",
+   "with_correction": {
+    "pcm_md5": "33f110d8eb91888849a451b5f07f99a7",
+    "pcm_bytes": 96000,
+    "matches_input": true
+   },
+   "without_correction": {
+    "pcm_md5": "61ec0d46931c0a8020ec774e81304ea3",
+    "pcm_bytes": 96000,
+    "matches_input": false
+   }
+  }
+ }
+}

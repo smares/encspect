@@ -1,0 +1,93 @@
+{
+ "length": 60277,
+ "header": {
+  "offset": 76,
+  "length": 36,
+  "ck_size": 28,
+  "version": 3,
+  "bits": 0,
+  "flags": "0000",
+  "flag_names": [],
+  "shift": 0,
+  "total_samples": 24000,
+  "crc": "30faeec2",
+  "crc2": "00000000",
+  "extension": "wav",
+  "extra_bc": 0,
+  "extras": "000000"
+ },
+ "wav": {
+  "riff_size": 96104,
+  "chunks": [
+   {
+    "id": "fmt ",
+    "offset": 12,
+    "size": 16
+   },
+   {
+    "id": "LIST",
+    "offset": 36,
+    "size": 24
+   },
+   {
+    "id": "data",
+    "offset": 68,
+    "size": 96000
+   }
+  ],
+  "data_size": 96000,
+  "data_offset": 76,
+  "format": {
+   "tag": 1,
+   "channels": 2,
+   "sample_rate": 44100,
+   "byte_rate": 176400,
+   "block_align": 4,
+   "bits_per_sample": 16
+  }
+ },
+ "figures": {
+  "channels": 2,
+  "sample_rate": 44100,
+  "bits_per_sample": 16,
+  "bytes_per_sample": 2,
+  "samples": 24000,
+  "mode": "lossless",
+  "samples_from_data_chunk": 24000,
+  "total_samples_match": true
+ },
+ "bitstream": {
+  "offset": 112,
+  "length": 60165
+ },
+ "encoder": {
+  "tool": "WavPack 3.0 for DOS (ReallyRareWares: WAVPACK3.ZIP), run under DOSBox 0.74-3",
+  "arguments": [],
+  "input": {
+   "kind": "wav",
+   "rate": 44100,
+   "channels": 2,
+   "bits": 16,
+   "samples": 24000,
+   "chunks_before_data": true,
+   "chunks_after_data": true,
+   "pcm_md5": "33f110d8eb91888849a451b5f07f99a7",
+   "file_md5": "36d5456b35b8cbca1e652841981215a9"
+  },
+  "file": "main file"
+ },
+ "crosscheck": {
+  "libwavpack_legacy": {
+   "opens": true,
+   "version": 3,
+   "channels": 2,
+   "samples_unpacked": 24000
+  },
+  "original_decoder": {
+   "tool": "WVUNPACK 3.0 for DOS, run under DOSBox 0.74-3",
+   "pcm_md5": "33f110d8eb91888849a451b5f07f99a7",
+   "pcm_bytes": 96000,
+   "matches_input": true
+  }
+ }
+}

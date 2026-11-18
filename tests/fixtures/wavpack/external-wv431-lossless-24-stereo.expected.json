@@ -1,0 +1,237 @@
+{
+ "length": 92956,
+ "blocks": [
+  {
+   "offset": 0,
+   "length": 35942,
+   "index": 0,
+   "samples": 12000,
+   "flags": "04dc1832",
+   "version": "404",
+   "total": 24000,
+   "crc": "caae8b58",
+   "verifies": true,
+   "checksum": null,
+   "status": [],
+   "sub_blocks": [
+    [
+     32,
+     33,
+     44
+    ],
+    [
+     78,
+     66,
+     6
+    ],
+    [
+     86,
+     3,
+     10
+    ],
+    [
+     98,
+     4,
+     8
+    ],
+    [
+     108,
+     5,
+     12
+    ],
+    [
+     122,
+     101,
+     4
+    ],
+    [
+     128,
+     138,
+     35810
+    ]
+   ]
+  },
+  {
+   "offset": 35942,
+   "length": 57014,
+   "index": 12000,
+   "samples": 12000,
+   "flags": "04dc1832",
+   "version": "404",
+   "total": 24000,
+   "crc": "e8b46df9",
+   "verifies": true,
+   "checksum": null,
+   "status": [],
+   "sub_blocks": [
+    [
+     35974,
+     66,
+     6
+    ],
+    [
+     35982,
+     3,
+     10
+    ],
+    [
+     35994,
+     4,
+     8
+    ],
+    [
+     36004,
+     5,
+     12
+    ],
+    [
+     36018,
+     138,
+     56934
+    ]
+   ]
+  }
+ ],
+ "skipped": [],
+ "stream_infos": [
+  {
+   "codec": "WavPack lossless",
+   "layout": [
+    "front left",
+    "front right"
+   ],
+   "sample_rate": 44100,
+   "channels": 2,
+   "samples": 24000,
+   "lost_samples": 0,
+   "duration": 0.54421768707483,
+   "bits_per_sample": 24,
+   "average_bitrate": 1365.777,
+   "hybrid": false,
+   "correction": false,
+   "lossless": true,
+   "sets": 2,
+   "declared": 24000
+  }
+ ],
+ "decoded_samples": 24000,
+ "pcm_samples": 24000,
+ "decoded_pcm_md5": "07a90b117634efb316f2121973494f8a",
+ "verification": {
+  "default": {
+   "isVerified": null,
+   "decoding": "notRequested",
+   "checksums": [
+    {
+     "name": "block checksum",
+     "covers": "codedData",
+     "coversAllAudio": false,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    },
+    {
+     "name": "block header CRC",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 2,
+     "checked": 0,
+     "failed": 0
+    },
+    {
+     "name": "extended CRC",
+     "covers": "decodedAudio",
+     "coversAllAudio": false,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    },
+    {
+     "name": "MD5",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  },
+  "verify": {
+   "isVerified": true,
+   "decoding": "decoded",
+   "checksums": [
+    {
+     "name": "block checksum",
+     "covers": "codedData",
+     "coversAllAudio": false,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    },
+    {
+     "name": "block header CRC",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 2,
+     "checked": 2,
+     "failed": 0
+    },
+    {
+     "name": "extended CRC",
+     "covers": "decodedAudio",
+     "coversAllAudio": false,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    },
+    {
+     "name": "MD5",
+     "covers": "decodedAudio",
+     "coversAllAudio": true,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    }
+   ]
+  }
+ },
+ "decode_findings": [],
+ "regions": [
+  {
+   "name": "WavPack",
+   "offset": 0,
+   "length": 92956
+  }
+ ],
+ "encoder": {
+  "tool": "WavPack 4.31 for DOS (ReallyRareWares: WVDOS431.ZIP), run under DOSBox 0.74-3",
+  "arguments": [],
+  "input": {
+   "kind": "wav",
+   "rate": 44100,
+   "channels": 2,
+   "bits": 24,
+   "samples": 24000,
+   "chunks_before_data": false,
+   "chunks_after_data": false,
+   "pcm_md5": "07a90b117634efb316f2121973494f8a",
+   "file_md5": "18169ee4a2a9e80f1f2c6b14ac100e0a"
+  },
+  "file": "main file"
+ },
+ "findings": [],
+ "crosscheck": {
+  "valid": true,
+  "decode": {
+   "opens": true,
+   "samples": 24000,
+   "errors": 0
+  },
+  "original_decoder": {
+   "tool": "WVUNPACK 4.31 for DOS, run under DOSBox 0.74-3",
+   "pcm_md5": "07a90b117634efb316f2121973494f8a",
+   "pcm_bytes": 144000,
+   "matches_input": true
+  }
+ }
+}
