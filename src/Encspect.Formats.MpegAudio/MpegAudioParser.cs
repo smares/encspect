@@ -297,6 +297,9 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
                         }
                     }
 
+                    // A frame does not reach past its stretch: the container's bytes after it are not its own.
+                    frameLimit = Math.Min(frameLimit, blocks.StretchEnd(at));
+
                     // The node AddFrame's entry will have, so findings keep the order they are found in; built only for a finding.
                     Node? node = null;
                     if (resynced is { } change)
@@ -315,8 +318,6 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
                             $"The free-format frame length changes {Times(count)}, first from {from} to {to} bytes plus padding at {findings.At(at)}; ISO/IEC 11172-3 requires a fixed bitrate.");
                     }
 
-                    // A frame does not reach past its stretch: the container's bytes after it are not its own.
-                    frameLimit = Math.Min(frameLimit, blocks.StretchEnd(at));
                     Entry frame = AddFrame(state, regionState, at, frameLimit, header, freeLength, frameLimit < Math.Min(end, frameEnd));
                     if (!frame.IsVbrHeader)
                     {
