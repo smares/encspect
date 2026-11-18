@@ -31,7 +31,7 @@ public partial class FindingCoverageTests
     [GeneratedRegex("\"code\": \"(wavpack\\.[a-z0-9-]+)\"")]
     private static partial Regex WavPackManifestCode();
 
-    // Every code the WavPack parser emits is raised by a fixture (also of versions 1 to 3) whose manifest lists it, or by a
+    // Every code the WavPack parser emits is raised by a fixture (also of versions 1 to 3) whose manifest or decode golden lists it, or by a
     // crafted file of WavPackFindingTests, which asserts the finding is present.
     [Fact]
     public void EveryWavPackCodeIsAsserted()
@@ -44,7 +44,8 @@ public partial class FindingCoverageTests
 
         var asserted = WavPackTable().Matches(File.ReadAllText(Path.Combine(root, "tests", "Encspect.Tests", "Formats/WavPack/WavPackFindingTests.cs"))).Select(m => m.Groups[1].Value).ToHashSet();
         foreach (string path in Directory.EnumerateFiles(Path.Combine(root, "tests", "fixtures", "wavpack"), "*.expected.json")
-            .Concat(Directory.EnumerateFiles(Path.Combine(root, "tests", "fixtures", "wavpack", "legacy"), "*.expected.json")))
+            .Concat(Directory.EnumerateFiles(Path.Combine(root, "tests", "fixtures", "wavpack", "legacy"), "*.expected.json"))
+            .Concat(Directory.EnumerateFiles(Path.Combine(root, "tests", "fixtures", "wavpack", "legacy"), "*.decode.json")))
         {
             foreach (Match m in WavPackManifestCode().Matches(File.ReadAllText(path)))
             {

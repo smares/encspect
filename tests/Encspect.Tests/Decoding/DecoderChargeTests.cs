@@ -167,6 +167,18 @@ public class DecoderChargeTests
     }
 
     [Fact]
+    public void WavPack1To3StaysUnderTheDefaultAllowanceForItsBytes()
+    {
+        // The cheapest code, zero bits, in the mode with the most passes (extreme decorrelation with cross-channel terms, 18 passes), stereo: the units a byte of the file charges.
+        const int bytes = 1 << 20;
+        long units = Units(DecoderWorkTests.WavPackCases.LegacyZeros("external-wv340-high.wv", bytes), "zeros.wv");
+        Assert.True(units / bytes <= DecodeWork.DefaultPerInputByte, $"{units / (double)bytes:F1} units a byte");
+
+        // Measured: a word of zero bits takes 2 bits, so a byte holds 4 words, each charged 16 + 24 + 18 x 11 = 238 units, and 16 for the byte itself: 968 a byte.
+        Assert.InRange(units / bytes, 960, 975);
+    }
+
+    [Fact]
     public void WavPackChargesTheDsdTablesOfEveryBlockBeforeTheBlockIsDecoded()
     {
         // 100 bytes of DSD a block, mono, in the fast mode with 5 history bits: 13 a byte, 16 a byte of the data, 32 more a byte for the
