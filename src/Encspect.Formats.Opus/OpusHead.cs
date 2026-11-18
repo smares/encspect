@@ -86,7 +86,7 @@ internal sealed record OpusHead(int Version, int Channels, int PreSkip, uint Inp
             }
             else if (Length > 21)
             {
-                Node table = header.Add(Node.FromMapped("Channel Mapping", packet, 21, Length, string.Join(", ", Mapping), description: Explain.ChannelMapping,
+                Node table = header.Add(Node.FromMapped("Channel Mapping", packet, 21, Length, MappingText(), description: Explain.ChannelMapping,
                     topic: Topics.OpusChannelMapping));
                 for (int c = 0; c < Mapping.Length; c++)
                 {
@@ -147,6 +147,23 @@ internal sealed record OpusHead(int Version, int Channels, int PreSkip, uint Inp
 
     // What decoded channel a table entry takes (section 5.1.1): the coupled streams give two
     // channels each, left then right, the others one each; 255 is silence.
+    // The table as text. A StringBuilder rather than string.Join, whose buffer for 255 entries grows through the shared array pool, which the memory tests forbid.
+    private string MappingText()
+    {
+        var text = new System.Text.StringBuilder(Mapping.Length * 5);
+        for (int c = 0; c < Mapping.Length; c++)
+        {
+            if (c > 0)
+            {
+                text.Append(", ");
+            }
+
+            text.Append(Mapping[c]);
+        }
+
+        return text.ToString();
+    }
+
     public string MappingEntry(int channel)
     {
         int index = Mapping[channel];
