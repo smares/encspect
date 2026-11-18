@@ -635,6 +635,8 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
     {
         Bounded("indexes.asf", AsfBuilder.Append("minimal", AsfBuilder.IndexOfBlocks(1_000_000)), 150_000_000, "asf.index-missing", expectFinding: false);
         Bounded("codecs.asf", AsfBuilder.InHeader("minimal", AsfBuilder.CodecListOf(1_500_000)), 150_000_000, "asf.too-many-entries");
+        Bounded("markers.asf", AsfBuilder.InHeader("minimal", AsfBuilder.MarkersOf(1_500_000)), 150_000_000, "asf.too-many-entries");
+        Bounded("commands.asf", AsfBuilder.InHeader("minimal", AsfBuilder.CommandsOf(60_000)), 150_000_000, "asf.too-many-entries");
         Bounded("encryption.asf", AsfBuilder.InHeader("minimal", AsfBuilder.EncryptionRecords(40_000, 40), extension: true), 150_000_000, "asf.too-many-entries");
         Bounded("objects.asf", AsfBuilder.WithUnknownObjects("minimal", 900_000), 150_000_000, "asf.too-many-objects");
     }
