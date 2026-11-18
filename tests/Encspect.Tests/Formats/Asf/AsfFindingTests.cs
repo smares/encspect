@@ -189,6 +189,35 @@ public class AsfFindingTests
         TestFiles.CheckInsideParents(report.Root);
     }
 
+    // More commands and markers than become nodes: the first ones are nodes, the rest of the object is Extra Data, and the finding names the count.
+    [Theory]
+    [InlineData("Script Command Object", "Command", 5000, "5000 commands")]
+    [InlineData("Marker Object", "Marker", 5000, "5000 markers")]
+    public void LongListsOfCommandsAndMarkersAreShownAsFarAsTheyAreRead(string objectName, string entryName, int count, string counted)
+    {
+        byte[] list = objectName == "Marker Object" ? AsfBuilder.MarkersOf(count) : AsfBuilder.CommandsOf(count);
+        Report report = Analyzer.CreateDefault().Analyze("list.asf", new MemoryStream(AsfBuilder.InHeader("minimal", list)));
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "asf.too-many-entries");
+        Assert.Contains(counted, finding.Message, StringComparison.Ordinal);
+        Node node = FindNode(report.Root, objectName)!;
+        Assert.Equal(1000, node.Children.Count(c => c.Name == entryName));
+        Assert.Equal(node.End, Assert.Single(node.Children, c => c.Name == "Extra Data").End);
+        TestFiles.CheckInsideParents(report.Root);
+    }
+
+    // The entries of the two lists are nodes with the type resolved to its name and the times in the specification's units.
+    [Fact]
+    public void CommandsAndMarkersAreListedWithTheirContents()
+    {
+        Report report = Analyzer.CreateDefault().Analyze("list.asf", new MemoryStream(File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "asf", "script-commands-markers.asf"))));
+        Node commands = FindNode(report.Root, "Script Command Object")!;
+        Assert.Equal(["URL: http://example.invalid/a at 0 ms", "FILENAME: next.asf at 1500 ms", "caption: Chorus \u00e9\u4e2d at 1500 ms", ":  at 4000000000 ms"],
+            commands.Children.Where(c => c.Name == "Command").Select(c => c.Value!.ToString()).ToArray());
+        Node markers = FindNode(report.Root, "Marker Object")!;
+        Assert.Equal(["Intro", "", "Verse \u00e9\u4e2d", "Outro"], markers.Children.Where(c => c.Name == "Marker").Select(c => c.Value!.ToString()).ToArray());
+        Assert.All(commands.Children.Concat(markers.Children).SelectMany(c => c.Children), c => Assert.False(string.IsNullOrEmpty(c.Description)));
+    }
+
     // Every packet issue the parser can flag has a finding written for it.
     [Fact]
     public void EveryPacketIssueHasAFinding()

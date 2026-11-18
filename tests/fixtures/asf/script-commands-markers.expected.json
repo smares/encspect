@@ -1,0 +1,229 @@
+{
+ "description": "A Script Command Object with four command types (one of them empty, one with no terminating NUL) and four commands, and a Marker Object with four markers, one of which has no description, with names, descriptions, offsets and times in each.",
+ "format": "ASF",
+ "length": 1284,
+ "objects": [
+  [
+   "Header Object",
+   0,
+   722
+  ],
+  [
+   "Data Object",
+   722,
+   562
+  ]
+ ],
+ "header_objects": [
+  [
+   "File Properties Object",
+   30,
+   104
+  ],
+  [
+   "Stream Properties Object",
+   134,
+   96
+  ],
+  [
+   "Script Command Object",
+   230,
+   216
+  ],
+  [
+   "Marker Object",
+   446,
+   230
+  ],
+  [
+   "Header Extension Object",
+   676,
+   46
+  ]
+ ],
+ "extension_objects": [],
+ "streams": [
+  {
+   "number": 1,
+   "type": "F8699E40-5B4D-11CF-A8FD-00805F5C442B",
+   "error_correction": "20FB5700-5B55-11CF-A8FD-00805F5C442B",
+   "encrypted": false,
+   "type_length": 18,
+   "tag": 1,
+   "channels": 1,
+   "rate": 8000,
+   "avg_bytes": 16000,
+   "block_align": 2,
+   "bits": 16,
+   "codec_data": ""
+  }
+ ],
+ "packets": [
+  [
+   772,
+   256,
+   3
+  ],
+  [
+   1028,
+   256,
+   3
+  ]
+ ],
+ "payloads": [
+  [
+   0,
+   1,
+   1,
+   0,
+   8,
+   60,
+   false,
+   true
+  ],
+  [
+   0,
+   1,
+   2,
+   0,
+   8,
+   60,
+   false,
+   true
+  ],
+  [
+   0,
+   1,
+   3,
+   0,
+   8,
+   60,
+   false,
+   true
+  ],
+  [
+   1,
+   1,
+   4,
+   0,
+   8,
+   60,
+   false,
+   true
+  ],
+  [
+   1,
+   1,
+   5,
+   0,
+   8,
+   60,
+   false,
+   true
+  ],
+  [
+   1,
+   1,
+   6,
+   0,
+   8,
+   60,
+   false,
+   true
+  ]
+ ],
+ "media_objects": [
+  [
+   1,
+   1,
+   60,
+   0,
+   [
+    [
+     803,
+     60
+    ]
+   ]
+  ],
+  [
+   1,
+   2,
+   60,
+   25,
+   [
+    [
+     880,
+     60
+    ]
+   ]
+  ],
+  [
+   1,
+   3,
+   60,
+   50,
+   [
+    [
+     957,
+     60
+    ]
+   ]
+  ],
+  [
+   1,
+   4,
+   60,
+   75,
+   [
+    [
+     1059,
+     60
+    ]
+   ]
+  ],
+  [
+   1,
+   5,
+   60,
+   100,
+   [
+    [
+     1136,
+     60
+    ]
+   ]
+  ],
+  [
+   1,
+   6,
+   60,
+   125,
+   [
+    [
+     1213,
+     60
+    ]
+   ]
+  ]
+ ],
+ "file": {
+  "file_size": 1284,
+  "packets": 2,
+  "play_duration": 500000,
+  "send_duration": 0,
+  "preroll": 0,
+  "flags": 2,
+  "min_packet": 256,
+  "max_packet": 256,
+  "max_bitrate": 0
+ },
+ "findings": [
+  {
+   "code": "asf.codec-not-analyzed",
+   "contains": "PCM"
+  }
+ ],
+ "crosscheck": {
+  "ffprobe": true
+ }
+}

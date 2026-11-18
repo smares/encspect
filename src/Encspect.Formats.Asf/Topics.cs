@@ -7,6 +7,7 @@ internal static class Topics
     public const string AsfPackets = "asf-packets";
     public const string AsfMetadata = "asf-metadata";
     public const string AsfIndex = "asf-index";
+    public const string AsfScriptsAndMarkers = "asf-scripts-and-markers";
     public const string AsfContentProtection = "asf-content-protection";
     public const string WaveFormat = "waveformatex";
     public const string ChannelLayouts = "channel-layouts";

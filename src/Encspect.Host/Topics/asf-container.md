@@ -1,7 +1,7 @@
 ---
 id: asf-container
 title: The ASF container
-related: asf-packets, asf-metadata, asf-index, waveformatex, wma-standard
+related: asf-packets, asf-metadata, asf-index, asf-scripts-and-markers, waveformatex, wma-standard
 references: Advanced Systems Format (ASF) Specification, revision 01.20.03, sections 2, 3, 4 and 10; FFmpeg libavformat/asfdec_f.c
 ---
 

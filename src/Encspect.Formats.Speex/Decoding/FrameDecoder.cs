@@ -11,7 +11,7 @@ internal sealed class FrameDecoder : IFrameDecoder
     // Per output sample of the decoded band besides the fixed DecodeWork.ForSample of each channel: the synthesis and the enhancer, set by DecoderWorkTests
     // (docs/design/decoders.md, "As built: the Speex decoder's work weights").
     // Narrowband costs more a sample of its output than the sub-band modes do (its layer decodes 8,000 samples a second where the output has 16,000 or 32,000).
-    internal static ReadOnlySpan<long> SynthesisUnits => [84, 76, 68];
+    internal static ReadOnlySpan<long> SynthesisUnits => [133, 139, 121];
 
     // After a gap the output that depends on the lost frames' state is withheld: the excitation history of the pitch predictor and the synthesis filters settle slowly. A decoder
     // that starts over, cut at every packet of the fixtures' speech, is within 16 least significant bits of the one that went on from the 21st frame of 20 ms in 90 % of the cuts
