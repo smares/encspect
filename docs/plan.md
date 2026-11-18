@@ -245,7 +245,7 @@ The order (the lead, 2026-11-17): the milestone's own items first, then cheap it
    - **WavPack 1 to 3:** with encoder fixtures from the builds Rarewares keeps (3.4, 3.97, the first BSD release, and the DOS build of 4.31).
    - **The correction file** that belongs to a WavPack `.wv` (`.wvc`) or an OptimFROG DualStream `.ofs` (`.ofc`): host access to a companion file (found by base name and extension, `x.wv` to `x.wvc` and `x.ofs` to `x.ofc`, beside the input; an input with no folder, a stream or standard input, reports the pair as unchecked), checking the pair against each other and reporting it as lossless only when the correction file is there and consistent, in the same words for both (for OptimFROG on headers and checksums alone, since it has no decoder; [tak-optimfrog-headers.md](design/tak-optimfrog-headers.md#optimfrog-dualstream), the lead, 2026-11-09).
    - **The TAK frame walk:** the frame count, the frame CRC-24s and the bitrate per frame, which TAK then owes like the other lossless formats (decision 3 of [tak-optimfrog-headers.md](design/tak-optimfrog-headers.md#decisions)).
-   - **ASF script command and marker contents.**
+   - **ASF script command and marker contents** (done, 2026-11-18, #336).
 4. **One reading of the MPEG-2 multichannel extension per frame** (from the 0.3 milestone review, nit N4): the decoder reads each multichannel frame's side information twice more after the parser, allocating several arrays a frame.
    - A hand-off of the parsed extension from the parser to the decoder needs a change to `Core.Abstractions`; the cost stays inside `DecoderWorkTests` until then.
 5. **The coding graphs of formats whose data the parsers already read:** from the survey of [coding-graphs.md](design/coding-graphs.md#the-survey).
