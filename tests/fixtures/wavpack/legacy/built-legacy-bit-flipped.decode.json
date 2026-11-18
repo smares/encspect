@@ -1,0 +1,25 @@
+{
+  "verification": {
+    "decoding": "Decoded",
+    "decodedSamples": 24000,
+    "isVerified": false,
+    "checksums": [
+      {
+        "name": "audio CRC",
+        "stored": 1,
+        "checked": 1,
+        "failed": 1
+      }
+    ]
+  },
+  "pcmSamples": 24000,
+  "pcmMd5": "98aea554d5a7c75c562fa3eed5e72df3",
+  "findings": [
+    {
+      "code": "wavpack.legacy-crc-mismatch",
+      "severity": "Warning",
+      "count": 1,
+      "message": "The decoded audio has the CRC afd78ff4, but the header stores 30faeec2: the audio differs from what the encoder read (or the file is damaged)."
+    }
+  ]
+}
