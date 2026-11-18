@@ -1,0 +1,26 @@
+{
+ "length": 55,
+ "header": {
+  "offset": 44,
+  "length": 11,
+  "version": 2,
+  "cut": true,
+  "ck_size": 4
+ },
+ "findings": [
+  {
+   "severity": "warning",
+   "code": "wavpack.legacy-header-truncated"
+  }
+ ],
+ "stream": false,
+ "built": {
+  "description": "The data ends 11 bytes into the WavPack header of version 2.",
+  "from": "external-wv200-stereo-16.wv"
+ },
+ "crosscheck": {
+  "libwavpack_legacy": {
+   "opens": false
+  }
+ }
+}

@@ -1,0 +1,26 @@
+{
+ "length": 64,
+ "header": {
+  "offset": 44,
+  "length": 20,
+  "version": 3,
+  "cut": true,
+  "ck_size": 28
+ },
+ "findings": [
+  {
+   "severity": "warning",
+   "code": "wavpack.legacy-header-truncated"
+  }
+ ],
+ "stream": false,
+ "built": {
+  "description": "The data ends 20 bytes into the WavPack header of version 3.",
+  "from": "external-wv340-lossless-16-stereo.wv"
+ },
+ "crosscheck": {
+  "libwavpack_legacy": {
+   "opens": false
+  }
+ }
+}

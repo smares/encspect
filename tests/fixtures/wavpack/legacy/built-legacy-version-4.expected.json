@@ -1,0 +1,26 @@
+{
+ "length": 49352,
+ "header": {
+  "offset": 44,
+  "length": 10,
+  "version": 4,
+  "cut": false,
+  "ck_size": 28
+ },
+ "findings": [
+  {
+   "severity": "warning",
+   "code": "wavpack.version-unsupported"
+  }
+ ],
+ "stream": false,
+ "built": {
+  "description": "The version field of the WavPack header is 4, behind the stored WAV header.",
+  "from": "external-wv340-lossless-16-stereo.wv"
+ },
+ "crosscheck": {
+  "libwavpack_legacy": {
+   "opens": false
+  }
+ }
+}
