@@ -179,8 +179,20 @@ def manifest(data, extra=None):
     version = struct.unpack_from("<H", data, start + 8)[0] if len(data) >= start + 10 else -1
     header = {"offset": start}
     size = HEADER_SIZE.get(version, 0)
+    if not raw:
+        riff_size, found, _, data_size = stored
+        fmt = [c for c in found if c[0] == "fmt "]
+        fmt = fmt[-1] if fmt else None
+        wav = {"riff_size": riff_size, "chunks": [{"id": i, "offset": o, "size": s} for i, o, s in found], "data_size": data_size, "data_offset": start}
+        if fmt and fmt[2] >= 16:
+            tag, channels, rate, byte_rate, align, wbits = struct.unpack_from("<HHIIHH", data, fmt[1] + 8)
+            wav["format"] = {"tag": tag, "channels": channels, "sample_rate": rate, "byte_rate": byte_rate, "block_align": align, "bits_per_sample": wbits}
+    else:
+        wav, fmt = None, None
     if version not in HEADER_SIZE or len(data) < start + size:
-        header.update({"length": min(len(data) - start, size or 10), "version": version, "cut": len(data) < start + max(size, 10) or version in HEADER_SIZE})
+        if wav:
+            result["wav"] = wav
+        header.update({"length": min(len(data) - start, size or 10), "version": version})
         header["cut"] = len(data) < start + max(size, 10) or (version in HEADER_SIZE and len(data) < start + size)
         header["ck_size"] = struct.unpack_from("<I", data, start + 4)[0] if len(data) >= start + 8 else 0
         result["header"] = header
@@ -201,15 +213,7 @@ def manifest(data, extra=None):
         header.update({"flags": f"{flags:04x}", "flag_names": [name for bit, name in FLAG_NAMES if flags & bit], "shift": shift, "total_samples": total,
                        "crc": f"{crc:08x}", "crc2": f"{crc2:08x}", "extension": extension, "extra_bc": extra_bc, "extras": extras.hex()})
     result["header"] = header
-    wav = None
-    if not raw:
-        riff_size, found, _, data_size = stored
-        fmt = [c for c in found if c[0] == "fmt "]
-        fmt = fmt[-1] if fmt else None
-        wav = {"riff_size": riff_size, "chunks": [{"id": i, "offset": o, "size": s} for i, o, s in found], "data_size": data_size, "data_offset": start}
-        if fmt and fmt[2] >= 16:
-            tag, channels, rate, byte_rate, align, wbits = struct.unpack_from("<HHIIHH", data, fmt[1] + 8)
-            wav["format"] = {"tag": tag, "channels": channels, "sample_rate": rate, "byte_rate": byte_rate, "block_align": align, "bits_per_sample": wbits}
+    if wav:
         result["wav"] = wav
     fmt = (wav or {}).get("format")
     mono = bool(flags & 1) if raw or (version == 3 and not fmt) else (fmt["channels"] == 1 if fmt else False)
@@ -221,7 +225,7 @@ def manifest(data, extra=None):
     per_sample = (fmt["bits_per_sample"] if fmt else 0) if not raw else (24 if flags & 0x20 else RAW_BITS)
     # libwavpack's count of a version 3 file and the one of versions 1 and 2: the data chunk's size over a sample of all channels, 3 bytes over 16 bits.
     from_data = None if raw or not fmt or fmt["channels"] not in (1, 2) else wav["data_size"] // fmt["channels"] // (3 if fmt["bits_per_sample"] > 16 else 2)
-    samples = total if version == 3 else from_data
+    samples = total if version == 3 else (from_data or 0)
     mode = "lossless" if not bits else ("hybrid" if (version == 3 and flags & 0x0400) else "lossy")
     # The old lossy mode (versions 2 and 3 without the new high flag) caps the bits of a sample; the hybrid mode of version 3 targets bits per sample times 256.
     result["figures"] = {"channels": channels, "sample_rate": rate, "bits_per_sample": per_sample, "bytes_per_sample": width, "samples": samples,

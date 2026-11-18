@@ -123,7 +123,8 @@ internal readonly record struct LegacyHeader(long At, int Held, uint Size, int V
 
     public int Length => LegacyLayout.HeaderLength(Version);
 
-    public bool IsComplete => Held >= Length;
+    // A header of a version this reader does not know is complete at its 10 bytes: version-unsupported, not a cut.
+    public bool IsComplete => Version < 0 ? false : Held >= (Length == 0 ? 10 : Length);
 
     public bool IsVersion3 => Version == 3;
 
