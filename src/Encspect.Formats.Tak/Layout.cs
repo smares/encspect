@@ -244,73 +244,21 @@ internal static class Layout
         public int Align() => Get((8 - (Position % 8)) % 8);
     }
 
-    // The frame header at a position (tak_str_DecodeFrameHeader): its length with the CRC-24, or 0 where the sync word is not there, the header does not decode (it states
-    // metadata, which is not supported), its reserved and padding bits are not zero, or its CRC-24 differs. The header is 5, 7 (a last frame) or more bytes (an info frame
-    // holds the stream info) and a CRC-24.
+    // The length with its CRC-24 of the frame header at a position (FrameHeader.Read), or 0 where the sync word is not there, the header does not decode (it states metadata, which is
+    // not supported, or its reserved and padding bits are not zero), the data ends inside it or its CRC-24 differs.
     public static int FrameHeaderLength(ByteReader reader, long position)
     {
-        const int MaxHeader = 5 + 2 + 23 + 4 + 3;
         long available = reader.End - position;
-        if (available < 5 + CrcLength || !reader.MatchesAt(position, [0xFF, 0xA0]))
+        if (available < FrameHeader.MinLength || !reader.MatchesAt(position, [0xFF, 0xA0]))
         {
             return 0;
         }
 
-        Span<byte> bytes = stackalloc byte[(int)Math.Min(available, MaxHeader)];
+        Span<byte> bytes = stackalloc byte[(int)Math.Min(available, FrameHeader.MaxLength)];
         reader.Position = position;
         reader.Read(bytes);
-        var bits = new LsbBits(bytes);
-        bits.Get(16);
-        bool isLast = bits.Get(1) != 0;
-        bool isInfo = bits.Get(1) != 0;
-        bool hasMetadata = bits.Get(1) != 0;
-        bits.Get(21);
-        if (isLast)
-        {
-            bits.Get(14);
-            if (bits.Get(2) != 0)
-            {
-                return 0;
-            }
-        }
-
-        if (hasMetadata)
-        {
-            return 0;
-        }
-
-        if (isInfo)
-        {
-            if (StreamInfoFields.Read(ref bits) is null)
-            {
-                return 0;
-            }
-
-            bool hasDistance = bits.Get(1) != 0;
-            if (bits.Get(5) != 0)
-            {
-                return 0;
-            }
-
-            if (hasDistance)
-            {
-                bits.Get(25);
-            }
-
-            if (bits.Align() != 0)
-            {
-                return 0;
-            }
-        }
-
-        int length = (bits.Position + 7) / 8;
-        if (bits.IsOverflow || bytes.Length < length + CrcLength)
-        {
-            return 0;
-        }
-
-        uint stored = (uint)(bytes[length] | (bytes[length + 1] << 8) | (bytes[length + 2] << 16));
-        return Crc24(bytes[..length]) == stored ? length + CrcLength : 0;
+        FrameHeader header = FrameHeader.Read(bytes);
+        return header.Fault == HeaderFault.None ? header.Length : 0;
     }
 }
 
