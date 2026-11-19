@@ -19,7 +19,7 @@
       "code": "wavpack.legacy-bitstream-end-differs",
       "severity": "Info",
       "count": 1,
-      "message": "The last sample\u0027s bits end at 0x50, and the 49272 bytes after them do not begin with the 16 bytes of 0xFF of a trailer, which no decoder reads; the bitstream runs to 0xC0C8."
+      "message": "The bitstream, which holds no sample, ends at 0x50, and the 49272 bytes after them are not a trailer (16 bytes of 0xFF followed by the source\u0027s bytes), which no decoder reads; the bitstream runs to 0xC0C8."
     }
   ]
 }
