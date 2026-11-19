@@ -451,9 +451,7 @@ internal static class Reader
                         {
                             status |= EntryStatus.HasSpecialCodes;
                             s.SpecialFrames++;
-                            bool isSilent = h.Channels == 1 ? (special & 1) != 0 : h.Channels == 2 && (special & 3) == 3;
-                            s.SilentFrames += isSilent ? 1 : 0;
-                            s.PseudoStereoFrames += h.Channels == 2 && (special & 4) != 0 && !isSilent ? 1 : 0;
+                            s.SilentFrames += h.Channels == 1 && (special & 1) != 0 ? 1 : 0;
                             if (usable - start < StartBytes(startBit, 64))
                             {
                                 status |= EntryStatus.NoStartFields;
@@ -513,7 +511,12 @@ internal static class Reader
             // short for its start fields counts in the samples only.
             if ((status & (EntryStatus.Misplaced | EntryStatus.Cut | EntryStatus.NoStartFields)) == 0 && start < available)
             {
-                s.Figures.Add(FileOffsetOf(records, start), (end - start) * 8, blocks, index < s.MaxListedFrames);
+                bool listed = index < s.MaxListedFrames;
+                s.Figures.Add(FileOffsetOf(records, start), (end - start) * 8, blocks, listed);
+                if (listed)
+                {
+                    s.Stereo.Add(h.Channels == 2 ? State.StereoCodeOf(special, (status & EntryStatus.HasSpecialCodes) != 0) : null);
+                }
             }
 
             if (session is { IsDecoding: true })

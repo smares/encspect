@@ -91,8 +91,12 @@ internal static class Explain
     public const string StatLayout = "The speakers the channels feed, from the channel mask of the stored WAV header where it has one; the format itself states no positions, so without a mask one channel is taken as the center and two as left and right.";
     public const string StatBits = "The bits of each sample, from the header.";
     public const string StatLevel = "The compression level, from the header.";
-    public const string StatSilentFrames = "The frames flagged as silent in every channel they code (both channels of a stereo file, the only channel of a mono file), which hold no coded samples.";
-    public const string StatPseudoStereoFrames = "The frames flagged as pseudo-stereo, which code one channel and repeat it in the other.";
+    public const string StatSilentFrames = "The frames of a mono file flagged as silent, which hold no coded samples.";
+    public const string StatStereoCoding = "How the frames of two channels code them: as the mean and the difference of left and right (mid/side stereo), as one channel repeated in the other (pseudo-stereo), or not at all (silence). The special frame codes choose among them (Prepare.h).";
+    public const string StereoCodingSeries = "The coding of each frame of two channels, as the tally of Stereo Coding counts them.";
+    public const string StatMidSide = "The frames whose two channels are coded as X, close to the average of left and right, and Y, their difference. A frame with one silent channel flagged is counted here, as the decoder treats it like any other.";
+    public const string StatPseudoStereo = "The frames flagged as pseudo-stereo, which code only X, because the two channels are equal in every sample.";
+    public const string StatSilence = "The frames flagged as silent in both channels, which hold no coded samples.";
     public const string StatStoredChecksums = "The frames of a file without frame CRCs, each of which starts with a checksum of 30 bits, the sum of the absolute values of its samples, which is no CRC (Old/UnMACOld.cpp, DecompressFrame). The parser does not read it from the frame; the decoder compares it with the audio it decodes, except in files of 3.90 to 3.92, whose checksum the SDK does not read.";
     public const string StatStoredCrcs = "The frames that store a CRC of their decoded audio. The analyzer compares them only when the stream is decoded.";
     public const string StatMd5 = "Whether the MD5 of the coded data that the descriptor stores equals the one computed from the file.";

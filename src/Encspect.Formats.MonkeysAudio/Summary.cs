@@ -142,11 +142,6 @@ internal static class Summary
             statistics.Add(Cover("Silent Frames", NodeValue.Integer(s.SilentFrames, "frames", "frame"), Explain.StatSilentFrames, Topics.Frames));
         }
 
-        if (s.PseudoStereoFrames > 0)
-        {
-            statistics.Add(Cover("Pseudo-Stereo Frames", NodeValue.Integer(s.PseudoStereoFrames, "frames", "frame"), Explain.StatPseudoStereoFrames, Topics.Frames));
-        }
-
         statistics.Add(h.HasStoredCrc
             ? Cover("Stored Frame Checksums", NodeValue.Integer(s.StoredCrcs, "frames", "frame"), Explain.StatStoredCrcs, Topics.Crc)
             : Cover("Stored Frame Checksums", NodeValue.Integer(h.ReadsChecksum ? s.Frames : 0, "frames", "frame"), Explain.StatStoredChecksums, Topics.Crc));
@@ -160,6 +155,7 @@ internal static class Summary
         Node Covered(string name, NodeValue? value, string description) => Cover(name, value, description);
         figures.AddTo(statistics, Covered, "Frame", "frames", true, out _);
         Node? anchor = statistics.Children.FirstOrDefault(c => c.Name == "Average Bitrate");
+        Node? stereoNode = s.Stereo.AddTo(statistics, (name, value, description, topic) => Cover(name, value, description, topic), Explain.StatStereoCoding, Topics.MidSideStereo, "Frame", "Frames");
         s.AddLeading(statistics);
 
         string? channelMode = h.Channels switch
@@ -169,6 +165,7 @@ internal static class Summary
             > 2 => "Multichannel",
             _ => null,
         };
+        List<Series> series = figures.Series(anchor, s.Context.CancellationToken);
         return new StreamInfo
         {
             Nodes = [stream],
@@ -190,7 +187,8 @@ internal static class Summary
             Processor = ClaimRoles.Resolved(processor).Name,
             ProcessorConfidence = ClaimRoles.Resolved(processor).Confidence,
             Verification = verification,
-            Series = figures.Series(anchor, s.Context.CancellationToken),
+            Series = series,
+            CategorySeries = stereoNode is not null && series.Count > 0 && s.Stereo.Build(series[0], stereoNode, Explain.StereoCodingSeries, Topics.MidSideStereo, null) is { } stereoSeries ? [stereoSeries] : [],
         };
     }
 
