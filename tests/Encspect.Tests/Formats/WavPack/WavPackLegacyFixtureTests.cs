@@ -191,7 +191,7 @@ public class WavPackLegacyFixtureTests
         Assert.Equal("WavPack " + stream.Children.Single(c => c.Name == "WavPack Header").Children.Single(c => c.Name == "Version").Value, info.Encoder);
         Assert.Equal(Confidence.Medium, info.EncoderConfidence);
         Assert.NotNull(info.Verification);
-        Assert.Equal(DecodeStatus.NoDecoder, info.Verification.Decoding);
+        Assert.Equal(DecodeStatus.NotRequested, info.Verification.Decoding);
         Node statistics = stream.Children.Single(c => c.Name == "Statistics");
         Assert.Equal(figures.GetProperty("compression_mode").GetString(), statistics.Children.Single(c => c.Name == "Compression Mode").Value?.AsText());
         JsonElement stereo = figures.GetProperty("stereo_coding");

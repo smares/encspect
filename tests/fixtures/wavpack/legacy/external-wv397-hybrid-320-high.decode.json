@@ -1,0 +1,26 @@
+{
+  "verification": {
+    "decoding": "Decoded",
+    "decodedSamples": 24000,
+    "isVerified": true,
+    "isLossy": true,
+    "checksums": [
+      {
+        "name": "audio CRC",
+        "stored": 1,
+        "checked": 1,
+        "failed": 0
+      }
+    ]
+  },
+  "pcmSamples": 24000,
+  "pcmMd5": "3ed88777c5c7e5efbd54e4d8dab5af97",
+  "findings": [
+    {
+      "code": "wavpack.legacy-crc2-needs-correction-file",
+      "severity": "Info",
+      "count": 1,
+      "message": "The header\u0027s second CRC is of the lossless audio, which this hybrid file alone does not decode to (the correction file adds what it lacks), so it is not compared."
+    }
+  ]
+}

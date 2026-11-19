@@ -1,0 +1,25 @@
+{
+  "verification": {
+    "decoding": "Decoded",
+    "decodedSamples": 24000,
+    "isVerified": true,
+    "checksums": [
+      {
+        "name": "audio CRC",
+        "stored": 1,
+        "checked": 1,
+        "failed": 0
+      }
+    ]
+  },
+  "pcmSamples": 24000,
+  "pcmMd5": "33f110d8eb91888849a451b5f07f99a7",
+  "findings": [
+    {
+      "code": "wavpack.legacy-bitstream-end-differs",
+      "severity": "Info",
+      "count": 1,
+      "message": "The last sample\u0027s bits end at 0xC0C8, and the 16 bytes after them do not begin with the 16 bytes of 0xFF of a trailer, which no decoder reads; the bitstream runs to 0xC0D8."
+    }
+  ]
+}

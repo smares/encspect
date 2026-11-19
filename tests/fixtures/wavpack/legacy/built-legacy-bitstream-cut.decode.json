@@ -1,0 +1,25 @@
+{
+  "verification": {
+    "decoding": "Decoded",
+    "decodedSamples": 17053,
+    "isVerified": null,
+    "checksums": [
+      {
+        "name": "audio CRC",
+        "stored": 1,
+        "checked": 0,
+        "failed": 0
+      }
+    ]
+  },
+  "pcmSamples": 17053,
+  "pcmMd5": "d6ffbda8f5c8a932a1f5bf1f8f1dd526",
+  "findings": [
+    {
+      "code": "wavpack.legacy-data-ended",
+      "severity": "Warning",
+      "count": 1,
+      "message": "The bitstream\u0027s 24636 bytes hold 17053 samples of each channel, but the header states 24000; the stream ends early."
+    }
+  ]
+}

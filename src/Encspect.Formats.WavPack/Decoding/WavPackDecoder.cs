@@ -14,6 +14,11 @@ public sealed class WavPackDecoder : IDecoder
     {
         ArgumentNullException.ThrowIfNull(context);
 
+        if (context.Setup.Shared is LegacyDecodeInfo legacy)
+        {
+            return LegacyStreamDecoder.Open(context, legacy);
+        }
+
         if (context.Setup.Channels > 4096)
         {
             throw new InvalidDataException($"The stream has {context.Setup.Channels} channels; WavPack allows 4096");
