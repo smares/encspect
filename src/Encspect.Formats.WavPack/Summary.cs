@@ -65,7 +65,8 @@ internal static partial class Summary
         ClaimRoles.CompleteVersion(encoder, context.EncoderClaims);
 
         StreamInfo? info = Statistics(s, Cover, stream, encoder, writer, processor);
-        if (info is not null)
+        // The correction file of a pair has a stream of its own only where it holds correction data.
+        if (info is not null && (!s.IsCompanion || IsCorrection(s)))
         {
             context.AddStream(info);
         }
@@ -90,7 +91,7 @@ internal static partial class Summary
 
     // Audio blocks without a bitstream of their own that hold correction data or extra bits are a
     // correction file's.
-    private static bool IsCorrection(State s) => s.AudioBlocks > 0 && s.WvBlocks == 0 && s.DsdBlocks == 0 && (s.WvcBlocks > 0 || s.WvxBlocks > 0);
+    internal static bool IsCorrection(State s) => s.AudioBlocks > 0 && s.WvBlocks == 0 && s.DsdBlocks == 0 && (s.WvcBlocks > 0 || s.WvxBlocks > 0);
 
     private static Node EntryNode(Records s, int index) =>
         s.Entries[index].Kind == EntryKind.Skipped ? Nodes.Skipped(s, index) : Nodes.Block(s, index);
@@ -121,8 +122,11 @@ internal static partial class Summary
 
         if (isCorrection)
         {
-            s.Findings.Add(Severity.Info, "wavpack.correction-file", stream, _ =>
-                "The audio blocks hold correction data only, as a .wvc file does: it adds to the hybrid .wv file with the same blocks, and cannot be decoded alone.");
+            if (!s.IsCompanion)
+            {
+                s.Findings.Add(Severity.Info, "wavpack.correction-file", stream, _ =>
+                    "The audio blocks hold correction data only, as a .wvc file does: it adds to the hybrid .wv file with the same blocks, and cannot be decoded alone; analyze the .wv file beside it to check the pair.");
+            }
         }
         else if (s.WvcBlocks > 0 && (s.WvBlocks > 0 || s.DsdBlocks > 0))
         {
@@ -276,6 +280,8 @@ internal static partial class Summary
         int shifted = (first.BytesPerSample * 8) - first.LeftShift;
         int? bits = isDsd ? 1 : first.IsFloat ? 32 : shifted > 0 ? shifted : null;
         bool isLossless = !isHybrid && !isCorrection && !s.HasLossyBlocks;
+        // A hybrid file asks the host for its correction file, which the host looks for beside it.
+        PairResult? pair = isHybrid && !isCorrection && !s.IsCompanion && s.ParseContext is not null ? Pairing.Check(s, stream, s.Config is { } written && (written.Value.Flags & Decode.ConfigCreateWvc) == 0) : null;
         statistics.Add(Cover3("Audio Blocks", NodeValue.Integer(s.AudioBlocks, "blocks", "block"), Explain.StatAudioBlocks));
         if (s.MetadataBlocks > 0)
         {
@@ -391,7 +397,9 @@ internal static partial class Summary
             ProcessorConfidence = ClaimRoles.Resolved(processor).Confidence,
             Series = series,
             CategorySeries = stereoNode is not null && series.Count > 0 && s.Stereo.Build(series[0], stereoNode, Explain.StereoCodingSeries, Topics.MidSideStereo, null) is { } stereoSeries ? [stereoSeries] : [],
-            Verification = s.Feed.Finish(s, isCorrection),
+            Verification = s.Feed.Finish(s, isCorrection, pair?.Companion),
+            Correction = pair?.Pairing,
+            IsCorrectionFile = isCorrection,
         };
     }
 

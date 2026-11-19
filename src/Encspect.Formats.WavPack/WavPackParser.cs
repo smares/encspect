@@ -81,12 +81,16 @@ public sealed class WavPackParser : IFormatParser
     // Tags an ID3v2.4 SEEK frame found inside the data are already in the report. A tag between
     // blocks breaks the chain, so the blocks are read up to the first one, and the bytes between and
     // after the tags are reported as not read.
-    public void Parse(ParseContext context)
+    public void Parse(ParseContext context) => ParseInto(context, isCompanion: false);
+
+    // The same walk over a file or, with isCompanion, over the correction file the host opened beside the main file (the host's context over it): its
+    // nodes, findings and stream are the ones the file gets alone, less the finding that says it was opened alone.
+    internal static State ParseInto(ParseContext context, bool isCompanion)
     {
         ByteReader window = context.Reader;
         List<Node> tags = [.. context.EmbeddedTags.Where(t => t.Offset >= window.Start && t.Offset < window.End).OrderBy(t => t.Offset)];
         ByteReader reader = tags.Count > 0 ? window.Slice(window.Start, tags[0].Offset - window.Start) : window;
-        var state = new State(new Source(reader), context.CancellationToken, context);
+        var state = new State(new Source(reader), context.CancellationToken, context) { ParseContext = context, IsCompanion = isCompanion };
         state.Stream = Summary.StreamNode(state);
         Reader.Run(state);
         Summary.Finish(state, context);
@@ -104,5 +108,7 @@ public sealed class WavPackParser : IFormatParser
 
             position = Math.Max(position, tag?.End ?? position);
         }
+
+        return state;
     }
 }
