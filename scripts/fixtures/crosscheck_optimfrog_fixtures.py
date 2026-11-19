@@ -89,7 +89,14 @@ PAIR_SOURCES = {
 }
 
 # Pairs the manifest calls inconsistent that `ofs` decodes to the input anyway, each with what explains it (none is known: the pairs have not been decoded yet).
-PAIR_EXPLAINED = {}
+# Pairs the analyzer calls inconsistent that `ofs` 5.100 still decodes to the input: ofs reads only the CORR blocks its data blocks need and checks no CRC-32 of
+# them, so damage that leaves those bytes intact does not stop it. The analyzer withholds "lossless" for them, as the design's "consistent" asks the structure
+# and every stored checksum to hold (docs/design/correction-files.md, "OptimFROG"); CI run 44474147882 showed each.
+PAIR_EXPLAINED = {
+    "built-pair-block-more.ofs": "the .ofc has a CORR block more than the .ofs has data blocks; ofs reads the first and ignores the rest",
+    "built-pair-bytes-after.ofs": "the .ofc has bytes after its last CORR block; ofs ignores them",
+    "built-pair-crc-fails.ofs": "the .ofc's first stored CRC-32 is wrong in one bit while its data is intact; ofs does not check the CRC-32 of a CORR block",
+}
 
 # Pairs the analyzer's check cannot judge, which are printed and never fail.
 PAIR_NOT_JUDGED = {"built-pair-other-encode.ofs": "an .ofc of another encode with as many blocks passes the check on block counts and CRC-32s"}
