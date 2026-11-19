@@ -109,6 +109,15 @@ internal sealed class State
 
     public UnitCategoryTally Stereo { get; } = new("Stereo Coding", StereoCodings, "frame", GraphConcept.StereoCoding);
 
+    // A mono stream's flags, one per frame the series of bitrates has a point for: the frame is flagged silent or not. The "with" count equals "Silent Frames".
+    public static readonly Category[] SilenceFlags =
+    [
+        new("With silence", Explain.CategorySilent) { Topic = Topics.Frames },
+        new("Without silence", Explain.CategoryNotSilent) { Topic = Topics.Frames },
+    ];
+
+    public CategorySeriesBuilder SilentFlags { get; } = new("Silent Frames", SilenceFlags, "frame", 1, concept: GraphConcept.StereoCoding);
+
     public static int StereoCodeOf(uint special, bool hasCodes) =>
         !hasCodes ? 0 : (special & 3) == 3 ? 2 : (special & 4) != 0 ? 1 : 0;
 

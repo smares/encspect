@@ -451,7 +451,6 @@ internal static class Reader
                         {
                             status |= EntryStatus.HasSpecialCodes;
                             s.SpecialFrames++;
-                            s.SilentFrames += h.Channels == 1 && (special & 1) != 0 ? 1 : 0;
                             if (usable - start < StartBytes(startBit, 64))
                             {
                                 status |= EntryStatus.NoStartFields;
@@ -515,7 +514,14 @@ internal static class Reader
                 s.Figures.Add(FileOffsetOf(records, start), (end - start) * 8, blocks, listed);
                 if (listed)
                 {
-                    s.Stereo.Add(h.Channels == 2 ? State.StereoCodeOf(special, (status & EntryStatus.HasSpecialCodes) != 0) : null);
+                    bool hasCodes = (status & EntryStatus.HasSpecialCodes) != 0;
+                    s.Stereo.Add(h.Channels == 2 ? State.StereoCodeOf(special, hasCodes) : null);
+                    if (h.Channels == 1)
+                    {
+                        bool silent = hasCodes && (special & 1) != 0;
+                        s.SilentFrames += silent ? 1 : 0;
+                        s.SilentFlags.Add(silent ? (byte)0 : (byte)1);
+                    }
                 }
             }
 

@@ -94,6 +94,9 @@ internal static class Explain
     public const string StatSilentFrames = "The frames of a mono file flagged as silent, which hold no coded samples.";
     public const string StatStereoCoding = "How the frames of two channels code them: as the mean and the difference of left and right (mid/side stereo), as one channel repeated in the other (pseudo-stereo), or not at all (silence). The special frame codes choose among them (Prepare.h).";
     public const string StereoCodingSeries = "The coding of each frame of two channels, as the tally of Stereo Coding counts them.";
+    public const string SilentFramesSeries = "Whether each frame of a mono stream is flagged as silent, as the count of Silent Frames counts them; the frames without silence are the others the series covers.";
+    public const string CategorySilent = "The frames of a mono stream flagged as silent, which hold no coded samples.";
+    public const string CategoryNotSilent = "The frames of a mono stream not flagged as silent.";
     public const string StatMidSide = "The frames whose two channels are coded as X, close to the average of left and right, and Y, their difference. A frame with one silent channel flagged is counted here, as the decoder treats it like any other.";
     public const string StatPseudoStereo = "The frames flagged as pseudo-stereo, which code only X, because the two channels are equal in every sample.";
     public const string StatSilence = "The frames flagged as silent in both channels, which hold no coded samples.";

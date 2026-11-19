@@ -405,7 +405,7 @@ The parser and decoder are built (#137, Gate 3 fixes #192). The parser reads the
 | Candidate | Field and source | Read | Tallied | Kept per unit | Status | Wave |
 | --- | --- | --- | --- | --- | --- | --- |
 | Stereo coding, two-channel streams | the frame start: a 32-bit CRC word whose bit 31 says that a 32-bit word of special codes follows, from version 3.83 (above 3820: SDK `APEInfo.h` 64, `APEDecompressCore.cpp` 381-397; FFmpeg `apedec.c` 766-783). Codes 1 and 2 mark one silent channel each, 4 pseudo-stereo (`Prepare.h` 6-9; `apedec.c` 46-48). With both channels silent nothing is coded; with pseudo-stereo only the first coded channel, X (`APECompressCore.cpp` 104-140; `APEDecompressCore.cpp` 290-311; `apedec.c` 1509-1512, 1657-1658) | yes, the frame starts (`Reader`, `Entry.Special` with `EntryStatus.HasSpecialCodes`) | "Stereo Coding" ("Mid/side stereo", "Pseudo-stereo", "Silence"; replaced "Pseudo-Stereo Frames" and, for two channels, "Silent Frames") | 1 byte per frame, derived from the kept entry | built (#TBD) | built |
-| Silent frames, mono streams | code 1: nothing is coded (`APECompressCore.cpp` 142-150; `APEDecompressCore.cpp` 344-353; `apedec.c` 1482-1488) | yes | "Silent Frames" (mono only; stays a value node) | 1 byte per frame; a flag series | code | 2, not built |
+| Silent frames, mono streams | code 1: nothing is coded (`APECompressCore.cpp` 142-150; `APEDecompressCore.cpp` 344-353; `apedec.c` 1482-1488) | yes | "Silent Frames" (mono only) with a flag series ("With silence", "Without silence") | 1 byte per frame; a flag series | built (#TBD) | built |
 | Bitrate per frame | the frame's size: the next frame's position in the seek table minus its own, the last frame's to the end of the data before the WAV tail (`ape.c` 269-294); its blocks, the header's blocks per frame or, for the last frame, its own count (`ape.c` 225-230, 284) | yes | "Minimum Bitrate", "Maximum Bitrate", "Bitrate Distribution" | the format's bitrate series | built (#137) | built |
 | Compression ratio (new) | the frame's bytes over blocks × channels × bytes per sample, in percent | yes: the entry's length and blocks, and the header's channels and bits | no | 8 bytes per frame | code | 2, not built |
 | Compression level | the header's level, one per file (`ape.c` 185, 197); it chooses the filters (`apedec.c` 81-87, 274-286) | yes | "Compression Level" |  | code | not a series |
@@ -562,7 +562,7 @@ The lead asked, before item 5 of 0.4 builds anything, for the survey to be check
 - DTS: "Coded Bandwidth" is built from the subframes (the highest subband allocated, vector quantized or copied by joint intensity coding), not from the header's SUBS + 2; TMODE needed the subframe reader, which the entropy pass brought (#321).
 - AAC: "Window Sequences" is "Block Usage" since #226.
 - WMA: the readers came back without block records, so its block series are recorded while reading, not derived from `BlockRecord` fields, which no longer exist.
-- Monkey's Audio: "Stereo Coding" is built (#TBD); a mono stream keeps "Silent Frames" as a value node.
+- Monkey's Audio: "Stereo Coding" is built (#TBD); a mono stream keeps "Silent Frames", now with a flag series.
 - Wave 1 was not finished: Speex's submodes, Opus's TOC series and Vorbis's "Modes" are not built.
 - WAV: a Microsoft ADPCM fixture is committed now.
 

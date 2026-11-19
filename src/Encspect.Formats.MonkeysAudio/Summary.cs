@@ -137,9 +137,10 @@ internal static class Summary
         }
 
         statistics.Add(Cover("Compression Level", $"{ApeHeader.LevelName(h.CompressionLevel)} ({h.CompressionLevel})", Explain.StatLevel, Topics.Prediction));
+        Node? silentNode = null;
         if (s.SilentFrames > 0)
         {
-            statistics.Add(Cover("Silent Frames", NodeValue.Integer(s.SilentFrames, "frames", "frame"), Explain.StatSilentFrames, Topics.Frames));
+            statistics.Add(silentNode = Cover("Silent Frames", NodeValue.Integer(s.SilentFrames, "frames", "frame"), Explain.StatSilentFrames, Topics.Frames));
         }
 
         statistics.Add(h.HasStoredCrc
@@ -188,8 +189,29 @@ internal static class Summary
             ProcessorConfidence = ClaimRoles.Resolved(processor).Confidence,
             Verification = verification,
             Series = series,
-            CategorySeries = stereoNode is not null && series.Count > 0 && s.Stereo.Build(series[0], stereoNode, Explain.StereoCodingSeries, Topics.MidSideStereo, null) is { } stereoSeries ? [stereoSeries] : [],
+            CategorySeries = CategorySeriesOf(s, series, stereoNode, silentNode),
         };
+    }
+
+    private static List<CategorySeries> CategorySeriesOf(State s, List<Series> series, Node? stereoNode, Node? silentNode)
+    {
+        List<CategorySeries> result = [];
+        if (series.Count == 0)
+        {
+            return result;
+        }
+
+        if (stereoNode is not null && s.Stereo.Build(series[0], stereoNode, Explain.StereoCodingSeries, Topics.MidSideStereo, null) is { } stereo)
+        {
+            result.Add(stereo);
+        }
+
+        if (silentNode is not null && s.SilentFlags.Count == series[0].X.Length)
+        {
+            result.Add(s.SilentFlags.Build(series[0].X, series[0], silentNode, Explain.SilentFramesSeries, Topics.Frames));
+        }
+
+        return result;
     }
 
     public static string Number(long value) => value.ToString(CultureInfo.InvariantCulture);
