@@ -46,6 +46,7 @@ C# on .NET, Avalonia UI (GUI), console app (CLI), one shared core library, one p
 - One main item is in progress at a time, plus small fixes. A new idea goes into a later milestone, not into the current one, unless the lead says otherwise.
 - Nothing is parked without a decision: every item has a milestone, or sits under "Not planned" with the trigger that would bring it back. A pause the lead asks for keeps the item's place and priority, and the item resumes first.
 - A decoder pull request is done when it also brings its format's entropy-pass figures, coding graphs and the gap items it unlocks.
+- A pull request that adds a format or makes a parser or decoder read a new field per frame, packet or block also updates the survey of [`docs/design/coding-graphs.md`](docs/design/coding-graphs.md#the-survey) in the same change: the rows it makes possible, each built in that change or queued with a milestone, so that no graph waits for a later survey to find it.
 
 ## Code style
 
