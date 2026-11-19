@@ -271,6 +271,12 @@ public class SamplesDefinitionTests
         ["wavpack/external-dsd-64.decode.json"] = Reasons.wavpackdsd,
         #endregion
 
+        #region WavPack 1 to 3
+        ["wavpack/legacy/built-legacy-bitstream-cut.decode.json"] = Reasons.wavpacklegacy,
+        ["wavpack/legacy/built-legacy-header-only-v3.decode.json"] = Reasons.wavpacklegacy,
+        ["wavpack/legacy/built-legacy-total-samples-more.decode.json"] = Reasons.wavpacklegacy,
+        #endregion
+
     };
 
     private static class Reasons
@@ -292,6 +298,9 @@ public class SamplesDefinitionTests
 
         public const string wavpack =
             "the decoder decodes only the blocks of sets it accepts; the parser reads the blocks it refuses without flagging them";
+
+        public const string wavpacklegacy =
+            "the bitstream ends before the stated samples (wavpack.legacy-data-ended); a version 1 to 3 file is one bitstream without blocks, so only the decoder finds its end and the parser cannot count the samples lost";
 
     }
     [Fact]
