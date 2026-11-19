@@ -32,7 +32,7 @@ Monkey's Audio files (`.ape`): the lossless format of Matthew T. Ashland's Monke
 - "Stereo Coding" for two-channel streams, over the frames the bitrate figures cover and as a category series under the same name, unit and axis as FLAC's:
   - "Mid/side stereo": a coded frame, where the decoder undoes the mean and difference of the channels in every one; a frame with one silent channel flagged counts here, because decoding treats it like any other;
   - "Pseudo-stereo": a frame flagged as repeating the first channel, which codes that channel only;
-  - "Silence": a frame flagged silent in both channels, which takes precedence over pseudo-stereo, as in the decoders;
+  - "Silence": a frame flagged silent in both channels, which takes precedence over pseudo-stereo, as in the decoders; in a file without the CRC flag (up to 3.89) a frame whose checksum is 0 counts here, or as silent in a mono stream, as the SDK reads it;
   - a mono stream has no "Stereo Coding"; its count of silent frames stays as "Silent Frames", with a flag series of the same name ("With silence" and "Without silence", per frame the bitrate figures cover) where it has one;
 - and "Stored Frame Checksums", the number of frames that store a CRC-32 or, in a file without frame CRCs, a checksum (named as the other formats name a stored check; the decoder compares them);
 - whether the descriptor MD5 matches.

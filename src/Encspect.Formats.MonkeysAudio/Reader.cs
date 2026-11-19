@@ -426,6 +426,7 @@ internal static class Reader
             var status = startBit >= 32 ? EntryStatus.StartBitOutsideWord : EntryStatus.None;
             uint crc = 0;
             uint special = 0;
+            bool isChecksumSilence = false;
             if (start < 0 || start > dataSpan || end < start || end > dataSpan)
             {
                 status |= EntryStatus.Misplaced;
@@ -440,6 +441,22 @@ internal static class Reader
                 }
 
                 long usable = Math.Min(end, available);
+                if (!canFields && h.ReadsChecksum)
+                {
+                    // Without a CRC the frame starts with a Rice-coded checksum, and a checksum of 0 (a 1 bit and 30 zero bits) is a silent frame
+                    // (Old/UnMACOld.cpp, Old/UnBitArrayOld.cpp).
+                    if (usable - start >= StartBytes(startBit, 31))
+                    {
+                        long firstWord = start >> 2;
+                        ReadOnlySpan<byte> words = source.Window(wordStart + (firstWord << 2), (int)((((start + StartBytes(startBit, 31) - 1 + 4) >> 2) - firstWord + 1) << 2));
+                        if (Shifted(words, firstWord, start, startBit) >> 1 == 0x40000000)
+                        {
+                            special = 3;
+                            isChecksumSilence = true;
+                        }
+                    }
+                }
+
                 if (canFields)
                 {
                     // The CRC and the special frame codes are the 64 stream bits from the frame's start bit, which may lie past the frame's first word.
@@ -514,7 +531,7 @@ internal static class Reader
                 s.Figures.Add(FileOffsetOf(records, start), (end - start) * 8, blocks, listed);
                 if (listed)
                 {
-                    bool hasCodes = (status & EntryStatus.HasSpecialCodes) != 0;
+                    bool hasCodes = (status & EntryStatus.HasSpecialCodes) != 0 || isChecksumSilence;
                     s.Stereo.Add(h.Channels == 2 ? State.StereoCodeOf(special, hasCodes) : null);
                     if (h.Channels == 1)
                     {
