@@ -1,0 +1,55 @@
+{
+ "length": 49308,
+ "header": {
+  "offset": 0,
+  "length": 36,
+  "ck_size": 28,
+  "version": 3,
+  "bits": 0,
+  "flags": "fc14",
+  "flag_names": [
+   "raw",
+   "high",
+   "new-high",
+   "cancel-extreme",
+   "cross-decorr",
+   "new-decorr",
+   "joint-stereo",
+   "extreme-decorr"
+  ],
+  "shift": 0,
+  "total_samples": 24000,
+  "crc": "30faeec2",
+  "crc2": "00000000",
+  "extension": "RAW",
+  "extra_bc": 4,
+  "extras": "000000"
+ },
+ "figures": {
+  "channels": 2,
+  "sample_rate": 44100,
+  "bits_per_sample": 16,
+  "bytes_per_sample": 2,
+  "samples": 24000,
+  "mode": "lossless",
+  "compression_mode": "normal",
+  "stereo_coding": "Mid/side stereo",
+  "samples_from_data_chunk": null,
+  "total_samples_match": null
+ },
+ "bitstream": {
+  "offset": 36,
+  "length": 49272
+ },
+ "findings": [
+  {
+   "severity": "warning",
+   "code": "wavpack.legacy-extra-bytes-invalid"
+  }
+ ],
+ "stream": true,
+ "built": {
+  "description": "The header of a raw file says 4 bytes follow the last whole sample.",
+  "from": "external-wv340-raw-stereo.wv"
+ }
+}

@@ -65,7 +65,7 @@ Formats read so far ([details](docs/formats/README.md)):
 - AC-3 and E-AC-3, raw and in MP4, with the object audio (JOC) that Dolby Atmos adds; both are decoded for `--measure`
 - DTS (core, XCh, X96, XXCH and the DTS-HD extension substreams with the lossless extension's channel sets and the DTS:X signal), raw and in MP4; the core's subframes are read for "Coded Bandwidth" and block switching, and the core is decoded for `--measure`
 - DTS-HD files (`.dtshd`)
-- WavPack (lossless, hybrid and DSD), `.wv` and `.wvc`, with an optional decode that verifies the CRCs and the MD5 of the audio
+- WavPack (lossless, hybrid and DSD), `.wv` and `.wvc`, with an optional decode that verifies the CRCs and the MD5 of the audio; the files of WavPack 1 to 3 are read at header level, without a decode
 - FLAC (`.flac`, and in Ogg), with an optional decode that verifies the MD5 of the audio
 - Monkey's Audio (`.ape`), with an optional decode of files of versions 3.80 to 3.99 and 4.11 that verifies the CRC or checksum of every frame
 - TTA (`.tta`), verified by the CRC-32s of its header, seek table and frames, and decoded for `--measure` (audio format 1)

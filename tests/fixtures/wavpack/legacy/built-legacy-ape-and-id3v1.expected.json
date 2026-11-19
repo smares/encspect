@@ -1,0 +1,80 @@
+{
+ "length": 49562,
+ "header": {
+  "offset": 44,
+  "length": 36,
+  "ck_size": 28,
+  "version": 3,
+  "bits": 0,
+  "flags": "fc10",
+  "flag_names": [
+   "high",
+   "new-high",
+   "cancel-extreme",
+   "cross-decorr",
+   "new-decorr",
+   "joint-stereo",
+   "extreme-decorr"
+  ],
+  "shift": 0,
+  "total_samples": 24000,
+  "crc": "30faeec2",
+  "crc2": "00000000",
+  "extension": "WAV",
+  "extra_bc": 0,
+  "extras": "000000"
+ },
+ "wav": {
+  "riff_size": 96036,
+  "chunks": [
+   {
+    "id": "fmt ",
+    "offset": 12,
+    "size": 16
+   },
+   {
+    "id": "data",
+    "offset": 36,
+    "size": 96000
+   }
+  ],
+  "data_size": 96000,
+  "data_offset": 44,
+  "format": {
+   "tag": 1,
+   "channels": 2,
+   "sample_rate": 44100,
+   "byte_rate": 176400,
+   "block_align": 4,
+   "bits_per_sample": 16
+  }
+ },
+ "figures": {
+  "channels": 2,
+  "sample_rate": 44100,
+  "bits_per_sample": 16,
+  "bytes_per_sample": 2,
+  "samples": 24000,
+  "mode": "lossless",
+  "compression_mode": "normal",
+  "stereo_coding": "Mid/side stereo",
+  "samples_from_data_chunk": 24000,
+  "total_samples_match": true
+ },
+ "bitstream": {
+  "offset": 80,
+  "length": 49272
+ },
+ "findings": [],
+ "stream": true,
+ "trailing_tags": 210,
+ "built": {
+  "description": "An APEv2 tag and an ID3v1 tag after the bitstream.",
+  "from": "external-wv340-lossless-16-stereo.wv"
+ },
+ "crosscheck": {
+  "libwavpack_legacy": {
+   "opens": true
+  }
+ }
+}

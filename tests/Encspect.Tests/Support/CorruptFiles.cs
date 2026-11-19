@@ -54,6 +54,12 @@ internal static class CorruptFiles
                 yield return $"{family}/{Path.GetFileName(path)}";
             }
         }
+
+        // The WavPack files of versions 1 to 3 (the correction files alone are no format and are left out).
+        foreach (string path in Directory.EnumerateFiles(Path.Combine(Fixtures.FixtureDirectory, "wavpack", "legacy"), "*.wv", SearchOption.TopDirectoryOnly).Order(StringComparer.Ordinal))
+        {
+            yield return $"wavpack/legacy/{Path.GetFileName(path)}";
+        }
     }
 
     private enum VariantKind

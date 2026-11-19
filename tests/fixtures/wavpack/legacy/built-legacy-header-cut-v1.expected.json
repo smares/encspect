@@ -1,0 +1,51 @@
+{
+ "length": 52,
+ "wav": {
+  "riff_size": 96036,
+  "chunks": [
+   {
+    "id": "fmt ",
+    "offset": 12,
+    "size": 16
+   },
+   {
+    "id": "data",
+    "offset": 36,
+    "size": 96000
+   }
+  ],
+  "data_size": 96000,
+  "data_offset": 44,
+  "format": {
+   "tag": 1,
+   "channels": 2,
+   "sample_rate": 44100,
+   "byte_rate": 176400,
+   "block_align": 4,
+   "bits_per_sample": 16
+  }
+ },
+ "header": {
+  "offset": 44,
+  "length": 8,
+  "version": -1,
+  "cut": true,
+  "ck_size": 2
+ },
+ "findings": [
+  {
+   "severity": "warning",
+   "code": "wavpack.legacy-header-truncated"
+  }
+ ],
+ "stream": false,
+ "built": {
+  "description": "The data ends 8 bytes into the WavPack header of version 1, before the version field is complete.",
+  "from": "external-wv100-stereo-16.wv"
+ },
+ "crosscheck": {
+  "libwavpack_legacy": {
+   "opens": false
+  }
+ }
+}
