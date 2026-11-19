@@ -140,13 +140,13 @@
               "children": [
                 {
                   "name": "Confidence",
-                  "value": "Medium",
+                  "value": "High",
                   "offset": 0,
                   "length": 13816
                 },
                 {
                   "name": "Evidence",
-                  "value": "The reserved field of the data block has the low byte 0x01, as in every .ofs file of OptimFROG 5.100 in Encspect's test files, and the file name ends in .ofs, the extension of DualStream files",
+                  "value": "The reserved field of the data block has the low byte 0x01, as in every .ofs file of OptimFROG 5.100 in Encspect's test files, and the file name ends in .ofs, the extension of DualStream files, and the correction file external-ofs-quality0.ofc beside it belongs with it: its blocks match the file's data blocks and their checksums hold",
                   "offset": 0,
                   "length": 13816
                 }
@@ -531,6 +531,7 @@
         "isVbr": false,
         "verification": {
           "isVerified": true,
+          "withCorrection": true,
           "decoding": "noDecoder",
           "decodedSamples": 0,
           "checksums": [
@@ -538,6 +539,14 @@
               "name": "block CRC-32",
               "covers": "codedData",
               "coversAllAudio": true,
+              "stored": 1,
+              "checked": 1,
+              "failed": 0
+            },
+            {
+              "name": "correction block CRC-32",
+              "covers": "codedData",
+              "coversAllAudio": false,
               "stored": 1,
               "checked": 1,
               "failed": 0
@@ -552,14 +561,20 @@
             }
           ]
         },
+        "correction": {
+          "status": "consistent",
+          "source": "external-ofs-quality0.ofc",
+          "basis": "structure",
+          "problems": []
+        },
         "encoder": "OptimFROG 5.100",
         "encoderConfidence": "High",
         "claims": [
           {
             "kind": "lossy-part",
             "value": "DualStream",
-            "confidence": "Medium",
-            "evidence": "The reserved field of the data block has the low byte 0x01, as in every .ofs file of OptimFROG 5.100 in Encspect's test files, and the file name ends in .ofs, the extension of DualStream files"
+            "confidence": "High",
+            "evidence": "The reserved field of the data block has the low byte 0x01, as in every .ofs file of OptimFROG 5.100 in Encspect's test files, and the file name ends in .ofs, the extension of DualStream files, and the correction file external-ofs-quality0.ofc beside it belongs with it: its blocks match the file's data blocks and their checksums hold"
           }
         ],
         "series": [
@@ -588,6 +603,135 @@
         ]
       }
     ],
-    "findings": []
+    "findings": [],
+    "companions": [
+      {
+        "role": "correction",
+        "source": "external-ofs-quality0.ofc",
+        "root": {
+          "name": "Correction File",
+          "value": "OptimFROG",
+          "offset": 0,
+          "length": 28268,
+          "children": [
+            {
+              "name": "OptimFROG correction data",
+              "kind": "Stream",
+              "offset": 0,
+              "length": 28268,
+              "children": [
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 0,
+                  "length": 28268,
+                  "children": [
+                    {
+                      "name": "IsCorrectionFile",
+                      "value": true,
+                      "offset": 0,
+                      "length": 28268
+                    },
+                    {
+                      "name": "Blocks",
+                      "value": 1,
+                      "unit": "blocks",
+                      "offset": 0,
+                      "length": 28268
+                    },
+                    {
+                      "name": "Verified Block Checksums",
+                      "value": 1,
+                      "unit": "blocks",
+                      "offset": 0,
+                      "length": 28268
+                    }
+                  ]
+                },
+                {
+                  "name": "Correction Block",
+                  "value": 28268,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 28268,
+                  "children": [
+                    {
+                      "name": "Block ID",
+                      "value": "CORR",
+                      "offset": 0,
+                      "length": 4
+                    },
+                    {
+                      "name": "Block Length",
+                      "value": 28260,
+                      "unit": "bytes",
+                      "offset": 4,
+                      "length": 4
+                    },
+                    {
+                      "name": "CRC-32",
+                      "value": 617962301,
+                      "offset": 8,
+                      "length": 4
+                    },
+                    {
+                      "name": "Computed CRC-32",
+                      "value": 617962301,
+                      "offset": 8,
+                      "length": 4
+                    },
+                    {
+                      "name": "IsCrc32Valid",
+                      "value": true,
+                      "offset": 8,
+                      "length": 4
+                    },
+                    {
+                      "name": "Correction Data",
+                      "value": 28256,
+                      "unit": "bytes",
+                      "offset": 12,
+                      "length": 28256
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "streams": [
+          {
+            "nodes": [
+              [
+                0
+              ]
+            ],
+            "codec": "OptimFROG correction data",
+            "sampleRate": 0,
+            "channels": 0,
+            "samples": 0,
+            "duration": 0,
+            "isVbr": false,
+            "verification": {
+              "decoding": "noDecoder",
+              "decodedSamples": 0,
+              "checksums": [
+                {
+                  "name": "block CRC-32",
+                  "covers": "codedData",
+                  "coversAllAudio": false,
+                  "stored": 1,
+                  "checked": 1,
+                  "failed": 0
+                }
+              ]
+            },
+            "isCorrectionFile": true,
+            "series": []
+          }
+        ],
+        "findings": []
+      }
+    ]
   }
 ]

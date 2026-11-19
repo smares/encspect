@@ -640,6 +640,13 @@
             }
           ]
         },
+        "correction": {
+          "status": "unchecked",
+          "source": "external-ofs-lossywav.ofc",
+          "basis": "structure",
+          "problems": [],
+          "reason": "no folder to look in: the input is a stream"
+        },
         "encoder": "OptimFROG 5.100",
         "encoderConfidence": "High",
         "processor": "lossyWAV 1.4.2",
@@ -678,6 +685,18 @@
         ]
       }
     ],
-    "findings": []
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "correction.unchecked",
+        "message": "The correction file external-ofs-lossywav.ofc was not checked: no folder to look in: the input is a stream.",
+        "offset": 0,
+        "length": 13560,
+        "path": [
+          0
+        ],
+        "count": 1
+      }
+    ]
   }
 ]

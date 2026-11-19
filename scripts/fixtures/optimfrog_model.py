@@ -135,9 +135,47 @@ def fmt_fields(data, start, end):
     return None
 
 
-def manifest(data, extra=None):
+def companion_of(path):
+    """The committed correction file of a DualStream .ofs fixture, or None: the encoder's `-correction.ofc` file is committed next to the .ofs of its case as
+    `<stem>-data.ofc` or `<stem>-correction-data.ofc` (import_optimfrog_fixtures.py), and its manifest names it as `companion`."""
+    for suffix in ("-data.ofc", "-correction-data.ofc"):
+        candidate = path.with_name(path.stem + suffix)
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def pairing(data, companion):
+    """How a DualStream .ofs file stands with the file given as its correction file (docs/design/correction-files.md, "OptimFROG"): the check is on headers
+    and checksums only, as the .ofc stores no sample count, rate or position that is known. Returns {"status", "problems"}, each problem a kind and a count,
+    in the order the analyzer reports them: one CORR block for each data block (blocksMissing, blocksUnmatched), every CRC-32 holding (checksumsFail), no
+    block cut, no unknown block and nothing after the chain (cut)."""
+    data_blocks = [b for b in walk(data)[0] if b["id"] == "COMP"]
+    blocks, end = walk(companion)
+    if not blocks or blocks[0]["id"] != "CORR":
+        return {"status": "inconsistent", "problems": [{"kind": "notCorrectionData", "count": 1}]}
+    corr = [b for b in blocks if b["id"] == "CORR"]
+    problems = []
+    if len(data_blocks) > len(corr):
+        problems.append({"kind": "blocksMissing", "count": len(data_blocks) - len(corr)})
+    if len(corr) > len(data_blocks):
+        problems.append({"kind": "blocksUnmatched", "count": len(corr) - len(data_blocks)})
+    failed = sum(1 for b in corr if b["length"] >= 4 and b["end"] <= len(companion)
+                 and crc32(companion[b["offset"] + 12:b["end"]]) != struct.unpack_from("<I", companion, b["offset"] + 8)[0])
+    if failed:
+        problems.append({"kind": "checksumsFail", "count": failed})
+    cut = (sum(1 for b in blocks if b["end"] > len(companion)) + sum(1 for b in blocks if b["id"] != "CORR") + sum(1 for b in corr if b["length"] < 4)
+           + (1 if end < len(companion) else 0))
+    if cut:
+        problems.append({"kind": "cut", "count": cut})
+    return {"status": "inconsistent" if problems else "consistent", "problems": problems}
+
+
+def manifest(data, extra=None, companion=None):
     """The manifest of a fixture: the blocks, the main block, every data block with its CRC-32, the MD5, the stored header, the stream info, the
-    verification and the findings the analyzer must raise, all worked out here from the bytes by the specification."""
+    verification and the findings the analyzer must raise, all worked out here from the bytes by the specification. A DualStream .ofs file, which the
+    analyzer takes for the lossy part of a pair, also has its correction: the pairing with `companion`, the bytes of the .ofc the test hands the analyzer
+    (None where it is analyzed alone, which leaves the pair unchecked), and the findings that go with it."""
     blocks, end = walk(data)
     result = {"length": len(data), "end": end, "blocks": [dict(b) for b in blocks]}
     findings = []
@@ -188,6 +226,25 @@ def manifest(data, extra=None):
         if any(not c["crc_ok"] for c in corr):
             findings.append({"code": "optimfrog.block-crc-mismatch"})
     result["lossy"] = bool(comps) and all(c["reserved"] & 0xFF == 1 for c in comps)
+    if result["lossy"]:
+        if companion is None:
+            result["correction"] = {"status": "unchecked", "problems": []}
+            findings.append({"code": "correction.unchecked"})
+        else:
+            result["correction"] = pairing(data, companion)
+            findings += [{"code": "correction.inconsistent"} for _ in result["correction"]["problems"]]
+        if companion is not None:
+            corr_blocks = [b for b in walk(companion)[0] if b["id"] == "CORR"]
+            if corr_blocks:
+                whole = [b for b in corr_blocks if b["length"] >= 4 and b["end"] <= len(companion)]
+                failed = sum(1 for b in whole if crc32(companion[b["offset"] + 12:b["end"]]) != struct.unpack_from("<I", companion, b["offset"] + 8)[0])
+                cut = sum(1 for b in walk(companion)[0] if b["end"] > len(companion))
+                checksums = result["verification"]["checksums"]
+                checksums.insert(1, {"name": "correction block CRC-32", "stored": len(whole) + cut, "checked": len(whole), "failed": failed, "covers_all": False})
+            if result["correction"]["status"] == "consistent":
+                # A consistent pair confirms the claim (decision 7 of the design) and is what the stream's checksums vouch for together.
+                result["lossy_confidence"] = "High"
+                result["verification"]["with_correction"] = True
     result["findings"] = findings
     if extra:
         result.update(extra)
