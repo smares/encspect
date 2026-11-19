@@ -275,7 +275,7 @@ internal static class Summary
                 "The stream ends after a frame that is not flagged as the last one: the frames after it are missing.");
         }
 
-        if (r.Stream is { Samples: > 0 } info && f.IsLastFlagged && f.CutFrames == 0 && !f.HasGap && f.SkippedBytes == 0 && f.Samples != info.Samples)
+        if (r.Stream is { Samples: > 0 } info && f.IsLastFlagged && f.CutFrames == 0 && !f.HasGap && f.SkippedBytes == 0 && Layout.IsFrameSizeValid(info.FrameSizeType, info.SampleRate) && f.Samples != info.Samples)
         {
             long stated = info.Samples;
             long counted = f.Samples;
