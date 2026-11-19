@@ -330,7 +330,11 @@ def check_wvunpack_summary(name, manifest, path, report, work, problems):
     want = set()
     want.add("hybrid lossy" if statistic(report, "IsHybrid") else "lossless")
     mode = statistic(report, "Compression Mode")
-    if mode == "high":
+    if mode == "high" and stream_version(report) < 0x405:
+        # wvunpack shows the high mode of a stream older than 0x405 (WavPack before 4.40) as very high, the same algorithm under its later name
+        # (WavpackGetMode, common_utils.c); the report names it as the file's flags and its encoder do.
+        want.add("very high")
+    elif mode == "high":
         want.add("high")
     elif mode == "very high":
         want.add("very high")
@@ -552,6 +556,14 @@ def check_ffprobe(name, manifest, path, report, problems):
 
 MEDIAINFO_SETTINGS = [("IsFastMode", "-f"), ("IsHighMode", "-h"), ("IsVeryHighMode", "-hh"), ("CreatesCorrectionFile", "-c"), ("OptimizesCorrectionFile", "-cc"),
                       ("StoresMd5", "-m"), ("UsesDynamicNoiseShaping", "-use-dns")]
+
+
+def stream_version(report):
+    """The first block header's stream version (0x404 for the DOS build of 4.31), or 0x410 where the report shows none."""
+    for node in walk_blocks(report):
+        if node["name"] == "Block Header":
+            return next((f["value"] for f in node["children"] if f["name"] == "Stream Version"), 0x410)
+    return 0x410
 
 
 def config_flags(report):
