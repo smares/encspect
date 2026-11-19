@@ -5,7 +5,8 @@
     changes.py --event pull_request --files-from list.txt   # for tests and local runs
     changes.py --event push                  # runs everything
 
-On a pull request only the jobs whose inputs changed run; on a push to main, the nightly schedule and
+On a pull request only the jobs whose inputs changed run, and when the .NET-relevant changes all belong to format or tag
+projects only the unit tests those can affect (scope.py, areas.json); on a push to main, the nightly schedule and
 a manual run nothing is skipped. Whenever the change cannot be read, or a path is not known to any
 area, everything runs: a skipped check must always be a deliberate decision.
 
@@ -24,6 +25,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import scope as test_scope  # noqa: E402
 import shards as shard_config  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -356,9 +358,21 @@ def decide(event, files, root=ROOT, removed=()):
 NIGHTLY_EVENTS = ("schedule", "workflow_dispatch")
 
 
-def test_matrix(os_list, shards, include_nightly):
-    """One entry per platform and shard the event runs: a shard of the nightly run only is left out of a pull request and a push."""
-    return [{**p, "shard": s["name"], "filter": shard_config.filter_for(shards, s["name"], include_nightly)} for p in os_list for s in shards if shard_config.runs(s, include_nightly)]
+def test_matrix(os_list, shards, include_nightly, scope=None):
+    """One entry per platform and shard the event runs: a shard of the nightly run only is left out of a pull request and a push,
+    and so is a shard that the scope of a pull request leaves no test (the shard that takes the rest stays)."""
+    kept = [s for s in shards if shard_config.runs(s, include_nightly) and not (scope and test_scope.is_empty(scope, s))]
+    return [{**p, "shard": s["name"], "filter": test_scope.shard_filter(scope, s, shards, include_nightly) if scope else shard_config.filter_for(shards, s["name"], include_nightly)}
+            for p in os_list for s in kept]
+
+
+def scope_of(event, files, removed=(), root=ROOT):
+    """The scope of the unit tests of a pull request, or None when they run in full: every .NET-relevant changed path must
+    belong to a format or tag area, and nothing may be deleted under scripts/."""
+    if event != "pull_request" or files is None or any(r.startswith("scripts/") for r in removed):
+        return None
+    relevant = [f for f in files if f and matches(f, DOTNET) and not is_docs(f)]
+    return test_scope.plan(relevant, root)
 
 
 def platforms(event):
@@ -400,6 +414,9 @@ def main():
     else:
         files, removed = changed_files() if args.event == "pull_request" else (None, [])
     flags, reason = decide(args.event, files, removed=removed)
+    scope = scope_of(args.event, files, removed) if flags["unit-tests"] else None
+    if scope:
+        reason += "; " + scope.describe()
 
     os_list = platforms(args.event)
     shards = shard_config.load()
@@ -407,7 +424,7 @@ def main():
     outputs["reason"] = reason
     outputs["build-matrix"] = json.dumps(os_list, separators=(",", ":"))
     include_nightly = args.event in NIGHTLY_EVENTS
-    outputs["test-matrix"] = json.dumps(test_matrix(os_list, shards, include_nightly), separators=(",", ":"))
+    outputs["test-matrix"] = json.dumps(test_matrix(os_list, shards, include_nightly, scope), separators=(",", ":"))
     lines = [f"{k}={v}" for k, v in outputs.items()]
     if args.print or "GITHUB_OUTPUT" not in os.environ:
         print("\n".join(lines))
