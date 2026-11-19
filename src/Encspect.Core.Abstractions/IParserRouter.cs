@@ -16,5 +16,7 @@ public interface IParserRouter
 
     Node? ParseTag(AnalysisContext caller, string tagName, MappedBytes tag, Node parent);
 
+    Companion OpenCompanion(AnalysisContext caller, string extension);
+
     IDecodeSession StartDecoding(AnalysisContext caller, string codecId, DecodeSetup setup);
 }

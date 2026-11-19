@@ -6,7 +6,8 @@ namespace Encspect.Host;
 // the codec or tag parser, runs it inside the same exception boundary as the format parser, and
 // merges its findings and streams into the context that asked (a tag's encoder claims too, but not a codec parser's, which belong to its stream). A failure inside a
 // routed parser becomes a finding on the node the container gave it, so the container carries on.
-internal sealed class ParserRouter(IReadOnlyList<ICodecParser> codecs, IReadOnlyList<ITagParser> tags, IReadOnlyList<IDecoder>? decoders = null, DecodeRun? run = null) : IParserRouter
+internal sealed class ParserRouter(IReadOnlyList<ICodecParser> codecs, IReadOnlyList<ITagParser> tags, IReadOnlyList<IDecoder>? decoders = null, DecodeRun? run = null,
+    Analyzer.CompanionSession? companions = null) : IParserRouter
 {
     private readonly List<DecodeSession> _open = [];
 
@@ -117,6 +118,9 @@ internal sealed class ParserRouter(IReadOnlyList<ICodecParser> codecs, IReadOnly
 
         return shown;
     }
+
+    public Companion OpenCompanion(AnalysisContext caller, string extension) =>
+        companions?.Open(extension) ?? Companion.Unchecked(string.Empty, "the analysis has no place to look for it");
 
     public IDecodeSession StartDecoding(AnalysisContext caller, string codecId, DecodeSetup setup)
     {

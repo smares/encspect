@@ -130,6 +130,14 @@ public sealed record StreamInfo
 
     // Categories per frame for graphs and for the summary over the stream, such as the Layer III block types.
     public IReadOnlyList<CategorySeries> CategorySeries { get; init; } = [];
+
+    // How the stream stands with its correction file, for a coding that may have one (a WavPack hybrid file, an OptimFROG DualStream file); null for the
+    // others. The parser sets it; the host words it as findings and lines.
+    public CorrectionPairing? Correction { get; init; }
+
+    // True for a correction file's own stream: its data corrects the stream of another file and holds no audio of its own, so it counts in no duration, sample
+    // or bitrate of the file.
+    public bool IsCorrectionFile { get; init; }
 }
 
 public enum SeriesAxis

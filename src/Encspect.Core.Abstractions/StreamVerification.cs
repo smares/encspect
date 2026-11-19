@@ -72,6 +72,10 @@ public sealed record StreamVerification
     // text output and the GUI say "verified (lossy stream)"; JSON writes isLossy where it is true.
     public bool IsLossy { get; init; }
 
+    // True where the checksums vouch for the stream together with its correction file (a consistent pair): the text output and the front ends then say
+    // "with correction file". The host copies it from DecodeSetup.HasCorrection.
+    public bool WithCorrection { get; init; }
+
     public IReadOnlyList<ChecksumTally> Checksums { get; init; } = [];
 
     // False for a stream of a coding that stores no checksum at all (PCM), whose verification only says whether the audio was decoded: the text

@@ -300,6 +300,7 @@ internal sealed class DecodeSession : IDecodeSession
             Decoding = _status,
             DecodedSamples = _decodedSamples,
             IsLossy = _setup.IsLossy,
+            WithCorrection = _setup.HasCorrection,
             Checksums = tallies,
         };
         if (_record is not null)
