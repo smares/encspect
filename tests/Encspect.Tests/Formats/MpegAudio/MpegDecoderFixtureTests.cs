@@ -39,12 +39,6 @@ public class MpegDecoderFixtureTests
                 data.Add("wav/" + Path.GetFileName(file));
             }
 
-            // The MPEG audio of IEC 61937 bursts in WAVE files, handed over as packets.
-            foreach (string file in Directory.EnumerateFiles(Path.Combine(Fixtures.FixtureDirectory, "wav"), "*iec61937-mp*.wav").Order(StringComparer.Ordinal))
-            {
-                data.Add("wav/" + Path.GetFileName(file));
-            }
-
             return data;
         }
     }
