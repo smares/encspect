@@ -347,7 +347,7 @@ Nobody reads the code line by line, so correctness comes from automated checks t
 5. **Corrupt-file tests and fuzzing:** truncated, bit-flipped and garbage-prefixed files must never crash or hang the tool.
    - The fuzzer fails on `parse.failed` and on children that could not be built, as on an escaping exception.
 6. **Spec references in the code:** each parsed field cites the spec section it implements.
-7. **Independent review:** after each milestone, a separate review agent gets the code and the spec without the author's conclusions; its findings are recorded in the pull request.
+7. **Independent review:** every implementation pull request, before it merges, and each milestone get a separate review agent that has the diff and the spec without the author's conclusions; its findings are fixed first and recorded in the pull request.
 
 - The per-format fixtures, tools and their pinned versions are in [development.md, "Fixtures and cross-checks"](development.md#fixtures-and-cross-checks).
 - Nothing merges with a red pipeline. Work is pushed to its own branch, never to main directly.
