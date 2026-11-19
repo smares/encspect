@@ -295,7 +295,7 @@ internal static class Explain
     public const string StatIsFloat = "Whether the samples are 32-bit floating point numbers.";
     public const string StatIsDsd = "Whether the audio is DSD.";
     public const string StatMode = "The speed mode the encoder's config block records: fast, normal, high or very high.";
-    public const string StatExtraLevel = "The level of extra processing the config block records, or none.";
+    public const string StatExtraLevel = "The level of extra processing the config block records; none where extra processing is off, and not stored where it is on but the block holds no level, as WavPack before 4.40 writes it.";
     public const string StatTargetBits = "The bitrate the hybrid encoder aimed at in the first hybrid block, in bits per sample and channel.";
     public const string StatTargetRate = "The target bitrate over all channels: the target bits per sample times the sample rate times the channels.";
     public const string StatPasses = "How many decorrelation passes the blocks use.";
