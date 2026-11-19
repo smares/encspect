@@ -30,7 +30,7 @@ internal sealed class StreamDecoder : IFrameDecoder, ICorrectionDecoder
 
     // What decoding a hybrid block with its correction block costs a sample of a channel beyond the passes (the correction's read, the shaping of the error, the
     // sample-by-sample form of the passes, which cannot run block-wide because each correction feeds the next sample).
-    internal const long WorkPerCorrectedSample = 16;
+    internal const long WorkPerCorrectedSample = 48;
     internal const long WorkPerFloatSample = 16;
 
     private readonly DecodeContext _context;
