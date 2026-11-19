@@ -252,8 +252,13 @@ The order (the lead, 2026-11-17): the milestone's own items first, then cheap it
    - **ASF script command and marker contents** (done, 2026-11-18, #336).
 4. **One reading of the MPEG-2 multichannel extension per frame** (from the 0.3 milestone review, nit N4): the decoder reads each multichannel frame's side information twice more after the parser, allocating several arrays a frame.
    - A hand-off of the parsed extension from the parser to the decoder needs a change to `Core.Abstractions`; the cost stays inside `DecoderWorkTests` until then.
-5. **The coding graphs of formats whose data the parsers already read:** from the survey of [coding-graphs.md](design/coding-graphs.md#the-survey).
-   - **TrueHD's "Stereo Coding"** (the lead, 2026-11-10): from the matrix parameters of the substream blocks, which the parser already reads: a tally and its category series under the name, unit and axis of the other formats' "Stereo Coding" ([lossy-decoders.md, "Gap wave 3 figures this unlocks"](design/lossy-decoders.md#gap-wave-3-figures-this-unlocks)).
+5. **The coding graphs of formats whose data the parsers already read:** from the survey of [coding-graphs.md](design/coding-graphs.md#the-survey), checked again against the parsers on 2026-11-19 ([Re-survey, 2026-11-19](design/coding-graphs.md#re-survey-2026-11-19)); every group below is in 0.4, in this order (the lead, 2026-11-19). None needs a parser change.
+   - **"Stereo Coding" where it is missing:** TrueHD and MLP first (the lead, 2026-11-10: from the matrix parameters of the substream blocks, which the parser already reads, under the name, unit and axis of the other formats' "Stereo Coding"; [lossy-decoders.md, "Gap wave 3 figures this unlocks"](design/lossy-decoders.md#gap-wave-3-figures-this-unlocks)), then Monkey's Audio.
+   - **WMA:** "Block Sizes" and "Coded Bandwidth" per block, Pro's subframe sizes and Voice's frame types.
+   - **The first wave never finished:** Opus's modes, frame sizes and channel coding, Vorbis's modes, Speex's submodes.
+   - **Prediction:** the concept first, then FLAC's rows, with ALAC, WavPack and TrueHD's predictor orders under the same names.
+   - **"Compression Ratio"** in every lossless format, with the bit distribution on "Bitrate" in the formats that lack it (every golden with series changes).
+   - **The remaining wave 2 tallies as series:** MPEG audio, AAC and Musepack.
 6. **The coding's class on the coding line** (the lead, 2026-11-11): each stream states whether its coding is lossless, lossy or hybrid, a property of the coding, never of the audio's history.
    - **The classes,** set by each parser for every format: lossless for linear and floating-point PCM and the lossless codecs; lossy for A-law and mu-law (ITU-T G.711 rounds 13- or 14-bit samples to 8 bits), the ADPCM codings and the perceptual codecs; a WavPack hybrid or OptimFROG DualStream file lossless only with its correction file (item 3), lossy without it, which `StreamVerification.IsLossy` then follows.
    - **lossyWAV:** a file it processed keeps the class of its coding, with the processor claim beside it.
