@@ -451,7 +451,16 @@
   },
   "file": "main file"
  },
- "findings": [],
+ "findings": [
+  {
+   "code": "correction.missing",
+   "contains": "was found beside the file"
+  }
+ ],
+ "correction": {
+  "status": "missing",
+  "problems": []
+ },
  "crosscheck": {
   "valid": true,
   "decode": {
@@ -459,5 +468,6 @@
    "samples": 24000,
    "errors": 0
   }
- }
+ },
+ "companion": null
 }

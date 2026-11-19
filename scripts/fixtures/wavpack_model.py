@@ -294,7 +294,135 @@ def stream_info(data, entries):
             "sets": len(grouped), "declared": h["total"] if h["index"] == 0 else None}
 
 
-def manifest(data, start, end, extra=None):
+# The header bits that state the stream, not how a block is coded (Pairing.StreamFlags): the sample size, mono, float, 32-bit integer and false stereo
+# flags, the shift, the rate and DSD.
+STREAM_FLAGS = 0x3 | 0x4 | 0x80 | 0x100 | (0x1F << 13) | (0xF << 23) | FALSE_STEREO | DSD
+CONFIG_CREATE_WVC = 0x80000
+
+# What a hybrid file's lookup of its correction file found, where it is not bytes: nothing beside the file.
+MISSING = "missing"
+
+
+def hybrid_blocks(entries):
+    """The blocks of a hybrid main file that take a correction block: with audio and the hybrid flag."""
+    return [e for e in entries if e["kind"] == "block" and e["header"]["samples"] and e["header"]["flags"] & HYBRID]
+
+
+def is_correction(entries):
+    """Whether the blocks with audio hold correction data only: a correction or extra bitstream and no bitstream of their own."""
+    audio = [e for e in entries if e["kind"] == "block" and e["header"]["samples"]]
+    return bool(audio) and not any(has(e, 0x0A) or has(e, 0x0E) for e in audio) and any(has(e, 0x0B) or has(e, 0x0C) for e in audio)
+
+
+def match(main, other):
+    """libwavpack's match_wvc_header (open_utils.c): 0 the correction block is the main block's, 1 it comes before it (the next one is read), -1 the main
+    block has none."""
+    if main["index"] == other["index"] and main["samples"] == other["samples"]:
+        if main["flags"] == other["flags"]:
+            return 0
+        in_main = (-1 if main["flags"] & INITIAL else 0) + (1 if main["flags"] & FINAL else 0)
+        in_other = (-1 if other["flags"] & INITIAL else 0) + (1 if other["flags"] & FINAL else 0)
+        return 1 if in_other - in_main < 0 else -1
+    return 1 if (other["index"] - main["index"]) & 0x8000000000 else -1
+
+
+def config_flags(data, entries):
+    """The config flags of the first config block that holds them (read_config_info), or None."""
+    for e in entries:
+        if e["kind"] != "block":
+            continue
+        for i, p, hl, size, length, clipped in e["sub_blocks"]:
+            if i & 0x3F == 0x25 and not clipped and length >= 3:
+                d = data[e["offset"] + p + hl:e["offset"] + p + hl + length]
+                return d[0] << 8 | d[1] << 16 | d[2] << 24
+    return None
+
+
+def pairing(main_entries, other_data):
+    """How a hybrid file's blocks stand with the file given as its correction file (docs/design/correction-files.md, "WavPack"): {"status", "problems",
+    "companion"}, each problem a kind and a count, in the order the analyzer reports them. The blocks are matched as libwavpack matches them; a companion that
+    states another stream is not matched at all (one cause); the checksums and the damage are the companion's own."""
+    entries = walk(other_data, 0, len(other_data))
+    if not is_correction(entries):
+        return {"status": "inconsistent", "problems": [{"kind": "notCorrectionData", "count": 1}], "entries": entries}
+    mains = hybrid_blocks(main_entries)
+    audio = [e for e in entries if e["kind"] == "block" and e["header"]["samples"]]
+    problems = []
+    first = audio[0]["header"]
+    if mains and (mains[0]["header"]["version"] != first["version"] or mains[0]["header"]["total"] != first["total"] or mains[0]["header"]["index"] != first["index"]
+                  or (mains[0]["header"]["flags"] ^ first["flags"]) & STREAM_FLAGS):
+        problems.append({"kind": "streamDiffers", "count": 1})
+    else:
+        missing = unmatched = 0
+        j = 0
+        for m in mains:
+            while True:
+                if j >= len(audio):
+                    missing += 1
+                    break
+                result = match(m["header"], audio[j]["header"])
+                if result == -1:
+                    missing += 1
+                    break
+                j += 1
+                if result == 0:
+                    break
+                unmatched += 1
+        unmatched += len(audio) - j
+        if missing:
+            problems.append({"kind": "blocksMissing", "count": missing})
+        if unmatched:
+            problems.append({"kind": "blocksUnmatched", "count": unmatched})
+    failed = cut = 0
+    for e in entries:
+        if e["kind"] == "skipped":
+            cut += 1
+        elif e["header"]["samples"]:
+            if e["status"]:
+                cut += 1
+            elif not verifies(e):
+                failed += 1
+    if failed:
+        problems.append({"kind": "checksumsFail", "count": failed})
+    if cut:
+        problems.append({"kind": "cut", "count": cut})
+    return {"status": "inconsistent" if problems else "consistent", "problems": problems, "entries": entries}
+
+
+FINDING_TEXT = {"notCorrectionData": "holds no correction data", "streamDiffers": "states another stream", "blocksMissing": "lacks",
+                "blocksUnmatched": "that no block of the file matches", "checksumsFail": "checksum", "cut": "is cut"}
+
+
+def correction(data, entries, info, companion):
+    """The pairing of a hybrid main file that has a correction file to look for, the findings it raises and the tally the verification gains, or None for a
+    file without the concept. companion is the bytes of the file the lookup finds, MISSING where it finds none, or None where nothing was looked for."""
+    if info is None or not info["hybrid"] or info["correction"]:
+        return None
+    findings, tally = [], None
+    if companion is None:
+        result = {"status": "unchecked", "problems": []}
+        findings.append({"code": "correction.unchecked", "contains": "was not checked"})
+    elif companion is MISSING:
+        flags = config_flags(data, entries)
+        if flags is not None and not flags & CONFIG_CREATE_WVC:
+            result = {"status": "notWritten", "problems": []}
+        else:
+            result = {"status": "missing", "problems": []}
+            findings.append({"code": "correction.missing", "contains": "was found beside the file"})
+    else:
+        found = pairing(entries, companion)
+        result = {"status": found["status"], "problems": found["problems"]}
+        findings += [{"code": "correction.inconsistent", "contains": FINDING_TEXT[p["kind"]]} for p in found["problems"]]
+        if is_correction(found["entries"]):
+            blocks = [e for e in found["entries"] if e["kind"] == "block"]
+            missing = sum(1 for e in blocks if e["checksum"] is None and e["header"]["flags"] & 0x10000000 and "truncated" not in e["status"])
+            failed = sum(1 for e in blocks if e["checksum"] == "invalid") + missing
+            stored = sum(1 for e in blocks if e["checksum"] is not None) + missing
+            tally = {"name": "correction block checksum", "covers": "codedData", "coversAllAudio": False, "stored": stored, "checked": stored, "failed": failed}
+    return result, findings, tally
+
+
+def manifest(data, start, end, extra=None, companion=None):
     entries = walk(data, start, end)
     result = {"length": len(data), "blocks": [], "skipped": []}
     for e in entries:
@@ -315,6 +443,14 @@ def manifest(data, start, end, extra=None):
     if expected is not None:
         result.update(expected)
     result.update(extra or {})
+    found = correction(data, entries, info, companion)
+    if found is not None:
+        status, findings, tally = found
+        result["correction"] = status
+        result["findings"] = list(result.get("findings", [])) + findings
+        if tally is not None and expected is not None:
+            for mode in result["verification"].values():
+                mode["checksums"].insert(1, dict(tally))
     return result
 
 

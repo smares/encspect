@@ -82,7 +82,8 @@ internal static class Fixtures
     }
 
     // A main file whose manifest names a "companion" (the committed correction file, which keeps its own name) is analyzed with it, as its
-    // correction file; any other fixture is analyzed from a stream, which has no folder to look in.
+    // correction file, and one whose manifest has a companion of null with a lookup that finds none; any other fixture is analyzed from a stream,
+    // which has no folder to look in.
     public static AnalysisOptions? CompanionOptions(string name)
     {
         string manifest = MpegCompanion(name, ".expected.json");
@@ -90,6 +91,11 @@ internal static class Fixtures
             || !LoadMpegManifest(name).TryGetProperty("companion", out JsonElement companion))
         {
             return null;
+        }
+
+        if (companion.ValueKind == JsonValueKind.Null)
+        {
+            return new AnalysisOptions { Companions = CompanionSource.From(_ => null) };
         }
 
         // Whatever extension the parser asks for gets the file the manifest names (an .ofr as the companion of an .ofs, say).

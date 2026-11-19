@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using Encspect.Core;
+using Encspect.Host;
 
 namespace Encspect.Tests;
 
@@ -60,7 +61,54 @@ public class WavPackFixtureTests
         }
 
         CheckFindings(manifest.GetProperty("findings"), report.Findings);
+        CheckPairing(manifest, name, report);
     }
+
+    // The pairing the manifest works out from both files (wavpack_model.pairing), the companion's report and its tree, which equals the tree of the file analyzed alone.
+    private static void CheckPairing(JsonElement manifest, string name, Report report)
+    {
+        if (!manifest.TryGetProperty("correction", out JsonElement expected))
+        {
+            Assert.All(report.Streams, s => Assert.Null(s.Correction));
+            Assert.Empty(report.Companions);
+            return;
+        }
+
+        CorrectionPairing pairing = report.Streams.Single().Correction!;
+        Assert.Equal(expected.GetProperty("status").GetString(), CorrectionText.Word(pairing.Status));
+        Assert.Equal(expected.GetProperty("problems").EnumerateArray().Select(p => (p.GetProperty("kind").GetString()!, p.GetProperty("count").GetInt64())),
+            pairing.Problems.Select(p => (CorrectionText.Word(p.Kind), p.Count)));
+        Assert.Equal(CorrectionBasis.Structure, pairing.Basis);
+        string expectedName = Path.GetFileNameWithoutExtension(name) + ".wvc";
+        if (!manifest.TryGetProperty("companion", out JsonElement companion) || companion.ValueKind == JsonValueKind.Null)
+        {
+            // A lookup that finds nothing names the file it looked for; from a stream there is no name.
+            Assert.Equal(manifest.TryGetProperty("companion", out _) ? expectedName : null, pairing.Source);
+            Assert.Empty(report.Companions);
+            return;
+        }
+
+        Assert.Equal(expectedName, pairing.Source);
+        CompanionReport pair = Assert.Single(report.Companions);
+        Assert.Equal(CompanionReport.Correction, pair.Role);
+        Assert.Equal("Correction File", pair.Report.Root.Name);
+        Assert.Equal(expectedName, pair.Report.Source);
+        Assert.DoesNotContain(pair.Report.Findings, f => f.Code == "wavpack.correction-file");
+        Assert.All(pair.Report.Findings, f => Assert.NotNull(f.Path));
+        bool isCorrection = pairing.Problems.All(p => p.Kind != CorrectionProblemKind.NotCorrectionData);
+        Assert.Equal(isCorrection, pair.Report.Streams.Count == 1);
+        Assert.All(pair.Report.Streams, s => Assert.True(s.IsCorrectionFile));
+        string path = Path.Combine(Fixtures.FixtureDirectory, "wavpack", companion.GetString()!);
+        if (isCorrection && new FileInfo(path).Length > 0)
+        {
+            using FileStream alone = File.OpenRead(path);
+            Report reference = Analyzer.CreateDefault().Analyze(companion.GetString()!, alone);
+            Assert.Equal(Dump(reference.Root.Children.Single(c => c.Kind == NodeKind.Stream)), Dump(pair.Report.Root.Children.Single(c => c.Kind == NodeKind.Stream)));
+        }
+    }
+
+    private static string Dump(Node node) =>
+        $"{node.Name}={node.Value}@{node.Offset}+{node.Length}:{node.Description}[{string.Join(",", node.Children.Select(Dump))}]";
 
     [Theory]
     [MemberData(nameof(Names))]

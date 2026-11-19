@@ -195,6 +195,11 @@ def make_input(spec, work):
     return path
 
 
+# Main files whose test looks for a correction file and finds none: the one written with -c whose .wvc was not kept (missing), and the one written without
+# -c (the encoder wrote none). The other hybrid files are analyzed from a stream, which has no folder, so their pair is unchecked.
+NO_CORRECTION_FILE = {"hybrid-b4-correction-md5", "hybrid-b4-md5"}
+
+
 def encoder_version():
     return subprocess.run(["wavpack", "--version"], capture_output=True, text=True).stdout.strip()
 
@@ -264,11 +269,14 @@ def decode_expectation(path, result):
     return {"opens": True, "samples": info["samples"] // (8 if is_dsd else 1), "errors": 0}
 
 
-def build_manifest(path, encoder, findings=()):
+def build_manifest(path, encoder, findings=(), companion=None):
     data = path.read_bytes()
     end, top = regions(data, path, "apev2" in path.name)
-    result = m.manifest(data, 0, end, {"regions": top, "encoder": encoder, "findings": [{"code": c, "contains": t} for c, t in findings]})
+    result = m.manifest(data, 0, end, {"regions": top, "encoder": encoder, "findings": [{"code": c, "contains": t} for c, t in findings]}, companion=companion)
     result["crosscheck"] = {"valid": True, "decode": decode_expectation(path, result)}
+    if isinstance(companion, bytes):
+        # An encoder's own pair: libwavpack opens it with the correction file and unpacks every sample without an error.
+        result["crosscheck"]["pair"] = {"opens": True, "mode_wvc": True, "samples": result["crosscheck"]["decode"]["samples"], "errors": 0}
     return result
 
 
@@ -305,7 +313,17 @@ def main():
                 if name == "apev2-tag":
                     # wavpack writes the items in the order given, not sorted by size.
                     findings.append(("ape.items-unsorted", "is smaller than the item before it"))
-                manifest_path(path).write_text(json.dumps(build_manifest(path, note, findings), indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+                companion = None
+                if kind == "wv" and "wvc" in files:
+                    companion = produced["wvc"].read_bytes()
+                elif kind == "wv" and name in NO_CORRECTION_FILE:
+                    companion = m.MISSING
+                manifest = build_manifest(path, note, findings, companion)
+                if isinstance(companion, bytes):
+                    manifest["companion"] = produced["wvc"].name
+                elif companion is m.MISSING:
+                    manifest["companion"] = None
+                manifest_path(path).write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
                 count += 1
     print(f"Wrote {count} {'manifests' if only_manifests else 'fixtures'} to {OUT}")
 
