@@ -532,7 +532,11 @@ internal static class Reader
                 if (listed)
                 {
                     bool hasCodes = (status & EntryStatus.HasSpecialCodes) != 0 || isChecksumSilence;
-                    s.Stereo.Add(h.Channels == 2 ? State.StereoCodeOf(special, hasCodes) : null);
+                    if (h.Channels == 2)
+                    {
+                        s.Stereo.Add(State.StereoCodeOf(special, hasCodes));
+                    }
+
                     if (h.Channels == 1)
                     {
                         bool silent = hasCodes && (special & 1) != 0;
