@@ -12,3 +12,7 @@ references: Encspect's TrueHD and MLP format description (docs/design/truehd-for
 **Arithmetic.** One product reaches 37 bits, so the sums are 64-bit and only the shifted result is kept as 32 bits.
 
 **What you see.** The matrices of a block with the channel each replaces, the fractional bits and whether it bypasses the least significant bit, and the output shifts. A matrix count above 8 (6 for MLP), an output channel past the last matrix channel, or more than 14 fractional bits is a finding.
+
+**Stereo Coding.** For the two-channel presentation (substream 0, two matrix channels) the report counts how the matrices in force at the end of each access unit combine the two coded channels into left and right: left/right stereo, left/side stereo, side/right stereo, mid/side stereo, or a weighted mix (any other combination, also both channels rebuilt from one). This is the arithmetic, not a choice the format names, and every coding is inverted exactly. In a stream of more channels the presentation is a downmix, and says nothing about the other channels.
+
+**Observed.** In Encspect's test files, FFmpeg 6.1.1's encoder codes stereo as one channel less half of the other (a weighted mix) and writes no matrices for more than two channels. The analyzer does not use this.
