@@ -103,7 +103,7 @@ public static class CorrectionText
         CorrectionProblemKind.StreamDiffers => "states another stream",
         CorrectionProblemKind.BlocksMissing => $"{Counts.Of(problem.Count, "correction block", "correction blocks")} missing",
         CorrectionProblemKind.BlocksUnmatched => $"{Counts.Of(problem.Count, "correction block", "correction blocks")} match no block",
-        CorrectionProblemKind.ChecksumsFail => $"{Counts.Of(problem.Count, "correction block checksum", "correction block checksums")} fail",
+        CorrectionProblemKind.ChecksumsFail => $"{Counts.Of(problem.Count, "correction block checksum", "correction block checksums")} {Counts.Agree(problem.Count, "fails", "fail")}",
         _ => "cut",
     };
 
