@@ -99,7 +99,7 @@ public sealed partial class Mp4Parser
             f.U32(node, "Samples Per Packet", Explain.SamplesPerPacket);
             f.U32(node, "Bytes Per Packet", Explain.BytesPerPacket);
             f.U32(node, "Bytes Per Frame", Explain.BytesPerFrame);
-            entry.BytesPerSample = f.U32(node, "Bytes Per Sample", Explain.BytesPerSample);
+            f.U32(node, "Bytes Per Sample", Explain.BytesPerSample);
         }
         else if (quickTime && version == 2 && f.Remaining >= 36)
         {

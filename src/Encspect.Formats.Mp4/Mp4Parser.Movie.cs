@@ -254,7 +254,8 @@ public sealed partial class Mp4Parser
             return;
         }
 
-        ushort value = f.U16(node, "Little-Endian", Explain.Enda);
+        ushort value = f.U16(node, "IsLittleEndian", Explain.Enda);
+        node.Children[^1].Value = NodeValue.Boolean(value != 0);
         node.Value = value != 0 ? "little-endian" : "big-endian";
         if (state.CurrentEntry is { IsLittleEndianByEnda: null } entry)
         {

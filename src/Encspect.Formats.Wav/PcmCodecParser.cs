@@ -24,9 +24,9 @@ public sealed class PcmCodecParser : ICodecParser
 
         Node node = context.Parent;
         int channels = format.Channels;
-        if (channels < 1)
+        if (channels is < 1 or > PcmCoding.MaxChannels)
         {
-            throw new InvalidDataException("The container states no channels for the PCM samples");
+            throw new InvalidDataException($"The container states {channels} channels for the PCM samples, where 1 to {PcmCoding.MaxChannels} are read");
         }
 
         long frameBytes = coding.FrameBytes(channels);
@@ -137,7 +137,7 @@ public sealed class PcmCodecParser : ICodecParser
         int capacity = (int)Math.Max(PcmFeed.SliceBytes / frameBytes, 1) * (int)frameBytes;
         byte[] buffer = new byte[capacity];
         int held = 0;
-        long at = -1;
+        var pieces = new List<ByteRange>();
         long done = 0;
         int index = 0;
         foreach (MappedBytes packet in packets)
@@ -156,30 +156,40 @@ public sealed class PcmCodecParser : ICodecParser
             int position = 0;
             while (position < data.Length && done < frames)
             {
-                if (held == 0)
+                int take = Math.Min(data.Length - position, capacity - held);
+
+                // A slice that spans packets lies in the runs of the file the packets came from, which need not follow one another.
+                foreach (ByteRange piece in packet.FileRanges(position, position + take))
                 {
-                    at = packet.OffsetOf(position);
+                    if (pieces.Count > 0 && pieces[^1].End == piece.Offset)
+                    {
+                        pieces[^1] = pieces[^1] with { Length = pieces[^1].Length + piece.Length };
+                    }
+                    else
+                    {
+                        pieces.Add(piece);
+                    }
                 }
 
-                int take = Math.Min(data.Length - position, capacity - held);
                 data.Slice(position, take).CopyTo(buffer.AsSpan(held));
                 held += take;
                 position += take;
                 if (held == capacity)
                 {
-                    done = Hand(session, buffer, held, at, node, frameBytes, done, frames);
+                    done = Hand(session, buffer, held, pieces, node, frameBytes, done, frames);
                     held = 0;
+                    pieces.Clear();
                 }
             }
         }
 
         if (held >= frameBytes && done < frames)
         {
-            Hand(session, buffer, held, at, node, frameBytes, done, frames);
+            Hand(session, buffer, held, pieces, node, frameBytes, done, frames);
         }
     }
 
-    private static long Hand(IDecodeSession session, byte[] buffer, int held, long at, Node node, long frameBytes, long done, long frames)
+    private static long Hand(IDecodeSession session, byte[] buffer, int held, List<ByteRange> pieces, Node node, long frameBytes, long done, long frames)
     {
         int count = (int)Math.Min(held / frameBytes, frames - done);
         if (count < 1 || !session.IsDecoding)
@@ -187,7 +197,35 @@ public sealed class PcmCodecParser : ICodecParser
             return done;
         }
 
-        session.Decode(new CodedFrame(new MappedBytes(buffer.AsMemory(0, (int)(count * frameBytes)), at), node.Name, done, count) { Node = node });
+        session.Decode(new CodedFrame(SliceOf(buffer, (int)(count * frameBytes), pieces), node.Name, done, count) { Node = node });
         return done + count;
+    }
+
+    // The first bytes of the buffer with the runs of the file they lie in, cut to their length; packets that do not follow one another in file order are placed
+    // at the first one's offset.
+    private static MappedBytes SliceOf(byte[] buffer, int length, List<ByteRange> pieces)
+    {
+        var ranges = new List<ByteRange>();
+        long left = length;
+        long previousEnd = -1;
+        foreach (ByteRange piece in pieces)
+        {
+            if (left <= 0)
+            {
+                break;
+            }
+
+            if (piece.Offset < previousEnd)
+            {
+                return new MappedBytes(buffer.AsMemory(0, length), pieces[0].Offset);
+            }
+
+            long take = Math.Min(piece.Length, left);
+            ranges.Add(new ByteRange(piece.Offset, take));
+            previousEnd = piece.Offset + take;
+            left -= take;
+        }
+
+        return new MappedBytes(buffer.AsMemory(0, length), ranges);
     }
 }

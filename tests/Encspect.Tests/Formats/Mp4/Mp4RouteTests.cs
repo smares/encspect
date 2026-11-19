@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Text.Json;
 using Encspect.Core;
 using Encspect.Host;
@@ -122,6 +123,28 @@ public class Mp4RouteTests
         var decoding = new RecordingStream(file);
         Analyzer.CreateDefault().Analyze("p.mp4", decoding, new AnalysisOptions { Decoding = new DecodeOptions { Output = new PcmHashingSink().Declare } });
         Assert.True(decoding.BytesIn(start, file.Length) >= plain.BytesIn(start, file.Length) + media.Length);
+    }
+
+    // A QuickTime description of version 2 can state up to 2^31 - 1 channels; a layout whose sample frame no slice could hold is not read as PCM, so that nothing
+    // overflows and the decoder is not started (it was: an OverflowException, decode.failed).
+    [Theory]
+    [InlineData(1 << 30, 0)]
+    [InlineData(70000, 4 * 70000)]
+    public void ALayoutOfMoreChannelsThanWavCanStateIsNotReadAsPcm(int channels, int bytesPerPacket)
+    {
+        byte[] file = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "mp4/quicktime-lpcm-float.mov"));
+        int at = file.AsSpan().IndexOf("lpcm"u8);
+        Assert.True(at > 0);
+        int channelsAt = at + 4 + 6 + 2 + 16 + 4 + 8 + 4;
+        Assert.Equal(2, BinaryPrimitives.ReadInt32BigEndian(file.AsSpan(channelsAt)));
+        BinaryPrimitives.WriteInt32BigEndian(file.AsSpan(channelsAt), channels);
+        BinaryPrimitives.WriteInt32BigEndian(file.AsSpan(channelsAt + 16), bytesPerPacket);
+
+        Report report = Analyzer.CreateDefault().Analyze("c.mov", new MemoryStream(file), new AnalysisOptions { Decoding = new DecodeOptions { Output = new PcmHashingSink().Declare } });
+
+        Assert.DoesNotContain(report.Findings, f => f.Code is "decode.failed" or "parse.failed");
+        Assert.DoesNotContain(report.Streams, s => s.Codec.StartsWith("PCM", StringComparison.Ordinal));
+        Assert.Contains(report.Findings, f => f.Code == "mp4.codec-not-analyzed");
     }
 
     private sealed class RecordingStream(byte[] data) : MemoryStream(data)
