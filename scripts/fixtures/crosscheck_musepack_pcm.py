@@ -65,8 +65,8 @@ NOT_COMPARED = {
     "sv6-seek-tag.mpc": "libmpcdec 1.2.6's stream reader does not skip the ID3v2 tag the file starts with",
     "sv8-sample-count-unknown.mpc": "the header's sample count is 0 (unknown), so libmpcdec's trimmed range is empty",
     "sv7-resolution-invalid.mpc": "libmpcdec stops at the first frame, which has a resolution it rejects; the analyzer loses it, withholds the 32 frames after it and decodes the rest",
-    "sv8-audio-before-header.mpc": "an audio packet comes before the stream header, where libmpcdec stops; the analyzer decodes the stream",
-    "sv8-invalid-key-in-run.mpc": "a key frame libmpcdec rejects ends its decoding; the analyzer loses the frame, withholds 480 samples and decodes the rest",
+    "sv8-audio-before-header.mpc": "an audio packet before the stream header (libmpcdec decodes no sample; the analyzer reads the stream header and decodes the packets)",
+    "sv8-invalid-key-in-run.mpc": "libmpcdec stops decoding at a packet key outside A to Z; the analyzer reports it and decodes the packets it can read",
 }
 
 
