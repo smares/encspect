@@ -1,0 +1,572 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "external-wv340-trailer-only.wv",
+    "root": {
+      "name": "File",
+      "value": "WavPack",
+      "offset": 0,
+      "length": 49404,
+      "children": [
+        {
+          "name": "WavPack",
+          "kind": "Stream",
+          "offset": 0,
+          "length": 49404,
+          "children": [
+            {
+              "name": "Encoder",
+              "value": "WavPack 3",
+              "offset": 0,
+              "length": 49404,
+              "children": [
+                {
+                  "name": "Confidence",
+                  "value": "Medium",
+                  "offset": 0,
+                  "length": 49404
+                },
+                {
+                  "name": "Evidence",
+                  "value": "The version field of the WavPack header is 3; libwavpack reports it as the major version of the program that wrote the file. The Cool Edit filter of the 3.97 sources writes version 3 as well, from a header it builds (cool_wv.c)",
+                  "offset": 0,
+                  "length": 49404
+                }
+              ]
+            },
+            {
+              "name": "Statistics",
+              "kind": "Statistics",
+              "offset": 0,
+              "length": 49404,
+              "children": [
+                {
+                  "name": "Samples",
+                  "value": 24000,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 49404
+                },
+                {
+                  "name": "Duration",
+                  "value": 0.54421768707483,
+                  "unit": "s",
+                  "offset": 0,
+                  "length": 49404
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 0,
+                  "length": 49404
+                },
+                {
+                  "name": "Channels",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 0,
+                  "length": 49404
+                },
+                {
+                  "name": "Channel Layout",
+                  "value": "stereo (front left, front right)",
+                  "offset": 0,
+                  "length": 49404
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 0,
+                  "length": 49404
+                },
+                {
+                  "name": "IsLossless",
+                  "value": true,
+                  "offset": 0,
+                  "length": 49404
+                },
+                {
+                  "name": "IsHybrid",
+                  "value": false,
+                  "offset": 0,
+                  "length": 49404
+                },
+                {
+                  "name": "IsRaw",
+                  "value": false,
+                  "offset": 0,
+                  "length": 49404
+                },
+                {
+                  "name": "IsNoiseShaped",
+                  "value": false,
+                  "offset": 0,
+                  "length": 49404
+                },
+                {
+                  "name": "Compression Mode",
+                  "value": "normal",
+                  "offset": 0,
+                  "length": 49404
+                },
+                {
+                  "name": "Stereo Coding",
+                  "value": "Mid/side stereo",
+                  "offset": 0,
+                  "length": 49404
+                },
+                {
+                  "name": "Source Extension",
+                  "value": "WAV",
+                  "offset": 0,
+                  "length": 49404
+                },
+                {
+                  "name": "Average Bitrate",
+                  "value": 724.2984,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 49404
+                }
+              ]
+            },
+            {
+              "name": "WAV Header",
+              "offset": 0,
+              "length": 44,
+              "children": [
+                {
+                  "name": "RIFF Chunk",
+                  "offset": 0,
+                  "length": 12,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "RIFF",
+                      "offset": 0,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 96072,
+                      "unit": "bytes",
+                      "offset": 4,
+                      "length": 4
+                    },
+                    {
+                      "name": "Form Type",
+                      "value": "WAVE",
+                      "offset": 8,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "fmt Chunk",
+                  "offset": 12,
+                  "length": 24,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "fmt ",
+                      "offset": 12,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 16,
+                      "unit": "bytes",
+                      "offset": 16,
+                      "length": 4
+                    },
+                    {
+                      "name": "Format Tag",
+                      "value": "PCM",
+                      "offset": 20,
+                      "length": 2
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 2,
+                      "unit": "channels",
+                      "offset": 22,
+                      "length": 2
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 44100,
+                      "unit": "Hz",
+                      "offset": 24,
+                      "length": 4
+                    },
+                    {
+                      "name": "Byte Rate",
+                      "value": 176400,
+                      "unit": "bytes/s",
+                      "offset": 28,
+                      "length": 4
+                    },
+                    {
+                      "name": "Block Align",
+                      "value": 4,
+                      "unit": "bytes",
+                      "offset": 32,
+                      "length": 2
+                    },
+                    {
+                      "name": "Bits Per Sample",
+                      "value": 16,
+                      "unit": "bits",
+                      "offset": 34,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "data Chunk",
+                  "offset": 36,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "data",
+                      "offset": 36,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 96000,
+                      "unit": "bytes",
+                      "offset": 40,
+                      "length": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "WavPack Header",
+              "offset": 44,
+              "length": 36,
+              "children": [
+                {
+                  "name": "ID",
+                  "value": "wvpk",
+                  "offset": 44,
+                  "length": 4
+                },
+                {
+                  "name": "Size",
+                  "value": 28,
+                  "unit": "bytes",
+                  "offset": 48,
+                  "length": 4
+                },
+                {
+                  "name": "Version",
+                  "value": 3,
+                  "offset": 52,
+                  "length": 2
+                },
+                {
+                  "name": "Lossy Bit Limit",
+                  "value": 0,
+                  "unit": "bits",
+                  "offset": 54,
+                  "length": 2
+                },
+                {
+                  "name": "Flags",
+                  "value": 64528,
+                  "offset": 56,
+                  "length": 2,
+                  "children": [
+                    {
+                      "name": "IsMono",
+                      "value": false,
+                      "offset": 56,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsFast",
+                      "value": false,
+                      "offset": 56,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsRaw",
+                      "value": false,
+                      "offset": 56,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsNoiseCalculated",
+                      "value": false,
+                      "offset": 56,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsHigh",
+                      "value": true,
+                      "offset": 56,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "HasThreeByteSamples",
+                      "value": false,
+                      "offset": 56,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsOver20Bits",
+                      "value": false,
+                      "offset": 56,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "HasCorrectionFile",
+                      "value": false,
+                      "offset": 56,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsNoiseShaped",
+                      "value": false,
+                      "offset": 57,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsVeryFast",
+                      "value": false,
+                      "offset": 57,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsNewHigh",
+                      "value": true,
+                      "offset": 57,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsExtremeCanceled",
+                      "value": true,
+                      "offset": 57,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsCrossChannel",
+                      "value": true,
+                      "offset": 57,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "HasNewDecorrelator",
+                      "value": true,
+                      "offset": 57,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsJointStereo",
+                      "value": true,
+                      "offset": 57,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsExtreme",
+                      "value": true,
+                      "offset": 57,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    }
+                  ]
+                },
+                {
+                  "name": "Shift",
+                  "value": 0,
+                  "unit": "bits",
+                  "offset": 58,
+                  "length": 2
+                },
+                {
+                  "name": "Total Samples",
+                  "value": 24000,
+                  "unit": "samples",
+                  "offset": 60,
+                  "length": 4
+                },
+                {
+                  "name": "Audio CRC",
+                  "value": 821751490,
+                  "offset": 64,
+                  "length": 4
+                },
+                {
+                  "name": "Correction CRC",
+                  "value": 0,
+                  "offset": 68,
+                  "length": 4
+                },
+                {
+                  "name": "Source Extension",
+                  "value": "WAV",
+                  "offset": 72,
+                  "length": 4
+                },
+                {
+                  "name": "Extra Byte Count",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 76,
+                  "length": 1
+                },
+                {
+                  "name": "Extra Bytes",
+                  "value": 0,
+                  "offset": 77,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "Bitstream",
+              "value": 49272,
+              "unit": "bytes",
+              "offset": 80,
+              "length": 49272
+            },
+            {
+              "name": "Trailer",
+              "value": 52,
+              "unit": "bytes",
+              "offset": 49352,
+              "length": 52,
+              "children": [
+                {
+                  "name": "Marker",
+                  "value": 16,
+                  "unit": "bytes",
+                  "offset": 49352,
+                  "length": 16
+                },
+                {
+                  "name": "id3 Chunk",
+                  "offset": 49368,
+                  "length": 36,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "id3 ",
+                      "offset": 49368,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 28,
+                      "unit": "bytes",
+                      "offset": 49372,
+                      "length": 4
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0
+          ]
+        ],
+        "codec": "WavPack lossless",
+        "sampleRate": 44100,
+        "channels": 2,
+        "channelMode": "Joint stereo (mid/side)",
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
+        "bitsPerSample": 16,
+        "samples": 24000,
+        "duration": 0.54421768707483,
+        "averageBitrate": 724.2984,
+        "isVbr": false,
+        "verification": {
+          "decoding": "noDecoder",
+          "decodedSamples": 0,
+          "checksums": [
+            {
+              "name": "audio CRC",
+              "covers": "decodedAudio",
+              "coversAllAudio": true,
+              "stored": 1,
+              "checked": 0,
+              "failed": 0
+            }
+          ]
+        },
+        "encoder": "WavPack 3",
+        "encoderConfidence": "Medium",
+        "series": []
+      }
+    ],
+    "findings": []
+  }
+]

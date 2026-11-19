@@ -183,10 +183,11 @@ internal static partial class Summary
 
     // The Encoder node of a file or of the packets of a container: what the blocks show, then each claim of a tag or the container weighed as
     // evidence or, where it disagrees, a finding.
-    internal static Node EncoderNode(string name, bool isFive, string evidence, IReadOnlyList<EncoderClaim> claims, Func<string, NodeValue?, string, string?, Node> cover, FindingCollector findings)
+    internal static Node EncoderNode(string name, bool isFive, string evidence, IReadOnlyList<EncoderClaim> claims, Func<string, NodeValue?, string, string?, Node> cover, FindingCollector findings,
+        string? mediumDescription = null, string shows = "the blocks point to")
     {
         Node encoder = cover("Encoder", name, Explain.Encoder, ClaimRoles.EncoderTopic);
-        encoder.Add(cover("Confidence", isFive ? "Medium" : "Low", isFive ? Explain.ConfidenceMedium : Explain.ConfidenceLow, null));
+        encoder.Add(cover("Confidence", isFive ? "Medium" : "Low", isFive ? mediumDescription ?? Explain.ConfidenceMedium : Explain.ConfidenceLow, null));
         encoder.Add(cover("Evidence", evidence, Explain.Evidence, null));
         foreach (EncoderClaim claim in claims)
         {
@@ -208,7 +209,7 @@ internal static partial class Summary
             else
             {
                 findings.Add(Severity.Info, "wavpack.encoder-claim-differs", claim.Source, _ =>
-                    $"The {claim.Description} names \"{text}\", but the blocks point to {name}; the tag may have been written by other software, or kept when the audio was re-encoded.");
+                    $"The {claim.Description} names \"{text}\", but {shows} {name}; the tag may have been written by other software, or kept when the audio was re-encoded.");
             }
         }
 
@@ -216,10 +217,12 @@ internal static partial class Summary
     }
 
     // In a method of its own, so the lambdas that keep the state alive do not share a closure with the ones that outlive the analysis.
-    private static Node? Writer(State s, IReadOnlyList<EncoderClaim> claims, long start, long end) =>
+    private static Node? Writer(State s, IReadOnlyList<EncoderClaim> claims, long start, long end) => Writer(s.Findings, claims, start, end);
+
+    internal static Node? Writer(FindingCollector findings, IReadOnlyList<EncoderClaim> claims, long start, long end) =>
         WriterDetection.Detect(claims, (name, value, description) => new Node(name, start, end - start, value) { Description = description, Topic = ClaimRoles.TopicOf(name) },
-            (claim, text, name) => s.Findings.Add(Severity.Info, "wavpack.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
-            format: new WriterDetection.StreamFormat(KnownWriters.WavPack, "WavPack", (claim, message, node) => s.Findings.Add(Severity.Info, "wavpack.writer-other-format", node, _ => message)));
+            (claim, text, name) => findings.Add(Severity.Info, "wavpack.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
+            format: new WriterDetection.StreamFormat(KnownWriters.WavPack, "WavPack", (claim, message, node) => findings.Add(Severity.Info, "wavpack.writer-other-format", node, _ => message)));
 
     // A target the encoder floored to its lowest is only a limit, which is text rather than a number.
     internal static NodeValue TargetValue(double value, int decimals, string unit, bool isAtMost) =>
@@ -319,7 +322,8 @@ internal static partial class Summary
             }
             else
             {
-                statistics.Add(cover("Extra Processing Level", "none", Explain.StatExtraLevel, Topics.Decorrelation));
+                // WavPack before 4.40 sets the extra flag without storing its level (libwavpack reads the level as 0, unknown).
+                statistics.Add(cover("Extra Processing Level", (c.Flags & Decode.ConfigExtraMode) != 0 ? "not stored" : "none", Explain.StatExtraLevel, Topics.Decorrelation));
             }
         }
 

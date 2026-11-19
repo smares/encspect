@@ -1,0 +1,86 @@
+{
+ "length": 60240,
+ "header": {
+  "offset": 44,
+  "length": 12,
+  "ck_size": 4,
+  "version": 2,
+  "bits": 12
+ },
+ "wav": {
+  "riff_size": 96036,
+  "chunks": [
+   {
+    "id": "fmt ",
+    "offset": 12,
+    "size": 16
+   },
+   {
+    "id": "data",
+    "offset": 36,
+    "size": 96000
+   }
+  ],
+  "data_size": 96000,
+  "data_offset": 44,
+  "format": {
+   "tag": 1,
+   "channels": 2,
+   "sample_rate": 44100,
+   "byte_rate": 176400,
+   "block_align": 4,
+   "bits_per_sample": 16
+  }
+ },
+ "figures": {
+  "channels": 2,
+  "sample_rate": 44100,
+  "bits_per_sample": 16,
+  "bytes_per_sample": 2,
+  "samples": 24000,
+  "mode": "lossy",
+  "compression_mode": "fast",
+  "stereo_coding": "Mid/side stereo",
+  "samples_from_data_chunk": 24000,
+  "total_samples_match": null
+ },
+ "bitstream": {
+  "offset": 56,
+  "length": 60184
+ },
+ "findings": [],
+ "stream": true,
+ "encoder": {
+  "tool": "WavPack 2.0 for DOS (ReallyRareWares: WAVPACK2.ZIP), run under DOSBox 0.74-3",
+  "arguments": [
+   "-b15"
+  ],
+  "input": {
+   "kind": "wav",
+   "rate": 44100,
+   "channels": 2,
+   "bits": 16,
+   "samples": 24000,
+   "chunks_before_data": false,
+   "chunks_after_data": false,
+   "pcm_md5": "33f110d8eb91888849a451b5f07f99a7",
+   "file_md5": "8364e506d4832b55a3121fad876e3c53"
+  },
+  "file": "main file"
+ },
+ "crosscheck": {
+  "libwavpack_legacy": {
+   "opens": true,
+   "version": 2,
+   "channels": 2,
+   "samples_unpacked": 24000
+  },
+  "original_decoder": {
+   "tool": "WVUNPACK 2.0 for DOS, run under DOSBox 0.74-3",
+   "pcm_md5": "e6e4eb2089eb0574210737d1ff77d210",
+   "pcm_bytes": 96000,
+   "matches_input": false,
+   "file_matches_input": false
+  }
+ }
+}

@@ -1,0 +1,107 @@
+{
+ "length": 2512,
+ "header": {
+  "offset": 44,
+  "length": 36,
+  "ck_size": 28,
+  "version": 3,
+  "bits": 1858,
+  "flags": "2420",
+  "flag_names": [
+   "bytes-3",
+   "new-high",
+   "new-decorr"
+  ],
+  "shift": 0,
+  "total_samples": 2700,
+  "crc": "9ecafbfa",
+  "crc2": "c0f9f9c4",
+  "extension": "WAV",
+  "extra_bc": 0,
+  "extras": "000000"
+ },
+ "wav": {
+  "riff_size": 16236,
+  "chunks": [
+   {
+    "id": "fmt ",
+    "offset": 12,
+    "size": 16
+   },
+   {
+    "id": "data",
+    "offset": 36,
+    "size": 16200
+   }
+  ],
+  "data_size": 16200,
+  "data_offset": 44,
+  "format": {
+   "tag": 1,
+   "channels": 2,
+   "sample_rate": 44100,
+   "byte_rate": 264600,
+   "block_align": 6,
+   "bits_per_sample": 24
+  }
+ },
+ "figures": {
+  "channels": 2,
+  "sample_rate": 44100,
+  "bits_per_sample": 24,
+  "bytes_per_sample": 3,
+  "samples": 2700,
+  "mode": "hybrid",
+  "compression_mode": "normal",
+  "stereo_coding": "Left/right stereo",
+  "samples_from_data_chunk": 2700,
+  "total_samples_match": true
+ },
+ "bitstream": {
+  "offset": 80,
+  "length": 2432
+ },
+ "findings": [],
+ "stream": true,
+ "encoder": {
+  "tool": "WavPack 3.4 for DOS (ReallyRareWares: wavpck34.zip), run under DOSBox 0.74-3",
+  "arguments": [
+   "-b320",
+   "-c"
+  ],
+  "input": {
+   "kind": "wav",
+   "rate": 44100,
+   "channels": 2,
+   "bits": 24,
+   "samples": 2700,
+   "chunks_before_data": false,
+   "chunks_after_data": false,
+   "pcm_md5": "841747c19737c566ca6fcf239fee62e7",
+   "file_md5": "40d0d6cc813418e532e850b269ec2fa2"
+  },
+  "file": "main file"
+ },
+ "crosscheck": {
+  "libwavpack_legacy": {
+   "opens": true,
+   "version": 3,
+   "channels": 2,
+   "samples_unpacked": 2700
+  },
+  "original_decoder": {
+   "tool": "WVUNPACK 3.4 for DOS, run under DOSBox 0.74-3",
+   "with_correction": {
+    "pcm_md5": "841747c19737c566ca6fcf239fee62e7",
+    "pcm_bytes": 16200,
+    "matches_input": true,
+    "file_matches_input": true
+   },
+   "without_correction": {
+    "pcm_md5": "b9d044c691eb6172363923dcdb67389d",
+    "pcm_bytes": 16200,
+    "matches_input": false
+   }
+  }
+ }
+}

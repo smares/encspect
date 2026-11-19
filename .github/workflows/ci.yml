@@ -608,6 +608,13 @@ jobs:
           python3 scripts/fixtures/make_wavpack_fixtures.py
           python3 scripts/fixtures/make_external_wavpack_fixtures.py --manifests-only
 
+      # The files of WavPack 1.0 to 4.31 are written once, with the original encoders under DOSBox (docs/development.md, "WavPack 1 to 3 fixtures"), and committed; only
+      # the manifests are recomputed here, from the committed files, as for the Monkey's Audio legacy files.
+      - name: Recompute the manifests of the WavPack fixtures of the original encoders and regenerate the hand-built ones of versions 1 to 3
+        run: |
+          python3 scripts/fixtures/make_external_wavpack_legacy_fixtures.py --manifests-only
+          python3 scripts/fixtures/make_wavpack_legacy_fixtures.py
+
       - name: Regenerate the hand-built WAV and AIFF fixtures and the encoder-made ones' manifests
         run: |
           python3 scripts/fixtures/make_wav_fixtures.py
@@ -1170,6 +1177,10 @@ jobs:
 
       - name: Cross-check the WavPack fixtures
         run: python3 scripts/fixtures/crosscheck_wavpack_fixtures.py
+
+      # libwavpack 5.6.0 built with its legacy decoder from the pinned source; wvunpack 5.9.0 must refuse these files, FFmpeg and MediaInfo must not name them WavPack.
+      - name: Cross-check the WavPack fixtures of versions 1 to 3
+        run: python3 scripts/fixtures/crosscheck_wavpack_legacy_fixtures.py
 
       # What a job downloaded is kept whether it passes or not. A passing job saves the week's key (unless that key was restored
       # exactly); a failing or canceled one, which would otherwise lose its downloads, saves under a key of its own with the run ID

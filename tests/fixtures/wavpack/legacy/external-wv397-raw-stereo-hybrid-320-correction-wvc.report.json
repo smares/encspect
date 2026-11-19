@@ -1,0 +1,36 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "external-wv397-raw-stereo-hybrid-320-correction-wvc.wvc",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 28498,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 28498
+        }
+      ]
+    },
+    "streams": [],
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 28498,
+        "path": [
+          0
+        ],
+        "count": 1
+      }
+    ]
+  }
+]
