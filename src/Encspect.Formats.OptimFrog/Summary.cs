@@ -310,7 +310,7 @@ internal static class Summary
         ])
         {
             Description = Explain.LossyStream,
-            Topic = Topics.Blocks,
+            Topic = Topics.CorrectionFiles,
         };
 
     private static Node? Encoder(State s, MainBlock m, Func<string, NodeValue?, string, string?, Node> cover)

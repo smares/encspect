@@ -11,6 +11,11 @@ For every manifest in tests/fixtures/optimfrog (make_external_optimfrog_fixtures
   mode to method string that the fixtures show, and fails when one stored value gives two strings).
 - `ofr --info` (`ofs --info` for DualStream files) is run on each file and its output kept in the log; it must exit with status 0.
 - ffprobe and MediaInfo do not read OptimFROG (FFmpeg has no demuxer; MediaInfoLib 26.01 has no parser): both must find no audio stream.
+- Every DualStream pair (`.ofs` manifests with a `correction`: the committed pairs and the hand-built `built-pair-*` ones, docs/design/correction-files.md,
+  "Cross-checks") is decoded with `ofs --decode --correction` with the `.ofc` beside the `.ofs` as `x.ofc`, and without it. This is a black box: the exit status
+  and whether the output equals the recorded input are printed for each. A pair the manifest calls consistent that is an encoder's own must decode to the
+  input; a pair the manifest calls inconsistent that `ofs` decodes to the input fails the run until it is explained in PAIR_EXPLAINED. The pair the analyzer
+  cannot tell from a good one (`built-pair-other-encode`, an `.ofc` of another encode with as many blocks) is printed and not judged.
 
 Every skipped check prints its reason. Disagreements fail the run (exit status 1).
 
@@ -18,6 +23,7 @@ Every skipped check prints its reason. Disagreements fail the run (exit status 1
 """
 
 import ctypes
+import hashlib
 import json
 import pathlib
 import shutil
@@ -66,6 +72,70 @@ MEDIAINFO_READS = {
     "built-tag-id3v1-title-reads-as-block-end.ofr": "MediaInfo 24.01 reads it as MPEG Audio. " + MEDIAINFO_SHORT_TITLE,
     "built-tag-id3v1-title-reads-as-block-next.ofr": "MediaInfo 24.01 reads it as MPEG Audio. " + MEDIAINFO_SHORT_TITLE,
 }
+
+
+# The committed file each hand-built pair's `.ofs` is the unchanged copy of, whose provenance records the input the encoder was given; None where the `.ofs` was
+# changed (the data block twice), so no input is known.
+PAIR_SOURCES = {
+    "built-pair-crc-fails.ofs": "external-ofs-mono-quality3.ofs",
+    "built-pair-cut.ofs": "external-ofs-mono-quality3.ofs",
+    "built-pair-bytes-after.ofs": "external-ofs-mono-quality3.ofs",
+    "built-pair-block-more.ofs": "external-ofs-mono-quality3.ofs",
+    "built-pair-block-fewer.ofs": None,
+    "built-pair-empty.ofs": "external-ofs-mono-quality3.ofs",
+    "built-pair-ofr.ofs": "external-ofs-mono-quality3.ofs",
+    "built-pair-three-for-one.ofs": "external-ofs-quality0.ofs",
+    "built-pair-other-encode.ofs": "external-ofs-quality0.ofs",
+}
+
+# Pairs the manifest calls inconsistent that `ofs` decodes to the input anyway, each with what explains it (none is known: the pairs have not been decoded yet).
+PAIR_EXPLAINED = {}
+
+# Pairs the analyzer's check cannot judge, which are printed and never fail.
+PAIR_NOT_JUDGED = {"built-pair-other-encode.ofs": "an .ofc of another encode with as many blocks passes the check on block counts and CRC-32s"}
+
+
+def input_sha256(path):
+    """The SHA-256 of the WAVE file the encoder was given for this `.ofs`, from its provenance or its source's, or None."""
+    source = PAIR_SOURCES.get(path.name, path.name) if path.name.startswith("built-pair-") else path.name
+    if source is None:
+        return None
+    provenance = DIRECTORY / (source + ".provenance.json")
+    return json.loads(provenance.read_text(encoding="utf-8"))["input"]["sha256"] if provenance.exists() else None
+
+
+def sha256_of(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest() if path.exists() else None
+
+
+def check_pair(package, path, manifest, failures):
+    """Decodes the `.ofs` of a pair with its `.ofc` beside it and without, with `ofs` as a black box, and holds the result to the manifest's pairing."""
+    correction = manifest.get("correction")
+    if correction is None or correction["status"] == "unchecked":
+        return
+    expected = input_sha256(path)
+    with tempfile.TemporaryDirectory(prefix="optimfrog-pair-") as folder:
+        folder = pathlib.Path(folder)
+        shutil.copy(path, folder / "x.ofs")
+        results = {}
+        for label, has_companion in (("with", True), ("without", False)):
+            beside = folder / "x.ofc"
+            beside.unlink(missing_ok=True)
+            if has_companion and manifest.get("companion"):
+                shutil.copy(DIRECTORY / manifest["companion"], beside)
+            out = folder / f"{label}.wav"
+            command = [str(package / "ofs"), "--decode"] + (["--correction"] if has_companion else []) + [str(folder / "x.ofs"), "--output", str(out), "--overwrite"]
+            run = subprocess.run(command, capture_output=True, text=True)
+            results[label] = {"exit": run.returncode, "equals_input": expected is not None and sha256_of(out) == expected}
+        print(f"{path.name}: pair {correction['status']} {[p['kind'] for p in correction['problems']]}; decoded with the .ofc {results['with']}, without {results['without']}")
+        if path.name in PAIR_NOT_JUDGED:
+            print(f"  not judged: {PAIR_NOT_JUDGED[path.name]}")
+            return
+        decodes_to_input = results["with"]["exit"] == 0 and results["with"]["equals_input"]
+        if correction["status"] == "consistent" and not path.name.startswith("built-") and not decodes_to_input:
+            failures.append(f"{path.name}: the manifest calls the pair consistent and ofs does not decode it to the input ({results['with']})")
+        if correction["status"] == "inconsistent" and decodes_to_input and path.name not in PAIR_EXPLAINED:
+            failures.append(f"{path.name}: the manifest calls the pair inconsistent and ofs decodes it to the input; explain it in PAIR_EXPLAINED or change the check")
 
 
 def find(manifest):
@@ -173,6 +243,7 @@ def main():
                 failures.append(f"{path.name}: MediaInfo no longer finds the audio track it found ({MEDIAINFO_READS[path.name]}); remove it from MEDIAINFO_READS")
         else:
             skipped.setdefault("mediainfo is not installed", []).append(path.name)
+        check_pair(package, path, manifest, failures)
         checked += 1
     for mode, strings in sorted(methods.items()):
         print(f"stored mode {mode} -> library method {sorted(strings)}")

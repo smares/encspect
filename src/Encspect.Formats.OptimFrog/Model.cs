@@ -15,6 +15,7 @@ internal static class ChecksumNames
 internal static class Topics
 {
     public const string Blocks = "optimfrog-blocks";
+    public const string CorrectionFiles = "correction-files";
     public const string Modes = "optimfrog-modes";
     public const string Crc = "crc";
     public const string Channels = "channel-layouts";

@@ -196,7 +196,7 @@ One rule for the raw stream formats MPEG audio, ADTS, AC-3 and E-AC-3, and DTS:
   - the host wraps every parser entry point: any other exception from a sniff or a parse becomes an error `parse.failed` that names the parser and the exception, and a probe that throws is a rejected candidate with that error;
   - only cancellation and running out of memory pass through.
 - **The host never changes a parser's node:** an accepted tag is shown as a node with the same name, value and bytes, whose children are the parser's and the host's Detection.
-- **Cancellation and progress:** `Analyzer.Analyze` and `AnalyzeFile` take `AnalysisOptions` with a cancellation token and an `IProgress<long>` of bytes read.
+- **Cancellation and progress:** `Analyzer.Analyze` and `AnalyzeFile` take `AnalysisOptions` with a cancellation token, an `IProgress<long>` of bytes read and where to look for companion files.
   - Every read through `ByteReader` checks the token; loops that only compute (the MPEG passes over all frames) check `ParseContext.CancellationToken` every few thousand frames. Cancellation surfaces as `OperationCanceledException`.
   - Progress is the furthest file offset the format parser has read, which only grows, and the file length once the analysis is done.
 - **Readers:**
@@ -206,6 +206,17 @@ One rule for the raw stream formats MPEG audio, ADTS, AC-3 and E-AC-3, and DTS:
   - Before it looks for trailing tags, the host asks the parser that sniffs best on the data after the leading tags.
   - A trailing candidate that starts before that end is the container's own chunk, reported as a near miss naming the container, and the container hands it to the tag parser itself (an AIFF file's `ID3 ` chunk, which taggers write last).
   - A tag after the declared end is the file's. A parser returns null for a size it cannot trust, such as a placeholder.
+
+## Companion files
+
+A format whose stream may have a file beside it, such as the correction file of a WavPack hybrid file (`.wvc`) or of an OptimFROG DualStream file (`.ofc`), reads it through the context. The design is [correction-files.md](design/correction-files.md).
+
+- **The parser asks, the host opens:** `ParseContext.OpenCompanion(extension)` returns a `Companion`: `Found` with a `ParseContext` over the companion's file, `Missing`, or `Unchecked` with a reason (`IsUnreadable` where the file exists and cannot be read). A parser never opens a file; it asks once per stream and only for a stream that may have a companion (OptimFROG asks when it makes the lossy-part claim, at any confidence). A codec route has no file beside it and gets `Unchecked`.
+- **The name** is the input's without its last extension, a dot and the companion's extension, in the folder of the input, in the case of the input's extension; one name is tried. `AnalysisOptions.Companions` (`CompanionSource`) says where the host looks: `Beside(path)` (the file system, the default of `AnalyzeFile`), `From(function)` (a caller with no file system, or one that knows other names) and `None`; `Analyze(source, stream)` has no folder and reports the pair as unchecked.
+- **Prepared as a file:** the host finds the companion's tags at both ends and cuts its data window by the end the main parser declares (`DeclaredEnd`), so the tree a parser builds in a pair equals the tree it gets alone. The companion is read as a stream, never loaded whole, and closed with the analysis. A file that exists and cannot be opened or read (a folder, a FIFO, an error) is `Unchecked` with `correction.unreadable`.
+- **A report of its own:** what the parser builds in the companion's context becomes `Report.Companions` (`CompanionReport`, role `correction`, root "Correction File"): its tree with offsets in its own file, its findings (each in the report whose tree holds its node) and its streams. Nothing in the main tree points into the companion.
+- **The pairing:** the parser sets `StreamInfo.Correction` (`CorrectionPairing`: status `Consistent`, `Inconsistent`, `Missing`, `NotWritten` or `Unchecked`; source; basis; problems, each a kind, a count and the main tree's node it concerns; reason) and the host words it: the `correction.*` findings, the line under the stream, the JSON `correction`, the CSV column `Correction File`. A consistent pair confirms a claim that the stream is the lossy part of a pair (it is raised to high confidence, with the companion as evidence); the stream's verification is `WithCorrection` only for a consistent pair.
+- **Folder walks:** each file keeps its own row and report; the pair is analyzed once, from the main file, and the correction file's own report costs one structure pass.
 
 ## Routes between parsers
 
