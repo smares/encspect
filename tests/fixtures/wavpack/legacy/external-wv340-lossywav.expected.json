@@ -1,0 +1,97 @@
+{
+ "length": 42206,
+ "header": {
+  "offset": 112,
+  "length": 36,
+  "ck_size": 28,
+  "version": 3,
+  "bits": 0,
+  "flags": "fc10",
+  "flag_names": [
+   "high",
+   "new-high",
+   "cancel-extreme",
+   "cross-decorr",
+   "new-decorr",
+   "joint-stereo",
+   "extreme-decorr"
+  ],
+  "shift": 0,
+  "total_samples": 22173,
+  "crc": "291268e5",
+  "crc2": "00000000",
+  "extension": "WAV",
+  "extra_bc": 0,
+  "extras": "000000"
+ },
+ "wav": {
+  "riff_size": 88796,
+  "chunks": [
+   {
+    "id": "fmt ",
+    "offset": 12,
+    "size": 16
+   },
+   {
+    "id": "fact",
+    "offset": 36,
+    "size": 60
+   },
+   {
+    "id": "data",
+    "offset": 104,
+    "size": 88692
+   }
+  ],
+  "data_size": 88692,
+  "data_offset": 112,
+  "format": {
+   "tag": 1,
+   "channels": 2,
+   "sample_rate": 44100,
+   "byte_rate": 176400,
+   "block_align": 4,
+   "bits_per_sample": 16
+  }
+ },
+ "figures": {
+  "channels": 2,
+  "sample_rate": 44100,
+  "bits_per_sample": 16,
+  "bytes_per_sample": 2,
+  "samples": 22173,
+  "mode": "lossless",
+  "samples_from_data_chunk": 22173,
+  "total_samples_match": true
+ },
+ "bitstream": {
+  "offset": 148,
+  "length": 42058
+ },
+ "encoder": {
+  "tool": "WavPack 3.4 for DOS (ReallyRareWares: wavpck34.zip), run under DOSBox 0.74-3",
+  "arguments": [],
+  "input": {
+   "kind": "wav",
+   "file": "tests/fixtures/wav/lossywav-standard.wav",
+   "pcm_md5": "3d95b7a41d30b3921179b31435f87342",
+   "file_md5": "ddec1fd83a547e36cf29d4427922e8cc"
+  },
+  "file": "main file"
+ },
+ "crosscheck": {
+  "libwavpack_legacy": {
+   "opens": true,
+   "version": 3,
+   "channels": 2,
+   "samples_unpacked": 22173
+  },
+  "original_decoder": {
+   "tool": "WVUNPACK 3.4 for DOS, run under DOSBox 0.74-3",
+   "pcm_md5": "3d95b7a41d30b3921179b31435f87342",
+   "pcm_bytes": 88692,
+   "matches_input": true,
+   "file_matches_input": true
+  }
+ }
+}

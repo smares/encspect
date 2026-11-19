@@ -60,6 +60,7 @@ import speex_tool
 import opus_tool
 import vorbis_tool
 import tak_tool
+import wavpack_legacy_tool
 import wavpack_tool
 import xing_tool
 import xiph_tool
@@ -121,6 +122,7 @@ def sources():
         yield archive, digest, aotuv_tool.windows_addresses(archive)
     yield from musepack_tool.sources()
     yield from wavpack_tool.sources()
+    yield from wavpack_legacy_tool.sources()
     yield from speex_tool.sources()
     yield from vorbis_tool.sources()
     yield from opus_tool.sources()
