@@ -186,8 +186,10 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
                 Document = DocumentOf(value);
                 Highlight = value is null ? null : HexHighlight.For(value.Node);
                 BitStrip = BitStrip.For(_highlight, _document);
-                Graphs.MarkFrame(FrameOf(value)?.Node.Offset);
+                // Offsets of a companion file mean nothing to the main file's graphs.
+                Graphs.MarkFrame(value?.RootIndex == 0 ? FrameOf(value)?.Node.Offset : null);
                 Raise(nameof(HexTitle));
+                Raise(nameof(HasHexTitle));
                 Raise(nameof(SelectionText));
                 Raise(nameof(SelectionDescription));
                 Raise(nameof(SelectionTopic));
@@ -299,6 +301,17 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
 
     // Any file shown no longer is the one analyzed, so the hex view shows none of its bytes.
     public bool HasFileChanged => _documents.Any(d => d?.HasChanged == true);
+
+    // What the "Changed on disk" notice's tooltip says: which files changed.
+    public string FileChangedTip
+    {
+        get
+        {
+            string?[] names = [_path, .. _report?.Companions.Select(c => c.Report.Source) ?? []];
+            IEnumerable<string> changed = _documents.Select((d, i) => d?.HasChanged == true && i < names.Length ? System.IO.Path.GetFileName(names[i]) : null).OfType<string>();
+            return $"Changed: {string.Join(", ", changed)}. Refresh or open the file again to analyze it as it is now.";
+        }
+    }
 
     public HexHighlight? Highlight
     {
@@ -725,6 +738,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         length = info.Exists ? info.Length : 0;
         DateTime lastWrite = info.Exists ? info.LastWriteTimeUtc : default;
         documents = [];
+        DateTime started = DateTime.UtcNow;
         Report report = _analyzer.AnalyzeFile(path, options);
         if (!FileReports.IsNotAnalyzed(report))
         {
@@ -732,11 +746,19 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
             documents =
             [
                 HexDocument.Open(path, length, lastWrite),
-                .. report.Companions.Select(c => HexDocument.Open(c.Report.Source, c.Report.Root.Length, File.GetLastWriteTimeUtc(c.Report.Source))),
+                .. report.Companions.Select(c => HexDocument.Open(c.Report.Source, c.Report.Root.Length, CompanionTime(c.Report.Source, started))),
             ];
         }
 
         return report;
+    }
+
+    // A companion's last-write time is read once the analysis is done, so one written since the analysis began counts as changed: the default time never
+    // matches, and the hex view then shows none of its bytes.
+    private static DateTime CompanionTime(string path, DateTime started)
+    {
+        DateTime time = File.GetLastWriteTimeUtc(path);
+        return time > started ? default : time;
     }
 
     private static void DisposeAll(IReadOnlyList<HexDocument?> documents)
@@ -805,8 +827,8 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
     {
         SelectedFinding = null;
         IsDecoding = false;
-        SetDocuments(documents);
         Report = report;
+        SetDocuments(documents);
         Tree = new StructureTree(report.Root, [.. report.Companions.Select(c => new CompanionTree(c.Report.Root, System.IO.Path.GetFileName(c.Report.Source)))]);
         _allFindings =
         [
@@ -847,6 +869,8 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         }
 
         Document = documents.Count > 0 ? documents[0] : null;
+        Raise(nameof(HexTitle));
+        Raise(nameof(HasHexTitle));
         Raise(nameof(HasFileChanged));
     }
 
@@ -868,7 +892,11 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         IsLoading = false;
     }
 
-    private void OnDocumentChanged(object? sender, EventArgs e) => Raise(nameof(HasFileChanged));
+    private void OnDocumentChanged(object? sender, EventArgs e)
+    {
+        Raise(nameof(HasFileChanged));
+        Raise(nameof(FileChangedTip));
+    }
 
     // The frame a row is or lies in, which the graphs mark.
     private static TreeRow? FrameOf(TreeRow? row)

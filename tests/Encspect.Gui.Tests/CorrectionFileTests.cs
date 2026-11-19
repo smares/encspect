@@ -1,6 +1,10 @@
+using Avalonia.Controls;
+using Avalonia.Headless.XUnit;
+using Avalonia.VisualTree;
 using Encspect.Core;
 using Encspect.Gui.Cache;
 using Encspect.Gui.ViewModels;
+using Encspect.Gui.Views;
 using Encspect.Host;
 
 namespace Encspect.Gui.Tests;
@@ -46,7 +50,7 @@ public sealed class CorrectionFileTests : IDisposable
     }
 
     [Fact]
-    public void The_file_list_keeps_one_row_for_a_pair_and_its_codec_tooltip_gives_the_pairing()
+    public void The_file_list_keeps_a_row_per_file_and_the_main_rows_codec_tooltip_gives_the_pairing()
     {
         (string main, string companion) = Consistent();
         var ui = new TestDispatcher();
@@ -60,6 +64,78 @@ public sealed class CorrectionFileTests : IDisposable
         Assert.Equal("Correction file: consistent (song.wvc), lossless with its correction file", row.CodecTip);
         Assert.Null(model.Rows[1].CodecTip);
         Assert.True(File.Exists(companion) && File.Exists(main));
+    }
+
+    [Fact]
+    public void The_hex_header_is_announced_visible_when_a_pair_is_opened_and_again_after_a_refresh()
+    {
+        (string main, _) = Consistent();
+        var ui = new TestDispatcher();
+        using var model = new DetailViewModel(Analyzer.CreateDefault(), ui.Post);
+        var last = new Dictionary<string, object?>();
+        model.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName is nameof(DetailViewModel.HasHexTitle) or nameof(DetailViewModel.HexTitle))
+            {
+                last[e.PropertyName] = e.PropertyName == nameof(DetailViewModel.HasHexTitle) ? model.HasHexTitle : model.HexTitle;
+            }
+        };
+
+        Task load = model.LoadAsync(main);
+        ui.Until(() => load.IsCompleted);
+        Assert.Equal((true, "song.wv"), ((bool)last[nameof(DetailViewModel.HasHexTitle)]!, (string?)last[nameof(DetailViewModel.HexTitle)]));
+
+        last.Clear();
+        Task reload = model.ReloadAsync();
+        ui.Until(() => reload.IsCompleted);
+        Assert.True(last.TryGetValue(nameof(DetailViewModel.HasHexTitle), out object? shown) && (bool)shown!);
+    }
+
+    [AvaloniaFact]
+    public void The_detail_window_shows_the_hex_header_naming_the_file_on_open_and_the_companion_after_selection()
+    {
+        (string main, _) = Consistent();
+        var window = new DetailWindow(new DetailViewModel(Analyzer.CreateDefault())) { Width = 1100, Height = 760 };
+        window.Show();
+        Task load = window.Model.LoadAsync(main);
+        UiPump.Until(() => load.IsCompleted);
+
+        TextBlock title = window.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Name == "HexTitle");
+        Assert.True(title.IsVisible);
+        Assert.Equal("song.wv", title.Text);
+
+        window.Model.Tree!.Expand(window.Model.Tree.Roots[1]);
+        window.Model.SelectedNode = window.Model.Tree[window.Model.Tree.Count - 1];
+        UiPump.Until(() => true);
+        Assert.Equal("song.wvc", title.Text);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void A_file_without_a_companion_shows_no_hex_header()
+    {
+        var window = new DetailWindow(new DetailViewModel(Analyzer.CreateDefault())) { Width = 1100, Height = 760 };
+        window.Show();
+        Task load = window.Model.LoadAsync(Fixtures.Mpeg("external-lame-cbr128-joint.mp3"));
+        UiPump.Until(() => load.IsCompleted);
+
+        Assert.False(window.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Name == "HexTitle").IsVisible);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void The_codec_cell_of_the_file_list_carries_the_pairing_as_its_tooltip()
+    {
+        Consistent();
+        var main = new MainWindow(Analyzer.CreateDefault(), new Settings(), new MainViewModel(Analyzer.CreateDefault(), roots: []));
+        main.Show();
+        main.Model.Open(FileSource.ForFolder(_folder.Path));
+        UiPump.Until(() => !main.Model.IsRunning);
+        UiPump.Until(() => true);
+
+        TextBlock cell = main.GetVisualDescendants().OfType<TextBlock>().First(t => t.Text == main.Model.Rows[0].Codec && ToolTip.GetTip(t) is string);
+        Assert.Equal("Correction file: consistent (song.wvc), lossless with its correction file", ToolTip.GetTip(cell));
+        main.Close();
     }
 
     [Fact]
@@ -307,5 +383,48 @@ public sealed class CorrectionFileTests : IDisposable
 
         File.Delete(ofc);
         Assert.Null(cache.TryGet(ofs, fingerprint));
+    }
+
+    [Fact]
+    public void A_summary_that_a_companion_contradicts_is_not_kept()
+    {
+        (string main, string companion) = Consistent();
+        FileSummary consistent = FileSummary.From(Analyzer.CreateDefault().AnalyzeFile(main));
+        FileFingerprint fingerprint = FileFingerprint.Read(main)!;
+        using var cache = new SummaryCache(_folder["cache.bin"], Version);
+
+        // Written to after the analysis began.
+        DateTime written = File.GetLastWriteTimeUtc(companion);
+        cache.Put(main, fingerprint, consistent, written - TimeSpan.FromSeconds(1));
+        Assert.Equal(0, cache.Count);
+        cache.Put(main, fingerprint, consistent, written + TimeSpan.FromMinutes(1));
+        Assert.Equal(1, cache.Count);
+
+        // Longer than the report read it.
+        using var other = new SummaryCache(_folder["other.bin"], Version);
+        File.AppendAllText(companion, "x");
+        other.Put(main, fingerprint, consistent);
+        Assert.Equal(0, other.Count);
+
+        // Present now, where the report found none.
+        File.Delete(companion);
+        FileSummary missing = FileSummary.From(Analyzer.CreateDefault().AnalyzeFile(main));
+        File.WriteAllBytes(companion, [1]);
+        other.Put(main, fingerprint, missing);
+        Assert.Equal(0, other.Count);
+    }
+
+    [Fact]
+    public void The_changed_file_notice_names_the_file_that_changed()
+    {
+        (string main, string companion) = Consistent();
+        using DetailViewModel model = Load(main, out _);
+        model.Tree!.Expand(model.Tree.Roots[1]);
+        File.AppendAllText(companion, "more");
+        model.SelectedNode = model.Tree[model.Tree.Count - 1];
+        model.Document!.Read(0, new byte[4]);
+
+        Assert.True(model.HasFileChanged);
+        Assert.StartsWith("Changed: song.wvc.", model.FileChangedTip, StringComparison.Ordinal);
     }
 }
