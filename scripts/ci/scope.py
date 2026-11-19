@@ -173,7 +173,7 @@ def exclusion(scope, shard, shards):
         return name in mine if mine is not None else name not in named
 
     clauses = [f"FullyQualifiedName!~.{c}." for c in scope.excluded_classes if counts(c)]
-    clauses += [f"FullyQualifiedName!~.{c}.{m}" for c, gone in sorted(scope.excluded_methods.items()) if counts(c) for m in gone]
+    clauses += [f"FullyQualifiedName!=Encspect.Tests.{c}.{m}" for c, gone in sorted(scope.excluded_methods.items()) if counts(c) for m in gone]
     return clauses
 
 

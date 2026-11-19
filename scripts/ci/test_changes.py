@@ -313,7 +313,7 @@ def shard_names(matrix):
     return {entry["shard"] for entry in matrix}
 
 
-FILTER_TOKEN = re.compile(r"\s*(\(|\)|&|\||FullyQualifiedName!?~[A-Za-z0-9_.]+|Category!?=[A-Za-z]+)")
+FILTER_TOKEN = re.compile(r"\s*(\(|\)|&|\||FullyQualifiedName(?:!?~|!=)[A-Za-z0-9_.]+|Category!?=[A-Za-z]+)")
 
 
 def valid_filter(expression):
@@ -377,8 +377,8 @@ class ScopeTests(unittest.TestCase):
         for never in ("DescriptionTests", "FindingCoverageTests", "DecoderDeterminismTests", "AnalyzerTests", "MeasurementDeterminismTests"):
             self.assertNotIn(never, rest)
         corrupt_b = next(e["filter"] for e in matrix if e["shard"] == "corrupt-b")
-        self.assertIn("FullyQualifiedName!~.MemoryTests.ManySpeexPacketsStayCompact", corrupt_b)
-        self.assertNotIn("FullyQualifiedName!~.MemoryTests.ManyWavPackBlocksStayCompact", corrupt_b)
+        self.assertIn("FullyQualifiedName!=Encspect.Tests.MemoryTests.ManySpeexPacketsStayCompact", corrupt_b)
+        self.assertNotIn("FullyQualifiedName!=Encspect.Tests.MemoryTests.ManyWavPackBlocksStayCompact", corrupt_b)
 
     def test_a_codec_change_scopes_to_the_containers_that_carry_it_and_a_tag_change_to_what_holds_the_tag(self):
         self.assertEqual(scoped("src/Encspect.Formats.Opus/OpusParser.cs")[0].selected, {"Opus", "Ogg", "Matroska", "Mp4"})
@@ -418,7 +418,7 @@ class ScopeTests(unittest.TestCase):
                                         "tests/Encspect.Tests/Core/NodeTests.cs", "tests/Encspect.Tests/Cli/CommandLineTests.cs")
         self.assertEqual(chosen.selected, {"WavPack", "Matroska"})
         corrupt_b = next(e["filter"] for e in matrix if e["shard"] == "corrupt-b")
-        self.assertIn("FullyQualifiedName!~.MemoryTests.ManySpeexPacketsStayCompact", corrupt_b)
+        self.assertIn("FullyQualifiedName!=Encspect.Tests.MemoryTests.ManySpeexPacketsStayCompact", corrupt_b)
         only = scoped("tests/Encspect.Tests/Host/AnalyzerTests.cs")
         self.assertEqual(only[0].selected, set())
         self.assertIn("scoped to no area", only[1])
