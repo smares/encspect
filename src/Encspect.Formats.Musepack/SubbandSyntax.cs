@@ -72,33 +72,6 @@ internal sealed class SubbandState
     // nothing: the decoder makes their values (docs/design/lossy-decoders.md).
     public int[][] Quantized { get; } = [new int[Bands * SamplesPerBand], new int[Bands * SamplesPerBand]];
 
-    // The state of a stream's start, which a frame after a gap does not have: the decoder starts again from it and withholds what depends on the lost frames.
-    public void Reset()
-    {
-        foreach (int[] values in Resolution)
-        {
-            Array.Clear(values);
-        }
-
-        foreach (int[] values in Scalefactor)
-        {
-            Array.Clear(values);
-        }
-
-        foreach (int[] values in Selection)
-        {
-            Array.Clear(values);
-        }
-
-        foreach (bool[] values in Differential)
-        {
-            Array.Clear(values);
-        }
-
-        Array.Clear(MidSideFlag);
-        LastUsedBands = 0;
-    }
-
     // The scalefactor value libmpcdec stores where a differential scalefactor runs above 1,024.
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int Clamp(int scalefactor) => scalefactor > 1024 ? 0x8080 : scalefactor;

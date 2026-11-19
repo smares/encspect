@@ -18,10 +18,16 @@ public class MusepackGapTests
     }
 
     // The first change of one byte at a multiple of 509 from the quarter of the file that loses samples without losing the whole stream.
-    private static byte[] Damaged(string name, string finding)
+    private static byte[] Damaged(string name, string finding) => Damaged(name, finding, null);
+
+    // With firstFrameAt, the change is tried at each byte from that offset on instead, so that the first frame is the one that is lost.
+    private static byte[] Damaged(string name, string finding, int? firstFrameAt)
     {
         byte[] original = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "musepack", name));
-        for (int at = original.Length / 4; at < original.Length / 2; at += 509)
+        int from = firstFrameAt ?? original.Length / 4;
+        int to = firstFrameAt + 64 ?? original.Length / 2;
+        int step = firstFrameAt is null ? 509 : 1;
+        for (int at = from; at < to; at += step)
         {
             byte[] variant = [.. original];
             variant[at] ^= 0xA5;
@@ -58,5 +64,28 @@ public class MusepackGapTests
         Assert.Equal(info.Samples, m.Samples + m.LostSamples + m.WithheldSamples);
         Assert.Equal(480, m.WithheldSamples);
         Assert.Equal(m.WithheldSamples, m.WithheldByReason.AfterGap);
+    }
+
+    [Fact]
+    public void An_SV7_stream_whose_first_frame_is_lost_withholds_the_frames_after_it()
+    {
+        StreamInfo info = Measure(Damaged("external-mppenc-standard.mpc", "musepack.frame-length-mismatch", 0x18), out IReadOnlyList<Finding> findings);
+
+        StreamMeasurements m = info.Measurements!;
+        Assert.DoesNotContain(findings, f => f.Code is "parse.failed" or "decode.failed");
+        Assert.Equal(info.Samples, m.Samples + m.LostSamples + m.WithheldSamples);
+        Assert.Equal(32 * 1152, m.WithheldSamples);
+        Assert.Equal(m.WithheldSamples, m.WithheldByReason.AfterGap);
+    }
+
+    [Fact]
+    public void An_SV8_stream_whose_first_packet_is_lost_withholds_the_filters_history_of_the_next()
+    {
+        StreamInfo info = Measure(Damaged("external-mpcenc-packets.mpc", "musepack.packet-length-mismatch", 868), out IReadOnlyList<Finding> findings);
+
+        StreamMeasurements m = info.Measurements!;
+        Assert.DoesNotContain(findings, f => f.Code is "parse.failed" or "decode.failed");
+        Assert.Equal(info.Samples, m.Samples + m.LostSamples + m.WithheldSamples);
+        Assert.Equal(480, m.WithheldSamples);
     }
 }

@@ -60,7 +60,14 @@ def has_noise(path):
     return bool(found and int(found.group(1)) > 0)
 
 # Files where the analyzer decodes samples and libmpcdec none (or the reverse): the reason.
-NOT_COMPARED = {}
+NOT_COMPARED = {
+    "sv5-seek-tag.mpc": "libmpcdec 1.2.6's stream reader does not skip the ID3v2 tag the file starts with",
+    "sv6-seek-tag.mpc": "libmpcdec 1.2.6's stream reader does not skip the ID3v2 tag the file starts with",
+    "sv8-sample-count-unknown.mpc": "the header's sample count is 0 (unknown), so libmpcdec's trimmed range is empty",
+    "sv7-resolution-invalid.mpc": "libmpcdec stops at the first frame, which has a resolution it rejects; the analyzer loses it, withholds the 32 frames after it and decodes the rest",
+    "sv8-audio-before-header.mpc": "an audio packet comes before the stream header, where libmpcdec stops; the analyzer decodes the stream",
+    "sv8-invalid-key-in-run.mpc": "a key frame libmpcdec rejects ends its decoding; the analyzer loses the frame, withholds 480 samples and decodes the rest",
+}
 
 
 def version_of(path):
@@ -127,8 +134,11 @@ def main(argv=None):
             found = reference(binaries[version], path, raw)
             problems, notes = [], []
             if found is None:
-                if streams and streams[0]["samples"] and name not in NOT_COMPARED:
-                    notes.append("libmpcdec decodes no sample (it refuses the stream or stops at its first frame)")
+                if streams and streams[0]["samples"]:
+                    if name in NOT_COMPARED:
+                        notes.append(f"libmpcdec decodes no sample: {NOT_COMPARED[name]}")
+                    else:
+                        problems.append("libmpcdec decodes no sample and the analyzer decodes some; the file is not in NOT_COMPARED with its reason")
                 else:
                     notes.append("libmpcdec decodes no sample, and the analyzer decodes none")
             elif not streams:
