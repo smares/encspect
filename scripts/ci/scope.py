@@ -74,6 +74,24 @@ def carriers(changed, config):
     return result | forward | backward
 
 
+TYPE = re.compile(r"\b(?:class|struct|record|interface)\s+(\w+)")
+
+
+def callers_of(path, root):
+    """The classes that run when a shared test file changes: those it defines, and those of every test file that names a type defined in it
+    (nested types and helpers included), then of the files that name those, and so on."""
+    texts = {f: f.read_text(encoding="utf-8", errors="replace") for f in sources_of(root)}
+    touched = {root / path}
+    names = set()
+    while True:
+        names = {n for f in touched if f in texts for n in TYPE.findall(texts[f])}
+        more = {f for f, text in texts.items() if f not in touched and names and re.search(r"\b(?:" + "|".join(map(re.escape, names)) + r")\b", text)}
+        if not more:
+            break
+        touched |= more
+    return {name for f in touched if f in texts for name, _, _ in class_extent(texts[f])}
+
+
 def sources_of(root=ROOT):
     return sorted((root / TESTS).rglob("*.cs"))
 
@@ -184,7 +202,7 @@ def plan(files, root=ROOT, config=None):
         changed |= areas
         if not areas and (root / path).is_file():
             # A changed test file of a shared folder runs every class it defines, whoever owns it.
-            forced |= {name for name, _, _ in class_extent((root / path).read_text(encoding="utf-8", errors="replace"))}
+            forced |= callers_of(path, root)
     scope = build(carriers(changed, config), root, config, frozenset(forced))
     scope.changed = changed
     return scope

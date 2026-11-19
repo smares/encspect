@@ -451,7 +451,14 @@ class ScopeTests(unittest.TestCase):
         self.assertFalse(defined & set(chosen.excluded_classes))
         self.assertNotIn("CorruptTagFileTests", chosen.excluded_methods)
         self.assertNotIn("MemoryTests", scoped("tests/Encspect.Tests/Host/MemoryTests.cs")[0].excluded_methods)
-        self.assertIn("MemoryTests", scoped("tests/Encspect.Tests/Host/AnalyzerTests.cs")[0].excluded_methods)
+        self.assertIn("MemoryTests", scoped("tests/Encspect.Tests/Core/Crc32Tests.cs")[0].excluded_methods)
+
+    def test_a_changed_shared_helper_runs_the_owned_tests_that_use_it(self):
+        for path in ("tests/Encspect.Tests/Host/MemoryTestBase.cs", "tests/Encspect.Tests/Decoding/DecoderWorkTests.cs"):
+            chosen = scoped(path)[0]
+            self.assertEqual(chosen.selected, set())
+            self.assertNotIn("MemoryTests", chosen.excluded_methods, path)
+            self.assertNotIn("MusepackAndContainerMemoryTests", chosen.excluded_methods, path)
 
     def test_a_test_class_that_other_areas_call_selects_the_callers(self):
         owners, _ = scope.inventory()
