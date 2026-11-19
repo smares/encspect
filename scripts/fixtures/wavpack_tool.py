@@ -7,7 +7,7 @@ package of Ubuntu 24.04 that writes the fixtures, pinned by SHA-256.
 - wavpack_blocks, a small program (wavpack_blocks.c) linked with libwavpack's own sources, which prints
   what the library reads from a file: its figures, every block read_next_header finds with the verdict
   of WavpackVerifySingleBlock, and the outcome of a decoder's whole pass (the file opened as wvunpack opens it
-  and every sample unpacked, with the errors counted). The reference for the format is in the same tree: doc/WavPack5FileFormat.pdf.
+  and every sample unpacked, with the errors counted), for a main file with its correction file too (the pair). The reference for the format is in the same tree: doc/WavPack5FileFormat.pdf.
 - wavpack_legacy, a second program (wavpack_legacy.c) from the same tree built with -DENABLE_LEGACY and the legacy decoder's sources (unpack3.c,
   unpack3_open.c, unpack3_seek.c; off by default, and off in Debian's package, so the wvunpack of Ubuntu refuses every file of WavPack 1 to 3): whether a
   file of version 1 to 3 opens, its figures and a pass of WavpackUnpackSamples that writes the samples out.
@@ -55,8 +55,8 @@ def build_blocks(directory=None):
         tar.extractall(directory, filter="data")
     source = directory / "wavpack-5.6.0"
     binary = directory / "wavpack_blocks"
-    subprocess.run(["gcc", "-O2", "-w", "-DENABLE_DSD", "-DHAVE___BUILTIN_CLZ", "-DHAVE_FSEEKO", "-I", str(source / "include"), "-I", str(source / "src"),
-                    "-o", str(binary), str(HERE / "wavpack_blocks.c"), *[str(source / "src" / name) for name in LIBRARY], "-lm"], check=True)
+    subprocess.run(["gcc", "-O2", "-w", "-DENABLE_DSD", "-DHAVE___BUILTIN_CLZ", "-DHAVE_FSEEKO", "-I", str(source / "include"), "-I", str(source / "src"), "-I", str(source / "cli"),
+                    "-o", str(binary), str(HERE / "wavpack_blocks.c"), str(source / "cli" / "md5.c"), *[str(source / "src" / name) for name in LIBRARY], "-lm"], check=True)
     return binary
 
 

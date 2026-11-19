@@ -5,6 +5,7 @@ namespace Encspect.Formats.WavPack;
 internal static class ChecksumNames
 {
     public const string BlockChecksum = "block checksum";
+    public const string CorrectionBlockChecksum = "correction block checksum";
     public const string BlockCrc = "block header CRC";
     public const string ExtraCrc = "extended CRC";
     public const string Md5 = "MD5";

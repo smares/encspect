@@ -65,6 +65,12 @@ internal sealed class DecodeFeed
                 return;
             }
 
+            // The correction file of a pair is read for its structure: a block with a bitstream of its own is no correction data and is not decoded.
+            if (s.IsCompanion && (status & (BlockStatus.HasWv | BlockStatus.HasDsd)) != 0)
+            {
+                return;
+            }
+
             // The block libwavpack opens the file with, even where it refuses it: the decoder then refuses the stream, as libwavpack
             // refuses to open it.
             if (!s.IsConfigured)
@@ -172,7 +178,7 @@ internal sealed class DecodeFeed
     }
 
     // Ends the session with the checksums the stream stores and returns what it says about the stream.
-    public StreamVerification Finish(State s, bool isCorrection)
+    public StreamVerification Finish(State s, bool isCorrection, State? companion = null)
     {
         long audioBlocks = s.AudioBlocks;
         bool matches = s.DeclaredTotal is not { } declared || declared == s.CountedSamples;
@@ -180,12 +186,19 @@ internal sealed class DecodeFeed
         // A block that says it ends with a checksum and holds none fails the check as libwavpack makes it.
         long checksums = s.ChecksumValid + s.ChecksumInvalid + s.ChecksumMissing;
         IDecodeSession session = Session ?? s.Context.StartDecoding(WavPackCodecParser.CodecId, new DecodeSetup { Stream = s.Stream, Channels = 1, BitsPerSample = 16 });
-        return session.Finish(
-        [
-            new ChecksumTally { Name = ChecksumNames.BlockChecksum, Covers = ChecksumCoverage.CodedData, CoversAllAudio = coversAll && s.AudioChecksummed == audioBlocks, Stored = checksums, Checked = checksums, Failed = s.ChecksumInvalid + s.ChecksumMissing },
-            new ChecksumTally { Name = ChecksumNames.BlockCrc, Covers = ChecksumCoverage.DecodedAudio, CoversAllAudio = coversAll, Stored = audioBlocks },
-            new ChecksumTally { Name = ChecksumNames.ExtraCrc, Covers = ChecksumCoverage.DecodedAudio, Stored = s.WvxBlocks },
-            new ChecksumTally { Name = ChecksumNames.Md5, Covers = ChecksumCoverage.DecodedAudio, CoversAllAudio = true, Stored = s.Md5Count > 0 ? 1 : 0 },
-        ]);
+        var tallies = new List<ChecksumTally>
+        {
+            new() { Name = ChecksumNames.BlockChecksum, Covers = ChecksumCoverage.CodedData, CoversAllAudio = coversAll && s.AudioChecksummed == audioBlocks, Stored = checksums, Checked = checksums, Failed = s.ChecksumInvalid + s.ChecksumMissing },
+        };
+        if (companion is not null && Summary.IsCorrection(companion))
+        {
+            long stored = companion.ChecksumValid + companion.ChecksumInvalid + companion.ChecksumMissing;
+            tallies.Add(new ChecksumTally { Name = ChecksumNames.CorrectionBlockChecksum, Covers = ChecksumCoverage.CodedData, Stored = stored, Checked = stored, Failed = companion.ChecksumInvalid + companion.ChecksumMissing });
+        }
+
+        tallies.Add(new ChecksumTally { Name = ChecksumNames.BlockCrc, Covers = ChecksumCoverage.DecodedAudio, CoversAllAudio = coversAll, Stored = audioBlocks });
+        tallies.Add(new ChecksumTally { Name = ChecksumNames.ExtraCrc, Covers = ChecksumCoverage.DecodedAudio, Stored = s.WvxBlocks });
+        tallies.Add(new ChecksumTally { Name = ChecksumNames.Md5, Covers = ChecksumCoverage.DecodedAudio, CoversAllAudio = true, Stored = s.Md5Count > 0 ? 1 : 0 });
+        return session.Finish(tallies);
     }
 }

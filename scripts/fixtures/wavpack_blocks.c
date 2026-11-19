@@ -7,6 +7,10 @@
  * the pinned source tree (wavpack_tool.py): it includes src/wavpack_local.h and links the library's own
  * sources, so nothing here reads a block but libwavpack's own code.
  *
+ * Given the correction file, the pass is made a second time for the pair, opened with OPEN_WVC as wvunpack opens it: pair_mode_wvc (WavpackGetMode's
+ * MODE_WVC), pair_samples, pair_errors (WavpackGetNumErrors, which counts each hybrid block that was decoded without its correction block) and pair_md5, the
+ * MD5 of the samples as wvunpack writes them (the low bytes_per_sample bytes of each, little-endian).
+ *
  * Usage: wavpack_blocks file.wv [correction.wvc]
  */
 
@@ -15,6 +19,7 @@
 #include <string.h>
 
 #include "wavpack_local.h"
+#include "md5.h"
 
 static int32_t read_bytes(void *id, void *data, int32_t bcount) { return (int32_t) fread(data, 1, bcount, (FILE *) id); }
 static int64_t get_pos(void *id) { return ftell((FILE *) id); }
@@ -62,6 +67,53 @@ static void decode(const char *path)
     free(buffer);
     WavpackCloseFile(wpc);
     fclose(file);
+}
+
+/* The pass of a decoder for a pair: the main file opened with its correction file, every sample unpacked. */
+static void decode_pair(const char *path, const char *correction)
+{
+    char error[100] = "";
+    FILE *file = fopen(path, "rb");
+    FILE *wvc = fopen(correction, "rb");
+    WavpackContext *wpc = file && wvc ? WavpackOpenFileInputEx64(&reader, file, wvc, error, OPEN_WVC | OPEN_ALT_TYPES | OPEN_WRAPPER | OPEN_DSD_NATIVE, 0) : NULL;
+
+    if (!wpc) {
+        printf("pair_open_error %s\n", error);
+        if (file) fclose(file);
+        if (wvc) fclose(wvc);
+        return;
+    }
+
+    int channels = WavpackGetNumChannels(wpc);
+    int bytes = WavpackGetBytesPerSample(wpc);
+    int32_t *buffer = malloc(4096 * (channels > 0 ? channels : 1) * sizeof(int32_t));
+    long long samples = 0;
+    uint32_t count;
+    MD5_CTX md5;
+    unsigned char digest[16], *packed = malloc(4096 * (channels > 0 ? channels : 1) * 4);
+
+    MD5_Init(&md5);
+    while ((count = WavpackUnpackSamples(wpc, buffer, 4096)) > 0) {
+        long n = 0;
+        for (long i = 0; i < (long) count * channels; i++)
+            for (int b = 0; b < bytes; b++)
+                packed[n++] = (unsigned char) ((uint32_t) buffer[i] >> (8 * b));
+        MD5_Update(&md5, packed, n);
+        samples += count;
+    }
+    MD5_Final(digest, &md5);
+
+    printf("pair_mode_wvc %d\n", (WavpackGetMode(wpc) & MODE_WVC) != 0);
+    printf("pair_samples %lld\n", samples);
+    printf("pair_errors %d\n", WavpackGetNumErrors(wpc));
+    printf("pair_md5 ");
+    for (int i = 0; i < 16; i++) printf("%02x", digest[i]);
+    printf("\n");
+    free(buffer);
+    free(packed);
+    WavpackCloseFile(wpc);
+    fclose(file);
+    fclose(wvc);
 }
 
 int main(int argc, char **argv)
@@ -144,5 +196,7 @@ int main(int argc, char **argv)
 
     fclose(wv);
     decode(argv[1]);
+    if (argc > 2)
+        decode_pair(argv[1], argv[2]);
     return 0;
 }

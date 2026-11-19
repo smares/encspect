@@ -41,7 +41,11 @@ public class WavPackDecoderFixtureTests
     private static (Report Report, HashingSink Sink) Decode(string name)
     {
         var sink = new HashingSink();
-        var options = new AnalysisOptions { Decoding = new DecodeOptions { Output = stream => { sink.Format(stream.Format); return sink; } } };
+        var options = new AnalysisOptions
+        {
+            Decoding = new DecodeOptions { Output = stream => { sink.Format(stream.Format); return sink; } },
+            Companions = Fixtures.CompanionOptions(name)?.Companions ?? CompanionSource.None,
+        };
         using FileStream stream = File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, name));
         return (Analyzer.CreateDefault().Analyze(Path.GetFileName(name), stream, options), sink);
     }
