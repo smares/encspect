@@ -3,6 +3,7 @@
 
 import pathlib
 import re
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -488,8 +489,11 @@ class ScopeTests(unittest.TestCase):
                 self.assertTrue(listed and set(listed) <= set(self.config["areas"]), (name, method))
                 # A filter clause is a substring: no other method of the class may start with this one's name.
                 self.assertEqual([m for m in methods[name] if m.startswith(method)], [method], f"{name}.{method} is the start of another test's name")
+        # Read from git, not the working tree: the docs job's sparse checkout leaves the fixtures out.
+        tracked = set(subprocess.run(["git", "ls-tree", "-d", "--name-only", "HEAD", "tests/fixtures/"], cwd=changes.ROOT,
+                                     capture_output=True, text=True, check=True).stdout.split())
         for folder, listed in self.config["fixtures"].items():
-            self.assertTrue((changes.ROOT / "tests/fixtures" / folder).is_dir(), folder)
+            self.assertIn(f"tests/fixtures/{folder}", tracked, folder)
             self.assertTrue(set(listed) <= set(self.config["areas"]), folder)
         named = set(self.config["codecs"].values()) | set(self.config["routes"]) | set(self.config["tags"]) | {a for c in self.config["tags"].values() for a in c}
         self.assertLessEqual(named, set(self.config["areas"]))
