@@ -120,7 +120,23 @@ public class DtsDecoderFixtureTests
         {
             StreamMeasurements m = info.Measurements!;
             Assert.Equal(info.Samples, m.Samples + m.LostSamples + m.WithheldSamples);
+            Assert.Equal(1, m.Gaps);
+            Assert.Equal(480, m.WithheldSamples);
         }
+    }
+
+    // A valid stream of an arrangement the decoder does not know is not damaged: it is reported once as not decoded, and no frame is.
+    [Theory]
+    [InlineData("dts/amode-10.dts")]
+    [InlineData("dts/amode-13.dts")]
+    [InlineData("dts/user-defined-arrangement.dts")]
+    public void AnArrangementThatIsNotDecodedIsReportedOnce(string name)
+    {
+        using FileStream stream = File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, name));
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions() } };
+        Report report = Analyzer.CreateDefault().Analyze(Path.GetFileName(name), stream, options);
+        Assert.Single(report.Findings, f => f.Code == "decode.not-possible");
+        Assert.DoesNotContain(report.Findings, f => f.Code is "decode.frame-invalid" or "decode.failed" or "parse.failed");
     }
 
     [Theory]

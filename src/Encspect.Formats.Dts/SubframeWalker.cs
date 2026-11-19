@@ -101,6 +101,11 @@ internal sealed class SubframeWalker
 
     private void Fail(SubframeWalk walk, WalkProblem problem, string detail, int subframe)
     {
+        // A value read past the data is not a field to judge: the caller returns and Walk reports the overrun.
+        if (problem == WalkProblem.Invalid && _isOverrun)
+        {
+            return;
+        }
 
         walk.Problem = problem;
         walk.ProblemDetail = detail;
@@ -188,6 +193,11 @@ internal sealed class SubframeWalker
                     if (_abits[ch][n] > 0)
                     {
                         _tmode[ch][n] = Symbol(book);
+                        if (_tmode[ch][n] >= ssc)
+                        {
+                            Fail(walk, WalkProblem.Invalid, $"TMODE {_tmode[ch][n]} names a subsubframe the subframe, of {ssc}, does not have (5.5.1)", sf);
+                            return false;
+                        }
                     }
                 }
             }
@@ -304,7 +314,11 @@ internal sealed class SubframeWalker
                 }
             }
 
-            walk.Subbands = Math.Max(walk.Subbands, a.Subs[ch]);
+            if (vq < a.Subs[ch])
+            {
+                walk.Subbands = Math.Max(walk.Subbands, a.Subs[ch]);
+            }
+
             int source = a.Joinx[ch] - 1;
             if (source >= 0 && source < channels)
             {
@@ -351,6 +365,12 @@ internal sealed class SubframeWalker
             }
 
             int scaleIndex = (int)Read(8);
+            if (scaleIndex >= SubframeTables.ScaleFactor7.Length - 3)
+            {
+                Fail(walk, WalkProblem.Invalid, $"the LFE scale factor index {scaleIndex} is invalid (D.1.2)", sf);
+                return false;
+            }
+
             if (store)
             {
                 lent.Channel(channels)[LentLayout.Subframe(sf) + 3] = scaleIndex;

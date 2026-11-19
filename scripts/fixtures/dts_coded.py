@@ -60,9 +60,14 @@ def value_range(abits, sel):
     return "plain", -(1 << (width - 1)), (1 << (width - 1)) - 1
 
 
-def put_samples(bits, rng, abits, sel, books_of_ch):
+def put_samples(bits, rng, abits, sel, books_of_ch, fixed=None):
+    """Eight quantization indexes: from the generator, or the next eight of the list fixed (cycled), which must be codable."""
     kind, low, high = value_range(abits, sel)
-    values = [min(high, max(low, round(rng.gauss(0, max(1, (high - low) / 6))))) for _ in range(8)]
+    if fixed is not None:
+        values = [fixed.pop(0) for _ in range(8)]
+        assert all(low <= v <= high for v in values), (abits, sel, values)
+    else:
+        values = [min(high, max(low, round(rng.gauss(0, max(1, (high - low) / 6))))) for _ in range(8)]
     if kind == "huffman":
         for v in values:
             put_huffman(bits, QUANTIZER_BOOKS[abits - 1][sel], v)
@@ -90,6 +95,7 @@ def write_subframes(bits, p, nch, subs, vqsub, joinx, bhuff, shuff, thuff, sel, 
     """The subframes of a core frame with content. p carries cpf, dynf, aspf and lff; the arrays are per channel. Returns the facts the walk must find."""
     rng = random.Random(seed)
     facts = Facts()
+    probe_values = list(p["probe"][1]) * 64 if p.get("probe") else None
     for sf, count in enumerate(ssc_list):
         bits.put(count - 1, 2)
         bits.put(0, 3)
@@ -109,6 +115,9 @@ def write_subframes(bits, p, nch, subs, vqsub, joinx, bhuff, shuff, thuff, sel, 
                 high = 12 if bhuff[ch] < 5 else 15 if bhuff[ch] == 5 else 26
                 value = rng.choice([low, low, low + 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, high]) if p.get("rich", True) else low
                 value = min(value, high, p.get("abits_max", 99))
+                if p.get("probe"):
+                    # One quantizer of ABITS probe[0] in the first subband of each channel, nothing else (bhuff 5 allows ABITS 0): the quantization indexes are probe[1].
+                    value = p["probe"][0] if n == 0 else 0
                 row.append(value)
                 if bhuff[ch] < 5:
                     put_huffman(bits, ABITS_BOOKS[bhuff[ch]], value)
@@ -167,7 +176,7 @@ def write_subframes(bits, p, nch, subs, vqsub, joinx, bhuff, shuff, thuff, sel, 
                 for n in range(vqsub[ch]):
                     if abits[ch][n] > 0:
                         a = abits[ch][n]
-                        put_samples(bits, rng, a, sel[ch][a - 1] if a <= 10 else 0, None)
+                        put_samples(bits, rng, a, sel[ch][a - 1] if a <= 10 else 0, None, probe_values if p.get("probe") else None)
             if ssf == count - 1 or p.get("aspf"):
                 bits.put(0xFFFF, 16)
         highest = 0
@@ -175,7 +184,8 @@ def write_subframes(bits, p, nch, subs, vqsub, joinx, bhuff, shuff, thuff, sel, 
             for n in range(vqsub[ch]):
                 if abits[ch][n] > 0:
                     highest = max(highest, n + 1)
-            highest = max(highest, subs[ch])
+            if vqsub[ch] < subs[ch]:
+                highest = max(highest, subs[ch])
             if joinx[ch]:
                 highest = max(highest, subs[joinx[ch] - 1])
         facts.subbands = max(facts.subbands, highest)
