@@ -49,10 +49,20 @@ public class MpegPacketRouteTests
                 (bytes[i], bytes[i + 1]) = (bytes[i + 1], bytes[i]);
             }
 
-            stream.Write(bytes, 0, (int)payload.Length);
+            stream.Write(bytes, 0, FrameLength(bytes));
         }
 
         return stream.ToArray();
+    }
+
+    // The bytes of the frame a payload starts with (MPEG-1 and MPEG-2 layers II and III): a payload is as long as its words, which a frame of an odd length does not fill.
+    private static int FrameLength(byte[] header)
+    {
+        int[] bitrates = (header[1] & 0x18) == 0x18 ? ((header[1] & 6) == 4 ? [0, 32, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384] : [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320])
+            : [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160];
+        int rate = new[] { 44100, 48000, 32000 }[(header[2] >> 2) & 3] >> ((header[1] & 0x18) == 0x18 ? 0 : 1);
+        int slots = (header[1] & 0x18) != 0x18 && (header[1] & 6) == 2 ? 72 : 144;
+        return (slots * 1000 * bitrates[header[2] >> 4] / rate) + ((header[2] >> 1) & 1);
     }
 
     // The bursts' payloads are the stream of an MP2 or MP3 file: the route reads them, at either parity of the data chunk's offset, as that file is read and decodes them to the same audio.
