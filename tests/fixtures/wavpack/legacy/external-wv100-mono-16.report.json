@@ -1,0 +1,299 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "external-wv100-mono-16.wv",
+    "root": {
+      "name": "File",
+      "value": "WavPack",
+      "offset": 0,
+      "length": 29968,
+      "children": [
+        {
+          "name": "WavPack",
+          "kind": "Stream",
+          "offset": 0,
+          "length": 29968,
+          "children": [
+            {
+              "name": "Encoder",
+              "value": "WavPack 1",
+              "offset": 0,
+              "length": 29968,
+              "children": [
+                {
+                  "name": "Confidence",
+                  "value": "Medium",
+                  "offset": 0,
+                  "length": 29968
+                },
+                {
+                  "name": "Evidence",
+                  "value": "The version field of the WavPack header is 1; libwavpack reports it as the major version of the program that wrote the file. The Cool Edit filter of the 3.97 sources writes version 3 as well, from a header it builds (cool_wv.c)",
+                  "offset": 0,
+                  "length": 29968
+                }
+              ]
+            },
+            {
+              "name": "Statistics",
+              "kind": "Statistics",
+              "offset": 0,
+              "length": 29968,
+              "children": [
+                {
+                  "name": "Samples",
+                  "value": 24000,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 29968
+                },
+                {
+                  "name": "Duration",
+                  "value": 0.54421768707483,
+                  "unit": "s",
+                  "offset": 0,
+                  "length": 29968
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 0,
+                  "length": 29968
+                },
+                {
+                  "name": "Channels",
+                  "value": 1,
+                  "unit": "channels",
+                  "offset": 0,
+                  "length": 29968
+                },
+                {
+                  "name": "Channel Layout",
+                  "value": "mono (front center)",
+                  "offset": 0,
+                  "length": 29968
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 0,
+                  "length": 29968
+                },
+                {
+                  "name": "IsLossless",
+                  "value": true,
+                  "offset": 0,
+                  "length": 29968
+                },
+                {
+                  "name": "IsHybrid",
+                  "value": false,
+                  "offset": 0,
+                  "length": 29968
+                },
+                {
+                  "name": "IsRaw",
+                  "value": false,
+                  "offset": 0,
+                  "length": 29968
+                },
+                {
+                  "name": "Compression Mode",
+                  "value": "fast",
+                  "offset": 0,
+                  "length": 29968
+                },
+                {
+                  "name": "Average Bitrate",
+                  "value": 439.7358,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 29968
+                }
+              ]
+            },
+            {
+              "name": "WAV Header",
+              "offset": 0,
+              "length": 44,
+              "children": [
+                {
+                  "name": "RIFF Chunk",
+                  "offset": 0,
+                  "length": 12,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "RIFF",
+                      "offset": 0,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 48036,
+                      "unit": "bytes",
+                      "offset": 4,
+                      "length": 4
+                    },
+                    {
+                      "name": "Form Type",
+                      "value": "WAVE",
+                      "offset": 8,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "fmt Chunk",
+                  "offset": 12,
+                  "length": 24,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "fmt ",
+                      "offset": 12,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 16,
+                      "unit": "bytes",
+                      "offset": 16,
+                      "length": 4
+                    },
+                    {
+                      "name": "Format Tag",
+                      "value": "PCM",
+                      "offset": 20,
+                      "length": 2
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 1,
+                      "unit": "channels",
+                      "offset": 22,
+                      "length": 2
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 44100,
+                      "unit": "Hz",
+                      "offset": 24,
+                      "length": 4
+                    },
+                    {
+                      "name": "Byte Rate",
+                      "value": 88200,
+                      "unit": "bytes/s",
+                      "offset": 28,
+                      "length": 4
+                    },
+                    {
+                      "name": "Block Align",
+                      "value": 2,
+                      "unit": "bytes",
+                      "offset": 32,
+                      "length": 2
+                    },
+                    {
+                      "name": "Bits Per Sample",
+                      "value": 16,
+                      "unit": "bits",
+                      "offset": 34,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "data Chunk",
+                  "offset": 36,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "data",
+                      "offset": 36,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 48000,
+                      "unit": "bytes",
+                      "offset": 40,
+                      "length": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "WavPack Header",
+              "offset": 44,
+              "length": 10,
+              "children": [
+                {
+                  "name": "ID",
+                  "value": "wvpk",
+                  "offset": 44,
+                  "length": 4
+                },
+                {
+                  "name": "Size",
+                  "value": 2,
+                  "unit": "bytes",
+                  "offset": 48,
+                  "length": 4
+                },
+                {
+                  "name": "Version",
+                  "value": 1,
+                  "offset": 52,
+                  "length": 2
+                }
+              ]
+            },
+            {
+              "name": "Bitstream",
+              "value": 29914,
+              "unit": "bytes",
+              "offset": 54,
+              "length": 29914
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0
+          ]
+        ],
+        "codec": "WavPack lossless",
+        "sampleRate": 44100,
+        "channels": 1,
+        "channelMode": "Mono",
+        "channelLayout": [
+          "front center"
+        ],
+        "channelLayoutName": "mono",
+        "bitsPerSample": 16,
+        "samples": 24000,
+        "duration": 0.54421768707483,
+        "averageBitrate": 439.7358,
+        "isVbr": false,
+        "encoder": "WavPack 1",
+        "encoderConfidence": "Medium",
+        "series": []
+      }
+    ],
+    "findings": []
+  }
+]

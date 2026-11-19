@@ -1,0 +1,81 @@
+{
+ "length": 21258,
+ "header": {
+  "offset": 44,
+  "length": 36,
+  "ck_size": 28,
+  "version": 3,
+  "bits": 1858,
+  "flags": "b400",
+  "flag_names": [
+   "new-high",
+   "cross-decorr",
+   "new-decorr",
+   "extreme-decorr"
+  ],
+  "shift": 0,
+  "total_samples": 24000,
+  "crc": "38429a23",
+  "crc2": "30faeec2",
+  "extension": "WAV",
+  "extra_bc": 0,
+  "extras": "000000"
+ },
+ "wav": {
+  "riff_size": 96036,
+  "chunks": [
+   {
+    "id": "fmt ",
+    "offset": 12,
+    "size": 16
+   },
+   {
+    "id": "data",
+    "offset": 36,
+    "size": 96000
+   }
+  ],
+  "data_size": 96000,
+  "data_offset": 44,
+  "format": {
+   "tag": 1,
+   "channels": 2,
+   "sample_rate": 44100,
+   "byte_rate": 176400,
+   "block_align": 4,
+   "bits_per_sample": 16
+  }
+ },
+ "figures": {
+  "channels": 2,
+  "sample_rate": 44100,
+  "bits_per_sample": 16,
+  "bytes_per_sample": 2,
+  "samples": 24000,
+  "mode": "hybrid",
+  "compression_mode": "high",
+  "stereo_coding": "Left/right stereo",
+  "samples_from_data_chunk": 24000,
+  "total_samples_match": true
+ },
+ "bitstream": {
+  "offset": 80,
+  "length": 21178
+ },
+ "findings": [
+  {
+   "severity": "warning",
+   "code": "wavpack.flags-invalid"
+  }
+ ],
+ "stream": true,
+ "built": {
+  "description": "A hybrid target with the cross-channel flag and the extreme flag.",
+  "from": "external-wv340-hybrid-320.wv"
+ },
+ "crosscheck": {
+  "libwavpack_legacy": {
+   "opens": false
+  }
+ }
+}

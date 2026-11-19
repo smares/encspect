@@ -299,10 +299,10 @@ public class CorruptTrueHdBuiltFileTests
     public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
 }
 
-// The WavPack fixtures written by wavpack and FFmpeg, each analyzed with and without decoding (a share of the variants is decoded, as for Monkey's Audio).
+// The WavPack fixtures written by wavpack, FFmpeg and the original encoders of versions 1 to 4.31, each analyzed with and without decoding (a share of the variants is decoded, as for Monkey's Audio).
 public class CorruptWavPackFileTests
 {
-    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("wavpack/external-", StringComparison.Ordinal));
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("wavpack/external-", StringComparison.Ordinal) || n.StartsWith("wavpack/legacy/external-", StringComparison.Ordinal));
 
     [Theory]
     [MemberData(nameof(Names))]
@@ -312,7 +312,7 @@ public class CorruptWavPackFileTests
 // The hand-built WavPack fixtures.
 public class CorruptWavPackBuiltFileTests
 {
-    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("wavpack/built-", StringComparison.Ordinal));
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("wavpack/built-", StringComparison.Ordinal) || n.StartsWith("wavpack/legacy/built-", StringComparison.Ordinal));
 
     [Theory]
     [MemberData(nameof(Names))]

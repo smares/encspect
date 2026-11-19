@@ -474,7 +474,7 @@ internal static partial class Nodes
         }
     }
 
-    private static void WaveFormat(ReadOnlySpan<byte> f, int size, long at, Node chunk)
+    internal static void WaveFormat(ReadOnlySpan<byte> f, int size, long at, Node chunk)
     {
         ushort tag = BinaryPrimitives.ReadUInt16LittleEndian(f);
         string tagName = tag switch { 1 => "PCM", 3 => "IEEE float", 0xFFFE => "extensible", _ => $"0x{tag:X4}" };

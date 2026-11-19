@@ -1,0 +1,188 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-legacy-header-cut-v3.wv",
+    "root": {
+      "name": "File",
+      "value": "WavPack",
+      "offset": 0,
+      "length": 64,
+      "children": [
+        {
+          "name": "WavPack",
+          "kind": "Stream",
+          "offset": 0,
+          "length": 64,
+          "children": [
+            {
+              "name": "WAV Header",
+              "offset": 0,
+              "length": 44,
+              "children": [
+                {
+                  "name": "RIFF Chunk",
+                  "offset": 0,
+                  "length": 12,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "RIFF",
+                      "offset": 0,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 96036,
+                      "unit": "bytes",
+                      "offset": 4,
+                      "length": 4
+                    },
+                    {
+                      "name": "Form Type",
+                      "value": "WAVE",
+                      "offset": 8,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "fmt Chunk",
+                  "offset": 12,
+                  "length": 24,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "fmt ",
+                      "offset": 12,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 16,
+                      "unit": "bytes",
+                      "offset": 16,
+                      "length": 4
+                    },
+                    {
+                      "name": "Format Tag",
+                      "value": "PCM",
+                      "offset": 20,
+                      "length": 2
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 2,
+                      "unit": "channels",
+                      "offset": 22,
+                      "length": 2
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 44100,
+                      "unit": "Hz",
+                      "offset": 24,
+                      "length": 4
+                    },
+                    {
+                      "name": "Byte Rate",
+                      "value": 176400,
+                      "unit": "bytes/s",
+                      "offset": 28,
+                      "length": 4
+                    },
+                    {
+                      "name": "Block Align",
+                      "value": 4,
+                      "unit": "bytes",
+                      "offset": 32,
+                      "length": 2
+                    },
+                    {
+                      "name": "Bits Per Sample",
+                      "value": 16,
+                      "unit": "bits",
+                      "offset": 34,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "data Chunk",
+                  "offset": 36,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "data",
+                      "offset": 36,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 96000,
+                      "unit": "bytes",
+                      "offset": 40,
+                      "length": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "WavPack Header",
+              "offset": 44,
+              "length": 20,
+              "children": [
+                {
+                  "name": "ID",
+                  "value": "wvpk",
+                  "offset": 44,
+                  "length": 4
+                },
+                {
+                  "name": "Size",
+                  "value": 28,
+                  "unit": "bytes",
+                  "offset": 48,
+                  "length": 4
+                },
+                {
+                  "name": "Version",
+                  "value": 3,
+                  "offset": 52,
+                  "length": 2
+                },
+                {
+                  "name": "Lossy Bit Limit",
+                  "value": 0,
+                  "unit": "bits",
+                  "offset": 54,
+                  "length": 2
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [],
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "wavpack.legacy-header-truncated",
+        "message": "The data ends 20 bytes into the WavPack header of version 3, which takes 36; the file holds no audio.",
+        "offset": 44,
+        "length": 20,
+        "path": [
+          0,
+          1
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

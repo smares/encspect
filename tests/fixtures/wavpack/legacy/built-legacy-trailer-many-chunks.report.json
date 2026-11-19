@@ -1,0 +1,1839 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "built-legacy-trailer-many-chunks.wv",
+    "root": {
+      "name": "File",
+      "value": "WavPack",
+      "offset": 0,
+      "length": 49928,
+      "children": [
+        {
+          "name": "WavPack",
+          "kind": "Stream",
+          "offset": 0,
+          "length": 49928,
+          "children": [
+            {
+              "name": "Encoder",
+              "value": "WavPack 3",
+              "offset": 0,
+              "length": 49928,
+              "children": [
+                {
+                  "name": "Confidence",
+                  "value": "Medium",
+                  "offset": 0,
+                  "length": 49928
+                },
+                {
+                  "name": "Evidence",
+                  "value": "The version field of the WavPack header is 3; libwavpack reports it as the major version of the program that wrote the file. The Cool Edit filter of the 3.97 sources writes version 3 as well, from a header it builds (cool_wv.c)",
+                  "offset": 0,
+                  "length": 49928
+                }
+              ]
+            },
+            {
+              "name": "Statistics",
+              "kind": "Statistics",
+              "offset": 0,
+              "length": 49928,
+              "children": [
+                {
+                  "name": "Samples",
+                  "value": 24000,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 49928
+                },
+                {
+                  "name": "Duration",
+                  "value": 0.54421768707483,
+                  "unit": "s",
+                  "offset": 0,
+                  "length": 49928
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 0,
+                  "length": 49928
+                },
+                {
+                  "name": "Channels",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 0,
+                  "length": 49928
+                },
+                {
+                  "name": "Channel Layout",
+                  "value": "stereo (front left, front right)",
+                  "offset": 0,
+                  "length": 49928
+                },
+                {
+                  "name": "Bits Per Sample",
+                  "value": 16,
+                  "unit": "bits",
+                  "offset": 0,
+                  "length": 49928
+                },
+                {
+                  "name": "IsLossless",
+                  "value": true,
+                  "offset": 0,
+                  "length": 49928
+                },
+                {
+                  "name": "IsHybrid",
+                  "value": false,
+                  "offset": 0,
+                  "length": 49928
+                },
+                {
+                  "name": "IsRaw",
+                  "value": false,
+                  "offset": 0,
+                  "length": 49928
+                },
+                {
+                  "name": "IsNoiseShaped",
+                  "value": false,
+                  "offset": 0,
+                  "length": 49928
+                },
+                {
+                  "name": "Compression Mode",
+                  "value": "normal",
+                  "offset": 0,
+                  "length": 49928
+                },
+                {
+                  "name": "Stereo Coding",
+                  "value": "Mid/side stereo",
+                  "offset": 0,
+                  "length": 49928
+                },
+                {
+                  "name": "Source Extension",
+                  "value": "WAV",
+                  "offset": 0,
+                  "length": 49928
+                },
+                {
+                  "name": "Average Bitrate",
+                  "value": 724.2984,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 49928
+                }
+              ]
+            },
+            {
+              "name": "WAV Header",
+              "offset": 0,
+              "length": 44,
+              "children": [
+                {
+                  "name": "RIFF Chunk",
+                  "offset": 0,
+                  "length": 12,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "RIFF",
+                      "offset": 0,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 96036,
+                      "unit": "bytes",
+                      "offset": 4,
+                      "length": 4
+                    },
+                    {
+                      "name": "Form Type",
+                      "value": "WAVE",
+                      "offset": 8,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "fmt Chunk",
+                  "offset": 12,
+                  "length": 24,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "fmt ",
+                      "offset": 12,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 16,
+                      "unit": "bytes",
+                      "offset": 16,
+                      "length": 4
+                    },
+                    {
+                      "name": "Format Tag",
+                      "value": "PCM",
+                      "offset": 20,
+                      "length": 2
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 2,
+                      "unit": "channels",
+                      "offset": 22,
+                      "length": 2
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 44100,
+                      "unit": "Hz",
+                      "offset": 24,
+                      "length": 4
+                    },
+                    {
+                      "name": "Byte Rate",
+                      "value": 176400,
+                      "unit": "bytes/s",
+                      "offset": 28,
+                      "length": 4
+                    },
+                    {
+                      "name": "Block Align",
+                      "value": 4,
+                      "unit": "bytes",
+                      "offset": 32,
+                      "length": 2
+                    },
+                    {
+                      "name": "Bits Per Sample",
+                      "value": 16,
+                      "unit": "bits",
+                      "offset": 34,
+                      "length": 2
+                    }
+                  ]
+                },
+                {
+                  "name": "data Chunk",
+                  "offset": 36,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "data",
+                      "offset": 36,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 96000,
+                      "unit": "bytes",
+                      "offset": 40,
+                      "length": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "WavPack Header",
+              "offset": 44,
+              "length": 36,
+              "children": [
+                {
+                  "name": "ID",
+                  "value": "wvpk",
+                  "offset": 44,
+                  "length": 4
+                },
+                {
+                  "name": "Size",
+                  "value": 28,
+                  "unit": "bytes",
+                  "offset": 48,
+                  "length": 4
+                },
+                {
+                  "name": "Version",
+                  "value": 3,
+                  "offset": 52,
+                  "length": 2
+                },
+                {
+                  "name": "Lossy Bit Limit",
+                  "value": 0,
+                  "unit": "bits",
+                  "offset": 54,
+                  "length": 2
+                },
+                {
+                  "name": "Flags",
+                  "value": 64528,
+                  "offset": 56,
+                  "length": 2,
+                  "children": [
+                    {
+                      "name": "IsMono",
+                      "value": false,
+                      "offset": 56,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsFast",
+                      "value": false,
+                      "offset": 56,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsRaw",
+                      "value": false,
+                      "offset": 56,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsNoiseCalculated",
+                      "value": false,
+                      "offset": 56,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsHigh",
+                      "value": true,
+                      "offset": 56,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "HasThreeByteSamples",
+                      "value": false,
+                      "offset": 56,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsOver20Bits",
+                      "value": false,
+                      "offset": 56,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "HasCorrectionFile",
+                      "value": false,
+                      "offset": 56,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsNoiseShaped",
+                      "value": false,
+                      "offset": 57,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsVeryFast",
+                      "value": false,
+                      "offset": 57,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsNewHigh",
+                      "value": true,
+                      "offset": 57,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsExtremeCanceled",
+                      "value": true,
+                      "offset": 57,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsCrossChannel",
+                      "value": true,
+                      "offset": 57,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "HasNewDecorrelator",
+                      "value": true,
+                      "offset": 57,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsJointStereo",
+                      "value": true,
+                      "offset": 57,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    },
+                    {
+                      "name": "IsExtreme",
+                      "value": true,
+                      "offset": 57,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1,
+                      "bitOrder": "leastSignificantFirst"
+                    }
+                  ]
+                },
+                {
+                  "name": "Shift",
+                  "value": 0,
+                  "unit": "bits",
+                  "offset": 58,
+                  "length": 2
+                },
+                {
+                  "name": "Total Samples",
+                  "value": 24000,
+                  "unit": "samples",
+                  "offset": 60,
+                  "length": 4
+                },
+                {
+                  "name": "Audio CRC",
+                  "value": 821751490,
+                  "offset": 64,
+                  "length": 4
+                },
+                {
+                  "name": "Correction CRC",
+                  "value": 0,
+                  "offset": 68,
+                  "length": 4
+                },
+                {
+                  "name": "Source Extension",
+                  "value": "WAV",
+                  "offset": 72,
+                  "length": 4
+                },
+                {
+                  "name": "Extra Byte Count",
+                  "value": 0,
+                  "unit": "bytes",
+                  "offset": 76,
+                  "length": 1
+                },
+                {
+                  "name": "Extra Bytes",
+                  "value": 0,
+                  "offset": 77,
+                  "length": 3
+                }
+              ]
+            },
+            {
+              "name": "Bitstream",
+              "value": 49272,
+              "unit": "bytes",
+              "offset": 80,
+              "length": 49272
+            },
+            {
+              "name": "Trailer",
+              "value": 576,
+              "unit": "bytes",
+              "offset": 49352,
+              "length": 576,
+              "children": [
+                {
+                  "name": "Marker",
+                  "value": 16,
+                  "unit": "bytes",
+                  "offset": 49352,
+                  "length": 16
+                },
+                {
+                  "name": "c000 Chunk",
+                  "offset": 49368,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c000",
+                      "offset": 49368,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49372,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c001 Chunk",
+                  "offset": 49376,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c001",
+                      "offset": 49376,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49380,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c002 Chunk",
+                  "offset": 49384,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c002",
+                      "offset": 49384,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49388,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c003 Chunk",
+                  "offset": 49392,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c003",
+                      "offset": 49392,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49396,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c004 Chunk",
+                  "offset": 49400,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c004",
+                      "offset": 49400,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49404,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c005 Chunk",
+                  "offset": 49408,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c005",
+                      "offset": 49408,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49412,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c006 Chunk",
+                  "offset": 49416,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c006",
+                      "offset": 49416,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49420,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c007 Chunk",
+                  "offset": 49424,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c007",
+                      "offset": 49424,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49428,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c008 Chunk",
+                  "offset": 49432,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c008",
+                      "offset": 49432,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49436,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c009 Chunk",
+                  "offset": 49440,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c009",
+                      "offset": 49440,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49444,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c010 Chunk",
+                  "offset": 49448,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c010",
+                      "offset": 49448,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49452,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c011 Chunk",
+                  "offset": 49456,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c011",
+                      "offset": 49456,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49460,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c012 Chunk",
+                  "offset": 49464,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c012",
+                      "offset": 49464,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49468,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c013 Chunk",
+                  "offset": 49472,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c013",
+                      "offset": 49472,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49476,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c014 Chunk",
+                  "offset": 49480,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c014",
+                      "offset": 49480,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49484,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c015 Chunk",
+                  "offset": 49488,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c015",
+                      "offset": 49488,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49492,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c016 Chunk",
+                  "offset": 49496,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c016",
+                      "offset": 49496,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49500,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c017 Chunk",
+                  "offset": 49504,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c017",
+                      "offset": 49504,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49508,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c018 Chunk",
+                  "offset": 49512,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c018",
+                      "offset": 49512,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49516,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c019 Chunk",
+                  "offset": 49520,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c019",
+                      "offset": 49520,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49524,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c020 Chunk",
+                  "offset": 49528,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c020",
+                      "offset": 49528,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49532,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c021 Chunk",
+                  "offset": 49536,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c021",
+                      "offset": 49536,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49540,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c022 Chunk",
+                  "offset": 49544,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c022",
+                      "offset": 49544,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49548,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c023 Chunk",
+                  "offset": 49552,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c023",
+                      "offset": 49552,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49556,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c024 Chunk",
+                  "offset": 49560,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c024",
+                      "offset": 49560,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49564,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c025 Chunk",
+                  "offset": 49568,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c025",
+                      "offset": 49568,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49572,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c026 Chunk",
+                  "offset": 49576,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c026",
+                      "offset": 49576,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49580,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c027 Chunk",
+                  "offset": 49584,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c027",
+                      "offset": 49584,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49588,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c028 Chunk",
+                  "offset": 49592,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c028",
+                      "offset": 49592,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49596,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c029 Chunk",
+                  "offset": 49600,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c029",
+                      "offset": 49600,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49604,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c030 Chunk",
+                  "offset": 49608,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c030",
+                      "offset": 49608,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49612,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c031 Chunk",
+                  "offset": 49616,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c031",
+                      "offset": 49616,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49620,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c032 Chunk",
+                  "offset": 49624,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c032",
+                      "offset": 49624,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49628,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c033 Chunk",
+                  "offset": 49632,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c033",
+                      "offset": 49632,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49636,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c034 Chunk",
+                  "offset": 49640,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c034",
+                      "offset": 49640,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49644,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c035 Chunk",
+                  "offset": 49648,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c035",
+                      "offset": 49648,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49652,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c036 Chunk",
+                  "offset": 49656,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c036",
+                      "offset": 49656,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49660,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c037 Chunk",
+                  "offset": 49664,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c037",
+                      "offset": 49664,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49668,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c038 Chunk",
+                  "offset": 49672,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c038",
+                      "offset": 49672,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49676,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c039 Chunk",
+                  "offset": 49680,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c039",
+                      "offset": 49680,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49684,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c040 Chunk",
+                  "offset": 49688,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c040",
+                      "offset": 49688,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49692,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c041 Chunk",
+                  "offset": 49696,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c041",
+                      "offset": 49696,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49700,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c042 Chunk",
+                  "offset": 49704,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c042",
+                      "offset": 49704,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49708,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c043 Chunk",
+                  "offset": 49712,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c043",
+                      "offset": 49712,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49716,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c044 Chunk",
+                  "offset": 49720,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c044",
+                      "offset": 49720,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49724,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c045 Chunk",
+                  "offset": 49728,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c045",
+                      "offset": 49728,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49732,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c046 Chunk",
+                  "offset": 49736,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c046",
+                      "offset": 49736,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49740,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c047 Chunk",
+                  "offset": 49744,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c047",
+                      "offset": 49744,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49748,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c048 Chunk",
+                  "offset": 49752,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c048",
+                      "offset": 49752,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49756,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c049 Chunk",
+                  "offset": 49760,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c049",
+                      "offset": 49760,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49764,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c050 Chunk",
+                  "offset": 49768,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c050",
+                      "offset": 49768,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49772,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c051 Chunk",
+                  "offset": 49776,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c051",
+                      "offset": 49776,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49780,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c052 Chunk",
+                  "offset": 49784,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c052",
+                      "offset": 49784,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49788,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c053 Chunk",
+                  "offset": 49792,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c053",
+                      "offset": 49792,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49796,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c054 Chunk",
+                  "offset": 49800,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c054",
+                      "offset": 49800,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49804,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c055 Chunk",
+                  "offset": 49808,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c055",
+                      "offset": 49808,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49812,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c056 Chunk",
+                  "offset": 49816,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c056",
+                      "offset": 49816,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49820,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c057 Chunk",
+                  "offset": 49824,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c057",
+                      "offset": 49824,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49828,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c058 Chunk",
+                  "offset": 49832,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c058",
+                      "offset": 49832,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49836,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c059 Chunk",
+                  "offset": 49840,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c059",
+                      "offset": 49840,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49844,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c060 Chunk",
+                  "offset": 49848,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c060",
+                      "offset": 49848,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49852,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c061 Chunk",
+                  "offset": 49856,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c061",
+                      "offset": 49856,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49860,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c062 Chunk",
+                  "offset": 49864,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c062",
+                      "offset": 49864,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49868,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "c063 Chunk",
+                  "offset": 49872,
+                  "length": 8,
+                  "children": [
+                    {
+                      "name": "ID",
+                      "value": "c063",
+                      "offset": 49872,
+                      "length": 4
+                    },
+                    {
+                      "name": "Size",
+                      "value": 0,
+                      "unit": "bytes",
+                      "offset": 49876,
+                      "length": 4
+                    }
+                  ]
+                },
+                {
+                  "name": "Further Chunks",
+                  "value": 6,
+                  "unit": "chunks",
+                  "offset": 49880,
+                  "length": 48
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0
+          ]
+        ],
+        "codec": "WavPack lossless",
+        "sampleRate": 44100,
+        "channels": 2,
+        "channelMode": "Joint stereo (mid/side)",
+        "channelLayout": [
+          "front left",
+          "front right"
+        ],
+        "channelLayoutName": "stereo",
+        "bitsPerSample": 16,
+        "samples": 24000,
+        "duration": 0.54421768707483,
+        "averageBitrate": 724.2984,
+        "isVbr": false,
+        "verification": {
+          "decoding": "noDecoder",
+          "decodedSamples": 0,
+          "checksums": [
+            {
+              "name": "audio CRC",
+              "covers": "decodedAudio",
+              "coversAllAudio": true,
+              "stored": 1,
+              "checked": 0,
+              "failed": 0
+            }
+          ]
+        },
+        "encoder": "WavPack 3",
+        "encoderConfidence": "Medium",
+        "series": []
+      }
+    ],
+    "findings": []
+  }
+]
