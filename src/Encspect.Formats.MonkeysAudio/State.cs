@@ -116,7 +116,7 @@ internal sealed class State
         new("Without silence", Explain.CategoryNotSilent) { Topic = Topics.Frames },
     ];
 
-    public CategorySeriesBuilder SilentFlags { get; } = new("Silent Frames", SilenceFlags, "frame", 1, concept: GraphConcept.StereoCoding);
+    public CategorySeriesBuilder SilentFlags { get; } = new("Silent Frames", SilenceFlags, "frame", 1);
 
     public static int StereoCodeOf(uint special, bool hasCodes) =>
         !hasCodes ? 0 : (special & 3) == 3 ? 2 : (special & 4) != 0 ? 1 : 0;
