@@ -542,7 +542,7 @@ def check_pair(name, manifest, path, work, tool, problems):
     if "pair_open_error" in facts or "pair_samples" not in facts:
         problems.append(f"libwavpack does not open the pair ({facts.get('pair_open_error')})")
         return
-    got = {"opens": True, "mode_wvc": facts["pair_mode_wvc"] == "1", "samples": int(facts["pair_samples"]), "errors": int(facts["pair_errors"])}
+    got = {"opens": True, "mode_wvc": facts["pair_mode_wvc"] == "1", "samples": int(facts["pair_samples"]), "errors": int(facts["pair_errors"]), "md5": facts["pair_md5"]}
     if got != manifest["crosscheck"]["pair"]:
         problems.append(f"libwavpack's pass over the pair is {got}, the manifest {manifest['crosscheck']['pair']}")
     if status == "consistent" and got["errors"] != 0:
