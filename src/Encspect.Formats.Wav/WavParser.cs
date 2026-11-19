@@ -12,6 +12,8 @@ public sealed class WavParser : IFormatParser
     // The longest chain of chunks the sniff follows.
     private const int SniffChunks = SniffResult.MaxFrames;
 
+    private const int StepBackClass = 70;
+
     public string Name => "WAV";
 
     // The RIFF header with the form type WAVE is certain when a chunk header with an ID of printable characters follows it (class 100); a
@@ -36,6 +38,13 @@ public sealed class WavParser : IFormatParser
         {
             byte[] chunk = reader.ReadBytesAt(position, 8);
             ulong size = Fields.Dword(chunk.AsSpan(4), header.IsBigEndian);
+            if (chunk.AsSpan(0, 4).SequenceEqual("data"u8) && reader.MatchesAt(position + 8, "wvpk"u8))
+            {
+                // A WavPack file of version 1 to 3 keeps its source's WAV header, whose data chunk is followed by the WavPack header and not by audio: the WavPack
+                // parser's sniff rates it higher, and this one only steps back (docs/design/wavpack-legacy.md, "Detection").
+                return new SniffResult(StepBackClass, reader.Start, frames, End: Math.Min(position, reader.End), Note: "the data chunk starts with a WavPack header");
+            }
+
             if (size == uint.MaxValue)
             {
                 // A size the file states elsewhere or leaves open: the chain cannot go further.

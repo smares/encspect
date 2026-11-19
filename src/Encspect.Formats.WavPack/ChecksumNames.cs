@@ -9,4 +9,5 @@ internal static class ChecksumNames
     public const string BlockCrc = "block header CRC";
     public const string ExtraCrc = "extended CRC";
     public const string Md5 = "MD5";
+    public const string LegacyCrc = "audio CRC";
 }

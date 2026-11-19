@@ -57,13 +57,17 @@ def run_library(binary, path, work, with_correction=True):
 
 
 def check_library(name, path, manifest, binary, work, problems):
+    if "libwavpack_legacy" not in manifest.get("crosscheck", {}):
+        skip(name, "libwavpack's legacy decoder", "the hand-built file's damage leaves no answer to state")
+        return
     expected = manifest["crosscheck"]["libwavpack_legacy"]
     figures, digest = run_library(binary, path, work)
     opens = "open_error" not in figures
     if opens != expected["opens"]:
         problems.append(f"libwavpack's legacy decoder {'opens' if opens else 'refuses (' + figures.get('open_error', '') + ')'} the file, the manifest says it {'opens' if expected['opens'] else 'does not'}")
         return
-    if not opens:
+    if not opens or "samples_unpacked" not in expected:
+        # A hand-built file states only whether the library opens it: what it unpacks of damaged audio is not worked out.
         return
     if int(figures["version"]) != expected["version"] or int(figures["channels"]) != expected["channels"]:
         problems.append(f"libwavpack reads version {figures['version']} with {figures['channels']} channels, the manifest says {expected['version']} and {expected['channels']}")
@@ -152,8 +156,9 @@ def main():
             count += 1
             check_library(name, path, manifest, binary, work, problems)
             check_wvunpack(name, path, problems)
-            check_ffmpeg(name, path, manifest, problems)
-            check_mediainfo(name, path, manifest, problems)
+            if name.startswith("external-"):
+                check_ffmpeg(name, path, manifest, problems)
+                check_mediainfo(name, path, manifest, problems)
             for problem in problems:
                 print(f"{name}: {problem}")
             failed += bool(problems)

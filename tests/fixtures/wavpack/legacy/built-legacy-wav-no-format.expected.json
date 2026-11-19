@@ -1,0 +1,66 @@
+{
+ "length": 49328,
+ "header": {
+  "offset": 20,
+  "length": 36,
+  "ck_size": 28,
+  "version": 3,
+  "bits": 0,
+  "flags": "fc10",
+  "flag_names": [
+   "high",
+   "new-high",
+   "cancel-extreme",
+   "cross-decorr",
+   "new-decorr",
+   "joint-stereo",
+   "extreme-decorr"
+  ],
+  "shift": 0,
+  "total_samples": 24000,
+  "crc": "30faeec2",
+  "crc2": "00000000",
+  "extension": "WAV",
+  "extra_bc": 0,
+  "extras": "000000"
+ },
+ "wav": {
+  "riff_size": 96012,
+  "chunks": [
+   {
+    "id": "data",
+    "offset": 12,
+    "size": 96000
+   }
+  ],
+  "data_size": 96000,
+  "data_offset": 20
+ },
+ "figures": {
+  "channels": 2,
+  "sample_rate": 0,
+  "bits_per_sample": 0,
+  "bytes_per_sample": 2,
+  "samples": 24000,
+  "mode": "lossless",
+  "compression_mode": "normal",
+  "stereo_coding": "Mid/side stereo",
+  "samples_from_data_chunk": null,
+  "total_samples_match": null
+ },
+ "bitstream": {
+  "offset": 56,
+  "length": 49272
+ },
+ "findings": [
+  {
+   "severity": "warning",
+   "code": "wavpack.legacy-wav-format-unsupported"
+  }
+ ],
+ "stream": false,
+ "built": {
+  "description": "The stored WAV header has no format chunk.",
+  "from": "external-wv340-lossless-16-stereo.wv"
+ }
+}

@@ -1,0 +1,41 @@
+{
+ "length": 12,
+ "header": {
+  "offset": 0,
+  "length": 10,
+  "ck_size": 28,
+  "version": 1
+ },
+ "figures": {
+  "channels": 2,
+  "sample_rate": 44100,
+  "bits_per_sample": 16,
+  "bytes_per_sample": 2,
+  "samples": 0,
+  "mode": "lossless",
+  "compression_mode": "fast",
+  "stereo_coding": "Mid/side stereo",
+  "samples_from_data_chunk": null,
+  "total_samples_match": null
+ },
+ "bitstream": {
+  "offset": 10,
+  "length": 2
+ },
+ "findings": [
+  {
+   "severity": "info",
+   "code": "wavpack.legacy-header-size"
+  }
+ ],
+ "stream": true,
+ "built": {
+  "description": "A raw file whose header says version 1.",
+  "from": "external-wv340-raw-stereo.wv"
+ },
+ "crosscheck": {
+  "libwavpack_legacy": {
+   "opens": false
+  }
+ }
+}

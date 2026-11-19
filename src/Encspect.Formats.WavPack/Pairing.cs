@@ -41,7 +41,12 @@ internal static class Pairing
             return new PairResult(Result(companion, [new CorrectionProblem(CorrectionProblemKind.NotCorrectionData, 1, stream)]), null);
         }
 
-        State other = WavPackParser.ParseInto(context, isCompanion: true);
+        // A WavPack 1 to 3 file beside a version 4 or 5 file is another stream, not its correction data.
+        if (WavPackParser.ParseInto(context, isCompanion: true) is not { } other)
+        {
+            return new PairResult(Result(companion, [new CorrectionProblem(CorrectionProblemKind.NotCorrectionData, 1, stream)]), null);
+        }
+
         return new PairResult(Result(companion, Problems(main, other, stream)), other);
     }
 

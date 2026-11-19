@@ -23,6 +23,11 @@ public sealed class WavPackParser : IFormatParser
     public SniffResult Sniff(SniffContext context)
     {
         ByteReader reader = context.Reader;
+        if (Legacy.Sniff(reader) is { } legacy)
+        {
+            return legacy;
+        }
+
         if (reader.Length < BlockHeader.Length)
         {
             return SniffResult.None;
@@ -54,6 +59,11 @@ public sealed class WavPackParser : IFormatParser
     public long? DeclaredEnd(SniffContext context)
     {
         ByteReader reader = context.Reader;
+        if (LegacyLayout.Locate(reader) is not null)
+        {
+            return null;
+        }
+
         var source = new Source(reader);
         long position = reader.Start;
         if (!source.TryHeader(position, out _))
@@ -84,16 +94,24 @@ public sealed class WavPackParser : IFormatParser
     public void Parse(ParseContext context) => ParseInto(context, isCompanion: false);
 
     // The same walk over a file or, with isCompanion, over the correction file the host opened beside the main file (the host's context over it): its
-    // nodes, findings and stream are the ones the file gets alone, less the finding that says it was opened alone.
-    internal static State ParseInto(ParseContext context, bool isCompanion)
+    // nodes, findings and stream are the ones the file gets alone, less the finding that says it was opened alone. A WavPack 1 to 3 file has no state.
+    internal static State? ParseInto(ParseContext context, bool isCompanion)
     {
         ByteReader window = context.Reader;
         List<Node> tags = [.. context.EmbeddedTags.Where(t => t.Offset >= window.Start && t.Offset < window.End).OrderBy(t => t.Offset)];
         ByteReader reader = tags.Count > 0 ? window.Slice(window.Start, tags[0].Offset - window.Start) : window;
-        var state = new State(new Source(reader), context.CancellationToken, context) { ParseContext = context, IsCompanion = isCompanion };
-        state.Stream = Summary.StreamNode(state);
-        Reader.Run(state);
-        Summary.Finish(state, context);
+        State? state = null;
+        if (LegacyLayout.Locate(reader) is { } layout)
+        {
+            Legacy.Parse(context, reader, layout);
+        }
+        else
+        {
+            state = new State(new Source(reader), context.CancellationToken, context) { ParseContext = context, IsCompanion = isCompanion };
+            state.Stream = Summary.StreamNode(state);
+            Reader.Run(state);
+            Summary.Finish(state, context);
+        }
 
         long position = reader.End;
         foreach (Node? tag in tags.Append<Node?>(null))
