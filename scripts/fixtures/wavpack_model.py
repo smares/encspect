@@ -326,6 +326,52 @@ def match(main, other):
     return 1 if (other["index"] - main["index"]) & 0x8000000000 else -1
 
 
+def applied(main_entries, entries):
+    """How libwavpack's read_wvc_block takes the correction file's blocks for the main file's hybrid blocks (open_utils.c): the entries of the correction blocks the
+    main blocks use (a matching block that is whole and whose checksum holds), and how many hybrid blocks have none."""
+    audio = [e for e in entries if e["kind"] == "block" and e["header"]["samples"]]
+    used, missing, j = [], 0, 0
+    for block in hybrid_blocks(main_entries):
+        while True:
+            if j >= len(audio):
+                missing += 1
+                break
+            result = match(block["header"], audio[j]["header"])
+            if result == -1:
+                missing += 1
+                break
+            j += 1
+            if result == 0:
+                if audio[j - 1]["status"] or not verifies(audio[j - 1]):
+                    missing += 1
+                else:
+                    used.append(audio[j - 1])
+                break
+    return used, missing
+
+
+_TOOL = []
+
+
+def libwavpack_pair(data, companion):
+    """libwavpack's pass over the pair, as wavpack_blocks prints it (wavpack_blocks.c, decode_pair): whether the correction file is in use, the samples unpacked,
+    the errors counted and the MD5 of the samples (as the container's bytes, little-endian, channels interleaved), which the manifest holds as the pair's audio."""
+    import pathlib
+    import subprocess
+    import tempfile
+
+    import wavpack_tool
+
+    if not _TOOL:
+        _TOOL.append(wavpack_tool.build_blocks())
+    with tempfile.TemporaryDirectory() as work:
+        (pathlib.Path(work) / "x.wv").write_bytes(data)
+        (pathlib.Path(work) / "x.wvc").write_bytes(companion)
+        lines = subprocess.run([str(_TOOL[0]), str(pathlib.Path(work) / "x.wv"), str(pathlib.Path(work) / "x.wvc")], capture_output=True, text=True, check=True).stdout.splitlines()
+    facts = dict(line.split(" ", 1) for line in lines if line.startswith("pair_"))
+    return {"mode_wvc": facts["pair_mode_wvc"] == "1", "samples": int(facts["pair_samples"]), "errors": int(facts["pair_errors"]), "md5": facts["pair_md5"]}
+
+
 def config_flags(data, entries):
     """The config flags of the first config block that holds them (read_config_info), or None."""
     for e in entries:
@@ -398,7 +444,7 @@ def correction(data, entries, info, companion):
     file without the concept. companion is the bytes of the file the lookup finds, MISSING where it finds none, or None where nothing was looked for."""
     if info is None or not info["hybrid"] or info["correction"]:
         return None
-    findings, tally = [], None
+    findings, tally, pair = [], None, None
     if companion is None:
         result = {"status": "unchecked", "problems": []}
         findings.append({"code": "correction.unchecked", "contains": "was not checked"})
@@ -419,7 +465,10 @@ def correction(data, entries, info, companion):
             failed = sum(1 for e in blocks if e["checksum"] == "invalid") + missing
             stored = sum(1 for e in blocks if e["checksum"] is not None) + missing
             tally = {"name": "correction block checksum", "covers": "codedData", "coversAllAudio": False, "stored": stored, "checked": stored, "failed": failed}
-    return result, findings, tally
+        kinds = {p["kind"] for p in found["problems"]}
+        if not kinds & {"notCorrectionData", "streamDiffers"}:
+            pair = {"entries": found["entries"], "bytes": companion}
+    return result, findings, tally, pair
 
 
 def manifest(data, start, end, extra=None, companion=None):
@@ -445,7 +494,7 @@ def manifest(data, start, end, extra=None, companion=None):
     result.update(extra or {})
     found = correction(data, entries, info, companion)
     if found is not None:
-        status, findings, tally = found
+        status, findings, tally, pair = found
         result["correction"] = status
         result["findings"] = list(result.get("findings", [])) + findings
         if tally is not None and expected is not None:
@@ -454,7 +503,58 @@ def manifest(data, start, end, extra=None, companion=None):
                 if tally["failed"]:
                     # A checksum that fails, in either file, makes the verdict no.
                     mode["isVerified"] = False
+        if isinstance(companion, bytes):
+            passed = libwavpack_pair(data, companion)
+            result["crosscheck"] = {**result.get("crosscheck", {}), "pair": {"opens": True, "mode_wvc": passed["mode_wvc"], "samples": passed["samples"],
+                                                                           "errors": passed["errors"], "md5": passed["md5"]}}
+            if pair is not None and expected is not None:
+                decoded_with_correction(result, entries, pair, passed)
     return result
+
+
+def decoded_with_correction(result, entries, pair, passed):
+    """The decoding of a main file with the correction file that belongs to it (docs/design/correction-files.md, "Version 4 and 5"): the audio is libwavpack's
+    pass over the pair, and the verification is that of the decoding without the correction file with what the correction changes: the checksums of the blocks
+    that take a correction block are of the lossless audio (the CRC of the correction block's header, the extra bits' CRC, which only a correction block can
+    hold), the MD5 is compared only where every hybrid block has one, and the stream is the lossy part only where none has. A block libwavpack counts an error
+    for, and that has its correction block, is one whose CRC fails."""
+    used, missing = applied(entries, pair["entries"])
+    hybrid = len(hybrid_blocks(entries))
+    failed = max(0, passed["errors"] - missing)
+    result["decoded_samples"] = result["pcm_samples"] = passed["samples"]
+    result["decoded_pcm_md5"] = passed["md5"]
+    extra_stored = sum(1 for e in entries if e["kind"] == "block" and has(e, 0x0C)) + sum(1 for e in pair["entries"] if e["kind"] == "block" and has(e, 0x0C))
+    extra_used = sum(1 for e in used if has(e, 0x0C))
+    for mode, tallies in result["verification"].items():
+        by_name = {t["name"]: t for t in tallies["checksums"]}
+        by_name["extended CRC"]["stored"] = extra_stored
+        tallies["withCorrection"] = True
+        tallies.pop("isLossy", None)
+        if mode == "verify":
+            by_name["block header CRC"]["failed"] = failed
+            by_name["extended CRC"]["checked"] = extra_used
+            md5 = by_name["MD5"]
+            if md5["stored"] and not missing and md5["checked"] == 0 and tallies["decoding"] == "decoded":
+                md5["checked"], md5["failed"] = 1, 1 if failed else 0
+            if not used:
+                tallies["isLossy"] = True
+                tallies["withCorrection"] = False
+    # The findings: the lossless audio's MD5 is compared (or not) where the decoding says so, and a block whose CRC fails is one finding for each block.
+    verify = result["verification"]["verify"]
+    findings = [f for f in result["decode_findings"] if f["code"] not in ("wavpack.md5-needs-correction-file", "wavpack.audio-crc-mismatch", "wavpack.md5-mismatch")]
+    by_name = {t["name"]: t for t in verify["checksums"]}
+    if failed:
+        findings.append({"code": "wavpack.audio-crc-mismatch", "count": failed})
+    if by_name["MD5"]["stored"] and missing and verify["decoding"] == "decoded":
+        findings.append({"code": "wavpack.md5-needs-correction-file", "count": 1})
+    if by_name["MD5"]["failed"]:
+        findings.append({"code": "wavpack.md5-mismatch", "count": 1})
+    result["decode_findings"] = sorted(findings, key=lambda f: f["code"])
+    import wavpack_decode
+
+    for mode, tallies in result["verification"].items():
+        fresh = wavpack_decode.verification(tallies["decoding"], tallies["checksums"], tallies.get("isLossy", False))
+        tallies["isVerified"] = fresh["isVerified"]
 
 
 def decoding(data, start, end):

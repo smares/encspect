@@ -165,7 +165,7 @@ internal sealed class DecodeFeed
             IsDsd = isDsd,
             Samples = s.DeclaredTotal,
             Configuration = new MappedBytes(bytes.ToArray(), offset),
-            IsLossy = (first.IsHybrid && !hasCorrection) || s.HasLossyBlocks,
+            IsLossy = !hasCorrection && (first.IsHybrid || s.HasLossyBlocks),
             HasCorrection = hasCorrection,
         });
     }

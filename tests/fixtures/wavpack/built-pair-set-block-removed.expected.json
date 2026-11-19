@@ -1095,7 +1095,7 @@
  ],
  "decoded_samples": 24000,
  "pcm_samples": 24000,
- "decoded_pcm_md5": "57243c90fe9001de8904a5c9b21e07e3",
+ "decoded_pcm_md5": "43b0804e9405fa2871bcb962be781d56",
  "verification": {
   "default": {
    "isVerified": null,
@@ -1142,10 +1142,10 @@
      "failed": 0
     }
    ],
-   "isLossy": true
+   "withCorrection": true
   },
   "verify": {
-   "isVerified": true,
+   "isVerified": false,
    "decoding": "decoded",
    "checksums": [
     {
@@ -1170,7 +1170,7 @@
      "coversAllAudio": true,
      "stored": 20,
      "checked": 20,
-     "failed": 0
+     "failed": 1
     },
     {
      "name": "extended CRC",
@@ -1189,10 +1189,15 @@
      "failed": 0
     }
    ],
-   "isLossy": true
+   "withCorrection": true
   }
  },
- "decode_findings": [],
+ "decode_findings": [
+  {
+   "code": "wavpack.audio-crc-mismatch",
+   "count": 1
+  }
+ ],
  "regions": [
   {
    "name": "WavPack",
@@ -1218,7 +1223,8 @@
    "opens": true,
    "mode_wvc": true,
    "samples": 24000,
-   "errors": 2
+   "errors": 2,
+   "md5": "92f39d284caf4a508750143fb5042dae"
   }
  },
  "correction": {

@@ -155,6 +155,13 @@ MEDIAINFO_READS_OTHERWISE = {
 }
 
 
+# Pairs whose audio libwavpack gives differently, and why: it mutes a block whose CRC fails; blocks without a correction block it decodes as the lossy part, as
+# the analyzer does, so a pair with such errors is compared too.
+PAIR_AUDIO_DIFFERS = {
+    "built-pair-set-block-removed": "the main block that takes the wrong correction block decodes to audio whose CRC fails; libwavpack mutes it (check_crc_error), the analyzer keeps it",
+}
+
+
 def skip(name, check, reason):
     SKIPS.append(f"{name}: {check} skipped: {reason}")
 
@@ -380,10 +387,13 @@ def check_wvunpack_verify(name, manifest, path, report, work, problems):
             problems.append(f"wvunpack's unpacked digest {mine} differs from the stored {digest}")
 
 
-def raw_samples(path, work, facts, is_dsd=False):
-    """What wvunpack --raw writes for the main file alone (a hybrid file decodes to its lossy audio), as signed little-endian samples of the container's width."""
+def raw_samples(path, work, facts, is_dsd=False, companion=None):
+    """What wvunpack --raw writes for the main file alone (a hybrid file decodes to its lossy audio), or with its correction file beside it (the copy
+    audio.wvc, which wvunpack opens with the pair), as signed little-endian samples of the container's width."""
     copy = pathlib.Path(work) / "audio.wv"
     shutil.copy(path, copy)
+    if companion is not None:
+        shutil.copy(companion, pathlib.Path(work) / "audio.wvc")
     out = pathlib.Path(work) / "audio.raw"
     result = run(["wvunpack", "-y", "-q", "--raw", "-o", str(out), str(copy)], timeout=120)
     if not out.exists() or result.returncode != 0 and "missing" not in result.stderr:
@@ -400,8 +410,9 @@ def check_audio(name, manifest, path, facts, work, problems):
     if "decoded_pcm_md5" not in manifest and "decoded_dsd_md5" not in manifest:
         skip(name, "decoded audio", "the manifest has no decoded audio (the decoding is not possible)")
         return
-    expected = manifest["crosscheck"]["decode"]
-    if not expected["opens"] or expected["errors"] != 0:
+    companion = DIRECTORY / manifest["companion"] if manifest.get("companion") else None
+    expected = manifest["crosscheck"]["pair"] if companion is not None else manifest["crosscheck"]["decode"]
+    if not expected["opens"] or (expected["errors"] != 0 and companion is None):
         skip(name, "decoded audio", "libwavpack counts errors or refuses the file: the audio it leaves behind after a damaged block is its own")
         return
     if "decoded_dsd_md5" in manifest:
@@ -413,11 +424,23 @@ def check_audio(name, manifest, path, facts, work, problems):
             problems.append(f"wvunpack --raw writes DSD bytes with the MD5 {hashlib.md5(raw).hexdigest()}, the manifest says {manifest['decoded_dsd_md5']}")
         skip(name, "ffmpeg's audio", "FFmpeg converts DSD to PCM, which the manifest does not hold")
         return
-    raw, why = raw_samples(path, work, facts)
+    raw, why = raw_samples(path, work, facts, companion=companion)
     if raw is None:
         problems.append(f"wvunpack --raw fails: {why[0]}")
         return
     digest = hashlib.md5(raw).hexdigest()
+    if companion is not None:
+        # The audio of a pair is the one libwavpack's pass (the MD5 of crosscheck.pair) and wvunpack --raw with the .wvc give; FFmpeg's decoder does not read a
+        # .wvc beside a file, so it decodes the lossy part, which the other checks hold.
+        if digest != manifest["crosscheck"]["pair"]["md5"]:
+            problems.append(f"wvunpack --raw with the correction file decodes to {digest}, libwavpack's pass to {manifest['crosscheck']['pair']['md5']}")
+        if name in PAIR_AUDIO_DIFFERS:
+            if digest == manifest["decoded_pcm_md5"]:
+                problems.append(f"the pair's audio equals the manifest's, which it must not: {PAIR_AUDIO_DIFFERS[name]}")
+        elif digest != manifest["decoded_pcm_md5"]:
+            problems.append(f"wvunpack --raw with the correction file decodes to {digest}, the manifest says {manifest['decoded_pcm_md5']}")
+        skip(name, "ffmpeg's audio", "FFmpeg does not read a correction file beside a file")
+        return
     if name in WVUNPACK_AUDIO_DIFFERS:
         if digest == manifest["decoded_pcm_md5"]:
             problems.append(f"wvunpack --raw gives the manifest's audio, which it must not: {WVUNPACK_AUDIO_DIFFERS[name]}")

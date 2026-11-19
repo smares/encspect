@@ -643,6 +643,13 @@ PAIR_DECODES = {
 }
 
 
+# Pairs whose audio the analyzer decodes differently from libwavpack, with the analyzer's MD5 (the manifest's decoded_pcm_md5) and why: libwavpack mutes a block
+# whose CRC fails (WavpackUnpackSamples, check_crc_error), and the analyzer keeps the audio the block decodes to and reports the CRC that differs.
+PAIR_AUDIO_DIFFERS = {
+    "set-block-removed": ("43b0804e9405fa2871bcb962be781d56", "the main block that takes the wrong correction block (the third of its set) decodes to audio whose CRC fails; libwavpack mutes it"),
+}
+
+
 def decode(name):
     """The expectation of the decoder pass for the fixture: it does not open, or opens and unpacks this many samples with this many errors."""
     result = DECODES[name]
@@ -665,8 +672,11 @@ def write_pairs():
         result = m.manifest(data, 0, len(data), {"regions": [{"name": "WavPack", "offset": 0, "length": len(data)}], "description": description, "findings": [],
                                                  "crosscheck": {"valid": True, "decode": alone_decode(data)}}, companion=correction)
         result["companion"] = named
+        if stem in PAIR_AUDIO_DIFFERS:
+            result["decoded_pcm_md5"] = PAIR_AUDIO_DIFFERS[stem][0]
         mode, errors = PAIR_DECODES[stem]
-        result["crosscheck"]["pair"] = {"opens": True, "mode_wvc": mode, "samples": result["crosscheck"]["decode"]["samples"], "errors": errors}
+        passed = result["crosscheck"]["pair"]
+        assert (passed["mode_wvc"], passed["errors"], passed["samples"]) == (mode, errors, result["crosscheck"]["decode"]["samples"]), (stem, passed)
         (DIRECTORY / f"{full}.expected.json").write_text(json.dumps(result, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
         count += 1
     return count

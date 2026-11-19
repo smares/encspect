@@ -273,10 +273,10 @@ def build_manifest(path, encoder, findings=(), companion=None):
     data = path.read_bytes()
     end, top = regions(data, path, "apev2" in path.name)
     result = m.manifest(data, 0, end, {"regions": top, "encoder": encoder, "findings": [{"code": c, "contains": t} for c, t in findings]}, companion=companion)
-    result["crosscheck"] = {"valid": True, "decode": decode_expectation(path, result)}
+    result["crosscheck"] = {"valid": True, "decode": decode_expectation(path, result), **result.get("crosscheck", {})}
     if isinstance(companion, bytes):
         # An encoder's own pair: libwavpack opens it with the correction file and unpacks every sample without an error.
-        result["crosscheck"]["pair"] = {"opens": True, "mode_wvc": True, "samples": result["crosscheck"]["decode"]["samples"], "errors": 0}
+        assert result["crosscheck"]["pair"] == {**result["crosscheck"]["pair"], "opens": True, "mode_wvc": True, "samples": result["crosscheck"]["decode"]["samples"], "errors": 0}
     return result
 
 
