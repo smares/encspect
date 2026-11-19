@@ -124,14 +124,27 @@
     "covers_all": true
    },
    {
+    "name": "correction block CRC-32",
+    "stored": 3,
+    "checked": 3,
+    "failed": 0,
+    "covers_all": false
+   },
+   {
     "name": "MD5",
     "stored": 0,
     "checked": 0,
     "failed": 0
    }
-  ]
+  ],
+  "with_correction": true
  },
  "lossy": true,
+ "correction": {
+  "status": "consistent",
+  "problems": []
+ },
+ "lossy_confidence": "High",
  "findings": [],
  "encoder": {
   "tool": "OptimFROG 5.100 for Linux x64 (SDK 1.600), http://losslessaudio.org/Downloads.php",
@@ -150,5 +163,6 @@
    "sha256": "5da084537f8f71a94b8489904259f4647489662a3127189863b5fbe4b2a3745a",
    "size": 3616244
   }
- }
+ },
+ "companion": "external-ofs-blocks-quality3-correction-data.ofc"
 }

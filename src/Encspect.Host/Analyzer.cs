@@ -3,7 +3,7 @@ using Encspect.Core;
 
 namespace Encspect.Host;
 
-public sealed class Analyzer
+public sealed partial class Analyzer
 {
     private readonly IReadOnlyList<ITagParser> _tagParsers;
     private readonly IReadOnlyList<IFormatParser> _formatParsers;
@@ -63,7 +63,7 @@ public sealed class Analyzer
         ArgumentException.ThrowIfNullOrEmpty(path);
 
         using FileStream? stream = FileType.Open(path, out string? notRegular);
-        return stream is null ? FileReports.NotRegular(path, notRegular!) : Analyze(path, stream, options);
+        return stream is null ? FileReports.NotRegular(path, notRegular!) : AnalyzeCore(path, stream, options, CompanionSource.Beside(path));
     }
 
     // The names of the format parsers, in the order the host evaluates them.
@@ -183,6 +183,12 @@ public sealed class Analyzer
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(stream);
+
+        return AnalyzeCore(source, stream, options, CompanionSource.Stream);
+    }
+
+    private Report AnalyzeCore(string source, Stream stream, AnalysisOptions? options, CompanionSource defaultCompanions)
+    {
         options ??= AnalysisOptions.Default;
         options.CancellationToken.ThrowIfCancellationRequested();
         IFormatParser? forced = options.ForcedFormat is { } wanted ? ForcedParser(wanted) : null;
@@ -219,26 +225,18 @@ public sealed class Analyzer
             return new Report(source, root, findings, detection: emptyDetection);
         }
 
-        var leadingRejections = new List<(ITagParser Parser, TagProbe Probe)>();
-        List<Claim> leading = FindLeadingTags(reader, leadingRejections, failures);
-        long dataStart = leading.Count > 0 ? leading[^1].Tag.End : 0;
-        Container? container = FindContainer(reader, dataStart, Path.GetExtension(source), failures, forced);
-        List<Claim> trailing = FindTrailingTags(reader, dataStart, leading, container, pending, failures);
-        long dataEnd = trailing.Count > 0 ? trailing[0].Tag.Offset : reader.Length;
-        List<Finding> layout = CheckTrailingLayout(trailing);
-        List<Claim> embedded = FollowNextTagOffsets(reader, dataStart, dataEnd, leading, trailing, container, findings, failures);
-        pending.InsertRange(0, ResolveLeadingRejections(leadingRejections, trailing.Concat(embedded), reader));
-
-        var detectionNodes = new HashSet<Node>();
-        var shown = new Dictionary<Node, Node>(ReferenceEqualityComparer.Instance);
-        foreach (Claim claim in leading.Concat(embedded).Concat(trailing))
-        {
-            AddClaim(root, claim, findings, detectionNodes, shown);
-        }
+        TagScan scan = ScanTags(reader, Path.GetExtension(source), forced, root, findings, pending, failures);
+        (List<Claim> leading, List<Claim> trailing, List<Claim> embedded, Container? container) = (scan.Leading, scan.Trailing, scan.Embedded, scan.Container);
+        long dataStart = scan.DataStart;
+        long dataEnd = scan.DataEnd;
+        List<Finding> layout = scan.Layout;
+        HashSet<Node> detectionNodes = scan.DetectionNodes;
+        Dictionary<Node, Node> shown = scan.Shown;
 
         long embeddedBytes = embedded.Sum(c => c.Tag.Length);
         IReadOnlyList<StreamInfo> streams = [];
         FormatDetection? detection = null;
+        IReadOnlyList<CompanionReport> companions = [];
         if (dataEnd - dataStart > embeddedBytes)
         {
             List<EncoderClaim> claims = leading.Concat(embedded).Concat(trailing).OrderBy(c => c.Tag.Offset).SelectMany(c => c.Probe.EncoderClaims).ToList();
@@ -253,7 +251,9 @@ public sealed class Analyzer
             ByteReader window = new ByteReader(stream, options.CancellationToken, progress).Slice(dataStart, formatEnd - dataStart);
             List<Node> inWindow = embedded.Where(c => c.Tag.Offset < formatEnd).Select(c => shown[c.Tag]).ToList();
             var sniff = new SniffContext(window, Path.GetExtension(source)) { FirstEmbeddedTag = inWindow.Count > 0 ? inWindow.Min(t => t.Offset) : null };
-            (streams, detection) = ParseData(sniff, root, inWindow, claims, findings, failures, forced, decodeRun);
+            using var companionSession = new CompanionSession(this, source, options.Companions ?? defaultCompanions, options.CancellationToken);
+            (streams, detection) = ParseData(sniff, root, inWindow, claims, findings, failures, forced, decodeRun, companionSession);
+            companions = companionSession.Finish(decodeRun);
             AddDataBetweenTags(root, embedded.Where(c => c.Tag.Offset >= formatEnd), dataEnd, findings);
         }
         else
@@ -294,7 +294,7 @@ public sealed class Analyzer
 
         streams = streams.Select(s => s with { NodePaths = s.Nodes.Select(paths.Find).ToList(), Measurements = WithChannelReason(s, decodeRun?.RecordFor(s) ?? s.Measurements) }).ToList();
         progress?.Report(reader.Length);
-        return new Report(source, root, ordered, streams, detection);
+        return new Report(source, root, ordered, streams, detection, companions);
     }
 
     // A decoder may output fewer channels than the stream declares (the base stereo of an MPEG-2 multichannel stream); the measurement says so.
@@ -318,6 +318,33 @@ public sealed class Analyzer
             }
         }
     }
+
+    // The tags found at both ends of the data and in it, the end a container declares and what the host reports of them: what both the file and a companion
+    // file are prepared with before a format parser reads the bytes between the tags. The tags are added to root, and the findings about them to findings.
+    private TagScan ScanTags(ByteReader reader, string? extension, IFormatParser? forced, Node root, List<Finding> findings, List<PendingFinding> pending, List<Failure> failures)
+    {
+        var leadingRejections = new List<(ITagParser Parser, TagProbe Probe)>();
+        List<Claim> leading = FindLeadingTags(reader, leadingRejections, failures);
+        long dataStart = leading.Count > 0 ? leading[^1].Tag.End : 0;
+        Container? container = FindContainer(reader, dataStart, extension, failures, forced);
+        List<Claim> trailing = FindTrailingTags(reader, dataStart, leading, container, pending, failures);
+        long dataEnd = trailing.Count > 0 ? trailing[0].Tag.Offset : reader.Length;
+        List<Finding> layout = CheckTrailingLayout(trailing);
+        List<Claim> embedded = FollowNextTagOffsets(reader, dataStart, dataEnd, leading, trailing, container, findings, failures);
+        pending.InsertRange(0, ResolveLeadingRejections(leadingRejections, trailing.Concat(embedded), reader));
+
+        var detectionNodes = new HashSet<Node>();
+        var shown = new Dictionary<Node, Node>(ReferenceEqualityComparer.Instance);
+        foreach (Claim claim in leading.Concat(embedded).Concat(trailing))
+        {
+            AddClaim(root, claim, findings, detectionNodes, shown);
+        }
+
+        return new TagScan(leading, trailing, embedded, container, dataStart, dataEnd, layout, detectionNodes, shown);
+    }
+
+    private sealed record TagScan(List<Claim> Leading, List<Claim> Trailing, List<Claim> Embedded, Container? Container, long DataStart, long DataEnd,
+        List<Finding> Layout, HashSet<Node> DetectionNodes, Dictionary<Node, Node> Shown);
 
     private List<Claim> FindLeadingTags(ByteReader reader, List<(ITagParser Parser, TagProbe Probe)> rejections, List<Failure> failures)
     {
@@ -854,7 +881,7 @@ public sealed class Analyzer
     }
 
     private (IReadOnlyList<StreamInfo> Streams, FormatDetection? Detection) ParseData(SniffContext sniff, Node root, List<Node> embedded, List<EncoderClaim> claims,
-        List<Finding> findings, List<Failure> failures, IFormatParser? forced, DecodeRun? decoding)
+        List<Finding> findings, List<Failure> failures, IFormatParser? forced, DecodeRun? decoding, CompanionSession companions)
     {
         ByteReader window = sniff.Reader;
         List<Ranked> ranked = Rank(sniff, failures, out List<Ranked> weak);
@@ -891,13 +918,15 @@ public sealed class Analyzer
         FormatDetection? detection = Describe(ranked, parser, forced is not null, findings, root, sniff, failures);
 
         root.Value = parser.Name;
-        var router = new ParserRouter(_codecParsers, _tagParsers, _decoders, decoding);
+        var router = new ParserRouter(_codecParsers, _tagParsers, _decoders, decoding, companions);
+        companions.Begin(parser, router);
         var context = new ParseContext(window, root, embedded, claims, router);
 
         try
         {
             parser.Parse(context);
             ExtensionSignals.Apply(sniff.ExtensionHint, context);
+            CorrectionFindings.Apply(context);
         }
         catch (EndOfStreamException)
         {
@@ -920,6 +949,7 @@ public sealed class Analyzer
 
         // The front end's exception traveled through none of the parsers; it reaches the caller now, without a report.
         decoding?.ThrowIfSinkFailed();
+        companions.ThrowIfFailed();
         findings.AddRange(context.Findings);
         return (context.Streams, detection);
     }

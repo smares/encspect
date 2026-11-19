@@ -22,6 +22,8 @@ public abstract class AnalysisContext
         _decodingOwner = decodingOwner;
     }
 
+    private protected IParserRouter? Router => _router;
+
     // Reads check it already; loops that only compute, over every frame or packet, check it every
     // few thousand iterations.
     public CancellationToken CancellationToken { get; }

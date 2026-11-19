@@ -10,7 +10,8 @@ the others listed as `identicalCases` in that file's provenance. This script nev
 
 For each file it checks the SHA-256 and size against the artifact's manifest, copies it, and writes `<name>.provenance.json` (where it came from, the
 arguments, the input, the runs' exit statuses, the decoding checks) and, for the files the analyzer reads (`.ofr` and `.ofs`), `<name>.expected.json` from
-optimfrog_model.py, which reads the committed bytes by the specification apart from the analyzer. The correction files (`.ofc`) get one too: a run of CORR blocks
+optimfrog_model.py, which reads the committed bytes by the specification apart from the analyzer. The manifest of an `.ofs` that has its `.ofc` among the files
+names it as `companion`, which the tests pass to the analyzer as its correction file, and holds the pairing worked out from both files. The correction files (`.ofc`) get one too: a run of CORR blocks
 whose CRC-32s are compared (the lead's decision of 2026-11-09).
 """
 
@@ -39,6 +40,15 @@ def canonical_key(case):
     return (0 if name.startswith("preset-") else 1, 1 if "correction" in name else 0, len(name), name)
 
 
+def write_ofs_manifest(target, stem, extra):
+    """The manifest of an .ofs fixture: its pairing with the committed .ofc beside it, which the tests hand the analyzer as its correction file."""
+    companion = m.companion_of(target)
+    manifest = m.manifest(target.read_bytes(), extra, companion.read_bytes() if companion else None)
+    if companion:
+        manifest["companion"] = companion.name
+    stem.with_suffix(".expected.json").write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
 def main():
     arguments = [a for a in sys.argv[1:] if not a.startswith("--")]
     force = "--force" in sys.argv
@@ -58,6 +68,7 @@ def main():
         if case.get("status") != "no output":
             groups.setdefault(case["sha256"], []).append(case)
     written = 0
+    deferred = []
     seen_companions = set()
     for case in sorted(manifest["cases"], key=lambda c: c["name"]):
         if case.get("status") == "no output":
@@ -91,8 +102,14 @@ def main():
             target.with_name(name + ".provenance.json").write_text(json.dumps(provenance, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
             if target.suffix in (".ofr", ".ofs", ".ofc"):
                 extra = {"encoder": {"tool": SOURCE, "arguments": case["arguments"], "case": case["name"], "tool_program": case["tool"], "input": case["input"]}}
-                stem.with_suffix(".expected.json").write_text(json.dumps(m.manifest(data, extra), indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+                if target.suffix == ".ofs":
+                    # The manifest of a DualStream file needs the .ofc beside it, which a later case may bring: written once every file is in place.
+                    deferred.append((target, stem, extra))
+                else:
+                    stem.with_suffix(".expected.json").write_text(json.dumps(m.manifest(data, extra), indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
             written += 1
+    for target, stem, extra in deferred:
+        write_ofs_manifest(target, stem, extra)
     print(f"Imported {written} files into {OUT}")
 
 

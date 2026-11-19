@@ -15,6 +15,9 @@ The output is a text tree by default; `encspect --help` lists the options.
 - A symbolic link to a folder is followed only when it leads outside the folder named on the command line and not above it, so every folder is analyzed once and link loops end.
 - Anything that is not a regular file (a FIFO, a device, a socket, or a file of a kernel pseudo-file system such as `/proc` or `/sys`) is reported without being opened, so a FIFO cannot block the run.
 - Standard input is not read: `-` is wrong usage, and a file named `-` is given as `./-`. After `--`, every argument is a file or folder, even one that starts with a dash.
+- A correction file is found beside its main file: `encspect x.wv` or `encspect x.ofs` looks for `x.wvc` or `x.ofc` in the folder of the input, as [correction-files.md](design/correction-files.md) says, and reports the pair (see [The correction file of a stream](#the-correction-file-of-a-stream)). `encspect x.wvc` reports the correction file alone, as a file of its own.
+  - A folder walk analyzes every file, so `x.ofc` also gets its own report; the pair is analyzed once, from the main file.
+  - `--fail-on` counts the findings of the correction file in a pair, and so do the counts of the CSV.
 - On Linux, a file or folder whose name is not valid UTF-8 cannot be opened: .NET decodes such names lossily, so the name it lists no longer leads to the file. It is reported as unreadable.
 
 ## Output formats
@@ -24,7 +27,7 @@ The output is a text tree by default; `encspect --help` lists the options.
 - `--ndjson`: one compact report per line, which stays usable line by line if a long run stops early.
 - `--csv`: one summary row per file.
 
-Reports are written as each file is analyzed. All output is UTF-8 without a byte order mark, text from files included; JSON writes non-ASCII characters as they are, not as `\u` escapes. A CSV field that starts with `=`, `+`, `-` or `@` gets a leading apostrophe, so a spreadsheet does not run it as a formula; the columns the writer formats from numbers (the counts, duration, samples, bitrate, sample rate, `JOC Object Count` and the measured columns) skip the guard, as a number cannot start one. Against version 0.1.0 the CSV has fifteen more columns (38 in all, 23 before). `Lost Samples` stands directly after `Samples`; `Processor`, `Processor Confidence`, `Lossy Part` and `Lossy Part Confidence` stand after `Writer Confidence`; `Is Verified` stands after `DRM Systems`; and nine measured columns come last, in the order of their meaning: `Spectral Cutoff (Hz)`, then the level figures `Sample Peak (dBFS)`, `Maximum True Peak Level (dBTP)` and `Clipping Runs`, then `Integrated Loudness (LUFS)` and `Loudness Range (LU)`, then `Digital Silence Stretches`, `Changes of Low Bits Unused` and `Grid of the Changes (samples)`. The columns are grouped by meaning, so one moved against earlier versions: `Is Verified` was between `Is Protected` and `Protection Scheme`. A reader that addresses columns by index must be changed.
+Reports are written as each file is analyzed. All output is UTF-8 without a byte order mark, text from files included; JSON writes non-ASCII characters as they are, not as `\u` escapes. A CSV field that starts with `=`, `+`, `-` or `@` gets a leading apostrophe, so a spreadsheet does not run it as a formula; the columns the writer formats from numbers (the counts, duration, samples, bitrate, sample rate, `JOC Object Count` and the measured columns) skip the guard, as a number cannot start one. Against version 0.1.0 the CSV has twenty-one more columns (44 in all, 23 before). `Lost Samples` stands directly after `Samples`; `Processor`, `Processor Confidence`, `Lossy Part` and `Lossy Part Confidence` stand after `Writer Confidence`; `Correction File` stands after `Lossy Part Confidence`; `Is Verified` stands after `DRM Systems`; and nine measured columns come last, in the order of their meaning: `Spectral Cutoff (Hz)`, then the level figures `Sample Peak (dBFS)`, `Maximum True Peak Level (dBTP)` and `Clipping Runs`, then `Integrated Loudness (LUFS)` and `Loudness Range (LU)`, then `Digital Silence Stretches`, `Changes of Low Bits Unused` and `Grid of the Changes (samples)`. The columns are grouped by meaning, so one moved against earlier versions: `Is Verified` was between `Is Protected` and `Protection Scheme`. A reader that addresses columns by index must be changed.
 
 ## Options
 
@@ -181,9 +184,10 @@ A stream of a coding that declares its checksums has a verification, with or wit
   - `Verified: no (STREAMINFO MD5 1 of 1 differ)`: a stored checksum differs.
   - `Verified: unknown (STREAMINFO MD5 not compared: decoding was not asked for)`: something stored was not compared, or nothing compared covers all of the audio.
   - `Verified: yes (lossy stream; block header CRC 120 of 120)`: the checksums vouch for the output of a lossy coding (a WavPack hybrid file without its correction file).
+  - `Verified: yes (with correction file; block CRC-32 1 of 1, correction block CRC-32 1 of 1)`: the checksums vouch for the stream together with its correction file, a consistent pair.
 - **JSON:** `verification` in the stream, after `protection`:
   - `isVerified`, written where it is not null;
-  - `isLossy`, written where it is true;
+  - `isLossy` and `withCorrection`, written where they are true;
   - `decoding`: `notRequested`, `noDecoder`, `notPossible`, `decoded`, `stopped` or `failed`;
   - `decodedSamples`, the samples per channel the decoder decoded;
   - `checksums`, each with `name`, `covers` (`header`, `codedData` or `decodedAudio`), `coversAllAudio`, `stored`, `checked` and `failed`.
@@ -219,9 +223,18 @@ Prints `encspect <version>` and exits with 0, for example `encspect 0.3.0+4da770
 - **Commit suffix:** the part after `+` names the commit the build was made from, so a bug report identifies the exact source. A build without Git metadata has no suffix.
 - **Alone:** with any other argument it is wrong usage.
 
+### The correction file of a stream
+
+A stream that may have a correction file (an OptimFROG DualStream `.ofs` that makes the lossy-part claim; WavPack hybrid files follow) says how it stands with it, the same way for every format.
+
+- **Text tree:** a line under the stream, after `Verified`: `Correction file: consistent (x.ofc), lossless with its correction file`, `inconsistent (x.ofc: 3 correction blocks missing), lossy without its correction file`, `missing (x.ofc), lossy without its correction file`, `none written`, or `unchecked (no folder to look in: the input is a stream), lossy without its correction file`. After the file's report comes the correction file's own (`x.ofc (correction file)`), with its tree and findings, offsets those of its own file.
+- **JSON:** `correction` in the stream, after `verification`: `status` (`consistent`, `inconsistent`, `missing`, `notWritten` or `unchecked`), `source`, `basis` (`structure` or `decodedAudio`), `problems` (each a `kind`: `notCorrectionData`, `streamDiffers`, `blocksMissing`, `blocksUnmatched`, `checksumsFail` or `cut`; a `count`; the `offset` and `length` of the main tree's node it concerns) and `reason`. `companions` at the end of the report lists each correction file as a report of its own: `role` (`correction`) and the fields of a report. `isCorrectionFile` is true in the stream of a correction file. Fields are added, so the schema version stays 1.
+- **CSV:** `Correction File`, the first audio stream's status (the JSON word), after `Lossy Part Confidence`, beside the claim a consistent pair confirms; empty for a stream without a correction file to speak of.
+- **Findings:** `correction.missing` (Info), `correction.inconsistent` (Warning, once for each kind of problem), `correction.unchecked` (Info: not looked for, with the reason) and `correction.unreadable` (Warning: the file exists and cannot be read). They point at the main file's nodes. A consistent pair and `none written` raise none.
+
 ### `--fail-on info|warning|error`
 
-Makes the exit code 1 when a finding of that severity or worse turns up.
+Makes the exit code 1 when a finding of that severity or worse turns up, those of a correction file in a pair included.
 
 ## Format detection
 
@@ -347,7 +360,7 @@ The CSV row of a file has:
 - the duration and samples of the audio streams together, where streams that play at the same time (a playback group: the tracks of a movie or a Matroska Segment, the streams of one Ogg chain link, the streams of one ASF file, the independent substreams of an E-AC-3 file or track) count the longest once;
 - their average bitrate, weighted by duration;
 - the first audio stream's sample rate, channel mode and channel layout (`5.1 (front left, front right, front center, back left, back right, LFE)`, or only the speakers where the layout has no common name);
-- the first encoder named by an audio stream and its confidence (`Encoder`, `Encoder Confidence`), and the first writer named by any stream and its confidence (a fact about the file) (`Writer`, `Writer Confidence`, the two columns after the encoder's), and the first processor named by any stream and its confidence (`Processor`, `Processor Confidence`, the two after the writer's), and what the first stream with a claim of being the lossy part of a pair is the lossy part of and the confidence in it (`Lossy Part`, `Lossy Part Confidence`, the two after the processor's: `DualStream`, `Low` or `Medium`);
+- the first encoder named by an audio stream and its confidence (`Encoder`, `Encoder Confidence`), and the first writer named by any stream and its confidence (a fact about the file) (`Writer`, `Writer Confidence`, the two columns after the encoder's), and the first processor named by any stream and its confidence (`Processor`, `Processor Confidence`, the two after the writer's), and what the first stream with a claim of being the lossy part of a pair is the lossy part of and the confidence in it (`Lossy Part`, `Lossy Part Confidence`, the two after the processor's: `DualStream`, `Low`, `Medium` or `High`), and `Correction File`, the first audio stream's pairing status with its correction file, after the claim's columns (`consistent`, `inconsistent`, `missing`, `notWritten` or `unchecked`; empty for a stream without the concept);
 - the tags, including those a container holds in its chunks;
 - the number of errors, warnings and infos;
 - `Has Object Audio`, `true` or `false` for a file with a stream (empty without one), and `JOC Object Count`, the most objects a stream's joint object coding reconstructs, empty where it is not known;

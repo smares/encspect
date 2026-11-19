@@ -581,15 +581,106 @@ LOST = {
 }
 
 
+def committed(name):
+    return (DIRECTORY / name).read_bytes()
+
+
+def checksum_broken(block):
+    """The block with one bit of its stored block checksum changed, so that the checksum fails and nothing else does."""
+    out = bytearray(block)
+    out[checksum_start(block) + 2] ^= 1
+    return bytes(out)
+
+
+def pair_cases():
+    """The hand-built pairs (docs/design/correction-files.md, "Fixtures"): name -> (description, the main file, the correction file, the committed fixture the
+    manifest names as the correction file where none is new). Each damage is made in the correction file of an encoder-written pair, or a file that is none is
+    given in its place."""
+    wvc = committed("external-hybrid-b4-correction-wvc.wvc")
+    cb = blocks(wvc)
+    main = base("hybrid-b4-correction")
+    multi = committed("external-hybrid-51-b3-correction-wvc.wvc")
+    sets = blocks(multi)
+    return {
+        "checksum-broken": ("The correction file of hybrid-b4-correction with one bit of the third block's stored checksum changed: libwavpack does not use a block that fails its checksum.",
+                            main, b"".join(cb[:2] + [checksum_broken(cb[2])] + cb[3:]), None),
+        "block-removed": ("The correction file of hybrid-b4-correction without its third block: the third main block has none.",
+                          main, b"".join(cb[:2] + cb[3:]), None),
+        "block-repeated": ("The correction file of hybrid-b4-correction with its third block twice: one correction block matches no main block.",
+                           main, b"".join(cb[:3] + cb[2:]), None),
+        "cut": ("The correction file of hybrid-b4-correction cut inside its last block.", main, wvc[:-5], None),
+        "empty": ("An empty file as the correction file of hybrid-b4-correction.", main, b"", None),
+        "other-stream": ("The correction file of the mono hybrid-mono-b3-correction beside the stereo hybrid-b4-correction.",
+                         main, None, "external-hybrid-mono-b3-correction-wvc.wvc"),
+        "other-encode": ("The correction file of hybrid-b4-maximum (the same blocks encoded with -cc) beside hybrid-b4-correction: the blocks agree in index, samples and "
+                         "size but not in flags, so libwavpack uses none of them.", main, None, "external-hybrid-b4-maximum-wvc.wvc"),
+        "lossless-companion": ("A lossless WavPack file as the correction file of hybrid-b4-correction.", main, None, "external-lossless-16-stereo.wv"),
+        "flags-differ": ("The correction file of hybrid-b4-correction with the initial block flag cleared in its first block, its checksum worked out again: the first main "
+                         "block has none and the first correction block is skipped.", main, b"".join([with_flags(cb[0], INITIAL_FLAG)] + cb[1:]), None),
+        "not-written": ("The correction file of hybrid-b4-correction beside hybrid-b4-md5, which was written without one: a companion that is found is checked as any other.",
+                        base("hybrid-b4-md5"), None, "external-hybrid-b4-correction-wvc.wvc"),
+        "set-block-removed": ("The correction file of hybrid-51-b3-correction without the second block of its first set: the main block takes the third, whose flags equal "
+                              "its own, and the main block after it has none.", base("hybrid-51-b3-correction"), b"".join(sets[:1] + sets[2:]), None),
+    }
+
+
+# What libwavpack's decoder does with each pair, the main file opened with its correction file as wvunpack opens it (crosscheck_wavpack_fixtures.py runs
+# it and fails on a difference): whether the correction file is in use (MODE_WVC), the samples unpacked and the errors counted, one for each hybrid block
+# decoded without its correction block or whose CRC fails.
+PAIR_DECODES = {
+    "checksum-broken": (True, 1),
+    "block-removed": (True, 1),
+    "block-repeated": (True, 0),
+    "cut": (True, 1),
+    # libwavpack opens no correction file that holds no byte.
+    "empty": (False, 0),
+    "other-stream": (True, 5),
+    "other-encode": (True, 5),
+    "lossless-companion": (True, 5),
+    "flags-differ": (True, 1),
+    "not-written": (True, 2),
+    "set-block-removed": (True, 2),
+}
+
+
 def decode(name):
     """The expectation of the decoder pass for the fixture: it does not open, or opens and unpacks this many samples with this many errors."""
     result = DECODES[name]
     return {"opens": False} if result is None else {"opens": True, "samples": result[0], "errors": result[1]}
 
 
+INITIAL_FLAG = 0x800
+
+
+def write_pairs():
+    count = 0
+    for stem, (description, data, correction, named) in pair_cases().items():
+        full = f"built-pair-{stem}"
+        (DIRECTORY / f"{full}.wv").write_bytes(data)
+        if correction is not None:
+            named = f"{full}-wvc.wvc"
+            (DIRECTORY / named).write_bytes(correction)
+        else:
+            correction = committed(named)
+        result = m.manifest(data, 0, len(data), {"regions": [{"name": "WavPack", "offset": 0, "length": len(data)}], "description": description, "findings": [],
+                                                 "crosscheck": {"valid": True, "decode": alone_decode(data)}}, companion=correction)
+        result["companion"] = named
+        mode, errors = PAIR_DECODES[stem]
+        result["crosscheck"]["pair"] = {"opens": True, "mode_wvc": mode, "samples": result["crosscheck"]["decode"]["samples"], "errors": errors}
+        (DIRECTORY / f"{full}.expected.json").write_text(json.dumps(result, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+        count += 1
+    return count
+
+
+def alone_decode(data):
+    """The decoder pass of the main file without its correction file: it unpacks every sample of its sets without an error (a hybrid file decodes to its lossy audio)."""
+    info = m.stream_info(data, m.walk(data, 0, len(data)))
+    return {"opens": True, "samples": info["samples"], "errors": 0}
+
+
 def main():
     DIRECTORY.mkdir(parents=True, exist_ok=True)
-    count = 0
+    count = write_pairs()
     built = build()
     assert set(built) == set(DECODES), sorted(set(built) ^ set(DECODES))
     for name, (description, data, findings, valid) in built.items():

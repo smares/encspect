@@ -36,6 +36,9 @@ public sealed record DecodeSetup
     // True where the stream's decoded audio is a lossy coding's output (a WavPack hybrid file without its correction
     // file); the host copies it into StreamVerification.IsLossy.
     public bool IsLossy { get; init; }
+
+    // True where the stream's audio is checked together with its correction file, a consistent pair (StreamVerification.WithCorrection).
+    public bool HasCorrection { get; init; }
 }
 
 // The unit the coding decodes one at a time, as the parser read it: a frame, a block or an access unit; a packet where

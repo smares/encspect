@@ -8,7 +8,8 @@ Encspect ships two programs, the command line tool `encspect` and the GUI `encsp
 - **Why:** a third party could one day build its own GUI on them or analyze files from its own program.
 - **What follows:**
   - nothing that belongs to one front end goes below it: no UI types, dialogs, settings, caches or console output in the host, Core.Abstractions or a parser;
-  - front ends reach the analysis only through the host's public API (`Analyzer`, `Report`, the writers, the topic library), and add nothing to it that another front end could not use.
+  - front ends reach the analysis only through the host's public API (`Analyzer`, `AnalysisOptions`, `CompanionSource`, `Report`, the writers, the topic library), and add nothing to it that another front end could not use.
+  - a file that belongs with the analyzed one (a correction file) is found through `AnalysisOptions.Companions`: `CompanionSource.Beside(path)` looks in the folder of the input, the default of `AnalyzeFile`; `CompanionSource.From(open)` takes the stream a caller with no file system, or with other names, hands over for an extension (`"wvc"`, `"ofc"`), which the host disposes; `CompanionSource.None`, and a stream passed to `Analyze` with no source, report the pair as unchecked. The companion's report is `Report.Companions`.
 - **Not planned yet:** offering the library. The ways to offer it, and what each would take, are below.
 
 ## Today: the command line and its JSON

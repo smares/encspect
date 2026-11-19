@@ -50,6 +50,9 @@ public sealed record ReportSummary(
 
     public Confidence? LossyPartConfidence { get; init; }
 
+    // How the first audio stream stands with its correction file (StreamInfo.Correction); null for a stream without the concept.
+    public CorrectionStatus? Correction { get; init; }
+
     // The lost samples of the streams Samples adds up (StreamInfo.LostSamples), counted the same way: the longest stream of a playback group once.
     public long LostSamples { get; init; }
 
@@ -111,6 +114,9 @@ public sealed record ReportSummary(
         ArgumentNullException.ThrowIfNull(report);
 
         IReadOnlyList<StreamInfo> streams = report.Streams;
+
+        // The counts include the findings of the companion files, which belong to the file's report as its correction file does.
+        List<Finding> findings = [.. report.Findings, .. report.Companions.SelectMany(c => c.Report.Findings)];
         List<StreamInfo> audio = [.. streams.Where(s => s.Kind == StreamKind.Audio)];
         StreamInfo? first = audio.Count > 0 ? audio[0] : null;
         StreamInfo? encoded = audio.FirstOrDefault(s => s.Encoder is not null);
@@ -145,9 +151,9 @@ public sealed record ReportSummary(
             written?.Writer,
             written?.WriterConfidence,
             TagNames(report.Root),
-            report.Findings.Count(f => f.Severity == Severity.Error),
-            report.Findings.Count(f => f.Severity == Severity.Warning),
-            report.Findings.Count(f => f.Severity == Severity.Info),
+            findings.Count(f => f.Severity == Severity.Error),
+            findings.Count(f => f.Severity == Severity.Warning),
+            findings.Count(f => f.Severity == Severity.Info),
             streams.Any(s => s.HasObjectAudio),
             streams.Where(s => s.JocObjectCount is not null).Select(s => s.JocObjectCount).Max(),
             streams.Any(s => s.IsProtected),
@@ -159,6 +165,7 @@ public sealed record ReportSummary(
             ProcessorConfidence = processed?.ProcessorConfidence,
             LossyPart = lossyPart?.Value,
             LossyPartConfidence = lossyPart?.Confidence,
+            Correction = first?.Correction?.Status,
             LostSamples = lost,
             SpectralCutoff = first?.Measurements?.Spectrum?.Cutoff is { IsFound: true } cutoff ? cutoff.Frequency : null,
             SpectralBandwidth = first?.Measurements?.Spectrum?.Bandwidth is { IsFound: true } bandwidth ? bandwidth.Frequency : null,

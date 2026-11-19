@@ -4116,6 +4116,13 @@
             }
           ]
         },
+        "correction": {
+          "status": "unchecked",
+          "source": "external-hybrid-false-stereo-b2.wvc",
+          "basis": "structure",
+          "problems": [],
+          "reason": "no folder to look in: the input is a stream"
+        },
         "encoder": "WavPack 5.0 or later",
         "encoderConfidence": "Medium",
         "series": [
@@ -4179,6 +4186,18 @@
         ]
       }
     ],
-    "findings": []
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "correction.unchecked",
+        "message": "The correction file external-hybrid-false-stereo-b2.wvc was not checked: no folder to look in: the input is a stream.",
+        "offset": 0,
+        "length": 7482,
+        "path": [
+          0
+        ],
+        "count": 1
+      }
+    ]
   }
 ]

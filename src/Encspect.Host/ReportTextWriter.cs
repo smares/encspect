@@ -22,6 +22,19 @@ public static class ReportTextWriter
         ArgumentNullException.ThrowIfNull(filter);
 
         writer.WriteLine(Escape(report.Source));
+        WriteBody(report, writer, showOffsets, filter, explain);
+
+        // A companion file is a report of its own with offsets in its own file, written after the file's report.
+        foreach (CompanionReport companion in report.Companions)
+        {
+            writer.WriteLine();
+            writer.WriteLine($"{Escape(companion.Report.Source)} ({(companion.Role == CompanionReport.Correction ? "correction file" : companion.Role)})");
+            WriteBody(companion.Report, writer, showOffsets, filter, explain);
+        }
+    }
+
+    private static void WriteBody(Report report, TextWriter writer, bool showOffsets, ReportFilter filter, bool explain)
+    {
         Dictionary<Node, List<Series>> anchored = new(ReferenceEqualityComparer.Instance);
         foreach (Series series in report.Streams.SelectMany(s => s.Series).Where(s => s.Anchor is not null))
         {
@@ -64,6 +77,21 @@ public static class ReportTextWriter
             }
         }
 
+        Dictionary<Node, List<(int Stream, string Text)>> corrections = new(ReferenceEqualityComparer.Instance);
+        for (int i = 0; i < report.Streams.Count; i++)
+        {
+            StreamInfo stream = report.Streams[i];
+            if (stream.Correction is { } pairing && stream.Nodes.Count > 0)
+            {
+                if (!corrections.TryGetValue(stream.Nodes[0], out List<(int, string)>? list))
+                {
+                    corrections[stream.Nodes[0]] = list = [];
+                }
+
+                list.Add((i + 1, CorrectionText.Describe(pairing)));
+            }
+        }
+
         Dictionary<Node, List<(int Stream, IReadOnlyList<MeasurementLine> Lines)>> measured = new(ReferenceEqualityComparer.Instance);
         if (filter.ShowsMeasurements)
         {
@@ -82,7 +110,7 @@ public static class ReportTextWriter
             }
         }
 
-        WriteNode(report.Root, writer, new Options(showOffsets, explain, filter, verified, shares) { Measured = measured }, 0, anchored);
+        WriteNode(report.Root, writer, new Options(showOffsets, explain, filter, verified, shares) { Measured = measured, Corrections = corrections }, 0, anchored);
 
         if (report.Detection is { } detection)
         {
@@ -149,6 +177,16 @@ public static class ReportTextWriter
                 Indent(writer, depth + 1);
                 writer.Write(verifications.Count > 1 ? $"Verified (stream {stream}): " : "Verified: ");
                 writer.WriteLine(Escape(verification));
+            }
+        }
+
+        if (options.Corrections.TryGetValue(node, out List<(int Stream, string Text)>? pairings))
+        {
+            foreach ((int stream, string pairing) in pairings)
+            {
+                Indent(writer, depth + 1);
+                writer.Write(pairings.Count > 1 ? $"Correction file (stream {stream}): " : "Correction file: ");
+                writer.WriteLine(Escape(pairing));
             }
         }
 
@@ -331,6 +369,8 @@ public static class ReportTextWriter
     private sealed record Options(bool ShowOffsets, bool Explain, ReportFilter Filter, Dictionary<Node, List<(int Stream, string Text)>> Verified, Dictionary<Node, List<(CategorySeries Series, int Stream)>> Shares)
     {
         public Dictionary<Node, List<(int Stream, IReadOnlyList<MeasurementLine> Lines)>> Measured { get; init; } = new(ReferenceEqualityComparer.Instance);
+
+        public Dictionary<Node, List<(int Stream, string Text)>> Corrections { get; init; } = new(ReferenceEqualityComparer.Instance);
     }
 
     // Values from the file are text and escaped; numbers are written without a string per node.

@@ -122,10 +122,14 @@ public sealed class OptimFrogParser : IFormatParser
         return Walk.End(reader);
     }
 
-    public void Parse(ParseContext context)
+    public void Parse(ParseContext context) => ParseInto(context, isCompanion: false);
+
+    // The same walk over a file or, with isCompanion, over the correction file the host opened beside the main file (the host's context over it): its nodes,
+    // findings and stream are the ones the file gets alone, less the finding that says it was opened alone.
+    internal static State ParseInto(ParseContext context, bool isCompanion)
     {
         ByteReader reader = context.Reader;
-        var state = new State(context);
+        var state = new State(context) { IsCompanion = isCompanion };
         Walk.Run(state, reader);
         Records records = state.Records;
         state.Stream = Summary.StreamNode(state, state.Source);
@@ -139,5 +143,7 @@ public sealed class OptimFrogParser : IFormatParser
             context.AddFinding(Severity.Warning, "optimfrog.data-after-blocks",
                 $"{Counts.Of(length, "byte", "bytes")} at 0x{end:X} {Counts.Agree(length, "follows", "follow")} the last block and {Counts.Agree(length, "is", "are")} no tag; {Counts.Agree(length, "it is", "they are")} not read.", data);
         }
+
+        return state;
     }
 }

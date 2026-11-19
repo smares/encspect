@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Writes the hand-built OptimFROG fixtures in tests/fixtures/optimfrog (built-*.ofr) from the committed external-chunks.ofr, with tags after the blocks and tag-like
-bytes inside a data block (docs/design/tak-optimfrog-headers.md, "Hand-built"). The blocks are the encoder's; only the bytes around them and the payload of one
-data block are written here. The manifests come from optimfrog_model.py, which reads the specification and not the analyzer.
+bytes inside a data block (docs/design/tak-optimfrog-headers.md, "Hand-built"), and the damaged pairs of a DualStream .ofs file and its correction file
+(built-pair-*.ofs, with the .ofc its manifest names as `companion`; docs/design/correction-files.md, "Hand-built"). The blocks are the encoder's; only the bytes
+around them and the payload of one data block are written here. The manifests come from optimfrog_model.py, which reads the specification and not the analyzer.
 
     python3 scripts/fixtures/make_optimfrog_fixtures.py
 """
@@ -66,6 +67,53 @@ def bad_ape_footer():
     return b"APETAGEX" + struct.pack("<IIII", 2000, 4000, 9, 0) + bytes(8)
 
 
+MONO = OUT / "external-ofs-mono-quality3.ofs"
+MONO_CORRECTION = OUT / "external-ofs-mono-quality3-correction-data.ofc"
+STEREO = OUT / "external-ofs-quality0.ofs"
+THREE_BLOCKS_CORRECTION = OUT / "external-ofs-blocks-quality3-correction-data.ofc"
+OFR_AS_COMPANION = OUT / "external-8-mono.ofr"
+
+
+def twice(ofs):
+    """The .ofs with its data block twice and the sample count of its main block doubled: two data blocks whose CRC-32s hold."""
+    blocks, _ = m.walk(ofs)
+    parts = []
+    for b in blocks:
+        data = ofs[b["offset"] + 8:b["end"]]
+        if b["id"] == "OFR ":
+            samples = int.from_bytes(data[:6], "little") * 2
+            data = samples.to_bytes(6, "little") + data[6:]
+        parts.append(block(b["id"].encode(), data))
+        if b["id"] == "COMP":
+            parts.append(block(b"COMP", ofs[b["offset"] + 8:b["end"]]))
+    return b"".join(parts)
+
+
+def flip_crc(corr):
+    """The .ofc with the first CRC-32 of its blocks changed in one bit."""
+    return corr[:8] + bytes([corr[8] ^ 1]) + corr[9:]
+
+
+def twice_corr(corr):
+    return corr + corr
+
+
+# Each pair: the main file's name and bytes, the correction file's name (written as <stem>-data.ofc, or None where the pair names a committed file) and bytes,
+# the committed file the manifest names where there is no new one. The pairs the analyzer tells apart by block counts and CRC-32s alone, and the one it cannot
+# (an .ofc of another encode with as many blocks, which the check passes: docs/design/correction-files.md, "OptimFROG").
+PAIRS = {
+    "built-pair-crc-fails": (lambda: MONO.read_bytes(), lambda: flip_crc(MONO_CORRECTION.read_bytes()), None),
+    "built-pair-cut": (lambda: MONO.read_bytes(), lambda: MONO_CORRECTION.read_bytes()[:-3], None),
+    "built-pair-bytes-after": (lambda: MONO.read_bytes(), lambda: MONO_CORRECTION.read_bytes() + b"extra", None),
+    "built-pair-block-more": (lambda: MONO.read_bytes(), lambda: twice_corr(MONO_CORRECTION.read_bytes()), None),
+    "built-pair-block-fewer": (lambda: twice(MONO.read_bytes()), None, MONO_CORRECTION),
+    "built-pair-empty": (lambda: MONO.read_bytes(), lambda: b"", None),
+    "built-pair-ofr": (lambda: MONO.read_bytes(), None, OFR_AS_COMPANION),
+    "built-pair-three-for-one": (lambda: STEREO.read_bytes(), None, THREE_BLOCKS_CORRECTION),
+    "built-pair-other-encode": (lambda: STEREO.read_bytes(), None, MONO_CORRECTION),
+}
+
+
 FILES = {
     "built-tag-like-bytes-after-blocks.ofr": (lambda b: b + bad_ape_footer(), ["optimfrog.data-after-blocks", "tag.near-miss"]),
     "built-tag-ape-footer-only.ofr": (lambda b: b + ape_footer_only(), []),
@@ -91,6 +139,17 @@ def main():
         manifest["findings"] += [{"code": code} for code in findings]
         (OUT / name.replace(".ofr", ".expected.json")).write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
         print("wrote", name, len(data))
+    for stem, (main, companion, committed) in PAIRS.items():
+        data = main()
+        (OUT / f"{stem}.ofs").write_bytes(data)
+        if companion is not None:
+            (OUT / f"{stem}-data.ofc").write_bytes(companion())
+        named = OUT / f"{stem}-data.ofc" if companion is not None else committed
+        manifest = m.manifest(data, {"encoder": {"built": f"make_optimfrog_fixtures.py, {stem}: committed .ofs and .ofc files of the encoder, changed as the name says"}}, named.read_bytes())
+        manifest["companion"] = named.name
+        manifest["golden_hides"] = ["frames"]
+        (OUT / f"{stem}.expected.json").write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+        print("wrote", stem, len(data), manifest["correction"])
 
 
 if __name__ == "__main__":

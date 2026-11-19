@@ -51,6 +51,12 @@ internal sealed class State(Source source, CancellationToken cancellation, Analy
 
     public AnalysisContext Context { get; } = context;
 
+    // The context of the file, through which the correction file is asked for (the context of a container's packets has none).
+    public ParseContext? ParseContext { get; init; }
+
+    // The walk is over the correction file of a pair, which the host opened for the main file's parser.
+    public bool IsCompanion { get; init; }
+
     // lossyWAV's text in the fact chunk of the wrapper's RIFF header (the first one found), and where its body lies in the file.
     public FactText? FactText { get; set; }
 
