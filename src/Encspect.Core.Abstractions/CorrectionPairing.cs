@@ -65,6 +65,9 @@ public sealed record CorrectionPairing
 
     public IReadOnlyList<CorrectionProblem> Problems { get; init; } = [];
 
+    // True where the stream says its encoder wrote a correction file (WavPack's configuration block), for the words of a missing one.
+    public bool IsWritten { get; init; }
+
     // Why the pair is unchecked.
     public string? Reason { get; init; }
 

@@ -26,7 +26,7 @@ internal static class CorrectionFindings
             {
                 case CorrectionStatus.Missing:
                     context.AddFinding(Severity.Info, MissingCode,
-                        $"No correction file {name} was found beside the file, so the stream is reported as its lossy part alone.", node);
+                        $"No correction file {name} was found beside the file{(pairing.IsWritten ? ", although the stream's configuration block says its encoder wrote one" : string.Empty)}, so the stream is reported as its lossy part alone.", node);
                     break;
                 case CorrectionStatus.Inconsistent:
                     foreach (CorrectionProblem problem in pairing.Problems)
@@ -61,10 +61,10 @@ internal static class CorrectionFindings
     private static string Problem(string name, CorrectionProblem problem) => problem.Kind switch
     {
         CorrectionProblemKind.NotCorrectionData => $"{name} holds no correction data of this format",
-        CorrectionProblemKind.StreamDiffers => $"{name} states another stream than the file's (its length, rate, channels or sample format differ)",
+        CorrectionProblemKind.StreamDiffers => $"{name} states another stream than the file's (its version, length, first block, rate, channels or sample format differ)",
         CorrectionProblemKind.BlocksMissing => $"{name} lacks {Counts.Of(problem.Count, "correction block", "correction blocks")} that the file's blocks call for",
         CorrectionProblemKind.BlocksUnmatched => $"{name} holds {Counts.Of(problem.Count, "correction block", "correction blocks")} that no block of the file matches",
-        CorrectionProblemKind.ChecksumsFail => $"{Counts.Of(problem.Count, "correction block", "correction blocks")} of {name} {Counts.Agree(problem.Count, "fails its", "fail their")} checksum",
+        CorrectionProblemKind.ChecksumsFail => $"{Counts.Of(problem.Count, "correction block", "correction blocks")} of {name} {Counts.Agree(problem.Count, "fails its", "fail their")} checksum or {Counts.Agree(problem.Count, "does not", "do not")} end with the sub-blocks that make it up",
         _ => $"{name} is cut, or holds bytes after its last block",
     };
 }
