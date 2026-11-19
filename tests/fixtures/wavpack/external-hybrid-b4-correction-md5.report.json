@@ -7069,6 +7069,12 @@
             }
           ]
         },
+        "correction": {
+          "status": "missing",
+          "source": "external-hybrid-b4-correction-md5.wvc",
+          "basis": "structure",
+          "problems": []
+        },
         "encoder": "WavPack 5.0 or later",
         "encoderConfidence": "Medium",
         "series": [
@@ -7136,6 +7142,18 @@
         ]
       }
     ],
-    "findings": []
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "correction.missing",
+        "message": "No correction file external-hybrid-b4-correction-md5.wvc was found beside the file, so the stream is reported as its lossy part alone.",
+        "offset": 0,
+        "length": 24448,
+        "path": [
+          0
+        ],
+        "count": 1
+      }
+    ]
   }
 ]

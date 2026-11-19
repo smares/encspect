@@ -82,8 +82,8 @@ public class WavPackFixtureTests
         string expectedName = Path.GetFileNameWithoutExtension(name) + ".wvc";
         if (!manifest.TryGetProperty("companion", out JsonElement companion) || companion.ValueKind == JsonValueKind.Null)
         {
-            // A lookup that finds nothing names the file it looked for; from a stream there is no name.
-            Assert.Equal(manifest.TryGetProperty("companion", out _) ? expectedName : null, pairing.Source);
+            // A lookup that finds nothing names the file it looked for.
+            Assert.Equal(expectedName, pairing.Source);
             Assert.Empty(report.Companions);
             return;
         }

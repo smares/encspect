@@ -451,6 +451,9 @@ def manifest(data, start, end, extra=None, companion=None):
         if tally is not None and expected is not None:
             for mode in result["verification"].values():
                 mode["checksums"].insert(1, dict(tally))
+                if tally["failed"]:
+                    # A checksum that fails, in either file, makes the verdict no.
+                    mode["isVerified"] = False
     return result
 
 

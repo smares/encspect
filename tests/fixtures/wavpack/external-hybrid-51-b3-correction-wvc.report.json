@@ -10791,6 +10791,7 @@
             }
           ]
         },
+        "isCorrectionFile": true,
         "encoder": "WavPack 5.0 or later",
         "encoderConfidence": "Medium",
         "series": [
@@ -10862,7 +10863,7 @@
       {
         "severity": "Info",
         "code": "wavpack.correction-file",
-        "message": "The audio blocks hold correction data only, as a .wvc file does: it adds to the hybrid .wv file with the same blocks, and cannot be decoded alone.",
+        "message": "The audio blocks hold correction data only, as a .wvc file does: it adds to the hybrid .wv file with the same blocks, and cannot be decoded alone; analyze the .wv file beside it to check the pair.",
         "offset": 0,
         "length": 107668,
         "path": [

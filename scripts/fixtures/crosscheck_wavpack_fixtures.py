@@ -168,9 +168,9 @@ def find(manifest_path):
     return next(p for p in DIRECTORY.glob(stem + ".*") if p.suffix != ".json")
 
 
-def libwavpack(tool, path):
-    """The figures and blocks wavpack_blocks prints."""
-    lines = run([str(tool), str(path)]).stdout.splitlines()
+def libwavpack(tool, path, companion=None):
+    """The figures and blocks wavpack_blocks prints, and with a correction file the pair's pass (pair_*)."""
+    lines = run([str(tool), str(path)] + ([str(companion)] if companion else [])).stdout.splitlines()
     facts, blocks = {}, []
     for line in lines:
         parts = line.split(" ")
@@ -479,15 +479,44 @@ def check_libwavpack_verdict(name, manifest, problems):
         problems.append(f"only the MD5 differs, and libwavpack counts {expected['errors']} errors, which are not the MD5's (its pass does not compare it)")
 
 
-def check_pair(name, path, work, problems):
-    """A main file with its correction file: lossless, with the digest where there is one."""
-    wvc = path.with_name(path.name[:-len(".wv")] + "-wvc.wvc")
+# Pairs the manifest calls inconsistent that libwavpack uses and decodes without an error, each with what explains it.
+PAIR_EXPLAINED = {
+    "built-pair-block-repeated": "libwavpack skips a correction block whose index lies before the main block's (match_wvc_header returns 1) and decodes the pair to the input; "
+                                 "the analyzer counts the repeated block as one that no main block matches",
+}
+
+
+def check_pair(name, manifest, path, work, tool, problems):
+    """A main file with the correction file its manifest names: wvunpack -v on the copies x.wv and x.wvc (a consistent pair must verify as lossless; the others'
+    results are printed), and libwavpack's own pass with the correction file held to the manifest's crosscheck.pair and to the pairing's status."""
+    companion = manifest.get("companion")
+    if companion is None:
+        return
+    wvc = DIRECTORY / companion
     shutil.copy(path, pathlib.Path(work) / "x.wv")
     shutil.copy(wvc, pathlib.Path(work) / "x.wvc")
     result = run(["wvunpack", "-v", str(pathlib.Path(work) / "x.wv")], timeout=60)
     text = result.stdout + result.stderr
-    if result.returncode != 0 or "(+.wvc)" not in text or "(lossless" not in text:
+    status = manifest["correction"]["status"]
+    is_lossless = result.returncode == 0 and "(+.wvc)" in text and "(lossless" in text
+    if status == "consistent" and not is_lossless:
         problems.append(f"wvunpack -v does not verify the pair as lossless: {text.strip().splitlines()[-1] if text.strip() else result.stderr}")
+    if status != "consistent":
+        print(f"{name}: pair {status} {[p['kind'] for p in manifest['correction']['problems']]}; wvunpack -v: exit {result.returncode}, "
+              f"{text.strip().splitlines()[-1] if text.strip() else ''}")
+    facts, _ = libwavpack(tool, path, wvc)
+    if "pair_open_error" in facts or "pair_samples" not in facts:
+        problems.append(f"libwavpack does not open the pair ({facts.get('pair_open_error')})")
+        return
+    got = {"opens": True, "mode_wvc": facts["pair_mode_wvc"] == "1", "samples": int(facts["pair_samples"]), "errors": int(facts["pair_errors"])}
+    if got != manifest["crosscheck"]["pair"]:
+        problems.append(f"libwavpack's pass over the pair is {got}, the manifest {manifest['crosscheck']['pair']}")
+    if status == "consistent" and got["errors"] != 0:
+        problems.append(f"the manifest calls the pair consistent and libwavpack counts {got['errors']} errors")
+    if status == "inconsistent" and got["mode_wvc"] and got["errors"] == 0 and name not in PAIR_EXPLAINED:
+        problems.append("the manifest calls the pair inconsistent and libwavpack uses the correction file without an error; explain it in PAIR_EXPLAINED or change the check")
+    if status == "inconsistent" and name in PAIR_EXPLAINED and not (got["mode_wvc"] and got["errors"] == 0):
+        problems.append("the pair no longer needs its entry in PAIR_EXPLAINED")
 
 
 def ffprobe(path):
@@ -674,9 +703,8 @@ def main():
                 if valid and manifest["stream_infos"]:
                     check_wvunpack_summary(name, manifest, path, report, work, problems)
                 check_wvunpack_verify(name, manifest, path, report, work, problems)
-                pair = path.with_name(path.name[:-len(".wv")] + "-wvc.wvc")
-                if valid and pair.exists():
-                    check_pair(name, path, work, problems)
+                if valid:
+                    check_pair(name, manifest, path, work, tool, problems)
                 if valid and manifest["stream_infos"]:
                     check_ffprobe(name, manifest, path, report, problems)
         if valid:
