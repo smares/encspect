@@ -13,12 +13,15 @@ namespace Encspect.Host;
 // plain detected one (other formats match, or the analysis was forced) also has detection, with
 // the format that ran, its evidence, whether it was forced, the format detection would have chosen
 // then, and the alternatives with their evidence (class, offset, frames, verifiedFrames, note). A stream of a coding that
-// stores checksums has verification after protection: isVerified (where known), isLossy (where true), decoding,
+// stores checksums has verification after protection: isVerified (where known), isLossy and withCorrection (where true), decoding,
 // decodedSamples and checksums (name, covers, coversAllAudio, stored, checked, failed). A stream with category series
 // has categorySeries after series (name, concept, valueLabel, valuesPerUnit, valueNames, categories with their counts
 // and isReserved, total, uncodedValues, xSeries or x, valueCounts, runs of [code, length], weights, seconds, or groupOf
 // and map for a grouping, which has the x of its source); a series, numeric or category, that belongs to a shared
-// concept also has concept, and a numeric series that is a form of a quantity has quantity. A stream of an analysis that
+// concept also has concept, and a numeric series that is a form of a quantity has quantity. A stream that may have a correction file has correction
+// after verification (status: consistent, inconsistent, missing, notWritten or unchecked; source; basis; problems of kind, count, offset and length;
+// reason), and the stream of a correction file isCorrectionFile; a report whose parser read a correction file has companions after findings, each with
+// role and the fields of a report, its offsets those of its own file. A stream of an analysis that
 // asked for measurements has measurements after verification: status, samples, firstPosition, lostSamples, gaps, sampleRate,
 // channels, channelsMeasured, the spectrum (rows in tenths of a dB, the cutoff in whole hertz and tenths of a dB as
 // {value, unit}; the bandwidth and its floor, the slope, the partialCutoff, the holes with their row shares, and the midSide spectra with their cutoffs and holes), the levels (samplePeak, rms, dcOffset and dcOffsetLevel as {value, unit, perChannel}, null for minus infinity;
@@ -97,14 +100,22 @@ public static class ReportJsonWriter
         }
     }
 
-    private static void WriteReport(Utf8JsonWriter writer, Report report, ReportFilter filter, bool explain)
+    private static void WriteReport(Utf8JsonWriter writer, Report report, ReportFilter filter, bool explain, string? role = null)
     {
         writer.WriteStartObject();
-        writer.WriteNumber("schemaVersion", SchemaVersion);
-        writer.WriteStartObject("tool");
-        writer.WriteString("name", "encspect");
-        writer.WriteString("version", ToolVersion);
-        writer.WriteEndObject();
+        if (role is null)
+        {
+            writer.WriteNumber("schemaVersion", SchemaVersion);
+            writer.WriteStartObject("tool");
+            writer.WriteString("name", "encspect");
+            writer.WriteString("version", ToolVersion);
+            writer.WriteEndObject();
+        }
+        else
+        {
+            writer.WriteString("role", role);
+        }
+
         writer.WriteString("source", report.Source);
 
         writer.WritePropertyName("root");
@@ -146,6 +157,17 @@ public static class ReportJsonWriter
         }
 
         writer.WriteEndArray();
+        if (report.Companions.Count > 0)
+        {
+            writer.WriteStartArray("companions");
+            foreach (CompanionReport companion in report.Companions)
+            {
+                WriteReport(writer, companion.Report, filter, explain, companion.Role);
+            }
+
+            writer.WriteEndArray();
+        }
+
         writer.WriteEndObject();
     }
 
@@ -337,6 +359,16 @@ public static class ReportJsonWriter
         if (stream.Verification is { HasChecksums: true } verification)
         {
             WriteVerification(writer, verification);
+        }
+
+        if (stream.IsCorrectionFile)
+        {
+            writer.WriteBoolean("isCorrectionFile", true);
+        }
+
+        if (stream.Correction is { } correction)
+        {
+            WriteCorrection(writer, correction);
         }
 
         if (stream.Measurements is { } measurements && filter.ShowsMeasurements)
@@ -1532,6 +1564,36 @@ public static class ReportJsonWriter
         writer.WriteEndObject();
     }
 
+    private static void WriteCorrection(Utf8JsonWriter writer, CorrectionPairing correction)
+    {
+        writer.WriteStartObject("correction");
+        writer.WriteString("status", CorrectionText.Word(correction.Status));
+        if (correction.Source is { } source)
+        {
+            writer.WriteString("source", source);
+        }
+
+        writer.WriteString("basis", CorrectionText.Word(correction.Basis));
+        writer.WriteStartArray("problems");
+        foreach (CorrectionProblem problem in correction.Problems)
+        {
+            writer.WriteStartObject();
+            writer.WriteString("kind", CorrectionText.Word(problem.Kind));
+            writer.WriteNumber("count", problem.Count);
+            writer.WriteNumber("offset", problem.Node.Offset);
+            writer.WriteNumber("length", problem.Node.Length);
+            writer.WriteEndObject();
+        }
+
+        writer.WriteEndArray();
+        if (correction.Reason is { } reason)
+        {
+            writer.WriteString("reason", reason);
+        }
+
+        writer.WriteEndObject();
+    }
+
     private static void WriteVerification(Utf8JsonWriter writer, StreamVerification verification)
     {
         writer.WriteStartObject("verification");
@@ -1543,6 +1605,11 @@ public static class ReportJsonWriter
         if (verification.IsLossy)
         {
             writer.WriteBoolean("isLossy", true);
+        }
+
+        if (verification.WithCorrection)
+        {
+            writer.WriteBoolean("withCorrection", true);
         }
 
         writer.WriteString("decoding", verification.Decoding switch

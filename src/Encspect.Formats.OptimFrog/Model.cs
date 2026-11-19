@@ -7,6 +7,7 @@ namespace Encspect.Formats.OptimFrog;
 internal static class ChecksumNames
 {
     public const string BlockCrc32 = "block CRC-32";
+    public const string CorrectionBlockCrc32 = "correction block CRC-32";
     public const string Md5 = "MD5";
 }
 
