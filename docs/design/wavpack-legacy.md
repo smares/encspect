@@ -1,6 +1,6 @@
 # WavPack 1 to 3
 
-Status: signed off by the lead, 2026-11-18; the fixtures (pull request 2) and the parser (pull request 3) are in, and "What the files show" holds what the fixtures showed. Milestone 0.4, item 3 of the [plan](../plan.md#04-free-decoders-and-routes-complete): "WavPack 1 to 3, with encoder fixtures from the builds Rarewares keeps (3.4, 3.97, the first BSD release, and the DOS build of 4.31)". The parser reads them at header level ([wavpack.md](../formats/wavpack.md#wavpack-1-to-3)); their audio is not decoded yet.
+Status: signed off by the lead, 2026-11-18; the fixtures (pull request 2) and the parser (pull request 3) are in, and "What the files show" holds what the fixtures showed. Milestone 0.4, item 3 of the [plan](../plan.md#04-free-decoders-and-routes-complete): "WavPack 1 to 3, with encoder fixtures from the builds Rarewares keeps (3.4, 3.97, the first BSD release, and the DOS build of 4.31)". The parser reads them at header level ([wavpack.md](../formats/wavpack.md#wavpack-1-to-3)); their audio is decoded by the decoder of decision 5 (pull request 4, #346).
 
 ## Scope
 
@@ -192,7 +192,7 @@ The fixtures pull request ran the original programs (`wavpack_legacy_tool.py`, `
   - "Compression Mode": lossless `FAST_FLAG` "very fast", neither fast nor high "fast", high without extreme "normal", with extreme "high" (the options of 3.97 that write them: `-ff`, `-f`, the default, `-h`); hybrid and lossy "fast", "normal" or "high" the same way. The fixtures check each name against the option that wrote it; 3.0 and 3.2 wrote "very fast" with their `-f` and "fast" by default, as the flags of their files show ("What the files show").
   - "Hybrid Target Bitrate" (bits per sample of one channel, `bits` / 256 / channels) and "Hybrid Target Rate" (kbps, `bits` × rate / 256,000), version 3 hybrid.
   - "Lossy Bit Limit" (bits), version 2 and old version 3 lossy; a new name, since no other format has the concept.
-  - "Stereo Coding" as one value for the stream, from the flags and the version: "Mid/side stereo" (versions 1 and 2, the fast mode, joint stereo), "Left/right stereo" (the high and hybrid modes without joint stereo), and for the default lossless mode of 3.0 to 3.2, which chooses per sample, "Adaptive" with the description saying so. Not a tally or a series: there are no blocks to count.
+  - "Stereo Coding" as one value for the stream, from the flags and the version: "Mid/side stereo" (versions 1 and 2, the fast mode, joint stereo), "Left/right stereo" (the high and hybrid modes without joint stereo), and for the default lossless mode of 3.0 to 3.2, which chooses per sample, "Adaptive stereo" with the description saying so. Not a tally or a series: there are no blocks to count.
   - "Source Extension"; `IsLossless`, `IsHybrid`, `IsNoiseShaped` (the noise shaping flag), `IsRaw`.
 - **Not reported without a decoder:** Lost Samples, Bitrate Over Time, the bitrate distribution and mode (one bitstream has no variation to show).
 
@@ -222,7 +222,7 @@ New codes carry the prefix `wavpack.legacy-`; where version 4 has the concept, i
 - `wavpack.legacy-header-size` (info: a version 3 `ckSize` other than 28).
 - `wavpack.legacy-wav-format-unsupported`, once for each field libwavpack refuses (format tag, channels, rate, bits, block align), and for a chunk before the data over 1 MiB.
 - `wavpack.legacy-trailer-unrecognized` (info).
-- Decoder (decision 5): `wavpack.legacy-crc-mismatch`, `wavpack.legacy-data-ended` (the bitstream ends before the stated samples, the only check of versions 1 and 2), `wavpack.legacy-crc2-needs-correction-file` (info: a hybrid file decoded without its `.wvc`, whose `crc2` is not compared).
+- Decoder (decision 5): `wavpack.legacy-crc-mismatch` (not version 4's `wavpack.audio-crc-mismatch`: that finding names a block, and this one the one CRC of the whole stream), `wavpack.legacy-data-ended` (the bitstream ends before the stated samples, the only check of versions 1 and 2), `wavpack.legacy-crc2-needs-correction-file` (info: a hybrid file decoded without its `.wvc`, whose `crc2` is not compared).
 
 ## Decoding (decision 5)
 
