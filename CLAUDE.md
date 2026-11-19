@@ -43,7 +43,7 @@ C# on .NET, Avalonia UI (GUI), console app (CLI), one shared core library, one p
 
 - Work follows the milestones in [`docs/plan.md`](docs/plan.md). Each milestone ends with a gate (independent reviews, findings fixed, push and nightly runs green on every platform) and a release tag.
 - Before a release pull request merges, an independent review agent that has not written them checks the release notes and the README's format and status lines claim by claim: against the previous release's notes and README (what is really new), against the code, docs and workflows on the release branch (what is true), and against the wording rules; its findings are fixed first.
-- One main item is in progress at a time, plus small fixes. A new idea goes into a later milestone, not into the current one, unless the lead says otherwise.
+- Items run in parallel where that is efficient (separate code, separate agents); waiting for a pipeline is not work, so agents keep working on the plan while one runs. A new idea goes into a later milestone, not into the current one, unless the lead says otherwise.
 - Nothing is parked without a decision: every item has a milestone, or sits under "Not planned" with the trigger that would bring it back. A pause the lead asks for keeps the item's place and priority, and the item resumes first.
 - A decoder pull request is done when it also brings its format's entropy-pass figures, coding graphs and the gap items it unlocks.
 - A pull request that adds a format or makes a parser or decoder read a new field per frame, packet or block also updates the survey of [`docs/design/coding-graphs.md`](docs/design/coding-graphs.md#the-survey) in the same change: the rows it makes possible, each built in that change or queued with a milestone, so that no graph waits for a later survey to find it.
@@ -70,7 +70,7 @@ C# on .NET, Avalonia UI (GUI), console app (CLI), one shared core library, one p
 - At the start of a working session, run `python3 scripts/ci_report.py` (set `GITHUB_TOKEN` to see the failing tests) and raise any red or canceled run on main or in the nightly schedule with the user before starting new work.
 - Specifications, reference sources, tools and anything else a script downloads go to a cache outside what git tracks (the git-ignored `.cache/`, or the directory `ENCSPECT_DOWNLOAD_CACHE` names), never into the working tree, pinned by SHA-256 through `scripts/fixtures/downloads.py`. Before committing, check `git status` for untracked folders you did not mean to add.
 - Parsers are verified against known-input fixtures, cross-checks with other tools, golden reports and corrupt-file tests, as described in "Verification" in [`docs/architecture.md`](docs/architecture.md#verification). A parser change without a fixture or golden-report update is incomplete.
-- After each milestone, an independent review agent that has not seen the author's conclusions reviews the code against the spec.
+- Every implementation pull request gets an independent review of its diff before it merges, by an agent that has not seen the author's conclusions, and its findings are fixed first; after each milestone, the milestone review checks the code against the spec.
 - Agents for implementation and simple tasks run on Sonnet with medium effort; review agents, including the milestone review, run on Opus with high effort. Design documents are drafted on Opus with high effort; fixes to them count as implementation.
 
 ## Working efficiently
@@ -83,7 +83,7 @@ Tokens are limited; spend them on the work, not on talk. None of this lowers the
 - **Reports from agents:** at most about 15 lines: what changed, checks run, open decisions. Details go to a file in the scratchpad, which the coordinator reads only where a decision needs it.
 - **Context:** read large outputs (test logs, records, transcripts) through `tail`, `grep` or a summary, never whole.
 - **Checks:** run the fast checks of the changed areas locally; leave the full suite and the other platforms to CI. Run the slow cross-checks once per change, not per commit.
-- **Reviews:** one independent review per milestone, scoped to the diff, and one fix review of the fixes; further rounds only for blocking findings.
+- **Reviews:** one independent review per implementation pull request and one per milestone, each scoped to its diff, and one fix review of the fixes; further rounds only for blocking findings.
 - **Polling:** wait for notifications (agents, PR events); a scheduled check-in only where no event arrives.
 
 ## Git
