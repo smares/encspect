@@ -503,6 +503,232 @@ def parameters_change_within_unit():
     b.findings = [finding("truehd.parameters-change-within-unit", "changes the matrices")]
     return b
 
+# --- the coding of the two-channel presentation's matrices ----------------------------------------------------------------------------------
+
+# A primitive matrix as (output channel, fractional bits, LSB bypass, the coded coefficient of each input channel or None, matrix noise shift). The
+# block data of a 24-bit stream written by FFmpeg carries one bypassed bit per sample for its one matrix with LSB bypass, so each coding below keeps one
+# matrix with the bypass (a coding without matrices would need the block data written again).
+KEEP = [(0, 0, 1, [1])]
+FLIP = [(0, 0, 1, [-1])]
+LEFT_SIDE = [(1, 0, 1, [1, -1])]
+SIDE_RIGHT = [(0, 0, 1, [-1, 1])]
+MID_SIDE = [(0, 1, 1, [1, 1]), (1, 0, 0, [1, -1])]
+MID_SIDE_WITHOUT_BYPASS = [(0, 1, 0, [1, 1]), (1, 0, 0, [1, -1])]
+SINGULAR = [(1, 0, 1, [1])]
+LEFT_SIDE_NOISE = [(1, 4, 1, [16, -16, 1])]
+
+
+def to_bits(value, width):
+    return [(value >> (width - 1 - i)) & 1 for i in range(width)]
+
+
+def matrix_bits(matrices, last, noise_type):
+    """The bits of a matrix parameters group that states these matrices, its present bit first (docs/design/truehd-format.md, "Matrix parameters")."""
+    bits = [1] + to_bits(len(matrices), 4)
+    for out, fractional, bypass, coefficients, *shift in matrices:
+        bits += to_bits(out, 4) + to_bits(fractional, 4) + [bypass]
+        for i in range(last + 1 + (2 if noise_type == 0 else 0)):
+            value = coefficients[i] if i < len(coefficients) else None
+            if value is None:
+                bits.append(0)
+            else:
+                width = fractional + 2
+                assert -(1 << (width - 1)) <= value < (1 << (width - 1))
+                bits += [1] + to_bits(value & ((1 << width) - 1), width)
+        if noise_type == 1:
+            bits += to_bits(shift[0] if shift else 0, 4)
+    return bits
+
+
+def matrix_span(body):
+    """Where the matrix parameters group of a substream's first block lies, as (start bit of its present bit, end bit, matrix_last, noise type, the
+    restart header or None). The presence flags stay 0xFF, as in every file the fixtures are made from."""
+    bits = m._Bits(body, 0)
+    assert bits.read(1) == 1, "the block has parameters"
+    header = None
+    if bits.read(1):
+        header = m.restart_header(body, 2)
+        bits.at = 2 + header["bits"] + 8
+    assert bits.read(1) == 0, "the presence flags are not stated"
+    if bits.read(1):
+        bits.read(9)
+    start = bits.at
+    return start, header, bits
+
+
+def edit_matrices(unit, count, k, matrices, state):
+    """The unit (a bytearray) with substream k's first block stating these matrices in place of what its matrix parameters group holds (None: no
+    change); state is (matrix_last, noise_type) where the unit carries no restart header."""
+    parsed = m.Unit(bytes(unit), 0, len(unit), count)
+    sub = parsed.substreams[k]
+    body = bytes(unit[sub["start"]:sub["end"]])
+    start, header, bits = matrix_span(body)
+    last, noise = (header["matrix_last"], header["noise_type"]) if header else state
+    if bits.read(1):
+        m.read_matrices(bits, last, noise)
+    return edit_substream(unit, count, k, start, bits.at, matrix_bits(matrices, last, noise))
+
+
+def edit_substream(unit, count, k, start, stop, new_bits):
+    """The unit with the bits start to stop of substream k's blocks replaced by new_bits, and its lengths, directory, padding, parity byte, CRC-8 and
+    parity nibble worked out again. The substream has no end of stream marker."""
+    parsed = m.Unit(bytes(unit), 0, len(unit), count)
+    subs = parsed.substreams
+    body = bits_of_unit(unit[subs[k]["start"]:subs[k]["end"]], 0, (subs[k]["end"] - subs[k]["start"]) * 8)
+    content = body[:-16]
+    content_end = len(content) - next(i for i, bit in enumerate(reversed(content)) if bit)
+    assert len(content) - content_end < 16, "the substream has an end of stream marker or more than padding after its blocks"
+    bits = body[:start] + list(new_bits) + body[stop:content_end]
+    bits += [0] * ((-len(bits)) % 16)
+    data = bytearray(int("".join(map(str, bits[i:i + 8])), 2) for i in range(0, len(bits), 8)) + b"\0\0"
+    delta = (len(data) - (subs[k]["end"] - subs[k]["start"])) // 2
+    head = bytearray(unit[:parsed.dir_end])
+    at = parsed.dir_start
+    for j, entry in enumerate(parsed.directory):
+        if j >= k:
+            word = int.from_bytes(head[at:at + 2], "big")
+            head[at:at + 2] = ((word & 0xF000) | ((word & 0xFFF) + delta)).to_bytes(2, "big")
+        at += 4 if entry["extra"] else 2
+    result = head
+    for j, sub in enumerate(subs):
+        result += data if j == k else unit[sub["start"]:sub["end"]]
+    result += unit[subs[-1]["end"]:]
+    words = len(result) // 2
+    result[0] = (result[0] & 0xF0) | (words >> 8)
+    result[1] = words & 0xFF
+    m.refresh(result, count=count)
+    return result
+
+
+def set_assignments(unit, count, k, assignments):
+    """The unit with the channel assignment of substream k's restart header replaced, the header's CRC-8 and the substream's checks computed again."""
+    parsed = m.Unit(bytes(unit), 0, len(unit), count)
+    sub = parsed.substreams[k]
+    body = bytearray(unit[sub["start"]:sub["end"]])
+    header = m.restart_header(body, 2)
+    for i, position in enumerate(assignments):
+        m.set_bits(body, header["bit"] + 113 + 6 * i, 6, position)
+    m.set_restart_crc(body, header)
+    unit[sub["start"]:sub["end"]] = body
+    m.refresh(unit, count=count)
+    return unit
+
+
+def lossless_pass(b, substreams):
+    """Works the lossless check of every restart header out again from FFmpeg's decoding of the file, since the matrices change the audio: each header
+    after the first of its substream states the XOR over the output of the interval before it (docs/design/truehd-format.md, "Lossless check").
+    substreams: the substreams to do, each with the arguments that make FFmpeg output its presentation."""
+    import tempfile
+    base = b.base
+    n = base.unit_samples
+    data, framing = framing_of(b.pieces)
+    with tempfile.TemporaryDirectory() as directory:
+        path = pathlib.Path(directory) / f"file{b.extension}"
+        path.write_bytes(data)
+        for k, options in substreams:
+            raw = subprocess.run(["ffmpeg", "-v", "error", *options, "-f", "mlp" if base.is_mlp else "truehd", "-i", str(path), "-f", "s32le", "-"], capture_output=True, check=True).stdout
+            import struct
+            values = struct.unpack(f"<{len(raw) // 4}i", raw)
+            headers = []
+            for index, piece in enumerate(b.pieces):
+                parsed = m.Unit(bytes(piece[1]), 0, len(piece[1]), base.count)
+                if len(parsed.substreams) > k and parsed.substreams[k]["restart"] is not None:
+                    headers.append((index, parsed.substreams[k]["restart"]))
+            channels = headers[0][1]["matrix_last"] + 1
+            assert len(values) == channels * n * len(b.pieces), (len(values), channels, n, len(b.pieces))
+            for (previous, earlier), (index, _) in zip(headers, headers[1:]):
+                register = 0
+                for frame in range(previous * n, index * n):
+                    for c in range(channels):
+                        register ^= (((values[frame * channels + earlier["assignments"][c]] >> 8) & 0xFFFFFF) << c) & 0xFFFFFFFF
+                folded = (register ^ (register >> 8) ^ (register >> 16) ^ (register >> 24)) & 0xFF
+                unit = b.pieces[index][1]
+                parsed = m.Unit(bytes(unit), 0, len(unit), base.count)
+                sub = parsed.substreams[k]
+                body = bytearray(unit[sub["start"]:sub["end"]])
+                header = m.restart_header(body, 2)
+                m.set_bits(body, header["bit"] + 89, 8, folded)
+                m.set_restart_crc(body, header)
+                unit[sub["start"]:sub["end"]] = body
+                m.refresh(unit, count=base.count)
+
+
+STEREO_INTERVALS = [
+    # (what the interval's first unit states, the coding the model must read from it)
+    (None, 4), (KEEP, 0), (FLIP, 0), (LEFT_SIDE, 1), (SIDE_RIGHT, 2), (MID_SIDE, 3), (SINGULAR, 4), (LEFT_SIDE_NOISE, 1), ("swapped", 2), (None, 4),
+]
+
+
+@builder("stereo-coding")
+def stereo_coding_fixture():
+    base = Base("truehd-stereo-48k-24-interval-8", 80)
+    b = Built(base, "Ten restart intervals of eight units, each coding the stereo pair differently by the matrices of its first unit: FFmpeg's channel less half the other, a matrix that keeps its channel, one that flips its sign, left and side, side and right, mid and side by two matrices, a matrix that rebuilds both channels from one, left and side with a noise coefficient, left and side under a restart header that swaps the channel assignment, and the first coding again with left and side stated in the fourth unit, in the middle of the interval. The lossless checks are worked out again from FFmpeg's decoding.")
+    for i, (spec, _) in enumerate(STEREO_INTERVALS):
+        unit = b.unit(8 * i)
+        if spec == "swapped":
+            b.pieces[8 * i][1] = set_assignments(edit_matrices(unit, 1, 0, LEFT_SIDE, None), 1, 0, [1, 0])
+        elif spec is not None:
+            b.pieces[8 * i][1] = edit_matrices(unit, 1, 0, spec, None)
+    # The fourth unit of the last interval has parameters and no restart header; it states left and side.
+    b.pieces[8 * 9 + 3][1] = edit_matrices(b.pieces[8 * 9 + 3][1], 1, 0, LEFT_SIDE, (1, 0))
+    b.lossless = [(0, [])]
+    b.ffmpeg = True
+    b.expected_codings = [code for _, code in STEREO_INTERVALS[:9] for _ in range(8)] + [4, 4, 4, 1, 1, 1, 1, 1]
+    return b
+
+
+@builder("mlp-stereo-coding")
+def mlp_stereo_coding():
+    base = Base("mlp-stereo-48k-24", 48)
+    b = Built(base, "Three restart intervals of sixteen units of an MLP stream, each coding the stereo pair differently by the matrices of its first unit: left and side, mid and side by two matrices, and FFmpeg's channel less half the other. The lossless checks are worked out again from FFmpeg's decoding.")
+    b.pieces[0][1] = edit_matrices(b.unit(0), 1, 0, LEFT_SIDE, None)
+    b.pieces[16][1] = edit_matrices(b.unit(16), 1, 0, MID_SIDE, None)
+    b.lossless = [(0, [])]
+    b.ffmpeg = True
+    b.expected_codings = [1] * 16 + [3] * 16 + [4] * 16
+    return b
+
+
+# The matrices of a 5.1 presentation in the substream that outputs it, shaped like those of the real file TrueHD.raw: the front channels rebuilt from the
+# two-channel presentation's coded channels less the center and the surrounds.
+SIX_CHANNELS = [(0, 6, 0, [-64, 0, -45, 0, -45]), (1, 6, 0, [-64, -64, -45, 0, -45, -45]), (2, 6, 0, [10, 20, 30, 40, 50, 60])]
+SIX_CHANNELS_AGAIN = [(0, 6, 0, [-64, 0, -45, 0, -45]), (1, 6, 0, [-64, -64, -45, 0, -45, -45]), (2, 6, 0, [-10, 20, -30, 40, -50, 60]), (4, 6, 0, [0, 0, 0, 0, 64, 0])]
+
+
+@builder("stereo-coding-51")
+def stereo_coding_51():
+    base = Base("truehd-51-48k-24", 48)
+    b = Built(base, "A 5.1 stream of two substreams in three restart intervals of sixteen units. The two-channel presentation of substream 0 is coded as mid and side, then as left and side, then without matrices; substream 1 states matrices over all six channels in the first two intervals. Only substream 0 counts. The lossless checks of both presentations are worked out again from FFmpeg's decoding.")
+    b.pieces[0][1] = edit_matrices(edit_matrices(b.unit(0), 2, 0, MID_SIDE_WITHOUT_BYPASS, None), 2, 1, SIX_CHANNELS, None)
+    b.pieces[16][1] = edit_matrices(edit_matrices(b.unit(16), 2, 0, [(1, 0, 0, [1, -1])], None), 2, 1, SIX_CHANNELS_AGAIN, None)
+    b.lossless = [(0, ["-downmix", "stereo"]), (1, [])]
+    b.ffmpeg = True
+    b.expected_codings = [3] * 16 + [1] * 16 + [0] * 16
+    return b
+
+
+@builder("stereo-coding-second-block")
+def stereo_coding_second_block():
+    base = Base("truehd-stereo-48k-24", 3)
+    b = Built(base, "The second block of the first unit states left and side, which the first block's FFmpeg matrices do not: the unit codes left and side at its end, and the two units after it keep it.")
+    blocks = BLOCKS[0]
+    start, parameters_end, block_end = blocks[1]
+    unit = base.units[0]
+    parsed = m.Unit(bytes(unit), 0, len(unit), 1)
+    sub = parsed.substreams[0]
+    body = bits_of_unit(unit[sub["start"]:sub["end"]], 0, (sub["end"] - sub["start"]) * 8)
+    at = start + 2
+    assert body[at] == 0 and body[at + 1] == 1, "block size present"
+    at += 11
+    assert body[at] == 0, "no matrices"
+    last, noise = sub["restart"]["matrix_last"], sub["restart"]["noise_type"]
+    new = rewrite_substream(unit, 1, blocks, {at + 1: matrix_bits(LEFT_SIDE, last, noise)[1:]}, [(at, 1)])
+    b.pieces = [["unit", new]] + [["unit", u] for u in base.units[1:]]
+    b.findings = [finding("truehd.parameters-change-within-unit", "changes the matrices")]
+    b.stereo_overrides = {0: 1, 1: 1, 2: 1}
+    return b
+
+
 
 # --- the manifests --------------------------------------------------------------------------------------------------------------------------
 
@@ -517,7 +743,7 @@ def framing_of(pieces):
 
 def manifest_of(b, path, data, framing, previous):
     """The manifest of a built fixture: what the model reads and the analyzer must report."""
-    result = m.manifest(data, framing, b.counts, b.unreadable, b.lossless_failures)
+    result = m.manifest(data, framing, b.counts, b.unreadable, b.lossless_failures, stereo_overrides=getattr(b, "stereo_overrides", None))
     manifest = {"description": b.description, **result, "findings": b.findings, "decode_findings": b.decode_findings, "regions": [{"name": result["format"], "offset": 0, "length": len(data)}],
                 "crosscheck": {"ffmpeg": b.ffmpeg}}
     if not getattr(b, "golden_full", False):
@@ -542,13 +768,23 @@ def main():
         if chosen and name not in chosen:
             continue
         b = function()
-        data, framing = framing_of(b.pieces)
         path = OUT / f"built-{name}{b.extension}"
+        if getattr(b, "lossless", None):
+            if only_manifests:
+                # The file holds the lossless checks worked out from FFmpeg's decoding, which this run does not repeat.
+                stored = path.read_bytes()
+                b.pieces = [["unit", stored[o:o + l]] for o, l in m.split_units(stored)]
+            else:
+                lossless_pass(b, b.lossless)
+        data, framing = framing_of(b.pieces)
         manifest_path = ext.manifest_path(path)
         previous = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.exists() else None
         if not only_manifests:
             path.write_bytes(data)
         ext.write_manifest(path, manifest_of(b, path, data, framing, previous))
+        if getattr(b, "expected_codings", None) is not None:
+            status = m.simulate(data, framing)["status"]
+            assert m.substream0_codings(data, framing, status) == b.expected_codings, f"{name}: the model reads other codings than the ones the builder wrote"
         count += 1
     print(f"Wrote {count} {'manifests' if only_manifests else 'fixtures'} to {OUT}")
 
