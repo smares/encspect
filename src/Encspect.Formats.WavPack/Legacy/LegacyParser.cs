@@ -148,11 +148,12 @@ internal static partial class Legacy
     // Where the parts of the stream lie, for the decoder's session.
     private sealed record Placement(ByteReader Reader, Node Bitstream, long BitstreamAt, long BitstreamEnd, long DataEnd, bool HasTrailer, string? Refusal);
 
-    // Why libwavpack's open refuses the file (unpack3_open.c), or null where it opens it: the checks the findings above state, in the order the open makes them. The
-    // decoder of 3.97 reads the raw files libwavpack does not, so a raw file is refused only for what its header says.
     // The bytes libwavpack's open skips for a chunk (unpack3_open.c): what follows the 16 common fields of the format chunk, or the whole chunk, rounded up to even.
     private static long Skipped(string id, long size) => id == "fmt " ? (size >= 16 ? (size + 1 - 16) & ~1L : 0) : (size + 1) & ~1L;
 
+    // Why the file is not decoded, or null where it is: the checks of libwavpack's open (unpack3_open.c) that the findings above state, in the order the open
+    // makes them, and two of Encspect's own for files libwavpack opens (a bit limit beyond a signed 16-bit field, the mono flag against the channel count).
+    // The decoder of 3.97 reads the raw files libwavpack does not, so a raw file is refused only for what its header says.
     private static string? Refusal(LegacyHeader header, LegacyLayout layout, Format? format)
     {
         if (!layout.IsRaw)

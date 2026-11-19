@@ -307,9 +307,10 @@ internal sealed partial class LegacyStreamDecoder : IFrameDecoder
 
         string placed = _info.HasTrailer ? $"the trailer begins at 0x{_info.BitstreamEnd:X}" : $"the bitstream runs to 0x{_info.BitstreamEnd:X}";
         string last = _done > 0 ? "The last sample's bits end" : "The bitstream, which holds no sample, ends";
+        string after = _done > 0 ? "them" : "it";
         string message = hasMarker
             ? $"{last} at 0x{end:X}, where the 16 bytes of 0xFF of a trailer follow, but {placed}."
-            : $"{last} at 0x{end:X}, and the {Counts.Of(_afterLength, "byte", "bytes")} after them are not a trailer (16 bytes of 0xFF followed by the source's bytes), which no decoder reads; {placed}.";
+            : $"{last} at 0x{end:X}, and the {Counts.Of(_afterLength, "byte", "bytes")} after {after} are not a trailer (16 bytes of 0xFF followed by the source's bytes), which no decoder reads; {placed}.";
         _context.AddFinding(Severity.Info, "wavpack.legacy-bitstream-end-differs", message, BitstreamNode());
     }
 }
