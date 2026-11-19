@@ -11,6 +11,6 @@ references: libwavpack 5.6.0, src/unpack.c (the CRC of each block), src/unpack_f
 
 **Hybrid files.** A hybrid file without its correction file decodes to the lossy audio, so its block CRCs hold for that audio, but its MD5 is of the lossless original, which only a decoder given the correction file reproduces ([hybrid mode](wavpack-hybrid-mode)).
 
-**Versions 1 to 3.** A file of [WavPack 1 to 3](wavpack-legacy) stores one `crc` for the whole stream, not one for each block. It starts at 0 and, for each sample, takes three times the sum so far plus the sample (for two channels, nine times the sum plus three times the left sample plus the right). The analyzer compares it when the file is decoded; versions 1 and 2 store none, and the second CRC of a hybrid version 3 file, of the lossless audio, needs the correction file, which is not read.
+**Versions 1 to 3.** A file of [WavPack 1 to 3](wavpack-legacy) stores one `crc` for the whole stream, starting at 0 and taking three times the sum so far plus each sample. The analyzer compares it when the file is decoded; the second CRC of a hybrid file needs its correction file, which is not read.
 
 **What you see.** The CRC in each block's header, the CRC of the extra bitstream and the MD5 sub-block as stored. They can be compared only after decoding, so the analyzer compares them when you ask it to verify the audio ([verification](verification)).
