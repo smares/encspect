@@ -490,11 +490,23 @@ What changed (each its own commit; `--json` and `--csv` of every fixture folder 
 | | Pull request | Push to main | Nightly (02:17 UTC) and manual run |
 |---|---|---|---|
 | Jobs | those the change needs (path filter) | all | all |
+| Unit tests | the whole suite, or only the tests of the changed formats and tags ([below](#unit-tests-scoped-to-the-changed-areas)) | whole suite | whole suite |
 | `build-test` and `unit-tests` platforms | Linux x64, Windows x64, macOS arm64, Windows arm64 (Linux arm64 and macOS x64 are accepted as left to main and the nightly run) | those and Linux arm64, macOS x64 | those as on main |
 | Thread-safety tests | whole fixture corpus; long reports written by one writer on three threads | same | the same corpus; every long input, all three writers on four threads (`ENCSPECT_FULL_THREAD_TESTS=1`) |
 | Decoder and measurement timing (`DecoderWorkTests` and `MeasurementWorkTests`, `Category=Nightly`) | not run | not run | all of it, on all six platforms |
 | Fuzzing | 300 s | 300 s | 1,800 s |
 | Concurrency | a new push cancels the running checks | each run has a group of its own and is never canceled | same |
+
+### Unit tests scoped to the changed areas
+
+- **Areas:** a format project (`src/Encspect.Formats.<X>`) or a tag project (`src/Encspect.Tags.<Y>`) is a test area. A changed path belongs to it when it is under the project, under `tests/Encspect.Tests/Formats/<X>/` or `Tags/<Y>/`, or under a fixture folder that `scripts/ci/areas.json` maps to it.
+- **When it applies:** only on a pull request whose .NET-relevant changed paths all belong to areas. Any other such path (`Core.Abstractions`, the host, the front ends, `Support/`, the other test folders, a project file, `shards.json`, the CI files, `Directory.Build.*`, an unknown path) runs the whole suite, as do a push to main, the nightly run and a manual run. Documentation and fixture scripts do not count.
+- **Carriers:** the run also selects the areas that can carry a selected one: a container that hands payloads to its codec by ID (Matroska for WavPack, Ogg and Matroska for Opus) and the formats that hold a tag the area parses. `areas.json` holds the table (`routes`, `tags`, `codecs`); `scripts/ci/test_changes.py` fails when a project's sources name a codec ID or a tag that the table does not list for it.
+- **Exclusion, not inclusion:** the run leaves out the tests owned by areas that are not selected and runs everything else (golden, description, finding coverage, determinism, host and core tests, and any new test class). A class in an area folder is owned by that area, and also by another one when its file uses that area's namespace, builder or fixture folder. The damaged-input classes (`Corrupt*FileTests`) and the per-format memory tests (methods of `MemoryTests` and `MusepackAndContainerMemoryTests`) outside the folders are named in `areas.json`.
+- **Filters:** each shard's filter becomes `(<shard filter>)&(FullyQualifiedName!~.<Class>.&...)`; a method is excluded as `FullyQualifiedName!~.<Class>.<Method>`. The longest filter (the `rest` shard with nothing selected) is under 9,000 characters, and `test_changes.py` fails above 12,000.
+- **Shards:** a shard whose named classes are all excluded is left out of the pull request's matrix; `rest` always stays. `all-checks` sees one `unit-tests` job either way. `scripts/ci/check_shards.py` also checks that a shard the scope drops lists no test.
+- **The report:** the `reason` output of the `changes` job names the scope, such as "unit tests scoped to WavPack, Matroska".
+- **A new format or tag:** add the project to `areas.json` (`areas`, and `codecs`, `routes`, `tags` and `fixtures` where they apply) and its damaged-input and memory tests to `classes` and `methods`; a test that is not listed runs in every pull request.
 
 ### Runner images
 

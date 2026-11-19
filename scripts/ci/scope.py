@@ -54,16 +54,19 @@ def down(selected, config):
     return result
 
 
-def carriers(selected, config):
-    """The selected areas and every area that carries one of them: a container that hands a payload to the codec by its ID,
-    a format or container that holds a tag the area parses."""
-    result = set(selected)
+def carriers(changed, config):
+    """The changed areas, every area that carries one of them (a container that hands a payload to the codec by its ID, and the
+    container's container), and the areas that hold a changed tag area's tag (listed in full: the formats that hand a tag to its parser)."""
+    result = set(changed)
     while True:
         more = {container for container, ids in config["routes"].items() if any(config["codecs"][i] in result for i in ids)}
-        more |= {carrier for tag, carried in config["tags"].items() if tag in result for carrier in carried}
         if more <= result:
-            return result
+            break
         result |= more
+    for tag, carried in config["tags"].items():
+        if tag in changed:
+            result |= set(carried)
+    return result
 
 
 def sources_of(root=ROOT):

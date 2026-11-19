@@ -379,6 +379,13 @@ def platforms(event):
     return PULL_REQUEST_PLATFORMS if event == "pull_request" else FULL_PLATFORMS
 
 
+def decide_with_scope(event, files, removed=(), root=ROOT):
+    """decide, and the scope of the unit tests when the change allows one (the reason then names it)."""
+    flags, reason = decide(event, files, root, removed)
+    scope = scope_of(event, files, removed, root) if flags["unit-tests"] else None
+    return flags, reason + ("; " + scope.describe() if scope else ""), scope
+
+
 def parse_name_status(text):
     """(paths, removed) from git diff --name-status: removed are deleted paths and the old paths of renames."""
     files, removed = [], []
@@ -413,10 +420,7 @@ def main():
         files, removed = parse_name_status(text) if "\t" in text else (text.splitlines(), [])
     else:
         files, removed = changed_files() if args.event == "pull_request" else (None, [])
-    flags, reason = decide(args.event, files, removed=removed)
-    scope = scope_of(args.event, files, removed) if flags["unit-tests"] else None
-    if scope:
-        reason += "; " + scope.describe()
+    flags, reason, scope = decide_with_scope(args.event, files, removed)
 
     os_list = platforms(args.event)
     shards = shard_config.load()

@@ -2,12 +2,14 @@
 """Tests of changes.py against the repository's own scripts: python3 scripts/ci/test_changes.py"""
 
 import pathlib
+import re
 import sys
 import tempfile
 import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import changes  # noqa: E402
+import scope  # noqa: E402
 
 
 def run(*files, event="pull_request"):
@@ -297,6 +299,216 @@ class ChangesTests(unittest.TestCase):
         self.assertEqual(skipped, f"({full})&Category!=Nightly")
         rest = changes.shard_config.filter_for(shards, shards[-1]["name"])
         self.assertEqual(changes.shard_config.filter_for(shards, shards[-1]["name"], include_nightly=False), f"{rest}&Category!=Nightly")
+
+
+REPOSITORY_HAS_SOURCES = (changes.ROOT / "src").is_dir() and (changes.ROOT / "tests/Encspect.Tests").is_dir()
+
+
+def scoped(*files, event="pull_request"):
+    flags, reason, scope = changes.decide_with_scope(event, list(files))
+    return scope, reason, changes.test_matrix(changes.platforms(event), changes.shard_config.load(), event in changes.NIGHTLY_EVENTS, scope)
+
+
+def shard_names(matrix):
+    return {entry["shard"] for entry in matrix}
+
+
+FILTER_TOKEN = re.compile(r"\s*(\(|\)|&|\||FullyQualifiedName!?~[A-Za-z0-9_.]+|Category!?=[A-Za-z]+)")
+
+
+def valid_filter(expression):
+    """Whether a --filter expression is of the grammar dotnet test reads here: clauses joined by & and |, in balanced parentheses."""
+    tokens, at = [], 0
+    while at < len(expression):
+        match = FILTER_TOKEN.match(expression, at)
+        if not match:
+            return False
+        tokens.append(match.group(1))
+        at = match.end()
+    depth, expect_clause = 0, True
+    for token in tokens:
+        if expect_clause:
+            if token == "(":
+                depth += 1
+            elif token in (")", "&", "|"):
+                return False
+            else:
+                expect_clause = False
+        elif token == ")":
+            depth -= 1
+            if depth < 0:
+                return False
+        elif token in ("&", "|"):
+            expect_clause = True
+        else:
+            return False
+    return depth == 0 and not expect_clause
+
+
+@unittest.skipUnless(REPOSITORY_HAS_SOURCES, "needs src and tests/Encspect.Tests")
+class ScopeTests(unittest.TestCase):
+    def setUp(self):
+        self.config = scope.load()
+        self.shards = changes.shard_config.load()
+
+    def test_a_wavpack_change_scopes_to_wavpack_and_the_formats_that_carry_it(self):
+        for path in ("src/Encspect.Formats.WavPack/WavPackParser.cs", "src/Encspect.Formats.WavPack/Decoding/WavPackDecoder.cs",
+                     "tests/Encspect.Tests/Formats/WavPack/WavPackTests.cs", "tests/fixtures/wavpack/a.wv"):
+            chosen, reason, matrix = scoped(path)
+            self.assertEqual(chosen.selected, {"WavPack", "Matroska"}, path)
+            self.assertIn("unit tests scoped to WavPack, Matroska", reason)
+            names = shard_names(matrix)
+            self.assertNotIn("corrupt-c", names, "its classes belong to other formats, so nothing is left of it")
+            self.assertIn("rest", names)
+            self.assertIn("corrupt-d", names, "CorruptWavPackBuiltFileTests")
+            for entry in matrix:
+                self.assertTrue(valid_filter(entry["filter"]), entry["filter"])
+        corrupt_a = next(e["filter"] for e in matrix if e["shard"] == "corrupt-a")
+        self.assertIn("FullyQualifiedName!~.CorruptMpegFileTests.", corrupt_a)
+        self.assertNotIn("FullyQualifiedName!~.CorruptWavPackFileTests.", corrupt_a)
+        self.assertNotIn("FullyQualifiedName!~.CorruptMatroskaFileTests.", corrupt_a)
+
+    def test_a_scoped_run_excludes_the_tests_of_the_other_areas_and_never_what_nobody_owns(self):
+        chosen, _, matrix = scoped("src/Encspect.Formats.WavPack/WavPackParser.cs")
+        rest = next(e["filter"] for e in matrix if e["shard"] == "rest")
+        self.assertIn("FullyQualifiedName!~.TtaFixtureTests.", rest)
+        self.assertNotIn("FullyQualifiedName!~.WavPackFixtureTests.", rest)
+        self.assertNotIn("FullyQualifiedName!~.MatroskaFixtureTests.", rest)
+        for never in ("DescriptionTests", "FindingCoverageTests", "DecoderDeterminismTests", "AnalyzerTests", "MeasurementDeterminismTests"):
+            self.assertNotIn(never, rest)
+        corrupt_b = next(e["filter"] for e in matrix if e["shard"] == "corrupt-b")
+        self.assertIn("FullyQualifiedName!~.MemoryTests.ManySpeexPacketsStayCompact", corrupt_b)
+        self.assertNotIn("FullyQualifiedName!~.MemoryTests.ManyWavPackBlocksStayCompact", corrupt_b)
+
+    def test_a_codec_change_scopes_to_the_containers_that_carry_it_and_a_tag_change_to_what_holds_the_tag(self):
+        self.assertEqual(scoped("src/Encspect.Formats.Opus/OpusParser.cs")[0].selected, {"Opus", "Ogg", "Matroska", "Mp4"})
+        self.assertEqual(scoped("src/Encspect.Formats.Dts/DtsParser.cs")[0].selected, {"Dts", "Mp4", "Matroska", "Wav", "DtsHd", "Aiff"})
+        self.assertEqual(scoped("src/Encspect.Tags.Lyrics3/Lyrics3TagParser.cs")[0].selected, {"Lyrics3", "MpegAudio"})
+        self.assertIn("Aiff", scoped("src/Encspect.Formats.Wav/WavParser.cs")[0].selected)
+
+    def test_several_areas_and_a_fixture_folder_of_a_container_select_its_codecs(self):
+        chosen = scoped("src/Encspect.Formats.WavPack/WavPackParser.cs", "src/Encspect.Formats.Tta/TtaParser.cs", "docs/formats/tta.md")[0]
+        self.assertEqual(chosen.selected, {"WavPack", "Tta", "Matroska"})
+        self.assertLessEqual({"Matroska", "Opus", "Vorbis", "WavPack", "Flac"}, scoped("tests/fixtures/matroska/a.mka")[0].selected)
+
+    def test_a_scoped_run_drops_the_shards_it_leaves_no_test(self):
+        _, _, matrix = scoped("src/Encspect.Formats.WavPack/WavPackParser.cs")
+        self.assertEqual(len(matrix), len(changes.platforms("pull_request")) * len(shard_names(matrix)))
+        self.assertLess(len(shard_names(matrix)), len([s for s in self.shards if not s.get("nightly")]))
+
+    def test_whatever_is_not_an_area_runs_the_whole_suite(self):
+        everything = {s["name"] for s in self.shards if not s.get("nightly")}
+        for path in ("src/Encspect.Host/Analyzer.cs", "src/Encspect.Core.Abstractions/ByteReader.cs", "src/Encspect.Cli/Program.cs", "src/Encspect.Gui/App.axaml.cs",
+                     "tests/Encspect.Tests/Support/Fixtures.cs", "tests/Encspect.Tests/Host/AnalyzerTests.cs", "tests/Encspect.Tests/Core/NodeTests.cs",
+                     "tests/Encspect.Tests/Decoding/DecoderDeterminismTests.cs", "tests/Encspect.Tests/Measurement/MeasurementTests.cs", "tests/Encspect.Tests/Ci/CiWorkflowTests.cs",
+                     "tests/Encspect.Tests/Cli/CommandLineTests.cs", "tests/Encspect.Tests/Encspect.Tests.csproj", "tests/Encspect.Tests/Formats/NewFormat/Tests.cs",
+                     "tests/fixtures/fuzz/a.bin", "tests/fixtures/measurement/a.wav", "tests/fixtures/newformat/a.bin", "scripts/ci/shards.json", "scripts/ci/areas.json",
+                     ".github/workflows/ci.yml", "Directory.Build.props", "Encspect.slnx", "src/Encspect.Formats.WavPack/Encspect.Formats.WavPack.csproj",
+                     "src/Encspect.Formats.NewFormat/Parser.cs", "src/Encspect.Host/Topics/mid-side-stereo.md", "something-unknown.bin"):
+            chosen, reason, matrix = scoped(path)
+            self.assertIsNone(chosen, path)
+            self.assertNotIn("scoped", reason)
+            self.assertEqual(shard_names(matrix), everything, path)
+            self.assertEqual([e["filter"] for e in matrix], [changes.shard_config.filter_for(self.shards, e["shard"], False) for e in matrix], path)
+        # One shared path among area paths is enough.
+        self.assertIsNone(scoped("src/Encspect.Formats.WavPack/WavPackParser.cs", "src/Encspect.Host/Analyzer.cs")[0])
+        self.assertIsNone(scoped("src/Encspect.Formats.WavPack/WavPackParser.cs", "tests/Encspect.Tests/Support/Fixtures.cs")[0])
+
+    def test_documentation_and_fixture_scripts_do_not_widen_a_scope(self):
+        chosen = scoped("src/Encspect.Formats.WavPack/WavPackParser.cs", "docs/formats/wavpack.md", "scripts/fixtures/make_wavpack_fixtures.py")[0]
+        self.assertEqual(chosen.selected, {"WavPack", "Matroska"})
+        self.assertIsNone(scoped("docs/formats/wavpack.md")[0])
+
+    def test_a_deleted_script_runs_everything(self):
+        _, _, chosen = changes.decide_with_scope("pull_request", ["src/Encspect.Formats.WavPack/WavPackParser.cs"], removed=["scripts/fixtures/wavpack_model.py"])
+        self.assertIsNone(chosen)
+
+    def test_the_other_events_run_every_test_unchanged(self):
+        for event in ("push", "schedule", "workflow_dispatch"):
+            chosen, reason, matrix = scoped("src/Encspect.Formats.WavPack/WavPackParser.cs", event=event)
+            self.assertIsNone(chosen)
+            include = event in changes.NIGHTLY_EVENTS
+            self.assertEqual([(e["shard"], e["filter"]) for e in matrix], [(s["name"], changes.shard_config.filter_for(self.shards, s["name"], include))
+                                                                             for p in changes.platforms(event) for s in self.shards if changes.shard_config.runs(s, include)])
+        _, _, chosen = changes.decide_with_scope("pull_request", None)
+        self.assertIsNone(chosen)
+
+    def test_the_filters_are_valid_and_stay_short(self):
+        longest = 0
+        for selected in (set(), {"WavPack"}, {"Mp4", "Aac"}, set(self.config["areas"])):
+            chosen = scope.build(selected)
+            for shard in self.shards:
+                for include in (False, True):
+                    expression = scope.shard_filter(chosen, shard, self.shards, include)
+                    self.assertTrue(valid_filter(expression), (shard["name"], expression[:200]))
+                    longest = max(longest, len(expression))
+        self.assertLess(longest, 12000, "the longest filter, which the runners pass on the command line")
+
+    def test_selecting_every_area_excludes_nothing(self):
+        chosen = scope.build(set(self.config["areas"]))
+        self.assertEqual((chosen.excluded_classes, chosen.excluded_methods), ([], {}))
+        for shard in self.shards:
+            self.assertEqual(scope.shard_filter(chosen, shard, self.shards, False), changes.shard_config.filter_for(self.shards, shard["name"], False))
+
+    def test_the_rest_shard_is_never_dropped_and_names_only_what_the_others_do_not(self):
+        chosen = scope.build(set())
+        self.assertFalse(scope.is_empty(chosen, self.shards[-1]))
+        listed = {c for s in self.shards[:-1] for c in s["classes"]}
+        rest = scope.exclusion(chosen, self.shards[-1], self.shards)
+        self.assertFalse([c for c in rest if any(f".{name}." in c or f".{name}" == c.split("~")[1][:len(name) + 1] for name in listed)])
+
+    def test_the_areas_are_the_projects(self):
+        projects = {p.name.split(".", 2)[2] for p in (changes.ROOT / "src").iterdir() if re.fullmatch(r"Encspect\.(Formats|Tags)\.\w+", p.name)}
+        self.assertEqual(projects, set(self.config["areas"]), "a new format or tag project goes into areas.json, with its routes")
+        for folder in ("Formats", "Tags"):
+            for area in (changes.ROOT / "tests/Encspect.Tests" / folder).iterdir():
+                self.assertIn(area.name, projects, f"tests/Encspect.Tests/{folder}/{area.name} has no project")
+
+    def test_every_name_in_areas_exists(self):
+        owners, methods = scope.inventory()
+        for name, listed in self.config["classes"].items():
+            self.assertIn(name, methods, f"the class {name} has no test")
+            self.assertNotIn(name, owners, f"{name} is in an area folder, which owns it already")
+            self.assertTrue(listed and set(listed) <= set(self.config["areas"]), name)
+        for name, per_method in self.config["methods"].items():
+            self.assertIn(name, methods, name)
+            for method, listed in per_method.items():
+                self.assertIn(method, methods[name], f"{name}.{method} is no test")
+                self.assertTrue(listed and set(listed) <= set(self.config["areas"]), (name, method))
+                # A filter clause is a substring: no other method of the class may start with this one's name.
+                self.assertEqual([m for m in methods[name] if m.startswith(method)], [method], f"{name}.{method} is the start of another test's name")
+        for folder, listed in self.config["fixtures"].items():
+            self.assertTrue((changes.ROOT / "tests/fixtures" / folder).is_dir(), folder)
+            self.assertTrue(set(listed) <= set(self.config["areas"]), folder)
+        named = set(self.config["codecs"].values()) | set(self.config["routes"]) | set(self.config["tags"]) | {a for c in self.config["tags"].values() for a in c}
+        self.assertLessEqual(named, set(self.config["areas"]))
+
+    def test_every_fixture_folder_of_a_cross_check_is_mapped(self):
+        mapped = set(self.config["fixtures"])
+        known = {folder for spec in changes.AREAS.values() for folder in spec["fixtures"]}
+        self.assertEqual(known - mapped - {"measurement"}, set(), "a fixture folder no scope knows runs the whole suite; add it to areas.json")
+
+    def test_the_damaged_input_classes_of_every_format_are_owned(self):
+        _, methods = scope.inventory()
+        corrupt = {name for name in methods if name.startswith("Corrupt") and name.endswith("FileTests")}
+        self.assertEqual(corrupt - set(self.config["classes"]) - {"CorruptTagFileTests"}, set(), "a damaged-input class names its owners in areas.json, or runs always")
+        self.assertIn("CorruptTagFileTests", self.config["methods"])
+
+    def test_the_container_routes_name_every_codec_ID_the_sources_mention(self):
+        """The table of areas.json against the sources: a container project that names a codec ID of another area, or holds a
+        tag of another area, is in the table, so that a change to that codec reaches the container's tests."""
+        ids = self.config["codecs"]
+        for project in sorted((changes.ROOT / "src").glob("Encspect.Formats.*")):
+            area = project.name.split(".", 2)[2]
+            text = "\n".join(f.read_text(encoding="utf-8", errors="replace") for f in project.rglob("*.cs"))
+            named = {i for i in ids if f'"{i}"' in text and ids[i] != area}
+            self.assertLessEqual(named, set(self.config["routes"].get(area, [])), f"{area} names codec IDs that routes of areas.json lacks")
+            if re.search(r'ParseTag\(', text):
+                self.assertTrue(any(area in carried for carried in self.config["tags"].values()), f"{area} hands tags to a tag parser")
+            for literal, tag in (('"ID3v2"', "Id3"), ('"Vorbis Comment"', "VorbisComment")):
+                if literal in text and area != tag:
+                    self.assertIn(area, self.config["tags"][tag], f"{area} names the tag {literal}")
+
 
 
 if __name__ == "__main__":
