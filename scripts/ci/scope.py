@@ -21,6 +21,8 @@ import shards as shard_config  # noqa: E402
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 CONFIG = pathlib.Path(__file__).resolve().with_name("areas.json")
 TESTS = "tests/Encspect.Tests"
+# Tests no area owns run in every scope, so a change to them selects no area; what areas.json names in them stays owned.
+SHARED_TEST_FOLDERS = ("Host", "Decoding", "Measurement", "Core", "Cli")
 
 CLASS = re.compile(r"^(?:(?:public|internal)\s+)?(?:(?:sealed|static|abstract|partial)\s+)*class\s+(\w+)", re.MULTILINE)
 TEST_METHOD = re.compile(r"^\s+\[(?:Fact|Theory)[^\]]*\](?:\s*\[[^\]]*\])*\s*public\s+(?:async\s+)?(?:void|Task|ValueTask)\s+(\w+)\s*\(", re.MULTILINE)
@@ -40,6 +42,8 @@ def area_of(path, config):
         return {match.group(1)} if match and match.group(1) in areas and not path.endswith((".csproj", ".props", ".targets")) else None
     if parts[:2] == ["tests", "Encspect.Tests"] and len(parts) >= 5 and parts[2] in ("Formats", "Tags"):
         return {parts[3]} if parts[3] in areas else None
+    if parts[:2] == ["tests", "Encspect.Tests"] and len(parts) >= 4 and parts[2] in SHARED_TEST_FOLDERS:
+        return set()
     if parts[:2] == ["tests", "fixtures"] and len(parts) >= 4:
         listed = config["fixtures"].get(parts[2])
         return down(set(listed), config) if listed else None
@@ -117,7 +121,7 @@ class Scope:
 
     def describe(self):
         order = sorted(self.selected, key=lambda a: (a not in self.changed, a))
-        return "unit tests scoped to " + ", ".join(order)
+        return "unit tests scoped to " + (", ".join(order) or "no area")
 
 
 def build(selected, root=ROOT, config=None):

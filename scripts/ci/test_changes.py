@@ -399,9 +399,7 @@ class ScopeTests(unittest.TestCase):
     def test_whatever_is_not_an_area_runs_the_whole_suite(self):
         everything = {s["name"] for s in self.shards if not s.get("nightly")}
         for path in ("src/Encspect.Host/Analyzer.cs", "src/Encspect.Core.Abstractions/ByteReader.cs", "src/Encspect.Cli/Program.cs", "src/Encspect.Gui/App.axaml.cs",
-                     "tests/Encspect.Tests/Support/Fixtures.cs", "tests/Encspect.Tests/Host/AnalyzerTests.cs", "tests/Encspect.Tests/Core/NodeTests.cs",
-                     "tests/Encspect.Tests/Decoding/DecoderDeterminismTests.cs", "tests/Encspect.Tests/Measurement/MeasurementTests.cs", "tests/Encspect.Tests/Ci/CiWorkflowTests.cs",
-                     "tests/Encspect.Tests/Cli/CommandLineTests.cs", "tests/Encspect.Tests/Encspect.Tests.csproj", "tests/Encspect.Tests/Formats/NewFormat/Tests.cs",
+                     "tests/Encspect.Tests/Support/Fixtures.cs", "tests/Encspect.Tests/Ci/CiWorkflowTests.cs", "tests/Encspect.Tests/Encspect.Tests.csproj", "tests/Encspect.Tests/Formats/NewFormat/Tests.cs",
                      "tests/fixtures/fuzz/a.bin", "tests/fixtures/measurement/a.wav", "tests/fixtures/newformat/a.bin", "scripts/ci/shards.json", "scripts/ci/areas.json",
                      ".github/workflows/ci.yml", "Directory.Build.props", "Encspect.slnx", "src/Encspect.Formats.WavPack/Encspect.Formats.WavPack.csproj",
                      "src/Encspect.Formats.NewFormat/Parser.cs", "src/Encspect.Host/Topics/mid-side-stereo.md", "something-unknown.bin"):
@@ -413,6 +411,19 @@ class ScopeTests(unittest.TestCase):
         # One shared path among area paths is enough.
         self.assertIsNone(scoped("src/Encspect.Formats.WavPack/WavPackParser.cs", "src/Encspect.Host/Analyzer.cs")[0])
         self.assertIsNone(scoped("src/Encspect.Formats.WavPack/WavPackParser.cs", "tests/Encspect.Tests/Support/Fixtures.cs")[0])
+
+    def test_changed_tests_of_the_shared_folders_join_a_scope_and_stay_owned_by_their_areas(self):
+        chosen, reason, matrix = scoped("src/Encspect.Formats.WavPack/WavPackParser.cs", "tests/Encspect.Tests/Host/MemoryTests.cs",
+                                        "tests/Encspect.Tests/Decoding/DecoderChargeTests.cs", "tests/Encspect.Tests/Measurement/MeasurementTests.cs",
+                                        "tests/Encspect.Tests/Core/NodeTests.cs", "tests/Encspect.Tests/Cli/CommandLineTests.cs")
+        self.assertEqual(chosen.selected, {"WavPack", "Matroska"})
+        corrupt_b = next(e["filter"] for e in matrix if e["shard"] == "corrupt-b")
+        self.assertIn("FullyQualifiedName!~.MemoryTests.ManySpeexPacketsStayCompact", corrupt_b)
+        only = scoped("tests/Encspect.Tests/Host/AnalyzerTests.cs")
+        self.assertEqual(only[0].selected, set())
+        self.assertIn("scoped to no area", only[1])
+        for path in ("tests/Encspect.Tests/Support/Fixtures.cs", "tests/Encspect.Tests/Ci/CiWorkflowTests.cs", "scripts/ci/scope.py", "scripts/ci/areas.json"):
+            self.assertIsNone(scoped("src/Encspect.Formats.WavPack/WavPackParser.cs", path)[0], path)
 
     def test_documentation_and_fixture_scripts_do_not_widen_a_scope(self):
         chosen = scoped("src/Encspect.Formats.WavPack/WavPackParser.cs", "docs/formats/wavpack.md", "scripts/fixtures/make_wavpack_fixtures.py")[0]
