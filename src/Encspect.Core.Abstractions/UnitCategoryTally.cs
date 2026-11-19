@@ -30,6 +30,13 @@ public sealed class UnitCategoryTally(string name, IReadOnlyList<Category> categ
         }
     }
 
+    // One unit counted in the tally and left out of the series, for a parser that lists only the first units of a very long stream.
+    public void Count(int code)
+    {
+        _counts[code]++;
+        Total++;
+    }
+
     // One unit of a variable layout: any number of values, none for a unit without any.
     public void AddAll(ReadOnlySpan<byte> codes)
     {

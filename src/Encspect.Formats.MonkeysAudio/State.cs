@@ -98,7 +98,7 @@ internal sealed class State
 
     public long SilentFrames { get; set; }
 
-    // The coding of each two-channel frame that the series of bitrates has a point for. Silence takes precedence over pseudo-stereo, as in both
+    // The coding of each two-channel frame the bitrate figures cover; the series keeps the frames the series of bitrates has a point for. Silence takes precedence over pseudo-stereo, as in both
     // decoders; one silent channel alone changes nothing in decoding, so it counts as mid/side stereo.
     public static readonly Category[] StereoCodings =
     [

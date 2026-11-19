@@ -529,18 +529,26 @@ internal static class Reader
             {
                 bool listed = index < s.MaxListedFrames;
                 s.Figures.Add(FileOffsetOf(records, start), (end - start) * 8, blocks, listed);
-                if (listed)
+                bool hasCodes = (status & EntryStatus.HasSpecialCodes) != 0 || isChecksumSilence;
+                if (h.Channels == 2)
                 {
-                    bool hasCodes = (status & EntryStatus.HasSpecialCodes) != 0 || isChecksumSilence;
-                    if (h.Channels == 2)
+                    // The tally counts every frame; the series keeps the frames the bitrate series lists.
+                    int code = State.StereoCodeOf(special, hasCodes);
+                    if (listed)
                     {
-                        s.Stereo.Add(State.StereoCodeOf(special, hasCodes));
+                        s.Stereo.Add(code);
                     }
-
-                    if (h.Channels == 1)
+                    else
                     {
-                        bool silent = hasCodes && (special & 1) != 0;
-                        s.SilentFrames += silent ? 1 : 0;
+                        s.Stereo.Count(code);
+                    }
+                }
+                else if (h.Channels == 1)
+                {
+                    bool silent = hasCodes && (special & 1) != 0;
+                    s.SilentFrames += silent ? 1 : 0;
+                    if (listed)
+                    {
                         s.SilentFlags.Add(silent ? (byte)0 : (byte)1);
                     }
                 }
