@@ -1,7 +1,7 @@
 ---
 id: wavpack-hybrid-mode
 title: WavPack hybrid mode and correction files
-related: wavpack-legacy, wavpack-blocks, wavpack-decorrelation, wavpack-entropy-coding, wavpack-audio-checksums, bitrate-modes, ape-tag
+related: wavpack-legacy, wavpack-blocks, wavpack-decorrelation, wavpack-entropy-coding, wavpack-audio-checksums, bitrate-modes, ape-tag, correction-files
 references: WavPack 4 and 5 binary file/block format (David Bryant, April 2020), sections 1.0 and 3.0; libwavpack 5.6.0, src/write_words.c (word_set_bitrate), src/pack_utils.c, src/open_utils.c
 ---
 

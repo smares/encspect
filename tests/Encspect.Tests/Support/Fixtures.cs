@@ -78,7 +78,23 @@ internal static class Fixtures
     public static Report AnalyzeMpeg(string name)
     {
         using FileStream stream = File.OpenRead(Path.Combine(FixtureDirectory, name));
-        return Analyzer.CreateDefault().Analyze(Path.GetFileName(name), stream);
+        return Analyzer.CreateDefault().Analyze(Path.GetFileName(name), stream, CompanionOptions(name));
+    }
+
+    // A main file whose manifest names a "companion" (the committed correction file, which keeps its own name) is analyzed with it, as its
+    // correction file; any other fixture is analyzed from a stream, which has no folder to look in.
+    public static AnalysisOptions? CompanionOptions(string name)
+    {
+        string manifest = MpegCompanion(name, ".expected.json");
+        if (!File.Exists(manifest) || !File.ReadAllText(manifest).Contains("\"companion\":", StringComparison.Ordinal)
+            || !LoadMpegManifest(name).TryGetProperty("companion", out JsonElement companion))
+        {
+            return null;
+        }
+
+        // Whatever extension the parser asks for gets the file the manifest names (an .ofr as the companion of an .ofs, say).
+        string path = Path.Combine(FixtureDirectory, Path.GetDirectoryName(name)!, companion.GetString()!);
+        return new AnalysisOptions { Companions = CompanionSource.From(_ => File.OpenRead(path)) };
     }
 
     public static string MpegCompanion(string name, string suffix) =>

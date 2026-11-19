@@ -23,4 +23,8 @@ public sealed class AnalysisOptions
     // and the checksums over its decoded audio are compared. The tree is the same either way; the streams' Verification
     // and the decoder's findings are what decoding adds.
     public DecodeOptions? Decoding { get; init; }
+
+    // Where the host looks for the files that belong with the input, such as a correction file (CompanionSource). Null (the default): the folder of the input
+    // for AnalyzeFile, nothing for Analyze(source, stream), whose input is a stream and has no folder, so a pair is reported as unchecked.
+    public CompanionSource? Companions { get; init; }
 }

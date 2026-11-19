@@ -380,6 +380,18 @@ internal static class Walk
             s.FirstCut = s.FirstCut < 0 ? ordinal : s.FirstCut;
         }
 
+        if ((block.Status & BlockStatus.Unknown) == 0)
+        {
+            if (block.Id == Layout.Corr)
+            {
+                s.CorrBlocks++;
+            }
+            else if (block.Id == Layout.Comp)
+            {
+                s.DataBlocks++;
+            }
+        }
+
         if (block.Id == Layout.Corr && block.HasCrc)
         {
             s.CompBlocks++;

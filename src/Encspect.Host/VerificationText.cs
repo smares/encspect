@@ -4,7 +4,7 @@ namespace Encspect.Host;
 
 // How a stream's verification reads in the text output and in the front ends: "yes (frame CRC-16 40 of 40, STREAMINFO MD5
 // 1 of 1)", "no (STREAMINFO MD5 1 of 1 differ)" or "unknown (STREAMINFO MD5 not compared: decoding was not asked for)".
-// "n of m" is the values compared of the values stored; a failed checksum reads "n of m differ", the differing values of
+// A stream checked with its correction file starts with "with correction file", as a lossy one with "lossy stream". "n of m" is the values compared of the values stored; a failed checksum reads "n of m differ", the differing values of
 // those compared.
 public static class VerificationText
 {
@@ -14,10 +14,7 @@ public static class VerificationText
         ArgumentNullException.ThrowIfNull(verification);
 
         var parts = new List<string>();
-        if (verification.IsVerified == true && verification.IsLossy)
-        {
-            parts.Add("lossy stream");
-        }
+        string? lead = verification.IsVerified == true && verification.IsLossy ? "lossy stream" : verification.WithCorrection ? "with correction file" : null;
 
         bool anyProblem = false;
         foreach (ChecksumTally tally in verification.Checksums.Where(t => t.Stored > 0))
@@ -43,11 +40,7 @@ public static class VerificationText
             parts.Add(verification.Checksums.Any(t => t.Stored > 0) ? "no checksum that was compared covers all of the audio" : "the stream stores no checksum");
         }
 
-        string details = string.Join(", ", parts);
-        if (verification.IsVerified == true && verification.IsLossy)
-        {
-            details = "lossy stream; " + string.Join(", ", parts.Skip(1));
-        }
+        string details = lead is null ? string.Join(", ", parts) : parts.Count == 0 ? lead : $"{lead}; {string.Join(", ", parts)}";
 
         string verdict = verification.IsVerified switch { true => "yes", false => "no", null => "unknown" };
         return details.Length == 0 ? verdict : $"{verdict} ({details})";

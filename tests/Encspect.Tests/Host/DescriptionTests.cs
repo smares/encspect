@@ -56,6 +56,11 @@ public partial class DescriptionTests
         }
 
         Walk(report.Root, "File", 0, problems);
+        foreach (CompanionReport companion in report.Companions)
+        {
+            Walk(companion.Report.Root, $"{companion.Role} file", 0, problems);
+        }
+
         foreach (Series series in report.Streams.SelectMany(s => s.Series))
         {
             Check(series.Description, $"series {series.Name}", problems);

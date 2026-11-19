@@ -22,8 +22,10 @@ internal static class Explain
     public const string CorrData = "The correction data, which only OptimFROG's own library reads.";
     public const string CorrCut = "The bytes of a correction block that the data holds; they end before its CRC-32 does.";
     public const string LossyStream = "What the file looks like the lossy part of: a DualStream, the pair of a lossy .ofs file and its correction file. The low byte of the data blocks' two reserved bytes reads 0x01 in every .ofs file of OptimFROG 5.100 in Encspect's tests (0x1101 for stereo, 0x0901 for mono) and never in a lossless file; the analyzer uses that low byte alone, not the high byte.";
-    public const string LossyConfidenceLow = "Low: the bytes are undocumented, and the claim rests on the pattern of OptimFROG 5.100's files alone. Pairing the file with its .ofc (0.4) would confirm it.";
-    public const string LossyConfidenceMedium = "Medium: the pattern of OptimFROG 5.100's files and the file name's extension, .ofs, agree. Pairing the file with its .ofc (0.4) would confirm it.";
+    public const string LossyConfidenceLow = "Low: the bytes are undocumented, and the claim rests on the pattern of OptimFROG 5.100's files alone. A consistent .ofc file beside it raises the claim to High.";
+    public const string LossyConfidenceMedium = "Medium: the pattern of OptimFROG 5.100's files and the file name's extension, .ofs, agree. A consistent .ofc file beside it raises the claim to High.";
+    public const string LossyConfidenceHigh = "High: a correction file (.ofc) beside the file holds one correction block for each data block of the file and every CRC-32 of its blocks holds. The analyzer compares block counts and CRC-32s only, so the pair is shown to belong together and be intact, not to decode to the original audio.";
+    public const string NotCorrectionData = "Bytes beside an OptimFROG file that hold no correction blocks: a correction file is a run of correction blocks, so the analyzer reads none of these.";
     public const string StatIsCorrectionFile = "Whether this file is a correction file: its blocks hold correction data and no audio.";
     public const string CorrStream = "An OptimFROG correction file: a run of correction blocks, each with a 4-byte ID, a length, a CRC-32 and correction data (the structure of the files in Encspect's tests; format.txt does not describe it).";
     public const string BlockId = "The 4 characters that name the kind of block (format.txt).";
