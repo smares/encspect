@@ -276,7 +276,7 @@ public sealed partial class MpegAudioParser
 
             if (isReadable && plan is not null)
             {
-                isReadable = !header.IsMono && ReadMultichannelData(header, _frame.AsSpan(0, length).ToArray(), plan, lent);
+                isReadable = !header.IsMono && ReadMultichannelData(header, _frame.AsSpan(0, length).ToArray(), plan, lent, firstSample, _scale);
             }
 
             session.Decode(new CodedFrame(new MappedBytes(_frame.AsMemory(0, length), state.Build.Map?.FileOf(entry.Offset) ?? entry.Offset), "Frame", firstSample, header.Samples)
@@ -288,7 +288,7 @@ public sealed partial class MpegAudioParser
         }
 
         // Reads the sample codes of the additional channels and the LFE into the lent planes; false where the extension is not the stream's, fails its CRC or runs past the frame.
-        private static bool ReadMultichannelData(MpegHeader header, byte[] bytes, MultichannelPlan plan, SampleBuffers lent)
+        private static bool ReadMultichannelData(MpegHeader header, byte[] bytes, MultichannelPlan plan, SampleBuffers lent, long firstSample, Layer12Scale scale)
         {
             var audio = Layer2AudioData.Read(bytes, header);
             var mc = Layer2Multichannel.Read(bytes, audio.End, bytes.Length * 8, audio.BaseAllocation(), header.SampleRate);
@@ -298,6 +298,11 @@ public sealed partial class MpegAudioParser
             }
 
             mc.ReadData(bytes, lent.Narrow, lent.Stride);
+            if (mc.DataFits)
+            {
+                plan.Offer(firstSample, scale, mc);
+            }
+
             return mc.DataFits;
         }
 

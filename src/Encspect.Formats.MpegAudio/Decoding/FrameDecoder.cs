@@ -126,7 +126,7 @@ internal sealed class FrameDecoder : IFrameDecoder
 
         if (_multichannel is not null)
         {
-            _multichannel.Decode(header, bytes, lent.Narrow, lent.Stride, _planar, MaxFrameSamples);
+            _multichannel.Decode(header, bytes, frame.FirstSample, lent.Narrow, lent.Stride, _planar, MaxFrameSamples);
         }
         else if (isLayer3)
         {

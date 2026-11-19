@@ -522,6 +522,9 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         Add("wavpack-floats-shift-31-exponent-255", () => new Case("wavpack-floats-shift-31-exponent-255", WavPackCases.CraftedFloats()));
         Add("wavpack-muted-blocks", () => new Case("wavpack-muted-blocks", WavPackCases.MutedBlocks()));
         Add("wavpack-wide-set", () => new Case("wavpack-wide-set", WavPackCases.WideSet()));
+        Add("wavpack-legacy-high-stereo", () => new Case("wavpack-legacy-high-stereo", WavPackCases.LegacyNoise("external-wv340-high.wv", 1 << 20)));
+        Add("wavpack-legacy-lossless-24-stereo", () => new Case("wavpack-legacy-lossless-24-stereo", WavPackCases.LegacyNoise("external-wv340-lossless-24-stereo.wv")));
+        Add("wavpack-legacy-hybrid-mono", () => new Case("wavpack-legacy-hybrid-mono", WavPackCases.LegacyNoise("external-wv340-hybrid-320-mono.wv")));
         Add("wavpack-sets-that-never-complete", () => new Case("wavpack-sets-that-never-complete", WavPackCases.SetsThatNeverComplete()));
         Add("wavpack-many-small-dsd-blocks", () => new Case("wavpack-many-small-dsd-blocks", WavPackCases.SmallDsdBlocks()));
         Add("wavpack-dsd-fast-5-history-bits", () => new Case("wavpack-dsd-fast-5-history-bits", WavPackCases.DsdFast()));
@@ -1412,6 +1415,25 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
 
         // Bytes with a zero in every bit 7: the unary part of a word is at most 7 ones, so the entropy decoder neither runs out of code nor reads an
         // escape, and the values are not all zero.
+        // A file of versions 1 to 3 made of a fixture's first 80 bytes (the stored WAV header and the WavPack header, which states a sample count of about 2^31)
+        // and noise in place of its bitstream, so the decoder reads and decodes words until the data ends.
+        internal static byte[] LegacyNoise(string fixture, int bytes = LegacyNoiseBytes)
+        {
+            byte[] head = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "wavpack", "legacy", fixture))[..80];
+            BinaryPrimitives.WriteUInt32LittleEndian(head.AsSpan(60), int.MaxValue);
+            return [.. head, .. Noise(new Random(7), bytes)];
+        }
+
+        // The same with a bitstream of zero bits, the cheapest code there is, which is where a byte of a legitimate file carries the most samples.
+        internal static byte[] LegacyZeros(string fixture, int bytes, uint samples = int.MaxValue)
+        {
+            byte[] head = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "wavpack", "legacy", fixture))[..80];
+            BinaryPrimitives.WriteUInt32LittleEndian(head.AsSpan(60), samples);
+            return [.. head, .. new byte[bytes]];
+        }
+
+        internal const int LegacyNoiseBytes = 6 << 20;
+
         internal static byte[] Noise(Random random, int length)
         {
             byte[] bytes = new byte[length];

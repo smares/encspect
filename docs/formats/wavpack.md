@@ -159,7 +159,7 @@ The files WavPack 1.0 to 3.97 wrote from 1998 to 2003. The design, with the sour
   - the signature, size and version, in 10 bytes (12 in version 2, 36 in version 3);
   - `bits`, named by what it is: the limit on the bits of a sample in the older lossy mode (Lossy Bit Limit, 0 for a lossless file), or in hybrid mode the target in bits per sample times 256 (Hybrid Target);
   - in version 3 the 16 flags as typed fields (the three never stored among them), the shift, the total samples, the two checks (`crc`, and `crc2` with a correction file; shown, compared only by a decoder), the source's extension and the bytes after a raw file's last sample.
-- **The bitstream** as one node. Its end is known only to a decoder; without one it ends at the trailer, or at the end of the data.
+- **The bitstream** as one node. Its end is known only to a decoder; without decoding it ends at the trailer, or at the end of the data. When the file is decoded, the place of the last sample's last bit is compared with it (`wavpack.legacy-bitstream-end-differs`).
 - **The trailer:** 16 bytes of 0xFF followed by chunk headers that chain to the end of the data, as 3.4 writes the source's chunks after the audio. The first 64 chunks are listed.
 - **The stream:** codec "WavPack lossless", "WavPack hybrid" (a target and the new high flag) or "WavPack lossy" (a bit limit without it), as for version 4; the rate, channels and bits from the stored WAV header (a raw file: 44,100 Hz, 16 bits, or 24 for 3-byte samples, and the channels from the mono flag); the samples from the header (version 3) or from the data chunk's size (versions 1 and 2); the center for one channel and left/right for two.
 
@@ -177,7 +177,7 @@ The names of version 4 are kept where the concept is the same:
 - **Encoder:** "WavPack 1", "WavPack 2" or "WavPack 3", medium confidence, from the version field, which libwavpack reports as the major version of the program that wrote the file. Nothing in a file names the release; the Cool Edit filter of the 3.97 sources writes a version 3 header too.
 - **Processor:** a `fact` chunk with lossyWAV's text in the stored header names lossyWAV at high confidence, as in WAV files.
 - **Writer:** an APEv2 tag's claim, weighed as for version 4.
-- **Verification:** a version 3 file declares its `crc` as a checksum ("audio CRC") that is stored and not compared, since no decoder reads these files yet: "unknown (audio CRC not compared: no decoder handles this coding)".
+- **Verification:** a version 3 file declares its `crc` as a checksum ("audio CRC"), compared when the file is decoded; without decoding the status is unknown. Versions 1 and 2 store none, so they are verified only as decoded without error and to the stated length. A hybrid file decodes to its lossy audio (the correction file is not read), so it is reported as lossy, and its second CRC, of the lossless audio, is not compared (`wavpack.legacy-crc2-needs-correction-file`, info).
 
 ### Findings
 
@@ -192,7 +192,7 @@ The names of version 4 are kept where the concept is the same:
 
 ### Not covered
 
-- The audio: a decoder is the next pull request of the item ([the design](../design/wavpack-legacy.md#decoding-decision-5)). Until then: the CRC (`wavpack.legacy-crc-mismatch`), the end of a bitstream that is cut or lacks samples (`wavpack.legacy-data-ended`), the bitrate over time, Lost Samples and the measurements.
+- The audio, when the front end asks for decoding ([the design](../design/wavpack-legacy.md#decoding-decision-5)): the decoder (`Encspect.Formats.WavPack.Decoding`, ID `wavpack`) follows libwavpack 5.6.0's `unpack3.c` (3.97's decoder for version 1 mono), in batches of 4,096 samples charged to the work budget before they are decoded. It reports the CRC that does not hold (`wavpack.legacy-crc-mismatch`), a bitstream that ends before the stated samples (`wavpack.legacy-data-ended`), a bitstream whose last bit lies elsewhere than the parser placed the trailer (`wavpack.legacy-bitstream-end-differs`) and the second CRC of a hybrid file that is not compared (`wavpack.legacy-crc2-needs-correction-file`). The decoded PCM of the encoder-written files equals each release's own unpacker's output (WVUNPACK 1.0 to 3.4 under DOSBox, wvunpack 3.97 on Windows) in `WavPackLegacyDecoderFixtureTests`.
 - The `.wvc` of version 3 opened alone: it has no header or signature, so it is not recognized. Pairing it with its `.wv` is the correction-file item of 0.4.
 - Self-extracting files (`-e` of 3.97), and files written by 3.97, which no fixture holds: Wine does not run in the container that made the fixtures, so what 3.97 writes is known from its source only.
 
@@ -203,7 +203,7 @@ The names of version 4 are kept where the concept is the same:
 - WavPack hybrid correction data in Matroska (BlockAdditions, BlockAddIDType 1) is not read; the stream is reported from its main blocks.
 - WavPack in Matroska: Verified Block Checksums is not reported, since the block checksum covers the block's header, which Matroska does not keep; the other figures of a file (Stereo Coding, Wasted Bits and the low-confidence lossyWAV claim, counted from each packet's blocks at the position of the samples before it, the bitrate series and statistics, the block set figures, Bits Per Sample, IsLossless, Decorrelation Passes, the compression mode, Channel Layout, the encoder) are reported from the flags and sub-blocks the packets keep.
 - WavPack in Matroska: the lost samples of a packet are the samples its first four bytes declare, so a packet too short to hold them is not counted, and a packet without a block is not counted in the samples either.
-- WavPack 1 to 3: the audio is not decoded (the decoder is a separate item of 0.4), so no check of it is made, and the end of the bitstream, Lost Samples, the bitrate over time and the measurements are not reported; see [Not covered under WavPack 1 to 3](#wavpack-1-to-3).
+- WavPack 1 to 3: no bitrate over time. The bitstream has no blocks or sub-block lengths, so the bits a second of audio takes are known only by decoding, and the decoder, which reads one bitstream sample by sample, does not add series to the report (a decoder never does); the average bitrate is the stream's size over its duration. The correction file is not read, so a hybrid file is decoded to its lossy audio; see [Not covered under WavPack 1 to 3](#wavpack-1-to-3).
 - The correction file is not applied in decoding yet, so a pair is not verified against the MD5 of the lossless audio (planned in 0.4, the next step of the correction files); a correction file for the legacy format of WavPack 1 to 3 is part of that item.
 
 ## Articles

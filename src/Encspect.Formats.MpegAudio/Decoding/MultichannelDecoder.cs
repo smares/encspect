@@ -29,7 +29,7 @@ internal sealed class MultichannelDecoder
     private readonly float[][] _outputs;
     private readonly float[] _variables = new float[Dematrix.Variables * 12];
     private readonly float[] _predictionHistory = new float[2 * 8 * PredictionHistory];
-    private readonly Layer12Scale _base = new();
+    private readonly Layer12Scale _fallback = new();
 
     public MultichannelDecoder(MultichannelPlan plan)
     {
@@ -61,9 +61,34 @@ internal sealed class MultichannelDecoder
     // Decodes one frame into planar output: stride samples to a channel, the full-bandwidth channels first and the LFE last, as the plan's layout has them. lent holds
     // the frame's sample codes by channel (0 and 1 the base channels, 2 to 4 the additional ones, 5 the LFE's twelve).
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public void Decode(MpegHeader header, ReadOnlySpan<byte> frame, ReadOnlySpan<int> lent, int stride, Span<float> planar, int planarStride)
+    public void Decode(MpegHeader header, ReadOnlySpan<byte> frame, long firstSample, ReadOnlySpan<int> lent, int stride, Span<float> planar, int planarStride)
     {
-        if (!_base.Read(header, frame))
+        // The parser's feed read this frame's side information and extension just before; they are read again only for a frame it did not offer.
+        if (!_plan.TryTake(firstSample, out Layer12Scale scale, out Layer2Multichannel mc))
+        {
+            (scale, mc) = ReadAgain(header, frame);
+        }
+
+        foreach (float[] signal in _signals)
+        {
+            Array.Clear(signal);
+        }
+
+        ScaleBase(scale, lent, stride);
+        ScaleAdditional(scale, mc, lent, stride);
+        Predict(mc);
+        SaveHistory();
+        ApplyMatrix(mc);
+        Synthesize(planar, planarStride);
+        if (_plan.HasLfe)
+        {
+            Lfe(mc, lent.Slice(5 * stride, 12), planar.Slice(_plan.FullChannels * planarStride, planarStride));
+        }
+    }
+
+    private (Layer12Scale, Layer2Multichannel) ReadAgain(MpegHeader header, ReadOnlySpan<byte> frame)
+    {
+        if (!_fallback.Read(header, frame))
         {
             throw new InvalidDataException("The allocation and scalefactors run past the frame");
         }
@@ -82,41 +107,27 @@ internal sealed class MultichannelDecoder
             throw new InvalidDataException("The multichannel samples run past the frame");
         }
 
-        foreach (float[] signal in _signals)
-        {
-            Array.Clear(signal);
-        }
-
-        ScaleBase(lent, stride);
-        ScaleAdditional(mc, lent, stride);
-        Predict(mc);
-        SaveHistory();
-        ApplyMatrix(mc);
-        Synthesize(planar, planarStride);
-        if (_plan.HasLfe)
-        {
-            Lfe(mc, lent.Slice(5 * stride, 12), planar.Slice(_plan.FullChannels * planarStride, planarStride));
-        }
+        return (_fallback, mc);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private void ScaleBase(ReadOnlySpan<int> lent, int stride)
+    private void ScaleBase(Layer12Scale scale, ReadOnlySpan<int> lent, int stride)
     {
         for (int ch = 0; ch < 2; ch++)
         {
-            for (int band = 0; band < _base.TotalBands; band++)
+            for (int band = 0; band < scale.TotalBands; band++)
             {
                 int entry = (2 * band) + ch;
-                int ba = _base.ScalefactorAllocation[entry];
+                int ba = scale.ScalefactorAllocation[entry];
                 for (int part = 0; part < 3; part++)
                 {
-                    int index = _base.Scalefactor[(entry * 3) + part];
-                    float scale = index == 0 ? 0 : Layer12Dequantizer.Scale(ba, index - 1);
+                    int index = scale.Scalefactor[(entry * 3) + part];
+                    float factor = index == 0 ? 0 : Layer12Dequantizer.Scale(ba, index - 1);
                     ReadOnlySpan<int> codes = lent.Slice((ch * stride) + (((part * 32) + band) * 12), 12);
                     Span<float> destination = _signals[ch].AsSpan((part * 384) + (band * 12), 12);
                     for (int k = 0; k < 12; k++)
                     {
-                        destination[k] = codes[k] * scale;
+                        destination[k] = codes[k] * factor;
                     }
                 }
             }
@@ -125,7 +136,7 @@ internal sealed class MultichannelDecoder
 
     // T2 to T4: the quantized samples of the channel they come from (their own, or the source of a dynamic crosstalk copy) with their own scalefactors.
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private void ScaleAdditional(Layer2Multichannel mc, ReadOnlySpan<int> lent, int stride)
+    private void ScaleAdditional(Layer12Scale scale, Layer2Multichannel mc, ReadOnlySpan<int> lent, int stride)
     {
         for (int ch = 0; ch < mc.AdditionalChannels; ch++)
         {
@@ -140,7 +151,7 @@ internal sealed class MultichannelDecoder
 
                 // The copied codes keep the quantizer they were coded with: the base channel's own (its table follows the base frame's bitrate, 2.4.3.3.1), or the multichannel table's.
                 int quantizer = source < 2
-                    ? (sb < _base.TotalBands ? _base.ScalefactorAllocation[(2 * sb) + source] : 0)
+                    ? (sb < scale.TotalBands ? scale.ScalefactorAllocation[(2 * sb) + source] : 0)
                     : Layer2Multichannel.Quantizer(Layer2AudioData.Levels(mc.Table, sb)[mc.AllocationIndex(source, sb)]);
                 if (quantizer == 0)
                 {
@@ -155,12 +166,12 @@ internal sealed class MultichannelDecoder
                         continue;
                     }
 
-                    float scale = Layer12Dequantizer.Scale(quantizer, factor - 1);
+                    float amplitude = Layer12Dequantizer.Scale(quantizer, factor - 1);
                     ReadOnlySpan<int> codes = lent.Slice((source * stride) + (((part * 32) + sb) * 12), 12);
                     Span<float> destination = _signals[2 + ch].AsSpan((part * 384) + (sb * 12), 12);
                     for (int k = 0; k < 12; k++)
                     {
-                        destination[k] = codes[k] * scale;
+                        destination[k] = codes[k] * amplitude;
                     }
                 }
             }

@@ -1,0 +1,25 @@
+{
+  "verification": {
+    "decoding": "NotPossible",
+    "decodedSamples": 0,
+    "isVerified": null,
+    "checksums": [
+      {
+        "name": "audio CRC",
+        "stored": 1,
+        "checked": 0,
+        "failed": 0
+      }
+    ]
+  },
+  "pcmSamples": 0,
+  "pcmMd5": "",
+  "findings": [
+    {
+      "code": "decode.not-possible",
+      "severity": "Info",
+      "count": 1,
+      "message": "The stream was not decoded: The stored WAV header states audio that libwavpack\u0027s open refuses (PCM of one or two channels, 16 to 24 bits of at most 3 bytes a sample), so libwavpack\u0027s open refuses the file."
+    }
+  ]
+}
