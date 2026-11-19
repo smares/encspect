@@ -23,6 +23,10 @@ internal sealed class StreamFigures(long firstRate)
     private long _stretchStart;
     private long _counted;
 
+    // The stereo codings of the runs, each coding of a run with the number of its units as the weight; created at the first run that has one.
+    private CategorySeriesBuilder? _stereo;
+    private readonly long[] _stereoCounts = new long[StereoCodings.Categories.Length];
+
     public int Count => _points.Count;
 
     public long Units { get; private set; }
@@ -49,12 +53,13 @@ internal sealed class StreamFigures(long firstRate)
     // isPartial: a run cut short by the end of the stream; it is in the series and the totals, but only
     // counts for the extremes and the distribution where no whole run came before it, since a run of one
     // unit is not what the bitrate of a run means.
-    public void Add(long offset, long bits, long samples, bool inSeries = true, int rate = 0, bool isPartial = false, long firstFrame = 0, long coded = 0)
+    public void Add(long offset, long bits, long samples, bool inSeries = true, int rate = 0, bool isPartial = false, long firstFrame = 0, long coded = 0, ReadOnlySpan<int> codings = default)
     {
         long runRate = rate > 0 ? rate : _firstRate;
         double bitrate = samples > 0 && runRate > 0 ? bits * (double)runRate / samples / 1000 : 0;
         if (inSeries)
         {
+            AddStereo(codings, _points.Count);
             _points.Add(new Point(offset, bitrate, firstFrame, coded));
         }
 
@@ -99,6 +104,48 @@ internal sealed class StreamFigures(long firstRate)
         MinimumBitrate = Math.Min(MinimumBitrate, bitrate);
         MaximumBitrate = Math.Max(MaximumBitrate, bitrate);
     }
+
+    // The codings of one run, in code order with their unit counts as weights; runs before the first one that has a coding get empty values.
+    private void AddStereo(ReadOnlySpan<int> codings, int run)
+    {
+        Span<byte> codes = stackalloc byte[StereoCodings.Categories.Length];
+        Span<byte> weights = stackalloc byte[StereoCodings.Categories.Length];
+        int count = 0;
+        for (int code = 0; code < codings.Length; code++)
+        {
+            if (codings[code] > 0)
+            {
+                codes[count] = (byte)code;
+                weights[count++] = (byte)codings[code];
+                _stereoCounts[code] += codings[code];
+            }
+        }
+
+        if (_stereo is null)
+        {
+            if (count == 0)
+            {
+                return;
+            }
+
+            _stereo = new CategorySeriesBuilder("Stereo Coding", StereoCodings.Categories, "access unit", concept: GraphConcept.StereoCoding);
+            for (int i = 0; i < run; i++)
+            {
+                _stereo.Add([]);
+            }
+        }
+
+        _stereo.Add(codes[..count], weights[..count]);
+    }
+
+    // The units whose two-channel presentation was read, by coding.
+    public ReadOnlySpan<long> StereoCounts => _stereoCounts;
+
+    public long StereoUnits => _stereoCounts.Sum();
+
+    // The "Stereo Coding" series of the runs, sharing the x of the bitrate series; null where no unit had a two-channel presentation.
+    public CategorySeries? StereoSeries(Series bitrate, Node anchor) =>
+        _stereo is null || _stereo.Count != bitrate.X.Length ? null : _stereo.Build(bitrate.X, bitrate, anchor, Explain.StereoCodingSeries, Topics.Rematrixing);
 
     // Samples that a lost unit declares after the last run was closed: the run keeps the bitrate it was counted with and codes them.
     public void AddCoded(long samples)
