@@ -418,6 +418,32 @@ public partial class FindingCoverageTests
         Assert.True(missing.Length == 0, $"No table of crafted inputs or manifest raises: {string.Join(", ", missing)}");
     }
 
+    [GeneratedRegex("\"(correction\\.[a-z-]+)\"")]
+    private static partial Regex CorrectionCode();
+
+    // Every correction.* code the host emits is listed by a fixture's manifest or raised by a crafted input of CompanionTests, which asserts the finding present.
+    [Fact]
+    public void EveryCorrectionCodeIsAsserted()
+    {
+        string root = Path.GetFullPath(Path.Combine(Fixtures.FixtureDirectory, "..", ".."));
+        string[] sources = [.. Directory.EnumerateFiles(Path.Combine(root, "src", "Encspect.Host"), "*.cs", SearchOption.AllDirectories)
+            .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal))];
+        var emitted = sources.SelectMany(path => CorrectionCode().Matches(File.ReadAllText(path)).Select(m => m.Groups[1].Value)).ToHashSet();
+        Assert.True(emitted.Count >= 4, $"Found only {emitted.Count} codes.");
+
+        var asserted = CorrectionCode().Matches(File.ReadAllText(Path.Combine(root, "tests", "Encspect.Tests", "Host", "CompanionTests.cs"))).Select(m => m.Groups[1].Value).ToHashSet();
+        foreach (string path in Directory.EnumerateFiles(Path.Combine(root, "tests", "fixtures"), "*.expected.json", SearchOption.AllDirectories))
+        {
+            foreach (Match m in Regex.Matches(File.ReadAllText(path), "\"code\": \"(correction\\.[a-z-]+)\""))
+            {
+                asserted.Add(m.Groups[1].Value);
+            }
+        }
+
+        string[] missing = [.. emitted.Where(code => !asserted.Contains(code)).Order(StringComparer.Ordinal)];
+        Assert.True(missing.Length == 0, $"No crafted input of CompanionTests or manifest raises: {string.Join(", ", missing)}");
+    }
+
     [GeneratedRegex("\"(measure\\.[a-z-]+)\"")]
     private static partial Regex MeasureCode();
 

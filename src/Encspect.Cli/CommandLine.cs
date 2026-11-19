@@ -401,7 +401,7 @@ internal static class CommandLine
                     unreadable = true;
                 }
 
-                foreach (Finding finding in report.Findings)
+                foreach (Finding finding in report.Findings.Concat(report.Companions.SelectMany(c => c.Report.Findings)))
                 {
                     worst = worst is null || finding.Severity > worst ? finding.Severity : worst;
                 }

@@ -1110,6 +1110,14 @@
      "failed": 0
     },
     {
+     "name": "correction block checksum",
+     "covers": "codedData",
+     "coversAllAudio": false,
+     "stored": 20,
+     "checked": 20,
+     "failed": 0
+    },
+    {
      "name": "block header CRC",
      "covers": "decodedAudio",
      "coversAllAudio": true,
@@ -1144,6 +1152,14 @@
      "name": "block checksum",
      "covers": "codedData",
      "coversAllAudio": true,
+     "stored": 20,
+     "checked": 20,
+     "failed": 0
+    },
+    {
+     "name": "correction block checksum",
+     "covers": "codedData",
+     "coversAllAudio": false,
      "stored": 20,
      "checked": 20,
      "failed": 0
@@ -1201,12 +1217,23 @@
   "file": "main file"
  },
  "findings": [],
+ "correction": {
+  "status": "consistent",
+  "problems": []
+ },
  "crosscheck": {
   "valid": true,
   "decode": {
    "opens": true,
    "samples": 24000,
    "errors": 0
+  },
+  "pair": {
+   "opens": true,
+   "mode_wvc": true,
+   "samples": 24000,
+   "errors": 0
   }
- }
+ },
+ "companion": "external-hybrid-51-b3-correction-wvc.wvc"
 }

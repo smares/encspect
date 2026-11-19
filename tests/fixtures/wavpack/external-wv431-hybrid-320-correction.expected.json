@@ -141,6 +141,14 @@
      "failed": 0
     },
     {
+     "name": "correction block checksum",
+     "covers": "codedData",
+     "coversAllAudio": false,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    },
+    {
      "name": "block header CRC",
      "covers": "decodedAudio",
      "coversAllAudio": true,
@@ -173,6 +181,14 @@
    "checksums": [
     {
      "name": "block checksum",
+     "covers": "codedData",
+     "coversAllAudio": false,
+     "stored": 0,
+     "checked": 0,
+     "failed": 0
+    },
+    {
+     "name": "correction block checksum",
      "covers": "codedData",
      "coversAllAudio": false,
      "stored": 0,
@@ -235,10 +251,20 @@
   "file": "main file"
  },
  "findings": [],
+ "correction": {
+  "status": "consistent",
+  "problems": []
+ },
  "crosscheck": {
   "valid": true,
   "decode": {
    "opens": true,
+   "samples": 24000,
+   "errors": 0
+  },
+  "pair": {
+   "opens": true,
+   "mode_wvc": true,
    "samples": 24000,
    "errors": 0
   },
@@ -256,5 +282,6 @@
     "matches_input": false
    }
   }
- }
+ },
+ "companion": "external-wv431-hybrid-320-correction-wvc.wvc"
 }

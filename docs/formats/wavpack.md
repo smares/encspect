@@ -47,12 +47,20 @@ WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correctio
 
 ## Hybrid mode and correction files
 
-- **Names as a second signal (rule, 2026-11-09):** WavPack makes no claim from a file name today: hybrid mode is read from the block flags. Where a claim of this shape is made (OptimFROG's lossy part of a DualStream, [optimfrog.md](optimfrog.md)), the extension (`.wv`, `.wvc`) may raise a claim the bytes make from low to medium confidence, never makes one alone and never decides detection; the 0.4 pairing finds `x.wvc` beside `x.wv` by base name and extension.
+- **Names as a second signal (rule, 2026-11-09):** WavPack makes no claim from a file name today: hybrid mode is read from the block flags. Where a claim of this shape is made (OptimFROG's lossy part of a DualStream, [optimfrog.md](optimfrog.md)), the extension (`.wv`, `.wvc`) may raise a claim the bytes make from low to medium confidence, never makes one alone and never decides detection; the pairing finds `x.wvc` beside `x.wv` by base name and extension (below).
 
 - A hybrid `.wv` is lossy by itself. A `.wvc` file holds the correction that makes it lossless: its blocks are read the same way and the stream is reported as correction data.
 - A `.wvc` opened alone is a finding (`wavpack.correction-file`), not an error.
 - The extra bitstream (wvx) that 32-bit integer and float data need can sit in the `.wv` or in the `.wvc` block; a block that holds only that is not a block without a bitstream.
-- The analyzer reads the file it is given. It does not look for the other file of a pair.
+- A `.wvc` opened alone says in its finding to analyze the `.wv` beside it, and its stream is a correction file's (`IsCorrectionFile`: no duration, samples or bitrate of its own).
+- **The pair** ([correction-files.md](../design/correction-files.md), the structure; decoding with the correction file is a later item):
+  - a stream with a hybrid block asks the host for its correction file, which the host looks for beside the input by the name rule (`x.wv` to `x.wvc`, in the case of the input's extension; a file under another extension is paired by its stem); a stream, standard input or a caller with no folder reports the pair as `unchecked` (`correction.unchecked`);
+  - a found file is read with the walk of a file of its own, so its blocks, block checksums and sub-blocks are the ones it gets alone, in a report of its own inside the main file's (`Report.Companions`, root "Correction File"); only `wavpack.correction-file`, which says it was opened alone, is left out. A file that holds a main bitstream or no audio (a lossless `.wv`, an empty file) is `NotCorrectionData` and gets no stream of its own;
+  - the main file's hybrid blocks with audio are matched to the correction file's blocks in step, as libwavpack's `read_wvc_block` and `match_wvc_header` do (`open_utils.c`): the same block index and sample count and the same flags is a match; a correction block before the main block's index, or one whose initial and final flags place it earlier in a set, is skipped and counted as one no main block matches (`blocksUnmatched`); a main block with none is `blocksMissing`;
+  - `streamDiffers`: the first blocks differ in stream version, total samples, first block index or the flags that state the format (sample size, mono, float, 32-bit integer, false stereo, shift, rate, DSD); the blocks are not matched then, since all of them would differ for that one cause;
+  - `checksumsFail`: a correction block whose block checksum fails or is missing, or whose sub-blocks do not end with it, which libwavpack does not use (`WavpackVerifySingleBlock`); `cut`: a correction block cut by the end of the file or longer than its place, and bytes between and after the blocks that hold no block;
+  - a pair with no problem is `consistent`; the status of a pair is the structure's: the audio of a pair whose correction blocks match but belong to another encode (the same index, samples and flags) is for the decoder to compare. A correction file found beside a file whose configuration block says the encoder wrote none is checked as any other; with none found that file is `notWritten` and raises nothing, and a written one that is not there is `missing`;
+  - the verification gains a tally "correction block checksum" (coded data) for the correction file's block checksums. Decoding a pair still decodes the lossy audio, so it is verified as a lossy stream; applying the correction is a later item.
 - `IsCorrectionFileCreated` in the statistics is true for a correction file, and for a stream whose configuration block says the encoder wrote one (`CreatesCorrectionFile`); it does not say that the file is next to this one.
 
 ## Channel layout
@@ -85,7 +93,7 @@ WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correctio
 
 - The decoder (`Encspect.Formats.WavPack.Decoding`, ID `wavpack`) runs when the front end asks for it: `--verify` on the command line, "Decode Audio" in the detail window (which also measures the audio). The tree is the same either way.
 - It decodes lossless and hybrid streams (integers of 1 to 32 bits, floats, up to the channels a stream may have) and DSD (stored, fast and high modes). The syntax of the sub-blocks is read by the parser's code (`BlockContents`); the decoder adds the entropy decoding, the decorrelation passes, joint stereo, the shift and the sent, zero, one and duplicate bits, the restoring of floats, and the checksums.
-- A hybrid file is decoded without its `.wvc` to the lossy audio the main file holds; the analyzer does not look for the correction file.
+- A hybrid file is decoded to the lossy audio the main file holds, with or without its `.wvc` beside it; the correction is not applied yet.
 - Four checksums are declared and tallied:
 
 | Checksum | Covers | Counts as covering all of the audio when |
@@ -196,7 +204,7 @@ The names of version 4 are kept where the concept is the same:
 - WavPack in Matroska: Verified Block Checksums is not reported, since the block checksum covers the block's header, which Matroska does not keep; the other figures of a file (Stereo Coding, Wasted Bits and the low-confidence lossyWAV claim, counted from each packet's blocks at the position of the samples before it, the bitrate series and statistics, the block set figures, Bits Per Sample, IsLossless, Decorrelation Passes, the compression mode, Channel Layout, the encoder) are reported from the flags and sub-blocks the packets keep.
 - WavPack in Matroska: the lost samples of a packet are the samples its first four bytes declare, so a packet too short to hold them is not counted, and a packet without a block is not counted in the samples either.
 - WavPack 1 to 3: no bitrate over time. The bitstream has no blocks or sub-block lengths, so the bits a second of audio takes are known only by decoding, and the decoder, which reads one bitstream sample by sample, does not add series to the report (a decoder never does); the average bitrate is the stream's size over its duration. The correction file is not read, so a hybrid file is decoded to its lossy audio; see [Not covered under WavPack 1 to 3](#wavpack-1-to-3).
-- Finding the `.wvc` that belongs to a `.wv` (planned in 0.4, needs host access to a companion file).
+- The correction file is not applied in decoding yet, so a pair is not verified against the MD5 of the lossless audio (planned in 0.4, the next step of the correction files); a correction file for the legacy format of WavPack 1 to 3 is part of that item.
 
 ## Articles
 

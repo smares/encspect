@@ -1,0 +1,146 @@
+{
+ "length": 17229,
+ "end": 17229,
+ "blocks": [
+  {
+   "id": "OFR ",
+   "offset": 0,
+   "length": 17,
+   "end": 25
+  },
+  {
+   "id": "HEAD",
+   "offset": 25,
+   "length": 44,
+   "end": 77
+  },
+  {
+   "id": "COMP",
+   "offset": 77,
+   "length": 8564,
+   "end": 8649
+  },
+  {
+   "id": "COMP",
+   "offset": 8649,
+   "length": 8564,
+   "end": 17221
+  },
+  {
+   "id": "TAIL",
+   "offset": 17221,
+   "length": 0,
+   "end": 17229
+  }
+ ],
+ "main": {
+  "samples": 60000,
+  "sample_type": 3,
+  "channel_config": 0,
+  "sample_rate": 44100,
+  "encoder_id": 9602,
+  "version": 5100,
+  "system": 2,
+  "compression": 10,
+  "mode": 1,
+  "speedup": 2,
+  "size": 17,
+  "min_decoder_version": 4520
+ },
+ "comp": [
+  {
+   "crc": 608746296,
+   "crc_ok": true,
+   "samples": 30000,
+   "sample_type": 3,
+   "channel_config": 0,
+   "reserved": 2305,
+   "encoder_id": 9602,
+   "offset": 77,
+   "size": 8572
+  },
+  {
+   "crc": 608746296,
+   "crc_ok": true,
+   "samples": 30000,
+   "sample_type": 3,
+   "channel_config": 0,
+   "reserved": 2305,
+   "encoder_id": 9602,
+   "offset": 8649,
+   "size": 8572
+  }
+ ],
+ "md5": null,
+ "head": {
+  "offset": 33,
+  "length": 44,
+  "chunks": [
+   "fmt ",
+   "data"
+  ],
+  "fmt": {
+   "tag": 1,
+   "channels": 1
+  }
+ },
+ "tail": {
+  "offset": 17229,
+  "length": 0,
+  "chunks": []
+ },
+ "stream_info": {
+  "codec": "OptimFROG",
+  "sample_rate": 44100,
+  "channels": 1,
+  "bits_per_sample": 16,
+  "samples": 60000,
+  "encoder": "OptimFROG 5.100"
+ },
+ "verification": {
+  "checksums": [
+   {
+    "name": "block CRC-32",
+    "stored": 2,
+    "checked": 2,
+    "failed": 0,
+    "covers_all": true
+   },
+   {
+    "name": "correction block CRC-32",
+    "stored": 1,
+    "checked": 1,
+    "failed": 0,
+    "covers_all": false
+   },
+   {
+    "name": "MD5",
+    "stored": 0,
+    "checked": 0,
+    "failed": 0
+   }
+  ]
+ },
+ "lossy": true,
+ "correction": {
+  "status": "inconsistent",
+  "problems": [
+   {
+    "kind": "blocksMissing",
+    "count": 1
+   }
+  ]
+ },
+ "findings": [
+  {
+   "code": "correction.inconsistent"
+  }
+ ],
+ "encoder": {
+  "built": "make_optimfrog_fixtures.py, built-pair-block-fewer: committed .ofs and .ofc files of the encoder, changed as the name says"
+ },
+ "companion": "external-ofs-mono-quality3-correction-data.ofc",
+ "golden_hides": [
+  "frames"
+ ]
+}

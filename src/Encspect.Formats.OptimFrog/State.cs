@@ -36,6 +36,14 @@ internal sealed class State
 
     public bool IsCorrection { get; set; }
 
+    // The walk is over the correction file of a pair, which the host opened for the main file's parser.
+    public bool IsCompanion { get; init; }
+
+    // The data blocks and the correction blocks of the file, cut or not, with the damaged ones: what the pair check counts.
+    public long DataBlocks { get; set; }
+
+    public long CorrBlocks { get; set; }
+
     public long CutBlocks { get; set; }
 
     public long ShortBlocks { get; set; }

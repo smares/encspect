@@ -585,7 +585,9 @@ public class OptimFrogFindingTests
             Assert.Equal((StreamClaim.LossyPart, Confidence.Low), (typed.Kind, typed.Confidence));
             Assert.Equal(claim.Children.Single(c => c.Name == "Evidence").Value?.ToString(), typed.Evidence);
             Assert.Contains("the data block has the low byte 0x01", typed.Evidence);
-            Assert.Empty(report.Findings);
+
+            // A stream has no folder to look for the .ofc in: the pair is unchecked.
+            Assert.Equal("correction.unchecked", Assert.Single(report.Findings).Code);
         }
     }
 
@@ -600,7 +602,7 @@ public class OptimFrogFindingTests
         Assert.StartsWith("Medium", claim.Children.Single(c => c.Name == "Confidence").Description);
         Assert.Equal(Confidence.Medium, Assert.Single(report.Streams.Single().Claims).Confidence);
         Assert.Contains("reserved field", claim.Children.Single(c => c.Name == "Evidence").Value?.ToString());
-        Assert.Empty(report.Findings);
+        Assert.Equal("correction.unchecked", Assert.Single(report.Findings).Code);
     }
 
     [Fact]
@@ -613,8 +615,8 @@ public class OptimFrogFindingTests
         var csv = new StringWriter();
         ReportCsvWriter.Write([report], csv);
         string[] lines = csv.ToString().Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
-        Assert.Contains(",Processor,Processor Confidence,Lossy Part,Lossy Part Confidence,Tags,", lines[0], StringComparison.Ordinal);
-        Assert.Contains(",,,DualStream,Medium,", lines[1], StringComparison.Ordinal);
+        Assert.Contains(",Processor,Processor Confidence,Lossy Part,Lossy Part Confidence,Correction File,Tags,", lines[0], StringComparison.Ordinal);
+        Assert.Contains(",,,DualStream,Medium,unchecked,", lines[1], StringComparison.Ordinal);
         var json = new MemoryStream();
         ReportJsonWriter.Write([report], json);
         using var document = System.Text.Json.JsonDocument.Parse(json.ToArray());

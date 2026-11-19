@@ -552,6 +552,13 @@
             }
           ]
         },
+        "correction": {
+          "status": "unchecked",
+          "source": "external-ofs-mode-best.ofc",
+          "basis": "structure",
+          "problems": [],
+          "reason": "no folder to look in: the input is a stream"
+        },
         "encoder": "OptimFROG 5.100",
         "encoderConfidence": "High",
         "claims": [
@@ -588,6 +595,18 @@
         ]
       }
     ],
-    "findings": []
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "correction.unchecked",
+        "message": "The correction file external-ofs-mode-best.ofc was not checked: no folder to look in: the input is a stream.",
+        "offset": 0,
+        "length": 17341,
+        "path": [
+          0
+        ],
+        "count": 1
+      }
+    ]
   }
 ]

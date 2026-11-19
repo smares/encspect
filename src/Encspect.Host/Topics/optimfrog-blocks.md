@@ -1,7 +1,7 @@
 ---
 id: optimfrog-blocks
 title: OptimFROG blocks
-related: crc, verification, riff-chunks, lossywav, optimfrog-modes
+related: crc, verification, riff-chunks, lossywav, optimfrog-modes, correction-files
 references: OptimFROG 5.100 SDK, SDK/Documentation/format.txt (compressed file format specification); OptimFROG 5.100 (ofr, off, ofs) as a black-box writer of the files in Encspect's tests
 ---
 

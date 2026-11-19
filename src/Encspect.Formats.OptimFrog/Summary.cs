@@ -68,6 +68,9 @@ internal static class Summary
             s.AddLeading(LossyNode(made, r.Offset, r.End - r.Offset));
         }
 
+        // A stream that asserts the lossy-part claim, at any confidence, asks the host for its correction file.
+        PairResult? pair = claim is null ? null : Pairing.Check(s, stream);
+
         Node? writer = WriterDetection.Detect(s.Context.EncoderClaims, (name, value, description) => Cover(name, value, description, ClaimRoles.TopicOf(name)),
             (claim, text, name) => s.Findings.Add(Severity.Info, "optimfrog.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)));
         if (writer is not null)
@@ -82,8 +85,8 @@ internal static class Summary
         }
 
         ClaimRoles.CompleteVersion(encoder, s.Context.EncoderClaims);
-        StreamVerification verification = Verify(s, m);
-        StreamInfo info = Statistics(s, source, m, Cover, encoder, writer, processor, verification, claim, against);
+        StreamVerification verification = Verify(s, m, pair);
+        StreamInfo info = Statistics(s, source, m, Cover, encoder, writer, processor, verification, claim, against) with { Correction = pair?.Pairing };
         s.Context.AddStream(info);
         s.Findings.Flush(s.Context);
     }
@@ -94,8 +97,12 @@ internal static class Summary
         Records r = s.Records;
         Node stream = s.Stream;
         Checks(s, source);
-        s.Findings.Add(Severity.Info, "optimfrog.correction-file", stream, _ =>
-            "The file holds correction data only: it adds to the DualStream .ofs file with the same blocks and cannot be decoded alone. The analyzer reads its blocks and compares their CRC-32s.");
+        if (!s.IsCompanion)
+        {
+            s.Findings.Add(Severity.Info, "optimfrog.correction-file", stream, _ =>
+                "The file holds correction data only: it adds to the DualStream .ofs file with the same blocks and cannot be decoded alone. The analyzer reads its blocks and compares their CRC-32s; analyze the .ofs file beside it to check the pair.");
+        }
+
         Node Cover(string name, NodeValue? value, string description, string? topic = null) => new(name, r.Offset, Math.Max(0, r.End - r.Offset), value) { Description = description, Topic = topic };
         var statistics = new Node("Statistics", r.Offset, Math.Max(0, r.End - r.Offset)) { Kind = NodeKind.Statistics, Description = Explain.Statistics };
         statistics.Add(Cover("IsCorrectionFile", NodeValue.Boolean(true), Explain.StatIsCorrectionFile, Topics.Blocks));
@@ -110,7 +117,7 @@ internal static class Summary
         IDecodeSession session = s.Context.StartDecoding(CodecId, new DecodeSetup { Stream = stream, Channels = 1, BitsPerSample = 16 });
         StreamVerification verification = session.Finish(
             [new ChecksumTally { Name = ChecksumNames.BlockCrc32, Covers = ChecksumCoverage.CodedData, Stored = s.CompBlocks + s.CutBlocks, Checked = s.CompBlocks, Failed = s.CrcFailures }]);
-        s.Context.AddStream(new StreamInfo { Nodes = [stream], Codec = CorrectionCodecName, Verification = verification });
+        s.Context.AddStream(new StreamInfo { Nodes = [stream], Codec = CorrectionCodecName, Verification = verification, IsCorrectionFile = true });
         s.Findings.Flush(s.Context);
     }
 
@@ -298,12 +305,12 @@ internal static class Summary
     private static Node LossyNode(StreamClaim claim, long offset, long length) =>
         new("Lossy Part", offset, length, claim.Value, () =>
         [
-            new Node("Confidence", offset, length, claim.Confidence.ToString()) { Description = claim.Confidence == Confidence.Low ? Explain.LossyConfidenceLow : Explain.LossyConfidenceMedium },
+            new Node("Confidence", offset, length, claim.Confidence.ToString()) { Description = claim.Confidence switch { Confidence.Low => Explain.LossyConfidenceLow, Confidence.Medium => Explain.LossyConfidenceMedium, _ => Explain.LossyConfidenceHigh } },
             new Node("Evidence", offset, length, claim.Evidence) { Description = Explain.Evidence },
         ])
         {
             Description = Explain.LossyStream,
-            Topic = Topics.Blocks,
+            Topic = Topics.CorrectionFiles,
         };
 
     private static Node? Encoder(State s, MainBlock m, Func<string, NodeValue?, string, string?, Node> cover)
@@ -314,17 +321,37 @@ internal static class Summary
         return encoder;
     }
 
-    private static StreamVerification Verify(State s, MainBlock m)
+    private static StreamVerification Verify(State s, MainBlock m, PairResult? pair)
     {
         Records r = s.Records;
         bool coversAll = s.CompBlocks > 0 && s.CompSamples == m.Samples && s.CutBlocks == 0 && s.SizeInvalidBlocks == 0 && s.DifferingBlocks == 0 && s.OutOfOrderBlocks == 0;
         long wholeStored = s.CompBlocks + s.CutBlocks;
-        IDecodeSession session = s.Context.StartDecoding(CodecId, new DecodeSetup { Stream = s.Stream, Channels = m.Channels, BitsPerSample = Math.Max(m.BitsPerSample, 8), Samples = m.SamplesPerChannel });
-        return session.Finish(
-        [
-            new ChecksumTally { Name = ChecksumNames.BlockCrc32, Covers = ChecksumCoverage.CodedData, CoversAllAudio = coversAll, Stored = wholeStored, Checked = s.CompBlocks, Failed = s.CrcFailures },
-            new ChecksumTally { Name = ChecksumNames.Md5, Covers = ChecksumCoverage.DecodedAudio, CoversAllAudio = true, Stored = r.Md5 is not null ? 1 : 0 },
-        ]);
+        IDecodeSession session = s.Context.StartDecoding(CodecId, new DecodeSetup
+        {
+            Stream = s.Stream,
+            Channels = m.Channels,
+            BitsPerSample = Math.Max(m.BitsPerSample, 8),
+            Samples = m.SamplesPerChannel,
+            HasCorrection = pair?.Pairing.Status == CorrectionStatus.Consistent,
+        });
+        var tallies = new List<ChecksumTally>
+        {
+            new() { Name = ChecksumNames.BlockCrc32, Covers = ChecksumCoverage.CodedData, CoversAllAudio = coversAll, Stored = wholeStored, Checked = s.CompBlocks, Failed = s.CrcFailures },
+        };
+        if (pair?.Companion is { CorrBlocks: > 0 } other)
+        {
+            tallies.Add(new ChecksumTally
+            {
+                Name = ChecksumNames.CorrectionBlockCrc32,
+                Covers = ChecksumCoverage.CodedData,
+                Stored = other.CompBlocks + other.CutBlocks,
+                Checked = other.CompBlocks,
+                Failed = other.CrcFailures,
+            });
+        }
+
+        tallies.Add(new ChecksumTally { Name = ChecksumNames.Md5, Covers = ChecksumCoverage.DecodedAudio, CoversAllAudio = true, Stored = r.Md5 is not null ? 1 : 0 });
+        return session.Finish(tallies);
     }
 
     private static IReadOnlyList<Speaker>? LayoutOf(MainBlock m, uint? mask) =>
