@@ -9,8 +9,10 @@ tools, as docs/design/wavpack-legacy.md, "Verification and cross-checks", lists 
   read, and a version 1 mono file, whose samples unpack3.c does not decode) the manifest says so and the run fails if it reads it after all.
 - wvunpack of wavpack 5.9.0, which is built without the legacy decoder: it must refuse every file ("this legacy WavPack file is deprecated" or, for a file that
   starts with the WavPack header, "not compatible with this version"), so a change that makes it read them is noticed and the fixtures' notes are reviewed.
-- FFmpeg (ffprobe) and MediaInfo: neither reads these files as WavPack. FFmpeg and MediaInfo see a WAV file whose data chunk is the rest of the file; FFmpeg
-  refuses a raw file. The run fails if either names a file WavPack, so the entry (the design's "What the files show") is reviewed.
+- FFmpeg (ffprobe) and MediaInfo: neither reads these files as WavPack. FFmpeg and MediaInfo see a WAV file whose data chunk is the rest of the file. A raw
+  file has no header FFmpeg knows: FFmpeg 6.1 refuses all of them, and the FFmpeg of Ubuntu 26.04 takes two of them (external-wv300-raw-stereo and
+  external-wv320-raw-stereo) for VVC video from their bytes, so a raw file's reading is printed, not compared. The run fails if either tool names a file
+  WavPack, so the entry (the design's "What the files show") is reviewed.
 
 Every skipped check prints its reason. Disagreements fail the run (exit status 1).
 
@@ -114,7 +116,8 @@ def check_ffmpeg(name, path, manifest, problems):
     if not raw and format_name != "wav":
         problems.append(f"FFmpeg reads the file as {format_name or 'nothing'}, the entry says a WAV file")
     if raw and result.returncode == 0 and format_name:
-        problems.append(f"FFmpeg reads a raw file as {format_name}; it refused it before")
+        # A raw file has no header: what FFmpeg makes of it is a guess from its bytes that changes between versions, so it is shown, not held.
+        skip(name, "FFmpeg's reading of a raw file", f"FFmpeg guesses {format_name} from the bytes of a file with no header")
 
 
 def check_mediainfo(name, path, manifest, problems):

@@ -4,7 +4,7 @@ namespace Encspect.Formats.Tak;
 // the SDK's documentation (tak_deco_lib.h and the Doc pages) and the files Takc.exe wrote in Encspect's tests; where a sentence states what those files show, it says so.
 internal static class Explain
 {
-    public const string Stream = "A TAK file: the stream ID, metadata objects each protected by a CRC-24, and the audio frames (takStream.pas). The analyzer reads the metadata; the frames are counted as one run of bytes.";
+    public const string Stream = "A TAK file: the stream ID, metadata objects each protected by a CRC-24, and the audio frames (takStream.pas). The analyzer reads the metadata, finds the frames and compares their CRC-24s; the coded audio is not read.";
     public const string StreamId = "The 4 characters \"tBaK\" that every TAK file starts with (takStream.pas, tak_str_StreamId).";
 
     public const string ObjectId = "The kind of metadata object, 7 bits: 0 End, 1 stream info, 2 seek table, 3 wave data, 4 encoder info, 5 padding, 6 MD5, 7 last frame info (takStream.pas).";
@@ -65,7 +65,27 @@ internal static class Explain
     public const string LastFramePosition = "The distance of the last frame from the first frame in bytes, 5 bytes.";
     public const string LastFrameSize = "The size of the last frame in bytes, 3 bytes.";
 
-    public const string AudioData = "The audio frames, from the first frame to the end of the stream. Each frame has a header with a CRC-24 and a CRC-24 over its coded data; the analyzer does not walk them.";
+    public const string Frame = "One frame: a header with a CRC-24, the coded samples of every channel and a CRC-24 over the coded data (takStream.pas, \"Audio frames\"). A frame states no length; it ends where the next one begins.";
+    public const string FrameHeader = "The frame's header: the sync word, flags, the frame number, for the last frame its sample count, for an info frame the stream info, and a CRC-24 over all of it (takStream.pas, \"Frame-Info\" and \"Frame-Header\").";
+    public const string SyncWord = "The 16 bits 0xA0FF that start every frame, stored as the bytes FF A0 (takStream.pas, tak_str_FrameInfoSyncId).";
+    public const string IsLastFrame = "Whether this is the last frame of the stream; only the last frame states its sample count (takStream.pas, \"Is LastFrame\").";
+    public const string IsInfoFrame = "Whether the header also holds the stream info, so that a reader can start at this frame: takStream.pas makes an info frame obligatory every 2 seconds.";
+    public const string HasMetadata = "Whether metadata follows in the frame header. takStream.pas calls it \"not supported\", so a header that sets it is not read as a frame header.";
+    public const string FrameNumber = "The number of the frame in the stream, 21 bits, the first frame being 0 (takStream.pas).";
+    public const string LastFrameSamples = "The samples of each channel in the last frame, stored less 1 in 14 bits.";
+    public const string FrameReserved = "Bits takStream.pas says are always 0.";
+    public const string FrameStreamInfo = "The stream info the metadata also holds (the codec, the frame size, the sample count and the audio format), repeated in an info frame.";
+    public const string HasPreviousDistance = "Whether the distance to the previous info frame follows. takStream.pas says the feature is not used.";
+    public const string PreviousDistance = "The distance in bytes from the end of this header to the start of the previous info frame (takStream.pas, \"PrevDist\").";
+    public const string HeaderCrc = "The CRC-24 the header stores in its last 3 bytes, over the header's bytes before it, the sync word included. The analyzer compares it in every analysis.";
+    public const string HeaderComputedCrc = "The CRC-24 the analyzer computed over the bytes of the header before the stored CRC-24.";
+    public const string HeaderIsCrcValid = "Whether the stored CRC-24 of the header equals the one computed.";
+    public const string FrameData = "The coded audio of the frame; the analyzer does not read its coding.";
+    public const string CutFrameData = "The bytes of the frame that the data holds; the data ends before the frame does.";
+    public const string DataCrc = "The CRC-24 the frame stores in its last 3 bytes, over its coded data and not its header (takStream.pas, \"Footer (Data-Crc)\"). The analyzer compares it in every analysis.";
+    public const string DataComputedCrc = "The CRC-24 the analyzer computed over the coded data of the frame.";
+    public const string DataIsCrcValid = "Whether the stored CRC-24 of the frame's data equals the one computed.";
+    public const string SkippedData = "Bytes between or around frames that hold no frame: the analyzer looks for the next header whose CRC-24 holds, and skips what lies before it.";
     public const string Trailing = "Bytes after the last frame that belong to no tag; the analyzer does not read them.";
     public const string Unread = "Bytes the walk did not read.";
 
@@ -86,7 +106,19 @@ internal static class Explain
     public const string StatChannels = "The number of channels, from the stream info.";
     public const string StatBits = "The bits of each sample, from the stream info.";
     public const string StatLayout = "The speakers the channels feed: the speaker assignment of the stream info where it has one, else the channel mask of the stored WAV header, else center for one channel and left and right for two.";
-    public const string StatHeaderChecksums = "The metadata objects whose CRC-24 equals the one computed over the object's data.";
-    public const string StatHeaderChecksumsFailed = "The metadata objects whose CRC-24 differs from the one computed.";
-    public const string AverageBitrate = "The bits of the audio data over the time its samples last.";
+    public const string StatHeaderChecksums = "The headers whose CRC-24 equals the one computed: the metadata objects and the frames' headers.";
+    public const string StatHeaderChecksumsFailed = "The headers whose CRC-24 differs from the one computed: metadata objects and frames' headers.";
+    public const string StatFrames = "The number of frames in the stream, a frame the data cuts short not counted.";
+    public const string StatFrameChecksums = "The frames whose CRC-24 over the coded data equals the one computed.";
+    public const string StatFrameChecksumsFailed = "The frames whose CRC-24 over the coded data differs from the one computed.";
+    public const string AverageBitrate = "The bits of the frames over the time their samples last; without a frame, the bytes after the metadata over the duration the stream info states.";
+    public const string MinimumBitrate = "The bitrate of the frame with the lowest bitrate.";
+    public const string MaximumBitrate = "The bitrate of the frame with the highest bitrate.";
+    public const string Smallest = "The smallest frame.";
+    public const string Largest = "The largest frame.";
+    public const string BitrateMode = "Whether the frames all have the same bitrate: variable where they differ, constant where they do not, and unknown for a single frame, since one frame shows no variation. Lossless frames are as long as their audio needs.";
+    public const string Distribution = "How many frames fall in each bitrate range of 32 kbps.";
+    public const string DistributionBin = "The frames whose bitrate falls in this range, and their share.";
+    public const string BitrateSeries = "The bitrate of each frame: its bits over the time its samples last.";
+    public const string BitrateOverTimeSeries = "The bitrate of each second of audio: the bits of the frames that start in that second over the time their samples last.";
 }

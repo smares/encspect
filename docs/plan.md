@@ -229,7 +229,7 @@ Every coding with a free source is decoded, the DTS extensions aside, and every 
 
 The order (the lead, 2026-11-17): the milestone's own items first, then cheap items users see, fixture work before the detection that needs it, large or uncertain items after them, and items that wait for an outside file last.
 
-**Status:** in progress: items 1 and 2 are done.
+**Status:** in progress: items 1 and 2 are done, and item 3 is in progress.
 
 1. **The Musepack, DTS core and Speex decoders** (done, 2026-11-16, #319, #321 and #322): with the same definition of done as in 0.3.
    - **Musepack** (done, 2026-11-16, #319): SV7 and SV8, and SV4 to SV6 as libmpcdec 1.2.6 decodes them, bit for bit libmpcdec's floating-point output; the entropy pass of every stream version in every analysis, with "Coded Bandwidth" for all of them and the stereo coding figures for SV8. [As built: Musepack](design/lossy-decoders.md#as-built-musepack).
@@ -241,14 +241,15 @@ The order (the lead, 2026-11-17): the milestone's own items first, then cheap it
    - **Matroska: PCM** (done, 2026-11-17, #326): FFmpeg and mkvmerge write it.
    - **ASF: MP3 and AC-3** (the lead, 2026-11-07; done, 2026-11-17, #329): MP3 as format tag 0x0055, AC-3 as 0x2000; ffmpeg is the writer of the fixtures.
    - **Matroska header stripping** (done, 2026-11-18, #331): for AAC, AC-3, DTS and MPEG audio, one header stripping and nothing else. Old mkvmerge releases write it by default (4.5.0 to 5.9.0 for MP3 and DTS, 5.4.0 to 5.9.0 also for AC-3; run under Wine as black boxes and pinned by SHA-256), so those files are fixtures; the project's current tools (mkvmerge 82.0, ffmpeg) do not, so the AAC and edge-case fixtures are hand-built. The offset map stays inside each parser: the MPEG audio parser reads its packets through a map of its image to the file (stripped bytes come from the ContentCompSettings, and the fragmented media objects of ASF are read too), AC-3 and DTS place the nodes of such frames in their pieces, and AAC already did.
-3. **The small separate items:** WavPack 1 to 3, the correction files, the TAK frame walk and ASF script commands and markers.
-   - **WavPack 1 to 3** (in progress, the decoder built): the legacy `.wv` files, read by the WavPack parser and decoded by a decoder that follows libwavpack's BSD code.
+3. **The small separate items** (in progress): WavPack 1 to 3, the correction files, the TAK frame walk and ASF script commands and markers.
+   - **WavPack 1 to 3** (in progress): the legacy `.wv` files, read by the WavPack parser and decoded by a decoder that follows libwavpack's BSD code.
      - **Design:** [wavpack-legacy.md](design/wavpack-legacy.md) (the lead's decisions, 2026-11-18).
      - **Fixtures:** from every build ReallyRareWares keeps (1.0, 2.0, 3.0, 3.2, 3.4, 3.97, the first BSD release, and the DOS build of 4.31), run once under Wine and DOSBox.
      - **Pull requests:** the design, the fixtures, the parser (done: the files are detected and read at header level, with their findings, goldens and the model's cross-check), then the decoder (built: the audio CRC, the end of the bitstream and the PCM held to the original decoders; in review).
    - **The correction file** that belongs to a WavPack `.wv` (`.wvc`) or an OptimFROG DualStream `.ofs` (`.ofc`): host access to a companion file (found by base name and extension, `x.wv` to `x.wvc` and `x.ofs` to `x.ofc`, beside the input; an input with no folder, a stream or standard input, reports the pair as unchecked), checking the pair against each other and reporting it as lossless only when the correction file is there and consistent, in the same words for both (for OptimFROG on headers and checksums alone, since it has no decoder; [tak-optimfrog-headers.md](design/tak-optimfrog-headers.md#optimfrog-dualstream), the lead, 2026-11-09).
-   - **The TAK frame walk:** the frame count, the frame CRC-24s and the bitrate per frame, which TAK then owes like the other lossless formats (decision 3 of [tak-optimfrog-headers.md](design/tak-optimfrog-headers.md#decisions)).
-   - **ASF script command and marker contents.**
+     - **Design:** [correction-files.md](design/correction-files.md) (draft for the lead, 2026-11-18).
+   - **The TAK frame walk** (done, 2026-11-18, #335): the frame count, the frame CRC-24s and the bitrate per frame, which TAK then owes like the other lossless formats (decision 3 of [tak-optimfrog-headers.md](design/tak-optimfrog-headers.md#decisions)).
+   - **ASF script command and marker contents** (done, 2026-11-18, #336).
 4. **One reading of the MPEG-2 multichannel extension per frame** (from the 0.3 milestone review, nit N4): the decoder reads each multichannel frame's side information twice more after the parser, allocating several arrays a frame.
    - A hand-off of the parsed extension from the parser to the decoder needs a change to `Core.Abstractions`; the cost stays inside `DecoderWorkTests` until then.
 5. **The coding graphs of formats whose data the parsers already read:** from the survey of [coding-graphs.md](design/coding-graphs.md#the-survey).
