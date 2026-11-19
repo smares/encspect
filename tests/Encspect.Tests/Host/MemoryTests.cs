@@ -1710,6 +1710,26 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         Assert.True(heldPerFrame < DecodingFrameBound, $"Decoding held {heldPerFrame:F2} more bytes per further frame at the last frame than the analysis ends with. {RuntimeSettings()}");
     }
 
+    // A Layer II stream with the MPEG-2 multichannel extension in 3/2 with an LFE channel: the decoder takes the frame's side information from the parser's feed and holds the
+    // buffers of the plan's channels, so what it holds does not grow with the frames. The six frames of the fixture repeated 4,000 and 16,000 times.
+    [Fact]
+    public void DecodingManyMultichannelMpegFramesHoldsNothingPerFrame()
+    {
+        const int fewer = 24_000;
+        const int frames = 96_000;
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "mpeg-audio", "layer2", "mc-3-2-lfe.mp2"));
+        Analyzer.CreateDefault().Analyze("warm-up", new MemoryStream(source), new AnalysisOptions { Decoding = new DecodeOptions { Output = _ => new DecoderWorkTests.NullSink() } });
+
+        (long fewerHeld, long fewerKept) = LastFrameReading("frames.mp2", Unpooled.Repeat(source, fewer / 6), fewer, 1152);
+        (long held, long kept) = LastFrameReading("frames.mp2", Unpooled.Repeat(source, frames / 6), frames, 1152);
+        (_, long plainKept) = LastFrameReading("frames.mp2", Unpooled.Repeat(source, frames / 6), frames, 1152, isDecoding: false);
+
+        double heldPerFrame = (held - fewerHeld) / (double)(frames - fewer);
+        Output.WriteLine($"{kept} bytes kept with decoding and {plainKept} without; held above the end state at the last frame: {fewerHeld} at {fewer} frames and {held} at {frames} ({Hundredths(heldPerFrame)} per further frame)");
+        Assert.True(kept < plainKept + 1_000_000, $"Decoding made the report keep {(kept - plainKept) / (double)frames:F2} bytes more per frame.");
+        Assert.True(heldPerFrame < DecodingFrameBound, $"Decoding held {heldPerFrame:F2} more bytes per further frame at the last frame than the analysis ends with. {RuntimeSettings()}");
+    }
+
     private const long MonkeysAudioKeptBound = 140;
 
     private const long MonkeysAudioPeakBound = 140;
