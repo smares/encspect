@@ -20,6 +20,9 @@ internal sealed class DecodeSession : IDecodeSession
     private long _unitsPerByte;
     private IFrameDecoder? _decoder;
     private DecodeStatus _status;
+
+    // What a decoder with a correction file says it applied (ICorrectionDecoder); null for one without or where it did not finish.
+    private bool? _appliedCorrection;
     private DecodeRun.GuardedSink? _sink;
     private bool _isFrameWalked;
     private bool _isEnded;
@@ -299,8 +302,9 @@ internal sealed class DecodeSession : IDecodeSession
         {
             Decoding = _status,
             DecodedSamples = _decodedSamples,
-            IsLossy = _setup.IsLossy,
-            WithCorrection = _setup.HasCorrection,
+            // The decoder knows which blocks it applied the correction file to: a stream whose file was applied to none is the lossy part, one it was applied to is not.
+            IsLossy = _appliedCorrection is { } applied ? !applied && (_setup.IsLossy || _setup.HasCorrection) : _setup.IsLossy,
+            WithCorrection = _appliedCorrection ?? _setup.HasCorrection,
             Checksums = tallies,
         };
         if (_record is not null)
@@ -342,6 +346,10 @@ internal sealed class DecodeSession : IDecodeSession
                 if (isFinishing)
                 {
                     results = Validated(results, stored);
+                    if (decoder is ICorrectionDecoder correction)
+                    {
+                        _appliedCorrection = correction.AppliedCorrection;
+                    }
                 }
             }
             catch (OperationCanceledException) when (IsCanceledByTheDecoding())

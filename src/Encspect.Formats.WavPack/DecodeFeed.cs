@@ -21,6 +21,8 @@ internal sealed class DecodeFeed
     private long _skippedEnd;
     private long _skippedOffset;
 
+    private CorrectionCursor? _correction;
+
     public IDecodeSession? Session { get; private set; }
 
     public void Offer(State s, long offset, in BlockHeader header, ReadOnlyMemory<byte> bytes, BlockStatus status)
@@ -49,6 +51,12 @@ internal sealed class DecodeFeed
                 s.LastLostSet = s.SetOffset;
                 s.LostSamples += s.SetSamples;
             }
+        }
+
+        // The correction file of a hybrid stream is looked for when its first hybrid block is read, since the decoder needs its blocks as it goes.
+        if (header.HasAudio && header.IsHybrid && (status & BlockStatus.HasWv) != 0 && !s.IsCompanion && s.ParseContext is not null)
+        {
+            Pairing.Open(s);
         }
 
         bool followsGap = header.HasAudio && s.FollowsGap;
@@ -148,6 +156,7 @@ internal sealed class DecodeFeed
     {
         bool isDsd = first.IsDsd;
         bool isFloat = first.IsFloat;
+        bool hasCorrection = first.IsHybrid && s.Opened?.Other is { } other && Pairing.Belongs(first, other);
         return s.Context.StartDecoding(WavPackCodecParser.CodecId, new DecodeSetup
         {
             Stream = s.Stream,
@@ -156,7 +165,8 @@ internal sealed class DecodeFeed
             IsDsd = isDsd,
             Samples = s.DeclaredTotal,
             Configuration = new MappedBytes(bytes.ToArray(), offset),
-            IsLossy = first.IsHybrid || s.HasLossyBlocks,
+            IsLossy = (first.IsHybrid && !hasCorrection) || s.HasLossyBlocks,
+            HasCorrection = hasCorrection,
         });
     }
 
@@ -168,8 +178,15 @@ internal sealed class DecodeFeed
         }
 
         _firstPosition = _firstPosition < 0 ? Math.Max(0, s.FirstIndex) : _firstPosition;
+        MappedBytes? correction = null;
+        if (header.HasAudio && header.IsHybrid && (status & BlockStatus.HasWv) != 0 && s.Opened?.Other is { } other)
+        {
+            correction = (_correction ??= new CorrectionCursor(other)).Next(header);
+        }
+
         var frame = new CodedFrame(new MappedBytes(bytes, offset), header.HasAudio ? "Block" : "Metadata Block", header.BlockIndex - _firstPosition, (int)header.Samples)
         {
+            Correction = correction,
             IsDamaged = (status & (BlockStatus.ChecksumInvalid | BlockStatus.ChecksumMissing | BlockStatus.Oversized)) != 0,
             IsUnreadable = (status & (BlockStatus.Truncated | BlockStatus.Malformed | BlockStatus.Refused)) != 0,
             FollowsGap = followsGap,
@@ -197,7 +214,9 @@ internal sealed class DecodeFeed
         }
 
         tallies.Add(new ChecksumTally { Name = ChecksumNames.BlockCrc, Covers = ChecksumCoverage.DecodedAudio, CoversAllAudio = coversAll, Stored = audioBlocks });
-        tallies.Add(new ChecksumTally { Name = ChecksumNames.ExtraCrc, Covers = ChecksumCoverage.DecodedAudio, Stored = s.WvxBlocks });
+        // The extra bits of a hybrid stream are in its correction blocks.
+        long extra = s.WvxBlocks + (companion is not null && Summary.IsCorrection(companion) ? companion.WvxBlocks : 0);
+        tallies.Add(new ChecksumTally { Name = ChecksumNames.ExtraCrc, Covers = ChecksumCoverage.DecodedAudio, Stored = extra });
         tallies.Add(new ChecksumTally { Name = ChecksumNames.Md5, Covers = ChecksumCoverage.DecodedAudio, CoversAllAudio = true, Stored = s.Md5Count > 0 ? 1 : 0 });
         return session.Finish(tallies);
     }

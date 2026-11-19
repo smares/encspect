@@ -7,6 +7,10 @@ namespace Encspect.Formats.WavPack;
 // to the main file's as libwavpack's read_wvc_block and match_wvc_header match them (open_utils.c); the checksums of the audio are the decoder's.
 internal sealed record PairResult(CorrectionPairing Pairing, State? Companion);
 
+// What the host's lookup of the correction file gave and, where it was found and holds WavPack blocks, the walk of it. The lookup is made when the main file's
+// first hybrid block is read, so that the decoder has the correction file's blocks as it decodes; the pairing is checked once the main file's blocks are all read.
+internal sealed record Opened(Companion Handle, State? Other);
+
 internal static class Pairing
 {
     public const string Extension = "wvc";
@@ -16,11 +20,29 @@ internal static class Pairing
     private const uint StreamFlags = BlockHeader.BytesStoredMask | BlockHeader.MonoFlag | BlockHeader.FloatFlag | BlockHeader.Int32Flag | (0x1Fu << BlockHeader.ShiftLsb)
         | (0xFu << BlockHeader.SampleRateLsb) | BlockHeader.FalseStereoFlag | BlockHeader.DsdFlag;
 
-    // The check made for the hybrid main file of state main: asks the host for the .wvc and builds the companion's nodes in its context. isNotWritten is
-    // true where the configuration block says the encoder wrote no correction file.
+    // Asks the host for the .wvc, once, and walks it as a file of its own, building the companion's nodes in its context. A WavPack 1 to 3 file beside a
+    // version 4 or 5 file is another stream, not its correction data, and an empty one holds nothing: neither has a state.
+    public static Opened Open(State main)
+    {
+        if (main.Opened is { } opened)
+        {
+            return opened;
+        }
+
+        Companion companion = main.ParseContext?.OpenCompanion(Extension) ?? Companion.Unchecked(string.Empty, "the analysis has no host to look for it");
+        State? other = companion.Status == CompanionStatus.Found && companion.Context!.Reader.Length > 0 ? WavPackParser.ParseInto(companion.Context, isCompanion: true) : null;
+        return main.Opened = new Opened(companion, other);
+    }
+
+    // Whether the correction file states the stream of the main file's block first, so that it is used for it (not another stream, and holding correction data).
+    public static bool Belongs(in BlockHeader first, State other) => Summary.IsCorrection(other) && !Differs(first, other.FirstAudioHeader);
+
+    // The check made for the hybrid main file of state main, once its blocks are read. isNotWritten is true where the configuration block says the encoder wrote
+    // no correction file.
     public static PairResult Check(State main, Node stream, bool isNotWritten)
     {
-        Companion companion = main.ParseContext?.OpenCompanion(Extension) ?? Companion.Unchecked(string.Empty, "the analysis has no host to look for it");
+        Opened opened = Open(main);
+        Companion companion = opened.Handle;
         switch (companion.Status)
         {
             case CompanionStatus.Missing:
@@ -35,14 +57,7 @@ internal static class Pairing
                 }, null);
         }
 
-        ParseContext context = companion.Context!;
-        if (context.Reader.Length == 0)
-        {
-            return new PairResult(Result(companion, [new CorrectionProblem(CorrectionProblemKind.NotCorrectionData, 1, stream)]), null);
-        }
-
-        // A WavPack 1 to 3 file beside a version 4 or 5 file is another stream, not its correction data.
-        if (WavPackParser.ParseInto(context, isCompanion: true) is not { } other)
+        if (opened.Other is not { } other)
         {
             return new PairResult(Result(companion, [new CorrectionProblem(CorrectionProblemKind.NotCorrectionData, 1, stream)]), null);
         }
@@ -84,7 +99,7 @@ internal static class Pairing
         return problems;
     }
 
-    private static bool Differs(in BlockHeader main, in BlockHeader other) =>
+    internal static bool Differs(in BlockHeader main, in BlockHeader other) =>
         main.Version != other.Version || main.TotalSamples != other.TotalSamples || main.BlockIndex != other.BlockIndex || ((main.Flags ^ other.Flags) & StreamFlags) != 0;
 
     // The next block of the main file that takes a correction block: with audio and the hybrid flag.
@@ -103,7 +118,7 @@ internal static class Pairing
     }
 
     // The next block of the correction file with audio: the ones that hold only metadata are no correction blocks.
-    private static int NextCorrection(State s, int from)
+    internal static int NextCorrection(State s, int from)
     {
         for (int i = from; i < s.Entries.Count; i++)
         {

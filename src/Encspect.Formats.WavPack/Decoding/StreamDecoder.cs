@@ -12,7 +12,7 @@ namespace Encspect.Formats.WavPack.Decoding;
 // MD5. The set is the unit the contract counts: Decode returns 0 for the blocks before the final one and the set's
 // samples on it. libwavpack 5.6.0 (unpack_utils.c WavpackUnpackSamples, unpack.c, open_utils.c) is the reference; where it
 // mutes a block and goes on, this decoder also does, and where it would read a stream it cannot make sense of it refuses the block.
-internal sealed class StreamDecoder : IFrameDecoder
+internal sealed class StreamDecoder : IFrameDecoder, ICorrectionDecoder
 {
     // The samples of all the channels of one set a decoder holds: 2^24, 64 MiB of 32-bit values. A set past it is
     // decoded block by block, its CRCs compared, and its audio neither output nor hashed.
@@ -27,6 +27,10 @@ internal sealed class StreamDecoder : IFrameDecoder
     // passes whatever its width, 2.5 times what DecodeWork.ForSample says, so the entropy decoder's word, the mute check, the CRC and the copy
     // into the set's planes are charged on top of it; restoring the bits of a float costs about 7 ns more.
     internal const long WorkPerPcmSample = 24;
+
+    // What decoding a hybrid block with its correction block costs a sample of a channel beyond the passes (the correction's read, the shaping of the error, the
+    // sample-by-sample form of the passes, which cannot run block-wide because each correction feeds the next sample).
+    internal const long WorkPerCorrectedSample = 16;
     internal const long WorkPerFloatSample = 16;
 
     private readonly DecodeContext _context;
@@ -48,6 +52,11 @@ internal sealed class StreamDecoder : IFrameDecoder
     private byte[]? _reordering;
     private bool _isQmodeFrozen;
     private bool _sawHybrid;
+
+    // The hybrid blocks decoded with their correction block, and those that were not: the blocks of the pair without a correction block the correction file
+    // holds that matches them (or one whose checksum fails) are decoded as the lossy part, as libwavpack decodes them.
+    private long _correctedBlocks;
+    private long _uncorrectedBlocks;
 
     // The MD5 the file stores (the last block's), and the node of the sub-block that holds it.
     private byte[]? _storedMd5;
@@ -107,18 +116,33 @@ internal sealed class StreamDecoder : IFrameDecoder
         }
 
         _contents.Read(data, header, _channelInfo is not null);
-        Settle(frame, header);
+        BlockHeader? correction = null;
+        if (header.HasAudio && header.IsHybrid && frame.Correction is { } correctionBytes)
+        {
+            ReadOnlySpan<byte> correctionData = correctionBytes.Span;
+            if (correctionData.Length < BlockHeader.Length || !BlockHeader.IsPlausible(correctionData))
+            {
+                throw new InvalidDataException("The correction block does not start with a header libwavpack takes");
+            }
+
+            correction = new BlockHeader(correctionData);
+            _contents.ReadCorrection(correctionData, correction.Value, _channelInfo is not null);
+        }
+
+        Settle(frame, header, correction is not null);
         if (!header.HasAudio)
         {
             return 0;
         }
 
-        return Block(frame, data, header);
+        return Block(frame, data, header, correction);
     }
+
+    public bool AppliedCorrection => _correctedBlocks > 0;
 
     // The facts the blocks give about the stream: the channel info and sample rate of the first ones, the qualify mode up to
     // the first block with audio, and the last MD5.
-    private void Settle(in CodedFrame frame, in BlockHeader header)
+    private void Settle(in CodedFrame frame, in BlockHeader header, bool isCorrected)
     {
         if (_channelInfo is null && _contents.ChannelInfo is { } info)
         {
@@ -147,11 +171,15 @@ internal sealed class StreamDecoder : IFrameDecoder
 
         if (header.HasAudio)
         {
-            _sawHybrid |= header.IsHybrid;
+            if (header.IsHybrid && !isCorrected)
+            {
+                _sawHybrid = true;
+                _uncorrectedBlocks++;
+            }
         }
     }
 
-    private int Block(in CodedFrame frame, ReadOnlySpan<byte> data, in BlockHeader header)
+    private int Block(in CodedFrame frame, ReadOnlySpan<byte> data, in BlockHeader header, BlockHeader? correction)
     {
         if (!_hasAudio)
         {
@@ -212,7 +240,15 @@ internal sealed class StreamDecoder : IFrameDecoder
             _isSetOversized = true;
         }
 
-        uint blockCrc = header.Crc;
+        // A hybrid block with its correction block is decoded to the lossless audio and compared with the CRC of the correction block's header, which libwavpack
+        // copies over the main block's (open_utils.c 1043-1044); the main header's is the CRC of the lossy audio.
+        bool isCorrected = correction is not null;
+        if (isCorrected)
+        {
+            _correctedBlocks++;
+        }
+
+        uint blockCrc = correction?.Crc ?? header.Crc;
         bool isCrcValid;
         bool hasExtra = false;
         bool isExtraValid = true;
@@ -220,7 +256,7 @@ internal sealed class StreamDecoder : IFrameDecoder
         int width = (header.Flags & (BlockHeader.MonoFlag | BlockHeader.FalseStereoFlag)) != 0 ? 1 : 2;
         try
         {
-            Charge(data, header, isMuted, blockChannels, width, samples);
+            Charge(data, header, isMuted, blockChannels, width, samples, isCorrected);
             if (isMuted)
             {
                 isCrcValid = uint.MaxValue == blockCrc;
@@ -235,7 +271,9 @@ internal sealed class StreamDecoder : IFrameDecoder
             }
             else
             {
-                BlockOutcome outcome = _pcm.Decode(data, header, _contents, samples, _context.CancellationToken);
+                BlockOutcome outcome = isCorrected
+                    ? _pcm.DecodeCorrected(data, frame.Correction!.Span, header, blockCrc, _contents, samples, _context.CancellationToken)
+                    : _pcm.Decode(data, header, _contents, samples, _context.CancellationToken);
                 isCrcValid = outcome.IsCrcValid;
                 hasExtra = outcome.HasExtra;
                 isExtraValid = outcome.IsExtraCrcValid;
@@ -254,7 +292,7 @@ internal sealed class StreamDecoder : IFrameDecoder
         {
             _crcFailed++;
             _context.AddFinding(Severity.Warning, "wavpack.audio-crc-mismatch",
-                $"The decoded audio of the block at 0x{frame.Bytes.FileStart:X} does not have the CRC its header stores{(isMuted ? " (the block's data ends early or holds samples libwavpack takes for corrupt, so it is muted)" : string.Empty)}.",
+                $"The decoded audio of the block at 0x{frame.Bytes.FileStart:X} does not have the CRC {(isCorrected ? "its correction block's header" : "its header")} stores{(isMuted ? " (the block's data ends early or holds samples libwavpack takes for corrupt, so it is muted)" : string.Empty)}.",
                 Nodes.BlockCrc(frame.Bytes, blockCrc));
         }
 
@@ -266,7 +304,7 @@ internal sealed class StreamDecoder : IFrameDecoder
                 _extraFailed++;
                 _context.AddFinding(Severity.Warning, "wavpack.audio-crc-mismatch",
                     $"The extra bits of the block at 0x{frame.Bytes.FileStart:X} do not have the CRC their bitstream stores.",
-                    Nodes.ExtraCrc(frame.Bytes, _contents));
+                    _contents.IsExtraInCorrection ? Nodes.BlockCrc(frame.Bytes, header.Crc) : Nodes.ExtraCrc(frame.Bytes, _contents));
             }
         }
 
@@ -291,7 +329,7 @@ internal sealed class StreamDecoder : IFrameDecoder
     //   - 16 a byte of the bitstream sub-blocks it reads (the main one, the extra one of floats and of integers above 24 bits, the DSD data);
     //   - 11 a decorrelation pass for each sample of each channel the passes run on;
     //   - DSD: 16 more a byte of each channel in the fast mode and 64 in the high mode, and the setup of the block's tables.
-    private void Charge(ReadOnlySpan<byte> data, in BlockHeader header, bool isMuted, int blockChannels, int width, int samples)
+    private void Charge(ReadOnlySpan<byte> data, in BlockHeader header, bool isMuted, int blockChannels, int width, int samples, bool isCorrected)
     {
         long perSample = _workPerSample + (_isDsd ? 0 : WorkPerPcmSample + (header.IsFloat ? WorkPerFloatSample : 0));
         _context.AddWork(checked(perSample * blockChannels * samples));
@@ -309,8 +347,12 @@ internal sealed class StreamDecoder : IFrameDecoder
             return;
         }
 
-        _context.AddWork(checked(DecodeWork.PerCodedByte * (_contents.Bitstream.Length + _contents.ExtraBitstream.Length)));
+        _context.AddWork(checked(DecodeWork.PerCodedByte * (_contents.Bitstream.Length + _contents.ExtraBitstream.Length + _contents.CorrectionBitstream.Length)));
         _context.AddWork(checked(WorkPerPass * _contents.Passes * width * samples));
+        if (isCorrected)
+        {
+            _context.AddWork(checked(WorkPerCorrectedSample * width * samples));
+        }
     }
 
     private int[] _muted = [];
@@ -457,7 +499,9 @@ internal sealed class StreamDecoder : IFrameDecoder
             if (end.IsComplete)
             {
                 _context.AddFinding(Severity.Info, "wavpack.md5-needs-correction-file",
-                    "The file stores the MD5 of the lossless audio, which this stream does not decode to (a hybrid file without its correction file (.wvc), or blocks that drop bits), so it is not compared.", _md5Node);
+                    _correctedBlocks > 0
+                        ? $"The file stores the MD5 of the lossless audio, but {Counts.Of(_uncorrectedBlocks, "hybrid block", "hybrid blocks")} of its {Counts.Of(_correctedBlocks + _uncorrectedBlocks, "hybrid block", "hybrid blocks")} {Counts.Agree(_uncorrectedBlocks, "was", "were")} decoded without a correction block (the correction file (.wvc) has none that matches {(_uncorrectedBlocks == 1 ? "it" : "them")}, or one that fails its checksum), so the stream does not decode to the lossless audio and the MD5 is not compared."
+                        : "The file stores the MD5 of the lossless audio, which this stream does not decode to (a hybrid file without its correction file (.wvc), or blocks that drop bits), so it is not compared.", _md5Node);
             }
 
             return results;
