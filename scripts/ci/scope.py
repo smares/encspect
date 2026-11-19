@@ -46,12 +46,12 @@ def area_of(path, config):
         return set()
     if parts[:2] == ["tests", "fixtures"] and len(parts) >= 4:
         listed = config["fixtures"].get(parts[2])
-        return down(set(listed), config) if listed else None
+        return set(listed) if listed else None
     return None
 
 
 def down(selected, config):
-    """A container's fixtures are read by the tests of the codecs it carries too."""
+    """The selected areas and the areas of the codecs the selected containers carry: their tests parse files of the container."""
     result = set(selected)
     for container in selected:
         result |= {config["codecs"][codec] for codec in config["routes"].get(container, [])}
@@ -59,18 +59,19 @@ def down(selected, config):
 
 
 def carriers(changed, config):
-    """The changed areas, every area that carries one of them (a container that hands a payload to the codec by its ID, and the
-    container's container), and the areas that hold a changed tag area's tag (listed in full: the formats that hand a tag to its parser)."""
-    result = set(changed)
+    """The areas a change reaches. A changed container reaches the codecs it carries (their tests go through it); then every container
+    that carries a selected area is added, and its container in turn (routes followed upward). A changed tag area reaches the areas that
+    hold its tag, and a changed format (or the codecs a changed container carries) reaches the tag areas whose tests go through it; the tag lists are final, not carried further."""
+    base = down(set(changed), config)
+    result = set(base)
     while True:
         more = {container for container, ids in config["routes"].items() if any(config["codecs"][i] in result for i in ids)}
         if more <= result:
             break
         result |= more
-    for tag, carried in config["tags"].items():
-        if tag in changed:
-            result |= set(carried)
-    return result
+    forward = {carrier for tag, carried in config["tags"].items() if tag in changed for carrier in carried}
+    backward = {tag for tag, carried in config["tags"].items() if set(carried) & base}
+    return result | forward | backward
 
 
 def sources_of(root=ROOT):
@@ -85,25 +86,47 @@ def class_extent(text):
 
 @functools.lru_cache(maxsize=None)
 def _inventory(root, config_key):
-    """(owners, methods): the owners of every test class in the area folders, and the test methods of each class of a file
-    that has any ('Class' -> ['Method', ...])."""
+    """(owners, methods): the owners of every test class in the area folders, and the test methods of each test class
+    ('Class' -> ['Method', ...]), both joined across the files of a partial class.
+    A file is owned by the area of its folder, by the areas whose namespace, builder or fixture folder it uses, and by the areas of every test
+    class of an area folder that it names (a test class that other areas' tests call is relevant to them when its area is selected; owners follow
+    such calls through any number of files)."""
     config = json.loads(config_key)
-    owners = {}
-    methods = {}
     markers = {area: [re.compile(rf"using Encspect\.(?:Formats|Tags)\.{area}\b"), re.compile(rf"\b{area}(?:Builder|Streams)\b")] for area in config["areas"]}
     for folder, listed in config["fixtures"].items():
         markers[listed[0]].append(re.compile(rf'["/]{re.escape(folder)}(?:/|")'))
+    files = {}
+    defined = {}
     for file in sources_of(root):
         text = file.read_text(encoding="utf-8", errors="replace")
         relative = file.relative_to(root / TESTS).parts
         home = relative[1] if relative[0] in ("Formats", "Tags") and len(relative) > 2 and relative[1] in config["areas"] else None
-        for name, start, end in class_extent(text):
-            body = text[start:end]
-            found = TEST_METHOD.findall(body)
+        classes = [(name, TEST_METHOD.findall(text[start:end])) for name, start, end in class_extent(text)]
+        files[file] = (home, text, classes)
+        if home is not None:
+            for name, _ in classes:
+                defined.setdefault(name, set()).add(file)
+    owned = {file: ({home} | {a for a, patterns in markers.items() if a != home and any(p.search(text) for p in patterns)}) if home else set()
+             for file, (home, text, _) in files.items() if home}
+    called = re.compile(r"\b(" + "|".join(map(re.escape, sorted(defined, key=len, reverse=True))) + r")\b") if defined else None
+    uses = {file: {g for n in set(called.findall(files[file][1])) for g in defined[n] if g != file} for file in owned} if called else {}
+    changed = True
+    while changed:
+        changed = False
+        for file, others in uses.items():
+            for other in others:
+                if not owned[other] <= owned[file]:
+                    owned[file] |= owned[other]
+                    changed = True
+    owners = {}
+    methods = {}
+    for file, (home, _, classes) in files.items():
+        for name, found in classes:
             if found:
-                methods[name] = found
-            if home is not None and found:
-                owners[name] = {home} | {area for area, patterns in markers.items() if area != home and any(p.search(text) for p in patterns)}
+                methods.setdefault(name, [])
+                methods[name] += [m for m in found if m not in methods[name]]
+                if home is not None:
+                    owners.setdefault(name, set()).update(owned[file])
     return owners, methods
 
 
@@ -124,19 +147,19 @@ class Scope:
         return "unit tests scoped to " + (", ".join(order) or "no area")
 
 
-def build(selected, root=ROOT, config=None):
-    """The scope that selects these areas (carriers added by the caller)."""
+def build(selected, root=ROOT, config=None, forced=frozenset()):
+    """The scope that selects these areas (carriers added by the caller); the classes in forced run whole."""
     config = config or load()
     owners, methods = inventory(root, config)
-    excluded = sorted(c for c, o in owners.items() if not o & selected)
+    excluded = sorted(c for c, o in owners.items() if not o & selected and c not in forced)
     for name in config["classes"]:
-        if not set(config["classes"][name]) & selected:
+        if not set(config["classes"][name]) & selected and name not in forced:
             excluded.append(name)
     excluded = sorted(set(excluded))
     excluded_methods = {}
     empty = set(excluded)
     for name, per_method in config["methods"].items():
-        if name in excluded:
+        if name in excluded or name in forced:
             continue
         gone = sorted(m for m, o in per_method.items() if not set(o) & selected)
         if gone:
@@ -153,12 +176,16 @@ def plan(files, root=ROOT, config=None):
     if not files:
         return None
     changed = set()
+    forced = set()
     for path in files:
         areas = area_of(path, config)
         if areas is None:
             return None
         changed |= areas
-    scope = build(carriers(changed, config), root, config)
+        if not areas and (root / path).is_file():
+            # A changed test file of a shared folder runs every class it defines, whoever owns it.
+            forced |= {name for name, _, _ in class_extent((root / path).read_text(encoding="utf-8", errors="replace"))}
+    scope = build(carriers(changed, config), root, config, frozenset(forced))
     scope.changed = changed
     return scope
 

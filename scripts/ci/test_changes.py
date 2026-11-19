@@ -356,8 +356,8 @@ class ScopeTests(unittest.TestCase):
         for path in ("src/Encspect.Formats.WavPack/WavPackParser.cs", "src/Encspect.Formats.WavPack/Decoding/WavPackDecoder.cs",
                      "tests/Encspect.Tests/Formats/WavPack/WavPackTests.cs", "tests/fixtures/wavpack/a.wv"):
             chosen, reason, matrix = scoped(path)
-            self.assertEqual(chosen.selected, {"WavPack", "Matroska"}, path)
-            self.assertIn("unit tests scoped to WavPack, Matroska", reason)
+            self.assertEqual(chosen.selected, {"WavPack", "Matroska", "Ape"}, path)
+            self.assertIn("unit tests scoped to WavPack, Ape, Matroska", reason)
             names = shard_names(matrix)
             self.assertNotIn("corrupt-c", names, "its classes belong to other formats, so nothing is left of it")
             self.assertIn("rest", names)
@@ -382,14 +382,14 @@ class ScopeTests(unittest.TestCase):
         self.assertNotIn("FullyQualifiedName!=Encspect.Tests.MemoryTests.ManyWavPackBlocksStayCompact", corrupt_b)
 
     def test_a_codec_change_scopes_to_the_containers_that_carry_it_and_a_tag_change_to_what_holds_the_tag(self):
-        self.assertEqual(scoped("src/Encspect.Formats.Opus/OpusParser.cs")[0].selected, {"Opus", "Ogg", "Matroska", "Mp4"})
+        self.assertEqual(scoped("src/Encspect.Formats.Opus/OpusParser.cs")[0].selected, {"Opus", "Ogg", "Matroska", "Mp4", "VorbisComment"})
         self.assertEqual(scoped("src/Encspect.Formats.Dts/DtsParser.cs")[0].selected, {"Dts", "Mp4", "Matroska", "Wav", "DtsHd", "Aiff"})
         self.assertEqual(scoped("src/Encspect.Tags.Lyrics3/Lyrics3TagParser.cs")[0].selected, {"Lyrics3", "MpegAudio"})
         self.assertIn("Aiff", scoped("src/Encspect.Formats.Wav/WavParser.cs")[0].selected)
 
     def test_several_areas_and_a_fixture_folder_of_a_container_select_its_codecs(self):
         chosen = scoped("src/Encspect.Formats.WavPack/WavPackParser.cs", "src/Encspect.Formats.Tta/TtaParser.cs", "docs/formats/tta.md")[0]
-        self.assertEqual(chosen.selected, {"WavPack", "Tta", "Matroska"})
+        self.assertEqual(chosen.selected, {"WavPack", "Tta", "Matroska", "Ape"})
         self.assertLessEqual({"Matroska", "Opus", "Vorbis", "WavPack", "Flac"}, scoped("tests/fixtures/matroska/a.mka")[0].selected)
 
     def test_a_scoped_run_drops_the_shards_it_leaves_no_test(self):
@@ -417,18 +417,76 @@ class ScopeTests(unittest.TestCase):
         chosen, reason, matrix = scoped("src/Encspect.Formats.WavPack/WavPackParser.cs", "tests/Encspect.Tests/Host/MemoryTests.cs",
                                         "tests/Encspect.Tests/Decoding/DecoderChargeTests.cs", "tests/Encspect.Tests/Measurement/MeasurementTests.cs",
                                         "tests/Encspect.Tests/Core/NodeTests.cs", "tests/Encspect.Tests/Cli/CommandLineTests.cs")
-        self.assertEqual(chosen.selected, {"WavPack", "Matroska"})
+        self.assertEqual(chosen.selected, {"WavPack", "Matroska", "Ape"})
         corrupt_b = next(e["filter"] for e in matrix if e["shard"] == "corrupt-b")
-        self.assertIn("FullyQualifiedName!=Encspect.Tests.MemoryTests.ManySpeexPacketsStayCompact", corrupt_b)
+        self.assertNotIn("MemoryTests.ManySpeexPacketsStayCompact", corrupt_b, "the changed file's classes run whole")
         only = scoped("tests/Encspect.Tests/Host/AnalyzerTests.cs")
         self.assertEqual(only[0].selected, set())
         self.assertIn("scoped to no area", only[1])
         for path in ("tests/Encspect.Tests/Support/Fixtures.cs", "tests/Encspect.Tests/Ci/CiWorkflowTests.cs", "scripts/ci/scope.py", "scripts/ci/areas.json"):
             self.assertIsNone(scoped("src/Encspect.Formats.WavPack/WavPackParser.cs", path)[0], path)
 
+    def test_a_changed_container_selects_the_codecs_it_carries_and_their_fixture_folders_select_it(self):
+        chosen = scoped("src/Encspect.Formats.Mp4/Mp4Parser.cs")[0]
+        self.assertLessEqual({"Mp4", "Alac", "Aac", "Opus", "Flac", "TrueHd", "Ogg", "Matroska"}, chosen.selected)
+        for name in ("AlacDecoderTests", "AlacFixtureTests", "CorruptAlacFileTests", "CorruptAlacBuiltFileTests"):
+            self.assertNotIn(name, chosen.excluded_classes, name)
+        self.assertIn("Opus", scoped("src/Encspect.Formats.Ogg/OggParser.cs")[0].selected)
+        self.assertLessEqual({"Alac", "Mp4", "Matroska"}, scoped("tests/fixtures/alac/a.m4a")[0].selected)
+
+    def test_every_fixture_folder_lists_the_containers_of_its_files(self):
+        containers = {"m4a": "Mp4", "mp4": "Mp4", "m4b": "Mp4", "3gp": "Mp4", "mov": "Mp4", "mka": "Matroska", "mkv": "Matroska", "webm": "Matroska",
+                      "ogg": "Ogg", "opus": "Ogg", "spx": "Ogg", "asf": "Asf", "wma": "Asf", "wav": "Wav", "w64": "Wav", "aiff": "Aiff", "aifc": "Aiff"}
+        for folder, listed in self.config["fixtures"].items():
+            used = {containers[f.suffix[1:]] for f in (changes.ROOT / "tests/fixtures" / folder).rglob("*") if f.suffix[1:] in containers}
+            self.assertLessEqual(used, set(listed), f"tests/fixtures/{folder} holds files of containers that areas.json does not list for it")
+
+    def test_a_changed_shared_test_file_runs_every_class_and_method_it_defines(self):
+        path = "tests/Encspect.Tests/Host/CorruptTagFileTests.cs"
+        chosen = scoped(path)[0]
+        self.assertEqual(chosen.selected, set())
+        text = (changes.ROOT / path).read_text()
+        defined = {n for n in self.config["classes"] if f"class {n}" in text}
+        self.assertTrue(defined)
+        self.assertFalse(defined & set(chosen.excluded_classes))
+        self.assertNotIn("CorruptTagFileTests", chosen.excluded_methods)
+        self.assertNotIn("MemoryTests", scoped("tests/Encspect.Tests/Host/MemoryTests.cs")[0].excluded_methods)
+        self.assertIn("MemoryTests", scoped("tests/Encspect.Tests/Host/AnalyzerTests.cs")[0].excluded_methods)
+
+    def test_a_test_class_that_other_areas_call_selects_the_callers(self):
+        owners, _ = scope.inventory()
+        for caller, area in (("AlacDecoderFixtureTests", "Flac"), ("TtaFixtureTests", "Flac"), ("WavPackDecoderFixtureTests", "Flac"), ("MonkeysAudioFixtureTests", "WavPack"),
+                             ("MonkeysAudioDecoderFixtureTests", "WavPack"), ("MatroskaPcmRouteTests", "Flac")):
+            self.assertIn(area, owners[caller], caller)
+        self.assertNotIn("AlacDecoderFixtureTests", scoped("tests/Encspect.Tests/Formats/Flac/DecoderFixtureTests.cs")[0].excluded_classes)
+        self.assertNotIn("MonkeysAudioFixtureTests", scoped("tests/Encspect.Tests/Formats/WavPack/WavPackDecoderFixtureTests.cs")[0].excluded_classes)
+
+    def test_calls_are_followed_through_several_files_and_partial_classes_are_joined(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = pathlib.Path(folder)
+            files = {"Formats/A/One.cs": "namespace Encspect.Tests;\npublic partial class Shared\n{\n    [Fact]\n    public void FromA() { }\n}\npublic class Helper { }\n",
+                     "Formats/B/Two.cs": "namespace Encspect.Tests;\npublic partial class Shared\n{\n    [Fact]\n    public void FromB() { }\n}\npublic class UsesHelper\n{\n    [Fact]\n    public void T() { Helper.Run(); }\n}\n",
+                     "Formats/C/Three.cs": "namespace Encspect.Tests;\npublic class UsesUsesHelper\n{\n    [Fact]\n    public void T() { UsesHelper.Run(); }\n}\n"}
+            for name, text in files.items():
+                (root / "tests/Encspect.Tests" / name).parent.mkdir(parents=True, exist_ok=True)
+                (root / "tests/Encspect.Tests" / name).write_text(text)
+            owners, methods = scope.inventory(root, {"areas": ["A", "B", "C"], "fixtures": {}})
+            self.assertEqual(sorted(methods["Shared"]), ["FromA", "FromB"])
+            self.assertEqual(owners["Shared"], {"A", "B"})
+            self.assertEqual(owners["UsesHelper"], {"A", "B"})
+            self.assertEqual(owners["UsesUsesHelper"], {"A", "B", "C"})
+
+    def test_a_changed_format_selects_the_tag_areas_whose_tests_go_through_it(self):
+        chosen = scoped("src/Encspect.Formats.MpegAudio/MpegAudioParser.cs")[0]
+        self.assertLessEqual({"Ape", "Id3", "Lyrics3"}, chosen.selected)
+        for name in ("ApeItemLimitTests", "Id3v2FrameSizeTests"):
+            self.assertNotIn(name, chosen.excluded_classes)
+        self.assertIn("VorbisComment", scoped("src/Encspect.Formats.Ogg/OggParser.cs")[0].selected)
+        self.assertNotIn("Ape", scoped("src/Encspect.Formats.Opus/OpusParser.cs")[0].selected, "a tag list is not carried further")
+
     def test_documentation_and_fixture_scripts_do_not_widen_a_scope(self):
         chosen = scoped("src/Encspect.Formats.WavPack/WavPackParser.cs", "docs/formats/wavpack.md", "scripts/fixtures/make_wavpack_fixtures.py")[0]
-        self.assertEqual(chosen.selected, {"WavPack", "Matroska"})
+        self.assertEqual(chosen.selected, {"WavPack", "Matroska", "Ape"})
         self.assertIsNone(scoped("docs/formats/wavpack.md")[0])
 
     def test_a_deleted_script_runs_everything(self):
