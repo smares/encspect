@@ -9,7 +9,8 @@ namespace Encspect.Gui.Cache;
 // The per-user cache of the summaries a folder view shows, so a folder seen before fills its rows
 // without analyzing its files again. An entry is used only while every part of its key still holds:
 // the path, the file's fingerprint (size, last-write time, file ID, and a hash of its first and last
-// 64 KiB), the analyzer version and the report schema version. Only folder views read it: opening
+// 64 KiB), the fingerprint of each companion file the analysis looked for (its correction file; null where
+// there was none, so one added later misses too), the analyzer version and the report schema version. Only folder views read it: opening
 // a file always analyzes it again, and the CLI keeps no cache.
 //
 // The store is one file of the format below, read whole when first needed. Writes are batched
@@ -23,11 +24,11 @@ namespace Encspect.Gui.Cache;
 //
 // Format, little-endian as BinaryWriter writes it: the magic line, the format version, the
 // analyzer versions in use, the number of entries, the entries (path, fingerprint, analyzer version
-// index, schema version, when last used, the summary but its source, which is the path), and a
-// SHA-256 of all that.
+// index, schema version, when last used, the summary but its source, which is the path, then the
+// summary's correction line and its companions), and a SHA-256 of all that.
 public sealed class SummaryCache : IDisposable
 {
-    public const int FormatVersion = 7;
+    public const int FormatVersion = 8;
 
     public const int DefaultMaxEntries = 50_000;
 
@@ -101,14 +102,33 @@ public sealed class SummaryCache : IDisposable
         ArgumentException.ThrowIfNullOrEmpty(path);
         ArgumentNullException.ThrowIfNull(fingerprint);
 
+        Entry? entry;
         lock (_lock)
         {
-            if (!Loaded().TryGetValue(path, out Entry? entry)
+            if (!Loaded().TryGetValue(path, out entry)
                 || entry.AnalyzerVersion != _analyzerVersion
                 || entry.SchemaVersion != _schemaVersion
                 || !entry.Fingerprint.Matches(fingerprint))
             {
                 return null;
+            }
+        }
+
+        // The companions are read outside the lock; one added, removed or changed since the analysis misses.
+        foreach (CompanionKey companion in entry.Companions)
+        {
+            FileFingerprint? now = FileFingerprint.Read(companion.Path);
+            if (now is null ? companion.Fingerprint is not null : companion.Fingerprint is null || !companion.Fingerprint.Matches(now))
+            {
+                return null;
+            }
+        }
+
+        lock (_lock)
+        {
+            if (!Loaded().TryGetValue(path, out Entry? current) || !ReferenceEquals(current, entry))
+            {
+                return entry.Summary;
             }
 
             entry = entry with { LastUsed = _clock() };
@@ -124,9 +144,11 @@ public sealed class SummaryCache : IDisposable
         ArgumentNullException.ThrowIfNull(fingerprint);
         ArgumentNullException.ThrowIfNull(summary);
 
+        // Each companion the analysis looked for is fingerprinted as it is now, or recorded as absent.
+        CompanionKey[] companions = [.. summary.CompanionPaths.Select(p => new CompanionKey(p, FileFingerprint.Read(p)))];
         lock (_lock)
         {
-            var entry = new Entry(fingerprint, _analyzerVersion, _schemaVersion, _clock(), summary);
+            var entry = new Entry(fingerprint, _analyzerVersion, _schemaVersion, _clock(), summary, companions);
             Loaded()[path] = entry;
             MarkDirty(path, entry);
         }
@@ -381,15 +403,7 @@ public sealed class SummaryCache : IDisposable
     // A summary's source is the path it is stored under, so it is not stored twice.
     private static Entry ReadEntry(BinaryReader reader, string path, string[] versions)
     {
-        long size = reader.ReadInt64();
-        long ticks = reader.ReadInt64();
-        FileId? id = reader.ReadBoolean() ? new FileId(reader.ReadUInt64(), reader.ReadUInt64()) : null;
-        byte[] hash = reader.ReadBytes(FileFingerprint.HashLength);
-        if (hash.Length != FileFingerprint.HashLength)
-        {
-            throw new EndOfStreamException();
-        }
-
+        FileFingerprint fingerprint = ReadFingerprint(reader);
         string version = versions[Bounded(reader.ReadInt32(), versions.Length - 1)];
         int schemaVersion = reader.ReadInt32();
         long lastUsed = reader.ReadInt64();
@@ -418,7 +432,43 @@ public sealed class SummaryCache : IDisposable
         bool? isVbr = reader.ReadBoolean() ? reader.ReadBoolean() : null;
         string? problem = ReadText(reader);
         summary = ReadProtection(reader, summary);
-        return new Entry(new FileFingerprint(size, ticks, id, hash), version, schemaVersion, lastUsed, new FileSummary(summary, isVbr, problem));
+        string? correction = ReadText(reader);
+        var companions = new CompanionKey[Bounded(reader.ReadInt32(), 1 << 10)];
+        for (int i = 0; i < companions.Length; i++)
+        {
+            companions[i] = new CompanionKey(reader.ReadString(), reader.ReadBoolean() ? ReadFingerprint(reader) : null);
+        }
+
+        var cached = new FileSummary(summary, isVbr, problem) { Correction = correction, CompanionPaths = [.. companions.Select(c => c.Path)] };
+        return new Entry(fingerprint, version, schemaVersion, lastUsed, cached, companions);
+    }
+
+    private static FileFingerprint ReadFingerprint(BinaryReader reader)
+    {
+        long size = reader.ReadInt64();
+        long ticks = reader.ReadInt64();
+        FileId? id = reader.ReadBoolean() ? new FileId(reader.ReadUInt64(), reader.ReadUInt64()) : null;
+        byte[] hash = reader.ReadBytes(FileFingerprint.HashLength);
+        if (hash.Length != FileFingerprint.HashLength)
+        {
+            throw new EndOfStreamException();
+        }
+
+        return new FileFingerprint(size, ticks, id, hash);
+    }
+
+    private static void WriteFingerprint(BinaryWriter writer, FileFingerprint fingerprint)
+    {
+        writer.Write(fingerprint.Size);
+        writer.Write(fingerprint.LastWriteTicks);
+        writer.Write(fingerprint.Id is not null);
+        if (fingerprint.Id is { } id)
+        {
+            writer.Write(id.Volume);
+            writer.Write(id.File);
+        }
+
+        writer.Write(fingerprint.Hash);
     }
 
     private static Confidence ReadConfidence(BinaryReader reader)
@@ -511,17 +561,7 @@ public sealed class SummaryCache : IDisposable
 
     private static void WriteEntry(BinaryWriter writer, Entry entry, int version)
     {
-        FileFingerprint fingerprint = entry.Fingerprint;
-        writer.Write(fingerprint.Size);
-        writer.Write(fingerprint.LastWriteTicks);
-        writer.Write(fingerprint.Id is not null);
-        if (fingerprint.Id is { } id)
-        {
-            writer.Write(id.Volume);
-            writer.Write(id.File);
-        }
-
-        writer.Write(fingerprint.Hash);
+        WriteFingerprint(writer, entry.Fingerprint);
         writer.Write(version);
         writer.Write(entry.SchemaVersion);
         writer.Write(entry.LastUsed);
@@ -563,6 +603,17 @@ public sealed class SummaryCache : IDisposable
         WriteOptional(writer, entry.Summary.IsVbr, writer.Write);
         WriteText(writer, entry.Summary.Problem);
         WriteProtection(writer, summary);
+        WriteText(writer, entry.Summary.Correction);
+        writer.Write(entry.Companions.Count);
+        foreach (CompanionKey companion in entry.Companions)
+        {
+            writer.Write(companion.Path);
+            writer.Write(companion.Fingerprint is not null);
+            if (companion.Fingerprint is { } companionFingerprint)
+            {
+                WriteFingerprint(writer, companionFingerprint);
+            }
+        }
     }
 
     // The protection figures of a summary: whether a stream is protected, then its schemes and systems.
@@ -609,5 +660,8 @@ public sealed class SummaryCache : IDisposable
         }
     }
 
-    private sealed record Entry(FileFingerprint Fingerprint, string AnalyzerVersion, int SchemaVersion, long LastUsed, FileSummary Summary);
+    // A companion file the analysis looked for: its path and its fingerprint, or null where it was absent.
+    private sealed record CompanionKey(string Path, FileFingerprint? Fingerprint);
+
+    private sealed record Entry(FileFingerprint Fingerprint, string AnalyzerVersion, int SchemaVersion, long LastUsed, FileSummary Summary, IReadOnlyList<CompanionKey> Companions);
 }

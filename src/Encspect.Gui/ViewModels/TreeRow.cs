@@ -11,13 +11,21 @@ public sealed class TreeRow : ObservableObject
 
     private bool _isExpanded;
 
-    internal TreeRow(Node node, TreeRow? parent, int childIndex)
+    private readonly string? _valueText;
+
+    // A top-level row stands for a file: the report's root, or a companion file's, whose row shows the file's name as its value (valueText).
+    internal TreeRow(Node node, TreeRow? parent, int childIndex, int rootIndex = 0, string? valueText = null)
     {
         Node = node;
         Parent = parent;
         ChildIndex = childIndex;
         Depth = parent is null ? 0 : parent.Depth + 1;
+        RootIndex = parent?.RootIndex ?? rootIndex;
+        _valueText = valueText;
     }
+
+    // Which top-level row of the tree this row is or lies below: 0 for the analyzed file, then one for each companion file.
+    public int RootIndex { get; }
 
     public Node Node { get; }
 
@@ -32,7 +40,7 @@ public sealed class TreeRow : ObservableObject
 
     public string Name => Node.Name;
 
-    public string? Value => Node.Value?.ToString();
+    public string? Value => _valueText ?? Node.Value?.ToString();
 
     // What the row's tooltip shows: the name and value, then what the field is.
     public string Heading => Value is { } value ? $"{Name}: {value}" : Name;

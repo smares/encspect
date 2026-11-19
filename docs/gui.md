@@ -13,7 +13,7 @@ dotnet run -c Release --project src/Encspect.Gui [-- <file-or-folder>...]
 
 The main window lists a folder's files on the right, with these columns:
 
-- format and codec;
+- format and codec (for a file with a correction file, the codec cell's tooltip gives the pairing, worded as the command line words it: "Correction file: consistent (song.wvc), lossless with its correction file");
 - duration;
 - bitrate (VBR or CBR);
 - sample rate and channel mode;
@@ -52,7 +52,8 @@ A folder seen before fills in from the summary cache. A file takes its row from 
 - size;
 - last-write time;
 - file ID;
-- first and last 64 KiB.
+- first and last 64 KiB;
+- each companion file the analysis looked for (the correction file of a WavPack hybrid or an OptimFROG DualStream file).
 
 Only the other files are analyzed.
 
@@ -62,6 +63,7 @@ Only the other files are analyzed.
   - elsewhere: `~/.cache/Encspect`, or under `$XDG_CACHE_HOME`
 - **Size:** it keeps the 50,000 files used most recently.
 - **Refreshing:** View, Refresh (F5, Cmd+R on macOS) lists the folder again. View, Clear Summary Cache empties the cache and analyzes the folder from scratch.
+- **Companion files:** an entry holds, for each companion the report lists (`Report.Companions` and the pairing's source), its path and, where it was found, its size, last-write time, file ID and first and last 64 KiB, or that it was absent. A correction file added, removed or changed beside the file then analyzes it again, and the key needs no knowledge of the formats. The companion is fingerprinted just after the analysis, so a companion changed in between is keyed as it is after the change.
 - **Scope:** the detail window never uses the cache, and the CLI keeps none.
 - **Why the key has a hash:** the hash of the first and last 64 KiB catches taggers that rewrite tags and keep the time. A hash of the whole file would cost as much reading as the analysis.
 - **The file ID** is the volume serial number and file index from `GetFileInformationByHandle` on Windows, and the device and inode on Linux (`statx`, whose struct is the same on every architecture) and macOS (`fstat`, `fstat$INODE64` on x64), called on the open file through the C library the process has loaded, never through private .NET APIs. FreeBSD and other systems have none, and the other parts of the key carry on without it.
@@ -84,6 +86,13 @@ Only the other files are analyzed.
   - the streams at the top, each with its channel layout and speakers, the lost samples of a stream that has any ("1,152 lost samples", after the duration), and the object audio and JOC object count of a stream that has them, and the protection of a protected one ("encrypted: Common Encryption, AES-CTR (cenc); DRM systems: Widevine Content Protection", or "protected, not encrypted" where its samples are in the clear);
   - the structure tree, whose rows are made only as they are shown and whose children are read only when expanded, so a stream of 100,000 frames opens at once;
   - a hex view read from the file as it scrolls. Selecting a node marks its bytes, all its ranges where they are not contiguous, and, for a field of a few bits, the bits themselves, also in the bit strip below.
+- **Correction file:** a file that has one (a WavPack hybrid `.wv` with its `.wvc`, an OptimFROG `.ofs` with its `.ofc`) is one row in the list and one detail window:
+  - the streams line ends with the pairing, "Correction file: consistent (song.wvc), lossless with its correction file", "inconsistent (song.wvc: 3 correction blocks missing), lossy without its correction file", "missing (song.wvc), lossy without its correction file" and so on;
+  - the structure tree has a second top-level row, "Correction File" with the file's name, collapsed until opened; its nodes have offsets in the correction file;
+  - the hex view shows the file of the selected node's tree, and a header above it names the file whenever the file has a companion;
+  - the findings list holds the correction file's own findings after the file's, each with the file's name, and the findings counts include them, as the list's do; selecting one selects its node in the correction file's tree;
+  - a refresh keeps the selected node in its tree;
+  - "Decode Audio" analyzes the pair again with decoding, since the host finds the companion beside the file as it does for any analysis, so the pairing, the second tree and the selection stay.
 - **Explanations:**
   - Every row's tooltip says what the field is and what its value means.
   - The panel under the hex view shows that for the selected node, with a "Learn More" link to a background article on the concept behind it, such as mid/side stereo or the bit reservoir.

@@ -8,15 +8,22 @@ namespace Encspect.Gui.ViewModels;
 // expanded row followed by the rows below it. Nothing is built ahead: the list asks for the rows it
 // shows by index, and a row is located by walking down from the root past the expanded rows before
 // it, so expanding a stream of 100,000 frames costs nothing until frames are shown, and then only
-// the blocks of frames on screen are built. Changes are announced with ranges that resolve their
+// the blocks of frames on screen are built. Top-level rows follow one another: the analyzed file's, then one for each companion
+// file (its correction file), collapsed until opened. Changes are announced with ranges that resolve their
 // rows on demand too, so a handler reads them while it handles the change, as lists do.
 public sealed class StructureTree : IReadOnlyList<TreeRow>, IList, INotifyCollectionChanged
 {
-    public StructureTree(Node root)
+    public StructureTree(Node root, IReadOnlyList<CompanionTree>? companions = null)
     {
         ArgumentNullException.ThrowIfNull(root);
 
-        Root = new TreeRow(root, null, 0);
+        var roots = new List<TreeRow> { new(root, null, 0) };
+        for (int i = 0; companions is not null && i < companions.Count; i++)
+        {
+            roots.Add(new TreeRow(companions[i].Root, null, 0, i + 1, companions[i].FileName));
+        }
+
+        Roots = roots;
         if (Root.HasChildren)
         {
             Root.LoadChildren();
@@ -26,9 +33,12 @@ public sealed class StructureTree : IReadOnlyList<TreeRow>, IList, INotifyCollec
 
     public event NotifyCollectionChangedEventHandler? CollectionChanged;
 
-    public TreeRow Root { get; }
+    // The top-level rows: the analyzed file's, then each companion file's.
+    public IReadOnlyList<TreeRow> Roots { get; }
 
-    public int Count => 1 + (Root.IsExpanded ? Root.VisibleCount : 0);
+    public TreeRow Root => Roots[0];
+
+    public int Count => Roots.Sum(SizeOf);
 
     bool IList.IsFixedSize => false;
 
@@ -43,7 +53,18 @@ public sealed class StructureTree : IReadOnlyList<TreeRow>, IList, INotifyCollec
         get
         {
             ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual((uint)index, (uint)Count, nameof(index));
-            return index == 0 ? Root : Descendant(Root, index - 1);
+            foreach (TreeRow root in Roots)
+            {
+                int size = SizeOf(root);
+                if (index < size)
+                {
+                    return index == 0 ? root : Descendant(root, index - 1);
+                }
+
+                index -= size;
+            }
+
+            throw new ArgumentOutOfRangeException(nameof(index));
         }
     }
 
@@ -70,7 +91,19 @@ public sealed class StructureTree : IReadOnlyList<TreeRow>, IList, INotifyCollec
             index += 1 + Position(parent, current.ChildIndex);
         }
 
-        return ReferenceEquals(TopOf(row), Root) ? index : -1;
+        int offset = 0;
+        TreeRow top = TopOf(row);
+        foreach (TreeRow root in Roots)
+        {
+            if (ReferenceEquals(root, top))
+            {
+                return offset + index;
+            }
+
+            offset += SizeOf(root);
+        }
+
+        return -1;
     }
 
     public void Expand(TreeRow row)
@@ -129,11 +162,18 @@ public sealed class StructureTree : IReadOnlyList<TreeRow>, IList, INotifyCollec
 
     // The row at the end of a path of child indexes from the root (Finding.Path), with every row
     // on the way expanded; null when the path leads nowhere.
-    public TreeRow? Reveal(IReadOnlyList<int> path)
+    public TreeRow? Reveal(IReadOnlyList<int> path) => Reveal(0, path);
+
+    // The same below the top-level row at rootIndex (0 for the analyzed file, then the companion files).
+    public TreeRow? Reveal(int rootIndex, IReadOnlyList<int> path)
     {
         ArgumentNullException.ThrowIfNull(path);
+        if ((uint)rootIndex >= (uint)Roots.Count)
+        {
+            return null;
+        }
 
-        TreeRow row = Root;
+        TreeRow row = Roots[rootIndex];
         foreach (int childIndex in path)
         {
             if (!row.HasChildren || childIndex < 0 || childIndex >= row.LoadChildren().Count)
@@ -179,6 +219,8 @@ public sealed class StructureTree : IReadOnlyList<TreeRow>, IList, INotifyCollec
     void IList.Remove(object? value) => throw new NotSupportedException();
 
     void IList.RemoveAt(int index) => throw new NotSupportedException();
+
+    private static int SizeOf(TreeRow root) => 1 + (root.IsExpanded ? root.VisibleCount : 0);
 
     private static TreeRow TopOf(TreeRow row)
     {
@@ -306,3 +348,6 @@ public sealed class StructureTree : IReadOnlyList<TreeRow>, IList, INotifyCollec
         public void RemoveAt(int index) => throw new NotSupportedException();
     }
 }
+
+// A companion file's tree and its file name, the second top-level row of a report that has one.
+public readonly record struct CompanionTree(Node Root, string FileName);

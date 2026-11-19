@@ -111,6 +111,8 @@
               </ScrollViewer>
             </StackPanel>
           </Border>
+          <TextBlock DockPanel.Dock="Top" Name="HexTitle" Text="{Binding HexTitle}" Classes="secondary" FontSize="12" Margin="12,6,12,2" TextTrimming="CharacterEllipsis"
+                     ToolTip.Tip="The file the bytes below belong to." IsVisible="{Binding HasHexTitle}" />
           <views:HexView Name="Hex" Document="{Binding Document}" Highlight="{Binding Highlight}" />
         </DockPanel>
 

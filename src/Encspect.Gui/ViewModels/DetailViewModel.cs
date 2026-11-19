@@ -23,6 +23,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
     private StructureTree? _tree;
     private TreeRow? _selectedNode;
     private HexDocument? _document;
+    private IReadOnlyList<HexDocument?> _documents = [];
     private HexHighlight? _highlight;
     private BitStrip? _bitStrip;
     private IReadOnlyList<FindingItem> _allFindings = [];
@@ -182,9 +183,11 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         {
             if (Set(ref _selectedNode, value))
             {
+                Document = DocumentOf(value);
                 Highlight = value is null ? null : HexHighlight.For(value.Node);
                 BitStrip = BitStrip.For(_highlight, _document);
                 Graphs.MarkFrame(FrameOf(value)?.Node.Offset);
+                Raise(nameof(HexTitle));
                 Raise(nameof(SelectionText));
                 Raise(nameof(SelectionDescription));
                 Raise(nameof(SelectionTopic));
@@ -273,28 +276,29 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         ? (row.Value is { } value ? $"{row.Name}: {value}" : row.Name) + " · " + Format.Location(row.Node)
         : string.Empty;
 
+    // The file the selected node's tree belongs to, as the hex view shows it: the analyzed file's, or a companion file's.
     public HexDocument? Document
     {
         get => _document;
         private set
         {
-            if (_document is not null)
+            if (Set(ref _document, value))
             {
-                _document.Changed -= OnDocumentChanged;
+                Raise(nameof(HexTitle));
+                Raise(nameof(HasHexTitle));
             }
-
-            Set(ref _document, value);
-            if (value is not null)
-            {
-                value.Changed += OnDocumentChanged;
-            }
-
-            Raise(nameof(HasFileChanged));
         }
     }
 
-    // The file on disk is no longer the one analyzed, so the hex view shows none of its bytes.
-    public bool HasFileChanged => _document?.HasChanged == true;
+    // The hex view's header: the name of the file it shows, for a file that has companion files.
+    public string? HexTitle => _report is { Companions.Count: > 0 } && _document is not null
+        ? System.IO.Path.GetFileName(_selectedNode?.RootIndex is > 0 and var index ? _report.Companions[index - 1].Report.Source : _path)
+        : null;
+
+    public bool HasHexTitle => HexTitle is not null;
+
+    // Any file shown no longer is the one analyzed, so the hex view shows none of its bytes.
+    public bool HasFileChanged => _documents.Any(d => d?.HasChanged == true);
 
     public HexHighlight? Highlight
     {
@@ -381,7 +385,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         get => _selectedFinding;
         set
         {
-            if (Set(ref _selectedFinding, value) && value?.Path is { } path && _tree?.Reveal(path) is { } row)
+            if (Set(ref _selectedFinding, value) && value?.Path is { } path && _tree?.Reveal(value.RootIndex, path) is { } row)
             {
                 SelectedNode = row;
             }
@@ -420,11 +424,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
             return Task.CompletedTask;
         }
 
-        var keep = new List<int>();
-        for (TreeRow? row = _selectedNode; row?.Parent is not null; row = row.Parent)
-        {
-            keep.Insert(0, row.ChildIndex);
-        }
+        TreePlace? keep = PlaceOf(_selectedNode);
 
         return Load(path, _folderError, keep, _forcedFormat, _isDecodeRequested, keepShown: false);
     }
@@ -439,11 +439,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
             return Task.CompletedTask;
         }
 
-        var keep = new List<int>();
-        for (TreeRow? row = _selectedNode; row?.Parent is not null; row = row.Parent)
-        {
-            keep.Insert(0, row.ChildIndex);
-        }
+        TreePlace? keep = PlaceOf(_selectedNode);
 
         return Load(path, _folderError, keep, format, _isDecodeRequested, keepShown: false);
     }
@@ -458,11 +454,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
             return Task.CompletedTask;
         }
 
-        var keep = new List<int>();
-        for (TreeRow? row = _selectedNode; row?.Parent is not null; row = row.Parent)
-        {
-            keep.Insert(0, row.ChildIndex);
-        }
+        TreePlace? keep = PlaceOf(_selectedNode);
 
         return Load(path, _folderError, keep, _forcedFormat, decode: true, keepShown: true);
     }
@@ -476,7 +468,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         }
     }
 
-    private Task Load(string path, string? folderError, IReadOnlyList<int>? keep, string? forced, bool decode, bool keepShown)
+    private Task Load(string path, string? folderError, TreePlace? keep, string? forced, bool decode, bool keepShown)
     {
         ArgumentException.ThrowIfNullOrEmpty(path);
 
@@ -532,11 +524,11 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         Task.Run(() =>
         {
             Report? report = null;
-            HexDocument? document = null;
+            IReadOnlyList<HexDocument?> documents = [];
             string? failure = null;
             try
             {
-                report = folderError is not null ? FileReports.UnreadableFolder(path, folderError) : Analyze(path, options, out length, out document);
+                report = folderError is not null ? FileReports.UnreadableFolder(path, folderError) : Analyze(path, options, out length, out documents);
             }
             catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
             {
@@ -558,7 +550,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
                 {
                     if (generation != _generation || report is null)
                     {
-                        document?.Dispose();
+                        DisposeAll(documents);
                         if (keepShown && generation == _generation)
                         {
                             IsDecoding = false;
@@ -570,7 +562,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
                     }
                     else
                     {
-                        Show(report, document, keep, showAudio: decode && keepShown);
+                        Show(report, documents, keep, showAudio: decode && keepShown);
                         _isDecodeRequested = decode;
                     }
 
@@ -725,20 +717,57 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         Clear();
     }
 
-    private Report Analyze(string path, AnalysisOptions options, out long length, out HexDocument? document)
+    // Analyzes the file and opens a document for it and one for each companion file the report holds, the file at index 0.
+    private Report Analyze(string path, AnalysisOptions options, out long length, out IReadOnlyList<HexDocument?> documents)
     {
         // A folder or a file that is gone has no length; the analysis then reports what it is.
         var info = new FileInfo(path);
         length = info.Exists ? info.Length : 0;
         DateTime lastWrite = info.Exists ? info.LastWriteTimeUtc : default;
-        document = null;
+        documents = [];
         Report report = _analyzer.AnalyzeFile(path, options);
         if (!FileReports.IsNotAnalyzed(report))
         {
-            document = HexDocument.Open(path, length, lastWrite);
+            // A companion's root spans its file as analyzed, so a file that has since changed length shows as changed when first read.
+            documents =
+            [
+                HexDocument.Open(path, length, lastWrite),
+                .. report.Companions.Select(c => HexDocument.Open(c.Report.Source, c.Report.Root.Length, File.GetLastWriteTimeUtc(c.Report.Source))),
+            ];
         }
 
         return report;
+    }
+
+    private static void DisposeAll(IReadOnlyList<HexDocument?> documents)
+    {
+        foreach (HexDocument? document in documents)
+        {
+            document?.Dispose();
+        }
+    }
+
+    // Where a row stands: the top-level row it lies below and the child indexes from it, which a reload finds again in the new tree.
+    private static TreePlace? PlaceOf(TreeRow? selected)
+    {
+        if (selected is null)
+        {
+            return null;
+        }
+
+        var path = new List<int>();
+        for (TreeRow? row = selected; row?.Parent is not null; row = row.Parent)
+        {
+            path.Insert(0, row.ChildIndex);
+        }
+
+        return new TreePlace(selected.RootIndex, path);
+    }
+
+    private HexDocument? DocumentOf(TreeRow? row)
+    {
+        int index = row?.RootIndex ?? 0;
+        return index < _documents.Count ? _documents[index] : null;
     }
 
     private static bool IsRegularOrMissing(string path)
@@ -772,19 +801,18 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         return false;
     }
 
-    private void Show(Report report, HexDocument? document, IReadOnlyList<int>? keep, bool showAudio = false)
+    private void Show(Report report, IReadOnlyList<HexDocument?> documents, TreePlace? keep, bool showAudio = false)
     {
-        if (_document is not null && !ReferenceEquals(_document, document))
-        {
-            _document.Dispose();
-        }
-
         SelectedFinding = null;
         IsDecoding = false;
-        Document = document;
+        SetDocuments(documents);
         Report = report;
-        Tree = new StructureTree(report.Root);
-        _allFindings = report.Findings.Select(f => new FindingItem(f)).ToList();
+        Tree = new StructureTree(report.Root, [.. report.Companions.Select(c => new CompanionTree(c.Report.Root, System.IO.Path.GetFileName(c.Report.Source)))]);
+        _allFindings =
+        [
+            .. report.Findings.Select(f => new FindingItem(f)),
+            .. report.Companions.SelectMany((c, i) => c.Report.Findings.Select(f => new FindingItem(f, i + 1, System.IO.Path.GetFileName(c.Report.Source)))),
+        ];
         RaiseCounts();
         FilterFindings();
         IsLoading = false;
@@ -794,7 +822,32 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         Graphs.Load(report, showAudio);
         Raise(nameof(HasNoGraphs));
         RaiseDetection();
-        SelectedNode = keep is { Count: > 0 } && Tree.Reveal(keep) is { } kept ? kept : Tree.Root;
+        SelectedNode = keep is { } place && Tree.Reveal(place.Root, place.Path) is { } kept && (place.Path.Count > 0 || place.Root > 0) ? kept : Tree.Root;
+    }
+
+    // Replaces the documents the hex view reads: the old ones are closed, and a change in any of the new ones is raised.
+    private void SetDocuments(IReadOnlyList<HexDocument?> documents)
+    {
+        foreach (HexDocument? old in _documents)
+        {
+            if (old is not null)
+            {
+                old.Changed -= OnDocumentChanged;
+            }
+        }
+
+        DisposeAll(_documents);
+        _documents = documents;
+        foreach (HexDocument? document in documents)
+        {
+            if (document is not null)
+            {
+                document.Changed += OnDocumentChanged;
+            }
+        }
+
+        Document = documents.Count > 0 ? documents[0] : null;
+        Raise(nameof(HasFileChanged));
     }
 
     private void Clear()
@@ -803,8 +856,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         SelectedNode = null;
         Tree = null;
         Report = null;
-        _document?.Dispose();
-        Document = null;
+        SetDocuments([]);
         _allFindings = [];
         Findings.Clear();
         Streams = [];
@@ -894,3 +946,6 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         public void Report(long value) => report(value);
     }
 }
+
+// Where a row of the structure tree stands: which top-level row (0 for the analyzed file, then its companion files) and the child indexes below it.
+internal readonly record struct TreePlace(int Root, IReadOnlyList<int> Path);
