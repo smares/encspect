@@ -64,7 +64,7 @@ def libwavpack_expectation(version, channels, mono, raw, flags, bits, samples):
     decodes mono from version 2); a file the flag kludge refuses does not open."""
     if raw:
         return {"opens": False}
-    refused = version == 3 and (flags & 0x8000) and ((flags & NOT_STORED) or (bits and (flags & 0x0400) and (flags & (0x0002 | 0x0010 | 0x1000))))
+    refused = version == 3 and (flags & 0x8000) and ((flags & NOT_STORED) or (bits and ((flags & 0x0400) and (flags & (0x0002 | 0x0010)) or (flags & 0x1000))))
     if refused:
         return {"opens": False}
     return {"opens": True, "version": version, "channels": 1 if (mono or channels == 1) else 2, "samples_unpacked": 0 if (version == 1 and channels == 1) else samples}
