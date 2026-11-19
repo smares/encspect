@@ -30,6 +30,9 @@ public sealed class SummaryCache : IDisposable
 {
     public const int FormatVersion = 8;
 
+    // Coarse file systems keep times to two seconds.
+    private static readonly TimeSpan TimestampGranularity = TimeSpan.FromSeconds(2);
+
     public const int DefaultMaxEntries = 50_000;
 
     // A store larger than any the entry bound allows is no store of ours.
@@ -138,7 +141,9 @@ public sealed class SummaryCache : IDisposable
         }
     }
 
-    public void Put(string path, FileFingerprint fingerprint, FileSummary summary)
+    // started: when the analysis began. A companion that was written since then (within the file system's timestamp granularity), or whose presence or size
+    // is not what the report saw, may be newer than the summary, so the entry is not kept: the file is analyzed again next time.
+    public void Put(string path, FileFingerprint fingerprint, FileSummary summary, DateTime? started = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(path);
         ArgumentNullException.ThrowIfNull(fingerprint);
@@ -146,6 +151,18 @@ public sealed class SummaryCache : IDisposable
 
         // Each companion the analysis looked for is fingerprinted as it is now, or recorded as absent.
         CompanionKey[] companions = [.. summary.CompanionPaths.Select(p => new CompanionKey(p, FileFingerprint.Read(p)))];
+        bool isKnown = summary.CompanionLengths.Count == companions.Length;
+        for (int i = 0; i < companions.Length; i++)
+        {
+            FileFingerprint? now = companions[i].Fingerprint;
+            long? seen = isKnown ? summary.CompanionLengths[i] : null;
+            bool isDifferent = isKnown && ((seen is null) != (now is null) || (seen is { } length && now is { } file && file.Size != length));
+            if (isDifferent || (started is { } begun && now is not null && now.LastWriteTicks > begun.Ticks - TimestampGranularity.Ticks))
+            {
+                return;
+            }
+        }
+
         lock (_lock)
         {
             var entry = new Entry(fingerprint, _analyzerVersion, _schemaVersion, _clock(), summary, companions);
