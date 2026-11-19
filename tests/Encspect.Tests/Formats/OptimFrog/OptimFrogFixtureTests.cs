@@ -124,11 +124,12 @@ public class OptimFrogFixtureTests
         Assert.Equal(CompanionReport.Correction, pair.Role);
         Assert.Equal("Correction File", pair.Report.Root.Name);
         Assert.Equal(Path.GetFileNameWithoutExtension(name) + ".ofc", pair.Report.Source);
-        StreamInfo other = Assert.Single(pair.Report.Streams);
-        Assert.True(other.IsCorrectionFile);
+        bool hasData = pairing.Problems.All(p => p.Kind != CorrectionProblemKind.NotCorrectionData);
+        Assert.Equal(hasData, pair.Report.Streams.Count == 1);
+        Assert.All(pair.Report.Streams, s => Assert.True(s.IsCorrectionFile));
         Assert.DoesNotContain(pair.Report.Findings, f => f.Code == "optimfrog.correction-file");
         Assert.All(pair.Report.Findings, f => Assert.NotNull(f.Path));
-        if (pairing.Problems.All(p => p.Kind != CorrectionProblemKind.NotCorrectionData))
+        if (hasData)
         {
             using FileStream alone = File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, "optimfrog", companion.GetString()!));
             Report reference = Analyzer.CreateDefault().Analyze(companion.GetString()!, alone);

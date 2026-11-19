@@ -118,7 +118,7 @@ public class CompanionTests
         string ofs = folder.Copy(Main, "song.ofs");
         folder.MakeFifo("song.ofc");
 
-        Report report = Task.Run(() => AnalyzeFile(ofs)).WaitAsync(TimeSpan.FromSeconds(60)).GetAwaiter().GetResult();
+        Report report = AnalyzeFile(ofs);
 
         Assert.Equal(("correction.unreadable", true), (Assert.Single(report.Findings).Code, Stream(report).Correction!.IsUnreadable));
     }

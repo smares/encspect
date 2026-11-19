@@ -14,6 +14,15 @@ public sealed partial class Analyzer
         private readonly Dictionary<string, Companion> _opened = [];
         private IFormatParser? _parser;
         private ParserRouter? _router;
+        private Exception? _failure;
+
+        public void ThrowIfFailed()
+        {
+            if (_failure is not null)
+            {
+                System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(_failure).Throw();
+            }
+        }
 
         public void Begin(IFormatParser parser, ParserRouter router)
         {
@@ -28,7 +37,21 @@ public sealed partial class Analyzer
                 return opened;
             }
 
-            CompanionSource.Lookup lookup = source.Find(input, extension);
+            CompanionSource.Lookup lookup;
+            try
+            {
+                lookup = source.Find(input, extension);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                // A caller's function that throws something else is not a parser bug: it reaches the caller of Analyze once the format parser has returned, as a sink's does.
+                _failure ??= ex;
+                string name = CompanionSource.NameOf(input, extension);
+                Companion failed = Companion.Unchecked(name, "the caller's function failed", isUnreadable: false);
+                _opened[extension] = failed;
+                return failed;
+            }
+
             Companion companion = Prepare(lookup);
             _opened[extension] = companion;
             return companion;

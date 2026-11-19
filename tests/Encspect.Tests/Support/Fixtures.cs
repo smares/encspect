@@ -85,14 +85,16 @@ internal static class Fixtures
     // correction file; any other fixture is analyzed from a stream, which has no folder to look in.
     public static AnalysisOptions? CompanionOptions(string name)
     {
-        if (!File.Exists(MpegCompanion(name, ".expected.json")) || !LoadMpegManifest(name).TryGetProperty("companion", out JsonElement companion))
+        string manifest = MpegCompanion(name, ".expected.json");
+        if (!File.Exists(manifest) || !File.ReadAllText(manifest).Contains("\"companion\":", StringComparison.Ordinal)
+            || !LoadMpegManifest(name).TryGetProperty("companion", out JsonElement companion))
         {
             return null;
         }
 
+        // Whatever extension the parser asks for gets the file the manifest names (an .ofr as the companion of an .ofs, say).
         string path = Path.Combine(FixtureDirectory, Path.GetDirectoryName(name)!, companion.GetString()!);
-        string extension = Path.GetExtension(path)[1..];
-        return new AnalysisOptions { Companions = CompanionSource.From(asked => asked == extension ? File.OpenRead(path) : null) };
+        return new AnalysisOptions { Companions = CompanionSource.From(_ => File.OpenRead(path)) };
     }
 
     public static string MpegCompanion(string name, string suffix) =>

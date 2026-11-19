@@ -949,6 +949,7 @@ public sealed partial class Analyzer
 
         // The front end's exception traveled through none of the parsers; it reaches the caller now, without a report.
         decoding?.ThrowIfSinkFailed();
+        companions.ThrowIfFailed();
         findings.AddRange(context.Findings);
         return (context.Streams, detection);
     }
