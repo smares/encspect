@@ -176,6 +176,7 @@ def libwavpack(tool, path, companion=None):
         parts = line.split(" ")
         if parts[0] == "block":
             blocks.append(parts[1:])
+            facts.setdefault("stream_version", parts[3])
         elif parts[0] == "open":
             facts["open_error"] = line
         else:
@@ -265,8 +266,14 @@ def check_libwavpack(name, manifest, path, report, tool, problems):
         pairs.append(("samples", int(facts["samples"]) * (8 if is_dsd else 1), stream["samples"]))
     if statistic(report, "Compression Mode") is not None:
         mode = "very high" if facts["very_high"] == "1" else "high" if facts["high"] == "1" else "fast" if facts["fast"] == "1" else "normal"
+        # WavpackGetMode reports the high mode of a stream older than version 0x405 (WavPack before 4.40) as very high, the same
+        # algorithm under its later name (common_utils.c); the report names the mode as the file's flags and its encoder do.
+        if mode == "very high" and int(facts.get("stream_version", "410"), 16) < 0x405:
+            mode = "high"
         pairs.append(("compression mode", mode, statistic(report, "Compression Mode")))
-        pairs.append(("extra level", facts["extra"] if facts["extra"] != "-1" else "none", str(statistic(report, "Extra Processing Level"))))
+        # A level of 0 is libwavpack's "unknown": the extra flag is set and no level is stored (WavPack before 4.40).
+        extra = "none" if facts["extra"] == "-1" else "not stored" if facts["extra"] == "0" else facts["extra"]
+        pairs.append(("extra level", extra, str(statistic(report, "Extra Processing Level"))))
     md5 = statistic(report, "MD5 Checksum")
     pairs.append(("MD5 digest", facts.get("md5"), md5))
     if statistic(report, "Source Format") is not None:
@@ -323,7 +330,11 @@ def check_wvunpack_summary(name, manifest, path, report, work, problems):
     want = set()
     want.add("hybrid lossy" if statistic(report, "IsHybrid") else "lossless")
     mode = statistic(report, "Compression Mode")
-    if mode == "high":
+    if mode == "high" and stream_version(report) < 0x405:
+        # wvunpack shows the high mode of a stream older than 0x405 (WavPack before 4.40) as very high, the same algorithm under its later name
+        # (WavpackGetMode, common_utils.c); the report names it as the file's flags and its encoder do.
+        want.add("very high")
+    elif mode == "high":
         want.add("high")
     elif mode == "very high":
         want.add("very high")
@@ -574,6 +585,14 @@ def check_ffprobe(name, manifest, path, report, problems):
 
 MEDIAINFO_SETTINGS = [("IsFastMode", "-f"), ("IsHighMode", "-h"), ("IsVeryHighMode", "-hh"), ("CreatesCorrectionFile", "-c"), ("OptimizesCorrectionFile", "-cc"),
                       ("StoresMd5", "-m"), ("UsesDynamicNoiseShaping", "-use-dns")]
+
+
+def stream_version(report):
+    """The first block header's stream version (0x404 for the DOS build of 4.31), or 0x410 where the report shows none."""
+    for node in walk_blocks(report):
+        if node["name"] == "Block Header":
+            return next((f["value"] for f in node["children"] if f["name"] == "Stream Version"), 0x410)
+    return 0x410
 
 
 def config_flags(report):

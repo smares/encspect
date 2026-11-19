@@ -1,0 +1,108 @@
+{
+ "length": 49404,
+ "header": {
+  "offset": 44,
+  "length": 36,
+  "ck_size": 28,
+  "version": 3,
+  "bits": 0,
+  "flags": "fc10",
+  "flag_names": [
+   "high",
+   "new-high",
+   "cancel-extreme",
+   "cross-decorr",
+   "new-decorr",
+   "joint-stereo",
+   "extreme-decorr"
+  ],
+  "shift": 0,
+  "total_samples": 24000,
+  "crc": "30faeec2",
+  "crc2": "00000000",
+  "extension": "WAV",
+  "extra_bc": 0,
+  "extras": "000000"
+ },
+ "wav": {
+  "riff_size": 96072,
+  "chunks": [
+   {
+    "id": "fmt ",
+    "offset": 12,
+    "size": 16
+   },
+   {
+    "id": "data",
+    "offset": 36,
+    "size": 96000
+   }
+  ],
+  "data_size": 96000,
+  "data_offset": 44,
+  "format": {
+   "tag": 1,
+   "channels": 2,
+   "sample_rate": 44100,
+   "byte_rate": 176400,
+   "block_align": 4,
+   "bits_per_sample": 16
+  }
+ },
+ "figures": {
+  "channels": 2,
+  "sample_rate": 44100,
+  "bits_per_sample": 16,
+  "bytes_per_sample": 2,
+  "samples": 24000,
+  "mode": "lossless",
+  "samples_from_data_chunk": 24000,
+  "total_samples_match": true
+ },
+ "trailer": {
+  "offset": 49352,
+  "length": 52,
+  "marker": 16,
+  "chunks": [
+   {
+    "id": "id3 ",
+    "size": 28
+   }
+  ]
+ },
+ "bitstream": {
+  "offset": 80,
+  "length": 49272
+ },
+ "encoder": {
+  "tool": "WavPack 3.97 for Win32 (ReallyRareWares: wavpack3.97.zip), run on Windows 10",
+  "arguments": [],
+  "input": {
+   "kind": "wav",
+   "rate": 44100,
+   "channels": 2,
+   "bits": 16,
+   "samples": 24000,
+   "chunks_before_data": false,
+   "chunks_after_data": true,
+   "pcm_md5": "33f110d8eb91888849a451b5f07f99a7",
+   "file_md5": "e764398ab45156eac87bfcfe6fb507b4"
+  },
+  "file": "main file"
+ },
+ "crosscheck": {
+  "libwavpack_legacy": {
+   "opens": true,
+   "version": 3,
+   "channels": 2,
+   "samples_unpacked": 24000
+  },
+  "original_decoder": {
+   "tool": "wvunpack 3.97 for Win32, run on Windows 10",
+   "pcm_md5": "33f110d8eb91888849a451b5f07f99a7",
+   "pcm_bytes": 96000,
+   "matches_input": true,
+   "file_matches_input": true
+  }
+ }
+}
