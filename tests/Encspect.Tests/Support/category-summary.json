@@ -14,6 +14,7 @@
     "Blocks With Coupling": { "form": "flag", "anchor": "Blocks With Coupling", "denominator": "Audio Blocks Read" },
     "Blocks With Rematrixing": { "form": "flag", "anchor": "Blocks With Rematrixing", "denominator": "Audio Blocks Read" },
     "Blocks With Spectral Extension": { "form": "flag", "anchor": "Blocks With Spectral Extension", "denominator": "Audio Blocks Read" },
-    "Subframes With Block Switching": { "form": "flag", "anchor": "Subframes With Block Switching", "denominator": "Subframes Read" }
+    "Subframes With Block Switching": { "form": "flag", "anchor": "Subframes With Block Switching", "denominator": "Subframes Read" },
+    "Silent Frames": { "form": "flag", "anchor": "Silent Frames", "denominator": "Frames", "findings": ["monkeys-audio.frame-cut", "monkeys-audio.frame-misplaced", "monkeys-audio.frame-too-short", "monkeys-audio.frames-not-listed"] }
   }
 }
