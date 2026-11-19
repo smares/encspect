@@ -394,6 +394,7 @@ def pairing(main_entries, other_data):
     mains = hybrid_blocks(main_entries)
     audio = [e for e in entries if e["kind"] == "block" and e["header"]["samples"]]
     problems = []
+    matched = 0
     first = audio[0]["header"]
     if mains and (mains[0]["header"]["version"] != first["version"] or mains[0]["header"]["total"] != first["total"] or mains[0]["header"]["index"] != first["index"]
                   or (mains[0]["header"]["flags"] ^ first["flags"]) & STREAM_FLAGS):
@@ -412,6 +413,7 @@ def pairing(main_entries, other_data):
                     break
                 j += 1
                 if result == 0:
+                    matched += 1
                     break
                 unmatched += 1
         unmatched += len(audio) - j
@@ -432,7 +434,7 @@ def pairing(main_entries, other_data):
         problems.append({"kind": "checksumsFail", "count": failed})
     if cut:
         problems.append({"kind": "cut", "count": cut})
-    return {"status": "inconsistent" if problems else "consistent", "problems": problems, "entries": entries}
+    return {"status": "inconsistent" if problems else "consistent", "problems": problems, "entries": entries, "matched": matched}
 
 
 FINDING_TEXT = {"notCorrectionData": "holds no correction data", "streamDiffers": "states another stream", "blocksMissing": "lacks",
@@ -459,13 +461,14 @@ def correction(data, entries, info, companion):
         found = pairing(entries, companion)
         result = {"status": found["status"], "problems": found["problems"]}
         findings += [{"code": "correction.inconsistent", "contains": FINDING_TEXT[p["kind"]]} for p in found["problems"]]
-        if is_correction(found["entries"]):
+        kinds = {p["kind"] for p in found["problems"]}
+        # The companion's checksums are the stream's only where its blocks are used: it holds correction data of the same stream and a block of it matches one of the file.
+        if is_correction(found["entries"]) and not kinds & {"notCorrectionData", "streamDiffers"} and found.get("matched", 0) > 0:
             blocks = [e for e in found["entries"] if e["kind"] == "block"]
             missing = sum(1 for e in blocks if e["checksum"] is None and e["header"]["flags"] & 0x10000000 and "truncated" not in e["status"])
             failed = sum(1 for e in blocks if e["checksum"] == "invalid") + missing
             stored = sum(1 for e in blocks if e["checksum"] is not None) + missing
             tally = {"name": "correction block checksum", "covers": "codedData", "coversAllAudio": False, "stored": stored, "checked": stored, "failed": failed}
-        kinds = {p["kind"] for p in found["problems"]}
         if not kinds & {"notCorrectionData", "streamDiffers"}:
             pair = {"entries": found["entries"], "bytes": companion}
     return result, findings, tally, pair

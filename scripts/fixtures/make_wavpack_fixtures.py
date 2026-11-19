@@ -599,6 +599,7 @@ def pair_cases():
     wvc = committed("external-hybrid-b4-correction-wvc.wvc")
     cb = blocks(wvc)
     main = base("hybrid-b4-correction")
+    mono_blocks = blocks(committed("external-hybrid-mono-b3-correction-wvc.wvc"))
     multi = committed("external-hybrid-51-b3-correction-wvc.wvc")
     sets = blocks(multi)
     return {
@@ -612,6 +613,8 @@ def pair_cases():
         "empty": ("An empty file as the correction file of hybrid-b4-correction.", main, b"", None),
         "other-stream": ("The correction file of the mono hybrid-mono-b3-correction beside the stereo hybrid-b4-correction.",
                          main, None, "external-hybrid-mono-b3-correction-wvc.wvc"),
+        "other-stream-damaged": ("The correction file of the mono hybrid-mono-b3-correction with one bit of its first block's stored checksum changed, beside the stereo hybrid-b4-correction: "
+                                 "a file of another stream, whose checksums are not the stream's.", main, b"".join([checksum_broken(mono_blocks[0])] + mono_blocks[1:]), None),
         "other-encode": ("The correction file of hybrid-b4-maximum (the same blocks encoded with -cc) beside hybrid-b4-correction: the blocks agree in index, samples and "
                          "size but not in flags, so libwavpack uses none of them.", main, None, "external-hybrid-b4-maximum-wvc.wvc"),
         "lossless-companion": ("A lossless WavPack file as the correction file of hybrid-b4-correction.", main, None, "external-lossless-16-stereo.wv"),
@@ -635,6 +638,7 @@ PAIR_DECODES = {
     # libwavpack opens no correction file that holds no byte.
     "empty": (False, 0),
     "other-stream": (True, 5),
+    "other-stream-damaged": (True, 5),
     "other-encode": (True, 5),
     "lossless-companion": (True, 5),
     "flags-differ": (True, 1),

@@ -38,15 +38,15 @@ internal static class Pairing
     public static bool Belongs(in BlockHeader first, State other) => Summary.IsCorrection(other) && !Differs(first, other.FirstAudioHeader);
 
     // The check made for the hybrid main file of state main, once its blocks are read. isNotWritten is true where the configuration block says the encoder wrote
-    // no correction file.
-    public static PairResult Check(State main, Node stream, bool isNotWritten)
+    // no correction file, isWritten where it says it wrote one.
+    public static PairResult Check(State main, Node stream, bool isNotWritten, bool isWritten)
     {
         Opened opened = Open(main);
         Companion companion = opened.Handle;
         switch (companion.Status)
         {
             case CompanionStatus.Missing:
-                return new PairResult(new CorrectionPairing { Status = isNotWritten ? CorrectionStatus.NotWritten : CorrectionStatus.Missing, Source = companion.Source }, null);
+                return new PairResult(new CorrectionPairing { Status = isNotWritten ? CorrectionStatus.NotWritten : CorrectionStatus.Missing, Source = companion.Source, IsWritten = isWritten }, null);
             case CompanionStatus.Unchecked:
                 return new PairResult(new CorrectionPairing
                 {
@@ -62,7 +62,11 @@ internal static class Pairing
             return new PairResult(Result(companion, [new CorrectionProblem(CorrectionProblemKind.NotCorrectionData, 1, stream)]), null);
         }
 
-        return new PairResult(Result(companion, Problems(main, other, stream)), other);
+        List<CorrectionProblem> problems = Problems(main, other, stream, out long matched);
+        // The companion's checksums count in the main stream's verification only where its blocks are used: where it states another stream, or none of its blocks
+        // matches a block of the file, they are not the stream's.
+        bool isUsed = matched > 0 && !problems.Any(p => p.Kind is CorrectionProblemKind.NotCorrectionData or CorrectionProblemKind.StreamDiffers);
+        return new PairResult(Result(companion, problems), isUsed ? other : null);
     }
 
     private static CorrectionPairing Result(Companion companion, List<CorrectionProblem> problems) => new()
@@ -75,8 +79,9 @@ internal static class Pairing
 
     // The companion is correction data of the main stream: not another stream (the first blocks' version, total samples, first block index and the
     // flags that state the format), a correction block for each hybrid block and none that no block matches, every block's checksum holding, nothing cut.
-    private static List<CorrectionProblem> Problems(State main, State other, Node stream)
+    private static List<CorrectionProblem> Problems(State main, State other, Node stream, out long matched)
     {
+        matched = 0;
         var problems = new List<CorrectionProblem>();
         if (!Summary.IsCorrection(other))
         {
@@ -84,6 +89,7 @@ internal static class Pairing
             return problems;
         }
 
+        Dictionary<int, int> blocks = [];
         int firstMain = NextMain(main, 0);
         bool differs = firstMain >= 0 && Differs(main.Entries[firstMain].Header, other.FirstAudioHeader);
         if (differs)
@@ -92,10 +98,10 @@ internal static class Pairing
         }
         else
         {
-            Match(main, other, stream, problems);
+            matched = Match(main, other, stream, problems, out blocks);
         }
 
-        Damage(main, other, stream, problems);
+        Damage(main, other, stream, problems, blocks);
         return problems;
     }
 
@@ -151,8 +157,11 @@ internal static class Pairing
         return ((other.BlockIndex - main.BlockIndex) & 0x8000000000L) != 0 ? 1 : -1;
     }
 
-    private static void Match(State main, State other, Node stream, List<CorrectionProblem> problems)
+    // Returns how many main blocks took a correction block; blocks says which main entry each correction entry was matched with.
+    private static long Match(State main, State other, Node stream, List<CorrectionProblem> problems, out Dictionary<int, int> blocks)
     {
+        blocks = [];
+        long matched = 0;
         long missing = 0;
         long unmatched = 0;
         int firstMissing = -1;
@@ -174,6 +183,11 @@ internal static class Pairing
                     break;
                 }
 
+                if (++step % 4096 == 0)
+                {
+                    main.Cancellation.ThrowIfCancellationRequested();
+                }
+
                 int result = Compare(main.Entries[block].Header, other.Entries[correction].Header);
                 if (result == -1)
                 {
@@ -182,9 +196,12 @@ internal static class Pairing
                     break;
                 }
 
+                int taken = correction;
                 correction = NextCorrection(other, correction + 1);
                 if (result == 0)
                 {
+                    matched++;
+                    blocks[taken] = block;
                     break;
                 }
 
@@ -194,6 +211,11 @@ internal static class Pairing
 
         for (; correction >= 0; correction = NextCorrection(other, correction + 1))
         {
+            if (++step % 4096 == 0)
+            {
+                main.Cancellation.ThrowIfCancellationRequested();
+            }
+
             unmatched++;
         }
 
@@ -206,20 +228,26 @@ internal static class Pairing
         {
             problems.Add(new CorrectionProblem(CorrectionProblemKind.BlocksUnmatched, unmatched, stream));
         }
+
+        return matched;
     }
 
     // The checksums that fail and the damage to the file's blocks, as WavpackVerifySingleBlock sees them: a block whose checksum fails or is missing, or
     // whose sub-blocks do not end with it, is not used. A block cut by the end of the data, one that states more than it holds and bytes that hold no
     // block are the file's being cut or having bytes the blocks do not own.
-    private static void Damage(State main, State other, Node stream, List<CorrectionProblem> problems)
+    private static void Damage(State main, State other, Node stream, List<CorrectionProblem> problems, Dictionary<int, int> blocks)
     {
         long failed = 0;
         long cut = 0;
         int firstFailed = -1;
         int firstCut = -1;
-        int audioBlocks = 0;
         for (int i = 0; i < other.Entries.Count; i++)
         {
+            if (i % 4096 == 4095)
+            {
+                main.Cancellation.ThrowIfCancellationRequested();
+            }
+
             Entry e = other.Entries[i];
             if (e.Kind == EntryKind.Block && e.Header.HasAudio)
             {
@@ -227,43 +255,33 @@ internal static class Pairing
                 if ((status & (BlockStatus.Truncated | BlockStatus.Oversized)) != 0)
                 {
                     cut++;
-                    firstCut = firstCut < 0 ? audioBlocks : firstCut;
+                    firstCut = firstCut < 0 ? i : firstCut;
                 }
                 else if ((status & (BlockStatus.ChecksumInvalid | BlockStatus.ChecksumMissing | BlockStatus.Malformed)) != 0)
                 {
                     failed++;
-                    firstFailed = firstFailed < 0 ? audioBlocks : firstFailed;
+                    firstFailed = firstFailed < 0 ? i : firstFailed;
                 }
-
-                audioBlocks++;
             }
             else if (e.Kind == EntryKind.Skipped)
             {
                 cut++;
-                firstCut = firstCut < 0 ? audioBlocks : firstCut;
+                firstCut = firstCut < 0 ? i : firstCut;
             }
         }
 
         if (failed > 0)
         {
-            problems.Add(new CorrectionProblem(CorrectionProblemKind.ChecksumsFail, failed, MainBlock(main, firstFailed, stream)));
+            problems.Add(new CorrectionProblem(CorrectionProblemKind.ChecksumsFail, failed, MainBlock(main, blocks, firstFailed, stream)));
         }
 
         if (cut > 0)
         {
-            problems.Add(new CorrectionProblem(CorrectionProblemKind.Cut, cut, MainBlock(main, firstCut, stream)));
+            problems.Add(new CorrectionProblem(CorrectionProblemKind.Cut, cut, MainBlock(main, blocks, firstCut, stream)));
         }
     }
 
-    // The main file's node of its hybrid block with this number (counted from 0), or the stream's where there is none.
-    private static Node MainBlock(State main, int number, Node stream)
-    {
-        int block = NextMain(main, 0);
-        for (int i = 0; i < number && block >= 0; i++)
-        {
-            block = NextMain(main, block + 1);
-        }
-
-        return block >= 0 ? Nodes.Block(main.Records, block) : stream;
-    }
+    // The main file's node of the block the correction block at this entry was matched with, or the stream's where it was matched with none.
+    private static Node MainBlock(State main, Dictionary<int, int> blocks, int entry, Node stream) =>
+        entry >= 0 && blocks.TryGetValue(entry, out int block) ? Nodes.Block(main.Records, block) : stream;
 }
