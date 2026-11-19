@@ -256,7 +256,12 @@ def build_manifest(name, kind, path, encoder, original):
     note = dict(encoder, file="main file" if kind == "wv" else "correction file written next to " + path_for(name, "wv").name)
     if name.startswith("wv431-"):
         findings = [("wavpack.correction-file", "correction data only")] if kind == "wvc" else []
-        result = ext.build_manifest(path, note, findings)
+        # A version 4 main file with its correction file among the fixtures is analyzed with it (docs/design/correction-files.md).
+        wvc = path_for(name, "wvc")
+        has_pair = kind == "wv" and wvc.exists()
+        result = ext.build_manifest(path, note, findings, wvc.read_bytes() if has_pair else None)
+        if has_pair:
+            result["companion"] = wvc.name
         result["crosscheck"]["original_decoder"] = original
         return result
     if kind == "wvc":
