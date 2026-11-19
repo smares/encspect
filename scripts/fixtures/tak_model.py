@@ -10,6 +10,9 @@ Where the files depart from takStream.pas (the design's list; the files win):
 - Wave data has one CRC-24, at the end, over the header and footer sizes (3 bytes each) and the header and footer bytes.
 - The End object (ID 0) is a header with size 0 and no CRC.
 - The padding object (ID 5, "unused space") has no CRC: its size counts only its bytes, all zero (pipe encoding without -ihs, run 42719547527).
+
+The frames (takStream.pas, "Audio frames"): a header with its CRC-24, the coded data and a CRC-24 over the coded data. A frame states no length, so it ends where the next frame whose
+header CRC-24 holds begins; walk_frames() finds them so, which is the model of the analyzer's walk for files whose frame headers all hold.
 """
 
 import struct
@@ -155,6 +158,39 @@ def walk(data, start=0):
     return objects, audio
 
 
+def walk_frames(data, audio, end, declared_end=None):
+    """The frames from audio to end, each {offset, length, number, last, info, header_length, samples, data_crc_ok, cut}: a frame runs from its header, whose CRC-24 holds, to the
+    next such header, and its data CRC-24 is the 3 bytes before that header (or before end for the last one). The last frame is cut where its data CRC-24 fails and the data ends
+    before the stream does: it is not flagged as the last frame, or the last frame info states a later end (declared_end)."""
+    heads = []
+    pos = audio
+    while pos is not None and pos < end - 1:
+        at = data.find(SYNC, pos, end)
+        if at < 0:
+            break
+        header = frame_header(data[:end], at)
+        if header is not None:
+            heads.append((at, header))
+        pos = at + 1
+    frames = []
+    for k, (at, header) in enumerate(heads):
+        stop = heads[k + 1][0] if k + 1 < len(heads) else end
+        body_start = at + header["length"]
+        entry = {"offset": at, "length": stop - at, "number": header["number"], "last": header["last"], "info": header["info"], "header_length": header["length"],
+                 "samples": header.get("samples"), "cut": False}
+        if stop - body_start < 3:
+            entry["cut"] = True
+            entry["data_crc_ok"] = None
+        else:
+            stored = int.from_bytes(data[stop - 3:stop], "little")
+            entry["data_crc_ok"] = crc24(data[body_start:stop - 3]) == stored
+            if not entry["data_crc_ok"] and k + 1 == len(heads) and (not header["last"] or (declared_end is not None and declared_end > len(data))):
+                entry["cut"] = True
+                entry["data_crc_ok"] = None
+        frames.append(entry)
+    return frames
+
+
 def last_frame(data, entry, audio):
     pos_value = int.from_bytes(data[entry["offset"] + 4:entry["offset"] + 9], "little")
     size = int.from_bytes(data[entry["offset"] + 9:entry["offset"] + 12], "little")
@@ -257,6 +293,14 @@ def manifest(data, extra=None):
             findings.append({"code": "tak.audio-cut"})
     result["end"] = min(end, len(data))
     result["declared_end"] = end if result["last_frame"] and result["last_frame"]["crc_ok"] else None
+    frames = walk_frames(data, audio, result["end"], result["declared_end"]) if audio is not None else []
+    result["frames"] = frames
+    if any(f["cut"] for f in frames):
+        findings.append({"code": "tak.frame-cut"})
+    if any(f["data_crc_ok"] is False for f in frames):
+        findings.append({"code": "tak.frame-crc-mismatch"})
+    if audio is not None and not frames and not (result["declared_end"] or 0) > len(data):
+        findings.append({"code": "tak.no-frames"})
     if result["declared_end"] is not None and result["declared_end"] < len(data):
         # The bytes after the last frame are the host's tag (an APEv2 tag with its header, as Takc writes it) or a finding.
         result["trailing"] = {"bytes": len(data) - result["declared_end"], "is_ape_tag": data[result["declared_end"]:result["declared_end"] + 8] == b"APETAGEX"}
@@ -273,3 +317,18 @@ def manifest(data, extra=None):
     if extra:
         result.update(extra)
     return result
+
+
+if __name__ == "__main__":
+    # Refreshes the manifests in tests/fixtures/tak from the committed bytes: what this reader works out is rewritten, and the keys the fixture scripts add (encoder, built) stay.
+    import json
+    import pathlib
+    import sys
+
+    folder = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "tak"
+    for path in sorted(folder.glob("*.expected.json")):
+        old = json.loads(path.read_text(encoding="utf-8"))
+        new = manifest((folder / (path.name[:-len(".expected.json")] + ".tak")).read_bytes())
+        merged = {**new, **{k: v for k, v in old.items() if k not in new}}
+        path.write_text(json.dumps(merged, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    sys.exit(0)

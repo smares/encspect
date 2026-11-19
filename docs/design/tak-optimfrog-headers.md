@@ -67,9 +67,9 @@ Walked on the real files from samples.ffmpeg.org's archive (2026-11-09, by this 
   - encoder info: the version (major in the top byte), the preset and the evaluation;
   - padding (ID 5), MD5 (ID 6, shown, not compared), last frame info (ID 7: the last frame's position, counted from the first frame, which follows the End object, and its size);
   - End;
-  - the audio data as one node from the end of the metadata to the stream's end; frames are not walked.
+  - the frames from the end of the metadata to the stream's end (as built in 0.4, decision 3 below; the first version of the parser showed them as one audio data node).
 - **The frame length** follows takStream.pas's rule for the frame size type: a time type (94, 125, 188 or 250 ms) gives the rate times the duration, a size type its samples. A time type that comes to more than 16,384 samples, or a size type that lasts more than 250 ms, is a stream info the decoder rejects (`tak.frame-size-invalid`); types 10 to 15 are reserved or "not supported yet" (`tak.frame-size-type-reserved`).
-- **StreamInfo:** codec "TAK", sample rate, channels, bits per sample, samples, duration, average bitrate (the audio data's bytes over the duration).
+- **StreamInfo:** codec "TAK", sample rate, channels, bits per sample, samples, duration, average bitrate (the audio data's bytes over the duration; as built in 0.4, the bits of the frames over the time their samples last, as TTA and FLAC do).
 - **Channel layout,** in the words of TTA and Monkey's Audio: TAK's speaker assignment where the stream info stores one; else the nonzero channel mask of the stored WAV header (`ChannelLayouts.FromWaveMask`, as Monkey's Audio takes it); else one channel is center, two are left/right, and more have no layout. The "Channel Layout" statistic shows it.
 - **Statistics:** Codec, Profile, Preset, Frame Length, Channel Layout, and "Verified Header Checksums" and "Failed Header Checksums" over the metadata objects (the unit "Header", as Musepack SV8 names the CRC of its stream header; [development.md](../development.md#names-of-statistics-and-series) gains the line).
 - **Claims:**
@@ -149,7 +149,7 @@ The lead's requirement (2026-11-09): a DualStream file behaves as a WavPack hybr
 - **Compared:** TAK's metadata CRC-24s (header only, never covering the audio); OptimFROG's `COMP` CRC-32s, which cover the coded data when every block the samples call for is there.
 - **Declared and not compared,** as [CLAUDE.md](../../CLAUDE.md) asks of every checksum a stream stores:
   - both MD5s over the decoded audio, which needs a decoder; the verification says so, as for a stream whose decoder is missing;
-  - TAK's frame header CRC-24 and frame data CRC-24 (takStream.pas, "Audio frames"), since frames are not walked in 0.2 (decision 3).
+  - TAK's frame header CRC-24 and frame data CRC-24 (takStream.pas, "Audio frames"), since frames were not walked in 0.2 (decision 3); both are compared since 0.4.
 - **OptimFROG's MD5** of 5.001 and earlier does not follow RFC 1321 for audio of 56 to 63 bytes modulo 64 (format.txt); the MD5 node's description and the article say so.
 
 ## Fixtures
@@ -217,7 +217,7 @@ The lead's requirement (2026-11-09): a DualStream file behaves as a WavPack hybr
 - **Decoding** of either format, so no MD5 comparison, measurement, entropy figures or coding graphs.
   - OptimFROG's coded data has no public description at all; only the closed library decodes it.
   - A TAK decoder needs the clean-room split above; it goes under "Not planned", brought back if the lead wants TAK measured.
-- **TAK frames** until 0.4 (decision 3): frame count, frame CRC-24s, the bitrate per frame.
+- **TAK frames** (decision 3, done in 0.4): see its "As built" note.
 - **OptimFROG before 4.5xx**, whose layout the specification does not cover; such a file is not matched.
 - **The DualStream pair** (finding the `.ofc` beside the `.ofs` and checking the two together) until 0.4, with WavPack's `.wvc`; and the decoded pair, which needs a decoder.
 - **OptimFROG self-extracting files** (`--selfextract`: the OFR data after an executable stub), which are not matched.
@@ -232,6 +232,12 @@ The lead's requirement (2026-11-09): a DualStream file behaves as a WavPack hybr
 1. **TAK's source:** follow takStream.pas directly, with its notice, and no clean-room split. Recommended: yes; its terms allow it, and FFmpeg is not needed for the header.
 2. **TAK's license for CI:** run Takc.exe on a Windows runner to write fixtures for a non-commercial MIT project, commit only its output, keep the archive in the cache and in encspect-private. Recommended: yes; the terms allow private, non-commercial and educational use, and the archive is redistributable intact.
 3. **TAK frames in 0.2:** walk frames by sync word and header CRC to count them, compare their CRC-24s and draw the bitrate per frame, or stay at the metadata. Recommended: metadata only in 0.2, as the plan says; the frame walk queued in 0.4's "small separate items", since bitrate over time is then owed to TAK by the one-concept rule.
+   - **Done in 0.4 (item 3).** As built:
+     - **Source:** takStream.pas ("Audio frames", "Frame-Info", "Frame-Header") and the SDK documentation; no departure was found, so the list above gains none: every Takc file and both real files hold the frame layout (the header CRC-24 over the header from the sync word, the data CRC-24 over the coded data only, a frame ending where the next begins). No FFmpeg code and no TAK binary was used; ffprobe's packets are a black-box cross-check of each frame's offset and size.
+     - **The walk:** the header states no length, so a frame ends at the next sync word whose header CRC-24 holds, or whose header fails but states the next number, or after which the 3 bytes before it hold the data CRC-24 of the frame; bytes where no such header is found are skipped ([tak.md](../formats/tak.md#the-frame-walk)).
+     - **Reported:** a node for each frame (header fields, info frame's stream info, both CRC-24s), "Frames", "Verified Frame Checksums" and "Failed Frame Checksums" (the data CRC-24), the frames' headers added to "Verified Header Checksums", the figures and the series "Bitrate" and "Bitrate Over Time" as TTA has them, and the findings `tak.frame-header-crc-mismatch`, `tak.frame-crc-mismatch`, `tak.frame-cut`, `tak.frames-missing`, `tak.data-skipped`, `tak.frame-number-discontinuity`, `tak.total-samples-mismatch`, `tak.no-frames` and `tak.frames-limit`.
+     - **Verified:** a TAK stream whose CRC-24s all hold, with all the frames its stream info calls for, is verified without decoding; one with an MD5 stays unverified until a decoder compares it.
+     - **Article:** `tak-frames`; `tak_model.py` walks the frames apart from the analyzer for the manifests.
 4. **OptimFROG's `COMP` blocks:** walk them, compare their CRC-32s and draw the bitrate per block. Recommended: yes; the blocks are length-prefixed and specified, so this is container reading, cheap, and gives the coded data a verification.
 5. **OptimFROG's preset:** report mode and speedup only. Recommended: yes; the presets also set options the header does not store, so naming a preset would be a guess.
 6. **OptimFROG's other encoders** (replaced by the lead's requirement, 2026-11-09): `off` is read as OptimFROG lossless with the float sample types; `ofs` and its correction file follow [OptimFROG DualStream](#optimfrog-dualstream), as WavPack's hybrid mode does, and the pair check goes to 0.4 with WavPack's.
@@ -266,4 +272,4 @@ Run 42719547527 of `tak-fixtures.yml` (Takc 2.3.3 on `windows-2025`; the first r
 3. **TAK fixtures workflow:** the Windows workflow and importer, run once, the files and records committed.
 4. **TAK:** the parser project `Encspect.Formats.Tak` following takStream.pas and the departures listed here, the notice, host registration, goldens, finding coverage, `.tak` in `DescriptionTests`, the cross-check job, docs and articles; the plan's item 4 marked done.
 
-The frame walk of TAK (decision 3) and the DualStream pair go to 0.4's item 3 ([plan](../plan.md#04-free-decoders-and-routes-complete)).
+The frame walk of TAK (decision 3, done) and the DualStream pair go to 0.4's item 3 ([plan](../plan.md#04-free-decoders-and-routes-complete)).

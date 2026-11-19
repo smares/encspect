@@ -8,10 +8,10 @@ internal static class Nodes
 {
     public static Node StreamId(Records r) => new("Stream ID", r.Start, Layout.SignatureLength, "tBaK") { Description = Explain.StreamId, Topic = Topics.Metadata };
 
-    private static Node Bits(string name, long at, int first, int end, NodeValue? value, string description, string? topic = Topics.Metadata) =>
+    internal static Node Bits(string name, long at, int first, int end, NodeValue? value, string description, string? topic = Topics.Metadata) =>
         Node.FromBits(name, at, first, end, value, NodeKind.Detail, description, topic, BitOrder.LeastSignificantFirst);
 
-    private static Node Bytes(string name, long at, long length, NodeValue? value, string description, string? topic = Topics.Metadata) =>
+    internal static Node Bytes(string name, long at, long length, NodeValue? value, string description, string? topic = Topics.Metadata) =>
         new(name, at, length, value) { Description = description, Topic = topic };
 
     private static string DescriptionOf(int id) => id switch
@@ -90,7 +90,7 @@ internal static class Nodes
 
     public static Node CrcField(Records r, ObjectRecord o) => Object(r, o).Children.First(c => c.Name == "CRC-24");
 
-    private static void AddStreamInfo(Node node, long at, StreamInfoFields info)
+    internal static void AddStreamInfo(Node node, long at, StreamInfoFields info)
     {
         node.Add(Bits("Codec", at, 0, 6, Layout.CodecName(info.Codec) ?? $"undefined ({info.Codec})", Explain.Codec));
         node.Add(Bits("Profile", at, 6, 10, NodeValue.Integer(info.Profile), Explain.Profile, Topics.Presets));
@@ -149,7 +149,4 @@ internal static class Nodes
             node.Add(HeaderData.Node(footer, Explain.TerminatingData, isHeader: false));
         }
     }
-
-    public static Node AudioData(long offset, long length) =>
-        new("Audio Data", offset, length, NodeValue.Integer(length, "bytes", "byte")) { Description = Explain.AudioData, Topic = Topics.Metadata };
 }

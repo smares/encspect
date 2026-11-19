@@ -6,7 +6,8 @@ For every manifest in tests/fixtures/tak (import_windows_tak_fixtures.py, make_t
 
 - The records of the Windows run (the `.provenance.json` files: `Takc -fi` and the SDK library's stream info and encoder info): the codec, profile, preset, evaluation,
   encoder version, frame length, sample count, rate, bits, channels, the wave data sizes and the MD5 must equal the manifest's.
-- ffprobe opens an encoder-written file and gives the codec "tak", the rate, the channels, the bits per raw sample and the duration (the stream info's samples over the rate).
+- ffprobe opens an encoder-written file and gives the codec "tak", the rate, the channels, the bits per raw sample and the duration (the stream info's samples over the rate), and
+  its packets are the manifest's frames: the same offsets and sizes.
   For a hand-built file whose CRC-24 of an object fails, its message names the object ("<id> metadata block CRC error"): the CRC-24 placement of the manifest is the one a reader
   checks. Other hand-built files are opened or refused as ffprobe pleases, and the outcome is printed, not asserted.
 - FFmpeg decodes each encoder-written file with `-err_detect crccheck` and no error, and the samples equal the signal that was encoded (tak_cases.py regenerates it; the lossyWAV
@@ -115,7 +116,18 @@ def check_ffprobe(name, manifest, path, problems):
     duration = float(stream.get("duration") or document.get("format", {}).get("duration") or -1)
     if abs(duration - info["samples"] / info["sample_rate"]) > 0.001:
         problems.append(f"ffprobe duration is {duration}, the stream info counts {info['samples'] / info['sample_rate']}")
+    check_packets(manifest, path, problems)
     return True
+
+
+def check_packets(manifest, path, problems):
+    """ffprobe's packets of an encoder-written file are its frames: each starts at the frame's sync word and is as long as the frame (the header, the coded data and the
+    CRC-24 that ends it), which is what the manifest's frames (tak_model.py's walk, the analyzer's too) must give."""
+    packets = loads(run(["ffprobe", "-v", "error", "-select_streams", "a:0", "-show_packets", "-show_entries", "packet=pos,size", "-of", "json", str(path)]).stdout).get("packets", [])
+    found = [(int(p["pos"]), int(p["size"])) for p in packets]
+    expected = [(f["offset"], f["length"]) for f in manifest["frames"]]
+    if found != expected:
+        problems.append(f"ffprobe's packets are {found[:4]}... ({len(found)}), the manifest's frames {expected[:4]}... ({len(expected)})")
 
 
 def signal_of(provenance):

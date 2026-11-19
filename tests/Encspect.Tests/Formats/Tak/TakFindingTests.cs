@@ -41,16 +41,19 @@ public class TakFindingTests
         Assert.Equal(44100, stream.SampleRate);
         Assert.Equal(2, stream.Channels);
         Assert.Equal(16, stream.BitsPerSample);
-        Assert.Equal(44100, stream.Samples);
+        Assert.Equal(6512, stream.Samples);
         Assert.Equal("TAK 2.3.3", stream.Encoder);
         Assert.Equal(Confidence.High, stream.EncoderConfidence);
-        Assert.Null(stream.Verification!.IsVerified);
+        Assert.True(stream.Verification!.IsVerified);
         Assert.Equal(DecodeStatus.NoDecoder, stream.Verification.Decoding);
         ChecksumTally header = stream.Verification.Checksums.Single(c => c.Name == "metadata CRC-24");
         Assert.Equal((4, 4, 0), (header.Stored, header.Checked, header.Failed));
-        // One frame header CRC-24 and one frame data CRC-24 for each frame the stream info's samples and frame length call for: 44,100 samples in frames of 5512.
-        Assert.Equal(9, stream.Verification.Checksums.Single(c => c.Name == "frame data CRC-24").Stored);
-        Assert.Equal(0, stream.Verification.Checksums.Single(c => c.Name == "frame data CRC-24").Checked);
+        // Both frames are walked and compared: the first an info frame, the last flagged as such, 5512 and 1000 samples.
+        ChecksumTally frameHeader = stream.Verification.Checksums.Single(c => c.Name == "frame header CRC-24");
+        Assert.Equal((2, 2, 0), (frameHeader.Stored, frameHeader.Checked, frameHeader.Failed));
+        ChecksumTally frameData = stream.Verification.Checksums.Single(c => c.Name == "frame data CRC-24");
+        Assert.Equal((2, 2, 0), (frameData.Stored, frameData.Checked, frameData.Failed));
+        Assert.True(frameData.CoversAllAudio);
     }
 
     // The sniff.
@@ -188,7 +191,7 @@ public class TakFindingTests
         Single(report, "tak.end-missing");
         Assert.DoesNotContain(report.Findings, f => f.Code == "tak.object-unknown");
         Node stream = report.Root.Children.Single(n => n.Name == "TAK");
-        Assert.Equal(Builder.AudioStart(Builder.StreamInfo(), Builder.LastFrameInfo(0, 0), Builder.EncoderInfo(), Builder.WaveData()) - 4, stream.Children.Single(c => c.Name == "Audio Data").Offset);
+        Assert.Equal(Builder.AudioStart(Builder.StreamInfo(), Builder.LastFrameInfo(0, 0), Builder.EncoderInfo(), Builder.WaveData()) - 4, stream.Children.First(c => c.Name == "Frame").Offset);
         Assert.DoesNotContain(stream.Children, c => c.Name == "End Object");
     }
 
@@ -336,7 +339,7 @@ public class TakFindingTests
         Assert.Equal(1, tally.Failed);
         Assert.False(report.Streams.Single().Verification!.IsVerified);
         Node statistics = report.Root.Children.Single(n => n.Name == "TAK").Children.Single(c => c.Name == "Statistics");
-        Assert.Equal(3, statistics.Children.Single(c => c.Name == "Verified Header Checksums").Value?.AsInteger());
+        Assert.Equal(5, statistics.Children.Single(c => c.Name == "Verified Header Checksums").Value?.AsInteger());
         Assert.Equal(1, statistics.Children.Single(c => c.Name == "Failed Header Checksums").Value?.AsInteger());
     }
 
@@ -386,7 +389,7 @@ public class TakFindingTests
         Assert.Equal("Wave Data Object", cut.Node?.Name);
         Assert.Contains("26 of them", cut.Message, StringComparison.Ordinal);
         Node stream = report.Root.Children.Single(n => n.Name == "TAK");
-        Assert.DoesNotContain(stream.Children, c => c.Name == "Audio Data");
+        Assert.DoesNotContain(stream.Children, c => c.Name == "Frame");
     }
 
     [Fact]
@@ -429,7 +432,7 @@ public class TakFindingTests
             "codec" => Builder.Standard(streamInfo: Builder.StreamInfo(codec: 9)),
             "data-type" => Builder.Standard(streamInfo: Builder.StreamInfo(dataType: 3)),
             "sample-bits" => Builder.Standard(streamInfo: Builder.StreamInfo(bitsCode: 20)),
-            "sample-rate" => Builder.Standard(streamInfo: Builder.StreamInfo(rate: 265000, sizeType: 4)),
+            "sample-rate" => Builder.Standard(streamInfo: Builder.StreamInfo(rate: 265000, sizeType: 4, samples: 5096)),
             "valid-bits" => Builder.Standard(streamInfo: Builder.StreamInfo(validBits: 20)),
             "evaluation" => Builder.Standard(encoderInfo: Builder.EncoderInfo(evaluation: 3)),
             _ => Builder.Standard(streamInfo: Builder.StreamInfo(speakers: [1, 40])),
@@ -445,7 +448,7 @@ public class TakFindingTests
     [Fact]
     public void ACodecThatIsNotListedIsNamedWithoutAClaim()
     {
-        Report report = Analyze(Builder.Standard(streamInfo: Builder.StreamInfo(codec: 3, sizeType: 7)));
+        Report report = Analyze(Builder.Standard(streamInfo: Builder.StreamInfo(codec: 3, sizeType: 7, samples: 1512)));
 
         Assert.Empty(report.Findings);
         Node statistics = report.Root.Children.Single(n => n.Name == "TAK").Children.Single(c => c.Name == "Statistics");
