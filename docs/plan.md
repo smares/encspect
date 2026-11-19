@@ -103,7 +103,7 @@ The stack is C# on .NET with Avalonia for the GUI. The code is checked by tests 
 
 The lead, 2026-11-08:
 
-- One main item is in progress at a time, plus small fixes.
+- Items run in parallel where that is efficient (the lead, 2026-11-19): waiting for a pipeline is not work, so agents keep working on the plan while one runs.
 - A new idea goes into a later milestone, not into the current one, unless the lead says otherwise.
 - Every parked item has a milestone, or sits under [Not planned](#not-planned) with the trigger that would bring it back.
 - A pause the lead asks for keeps the item's place and priority, and the item resumes first.
