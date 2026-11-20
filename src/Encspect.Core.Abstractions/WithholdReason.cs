@@ -18,7 +18,7 @@ public enum WithholdReason
     ModeTransition,
 
     // Output of a unit whose checksum failed (docs/design/damaged-units.md): the one reason whose audio is still decoded and written to
-    // the front end's sink; only the measurements leave it out.
+    // the front end's sink; only the measurements leave it out. Reported with DecodeContext.WithholdFromMeasurements, never DecodeContext.Withhold.
     ChecksumFailed,
 }
 

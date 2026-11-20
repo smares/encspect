@@ -65,8 +65,9 @@ public sealed class DecodeContext
     {
         ArgumentOutOfRangeException.ThrowIfNegative(firstSample);
         ArgumentOutOfRangeException.ThrowIfNegative(samples);
-        if (!Enum.IsDefined(reason))
+        if (!Enum.IsDefined(reason) || reason == WithholdReason.ChecksumFailed)
         {
+            // ChecksumFailed is for output that is written: WithholdFromMeasurements.
             throw new ArgumentOutOfRangeException(nameof(reason));
         }
 

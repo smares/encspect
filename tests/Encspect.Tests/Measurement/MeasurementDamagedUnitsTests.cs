@@ -306,4 +306,12 @@ public class MeasurementDamagedUnitsTests
 
         Assert.Equal((100L, 0L), (m.LostSamples, m.WithheldSamples));
     }
+
+    [Fact]
+    public void WithholdRefusesTheReasonOfOutputThatIsWritten()
+    {
+        var context = new DecodeContext(new DecodeSetup { Stream = new Node("Stream", 0, 1), Channels = 1, BitsPerSample = 16 }, CancellationToken.None, (_, _, _, _, _) => { }, _ => throw new InvalidOperationException(), _ => { });
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => context.Withhold(0, 10, WithholdReason.ChecksumFailed));
+    }
 }
