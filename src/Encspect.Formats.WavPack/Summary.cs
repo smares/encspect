@@ -284,7 +284,7 @@ internal static partial class Summary
         int? bits = isDsd ? 1 : first.IsFloat ? 32 : shifted > 0 ? shifted : null;
         bool isLossless = !isHybrid && !isCorrection && !s.HasLossyBlocks;
         // A hybrid file asks the host for its correction file, which the host looks for beside it.
-        PairResult? pair = isHybrid && !isCorrection && !s.IsCompanion && s.ParseContext is not null ? Pairing.Check(s, stream, s.Config is { } written && (written.Value.Flags & Decode.ConfigCreateWvc) == 0) : null;
+        PairResult? pair = isHybrid && !isCorrection && !s.IsCompanion && s.ParseContext is not null ? Pairing.Check(s, stream, s.Config is { } none && (none.Value.Flags & Decode.ConfigCreateWvc) == 0, isCorrectionCreated) : null;
         statistics.Add(Cover3("Audio Blocks", NodeValue.Integer(s.AudioBlocks, "blocks", "block"), Explain.StatAudioBlocks));
         if (s.MetadataBlocks > 0)
         {

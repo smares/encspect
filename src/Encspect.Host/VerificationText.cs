@@ -50,7 +50,9 @@ public static class VerificationText
         verification is { Decoding: DecodeStatus.Decoded, IsLossy: true } && tally.Checked == 0
         && verification.Checksums.Where(t => t.Stored > 0 && t.Covers == ChecksumCoverage.DecodedAudio && t != tally).All(t => t.NotChecked == 0)
             ? "the stream decodes to lossy audio, and the checksum is of the lossless audio"
-            : Reason(verification.Decoding);
+            : verification is { Decoding: DecodeStatus.Decoded, WithCorrection: true } && tally.Covers == ChecksumCoverage.DecodedAudio
+                ? "a block was decoded without its correction block, or the decoded stream is incomplete: a frame was not decoded, a frame is missing, or the samples differ from the stated count"
+                : Reason(verification.Decoding);
 
     private static string Reason(DecodeStatus status) => status switch
     {

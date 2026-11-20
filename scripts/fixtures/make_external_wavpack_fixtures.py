@@ -75,6 +75,7 @@ FIXTURES = {
     "hybrid-b4-correction": (("wav", 44100, 2, 16, SHORT), ["-b4", "-c"], ["wv", "wvc"]),
     "hybrid-b4-md5": (("wav", 44100, 2, 16, SHORT), ["-b4", "-m"], ["wv"]),
     "hybrid-b4-correction-md5": (("wav", 44100, 2, 16, SHORT), ["-b4", "-c", "-m"], ["wv"]),
+    "hybrid-b4-correction-md5-pair": (("wav", 44100, 2, 16, SHORT), ["-b4", "-c", "-m"], ["wv", "wvc"]),
     "hybrid-mono-b3-md5": (("wav", 44100, 1, 16, SHORT), ["-b3", "-m"], ["wv"]),
     "hybrid-mono-b3": (("wav", 44100, 1, 16, SHORT), ["-b3"], ["wv"]),
     "hybrid-mono-b3-correction": (("wav", 44100, 1, 16, SHORT), ["-b3", "-c"], ["wv", "wvc"]),
@@ -273,10 +274,10 @@ def build_manifest(path, encoder, findings=(), companion=None):
     data = path.read_bytes()
     end, top = regions(data, path, "apev2" in path.name)
     result = m.manifest(data, 0, end, {"regions": top, "encoder": encoder, "findings": [{"code": c, "contains": t} for c, t in findings]}, companion=companion)
-    result["crosscheck"] = {"valid": True, "decode": decode_expectation(path, result)}
+    result["crosscheck"] = {"valid": True, "decode": decode_expectation(path, result), **result.get("crosscheck", {})}
     if isinstance(companion, bytes):
         # An encoder's own pair: libwavpack opens it with the correction file and unpacks every sample without an error.
-        result["crosscheck"]["pair"] = {"opens": True, "mode_wvc": True, "samples": result["crosscheck"]["decode"]["samples"], "errors": 0}
+        assert result["crosscheck"]["pair"] == {**result["crosscheck"]["pair"], "opens": True, "mode_wvc": True, "samples": result["crosscheck"]["decode"]["samples"], "errors": 0}
     return result
 
 
