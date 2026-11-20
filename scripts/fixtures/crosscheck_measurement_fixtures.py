@@ -304,7 +304,7 @@ def check_libebur128(path, expected, driver, found):
         return False
     scale = 1.0 / (1 << (stream.info["bits"] - 1))
     channels = [[] for _ in range(stream.info["channels"])]
-    for _, block in mm.segments(stream):
+    for _, block, _ in mm.segments(stream):
         for c, samples in enumerate(block):
             channels[c].extend(samples)
     raw = bytearray()
