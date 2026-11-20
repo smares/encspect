@@ -53,6 +53,7 @@ import mctoolame_tool
 import mctoolamed_tool
 import monkeys_audio_tool
 import optimfrog_tool
+import qtff_specs
 import philips_mc_tool
 import musepack_tool
 import old_lame_tool
@@ -135,6 +136,7 @@ def sources():
     yield asf_specs.NAME, asf_specs.SHA256, asf_specs.ADDRESSES
     for name, digest, addresses in matroska_specs.SPECS:
         yield name, digest, addresses
+    yield qtff_specs.NAME, qtff_specs.SHA256, qtff_specs.ADDRESSES
     yield dts_specs.NAME, dts_specs.SHA256, dts_specs.ADDRESSES
     yield libdca_source.ARCHIVE, libdca_source.SHA256, libdca_source.ADDRESSES
     yield from gpac_tool.sources()

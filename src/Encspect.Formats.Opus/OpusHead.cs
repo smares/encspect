@@ -145,8 +145,6 @@ internal sealed record OpusHead(int Version, int Channels, int PreSkip, uint Inp
 
     private string Counted => $"{Channels} {(Channels == 1 ? "channel" : "channels")}";
 
-    // What decoded channel a table entry takes (section 5.1.1): the coupled streams give two
-    // channels each, left then right, the others one each; 255 is silence.
     // The table as text. A StringBuilder rather than string.Join, whose buffer for 255 entries grows through the shared array pool, which the memory tests forbid.
     private string MappingText()
     {
@@ -164,6 +162,8 @@ internal sealed record OpusHead(int Version, int Channels, int PreSkip, uint Inp
         return text.ToString();
     }
 
+    // What decoded channel a table entry takes (section 5.1.1): the coupled streams give two
+    // channels each, left then right, the others one each; 255 is silence.
     public string MappingEntry(int channel)
     {
         int index = Mapping[channel];

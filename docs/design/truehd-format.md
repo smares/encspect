@@ -866,7 +866,7 @@ Observed behavior of the encoders behind Encspect's test files, not rules; none 
 - Which TrueHD presentation each substream outputs in a three-substream stream and how a single substream chooses between the 6-channel and 8-channel assignment; no test file has three substreams or an 8-channel assignment that differs from the 6-channel one.
 - Whether matrix, output shift and quantizer changes inside a unit apply from their block or to the whole unit.
 - Whether filter histories reset at a restart header.
-- Whether a Matroska block may hold more than one access unit, and the `mlpa` sample entry's rules beyond FFmpeg's muxer.
+- Whether a Matroska block may hold more than one access unit, and the `mlpa` sample entry's rules beyond FFmpeg's muxer: the analyzer compares the entry's channel count and sample rate with the stream's (`mp4.channels-differ`, `mp4.sample-rate-differs`) only because FFmpeg's muxer writes them equal, and reports a difference as an info until Dolby's binding is read.
 - Anything about Dolby Atmos beyond FFmpeg's signaling rule: the fourth substream, its checks, the extended substream info, the extension.
 - The block size check is described from FFmpeg alone; no file exercises it. Noise type 0 runs in every MLP file and in the Dolby file's substream 0, but no file has a nonzero noise coefficient or noise shift, so the generated noise values never reach the output and are unverified.
 - The channel order of MLP arrangements 18 to 20 (inferred from FFmpeg's reordering) and of every MLP arrangement with more than two channels; all test files are stereo.
