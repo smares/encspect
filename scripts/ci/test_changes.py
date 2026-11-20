@@ -20,7 +20,7 @@ def run(*files, event="pull_request"):
 
 class ChangesTests(unittest.TestCase):
     def test_docs_only_runs_nothing(self):
-        self.assertEqual(run("docs/cli.md", "README.md", "docs/formats/mp4.md", "CLAUDE.md"), set())
+        self.assertEqual(run("docs/cli.md", "docs/formats/mp4.md", "docs/gui.md"), set())
 
     def test_topic_article_runs_only_the_build_and_the_unit_tests(self):
         self.assertEqual(run("src/Encspect.Host/Topics/lame-tag.md"), {"build-test", "unit-tests"})
@@ -34,24 +34,43 @@ class ChangesTests(unittest.TestCase):
         self.assertIn("truehd-crosscheck", got)
         self.assertIn("unit-tests", run("tests/conformance/truehd-samples.json", "src/Encspect.Formats.TrueHd/TrueHdParser.cs"))
 
+    def test_named_paths_are_found_written_either_way(self):
+        found = named_paths('File.ReadAllText(Path.Combine(Root, "docs", "cli.md")); File.Exists(Path.Combine(Root, "LICENSE")); var a = "scripts/release/make_notices.py"; '
+                            'var b = "README.md"; Path.Combine(root, "scripts", "release", "dotnet-pin.txt"); Path.Combine(Root, "docs", "releases", version + ".md"); '
+                            'Path.Combine(RepositoryRoot(), "THIRD-PARTY-NOTICES.md"); "tests\\conformance\\a.json"', {"LICENSE", "README.md", "THIRD-PARTY-NOTICES.md"})
+        self.assertLessEqual({"docs/cli.md", "LICENSE", "scripts/release/make_notices.py", "README.md", "scripts/release/dotnet-pin.txt", "docs/releases",
+                              "THIRD-PARTY-NOTICES.md", "tests/conformance/a.json"}, found)
+
+    def test_the_probes_of_the_review_are_covered_or_caught(self):
+        def covered(path):
+            return bool(changes.is_dotnet(path) or changes.reader_of(path) or changes.matches(path, changes.SHARED))
+        for path in ("LICENSE", "README.md", "CLAUDE.md", "THIRD-PARTY-NOTICES.md", "scripts/release/dotnet-pin.txt", "docs/development.md", "docs/releases/0.4.0.md", "src/Encspect.Host/Topics/a.md"):
+            self.assertTrue(covered(path), path)
+        for path in ("docs/cli.md", "scripts/release/make_notices.py", "tests/conformance/a.json", "scripts/fixtures/make_x.py", "docs/formats/wavpack.md"):
+            self.assertFalse(covered(path), path)
+        self.assertEqual(run("LICENSE"), {"unit-tests"})
+        self.assertEqual(run("README.md"), {"unit-tests"})
+        self.assertEqual(run("newfile.txt"), set(changes.ALL_JOBS), "a new top-level file runs everything, RepositoryRootTests among it")
+
     @unittest.skipUnless((changes.ROOT / "src").is_dir() and (changes.ROOT / "tests/Encspect.Tests").is_dir(), "needs src and tests/Encspect.Tests")
     def test_every_non_dotnet_file_a_dotnet_test_reads_is_registered_as_read(self):
-        """A .NET test or project that names a file changes.py does not count as .NET input must find it in READERS, or a change to the file
-        runs no test; tests/conformance is read by none."""
-        registered = {r["token"] for r in changes.READERS}
-        found = {}
-        for root in ("src", "tests/Encspect.Tests", "tests/Encspect.Gui.Tests", "tests/Encspect.Fuzz", "tests/Encspect.PcmDump"):
-            for file in (changes.ROOT / root).rglob("*"):
-                if file.suffix not in (".cs", ".csproj", ".props", ".targets", ".axaml") or {"bin", "obj", "fixtures"} & set(file.parts):
+        """A .NET test or project that names a path changes.py does not count as .NET input (written as a path or as the pieces of a
+        Path.Combine) must find it in READERS, or a change to it runs no test; tests/conformance is read by none."""
+        root_files = {f.name for f in changes.ROOT.iterdir() if f.is_file()}
+        uncovered = {}
+        for project in ("src", "tests/Encspect.Tests", "tests/Encspect.Gui.Tests", "tests/Encspect.Fuzz", "tests/Encspect.PcmDump"):
+            for file in (changes.ROOT / project).rglob("*"):
+                if file.suffix not in (".cs", ".csproj", ".props", ".targets", ".axaml") or {"bin", "obj"} & set(file.parts):
                     continue
-                text = file.read_text(encoding="utf-8", errors="replace")
-                kinds = {f'"{k}"' for k in re.findall(r'"(docs)"', text)}
-                kinds |= set(re.findall(r'"scripts",\s*"release",\s*"([\w.-]+)"', text)) | set(re.findall(r"(THIRD-PARTY-NOTICES\.md)", text))
-                if re.search(r"tests[/\\]conformance|\"conformance\"", text):
-                    kinds.add("tests/conformance")
-                for kind in kinds - registered:
-                    found.setdefault(kind, []).append(file.name)
-        self.assertEqual(found, {}, "register these in READERS of changes.py (or, for tests/conformance, stop reading it)")
+                for path in named_paths(file.read_text(encoding="utf-8", errors="replace"), root_files):
+                    target = changes.ROOT / path
+                    if not target.exists() or path == ".git" or "/" not in path and target.is_dir():
+                        continue
+                    probe = path + "/x.md" if target.is_dir() else path
+                    covered = changes.is_dotnet(probe) or changes.reader_of(probe) or changes.matches(probe, changes.SHARED)
+                    if not covered and not path.startswith(("tests/fixtures/", "scripts/fixtures/", "tests/conformance")) or path.startswith("tests/conformance"):
+                        uncovered.setdefault(path, []).append(file.name)
+        self.assertEqual(uncovered, {}, "register these in READERS of changes.py (or, for tests/conformance, stop reading it)")
 
     def test_the_release_scripts_run_no_job_of_this_workflow(self):
         self.assertEqual(run("scripts/release/make_notices.py", "scripts/release/licenses/libspeex.txt"), set())
@@ -342,6 +361,29 @@ class ChangesTests(unittest.TestCase):
 
 
 REPOSITORY_HAS_SOURCES = (changes.ROOT / "src").is_dir() and (changes.ROOT / "tests/Encspect.Tests").is_dir()
+
+
+def named_paths(text, root_files=()):
+    """The repository paths a C# file names: string literals with a slash (either kind), the literals of a Path.Combine joined (the run after its first
+    argument), and a literal that is a file of the repository root."""
+    found = set()
+    for literal in re.findall(r'"((?:[^"\\\n]|\\.)*)"', text):
+        path = literal.replace("\\\\", "/").replace("\\", "/")
+        if "/" in path and not path.startswith("/") and " " not in path and ".." not in path:
+            found.add(path.strip("/"))
+        if literal in root_files:
+            found.add(literal)
+    for call in re.findall(r"Path\.Combine\(([^;]*?)\)(?:;|\))", text):
+        run = []
+        for argument in (a.strip() for a in call.split(",")):
+            match = re.fullmatch(r'"([^"]*)"', argument)
+            if match:
+                run.append(match.group(1))
+            elif run:
+                break
+        if run and ".." not in run:
+            found.add("/".join(run))
+    return found
 
 
 def scoped(*files, event="pull_request"):

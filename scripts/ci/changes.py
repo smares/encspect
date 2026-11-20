@@ -183,6 +183,8 @@ READERS = [
     {"paths": ["src/Encspect.Host/Topics/*.md"], "jobs": ["build-test", "unit-tests"], "token": "TopicLibrary"},
     {"paths": ["THIRD-PARTY-NOTICES.md"], "jobs": ["build-test", "unit-tests"], "token": "THIRD-PARTY-NOTICES.md"},
     {"paths": ["scripts/release/dotnet-pin.txt"], "jobs": ["unit-tests"], "token": "dotnet-pin.txt"},
+    {"paths": ["LICENSE"], "jobs": ["unit-tests"], "token": '"LICENSE"'},
+    {"paths": ["README.md", "CLAUDE.md", ".gitignore"], "jobs": ["unit-tests"], "token": "class RepositoryRootTests"},
     {"paths": ["docs/development.md", "docs/releases/**"], "jobs": ["unit-tests"], "token": '"docs"'},
 ]
 RELEASE_SCRIPTS = ["scripts/release/**"]
