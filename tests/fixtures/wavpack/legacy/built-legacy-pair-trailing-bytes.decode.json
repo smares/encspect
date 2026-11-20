@@ -19,10 +19,16 @@
     "problems": []
   },
   "companionTree": [
-    "Correction Bitstream 0\u002B28498",
-    "Bytes Not Reached 28498\u002B16"
+    "Correction Bitstream 0\u002B28514"
   ],
   "pcmSamples": 24000,
   "pcmMd5": "33f110d8eb91888849a451b5f07f99a7",
-  "findings": []
+  "findings": [
+    {
+      "code": "wavpack.legacy-correction-unread",
+      "severity": "Info",
+      "count": 1,
+      "message": "16 bytes of the correction file follow the last bit the decoder read for the stream\u0027s samples; no decoder reads them."
+    }
+  ]
 }

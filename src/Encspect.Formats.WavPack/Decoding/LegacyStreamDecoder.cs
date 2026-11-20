@@ -255,7 +255,14 @@ internal sealed partial class LegacyStreamDecoder : IFrameDecoder
                         $"The correction file's {Counts.Of(_info.CorrectionEnd - _info.CorrectionAt, "byte", "bytes")} end before the stream's {Counts.Of(_total, "sample", "samples")} are decoded, so the rest of the correction is read as 0xFF bytes; the correction file is cut, or belongs to another file.",
                         new Node("Correction CRC", _header.At + 24, 4));
                 }
-                else if (_isCrcFailed)
+                else if (_info.CorrectionEnd - _info.CorrectionAt - _info.CorrectionRead is > 0 and var unread)
+                {
+                    _context.AddFinding(Severity.Info, "wavpack.legacy-correction-unread",
+                        $"{Counts.Of(unread, "byte", "bytes")} of the correction file follow the last bit the decoder read for the stream's samples; no decoder reads them.",
+                        new Node("Correction CRC", _header.At + 24, 4));
+                }
+
+                if (!_info.IsCorrectionShort && _isCrcFailed)
                 {
                     _context.AddFinding(Severity.Warning, "wavpack.legacy-crc2-mismatch",
                         $"The audio decoded with the correction file has the CRC {(uint)_crc:x8}, but the header stores {_header.Crc2:x8} as the CRC of the lossless audio: the correction file is not this file's, or one of them is damaged.",

@@ -109,10 +109,12 @@ public class WavPackLegacyPairTests
         Report report = Analyze("built-legacy-pair-trailing-bytes.wv", Decoding);
 
         Assert.Equal(CorrectionStatus.Consistent, Stream(report).Correction!.Status);
-        Node root = Assert.Single(report.Companions).Report.Root;
-        Assert.Equal(["Correction Bitstream", "Bytes Not Reached"], root.Children.Select(c => c.Name));
-        Assert.Equal(16, root.Children[1].Length);
-        Assert.Equal(root.Children[0].End, root.Children[1].Offset);
+        // The tree is the same with and without decoding: one node over all the bytes; the decoder says that 16 were not read.
+        Node node = Assert.Single(Assert.Single(report.Companions).Report.Root.Children);
+        Assert.Equal(("Correction Bitstream", 28514), (node.Name, node.Length));
+        Assert.Contains("16 bytes", Assert.Single(report.Findings, f => f.Code == "wavpack.legacy-correction-unread").Message);
+        Node plain = Assert.Single(Assert.Single(Analyze("built-legacy-pair-trailing-bytes.wv").Companions).Report.Root.Children);
+        Assert.Equal((node.Name, node.Offset, node.Length), (plain.Name, plain.Offset, plain.Length));
     }
 
     [Fact]

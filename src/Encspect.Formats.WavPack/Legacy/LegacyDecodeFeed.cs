@@ -47,7 +47,7 @@ internal sealed class LegacyDecodeInfo
     public bool HasCorrection => CorrectionReader is not null;
 
     // What the decoder found of the correction bitstream once the samples were decoded: how many of its bytes the last bit read lies in (-1 where it did not get so far), and
-    // whether it ended before the samples did. The parser places the node of the bytes that were not reached by it; this is the one thing the decoder gives back.
+    // whether it ended before the samples did. The decoder words them itself (findings); the parser reads only whether the correction bitstream was short.
     public long CorrectionRead { get; set; } = -1;
 
     public bool IsCorrectionShort { get; set; }

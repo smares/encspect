@@ -50,7 +50,7 @@ public class WavPackLegacyDecoderFixtureTests
     }
 
     private static bool IsAdded(Finding f) => f.Code.StartsWith("decode.", StringComparison.Ordinal) || f.Code.StartsWith("correction.", StringComparison.Ordinal) || f.Code.StartsWith("wavpack.legacy-crc", StringComparison.Ordinal)
-        || f.Code is "wavpack.legacy-data-ended" or "wavpack.legacy-bitstream-end-differs" or "wavpack.legacy-correction-ended";
+        || f.Code is "wavpack.legacy-data-ended" or "wavpack.legacy-bitstream-end-differs" or "wavpack.legacy-correction-ended" or "wavpack.legacy-correction-unread";
 
     [Theory]
     [MemberData(nameof(Names))]

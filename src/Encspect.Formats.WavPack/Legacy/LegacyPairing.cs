@@ -64,28 +64,19 @@ internal static partial class Legacy
         Reason = reason,
     };
 
-    // The correction file's own tree and stream: one node over the bitstream's bytes, with the bytes the decoder did not reach as a second node where it found the end.
+    // The correction file's own tree and stream: one node over all the bitstream's bytes, with decoding or without it (decoding never changes the parser's nodes; the bytes the
+    // decoder did not reach are its finding).
     private static void ReportCorrectionFile(ParseContext context, LegacyDecodeInfo info)
     {
         long start = context.Reader.Start;
         long length = context.Reader.Length;
-        long read = info.CorrectionRead is >= 0 and var reached && reached < length && !info.IsCorrectionShort ? reached : length;
-        var bitstream = new Node("Correction Bitstream", start, read, NodeValue.Integer(read, "bytes", "byte"))
+        var bitstream = new Node("Correction Bitstream", start, length, NodeValue.Integer(length, "bytes", "byte"))
         {
             Kind = NodeKind.Stream,
             Description = LegacyExplain.CorrectionBitstream,
             Topic = Topics.CorrectionFiles,
         };
         context.Root.Add(bitstream);
-        if (read < length)
-        {
-            context.Root.Add(new Node("Bytes Not Reached", start + read, length - read, NodeValue.Integer(length - read, "bytes", "byte"))
-            {
-                Description = LegacyExplain.CorrectionNotReached,
-                Topic = Topics.CorrectionFiles,
-            });
-        }
-
         context.AddStream(new StreamInfo { Nodes = [bitstream], Codec = "WavPack correction data", IsCorrectionFile = true });
     }
 }
