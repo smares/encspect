@@ -78,10 +78,8 @@ internal readonly record struct FrameHeader
         if (isLast)
         {
             samples = bits.Get(14) + 1;
-            if (bits.Get(2) != 0)
-            {
-                return new FrameHeader { Fault = bits.IsOverflow ? overflow : HeaderFault.Structure };
-            }
+            // The 2 padding bits are read and ignored, as tak_str_DecodeFrameInfo does; the CRC-24 still covers them.
+            bits.Get(2);
         }
 
         if (bits.IsOverflow)

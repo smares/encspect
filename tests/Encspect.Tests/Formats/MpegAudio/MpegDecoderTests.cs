@@ -103,6 +103,25 @@ public class MpegDecoderTests
         Assert.Null(m.Reason);
     }
 
+    // The parser's feed reads each multichannel frame's side information and extension and the decoder takes them from it (MultichannelPlan.TryTake). A hand-off that missed
+    // would still decode the same PCM, by reading every frame again, so the reads are counted.
+    [Theory]
+    [InlineData("mc-3-2-lfe.mp2")]
+    [InlineData("mc-2-1.mp2")]
+    [InlineData("mc-second-stereo.mp2")]
+    [InlineData("mc-3-1-crosstalk-side.mp2")]
+    [InlineData("external-mctoolame-5-1-music.mp2")]
+    public void AMultichannelFrameTheParserReadIsNotReadAgainByTheDecoder(string name)
+    {
+        byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "mpeg-audio", "layer2", name));
+        Encspect.Formats.MpegAudio.MultichannelPlan.FramesReadAgain = 0;
+
+        (Report report, _) = Decode(data);
+
+        Assert.True(Assert.Single(report.Streams).Verification!.DecodedSamples > 0);
+        Assert.Equal(0, Encspect.Formats.MpegAudio.MultichannelPlan.FramesReadAgain);
+    }
+
     // The LFE channel is coded at 1/96 of the sample rate (ISO/IEC 13818-3 2.5.3.2.4), so a frame's twelve samples come out held for 96 samples each, last in the layout; the
     // fixture is a 5.1 stream of mctoolame, written with music, whose LFE is not silent.
     [Fact]

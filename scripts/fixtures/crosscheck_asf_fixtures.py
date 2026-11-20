@@ -7,7 +7,9 @@ For every manifest in tests/fixtures/asf:
   and the packets it reads. For a hand-built fixture the packets are the media objects the model
   works out from the payloads: the same count, and for each one the stream, the size and the
   presentation time, which also covers fragmented objects put together and compressed payloads split.
-  For an ffmpeg-encoded WMA file they are the superframes the manifest records.
+  For an ffmpeg-encoded WMA file they are the superframes the manifest records. The Marker Object's entries
+  are ffprobe's chapters (`-show_chapters`): the start times and titles equal the golden report's markers'.
+  ffprobe reads no Script Command Object, so the commands have no cross-check by another tool.
 - ffmpeg decoding to PCM: no error, and for the WMA files the sample count the manifest records. For
   the Lossless fixtures of Microsoft's encoder (external-windows-*), the decoded samples equal the
   input signal bit for bit. For Windows Media Audio Voice, the samples ffmpeg decodes equal the
@@ -310,6 +312,28 @@ def check_protection(name, manifest, path, problems):
             problems.append(f"MediaInfo finds {len(audio)} audio tracks, the manifest {len(flagged)}")
 
 
+def check_markers(path, problems):
+    """ffmpeg's ASF demuxer (asfdec_f.c, asf_read_marker) exports the Marker Object's entries as chapters: their start times and titles are
+    the golden report's markers' presentation times and descriptions. It reads no Script Command Object, so the commands have no second reading here."""
+    report = golden_report(path)
+    markers = [n for n in nodes_of(report["root"]) if n["name"] == "Marker" and any(c["name"] == "Presentation Time" for c in n.get("children", []))] if report else []
+    if not markers:
+        return False
+    code, data = ffprobe_json(path, "-show_chapters")
+    if code != 0:
+        problems.append("ffprobe -show_chapters failed")
+        return True
+    got = [(int(c["start"]), c.get("tags", {}).get("title", "")) for c in data.get("chapters", [])]
+    want = []
+    for n in markers:
+        time = next(c["value"] for c in n["children"] if c["name"] == "Presentation Time")
+        description = next((c["value"] for c in n["children"] if c["name"] == "Marker Description"), "")
+        want.append((round(float(time) * 10_000_000), description))
+    if got != want:
+        problems.append(f"ffprobe's chapters are {got}, the golden report's markers {want}")
+    return True
+
+
 def check_hand_built(name, manifest, path, problems):
     crosscheck = manifest.get("crosscheck", {})
     check_protection(name, manifest, path, problems)
@@ -348,6 +372,7 @@ def check_hand_built(name, manifest, path, problems):
             if g != w:
                 problems.append(f"packet of stream {g[0]}: ffprobe has size {g[1]} at {g[2]} ms, the model {w[1]} at {w[2]} ms")
                 break
+    check_markers(path, problems)
     if audio and all(s["tag"] == 1 for s in audio) and len(audio) == len(manifest["streams"]):
         code, pcm, errors = decode(path)
         if code != 0 or errors:
