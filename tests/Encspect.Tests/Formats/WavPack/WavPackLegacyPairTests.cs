@@ -173,6 +173,43 @@ public class WavPackLegacyPairTests
         Assert.Empty(report.Companions);
     }
 
+    // The correction bitstream is read bit by bit beside the main one, from bytes of any value and of any length, in frames the main bitstream's progress sets.
+    [Theory]
+    [InlineData("external-wv397-hybrid-320-correction")]
+    [InlineData("external-wv397-hybrid-6-correction")]
+    [InlineData("external-wv340-hybrid-320-24-correction")]
+    public void ADamagedPairNeverFailsTheAnalysis(string stem)
+    {
+        byte[] main = File.ReadAllBytes(Fixture(stem + ".wv"));
+        byte[] correction = File.ReadAllBytes(Fixture(stem + "-wvc.wvc"));
+        var random = new Random(23);
+        for (int round = 0; round < 40; round++)
+        {
+            byte[] wvc = [.. correction];
+            switch (round % 4)
+            {
+                case 0:
+                    wvc[random.Next(wvc.Length)] ^= (byte)(1 << random.Next(8));
+                    break;
+                case 1:
+                    wvc = wvc[..random.Next(wvc.Length)];
+                    break;
+                case 2:
+                    wvc = [.. wvc, .. new byte[random.Next(1, 9000)]];
+                    break;
+                default:
+                    random.NextBytes(wvc.AsSpan(random.Next(wvc.Length / 2), 64));
+                    break;
+            }
+
+            using var stream = new MemoryStream(main);
+            Report report = Analyzer.CreateDefault().Analyze(stem + ".wv", stream, new AnalysisOptions { Decoding = new DecodeOptions(), Companions = CompanionSource.From(_ => new MemoryStream(wvc)) });
+
+            Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+            Assert.NotNull(Stream(report).Correction);
+        }
+    }
+
     [Theory]
     [InlineData("external-wv300-stereo-16.wv")]
     [InlineData("external-wv397-hybrid-320-correction.wv")]
