@@ -416,6 +416,8 @@ AC3_BURSTS = bursts_of("wav/external-iec61937-ac3-stereo-192k.wav")
 EAC3_BURSTS = bursts_of("wav/external-iec61937-eac3-stereo-192k.wav")
 DTS_BURSTS = bursts_of("wav/external-iec61937-dts-stereo-768k.wav")
 AAC_BURSTS = bursts_of("wav/external-iec61937-aac-stereo-128k.wav")
+MP3_BURSTS = bursts_of("wav/external-iec61937-mp3-stereo-128k.wav")
+MP3_PERIOD = 1152 * 4
 AC3_PERIOD, EAC3_PERIOD, DTS_PERIOD, AAC_PERIOD = 1536 * 4, 6144 * 4, 512 * 4, 1024 * 4
 PAUSE = struct.pack("<HHHH", 0xF872, 0x4E1F, 3, 0) + b"\0" * (AC3_PERIOD - 8)
 # The pause and null bursts at the recommended period of 3 IEC 60958 frames (IEC 61937-3:2017 Table 2): the preamble and a payload of 32 bits.
@@ -444,6 +446,8 @@ fixture("built-iec61937-dts-type-i", riff(basic_data(b"".join(burst_of(DTS_BURST
 fixture("built-iec61937-dts-fmt-tag-0008", riff([chunk("fmt ", fmt_body(0x8, 2, 48000, 16, 4, 192000)), chunk("fact", struct.pack("<I", 3072)), chunk("data", b"".join(burst_of(DTS_BURSTS[i], DTS_PERIOD) for i in range(6)))]), ["wav.iec61937-in-pcm"], carried=("dts", 48000, 2))
 fixture("built-iec61937-aac", riff(basic_data(b"".join(burst_of(AAC_BURSTS[i], AAC_PERIOD) for i in range(5)), rate=48000)), ["wav.iec61937-in-pcm"], carried=("aac-adts", 48000, 2))
 ATRAC = [burst(14, 800, bytes(range(100)) * 1 + b"", 512 * 4) for _ in range(4)]
+# The data chunk at an odd file offset (a one-byte chunk before it, its pad byte missing): the words of the payloads are paired from the chunk's start, not from the file's.
+fixture("built-iec61937-mp3-odd-data-offset", riff([chunk("fmt ", fmt_body(rate=44100)), chunk("junk", b"\0", pad=False), chunk("data", b"".join(burst_of(MP3_BURSTS[i % len(MP3_BURSTS)], MP3_PERIOD) for i in range(5)))]), ["wav.iec61937-in-pcm", "wav.pad-byte-missing"], carried=("mpeg-audio", 44100, 2))
 fixture("built-iec61937-atrac", riff(basic_data(b"".join(ATRAC), rate=44100)), ["wav.iec61937-payload-not-analyzed"])
 ATRAC_X_LL = [burst(112, 128 * 8, bytes(range(128)), 128 * 4) for _ in range(5)]
 fixture("built-iec61937-atrac-x-low-latency", riff(basic_data(b"".join(ATRAC_X_LL), rate=48000)), ["wav.iec61937-payload-not-analyzed"])

@@ -17,7 +17,7 @@ Sources:
 - Encoder info (ID 4): the version (three digits, the major in the top byte), the preset and the evaluation level (Standard, Extra, Max).
 - Padding (ID 5), MD5 (ID 6, shown, not compared) and last frame info (ID 7: the last frame's distance from the first frame, which follows the End object, and its size).
 - The frames, from the end of the metadata to the end of the stream (takStream.pas, "Audio frames", "Frame-Info", "Frame-Header"). Each is a header, the coded data and a CRC-24 over the coded data:
-  - the header: the sync word 0xA0FF (the bytes `FF A0`), the flags for the last frame, an info frame and metadata (not supported: a header that sets it is no frame header), the 21-bit frame number, for the last frame its sample count less 1 (14 bits) and 2 padding bits, for an info frame the stream info (as in the metadata) with the previous-distance flag, 5 reserved bits and the 25-bit distance, padded to a byte, and the CRC-24 over all of it, the sync word included;
+  - the header: the sync word 0xA0FF (the bytes `FF A0`), the flags for the last frame, an info frame and metadata (not supported: a header that sets it is no frame header), the 21-bit frame number, for the last frame its sample count less 1 (14 bits) and 2 padding bits (read and ignored, as TAK's decoder does; the CRC-24 covers them), for an info frame the stream info (as in the metadata) with the previous-distance flag, 5 reserved bits and the 25-bit distance, padded to a byte, and the CRC-24 over all of it, the sync word included;
   - the data CRC-24, the 3 bytes that end the frame, over the coded data between the header's CRC-24 and itself;
   - an info frame comes every 2 seconds at least (takStream.pas), and the last frame states its samples.
 

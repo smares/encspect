@@ -26030,9 +26030,9 @@
     ],
     "findings": [
       {
-        "severity": "Warning",
+        "severity": "Info",
         "code": "mp4.sample-rate-differs",
-        "message": "The sample entry of track 1 states a sample rate of 44100 Hz, but its Dolby TrueHD stream has 48000 Hz.",
+        "message": "The sample entry of track 1 states a sample rate of 44100 Hz, but its Dolby TrueHD stream has 48000 Hz (Encspect compares them because ffmpeg's muxer writes the stream's own; the rule of Dolby's binding was not read).",
         "offset": 413,
         "length": 54,
         "path": [
@@ -26048,9 +26048,9 @@
         "count": 1
       },
       {
-        "severity": "Warning",
+        "severity": "Info",
         "code": "mp4.channels-differ",
-        "message": "The sample entry of track 1 states 2 channels, but its Dolby TrueHD stream has 1.",
+        "message": "The sample entry of track 1 states 2 channels, but its Dolby TrueHD stream has 1 (Encspect compares them because ffmpeg's muxer writes the stream's own; the rule of Dolby's binding was not read).",
         "offset": 413,
         "length": 54,
         "path": [
