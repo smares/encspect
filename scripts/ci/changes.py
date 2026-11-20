@@ -172,6 +172,12 @@ FIXTURE_ONLY = ["scripts/fixtures/*_tool.py", "scripts/fixtures/make_*.py", "scr
                 "scripts/fixtures/ancillary_scan.py", "scripts/fixtures/vbr_tags.py", "scripts/fixtures/aac_tables.py",
                 "scripts/fixtures/macos/**"]
 
+# A background article is read by the tests that load the TopicLibrary and nothing else (scope.py), and the GUI tests of build-test. The release scripts
+# are checked by the release workflow, which runs on a pull request that touches them, and by no job of this one.
+ARTICLES = ["src/Encspect.Host/Topics/*.md"]
+ARTICLE_JOBS = ["build-test", "unit-tests"]
+RELEASE_SCRIPTS = ["scripts/release/**"]
+
 CI_JOBS_DOTNET = ["build-test", "unit-tests", "shard-guard", "fuzz", "format"]
 ALL_JOBS = CI_JOBS_DOTNET + ["fixtures"] + list(AREAS)
 
@@ -312,6 +318,12 @@ def decide(event, files, root=ROOT, removed=()):
             reasons.append(f"{gone[0]} was deleted or renamed, and what imported it cannot be told")
             files = []
         for path in files:
+            if matches(path, ARTICLES):
+                for job in ARTICLE_JOBS:
+                    flags[job] = True
+                continue
+            if matches(path, RELEASE_SCRIPTS):
+                continue
             if matches(path, SHARED):
                 flags = {job: True for job in ALL_JOBS}
                 reasons.append(f"{path} is shared")
@@ -372,7 +384,10 @@ def scope_of(event, files, removed=(), root=ROOT):
     if event != "pull_request" or files is None or any(r.startswith("scripts/") for r in removed):
         return None
     relevant = [f for f in files if f and matches(f, DOTNET) and not is_docs(f)]
-    return test_scope.plan(relevant, root)
+    others = [f for f in relevant if not matches(f, ARTICLES)]
+    if relevant and not others:
+        return test_scope.plan_articles(root)
+    return test_scope.plan(others, root)
 
 
 def platforms(event):

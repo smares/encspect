@@ -22,8 +22,15 @@ class ChangesTests(unittest.TestCase):
     def test_docs_only_runs_nothing(self):
         self.assertEqual(run("docs/cli.md", "README.md", "docs/formats/mp4.md", "CLAUDE.md"), set())
 
-    def test_topic_article_is_code(self):
-        self.assertEqual(run("src/Encspect.Host/Topics/lame-tag.md"), set(changes.ALL_JOBS))
+    def test_topic_article_runs_only_the_build_and_the_unit_tests(self):
+        self.assertEqual(run("src/Encspect.Host/Topics/lame-tag.md"), {"build-test", "unit-tests"})
+        self.assertEqual(run("src/Encspect.Host/Topics/lame-tag.md", "src/Encspect.Host/Analyzer.cs"), set(changes.ALL_JOBS))
+        self.assertEqual(run("src/Encspect.Host/Topics/lame-tag.md", "docs/cli.md"), {"build-test", "unit-tests"})
+        self.assertIn("unit-tests", run("src/Encspect.Host/Topics/lame-tag.md", "src/Encspect.Formats.WavPack/WavPackParser.cs"))
+
+    def test_the_release_scripts_run_no_job_of_this_workflow(self):
+        self.assertEqual(run("scripts/release/make_notices.py", "scripts/release/licenses/libspeex.txt", "THIRD-PARTY-NOTICES.md"), set())
+        self.assertEqual(run("scripts/release/make_notices.py", "src/Encspect.Formats.WavPack/WavPackParser.cs"), run("src/Encspect.Formats.WavPack/WavPackParser.cs"))
 
     def test_other_markdown_in_src_is_code(self):
         self.assertIn("build-test", run("src/Encspect.Formats.Ogg/NOTES.md"))
@@ -403,7 +410,7 @@ class ScopeTests(unittest.TestCase):
                      "tests/Encspect.Tests/Support/Fixtures.cs", "tests/Encspect.Tests/Ci/CiWorkflowTests.cs", "tests/Encspect.Tests/Encspect.Tests.csproj", "tests/Encspect.Tests/Formats/NewFormat/Tests.cs",
                      "tests/fixtures/fuzz/a.bin", "tests/fixtures/measurement/a.wav", "tests/fixtures/newformat/a.bin", "scripts/ci/shards.json", "scripts/ci/areas.json",
                      ".github/workflows/ci.yml", "Directory.Build.props", "Encspect.slnx", "src/Encspect.Formats.WavPack/Encspect.Formats.WavPack.csproj",
-                     "src/Encspect.Formats.NewFormat/Parser.cs", "src/Encspect.Host/Topics/mid-side-stereo.md", "something-unknown.bin"):
+                     "src/Encspect.Formats.NewFormat/Parser.cs", "something-unknown.bin"):
             chosen, reason, matrix = scoped(path)
             self.assertIsNone(chosen, path)
             self.assertNotIn("scoped", reason)
@@ -433,6 +440,32 @@ class ScopeTests(unittest.TestCase):
             self.assertNotIn(name, chosen.excluded_classes, name)
         self.assertIn("Opus", scoped("src/Encspect.Formats.Ogg/OggParser.cs")[0].selected)
         self.assertLessEqual({"Alac", "Mp4", "Matroska"}, scoped("tests/fixtures/alac/a.m4a")[0].selected)
+
+    def test_an_article_change_runs_only_the_tests_that_read_the_articles(self):
+        chosen, reason, matrix = scoped("src/Encspect.Host/Topics/mid-side-stereo.md")
+        readers = scope.article_readers()
+        self.assertIn("DescriptionTests", readers)
+        self.assertIn("scoped to the tests that read the articles", reason)
+        self.assertEqual(set(chosen.only), set(readers))
+        self.assertEqual(shard_names(matrix), {"rest"}, "every reader is in the rest shard, so the others have nothing to run")
+        for entry in matrix:
+            self.assertTrue(valid_filter(entry["filter"]), entry["filter"])
+            self.assertTrue(entry["filter"].endswith("|".join(f"FullyQualifiedName~.{c}." for c in readers) + ")"))
+        # Every test file that loads the TopicLibrary is a reader.
+        for file in scope.sources_of():
+            if "TopicLibrary" in file.read_text(encoding="utf-8", errors="replace"):
+                self.assertTrue(set(n for n, _, _ in scope.class_extent(file.read_text(encoding="utf-8", errors="replace"))) <= set(readers), file.name)
+        # With other changes, those decide.
+        mixed = scoped("src/Encspect.Host/Topics/mid-side-stereo.md", "src/Encspect.Formats.WavPack/WavPackParser.cs")[0]
+        self.assertIsNone(mixed.only)
+        self.assertEqual(mixed.selected, {"WavPack", "Matroska", "Ape"})
+        self.assertIsNone(scoped("src/Encspect.Host/Topics/mid-side-stereo.md", "src/Encspect.Host/Analyzer.cs")[0])
+        self.assertIsNone(scoped("src/Encspect.Host/Topics/mid-side-stereo.md", "tests/Encspect.Tests/Support/Fixtures.cs")[0])
+
+    def test_a_release_script_change_has_no_unit_tests_to_scope(self):
+        flags, reason, chosen = changes.decide_with_scope("pull_request", ["scripts/release/make_notices.py"])
+        self.assertFalse(any(flags.values()))
+        self.assertIsNone(chosen)
 
     def test_carriers_stop_at_one_level(self):
         mp4 = scoped("src/Encspect.Formats.Mp4/Mp4Parser.cs")[0].selected

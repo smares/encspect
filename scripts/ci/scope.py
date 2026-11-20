@@ -148,7 +148,8 @@ def inventory(root=ROOT, config=None):
 
 
 class Scope:
-    def __init__(self, changed, selected, excluded_classes, excluded_methods, empty_classes):
+    def __init__(self, changed, selected, excluded_classes, excluded_methods, empty_classes, only=None):
+        self.only = only  # when set, the only classes that run (the tests that read the background articles)
         self.changed = changed
         self.selected = selected
         self.excluded_classes = excluded_classes  # sorted class names
@@ -156,6 +157,8 @@ class Scope:
         self.empty_classes = empty_classes  # classes with no test left
 
     def describe(self):
+        if self.only is not None:
+            return "unit tests scoped to the tests that read the articles"
         order = sorted(self.selected, key=lambda a: (a not in self.changed, a))
         return "unit tests scoped to " + (", ".join(order) or "no area")
 
@@ -203,6 +206,24 @@ def plan(files, root=ROOT, config=None):
     return scope
 
 
+def article_readers(root=ROOT):
+    """The test classes of every file that names the TopicLibrary, which serves the articles."""
+    return sorted({name for f in sources_of(root) for text in [f.read_text(encoding="utf-8", errors="replace")] if "TopicLibrary" in text for name, _, _ in class_extent(text)})
+
+
+def plan_articles(root=ROOT):
+    """The scope of a pull request that changes only background articles: the tests that read them and no other."""
+    readers = article_readers(root)
+    return Scope(set(), set(), [], {}, set(), only=frozenset(readers)) if readers else None
+
+
+def only_classes(scope, shard, shards):
+    named = {c for s in shards[:-1] for c in s["classes"]}
+    if shard["classes"] is not None:
+        return sorted(set(shard["classes"]) & scope.only)
+    return sorted(c for c in scope.only if c not in named)
+
+
 def exclusion(scope, shard, shards):
     """The clauses of the filter that leave out of this shard the tests the scope excludes. A shard that names its classes
     needs only those of them; the rest shard already excludes the classes the others name."""
@@ -217,13 +238,17 @@ def exclusion(scope, shard, shards):
     return clauses
 
 
-def is_empty(scope, shard):
+def is_empty(scope, shard, shards=None):
     """Whether the scope leaves a shard that names its classes no test: every class of it is excluded or has no test left."""
+    if scope.only is not None:
+        return not only_classes(scope, shard, shards or shard_config.load())
     return shard["classes"] is not None and all(c in scope.empty_classes for c in shard["classes"])
 
 
 def shard_filter(scope, shard, shards, include_nightly):
     base = shard_config.filter_for(shards, shard["name"], include_nightly)
+    if scope.only is not None:
+        return f"({base})&({'|'.join(f'FullyQualifiedName~.{c}.' for c in only_classes(scope, shard, shards))})"
     clauses = exclusion(scope, shard, shards)
     return f"({base})&({'&'.join(clauses)})" if clauses else base
 
