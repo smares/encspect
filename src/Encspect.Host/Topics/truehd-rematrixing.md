@@ -1,7 +1,7 @@
 ---
 id: truehd-rematrixing
 title: TrueHD and MLP rematrixing
-related: truehd-substreams, truehd-decoding-parameters, channel-layouts
+related: truehd-substreams, truehd-decoding-parameters, channel-layouts, left-side-stereo, mid-side-stereo
 references: Encspect's TrueHD and MLP format description (docs/design/truehd-format.md), sections "Matrix parameters" and "Rematrixing"
 ---
 
@@ -15,4 +15,4 @@ references: Encspect's TrueHD and MLP format description (docs/design/truehd-for
 
 **Stereo Coding.** For the two-channel presentation (substream 0, two matrix channels) the report counts how the matrices in force at the end of each access unit combine the two coded channels into left and right: left/right stereo, left/side stereo, side/right stereo, mid/side stereo, or a weighted mix (any other combination, also both channels rebuilt from one). This is the arithmetic, not a choice the format names, and every coding is inverted exactly. In a stream of more channels the presentation is a downmix, and says nothing about the other channels.
 
-**Observed.** In Encspect's test files, FFmpeg 6.1.1's encoder codes stereo as one channel less half of the other (a weighted mix) and writes no matrices for more than two channels. The analyzer does not use this.
+**Observed.** In Encspect's test files, FFmpeg 6.1.1's encoder codes stereo as one channel less half of the other (a weighted mix) and writes no matrices for the two-channel presentation of more than two channels. Exceptions: the silent file has none in its silent units, and the lossyWAV file has a matrix that keeps its channel in 354 units (both left/right). The analyzer does not use this.
