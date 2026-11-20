@@ -58,6 +58,7 @@ public class MeasurementFixtureTests
         Assert.Equal(model.GetProperty("samples").GetInt64(), m.Samples);
         Assert.Equal(model.GetProperty("first_position").GetInt64(), m.FirstPosition);
         Assert.Equal(model.GetProperty("lost_samples").GetInt64(), m.LostSamples);
+        Assert.Equal(model.TryGetProperty("withheld_samples", out JsonElement withheld) ? withheld.GetInt64() : 0, m.WithheldSamples);
         Assert.Equal(model.GetProperty("gaps").GetInt32(), m.Gaps);
         Assert.Equal(model.GetProperty("sample_rate").GetInt32(), m.SampleRate);
         Assert.Equal(model.GetProperty("channels_measured").GetInt32(), m.ChannelsMeasured);

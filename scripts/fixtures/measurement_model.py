@@ -662,11 +662,12 @@ def true_peak_of(runs, measured, bits, rate):
 
 
 def segments(stream):
-    """The decoded blocks of a FLAC stream as (position, [channel lists])."""
+    """The decoded blocks of a FLAC stream as (position, [channel lists], fails): fails is True where the frame's CRC-16 fails, and the measurements
+    leave such a frame out as withheld samples (docs/design/damaged-units.md)."""
     out = []
     for f in stream.frames:
         if "channels" in f:
-            out.append((f["first_sample"], f["channels"]))
+            out.append((f["first_sample"], f["channels"], "crc16" in f["status"]))
     return out
 
 
@@ -704,7 +705,8 @@ def measure(data, layout=None):
     sums = [[0.0] * ROWS for _ in range(sets)]
     counters = [Counters() for _ in range(sets)]
     frames = 0
-    samples = lost = gaps = 0
+    samples = lost = gaps = withheld = 0
+    pending_withheld = 0
     first_position = None
     origin = 0
     expected = None
@@ -739,19 +741,30 @@ def measure(data, layout=None):
                     count_frame(derived_rows, counters[measured + offset], w, first_candidate)
         frames += 1
 
-    for position, block in segments(stream):
+    blocks = segments(stream)
+    if blocks and blocks[-1][2]:
+        raise ValueError("the model has no failed last frame")
+    for position, block, fails in blocks:
+        if fails:
+            # Decoded and written, but left out of every figure; the next block follows a gap, so a run of failed frames is one gap.
+            if expected is None:
+                raise ValueError("the model has no failed first frame")
+            withheld += len(block[0])
+            pending_withheld += len(block[0])
+            continue
         if expected is None:
             first_position = position
             origin = position // hop * hop
             expected = position
             segment_start = position
         if position > expected:
-            lost += position - expected
+            lost += position - expected - pending_withheld
             gaps += 1
             expected = position
             buffers = [[] for _ in range(measured)]
             segment_start = position
             runs.append([[] for _ in range(measured)])
+            pending_withheld = 0
         elif not runs:
             runs.append([[] for _ in range(measured)])
         count = len(block[0])
@@ -812,7 +825,7 @@ def measure(data, layout=None):
         waveform.append({"minimum": [max(-32768, min(32767, v)) for v in low], "maximum": [max(-32768, min(32767, v)) for v in high]})
     return {
         "sample_rate": rate, "channels": channels, "channels_measured": measured, "bits": bits, "samples": samples, "first_position": first_position or 0,
-        "lost_samples": lost, "gaps": gaps, "fft_size": size, "frames": frames, "combined": levels[measured], "per_channel": levels[:measured],
+        "lost_samples": lost, **({"withheld_samples": withheld} if withheld else {}), "gaps": gaps, "fft_size": size, "frames": frames, "combined": levels[measured], "per_channel": levels[:measured],
         "cutoff": cutoffs[measured], "channel_cutoffs": cutoffs[:measured], "bandwidth": bandwidths[measured],
         "channel_bandwidths": bandwidths[:measured], "slope": slopes[measured], "channel_slopes": slopes[:measured], "partial_cutoff": partial, "holes": holes, "mid_side": mid_side, "levels": levels_of(runs, measured, bits, rate),
         "loudness": loudness_of(runs, measured, bits, rate, layout), "true_peak": true_peak_of(runs, measured, bits, rate), "spectrogram_columns": columns, "hops_per_column": 1 << shift, "waveform": waveform,

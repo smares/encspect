@@ -468,6 +468,14 @@ As under [CLI](#cli). The text never prints the spectrum rows or the grids, as i
   - `measure.format-changed`, info: a block's channels or format differed from the declared output; the figures cover what came before.
 - Each code gets its row in the finding-coverage test.
 
+### Units whose checksum fails
+
+- A unit whose per-unit checksum fails is decoded and written, but its positions are left out of every figure ([damaged-units.md](damaged-units.md)).
+- The decode session passes the span (`CodedFrame.FailsChecksum`, `DecodeContext.WithholdFromMeasurements`) to the measurer before the decoder writes it. The measurer keeps up to `MaxPendingSpans` of them, cuts the part of each written block that lies inside one out of it, and handles the parts before and after as blocks of their own.
+- The cut part is withheld with the reason "checksum failed" (`WithheldCounts.ChecksumFailed`, JSON `withheldReasons.checksumFailed`), so the next measured sample follows a jump that is withheld whole: the levels, the loudness and the true peak resume after it, a stretch of digital silence ends at it and `Gaps` counts it once for a run of failed units. A failed first or last unit is leading or trailing withheld.
+- A stream in which every unit fails measures nothing: `samples` is 0 and the withheld figure holds the whole stream, with no finding.
+- A failed unit the decoder could not decode writes nothing, so its positions are lost, as before.
+
 ## Algorithms
 
 ### FFT

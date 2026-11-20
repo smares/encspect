@@ -375,7 +375,7 @@ The lead's rule of 2026-11-01: a unit the decoder cannot decode is a gap, never 
 **Recommendation (decision 4):** after a gap, or after a unit that was unreadable or not decoded, the decoder resets its state and withholds the output that depends on the lost state. The withheld positions are **withheld samples**, a figure of their own:
 
 - **Not lost samples.** Lost samples keep the meaning of [samples-definition.md](samples-definition.md): the declared samples of units that are cut, unreadable or in a stream whose state was lost, a figure at the coded stage and in the measurements. Withheld samples belong to units that were read and decoded; the decoder holds their output back because it would be wrong.
-- **One figure with reasons:** "Withheld Samples" in the measurements (JSON `measurements.withheldSamples` and `withheldReasons`, the text line, the GUI caption), with each span's reason: after a gap, after frames of 0 bytes (decision 5), main data not available (decision 7), a mode transition (decision 6, option b only).
+- **One figure with reasons:** "Withheld Samples" in the measurements (JSON `measurements.withheldSamples` and `withheldReasons`, the text line, the GUI caption), with each span's reason: after a gap, after frames of 0 bytes (decision 5), main data not available (decision 7), a mode transition (decision 6, option b only), and a fifth, "checksum failed", for output that is still written: a unit whose checksum fails and the output that depends on it ([damaged-units.md](damaged-units.md)). It is the one reason whose audio reaches the front end's sink; the measurements leave it out.
 - **No finding.** `decode.frame-invalid` was raised for the unit that caused it, where one did.
 - **How it is reported (a contract change):** the decoder calls `DecodeContext.Withhold(long firstSample, long samples, WithholdReason reason)` for each span, and the host passes it to the measurer, which counts those positions as withheld and the rest of a position jump as lost.
   - A sink still sees only the jump.
@@ -587,7 +587,7 @@ What the recommendations change outside the decoders, so that none of it arrives
 ## Contract changes
 
 - **`DetMath`** moves to `Core.Abstractions`, public, with its tests. `Encspect.Host.Measurement` uses it from there.
-- **`DecodeContext.Withhold(long firstSample, long samples, WithholdReason reason)`** and the enum `WithholdReason` (`AfterGap`, `EmptyFrame`, `MainDataUnavailable`, `ModeTransition`), passed by the host to the measurer. A front end's sink sees only the position jump, as now.
+- **`DecodeContext.Withhold(long firstSample, long samples, WithholdReason reason)`** and the enum `WithholdReason` (`AfterGap`, `EmptyFrame`, `MainDataUnavailable`, `ModeTransition`, and later `ChecksumFailed`), passed by the host to the measurer. A front end's sink sees only the position jump, as now.
 - **The determinism scan** covers the nine lossy format assemblies but their `Decoding.Lossless` namespaces, tells integer from floating-point `Enumerable` reductions by their signatures (new work, above), and the inventory above is fixed.
 - **[`CLAUDE.md`](../../CLAUDE.md),** in the groundwork pull request:
   - Layout, `src/Encspect.Core.Abstractions`, at the end of its sentence: "…, the shared lazy-children list (`BlockedChildren`) with the record containers it is built from (`ChunkedList`, `ByteStore`), and the deterministic math (`DetMath`) that measurements and lossy decoders share."
