@@ -161,6 +161,9 @@ SHARED = [
 DOTNET = ["src/**", "tests/**", "Directory.*.props", "Directory.Packages.props", "global.json", "*.slnx", ".editorconfig", ".gitattributes",
           "scripts/*.sh", ".github/workflows/**", ".github/actions/**", "scripts/ci/**", ".claude/settings.json"]
 
+# Data only the cross-check scripts read (test_changes.py fails if a .NET project or test names it): not .NET input.
+NOT_DOTNET = ["tests/conformance/**"]
+
 # Documentation only: nothing here changes what the analyzer does. Markdown under src is a topic article
 # (the host serves it, and DescriptionTests reads it), so it is code.
 DOCS = ["docs/**", "LICENSE", "**/*.md"]
@@ -264,6 +267,10 @@ def area_matches(area, path, closure):
     return matches(path, spec["globs"])
 
 
+def is_dotnet(path):
+    return matches(path, DOTNET) and not is_docs(path) and not matches(path, NOT_DOTNET)
+
+
 def is_docs(path):
     return matches(path, DOCS) and not path.startswith(("src/", "tests/"))
 
@@ -337,7 +344,7 @@ def decide(event, files, root=ROOT, removed=()):
                 if area_matches(area, path, closures[area]):
                     flags[area] = True
                     hit = True
-            if matches(path, DOTNET) and not is_docs(path):
+            if is_dotnet(path):
                 for job in CI_JOBS_DOTNET:
                     flags[job] = True
                 hit = True
@@ -383,7 +390,7 @@ def scope_of(event, files, removed=(), root=ROOT):
     belong to a format or tag area, and nothing may be deleted under scripts/."""
     if event != "pull_request" or files is None or any(r.startswith("scripts/") for r in removed):
         return None
-    relevant = [f for f in files if f and matches(f, DOTNET) and not is_docs(f)]
+    relevant = [f for f in files if f and is_dotnet(f)]
     others = [f for f in relevant if not matches(f, ARTICLES)]
     if relevant and not others:
         return test_scope.plan_articles(root)

@@ -28,6 +28,19 @@ class ChangesTests(unittest.TestCase):
         self.assertEqual(run("src/Encspect.Host/Topics/lame-tag.md", "docs/cli.md"), {"build-test", "unit-tests"})
         self.assertIn("unit-tests", run("src/Encspect.Host/Topics/lame-tag.md", "src/Encspect.Formats.WavPack/WavPackParser.cs"))
 
+    def test_conformance_manifests_are_no_dotnet_input(self):
+        got = run("tests/conformance/truehd-samples.json")
+        self.assertFalse(got & set(changes.CI_JOBS_DOTNET), got)
+        self.assertIn("truehd-crosscheck", got)
+        self.assertIn("unit-tests", run("tests/conformance/truehd-samples.json", "src/Encspect.Formats.TrueHd/TrueHdParser.cs"))
+
+    @unittest.skipUnless((changes.ROOT / "src").is_dir() and (changes.ROOT / "tests/Encspect.Tests").is_dir(), "needs src and tests/Encspect.Tests")
+    def test_no_dotnet_project_or_test_names_the_conformance_folder(self):
+        for root in ("src", "tests/Encspect.Tests", "tests/Encspect.Gui.Tests", "tests/Encspect.Fuzz", "tests/Encspect.PcmDump"):
+            for file in (changes.ROOT / root).rglob("*"):
+                if file.suffix in (".cs", ".csproj", ".props", ".targets", ".axaml", ".json") and "bin" not in file.parts and "obj" not in file.parts and "fixtures" not in file.parts:
+                    self.assertIsNone(re.search(r"tests[/\\]conformance|\"conformance\"", file.read_text(encoding="utf-8", errors="replace")), f"{file} names tests/conformance, which changes.py treats as no .NET input")
+
     def test_the_release_scripts_run_no_job_of_this_workflow(self):
         self.assertEqual(run("scripts/release/make_notices.py", "scripts/release/licenses/libspeex.txt", "THIRD-PARTY-NOTICES.md"), set())
         self.assertEqual(run("scripts/release/make_notices.py", "src/Encspect.Formats.WavPack/WavPackParser.cs"), run("src/Encspect.Formats.WavPack/WavPackParser.cs"))
