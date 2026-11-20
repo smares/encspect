@@ -241,7 +241,7 @@ internal static class Sv7Syntax
                     int offset = MusepackTables.Offsets[resolution + 1];
                     for (int k = 0; k < 36; k++)
                     {
-                        values[k] = bits.ReadLong(width) - offset;
+                        values[k] = (short)(bits.ReadLong(width) - offset);
                     }
 
                     break;

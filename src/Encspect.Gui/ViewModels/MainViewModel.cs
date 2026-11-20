@@ -485,6 +485,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
 
     private void Analyze(Run run, FileRow row, FileFingerprint? fingerprint, CancellationToken token)
     {
+        DateTime started = DateTime.UtcNow;
         Core.Report report;
         if (row.FolderError is { } folderError)
         {
@@ -514,7 +515,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         // A file that could not be read is tried again next time.
         if (fingerprint is not null && summary.Problem is null)
         {
-            _cache?.Put(row.Path, fingerprint, summary);
+            _cache?.Put(row.Path, fingerprint, summary, started);
         }
 
         Apply(run, row, summary, isCached: false);

@@ -260,10 +260,8 @@ public sealed partial class Mp4Parser
         // QuickTime's enda box (inside the wave box of a version 1 entry): whether the samples are little-endian, or null without the box.
         public bool? IsLittleEndianByEnda { get; set; }
 
-        // QuickTime's sound sample description version 1 and 2: the bytes of a sample of one channel (version 1), and the format flags, bits per channel, bytes and frames per
-        // audio packet of version 2, which a linear PCM entry (lpcm) describes its samples by.
-        public uint? BytesPerSample { get; set; }
-
+        // QuickTime's sound sample description version 2: the format flags, bits per channel, bytes and frames per audio packet, which a linear PCM entry (lpcm) describes
+        // its samples by.
         public (uint Flags, uint Bits, uint BytesPerPacket, uint FramesPerPacket)? LpcmFormat { get; set; }
     }
 

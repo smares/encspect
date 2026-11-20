@@ -303,6 +303,30 @@ public class TakFrameTests
         Assert.Null(report.Streams.Single().Verification!.IsVerified);
     }
 
+    [Theory]
+    [InlineData(10)]
+    [InlineData(15)]
+    public void AnInvalidFrameSizeTypeStatesNoSampleCountThatTheAnalyzerNeverKnew(int sizeType)
+    {
+        byte[][] frames = FrameParts(4);
+        byte[] file = [.. "tBaK"u8, .. Builder.StreamInfo(sizeType: sizeType, samples: SamplesOf(4)), .. Builder.LastFrameInfo(frames.Take(3).Sum(f => f.Length), frames[3].Length), .. Builder.EncoderInfo(), .. Builder.End(), .. frames.SelectMany(f => f)];
+
+        Report report = Analyze(file);
+
+        Assert.DoesNotContain(report.Findings, f => f.Code == "tak.total-samples-mismatch");
+    }
+
+    [Fact]
+    public void ALastFrameWithItsPaddingBitsSetIsAFrameAsTakDecoderReadsIt()
+    {
+        byte[][] frames = [Builder.Frame(0, 200, isInfo: true), Builder.Frame(1, 200, isLast: true, padding: 3)];
+
+        Report report = Analyze(FramesFile(frames));
+
+        Assert.Equal(2, FrameNodes(report).Length);
+        Assert.DoesNotContain(report.Findings, f => f.Code == "tak.frames-missing");
+    }
+
     [Fact]
     public void MetadataWithNoFrameAfterItIsReported()
     {
