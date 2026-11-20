@@ -383,7 +383,7 @@ class ScopeTests(unittest.TestCase):
 
     def test_a_codec_change_scopes_to_the_containers_that_carry_it_and_a_tag_change_to_what_holds_the_tag(self):
         self.assertEqual(scoped("src/Encspect.Formats.Opus/OpusParser.cs")[0].selected, {"Opus", "Ogg", "Matroska", "Mp4", "VorbisComment"})
-        self.assertEqual(scoped("src/Encspect.Formats.Dts/DtsParser.cs")[0].selected, {"Dts", "Mp4", "Matroska", "Wav", "DtsHd", "Aiff"})
+        self.assertEqual(scoped("src/Encspect.Formats.Dts/DtsParser.cs")[0].selected, {"Dts", "Mp4", "Matroska", "Wav", "DtsHd"})
         self.assertEqual(scoped("src/Encspect.Tags.Lyrics3/Lyrics3TagParser.cs")[0].selected, {"Lyrics3", "MpegAudio"})
         self.assertIn("Aiff", scoped("src/Encspect.Formats.Wav/WavParser.cs")[0].selected)
 
@@ -428,11 +428,20 @@ class ScopeTests(unittest.TestCase):
 
     def test_a_changed_container_selects_the_codecs_it_carries_and_their_fixture_folders_select_it(self):
         chosen = scoped("src/Encspect.Formats.Mp4/Mp4Parser.cs")[0]
-        self.assertLessEqual({"Mp4", "Alac", "Aac", "Opus", "Flac", "TrueHd", "Ogg", "Matroska"}, chosen.selected)
+        self.assertLessEqual({"Mp4", "Alac", "Aac", "Opus", "Flac", "TrueHd"}, chosen.selected)
         for name in ("AlacDecoderTests", "AlacFixtureTests", "CorruptAlacFileTests", "CorruptAlacBuiltFileTests"):
             self.assertNotIn(name, chosen.excluded_classes, name)
         self.assertIn("Opus", scoped("src/Encspect.Formats.Ogg/OggParser.cs")[0].selected)
         self.assertLessEqual({"Alac", "Mp4", "Matroska"}, scoped("tests/fixtures/alac/a.m4a")[0].selected)
+
+    def test_carriers_stop_at_one_level(self):
+        mp4 = scoped("src/Encspect.Formats.Mp4/Mp4Parser.cs")[0].selected
+        self.assertTrue({"Ogg", "Matroska", "Asf"}.isdisjoint(mp4), "the containers of Mp4's codecs are not selected")
+        self.assertNotIn("Aiff", scoped("src/Encspect.Formats.Dts/DtsParser.cs")[0].selected)
+        opus = scoped("src/Encspect.Formats.Opus/OpusParser.cs")[0].selected
+        self.assertEqual(opus, {"Opus", "Ogg", "Matroska", "Mp4", "VorbisComment"})
+        self.assertEqual(scoped("src/Encspect.Formats.WavPack/WavPackParser.cs")[0].selected, {"WavPack", "Matroska", "Ape"})
+        self.assertEqual(scoped("src/Encspect.Tags.Ape/ApeTagParser.cs")[0].selected, {"Ape", "MonkeysAudio", "MpegAudio", "Musepack", "OptimFrog", "Tak", "Tta", "WavPack"})
 
     def test_every_fixture_folder_lists_the_containers_of_its_files(self):
         containers = {"m4a": "Mp4", "mp4": "Mp4", "m4b": "Mp4", "3gp": "Mp4", "mov": "Mp4", "mka": "Matroska", "mkv": "Matroska", "webm": "Matroska",

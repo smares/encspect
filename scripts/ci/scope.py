@@ -59,19 +59,14 @@ def down(selected, config):
 
 
 def carriers(changed, config):
-    """The areas a change reaches. A changed container reaches the codecs it carries (their tests go through it); then every container
-    that carries a selected area is added, and its container in turn (routes followed upward). A changed tag area reaches the areas that
-    hold its tag, and a changed format (or the codecs a changed container carries) reaches the tag areas whose tests go through it; the tag lists are final, not carried further."""
-    base = down(set(changed), config)
-    result = set(base)
-    while True:
-        more = {container for container, ids in config["routes"].items() if any(config["codecs"][i] in result for i in ids)}
-        if more <= result:
-            break
-        result |= more
+    """The areas a change reaches, one level deep. A changed container reaches the codecs it carries (their tests go through it), and a
+    changed codec the containers that carry it, but not those containers' other codecs. A changed tag area reaches the formats that hold its
+    tag, and a changed format the tag areas whose lists name it; nothing is carried further (the push to main runs everything)."""
+    changed = set(changed)
+    containers = {container for container, ids in config["routes"].items() if any(config["codecs"][i] in changed for i in ids)}
     forward = {carrier for tag, carried in config["tags"].items() if tag in changed for carrier in carried}
-    backward = {tag for tag, carried in config["tags"].items() if set(carried) & base}
-    return result | forward | backward
+    backward = {tag for tag, carried in config["tags"].items() if set(carried) & changed}
+    return down(changed, config) | containers | forward | backward
 
 
 TYPE = re.compile(r"\b(?:class|struct|record|interface)\s+(\w+)")
