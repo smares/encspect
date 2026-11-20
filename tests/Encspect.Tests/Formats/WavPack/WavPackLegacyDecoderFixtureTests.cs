@@ -62,7 +62,8 @@ public class WavPackLegacyDecoderFixtureTests
         // A hybrid file decoded alone is the lossy audio, which the original decoder's run without the correction file gives. The raw-stereo-extra files hold the audio of
         // raw-stereo with 1 to 3 stray bytes after it, which the original decoder writes out beyond the whole samples (96001 bytes) and a decoder of samples does not.
         string expected = original.TryGetProperty("without_correction", out JsonElement lossy) ? lossy.GetProperty("pcm_md5").GetString()!
-            : original.GetProperty("pcm_bytes").GetInt64() % 4 != 0 ? Fixtures.LoadMpegManifest("wavpack/legacy/external-wv340-raw-stereo.wv").GetProperty("crosscheck").GetProperty("original_decoder").GetProperty("pcm_md5").GetString()!
+            : manifest.GetProperty("encoder").GetProperty("input").TryGetProperty("extra_bytes", out JsonElement extra) && extra.GetInt32() > 0
+                ? Fixtures.LoadMpegManifest(name[..name.LastIndexOf("-extra-", StringComparison.Ordinal)] + ".wv").GetProperty("crosscheck").GetProperty("original_decoder").GetProperty("pcm_md5").GetString()!
             : original.GetProperty("pcm_md5").GetString()!;
         Assert.Equal(expected, sink.Hash());
     }

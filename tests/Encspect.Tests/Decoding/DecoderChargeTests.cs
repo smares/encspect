@@ -169,13 +169,28 @@ public class DecoderChargeTests
     [Fact]
     public void WavPack1To3StaysUnderTheDefaultAllowanceForItsBytes()
     {
-        // The cheapest code, zero bits, in the mode with the most passes (extreme decorrelation with cross-channel terms, 18 passes), stereo: the units a byte of the file charges.
+        // The cheapest code outside zero runs, zero bits, in the mode with the most passes (extreme decorrelation with cross-channel terms, 18 passes), stereo: the units a byte of the file charges.
         const int bytes = 1 << 20;
         long units = Units(DecoderWorkTests.WavPackCases.LegacyZeros("external-wv340-high.wv", bytes), "zeros.wv");
         Assert.True(units / bytes <= DecodeWork.DefaultPerInputByte, $"{units / (double)bytes:F1} units a byte");
 
         // Measured: a word of zero bits takes 2 bits, so a byte holds 4 words, each charged 16 + 24 + 18 x 11 = 238 units, and 16 for the byte itself: 968 a byte.
         Assert.InRange(units / bytes, 960, 975);
+    }
+
+    [Fact]
+    public void WavPack1To3ZeroRunsOfTheExtremeModeCostNoBitsAndAreChargedPerSample()
+    {
+        // A run code of 8 bytes states 2^32 - 1 zero words; the charge is 16 + 24 + 18 x 11 = 238 units a word, so a byte of a legitimate -h file of digital silence is
+        // charged far more than the default allowance, and the stream stops with decode.limit instead of running to the end.
+        byte[] data = DecoderWorkTests.WavPackCases.LegacyZeroRuns("external-wv340-high.wv", 1 << 12);
+        var counting = new CountingDecoder(new WavPackDecoder());
+        var analyzer = new Analyzer(DefaultParsers.Tags, DefaultParsers.Formats, DefaultParsers.Codecs, [counting]);
+        Report report = analyzer.Analyze("runs.wv", new MemoryStream(data), new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = 1L << 30, Output = _ => new DecoderWorkTests.NullSink() } });
+
+        Assert.Contains(report.Findings, f => f.Code == "decode.limit");
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+        Assert.True(counting.Units / data.Length > DecodeWork.DefaultPerInputByte);
     }
 
     [Fact]

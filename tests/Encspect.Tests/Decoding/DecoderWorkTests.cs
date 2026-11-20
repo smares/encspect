@@ -522,6 +522,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         Add("wavpack-muted-blocks", () => new Case("wavpack-muted-blocks", WavPackCases.MutedBlocks()));
         Add("wavpack-wide-set", () => new Case("wavpack-wide-set", WavPackCases.WideSet()));
         Add("wavpack-legacy-high-stereo", () => new Case("wavpack-legacy-high-stereo", WavPackCases.LegacyNoise("external-wv340-high.wv", 1 << 20)));
+        Add("wavpack-legacy-high-zero-runs", () => new Case("wavpack-legacy-high-zero-runs", WavPackCases.LegacyZeroRuns("external-wv340-high.wv", 1 << 20)));
         Add("wavpack-legacy-lossless-24-stereo", () => new Case("wavpack-legacy-lossless-24-stereo", WavPackCases.LegacyNoise("external-wv340-lossless-24-stereo.wv")));
         Add("wavpack-legacy-hybrid-mono", () => new Case("wavpack-legacy-hybrid-mono", WavPackCases.LegacyNoise("external-wv340-hybrid-320-mono.wv")));
         Add("wavpack-sets-that-never-complete", () => new Case("wavpack-sets-that-never-complete", WavPackCases.SetsThatNeverComplete()));
@@ -1423,12 +1424,28 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             return [.. head, .. Noise(new Random(7), bytes)];
         }
 
-        // The same with a bitstream of zero bits, the cheapest code there is, which is where a byte of a legitimate file carries the most samples.
+        // The same with a bitstream of zero bits, the cheapest code outside zero runs: a word of 2 bits.
         internal static byte[] LegacyZeros(string fixture, int bytes, uint samples = int.MaxValue)
         {
             byte[] head = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "wavpack", "legacy", fixture))[..80];
             BinaryPrimitives.WriteUInt32LittleEndian(head.AsSpan(60), samples);
             return [.. head, .. new byte[bytes]];
+        }
+
+        // The same in the extreme mode with the bitstream made of the longest zero-run code (32 ones, a zero, 31 ones: 8 bytes for 2^32 - 1 words), after which a word costs
+        // no bit at all: where a byte of a legitimate file carries the most samples.
+        internal static byte[] LegacyZeroRuns(string fixture, int bytes)
+        {
+            byte[] head = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "wavpack", "legacy", fixture))[..80];
+            BinaryPrimitives.WriteUInt32LittleEndian(head.AsSpan(60), int.MaxValue);
+            byte[] run = [0xFF, 0xFF, 0xFF, 0xFF, 0xFE, 0xFF, 0xFF, 0xFF];
+            byte[] body = new byte[bytes / run.Length * run.Length];
+            for (int i = 0; i < body.Length; i += run.Length)
+            {
+                run.CopyTo(body, i);
+            }
+
+            return [.. head, .. body];
         }
 
         internal const int LegacyNoiseBytes = 6 << 20;

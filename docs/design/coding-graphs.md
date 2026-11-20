@@ -348,11 +348,11 @@ The readers behind this table were removed on 2026-10-29 for their provenance (s
 | --- | --- | --- | --- | --- | --- | --- |
 | Mid/side stereo | the joint stereo flag of each stereo block's header | yes, the header is in the block record | "Stereo Coding" ("x of y stereo blocks"; replaced "Mid/Side Blocks" in #228) | 1 byte per block, derived; a flag series over stereo blocks | built (#228) | built |
 | Decorrelation passes | decorrelation terms per block | yes, the decorrelation terms of every block | "Decorrelation Passes" (the smallest and largest) | 8 bytes per block as a numeric series, recorded while reading | code | 2 |
-| Stereo coding, WavPack 1 to 3 | the joint stereo flag and the mode of the stream's one header (`unpack3.h`) | yes, the header (branch `feat/wavpack-legacy-parser`, 81c9d5d) | "Stereo Coding" as one value for the stream: "Mid/side stereo", "Left/right stereo" or "Adaptive" | | code (branch) | not a series: one header and one bitstream, no blocks |
-| Bitrate per unit, WavPack 1 to 3 | the bit position of the bitstream as each second ends | only by the decoder (branch `feat/wavpack-legacy-decoder`, 66ba946), which adds no series | no | | code (branch) | not a series: [wavpack-legacy.md](wavpack-legacy.md) lists "Bitrate Over Time" as needing the decoder, and decoding never changes the parser's figures |
+| Stereo coding, WavPack 1 to 3 | the joint stereo flag and the mode of the stream's one header (`unpack3.h`) | yes, the header | "Stereo Coding" as one value for the stream: "Mid/side stereo", "Left/right stereo" or "Adaptive stereo" | | built (#343) | not a series: one header and one bitstream, no blocks |
+| Bitrate per unit, WavPack 1 to 3 | the bit position of the bitstream as each second ends | only by the decoder (#346), which adds no series | no | | not built: needs the decoder's figures, which never change the parser's | not a series: [wavpack-legacy.md](wavpack-legacy.md) lists "Bitrate Over Time" as needing the decoder, and decoding never changes the parser's figures |
 
 - A WavPack 4 and 5 block holds a whole number of samples chosen by the encoder, so these graphs have as many points as the file has blocks; their cost is the bytes in the table.
-- A WavPack 1 to 3 file is one header and one bitstream ([wavpack-legacy.md](wavpack-legacy.md)), so it has no unit to put a per-frame series on; its "Stereo Coding" is a single value of the stream, with "Adaptive" for the default lossless mode of 3.0 to 3.2, which chooses per sample. The rows above were read on the unmerged branches.
+- A WavPack 1 to 3 file is one header and one bitstream ([wavpack-legacy.md](wavpack-legacy.md)), so it has no unit to put a per-frame series on; its "Stereo Coding" is a single value of the stream, with "Adaptive stereo" for the default lossless mode of 3.0 to 3.2, which chooses per sample.
 
 ### FLAC
 
