@@ -119,7 +119,13 @@ public partial class MainWindow : Window
     {
         grid.Columns.Add(Column("Name", CompiledBinding.Create<FileRow, string>(r => r.Name), nameof(FileRow.Name), new DataGridLength(NameWidth)));
         grid.Columns.Add(Column("Format", CompiledBinding.Create<FileRow, string>(r => r.FormatText), nameof(FileRow.FormatText), new DataGridLength(104)));
-        grid.Columns.Add(Column("Codec", CompiledBinding.Create<FileRow, string?>(r => r.Codec), nameof(FileRow.Codec), new DataGridLength(128)));
+        grid.Columns.Add(new DataGridTemplateColumn
+        {
+            Header = "Codec",
+            SortMemberPath = nameof(FileRow.Codec),
+            Width = new DataGridLength(128),
+            CellTemplate = new FuncDataTemplate<FileRow>((_, _) => CodecCell()),
+        });
         grid.Columns.Add(Column("Duration", CompiledBinding.Create<FileRow, string?>(r => r.DurationText), nameof(FileRow.Duration), new DataGridLength(82), 0, "numeric"));
         grid.Columns.Add(Column("Bitrate", CompiledBinding.Create<FileRow, string?>(r => r.BitrateText), nameof(FileRow.Bitrate), new DataGridLength(112), 0, "numeric"));
         grid.Columns.Add(Column("Sample Rate", CompiledBinding.Create<FileRow, string?>(r => r.SampleRateText), nameof(FileRow.SampleRate), new DataGridLength(98), 0, "numeric"));
@@ -197,6 +203,15 @@ public partial class MainWindow : Window
         }
 
         return column;
+    }
+
+    // The codec, with the pairing with its correction file as the tooltip.
+    private static TextBlock CodecCell()
+    {
+        var text = new TextBlock { Margin = new Avalonia.Thickness(12, 0), VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center, TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis };
+        text.Bind(TextBlock.TextProperty, CompiledBinding.Create<FileRow, string?>(r => r.Codec));
+        text.Bind(ToolTip.TipProperty, CompiledBinding.Create<FileRow, string?>(r => r.CodecTip));
+        return text;
     }
 
     // The layout's name, with its speakers as the tooltip.

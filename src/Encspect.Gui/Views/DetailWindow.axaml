@@ -37,7 +37,7 @@
         </StackPanel>
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="12,0,0,0">
           <TextBlock Name="FileChangedText" Text="Changed on disk since it was analyzed" Classes="secondary" Margin="0,0,6,0"
-                     VerticalAlignment="Center" ToolTip.Tip="Refresh or open the file again to analyze it as it is now."
+                     VerticalAlignment="Center" ToolTip.Tip="{Binding FileChangedTip}"
                      IsVisible="{Binding HasFileChanged}" />
           <TextBlock Name="CommandErrorText" Text="{Binding CommandError}" Classes="error" MaxWidth="320" Margin="0,0,6,0"
                      VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding CommandError}"
@@ -111,6 +111,8 @@
               </ScrollViewer>
             </StackPanel>
           </Border>
+          <TextBlock DockPanel.Dock="Top" Name="HexTitle" Text="{Binding HexTitle}" Classes="secondary" FontSize="12" Margin="12,6,12,2" TextTrimming="CharacterEllipsis"
+                     ToolTip.Tip="The file the bytes below belong to." IsVisible="{Binding HasHexTitle}" />
           <views:HexView Name="Hex" Document="{Binding Document}" Highlight="{Binding Highlight}" />
         </DockPanel>
 

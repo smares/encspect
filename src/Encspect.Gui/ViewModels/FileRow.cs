@@ -20,7 +20,7 @@ public sealed class FileRow : ObservableObject
 
     private static readonly string[] Changed =
     [
-        nameof(Format), nameof(FormatText), nameof(Codec), nameof(Duration), nameof(DurationText), nameof(Bitrate), nameof(IsVbr),
+        nameof(Format), nameof(FormatText), nameof(Codec), nameof(CodecTip), nameof(Duration), nameof(DurationText), nameof(Bitrate), nameof(IsVbr),
         nameof(BitrateText), nameof(SampleRate), nameof(SampleRateText), nameof(ChannelMode), nameof(ChannelLayout),
         nameof(ChannelLayoutTip), nameof(Encoder), nameof(EncoderConfidence),
         nameof(EncoderText), nameof(Writer), nameof(WriterConfidence), nameof(WriterText), nameof(Tags), nameof(Errors), nameof(Warnings), nameof(Infos), nameof(ErrorsText), nameof(WarningsText),
@@ -69,6 +69,9 @@ public sealed class FileRow : ObservableObject
     };
 
     public string? Codec => _summary?.Summary.Codec;
+
+    // The pairing with the correction file, for the codec cell's tooltip; null for a file without one.
+    public string? CodecTip => _summary?.Correction;
 
     public double? Duration => _summary?.Summary.Duration;
 
