@@ -14,14 +14,14 @@ references: RFC 6716 section 2, table 1; section 3.1; ISO/IEC 11172-3 2.4.1.5, 2
 
 **In AC-3 and E-AC-3.** A channel that codes its own exponents sends chbwcod, and its coefficients end at bin 37 + 3 × (chbwcod + 12); a bin is a 512th of the sample rate wide. Coupling and, in E-AC-3, [spectral extension](eac3-spectral-extension) change where a range ends. The figure is the highest end over the [audio blocks](ac3-audio-blocks).
 
-**In DTS.** The top of the highest of the 32 subbands with bits, a vector quantization address ([subframes](dts-subframes)).
+**In DTS.** The top of the highest of the 32 subbands with bits, a vector quantization address or a joint intensity copy ([subframes](dts-subframes)).
 
 **In Vorbis.** The end of the last [residue partition](vorbis-floors-and-residues) that reads an entry.
 
 **In Windows Media Audio.** The upper edge of the last non-zero coefficient found in a block's run-level codes ([frames and blocks](wma-frames-and-blocks)), at the resolution of one coefficient and placed by the channel's noise substitution flags.
 
-**In Opus.** The TOC byte of every packet names a bandwidth (RFC 6716, table 1). The figure is the top of that band.
+**In Opus.** The TOC byte of every packet names a bandwidth. The figure is the top of that band.
 
-**A bound the data states.** Except in Windows Media Audio, where it is a coded value, the figure is what the syntax declares, not a measurement of the sound: a band below it can carry very little, and SBR or spectral extension adds content above.
+**A bound the data states.** Except in Windows Media Audio, where it is a coded value, the figure is what the syntax declares, not a measurement of the sound: a band below it can carry very little, noise substitution and intensity stereo bands count, and SBR or spectral extension adds content above.
 
 **What you see.** The lowest, most common and highest value, and a graph. It is neither the [lowpass frequency](lowpass), the setting a LAME tag states, nor the [spectral cutoff](spectral-cutoff) or the [spectral bandwidth](spectral-bandwidth), measured from decoded audio: the four can differ.

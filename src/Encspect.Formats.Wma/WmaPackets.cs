@@ -93,6 +93,9 @@ internal sealed class WmaPacketReader
     // Called after every frame, in order, with whether the frame is one the series have a point for (the frames past FrameLimit are not).
     public Action<bool>? FrameRead { get; init; }
 
+    // Called after the bits of a lost frame are read, which are no frame: what they added to the frame series' scratch is dropped.
+    public Action? LostRead { get; init; }
+
     // The frames read, those past FrameLimit included; a lost frame's end (see ReadRun) is no frame.
     public long FramesRead => _frameNumber;
 
@@ -1116,6 +1119,7 @@ internal sealed class WmaPacketReader
         if (isLost)
         {
             _lastFrameNumber = -1;
+            LostRead?.Invoke();
             return result;
         }
 

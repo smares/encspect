@@ -98,6 +98,7 @@ public sealed class WmaLosslessParser : ICodecParser
             FrameLimit = FrameLimit,
             Stereo = p.Channels == 2 ? new UnitCategoryTally("Stereo Coding", LosslessReport.StereoCodings, "frame", GraphConcept.StereoCoding) : null,
             FrameStereo = p.Channels == 2 ? FrameStereo : null,
+            LostRead = () => tally.FrameSizes!.Clear(),
             FrameRead = isRecorded =>
             {
                 if (isRecorded)

@@ -98,7 +98,8 @@ def ffprobe_json(path, *args):
 def check_noise_line(pcm, channels, line, problems):
     """The fixtures of make_wma_noise_fixtures.py hold one escape-coded coefficient per frame in channel 1, at the line the analyzer's golden report
     gives as its coded bandwidth; ffmpeg, run as a program, decodes a tone at that line (docs/design/wma-standard-format.md, "Coefficients"). A frame of
-    2,048 lines is 4,096 samples of window, so a line is a bin of an FFT of 4,096 samples, and the frame's tone sits within one bin of it."""
+    2,048 lines is 4,096 samples of window; padded to 8,192 points the FFT has two bins to a line. A tone at line T peaks at bin 2T (flagged-band: 894) or 2T + 2 (control: 830 for line 829) in the committed files:
+    the peak of one coefficient depends on the phase of the frames' sign pattern, so it is held to within one line, which the 65 lines between the files' placements exceed."""
     try:
         import numpy
     except ImportError:
@@ -106,9 +107,9 @@ def check_noise_line(pcm, channels, line, problems):
         return
     samples = numpy.frombuffer(pcm, dtype="<i2").reshape(-1, channels)[:, 0].astype(float)
     window = samples[16 * 2048:18 * 2048]
-    bin_ = int(numpy.abs(numpy.fft.rfft(window * numpy.hanning(len(window)))).argmax())
-    if bin_ not in (line, line + 1):
-        problems.append(f"ffmpeg decodes a tone at line {bin_}, where the analyzer places the coefficient at line {line}")
+    bin_ = int(numpy.abs(numpy.fft.rfft(window * numpy.hanning(len(window)), 8192)).argmax())
+    if abs(bin_ - 2 * line) > 2:
+        problems.append(f"ffmpeg decodes a tone at line {bin_ / 2}, where the analyzer places the coefficient at line {line}")
 
 
 def decode(path, fmt="s16le", level="error"):
