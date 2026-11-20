@@ -41,9 +41,6 @@
  "crosscheck": {
   "ffprobe": true,
   "decode": true,
-  "libdca": false,
-  "skip": {
-   "libdca": "libdca is not asked about the quantizer books: ffmpeg's decoder is the reference for the derived levels"
-  }
+  "libdca": true
  }
 }

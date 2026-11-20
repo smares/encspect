@@ -417,7 +417,7 @@ def build_coded():
           sel=sel_a, ssc=[2, 2], nblks=31, size=1400, scale_range=(5, 30))
     # The two quantizer books whose tables the specification's PDF gets wrong (development.md): D65 stops at level -30, which leaves levels 31, -31, 32 and -32 to be derived, and D129 lists level 37 twice.
     probe = dict(layout=["front center"], mode="1/0", amode=0, nch=1, subs=[0], vqsub=[31], joinx=[0], thuff=[0], shuff=[5], bhuff=[5], ssc=[2], nblks=15, filts=0, scale_range=(40, 40),
-                 check=cc(libdca=False, skip={"libdca": "libdca is not asked about the quantizer books: ffmpeg's decoder is the reference for the derived levels"}))
+                 check=cc())
     coded("subframes-quantizer-d65", "Three mono core frames whose first subband codes quantization indexes 31, -31, 32 and -32 with the book D65 (ABITS 9, SEL 3), the levels the PDF's table leaves out.", 3,
           sel=[[0, 0, 0, 0, 0, 0, 0, 0, 3, 0]], probe=(9, [31, -31, 32, -32]), **probe)
     coded("subframes-quantizer-d129", "Three mono core frames whose first subband codes quantization indexes 37, -37, 36 and -36 with the book D129 (ABITS 10, SEL 3), where the PDF lists 37 twice.", 3,

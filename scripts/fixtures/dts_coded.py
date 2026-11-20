@@ -186,7 +186,7 @@ def write_subframes(bits, p, nch, subs, vqsub, joinx, bhuff, shuff, thuff, sel, 
                     highest = max(highest, n + 1)
             if vqsub[ch] < subs[ch]:
                 highest = max(highest, subs[ch])
-            if joinx[ch]:
+            if joinx[ch] and subs[joinx[ch] - 1] > subs[ch]:
                 highest = max(highest, subs[joinx[ch] - 1])
         facts.subbands = max(facts.subbands, highest)
         facts.transient_mask.append(any(t > 0 for row in tmode for t in row))

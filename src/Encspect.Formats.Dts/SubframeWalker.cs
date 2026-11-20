@@ -320,7 +320,7 @@ internal sealed class SubframeWalker
             }
 
             int source = a.Joinx[ch] - 1;
-            if (source >= 0 && source < channels)
+            if (source >= 0 && source < channels && a.Subs[source] > a.Subs[ch])
             {
                 walk.Subbands = Math.Max(walk.Subbands, a.Subs[source]);
             }
