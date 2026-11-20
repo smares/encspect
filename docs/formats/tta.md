@@ -116,7 +116,7 @@ The header states a channel count and no speaker positions. The layout comes fro
 - **Checked against:** a test-side encoder that inverts the description (round trips for 8, 16 and 24 bits, 1 to 6 channels, silence, noise, the ends of the range, long runs of ones after silence), the worked examples of the description, and `tta -d` and FFmpeg sample for sample on the 26 encoder-written files it can (the 27th is the password file), which `scripts/fixtures/crosscheck_tta_pcm.py` runs in CI ([development.md](../development.md#tta-decoding-clean-room)). `tta -d` refuses the 8-bit and 8-channel files, so FFmpeg is the only reference for them; the 8-bit coding (a predictor of 15/16 and a filter shift of 10) rests on FFmpeg's decode of its own file.
 - **Damage:**
   - a sample outside the range of the depth, a Rice code of 31 bits or more, a Rice parameter beyond 32 bits, or coded data that ends inside a sample: the frame is not decoded (`decode.frame-invalid`), and the blocks it had written stay; the next frame decodes on its own;
-  - a frame the parser calls damaged (its CRC-32 fails) is decoded all the same;
+  - a frame the parser calls damaged (its CRC-32 fails) is decoded all the same, and written, but the measurements leave its positions out as withheld samples ("checksum failed") and the next frame follows a gap; every frame starts from the same state, so nothing else depends on it ([the design](../design/damaged-units.md));
   - a frame cut by the end of the data or shorter than its CRC-32 is not decoded;
   - bytes left after the last code of a frame are ignored, as the reference ignores them (the decoder reports them as the info `tta.frame-bytes-after-codes`);
   - a frame of more than 64 MiB is not read into memory and not decoded (`tta.frame-not-decoded`, Info).
@@ -132,7 +132,7 @@ The header states a channel count and no speaker positions. The layout comes fro
 - 8-bit streams of encoders other than FFmpeg's: the reference decoder refuses 8 bits, and only FFmpeg's file tells how they decode.
 - TTA2, and a decrypted view of audio format 2.
 - Finding frames in a file whose seek table is damaged beyond its CRC-32 (the description says such a file can be decoded only in an "unseekable" mode; the analyzer follows the lengths).
-- No check of the audio beyond the frames' CRC-32s: the stream stores none over the decoded samples.
+- No check of the audio beyond the frames' CRC-32s: the stream stores none over the decoded samples. Every frame has a CRC-32, so none is unprotected, but a stream whose writer computes it wrongly has every frame withheld and measures nothing.
 - Compression ratio per frame, which [coding-graphs.md](../design/coding-graphs.md) plans for TTA after the parser.
 
 ## Articles
