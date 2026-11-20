@@ -78,6 +78,9 @@ DIRECTORY = ROOT / "tests" / "fixtures" / "measurement"
 # low, where BS.1770-5 equation 7 (the model, the analyzer) gates each block on its own. Their integrated loudness is not compared.
 HISTOGRAM_GATED = {"synthetic-loudness-gate-straddle-8000"}
 
+# Files with a frame whose CRC-16 fails (docs/design/damaged-units.md): the model leaves the frame out of its figures, while flac and FFmpeg reject or
+# conceal it, so every comparison that reads the decoded file is skipped, with its reason printed.
+DAMAGED = {"synthetic-levels-crc16-fails"}
 GAPS = {"synthetic-gap-frames-removed", "synthetic-gap-jump-2-40", "synthetic-levels-gaps", "synthetic-levels-silence-stretches-gaps", "synthetic-loudness-gap-8000"}
 
 
@@ -293,7 +296,7 @@ def tenths_close(figure, value, tolerance, what="figure"):
 def check_libebur128(path, expected, driver, found):
     model = expected["model"]
     loud, peak = model["loudness"], model["true_peak"]
-    if "not_measured" in loud or path.stem in GAPS:
+    if "not_measured" in loud or path.stem in GAPS or path.stem in DAMAGED:
         return False
     stream = m.Stream(path.read_bytes())
     layout = m.LAYOUTS.get(stream.info["channels"])
@@ -363,7 +366,7 @@ FFMPEG_VERSION = "unknown"
 def check_ffmpeg_ebur128(path, expected, info, found, skipped):
     model = expected["model"]
     loud, peak = model["loudness"], model["true_peak"]
-    if "not_measured" in loud or path.stem in GAPS:
+    if "not_measured" in loud or path.stem in GAPS or path.stem in DAMAGED:
         return
     if info["channels"] not in FFMPEG_LAYOUT_CHANNELS:
         skipped.append(f"{path.stem}: FFmpeg's ebur128 (its channel weights for {info['channels']} channels differ from Table 4's)")
@@ -413,7 +416,9 @@ def main():
             found = []
             stream = m.Stream(path.read_bytes())
             info = stream.info
-            if path.stem in GAPS:
+            if path.stem in DAMAGED:
+                skipped.append(f"{path.stem}: flac -t, flac -d and ffmpeg (a frame's CRC-16 fails, which the measurements leave out as withheld samples)")
+            elif path.stem in GAPS:
                 skipped.append(f"{path.stem}: flac -t, flac -d and ffmpeg (the frame numbers jump)")
             else:
                 result = run(["flac", "-t", "-s", str(path)])
@@ -442,6 +447,8 @@ def main():
             expected = json.loads(path.with_suffix(".expected.json").read_text())
             if "levels" not in expected.get("model", {}):
                 found.append("the manifest has no levels")
+            elif path.stem in DAMAGED:
+                skipped.append(f"{path.stem}: astats (it reads the decoded file, which holds the frame the model leaves out)")
             else:
                 check_astats(path, expected, info, found)
             if "loudness" not in expected.get("model", {}):
@@ -449,7 +456,9 @@ def main():
             else:
                 compared_loudness += 1 if check_libebur128(path, expected, driver, found) else 0
                 check_ffmpeg_ebur128(path, expected, info, found, skipped)
-            if path.stem in GAPS and path.stem.startswith("synthetic-levels-"):
+            if path.stem in DAMAGED:
+                skipped.append(f"{path.stem}: silencedetect (the decoded file holds the frame the model leaves out)")
+            elif path.stem in GAPS and path.stem.startswith("synthetic-levels-"):
                 skipped.append(f"{path.stem}: silencedetect (it follows the timestamps and counts a gap in the frame numbers as silence, so its stretches cross the gaps the levels keep apart)")
             elif path.stem.startswith("synthetic-levels-") and info["bits"] <= 16:
                 check_silence(path, stream, info, expected, found)
