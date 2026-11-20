@@ -6,7 +6,9 @@ name: CI
 # which the filters of the other events exclude: scripts/ci/changes.py), and fuzz for half an hour. Every Linux job is pinned to ubuntu-26.04. The
 # cross-check jobs run that image's packaged tools (GPAC's MP4Box, which it lacks, is built from source) and fail
 # when a tool's version differs from the one their scripts expect (scripts/fixtures/tool_versions.py). See "CI" in
-# docs/development.md.
+# docs/development.md. A pull request that changes only format or tag projects (and their tests and fixtures) runs the unit tests of
+# those areas and of the formats that carry them, and every test no area owns (scripts/ci/scope.py, areas.json); any other .NET change
+# runs the whole suite, and so do a push, the nightly run and a manual run. A shard with no test left is left out of the matrix.
 on:
   push:
     branches: [main]
@@ -78,7 +80,10 @@ jobs:
         with:
           fetch-depth: 2
           filter: blob:none
-          sparse-checkout: scripts
+          # The test sources are read for the classes of each area (scripts/ci/scope.py).
+          sparse-checkout: |
+            scripts
+            tests/Encspect.Tests
 
       # Decided here, in plain shell and not by changes.py, so that a change to the filter cannot excuse itself: a
       # pull request that touches .github/ or scripts/ci/ runs every job and accepts no skip (see all-checks).
@@ -108,11 +113,12 @@ jobs:
         with:
           # The golden is the real report test_golden_additions.py checks the script against; the conformance
           # lists are what test_sources_plan.py lists the addresses of; the Matroska element table is what
-          # matroska_model.py, which test_alac_model.py imports, reads its schema from.
+          # matroska_model.py, which test_alac_model.py imports, reads its schema from; src and the test sources are what test_changes.py checks areas.json against.
           sparse-checkout: |
             /docs/
             /scripts/
-            /src/Encspect.Formats.Matroska/Elements.cs
+            /src/
+            /tests/Encspect.Tests/
             /README.md
             /CLAUDE.md
             /tests/fixtures/mpeg-audio/channel-mode-change.report.json
