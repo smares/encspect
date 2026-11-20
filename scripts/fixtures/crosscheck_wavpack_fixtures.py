@@ -163,6 +163,13 @@ PAIR_AUDIO_DIFFERS = {
 }
 
 
+# Pairs with a block whose CRC fails: the audio libwavpack leaves for such a block is its own and differs between its versions (CI's wvunpack 5.9.0 gives other
+# audio than the pinned 5.6.0 pass), so only that the analyzer's audio is not libwavpack's is held (PAIR_AUDIO_DIFFERS).
+PAIR_MUTED_DIFFERENTLY = {
+    "built-pair-set-block-removed": "the block whose CRC fails is muted by libwavpack, and wvunpack 5.9.0 leaves other audio for it than the 5.6.0 pass",
+}
+
+
 def skip(name, check, reason):
     SKIPS.append(f"{name}: {check} skipped: {reason}")
 
@@ -433,7 +440,9 @@ def check_audio(name, manifest, path, facts, work, problems):
     if companion is not None:
         # The audio of a pair is the one libwavpack's pass (the MD5 of crosscheck.pair) and wvunpack --raw with the .wvc give; FFmpeg's decoder does not read a
         # .wvc beside a file, so it decodes the lossy part, which the other checks hold.
-        if digest != manifest["crosscheck"]["pair"]["md5"]:
+        if name in PAIR_MUTED_DIFFERENTLY:
+            skip(name, "wvunpack's audio against libwavpack 5.6.0's pass", PAIR_MUTED_DIFFERENTLY[name])
+        elif digest != manifest["crosscheck"]["pair"]["md5"]:
             problems.append(f"wvunpack --raw with the correction file decodes to {digest}, libwavpack's pass to {manifest['crosscheck']['pair']['md5']}")
         if name in PAIR_AUDIO_DIFFERS:
             if digest == manifest["decoded_pcm_md5"]:
@@ -499,6 +508,9 @@ def check_libwavpack_verdict(name, manifest, problems):
     if "verification" not in manifest or manifest["verification"]["verify"]["decoding"] != "decoded":
         return
     expected = manifest["crosscheck"]["decode"]
+    # A pair that is decoded with its correction file is held to libwavpack's pass over the pair (the other pairs decode as the main file alone).
+    if manifest.get("companion") and not {p["kind"] for p in manifest["correction"]["problems"]} & {"notCorrectionData", "streamDiffers"}:
+        expected = manifest["crosscheck"]["pair"]
     if not expected["opens"]:
         return
     verify = manifest["verification"]["verify"]
