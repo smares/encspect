@@ -18,8 +18,6 @@ references: RFC 6716 section 2, table 1; section 3.1; ISO/IEC 11172-3 2.4.1.5, 2
 
 **In Vorbis.** The end of the last [residue partition](vorbis-floors-and-residues) that reads an entry.
 
-**In Windows Media Audio.** The upper edge of the last non-zero coefficient of each block ([frames and blocks](wma-frames-and-blocks)), found in the run-level codes: a coded value at the resolution of one coefficient, not a stated bound.
-
 **In Opus.** The TOC byte of every packet names a bandwidth, narrowband to fullband: 4, 6, 8, 12 or 20 kHz (RFC 6716, table 1). The figure is the top of that band.
 
 **A bound the data states.** The value is what the syntax declares, not a measurement of the sound: a band below it can carry very little, noise substitution and intensity stereo bands count, and SBR or spectral extension adds content above.
