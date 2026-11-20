@@ -30,6 +30,7 @@ internal sealed partial class FileReader
         bool afterCrc = false;
         int timestamps = 0;
         int crcIndex = 0;
+        int firstBlock = records.Blocks.Count;
         long position = dataStart;
         int seen = 0;
 
@@ -171,6 +172,14 @@ internal sealed partial class FileReader
             records.ComputedCrcs[crcIndex] = computed;
             if (computed != (uint)stored.Value)
             {
+                // The CRC-32 covers every element after it, so every block of the Cluster fails the container's check.
+                for (int i = firstBlock; i < records.Blocks.Count; i++)
+                {
+                    BlockRecord failed = records.Blocks[i];
+                    failed.FailsChecksum = true;
+                    records.Blocks.Set(i, failed);
+                }
+
                 _findings.Add(Severity.Warning, "matroska.crc-mismatch", () => new Node("CRC-32", stored.Offset, stored.HeaderLength + stored.DataLength), count =>
                     $"{(count == 1 ? "A CRC-32 element does" : $"{count} CRC-32 elements do")} not match the data {(count == 1 ? "it covers" : "they cover")}: the first, the CRC-32 at 0x{stored.Offset:X} in the Cluster at 0x{header.Offset:X}, stores 0x{(uint)stored.Value:X8} but the {Bytes(end - crcEnd)} after it give 0x{computed:X8}, so the Cluster is damaged or was edited without updating it.");
             }

@@ -220,8 +220,8 @@ internal sealed class State
             $"{Counts.Of(length, "byte", "bytes")} at 0x{offset:X} {Counts.Agree(length, "holds", "hold")} no frame{(count > 1 ? $", and {Counts.Of(count - 1, "more such stretch", "more such stretches")} {Counts.Agree(count - 1, "does", "do")}" : string.Empty)}; frames are found again after {(length == 1 ? "it" : "them")}.");
     }
 
-    // Adds a frame, in stream order. bytes are the frame's bytes to its end, as far as it has one; for a cut frame, as far as the data goes.
-    public void AddFrame(MappedBytes bytes, in FrameHeader header, in FrameWalk walk, ReadOnlySpan<SubframeFacts> facts, EntryStatus status, PartitionLog[]? logs, bool followsLoss = false)
+    // Adds a frame, in stream order. failsContainerChecksum: the container's check over the frame's packet failed (MappedBytes.FailsChecksum), which keeps the frame out of the measurements like its own CRC-16 does and is no tally of the stream's. bytes are the frame's bytes to its end, as far as it has one; for a cut frame, as far as the data goes.
+    public void AddFrame(MappedBytes bytes, in FrameHeader header, in FrameWalk walk, ReadOnlySpan<SubframeFacts> facts, EntryStatus status, PartitionLog[]? logs, bool followsLoss = false, bool failsContainerChecksum = false)
     {
         int index = Entries.Count;
         long offset = bytes.FileStart;
@@ -439,7 +439,7 @@ internal sealed class State
             var codedFrame = new CodedFrame(bytes, "Frame", first, header.BlockSize)
             {
                 IsDamaged = (status & (EntryStatus.Crc16Fails | EntryStatus.Cut | EntryStatus.Unreadable | EntryStatus.ExtentFound | EntryStatus.Crc8Fails)) != 0,
-                FailsChecksum = (status & EntryStatus.Crc16Fails) != 0,
+                FailsChecksum = (status & EntryStatus.Crc16Fails) != 0 || failsContainerChecksum,
                 FollowsGap = followsGap,
                 IsWalked = walk.IsStored && isWalked,
                 IsUnreadable = (status & EntryStatus.Unreadable) != 0,

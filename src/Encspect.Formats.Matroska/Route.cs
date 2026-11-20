@@ -605,7 +605,11 @@ internal sealed partial class FileReader
                 bool isCut = block.IsCut && (present < declared || (block.Lacing != Lacing.FixedSize && f == block.Frames - 1));
                 try
                 {
-                    packet = decoder is null ? new MappedBytes(data, position) : decoder.Decode(data, position, this);
+                    packet = decoder is null ? new MappedBytes(data, position) { FailsChecksum = block.FailsChecksum } : decoder.Decode(data, position, this);
+                    if (block.FailsChecksum)
+                    {
+                        packet = packet.AsChecksumFailed();
+                    }
                 }
                 catch (InvalidDataException ex)
                 {

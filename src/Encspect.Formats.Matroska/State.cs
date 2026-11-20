@@ -250,6 +250,9 @@ internal sealed class SegmentState
 
     public bool IsHeaderMissing { get; set; }
 
+    // The Segment's own CRC-32 element was verified and does not match, so every block of the Segment fails its container's check.
+    public bool FailsChecksum { get; set; }
+
     public List<TrackInfo> Tracks { get; } = [];
 
     public Dictionary<ulong, TrackInfo> TracksByNumber { get; } = [];

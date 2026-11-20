@@ -35,6 +35,10 @@ internal sealed class FrameDecoder : IFrameDecoder
     private long _withheldUntil;
     private bool _lostBefore;
 
+    // After a packet that failed its checksum (CodedFrame.FailsChecksum) the decoder keeps its state, and the Preroll samples after the packet, the span a gap's reset withholds
+    // too, depend on it: the samples still to withhold from the measurements (docs/design/damaged-units.md).
+    private int _dependentLeft;
+
     public FrameDecoder(DecodeContext context, OpusHead head)
     {
         _context = context;
@@ -91,6 +95,7 @@ internal sealed class FrameDecoder : IFrameDecoder
             // The host lends at most 2^24 ints and this packet's records could need more: it is not decoded, and the one after it follows a loss.
             _context.AddFinding(Severity.Info, "decode.frame-too-large", $"The packet at 0x{frame.Bytes.FileStart:X} could hold more values than the host lends buffers for, so it is not decoded.");
             _lostBefore = true;
+            _dependentLeft = 0;
             return 0;
         }
 
@@ -98,6 +103,7 @@ internal sealed class FrameDecoder : IFrameDecoder
         if (frame.FollowsGap || _lostBefore)
         {
             _lostBefore = false;
+            _dependentLeft = 0;
             ResetAll();
             _context.Withhold(frame.FirstSample, Preroll, WithholdReason.AfterGap);
             _withheldUntil = Math.Max(_withheldUntil, frame.FirstSample + Preroll);
@@ -130,6 +136,7 @@ internal sealed class FrameDecoder : IFrameDecoder
                 {
                     // No data: the stream starts over, and the frame and the 80 ms after it are withheld.
                     decoder.Reset();
+                    _dependentLeft = 0;
                     _context.Withhold(frame.FirstSample + position, size + Preroll, WithholdReason.EmptyFrame);
                     _withheldUntil = Math.Max(_withheldUntil, frame.FirstSample + position + size + Preroll);
                     for (int c = 0; c < _streamChannels[s]; c++)
@@ -164,9 +171,23 @@ internal sealed class FrameDecoder : IFrameDecoder
         long first = Math.Max(frame.FirstSample, _withheldUntil);
         int skip = (int)Math.Min(samples, first - frame.FirstSample);
         int count = samples - skip;
+
+        // Both spans count from the packet's start, so where they overlap the larger one is withheld, not their sum.
+        int dependent = Math.Min(_dependentLeft, samples);
+        _dependentLeft -= dependent;
+        if (frame.FailsChecksum)
+        {
+            _dependentLeft = Preroll;
+        }
+
         if (count <= 0)
         {
             return 0;
+        }
+
+        if (dependent > skip)
+        {
+            _context.WithholdFromMeasurements(first, dependent - skip);
         }
 
         _sink ??= _context.DeclareOutput(new PcmFormat(Rate, _channels, 32, SampleFormat.Float32));

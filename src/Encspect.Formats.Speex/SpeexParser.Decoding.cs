@@ -95,12 +95,12 @@ public sealed partial class SpeexParser
             SampleBuffers lent = session.Lend((expected + 1) * SpeexLayout.FrameInts, 1);
             if (lent.IsEmpty)
             {
-                session.Decode(new CodedFrame(held.Packet, "Packet", held.First, held.Samples) { FollowsGap = held.FollowsGap });
+                session.Decode(new CodedFrame(held.Packet, "Packet", held.First, held.Samples) { FollowsGap = held.FollowsGap, FailsChecksum = held.Packet.FailsChecksum });
                 return;
             }
 
             SpeexFrames.Walk(held.Packet.Span, Mode, expected + 1, null, expected, lent.Narrow);
-            session.Decode(new CodedFrame(held.Packet, "Packet", held.First, held.Samples) { IsWalked = true, FollowsGap = held.FollowsGap });
+            session.Decode(new CodedFrame(held.Packet, "Packet", held.First, held.Samples) { IsWalked = true, FollowsGap = held.FollowsGap, FailsChecksum = held.Packet.FailsChecksum });
         }
 
         // The end of the stream: the trim reaches the packets still held, which are then fed.

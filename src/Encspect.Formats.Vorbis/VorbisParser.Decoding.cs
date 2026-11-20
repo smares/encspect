@@ -73,7 +73,7 @@ public sealed partial class VorbisParser
 
             if (isDecoding)
             {
-                session.Decode(new CodedFrame(packet, "Packet", first, (int)samples) { IsWalked = !lent.IsEmpty, FollowsGap = followsGap });
+                session.Decode(new CodedFrame(packet, "Packet", first, (int)samples) { IsWalked = !lent.IsEmpty, FollowsGap = followsGap, FailsChecksum = packet.FailsChecksum });
             }
 
             ushort end = (ushort)Math.Min(facts.CodedEnd, ushort.MaxValue - 1);

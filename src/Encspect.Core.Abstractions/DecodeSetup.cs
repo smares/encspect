@@ -60,7 +60,8 @@ public readonly record struct CodedFrame(MappedBytes Bytes, string NodeName, lon
 
     // The parser compared a checksum over the unit that counts (docs/design/damaged-units.md, "Which failures count") and it failed, or it is
     // missing where the format states one. The unit is still decoded and written; the host leaves its positions out of the measurements as
-    // withheld samples ("checksum failed") and the measurements resume after them as after a gap. Set beside IsDamaged where that also holds.
+    // withheld samples ("checksum failed") and the measurements resume after them as after a gap. Set beside IsDamaged where that also holds. A codec parser of packets also sets it
+    // from MappedBytes.FailsChecksum, the container's own check over the packet (an Ogg page CRC, a Matroska CRC-32 element).
     public bool FailsChecksum { get; init; }
 
     // The parser's walk stored the frame's warm-up samples and residuals in the buffers the session lent (Lend), so the

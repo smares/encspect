@@ -105,6 +105,10 @@ internal struct BlockRecord
     // so its last frame, or every frame of one with fixed-size lacing, is cut.
     public bool IsCut;
 
+    // A CRC-32 element that covers the block, its Cluster's or the Segment's, was verified and does not match: the frames are handed to the codec parsers as
+    // MappedBytes.FailsChecksum (docs/design/damaged-units.md, decision 2).
+    public bool FailsChecksum;
+
     // How many bytes of the block the file or the parent lacks (0 unless IsCut), so a fixed-size lace takes its frame size from the declared block.
     public uint Missing;
 

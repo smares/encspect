@@ -37,6 +37,10 @@ internal sealed class FrameDecoder : IFrameDecoder
     private readonly short[] _output;
     private State _state = State.Fresh;
     private int _withheldLeft;
+
+    // After a packet that failed its checksum (CodedFrame.FailsChecksum) the decoder keeps its state, and the samples after the packet that the same recursive state estimate
+    // gives after a gap depend on it: the samples still to withhold from the measurements (docs/design/damaged-units.md).
+    private int _dependentLeft;
     private int[] _planar = [];
     private IPcmSink? _sink;
 
@@ -123,7 +127,13 @@ internal sealed class FrameDecoder : IFrameDecoder
         }
 
         _state = State.Valid;
-        return Write(frame, samples);
+        int written = Write(frame, samples);
+        if (frame.FailsChecksum)
+        {
+            _dependentLeft = WithheldFrames * _frameSize;
+        }
+
+        return written;
     }
 
     public IReadOnlyList<ChecksumResult> Finish(DecodeEnd end) => [];
@@ -139,6 +149,7 @@ internal sealed class FrameDecoder : IFrameDecoder
         _smoothLeft = 16384;
         _smoothRight = 16384;
         _withheldLeft = 0;
+        _dependentLeft = 0;
     }
 
     // Writes the packet's samples to the sink as planar integers, leaving out the span after a gap (Withhold). Returns the samples written.
@@ -151,10 +162,18 @@ internal sealed class FrameDecoder : IFrameDecoder
             _withheldLeft -= withheld;
         }
 
+        // Both spans count from the packet's start, so where they overlap the larger one is withheld, not their sum.
+        int dependent = Math.Min(_dependentLeft, samples);
+        _dependentLeft -= dependent;
         int count = samples - withheld;
         if (count == 0)
         {
             return 0;
+        }
+
+        if (dependent > withheld)
+        {
+            _context.WithholdFromMeasurements(frame.FirstSample + withheld, dependent - withheld);
         }
 
         _sink ??= _context.DeclareOutput(new PcmFormat(_rate, _channels, 16, SampleFormat.Integer)

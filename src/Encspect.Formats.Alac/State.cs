@@ -163,6 +163,7 @@ internal sealed class State
                 IsWalked = isDecoded,
                 IsUnreadable = isUnreadable,
                 FollowsGap = _followsGap,
+                FailsChecksum = packet.FailsChecksum,
             });
             _followsGap = isUnreadable;
         }

@@ -197,8 +197,8 @@ internal sealed partial class FileReader
         }
     }
 
-    // The CRC-32 element's value against the CRC computed over the parent's data after it (RFC 8794 section 11.3.1).
-    private void VerifyCrc(Node node, ElementHeader crc, long dataStart, long parentEnd, string parentName)
+    // The CRC-32 element's value against the CRC computed over the parent's data after it (RFC 8794 section 11.3.1). False where it was compared and does not match.
+    private bool VerifyCrc(Node node, ElementHeader crc, long dataStart, long parentEnd, string parentName)
     {
         // A CRC-32 element the parent's end cuts off holds fewer than its 4 bytes, wherever its own size says.
         long available = Math.Max(0, parentEnd - crc.DataOffset);
@@ -207,7 +207,7 @@ internal sealed partial class FileReader
             long held = Math.Min((long)Math.Min(crc.Size ?? 0, long.MaxValue), available);
             _findings.Add(Severity.Warning, "matroska.crc-size", node, count =>
                 $"{(count == 1 ? "A CRC-32 element holds" : $"{count} CRC-32 elements hold")} other than the 4 bytes RFC 8794 gives it (section 11.3.1); the first, the CRC-32 at 0x{crc.Offset:X} in the {parentName}, holds {Bytes(held)}, so {(count == 1 ? "it is" : "they are")} not checked.");
-            return;
+            return true;
         }
 
         _reader.Position = crc.DataOffset;
@@ -219,6 +219,8 @@ internal sealed partial class FileReader
             _findings.Add(Severity.Warning, "matroska.crc-mismatch", node, count =>
                 $"{(count == 1 ? "A CRC-32 element does" : $"{count} CRC-32 elements do")} not match the data {(count == 1 ? "it covers" : "they cover")}: the first, the CRC-32 at 0x{crc.Offset:X} in the {parentName}, stores 0x{stored:X8} but the {Bytes(parentEnd - dataStart)} after it give 0x{computed:X8}, so the {parentName} is damaged or was edited without updating it.");
         }
+
+        return stored == computed;
     }
 
     private Node Unparsed(long start, long end, HeaderProblem problem, string where)
