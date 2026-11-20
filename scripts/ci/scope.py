@@ -59,19 +59,14 @@ def down(selected, config):
 
 
 def carriers(changed, config):
-    """The areas a change reaches. A changed container reaches the codecs it carries (their tests go through it); then every container
-    that carries a selected area is added, and its container in turn (routes followed upward). A changed tag area reaches the areas that
-    hold its tag, and a changed format (or the codecs a changed container carries) reaches the tag areas whose tests go through it; the tag lists are final, not carried further."""
-    base = down(set(changed), config)
-    result = set(base)
-    while True:
-        more = {container for container, ids in config["routes"].items() if any(config["codecs"][i] in result for i in ids)}
-        if more <= result:
-            break
-        result |= more
+    """The areas a change reaches, one level deep. A changed container reaches the codecs it carries (their tests go through it), and a
+    changed codec the containers that carry it, but not those containers' other codecs. A changed tag area reaches the formats that hold its
+    tag, and a changed format the tag areas whose lists name it; nothing is carried further (the push to main runs everything)."""
+    changed = set(changed)
+    containers = {container for container, ids in config["routes"].items() if any(config["codecs"][i] in changed for i in ids)}
     forward = {carrier for tag, carried in config["tags"].items() if tag in changed for carrier in carried}
-    backward = {tag for tag, carried in config["tags"].items() if set(carried) & base}
-    return result | forward | backward
+    backward = {tag for tag, carried in config["tags"].items() if set(carried) & changed}
+    return down(changed, config) | containers | forward | backward
 
 
 TYPE = re.compile(r"\b(?:class|struct|record|interface)\s+(\w+)")
@@ -153,7 +148,8 @@ def inventory(root=ROOT, config=None):
 
 
 class Scope:
-    def __init__(self, changed, selected, excluded_classes, excluded_methods, empty_classes):
+    def __init__(self, changed, selected, excluded_classes, excluded_methods, empty_classes, only=None):
+        self.only = only  # when set, the only classes that run (the tests that read the background articles)
         self.changed = changed
         self.selected = selected
         self.excluded_classes = excluded_classes  # sorted class names
@@ -161,6 +157,8 @@ class Scope:
         self.empty_classes = empty_classes  # classes with no test left
 
     def describe(self):
+        if self.only is not None:
+            return "unit tests scoped to the tests that read the changed files"
         order = sorted(self.selected, key=lambda a: (a not in self.changed, a))
         return "unit tests scoped to " + (", ".join(order) or "no area")
 
@@ -208,6 +206,33 @@ def plan(files, root=ROOT, config=None):
     return scope
 
 
+def readers_of(tokens, root=ROOT):
+    """The test classes of every file that names one of the tokens (the TopicLibrary that serves the articles, a file name a test reads)."""
+    found = set()
+    for f in sources_of(root):
+        text = f.read_text(encoding="utf-8", errors="replace")
+        if any(token in text for token in tokens):
+            found |= {name for name, _, _ in class_extent(text)}
+    return sorted(found)
+
+
+def article_readers(root=ROOT):
+    return readers_of(["TopicLibrary"], root)
+
+
+def plan_readers(tokens, root=ROOT):
+    """The scope of a pull request that changes only files the tests read: the classes of the tests that read them and no other."""
+    readers = readers_of(set(tokens), root)
+    return Scope(set(), set(), [], {}, set(), only=frozenset(readers)) if readers else None
+
+
+def only_classes(scope, shard, shards):
+    named = {c for s in shards[:-1] for c in s["classes"]}
+    if shard["classes"] is not None:
+        return sorted(set(shard["classes"]) & scope.only)
+    return sorted(c for c in scope.only if c not in named)
+
+
 def exclusion(scope, shard, shards):
     """The clauses of the filter that leave out of this shard the tests the scope excludes. A shard that names its classes
     needs only those of them; the rest shard already excludes the classes the others name."""
@@ -222,13 +247,17 @@ def exclusion(scope, shard, shards):
     return clauses
 
 
-def is_empty(scope, shard):
+def is_empty(scope, shard, shards=None):
     """Whether the scope leaves a shard that names its classes no test: every class of it is excluded or has no test left."""
+    if scope.only is not None:
+        return not only_classes(scope, shard, shards or shard_config.load())
     return shard["classes"] is not None and all(c in scope.empty_classes for c in shard["classes"])
 
 
 def shard_filter(scope, shard, shards, include_nightly):
     base = shard_config.filter_for(shards, shard["name"], include_nightly)
+    if scope.only is not None:
+        return f"({base})&({'|'.join(f'FullyQualifiedName~.{c}.' for c in only_classes(scope, shard, shards))})"
     clauses = exclusion(scope, shard, shards)
     return f"({base})&({'&'.join(clauses)})" if clauses else base
 
