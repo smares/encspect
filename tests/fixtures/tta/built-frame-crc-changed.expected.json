@@ -1,0 +1,106 @@
+{
+ "length": 22595,
+ "regions": [
+  {
+   "name": "TTA",
+   "offset": 0,
+   "length": 22595
+  }
+ ],
+ "header": {
+  "format": 1,
+  "channels": 1,
+  "bits": 16,
+  "rate": 8000,
+  "samples": 20000,
+  "crc": "77f1ffe8",
+  "crc_ok": true
+ },
+ "frame_length": 8359,
+ "table": {
+  "offset": 22,
+  "expected": 3,
+  "entries": [
+   6372,
+   10329,
+   5856
+  ],
+  "crc": "5c9cda9a",
+  "crc_ok": true
+ },
+ "frames": [
+  {
+   "offset": 38,
+   "size": 6372,
+   "status": [],
+   "crc": "57c8e5fa"
+  },
+  {
+   "offset": 6410,
+   "size": 10329,
+   "status": [
+    "crc"
+   ],
+   "crc": "b1e77263"
+  },
+  {
+   "offset": 16739,
+   "size": 5856,
+   "status": [],
+   "crc": "31c962e4"
+  }
+ ],
+ "stream_infos": [
+  {
+   "codec": "TTA",
+   "sample_rate": 8000,
+   "channels": 1,
+   "samples": 20000,
+   "lost_samples": 0,
+   "duration": 2.5,
+   "bits_per_sample": 16,
+   "average_bitrate": 72.1824,
+   "layout": [
+    "front center"
+   ]
+  }
+ ],
+ "verification": {
+  "default": {
+   "isVerified": false,
+   "decoding": "notRequested",
+   "checksums": [
+    {
+     "name": "header CRC-32",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "seek table CRC-32",
+     "covers": "header",
+     "coversAllAudio": false,
+     "stored": 1,
+     "checked": 1,
+     "failed": 0
+    },
+    {
+     "name": "frame CRC-32",
+     "covers": "codedData",
+     "coversAllAudio": true,
+     "stored": 3,
+     "checked": 3,
+     "failed": 1
+    }
+   ]
+  }
+ },
+ "findings": [
+  {
+   "code": "tta.frame-crc-mismatch"
+  }
+ ],
+ "description": "The stored CRC-32 of the second frame of external-8000-mono.tta differs by one bit. The coded samples are the encoder's, so the frame decodes, and the measurements leave it out."
+}

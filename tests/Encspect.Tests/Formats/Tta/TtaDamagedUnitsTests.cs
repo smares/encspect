@@ -7,7 +7,7 @@ namespace Encspect.Tests;
 // withheld samples ("checksum failed") while the decoded samples, the verification and the findings stay as the decoding gives them.
 public class TtaDamagedUnitsTests
 {
-    public static TheoryData<string> Names => new() { "tta/built-frame-crc-fails.tta", "tta/built-frame-crc-fails-every-frame.tta" };
+    public static TheoryData<string> Names => new() { "tta/built-frame-crc-changed.tta", "tta/built-frame-crc-changed-every-frame.tta" };
 
     private static Report Analyze(string name, byte[]? data = null, bool measure = true)
     {
@@ -23,24 +23,18 @@ public class TtaDamagedUnitsTests
     private static long FailedSamples(Report report) =>
         Frames(report).Where(f => f.Children.Any(c => c.Name == "IsCrc32Valid" && c.Value?.AsBoolean() == false)).Sum(f => f.Value!.AsInteger()!.Value);
 
-    // The hand-built files hold bytes in place of coded samples, which decode to nothing: their frames are lost, and no positions are withheld.
-    // So a decodable stream has one frame's checksum changed.
+    // The files are the committed external-8000-mono.tta with stored CRC-32s changed, so their frames decode.
     [Fact]
     public void TheWithheldPositionsAreThoseOfTheFramesTheTalliesCountAsFailed()
     {
-        const string name = "tta/external-16-stereo.tta";
-        byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, name));
-        Node[] frames = [.. Frames(Analyze(name, measure: false))];
-        Assert.Equal(3, frames.Length);
-        data[frames[1].Offset + frames[1].Length - 1] ^= 0x55;
-
-        Report report = Analyze(name, data);
+        Report report = Analyze("tta/built-frame-crc-changed.tta");
         StreamInfo stream = report.Streams[0];
         StreamMeasurements m = stream.Measurements!;
+        Node second = Frames(report).ElementAt(1);
 
         Assert.Equal(1, stream.Verification!.Checksums.Single(c => c.Name == "frame CRC-32").Failed);
         Assert.Equal(FailedSamples(report), m.WithheldSamples);
-        Assert.Equal(frames[1].Value!.AsInteger()!.Value, m.WithheldByReason[WithholdReason.ChecksumFailed]);
+        Assert.Equal(second.Value!.AsInteger()!.Value, m.WithheldByReason[WithholdReason.ChecksumFailed]);
         Assert.Equal(1, m.Gaps);
         Assert.Equal(0, m.LostSamples);
         Assert.Equal(stream.Verification.DecodedSamples, m.Samples + m.WithheldSamples);
@@ -75,18 +69,10 @@ public class TtaDamagedUnitsTests
         Assert.Equal(plain.Findings.Select(f => f.Code).Order(), measured.Findings.Where(f => !f.Code.StartsWith("measure.", StringComparison.Ordinal)).Select(f => f.Code).Order());
     }
 
-    // The last 4 bytes of every frame, which hold its checksum, changed: every frame fails, and nothing is measured.
     [Fact]
     public void AStreamWhereEveryFrameFailsMeasuresNothingWithoutAnError()
     {
-        string name = "tta/external-16-stereo.tta";
-        byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, name));
-        foreach (Node frame in Frames(Analyze(name, measure: false)))
-        {
-            data[frame.Offset + frame.Length - 1] ^= 0x55;
-        }
-
-        Report report = Analyze(name, data);
+        Report report = Analyze("tta/built-frame-crc-changed-every-frame.tta");
         StreamInfo stream = Assert.Single(report.Streams);
         StreamMeasurements m = stream.Measurements!;
 
