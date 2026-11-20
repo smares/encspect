@@ -6,7 +6,9 @@ Each manifest states what truehd_model.py (apart from the analyzer) reads from t
 checks that differ, the findings, the verification without and with decoding, and, where FFmpeg decodes the file as the analyzer must, the
 MD5 of the decoded audio. crosscheck_truehd_fixtures.py confirms them with FFmpeg and MediaInfo where the tools read the file.
 
-    python3 scripts/fixtures/make_truehd_fixtures.py [--manifests-only] [name ...]
+    python3 scripts/fixtures/make_truehd_fixtures.py [--manifests-only] [--ffmpeg-lossless] [name ...]
+
+--ffmpeg-lossless works the lossless checks of the stereo coding fixtures out again from FFmpeg's decoding; without it they are read from the committed files.
 """
 
 import hashlib
@@ -615,6 +617,27 @@ def set_assignments(unit, count, k, assignments):
     return unit
 
 
+def stored_lossless_pass(b, substreams, path):
+    """Sets the lossless checks to the ones the committed file holds, which lossless_pass worked out from FFmpeg's decoding (run with
+    --ffmpeg-lossless to work them out again): the generator then needs no external tool and writes the committed bytes."""
+    stored = path.read_bytes()
+    units = [m.Unit(stored, o, l, b.base.count) for o, l in m.split_units(stored)]
+    assert len(units) == len(b.pieces), f"{path.name} holds {len(units)} units, the builder {len(b.pieces)}: run with --ffmpeg-lossless"
+    for k, _ in substreams:
+        for index, kept in enumerate(units):
+            if len(kept.substreams) <= k or kept.substreams[k]["restart"] is None:
+                continue
+            value = kept.substreams[k]["restart"]["lossless"]
+            unit = b.pieces[index][1]
+            sub = m.Unit(bytes(unit), 0, len(unit), b.base.count).substreams[k]
+            body = bytearray(unit[sub["start"]:sub["end"]])
+            header = m.restart_header(body, 2)
+            m.set_bits(body, header["bit"] + 89, 8, value)
+            m.set_restart_crc(body, header)
+            unit[sub["start"]:sub["end"]] = body
+            m.refresh(unit, count=b.base.count)
+
+
 def lossless_pass(b, substreams):
     """Works the lossless check of every restart header out again from FFmpeg's decoding of the file, since the matrices change the audio: each header
     after the first of its substream states the XOR over the output of the interval before it (docs/design/truehd-format.md, "Lossless check").
@@ -775,8 +798,10 @@ def main():
                 # The file holds the lossless checks worked out from FFmpeg's decoding, which this run does not repeat.
                 stored = path.read_bytes()
                 b.pieces = [["unit", stored[o:o + l]] for o, l in m.split_units(stored)]
-            else:
+            elif "--ffmpeg-lossless" in sys.argv:
                 lossless_pass(b, b.lossless)
+            else:
+                stored_lossless_pass(b, b.lossless, path)
         data, framing = framing_of(b.pieces)
         if getattr(b, "expected_codings", None) is not None:
             status = m.simulate(data, framing)["status"]
