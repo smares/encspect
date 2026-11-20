@@ -302,4 +302,17 @@ public class DecoderChargeTests
 
         Assert.True(units < file.Length * MonkeysAudioDecoder.PerInputByte, $"{units / (double)file.Length:F0} units a byte against {MonkeysAudioDecoder.PerInputByte}.");
     }
+
+    // A frame above the cap on held samples is decoded twice, and the two passes together must stay under the allowance (damaged-units.md, "As built, pull request 3").
+    [Fact]
+    public void AnInsaneFileDecodedTwiceAboveTheCapStaysUnderTheAllowanceForItsBytes()
+    {
+        byte[] file = DecoderWorkTests.MonkeysAudioCases.Repeated("external-quiet-insane.ape", 1L << 24);
+
+        long once = DecoderWorkTests.MonkeysAudioCases.Units(file);
+        long twice = DecoderWorkTests.MonkeysAudioCases.Units(file, maxHeld: 0);
+
+        Assert.True(twice > once * 18 / 10, $"{twice} units against {once} for one pass.");
+        Assert.True(twice < file.Length * MonkeysAudioDecoder.PerInputByte, $"{twice / (double)file.Length:F0} units a byte against {MonkeysAudioDecoder.PerInputByte}.");
+    }
 }

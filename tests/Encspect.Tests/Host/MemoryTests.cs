@@ -1660,6 +1660,27 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         Assert.True(heldPerFrame < DecodingFrameBound, $"Decoding held {heldPerFrame:F2} more bytes per further frame at the last frame than the analysis ends with. {RuntimeSettings()}");
     }
 
+    // The decoder holds a frame's samples until its CRC is known (docs/design/damaged-units.md), at any width: a frame of 1,179,648 samples of one channel (the
+    // SDK's largest at the highest level) takes one buffer of that many 32-bit values, allocated once, whatever the width and the file's other frames.
+    [Fact]
+    public void DecodingAFullFrameOfMonkeysAudioHoldsOneBufferOfItsSamples()
+    {
+        byte[] file = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "monkeys-audio", "external-full-frame-insane-24-mono.ape"));
+        const long held = 1_179_648L * 4;
+        long Allocated(bool isDecoding)
+        {
+            Analyzer.CreateDefault().Analyze("warm-up", new MemoryStream(file), new AnalysisOptions { Decoding = isDecoding ? new DecodeOptions() : null });
+            long before = GC.GetTotalAllocatedBytes(precise: true);
+            Analyzer.CreateDefault().Analyze("full.ape", new MemoryStream(file), new AnalysisOptions { Decoding = isDecoding ? new DecodeOptions() : null });
+            return GC.GetTotalAllocatedBytes(precise: true) - before;
+        }
+
+        long extra = Allocated(true) - Allocated(false);
+
+        Output.WriteLine($"Decoding allocated {extra} bytes; the held samples are {held}");
+        Assert.True(extra < (held * 3 / 2) + (4 << 20), $"Decoding allocated {extra} bytes for a frame whose held samples are {held}.");
+    }
+
     // The decoding of a TTA file holds one frame's bytes, a chunk of output and the state of its channels, so what it holds does not grow with the frames. Measured
     // as the Monkey's Audio test above does, at 50,000 and 200,000 frames: at a sample rate of 1 Hz a frame is one sample, and of silence 6 bytes with its CRC-32.
     [Fact]
