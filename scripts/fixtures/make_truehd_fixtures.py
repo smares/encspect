@@ -777,14 +777,14 @@ def main():
             else:
                 lossless_pass(b, b.lossless)
         data, framing = framing_of(b.pieces)
+        if getattr(b, "expected_codings", None) is not None:
+            status = m.simulate(data, framing)["status"]
+            assert m.substream0_codings(data, framing, status) == b.expected_codings, f"{name}: the model reads other codings than the ones the builder wrote"
         manifest_path = ext.manifest_path(path)
         previous = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.exists() else None
         if not only_manifests:
             path.write_bytes(data)
         ext.write_manifest(path, manifest_of(b, path, data, framing, previous))
-        if getattr(b, "expected_codings", None) is not None:
-            status = m.simulate(data, framing)["status"]
-            assert m.substream0_codings(data, framing, status) == b.expected_codings, f"{name}: the model reads other codings than the ones the builder wrote"
         count += 1
     print(f"Wrote {count} {'manifests' if only_manifests else 'fixtures'} to {OUT}")
 

@@ -825,6 +825,7 @@ internal sealed class Analysis
 
                 stereoCoding = state.StereoCoding;
             }
+
             if (!walk.IsRead)
             {
                 isReadable = false;
