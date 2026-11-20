@@ -144,7 +144,7 @@ public class Mp4RouteTests
 
         Assert.DoesNotContain(report.Findings, f => f.Code is "decode.failed" or "parse.failed");
         Assert.DoesNotContain(report.Streams, s => s.Codec.StartsWith("PCM", StringComparison.Ordinal));
-        Assert.Contains(report.Findings, f => f.Code == "mp4.codec-not-analyzed");
+        Assert.Contains(report.Findings, f => f.Code == "mp4.codec-not-analyzed" && f.Message.Contains("channels, more than the 65535", StringComparison.Ordinal));
     }
 
     private sealed class RecordingStream(byte[] data) : MemoryStream(data)

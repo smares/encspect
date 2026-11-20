@@ -84,7 +84,8 @@ public sealed partial class Mp4Parser
             string format = entry.EffectiveFormat;
             string what = format != "mp4a" ? $"{format} ({FormatName(format)})"
                 : entry.ObjectType is { } type ? $"MPEG-4 audio of object type 0x{type:X2}" : "MPEG-4 audio without an esds box";
-            state.Findings.AddNow(Severity.Info, "mp4.codec-not-analyzed", $"The audio {label} holds {(protection is null ? string.Empty : "protected ")}{what}, whose samples are not analyzed yet.", entry.Node);
+            string reason = entry.Channels > PcmCoding.MaxChannels ? $" (states {entry.Channels} channels, more than the {PcmCoding.MaxChannels} that are read as samples)" : string.Empty;
+            state.Findings.AddNow(Severity.Info, "mp4.codec-not-analyzed", $"The audio {label} holds {(protection is null ? string.Empty : "protected ")}{what}{reason}, whose samples are not analyzed yet.", entry.Node);
 
             // A protected track is still a stream, described by its sample entry, so that its protection is reported; any other track
             // whose coding has no parser is shown as boxes only.
