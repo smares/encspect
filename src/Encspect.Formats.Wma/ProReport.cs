@@ -12,9 +12,53 @@ internal static class ProReport
         new("Mid/side stereo", ProExplain.StereoMidSide) { Topic = Topics.WmaChannelTransforms },
     ];
 
-    public static IReadOnlyList<CategorySeries> Categories(WmaPacketReader reader, IReadOnlyList<Series> series, Node stream) =>
-        reader.Stereo is { } stereo && stream.Children.FirstOrDefault(c => c.Kind == NodeKind.Statistics)?.Children.FirstOrDefault(c => c.Name == "Stereo Coding") is { } node
-            && series.Count > 0 && series[0].Name == "Bitrate" && stereo.Build(series[0], node, ProExplain.StereoCodingSeries, Topics.WmaChannelTransforms, null) is { } built ? [built] : [];
+    // One category for each subframe length the frame length and the most subframes a frame may have allow, from the whole frame down.
+    public static Category[] SizeCategories(int frameLength, int minSubframe)
+    {
+        var categories = new Category[System.Numerics.BitOperations.Log2((uint)(frameLength / minSubframe)) + 1];
+        for (int k = 0; k < categories.Length; k++)
+        {
+            categories[k] = new Category($"{frameLength >> k} samples", ProExplain.StatSubframeSize) { Topic = Topics.WmaSubframes };
+        }
+
+        return categories;
+    }
+
+    // The subframes of a frame, each as the category of its length.
+    public static void AddSizes(int frameLength, int minSubframe, CategorySeriesBuilder builder, List<byte> sizes)
+    {
+        int count = System.Numerics.BitOperations.Log2((uint)(frameLength / minSubframe)) + 1;
+        Span<byte> codes = sizes.Count <= 512 ? stackalloc byte[sizes.Count] : new byte[sizes.Count];
+        for (int i = 0; i < codes.Length; i++)
+        {
+            codes[i] = sizes[i] < count ? sizes[i] : CategorySeries.None;
+        }
+
+        builder.Add(codes);
+    }
+
+    public static IReadOnlyList<CategorySeries> Categories(WmaPacketReader reader, IReadOnlyList<Series> series, Node stream, CategorySeriesBuilder sizes)
+    {
+        var categories = new List<CategorySeries>();
+        if (series.Count == 0 || series[0].Name != "Bitrate")
+        {
+            return categories;
+        }
+
+        Node? statistics = stream.Children.FirstOrDefault(c => c.Kind == NodeKind.Statistics);
+        if (reader.Stereo is { } stereo && statistics?.Children.FirstOrDefault(c => c.Name == "Stereo Coding") is { } node
+            && stereo.Build(series[0], node, ProExplain.StereoCodingSeries, Topics.WmaChannelTransforms, null) is { } built)
+        {
+            categories.Add(built);
+        }
+
+        if (statistics?.Children.FirstOrDefault(c => c.Name == "Subframe Sizes") is { } sizeNode && sizes.Count == series[0].X.Length)
+        {
+            categories.Add(sizes.Build(series[0].X, series[0], sizeNode, ProExplain.SubframeSizesSeries, Topics.WmaSubframes));
+        }
+
+        return categories;
+    }
 
     public static Node Statistics(ProParameters p, WmaPacketReader reader, ProTally tally, Node parent, double duration, CodecConfiguration? configuration)
     {

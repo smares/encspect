@@ -84,7 +84,8 @@ public sealed partial class Mp4Parser
             string format = entry.EffectiveFormat;
             string what = format != "mp4a" ? $"{format} ({FormatName(format)})"
                 : entry.ObjectType is { } type ? $"MPEG-4 audio of object type 0x{type:X2}" : "MPEG-4 audio without an esds box";
-            state.Findings.AddNow(Severity.Info, "mp4.codec-not-analyzed", $"The audio {label} holds {(protection is null ? string.Empty : "protected ")}{what}, whose samples are not analyzed yet.", entry.Node);
+            string reason = entry.Channels > PcmCoding.MaxChannels ? $" (states {entry.Channels} channels, more than the {PcmCoding.MaxChannels} that are read as samples)" : string.Empty;
+            state.Findings.AddNow(Severity.Info, "mp4.codec-not-analyzed", $"The audio {label} holds {(protection is null ? string.Empty : "protected ")}{what}{reason}, whose samples are not analyzed yet.", entry.Node);
 
             // A protected track is still a stream, described by its sample entry, so that its protection is reported; any other track
             // whose coding has no parser is shown as boxes only.
@@ -223,7 +224,7 @@ public sealed partial class Mp4Parser
     private static PcmCoding? PcmOf(SampleEntry entry)
     {
         int channels = entry.Channels;
-        if (channels < 1)
+        if (channels is < 1 or > PcmCoding.MaxChannels)
         {
             return null;
         }
@@ -267,7 +268,7 @@ public sealed partial class Mp4Parser
     private static PcmLayout? LpcmLayout(SampleEntry entry)
     {
         if (entry.LpcmFormat is not { } format || (format.Flags & (16 | 32)) != 0 || format.FramesPerPacket != 1 || format.Bits is not (8 or 16 or 24 or 32 or 64)
-            || format.BytesPerPacket != (uint)entry.Channels * (format.Bits / 8))
+            || format.BytesPerPacket != (ulong)entry.Channels * (format.Bits / 8))
         {
             return null;
         }
@@ -334,19 +335,23 @@ public sealed partial class Mp4Parser
 
         // FFmpeg writes the sampling rate of a Dolby TrueHD entry as a 32-bit integer where the field holds 16.16 fixed-point numbers, so the integer part reads 0.
         double stated = entry.EffectiveFormat == "mlpa" && entry.SampleRate < 1 ? Math.Round(entry.SampleRate * 65536) : entry.SampleRate;
+        // For FLAC the entry's fields are the codec's binding (the ISO/IEC 14496-3 style entry of the FLAC-in-ISOBMFF specification); for Dolby TrueHD the comparison rests on
+        // ffmpeg's muxer, which states the stream's own, and the registration's rule was not read, so a difference is information, not a fault.
+        Severity severity = codec == "truehd" ? Severity.Info : Severity.Warning;
+        string caveat = codec == "truehd" ? " (Encspect compares them because ffmpeg's muxer writes the stream's own; the rule of Dolby's binding was not read)" : string.Empty;
         foreach (StreamInfo stream in state.Context.Streams.Skip(streamsBefore).ToList())
         {
             if (stated >= 1 && stream.SampleRate is > 0 and <= 65535 && Math.Abs(stated - stream.SampleRate) >= 0.5)
             {
                 string text = stated.ToString("0.###", CultureInfo.InvariantCulture);
-                state.Findings.AddNow(Severity.Warning, "mp4.sample-rate-differs",
-                    $"The sample entry of {label} states a sample rate of {text} Hz, but its {stream.Codec} stream has {stream.SampleRate} Hz.", entry.Node);
+                state.Findings.AddNow(severity, "mp4.sample-rate-differs",
+                    $"The sample entry of {label} states a sample rate of {text} Hz, but its {stream.Codec} stream has {stream.SampleRate} Hz{caveat}.", entry.Node);
             }
 
             if (entry.Channels > 0 && stream.Channels > 0 && entry.Channels != stream.Channels)
             {
-                state.Findings.AddNow(Severity.Warning, "mp4.channels-differ",
-                    $"The sample entry of {label} states {Counts.Of(entry.Channels, "channel", "channels")}, but its {stream.Codec} stream has {stream.Channels}.", entry.Node);
+                state.Findings.AddNow(severity, "mp4.channels-differ",
+                    $"The sample entry of {label} states {Counts.Of(entry.Channels, "channel", "channels")}, but its {stream.Codec} stream has {stream.Channels}{caveat}.", entry.Node);
             }
 
             if (codec == "flac" && entry.SampleSize > 0 && stream.BitsPerSample is > 0 and var bits && entry.SampleSize != bits)

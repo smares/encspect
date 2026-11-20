@@ -103,7 +103,7 @@ Six checksums are declared: three cover headers, two the coded data and one, for
 An `mlpa` sample entry goes to the codec parser with one access unit to a sample ([mp4.md](mp4.md#dolby-truehd)); the stream type comes from the first usable major sync, as in Matroska.
 
 - **The `dmlp` box** (10 bytes: the 32 bits of format information of the first major sync, its 15-bit peak data rate in the top bits of 16, and 32 reserved bits; no version and flags) is the codec parser's configuration. Its fields are shown under the box, the format information as in a major sync, and compared with the first major sync of the stream: a difference in either figure is `truehd.dmlp-differs`, and a box of fewer than 10 bytes is `truehd.dmlp-short` and is not read. The box describes Dolby TrueHD; for an MLP stream it is not compared.
-- **The entry's channels and rate** are compared with the stream's by the container (`mp4.channels-differ`, `mp4.sample-rate-differs`); the sample size field (16 in ffmpeg's files) says nothing about the stream, which states no bit depth, and is not compared.
+- **The entry's channels and rate** are compared with the stream's by the container (`mp4.channels-differ`, `mp4.sample-rate-differs`, as infos: the comparison rests on ffmpeg 6.1.1's muxer, and Dolby's rule for the entry was not read); the sample size field (16 in ffmpeg's files) says nothing about the stream, which states no bit depth, and is not compared.
 - **Fixtures:** `external-ffmpeg-truehd-in-mp4.mp4` and `external-ffmpeg-truehd-51-in-mp4.mp4` (ffmpeg 6.1.1, `-c:a truehd -strict -2`; its muxer writes the sampling rate of the entry as a 32-bit integer), and the hand-built `truehd-entry-differs-in-mp4` and `truehd-dmlp-short-in-mp4`, in `tests/fixtures/mp4`.
 
 ## Memory

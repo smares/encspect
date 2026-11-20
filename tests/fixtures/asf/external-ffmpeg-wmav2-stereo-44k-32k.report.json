@@ -5712,6 +5712,34 @@
                           "value": 264,
                           "offset": 394,
                           "length": 9650
+                        },
+                        {
+                          "name": "Coded Bandwidth",
+                          "offset": 394,
+                          "length": 9650,
+                          "children": [
+                            {
+                              "name": "Lowest",
+                              "value": 528,
+                              "unit": "Hz",
+                              "offset": 394,
+                              "length": 9650
+                            },
+                            {
+                              "name": "Most Common",
+                              "value": 571,
+                              "unit": "Hz",
+                              "offset": 394,
+                              "length": 9650
+                            },
+                            {
+                              "name": "Highest",
+                              "value": 20069,
+                              "unit": "Hz",
+                              "offset": 394,
+                              "length": 9650
+                            }
+                          ]
                         }
                       ]
                     },
@@ -10842,6 +10870,120 @@
               23.6,
               24.8
             ]
+          },
+          {
+            "name": "Coded Bandwidth",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              474,
+              676,
+              878,
+              1080,
+              1282,
+              1484,
+              1686,
+              1888,
+              2090,
+              2292,
+              2494,
+              2696,
+              2898,
+              3100,
+              3302,
+              3674,
+              3876,
+              4078,
+              4280,
+              4482,
+              4684,
+              4886,
+              5088,
+              5290,
+              5492,
+              5694,
+              5896,
+              6098,
+              6300,
+              6502,
+              6875,
+              7077,
+              7279,
+              7481,
+              7683,
+              7885,
+              8087,
+              8289,
+              8491,
+              8693,
+              8895,
+              9097,
+              9299,
+              9501
+            ],
+            "values": [
+              17733,
+              18389,
+              549,
+              19864,
+              19541,
+              19003,
+              581,
+              19401,
+              19455,
+              19477,
+              560,
+              571,
+              19843,
+              19907,
+              18680,
+              581,
+              20058,
+              20069,
+              19649,
+              549,
+              592,
+              20047,
+              19961,
+              19864,
+              592,
+              19886,
+              19735,
+              18400,
+              571,
+              19832,
+              19789,
+              19767,
+              571,
+              549,
+              18282,
+              19455,
+              17873,
+              571,
+              20058,
+              20069,
+              20058,
+              603,
+              528,
+              1593
+            ]
+          },
+          {
+            "name": "Coded Bandwidth Over Time",
+            "unit": "Hz",
+            "axis": "seconds",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              0,
+              1
+            ],
+            "values": [
+              20069,
+              20069
+            ]
           }
         ],
         "categorySeries": [
@@ -10861,6 +11003,59 @@
             ],
             "total": 44,
             "xSeries": "Bitrate",
+            "runs": [
+              [
+                1,
+                44
+              ]
+            ]
+          },
+          {
+            "name": "Block Sizes",
+            "concept": "blockSwitching",
+            "valueLabel": "block",
+            "categories": [
+              {
+                "name": "2048 samples",
+                "count": 44
+              }
+            ],
+            "total": 44,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                44
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                44
+              ]
+            ]
+          },
+          {
+            "name": "Noise-Substituted Blocks",
+            "valueLabel": "block",
+            "categories": [
+              {
+                "name": "With noise substitution",
+                "count": 0
+              },
+              {
+                "name": "Without noise substitution",
+                "count": 44
+              }
+            ],
+            "total": 44,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                44
+              ]
+            ],
             "runs": [
               [
                 1,

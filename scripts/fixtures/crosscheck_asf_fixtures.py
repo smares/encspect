@@ -7,7 +7,9 @@ For every manifest in tests/fixtures/asf:
   and the packets it reads. For a hand-built fixture the packets are the media objects the model
   works out from the payloads: the same count, and for each one the stream, the size and the
   presentation time, which also covers fragmented objects put together and compressed payloads split.
-  For an ffmpeg-encoded WMA file they are the superframes the manifest records.
+  For an ffmpeg-encoded WMA file they are the superframes the manifest records. The Marker Object's entries
+  are ffprobe's chapters (`-show_chapters`): the start times and titles equal the golden report's markers'.
+  ffprobe reads no Script Command Object, so the commands have no cross-check by another tool.
 - ffmpeg decoding to PCM: no error, and for the WMA files the sample count the manifest records. For
   the Lossless fixtures of Microsoft's encoder (external-windows-*), the decoded samples equal the
   input signal bit for bit. For Windows Media Audio Voice, the samples ffmpeg decodes equal the
@@ -93,6 +95,23 @@ def run(command, **kw):
 def ffprobe_json(path, *args):
     result = run(["ffprobe", "-v", "error", "-of", "json", *args, str(path)], text=True)
     return result.returncode, (json.loads(result.stdout) if result.stdout.strip() else {})
+
+
+def check_noise_line(pcm, channels, line, problems):
+    """The fixtures of make_wma_noise_fixtures.py hold one escape-coded coefficient per frame in channel 1, at the line the analyzer's golden report
+    gives as its coded bandwidth; ffmpeg, run as a program, decodes a tone at that line (docs/design/wma-standard-format.md, "Coefficients"). A frame of
+    2,048 lines is 4,096 samples of window; padded to 8,192 points the FFT has two bins to a line. A tone at line T peaks at bin 2T (flagged-band: 894) or 2T + 2 (control: 830 for line 829) in the committed files:
+    the peak of one coefficient depends on the phase of the frames' sign pattern, so it is held to within one line, which the 65 lines between the files' placements exceed."""
+    try:
+        import numpy
+    except ImportError:
+        print("skipped: the noise substitution line check needs numpy")
+        return
+    samples = numpy.frombuffer(pcm, dtype="<i2").reshape(-1, channels)[:, 0].astype(float)
+    window = samples[16 * 2048:18 * 2048]
+    bin_ = int(numpy.abs(numpy.fft.rfft(window * numpy.hanning(len(window)), 8192)).argmax())
+    if abs(bin_ - 2 * line) > 2:
+        problems.append(f"ffmpeg decodes a tone at line {bin_ / 2}, where the analyzer places the coefficient at line {line}")
 
 
 def decode(path, fmt="s16le", level="error"):
@@ -310,6 +329,28 @@ def check_protection(name, manifest, path, problems):
             problems.append(f"MediaInfo finds {len(audio)} audio tracks, the manifest {len(flagged)}")
 
 
+def check_markers(path, problems):
+    """ffmpeg's ASF demuxer (asfdec_f.c, asf_read_marker) exports the Marker Object's entries as chapters: their start times and titles are
+    the golden report's markers' presentation times and descriptions. It reads no Script Command Object, so the commands have no second reading here."""
+    report = golden_report(path)
+    markers = [n for n in nodes_of(report["root"]) if n["name"] == "Marker" and any(c["name"] == "Presentation Time" for c in n.get("children", []))] if report else []
+    if not markers:
+        return False
+    code, data = ffprobe_json(path, "-show_chapters")
+    if code != 0:
+        problems.append("ffprobe -show_chapters failed")
+        return True
+    got = [(int(c["start"]), c.get("tags", {}).get("title", "")) for c in data.get("chapters", [])]
+    want = []
+    for n in markers:
+        time = next(c["value"] for c in n["children"] if c["name"] == "Presentation Time")
+        description = next((c["value"] for c in n["children"] if c["name"] == "Marker Description"), "")
+        want.append((round(float(time) * 10_000_000), description))
+    if got != want:
+        problems.append(f"ffprobe's chapters are {got}, the golden report's markers {want}")
+    return True
+
+
 def check_hand_built(name, manifest, path, problems):
     crosscheck = manifest.get("crosscheck", {})
     check_protection(name, manifest, path, problems)
@@ -348,6 +389,7 @@ def check_hand_built(name, manifest, path, problems):
             if g != w:
                 problems.append(f"packet of stream {g[0]}: ffprobe has size {g[1]} at {g[2]} ms, the model {w[1]} at {w[2]} ms")
                 break
+    check_markers(path, problems)
     if audio and all(s["tag"] == 1 for s in audio) and len(audio) == len(manifest["streams"]):
         code, pcm, errors = decode(path)
         if code != 0 or errors:
@@ -362,6 +404,8 @@ def check_hand_built(name, manifest, path, problems):
                 problems.append(f"ffmpeg decoding: {errors or code}")
             else:
                 check_standard_frames(path, len(pcm) // (2 * audio[0]["channels"]), problems)
+                if crosscheck.get("wma_noise_line"):
+                    check_noise_line(pcm, audio[0]["channels"], crosscheck["wma_noise_line"], problems)
     if crosscheck.get("wma_frames"):
         # The frames of a Professional stream written without the length prefix, which ffmpeg reads one packet late (flushed_frames).
         check_wma_frames(path, crosscheck["wma_frames"], problems)

@@ -23,6 +23,10 @@ public sealed record PcmCoding
     // The codec ID of the decoder, which parsers of different projects start sessions with.
     public const string CodecId = "pcm";
 
+    // The most channels a container may state for samples read as PCM: what WAV's 16-bit channel field holds. A route refuses more (a sample frame of them could not be
+    // held in a slice), as MP4's and Matroska's fields could state up to 2^31 - 1.
+    public const int MaxChannels = 65535;
+
     public required PcmEncoding Encoding { get; init; }
 
     public required bool IsBigEndian { get; init; }

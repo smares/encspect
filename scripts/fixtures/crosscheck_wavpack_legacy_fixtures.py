@@ -95,7 +95,7 @@ def check_wvunpack(name, path, problems):
     text = result.stdout + result.stderr
     if result.returncode == 0:
         problems.append("wvunpack 5.9.0 reads the file; it is built without the legacy decoder and must refuse it")
-    elif "legacy WavPack file is deprecated" not in text and "not compatible" not in text and "not a valid" not in text.lower() and "can't" not in text.lower():
+    elif "legacy WavPack file is deprecated" not in text and "not compatible" not in text:
         problems.append(f"wvunpack refuses the file with an unexpected message: {text.strip()[-120:]}")
 
 

@@ -88,6 +88,11 @@ public sealed class StreamItem(StreamInfo stream)
                 parts.Add($"lossy part of a {lossyPart.Value} (" + lossyPart.Confidence.ToString().ToLowerInvariant() + ")");
             }
 
+            if (Stream.Correction is { } pairing)
+            {
+                parts.Add(FileSummary.CorrectionLine(pairing));
+            }
+
             return string.Join(" · ", parts);
         }
     }
