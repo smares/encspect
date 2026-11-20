@@ -239,6 +239,21 @@
                       "length": 8880
                     }
                   ]
+                },
+                {
+                  "name": "Stereo Coding",
+                  "value": 64,
+                  "unit": "access units",
+                  "offset": 0,
+                  "length": 8880,
+                  "children": [
+                    {
+                      "name": "Weighted mix",
+                      "value": "64 access units (100.0%)",
+                      "offset": 0,
+                      "length": 8880
+                    }
+                  ]
                 }
               ]
             }
@@ -369,6 +384,63 @@
             ],
             "values": [
               1065
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "access unit",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 0
+              },
+              {
+                "name": "Left/side stereo",
+                "count": 0
+              },
+              {
+                "name": "Side/right stereo",
+                "count": 0
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 0
+              },
+              {
+                "name": "Weighted mix",
+                "count": 64
+              }
+            ],
+            "total": 64,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                2
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                2
+              ]
+            ],
+            "runs": [
+              [
+                4,
+                4
+              ]
+            ],
+            "weights": [
+              [
+                16,
+                4
+              ]
             ]
           }
         ]

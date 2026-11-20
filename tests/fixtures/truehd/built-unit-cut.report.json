@@ -232,6 +232,21 @@
                       "length": 8826
                     }
                   ]
+                },
+                {
+                  "name": "Stereo Coding",
+                  "value": 79,
+                  "unit": "access units",
+                  "offset": 0,
+                  "length": 8826,
+                  "children": [
+                    {
+                      "name": "Weighted mix",
+                      "value": "79 access units (100.0%)",
+                      "offset": 0,
+                      "length": 8826
+                    }
+                  ]
                 }
               ]
             }
@@ -361,6 +376,59 @@
             ],
             "values": [
               1059
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "access unit",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 0
+              },
+              {
+                "name": "Left/side stereo",
+                "count": 0
+              },
+              {
+                "name": "Side/right stereo",
+                "count": 0
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 0
+              },
+              {
+                "name": "Weighted mix",
+                "count": 79
+              }
+            ],
+            "total": 79,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                5
+              ]
+            ],
+            "runs": [
+              [
+                4,
+                5
+              ]
+            ],
+            "weights": [
+              [
+                16,
+                4
+              ],
+              [
+                15,
+                1
+              ]
             ]
           }
         ]
