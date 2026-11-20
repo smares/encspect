@@ -54,9 +54,14 @@ public readonly record struct CodedFrame(MappedBytes Bytes, string NodeName, lon
     // none or the data ends with the unit. Valid only during the call, like Bytes.
     public MappedBytes? Following { get; init; }
 
-    // The parser found the frame damaged: a checksum over its coded data fails, or the data ends inside it. The decoder
-    // still decodes what it can, so a whole-stream checksum then says the audio differs.
+    // The parser found the frame damaged in its syntax: cut, or unreadable in part. The decoder still decodes what it can, so a
+    // whole-stream checksum then says the audio differs. Nothing is withheld from the measurements for it (docs/design/damaged-units.md).
     public bool IsDamaged { get; init; }
+
+    // The parser compared a checksum over the unit that counts (docs/design/damaged-units.md, "Which failures count") and it failed, or it is
+    // missing where the format states one. The unit is still decoded and written; the host leaves its positions out of the measurements as
+    // withheld samples ("checksum failed") and the measurements resume after them as after a gap. Set beside IsDamaged where that also holds.
+    public bool FailsChecksum { get; init; }
 
     // The parser's walk stored the frame's warm-up samples and residuals in the buffers the session lent (Lend), so the
     // decoder does not read them again: it takes them from DecodeContext.LentBuffers.

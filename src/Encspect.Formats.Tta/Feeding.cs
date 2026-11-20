@@ -40,7 +40,7 @@ internal static class Feeding
 
             reader.Position = entry.Offset;
             MappedBytes bytes = MappedBytes.Read(reader, [new ByteRange(entry.Offset, entry.Size)]);
-            session.Decode(new CodedFrame(bytes, FrameName, first, samples) { IsDamaged = !entry.IsCrcValid });
+            session.Decode(new CodedFrame(bytes, FrameName, first, samples) { IsDamaged = !entry.IsCrcValid, FailsChecksum = !entry.IsCrcValid });
         }
 
         if (tooLarge > 0)
@@ -76,6 +76,6 @@ internal static class Feeding
             return;
         }
 
-        session.Decode(new CodedFrame(packet, FrameName, first, samples) { IsDamaged = !entry.IsCrcValid, FollowsGap = packet.FollowsGap });
+        session.Decode(new CodedFrame(packet, FrameName, first, samples) { IsDamaged = !entry.IsCrcValid, FailsChecksum = !entry.IsCrcValid, FollowsGap = packet.FollowsGap });
     }
 }

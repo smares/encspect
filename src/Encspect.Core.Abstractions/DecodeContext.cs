@@ -11,9 +11,10 @@ public sealed class DecodeContext
     private readonly Action<long> _addWork;
     private readonly LentBuffersProvider? _lent;
     private readonly Action<long, long, WithholdReason>? _withhold;
+    private readonly Action<long, long>? _withholdFromMeasurements;
 
     public DecodeContext(DecodeSetup setup, CancellationToken cancellationToken, Action<Severity, string, string, Node?, int> addFinding,
-        Func<PcmFormat, IPcmSink> declareOutput, Action<long> addWork, LentBuffersProvider? lent = null, Action<long, long, WithholdReason>? withhold = null)
+        Func<PcmFormat, IPcmSink> declareOutput, Action<long> addWork, LentBuffersProvider? lent = null, Action<long, long, WithholdReason>? withhold = null, Action<long, long>? withholdFromMeasurements = null)
     {
         ArgumentNullException.ThrowIfNull(setup);
         ArgumentNullException.ThrowIfNull(addFinding);
@@ -27,6 +28,7 @@ public sealed class DecodeContext
         _addWork = addWork;
         _lent = lent;
         _withhold = withhold;
+        _withholdFromMeasurements = withholdFromMeasurements;
     }
 
     public DecodeSetup Setup { get; }
@@ -71,6 +73,20 @@ public sealed class DecodeContext
         if (samples > 0)
         {
             _withhold?.Invoke(firstSample, samples, reason);
+        }
+    }
+
+    // Positions whose output the decoder still writes but the measurements leave out as withheld samples ("checksum failed"): a check over
+    // decoded audio that failed, or the output that depends on a failed unit's state (docs/design/damaged-units.md). A unit the parser flagged
+    // with CodedFrame.FailsChecksum is reported by the host. Spans come in stream order, before the Write of their first position. Zero
+    // samples is no span. Throws ArgumentOutOfRangeException for a negative position or count, which reaches the host as decode.failed.
+    public void WithholdFromMeasurements(long firstSample, long samples)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(firstSample);
+        ArgumentOutOfRangeException.ThrowIfNegative(samples);
+        if (samples > 0)
+        {
+            _withholdFromMeasurements?.Invoke(firstSample, samples);
         }
     }
 

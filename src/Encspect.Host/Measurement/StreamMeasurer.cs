@@ -105,6 +105,7 @@ internal sealed class StreamMeasurer
     private long _trimmedInner;
     private long _pendingInner;
     private readonly List<(long First, long End)> _innerTrims = [];
+    private readonly List<(long First, long End)> _damaged = [];
     private readonly List<(int From, int To)> _segments = [];
     private readonly long[] _withheld = new long[WithholdReasons.Count];
     private readonly List<Span> _pending = [];
@@ -254,7 +255,7 @@ internal sealed class StreamMeasurer
     public static long EstimateBytes(PcmFormat format, MeasureOptions options)
     {
         int measured = Math.Min(format.Channels, MeasurementLimits.MaxChannels);
-        long bytes = (64 * 1024) + (2L * MaxPendingSpans * 24);
+        long bytes = (64 * 1024) + (3L * MaxPendingSpans * 24);
         MeasurementKinds kinds = options.Include ?? MeasurementSets.All;
         bool isMeasuringSpectrum = (kinds & MeasurementKinds.Spectrum) != 0 && format.SampleRate > 0;
         if ((kinds & MeasurementKinds.Levels) != 0)
@@ -428,6 +429,34 @@ internal sealed class StreamMeasurer
         (_trimStart, _trimEnd) = (_hasStarted ? _trimStart : firstPosition, end);
     }
 
+    // The sink's side: positions whose output is written but left out of every figure (a failed unit's, docs/design/damaged-units.md). Kept until
+    // the blocks they lie in arrive; the part of a block inside them is cut out of it and counted as withheld ("checksum failed"), and measuring
+    // resumes after it as after a jump. Spans past MaxPendingSpans are not kept, so their output is measured.
+    public void WithholdWritten(long firstPosition, long samples)
+    {
+        if (_isStopped || samples <= 0 || firstPosition < 0)
+        {
+            return;
+        }
+
+        long end = firstPosition > long.MaxValue - samples ? long.MaxValue : firstPosition + samples;
+        long floor = _damaged.Count > 0 ? _damaged[^1].End : long.MinValue;
+        long first = Math.Max(firstPosition, floor);
+        if (first >= end)
+        {
+            return;
+        }
+
+        if (_damaged.Count > 0 && _damaged[^1].End == first)
+        {
+            _damaged[^1] = (_damaged[^1].First, end);
+        }
+        else if (_damaged.Count < MaxPendingSpans)
+        {
+            _damaged.Add((first, end));
+        }
+    }
+
     // The sink's side: a range inside the stream that its syntax trims (IDecodeSession.TrimInner). Kept until the blocks it lies in arrive; the part
     // of a block inside it is not measured and is counted as trimmed, inner where measured samples follow it and trailing where none does.
     public void TrimInner(long firstPosition, long samples)
@@ -490,7 +519,14 @@ internal sealed class StreamMeasurer
 
         try
         {
-            Process(block);
+            if (_damaged.Count == 0 || block.Length == 0)
+            {
+                Process(block);
+            }
+            else
+            {
+                WriteAroundDamaged(block);
+            }
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
@@ -498,6 +534,63 @@ internal sealed class StreamMeasurer
             _isStopped = true;
         }
     }
+
+    // The parts of the block outside the withheld written spans are processed as blocks of their own; each span part joins the pending spans
+    // as withheld output before the part after it, so it is a jump that is withheld whole.
+    private void WriteAroundDamaged(PcmBlock block)
+    {
+        long start = block.Position;
+        long end = start + block.Length;
+        int drop = 0;
+        while (drop < _damaged.Count && _damaged[drop].End <= start)
+        {
+            drop++;
+        }
+
+        if (drop > 0)
+        {
+            _damaged.RemoveRange(0, drop);
+        }
+
+        int at = 0;
+        foreach ((long first, long spanEnd) in _damaged)
+        {
+            if (first >= end)
+            {
+                break;
+            }
+
+            int a = (int)Math.Max(at, Math.Clamp(first - start, 0, block.Length));
+            int b = (int)Math.Clamp(spanEnd - start, a, block.Length);
+            if (a > at)
+            {
+                Process(Slice(block, at, a - at));
+            }
+
+            if (b > a)
+            {
+                Withhold(start + a, b - a, WithholdReason.ChecksumFailed);
+            }
+
+            at = b;
+            if (_isStopped)
+            {
+                return;
+            }
+        }
+
+        if (at < block.Length)
+        {
+            Process(at == 0 ? block : Slice(block, at, block.Length - at));
+        }
+    }
+
+    private static PcmBlock Slice(PcmBlock block, int from, int length) => block.Format switch
+    {
+        SampleFormat.Integer => new PcmBlock(block.Position + from, length, block.Channels, block.Stride, block.Integers[from..]),
+        SampleFormat.Float32 => new PcmBlock(block.Position + from, length, block.Channels, block.Stride, block.Floats[from..]),
+        _ => new PcmBlock(block.Position + from, length, block.Channels, block.Stride, block.Doubles[from..]),
+    };
 
     private void Process(PcmBlock block)
     {
@@ -1279,6 +1372,12 @@ internal sealed class StreamMeasurer
         long leadingTrimmedGap = 0;
         long trailingTrimmedGap = 0;
         long[] withheld = [.. _withheld];
+        if (!_hasReceived)
+        {
+            // Every written block lay in failed units: nothing was measured, and the positions say why.
+            withheld[(int)WithholdReason.ChecksumFailed] += _pending.Where(p => p.Reason == WithholdReason.ChecksumFailed).Sum(p => p.End - p.First);
+        }
+
         if (_hasCodedRange && _hasStarted && status is MeasurementStatus.Complete or MeasurementStatus.Incomplete)
         {
             // Positions the syntax trims are not samples of the stream, so a decoder's gap or withheld span that covers them is counted only outside them (docs/design/samples-definition.md):

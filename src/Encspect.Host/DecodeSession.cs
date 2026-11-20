@@ -47,6 +47,7 @@ internal sealed class DecodeSession : IDecodeSession
     private long _trimEnd;
     private List<(long First, long Samples, WithholdReason Reason)>? _earlyWithheld;
     private List<(long First, long Samples)>? _earlyInnerTrims;
+    private List<(long First, long Samples)>? _earlyDamaged;
     private readonly long[] _earlyOverflow = new long[WithholdReasons.Count];
     private long _earlyEnd;
 
@@ -84,7 +85,7 @@ internal sealed class DecodeSession : IDecodeSession
         try
         {
             _unitsPerByte = decoder.WorkPerInputByte;
-            _decoder = decoder.Open(new DecodeContext(_setup, _run!.Token, AddFromDecoder, DeclareOutput, AddWorkFromDecoder, LentToDecoder, WithholdFromDecoder));
+            _decoder = decoder.Open(new DecodeContext(_setup, _run!.Token, AddFromDecoder, DeclareOutput, AddWorkFromDecoder, LentToDecoder, WithholdFromDecoder, WithholdWrittenFromDecoder));
             _status = DecodeStatus.Decoded;
         }
         catch (InvalidDataException ex)
@@ -191,6 +192,11 @@ internal sealed class DecodeSession : IDecodeSession
             _framesNotDecoded++;
             _isAfterUnreadable = true;
             return IsDecoding;
+        }
+
+        if (frame.FailsChecksum && frame.Samples > 0 && frame.FirstSample >= 0)
+        {
+            WithholdWrittenFromDecoder(frame.FirstSample, frame.Samples);
         }
 
         try
@@ -575,6 +581,28 @@ internal sealed class DecodeSession : IDecodeSession
         }
     }
 
+    // Positions the decoder writes but the measurements leave out (CodedFrame.FailsChecksum, DecodeContext.WithholdFromMeasurements); the
+    // front end's sink still gets the output. Spans before the declaration of the output wait for it, as the withheld ones do.
+    private void WithholdWrittenFromDecoder(long first, long samples)
+    {
+        if (_sink is not null)
+        {
+            _sink.Measurer?.WithholdWritten(first, samples);
+        }
+        else
+        {
+            List<(long First, long Samples)> early = _earlyDamaged ??= [];
+            if (early.Count > 0 && early[^1].First + early[^1].Samples == first)
+            {
+                early[^1] = early[^1] with { Samples = early[^1].Samples + samples };
+            }
+            else if (early.Count < StreamMeasurer.MaxPendingSpans)
+            {
+                early.Add((first, samples));
+            }
+        }
+    }
+
     public void Trim(long firstPosition, long endPosition)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(firstPosition);
@@ -633,6 +661,11 @@ internal sealed class DecodeSession : IDecodeSession
                 measurer.TrimInner(first, samples);
             }
 
+            foreach ((long first, long samples) in _earlyDamaged ?? [])
+            {
+                measurer.WithholdWritten(first, samples);
+            }
+
             foreach ((long first, long samples, WithholdReason reason) in _earlyWithheld ?? [])
             {
                 measurer.Withhold(first, samples, reason);
@@ -646,6 +679,7 @@ internal sealed class DecodeSession : IDecodeSession
 
         _earlyWithheld = null;
         _earlyInnerTrims = null;
+        _earlyDamaged = null;
         return _sink;
     }
 
