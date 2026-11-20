@@ -171,9 +171,10 @@ public class MonkeysAudioReviewFixTests
         const int blocks = 10_000_000;
         byte[] frame = MonkeysAudioBuilder.SilentFrame(blocks);
         // 10 frames of 10 million samples: 3.2 billion units at 32 a sample, 11.2 billion at the old 112.
+        // Frames this large are above the cap on held samples, so each is decoded twice (damaged-units.md): 6.4 billion units.
         byte[] file = MonkeysAudioBuilder.Build(header, headerData, [.. Enumerable.Repeat(frame, 10)], blocks, blocks);
 
-        Report report = Analyzer.CreateDefault().Analyze("silent.ape", new MemoryStream(file), new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = 1L << 32 } });
+        Report report = Analyzer.CreateDefault().Analyze("silent.ape", new MemoryStream(file), new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = 1L << 33 } });
 
         Assert.DoesNotContain(report.Findings, f => f.Code is "decode.limit" or "decode.failed" or "parse.failed");
         Assert.True(report.Streams.Single().Verification!.IsVerified);
