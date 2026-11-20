@@ -325,6 +325,7 @@ The scope is confirmed when 0.4 is done. The decoders follow steps 9 to 15 of [l
 5. **USAC** (xHE-AAC).
 6. **WMA Voice** (the lead, 2026-11-08): after its clean-room supplement. The lead wants it covered, as Speex is (decision 12 of [lossy-decoders.md](design/lossy-decoders.md#decisions)).
    - **The patent decision** comes before HE-AAC, USAC and WMA Professional.
+7. **Speex's coding graphs beyond its submodes** (the review of 0.4's Speex decoder, 2026-11-19): "Coded Bandwidth" from the layers a frame holds, the stereo requests' balance and energy ratio, the line spectral pair indexes, the open-loop pitch and the pitch lags, and the pitch and innovation gains, from the parameters the walk already reads ([coding-graphs.md](design/coding-graphs.md#speex)). The innovation codebook indexes are not planned.
 
 ### After 0.5
 
@@ -367,6 +368,7 @@ Parked items carry the trigger that would bring them back. The formats at the en
   - the Musepack SV4 to SV6 streams that libmpcdec 1.2.6 refuses;
   - the WMA cases the parsers leave open (version 1 with variable block lengths and scale factor exponents, version 2 at 49,048 Hz and above, Professional frames over three packets or 32,768 bytes, the default channel transform matrices, music superframes inside Voice), until a clean-room supplement closes them (decision 12);
   - Dolby's object audio: the design does not cover its decoder, which waits for a design of its own (the AC-4 and MPEG-H decoders moved to [After 0.5](#after-05) on 2026-11-16).
+- **Speex's innovation codebook indexes as a graph** (the review of 0.4's Speex decoder, 2026-11-19): an index is an address in a table with no unit. **Trigger:** a concept the other formats share for their codebook indexes is surveyed.
 - **A lighter run on a push to main** (the lead, 2026-11-19): a push to main runs the whole matrix again after the pull request's run, about 71 jobs, while the account's runners take about 20 at a time; a push to main could run only what the pull request did not (Linux arm64, macOS x64 and the shards a scoped pull request left out). Kept as it is for now. **Trigger:** the runner queue still holds pull requests for hours after the scoped unit tests (#349).
 - **TrueHD and MLP stereo coding of presentations of more than two channels** (the lead, 2026-11-19; [coding-graphs.md, "Stereo Coding: the design"](design/coding-graphs.md#stereo-coding-the-design-2026-11-19), decision 2): "Stereo Coding" covers the two-channel presentation only; the matrices of a 6-channel or 8-channel presentation get no series, since no committed file has any (FFmpeg's encoder writes none) and a count of replaced matrix channels has no counterpart in another format. **Trigger:** a committed file whose presentation of more than two channels carries matrices (an encoder other than FFmpeg's), or a user's request.
 - **The official-decoder runs on the Intel and arm64 Windows images:** the Windows column runs on `windows-2025`, x64, only. **Trigger:** a difference that depends on the build.

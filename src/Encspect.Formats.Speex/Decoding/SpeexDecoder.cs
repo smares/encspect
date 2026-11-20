@@ -12,9 +12,10 @@ public sealed class SpeexDecoder : IDecoder
 
     public bool DeclaresChecksums => false;
 
-    // The cheapest coded audio, libspeex's quality 0 (narrowband, wideband and ultra-wideband frames of 6, 10 and 11 bytes), needs about 4,000 to 8,000 units a byte at the weights
-    // of FrameDecoder.SynthesisUnits; DTX frames without speech are covered by the floor (docs/design/lossy-decoders.md, "Per-byte allowance").
-    public long WorkPerInputByte => 8192;
+    // The cheapest coded audio, libspeex's quality 0 (narrowband, wideband and ultra-wideband frames of 6, 10 and 11 bytes as one frame to a packet), needs about 4,000 to 8,000
+    // units a byte at the weights of FrameDecoder.SynthesisUnits, and ultra-wideband with ten frames to a packet (83 bits a frame, 104 bytes for 6,400 samples) 8,431; DTX frames
+    // without speech are covered by the floor (docs/design/lossy-decoders.md, "Per-byte allowance").
+    public long WorkPerInputByte => 9216;
 
     public IFrameDecoder Open(DecodeContext context)
     {

@@ -233,6 +233,38 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         GC.KeepAlive(report);
     }
 
+    // A Speex stream whose pages state no granule position never gives the delay, so the parser holds the packets it keeps back for it: where nothing is decoded no packet's
+    // bytes at all, and where the stream is decoded no more than a byte budget (1 MiB), whatever the stream's length: 500 packets of 60,000 bytes (a 30 MB file) held in full
+    // would be 30 MB, and a packet of 64 MiB each could be 32 GiB.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void SpeexPacketsBeforeTheFirstGranulePositionAreBounded(bool decode)
+    {
+        static byte[] Stream(int count)
+        {
+            byte[] packet = [0x38, .. new byte[59_998], 0x07, 0x80];
+            var builder = new OggBuilder()
+                .Page(9, 0, 2, OggBuilder.SpeexHeader(8000, 0))
+                .Page(9, 0, 0, OggBuilder.VorbisComment("Encoded with Speex 1.2.1"));
+            for (int i = 0; i < count; i++)
+            {
+                builder.Page(9, -1, i + 1 == count ? (byte)4 : (byte)0, packet);
+            }
+
+            return builder.Bytes;
+        }
+
+        var options = decode ? new AnalysisOptions { Decoding = new DecodeOptions { Output = _ => new DecoderWorkTests.NullSink() } } : null;
+
+        (Report report, _, long excess, string where) = MeasureExcess("speex.spx", Stream(500), Stream(5), options);
+
+        Output.WriteLine($"{excess / 1_000_000.0:F1} MB excess for 30 MB {where}");
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+        Assert.True(excess < 8_000_000, $"The analysis held {excess / 1_000_000.0:F1} MB above the heap it starts and ends with, for a stream of 30 MB.");
+        GC.KeepAlive(report);
+    }
+
     // An AC-3 stream keeps a 16-byte record per frame (offset, store position, kept bits and CRC
     // verdicts), the fields its nodes are built from without the exponent groups and mantissas,
     // and its per-frame series, with the coding series (14 bytes for a mono frame): the frames repeat a committed mono fixture of 384-byte frames at

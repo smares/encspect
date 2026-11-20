@@ -461,8 +461,9 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
 
         // Opus packets of 120 ms (the longest a packet holds: six hybrid frames of 20 ms, or two SILK frames of 60 ms, the frames of the fixtures repeated in one packet) and a stream of
         // CELT frames that code silence (the silence flag set by the first byte of the range coder's data).
-        // Speex: every mode at its largest bit allocations (narrowband submode 5, wideband with submode 6 under submode 3, ultra-wideband with submode 7 under submode 3 and a layer of
-        // submode 1), the cheapest (narrowband at 6 kbps, the wideband layer without excitation), a variable bitrate stream with discontinuous transmission and stereo. Each case
+        // Speex: narrowband submode 5 (submode 7, narrowband's largest, is timed only under ultra-wideband), wideband with submode 6 under submode 3, ultra-wideband with submode 7
+        // under submode 3 and a layer of submode 1, the cheapest (narrowband at 6 kbps, the wideband layer without excitation), a variable bitrate stream with discontinuous
+        // transmission and stereo. Each case
         // repeats the audio packets of an encoder's file in one stream.
         foreach ((string label, string file) in new[]
         {
