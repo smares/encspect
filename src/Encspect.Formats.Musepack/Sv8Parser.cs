@@ -497,7 +497,7 @@ internal static class Sv8Parser
         }
 
         state.Stereo.AddAll(feed.Codes.AsSpan(0, frames));
-        state.Bandwidths.Add(highest);
+        state.Bandwidths[index] = highest;
     }
 
     private static void MissingFrames(State state, SubbandFeed feed, int index, Packet packet, long firstSample, long missing)
@@ -1284,7 +1284,6 @@ internal static class Sv8Parser
         var figures = new StreamFigures(rate);
         long frames = 0;
         long cut = 0;
-        int walked = 0;
         for (int i = 0; i < state.AudioPackets.Count; i++)
         {
             if (i % 4096 == 0)
@@ -1313,7 +1312,7 @@ internal static class Sv8Parser
             }
 
             frames += count;
-            figures.Add(packet.Offset, packet.Length * 8, count * Sv7Parser.FrameSamples, bands: walked < state.Bandwidths.Count ? state.Bandwidths[walked++] : -1);
+            figures.Add(packet.Offset, packet.Length * 8, count * Sv7Parser.FrameSamples, bands: state.Bandwidths.GetValueOrDefault(state.AudioPackets[i], -1));
         }
 
         // libmpcdec r495 outputs the header's samples less the beginning silence, and no more than
@@ -1601,8 +1600,8 @@ internal static class Sv8Parser
 
         public (int Index, long Frame)? FirstMismatch { get; set; }
 
-        // The coded bandwidth of each audio packet that was walked and has one, in subbands, in the order of the packets (-1 where its frames could not be read).
-        public List<int> Bandwidths { get; } = [];
+        // The coded bandwidth of each audio packet that was walked, in subbands, by the packet's index in Packets (-1 where its frames could not be read).
+        public Dictionary<int, int> Bandwidths { get; } = [];
 
         public UnitCategoryTally Stereo { get; } = new("Stereo Coding", Sv7Parser.StereoCodings, "frame", GraphConcept.StereoCoding, isVariable: true);
 

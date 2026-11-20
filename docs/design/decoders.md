@@ -784,6 +784,11 @@ Every code follows the plan's severity rules: a stored checksum that differs is 
 - **GUI:** the stream line of the detail window names the verdict, "verified (lossy stream)" where the stream is verified and `IsLossy` is set (a WavPack hybrid file without its `.wvc`), and links to the article. The file list gets no column in Gate 3, for the same reason as the CSV.
 - **Article:** `verification` in `src/Encspect.Host/Topics`: what stored checksums cover (a header, coded data, decoded audio), why an MD5 needs decoding, what "verified" means in the report. The stored checksum fields of the lossless formats point to it.
 
+### Damaged units and the measurements
+
+- **The lead's decision (2026-11-20):** a unit whose checksum fails is still decoded, so the verification and the findings stay as they are, but its output is withheld from the measurements and counted as withheld, and the next unit follows a gap. Until it is built, `CodedFrame.IsDamaged` keeps today's meaning, and a failed unit's output is measured like any other.
+- **Design:** [damaged-units.md](damaged-units.md), with the survey of every decoder's per-unit checks, the rule, its effects and the lead's decisions (signed off, 2026-11-20).
+
 ## When decoding runs
 
 ### Cost

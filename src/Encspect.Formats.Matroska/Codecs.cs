@@ -49,9 +49,9 @@ internal static class Codecs
             return null;
         }
 
-        if ((channels ?? 1) is 0 or > int.MaxValue)
+        if ((channels ?? 1) is 0 or > PcmCoding.MaxChannels)
         {
-            why = $"states {channels} channels";
+            why = $"states {channels} channels, where 1 to {PcmCoding.MaxChannels} are read as samples";
             return null;
         }
 

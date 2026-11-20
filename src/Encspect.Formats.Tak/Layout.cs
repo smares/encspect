@@ -245,7 +245,7 @@ internal static class Layout
     }
 
     // The length with its CRC-24 of the frame header at a position (FrameHeader.Read), or 0 where the sync word is not there, the header does not decode (it states metadata, which is
-    // not supported, or its reserved and padding bits are not zero), the data ends inside it or its CRC-24 differs.
+    // not supported, or its info frame's reserved bits are not zero), the data ends inside it or its CRC-24 differs.
     public static int FrameHeaderLength(ByteReader reader, long position)
     {
         long available = reader.End - position;
