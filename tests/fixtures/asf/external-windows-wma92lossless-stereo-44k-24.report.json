@@ -10198,6 +10198,21 @@
                           "length": 388824
                         },
                         {
+                          "name": "Subframe Sizes",
+                          "value": 1,
+                          "unit": "sizes",
+                          "offset": 4991,
+                          "length": 388824,
+                          "children": [
+                            {
+                              "name": "2048 samples",
+                              "value": "44 subframes (100.0%)",
+                              "offset": 4991,
+                              "length": 388824
+                            }
+                          ]
+                        },
+                        {
                           "name": "Seekable Subframes",
                           "value": "5 subframes (11.4%)",
                           "offset": 4991,
@@ -18912,6 +18927,47 @@
               [
                 null,
                 4
+              ]
+            ]
+          },
+          {
+            "name": "Subframe Sizes",
+            "concept": "blockSwitching",
+            "valueLabel": "subframe",
+            "categories": [
+              {
+                "name": "2048 samples",
+                "count": 44
+              },
+              {
+                "name": "1024 samples",
+                "count": 0
+              },
+              {
+                "name": "512 samples",
+                "count": 0
+              },
+              {
+                "name": "256 samples",
+                "count": 0
+              },
+              {
+                "name": "128 samples",
+                "count": 0
+              }
+            ],
+            "total": 44,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                44
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                44
               ]
             ]
           }

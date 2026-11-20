@@ -514,6 +514,35 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
     private const long AsfWmaKeptBound = 550;
     private const long AsfWmaPeakBound = 550;
 
+    // A version 2 stream of Microsoft's encoder with variable block lengths (about three blocks to a frame in this fixture) keeps, beside the
+    // frame records, one size and one noise flag for each block and a coded bandwidth with its own x for the blocks that have one, recorded
+    // while the frames are read. The 15 media objects of a fixture (a stereo stream at 128 kbit/s, 65 frames) repeated with continuing sequence
+    // numbers, so the blocks the series count are those of the file, whatever damage the repetition makes. linux-x64 measures 74 bytes kept and
+    // 124 peak per block, the frame records included (57 kept before the series); the bounds leave about twice that.
+    [Fact]
+    public void ManyStandardBlocksStayCompact()
+    {
+        const int packets = 6_000;
+        byte[] data = FileOfCycles("asf/external-windows-wma92-cbr-stereo-44k-128.wma", 0x0161, packets);
+
+        (Report report, long kept, long peak) = Measure("blocks.wma", data, data[..4096]);
+
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal("Windows Media Audio 2", stream.Codec);
+        CategorySeries sizes = Assert.Single(stream.CategorySeries, s => s.Name == "Block Sizes");
+        Series bandwidth = Assert.Single(stream.Series, s => s.Name == "Coded Bandwidth");
+        long blocks = sizes.Total;
+        Assert.True(blocks > 30_000, $"The stream has {blocks} blocks.");
+        Assert.True(bandwidth.X.Length > blocks / 2);
+        Output.WriteLine($"{kept / blocks} bytes kept and {peak / blocks} bytes peak per block");
+        Assert.True(kept < blocks * StandardBlockKeptBound, $"The report keeps {kept / blocks} bytes per block.");
+        Assert.True(peak < blocks * StandardBlockPeakBound, $"The live heap grew by {peak / blocks} bytes per block.");
+        GC.KeepAlive(report);
+    }
+
+    private const long StandardBlockKeptBound = 150;
+    private const long StandardBlockPeakBound = 250;
+
     // Voice keeps a fixed record per packet and per superframe, and builds the nodes when they are read: a Microsoft-encoded media object of
     // 187 bytes with 4 counted superframes, repeated, gives a packet and 3 to 4 superframes for each repetition, none of them kept as nodes.
     // The bounds leave about twice what linux-x64 measures, and are far below what a node for each superframe would cost.

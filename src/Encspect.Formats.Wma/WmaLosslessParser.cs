@@ -80,7 +80,8 @@ public sealed class WmaLosslessParser : ICodecParser
         });
 
         WmaEncoder.Detected detected = WmaEncoder.Apply(context, stream, findings);
-        var tally = new LosslessTally();
+        var sizes = new CategorySeriesBuilder("Subframe Sizes", ProReport.SizeCategories(p.FrameLength, p.MinSubframe), "subframe", isOrdered: true, concept: GraphConcept.BlockSwitching);
+        var tally = new LosslessTally { FrameSizes = [] };
         long seekableSeen = 0;
         long midSideSeen = 0;
         int? FrameStereo()
@@ -97,6 +98,16 @@ public sealed class WmaLosslessParser : ICodecParser
             FrameLimit = FrameLimit,
             Stereo = p.Channels == 2 ? new UnitCategoryTally("Stereo Coding", LosslessReport.StereoCodings, "frame", GraphConcept.StereoCoding) : null,
             FrameStereo = p.Channels == 2 ? FrameStereo : null,
+            LostRead = () => tally.FrameSizes!.Clear(),
+            FrameRead = isRecorded =>
+            {
+                if (isRecorded)
+                {
+                    ProReport.AddSizes(p.FrameLength, p.MinSubframe, sizes, tally.FrameSizes!);
+                }
+
+                tally.FrameSizes!.Clear();
+            },
         };
         reader.Run(packets);
 
@@ -146,7 +157,7 @@ public sealed class WmaLosslessParser : ICodecParser
             Writer = detected.Writer,
             WriterConfidence = detected.WriterConfidence,
             Series = series,
-            CategorySeries = LosslessReport.Categories(reader, series, stream),
+            CategorySeries = LosslessReport.Categories(reader, series, stream, sizes),
         });
 
         findings.Flush(context);

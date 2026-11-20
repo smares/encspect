@@ -20,10 +20,68 @@ def run(*files, event="pull_request"):
 
 class ChangesTests(unittest.TestCase):
     def test_docs_only_runs_nothing(self):
-        self.assertEqual(run("docs/cli.md", "README.md", "docs/formats/mp4.md", "CLAUDE.md"), set())
+        self.assertEqual(run("docs/cli.md", "docs/formats/mp4.md", "docs/gui.md"), set())
 
-    def test_topic_article_is_code(self):
-        self.assertEqual(run("src/Encspect.Host/Topics/lame-tag.md"), set(changes.ALL_JOBS))
+    def test_topic_article_runs_only_the_build_and_the_unit_tests(self):
+        self.assertEqual(run("src/Encspect.Host/Topics/lame-tag.md"), {"build-test", "unit-tests"})
+        self.assertEqual(run("src/Encspect.Host/Topics/lame-tag.md", "src/Encspect.Host/Analyzer.cs"), set(changes.ALL_JOBS))
+        self.assertEqual(run("src/Encspect.Host/Topics/lame-tag.md", "docs/cli.md"), {"build-test", "unit-tests"})
+        self.assertIn("unit-tests", run("src/Encspect.Host/Topics/lame-tag.md", "src/Encspect.Formats.WavPack/WavPackParser.cs"))
+
+    def test_conformance_manifests_are_no_dotnet_input(self):
+        got = run("tests/conformance/truehd-samples.json")
+        self.assertFalse(got & set(changes.CI_JOBS_DOTNET), got)
+        self.assertIn("truehd-crosscheck", got)
+        self.assertIn("unit-tests", run("tests/conformance/truehd-samples.json", "src/Encspect.Formats.TrueHd/TrueHdParser.cs"))
+
+    def test_named_paths_are_found_written_either_way(self):
+        found = named_paths('File.ReadAllText(Path.Combine(Root, "docs", "cli.md")); File.Exists(Path.Combine(Root, "LICENSE")); var a = "scripts/release/make_notices.py"; '
+                            'var b = "README.md"; Path.Combine(root, "scripts", "release", "dotnet-pin.txt"); Path.Combine(Root, "docs", "releases", version + ".md"); '
+                            'Path.Combine(RepositoryRoot(), "THIRD-PARTY-NOTICES.md"); "tests\\conformance\\a.json"', {"LICENSE", "README.md", "THIRD-PARTY-NOTICES.md"})
+        self.assertLessEqual({"docs/cli.md", "LICENSE", "scripts/release/make_notices.py", "README.md", "scripts/release/dotnet-pin.txt", "docs/releases",
+                              "THIRD-PARTY-NOTICES.md", "tests/conformance/a.json"}, found)
+
+    def test_the_probes_of_the_review_are_covered_or_caught(self):
+        def covered(path):
+            return bool(changes.is_dotnet(path) or changes.reader_of(path) or changes.matches(path, changes.SHARED))
+        for path in ("LICENSE", "README.md", "CLAUDE.md", "THIRD-PARTY-NOTICES.md", "scripts/release/dotnet-pin.txt", "docs/development.md", "docs/releases/0.4.0.md", "src/Encspect.Host/Topics/a.md"):
+            self.assertTrue(covered(path), path)
+        for path in ("docs/cli.md", "scripts/release/make_notices.py", "tests/conformance/a.json", "scripts/fixtures/make_x.py", "docs/formats/wavpack.md"):
+            self.assertFalse(covered(path), path)
+        self.assertEqual(run("LICENSE"), {"unit-tests"})
+        self.assertEqual(run("README.md"), {"unit-tests"})
+        self.assertEqual(run("newfile.txt"), set(changes.ALL_JOBS), "a new top-level file runs everything, RepositoryRootTests among it")
+
+    @unittest.skipUnless((changes.ROOT / "src").is_dir() and (changes.ROOT / "tests/Encspect.Tests").is_dir(), "needs src and tests/Encspect.Tests")
+    def test_every_non_dotnet_file_a_dotnet_test_reads_is_registered_as_read(self):
+        """A .NET test or project that names a path changes.py does not count as .NET input (written as a path or as the pieces of a
+        Path.Combine) must find it in READERS, or a change to it runs no test; tests/conformance is read by none."""
+        root_files = {f.name for f in changes.ROOT.iterdir() if f.is_file()}
+        uncovered = {}
+        for project in ("src", "tests/Encspect.Tests", "tests/Encspect.Gui.Tests", "tests/Encspect.Fuzz", "tests/Encspect.PcmDump"):
+            for file in (changes.ROOT / project).rglob("*"):
+                if file.suffix not in (".cs", ".csproj", ".props", ".targets", ".axaml") or {"bin", "obj"} & set(file.parts):
+                    continue
+                for path in named_paths(file.read_text(encoding="utf-8", errors="replace"), root_files):
+                    target = changes.ROOT / path
+                    if not target.exists() or path == ".git" or "/" not in path and target.is_dir():
+                        continue
+                    probe = path + "/x.md" if target.is_dir() else path
+                    covered = changes.is_dotnet(probe) or changes.reader_of(probe) or changes.matches(probe, changes.SHARED)
+                    if not covered and not path.startswith(("tests/fixtures/", "scripts/fixtures/", "tests/conformance")) or path.startswith("tests/conformance"):
+                        uncovered.setdefault(path, []).append(file.name)
+        self.assertEqual(uncovered, {}, "register these in READERS of changes.py (or, for tests/conformance, stop reading it)")
+
+    def test_the_release_scripts_run_no_job_of_this_workflow(self):
+        self.assertEqual(run("scripts/release/make_notices.py", "scripts/release/licenses/libspeex.txt"), set())
+        self.assertEqual(run("scripts/release/make_notices.py", "src/Encspect.Formats.WavPack/WavPackParser.cs"), run("src/Encspect.Formats.WavPack/WavPackParser.cs"))
+
+    def test_files_that_tests_read_run_those_tests(self):
+        self.assertEqual(run("THIRD-PARTY-NOTICES.md"), {"build-test", "unit-tests"})
+        self.assertEqual(run("scripts/release/dotnet-pin.txt"), {"unit-tests"})
+        self.assertEqual(run("docs/development.md"), {"unit-tests"})
+        self.assertEqual(run("docs/releases/0.4.0.md"), {"unit-tests"})
+        self.assertEqual(run("docs/formats/wavpack.md"), set())
 
     def test_other_markdown_in_src_is_code(self):
         self.assertIn("build-test", run("src/Encspect.Formats.Ogg/NOTES.md"))
@@ -305,6 +363,29 @@ class ChangesTests(unittest.TestCase):
 REPOSITORY_HAS_SOURCES = (changes.ROOT / "src").is_dir() and (changes.ROOT / "tests/Encspect.Tests").is_dir()
 
 
+def named_paths(text, root_files=()):
+    """The repository paths a C# file names: string literals with a slash (either kind), the literals of a Path.Combine joined (the run after its first
+    argument), and a literal that is a file of the repository root."""
+    found = set()
+    for literal in re.findall(r'"((?:[^"\\\n]|\\.)*)"', text):
+        path = literal.replace("\\\\", "/").replace("\\", "/")
+        if "/" in path and not path.startswith("/") and " " not in path and ".." not in path:
+            found.add(path.strip("/"))
+        if literal in root_files:
+            found.add(literal)
+    for call in re.findall(r"Path\.Combine\(([^;]*?)\)(?:;|\))", text):
+        run = []
+        for argument in (a.strip() for a in call.split(",")):
+            match = re.fullmatch(r'"([^"]*)"', argument)
+            if match:
+                run.append(match.group(1))
+            elif run:
+                break
+        if run and ".." not in run:
+            found.add("/".join(run))
+    return found
+
+
 def scoped(*files, event="pull_request"):
     flags, reason, scope = changes.decide_with_scope(event, list(files))
     return scope, reason, changes.test_matrix(changes.platforms(event), changes.shard_config.load(), event in changes.NIGHTLY_EVENTS, scope)
@@ -383,7 +464,7 @@ class ScopeTests(unittest.TestCase):
 
     def test_a_codec_change_scopes_to_the_containers_that_carry_it_and_a_tag_change_to_what_holds_the_tag(self):
         self.assertEqual(scoped("src/Encspect.Formats.Opus/OpusParser.cs")[0].selected, {"Opus", "Ogg", "Matroska", "Mp4", "VorbisComment"})
-        self.assertEqual(scoped("src/Encspect.Formats.Dts/DtsParser.cs")[0].selected, {"Dts", "Mp4", "Matroska", "Wav", "DtsHd", "Aiff"})
+        self.assertEqual(scoped("src/Encspect.Formats.Dts/DtsParser.cs")[0].selected, {"Dts", "Mp4", "Matroska", "Wav", "DtsHd"})
         self.assertEqual(scoped("src/Encspect.Tags.Lyrics3/Lyrics3TagParser.cs")[0].selected, {"Lyrics3", "MpegAudio"})
         self.assertIn("Aiff", scoped("src/Encspect.Formats.Wav/WavParser.cs")[0].selected)
 
@@ -403,7 +484,7 @@ class ScopeTests(unittest.TestCase):
                      "tests/Encspect.Tests/Support/Fixtures.cs", "tests/Encspect.Tests/Ci/CiWorkflowTests.cs", "tests/Encspect.Tests/Encspect.Tests.csproj", "tests/Encspect.Tests/Formats/NewFormat/Tests.cs",
                      "tests/fixtures/fuzz/a.bin", "tests/fixtures/measurement/a.wav", "tests/fixtures/newformat/a.bin", "scripts/ci/shards.json", "scripts/ci/areas.json",
                      ".github/workflows/ci.yml", "Directory.Build.props", "Encspect.slnx", "src/Encspect.Formats.WavPack/Encspect.Formats.WavPack.csproj",
-                     "src/Encspect.Formats.NewFormat/Parser.cs", "src/Encspect.Host/Topics/mid-side-stereo.md", "something-unknown.bin"):
+                     "src/Encspect.Formats.NewFormat/Parser.cs", "something-unknown.bin"):
             chosen, reason, matrix = scoped(path)
             self.assertIsNone(chosen, path)
             self.assertNotIn("scoped", reason)
@@ -428,11 +509,56 @@ class ScopeTests(unittest.TestCase):
 
     def test_a_changed_container_selects_the_codecs_it_carries_and_their_fixture_folders_select_it(self):
         chosen = scoped("src/Encspect.Formats.Mp4/Mp4Parser.cs")[0]
-        self.assertLessEqual({"Mp4", "Alac", "Aac", "Opus", "Flac", "TrueHd", "Ogg", "Matroska"}, chosen.selected)
+        self.assertLessEqual({"Mp4", "Alac", "Aac", "Opus", "Flac", "TrueHd"}, chosen.selected)
         for name in ("AlacDecoderTests", "AlacFixtureTests", "CorruptAlacFileTests", "CorruptAlacBuiltFileTests"):
             self.assertNotIn(name, chosen.excluded_classes, name)
         self.assertIn("Opus", scoped("src/Encspect.Formats.Ogg/OggParser.cs")[0].selected)
         self.assertLessEqual({"Alac", "Mp4", "Matroska"}, scoped("tests/fixtures/alac/a.m4a")[0].selected)
+
+    def test_an_article_change_runs_only_the_tests_that_read_the_articles(self):
+        chosen, reason, matrix = scoped("src/Encspect.Host/Topics/mid-side-stereo.md")
+        readers = scope.article_readers()
+        self.assertIn("DescriptionTests", readers)
+        self.assertIn("scoped to the tests that read the changed files", reason)
+        self.assertEqual(set(chosen.only), set(readers))
+        self.assertEqual(shard_names(matrix), {"rest"}, "every reader is in the rest shard, so the others have nothing to run")
+        for entry in matrix:
+            self.assertTrue(valid_filter(entry["filter"]), entry["filter"])
+            self.assertTrue(entry["filter"].endswith("|".join(f"FullyQualifiedName~.{c}." for c in readers) + ")"))
+        # Every test file that loads the TopicLibrary is a reader.
+        for file in scope.sources_of():
+            if "TopicLibrary" in file.read_text(encoding="utf-8", errors="replace"):
+                self.assertTrue(set(n for n, _, _ in scope.class_extent(file.read_text(encoding="utf-8", errors="replace"))) <= set(readers), file.name)
+        # With other changes, those decide.
+        mixed = scoped("src/Encspect.Host/Topics/mid-side-stereo.md", "src/Encspect.Formats.WavPack/WavPackParser.cs")[0]
+        self.assertIsNone(mixed.only)
+        self.assertEqual(mixed.selected, {"WavPack", "Matroska", "Ape"})
+        self.assertIsNone(scoped("src/Encspect.Host/Topics/mid-side-stereo.md", "src/Encspect.Host/Analyzer.cs")[0])
+        self.assertIsNone(scoped("src/Encspect.Host/Topics/mid-side-stereo.md", "tests/Encspect.Tests/Support/Fixtures.cs")[0])
+
+    def test_a_change_to_a_file_the_tests_read_runs_the_classes_that_name_it(self):
+        for path, expected in (("THIRD-PARTY-NOTICES.md", {"ReleaseWorkflowTests", "RepositoryRootTests"}), ("scripts/release/dotnet-pin.txt", {"ReleaseWorkflowTests"}),
+                               ("docs/development.md", {"ReleaseWorkflowTests", "RepositoryRootTests"})):
+            chosen, reason, matrix = scoped(path)
+            self.assertLessEqual(expected, set(chosen.only), path)
+            self.assertIn("read the changed files", reason)
+            self.assertTrue(all(valid_filter(e["filter"]) for e in matrix))
+        self.assertEqual(shard_names(scoped("scripts/release/dotnet-pin.txt")[2]), {"rest"})
+        self.assertIsNone(scoped("THIRD-PARTY-NOTICES.md", "src/Encspect.Host/Analyzer.cs")[0])
+
+    def test_a_release_script_change_has_no_unit_tests_to_scope(self):
+        flags, reason, chosen = changes.decide_with_scope("pull_request", ["scripts/release/make_notices.py"])
+        self.assertFalse(any(flags.values()))
+        self.assertIsNone(chosen)
+
+    def test_carriers_stop_at_one_level(self):
+        mp4 = scoped("src/Encspect.Formats.Mp4/Mp4Parser.cs")[0].selected
+        self.assertTrue({"Ogg", "Matroska", "Asf"}.isdisjoint(mp4), "the containers of Mp4's codecs are not selected")
+        self.assertNotIn("Aiff", scoped("src/Encspect.Formats.Dts/DtsParser.cs")[0].selected)
+        opus = scoped("src/Encspect.Formats.Opus/OpusParser.cs")[0].selected
+        self.assertEqual(opus, {"Opus", "Ogg", "Matroska", "Mp4", "VorbisComment"})
+        self.assertEqual(scoped("src/Encspect.Formats.WavPack/WavPackParser.cs")[0].selected, {"WavPack", "Matroska", "Ape"})
+        self.assertEqual(scoped("src/Encspect.Tags.Ape/ApeTagParser.cs")[0].selected, {"Ape", "MonkeysAudio", "MpegAudio", "Musepack", "OptimFrog", "Tak", "Tta", "WavPack"})
 
     def test_every_fixture_folder_lists_the_containers_of_its_files(self):
         containers = {"m4a": "Mp4", "mp4": "Mp4", "m4b": "Mp4", "3gp": "Mp4", "mov": "Mp4", "mka": "Matroska", "mkv": "Matroska", "webm": "Matroska",

@@ -97,6 +97,23 @@ def ffprobe_json(path, *args):
     return result.returncode, (json.loads(result.stdout) if result.stdout.strip() else {})
 
 
+def check_noise_line(pcm, channels, line, problems):
+    """The fixtures of make_wma_noise_fixtures.py hold one escape-coded coefficient per frame in channel 1, at the line the analyzer's golden report
+    gives as its coded bandwidth; ffmpeg, run as a program, decodes a tone at that line (docs/design/wma-standard-format.md, "Coefficients"). A frame of
+    2,048 lines is 4,096 samples of window; padded to 8,192 points the FFT has two bins to a line. A tone at line T peaks at bin 2T (flagged-band: 894) or 2T + 2 (control: 830 for line 829) in the committed files:
+    the peak of one coefficient depends on the phase of the frames' sign pattern, so it is held to within one line, which the 65 lines between the files' placements exceed."""
+    try:
+        import numpy
+    except ImportError:
+        print("skipped: the noise substitution line check needs numpy")
+        return
+    samples = numpy.frombuffer(pcm, dtype="<i2").reshape(-1, channels)[:, 0].astype(float)
+    window = samples[16 * 2048:18 * 2048]
+    bin_ = int(numpy.abs(numpy.fft.rfft(window * numpy.hanning(len(window)), 8192)).argmax())
+    if abs(bin_ - 2 * line) > 2:
+        problems.append(f"ffmpeg decodes a tone at line {bin_ / 2}, where the analyzer places the coefficient at line {line}")
+
+
 def decode(path, fmt="s16le", level="error"):
     """Decodes every audio stream, one ffmpeg run each, and joins the PCM: ffmpeg 7.0 and later refuse a raw PCM output with more
     than one audio stream (FF_OFMT_FLAG_MAX_ONE_OF_EACH in libavformat/pcmenc.c of 7.0 and 8.0.1), where 6.1 interleaved them. The samples
@@ -387,6 +404,8 @@ def check_hand_built(name, manifest, path, problems):
                 problems.append(f"ffmpeg decoding: {errors or code}")
             else:
                 check_standard_frames(path, len(pcm) // (2 * audio[0]["channels"]), problems)
+                if crosscheck.get("wma_noise_line"):
+                    check_noise_line(pcm, audio[0]["channels"], crosscheck["wma_noise_line"], problems)
     if crosscheck.get("wma_frames"):
         # The frames of a Professional stream written without the length prefix, which ffmpeg reads one packet late (flushed_frames).
         check_wma_frames(path, crosscheck["wma_frames"], problems)

@@ -102,6 +102,21 @@ public class WmaLosslessPacketTests
         Assert.Contains("frames that start in the packet before it", gap.Message, StringComparison.Ordinal);
     }
 
+    // The subframes the bits of a lost frame hold are no value of any frame's "Subframe Sizes": the series holds one value for each subframe the
+    // listed frames' nodes show.
+    [Fact]
+    public void TheSubframesOfALostFrameAreInNoFrameSeries()
+    {
+        CodecContext context = Run(s => s.Objects[2][0] = (byte)((s.Objects[2][0] & 0x0F) | 0x30), WmaStream.LosslessFive);
+        StreamInfo stream = context.Streams[0];
+
+        CategorySeries sizes = Assert.Single(stream.CategorySeries, c => c.Name == "Subframe Sizes");
+        Node frames = WmaStream.Child(WmaStream.StreamNode(context), "Frames");
+        long shown = frames.Children.Sum(f => f.Children.Count(c => c.Name == "Subframe"));
+        Assert.True(shown > 0);
+        Assert.Equal(shown, sizes.Total);
+    }
+
     // After the first frame, a frame rejected for its end trim in the flush after the last packet outputs nothing and ends the reading: the frame
     // that follows it is not decoded.
     [Fact]

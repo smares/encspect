@@ -1,100 +1,482 @@
 {
   "goldens": [
-    "tests/fixtures/asf/ac3-object-fragmented.report.json",
-    "tests/fixtures/asf/mpeg-audio-object-fragmented.report.json"
+    "tests/fixtures/asf/"
   ],
-  "changed": [
+  "added": [
     {
-      "path": [
+      "scope": "node",
+      "parent": [
         "ASF",
         "Data Object",
-        "AC-3"
+        "Windows Media Audio 1",
+        "Statistics"
       ],
-      "fields": [
-        "children",
-        "offset",
-        "length",
-        "ranges"
-      ],
+      "name": "Coded Bandwidth",
       "goldens": [
-        "tests/fixtures/asf/ac3-object-fragmented.report.json"
+        "tests/fixtures/asf/external-ffmpeg-wmav1-mono-22k-24k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-48k.report.json"
       ]
     },
     {
-      "path": [
+      "scope": "node",
+      "parent": [
         "ASF",
         "Data Object",
-        "MPEG Audio"
+        "Windows Media Audio 1",
+        "Statistics",
+        "Coded Bandwidth"
       ],
-      "fields": [
-        "children",
-        "offset",
-        "length",
-        "ranges"
-      ],
+      "name": "Highest",
       "goldens": [
-        "tests/fixtures/asf/mpeg-audio-object-fragmented.report.json"
+        "tests/fixtures/asf/external-ffmpeg-wmav1-mono-22k-24k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-48k.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 1",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Lowest",
+      "goldens": [
+        "tests/fixtures/asf/external-ffmpeg-wmav1-mono-22k-24k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-48k.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 1",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Most Common",
+      "goldens": [
+        "tests/fixtures/asf/external-ffmpeg-wmav1-mono-22k-24k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-48k.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics"
+      ],
+      "name": "Coded Bandwidth",
+      "goldens": [
+        "tests/fixtures/asf/derived-ffmpeg-wmav2-tool-name-lavc.report.json",
+        "tests/fixtures/asf/derived-windows-wma92-stereo-44k-128-damaged.report.json",
+        "tests/fixtures/asf/derived-windows-wma92-stereo-44k-128-object-cut.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-mono-44k-48k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-22k-32k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-32k-64k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-128k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-32k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-64k.report.json",
+        "tests/fixtures/asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-20-sdk.report.json",
+        "tests/fixtures/asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-32.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-mono-44k-48.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-22k-20-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-22k-32.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-cut-30.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-cut-36.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-192.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-32-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-48-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-64.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-48k-128.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q10.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q25.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q75-tagged.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q75.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q90.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Highest",
+      "goldens": [
+        "tests/fixtures/asf/derived-ffmpeg-wmav2-tool-name-lavc.report.json",
+        "tests/fixtures/asf/derived-windows-wma92-stereo-44k-128-damaged.report.json",
+        "tests/fixtures/asf/derived-windows-wma92-stereo-44k-128-object-cut.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-mono-44k-48k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-22k-32k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-32k-64k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-128k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-32k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-64k.report.json",
+        "tests/fixtures/asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-20-sdk.report.json",
+        "tests/fixtures/asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-32.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-mono-44k-48.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-22k-20-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-22k-32.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-cut-30.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-cut-36.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-192.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-32-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-48-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-64.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-48k-128.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q10.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q25.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q75-tagged.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q75.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q90.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Lowest",
+      "goldens": [
+        "tests/fixtures/asf/derived-ffmpeg-wmav2-tool-name-lavc.report.json",
+        "tests/fixtures/asf/derived-windows-wma92-stereo-44k-128-damaged.report.json",
+        "tests/fixtures/asf/derived-windows-wma92-stereo-44k-128-object-cut.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-mono-44k-48k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-22k-32k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-32k-64k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-128k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-32k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-64k.report.json",
+        "tests/fixtures/asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-20-sdk.report.json",
+        "tests/fixtures/asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-32.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-mono-44k-48.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-22k-20-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-22k-32.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-cut-30.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-cut-36.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-192.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-32-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-48-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-64.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-48k-128.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q10.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q25.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q75-tagged.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q75.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q90.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Statistics",
+        "Coded Bandwidth"
+      ],
+      "name": "Most Common",
+      "goldens": [
+        "tests/fixtures/asf/derived-ffmpeg-wmav2-tool-name-lavc.report.json",
+        "tests/fixtures/asf/derived-windows-wma92-stereo-44k-128-damaged.report.json",
+        "tests/fixtures/asf/derived-windows-wma92-stereo-44k-128-object-cut.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-mono-44k-48k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-22k-32k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-32k-64k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-128k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-32k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-64k.report.json",
+        "tests/fixtures/asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-20-sdk.report.json",
+        "tests/fixtures/asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-32.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-mono-44k-48.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-22k-20-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-22k-32.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-cut-30.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-cut-36.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-192.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-32-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-48-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-64.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-48k-128.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q10.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q25.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q75-tagged.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q75.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q90.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio Lossless",
+        "Statistics"
+      ],
+      "name": "Subframe Sizes",
+      "goldens": [
+        "tests/fixtures/asf/derived-windows-wma92lossless-stereo-44k-16-damaged.report.json",
+        "tests/fixtures/asf/derived-windows-wma92lossless-stereo-44k-16-object-cut.report.json",
+        "tests/fixtures/asf/external-windows-wma92lossless-5.1-48k-24.report.json",
+        "tests/fixtures/asf/external-windows-wma92lossless-stereo-44k-16.report.json",
+        "tests/fixtures/asf/external-windows-wma92lossless-stereo-44k-24.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio Lossless",
+        "Statistics",
+        "Subframe Sizes"
+      ],
+      "name": "128 samples",
+      "goldens": [
+        "tests/fixtures/asf/derived-windows-wma92lossless-stereo-44k-16-damaged.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio Lossless",
+        "Statistics",
+        "Subframe Sizes"
+      ],
+      "name": "2048 samples",
+      "goldens": [
+        "tests/fixtures/asf/derived-windows-wma92lossless-stereo-44k-16-damaged.report.json",
+        "tests/fixtures/asf/derived-windows-wma92lossless-stereo-44k-16-object-cut.report.json",
+        "tests/fixtures/asf/external-windows-wma92lossless-5.1-48k-24.report.json",
+        "tests/fixtures/asf/external-windows-wma92lossless-stereo-44k-16.report.json",
+        "tests/fixtures/asf/external-windows-wma92lossless-stereo-44k-24.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio Lossless",
+        "Statistics",
+        "Subframe Sizes"
+      ],
+      "name": "512 samples",
+      "goldens": [
+        "tests/fixtures/asf/derived-windows-wma92lossless-stereo-44k-16-damaged.report.json"
       ]
     },
     {
       "scope": "stream",
-      "fields": [
-        "samples",
-        "duration",
-        "averageBitrate",
-        "categorySeries",
-        "series",
-        "nodes"
-      ],
+      "array": "categorySeries",
+      "name": "Block Sizes",
       "goldens": [
-        "tests/fixtures/asf/mpeg-audio-object-fragmented.report.json"
-      ]
-    },
-    {
-      "path": [
-        "ASF",
-        "Data Object",
-        "MPEG Audio"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/asf/mpeg-audio-object-fragmented.report.json"
+        "tests/fixtures/asf/derived-ffmpeg-wmav2-tool-name-lavc.report.json",
+        "tests/fixtures/asf/derived-windows-wma92-stereo-44k-128-damaged.report.json",
+        "tests/fixtures/asf/derived-windows-wma92-stereo-44k-128-object-cut.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav1-mono-22k-24k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-48k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-mono-44k-48k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-22k-32k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-32k-64k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-128k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-32k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-64k.report.json",
+        "tests/fixtures/asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-20-sdk.report.json",
+        "tests/fixtures/asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-32.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-mono-44k-48.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-22k-20-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-22k-32.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-cut-30.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-cut-36.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-192.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-32-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-48-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-64.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-48k-128.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q10.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q25.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q75-tagged.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q75.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q90.report.json",
+        "tests/fixtures/asf/fragments-in-two-streams.report.json",
+        "tests/fixtures/asf/writer-stamp-last.report.json",
+        "tests/fixtures/asf/writer-stamp-not-last.report.json"
       ]
     },
     {
       "scope": "stream",
-      "fields": [
-        "series"
-      ],
+      "array": "categorySeries",
+      "name": "Frame Types",
       "goldens": [
-        "tests/fixtures/asf/ac3-object-fragmented.report.json"
-      ]
-    }
-  ],
-  "removed": [
-    {
-      "scope": "finding",
-      "code": "asf.object-not-contiguous",
-      "goldens": [
-        "tests/fixtures/asf/mpeg-audio-object-fragmented.report.json"
+        "tests/fixtures/asf/external-windows-wmavoice-cbr-mono-16k-16-speech.report.json",
+        "tests/fixtures/asf/external-windows-wmavoice-cbr-mono-16k-16.report.json",
+        "tests/fixtures/asf/external-windows-wmavoice-cbr-mono-8k-4-speech.report.json",
+        "tests/fixtures/asf/external-windows-wmavoice-cbr-mono-8k-5-speech.report.json",
+        "tests/fixtures/asf/external-windows-wmavoice-cbr-mono-8k-5.report.json",
+        "tests/fixtures/asf/external-windows-wmavoice-cbr-mono-8k-8-speech.report.json",
+        "tests/fixtures/asf/voice-11k-two-blocks.report.json",
+        "tests/fixtures/asf/voice-16k-independent.report.json",
+        "tests/fixtures/asf/voice-8k-residual.report.json",
+        "tests/fixtures/asf/voice-cache-overflow.report.json",
+        "tests/fixtures/asf/voice-config-overlap.report.json",
+        "tests/fixtures/asf/voice-config-unreachable.report.json",
+        "tests/fixtures/asf/voice-invalid-superframes.report.json",
+        "tests/fixtures/asf/voice-lsp-flag-changes.report.json",
+        "tests/fixtures/asf/voice-object-dropped-blocks.report.json",
+        "tests/fixtures/asf/voice-object-dropped.report.json",
+        "tests/fixtures/asf/voice-object-headerless-start.report.json",
+        "tests/fixtures/asf/voice-object-not-whole.report.json",
+        "tests/fixtures/asf/voice-object-remainder-first.report.json",
+        "tests/fixtures/asf/voice-object-short.report.json",
+        "tests/fixtures/asf/voice-object-skip-kept.report.json",
+        "tests/fixtures/asf/voice-object-start-in-lead.report.json",
+        "tests/fixtures/asf/voice-object-superframe-in-lead.report.json",
+        "tests/fixtures/asf/voice-spillover.report.json",
+        "tests/fixtures/asf/voice-superframe-exact-fill.report.json",
+        "tests/fixtures/asf/voice-truncated.report.json"
       ]
     },
     {
-      "scope": "finding",
-      "code": "mpeg-audio.main-data-overlap",
+      "scope": "stream",
+      "array": "categorySeries",
+      "name": "Noise-Substituted Blocks",
       "goldens": [
-        "tests/fixtures/asf/mpeg-audio-object-fragmented.report.json"
+        "tests/fixtures/asf/external-ffmpeg-wmav1-mono-22k-24k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-32k.report.json",
+        "tests/fixtures/asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-20-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-22k-20-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-32-sdk.report.json"
       ]
-    }
-  ],
-  "bitrate": [
+    },
     {
+      "scope": "stream",
+      "array": "categorySeries",
+      "name": "Subframe Sizes",
       "goldens": [
-        "tests/fixtures/asf/mpeg-audio-object-fragmented.report.json"
-      ],
-      "reason": "the fragmented frame is now read, so the stream's bytes and its bitrate are those of all eight frames"
+        "tests/fixtures/asf/derived-windows-wma10pro-stereo-44k-128-no-length-prefix.report.json",
+        "tests/fixtures/asf/derived-windows-wma92lossless-stereo-44k-16-damaged.report.json",
+        "tests/fixtures/asf/derived-windows-wma92lossless-stereo-44k-16-object-cut.report.json",
+        "tests/fixtures/asf/external-windows-wma10pro-cbr-5.1-48k-384.report.json",
+        "tests/fixtures/asf/external-windows-wma10pro-cbr-stereo-44k-128-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma10pro-cbr-stereo-44k-128.report.json",
+        "tests/fixtures/asf/external-windows-wma10pro-cbr-stereo-44k-192.report.json",
+        "tests/fixtures/asf/external-windows-wma10pro-cbr-stereo-44k-256.report.json",
+        "tests/fixtures/asf/external-windows-wma10pro-cbr-stereo-44k-384-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma10pro-cbr-stereo-44k-64.report.json",
+        "tests/fixtures/asf/external-windows-wma10pro-vbr-5.1-48k-q50.report.json",
+        "tests/fixtures/asf/external-windows-wma10pro-vbr-stereo-44k-q10.report.json",
+        "tests/fixtures/asf/external-windows-wma10pro-vbr-stereo-44k-q50.report.json",
+        "tests/fixtures/asf/external-windows-wma10pro-vbr-stereo-44k-q98.report.json",
+        "tests/fixtures/asf/external-windows-wma92lossless-5.1-48k-24.report.json",
+        "tests/fixtures/asf/external-windows-wma92lossless-stereo-44k-16.report.json",
+        "tests/fixtures/asf/external-windows-wma92lossless-stereo-44k-24.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Coded Bandwidth",
+      "goldens": [
+        "tests/fixtures/asf/derived-ffmpeg-wmav2-tool-name-lavc.report.json",
+        "tests/fixtures/asf/derived-windows-wma92-stereo-44k-128-damaged.report.json",
+        "tests/fixtures/asf/derived-windows-wma92-stereo-44k-128-object-cut.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav1-mono-22k-24k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-48k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-mono-44k-48k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-22k-32k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-32k-64k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-128k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-32k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-64k.report.json",
+        "tests/fixtures/asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-20-sdk.report.json",
+        "tests/fixtures/asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-32.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-mono-44k-48.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-22k-20-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-22k-32.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-cut-30.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-cut-36.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-192.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-32-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-48-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-64.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-48k-128.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q10.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q25.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q75-tagged.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q75.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q90.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "array": "series",
+      "name": "Coded Bandwidth Over Time",
+      "goldens": [
+        "tests/fixtures/asf/derived-ffmpeg-wmav2-tool-name-lavc.report.json",
+        "tests/fixtures/asf/derived-windows-wma92-stereo-44k-128-damaged.report.json",
+        "tests/fixtures/asf/derived-windows-wma92-stereo-44k-128-object-cut.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav1-mono-22k-24k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-48k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-mono-44k-48k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-22k-32k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-32k-64k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-128k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-32k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-64k.report.json",
+        "tests/fixtures/asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-20-sdk.report.json",
+        "tests/fixtures/asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-32.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-mono-44k-48.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-22k-20-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-22k-32.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-cut-30.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-cut-36.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-192.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-32-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-48-sdk.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-64.report.json",
+        "tests/fixtures/asf/external-windows-wma92-cbr-stereo-48k-128.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q10.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q25.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q75-tagged.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q75.report.json",
+        "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q90.report.json"
+      ]
     }
   ]
 }

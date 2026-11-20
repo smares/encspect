@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The original WavPack releases 1.0 to 3.4 and the DOS build of 4.31, run as black boxes for the files they wrote
+"""The original WavPack releases 1.0 to 3.97 and the DOS build of 4.31, run as black boxes for the files they wrote
 (docs/design/wavpack-legacy.md, "The original sources and documentation" and "Running the old encoders").
 
 ReallyRareWares (https://www.rarewares.org/rrw/wavpack.php) keeps every release, "kindly contributed by David Bryant himself". Each archive is pinned by
