@@ -516,6 +516,7 @@ MID_SIDE = [(0, 1, 1, [1, 1]), (1, 0, 0, [1, -1])]
 MID_SIDE_WITHOUT_BYPASS = [(0, 1, 0, [1, 1]), (1, 0, 0, [1, -1])]
 SINGULAR = [(1, 0, 1, [1])]
 LEFT_SIDE_NOISE = [(1, 4, 1, [16, -16, 1])]
+SCALE = [(0, 3, 1, [12])]
 
 
 def to_bits(value, width):
@@ -655,14 +656,14 @@ def lossless_pass(b, substreams):
 
 STEREO_INTERVALS = [
     # (what the interval's first unit states, the coding the model must read from it)
-    (None, 4), (KEEP, 0), (FLIP, 0), (LEFT_SIDE, 1), (SIDE_RIGHT, 2), (MID_SIDE, 3), (SINGULAR, 4), (LEFT_SIDE_NOISE, 1), ("swapped", 2), (None, 4),
+    (None, 4), (KEEP, 0), (FLIP, 0), (LEFT_SIDE, 1), (SIDE_RIGHT, 2), (MID_SIDE, 3), (SINGULAR, 4), (LEFT_SIDE_NOISE, 1), ("swapped", 2), (None, 4), (SCALE, 0),
 ]
 
 
 @builder("stereo-coding")
 def stereo_coding_fixture():
-    base = Base("truehd-stereo-48k-24-interval-8", 80)
-    b = Built(base, "Ten restart intervals of eight units, each coding the stereo pair differently by the matrices of its first unit: FFmpeg's channel less half the other, a matrix that keeps its channel, one that flips its sign, left and side, side and right, mid and side by two matrices, a matrix that rebuilds both channels from one, left and side with a noise coefficient, left and side under a restart header that swaps the channel assignment, and the first coding again with left and side stated in the fourth unit, in the middle of the interval. The lossless checks are worked out again from FFmpeg's decoding.")
+    base = Base("truehd-stereo-48k-24-interval-8", 88)
+    b = Built(base, "Eleven restart intervals of eight units, each coding the stereo pair differently by the matrices of its first unit: FFmpeg's channel less half the other, a matrix that keeps its channel, one that flips its sign, left and side, side and right, mid and side by two matrices, a matrix that rebuilds both channels from one, left and side with a noise coefficient, left and side under a restart header that swaps the channel assignment, the first coding again with left and side stated in the fourth unit, in the middle of the interval, and a matrix that scales its channel by 1.5. The lossless checks are worked out again from FFmpeg's decoding.")
     for i, (spec, _) in enumerate(STEREO_INTERVALS):
         unit = b.unit(8 * i)
         if spec == "swapped":
@@ -673,7 +674,7 @@ def stereo_coding_fixture():
     b.pieces[8 * 9 + 3][1] = edit_matrices(b.pieces[8 * 9 + 3][1], 1, 0, LEFT_SIDE, (1, 0))
     b.lossless = [(0, [])]
     b.ffmpeg = True
-    b.expected_codings = [code for _, code in STEREO_INTERVALS[:9] for _ in range(8)] + [4, 4, 4, 1, 1, 1, 1, 1]
+    b.expected_codings = [code for _, code in STEREO_INTERVALS[:9] for _ in range(8)] + [4, 4, 4, 1, 1, 1, 1, 1] + [0] * 8
     return b
 
 

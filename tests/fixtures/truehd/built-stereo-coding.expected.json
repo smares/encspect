@@ -1,6 +1,6 @@
 {
- "description": "Ten restart intervals of eight units, each coding the stereo pair differently by the matrices of its first unit: FFmpeg's channel less half the other, a matrix that keeps its channel, one that flips its sign, left and side, side and right, mid and side by two matrices, a matrix that rebuilds both channels from one, left and side with a noise coefficient, left and side under a restart header that swaps the channel assignment, and the first coding again with left and side stated in the fourth unit, in the middle of the interval. The lossless checks are worked out again from FFmpeg's decoding.",
- "length": 10318,
+ "description": "Eleven restart intervals of eight units, each coding the stereo pair differently by the matrices of its first unit: FFmpeg's channel less half the other, a matrix that keeps its channel, one that flips its sign, left and side, side and right, mid and side by two matrices, a matrix that rebuilds both channels from one, left and side with a noise coefficient, left and side under a restart header that swaps the channel assignment, the first coding again with left and side stated in the fourth unit, in the middle of the interval, and a matrix that scales its channel by 1.5. The lossless checks are worked out again from FFmpeg's decoding.",
+ "length": 11344,
  "format": "Dolby TrueHD",
  "entries": [
   ["unit", 0, 224, 1, "read"],
@@ -82,7 +82,15 @@
   ["unit", 9836, 124, 0, "read"],
   ["unit", 9960, 122, 0, "read"],
   ["unit", 10082, 110, 0, "read"],
-  ["unit", 10192, 126, 0, "read"]
+  ["unit", 10192, 126, 0, "read"],
+  ["unit", 10318, 226, 1, "read"],
+  ["unit", 10544, 122, 0, "read"],
+  ["unit", 10666, 110, 0, "read"],
+  ["unit", 10776, 116, 0, "read"],
+  ["unit", 10892, 106, 0, "read"],
+  ["unit", 10998, 118, 0, "read"],
+  ["unit", 11116, 114, 0, "read"],
+  ["unit", 11230, 114, 0, "read"]
  ],
  "syncs": [
   {"unit": 0, "crc_ok": true, "usable": true, "supported": true, "rate": 48000, "substreams": 1, "mlp": false, "signature": 46930, "info": 20, "assign6": 1, "assign8": 1, "arrangement": null, "bits": 24},
@@ -94,7 +102,8 @@
   {"unit": 48, "crc_ok": true, "usable": true, "supported": true, "rate": 48000, "substreams": 1, "mlp": false, "signature": 46930, "info": 20, "assign6": 1, "assign8": 1, "arrangement": null, "bits": 24},
   {"unit": 56, "crc_ok": true, "usable": true, "supported": true, "rate": 48000, "substreams": 1, "mlp": false, "signature": 46930, "info": 20, "assign6": 1, "assign8": 1, "arrangement": null, "bits": 24},
   {"unit": 64, "crc_ok": true, "usable": true, "supported": true, "rate": 48000, "substreams": 1, "mlp": false, "signature": 46930, "info": 20, "assign6": 1, "assign8": 1, "arrangement": null, "bits": 24},
-  {"unit": 72, "crc_ok": true, "usable": true, "supported": true, "rate": 48000, "substreams": 1, "mlp": false, "signature": 46930, "info": 20, "assign6": 1, "assign8": 1, "arrangement": null, "bits": 24}
+  {"unit": 72, "crc_ok": true, "usable": true, "supported": true, "rate": 48000, "substreams": 1, "mlp": false, "signature": 46930, "info": 20, "assign6": 1, "assign8": 1, "arrangement": null, "bits": 24},
+  {"unit": 80, "crc_ok": true, "usable": true, "supported": true, "rate": 48000, "substreams": 1, "mlp": false, "signature": 46930, "info": 20, "assign6": 1, "assign8": 1, "arrangement": null, "bits": 24}
  ],
  "restarts": [
   {"unit": 0, "sub": 0, "bit": 2, "crc_ok": true, "lossless": 0},
@@ -106,19 +115,20 @@
   {"unit": 48, "sub": 0, "bit": 2, "crc_ok": true, "lossless": 2},
   {"unit": 56, "sub": 0, "bit": 2, "crc_ok": true, "lossless": 71},
   {"unit": 64, "sub": 0, "bit": 2, "crc_ok": true, "lossless": 251},
-  {"unit": 72, "sub": 0, "bit": 2, "crc_ok": true, "lossless": 191}
+  {"unit": 72, "sub": 0, "bit": 2, "crc_ok": true, "lossless": 191},
+  {"unit": 80, "sub": 0, "bit": 2, "crc_ok": true, "lossless": 3}
  ],
  "failures": [],
  "no_check_data": [],
- "stream_infos": [{"codec": "Dolby TrueHD", "sample_rate": 48000, "channels": 2, "layout": ["front left", "front right"], "bits_per_sample": 24, "samples": 3200, "duration": 0.06666666666666667}],
- "decoded_samples": 3200,
- "stereo_coding": {"units": [16, 21, 16, 8, 19], "runs": [[[0, 8], [4, 8]], [[0, 8], [1, 8]], [[2, 8], [3, 8]], [[1, 8], [4, 8]], [[1, 5], [2, 8], [4, 3]]]},
- "verification": {"default": {"isVerified": null, "decoding": "notRequested", "checksums": [{"name": "major sync CRC-16", "covers": "header", "coversAllAudio": false, "stored": 10, "checked": 10, "failed": 0}, {"name": "unit parity nibble", "covers": "header", "coversAllAudio": false, "stored": 80, "checked": 80, "failed": 0}, {"name": "restart header CRC-8", "covers": "header", "coversAllAudio": false, "stored": 10, "checked": 10, "failed": 0}, {"name": "substream parity byte", "covers": "codedData", "coversAllAudio": true, "stored": 80, "checked": 80, "failed": 0}, {"name": "substream CRC-8", "covers": "codedData", "coversAllAudio": true, "stored": 80, "checked": 80, "failed": 0}, {"name": "lossless check, substream 0", "covers": "decodedAudio", "coversAllAudio": false, "stored": 9, "checked": 0, "failed": 0}]}, "verify": {"isVerified": true, "decoding": "decoded", "checksums": [{"name": "major sync CRC-16", "covers": "header", "coversAllAudio": false, "stored": 10, "checked": 10, "failed": 0}, {"name": "unit parity nibble", "covers": "header", "coversAllAudio": false, "stored": 80, "checked": 80, "failed": 0}, {"name": "restart header CRC-8", "covers": "header", "coversAllAudio": false, "stored": 10, "checked": 10, "failed": 0}, {"name": "substream parity byte", "covers": "codedData", "coversAllAudio": true, "stored": 80, "checked": 80, "failed": 0}, {"name": "substream CRC-8", "covers": "codedData", "coversAllAudio": true, "stored": 80, "checked": 80, "failed": 0}, {"name": "lossless check, substream 0", "covers": "decodedAudio", "coversAllAudio": false, "stored": 9, "checked": 9, "failed": 0}]}},
+ "stream_infos": [{"codec": "Dolby TrueHD", "sample_rate": 48000, "channels": 2, "layout": ["front left", "front right"], "bits_per_sample": 24, "samples": 3520, "duration": 0.07333333333333333}],
+ "decoded_samples": 3520,
+ "stereo_coding": {"units": [24, 21, 16, 8, 19], "runs": [[[0, 8], [4, 8]], [[0, 8], [1, 8]], [[2, 8], [3, 8]], [[1, 8], [4, 8]], [[1, 5], [2, 8], [4, 3]], [[0, 8]]]},
+ "verification": {"default": {"isVerified": null, "decoding": "notRequested", "checksums": [{"name": "major sync CRC-16", "covers": "header", "coversAllAudio": false, "stored": 11, "checked": 11, "failed": 0}, {"name": "unit parity nibble", "covers": "header", "coversAllAudio": false, "stored": 88, "checked": 88, "failed": 0}, {"name": "restart header CRC-8", "covers": "header", "coversAllAudio": false, "stored": 11, "checked": 11, "failed": 0}, {"name": "substream parity byte", "covers": "codedData", "coversAllAudio": true, "stored": 88, "checked": 88, "failed": 0}, {"name": "substream CRC-8", "covers": "codedData", "coversAllAudio": true, "stored": 88, "checked": 88, "failed": 0}, {"name": "lossless check, substream 0", "covers": "decodedAudio", "coversAllAudio": false, "stored": 10, "checked": 0, "failed": 0}]}, "verify": {"isVerified": true, "decoding": "decoded", "checksums": [{"name": "major sync CRC-16", "covers": "header", "coversAllAudio": false, "stored": 11, "checked": 11, "failed": 0}, {"name": "unit parity nibble", "covers": "header", "coversAllAudio": false, "stored": 88, "checked": 88, "failed": 0}, {"name": "restart header CRC-8", "covers": "header", "coversAllAudio": false, "stored": 11, "checked": 11, "failed": 0}, {"name": "substream parity byte", "covers": "codedData", "coversAllAudio": true, "stored": 88, "checked": 88, "failed": 0}, {"name": "substream CRC-8", "covers": "codedData", "coversAllAudio": true, "stored": 88, "checked": 88, "failed": 0}, {"name": "lossless check, substream 0", "covers": "decodedAudio", "coversAllAudio": false, "stored": 10, "checked": 10, "failed": 0}]}},
  "counts": {"leading": 0, "after_damage": 0, "unreadable": 0, "cut": 0, "skipped_bytes": 0},
  "findings": [],
  "decode_findings": [],
- "regions": [{"name": "Dolby TrueHD", "offset": 0, "length": 10318}],
+ "regions": [{"name": "Dolby TrueHD", "offset": 0, "length": 11344}],
  "crosscheck": {"ffmpeg": true},
  "golden_hides": ["frames"],
- "decoded_pcm_md5": "079fc52a14a0c1a9be8400cade9470f9"
+ "decoded_pcm_md5": "7c8feff030a86f3e0aaec31164a20a11"
 }
