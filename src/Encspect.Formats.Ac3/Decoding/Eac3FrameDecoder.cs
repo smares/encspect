@@ -20,6 +20,9 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
     private long _withheldUntil;
     private bool _lostBefore;
 
+    // The unit before this one failed its checksum: the first block after it depends on the state it left, so it is left out of the measurements.
+    private bool _followsFailedUnit;
+
     // The samples of one block of the program (planar, 256 for each channel), and which substreams of its unit are to deliver theirs and have.
     private sealed class Block(int channels)
     {
@@ -83,9 +86,17 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
                 substream.Reset();
             }
 
+            _followsFailedUnit = false;
             _context.Withhold(frame.FirstSample, BlockSamples, WithholdReason.AfterGap);
             _withheldUntil = Math.Max(_withheldUntil, frame.FirstSample + BlockSamples);
         }
+        else if (_followsFailedUnit)
+        {
+            // The first block's overlap is the failed unit's last, which the decoder kept: the span a gap withholds (docs/design/damaged-units.md).
+            _context.WithholdFromMeasurements(frame.FirstSample, BlockSamples);
+        }
+
+        _followsFailedUnit = frame.FailsChecksum;
 
         int substreams = r.Next();
         int blocks = frame.Samples / BlockSamples;

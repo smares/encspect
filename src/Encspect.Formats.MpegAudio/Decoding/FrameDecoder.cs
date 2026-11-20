@@ -53,6 +53,10 @@ internal sealed class FrameDecoder : IFrameDecoder
     private readonly Layer12Scale _layer12 = new();
     private State _state = State.Fresh;
     private int _withheldLeft;
+
+    // The samples after a unit whose CRC failed that the measurements leave out: the state the unit left (overlap, synthesis history, prediction) is kept and gives
+    // what a gap's reset gives, so the span is the after-gap one (docs/design/damaged-units.md).
+    private int _dependentLeft;
     private IPcmSink? _sink;
 
     public FrameDecoder(DecodeContext context, MpegHeader stream, int channels, MultichannelPlan? plan)
@@ -137,7 +141,13 @@ internal sealed class FrameDecoder : IFrameDecoder
             DecodeLayer12(header, bytes, lent, frameChannels);
         }
 
-        return Write(frame, samples, frameChannels);
+        int written = Write(frame, samples, frameChannels);
+        if (frame.FailsChecksum)
+        {
+            _dependentLeft = isLayer3 ? Layer3WithheldAfterGap : _plan is null ? Layer12WithheldAfterGap : MultichannelWithheldAfterGap;
+        }
+
+        return written;
     }
 
     public IReadOnlyList<ChecksumResult> Finish(DecodeEnd end) => [];
@@ -148,6 +158,7 @@ internal sealed class FrameDecoder : IFrameDecoder
         Array.Clear(_history);
         _multichannel?.Reset();
         _withheldLeft = 0;
+        _dependentLeft = 0;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -265,6 +276,13 @@ internal sealed class FrameDecoder : IFrameDecoder
         if (count == 0)
         {
             return 0;
+        }
+
+        int dependent = Math.Min(_dependentLeft, count);
+        if (dependent > 0)
+        {
+            _context.WithholdFromMeasurements(frame.FirstSample + withheld, dependent);
+            _dependentLeft -= dependent;
         }
 
         int stride = MaxFrameSamples;

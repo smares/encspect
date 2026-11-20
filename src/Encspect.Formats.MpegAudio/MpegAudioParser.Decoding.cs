@@ -57,7 +57,7 @@ public sealed partial class MpegAudioParser
 
         // One audio frame of the current stream: the coded lines of a walked Layer III frame (-1 where the frame was not walked), the lowest line from which its right channel
         // codes intensity positions (-1 where none does) and the granules and channels whose Huffman data ran past their part2_3_length.
-        public (int CodedLines, int Overruns, int IntensityLine) Feed(StreamState state, int index, long position, long available, int length, bool isComplete, MpegHeader header, MainDataPlacement? placement, int runsBefore)
+        public (int CodedLines, int Overruns, int IntensityLine) Feed(StreamState state, int index, long position, long available, int length, bool isComplete, MpegHeader header, MainDataPlacement? placement, int runsBefore, bool failsChecksum)
         {
             if (IsDeferred)
             {
@@ -152,6 +152,7 @@ public sealed partial class MpegAudioParser
                         IsWalked = !lent.IsEmpty && !isUnreadable,
                         IsUnreadable = isUnreadable || lent.IsEmpty,
                         IsDamaged = (facts.Problems & WalkProblems.HuffmanOverrun) != 0,
+                        FailsChecksum = failsChecksum,
                         FollowsGap = PendingGap,
                     });
                 }
@@ -171,6 +172,7 @@ public sealed partial class MpegAudioParser
                 {
                     IsWalked = isReadable,
                     IsUnreadable = !isReadable,
+                    FailsChecksum = failsChecksum,
                     FollowsGap = PendingGap,
                 });
             }
@@ -283,6 +285,7 @@ public sealed partial class MpegAudioParser
             {
                 IsWalked = isReadable,
                 IsUnreadable = !isReadable,
+                FailsChecksum = entry.FailsCrc,
                 FollowsGap = isPending,
             });
         }
