@@ -1095,7 +1095,7 @@
  ],
  "decoded_samples": 24000,
  "pcm_samples": 24000,
- "decoded_pcm_md5": "57243c90fe9001de8904a5c9b21e07e3",
+ "decoded_pcm_md5": "43b0804e9405fa2871bcb962be781d56",
  "verification": {
   "default": {
    "isVerified": null,
@@ -1142,10 +1142,10 @@
      "failed": 0
     }
    ],
-   "isLossy": true
+   "withCorrection": true
   },
   "verify": {
-   "isVerified": true,
+   "isVerified": false,
    "decoding": "decoded",
    "checksums": [
     {
@@ -1170,7 +1170,7 @@
      "coversAllAudio": true,
      "stored": 20,
      "checked": 20,
-     "failed": 0
+     "failed": 2
     },
     {
      "name": "extended CRC",
@@ -1189,10 +1189,19 @@
      "failed": 0
     }
    ],
-   "isLossy": true
+   "withCorrection": true
   }
  },
- "decode_findings": [],
+ "decode_findings": [
+  {
+   "code": "wavpack.audio-crc-mismatch",
+   "count": 1
+  },
+  {
+   "code": "wavpack.correction-block-missing",
+   "count": 1
+  }
+ ],
  "regions": [
   {
    "name": "WavPack",
@@ -1200,7 +1209,7 @@
    "length": 58052
   }
  ],
- "description": "The correction file of hybrid-51-b3-correction without the second block of its first set: the main block takes the third, whose flags equal its own, and the main block after it has none.",
+ "description": "The correction file of hybrid-51-b3-correction without the second block of its first set: the main block takes the third, whose flags equal its own, and the main block after it has none. The manifest's audio is the analyzer's: libwavpack mutes the block whose CRC fails and no tool keeps it.",
  "findings": [
   {
    "code": "correction.inconsistent",
@@ -1218,7 +1227,8 @@
    "opens": true,
    "mode_wvc": true,
    "samples": 24000,
-   "errors": 2
+   "errors": 2,
+   "md5": "92f39d284caf4a508750143fb5042dae"
   }
  },
  "correction": {

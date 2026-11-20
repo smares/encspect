@@ -2,7 +2,7 @@ using Encspect.Core;
 
 namespace Encspect.Formats.Dts.Decoding;
 
-// The decoder of the DTS core (ETSI TS 102 114 V1.6.1, written from the specification alone, docs/design/lossy-decoders.md): the entropy pass of the parser (SubframeWalker) reads every
+// The decoder of the DTS core (ETSI TS 102 114 V1.6.1, docs/design/lossy-decoders.md; the high-frequency vectors' table D.10 is format data, docs/development.md): the entropy pass of the parser (SubframeWalker) reads every
 // subframe's side information and quantization indexes into the buffers the session lends, and this decoder adds the reconstruction: inverse quantization, subband prediction, joint
 // intensity coding, sum/difference decoding of the front and surround pairs, the 32-band synthesis filter bank the header selects and the interpolation of the LFE channel. It outputs
 // the core's channels at the core's sampling frequency in single precision floats, full scale 1.0, and no extension. The stream stores no checksum over its audio, so it runs only where a
@@ -13,9 +13,10 @@ public sealed class DtsDecoder : IDecoder
 
     public bool DeclaresChecksums => false;
 
-    // The smallest frames (96 bytes for 256 samples of up to six channels) cost about 256 x 6 x 56 units: 900 a byte, under the default of 2,048 with room for the worst case of
-    // an extension-less 5.1 frame at the lowest rates.
-    public long WorkPerInputByte => 2048;
+    // A 5.1 frame costs (22 + 56) x 5 + (22 + 8) + 5 x 5 = 445 units a sample. The smallest frame the syntax allows at 512 samples (NBLKS 15, FSIZE 95: 96 bytes) is about 228,000
+    // units, 2,400 a byte, and a 5.1 stream at 48 kHz and 64 kbps (RATE 3) needs about 21 million units a second against 8,000 bytes: 2,700 a byte. 4,096 covers both; a frame of
+    // more samples in fewer bytes (valid syntax, no encoder writes one) can exceed it and stops with decode.limit.
+    public long WorkPerInputByte => 4096;
 
     public IFrameDecoder Open(DecodeContext context)
     {
@@ -24,6 +25,12 @@ public sealed class DtsDecoder : IDecoder
         if (context.Setup.Shared is not DecodeShared shared || shared.Positions.Count != context.Setup.Channels || context.Setup.Channels is < 1 or > 6)
         {
             throw new InvalidDataException("The stream gives no configuration to start the decoder with");
+        }
+
+        // The arrangements 10 to 15 and the user defined ones are valid streams whose channel pairs the decoder does not know (docs/formats/dts.md): reported once, not for every frame.
+        if (shared.Amode > 9)
+        {
+            throw new InvalidDataException($"The channel arrangement {shared.Amode} is not decoded");
         }
 
         return new FrameDecoder(context, shared);
