@@ -88,6 +88,17 @@ internal static class StdText
     public const string StatSmallestGain = "The smallest total gain over blocks with a coded channel.";
     public const string StatLargestGain = "The largest total gain over blocks with a coded channel.";
     public const string StatNonZero = "Non-zero coefficients over blocks with a coded channel: every run-level code and every escape.";
+    public const string StatCodedBandwidth = "The upper edge of the last non-zero coefficient that any channel of a block codes, in whole hertz: the first coded coefficient (3 in version 1, 0 in version 2) plus the position of the last non-zero coefficient plus 1, times half the sample rate over the block length. The position is mapped to its line through the channel's own noise substitution flags, since a flagged band takes no positions. It is a value read from the run-level codes at coefficient resolution, not a bound the stream states, not the encoder's lowpass setting and not a measurement of decoded audio.";
+    public const string BandwidthLowest = "The lowest coded bandwidth of any block of a valid frame that has one.";
+    public const string BandwidthMostCommon = "The coded bandwidth most blocks have; the lowest of them where several are equally common.";
+    public const string BandwidthHighest = "The highest coded bandwidth of any block of a valid frame.";
+    public const string CodedBandwidthSeries = "The coded bandwidth of each block of a valid frame in whole hertz: the upper edge of the last non-zero coefficient that any channel of the block codes, mapped to its line through the channel's noise substitution flags, since a flagged band takes no positions. It is a value read from the run-level codes, not a bound the stream states and not the encoder's lowpass setting. A block with no non-zero coefficient has none; the blocks of a frame lie at the frame's first byte, so they share an x value.";
+    public const string CodedBandwidthOverTimeSeries = "The highest coded bandwidth of the blocks of the valid frames that start in each second of audio.";
+    public const string BlockSizesSeries = "The size of each block in samples, as the tally of Block Sizes counts them: the blocks of a frame follow one another and add up to its length, and the blocks of a frame lie at its first byte. A block whose size the frame does not state with a valid code has none. This is the form of block switching that names lengths, where MPEG audio and AAC name long and short transforms.";
+    public const string CategoryBlockSize = "Blocks of this length in samples, as a share of the blocks read.";
+    public const string NoiseSubstitutedBlocksSeries = "Whether each block read has a band replaced by noise, as the tally of Noise-Substituted Blocks counts them: a block with a coded channel and at least one flagged high band is with noise substitution. A stream with noise substitution turned off has no such series.";
+    public const string CategoryWithNoise = "Blocks with a coded channel and a band replaced by noise, as a share of all blocks.";
+    public const string CategoryWithoutNoise = "Blocks without a band replaced by noise, those with no coded channel included. A complement of the blocks with noise substitution, not a figure of its own.";
     public const string StatEscapes = "Coefficients coded as an escape, whatever their level.";
 
     public const string BitrateSeries = "The bitrate of each frame if frames of its size followed one another, at the frame's first byte; 0 for an invalid frame.";

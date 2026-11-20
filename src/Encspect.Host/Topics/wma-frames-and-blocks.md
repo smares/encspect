@@ -1,7 +1,7 @@
 ---
 id: wma-frames-and-blocks
 title: Frames and blocks of Windows Media Audio
-related: wma-superframes, wma-bit-reservoir, mid-side-stereo, noise-substitution, block-switching, huffman-coding
+related: wma-superframes, wma-bit-reservoir, mid-side-stereo, noise-substitution, block-switching, coded-bandwidth, huffman-coding
 references: docs/design/wma-standard-format.md
 ---
 
@@ -13,4 +13,4 @@ references: docs/design/wma-standard-format.md
 
 **Coefficients.** The coefficients are run-level codes, each a run of zero coefficients and a non-zero one, with a sign. An end-of-block code ends the channel early, and an escape carries a level and run that no code covers.
 
-**What you see.** The blocks of each frame with their fields at their bits, and statistics over all blocks: the sizes used, the mid/side blocks, the blocks that reuse exponents. A frame has no length field and no checksum, so only reading its syntax finds where it ends.
+**What you see.** The blocks of each frame with their fields at their bits, and statistics over all blocks: the sizes used, the mid/side blocks, the blocks that reuse exponents. The Block Sizes graph gives the length of every block in samples, the form of [block switching](block-switching) that names lengths, and Noise-Substituted Blocks tells which blocks replace a band by noise. Coded Bandwidth is the top of the last non-zero coefficient of each block, read from the run-level codes at the resolution of one coefficient: it is a coded value and not a bound the stream states. A frame has no length field and no checksum, so only reading its syntax finds where it ends.

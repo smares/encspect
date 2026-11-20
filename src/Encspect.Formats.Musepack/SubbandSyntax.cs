@@ -72,33 +72,6 @@ internal sealed class SubbandState
     // nothing: the decoder makes their values (docs/design/lossy-decoders.md).
     public int[][] Quantized { get; } = [new int[Bands * SamplesPerBand], new int[Bands * SamplesPerBand]];
 
-    // The state of a stream's start, which a frame after a gap does not have: the decoder starts again from it and withholds what depends on the lost frames.
-    public void Reset()
-    {
-        foreach (int[] values in Resolution)
-        {
-            Array.Clear(values);
-        }
-
-        foreach (int[] values in Scalefactor)
-        {
-            Array.Clear(values);
-        }
-
-        foreach (int[] values in Selection)
-        {
-            Array.Clear(values);
-        }
-
-        foreach (bool[] values in Differential)
-        {
-            Array.Clear(values);
-        }
-
-        Array.Clear(MidSideFlag);
-        LastUsedBands = 0;
-    }
-
     // The scalefactor value libmpcdec stores where a differential scalefactor runs above 1,024.
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int Clamp(int scalefactor) => scalefactor > 1024 ? 0x8080 : scalefactor;
@@ -116,7 +89,10 @@ internal static class LentLayout
 
     public const int MidSideOffset = ScalefactorOffset + (SubbandState.Bands * 3);
 
-    public const int PerChannel = MidSideOffset + SubbandState.Bands;
+    // The number of subbands the frame used (SV8's count, which libmpcdec draws noise below), in the left channel's plane only.
+    public const int UsedOffset = MidSideOffset + SubbandState.Bands;
+
+    public const int PerChannel = UsedOffset + 1;
 
     // Copies the walked frame into the plane of one channel.
     public static void Store(SubbandState state, int channel, Span<int> plane)
@@ -132,5 +108,7 @@ internal static class LentLayout
 
             plane[MidSideOffset + band] = channel == 0 && state.MidSideFlag[band] ? 1 : 0;
         }
+
+        plane[UsedOffset] = channel == 0 ? state.LastUsedBands : 0;
     }
 }

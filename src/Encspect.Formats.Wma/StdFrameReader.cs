@@ -55,6 +55,42 @@ internal sealed class StdTotals
     public long Escapes;
 
     public long KnownSize => BySize.Sum();
+
+    // The blocks of the frame being read, which the stream hands to its block series once the frame is read.
+    public StdBlockNotes Notes { get; } = new();
+}
+
+// What a frame's blocks showed that the block series keep, one note for each block read, in order.
+internal sealed class StdBlockNotes
+{
+    public const byte UnknownSize = byte.MaxValue;
+
+    private readonly List<Note> _notes = [];
+
+    public int Count => _notes.Count;
+
+    public Note this[int index] => _notes[index];
+
+    public void Clear() => _notes.Clear();
+
+    public void Begin() => _notes.Add(new Note { Size = UnknownSize });
+
+    public void Size(int size) => Last().Size = (byte)size;
+
+    public void Noise() => Last().IsNoiseSubstituted = true;
+
+    // The highest of a block's channels.
+    public void Reach(int hertz) => Last().Hertz = Math.Max(Last().Hertz, hertz);
+
+    private ref Note Last() => ref System.Runtime.InteropServices.CollectionsMarshal.AsSpan(_notes)[^1];
+
+    // Hertz is 0 where no channel of the block coded a non-zero coefficient.
+    public struct Note
+    {
+        public byte Size;
+        public bool IsNoiseSubstituted;
+        public int Hertz;
+    }
 }
 
 internal enum FieldKind : byte
@@ -144,6 +180,7 @@ internal static class StdFrameReader
         if (totals is not null)
         {
             totals.Blocks++;
+            totals.Notes.Begin();
         }
 
         int channels = p.Channels;
@@ -280,6 +317,7 @@ internal static class StdFrameReader
         if (totals is not null)
         {
             totals.BySize[size]++;
+            totals.Notes.Size(size);
         }
 
         if (block is not null)
@@ -319,9 +357,10 @@ internal static class StdFrameReader
         int escapeWidth = sum < 15 ? 13 : sum < 32 ? 12 : sum < 40 ? 11 : sum < 45 ? 10 : 9;
 
         Span<int> flaggedWidth = stackalloc int[2];
+        int[] high = p.UsesNoiseSubstitution ? p.HighBands[size] : [];
+        Span<bool> flags = stackalloc bool[2 * high.Length];
         if (p.UsesNoiseSubstitution)
         {
-            int[] high = p.HighBands[size];
             int flagsAt = bits.Position;
             int flagged = 0;
             int total = 0;
@@ -338,6 +377,7 @@ internal static class StdFrameReader
                     total++;
                     if (bits.Read(1) != 0)
                     {
+                        flags[(c * high.Length) + i] = true;
                         flagged++;
                         flaggedBands[c]++;
                         flaggedWidth[c] += high[i];
@@ -351,6 +391,7 @@ internal static class StdFrameReader
                 if (totals is not null)
                 {
                     totals.NoiseSubstituted++;
+                    totals.Notes.Noise();
                 }
 
                 int levelsAt = bits.Position;
@@ -438,6 +479,12 @@ internal static class StdFrameReader
                 }
 
                 fields?.Add(new TraceField(FieldKind.Coefficients, c, at, bits.Position, nonZero, last));
+                if (totals is not null && nonZero > 0)
+                {
+                    // The upper edge of the last non-zero coefficient, in whole hertz rounded half up.
+                    long upper = LineOf(p, size, high, flags.Slice(c * high.Length, high.Length), last) + 1;
+                    totals.Notes.Reach((int)(((p.SampleRate * upper) + length) / (2L * length)));
+                }
             }
             else if (p.Version == 1 && channels == 2)
             {
@@ -446,6 +493,37 @@ internal static class StdFrameReader
         }
 
         return FrameFault.None;
+    }
+
+    // The line of the coefficient at a position among those the channel codes: the lines of flagged high bands take no positions, so each
+    // flagged band below the coefficient moves it up by the band's width (docs/design/wma-standard-format.md, "Coefficients").
+    private static long LineOf(StdParameters p, int size, int[] high, ReadOnlySpan<bool> flagged, int position)
+    {
+        int first = p.FirstCoefficient;
+        int start = p.CoefficientEnds[size] - high.Sum();
+        if (first + position < start)
+        {
+            return first + position;
+        }
+
+        long remaining = first + position - start;
+        long line = start;
+        for (int i = 0; i < high.Length; i++)
+        {
+            if (!flagged[i])
+            {
+                if (remaining < high[i])
+                {
+                    return line + remaining;
+                }
+
+                remaining -= high[i];
+            }
+
+            line += high[i];
+        }
+
+        return line + remaining;
     }
 
     private static FrameFault ReadLineSpectralPairs(Bits bits)

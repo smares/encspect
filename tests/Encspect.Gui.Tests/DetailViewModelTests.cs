@@ -335,7 +335,8 @@ public class DetailViewModelTests
         Task load = model.LoadAsync(Path.Combine(Fixtures.Directory, "optimfrog", "external-ofs-quality3.ofs"));
         ui.Until(() => load.IsCompleted);
 
-        Assert.EndsWith(" · lossy part of a DualStream (medium)", model.StreamsText, StringComparison.Ordinal);
+        // The pairing comes last; no .ofc of this name lies beside the fixture.
+        Assert.EndsWith(" · lossy part of a DualStream (medium) · Correction file: missing (external-ofs-quality3.ofc), lossy without its correction file", model.StreamsText, StringComparison.Ordinal);
     }
 
     // The processor comes last in the stream's line.

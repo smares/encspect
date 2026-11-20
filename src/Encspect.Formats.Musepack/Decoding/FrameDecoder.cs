@@ -86,7 +86,7 @@ internal sealed class FrameDecoder : IFrameDecoder
         }
 
         _context.CancellationToken.ThrowIfCancellationRequested();
-        if (frame.FollowsGap && _state != State.Fresh)
+        if (frame.FollowsGap)
         {
             Reset();
             _state = State.Lost;
@@ -163,10 +163,11 @@ internal sealed class FrameDecoder : IFrameDecoder
         return _first ^ _second;
     }
 
+    // libmpcdec draws noise for the bands below the frame's used count in SV8 (a crafted frame can raise it above the header's last band, or leave a stale -1 above it), and up to the header's last band before.
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private void FillNoise(ReadOnlySpan<int> left, ReadOnlySpan<int> right)
+    private void FillNoise(ReadOnlySpan<int> left, ReadOnlySpan<int> right, int bands)
     {
-        for (int band = 0; band < SubbandStateBands; band++)
+        for (int band = 0; band < bands; band++)
         {
             for (int channel = 0; channel < 2; channel++)
             {
@@ -192,10 +193,10 @@ internal sealed class FrameDecoder : IFrameDecoder
     {
         ReadOnlySpan<int> left = lent.Narrow.Slice(0, LentLayout.PerChannel);
         ReadOnlySpan<int> right = lent.Narrow.Slice(lent.Stride, LentLayout.PerChannel);
-        FillNoise(left, right);
         float[] yLeft = _subbands[0];
         float[] yRight = _subbands[1];
         int lastBand = Math.Min(_setup.MaxBand, SubbandStateBands - 1);
+        FillNoise(left, right, _setup.Version == 8 ? Math.Min(left[LentLayout.UsedOffset], SubbandStateBands) : lastBand + 1);
         for (int band = 0; band <= lastBand; band++)
         {
             int resolutionLeft = left[LentLayout.ResolutionOffset + band];
