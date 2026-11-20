@@ -35,6 +35,9 @@ internal sealed class ProTally
     public long Subframes;
     public long ChannelSubframes;
     public long[] Sizes = new long[8];
+
+    // The sizes of the subframes of the frame being read, for the series of the stream's main tally; null where nothing drains them.
+    public List<byte>? FrameSizes;
     public long Groups;
     public long GroupsWithTransform;
 
@@ -376,6 +379,7 @@ internal sealed class ProFrameReader(ProParameters parameters, ProTally tally) :
             tally.Subframes++;
             tally.ChannelSubframes += members;
             tally.Sizes[size]++;
+            tally.FrameSizes?.Add((byte)size);
 
             ProFault fault = ReadSubframe(members, length, size);
             _trace.Put(Tag.End);

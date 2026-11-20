@@ -150,15 +150,19 @@ internal static partial class Legacy
     // Where the parts of the stream lie, for the decoder's session.
     private sealed record Placement(ByteReader Reader, Node Bitstream, long BitstreamAt, long BitstreamEnd, long DataEnd, bool HasTrailer, string? Refusal, Node Header, bool IsCompanion);
 
-    // Why libwavpack's open refuses the file (unpack3_open.c), or null where it opens it: the checks the findings above state, in the order the open makes them. The
-    // decoder of 3.97 reads the raw files libwavpack does not, so a raw file is refused only for what its header says.
+    // The bytes libwavpack's open skips for a chunk (unpack3_open.c): what follows the 16 common fields of the format chunk, or the whole chunk, rounded up to even.
+    private static long Skipped(string id, long size) => id == "fmt " ? (size >= 16 ? (size + 1 - 16) & ~1L : 0) : (size + 1) & ~1L;
+
+    // Why the file is not decoded, or null where it is: the checks of libwavpack's open (unpack3_open.c) that the findings above state, in the order the open
+    // makes them, and two of Encspect's own for files libwavpack opens (a bit limit beyond a signed 16-bit field, the mono flag against the channel count).
+    // The decoder of 3.97 reads the raw files libwavpack does not, so a raw file is refused only for what its header says.
     private static string? Refusal(LegacyHeader header, LegacyLayout layout, Format? format)
     {
         if (!layout.IsRaw)
         {
             if (format is not { } f)
             {
-                return "The stored WAV header has no format chunk before the data, so the audio's layout is not stated";
+                return "The stored WAV header has no format chunk before the data, so the audio's layout is not stated, and libwavpack's open refuses the file";
             }
 
             if (f.Tag != 1 || f.Channels is 0 or > 2 || f.Rate == 0 || f.Bits is < 16 or > 24 || f.BlockAlign / f.Channels > 3 || f.BlockAlign % f.Channels != 0 || f.BlockAlign / f.Channels < (f.Bits + 7) / 8)
@@ -166,9 +170,9 @@ internal static partial class Legacy
                 return "The stored WAV header states audio that libwavpack's open refuses (PCM of one or two channels, 16 to 24 bits of at most 3 bytes a sample)";
             }
 
-            if (layout.Chunks.Any(c => c.Id != "data" && c.Size > MaxChunkBeforeData))
+            if (layout.Chunks.Any(c => c.Id != "data" && Skipped(c.Id, c.Size) > MaxChunkBeforeData))
             {
-                return "A chunk of the stored WAV header is larger than the 1 MiB that libwavpack's open skips";
+                return "A chunk of the stored WAV header is larger than the 1 MiB that libwavpack's open skips, so it refuses the file";
             }
         }
         else if (!header.IsVersion3)
@@ -180,23 +184,23 @@ internal static partial class Legacy
         {
             if ((header.Flags & LegacyHeader.NotStoredFlags) != 0)
             {
-                return "The flags have a bit that is never stored together with the extreme flag";
+                return "The flags have a bit that is never stored together with the extreme flag, so libwavpack's open refuses the file";
             }
 
             if (header.Bits != 0 && ((header.Flags & LegacyHeader.NewHighFlag) != 0 && (header.Flags & (LegacyHeader.FastFlag | LegacyHeader.HighFlag)) != 0 || (header.Flags & LegacyHeader.CrossDecorrFlag) != 0))
             {
-                return "The flags combine a bit limit or hybrid target with flags libwavpack's open refuses with the extreme flag";
+                return "The flags combine a bit limit or hybrid target with flags libwavpack's open refuses with the extreme flag, so it refuses the file";
             }
         }
 
         if (header.Bits > short.MaxValue)
         {
-            return $"The bit limit or hybrid target of {header.Bits} is more than a signed 16-bit field holds";
+            return $"The bit limit or hybrid target of {header.Bits} is more than a signed 16-bit field holds; Encspect does not decode it";
         }
 
         if (header.IsVersion3 && !layout.IsRaw && format is { } fmt && ((header.Flags & LegacyHeader.MonoFlag) != 0) != (fmt.Channels == 1))
         {
-            return "The mono flag and the channel count of the stored WAV header disagree";
+            return "The mono flag and the channel count of the stored WAV header disagree; libwavpack opens the file, but Encspect does not guess which of the two is right";
         }
 
         return null;
@@ -244,7 +248,7 @@ internal static partial class Legacy
             {
                 dataSize = chunk.Size;
             }
-            else if (chunk.Size > MaxChunkBeforeData)
+            else if (Skipped(chunk.Id, chunk.Size) > MaxChunkBeforeData)
             {
                 firstLarge ??= node;
             }
@@ -286,7 +290,7 @@ internal static partial class Legacy
         {
             Node large = firstLarge;
             findings.Add(Severity.Warning, "wavpack.legacy-wav-format-unsupported", large, _ =>
-                $"A chunk before the data states more than 1 MiB ({Counts.Of(Chunk(large), "byte", "bytes")}); libwavpack refuses to skip one that large.", "large chunk");
+                $"A chunk before the data is more than 1 MiB to skip ({Counts.Of(Chunk(large), "byte", "bytes")}); libwavpack refuses to skip one that large.", "large chunk");
         }
 
         if (format is null && !layout.Chunks.Any(c => c.Id == "fmt " && c.Size < 16))
@@ -333,7 +337,7 @@ internal static partial class Legacy
 
         bool isHybrid = header.IsHybrid;
         node.Add(isHybrid
-            ? Field(at + 10, 2, "Hybrid Target", NodeValue.Integer(header.Bits), LegacyExplain.HybridTarget)
+            ? Field(at + 10, 2, "Hybrid Target", NodeValue.Integer(header.Bits, "1/256 bits", "1/256 bit"), LegacyExplain.HybridTarget)
             : Field(at + 10, 2, "Lossy Bit Limit", NodeValue.Integer(header.Bits, "bits", "bit"), LegacyExplain.LossyBitLimit));
         if (!header.IsVersion3 || !header.IsComplete)
         {

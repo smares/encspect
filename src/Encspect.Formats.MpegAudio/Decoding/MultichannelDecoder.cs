@@ -88,6 +88,7 @@ internal sealed class MultichannelDecoder
 
     private (Layer12Scale, Layer2Multichannel) ReadAgain(MpegHeader header, ReadOnlySpan<byte> frame)
     {
+        MultichannelPlan.FramesReadAgain++;
         if (!_fallback.Read(header, frame))
         {
             throw new InvalidDataException("The allocation and scalefactors run past the frame");

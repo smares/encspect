@@ -16,6 +16,10 @@ internal sealed class MultichannelPlan(IReadOnlyList<Speaker> layout, (bool, int
 
     public bool HasLfe { get; } = hasLfe;
 
+    // How many frames the decoder read again on this thread because the parser's feed had not offered them; a test pins it at 0 for a stream the parser reads in full.
+    [ThreadStatic]
+    internal static long FramesReadAgain;
+
     public int Channels => Layout.Count;
 
     // The channels of the full-bandwidth programs: all but the LFE.

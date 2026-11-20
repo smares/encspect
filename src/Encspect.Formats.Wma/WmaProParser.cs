@@ -71,7 +71,8 @@ public sealed class WmaProParser : ICodecParser
         });
 
         WmaEncoder.Detected detected = WmaEncoder.Apply(context, stream, findings);
-        var tally = new ProTally();
+        var sizes = new CategorySeriesBuilder("Subframe Sizes", ProReport.SizeCategories(p.FrameLength, p.MinSubframe), "subframe", isOrdered: true, concept: GraphConcept.BlockSwitching);
+        var tally = new ProTally { FrameSizes = [] };
         long pairsSeen = 0;
         long midSideSeen = 0;
         int? FrameStereo()
@@ -87,6 +88,15 @@ public sealed class WmaProParser : ICodecParser
         {
             Stereo = p.Channels == 2 ? new UnitCategoryTally("Stereo Coding", ProReport.StereoCodings, "frame", GraphConcept.StereoCoding) : null,
             FrameStereo = p.Channels == 2 ? FrameStereo : null,
+            FrameRead = isRecorded =>
+            {
+                if (isRecorded)
+                {
+                    ProReport.AddSizes(p.FrameLength, p.MinSubframe, sizes, tally.FrameSizes!);
+                }
+
+                tally.FrameSizes!.Clear();
+            },
         };
         reader.Run(packets);
 
@@ -138,7 +148,7 @@ public sealed class WmaProParser : ICodecParser
             Writer = detected.Writer,
             WriterConfidence = detected.WriterConfidence,
             Series = series,
-            CategorySeries = ProReport.Categories(reader, series, stream),
+            CategorySeries = ProReport.Categories(reader, series, stream, sizes),
         });
 
         findings.Flush(context);

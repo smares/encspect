@@ -69,7 +69,8 @@ public class WavPackLegacyDecoderFixtureTests
         bool hasCompanion = manifest.TryGetProperty("companion", out JsonElement companion) && companion.ValueKind == JsonValueKind.String;
         string expected = hasCompanion && original.TryGetProperty("with_correction", out JsonElement lossless) ? lossless.GetProperty("pcm_md5").GetString()!
             : original.TryGetProperty("without_correction", out JsonElement lossy) ? lossy.GetProperty("pcm_md5").GetString()!
-            : original.GetProperty("pcm_bytes").GetInt64() % 4 != 0 ? Fixtures.LoadMpegManifest("wavpack/legacy/external-wv340-raw-stereo.wv").GetProperty("crosscheck").GetProperty("original_decoder").GetProperty("pcm_md5").GetString()!
+            : manifest.GetProperty("encoder").GetProperty("input").TryGetProperty("extra_bytes", out JsonElement extra) && extra.GetInt32() > 0
+                ? Fixtures.LoadMpegManifest(name[..name.LastIndexOf("-extra-", StringComparison.Ordinal)] + ".wv").GetProperty("crosscheck").GetProperty("original_decoder").GetProperty("pcm_md5").GetString()!
             : original.GetProperty("pcm_md5").GetString()!;
         Assert.Equal(expected, sink.Hash());
     }

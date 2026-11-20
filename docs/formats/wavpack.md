@@ -170,7 +170,7 @@ The files WavPack 1.0 to 3.97 wrote from 1998 to 2003. The design, with the sour
 
 The names of version 4 are kept where the concept is the same:
 
-- **Compression Mode:** by the flags, as libwavpack's open does: very fast (fast flag), fast (neither the fast nor the high flag), normal (high), high (high with the extreme decorrelator); a hybrid file is normal, and high with the extreme decorrelator. Versions 1 and 2 have one mode, which the rule calls fast.
+- **Compression Mode:** by the flags, following libwavpack's rule (`unpack3_open.c`) with two departures, very fast for the fast flag (libwavpack gives it and no flag the same mode) and the old lossy mode without the high flag read as lossless: very fast (fast flag), fast (neither the fast nor the high flag), normal (high), high (high with the extreme decorrelator); a hybrid file is normal, and high with the extreme decorrelator. Versions 1 and 2 have one mode, which the rule calls fast.
 - **Hybrid Target Bitrate** (bits per sample of one channel) and **Hybrid Target Rate** (kbps), **Lossy Bit Limit** (bits), **Stereo Coding**, **Source Extension**, **IsLossless**, **IsHybrid**, **IsNoiseShaped**, **IsRaw**, Average Bitrate over the bitstream.
 - **Stereo Coding** is one value for the stream (there are no blocks to count): "Mid/side stereo" (versions 1 and 2, the lossless fast mode, and joint stereo with the high or hybrid modes), "Left/right stereo" (the lossy and hybrid modes otherwise, and the high mode without joint stereo) or "Adaptive stereo" (the lossless modes that choose sum and difference, left or right sample by sample). The design called the last "Adaptive"; the value is worded like the others.
 - No tally, series or graph is built: one bitstream has no units to vary over.
@@ -204,11 +204,14 @@ The names of version 4 are kept where the concept is the same:
 - It takes the total samples from the data chunk's size and refuses raw files; this parser reports the header's count (as 3.97's `wvunpack` does) and reads raw files.
 - It decodes no version 1 mono file; the parser reads its header like any other.
 
-### Not covered
+### Decoding
 
 - The audio, when the front end asks for decoding ([the design](../design/wavpack-legacy.md#decoding-decision-5)): the decoder (`Encspect.Formats.WavPack.Decoding`, ID `wavpack`) follows libwavpack 5.6.0's `unpack3.c` (3.97's decoder for version 1 mono), in batches of 4,096 samples charged to the work budget before they are decoded. It reports the CRC that does not hold (`wavpack.legacy-crc-mismatch`), a bitstream that ends before the stated samples (`wavpack.legacy-data-ended`), a bitstream whose last bit lies elsewhere than the parser placed the trailer (`wavpack.legacy-bitstream-end-differs`) and the second CRC of a hybrid file that is not compared where no correction file is read (`wavpack.legacy-crc2-needs-correction-file`); with one it compares that CRC (`wavpack.legacy-crc2-mismatch`, `wavpack.legacy-correction-ended`). The decoded PCM of the encoder-written files equals each release's own unpacker's output (WVUNPACK 1.0 to 3.4 under DOSBox, wvunpack 3.97 on Windows) in `WavPackLegacyDecoderFixtureTests`.
-- The `.wvc` of version 3 opened alone: it has no header or signature, so it is not recognized; beside its `.wv` it is read as above.
-- Self-extracting files (`-e` of 3.97), and files written by 3.97, which no fixture holds: Wine does not run in the container that made the fixtures, so what 3.97 writes is known from its source only.
+
+### Not covered
+
+- The `.wvc` of version 3 opened alone: it has no header or signature, so it is not recognized; beside its `.wv` it is read as [Hybrid mode and the correction file](#hybrid-mode-and-the-correction-file) says.
+- Self-extracting files (`-e` of 3.97).
 
 ## Not covered
 

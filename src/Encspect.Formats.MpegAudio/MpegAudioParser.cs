@@ -199,11 +199,16 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         if (image.First >= 0)
         {
             var reader = new ByteReader(image, context.CancellationToken);
-            ParseInner(context, reader.Slice(image.First, image.Last - image.First), image.Stretches.Count > 1 ? image.Stretches : null, image.Map.IsIdentity ? null : image.Map);
+            int streams = ParseInner(context, reader.Slice(image.First, image.Last - image.First), image.Stretches.Count > 1 ? image.Stretches : null, image.Map.IsIdentity ? null : image.Map);
+            if (streams == 0)
+            {
+                context.AddFinding(Severity.Warning, "mpeg-audio.packets-no-frame",
+                    $"The container hands over {Counts.Of(image.Last - image.First, "byte", "bytes")} of MPEG audio in packets, but no frame header with a chain of frames after it is found in them.", context.Parent);
+            }
         }
     }
 
-    private void ParseInner(CodecContext context, ByteReader payload, IReadOnlyList<ByteRange>? stretches, ImageMap? map)
+    private int ParseInner(CodecContext context, ByteReader payload, IReadOnlyList<ByteRange>? stretches, ImageMap? map)
     {
         var inner = new ParseContext(payload, context.Parent, encoderClaims: context.EncoderClaims, decodingOwner: context);
         try
@@ -222,6 +227,8 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
                 context.AddStream(info);
             }
         }
+
+        return inner.Streams.Count;
     }
 
     // Built in a method of its own so that the node's factory captures these arguments and not the
