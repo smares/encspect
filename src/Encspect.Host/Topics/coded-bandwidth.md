@@ -1,7 +1,7 @@
 ---
 id: coded-bandwidth
 title: Coded bandwidth
-related: dts-subframes, vorbis-floors-and-residues, opus-toc, lowpass, spectral-cutoff, spectral-bandwidth, subband-coding, filter-bank, mpeg-layers, huffman-coding, aac-windows-and-blocks, ac3-audio-blocks
+related: wma-frames-and-blocks, dts-subframes, vorbis-floors-and-residues, opus-toc, lowpass, spectral-cutoff, spectral-bandwidth, subband-coding, filter-bank, mpeg-layers, huffman-coding, aac-windows-and-blocks, ac3-audio-blocks
 references: RFC 6716 section 2, table 1; section 3.1; ISO/IEC 11172-3 2.4.1.5, 2.4.1.6, 2.4.2.5, 2.4.2.6, 2.4.2.7; ISO/IEC 14496-3 4.5.2, 4.6.11; ATSC A/52:2018 5.4.3.24, 7.2.2.1; Annex E 3.3.3; ETSI TS 102 114 V1.6.1 5.4.3, 5.5.1
 ---
 **The problem.** Encoders spend no bits on frequencies they filtered out or chose not to code. The coded data says where coding stopped.
@@ -17,6 +17,8 @@ references: RFC 6716 section 2, table 1; section 3.1; ISO/IEC 11172-3 2.4.1.5, 2
 **In DTS.** The top of the highest of the 32 subbands with bits, a vector quantization address or a joint intensity copy ([subframes](dts-subframes)).
 
 **In Vorbis.** The end of the last [residue partition](vorbis-floors-and-residues) that reads an entry.
+
+**In Windows Media Audio.** The upper edge of the last non-zero coefficient of each block ([frames and blocks](wma-frames-and-blocks)), found in the run-level codes: a coded value at the resolution of one coefficient, not a stated bound.
 
 **In Opus.** The TOC byte of every packet names a bandwidth, narrowband to fullband: 4, 6, 8, 12 or 20 kHz (RFC 6716, table 1). The figure is the top of that band.
 

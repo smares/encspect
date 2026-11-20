@@ -1,7 +1,7 @@
 ---
 id: block-switching
 title: Block types and block switching
-related: filter-bank, granules-and-frames, scfsi, dts-transient-mode
+related: filter-bank, granules-and-frames, scfsi, dts-transient-mode, wma-frames-and-blocks
 references: ISO/IEC 11172-3 2.4.2.7, 2.4.3.4.10.2, 2.4.3.4.10.3; ATSC A/52:2018 5.4.3.1; ETSI TS 102 114 V1.6.1 5.5.1
 ---
 
@@ -20,5 +20,7 @@ references: ISO/IEC 11172-3 2.4.2.7, 2.4.3.4.10.2, 2.4.3.4.10.3; ATSC A/52:2018 
 **In AAC.** The four window sequences of [AAC](aac-windows-and-blocks) correspond to Layer III's: only long to normal, long start to start, eight short to short, long stop to stop; there are no mixed blocks. In AAC, Block Usage and Block Sizes count every channel stream; in Layer III they count every granule and channel.
 
 **In AC-3.** blksw splits a channel's transform of 512 points into two of 256 for one audio block ([audio blocks](ac3-audio-blocks)), which is AC-3's short block; it signals no other window types. Blocks With Block Switching counts the blocks in which any channel switches, and its graph shows each block of a frame.
+
+**In Windows Media Audio.** Block Sizes and Subframe Sizes give the length in samples of each block or subframe ([frames and blocks](wma-frames-and-blocks)), since the lengths halve in steps and there is no long or short type.
 
 **In DTS.** A transient mode splits scale factors, not the transform ([transient modes](dts-transient-mode)).
