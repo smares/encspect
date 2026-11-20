@@ -1,6 +1,6 @@
 # Damaged units in the measurements
 
-Status: draft for the lead, 2026-11-20. Milestone 0.4, the item "Damaged units withheld from the measurements" of the [plan](../plan.md#04-free-decoders-and-routes-complete). Claims about the code were checked at ac6f3df39 (main).
+Status: signed off by the lead, 2026-11-20 (every decision as recommended, the [`CLAUDE.md`](../../CLAUDE.md) rule and the order of pull requests). Milestone 0.4, the item "Damaged units withheld from the measurements" of the [plan](../plan.md#04-free-decoders-and-routes-complete). Claims about the code were checked at ac6f3df39 (main).
 
 - **Why a document of its own:** the rule crosses three designs, the decoder contract ([decoders.md](decoders.md)), the withheld output of the lossy decoders ([lossy-decoders.md](lossy-decoders.md#withheld-output)) and the measurements ([spectral-analysis.md](spectral-analysis.md)), and it brings its own decisions and pull requests. [decoders.md](decoders.md) is over 1,800 lines; it gets a short section that links here, as [correction-files.md](correction-files.md) is linked from the format docs.
 
@@ -185,6 +185,8 @@ Status: draft for the lead, 2026-11-20. Milestone 0.4, the item "Damaged units w
 
 ## Decisions for the lead
 
+Decided by the lead, 2026-11-20: every recommendation below.
+
 1. **Which checks count.**
    - (a) Coded data and decoded audio only.
    - (b) (a), plus the per-unit checks of the fields a unit is decoded with that no wider check covers: MPEG's CRC-16 and multichannel CRC.
@@ -218,7 +220,7 @@ Status: draft for the lead, 2026-11-20. Milestone 0.4, the item "Damaged units w
 
 ## Pull requests, in order
 
-1. **This design,** signed off, with the line it adds to [`CLAUDE.md`](../../CLAUDE.md)'s architecture rules ("a unit whose per-unit checksum fails is decoded and withheld from the measurements") for the lead to approve.
+1. **This design** (signed off, 2026-11-20), with its rule in [`CLAUDE.md`](../../CLAUDE.md)'s architecture rules, approved by the lead.
 2. **The contract, the host and the measurer, with FLAC and TTA:**
    - `CodedFrame.FailsChecksum`, `DecodeContext.WithholdFromMeasurements`, `WithholdReason.ChecksumFailed`, the session and the measurer, and the writers;
    - the article, and the new measurement fixture;

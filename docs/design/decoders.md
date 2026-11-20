@@ -787,7 +787,7 @@ Every code follows the plan's severity rules: a stored checksum that differs is 
 ### Damaged units and the measurements
 
 - **The lead's decision (2026-11-20):** a unit whose checksum fails is still decoded, so the verification and the findings stay as they are, but its output is withheld from the measurements and counted as withheld, and the next unit follows a gap. Until it is built, `CodedFrame.IsDamaged` keeps today's meaning, and a failed unit's output is measured like any other.
-- **Design:** [damaged-units.md](damaged-units.md), with the survey of every decoder's per-unit checks, the rule, its effects and the decisions it leaves to the lead (draft for the lead).
+- **Design:** [damaged-units.md](damaged-units.md), with the survey of every decoder's per-unit checks, the rule, its effects and the lead's decisions (signed off, 2026-11-20).
 
 ## When decoding runs
 
