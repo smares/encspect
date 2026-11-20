@@ -42,6 +42,12 @@ internal sealed class StreamDecoder : IFrameDecoder
     private readonly int[] _held = new int[Substreams];
     private readonly int[] _output = new int[Substreams];
     private readonly bool[] _ended = new bool[Substreams];
+    private readonly bool[] _hasRestart = new bool[Substreams];
+
+    // A unit's substream check failed (CodedFrame.FailsChecksum): the filter histories and the matrices it left behind are the ones the next units
+    // start from, so their output is withheld from the measurements until a unit restarts every substream it reads (docs/design/damaged-units.md).
+    // The histories run on across restart headers, so damage can outlast the span; the lossless check after it then fails and is reported.
+    private bool _isDependent;
 
     // The matrix channels of the presentation being built, one row of MaxUnit samples each, and after them the two noise channels.
     private readonly int[] _samples = new int[10 * MaxUnit];
@@ -141,6 +147,7 @@ internal sealed class StreamDecoder : IFrameDecoder
         }
 
         long unitOffset = frame.Bytes.FileStart;
+        Array.Clear(_hasRestart);
         for (int k = 0; k < read; k++)
         {
             _context.CancellationToken.ThrowIfCancellationRequested();
@@ -158,6 +165,18 @@ internal sealed class StreamDecoder : IFrameDecoder
             throw new InvalidDataException($"The highest substream outputs {Counts.Of(_states[top].LastMatrixChannel + 1, "channel", "channels")}, but the stream was opened with {_channels}");
         }
 
+        // The host withholds the span of a unit that fails its check; the units after it depend on it until every substream has restarted.
+        bool isRestarted = !_hasRestart.AsSpan(0, read).Contains(false);
+        bool isWithheld = _isDependent && !frame.FailsChecksum && !isRestarted;
+        if (frame.FailsChecksum)
+        {
+            _isDependent = true;
+        }
+        else if (isRestarted)
+        {
+            _isDependent = false;
+        }
+
         int written = 0;
         for (int k = 0; k < read; k++)
         {
@@ -170,6 +189,11 @@ internal sealed class StreamDecoder : IFrameDecoder
             Rematrix(k, state, output, n, planes);
             if (k == top)
             {
+                if (isWithheld)
+                {
+                    _context.WithholdFromMeasurements(frame.FirstSample, output);
+                }
+
                 written = Write(frame, current, state, count, output);
             }
 
@@ -226,6 +250,7 @@ internal sealed class StreamDecoder : IFrameDecoder
     private void Reset()
     {
         _isSynced = false;
+        _isDependent = false;
         foreach (SubstreamState state in _states)
         {
             state.Forget();
@@ -250,6 +275,7 @@ internal sealed class StreamDecoder : IFrameDecoder
 
             if (block.HasRestartHeader)
             {
+                _hasRestart[k] = true;
                 Restart(k, block.Restart, state, substreamOffset);
             }
 

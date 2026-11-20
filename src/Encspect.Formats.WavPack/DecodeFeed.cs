@@ -171,6 +171,7 @@ internal sealed class DecodeFeed
         var frame = new CodedFrame(new MappedBytes(bytes, offset), header.HasAudio ? "Block" : "Metadata Block", header.BlockIndex - _firstPosition, (int)header.Samples)
         {
             IsDamaged = (status & (BlockStatus.ChecksumInvalid | BlockStatus.ChecksumMissing | BlockStatus.Oversized)) != 0,
+            FailsChecksum = (status & (BlockStatus.ChecksumInvalid | BlockStatus.ChecksumMissing)) != 0,
             IsUnreadable = (status & (BlockStatus.Truncated | BlockStatus.Malformed | BlockStatus.Refused)) != 0,
             FollowsGap = followsGap,
         };

@@ -16,9 +16,10 @@ internal sealed class FrameDecoder : IFrameDecoder
     internal const long RangeUnits = 192;
     internal const long PredictorUnits = 48;
 
-    // The most samples over all channels that a frame of 24-bit audio may hold for the decoder to keep them until the CRC has passed, in case it has to
-    // decode the frame again in interim mode (APEDecompressCore.cpp, DecodeFrame). A larger frame is decoded once without output to find its CRC and
-    // again to give its samples, so that no frame size is left out of the retry.
+    // The most samples over all channels that a frame may hold for the decoder to keep them until the CRC is known: a frame of 24-bit audio in case it
+    // has to decode the frame again in interim mode (APEDecompressCore.cpp, DecodeFrame), and every frame so that the measurements can leave out the
+    // samples of one whose CRC fails (docs/design/damaged-units.md). A larger frame is decoded once without output to find its CRC and again to give
+    // its samples, so that no frame size is left out.
     internal const long DefaultMaxHeldSamples = 1 << 23;
 
     // Where a decoded chunk goes: to the sink, into the held samples, or nowhere (a pass that only works out the CRC).
@@ -59,6 +60,7 @@ internal sealed class FrameDecoder : IFrameDecoder
     private byte[] _stream = [];
     private int[] _held = [];
     private int _heldStride;
+    private int _heldDone;
     private float[] _floats = [];
     private long _checked;
     private long _failed;
@@ -149,17 +151,10 @@ internal sealed class FrameDecoder : IFrameDecoder
             : _channels == 2 && (special & 4) != 0 ? Mode.PseudoStereo
             : Mode.Normal;
         bool isRetried = _bits == 24 && !_isInterim;
-        uint computed;
-        if (isRetried)
-        {
-            computed = (long)blocks * _channels <= _maxHeldSamples
-                ? DecodeHeld(frame, blocks, mode, at, length, stored)
-                : DecodeTwice(frame, blocks, mode, at, length, stored);
-        }
-        else
-        {
-            computed = DecodeBody(frame, blocks, mode, at, length, Output.Sink);
-        }
+        bool isHeld = (long)blocks * _channels <= _maxHeldSamples;
+        uint computed = isRetried
+            ? isHeld ? DecodeHeld(frame, blocks, mode, at, length, stored) : DecodeTwice(frame, blocks, mode, at, length, stored)
+            : isHeld ? DecodeHeldOnce(frame, blocks, mode, at, length, stored) : DecodeTwiceOnce(frame, blocks, mode, at, length, stored);
 
         _checked++;
         if (computed != stored)
@@ -228,8 +223,65 @@ internal sealed class FrameDecoder : IFrameDecoder
             DecodeBody(frame, blocks, mode, at, length, Output.Hold);
         }
 
+        _context.WithholdFromMeasurements(frame.FirstSample, blocks);
         Release(frame.FirstSample, blocks);
         return isRead ? normal : interim;
+    }
+
+    // A frame that is not retried (any other width, or 24-bit audio once the file is in interim mode): the samples are held until the CRC is known, so that
+    // the measurements leave out those of a frame whose CRC fails. A frame whose coded data does not read gives the samples decoded before that point, as
+    // when they were written chunk by chunk.
+    private uint DecodeHeldOnce(in CodedFrame frame, int blocks, Mode mode, int at, int length, uint stored)
+    {
+        _heldStride = blocks;
+        _heldDone = 0;
+        if (_held.Length < _channels * blocks)
+        {
+            _held = new int[_channels * blocks];
+        }
+
+        uint computed;
+        try
+        {
+            computed = DecodeBody(frame, blocks, mode, at, length, Output.Hold);
+        }
+        catch (Exception ex) when (ex is InvalidDataException or EndOfStreamException)
+        {
+            Release(frame.FirstSample, _heldDone);
+            throw;
+        }
+
+        if (computed != stored)
+        {
+            _context.WithholdFromMeasurements(frame.FirstSample, blocks);
+        }
+
+        Release(frame.FirstSample, blocks);
+        return computed;
+    }
+
+    // The same for a frame too large to hold: it is decoded without output to find its CRC and again to give its samples. A frame that does not read
+    // is decoded again to the sink, which writes what precedes the failure and fails at the same place.
+    private uint DecodeTwiceOnce(in CodedFrame frame, int blocks, Mode mode, int at, int length, uint stored)
+    {
+        uint computed;
+        try
+        {
+            computed = DecodeBody(frame, blocks, mode, at, length, Output.None);
+        }
+        catch (Exception ex) when (ex is InvalidDataException or EndOfStreamException)
+        {
+            DecodeBody(frame, blocks, mode, at, length, Output.Sink);
+            throw;
+        }
+
+        if (computed != stored)
+        {
+            _context.WithholdFromMeasurements(frame.FirstSample, blocks);
+        }
+
+        DecodeBody(frame, blocks, mode, at, length, Output.Sink);
+        return computed;
     }
 
     // The same as DecodeHeld for a frame too large to hold: each attempt that decides the outcome is decoded first without output, and the attempt
@@ -272,6 +324,7 @@ internal sealed class FrameDecoder : IFrameDecoder
             return interim;
         }
 
+        _context.WithholdFromMeasurements(frame.FirstSample, blocks);
         if (isRead)
         {
             LeaveInterim();
@@ -290,13 +343,32 @@ internal sealed class FrameDecoder : IFrameDecoder
         CreatePredictors();
     }
 
-    // Gives the held samples to the sink.
+    // Gives the first `blocks` held samples of each channel to the sink.
     private void Release(long first, int blocks)
     {
         for (int done = 0; done < blocks; done += Chunk)
         {
             int n = Math.Min(Chunk, blocks - done);
-            Sink().Write(new PcmBlock(first + done, n, _channels, _heldStride, _held.AsSpan(done, _heldStride * (_channels - 1) + n)));
+            if (!_isFloat)
+            {
+                Sink().Write(new PcmBlock(first + done, n, _channels, _heldStride, _held.AsSpan(done, _heldStride * (_channels - 1) + n)));
+                continue;
+            }
+
+            if (_floats.Length < _samples.Length)
+            {
+                _floats = new float[_samples.Length];
+            }
+
+            for (int c = 0; c < _channels; c++)
+            {
+                for (int i = 0; i < n; i++)
+                {
+                    _floats[(c * Chunk) + i] = FloatOf((uint)_held[(c * _heldStride) + done + i]);
+                }
+            }
+
+            Sink().Write(new PcmBlock(first + done, n, _channels, Chunk, _floats.AsSpan(0, ((_channels - 1) * Chunk) + n)));
         }
     }
 
@@ -350,6 +422,8 @@ internal sealed class FrameDecoder : IFrameDecoder
                 {
                     _samples.AsSpan(c * Chunk, n).CopyTo(_held.AsSpan((c * _heldStride) + done, n));
                 }
+
+                _heldDone = done + n;
             }
             else if (output == Output.Sink)
             {

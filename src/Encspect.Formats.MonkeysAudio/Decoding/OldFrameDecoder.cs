@@ -176,21 +176,22 @@ internal sealed class OldFrameDecoder : IFrameDecoder
             }
         }
 
-        uint crc = Crc32.Initial;
+        // The CRC over the decoded audio is worked out before any sample is written, so that the measurements can leave out a frame whose CRC fails
+        // (docs/design/damaged-units.md): the samples are made once to hash and once more to write. The old checksum is over the arrays.
         long perSample = DecodeWork.ForSample(_bits / 8) * _channels + (mode == Mode.BothSilent ? _channels * SilentUnits : 0);
-        for (int done = 0; done < blocks; done += FrameDecoder.Chunk)
-        {
-            int n = Math.Min(FrameDecoder.Chunk, blocks - done);
-            _context.AddWork(checked(n * perSample));
-            _context.CancellationToken.ThrowIfCancellationRequested();
-            Unprepare(x, y, done, n);
-            crc = Crc32.Update(crc, _pcm.AsSpan(0, n * _channels * (_bits / 8)));
-            WriteChunk(frame.FirstSample + done, n);
-        }
-
         uint computed;
         if (_hasCrc)
         {
+            uint crc = Crc32.Initial;
+            for (int done = 0; done < blocks; done += FrameDecoder.Chunk)
+            {
+                int n = Math.Min(FrameDecoder.Chunk, blocks - done);
+                _context.AddWork(checked(n * perSample));
+                _context.CancellationToken.ThrowIfCancellationRequested();
+                Unprepare(x, y, done, n);
+                crc = Crc32.Update(crc, _pcm.AsSpan(0, n * _channels * (_bits / 8)));
+            }
+
             computed = Crc32.Finish(crc);
             if (_hasSpecial)
             {
@@ -200,6 +201,20 @@ internal sealed class OldFrameDecoder : IFrameDecoder
         else
         {
             computed = Checksum(x, y, blocks);
+        }
+
+        if (computed != stored)
+        {
+            _context.WithholdFromMeasurements(frame.FirstSample, blocks);
+        }
+
+        for (int done = 0; done < blocks; done += FrameDecoder.Chunk)
+        {
+            int n = Math.Min(FrameDecoder.Chunk, blocks - done);
+            _context.AddWork(checked(n * perSample));
+            _context.CancellationToken.ThrowIfCancellationRequested();
+            Unprepare(x, y, done, n);
+            WriteChunk(frame.FirstSample + done, n);
         }
 
         _checked++;
