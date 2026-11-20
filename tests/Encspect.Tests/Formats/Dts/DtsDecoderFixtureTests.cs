@@ -25,6 +25,8 @@ public class DtsDecoderFixtureTests
         "dts/subframes-linear.dts",
         "dts/subframes-five-one.dts",
         "dts/14le-subframes.dts",
+        "dts/subframes-quantizer-d65.dts",
+        "dts/subframes-quantizer-d129.dts",
     };
 
     private static (Report Report, List<PcmHashSink> Sinks) Decode(string name)
