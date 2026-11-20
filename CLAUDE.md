@@ -86,6 +86,7 @@ Tokens are limited; spend them on the work, not on talk. None of this lowers the
 - **Checks:** run the fast checks of the changed areas locally; leave the full suite and the other platforms to CI. Run the slow cross-checks once per change, not per commit.
 - **Reviews:** one independent review per implementation pull request and one per milestone, each scoped to its diff, and one fix review of the fixes; further rounds only for blocking findings.
 - **Polling:** wait for notifications (agents, PR events); a scheduled check-in only where no event arrives.
+- **Pull requests:** one open at a time, two at most while one waits only on its last job. Work goes on in pushed branches, which start no CI: reviews and fixes happen there, and the next pull request opens when the previous one has merged, with main merged in once, right before it opens. Main is not merged into an open pull request unless GitHub reports a conflict, since every push restarts its pipeline. Each merge keeps its own full run on main, so a failure there points to one change.
 
 ## Git
 
