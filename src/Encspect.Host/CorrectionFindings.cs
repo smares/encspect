@@ -64,14 +64,14 @@ internal static class CorrectionFindings
             ? $"The bitstream of {name} ends before the samples of the file do"
             : $"The audio decoded with {name} does not have the CRC the file's header states for the lossless audio"
         : problem.Kind switch
-    {
-        CorrectionProblemKind.NotCorrectionData => $"{name} holds no correction data of this format",
-        CorrectionProblemKind.StreamDiffers => $"{name} states another stream than the file's (its version, length, first block, rate, channels or sample format differ)",
-        CorrectionProblemKind.BlocksMissing => $"{name} lacks {Counts.Of(problem.Count, "correction block", "correction blocks")} that the file's blocks call for",
-        CorrectionProblemKind.BlocksUnmatched => $"{name} holds {Counts.Of(problem.Count, "correction block", "correction blocks")} that no block of the file matches",
-        CorrectionProblemKind.ChecksumsFail => $"{Counts.Of(problem.Count, "correction block", "correction blocks")} of {name} {Counts.Agree(problem.Count, "fails its", "fail their")} checksum or {Counts.Agree(problem.Count, "does not", "do not")} end with the sub-blocks that make it up",
-        _ => $"{name} is cut, or holds bytes after its last block",
-    };
+        {
+            CorrectionProblemKind.NotCorrectionData => $"{name} holds no correction data of this format",
+            CorrectionProblemKind.StreamDiffers => $"{name} states another stream than the file's (its version, length, first block, rate, channels or sample format differ)",
+            CorrectionProblemKind.BlocksMissing => $"{name} lacks {Counts.Of(problem.Count, "correction block", "correction blocks")} that the file's blocks call for",
+            CorrectionProblemKind.BlocksUnmatched => $"{name} holds {Counts.Of(problem.Count, "correction block", "correction blocks")} that no block of the file matches",
+            CorrectionProblemKind.ChecksumsFail => $"{Counts.Of(problem.Count, "correction block", "correction blocks")} of {name} {Counts.Agree(problem.Count, "fails its", "fail their")} checksum or {Counts.Agree(problem.Count, "does not", "do not")} end with the sub-blocks that make it up",
+            _ => $"{name} is cut, or holds bytes after its last block",
+        };
 }
 
 // How a pairing reads in the text output and the front ends, and its words in the JSON and CSV output.
@@ -105,14 +105,14 @@ public static class CorrectionText
     private static string Short(CorrectionProblem problem, CorrectionBasis basis) => basis == CorrectionBasis.DecodedAudio && problem.Kind is CorrectionProblemKind.ChecksumsFail or CorrectionProblemKind.Cut
         ? problem.Kind == CorrectionProblemKind.Cut ? "bitstream ends early" : "decoded audio fails its CRC"
         : problem.Kind switch
-    {
-        CorrectionProblemKind.NotCorrectionData => "holds no correction data",
-        CorrectionProblemKind.StreamDiffers => "states another stream",
-        CorrectionProblemKind.BlocksMissing => $"{Counts.Of(problem.Count, "correction block", "correction blocks")} missing",
-        CorrectionProblemKind.BlocksUnmatched => $"{Counts.Of(problem.Count, "correction block", "correction blocks")} match no block",
-        CorrectionProblemKind.ChecksumsFail => $"{Counts.Of(problem.Count, "correction block checksum", "correction block checksums")} {Counts.Agree(problem.Count, "fails", "fail")}",
-        _ => "cut",
-    };
+        {
+            CorrectionProblemKind.NotCorrectionData => "holds no correction data",
+            CorrectionProblemKind.StreamDiffers => "states another stream",
+            CorrectionProblemKind.BlocksMissing => $"{Counts.Of(problem.Count, "correction block", "correction blocks")} missing",
+            CorrectionProblemKind.BlocksUnmatched => $"{Counts.Of(problem.Count, "correction block", "correction blocks")} match no block",
+            CorrectionProblemKind.ChecksumsFail => $"{Counts.Of(problem.Count, "correction block checksum", "correction block checksums")} {Counts.Agree(problem.Count, "fails", "fail")}",
+            _ => "cut",
+        };
 
     // The status as JSON and CSV write it.
     public static string Word(CorrectionStatus status) => status switch
