@@ -540,11 +540,30 @@
             }
           ]
         },
+        "correction": {
+          "status": "unchecked",
+          "source": "external-wv397-hybrid-320-24.wvc",
+          "basis": "decodedAudio",
+          "problems": [],
+          "reason": "no folder to look in: the input is a stream"
+        },
         "encoder": "WavPack 3",
         "encoderConfidence": "Medium",
         "series": []
       }
     ],
-    "findings": []
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "correction.unchecked",
+        "message": "The correction file external-wv397-hybrid-320-24.wvc was not checked: no folder to look in: the input is a stream.",
+        "offset": 0,
+        "length": 2512,
+        "path": [
+          0
+        ],
+        "count": 1
+      }
+    ]
   }
 ]

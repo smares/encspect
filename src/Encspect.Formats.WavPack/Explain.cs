@@ -18,6 +18,7 @@ internal static class Topics
     public const string AudioChecksums = "wavpack-audio-checksums";
     public const string EntropyCoding = "wavpack-entropy-coding";
     public const string WastedBits = "wasted-bits";
+    public const string CorrectionFiles = "correction-files";
 }
 
 // What each WavPack node is, in the words the report shows next to it. Constants only: the blocks

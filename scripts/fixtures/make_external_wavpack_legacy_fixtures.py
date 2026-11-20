@@ -268,6 +268,9 @@ def build_manifest(name, kind, path, encoder, original):
         # A correction file has no header and no signature: it is a bitstream alone and nothing reads it by itself.
         return {"length": len(data), "kind": "correction", "encoder": note, "crosscheck": {"opens": False}}
     result = legacy_model.manifest(data, {"encoder": note})
+    # A main file with its correction file among the fixtures is analyzed with it (docs/design/correction-files.md); a version 3 pair is compared only by decoding.
+    if path_for(name, "wvc").exists():
+        result["companion"] = path_for(name, "wvc").name
     result["crosscheck"] = {"libwavpack_legacy": result.pop("libwavpack_legacy"), "original_decoder": original}
     return result
 

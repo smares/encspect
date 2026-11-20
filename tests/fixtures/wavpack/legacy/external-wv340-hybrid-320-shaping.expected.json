@@ -61,8 +61,14 @@
   "offset": 80,
   "length": 21270
  },
- "findings": [],
+ "findings": [
+  {
+   "severity": "info",
+   "code": "correction.unchecked"
+  }
+ ],
  "stream": true,
+ "asks_for_correction_file": true,
  "encoder": {
   "tool": "WavPack 3.4 for DOS (ReallyRareWares: wavpck34.zip), run under DOSBox 0.74-3",
   "arguments": [

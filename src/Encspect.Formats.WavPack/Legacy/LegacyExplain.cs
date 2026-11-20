@@ -59,6 +59,10 @@ internal static class LegacyExplain
     public const string ConfidenceMedium = "How sure the analyzer is: medium, since the version field names the generation of the program that wrote the file, but no release, and other software writes a version 3 header too.";
     public const string EncoderEvidence = "The version field says which generation of WavPack wrote the file; libwavpack reports it as the major version of the program. The Cool Edit filter of the 3.97 sources writes a version 3 header as well, from a header it builds (cool_wv.c).";
 
+    public const string CorrectionBitstream = "The correction file of a version 3 hybrid file: a bitstream with no header or signature, read bit by bit beside the main file's. For each sample it holds where the sample lay in the range the hybrid coding left (3.97 wavpack.c; libwavpack 5.6.0 unpack3.c, get_word4), so only decoding both files reads it.";
+    public const string CorrectionNotReached = "The bytes of the correction file after the last bit the decoder read for the stream's samples. The writers leave none.";
+    public const string CorrectionStream = "The correction bitstream of a version 3 hybrid file, which has no structure of its own to report.";
+
     public const string FlagMono = "One channel.";
     public const string FlagFast = "The fast mode: non-adaptive prediction and sum and difference stereo in the lossless files (3.0's -f, 3.4's -ff).";
     public const string FlagRaw = "A raw file: no WAV header before the WavPack header.";

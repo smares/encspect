@@ -9,7 +9,8 @@ namespace Encspect.Formats.WavPack.Decoding;
 // The decoding of one WavPack stream of format version 1, 2 or 3 (docs/design/wavpack-legacy.md): one bitstream, which the parser hands over in chunks of its bytes from the
 // WavPack header's end to the end of the data. The decoder keeps what it has not yet read (at most Margin bytes: no sample's code is longer) and decodes whole
 // samples of every channel in batches of BatchSamples, which it gives to the sink, charging the batch before it. It follows libwavpack 5.6.0's unpack3.c; the correction file
-// is not read, so a hybrid file decodes to its lossy audio, and the audio CRC (version 3 only) is compared when all the samples are decoded. The bytes after the
+// is read where the parser hands its bytes over (LegacyCorrection.cs, the WVC_FLAG paths), else a hybrid file decodes to its lossy audio. The audio CRC (version 3 only,
+// the correction CRC with a correction file) is compared when all the samples are decoded. The bytes after the
 // bitstream's last bit tell where the stream ends, which the parser's placement of the trailer is compared with.
 internal sealed partial class LegacyStreamDecoder : IFrameDecoder
 {
@@ -84,10 +85,10 @@ internal sealed partial class LegacyStreamDecoder : IFrameDecoder
         _output = new int[_channels * BatchSamples];
 
         // unpack3_open.c: versions 1 and 2 take the flags and the shift from the stored WAV header, version 1 has no bit limit; version 3 takes the flags as the kludge leaves
-        // them and has no correction file here (the correction flag clear).
+        // them, with the correction flag set where a correction bitstream is handed over.
         if (_version == 3)
         {
-            _flags = _header.EffectiveFlags & ~LegacyHeader.WvcFlag;
+            _flags = (_header.EffectiveFlags & ~LegacyHeader.WvcFlag) | (info.HasCorrection ? LegacyHeader.WvcFlag : 0);
             _shift = _header.Shift;
             _isMono = (_flags & LegacyHeader.MonoFlag) != 0;
             _bits = (short)_header.Bits;
@@ -167,12 +168,17 @@ internal sealed partial class LegacyStreamDecoder : IFrameDecoder
         }
 
         Append(data);
+        if (HasCorrection)
+        {
+            AppendCorrection(frame);
+        }
+
         _stopAt = isLast ? 0 : Margin;
         int produced = 0;
-        while (_done < _total && !_isEof && (isLast || _end - _pos >= Margin))
+        while (_done < _total && !_isEof && (isLast || _end - _pos >= Margin) && !IsCorrectionStarved())
         {
             int want = (int)Math.Min(BatchSamples, _total - _done);
-            _context.AddWork(checked(((_workPerSample + WorkPerWord + (WorkPerPass * _workPasses)) * _channels) * want));
+            _context.AddWork(checked(((_workPerSample + WorkPerWord + (HasCorrection ? WorkPerCorrectedSample : 0) + (WorkPerPass * _workPasses)) * _channels) * want));
             _context.CancellationToken.ThrowIfCancellationRequested();
             int got = Run(want, _output, BatchSamples);
             if (got > 0)
@@ -232,8 +238,24 @@ internal sealed partial class LegacyStreamDecoder : IFrameDecoder
         if (_done == _total && _total > 0 && _version == 3 && !_isEof)
         {
             _isCrcChecked = true;
-            _isCrcFailed = (uint)_crc != _header.Crc;
-            if (_isCrcFailed)
+            _isCrcFailed = (uint)_crc != (HasCorrection ? _header.Crc2 : _header.Crc);
+            if (HasCorrection)
+            {
+                ReportCorrection();
+                if (_info.IsCorrectionShort)
+                {
+                    _context.AddFinding(Severity.Warning, "wavpack.legacy-correction-ended",
+                        $"The correction file's {Counts.Of(_info.CorrectionEnd - _info.CorrectionAt, "byte", "bytes")} end before the stream's {Counts.Of(_total, "sample", "samples")} are decoded, so the rest of the correction is read as 0xFF bytes; the correction file is cut, or belongs to another file.",
+                        new Node("Correction CRC", _header.At + 24, 4));
+                }
+                else if (_isCrcFailed)
+                {
+                    _context.AddFinding(Severity.Warning, "wavpack.legacy-crc2-mismatch",
+                        $"The audio decoded with the correction file has the CRC {(uint)_crc:x8}, but the header stores {_header.Crc2:x8} as the CRC of the lossless audio: the correction file is not this file's, or one of them is damaged.",
+                        new Node("Correction CRC", _header.At + 24, 4));
+                }
+            }
+            else if (_isCrcFailed)
             {
                 _context.AddFinding(Severity.Warning, "wavpack.legacy-crc-mismatch",
                     $"The decoded audio has the CRC {(uint)_crc:x8}, but the header stores {_header.Crc:x8}: the audio differs from what the encoder read (or the file is damaged).",
@@ -281,14 +303,14 @@ internal sealed partial class LegacyStreamDecoder : IFrameDecoder
             CheckEnd();
         }
 
-        if (end.IsComplete && _info.Header.IsHybrid && _isComplete && !_isEof)
+        if (end.IsComplete && _info.Header.IsHybrid && _isComplete && !_isEof && !HasCorrection)
         {
             _context.AddFinding(Severity.Info, "wavpack.legacy-crc2-needs-correction-file",
                 "The header's second CRC is of the lossless audio, which this hybrid file alone does not decode to (the correction file adds what it lacks), so it is not compared.",
                 new Node("Correction CRC", _header.At + 24, 4));
         }
 
-        return _isCrcChecked ? [new ChecksumResult(ChecksumNames.LegacyCrc, 1, _isCrcFailed ? 1 : 0)] : [];
+        return _isCrcChecked ? [new ChecksumResult(HasCorrection ? ChecksumNames.LegacyCrc2 : ChecksumNames.LegacyCrc, 1, _isCrcFailed || _info.IsCorrectionShort ? 1 : 0)] : [];
     }
 
     private Node BitstreamNode() => new("Bitstream", _info.BitstreamAt, _info.BitstreamEnd - _info.BitstreamAt);

@@ -31,7 +31,7 @@ internal static class CorrectionFindings
                 case CorrectionStatus.Inconsistent:
                     foreach (CorrectionProblem problem in pairing.Problems)
                     {
-                        context.AddFinding(Severity.Warning, InconsistentCode, $"{Problem(name, problem)}; it is not counted as the lossless pair of the file.", problem.Node,
+                        context.AddFinding(Severity.Warning, InconsistentCode, $"{Problem(name, problem, pairing.Basis)}; it is not counted as the lossless pair of the file.", problem.Node,
                             (int)Math.Clamp(problem.Count, 1, int.MaxValue));
                     }
 
@@ -58,7 +58,12 @@ internal static class CorrectionFindings
         ? "decoding the pair reproduces the checksum of the lossless audio"
         : "its blocks match the file's data blocks and their checksums hold";
 
-    private static string Problem(string name, CorrectionProblem problem) => problem.Kind switch
+    // The decoded pair of WavPack 3 has no blocks: its problems are the second CRC of the header failing and the correction bitstream ending before the samples.
+    private static string Problem(string name, CorrectionProblem problem, CorrectionBasis basis) => basis == CorrectionBasis.DecodedAudio && problem.Kind is CorrectionProblemKind.ChecksumsFail or CorrectionProblemKind.Cut
+        ? problem.Kind == CorrectionProblemKind.Cut
+            ? $"The bitstream of {name} ends before the samples of the file do"
+            : $"The audio decoded with {name} does not have the CRC the file's header states for the lossless audio"
+        : problem.Kind switch
     {
         CorrectionProblemKind.NotCorrectionData => $"{name} holds no correction data of this format",
         CorrectionProblemKind.StreamDiffers => $"{name} states another stream than the file's (its version, length, first block, rate, channels or sample format differ)",
@@ -82,7 +87,7 @@ public static class CorrectionText
         string status = pairing.Status switch
         {
             CorrectionStatus.Consistent => WithSource("consistent", pairing.Source),
-            CorrectionStatus.Inconsistent => $"inconsistent ({(pairing.Source is { } s ? s + ": " : string.Empty)}{string.Join("; ", pairing.Problems.Select(Short))})",
+            CorrectionStatus.Inconsistent => $"inconsistent ({(pairing.Source is { } s ? s + ": " : string.Empty)}{string.Join("; ", pairing.Problems.Select(p => Short(p, pairing.Basis)))})",
             CorrectionStatus.Missing => WithSource("missing", pairing.Source),
             CorrectionStatus.NotWritten => "none written",
             _ => $"unchecked ({(pairing.IsUnreadable && pairing.Source is { } unreadable ? unreadable + " cannot be read: " : string.Empty)}{pairing.Reason})",
@@ -97,7 +102,9 @@ public static class CorrectionText
 
     private static string WithSource(string status, string? source) => source is null ? status : $"{status} ({source})";
 
-    private static string Short(CorrectionProblem problem) => problem.Kind switch
+    private static string Short(CorrectionProblem problem, CorrectionBasis basis) => basis == CorrectionBasis.DecodedAudio && problem.Kind is CorrectionProblemKind.ChecksumsFail or CorrectionProblemKind.Cut
+        ? problem.Kind == CorrectionProblemKind.Cut ? "bitstream ends early" : "decoded audio fails its CRC"
+        : problem.Kind switch
     {
         CorrectionProblemKind.NotCorrectionData => "holds no correction data",
         CorrectionProblemKind.StreamDiffers => "states another stream",

@@ -73,7 +73,9 @@ internal static partial class Legacy
         public Node? Extra { get; set; }
     }
 
-    public static void Parse(ParseContext context, ByteReader reader, LegacyLayout layout)
+    // isCompanion: the file was opened as the correction file of a version 4 or 5 hybrid file, which is not its correction data (a version 4 file has blocks, this has none): its
+    // tree is built as it is alone, with no stream of its own, no decoding and no correction file asked for.
+    public static void Parse(ParseContext context, ByteReader reader, LegacyLayout layout, bool isCompanion = false)
     {
         var findings = new FindingCollector();
         long start = reader.Start;
@@ -139,14 +141,14 @@ internal static partial class Legacy
         bool isMono = layout.IsRaw ? (header.Flags & LegacyHeader.MonoFlag) != 0 : format is { Channels: 1 };
         Check(header, layout, format, dataSize, nodes, wav, findings, out long fromData);
         var leading = new List<Node>();
-        var placement = new Placement(reader, bitstream, bitstreamAt, bitstreamEnd, end, trailer.At >= 0, Refusal(header, layout, format));
+        var placement = new Placement(reader, bitstream, bitstreamAt, bitstreamEnd, end, trailer.At >= 0, Refusal(header, layout, format), nodes.Header, isCompanion);
         Summarize(context, header, layout, format, fromData, isMono, bitstreamEnd - bitstreamAt, stream, leading, findings, fact, factAt, factLength, placement);
         AddAll(stream, leading, parts);
         findings.Flush(context);
     }
 
     // Where the parts of the stream lie, for the decoder's session.
-    private sealed record Placement(ByteReader Reader, Node Bitstream, long BitstreamAt, long BitstreamEnd, long DataEnd, bool HasTrailer, string? Refusal);
+    private sealed record Placement(ByteReader Reader, Node Bitstream, long BitstreamAt, long BitstreamEnd, long DataEnd, bool HasTrailer, string? Refusal, Node Header, bool IsCompanion);
 
     // Why libwavpack's open refuses the file (unpack3_open.c), or null where it opens it: the checks the findings above state, in the order the open makes them. The
     // decoder of 3.97 reads the raw files libwavpack does not, so a raw file is refused only for what its header says.
