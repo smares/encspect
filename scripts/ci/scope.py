@@ -158,7 +158,7 @@ class Scope:
 
     def describe(self):
         if self.only is not None:
-            return "unit tests scoped to the tests that read the articles"
+            return "unit tests scoped to the tests that read the changed files"
         order = sorted(self.selected, key=lambda a: (a not in self.changed, a))
         return "unit tests scoped to " + (", ".join(order) or "no area")
 
@@ -206,14 +206,23 @@ def plan(files, root=ROOT, config=None):
     return scope
 
 
+def readers_of(tokens, root=ROOT):
+    """The test classes of every file that names one of the tokens (the TopicLibrary that serves the articles, a file name a test reads)."""
+    found = set()
+    for f in sources_of(root):
+        text = f.read_text(encoding="utf-8", errors="replace")
+        if any(token in text for token in tokens):
+            found |= {name for name, _, _ in class_extent(text)}
+    return sorted(found)
+
+
 def article_readers(root=ROOT):
-    """The test classes of every file that names the TopicLibrary, which serves the articles."""
-    return sorted({name for f in sources_of(root) for text in [f.read_text(encoding="utf-8", errors="replace")] if "TopicLibrary" in text for name, _, _ in class_extent(text)})
+    return readers_of(["TopicLibrary"], root)
 
 
-def plan_articles(root=ROOT):
-    """The scope of a pull request that changes only background articles: the tests that read them and no other."""
-    readers = article_readers(root)
+def plan_readers(tokens, root=ROOT):
+    """The scope of a pull request that changes only files the tests read: the classes of the tests that read them and no other."""
+    readers = readers_of(set(tokens), root)
     return Scope(set(), set(), [], {}, set(), only=frozenset(readers)) if readers else None
 
 

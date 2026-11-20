@@ -35,15 +35,34 @@ class ChangesTests(unittest.TestCase):
         self.assertIn("unit-tests", run("tests/conformance/truehd-samples.json", "src/Encspect.Formats.TrueHd/TrueHdParser.cs"))
 
     @unittest.skipUnless((changes.ROOT / "src").is_dir() and (changes.ROOT / "tests/Encspect.Tests").is_dir(), "needs src and tests/Encspect.Tests")
-    def test_no_dotnet_project_or_test_names_the_conformance_folder(self):
+    def test_every_non_dotnet_file_a_dotnet_test_reads_is_registered_as_read(self):
+        """A .NET test or project that names a file changes.py does not count as .NET input must find it in READERS, or a change to the file
+        runs no test; tests/conformance is read by none."""
+        registered = {r["token"] for r in changes.READERS}
+        found = {}
         for root in ("src", "tests/Encspect.Tests", "tests/Encspect.Gui.Tests", "tests/Encspect.Fuzz", "tests/Encspect.PcmDump"):
             for file in (changes.ROOT / root).rglob("*"):
-                if file.suffix in (".cs", ".csproj", ".props", ".targets", ".axaml", ".json") and "bin" not in file.parts and "obj" not in file.parts and "fixtures" not in file.parts:
-                    self.assertIsNone(re.search(r"tests[/\\]conformance|\"conformance\"", file.read_text(encoding="utf-8", errors="replace")), f"{file} names tests/conformance, which changes.py treats as no .NET input")
+                if file.suffix not in (".cs", ".csproj", ".props", ".targets", ".axaml") or {"bin", "obj", "fixtures"} & set(file.parts):
+                    continue
+                text = file.read_text(encoding="utf-8", errors="replace")
+                kinds = {f'"{k}"' for k in re.findall(r'"(docs)"', text)}
+                kinds |= set(re.findall(r'"scripts",\s*"release",\s*"([\w.-]+)"', text)) | set(re.findall(r"(THIRD-PARTY-NOTICES\.md)", text))
+                if re.search(r"tests[/\\]conformance|\"conformance\"", text):
+                    kinds.add("tests/conformance")
+                for kind in kinds - registered:
+                    found.setdefault(kind, []).append(file.name)
+        self.assertEqual(found, {}, "register these in READERS of changes.py (or, for tests/conformance, stop reading it)")
 
     def test_the_release_scripts_run_no_job_of_this_workflow(self):
-        self.assertEqual(run("scripts/release/make_notices.py", "scripts/release/licenses/libspeex.txt", "THIRD-PARTY-NOTICES.md"), set())
+        self.assertEqual(run("scripts/release/make_notices.py", "scripts/release/licenses/libspeex.txt"), set())
         self.assertEqual(run("scripts/release/make_notices.py", "src/Encspect.Formats.WavPack/WavPackParser.cs"), run("src/Encspect.Formats.WavPack/WavPackParser.cs"))
+
+    def test_files_that_tests_read_run_those_tests(self):
+        self.assertEqual(run("THIRD-PARTY-NOTICES.md"), {"build-test", "unit-tests"})
+        self.assertEqual(run("scripts/release/dotnet-pin.txt"), {"unit-tests"})
+        self.assertEqual(run("docs/development.md"), {"unit-tests"})
+        self.assertEqual(run("docs/releases/0.4.0.md"), {"unit-tests"})
+        self.assertEqual(run("docs/formats/wavpack.md"), set())
 
     def test_other_markdown_in_src_is_code(self):
         self.assertIn("build-test", run("src/Encspect.Formats.Ogg/NOTES.md"))
@@ -458,7 +477,7 @@ class ScopeTests(unittest.TestCase):
         chosen, reason, matrix = scoped("src/Encspect.Host/Topics/mid-side-stereo.md")
         readers = scope.article_readers()
         self.assertIn("DescriptionTests", readers)
-        self.assertIn("scoped to the tests that read the articles", reason)
+        self.assertIn("scoped to the tests that read the changed files", reason)
         self.assertEqual(set(chosen.only), set(readers))
         self.assertEqual(shard_names(matrix), {"rest"}, "every reader is in the rest shard, so the others have nothing to run")
         for entry in matrix:
@@ -474,6 +493,16 @@ class ScopeTests(unittest.TestCase):
         self.assertEqual(mixed.selected, {"WavPack", "Matroska", "Ape"})
         self.assertIsNone(scoped("src/Encspect.Host/Topics/mid-side-stereo.md", "src/Encspect.Host/Analyzer.cs")[0])
         self.assertIsNone(scoped("src/Encspect.Host/Topics/mid-side-stereo.md", "tests/Encspect.Tests/Support/Fixtures.cs")[0])
+
+    def test_a_change_to_a_file_the_tests_read_runs_the_classes_that_name_it(self):
+        for path, expected in (("THIRD-PARTY-NOTICES.md", {"ReleaseWorkflowTests", "RepositoryRootTests"}), ("scripts/release/dotnet-pin.txt", {"ReleaseWorkflowTests"}),
+                               ("docs/development.md", {"ReleaseWorkflowTests", "RepositoryRootTests"})):
+            chosen, reason, matrix = scoped(path)
+            self.assertLessEqual(expected, set(chosen.only), path)
+            self.assertIn("read the changed files", reason)
+            self.assertTrue(all(valid_filter(e["filter"]) for e in matrix))
+        self.assertEqual(shard_names(scoped("scripts/release/dotnet-pin.txt")[2]), {"rest"})
+        self.assertIsNone(scoped("THIRD-PARTY-NOTICES.md", "src/Encspect.Host/Analyzer.cs")[0])
 
     def test_a_release_script_change_has_no_unit_tests_to_scope(self):
         flags, reason, chosen = changes.decide_with_scope("pull_request", ["scripts/release/make_notices.py"])

@@ -175,10 +175,16 @@ FIXTURE_ONLY = ["scripts/fixtures/*_tool.py", "scripts/fixtures/make_*.py", "scr
                 "scripts/fixtures/ancillary_scan.py", "scripts/fixtures/vbr_tags.py", "scripts/fixtures/aac_tables.py",
                 "scripts/fixtures/macos/**"]
 
-# A background article is read by the tests that load the TopicLibrary and nothing else (scope.py), and the GUI tests of build-test. The release scripts
-# are checked by the release workflow, which runs on a pull request that touches them, and by no job of this one.
-ARTICLES = ["src/Encspect.Host/Topics/*.md"]
-ARTICLE_JOBS = ["build-test", "unit-tests"]
+# Files that unit tests (and the GUI's) read without being .NET input themselves: a change runs the jobs listed and only the test classes of the files that
+# name the token (scope.py), unless other changes decide otherwise. A background article is read by what loads the TopicLibrary; the GUI embeds the
+# notices and the article files, so build-test runs for them. The release scripts are checked by the release workflow, which runs on a pull request that
+# touches them, and by no job of this one; scripts/release/dotnet-pin.txt is read by the release workflow's test.
+READERS = [
+    {"paths": ["src/Encspect.Host/Topics/*.md"], "jobs": ["build-test", "unit-tests"], "token": "TopicLibrary"},
+    {"paths": ["THIRD-PARTY-NOTICES.md"], "jobs": ["build-test", "unit-tests"], "token": "THIRD-PARTY-NOTICES.md"},
+    {"paths": ["scripts/release/dotnet-pin.txt"], "jobs": ["unit-tests"], "token": "dotnet-pin.txt"},
+    {"paths": ["docs/development.md", "docs/releases/**"], "jobs": ["unit-tests"], "token": '"docs"'},
+]
 RELEASE_SCRIPTS = ["scripts/release/**"]
 
 CI_JOBS_DOTNET = ["build-test", "unit-tests", "shard-guard", "fuzz", "format"]
@@ -267,6 +273,10 @@ def area_matches(area, path, closure):
     return matches(path, spec["globs"])
 
 
+def reader_of(path):
+    return next((r for r in READERS if matches(path, r["paths"])), None)
+
+
 def is_dotnet(path):
     return matches(path, DOTNET) and not is_docs(path) and not matches(path, NOT_DOTNET)
 
@@ -325,8 +335,9 @@ def decide(event, files, root=ROOT, removed=()):
             reasons.append(f"{gone[0]} was deleted or renamed, and what imported it cannot be told")
             files = []
         for path in files:
-            if matches(path, ARTICLES):
-                for job in ARTICLE_JOBS:
+            reader = reader_of(path)
+            if reader:
+                for job in reader["jobs"]:
                     flags[job] = True
                 continue
             if matches(path, RELEASE_SCRIPTS):
@@ -391,9 +402,10 @@ def scope_of(event, files, removed=(), root=ROOT):
     if event != "pull_request" or files is None or any(r.startswith("scripts/") for r in removed):
         return None
     relevant = [f for f in files if f and is_dotnet(f)]
-    others = [f for f in relevant if not matches(f, ARTICLES)]
-    if relevant and not others:
-        return test_scope.plan_articles(root)
+    readers = [r for f in files if f and (r := reader_of(f))]
+    others = [f for f in relevant if not reader_of(f)]
+    if readers and not others:
+        return test_scope.plan_readers([r["token"] for r in readers], root)
     return test_scope.plan(others, root)
 
 
