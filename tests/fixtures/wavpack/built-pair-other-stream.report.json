@@ -6606,14 +6606,6 @@
               "failed": 0
             },
             {
-              "name": "correction block checksum",
-              "covers": "codedData",
-              "coversAllAudio": false,
-              "stored": 6,
-              "checked": 6,
-              "failed": 0
-            },
-            {
               "name": "block header CRC",
               "covers": "decodedAudio",
               "coversAllAudio": true,
@@ -6723,7 +6715,7 @@
       {
         "severity": "Warning",
         "code": "correction.inconsistent",
-        "message": "built-pair-other-stream.wvc states another stream than the file's (its length, rate, channels or sample format differ); it is not counted as the lossless pair of the file.",
+        "message": "built-pair-other-stream.wvc states another stream than the file's (its version, length, first block, rate, channels or sample format differ); it is not counted as the lossless pair of the file.",
         "offset": 0,
         "length": 10544,
         "path": [

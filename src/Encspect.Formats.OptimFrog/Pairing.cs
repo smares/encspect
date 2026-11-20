@@ -62,7 +62,7 @@ internal static class Pairing
         long corr = other.CorrBlocks;
         if (data > corr)
         {
-            problems.Add(new CorrectionProblem(CorrectionProblemKind.BlocksMissing, data - corr, DataBlock(main, corr, stream)));
+            problems.Add(new CorrectionProblem(CorrectionProblemKind.BlocksMissing, data - corr, DataBlock(main, corr, stream, main.Context.CancellationToken)));
         }
 
         if (corr > data)
@@ -72,25 +72,30 @@ internal static class Pairing
 
         if (other.CrcFailures > 0)
         {
-            problems.Add(new CorrectionProblem(CorrectionProblemKind.ChecksumsFail, other.CrcFailures, DataBlock(main, Math.Max(0, other.FirstCrcFailure), stream)));
+            problems.Add(new CorrectionProblem(CorrectionProblemKind.ChecksumsFail, other.CrcFailures, DataBlock(main, Math.Max(0, other.FirstCrcFailure), stream, main.Context.CancellationToken)));
         }
 
         long cut = other.CutBlocks + other.UnknownBlocks + other.SizeInvalidBlocks + (other.Records.End < other.Records.DataEnd ? 1 : 0);
         if (cut > 0)
         {
-            problems.Add(new CorrectionProblem(CorrectionProblemKind.Cut, cut, other.FirstCut >= 0 ? DataBlock(main, other.FirstCut, stream) : stream));
+            problems.Add(new CorrectionProblem(CorrectionProblemKind.Cut, cut, other.FirstCut >= 0 ? DataBlock(main, other.FirstCut, stream, main.Context.CancellationToken) : stream));
         }
 
         return problems;
     }
 
     // The main file's node of its data block with this number (counted from 0), or the stream's where there is none or the records stopped before it.
-    private static Node DataBlock(State main, long number, Node stream)
+    private static Node DataBlock(State main, long number, Node stream, CancellationToken cancellation)
     {
         Records r = main.Records;
         long seen = 0;
         for (int i = 0; i < r.Blocks.Count; i++)
         {
+            if (i % 4096 == 4095)
+            {
+                cancellation.ThrowIfCancellationRequested();
+            }
+
             BlockRecord b = r.Blocks[i];
             if (b.Id != Layout.Comp || (b.Status & BlockStatus.Unknown) != 0)
             {

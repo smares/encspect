@@ -135,6 +135,13 @@ def wav_findings(wav, version):
     return found
 
 
+def refused_by_flags(flags, bits):
+    """Whether the flags make libwavpack's open refuse the file (the extreme flag with a flag never stored, or with the combinations of a hybrid target)."""
+    if not flags & 0x8000:
+        return False
+    return bool(flags & NOT_STORED or (bits and flags & 0x0400 and flags & (0x0002 | 0x0010)) or (bits and flags & 0x1000))
+
+
 def findings(header, flags, wav, raw, from_data):
     """The findings the analyzer is expected to raise (code and severity), worked out from the header: the design's "Findings"."""
     found = []
@@ -245,7 +252,8 @@ def manifest(data, extra=None):
     if end == start + size:
         expected.append(("warning", "wavpack.legacy-bitstream-missing"))
     result["findings"] = [{"severity": s, "code": c} for s, c in sorted(expected, key=lambda f: (f[1], f[0]))]
-    result["stream"] = bool(rate and (raw or (fmt and fmt["channels"] in (1, 2))))
+    stream = bool(rate and (raw or (fmt and fmt["channels"] in (1, 2))))
+    result["stream"] = stream
     refusals = wav_findings(wav, version) if wav else []
     if "no format" in refusals:
         # libwavpack reads its WAV header structure uninitialized then: no answer is stated.
@@ -254,6 +262,12 @@ def manifest(data, extra=None):
         result["libwavpack_legacy"] = {"opens": False}
     else:
         result["libwavpack_legacy"] = libwavpack_expectation(version, channels, mono, raw, flags, bits, samples if samples is not None else 0)
+    # A version 3 hybrid file that libwavpack's open accepts asks the host for its correction file (unpack3_open.c: a bit limit and the new high flag). The manifests are analyzed
+    # without decoding, whatever companion they name, and a version 3 pair is compared only by decoding, so the pair is unchecked (docs/design/correction-files.md, "Version 3").
+    mono_mismatch = bool(fmt and fmt["channels"] in (1, 2) and bool(flags & 1) != (fmt["channels"] == 1))
+    if stream and version == 3 and bits and flags & 0x0400 and not refusals and not refused_by_flags(flags, bits) and bits <= 32767 and not mono_mismatch:
+        result["asks_for_correction_file"] = True
+        result["findings"] = sorted(result["findings"] + [{"severity": "info", "code": "correction.unchecked"}], key=lambda f: (f["code"], f["severity"]))
     if result["libwavpack_legacy"].get("opens") and from_data is not None:
         result["libwavpack_legacy"]["samples_unpacked"] = 0 if (version == 1 and channels == 1) else from_data
     if extra:

@@ -71,6 +71,10 @@ public readonly record struct CodedFrame(MappedBytes Bytes, string NodeName, lon
     // NodeName with the range of Bytes names the parser's node.
     public Node? Node { get; init; }
 
+    // The matching block of the stream's correction file, where the parser found one for this unit (a hybrid WavPack block and the correction block that
+    // belongs to it, whose checksum holds), as bytes of the correction file; null where the unit has none. Valid only during the call, like Bytes.
+    public MappedBytes? Correction { get; init; }
+
     // The parser could not read the unit at all (its syntax breaks) and reported that itself. The host counts it as not decoded, so the
     // stream is incomplete, and reports nothing more; the decoder is not called for it, and the next unit it is given has FollowsGap set, so a
     // decoder that carries state from unit to unit does not decode on stale state.

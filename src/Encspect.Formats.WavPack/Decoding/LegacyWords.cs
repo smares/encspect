@@ -388,7 +388,7 @@ internal sealed partial class LegacyStreamDecoder
     }
 
     // The hybrid mode's word: a unary count of zones, the bit that tells which half of the zone the value lies in and as many more bits as the bitrate control allows
-    // (the rest is the correction file's, which this decoder is not given).
+    // (the rest is the correction file's: read from the correction bitstream where there is one, else left out).
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private int GetWord4(int chan)
     {
@@ -476,9 +476,12 @@ internal sealed partial class LegacyStreamDecoder
         _bitsAcc[chan] &= 0xff;
 
         int mid;
+        int low;
+        int high;
         if (baseValue == 0)
         {
             mid = onesCount != 0 ? (GetBit() != 0 ? -(int)onesCount : (int)onesCount) : 0;
+            low = high = mid;
         }
         else
         {
@@ -488,8 +491,8 @@ internal sealed partial class LegacyStreamDecoder
                 mid = -mid;
             }
 
-            int low = mid - (int)baseValue;
-            int high = mid + (int)baseValue - 1;
+            low = mid - (int)baseValue;
+            high = mid + (int)baseValue - 1;
             while (bitcount-- > 0)
             {
                 if (GetBit() != 0)
@@ -515,6 +518,11 @@ internal sealed partial class LegacyStreamDecoder
         _fastLevel[chan] += magnitude;
         _slowLevel[chan] -= (_slowLevel[chan] + 0x80) >> 8;
         _slowLevel[chan] += magnitude;
+        if (HasCorrection)
+        {
+            _correction[chan] = ReadCorrection(mid, low, high);
+        }
+
         return mid;
     }
 

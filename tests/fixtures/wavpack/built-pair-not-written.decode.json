@@ -2,8 +2,8 @@
   "verification": {
     "decoding": "Decoded",
     "decodedSamples": 24000,
-    "isVerified": null,
-    "isLossy": true,
+    "isVerified": false,
+    "withCorrection": true,
     "checksums": [
       {
         "name": "block checksum",
@@ -21,7 +21,7 @@
         "name": "block header CRC",
         "stored": 3,
         "checked": 3,
-        "failed": 0
+        "failed": 2
       },
       {
         "name": "extended CRC",
@@ -39,10 +39,16 @@
   },
   "findings": [
     {
+      "code": "wavpack.correction-block-missing",
+      "severity": "Warning",
+      "count": 2,
+      "message": "The hybrid block at 0x2930 was decoded without a correction block: the correction file (.wvc) has none that matches it, or the one that does fails its checksum or is cut. libwavpack counts it as an error."
+    },
+    {
       "code": "wavpack.md5-needs-correction-file",
       "severity": "Info",
       "count": 1,
-      "message": "The file stores the MD5 of the lossless audio, which this stream does not decode to (a hybrid file without its correction file (.wvc), or blocks that drop bits), so it is not compared."
+      "message": "The file stores the MD5 of the lossless audio, but 2 hybrid blocks of its 3 hybrid blocks were decoded without a correction block (the correction file (.wvc) has none that matches them, or one that fails its checksum), so the stream does not decode to the lossless audio and the MD5 is not compared."
     }
   ]
 }

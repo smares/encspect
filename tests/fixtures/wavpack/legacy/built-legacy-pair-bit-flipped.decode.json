@@ -1,0 +1,42 @@
+{
+  "verification": {
+    "decoding": "Decoded",
+    "decodedSamples": 24000,
+    "isVerified": false,
+    "withCorrection": true,
+    "checksums": [
+      {
+        "name": "correction CRC",
+        "stored": 1,
+        "checked": 1,
+        "failed": 1
+      }
+    ]
+  },
+  "correction": {
+    "status": "inconsistent",
+    "basis": "decodedAudio",
+    "problems": [
+      "checksumsFail 1 Correction CRC"
+    ]
+  },
+  "companionTree": [
+    "Correction Bitstream 0\u002B28498"
+  ],
+  "pcmSamples": 24000,
+  "pcmMd5": "e3f895a6bb8f2abd2111960fd3ee357b",
+  "findings": [
+    {
+      "code": "wavpack.legacy-crc2-mismatch",
+      "severity": "Warning",
+      "count": 1,
+      "message": "The audio decoded with the correction file has the CRC 6b0cb5c2, but the header stores 30faeec2 as the CRC of the lossless audio: the correction file is not this file\u0027s, or one of them is damaged."
+    },
+    {
+      "code": "correction.inconsistent",
+      "severity": "Warning",
+      "count": 1,
+      "message": "The audio decoded with built-legacy-pair-bit-flipped.wvc does not have the CRC the file\u0027s header states for the lossless audio; it is not counted as the lossless pair of the file."
+    }
+  ]
+}

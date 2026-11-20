@@ -225,6 +225,27 @@
                       "length": 11584
                     }
                   ]
+                },
+                {
+                  "name": "Stereo Coding",
+                  "value": 240,
+                  "unit": "access units",
+                  "offset": 0,
+                  "length": 11584,
+                  "children": [
+                    {
+                      "name": "Left/right stereo",
+                      "value": "160 access units (66.7%)",
+                      "offset": 0,
+                      "length": 11584
+                    },
+                    {
+                      "name": "Weighted mix",
+                      "value": "80 access units (33.3%)",
+                      "offset": 0,
+                      "length": 11584
+                    }
+                  ]
                 }
               ]
             }
@@ -393,6 +414,66 @@
             ],
             "values": [
               463
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "access unit",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 160
+              },
+              {
+                "name": "Left/side stereo",
+                "count": 0
+              },
+              {
+                "name": "Side/right stereo",
+                "count": 0
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 0
+              },
+              {
+                "name": "Weighted mix",
+                "count": 80
+              }
+            ],
+            "total": 240,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                15
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                5
+              ],
+              [
+                4,
+                5
+              ],
+              [
+                0,
+                5
+              ]
+            ],
+            "weights": [
+              [
+                16,
+                15
+              ]
+            ],
+            "seconds": [
+              0
             ]
           }
         ]

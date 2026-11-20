@@ -108,6 +108,61 @@ public class TrueHdFixtureTests
         Assert.Equal(File.ReadAllText(path).ReplaceLineEndings("\n"), actual);
     }
 
+    // The tally and the series of "Stereo Coding" are those of the model, which reads the matrix parameters of substream 0's first block of every unit
+    // (truehd_model.py) and the rest from what the builder wrote: the units by coding, and for each run of the bitrate series the codings in force with
+    // their unit counts. A stream without a two-channel presentation has neither a node nor a series.
+    [Theory]
+    [MemberData(nameof(Names))]
+    public void StereoCodingMatchesModel(string name)
+    {
+        JsonElement manifest = Fixtures.LoadMpegManifest(name);
+        if (!manifest.TryGetProperty("stereo_coding", out JsonElement expected))
+        {
+            return;
+        }
+
+        Report report = Fixtures.AnalyzeMpeg(name);
+        StreamInfo stream = report.Streams.Single();
+        long[] units = [.. expected.GetProperty("units").EnumerateArray().Select(u => u.GetInt64())];
+        Node? tally = FindNode(report.Root, "Stereo Coding");
+        CategorySeries? series = stream.CategorySeries.SingleOrDefault(s => s.Name == "Stereo Coding");
+        if (units.All(u => u == 0))
+        {
+            Assert.Null(tally);
+            Assert.Null(series);
+            return;
+        }
+
+        Assert.NotNull(tally);
+        Assert.NotNull(series);
+        Assert.Equal(units.Sum(), tally.Value?.AsInteger());
+        Assert.Equal(GraphConcept.StereoCoding, series.Concept);
+        Assert.Equal(units, series.Counts);
+        for (int code = 0; code < units.Length; code++)
+        {
+            Node? entry = tally.Children.FirstOrDefault(c => c.Name == series.Categories[code].Name);
+            Assert.Equal(units[code], entry is null ? 0 : CategorySummary.Count(entry.Value));
+        }
+
+        Series bitrate = stream.Series.Single(s => s.Name == "Bitrate");
+        Assert.Same(bitrate, series.XSeries);
+        JsonElement[] runs = [.. expected.GetProperty("runs").EnumerateArray()];
+        Assert.Equal(runs.Length, series.Count);
+        for (int run = 0; run < runs.Length; run++)
+        {
+            JsonElement[] codings = [.. runs[run].EnumerateArray()];
+            Assert.True(codings.Length == series.ValueCount(run), $"{name}: run {run} holds {series.ValueCount(run)} codings, the model has {codings.Length}");
+            for (int i = 0; i < codings.Length; i++)
+            {
+                Assert.Equal(codings[i][0].GetInt32(), series[run, i]);
+                Assert.Equal(codings[i][1].GetInt32(), series.WeightAt(run, i));
+            }
+        }
+    }
+
+    private static Node? FindNode(Node node, string name) =>
+        node.Name == name ? node : node.HasChildren ? node.Children.Select(c => FindNode(c, name)).FirstOrDefault(n => n is not null) : null;
+
     private static void CheckEntry(JsonElement expected, Node node, int index, string name)
     {
         string where = $"{name}, entry {index}";

@@ -83,6 +83,7 @@ internal static class ProExplain
     public const string StatMostSubframes = "The most subframes a channel may be divided into in one frame.";
     public const string StatSubframes = "How many subframes were read, counting a subframe shared by channels once.";
     public const string StatSubframeSizes = "How many different subframe lengths occur; each size lists how many subframes have it.";
+    public const string SubframeSizesSeries = "The length in samples of each subframe, in the order the subframes of a frame follow one another, as the tally of Subframe Sizes counts them; a subframe that codes several channels is one value. This is the form of block switching that names lengths, as WMA versions 1 and 2 name block lengths, where MPEG audio and AAC name long and short transforms.";
     public const string StatSubframeSize = "How many subframes have this length, and their share of all.";
     public const string StatChannelsPerSubframe = "The average number of channels a subframe is shared by.";
     public const string StatStereoCoding = "How the valid frames of a stream of two channels code them: with the channel transform of the pair on, which is sum and difference, so mid/side, in at least one scale factor band, or as left and right in all (the channel transform of a subframe).";
