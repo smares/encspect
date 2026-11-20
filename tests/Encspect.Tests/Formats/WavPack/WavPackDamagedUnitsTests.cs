@@ -16,6 +16,7 @@ public class WavPackDamagedUnitsTests
         "wavpack/built-bitstream-cut.wv",
         "wavpack/built-bad-checksum.wv",
         "wavpack/built-checksum-missing.wv",
+        "wavpack/damaged-units/set-block-checksum-changed.wv",
     };
 
     private static (Report Report, string Pcm) Analyze(string name, byte[]? data = null, bool measure = true, Analyzer? analyzer = null)
@@ -26,7 +27,7 @@ public class WavPackDamagedUnitsTests
         return (report, sink.Hash());
     }
 
-    // The samples of the set (the stream's blocks hold one each: 11,025, 6,487 and 6,488 samples) whose block fails.
+    // The samples of the set whose block fails (the built files have one block to a set: 11,025, 6,487 and 6,488 samples).
     [Theory]
     [InlineData("wavpack/built-block-crc-changed.wv", 6487L)]
     [InlineData("wavpack/built-audio-bit-flipped.wv", 11025L)]
@@ -34,6 +35,7 @@ public class WavPackDamagedUnitsTests
     [InlineData("wavpack/built-bitstream-cut.wv", 6487L)]
     [InlineData("wavpack/built-bad-checksum.wv", 6487L)]
     [InlineData("wavpack/built-checksum-missing.wv", 6487L)]
+    [InlineData("wavpack/damaged-units/set-block-checksum-changed.wv", 11025L)]
     public void AFailedBlockIsWithheldWhatItsFailureIs(string name, long withheld)
     {
         (Report report, _) = Analyze(name);
@@ -46,6 +48,21 @@ public class WavPackDamagedUnitsTests
         Assert.Equal(0, m.LostSamples);
         Assert.Equal(stream.Verification!.DecodedSamples, m.Samples + m.WithheldSamples);
         Assert.DoesNotContain(report.Findings, f => f.Code is "decode.failed" or "measure.failed");
+    }
+
+    // The file is external-lossless-3ch-unassigned.wv with the stored checksum of the second of the three blocks of its first set changed
+    // (make_wavpack_damaged_units_fixtures.py): a block that is not the set's last fails, and the whole set is withheld once, no other position.
+    [Fact]
+    public void AFailedBlockThatIsNotTheLastOfItsSetWithholdsTheWholeSet()
+    {
+        (Report report, _) = Analyze("wavpack/damaged-units/set-block-checksum-changed.wv");
+        StreamInfo stream = report.Streams[0];
+        StreamMeasurements m = stream.Measurements!;
+
+        Assert.Equal(1, stream.Verification!.Checksums.Single(c => c.Name == "block checksum").Failed);
+        Assert.Equal(11025, m.WithheldSamples);
+        Assert.Equal(1, m.Gaps);
+        Assert.Equal(24000 - 11025, m.Samples);
     }
 
     // The muted block of these files is zeros that fail their CRC: it is no stretch of digital silence.

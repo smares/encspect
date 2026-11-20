@@ -613,6 +613,7 @@ jobs:
         run: |
           python3 scripts/fixtures/make_wavpack_fixtures.py
           python3 scripts/fixtures/make_external_wavpack_fixtures.py --manifests-only
+          python3 scripts/fixtures/make_wavpack_damaged_units_fixtures.py
 
       # The files of WavPack 1.0 to 4.31 are written once, with the original encoders under DOSBox (docs/development.md, "WavPack 1 to 3 fixtures"), and committed; only
       # the manifests are recomputed here, from the committed files, as for the Monkey's Audio legacy files.
