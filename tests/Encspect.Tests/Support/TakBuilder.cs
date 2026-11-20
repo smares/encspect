@@ -115,12 +115,12 @@ internal static class TakBuilder
     }
 
     // A frame: the header (sync, flags, frame number, the sample count of a last frame, and for an info frame the stream info) with its CRC-24, coded bytes and the CRC-24 over them.
-    public static byte[] Frame(int number, int payload, bool isLast = false, bool isInfo = false, int samples = 1000, byte[]? streamInfoBits = null, uint? headerCrc = null, bool hasMetadata = false, byte[]? coded = null)
+    public static byte[] Frame(int number, int payload, bool isLast = false, bool isInfo = false, int samples = 1000, byte[]? streamInfoBits = null, uint? headerCrc = null, bool hasMetadata = false, byte[]? coded = null, int padding = 0)
     {
         BitWriter w = new BitWriter().Put(0xA0FF, 16).Put(isLast ? 1 : 0, 1).Put(isInfo ? 1 : 0, 1).Put(hasMetadata ? 1 : 0, 1).Put(number, 21);
         if (isLast)
         {
-            w.Put(samples - 1, 14).Put(0, 2);
+            w.Put(samples - 1, 14).Put(padding, 2);
         }
 
         if (isInfo)
