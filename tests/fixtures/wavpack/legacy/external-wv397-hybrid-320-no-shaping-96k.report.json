@@ -541,11 +541,30 @@
             }
           ]
         },
+        "correction": {
+          "status": "unchecked",
+          "source": "external-wv397-hybrid-320-no-shaping-96k.wvc",
+          "basis": "decodedAudio",
+          "problems": [],
+          "reason": "no folder to look in: the input is a stream"
+        },
         "encoder": "WavPack 3",
         "encoderConfidence": "Medium",
         "series": []
       }
     ],
-    "findings": []
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "correction.unchecked",
+        "message": "The correction file external-wv397-hybrid-320-no-shaping-96k.wvc was not checked: no folder to look in: the input is a stream.",
+        "offset": 0,
+        "length": 18302,
+        "path": [
+          0
+        ],
+        "count": 1
+      }
+    ]
   }
 ]

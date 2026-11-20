@@ -166,10 +166,13 @@ internal static partial class Legacy
             "Adaptive stereo" => "Stereo, mid/side in some samples",
             _ => "Stereo",
         };
+        // A version 3 hybrid file asks the host for its correction file, which the host looks for beside it; the decoder is given it where it holds any bytes. A file the decoder refuses asks for none.
+        Companion? companion = !placement.IsCompanion && placement.Refusal is null && AsksForCorrection(h) ? context.OpenCompanion(Pairing.Extension) : null;
+        ByteReader? correction = CorrectionBytes(companion);
         var checksums = new List<ChecksumTally>();
         if (h.IsVersion3)
         {
-            checksums.Add(new ChecksumTally { Name = ChecksumNames.LegacyCrc, Covers = ChecksumCoverage.DecodedAudio, CoversAllAudio = true, Stored = 1 });
+            checksums.Add(new ChecksumTally { Name = correction is null ? ChecksumNames.LegacyCrc : ChecksumNames.LegacyCrc2, Covers = ChecksumCoverage.DecodedAudio, CoversAllAudio = true, Stored = 1 });
         }
 
         bool hasBytes = (h.Flags & LegacyHeader.Bytes3Flag) != 0 && h.IsVersion3;
@@ -187,8 +190,22 @@ internal static partial class Legacy
             DataEnd = placement.DataEnd,
             HasTrailer = placement.HasTrailer,
             Refusal = placement.Refusal,
+            CorrectionReader = correction,
+            CorrectionAt = correction?.Start ?? 0,
+            CorrectionEnd = correction?.End ?? 0,
         };
+        if (placement.IsCompanion)
+        {
+            return;
+        }
+
         StreamVerification verification = Decode(context, placement.Reader, info, stream, placement.Bitstream, checksums);
+        CorrectionPairing? pairing = companion is null ? null : Pair(companion, correction, verification, info, stream, placement.Header);
+        if (correction is not null && companion?.Context is { } correctionContext)
+        {
+            ReportCorrectionFile(correctionContext, info);
+        }
+
         context.AddStream(new StreamInfo
         {
             Nodes = [stream],
@@ -208,6 +225,7 @@ internal static partial class Legacy
             Processor = ClaimRoles.Resolved(processor).Name,
             ProcessorConfidence = ClaimRoles.Resolved(processor).Confidence,
             Verification = verification,
+            Correction = pairing,
         });
     }
 }

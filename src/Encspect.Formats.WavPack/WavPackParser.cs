@@ -103,7 +103,7 @@ public sealed class WavPackParser : IFormatParser
         State? state = null;
         if (LegacyLayout.Locate(reader) is { } layout)
         {
-            Legacy.Parse(context, reader, layout);
+            Legacy.Parse(context, reader, layout, isCompanion);
         }
         else
         {

@@ -530,6 +530,14 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         Add("wavpack-legacy-high-zero-runs", () => new Case("wavpack-legacy-high-zero-runs", WavPackCases.LegacyZeroRuns("external-wv340-high.wv", 1 << 20)));
         Add("wavpack-legacy-lossless-24-stereo", () => new Case("wavpack-legacy-lossless-24-stereo", WavPackCases.LegacyNoise("external-wv340-lossless-24-stereo.wv")));
         Add("wavpack-legacy-hybrid-mono", () => new Case("wavpack-legacy-hybrid-mono", WavPackCases.LegacyNoise("external-wv340-hybrid-320-mono.wv")));
+
+        // A version 3 hybrid file decoded with its correction bitstream: the header of a pair's main file and noise for both bitstreams, so the decoder reads a correction
+        // for every word until the data ends.
+        foreach ((string label, string file) in new[] { ("stereo", "external-wv397-hybrid-320-correction.wv"), ("mono", "external-wv340-hybrid-320-mono.wv") })
+        {
+            Add("wavpack-legacy-pair-" + label, () => new Case("wavpack-legacy-pair-" + label, WavPackCases.LegacyNoise(file, 4 << 20), Companion: WavPackCases.Noise(new Random(11), 4 << 20)));
+        }
+
         Add("wavpack-sets-that-never-complete", () => new Case("wavpack-sets-that-never-complete", WavPackCases.SetsThatNeverComplete()));
         Add("wavpack-many-small-dsd-blocks", () => new Case("wavpack-many-small-dsd-blocks", WavPackCases.SmallDsdBlocks()));
         Add("wavpack-dsd-fast-5-history-bits", () => new Case("wavpack-dsd-fast-5-history-bits", WavPackCases.DsdFast()));

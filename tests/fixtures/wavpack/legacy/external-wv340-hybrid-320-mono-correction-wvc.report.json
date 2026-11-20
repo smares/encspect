@@ -1,0 +1,36 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "external-wv340-hybrid-320-mono-correction-wvc.wvc",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 7507,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 7507
+        }
+      ]
+    },
+    "streams": [],
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 7507,
+        "path": [
+          0
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

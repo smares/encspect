@@ -1,0 +1,42 @@
+{
+  "verification": {
+    "decoding": "Decoded",
+    "decodedSamples": 24000,
+    "isVerified": false,
+    "withCorrection": true,
+    "checksums": [
+      {
+        "name": "correction CRC",
+        "stored": 1,
+        "checked": 1,
+        "failed": 1
+      }
+    ]
+  },
+  "correction": {
+    "status": "inconsistent",
+    "basis": "decodedAudio",
+    "problems": [
+      "cut 1 Correction CRC"
+    ]
+  },
+  "companionTree": [
+    "Correction Bitstream 0\u002B18900"
+  ],
+  "pcmSamples": 24000,
+  "pcmMd5": "a31ad44338a74079bb0c7af91773b75f",
+  "findings": [
+    {
+      "code": "wavpack.legacy-correction-ended",
+      "severity": "Warning",
+      "count": 1,
+      "message": "The correction file\u0027s 18900 bytes end before the stream\u0027s 24000 samples are decoded, so the rest of the correction is read as 0xFF bytes; the correction file is cut, or belongs to another file."
+    },
+    {
+      "code": "correction.inconsistent",
+      "severity": "Warning",
+      "count": 1,
+      "message": "The bitstream of built-legacy-pair-other-stream.wvc ends before the samples of the file do; it is not counted as the lossless pair of the file."
+    }
+  ]
+}
