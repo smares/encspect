@@ -11,9 +11,9 @@ internal sealed class StdBlockSeries
     private readonly StdParameters _p;
     private readonly CategorySeriesBuilder _sizes;
     private readonly CategorySeriesBuilder? _noise;
-    private readonly ChunkedList<(int Frame, int Hertz)> _reach = new();
-    private readonly ChunkedList<(long Second, int Hertz)> _seconds = new();
-    private readonly SortedDictionary<int, int> _counts = [];
+    private ChunkedList<(int Frame, int Hertz)> _reach = new();
+    private ChunkedList<(long Second, int Hertz)> _seconds = new();
+    private SortedDictionary<int, int> _counts = [];
     private byte[] _codes = new byte[64];
 
     public StdBlockSeries(StdParameters parameters)
@@ -119,10 +119,11 @@ internal sealed class StdBlockSeries
     }
 
     // "Coded Bandwidth" for each block that has one, at its frame's offset, and "Coded Bandwidth Over Time".
-    public void AddSeriesTo(List<Series> series, double[] frameOffsets, Node? bandwidthNode)
+    public void AddSeriesTo(List<Series> series, double[] frameOffsets, Node? bandwidthNode, CancellationToken cancellation)
     {
         if (_reach.Count == 0 || bandwidthNode is null)
         {
+            Release();
             return;
         }
 
@@ -130,6 +131,11 @@ internal sealed class StdBlockSeries
         var hertz = new double[_reach.Count];
         for (int i = 0; i < x.Length; i++)
         {
+            if (i % 4096 == 0)
+            {
+                cancellation.ThrowIfCancellationRequested();
+            }
+
             x[i] = frameOffsets[_reach[i].Frame];
             hertz[i] = _reach[i].Hertz;
         }
@@ -154,6 +160,15 @@ internal sealed class StdBlockSeries
             Concept = GraphConcept.CodedBandwidth,
             Quantity = "Coded Bandwidth",
         });
+        Release();
+    }
+
+    // The per-block records are copied into the series, and the nodes read the stream afterwards: nothing here needs to stay.
+    private void Release()
+    {
+        _reach = new();
+        _seconds = new();
+        _counts = [];
     }
 
     // The category series, anchored to their tally nodes; one with no node is left out.

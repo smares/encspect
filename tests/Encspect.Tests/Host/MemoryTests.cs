@@ -485,8 +485,8 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
     // A version 2 stream of Microsoft's encoder with variable block lengths (about three blocks to a frame in this fixture) keeps, beside the
     // frame records, one size and one noise flag for each block and a coded bandwidth with its own x for the blocks that have one, recorded
     // while the frames are read. The 15 media objects of a fixture (a stereo stream at 128 kbit/s, 65 frames) repeated with continuing sequence
-    // numbers, so the blocks the series count are those of the file, whatever damage the repetition makes. linux-x64 measures 83 bytes kept and
-    // 131 peak per block, the frame records included; the bounds leave about twice that.
+    // numbers, so the blocks the series count are those of the file, whatever damage the repetition makes. linux-x64 measures 74 bytes kept and
+    // 124 peak per block, the frame records included (57 kept before the series); the bounds leave about twice that.
     [Fact]
     public void ManyStandardBlocksStayCompact()
     {
@@ -508,8 +508,8 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         GC.KeepAlive(report);
     }
 
-    private const long StandardBlockKeptBound = 170;
-    private const long StandardBlockPeakBound = 270;
+    private const long StandardBlockKeptBound = 150;
+    private const long StandardBlockPeakBound = 250;
 
     // Voice keeps a fixed record per packet and per superframe, and builds the nodes when they are read: a Microsoft-encoded media object of
     // 187 bytes with 4 counted superframes, repeated, gives a packet and 3 to 4 superframes for each repetition, none of them kept as nodes.

@@ -144,7 +144,7 @@ internal static class StdReport
         return categories;
     }
 
-    public static IReadOnlyList<Series> Series(StdParameters p, StdStream stream, Node statistics)
+    public static IReadOnlyList<Series> Series(StdParameters p, StdStream stream, Node statistics, CancellationToken cancellation)
     {
         int frames = stream.Frames.Count;
         var offsets = new double[frames];
@@ -154,6 +154,11 @@ internal static class StdReport
         int mapped = -1;
         for (int i = 0; i < frames; i++)
         {
+            if (i % 4096 == 0)
+            {
+                cancellation.ThrowIfCancellationRequested();
+            }
+
             StdFrameRecord frame = stream.Frames[i];
             if (mapped != frame.StartSuperframe)
             {
@@ -193,7 +198,7 @@ internal static class StdReport
             series.Add(new Series("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, values, statistics) { Description = StdText.BitrateOverTimeSeries, Concept = GraphConcept.BitDistribution, Quantity = "Bitrate" });
         }
 
-        stream.Blocks.AddSeriesTo(series, offsets, statistics.Children.FirstOrDefault(c => c.Name == "Coded Bandwidth"));
+        stream.Blocks.AddSeriesTo(series, offsets, statistics.Children.FirstOrDefault(c => c.Name == "Coded Bandwidth"), cancellation);
 
         if (p.UsesBitReservoir)
         {

@@ -137,7 +137,7 @@ public sealed class WmaVoiceParser : ICodecParser
             Writer = detected.Writer,
             WriterConfidence = detected.WriterConfidence,
             Series = series,
-            CategorySeries = statistics is null ? [] : VoiceReport.CategoriesOf(voice, series, statistics),
+            CategorySeries = statistics is null ? [] : VoiceReport.CategoriesOf(voice, series, statistics, context.CancellationToken),
         });
 
         findings.Flush(context);
