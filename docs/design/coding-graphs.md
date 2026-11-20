@@ -404,8 +404,8 @@ The parser and decoder are built (#137, Gate 3 fixes #192). The parser reads the
 
 | Candidate | Field and source | Read | Tallied | Kept per unit | Status | Wave |
 | --- | --- | --- | --- | --- | --- | --- |
-| Stereo coding, two-channel streams | the frame start: a 32-bit CRC word whose bit 31 says that a 32-bit word of special codes follows, from version 3.83 with a CRC word (above 3820: SDK `APEInfo.h` 64, `APEDecompressCore.cpp` 381-397; FFmpeg `apedec.c` 766-783). Codes 1 and 2 mark one silent channel each, 4 pseudo-stereo (`Prepare.h` 6-9; `apedec.c` 46-48). With both channels silent nothing is coded; with pseudo-stereo only the first coded channel, X (`APECompressCore.cpp` 104-140; `APEDecompressCore.cpp` 290-311; `apedec.c` 1509-1512, 1657-1658) | yes, the frame starts (`Reader`, `Entry.Special` with `EntryStatus.HasSpecialCodes`); in a file without the CRC flag, a checksum of 0 counts as silence (`Old/UnMACOld.cpp` 125-132) | "Stereo Coding" ("Mid/side stereo", "Pseudo-stereo", "Silence"; replaced "Pseudo-Stereo Frames" and, for two channels, "Silent Frames") | 1 byte per frame, derived from the kept entry | built (#TBD) | built |
-| Silent frames, mono streams | code 1: nothing is coded (`APECompressCore.cpp` 142-150; `APEDecompressCore.cpp` 344-353; `apedec.c` 1482-1488) | yes | "Silent Frames" (mono only) with a flag series ("With silence", "Without silence") | 1 byte per frame; a flag series | built (#TBD) | built |
+| Stereo coding, two-channel streams | the frame start: a 32-bit CRC word whose bit 31 says that a 32-bit word of special codes follows, from version 3.83 with a CRC word (above 3820: SDK `APEInfo.h` 64, `APEDecompressCore.cpp` 381-397; FFmpeg `apedec.c` 766-783). Codes 1 and 2 mark one silent channel each, 4 pseudo-stereo (`Prepare.h` 6-9; `apedec.c` 46-48). With both channels silent nothing is coded; with pseudo-stereo only the first coded channel, X (`APECompressCore.cpp` 104-140; `APEDecompressCore.cpp` 290-311; `apedec.c` 1509-1512, 1657-1658) | yes, the frame starts (`Reader`, `Entry.Special` with `EntryStatus.HasSpecialCodes`); in a file without the CRC flag, a checksum of 0 counts as silence (`Old/UnMACOld.cpp` 125-132) | "Stereo Coding" ("Mid/side stereo", "Pseudo-stereo", "Silence"; replaced "Pseudo-Stereo Frames" and, for two channels, "Silent Frames") | 1 byte per frame, derived from the kept entry | built (#356) | built |
+| Silent frames, mono streams | code 1: nothing is coded (`APECompressCore.cpp` 142-150; `APEDecompressCore.cpp` 344-353; `apedec.c` 1482-1488) | yes | "Silent Frames" (mono only) with a flag series ("With silence", "Without silence") | 1 byte per frame; a flag series | built (#356) | built |
 | Bitrate per frame | the frame's size: the next frame's position in the seek table minus its own, the last frame's to the end of the data before the WAV tail (`ape.c` 269-294); its blocks, the header's blocks per frame or, for the last frame, its own count (`ape.c` 225-230, 284) | yes | "Minimum Bitrate", "Maximum Bitrate", "Bitrate Distribution" | the format's bitrate series | built (#137) | built |
 | Compression ratio (new) | the frame's bytes over blocks × channels × bytes per sample, in percent | yes: the entry's length and blocks, and the header's channels and bits | no | 8 bytes per frame | code | 2, not built |
 | Compression level | the header's level, one per file (`ape.c` 185, 197); it chooses the filters (`apedec.c` 81-87, 274-286) | yes | "Compression Level" |  | code | not a series |
@@ -600,7 +600,7 @@ The lead asked, before item 5 of 0.4 builds anything, for the survey to be check
 
 1. **Stereo coding where it is missing:**
    - TrueHD and MLP "Stereo Coding" (the plan's item 5): the matrices are read in every block; under a byte per access unit (one per run of 16). Its categories are designed and signed off (the lead, 2026-11-19) in [Stereo Coding: the design](#stereo-coding-the-design-2026-11-19).
-   - Monkey's Audio "Stereo Coding" ("Mid/side stereo", "Pseudo-stereo", "Silence"), built (#TBD): 1 byte per frame (a frame lasts 1.67 s or more at 44.1 kHz), derived from the kept entries; "Pseudo-Stereo Frames" and the two-channel "Silent Frames" moved under it.
+   - Monkey's Audio "Stereo Coding" ("Mid/side stereo", "Pseudo-stereo", "Silence"), built (#356): 1 byte per frame (a frame lasts 1.67 s or more at 44.1 kHz), derived from the kept entries; "Pseudo-Stereo Frames" and the two-channel "Silent Frames" moved under it.
    - Why first: "Stereo Coding" is the heading users compare across files, and these are the last lossless formats whose parser reads the choice without showing it.
 2. **WMA standard's block switching and coded bandwidth:**
    - "Block Sizes" per block, "Coded Bandwidth" per block with its own x, the noise substitution flag; with them WMA Professional's "Subframe Sizes" and WMA Voice's "Frame Types".
@@ -634,7 +634,7 @@ The lead asked, before item 5 of 0.4 builds anything, for the survey to be check
 - DTS: "Coded Bandwidth" is built from the subframes (the highest subband allocated, vector quantized or copied by joint intensity coding), not from the header's SUBS + 2; TMODE needed the subframe reader, which the entropy pass brought (#321).
 - AAC: "Window Sequences" is "Block Usage" since #226.
 - WMA: the readers came back without block records, so its block series are recorded while reading, not derived from `BlockRecord` fields, which no longer exist.
-- Monkey's Audio: "Stereo Coding" is built (#TBD); a mono stream keeps "Silent Frames", now with a flag series.
+- Monkey's Audio: "Stereo Coding" is built (#356); a mono stream keeps "Silent Frames", now with a flag series.
 - Wave 1 was not finished: Speex's submodes, Opus's TOC series and Vorbis's "Modes" are not built.
 - WAV: a Microsoft ADPCM fixture is committed now.
 
@@ -864,7 +864,7 @@ One concept, one name, checked across the tally nodes, series, JSON and docs:
 | Highest frequency the coded data reaches | "Coded Bandwidth" | new in the formats of the survey | AAC "Bandwidth" renamed; every AAC golden |
 | The bandwidth a packet states | "Bandwidths"; as built (#226) also "Coded Bandwidth" in whole hertz, node and numeric series, its description saying it is the stated bandwidth | Opus | none |
 | FLAC's channel assignment of two-channel frames: left/right, left/side, side/right, mid/side | "Stereo Coding" | new parent in FLAC, over the complete two-channel frames | "Independent Frames", "Left/Side Frames", "Right/Side Frames" and "Mid/Side Frames" move under it as "Left/right stereo", "Left/side stereo", "Side/right stereo" and "Mid/side stereo"; every FLAC golden of a two-channel stream |
-| Monkey's Audio frames: mid/side stereo, pseudo-stereo, silence | "Stereo Coding" | built (#TBD) | "Pseudo-Stereo Frames" and, in two-channel streams, "Silent Frames" move under it |
+| Monkey's Audio frames: mid/side stereo, pseudo-stereo, silence | "Stereo Coding" | built (#356) | "Pseudo-Stereo Frames" and, in two-channel streams, "Silent Frames" move under it |
 | The length of a frame in samples, where it varies | "Block Size", a numeric series | FLAC | none; a third form of block switching beside "Block Sizes" (long against short) and WMA's lengths in samples |
 | A frame's coded size against its PCM size | "Compression Ratio" | new in FLAC, Monkey's Audio and TTA | none |
 
