@@ -30,6 +30,13 @@ internal sealed class PreNoise
     private readonly int _channels;
     private readonly Action<long, float[], int> _emit;
     private readonly Action<long> _charge;
+    private readonly Action<long, long>? _withhold;
+
+    // Positions whose output is damaged (a frame whose checksum failed and the block after it; then a correction that read them), which a correction must not copy from
+    // unwithheld, and the corrections' own output that is, in the order the corrections were made, until its samples leave.
+    private readonly List<(long First, long End)> _damaged = [];
+    private readonly List<(long First, long End)> _dependent = [];
+    private const int MaxRanges = 256;
     private readonly List<(int Channel, long Location, int Length)> _pending = [];
     private float[][] _buffer;
     private long _base;
@@ -37,11 +44,13 @@ internal sealed class PreNoise
     private long _emitted;
 
     // emit gets the first position, the planar samples and their count per channel; charge the work of a correction, in samples it touches.
-    public PreNoise(int channels, Action<long, float[], int> emit, Action<long> charge)
+    // withhold gets the positions of the output that a correction made from damaged samples, just before the samples leave (docs/design/damaged-units.md).
+    public PreNoise(int channels, Action<long, float[], int> emit, Action<long> charge, Action<long, long>? withhold = null)
     {
         _channels = channels;
         _emit = emit;
         _charge = charge;
+        _withhold = withhold;
         _buffer = [.. Enumerable.Range(0, channels).Select(_ => new float[8192])];
     }
 
@@ -54,6 +63,28 @@ internal sealed class PreNoise
         }
 
         return window;
+    }
+
+    // Output positions [first, end) that a failed frame leaves damaged. A correction that reads any of them makes its own output depend on them.
+    public void MarkDamaged(long first, long end)
+    {
+        if (_damaged.Count < MaxRanges)
+        {
+            _damaged.Add((first, end));
+        }
+    }
+
+    private bool ReadsDamaged(long first, long end)
+    {
+        foreach ((long a, long b) in _damaged)
+        {
+            if (a < end && first < b)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // A channel's transient of a frame, at the sample position location, with the time scaling length.
@@ -90,6 +121,8 @@ internal sealed class PreNoise
         Apply();
         Release(force: true);
         _pending.Clear();
+        _damaged.Clear();
+        _dependent.Clear();
         _length = 0;
     }
 
@@ -137,6 +170,12 @@ internal sealed class PreNoise
         }
 
         _charge(4L * (((2 * Tc1) + pn) + total));
+        if (_withhold is not null && ReadsDamaged(source, source + (2 * Tc1) + pn) && _damaged.Count < MaxRanges)
+        {
+            _damaged.Add((start, start + total));
+            _dependent.Add((start, start + total));
+        }
+
         float[] pcm = _buffer[channel];
         var synth = new float[(2 * Tc1) + pn];
         Array.Copy(pcm, (int)(source - _base), synth, 0, synth.Length);
@@ -158,6 +197,42 @@ internal sealed class PreNoise
         }
     }
 
+    // The positions of the samples about to leave that a correction made from damaged samples, in order and merged.
+    private void ReportDependent(long limit)
+    {
+        if (_dependent.Count == 0)
+        {
+            return;
+        }
+
+        var spans = new List<(long First, long End)>();
+        foreach ((long a, long b) in _dependent.OrderBy(r => r.First))
+        {
+            long first = Math.Max(a, _emitted);
+            long end = Math.Min(b, limit);
+            if (first >= end)
+            {
+                continue;
+            }
+
+            if (spans.Count > 0 && first <= spans[^1].End)
+            {
+                spans[^1] = (spans[^1].First, Math.Max(spans[^1].End, end));
+            }
+            else
+            {
+                spans.Add((first, end));
+            }
+        }
+
+        foreach ((long first, long end) in spans)
+        {
+            _withhold!(first, end - first);
+        }
+
+        _dependent.RemoveAll(r => r.End <= limit);
+    }
+
     // The samples no correction can change leave; the history the corrections read stays.
     private void Release(bool force)
     {
@@ -171,6 +246,7 @@ internal sealed class PreNoise
 
         if (limit > _emitted)
         {
+            ReportDependent(limit);
             int count = (int)(limit - _emitted);
             var planar = new float[_channels * count];
             for (int c = 0; c < _channels; c++)
@@ -183,6 +259,7 @@ internal sealed class PreNoise
         }
 
         long keep = _emitted - ReadReach;
+        _damaged.RemoveAll(r => r.End <= keep);
         if (!force && keep - _base > 8192)
         {
             int drop = (int)(keep - _base);

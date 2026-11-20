@@ -272,17 +272,18 @@ internal sealed class FrameDecoder : IFrameDecoder
             _withheldLeft -= withheld;
         }
 
+        // Both spans count from the frame's start, so where they overlap the larger one is withheld, not their sum.
+        int dependent = Math.Min(_dependentLeft, samples);
+        _dependentLeft -= dependent;
         int count = samples - withheld;
         if (count == 0)
         {
             return 0;
         }
 
-        int dependent = Math.Min(_dependentLeft, count);
-        if (dependent > 0)
+        if (dependent > withheld)
         {
-            _context.WithholdFromMeasurements(frame.FirstSample + withheld, dependent);
-            _dependentLeft -= dependent;
+            _context.WithholdFromMeasurements(frame.FirstSample + withheld, dependent - withheld);
         }
 
         int stride = MaxFrameSamples;

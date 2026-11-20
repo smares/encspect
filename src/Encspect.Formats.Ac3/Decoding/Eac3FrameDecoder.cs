@@ -97,6 +97,11 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
         }
 
         _followsFailedUnit = frame.FailsChecksum;
+        if (frame.FailsChecksum)
+        {
+            // Pre-noise corrections of later frames copy from this frame's output and the block it taints (A/52 Annex E 3.7).
+            (_pre ??= NewPreNoise()).MarkDamaged(frame.FirstSample, frame.FirstSample + frame.Samples + BlockSamples);
+        }
 
         int substreams = r.Next();
         int blocks = frame.Samples / BlockSamples;
@@ -274,7 +279,7 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
 
     private PreNoise? _pre;
 
-    private PreNoise NewPreNoise() => new(_channels, Output, _context.AddWork);
+    private PreNoise NewPreNoise() => new(_channels, Output, _context.AddWork, _context.WithholdFromMeasurements);
 
     private void Output(long first, float[] planar, int length)
     {

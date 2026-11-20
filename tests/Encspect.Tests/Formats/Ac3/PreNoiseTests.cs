@@ -98,4 +98,50 @@ public class PreNoiseTests
         float[] output = Run(signal, 256, [(300, 40), (100000, 40)], out _);
         Assert.Equal(signal, output);
     }
+
+    // A frame that failed its checksum leaves its output damaged: a correction of a later transient that copies from it makes the corrected samples depend on it, which are
+    // reported before they leave, and one that reads only undamaged samples reports nothing.
+    [Theory]
+    [InlineData(3000L, true)]
+    [InlineData(5400L, false)]
+    public void A_correction_that_reads_damaged_samples_reports_what_it_writes(long location, bool depends)
+    {
+        float[] signal = Signal(6144);
+        var spans = new List<(long First, long Samples)>();
+        long next = 0;
+        long reportedBeforeEmit = -1;
+        var pre = new PreNoise(1, (first, planar, length) =>
+        {
+            Assert.Equal(next, first);
+            next += length;
+            reportedBeforeEmit = spans.Count == 0 ? -1 : spans[^1].First + spans[^1].Samples;
+        }, _ => { }, (first, samples) => spans.Add((first, samples)));
+        // The damaged frame is [2304, 3840) and the block after it; the correction at 3000 reads [1608, 2560); the one at 5400 reads from 4328 on.
+        pre.MarkDamaged(2304, 2304 + 1536 + 256);
+        pre.Add(0, location, 50);
+        for (int at = 0; at < signal.Length; at += 256)
+        {
+            pre.Append(at, signal.AsSpan(at, 256).ToArray(), 256);
+        }
+
+        pre.Flush();
+        long blockStart = ((location / 256) - 1) * 256;
+        long total = (location - blockStart) + 50 + 256;
+        if (depends)
+        {
+            // Reported as the samples leave, in pieces that run on from one to the next.
+            Assert.Equal(location - total, spans[0].First);
+            for (int i = 1; i < spans.Count; i++)
+            {
+                Assert.Equal(spans[i - 1].First + spans[i - 1].Samples, spans[i].First);
+            }
+
+            Assert.Equal(total, spans.Sum(x => x.Samples));
+            Assert.True(reportedBeforeEmit >= location - 128);
+        }
+        else
+        {
+            Assert.Empty(spans);
+        }
+    }
 }

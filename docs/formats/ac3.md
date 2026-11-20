@@ -147,7 +147,10 @@ Dolby Atmos in Dolby Digital Plus adds object audio to an ordinary E-AC-3 stream
 ## Not yet covered
 
 - A frame whose CRCs are not compared, because the data ends inside it, is not withheld for them; it is cut, so it is lost.
-- The dither generators and transient pre-noise processing (which copies earlier samples) are not part of the span after a failed frame: it is the 256 samples a gap withholds.
+- **E-AC-3 transient pre-noise processing** (Annex E 3.7) reaches across frames:
+  - Forward, handled: a correction of a later frame whose source samples include a failed frame's output or the block after it writes samples that depend on it, so those samples are withheld too, beyond the 256. A correction made from them is itself a source for the next.
+  - Backward, not covered: a failed frame's own transient data, which its CRC covers, can rewrite up to 1,024 samples at the end of the frame before it, which may not have left the decoder yet. The contract takes spans in stream order, after the failed frame's own span is reported, so a span that starts before it cannot be reported without changing the contract or the measurer; those samples are measured as decoded.
+- **The dither generators:** a zero-bit mantissa draws a number, so a damaged frame's bit allocation can shift the generator's sequence for the rest of the stream. Later output then differs in its noise from an undamaged decode (the same statistics, as after a gap's reseed) and is not withheld for that.
 - E-AC-3's dependent substreams: the channel map's replacement of the independent substream's channels by those of a dependent one is applied only as far as the layout tokens go (Annex E 3.8); no downmix is made when a decoder would reproduce fewer channels.
 - E-AC-3 frames at a reduced sample rate (fscod2) and AC-3 frames with bsid 9 or 10 (half and quarter rate): only their headers are read, not their audio blocks, and they are not decoded; A/52 does not specify their bit allocation.
 - Object audio: the payloads after the JOC and OAMD fields named above (the per-object parameters, the program assignment, the object properties), the protection bits (their calculation is the implementation's, TS 102 366 H.2.2.4.3), TS 103 420's requirement that the container is in the last dependent substream, and Dolby Atmos in TrueHD.
