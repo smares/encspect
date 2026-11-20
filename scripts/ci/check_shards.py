@@ -2,6 +2,9 @@
 """Fails unless the shard filters of shards.json partition the tests of Encspect.Tests: every test, theory
 row included, is listed by exactly one shard, and no shard is empty or names a class that does not exist.
 
+It also checks the scoped filters of a pull request (scope.py): with no area selected, they list no test of an excluded class or
+method, and the shards the scope drops list nothing.
+
 Needs the test project built in Release:   python3 scripts/ci/check_shards.py
 """
 
@@ -11,6 +14,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import scope as test_scope  # noqa: E402
 import shards as shard_config  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -75,6 +79,22 @@ def main():
             problems.append(f"{test} is listed {count} times overall and {found[0][1]} times in {found[0][0]}")
     extra = set(owners) - set(everything)
     problems += [f"a shard lists {test}, which the full list does not" for test in sorted(extra)]
+
+    # The scope of a pull request (scope.py) leaves out the tests of the areas it did not select. With no area selected its filters
+    # leave out the most: they must list no test of an excluded class or method, and a shard it drops must list nothing at all.
+    scoped = test_scope.build(set())
+    left_out = set(scoped.excluded_classes)
+    for shard in shards:
+        members = listed(test_scope.shard_filter(scoped, shard, shards, include_nightly=False))
+        dropped = test_scope.is_empty(scoped, shard)
+        if dropped and members:
+            problems.append(f"the scope drops the shard {shard['name']}, which still lists {sum(members.values())} tests")
+        for test in members:
+            name = test.split("(")[0]
+            cls, method = name.rsplit(".", 2)[-2:]
+            if cls in left_out or method in scoped.excluded_methods.get(cls, []):
+                problems.append(f"the scoped filter of {shard['name']} still lists {test}")
+        print(f"{shard['name']} scoped to nothing: {sum(members.values())} tests{', dropped' if dropped else ''}")
 
     for problem in problems[:50]:
         print(f"::error::{problem}")
