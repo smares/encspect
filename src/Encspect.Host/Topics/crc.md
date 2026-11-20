@@ -9,12 +9,12 @@ references: ISO/IEC 11172-3 2.4.3.1, Table B.5; ISO/IEC 13818-3 2.4.2.4, 2.5.2.1
 
 **What it does not cover.** The CRC does not protect the audio data itself, such as Layer III's main data, which may lie in earlier frames. A matching CRC says the frame's control data is intact, not that every bit is.
 
-**In practice.** Most encoders write no CRC.
+**In practice.** Most encoders write no CRC by default.
 
-**In AAC.** An [ADTS](adts) header may carry the same CRC-16. It covers the header and the first bits of every channel element, so checking it means knowing where each element ends, which takes decoding its spectral data; the analyzer reads every element and verifies it, and says it is not verified only where an element cannot be read.
+**In AAC.** An [ADTS](adts) header may carry the same CRC-16. It covers the header and the first bits of every channel element, so checking it takes decoding the spectral data to find where each element ends; the analyzer reads every element and verifies it, unless one cannot be read.
 
 **In AC-3.** An [AC-3 frame](ac3-frames-and-bsi) has crc1 over its first 5/8 and crc2 over all of it; E-AC-3, one.
 
 **In DTS.** The headers of an [extension substream](dts-extension-substream), of XXCH, X96, XBR and the lossless extension (its sub-headers and navigation index too) end in a CRC-16 that is verified. A [core frame](dts-core-frames) with CPF set has CRC words that the specification says not to test, so they are reported as not verified.
 
-**What you see.** CRC and Computed under each protected frame, and a finding for frames whose CRCs differ. Other CRCs serve other purposes: the LAME tag has two, the multichannel extension one, every [Ogg page](ogg-pages) a CRC-32, Musepack SV8's stream header a CRC-32 ([SV8 packets](musepack-sv8-packets)), and each WavPack 5 block a checksum ([sub-blocks](wavpack-sub-blocks)). Every [FLAC frame](flac-frames) has a CRC-8 over its header and a CRC-16 over the frame. A [Monkey's Audio frame](monkeys-audio-frames) stores a CRC-32 over its decoded audio, and a [TTA stream](tta-stream) one over its header, one over its seek table and one at the end of every frame. A frame that fails its CRC is decoded, but the [measurements](measurements) leave it out.
+**What you see.** CRC and Computed under each protected frame, and a finding for frames whose CRCs differ. Other CRCs serve other purposes: the LAME tag has two, the multichannel extension one, every [Ogg page](ogg-pages) a CRC-32, Musepack SV8's stream header a CRC-32 ([SV8 packets](musepack-sv8-packets)), and each WavPack 5 block a checksum ([sub-blocks](wavpack-sub-blocks)). Every [FLAC frame](flac-frames) has a CRC-8 over its header and a CRC-16 over the frame. A [Monkey's Audio frame](monkeys-audio-frames) stores a CRC-32 over its decoded audio, and a [TTA stream](tta-stream) one over its header, one over its seek table and one at the end of every frame. A FLAC or TTA frame whose own CRC fails is decoded but left out of the [measurements](measurements).
