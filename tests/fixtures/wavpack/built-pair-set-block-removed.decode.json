@@ -21,7 +21,7 @@
         "name": "block header CRC",
         "stored": 20,
         "checked": 20,
-        "failed": 1
+        "failed": 2
       },
       {
         "name": "extended CRC",
@@ -43,6 +43,12 @@
       "severity": "Warning",
       "count": 1,
       "message": "The decoded audio of the block at 0x2304 does not have the CRC its correction block\u0027s header stores."
+    },
+    {
+      "code": "wavpack.correction-block-missing",
+      "severity": "Warning",
+      "count": 1,
+      "message": "The hybrid block at 0x34B4 was decoded without a correction block: the correction file (.wvc) has none that matches it, or the one that does fails its checksum or is cut. libwavpack counts it as an error."
     }
   ]
 }

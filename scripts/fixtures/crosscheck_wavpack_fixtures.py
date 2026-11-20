@@ -546,6 +546,12 @@ def check_pair(name, manifest, path, work, tool, problems):
     got = {"opens": True, "mode_wvc": facts["pair_mode_wvc"] == "1", "samples": int(facts["pair_samples"]), "errors": int(facts["pair_errors"]), "md5": facts["pair_md5"]}
     if got != manifest["crosscheck"]["pair"]:
         problems.append(f"libwavpack's pass over the pair is {got}, the manifest {manifest['crosscheck']['pair']}")
+    kinds = {p["kind"] for p in manifest["correction"]["problems"]}
+    if not kinds & {"notCorrectionData", "streamDiffers"}:
+        # The analyzer counts a hybrid block without its correction block, and a block whose CRC fails, as libwavpack counts its errors.
+        failed = sum(t["failed"] for t in manifest["verification"]["verify"]["checksums"] if t["name"] in ("block header CRC", "extended CRC"))
+        if failed != got["errors"]:
+            problems.append(f"the analyzer counts {failed} failed block CRCs for the pair, libwavpack {got['errors']} errors")
     if status == "consistent" and got["errors"] != 0:
         problems.append(f"the manifest calls the pair consistent and libwavpack counts {got['errors']} errors")
     if status == "inconsistent" and got["mode_wvc"] and got["errors"] == 0 and name not in PAIR_EXPLAINED:

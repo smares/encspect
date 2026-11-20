@@ -95,6 +95,7 @@ internal sealed class DecodeFeed
             }
 
             Session = Start(s, header, offset, bytes);
+            _belongs = header.IsHybrid && s.Opened?.Other is { } opened && Pairing.Belongs(header, opened);
             foreach ((long heldOffset, byte[] heldBytes, BlockHeader heldHeader, bool isHeldRefused) in _held)
             {
                 Hand(s, heldOffset, heldHeader, heldBytes, isHeldRefused ? BlockStatus.Refused : BlockStatus.None, false);
@@ -158,7 +159,6 @@ internal sealed class DecodeFeed
         bool isDsd = first.IsDsd;
         bool isFloat = first.IsFloat;
         bool hasCorrection = first.IsHybrid && s.Opened?.Other is { } other && Pairing.Belongs(first, other);
-        _belongs = hasCorrection;
         return s.Context.StartDecoding(WavPackCodecParser.CodecId, new DecodeSetup
         {
             Stream = s.Stream,

@@ -2,7 +2,7 @@
   "verification": {
     "decoding": "Decoded",
     "decodedSamples": 24000,
-    "isVerified": true,
+    "isVerified": false,
     "withCorrection": true,
     "checksums": [
       {
@@ -21,7 +21,7 @@
         "name": "block header CRC",
         "stored": 5,
         "checked": 5,
-        "failed": 0
+        "failed": 1
       },
       {
         "name": "extended CRC",
@@ -37,5 +37,12 @@
       }
     ]
   },
-  "findings": []
+  "findings": [
+    {
+      "code": "wavpack.correction-block-missing",
+      "severity": "Warning",
+      "count": 1,
+      "message": "The hybrid block at 0x0 was decoded without a correction block: the correction file (.wvc) has none that matches it, or the one that does fails its checksum or is cut. libwavpack counts it as an error."
+    }
+  ]
 }

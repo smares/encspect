@@ -2,7 +2,7 @@
   "verification": {
     "decoding": "Decoded",
     "decodedSamples": 24000,
-    "isVerified": null,
+    "isVerified": false,
     "withCorrection": true,
     "checksums": [
       {
@@ -21,7 +21,7 @@
         "name": "block header CRC",
         "stored": 3,
         "checked": 3,
-        "failed": 0
+        "failed": 2
       },
       {
         "name": "extended CRC",
@@ -38,6 +38,12 @@
     ]
   },
   "findings": [
+    {
+      "code": "wavpack.correction-block-missing",
+      "severity": "Warning",
+      "count": 2,
+      "message": "The hybrid block at 0x2930 was decoded without a correction block: the correction file (.wvc) has none that matches it, or the one that does fails its checksum or is cut. libwavpack counts it as an error."
+    },
     {
       "code": "wavpack.md5-needs-correction-file",
       "severity": "Info",
