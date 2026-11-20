@@ -288,6 +288,18 @@ internal sealed class StreamDecoder : IFrameDecoder, ICorrectionDecoder
         }
 
         _crcChecked++;
+
+        // A hybrid block of a pair that has no correction block is decoded as the lossy part and its lossy CRC holds, but libwavpack counts it as an error
+        // (read_wvc_block), and the stream is not the lossless audio the pair stands for.
+        bool isMissing = !isCorrected && header.IsHybrid && _context.Setup.HasCorrection;
+        if (isMissing && isCrcValid)
+        {
+            _crcFailed++;
+            _context.AddFinding(Severity.Warning, "wavpack.correction-block-missing",
+                $"The hybrid block at 0x{frame.Bytes.FileStart:X} was decoded without a correction block: the correction file (.wvc) has none that matches it, or the one that does fails its checksum or is cut. libwavpack counts it as an error.",
+                Nodes.BlockCrc(frame.Bytes, header.Crc));
+        }
+
         if (!isCrcValid)
         {
             _crcFailed++;

@@ -1,3 +1,6 @@
+// Derived from libwavpack 5.6.0 (open_utils.c: match_wvc_header and read_wvc_block), Copyright (c) 1998 - 2022 David Bryant, under the BSD 3-clause license.
+// The license text is in THIRD-PARTY-NOTICES.md.
+
 using Encspect.Core;
 
 namespace Encspect.Formats.WavPack;
@@ -123,13 +126,15 @@ internal static class Pairing
         return -1;
     }
 
-    // The next block of the correction file with audio: the ones that hold only metadata are no correction blocks.
+    // The next block of the correction file: libwavpack's read_next_header takes any block, one that holds no audio included, which then never matches
+    // (its sample count differs) and is skipped or leaves the main block without a correction, as match_wvc_header says. Runs of header-only blocks past the
+    // detailed ones are not kept block by block and are passed over.
     internal static int NextCorrection(State s, int from)
     {
         for (int i = from; i < s.Entries.Count; i++)
         {
             Entry e = s.Entries[i];
-            if (e.Kind == EntryKind.Block && e.Header.HasAudio)
+            if (e.Kind == EntryKind.Block)
             {
                 return i;
             }

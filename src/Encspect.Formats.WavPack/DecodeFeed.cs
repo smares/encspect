@@ -22,6 +22,7 @@ internal sealed class DecodeFeed
     private long _skippedOffset;
 
     private CorrectionCursor? _correction;
+    private bool _belongs;
 
     public IDecodeSession? Session { get; private set; }
 
@@ -157,6 +158,7 @@ internal sealed class DecodeFeed
         bool isDsd = first.IsDsd;
         bool isFloat = first.IsFloat;
         bool hasCorrection = first.IsHybrid && s.Opened?.Other is { } other && Pairing.Belongs(first, other);
+        _belongs = hasCorrection;
         return s.Context.StartDecoding(WavPackCodecParser.CodecId, new DecodeSetup
         {
             Stream = s.Stream,
@@ -179,7 +181,8 @@ internal sealed class DecodeFeed
 
         _firstPosition = _firstPosition < 0 ? Math.Max(0, s.FirstIndex) : _firstPosition;
         MappedBytes? correction = null;
-        if (header.HasAudio && header.IsHybrid && (status & BlockStatus.HasWv) != 0 && s.Opened?.Other is { } other)
+        // A correction file the pairing says is another stream's is not used: the stream is decoded as its lossy part.
+        if (_belongs && header.HasAudio && header.IsHybrid && (status & BlockStatus.HasWv) != 0 && s.Opened?.Other is { } other)
         {
             correction = (_correction ??= new CorrectionCursor(other)).Next(header);
         }

@@ -281,7 +281,7 @@
    "withCorrection": true
   },
   "verify": {
-   "isVerified": null,
+   "isVerified": false,
    "decoding": "decoded",
    "checksums": [
     {
@@ -306,7 +306,7 @@
      "coversAllAudio": true,
      "stored": 3,
      "checked": 3,
-     "failed": 0
+     "failed": 2
     },
     {
      "name": "extended CRC",
@@ -329,6 +329,10 @@
   }
  },
  "decode_findings": [
+  {
+   "code": "wavpack.correction-block-missing",
+   "count": 2
+  },
   {
    "code": "wavpack.md5-needs-correction-file",
    "count": 1

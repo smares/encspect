@@ -615,6 +615,8 @@ def pair_cases():
                          main, None, "external-hybrid-mono-b3-correction-wvc.wvc"),
         "other-stream-damaged": ("The correction file of the mono hybrid-mono-b3-correction with one bit of its first block's stored checksum changed, beside the stereo hybrid-b4-correction: "
                                  "a file of another stream, whose checksums are not the stream's.", main, b"".join([checksum_broken(mono_blocks[0])] + mono_blocks[1:]), None),
+        "first-block-removed": ("The correction file of hybrid-b4-correction without its first block: it states a first block index that is not the file's, so the pairing finds "
+                               "another stream and the decoder uses none of it, though libwavpack takes the blocks that match.", main, b"".join(cb[1:]), None),
         "other-encode": ("The correction file of hybrid-b4-maximum (the same blocks encoded with -cc) beside hybrid-b4-correction: the blocks agree in index, samples and "
                          "size but not in flags, so libwavpack uses none of them.", main, None, "external-hybrid-b4-maximum-wvc.wvc"),
         "lossless-companion": ("A lossless WavPack file as the correction file of hybrid-b4-correction.", main, None, "external-lossless-16-stereo.wv"),
@@ -623,7 +625,7 @@ def pair_cases():
         "not-written": ("The correction file of hybrid-b4-correction beside hybrid-b4-md5, which was written without one: a companion that is found is checked as any other.",
                         base("hybrid-b4-md5"), None, "external-hybrid-b4-correction-wvc.wvc"),
         "set-block-removed": ("The correction file of hybrid-51-b3-correction without the second block of its first set: the main block takes the third, whose flags equal "
-                              "its own, and the main block after it has none.", base("hybrid-51-b3-correction"), b"".join(sets[:1] + sets[2:]), None),
+                              "its own, and the main block after it has none. The manifest's audio is the analyzer's: libwavpack mutes the block whose CRC fails and no tool keeps it.", base("hybrid-51-b3-correction"), b"".join(sets[:1] + sets[2:]), None),
     }
 
 
@@ -639,6 +641,7 @@ PAIR_DECODES = {
     "empty": (False, 0),
     "other-stream": (True, 5),
     "other-stream-damaged": (True, 5),
+    "first-block-removed": (True, 1),
     "other-encode": (True, 5),
     "lossless-companion": (True, 5),
     "flags-differ": (True, 1),
@@ -649,8 +652,11 @@ PAIR_DECODES = {
 
 # Pairs whose audio the analyzer decodes differently from libwavpack, with the analyzer's MD5 (the manifest's decoded_pcm_md5) and why: libwavpack mutes a block
 # whose CRC fails (WavpackUnpackSamples, check_crc_error), and the analyzer keeps the audio the block decodes to and reports the CRC that differs.
+# The MD5 is the analyzer's where no tool gives the audio it keeps (no tool keeps a block whose CRC fails), None where the manifest's audio is the model's own
+# (wavpack_decode.py's lossy decode, independent of the analyzer).
 PAIR_AUDIO_DIFFERS = {
     "set-block-removed": ("43b0804e9405fa2871bcb962be781d56", "the main block that takes the wrong correction block (the third of its set) decodes to audio whose CRC fails; libwavpack mutes it"),
+    "first-block-removed": (None, "the pairing says another stream, so the analyzer decodes the lossy part; libwavpack uses the correction blocks that match"),
 }
 
 
@@ -676,7 +682,7 @@ def write_pairs():
         result = m.manifest(data, 0, len(data), {"regions": [{"name": "WavPack", "offset": 0, "length": len(data)}], "description": description, "findings": [],
                                                  "crosscheck": {"valid": True, "decode": alone_decode(data)}}, companion=correction)
         result["companion"] = named
-        if stem in PAIR_AUDIO_DIFFERS:
+        if stem in PAIR_AUDIO_DIFFERS and PAIR_AUDIO_DIFFERS[stem][0]:
             result["decoded_pcm_md5"] = PAIR_AUDIO_DIFFERS[stem][0]
         mode, errors = PAIR_DECODES[stem]
         passed = result["crosscheck"]["pair"]

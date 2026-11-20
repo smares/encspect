@@ -173,7 +173,7 @@ internal sealed class DecodeSession : IDecodeSession
         }
 
         // The unit's bytes earn the session's coding the allowance of its decoder, before the unit is decoded.
-        run.Allow(frame.Bytes.Length, _unitsPerByte);
+        run.Allow(frame.Bytes.Length + (frame.Correction?.Length ?? 0), _unitsPerByte);
 
         // The span of the units handed over, lost ones included, which the measurer needs to count a lost first or last unit.
         if (frame.Samples > 0 && frame.FirstSample >= 0)

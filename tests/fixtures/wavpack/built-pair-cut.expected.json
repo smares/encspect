@@ -366,7 +366,7 @@
    "withCorrection": true
   },
   "verify": {
-   "isVerified": true,
+   "isVerified": false,
    "decoding": "decoded",
    "checksums": [
     {
@@ -391,7 +391,7 @@
      "coversAllAudio": true,
      "stored": 5,
      "checked": 5,
-     "failed": 0
+     "failed": 1
     },
     {
      "name": "extended CRC",
@@ -413,7 +413,12 @@
    "withCorrection": true
   }
  },
- "decode_findings": [],
+ "decode_findings": [
+  {
+   "code": "wavpack.correction-block-missing",
+   "count": 1
+  }
+ ],
  "regions": [
   {
    "name": "WavPack",

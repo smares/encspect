@@ -26,7 +26,7 @@ internal static class CorrectionFindings
             {
                 case CorrectionStatus.Missing:
                     context.AddFinding(Severity.Info, MissingCode,
-                        $"No correction file {name} was found beside the file{(pairing.IsWritten ? ", although the stream's configuration block says its encoder wrote one" : string.Empty)}, so the stream is reported as its lossy part alone.", node);
+                        $"No correction file {name} was found{(pairing.IsWritten ? ", although the stream's configuration block says its encoder wrote one" : string.Empty)}, so the stream is reported as its lossy part alone.", node);
                     break;
                 case CorrectionStatus.Inconsistent:
                     foreach (CorrectionProblem problem in pairing.Problems)

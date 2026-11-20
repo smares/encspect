@@ -158,6 +158,7 @@ MEDIAINFO_READS_OTHERWISE = {
 # Pairs whose audio libwavpack gives differently, and why: it mutes a block whose CRC fails; blocks without a correction block it decodes as the lossy part, as
 # the analyzer does, so a pair with such errors is compared too.
 PAIR_AUDIO_DIFFERS = {
+    "built-pair-first-block-removed": "the pairing says another stream, so the analyzer decodes the lossy part; libwavpack uses the correction blocks that match",
     "built-pair-set-block-removed": "the main block that takes the wrong correction block decodes to audio whose CRC fails; libwavpack mutes it (check_crc_error), the analyzer keeps it",
 }
 

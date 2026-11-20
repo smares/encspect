@@ -329,7 +329,7 @@ def match(main, other):
 def applied(main_entries, entries):
     """How libwavpack's read_wvc_block takes the correction file's blocks for the main file's hybrid blocks (open_utils.c): the entries of the correction blocks the
     main blocks use (a matching block that is whole and whose checksum holds), and how many hybrid blocks have none."""
-    audio = [e for e in entries if e["kind"] == "block" and e["header"]["samples"]]
+    audio = [e for e in entries if e["kind"] == "block"]
     used, missing, j = [], 0, 0
     for block in hybrid_blocks(main_entries):
         while True:
@@ -392,10 +392,11 @@ def pairing(main_entries, other_data):
     if not is_correction(entries):
         return {"status": "inconsistent", "problems": [{"kind": "notCorrectionData", "count": 1}], "entries": entries}
     mains = hybrid_blocks(main_entries)
-    audio = [e for e in entries if e["kind"] == "block" and e["header"]["samples"]]
+    # libwavpack's read_next_header takes any block of the correction file, one with no audio included (it never matches).
+    audio = [e for e in entries if e["kind"] == "block"]
     problems = []
     matched = 0
-    first = audio[0]["header"]
+    first = next(e for e in audio if e["header"]["samples"])["header"]
     if mains and (mains[0]["header"]["version"] != first["version"] or mains[0]["header"]["total"] != first["total"] or mains[0]["header"]["index"] != first["index"]
                   or (mains[0]["header"]["flags"] ^ first["flags"]) & STREAM_FLAGS):
         problems.append({"kind": "streamDiffers", "count": 1})
@@ -456,7 +457,7 @@ def correction(data, entries, info, companion):
             result = {"status": "notWritten", "problems": []}
         else:
             result = {"status": "missing", "problems": []}
-            findings.append({"code": "correction.missing", "contains": "was found beside the file"})
+            findings.append({"code": "correction.missing", "contains": "was found"})
     else:
         found = pairing(entries, companion)
         result = {"status": found["status"], "problems": found["problems"]}
@@ -524,6 +525,7 @@ def decoded_with_correction(result, entries, pair, passed):
     used, missing = applied(entries, pair["entries"])
     hybrid = len(hybrid_blocks(entries))
     failed = max(0, passed["errors"] - missing)
+    # libwavpack counts a hybrid block without a correction block as an error, and the analyzer counts it as a failed block header CRC.
     result["decoded_samples"] = result["pcm_samples"] = passed["samples"]
     result["decoded_pcm_md5"] = passed["md5"]
     extra_stored = sum(1 for e in entries if e["kind"] == "block" and has(e, 0x0C)) + sum(1 for e in pair["entries"] if e["kind"] == "block" and has(e, 0x0C))
@@ -534,7 +536,7 @@ def decoded_with_correction(result, entries, pair, passed):
         tallies["withCorrection"] = True
         tallies.pop("isLossy", None)
         if mode == "verify":
-            by_name["block header CRC"]["failed"] = failed
+            by_name["block header CRC"]["failed"] = failed + missing
             by_name["extended CRC"]["checked"] = extra_used
             md5 = by_name["MD5"]
             if md5["stored"] and not missing and md5["checked"] == 0 and tallies["decoding"] == "decoded":
@@ -544,10 +546,12 @@ def decoded_with_correction(result, entries, pair, passed):
                 tallies["withCorrection"] = False
     # The findings: the lossless audio's MD5 is compared (or not) where the decoding says so, and a block whose CRC fails is one finding for each block.
     verify = result["verification"]["verify"]
-    findings = [f for f in result["decode_findings"] if f["code"] not in ("wavpack.md5-needs-correction-file", "wavpack.audio-crc-mismatch", "wavpack.md5-mismatch")]
+    findings = [f for f in result["decode_findings"] if f["code"] not in ("wavpack.md5-needs-correction-file", "wavpack.audio-crc-mismatch", "wavpack.md5-mismatch", "wavpack.correction-block-missing")]
     by_name = {t["name"]: t for t in verify["checksums"]}
     if failed:
         findings.append({"code": "wavpack.audio-crc-mismatch", "count": failed})
+    if missing:
+        findings.append({"code": "wavpack.correction-block-missing", "count": missing})
     if by_name["MD5"]["stored"] and missing and verify["decoding"] == "decoded":
         findings.append({"code": "wavpack.md5-needs-correction-file", "count": 1})
     if by_name["MD5"]["failed"]:

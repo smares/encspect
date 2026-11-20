@@ -75,6 +75,7 @@ FIXTURES = {
     "hybrid-b4-correction": (("wav", 44100, 2, 16, SHORT), ["-b4", "-c"], ["wv", "wvc"]),
     "hybrid-b4-md5": (("wav", 44100, 2, 16, SHORT), ["-b4", "-m"], ["wv"]),
     "hybrid-b4-correction-md5": (("wav", 44100, 2, 16, SHORT), ["-b4", "-c", "-m"], ["wv"]),
+    "hybrid-b4-correction-md5-pair": (("wav", 44100, 2, 16, SHORT), ["-b4", "-c", "-m"], ["wv", "wvc"]),
     "hybrid-mono-b3-md5": (("wav", 44100, 1, 16, SHORT), ["-b3", "-m"], ["wv"]),
     "hybrid-mono-b3": (("wav", 44100, 1, 16, SHORT), ["-b3"], ["wv"]),
     "hybrid-mono-b3-correction": (("wav", 44100, 1, 16, SHORT), ["-b3", "-c"], ["wv", "wvc"]),

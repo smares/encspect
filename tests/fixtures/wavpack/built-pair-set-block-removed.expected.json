@@ -1170,7 +1170,7 @@
      "coversAllAudio": true,
      "stored": 20,
      "checked": 20,
-     "failed": 1
+     "failed": 2
     },
     {
      "name": "extended CRC",
@@ -1196,6 +1196,10 @@
   {
    "code": "wavpack.audio-crc-mismatch",
    "count": 1
+  },
+  {
+   "code": "wavpack.correction-block-missing",
+   "count": 1
   }
  ],
  "regions": [
@@ -1205,7 +1209,7 @@
    "length": 58052
   }
  ],
- "description": "The correction file of hybrid-51-b3-correction without the second block of its first set: the main block takes the third, whose flags equal its own, and the main block after it has none.",
+ "description": "The correction file of hybrid-51-b3-correction without the second block of its first set: the main block takes the third, whose flags equal its own, and the main block after it has none. The manifest's audio is the analyzer's: libwavpack mutes the block whose CRC fails and no tool keeps it.",
  "findings": [
   {
    "code": "correction.inconsistent",

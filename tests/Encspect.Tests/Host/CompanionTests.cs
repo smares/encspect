@@ -75,6 +75,19 @@ public class CompanionTests
     }
 
     [Fact]
+    public void AnInputSavedUnderTheCompanionsOwnExtensionHasNoCompanionAndIsNotPairedWithItself()
+    {
+        using var folder = new TempFolder();
+        string saved = folder.Copy(Main, "song.ofc");
+
+        Report report = AnalyzeFile(saved);
+
+        Assert.Equal(CorrectionStatus.Missing, Stream(report).Correction!.Status);
+        Assert.Empty(report.Companions);
+        Assert.DoesNotContain(report.Findings, f => f.Code == "correction.inconsistent");
+    }
+
+    [Fact]
     public void AMissingCompanionIsReportedAndTheStreamIsItsLossyPart()
     {
         using var folder = new TempFolder();

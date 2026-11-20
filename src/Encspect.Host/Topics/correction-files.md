@@ -7,7 +7,7 @@ references: WavPack 4 and 5 binary file/block format (David Bryant, April 2020);
 
 **The problem.** A lossy file plays anywhere but cannot give the original audio back, and a lossless file can but is large. A pair of files offers both: the main file plays alone, and a second file holds what the lossy coding left out.
 
-**How it works.** The correction file is read together with its main file, one block for each block. WavPack's .wvc file holds blocks that libwavpack matches to the .wv file's blocks by block index, sample count and flags. OptimFROG's .ofc file holds one correction block for each data block of its .ofs file, in the same order. A decoder given both files rebuilds the original audio; given the main file alone it plays the lossy audio.
+**How it works.** The correction file is read together with its main file, one block for each block. WavPack's .wvc file holds blocks that libwavpack matches to the .wv file's blocks by block index, sample count and flags. In Encspect's test files (OptimFROG 5.100), an .ofc file holds one correction block for each data block of its .ofs file, in the same order. A decoder given both files rebuilds the original audio; given the main file alone it plays the lossy audio.
 
 **How Encspect finds it.** The host looks for the file, never the parser: the input's name without its last extension, a dot and the correction file's extension, in the same folder (x.ofs to x.ofc). A stream or standard input has no folder, so the pair is reported as unchecked.
 
