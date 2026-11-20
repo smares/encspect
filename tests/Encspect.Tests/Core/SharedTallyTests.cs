@@ -101,6 +101,28 @@ public class SharedTallyTests
     }
 
     [Fact]
+    public void Units_past_the_listed_ones_count_in_the_tally_and_stay_out_of_the_series()
+    {
+        var tally = new UnitCategoryTally("Stereo Coding", Codings, "frame", GraphConcept.StereoCoding);
+        tally.Add(0);
+        tally.Add(1);
+        tally.Count(1);
+        tally.Count(1);
+
+        var statistics = new Node("Statistics", 0, 10);
+        Node node = tally.AddTo(statistics, Cover, "A tally.", null, "Frame", "Frames")!;
+        Series bitrate = new("Bitrate", "kbps", SeriesAxis.FrameOffset, new double[] { 0, 1 }, new double[] { 1, 1 });
+        CategorySeries series = tally.Build(bitrate, node, "A series.", null, null)!;
+
+        Assert.Equal(2, tally.Units);
+        Assert.Equal(4, tally.Total);
+        Assert.Equal("4 frames", node.Value!.ToString());
+        Assert.Equal(["1 frame (25.0%)", "3 frames (75.0%)"], node.Children.Select(c => c.Value!.ToString()));
+        Assert.Equal(2, series.Count);
+        Assert.Equal(2, series.Counts.Sum());
+    }
+
+    [Fact]
     public void A_variable_tally_takes_any_number_of_values_for_a_unit()
     {
         var tally = new UnitCategoryTally("Stereo Coding", Codings, "stereo block", GraphConcept.StereoCoding, isVariable: true);
