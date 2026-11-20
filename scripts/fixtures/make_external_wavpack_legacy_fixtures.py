@@ -110,6 +110,14 @@ FIXTURES = dict([
         ("lossywav", ("file", LOSSYWAV), "", ("wv",)),
         ("standard-input", ("wav", 44100, 2, 16, SHORT), "-", ("wv",)),
     ]],
+    # Pairs of the paths the first pairs do not take (the correction added in mono, after the joint-stereo step and with the noise shaping of the lossy coding): 3.4 only,
+    # since 3.97's files are 3.4's byte for byte.
+    *[fixture("3.4", t, s, a, ("wv", "wvc")) for t, s, a in [
+        ("hybrid-320-mono-correction", ("wav", 44100, 1, 16, SHORT), "-b320 -c"),
+        ("hybrid-320-joint-stereo-correction", ("wav", 44100, 2, 16, SHORT), "-b320 -j1 -c"),
+        ("hybrid-320-shaping-correction", ("wav", 44100, 2, 16, SHORT), "-b320 -s1 -c"),
+        ("hybrid-320-96k-correction", ("wav", 96000, 2, 16, SHORT), "-b320 -c"),
+    ]],
     # What 3.97's documentation adds to 3.4's options: the raw and hybrid modes together ("With version 3.96 the raw and hybrid modes are usable together
     # (with a warning)"), which -y answers. 3.4's limit on 3-byte samples is a question of the DOS build, so one 24-bit file has the full length.
     *[fixture("3.97", t, s, a, f) for t, s, a, f in [
