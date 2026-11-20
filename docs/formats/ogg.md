@@ -21,6 +21,7 @@ The Ogg container (RFC 3533). Its codecs have their own pages: [Speex](speex.md)
 - **Codecs:** each stream's packets go to the codec parser its first packet names.
   - The first packet is recognized for Speex, Vorbis, Opus, FLAC, Theora, Skeleton, CELT, Kate, Dirac, PCM and VP8 by their identification headers. A stream whose codec has no parser gets its node with the pages' figures and an info finding; an unknown first packet gets one too.
 - **Packets handed over:** the packets of a page that fails its CRC reach the codec parser as the page holds them, and so do the packets with bytes present on a truncated page, the one the data cuts flagged as cut (`MappedBytes.IsCut`); a packet left unfinished at the end of a stream is handed over cut. libogg drops these pages, so a decoder lacks their packets; the codec parsers count the packets' declared samples and record a cut packet as lost samples. The granule position of a truncated page is not used.
+- **Packets on a failed page:** a packet with a byte on a page whose CRC fails is flagged `MappedBytes.FailsChecksum`, whether it ends on that page, continues past it or begins on it (one that spans a failing page and a good one is flagged whole). The codec parser passes the flag on, and the measurements leave the packet's positions out as withheld samples ("checksum failed") together with the span after it that the codec's state carries; the decoded samples, the verification and the findings stay as they are, and the page CRC is no tally of the codec's. Each codec's span is in its page: [Vorbis](vorbis.md#decoding), [Opus](opus.md#decoding), [Speex](speex.md#decoding) and [FLAC](flac.md#ogg-flac) ([the design](../design/damaged-units.md#as-built-pull-request-5)). A truncated page has no CRC to compare and flags nothing; a stream whose first page fails is not identified at all.
 - **Length:** a logical stream that its codec parser reports once also lists **Container Samples** (its last granule position less the stream's Start Offset) and **Container Duration** (that length at the stream's sampling rate); for Opus the position counts at 48 kHz and includes the pre-skip, as every container's figure is the container's own statement without the codec's trims (see [the samples definition](../design/samples-definition.md#container-length)).
 - **Playback groups:** the streams of one link play at the same time, so they share a playback group and the summary counts the longest once; the links of a chain follow one another and add up.
 - **Limits:**
@@ -67,6 +68,7 @@ Findings of one kind are reported once per stream, with a count.
 - **Analyzed:** Speex, Vorbis and Opus.
 - **Streams past the limit** above, and the packets of any stream over 64 MiB, are not read.
 - Anything that needs decoding: no audio is rebuilt.
+- A packet is checked by nothing but its page's CRC in Vorbis, Opus and Speex, so a page whose bytes are damaged and whose CRC holds again (or a packet damaged before it was paged) is measured as it decodes; a page with a failing CRC and intact bytes withholds its packets all the same, since the CRC cannot say which byte changed.
 
 ## Articles
 
