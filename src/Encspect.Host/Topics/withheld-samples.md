@@ -7,7 +7,7 @@ references: Encspect's designs for lossy decoders (docs/design/lossy-decoders.md
 
 **The problem.** In a lossy coding the output of a unit depends on the units before it: a transform adds the overlap of the previous unit, a filter keeps a history, a predictor adapts over many units. When a unit is lost, the first units after it cannot be rebuilt correctly, though their own bytes are intact.
 
-**How it works.** The decoder never conceals a lost unit with made-up audio. After a gap it resets its state and holds back the output that depends on what was lost. Those positions are withheld samples, a count of samples per channel with a reason, such as after a gap, after frames of 0 bytes, main data not available or checksum failed. Where a span ends inside a unit, the decoder writes the rest of that unit.
+**How it works.** The decoder never conceals a lost unit with made-up audio. After a gap it resets its state and holds back the output that depends on what was lost. Those positions are withheld samples, a count of samples per channel with a reason, such as after a gap, after frames of 0 bytes, or main data not available. Where a span ends inside a unit, the decoder writes the rest of that unit.
 
 **Not lost samples.** [Lost samples](samples-and-lost-samples) are the declared samples of units that could not be read or decoded. Withheld samples belong to units that were read and decoded, whose output would be wrong. Both are positions that no measured block covers, and the measurements count them apart.
 
