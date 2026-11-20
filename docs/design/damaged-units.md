@@ -244,3 +244,25 @@ Decided by the lead, 2026-11-20: every recommendation below.
 - **A block wholly inside a span** is left out before it is looked at, so a failed unit whose block does not fit the declared output does not end the measuring.
 - **The GUI** shows "No audio was measured: 400 samples withheld (checksum failed)." for a stream in which every unit fails.
 - **`DecodeContext.Withhold`** refuses `ChecksumFailed`; a decoder reports written positions with `WithholdFromMeasurements`.
+
+## As built, pull request 3
+
+- **WavPack 4 and 5:**
+  - The parser flags a block whose checksum fails or is missing (`FailsChecksum`, beside `IsDamaged`, which keeps the oversized block too). The decoder keeps one flag for the set being gathered: set by the parser's flag, by a block CRC that fails (a muted block's included) and by an extra CRC that fails. At the set's final block it calls `WithholdFromMeasurements` for the whole set before it writes the planes, so a muted block's zeros are no longer digital silence.
+  - The host reports the flagged block's own span first; the measurer clips the repeat, so the set is withheld once.
+  - A set that is never written (an unreadable block, more samples than the set holds at once) is lost or not measured, not withheld.
+  - With and without a correction file the main file's blocks behave the same: the correction is not applied, so only the main file's blocks are decoded. A damaged correction block withholds nothing (`WavPackDamagedUnitsTests`). The first block libwavpack opens the file with is refused when its checksum fails, so a failed first block is lost, not withheld.
+  - WavPack 1 to 3 is unchanged.
+- **Monkey's Audio:**
+  - Every frame of every width is held until its CRC is known: `DecodeHeld` for the 24-bit retry (which reports before it releases the final attempt), the new `DecodeHeldOnce` for the other widths and for 24-bit audio in interim mode, `DecodeTwice` and the new `DecodeTwiceOnce` above `DefaultMaxHeldSamples`. `Release` converts floats, since 32-bit float files now go through it.
+  - A frame whose coded data breaks the syntax writes the chunks decoded before the break, as it did, and fails with `decode.frame-invalid`; its CRC is unknown, so nothing is withheld.
+  - `OldFrameDecoder` makes the samples twice for a file with a CRC (once to hash, once to write) and charges both; the 30-bit checksum is over the arrays and needs no first pass.
+  - The decoded PCM of every fixture is unchanged (the decode goldens).
+- **TrueHD and MLP:**
+  - The parser flags a unit in which a substream's parity byte or CRC-8 fails (`UnitStatus.CheckFails`); a restart header CRC does not count.
+  - The decoder keeps `_isDependent`, set by a flagged unit and cleared by a unit in which every substream it reads has a restart header, and by a reset. A unit in between is withheld for its output samples, before it is written; the unit that restarts every substream is not.
+  - The substream checks of the fourth (Atmos) substream are not compared, so its units are never flagged.
+  - A lossless check that fails withholds nothing (`built-audio-bit-flipped`).
+- **Goldens added** (new `.measure.json`, nothing existing changed): WavPack `built-block-crc-changed`, `built-audio-bit-flipped`, `built-stereo-mute-limit`, `built-bitstream-cut`, `built-bad-checksum`, `built-checksum-missing`; Monkey's Audio `built-frame-crc-changed`, `built-24-bit-frame-crc-changed`, `built-old-3830-crc-changed`, `built-old-3850-checksum-changed`, `built-old-3860-crc-changed`; TrueHD `built-substream-crc-mismatch`, `built-substream-parity-mismatch`, `built-mlp-substream-crc-mismatch`, `built-audio-bit-flipped` (nothing withheld). No new fixture was needed.
+- **Cross-checks:** none of the WavPack, Monkey's Audio and TrueHD cross-checks reads a measurement, and the PCM they compare is unchanged. The lossyWAV figures cross-check already leaves out a stream with withheld samples; its WavPack and Monkey's Audio files are undamaged.
+- **Tests:** `WavPackDamagedUnitsTests` (the withheld set, muted blocks not silence, a pair with and without its correction file), `MonkeysAudioDamagedUnitsTests` (withheld frames, the cap with `MonkeysAudioDecoder(0)` giving the same PCM and measurements), `TrueHdDamagedUnitsTests` (the span to the next restart, a lossless check that withholds nothing), and the measure goldens and the unchanged-PCM test in each.

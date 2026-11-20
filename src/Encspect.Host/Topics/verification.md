@@ -11,7 +11,7 @@ references: RFC 9639 (FLAC), sections 8.2, 9.1.8 and 9.3; TTA format description
 
 **What verified means here.** A stream is verified when every checksum it stores was compared and holds, and at least one of them covers all of its audio. A checksum that every frame carries covers all of the audio only where no frame is missing: a file cut after a whole frame, or with frames removed, can pass every frame checksum and still be incomplete. A TTA stream has no checksum over decoded audio, so the CRC-32 of every frame verifies it without decoding, provided the CRC-32s of its header and seek table hold and no frame is missing; in Encspect's test files a frame's CRC-32 covers its coded bytes ([TTA](tta-stream)). A checksum that differs makes the stream not verified; one that was not compared leaves it unknown.
 
-A FLAC or TTA frame whose own CRC fails is decoded but left out of the measurements ([withheld samples](withheld-samples)).
+A unit whose own checksum fails (a FLAC, TTA, WavPack, Monkey's Audio or TrueHD one) is decoded but left out of the measurements ([withheld samples](withheld-samples)); a stream-wide checksum such as an MD5 cannot say which unit is damaged and withholds nothing.
 
 **One pass.** Asking for [measurements](measurements) decodes with the same options, so the checksums over decoded audio are compared in the same pass.
 
