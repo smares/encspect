@@ -98,7 +98,28 @@ internal sealed class State
 
     public long SilentFrames { get; set; }
 
-    public long PseudoStereoFrames { get; set; }
+    // The coding of each two-channel frame the bitrate figures cover; the series keeps the frames the series of bitrates has a point for. Silence takes precedence over pseudo-stereo, as in both
+    // decoders; one silent channel alone changes nothing in decoding, so it counts as mid/side stereo.
+    public static readonly Category[] StereoCodings =
+    [
+        new("Mid/side stereo", Explain.StatMidSide) { Topic = Topics.MidSideStereo },
+        new("Pseudo-stereo", Explain.StatPseudoStereo) { Topic = Topics.Frames },
+        new("Silence", Explain.StatSilence) { Topic = Topics.Frames },
+    ];
+
+    public UnitCategoryTally Stereo { get; } = new("Stereo Coding", StereoCodings, "frame", GraphConcept.StereoCoding);
+
+    // A mono stream's flags, one per frame the series of bitrates has a point for: the frame is flagged silent or not. The "with" count equals "Silent Frames".
+    public static readonly Category[] SilenceFlags =
+    [
+        new("With silence", Explain.CategorySilent) { Topic = Topics.Frames },
+        new("Without silence", Explain.CategoryNotSilent) { Topic = Topics.Frames },
+    ];
+
+    public CategorySeriesBuilder SilentFlags { get; } = new("Silent Frames", SilenceFlags, "frame", 1);
+
+    public static int StereoCodeOf(uint special, bool hasCodes) =>
+        !hasCodes ? 0 : (special & 3) == 3 ? 2 : (special & 4) != 0 ? 1 : 0;
 
     public long SpecialFrames { get; set; }
 

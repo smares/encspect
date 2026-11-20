@@ -194,13 +194,6 @@
                   "length": 1500
                 },
                 {
-                  "name": "Pseudo-Stereo Frames",
-                  "value": 1,
-                  "unit": "frames",
-                  "offset": 0,
-                  "length": 1500
-                },
-                {
                   "name": "Stored Frame Checksums",
                   "value": 1,
                   "unit": "frames",
@@ -255,6 +248,21 @@
                   "children": [
                     {
                       "name": "160 to 191 kbps",
+                      "value": "1 frame (100.0%)",
+                      "offset": 0,
+                      "length": 1500
+                    }
+                  ]
+                },
+                {
+                  "name": "Stereo Coding",
+                  "value": 1,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 1500,
+                  "children": [
+                    {
+                      "name": "Pseudo-stereo",
                       "value": "1 frame (100.0%)",
                       "offset": 0,
                       "length": 1500
@@ -354,6 +362,35 @@
             ],
             "values": [
               172
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Mid/side stereo",
+                "count": 0
+              },
+              {
+                "name": "Pseudo-stereo",
+                "count": 1
+              },
+              {
+                "name": "Silence",
+                "count": 0
+              }
+            ],
+            "total": 1,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                1,
+                1
+              ]
             ]
           }
         ]

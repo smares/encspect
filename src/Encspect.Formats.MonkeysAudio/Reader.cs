@@ -426,6 +426,7 @@ internal static class Reader
             var status = startBit >= 32 ? EntryStatus.StartBitOutsideWord : EntryStatus.None;
             uint crc = 0;
             uint special = 0;
+            bool isChecksumSilence = false;
             if (start < 0 || start > dataSpan || end < start || end > dataSpan)
             {
                 status |= EntryStatus.Misplaced;
@@ -440,6 +441,22 @@ internal static class Reader
                 }
 
                 long usable = Math.Min(end, available);
+                if (!canFields && h.ReadsChecksum)
+                {
+                    // Without a CRC the frame starts with a Rice-coded checksum, and a checksum of 0 (a 1 bit and 30 zero bits) is a silent frame
+                    // (Old/UnMACOld.cpp, Old/UnBitArrayOld.cpp).
+                    if (usable - start >= StartBytes(startBit, 31))
+                    {
+                        long firstWord = start >> 2;
+                        ReadOnlySpan<byte> words = source.Window(wordStart + (firstWord << 2), (int)((((start + StartBytes(startBit, 31) - 1 + 4) >> 2) - firstWord + 1) << 2));
+                        if (Shifted(words, firstWord, start, startBit) >> 1 == 0x40000000)
+                        {
+                            special = 3;
+                            isChecksumSilence = true;
+                        }
+                    }
+                }
+
                 if (canFields)
                 {
                     // The CRC and the special frame codes are the 64 stream bits from the frame's start bit, which may lie past the frame's first word.
@@ -451,9 +468,6 @@ internal static class Reader
                         {
                             status |= EntryStatus.HasSpecialCodes;
                             s.SpecialFrames++;
-                            bool isSilent = h.Channels == 1 ? (special & 1) != 0 : h.Channels == 2 && (special & 3) == 3;
-                            s.SilentFrames += isSilent ? 1 : 0;
-                            s.PseudoStereoFrames += h.Channels == 2 && (special & 4) != 0 && !isSilent ? 1 : 0;
                             if (usable - start < StartBytes(startBit, 64))
                             {
                                 status |= EntryStatus.NoStartFields;
@@ -513,7 +527,31 @@ internal static class Reader
             // short for its start fields counts in the samples only.
             if ((status & (EntryStatus.Misplaced | EntryStatus.Cut | EntryStatus.NoStartFields)) == 0 && start < available)
             {
-                s.Figures.Add(FileOffsetOf(records, start), (end - start) * 8, blocks, index < s.MaxListedFrames);
+                bool listed = index < s.MaxListedFrames;
+                s.Figures.Add(FileOffsetOf(records, start), (end - start) * 8, blocks, listed);
+                bool hasCodes = (status & EntryStatus.HasSpecialCodes) != 0 || isChecksumSilence;
+                if (h.Channels == 2)
+                {
+                    // The tally counts every frame; the series keeps the frames the bitrate series lists.
+                    int code = State.StereoCodeOf(special, hasCodes);
+                    if (listed)
+                    {
+                        s.Stereo.Add(code);
+                    }
+                    else
+                    {
+                        s.Stereo.Count(code);
+                    }
+                }
+                else if (h.Channels == 1)
+                {
+                    bool silent = hasCodes && (special & 1) != 0;
+                    s.SilentFrames += silent ? 1 : 0;
+                    if (listed)
+                    {
+                        s.SilentFlags.Add(silent ? (byte)0 : (byte)1);
+                    }
+                }
             }
 
             if (session is { IsDecoding: true })
