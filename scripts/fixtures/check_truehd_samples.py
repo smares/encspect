@@ -8,7 +8,9 @@ They are the real data the format description was checked against (docs/design/t
 presentation holds over the whole of each file. Per file, ffprobe and MediaInfo must agree with the manifest, with their words mapped to the analyzer's
 (ffprobe's codec and channel layout names, channel_layouts.py; MediaInfo's format, channels, sampling rate, bit depth and compression mode). With
 --analyzer, the analyzer's report (encspect --ndjson --verify --hide frames) must match instead: the first stream, its samples, a verification that
-holds with decoding, and exactly the warnings "findings" and the infos "info_findings" list.
+holds with decoding, the units of its "Stereo Coding" tally by category ("stereo_coding"), and exactly the warnings "findings" and the infos
+"info_findings" list. Without it, truehd_model.py's own count of the units by stereo coding must equal "stereo_coding", so the model and the analyzer
+meet on the real files.
 
 Needs curl, ffprobe and mediainfo. Usage:
 
@@ -25,6 +27,7 @@ import channel_layouts
 import downloads
 import mediainfo_tool as mi
 import tool_versions
+import truehd_model as model
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 MANIFEST = ROOT / "tests" / "conformance" / "truehd-samples.json"
@@ -49,8 +52,19 @@ def normalized(speakers):
     return sorted(speakers)
 
 
+def model_codings(path):
+    """The units of the file by the coding of substream 0's matrices, the model's reading of each unit's first block."""
+    data = path.read_bytes()
+    framing = [("unit", offset, length) for offset, length in model.split_units(data)]
+    codes = model.substream0_codings(data, framing, model.simulate(data, framing)["status"])
+    return [codes.count(code) for code in range(len(model.STEREO_CODINGS))]
+
+
 def tool_problems(path, sample):
     problems = []
+    found = model_codings(path)
+    if found != sample["stereo_coding"]:
+        problems.append(f"the model counts the units by stereo coding as {found}, the manifest {sample['stereo_coding']}")
     forced = "truehd" if sample["codec"] == "Dolby TrueHD" else "mlp"
     probe = json.loads(subprocess.run(["ffprobe", "-v", "error", "-f", forced, "-select_streams", "a:0", "-show_entries",
                                        "stream=codec_name,sample_rate,channels,channel_layout,bits_per_raw_sample", "-of", "json", str(path)],
@@ -77,6 +91,15 @@ def tool_problems(path, sample):
     return problems
 
 
+def find_node(node, name):
+    if node.get("name") == name:
+        return node
+    for child in node.get("children") or []:
+        if (found := find_node(child, name)) is not None:
+            return found
+    return None
+
+
 def analyzer_problems(analyzer, path, sample):
     report = json.loads(subprocess.run([analyzer, "--ndjson", "--verify", "--hide", "frames", str(path)], capture_output=True, text=True, check=True).stdout)
     problems = []
@@ -92,6 +115,13 @@ def analyzer_problems(analyzer, path, sample):
     verification = stream.get("verification") or {}
     if verification.get("isVerified") is not True or verification.get("decoding") != "decoded" or verification.get("decodedSamples") != sample["samples"]:
         problems.append(f"the analyzer's verification is {verification}, expected a verified stream decoded to {sample['samples']} samples")
+    tally = find_node(report["root"], "Stereo Coding")
+    counted = [int(next((c["value"] for c in (tally or {}).get("children", []) if c["name"] == name), "0").split()[0]) for name in model.STEREO_CODINGS]
+    if counted != sample["stereo_coding"]:
+        problems.append(f"the analyzer's Stereo Coding tally is {counted}, the manifest {sample['stereo_coding']}")
+    series = next((c for c in stream.get("categorySeries", []) if c["name"] == "Stereo Coding"), None)
+    if (series["total"] if series else 0) != sum(sample["stereo_coding"]):
+        problems.append(f"the analyzer's Stereo Coding series counts {series['total'] if series else 0} units, the manifest {sum(sample['stereo_coding'])}")
     serious = sorted({f["code"] for f in report["findings"] if f["severity"] != "Info"})
     if serious != sorted(sample["findings"]):
         problems.append(f"the analyzer reports {serious}, the manifest {sample['findings']}")

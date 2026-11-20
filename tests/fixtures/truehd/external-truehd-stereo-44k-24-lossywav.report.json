@@ -268,6 +268,27 @@
                       "length": 88736
                     }
                   ]
+                },
+                {
+                  "name": "Stereo Coding",
+                  "value": 1106,
+                  "unit": "access units",
+                  "offset": 0,
+                  "length": 88736,
+                  "children": [
+                    {
+                      "name": "Left/right stereo",
+                      "value": "354 access units (32.0%)",
+                      "offset": 0,
+                      "length": 88736
+                    },
+                    {
+                      "name": "Weighted mix",
+                      "value": "752 access units (68.0%)",
+                      "offset": 0,
+                      "length": 88736
+                    }
+                  ]
                 }
               ]
             }
@@ -658,6 +679,155 @@
             "values": [
               706,
               1893
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "access unit",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 354
+              },
+              {
+                "name": "Left/side stereo",
+                "count": 0
+              },
+              {
+                "name": "Side/right stereo",
+                "count": 0
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 0
+              },
+              {
+                "name": "Weighted mix",
+                "count": 752
+              }
+            ],
+            "total": 1106,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                70
+              ]
+            ],
+            "runs": [
+              [
+                4,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                4,
+                2
+              ],
+              [
+                0,
+                4
+              ],
+              [
+                4,
+                2
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                4,
+                3
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                4,
+                6
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                4,
+                3
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                4,
+                1
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                4,
+                7
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                4,
+                9
+              ],
+              [
+                0,
+                5
+              ],
+              [
+                4,
+                6
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                4,
+                4
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                4,
+                3
+              ],
+              [
+                0,
+                1
+              ]
+            ],
+            "weights": [
+              [
+                16,
+                69
+              ],
+              [
+                2,
+                1
+              ]
+            ],
+            "seconds": [
+              0,
+              69
             ]
           }
         ]

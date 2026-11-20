@@ -124,6 +124,7 @@ internal static class Explain
 
     public const string CodingLeftRight = "A channel pair coded as left and right: its mixing resolution is 0 or its samples are uncompressed (matrix_dec.c).";
     public const string CodingLeftSide = "A channel pair whose mixing resolution equals 2 to the power of the mix bits: the first channel is the left channel and the second is left minus right, the side channel (matrix_dec.c).";
+    public const string CodingSideRight = "A channel pair coded as the side channel and the right channel. ALAC does not write it: the second channel of a pair is always left minus right (matrix_dec.c), so the category is listed only so that the stereo codings are the same as in FLAC and Dolby TrueHD.";
     public const string CodingMidSide = "A channel pair whose mixing resolution is half of 2 to the power of the mix bits: the first channel is the mean of left and right and the second is left minus right (matrix_dec.c).";
     public const string CodingWeightedMix = "A channel pair whose first channel weighs the left channel by a mixing resolution that is neither 0, all nor half of 2 to the power of the mix bits, and whose second is left minus right (matrix_dec.c).";
     public const string CodingCompressed = "An audio element coded with a predictor and Golomb-coded residuals.";

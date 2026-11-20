@@ -140,4 +140,12 @@ internal static class Explain
     public const string MaximumBitrate = "The highest bitrate of any run of 16 access units.";
     public const string Distribution = "How the runs of 16 access units spread over bitrates.";
     public const string DistributionBin = "The runs of 16 access units whose bitrate lies in this range.";
+
+    public const string StatStereoCoding = "How the primitive matrices of the two-channel presentation (substream 0 where its restart header gives it two matrix channels) combine its two coded channels into left and right, counted per access unit from the matrices in force at the end of the unit, without their rounding, noise and bypassed bits. In a stream of more channels this presentation is a downmix, and its coding says nothing of how the other channels are coded.";
+    public const string StereoCodingSeries = "How the two-channel presentation's matrices combine its coded channels in each run of 16 access units, as the tally of Stereo Coding counts them; each coding of a run carries the number of the run's units that use it, and a unit whose two-channel presentation was not read has none.";
+    public const string StereoLeftRight = "Each channel is rebuilt from one coded channel: the matrices are absent, or only keep, flip or scale their channel.";
+    public const string StereoLeftSide = "Left is coded as it is and the other coded channel is the difference of left and right; a matrix adds it back.";
+    public const string StereoSideRight = "Right is coded as it is and the other coded channel is the difference of left and right.";
+    public const string StereoMidSide = "One coded channel is the sum or mean of left and right and the other is their difference.";
+    public const string StereoWeightedMix = "The matrices combine left and right with other weights, such as a channel less a fraction of the other; also where both channels are rebuilt from one coded channel. Like every coding it is inverted exactly.";
 }
