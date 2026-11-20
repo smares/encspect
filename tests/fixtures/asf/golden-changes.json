@@ -230,6 +230,69 @@
       ]
     },
     {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio Lossless",
+        "Statistics"
+      ],
+      "name": "Subframe Sizes",
+      "goldens": [
+        "tests/fixtures/asf/derived-windows-wma92lossless-stereo-44k-16-damaged.report.json",
+        "tests/fixtures/asf/derived-windows-wma92lossless-stereo-44k-16-object-cut.report.json",
+        "tests/fixtures/asf/external-windows-wma92lossless-5.1-48k-24.report.json",
+        "tests/fixtures/asf/external-windows-wma92lossless-stereo-44k-16.report.json",
+        "tests/fixtures/asf/external-windows-wma92lossless-stereo-44k-24.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio Lossless",
+        "Statistics",
+        "Subframe Sizes"
+      ],
+      "name": "128 samples",
+      "goldens": [
+        "tests/fixtures/asf/derived-windows-wma92lossless-stereo-44k-16-damaged.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio Lossless",
+        "Statistics",
+        "Subframe Sizes"
+      ],
+      "name": "2048 samples",
+      "goldens": [
+        "tests/fixtures/asf/derived-windows-wma92lossless-stereo-44k-16-damaged.report.json",
+        "tests/fixtures/asf/derived-windows-wma92lossless-stereo-44k-16-object-cut.report.json",
+        "tests/fixtures/asf/external-windows-wma92lossless-5.1-48k-24.report.json",
+        "tests/fixtures/asf/external-windows-wma92lossless-stereo-44k-16.report.json",
+        "tests/fixtures/asf/external-windows-wma92lossless-stereo-44k-24.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio Lossless",
+        "Statistics",
+        "Subframe Sizes"
+      ],
+      "name": "512 samples",
+      "goldens": [
+        "tests/fixtures/asf/derived-windows-wma92lossless-stereo-44k-16-damaged.report.json"
+      ]
+    },
+    {
       "scope": "stream",
       "array": "categorySeries",
       "name": "Block Sizes",
@@ -321,6 +384,8 @@
       "name": "Subframe Sizes",
       "goldens": [
         "tests/fixtures/asf/derived-windows-wma10pro-stereo-44k-128-no-length-prefix.report.json",
+        "tests/fixtures/asf/derived-windows-wma92lossless-stereo-44k-16-damaged.report.json",
+        "tests/fixtures/asf/derived-windows-wma92lossless-stereo-44k-16-object-cut.report.json",
         "tests/fixtures/asf/external-windows-wma10pro-cbr-5.1-48k-384.report.json",
         "tests/fixtures/asf/external-windows-wma10pro-cbr-stereo-44k-128-sdk.report.json",
         "tests/fixtures/asf/external-windows-wma10pro-cbr-stereo-44k-128.report.json",
@@ -331,7 +396,10 @@
         "tests/fixtures/asf/external-windows-wma10pro-vbr-5.1-48k-q50.report.json",
         "tests/fixtures/asf/external-windows-wma10pro-vbr-stereo-44k-q10.report.json",
         "tests/fixtures/asf/external-windows-wma10pro-vbr-stereo-44k-q50.report.json",
-        "tests/fixtures/asf/external-windows-wma10pro-vbr-stereo-44k-q98.report.json"
+        "tests/fixtures/asf/external-windows-wma10pro-vbr-stereo-44k-q98.report.json",
+        "tests/fixtures/asf/external-windows-wma92lossless-5.1-48k-24.report.json",
+        "tests/fixtures/asf/external-windows-wma92lossless-stereo-44k-16.report.json",
+        "tests/fixtures/asf/external-windows-wma92lossless-stereo-44k-24.report.json"
       ]
     },
     {
