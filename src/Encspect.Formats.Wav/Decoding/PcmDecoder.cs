@@ -75,7 +75,12 @@ public sealed class PcmDecoder : IDecoder
             _context = context;
             _coding = coding;
             _channels = context.Setup.Channels;
-            _frameBytes = checked((coding.ContainerBits / 8) * _channels);
+            if (_channels is < 1 or > PcmCoding.MaxChannels)
+            {
+                throw new InvalidDataException($"The stream has {_channels} channels, where 1 to {PcmCoding.MaxChannels} are decoded");
+            }
+
+            _frameBytes = (coding.ContainerBits / 8) * _channels;
             _outputBytes = CanonicalPcm.BytesPerSample(coding.OutputBits);
             _format = new PcmFormat(coding.SampleRate, _channels, coding.OutputBits, coding.Encoding == PcmEncoding.Float ? (coding.ContainerBits == 32 ? SampleFormat.Float32 : SampleFormat.Float64) : SampleFormat.Integer)
             {

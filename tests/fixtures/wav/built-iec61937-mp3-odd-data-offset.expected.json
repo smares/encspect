@@ -1,0 +1,63 @@
+{
+ "length": 23093,
+ "container": {
+  "id": "RIFF",
+  "size": 23085,
+  "end": 23093
+ },
+ "chunks": [
+  {
+   "id": "fmt ",
+   "offset": 12,
+   "end": 36,
+   "size": 16,
+   "length": 16
+  },
+  {
+   "id": "junk",
+   "offset": 36,
+   "end": 45,
+   "size": 1,
+   "length": 1
+  },
+  {
+   "id": "data",
+   "offset": 45,
+   "end": 23093,
+   "size": 23040,
+   "length": 23040
+  }
+ ],
+ "stream": {
+  "routed": "mpeg-audio",
+  "carried": true,
+  "sample_rate": 44100,
+  "channels": 2
+ },
+ "iec61937": {
+  "first": 53,
+  "data_type": 5,
+  "name": "MPEG-1 Layer II or III",
+  "bursts": 5,
+  "pauses": 0,
+  "pause_runs": 0,
+  "listed": [
+   53,
+   4661,
+   9269,
+   13877,
+   18485
+  ],
+  "findings": {},
+  "duration": 0.1306122448979592,
+  "link_rate": 44100
+ },
+ "findings": [
+  {
+   "code": "wav.iec61937-in-pcm"
+  },
+  {
+   "code": "wav.pad-byte-missing"
+  }
+ ]
+}

@@ -43,6 +43,10 @@ internal sealed class PacketImage(ByteReader source, bool isWordSwapped) : Strea
     // The file offset where the last packet's last piece ends, which the next packet's pieces must not precede.
     private long _lastFile;
 
+    // The parity of the file offset where the first packet begins: the 16-bit words of an IEC 61937 payload are aligned to the payload (the data chunk's start, which may
+    // be at an odd file offset), and every payload of a chain shares that alignment.
+    private long _phase;
+
     // Adds a packet; false (with Problem set) when it cannot be placed: its bytes are not bytes of the file (a compressed block, or one with bytes that are put back from nowhere), or
     // it lies before the one it follows. A packet of one piece is at its file offset in the image. A packet of several is laid out in one run, its pieces one after another and the
     // last at its file offset; pieces that are stripped bytes put back are read again from the file where they are stored, the same ones for every packet.
@@ -75,6 +79,11 @@ internal sealed class PacketImage(ByteReader source, bool isWordSwapped) : Strea
 
         long start = Math.Max(Last, pieces[anchor].Offset - before);
         bool continues = Stretches.Count > 0 && Stretches[^1].End == start && _lastFile == pieces[0].Offset;
+        if (First < 0)
+        {
+            _phase = pieces[0].Offset & 1;
+        }
+
         First = First < 0 ? start : First;
         long at = start;
         foreach (ByteRange piece in pieces)
@@ -136,15 +145,16 @@ internal sealed class PacketImage(ByteReader source, bool isWordSwapped) : Strea
             return;
         }
 
-        long first = offset & ~1L;
-        long last = Math.Min((offset + destination.Length + 1) & ~1L, source.End);
-        byte[] raw = new byte[last - first];
+        // Pairs are (_phase + 2k, _phase + 2k + 1); a byte whose partner lies outside the file reads as zero.
+        long first = Math.Max(0, ((offset - _phase) & ~1L) + _phase);
+        long last = Math.Min(((offset + destination.Length + 1 - _phase) & ~1L) + _phase, source.End);
+        byte[] raw = new byte[Math.Max(0, last - first)];
         source.Position = first;
         source.Read(raw);
         for (int i = 0; i < destination.Length; i++)
         {
-            long index = ((offset + i) ^ 1) - first;
-            destination[i] = index < raw.Length ? raw[index] : (byte)0;
+            long index = (((offset + i - _phase) ^ 1) + _phase) - first;
+            destination[i] = index >= 0 && index < raw.Length ? raw[index] : (byte)0;
         }
     }
 
