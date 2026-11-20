@@ -89,7 +89,10 @@ internal static class LentLayout
 
     public const int MidSideOffset = ScalefactorOffset + (SubbandState.Bands * 3);
 
-    public const int PerChannel = MidSideOffset + SubbandState.Bands;
+    // The number of subbands the frame used (SV8's count, which libmpcdec draws noise below), in the left channel's plane only.
+    public const int UsedOffset = MidSideOffset + SubbandState.Bands;
+
+    public const int PerChannel = UsedOffset + 1;
 
     // Copies the walked frame into the plane of one channel.
     public static void Store(SubbandState state, int channel, Span<int> plane)
@@ -105,5 +108,7 @@ internal static class LentLayout
 
             plane[MidSideOffset + band] = channel == 0 && state.MidSideFlag[band] ? 1 : 0;
         }
+
+        plane[UsedOffset] = channel == 0 ? state.LastUsedBands : 0;
     }
 }

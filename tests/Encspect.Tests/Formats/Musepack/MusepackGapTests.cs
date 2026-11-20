@@ -78,14 +78,24 @@ public class MusepackGapTests
         Assert.Equal(m.WithheldSamples, m.WithheldByReason.AfterGap);
     }
 
+    // Frame 0 of an SV8 packet has no length of its own, so no change of one byte loses it: a packet of 2 bytes of payload put before the first audio packet (at 0x2D) does, since its
+    // first frame cannot be read from them.
     [Fact]
-    public void An_SV8_stream_whose_first_packet_is_lost_withholds_the_filters_history_of_the_next()
+    public void An_SV8_stream_whose_first_frame_is_lost_withholds_the_filters_history_of_the_next_packet()
     {
-        StreamInfo info = Measure(Damaged("external-mpcenc-packets.mpc", "musepack.packet-length-mismatch", 868), out IReadOnlyList<Finding> findings);
+        byte[] original = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "musepack", "external-mpcenc-packets.mpc"));
+        Assert.Equal((byte)'A', original[0x2D]);
+        Assert.Equal((byte)'P', original[0x2E]);
+        byte[] file = [.. original[..0x2D], (byte)'A', (byte)'P', 5, 0xFF, 0xFF, .. original[0x2D..]];
+
+        StreamInfo info = Measure(file, out IReadOnlyList<Finding> findings);
 
         StreamMeasurements m = info.Measurements!;
         Assert.DoesNotContain(findings, f => f.Code is "parse.failed" or "decode.failed");
+        Assert.Contains(findings, f => f.Code == "musepack.packet-length-mismatch" && f.Message.Contains("first at frame 0 of the packet at 0x2D", StringComparison.Ordinal));
         Assert.Equal(info.Samples, m.Samples + m.LostSamples + m.WithheldSamples);
+        Assert.True(m.LostSamples > 0);
         Assert.Equal(480, m.WithheldSamples);
+        Assert.Equal(m.WithheldSamples, m.WithheldByReason.AfterGap);
     }
 }
