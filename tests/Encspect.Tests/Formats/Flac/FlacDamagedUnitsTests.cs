@@ -36,6 +36,7 @@ public class FlacDamagedUnitsTests
 
     [Theory]
     [InlineData("flac/built-crc16-fails.flac")]
+    [InlineData("measurement/synthetic-levels-crc16-fails.flac")]
     public void TheWithheldPositionsAreThoseOfTheFramesTheTalliesCountAsFailed(string name)
     {
         Report report = Analyze(name);
