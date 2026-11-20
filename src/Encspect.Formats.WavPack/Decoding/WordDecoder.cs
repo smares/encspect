@@ -43,7 +43,17 @@ internal sealed class WordDecoder
     // get_word: false where the bitstream ends or an escape code is invalid (libwavpack's WORD_EOF).
     public bool TryGetWord(ref LsbBitCursor bits, int channel, out int value)
     {
+        LsbBitCursor none = default;
+        return TryGetWord(ref bits, ref none, false, channel, out value, out _);
+    }
+
+    // get_word with a correction file: where the block has a correction bitstream and the error limit is not 0, the position inside the range the main
+    // bitstream narrowed down to is read from the correction bitstream, and the difference from the middle of the range, which the main bitstream settled
+    // for, is the correction (read_words.c 318-323).
+    public bool TryGetWord(ref LsbBitCursor bits, ref LsbBitCursor correctionBits, bool hasCorrectionBits, int channel, out int value, out int correction)
+    {
         value = 0;
+        correction = 0;
         int m = channel * 3;
         if ((_median[0] & ~1u) == 0 && !_holdingZero && _holdingOne == 0 && (_median[3] & ~1u) == 0)
         {
@@ -192,6 +202,12 @@ internal sealed class WordDecoder
         }
 
         bool isNegative = bits.ReadBit();
+        if (hasCorrectionBits && limit != 0)
+        {
+            uint exact = ReadCode(ref correctionBits, high - low) + low;
+            correction = unchecked(isNegative ? (int)(mid - exact) : (int)(exact - mid));
+        }
+
         if ((_flags & BlockHeader.HybridBitrateFlag) != 0)
         {
             _slowLevel[channel] -= (_slowLevel[channel] + SlowLevelOffset) >> SlowLevelShift;

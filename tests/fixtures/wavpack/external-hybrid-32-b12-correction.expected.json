@@ -221,7 +221,7 @@
  ],
  "decoded_samples": 24000,
  "pcm_samples": 24000,
- "decoded_pcm_md5": "0ecee9d3812d946e64d758863a34b2c4",
+ "decoded_pcm_md5": "a7074e1fcb6edfa1321766f0fde33bb6",
  "verification": {
   "default": {
    "isVerified": null,
@@ -255,7 +255,7 @@
      "name": "extended CRC",
      "covers": "decodedAudio",
      "coversAllAudio": false,
-     "stored": 0,
+     "stored": 2,
      "checked": 0,
      "failed": 0
     },
@@ -268,7 +268,7 @@
      "failed": 0
     }
    ],
-   "isLossy": true
+   "withCorrection": true
   },
   "verify": {
    "isVerified": true,
@@ -302,8 +302,8 @@
      "name": "extended CRC",
      "covers": "decodedAudio",
      "coversAllAudio": false,
-     "stored": 0,
-     "checked": 0,
+     "stored": 2,
+     "checked": 2,
      "failed": 0
     },
     {
@@ -315,7 +315,7 @@
      "failed": 0
     }
    ],
-   "isLossy": true
+   "withCorrection": true
   }
  },
  "decode_findings": [],
@@ -357,7 +357,8 @@
    "opens": true,
    "mode_wvc": true,
    "samples": 24000,
-   "errors": 0
+   "errors": 0,
+   "md5": "a7074e1fcb6edfa1321766f0fde33bb6"
   }
  },
  "companion": "external-hybrid-32-b12-correction-wvc.wvc"

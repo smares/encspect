@@ -302,13 +302,6 @@
                   "length": 66128
                 },
                 {
-                  "name": "Silent Frames",
-                  "value": 1,
-                  "unit": "frames",
-                  "offset": 0,
-                  "length": 66128
-                },
-                {
                   "name": "Stored Frame Checksums",
                   "value": 3,
                   "unit": "frames",
@@ -381,6 +374,27 @@
                     },
                     {
                       "name": "288 to 319 kbps",
+                      "value": "1 frame (33.3%)",
+                      "offset": 0,
+                      "length": 66128
+                    }
+                  ]
+                },
+                {
+                  "name": "Stereo Coding",
+                  "value": 3,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 66128,
+                  "children": [
+                    {
+                      "name": "Mid/side stereo",
+                      "value": "2 frames (66.7%)",
+                      "offset": 0,
+                      "length": 66128
+                    },
+                    {
+                      "name": "Silence",
                       "value": "1 frame (33.3%)",
                       "offset": 0,
                       "length": 66128
@@ -592,6 +606,39 @@
               0,
               264,
               304
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Mid/side stereo",
+                "count": 2
+              },
+              {
+                "name": "Pseudo-stereo",
+                "count": 0
+              },
+              {
+                "name": "Silence",
+                "count": 1
+              }
+            ],
+            "total": 3,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                2,
+                1
+              ],
+              [
+                0,
+                2
+              ]
             ]
           }
         ]

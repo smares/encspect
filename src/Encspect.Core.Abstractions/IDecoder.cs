@@ -55,3 +55,10 @@ public sealed record ChecksumResult(string Name, long Checked, long Failed);
 // followed a gap, and the samples decoded equal the count the parser stated (DecodeSetup.Samples), so a checksum of the
 // whole stream can be compared. FramesNotDecoded: the frames the decoder was handed and could not decode.
 public readonly record struct DecodeEnd(bool IsComplete, long FramesNotDecoded);
+
+// Implemented by the decoder of a coding that has a correction file (WavPack hybrid), next to IFrameDecoder: once Finish has returned, whether it applied the
+// correction of any unit. The host then reports StreamVerification.WithCorrection from it, and a stream whose correction file was set up but not used as lossy.
+public interface ICorrectionDecoder
+{
+    bool AppliedCorrection { get; }
+}

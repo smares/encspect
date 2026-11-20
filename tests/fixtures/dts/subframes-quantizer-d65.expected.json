@@ -1,0 +1,46 @@
+{
+ "description": "Three mono core frames whose first subband codes quantization indexes 31, -31, 32 and -32 with the book D65 (ABITS 9, SEL 3), the levels the PDF's table leaves out.",
+ "length": 288,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   96
+  ],
+  [
+   96,
+   96
+  ],
+  [
+   192,
+   96
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 1,
+   "channel_mode": "1/0",
+   "channel_layout": [
+    "front center"
+   ],
+   "samples": 1536,
+   "is_vbr": true
+  }
+ ],
+ "fields": {
+  "DTS/Statistics/Coded Bandwidth/Lowest": "750 Hz",
+  "DTS/Statistics/Coded Bandwidth/Most Common": "750 Hz",
+  "DTS/Statistics/Coded Bandwidth/Highest": "750 Hz",
+  "DTS/Statistics/Subframes Read": "3 subframes",
+  "DTS/Statistics/Subframes With Block Switching": "2 subframes"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": true
+ }
+}

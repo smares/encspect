@@ -70,7 +70,8 @@ internal sealed class BlockContents
     public byte Int32Dups { get; private set; }
 
     // The main bitstream, the extra bitstream (after its CRC) and the DSD block, as ranges of the block; a Length of 0
-    // means the block has none. The correction bitstream is checked and not used: a main file decodes without it.
+    // means the block has none. The extra bitstream of a hybrid stream decoded with its correction file is in the correction block
+    // (IsExtraInCorrection); the correction bitstream's range is in the correction block too, and a main file decodes without it.
     public (int Start, int Length) Bitstream { get; private set; }
 
     public (int Start, int Length) ExtraBitstream { get; private set; }
@@ -80,6 +81,12 @@ internal sealed class BlockContents
     public (int Start, int Length) Dsd { get; private set; }
 
     public bool HasCorrection { get; private set; }
+
+    // The correction bitstream, as a range of the correction block that ReadCorrection read; a Length of 0 means it has none.
+    public (int Start, int Length) CorrectionBitstream { get; private set; }
+
+    // Whether the extra bitstream is in the correction block (ReadCorrection found it there), where libwavpack opens it for a hybrid pair.
+    public bool IsExtraInCorrection { get; private set; }
 
     // What the block says about the stream, for the decoder's stream-level state.
     public ChannelInfoValue? ChannelInfo { get; private set; }
@@ -188,6 +195,31 @@ internal sealed class BlockContents
         }
     }
 
+    private bool _isCorrection;
+
+    // The correction block's sub-blocks, processed after the main block's as libwavpack's unpack_init does for a hybrid pair (open_utils.c 329-338):
+    // what they hold adds to or replaces what the main block gave. A correction block holds the correction and the extra bitstreams and its checksum; one
+    // that holds a bitstream of its own is refused, since the ranges of its bytes would not be the main block's.
+    public void ReadCorrection(ReadOnlySpan<byte> block, in BlockHeader header, bool channelsAreKnown)
+    {
+        bool isMono = (header.Flags & (BlockHeader.MonoFlag | BlockHeader.FalseStereoFlag)) != 0;
+        _isCorrection = true;
+        try
+        {
+            int position = BlockHeader.Length;
+            while (TryRead(block, position, out SubBlockSpan sub))
+            {
+                ReadOnlySpan<byte> data = block.Slice(sub.DataStart, sub.DataLength);
+                Process(block, header, sub, data, isMono, channelsAreKnown);
+                position = sub.Next;
+            }
+        }
+        finally
+        {
+            _isCorrection = false;
+        }
+    }
+
     private void Reset()
     {
         Passes = 0;
@@ -207,7 +239,8 @@ internal sealed class BlockContents
         HasFloatInfo = false;
         FloatFlags = FloatShift = FloatMaxExponent = FloatNormalizeExponent = 0;
         Int32SentBits = Int32Zeros = Int32Ones = Int32Dups = 0;
-        Bitstream = ExtraBitstream = Dsd = (0, 0);
+        Bitstream = ExtraBitstream = Dsd = CorrectionBitstream = (0, 0);
+        IsExtraInCorrection = false;
         ExtraCrc = 0;
         ExtraPosition = ExtraHeaderLength = ExtraSize = 0;
         HasCorrection = false;
@@ -297,6 +330,11 @@ internal sealed class BlockContents
                     throw Refused("WavPack bitstream", "a bitstream of an even number of bytes, not empty");
                 }
 
+                if (_isCorrection)
+                {
+                    throw new InvalidDataException("The correction block holds a bitstream of its own");
+                }
+
                 Bitstream = (sub.DataStart, data.Length);
                 break;
             case SubBlockIds.WvcBitstream:
@@ -306,6 +344,11 @@ internal sealed class BlockContents
                 }
 
                 HasCorrection = true;
+                if (_isCorrection)
+                {
+                    CorrectionBitstream = (sub.DataStart, data.Length);
+                }
+
                 break;
             case SubBlockIds.WvxBitstream:
                 if (data.Length <= 4 || (data.Length & 1) != 0)
@@ -315,13 +358,14 @@ internal sealed class BlockContents
 
                 ExtraCrc = System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(data);
                 ExtraBitstream = (sub.DataStart + 4, data.Length - 4);
+                IsExtraInCorrection = _isCorrection;
                 (ExtraPosition, ExtraHeaderLength, ExtraSize) = (sub.DataStart - sub.HeaderLength, sub.HeaderLength, sub.Next - sub.DataStart);
                 break;
             case SubBlockIds.DsdBlock:
                 ReadDsd(header, sub, data, isMono);
                 break;
             case SubBlockIds.Md5Checksum or SubBlockIds.AltMd5Checksum:
-                if (data.Length == 16)
+                if (data.Length == 16 && !_isCorrection)
                 {
                     Md5 = (sub.DataStart, sub.Function == SubBlockIds.AltMd5Checksum);
                     (Md5Position, Md5HeaderLength, Md5Size) = (sub.DataStart - sub.HeaderLength, sub.HeaderLength, sub.Next - sub.DataStart);
