@@ -595,6 +595,8 @@ public static class AudioPanels
         return m.Status switch
         {
             // A complete measurement has a reason only where the decoder outputs fewer channels than the stream has.
+            // Every unit failed its checksum, or every other sample was withheld: no panel has data, and the withheld figure says why.
+            MeasurementStatus.Complete when m.Samples == 0 && m.WithheldSamples > 0 => new AudioCaption($"No audio was measured: {MeasurementText.WithheldText(m)}.", false),
             MeasurementStatus.Complete => m.Reason is { Length: > 0 } note ? new AudioCaption($"{char.ToUpperInvariant(note[0])}{note[1..].TrimEnd('.')}.", false) : null,
             MeasurementStatus.NotPossible => new AudioCaption(Cannot(m.Reason ?? "the stream cannot be measured"), false),
             MeasurementStatus.Failed => new AudioCaption("The measuring failed, so the audio has no figures.", false),

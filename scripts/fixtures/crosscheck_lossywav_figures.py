@@ -15,7 +15,7 @@ measurement fixtures whose decoded blocks are contiguous. For each file:
 - every figure must be equal: the distribution, the silent and thin spans, the spans above Low Bits Unused, the changes, the grid and the
   changes on it, and the times with equal counts.
 
-A stream whose blocks are not contiguous (a gap or withheld output) is listed and left out: the prototype has no gaps, and the unit tests
+A stream whose blocks are not contiguous (a gap or withheld output), or whose analyzer figures leave out withheld samples that PcmDump still writes (a unit whose checksum failed), is listed and left out: the prototype has no gaps, and the unit tests
 (MeasurementSpanTests) hold the analyzer to a model with them. A stream that is not integer is left out. The script fails if a figure
 differs, if a tool fails, or if no stream was compared.
 """
@@ -65,7 +65,7 @@ def analyzer(command, path):
     if result.returncode > 1:
         raise RuntimeError(f"{path}: encspect exited with {result.returncode}: {result.stderr.decode('utf-8', 'replace')[-300:]}")
     streams = json.loads(result.stdout)[0]["streams"]
-    return [s.get("measurements", {}).get("levels", {}).get("lowBitsPerSpan") for s in streams]
+    return [(s.get("measurements", {}).get("levels", {}).get("lowBitsPerSpan"), s.get("measurements", {}).get("withheldSamples", 0)) for s in streams]
 
 
 def compare(expected, got):
@@ -126,7 +126,10 @@ def main():
                 if entry["runs"][0][0] % 32 != 0:
                     print(f"skip {label}: starts at position {entry['runs'][0][0]}")
                     continue
-                got = reports[entry["index"]] if entry["index"] < len(reports) else None
+                got, withheld = reports[entry["index"]] if entry["index"] < len(reports) else (None, 0)
+                if withheld > 0:
+                    print(f"skip {label}: {withheld} samples withheld from the measurements (PcmDump writes them, the analyzer leaves them out)")
+                    continue
                 if got is None:
                     print(f"FAIL {label}: the analyzer gave no figures")
                     failed += 1

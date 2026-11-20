@@ -136,8 +136,8 @@ Status: signed off by the lead, 2026-11-20 (every decision as recommended, the [
 ### Fixtures that show the change
 
 - **Measurement goldens added for committed fixtures:**
-  - FLAC: `built-crc16-fails`, `built-residual-bit-flipped`;
-  - TTA: `built-frame-crc-fails`, `built-frame-crc-fails-every-frame` (every frame withheld, nothing measured: decision 7);
+  - FLAC: `built-crc16-fails`, `built-residual-bit-flipped` (as built, this one is lost, not withheld: see "As built, pull request 2");
+  - TTA: `built-frame-crc-changed` and `built-frame-crc-changed-every-frame` (every frame withheld, nothing measured: decision 7), as built; `built-frame-crc-fails*` hold bytes in place of coded samples, so no frame decodes;
   - WavPack: `built-block-crc-changed`, `built-audio-bit-flipped`, `built-stereo-mute-limit` and `built-bitstream-cut` (muted blocks), `built-bad-checksum`, `built-checksum-missing`;
   - Monkey's Audio: `built-frame-crc-changed`, `built-24-bit-frame-crc-changed`, `built-old-3850-checksum-changed`;
   - TrueHD: `built-substream-crc-mismatch`, `built-audio-bit-flipped`;
@@ -231,3 +231,16 @@ Decided by the lead, 2026-11-20: every recommendation below.
 
 - **Recommended:** this order, not all at once. Each group touches other decoders and reviewers, and each brings its own goldens. The contract comes with a user, so it is not reviewed in the abstract.
 - Later decoders (TAK, item 13; the WavPack pair, item 3; AAC and WMA in 0.5) apply the rule in their own pull requests.
+
+## As built, pull request 2
+
+- **Two fixtures differ from the list above:**
+  - `flac/built-residual-bit-flipped` fails its CRC-16 but its frame cannot be decoded, so its positions are lost, not withheld; its golden pins that, and `flac/built-crc16-fails` shows the rule.
+  - The two TTA fixtures `built-frame-crc-fails` and `built-frame-crc-fails-every-frame` hold bytes in place of coded samples and decode to nothing. `built-frame-crc-changed` and `built-frame-crc-changed-every-frame` are derived from the encoder-written `external-8000-mono.tta` with stored CRC-32s changed (`make_tta_fixtures.py`), so their frames decode; they carry the TTA measurement goldens.
+- **The new measurement fixture** `measurement/synthetic-levels-crc16-fails` (FLAC, one frame with a bit flipped, built by `make_measurement_fixtures.py`):
+  - `measurement_model.py` leaves the frame out and the test holds the analyzer to its `withheld_samples`.
+  - The measurement cross-check skips it for `flac -t`, `flac -d`, FFmpeg's decode, `astats`, `ebur128` and `silencedetect`, and the lossyWAV-figures cross-check skips it because PcmDump still writes the frame; each skip prints its reason.
+- **Trims:** the part of a failed unit's span that the stream's syntax trims (before the start, from the end on, inside) is counted as trimmed, as for a decoder's withheld span; only the part inside the stream is withheld.
+- **A block wholly inside a span** is left out before it is looked at, so a failed unit whose block does not fit the declared output does not end the measuring.
+- **The GUI** shows "No audio was measured: 400 samples withheld (checksum failed)." for a stream in which every unit fails.
+- **`DecodeContext.Withhold`** refuses `ChecksumFailed`; a decoder reports written positions with `WithholdFromMeasurements`.

@@ -282,6 +282,22 @@ def flac_file(channels, rate, bits, block=4096, numbers=None, drop=(), md5_of=No
     return b"fLaC" + m.metadata_block(0, info, last=True) + b"".join(frames)
 
 
+def damage_frame(data, index):
+    """The file with one bit flipped in the coded audio of frame index, so that its CRC-16 fails and nothing else does: the first bit, from the middle
+    of the frame on, that leaves the frame decodable with every other frame as it was."""
+    frames = m.Stream(data).frames
+    frame = frames[index]
+    for at in range(frame["offset"] + frame["length"] // 2, frame["offset"] + frame["length"] - 2):
+        for bit in range(8):
+            candidate = bytearray(data)
+            candidate[at] ^= 1 << bit
+            parsed = m.Stream(bytes(candidate)).frames
+            if len(parsed) == len(frames) and "channels" in parsed[index] and parsed[index]["status"] == ["crc16"] and all(
+                    a["status"] == b["status"] and a.get("channels") == b.get("channels") for i, (a, b) in enumerate(zip(parsed, frames)) if i != index):
+                return bytes(candidate)
+    raise ValueError(f"no bit of frame {index} can be flipped alone")
+
+
 def manifest(data, description, construction, layout=None):
     result = {"description": description, "length": len(data), "construction": construction, "model": mm.measure(data, layout)}
     return result
@@ -518,6 +534,17 @@ def add_levels():
     gap_audio[6144:8192] = [0] * 2048
     add("levels-gaps", "Blocks of 1,024 samples with the second, fourth and sixth removed: the first block and the start of the third are silent (the stretch at the start ends at the gap), two samples at +32,767 end the third block and one starts the fifth (no run), 300 zeros end the fifth block, and the last two blocks are silent (the stretch at the end starts after the gap).",
         [gap_audio], rate, 16, dict(unspecified, levels={"stream": {"clipping_runs": 0, "silent_at_start": 1024, "silent_at_end": 2048, "zero_samples": 3572}}), block=1024, drop=(1, 3, 5))
+
+    damaged = small_noise(8192, 14, 299, nonzero=True)
+    damaged[0:1024] = [0] * 1024
+    damaged[2548:3500] = [0] * 952
+    damaged[3500:3503] = [32767] * 3
+    damaged[3503:4640] = [0] * 1137
+    add("levels-crc16-fails", "Blocks of 1,024 samples of noise that never reaches 0 but where silence is put: the first block, 2,548 to 3,500 and 3,503 to 4,640 are silent, and three samples at +32,767 "
+        "stand in the fourth block, whose coded audio has one bit flipped, so its CRC-16 fails. The frame is decoded and written, but the measurements leave it out as withheld samples and "
+        "measure after it as after a gap: the stretch of silence is cut in two at the frame and the full-scale run is not counted.",
+        [damaged], rate, 16, dict(unspecified, levels={"stream": {"clipping_runs": 0, "silent_at_start": 1024, "silent_at_end": 0, "zero_samples": 1024 + 524 + 544}}, withheld_samples=1024,
+                                  damaged_frame=3), block=1024, damage=3)
 
     wide = [2147483647 if i % 128 < 96 else -2147483648 for i in range(4096)]
     add("levels-full-scale-32-bits", "A 32-bit square wave between +2,147,483,647 and -2,147,483,648, high for 96 and low for 32 samples of every 128: the sum of squares passes 2^64 within two samples.",
@@ -920,6 +947,8 @@ def main():
             continue
         data = flac_file(channels, rate, bits, block=block, numbers=options.get("numbers"), drop=options.get("drop", ()), wasted=options.get("wasted", False),
                          verbatim=options.get("verbatim", False))
+        if "damage" in options:
+            data = damage_frame(data, options["damage"])
         stem = OUT / f"synthetic-{name}"
         stem.with_suffix(".flac").write_bytes(data)
         text = mm.dumps(manifest(data, description, construction, layout))

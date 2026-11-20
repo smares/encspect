@@ -55,6 +55,7 @@ internal sealed class Analysis
     private long _runFirstFrame;
     private long _runCoded;
     private bool _isRunEnding;
+    private readonly int[] _runCodings = new int[StereoCodings.Categories.Length];
 
     public Analysis(AnalysisContext context)
     {
@@ -480,11 +481,13 @@ internal sealed class Analysis
         UnitDetail? detail = null;
         MajorSync? current = _sync;
         bool isWalked = false;
+        int stereoCoding = -1;
         if (isReadable && current is { } active)
         {
             SubstreamsRead read = ReadSubstreams(memory, offset, index, layout, active, overall);
             (isReadable, outSamples, heldSamples, isDamaged, isWalked, overall, detail) = (read.IsReadable, read.OutSamples, read.HeldSamples, read.IsDamaged, read.IsWalked, read.Status, read.Detail);
             isUnsupported = read.IsUnsupported;
+            stereoCoding = read.StereoCoding;
         }
 
         // A unit that cannot be read leaves the substreams' state behind: the stream is read again from the next major sync.
@@ -531,7 +534,7 @@ internal sealed class Analysis
         if (_hasSynced)
         {
             long counted = isReadable ? outSamples : current?.UnitSamples ?? 0;
-            Figure(offset, length, counted, bytes.Length, current?.SampleRate ?? 0, isReadable ? outSamples : lostSamples, lostSamples > 0);
+            Figure(offset, length, counted, bytes.Length, current?.SampleRate ?? 0, isReadable ? outSamples : lostSamples, lostSamples > 0, isReadable ? stereoCoding : -1);
         }
 
         if (AddEntry(new Entry { Kind = EntryKind.Unit, Status = overall, Offset = offset, Header = header, SyncLength = syncLength }, bytes.Length))
@@ -699,7 +702,7 @@ internal sealed class Analysis
     }
 
     // What reading the substreams of a unit gave. IsUnsupported: the unit cannot be read because of what the analyzer leaves aside, and of nothing else.
-    private readonly record struct SubstreamsRead(bool IsReadable, int OutSamples, int HeldSamples, bool IsDamaged, bool IsWalked, UnitStatus Status, UnitDetail? Detail, bool IsUnsupported);
+    private readonly record struct SubstreamsRead(bool IsReadable, int OutSamples, int HeldSamples, bool IsDamaged, bool IsWalked, UnitStatus Status, UnitDetail? Detail, bool IsUnsupported, int StereoCoding);
 
     private SubstreamsRead ReadSubstreams(ReadOnlyMemory<byte> memory, long offset, int index, UnitLayout layout, MajorSync sync, UnitStatus status)
     {
@@ -730,6 +733,7 @@ internal sealed class Analysis
         }
 
         bool isReadable = true;
+        int stereoCoding = -1;
         bool isDamaged = false;
         bool hasUnsupportedFault = false;
         bool hasDamageFault = false;
@@ -810,6 +814,18 @@ internal sealed class Analysis
             WalkResult walk = SubstreamWalk.Run(state, content, hasCheck, !sync.IsTrueHd, n, _listSizes[k], planes, n);
             _walks[k] = walk;
             verdicts[k] = verdict;
+            if (k == 0 && walk.IsRead)
+            {
+                // The coding is worked out where the matrices change, not in every unit.
+                if (state.HasNewMatrices)
+                {
+                    state.StereoCoding = StereoCodings.Classify(state);
+                    state.HasNewMatrices = false;
+                }
+
+                stereoCoding = state.StereoCoding;
+            }
+
             if (!walk.IsRead)
             {
                 isReadable = false;
@@ -951,7 +967,7 @@ internal sealed class Analysis
         }
 
         bool isWalked = isReadable && !lent.IsEmpty;
-        return new SubstreamsRead(isReadable, outSamples, heldSamples, isDamaged, isWalked, status, detail, hasUnsupportedFault && !hasDamageFault);
+        return new SubstreamsRead(isReadable, outSamples, heldSamples, isDamaged, isWalked, status, detail, hasUnsupportedFault && !hasDamageFault, stereoCoding);
     }
 
     // Stores what the nodes of a unit are built from.
@@ -1171,7 +1187,7 @@ internal sealed class Analysis
     }
 
     // coded: the samples the unit really codes, none for a unit that cannot be read; samples is what the bitrate counts it over.
-    private void Figure(long offset, int length, long samples, int available, int rate, long coded, bool isLost)
+    private void Figure(long offset, int length, long samples, int available, int rate, long coded, bool isLost, int stereoCoding)
     {
         Figures ??= new StreamFigures(Records.StreamRate > 0 ? Records.StreamRate : 48000);
         if (_runUnits > 0 && (rate != _runRate || _isRunEnding))
@@ -1187,6 +1203,11 @@ internal sealed class Analysis
         }
 
         _runUnits++;
+        if (stereoCoding >= 0)
+        {
+            _runCodings[stereoCoding]++;
+        }
+
         _runBits += available * 8L;
         _runSamples += samples;
         _runCoded += coded;
@@ -1222,8 +1243,10 @@ internal sealed class Analysis
     {
         if (_runUnits > 0)
         {
-            Figures?.Add(_runOffset, _runBits, _runSamples, true, _runRate, isLast && !_isRunEnding && _runUnits < RunLength, _runFirstFrame, _runCoded);
+            Figures?.Add(_runOffset, _runBits, _runSamples, true, _runRate, isLast && !_isRunEnding && _runUnits < RunLength, _runFirstFrame, _runCoded, _runCodings);
         }
+
+        Array.Clear(_runCodings);
 
         _isRunEnding = false;
         _runUnits = 0;

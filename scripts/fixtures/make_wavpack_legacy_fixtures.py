@@ -117,6 +117,39 @@ def build_all():
         lambda d: with_wav_header(d, [(b"fmt ", FMT)] + [(b"JUNK", b"\0\0\0\0")] * 8), opens=True)
 
 
+# The hand-built pairs: a correction file changed from the one of external-wv397-hybrid-320-correction.wv, or another one named, beside that main file. name: (description,
+# the correction file's bytes from the encoder-written one or the committed fixture to name instead, whether the pair is consistent). Written as built-legacy-pair-<name>.wv
+# with built-legacy-pair-<name>-wvc.wvc beside it.
+PAIR_MAIN = "wv397-hybrid-320-correction"
+PAIRS = {}
+
+# The errors libwavpack's legacy decoder counts for each pair (WavpackGetNumErrors: the CRC of the audio decoded with the correction file, unpack3.c): the pair is
+# consistent where it counts none and holds a correction file. crosscheck_wavpack_legacy_fixtures.py runs the library and fails on a difference.
+PAIR_ERRORS = {"cut": 1, "bit-flipped": 1, "other-stream": 1, "empty": 1, "trailing-bytes": 0}
+
+
+def pair(name, description, change=None, named=None):
+    PAIRS[name] = (description, change, named)
+
+
+def build_pairs():
+    pair("cut", "The correction file cut in half: the correction bitstream ends before the samples do.", lambda w: w[:len(w) // 2])
+    pair("bit-flipped", "One bit of the correction file flipped: the decoded audio's CRC fails.", lambda w: put(w, 9000, "<B", w[9000] ^ 0x08))
+    pair("other-stream", "The correction file of external-wv397-hybrid-6-correction beside the hybrid-320 file.", named="external-wv397-hybrid-6-correction-wvc.wvc")
+    pair("empty", "An empty file as the correction file.", lambda w: b"")
+    pair("trailing-bytes", "The correction file with 16 bytes of zero after its bitstream: the decoder reads none of them.", lambda w: w + bytes(16))
+
+
+def pair_manifest(name, description, data, wvc_name):
+    result = manifest(f"pair-{name}", description, PAIR_MAIN, data, (), True)
+    result["companion"] = wvc_name
+    result["crosscheck"]["libwavpack_legacy"]["pair_errors"] = PAIR_ERRORS[name]
+    if name == "empty":
+        # A correction file with no byte holds no correction data; it is found, so the pair is inconsistent whether or not the file is decoded.
+        result["findings"] = [{"severity": "warning", "code": "correction.inconsistent"}]
+    return result
+
+
 def manifest(name, description, source, data, extra, opens):
     if name == "id3v2-leading":
         # The tag is the host's: the file is the WAV header onwards, so the model reads it from there.
@@ -150,7 +183,8 @@ def manifest(name, description, source, data, extra, opens):
 
 def main():
     build_all()
-    for old in [*DIRECTORY.glob("built-legacy-*.wv"), *DIRECTORY.glob("built-legacy-*.expected.json")]:
+    build_pairs()
+    for old in [*DIRECTORY.glob("built-legacy-*.wv"), *DIRECTORY.glob("built-legacy-*.wvc"), *DIRECTORY.glob("built-legacy-*.expected.json")]:
         old.unlink()
     for name, (description, source, change, extra, opens) in FIXTURES.items():
         data = change(base(source))
@@ -158,7 +192,18 @@ def main():
         path.write_bytes(data)
         text = json.dumps(manifest(name, description, source, data, extra, opens), indent=1, ensure_ascii=False) + "\n"
         path.with_name(path.name[:-3] + ".expected.json").write_text(text, encoding="utf-8")
-    print(f"Wrote {len(FIXTURES)} fixtures to {DIRECTORY}")
+    for name, (description, change, named) in PAIRS.items():
+        data = base(PAIR_MAIN)
+        path = DIRECTORY / f"built-legacy-pair-{name}.wv"
+        path.write_bytes(data)
+        if change is not None:
+            wvc_name = f"built-legacy-pair-{name}-wvc.wvc"
+            (DIRECTORY / wvc_name).write_bytes(change((DIRECTORY / f"external-{PAIR_MAIN}-wvc.wvc").read_bytes()))
+        else:
+            wvc_name = named
+        text = json.dumps(pair_manifest(name, description, data, wvc_name), indent=1, ensure_ascii=False) + "\n"
+        path.with_name(path.name[:-3] + ".expected.json").write_text(text, encoding="utf-8")
+    print(f"Wrote {len(FIXTURES)} fixtures and {len(PAIRS)} pairs to {DIRECTORY}")
 
 
 if __name__ == "__main__":

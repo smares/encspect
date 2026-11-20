@@ -439,6 +439,7 @@ internal sealed class State
             var codedFrame = new CodedFrame(bytes, "Frame", first, header.BlockSize)
             {
                 IsDamaged = (status & (EntryStatus.Crc16Fails | EntryStatus.Cut | EntryStatus.Unreadable | EntryStatus.ExtentFound | EntryStatus.Crc8Fails)) != 0,
+                FailsChecksum = (status & EntryStatus.Crc16Fails) != 0,
                 FollowsGap = followsGap,
                 IsWalked = walk.IsStored && isWalked,
                 IsUnreadable = (status & EntryStatus.Unreadable) != 0,

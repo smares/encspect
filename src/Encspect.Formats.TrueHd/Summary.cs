@@ -199,8 +199,10 @@ internal static class Summary
         Node Covered(string name, NodeValue? value, string description) => Cover(name, value, description, null);
         a.Figures?.AddTo(statistics, Covered, "Run", "runs", true, out _);
         Node? anchor = a.Figures is null ? null : statistics.Children.FirstOrDefault(c => c.Name == "Average Bitrate");
+        Node? stereo = a.Figures is { StereoUnits: > 0 } coded ? AddStereoCoding(statistics, coded, Cover) : null;
         a.Leading.Add(statistics);
 
+        List<Series> series = a.Figures?.Series(anchor, a.Units, default) ?? [];
         string? mode = channels switch { 1 => "Mono", 2 => "Stereo", _ => "Multichannel" };
         return new StreamInfo
         {
@@ -217,7 +219,25 @@ internal static class Summary
             AverageBitrate = a.Figures?.AverageBitrate,
             IsVbr = a.Figures is { Units: > 0 } figures && figures.MaximumBitrate > figures.MinimumBitrate,
             Verification = verification,
-            Series = a.Figures?.Series(anchor, a.Units, default) ?? [],
+            Series = series,
+            CategorySeries = stereo is not null && series.Count > 0 && series[0].Name == "Bitrate" && a.Figures!.StereoSeries(series[0], stereo) is { } stereoSeries ? [stereoSeries] : [],
         };
+    }
+
+    // The tally of the two-channel presentation's codings over the access units, with an entry for each that occurs.
+    private static Node AddStereoCoding(Node statistics, StreamFigures figures, Func<string, NodeValue?, string, string?, Node> cover)
+    {
+        Node node = statistics.Add(cover("Stereo Coding", NodeValue.Integer(figures.StereoUnits, "access units", "access unit"), Explain.StatStereoCoding, Topics.Rematrixing));
+        ReadOnlySpan<long> counts = figures.StereoCounts;
+        for (int code = 0; code < counts.Length; code++)
+        {
+            if (counts[code] > 0)
+            {
+                string value = $"{StreamFigures.Counted(counts[code], "access unit", "access units")} ({StreamFigures.Share(counts[code], figures.StereoUnits)})";
+                node.Add(cover(StereoCodings.Categories[code].Name, value, StereoCodings.Categories[code].Description, null));
+            }
+        }
+
+        return node;
     }
 }

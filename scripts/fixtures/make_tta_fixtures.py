@@ -95,6 +95,16 @@ def damage():
     case("frame-crc-fails", "One bit of the second frame's coded bytes differs, so its CRC-32 fails.", put(head, sizes, [frames[0], bad, frames[2]]))
     case("frame-crc-fails-every-frame", "The stored CRC-32 of every frame differs by one bit.", put(head, sizes, [flip(f, len(f) - 1) for f in frames]))
 
+    # Frames that decode: the committed encoder-written external-8000-mono.tta (three frames) with a stored CRC-32 changed, so the measurements show the rule
+    # of docs/design/damaged-units.md on a real stream.
+    real = (OUT / "external-8000-mono.tta").read_bytes()
+    real_head, real_sizes, real_frames = pieces(real)
+    assert real.startswith(put(real_head, real_sizes, real_frames))  # the file's own tag after the last frame is left out
+    case("frame-crc-changed", "The stored CRC-32 of the second frame of external-8000-mono.tta differs by one bit. The coded samples are the encoder's, so the frame decodes, and the measurements leave it out.",
+         put(real_head, real_sizes, [real_frames[0], flip(real_frames[1], len(real_frames[1]) - 1), real_frames[2]]))
+    case("frame-crc-changed-every-frame", "The stored CRC-32 of every frame of external-8000-mono.tta differs by one bit: every frame decodes and fails its CRC-32, so nothing is measured.",
+         put(real_head, real_sizes, [flip(f, len(f) - 1) for f in real_frames]))
+
     # Where the data ends.
     case("cut-mid-frame", "The file ends in the middle of the second frame.", base[:first_end + 100])
     case("cut-after-frame", "The file ends after the first frame, so two frames the seek table lists are missing.", base[:first_end])

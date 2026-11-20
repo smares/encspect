@@ -16,11 +16,15 @@ public enum WithholdReason
 
     // The span a change of coding mode affects, where a decoder withholds it instead of smoothing it.
     ModeTransition,
+
+    // Output of a unit whose checksum failed (docs/design/damaged-units.md): the one reason whose audio is still decoded and written to
+    // the front end's sink; only the measurements leave it out. Reported with DecodeContext.WithholdFromMeasurements, never DecodeContext.Withhold.
+    ChecksumFailed,
 }
 
 public static class WithholdReasons
 {
-    public const int Count = 4;
+    public const int Count = 5;
 
     // The reason as the writers spell it in text: "after a gap".
     public static string Text(WithholdReason reason) => reason switch
@@ -29,6 +33,7 @@ public static class WithholdReasons
         WithholdReason.EmptyFrame => "frames of 0 bytes",
         WithholdReason.MainDataUnavailable => "main data not available",
         WithholdReason.ModeTransition => "mode transition",
+        WithholdReason.ChecksumFailed => "checksum failed",
         _ => throw new ArgumentOutOfRangeException(nameof(reason)),
     };
 
@@ -39,12 +44,13 @@ public static class WithholdReasons
         WithholdReason.EmptyFrame => "emptyFrame",
         WithholdReason.MainDataUnavailable => "mainDataUnavailable",
         WithholdReason.ModeTransition => "modeTransition",
+        WithholdReason.ChecksumFailed => "checksumFailed",
         _ => throw new ArgumentOutOfRangeException(nameof(reason)),
     };
 }
 
 // The withheld samples of a stream by reason; a struct, so that records holding it compare by value.
-public readonly record struct WithheldCounts(long AfterGap, long EmptyFrame, long MainDataUnavailable, long ModeTransition)
+public readonly record struct WithheldCounts(long AfterGap, long EmptyFrame, long MainDataUnavailable, long ModeTransition, long ChecksumFailed = 0)
 {
     public long this[WithholdReason reason] => reason switch
     {
@@ -52,10 +58,11 @@ public readonly record struct WithheldCounts(long AfterGap, long EmptyFrame, lon
         WithholdReason.EmptyFrame => EmptyFrame,
         WithholdReason.MainDataUnavailable => MainDataUnavailable,
         WithholdReason.ModeTransition => ModeTransition,
+        WithholdReason.ChecksumFailed => ChecksumFailed,
         _ => throw new ArgumentOutOfRangeException(nameof(reason)),
     };
 
-    public long Total => AfterGap + EmptyFrame + MainDataUnavailable + ModeTransition;
+    public long Total => AfterGap + EmptyFrame + MainDataUnavailable + ModeTransition + ChecksumFailed;
 
-    public static WithheldCounts From(ReadOnlySpan<long> byReason) => new(byReason[0], byReason[1], byReason[2], byReason[3]);
+    public static WithheldCounts From(ReadOnlySpan<long> byReason) => new(byReason[0], byReason[1], byReason[2], byReason[3], byReason[4]);
 }

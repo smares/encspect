@@ -120,7 +120,7 @@ internal sealed class ParserRouter(IReadOnlyList<ICodecParser> codecs, IReadOnly
     }
 
     public Companion OpenCompanion(AnalysisContext caller, string extension) =>
-        companions?.Open(extension) ?? Companion.Unchecked(string.Empty, "the analysis has no host to look for it");
+        companions?.Open(caller, extension) ?? Companion.Unchecked(string.Empty, "the analysis has no host to look for it");
 
     public IDecodeSession StartDecoding(AnalysisContext caller, string codecId, DecodeSetup setup)
     {
