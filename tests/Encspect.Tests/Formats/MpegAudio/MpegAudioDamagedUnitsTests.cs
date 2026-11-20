@@ -105,4 +105,20 @@ public class MpegAudioDamagedUnitsTests
         Assert.Equal(0, m.WithheldSamples);
         Assert.Equal(0, m.Gaps);
     }
+
+    // mpeg1-layer1-crc.mp1 is six frames of 256 bytes and 384 samples. The file is the six frames, a gap of 100 bytes and the six again with the CRC of the first of them changed: the first 480 samples after the gap are withheld
+    // as after a gap (the frame and 96 of the next), and the 480 after the failed frame count from the same place, so the larger is withheld, not their sum: 384 + 480 in all.
+    [Fact]
+    public void AFailedFrameRightAfterAGapWithholdsTheLargerOfTheTwoSpansNotTheirSum()
+    {
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "mpeg-audio/mpeg1-layer1-crc.mp1"));
+        byte[] data = [.. source, .. Enumerable.Repeat((byte)0x11, 100), .. source];
+        data[source.Length + 100 + 4] ^= 0x55;
+        (Report report, _) = Analyze("gap.mp1", data);
+        StreamMeasurements m = report.Streams[0].Measurements!;
+
+        Assert.Equal(384 + 480, m.WithheldSamples);
+        Assert.Equal(480, m.WithheldByReason.AfterGap);
+        Assert.Equal(384, m.WithheldByReason[WithholdReason.ChecksumFailed]);
+    }
 }

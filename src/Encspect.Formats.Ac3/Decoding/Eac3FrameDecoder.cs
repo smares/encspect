@@ -167,7 +167,7 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
         {
             if (lastOwner[outputSlot] == id)
             {
-                (_pre ??= NewPreNoise()).Add(outputSlot, location, length);
+                (_pre ??= NewPreNoise()).Add(outputSlot, location, length, frame.FailsChecksum);
             }
         }
 

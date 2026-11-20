@@ -37,7 +37,7 @@ internal sealed class PreNoise
     private readonly List<(long First, long End)> _damaged = [];
     private readonly List<(long First, long End)> _dependent = [];
     private const int MaxRanges = 256;
-    private readonly List<(int Channel, long Location, int Length)> _pending = [];
+    private readonly List<(int Channel, long Location, int Length, bool IsDamaged)> _pending = [];
     private float[][] _buffer;
     private long _base;
     private int _length;
@@ -87,8 +87,9 @@ internal sealed class PreNoise
         return false;
     }
 
-    // A channel's transient of a frame, at the sample position location, with the time scaling length.
-    public void Add(int channel, long location, int length) => _pending.Add((channel, location, length));
+    // A channel's transient of a frame, at the sample position location, with the time scaling length. isDamaged: the frame failed its checksum, so the transient's
+    // location and length are damaged and the samples the correction writes depend on them, whatever it reads.
+    public void Add(int channel, long location, int length, bool isDamaged = false) => _pending.Add((channel, location, length, isDamaged));
 
     // The next samples of the program (planar, count for each channel). A run that does not follow the one before it ends that one.
     public void Append(long first, float[] planar, int count)
@@ -144,19 +145,19 @@ internal sealed class PreNoise
     {
         for (int i = 0; i < _pending.Count; i++)
         {
-            (int channel, long location, int length) = _pending[i];
+            (int channel, long location, int length, bool isDamaged) = _pending[i];
             if (location > _base + _length)
             {
                 continue;
             }
 
             _pending.RemoveAt(i--);
-            Correct(channel, location, length);
+            Correct(channel, location, length, isDamaged);
         }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private void Correct(int channel, long location, int length)
+    private void Correct(int channel, long location, int length, bool isDamaged)
     {
         // The audio coding block before the one that holds the transient starts the pre-noise (3.7.2, Figure E3.2b).
         long blockStart = ((location / BlockSamples) - 1) * BlockSamples;
@@ -170,7 +171,7 @@ internal sealed class PreNoise
         }
 
         _charge(4L * (((2 * Tc1) + pn) + total));
-        if (_withhold is not null && ReadsDamaged(source, source + (2 * Tc1) + pn) && _damaged.Count < MaxRanges)
+        if (_withhold is not null && (isDamaged || ReadsDamaged(source, source + (2 * Tc1) + pn)) && _damaged.Count < MaxRanges)
         {
             _damaged.Add((start, start + total));
             _dependent.Add((start, start + total));
@@ -238,7 +239,7 @@ internal sealed class PreNoise
     {
         long end = _base + _length;
         long limit = force ? end : Math.Min(end, end - Reach);
-        foreach ((_, long location, int length) in _pending)
+        foreach ((_, long location, int length, _) in _pending)
         {
             long blockStart = ((location / BlockSamples) - 1) * BlockSamples;
             limit = Math.Min(limit, location - ((int)(location - blockStart) + length + Tc1));

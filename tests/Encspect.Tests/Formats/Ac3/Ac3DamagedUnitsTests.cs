@@ -93,4 +93,42 @@ public class Ac3DamagedUnitsTests
         Assert.Equal(0, report.Streams[0].Measurements!.WithheldSamples);
         Assert.Equal(0, report.Streams[0].Measurements!.Gaps);
     }
+
+    // eac3-signal-transient.eac3 has transient pre-noise processing data in every frame, some for a transient in the next frame. With the CRC of one frame changed in memory (the
+    // audio is intact, so the PCM stays), the corrections that copy from the frame, and those it adds, rewrite more than the frame and the block after it, and all of that is
+    // withheld; the same file without the data (eac3-signal-transient-off) withholds exactly the frame and the block.
+    [Theory]
+    [InlineData(5)]
+    [InlineData(8)]
+    public void CorrectionsThatCopyFromAFailedFrameAreWithheldBeyondItsBlock(int frame)
+    {
+        byte[] Change(string name)
+        {
+            byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, name));
+            data[((frame + 1) * 4096) - 1] ^= 0x55;
+            return data;
+        }
+
+        (Report Report, string Pcm) Run(byte[] data, bool measure)
+        {
+            using var stream = new MemoryStream(data);
+            var sink = new PcmHashingSink();
+            Report report = Analyzer.CreateDefault().Analyze("x.eac3", stream, new AnalysisOptions { Decoding = new DecodeOptions { Output = sink.Declare, Measure = measure ? new MeasureOptions() : null } });
+            return (report, sink.Hash());
+        }
+
+        (Report plain, string plainPcm) = Run(Change("ac3/eac3-signal-transient.eac3"), measure: false);
+        (Report measured, string pcm) = Run(Change("ac3/eac3-signal-transient.eac3"), measure: true);
+        (Report off, _) = Run(Change("ac3/eac3-signal-transient-off.eac3"), measure: true);
+        (_, string undamagedPcm) = Run(File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "ac3/eac3-signal-transient.eac3")), measure: false);
+
+        Assert.Equal(1, measured.Streams[0].Verification!.Checksums.Single().Failed);
+        Assert.Equal(1536 + 256, off.Streams[0].Measurements!.WithheldSamples);
+        long withheld = measured.Streams[0].Measurements!.WithheldSamples;
+        Assert.True(withheld > 1536 + 256, $"{withheld} samples withheld");
+        Assert.Equal(withheld, measured.Streams[0].Measurements!.WithheldByReason[WithholdReason.ChecksumFailed]);
+        Assert.Equal(undamagedPcm, pcm);
+        Assert.Equal(plainPcm, pcm);
+        Assert.DoesNotContain(measured.Findings, f => f.Code is "decode.failed" or "measure.failed");
+    }
 }

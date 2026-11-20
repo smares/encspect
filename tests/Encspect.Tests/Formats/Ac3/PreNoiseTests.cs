@@ -144,4 +144,30 @@ public class PreNoiseTests
             Assert.Empty(spans);
         }
     }
+
+    // A correction that reads the output of one that read damaged samples depends on them too, though it reads none of the damaged ones itself; and a transient of a damaged frame
+    // makes its correction dependent whatever it reads.
+    [Fact]
+    public void A_chained_correction_and_a_damaged_transient_report_what_they_write()
+    {
+        float[] signal = Signal(6144);
+        var spans = new List<(long First, long Samples)>();
+        var pre = new PreNoise(1, (_, _, _) => { }, _ => { }, (first, samples) => spans.Add((first, samples)));
+        pre.MarkDamaged(1000, 1500);
+        pre.Add(0, 2000, 50);
+        pre.Add(0, 2816, 50);
+        pre.Add(0, 4500, 50, isDamaged: true);
+        for (int at = 0; at < signal.Length; at += 256)
+        {
+            pre.Append(at, signal.AsSpan(at, 256).ToArray(), 256);
+        }
+
+        pre.Flush();
+        bool Covered(long position) => spans.Any(x => position >= x.First && position < x.First + x.Samples);
+        // [1230, 2000), [2254, 2816) and [4500 - (pn + 50 + 256), 4500), pn = 256 + 4500 % 256 = 404.
+        for (long n = 1230; n < 2000; n++) Assert.True(Covered(n), $"{n}");
+        for (long n = 2254; n < 2816; n++) Assert.True(Covered(n), $"{n}");
+        for (long n = 3790; n < 4500; n++) Assert.True(Covered(n), $"{n}");
+        Assert.Equal(770 + 562 + 710, spans.Sum(x => x.Samples));
+    }
 }
