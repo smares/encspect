@@ -12,9 +12,27 @@ internal static class LosslessReport
         new("Mid/side stereo", LosslessExplain.StereoMidSide) { Topic = Topics.MidSide },
     ];
 
-    public static IReadOnlyList<CategorySeries> Categories(WmaPacketReader reader, IReadOnlyList<Series> series, Node stream) =>
-        reader.Stereo is { } stereo && FindStereo(stream) is { } node && series.Count > 0 && series[0].Name == "Bitrate"
-            && stereo.Build(series[0], node, LosslessExplain.StereoCodingSeries, Topics.MidSide, null) is { } built ? [built] : [];
+    public static IReadOnlyList<CategorySeries> Categories(WmaPacketReader reader, IReadOnlyList<Series> series, Node stream, CategorySeriesBuilder sizes)
+    {
+        var categories = new List<CategorySeries>();
+        if (series.Count == 0 || series[0].Name != "Bitrate")
+        {
+            return categories;
+        }
+
+        Node? statistics = stream.Children.FirstOrDefault(c => c.Kind == NodeKind.Statistics);
+        if (reader.Stereo is { } stereo && FindStereo(stream) is { } node && stereo.Build(series[0], node, LosslessExplain.StereoCodingSeries, Topics.MidSide, null) is { } built)
+        {
+            categories.Add(built);
+        }
+
+        if (statistics?.Children.FirstOrDefault(c => c.Name == "Subframe Sizes") is { } sizeNode && sizes.Count == series[0].X.Length)
+        {
+            categories.Add(sizes.Build(series[0].X, series[0], sizeNode, ProExplain.SubframeSizesSeries, Topics.WmaSubframes));
+        }
+
+        return categories;
+    }
 
     private static Node? FindStereo(Node stream) =>
         stream.Children.FirstOrDefault(c => c.Kind == NodeKind.Statistics)?.Children.FirstOrDefault(c => c.Name == "Stereo Coding");
@@ -80,6 +98,16 @@ internal static class LosslessReport
         Add("Has Length Prefix", NodeValue.Boolean(p.HasLengthPrefix), ProExplain.StatHasLengthPrefix, Topics.WmaPackets);
         Add("Most Subframes in a Frame", NodeValue.Integer(p.MaxSubframes), ProExplain.StatMostSubframes, Topics.WmaSubframes);
         Add("Subframes", NodeValue.Integer(tally.Subframes), ProExplain.StatSubframes, Topics.WmaSubframes);
+        Node sizeNode = Add("Subframe Sizes", NodeValue.Integer(tally.Sizes.Count(n => n > 0), "sizes", "size"), ProExplain.StatSubframeSizes, Topics.WmaSubframes);
+        for (int k = 0; k < tally.Sizes.Length; k++)
+        {
+            if (tally.Sizes[k] > 0)
+            {
+                sizeNode.Add($"{p.FrameLength >> k} samples", parent.Offset, parent.Length,
+                    NodeValue.Text(WmaText.Share(tally.Sizes[k], tally.Subframes, "subframe", "subframes")), ProExplain.StatSubframeSize);
+            }
+        }
+
         Add("Seekable Subframes", NodeValue.Text(WmaText.Share(tally.Seekable, tally.Subframes, "subframe", "subframes")), LosslessExplain.StatSeekable, Topics.WmaLosslessSubframes);
         Add("Raw PCM Subframes", NodeValue.Text(WmaText.Share(tally.RawPcm, tally.Subframes, "subframe", "subframes")), LosslessExplain.StatRawPcm, Topics.WmaLosslessSubframes);
         Add("Coded Channel Subframes", NodeValue.Text(WmaText.Share(tally.CodedChannels, tally.CodableChannelSubframes, "channel subframe", "channel subframes")), LosslessExplain.StatCodedChannels, Topics.WmaLosslessSubframes);

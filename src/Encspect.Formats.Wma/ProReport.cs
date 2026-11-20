@@ -13,21 +13,21 @@ internal static class ProReport
     ];
 
     // One category for each subframe length the frame length and the most subframes a frame may have allow, from the whole frame down.
-    public static Category[] SizeCategories(ProParameters p)
+    public static Category[] SizeCategories(int frameLength, int minSubframe)
     {
-        var categories = new Category[System.Numerics.BitOperations.Log2((uint)(p.FrameLength / p.MinSubframe)) + 1];
+        var categories = new Category[System.Numerics.BitOperations.Log2((uint)(frameLength / minSubframe)) + 1];
         for (int k = 0; k < categories.Length; k++)
         {
-            categories[k] = new Category($"{p.FrameLength >> k} samples", ProExplain.StatSubframeSize) { Topic = Topics.WmaSubframes };
+            categories[k] = new Category($"{frameLength >> k} samples", ProExplain.StatSubframeSize) { Topic = Topics.WmaSubframes };
         }
 
         return categories;
     }
 
     // The subframes of a frame, each as the category of its length.
-    public static void AddSizes(ProParameters p, CategorySeriesBuilder builder, List<byte> sizes)
+    public static void AddSizes(int frameLength, int minSubframe, CategorySeriesBuilder builder, List<byte> sizes)
     {
-        int count = System.Numerics.BitOperations.Log2((uint)(p.FrameLength / p.MinSubframe)) + 1;
+        int count = System.Numerics.BitOperations.Log2((uint)(frameLength / minSubframe)) + 1;
         Span<byte> codes = sizes.Count <= 512 ? stackalloc byte[sizes.Count] : new byte[sizes.Count];
         for (int i = 0; i < codes.Length; i++)
         {

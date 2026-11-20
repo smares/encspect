@@ -71,7 +71,7 @@ public sealed class WmaProParser : ICodecParser
         });
 
         WmaEncoder.Detected detected = WmaEncoder.Apply(context, stream, findings);
-        var sizes = new CategorySeriesBuilder("Subframe Sizes", ProReport.SizeCategories(p), "subframe", isOrdered: true, concept: GraphConcept.BlockSwitching);
+        var sizes = new CategorySeriesBuilder("Subframe Sizes", ProReport.SizeCategories(p.FrameLength, p.MinSubframe), "subframe", isOrdered: true, concept: GraphConcept.BlockSwitching);
         var tally = new ProTally { FrameSizes = [] };
         long pairsSeen = 0;
         long midSideSeen = 0;
@@ -92,7 +92,7 @@ public sealed class WmaProParser : ICodecParser
             {
                 if (isRecorded)
                 {
-                    ProReport.AddSizes(p, sizes, tally.FrameSizes!);
+                    ProReport.AddSizes(p.FrameLength, p.MinSubframe, sizes, tally.FrameSizes!);
                 }
 
                 tally.FrameSizes!.Clear();
