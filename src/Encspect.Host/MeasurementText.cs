@@ -434,7 +434,7 @@ public static class MeasurementText
         {
             // A jump that is withheld whole is still a gap.
             string gaps = m.Gaps > 0 && m.LostSamples == 0 ? $"; {Counts.Of(m.Gaps, "gap", "gaps")}," : ";";
-            text += $"{gaps} {Counts.Of(m.WithheldSamples, "sample", "samples")} withheld ({WithheldReasonsText(m)})";
+            text += $"{gaps} {WithheldText(m)}";
         }
 
         if (m.TrimmedSamples > 0)
@@ -454,6 +454,9 @@ public static class MeasurementText
             _ => m.Reason is { } note ? $"{text}; {note}" : text,
         };
     }
+
+    // "400 samples withheld (checksum failed)": the withheld samples with their reasons, as the text line and the GUI's caption say them.
+    public static string WithheldText(StreamMeasurements m) => $"{Counts.Of(m.WithheldSamples, "sample", "samples")} withheld ({WithheldReasonsText(m)})";
 
     // The reasons of the withheld samples: the one reason alone, or each with its count.
     private static string WithheldReasonsText(StreamMeasurements m)

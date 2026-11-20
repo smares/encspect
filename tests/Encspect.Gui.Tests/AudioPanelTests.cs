@@ -154,6 +154,7 @@ public class AudioPanelTests
         Assert.Equal("Decoding stopped before any audio was measured.", Caption(Stream(null, DecodeStatus.Stopped)));
         Assert.Null(Caption(Stream(new StreamMeasurements { Status = MeasurementStatus.Complete }, DecodeStatus.Decoded)));
         Assert.Equal("The decoder outputs 2 channels of the stream's 6, and only those were measured.", Caption(Stream(new StreamMeasurements { Status = MeasurementStatus.Complete, Reason = "the decoder outputs 2 channels of the stream's 6, and only those were measured" }, DecodeStatus.Decoded)));
+        Assert.Equal("No audio was measured: 400 samples withheld (checksum failed).", Caption(Stream(new StreamMeasurements { Status = MeasurementStatus.Complete, WithheldSamples = 400, WithheldByReason = new WithheldCounts(0, 0, 0, 0, 400) }, DecodeStatus.Decoded)));
         Assert.Null(AudioPanels.CaptionFor(Stream(null, null) with { Kind = StreamKind.Video }));
         Assert.Equal("The audio of this stream is not decoded here.", AudioPanels.NotDecodedHere(string.Empty));
 
