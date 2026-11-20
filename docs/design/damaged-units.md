@@ -274,3 +274,20 @@ Decided by the lead, 2026-11-20: every recommendation below.
   - **TrueHD's span** ends at a unit in which every substream the decoder reads has a restart header, not at the failed substream's next restart header as the table above words it: the output of a higher substream depends on the lower ones. Every fixture restarts all substreams at a major sync, so no fixture tells the two apart.
   - **The WavPack pair** is tested on files changed in memory (the checksum of the second block of the main file, and of the first block of the correction file), not on a committed pair; the main file's rule is pinned by the committed goldens.
 
+
+## As built, pull request 4
+
+- **MPEG audio:**
+  - The parser flags a protected frame whose stored CRC-16 differs from the one it computed (`Entry.FailsCrc`, the same test the frame CRC tally counts): Layer III in the frame loop, Layers I and II in the feed of the deferred Layer II and the Layer I path. A frame whose covered bytes are not all there is not compared, so not flagged. `IsDamaged` keeps its Huffman overrun meaning.
+  - The decoder keeps its state after the frame and, after writing it, sets the span to withhold: 1,056 samples of Layer III, 480 of Layers I and II, 768 of a multichannel stream (the after-gap constants). The following frames report it with `WithholdFromMeasurements` as they are written, so a Layer I span (384-sample frames) runs on into the frame after the next. A gap, an unavailable frame or any reset clears it; a second failed frame sets it again.
+  - The multichannel extension's CRC is not a second flag: a frame of a stream that carries the extension in full whose CRC fails is not decoded (unreadable), so it is lost and the output after it is withheld as after a gap, as before.
+- **AC-3 and E-AC-3:**
+  - `DecodeFeed` sets `FailsChecksum` where it set `IsDamaged` (crc1 or crc2 fails, E-AC-3's CRC, a dependent frame's CRC); `IsDamaged` is no longer set for AC-3. Crc2 covers the whole frame, so a frame whose crc1 fails fails both.
+  - Both decoders (`FrameDecoder`, `Eac3FrameDecoder`) report the first block, 256 samples, of the unit after a failed one, unless a gap or a lost frame reset them (which withholds the same block already). The unit's own output is withheld by the host.
+- **Not covered by the span, as the design says:**
+  - A Layer III frame whose main data begin in a frame that failed its CRC is not withheld for that, only the after-gap span is. The CRC covers the failed frame's side information, not the main data a later frame reads from it.
+  - AC-3's dither generators keep running over a damaged frame's blocks, and E-AC-3's transient pre-noise processing reads earlier output. Neither is in the span, which is the one a gap withholds.
+- **Fixtures** (`make_mpeg_ac3_damaged_units_fixtures.py`, regenerated in CI): encoder-written files with the stored CRC of one frame changed, so the frame decodes: `mpeg-audio/damaged-units/layer1-crc-changed.mp1`, `external-twolame-crc-stereo-crc-changed.mp2`, `external-lame-crc-crc-changed.mp3`, and `ac3/damaged-units/external-ffmpeg-stereo-192k-crc1-crc2-changed.ac3` (one frame's crc1 and another's crc2). Their decoded PCM equals their sources' (a test).
+- **Goldens added** (new `.measure.json`, nothing existing changed): `mpeg-audio/mpeg1-layer3-crc-mismatch`, `mpeg-audio/layer2/crc-mismatch`, the four files above, `ac3/crc-damaged` and `ac3/substreams-dependent-crc`. They show 1,152 + 1,056 samples (Layer III), 1,152 + 480 (Layer II), 384 + 480 (Layer I) and 1,536 + 256 per failed AC-3 frame, one gap each.
+- **Tests:** `MpegAudioDamagedUnitsTests` and `Ac3DamagedUnitsTests` (the withheld span, the decoded PCM and samples unchanged against the undamaged file, the goldens, nothing withheld where nothing fails).
+- **Cross-checks:** none reads a measurement of these files, and the PCM cross-checks compare the unchanged decoded PCM.
