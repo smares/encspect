@@ -90,6 +90,9 @@ internal sealed class WmaPacketReader
 
     public Func<int?>? FrameStereo { get; init; }
 
+    // Called after every frame, in order, with whether the frame is one the series have a point for (the frames past FrameLimit are not).
+    public Action<bool>? FrameRead { get; init; }
+
     // The frames read, those past FrameLimit included; a lost frame's end (see ReadRun) is no frame.
     public long FramesRead => _frameNumber;
 
@@ -1254,6 +1257,7 @@ internal sealed class WmaPacketReader
         }
 
         int? stereo = FrameStereo?.Invoke();
+        FrameRead?.Invoke(isRecorded);
         if (isRecorded)
         {
             BitrateX.Add(offset);
