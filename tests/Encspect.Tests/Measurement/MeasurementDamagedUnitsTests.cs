@@ -193,15 +193,21 @@ public class MeasurementDamagedUnitsTests
         Assert.Contains("400 samples withheld (checksum failed)", string.Join('\n', MeasurementText.Lines(m, false)));
     }
 
+    // A block that lies wholly in a failed unit is left out before it is looked at, so a damaged unit whose block does not fit the declared output
+    // does not end the measuring.
     [Fact]
-    public void ABlockOfAnotherFormatInsideASpanStillStopsTheMeasuring()
+    public void ABlockOfAnotherFormatWhollyInsideASpanIsLeftOutAndDoesNotStopTheMeasuring()
     {
         StreamMeasurer measurer = Measurer();
-        measurer.WithholdWritten(0, 100);
-        measurer.Write(new PcmBlock(0, 100, 2, 100, new int[200]));
+        Write(measurer, 0, 100);
+        measurer.WithholdWritten(100, 100);
+        measurer.Write(new PcmBlock(100, 100, 2, 100, new int[200]));
+        Write(measurer, 200, 100);
+        StreamMeasurements m = measurer.Result(MeasurementStatus.Complete, null);
 
+        Assert.False(measurer.HasFormatChanged);
         Assert.Null(measurer.Failure);
-        Assert.Equal(MeasurementStatus.Complete, measurer.Result(MeasurementStatus.Complete, null).Status);
+        Assert.Equal((200L, 100L), (m.Samples, m.WithheldSamples));
     }
 
     // Through the decode session: a decoder that writes every unit, as FLAC and TTA do.
