@@ -481,7 +481,7 @@ The parser (#140, Gate 3 fixes #191 and #198) walks the first three substreams o
 
 | Candidate | Field and source | Read | Tallied | Kept per unit | Status | Wave |
 | --- | --- | --- | --- | --- | --- | --- |
-| Stereo coding | the primitive matrices of a substream: how many there are, which matrix channel each replaces and its coefficients ([truehd-format.md](truehd-format.md), "Matrix parameters") | yes, every block (`ReadMatrices`), kept in `SubstreamState.Matrices` | "Stereo Coding" | variable: per run of access units a count byte, and a code and a weight byte (its units) for each coding in force in the run, recorded while reading ([the design](#stereo-coding-the-design-2026-11-19)) | built (#TBD) | built |
+| Stereo coding | the primitive matrices of a substream: how many there are, which matrix channel each replaces and its coefficients ([truehd-format.md](truehd-format.md), "Matrix parameters") | yes, every block (`ReadMatrices`), kept in `SubstreamState.Matrices` | "Stereo Coding" | variable: per run of access units a count byte, and a code and a weight byte (its units) for each coding in force in the run, recorded while reading ([the design](#stereo-coding-the-design-2026-11-19)) | built (#362) | built |
 | Prediction filter orders | the FIR and IIR order of each coded channel, at most 8 together | yes, every block (`ReadFilter`) | no | 8 bytes per run as a numeric series (the highest order of the run), recorded while reading | code | "Prediction", with FLAC's |
 | Block size | the samples of a block, a decoding parameter | yes, every block | no | | code | not proposed: a block is a unit of the parameters, not a transform length, so it is not "Block Switching" |
 | Compression ratio | a run's bits over its samples × channels × bits | yes: the run's bits and coded samples (`StreamFigures`), the sync's channels and bits | no | 8 bytes per run, derived | code | with the other lossless formats |
@@ -493,7 +493,7 @@ The parser (#140, Gate 3 fixes #191 and #198) walks the first three substreams o
 
 #### Stereo Coding: the design (2026-11-19)
 
-Status: signed off by the project lead on 2026-11-19, who took all five recommendations under [Decisions for the lead](#stereo-coding-the-design-2026-11-19) (recorded there); built (#TBD). Written from the clean-room description ([truehd-format.md](truehd-format.md)), the parser and decoder, the committed fixtures, and the three real files of `tests/conformance/truehd-samples.json` analyzed as data. No FFmpeg source was read.
+Status: signed off by the project lead on 2026-11-19, who took all five recommendations under [Decisions for the lead](#stereo-coding-the-design-2026-11-19) (recorded there); built (#362). Written from the clean-room description ([truehd-format.md](truehd-format.md)), the parser and decoder, the committed fixtures, and the three real files of `tests/conformance/truehd-samples.json` analyzed as data. No FFmpeg source was read.
 
 **What the files hold.** The matrices in force at the end of each read unit were dumped with a throwaway instrumented build of the parser (not committed) over every committed TrueHD and MLP stream (the `truehd` folder, the TrueHD and MLP tracks in `matroska` and `mp4`) and over the three real files:
 
@@ -600,7 +600,7 @@ The lead asked, before item 5 of 0.4 builds anything, for the survey to be check
 **Candidates now buildable, in the recommended order.** Each reads only what the parser reads in every analysis today; none needs a parser change.
 
 1. **Stereo coding where it is missing:**
-   - TrueHD and MLP "Stereo Coding" (the plan's item 5): the matrices are read in every block; under a byte per access unit (one per run of 16). Its categories are designed and signed off (the lead, 2026-11-19) in [Stereo Coding: the design](#stereo-coding-the-design-2026-11-19); built (#TBD), with an unused "Side/right stereo" in ALAC's list.
+   - TrueHD and MLP "Stereo Coding" (the plan's item 5): the matrices are read in every block; under a byte per access unit (one per run of 16). Its categories are designed and signed off (the lead, 2026-11-19) in [Stereo Coding: the design](#stereo-coding-the-design-2026-11-19); built (#362), with an unused "Side/right stereo" in ALAC's list.
    - Monkey's Audio "Stereo Coding" ("Mid/side stereo", "Pseudo-stereo", "Silence"), designed above: 1 byte per frame (a frame lasts 1.67 s or more at 44.1 kHz), derived from the kept entries; "Silent Frames" and "Pseudo-Stereo Frames" move under it.
    - Why first: "Stereo Coding" is the heading users compare across files, and these are the last lossless formats whose parser reads the choice without showing it.
 2. **WMA standard's block switching and coded bandwidth:**
