@@ -56,6 +56,7 @@ Mono or stereo: two channels are intensity-coded stereo, which decodes to left a
 - In-band requests other than the stereo parameters are skipped by their sizes (the standard handlers' and the user handler's); what they ask is counted, not applied. libspeex applies them only where an application registers a handler, and speexdec registers the stereo one only.
 - Bits after the frames the header gives per packet: decoders never read them, so they are shown as ignored data and are no finding (only a complete extra frame is `speex.extra-frames`).
 - A wideband layer before a frame of a narrowband stream is skipped as libspeex 1.2.1 skips it (submodes 1 to 4); submode 0 and 5 to 7 make that decoder read the layer again and report a corrupt stream, which is `speex.frame-invalid`; only the layers it skips count for `speex.wideband-layer-in-narrowband`.
+- A stream whose first granule position comes only after 1 MiB of packets (or 512): the decoder starts with the range trimmed from 0 and gets the real delay only at the end, so what the measurements keep of those first packets is not checked against the delay (crafted streams only).
 
 ## Decoding
 
