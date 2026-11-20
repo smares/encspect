@@ -63,15 +63,15 @@ public class WmaBlockSeriesTests
         Assert.Equal([0L, 2L], Category(stream, "Noise-Substituted Blocks").Counts.ToArray());
     }
 
-    // The last coefficient that fits one flagged band less is at position 1,798: the bandwidth is the edge of that line, counted among the
-    // coefficients the channel codes.
+    // Position 1,798 is the last that fits with the first high band (65 lines) flagged. A flagged band takes no positions, so the coefficient's
+    // line is 1,798 + 65 = 1,863, the last one coded, and its edge is 20,069 Hz.
     [Fact]
     public void AnEscapeCodedCoefficientSetsTheBandwidth()
     {
         StdParameters p = Parameters();
         StreamInfo stream = Run(WmaStandardStreams.MonoFrame(p, 20, 0, flaggedBand: 0, escapeRun: 1798));
 
-        Assert.Equal([19369d, 19369d], Assert.Single(stream.Series, s => s.Name == "Coded Bandwidth").Values.ToArray());
+        Assert.Equal([20069d, 20069d], Assert.Single(stream.Series, s => s.Name == "Coded Bandwidth").Values.ToArray());
     }
 
     [Fact]
@@ -135,5 +135,30 @@ public class WmaBlockSeriesTests
         Assert.Equal(17, types.Categories.Count);
         Assert.Equal(Statistic(stream, "Frames").Value!.AsInteger(), types.Total);
         Assert.Equal(GraphConcept.None, types.Concept);
+    }
+
+    // The fixtures hold one escape-coded coefficient at position 829 of channel 1 (scripts/fixtures/make_wma_noise_fixtures.py). With the first
+    // high band of 65 lines flagged the line is 894 and without a flag 829; the cross-check decodes both with ffmpeg and finds the tone at those
+    // lines. A line's upper edge is (line + 1) × 44,100 / 2 / 2,048 Hz.
+    [Theory]
+    [InlineData("asf/derived-ffmpeg-wmav2-noise-flagged-band.asf", 9636, 20)]
+    [InlineData("asf/derived-ffmpeg-wmav2-noise-control.asf", 8936, 0)]
+    public void ANoiseFlagMovesTheLineOfTheCoefficientPastTheFlaggedBand(string name, int hertz, int flaggedBlocks)
+    {
+        StreamInfo stream = Fixtures.AnalyzeMpeg(name).Streams[0];
+
+        Series bandwidth = Assert.Single(stream.Series, s => s.Name == "Coded Bandwidth");
+        Assert.Equal(20, bandwidth.Values.ToArray().Count(v => v == hertz));
+        Assert.Equal(flaggedBlocks, Category(stream, "Noise-Substituted Blocks").Counts[0]);
+    }
+
+    // The version 1 stream codes from line 3: its last position that fits is 1,860, so the edge is (3 + 1,860 + 1) × 22,050 / 2,048 Hz.
+    [Fact]
+    public void AVersion1StreamCodesFromLine3()
+    {
+        StreamInfo stream = Fixtures.AnalyzeMpeg("asf/external-ffmpeg-wmav1-stereo-44k-128k.wma").Streams[0];
+
+        Node highest = Assert.Single(Statistic(stream, "Coded Bandwidth").Children, c => c.Name == "Highest");
+        Assert.Equal(20_069, highest.Value!.AsInteger());
     }
 }

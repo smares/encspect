@@ -1329,6 +1329,8 @@ The figures were measured with the load average above the 1.5 that earlier steps
 
 `make_asf_fixtures.py` derives `derived-ffmpeg-wmav2-tool-name-lavc.asf` from `external-ffmpeg-wmav2-mono-44k-48k.wma`: the same stream, packets and File Properties figures, with a WM/ToolName attribute of "Lavc60.31.102 wmav2" added. It is not an encoder's output, and its manifest says so (`derived`). ffprobe reads the same start and duration as for the source.
 
+`make_wma_noise_fixtures.py` (run by `make_asf_fixtures.py`) writes `derived-ffmpeg-wmav2-noise-flagged-band.asf` and `derived-ffmpeg-wmav2-noise-control.asf` from `external-ffmpeg-wmav2-stereo-44k-32k.wma`: superframes 12 to 31 are replaced by one hand-built frame each, with one escape-coded coefficient at position 829 of channel 1, the first high band flagged in the first file and none in the second. The analyzer places the coefficient at line 894 and 829, and `crosscheck_asf_fixtures.py` runs ffmpeg only as a program to decode both and finds the tone at those lines (an FFT of 4,096 samples; it needs numpy); no committed encoder file tells the two placements apart. Nothing is read from FFmpeg's source.
+
 ### Derived Musepack SV6 fixtures
 
 No SV6 encoder was found, so `make_musepack_fixtures.py` derives the SV6 fixtures (`derived-*-as-sv6.mpc`) from the SV5 encoder's variable bitrate fixtures, with and without mid/side. They are relabeled SV5 streams, not an encoder's output, and their manifests say so (`derived`).

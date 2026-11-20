@@ -18,7 +18,7 @@ references: RFC 6716 section 2, table 1; section 3.1; ISO/IEC 11172-3 2.4.1.5, 2
 
 **In Vorbis.** The end of the last [residue partition](vorbis-floors-and-residues) that reads an entry.
 
-**In Windows Media Audio.** The upper edge of the last non-zero coefficient found in a block's run-level codes ([frames and blocks](wma-frames-and-blocks)), at the resolution of one coefficient.
+**In Windows Media Audio.** The upper edge of the last non-zero coefficient found in a block's run-level codes ([frames and blocks](wma-frames-and-blocks)), at the resolution of one coefficient and placed by the channel's noise substitution flags.
 
 **In Opus.** The TOC byte of every packet names a bandwidth (RFC 6716, table 1). The figure is the top of that band.
 
