@@ -175,7 +175,8 @@ public class WavPackLegacyPairTests
         Assert.Empty(report.Companions);
     }
 
-    // The correction bitstream is read bit by bit beside the main one, from bytes of any value and of any length, in frames the main bitstream's progress sets.
+    // The correction bitstream is read bit by bit beside the main one, from bytes of any value and of any length, and the main file may be damaged as well (its headers
+    // among them): the analysis ends with findings, never a parse or decode failure.
     [Theory]
     [InlineData("external-wv397-hybrid-320-correction")]
     [InlineData("external-wv397-hybrid-6-correction")]
@@ -185,10 +186,11 @@ public class WavPackLegacyPairTests
         byte[] main = File.ReadAllBytes(Fixture(stem + ".wv"));
         byte[] correction = File.ReadAllBytes(Fixture(stem + "-wvc.wvc"));
         var random = new Random(23);
-        for (int round = 0; round < 40; round++)
+        for (int round = 0; round < 72; round++)
         {
             byte[] wvc = [.. correction];
-            switch (round % 4)
+            byte[] damaged = [.. main];
+            switch (round % 9)
             {
                 case 0:
                     wvc[random.Next(wvc.Length)] ^= (byte)(1 << random.Next(8));
@@ -199,16 +201,32 @@ public class WavPackLegacyPairTests
                 case 2:
                     wvc = [.. wvc, .. new byte[random.Next(1, 9000)]];
                     break;
-                default:
+                case 3:
                     random.NextBytes(wvc.AsSpan(random.Next(wvc.Length / 2), 64));
+                    break;
+                case 4:
+                    // A bit of the main file, the WAV and WavPack headers among them.
+                    damaged[random.Next(120)] ^= (byte)(1 << random.Next(8));
+                    break;
+                case 5:
+                    damaged[random.Next(damaged.Length)] ^= (byte)(1 << random.Next(8));
+                    break;
+                case 6:
+                    damaged = damaged[..random.Next(damaged.Length)];
+                    break;
+                case 7:
+                    random.NextBytes(damaged.AsSpan(random.Next(damaged.Length - 200), 200));
+                    break;
+                default:
+                    wvc = new byte[random.Next(correction.Length * 2)];
+                    random.NextBytes(wvc);
                     break;
             }
 
-            using var stream = new MemoryStream(main);
+            using var stream = new MemoryStream(damaged);
             Report report = Analyzer.CreateDefault().Analyze(stem + ".wv", stream, new AnalysisOptions { Decoding = new DecodeOptions(), Companions = CompanionSource.From(_ => new MemoryStream(wvc)) });
 
             Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
-            Assert.NotNull(Stream(report).Correction);
         }
     }
 
