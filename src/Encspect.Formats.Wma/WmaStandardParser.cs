@@ -107,7 +107,7 @@ public sealed class WmaStandardParser : ICodecParser
             }
         }
 
-        IReadOnlyList<Series> series = statistics is not null ? StdReport.Series(parameters, stream, statistics) : [];
+        IReadOnlyList<Series> series = statistics is not null ? StdReport.Series(parameters, stream, statistics, context.CancellationToken) : [];
         context.AddStream(new StreamInfo
         {
             Nodes = [streamNode],

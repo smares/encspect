@@ -13,6 +13,6 @@ references: Encspect's format description docs/design/wma-voice-format.md (Micro
 
 **Blocks.** Each block then sends its excitation: positions and signs of pulses, and a gain index. Their widths follow from the type, except that the first pulse of a pitch-adaptive window frame decides how the frame's bits divide between its two blocks, and that the pitch such a frame is read with depends on the frame before.
 
-**What you see in a file.** Each frame's type, pitch and block sizes, with statistics of the types. The analyzer reads the excitation only to find where a frame ends and does not report it.
+**What you see in a file.** Each frame's type, pitch and block sizes, with statistics of the types, and the Frame Types graph shows the type of each of the three frames of every superframe. The analyzer reads the excitation only to find where a frame ends and does not report it.
 
 **In Encspect's test files.** The hand-built files use every frame type. No file from the Windows Media Format SDK's writer uses a code of 14 bits. The analyzer does not use this.

@@ -205,4 +205,39 @@ internal static class VoiceReport
         };
         return [perSuperframe, perSecond];
     }
+
+    private static readonly Category[] FrameTypeCategories = [.. Enumerable.Range(0, VoiceParameters.FrameTypes)
+        .Select(i => new Category($"Type {i} ({VoiceNames.Frame(i)})", VoiceExplain.StatFrameTypeShare) { Topic = Topics.WmaVoiceFrames })];
+
+    private static readonly string[] FrameNames = ["first frame", "second frame", "third frame"];
+
+    // The type of each frame of each superframe, at the superframes of the bitrate series; a superframe that was not read has none.
+    public static IReadOnlyList<CategorySeries> CategoriesOf(VoiceStream stream, IReadOnlyList<Series> series, Node statistics, CancellationToken cancellation)
+    {
+        if (series.Count == 0 || series[0].Name != "Bitrate" || series[0].X.Length != stream.Superframes
+            || statistics.Children.FirstOrDefault(c => c.Name == "Frame Types") is not { } anchor)
+        {
+            return [];
+        }
+
+        var builder = new CategorySeriesBuilder("Frame Types", FrameTypeCategories, "frame", VoiceParameters.FramesPerSuperframe, FrameNames);
+        Span<byte> codes = stackalloc byte[VoiceParameters.FramesPerSuperframe];
+        for (int i = 0; i < stream.Superframes; i++)
+        {
+            if (i % 4096 == 0)
+            {
+                cancellation.ThrowIfCancellationRequested();
+            }
+
+            VoiceSuperframe sf = stream.SuperframeRecords[i];
+            for (int f = 0; f < codes.Length; f++)
+            {
+                codes[f] = sf.Outcome == VoiceOutcome.Read ? sf[f].Type : CategorySeries.None;
+            }
+
+            builder.Add(codes);
+        }
+
+        return [builder.Build(series[0].X, series[0], anchor, VoiceExplain.FrameTypesSeries, Topics.WmaVoiceFrames)];
+    }
 }
