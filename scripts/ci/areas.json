@@ -1,0 +1,702 @@
+{
+ "note": "2026-11-19: which tests of Encspect.Tests belong to which format or tag area, for the pull request run that scopes the unit tests (scope.py, changes.py). A scoped run EXCLUDES the tests owned by areas it did not select and runs every other test, so a test nobody owns (golden, description, finding coverage, determinism, host, core) and a new test class always run. Classes in tests/Encspect.Tests/Formats/<Area> and Tags/<Area> are owned by that area (found by scanning the files; a file that also uses another area's namespace, builder or fixture folder is owned by that one too) and are not listed here. 'areas' are the format and tag projects (src/Encspect.Formats.X, src/Encspect.Tags.X). 'codecs' maps the codec IDs the host's parsers register to the area that parses them. 'routes' lists the codec IDs each container hands payloads to (ParseStream, ParsePackets) or starts decoders with; selecting an area also selects the containers that carry its codec IDs, and 'tags' lists, for each tag area, every area whose tests it can reach (the formats that hand a tag to its parser with ParseTag, and where the host finds it in the formats' fixtures, containers of those formats included); that list is final and is not carried further. Aiff is listed with pcm-samples because it starts the decoder of Wav's PcmCodecParser. 'fixtures' maps the fixture folders to the areas whose tests read them (a container's folder lists the codecs it carries too, and a folder whose files lie in a container, such as alac in MP4 and Matroska, lists the container). 'classes' and 'methods' name the damaged-input classes and the per-format memory tests outside the area folders, with the areas that own them (a test that goes through a container lists it too). scripts/ci/test_changes.py checks the routes against the sources; check_shards.py checks that the scoped filters are valid.",
+ "areas": [
+  "Aac",
+  "Ac3",
+  "Aiff",
+  "Alac",
+  "Asf",
+  "Dts",
+  "DtsHd",
+  "Flac",
+  "Matroska",
+  "MonkeysAudio",
+  "Mp4",
+  "MpegAudio",
+  "Musepack",
+  "Ogg",
+  "OptimFrog",
+  "Opus",
+  "Speex",
+  "Tak",
+  "TrueHd",
+  "Tta",
+  "Vorbis",
+  "Wav",
+  "WavPack",
+  "Wma",
+  "Ape",
+  "Id3",
+  "Lyrics3",
+  "VorbisComment"
+ ],
+ "codecs": {
+  "mpeg-audio": "MpegAudio",
+  "aac": "Aac",
+  "aac-adts": "Aac",
+  "speex": "Speex",
+  "vorbis": "Vorbis",
+  "opus": "Opus",
+  "ac-3": "Ac3",
+  "e-ac-3": "Ac3",
+  "wma": "Wma",
+  "wma-pro": "Wma",
+  "wma-lossless": "Wma",
+  "wma-voice": "Wma",
+  "dts": "Dts",
+  "flac": "Flac",
+  "wavpack": "WavPack",
+  "tta": "Tta",
+  "alac": "Alac",
+  "truehd": "TrueHd",
+  "mlp": "TrueHd",
+  "pcm-samples": "Wav"
+ },
+ "routes": {
+  "Mp4": [
+   "aac",
+   "ac-3",
+   "alac",
+   "dts",
+   "e-ac-3",
+   "flac",
+   "mpeg-audio",
+   "opus",
+   "pcm-samples",
+   "truehd"
+  ],
+  "Matroska": [
+   "aac",
+   "ac-3",
+   "alac",
+   "dts",
+   "e-ac-3",
+   "flac",
+   "mlp",
+   "mpeg-audio",
+   "opus",
+   "pcm-samples",
+   "tta",
+   "truehd",
+   "vorbis",
+   "wavpack"
+  ],
+  "Ogg": [
+   "flac",
+   "opus",
+   "speex",
+   "vorbis"
+  ],
+  "Wav": [
+   "aac-adts",
+   "ac-3",
+   "dts",
+   "e-ac-3",
+   "mpeg-audio",
+   "pcm-samples"
+  ],
+  "Aiff": [
+   "pcm-samples"
+  ],
+  "Asf": [
+   "ac-3",
+   "mpeg-audio",
+   "wma",
+   "wma-lossless",
+   "wma-pro",
+   "wma-voice"
+  ],
+  "DtsHd": [
+   "dts"
+  ]
+ },
+ "tags": {
+  "Id3": [
+   "Aiff",
+   "Asf",
+   "Mp4",
+   "MpegAudio",
+   "Wav"
+  ],
+  "Ape": [
+   "MonkeysAudio",
+   "MpegAudio",
+   "Musepack",
+   "OptimFrog",
+   "Tak",
+   "Tta",
+   "WavPack"
+  ],
+  "Lyrics3": [
+   "MpegAudio"
+  ],
+  "VorbisComment": [
+   "Flac",
+   "Matroska",
+   "Mp4",
+   "Ogg",
+   "Opus",
+   "Speex",
+   "Vorbis"
+  ]
+ },
+ "fixtures": {
+  "aac": [
+   "Aac",
+   "Mp4"
+  ],
+  "ac3": [
+   "Ac3",
+   "Mp4"
+  ],
+  "aiff": [
+   "Aiff",
+   "Wav"
+  ],
+  "alac": [
+   "Alac",
+   "Mp4",
+   "Matroska"
+  ],
+  "asf": [
+   "Asf",
+   "Wma",
+   "Ac3",
+   "MpegAudio"
+  ],
+  "dts": [
+   "Dts",
+   "DtsHd",
+   "Mp4"
+  ],
+  "flac": [
+   "Flac",
+   "Ogg"
+  ],
+  "matroska": [
+   "Matroska",
+   "Aac",
+   "Ac3",
+   "Alac",
+   "Dts",
+   "Flac",
+   "TrueHd",
+   "MpegAudio",
+   "Opus",
+   "Wav",
+   "Tta",
+   "Vorbis",
+   "WavPack"
+  ],
+  "monkeys-audio": [
+   "MonkeysAudio"
+  ],
+  "mp4": [
+   "Mp4",
+   "Aac",
+   "Ac3",
+   "Alac",
+   "Dts",
+   "Flac",
+   "MpegAudio",
+   "Opus",
+   "Wav",
+   "TrueHd"
+  ],
+  "mpeg-audio": [
+   "MpegAudio"
+  ],
+  "musepack": [
+   "Musepack"
+  ],
+  "ogg": [
+   "Ogg",
+   "Flac",
+   "Opus",
+   "Speex",
+   "Vorbis"
+  ],
+  "optimfrog": [
+   "OptimFrog"
+  ],
+  "tags": [
+   "Id3",
+   "Ape",
+   "Lyrics3",
+   "MpegAudio"
+  ],
+  "tak": [
+   "Tak"
+  ],
+  "truehd": [
+   "TrueHd"
+  ],
+  "tta": [
+   "Tta"
+  ],
+  "wav": [
+   "Wav",
+   "Aac",
+   "Ac3",
+   "Dts",
+   "MpegAudio"
+  ],
+  "wavpack": [
+   "WavPack"
+  ]
+ },
+ "classes": {
+  "CorruptLameFileTests": [
+   "MpegAudio"
+  ],
+  "CorruptMpegFileTests": [
+   "MpegAudio"
+  ],
+  "CorruptLayerFileTests": [
+   "MpegAudio"
+  ],
+  "CorruptVbrFileTests": [
+   "MpegAudio"
+  ],
+  "CorruptMp4FileTests": [
+   "Mp4"
+  ],
+  "CorruptAdtsFileTests": [
+   "Aac"
+  ],
+  "CorruptOggFileTests": [
+   "Ogg"
+  ],
+  "CorruptDtsFileTests": [
+   "Dts",
+   "DtsHd"
+  ],
+  "CorruptAc3FileTests": [
+   "Ac3"
+  ],
+  "CorruptMatroskaFileTests": [
+   "Matroska"
+  ],
+  "CorruptMusepackFileTests": [
+   "Musepack"
+  ],
+  "CorruptFlacFileTests": [
+   "Flac"
+  ],
+  "CorruptFlacBuiltFileTests": [
+   "Flac"
+  ],
+  "CorruptOptimFrogFileTests": [
+   "OptimFrog"
+  ],
+  "CorruptTakFileTests": [
+   "Tak"
+  ],
+  "CorruptTtaFileTests": [
+   "Tta"
+  ],
+  "CorruptTtaBuiltFileTests": [
+   "Tta"
+  ],
+  "CorruptAlacFileTests": [
+   "Alac"
+  ],
+  "CorruptAlacBuiltFileTests": [
+   "Alac"
+  ],
+  "CorruptMonkeysAudioFileTests": [
+   "MonkeysAudio"
+  ],
+  "CorruptMonkeysAudioHeavyFileTests": [
+   "MonkeysAudio"
+  ],
+  "CorruptMonkeysAudioLegacyFileTests": [
+   "MonkeysAudio"
+  ],
+  "CorruptMonkeysAudioBuiltFileTests": [
+   "MonkeysAudio"
+  ],
+  "CorruptTrueHdFileTests": [
+   "TrueHd"
+  ],
+  "CorruptTrueHdBuiltFileTests": [
+   "TrueHd"
+  ],
+  "CorruptWavFileTests": [
+   "Wav"
+  ],
+  "CorruptWavBuiltFileTests": [
+   "Wav"
+  ],
+  "CorruptAiffFileTests": [
+   "Aiff"
+  ],
+  "CorruptWavPackFileTests": [
+   "WavPack"
+  ],
+  "CorruptWavPackBuiltFileTests": [
+   "WavPack"
+  ]
+ },
+ "methods": {
+  "CorruptTagFileTests": {
+   "MutatedFixturesProduceReports": [
+    "Id3",
+    "Ape",
+    "Lyrics3",
+    "MpegAudio"
+   ]
+  },
+  "MemoryTests": {
+   "ManyFramesStayCompact": [
+    "MpegAudio"
+   ],
+   "ManyLayer2FramesStayCompact": [
+    "MpegAudio"
+   ],
+   "DecodingManyMpegFramesHoldsNothingPerFrame": [
+    "MpegAudio"
+   ],
+   "TheFramesOfMpegAudioInManyStretchesAreReadAgainFromTheFile": [
+    "MpegAudio",
+    "Matroska"
+   ],
+   "TheFramesOfAHeaderStrippedMpegAudioTrackAreReadAgainFromTheFile": [
+    "MpegAudio",
+    "Mp4",
+    "Aac"
+   ],
+   "TheStretchesOfInterleavedMpegAudioTracksCostTimeAndMemoryByTheirFrames": [
+    "MpegAudio",
+    "Mp4"
+   ],
+   "MeasuringManyChainedStreamsStaysWithinTheBound": [
+    "Aac",
+    "Flac",
+    "Mp4",
+    "MpegAudio",
+    "Ogg"
+   ],
+   "ManyAdtsFramesStayCompact": [
+    "Aac"
+   ],
+   "TheCodingSeriesOfFurtherAdtsFramesStayWithinTheirBudget": [
+    "Aac"
+   ],
+   "AdifBlocksPastTheCapStayBounded": [
+    "Aac"
+   ],
+   "AdtsFramesPastTheCapStayBounded": [
+    "Aac"
+   ],
+   "AdtsThatChangesItsHeaderStaysBounded": [
+    "Aac"
+   ],
+   "ManyPagesStayCompact": [
+    "Ogg"
+   ],
+   "ManyLogicalStreamsStayBounded": [
+    "Ogg"
+   ],
+   "ManyOggFlacHeaderPacketsAndTrailingBytesStayCompact": [
+    "Ogg",
+    "Flac"
+   ],
+   "ManyEmptyVorbisCommentsStayBounded": [
+    "Ogg",
+    "Opus",
+    "VorbisComment"
+   ],
+   "ManySpeexPacketsStayCompact": [
+    "Speex",
+    "Ogg"
+   ],
+   "DecodingManySpeexPacketsHoldsNothingPerPacket": [
+    "Speex",
+    "Ogg"
+   ],
+   "ManyVorbisPacketsStayCompact": [
+    "Vorbis",
+    "Ogg"
+   ],
+   "DecodingManyVorbisPacketsHoldsNothingPerPacket": [
+    "Vorbis",
+    "Ogg"
+   ],
+   "ManyOpusPacketsStayCompact": [
+    "Opus",
+    "Ogg"
+   ],
+   "DecodingManyOpusPacketsHoldsNothingPerPacket": [
+    "Opus",
+    "Ogg"
+   ],
+   "HoldingManyStreamsOfShortOpusFramesStaysBounded": [
+    "Opus",
+    "Ogg"
+   ],
+   "ManyBrokenMultistreamOpusPacketsStayCompact": [
+    "Opus",
+    "Ogg"
+   ],
+   "ManyAc3FramesStayCompact": [
+    "Ac3"
+   ],
+   "TheCodingSeriesOfFurtherAc3FramesStayWithinTheirBudget": [
+    "Ac3"
+   ],
+   "TheCodingSeriesOfFurtherEac3ProgramFramesWithDependentFramesStayWithinTheirBudget": [
+    "Ac3"
+   ],
+   "TinyEac3FramesStayCompact": [
+    "Ac3"
+   ],
+   "DecodingManyAc3FramesHoldsNothingPerFrame": [
+    "Ac3"
+   ],
+   "ManyDtsFramesStayCompact": [
+    "Dts"
+   ],
+   "DecodingManyDtsFramesHoldsNothingPerFrame": [
+    "Dts"
+   ],
+   "ManyDtsSubstreamsStayCompact": [
+    "Dts"
+   ],
+   "ManyDtsSubstreamsWithoutStaticFieldsStayCompact": [
+    "Dts"
+   ],
+   "ManyAsfPacketsStayCompact": [
+    "Asf",
+    "Wma"
+   ],
+   "ManyVoicePacketsStayCompact": [
+    "Asf",
+    "Wma"
+   ],
+   "ManyTinyVoiceBlocksAreBounded": [
+    "Asf",
+    "Wma"
+   ],
+   "ManyProfessionalFramesStayCompact": [
+    "Asf",
+    "Wma"
+   ],
+   "ManyLosslessFramesStayCompact": [
+    "Asf",
+    "Wma"
+   ],
+   "MinimalLosslessFramesStayBounded": [
+    "Asf",
+    "Wma"
+   ],
+   "AsfObjectsOfMillionsOfEntriesStayBounded": [
+    "Asf",
+    "Wma"
+   ],
+   "PacketsPastTheDetailedOnesAreCounted": [
+    "Asf",
+    "Wma"
+   ],
+   "ManyAsfPcmPayloadsStayCompact": [
+    "Asf",
+    "Wma",
+    "Wav"
+   ],
+   "ManyFlacFramesStayCompact": [
+    "Flac"
+   ],
+   "DecodingManyFlacFramesHoldsNothingPerFrame": [
+    "Flac"
+   ],
+   "MeasuringManyFlacFramesHoldsNothingPerFrame": [
+    "Flac"
+   ],
+   "MeasuringTheLevelsOfManyFlacFramesHoldsNothingPerFrame": [
+    "Flac"
+   ],
+   "TheSamplesOfAWaveFileCostNothing": [
+    "Wav",
+    "Aiff"
+   ],
+   "NestedListsOfManyChunksStayWithinTheNodeBudget": [
+    "Wav",
+    "Aiff"
+   ],
+   "RepeatedTableChunksStayWithinTheNodeBudget": [
+    "Wav",
+    "Aiff"
+   ],
+   "BigTablesCostNoMoreThanTheirCaps": [
+    "Wav",
+    "Aiff"
+   ],
+   "ManyBurstsCostNothingPerBurst": [
+    "Wav",
+    "Aiff"
+   ],
+   "ManyChunksStayCompact": [
+    "Wav",
+    "Aiff"
+   ],
+   "DecodingAndMeasuringALongWaveFileHoldsNothingPerSlice": [
+    "Wav",
+    "Aiff"
+   ],
+   "ALongWaveFileAllocatesNoBufferPerSlice": [
+    "Wav",
+    "Aiff"
+   ],
+   "DecodingManyAlacFramesHoldsNothingPerFrame": [
+    "Alac"
+   ],
+   "ManyAlacFramesStayCompact": [
+    "Alac"
+   ],
+   "AlacFramesPastTheCapStayBounded": [
+    "Alac"
+   ],
+   "ManyTtaFramesStayCompact": [
+    "Tta"
+   ],
+   "ATtaSeekTableOfEntriesPastTheEndStaysTheSizeOfTheFile": [
+    "Tta"
+   ],
+   "TtaFramesPastTheCapStayBounded": [
+    "Tta"
+   ],
+   "DecodingManyTtaFramesHoldsNothingPerFrame": [
+    "Tta"
+   ],
+   "ATtaTrackWithManyChannelsAllocatesNothingForThem": [
+    "Tta",
+    "Matroska"
+   ],
+   "ManyTakFramesStayCompact": [
+    "Tak"
+   ],
+   "TakFramesPastTheCapStayBounded": [
+    "Tak"
+   ],
+   "ManyWavPackBlocksStayCompact": [
+    "WavPack"
+   ],
+   "DecodingManyWavPackBlocksHoldsNothingPerBlock": [
+    "WavPack"
+   ],
+   "ManyWavPackSubBlocksAreBounded": [
+    "WavPack"
+   ],
+   "ManySubBlocksInManyDetailedWavPackBlocksShareOneBudget": [
+    "WavPack"
+   ],
+   "StoredBytesOfManyDetailedWavPackBlocksShareOneBudget": [
+    "WavPack"
+   ],
+   "ManyEmptyWavPackBlocksAreBounded": [
+    "WavPack"
+   ],
+   "ManyTrueHdUnitsStayCompact": [
+    "TrueHd"
+   ],
+   "TrueHdUnitsPastTheLimitOfRecordsCostOnlyTheirFigures": [
+    "TrueHd"
+   ],
+   "DecodingManyTrueHdUnitsHoldsNothingPerUnit": [
+    "TrueHd"
+   ],
+   "ManyMonkeysAudioFramesStayCompact": [
+    "MonkeysAudio"
+   ],
+   "DecodingManyMonkeysAudioFramesHoldsNothingPerFrame": [
+    "MonkeysAudio"
+   ],
+   "ManyApeItemsStayBounded": [
+    "Ape",
+    "MpegAudio"
+   ]
+  },
+  "MusepackAndContainerMemoryTests": {
+   "ManySamplesStayCompact": [
+    "Mp4"
+   ],
+   "TheCodingSeriesOfFurtherMp4SamplesStayWithinTheirBudget": [
+    "Mp4"
+   ],
+   "OverlappingChunksOfConstantSizedSamplesStayBounded": [
+    "Mp4",
+    "Aac"
+   ],
+   "ValidFragmentsPastTheNodeBudgetAreReadInFull": [
+    "Mp4",
+    "Aac"
+   ],
+   "ProtectionEvidencePastTheNodeBudgetCounts": [
+    "Mp4",
+    "Aac"
+   ],
+   "HugeRunsOfManyTracksStayBounded": [
+    "Mp4",
+    "Alac"
+   ],
+   "BoxesEditsAndChannelDescriptionsPastTheirLimitsStayBounded": [
+    "Mp4",
+    "Alac"
+   ],
+   "ManyMatroskaBlocksStayCompact": [
+    "Matroska",
+    "Opus"
+   ],
+   "MatroskaRecordsAndElementsPastTheirLimitsStayBounded": [
+    "Matroska",
+    "Opus"
+   ],
+   "ManyHidingContentEncodingsStayBounded": [
+    "Matroska",
+    "Opus"
+   ],
+   "InflatedMatroskaFramesStayBounded": [
+    "Matroska",
+    "Opus"
+   ],
+   "LacedBlocksOfEmptyFramesStayBounded": [
+    "Matroska",
+    "Opus"
+   ],
+   "LacedBlocksOfHeaderStrippedFramesStayBounded": [
+    "Matroska",
+    "Opus"
+   ],
+   "XiphLacedBlocksStayBounded": [
+    "Matroska",
+    "Opus"
+   ],
+   "ConcatenatedSegmentsStayBounded": [
+    "Matroska"
+   ],
+   "ManyMusepackFramesStayCompact": [
+    "Musepack"
+   ],
+   "DecodingManyMusepackFramesHoldsNothingPerFrame": [
+    "Musepack"
+   ],
+   "ManyOldMusepackFramesStayCompact": [
+    "Musepack"
+   ],
+   "LongEmptySv8PacketsStayCompact": [
+    "Musepack"
+   ],
+   "RepeatedSv8StreamPacketsStayCompact": [
+    "Musepack"
+   ],
+   "UnknownSv8PacketsStayCompact": [
+    "Musepack",
+    "Mp4"
+   ],
+   "AnExplicitSampleRateOfOneHertzKeepsTheGraphBounded": [
+    "Musepack",
+    "Mp4"
+   ]
+  }
+ }
+}
