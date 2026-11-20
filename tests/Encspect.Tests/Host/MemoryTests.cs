@@ -1661,11 +1661,13 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
     }
 
     // The decoder holds a frame's samples until its CRC is known (docs/design/damaged-units.md), at any width: a frame of 1,179,648 samples of one channel (the
-    // SDK's largest at the highest level) takes one buffer of that many 32-bit values, allocated once, whatever the width and the file's other frames.
-    [Fact]
-    public void DecodingAFullFrameOfMonkeysAudioHoldsOneBufferOfItsSamples()
+    // SDK's largest at the highest level) takes one buffer of that many 32-bit values, allocated once, whatever the width and the file's other frames (the 16-bit file reaches the newly held path, the 24-bit one the retry's).
+    [Theory]
+    [InlineData("external-frames-insane-16-mono.ape")]
+    [InlineData("external-full-frame-insane-24-mono.ape")]
+    public void DecodingAFullFrameOfMonkeysAudioHoldsOneBufferOfItsSamples(string name)
     {
-        byte[] file = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "monkeys-audio", "external-full-frame-insane-24-mono.ape"));
+        byte[] file = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "monkeys-audio", name));
         const long held = 1_179_648L * 4;
         long Allocated(bool isDecoding)
         {
