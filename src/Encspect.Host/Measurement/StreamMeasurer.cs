@@ -569,7 +569,7 @@ internal sealed class StreamMeasurer
 
             if (b > a)
             {
-                Withhold(start + a, b - a, WithholdReason.ChecksumFailed);
+                WithholdDamagedPart(block, start, a, b);
             }
 
             at = b;
@@ -582,6 +582,57 @@ internal sealed class StreamMeasurer
         if (at < block.Length)
         {
             Process(at == 0 ? block : Slice(block, at, block.Length - at));
+        }
+    }
+
+    // The part [a, b) of the block lies in a failed unit. What the syntax trims there (before the start while measuring has not begun, from the end on,
+    // the inner ranges) is not a sample of the stream, so it goes through Process as trimmed; the rest is withheld.
+    private void WithholdDamagedPart(PcmBlock block, long start, int a, int b)
+    {
+        long cursor = start + a;
+        long end = start + b;
+        while (cursor < end && !_isStopped)
+        {
+            long lowest = _hasStarted ? long.MinValue : _trimStart;
+            long next = end;
+            bool isTrimmed = false;
+            if (cursor < lowest)
+            {
+                (next, isTrimmed) = (Math.Min(end, lowest), true);
+            }
+            else if (cursor >= _trimEnd)
+            {
+                isTrimmed = true;
+            }
+            else
+            {
+                next = Math.Min(next, _trimEnd);
+                foreach ((long first, long spanEnd) in _innerTrims)
+                {
+                    if (first <= cursor && cursor < spanEnd)
+                    {
+                        (next, isTrimmed) = (Math.Min(end, spanEnd), true);
+                        break;
+                    }
+
+                    if (first > cursor)
+                    {
+                        next = Math.Min(next, first);
+                        break;
+                    }
+                }
+            }
+
+            if (isTrimmed)
+            {
+                Process(Slice(block, (int)(cursor - start), (int)(next - cursor)));
+            }
+            else
+            {
+                Withhold(cursor, next - cursor, WithholdReason.ChecksumFailed);
+            }
+
+            cursor = next;
         }
     }
 
@@ -1372,10 +1423,11 @@ internal sealed class StreamMeasurer
         long leadingTrimmedGap = 0;
         long trailingTrimmedGap = 0;
         long[] withheld = [.. _withheld];
-        if (!_hasReceived)
+        if (!_hasStarted)
         {
-            // Every written block lay in failed units: nothing was measured, and the positions say why.
-            withheld[(int)WithholdReason.ChecksumFailed] += _pending.Where(p => p.Reason == WithholdReason.ChecksumFailed).Sum(p => p.End - p.First);
+            // Every written block lay in failed units or in what the syntax trims: nothing was measured, and the positions say why (the spans hold
+            // only positions that are no trimmed ones).
+            withheld[(int)WithholdReason.ChecksumFailed] += _leading.Concat(_pending).Where(p => p.Reason == WithholdReason.ChecksumFailed).Sum(p => p.End - p.First);
         }
 
         if (_hasCodedRange && _hasStarted && status is MeasurementStatus.Complete or MeasurementStatus.Incomplete)

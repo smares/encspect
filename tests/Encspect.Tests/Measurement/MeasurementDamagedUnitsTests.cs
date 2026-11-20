@@ -110,7 +110,7 @@ public class MeasurementDamagedUnitsTests
     }
 
     [Fact]
-    public void TheEndTrimmingOfTheStreamCountsPartsOfSpansOutsideNothing()
+    public void ASpanInTheKeptRangeBesideTheEndTrimIsWithheldAndTheTrimmedPartIsTrimmed()
     {
         StreamMeasurer measurer = Measurer();
         measurer.Trim(0, 2000);
@@ -119,6 +119,58 @@ public class MeasurementDamagedUnitsTests
         StreamMeasurements m = measurer.Result(MeasurementStatus.Complete, null);
 
         Assert.Equal((1700L, 1000L, 300L, 1), (m.Samples, m.TrailingTrimmedSamples, m.WithheldSamples, m.Gaps));
+    }
+
+    [Fact]
+    public void ASpanThatCrossesTheEndTrimCountsOnlyItsPartInsideTheStream()
+    {
+        StreamMeasurer measurer = Measurer();
+        measurer.Trim(0, 2000);
+        measurer.WithholdWritten(1800, 700);
+        Write(measurer, 0, 3000);
+        StreamMeasurements m = measurer.Result(MeasurementStatus.Complete, null);
+
+        Assert.Equal((1800L, 200L, 1000L), (m.Samples, m.WithheldSamples, m.TrimmedSamples));
+    }
+
+    [Fact]
+    public void ASpanThatCrossesTheStartTrimCountsOnlyItsPartInsideTheStream()
+    {
+        StreamMeasurer measurer = Measurer();
+        measurer.Trim(1000, long.MaxValue);
+        measurer.WithholdWritten(500, 1000);
+        Write(measurer, 0, 500);
+        Write(measurer, 500, 1000);
+        Write(measurer, 1500, 1500);
+        StreamMeasurements m = measurer.Result(MeasurementStatus.Complete, null);
+
+        Assert.Equal((1500L, 500L, 1000L), (m.Samples, m.WithheldSamples, m.TrimmedSamples));
+        Assert.Equal(500L, m.WithheldByReason[WithholdReason.ChecksumFailed]);
+    }
+
+    [Fact]
+    public void ASpanThatCrossesAnInnerTrimCountsOnlyItsPartOutsideIt()
+    {
+        StreamMeasurer measurer = Measurer();
+        measurer.TrimInner(1000, 200);
+        measurer.WithholdWritten(900, 200);
+        Write(measurer, 0, 3000);
+        StreamMeasurements m = measurer.Result(MeasurementStatus.Complete, null);
+
+        Assert.Equal((2700L, 100L, 200L), (m.Samples, m.WithheldSamples, m.InnerTrimmedSamples));
+    }
+
+    [Fact]
+    public void AStreamWhoseEveryUnitFailsCountsOnlyThePositionsInsideTheTrim()
+    {
+        StreamMeasurer measurer = Measurer();
+        measurer.Trim(100, 900);
+        measurer.WithholdWritten(0, 1000);
+        Write(measurer, 0, 1000);
+        measurer.SetCodedRange(0, 1000);
+        StreamMeasurements m = measurer.Result(MeasurementStatus.Complete, null);
+
+        Assert.Equal((0L, 800L), (m.Samples, m.WithheldSamples));
     }
 
     [Fact]
