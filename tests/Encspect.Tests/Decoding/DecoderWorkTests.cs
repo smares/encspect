@@ -366,8 +366,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             Add("mpeg-" + label, () => new Case("mpeg-" + label, MpegCases.Repeated(file)));
         }
 
-        // Musepack SV8: stereo at the standard profile and at the highest (the largest resolutions, 36 samples in 14 bits), mono, noise substitution, 32 and 48 kHz, and a stream
-        // of frames that code no subband. Each case repeats the audio packets of an encoder's file in one stream whose header states no length.
+        // Musepack SV8: stereo at the standard profile and at the highest (the largest resolutions, 36 samples in 14 bits), mono, noise substitution, 32 and 48 kHz. Each case repeats the audio packets of an encoder's file in one stream whose header states no length.
         foreach ((string label, string file) in new[]
         {
             ("standard", "external-mpcenc-standard.mpc"),
