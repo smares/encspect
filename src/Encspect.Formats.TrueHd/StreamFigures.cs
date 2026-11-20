@@ -16,6 +16,8 @@ internal sealed class StreamFigures(long firstRate)
     // Only the seconds a unit starts in, in order: a block may declare far more samples than its bytes
     // hold, so the seconds it spans are not kept.
     private readonly ChunkedList<(long Second, long Bits, long Samples, int Rate)> _seconds = new();
+    // The index of the first run that starts in each of those seconds.
+    private readonly ChunkedList<int> _firstRuns = new();
     private readonly SortedDictionary<int, int> _bins = [];
     private readonly Dictionary<int, long> _samplesByRate = [];
     private long _rate = firstRate;
@@ -81,6 +83,7 @@ internal sealed class StreamFigures(long firstRate)
             else
             {
                 _seconds.Add((second, bits, samples, (int)runRate));
+                _firstRuns.Add(Math.Max(0, _points.Count - 1));
             }
 
             _stretchSamples += samples;
@@ -143,9 +146,31 @@ internal sealed class StreamFigures(long firstRate)
 
     public long StereoUnits => _stereoCounts.Sum();
 
-    // The "Stereo Coding" series of the runs, sharing the x of the bitrate series; null where no unit had a two-channel presentation.
+    // The seconds "Bitrate Over Time" is counted over, with the first run that starts in each; null without them.
+    private TimeIndex? Time
+    {
+        get
+        {
+            if (_seconds.Count == 0)
+            {
+                return null;
+            }
+
+            var starts = new double[_seconds.Count];
+            var first = new int[_seconds.Count];
+            for (int i = 0; i < starts.Length; i++)
+            {
+                starts[i] = _seconds[i].Second;
+                first[i] = _firstRuns[i];
+            }
+
+            return new TimeIndex(starts, first);
+        }
+    }
+
+    // The "Stereo Coding" series of the runs, sharing the x and the time index of the bitrate series; null where no unit had a two-channel presentation.
     public CategorySeries? StereoSeries(Series bitrate, Node anchor) =>
-        _stereo is null || _stereo.Count != bitrate.X.Length ? null : _stereo.Build(bitrate.X, bitrate, anchor, Explain.StereoCodingSeries, Topics.Rematrixing);
+        _stereo?.Build(bitrate.X, bitrate, anchor, Explain.StereoCodingSeries, Topics.Rematrixing, Time);
 
     // Samples that a lost unit declares after the last run was closed: the run keeps the bitrate it was counted with and codes them.
     public void AddCoded(long samples)
