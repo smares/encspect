@@ -111,6 +111,7 @@ internal sealed class StreamMeasurer
     private readonly List<Span> _pending = [];
     private readonly List<Span> _leading = [];
     private long _overflow;
+    private long _withheldBeforeStart;
     private long _leadingOverflow;
     private readonly long[] _overflowBy = new long[WithholdReasons.Count];
     private readonly long[] _leadingOverflowBy = new long[WithholdReasons.Count];
@@ -894,6 +895,13 @@ internal sealed class StreamMeasurer
     private void RecordJump(long from, long to)
     {
         long withheld = Overlap(_pending, from, to, _withheld);
+
+        // A jump before the first measured sample (a first block the syntax trims whole): its withheld positions lie before the figures' span, as leading ones.
+        if (!_hasStarted)
+        {
+            _withheldBeforeStart += withheld;
+        }
+
         _lost += Math.Max(0, to - from - withheld - _overflow);
         _overflow = 0;
         Array.Clear(_overflowBy);
@@ -1466,13 +1474,13 @@ internal sealed class StreamMeasurer
             LeadingLostSamples = leading - leadingWithheld,
             TrailingLostSamples = trailingLost,
             WithheldSamples = withheld.Sum(),
-            LeadingWithheldSamples = leadingWithheld,
+            LeadingWithheldSamples = leadingWithheld + (_hasStarted ? _withheldBeforeStart : 0),
             TrailingWithheldSamples = trailingWithheld,
             WithheldByReason = WithheldCounts.From(withheld),
             LeadingTrimmedSamples = _trimmedLeading + leadingTrimmedGap,
             InnerTrimmedSamples = _trimmedInner,
             TrailingTrimmedSamples = _trimmedTrailing + _pendingInner + trailingTrimmedGap,
-            Gaps = _gaps + (leading > 0 ? 1 : 0) + (trailing > 0 ? 1 : 0),
+            Gaps = _hasStarted ? _gaps + (leading > 0 ? 1 : 0) + (trailing > 0 ? 1 : 0) : 0,
             SampleRate = _format.SampleRate,
             ChannelLayout = _format.ChannelLayout is { } layout ? [.. layout.Take(_measured)] : null,
             Channels = _channels,

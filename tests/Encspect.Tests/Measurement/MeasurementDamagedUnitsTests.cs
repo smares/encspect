@@ -149,6 +149,21 @@ public class MeasurementDamagedUnitsTests
     }
 
     [Fact]
+    public void ASpanRightAfterAFirstBlockTheTrimTakesWholeIsLeadingWithheld()
+    {
+        StreamMeasurer measurer = Measurer();
+        measurer.Trim(1000, long.MaxValue);
+        measurer.WithholdWritten(500, 1000);
+        Write(measurer, 0, 500);
+        Write(measurer, 500, 1000);
+        Write(measurer, 1500, 1500);
+        StreamMeasurements m = measurer.Result(MeasurementStatus.Complete, null);
+
+        Assert.Equal((500L, 500L, 0L), (m.WithheldSamples, m.LeadingWithheldSamples, m.InnerWithheldSamples));
+        Assert.Equal(1, m.Gaps);
+    }
+
+    [Fact]
     public void ASpanThatCrossesAnInnerTrimCountsOnlyItsPartOutsideIt()
     {
         StreamMeasurer measurer = Measurer();
@@ -170,7 +185,7 @@ public class MeasurementDamagedUnitsTests
         measurer.SetCodedRange(0, 1000);
         StreamMeasurements m = measurer.Result(MeasurementStatus.Complete, null);
 
-        Assert.Equal((0L, 800L), (m.Samples, m.WithheldSamples));
+        Assert.Equal((0L, 800L, 0), (m.Samples, m.WithheldSamples, m.Gaps));
     }
 
     [Fact]
