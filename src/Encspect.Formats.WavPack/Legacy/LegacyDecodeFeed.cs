@@ -51,6 +51,14 @@ internal sealed class LegacyDecodeInfo
     public long CorrectionRead { get; set; } = -1;
 
     public bool IsCorrectionShort { get; set; }
+
+    // What the decoder tells the feed, so that the correction bytes are handed over by its demand and not by a share of the file: how many it has taken from the bitstream
+    // (those of 0xFF past the end included), whether it waits for more before it can go on, and whether it has ended (all samples decoded, or the main bitstream ended).
+    public long CorrectionTaken { get; set; }
+
+    public bool IsCorrectionStarved { get; set; }
+
+    public bool IsDecoded { get; set; }
 }
 
 internal static partial class Legacy
@@ -58,12 +66,13 @@ internal static partial class Legacy
     // The bytes of the bitstream handed to the decoder at a time.
     internal const int FeedLength = 1 << 18;
 
-    // The bytes of the correction bitstream handed over with a frame at most, so that a correction file far longer than its stream is not held at once.
-    private const int CorrectionChunk = 1 << 22;
+    // The correction bytes the decoder is kept supplied with beyond those it has taken: a window, so that neither the decoder's buffer nor the feed's grows with the correction
+    // file, whatever its length and however fast the stream's words use it.
+    private const int CorrectionWindow = 1 << 20;
 
     // Starts the decoding session of the stream, feeds it the bytes from the bitstream's start to the end of the data and ends it with the checksum the stream stores. A
-    // correction bitstream is fed in step with the main one (the share of the file that the main bitstream's progress is), what is left of it after the last frame
-    // in frames of its own. Nothing is read where decoding is not asked for.
+    // correction bitstream is fed by the decoder's demand: each frame carries the bytes up to a window beyond those the decoder has taken, and while the decoder waits for more
+    // it is given frames of correction bytes alone before the next main bytes. Nothing is read where decoding is not asked for.
     private static StreamVerification Decode(ParseContext context, ByteReader reader, LegacyDecodeInfo info, Node stream, Node bitstream, IReadOnlyList<ChecksumTally> checksums)
     {
         IDecodeSession session = context.StartDecoding(WavPackCodecParser.CodecId, new DecodeSetup
@@ -81,17 +90,15 @@ internal static partial class Legacy
             byte[] buffer = new byte[FeedLength];
             byte[] corrections = [];
             long correctionPosition = info.CorrectionAt;
-            long correctionLength = info.CorrectionEnd - info.CorrectionAt;
-            long mainLength = info.DataEnd - info.BitstreamAt;
-            MappedBytes? Correction(long mainPosition)
+            MappedBytes? Correction()
             {
                 if (!info.HasCorrection)
                 {
                     return null;
                 }
 
-                long target = mainPosition >= info.DataEnd || mainLength <= 0 ? info.CorrectionEnd : info.CorrectionAt + (long)((Int128)correctionLength * (mainPosition - info.BitstreamAt) / mainLength);
-                int length = (int)Math.Clamp(target - correctionPosition, 0, CorrectionChunk);
+                long target = Math.Min(info.CorrectionEnd, info.CorrectionAt + info.CorrectionTaken + CorrectionWindow);
+                int length = (int)Math.Max(0, target - correctionPosition);
                 if (corrections.Length < length)
                 {
                     corrections = new byte[length];
@@ -112,15 +119,15 @@ internal static partial class Legacy
                 reader.Position = position;
                 reader.Read(buffer.AsSpan(0, length));
                 position += length;
-                isDecoding = session.Decode(new CodedFrame(new MappedBytes(buffer.AsMemory(0, length), position - length), "Bitstream", 0, 0) { Node = bitstream, Correction = Correction(position) });
+                isDecoding = session.Decode(new CodedFrame(new MappedBytes(buffer.AsMemory(0, length), position - length), "Bitstream", 0, 0) { Node = bitstream, Correction = info.IsDecoded ? null : Correction() });
+
+                // The decoder waits for correction bytes it has not been given: they come before the next main bytes, so that the main bitstream is not held meanwhile.
+                while (isDecoding && info.IsCorrectionStarved && correctionPosition < info.CorrectionEnd)
+                {
+                    isDecoding = session.Decode(new CodedFrame(new MappedBytes(ReadOnlyMemory<byte>.Empty, position), "Bitstream", 0, 0) { Node = bitstream, Correction = Correction() });
+                }
             }
             while (isDecoding && position < info.DataEnd);
-
-            // The correction bitstream's bytes beyond the share the main frames carried, which a sample near the end may still need.
-            while (isDecoding && info.HasCorrection && correctionPosition < info.CorrectionEnd && info.CorrectionRead < 0)
-            {
-                isDecoding = session.Decode(new CodedFrame(new MappedBytes(ReadOnlyMemory<byte>.Empty, info.DataEnd), "Bitstream", 0, 0) { Node = bitstream, Correction = Correction(info.DataEnd) });
-            }
         }
 
         return session.Finish(checksums);

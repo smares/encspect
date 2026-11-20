@@ -203,6 +203,12 @@ internal sealed partial class LegacyStreamDecoder : IFrameDecoder
             Complete(isLast);
         }
 
+        if (HasCorrection)
+        {
+            _info.CorrectionTaken = _cfetched;
+            _info.IsCorrectionStarved = !_isComplete && IsCorrectionStarved();
+        }
+
         return produced;
     }
 
@@ -235,6 +241,7 @@ internal sealed partial class LegacyStreamDecoder : IFrameDecoder
         }
 
         _isComplete = true;
+        _info.IsDecoded = true;
         if (_done == _total && _total > 0 && _version == 3 && !_isEof)
         {
             _isCrcChecked = true;

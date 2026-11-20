@@ -210,6 +210,92 @@ public class WavPackLegacyPairTests
         }
     }
 
+    // A stream of pseudo-random bytes of any length that holds nothing: its bytes are made as they are read.
+    private sealed class VirtualStream(long length) : Stream
+    {
+        private long _position;
+
+        public long BytesRead { get; private set; }
+
+        public override bool CanRead => true;
+
+        public override bool CanSeek => true;
+
+        public override bool CanWrite => false;
+
+        public override long Length => length;
+
+        public override long Position { get => _position; set => _position = value; }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            int n = (int)Math.Min(count, length - _position);
+            for (int i = 0; i < n; i++)
+            {
+                buffer[offset + i] = (byte)((_position + i) * 2654435761L >> 13);
+            }
+
+            _position += n;
+            BytesRead += n;
+            return n;
+        }
+
+        public override long Seek(long offset, SeekOrigin origin) => _position = origin switch { SeekOrigin.Begin => offset, SeekOrigin.Current => _position + offset, _ => length + offset };
+
+        public override void Flush()
+        {
+        }
+
+        public override void SetLength(long value) => throw new NotSupportedException();
+
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    }
+
+    // The header of a pair's main file and noise for its bitstream, so that the stream is many frames long and states more samples than the bytes hold.
+    private static byte[] NoiseMain(int bytes)
+    {
+        byte[] head = File.ReadAllBytes(Main)[..80];
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(head.AsSpan(60), int.MaxValue);
+        byte[] noise = new byte[bytes];
+        new Random(7).NextBytes(noise);
+        for (int i = 0; i < noise.Length; i++)
+        {
+            noise[i] &= 0x7F;
+        }
+
+        return [.. head, .. noise];
+    }
+
+    [Fact]
+    public void ALargeCorrectionFileIsReadByTheDecodersDemandAndHoldsNothingBeyondAWindow()
+    {
+        byte[] main = NoiseMain(8 << 20);
+        var correction = new VirtualStream(2L << 30);
+        long before = GC.GetAllocatedBytesForCurrentThread();
+
+        Report report = Analyzer.CreateDefault().Analyze("big.wv", new MemoryStream(main), new AnalysisOptions { Decoding = new DecodeOptions(), Companions = CompanionSource.From(_ => correction) });
+
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+        Assert.Equal(DecodeStatus.Decoded, Stream(report).Verification!.Decoding);
+        // The decoder takes a few MiB of the 2 GiB, and the buffers stay within a window of them.
+        Assert.True(correction.BytesRead < 64L << 20, $"{correction.BytesRead} bytes of the correction file were read.");
+        Assert.True(allocated < 96L << 20, $"{allocated} bytes were allocated.");
+    }
+
+    [Fact]
+    public void AMainFileThatEndsEarlyDoesNotReadTheWholeCorrectionFile()
+    {
+        byte[] main = File.ReadAllBytes(Main);
+        main = main[..(main.Length * 2 / 3)];
+        var correction = new VirtualStream(8L << 30);
+
+        Report report = Analyzer.CreateDefault().Analyze("early.wv", new MemoryStream(main), new AnalysisOptions { Decoding = new DecodeOptions(), Companions = CompanionSource.From(_ => correction) });
+
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+        Assert.True(correction.BytesRead < 64L << 20, $"{correction.BytesRead} bytes of the correction file were read.");
+    }
+
     [Theory]
     [InlineData("external-wv300-stereo-16.wv")]
     [InlineData("external-wv397-hybrid-320-correction.wv")]
