@@ -28,6 +28,7 @@ internal sealed class StdStream
     public StdStream(StdParameters parameters)
     {
         Parameters = parameters;
+        Blocks = new StdBlockSeries(parameters);
     }
 
     public StdParameters Parameters { get; }
@@ -39,6 +40,9 @@ internal sealed class StdStream
     public ByteStore Store { get; } = new();
 
     public StdTotals Totals { get; } = new();
+
+    // The series over the blocks, recorded while the frames are read.
+    public StdBlockSeries Blocks { get; }
 
     // Media objects handed over, and those past the limit that were counted and not read.
     public long Skipped { get; private set; }
@@ -522,6 +526,8 @@ internal sealed class StdStream
         long midSide = Totals.MidSide - _midSideSeen;
         _midSideSeen = Totals.MidSide;
         Stereo.Add(Parameters.Channels == 2 && frame.IsValid ? (midSide > 0 ? 1 : 0) : null);
+        Blocks.Add(Frames.Count, frame.IsValid, Totals.Notes);
+        Totals.Notes.Clear();
         Frames.Add(frame);
         return Frames.Count - 1;
     }
