@@ -90,7 +90,7 @@ public class WavPackDamagedUnitsTests
         Assert.Equal(plain.Findings.Select(f => f.Code).Order(), measured.Findings.Where(f => !f.Code.StartsWith("measure.", StringComparison.Ordinal)).Select(f => f.Code).Order());
     }
 
-    // A block of the main file of a hybrid pair is withheld whether or not the correction file is beside it; the correction file's own blocks are not decoded
+    // A block of the main file of a hybrid pair whose stored checksum is changed (its data intact; the second block, since a first block that fails its checksum is not one libwavpack opens the file with) is withheld whether or not the correction file is beside it; the correction file's own blocks are not decoded
     // (applying it is a later pull request), so damage there withholds nothing.
     [Fact]
     public void AFailedBlockOfAPairIsWithheldWithAndWithoutItsCorrectionFile()
@@ -98,7 +98,7 @@ public class WavPackDamagedUnitsTests
         string main = Path.Combine(Fixtures.FixtureDirectory, "wavpack", "external-hybrid-b4-correction.wv");
         string correction = Path.Combine(Fixtures.FixtureDirectory, "wavpack", "external-hybrid-b4-correction-wvc.wvc");
         byte[] damaged = File.ReadAllBytes(main);
-        damaged[0x1000] ^= 0x55;
+        damaged[0x36CC] ^= 0x55;
 
         using var with = new TempFolder();
         File.WriteAllBytes(with["song.wv"], damaged);
@@ -108,7 +108,7 @@ public class WavPackDamagedUnitsTests
         using var intact = new TempFolder();
         intact.Copy(main, "song.wv");
         byte[] damagedCorrection = File.ReadAllBytes(correction);
-        damagedCorrection[0x1000] ^= 0x55;
+        damagedCorrection[0xF08] ^= 0x55;
         File.WriteAllBytes(intact["song.wvc"], damagedCorrection);
 
         static AnalysisOptions Options() => new() { Decoding = new DecodeOptions { Output = new PcmHashingSink().Declare, Measure = new MeasureOptions() } };
@@ -118,7 +118,7 @@ public class WavPackDamagedUnitsTests
 
         StreamMeasurements withCorrection = pair.Streams[0].Measurements!;
         StreamMeasurements withoutCorrection = alone.Streams[0].Measurements!;
-        Assert.Equal(11025, withoutCorrection.WithheldByReason[WithholdReason.ChecksumFailed]);
+        Assert.Equal(3936, withoutCorrection.WithheldByReason[WithholdReason.ChecksumFailed]);
         Assert.Equal(withoutCorrection.WithheldByReason[WithholdReason.ChecksumFailed], withCorrection.WithheldByReason[WithholdReason.ChecksumFailed]);
         Assert.Equal(pair.Streams[0].Verification!.DecodedSamples, withCorrection.Samples + withCorrection.WithheldSamples);
         Assert.Equal(0, brokenCorrection.Streams[0].Measurements!.WithheldSamples);

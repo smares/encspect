@@ -52,7 +52,7 @@ public class MonkeysAudioDamagedUnitsTests
     [Theory]
     [InlineData("monkeys-audio/built-frame-crc-changed.ape")]
     [InlineData("monkeys-audio/built-24-bit-frame-crc-changed.ape")]
-    [InlineData("monkeys-audio/external-normal-16-stereo.ape")]
+    [InlineData("monkeys-audio/external-level-normal-16-stereo.ape")]
     public void AFrameAboveTheCapIsDecodedTwiceAndGivesTheSamePcmAndMeasurements(string name)
     {
         (Report held, string heldPcm) = Analyze(name);
@@ -99,7 +99,7 @@ public class MonkeysAudioDamagedUnitsTests
     [Fact]
     public void AnUndamagedFileWithholdsNothing()
     {
-        (Report report, _) = Analyze("monkeys-audio/external-normal-16-stereo.ape");
+        (Report report, _) = Analyze("monkeys-audio/external-level-normal-16-stereo.ape");
 
         Assert.Equal(0, report.Streams[0].Measurements!.WithheldSamples);
         Assert.Equal(0, report.Streams[0].Measurements!.Gaps);
