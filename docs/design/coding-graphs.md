@@ -282,7 +282,7 @@ The AAC codec parser serves every container that routes AAC to it. There is no L
 | Candidate | Field and source | Read | Tallied | Kept per unit | Status | Wave |
 | --- | --- | --- | --- | --- | --- | --- |
 | Block sizes | the mode's blockflag (Vorbis I 4.3.1), with the previous and next window flags | yes, in the packet record (`PacketFlags.Long`, `PreviousLong`, `NextLong`) | "Block Sizes", one tally with "Long" and "Short" (#226 dropped "Long Blocks" and "Short Blocks") | none: a grouping of "Modes" | built (#226) | 1 |
-| Modes | mode number per packet | yes, in the record | "Modes" | 1 byte per packet, derived | code; not built | 1 |
+| Modes | mode number per packet | yes, in the record | "Modes" | 1 byte per packet, derived | built (this pull request) | 1 |
 | Coded bandwidth | the end of the highest residue partition that reads a codebook entry (8.6.2); the packet's floors and residues are walked by the entropy pass | yes, by the entropy pass (every analysis) | "Coded Bandwidth" (children "Lowest", "Most Common", "Highest" in whole hertz) | 2 bytes per packet in the record (the end in coefficients), the series' 8-byte values built at the end | built (#274) | built with the Vorbis decoder |
 
 - residue_end is fixed per residue, so the bandwidth it implies changes only with the mode a packet chooses; the "Modes" series already shows that. Where the coded spectrum really ends needs the floors and residues, which the entropy pass of the Vorbis decoder reads: a partition counts where a pass has a codebook for its class and reads an entry for it.
@@ -292,10 +292,10 @@ The AAC codec parser serves every container that routes AAC to it. There is no L
 
 | Candidate | Field and source | Read | Tallied | Kept per unit | Status | Wave |
 | --- | --- | --- | --- | --- | --- | --- |
-| Modes | TOC config: SILK-only, hybrid, CELT-only (RFC 6716 3.1) | yes, the TOC byte is in the record | "Modes", per frame | derived; 1 byte per stream packet in the series, plus a weight byte (its frames) | code; not built | 1 |
+| Modes | TOC config: SILK-only, hybrid, CELT-only (RFC 6716 3.1) | yes, the TOC byte is in the record | "Modes", per frame | derived; 1 byte per stream packet in the series, plus a weight byte (its frames) | built (this pull request) | 1 |
 | Bandwidths | TOC config: narrowband (4 kHz) to fullband (20 kHz), RFC 6716 table 1 | yes | "Bandwidths", per frame; "Coded Bandwidth" (lowest, most common, highest) gives the same figure in whole hertz (#226) | as above; the numeric series "Coded Bandwidth" (8 bytes per packet) already shows it | code; the category series not built, superseded by "Coded Bandwidth" | not proposed |
-| Frame sizes | TOC config: 2.5 to 60 ms | yes | "Frame Sizes", per frame | as above | code; not built | 1 |
-| Channel counts | TOC s bit: stereo or mono packet | yes | "Channel Coding" with "Stereo" and "Mono", per stream packet (renamed from "Stereo Coding" in #260, not "Channel Counts" as proposed here) | 1 byte per stream packet, derived | code; not built | 1 |
+| Frame sizes | TOC config: 2.5 to 60 ms | yes | "Frame Sizes", per frame | as above | built (this pull request) | 1 |
+| Channel counts | TOC s bit: stereo or mono packet | yes | "Channel Coding" with "Stereo" and "Mono", per stream packet (renamed from "Stereo Coding" in #260, not "Channel Counts" as proposed here) | 1 byte per stream packet, derived | built (this pull request) | 1 |
 | Block sizes and stereo coding of CELT frames | the transient flag; dual stereo, intensity stereo and the mid/side coding of bands (RFC 6716 4.3) | yes, by the entropy pass (every analysis) | "Block Sizes" ("Long", "Short"), "Stereo Coding" over stereo CELT frames | 1 byte per frame each | built (#282) | built with the Opus decoder |
 | Intensity stereo bound, CELT | the first band coded as intensity stereo, in Hz | yes, by the entropy pass | "Intensity Stereo Bound" | 8 bytes per frame that has one | built (#282) | built with the Opus decoder |
 
@@ -307,8 +307,8 @@ The AAC codec parser serves every container that routes AAC to it. There is no L
 
 | Candidate | Field and source | Read | Tallied | Kept per unit | Status | Wave |
 | --- | --- | --- | --- | --- | --- | --- |
-| Narrowband submode | 4-bit submode per frame (libspeex 1.2.1 `nb_decode`); 0 is a frame without speech data | yes, the 4-byte frame record (`FrameRecord`), read by the frame walk the entropy pass shares (#322) | "Narrowband Submodes", frames of each submode | 1 byte per frame in the series, derived | code; not built | 1 |
-| Wideband and ultra-wideband submodes | 3-bit submode per layer (`sb_decode`) | yes | "Wideband Submodes", "Ultra-Wideband Submodes" | 1 byte per frame and layer, derived | code; not built | 1 |
+| Narrowband submode | 4-bit submode per frame (libspeex 1.2.1 `nb_decode`); 0 is a frame without speech data | yes, the 4-byte frame record (`FrameRecord`), read by the frame walk the entropy pass shares (#322) | "Narrowband Submodes", frames of each submode | 1 byte per frame in the series, derived | built (this pull request) | 1 |
+| Wideband and ultra-wideband submodes | 3-bit submode per layer (`sb_decode`) | yes | "Wideband Submodes", "Ultra-Wideband Submodes" | 1 byte per frame and layer, derived | built (this pull request) | 1 |
 | Stereo coding | the in-band stereo request (code 9): balance and energy ratio for intensity stereo of the mono frames (libspeex 1.2.1 `speex_std_stereo_request_handler`) | yes, counted by the frame walk | "Stereo Parameters" (a count) | | code | not a series: a stereo Speex stream is intensity stereo in every frame, and the request only updates its parameters |
 | Coded bandwidth | the layers a frame holds: narrowband alone is 4 kHz of audio, with a wideband layer 8 kHz, with an ultra-wideband layer 16 kHz (`sb_decode`; the walk reads each layer's submode) | yes, with the submodes | "Coded Bandwidth", under the name, unit and axis of the other lossy formats | 1 byte per frame, derived from the layer count | queued, 0.5 ([plan.md](../plan.md#05-aac-and-wma), item 7) | later |
 | Balance and energy ratio over time | the balance and energy ratio of each in-band stereo request (`speex_std_stereo_request_handler`), quantized as the request codes them | yes, kept by the walk for the decoder | a numeric series of each, per request | 2 bytes per request | queued, 0.5 (item 7) | later |
@@ -618,9 +618,10 @@ The lead asked, before item 5 of 0.4 builds anything, for the survey to be check
    - About 18 bytes per block for the standard reader, recorded while reading, since the clean-room readers keep no block records.
    - Built (#363), as above; the table under "WMA standard, Pro and Voice" says how each row was built.
    - Why second: WMA standard is the one transform codec of the survey with no graph under "Block Switching" or "Coded Bandwidth", and its coded bandwidth is a coded value, which shows a lowpass frame by frame.
-3. **Wave 1 rows left in "Other":**
+3. **Wave 1 rows left in "Other" (built, this pull request):**
    - Opus "Modes", "Frame Sizes" and "Channel Coding"; Vorbis "Modes"; Speex's three submode series.
    - 1 to 7 bytes per packet, derived from the kept records.
+   - As built: one unit per packet. Opus has a value per stream packet (a fixed layout up to 254 streams, a variable one past that), Modes and Frame Sizes weighted by its frames and a stream packet that is cut or breaks the framing holding none; Vorbis has one value per packet; Speex has a variable layout, a value per frame, since a packet may hold fewer frames than the header gives. The summary table maps Opus' "Channel Coding" to the sum of its entries, which has no node of its own.
    - Opus "Bandwidths" is dropped: gap wave 1 made the TOC bandwidth "Coded Bandwidth" (#226), which shows the same figure.
 4. **Prediction:**
    - First the small pull request that adds the `Prediction` concept (decision 12).
@@ -647,7 +648,7 @@ The lead asked, before item 5 of 0.4 builds anything, for the survey to be check
 - AAC: "Window Sequences" is "Block Usage" since #226.
 - WMA: the readers came back without block records, so its block series are recorded while reading, not derived from `BlockRecord` fields, which no longer exist.
 - Monkey's Audio: "Stereo Coding" is built (#356); a mono stream keeps "Silent Frames", now with a flag series.
-- Wave 1 was not finished: Speex's submodes, Opus's TOC series and Vorbis's "Modes" are not built.
+- Wave 1 was not finished: Speex's submodes, Opus's TOC series and Vorbis's "Modes" were not built until this pull request, which builds them (Opus "Bandwidths" stays dropped).
 - WAV: a Microsoft ADPCM fixture is committed now.
 
 ## The model

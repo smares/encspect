@@ -2180,6 +2180,94 @@
               8000
             ]
           }
+        ],
+        "categorySeries": [
+          {
+            "name": "Modes",
+            "valueLabel": "stream packet",
+            "categories": [
+              {
+                "name": "SILK-only",
+                "count": 10
+              },
+              {
+                "name": "Hybrid",
+                "count": 0
+              },
+              {
+                "name": "CELT-only",
+                "count": 0
+              }
+            ],
+            "total": 10,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                0,
+                10
+              ]
+            ]
+          },
+          {
+            "name": "Frame Sizes",
+            "valueLabel": "stream packet",
+            "categories": [
+              {
+                "name": "2.5 ms",
+                "count": 0
+              },
+              {
+                "name": "5 ms",
+                "count": 0
+              },
+              {
+                "name": "10 ms",
+                "count": 0
+              },
+              {
+                "name": "20 ms",
+                "count": 10
+              },
+              {
+                "name": "40 ms",
+                "count": 0
+              },
+              {
+                "name": "60 ms",
+                "count": 0
+              }
+            ],
+            "total": 10,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                3,
+                10
+              ]
+            ]
+          },
+          {
+            "name": "Channel Coding",
+            "valueLabel": "stream packet",
+            "categories": [
+              {
+                "name": "Stereo",
+                "count": 10
+              },
+              {
+                "name": "Mono",
+                "count": 0
+              }
+            ],
+            "total": 10,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                0,
+                10
+              ]
+            ]
+          }
         ]
       }
     ],
