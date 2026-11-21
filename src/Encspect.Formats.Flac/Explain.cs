@@ -251,12 +251,12 @@ internal static class Explain
         "Residuals coded in 128 partitions, each with its own Rice parameter (RFC 9639, section 9.2.7).",
         "Residuals coded in 256 partitions, each with its own Rice parameter (RFC 9639, section 9.2.7).",
         "Residuals coded in 512 partitions, each with its own Rice parameter (RFC 9639, section 9.2.7).",
-        "Residuals coded in 1024 partitions, each with its own Rice parameter (RFC 9639, section 9.2.7).",
-        "Residuals coded in 2048 partitions, each with its own Rice parameter (RFC 9639, section 9.2.7).",
-        "Residuals coded in 4096 partitions, each with its own Rice parameter (RFC 9639, section 9.2.7).",
-        "Residuals coded in 8192 partitions, each with its own Rice parameter (RFC 9639, section 9.2.7).",
-        "Residuals coded in 16384 partitions, each with its own Rice parameter (RFC 9639, section 9.2.7).",
-        "Residuals coded in 32768 partitions, each with its own Rice parameter (RFC 9639, section 9.2.7).",
+        "Residuals coded in 1,024 partitions, each with its own Rice parameter (RFC 9639, section 9.2.7).",
+        "Residuals coded in 2,048 partitions, each with its own Rice parameter (RFC 9639, section 9.2.7).",
+        "Residuals coded in 4,096 partitions, each with its own Rice parameter (RFC 9639, section 9.2.7).",
+        "Residuals coded in 8,192 partitions, each with its own Rice parameter (RFC 9639, section 9.2.7).",
+        "Residuals coded in 16,384 partitions, each with its own Rice parameter (RFC 9639, section 9.2.7).",
+        "Residuals coded in 32,768 partitions, each with its own Rice parameter (RFC 9639, section 9.2.7).",
     ];
 
     public const string Encoder = "The encoder that wrote the stream, as far as the Vorbis comment names it, with the evidence and the confidence in it.";

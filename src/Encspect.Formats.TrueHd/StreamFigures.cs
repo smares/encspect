@@ -271,7 +271,7 @@ internal sealed class StreamFigures(long firstRate)
     private readonly ChunkedList<byte> _orders = new();
 
     // The highest prediction filter order of each run, at the runs that have one (sharing the bitrate series' x where all do).
-    public Series? OrderSeries(Series bitrate)
+    public Series? OrderSeries(Series bitrate, CancellationToken cancellation)
     {
         if (_orders.Count != bitrate.X.Length)
         {
@@ -281,6 +281,11 @@ internal sealed class StreamFigures(long firstRate)
         int valued = 0;
         for (int i = 0; i < _orders.Count; i++)
         {
+            if (i % 4096 == 0)
+            {
+                cancellation.ThrowIfCancellationRequested();
+            }
+
             valued += _orders[i] != 255 ? 1 : 0;
         }
 
@@ -294,6 +299,11 @@ internal sealed class StreamFigures(long firstRate)
         var y = new double[valued];
         for (int i = 0, n = 0; i < _orders.Count; i++)
         {
+            if (i % 4096 == 0)
+            {
+                cancellation.ThrowIfCancellationRequested();
+            }
+
             if (_orders[i] != 255)
             {
                 if (x.Length > 0)

@@ -58,6 +58,8 @@ internal sealed class Analysis
     private int _runOrder = -1;
     private readonly int[] _runCodings = new int[StereoCodings.Categories.Length];
 
+    public CancellationToken CancellationToken => _context.CancellationToken;
+
     public Analysis(AnalysisContext context)
     {
         _context = context;

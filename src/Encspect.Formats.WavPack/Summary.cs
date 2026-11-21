@@ -385,6 +385,11 @@ internal static partial class Summary
             int valued = 0;
             for (int i = 0; i < s.PassesPerSet.Count; i++)
             {
+                if (i % 4096 == 0)
+                {
+                    s.Cancellation.ThrowIfCancellationRequested();
+                }
+
                 valued += s.PassesPerSet[i] != 255 ? 1 : 0;
             }
 
@@ -395,6 +400,11 @@ internal static partial class Summary
                 var passes = new double[valued];
                 for (int i = 0, n = 0; i < s.PassesPerSet.Count; i++)
                 {
+                    if (i % 4096 == 0)
+                    {
+                        s.Cancellation.ThrowIfCancellationRequested();
+                    }
+
                     if (s.PassesPerSet[i] != 255)
                     {
                         if (x.Length > 0)

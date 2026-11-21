@@ -264,7 +264,7 @@ internal static class Summary
         IReadOnlyList<CategorySeries> categories = series.Count > 0
             ? s.Series.Build(series[0].X, series[0], figures.Time, nodes)
             : [];
-        if (series.Count > 0 && s.Series.BuildOrders(series[0].X) is { } orders)
+        if (series.Count > 0 && s.Series.BuildOrders(series[0].X, s.Context.CancellationToken) is { } orders)
         {
             series.Add(orders);
         }

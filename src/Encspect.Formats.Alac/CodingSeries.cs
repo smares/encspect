@@ -114,7 +114,7 @@ internal sealed class CodingRecorder
     }
 
     // The highest predictor order of each unit's channels, at the units that have a compressed channel (x: their offsets).
-    public Series? BuildOrders(ReadOnlyMemory<double> offsets)
+    public Series? BuildOrders(ReadOnlyMemory<double> offsets, CancellationToken cancellation)
     {
         if (Count == 0 || offsets.Length != Count)
         {
@@ -124,6 +124,11 @@ internal sealed class CodingRecorder
         int count = 0;
         for (int i = 0; i < _orders.Count; i++)
         {
+            if (i % 4096 == 0)
+            {
+                cancellation.ThrowIfCancellationRequested();
+            }
+
             count += _orders[i] != 255 ? 1 : 0;
         }
 
@@ -138,6 +143,11 @@ internal sealed class CodingRecorder
         var y = new double[count];
         for (int i = 0, n = 0; i < _orders.Count; i++)
         {
+            if (i % 4096 == 0)
+            {
+                cancellation.ThrowIfCancellationRequested();
+            }
+
             if (_orders[i] != 255)
             {
                 if (xs.Length > 0)
