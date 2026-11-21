@@ -692,7 +692,7 @@ All in `Encspect.Core`.
 ```csharp
 // The concept a graph shows, which front ends group by in place of names: the GUI lists the series of a stream under one
 // heading per concept, whatever the format. None for a series that belongs to no shared concept (modes, frame sizes).
-public enum GraphConcept { None, StereoCoding, BlockSwitching, CodedBandwidth, BitDistribution }
+public enum GraphConcept { None, StereoCoding, BlockSwitching, CodedBandwidth, BitDistribution, Prediction }
 
 // One category a series' values take, such as a Layer III block type. Name is written as the tally entry for it is named
 // ("Mid/side stereo", "Short"), Description as a node's (constant, citing the specification), Topic as a node's.
