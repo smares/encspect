@@ -95,20 +95,22 @@ internal sealed partial class CategorySummary
 
         // The tally covers a region and the series a stream: the tallies of the group's regions are summed, and the series of its
         // streams. A series' own anchor counts too where it lies outside the streams' nodes.
+        // A region's own series anchor comes first, as another node of the same name (a setup header's "Modes") may lie before it.
+        var own = new HashSet<Node>(series.Select(s => s.Anchor!), ReferenceEqualityComparer.Instance);
         var anchors = new List<Node>();
         foreach (Node region in regions)
         {
-            if (FindByName(region, entry.Anchor, 0) is { } found && !anchors.Contains(found, ReferenceEqualityComparer.Instance))
+            if ((FindByName(region, entry.Anchor, 0, own) ?? FindByName(region, entry.Anchor, 0, null)) is { } found && !anchors.Contains(found, ReferenceEqualityComparer.Instance))
             {
                 anchors.Add(found);
             }
         }
 
-        foreach (Node own in series.Select(s => s.Anchor!))
+        foreach (Node anchor in series.Select(s => s.Anchor!))
         {
-            if (!anchors.Contains(own, ReferenceEqualityComparer.Instance))
+            if (!anchors.Contains(anchor, ReferenceEqualityComparer.Instance))
             {
-                anchors.Add(own);
+                anchors.Add(anchor);
             }
         }
 
@@ -118,7 +120,7 @@ internal sealed partial class CategorySummary
         foreach (Node anchor in anchors)
         {
             // The first of the names that has a node beside the anchor: a series two formats share has the denominator of each.
-            if (entry.Denominator.Select(n => Denominator(report.Root, anchor, n)).FirstOrDefault(d => d is not null) is not { } value)
+            if (entry.Denominator.Select(n => n == EntriesDenominator ? anchor.Children.Sum(c => Count(c.Value) ?? 0) : Denominator(report.Root, anchor, n)).FirstOrDefault(d => d is not null) is not { } value)
             {
                 problems.Add($"{name}: no node {string.Join(" or ", entry.Denominator)} with a whole number beside {anchor.Name}");
                 return;
@@ -174,9 +176,12 @@ internal sealed partial class CategorySummary
     [GeneratedRegex(@"^\s*([0-9][0-9,]*)(?![0-9])")]
     private static partial Regex LeadingCount();
 
-    private static Node? FindByName(Node node, string name, int depth)
+    // The denominator of a tally that has no node of its total, such as Opus' stereo and mono packets: the sum of the anchor's entries.
+    private const string EntriesDenominator = "@entries";
+
+    private static Node? FindByName(Node node, string name, int depth, HashSet<Node>? only)
     {
-        if (node.Name == name)
+        if (node.Name == name && (only is null || only.Contains(node)))
         {
             return node;
         }
@@ -188,7 +193,7 @@ internal sealed partial class CategorySummary
 
         foreach (Node child in node.Children)
         {
-            if (child.Kind != NodeKind.Frame && FindByName(child, name, depth + 1) is { } found)
+            if (child.Kind != NodeKind.Frame && FindByName(child, name, depth + 1, only) is { } found)
             {
                 return found;
             }
