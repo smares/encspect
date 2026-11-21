@@ -405,7 +405,7 @@ Native FLAC and FLAC in Ogg, one parser (`src/Encspect.Formats.Flac`, merged). S
   - left/side frames in 13 fixtures, side/right in 6, mid/side in 67, two channels each coded by itself in 64;
   - constant subframes in 3, verbatim in 6, fixed predictors in 95, linear predictors in 84; wasted bits in 5; 5-bit Rice parameters in 14;
   - a variable blocking strategy only in the hand-built `built-variable-block-sizes` and `built-variable-block-strategy`, and a mixed one in `built-blocking-strategy-changes`.
-  - The longest holds 24 frames, so no committed fixture passes the 4,096 detailed frames. The FLAC pull request adds a stream past them, where the subframe series continue from what was recorded while reading.
+  - The longest holds 24 frames, so no committed fixture passes the 4,096 detailed frames. The FLAC pull request added one, `built-frames-past-detail-limit` (4,200 frames, #378), where the subframe series continue from what was recorded while reading.
 - **Cross-check:** `crosscheck_flac_fixtures.py` already runs `flac -a -F` and reads only each frame's offset. Run for this design with flac 1.4.3 on `external-16-wasted-bits.flac`, `external-24-stereo.flac` and `built-subframe-types.flac`, its output gives per frame `bits`, `blocksize` and `channel_assignment` (`INDEPENDENT`, `LEFT_SIDE`, `RIGHT_SIDE`, `MID_SIDE`), and per subframe `wasted_bits`, `type` (`CONSTANT`, `VERBATIM`, `FIXED`, `LPC`), `order`, `qlp_coeff_precision`, `residual_type` (`RICE`, `RICE2`) and `partition_order`. Comparing them unit by unit makes libFLAC an independent reader of every FLAC series. Whether flac 1.5.0, which CI pins, prints the same subframe lines is **unverified**.
 
 ### Monkey's Audio
@@ -626,8 +626,8 @@ The lead asked, before item 5 of 0.4 builds anything, for the survey to be check
 4. **Prediction:**
    - First the small pull request that adds the `Prediction` concept (decision 12): built, #377 (the enum, JSON `prediction` and the GUI heading; no series sets it yet).
    - Built (#378): the rows below, as the tables say. As built, "Highest Predictor Order" (unit "order", concept `prediction`) is the one name for FLAC's linear predictor order, ALAC's highest number of coefficients and TrueHD's FIR and IIR taps together; WavPack's "Decorrelation Passes" (unit "passes") is per set of blocks; only FLAC has the "Over Time" forms. FLAC's tallies count the frames that have a bitrate point.
-   - Then FLAC's wave 2 rows (subframe types, fixed and linear predictor orders, coefficient precision, residual coding method, partition orders, wasted bits, block size), with ALAC's predictor orders, WavPack's decorrelation passes and TrueHD's filter orders under the same names, unit and axis where the concept is the same.
-   - The most memory of the groups: FLAC 48 bytes per stereo frame, recorded while reading.
+   - The rows were: FLAC's wave 2 (subframe types, fixed and linear predictor orders, coefficient precision, residual coding method, partition orders, wasted bits, block size), with ALAC's predictor orders, WavPack's decorrelation passes and TrueHD's filter orders under the same names, unit and axis where the concept is the same. FLAC's partition orders, residual method and wasted bits are under "Other", as the lossless formats' section says.
+   - The most memory of the groups: FLAC 48 bytes per stereo frame, recorded while reading; as built 29 for a stereo frame of two linear predictors (`ManyFlacFramesOfLinearPredictorsKeepTheirCodingSeriesWithinTheBudget`), leaving room for the compression ratio.
    - Lower value to most users than the groups above: these are encoder settings, mostly constant over a file.
 5. **Compression ratio and the bitrate's concept:**
    - "Compression Ratio" in every lossless format with a bitrate per unit: FLAC, ALAC, Monkey's Audio, TTA, WavPack, OptimFROG, TAK, TrueHD and MLP, WMA Lossless; 8 bytes per unit, derived at the end.
@@ -913,8 +913,8 @@ FLAC, Monkey's Audio, TTA and WAV and AIFF (decision 11), beyond the three rows 
 
 - **Bit Distribution:** "Bitrate", "Bitrate Over Time" and the new "Compression Ratio" with its per-second form, in FLAC, Monkey's Audio and TTA, with the concept `bitDistribution` and their quantities set in each format's pull request, as MPEG set them. PCM in WAV and AIFF has a constant bitrate and no series.
 - **Prediction (new, decision 12):** a fifth `GraphConcept`, `Prediction` (JSON `prediction`), for the predictor a lossless coder chooses per frame or block. No shared heading fits it: it is neither stereo coding nor block switching nor bandwidth nor bits. It holds:
-  - FLAC: "Subframe Types", "Fixed Predictor Orders", "Linear Predictor Order" and "Coefficient Precision" (wave 2);
-  - WavPack: its "Decorrelation passes" (wave 2), which would otherwise sit under "Other";
+  - FLAC: "Subframe Types", "Fixed Predictor Orders", "Highest Predictor Order" and "Coefficient Precision" (built, #378);
+  - WavPack: its "Decorrelation Passes", per set of blocks (built, #378), and ALAC's and TrueHD's "Highest Predictor Order" (built, #378);
   - Monkey's Audio and TTA: none, since their filters are fixed per file (the compression level) or per bit depth.
   - The GUI lists it after "Bit Distribution" and before "Other". Adding it changes `Core.Abstractions` (the enum), the JSON writer and the GUI's headings, so it is a small pull request of its own before FLAC's, as [the rollout](#rollout) asks of a change to the contract. If the lead rejects it, these series have no concept and sit under "Other".
 - **Other:** FLAC's "Rice With 5-Bit Parameters", "Partition Orders" and "Subframes With Wasted Bits", which only FLAC chooses per frame among the formats surveyed, and Monkey's Audio's "Silent Frames" of mono streams.
