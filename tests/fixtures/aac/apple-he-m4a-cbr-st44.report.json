@@ -31007,6 +31007,63 @@
             ]
           },
           {
+            "name": "Mid/Side Bands",
+            "unit": "%",
+            "axis": "frameOffset",
+            "concept": "stereoCoding",
+            "quantity": "Mid/Side Bands",
+            "x": [
+              4351,
+              4784,
+              5130,
+              5474,
+              5847,
+              6394,
+              6853,
+              7024,
+              7353,
+              7820,
+              8397,
+              8568,
+              8855,
+              9308,
+              9908,
+              10132,
+              10352,
+              10741,
+              11295,
+              11836,
+              11988,
+              12224,
+              12751
+            ],
+            "values": [
+              0,
+              100,
+              64.4,
+              70,
+              22.2,
+              15.6,
+              73.3,
+              68.9,
+              42.2,
+              20,
+              75.6,
+              73.3,
+              33.3,
+              0,
+              44.4,
+              77.8,
+              75.6,
+              28.3,
+              21.7,
+              64.4,
+              71.1,
+              28.3,
+              100
+            ]
+          },
+          {
             "name": "Coded Bandwidth",
             "unit": "Hz",
             "axis": "frameOffset",
@@ -31280,6 +31337,206 @@
               [
                 0,
                 1
+              ]
+            ],
+            "seconds": [
+              0,
+              22
+            ]
+          },
+          {
+            "name": "Window Shapes",
+            "valueLabel": "channel stream",
+            "categories": [
+              {
+                "name": "Sine",
+                "count": 50
+              },
+              {
+                "name": "KBD",
+                "count": 0
+              }
+            ],
+            "total": 50,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                25
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                50
+              ]
+            ],
+            "seconds": [
+              0,
+              22
+            ]
+          },
+          {
+            "name": "Channel Streams With TNS",
+            "valueLabel": "channel stream",
+            "categories": [
+              {
+                "name": "With TNS",
+                "count": 46
+              },
+              {
+                "name": "Without TNS",
+                "count": 4
+              }
+            ],
+            "total": 50,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                25
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                2
+              ],
+              [
+                0,
+                46
+              ],
+              [
+                1,
+                2
+              ]
+            ],
+            "seconds": [
+              0,
+              22
+            ]
+          },
+          {
+            "name": "Channel Streams With Pulse Data",
+            "valueLabel": "channel stream",
+            "categories": [
+              {
+                "name": "With pulse data",
+                "count": 0
+              },
+              {
+                "name": "Without pulse data",
+                "count": 50
+              }
+            ],
+            "total": 50,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                25
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                50
+              ]
+            ],
+            "seconds": [
+              0,
+              22
+            ]
+          },
+          {
+            "name": "Noise-Substituted Channel Streams",
+            "valueLabel": "channel stream",
+            "categories": [
+              {
+                "name": "With noise substitution",
+                "count": 0
+              },
+              {
+                "name": "Without noise substitution",
+                "count": 50
+              }
+            ],
+            "total": 50,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                25
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                50
+              ]
+            ],
+            "seconds": [
+              0,
+              22
+            ]
+          },
+          {
+            "name": "Raw Data Blocks With SBR",
+            "valueLabel": "raw data block",
+            "categories": [
+              {
+                "name": "With SBR",
+                "count": 25
+              },
+              {
+                "name": "Without SBR",
+                "count": 0
+              }
+            ],
+            "total": 25,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                25
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                25
+              ]
+            ],
+            "seconds": [
+              0,
+              22
+            ]
+          },
+          {
+            "name": "Raw Data Blocks With Parametric Stereo",
+            "valueLabel": "raw data block",
+            "categories": [
+              {
+                "name": "With parametric stereo",
+                "count": 0
+              },
+              {
+                "name": "Without parametric stereo",
+                "count": 25
+              }
+            ],
+            "total": 25,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                25
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                25
               ]
             ],
             "seconds": [

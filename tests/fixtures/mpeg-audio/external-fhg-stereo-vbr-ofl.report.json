@@ -13960,6 +13960,54 @@
             "seconds": [
               0
             ]
+          },
+          {
+            "name": "Scalefactor Scaling",
+            "valueLabel": "granule and channel",
+            "valuesPerUnit": 4,
+            "valueNames": [
+              "granule 1, channel 1",
+              "granule 1, channel 2",
+              "granule 2, channel 1",
+              "granule 2, channel 2"
+            ],
+            "categories": [
+              {
+                "name": "With scalefactor scaling",
+                "count": 5
+              },
+              {
+                "name": "Without scalefactor scaling",
+                "count": 79
+              }
+            ],
+            "total": 84,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                1,
+                2
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                72
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                1,
+                5
+              ]
+            ],
+            "seconds": [
+              0
+            ]
           }
         ]
       }
