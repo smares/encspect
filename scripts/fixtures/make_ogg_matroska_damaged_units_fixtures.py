@@ -101,12 +101,6 @@ def speex_samples(header):
     return frame_size * frames_per_packet
 
 
-def flac_samples(packet):
-    code = packet[2] >> 4
-    assert code not in (0, 6, 7), "a block size written after the header"
-    return 192 if code == 1 else 576 << (code - 2) if code < 6 else 256 << (code - 8)
-
-
 def ogg_repage(data, headers, per_page, samples_of):
     """The file again with `headers` packets in the first pages, then `per_page` packets to a page."""
     packets, granules = ogg_packets(data)

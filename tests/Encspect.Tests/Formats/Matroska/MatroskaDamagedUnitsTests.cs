@@ -148,6 +148,7 @@ public class MatroskaDamagedUnitsTests
     [InlineData("matroska/external-ffmpeg-alac.mka")]
     [InlineData("matroska/external-ffmpeg-tta.mka")]
     [InlineData("matroska/external-ffmpeg-wavpack.mka")]
+    [InlineData("matroska/external-ffmpeg-pcm.mka")]
     public void ACodecParserOfPacketsPassesTheContainersFailureOn(string name)
     {
         byte[] data = Read(name);

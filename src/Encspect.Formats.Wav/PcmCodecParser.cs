@@ -138,6 +138,9 @@ public sealed class PcmCodecParser : ICodecParser
         byte[] buffer = new byte[capacity];
         int held = 0;
         var pieces = new List<ByteRange>();
+
+        // A packet that fails its container's check (MappedBytes.FailsChecksum) marks the slice it gives bytes to.
+        bool fails = false;
         long done = 0;
         int index = 0;
         foreach (MappedBytes packet in packets)
@@ -172,12 +175,14 @@ public sealed class PcmCodecParser : ICodecParser
                 }
 
                 data.Slice(position, take).CopyTo(buffer.AsSpan(held));
+                fails |= packet.FailsChecksum && take > 0;
                 held += take;
                 position += take;
                 if (held == capacity)
                 {
-                    done = Hand(session, buffer, held, pieces, node, frameBytes, done, frames);
+                    done = Hand(session, buffer, held, pieces, node, frameBytes, done, frames, fails);
                     held = 0;
+                    fails = false;
                     pieces.Clear();
                 }
             }
@@ -185,11 +190,11 @@ public sealed class PcmCodecParser : ICodecParser
 
         if (held >= frameBytes && done < frames)
         {
-            Hand(session, buffer, held, pieces, node, frameBytes, done, frames);
+            Hand(session, buffer, held, pieces, node, frameBytes, done, frames, fails);
         }
     }
 
-    private static long Hand(IDecodeSession session, byte[] buffer, int held, List<ByteRange> pieces, Node node, long frameBytes, long done, long frames)
+    private static long Hand(IDecodeSession session, byte[] buffer, int held, List<ByteRange> pieces, Node node, long frameBytes, long done, long frames, bool fails)
     {
         int count = (int)Math.Min(held / frameBytes, frames - done);
         if (count < 1 || !session.IsDecoding)
@@ -197,7 +202,7 @@ public sealed class PcmCodecParser : ICodecParser
             return done;
         }
 
-        session.Decode(new CodedFrame(SliceOf(buffer, (int)(count * frameBytes), pieces), node.Name, done, count) { Node = node });
+        session.Decode(new CodedFrame(SliceOf(buffer, (int)(count * frameBytes), pieces), node.Name, done, count) { Node = node, FailsChecksum = fails });
         return done + count;
     }
 
