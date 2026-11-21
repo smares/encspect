@@ -29,7 +29,12 @@ Monkey's Audio files (`.ape`): the lossless format of Matthew T. Ashland's Monke
 - the codec "Monkey's Audio", the sample rate, channels, bits per sample, total samples and duration (the samples are the blocks the frames declare, for the frames whose first byte the file holds; the bitrate figures cover the frames the file holds whole; Lost Samples counts the blocks of the frames the data cuts and of those too short for the CRC and special frame codes they start with);
 - the compression level by its name (fast 1000, normal 2000, high 3000, extra high 4000, insane 5000);
 - the bitrate per frame and per second as series, with the smallest and largest frame and a distribution; the bitrate mode: variable where frames differ in bitrate, constant where they do not and unknown for a single frame (`IsVbr` is false for the last two);
-- the counts of silent frames and of pseudo-stereo frames, and "Stored Frame Checksums", the number of frames that store a CRC-32 or, in a file without frame CRCs, a checksum (named as the other formats name a stored check; the decoder compares them);
+- "Stereo Coding" for two-channel streams, over every frame the bitrate figures cover, and as a category series over the frames the per-frame bitrate series has a point for (the first 1,048,576; the tally counts the frames beyond them too, and `monkeys-audio.frames-not-listed` says so) under the same name, unit and axis as FLAC's:
+  - "Mid/side stereo": a coded frame, where the decoder undoes the mean and difference of the channels in every one; a frame with one silent channel flagged counts here, because decoding treats it like any other;
+  - "Pseudo-stereo": a frame flagged as repeating the first channel, which codes that channel only;
+  - "Silence": a frame flagged silent in both channels, which takes precedence over pseudo-stereo, as in the decoders; in a file without the CRC flag (up to 3.89) a frame whose checksum is 0 counts here, or as silent in a mono stream, as the SDK reads it; a file of 3.90 to 3.92 without the CRC flag, which the SDK reads as silence throughout and Encspect does not decode, keeps the coding its frames' flags state;
+  - a mono stream has no "Stereo Coding"; its count of silent frames stays as "Silent Frames", with a flag series of the same name ("With silence" and "Without silence", per frame the bitrate series has a point for; "Silent Frames" itself counts every frame) where it has one;
+- and "Stored Frame Checksums", the number of frames that store a CRC-32 or, in a file without frame CRCs, a checksum (named as the other formats name a stored check; the decoder compares them);
 - whether the descriptor MD5 matches.
 
 ## Channel layout

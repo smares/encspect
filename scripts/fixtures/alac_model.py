@@ -293,15 +293,16 @@ class Channel:
 
 
 def pair_code(uncompressed, mix_bits, mix_res):
-    """The code of a channel pair by what matrix_dec.c reconstructs: 0 left/right, 1 left/side, 2 mid/side, 3 a weighted mix."""
+    """The code of a channel pair by what matrix_dec.c reconstructs: 0 left/right, 1 left/side, 3 mid/side, 4 a weighted mix. Code 2, side/right, is
+    never written: the second channel is always left minus right; the list has it so that the categories are FLAC's and Dolby TrueHD's."""
     if uncompressed or mix_res == 0:
         return 0
     if mix_bits < 8:
         if mix_res == 1 << mix_bits:
             return 1
         if mix_bits > 0 and mix_res == 1 << (mix_bits - 1):
-            return 2
-    return 3
+            return 3
+    return 4
 
 
 def write_audio(w, tag, instance, channels, bit_depth, frame_length=4096, partial=None, count=None, shifted=0, escape=False, mix_bits=2, mix_res=0,
@@ -868,7 +869,7 @@ def manifest(data, kind, extra=None):
             add(code)
         result["cookie"] = c
     frames = []
-    tally = {"elements": [0] * 8, "compressed": 0, "uncompressed": 0, "pairs": 0, "pair_codings": [0] * 4, "channels": 0, "types": [0] * 16, "orders": [0] * 32,
+    tally = {"elements": [0] * 8, "compressed": 0, "uncompressed": 0, "pairs": 0, "pair_codings": [0] * 5, "channels": 0, "types": [0] * 16, "orders": [0] * 32,
              "shifts": [0] * 16, "weights": [0] * 8, "bytes_shifted": [0] * 3, "zero_runs": 0, "long_codes": 0, "fill_bytes": 0, "data_stream_bytes": 0}
     partial_frames = uncompressed_frames = unreadable_frames = 0
     total_samples = 0

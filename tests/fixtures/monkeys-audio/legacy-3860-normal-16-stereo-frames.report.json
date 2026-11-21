@@ -279,6 +279,21 @@
                       "length": 39868
                     }
                   ]
+                },
+                {
+                  "name": "Stereo Coding",
+                  "value": 3,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 39868,
+                  "children": [
+                    {
+                      "name": "Mid/side stereo",
+                      "value": "3 frames (100.0%)",
+                      "offset": 0,
+                      "length": 39868
+                    }
+                  ]
                 }
               ]
             },
@@ -467,6 +482,35 @@
             ],
             "values": [
               702
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Mid/side stereo",
+                "count": 3
+              },
+              {
+                "name": "Pseudo-stereo",
+                "count": 0
+              },
+              {
+                "name": "Silence",
+                "count": 0
+              }
+            ],
+            "total": 3,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                0,
+                3
+              ]
             ]
           }
         ]

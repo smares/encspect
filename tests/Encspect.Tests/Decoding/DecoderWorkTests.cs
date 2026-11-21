@@ -125,7 +125,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
 
     // ----- The measurement -----
 
-    private sealed record Case(string Name, byte[] Data, bool LendsBuffers = true, Func<IDecoder>? Decoder = null);
+    private sealed record Case(string Name, byte[] Data, bool LendsBuffers = true, Func<IDecoder>? Decoder = null, byte[]? Companion = null);
 
     private readonly record struct Figures(double Seconds, long Units)
     {
@@ -170,7 +170,11 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         IEnumerable<IFormatParser> formats = DefaultParsers.Formats.Select(p => p is FlacParser && !work.LendsBuffers ? new FlacParser { LendsBuffers = false } : p);
         var analyzer = new Analyzer(DefaultParsers.Tags, formats, DefaultParsers.Codecs, [counting]);
         // A decoder with no checksum decodes only for a front end that wants the samples: the sink of a PCM case takes them and does nothing.
-        var options = new AnalysisOptions { Decoding = decode ? new DecodeOptions { MaxWork = long.MaxValue, Output = real.DeclaresChecksums ? null : _ => new NullSink() } : null };
+        var options = new AnalysisOptions
+        {
+            Decoding = decode ? new DecodeOptions { MaxWork = long.MaxValue, Output = real.DeclaresChecksums ? null : _ => new NullSink() } : null,
+            Companions = work.Companion is { } companion ? CompanionSource.From(_ => new MemoryStream(companion, writable: false)) : CompanionSource.None,
+        };
         using var stream = new MemoryStream(work.Data, writable: false);
 
         long start = Stopwatch.GetTimestamp();
@@ -457,8 +461,9 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
 
         // Opus packets of 120 ms (the longest a packet holds: six hybrid frames of 20 ms, or two SILK frames of 60 ms, the frames of the fixtures repeated in one packet) and a stream of
         // CELT frames that code silence (the silence flag set by the first byte of the range coder's data).
-        // Speex: every mode at its largest bit allocations (narrowband submode 5, wideband with submode 6 under submode 3, ultra-wideband with submode 7 under submode 3 and a layer of
-        // submode 1), the cheapest (narrowband at 6 kbps, the wideband layer without excitation), a variable bitrate stream with discontinuous transmission and stereo. Each case
+        // Speex: narrowband submode 5 (submode 7, narrowband's largest, is timed only under ultra-wideband), wideband with submode 6 under submode 3, ultra-wideband with submode 7
+        // under submode 3 and a layer of submode 1, the cheapest (narrowband at 6 kbps, the wideband layer without excitation), a variable bitrate stream with discontinuous
+        // transmission and stereo. Each case
         // repeats the audio packets of an encoder's file in one stream.
         foreach ((string label, string file) in new[]
         {
@@ -529,6 +534,14 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         Add("wavpack-legacy-high-zero-runs", () => new Case("wavpack-legacy-high-zero-runs", WavPackCases.LegacyZeroRuns("external-wv340-high.wv", 1 << 20)));
         Add("wavpack-legacy-lossless-24-stereo", () => new Case("wavpack-legacy-lossless-24-stereo", WavPackCases.LegacyNoise("external-wv340-lossless-24-stereo.wv")));
         Add("wavpack-legacy-hybrid-mono", () => new Case("wavpack-legacy-hybrid-mono", WavPackCases.LegacyNoise("external-wv340-hybrid-320-mono.wv")));
+
+        // A version 3 hybrid file decoded with its correction bitstream: the header of a pair's main file and noise for both bitstreams, so the decoder reads a correction
+        // for every word until the data ends.
+        foreach ((string label, string file) in new[] { ("stereo", "external-wv397-hybrid-320-correction.wv"), ("mono", "external-wv340-hybrid-320-mono.wv") })
+        {
+            Add("wavpack-legacy-pair-" + label, () => new Case("wavpack-legacy-pair-" + label, WavPackCases.LegacyNoise(file, 4 << 20), Companion: WavPackCases.Noise(new Random(11), 4 << 20)));
+        }
+
         Add("wavpack-sets-that-never-complete", () => new Case("wavpack-sets-that-never-complete", WavPackCases.SetsThatNeverComplete()));
         Add("wavpack-many-small-dsd-blocks", () => new Case("wavpack-many-small-dsd-blocks", WavPackCases.SmallDsdBlocks()));
         Add("wavpack-dsd-fast-5-history-bits", () => new Case("wavpack-dsd-fast-5-history-bits", WavPackCases.DsdFast()));
@@ -557,6 +570,25 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         })
         {
             Add("wavpack-fixture-" + label, () => new Case("wavpack-fixture-" + label, WavPackCases.Repeated(file)));
+        }
+
+        // WavPack hybrid files decoded with their correction files: the sample-by-sample path of the hybrid lossless decoding, with and without noise shaping,
+        // the extra bits of 32-bit integers, floats, mono and stereo.
+        foreach ((string label, string file) in new[]
+        {
+            ("b4-stereo", "external-hybrid-b4-correction"),
+            ("b4-maximum", "external-hybrid-b4-maximum"),
+            ("mono-b3", "external-hybrid-mono-b3-correction"),
+            ("24-bit-b8", "external-hybrid-24-b8-correction"),
+            ("32-bit-b12", "external-hybrid-32-b12-correction"),
+            ("float-b8", "external-hybrid-float-b8-correction"),
+        })
+        {
+            Add("wavpack-pair-" + label, () =>
+            {
+                (byte[] main, byte[] companion) = WavPackCases.RepeatedPair(file + ".wv", file + "-wvc.wvc");
+                return new Case("wavpack-pair-" + label, main, Companion: companion);
+            });
         }
 
         // TrueHD and MLP: the encoder's fixtures repeated, and crafted units of the stages' worst cases (192 kHz, 160 samples a unit).
@@ -1680,6 +1712,17 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             (_, long units, _) = Run(once, decode: true);
             int copies = (int)Math.Max(1, (Target + units - 1) / units);
             return WavPackBuilder.Concat(Enumerable.Repeat(blocks, copies).SelectMany(b => b));
+        }
+
+        // The same for a main file and its correction file: both are repeated block for block, so the correction block of each copy matches its main block.
+        public static (byte[] Main, byte[] Companion) RepeatedPair(string file, string correction)
+        {
+            List<byte[]> blocks = WavPackBuilder.Split(File.ReadAllBytes(WavPackBuilder.FixturePath(file)));
+            List<byte[]> corrections = WavPackBuilder.Split(File.ReadAllBytes(WavPackBuilder.FixturePath(correction)));
+            var once = new Case("wavpack-once", WavPackBuilder.Concat(blocks), Companion: WavPackBuilder.Concat(corrections));
+            (_, long units, _) = Run(once, decode: true);
+            int copies = (int)Math.Max(1, (Target + units - 1) / units);
+            return (WavPackBuilder.Concat(Enumerable.Repeat(blocks, copies).SelectMany(b => b)), WavPackBuilder.Concat(Enumerable.Repeat(corrections, copies).SelectMany(b => b)));
         }
     }
 

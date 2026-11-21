@@ -13,9 +13,20 @@
       }
     ]
   },
+  "correction": {
+    "status": "unchecked",
+    "basis": "decodedAudio",
+    "problems": []
+  },
   "pcmSamples": 24000,
   "pcmMd5": "864e79b8df128d92bc9ec1c0f96f84f0",
   "findings": [
+    {
+      "code": "correction.unchecked",
+      "severity": "Info",
+      "count": 1,
+      "message": "The correction file external-wv340-hybrid-320-mono.wvc was not checked: no folder to look in: the input is a stream."
+    },
     {
       "code": "wavpack.legacy-crc2-needs-correction-file",
       "severity": "Info",

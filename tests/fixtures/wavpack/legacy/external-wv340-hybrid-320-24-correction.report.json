@@ -527,12 +527,12 @@
         "averageBitrate": 317.7813333333333,
         "isVbr": false,
         "verification": {
-          "isLossy": true,
+          "withCorrection": true,
           "decoding": "notRequested",
           "decodedSamples": 0,
           "checksums": [
             {
-              "name": "audio CRC",
+              "name": "correction CRC",
               "covers": "decodedAudio",
               "coversAllAudio": true,
               "stored": 1,
@@ -541,11 +541,70 @@
             }
           ]
         },
+        "correction": {
+          "status": "unchecked",
+          "source": "external-wv340-hybrid-320-24-correction.wvc",
+          "basis": "decodedAudio",
+          "problems": [],
+          "reason": "a version 3 correction file has no header; only decoding with it compares it"
+        },
         "encoder": "WavPack 3",
         "encoderConfidence": "Medium",
         "series": []
       }
     ],
-    "findings": []
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "correction.unchecked",
+        "message": "The correction file external-wv340-hybrid-320-24-correction.wvc was not checked: a version 3 correction file has no header; only decoding with it compares it.",
+        "offset": 0,
+        "length": 2512,
+        "path": [
+          0
+        ],
+        "count": 1
+      }
+    ],
+    "companions": [
+      {
+        "role": "correction",
+        "source": "external-wv340-hybrid-320-24-correction.wvc",
+        "root": {
+          "name": "Correction File",
+          "value": "WavPack",
+          "offset": 0,
+          "length": 9539,
+          "children": [
+            {
+              "name": "Correction Bitstream",
+              "kind": "Stream",
+              "value": 9539,
+              "unit": "bytes",
+              "offset": 0,
+              "length": 9539
+            }
+          ]
+        },
+        "streams": [
+          {
+            "nodes": [
+              [
+                0
+              ]
+            ],
+            "codec": "WavPack correction data",
+            "sampleRate": 0,
+            "channels": 0,
+            "samples": 0,
+            "duration": 0,
+            "isVbr": false,
+            "isCorrectionFile": true,
+            "series": []
+          }
+        ],
+        "findings": []
+      }
+    ]
   }
 ]

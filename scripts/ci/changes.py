@@ -161,6 +161,9 @@ SHARED = [
 DOTNET = ["src/**", "tests/**", "Directory.*.props", "Directory.Packages.props", "global.json", "*.slnx", ".editorconfig", ".gitattributes",
           "scripts/*.sh", ".github/workflows/**", ".github/actions/**", "scripts/ci/**", ".claude/settings.json"]
 
+# Data only the cross-check scripts read (test_changes.py fails if a .NET project or test names it): not .NET input.
+NOT_DOTNET = ["tests/conformance/**"]
+
 # Documentation only: nothing here changes what the analyzer does. Markdown under src is a topic article
 # (the host serves it, and DescriptionTests reads it), so it is code.
 DOCS = ["docs/**", "LICENSE", "**/*.md"]
@@ -171,6 +174,20 @@ FIXTURE_ONLY = ["scripts/fixtures/*_tool.py", "scripts/fixtures/make_*.py", "scr
                 "scripts/fixtures/check_sources.py", "scripts/fixtures/check_restricted_encoders.py", "scripts/fixtures/check_faac_sbr.py",
                 "scripts/fixtures/ancillary_scan.py", "scripts/fixtures/vbr_tags.py", "scripts/fixtures/aac_tables.py",
                 "scripts/fixtures/macos/**"]
+
+# Files that unit tests (and the GUI's) read without being .NET input themselves: a change runs the jobs listed and only the test classes of the files that
+# name the token (scope.py), unless other changes decide otherwise. A background article is read by what loads the TopicLibrary; the GUI embeds the
+# notices and the article files, so build-test runs for them. The release scripts are checked by the release workflow, which runs on a pull request that
+# touches them, and by no job of this one; scripts/release/dotnet-pin.txt is read by the release workflow's test.
+READERS = [
+    {"paths": ["src/Encspect.Host/Topics/*.md"], "jobs": ["build-test", "unit-tests"], "token": "TopicLibrary"},
+    {"paths": ["THIRD-PARTY-NOTICES.md"], "jobs": ["build-test", "unit-tests"], "token": "THIRD-PARTY-NOTICES.md"},
+    {"paths": ["scripts/release/dotnet-pin.txt"], "jobs": ["unit-tests"], "token": "dotnet-pin.txt"},
+    {"paths": ["LICENSE"], "jobs": ["unit-tests"], "token": '"LICENSE"'},
+    {"paths": ["README.md", "CLAUDE.md", ".gitignore"], "jobs": ["unit-tests"], "token": "class RepositoryRootTests"},
+    {"paths": ["docs/development.md", "docs/releases/**"], "jobs": ["unit-tests"], "token": '"docs"'},
+]
+RELEASE_SCRIPTS = ["scripts/release/**"]
 
 CI_JOBS_DOTNET = ["build-test", "unit-tests", "shard-guard", "fuzz", "format"]
 ALL_JOBS = CI_JOBS_DOTNET + ["fixtures"] + list(AREAS)
@@ -258,6 +275,14 @@ def area_matches(area, path, closure):
     return matches(path, spec["globs"])
 
 
+def reader_of(path):
+    return next((r for r in READERS if matches(path, r["paths"])), None)
+
+
+def is_dotnet(path):
+    return matches(path, DOTNET) and not is_docs(path) and not matches(path, NOT_DOTNET)
+
+
 def is_docs(path):
     return matches(path, DOCS) and not path.startswith(("src/", "tests/"))
 
@@ -312,6 +337,13 @@ def decide(event, files, root=ROOT, removed=()):
             reasons.append(f"{gone[0]} was deleted or renamed, and what imported it cannot be told")
             files = []
         for path in files:
+            reader = reader_of(path)
+            if reader:
+                for job in reader["jobs"]:
+                    flags[job] = True
+                continue
+            if matches(path, RELEASE_SCRIPTS):
+                continue
             if matches(path, SHARED):
                 flags = {job: True for job in ALL_JOBS}
                 reasons.append(f"{path} is shared")
@@ -325,7 +357,7 @@ def decide(event, files, root=ROOT, removed=()):
                 if area_matches(area, path, closures[area]):
                     flags[area] = True
                     hit = True
-            if matches(path, DOTNET) and not is_docs(path):
+            if is_dotnet(path):
                 for job in CI_JOBS_DOTNET:
                     flags[job] = True
                 hit = True
@@ -371,8 +403,12 @@ def scope_of(event, files, removed=(), root=ROOT):
     belong to a format or tag area, and nothing may be deleted under scripts/."""
     if event != "pull_request" or files is None or any(r.startswith("scripts/") for r in removed):
         return None
-    relevant = [f for f in files if f and matches(f, DOTNET) and not is_docs(f)]
-    return test_scope.plan(relevant, root)
+    relevant = [f for f in files if f and is_dotnet(f)]
+    readers = [r for f in files if f and (r := reader_of(f))]
+    others = [f for f in relevant if not reader_of(f)]
+    if readers and not others:
+        return test_scope.plan_readers([r["token"] for r in readers], root)
+    return test_scope.plan(others, root)
 
 
 def platforms(event):

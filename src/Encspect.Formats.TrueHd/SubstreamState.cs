@@ -144,6 +144,13 @@ internal sealed class SubstreamState
     // How often the matrices were read in the unit being read (at most twice).
     public int MatrixReads { get; set; }
 
+    // Set where a restart header resets the matrices or a block reads new ones; the analysis classifies the matrices at the end of such a unit
+    // (StereoCodings) and clears it.
+    public bool HasNewMatrices { get; set; }
+
+    // The coding of the matrices in force (StereoCodings), -1 where the substream is no two-channel presentation.
+    public int StereoCoding { get; set; } = -1;
+
     public int CodedChannels => LastChannel - FirstChannel + 1;
 
     private static MatrixState[] CreateMatrices()
@@ -173,6 +180,7 @@ internal sealed class SubstreamState
     public void ResetForRestart()
     {
         HasRestart = true;
+        HasNewMatrices = true;
         ParameterFlags = 0xFF;
         MatrixCount = 0;
         BlockSize = 8;
@@ -201,6 +209,8 @@ internal sealed class SubstreamState
             BlockSize = BlockSize,
             MatrixCount = MatrixCount,
             MatrixReads = MatrixReads,
+            HasNewMatrices = HasNewMatrices,
+            StereoCoding = StereoCoding,
         };
         ChannelAssignment.CopyTo(copy.ChannelAssignment, 0);
         OutputShift.CopyTo(copy.OutputShift, 0);

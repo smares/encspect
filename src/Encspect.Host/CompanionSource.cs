@@ -74,6 +74,12 @@ public abstract class CompanionSource
             string companion = PathOf(path, name);
             try
             {
+                // A file saved under the companion's own extension (a hybrid file named s.wvc) has no companion beside it: the name is the input's.
+                if (IsSameFile(path, companion))
+                {
+                    return new Lookup(name, companion, IsMissing: true);
+                }
+
                 if (!File.Exists(companion) && !Directory.Exists(companion))
                 {
                     return new Lookup(name, companion, IsMissing: true);
@@ -90,6 +96,9 @@ public abstract class CompanionSource
             }
         }
     }
+
+    private static bool IsSameFile(string input, string companion) =>
+        string.Equals(System.IO.Path.GetFullPath(input), System.IO.Path.GetFullPath(companion), OperatingSystem.IsWindows() || OperatingSystem.IsMacOS() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
 
     private sealed class FunctionSource(Func<string, Stream?> open) : CompanionSource
     {

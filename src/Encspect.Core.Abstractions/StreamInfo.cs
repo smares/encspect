@@ -135,8 +135,8 @@ public sealed record StreamInfo
     // others. The parser sets it; the host words it as findings and lines.
     public CorrectionPairing? Correction { get; init; }
 
-    // True for a correction file's own stream: its data corrects the stream of another file and holds no audio of its own, so it counts in no duration, sample
-    // or bitrate of the file.
+    // True for a correction file's own stream: its data corrects the stream of another file and holds no audio of its own, so it is a report of its own beside the main file's (Report.Companions) and counts in no duration,
+    // sample or bitrate of the main file; its own figures are those of the correction data alone.
     public bool IsCorrectionFile { get; init; }
 }
 

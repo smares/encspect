@@ -19,6 +19,10 @@ internal enum LosslessFault
 internal sealed class LosslessTally
 {
     public long Subframes;
+    public long[] Sizes = new long[8];
+
+    // The sizes of the subframes of the frame being read, for the series of the stream's main tally; null where nothing drains them.
+    public List<byte>? FrameSizes;
     public long Seekable;
     public long RawPcm;
     public long ChannelSubframes;
@@ -312,6 +316,9 @@ internal sealed class LosslessFrameReader(LosslessParameters parameters, Lossles
             SubframesRead++;
             tally.Subframes++;
             tally.ChannelSubframes += members;
+            int size = System.Numerics.BitOperations.Log2((uint)(parameters.FrameLength / length));
+            tally.Sizes[Math.Min(size, tally.Sizes.Length - 1)]++;
+            tally.FrameSizes?.Add((byte)size);
 
             LosslessFault fault = ReadSubframe(length, mask);
             _trace.Put(LosslessTag.End);

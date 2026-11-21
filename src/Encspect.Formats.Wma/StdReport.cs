@@ -115,6 +115,7 @@ internal static class StdReport
 
         Add("Non-Zero Coefficients", NodeValue.Integer(totals.NonZero), StdText.StatNonZero);
         Add("Escape-Coded Coefficients", NodeValue.Integer(totals.Escapes), StdText.StatEscapes);
+        stream.Blocks.AddBandwidthTo(statistics, (name, value, description, topic) => new Node(name, parent.Offset, parent.Length, value) { Description = description, Topic = topic ?? Topics.WmaStandard });
     }
 
     private static NodeValue Share(long count, long total)
@@ -125,11 +126,25 @@ internal static class StdReport
 
     private static double FrameBitrate(long bits, StdParameters p) => bits * (p.SampleRate / 1000.0) / p.FrameLength;
 
-    public static IReadOnlyList<CategorySeries> Categories(StdStream stream, IReadOnlyList<Series> series, Node statistics) =>
-        statistics.Children.FirstOrDefault(c => c.Name == "Stereo Coding") is { } node && series.Count > 0 && series[0].Name == "Bitrate"
-            && stream.Stereo.Build(series[0], node, StdText.StereoCodingSeries, Topics.MidSideStereo, null) is { } stereo ? [stereo] : [];
+    public static IReadOnlyList<CategorySeries> Categories(StdStream stream, IReadOnlyList<Series> series, Node statistics)
+    {
+        var categories = new List<CategorySeries>();
+        if (series.Count == 0 || series[0].Name != "Bitrate")
+        {
+            return categories;
+        }
 
-    public static IReadOnlyList<Series> Series(StdParameters p, StdStream stream, Node statistics)
+        if (statistics.Children.FirstOrDefault(c => c.Name == "Stereo Coding") is { } node
+            && stream.Stereo.Build(series[0], node, StdText.StereoCodingSeries, Topics.MidSideStereo, null) is { } stereo)
+        {
+            categories.Add(stereo);
+        }
+
+        stream.Blocks.AddCategoriesTo(categories, series[0], statistics);
+        return categories;
+    }
+
+    public static IReadOnlyList<Series> Series(StdParameters p, StdStream stream, Node statistics, CancellationToken cancellation)
     {
         int frames = stream.Frames.Count;
         var offsets = new double[frames];
@@ -139,6 +154,11 @@ internal static class StdReport
         int mapped = -1;
         for (int i = 0; i < frames; i++)
         {
+            if (i % 4096 == 0)
+            {
+                cancellation.ThrowIfCancellationRequested();
+            }
+
             StdFrameRecord frame = stream.Frames[i];
             if (mapped != frame.StartSuperframe)
             {
@@ -177,6 +197,8 @@ internal static class StdReport
 
             series.Add(new Series("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, values, statistics) { Description = StdText.BitrateOverTimeSeries, Concept = GraphConcept.BitDistribution, Quantity = "Bitrate" });
         }
+
+        stream.Blocks.AddSeriesTo(series, offsets, statistics.Children.FirstOrDefault(c => c.Name == "Coded Bandwidth"), cancellation);
 
         if (p.UsesBitReservoir)
         {

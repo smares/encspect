@@ -357,6 +357,8 @@ Reported per channel: the non-zero coefficients (every run-level code and every 
 
 The sign and level are read and not used further. Positions are relative to s, so version 1's position 0 is coefficient 3.
 
+Positions count only the lines the channel codes: a flagged high band takes no positions, and the positions after it go on at the first line of the next band that is not flagged. Position p is line s + p while that line is below the high-band start S_k; from S_k on, the high bands are walked in band order, a flagged band moving the line on by its width without using a position, every other band taking the next positions for its lines in order. So without noise substitution, or without a flagged band below it, the last coefficient's line is s + p (3 + p for version 1), and each flagged band below it moves the line up by that band's width: with the high bands 65, 232, 324 and 424 from S_0 = 819 (wmav2, 44.1 kHz, 32 kbit/s) and the first one flagged, position 829 is line 894, not 829. The flags are per channel, so each channel of a mid/side block maps through its own flags. Lines below s and from E_k to L_k are never coded; where noise substitution is on, the decoder fills them with noise, otherwise with zeros.
+
 ### Where a frame ends
 
 - A frame ends after its last block's last field, or alignment for version 1 stereo; there is no length field, no checksum and no trailer. Only reading the whole syntax finds the end.
