@@ -13,7 +13,8 @@ public class MatroskaByteStreamDamagedUnitsTests
     // and MLP up to the next unit that restarts every substream).
     public static TheoryData<string, string, long> Names => new()
     {
-        { "external-ffmpeg-mp3", "MPEG-1 Layer III", (3 * 1152) + 1056 },
+        // The failed Cluster holds 3 frames; the 2 frames after it read their main data back into it through the bit reservoir (their own bytes are clean).
+        { "external-ffmpeg-mp3", "MPEG-1 Layer III", (5 * 1152) + 1056 },
         { "external-ffmpeg-mp2", "MPEG-1 Layer II", (12 * 1152) + 480 },
         { "external-ffmpeg-ac3-51", "AC-3", (2 * 1536) + 256 },
         { "external-ffmpeg-eac3-51", "E-AC-3", (2 * 1536) + 256 },
@@ -47,6 +48,17 @@ public class MatroskaByteStreamDamagedUnitsTests
         Assert.Equal(1, m.Gaps);
         Assert.Equal(0, m.LostSamples);
         Assert.DoesNotContain(report.Findings, f => f.Code is "decode.failed" or "measure.failed" or "parse.failed");
+    }
+
+    // A Layer III frame whose own packet is clean but whose main data begin in the failing Cluster decodes from bytes the container's check fails over, so it is withheld too.
+    [Fact]
+    public void ALayerIiiFrameThatReadsMainDataFromTheFailedClusterIsWithheldWithItsSpan()
+    {
+        (Report report, _) = Analyze(Damaged("external-ffmpeg-mp3"));
+        long ownFrames = 3 * 1152;
+
+        Assert.True(report.Streams[0].Measurements!.WithheldSamples > ownFrames + 1056);
+        Assert.Equal(ownFrames + (2 * 1152) + 1056, report.Streams[0].Measurements!.WithheldSamples);
     }
 
     [Theory]

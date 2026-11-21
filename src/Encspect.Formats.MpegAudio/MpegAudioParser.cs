@@ -538,7 +538,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         feed.Previous = header;
         if (vbr is null && !feed.IsLimited)
         {
-            (int codedLines, int overruns, int intensityLine) = feed.Feed(state, index, position, available, length, isComplete, header, placement, runsBefore, frame.FailsCrc || build.FailsContainerCheck(position, available));
+            (int codedLines, int overruns, int intensityLine) = feed.Feed(state, index, position, available, length, isComplete, header, placement, runsBefore, frame.FailsCrc || build.FailsContainerCheck(position, available) || build.RunsFailContainerCheck(runsBefore));
             if (codedLines >= 0)
             {
                 frame = frame with { CodedLines = codedLines, IntensityLine = intensityLine };
@@ -1859,6 +1859,25 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
 
         // The image's ranges whose bytes come from packets that fail the container's checksum (MappedBytes.FailsChecksum), sorted and apart, or null.
         public IReadOnlyList<ByteRange>? Failing { get; set; }
+
+        // Whether any main-data byte the frame just added reads (its runs from index first, which reach back into earlier frames through the reservoir) comes from such a packet.
+        public bool RunsFailContainerCheck(int first)
+        {
+            if (Failing is null)
+            {
+                return false;
+            }
+
+            for (int i = first; i < Runs.Count; i++)
+            {
+                if (FailsContainerCheck(Runs[i].Offset, Runs[i].Length))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
 
         // Whether any of the frame's bytes [position, position + length) comes from such a packet.
         public bool FailsContainerCheck(long position, long length)
