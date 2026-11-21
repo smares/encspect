@@ -152,6 +152,20 @@ internal static class CategoryTestData
         ];
     }
 
+    // One value per frame of a predictor order, in a series of the concept "Prediction".
+    public static CategorySeries PredictorOrders(StreamInfo stream)
+    {
+        Series bitrate = stream.Series.First(s => s.Name == "Bitrate");
+        int units = bitrate.X.Length;
+        var builder = new CategorySeriesBuilder("Predictor Orders", Numbered("Order", 5), "frame", 1, isOrdered: true, concept: GraphConcept.Prediction);
+        for (int frame = 0; frame < units; frame++)
+        {
+            builder.Add((byte)((frame / 11) % 5));
+        }
+
+        return builder.Build(bitrate.X, bitrate, null, "The order of the predictor of each frame.", null, TimeOf(stream, units));
+    }
+
     // A stream with many entries: a dozen category series under all the headings and a few numeric quantities.
     public static CategorySeries[] ManyCategorySeries(StreamInfo stream)
     {

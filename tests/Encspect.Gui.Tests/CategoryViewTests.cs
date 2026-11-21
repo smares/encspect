@@ -47,6 +47,17 @@ public class CategoryViewTests
     }
 
     [AvaloniaFact]
+    public void A_series_of_the_prediction_concept_is_listed_after_bit_distribution_and_before_other()
+    {
+        DetailWindow window = OpenWithCategories(Fixtures.Stats("vbr-seconds.mp3"), analyzer: CategoryTestData.Analyzer(stream => [.. CategoryTestData.All(stream), CategoryTestData.PredictorOrders(stream)]));
+
+        Assert.Equal(["Summary", "Stereo Coding", "Block Switching", "Coded Bandwidth", "Bit Distribution", "Prediction", "Other", "Audio"], window.Model.Graphs.ChoiceGroups.Select(g => g.Heading));
+        GraphChoice choice = window.Model.Graphs.Choices.Single(c => c.Title == "Predictor Orders");
+        Assert.Equal("Prediction", choice.Heading);
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public void The_graphs_tab_offers_the_headings_the_chips_and_the_views()
     {
         DetailWindow window = OpenWithCategories(Fixtures.Stats("vbr-seconds.mp3"));

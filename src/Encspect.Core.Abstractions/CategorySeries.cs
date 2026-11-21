@@ -9,6 +9,7 @@ public enum GraphConcept
     BlockSwitching,
     CodedBandwidth,
     BitDistribution,
+    Prediction,
 }
 
 // One category a series' values take, such as a Layer III block type. Name is written as the tally entry for it is named

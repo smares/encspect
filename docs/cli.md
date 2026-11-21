@@ -306,7 +306,7 @@ A JSON report (schema version 1) is an object:
     - `{"steps": [32, 40, 48, ...]}`: the steps the format allows, strictly ascending, such as the bitrate table of an MPEG version and layer.
     - `{"minimum": 0, "maximum": 100}`: a fixed minimum and maximum, such as a percentage.
   - MPEG sets it on `Bitrate` (not on a free-format stream, whose computed bitrates fall between the steps) and on both forms of `Channel Bit Share`. The text report does not print it. A field was added, so the schema version stays 1.
-  - `concept` is `stereoCoding`, `blockSwitching`, `codedBandwidth` or `bitDistribution`, on a numeric series or a category series, and is left out where a series has none. Front ends group graphs by it, never by name.
+  - `concept` is `stereoCoding`, `blockSwitching`, `codedBandwidth`, `bitDistribution` or `prediction` (the predictor a lossless coder chooses per frame or block), on a numeric series or a category series, and is left out where a series has none. Front ends group graphs by it, never by name.
   - `categorySeries` holds the category of each value of each unit (a frame, packet or block) of the stream, for graphs and for the summary over the stream. It is left out when the stream has none, and a field was added, so the schema version stays 1. Each entry has:
     - `name`, the name of the tally node it is anchored to, and `valueLabel`, what one value is (`granule and channel`);
     - `valuesPerUnit` and `valueNames` for a unit of a fixed number of values (`granule 1, channel 1`, …); a variable layout writes `valueCounts`, the number of values of each unit as runs of `[count, units]`; a fixed layout of one value writes neither, and one value per unit is meant;
