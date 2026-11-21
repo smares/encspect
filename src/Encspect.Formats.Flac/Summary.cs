@@ -280,6 +280,8 @@ internal static partial class Summary
         long stereo = s.AssignmentFrames.Sum();
         Node? stereoNode = s.Stereo.AddTo(statistics, cover, Explain.StatStereoCoding, Topics.MidSideStereo, "Frame", "Frames");
 
+        Node? fixedNode = null, partitionNode = null, methodNode = null, wastedNode = null, orderNode = null, precisionNode = null;
+        Node? typesNode = null;
         if (s.Subframes > 0)
         {
             Node types = Cover3("Subframe Types", NodeValue.Integer(s.Subframes, "subframes", "subframe"), Explain.StatSubframeTypes);
@@ -288,15 +290,31 @@ internal static partial class Summary
             types.Add(cover("Fixed Predictor", Share(s.SubframeTypes[(int)SubframeType.Fixed], s.Subframes), Explain.StatFixed, Topics.LinearPrediction));
             types.Add(cover("Linear Predictor", Share(s.SubframeTypes[(int)SubframeType.Lpc], s.Subframes), Explain.StatLpc, Topics.LinearPrediction));
             statistics.Add(types);
+            typesNode = types;
+            long fixedCount = s.SubframeTypes[(int)SubframeType.Fixed];
+            if (fixedCount > 0)
+            {
+                fixedNode = Cover3("Fixed Predictor Orders", NodeValue.Integer(fixedCount, "subframes", "subframe"), Explain.StatFixedOrders);
+                for (int order = 0; order < s.FixedOrders.Length; order++)
+                {
+                    if (s.FixedOrders[order] > 0)
+                    {
+                        fixedNode.Add(cover($"Order {order}", Share(s.FixedOrders[order], fixedCount), Explain.StatFixedOrder, Topics.LinearPrediction));
+                    }
+                }
+
+                statistics.Add(fixedNode);
+            }
+
             long lpc = s.SubframeTypes[(int)SubframeType.Lpc];
             if (lpc > 0)
             {
                 statistics.Add(cover("Average Predictor Order", NodeValue.Decimal(s.LpcOrderTotal / (double)lpc, 1), Explain.StatAverageOrder, Topics.LinearPrediction));
-                statistics.Add(cover("Highest Predictor Order", NodeValue.Integer(s.LpcOrderMax), Explain.StatHighestOrder, Topics.LinearPrediction));
-                statistics.Add(cover("Coefficient Precision", s.LpcPrecisionMin == s.LpcPrecisionMax ? NodeValue.Integer(s.LpcPrecisionMin, "bits") : $"{s.LpcPrecisionMin} to {s.LpcPrecisionMax} bits", Explain.StatPrecision, Topics.LinearPrediction));
+                orderNode = statistics.Add(cover("Highest Predictor Order", NodeValue.Integer(s.LpcOrderMax), Explain.StatHighestOrder, Topics.LinearPrediction));
+                precisionNode = statistics.Add(cover("Coefficient Precision", s.LpcPrecisionMin == s.LpcPrecisionMax ? NodeValue.Integer(s.LpcPrecisionMin, "bits") : $"{s.LpcPrecisionMin} to {s.LpcPrecisionMax} bits", Explain.StatPrecision, Topics.LinearPrediction));
             }
 
-            statistics.Add(cover("Subframes With Wasted Bits", Share(s.WastedSubframes, s.Subframes), Explain.StatWasted, Topics.WastedBits));
+            wastedNode = statistics.Add(cover("Subframes With Wasted Bits", Share(s.WastedSubframes, s.Subframes), Explain.StatWasted, Topics.WastedBits));
             s.Wasted.AddTo(statistics, cover, Wording, Topics.WastedBits);
             if (s.ResidualSubframes > 0)
             {
@@ -310,7 +328,8 @@ internal static partial class Summary
                 }
 
                 statistics.Add(orders);
-                statistics.Add(cover("Rice With 5-Bit Parameters", Share(s.Rice2Subframes, s.ResidualSubframes), Explain.StatRice2, Topics.RiceCoding));
+                partitionNode = orders;
+                methodNode = statistics.Add(cover("Rice With 5-Bit Parameters", Share(s.Rice2Subframes, s.ResidualSubframes), Explain.StatRice2, Topics.RiceCoding));
                 statistics.Add(cover("Escaped Partitions", NodeValue.Integer(s.EscapedPartitions, "partitions", "partition"), Explain.EscapedPartitionsStat, Topics.RiceCoding));
             }
         }
@@ -349,6 +368,19 @@ internal static partial class Summary
             _ => null,
         };
         List<Series> series = s.Figures?.Series(anchor, s.Context.CancellationToken) ?? [];
+        var categories = new List<CategorySeries>();
+        if (stereoNode is not null && series.Count > 0 && s.Stereo.Build(series[0], stereoNode, Explain.StereoCodingSeries, Topics.MidSideStereo, null) is { } stereoSeries)
+        {
+            categories.Add(stereoSeries);
+        }
+
+        if (s.Prediction is not null && series.Count > 0)
+        {
+            (List<Series> numeric, List<CategorySeries> coding) = s.Prediction.Build(series[0], new PredictionSeries.Anchors(typesNode, fixedNode, partitionNode, methodNode, wastedNode, orderNode, precisionNode), s.Context.CancellationToken);
+            series.AddRange(numeric);
+            categories.AddRange(coding);
+        }
+
         return new StreamInfo
         {
             Nodes = [stream],
@@ -371,7 +403,7 @@ internal static partial class Summary
             ProcessorConfidence = ClaimRoles.Resolved(processor).Confidence,
             Verification = verification,
             Series = series,
-            CategorySeries = stereoNode is not null && series.Count > 0 && s.Stereo.Build(series[0], stereoNode, Explain.StereoCodingSeries, Topics.MidSideStereo, null) is { } stereoSeries ? [stereoSeries] : [],
+            CategorySeries = categories,
         };
     }
 
