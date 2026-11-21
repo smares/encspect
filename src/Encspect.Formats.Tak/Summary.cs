@@ -423,7 +423,7 @@ internal static class Summary
 
         s.Leading.Insert(0, statistics);
         List<Series> series = figures?.Series(anchor, s.Context.CancellationToken) ?? [];
-        CompressionRatio.AddTo(series, CompressionRatio.PcmBitsPerSecond(rate, info.Channels, info.BitsPerSample), ratio, s.Context.CancellationToken);
+        CompressionRatio.AddTo(series, CompressionRatio.PcmBitsPerSecond(rate, info.Channels, info.BitsPerSample), ratio, s.Context.CancellationToken, figures?.SecondKbps);
         s.Context.AddStream(new StreamInfo
         {
             Nodes = [stream],

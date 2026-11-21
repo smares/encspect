@@ -38,8 +38,9 @@ public static class CompressionRatio
     }
 
     // Adds the ratio of each unit and of each second to the series, from "Bitrate" and "Bitrate Over Time" (the x values of the first shared, the runs too), anchored to
-    // the statistics node. The concept is the bitrate's.
-    public static void AddTo(List<Series> series, long pcm, Node? anchor, CancellationToken cancellation = default)
+    // the statistics node. The concept is the bitrate's. exactSecondKbps are the seconds' bitrates before the format rounded them to whole kbps, which the ratio of a
+    // second is made from, so that its tenth of a percent is not quantized by that rounding.
+    public static void AddTo(List<Series> series, long pcm, Node? anchor, CancellationToken cancellation = default, double[]? exactSecondKbps = null)
     {
         if (pcm <= 0 || anchor is null)
         {
@@ -55,13 +56,13 @@ public static class CompressionRatio
 
         if (perSecond is not null)
         {
-            series.Add(Of(perSecond, Name + " Over Time", OverTimeDescription, anchor, pcm, cancellation));
+            series.Add(Of(perSecond, Name + " Over Time", OverTimeDescription, anchor, pcm, cancellation, exactSecondKbps is not null && exactSecondKbps.Length == perSecond.Values.Length ? exactSecondKbps : null));
         }
     }
 
-    private static Series Of(Series bitrate, string name, string description, Node? anchor, long pcm, CancellationToken cancellation)
+    private static Series Of(Series bitrate, string name, string description, Node? anchor, long pcm, CancellationToken cancellation, double[]? exact = null)
     {
-        ReadOnlySpan<double> kbps = bitrate.Values.Span;
+        ReadOnlySpan<double> kbps = exact ?? bitrate.Values.Span;
         var ratios = new double[kbps.Length];
         for (int i = 0; i < ratios.Length; i++)
         {

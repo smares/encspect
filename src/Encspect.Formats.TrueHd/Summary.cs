@@ -205,7 +205,7 @@ internal static class Summary
         a.Leading.Add(statistics);
 
         List<Series> series = a.Figures?.Series(anchor, a.Units, default) ?? [];
-        CompressionRatio.AddTo(series, pcm, ratio, a.CancellationToken);
+        CompressionRatio.AddTo(series, pcm, ratio, a.CancellationToken, a.Figures?.SecondKbps);
         if (series.Count > 0 && series[0].Name == "Bitrate" && a.Figures!.OrderSeries(series[0], a.CancellationToken) is { } orders)
         {
             series.Add(orders);

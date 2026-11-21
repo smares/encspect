@@ -169,7 +169,7 @@ internal static class Summary
             _ => null,
         };
         List<Series> series = figures.Series(anchor, s.Context.CancellationToken);
-        CompressionRatio.AddTo(series, pcm, ratio, s.Context.CancellationToken);
+        CompressionRatio.AddTo(series, pcm, ratio, s.Context.CancellationToken, figures.SecondKbps);
         return new StreamInfo
         {
             Nodes = [stream],

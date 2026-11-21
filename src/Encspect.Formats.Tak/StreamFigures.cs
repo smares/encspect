@@ -8,6 +8,9 @@ namespace Encspect.Formats.Tak;
 // rounding adds up.
 internal sealed class StreamFigures(long sampleRate)
 {
+    // Each second's bitrate in kbps before it is rounded, in the order of "Bitrate Over Time"; set by Series.
+    public double[]? SecondKbps { get; private set; }
+
     private const int BinWidth = 32;
     private const int LastBin = 1000;
 
@@ -98,6 +101,7 @@ internal sealed class StreamFigures(long sampleRate)
         {
             var starts = new double[_seconds.Count];
             var values = new double[_seconds.Count];
+            var exact = new double[_seconds.Count];
             for (int i = 0; i < _seconds.Count; i++)
             {
                 if (i % 4096 == 0)
@@ -108,8 +112,10 @@ internal sealed class StreamFigures(long sampleRate)
                 (long second, long bits, long samples) = _seconds[i];
                 starts[i] = second;
                 values[i] = samples > 0 ? Math.Round(bits * (double)sampleRate / samples / 1000, MidpointRounding.ToEven) : 0;
+                exact[i] = samples > 0 ? bits * (double)sampleRate / samples / 1000 : 0;
             }
 
+            SecondKbps = exact;
             series.Add(new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, values, anchor) { Description = Explain.BitrateOverTimeSeries, Concept = GraphConcept.BitDistribution, Quantity = "Bitrate" });
         }
 

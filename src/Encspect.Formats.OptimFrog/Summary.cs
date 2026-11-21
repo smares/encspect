@@ -412,7 +412,7 @@ internal static class Summary
         Node? ratio = figures.Units > 0 ? CompressionRatio.AddTo(statistics, Covered, pcm, figures.AverageBitrate, figures.MinimumBitrate, figures.MaximumBitrate) : null;
         s.AddLeading(statistics);
         List<Series> series = figures.Units > 0 ? figures.Series(anchor, s.Context.CancellationToken) : [];
-        CompressionRatio.AddTo(series, pcm, ratio, s.Context.CancellationToken);
+        CompressionRatio.AddTo(series, pcm, ratio, s.Context.CancellationToken, figures.SecondKbps);
 
         return new StreamInfo
         {

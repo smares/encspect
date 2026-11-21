@@ -370,7 +370,7 @@ internal static partial class Summary
             _ => null,
         };
         List<Series> series = s.Figures?.Series(anchor, s.Context.CancellationToken) ?? [];
-        CompressionRatio.AddTo(series, pcm, ratio, s.Context.CancellationToken);
+        CompressionRatio.AddTo(series, pcm, ratio, s.Context.CancellationToken, s.Figures?.SecondKbps);
         var categories = new List<CategorySeries>();
         if (stereoNode is not null && series.Count > 0 && s.Stereo.Build(series[0], stereoNode, Explain.StereoCodingSeries, Topics.MidSideStereo, null) is { } stereoSeries)
         {

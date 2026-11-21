@@ -144,11 +144,13 @@ internal static class LosslessReport
             new("Bitrate", "kbps", SeriesAxis.FrameOffset, reader.BitrateX.ToArray(), reader.BitrateY.ToArray()) { Description = ProExplain.BitrateSeries, Concept = GraphConcept.BitDistribution, Quantity = "Bitrate" },
         };
 
+        double[]? exact = null;
         if (reader.LastValidSecond >= 0)
         {
             int seconds = reader.LastValidSecond + 1;
             var starts = new double[seconds];
             var rates = new double[seconds];
+            exact = new double[seconds];
             for (int s = 0; s < seconds; s++)
             {
                 starts[s] = s;
@@ -157,6 +159,7 @@ internal static class LosslessReport
                 {
                     double rate = reader.SecondBits[s] * (double)p.SampleRate / ((double)count * p.FrameLength) / 1000;
                     rates[s] = Math.Round(rate, 1, MidpointRounding.ToEven);
+                    exact[s] = rate;
                 }
             }
 
@@ -164,7 +167,7 @@ internal static class LosslessReport
         }
 
         Node? ratio = anchor.Children.FirstOrDefault(c => c.Kind == NodeKind.Statistics)?.Children.FirstOrDefault(c => c.Name == CompressionRatio.Name);
-        CompressionRatio.AddTo(series, PcmBitsPerSecond(p), ratio);
+        CompressionRatio.AddTo(series, PcmBitsPerSecond(p), ratio, default, exact);
         return series;
     }
 

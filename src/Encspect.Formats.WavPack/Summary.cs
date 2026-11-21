@@ -383,7 +383,7 @@ internal static partial class Summary
         string codec = isCorrection ? "WavPack correction data" : isHybrid ? "WavPack hybrid" : s.HasLossyBlocks ? "WavPack lossy" : "WavPack lossless";
         string? channelMode = ChannelModeOf(channels, s.StereoBlocks, s.JointStereoBlocks);
         List<Series> series = s.Figures?.Series(anchor, s.Cancellation) ?? [];
-        CompressionRatio.AddTo(series, pcm, ratio, s.Cancellation);
+        CompressionRatio.AddTo(series, pcm, ratio, s.Cancellation, s.Figures?.SecondKbps);
         if (series.Count > 0 && s.TermsBlocks > 0 && s.PassesPerSet.Count == series[0].X.Length)
         {
             ReadOnlySpan<double> offsets = series[0].X.Span;

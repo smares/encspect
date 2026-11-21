@@ -265,7 +265,7 @@ internal static class Summary
 
         List<Series> series = figures.Series(anchor, s.Context.CancellationToken);
         long pcm = CompressionRatio.PcmBitsPerSecond(info.SampleRate, info.Channels, info.BitsPerSample);
-        CompressionRatio.AddTo(series, pcm, ratioNode, s.Context.CancellationToken);
+        CompressionRatio.AddTo(series, pcm, ratioNode, s.Context.CancellationToken, figures.SecondKbps);
         IReadOnlyList<CategorySeries> categories = series.Count > 0
             ? s.Series.Build(series[0].X, series[0], figures.Time, nodes)
             : [];
