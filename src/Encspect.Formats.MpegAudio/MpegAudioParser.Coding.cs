@@ -67,6 +67,12 @@ internal static class CodingCategories
     // By block kind: long, start, short, mixed, stop, reserved, as the tally lists them.
     public static readonly string[] BlockKindNames = ["Long", "Start", "Short", "Mixed", "Stop", "Reserved"];
 
+    public static readonly Category[] ScalingCategories =
+    [
+        new("With scalefactor scaling", Explain.ScalingWith) { Topic = Topics.ScalefacScaleAndPreflag },
+        new("Without scalefactor scaling", Explain.ScalingWithout) { Topic = Topics.ScalefacScaleAndPreflag },
+    ];
+
     public static readonly Category[] BlockCategories =
     [
         new(BlockKindNames[0], Explain.BlockNormal) { Topic = Topics.BlockSwitching },
@@ -124,6 +130,8 @@ public sealed partial class MpegAudioParser
 
         public Node? BlockUsage { get; set; }
 
+        public Node? ScalefactorScaling { get; set; }
+
         public Node? BlockSizes { get; set; }
 
         public Node? CodedBandwidth { get; set; }
@@ -178,6 +186,8 @@ public sealed partial class MpegAudioParser
         private readonly CategorySeriesBuilder? _joint;
         private readonly CategorySeriesBuilder? _bounds;
         private readonly CategorySeriesBuilder? _blocks;
+        private readonly CategorySeriesBuilder? _scaling;
+        private readonly byte[] _scalingCodes = [];
         private readonly byte[] _blockCodes = [];
         private readonly int _channels;
         private readonly Numeric? _bandwidth;
@@ -201,6 +211,11 @@ public sealed partial class MpegAudioParser
                     string[] names = [.. Enumerable.Range(1, granules).SelectMany(gr => Enumerable.Range(1, _channels).Select(ch => $"granule {gr}, channel {ch}"))];
                     _blocks = new("Block Usage", BlockCategories, "granule and channel", granules * _channels, names, concept: GraphConcept.BlockSwitching);
                     _blockCodes = new byte[granules * _channels];
+                    if (Has(r => r.Nodes.ScalefactorScaling))
+                    {
+                        _scaling = new("Scalefactor Scaling", ScalingCategories, "granule and channel", granules * _channels, names);
+                        _scalingCodes = new byte[granules * _channels];
+                    }
                 }
 
                 _bandwidth = new Numeric(count, offsets);
@@ -270,6 +285,7 @@ public sealed partial class MpegAudioParser
         private void AddBlocks(in Entry frame, MpegHeader header)
         {
             Array.Fill(_blockCodes, CategorySeries.None);
+            Array.Fill(_scalingCodes, CategorySeries.None);
             if (frame.HasSideInfo)
             {
                 ReadOnlySpan<byte> sideInfo = _build.Store.Span(frame.Data, frame.DataLength);
@@ -279,11 +295,13 @@ public sealed partial class MpegAudioParser
                     for (int ch = 0; ch < channels; ch++)
                     {
                         _blockCodes[(gr * _channels) + ch] = FrameFigures.BlockKind(sideInfo, header, gr, ch);
+                        _scalingCodes[(gr * _channels) + ch] = FrameFigures.ScalefacScale(sideInfo, header, gr, ch) == 1 ? (byte)0 : (byte)1;
                     }
                 }
             }
 
             _blocks!.Add(_blockCodes);
+            _scaling?.Add(_scalingCodes);
         }
 
         public void Build(Series bitrate, TimeIndex time, double[] secondStarts, List<Series> series, List<CategorySeries> categories)
@@ -306,6 +324,10 @@ public sealed partial class MpegAudioParser
                 CategorySeries usage = _blocks.Build(x, bitrate, Anchor(r => r.Nodes.BlockUsage), SeriesText.BlockUsageSeries, Topics.BlockSwitching, time);
                 categories.Add(usage);
                 categories.Add(usage.Group("Block Sizes", SizeCategories, SizeOfKind, Anchor(r => r.Nodes.BlockSizes), SeriesText.BlockSizesSeries, Topics.BlockSwitching));
+                if (_scaling is not null)
+                {
+                    categories.Add(_scaling.Build(x, bitrate, Anchor(r => r.Nodes.ScalefactorScaling), SeriesText.ScalingSeries, Topics.ScalefacScaleAndPreflag, time));
+                }
             }
 
             if (_intensityBound?.Count > 0)

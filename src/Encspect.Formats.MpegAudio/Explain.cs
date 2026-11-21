@@ -306,6 +306,8 @@ internal static class Explain
     public const string UsesPadding = "Whether any frame carries a padding slot.";
     public const string UsesScfsi = "Whether any frame reuses granule 0's scalefactors through scfsi.";
     public const string UsesScaling = "Whether any granule sets scalefac_scale.";
+    public const string ScalingWith = "Granules and channels whose scalefac_scale is 1 (ISO/IEC 11172-3, 2.4.2.7).";
+    public const string ScalingWithout = "Granules and channels whose scalefac_scale is 0 (ISO/IEC 11172-3, 2.4.2.7).";
     public const string ScalingShare = "The share of granules, counted per channel, with scalefac_scale set (EncSpot's 'Scalefac').";
     public const string AverageMainDataBegin = "The mean main_data_begin, how far back frames start their main data (EncSpot's 'Av. Reservoir', which truncates it to whole bytes).";
     public const string MaximumMainDataBegin = "The largest main_data_begin of any frame (EncSpot's 'Max. Reservoir', mp3guessenc's 'Max reservoir').";
@@ -351,6 +353,7 @@ internal static class SeriesText
     public const string JointStereoModesSeries = "The Layer III stereo coding of each joint stereo frame, which its mode_extension selects (ISO/IEC 11172-3 2.4.2.3); frames of the other channel modes have no value.";
     public const string IntensityStereoBoundsSeries = "The subband from which each joint stereo frame of Layer I or II codes intensity stereo, which its mode_extension selects (ISO/IEC 11172-3 2.4.2.3); frames of the other channel modes have no value.";
     public const string IntensityStereoBound = "The lowest frequency from which each joint stereo frame codes intensity stereo, in whole hertz: in Layers I and II the lower edge of the bound subband, the first that its mode_extension codes in intensity stereo (ISO/IEC 11172-3 2.4.2.3), in Layer III the lower edge of the first scalefactor band, in any granule, whose right channel carries intensity positions (2.4.3.4.9.3; ISO/IEC 13818-3 for MPEG-2 and 2.5). A frame without such a band has none.";
+    public const string ScalingSeries = "Whether each granule and channel of every complete Layer III audio frame has scalefac_scale set, counted per channel as the tally of Scalefactor Scaling counts them; a frame without side information has none.";
     public const string BlockUsageSeries = "The block type of each granule and channel of every complete Layer III audio frame, counted per channel as the Block Usage statistics count them (ISO/IEC 11172-3 2.4.2.7); the second channel of a mono frame has no value.";
     public const string BlockSizesSeries = "The granules of Block Usage grouped by the size of their transform, as EncSpot counts them: long with start and stop blocks, short, mixed, and the reserved block type apart.";
 }

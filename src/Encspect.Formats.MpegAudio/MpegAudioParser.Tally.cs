@@ -167,7 +167,7 @@ public sealed partial class MpegAudioParser
         {
             node.Add("UsesScfsi", start, length, NodeValue.Boolean(tally.UsesScfsi), Explain.UsesScfsi, Topics.Scfsi);
             node.Add("UsesScalefactorScaling", start, length, NodeValue.Boolean(tally.Scaled > 0), Explain.UsesScaling, Topics.ScalefacScaleAndPreflag);
-            node.Add("Scalefactor Scaling", start, length, NodeValue.Decimal(RoundHalfEven((Int128)tally.Scaled * 1000, tally.GranuleChannels) / 10.0, 1, "%"),
+            region.Nodes.ScalefactorScaling = node.Add("Scalefactor Scaling", start, length, NodeValue.Decimal(RoundHalfEven((Int128)tally.Scaled * 1000, tally.GranuleChannels) / 10.0, 1, "%"),
                 Explain.ScalingShare, Topics.ScalefacScaleAndPreflag);
             node.Add("Average Main Data Begin", start, length, NodeValue.Decimal(RoundHalfEven((Int128)tally.MainDataBegins * 10, tally.Layer3Frames) / 10.0, 1, "bytes"),
                 Explain.AverageMainDataBegin, Topics.BitReservoir);

@@ -35,6 +35,7 @@
     "Noise-Substituted Channel Streams": { "form": "flag", "anchor": "Noise Substitution", "denominator": "Window Shapes" },
     "Raw Data Blocks With SBR": { "form": "flag", "anchor": "SBR", "denominator": "Raw Data Blocks" },
     "Raw Data Blocks With Parametric Stereo": { "form": "flag", "anchor": "Parametric Stereo", "denominator": "Raw Data Blocks" },
+    "Scalefactor Scaling": { "form": "flag", "anchor": "Scalefactor Scaling", "denominator": "Block Usage", "findings": ["mpeg-audio.streams-limited"] },
     "Silent Frames": { "form": "flag", "anchor": "Silent Frames", "denominator": "Frames", "findings": ["monkeys-audio.frame-cut", "monkeys-audio.frame-misplaced", "monkeys-audio.frame-too-short", "monkeys-audio.frames-not-listed"] }
   }
 }
