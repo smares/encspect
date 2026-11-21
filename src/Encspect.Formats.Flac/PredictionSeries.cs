@@ -154,34 +154,68 @@ internal sealed class PredictionSeries(long sampleRate)
         Add(_methods, nodes.Method, Explain.RiceSeries, Topics.RiceCoding);
         Add(_wasted, nodes.Wasted, Explain.WastedSeries, Topics.WastedBits);
 
-        ReadOnlySpan<double> offsets = bitrate.X.Span;
-        if (nodes.HighestOrder is not null)
+        if (nodes.HighestOrder is not null || nodes.Precision is not null)
         {
-            Numeric(series, offsets, _orders, "Highest Predictor Order", "order", Explain.HighestOrderSeries, "Highest Predictor Order Over Time", Explain.HighestOrderOverTimeSeries, _secondOrders, nodes.HighestOrder, cancellation);
+            // The frames with a linear predictor have an order and a precision both, so the two series share one x: the bitrate series' where every frame has
+            // one, else the offsets of those that do.
+            ReadOnlyMemory<double> x = FramesWithPredictors(bitrate, cancellation);
+            if (nodes.HighestOrder is not null)
+            {
+                Numeric(series, x, _orders, "Highest Predictor Order", "order", Explain.HighestOrderSeries, "Highest Predictor Order Over Time", Explain.HighestOrderOverTimeSeries, _secondOrders, nodes.HighestOrder, cancellation);
+            }
+
+            if (nodes.Precision is not null)
+            {
+                Numeric(series, x, _precisions, "Coefficient Precision", "bits", Explain.PrecisionSeries, "Coefficient Precision Over Time", Explain.PrecisionOverTimeSeries, _secondPrecisions, nodes.Precision, cancellation);
+            }
         }
 
-        if (nodes.Precision is not null)
-        {
-            Numeric(series, offsets, _precisions, "Coefficient Precision", "bits", Explain.PrecisionSeries, "Coefficient Precision Over Time", Explain.PrecisionOverTimeSeries, _secondPrecisions, nodes.Precision, cancellation);
-        }
-
-        AddBlockSizes(series, bitrate);
+        AddBlockSizes(series, bitrate, cancellation);
         return (series, categories);
     }
 
-    private void Numeric(List<Series> series, ReadOnlySpan<double> offsets, ChunkedList<byte> values, string name, string unit, string description, string overTimeName, string overTimeDescription,
-        ChunkedList<byte> perSecond, Node anchor, CancellationToken cancellation)
+    private ReadOnlyMemory<double> FramesWithPredictors(Series bitrate, CancellationToken cancellation)
     {
         int count = 0;
-        for (int i = 0; i < values.Count; i++)
+        for (int i = 0; i < _orders.Count; i++)
         {
-            count += values[i] > 0 ? 1 : 0;
+            if (i % 4096 == 0)
+            {
+                cancellation.ThrowIfCancellationRequested();
+            }
+
+            count += _orders[i] > 0 ? 1 : 0;
         }
 
-        if (count > 0)
+        if (count == _orders.Count)
         {
-            var x = new double[count];
-            var y = new double[count];
+            return bitrate.X;
+        }
+
+        var x = new double[count];
+        ReadOnlySpan<double> offsets = bitrate.X.Span;
+        for (int i = 0, n = 0; i < _orders.Count; i++)
+        {
+            if (i % 4096 == 0)
+            {
+                cancellation.ThrowIfCancellationRequested();
+            }
+
+            if (_orders[i] > 0)
+            {
+                x[n++] = offsets[i];
+            }
+        }
+
+        return x;
+    }
+
+    private void Numeric(List<Series> series, ReadOnlyMemory<double> x, ChunkedList<byte> values, string name, string unit, string description, string overTimeName, string overTimeDescription,
+        ChunkedList<byte> perSecond, Node anchor, CancellationToken cancellation)
+    {
+        if (x.Length > 0)
+        {
+            var y = new double[x.Length];
             for (int i = 0, n = 0; i < values.Count; i++)
             {
                 if (i % 4096 == 0)
@@ -191,7 +225,6 @@ internal sealed class PredictionSeries(long sampleRate)
 
                 if (values[i] > 0)
                 {
-                    x[n] = offsets[i];
                     y[n++] = values[i];
                 }
             }
@@ -223,12 +256,17 @@ internal sealed class PredictionSeries(long sampleRate)
     }
 
     // Only where the frames differ in size but for a shorter last one: a fixed block size has one value.
-    private void AddBlockSizes(List<Series> series, Series bitrate)
+    private void AddBlockSizes(List<Series> series, Series bitrate, CancellationToken cancellation)
     {
         int frames = _blockSizes.Count;
         bool differs = false;
         for (int i = 1; i < frames - 1 && !differs; i++)
         {
+            if (i % 4096 == 0)
+            {
+                cancellation.ThrowIfCancellationRequested();
+            }
+
             differs = _blockSizes[i] != _blockSizes[0];
         }
 
@@ -240,6 +278,11 @@ internal sealed class PredictionSeries(long sampleRate)
         var sizes = new double[frames];
         for (int i = 0; i < frames; i++)
         {
+            if (i % 4096 == 0)
+            {
+                cancellation.ThrowIfCancellationRequested();
+            }
+
             sizes[i] = _blockSizes[i];
         }
 

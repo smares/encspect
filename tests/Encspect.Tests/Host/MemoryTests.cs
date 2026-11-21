@@ -779,6 +779,44 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         GC.KeepAlive(report);
     }
 
+    // Frames of two linear predictor subframes, which have every series of the subframes: the codes and count bytes of five category series (at most 15
+    // bytes), and the numeric series of the order and the precision, whose values take 8 bytes each and whose x values are the bitrate series' where every frame has
+    // a predictor, so that the series keep 31 bytes for a stereo frame and leave the design's 48 room for the compression ratio (docs/design/coding-graphs.md, "Memory budget").
+    [Fact]
+    public void ManyFlacFramesOfLinearPredictorsKeepTheirCodingSeriesWithinTheBudget()
+    {
+        const int frames = 100_000;
+        byte[] data = FlacBuilder.LpcStream(frames);
+
+        (Report report, long kept, long peak) = Measure("lpc-frames.flac", data, FlacBuilder.LpcStream(100));
+
+        StreamInfo stream = Assert.Single(report.Streams);
+        Series bitrate = stream.Series.Single(s => s.Name == "Bitrate");
+        Assert.Equal(frames, bitrate.X.Length);
+        long index = stream.CategorySeries.Count * 4L * ((frames / 1024) + 1);
+        long categories = stream.CategorySeries.Sum(c => c.StorageBytes);
+
+        // The arrays behind the numeric series, each counted once, with the bitrate series' (counted by the report already) left out.
+        var arrays = new Dictionary<double[], long>(ReferenceEqualityComparer.Instance);
+        foreach (Series series in stream.Series.Where(s => s.Axis == SeriesAxis.FrameOffset && s.Name != "Bitrate"))
+        {
+            foreach (ReadOnlyMemory<double> memory in new[] { series.X, series.Values })
+            {
+                Assert.True(MemoryMarshal.TryGetArray(memory, out ArraySegment<double> segment));
+                arrays[segment.Array!] = segment.Array!.Length * 8L;
+            }
+        }
+
+        MemoryMarshal.TryGetArray(bitrate.X, out ArraySegment<double> shared);
+        arrays.Remove(shared.Array!);
+        long numeric = arrays.Values.Sum();
+        Assert.Contains(stream.Series, s => s.Name == "Highest Predictor Order");
+        Assert.Contains(stream.CategorySeries, c => c.Name == "Partition Orders");
+        Output.WriteLine($"{categories / frames} bytes of category series and {numeric / frames} of numeric series per frame");
+        Assert.True(categories + numeric <= (frames * 31L) + index, $"The coding series keep {(categories + numeric) / (double)frames} bytes per frame.");
+        GC.KeepAlive(report);
+    }
+
     // An Ogg FLAC stream with many header packets lists the first 1,024 metadata blocks as a native file does and counts the rest (4-byte
     // padding blocks, 255 to a page, were 1.6 GB for 5 MB of file); bytes after each frame cost one node and a count, not a node for each.
     [Fact]

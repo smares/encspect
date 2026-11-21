@@ -162,5 +162,36 @@ internal static class FlacBuilder
         return [.. Marker, .. Block(0, StreamInfo(4096, 44100, 2, 16, 4096L * frames, md5), isLast: more.Length == 0), .. more.SelectMany(b => b), .. built.SelectMany(f => f)];
     }
 
+    // A frame of linear predictor subframes of order 1 (precision 4, coefficient 1, shift 0) whose residuals, in one partition with the Rice parameter 0, are all 0,
+    // each coded as one bit: the smallest frame that has the series of a predictor and of a residual.
+    public static byte[] LpcFrame(long number, int blockSize, int rate, int channels, int bits) =>
+        Frame(number, blockSize, rate, channels, bits, false, body =>
+        {
+            for (int c = 0; c < channels; c++)
+            {
+                Bits(body, 0, 1);
+                Bits(body, 0b100000, 6);
+                Bits(body, 0, 1);
+                Bits(body, 0, bits);
+                Bits(body, 3, 4);
+                Bits(body, 0, 5);
+                Bits(body, 1, 4);
+                Bits(body, 0, 2);
+                Bits(body, 0, 4);
+                Bits(body, 0, 4);
+                for (int i = 1; i < blockSize; i++)
+                {
+                    Bits(body, 1, 1);
+                }
+            }
+        });
+
+    // A stream of frames of linear predictor subframes of 16 samples, 16 bits, stereo, 44.1 kHz.
+    public static byte[] LpcStream(int frames)
+    {
+        byte[][] built = [.. Enumerable.Range(0, frames).Select(i => LpcFrame(i, 16, 44100, 2, 16))];
+        return [.. Marker, .. Block(0, StreamInfo(16, 44100, 2, 16, 16L * frames), isLast: true), .. built.SelectMany(f => f)];
+    }
+
     public static byte[] Concat(params byte[][] parts) => Unpooled.Join(parts);
 }
