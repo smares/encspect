@@ -212,7 +212,7 @@ internal sealed class StreamFigures(long firstRate)
 
         if (Count > 0)
         {
-            series.Add(new("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = Explain.BitrateSeries, Runs = new FrameRuns(firstFrames, frameCount, runSamples) });
+            series.Add(new("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = Explain.BitrateSeries, Concept = GraphConcept.BitDistribution, Quantity = "Bitrate", Runs = new FrameRuns(firstFrames, frameCount, runSamples) });
         }
 
         if (_seconds.Count > 0)
@@ -231,7 +231,7 @@ internal sealed class StreamFigures(long firstRate)
                 values[i] = samples > 0 ? Math.Round(bits * (double)rate / samples / 1000, MidpointRounding.ToEven) : 0;
             }
 
-            series.Add(new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, values, anchor) { Description = Explain.BitrateOverTimeSeries });
+            series.Add(new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, values, anchor) { Description = Explain.BitrateOverTimeSeries, Concept = GraphConcept.BitDistribution, Quantity = "Bitrate" });
         }
 
         return series;
