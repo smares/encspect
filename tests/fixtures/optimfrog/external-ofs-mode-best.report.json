@@ -296,6 +296,34 @@
                       "length": 17341
                     }
                   ]
+                },
+                {
+                  "name": "Compression Ratio",
+                  "offset": 0,
+                  "length": 17341,
+                  "children": [
+                    {
+                      "name": "Lowest",
+                      "value": 14.4,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 17341
+                    },
+                    {
+                      "name": "Overall",
+                      "value": 14.4,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 17341
+                    },
+                    {
+                      "name": "Highest",
+                      "value": 14.4,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 17341
+                    }
+                  ]
                 }
               ]
             },
@@ -594,6 +622,32 @@
             ],
             "values": [
               203
+            ]
+          },
+          {
+            "name": "Compression Ratio",
+            "unit": "%",
+            "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Compression Ratio",
+            "x": [
+              77
+            ],
+            "values": [
+              14.4
+            ]
+          },
+          {
+            "name": "Compression Ratio Over Time",
+            "unit": "%",
+            "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Compression Ratio",
+            "x": [
+              0
+            ],
+            "values": [
+              14.4
             ]
           }
         ]

@@ -609,6 +609,34 @@
                       "length": 51057
                     }
                   ]
+                },
+                {
+                  "name": "Compression Ratio",
+                  "offset": 0,
+                  "length": 51057,
+                  "children": [
+                    {
+                      "name": "Lowest",
+                      "value": 16.2,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 51057
+                    },
+                    {
+                      "name": "Overall",
+                      "value": 44.6,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 51057
+                    },
+                    {
+                      "name": "Highest",
+                      "value": 85.6,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 51057
+                    }
+                  ]
                 }
               ]
             },
@@ -4314,6 +4342,42 @@
             ],
             "values": [
               629
+            ]
+          },
+          {
+            "name": "Compression Ratio",
+            "unit": "%",
+            "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Compression Ratio",
+            "x": [
+              8288,
+              11275,
+              14266,
+              17388,
+              32114,
+              47770
+            ],
+            "values": [
+              16.2,
+              16.2,
+              16.9,
+              79.9,
+              84.9,
+              85.6
+            ]
+          },
+          {
+            "name": "Compression Ratio Over Time",
+            "unit": "%",
+            "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Compression Ratio",
+            "x": [
+              0
+            ],
+            "values": [
+              44.6
             ]
           },
           {

@@ -1417,6 +1417,34 @@
                               "length": 16598
                             }
                           ]
+                        },
+                        {
+                          "name": "Compression Ratio",
+                          "offset": 593,
+                          "length": 16598,
+                          "children": [
+                            {
+                              "name": "Lowest",
+                              "value": 29.1,
+                              "unit": "%",
+                              "offset": 593,
+                              "length": 16598
+                            },
+                            {
+                              "name": "Overall",
+                              "value": 50.7,
+                              "unit": "%",
+                              "offset": 593,
+                              "length": 16598
+                            },
+                            {
+                              "name": "Highest",
+                              "value": 72.2,
+                              "unit": "%",
+                              "offset": 593,
+                              "length": 16598
+                            }
+                          ]
                         }
                       ]
                     },
@@ -2030,6 +2058,34 @@
             ],
             "values": [
               715
+            ]
+          },
+          {
+            "name": "Compression Ratio",
+            "unit": "%",
+            "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Compression Ratio",
+            "x": [
+              593,
+              5368
+            ],
+            "values": [
+              29.1,
+              72.2
+            ]
+          },
+          {
+            "name": "Compression Ratio Over Time",
+            "unit": "%",
+            "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Compression Ratio",
+            "x": [
+              0
+            ],
+            "values": [
+              50.7
             ]
           },
           {

@@ -311,6 +311,34 @@
                       "length": 43646
                     }
                   ]
+                },
+                {
+                  "name": "Compression Ratio",
+                  "offset": 0,
+                  "length": 43646,
+                  "children": [
+                    {
+                      "name": "Lowest",
+                      "value": 17.9,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 43646
+                    },
+                    {
+                      "name": "Overall",
+                      "value": 45.5,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 43646
+                    },
+                    {
+                      "name": "Highest",
+                      "value": 84.9,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 43646
+                    }
+                  ]
                 }
               ]
             },
@@ -3942,6 +3970,42 @@
             ],
             "values": [
               642
+            ]
+          },
+          {
+            "name": "Compression Ratio",
+            "unit": "%",
+            "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Compression Ratio",
+            "x": [
+              0,
+              3195,
+              6319,
+              9257,
+              17835,
+              31692
+            ],
+            "values": [
+              19.5,
+              19.1,
+              17.9,
+              52.4,
+              84.6,
+              84.9
+            ]
+          },
+          {
+            "name": "Compression Ratio Over Time",
+            "unit": "%",
+            "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Compression Ratio",
+            "x": [
+              0
+            ],
+            "values": [
+              45.5
             ]
           },
           {

@@ -885,6 +885,34 @@
                           "length": 5457
                         }
                       ]
+                    },
+                    {
+                      "name": "Compression Ratio",
+                      "offset": 142,
+                      "length": 5457,
+                      "children": [
+                        {
+                          "name": "Lowest",
+                          "value": 14.1,
+                          "unit": "%",
+                          "offset": 142,
+                          "length": 5457
+                        },
+                        {
+                          "name": "Overall",
+                          "value": 14.6,
+                          "unit": "%",
+                          "offset": 142,
+                          "length": 5457
+                        },
+                        {
+                          "name": "Highest",
+                          "value": 15.2,
+                          "unit": "%",
+                          "offset": 142,
+                          "length": 5457
+                        }
+                      ]
                     }
                   ]
                 },
@@ -1979,6 +2007,38 @@
             ],
             "values": [
               103
+            ]
+          },
+          {
+            "name": "Compression Ratio",
+            "unit": "%",
+            "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Compression Ratio",
+            "x": [
+              211,
+              1623,
+              2985,
+              4295
+            ],
+            "values": [
+              15.2,
+              14.7,
+              14.1,
+              14.1
+            ]
+          },
+          {
+            "name": "Compression Ratio Over Time",
+            "unit": "%",
+            "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Compression Ratio",
+            "x": [
+              0
+            ],
+            "values": [
+              14.6
             ]
           },
           {

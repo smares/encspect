@@ -355,6 +355,34 @@
                   ]
                 },
                 {
+                  "name": "Compression Ratio",
+                  "offset": 0,
+                  "length": 91928,
+                  "children": [
+                    {
+                      "name": "Lowest",
+                      "value": 14.3,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 91928
+                    },
+                    {
+                      "name": "Overall",
+                      "value": 14.3,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 91928
+                    },
+                    {
+                      "name": "Highest",
+                      "value": 14.3,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 91928
+                    }
+                  ]
+                },
+                {
                   "name": "Stereo Coding",
                   "value": 1,
                   "unit": "frames",
@@ -468,6 +496,32 @@
             ],
             "values": [
               202
+            ]
+          },
+          {
+            "name": "Compression Ratio",
+            "unit": "%",
+            "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Compression Ratio",
+            "x": [
+              124
+            ],
+            "values": [
+              14.3
+            ]
+          },
+          {
+            "name": "Compression Ratio Over Time",
+            "unit": "%",
+            "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Compression Ratio",
+            "x": [
+              0
+            ],
+            "values": [
+              14.3
             ]
           }
         ],

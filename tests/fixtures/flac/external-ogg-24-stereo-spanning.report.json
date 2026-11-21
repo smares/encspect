@@ -624,6 +624,34 @@
                           "length": 169172
                         }
                       ]
+                    },
+                    {
+                      "name": "Compression Ratio",
+                      "offset": 28,
+                      "length": 169172,
+                      "children": [
+                        {
+                          "name": "Lowest",
+                          "value": 66.7,
+                          "unit": "%",
+                          "offset": 28,
+                          "length": 169172
+                        },
+                        {
+                          "name": "Overall",
+                          "value": 66.7,
+                          "unit": "%",
+                          "offset": 28,
+                          "length": 169172
+                        },
+                        {
+                          "name": "Highest",
+                          "value": 66.7,
+                          "unit": "%",
+                          "offset": 28,
+                          "length": 169172
+                        }
+                      ]
                     }
                   ]
                 },
@@ -6679,6 +6707,36 @@
             ],
             "values": [
               1536
+            ]
+          },
+          {
+            "name": "Compression Ratio",
+            "unit": "%",
+            "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Compression Ratio",
+            "x": [
+              8733,
+              74563,
+              140258
+            ],
+            "values": [
+              66.7,
+              66.7,
+              66.7
+            ]
+          },
+          {
+            "name": "Compression Ratio Over Time",
+            "unit": "%",
+            "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Compression Ratio",
+            "x": [
+              0
+            ],
+            "values": [
+              66.7
             ]
           }
         ],

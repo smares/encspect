@@ -635,6 +635,34 @@
                       "length": 56451
                     }
                   ]
+                },
+                {
+                  "name": "Compression Ratio",
+                  "offset": 0,
+                  "length": 56451,
+                  "children": [
+                    {
+                      "name": "Lowest",
+                      "value": 11.5,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 56451
+                    },
+                    {
+                      "name": "Overall",
+                      "value": 50.2,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 56451
+                    },
+                    {
+                      "name": "Highest",
+                      "value": 93.5,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 56451
+                    }
+                  ]
                 }
               ]
             },
@@ -9991,6 +10019,72 @@
             ],
             "values": [
               708
+            ]
+          },
+          {
+            "name": "Compression Ratio",
+            "unit": "%",
+            "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Compression Ratio",
+            "x": [
+              8288,
+              9771,
+              11356,
+              12972,
+              14596,
+              16177,
+              17707,
+              19038,
+              20136,
+              21066,
+              21598,
+              22553,
+              23661,
+              24995,
+              27192,
+              31473,
+              35736,
+              40016,
+              44292,
+              48573,
+              52861
+            ],
+            "values": [
+              32.2,
+              34.4,
+              35.1,
+              35.2,
+              34.3,
+              33.2,
+              28.9,
+              23.8,
+              20.2,
+              11.5,
+              20.7,
+              24,
+              28.9,
+              47.7,
+              92.9,
+              92.5,
+              92.9,
+              92.8,
+              92.9,
+              93.1,
+              93.5
+            ]
+          },
+          {
+            "name": "Compression Ratio Over Time",
+            "unit": "%",
+            "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Compression Ratio",
+            "x": [
+              0
+            ],
+            "values": [
+              50.2
             ]
           }
         ],

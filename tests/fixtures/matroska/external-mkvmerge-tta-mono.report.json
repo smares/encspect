@@ -921,6 +921,34 @@
                           "length": 46746
                         }
                       ]
+                    },
+                    {
+                      "name": "Compression Ratio",
+                      "offset": 5449,
+                      "length": 46746,
+                      "children": [
+                        {
+                          "name": "Lowest",
+                          "value": 24.1,
+                          "unit": "%",
+                          "offset": 5449,
+                          "length": 46746
+                        },
+                        {
+                          "name": "Overall",
+                          "value": 46.6,
+                          "unit": "%",
+                          "offset": 5449,
+                          "length": 46746
+                        },
+                        {
+                          "name": "Highest",
+                          "value": 300,
+                          "unit": "%",
+                          "offset": 5449,
+                          "length": 46746
+                        }
+                      ]
                     }
                   ]
                 },
@@ -1130,6 +1158,40 @@
               92,
               265,
               1152
+            ]
+          },
+          {
+            "name": "Compression Ratio",
+            "unit": "%",
+            "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Compression Ratio",
+            "x": [
+              5449,
+              17516,
+              52189
+            ],
+            "values": [
+              24.1,
+              69.1,
+              300
+            ]
+          },
+          {
+            "name": "Compression Ratio Over Time",
+            "unit": "%",
+            "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Compression Ratio",
+            "x": [
+              0,
+              1,
+              2
+            ],
+            "values": [
+              24,
+              69,
+              300
             ]
           }
         ]

@@ -666,6 +666,34 @@
                       "length": 48755
                     }
                   ]
+                },
+                {
+                  "name": "Compression Ratio",
+                  "offset": 0,
+                  "length": 48755,
+                  "children": [
+                    {
+                      "name": "Lowest",
+                      "value": 17.9,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 48755
+                    },
+                    {
+                      "name": "Overall",
+                      "value": 50.8,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 48755
+                    },
+                    {
+                      "name": "Highest",
+                      "value": 84.9,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 48755
+                    }
+                  ]
                 }
               ]
             },
@@ -3916,6 +3944,40 @@
             ],
             "values": [
               717
+            ]
+          },
+          {
+            "name": "Compression Ratio",
+            "unit": "%",
+            "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Compression Ratio",
+            "x": [
+              8304,
+              11428,
+              14366,
+              22944,
+              36801
+            ],
+            "values": [
+              19.1,
+              17.9,
+              52.4,
+              84.6,
+              84.9
+            ]
+          },
+          {
+            "name": "Compression Ratio Over Time",
+            "unit": "%",
+            "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Compression Ratio",
+            "x": [
+              0
+            ],
+            "values": [
+              50.8
             ]
           },
           {

@@ -234,6 +234,34 @@
                       "length": 29680
                     }
                   ]
+                },
+                {
+                  "name": "Compression Ratio",
+                  "offset": 0,
+                  "length": 29680,
+                  "children": [
+                    {
+                      "name": "Lowest",
+                      "value": 27.6,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 29680
+                    },
+                    {
+                      "name": "Overall",
+                      "value": 56.2,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 29680
+                    },
+                    {
+                      "name": "Highest",
+                      "value": 93.8,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 29680
+                    }
+                  ]
                 }
               ]
             }
@@ -362,6 +390,53 @@
             ],
             "values": [
               4760
+            ]
+          },
+          {
+            "name": "Compression Ratio",
+            "unit": "%",
+            "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Compression Ratio",
+            "frameRuns": {
+              "firstFrames": [
+                1,
+                17,
+                33,
+                49
+              ],
+              "frameCount": 55,
+              "samples": [
+                2560,
+                2560,
+                2560,
+                1120
+              ]
+            },
+            "x": [
+              0,
+              4686,
+              8920,
+              23332
+            ],
+            "values": [
+              30.5,
+              27.6,
+              93.8,
+              94.5
+            ]
+          },
+          {
+            "name": "Compression Ratio Over Time",
+            "unit": "%",
+            "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Compression Ratio",
+            "x": [
+              0
+            ],
+            "values": [
+              56.2
             ]
           },
           {
