@@ -498,6 +498,7 @@ internal static class Reader
                     s.TermsBlocks++;
                     s.TermsMinimum = Math.Min(s.TermsMinimum, found.Terms.Length);
                     s.TermsMaximum = Math.Max(s.TermsMaximum, found.Terms.Length);
+                    s.SetPasses = Math.Max(s.SetPasses, found.Terms.Length);
                 }
 
                 break;
@@ -1009,6 +1010,7 @@ internal static class Reader
             s.SetBits = 0;
             s.SetBlocks = 0;
             s.SetStereoCodes.Clear();
+            s.SetPasses = -1;
             s.SetChannels = 0;
             s.SetFirstEntry = entry;
             s.SetFormat = header.Flags & FormatMask;
@@ -1126,6 +1128,7 @@ internal static class Reader
 
         if (s.Figures is not null && s.SetBlocks <= State.MaxSetBlocks)
         {
+            s.PassesPerSet.Add(s.SetPasses < 0 ? (byte)255 : (byte)s.SetPasses);
             s.Stereo.AddAll((s.FormatFlags & BlockHeader.DsdFlag) != 0 ? [] : System.Runtime.InteropServices.CollectionsMarshal.AsSpan(s.SetStereoCodes));
         }
 

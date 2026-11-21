@@ -73,6 +73,9 @@ internal sealed class CodingRecorder
     private CategorySeriesBuilder? _pairs;
     private int _pairUnits;
 
+    // Per unit, the highest predictor order of its channels, 255 for a unit without a compressed channel.
+    private readonly ChunkedList<byte> _orders = new();
+
     // Units ended so far.
     public int Count { get; private set; }
 
@@ -81,6 +84,7 @@ internal sealed class CodingRecorder
         ReadOnlySpan<byte> elements = CollectionsMarshal.AsSpan(tally.ElementCodes);
         ReadOnlySpan<byte> pairs = CollectionsMarshal.AsSpan(tally.PairCodes);
         _elements.Add(elements);
+        _orders.Add(tally.UnitHighestOrder < 0 ? (byte)255 : (byte)tally.UnitHighestOrder);
         if (pairs.Length > 0 && _pairs is null)
         {
             // The first pair: the units before it have none and get empty units, so that a stream without pairs keeps nothing.
@@ -106,6 +110,51 @@ internal sealed class CodingRecorder
     {
         tally.ElementCodes.Clear();
         tally.PairCodes.Clear();
+        tally.UnitHighestOrder = -1;
+    }
+
+    // The highest predictor order of each unit's channels, at the units that have a compressed channel (x: their offsets).
+    public Series? BuildOrders(ReadOnlyMemory<double> offsets)
+    {
+        if (Count == 0 || offsets.Length != Count)
+        {
+            return null;
+        }
+
+        int count = 0;
+        for (int i = 0; i < _orders.Count; i++)
+        {
+            count += _orders[i] != 255 ? 1 : 0;
+        }
+
+        if (count == 0)
+        {
+            return null;
+        }
+
+        // Where every unit has a value the series shares the bitrate series' x values.
+        ReadOnlySpan<double> all = offsets.Span;
+        double[] xs = count == Count ? [] : new double[count];
+        var y = new double[count];
+        for (int i = 0, n = 0; i < _orders.Count; i++)
+        {
+            if (_orders[i] != 255)
+            {
+                if (xs.Length > 0)
+                {
+                    xs[n] = all[i];
+                }
+
+                y[n++] = _orders[i];
+            }
+        }
+
+        return new Series("Highest Predictor Order", "order", SeriesAxis.FrameOffset, xs.Length > 0 ? xs : offsets, y)
+        {
+            Description = Explain.HighestOrderSeries,
+            Concept = GraphConcept.Prediction,
+            Quantity = "Highest Predictor Order",
+        };
     }
 
     // The series of the stream, once all its units are ended: offsets are the units' x values, those of the bitrate series (shared), and time is the

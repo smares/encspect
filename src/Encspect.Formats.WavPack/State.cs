@@ -142,6 +142,11 @@ internal sealed class State(Source source, CancellationToken cancellation, Analy
 
     public int JointStereoBlocks { get; set; }
 
+    // The most decorrelation passes of a block of the set being read, -1 for none, and that figure for each set the series of bitrates has a point for (255: none).
+    public int SetPasses { get; set; } = -1;
+
+    public ChunkedList<byte> PassesPerSet { get; } = new();
+
     public int CrossDecorrBlocks { get; set; }
 
     public int HybridBlocks { get; set; }

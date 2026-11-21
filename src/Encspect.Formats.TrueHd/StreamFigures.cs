@@ -55,13 +55,14 @@ internal sealed class StreamFigures(long firstRate)
     // isPartial: a run cut short by the end of the stream; it is in the series and the totals, but only
     // counts for the extremes and the distribution where no whole run came before it, since a run of one
     // unit is not what the bitrate of a run means.
-    public void Add(long offset, long bits, long samples, bool inSeries = true, int rate = 0, bool isPartial = false, long firstFrame = 0, long coded = 0, ReadOnlySpan<int> codings = default)
+    public void Add(long offset, long bits, long samples, bool inSeries = true, int rate = 0, bool isPartial = false, long firstFrame = 0, long coded = 0, ReadOnlySpan<int> codings = default, int filterOrder = -1)
     {
         long runRate = rate > 0 ? rate : _firstRate;
         double bitrate = samples > 0 && runRate > 0 ? bits * (double)runRate / samples / 1000 : 0;
         if (inSeries)
         {
             AddStereo(codings, _points.Count);
+            _orders.Add(filterOrder < 0 ? (byte)255 : (byte)filterOrder);
             _points.Add(new Point(offset, bitrate, firstFrame, coded));
         }
 
@@ -265,6 +266,52 @@ internal sealed class StreamFigures(long firstRate)
     // A share in percent with one decimal, rounded half to even.
     public static string Share(long count, long total) =>
         total > 0 ? (Math.Round(count * 1000.0 / total, MidpointRounding.ToEven) / 10).ToString("F1", CultureInfo.InvariantCulture) + "%" : "0.0%";
+
+    // Per run, the highest filter order of its units, 255 for a run without a coded channel in a read unit.
+    private readonly ChunkedList<byte> _orders = new();
+
+    // The highest prediction filter order of each run, at the runs that have one (sharing the bitrate series' x where all do).
+    public Series? OrderSeries(Series bitrate)
+    {
+        if (_orders.Count != bitrate.X.Length)
+        {
+            return null;
+        }
+
+        int valued = 0;
+        for (int i = 0; i < _orders.Count; i++)
+        {
+            valued += _orders[i] != 255 ? 1 : 0;
+        }
+
+        if (valued == 0)
+        {
+            return null;
+        }
+
+        ReadOnlySpan<double> offsets = bitrate.X.Span;
+        double[] x = valued == _orders.Count ? [] : new double[valued];
+        var y = new double[valued];
+        for (int i = 0, n = 0; i < _orders.Count; i++)
+        {
+            if (_orders[i] != 255)
+            {
+                if (x.Length > 0)
+                {
+                    x[n] = offsets[i];
+                }
+
+                y[n++] = _orders[i];
+            }
+        }
+
+        return new Series("Highest Predictor Order", "order", SeriesAxis.FrameOffset, x.Length > 0 ? x : bitrate.X, y)
+        {
+            Description = Explain.HighestOrderSeries,
+            Concept = GraphConcept.Prediction,
+            Quantity = "Highest Predictor Order",
+        };
+    }
 
     private readonly record struct Point(long Offset, double Bitrate, long FirstFrame, long Samples);
 }

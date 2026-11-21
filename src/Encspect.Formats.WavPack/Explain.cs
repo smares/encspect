@@ -299,6 +299,7 @@ internal static class Explain
     public const string StatExtraLevel = "The level of extra processing the config block records; none where extra processing is off, and not stored where it is on but the block holds no level, as WavPack before 4.40 writes it.";
     public const string StatTargetBits = "The bitrate the hybrid encoder aimed at in the first hybrid block, in bits per sample and channel.";
     public const string StatTargetRate = "The target bitrate over all channels: the target bits per sample times the sample rate times the channels.";
+    public const string PassesSeries = "The most decorrelation passes of any block of each set of blocks (ID_DECORR_TERMS); a set whose blocks state no valid terms has none.";
     public const string StatPasses = "How many decorrelation passes the blocks use.";
     public const string StatStereoCoding = "How the stereo blocks of the sets in the graphs code their two channels: as left and right, or as mid and side (joint stereo flag).";
     public const string StereoCodingSeries = "The coding of each stereo block of each set of blocks, as the tally of Stereo Coding counts them; a set of mono blocks has none.";
