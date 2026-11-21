@@ -288,7 +288,7 @@ public class DecoderChargeTests
         double unitsPerSample = (DecodeWork.ForSample(bytes) * channels) + (codedChannels * (MonkeysAudioFrameDecoder.RangeUnits + MonkeysAudioFrameDecoder.PredictorUnits + taps));
         double bytesPerSample = codedChannels * (-Math.Log2(19578.0 / 65536) / 8);
 
-        Assert.True(unitsPerSample / bytesPerSample < MonkeysAudioDecoder.PerInputByte, $"{unitsPerSample / bytesPerSample:F0} units a byte against {MonkeysAudioDecoder.PerInputByte}.");
+        Assert.True(unitsPerSample / bytesPerSample < MonkeysAudioDecoder.PerInputByte / 2, $"{unitsPerSample / bytesPerSample:F0} units a byte against {MonkeysAudioDecoder.PerInputByte / 2} for one pass.");
     }
 
     [Fact]
@@ -300,6 +300,19 @@ public class DecoderChargeTests
 
         long units = DecoderWorkTests.MonkeysAudioCases.Units(file);
 
-        Assert.True(units < file.Length * MonkeysAudioDecoder.PerInputByte, $"{units / (double)file.Length:F0} units a byte against {MonkeysAudioDecoder.PerInputByte}.");
+        Assert.True(units < file.Length * MonkeysAudioDecoder.PerInputByte / 2, $"{units / (double)file.Length:F0} units a byte against {MonkeysAudioDecoder.PerInputByte / 2} for one pass.");
+    }
+
+    // A frame above the cap on held samples is decoded twice, and the two passes together must stay under the allowance (damaged-units.md, "As built, pull request 3").
+    [Fact]
+    public void AnInsaneFileDecodedTwiceAboveTheCapStaysUnderTheAllowanceForItsBytes()
+    {
+        byte[] file = DecoderWorkTests.MonkeysAudioCases.Repeated("external-quiet-insane.ape", 1L << 24);
+
+        long once = DecoderWorkTests.MonkeysAudioCases.Units(file);
+        long twice = DecoderWorkTests.MonkeysAudioCases.Units(file, maxHeld: 0);
+
+        Assert.True(twice > once * 18 / 10, $"{twice} units against {once} for one pass.");
+        Assert.True(twice < file.Length * MonkeysAudioDecoder.PerInputByte, $"{twice / (double)file.Length:F0} units a byte against {MonkeysAudioDecoder.PerInputByte}.");
     }
 }

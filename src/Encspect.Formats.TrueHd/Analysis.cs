@@ -555,6 +555,7 @@ internal sealed class Analysis
                 session.Decode(new CodedFrame(new MappedBytes(memory, offset), Nodes.UnitName, FirstSample, outSamples)
                 {
                     IsDamaged = isDamaged,
+                    FailsChecksum = (overall & UnitStatus.CheckFails) != 0,
                     FollowsGap = (overall & UnitStatus.FollowsGap) != 0 || _isDecodeResumed,
                     IsWalked = isWalked,
                 });

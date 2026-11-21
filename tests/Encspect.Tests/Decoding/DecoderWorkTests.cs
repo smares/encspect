@@ -513,6 +513,10 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         Add("monkeys-audio-old-range-3.92-silent-frames", () => new Case("monkeys-audio-old-range-3.92-silent-frames", MonkeysAudioCases.RepeatedOld("legacy-3920-extra-high-16-stereo-silent-then-tone.ape")));
 
         // Frames flagged silent charge the fixed work of their samples and no more, at the level whose coded frames cost the most.
+        // A frame above the cap on held samples is decoded twice, without output and then to the sink, each pass charged (the cap lowered to 0 reaches it with a small file).
+        Add("monkeys-audio-above-cap-insane-16-bit", () => new Case("monkeys-audio-above-cap-insane-16-bit", MonkeysAudioCases.Repeated("external-level-insane-16-stereo.ape"), Decoder: () => new MonkeysAudioDecoder(0)));
+        // A frame of a width the retry never held is now held (the copy into the held samples) until its CRC is known.
+        Add("monkeys-audio-held-16-bit-full-frames", () => new Case("monkeys-audio-held-16-bit-full-frames", MonkeysAudioCases.Repeated("external-level-insane-16-stereo.ape")));
         Add("monkeys-audio-insane-silent-frames", () => new Case("monkeys-audio-insane-silent-frames", MonkeysAudioCases.Repeated("external-silent-stereo.ape", level: 5000)));
 
         // WavPack: the crafted worst cases, all 16 decorrelation passes.
@@ -1377,9 +1381,9 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             return MonkeysAudioBuilder.BuildOld(header, [.. Enumerable.Repeat(frames[0], copies)], blocks);
         }
 
-        public static long Units(byte[] file)
+        public static long Units(byte[] file, long? maxHeld = null)
         {
-            var counting = new CountingDecoder(new MonkeysAudioDecoder());
+            var counting = new CountingDecoder(maxHeld is { } cap ? new MonkeysAudioDecoder(cap) : new MonkeysAudioDecoder());
             var analyzer = new Analyzer(DefaultParsers.Tags, DefaultParsers.Formats, DefaultParsers.Codecs, [counting]);
             Report report = analyzer.Analyze("probe.ape", new MemoryStream(file), new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = long.MaxValue } });
             Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed" or "decode.limit");

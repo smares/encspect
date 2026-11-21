@@ -191,6 +191,7 @@ internal sealed class DecodeFeed
         {
             Correction = correction,
             IsDamaged = (status & (BlockStatus.ChecksumInvalid | BlockStatus.ChecksumMissing | BlockStatus.Oversized)) != 0,
+            FailsChecksum = (status & (BlockStatus.ChecksumInvalid | BlockStatus.ChecksumMissing)) != 0,
             IsUnreadable = (status & (BlockStatus.Truncated | BlockStatus.Malformed | BlockStatus.Refused)) != 0,
             FollowsGap = followsGap,
         };

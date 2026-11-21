@@ -96,7 +96,8 @@ Six checksums are declared: three cover headers, two the coded data and one, for
   - for each output sample, 3 units for each input of each primitive matrix (the matrix channels, and the two noise channels where the noise type is 0);
   - for a unit the walk did not store, which the decoder reads itself (the first unit of a stream, and every unit where the structure pass lends nothing), 16 units for each byte.
 - The first unit of a stream is read by the decoder itself: the decoding session starts when its major sync has been read, so its walk had nothing to lend.
-- A lossless check that differs is reported (`truehd.lossless-check-failed`, on the restart header whose check differs; on the unit where the tree keeps no detail for it, and on the stream for a unit past the limit of records); the verification counts every one that differs.
+- A lossless check that differs is reported (`truehd.lossless-check-failed`, on the restart header whose check differs; on the unit where the tree keeps no detail for it, and on the stream for a unit past the limit of records); the verification counts every one that differs. It withholds nothing: it covers output already written and measured, and the substream checks flag the damaged units.
+- **Units whose substream check fails:** the parser flags a unit in which the parity byte or the CRC-8 of one of the first three substreams fails. The decoder decodes and writes it as before, so the PCM, the verification and the findings are unchanged, and the measurements leave out the unit and the units after it, up to the next one in which every substream it reads has a restart header, as withheld samples ("checksum failed"). The filter histories run on across restart headers, so damage can outlast that span; the next lossless check then fails and is reported ([the design](../design/damaged-units.md)). A restart header CRC or a major sync CRC that fails, being a header check, withholds nothing.
 
 ## Dolby TrueHD in MP4
 
@@ -147,6 +148,7 @@ An `mlpa` sample entry goes to the codec parser with one access unit to a sample
 
 - The coding of presentations of more than two channels: no category describes how a matrix over more channels combines them, and no committed file has such matrices (FFmpeg's encoder writes none; the real 5.1 file `TrueHD.raw` has them, and is not committed). A committed file whose larger presentation carries matrices, or a user's request, would bring it back (the plan's "Not planned").
 - A protected Dolby TrueHD track in MP4 is named by its sample entry and not analyzed. Matroska routes `A_TRUEHD` and `A_MLP` to the codec parser (`truehd` and `mlp`), which reads the packets, one access unit each; a track whose frames are zlib-compressed or header-stripped is not routed (`matroska.track-encoding-not-read`).
+- A per-unit check for the fourth (Atmos) substream, which is neither compared nor counted, and for a substream without check data: their units are never withheld.
 - The fourth (Atmos) substream, and MLP streams whose two channel groups have different sampling rates (`truehd.unsupported`; the units are not read, decoded or counted).
 - A negative output shift, and matrices with more than 5 channels together with noise type 0, which the description marks unsupported in FFmpeg (`truehd.unsupported`).
 - Playback and any output other than the checksum comparison.

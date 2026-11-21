@@ -74,6 +74,10 @@ internal sealed class StreamDecoder : IFrameDecoder, ICorrectionDecoder
     private int _setBlocks;
     private bool _isSetOversized;
     private bool _isSetFailed;
+
+    // A block of the set fails a check: the block checksum the parser compared, or the CRC or the extra CRC of its decoded audio, a muted
+    // block's included. The measurements withhold the whole set (docs/design/damaged-units.md), since they withhold positions, not channels.
+    private bool _isSetDamaged;
     private int[] _planes = [];
 
     private long _crcChecked;
@@ -206,6 +210,7 @@ internal sealed class StreamDecoder : IFrameDecoder, ICorrectionDecoder
             _setBlocks = 0;
             _isSetOversized = false;
             _isSetFailed = false;
+            _isSetDamaged = false;
         }
         else if (!_inSet)
         {
@@ -287,6 +292,7 @@ internal sealed class StreamDecoder : IFrameDecoder, ICorrectionDecoder
             throw;
         }
 
+        _isSetDamaged |= frame.FailsChecksum || !isCrcValid || (hasExtra && !isExtraValid);
         _crcChecked++;
 
         // A hybrid block of a pair that has no correction block is decoded as the lossy part and its lossy CRC holds, but libwavpack counts it as an error
@@ -448,6 +454,11 @@ internal sealed class StreamDecoder : IFrameDecoder, ICorrectionDecoder
         }
 
         ReadOnlySpan<int> planes = _planes.AsSpan(0, _channels * samples);
+        if (_isSetDamaged)
+        {
+            _context.WithholdFromMeasurements(_setPosition, samples);
+        }
+
         if (!_isDsd)
         {
             if (_sink is null)
