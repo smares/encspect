@@ -254,6 +254,21 @@
                   ]
                 },
                 {
+                  "name": "Fixed Predictor Orders",
+                  "value": 5,
+                  "unit": "subframes",
+                  "offset": 0,
+                  "length": 1325,
+                  "children": [
+                    {
+                      "name": "Order 1",
+                      "value": "5 subframes (100.0%)",
+                      "offset": 0,
+                      "length": 1325
+                    }
+                  ]
+                },
+                {
                   "name": "Subframes With Wasted Bits",
                   "value": "0 subframes (0.0%)",
                   "offset": 0,
@@ -1579,6 +1594,226 @@
             ],
             "values": [
               354
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Subframe Types",
+            "concept": "prediction",
+            "valueLabel": "subframe",
+            "categories": [
+              {
+                "name": "Constant",
+                "count": 0
+              },
+              {
+                "name": "Verbatim",
+                "count": 0
+              },
+              {
+                "name": "Fixed Predictor",
+                "count": 5
+              },
+              {
+                "name": "Linear Predictor",
+                "count": 0
+              }
+            ],
+            "total": 5,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                5
+              ]
+            ],
+            "runs": [
+              [
+                2,
+                5
+              ]
+            ]
+          },
+          {
+            "name": "Fixed Predictor Orders",
+            "concept": "prediction",
+            "valueLabel": "subframe",
+            "categories": [
+              {
+                "name": "Order 0",
+                "count": 0
+              },
+              {
+                "name": "Order 1",
+                "count": 5
+              },
+              {
+                "name": "Order 2",
+                "count": 0
+              },
+              {
+                "name": "Order 3",
+                "count": 0
+              },
+              {
+                "name": "Order 4",
+                "count": 0
+              }
+            ],
+            "total": 5,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                5
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                5
+              ]
+            ]
+          },
+          {
+            "name": "Partition Orders",
+            "valueLabel": "subframe",
+            "categories": [
+              {
+                "name": "Order 0",
+                "count": 5
+              },
+              {
+                "name": "Order 1",
+                "count": 0
+              },
+              {
+                "name": "Order 2",
+                "count": 0
+              },
+              {
+                "name": "Order 3",
+                "count": 0
+              },
+              {
+                "name": "Order 4",
+                "count": 0
+              },
+              {
+                "name": "Order 5",
+                "count": 0
+              },
+              {
+                "name": "Order 6",
+                "count": 0
+              },
+              {
+                "name": "Order 7",
+                "count": 0
+              },
+              {
+                "name": "Order 8",
+                "count": 0
+              },
+              {
+                "name": "Order 9",
+                "count": 0
+              },
+              {
+                "name": "Order 10",
+                "count": 0
+              },
+              {
+                "name": "Order 11",
+                "count": 0
+              },
+              {
+                "name": "Order 12",
+                "count": 0
+              },
+              {
+                "name": "Order 13",
+                "count": 0
+              },
+              {
+                "name": "Order 14",
+                "count": 0
+              },
+              {
+                "name": "Order 15",
+                "count": 0
+              }
+            ],
+            "total": 5,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                5
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                5
+              ]
+            ]
+          },
+          {
+            "name": "Rice With 5-Bit Parameters",
+            "valueLabel": "subframe",
+            "categories": [
+              {
+                "name": "Rice with 5-bit parameters",
+                "count": 0
+              },
+              {
+                "name": "Rice",
+                "count": 5
+              }
+            ],
+            "total": 5,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                5
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                5
+              ]
+            ]
+          },
+          {
+            "name": "Subframes With Wasted Bits",
+            "valueLabel": "subframe",
+            "categories": [
+              {
+                "name": "With wasted bits",
+                "count": 0
+              },
+              {
+                "name": "Without wasted bits",
+                "count": 5
+              }
+            ],
+            "total": 5,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                5
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                5
+              ]
             ]
           }
         ]

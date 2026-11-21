@@ -203,6 +203,11 @@ internal static class Summary
         a.Leading.Add(statistics);
 
         List<Series> series = a.Figures?.Series(anchor, a.Units, default) ?? [];
+        if (series.Count > 0 && series[0].Name == "Bitrate" && a.Figures!.OrderSeries(series[0], a.CancellationToken) is { } orders)
+        {
+            series.Add(orders);
+        }
+
         string? mode = channels switch { 1 => "Mono", 2 => "Stereo", _ => "Multichannel" };
         return new StreamInfo
         {

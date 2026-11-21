@@ -29,6 +29,7 @@ WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correctio
 
 ## Reported
 
+- **Decorrelation Passes**, beside the tally of the fewest and most passes, a numeric series (concept `prediction`, unit "passes") of the most passes of any block of each set of the graphs; a set whose blocks state no valid terms has no point;
 - **Stereo Coding**, a tally and a category series of the coding of each stereo block (left/right or mid/side) in the sets of the graphs, in place of "Mid/Side Blocks"; DSD streams have none.
 - the sample rate (a custom rate from its sub-block, ignored where it is 0 as libwavpack ignores it; for DSD the native bit rate, held to 2,147,483,647 Hz), channels and layout, bits per sample, the total samples and the duration (the samples are those of the first block of each set; Lost Samples counts a set once for any block in it that is cut, malformed or refused and for a set that begins without the initial block flag (libwavpack reads on to the next set that has it), and is 0 for correction data and for a stream version libwavpack does not decode);
 - "WavPack lossless", "WavPack hybrid", "WavPack lossy" or "WavPack correction data" as the codec;

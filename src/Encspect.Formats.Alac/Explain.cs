@@ -111,6 +111,7 @@ internal static class Explain
     public const string StatStereoCoding = "How the channel pairs are coded by their mix: as they are, left and right (also an uncompressed pair), left and side, mid and side, or a weighted mix of the two (matrix_dec.c).";
     public const string StatChannelsCompressed = "The channels of compressed elements, which have a predictor.";
     public const string StatPredictionTypes = "The channels by the prediction type they state.";
+    public const string HighestOrderSeries = "The highest predictor order among the channels of each frame's compressed elements, in coefficients (ALACDecoder.cpp, Decode); a frame without a compressed channel has none.";
     public const string StatPredictorOrders = "The channels by the number of coefficients of their filter.";
     public const string StatPredictorShifts = "The channels by the predictor shift they state.";
     public const string StatWeightFactors = "The channels by the history weight factor they state.";

@@ -767,6 +767,53 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         Output.WriteLine($"{kept / frames} bytes kept and {peak / frames} bytes peak per frame");
         Assert.True(kept < frames * 200L, $"The report keeps {kept / frames} bytes per frame.");
         Assert.True(peak < frames * 260L, $"The live heap grew by {peak / frames} bytes per frame.");
+
+        // The coding series of the subframes (docs/design/coding-graphs.md, "Memory budget"): about 48 bytes for a stereo frame at most, recorded while reading,
+        // with the numeric series' values and the codes and count bytes of the category series.
+        StreamInfo stream = Assert.Single(report.Streams);
+        long index = stream.CategorySeries.Count * 4L * ((frames / 1024) + 1);
+        long categories = stream.CategorySeries.Sum(c => c.StorageBytes);
+        long numeric = stream.Series.Where(s => s.Name is "Highest Predictor Order" or "Coefficient Precision" or "Block Size").Sum(s => BackingBytes(s.Values));
+        Output.WriteLine($"{categories / frames} bytes of category series and {numeric / frames} of numeric series per frame");
+        Assert.True(categories + numeric <= (frames * 48L) + index, $"The coding series keep {(categories + numeric) / (double)frames} bytes per frame.");
+        GC.KeepAlive(report);
+    }
+
+    // Frames of two linear predictor subframes, which have every series of the subframes: the codes and count bytes of five category series (at most 15
+    // bytes), and the numeric series of the order and the precision, whose values take 8 bytes each and whose x values are the bitrate series' where every frame has
+    // a predictor, so that the series keep 31 bytes for a stereo frame and leave the design's 48 room for the compression ratio (docs/design/coding-graphs.md, "Memory budget").
+    [Fact]
+    public void ManyFlacFramesOfLinearPredictorsKeepTheirCodingSeriesWithinTheBudget()
+    {
+        const int frames = 100_000;
+        byte[] data = FlacBuilder.LpcStream(frames);
+
+        (Report report, long kept, long peak) = Measure("lpc-frames.flac", data, FlacBuilder.LpcStream(100));
+
+        StreamInfo stream = Assert.Single(report.Streams);
+        Series bitrate = stream.Series.Single(s => s.Name == "Bitrate");
+        Assert.Equal(frames, bitrate.X.Length);
+        long index = stream.CategorySeries.Count * 4L * ((frames / 1024) + 1);
+        long categories = stream.CategorySeries.Sum(c => c.StorageBytes);
+
+        // The arrays behind the numeric series, each counted once, with the bitrate series' (counted by the report already) left out.
+        var arrays = new Dictionary<double[], long>(ReferenceEqualityComparer.Instance);
+        foreach (Series series in stream.Series.Where(s => s.Axis == SeriesAxis.FrameOffset && s.Name != "Bitrate"))
+        {
+            foreach (ReadOnlyMemory<double> memory in new[] { series.X, series.Values })
+            {
+                Assert.True(MemoryMarshal.TryGetArray(memory, out ArraySegment<double> segment));
+                arrays[segment.Array!] = segment.Array!.Length * 8L;
+            }
+        }
+
+        MemoryMarshal.TryGetArray(bitrate.X, out ArraySegment<double> shared);
+        arrays.Remove(shared.Array!);
+        long numeric = arrays.Values.Sum();
+        Assert.Contains(stream.Series, s => s.Name == "Highest Predictor Order");
+        Assert.Contains(stream.CategorySeries, c => c.Name == "Partition Orders");
+        Output.WriteLine($"{categories / frames} bytes of category series and {numeric / frames} of numeric series per frame");
+        Assert.True(categories + numeric <= (frames * 31L) + index, $"The coding series keep {(categories + numeric) / (double)frames} bytes per frame.");
         GC.KeepAlive(report);
     }
 

@@ -215,6 +215,50 @@ internal static class Explain
     public const string BitrateSeries = "The bitrate of each frame: its bits over the time its samples last.";
     public const string BitrateOverTimeSeries = "The bitrate of each second of audio: the bits of the frames that start in that second over the time their samples last.";
 
+    public const string StatFixedOrders = "How many fixed predictor subframes use each order of the five fixed predictors.";
+    public const string StatFixedOrder = "The fixed predictor subframes of this order, and their share of the fixed predictor subframes.";
+    public const string SubframeTypesSeries = "The type of each subframe of a frame: constant, verbatim, fixed predictor or linear predictor (RFC 9639, section 9.2.1), as the tally of Subframe Types counts them; a frame the analyzer cannot read to its end has none.";
+    public const string FixedOrdersSeries = "The order of each fixed predictor subframe of a frame (RFC 9639, sections 9.2.1 and 9.2.5), as the tally of Fixed Predictor Orders counts them; a subframe of another type has none.";
+    public const string PartitionOrdersSeries = "The partition order of the residual of each fixed or linear predictor subframe of a frame (RFC 9639, section 9.2.7), as the tally of Partition Orders counts them.";
+    public const string RiceSeries = "Whether the residual of each fixed or linear predictor subframe uses Rice parameters of 4 or of 5 bits (RFC 9639, section 9.2.7), as the tally of Rice With 5-Bit Parameters counts them.";
+    public const string WastedSeries = "Whether each subframe of a frame states wasted bits (RFC 9639, section 9.2.2), as the tally of Subframes With Wasted Bits counts them.";
+    public const string CategoryRice4 = "Residuals coded with partitioned Rice codes whose parameters have 4 bits (RFC 9639, section 9.2.7).";
+    public const string CategoryRice5 = "Residuals coded with partitioned Rice codes whose parameters have 5 bits (RFC 9639, section 9.2.7).";
+    public const string CategoryWasted = "Subframes that state wasted bits: low bits that are zero in every sample and are left out (RFC 9639, section 9.2.2).";
+    public const string CategoryNoWasted = "Subframes that state no wasted bits.";
+    public const string HighestOrderSeries = "The highest order among the linear predictor subframes of each frame, in the number of earlier samples the predictor uses (RFC 9639, section 9.2.6); a frame without a linear predictor subframe has none.";
+    public const string HighestOrderOverTimeSeries = "The highest linear predictor order in each second of audio, over the frames that start in it.";
+    public const string PrecisionSeries = "The highest coefficient precision among the linear predictor subframes of each frame, in bits (RFC 9639, section 9.2.6); a frame without a linear predictor subframe has none.";
+    public const string PrecisionOverTimeSeries = "The highest coefficient precision in each second of audio, over the frames that start in it.";
+    public const string BlockSizeSeries = "The number of samples of each frame (RFC 9639, section 9.1.1), for a stream whose frames differ in size apart from a shorter last one.";
+    public static readonly string[] FixedOrderCategories =
+    [
+        "Subframes whose fixed predictor has order 0: no prediction, the residual is the signal (RFC 9639, section 9.2.5).",
+        "Subframes whose fixed predictor has order 1: each sample is predicted as the one before it (RFC 9639, section 9.2.5).",
+        "Subframes whose fixed predictor has order 2: each sample is predicted by a straight line through the two before it (RFC 9639, section 9.2.5).",
+        "Subframes whose fixed predictor has order 3: each sample is predicted from the three before it with the coefficients 3, -3 and 1 (RFC 9639, section 9.2.5).",
+        "Subframes whose fixed predictor has order 4: each sample is predicted from the four before it with the coefficients 4, -6, 4 and -1 (RFC 9639, section 9.2.5).",
+    ];
+    public static readonly string[] PartitionOrderCategories =
+    [
+        "Residuals coded in 1 partition, each with its own Rice parameter (RFC 9639, section 9.2.7).",
+        "Residuals coded in 2 partitions, each with its own Rice parameter (RFC 9639, section 9.2.7).",
+        "Residuals coded in 4 partitions, each with its own Rice parameter (RFC 9639, section 9.2.7).",
+        "Residuals coded in 8 partitions, each with its own Rice parameter (RFC 9639, section 9.2.7).",
+        "Residuals coded in 16 partitions, each with its own Rice parameter (RFC 9639, section 9.2.7).",
+        "Residuals coded in 32 partitions, each with its own Rice parameter (RFC 9639, section 9.2.7).",
+        "Residuals coded in 64 partitions, each with its own Rice parameter (RFC 9639, section 9.2.7).",
+        "Residuals coded in 128 partitions, each with its own Rice parameter (RFC 9639, section 9.2.7).",
+        "Residuals coded in 256 partitions, each with its own Rice parameter (RFC 9639, section 9.2.7).",
+        "Residuals coded in 512 partitions, each with its own Rice parameter (RFC 9639, section 9.2.7).",
+        "Residuals coded in 1,024 partitions, each with its own Rice parameter (RFC 9639, section 9.2.7).",
+        "Residuals coded in 2,048 partitions, each with its own Rice parameter (RFC 9639, section 9.2.7).",
+        "Residuals coded in 4,096 partitions, each with its own Rice parameter (RFC 9639, section 9.2.7).",
+        "Residuals coded in 8,192 partitions, each with its own Rice parameter (RFC 9639, section 9.2.7).",
+        "Residuals coded in 16,384 partitions, each with its own Rice parameter (RFC 9639, section 9.2.7).",
+        "Residuals coded in 32,768 partitions, each with its own Rice parameter (RFC 9639, section 9.2.7).",
+    ];
+
     public const string Encoder = "The encoder that wrote the stream, as far as the Vorbis comment names it, with the evidence and the confidence in it.";
     public const string Confidence = "How sure the analyzer is: high where the vendor string has the form libFLAC writes, medium where only an ENCODER comment names ffmpeg's encoder or the vendor string is in libFLAC's form but of no release the analyzer knows.";
     public const string Evidence = "Something in the file that points to the encoder.";

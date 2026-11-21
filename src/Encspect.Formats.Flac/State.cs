@@ -163,6 +163,9 @@ internal sealed class State
 
     public StreamFigures? Figures { get; private set; }
 
+    // The series of the subframes, one unit for each frame that has a bitrate point.
+    public PredictionSeries? Prediction { get; private set; }
+
     public long NextSample { get; private set; }
 
     private bool _hasFrame;
@@ -369,6 +372,7 @@ internal sealed class State
             MinFrameLength = Math.Min(MinFrameLength, coded);
             Figures ??= new StreamFigures(Info is { SampleRate: > 0 } rate ? rate.SampleRate : header.SampleRate);
             Figures.Add(offset, coded * 8L, header.BlockSize);
+            Prediction ??= new PredictionSeries(Info is { SampleRate: > 0 } known ? known.SampleRate : header.SampleRate);
             Stereo.Add(header.Channels == 2 ? (int)header.Assignment : null);
         }
 
@@ -383,13 +387,24 @@ internal sealed class State
         int detail = -1;
         if (isWalked)
         {
-            Count(facts[..header.Channels], first, header.Assignment);
+            // The tallies and the series of the subframes cover the frames that have a bitrate point, so they stay equal.
+            if (!isCut)
+            {
+                Count(facts[..header.Channels], first, header.Assignment);
+                Prediction!.AddFrame(header.BlockSize, facts[..header.Channels]);
+            }
+
             ReportResidualLimits(facts[..header.Channels], offset, index);
             if (index < MaxDetailedFrames && Records.Details.Count < MaxDetailedFrames)
             {
                 detail = Records.Details.Count;
                 Records.Details.Add(DetailOf(header, facts, logs));
             }
+        }
+
+        if (!isCut && !isWalked)
+        {
+            Prediction!.AddEmpty(header.BlockSize);
         }
 
         if ((status & EntryStatus.Unreadable) != 0)

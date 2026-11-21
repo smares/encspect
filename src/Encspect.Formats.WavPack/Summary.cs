@@ -379,6 +379,47 @@ internal static partial class Summary
         string codec = isCorrection ? "WavPack correction data" : isHybrid ? "WavPack hybrid" : s.HasLossyBlocks ? "WavPack lossy" : "WavPack lossless";
         string? channelMode = ChannelModeOf(channels, s.StereoBlocks, s.JointStereoBlocks);
         List<Series> series = s.Figures?.Series(anchor, s.Cancellation) ?? [];
+        if (series.Count > 0 && s.TermsBlocks > 0 && s.PassesPerSet.Count == series[0].X.Length)
+        {
+            ReadOnlySpan<double> offsets = series[0].X.Span;
+            int valued = 0;
+            for (int i = 0; i < s.PassesPerSet.Count; i++)
+            {
+                if (i % 4096 == 0)
+                {
+                    s.Cancellation.ThrowIfCancellationRequested();
+                }
+
+                valued += s.PassesPerSet[i] != 255 ? 1 : 0;
+            }
+
+            if (valued > 0)
+            {
+                // Where every set has a value the series shares the bitrate series' x values.
+                double[] x = valued == s.PassesPerSet.Count ? [] : new double[valued];
+                var passes = new double[valued];
+                for (int i = 0, n = 0; i < s.PassesPerSet.Count; i++)
+                {
+                    if (i % 4096 == 0)
+                    {
+                        s.Cancellation.ThrowIfCancellationRequested();
+                    }
+
+                    if (s.PassesPerSet[i] != 255)
+                    {
+                        if (x.Length > 0)
+                        {
+                            x[n] = offsets[i];
+                        }
+
+                        passes[n++] = s.PassesPerSet[i];
+                    }
+                }
+
+                series.Add(new Series("Decorrelation Passes", "passes", SeriesAxis.FrameOffset, x.Length > 0 ? x : series[0].X, passes) { Description = Explain.PassesSeries, Concept = GraphConcept.Prediction, Quantity = "Decorrelation Passes" });
+            }
+        }
+
         return new StreamInfo
         {
             Nodes = [stream],

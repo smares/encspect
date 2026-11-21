@@ -131,6 +131,7 @@ internal static class Explain
     public const string StatLeadingUnits = "How many access units come before the first major sync; they are not decoded.";
 
     public const string BitrateSeries = "The bitrate of each run of 16 access units at the byte offset it starts at.";
+    public const string HighestOrderSeries = "The highest prediction filter order of each run of access units: the FIR and IIR taps of a coded channel together, at most 8, as the first substream states them; a run with no read access unit has none.";
     public const string BitrateOverTimeSeries = "The bitrate over each second of audio, from the access units that start in it.";
     public const string AverageBitrate = "The bytes of all access units over the duration they hold.";
     public const string BitrateMode = "Constant where every run of 16 access units has the same bitrate, else variable; unknown with a single run.";

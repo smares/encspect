@@ -27,6 +27,9 @@ internal sealed class CodingTally
 
     public long[] PredictorOrders { get; } = new long[32];
 
+    // The highest order of the channels of the unit being read, -1 for a unit without a compressed channel; the series' value for the unit.
+    public int UnitHighestOrder { get; set; } = -1;
+
     public long[] PredictorShifts { get; } = new long[16];
 
     public long[] WeightFactors { get; } = new long[8];
@@ -101,6 +104,7 @@ internal sealed class CodingTally
         Channels++;
         PredictionTypes[channel.PredictionType & 15]++;
         PredictorOrders[channel.Order & 31]++;
+        UnitHighestOrder = Math.Max(UnitHighestOrder, channel.Order & 31);
         PredictorShifts[channel.PredictorShift & 15]++;
         WeightFactors[channel.WeightFactor & 7]++;
         ZeroRuns += channel.ZeroRuns;
