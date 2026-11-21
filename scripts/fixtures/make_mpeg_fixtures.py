@@ -1181,7 +1181,7 @@ def main():
         if path.is_dir():
             continue
         # The golden-change file (docs/development.md, "Golden-change files") is no fixture of this script's.
-        if path.name.startswith("external-") or path.name.endswith((".report.json", ".decode.json")) or path.name == "golden-changes.json":
+        if path.name.startswith("external-") or path.name.endswith((".report.json", ".decode.json", ".measure.json")) or path.name == "golden-changes.json":
             continue
         path.unlink()
     names = set()
