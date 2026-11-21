@@ -84,8 +84,8 @@ def regions_of(data, top=None):
 CASES = {}
 
 
-def case(name, description, data, extra=(), flac_test=None, top=None, decodes=True, ffmpeg=True):
-    CASES[name] = {"description": description, "data": data, "extra": list(extra), "flac_test": flac_test, "top": top, "decodes": decodes, "ffmpeg": ffmpeg}
+def case(name, description, data, extra=(), flac_test=None, top=None, decodes=True, ffmpeg=True, golden_hides=None):
+    CASES[name] = {"description": description, "data": data, "extra": list(extra), "flac_test": flac_test, "top": top, "decodes": decodes, "ffmpeg": ffmpeg, "golden_hides": golden_hides}
 
 
 def damage():
@@ -307,6 +307,15 @@ def corners():
     case("variable-block-sizes", "Mono frames of 192, 576, 1000, 100, 4096, 300, 16 and 2,048 samples with variable block size: each header counts samples; the sizes 1000 and 300 are stated in 16 and 8 bits... "
          "and 100 in 8.", data, flac_test=True)
 
+    # More frames than the 4,096 whose subframes the report lists: the series and tallies of the subframes still count every frame.
+    rate, bits, block, count = 8000, 16, 16, 4200
+    music = signal_channels("music", rate, 1, block * count, bits)[0]
+    frames = [writer_frame(i, block, rate, bits, 0, [music[i * block:(i + 1) * block]],
+                           [{"kind": "fixed", "order": 1 + i % 2, "partition_order": 0}])
+              for i in range(count)]
+    data = stream_of([], frames, rate, 1, bits, block * count, bytes.fromhex(md5_of(bits, [music])), block, block)
+    case("frames-past-detail-limit", "4,200 mono frames of 16 samples with fixed predictors of order 1 and 2, more than the 4,096 frames whose subframes the report lists: the subframe tallies and series count the frames past the limit too.", data, flac_test=True, golden_hides=["frames"])
+
     # Sample rates and bit depths the header states or leaves to STREAMINFO.
     frames, chans = [], []
     for k, (rate_value, bits_value, rate_code, size_code) in enumerate([(44100, 12, 0, 2), (12000, 12, 12, 0), (11025, 12, 13, 2), (640000, 12, 14, 0), (88200, 12, 0, 0)]):
@@ -504,7 +513,7 @@ def main():
         top = c["top"] or [("FLAC", 0, len(data))]
         flac = [t for t in top if t[0] == "FLAC"][0]
         stream = m.Stream(data, flac[1], flac[1] + flac[2])
-        extra = {"regions": [{"name": n, "offset": o, "length": l} for n, o, l in top], "description": c["description"], "crosscheck": {"flac_test": c["flac_test"], "decodes": c["decodes"], "ffmpeg": c["ffmpeg"]}}
+        extra = {"regions": [{"name": n, "offset": o, "length": l} for n, o, l in top], "description": c["description"], "crosscheck": {"flac_test": c["flac_test"], "decodes": c["decodes"], "ffmpeg": c["ffmpeg"]}, **({"golden_hides": c["golden_hides"]} if c["golden_hides"] else {})}
         result = m.manifest(data, flac[1], flac[1] + flac[2], extra)
         result["findings"] += c["extra"]
         (OUT / f"built-{name}.flac").write_bytes(data)

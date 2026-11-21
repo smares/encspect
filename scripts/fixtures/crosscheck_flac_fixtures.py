@@ -21,6 +21,10 @@ For every manifest in tests/fixtures/flac (make_external_flac_fixtures.py, make_
   a good CRC-8 for a frame wherever it is, and does not follow a SEEK tag). The manifests of damaged files are decided by the model's reading of
   docs/formats/flac.md, not by a tool (docs/development.md).
 
+- `flac -a` also lists each subframe of every frame (type, order, wasted bits, partition order). For a fixture `flac -t` accepts, the manifest's
+  subframes of every frame (type, order, wasted bits and, for a residual, the partition order), which the series "Subframe Types", "Fixed Predictor
+  Orders", "Subframes With Wasted Bits" and "Partition Orders" and the predictor order are counted from, must equal flac's.
+
 Every skipped check prints its reason. Disagreements fail the run (exit status 1).
 
     python3 scripts/fixtures/crosscheck_flac_fixtures.py [name ...]
@@ -223,11 +227,44 @@ def check_frames(name, manifest, path, work, problems):
     if manifest["crosscheck"]["flac_test"] is True:
         if sorted(set(seen)) != intact:
             problems.append(f"flac lists the frames at {sorted(set(seen))}, the manifest {intact}")
+        else:
+            check_subframes(frames, analysis.read_text(), problems)
         return
     missing = [o for o in intact if o not in seen]
     extra = sorted(set(o for o in seen if o not in frames))
     if missing or extra:
         print(f"note {name}: intact in the manifest but not decoded by flac {missing[:4]}; decoded by flac but not in the manifest {extra[:4]}")
+
+
+TYPES = {"CONSTANT": "constant", "VERBATIM": "verbatim", "FIXED": "fixed", "LPC": "lpc"}
+
+
+def analyzed_subframes(text):
+    """The subframes flac -a lists, by frame offset: [type, order, wasted bits, partition order or None] each."""
+    result = {}
+    current = None
+    for line in text.splitlines():
+        frame = re.match(r"^frame=\d+\toffset=(\d+)", line)
+        if frame:
+            current = result.setdefault(int(frame.group(1)), [])
+            continue
+        if line.startswith("\tsubframe=") and current is not None:
+            fields = dict(part.split("=", 1) for part in line.strip().split("\t") if "=" in part)
+            kind = TYPES[fields["type"]]
+            order = int(fields.get("order", 0))
+            partition = int(fields["partition_order"]) if "partition_order" in fields else None
+            current.append([kind, order, int(fields["wasted_bits"]), partition])
+    return result
+
+
+def check_subframes(frames, text, problems):
+    listed = analyzed_subframes(text)
+    for offset, frame in sorted(frames.items()):
+        if frame["status"] or "subframes" not in frame:
+            continue
+        expected = [[kind, order, wasted] + ([rest[0]] if rest else [None]) for kind, order, wasted, *rest in frame["subframes"]]
+        if listed.get(offset) != expected:
+            problems.append(f"flac -a lists the subframes {listed.get(offset)} of the frame at {offset}, the manifest {expected}")
 
 
 def main():

@@ -42,6 +42,21 @@ public class PredictionSeriesTests
         Assert.Equal(report.Streams.Single().Series.Single(s => s.Name == "Bitrate").X.Length, sizes.Values.Length);
     }
 
+    [Fact]
+    public void Frames_past_the_detail_limit_count_in_the_series_and_the_tallies()
+    {
+        Report report = Fixtures.AnalyzeMpeg("flac/built-frames-past-detail-limit.flac");
+        StreamInfo stream = Assert.Single(report.Streams);
+
+        CategorySeries types = stream.CategorySeries.Single(c => c.Name == "Subframe Types");
+        CategorySeries orders = stream.CategorySeries.Single(c => c.Name == "Fixed Predictor Orders");
+
+        Assert.Equal(4200, types.Count);
+        Assert.Equal(4200, types.Total);
+        Assert.Equal([0L, 2100L, 2100L, 0L, 0L], orders.Counts);
+        Assert.Equal(4200, orders.Total);
+    }
+
     [Theory]
     [InlineData("alac/apple-alac-m4a-st44q16.m4a", "Highest Predictor Order", "order")]
     [InlineData("wavpack/built-ape-and-id3v1.wv", "Decorrelation Passes", "passes")]
