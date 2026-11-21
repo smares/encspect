@@ -4084,7 +4084,7 @@
         "categorySeries": [
           {
             "name": "Modes",
-            "valueLabel": "stream packet",
+            "valueLabel": "packet",
             "categories": [
               {
                 "name": "SILK-only",
@@ -4190,7 +4190,7 @@
           },
           {
             "name": "Frame Sizes",
-            "valueLabel": "stream packet",
+            "valueLabel": "packet",
             "categories": [
               {
                 "name": "2.5 ms",
@@ -4308,7 +4308,7 @@
           },
           {
             "name": "Channel Coding",
-            "valueLabel": "stream packet",
+            "valueLabel": "packet",
             "categories": [
               {
                 "name": "Stereo",
@@ -4561,7 +4561,6 @@
           {
             "name": "Modes",
             "valueLabel": "stream packet",
-            "valuesPerUnit": 2,
             "categories": [
               {
                 "name": "SILK-only",
@@ -4578,25 +4577,30 @@
             ],
             "total": 10,
             "xSeries": "Bitrate",
-            "runs": [
+            "valueCounts": [
               [
                 2,
-                4
-              ],
-              [
-                null,
                 2
               ],
               [
+                0,
+                1
+              ],
+              [
                 2,
-                6
+                3
+              ]
+            ],
+            "runs": [
+              [
+                2,
+                10
               ]
             ]
           },
           {
             "name": "Frame Sizes",
             "valueLabel": "stream packet",
-            "valuesPerUnit": 2,
             "categories": [
               {
                 "name": "2.5 ms",
@@ -4625,18 +4629,24 @@
             ],
             "total": 10,
             "xSeries": "Bitrate",
-            "runs": [
+            "valueCounts": [
               [
-                3,
-                4
-              ],
-              [
-                null,
+                2,
                 2
               ],
               [
-                3,
+                0,
+                1
+              ],
+              [
+                2,
                 3
+              ]
+            ],
+            "runs": [
+              [
+                3,
+                7
               ],
               [
                 2,
@@ -4651,7 +4661,6 @@
           {
             "name": "Channel Coding",
             "valueLabel": "stream packet",
-            "valuesPerUnit": 2,
             "categories": [
               {
                 "name": "Stereo",
@@ -4664,6 +4673,20 @@
             ],
             "total": 11,
             "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                2
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                3
+              ]
+            ],
             "runs": [
               [
                 0,
@@ -4683,15 +4706,7 @@
               ],
               [
                 0,
-                1
-              ],
-              [
-                null,
-                1
-              ],
-              [
-                0,
-                1
+                2
               ],
               [
                 1,
