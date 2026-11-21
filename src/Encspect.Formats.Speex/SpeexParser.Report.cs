@@ -216,6 +216,8 @@ public sealed partial class SpeexParser
             return distribution;
         }
 
+        private static string SubmodeName(int submode, int bits) => $"Submode {submode} ({Counts.Of(bits, "bit", "bits")})";
+
         private Node? _narrowbandNode;
         private Node? _widebandNode;
         private Node? _ultraWidebandNode;
@@ -228,7 +230,7 @@ public sealed partial class SpeexParser
             {
                 if (counts[submode] > 0)
                 {
-                    node.Add($"Submode {submode} ({Counts.Of(bits[submode], "bit", "bits")})", statistics.Offset, statistics.Length, Share(counts[submode], _frames, "frame", "frames"), Explain.SubmodeShare);
+                    node.Add(SubmodeName(submode, bits[submode]), statistics.Offset, statistics.Length, Share(counts[submode], _frames, "frame", "frames"), Explain.SubmodeShare);
                 }
             }
 
@@ -327,11 +329,11 @@ public sealed partial class SpeexParser
                 return built;
             }
 
-            (string Name, Node? Anchor, int[] Bits, string Absent, string Description, string Layer, Func<FrameRecord, int> Submode, string Text)[] layers =
+            (string Name, Node? Anchor, int[] Bits, string Absent, string[] Descriptions, string Layer, Func<FrameRecord, int> Submode, string Text)[] layers =
             [
-                ("Narrowband Submodes", _narrowbandNode, SpeexFrames.NarrowbandBits.ToArray(), string.Empty, Explain.NarrowbandSubmode, "narrowband", f => f.Narrowband, SeriesText.NarrowbandSubmodes),
-                ("Wideband Submodes", Mode >= 1 ? _widebandNode : null, SpeexFrames.WidebandBits.ToArray(), "No wideband layer", Explain.WidebandSubmode, "wideband", f => f.Wideband, SeriesText.WidebandSubmodes),
-                ("Ultra-Wideband Submodes", Mode >= 2 ? _ultraWidebandNode : null, SpeexFrames.UltraWidebandBits.ToArray(), "No ultra-wideband layer", Explain.UltraWidebandSubmode, "ultra-wideband", f => f.UltraWideband, SeriesText.UltraWidebandSubmodes),
+                ("Narrowband Submodes", _narrowbandNode, SpeexFrames.NarrowbandBits.ToArray(), string.Empty, Explain.NarrowbandSubmodeCategories, "narrowband", f => f.Narrowband, SeriesText.NarrowbandSubmodes),
+                ("Wideband Submodes", Mode >= 1 ? _widebandNode : null, SpeexFrames.WidebandBits.ToArray(), "No wideband layer", Explain.WidebandSubmodeCategories, "wideband", f => f.Wideband, SeriesText.WidebandSubmodes),
+                ("Ultra-Wideband Submodes", Mode >= 2 ? _ultraWidebandNode : null, SpeexFrames.UltraWidebandBits.ToArray(), "No ultra-wideband layer", Explain.UltraWidebandSubmodeCategories, "ultra-wideband", f => f.UltraWideband, SeriesText.UltraWidebandSubmodes),
             ];
             foreach (var layer in layers)
             {
@@ -340,16 +342,17 @@ public sealed partial class SpeexParser
                     continue;
                 }
 
+                // A layer a frame lacks comes first, as the submode of fewest bits, so an ordered series reads from none to the largest.
                 var categories = new List<Category>();
-                for (int submode = 0; submode < layer.Bits.Length && layer.Bits[submode] >= 0; submode++)
-                {
-                    categories.Add(new Category($"Submode {submode} ({Counts.Of(layer.Bits[submode], "bit", "bits")})", layer.Description) { Topic = Topics.SpeexModes });
-                }
-
-                int defined = categories.Count;
-                if (layer.Absent.Length > 0)
+                int shift = layer.Absent.Length > 0 ? 1 : 0;
+                if (shift == 1)
                 {
                     categories.Add(new Category(layer.Absent, Explain.LayerAbsent) { Topic = Topics.SpeexModes });
+                }
+
+                for (int submode = 0; submode < layer.Descriptions.Length; submode++)
+                {
+                    categories.Add(new Category(SubmodeName(submode, layer.Bits[submode]), layer.Descriptions[submode]) { Topic = Topics.SpeexModes });
                 }
 
                 var builder = new CategorySeriesBuilder(layer.Name, categories, "frame", isOrdered: true);
@@ -366,7 +369,7 @@ public sealed partial class SpeexParser
                     for (int f = 0; f < frames; f++)
                     {
                         int submode = layer.Submode(_records.Frames[first + f]);
-                        codes[f] = submode == FrameRecord.Absent && layer.Absent.Length > 0 ? (byte)defined : submode < defined ? (byte)submode : CategorySeries.None;
+                        codes[f] = submode == FrameRecord.Absent && shift == 1 ? (byte)0 : submode < layer.Descriptions.Length ? (byte)(submode + shift) : CategorySeries.None;
                     }
 
                     builder.Add(codes.AsSpan(0, frames));
