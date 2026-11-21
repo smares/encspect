@@ -260,6 +260,7 @@ internal static class Reader
     private static BlockStatus Walk(State s, int entry, long offset, in BlockHeader header, Span<byte> block, Detail? detail, BlockStatus status, out int count, out int wrapper)
     {
         var found = new BlockFacts();
+        s.BlockPasses = -1;
         wrapper = 0;
         BlockStatus result = BlockStatus.None;
         int position = BlockHeader.Length;
@@ -498,7 +499,7 @@ internal static class Reader
                     s.TermsBlocks++;
                     s.TermsMinimum = Math.Min(s.TermsMinimum, found.Terms.Length);
                     s.TermsMaximum = Math.Max(s.TermsMaximum, found.Terms.Length);
-                    s.SetPasses = Math.Max(s.SetPasses, found.Terms.Length);
+                    s.BlockPasses = found.Terms.Length;
                 }
 
                 break;
@@ -1055,6 +1056,7 @@ internal static class Reader
 
         s.SetBits += length * 8;
         s.SetBlocks++;
+        s.SetPasses = Math.Max(s.SetPasses, s.BlockPasses);
         if (!header.IsMono && s.SetStereoCodes.Count < State.MaxSetBlocks)
         {
             s.SetStereoCodes.Add((header.Flags & BlockHeader.JointStereoFlag) != 0 ? (byte)1 : (byte)0);
