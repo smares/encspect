@@ -416,7 +416,8 @@ public sealed class GraphsViewModel : ObservableObject
         if (perSecond is not null)
         {
             forms.Add(new GraphFormChoice(GraphForm.OverTime, "Over Time", "One point for every second of audio", new LineGraph(perSecond, frameOffsets, duration)));
-            if (perSecond is { Concept: GraphConcept.BitDistribution, Unit: "%" })
+            // A share in percent of two parts: the channel bit share, not every figure in percent of the concept (the compression ratio is one part).
+            if (perSecond is { Concept: GraphConcept.BitDistribution, Unit: "%", Quantity: "Channel Bit Share" })
             {
                 forms.Add(new GraphFormChoice(GraphForm.Split, "First and Second", "The share of each of the two parts in every second of audio", new ShareSplitGraph(perSecond, frameOffsets, duration)));
             }

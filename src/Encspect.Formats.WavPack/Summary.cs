@@ -374,11 +374,16 @@ internal static partial class Summary
         Node Covered(string name, NodeValue? value, string description) => cover(name, value, description, null);
         s.Figures?.AddTo(statistics, Covered, "Block Set", "block sets", true, out _);
         Node? anchor = s.Figures is null ? null : statistics.Children.FirstOrDefault(c => c.Name == "Average Bitrate");
+
+        // A DSD stream counts bits and a correction file holds the correction to a lossy stream, so neither has a PCM size to compare with.
+        long pcm = isDsd || isCorrection ? 0 : CompressionRatio.PcmBitsPerSecond(nativeRate, channels, bits);
+        Node? ratio = s.Figures is { } bitrates ? CompressionRatio.AddTo(statistics, Covered, pcm, bitrates.AverageBitrate, bitrates.MinimumBitrate, bitrates.MaximumBitrate) : null;
         s.Leading.Add(statistics);
 
         string codec = isCorrection ? "WavPack correction data" : isHybrid ? "WavPack hybrid" : s.HasLossyBlocks ? "WavPack lossy" : "WavPack lossless";
         string? channelMode = ChannelModeOf(channels, s.StereoBlocks, s.JointStereoBlocks);
         List<Series> series = s.Figures?.Series(anchor, s.Cancellation) ?? [];
+        CompressionRatio.AddTo(series, pcm, ratio, s.Cancellation);
         if (series.Count > 0 && s.TermsBlocks > 0 && s.PassesPerSet.Count == series[0].X.Length)
         {
             ReadOnlySpan<double> offsets = series[0].X.Span;

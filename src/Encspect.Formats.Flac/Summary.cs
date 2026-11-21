@@ -355,6 +355,8 @@ internal static partial class Summary
         Node Covered(string name, NodeValue? value, string description) => cover(name, value, description, null);
         s.Figures?.AddTo(statistics, Covered, "Frame", "frames", true, out _);
         Node? anchor = s.Figures is null ? null : statistics.Children.FirstOrDefault(c => c.Name == "Average Bitrate");
+        long pcm = CompressionRatio.PcmBitsPerSecond(rate, channels, bits);
+        Node? ratio = s.Figures is { } bitrates ? CompressionRatio.AddTo(statistics, Covered, pcm, bitrates.AverageBitrate, bitrates.MinimumBitrate, bitrates.MaximumBitrate) : null;
         s.AddLeading(statistics);
 
         string? channelMode = channels switch
@@ -368,6 +370,7 @@ internal static partial class Summary
             _ => null,
         };
         List<Series> series = s.Figures?.Series(anchor, s.Context.CancellationToken) ?? [];
+        CompressionRatio.AddTo(series, pcm, ratio, s.Context.CancellationToken);
         var categories = new List<CategorySeries>();
         if (stereoNode is not null && series.Count > 0 && s.Stereo.Build(series[0], stereoNode, Explain.StereoCodingSeries, Topics.MidSideStereo, null) is { } stereoSeries)
         {

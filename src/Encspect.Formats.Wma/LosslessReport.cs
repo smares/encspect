@@ -91,6 +91,11 @@ internal static class LosslessReport
             Add("Minimum Bitrate", NodeValue.Decimal(WmaPacketReader.RateOf(reader.SmallestBits, p), 1, "kbps"), ProExplain.StatMinimumFrameBitrate);
             Add("Maximum Bitrate", NodeValue.Decimal(WmaPacketReader.RateOf(reader.LargestBits, p), 1, "kbps"), ProExplain.StatMaximumFrameBitrate);
             reader.Distribution.AddTo(statistics, (name, value, description) => new Node(name, parent.Offset, parent.Length, value) { Description = description }, "Frame", "Frames", configuration?.IsVbr);
+            if (duration > 0)
+            {
+                CompressionRatio.AddTo(statistics, (name, figure, description) => new Node(name, parent.Offset, parent.Length, figure) { Description = description }, PcmBitsPerSecond(p),
+                    p.BlockAlignment * 8.0 * reader.FullPackets / duration / 1000, WmaPacketReader.RateOf(reader.SmallestBits, p), WmaPacketReader.RateOf(reader.LargestBits, p));
+            }
         }
 
         Add("Frames Spanning Packets", NodeValue.Integer(reader.SpanningFrames), ProExplain.StatFramesSpanningPackets, Topics.WmaPackets);
@@ -158,6 +163,10 @@ internal static class LosslessReport
             series.Add(new Series("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, rates, anchor) { Description = ProExplain.BitrateOverTimeSeries, Concept = GraphConcept.BitDistribution, Quantity = "Bitrate" });
         }
 
+        Node? ratio = anchor.Children.FirstOrDefault(c => c.Kind == NodeKind.Statistics)?.Children.FirstOrDefault(c => c.Name == CompressionRatio.Name);
+        CompressionRatio.AddTo(series, PcmBitsPerSecond(p), ratio);
         return series;
     }
+
+    private static long PcmBitsPerSecond(LosslessParameters p) => CompressionRatio.PcmBitsPerSecond(p.SampleRate, p.Channels, p.SampleSize);
 }

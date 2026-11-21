@@ -392,9 +392,11 @@ internal static class Summary
         StreamFigures? figures = frames.Figures is { Units: > 0 } measured ? measured : null;
         double? bitrate;
         Node? anchor = null;
+        Node? ratio = null;
         if (figures is not null)
         {
             figures.AddTo(statistics, (name, value, description) => Cover(name, value, description), "Frame", "frames", true, out anchor);
+            ratio = CompressionRatio.AddTo(statistics, (name, value, description) => Cover(name, value, description), CompressionRatio.PcmBitsPerSecond(rate, info.Channels, info.BitsPerSample), figures.AverageBitrate, figures.MinimumBitrate, figures.MaximumBitrate);
             bitrate = figures.AverageBitrate;
         }
         else
@@ -420,6 +422,8 @@ internal static class Summary
         }
 
         s.Leading.Insert(0, statistics);
+        List<Series> series = figures?.Series(anchor, s.Context.CancellationToken) ?? [];
+        CompressionRatio.AddTo(series, CompressionRatio.PcmBitsPerSecond(rate, info.Channels, info.BitsPerSample), ratio, s.Context.CancellationToken);
         s.Context.AddStream(new StreamInfo
         {
             Nodes = [stream],
@@ -441,7 +445,7 @@ internal static class Summary
             LostSamples = frames.LostSamples,
             IsVbr = figures is { Units: > 0 } f && f.MaximumBitrate > f.MinimumBitrate,
             Verification = verification,
-            Series = figures?.Series(anchor, s.Context.CancellationToken) ?? [],
+            Series = series,
         });
     }
 
