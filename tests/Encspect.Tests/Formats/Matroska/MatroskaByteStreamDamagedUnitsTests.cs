@@ -51,6 +51,7 @@ public class MatroskaByteStreamDamagedUnitsTests
     }
 
     // A Layer III frame whose own packet is clean but whose main data begin in the failing Cluster decodes from bytes the container's check fails over, so it is withheld too.
+    // In this file the failing Cluster holds frames 9 to 11; frames 12 and 13 (main_data_begin 505 and 510) begin their main data in frames 10 and 11, and frame 14 in its own Cluster.
     [Fact]
     public void ALayerIiiFrameThatReadsMainDataFromTheFailedClusterIsWithheldWithItsSpan()
     {
