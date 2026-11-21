@@ -190,6 +190,7 @@ public sealed partial class OpusParser
             if (_frames > 0)
             {
                 Node modes = Add(node, "Modes", Count(_modes.Count(c => c > 0), "mode", "modes"), Explain.Modes, Topics.OpusModes);
+                _modesNode = modes;
                 for (int m = 0; m < _modes.Length; m++)
                 {
                     if (_modes[m] > 0)
@@ -221,6 +222,7 @@ public sealed partial class OpusParser
                 _codedBandwidthNode = coded;
 
                 Node frameSizes = Add(node, "Frame Sizes", Count(_frameSizes.Count, "size", "sizes"), Explain.FrameSizes, Topics.OpusToc);
+                _frameSizesNode = frameSizes;
                 foreach ((int size, long count) in _frameSizes)
                 {
                     Add(frameSizes, Toc.FrameDuration(size), Share(count, _frames, "frame", "frames"), Explain.FrameSizeShare);
@@ -232,6 +234,7 @@ public sealed partial class OpusParser
                 string unit = _records.StreamCount > 1 ? "stream packet" : "packet";
                 string units = unit + "s";
                 Node channels = Add(node, "Channel Coding", NodeValue.Integer(_stereo[1], $"stereo {units}", $"stereo {unit}"), Explain.StereoCoding, Topics.OpusToc);
+                _channelCodingNode = channels;
                 Add(channels, "Stereo", Share(_stereo[1], _parts, unit, units), Explain.StereoShare);
                 Add(channels, "Mono", Share(_stereo[0], _parts, unit, units), Explain.MonoShare);
                 Node codes = Add(node, "Frame Packing", Count(_codes.Count(c => c > 0), "code", "codes"), Explain.FramePacking, Topics.OpusToc);
@@ -365,6 +368,95 @@ public sealed partial class OpusParser
         private Node? _blockUsageNode;
         private Node? _stereoCodingNode;
         private Node? _boundNode;
+        private Node? _modesNode;
+        private Node? _frameSizesNode;
+        private Node? _channelCodingNode;
+
+        private static readonly Category[] ModeCategories =
+        [
+            new(Toc.ModeNames[0], Explain.ModeSilk) { Topic = Topics.OpusModes },
+            new(Toc.ModeNames[1], Explain.ModeHybrid) { Topic = Topics.OpusModes },
+            new(Toc.ModeNames[2], Explain.ModeCelt) { Topic = Topics.OpusModes },
+        ];
+
+        // The frame sizes a TOC byte can state, in samples at 48 kHz, in the order of the categories.
+        private static readonly int[] FrameSampleCounts = [120, 240, 480, 960, 1920, 2880];
+
+        private static readonly Category[] FrameSizeCategories =
+        [
+            .. FrameSampleCounts.Select(size => new Category(Toc.FrameDuration(size), Explain.FrameSizeShare) { Topic = Topics.OpusToc }),
+        ];
+
+        private static readonly Category[] ChannelCodingCategories =
+        [
+            new("Stereo", Explain.StereoShare) { Topic = Topics.OpusToc },
+            new("Mono", Explain.MonoShare) { Topic = Topics.OpusToc },
+        ];
+
+        // The TOC series, one unit per packet with a value per stream packet of its streams (the stream count is OpusHead's; a stream
+        // past the 254th is counted without a code). Modes and frame sizes weight a value by the frames of its stream packet, as the
+        // tally counts frames; a packet the container cut or whose stream packet breaks the framing is tallied by nothing and holds none.
+        private IEnumerable<CategorySeries> BuildTocSeries(double[] offsets, Series bitrate)
+        {
+            if (_frames == 0 || _modesNode is null || _frameSizesNode is null)
+            {
+                yield break;
+            }
+
+            int streams = _records.StreamCount;
+            int layout = streams <= CategorySeries.MaxValuesPerUnit ? streams : 0;
+            var modes = new CategorySeriesBuilder("Modes", ModeCategories, "stream packet", layout);
+            var sizes = new CategorySeriesBuilder("Frame Sizes", FrameSizeCategories, "stream packet", layout, isOrdered: true);
+            var channels = _parts > 0 && _channelCodingNode is not null ? new CategorySeriesBuilder("Channel Coding", ChannelCodingCategories, "stream packet", layout) : null;
+            var modeCodes = new byte[streams];
+            var sizeCodes = new byte[streams];
+            var channelCodes = new byte[streams];
+            var frameWeights = new byte[streams];
+            var onesWeights = new byte[streams];
+            Array.Fill(onesWeights, (byte)1);
+            for (int i = 0; i < _records.Count; i++)
+            {
+                if (i % 4096 == 0)
+                {
+                    context.CancellationToken.ThrowIfCancellationRequested();
+                }
+
+                Array.Fill(modeCodes, CategorySeries.None);
+                Array.Fill(sizeCodes, CategorySeries.None);
+                Array.Fill(channelCodes, CategorySeries.None);
+                Array.Fill(frameWeights, (byte)1);
+                if (!_cutPackets.Contains(i))
+                {
+                    for (int s = 0; s < _records.PartCount(i) && s < streams; s++)
+                    {
+                        PartRecord part = _records.Part(i, s);
+                        if (!part.HasToc)
+                        {
+                            continue;
+                        }
+
+                        channelCodes[s] = Toc.IsStereo(part.TocByte) ? (byte)0 : (byte)1;
+                        if (part.Status == PartStatus.Valid && part.Frames > 0)
+                        {
+                            modeCodes[s] = (byte)Toc.Mode(part.TocByte);
+                            sizeCodes[s] = (byte)Array.IndexOf(FrameSampleCounts, Toc.FrameSamples(part.TocByte));
+                            frameWeights[s] = part.Frames;
+                        }
+                    }
+                }
+
+                modes.Add(modeCodes, frameWeights);
+                sizes.Add(sizeCodes, frameWeights);
+                channels?.Add(channelCodes, onesWeights);
+            }
+
+            yield return modes.Build(offsets, bitrate, _modesNode, SeriesText.Modes, Topics.OpusModes);
+            yield return sizes.Build(offsets, bitrate, _frameSizesNode, SeriesText.FrameSizes, Topics.OpusToc);
+            if (channels is not null)
+            {
+                yield return channels.Build(offsets, bitrate, _channelCodingNode, SeriesText.ChannelCoding, Topics.OpusToc);
+            }
+        }
 
         private (List<Series> Series, IReadOnlyList<CategorySeries> Categories) Series(Node? anchor, Node? packets)
         {
@@ -435,7 +527,7 @@ public sealed partial class OpusParser
                 bitrate,
                 new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, rates, anchor) { Description = SeriesText.BitrateOverTime },
             };
-            var categories = new List<CategorySeries>();
+            var categories = new List<CategorySeries>(BuildTocSeries(offsets, bitrate));
             if (_celtFrames > 0 && _blockUsageNode is not null)
             {
                 categories.Add(_blockUsage.Build(offsets, bitrate, _blockUsageNode, SeriesText.BlockUsage, Topics.BlockSwitching));

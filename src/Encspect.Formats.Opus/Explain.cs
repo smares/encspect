@@ -78,6 +78,9 @@ internal static class Explain
     public const string PacketSizes = "The smallest, largest and average size of the audio packets.";
     public const string PacketSizesConstant = "Every audio packet has the same size, as CBR encoding writes them.";
     public const string Modes = "How many frames use each mode: SILK for speech, CELT for music, hybrid for both in one frame (RFC 6716, section 2).";
+    public const string ModeSilk = "Frames whose TOC config selects SILK-only coding, the linear-prediction speech coder for narrowband to wideband (RFC 6716, section 3.1).";
+    public const string ModeHybrid = "Frames whose TOC config selects hybrid coding: SILK for the low band and CELT for the high band, in super-wideband and fullband (RFC 6716, section 3.1).";
+    public const string ModeCelt = "Frames whose TOC config selects CELT-only coding, the transform coder (RFC 6716, section 3.1).";
     public const string ModeShare = "Frames of this mode, and their share of all frames.";
     public const string StatCodedBandwidth = "The audio bandwidth the TOC bytes of the frames name, in whole hertz: 4,000, 6,000, 8,000, 12,000 or 20,000 for narrowband to fullband (RFC 6716, section 2, table 1). It is the bandwidth the stream's configuration states, not a measurement of the sound.";
     public const string BandwidthLowest = "The lowest coded bandwidth of any frame.";
@@ -121,5 +124,8 @@ internal static class SeriesText
     public const string BlockUsage = "How each CELT frame of a packet is coded: one long block or several short ones (the frame's transient flag, RFC 6716, section 4.3.1); a packet with frames of both has both.";
     public const string StereoCoding = "How each stereo CELT frame of a packet codes its bands: with an angle between mid and side, as left and right (dual stereo) or as intensity stereo (RFC 6716, section 4.3.4); each frame once.";
     public const string IntensityStereoBound = "The lowest intensity stereo bound of each audio packet's stereo CELT frames, in whole hertz: the lower edge of the first band coded as intensity stereo (RFC 6716, section 4.3.3, table 55); a packet without such a frame has none.";
+    public const string Modes = "The coding mode of each stream packet's frames, SILK-only, hybrid or CELT-only, from its TOC config (RFC 6716, section 3.1); a value stands for the packet's frames, so the counts equal the tally of Modes, and a packet the container cut or that breaks the framing rules has none.";
+    public const string FrameSizes = "The duration of each stream packet's frames, from 2.5 to 60 ms, from its TOC config (RFC 6716, section 3.1); a value stands for the packet's frames, so the counts equal the tally of Frame Sizes, and a packet the container cut or that breaks the framing rules has none.";
+    public const string ChannelCoding = "Whether each stream packet is coded as stereo or mono, from the stereo flag of its TOC byte (RFC 6716, section 3.1), as the tally of Channel Coding counts them; a multistream packet has a value per stream, and one the container cut has none.";
     public const string BitrateOverTime = "The bitrate in each second of audio: the bits of the packets that start in it over their duration.";
 }
