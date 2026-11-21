@@ -227,7 +227,7 @@ public class AudioPanelTests
         Assert.IsType<SpectrogramGraph>(window.Graph.Graph);
         Assert.Equal("Audio", window.Model.Graphs.Graph!.Heading);
         Assert.All(audio.Choices, c => Assert.False(string.IsNullOrEmpty(c.Description)));
-        Assert.Equal(["Bit Distribution", "Audio"], window.Model.Graphs.ChoiceGroups.Select(g => g.Heading));
+        Assert.Equal(["Summary", "Bit Distribution", "Prediction", "Audio"], window.Model.Graphs.ChoiceGroups.Select(g => g.Heading));
 
         // The Spectrum of one channel has one line; the figures are text, not a chart.
         Choose(window, "Spectrum");

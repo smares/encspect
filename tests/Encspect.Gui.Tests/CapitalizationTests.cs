@@ -24,11 +24,12 @@ public sealed class CapitalizationTests
     private static readonly HashSet<string> OwnSpelling = new(StringComparer.Ordinal) { "mid/side" };
 
     // Whole labels that legitimately break the rule, with the reason.
-    // The names of AC-3's tally nodes are text from the analysis, which keeps its own spelling; the series carry them (docs/design/coding-graphs.md,
+    // The names of AC-3's and FLAC's tally nodes are text from the analysis, which keeps its own spelling; the series carry them (docs/design/coding-graphs.md,
     // "Names across formats").
     private static readonly HashSet<string> Exceptions = new(StringComparer.Ordinal)
     {
         "Blocks With Block Switching", "Blocks With Coupling", "Blocks With Rematrixing", "Blocks With Spectral Extension",
+        "Rice With 5-Bit Parameters", "Subframes With Wasted Bits",
     };
 
     [Theory]
