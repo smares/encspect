@@ -105,6 +105,9 @@ internal sealed class DtsAnalysis
     private readonly SubframeWalker _walker = new();
 
     // The entropy pass over the subframes of the unit's core frame, in every analysis; what it finds wrong is a finding on the core's audio data.
+    // The unit being added lies in a packet that fails the container's checksum (MappedBytes.FailsChecksum): the core frame is handed to the decoder as failing its check.
+    public bool FailsContainerCheck { get; set; }
+
     private void WalkSubframes(UnitFacts facts, byte[]? packed, UnitLayout layout, Region region)
     {
         DtsStream stream = _current!;
@@ -131,7 +134,7 @@ internal sealed class DtsAnalysis
         SubframeWalk walk = _walker.Walk(packed, facts.CoreDataStart, facts.CoreDataEnd, audio, lent, Cancellation);
         facts.Walk = walk;
         // The decoder reads what the walk stored, whole frames only: the subframes' samples must be those the header counts.
-        feed?.Frame(layout.Offset, layout.Length, facts.Core.Samples, !lent.IsEmpty && walk.IsComplete && walk.Samples == audio.Blocks && !layout.IsCut && !layout.IsTruncated);
+        feed?.Frame(layout.Offset, layout.Length, facts.Core.Samples, !lent.IsEmpty && walk.IsComplete && walk.Samples == audio.Blocks && !layout.IsCut && !layout.IsTruncated, FailsContainerCheck);
         if (walk.Problem == WalkProblem.None || layout.IsCut || layout.IsTruncated)
         {
             return;

@@ -78,7 +78,7 @@ internal sealed class Ac3Analysis
     public FrameResult LastResult => _syntax.Result;
 
     // Reads one frame of length bytes from bytes, which hold available of them.
-    public void AddFrame(Region region, long offset, ReadOnlySpan<byte> bytes, SyncFrame header, bool cut = false, bool truncated = false, bool inSample = false)
+    public void AddFrame(Region region, long offset, ReadOnlySpan<byte> bytes, SyncFrame header, bool cut = false, bool truncated = false, bool inSample = false, bool failsContainerCheck = false)
     {
         if (!header.IsDependent)
         {
@@ -178,7 +178,7 @@ internal sealed class Ac3Analysis
         bool isReadable = !shortened && !cut && result.Stop == StopReason.None && (header.IsEac3 || header.Bsid <= 8);
         bool keeps = _writer.IsEnabled || (feed is not null && feed.Session.IsDecoding);
         _pending.Add(new PendingFrame(region, index, offset, available, header, result.Clone(), crc1, crc2, shortened, cut, isReadable, feed, _buffer.AsSpan(0, SyncFrame.Length).ToArray(),
-            keeps ? _buffer.AsSpan(0, available).ToArray() : [], _writer.IsEnabled ? _writer.Written.ToArray() : []));
+            keeps ? _buffer.AsSpan(0, available).ToArray() : [], _writer.IsEnabled ? _writer.Written.ToArray() : [], FailsContainerCheck: failsContainerCheck));
         if (_pending.Count >= MaxPendingFrames)
         {
             CommitUnit();
@@ -194,7 +194,7 @@ internal sealed class Ac3Analysis
     private readonly List<PendingFrame> _pending = [];
 
     private sealed record PendingFrame(Region Region, int Index, long Offset, int Available, SyncFrame Header, FrameResult Result, CrcState Crc1, CrcState Crc2, bool Shortened, bool Cut,
-        bool IsReadable, DecodeFeed? Feed, byte[] HeaderBytes, byte[] Bytes, int[] Records, bool DependentsLost = false);
+        bool IsReadable, DecodeFeed? Feed, byte[] HeaderBytes, byte[] Bytes, int[] Records, bool DependentsLost = false, bool FailsContainerCheck = false);
 
     // Decides the program of the access unit held back (an independent frame and the dependent frames after it): the dependent substreams' configuration is part of the program's key, so
     // a dependent substream that appears, disappears or changes starts a new stream as an independent one does.
@@ -281,11 +281,11 @@ internal sealed class Ac3Analysis
 
         if (program.Feed is { } fed && !header.IsDependent)
         {
-            fed.Feed(p.Records, offset, p.Bytes, header, p.IsReadable, p.Crc1, p.Crc2);
+            fed.Feed(p.Records, offset, p.Bytes, header, p.IsReadable, p.Crc1, p.Crc2, p.FailsContainerCheck);
         }
         else if (header.IsDependent && program == _current && program.Feed is { } dependentFeed)
         {
-            dependentFeed.AddDependent(p.Records, header, result, p.Bytes, p.IsReadable, p.Crc2);
+            dependentFeed.AddDependent(p.Records, header, result, p.Bytes, p.IsReadable, p.Crc2, p.FailsContainerCheck);
         }
 
         program.Cover(p.Region, offset, available);

@@ -104,15 +104,16 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         return (frames, verified, next);
     }
 
-    public void Parse(ParseContext context) => Parse(context, null, null);
+    public void Parse(ParseContext context) => Parse(context, null, null, null);
 
     // stretches: where a container hands the stream over in several pieces, the pieces' file ranges, sorted, apart and inside the reader.
     // map: where the image's bytes lie in the file where that is not the image's own offsets (null where it is).
-    private void Parse(ParseContext context, IReadOnlyList<ByteRange>? stretches, ImageMap? map)
+    // failing: the image's ranges whose bytes come from packets that fail the container's checksum (PacketImage.Failing), sorted and apart.
+    private void Parse(ParseContext context, IReadOnlyList<ByteRange>? stretches, ImageMap? map, IReadOnlyList<ByteRange>? failing)
     {
         var blocks = new BlockReader(context.Reader) { Stretches = stretches };
         var findings = new FindingCollector(map);
-        var build = new BuildContext { Stretches = stretches, Map = map };
+        var build = new BuildContext { Stretches = stretches, Map = map, Failing = failing };
         var stream = new StreamState(blocks, findings, build, new BitReservoir(build.Runs, blocks.Hop), [], [], context.CancellationToken) { Context = context };
         long position = context.Reader.Start;
 
@@ -165,7 +166,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
     {
         if (context.Payload is { } payload)
         {
-            ParseInner(context, payload, null, null);
+            ParseInner(context, payload, null, null, null);
             return;
         }
 
@@ -199,7 +200,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         if (image.First >= 0)
         {
             var reader = new ByteReader(image, context.CancellationToken);
-            int streams = ParseInner(context, reader.Slice(image.First, image.Last - image.First), image.Stretches.Count > 1 ? image.Stretches : null, image.Map.IsIdentity ? null : image.Map);
+            int streams = ParseInner(context, reader.Slice(image.First, image.Last - image.First), image.Stretches.Count > 1 ? image.Stretches : null, image.Map.IsIdentity ? null : image.Map, image.Failing.Count > 0 ? image.Failing : null);
             if (streams == 0)
             {
                 context.AddFinding(Severity.Warning, "mpeg-audio.packets-no-frame",
@@ -208,12 +209,12 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         }
     }
 
-    private int ParseInner(CodecContext context, ByteReader payload, IReadOnlyList<ByteRange>? stretches, ImageMap? map)
+    private int ParseInner(CodecContext context, ByteReader payload, IReadOnlyList<ByteRange>? stretches, ImageMap? map, IReadOnlyList<ByteRange>? failing)
     {
         var inner = new ParseContext(payload, context.Parent, encoderClaims: context.EncoderClaims, decodingOwner: context);
         try
         {
-            Parse(inner, stretches, map);
+            Parse(inner, stretches, map, failing);
         }
         finally
         {
@@ -537,7 +538,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         feed.Previous = header;
         if (vbr is null && !feed.IsLimited)
         {
-            (int codedLines, int overruns, int intensityLine) = feed.Feed(state, index, position, available, length, isComplete, header, placement, runsBefore, frame.FailsCrc);
+            (int codedLines, int overruns, int intensityLine) = feed.Feed(state, index, position, available, length, isComplete, header, placement, runsBefore, frame.FailsCrc || build.FailsContainerCheck(position, available) || build.RunsFailContainerCheck(runsBefore));
             if (codedLines >= 0)
             {
                 frame = frame with { CodedLines = codedLines, IntensityLine = intensityLine };
@@ -1855,6 +1856,54 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
 
         // Where the stream's image lies in the file, where it is not at its own offsets, or null.
         public ImageMap? Map { get; set; }
+
+        // The image's ranges whose bytes come from packets that fail the container's checksum (MappedBytes.FailsChecksum), sorted and apart, or null.
+        public IReadOnlyList<ByteRange>? Failing { get; set; }
+
+        // Whether any main-data byte the frame just added reads (its runs from index first, which reach back into earlier frames through the reservoir) comes from such a packet.
+        public bool RunsFailContainerCheck(int first)
+        {
+            if (Failing is null)
+            {
+                return false;
+            }
+
+            for (int i = first; i < Runs.Count; i++)
+            {
+                if (FailsContainerCheck(Runs[i].Offset, Runs[i].Length))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // Whether any of the frame's bytes [position, position + length) comes from such a packet.
+        public bool FailsContainerCheck(long position, long length)
+        {
+            if (Failing is not { } ranges || length <= 0)
+            {
+                return false;
+            }
+
+            int low = 0;
+            int high = ranges.Count;
+            while (low < high)
+            {
+                int mid = (low + high) >>> 1;
+                if (ranges[mid].Offset + ranges[mid].Length <= position)
+                {
+                    low = mid + 1;
+                }
+                else
+                {
+                    high = mid;
+                }
+            }
+
+            return low < ranges.Count && ranges[low].Offset < position + length;
+        }
 
         // The music CRC computed for each LAME tag, by the offset of its frame.
         public Dictionary<long, int> MusicCrcs { get; } = [];
