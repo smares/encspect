@@ -157,7 +157,7 @@ public sealed class TrueHdCodecParser(string id) : ICodecParser
             }
 
             int available = Math.Min(length, data.Length - position);
-            analysis.AddUnit(data.Slice(position, available), packet.OffsetOf(position), available < length, false);
+            analysis.AddUnit(data.Slice(position, available), packet.OffsetOf(position), available < length, false, packet.FailsChecksum);
             position += available;
         }
     }

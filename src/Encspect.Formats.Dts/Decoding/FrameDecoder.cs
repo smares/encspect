@@ -40,6 +40,10 @@ internal sealed class FrameDecoder : IFrameDecoder
     private readonly float[] _slot = new float[MaxBlocks * 32];
     private bool _isFresh = true;
     private int _withheldLeft;
+
+    // After a frame that failed the container's checksum (CodedFrame.FailsChecksum) the decoder keeps its state, and the samples that the synthesis history and the subband
+    // prediction carry on from it (the span after a gap) depend on it: the samples still to withhold from the measurements (docs/design/damaged-units.md).
+    private int _dependentLeft;
     private IPcmSink? _sink;
 
     public FrameDecoder(DecodeContext context, DecodeShared shared)
@@ -122,7 +126,13 @@ internal sealed class FrameDecoder : IFrameDecoder
             Lfe(lent.Channel(primary), header[9], subframes, _planar.AsSpan(primary * MaxBlocks * 32, samples));
         }
 
-        return Write(frame, samples);
+        int written = Write(frame, samples);
+        if (frame.FailsChecksum)
+        {
+            _dependentLeft = WithheldAfterGap;
+        }
+
+        return written;
     }
 
     // The subband prediction feeds back into itself across subframes and frames; its history is cut below 1e-30 at the start of each frame (docs/design/lossy-decoders.md, "Determinism").
@@ -154,6 +164,7 @@ internal sealed class FrameDecoder : IFrameDecoder
         }
 
         Array.Clear(_lfeHistory);
+        _dependentLeft = 0;
     }
 
     // The subband samples of one channel: the indexes times the step size of their quantizer, the scale factor of their part of the subframe and ADJ (5.6), then the prediction (C.3.3).
@@ -379,10 +390,18 @@ internal sealed class FrameDecoder : IFrameDecoder
             _withheldLeft -= withheld;
         }
 
+        // Both spans count from the frame's start, so where they overlap the larger one is withheld, not their sum.
+        int dependent = Math.Min(_dependentLeft, samples);
+        _dependentLeft -= dependent;
         int count = samples - withheld;
         if (count == 0)
         {
             return 0;
+        }
+
+        if (dependent > withheld)
+        {
+            _context.WithholdFromMeasurements(frame.FirstSample + withheld, dependent - withheld);
         }
 
         _sink ??= _context.DeclareOutput(new PcmFormat(_shared.SampleRate, _channels, 32, SampleFormat.Float32)

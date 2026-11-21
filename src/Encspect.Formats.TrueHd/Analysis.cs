@@ -307,8 +307,8 @@ internal sealed class Analysis
     }
 
     // Reads one access unit, whose bytes are all there (or, with isCut, as far as the data goes) and starts at offset, and adds it to the stream.
-    // followsLoss: bytes before it were skipped.
-    public void AddUnit(ReadOnlyMemory<byte> memory, long offset, bool isCut, bool followsLoss)
+    // followsLoss: bytes before it were skipped. failsContainerCheck: the unit lies in a packet that fails the container's checksum (MappedBytes.FailsChecksum).
+    public void AddUnit(ReadOnlyMemory<byte> memory, long offset, bool isCut, bool followsLoss, bool failsContainerCheck = false)
     {
         ReadOnlySpan<byte> bytes = memory.Span;
         UnitLayout layout = _layout;
@@ -555,7 +555,7 @@ internal sealed class Analysis
                 session.Decode(new CodedFrame(new MappedBytes(memory, offset), Nodes.UnitName, FirstSample, outSamples)
                 {
                     IsDamaged = isDamaged,
-                    FailsChecksum = (overall & UnitStatus.CheckFails) != 0,
+                    FailsChecksum = failsContainerCheck || (overall & UnitStatus.CheckFails) != 0,
                     FollowsGap = (overall & UnitStatus.FollowsGap) != 0 || _isDecodeResumed,
                     IsWalked = isWalked,
                 });

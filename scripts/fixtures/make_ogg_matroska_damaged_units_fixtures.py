@@ -11,12 +11,18 @@ Ogg page, or of one Matroska Cluster, changed, so that the packets it covers fai
   a page whose last frame goes on in the next page (a packet that spans a failing and a good page);
 - external-ffmpeg-small-clusters-cluster-crc-changed.mka: external-ffmpeg-small-clusters.mka (Opus in Matroska) with the CRC-32 of its eighth Cluster changed.
 
+The codecs that read their packets as a byte stream (MPEG audio, AC-3, E-AC-3, DTS, TrueHD and MLP) have one Cluster in their encoder-written Matroska fixtures, so a
+failing CRC-32 would cover the whole stream. matroska/damaged-units/<source>-small-clusters-cluster-crc-changed.mka is the source file with its blocks written again,
+BLOCKS to a Cluster (a new Cluster Timestamp from the first block, the blocks' own bytes and relative timestamps adjusted, a CRC-32 over each Cluster, no SeekHead and
+no Cues), and the stored CRC-32 of the CLUSTER-th Cluster changed.
+
 A page written again keeps the packets, the serial number and the first two pages; the granule position of each is the position the packets before it add up to, from the
 one the source states for its first audio page, and the last page keeps the source's, which holds the trimming at the end.
 """
 
 import pathlib
 import struct
+import zlib
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 FIXTURES = ROOT / "tests" / "fixtures"
@@ -170,6 +176,106 @@ def matroska_change(data, cluster):
     return bytes(data)
 
 
+def put_vint(value):
+    """The EBML variable-size integer of `value`, in the shortest form."""
+    length = 1
+    while value >= (1 << (7 * length)) - 1:
+        length += 1
+    return ((1 << (7 * length)) | value).to_bytes(length, "big")
+
+
+def element(element_id, body):
+    return element_id + put_vint(len(body)) + body
+
+
+def children(data, start, end):
+    """The elements in data[start:end]: (id bytes, body start, body end)."""
+    at = start
+    found = []
+    while at < end:
+        id_length = 1
+        while not data[at] & (0x80 >> (id_length - 1)):
+            id_length += 1
+        size_length, size = vint(data, at + id_length)
+        body = at + id_length + size_length
+        assert size < (1 << (7 * size_length)) - 1, "an unknown size"
+        found.append((bytes(data[at:at + id_length]), body, body + size))
+        at = body + size
+    assert at == end
+    return found
+
+
+def matroska_rechunk(data, per_cluster):
+    """The file with its blocks written again, `per_cluster` to a Cluster, each Cluster with a CRC-32; the SeekHead and the Cues are left out."""
+    (_, head_start, head_end), (segment_id, segment_start, segment_end) = children(data, 0, len(data))[:2]
+    assert segment_id == b"\x18\x53\x80\x67"
+    kept = b""
+    blocks = []
+    for element_id, start, end in children(data, segment_start, segment_end):
+        if element_id == b"\x1f\x43\xb6\x75":
+            timecode = 0
+            for child_id, child_start, child_end in children(data, start, end):
+                if child_id == b"\xe7":
+                    timecode = int.from_bytes(data[child_start:child_end], "big")
+                elif child_id in (b"\xa3", b"\xa0"):
+                    blocks.append((timecode, child_id, bytes(data[child_start:child_end])))
+        elif element_id in (b"\x15\x49\xa9\x66", b"\x16\x54\xae\x6b", b"\x12\x54\xc3\x67"):
+            kept += element(element_id, bytes(data[start:end]))
+    clusters = b""
+    for first in range(0, len(blocks), per_cluster):
+        chunk = blocks[first:first + per_cluster]
+        timecode = chunk[0][0] + block_timecode(chunk[0])
+        body = b""
+        for old, block_id, content in chunk:
+            shift = old - timecode
+            if block_id == b"\xa3":
+                content = with_timecode(content, shift)
+            else:
+                inner = b""
+                for child_id, child_start, child_end in children(content, 0, len(content)):
+                    part = content[child_start:child_end]
+                    inner += element(child_id, with_timecode(part, shift) if child_id == b"\xa1" else part)
+                content = inner
+            body += element(block_id, content)
+        timecode_element = element(b"\xe7", timecode.to_bytes(max(1, (timecode.bit_length() + 7) // 8), "big"))
+        covered = timecode_element + body
+        crc = element(b"\xbf", struct.pack("<I", zlib.crc32(covered)))
+        clusters += element(b"\x1f\x43\xb6\x75", crc + covered)
+    return bytes(data[:head_end]) + element(segment_id, kept + clusters)
+
+
+def block_timecode(entry):
+    """The first block's timestamp relative to its Cluster."""
+    _, block_id, content = entry
+    if block_id == b"\xa0":
+        for child_id, child_start, child_end in children(content, 0, len(content)):
+            if child_id == b"\xa1":
+                content = content[child_start:child_end]
+                break
+    track_length, _ = vint(content, 0)
+    (relative,) = struct.unpack(">h", content[track_length:track_length + 2])
+    return relative
+
+
+def with_timecode(block, shift):
+    """The block with its relative timestamp moved by `shift`."""
+    track_length, _ = vint(block, 0)
+    (relative,) = struct.unpack(">h", block[track_length:track_length + 2])
+    return block[:track_length] + struct.pack(">h", relative + shift) + block[track_length + 2:]
+
+
+# source in tests/fixtures/matroska, blocks to a Cluster, the Cluster whose CRC-32 is changed.
+BYTE_STREAMS = [
+    ("external-ffmpeg-mp3", 3, 3),
+    ("external-ffmpeg-mp2", 12, 3),
+    ("external-ffmpeg-ac3-51", 2, 3),
+    ("external-ffmpeg-eac3-51", 2, 3),
+    ("external-ffmpeg-dts-51", 6, 3),
+    ("external-mkvmerge-truehd-50", 15, 3),
+    ("external-ffmpeg-mlp-51", 30, 3),
+]
+
+
 def main():
     def read(name):
         return (FIXTURES / name).read_bytes()
@@ -181,6 +287,9 @@ def main():
     write("ogg/damaged-units", "external-speexenc-wb-repaged-page-crc-changed.spx", ogg_change(speex, 4))
     write("flac/damaged-units", "external-ogg-24-stereo-spanning-page-crc-changed.ogg", ogg_change(read("flac/external-ogg-24-stereo-spanning.ogg"), 3))
     write("matroska/damaged-units", "external-ffmpeg-small-clusters-cluster-crc-changed.mka", matroska_change(read("matroska/external-ffmpeg-small-clusters.mka"), 7))
+    for source, per_cluster, cluster in BYTE_STREAMS:
+        data = matroska_change(matroska_rechunk(read(f"matroska/{source}.mka"), per_cluster), cluster)
+        write("matroska/damaged-units", f"{source}-small-clusters-cluster-crc-changed.mka", data)
 
 
 if __name__ == "__main__":

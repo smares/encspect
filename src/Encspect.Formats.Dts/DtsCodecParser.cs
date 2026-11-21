@@ -101,7 +101,9 @@ public sealed class DtsCodecParser : ICodecParser
                 }
             }
 
+            analysis.FailsContainerCheck = packet.FailsChecksum;
             analysis.AddUnit(region, DtsParser.LayoutOf(position, stop, unit, false, position + unit.Length > source.End), source);
+            analysis.FailsContainerCheck = false;
             observed.Add(analysis.LastFacts, (int)(stop - position));
             position = stop;
         }

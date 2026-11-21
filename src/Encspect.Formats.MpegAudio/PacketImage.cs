@@ -14,6 +14,9 @@ internal sealed class PacketImage(ByteReader source, bool isWordSwapped) : Strea
     // The stretches of the packets (those that touch are one), the first packet's offset and the end of the last.
     public List<ByteRange> Stretches { get; } = [];
 
+    // The ranges of the image that come from packets failing the container's checksum (MappedBytes.FailsChecksum), those that touch merged.
+    public List<ByteRange> Failing { get; } = [];
+
     public long First { get; private set; } = -1;
 
     public long Last { get; private set; }
@@ -99,6 +102,18 @@ internal sealed class PacketImage(ByteReader source, bool isWordSwapped) : Strea
         else
         {
             Stretches.Add(new ByteRange(start, length));
+        }
+
+        if (packet.FailsChecksum)
+        {
+            if (Failing.Count > 0 && Failing[^1].Offset + Failing[^1].Length == start)
+            {
+                Failing[^1] = Failing[^1] with { Length = Failing[^1].Length + length };
+            }
+            else
+            {
+                Failing.Add(new ByteRange(start, length));
+            }
         }
 
         Last = start + length;
