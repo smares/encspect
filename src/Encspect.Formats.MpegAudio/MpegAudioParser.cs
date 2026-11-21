@@ -537,7 +537,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         feed.Previous = header;
         if (vbr is null && !feed.IsLimited)
         {
-            (int codedLines, int overruns, int intensityLine) = feed.Feed(state, index, position, available, length, isComplete, header, placement, runsBefore);
+            (int codedLines, int overruns, int intensityLine) = feed.Feed(state, index, position, available, length, isComplete, header, placement, runsBefore, frame.FailsCrc);
             if (codedLines >= 0)
             {
                 frame = frame with { CodedLines = codedLines, IntensityLine = intensityLine };
@@ -1683,6 +1683,9 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             get => (_flags & HasComputedCrcFlag) != 0 ? _computedCrc : -1;
             init => (_computedCrc, _flags) = value >= 0 ? ((ushort)value, (byte)(_flags | HasComputedCrcFlag)) : (_computedCrc, _flags);
         }
+
+        // The frame states a CRC and the bytes it covers are there, and the two differ: the check the frame's tally counts as failed.
+        public bool FailsCrc => Crc >= 0 && ComputedCrc >= 0 && Crc != ComputedCrc;
 
         public bool IsTruncated
         {

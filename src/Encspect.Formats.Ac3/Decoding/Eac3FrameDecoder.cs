@@ -20,6 +20,9 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
     private long _withheldUntil;
     private bool _lostBefore;
 
+    // The unit before this one failed its checksum: the first block after it depends on the state it left, so it is left out of the measurements.
+    private bool _followsFailedUnit;
+
     // The samples of one block of the program (planar, 256 for each channel), and which substreams of its unit are to deliver theirs and have.
     private sealed class Block(int channels)
     {
@@ -83,8 +86,21 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
                 substream.Reset();
             }
 
+            _followsFailedUnit = false;
             _context.Withhold(frame.FirstSample, BlockSamples, WithholdReason.AfterGap);
             _withheldUntil = Math.Max(_withheldUntil, frame.FirstSample + BlockSamples);
+        }
+        else if (_followsFailedUnit)
+        {
+            // The first block's overlap is the failed unit's last, which the decoder kept: the span a gap withholds (docs/design/damaged-units.md).
+            _context.WithholdFromMeasurements(frame.FirstSample, BlockSamples);
+        }
+
+        _followsFailedUnit = frame.FailsChecksum;
+        if (frame.FailsChecksum)
+        {
+            // Pre-noise corrections of later frames copy from this frame's output and the block it taints (A/52 Annex E 3.7).
+            (_pre ??= NewPreNoise()).MarkDamaged(frame.FirstSample, frame.FirstSample + frame.Samples + BlockSamples);
         }
 
         int substreams = r.Next();
@@ -151,7 +167,7 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
         {
             if (lastOwner[outputSlot] == id)
             {
-                (_pre ??= NewPreNoise()).Add(outputSlot, location, length);
+                (_pre ??= NewPreNoise()).Add(outputSlot, location, length, frame.FailsChecksum);
             }
         }
 
@@ -263,7 +279,7 @@ internal sealed class Eac3FrameDecoder : IFrameDecoder
 
     private PreNoise? _pre;
 
-    private PreNoise NewPreNoise() => new(_channels, Output, _context.AddWork);
+    private PreNoise NewPreNoise() => new(_channels, Output, _context.AddWork, _context.WithholdFromMeasurements);
 
     private void Output(long first, float[] planar, int length)
     {

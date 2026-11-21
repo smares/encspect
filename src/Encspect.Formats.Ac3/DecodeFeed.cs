@@ -88,15 +88,15 @@ internal sealed class DecodeFeed
             return;
         }
 
-        bool damaged = crc1 == Ac3Analysis.CrcState.Mismatch || crc2 == Ac3Analysis.CrcState.Mismatch;
+        bool failsChecksum = crc1 == Ac3Analysis.CrcState.Mismatch || crc2 == Ac3Analysis.CrcState.Mismatch;
         if (UsesUnits)
         {
-            _unit = new Unit(offset, first, samples, followsGap, damaged, isReadable, frame.ToArray());
+            _unit = new Unit(offset, first, samples, followsGap, failsChecksum, isReadable, frame.ToArray());
             _unit.Substreams.Add(new Substream(_isEac3 ? 0 : 0x100, Coded(Program.TokensOf(header, new FrameResult()), written), written));
             return;
         }
 
-        Send(offset, first, samples, followsGap, damaged, isReadable, frame, written);
+        Send(offset, first, samples, followsGap, failsChecksum, isReadable, frame, written);
     }
 
     // A dependent frame after the independent frame of the unit: its records, and its bytes for the budget. A frame that is not read to its end makes the whole program frame unreadable.
@@ -123,8 +123,8 @@ internal sealed class DecodeFeed
 
         unit.Bytes = [.. unit.Bytes, .. frame.ToArray()];
         // A dependent frame that is lost (not read to its end) leaves channels of the program frame without audio: the whole program frame is then lost, not output with silent
-        // channels. One whose CRC fails is read and decoded, and marks the unit damaged.
-        unit.IsDamaged |= crc2 == Ac3Analysis.CrcState.Mismatch;
+        // channels. One whose CRC fails is read and decoded, and marks the unit as failing its check.
+        unit.FailsChecksum |= crc2 == Ac3Analysis.CrcState.Mismatch;
         if (!isReadable)
         {
             unit.IsReadable = false;
@@ -138,13 +138,13 @@ internal sealed class DecodeFeed
     private Unit? _unit;
     private List<Program.Token>? _layout;
 
-    private sealed class Unit(long offset, long first, int samples, bool followsGap, bool isDamaged, bool isReadable, byte[] bytes)
+    private sealed class Unit(long offset, long first, int samples, bool followsGap, bool failsChecksum, bool isReadable, byte[] bytes)
     {
         public long Offset { get; } = offset;
         public long First { get; } = first;
         public int Samples { get; } = samples;
         public bool FollowsGap { get; } = followsGap;
-        public bool IsDamaged { get; set; } = isDamaged;
+        public bool FailsChecksum { get; set; } = failsChecksum;
         public bool IsReadable { get; set; } = isReadable;
         public byte[] Bytes { get; set; } = bytes;
         public List<Substream> Substreams { get; } = [];
@@ -169,7 +169,7 @@ internal sealed class DecodeFeed
         _unit = null;
         if (!unit.IsReadable)
         {
-            Send(unit.Offset, unit.First, unit.Samples, unit.FollowsGap, unit.IsDamaged, false, unit.Bytes, []);
+            Send(unit.Offset, unit.First, unit.Samples, unit.FollowsGap, unit.FailsChecksum, false, unit.Bytes, []);
             return;
         }
 
@@ -191,10 +191,10 @@ internal sealed class DecodeFeed
             ints.AddRange(sub.Records);
         }
 
-        Send(unit.Offset, unit.First, unit.Samples, unit.FollowsGap, unit.IsDamaged, true, unit.Bytes, ints.ToArray());
+        Send(unit.Offset, unit.First, unit.Samples, unit.FollowsGap, unit.FailsChecksum, true, unit.Bytes, ints.ToArray());
     }
 
-    private void Send(long offset, long first, int samples, bool followsGap, bool isDamaged, bool isReadable, ReadOnlyMemory<byte> frame, ReadOnlySpan<int> written)
+    private void Send(long offset, long first, int samples, bool followsGap, bool failsChecksum, bool isReadable, ReadOnlyMemory<byte> frame, ReadOnlySpan<int> written)
     {
         if (!Session.IsDecoding)
         {
@@ -217,7 +217,7 @@ internal sealed class DecodeFeed
         Session.Decode(new CodedFrame(new MappedBytes(frame, offset), "Frame", first, samples)
         {
             IsWalked = isWalked,
-            IsDamaged = isDamaged,
+            FailsChecksum = failsChecksum,
             FollowsGap = followsGap,
         });
     }

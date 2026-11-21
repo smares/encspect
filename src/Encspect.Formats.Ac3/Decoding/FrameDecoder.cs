@@ -32,6 +32,9 @@ internal sealed class FrameDecoder : IFrameDecoder
     private long _withheldUntil;
     private bool _lostBefore;
 
+    // The unit before this one failed its checksum: the first block after it depends on the state it left, so it is left out of the measurements.
+    private bool _followsFailedUnit;
+
     // The seed of the dither generator, at the start of the stream and after each gap (docs/design/lossy-decoders.md, "Random noise").
     private const uint NoiseSeed = 0x2545F491;
 
@@ -113,10 +116,18 @@ internal sealed class FrameDecoder : IFrameDecoder
         if (frame.FollowsGap || _lostBefore)
         {
             _lostBefore = false;
+            _followsFailedUnit = false;
             Reset();
             _context.Withhold(frame.FirstSample, BlockSamples, WithholdReason.AfterGap);
             _withheldUntil = Math.Max(_withheldUntil, frame.FirstSample + BlockSamples);
         }
+        else if (_followsFailedUnit)
+        {
+            // The first block's overlap is the failed unit's last, which the decoder kept: the span a gap withholds (docs/design/damaged-units.md).
+            _context.WithholdFromMeasurements(frame.FirstSample, BlockSamples);
+        }
+
+        _followsFailedUnit = frame.FailsChecksum;
 
         int samples = frame.Samples;
         EnsureBuffers(samples);

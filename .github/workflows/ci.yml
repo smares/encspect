@@ -664,6 +664,9 @@ jobs:
           python3 scripts/fixtures/make_ac3_signal_fixtures.py
           python3 scripts/fixtures/make_external_ac3_fixtures.py --manifests-only
 
+      - name: Regenerate the MPEG audio and AC-3 files with a stored CRC changed
+        run: python3 scripts/fixtures/make_mpeg_ac3_damaged_units_fixtures.py
+
       - name: Regenerate the hand-built DTS fixtures and the encoder-made ones' manifests
         run: |
           python3 scripts/fixtures/make_dts_fixtures.py
