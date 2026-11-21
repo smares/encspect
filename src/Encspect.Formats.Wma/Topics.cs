@@ -24,4 +24,6 @@ internal static class Topics
     public const string WmaFramesAndBlocks = "wma-frames-and-blocks";
     public const string MidSideStereo = "mid-side-stereo";
     public const string NoiseSubstitution = "noise-substitution";
+    public const string BlockSwitching = "block-switching";
+    public const string CodedBandwidth = "coded-bandwidth";
 }

@@ -6241,6 +6241,33 @@
                           "length": 201140
                         },
                         {
+                          "name": "Subframe Sizes",
+                          "value": 3,
+                          "unit": "sizes",
+                          "offset": 4991,
+                          "length": 201140,
+                          "children": [
+                            {
+                              "name": "2048 samples",
+                              "value": "23 subframes (92.0%)",
+                              "offset": 4991,
+                              "length": 201140
+                            },
+                            {
+                              "name": "512 samples",
+                              "value": "1 subframe (4.0%)",
+                              "offset": 4991,
+                              "length": 201140
+                            },
+                            {
+                              "name": "128 samples",
+                              "value": "1 subframe (4.0%)",
+                              "offset": 4991,
+                              "length": 201140
+                            }
+                          ]
+                        },
+                        {
                           "name": "Seekable Subframes",
                           "value": "3 subframes (12.0%)",
                           "offset": 4991,
@@ -11038,6 +11065,83 @@
               [
                 null,
                 4
+              ]
+            ]
+          },
+          {
+            "name": "Subframe Sizes",
+            "concept": "blockSwitching",
+            "valueLabel": "subframe",
+            "categories": [
+              {
+                "name": "2048 samples",
+                "count": 23
+              },
+              {
+                "name": "1024 samples",
+                "count": 0
+              },
+              {
+                "name": "512 samples",
+                "count": 1
+              },
+              {
+                "name": "256 samples",
+                "count": 0
+              },
+              {
+                "name": "128 samples",
+                "count": 1
+              }
+            ],
+            "total": 25,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                16
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                5
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                17
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                4,
+                1
+              ],
+              [
+                0,
+                6
               ]
             ]
           }

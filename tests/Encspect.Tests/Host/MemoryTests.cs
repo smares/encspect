@@ -233,6 +233,38 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         GC.KeepAlive(report);
     }
 
+    // A Speex stream whose pages state no granule position never gives the delay, so the parser holds the packets it keeps back for it: where nothing is decoded no packet's
+    // bytes at all, and where the stream is decoded no more than a byte budget (1 MiB), whatever the stream's length: 500 packets of 60,000 bytes (a 30 MB file) held in full
+    // would be 30 MB, and a packet of 64 MiB each could be 32 GiB.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void SpeexPacketsBeforeTheFirstGranulePositionAreBounded(bool decode)
+    {
+        static byte[] Stream(int count)
+        {
+            byte[] packet = [0x38, .. new byte[59_998], 0x07, 0x80];
+            var builder = new OggBuilder()
+                .Page(9, 0, 2, OggBuilder.SpeexHeader(8000, 0))
+                .Page(9, 0, 0, OggBuilder.VorbisComment("Encoded with Speex 1.2.1"));
+            for (int i = 0; i < count; i++)
+            {
+                builder.Page(9, -1, i + 1 == count ? (byte)4 : (byte)0, packet);
+            }
+
+            return builder.Bytes;
+        }
+
+        var options = decode ? new AnalysisOptions { Decoding = new DecodeOptions { Output = _ => new DecoderWorkTests.NullSink() } } : null;
+
+        (Report report, _, long excess, string where) = MeasureExcess("speex.spx", Stream(500), Stream(5), options);
+
+        Output.WriteLine($"{excess / 1_000_000.0:F1} MB excess for 30 MB {where}");
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+        Assert.True(excess < 8_000_000, $"The analysis held {excess / 1_000_000.0:F1} MB above the heap it starts and ends with, for a stream of 30 MB.");
+        GC.KeepAlive(report);
+    }
+
     // An AC-3 stream keeps a 16-byte record per frame (offset, store position, kept bits and CRC
     // verdicts), the fields its nodes are built from without the exponent groups and mantissas,
     // and its per-frame series, with the coding series (14 bytes for a mono frame): the frames repeat a committed mono fixture of 384-byte frames at
@@ -481,6 +513,35 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
 
     private const long AsfWmaKeptBound = 550;
     private const long AsfWmaPeakBound = 550;
+
+    // A version 2 stream of Microsoft's encoder with variable block lengths (about three blocks to a frame in this fixture) keeps, beside the
+    // frame records, one size and one noise flag for each block and a coded bandwidth with its own x for the blocks that have one, recorded
+    // while the frames are read. The 15 media objects of a fixture (a stereo stream at 128 kbit/s, 65 frames) repeated with continuing sequence
+    // numbers, so the blocks the series count are those of the file, whatever damage the repetition makes. linux-x64 measures 74 bytes kept and
+    // 124 peak per block, the frame records included (57 kept before the series); the bounds leave about twice that.
+    [Fact]
+    public void ManyStandardBlocksStayCompact()
+    {
+        const int packets = 6_000;
+        byte[] data = FileOfCycles("asf/external-windows-wma92-cbr-stereo-44k-128.wma", 0x0161, packets);
+
+        (Report report, long kept, long peak) = Measure("blocks.wma", data, data[..4096]);
+
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal("Windows Media Audio 2", stream.Codec);
+        CategorySeries sizes = Assert.Single(stream.CategorySeries, s => s.Name == "Block Sizes");
+        Series bandwidth = Assert.Single(stream.Series, s => s.Name == "Coded Bandwidth");
+        long blocks = sizes.Total;
+        Assert.True(blocks > 30_000, $"The stream has {blocks} blocks.");
+        Assert.True(bandwidth.X.Length > blocks / 2);
+        Output.WriteLine($"{kept / blocks} bytes kept and {peak / blocks} bytes peak per block");
+        Assert.True(kept < blocks * StandardBlockKeptBound, $"The report keeps {kept / blocks} bytes per block.");
+        Assert.True(peak < blocks * StandardBlockPeakBound, $"The live heap grew by {peak / blocks} bytes per block.");
+        GC.KeepAlive(report);
+    }
+
+    private const long StandardBlockKeptBound = 150;
+    private const long StandardBlockPeakBound = 250;
 
     // Voice keeps a fixed record per packet and per superframe, and builds the nodes when they are read: a Microsoft-encoded media object of
     // 187 bytes with 4 counted superframes, repeated, gives a packet and 3 to 4 superframes for each repetition, none of them kept as nodes.
@@ -1543,11 +1604,12 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
 
     // A WavPack file of versions 1 to 3 is one bitstream the decoder reads in chunks and decodes in batches of 4,096 samples, so what decoding holds does not grow
     // with the batches. The files hold zero bits, which decode to a stream of the stated length (the CRC does not hold; the finding is one count).
+    // linux-x64 reads 1 to 3 bytes per further batch; 3,500 further batches keep a stray 16 KB of heap (seen once on macOS at 600) under the bound.
     [Fact]
     public void DecodingALongWavPack1To3StreamHoldsNothingPerBatch()
     {
-        const int fewer = 200;
-        const int batches = 800;
+        const int fewer = 500;
+        const int batches = 4_000;
         byte[] Build(int count) => DecoderWorkTests.WavPackCases.LegacyZeros("external-wv340-high.wv", (count * 4096 / 2) + 4096, (uint)(count * 4096));
 
         (long fewerHeld, _) = LastFrameReading("legacy.wv", Build(fewer), fewer, 4096);

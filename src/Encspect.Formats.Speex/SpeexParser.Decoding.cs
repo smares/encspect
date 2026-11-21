@@ -14,6 +14,9 @@ public sealed partial class SpeexParser
 
     private const int HoldBeforeDelay = 512;
 
+    // The most bytes of packets it holds while the delay is still to come (the last HoldPackets are held whatever their size); where nothing is decoded no bytes are held at all.
+    private const long HoldBytesBeforeDelay = 1 << 20;
+
     // The largest position a trim is stated at: a delay a corrupt granule position makes absurd trims everything.
     private const long MaxPosition = long.MaxValue / 8;
 
@@ -22,6 +25,7 @@ public sealed partial class SpeexParser
         private sealed record HeldPacket(MappedBytes Packet, bool IsUnreadable, long First, int Samples, bool FollowsGap);
 
         private readonly Queue<HeldPacket> _held = new();
+        private long _heldBytes;
         private IDecodeSession? _session;
         private byte[]? _headerBytes;
         private long _headerOffset;
@@ -52,26 +56,31 @@ public sealed partial class SpeexParser
                 Configuration = new MappedBytes(_headerBytes, _headerOffset),
                 IsLossy = true,
             });
-            _held.Enqueue(new HeldPacket(packet, isUnreadable, first, samples, packet.FollowsGap));
+
+            // A session that decodes nothing takes the packets as lost, whatever their bytes, so only their place is held.
+            MappedBytes kept = _session.IsDecoding ? packet : MappedBytes.Opaque(ReadOnlyMemory<byte>.Empty, packet.FileStart, packet.FileStart);
+            _heldBytes += kept.Length;
+            _held.Enqueue(new HeldPacket(kept, isUnreadable, first, samples, packet.FollowsGap));
             Release();
         }
 
-        // Feeds the packets that nothing can reach any more: all but the last HoldPackets once the delay is known, or once the stream has held enough that it is assumed.
+        // Feeds the packets that nothing can reach any more: all but the last HoldPackets once the delay is known, or once the stream has held enough that it is assumed
+        // (as 0, which is what the report's samples count from when no granule position comes).
         private void Release()
         {
             if (!_isTrimStated)
             {
-                if (_firstDelay is null && _held.Count <= HoldBeforeDelay)
+                if (_firstDelay is null && _held.Count <= HoldBeforeDelay && _heldBytes <= HoldBytesBeforeDelay)
                 {
                     return;
                 }
 
-                StateLeadingTrim(_firstDelay ?? SpeexHeader.Lookahead[Mode]);
+                StateLeadingTrim(_firstDelay ?? 0);
             }
 
             while (_held.Count > HoldPackets)
             {
-                Feed(_held.Dequeue());
+                Feed(Take());
             }
         }
 
@@ -80,6 +89,13 @@ public sealed partial class SpeexParser
         {
             _isTrimStated = true;
             _session!.Trim(Math.Clamp(delay, 0, MaxPosition), long.MaxValue / 4);
+        }
+
+        private HeldPacket Take()
+        {
+            HeldPacket held = _held.Dequeue();
+            _heldBytes -= held.Packet.Length;
+            return held;
         }
 
         private void Feed(HeldPacket held)
@@ -113,14 +129,14 @@ public sealed partial class SpeexParser
 
             if (HasTime)
             {
-                long first = Math.Clamp(_isTrimStated ? _firstDelay ?? SpeexHeader.Lookahead[Mode] : _firstDelay ?? 0, 0, MaxPosition);
+                long first = Math.Clamp(_firstDelay ?? 0, 0, MaxPosition);
                 _session.Trim(first, first + samples);
                 _isTrimStated = true;
             }
 
             while (_held.Count > 0)
             {
-                Feed(_held.Dequeue());
+                Feed(Take());
             }
 
             return _session.Finish([]);

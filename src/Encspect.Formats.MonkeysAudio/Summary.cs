@@ -137,14 +137,10 @@ internal static class Summary
         }
 
         statistics.Add(Cover("Compression Level", $"{ApeHeader.LevelName(h.CompressionLevel)} ({h.CompressionLevel})", Explain.StatLevel, Topics.Prediction));
+        Node? silentNode = null;
         if (s.SilentFrames > 0)
         {
-            statistics.Add(Cover("Silent Frames", NodeValue.Integer(s.SilentFrames, "frames", "frame"), Explain.StatSilentFrames, Topics.Frames));
-        }
-
-        if (s.PseudoStereoFrames > 0)
-        {
-            statistics.Add(Cover("Pseudo-Stereo Frames", NodeValue.Integer(s.PseudoStereoFrames, "frames", "frame"), Explain.StatPseudoStereoFrames, Topics.Frames));
+            statistics.Add(silentNode = Cover("Silent Frames", NodeValue.Integer(s.SilentFrames, "frames", "frame"), Explain.StatSilentFrames, Topics.Frames));
         }
 
         statistics.Add(h.HasStoredCrc
@@ -160,6 +156,7 @@ internal static class Summary
         Node Covered(string name, NodeValue? value, string description) => Cover(name, value, description);
         figures.AddTo(statistics, Covered, "Frame", "frames", true, out _);
         Node? anchor = statistics.Children.FirstOrDefault(c => c.Name == "Average Bitrate");
+        Node? stereoNode = s.Stereo.AddTo(statistics, (name, value, description, topic) => Cover(name, value, description, topic), Explain.StatStereoCoding, Topics.MidSideStereo, "Frame", "Frames");
         s.AddLeading(statistics);
 
         string? channelMode = h.Channels switch
@@ -169,6 +166,7 @@ internal static class Summary
             > 2 => "Multichannel",
             _ => null,
         };
+        List<Series> series = figures.Series(anchor, s.Context.CancellationToken);
         return new StreamInfo
         {
             Nodes = [stream],
@@ -190,8 +188,30 @@ internal static class Summary
             Processor = ClaimRoles.Resolved(processor).Name,
             ProcessorConfidence = ClaimRoles.Resolved(processor).Confidence,
             Verification = verification,
-            Series = figures.Series(anchor, s.Context.CancellationToken),
+            Series = series,
+            CategorySeries = CategorySeriesOf(s, series, stereoNode, silentNode),
         };
+    }
+
+    private static List<CategorySeries> CategorySeriesOf(State s, List<Series> series, Node? stereoNode, Node? silentNode)
+    {
+        List<CategorySeries> result = [];
+        if (series.Count == 0)
+        {
+            return result;
+        }
+
+        if (stereoNode is not null && s.Stereo.Build(series[0], stereoNode, Explain.StereoCodingSeries, Topics.MidSideStereo, null) is { } stereo)
+        {
+            result.Add(stereo);
+        }
+
+        if (silentNode is not null && s.SilentFlags.Count == series[0].X.Length)
+        {
+            result.Add(s.SilentFlags.Build(series[0].X, series[0], silentNode, Explain.SilentFramesSeries, Topics.Frames));
+        }
+
+        return result;
     }
 
     public static string Number(long value) => value.ToString(CultureInfo.InvariantCulture);

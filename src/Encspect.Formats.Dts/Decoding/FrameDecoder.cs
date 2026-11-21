@@ -102,6 +102,7 @@ internal sealed class FrameDecoder : IFrameDecoder
         }
 
         _isFresh = false;
+        FlushHistory();
         int samples = blocks * 32;
         _context.AddWork(checked(((DecodeWork.ForSample(4) + SynthesisUnits) * samples * primary) + (hasLfe ? (DecodeWork.ForSample(4) + LfeUnits) * samples : 0) + (SubbandSampleUnits * blocks * 32 * primary)));
         for (int channel = 0; channel < primary; channel++)
@@ -118,14 +119,7 @@ internal sealed class FrameDecoder : IFrameDecoder
             _synthesis[channel].Run(_subbands[channel], MaxBlocks, blocks, Math.Max(active, source), header[5] != 0, _planar.AsSpan(channel * MaxBlocks * 32, samples));
         }
 
-        for (int channel = 0; channel < primary; channel++)
-        {
-            Span<float> plane = _planar.AsSpan(channel * MaxBlocks * 32, samples);
-            for (int i = 0; i < plane.Length; i++)
-            {
-                plane[i] *= OutputScale;
-            }
-        }
+        Scale(samples, primary);
 
         if (hasLfe)
         {
@@ -139,6 +133,22 @@ internal sealed class FrameDecoder : IFrameDecoder
         }
 
         return written;
+    }
+
+    // The subband prediction feeds back into itself across subframes and frames; its history is cut below 1e-30 at the start of each frame (docs/design/lossy-decoders.md, "Determinism").
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private void FlushHistory()
+    {
+        foreach (float[] history in _history)
+        {
+            for (int i = 0; i < history.Length; i++)
+            {
+                if (Math.Abs(history[i]) < 1e-30f)
+                {
+                    history[i] = 0f;
+                }
+            }
+        }
     }
 
     private void Reset()
@@ -158,7 +168,7 @@ internal sealed class FrameDecoder : IFrameDecoder
     }
 
     // The subband samples of one channel: the indexes times the step size of their quantizer, the scale factor of their part of the subframe and ADJ (5.6), then the prediction (C.3.3).
-    // The vectors of high-frequency subbands come from Annex D.10.2 (not yet available).
+    // The vectors of high-frequency subbands are format data (D.10.2), see development.md.
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void Reconstruct(SampleBuffers lent, int channel, int subframes, bool hasHistory)
     {
@@ -240,6 +250,20 @@ internal sealed class FrameDecoder : IFrameDecoder
     }
 
     // C.3.4: the subbands above a channel's own that it copies from its source channel, scaled.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private void Scale(int samples, int primary)
+    {
+        for (int channel = 0; channel < primary; channel++)
+        {
+            Span<float> plane = _planar.AsSpan(channel * MaxBlocks * 32, samples);
+            for (int i = 0; i < plane.Length; i++)
+            {
+                plane[i] *= OutputScale;
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void JointIntensity(SampleBuffers lent, int primary, int subframes)
     {
         for (int channel = 0; channel < primary; channel++)
@@ -276,6 +300,7 @@ internal sealed class FrameDecoder : IFrameDecoder
     }
 
     // C.3.5: the channels of the front pair and of the surround pair that are coded as sum and difference become left and right.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void SumDifference(ReadOnlySpan<int> header, int primary, int blocks)
     {
         int amode = header[8];
@@ -298,6 +323,7 @@ internal sealed class FrameDecoder : IFrameDecoder
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void Mix(int first, int second, int primary, int blocks)
     {
         if (second >= primary)
@@ -319,6 +345,7 @@ internal sealed class FrameDecoder : IFrameDecoder
     }
 
     // 5.6 and C.3.7: the decimated samples of each subframe times the step 0.035 and the scale factor, interpolated by the filter of the decimation factor, with the previous samples as history.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void Lfe(ReadOnlySpan<int> plane, int lff, int subframes, Span<float> output)
     {
         int factor = lff == 1 ? 128 : 64;

@@ -111,11 +111,318 @@ internal sealed class PcmBlockDecoder
         bool hasExtra = contents.ExtraBitstream.Length > 0 && isComplete;
         uint extraCrc = uint.MaxValue;
         var extra = new LsbBitCursor(hasExtra ? block.Slice(contents.ExtraBitstream.Start, contents.ExtraBitstream.Length) : []);
-        Fixup(buffer, header, contents, hasExtra, ref extra, ref extraCrc);
+        Fixup(buffer, header, isHybrid, contents, hasExtra, ref extra, ref extraCrc);
         bool isExtraValid = !hasExtra || (extraCrc == contents.ExtraCrc && !extra.IsOverrun);
         // libwavpack compares the CRC the muted block was left with, which in its stereo path runs to the end of the chunk where the mute hit, so it
         // reports an error only when that is before the block's last chunk. The analyzer deliberately counts every muted block as failed.
         return new BlockOutcome(!isComplete, isComplete && crc == header.Crc, hasExtra, isExtraValid);
+    }
+
+    // The hybrid block decoded with its correction block (unpack.c, "handle hybrid lossless mono data" and "stereo data"): the entropy decoder gives each
+    // word and its correction, which come with the decorrelation passes one sample at a time, because the noise shaping of the lossy part feeds back from
+    // each sample's correction to the next. The block's CRC is the correction block header's (libwavpack copies it over the main one, open_utils.c 1043-1044).
+    public BlockOutcome DecodeCorrected(ReadOnlySpan<byte> block, ReadOnlySpan<byte> correctionBlock, in BlockHeader header, uint correctionCrc, BlockContents contents, int count, CancellationToken cancellation)
+    {
+        uint flags = header.Flags;
+        bool isMonoData = (flags & (BlockHeader.MonoFlag | BlockHeader.FalseStereoFlag)) != 0;
+        int width = isMonoData ? 1 : 2;
+        int total = checked(count * width);
+        if (_samples.Length < total)
+        {
+            _samples = new int[total];
+        }
+
+        Span<int> buffer = _samples.AsSpan(0, total);
+        int muteLimit = unchecked((int)((1L << header.MaxMagnitude) + 2));
+        uint crc = uint.MaxValue;
+        var bits = new LsbBitCursor(block.Slice(contents.Bitstream.Start, contents.Bitstream.Length));
+        bool hasCorrectionBits = contents.CorrectionBitstream.Length > 0;
+        var correctionBits = new LsbBitCursor(hasCorrectionBits ? correctionBlock.Slice(contents.CorrectionBitstream.Start, contents.CorrectionBitstream.Length) : []);
+        _words.Start(contents, flags);
+        bool isComplete = isMonoData
+            ? CorrectedMono(buffer, ref bits, ref correctionBits, hasCorrectionBits, header, contents, muteLimit, ref crc, cancellation)
+            : CorrectedStereo(buffer, ref bits, ref correctionBits, hasCorrectionBits, header, contents, muteLimit, ref crc, cancellation);
+        if (!isComplete)
+        {
+            buffer.Clear();
+        }
+
+        bool hasExtra = contents.ExtraBitstream.Length > 0 && isComplete;
+        uint extraCrc = uint.MaxValue;
+        ReadOnlySpan<byte> extraBlock = contents.IsExtraInCorrection ? correctionBlock : block;
+        var extra = new LsbBitCursor(hasExtra ? extraBlock.Slice(contents.ExtraBitstream.Start, contents.ExtraBitstream.Length) : []);
+        Fixup(buffer, header, false, contents, hasExtra, ref extra, ref extraCrc);
+        bool isExtraValid = !hasExtra || (extraCrc == contents.ExtraCrc && !extra.IsOverrun);
+        return new BlockOutcome(!isComplete, isComplete && crc == correctionCrc, hasExtra, isExtraValid);
+    }
+
+    private bool CorrectedMono(Span<int> buffer, ref LsbBitCursor bits, ref LsbBitCursor correctionBits, bool hasCorrectionBits, in BlockHeader header, BlockContents c, int muteLimit, ref uint crc, CancellationToken cancellation)
+    {
+        uint flags = header.Flags;
+        int passes = c.Passes;
+        int m = 0;
+        for (int i = 0; i < buffer.Length; i++)
+        {
+            if ((i & 0xFFF) == 0)
+            {
+                cancellation.ThrowIfCancellationRequested();
+            }
+
+            if (!_words.TryGetWord(ref bits, ref correctionBits, hasCorrectionBits, 0, out int word, out int correction))
+            {
+                return false;
+            }
+
+            for (int pass = 0; pass < passes; pass++)
+            {
+                int term = c.Terms[pass];
+                Span<int> a = c.SamplesA.AsSpan(pass * BlockContents.MaxTerm, BlockContents.MaxTerm);
+                int sam;
+                int k;
+                if (term > BlockContents.MaxTerm)
+                {
+                    sam = (term & 1) != 0 ? unchecked((2 * a[0]) - a[1]) : unchecked((3 * a[0]) - a[1]) >> 1;
+                    a[1] = a[0];
+                    k = 0;
+                }
+                else
+                {
+                    sam = a[m];
+                    k = (m + term) & (BlockContents.MaxTerm - 1);
+                }
+
+                int temp = unchecked(Apply(c.WeightsA[pass], sam) + word);
+                Update(ref c.WeightsA[pass], c.Deltas[pass], sam, word);
+                a[k] = word = temp;
+            }
+
+            m = (m + 1) & (BlockContents.MaxTerm - 1);
+            word = Shape(flags, c, 0, word, correction);
+            crc = unchecked(crc + (crc << 1) + (uint)word);
+            if (Exceeds(word, muteLimit))
+            {
+                return false;
+            }
+
+            buffer[i] = word;
+        }
+
+        return true;
+    }
+
+    // The noise shaping of the lossy part: the sample the correction restores is the lossy one plus the correction less the shaped error of the sample
+    // before (unpack.c 257-273).
+    private static int Shape(uint flags, BlockContents c, int channel, int sample, int correction) =>
+        (flags & BlockHeader.HybridShapeFlag) == 0 ? unchecked(sample + correction) : unchecked(sample + correction - ShapedError(flags, c, channel, correction));
+
+    private bool CorrectedStereo(Span<int> buffer, ref LsbBitCursor bits, ref LsbBitCursor correctionBits, bool hasCorrectionBits, in BlockHeader header, BlockContents c, int muteLimit, ref uint crc, CancellationToken cancellation)
+    {
+        uint flags = header.Flags;
+        int passes = c.Passes;
+        bool isCross = (flags & BlockHeader.CrossDecorrFlag) != 0;
+        bool isJoint = (flags & BlockHeader.JointStereoFlag) != 0;
+        int m = 0;
+        for (int i = 0; i * 2 < buffer.Length; i++)
+        {
+            if ((i & 0xFFF) == 0)
+            {
+                cancellation.ThrowIfCancellationRequested();
+            }
+
+            if (!_words.TryGetWord(ref bits, ref correctionBits, hasCorrectionBits, 0, out int left, out int leftCorrection)
+                || !_words.TryGetWord(ref bits, ref correctionBits, hasCorrectionBits, 1, out int right, out int rightCorrection))
+            {
+                return false;
+            }
+
+            int leftC = 0;
+            int rightC = 0;
+            if (isCross)
+            {
+                leftC = unchecked(left + leftCorrection);
+                rightC = unchecked(right + rightCorrection);
+                for (int pass = 0; pass < passes; pass++)
+                {
+                    int term = c.Terms[pass];
+                    Span<int> a = c.SamplesA.AsSpan(pass * BlockContents.MaxTerm, BlockContents.MaxTerm);
+                    Span<int> b = c.SamplesB.AsSpan(pass * BlockContents.MaxTerm, BlockContents.MaxTerm);
+                    if (term > 0)
+                    {
+                        int samA;
+                        int samB;
+                        if (term > BlockContents.MaxTerm)
+                        {
+                            if ((term & 1) != 0)
+                            {
+                                samA = unchecked((2 * a[0]) - a[1]);
+                                samB = unchecked((2 * b[0]) - b[1]);
+                            }
+                            else
+                            {
+                                samA = unchecked((3 * a[0]) - a[1]) >> 1;
+                                samB = unchecked((3 * b[0]) - b[1]) >> 1;
+                            }
+                        }
+                        else
+                        {
+                            samA = a[m];
+                            samB = b[m];
+                        }
+
+                        leftC = unchecked(leftC + Apply(c.WeightsA[pass], samA));
+                        rightC = unchecked(rightC + Apply(c.WeightsB[pass], samB));
+                    }
+                    else if (term == -1)
+                    {
+                        leftC = unchecked(leftC + Apply(c.WeightsA[pass], a[0]));
+                        rightC = unchecked(rightC + Apply(c.WeightsB[pass], leftC));
+                    }
+                    else
+                    {
+                        rightC = unchecked(rightC + Apply(c.WeightsB[pass], b[0]));
+                        leftC = term == -3 ? unchecked(leftC + Apply(c.WeightsA[pass], a[0])) : unchecked(leftC + Apply(c.WeightsA[pass], rightC));
+                    }
+                }
+
+                if (isJoint)
+                {
+                    rightC = unchecked(rightC - (leftC >> 1));
+                    leftC = unchecked(leftC + rightC);
+                }
+            }
+
+            for (int pass = 0; pass < passes; pass++)
+            {
+                int term = c.Terms[pass];
+                Span<int> a = c.SamplesA.AsSpan(pass * BlockContents.MaxTerm, BlockContents.MaxTerm);
+                Span<int> b = c.SamplesB.AsSpan(pass * BlockContents.MaxTerm, BlockContents.MaxTerm);
+                if (term > 0)
+                {
+                    int samA;
+                    int samB;
+                    int k;
+                    if (term > BlockContents.MaxTerm)
+                    {
+                        if ((term & 1) != 0)
+                        {
+                            samA = unchecked((2 * a[0]) - a[1]);
+                            samB = unchecked((2 * b[0]) - b[1]);
+                        }
+                        else
+                        {
+                            samA = unchecked((3 * a[0]) - a[1]) >> 1;
+                            samB = unchecked((3 * b[0]) - b[1]) >> 1;
+                        }
+
+                        a[1] = a[0];
+                        b[1] = b[0];
+                        k = 0;
+                    }
+                    else
+                    {
+                        samA = a[m];
+                        samB = b[m];
+                        k = (m + term) & (BlockContents.MaxTerm - 1);
+                    }
+
+                    int left2 = unchecked(Apply(c.WeightsA[pass], samA) + left);
+                    int right2 = unchecked(Apply(c.WeightsB[pass], samB) + right);
+                    Update(ref c.WeightsA[pass], c.Deltas[pass], samA, left);
+                    Update(ref c.WeightsB[pass], c.Deltas[pass], samB, right);
+                    a[k] = left = left2;
+                    b[k] = right = right2;
+                }
+                else if (term == -1)
+                {
+                    int left2 = unchecked(left + Apply(c.WeightsA[pass], a[0]));
+                    UpdateClip(ref c.WeightsA[pass], c.Deltas[pass], a[0], left);
+                    left = left2;
+                    int right2 = unchecked(right + Apply(c.WeightsB[pass], left2));
+                    UpdateClip(ref c.WeightsB[pass], c.Deltas[pass], left2, right);
+                    a[0] = right = right2;
+                }
+                else
+                {
+                    int right2 = unchecked(right + Apply(c.WeightsB[pass], b[0]));
+                    UpdateClip(ref c.WeightsB[pass], c.Deltas[pass], b[0], right);
+                    right = right2;
+                    if (term == -3)
+                    {
+                        right2 = a[0];
+                        a[0] = right;
+                    }
+
+                    int left2 = unchecked(left + Apply(c.WeightsA[pass], right2));
+                    UpdateClip(ref c.WeightsA[pass], c.Deltas[pass], right2, left);
+                    b[0] = left = left2;
+                }
+            }
+
+            m = (m + 1) & (BlockContents.MaxTerm - 1);
+            if (!isCross)
+            {
+                leftC = unchecked(left + leftCorrection);
+                rightC = unchecked(right + rightCorrection);
+                if (isJoint)
+                {
+                    rightC = unchecked(rightC - (leftC >> 1));
+                    leftC = unchecked(leftC + rightC);
+                }
+            }
+
+            if (isJoint)
+            {
+                right = unchecked(right - (left >> 1));
+                left = unchecked(left + right);
+            }
+
+            if ((flags & BlockHeader.HybridShapeFlag) != 0)
+            {
+                leftCorrection = unchecked(leftC - left);
+                left = unchecked(leftC - ShapedError(flags, c, 0, leftCorrection));
+                rightCorrection = unchecked(rightC - right);
+                right = unchecked(rightC - ShapedError(flags, c, 1, rightCorrection));
+            }
+            else
+            {
+                left = leftC;
+                right = rightC;
+            }
+
+            if (Exceeds(left, muteLimit) || Exceeds(right, muteLimit))
+            {
+                return false;
+            }
+
+            crc = unchecked(crc + (crc << 3) + ((uint)left << 1) + (uint)left + (uint)right);
+            buffer[2 * i] = left;
+            buffer[(2 * i) + 1] = right;
+        }
+
+        return true;
+    }
+
+    // The shaped error of the channel for the sample just decoded (unpack.c 257-268 and 415-428): what is subtracted from the corrected sample, with the
+    // error handed on to the next sample, which is the new correction.
+    private static int ShapedError(uint flags, BlockContents c, int channel, int correction)
+    {
+        int weight = (c.ShapingAccumulators[channel] = unchecked(c.ShapingAccumulators[channel] + c.ShapingDeltas[channel])) >> 16;
+        int temp = unchecked(-Apply(weight, c.Errors[channel]));
+        if ((flags & BlockHeader.NewShapingFlag) != 0 && weight < 0 && temp != 0)
+        {
+            if (temp == c.Errors[channel])
+            {
+                temp = temp < 0 ? temp + 1 : temp - 1;
+            }
+
+            c.Errors[channel] = unchecked(temp - correction);
+        }
+        else
+        {
+            c.Errors[channel] = unchecked(-correction);
+        }
+
+        return temp;
     }
 
     // get_words_lossless and the loop of get_word: the residuals of every sample, the channels alternating.
@@ -375,10 +682,9 @@ internal sealed class PcmBlockDecoder
     }
 
     // fixup_samples: floats, the integer details, the shift and the clipping of a lossy block.
-    private static void Fixup(Span<int> buffer, in BlockHeader header, BlockContents c, bool hasExtra, ref LsbBitCursor extra, ref uint extraCrc)
+    private static void Fixup(Span<int> buffer, in BlockHeader header, bool isLossy, BlockContents c, bool hasExtra, ref LsbBitCursor extra, ref uint extraCrc)
     {
         uint flags = header.Flags;
-        bool isLossy = (flags & BlockHeader.HybridFlag) != 0;
         int shift = header.LeftShift;
         if ((flags & BlockHeader.FloatFlag) != 0)
         {

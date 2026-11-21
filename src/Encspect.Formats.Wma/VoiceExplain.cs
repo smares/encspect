@@ -67,6 +67,7 @@ internal static class VoiceExplain
     public const string StatFixedCodebooks = "How many frames use each kind of fixed codebook, the part of the excitation that a frame's pulses code.";
     public const string StatAdaptiveCodebooks = "How many frames use each kind of adaptive codebook, the part of the excitation that repeats the pitch of the sound before.";
     public const string StatBlocksPerFrame = "How many frames are divided into 1, 2, 4 or 8 blocks, each with its own excitation.";
+    public const string FrameTypesSeries = "The type of each of the three frames of every superframe read, in order, as the tally of Frame Types counts them; the frames of a superframe that was cut, broke the syntax or was dropped have none. Each type fixes how many blocks a frame has and which codebooks it uses.";
     public const string StatFrameTypeShare = "The frames of this type, with their share of all the frames read.";
     public const string StatFixedShare = "The frames that use this fixed codebook, with their share of all the frames read.";
     public const string StatAdaptiveShare = "The frames that use this adaptive codebook, with their share of all the frames read.";

@@ -7,7 +7,8 @@ namespace Encspect.Tests;
 
 // Decodes every WavPack fixture of versions 1 to 3 with a hashing sink. The encoder-written files' PCM must match the MD5 of the original decoder's output stored in
 // the manifest (each release's own unpacker: WVUNPACK 1.0 to 3.4 under DOSBox, wvunpack 3.97 on Windows); every file's verification, samples, PCM MD5 and decode findings are held to
-// <name>.decode.json, and decoding must change no node.
+// <name>.decode.json, and decoding must change no node. A main file whose manifest names a correction file is decoded with it, and its PCM must match the original
+// decoder's output with the correction file.
 public class WavPackLegacyDecoderFixtureTests
 {
     public static TheoryData<string> Names => WavPackLegacyFixtureTests.Names;
@@ -39,13 +40,17 @@ public class WavPackLegacyDecoderFixtureTests
     private static (Report Report, HashingSink Sink) Decode(string name)
     {
         var sink = new HashingSink();
-        var options = new AnalysisOptions { Decoding = new DecodeOptions { Output = stream => { sink.Format(stream.Format); return sink; } } };
+        var options = new AnalysisOptions
+        {
+            Decoding = new DecodeOptions { Output = stream => { sink.Format(stream.Format); return sink; } },
+            Companions = Fixtures.CompanionOptions(name)?.Companions,
+        };
         using FileStream stream = File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, name));
         return (Analyzer.CreateDefault().Analyze(Path.GetFileName(name), stream, options), sink);
     }
 
-    private static bool IsAdded(Finding f) => f.Code.StartsWith("decode.", StringComparison.Ordinal) || f.Code.StartsWith("wavpack.legacy-crc", StringComparison.Ordinal)
-        || f.Code is "wavpack.legacy-data-ended" or "wavpack.legacy-bitstream-end-differs";
+    private static bool IsAdded(Finding f) => f.Code.StartsWith("decode.", StringComparison.Ordinal) || f.Code.StartsWith("correction.", StringComparison.Ordinal) || f.Code.StartsWith("wavpack.legacy-crc", StringComparison.Ordinal)
+        || f.Code is "wavpack.legacy-data-ended" or "wavpack.legacy-bitstream-end-differs" or "wavpack.legacy-correction-ended" or "wavpack.legacy-correction-unread";
 
     [Theory]
     [MemberData(nameof(Names))]
@@ -61,7 +66,9 @@ public class WavPackLegacyDecoderFixtureTests
 
         // A hybrid file decoded alone is the lossy audio, which the original decoder's run without the correction file gives. The raw-stereo-extra files hold the audio of
         // raw-stereo with 1 to 3 stray bytes after it, which the original decoder writes out beyond the whole samples (96001 bytes) and a decoder of samples does not.
-        string expected = original.TryGetProperty("without_correction", out JsonElement lossy) ? lossy.GetProperty("pcm_md5").GetString()!
+        bool hasCompanion = manifest.TryGetProperty("companion", out JsonElement companion) && companion.ValueKind == JsonValueKind.String;
+        string expected = hasCompanion && original.TryGetProperty("with_correction", out JsonElement lossless) ? lossless.GetProperty("pcm_md5").GetString()!
+            : original.TryGetProperty("without_correction", out JsonElement lossy) ? lossy.GetProperty("pcm_md5").GetString()!
             : manifest.GetProperty("encoder").GetProperty("input").TryGetProperty("extra_bytes", out JsonElement extra) && extra.GetInt32() > 0
                 ? Fixtures.LoadMpegManifest(name[..name.LastIndexOf("-extra-", StringComparison.Ordinal)] + ".wv").GetProperty("crosscheck").GetProperty("original_decoder").GetProperty("pcm_md5").GetString()!
             : original.GetProperty("pcm_md5").GetString()!;
@@ -136,6 +143,11 @@ public class WavPackLegacyDecoderFixtureTests
                     writer.WriteBoolean("isLossy", true);
                 }
 
+                if (v.WithCorrection)
+                {
+                    writer.WriteBoolean("withCorrection", true);
+                }
+
                 writer.WriteStartArray("checksums");
                 foreach (ChecksumTally tally in v.Checksums)
                 {
@@ -149,6 +161,32 @@ public class WavPackLegacyDecoderFixtureTests
 
                 writer.WriteEndArray();
                 writer.WriteEndObject();
+                if (report.Streams.Single().Correction is { } pairing)
+                {
+                    writer.WriteStartObject("correction");
+                    writer.WriteString("status", CorrectionText.Word(pairing.Status));
+                    writer.WriteString("basis", CorrectionText.Word(pairing.Basis));
+                    writer.WriteStartArray("problems");
+                    foreach (CorrectionProblem problem in pairing.Problems)
+                    {
+                        writer.WriteStringValue($"{CorrectionText.Word(problem.Kind)} {problem.Count} {problem.Node.Name}");
+                    }
+
+                    writer.WriteEndArray();
+                    writer.WriteEndObject();
+                }
+
+                if (report.Companions.SingleOrDefault() is { } companion)
+                {
+                    writer.WriteStartArray("companionTree");
+                    foreach (Node node in companion.Report.Root.Children)
+                    {
+                        writer.WriteStringValue($"{node.Name} {node.Offset}+{node.Length}");
+                    }
+
+                    writer.WriteEndArray();
+                }
+
                 writer.WriteNumber("pcmSamples", sink.Samples);
                 writer.WriteString("pcmMd5", sink.Samples == 0 ? "" : sink.Hash());
             }

@@ -6,6 +6,7 @@ It reads no block: the samples of a unit, the decoded audio and the lossless che
 confirms them) or, for a damaged file, from the unit the damage leaves readable.
 """
 
+from fractions import Fraction
 import struct
 
 RATES = {0: 48000, 1: 96000, 2: 192000, 8: 44100, 9: 88200, 10: 176400}
@@ -321,6 +322,160 @@ def split_units(data, start=0):
     return units
 
 
+# --- the coding of the two-channel presentation's matrices ----------------------------------------------------------------------------------
+
+STEREO_CODINGS = ["Left/right stereo", "Left/side stereo", "Side/right stereo", "Mid/side stereo", "Weighted mix"]
+RUN_LENGTH = 16
+
+
+class _Bits:
+    def __init__(self, body, at):
+        self.body = body
+        self.at = at
+
+    def read(self, count):
+        value = 0
+        for _ in range(count):
+            value = (value << 1) | ((self.body[self.at >> 3] >> (7 - (self.at & 7))) & 1)
+            self.at += 1
+        return value
+
+    def signed(self, count):
+        value = self.read(count)
+        return value - (1 << count) if value >> (count - 1) else value
+
+
+def read_matrices(bits, last_matrix, noise_type):
+    """The primitive matrices of a matrix parameters group (docs/design/truehd-format.md, "Matrix parameters"): (output channel, [coefficients of the
+    input channels 0 to M as fractions]) for each; the noise channels' coefficients and the bypass and noise shifts do not enter the coding."""
+    matrices = []
+    for _ in range(bits.read(4)):
+        out = bits.read(4)
+        fractional = bits.read(4)
+        bits.read(1)
+        coefficients = []
+        for i in range(last_matrix + 1 + (2 if noise_type == 0 else 0)):
+            c = Fraction(bits.signed(fractional + 2), 1 << fractional) if bits.read(1) else Fraction(0)
+            if i <= last_matrix:
+                coefficients.append(c)
+        if noise_type == 1:
+            bits.read(4)
+        matrices.append((out, coefficients))
+    return matrices
+
+
+def _part(left, right):
+    if right == 0:
+        return "left"
+    if left == 0:
+        return "right"
+    if left == right:
+        return "sum"
+    return "difference" if left == -right else "weighted"
+
+
+def classify_matrices(matrices, assignments):
+    """The coding of a two-channel presentation: the matrices composed into the map T from the two coded channels to left and right (position
+    order), then what each coded channel is in left and right from the adjugate's rows, as docs/design/coding-graphs.md, "Stereo Coding: the design",
+    states it. Returns an index into STEREO_CODINGS."""
+    rows = [[Fraction(1), Fraction(0)], [Fraction(0), Fraction(1)]]
+    for out, c in matrices:
+        rows[out] = [c[0] * rows[0][k] + c[1] * rows[1][k] for k in range(2)]
+    left = 1 if (assignments[0], assignments[1]) == (1, 0) else 0
+    t00, t01 = rows[left]
+    t10, t11 = rows[1 - left]
+    if t00 * t11 - t01 * t10 == 0:
+        return 4
+    parts = {_part(t11, -t01), _part(-t10, t00)}
+    if parts == {"left", "right"}:
+        return 0
+    if parts == {"left", "difference"}:
+        return 1
+    if parts == {"difference", "right"}:
+        return 2
+    if parts == {"sum", "difference"}:
+        return 3
+    return 4
+
+
+def substream0_codings(data, framing, status):
+    """For each entry of the framing the coding of substream 0's matrices at the end of the unit's first block (the model reads no further), or None
+    where the unit was not read or substream 0 is no two-channel presentation. The state across units: a restart header resets the matrices, a
+    block's matrix parameters replace them."""
+    state = None
+    count = 0
+    result = []
+    for entry, kind in zip(framing, status):
+        result.append(None)
+        if entry[0] == "skipped" or kind != "read":
+            continue
+        unit = Unit(data, entry[1], entry[2], count)
+        if unit.sync is not None:
+            count = unit.sync.count
+        if not unit.substreams:
+            continue
+        sub = unit.substreams[0]
+        body = unit.data[sub["start"]:sub["end"]]
+        bits = _Bits(body, 0)
+        if bits.read(1):
+            if bits.read(1):
+                header = restart_header(body, 2)
+                if header is None:
+                    continue
+                state = {"noise_type": header["noise_type"], "last": header["matrix_last"], "assignments": header["assignments"], "flags": 0xFF, "matrices": []}
+                bits.at = 2 + header["bits"] + 8
+            if state is None:
+                continue
+            if state["flags"] & 0x01 and bits.read(1):
+                state["flags"] = bits.read(8)
+            if state["flags"] & 0x80 and bits.read(1):
+                bits.read(9)
+            if state["flags"] & 0x40 and bits.read(1):
+                state["matrices"] = read_matrices(bits, state["last"], state["noise_type"])
+        if state is not None and state["last"] == 1:
+            result[-1] = classify_matrices(state["matrices"], state["assignments"])
+    return result
+
+
+def stereo_coding(data, framing, counts, status, rates, overrides=None):
+    """What the analyzer's "Stereo Coding" tally and series state: the units by coding, and per run of the bitrate series (16 units, a change of the
+    sampling rate or a unit that codes nothing closes one) the codings in force in its units with their unit counts, in code order. overrides maps a
+    unit to the coding in force at its end where a later block changes it. None where a unit is not read, which the runs of the analyzer's figures
+    would then count in ways the model does not follow."""
+    if any(kind not in ("read", "leading") for kind in status):
+        return None
+    codes = substream0_codings(data, framing, status)
+    for index, code in (overrides or {}).items():
+        codes[index] = code
+    units = [0] * len(STEREO_CODINGS)
+    runs = []
+    current = {}
+    held = 0
+    run_rate = None
+
+    def flush():
+        nonlocal current, held
+        if held:
+            runs.append([[code, current[code]] for code in sorted(current)])
+        current = {}
+        held = 0
+
+    for index, kind in enumerate(status):
+        if kind != "read":
+            continue
+        if held and rates[index] != run_rate:
+            flush()
+        run_rate = rates[index]
+        held += 1
+        if codes[index] is not None:
+            current[codes[index]] = current.get(codes[index], 0) + 1
+            units[codes[index]] += 1
+        if held == RUN_LENGTH or counts[index] == 0:
+            flush()
+    flush()
+    return {"units": units, "runs": runs}
+
+
 # --- the manifest ---------------------------------------------------------------------------------------------------------------------------
 
 def simulate(data, framing, unreadable=(), lossless_failures=()):
@@ -577,7 +732,7 @@ def stream_info(t, data, framing, counts, average=False):
     return info
 
 
-def manifest(data, framing, counts, unreadable=(), lossless_failures=(), average=False):
+def manifest(data, framing, counts, unreadable=(), lossless_failures=(), average=False, stereo_overrides=None):
     """Everything a manifest states that the model gives, for a file whose entries are framing (see simulate) and whose units hold counts samples."""
     t = simulate(data, framing, unreadable, lossless_failures)
     info = stream_info(t, data, framing, counts, average)
@@ -589,9 +744,10 @@ def manifest(data, framing, counts, unreadable=(), lossless_failures=(), average
         else:
             unit = Unit(data, entry[1], entry[2])
             entries.append(["unit", entry[1], entry[2], 1 if unit.sync is not None else 0, t["status"][i]])
+    coding = stereo_coding(data, framing, counts, t["status"], t["rates"], stereo_overrides)
     return {
         "length": len(data), "format": info["codec"] if info else "Dolby TrueHD", "entries": entries, "syncs": t["syncs"], "restarts": t["restarts"],
-        "failures": t["failures"], "no_check_data": t["no_check_data"], "stream_infos": [info] if info else [], "decoded_samples": decoded,
+        "failures": t["failures"], "no_check_data": t["no_check_data"], "stream_infos": [info] if info else [], "decoded_samples": decoded, **({"stereo_coding": coding} if coding else {}),
         "verification": {"default": verification(t, False), "verify": verification(t, True)},
         "counts": {"leading": t["leading"], "after_damage": t["after_damage"], "unreadable": t["unreadable"], "cut": t["cut"], "skipped_bytes": t["skipped"]},
     }

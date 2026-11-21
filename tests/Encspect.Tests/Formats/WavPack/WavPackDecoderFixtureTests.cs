@@ -92,7 +92,7 @@ public class WavPackDecoderFixtureTests
         }
 
         var actual = new SortedDictionary<string, int>(StringComparer.Ordinal);
-        foreach (Finding finding in report.Findings.Where(f => f.Code.StartsWith("decode.", StringComparison.Ordinal) || f.Code is "wavpack.audio-crc-mismatch" or "wavpack.md5-mismatch" or "wavpack.md5-needs-correction-file" or "wavpack.md5-set-too-large"))
+        foreach (Finding finding in report.Findings.Where(f => f.Code.StartsWith("decode.", StringComparison.Ordinal) || f.Code is "wavpack.audio-crc-mismatch" or "wavpack.correction-block-missing" or "wavpack.md5-mismatch" or "wavpack.md5-needs-correction-file" or "wavpack.md5-set-too-large"))
         {
             actual[finding.Code] = finding.Count;
         }
@@ -104,6 +104,7 @@ public class WavPackDecoderFixtureTests
     {
         FlacFixtureTests.CheckVerification(expected, actual, status);
         Assert.Equal(expected.TryGetProperty("isLossy", out JsonElement lossy) && lossy.GetBoolean(), actual!.IsLossy);
+        Assert.Equal(expected.TryGetProperty("withCorrection", out JsonElement withCorrection) && withCorrection.GetBoolean(), actual.WithCorrection);
     }
 
     [Theory]
@@ -176,6 +177,11 @@ public class WavPackDecoderFixtureTests
                     writer.WriteBoolean("isLossy", true);
                 }
 
+                if (v.WithCorrection)
+                {
+                    writer.WriteBoolean("withCorrection", true);
+                }
+
                 writer.WriteStartArray("checksums");
                 foreach (ChecksumTally tally in v.Checksums)
                 {
@@ -192,7 +198,7 @@ public class WavPackDecoderFixtureTests
             }
 
             writer.WriteStartArray("findings");
-            foreach (Finding finding in report.Findings.Where(f => f.Code.StartsWith("decode.", StringComparison.Ordinal) || f.Code is "wavpack.audio-crc-mismatch" or "wavpack.md5-mismatch" or "wavpack.md5-needs-correction-file" or "wavpack.md5-set-too-large"))
+            foreach (Finding finding in report.Findings.Where(f => f.Code.StartsWith("decode.", StringComparison.Ordinal) || f.Code is "wavpack.audio-crc-mismatch" or "wavpack.correction-block-missing" or "wavpack.md5-mismatch" or "wavpack.md5-needs-correction-file" or "wavpack.md5-set-too-large"))
             {
                 writer.WriteStartObject();
                 writer.WriteString("code", finding.Code);

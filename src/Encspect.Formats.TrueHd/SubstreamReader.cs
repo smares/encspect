@@ -392,6 +392,7 @@ internal ref struct SubstreamReader
 
         _log?.Open("Matrices", fieldStart, Explain.Matrices, Topics.Rematrixing);
         s.MatrixCount = count;
+        s.HasNewMatrices = true;
         int inputs = s.LastMatrixChannel + 1 + (s.NoiseType == 0 ? 2 : 0);
         for (int j = 0; j < count; j++)
         {

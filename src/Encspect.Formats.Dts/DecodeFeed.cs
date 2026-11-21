@@ -34,7 +34,7 @@ internal sealed class DecodeFeed
             Channels = Channels,
             BitsPerSample = 32,
             IsLossy = true,
-            Shared = new DecodeShared(sampleRate, Positions),
+            Shared = new DecodeShared(sampleRate, Positions, amode),
         });
     }
 
@@ -81,5 +81,5 @@ internal sealed class DecodeFeed
     public StreamVerification? Finish() => _session.Finish([]);
 }
 
-// What the parser tells the decoder that no frame carries: the core's sampling frequency and the speakers of the channels it outputs, in order.
-internal sealed record DecodeShared(int SampleRate, IReadOnlyList<Position> Positions);
+// What the parser tells the decoder that no frame carries: the core's sampling frequency, the speakers of the channels it outputs, in order, and the stream's channel arrangement (AMODE).
+internal sealed record DecodeShared(int SampleRate, IReadOnlyList<Position> Positions, int Amode);

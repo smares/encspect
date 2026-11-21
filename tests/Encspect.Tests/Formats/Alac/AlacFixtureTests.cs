@@ -345,8 +345,9 @@ public partial class AlacFixtureTests
             long[] codings = [.. t.GetProperty("pair_codings").EnumerateArray().Select(c => c.GetInt64())];
             Assert.Equal(codings[0], Entry(stereo, "Left/right stereo"));
             Assert.Equal(codings[1], Entry(stereo, "Left/side stereo"));
-            Assert.Equal(codings[2], Entry(stereo, "Mid/side stereo"));
-            Assert.Equal(codings[3], Entry(stereo, "Weighted mix"));
+            Assert.Equal(codings[2], Entry(stereo, "Side/right stereo"));
+            Assert.Equal(codings[3], Entry(stereo, "Mid/side stereo"));
+            Assert.Equal(codings[4], Entry(stereo, "Weighted mix"));
         }
 
         long channels = t.GetProperty("channels").GetInt64();

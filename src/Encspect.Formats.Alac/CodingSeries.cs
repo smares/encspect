@@ -9,11 +9,13 @@ internal static class CodingCategories
 {
     // The codes of the "Stereo Coding" series, by what matrix_dec.c reconstructs: the first channel u and the second v give left = u + v - (mixRes * v >> mixBits)
     // and right = left - v. A mixing resolution of 0 (and an uncompressed pair) leaves the channels as they are; 2^mixBits makes u the left channel itself and v
-    // left minus right; half of that makes u the mean of both, which is mid/side; any other value is a weighted mix.
+    // left minus right; half of that makes u the mean of both, which is mid/side; any other value is a weighted mix. The second channel is always left minus
+    // right, so no pair is side/right: that category (code 2) stands in the list only so that "Mid/side stereo" and "Weighted mix" have the codes, and the
+    // colors, they have in FLAC and Dolby TrueHD.
     public const byte CodeLeftRight = 0;
     public const byte CodeLeftSide = 1;
-    public const byte CodeMidSide = 2;
-    public const byte CodeWeightedMix = 3;
+    public const byte CodeMidSide = 3;
+    public const byte CodeWeightedMix = 4;
 
     public static byte PairCode(bool isUncompressed, byte mixBits, sbyte mixResolution)
     {
@@ -47,6 +49,7 @@ internal static class CodingCategories
     [
         new("Left/right stereo", Explain.CodingLeftRight) { Topic = Topics.Prediction },
         new("Left/side stereo", Explain.CodingLeftSide) { Topic = Topics.LeftSide },
+        new("Side/right stereo", Explain.CodingSideRight) { Topic = Topics.LeftSide },
         new("Mid/side stereo", Explain.CodingMidSide) { Topic = Topics.MidSide },
         new("Weighted mix", Explain.CodingWeightedMix) { Topic = Topics.Prediction },
     ];

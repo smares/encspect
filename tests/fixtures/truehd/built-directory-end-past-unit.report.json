@@ -232,6 +232,21 @@
                       "length": 8880
                     }
                   ]
+                },
+                {
+                  "name": "Stereo Coding",
+                  "value": 72,
+                  "unit": "access units",
+                  "offset": 0,
+                  "length": 8880,
+                  "children": [
+                    {
+                      "name": "Weighted mix",
+                      "value": "72 access units (100.0%)",
+                      "offset": 0,
+                      "length": 8880
+                    }
+                  ]
                 }
               ]
             }
@@ -361,6 +376,66 @@
             ],
             "values": [
               1065
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "access unit",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 0
+              },
+              {
+                "name": "Left/side stereo",
+                "count": 0
+              },
+              {
+                "name": "Side/right stereo",
+                "count": 0
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 0
+              },
+              {
+                "name": "Weighted mix",
+                "count": 72
+              }
+            ],
+            "total": 72,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                5
+              ]
+            ],
+            "runs": [
+              [
+                4,
+                5
+              ]
+            ],
+            "weights": [
+              [
+                16,
+                2
+              ],
+              [
+                8,
+                1
+              ],
+              [
+                16,
+                2
+              ]
+            ],
+            "seconds": [
+              0
             ]
           }
         ]
