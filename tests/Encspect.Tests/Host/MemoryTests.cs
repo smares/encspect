@@ -37,12 +37,12 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         Assert.True(kept < Frames * 250L, $"The report keeps {kept / Frames} bytes per frame.");
         Assert.True(peak < Frames * 350L, $"The live heap grew by {peak / Frames} bytes per frame.");
 
-        // The coding series of the stream (docs/design/coding-graphs.md, "Memory budget"): a Layer III stereo frame adds at most 23 bytes,
+        // The coding series of the stream (docs/design/coding-graphs.md, "Memory budget"): a Layer III stereo frame adds at most 27 bytes (scalefactor scaling 4 of them),
         // channel modes 1, stereo coding 1, joint stereo modes 1, block usage 4 and channel bit share 16 (a value and its own x); block
         // sizes is a grouping and costs its map. This frame is stereo, not joint stereo, and has a share, so its x values are the bitrate series'. The coded bandwidth
         // of the entropy pass adds 8 bytes (its values; its x values are the bitrate series' too), so the numeric series keep 16.
         StreamInfo stream = Assert.Single(report.Streams);
-        CheckCodingBytes(stream, categoryBytesPerFrame: 6, numericBytesPerFrame: 16);
+        CheckCodingBytes(stream, categoryBytesPerFrame: 10, numericBytesPerFrame: 16);
         Output.WriteLine($"{stream.CategorySeries.Sum(c => c.StorageBytes) / Frames} bytes of category series per frame");
         GC.KeepAlive(report);
     }
@@ -125,7 +125,9 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
 
     // The coding series of an AAC stream (docs/design/coding-graphs.md, "Memory budget") are recorded while the raw data blocks are read:
     // for a stereo access unit the window sequences of its two channel streams and a count byte, the stereo coding of its pair and a count
-    // byte (5 bytes), and the coded bandwidth, which the report keeps as a value of 8 bytes (13 in all). The bound is on the growth between
+    // byte (5 bytes), the window shape and the TNS, pulse data and noise substitution flags of its two channel streams with a count byte for each series (12), and the
+    // coded bandwidth, which the report keeps as a value of 8 bytes (25 in all, 17 of them codes and count bytes; a stream with SBR adds the SBR and parametric stereo flags of each
+    // block and a count byte each: 4 more). The bound is on the growth between
     // two counts of frames, so that what is kept whatever the count (pools, the records of the first frames) does not count: the series'
     // own bytes grow by at most their budget, and the whole report and the heap the analysis holds above it by less than the bounds of
     // ManyAdtsFramesStayCompact, which stay as they were.
@@ -139,7 +141,8 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         (Report few, long fewerKept) = MeasureKept("few.aac", AdtsFrames(fewer), warmUp);
         (Report many, long kept) = MeasureKept("many.aac", AdtsFrames(frames), warmUp);
 
-        CheckCodingGrowth(few, many, fewer, frames, categoryBytes: 5, numericBytes: 8);
+        CheckCodingGrowth(few, many, fewer, frames, categoryBytes: 17, numericBytes: 8,
+            names: ["Block Usage", "Block Sizes", "Stereo Coding", "Window Shapes", "Channel Streams With TNS", "Channel Streams With Pulse Data", "Noise-Substituted Channel Streams"]);
         double keptPerFrame = (kept - fewerKept) / (double)(frames - fewer);
         Output.WriteLine($"{Hundredths(keptPerFrame)} bytes kept per further frame");
         Assert.True(keptPerFrame < 220, $"The report keeps {keptPerFrame:F2} bytes per further frame.");

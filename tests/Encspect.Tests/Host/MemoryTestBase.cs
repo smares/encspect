@@ -28,11 +28,11 @@ public abstract class MemoryTestBase(ITestOutputHelper output) : IDisposable
 
     // What the further units add to the coding series, from the series' own sizes: the codes and count bytes of the category series and 8 bytes
     // for each point of the numeric series, which shares the bitrate series' x values.
-    protected static void CheckCodingGrowth(Report few, Report many, int fewer, int units, int categoryBytes, int numericBytes)
+    protected static void CheckCodingGrowth(Report few, Report many, int fewer, int units, int categoryBytes, int numericBytes, string[]? names = null)
     {
         StreamInfo small = Assert.Single(few.Streams);
         StreamInfo large = Assert.Single(many.Streams);
-        Assert.Equal(["Block Usage", "Block Sizes", "Stereo Coding"], large.CategorySeries.Select(c => c.Name));
+        Assert.Equal(names ?? ["Block Usage", "Block Sizes", "Stereo Coding"], large.CategorySeries.Select(c => c.Name));
         long grown = large.CategorySeries.Sum(c => c.StorageBytes) - small.CategorySeries.Sum(c => c.StorageBytes);
         long index = large.CategorySeries.Count * 4L * ((units - fewer) / 1024 + 1);
         Assert.True(grown <= (units - fewer) * (long)categoryBytes + index, $"The category series grow by {grown / (double)(units - fewer):F3} bytes per further unit.");

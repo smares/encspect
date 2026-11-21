@@ -178,6 +178,7 @@ Each stream, which may span regions, reports its codec, duration, average bitrat
 - the **category series** of the coding, derived at the end from the kept frame records (one code per frame, 4 per Layer III frame of two channels for the block types), with the counts of the tally node each is anchored to, under the same names, and a time index of the seconds:
   - "Channel Modes" (no heading, in "Other");
   - "Stereo Coding", "Joint Stereo Modes" (Layer III) and "Intensity Stereo Bounds" (Layers I and II), under "Stereo Coding";
+  - "Scalefactor Scaling" (a flag series, no concept: scalefac_scale of each granule and channel, a fixed layout like "Block Usage", held equal to the share the tally states);
   - "Block Usage" (the value of each granule and channel: granule 1 channel 1, granule 1 channel 2, granule 2 channel 1, ..., one granule in MPEG-2 and 2.5; the second channel of a mono frame has no value) and "Block Sizes", its grouping, under "Block Switching".
   - The series of a stream that a tag splits are over the stream, the tally's over each region; `CategorySummaryTests` sums them per group of regions and streams that overlap.
   - A series exists where its tally node does: a file without joint stereo frames has no "Joint Stereo Modes".
