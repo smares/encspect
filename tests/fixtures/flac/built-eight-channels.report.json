@@ -852,6 +852,74 @@
               3123
             ]
           }
+        ],
+        "categorySeries": [
+          {
+            "name": "Subframe Types",
+            "concept": "prediction",
+            "valueLabel": "subframe",
+            "categories": [
+              {
+                "name": "Constant",
+                "count": 0
+              },
+              {
+                "name": "Verbatim",
+                "count": 8
+              },
+              {
+                "name": "Fixed Predictor",
+                "count": 0
+              },
+              {
+                "name": "Linear Predictor",
+                "count": 0
+              }
+            ],
+            "total": 8,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                8,
+                1
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                8
+              ]
+            ]
+          },
+          {
+            "name": "Subframes With Wasted Bits",
+            "concept": "prediction",
+            "valueLabel": "subframe",
+            "categories": [
+              {
+                "name": "With wasted bits",
+                "count": 0
+              },
+              {
+                "name": "Without wasted bits",
+                "count": 8
+              }
+            ],
+            "total": 8,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                8,
+                1
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                8
+              ]
+            ]
+          }
         ]
       }
     ],

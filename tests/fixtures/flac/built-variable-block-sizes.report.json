@@ -254,6 +254,21 @@
                   ]
                 },
                 {
+                  "name": "Fixed Predictor Orders",
+                  "value": 8,
+                  "unit": "subframes",
+                  "offset": 0,
+                  "length": 12682,
+                  "children": [
+                    {
+                      "name": "Order 2",
+                      "value": "8 subframes (100.0%)",
+                      "offset": 0,
+                      "length": 12682
+                    }
+                  ]
+                },
+                {
                   "name": "Subframes With Wasted Bits",
                   "value": "0 subframes (0.0%)",
                   "offset": 0,
@@ -2244,6 +2259,254 @@
             ],
             "values": [
               583
+            ]
+          },
+          {
+            "name": "Block Size",
+            "unit": "samples",
+            "axis": "frameOffset",
+            "x": [
+              42,
+              214,
+              714,
+              1609,
+              1716,
+              8122,
+              8712,
+              8756
+            ],
+            "values": [
+              192,
+              576,
+              1000,
+              100,
+              4096,
+              300,
+              16,
+              2048
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Subframe Types",
+            "concept": "prediction",
+            "valueLabel": "subframe",
+            "categories": [
+              {
+                "name": "Constant",
+                "count": 0
+              },
+              {
+                "name": "Verbatim",
+                "count": 0
+              },
+              {
+                "name": "Fixed Predictor",
+                "count": 8
+              },
+              {
+                "name": "Linear Predictor",
+                "count": 0
+              }
+            ],
+            "total": 8,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                8
+              ]
+            ],
+            "runs": [
+              [
+                2,
+                8
+              ]
+            ]
+          },
+          {
+            "name": "Fixed Predictor Orders",
+            "concept": "prediction",
+            "valueLabel": "subframe",
+            "categories": [
+              {
+                "name": "Order 0",
+                "count": 0
+              },
+              {
+                "name": "Order 1",
+                "count": 0
+              },
+              {
+                "name": "Order 2",
+                "count": 8
+              },
+              {
+                "name": "Order 3",
+                "count": 0
+              },
+              {
+                "name": "Order 4",
+                "count": 0
+              }
+            ],
+            "total": 8,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                8
+              ]
+            ],
+            "runs": [
+              [
+                2,
+                8
+              ]
+            ]
+          },
+          {
+            "name": "Partition Orders",
+            "concept": "prediction",
+            "valueLabel": "subframe",
+            "categories": [
+              {
+                "name": "Order 0",
+                "count": 8
+              },
+              {
+                "name": "Order 1",
+                "count": 0
+              },
+              {
+                "name": "Order 2",
+                "count": 0
+              },
+              {
+                "name": "Order 3",
+                "count": 0
+              },
+              {
+                "name": "Order 4",
+                "count": 0
+              },
+              {
+                "name": "Order 5",
+                "count": 0
+              },
+              {
+                "name": "Order 6",
+                "count": 0
+              },
+              {
+                "name": "Order 7",
+                "count": 0
+              },
+              {
+                "name": "Order 8",
+                "count": 0
+              },
+              {
+                "name": "Order 9",
+                "count": 0
+              },
+              {
+                "name": "Order 10",
+                "count": 0
+              },
+              {
+                "name": "Order 11",
+                "count": 0
+              },
+              {
+                "name": "Order 12",
+                "count": 0
+              },
+              {
+                "name": "Order 13",
+                "count": 0
+              },
+              {
+                "name": "Order 14",
+                "count": 0
+              },
+              {
+                "name": "Order 15",
+                "count": 0
+              }
+            ],
+            "total": 8,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                8
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                8
+              ]
+            ]
+          },
+          {
+            "name": "Rice With 5-Bit Parameters",
+            "concept": "prediction",
+            "valueLabel": "subframe",
+            "categories": [
+              {
+                "name": "Rice with 5-bit parameters",
+                "count": 0
+              },
+              {
+                "name": "Rice",
+                "count": 8
+              }
+            ],
+            "total": 8,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                8
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                8
+              ]
+            ]
+          },
+          {
+            "name": "Subframes With Wasted Bits",
+            "concept": "prediction",
+            "valueLabel": "subframe",
+            "categories": [
+              {
+                "name": "With wasted bits",
+                "count": 0
+              },
+              {
+                "name": "Without wasted bits",
+                "count": 8
+              }
+            ],
+            "total": 8,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                8
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                8
+              ]
             ]
           }
         ]

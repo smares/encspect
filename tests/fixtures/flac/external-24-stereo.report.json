@@ -529,6 +529,21 @@
                   ]
                 },
                 {
+                  "name": "Fixed Predictor Orders",
+                  "value": 4,
+                  "unit": "subframes",
+                  "offset": 0,
+                  "length": 82282,
+                  "children": [
+                    {
+                      "name": "Order 0",
+                      "value": "4 subframes (100.0%)",
+                      "offset": 0,
+                      "length": 82282
+                    }
+                  ]
+                },
+                {
                   "name": "Average Predictor Order",
                   "value": 8,
                   "offset": 0,
@@ -4267,6 +4282,70 @@
             "values": [
               1183
             ]
+          },
+          {
+            "name": "Highest Predictor Order",
+            "unit": "order",
+            "axis": "frameOffset",
+            "concept": "prediction",
+            "quantity": "Highest Predictor Order",
+            "x": [
+              8348,
+              14966,
+              21417,
+              25480
+            ],
+            "values": [
+              8,
+              8,
+              8,
+              8
+            ]
+          },
+          {
+            "name": "Highest Predictor Order Over Time",
+            "unit": "order",
+            "axis": "seconds",
+            "concept": "prediction",
+            "quantity": "Highest Predictor Order",
+            "x": [
+              0
+            ],
+            "values": [
+              8
+            ]
+          },
+          {
+            "name": "Coefficient Precision",
+            "unit": "bits",
+            "axis": "frameOffset",
+            "concept": "prediction",
+            "quantity": "Coefficient Precision",
+            "x": [
+              8348,
+              14966,
+              21417,
+              25480
+            ],
+            "values": [
+              15,
+              15,
+              15,
+              15
+            ]
+          },
+          {
+            "name": "Coefficient Precision Over Time",
+            "unit": "bits",
+            "axis": "seconds",
+            "concept": "prediction",
+            "quantity": "Coefficient Precision",
+            "x": [
+              0
+            ],
+            "values": [
+              15
+            ]
           }
         ],
         "categorySeries": [
@@ -4306,6 +4385,259 @@
               [
                 3,
                 3
+              ]
+            ]
+          },
+          {
+            "name": "Subframe Types",
+            "concept": "prediction",
+            "valueLabel": "subframe",
+            "categories": [
+              {
+                "name": "Constant",
+                "count": 0
+              },
+              {
+                "name": "Verbatim",
+                "count": 0
+              },
+              {
+                "name": "Fixed Predictor",
+                "count": 4
+              },
+              {
+                "name": "Linear Predictor",
+                "count": 8
+              }
+            ],
+            "total": 12,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                6
+              ]
+            ],
+            "runs": [
+              [
+                3,
+                8
+              ],
+              [
+                2,
+                4
+              ]
+            ]
+          },
+          {
+            "name": "Fixed Predictor Orders",
+            "concept": "prediction",
+            "valueLabel": "subframe",
+            "categories": [
+              {
+                "name": "Order 0",
+                "count": 4
+              },
+              {
+                "name": "Order 1",
+                "count": 0
+              },
+              {
+                "name": "Order 2",
+                "count": 0
+              },
+              {
+                "name": "Order 3",
+                "count": 0
+              },
+              {
+                "name": "Order 4",
+                "count": 0
+              }
+            ],
+            "total": 4,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                0,
+                4
+              ],
+              [
+                2,
+                2
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                4
+              ]
+            ]
+          },
+          {
+            "name": "Partition Orders",
+            "concept": "prediction",
+            "valueLabel": "subframe",
+            "categories": [
+              {
+                "name": "Order 0",
+                "count": 5
+              },
+              {
+                "name": "Order 1",
+                "count": 4
+              },
+              {
+                "name": "Order 2",
+                "count": 0
+              },
+              {
+                "name": "Order 3",
+                "count": 1
+              },
+              {
+                "name": "Order 4",
+                "count": 0
+              },
+              {
+                "name": "Order 5",
+                "count": 2
+              },
+              {
+                "name": "Order 6",
+                "count": 0
+              },
+              {
+                "name": "Order 7",
+                "count": 0
+              },
+              {
+                "name": "Order 8",
+                "count": 0
+              },
+              {
+                "name": "Order 9",
+                "count": 0
+              },
+              {
+                "name": "Order 10",
+                "count": 0
+              },
+              {
+                "name": "Order 11",
+                "count": 0
+              },
+              {
+                "name": "Order 12",
+                "count": 0
+              },
+              {
+                "name": "Order 13",
+                "count": 0
+              },
+              {
+                "name": "Order 14",
+                "count": 0
+              },
+              {
+                "name": "Order 15",
+                "count": 0
+              }
+            ],
+            "total": 12,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                6
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                3
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                3,
+                1
+              ],
+              [
+                5,
+                2
+              ],
+              [
+                0,
+                4
+              ]
+            ]
+          },
+          {
+            "name": "Rice With 5-Bit Parameters",
+            "concept": "prediction",
+            "valueLabel": "subframe",
+            "categories": [
+              {
+                "name": "Rice with 5-bit parameters",
+                "count": 6
+              },
+              {
+                "name": "Rice",
+                "count": 6
+              }
+            ],
+            "total": 12,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                6
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                6
+              ],
+              [
+                0,
+                6
+              ]
+            ]
+          },
+          {
+            "name": "Subframes With Wasted Bits",
+            "concept": "prediction",
+            "valueLabel": "subframe",
+            "categories": [
+              {
+                "name": "With wasted bits",
+                "count": 0
+              },
+              {
+                "name": "Without wasted bits",
+                "count": 12
+              }
+            ],
+            "total": 12,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                6
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                12
               ]
             ]
           }
