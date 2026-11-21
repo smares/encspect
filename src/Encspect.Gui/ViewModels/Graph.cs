@@ -458,8 +458,8 @@ public static class GraphColumns
 }
 
 // The headings the Graphs tab lists a stream's series under, the same in every format: "Stereo Coding", "Block
-// switching", "Coded Bandwidth" and "Bit Distribution", then "Other". A series says its concept; the bitrate series, which
-// set none, are placed by their unit.
+// Switching", "Coded Bandwidth", "Bit Distribution" and "Prediction", then "Other". A series says its concept; the
+// bitrate series, which set none, are placed by their unit.
 public static class GraphHeadings
 {
     public const string Summary = "Summary";
@@ -467,13 +467,14 @@ public static class GraphHeadings
     public const string BlockSwitching = "Block Switching";
     public const string CodedBandwidth = "Coded Bandwidth";
     public const string BitDistribution = "Bit Distribution";
+    public const string Prediction = "Prediction";
     public const string Other = "Other";
 
     // The panels drawn from the decoded audio's measurements; the last heading, under the graphs of the coded data.
     public const string Audio = "Audio";
 
     // In the order the tab lists them.
-    public static IReadOnlyList<string> All { get; } = [Summary, StereoCoding, BlockSwitching, CodedBandwidth, BitDistribution, Other, Audio];
+    public static IReadOnlyList<string> All { get; } = [Summary, StereoCoding, BlockSwitching, CodedBandwidth, BitDistribution, Prediction, Other, Audio];
 
     public static string Of(GraphConcept concept) => concept switch
     {
@@ -481,6 +482,7 @@ public static class GraphHeadings
         GraphConcept.BlockSwitching => BlockSwitching,
         GraphConcept.CodedBandwidth => CodedBandwidth,
         GraphConcept.BitDistribution => BitDistribution,
+        GraphConcept.Prediction => Prediction,
         _ => Other,
     };
 

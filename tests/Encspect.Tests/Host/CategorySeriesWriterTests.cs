@@ -40,6 +40,21 @@ public class CategorySeriesWriterTests
     }
 
     [Fact]
+    public void The_json_names_every_graph_concept()
+    {
+        foreach ((GraphConcept concept, string name) in new[] { (GraphConcept.StereoCoding, "stereoCoding"), (GraphConcept.BlockSwitching, "blockSwitching"), (GraphConcept.CodedBandwidth, "codedBandwidth"), (GraphConcept.BitDistribution, "bitDistribution"), (GraphConcept.Prediction, "prediction") })
+        {
+            Series series = new("Test", "x", SeriesAxis.FrameOffset, new double[] { 0, 1 }, new double[] { 1, 2 }) { Description = "A test series.", Concept = concept };
+            var stream = new StreamInfo { Nodes = [new Node("Stream", 0, 2)], Codec = "Test", Series = [series] };
+            var report = new Report("a.bin", new Node("File", 0, 2), [], [stream]);
+
+            using JsonDocument document = JsonDocument.Parse(Json(report));
+
+            Assert.Equal(name, document.RootElement[0].GetProperty("streams")[0].GetProperty("series")[0].GetProperty("concept").GetString());
+        }
+    }
+
+    [Fact]
     public void The_json_has_counts_slot_names_the_time_index_and_run_length_codes()
     {
         (Report report, _) = Example();

@@ -508,6 +508,7 @@ public static class ReportJsonWriter
         GraphConcept.BlockSwitching => "blockSwitching",
         GraphConcept.CodedBandwidth => "codedBandwidth",
         GraphConcept.BitDistribution => "bitDistribution",
+        GraphConcept.Prediction => "prediction",
         _ => throw new ArgumentOutOfRangeException(nameof(concept)),
     };
 
