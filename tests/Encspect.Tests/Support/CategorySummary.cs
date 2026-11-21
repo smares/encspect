@@ -95,14 +95,23 @@ internal sealed partial class CategorySummary
 
         // The tally covers a region and the series a stream: the tallies of the group's regions are summed, and the series of its
         // streams. A series' own anchor counts too where it lies outside the streams' nodes.
-        // A region's own series anchor comes first, as another node of the same name (a setup header's "Modes") may lie before it.
+        // Where a region holds the series' own anchor, a node of the same name outside the statistics (a setup header's "Modes") is not a
+        // tally; one inside them still is, so a same-named tally without a series fails as it did. Without an own anchor the first match counts.
         var own = new HashSet<Node>(series.Select(s => s.Anchor!), ReferenceEqualityComparer.Instance);
         var anchors = new List<Node>();
         foreach (Node region in regions)
         {
-            if ((FindByName(region, entry.Anchor, 0, own) ?? FindByName(region, entry.Anchor, 0, null)) is { } found && !anchors.Contains(found, ReferenceEqualityComparer.Instance))
+            var matches = new List<(Node Node, bool InStatistics)>();
+            FindAll(region, entry.Anchor, 0, false, matches);
+            IEnumerable<Node> counted = matches.Any(m => own.Contains(m.Node))
+                ? matches.Where(m => own.Contains(m.Node) || m.InStatistics).Select(m => m.Node)
+                : matches.Take(1).Select(m => m.Node);
+            foreach (Node found in counted)
             {
-                anchors.Add(found);
+                if (!anchors.Contains(found, ReferenceEqualityComparer.Instance))
+                {
+                    anchors.Add(found);
+                }
             }
         }
 
@@ -179,27 +188,27 @@ internal sealed partial class CategorySummary
     // The denominator of a tally that has no node of its total, such as Opus' stereo and mono packets: the sum of the anchor's entries.
     private const string EntriesDenominator = "@entries";
 
-    private static Node? FindByName(Node node, string name, int depth, HashSet<Node>? only)
+    private static void FindAll(Node node, string name, int depth, bool inStatistics, List<(Node Node, bool InStatistics)> found)
     {
-        if (node.Name == name && (only is null || only.Contains(node)))
+        inStatistics |= node.Kind == NodeKind.Statistics;
+        if (node.Name == name)
         {
-            return node;
+            found.Add((node, inStatistics));
+            return;
         }
 
         if (depth >= 6 || !node.HasChildren)
         {
-            return null;
+            return;
         }
 
         foreach (Node child in node.Children)
         {
-            if (child.Kind != NodeKind.Frame && FindByName(child, name, depth + 1, only) is { } found)
+            if (child.Kind != NodeKind.Frame)
             {
-                return found;
+                FindAll(child, name, depth + 1, inStatistics, found);
             }
         }
-
-        return null;
     }
 
     private static void Compare(string name, string what, long actual, long expected, bool mayBeSmaller, List<string> problems)
