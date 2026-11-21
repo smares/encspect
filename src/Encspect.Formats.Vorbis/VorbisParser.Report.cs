@@ -447,7 +447,8 @@ public sealed partial class VorbisParser
                 .Select(s => s.Samples > 0 ? Math.Round(s.Bits * (double)Rate / s.Samples / 1000, 1, MidpointRounding.ToEven) : 0)
                 .ToArray();
             var bitrate = new Series("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = SeriesText.Bitrate };
-            CategorySeries blockSizes = sizeSeries.Build(offsets, bitrate, _blockSizesNode, SeriesText.BlockSizes, Topics.VorbisBlocks, perSecond ? new TimeIndex(starts, firstUnits.ToArray()) : null);
+            TimeIndex? time = perSecond ? new TimeIndex(starts, firstUnits.ToArray()) : null;
+            CategorySeries blockSizes = sizeSeries.Build(offsets, bitrate, _blockSizesNode, SeriesText.BlockSizes, Topics.VorbisBlocks, time);
             List<Series> series = perSecond ? [bitrate, new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, rates, anchor) { Description = SeriesText.BitrateOverTime }] : [bitrate];
             if (bandwidthValues.Count > 0 && _bandwidthNode is not null)
             {
@@ -481,7 +482,7 @@ public sealed partial class VorbisParser
                 }
             }
 
-            return (series, modeSeries is null ? [blockSizes] : [blockSizes, modeSeries.Build(offsets, bitrate, _modesNode, SeriesText.Modes, Topics.VorbisBlocks, perSecond ? new TimeIndex(starts, firstUnits.ToArray()) : null)]);
+            return (series, modeSeries is null ? [blockSizes] : [blockSizes, modeSeries.Build(offsets, bitrate, _modesNode, SeriesText.Modes, Topics.VorbisBlocks, time)]);
         }
     }
 
