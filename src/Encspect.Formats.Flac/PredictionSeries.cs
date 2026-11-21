@@ -46,7 +46,11 @@ internal sealed class PredictionSeries(long sampleRate)
     // Per frame, the highest order and precision of its linear predictors (0: none), and its block size.
     private readonly ChunkedList<byte> _orders = new();
     private readonly ChunkedList<byte> _precisions = new();
-    private readonly ChunkedList<ushort> _blockSizes = new();
+
+    // The block sizes are kept from the first frame that differs from the first one: a stream of one size keeps none.
+    private ChunkedList<ushort>? _blockSizes;
+    private int _frames;
+    private int _firstSize;
 
     // The seconds a frame starts in, and the highest order and precision of the frames that start in each.
     private readonly ChunkedList<long> _seconds = new();
@@ -110,7 +114,22 @@ internal sealed class PredictionSeries(long sampleRate)
     {
         _orders.Add((byte)order);
         _precisions.Add((byte)precision);
-        _blockSizes.Add((ushort)Math.Min(blockSize, ushort.MaxValue));
+        if (_frames == 0)
+        {
+            _firstSize = blockSize;
+        }
+
+        if (_blockSizes is null && blockSize != _firstSize)
+        {
+            _blockSizes = new ChunkedList<ushort>();
+            for (int i = 0; i < _frames; i++)
+            {
+                _blockSizes.Add((ushort)Math.Min(_firstSize, ushort.MaxValue));
+            }
+        }
+
+        _blockSizes?.Add((ushort)Math.Min(blockSize, ushort.MaxValue));
+        _frames++;
         if (sampleRate > 0)
         {
             long second = _coded / sampleRate;
@@ -258,6 +277,11 @@ internal sealed class PredictionSeries(long sampleRate)
     // Only where the frames differ in size but for a shorter last one: a fixed block size has one value.
     private void AddBlockSizes(List<Series> series, Series bitrate, CancellationToken cancellation)
     {
+        if (_blockSizes is null)
+        {
+            return;
+        }
+
         int frames = _blockSizes.Count;
         bool differs = false;
         for (int i = 1; i < frames - 1 && !differs; i++)
