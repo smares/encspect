@@ -60,7 +60,7 @@ internal sealed class DecodeFeed
 
     // One independent frame of the program: its bytes as far as the data holds them, the walk's records in written, and how it ended. An E-AC-3 program frame is the independent
     // frame and the dependent frames after it, so its unit is handed to the session when the next independent frame comes, or at the end (FlushUnit).
-    public void Feed(int[] written, long offset, ReadOnlyMemory<byte> frame, SyncFrame header, bool isReadable, Ac3Analysis.CrcState crc1, Ac3Analysis.CrcState crc2)
+    public void Feed(int[] written, long offset, ReadOnlyMemory<byte> frame, SyncFrame header, bool isReadable, Ac3Analysis.CrcState crc1, Ac3Analysis.CrcState crc2, bool failsContainerCheck = false)
     {
         FlushUnit();
         long first = _position;
@@ -88,7 +88,8 @@ internal sealed class DecodeFeed
             return;
         }
 
-        bool failsChecksum = crc1 == Ac3Analysis.CrcState.Mismatch || crc2 == Ac3Analysis.CrcState.Mismatch;
+        // failsContainerCheck: the frame's bytes come from a packet that fails the container's checksum (MappedBytes.FailsChecksum), which counts as the frame's own check.
+        bool failsChecksum = failsContainerCheck || crc1 == Ac3Analysis.CrcState.Mismatch || crc2 == Ac3Analysis.CrcState.Mismatch;
         if (UsesUnits)
         {
             _unit = new Unit(offset, first, samples, followsGap, failsChecksum, isReadable, frame.ToArray());
@@ -100,7 +101,7 @@ internal sealed class DecodeFeed
     }
 
     // A dependent frame after the independent frame of the unit: its records, and its bytes for the budget. A frame that is not read to its end makes the whole program frame unreadable.
-    public void AddDependent(int[] written, SyncFrame header, FrameResult result, ReadOnlyMemory<byte> frame, bool isReadable, Ac3Analysis.CrcState crc2)
+    public void AddDependent(int[] written, SyncFrame header, FrameResult result, ReadOnlyMemory<byte> frame, bool isReadable, Ac3Analysis.CrcState crc2, bool failsContainerCheck = false)
     {
         // The dependent frame's one CRC (Annex E 2.2.6) is part of the program's tally, an AC-3 core's crc2 tally included.
         _crc2Stored++;
@@ -124,7 +125,7 @@ internal sealed class DecodeFeed
         unit.Bytes = [.. unit.Bytes, .. frame.ToArray()];
         // A dependent frame that is lost (not read to its end) leaves channels of the program frame without audio: the whole program frame is then lost, not output with silent
         // channels. One whose CRC fails is read and decoded, and marks the unit as failing its check.
-        unit.FailsChecksum |= crc2 == Ac3Analysis.CrcState.Mismatch;
+        unit.FailsChecksum |= failsContainerCheck || crc2 == Ac3Analysis.CrcState.Mismatch;
         if (!isReadable)
         {
             unit.IsReadable = false;

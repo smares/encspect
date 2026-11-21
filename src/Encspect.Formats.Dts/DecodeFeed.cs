@@ -54,8 +54,9 @@ internal sealed class DecodeFeed
     // A frame was lost before the next one: it follows a gap.
     public void Gap() => _pendingGap = true;
 
+    // failsChecksum: the container's check over the frame's packet fails; a core frame has no check of its own that is compared.
     // Hands the unit to the decoder: walked from the values the planes hold, or unreadable. samples counts at the core rate.
-    public void Frame(long offset, int length, int samples, bool isWalked)
+    public void Frame(long offset, int length, int samples, bool isWalked, bool failsChecksum = false)
     {
         long first = _next;
         _next += samples;
@@ -73,7 +74,7 @@ internal sealed class DecodeFeed
             return;
         }
 
-        _session.Decode(new CodedFrame(bytes, "Frame", first, samples) { IsWalked = true, FollowsGap = _pendingGap });
+        _session.Decode(new CodedFrame(bytes, "Frame", first, samples) { IsWalked = true, FollowsGap = _pendingGap, FailsChecksum = failsChecksum });
         _pendingGap = false;
     }
 

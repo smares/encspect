@@ -128,7 +128,7 @@ public sealed class Ac3CodecParser(string id) : ICodecParser
 
             int length = Math.Min(valid.FrameLength, bytes.Length - position);
             long offset = Where(analysis, packet, position, position + length);
-            analysis.AddFrame(region, offset, bytes.Slice(position, length), valid, truncated: length < valid.FrameLength, inSample: true);
+            analysis.AddFrame(region, offset, bytes.Slice(position, length), valid, truncated: length < valid.FrameLength, inSample: true, failsContainerCheck: packet.FailsChecksum);
             observed.Add(valid, analysis.LastResult, length, isSampleStart: false);
             if (length < valid.FrameLength)
             {

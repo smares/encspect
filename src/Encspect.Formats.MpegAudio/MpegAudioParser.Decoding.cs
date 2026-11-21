@@ -285,7 +285,7 @@ public sealed partial class MpegAudioParser
             {
                 IsWalked = isReadable,
                 IsUnreadable = !isReadable,
-                FailsChecksum = entry.FailsCrc,
+                FailsChecksum = entry.FailsCrc || state.Build.FailsContainerCheck(entry.Offset, entry.Length),
                 FollowsGap = isPending,
             });
         }
