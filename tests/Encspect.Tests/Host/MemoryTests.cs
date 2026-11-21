@@ -767,6 +767,15 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         Output.WriteLine($"{kept / frames} bytes kept and {peak / frames} bytes peak per frame");
         Assert.True(kept < frames * 200L, $"The report keeps {kept / frames} bytes per frame.");
         Assert.True(peak < frames * 260L, $"The live heap grew by {peak / frames} bytes per frame.");
+
+        // The coding series of the subframes (docs/design/coding-graphs.md, "Memory budget"): about 48 bytes for a stereo frame at most, recorded while reading,
+        // with the numeric series' values and the codes and count bytes of the category series.
+        StreamInfo stream = Assert.Single(report.Streams);
+        long index = stream.CategorySeries.Count * 4L * ((frames / 1024) + 1);
+        long categories = stream.CategorySeries.Sum(c => c.StorageBytes);
+        long numeric = stream.Series.Where(s => s.Name is "Highest Predictor Order" or "Coefficient Precision" or "Block Size").Sum(s => BackingBytes(s.Values));
+        Output.WriteLine($"{categories / frames} bytes of category series and {numeric / frames} of numeric series per frame");
+        Assert.True(categories + numeric <= (frames * 48L) + index, $"The coding series keep {(categories + numeric) / (double)frames} bytes per frame.");
         GC.KeepAlive(report);
     }
 
