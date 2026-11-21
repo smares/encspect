@@ -195,15 +195,15 @@ public sealed partial class SpeexParser
 
             if (Mode >= 0 && _frames > 0)
             {
-                AddSubmodes(node, "Narrowband Submodes", Explain.NarrowbandSubmodes, _narrowband, SpeexFrames.NarrowbandBits, null);
+                _narrowbandNode = AddSubmodes(node, "Narrowband Submodes", Explain.NarrowbandSubmodes, _narrowband, SpeexFrames.NarrowbandBits, null);
                 if (Mode >= 1)
                 {
-                    AddSubmodes(node, "Wideband Submodes", Explain.WidebandSubmodes, _wideband, SpeexFrames.WidebandBits, "No wideband layer");
+                    _widebandNode = AddSubmodes(node, "Wideband Submodes", Explain.WidebandSubmodes, _wideband, SpeexFrames.WidebandBits, "No wideband layer");
                 }
 
                 if (Mode >= 2)
                 {
-                    AddSubmodes(node, "Ultra-Wideband Submodes", Explain.UltraWidebandSubmodes, _ultraWideband, SpeexFrames.UltraWidebandBits, "No ultra-wideband layer");
+                    _ultraWidebandNode = AddSubmodes(node, "Ultra-Wideband Submodes", Explain.UltraWidebandSubmodes, _ultraWideband, SpeexFrames.UltraWidebandBits, "No ultra-wideband layer");
                 }
             }
 
@@ -216,7 +216,13 @@ public sealed partial class SpeexParser
             return distribution;
         }
 
-        private void AddSubmodes(Node statistics, string name, string description, long[] counts, ReadOnlySpan<int> bits, string? absent)
+        private static string SubmodeName(int submode, int bits) => $"Submode {submode} ({Counts.Of(bits, "bit", "bits")})";
+
+        private Node? _narrowbandNode;
+        private Node? _widebandNode;
+        private Node? _ultraWidebandNode;
+
+        private Node AddSubmodes(Node statistics, string name, string description, long[] counts, ReadOnlySpan<int> bits, string? absent)
         {
             int kinds = counts.Count(c => c > 0);
             Node node = statistics.Add(name, statistics.Offset, statistics.Length, NodeValue.Integer(kinds, "submodes", "submode"), description);
@@ -224,7 +230,7 @@ public sealed partial class SpeexParser
             {
                 if (counts[submode] > 0)
                 {
-                    node.Add($"Submode {submode} ({Counts.Of(bits[submode], "bit", "bits")})", statistics.Offset, statistics.Length, Share(counts[submode], _frames, "frame", "frames"), Explain.SubmodeShare);
+                    node.Add(SubmodeName(submode, bits[submode]), statistics.Offset, statistics.Length, Share(counts[submode], _frames, "frame", "frames"), Explain.SubmodeShare);
                 }
             }
 
@@ -232,6 +238,8 @@ public sealed partial class SpeexParser
             {
                 node.Add(absent, statistics.Offset, statistics.Length, Share(counts[FrameRecord.Absent], _frames, "frame", "frames"), Explain.LayerAbsent);
             }
+
+            return node;
         }
 
         // A packet's bytes over the samples it codes, in kbps.
@@ -260,11 +268,11 @@ public sealed partial class SpeexParser
         // that start in it over their duration, rounded half to even to 0.1 kbps. A header whose
         // sample rate makes a packet last longer than a second has no per-second series, so a
         // corrupt rate cannot make one of billions of seconds.
-        private List<Series> Series(Node? distribution, Node? packets)
+        private (List<Series> Series, IReadOnlyList<CategorySeries> Categories) Series(Node? distribution, Node? packets)
         {
             if (!HasTime || _packets == 0 || packets is null)
             {
-                return [];
+                return ([], []);
             }
 
             bool perSecond = SamplesPerPacket <= Rate;
@@ -307,7 +315,70 @@ public sealed partial class SpeexParser
                 .Select(s => s.Packets > 0 ? Math.Round(s.Bits * (double)Rate / (s.Packets * perPacket) / 1000, 1, MidpointRounding.ToEven) : 0)
                 .ToArray();
             var bitrate = new Series("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = SeriesText.Bitrate };
-            return perSecond ? [bitrate, new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, rates, distribution) { Description = SeriesText.BitrateOverTime }] : [bitrate];
+            List<Series> series = perSecond ? [bitrate, new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, rates, distribution) { Description = SeriesText.BitrateOverTime }] : [bitrate];
+            return (series, SubmodeSeries(offsets, bitrate));
+        }
+
+        // The submodes of each layer, one unit per packet with a value per frame it holds, as the tallies count frames; a packet the
+        // container cut holds none. The categories are the submodes the mode defines, with "No wideband layer" or "No ultra-wideband layer" last.
+        private List<CategorySeries> SubmodeSeries(double[] offsets, Series bitrate)
+        {
+            var built = new List<CategorySeries>();
+            if (Mode < 0 || _frames == 0 || _narrowbandNode is null)
+            {
+                return built;
+            }
+
+            (string Name, Node? Anchor, int[] Bits, string Absent, string[] Descriptions, string Layer, Func<FrameRecord, int> Submode, string Text)[] layers =
+            [
+                ("Narrowband Submodes", _narrowbandNode, SpeexFrames.NarrowbandBits.ToArray(), string.Empty, Explain.NarrowbandSubmodeCategories, "narrowband", f => f.Narrowband, SeriesText.NarrowbandSubmodes),
+                ("Wideband Submodes", Mode >= 1 ? _widebandNode : null, SpeexFrames.WidebandBits.ToArray(), "No wideband layer", Explain.WidebandSubmodeCategories, "wideband", f => f.Wideband, SeriesText.WidebandSubmodes),
+                ("Ultra-Wideband Submodes", Mode >= 2 ? _ultraWidebandNode : null, SpeexFrames.UltraWidebandBits.ToArray(), "No ultra-wideband layer", Explain.UltraWidebandSubmodeCategories, "ultra-wideband", f => f.UltraWideband, SeriesText.UltraWidebandSubmodes),
+            ];
+            foreach (var layer in layers)
+            {
+                if (layer.Anchor is null)
+                {
+                    continue;
+                }
+
+                // A layer a frame lacks comes first, as the submode of fewest bits, so an ordered series reads from none to the largest.
+                var categories = new List<Category>();
+                int shift = layer.Absent.Length > 0 ? 1 : 0;
+                if (shift == 1)
+                {
+                    categories.Add(new Category(layer.Absent, Explain.LayerAbsent) { Topic = Topics.SpeexModes });
+                }
+
+                for (int submode = 0; submode < layer.Descriptions.Length; submode++)
+                {
+                    categories.Add(new Category(SubmodeName(submode, layer.Bits[submode]), layer.Descriptions[submode]) { Topic = Topics.SpeexModes });
+                }
+
+                var builder = new CategorySeriesBuilder(layer.Name, categories, "frame", isOrdered: true);
+                var codes = new byte[CategorySeries.MaxValuesPerUnit];
+                for (int i = 0; i < _records.Packets.Count; i++)
+                {
+                    if (i % 4096 == 0)
+                    {
+                        context.CancellationToken.ThrowIfCancellationRequested();
+                    }
+
+                    int frames = _cutPackets.Contains(i) ? 0 : Math.Min(_records.FrameCount(i), codes.Length);
+                    int first = _records.Packets[i].FirstFrame;
+                    for (int f = 0; f < frames; f++)
+                    {
+                        int submode = layer.Submode(_records.Frames[first + f]);
+                        codes[f] = submode == FrameRecord.Absent && shift == 1 ? (byte)0 : submode < layer.Descriptions.Length ? (byte)(submode + shift) : CategorySeries.None;
+                    }
+
+                    builder.Add(codes.AsSpan(0, frames));
+                }
+
+                built.Add(builder.Build(offsets, bitrate, layer.Anchor, layer.Text, Topics.SpeexModes));
+            }
+
+            return built;
         }
     }
 

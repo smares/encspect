@@ -8774,6 +8774,110 @@
         ],
         "categorySeries": [
           {
+            "name": "Modes",
+            "valueLabel": "stream packet",
+            "categories": [
+              {
+                "name": "SILK-only",
+                "count": 0
+              },
+              {
+                "name": "Hybrid",
+                "count": 0
+              },
+              {
+                "name": "CELT-only",
+                "count": 104
+              }
+            ],
+            "total": 104,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                4,
+                26
+              ]
+            ],
+            "runs": [
+              [
+                2,
+                104
+              ]
+            ]
+          },
+          {
+            "name": "Frame Sizes",
+            "valueLabel": "stream packet",
+            "categories": [
+              {
+                "name": "2.5 ms",
+                "count": 0
+              },
+              {
+                "name": "5 ms",
+                "count": 0
+              },
+              {
+                "name": "10 ms",
+                "count": 0
+              },
+              {
+                "name": "20 ms",
+                "count": 104
+              },
+              {
+                "name": "40 ms",
+                "count": 0
+              },
+              {
+                "name": "60 ms",
+                "count": 0
+              }
+            ],
+            "total": 104,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                4,
+                26
+              ]
+            ],
+            "runs": [
+              [
+                3,
+                104
+              ]
+            ]
+          },
+          {
+            "name": "Channel Coding",
+            "valueLabel": "stream packet",
+            "categories": [
+              {
+                "name": "Stereo",
+                "count": 0
+              },
+              {
+                "name": "Mono",
+                "count": 104
+              }
+            ],
+            "total": 104,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                4,
+                26
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                104
+              ]
+            ]
+          },
+          {
             "name": "Block Sizes",
             "concept": "blockSwitching",
             "valueLabel": "frame",

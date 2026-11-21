@@ -205,6 +205,7 @@ public class GraphTests
         using var model = new DetailViewModel(Analyzer.CreateDefault(), ui.Post);
         Task load = model.LoadAsync(Fixtures.Ogg("external-speexenc-wb-vbr.spx"));
         ui.Until(() => load.IsCompleted);
+        model.Graphs.Selected = model.Graphs.Choices.Single(c => c.Title == "Bitrate");
         var line = (LineGraph)model.Graphs.Graph!;
         Assert.Equal("Bitrate", line.Series.Name);
 

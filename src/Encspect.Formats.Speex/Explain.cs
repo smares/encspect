@@ -70,6 +70,34 @@ internal static class Explain
     public const string NarrowbandSubmodes = "How many frames use each narrowband submode, with the bits per frame it takes (Speex manual, table 9.1).";
     public const string WidebandSubmodes = "How many frames use each wideband submode, with the bits per layer it takes (Speex manual, table 10.1).";
     public const string UltraWidebandSubmodes = "How many frames use each ultra-wideband submode, with the bits per layer it takes (libspeex 1.2.1, speex_uwb_mode).";
+    public static readonly string[] NarrowbandSubmodeCategories =
+    [
+        "Frames whose narrowband layer is submode 0, the 5-bit frame of discontinuous transmission, which carries no speech data (Speex manual, table 9.1).",
+        "Frames whose narrowband layer uses submode 1, which takes 43 bits per frame (Speex manual, table 9.1).",
+        "Frames whose narrowband layer uses submode 2, which takes 119 bits per frame (Speex manual, table 9.1).",
+        "Frames whose narrowband layer uses submode 3, which takes 160 bits per frame (Speex manual, table 9.1).",
+        "Frames whose narrowband layer uses submode 4, which takes 220 bits per frame (Speex manual, table 9.1).",
+        "Frames whose narrowband layer uses submode 5, which takes 300 bits per frame (Speex manual, table 9.1).",
+        "Frames whose narrowband layer uses submode 6, which takes 364 bits per frame (Speex manual, table 9.1).",
+        "Frames whose narrowband layer uses submode 7, which takes 492 bits per frame (Speex manual, table 9.1).",
+        "Frames whose narrowband layer uses submode 8, which takes 79 bits per frame (Speex manual, table 9.1).",
+    ];
+
+    public static readonly string[] WidebandSubmodeCategories =
+    [
+        "Frames whose wideband layer uses submode 0, which takes 4 bits per layer (Speex manual, table 10.1).",
+        "Frames whose wideband layer uses submode 1, which takes 36 bits per layer (Speex manual, table 10.1).",
+        "Frames whose wideband layer uses submode 2, which takes 112 bits per layer (Speex manual, table 10.1).",
+        "Frames whose wideband layer uses submode 3, which takes 192 bits per layer (Speex manual, table 10.1).",
+        "Frames whose wideband layer uses submode 4, which takes 352 bits per layer (Speex manual, table 10.1).",
+    ];
+
+    public static readonly string[] UltraWidebandSubmodeCategories =
+    [
+        "Frames whose ultra-wideband layer uses submode 0, which takes 4 bits per layer (libspeex 1.2.1, speex_uwb_mode).",
+        "Frames whose ultra-wideband layer uses submode 1, which takes 36 bits per layer (libspeex 1.2.1, speex_uwb_mode).",
+    ];
+
     public const string SubmodeShare = "Frames of this submode, and their share of all frames.";
     public const string LayerAbsent = "Frames without a layer for this band, and their share of all frames.";
     public const string InBandRequests = "How many in-band requests, parameters and application data the frames carry (codes 14 and 13, Speex manual, section 5.5).";
@@ -84,5 +112,8 @@ internal static class Explain
 internal static class SeriesText
 {
     public const string Bitrate = "The bitrate of each audio packet: its bits over the samples its frames code.";
+    public const string NarrowbandSubmodes = "The narrowband submode of each frame of an audio packet, which sets its bit allocation (Speex manual, table 9.1), as the tally of Narrowband Submodes counts them; a packet the container cut holds none.";
+    public const string WidebandSubmodes = "The wideband layer's submode of each frame of an audio packet (Speex manual, table 10.1), or no layer where the frame has none, as the tally of Wideband Submodes counts them; a packet the container cut holds none.";
+    public const string UltraWidebandSubmodes = "The ultra-wideband layer's submode of each frame of an audio packet (libspeex 1.2.1, speex_uwb_mode), or no layer where the frame has none, as the tally of Ultra-Wideband Submodes counts them; a packet the container cut holds none.";
     public const string BitrateOverTime = "The bitrate in each second of audio: the bits of the packets that start in it over their duration.";
 }

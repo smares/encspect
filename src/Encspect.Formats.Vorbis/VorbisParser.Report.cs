@@ -287,11 +287,12 @@ public sealed partial class VorbisParser
             if (_setup is { HasModes: true } setup && blocks > 0)
             {
                 Node modes = Add("Modes", Count(_modeCounts.Count(c => c > 0), "mode used", "modes used"), Explain.ModeUsage, Topics.VorbisBlocks);
+                _modesNode = modes;
                 for (int mode = 0; mode < setup.ModeIsLong!.Length; mode++)
                 {
                     if (_modeCounts[mode] > 0)
                     {
-                        modes.Add($"Mode {mode} ({(setup.ModeIsLong[mode] ? "long" : "short")} block)", start, length, Share(_modeCounts[mode], blocks, "packet", "packets"), Explain.ModeShare);
+                        modes.Add(ModeName(mode, setup.ModeIsLong[mode]), start, length, Share(_modeCounts[mode], blocks, "packet", "packets"), Explain.ModeShare);
                     }
                 }
             }
@@ -343,6 +344,9 @@ public sealed partial class VorbisParser
         ];
 
         private Node? _blockSizesNode;
+        private Node? _modesNode;
+
+        private static string ModeName(int mode, bool isLong) => $"Mode {mode} ({(isLong ? "long" : "short")} block)";
 
         // The bitrate of each whole packet that codes a block, counted as the packets are read.
         private readonly BitrateDistribution _distribution = new();
@@ -387,6 +391,10 @@ public sealed partial class VorbisParser
             var bandwidthValues = new List<double>();
             var firstUnits = new List<int>();
             var sizeSeries = new CategorySeriesBuilder("Block Sizes", BlockSizeCategories, "packet", 1, concept: GraphConcept.BlockSwitching);
+            bool hasModes = _setup is { HasModes: true } && _modesNode is not null;
+            CategorySeriesBuilder? modeSeries = hasModes
+                ? new CategorySeriesBuilder("Modes", [.. _setup!.ModeIsLong!.Select((isLong, mode) => new Category(ModeName(mode, isLong), isLong ? Explain.ModeLong : Explain.ModeShort) { Topic = Topics.VorbisBlocks })], "packet", 1)
+                : null;
             long position = 0;
             for (int i = 0; i < count; i++)
             {
@@ -399,10 +407,12 @@ public sealed partial class VorbisParser
                 if (!packet.IsBlock || _cutPackets.Contains(i))
                 {
                     sizeSeries.Add(CategorySeries.None);
+                    modeSeries?.Add(CategorySeries.None);
                     continue;
                 }
 
                 sizeSeries.Add(packet.IsLong ? (byte)0 : (byte)1);
+                modeSeries?.Add(packet.Mode);
                 bitrates[i] = PacketBitrate(packet);
                 int half = _records.BlockSize(packet) / 2;
                 double? bandwidth = _records.CodedEnds[i] == NoBandwidth ? null : BandwidthOf(_records.CodedEnds[i], _records.BlockSize(packet));
@@ -437,7 +447,8 @@ public sealed partial class VorbisParser
                 .Select(s => s.Samples > 0 ? Math.Round(s.Bits * (double)Rate / s.Samples / 1000, 1, MidpointRounding.ToEven) : 0)
                 .ToArray();
             var bitrate = new Series("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = SeriesText.Bitrate };
-            CategorySeries blockSizes = sizeSeries.Build(offsets, bitrate, _blockSizesNode, SeriesText.BlockSizes, Topics.VorbisBlocks, perSecond ? new TimeIndex(starts, firstUnits.ToArray()) : null);
+            TimeIndex? time = perSecond ? new TimeIndex(starts, firstUnits.ToArray()) : null;
+            CategorySeries blockSizes = sizeSeries.Build(offsets, bitrate, _blockSizesNode, SeriesText.BlockSizes, Topics.VorbisBlocks, time);
             List<Series> series = perSecond ? [bitrate, new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, rates, anchor) { Description = SeriesText.BitrateOverTime }] : [bitrate];
             if (bandwidthValues.Count > 0 && _bandwidthNode is not null)
             {
@@ -471,7 +482,7 @@ public sealed partial class VorbisParser
                 }
             }
 
-            return (series, [blockSizes]);
+            return (series, modeSeries is null ? [blockSizes] : [blockSizes, modeSeries.Build(offsets, bitrate, _modesNode, SeriesText.Modes, Topics.VorbisBlocks, time)]);
         }
     }
 

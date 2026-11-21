@@ -7838,6 +7838,92 @@
         ],
         "categorySeries": [
           {
+            "name": "Modes",
+            "valueLabel": "packet",
+            "categories": [
+              {
+                "name": "SILK-only",
+                "count": 0
+              },
+              {
+                "name": "Hybrid",
+                "count": 0
+              },
+              {
+                "name": "CELT-only",
+                "count": 60
+              }
+            ],
+            "total": 60,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                2,
+                60
+              ]
+            ]
+          },
+          {
+            "name": "Frame Sizes",
+            "valueLabel": "packet",
+            "categories": [
+              {
+                "name": "2.5 ms",
+                "count": 0
+              },
+              {
+                "name": "5 ms",
+                "count": 0
+              },
+              {
+                "name": "10 ms",
+                "count": 0
+              },
+              {
+                "name": "20 ms",
+                "count": 60
+              },
+              {
+                "name": "40 ms",
+                "count": 0
+              },
+              {
+                "name": "60 ms",
+                "count": 0
+              }
+            ],
+            "total": 60,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                3,
+                60
+              ]
+            ]
+          },
+          {
+            "name": "Channel Coding",
+            "valueLabel": "packet",
+            "categories": [
+              {
+                "name": "Stereo",
+                "count": 60
+              },
+              {
+                "name": "Mono",
+                "count": 0
+              }
+            ],
+            "total": 60,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                0,
+                60
+              ]
+            ]
+          },
+          {
             "name": "Block Sizes",
             "concept": "blockSwitching",
             "valueLabel": "frame",

@@ -28,7 +28,7 @@ Speex in [Ogg](ogg.md).
 - **Bitrate Mode** (the mode the stream or its container states where it states one (the nominal bitrates of AC-3 and of DTS without extension substreams, 0x7FF in ADTS, the variable flag of ASF), else variable or constant by the units' own bitrates, unknown for one unit) and **Bitrate Distribution** (the units' bitrates counted in ranges of 32 kbps, with each range's share), beside the minimum and maximum bitrate. The header's vbr flag states a variable mode when it is 1; a clear flag states nothing (speexenc and ffmpeg leave it unset in ABR), so the packets' own bitrates decide. The stream's `isVbr` (JSON, the GUI's VBR) follows the same decision, so the stream and the statistic agree; there is no separate `IsVbr` statistic.
 - the delay, end trimming and duration;
 - bitrates and packet sizes;
-- the frames of each submode;
+- the frames of each submode, as the tallies "Narrowband Submodes", "Wideband Submodes" and "Ultra-Wideband Submodes" and as ordered category series of the same names: one unit per packet with a value per frame, a wideband or ultra-wideband layer a frame lacks counted as "No wideband layer" or "No ultra-wideband layer", the first category of the ordered series; each category has its own description (the bits per frame or layer its submode takes), and the nine narrowband submodes outrun the eight steps of a ramp, so the GUI draws the last in the flat gray "Other" (see the palette in the design); a packet the container cut has no value;
 - the bitrate of every packet and per second.
 
 ## Channel layout

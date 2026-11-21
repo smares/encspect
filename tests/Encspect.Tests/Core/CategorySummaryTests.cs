@@ -128,6 +128,59 @@ public class CategorySummaryTests
         Assert.Empty(CategorySummary.Parse(Table).Check(allowed));
     }
 
+    [Fact]
+    public void A_total_of_the_anchors_entries_stands_for_a_tally_with_no_node_of_its_total()
+    {
+        const string table = """{ "series": { "Block Usage": { "form": "entries", "anchor": "Block Usage", "denominator": "@entries" } } }""";
+        (Report report, _) = Build([10, 2, 3], tally: [10, 2, 3], granules: 99);
+
+        Assert.Empty(CategorySummary.Parse(table).Check(report));
+
+        (Report wrong, _) = Build([10, 2, 3], tally: [10, 2, 4], granules: 99);
+        Assert.Contains("Block Usage: total is 15 in the series and 16 in the tally", CategorySummary.Parse(table).Check(wrong));
+    }
+
+    [Fact]
+    public void A_node_of_the_anchors_name_outside_the_statistics_is_not_a_tally_beside_the_series_anchor()
+    {
+        (Report report, Node anchor) = Build([10, 2, 3], tally: [10, 2, 3], granules: 15);
+        // A setup header's node of the same name, found before the statistics.
+        var header = new Node("Setup Header", 0, 100);
+        header.Add(new Node("Block Usage", 0, 100, NodeValue.Integer(7, "granules", "granule")));
+        Node stream = report.Streams[0].Nodes[0];
+        Node reordered = new("Stream", 0, 100) { Kind = NodeKind.Stream };
+        reordered.Add(header);
+        foreach (Node child in stream.Children)
+        {
+            reordered.Add(child);
+        }
+
+        var root = new Node("File", 0, 100);
+        root.Add(reordered);
+        var withHeader = new Report("a.mp3", root, [], [new StreamInfo { Nodes = [reordered], Codec = "Test", CategorySeries = report.Streams[0].CategorySeries }]);
+
+        Assert.Empty(CategorySummary.Parse(Table).Check(withHeader));
+        Assert.NotNull(anchor);
+    }
+
+    [Fact]
+    public void A_tally_of_the_anchors_name_in_the_statistics_without_a_series_still_fails()
+    {
+        (Report report, _) = Build([10, 2, 3], tally: [10, 2, 3], granules: 15);
+        Node stream = report.Streams[0].Nodes[0];
+        var other = new Node("Statistics", 0, 100) { Kind = NodeKind.Statistics };
+        var tally = new Node("Block Usage", 0, 100, NodeValue.Integer(5, "granules", "granule"));
+        foreach (string name in new[] { "Long", "Start", "Short" })
+        {
+            tally.Add(new Node(name, 0, 100, NodeValue.Integer(name == "Long" ? 5 : 0, "granules", "granule")));
+        }
+
+        other.Add(tally);
+        stream.Add(other);
+
+        Assert.NotEmpty(CategorySummary.Parse(Table).Check(report));
+    }
+
     private static CategorySeries Series(string name, long[] counts, Node anchor)
     {
         Category[] categories = [new("Long", "l"), new("Start", "s"), new("Short", "t")];

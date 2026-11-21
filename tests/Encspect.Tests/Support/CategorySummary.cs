@@ -95,20 +95,31 @@ internal sealed partial class CategorySummary
 
         // The tally covers a region and the series a stream: the tallies of the group's regions are summed, and the series of its
         // streams. A series' own anchor counts too where it lies outside the streams' nodes.
+        // Where a region holds the series' own anchor, a node of the same name outside the statistics (a setup header's "Modes") is not a
+        // tally; one inside them still is, so a same-named tally without a series fails as it did. Without an own anchor the first match counts.
+        var own = new HashSet<Node>(series.Select(s => s.Anchor!), ReferenceEqualityComparer.Instance);
         var anchors = new List<Node>();
         foreach (Node region in regions)
         {
-            if (FindByName(region, entry.Anchor, 0) is { } found && !anchors.Contains(found, ReferenceEqualityComparer.Instance))
+            var matches = new List<(Node Node, bool InStatistics)>();
+            FindAll(region, entry.Anchor, 0, false, matches);
+            IEnumerable<Node> counted = matches.Any(m => own.Contains(m.Node))
+                ? matches.Where(m => own.Contains(m.Node) || m.InStatistics).Select(m => m.Node)
+                : matches.Take(1).Select(m => m.Node);
+            foreach (Node found in counted)
             {
-                anchors.Add(found);
+                if (!anchors.Contains(found, ReferenceEqualityComparer.Instance))
+                {
+                    anchors.Add(found);
+                }
             }
         }
 
-        foreach (Node own in series.Select(s => s.Anchor!))
+        foreach (Node anchor in series.Select(s => s.Anchor!))
         {
-            if (!anchors.Contains(own, ReferenceEqualityComparer.Instance))
+            if (!anchors.Contains(anchor, ReferenceEqualityComparer.Instance))
             {
-                anchors.Add(own);
+                anchors.Add(anchor);
             }
         }
 
@@ -118,7 +129,7 @@ internal sealed partial class CategorySummary
         foreach (Node anchor in anchors)
         {
             // The first of the names that has a node beside the anchor: a series two formats share has the denominator of each.
-            if (entry.Denominator.Select(n => Denominator(report.Root, anchor, n)).FirstOrDefault(d => d is not null) is not { } value)
+            if (entry.Denominator.Select(n => n == EntriesDenominator ? anchor.Children.Sum(c => Count(c.Value) ?? 0) : Denominator(report.Root, anchor, n)).FirstOrDefault(d => d is not null) is not { } value)
             {
                 problems.Add($"{name}: no node {string.Join(" or ", entry.Denominator)} with a whole number beside {anchor.Name}");
                 return;
@@ -174,27 +185,30 @@ internal sealed partial class CategorySummary
     [GeneratedRegex(@"^\s*([0-9][0-9,]*)(?![0-9])")]
     private static partial Regex LeadingCount();
 
-    private static Node? FindByName(Node node, string name, int depth)
+    // The denominator of a tally that has no node of its total, such as Opus' stereo and mono packets: the sum of the anchor's entries.
+    private const string EntriesDenominator = "@entries";
+
+    private static void FindAll(Node node, string name, int depth, bool inStatistics, List<(Node Node, bool InStatistics)> found)
     {
+        inStatistics |= node.Kind == NodeKind.Statistics;
         if (node.Name == name)
         {
-            return node;
+            found.Add((node, inStatistics));
+            return;
         }
 
         if (depth >= 6 || !node.HasChildren)
         {
-            return null;
+            return;
         }
 
         foreach (Node child in node.Children)
         {
-            if (child.Kind != NodeKind.Frame && FindByName(child, name, depth + 1) is { } found)
+            if (child.Kind != NodeKind.Frame)
             {
-                return found;
+                FindAll(child, name, depth + 1, inStatistics, found);
             }
         }
-
-        return null;
     }
 
     private static void Compare(string name, string what, long actual, long expected, bool mayBeSmaller, List<string> problems)

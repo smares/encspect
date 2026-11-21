@@ -458,6 +458,7 @@ public sealed partial class SpeexParser
 
             if (_header is { } header)
             {
+                var built = Series(distribution, packets);
                 context.AddStream(new StreamInfo
                 {
                     Nodes = [_parent],
@@ -475,7 +476,8 @@ public sealed partial class SpeexParser
                     EncoderConfidence = ClaimRoles.Resolved(encoder).Confidence,
                     Writer = ClaimRoles.Resolved(writer).Name,
                     WriterConfidence = ClaimRoles.Resolved(writer).Confidence,
-                    Series = Series(distribution, packets),
+                    Series = built.Series,
+                    CategorySeries = built.Categories,
                     Verification = verification,
                 });
             }

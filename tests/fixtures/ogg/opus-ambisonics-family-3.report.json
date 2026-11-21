@@ -2755,6 +2755,112 @@
               20000
             ]
           }
+        ],
+        "categorySeries": [
+          {
+            "name": "Modes",
+            "valueLabel": "stream packet",
+            "categories": [
+              {
+                "name": "SILK-only",
+                "count": 0
+              },
+              {
+                "name": "Hybrid",
+                "count": 0
+              },
+              {
+                "name": "CELT-only",
+                "count": 30
+              }
+            ],
+            "total": 30,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                15
+              ]
+            ],
+            "runs": [
+              [
+                2,
+                30
+              ]
+            ]
+          },
+          {
+            "name": "Frame Sizes",
+            "valueLabel": "stream packet",
+            "categories": [
+              {
+                "name": "2.5 ms",
+                "count": 0
+              },
+              {
+                "name": "5 ms",
+                "count": 0
+              },
+              {
+                "name": "10 ms",
+                "count": 0
+              },
+              {
+                "name": "20 ms",
+                "count": 30
+              },
+              {
+                "name": "40 ms",
+                "count": 0
+              },
+              {
+                "name": "60 ms",
+                "count": 0
+              }
+            ],
+            "total": 30,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                15
+              ]
+            ],
+            "runs": [
+              [
+                3,
+                30
+              ]
+            ]
+          },
+          {
+            "name": "Channel Coding",
+            "valueLabel": "stream packet",
+            "categories": [
+              {
+                "name": "Stereo",
+                "count": 30
+              },
+              {
+                "name": "Mono",
+                "count": 0
+              }
+            ],
+            "total": 30,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                15
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                30
+              ]
+            ]
+          }
         ]
       }
     ],

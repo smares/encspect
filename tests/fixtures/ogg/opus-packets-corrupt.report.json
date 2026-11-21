@@ -4083,6 +4083,260 @@
         ],
         "categorySeries": [
           {
+            "name": "Modes",
+            "valueLabel": "packet",
+            "categories": [
+              {
+                "name": "SILK-only",
+                "count": 0
+              },
+              {
+                "name": "Hybrid",
+                "count": 0
+              },
+              {
+                "name": "CELT-only",
+                "count": 11
+              }
+            ],
+            "total": 11,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                2,
+                1
+              ],
+              [
+                null,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                null,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                null,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                null,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                null,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                null,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                null,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                null,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                null,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                null,
+                1
+              ],
+              [
+                2,
+                1
+              ]
+            ]
+          },
+          {
+            "name": "Frame Sizes",
+            "valueLabel": "packet",
+            "categories": [
+              {
+                "name": "2.5 ms",
+                "count": 0
+              },
+              {
+                "name": "5 ms",
+                "count": 0
+              },
+              {
+                "name": "10 ms",
+                "count": 0
+              },
+              {
+                "name": "20 ms",
+                "count": 11
+              },
+              {
+                "name": "40 ms",
+                "count": 0
+              },
+              {
+                "name": "60 ms",
+                "count": 0
+              }
+            ],
+            "total": 11,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                3,
+                1
+              ],
+              [
+                null,
+                1
+              ],
+              [
+                3,
+                1
+              ],
+              [
+                null,
+                1
+              ],
+              [
+                3,
+                1
+              ],
+              [
+                null,
+                1
+              ],
+              [
+                3,
+                1
+              ],
+              [
+                null,
+                1
+              ],
+              [
+                3,
+                1
+              ],
+              [
+                null,
+                1
+              ],
+              [
+                3,
+                1
+              ],
+              [
+                null,
+                1
+              ],
+              [
+                3,
+                1
+              ],
+              [
+                null,
+                1
+              ],
+              [
+                3,
+                1
+              ],
+              [
+                null,
+                1
+              ],
+              [
+                3,
+                1
+              ],
+              [
+                null,
+                1
+              ],
+              [
+                3,
+                1
+              ],
+              [
+                null,
+                1
+              ],
+              [
+                3,
+                1
+              ]
+            ]
+          },
+          {
+            "name": "Channel Coding",
+            "valueLabel": "packet",
+            "categories": [
+              {
+                "name": "Stereo",
+                "count": 0
+              },
+              {
+                "name": "Mono",
+                "count": 20
+              }
+            ],
+            "total": 20,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                1,
+                1
+              ],
+              [
+                null,
+                1
+              ],
+              [
+                1,
+                19
+              ]
+            ]
+          },
+          {
             "name": "Block Sizes",
             "concept": "blockSwitching",
             "valueLabel": "frame",
@@ -4304,6 +4558,178 @@
           }
         ],
         "categorySeries": [
+          {
+            "name": "Modes",
+            "valueLabel": "stream packet",
+            "categories": [
+              {
+                "name": "SILK-only",
+                "count": 0
+              },
+              {
+                "name": "Hybrid",
+                "count": 0
+              },
+              {
+                "name": "CELT-only",
+                "count": 10
+              }
+            ],
+            "total": 10,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                2
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                2,
+                3
+              ]
+            ],
+            "runs": [
+              [
+                2,
+                10
+              ]
+            ]
+          },
+          {
+            "name": "Frame Sizes",
+            "valueLabel": "stream packet",
+            "categories": [
+              {
+                "name": "2.5 ms",
+                "count": 0
+              },
+              {
+                "name": "5 ms",
+                "count": 0
+              },
+              {
+                "name": "10 ms",
+                "count": 1
+              },
+              {
+                "name": "20 ms",
+                "count": 9
+              },
+              {
+                "name": "40 ms",
+                "count": 0
+              },
+              {
+                "name": "60 ms",
+                "count": 0
+              }
+            ],
+            "total": 10,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                2
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                2,
+                3
+              ]
+            ],
+            "runs": [
+              [
+                3,
+                7
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                3,
+                2
+              ]
+            ]
+          },
+          {
+            "name": "Channel Coding",
+            "valueLabel": "stream packet",
+            "categories": [
+              {
+                "name": "Stereo",
+                "count": 6
+              },
+              {
+                "name": "Mono",
+                "count": 5
+              }
+            ],
+            "total": 11,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                2
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                3
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ]
+          },
           {
             "name": "Block Sizes",
             "concept": "blockSwitching",
