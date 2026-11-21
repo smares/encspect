@@ -40,6 +40,10 @@ internal sealed class FrameDecoder : IFrameDecoder
     private IPcmSink? _sink;
     private bool _lostBefore;
 
+    // The packet before this one failed its checksum (CodedFrame.FailsChecksum): the decoder kept its overlap, so the samples this packet returns, the overlap of that packet's right half
+    // with this one's left half, depend on it and are withheld from the measurements (docs/design/damaged-units.md).
+    private bool _followsFailedUnit;
+
     public FrameDecoder(DecodeContext context, Identification identification, SetupModel setup)
     {
         _context = context;
@@ -137,6 +141,7 @@ internal sealed class FrameDecoder : IFrameDecoder
             _context.AddFinding(Severity.Info, "decode.frame-too-large", $"The packet at 0x{frame.Bytes.FileStart:X} could hold more values than the host lends buffers for, so it is not decoded.");
             _previousSize = -1;
             _lostBefore = true;
+            _followsFailedUnit = false;
             return 0;
         }
 
@@ -184,6 +189,12 @@ internal sealed class FrameDecoder : IFrameDecoder
         {
             _context.Withhold(frame.FirstSample, frame.Samples, WithholdReason.AfterGap);
         }
+        else if (_followsFailedUnit && count > 0)
+        {
+            _context.WithholdFromMeasurements(frame.FirstSample, count);
+        }
+
+        _followsFailedUnit = frame.FailsChecksum;
 
         if (count == 0)
         {

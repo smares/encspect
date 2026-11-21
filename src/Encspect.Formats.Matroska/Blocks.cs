@@ -21,6 +21,7 @@ internal sealed partial class FileReader
             IsInGroup = isInGroup,
             IsCut = element.End is { } declared && declared > end,
             Missing = element.End is { } stated && stated > end ? (uint)Math.Min(stated - end, uint.MaxValue) : 0,
+            FailsChecksum = segment.FailsChecksum,
         };
         string name = isInGroup ? "Block" : "SimpleBlock";
         if (dataLength > MaxBlock)

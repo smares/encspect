@@ -98,7 +98,7 @@ public sealed class MappedBytes
         FileStart = segments > 0 ? _offsets[0] : FileEnd;
     }
 
-    private MappedBytes(MappedBytes other)
+    private MappedBytes(MappedBytes other, bool isCut, bool failsChecksum)
     {
         Data = other.Data;
         _starts = other._starts;
@@ -110,7 +110,8 @@ public sealed class MappedBytes
         EndPositionField = other.EndPositionField;
         IsEndOfStream = other.IsEndOfStream;
         FollowsGap = other.FollowsGap;
-        IsCut = true;
+        IsCut = isCut;
+        FailsChecksum = failsChecksum;
     }
 
     private MappedBytes(ReadOnlyMemory<byte> data, long fileStart, long fileEnd)
@@ -148,6 +149,12 @@ public sealed class MappedBytes
     // above and this one describe a packet and are not carried by Slice.
     public bool IsCut { get; init; }
 
+    // For a packet a container hands to a codec parser: a byte of the packet lies on an Ogg page whose CRC fails, or inside a Matroska element whose CRC-32 fails (a
+    // Cluster, or the Segment), so the container's own check fails over it; a check that covers several packets marks every one. The codec parser passes it on as
+    // CodedFrame.FailsChecksum, which keeps the unit's output out of the measurements (docs/design/damaged-units.md, decision 2). It is not a finding of the codec's:
+    // the container's tallies stay out of the codec's verification. Like IsCut it describes a packet and is not carried by Slice.
+    public bool FailsChecksum { get; init; }
+
     public ReadOnlySpan<byte> Span => Data.Span;
 
     public int Length => Data.Length;
@@ -169,7 +176,10 @@ public sealed class MappedBytes
     }
 
     // The same bytes and packet members, flagged as cut: for a packet a content decoder returns, whose encoded frame was cut.
-    public MappedBytes AsCut() => IsCut ? this : new MappedBytes(this);
+    public MappedBytes AsCut() => IsCut ? this : new MappedBytes(this, true, FailsChecksum);
+
+    // The same bytes and packet members, flagged as failing the container's checksum: for a packet a content decoder returns, whose encoded frame lay in a failing element.
+    public MappedBytes AsChecksumFailed() => FailsChecksum ? this : new MappedBytes(this, IsCut, true);
 
     // Reads the ranges, in file order, into one buffer: a packet put together from its pages.
     public static MappedBytes Read(ByteReader reader, IReadOnlyList<ByteRange> ranges, bool isCut = false)

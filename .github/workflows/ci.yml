@@ -667,6 +667,9 @@ jobs:
       - name: Regenerate the MPEG audio and AC-3 files with a stored CRC changed
         run: python3 scripts/fixtures/make_mpeg_ac3_damaged_units_fixtures.py
 
+      - name: Regenerate the Ogg, FLAC and Matroska files with a page or Cluster CRC changed
+        run: python3 scripts/fixtures/make_ogg_matroska_damaged_units_fixtures.py
+
       - name: Regenerate the hand-built DTS fixtures and the encoder-made ones' manifests
         run: |
           python3 scripts/fixtures/make_dts_fixtures.py

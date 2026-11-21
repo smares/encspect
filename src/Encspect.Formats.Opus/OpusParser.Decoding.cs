@@ -278,12 +278,12 @@ public sealed partial class OpusParser
             SampleBuffers lent = _session.Lend(record.Length, 1);
             if (lent.IsEmpty)
             {
-                _session.Decode(new CodedFrame(held.Packet, "Packet", held.First, held.Samples) { FollowsGap = held.FollowsGap });
+                _session.Decode(new CodedFrame(held.Packet, "Packet", held.First, held.Samples) { FollowsGap = held.FollowsGap, FailsChecksum = held.Packet.FailsChecksum });
                 return;
             }
 
             record.CopyTo(lent.Narrow);
-            _session.Decode(new CodedFrame(held.Packet, "Packet", held.First, held.Samples) { IsWalked = true, FollowsGap = held.FollowsGap });
+            _session.Decode(new CodedFrame(held.Packet, "Packet", held.First, held.Samples) { IsWalked = true, FollowsGap = held.FollowsGap, FailsChecksum = held.Packet.FailsChecksum });
         }
 
         // The record of the entropy pass for a packet that is about to be decoded: the walk again, with the walkers of the feeding side, which see the packets in the order the first walk did

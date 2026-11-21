@@ -17,7 +17,8 @@ public class SpeexGapTests
         return report.Streams.Single(s => s.Codec.StartsWith("Speex", StringComparison.Ordinal));
     }
 
-    // The first byte of the tenth audio packet becomes the start of a narrowband layer of submode 9, which Speex does not define: the packet is corrupt.
+    // The first byte of the tenth audio packet becomes the start of a narrowband layer of submode 9, which Speex does not define: the packet is corrupt. The CRC of its page is written
+    // again, so the packet is damaged and the page is not (a page that fails its CRC withholds its packets whole: OggDamagedUnitsTests).
     private static byte[] Damaged(string name)
     {
         byte[] file = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "ogg", name));
@@ -25,6 +26,24 @@ public class SpeexGapTests
         Node packets = report.Streams.Single().Nodes[0].Children.Single(c => c.Name == "Audio Packets");
         long at = packets.Children[10].Offset;
         file[at] = (byte)(0x48 | (file[at] & 0x07));
+        for (int page = 0; page + 27 <= file.Length;)
+        {
+            int length = 27 + file[page + 26];
+            for (int i = 0; i < file[page + 26]; i++)
+            {
+                length += file[page + 27 + i];
+            }
+
+            if (at < page + length)
+            {
+                file.AsSpan(page + 22, 4).Clear();
+                System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(file.AsSpan(page + 22), OggBuilder.Crc(file.AsSpan(page, length)));
+                break;
+            }
+
+            page += length;
+        }
+
         return file;
     }
 

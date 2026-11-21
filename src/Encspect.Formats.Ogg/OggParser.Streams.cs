@@ -284,8 +284,8 @@ public sealed partial class OggParser
     }
 
     // The stream's packets, read again from its pages as the scan followed them. A page that fails its CRC hands over its packets as the
-    // page holds them, and a truncated page those with bytes present, the one it cuts flagged as cut (docs/design/samples-definition.md,
-    // question 2); a packet left unfinished at the end of the stream is handed over cut. The next packet after a page the stream lost follows
+    // page holds them, flagged as failing the checksum when a byte of them lies on such a page (MappedBytes.FailsChecksum), and a truncated page those
+    // with bytes present, the one it cuts flagged as cut (docs/design/samples-definition.md, question 2); a packet left unfinished at the end of the stream is handed over cut. The next packet after a page the stream lost follows
     // a gap.
     private static IEnumerable<MappedBytes> Packets(Region region, LogicalStream stream, PageWindow window, CancellationToken cancellationToken)
     {
@@ -322,11 +322,15 @@ public sealed partial class OggParser
         private int _length;
         private bool _gap;
 
+        // A byte of the packet lies on a page that failed its CRC (MappedBytes.FailsChecksum).
+        private bool _failsChecksum;
+
         public void Feed(int index, List<MappedBytes> completed)
         {
             completed.Clear();
             ref readonly PageRecord page = ref region.Pages[index];
             bool isTruncated = (page.Status & PageStatus.Truncated) != 0;
+            bool failsCrc = (page.Status & PageStatus.CrcMismatch) != 0;
             if ((page.Status & PageStatus.DropsPending) != 0)
             {
                 _assembler.Lose();
@@ -365,6 +369,7 @@ public sealed partial class OggParser
                 long held = Math.Min(run.Length, bodyPresent - run.Start);
 
                 Append(window.Get(page.BodyOffset + run.Start, (int)held), page.BodyOffset + run.Start);
+                _failsChecksum |= failsCrc && held > 0;
                 if (held < run.Length)
                 {
                     // The data ends inside this packet, on the page's last bytes.
@@ -385,6 +390,7 @@ public sealed partial class OggParser
                     EndPositionField = positioned ? GranuleField(page.Offset) : null,
                     IsEndOfStream = r == lastEnding && (page.Flags & Pages.End) != 0 && !outcome.EndsInsidePacket,
                     FollowsGap = _gap,
+                    FailsChecksum = _failsChecksum,
                 });
                 _gap = false;
                 Reset();
@@ -409,7 +415,7 @@ public sealed partial class OggParser
 
         private MappedBytes CutPacket()
         {
-            var packet = new MappedBytes(_buffer.AsSpan(0, _length).ToArray(), _ranges, _ranges[^1].End) { FollowsGap = _gap, IsCut = true };
+            var packet = new MappedBytes(_buffer.AsSpan(0, _length).ToArray(), _ranges, _ranges[^1].End) { FollowsGap = _gap, IsCut = true, FailsChecksum = _failsChecksum };
             _gap = false;
             Reset();
             return packet;
@@ -430,6 +436,7 @@ public sealed partial class OggParser
         private void Reset()
         {
             _length = 0;
+            _failsChecksum = false;
             _ranges.Clear();
             if (_buffer.Length > 1 << 20)
             {

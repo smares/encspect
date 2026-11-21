@@ -51,6 +51,7 @@ ALAC stores no checksum, so no figure is compared and the verdict stays unknown.
   - a frame larger than the maximum frame size the cookie states (`alac.frame-larger-than-stated`).
 - Anything the reference decoder refuses ends the walk of that frame; the rest of the file is read. Findings carry a count and point to the first element they occurred in.
 - No input throws: the walk stops with a fault and the finding says where.
+- A frame in Matroska whose Cluster or Segment CRC-32 fails is decoded and written as before, but the measurements leave its positions out as withheld samples ("checksum failed"). ALAC stores no check of its own and keeps no audio state across frames, so only the frame is withheld; elsewhere no ALAC frame is protected ([the design](../design/damaged-units.md#as-built-pull-request-5)).
 
 ## Encoder detection
 

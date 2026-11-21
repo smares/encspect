@@ -76,6 +76,6 @@ internal static class Feeding
             return;
         }
 
-        session.Decode(new CodedFrame(packet, FrameName, first, samples) { IsDamaged = !entry.IsCrcValid, FailsChecksum = !entry.IsCrcValid, FollowsGap = packet.FollowsGap });
+        session.Decode(new CodedFrame(packet, FrameName, first, samples) { IsDamaged = !entry.IsCrcValid, FailsChecksum = !entry.IsCrcValid || packet.FailsChecksum, FollowsGap = packet.FollowsGap });
     }
 }

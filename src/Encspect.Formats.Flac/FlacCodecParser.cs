@@ -313,7 +313,7 @@ public sealed class FlacCodecParser : ICodecParser
                 status = EntryStatus.Unreadable | EntryStatus.ExtentFound;
             }
 
-            s.AddFrame(bytes, header, walk, _facts, status, _logs, packet.FollowsGap);
+            s.AddFrame(bytes, header, walk, _facts, status, _logs, packet.FollowsGap, packet.FailsChecksum);
             if (packet.EndPosition is { } stated)
             {
                 // RFC 9639, section 10.1: the first audio page of a stream that is joined mid-way may state more than the samples counted;

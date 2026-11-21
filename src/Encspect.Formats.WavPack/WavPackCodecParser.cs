@@ -331,6 +331,7 @@ public sealed class WavPackCodecParser : ICodecParser
                 session.Decode(new CodedFrame(MappedBytes.Opaque(_rebuilt.AsMemory(0, total), fileStart, fileEnd), hasAudio ? "Block" : "Metadata Block", _samples, (int)samples)
                 {
                     FollowsGap = packet.FollowsGap && blockStart == 4,
+                    FailsChecksum = packet.FailsChecksum,
                 });
             }
         }
