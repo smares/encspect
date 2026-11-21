@@ -627,7 +627,7 @@ internal static class Sv7Parser
             complete++;
             lostFrames += (frame.Flags & (Flags.BadResolution | Flags.Overrun | Flags.Mismatch)) != 0 ? 1 : 0;
             figures.Add(state.Layout.WordStart(frame.Bit), frame.End - frame.Bit, FrameSamples, inSeries: frame.Length > 0,
-                bands: frame.Length > 0 && (frame.Flags & (Flags.Overrun | Flags.BadResolution | Flags.Mismatch)) == 0 ? frame.UsedBands : -1);
+                bands: frame.Length > 0 && (frame.Flags & (Flags.Overrun | Flags.BadResolution | Flags.Mismatch)) == 0 ? frame.UsedBands : -1, noise: frame.NoiseChannels);
             if (frame.Length > 0)
             {
                 state.Stereo.Add(System.Numerics.BitOperations.PopCount(frame.MidSide) > 0 ? 1 : 0);
@@ -767,7 +767,7 @@ internal static class Sv7Parser
         });
         use.Add(Cover("Mid/Side", $"{StreamFigures.Counted(state.MidSideBands, "Subband", "subbands")} ({StreamFigures.Share(state.MidSideBands, state.FlaggedBands)})", Explain.MidSideCount));
         use.Add(Cover("Left/Right", $"{StreamFigures.Counted(state.FlaggedBands - state.MidSideBands, "Subband", "subbands")} ({StreamFigures.Share(state.FlaggedBands - state.MidSideBands, state.FlaggedBands)})", Explain.LeftRightCount));
-        statistics.Add(new Node("Noise-Substituted Channels", node.Offset, node.Length, NodeValue.Integer(state.NoiseChannels, "subband channels", "subband channel"))
+        figures.NoiseNode = statistics.Add(new Node("Noise-Substituted Channels", node.Offset, node.Length, NodeValue.Integer(state.NoiseChannels, "subband channels", "subband channel"))
         {
             Description = Explain.NoiseCount,
             Topic = Topics.NoiseSubstitution,

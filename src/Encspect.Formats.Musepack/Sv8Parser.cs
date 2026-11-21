@@ -418,6 +418,7 @@ internal static class Sv8Parser
         int windowLength = 0;
         long bit = 0;
         int highest = -1;
+        int noise = 0;
         int frames = 0;
         for (long frame = 0; frame < count; frame++)
         {
@@ -493,11 +494,13 @@ internal static class Sv8Parser
             state.MidSideBands += System.Numerics.BitOperations.PopCount(facts.MidSide);
             state.FlaggedBands += facts.Flagged;
             state.NoiseChannels += facts.Noise;
+            noise += facts.Noise;
             bit = end;
         }
 
         state.Stereo.AddAll(feed.Codes.AsSpan(0, frames));
         state.Bandwidths[index] = highest;
+        state.Noises[index] = noise;
     }
 
     private static void MissingFrames(State state, SubbandFeed feed, int index, Packet packet, long firstSample, long missing)
@@ -1312,7 +1315,7 @@ internal static class Sv8Parser
             }
 
             frames += count;
-            figures.Add(packet.Offset, packet.Length * 8, count * Sv7Parser.FrameSamples, bands: state.Bandwidths.GetValueOrDefault(state.AudioPackets[i], -1));
+            figures.Add(packet.Offset, packet.Length * 8, count * Sv7Parser.FrameSamples, bands: state.Bandwidths.GetValueOrDefault(state.AudioPackets[i], -1), noise: state.Noises.GetValueOrDefault(state.AudioPackets[i]));
         }
 
         // libmpcdec r495 outputs the header's samples less the beginning silence, and no more than
@@ -1385,7 +1388,7 @@ internal static class Sv8Parser
             });
             use.Add(Cover("Mid/Side", $"{StreamFigures.Counted(state.MidSideBands, "Subband", "subbands")} ({StreamFigures.Share(state.MidSideBands, state.FlaggedBands)})", Explain.MidSideCount));
             use.Add(Cover("Left/Right", $"{StreamFigures.Counted(state.FlaggedBands - state.MidSideBands, "Subband", "subbands")} ({StreamFigures.Share(state.FlaggedBands - state.MidSideBands, state.FlaggedBands)})", Explain.LeftRightCount));
-            statistics.Add(new Node("Noise-Substituted Channels", node.Offset, node.Length, NodeValue.Integer(state.NoiseChannels, "subband channels", "subband channel"))
+            figures.NoiseNode = statistics.Add(new Node("Noise-Substituted Channels", node.Offset, node.Length, NodeValue.Integer(state.NoiseChannels, "subband channels", "subband channel"))
             {
                 Description = Explain.NoiseCount,
                 Topic = Topics.NoiseSubstitution,
@@ -1602,6 +1605,9 @@ internal static class Sv8Parser
 
         // The coded bandwidth of each audio packet that was walked, in subbands, by the packet's index in Packets (-1 where its frames could not be read).
         public Dictionary<int, int> Bandwidths { get; } = [];
+
+        // The noise-substituted subband channels of the frames of each audio packet.
+        public Dictionary<int, int> Noises { get; } = [];
 
         public UnitCategoryTally Stereo { get; } = new("Stereo Coding", Sv7Parser.StereoCodings, "frame", GraphConcept.StereoCoding, isVariable: true);
 
