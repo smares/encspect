@@ -31,6 +31,25 @@ internal static partial class Explain
     public const string IntensityStereoBoundSeries = "The lowest frequency from which each access unit, ADTS frame or ADIF block codes intensity stereo, in whole hertz at the core's sample rate: the lower edge of the lowest scalefactor band of any pair's second channel that uses codebook 14 or 15 (ISO/IEC 14496-3 4.6.8.2); a unit without such a band has none.";
     public const string CodedBandwidthOverTimeSeries = "The highest coded bandwidth of the access units, frames or blocks that start in each second of audio. A stream of more than about 36 hours, or one stated at a very low sample rate, is graphed in spans of 2, 4 or more seconds.";
 
+    public const string ShapeSine = "Channel streams whose window_shape selects the sine window (ISO/IEC 14496-3, 4.5.2).";
+    public const string ShapeKbd = "Channel streams whose window_shape selects the Kaiser-Bessel derived window (ISO/IEC 14496-3, 4.5.2).";
+    public const string FlagWithTns = "Channel streams that carry temporal noise shaping data (tns_data_present, ISO/IEC 14496-3, 4.6.9).";
+    public const string FlagWithoutTns = "Channel streams without temporal noise shaping data.";
+    public const string FlagWithPulses = "Channel streams that carry pulse data (pulse_data_present, ISO/IEC 14496-3, 4.6.3).";
+    public const string FlagWithoutPulses = "Channel streams without pulse data.";
+    public const string FlagWithNoise = "Channel streams that code at least one band with perceptual noise substitution (codebook 13).";
+    public const string FlagWithoutNoise = "Channel streams without a band coded with perceptual noise substitution.";
+    public const string FlagWithSbr = "Raw data blocks that hold SBR data in a fill element.";
+    public const string FlagWithoutSbr = "Raw data blocks without SBR data, and those that could not be read.";
+    public const string FlagWithPs = "Raw data blocks whose SBR data carries the parametric stereo extension.";
+    public const string FlagWithoutPs = "Raw data blocks without the parametric stereo extension, and those that could not be read.";
+    public const string WindowShapesSeries = "The window shape of every channel stream of every unit, sine or Kaiser-Bessel derived (ISO/IEC 14496-3, 4.5.2), as the tally of Window Shapes counts them.";
+    public const string TnsSeries = "Whether each channel stream of every unit carries temporal noise shaping data, as the tally of TNS counts them.";
+    public const string PulseSeries = "Whether each channel stream of every unit carries pulse data, as the tally of Pulse Data counts them.";
+    public const string NoiseSeries = "Whether each channel stream of every unit codes a band with perceptual noise substitution, as the tally of Noise Substitution counts them.";
+    public const string SbrSeries = "Whether each raw data block holds SBR data, as the tally of SBR counts them; a block that could not be read has none.";
+    public const string PsSeries = "Whether each raw data block's SBR data carries the parametric stereo extension, as the tally of Parametric Stereo counts them; a block that could not be read has none.";
+    public const string MidSideBandsSeries = "The share of the scalefactor bands of each unit's channel pairs with a common window that are coded as mid/side, leaving out intensity stereo bands, in percent; a unit without such a pair has none.";
     public const string WindowSequencesSeries = "The window sequence of every channel stream of every access unit, frame or block, as the Block Usage statistics count them (ISO/IEC 14496-3 4.5.2, 4.6.11); a raw data block of several elements gives a value for each of its channel streams.";
     public const string BlockSizesSeries = "The channel streams of Block Usage grouped by the size of their transform: long, with the long start and long stop windows, and short.";
     public const string StereoCodingSeries = "How each channel pair element codes its channels, whether or not it has a common window, as the Stereo Coding statistics count them (ISO/IEC 14496-3 4.6.8); a unit without a channel pair has no value.";
