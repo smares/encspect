@@ -34,7 +34,7 @@ Native FLAC files (`.flac`, RFC 9639) and FLAC in Ogg (`.oga` and `.ogg`, throug
 
 ## Reported
 
-- **The predictor each subframe uses**, as tallies and series of the concept `prediction` ("Prediction" in the GUI), one unit per frame that has a bitrate point, recorded while the frames are read (a frame past the first 4,096 keeps no subframes), and counted over those same frames:
+- **The predictor each subframe uses**, as tallies and series (the concept `prediction`, "Prediction" in the GUI, for the types, the fixed orders, the predictor order and the precision; the residual's partition orders and method and the wasted bits have none and sit under "Other"), one unit per frame that has a bitrate point, recorded while the frames are read (a frame past the first 4,096 keeps no subframes), and counted over those same frames:
   - category series "Subframe Types" (constant, verbatim, fixed predictor, linear predictor), "Fixed Predictor Orders" (ordered, orders 0 to 4, a new tally node), "Partition Orders" (ordered, 0 to 15), "Rice With 5-Bit Parameters" (a flag series: 5-bit or 4-bit parameters) and "Subframes With Wasted Bits" (a flag series); a value for each subframe of the frame that has one, so a stereo frame has two;
   - numeric series "Highest Predictor Order" (in orders, 1 to 32) and "Coefficient Precision" (bits), the highest of the frame's linear predictor subframes, each with an "Over Time" form (each second's highest) anchored to the tally of the same name; a frame without a linear predictor has no point;
   - numeric series "Block Size" (samples) per frame, only in a stream whose frames differ in size apart from a shorter last frame;

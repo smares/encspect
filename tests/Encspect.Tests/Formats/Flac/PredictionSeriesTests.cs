@@ -14,7 +14,9 @@ public class PredictionSeriesTests
         StreamInfo stream = Assert.Single(report.Streams);
 
         Assert.Equal(["Stereo Coding", "Subframe Types", "Partition Orders", "Rice With 5-Bit Parameters", "Subframes With Wasted Bits"], stream.CategorySeries.Select(c => c.Name).Where(n => n != "Fixed Predictor Orders"));
-        Assert.All(stream.CategorySeries.Where(c => c.Name != "Stereo Coding"), c => Assert.Equal(GraphConcept.Prediction, c.Concept));
+        // The predictor each subframe uses is "Prediction"; the residual and the wasted bits stay under "Other" (the design's survey).
+        Assert.All(stream.CategorySeries.Where(c => c.Name is "Subframe Types" or "Fixed Predictor Orders"), c => Assert.Equal(GraphConcept.Prediction, c.Concept));
+        Assert.All(stream.CategorySeries.Where(c => c.Name is "Partition Orders" or "Rice With 5-Bit Parameters" or "Subframes With Wasted Bits"), c => Assert.Equal(GraphConcept.None, c.Concept));
         Assert.True(stream.CategorySeries.Single(c => c.Name == "Partition Orders").IsOrdered);
 
         Series order = stream.Series.Single(s => s.Name == "Highest Predictor Order");

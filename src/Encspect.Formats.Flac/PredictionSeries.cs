@@ -39,9 +39,9 @@ internal sealed class PredictionSeries(long sampleRate)
 
     private readonly CategorySeriesBuilder _types = new("Subframe Types", Types, "subframe", concept: GraphConcept.Prediction);
     private readonly CategorySeriesBuilder _fixed = new("Fixed Predictor Orders", FixedOrders, "subframe", isOrdered: true, concept: GraphConcept.Prediction);
-    private readonly CategorySeriesBuilder _partitions = new("Partition Orders", PartitionOrders, "subframe", isOrdered: true, concept: GraphConcept.Prediction);
-    private readonly CategorySeriesBuilder _methods = new("Rice With 5-Bit Parameters", Methods, "subframe", concept: GraphConcept.Prediction);
-    private readonly CategorySeriesBuilder _wasted = new("Subframes With Wasted Bits", Wasted, "subframe", concept: GraphConcept.Prediction);
+    private readonly CategorySeriesBuilder _partitions = new("Partition Orders", PartitionOrders, "subframe", isOrdered: true);
+    private readonly CategorySeriesBuilder _methods = new("Rice With 5-Bit Parameters", Methods, "subframe");
+    private readonly CategorySeriesBuilder _wasted = new("Subframes With Wasted Bits", Wasted, "subframe");
 
     // Per frame, the highest order and precision of its linear predictors (0: none), and its block size.
     private readonly ChunkedList<byte> _orders = new();
