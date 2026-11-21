@@ -51,11 +51,16 @@ public class AacGraphsTests
             [
                 ("Summary", "Coding Summary"),
                 ("Stereo Coding", "Stereo Coding"),
+                ("Stereo Coding", "Mid/Side Bands"),
                 ("Stereo Coding", "Intensity Stereo Bound"),
                 ("Block Switching", "Block Usage"),
                 ("Block Switching", "Block Sizes"),
                 ("Coded Bandwidth", "Coded Bandwidth"),
                 ("Bit Distribution", "Bitrate"),
+                ("Other", "Window Shapes"),
+                ("Other", "Channel Streams With TNS"),
+                ("Other", "Channel Streams With Pulse Data"),
+                ("Other", "Noise-Substituted Channel Streams"),
             ],
             window.Model.Graphs.Choices.Select(c => (c.Heading, c.Title)));
         Assert.Equal(["Over Time", "Frames", "Summary", "Frame Map"], window.Model.Graphs.Choices.Single(c => c.Title == "Block Usage").Forms.Select(f => f.Title));

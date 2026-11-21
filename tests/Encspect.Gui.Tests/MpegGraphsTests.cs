@@ -57,6 +57,7 @@ public class MpegGraphsTests
                 ("Bit Distribution", "Reservoir Fill"),
                 ("Bit Distribution", "Channel Bit Share"),
                 ("Other", "Channel Modes"),
+                ("Other", "Scalefactor Scaling"),
             ],
             window.Model.Graphs.Choices.Select(c => (c.Heading, c.Title)));
         Assert.Equal(["Per Frame", "Over Time", "First and Second", "Frame Map"], window.Model.Graphs.Choices.Single(c => c.Title == "Channel Bit Share").Forms.Select(f => f.Title));
