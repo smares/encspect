@@ -8,6 +8,9 @@ namespace Encspect.Formats.TrueHd;
 // rounding adds up; a stream that changes its sampling rate counts each stretch at its own rate.
 internal sealed class StreamFigures(long firstRate)
 {
+    // Each second's bitrate in kbps before it is rounded, in the order of "Bitrate Over Time"; set by Series.
+    public double[]? SecondKbps { get; private set; }
+
     private readonly long _firstRate = firstRate;
     private const int BinWidth = 32;
     private const int LastBin = 1000;
@@ -212,13 +215,14 @@ internal sealed class StreamFigures(long firstRate)
 
         if (Count > 0)
         {
-            series.Add(new("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = Explain.BitrateSeries, Runs = new FrameRuns(firstFrames, frameCount, runSamples) });
+            series.Add(new("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = Explain.BitrateSeries, Concept = GraphConcept.BitDistribution, Quantity = "Bitrate", Runs = new FrameRuns(firstFrames, frameCount, runSamples) });
         }
 
         if (_seconds.Count > 0)
         {
             var starts = new double[_seconds.Count];
             var values = new double[_seconds.Count];
+            var exact = new double[_seconds.Count];
             for (int i = 0; i < _seconds.Count; i++)
             {
                 if (i % 4096 == 0)
@@ -229,9 +233,11 @@ internal sealed class StreamFigures(long firstRate)
                 (long second, long bits, long samples, int rate) = _seconds[i];
                 starts[i] = second;
                 values[i] = samples > 0 ? Math.Round(bits * (double)rate / samples / 1000, MidpointRounding.ToEven) : 0;
+                exact[i] = samples > 0 ? bits * (double)rate / samples / 1000 : 0;
             }
 
-            series.Add(new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, values, anchor) { Description = Explain.BitrateOverTimeSeries });
+            SecondKbps = exact;
+            series.Add(new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, values, anchor) { Description = Explain.BitrateOverTimeSeries, Concept = GraphConcept.BitDistribution, Quantity = "Bitrate" });
         }
 
         return series;

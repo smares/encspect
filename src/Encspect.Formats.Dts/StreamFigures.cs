@@ -295,12 +295,12 @@ internal sealed class StreamFigures(int sampleRate)
             bitrates[i] = Bitrate(point.Length, point.Samples);
         }
 
-        var series = new List<Series> { new("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = Explain.BitrateSeries } };
+        var series = new List<Series> { new("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = Explain.BitrateSeries, Concept = GraphConcept.BitDistribution, Quantity = "Bitrate" } };
         if (_seconds.Count > 0)
         {
             double[] starts = Enumerable.Range(0, _seconds.Count).Select(s => (double)s).ToArray();
             double[] values = _seconds.Select(s => s.Samples > 0 ? Math.Round(s.Bits * (double)sampleRate / s.Samples / 1000, MidpointRounding.ToEven) : 0).ToArray();
-            series.Add(new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, values, anchor) { Description = Explain.BitrateOverTimeSeries });
+            series.Add(new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, values, anchor) { Description = Explain.BitrateOverTimeSeries, Concept = GraphConcept.BitDistribution, Quantity = "Bitrate" });
         }
 
         if (_bandwidth.Count > 0 && BandwidthNode is not null)

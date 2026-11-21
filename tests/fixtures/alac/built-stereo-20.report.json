@@ -1458,6 +1458,34 @@
                               "length": 38885
                             }
                           ]
+                        },
+                        {
+                          "name": "Compression Ratio",
+                          "offset": 605,
+                          "length": 38885,
+                          "children": [
+                            {
+                              "name": "Lowest",
+                              "value": 42.8,
+                              "unit": "%",
+                              "offset": 605,
+                              "length": 38885
+                            },
+                            {
+                              "name": "Overall",
+                              "value": 77.8,
+                              "unit": "%",
+                              "offset": 605,
+                              "length": 38885
+                            },
+                            {
+                              "name": "Highest",
+                              "value": 146.6,
+                              "unit": "%",
+                              "offset": 605,
+                              "length": 38885
+                            }
+                          ]
                         }
                       ]
                     },
@@ -2355,6 +2383,36 @@
             ],
             "values": [
               1372
+            ]
+          },
+          {
+            "name": "Compression Ratio",
+            "unit": "%",
+            "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Compression Ratio",
+            "x": [
+              605,
+              9376,
+              26240
+            ],
+            "values": [
+              42.8,
+              82.3,
+              146.6
+            ]
+          },
+          {
+            "name": "Compression Ratio Over Time",
+            "unit": "%",
+            "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Compression Ratio",
+            "x": [
+              0
+            ],
+            "values": [
+              77.8
             ]
           },
           {

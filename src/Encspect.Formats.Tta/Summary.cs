@@ -251,7 +251,11 @@ internal static class Summary
         Node Covered(string name, NodeValue? value, string description) => cover(name, value, description, null);
         figures?.AddTo(statistics, Covered, "Frame", "frames", true, out _);
         Node? anchor = figures is null ? null : statistics.Children.FirstOrDefault(c => c.Name == "Average Bitrate");
+        long pcm = CompressionRatio.PcmBitsPerSecond(rate, channels, bits);
+        Node? ratio = figures is null ? null : CompressionRatio.AddTo(statistics, Covered, pcm, figures.AverageBitrate, figures.MinimumBitrate, figures.MaximumBitrate);
         s.AddLeading(statistics);
+        List<Series> series = figures?.Series(anchor, s.Context.CancellationToken) ?? [];
+        CompressionRatio.AddTo(series, pcm, ratio, s.Context.CancellationToken, figures?.SecondKbps);
 
         return new StreamInfo
         {
@@ -270,7 +274,7 @@ internal static class Summary
             Writer = ClaimRoles.Resolved(writer).Name,
             WriterConfidence = ClaimRoles.Resolved(writer).Confidence,
             Verification = verification,
-            Series = figures?.Series(anchor, s.Context.CancellationToken) ?? [],
+            Series = series,
         };
     }
 

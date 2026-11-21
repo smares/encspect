@@ -1483,6 +1483,34 @@
                               "length": 27877
                             }
                           ]
+                        },
+                        {
+                          "name": "Compression Ratio",
+                          "offset": 609,
+                          "length": 27877,
+                          "children": [
+                            {
+                              "name": "Lowest",
+                              "value": 28.8,
+                              "unit": "%",
+                              "offset": 609,
+                              "length": 27877
+                            },
+                            {
+                              "name": "Overall",
+                              "value": 49.8,
+                              "unit": "%",
+                              "offset": 609,
+                              "length": 27877
+                            },
+                            {
+                              "name": "Highest",
+                              "value": 92.2,
+                              "unit": "%",
+                              "offset": 609,
+                              "length": 27877
+                            }
+                          ]
                         }
                       ]
                     },
@@ -2657,6 +2685,38 @@
             ],
             "values": [
               703
+            ]
+          },
+          {
+            "name": "Compression Ratio",
+            "unit": "%",
+            "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Compression Ratio",
+            "x": [
+              609,
+              5456,
+              10173,
+              22175
+            ],
+            "values": [
+              29.6,
+              28.8,
+              73.3,
+              92.2
+            ]
+          },
+          {
+            "name": "Compression Ratio Over Time",
+            "unit": "%",
+            "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Compression Ratio",
+            "x": [
+              0
+            ],
+            "values": [
+              49.8
             ]
           },
           {

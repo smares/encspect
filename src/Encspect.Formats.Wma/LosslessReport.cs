@@ -91,6 +91,11 @@ internal static class LosslessReport
             Add("Minimum Bitrate", NodeValue.Decimal(WmaPacketReader.RateOf(reader.SmallestBits, p), 1, "kbps"), ProExplain.StatMinimumFrameBitrate);
             Add("Maximum Bitrate", NodeValue.Decimal(WmaPacketReader.RateOf(reader.LargestBits, p), 1, "kbps"), ProExplain.StatMaximumFrameBitrate);
             reader.Distribution.AddTo(statistics, (name, value, description) => new Node(name, parent.Offset, parent.Length, value) { Description = description }, "Frame", "Frames", configuration?.IsVbr);
+            if (duration > 0)
+            {
+                CompressionRatio.AddTo(statistics, (name, figure, description) => new Node(name, parent.Offset, parent.Length, figure) { Description = description }, PcmBitsPerSecond(p),
+                    p.BlockAlignment * 8.0 * reader.FullPackets / duration / 1000, WmaPacketReader.RateOf(reader.SmallestBits, p), WmaPacketReader.RateOf(reader.LargestBits, p));
+            }
         }
 
         Add("Frames Spanning Packets", NodeValue.Integer(reader.SpanningFrames), ProExplain.StatFramesSpanningPackets, Topics.WmaPackets);
@@ -139,11 +144,13 @@ internal static class LosslessReport
             new("Bitrate", "kbps", SeriesAxis.FrameOffset, reader.BitrateX.ToArray(), reader.BitrateY.ToArray()) { Description = ProExplain.BitrateSeries, Concept = GraphConcept.BitDistribution, Quantity = "Bitrate" },
         };
 
+        double[]? exact = null;
         if (reader.LastValidSecond >= 0)
         {
             int seconds = reader.LastValidSecond + 1;
             var starts = new double[seconds];
             var rates = new double[seconds];
+            exact = new double[seconds];
             for (int s = 0; s < seconds; s++)
             {
                 starts[s] = s;
@@ -152,12 +159,17 @@ internal static class LosslessReport
                 {
                     double rate = reader.SecondBits[s] * (double)p.SampleRate / ((double)count * p.FrameLength) / 1000;
                     rates[s] = Math.Round(rate, 1, MidpointRounding.ToEven);
+                    exact[s] = rate;
                 }
             }
 
             series.Add(new Series("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, rates, anchor) { Description = ProExplain.BitrateOverTimeSeries, Concept = GraphConcept.BitDistribution, Quantity = "Bitrate" });
         }
 
+        Node? ratio = anchor.Children.FirstOrDefault(c => c.Kind == NodeKind.Statistics)?.Children.FirstOrDefault(c => c.Name == CompressionRatio.Name);
+        CompressionRatio.AddTo(series, PcmBitsPerSecond(p), ratio, default, exact);
         return series;
     }
+
+    private static long PcmBitsPerSecond(LosslessParameters p) => CompressionRatio.PcmBitsPerSecond(p.SampleRate, p.Channels, p.SampleSize);
 }

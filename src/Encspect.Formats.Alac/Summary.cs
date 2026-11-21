@@ -230,10 +230,13 @@ internal static class Summary
         }
 
         Node? anchor = null;
+        Node? ratioNode = null;
         if (figures is { Units: > 0 })
         {
             figures.AddTo(statistics, (name, value, description) => cover(name, value, description, null), "Frame", "frames", true, out _);
             anchor = statistics.Children.FirstOrDefault(c => c.Name == "Average Bitrate");
+            ratioNode = CompressionRatio.AddTo(statistics, (name, value, description) => cover(name, value, description, null),
+                CompressionRatio.PcmBitsPerSecond(rate, channels, cookie is { BitDepth: > 0 } ? cookie.BitDepth : null), figures.AverageBitrate, figures.MinimumBitrate, figures.MaximumBitrate);
         }
 
         s.Leading.Add(statistics);
@@ -261,6 +264,8 @@ internal static class Summary
         }
 
         List<Series> series = figures.Series(anchor, s.Context.CancellationToken);
+        long pcm = CompressionRatio.PcmBitsPerSecond(info.SampleRate, info.Channels, info.BitsPerSample);
+        CompressionRatio.AddTo(series, pcm, ratioNode, s.Context.CancellationToken, figures.SecondKbps);
         IReadOnlyList<CategorySeries> categories = series.Count > 0
             ? s.Series.Build(series[0].X, series[0], figures.Time, nodes)
             : [];

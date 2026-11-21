@@ -446,10 +446,10 @@ public sealed partial class VorbisParser
             double[] rates = seconds
                 .Select(s => s.Samples > 0 ? Math.Round(s.Bits * (double)Rate / s.Samples / 1000, 1, MidpointRounding.ToEven) : 0)
                 .ToArray();
-            var bitrate = new Series("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = SeriesText.Bitrate };
+            var bitrate = new Series("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = SeriesText.Bitrate, Concept = GraphConcept.BitDistribution, Quantity = "Bitrate" };
             TimeIndex? time = perSecond ? new TimeIndex(starts, firstUnits.ToArray()) : null;
             CategorySeries blockSizes = sizeSeries.Build(offsets, bitrate, _blockSizesNode, SeriesText.BlockSizes, Topics.VorbisBlocks, time);
-            List<Series> series = perSecond ? [bitrate, new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, rates, anchor) { Description = SeriesText.BitrateOverTime }] : [bitrate];
+            List<Series> series = perSecond ? [bitrate, new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, rates, anchor) { Description = SeriesText.BitrateOverTime, Concept = GraphConcept.BitDistribution, Quantity = "Bitrate" }] : [bitrate];
             if (bandwidthValues.Count > 0 && _bandwidthNode is not null)
             {
                 // Where every packet has a value the series shares the bitrate series' x values.

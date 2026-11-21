@@ -567,11 +567,11 @@ public sealed partial class OpusParser
             double[] rates = seconds
                 .Select(s => s.Samples > 0 ? Math.Round(s.Bits * (double)Rate / s.Samples / 1000, 1, MidpointRounding.ToEven) : 0)
                 .ToArray();
-            var bitrate = new Series("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = SeriesText.Bitrate };
+            var bitrate = new Series("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = SeriesText.Bitrate, Concept = GraphConcept.BitDistribution, Quantity = "Bitrate" };
             var series = new List<Series>
             {
                 bitrate,
-                new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, rates, anchor) { Description = SeriesText.BitrateOverTime },
+                new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, rates, anchor) { Description = SeriesText.BitrateOverTime, Concept = GraphConcept.BitDistribution, Quantity = "Bitrate" },
             };
             var categories = new List<CategorySeries>(BuildTocSeries(offsets, bitrate));
             if (_celtFrames > 0 && _blockUsageNode is not null)

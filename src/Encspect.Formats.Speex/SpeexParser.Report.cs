@@ -314,8 +314,8 @@ public sealed partial class SpeexParser
             double[] rates = seconds
                 .Select(s => s.Packets > 0 ? Math.Round(s.Bits * (double)Rate / (s.Packets * perPacket) / 1000, 1, MidpointRounding.ToEven) : 0)
                 .ToArray();
-            var bitrate = new Series("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = SeriesText.Bitrate };
-            List<Series> series = perSecond ? [bitrate, new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, rates, distribution) { Description = SeriesText.BitrateOverTime }] : [bitrate];
+            var bitrate = new Series("Bitrate", "kbps", SeriesAxis.FrameOffset, offsets, bitrates) { Description = SeriesText.Bitrate, Concept = GraphConcept.BitDistribution, Quantity = "Bitrate" };
+            List<Series> series = perSecond ? [bitrate, new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, rates, distribution) { Description = SeriesText.BitrateOverTime, Concept = GraphConcept.BitDistribution, Quantity = "Bitrate" }] : [bitrate];
             return (series, SubmodeSeries(offsets, bitrate));
         }
 

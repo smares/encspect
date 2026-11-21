@@ -156,6 +156,8 @@ internal static class Summary
         Node Covered(string name, NodeValue? value, string description) => Cover(name, value, description);
         figures.AddTo(statistics, Covered, "Frame", "frames", true, out _);
         Node? anchor = statistics.Children.FirstOrDefault(c => c.Name == "Average Bitrate");
+        long pcm = CompressionRatio.PcmBitsPerSecond(rate, h.Channels, h.BitsPerSample);
+        Node? ratio = CompressionRatio.AddTo(statistics, Covered, pcm, figures.AverageBitrate, figures.MinimumBitrate, figures.MaximumBitrate);
         Node? stereoNode = s.Stereo.AddTo(statistics, (name, value, description, topic) => Cover(name, value, description, topic), Explain.StatStereoCoding, Topics.MidSideStereo, "Frame", "Frames");
         s.AddLeading(statistics);
 
@@ -167,6 +169,7 @@ internal static class Summary
             _ => null,
         };
         List<Series> series = figures.Series(anchor, s.Context.CancellationToken);
+        CompressionRatio.AddTo(series, pcm, ratio, s.Context.CancellationToken, figures.SecondKbps);
         return new StreamInfo
         {
             Nodes = [stream],

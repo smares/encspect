@@ -1496,6 +1496,34 @@
                               "length": 83027
                             }
                           ]
+                        },
+                        {
+                          "name": "Compression Ratio",
+                          "offset": 625,
+                          "length": 83027,
+                          "children": [
+                            {
+                              "name": "Lowest",
+                              "value": 63.1,
+                              "unit": "%",
+                              "offset": 625,
+                              "length": 83027
+                            },
+                            {
+                              "name": "Overall",
+                              "value": 69.2,
+                              "unit": "%",
+                              "offset": 625,
+                              "length": 83027
+                            },
+                            {
+                              "name": "Highest",
+                              "value": 96.6,
+                              "unit": "%",
+                              "offset": 625,
+                              "length": 83027
+                            }
+                          ]
                         }
                       ]
                     },
@@ -3837,6 +3865,34 @@
             ],
             "values": [
               6376
+            ]
+          },
+          {
+            "name": "Compression Ratio",
+            "unit": "%",
+            "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Compression Ratio",
+            "x": [
+              625,
+              62686
+            ],
+            "values": [
+              63.1,
+              96.6
+            ]
+          },
+          {
+            "name": "Compression Ratio Over Time",
+            "unit": "%",
+            "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Compression Ratio",
+            "x": [
+              0
+            ],
+            "values": [
+              69.2
             ]
           },
           {

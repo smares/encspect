@@ -408,7 +408,11 @@ internal static class Summary
         Node Covered(string name, NodeValue? value, string description) => cover(name, value, description, null);
         figures.AddTo(statistics, Covered, "Block", "blocks", true, out _);
         Node? anchor = statistics.Children.FirstOrDefault(c => c.Name == "Average Bitrate");
+        long pcm = CompressionRatio.PcmBitsPerSecond(rate, m.Channels, m.BitsPerSample);
+        Node? ratio = figures.Units > 0 ? CompressionRatio.AddTo(statistics, Covered, pcm, figures.AverageBitrate, figures.MinimumBitrate, figures.MaximumBitrate) : null;
         s.AddLeading(statistics);
+        List<Series> series = figures.Units > 0 ? figures.Series(anchor, s.Context.CancellationToken) : [];
+        CompressionRatio.AddTo(series, pcm, ratio, s.Context.CancellationToken, figures.SecondKbps);
 
         return new StreamInfo
         {
@@ -433,7 +437,7 @@ internal static class Summary
             Verification = verification,
             Claims = claim is null ? [] : [claim],
             ClaimsAgainst = against is null ? [] : [against],
-            Series = figures.Units > 0 ? figures.Series(anchor, s.Context.CancellationToken) : [],
+            Series = series,
         };
     }
 }

@@ -636,6 +636,7 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         Output.WriteLine($"{kept / frames} bytes kept and {peak / frames} bytes peak per frame");
         Assert.True(kept < frames * LosslessKeptBound, $"The report keeps {kept / frames} bytes per frame.");
         Assert.True(peak < frames * LosslessPeakBound, $"The live heap grew by {peak / frames} bytes per frame.");
+        CheckCompressionRatio(report.Streams.Single(s => s.Series.Any(x => x.Name == "Bitrate")));
         GC.KeepAlive(report);
     }
 
@@ -776,12 +777,13 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         long numeric = stream.Series.Where(s => s.Name is "Highest Predictor Order" or "Coefficient Precision" or "Block Size").Sum(s => BackingBytes(s.Values));
         Output.WriteLine($"{categories / frames} bytes of category series and {numeric / frames} of numeric series per frame");
         Assert.True(categories + numeric <= (frames * 48L) + index, $"The coding series keep {(categories + numeric) / (double)frames} bytes per frame.");
+        CheckCompressionRatio(report.Streams.Single(s => s.Series.Any(x => x.Name == "Bitrate")));
         GC.KeepAlive(report);
     }
 
     // Frames of two linear predictor subframes, which have every series of the subframes: the codes and count bytes of five category series (at most 15
     // bytes), and the numeric series of the order and the precision, whose values take 8 bytes each and whose x values are the bitrate series' where every frame has
-    // a predictor, so that the series keep 31 bytes for a stereo frame and leave the design's 48 room for the compression ratio (docs/design/coding-graphs.md, "Memory budget").
+    // a predictor, and the compression ratio, which takes 8 bytes more with the bitrate series' x values, so that the series keep 39 bytes for a stereo frame, within the design's 48 (docs/design/coding-graphs.md, "Memory budget").
     [Fact]
     public void ManyFlacFramesOfLinearPredictorsKeepTheirCodingSeriesWithinTheBudget()
     {
@@ -813,7 +815,8 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         Assert.Contains(stream.Series, s => s.Name == "Highest Predictor Order");
         Assert.Contains(stream.CategorySeries, c => c.Name == "Partition Orders");
         Output.WriteLine($"{categories / frames} bytes of category series and {numeric / frames} of numeric series per frame");
-        Assert.True(categories + numeric <= (frames * 31L) + index, $"The coding series keep {(categories + numeric) / (double)frames} bytes per frame.");
+        Assert.True(categories + numeric <= (frames * 39L) + index, $"The coding series keep {(categories + numeric) / (double)frames} bytes per frame.");
+        CheckCompressionRatio(report.Streams.Single(s => s.Series.Any(x => x.Name == "Bitrate")));
         GC.KeepAlive(report);
     }
 
@@ -1518,6 +1521,7 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         Output.WriteLine($"{kept / frames} bytes kept and {peak / frames} bytes peak per frame");
         Assert.True(kept < frames * 100L, $"The report keeps {kept / frames} bytes per frame.");
         Assert.True(peak < frames * 140L, $"The live heap grew by {peak / frames} bytes per frame.");
+        CheckCompressionRatio(report.Streams.Single(s => s.Series.Any(x => x.Name == "Bitrate")));
         GC.KeepAlive(report);
     }
 
@@ -1567,6 +1571,7 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         Output.WriteLine($"{kept / frames} bytes kept and {peak / frames} bytes peak per frame");
         Assert.True(kept < frames * KeptPerTakFrame, $"The report keeps {kept / frames} bytes per frame.");
         Assert.True(peak < frames * PeakPerTakFrame, $"The live heap grew by {peak / frames} bytes per frame.");
+        CheckCompressionRatio(report.Streams.Single(s => s.Series.Any(x => x.Name == "Bitrate")));
         GC.KeepAlive(report);
     }
 
@@ -1600,6 +1605,7 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         Output.WriteLine($"{kept / frames} bytes kept and {peak / frames} bytes peak per frame");
         Assert.True(kept < frames * 100L, $"The report keeps {kept / frames} bytes per frame.");
         Assert.True(peak < frames * 160L, $"The live heap grew by {peak / frames} bytes per frame.");
+        CheckCompressionRatio(report.Streams.Single(s => s.Series.Any(x => x.Name == "Bitrate")));
         GC.KeepAlive(report);
     }
 
@@ -1630,6 +1636,7 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         Output.WriteLine($"{kept / blocks} bytes kept and {peak / blocks} bytes peak per block");
         Assert.True(kept < blocks * WavPackKeptBound, $"The report keeps {kept / blocks} bytes per block.");
         Assert.True(peak < blocks * WavPackPeakBound, $"The live heap grew by {peak / blocks} bytes per block.");
+        CheckCompressionRatio(report.Streams.Single(s => s.Series.Any(x => x.Name == "Bitrate")));
         GC.KeepAlive(report);
     }
 
@@ -1687,6 +1694,7 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         Output.WriteLine($"{kept / units} bytes kept and {peak / units} bytes peak per unit");
         Assert.True(kept < units * TrueHdKeptBound, $"The report keeps {kept / units} bytes per unit.");
         Assert.True(peak < units * TrueHdPeakBound, $"The live heap grew by {peak / units} bytes per unit.");
+        CheckCompressionRatio(report.Streams.Single(s => s.Series.Any(x => x.Name == "Bitrate")));
         GC.KeepAlive(report);
     }
 
@@ -1753,6 +1761,7 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         Output.WriteLine($"{kept / frames} bytes kept and {peak / frames} bytes peak per frame");
         Assert.True(kept < frames * MonkeysAudioKeptBound, $"The report keeps {kept / frames} bytes per frame.");
         Assert.True(peak < frames * MonkeysAudioPeakBound, $"The live heap grew by {peak / frames} bytes per frame.");
+        CheckCompressionRatio(report.Streams.Single(s => s.Series.Any(x => x.Name == "Bitrate")));
         GC.KeepAlive(report);
     }
 

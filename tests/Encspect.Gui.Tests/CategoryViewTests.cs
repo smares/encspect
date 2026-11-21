@@ -58,6 +58,24 @@ public class CategoryViewTests
     }
 
     [AvaloniaFact]
+    public void The_compression_ratio_is_a_bit_distribution_graph_of_one_part_without_the_two_part_share_form()
+    {
+        Analyzer analyzer = CategoryTestData.Analyzer(_ => [], stream =>
+        {
+            List<Series> series = [.. stream.Series];
+            CompressionRatio.AddTo(series, 1_411_200, new Node("Compression Ratio", 0, 1));
+            return [.. series.Where(s => s.Name.StartsWith("Compression Ratio", StringComparison.Ordinal))];
+        });
+        DetailWindow window = OpenWithCategories(Fixtures.Stats("vbr-seconds.mp3"), analyzer: analyzer);
+
+        GraphChoice choice = window.Model.Graphs.Choices.Single(c => c.Title == "Compression Ratio");
+
+        Assert.Equal("Bit Distribution", choice.Heading);
+        Assert.Equal(["Per Frame", "Over Time", "Frame Map"], choice.Forms.Select(f => f.Title));
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public void The_graphs_tab_offers_the_headings_the_chips_and_the_views()
     {
         DetailWindow window = OpenWithCategories(Fixtures.Stats("vbr-seconds.mp3"));

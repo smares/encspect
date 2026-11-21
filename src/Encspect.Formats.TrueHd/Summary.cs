@@ -200,9 +200,12 @@ internal static class Summary
         a.Figures?.AddTo(statistics, Covered, "Run", "runs", true, out _);
         Node? anchor = a.Figures is null ? null : statistics.Children.FirstOrDefault(c => c.Name == "Average Bitrate");
         Node? stereo = a.Figures is { StereoUnits: > 0 } coded ? AddStereoCoding(statistics, coded, Cover) : null;
+        long pcm = CompressionRatio.PcmBitsPerSecond(rate, channels, followed.BitDepth);
+        Node? ratio = a.Figures is { } bitrates ? CompressionRatio.AddTo(statistics, Covered, pcm, bitrates.AverageBitrate, bitrates.MinimumBitrate, bitrates.MaximumBitrate) : null;
         a.Leading.Add(statistics);
 
         List<Series> series = a.Figures?.Series(anchor, a.Units, default) ?? [];
+        CompressionRatio.AddTo(series, pcm, ratio, a.CancellationToken, a.Figures?.SecondKbps);
         if (series.Count > 0 && series[0].Name == "Bitrate" && a.Figures!.OrderSeries(series[0], a.CancellationToken) is { } orders)
         {
             series.Add(orders);
