@@ -153,6 +153,8 @@ internal static class Explain
     public const string PacketSizes = "How many different sizes the audio packets have, and the range of sizes for each block size.";
     public const string PacketSizesPerBlock = "The smallest, largest and average size of the packets that code blocks of this size.";
     public const string ModeUsage = "How many audio packets use each mode of the setup header.";
+    public const string ModeLong = "A mode of the setup header whose blockflag selects the long block (blocksize_1); the packets that use it code long blocks (Vorbis I, section 4.2.4).";
+    public const string ModeShort = "A mode of the setup header whose blockflag selects the short block (blocksize_0); the packets that use it code short blocks (Vorbis I, section 4.2.4).";
     public const string ModeShare = "Packets of this mode, and their share of the packets that code a block.";
 
     public const string Encoder = "Which library or program encoded the stream, as the analyzer concludes from the evidence below.";
@@ -168,6 +170,7 @@ internal static class Explain
 internal static class SeriesText
 {
     public const string BlockSizes = "The size of the block each audio packet codes, long or short, as the tally of Block Sizes counts them; a packet that codes no block has none.";
+    public const string Modes = "The mode each audio packet uses, one of the modes of the setup header (Vorbis I, section 4.2.4), as the tally of Modes counts them; a packet that codes no block has none.";
     public const string Bitrate = "The bitrate of each audio packet: its bits over the half block of samples it codes, 0 for a packet that codes no block.";
     public const string CodedBandwidth = "The coded bandwidth of each audio packet in whole hertz: the upper edge of the highest coefficient that a residue partition of the packet codes in any channel (Vorbis I, section 8.6.2), found by reading its floors and residues. A partition counts where a pass reads a codebook entry for it. It is the bound the packet's own data states, read without reconstructing audio; a band below it may still be quiet, and it is not the encoder's lowpass setting. A packet that codes no block, or that the container cut, has none.";
     public const string CodedBandwidthOverTime = "The highest coded bandwidth of the packets whose blocks start in each second of audio.";
