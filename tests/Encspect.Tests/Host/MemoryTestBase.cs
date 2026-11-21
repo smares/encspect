@@ -48,6 +48,19 @@ public abstract class MemoryTestBase(ITestOutputHelper output) : IDisposable
     }
 
     // The bytes of the array behind a series, not only of the part it shows, so a slack kept at the end counts.
+    // The compression ratio of a lossless stream (docs/design/coding-graphs.md, "Memory budget"): 8 bytes for each unit of its own values, and the bitrate series' x values,
+    // shared, so that it costs nothing more; its per-second form is as short as the bitrate's.
+    protected static void CheckCompressionRatio(StreamInfo stream)
+    {
+        Series bitrate = stream.Series.Single(s => s.Name == "Bitrate");
+        Series ratio = stream.Series.Single(s => s.Name == "Compression Ratio");
+        Assert.Equal(bitrate.X.Length, ratio.Values.Length);
+        Assert.True(MemoryMarshal.TryGetArray(ratio.X, out ArraySegment<double> own) && MemoryMarshal.TryGetArray(bitrate.X, out ArraySegment<double> shared) && ReferenceEquals(own.Array, shared.Array),
+            "The compression ratio copies the bitrate series' x values.");
+        Assert.Equal(bitrate.X.Length * 8L, BackingBytes(ratio.Values));
+        Assert.Equal(stream.Series.Single(s => s.Name == "Bitrate Over Time").Values.Length, stream.Series.Single(s => s.Name == "Compression Ratio Over Time").Values.Length);
+    }
+
     protected static long BackingBytes(ReadOnlyMemory<double> values) =>
         MemoryMarshal.TryGetArray(values, out ArraySegment<double> segment) ? segment.Array!.Length * 8L : values.Length * 8L;
 
