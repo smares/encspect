@@ -231,6 +231,21 @@
                       "length": 26624
                     }
                   ]
+                },
+                {
+                  "name": "Stereo Coding",
+                  "value": 107,
+                  "unit": "access units",
+                  "offset": 0,
+                  "length": 26624,
+                  "children": [
+                    {
+                      "name": "Left/right stereo",
+                      "value": "107 access units (100.0%)",
+                      "offset": 0,
+                      "length": 26624
+                    }
+                  ]
                 }
               ]
             }
@@ -379,6 +394,62 @@
             ],
             "values": [
               2389
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "access unit",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 107
+              },
+              {
+                "name": "Left/side stereo",
+                "count": 0
+              },
+              {
+                "name": "Side/right stereo",
+                "count": 0
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 0
+              },
+              {
+                "name": "Weighted mix",
+                "count": 0
+              }
+            ],
+            "total": 107,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                7
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                7
+              ]
+            ],
+            "weights": [
+              [
+                16,
+                6
+              ],
+              [
+                11,
+                1
+              ]
+            ],
+            "seconds": [
+              0
             ]
           }
         ]

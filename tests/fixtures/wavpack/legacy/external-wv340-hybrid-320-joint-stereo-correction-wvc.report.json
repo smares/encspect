@@ -1,0 +1,36 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "external-wv340-hybrid-320-joint-stereo-correction-wvc.wvc",
+    "root": {
+      "name": "File",
+      "offset": 0,
+      "length": 29317,
+      "children": [
+        {
+          "name": "Data",
+          "offset": 0,
+          "length": 29317
+        }
+      ]
+    },
+    "streams": [],
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "format.unrecognized",
+        "message": "No format parser recognized this file.",
+        "offset": 0,
+        "length": 29317,
+        "path": [
+          0
+        ],
+        "count": 1
+      }
+    ]
+  }
+]

@@ -1,57 +1,82 @@
 {
   "goldens": [
-    "tests/fixtures/mp4/mp3-two-chunks-gap.report.json"
+    "tests/fixtures/mp4/external-ffmpeg-truehd-51-in-mp4.report.json"
   ],
-  "removed": [
-    {
-      "scope": "finding",
-      "code": "mpeg-audio.packets-not-analyzed"
-    }
-  ],
-  "changed": [
-    {
-      "path": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "MPEG Audio"
-      ],
-      "fields": [
-        "value",
-        "unit",
-        "children"
-      ]
-    },
+  "added": [
     {
       "scope": "stream",
-      "fields": [
-        "codec",
-        "channelMode",
-        "channelLayout",
-        "channelLayoutName",
-        "categorySeries",
-        "verification",
-        "series",
-        "samples",
-        "duration",
-        "averageBitrate",
-        "isVbr",
-        "encoder",
-        "encoderConfidence",
-        "writer",
-        "writerConfidence"
-      ]
-    }
-  ],
-  "renamed": [
+      "key": "categorySeries"
+    },
     {
+      "scope": "node",
       "parent": [
         "MP4",
         "mdat",
-        "Track 1 Samples"
+        "Track 1 Samples",
+        "Dolby TrueHD",
+        "Statistics"
       ],
-      "from": "MPEG-1 audio",
-      "to": "MPEG Audio"
+      "name": "Stereo Coding"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "Dolby TrueHD",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Left/right stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "Dolby TrueHD",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Left/side stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "Dolby TrueHD",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Side/right stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "Dolby TrueHD",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Mid/side stereo"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "Dolby TrueHD",
+        "Statistics",
+        "Stereo Coding"
+      ],
+      "name": "Weighted mix"
     }
   ]
 }

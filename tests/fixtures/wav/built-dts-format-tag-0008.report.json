@@ -243,34 +243,6 @@
                           "length": 3456
                         },
                         {
-                          "name": "Coded Bandwidth",
-                          "offset": 56,
-                          "length": 3456,
-                          "children": [
-                            {
-                              "name": "Lowest",
-                              "value": 24000,
-                              "unit": "Hz",
-                              "offset": 56,
-                              "length": 3456
-                            },
-                            {
-                              "name": "Most Common",
-                              "value": 24000,
-                              "unit": "Hz",
-                              "offset": 56,
-                              "length": 3456
-                            },
-                            {
-                              "name": "Highest",
-                              "value": 24000,
-                              "unit": "Hz",
-                              "offset": 56,
-                              "length": 3456
-                            }
-                          ]
-                        },
-                        {
                           "name": "Subframes Read",
                           "value": 6,
                           "unit": "subframes",
@@ -4399,42 +4371,6 @@
             ],
             "values": [
               432
-            ]
-          },
-          {
-            "name": "Coded Bandwidth",
-            "unit": "Hz",
-            "axis": "frameOffset",
-            "concept": "codedBandwidth",
-            "quantity": "Coded Bandwidth",
-            "x": [
-              56,
-              632,
-              1208,
-              1784,
-              2360,
-              2936
-            ],
-            "values": [
-              24000,
-              24000,
-              24000,
-              24000,
-              24000,
-              24000
-            ]
-          },
-          {
-            "name": "Coded Bandwidth Over Time",
-            "unit": "Hz",
-            "axis": "seconds",
-            "concept": "codedBandwidth",
-            "quantity": "Coded Bandwidth",
-            "x": [
-              0
-            ],
-            "values": [
-              24000
             ]
           }
         ],

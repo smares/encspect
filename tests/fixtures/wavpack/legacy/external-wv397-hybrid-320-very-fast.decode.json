@@ -13,9 +13,20 @@
       }
     ]
   },
+  "correction": {
+    "status": "unchecked",
+    "basis": "decodedAudio",
+    "problems": []
+  },
   "pcmSamples": 24000,
   "pcmMd5": "f76bdc2c942fee70df53a273145c15a2",
   "findings": [
+    {
+      "code": "correction.unchecked",
+      "severity": "Info",
+      "count": 1,
+      "message": "The correction file external-wv397-hybrid-320-very-fast.wvc was not checked: no folder to look in: the input is a stream."
+    },
     {
       "code": "wavpack.legacy-crc2-needs-correction-file",
       "severity": "Info",

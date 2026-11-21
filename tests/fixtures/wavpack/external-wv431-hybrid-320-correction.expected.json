@@ -126,7 +126,7 @@
  ],
  "decoded_samples": 24000,
  "pcm_samples": 24000,
- "decoded_pcm_md5": "61ec0d46931c0a8020ec774e81304ea3",
+ "decoded_pcm_md5": "33f110d8eb91888849a451b5f07f99a7",
  "verification": {
   "default": {
    "isVerified": null,
@@ -173,7 +173,7 @@
      "failed": 0
     }
    ],
-   "isLossy": true
+   "withCorrection": true
   },
   "verify": {
    "isVerified": true,
@@ -220,7 +220,7 @@
      "failed": 0
     }
    ],
-   "isLossy": true
+   "withCorrection": true
   }
  },
  "decode_findings": [],
@@ -266,7 +266,8 @@
    "opens": true,
    "mode_wvc": true,
    "samples": 24000,
-   "errors": 0
+   "errors": 0,
+   "md5": "33f110d8eb91888849a451b5f07f99a7"
   },
   "original_decoder": {
    "tool": "WVUNPACK 4.31 for DOS, run under DOSBox 0.74-3",

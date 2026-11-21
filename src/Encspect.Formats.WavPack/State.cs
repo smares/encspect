@@ -54,6 +54,9 @@ internal sealed class State(Source source, CancellationToken cancellation, Analy
     // The context of the file, through which the correction file is asked for (the context of a container's packets has none).
     public ParseContext? ParseContext { get; init; }
 
+    // The host's lookup of the correction file and the walk of it, once the first hybrid block asked for it (Pairing.Open).
+    public Opened? Opened { get; set; }
+
     // The walk is over the correction file of a pair, which the host opened for the main file's parser.
     public bool IsCompanion { get; init; }
 

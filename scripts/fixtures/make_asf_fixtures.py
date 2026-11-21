@@ -22,6 +22,7 @@ import asf_model as m
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent / "windows"))
 import make_wma_pro_no_length_prefix as no_prefix  # noqa: E402
 import make_wma_damaged_variants as damaged  # noqa: E402
+import make_wma_noise_fixtures as noise  # noqa: E402
 
 OUT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "asf"
 
@@ -505,6 +506,10 @@ damaged_fixture("derived-windows-wma92lossless-stereo-44k-16-damaged",
                 "a sequence number is changed on purpose.")
 
 
+for variant, fixture_name in noise.NAMES.items():
+    fixture(fixture_name, noise.DESCRIPTIONS[variant], lambda variant=variant: noise.build(variant), [], {"ffprobe": True, "wma_noise_line": 894 if variant == "flagged-band" else 829})
+
+
 def two_codecs():
     return m.asf_file(
         [m.stream_properties(1, m.wave_format(0x0050, 2, 44100, 16000, 1, 0)),
@@ -905,6 +910,8 @@ def main():
             source = json.loads((OUT / (variant[1][:-4] + ".provenance.json")).read_text(encoding="utf-8"))
             record = damaged.provenance(name, variant[1], variant[3], data, source)
             (OUT / f"{name}.provenance.json").write_text(json.dumps(record, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+        elif name in noise.NAMES.values():
+            derived = {"derived": {"from": noise.SOURCE, "tool": "scripts/fixtures/make_wma_noise_fixtures.py", "note": "Not an encoder's output: the source file with superframes 12 to 31 replaced by hand-built frames."}}
         elif name.startswith("derived-"):
             derived = {"derived": {"from": DERIVED_FROM, "note": "Not an encoder's output: the source file with one attribute added to its header."}}
         manifest = {"description": description, "format": "ASF", **model, **derived, "findings": unparsed(model["streams"]) + findings, "crosscheck": crosscheck}

@@ -657,10 +657,12 @@ internal sealed partial class LegacyStreamDecoder
         else if ((flags & (LegacyHeader.HighFlag | LegacyHeader.NewHighFlag)) != 0)
         {
             bool isNew = (flags & LegacyHeader.NewHighFlag) != 0;
+            bool isCorrected = HasCorrection;
+            bool isShaped = (flags & LegacyHeader.LossyShapeFlag) != 0;
             Pass[] passes = _passes;
             for (; i < count; i++)
             {
-                if (_end - _pos < _stopAt)
+                if (_end - _pos < _stopAt || IsCorrectionStarved())
                 {
                     break;
                 }
@@ -681,8 +683,22 @@ internal sealed partial class LegacyStreamDecoder
                 }
 
                 m = (m + 1) & (MaxTerm - 1);
-                crc = (crc * 3) + word;
-                output[i] = Clamp(word);
+                if (isCorrected)
+                {
+                    word += isShaped ? _correction[0] + _error[0] : _correction[0];
+                    if (isShaped)
+                    {
+                        _error[0] = -_correction[0];
+                    }
+
+                    crc = (crc * 3) + word;
+                    output[i] = word << _shift;
+                }
+                else
+                {
+                    crc = (crc * 3) + word;
+                    output[i] = Clamp(word);
+                }
             }
         }
         else
@@ -764,10 +780,12 @@ internal sealed partial class LegacyStreamDecoder
         {
             bool isNew = (flags & LegacyHeader.NewHighFlag) != 0;
             bool isJoint = (flags & LegacyHeader.JointStereoFlag) != 0;
+            bool isCorrected = HasCorrection;
+            bool isShaped = (flags & LegacyHeader.LossyShapeFlag) != 0;
             Pass[] passes = _passes;
             for (; i < count; i++)
             {
-                if (_end - _pos < _stopAt)
+                if (_end - _pos < _stopAt || IsCorrectionStarved())
                 {
                     break;
                 }
@@ -805,6 +823,22 @@ internal sealed partial class LegacyStreamDecoder
                 }
 
                 m = (m + 1) & (MaxTerm - 1);
+                if (isCorrected)
+                {
+                    if (isShaped)
+                    {
+                        left += _correction[0] + _error[0];
+                        right += _correction[1] + _error[1];
+                        _error[0] = -_correction[0];
+                        _error[1] = -_correction[1];
+                    }
+                    else
+                    {
+                        left += _correction[0];
+                        right += _correction[1];
+                    }
+                }
+
                 if (isJoint)
                 {
                     int sum;
@@ -814,8 +848,16 @@ internal sealed partial class LegacyStreamDecoder
                 }
 
                 crc = (crc * 9) + (left * 3) + right;
-                output[i] = Clamp(left);
-                output[stride + i] = Clamp(right);
+                if (isCorrected)
+                {
+                    output[i] = left << _shift;
+                    output[stride + i] = right << _shift;
+                }
+                else
+                {
+                    output[i] = Clamp(left);
+                    output[stride + i] = Clamp(right);
+                }
             }
         }
         else

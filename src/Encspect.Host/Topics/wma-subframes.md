@@ -11,4 +11,4 @@ references: Encspect's format descriptions docs/design/wma-pro-format.md and wma
 
 **Subframes.** The next subframe starts at the smallest number of samples any channel has covered. It holds the channels whose next subframe starts there and has that length, so a subframe is coded once for all of them.
 
-**What you see in a file.** Encspect shows the tile header with each channel's list of subframe lengths, and each subframe with its start, length and channels. Its statistics count the subframes of each length.
+**What you see in a file.** Encspect shows the tile header with each channel's list of subframe lengths, and each subframe with its start, length and channels. Its statistics count the subframes of each length, and the Subframe Sizes graph gives the length of every subframe, as the Block Sizes graph does for the blocks of Windows Media Audio versions 1 and 2.

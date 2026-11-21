@@ -43,9 +43,14 @@ def skip(name, what, why):
     SKIPS.append(f"{name}: {what} skipped, {why}")
 
 
-def run_library(binary, path, work, with_correction=True):
+def correction_file(path, manifest):
+    """The correction file beside the main file: the one its manifest names, else the one of the name rule of the fixtures (x.wv with x-wvc.wvc)."""
+    return path.with_name(manifest.get("companion") or path.stem + "-wvc.wvc")
+
+
+def run_library(binary, path, work, manifest, with_correction=True):
     """The pairs wavpack_legacy prints, and the MD5 of the samples it wrote."""
-    wvc = path.with_name(path.stem + "-wvc.wvc") if with_correction else path.with_name("none")
+    wvc = correction_file(path, manifest) if with_correction else path.with_name("none")
     out = pathlib.Path(work) / "samples.pcm"
     out.unlink(missing_ok=True)
     result = subprocess.run([str(binary), str(path), str(out), *([str(wvc)] if wvc.exists() else [])], capture_output=True, text=True, timeout=300)
@@ -61,10 +66,15 @@ def check_library(name, path, manifest, binary, work, problems):
         skip(name, "libwavpack's legacy decoder", "the hand-built file's damage leaves no answer to state")
         return
     expected = manifest["crosscheck"]["libwavpack_legacy"]
-    figures, digest = run_library(binary, path, work)
+    figures, digest = run_library(binary, path, work, manifest)
     opens = "open_error" not in figures
     if opens != expected["opens"]:
         problems.append(f"libwavpack's legacy decoder {'opens' if opens else 'refuses (' + figures.get('open_error', '') + ')'} the file, the manifest says it {'opens' if expected['opens'] else 'does not'}")
+        return
+    if "pair_errors" in expected:
+        # A hand-built pair states the errors the library counts decoding it (the CRC of the audio with the correction file); the analyzer's verdict is held to them in the tests.
+        if int(figures.get("decode_errors", "-1")) != expected["pair_errors"]:
+            problems.append(f"libwavpack counts {figures.get('decode_errors')} errors decoding the pair, the manifest says {expected['pair_errors']}")
         return
     if not opens or "samples_unpacked" not in expected:
         # A hand-built file states only whether the library opens it: what it unpacks of damaged audio is not worked out.
@@ -76,13 +86,13 @@ def check_library(name, path, manifest, binary, work, problems):
     if int(figures.get("decode_errors", "0")) != 0:
         problems.append(f"libwavpack counts {figures['decode_errors']} errors")
     original = manifest["crosscheck"]["original_decoder"]
-    wvc = path.with_name(path.stem + "-wvc.wvc").exists()
+    wvc = correction_file(path, manifest).exists()
     wanted = (original["with_correction"] if "with_correction" in original else original)["pcm_md5"] if wvc or "with_correction" not in original else None
     if expected["samples_unpacked"] and digest != wanted:
         problems.append(f"libwavpack's samples have the MD5 {digest}, the original decoder's {wanted}")
     if wvc:
         # The main file alone is the lossy file; the samples are those the release's WVUNPACK wrote without the correction file.
-        _, alone = run_library(binary, path, work, with_correction=False)
+        _, alone = run_library(binary, path, work, manifest, with_correction=False)
         if alone != original["without_correction"]["pcm_md5"]:
             problems.append(f"libwavpack's samples of the main file alone have the MD5 {alone}, the original decoder's {original['without_correction']['pcm_md5']}")
 

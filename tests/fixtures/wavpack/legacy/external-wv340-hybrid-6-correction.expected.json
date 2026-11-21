@@ -60,8 +60,14 @@
   "offset": 80,
   "length": 29796
  },
- "findings": [],
+ "findings": [
+  {
+   "severity": "info",
+   "code": "correction.unchecked"
+  }
+ ],
  "stream": true,
+ "asks_for_correction_file": true,
  "encoder": {
   "tool": "WavPack 3.4 for DOS (ReallyRareWares: wavpck34.zip), run under DOSBox 0.74-3",
   "arguments": [
@@ -81,6 +87,7 @@
   },
   "file": "main file"
  },
+ "companion": "external-wv340-hybrid-6-correction-wvc.wvc",
  "crosscheck": {
   "libwavpack_legacy": {
    "opens": true,

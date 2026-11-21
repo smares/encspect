@@ -10,6 +10,8 @@ internal static class Topics
     public const string ResidualCoding = "truehd-residual-coding";
     public const string PredictionFilters = "truehd-prediction-filters";
     public const string Rematrixing = "truehd-rematrixing";
+    public const string LeftSideStereo = "left-side-stereo";
+    public const string MidSideStereo = "mid-side-stereo";
     public const string LosslessCheck = "truehd-lossless-check";
     public const string Crc = "crc";
     public const string Verification = "verification";

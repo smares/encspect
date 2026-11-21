@@ -47,7 +47,7 @@ internal static class Fixed
     public static int Mult16_16(int a, int b) => (short)a * (short)b;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static int Mult16_16_16(int a, int b) => (short)((short)a * (short)b);
+    public static int Mult16_16_16(int a, int b) => (short)a * (short)b;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static int Mult16_16_Q13(int a, int b) => Mult16_16(a, b) >> 13;

@@ -39,6 +39,7 @@ public class SpeexGapTests
         StreamMeasurements m = info.Measurements!;
         Assert.DoesNotContain(findings, f => f.Code is "parse.failed" or "decode.failed");
         Assert.Equal(info.Samples, m.Samples + m.LostSamples + m.WithheldSamples);
+        Assert.True(m.LostSamples > 0);
         Assert.True(m.WithheldSamples > 0);
         Assert.Equal(m.WithheldSamples, m.WithheldByReason.AfterGap);
         Assert.True(m.WithheldSamples <= 20 * frameSize);

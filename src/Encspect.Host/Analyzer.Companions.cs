@@ -30,8 +30,14 @@ public sealed partial class Analyzer
             _router = router;
         }
 
-        public Companion Open(string extension)
+        public Companion Open(AnalysisContext caller, string extension)
         {
+            // A correction file has none of its own: asked from the context over a companion (a WavPack 1 to 3 file opened as the .wvc of a version 4 file), it is not looked for.
+            if (_runs.Any(run => run.Context == caller))
+            {
+                return Companion.Unchecked(string.Empty, "a correction file has no correction file of its own");
+            }
+
             if (_opened.TryGetValue(extension, out Companion? opened))
             {
                 return opened;

@@ -3,24 +3,25 @@
     "decoding": "Decoded",
     "decodedSamples": 2700,
     "isVerified": true,
-    "isLossy": true,
+    "withCorrection": true,
     "checksums": [
       {
-        "name": "audio CRC",
+        "name": "correction CRC",
         "stored": 1,
         "checked": 1,
         "failed": 0
       }
     ]
   },
+  "correction": {
+    "status": "consistent",
+    "basis": "decodedAudio",
+    "problems": []
+  },
+  "companionTree": [
+    "Correction Bitstream 0\u002B9539"
+  ],
   "pcmSamples": 2700,
-  "pcmMd5": "b9d044c691eb6172363923dcdb67389d",
-  "findings": [
-    {
-      "code": "wavpack.legacy-crc2-needs-correction-file",
-      "severity": "Info",
-      "count": 1,
-      "message": "The header\u0027s second CRC is of the lossless audio, which this hybrid file alone does not decode to (the correction file adds what it lacks), so it is not compared."
-    }
-  ]
+  "pcmMd5": "841747c19737c566ca6fcf239fee62e7",
+  "findings": []
 }
