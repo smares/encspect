@@ -198,6 +198,12 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         Output.WriteLine($"{kept / packets} bytes kept and {peak / packets} bytes peak per packet");
         Assert.True(kept < packets * 80L, $"The report keeps {kept / packets} bytes per packet.");
         Assert.True(peak < packets * 110L, $"The live heap grew by {peak / packets} bytes per packet.");
+
+        // The submode series (docs/design/coding-graphs.md, "Memory budget"): a variable layout, so a code and a count byte for the one frame of a packet.
+        StreamInfo stream = Assert.Single(report.Streams);
+        CategorySeries submodes = Assert.Single(stream.CategorySeries);
+        Assert.Equal("Narrowband Submodes", submodes.Name);
+        Assert.True(submodes.StorageBytes <= (packets * 2L) + (4L * ((packets / 1024) + 1)), $"The submode series keeps {submodes.StorageBytes / (double)packets} bytes per packet.");
         GC.KeepAlive(report);
     }
 
@@ -1965,6 +1971,12 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         Output.WriteLine($"{kept / packets} bytes kept and {peak / packets} bytes peak per packet");
         Assert.True(kept < packets * 60L, $"The report keeps {kept / packets} bytes per packet.");
         Assert.True(peak < packets * 110L, $"The live heap grew by {peak / packets} bytes per packet.");
+
+        // Block sizes and modes keep a code per packet each (a fixed layout of one value).
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal(["Block Sizes", "Modes"], stream.CategorySeries.Select(c => c.Name));
+        long categories = stream.CategorySeries.Sum(c => c.StorageBytes);
+        Assert.True(categories <= packets * 2L, $"The category series keep {categories / (double)packets} bytes per packet.");
         GC.KeepAlive(report);
     }
 
@@ -2031,6 +2043,12 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         Output.WriteLine($"{kept / packets} bytes kept and {peak / packets} bytes peak per packet");
         Assert.True(kept < packets * 90L, $"The report keeps {kept / packets} bytes per packet.");
         Assert.True(peak < packets * 120L, $"The live heap grew by {peak / packets} bytes per packet.");
+
+        // One stream has a code per packet in each of modes, frame sizes and channel coding (a fixed layout of one value, no weights where a packet has one frame).
+        StreamInfo stream = Assert.Single(report.Streams);
+        long toc = stream.CategorySeries.Where(c => c.Name is "Modes" or "Frame Sizes" or "Channel Coding").Sum(c => c.StorageBytes);
+        Assert.Equal(3, stream.CategorySeries.Count(c => c.Name is "Modes" or "Frame Sizes" or "Channel Coding"));
+        Assert.True(toc <= packets * 3L, $"The TOC series keep {toc / (double)packets} bytes per packet.");
         GC.KeepAlive(report);
     }
 
@@ -2125,6 +2143,35 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         Output.WriteLine($"{kept / packets} bytes kept and {peak / packets} bytes peak per packet");
         Assert.True(kept < packets * 150L, $"The report keeps {kept / packets} bytes per packet.");
         Assert.True(peak < packets * 250L, $"The live heap grew by {peak / packets} bytes per packet.");
+        GC.KeepAlive(report);
+    }
+
+    // The same file with a valid first stream packet in each packet: TOC byte 0xFC and a self-delimited length of 0 (one empty frame), and nothing for the 254 streams
+    // after it. The TOC series keep the values of the stream packets that were read and nothing for the others, so a packet of two bytes costs a few bytes of series
+    // and not one per stream of the header.
+    [Fact]
+    public void ManyTinyMultistreamOpusPacketsKeepOnlyTheValuesTheyHold()
+    {
+        const int packets = 20_000;
+        byte[] head = [.. "OpusHead"u8, 1, 255, 0x38, 0x01, 0x80, 0xBB, 0, 0, 0, 0, 255, 255, 0, .. Enumerable.Range(0, 255).Select(i => (byte)i)];
+        var builder = new OggBuilder()
+            .Page(6, 0, 2, head)
+            .Page(6, 0, 0, [.. "OpusTags"u8, .. OggBuilder.VorbisComment("Encspect")]);
+        byte[] packet = [0xFC, 0x00];
+        for (int done = 0; done < packets; done += 250)
+        {
+            builder.Page(6, (done + 250) * 960L, done + 250 == packets ? (byte)4 : (byte)0, [.. Enumerable.Repeat(packet, 250)]);
+        }
+
+        (Report report, long kept, long peak) = Measure("opus-multistream-tiny.opus", builder.Bytes);
+
+        StreamInfo stream = Assert.Single(report.Streams);
+        CategorySeries[] toc = [.. stream.CategorySeries.Where(c => c.Name is "Modes" or "Frame Sizes" or "Channel Coding")];
+        Assert.Equal(3, toc.Length);
+        long bytes = toc.Sum(c => c.StorageBytes);
+        Output.WriteLine($"{kept / packets} bytes kept, {peak / packets} bytes peak and {bytes / packets} bytes of TOC series per packet");
+        Assert.True(bytes <= (packets * 8L) + (3 * 4L * ((packets / 1024) + 1)), $"The TOC series keep {bytes / (double)packets} bytes per packet.");
+        Assert.True(kept < packets * 150L, $"The report keeps {kept / packets} bytes per packet.");
         GC.KeepAlive(report);
     }
 
