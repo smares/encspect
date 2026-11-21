@@ -18,6 +18,12 @@
     "Blocks With Rematrixing": { "form": "flag", "anchor": "Blocks With Rematrixing", "denominator": "Audio Blocks Read" },
     "Blocks With Spectral Extension": { "form": "flag", "anchor": "Blocks With Spectral Extension", "denominator": "Audio Blocks Read" },
     "Subframes With Block Switching": { "form": "flag", "anchor": "Subframes With Block Switching", "denominator": "Subframes Read" },
+    "Modes": { "form": "entries", "anchor": "Modes", "denominator": ["Frames", "Block Sizes"] },
+    "Frame Sizes": { "form": "entries", "anchor": "Frame Sizes", "denominator": "Frames" },
+    "Channel Coding": { "form": "entries", "anchor": "Channel Coding", "denominator": "Channel Coding" },
+    "Narrowband Submodes": { "form": "entries", "anchor": "Narrowband Submodes", "denominator": "Frames" },
+    "Wideband Submodes": { "form": "entries", "anchor": "Wideband Submodes", "denominator": "Frames" },
+    "Ultra-Wideband Submodes": { "form": "entries", "anchor": "Ultra-Wideband Submodes", "denominator": "Frames" },
     "Silent Frames": { "form": "flag", "anchor": "Silent Frames", "denominator": "Frames", "findings": ["monkeys-audio.frame-cut", "monkeys-audio.frame-misplaced", "monkeys-audio.frame-too-short", "monkeys-audio.frames-not-listed"] }
   }
 }

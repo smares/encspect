@@ -84,5 +84,8 @@ internal static class Explain
 internal static class SeriesText
 {
     public const string Bitrate = "The bitrate of each audio packet: its bits over the samples its frames code.";
+    public const string NarrowbandSubmodes = "The narrowband submode of each frame of an audio packet, which sets its bit allocation (Speex manual, table 9.1), as the tally of Narrowband Submodes counts them; a packet the container cut holds none.";
+    public const string WidebandSubmodes = "The wideband layer's submode of each frame of an audio packet (Speex manual, table 10.1), or no layer where the frame has none, as the tally of Wideband Submodes counts them; a packet the container cut holds none.";
+    public const string UltraWidebandSubmodes = "The ultra-wideband layer's submode of each frame of an audio packet (libspeex 1.2.1, speex_uwb_mode), or no layer where the frame has none, as the tally of Ultra-Wideband Submodes counts them; a packet the container cut holds none.";
     public const string BitrateOverTime = "The bitrate in each second of audio: the bits of the packets that start in it over their duration.";
 }
