@@ -2,9 +2,9 @@ using Encspect.Core;
 
 namespace Encspect.Formats.Mp4;
 
-// Nero's tags box: neroAacTag writes its tags into a `tags` box of the movie's user data, beside the iTunes metadata. No specification is known; the
-// layout is read from the bytes of files that neroAacEnc and neroAacTag 1.5.4.0 wrote (tests/fixtures/aac/sample-kit/external-neroaactag-*), checked against
-// neroAacTag's own listings. The box holds a field list (`meta`: a 32-bit count, then per field a flags byte, a 16-bit key length, the key, a 16-bit value
+// Nero's tags box: Nero's encoders and neroAacTag write a `tags` box into the movie's user data, beside the iTunes metadata. No specification is known; the
+// layout is read from the bytes of the committed files that hold it (neroAacEnc 1.0.0.2 to 1.3.3.0, Nero Burning ROM's ndaudio 1.7.27.0 and neroAacTag
+// 1.5.4.0: tests/fixtures/aac/sample-kit/external-nero*), checked against neroAacTag's own listings for the last. The box holds a field list (`meta`: a 32-bit count, then per field a flags byte, a 16-bit key length, the key, a 16-bit value
 // type, a 32-bit value length and the value), covers (`cvrx`) and segments (`tseg`: a `tshd` header with the segment's number and, in the file with chapters,
 // a field list of the chapter's own).
 public sealed partial class Mp4Parser
@@ -22,6 +22,10 @@ public sealed partial class Mp4Parser
         "album" => "©alb",
         "comment" => "©cmt",
         "tool" => "©too",
+        "album artist" => "aART",
+        "composer" => "©wrt",
+        "genre" => "©gen",
+        "year" => "©day",
         _ => key,
     };
 
@@ -137,7 +141,8 @@ public sealed partial class Mp4Parser
             long valueAt = f.Position;
             byte[] bytes = f.TakeBytes(valueLength);
             NodeValue value = type == 1 ? Latin1OrUtf8(bytes) : bytes.Length <= 32 ? $"0x{Convert.ToHexString(bytes)}" : NodeValue.Integer(bytes.Length, "bytes");
-            string name = key is "title" or "artist" or "album" or "comment" or "tool" ? BoxNames.Item(ItunesKeyOf(key)) ?? key : key;
+            string itunes = ItunesKeyOf(key);
+            string name = itunes != key ? BoxNames.Item(itunes) ?? key : key;
             var field = new Node(name, at, f.Position - at, value) { Description = Explain.NeroField, Topic = Topics.NeroTags };
             field.Add(new Node("Flags", at, 1, NodeValue.Hex(flags, 2)) { Description = Explain.NeroFieldFlags });
             field.Add(new Node("Key Length", at + 1, 2, NodeValue.Integer(keyLength, "bytes")) { Description = Explain.NeroKeyLength });

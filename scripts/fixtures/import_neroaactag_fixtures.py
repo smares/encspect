@@ -34,7 +34,7 @@ FILES = {
     "cover": {
         "name_in_kit": "music-44k-stereo-lc-cbr128-cover.m4a",
         "commands": ["neroAacEnc -lc -cbr 128000 -if music-44k-stereo.wav", "neroAacTag -meta:title=\"Encspect cover test\" -write-nd-covers -add-cover:front:cover.jpg"],
-        "selected_for": "a cover in neroAacTag's own box and in the iTunes metadata",
+        "selected_for": "a cover in neroAacTag's own box and in the iTunes metadata (cover.jpg is a synthetic 64 by 64 JPEG, a yellow square on blue, written for the kit, so it carries no copyright)",
         "listings": {
             "meta": {"cdec": CHAPTER_META["cdec"], "itunsmpb": SMPB_SINGLE, "title": "Encspect cover test", "tool": CHAPTER_META["tool"]},
             "covers": ["front cover #1,image/jpeg"],

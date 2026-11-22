@@ -2,12 +2,12 @@
 id: nero-tags
 title: Nero's tags box in MP4
 related: itunes-metadata, quicktime-user-data, iso-base-media-format
-references: files that neroAacEnc and neroAacTag 1.5.4.0 wrote, with neroAacTag's own listings (-list-meta, -list-covers, -list-chapters); no specification is known
+references: files that neroAacEnc 1.0.0.2 to 1.3.3.0, Nero Burning ROM and neroAacTag 1.5.4.0 wrote, with neroAacTag's own listings (-list-meta, -list-covers, -list-chapters); no specification is known
 ---
 
-**Where it lives.** neroAacTag tags a file twice. It writes the iTunes metadata (an `ilst` in `moov`'s `meta` box) and, beside it in the movie's user data (`udta`), a `tags` box of its own. The same fields therefore appear in both. No specification of the `tags` box is known: the analyzer reads it from the bytes of files that neroAacEnc and neroAacTag 1.5.4.0 wrote and checks the result against neroAacTag's own listings.
+**Where it lives.** Nero's software writes a file's tags twice: the iTunes metadata (an `ilst` in the `meta` box of the movie's user data, `udta`) and, beside that `meta` box, a `tags` box of its own. The same fields therefore appear in both. In the committed files, neroAacEnc 1.0.0.2 to 1.3.3.0 write the box with only the `tool` field (and `cdec` from 1.3.3.0), Nero Burning ROM's encoder (ndaudio 1.7.27.0) with twelve fields, most of them empty, and neroAacTag 1.5.4.0 with what it was given; neroAacEnc 1.5.3.0 and 1.5.4.0 alone write none. No specification is known: the analyzer reads the layout from the bytes of those files and checks neroAacTag's against its own listings.
 
-**Fields.** A `meta` box inside it holds a list of fields, a 32-bit count and then for each a flags byte, a key (its length is 16 bits), a 16-bit value type and a 32-bit value length with the value. The fields seen are text in UTF-8: title, artist, album, comment, a field a user named with `-meta-user`, and three that the encoder writes, `cdec` (its version and command line), `iTunSMPB` (the [gapless playback](gapless-playback) figures) and `tool`.
+**Fields.** A `meta` box inside it holds a list of fields, a 32-bit count and then for each a flags byte, a key (its length is 16 bits), a 16-bit value type and a 32-bit value length with the value. The fields seen are text in UTF-8: title, artist, album, album artist, composer, genre, year, comment, a field a user named with `-meta-user`, and what the encoders write: `cdec` (its version and command line), `iTunSMPB` (the [gapless playback](gapless-playback) figures) and `tool`. The flags byte is 0x00 in every `iTunSMPB` and `tool` field and in `cdec` of neroAacEnc 1.3.3.0, and 0x80 in the others; the files do not show what it selects.
 
 **Covers.** A `cvrx` box holds a cover image: two 32-bit values, a text that names the kind of cover ("front cover" in the file seen), and the image with its length. The box states no image type; the cover seen is a JPEG.
 
