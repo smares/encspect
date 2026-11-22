@@ -19,7 +19,7 @@ Containers that define their own metadata are read by their format parsers, and 
   - an `ID32` box's ID3v2 tag;
   - Nero's chapters (`chpl`) and Nero's `tags` box ([mp4.md](../formats/mp4.md), with [Nero's tags box](../formats/mp4.md#neros-tags-box)).
 - **Matroska and WebM:** Tags, Chapters and Attachments, shown and not interpreted ([matroska.md](../formats/matroska.md#what-is-read)).
-- **WAV:** the `LIST` chunk's `INFO` texts; an `id3 ` or `ID3 ` chunk goes to the ID3v2 parser ([wav.md](../formats/wav.md#what-is-read)).
+- **WAV:** the `LIST` chunk's `INFO` texts, the `bext` chunk's description and originator, the `iXML` text and the `adtl` labels and notes; an `id3 ` or `ID3 ` chunk goes to the ID3v2 parser ([wav.md](../formats/wav.md#what-is-read)).
 - **AIFF:** the `NAME`, `AUTH`, `(c) ` and `ANNO` text chunks; an `ID3 ` or `id3 ` chunk goes to the ID3v2 parser ([aiff.md](../formats/aiff.md#what-is-read)).
 - **FLAC, Ogg Vorbis, Opus and Speex:** their comment blocks and headers go to the Vorbis comment parser.
 - **Musepack SV8:** chapters with their APEv2 tags ([musepack.md](../formats/musepack.md#what-is-read)).
