@@ -146,11 +146,11 @@ public sealed partial class Mp4Parser
             byte[] bytes = f.TakeBytes(valueLength);
             NodeValue value = type == 1 ? Latin1OrUtf8(bytes) : bytes.Length <= 32 ? $"0x{Convert.ToHexString(bytes)}" : NodeValue.Integer(bytes.Length, "bytes");
             string itunes = ItunesKeyOf(key);
-            string name = itunes != key ? BoxNames.Item(itunes) ?? key : key;
+            string name = key.Length == 0 ? "Field" : itunes != key ? BoxNames.Item(itunes) ?? key : key;
             var field = new Node(name, at, f.Position - at, value) { Description = Explain.NeroField, Topic = Topics.NeroTags };
             field.Add(new Node("Flags", at, 1, NodeValue.Hex(flags, 2)) { Description = Explain.NeroFieldFlags });
             field.Add(new Node("Key Length", at + 1, 2, NodeValue.Integer(keyLength, "bytes")) { Description = Explain.NeroKeyLength });
-            field.Add(new Node("Key", at + 3, keyLength, key) { Description = Explain.NeroKey });
+            field.Add(new Node("Key", at + 3, keyLength, key.Length == 0 ? "none" : key) { Description = Explain.NeroKey });
             field.Add(new Node("Value Type", at + 3 + keyLength, 2, NodeValue.Integer(type)) { Description = Explain.NeroValueType });
             field.Add(new Node("Value Length", at + 5 + keyLength, 4, NodeValue.Integer(length, "bytes")) { Description = Explain.NeroValueLength });
             field.Add(new Node("Value", valueAt, valueLength, value) { Description = Explain.NeroValue });

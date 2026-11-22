@@ -283,6 +283,16 @@ public class NeroTagsTests
     private static byte[] Header(int index) => Mp4Builder.Box("tshd", Mp4Builder.U32(index));
 
     [Fact]
+    public void AFieldWithAnEmptyKeyIsNamedField()
+    {
+        Report report = AnalyzeUserData(Mp4Builder.Box("tags", FieldList(("", "value"))));
+
+        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        Node field = Tag(report).Children.SelectMany(c => c.Children).Single(c => c.Name == "Field");
+        Assert.Equal("none", ChildText(field, "Key"));
+    }
+
+    [Fact]
     public void ASegmentInsideASegmentKeepsItsOwnNumber()
     {
         byte[] inner = Mp4Builder.Box("tseg", Header(0), FieldList(("title", "Chapter 1")));
