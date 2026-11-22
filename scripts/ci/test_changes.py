@@ -146,6 +146,8 @@ class ChangesTests(unittest.TestCase):
                      "scripts/fixtures/import_sample_kit_fixtures.py"):
             self.assertIn("sample-kit-crosscheck", run(path), path)
         self.assertEqual(run("scripts/fixtures/crosscheck_sample_kit_fixtures.py"), {"sample-kit-crosscheck", "fixtures"})
+        for path in ("tests/fixtures/aac/sample-kit/external-qaac-he-cbr64.report.json", "tests/fixtures/mpeg-audio/sample-kit/external-nero-rom-mp3-cbr128.report.json"):
+            self.assertEqual(run(path) & {"mp4-crosscheck", "mpeg-crosscheck", "alac-crosscheck"}, set(), path)
         # The script reads the committed files, manifests and golden reports with ffprobe, ffmpeg and MediaInfo, never the analyzer.
         self.assertNotIn("sample-kit-crosscheck", run("src/Encspect.Formats.Aac/AacParser.cs"))
 

@@ -274,7 +274,8 @@ def area_matches(area, path, closure):
     spec = AREAS[area]
     if any(path.startswith(f"src/{p}/") for p in spec["projects"]):
         return True
-    if any(path.startswith(f"tests/fixtures/{d}/") for d in spec["fixtures"]):
+    # The sample kit's folders are read by the sample-kit job alone: the other jobs walk the top of their fixture folders.
+    if any(path.startswith(f"tests/fixtures/{d}/") for d in spec["fixtures"]) and not ("/sample-kit/" in path and area != "sample-kit-crosscheck"):
         return True
     if path.startswith(FIXTURE_SCRIPTS + "/") and path.count("/") == 2 and path.rsplit("/", 1)[1] in closure:
         return True
