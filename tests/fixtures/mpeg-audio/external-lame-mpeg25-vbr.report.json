@@ -3967,6 +3967,46 @@
             "values": [
               3903
             ]
+          },
+          {
+            "name": "Global Gain",
+            "unit": "steps",
+            "axis": "frameOffset",
+            "quantity": "Global Gain",
+            "x": [
+              288,
+              648,
+              864,
+              1008,
+              1152,
+              1296,
+              1368,
+              1512,
+              1872
+            ],
+            "values": [
+              172,
+              161,
+              145,
+              147,
+              146,
+              145,
+              145,
+              165,
+              169
+            ]
+          },
+          {
+            "name": "Global Gain Over Time",
+            "unit": "steps",
+            "axis": "seconds",
+            "quantity": "Global Gain",
+            "x": [
+              0
+            ],
+            "values": [
+              172
+            ]
           }
         ],
         "categorySeries": [
@@ -4145,6 +4185,31 @@
               2,
               0,
               3
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Scalefactor Scaling",
+            "valueLabel": "granule and channel",
+            "categories": [
+              {
+                "name": "With scalefactor scaling",
+                "count": 0
+              },
+              {
+                "name": "Without scalefactor scaling",
+                "count": 9
+              }
+            ],
+            "total": 9,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                1,
+                9
+              ]
             ],
             "seconds": [
               0

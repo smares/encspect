@@ -35,6 +35,42 @@ internal static class CodingCategories
     public const byte CodeMidSideAndIntensity = 3;
     public const byte CodeReserved = 4;
 
+    public static readonly Category[] WindowShapes =
+    [
+        new("Sine", Explain.ShapeSine) { Topic = Topics.Windows },
+        new("KBD", Explain.ShapeKbd) { Topic = Topics.Windows },
+    ];
+
+    public static readonly Category[] WithTns =
+    [
+        new("With TNS", Explain.FlagWithTns) { Topic = Topics.Tns },
+        new("Without TNS", Explain.FlagWithoutTns) { Topic = Topics.Tns },
+    ];
+
+    public static readonly Category[] WithPulses =
+    [
+        new("With pulse data", Explain.FlagWithPulses) { Topic = Topics.PulseData },
+        new("Without pulse data", Explain.FlagWithoutPulses) { Topic = Topics.PulseData },
+    ];
+
+    public static readonly Category[] WithNoise =
+    [
+        new("With noise substitution", Explain.FlagWithNoise) { Topic = Topics.Pns },
+        new("Without noise substitution", Explain.FlagWithoutNoise) { Topic = Topics.Pns },
+    ];
+
+    public static readonly Category[] WithSbr =
+    [
+        new("With SBR", Explain.FlagWithSbr) { Topic = Topics.Sbr },
+        new("Without SBR", Explain.FlagWithoutSbr) { Topic = Topics.Sbr },
+    ];
+
+    public static readonly Category[] WithParametricStereo =
+    [
+        new("With parametric stereo", Explain.FlagWithPs) { Topic = Topics.ParametricStereo },
+        new("Without parametric stereo", Explain.FlagWithoutPs) { Topic = Topics.ParametricStereo },
+    ];
+
     public static readonly Category[] StereoCodings =
     [
         new("Left/right stereo", Explain.CodingLeftRight) { Topic = Topics.MidSide },
@@ -46,7 +82,22 @@ internal static class CodingCategories
 }
 
 // The statistics nodes the coding series are anchored to.
-internal sealed record CodingNodes(Node? WindowSequences, Node? BlockSizes, Node? StereoCoding, Node? CodedBandwidth, Node? IntensityBound = null);
+internal sealed record CodingNodes(Node? WindowSequences, Node? BlockSizes, Node? StereoCoding, Node? CodedBandwidth, Node? IntensityBound = null)
+{
+    public Node? Shapes { get; init; }
+
+    public Node? MidSideBands { get; init; }
+
+    public Node? Noise { get; init; }
+
+    public Node? Tns { get; init; }
+
+    public Node? Pulses { get; init; }
+
+    public Node? Sbr { get; init; }
+
+    public Node? ParametricStereo { get; init; }
+}
 
 // Records the coding series of a stream while its raw data blocks are read: the window sequence of every channel stream, the
 // stereo coding of every channel pair and the coded bandwidth of every unit (an access unit, an ADTS frame or an ADIF block).
@@ -56,6 +107,28 @@ internal sealed record CodingNodes(Node? WindowSequences, Node? BlockSizes, Node
 internal sealed class CodingRecorder(StreamSetup setup)
 {
     private readonly List<byte> _windows = [];
+    private readonly List<byte> _shapes = [];
+    private readonly List<byte> _tns = [];
+    private readonly List<byte> _pulses = [];
+    private readonly List<byte> _noise = [];
+    private readonly List<byte> _sbr = [];
+    private readonly List<byte> _ps = [];
+    private readonly CategorySeriesBuilder _shapeSeries = new("Window Shapes", CodingCategories.WindowShapes, "channel stream");
+    private readonly CategorySeriesBuilder _tnsSeries = new("TNS", CodingCategories.WithTns, "channel stream");
+    private readonly CategorySeriesBuilder _pulseSeries = new("Pulse Data", CodingCategories.WithPulses, "channel stream");
+    private readonly CategorySeriesBuilder _noiseSeries = new("Noise Substitution", CodingCategories.WithNoise, "channel stream");
+
+    // The SBR and parametric stereo series exist from the first raw data block with SBR data, so that a stream without it keeps nothing for them but
+    // the number of raw data blocks of each unit, which the units before that block get as values without SBR.
+    private CategorySeriesBuilder? _sbrSeries;
+    private CategorySeriesBuilder? _psSeries;
+    private ChunkedList<byte>? _blockCounts = new();
+
+    // The mid/side bands and the bands of common window pairs of the unit being read, and per unit the share of them in tenths of a percent, -1 for a unit without such bands.
+    private int _unitMidSide;
+    private int _unitPairBands;
+    private readonly ChunkedList<short> _midSideShare = new();
+    private int _shareUnits;
     private readonly List<byte> _pairs = [];
     private readonly CategorySeriesBuilder _windowSeries = new("Block Usage", CodingCategories.WindowSequences, "channel stream", concept: GraphConcept.BlockSwitching);
     private CategorySeriesBuilder? _pairSeries;
@@ -81,6 +154,29 @@ internal sealed class CodingRecorder(StreamSetup setup)
 
     public void Pair(byte code) => _pairs.Add(code);
 
+    // What the channel stream uses besides its window: the window shape, temporal noise shaping, pulse data and noise substitution.
+    public void Tools(int windowShape, bool hasTns, bool hasPulses, bool hasNoise)
+    {
+        _shapes.Add((byte)windowShape);
+        _tns.Add(hasTns ? (byte)0 : (byte)1);
+        _pulses.Add(hasPulses ? (byte)0 : (byte)1);
+        _noise.Add(hasNoise ? (byte)0 : (byte)1);
+    }
+
+    // A raw data block: whether it holds SBR data and whether that carries parametric stereo; a block that could not be read has neither.
+    public void Block(bool hasSbr, bool hasPs)
+    {
+        _sbr.Add(hasSbr ? (byte)0 : (byte)1);
+        _ps.Add(hasPs ? (byte)0 : (byte)1);
+    }
+
+    // The bands of a pair with a common window, and those of them coded as mid/side (not intensity stereo bands).
+    public void PairBands(int midSide, int bands)
+    {
+        _unitMidSide += midSide;
+        _unitPairBands += bands;
+    }
+
     // Units that have an intensity stereo bound (the lowest band of codebook 14 or 15 in any pair of the unit), and the lowest and highest of them in Hz.
     public int IntensityUnits { get; private set; }
 
@@ -103,9 +199,43 @@ internal sealed class CodingRecorder(StreamSetup setup)
         return (int)Math.Min(int.MaxValue, CodingStatistics.RoundHalfEven((long)line * setup.SampleRate, 2 * lines));
     }
 
+    private void AddSbr()
+    {
+        if (_sbrSeries is null && _sbr.Contains(0))
+        {
+            _sbrSeries = new("SBR", CodingCategories.WithSbr, "raw data block");
+            _psSeries = new("Parametric Stereo", CodingCategories.WithParametricStereo, "raw data block");
+            byte[] without = new byte[CategorySeries.MaxValuesPerUnit];
+            Array.Fill(without, (byte)1);
+            for (int unit = 0; unit < _blockCounts!.Count; unit++)
+            {
+                _sbrSeries.Add(without.AsSpan(0, _blockCounts[unit]));
+                _psSeries.Add(without.AsSpan(0, _blockCounts[unit]));
+            }
+
+            _blockCounts = null;
+        }
+
+        if (_sbrSeries is null)
+        {
+            _blockCounts!.Add((byte)Math.Min(_sbr.Count, CategorySeries.MaxValuesPerUnit));
+            return;
+        }
+
+        _sbrSeries.Add(CollectionsMarshal.AsSpan(_sbr));
+        _psSeries!.Add(CollectionsMarshal.AsSpan(_ps));
+    }
+
     public void EndUnit()
     {
         _windowSeries.Add(CollectionsMarshal.AsSpan(_windows));
+        _shapeSeries.Add(CollectionsMarshal.AsSpan(_shapes));
+        _tnsSeries.Add(CollectionsMarshal.AsSpan(_tns));
+        _pulseSeries.Add(CollectionsMarshal.AsSpan(_pulses));
+        _noiseSeries.Add(CollectionsMarshal.AsSpan(_noise));
+        AddSbr();
+        _midSideShare.Add(_unitPairBands == 0 ? (short)-1 : (short)Math.Round(_unitMidSide * 1000.0 / _unitPairBands, MidpointRounding.ToEven));
+        _shareUnits += _unitPairBands == 0 ? 0 : 1;
         if (_pairs.Count > 0 && _pairSeries is null)
         {
             // The first pair: the units before it have no pair and get empty units, so that a stream without pairs keeps nothing.
@@ -137,6 +267,14 @@ internal sealed class CodingRecorder(StreamSetup setup)
         }
 
         _windows.Clear();
+        _shapes.Clear();
+        _tns.Clear();
+        _pulses.Clear();
+        _noise.Clear();
+        _sbr.Clear();
+        _ps.Clear();
+        _unitMidSide = 0;
+        _unitPairBands = 0;
         _pairs.Clear();
         _unitHertz = -1;
         _unitBound = -1;
@@ -171,9 +309,64 @@ internal sealed class CodingRecorder(StreamSetup setup)
             categories.Add(_pairSeries.Build(offsets, shared, pairAnchor, Explain.StereoCodingSeries, Topics.MidSide, time));
         }
 
+        void Add(CategorySeriesBuilder builder, Node? anchor, string description, string topic)
+        {
+            if (anchor is not null)
+            {
+                categories.Add(builder.Build(offsets, shared, anchor, description, topic, time));
+            }
+        }
+
+        Add(_shapeSeries, nodes.Shapes, Explain.WindowShapesSeries, Topics.Windows);
+        Add(_tnsSeries, nodes.Tns, Explain.TnsSeries, Topics.Tns);
+        Add(_pulseSeries, nodes.Pulses, Explain.PulseSeries, Topics.PulseData);
+        Add(_noiseSeries, nodes.Noise, Explain.NoiseSeries, Topics.Pns);
+        if (_sbrSeries is not null)
+        {
+            Add(_sbrSeries, nodes.Sbr, Explain.SbrSeries, Topics.Sbr);
+            Add(_psSeries!, nodes.ParametricStereo, Explain.PsSeries, Topics.ParametricStereo);
+        }
+        AddMidSideBands(offsets, nodes.MidSideBands, series, cancellation);
         AddBound(offsets, nodes.IntensityBound, series, cancellation);
         AddBandwidth(offsets, nodes.CodedBandwidth, time, series, cancellation);
         return categories;
+    }
+
+    // "Mid/Side Bands" per unit: the share of the bands of its common window pairs that are coded as mid/side, in percent, at the units that have such bands.
+    private void AddMidSideBands(ReadOnlyMemory<double> offsets, Node? anchor, List<Series> series, CancellationToken cancellation)
+    {
+        if (_shareUnits == 0 || anchor is null)
+        {
+            return;
+        }
+
+        var values = new double[_shareUnits];
+        double[]? own = _shareUnits == Count ? null : new double[_shareUnits];
+        for (int i = 0, n = 0; i < Count; i++)
+        {
+            if (i % 4096 == 0)
+            {
+                cancellation.ThrowIfCancellationRequested();
+            }
+
+            if (_midSideShare[i] >= 0)
+            {
+                values[n] = _midSideShare[i] / 10.0;
+                if (own is not null)
+                {
+                    own[n] = offsets.Span[i];
+                }
+
+                n++;
+            }
+        }
+
+        series.Add(new Series("Mid/Side Bands", "%", SeriesAxis.FrameOffset, own is null ? offsets : own, values, anchor)
+        {
+            Description = Explain.MidSideBandsSeries,
+            Concept = GraphConcept.StereoCoding,
+            Quantity = "Mid/Side Bands",
+        });
     }
 
     // "Intensity Stereo Bound" per unit, at the units that have one.

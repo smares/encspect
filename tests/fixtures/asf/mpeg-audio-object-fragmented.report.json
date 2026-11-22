@@ -7879,6 +7879,44 @@
             ]
           },
           {
+            "name": "Global Gain",
+            "unit": "steps",
+            "axis": "frameOffset",
+            "quantity": "Global Gain",
+            "x": [
+              369,
+              803,
+              1393,
+              2208,
+              2643,
+              3441,
+              3876,
+              4465
+            ],
+            "values": [
+              171,
+              137,
+              135,
+              139,
+              137,
+              136,
+              140,
+              138
+            ]
+          },
+          {
+            "name": "Global Gain Over Time",
+            "unit": "steps",
+            "axis": "seconds",
+            "quantity": "Global Gain",
+            "x": [
+              0
+            ],
+            "values": [
+              171
+            ]
+          },
+          {
             "name": "Channel Bit Share",
             "unit": "%",
             "axis": "frameOffset",
@@ -8139,6 +8177,46 @@
               2,
               0,
               3
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Scalefactor Scaling",
+            "valueLabel": "granule and channel",
+            "valuesPerUnit": 4,
+            "valueNames": [
+              "granule 1, channel 1",
+              "granule 1, channel 2",
+              "granule 2, channel 1",
+              "granule 2, channel 2"
+            ],
+            "categories": [
+              {
+                "name": "With scalefactor scaling",
+                "count": 1
+              },
+              {
+                "name": "Without scalefactor scaling",
+                "count": 31
+              }
+            ],
+            "total": 32,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                1,
+                13
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                18
+              ]
             ],
             "seconds": [
               0

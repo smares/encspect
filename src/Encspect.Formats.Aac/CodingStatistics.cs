@@ -23,6 +23,13 @@ internal static class CodingStatistics
         Node? stereo = null;
         Node? bandwidth = null;
         Node? intensityBound = null;
+        Node? shapesNode = null;
+        Node? midSideBandsNode = null;
+        Node? noiseNode = null;
+        Node? tnsStreams = null;
+        Node? pulseNode = null;
+        Node? sbrNode = null;
+        Node? psNode = null;
         Node blocks = statistics.Add(cover("Raw Data Blocks", NodeValue.Integer(tally.Blocks, "blocks", "block"), Explain.StatBlocks, Topics.RawDataBlocks));
         if (tally.DamagedBlocks > 0)
         {
@@ -65,7 +72,7 @@ internal static class CodingStatistics
                 }
             }
 
-            Node shapes = statistics.Add(cover("Window Shapes", NodeValue.Integer(streams, "channel streams", "channel stream"), Explain.StatWindowShapes, Topics.Windows));
+            Node shapes = shapesNode = statistics.Add(cover("Window Shapes", NodeValue.Integer(streams, "channel streams", "channel stream"), Explain.StatWindowShapes, Topics.Windows));
             for (int s = 0; s < 2; s++)
             {
                 if (tally.WindowShapes[s] > 0)
@@ -90,7 +97,7 @@ internal static class CodingStatistics
                     }
                 }
 
-                pairs.Add(cover("Mid/Side Bands", Percent(tally.MidSideBands, tally.PairBands), Explain.StatMidSideBands, Topics.MidSide));
+                midSideBandsNode = pairs.Add(cover("Mid/Side Bands", Percent(tally.MidSideBands, tally.PairBands), Explain.StatMidSideBands, Topics.MidSide));
             }
 
             pairs.Add(cover("Intensity Stereo", Share(tally.IntensityPairs, tally.Pairs, "element"), Explain.StatIntensityPairs, Topics.Intensity));
@@ -112,10 +119,10 @@ internal static class CodingStatistics
 
         if (streams > 0)
         {
-            Node noise = statistics.Add(cover("Noise Substitution", Share(tally.NoiseStreams, streams, "channel stream"), Explain.StatNoise, Topics.Pns));
+            Node noise = noiseNode = statistics.Add(cover("Noise Substitution", Share(tally.NoiseStreams, streams, "channel stream"), Explain.StatNoise, Topics.Pns));
             noise.Add(cover("Noise Bands", Percent(tally.NoiseBands, tally.Bands), Explain.StatNoiseBands, null));
             long tns = tally.Tns.Sum();
-            Node tnsNode = statistics.Add(cover("TNS", Share(tns, streams, "channel stream"), Explain.StatTns, Topics.Tns));
+            Node tnsNode = tnsStreams = statistics.Add(cover("TNS", Share(tns, streams, "channel stream"), Explain.StatTns, Topics.Tns));
             for (int w = 0; w < 4; w++)
             {
                 if (tally.WindowSequences[w] > 0)
@@ -130,7 +137,7 @@ internal static class CodingStatistics
                 tnsNode.Add(cover("Filters", NodeValue.Integer(tally.TnsFilters, "filters", "filter"), Explain.StatTnsFilters, null));
             }
 
-            statistics.Add(cover("Pulse Data", Share(tally.Pulses, streams, "channel stream"), Explain.StatPulses, Topics.PulseData));
+            pulseNode = statistics.Add(cover("Pulse Data", Share(tally.Pulses, streams, "channel stream"), Explain.StatPulses, Topics.PulseData));
             if (tally.GainControl > 0 || setup.ObjectType == 3)
             {
                 statistics.Add(cover("Gain Control", Share(tally.GainControl, streams, "channel stream"), Explain.StatGainControl, null));
@@ -188,8 +195,8 @@ internal static class CodingStatistics
 
         if (tally.SbrBlocks > 0)
         {
-            Node sbr = statistics.Add(cover("SBR", Share(tally.SbrBlocks, tally.Blocks, "access unit"), Explain.StatSbr, Topics.Sbr));
-            sbr.Add(cover("Parametric Stereo", Share(tally.PsBlocks, tally.Blocks, "access unit"), Explain.StatPs, Topics.ParametricStereo));
+            Node sbr = sbrNode = statistics.Add(cover("SBR", Share(tally.SbrBlocks, tally.Blocks, "access unit"), Explain.StatSbr, Topics.Sbr));
+            psNode = sbr.Add(cover("Parametric Stereo", Share(tally.PsBlocks, tally.Blocks, "access unit"), Explain.StatPs, Topics.ParametricStereo));
             sbr.Add(cover("SBR Headers", NodeValue.Integer(tally.SbrHeaders, "headers", "header"), Explain.StatSbrHeaders, null));
             if (tally.SbrUnread > 0)
             {
@@ -231,7 +238,16 @@ internal static class CodingStatistics
             statistics.Add(cover("Data Stream Elements", $"{Count(tally.Elements[4], "element")}, {Count(tally.DataStreamBytes, "byte")}", Explain.StatDse, Topics.RawDataBlocks));
         }
 
-        return new CodingNodes(windows, sizes, stereo, bandwidth, intensityBound);
+        return new CodingNodes(windows, sizes, stereo, bandwidth, intensityBound)
+        {
+            Shapes = shapesNode,
+            MidSideBands = midSideBandsNode,
+            Noise = noiseNode,
+            Tns = tnsStreams,
+            Pulses = pulseNode,
+            Sbr = sbrNode,
+            ParametricStereo = psNode,
+        };
     }
 
     private static void AddMaxSfb(Node statistics, string name, long[] counts, Func<string, NodeValue?, string, string?, Node> cover, string description)

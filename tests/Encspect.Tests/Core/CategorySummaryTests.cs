@@ -119,6 +119,29 @@ public class CategorySummaryTests
     }
 
     [Fact]
+    public void A_flag_series_is_held_to_a_tally_that_states_its_share_as_a_decimal_percent()
+    {
+        const string table = """{ "series": { "Scalefactor Scaling": { "form": "flag", "anchor": "Scalefactor Scaling", "denominator": "Block Usage" } } }""";
+        var root = new Node("File", 0, 100);
+        var stream = new Node("Stream", 0, 100) { Kind = NodeKind.Stream };
+        var statistics = new Node("Statistics", 0, 100) { Kind = NodeKind.Statistics };
+        var usage = new Node("Block Usage", 0, 100, NodeValue.Integer(8, "granules", "granule"));
+        var scaling = new Node("Scalefactor Scaling", 0, 100, NodeValue.Decimal(37.5, 1, "%"));
+        root.Add(stream);
+        stream.Add(statistics);
+        statistics.Add(usage);
+        statistics.Add(scaling);
+        CategorySeries series = FlagSeries("Scalefactor Scaling", with: 3, without: 5, scaling);
+        Report report = new("a.mp3", root, [], [new StreamInfo { Nodes = [stream], Codec = "Test", CategorySeries = [series] }]);
+
+        Assert.Empty(CategorySummary.Parse(table).Check(report));
+
+        CategorySeries wrong = FlagSeries("Scalefactor Scaling", with: 2, without: 6, scaling);
+        Report broken = new("a.mp3", root, [], [new StreamInfo { Nodes = [stream], Codec = "Test", CategorySeries = [wrong] }]);
+        Assert.Contains("25% in the series and 37.5% in the tally", Assert.Single(CategorySummary.Parse(table).Check(broken)));
+    }
+
+    [Fact]
     public void A_listed_finding_allows_the_series_to_be_smaller()
     {
         (Report report, _) = Build([10, 2, 2], tally: [10, 2, 3], granules: 15, "Joint Stereo Modes", "Frames");

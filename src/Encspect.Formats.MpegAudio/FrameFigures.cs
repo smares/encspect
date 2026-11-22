@@ -137,6 +137,19 @@ internal static class FrameFigures
         };
     }
 
+    // scalefac_scale of one granule and channel (2.4.2.7): after window_switching_flag, the 22 bits of the block type and table fields or of the table
+    // selects and region counts, and in MPEG-1 the preflag.
+    public static byte ScalefacScale(ReadOnlySpan<byte> sideInfo, MpegHeader header, int granule, int channel)
+    {
+        int start = GranuleStart(header, granule, channel);
+        int windowSwitching = start + 12 + 9 + 8 + (header.IsMpeg1 ? 4 : 9);
+        return (byte)Bits(sideInfo, windowSwitching + 1 + 22 + (header.IsMpeg1 ? 1 : 0), 1);
+    }
+
+    // global_gain of one granule and channel (2.4.2.7): 8 bits after part2_3_length and big_values.
+    public static int GlobalGain(ReadOnlySpan<byte> sideInfo, MpegHeader header, int granule, int channel) =>
+        Bits(sideInfo, GranuleStart(header, granule, channel) + 12 + 9, 8);
+
     public static int Granules(MpegHeader header) => header.IsMpeg1 ? 2 : 1;
 
     // The side information has a fixed layout: main_data_begin, private bits and, in MPEG-1, scfsi come first, then every

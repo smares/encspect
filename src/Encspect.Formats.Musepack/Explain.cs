@@ -176,6 +176,7 @@ internal static class Explain
     public const string BandwidthLowest = "The lowest coded bandwidth of any frame that has one.";
     public const string BandwidthMostCommon = "The coded bandwidth most frames have; the lowest of them where several are equally common.";
     public const string BandwidthHighest = "The highest coded bandwidth of any frame that has one.";
+    public const string NoiseSeries = "The subband channels coded with noise substitution (resolution -1) in each unit: in an SV7 frame, or in the frames of an SV8 audio packet together; a unit that is cut or damaged has none.";
     public const string CodedBandwidthSeries = "The coded bandwidth of each frame (SV8: of each audio packet, the highest of its frames) in whole hertz: the upper edge of the highest subband with a resolution other than 0 in either channel. A frame the data cuts short or that cannot be read has none.";
     public const string CodedBandwidthOverTimeSeries = "The highest coded bandwidth of the frames or packets that start in each second of audio.";
     public const string NoiseCount = "Subband channels filled with noise (resolution -1) across all frames.";
