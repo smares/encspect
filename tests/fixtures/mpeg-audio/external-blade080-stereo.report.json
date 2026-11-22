@@ -47422,7 +47422,7 @@
       {
         "severity": "Warning",
         "code": "mpeg-audio.main-data-overlap",
-        "message": "2 frames have main data that overlaps the previous frame's, the first at 0x6398; frames are probably missing.",
+        "message": "2 frames have a main_data_begin that reaches back past the bytes the frames before it leave free; the first, at 0x6398, reaches 129 bytes back past 0 bytes free.",
         "offset": 25496,
         "length": 418,
         "path": [

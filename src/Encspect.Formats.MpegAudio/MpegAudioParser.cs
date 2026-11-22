@@ -1376,7 +1376,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
                 break;
             case MainDataProblem.Overlap:
                 findings.Add(Severity.Warning, "mpeg-audio.main-data-overlap", frame, count =>
-                    $"{Frames(count, "has", "have")} main data that overlaps the previous frame's, the first at {findings.At(position)}; frames are probably missing.");
+                    $"{Frames(count, "has", "have")} a main_data_begin that reaches back past the bytes the frames before it leave free; the first, at {findings.At(position)}, reaches {Counts.Of(placement.MainDataBegin, "byte", "bytes")} back past {Counts.Of(placement.Reservoir, "byte", "bytes")} free.");
                 break;
             case MainDataProblem.InHeaderFrame:
                 findings.Add(Severity.Warning, "mpeg-audio.main-data-in-vbr-header-frame", frame, count =>
