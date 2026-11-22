@@ -40,6 +40,14 @@ MPEG_LAYERS = {"Layer 1": "Layer I", "Layer 2": "Layer II", "Layer 3": "Layer II
 AAC_FEATURES = {"LC": "AAC LC", "LC SBR": "HE-AAC", "LC SBR PS": "HE-AAC v2"}
 SIMPLE = {"AC-3": "AC-3", "FLAC": "FLAC", "Vorbis": "Vorbis", "ALAC": "Apple Lossless"}
 
+# Durations MediaInfo reports that differ from the analyzer's for a reason that is known, name -> (MediaInfo's duration, why). A duration that is neither the
+# analyzer's nor the listed one fails.
+MEDIAINFO_DURATIONS = {
+    "external-nero-rom-mp3pro-vbr-low": (
+        10.522, "MediaInfo 26.01 divides the VBRI header's byte count (52,610) by the 40 kbit/s it reports as the stream's bitrate (52,610 x 8 / 40,000 = 10.522 s); the stream's "
+                "386 frames of 576 samples at 22,050 Hz are 10.083 s, which the analyzer reports and the header's frame count (387, its own frame included) agrees with"),
+}
+
 SKIPS = {}
 FAILURES = []
 
@@ -147,7 +155,10 @@ def check_mediainfo(name, stem, path):
             fail(name, f"MediaInfo's sample rate is {rate}, the analyzer's {ours['sampleRate']}")
         if "Duration" in found:
             seconds = float(found["Duration"])
-            if abs(seconds - float(ours["duration"])) > 0.15:
+            listed = MEDIAINFO_DURATIONS.get(stem.name.removeprefix("external-"), None) or MEDIAINFO_DURATIONS.get(stem.name)
+            if listed and abs(seconds - listed[0]) < 0.001:
+                skip(name, "MediaInfo duration", listed[1])
+            elif abs(seconds - float(ours["duration"])) > 0.15:
                 fail(name, f"MediaInfo's duration is {seconds}, the analyzer's {ours['duration']}")
         else:
             skip(name, "MediaInfo duration", "MediaInfo reports no duration for an ADTS stream or a variable bitrate MPEG audio stream without a header that gives one")

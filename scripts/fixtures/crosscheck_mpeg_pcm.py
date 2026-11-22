@@ -53,6 +53,12 @@ EXPLAINED = {
     "mc-forbidden-values.mp2": {"mctoolamed": "dyn_cross_mode 15 of 3/2 and a nonzero tc_allocation with dematrix_procedure 3, which 13818-3 2.5.2.15 forbids, are in the fixture and read differently by the two decoders (each alone, in every frame of a variant, differs; the valid lfe_allocation 15 and a scalefactor index of 63 agree)"},
     "mc-second-stereo-crosstalk.mp2": {"mctoolamed": "tc_allocation 3, which 13818-3 2.5.2.15 leaves unassigned in 3/0 + 2/0, is in the fixture"},
     "mc-center-reserved-second-stereo.mp2": {"mctoolamed": "the reserved center value 2 (13818-3 2.5.2.13: not defined), which the analyzer reads as no center"},
+    "external-nero-rom-mp3pro-cbr64.mp3": {
+        "ffmpeg": "in the intensity stereo frames of a tone in the left channel only (8.6 to 9.3 s of the source, whose right channel is digital silence there), where the right channel codes no lines and has scalefac_compress 90, FFmpeg 6.1.1 and 8.0.1 and mpg123 1.32.5 put the tone into the right channel as well (RMS 0.21 to 0.25 of full scale), while minimp3, libmad (madplay 0.15.2b) and the analyzer decode it silent (RMS 0.003 or less), as the source is; two decoders against two, and the source decides for the analyzer"
+    },
+    "external-nero-rom-mp3pro-vbr-low.mp3": {
+        "ffmpeg": "in the intensity stereo frames of a tone in the left channel only (8.6 to 9.3 s of the source, whose right channel is digital silence there), where the right channel codes no lines and has scalefac_compress 90, FFmpeg 6.1.1 and 8.0.1 and mpg123 1.32.5 put the tone into the right channel as well (RMS 0.21 to 0.25 of full scale), while minimp3, libmad (madplay 0.15.2b) and the analyzer decode it silent (RMS 0.003 or less), as the source is; two decoders against two, and the source decides for the analyzer; in frames 233 and 234 (intensity stereo, MPEG-2) FFmpeg also differs by at most 1.2e-4 of full scale, in 18 and 24 samples above the bound, where libmad's decode equals the analyzer's"
+    },
     "external-xing-mpeg2.mp3": {
         "ffmpeg": "the references disagree: in the granules of frames 61 to 64 of this tompg file (MPEG-2 joint stereo, intensity and mid/side stereo, a transient after near silence) the largest "
                   "differences are 0.0236 of full scale between minimp3 and FFmpeg 6.1.1 (mp3float and mp3 agree to 3e-5), 0.0221 between minimp3 and mpg123 1.32.5 and 0.0174 between FFmpeg and "
@@ -160,6 +166,7 @@ def minimp3_reference(binary, path, work):
 # unavailable frame) included; each span is also held to the rules: whole frames, then at most the withheld span (1,056 samples in Layer III, 480 in Layers I and II).
 ONLY_IN_MINIMP3 = {
     "damaged-bitrate.mp3": [[3456, 4608]],
+    "external-nero-rom-mp3pro-vbr-low.mp3": [[221184, 222336]],
     "external-blade080-stereo.mp3": [[69120, 73632], [87552, 88704]],
     "external-blade082-stereo.mp3": [[87552, 88704]],
     "external-shine-joint.mp3": [[87552, 88704]],
