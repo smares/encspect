@@ -4143,7 +4143,10 @@
                       ]
                     },
                     {
-                      "name": "tags",
+                      "name": "Nero Tags",
+                      "kind": "Tag",
+                      "value": 12,
+                      "unit": "fields",
                       "offset": 2251,
                       "length": 393,
                       "children": [
@@ -4161,11 +4164,631 @@
                           "length": 4
                         },
                         {
-                          "name": "Data",
-                          "value": 385,
-                          "unit": "bytes",
+                          "name": "Nero Tag Fields",
+                          "value": 12,
+                          "unit": "fields",
                           "offset": 2259,
-                          "length": 385
+                          "length": 365,
+                          "children": [
+                            {
+                              "name": "Size",
+                              "value": 365,
+                              "unit": "bytes",
+                              "offset": 2259,
+                              "length": 4
+                            },
+                            {
+                              "name": "Type",
+                              "value": "meta",
+                              "offset": 2263,
+                              "length": 4
+                            },
+                            {
+                              "name": "Entries",
+                              "value": 12,
+                              "offset": 2267,
+                              "length": 4
+                            },
+                            {
+                              "name": "Album",
+                              "value": "",
+                              "offset": 2271,
+                              "length": 14,
+                              "children": [
+                                {
+                                  "name": "Flags",
+                                  "value": 128,
+                                  "offset": 2271,
+                                  "length": 1
+                                },
+                                {
+                                  "name": "Key Length",
+                                  "value": 5,
+                                  "unit": "bytes",
+                                  "offset": 2272,
+                                  "length": 2
+                                },
+                                {
+                                  "name": "Key",
+                                  "value": "album",
+                                  "offset": 2274,
+                                  "length": 5
+                                },
+                                {
+                                  "name": "Value Type",
+                                  "value": 1,
+                                  "offset": 2279,
+                                  "length": 2
+                                },
+                                {
+                                  "name": "Value Length",
+                                  "value": 0,
+                                  "unit": "bytes",
+                                  "offset": 2281,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Value",
+                                  "value": "",
+                                  "offset": 2285,
+                                  "length": 0
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Album Artist",
+                              "value": "",
+                              "offset": 2285,
+                              "length": 21,
+                              "children": [
+                                {
+                                  "name": "Flags",
+                                  "value": 128,
+                                  "offset": 2285,
+                                  "length": 1
+                                },
+                                {
+                                  "name": "Key Length",
+                                  "value": 12,
+                                  "unit": "bytes",
+                                  "offset": 2286,
+                                  "length": 2
+                                },
+                                {
+                                  "name": "Key",
+                                  "value": "album artist",
+                                  "offset": 2288,
+                                  "length": 12
+                                },
+                                {
+                                  "name": "Value Type",
+                                  "value": 1,
+                                  "offset": 2300,
+                                  "length": 2
+                                },
+                                {
+                                  "name": "Value Length",
+                                  "value": 0,
+                                  "unit": "bytes",
+                                  "offset": 2302,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Value",
+                                  "value": "",
+                                  "offset": 2306,
+                                  "length": 0
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Artist",
+                              "value": "",
+                              "offset": 2306,
+                              "length": 15,
+                              "children": [
+                                {
+                                  "name": "Flags",
+                                  "value": 128,
+                                  "offset": 2306,
+                                  "length": 1
+                                },
+                                {
+                                  "name": "Key Length",
+                                  "value": 6,
+                                  "unit": "bytes",
+                                  "offset": 2307,
+                                  "length": 2
+                                },
+                                {
+                                  "name": "Key",
+                                  "value": "artist",
+                                  "offset": 2309,
+                                  "length": 6
+                                },
+                                {
+                                  "name": "Value Type",
+                                  "value": 1,
+                                  "offset": 2315,
+                                  "length": 2
+                                },
+                                {
+                                  "name": "Value Length",
+                                  "value": 0,
+                                  "unit": "bytes",
+                                  "offset": 2317,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Value",
+                                  "value": "",
+                                  "offset": 2321,
+                                  "length": 0
+                                }
+                              ]
+                            },
+                            {
+                              "name": "cdec",
+                              "value": "ndaudio 1.7.27.0 / -cbr 64000",
+                              "offset": 2321,
+                              "length": 42,
+                              "children": [
+                                {
+                                  "name": "Flags",
+                                  "value": 128,
+                                  "offset": 2321,
+                                  "length": 1
+                                },
+                                {
+                                  "name": "Key Length",
+                                  "value": 4,
+                                  "unit": "bytes",
+                                  "offset": 2322,
+                                  "length": 2
+                                },
+                                {
+                                  "name": "Key",
+                                  "value": "cdec",
+                                  "offset": 2324,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Value Type",
+                                  "value": 1,
+                                  "offset": 2328,
+                                  "length": 2
+                                },
+                                {
+                                  "name": "Value Length",
+                                  "value": 29,
+                                  "unit": "bytes",
+                                  "offset": 2330,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Value",
+                                  "value": "ndaudio 1.7.27.0 / -cbr 64000",
+                                  "offset": 2334,
+                                  "length": 29
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Comment",
+                              "value": "",
+                              "offset": 2363,
+                              "length": 16,
+                              "children": [
+                                {
+                                  "name": "Flags",
+                                  "value": 128,
+                                  "offset": 2363,
+                                  "length": 1
+                                },
+                                {
+                                  "name": "Key Length",
+                                  "value": 7,
+                                  "unit": "bytes",
+                                  "offset": 2364,
+                                  "length": 2
+                                },
+                                {
+                                  "name": "Key",
+                                  "value": "comment",
+                                  "offset": 2366,
+                                  "length": 7
+                                },
+                                {
+                                  "name": "Value Type",
+                                  "value": 1,
+                                  "offset": 2373,
+                                  "length": 2
+                                },
+                                {
+                                  "name": "Value Length",
+                                  "value": 0,
+                                  "unit": "bytes",
+                                  "offset": 2375,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Value",
+                                  "value": "",
+                                  "offset": 2379,
+                                  "length": 0
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Composer",
+                              "value": "",
+                              "offset": 2379,
+                              "length": 17,
+                              "children": [
+                                {
+                                  "name": "Flags",
+                                  "value": 128,
+                                  "offset": 2379,
+                                  "length": 1
+                                },
+                                {
+                                  "name": "Key Length",
+                                  "value": 8,
+                                  "unit": "bytes",
+                                  "offset": 2380,
+                                  "length": 2
+                                },
+                                {
+                                  "name": "Key",
+                                  "value": "composer",
+                                  "offset": 2382,
+                                  "length": 8
+                                },
+                                {
+                                  "name": "Value Type",
+                                  "value": 1,
+                                  "offset": 2390,
+                                  "length": 2
+                                },
+                                {
+                                  "name": "Value Length",
+                                  "value": 0,
+                                  "unit": "bytes",
+                                  "offset": 2392,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Value",
+                                  "value": "",
+                                  "offset": 2396,
+                                  "length": 0
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Genre",
+                              "value": "",
+                              "offset": 2396,
+                              "length": 14,
+                              "children": [
+                                {
+                                  "name": "Flags",
+                                  "value": 128,
+                                  "offset": 2396,
+                                  "length": 1
+                                },
+                                {
+                                  "name": "Key Length",
+                                  "value": 5,
+                                  "unit": "bytes",
+                                  "offset": 2397,
+                                  "length": 2
+                                },
+                                {
+                                  "name": "Key",
+                                  "value": "genre",
+                                  "offset": 2399,
+                                  "length": 5
+                                },
+                                {
+                                  "name": "Value Type",
+                                  "value": 1,
+                                  "offset": 2404,
+                                  "length": 2
+                                },
+                                {
+                                  "name": "Value Length",
+                                  "value": 0,
+                                  "unit": "bytes",
+                                  "offset": 2406,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Value",
+                                  "value": "",
+                                  "offset": 2410,
+                                  "length": 0
+                                }
+                              ]
+                            },
+                            {
+                              "name": "iTunSMPB",
+                              "value": " 00000000 00000920 0000018C 0000000000035D54 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000",
+                              "offset": 2410,
+                              "length": 133,
+                              "children": [
+                                {
+                                  "name": "Flags",
+                                  "value": 0,
+                                  "offset": 2410,
+                                  "length": 1
+                                },
+                                {
+                                  "name": "Key Length",
+                                  "value": 8,
+                                  "unit": "bytes",
+                                  "offset": 2411,
+                                  "length": 2
+                                },
+                                {
+                                  "name": "Key",
+                                  "value": "iTunSMPB",
+                                  "offset": 2413,
+                                  "length": 8
+                                },
+                                {
+                                  "name": "Value Type",
+                                  "value": 1,
+                                  "offset": 2421,
+                                  "length": 2
+                                },
+                                {
+                                  "name": "Value Length",
+                                  "value": 116,
+                                  "unit": "bytes",
+                                  "offset": 2423,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Value",
+                                  "value": " 00000000 00000920 0000018C 0000000000035D54 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000",
+                                  "offset": 2427,
+                                  "length": 116
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Title",
+                              "value": "",
+                              "offset": 2543,
+                              "length": 14,
+                              "children": [
+                                {
+                                  "name": "Flags",
+                                  "value": 128,
+                                  "offset": 2543,
+                                  "length": 1
+                                },
+                                {
+                                  "name": "Key Length",
+                                  "value": 5,
+                                  "unit": "bytes",
+                                  "offset": 2544,
+                                  "length": 2
+                                },
+                                {
+                                  "name": "Key",
+                                  "value": "title",
+                                  "offset": 2546,
+                                  "length": 5
+                                },
+                                {
+                                  "name": "Value Type",
+                                  "value": 1,
+                                  "offset": 2551,
+                                  "length": 2
+                                },
+                                {
+                                  "name": "Value Length",
+                                  "value": 0,
+                                  "unit": "bytes",
+                                  "offset": 2553,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Value",
+                                  "value": "",
+                                  "offset": 2557,
+                                  "length": 0
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Encoding Tool",
+                              "value": "Nero AAC codec / 1.7.27.0",
+                              "offset": 2557,
+                              "length": 38,
+                              "children": [
+                                {
+                                  "name": "Flags",
+                                  "value": 0,
+                                  "offset": 2557,
+                                  "length": 1
+                                },
+                                {
+                                  "name": "Key Length",
+                                  "value": 4,
+                                  "unit": "bytes",
+                                  "offset": 2558,
+                                  "length": 2
+                                },
+                                {
+                                  "name": "Key",
+                                  "value": "tool",
+                                  "offset": 2560,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Value Type",
+                                  "value": 1,
+                                  "offset": 2564,
+                                  "length": 2
+                                },
+                                {
+                                  "name": "Value Length",
+                                  "value": 25,
+                                  "unit": "bytes",
+                                  "offset": 2566,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Value",
+                                  "value": "Nero AAC codec / 1.7.27.0",
+                                  "offset": 2570,
+                                  "length": 25
+                                }
+                              ]
+                            },
+                            {
+                              "name": "track",
+                              "value": "0",
+                              "offset": 2595,
+                              "length": 15,
+                              "children": [
+                                {
+                                  "name": "Flags",
+                                  "value": 128,
+                                  "offset": 2595,
+                                  "length": 1
+                                },
+                                {
+                                  "name": "Key Length",
+                                  "value": 5,
+                                  "unit": "bytes",
+                                  "offset": 2596,
+                                  "length": 2
+                                },
+                                {
+                                  "name": "Key",
+                                  "value": "track",
+                                  "offset": 2598,
+                                  "length": 5
+                                },
+                                {
+                                  "name": "Value Type",
+                                  "value": 1,
+                                  "offset": 2603,
+                                  "length": 2
+                                },
+                                {
+                                  "name": "Value Length",
+                                  "value": 1,
+                                  "unit": "bytes",
+                                  "offset": 2605,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Value",
+                                  "value": "0",
+                                  "offset": 2609,
+                                  "length": 1
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Year",
+                              "value": "0",
+                              "offset": 2610,
+                              "length": 14,
+                              "children": [
+                                {
+                                  "name": "Flags",
+                                  "value": 128,
+                                  "offset": 2610,
+                                  "length": 1
+                                },
+                                {
+                                  "name": "Key Length",
+                                  "value": 4,
+                                  "unit": "bytes",
+                                  "offset": 2611,
+                                  "length": 2
+                                },
+                                {
+                                  "name": "Key",
+                                  "value": "year",
+                                  "offset": 2613,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Value Type",
+                                  "value": 1,
+                                  "offset": 2617,
+                                  "length": 2
+                                },
+                                {
+                                  "name": "Value Length",
+                                  "value": 1,
+                                  "unit": "bytes",
+                                  "offset": 2619,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Value",
+                                  "value": "0",
+                                  "offset": 2623,
+                                  "length": 1
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Nero Tag Segment",
+                          "offset": 2624,
+                          "length": 20,
+                          "children": [
+                            {
+                              "name": "Size",
+                              "value": 20,
+                              "unit": "bytes",
+                              "offset": 2624,
+                              "length": 4
+                            },
+                            {
+                              "name": "Type",
+                              "value": "tseg",
+                              "offset": 2628,
+                              "length": 4
+                            },
+                            {
+                              "name": "Nero Tag Segment Header",
+                              "value": 0,
+                              "offset": 2632,
+                              "length": 12,
+                              "children": [
+                                {
+                                  "name": "Size",
+                                  "value": 12,
+                                  "unit": "bytes",
+                                  "offset": 2632,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Type",
+                                  "value": "tshd",
+                                  "offset": 2636,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Segment Index",
+                                  "value": 0,
+                                  "offset": 2640,
+                                  "length": 4
+                                }
+                              ]
+                            }
+                          ]
                         }
                       ]
                     }

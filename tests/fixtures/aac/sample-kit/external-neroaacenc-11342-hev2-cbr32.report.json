@@ -3206,7 +3206,10 @@
                       ]
                     },
                     {
-                      "name": "tags",
+                      "name": "Nero Tags",
+                      "kind": "Tag",
+                      "value": 1,
+                      "unit": "fields",
                       "offset": 1695,
                       "length": 81,
                       "children": [
@@ -3224,11 +3227,125 @@
                           "length": 4
                         },
                         {
-                          "name": "Data",
-                          "value": 73,
-                          "unit": "bytes",
+                          "name": "Nero Tag Fields",
+                          "value": 1,
+                          "unit": "fields",
                           "offset": 1703,
-                          "length": 73
+                          "length": 53,
+                          "children": [
+                            {
+                              "name": "Size",
+                              "value": 53,
+                              "unit": "bytes",
+                              "offset": 1703,
+                              "length": 4
+                            },
+                            {
+                              "name": "Type",
+                              "value": "meta",
+                              "offset": 1707,
+                              "length": 4
+                            },
+                            {
+                              "name": "Entries",
+                              "value": 1,
+                              "offset": 1711,
+                              "length": 4
+                            },
+                            {
+                              "name": "Encoding Tool",
+                              "value": "Nero AAC codec / Aug  6 2007",
+                              "offset": 1715,
+                              "length": 41,
+                              "children": [
+                                {
+                                  "name": "Flags",
+                                  "value": 0,
+                                  "offset": 1715,
+                                  "length": 1
+                                },
+                                {
+                                  "name": "Key Length",
+                                  "value": 4,
+                                  "unit": "bytes",
+                                  "offset": 1716,
+                                  "length": 2
+                                },
+                                {
+                                  "name": "Key",
+                                  "value": "tool",
+                                  "offset": 1718,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Value Type",
+                                  "value": 1,
+                                  "offset": 1722,
+                                  "length": 2
+                                },
+                                {
+                                  "name": "Value Length",
+                                  "value": 28,
+                                  "unit": "bytes",
+                                  "offset": 1724,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Value",
+                                  "value": "Nero AAC codec / Aug  6 2007",
+                                  "offset": 1728,
+                                  "length": 28
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Nero Tag Segment",
+                          "offset": 1756,
+                          "length": 20,
+                          "children": [
+                            {
+                              "name": "Size",
+                              "value": 20,
+                              "unit": "bytes",
+                              "offset": 1756,
+                              "length": 4
+                            },
+                            {
+                              "name": "Type",
+                              "value": "tseg",
+                              "offset": 1760,
+                              "length": 4
+                            },
+                            {
+                              "name": "Nero Tag Segment Header",
+                              "value": 0,
+                              "offset": 1764,
+                              "length": 12,
+                              "children": [
+                                {
+                                  "name": "Size",
+                                  "value": 12,
+                                  "unit": "bytes",
+                                  "offset": 1764,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Type",
+                                  "value": "tshd",
+                                  "offset": 1768,
+                                  "length": 4
+                                },
+                                {
+                                  "name": "Segment Index",
+                                  "value": 0,
+                                  "offset": 1772,
+                                  "length": 4
+                                }
+                              ]
+                            }
+                          ]
                         }
                       ]
                     }
