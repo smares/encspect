@@ -141,6 +141,14 @@ class ChangesTests(unittest.TestCase):
             self.assertIn("tta-crosscheck", run(path), path)
         self.assertNotIn("tta-crosscheck", run("src/Encspect.Formats.Flac/FlacParser.cs"))
 
+    def test_sample_kit_fixtures_and_script_belong_to_the_sample_kit_job(self):
+        for path in ("tests/fixtures/aac/sample-kit/external-qaac-he-cbr64.m4a", "tests/fixtures/mpeg-audio/sample-kit/external-nero-rom-mp3-cbr128.mp3",
+                     "scripts/fixtures/import_sample_kit_fixtures.py"):
+            self.assertIn("sample-kit-crosscheck", run(path), path)
+        self.assertEqual(run("scripts/fixtures/crosscheck_sample_kit_fixtures.py"), {"sample-kit-crosscheck", "fixtures"})
+        # The script reads the committed files, manifests and summaries with ffprobe, ffmpeg and MediaInfo, never the analyzer.
+        self.assertNotIn("sample-kit-crosscheck", run("src/Encspect.Formats.Aac/AacParser.cs"))
+
     def test_optimfrog_parser_scripts_and_fixtures_belong_to_the_optimfrog_job(self):
         for path in ("src/Encspect.Formats.OptimFrog/OptimFrogParser.cs", "tests/fixtures/optimfrog/a.ofr", "scripts/fixtures/optimfrog_model.py",
                      "scripts/fixtures/make_external_optimfrog_fixtures.py", "scripts/fixtures/optimfrog_tool.py"):

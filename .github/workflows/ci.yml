@@ -73,6 +73,7 @@ jobs:
       matroska-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.matroska-crosscheck }}
       wav-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.wav-crosscheck }}
       truehd-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.truehd-crosscheck }}
+      sample-kit-crosscheck: ${{ steps.pipeline.outputs.changed == 'true' && 'true' || steps.decide.outputs.sample-kit-crosscheck }}
     steps:
       # Two commits deep: on a pull request the checkout is the merge commit, and its first parent is the base.
       # Only the scripts are needed in the working tree; the diff reads names, not contents.
@@ -1895,6 +1896,28 @@ jobs:
         with:
           path: .cache/downloads
           key: downloads-${{ github.job }}-${{ steps.week.outputs.name }}-${{ hashFiles('tests/conformance/*.json') }}-failed-${{ github.run_id }}-${{ github.run_attempt }}
+  sample-kit-crosscheck:
+    name: Sample kit fixtures agree with ffprobe, ffmpeg and MediaInfo
+    runs-on: ubuntu-26.04
+    needs: changes
+    if: needs.changes.outputs.sample-kit-crosscheck == 'true'
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash scripts/ci/step-shell.sh {0}
+    steps:
+      - uses: actions/checkout@v5
+
+      # ffmpeg 8.0.1 and MediaInfo 26.01 from Ubuntu 26.04, the versions the script asserts (the manifests were written with ffprobe 6.1.1; the
+      # script compares only what both versions read the same). No encoder runs here: the files are committed, and both tools are black boxes.
+      - name: Install ffmpeg and mediainfo
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg mediainfo
+
+      - name: Cross-check the sample kit fixtures
+        run: python3 scripts/fixtures/crosscheck_sample_kit_fixtures.py
+
   all-checks:
     name: all checks passed
     if: always()
@@ -1924,6 +1947,7 @@ jobs:
       - matroska-crosscheck
       - wav-crosscheck
       - truehd-crosscheck
+      - sample-kit-crosscheck
     runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v5

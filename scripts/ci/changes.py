@@ -146,6 +146,12 @@ AREAS = {
         "scripts": ["crosscheck_truehd_fixtures.py", "check_truehd_samples.py"],
         "globs": ["scripts/fixtures/make_*truehd*", "scripts/fixtures/truehd_*", "tests/conformance/truehd-samples.json"],
     },
+    "sample-kit-crosscheck": {
+        "projects": [],
+        "fixtures": [],
+        "scripts": ["crosscheck_sample_kit_fixtures.py"],
+        "globs": ["scripts/fixtures/import_sample_kit*", "tests/fixtures/*/sample-kit/**"],
+    },
 }
 
 # A change here concerns every job: the analysis every format goes through, the front end the
