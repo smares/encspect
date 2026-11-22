@@ -20,6 +20,11 @@ public sealed record FileSummary(ReportSummary Summary, bool? IsVbr, string? Pro
     // files as they are once the analysis is done, and does not keep a summary a companion that changed meanwhile contradicts.
     public IReadOnlyList<long?> CompanionLengths { get; init; } = [];
 
+    // Whether the analysis found no audio: no format was detected, or the file has streams and none is audio (the summary's duration and codec come from the first
+    // audio stream and are null without one). A detected format without any stream stays false: a damaged header or a parser failure says nothing about the
+    // audio, and a parser may keep audio it does not report as a stream. The file name never enters.
+    public bool FoundNoAudio => Summary.Format is null || (Summary.Streams > 0 && Summary.Duration is null);
+
     public static FileSummary From(Report report)
     {
         ArgumentNullException.ThrowIfNull(report);

@@ -39,6 +39,12 @@ Columns sort by the figures behind them, so durations and bitrates sort as numbe
   - File, Open Folder (Cmd+O on macOS, Ctrl+O elsewhere).
   - Drop files and folders onto the window.
   - Files and folders named on the command line open the same way.
+- **Show Only Audio:**
+  - A checkbox above the list, also View, Show Only Audio, hides the files in which the analysis found no audio. It is off when the window opens and not remembered, like Include Subfolders.
+  - **What "no audio" means:** the analysis ran and either detected no format (a text file, an image, an empty file), or found streams and none of them is audio (a container with only video). It comes from what the parsers found, as `--only-format` selects by the detected format, and never from the file name: audio under a `.txt` name is shown, and a text file under an `.mp3` name is hidden.
+  - **Never hidden:** a file with a detected format and no stream (a damaged header, a parser failure, audio a parser does not report as a stream), a file not analyzed yet or stopped before its turn, one that could not be read, and a folder that could not be listed. Nothing certain is known about their audio, and they show their reason as always.
+  - **Only the view changes:** hidden files are still analyzed, listed in the summary cache and counted in the status line's total. The status bar says how many files the list does not show, for example "3 files without audio hidden", and the count always matches the rows shown. During a run, a file whose analysis found no audio leaves the list at the next refresh of the list (a quarter second or so, as for sorting) and once more when the run ends; from then on it is counted.
+  - **Selection and detail windows:** a hidden row is never selected again by Refresh. A detail window on a row that became hidden keeps its Previous and Next, which go to the rows the list shows before and after the place the list's sort would give the hidden row.
 - **Analysis:**
   - Files are analyzed in the background, a few at a time, and rows fill in as they are done. A list sorted by a column sorts again as they do, keeping the selected row.
   - Stop cancels, and choosing another folder cancels the run before it.

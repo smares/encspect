@@ -229,7 +229,7 @@ Every coding with a free source is decoded, the DTS extensions aside, and every 
 
 The order (the lead, 2026-11-17): the milestone's own items first, then cheap items users see, fixture work before the detection that needs it, large or uncertain items after them, and items that wait for an outside file last.
 
-**Status:** in progress: items 1 to 5 and 16 are done.
+**Status:** in progress: items 1 to 5, 7 and 16 are done.
 
 1. **The Musepack, DTS core and Speex decoders** (done, 2026-11-16, #319, #321 and #322): with the same definition of done as in 0.3.
    - **Musepack** (done, 2026-11-16, #319): SV7 and SV8, and SV4 to SV6 as libmpcdec 1.2.6 decodes them, bit for bit libmpcdec's floating-point output; the entropy pass of every stream version in every analysis, with "Coded Bandwidth" for all of them and the stereo coding figures for SV8. [As built: Musepack](design/lossy-decoders.md#as-built-musepack).
@@ -266,9 +266,10 @@ The order (the lead, 2026-11-17): the milestone's own items first, then cheap it
    - **Worded with the basis:** "lossless coding", not "lossless"; and "Verified" says what it covers (the decoded audio matches the stored checksum), which tells nothing about where the audio came from.
    - **The figures beside it:** the spectral cutoff, the low bits unused and the processor claim stand next to the coding line in the text report and the GUI, so the evidence about a file's history is where a reader looks first.
    - **An article** on what the coding class and these figures can and cannot show about a file's history, linked from the coding line. No figure becomes a verdict (the non-goals).
-7. **"Show Only Audio" in the GUI's file list** (the lead, 2026-11-11): a switch that hides the files in which Encspect found no audio, by the detected format and never by the file name, as `--only-format` does on the command line.
+7. **"Show Only Audio" in the GUI's file list** (the lead, 2026-11-11; done, 2026-11-22, #381): a switch that hides the files in which Encspect found no audio, by the detected format and never by the file name, as `--only-format` does on the command line.
    - The files stay analyzed and listed in the summary cache; the switch only filters the view, and the list says how many files it hides.
    - File names never decide what is read: a list of extensions to scan would hide the mislabeled files Encspect is meant to find.
+   - Built: a checkbox and View menu item, "Show Only Audio", hiding a file when the analysis detected no format, or found streams and none of them audio (`FileSummary.FoundNoAudio`, from the cached summary, so no cache change); a detected format with no stream, and files not read or not yet analyzed, stay shown; the status bar counts the hidden files; defined in [gui.md](gui.md#main-window).
 8. **The sample kit's files as fixtures** (the lead, 2026-11-11): the encodes received through the private sample kit (Nero Burning ROM's MP3, mp3PRO and AAC, neroAacEnc 1.0.0.2 to 1.5.4, qaac with Core Audio, iTunes' AAC and MP3 encoders, Winamp's Fraunhofer AAC, aacPlus and Vorbis encoders, Windows 10's Media Foundation encoders) come from synthetic sources, so the audio carries no copyright.
    - **A selection per encoder,** the files that show something the fixtures lack (a profile, mode, rate, header or tag), not every bitrate; the kit holds about 85 MB, most of it Media Foundation's lossless files.
    - **Imported by a script** like `import_macos_aac_fixtures.py`, with a manifest, a golden report and the cross-checks of each format, and a provenance record of encoder, version and settings; the contributor's logs and machine details stay private.
@@ -304,6 +305,10 @@ The order (the lead, 2026-11-17): the milestone's own items first, then cheap it
 16. **Damaged units withheld from the measurements** (the lead, 2026-11-20; done, 2026-11-21: design signed off, 2026-11-20; steps 1 to 5 done in #366, #371, #372, #373 and #374; step 5 added by the lead, 2026-11-21): a unit whose checksum fails is still decoded, so the verification and the findings stay as they are, but its output and the output that depends on it are withheld from the measurements, counted as withheld ("checksum failed"), as a gap is for the measurements; the decoders do not reset, so the decoded PCM stays as it is. Today the output is measured like any other unit's (WavPack's muted blocks as digital silence).
     - **Design:** [damaged-units.md](design/damaged-units.md): the survey of every decoder's per-unit checks, which failures count, the state after a failed unit, the effects on goldens, fixtures and cross-checks, and the seven decisions, which the lead took as recommended on 2026-11-20.
     - **Pull requests,** in the design's order: the contract (#366: `CodedFrame.FailsChecksum`, `WithholdFromMeasurements`, the fifth withheld reason, the session and the measurer, with FLAC and TTA setting the flag), then WavPack, Monkey's Audio and TrueHD (#371: a muted block's set withheld whole, every Monkey's Audio frame held until its CRC is known, TrueHD's units up to the next restart), then MPEG audio and AC-3 (#372: the parsers flag a failed CRC and the decoders withhold the span after it, with E-AC-3's pre-noise forward), then Ogg and Matroska (#373: `MappedBytes.FailsChecksum` set for a failing page, Cluster or Segment, passed on by the Opus, Vorbis, Speex, FLAC, ALAC, TTA, WavPack and PCM parsers, with the Ogg codecs' spans), then the container checksums over MPEG audio, AC-3, E-AC-3, DTS, TrueHD and MLP packets (#374: a frame is flagged when any of its bytes, or for Layer III any main data it reads, comes from a flagged packet; the DTS decoder withholds the 480 samples after it).
+17. **Two misreadings found by the sample kit import** (the lead, 2026-11-22; found in item 8, not fixed there):
+    - **A VBRI frame with side information:** in `external-nero-rom-mp3pro-vbr-low.mp3` (Nero Burning ROM 28.0.1.7, mp3PRO, MPEG-2), the frame that holds the VBRI header has nonzero bytes where the side information would be. The parser takes a VBRI header only when bytes 4 to 36 of the frame are zero, so it reads the frame as audio at 144 kbit/s and names no encoder; ffprobe skips the frame. The same file raises `main-data-overlap` and `scalefactors-exceed-granule` a few bytes before its end, where FFmpeg decodes without a message; whether that is the file or the reader is open.
+    - **Channels that disagree in MP4:** in `external-winamp-fhgaac-8k-mono-cbr16.m4a` (Winamp's Fraunhofer AAC encoder, 8 kHz mono), the sample entry states two channels and the AudioSpecificConfig one, and no finding says so. The stream carries no parametric stereo (none of its 159 SBR data elements has the parametric stereo extension, and ffprobe names it HE-AAC, not HE-AAC v2), so it decodes to one channel and the sample entry is wrong: the disagreement becomes a finding.
+    - **Each** with its fixture's golden updated in the same change.
 
 ### 0.5: AAC and WMA
 
@@ -321,6 +326,9 @@ The scope is confirmed when 0.4 is done. The decoders follow steps 9 to 15 of [l
 5. **USAC** (xHE-AAC).
 6. **WMA Voice** (the lead, 2026-11-08): after its clean-room supplement. The lead wants it covered, as Speex is (decision 12 of [lossy-decoders.md](design/lossy-decoders.md#decisions)).
    - **The patent decision** comes before HE-AAC, USAC and WMA Professional.
+7. **PCM and MPEG Layer I and II in ASF** (the lead, 2026-11-22, from the review of the "Show Only Audio" switch): ASF audio streams with these format tags are now only `asf.codec-not-analyzed`, so the test files hold 46 ASF files whose audio reaches no parser and no stream ([asf-wma.md](formats/asf-wma.md#asf-what-is-reported)).
+   - **The routes:** PCM to the PCM description and feed the WAV and AIFF parsers share (`PcmCoding`, `PcmFeed`), and `0x0050` to the MPEG audio parser, as `0x0055` already goes there.
+   - **With the WMA work,** since both read the same stream properties.
 
 ### After 0.5
 
