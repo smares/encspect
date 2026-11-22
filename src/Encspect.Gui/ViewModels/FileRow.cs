@@ -145,6 +145,9 @@ public sealed class FileRow : ObservableObject
     // Why the file was not analyzed, as its single error finding says.
     public string? Problem => _summary?.Problem;
 
+    // Whether the analysis ran and found no audio (FileSummary.FoundNoAudio). A file that could not be read, or whose folder could not be listed, is not one: nothing was found out about it.
+    internal bool HasNoAudio => _state == FileState.Analyzed && FolderError is null && Problem is null && _summary is { FoundNoAudio: true };
+
     // Whether the summary came from the summary cache rather than an analysis of the file.
     public bool IsCached { get; private set; }
 

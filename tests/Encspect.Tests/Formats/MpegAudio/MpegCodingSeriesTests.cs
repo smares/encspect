@@ -315,8 +315,8 @@ public class MpegCodingSeriesTests
         Report report = Fixtures.AnalyzeMpeg("mpeg-audio/external-lame-cbr128-joint.mp3");
         StreamInfo stream = Assert.Single(report.Streams);
 
-        Assert.Equal(["Channel Modes", "Stereo Coding", "Joint Stereo Modes", "Block Usage", "Block Sizes"], stream.CategorySeries.Select(s => s.Name));
-        Assert.Equal([GraphConcept.None, GraphConcept.StereoCoding, GraphConcept.StereoCoding, GraphConcept.BlockSwitching, GraphConcept.BlockSwitching],
+        Assert.Equal(["Channel Modes", "Stereo Coding", "Joint Stereo Modes", "Block Usage", "Block Sizes", "Scalefactor Scaling"], stream.CategorySeries.Select(s => s.Name));
+        Assert.Equal([GraphConcept.None, GraphConcept.StereoCoding, GraphConcept.StereoCoding, GraphConcept.BlockSwitching, GraphConcept.BlockSwitching, GraphConcept.None],
             stream.CategorySeries.Select(s => s.Concept));
         Assert.All(stream.CategorySeries, s => Assert.Equal(s.Name, s.Anchor!.Name));
         Assert.All(stream.CategorySeries, s => Assert.Equal("Bitrate", s.XSeries!.Name));
