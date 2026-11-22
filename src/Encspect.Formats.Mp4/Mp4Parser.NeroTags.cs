@@ -198,6 +198,8 @@ public sealed partial class Mp4Parser
         node.Add(image);
         if (length > available)
         {
+            // The cut cover keeps its slot (length -1), so that later covers meet their own iTunes images; it is not compared.
+            state.NeroCovers.Add((at, -1, image));
             state.Findings.AddNow(Severity.Warning, "mp4.nero-field-size-invalid",
                 $"The cover at 0x{node.Offset:X} of Nero's tags box states an image of {Counts.Of(length, "byte", "bytes")}, but {available} {Counts.Agree(available, "follows", "follow")} in its box; the image is cut there.", image);
         }
@@ -238,6 +240,11 @@ public sealed partial class Mp4Parser
         {
             (long Offset, long Length, Node Node) nero = state.NeroCovers[i];
             (long Offset, long Length) itunes = state.ItunesCovers[i];
+            if (nero.Length < 0)
+            {
+                continue;
+            }
+
             if (nero.Length != itunes.Length || !SameBytes(state, nero.Offset, itunes.Offset, nero.Length))
             {
                 state.Findings.Add(Severity.Warning, "mp4.nero-cover-differs", nero.Node, times =>
