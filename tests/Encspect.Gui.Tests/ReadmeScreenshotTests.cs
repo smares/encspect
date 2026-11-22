@@ -138,7 +138,7 @@ public class ReadmeScreenshotTests
     private static void FitTree(DetailWindow window, Action select)
     {
         var list = window.FindControl<ListBox>("TreeList")!;
-        for (int round = 0; round < 4; round++)
+        for (int round = 0; round < 12; round++)
         {
             select();
             AudioPanelTests.Settle();
@@ -153,7 +153,7 @@ public class ReadmeScreenshotTests
                 return;
             }
 
-            window.Height -= 2 * extra;
+            window.Height -= extra;
         }
 
         throw new InvalidOperationException("The tree pane did not settle on a whole number of rows.");
