@@ -73,8 +73,14 @@ internal static partial class Summary
         }
 
         ClaimRoles.CompleteVersion(encoder, s.Context.EncoderClaims);
+        Node? level = CompressionLevel(s, start, end, encoder, writer);
+        if (level is not null)
+        {
+            s.AddLeading(level);
+        }
+
         StreamVerification verification = Verify(s);
-        StreamInfo? info = Statistics(s, Cover, stream, encoder, writer, processor, verification);
+        StreamInfo? info = Statistics(s, Cover, stream, encoder, writer, processor, verification, level);
         if (info is not null)
         {
             s.Context.AddStream(info);
@@ -213,6 +219,26 @@ internal static partial class Summary
         return node;
     }
 
+    // The compression level of the named encoder whose settings the frames fit, as a claim of its own: the frames never state it.
+    private static Node? CompressionLevel(State s, long start, long end, Node? encoder, Node? writer)
+    {
+        if (LevelGuess.Of(s, encoder?.Value?.ToString(), writer?.Value?.ToString()) is not { } guess)
+        {
+            return null;
+        }
+
+        Confidence confidence = guess.IsReached ? Confidence.Medium : Confidence.Low;
+        Confidence named = guess.IsFromWriter ? (guess.IsSignedByPrecision ? Confidence.Medium : Confidence.Low) : ClaimRoles.Resolved(encoder).Confidence ?? Confidence.Low;
+        var node = new Node("Compression Level", start, end - start, LevelGuess.Join([.. guess.Levels])) { Ranges = s.Stream.Ranges, Description = Explain.CompressionLevel, Topic = Topics.CompressionLevels };
+        node.Add("Confidence", start, end - start, (confidence < named ? confidence : named).ToString(), Explain.LevelConfidence);
+        foreach (string text in guess.Evidence)
+        {
+            node.Add(new Node("Evidence", start, end - start, text) { Ranges = s.Stream.Ranges, Description = Explain.LevelEvidence });
+        }
+
+        return node;
+    }
+
     private static Node Evidence(Node at, string text) => new("Evidence", at.Offset, at.Length, text) { Description = Explain.Evidence, Ranges = at.Ranges };
 
     private static Node? Writer(State s, long start, long end, IReadOnlyList<ByteRange>? ranges) =>
@@ -220,7 +246,7 @@ internal static partial class Summary
             (claim, text, name) => s.Findings.Add(Severity.Info, "flac.writer-claim-differs", claim.Source, _ => WriterDetection.Disagreement(claim, text, name)),
             format: new WriterDetection.StreamFormat(KnownWriters.Flac, "FLAC", (claim, message, node) => s.Findings.Add(Severity.Info, "flac.writer-other-format", node, _ => message)));
 
-    private static StreamInfo? Statistics(State s, Func<string, NodeValue?, string, string?, Node> cover, Node stream, Node? encoder, Node? writer, Node? processor, StreamVerification verification)
+    private static StreamInfo? Statistics(State s, Func<string, NodeValue?, string, string?, Node> cover, Node stream, Node? encoder, Node? writer, Node? processor, StreamVerification verification, Node? level)
     {
         if (s.Info is null && s.Frames == 0)
         {
@@ -332,6 +358,11 @@ internal static partial class Summary
                 methodNode = statistics.Add(cover("Rice With 5-Bit Parameters", Share(s.Rice2Subframes, s.ResidualSubframes), Explain.StatRice2, Topics.RiceCoding));
                 statistics.Add(cover("Escaped Partitions", NodeValue.Integer(s.EscapedPartitions, "partitions", "partition"), Explain.EscapedPartitionsStat, Topics.RiceCoding));
             }
+        }
+
+        if (level is not null)
+        {
+            statistics.Add(cover("Compression Level", level.Value, Explain.StatCompressionLevel, Topics.CompressionLevels));
         }
 
         statistics.Add(cover("Verified Header Checksums", NodeValue.Integer(s.Frames - s.Crc8Failures, "frames"), Explain.StatHeaderChecksums, Topics.Crc));
