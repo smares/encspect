@@ -123,7 +123,8 @@ public sealed partial class Mp4Parser
             field.Add(new Node("Value", valueAt, valueLength, value) { Description = Explain.NeroValue });
             node.Add(field);
             state.NeroFieldCount++;
-            if (type == 1 && state.NeroFields.Count < MaxNeroFieldsKept)
+            // A cut value is not compared: the size finding says it is cut, and it would differ from the intact copy.
+            if (type == 1 && fits && state.NeroFields.Count < MaxNeroFieldsKept)
             {
                 state.NeroFields.Add(new NeroField(key, value.AsText()!, field, state.NeroSegment));
             }
@@ -166,15 +167,18 @@ public sealed partial class Mp4Parser
         };
         var image = new Node("Image", at, available, $"{format}, {Counts.Of(available, "byte", "bytes")}") { Description = Explain.NeroImage };
         node.Add(image);
-        state.NeroCovers.Add((at, available, image));
         if (length > available)
         {
             state.Findings.AddNow(Severity.Warning, "mp4.nero-field-size-invalid",
                 $"The cover at 0x{node.Offset:X} of Nero's tags box states an image of {Counts.Of(length, "byte", "bytes")}, but {available} {Counts.Agree(available, "follows", "follow")} in its box; the image is cut there.", image);
         }
-        else if (f.Remaining > 0)
+        else
         {
-            node.Add(new Node("Data", f.Position, f.Remaining, NodeValue.Integer(f.Remaining, "bytes")) { Description = Explain.UnreadData });
+            state.NeroCovers.Add((at, available, image));
+            if (f.Remaining > 0)
+            {
+                node.Add(new Node("Data", f.Position, f.Remaining, NodeValue.Integer(f.Remaining, "bytes")) { Description = Explain.UnreadData });
+            }
         }
     }
 

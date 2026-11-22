@@ -222,4 +222,35 @@ public class NeroTagsTests
         Assert.Empty(FindAll(report.Root, "Nero Tags"));
         Assert.NotNull(Find(report.Root, "tags"));
     }
+
+    [Fact]
+    public void ACutValueIsReportedAsCutAndNotAlsoAsDifferent()
+    {
+        byte[] data = File.ReadAllBytes(PathOf("unicode") + ".m4a");
+        byte[] key = [0x80, 0x00, 0x05, (byte)'a', (byte)'l', (byte)'b', (byte)'u', (byte)'m', 0x00, 0x01, 0x00, 0x00, 0x00];
+        int at = data.AsSpan().LastIndexOf(key);
+        data[at + 10] = 0x10;
+
+        Report report = Analyze(data);
+
+        Assert.Single(report.Findings, f => f.Code == "mp4.nero-field-size-invalid");
+        Assert.DoesNotContain(report.Findings, f => f.Code.EndsWith("-differs", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void ACutCoverImageIsReportedAsCutAndNotAlsoAsDifferent()
+    {
+        byte[] data = File.ReadAllBytes(PathOf("cover") + ".m4a");
+        // The image length of the cvrx box: 00 00, then 00 00 02 C5 after the text "front cover".
+        byte[] marker = [.. Encoding.ASCII.GetBytes("front cover"), 0x00, 0x00, 0x00, 0x00, 0x02, 0xC5];
+        int at = data.AsSpan().LastIndexOf(marker);
+        Assert.True(at > 0);
+        data[at + marker.Length - 2] = 0x7F;
+
+        Report report = Analyze(data);
+
+        Finding cut = Assert.Single(report.Findings, f => f.Code == "mp4.nero-field-size-invalid");
+        Assert.Equal("Image", cut.Node!.Name);
+        Assert.DoesNotContain(report.Findings, f => f.Code == "mp4.nero-cover-differs");
+    }
 }
