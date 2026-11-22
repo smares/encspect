@@ -1,0 +1,21 @@
+{
+ "description": "iTunes MP3 encoder iTunes 12.13.12.3, converted through iTunes' ConvertFile2: MP3, 64 kbit/s, mono, sample rate and channels automatic, on the synthetic source music-44k-mono.wav.",
+ "encoder": {
+  "tool": "iTunes MP3 encoder",
+  "version": "iTunes 12.13.12.3, converted through iTunes' ConvertFile2",
+  "settings": "MP3, 64 kbit/s, mono, sample rate and channels automatic"
+ },
+ "input": {
+  "name": "music-44k-mono.wav",
+  "sha256": "5e1561907808ac2eca1c9073e3cc45a5ae03e143e7bd551ea1c2082035741c9a",
+  "generator": "sources/make_sources.py of the sample kit (written from nothing, reproducible byte for byte)"
+ },
+ "selected_for": "iTunes resamples to 22.05 kHz at this rate",
+ "file": {
+  "name_in_kit": "music-44k-mono-cbr64.mp3",
+  "bytes": 42460,
+  "sha256": "181aba82e1e99195726be24cec3c8825ea8bcc43c977845a8fb3e62f28a84c2b"
+ },
+ "reproducible": false,
+ "note": "The encoder stamps the time of the encode into the file; the file is committed as written, and checked by its content."
+}

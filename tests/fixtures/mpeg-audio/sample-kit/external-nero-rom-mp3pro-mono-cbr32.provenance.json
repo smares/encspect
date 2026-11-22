@@ -1,0 +1,23 @@
+{
+ "description": "Nero Burning ROM 2026 (28.0.1.7), Extras > Encode Files, MP3 and mp3PRO output 28.0.1.7: list entry mp3PRO 32 kbit/s 44100 Hz mono, constant bitrate, source 44100 Hz mono, on the synthetic source music-44k-mono.wav.",
+ "encoder": {
+  "tool": "Nero Burning ROM 2026 (28.0.1.7), Extras > Encode Files, MP3 and mp3PRO output",
+  "version": "28.0.1.7",
+  "component": "APM_mp3pro.dll, mp3PRO Audio Plugin, file version 28.0.1.3, product version 2.1.0.0",
+  "settings": "list entry mp3PRO 32 kbit/s 44100 Hz mono, constant bitrate, source 44100 Hz mono"
+ },
+ "input": {
+  "name": "music-44k-mono.wav",
+  "sha256": "5e1561907808ac2eca1c9073e3cc45a5ae03e143e7bd551ea1c2082035741c9a",
+  "generator": "sources/make_sources.py of the sample kit (written from nothing, reproducible byte for byte)"
+ },
+ "selected_for": "mono mp3PRO",
+ "file": {
+  "name_in_kit": "music-44k-mono-pro-cbr32.mp3",
+  "bytes": 41357,
+  "sha256": "d497a53e89ea1a9b5193bb5ff681ebab1e38c89564d461df702723b461284878"
+ },
+ "reproducible": false,
+ "note": "The encoder stamps the time of the encode into the file; the file is committed as written, and checked by its content.",
+ "license": "Nero's license limits how the software is used, not the files it writes."
+}

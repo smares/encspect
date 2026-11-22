@@ -1,0 +1,23 @@
+{
+ "description": "Nero Burning ROM 2026 (28.0.1.7), Extras > Encode Files, MP3 and mp3PRO output 28.0.1.7: list entry MP3 8 kbit/s 8000 Hz mono, constant bitrate, quality Medium, padding ISO, on the synthetic source music-8k-mono.wav.",
+ "encoder": {
+  "tool": "Nero Burning ROM 2026 (28.0.1.7), Extras > Encode Files, MP3 and mp3PRO output",
+  "version": "28.0.1.7",
+  "component": "APM_mp3pro.dll, mp3PRO Audio Plugin, file version 28.0.1.3, product version 2.1.0.0",
+  "settings": "list entry MP3 8 kbit/s 8000 Hz mono, constant bitrate, quality Medium, padding ISO"
+ },
+ "input": {
+  "name": "music-8k-mono.wav",
+  "sha256": "094f4d1b05a094237443e6f4e3d511357354860161206da5b29008926b82e10f",
+  "generator": "sources/make_sources.py of the sample kit (written from nothing, reproducible byte for byte)"
+ },
+ "selected_for": "MPEG 2.5 at the lowest rate",
+ "file": {
+  "name_in_kit": "music-8k-mono-cbr8.mp3",
+  "bytes": 11248,
+  "sha256": "3c6d83c89561af6380b8d1da4408fb6086ba200510d64f6407ce3ca0eb47dd5b"
+ },
+ "reproducible": false,
+ "note": "The encoder stamps the time of the encode into the file; the file is committed as written, and checked by its content.",
+ "license": "Nero's license limits how the software is used, not the files it writes."
+}

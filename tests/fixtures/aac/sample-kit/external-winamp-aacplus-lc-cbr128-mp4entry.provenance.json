@@ -1,0 +1,22 @@
+{
+ "description": "Coding Technologies aacPlus encoder in Winamp's enc_aacplus.dll (aacPlus encoding 1998-2009 Coding Technologies, v1.3) Winamp 5.572: Format Converter entry MP4/LC-AAC Encoder v1.3, 128 kbit/s, on the synthetic source music-44k-stereo.wav.",
+ "encoder": {
+  "tool": "Coding Technologies aacPlus encoder in Winamp's enc_aacplus.dll (aacPlus encoding 1998-2009 Coding Technologies, v1.3)",
+  "version": "Winamp 5.572",
+  "component": "enc_aacplus.dll, 912,896 bytes, SHA-256 F4333EB10A78C26772026BEC6A9182A9C6811E52B2C93BFF586E49C69F25EC91, no version resource; Format Converter",
+  "settings": "Format Converter entry MP4/LC-AAC Encoder v1.3, 128 kbit/s"
+ },
+ "input": {
+  "name": "music-44k-stereo.wav",
+  "sha256": "5272121c7f1c5b652f3f94287cd87cdbe5e2351a299a276d973557974166aa27",
+  "generator": "sources/make_sources.py of the sample kit (written from nothing, reproducible byte for byte)"
+ },
+ "selected_for": "an M4A with three tracks",
+ "file": {
+  "name_in_kit": "music-44k-stereo-lc-cbr128-mp4entry.m4a",
+  "bytes": 165216,
+  "sha256": "fabc2c43af543e5140808c6f04563d83c24898ac7535201fc45bafaa54379aa8"
+ },
+ "reproducible": false,
+ "note": "The encoder stamps the time of the encode into the file; the file is committed as written, and checked by its content."
+}

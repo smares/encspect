@@ -1,0 +1,22 @@
+{
+ "description": "qaac (Apple's AAC encoder in CoreAudioToolbox) qaac 3.07, CoreAudioToolbox 7.10.9.0: qaac --adts --he -c 64, 44100 Hz stereo source, on the synthetic source music-44k-stereo.wav.",
+ "encoder": {
+  "tool": "qaac (Apple's AAC encoder in CoreAudioToolbox)",
+  "version": "qaac 3.07, CoreAudioToolbox 7.10.9.0",
+  "component": "the CoreAudioToolbox of Apple's standalone iTunes 12.13.12.3 installer",
+  "settings": "qaac --adts --he -c 64, 44100 Hz stereo source"
+ },
+ "input": {
+  "name": "music-44k-stereo.wav",
+  "sha256": "5272121c7f1c5b652f3f94287cd87cdbe5e2351a299a276d973557974166aa27",
+  "generator": "sources/make_sources.py of the sample kit (written from nothing, reproducible byte for byte)"
+ },
+ "selected_for": "HE-AAC as an ADTS stream, whose SBR is signaled implicitly",
+ "file": {
+  "name_in_kit": "music-44k-stereo-he-cbr64.aac",
+  "bytes": 82779,
+  "sha256": "1b09f2851b4c1e7ea03adab51a9c98127e6ffd8234a2b8bd852d541e7a8569ff"
+ },
+ "reproducible": false,
+ "note": "The encoder stamps the time of the encode into the file; the file is committed as written, and checked by its content."
+}

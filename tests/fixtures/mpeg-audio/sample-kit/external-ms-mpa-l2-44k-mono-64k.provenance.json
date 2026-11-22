@@ -1,0 +1,21 @@
+{
+ "description": "Microsoft MPEG-2 Audio Encoder MFT (Media Foundation) msmpeg2enc.dll 10.0.19041.4522: MPEG-1 Layer II, 64 kbit/s, 44100 Hz, mono, on the synthetic source music-44k-mono.wav.",
+ "encoder": {
+  "tool": "Microsoft MPEG-2 Audio Encoder MFT (Media Foundation)",
+  "version": "msmpeg2enc.dll 10.0.19041.4522",
+  "settings": "MPEG-1 Layer II, 64 kbit/s, 44100 Hz, mono"
+ },
+ "input": {
+  "name": "music-44k-mono.wav",
+  "sha256": "5e1561907808ac2eca1c9073e3cc45a5ae03e143e7bd551ea1c2082035741c9a",
+  "generator": "sources/make_sources.py of the sample kit (written from nothing, reproducible byte for byte)"
+ },
+ "selected_for": "a Layer II encoder of Windows",
+ "file": {
+  "name_in_kit": "music-44k-mono-ms-mpa-l2-64k.mp2",
+  "bytes": 80040,
+  "sha256": "9f24abc8942f937ccd72f078cf388a5a853effe0feadc1a4a4ead7097e006b1a"
+ },
+ "reproducible": false,
+ "note": "The encoder stamps the time of the encode into the file; the file is committed as written, and checked by its content."
+}

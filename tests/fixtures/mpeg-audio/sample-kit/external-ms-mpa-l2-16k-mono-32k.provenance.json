@@ -1,0 +1,21 @@
+{
+ "description": "Microsoft MPEG-2 Audio Encoder MFT (Media Foundation) msmpeg2enc.dll 10.0.19041.4522: MPEG-2 Layer II, 32 kbit/s, 16000 Hz, mono, on the synthetic source music-16k-mono.wav.",
+ "encoder": {
+  "tool": "Microsoft MPEG-2 Audio Encoder MFT (Media Foundation)",
+  "version": "msmpeg2enc.dll 10.0.19041.4522",
+  "settings": "MPEG-2 Layer II, 32 kbit/s, 16000 Hz, mono"
+ },
+ "input": {
+  "name": "music-16k-mono.wav",
+  "sha256": "1eb286d400d98e12b74d1289f05220bd65e36bbf8073787cc01cf5cc4b70c00f",
+  "generator": "sources/make_sources.py of the sample kit (written from nothing, reproducible byte for byte)"
+ },
+ "selected_for": "MPEG-2 Layer II at a half rate",
+ "file": {
+  "name_in_kit": "music-16k-mono-ms-mpa-l2-32k.mp2",
+  "bytes": 40032,
+  "sha256": "07c47ebc9663e5bbd5033ec933db7224095ed42a688e4b2700c730b5b91a23e9"
+ },
+ "reproducible": false,
+ "note": "The encoder stamps the time of the encode into the file; the file is committed as written, and checked by its content."
+}

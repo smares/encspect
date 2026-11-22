@@ -1,0 +1,21 @@
+{
+ "description": "Microsoft FLAC encoder (Media Foundation) MSFlacEncoder.dll 10.0.19041.4355: 16 bits per sample, mono, on the synthetic source music-44k-mono.wav.",
+ "encoder": {
+  "tool": "Microsoft FLAC encoder (Media Foundation)",
+  "version": "MSFlacEncoder.dll 10.0.19041.4355",
+  "settings": "16 bits per sample, mono"
+ },
+ "input": {
+  "name": "music-44k-mono.wav",
+  "sha256": "5e1561907808ac2eca1c9073e3cc45a5ae03e143e7bd551ea1c2082035741c9a",
+  "generator": "sources/make_sources.py of the sample kit (written from nothing, reproducible byte for byte)"
+ },
+ "selected_for": "Microsoft's FLAC encoder (the vendor string names libFLAC 1.3.0)",
+ "file": {
+  "name_in_kit": "music-44k-mono-ms-flac-16bit.flac",
+  "bytes": 294030,
+  "sha256": "01a7be7be0a34d54f7d2830c6bd17cb45c398a288eb82d1a602ab711ae23d474"
+ },
+ "reproducible": false,
+ "note": "The encoder stamps the time of the encode into the file; the file is committed as written, and checked by its content."
+}

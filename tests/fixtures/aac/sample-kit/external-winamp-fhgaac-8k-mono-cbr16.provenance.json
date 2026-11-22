@@ -1,0 +1,22 @@
+{
+ "description": "Fraunhofer IIS AAC encoder in Winamp's enc_fhgaac.dll (MPEG-4 AAC Encoder v1.08) enc_fhgaac.dll 1.0.8.0, Fraunhofer library 03.02.16, Winamp 5.666 build 3516: fhgaacenc --cbr 16 --no-optimize, 8000 Hz mono source, on the synthetic source music-8k-mono.wav.",
+ "encoder": {
+  "tool": "Fraunhofer IIS AAC encoder in Winamp's enc_fhgaac.dll (MPEG-4 AAC Encoder v1.08)",
+  "version": "enc_fhgaac.dll 1.0.8.0, Fraunhofer library 03.02.16, Winamp 5.666 build 3516",
+  "component": "driven by fhgaacenc (tmkk, MIT); the MP4 files without fhgaacenc's own optimize pass, so they are as Winamp's plug-in writes them, and the ADTS files with fhgaacenc's own ADTS headers, not the SHOUTcast plug-in's",
+  "settings": "fhgaacenc --cbr 16 --no-optimize, 8000 Hz mono source"
+ },
+ "input": {
+  "name": "music-8k-mono.wav",
+  "sha256": "094f4d1b05a094237443e6f4e3d511357354860161206da5b29008926b82e10f",
+  "generator": "sources/make_sources.py of the sample kit (written from nothing, reproducible byte for byte)"
+ },
+ "selected_for": "8 kHz input at 16 kbit/s",
+ "file": {
+  "name_in_kit": "music-8k-mono-cbr16.m4a",
+  "bytes": 23134,
+  "sha256": "1af1ee81259051eba89c6d08c109b5f09b793b9962d4cf4a03ea911a7289e7d2"
+ },
+ "reproducible": false,
+ "note": "The encoder stamps the time of the encode into the file; the file is committed as written, and checked by its content."
+}

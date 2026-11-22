@@ -1,0 +1,22 @@
+{
+ "description": "Fraunhofer IIS AAC encoder in Winamp's enc_fhgaac.dll (MPEG-4 AAC Encoder v1.08) enc_fhgaac.dll 1.0.8.0, Fraunhofer library 03.02.16, Winamp 5.666 build 3516: fhgaacenc --cbr 32 --profile hev2 --no-optimize, on the synthetic source music-44k-stereo.wav.",
+ "encoder": {
+  "tool": "Fraunhofer IIS AAC encoder in Winamp's enc_fhgaac.dll (MPEG-4 AAC Encoder v1.08)",
+  "version": "enc_fhgaac.dll 1.0.8.0, Fraunhofer library 03.02.16, Winamp 5.666 build 3516",
+  "component": "driven by fhgaacenc (tmkk, MIT); the MP4 files without fhgaacenc's own optimize pass, so they are as Winamp's plug-in writes them, and the ADTS files with fhgaacenc's own ADTS headers, not the SHOUTcast plug-in's",
+  "settings": "fhgaacenc --cbr 32 --profile hev2 --no-optimize"
+ },
+ "input": {
+  "name": "music-44k-stereo.wav",
+  "sha256": "5272121c7f1c5b652f3f94287cd87cdbe5e2351a299a276d973557974166aa27",
+  "generator": "sources/make_sources.py of the sample kit (written from nothing, reproducible byte for byte)"
+ },
+ "selected_for": "Fraunhofer's HE-AAC v2",
+ "file": {
+  "name_in_kit": "music-44k-stereo-hev2-cbr32.m4a",
+  "bytes": 43892,
+  "sha256": "7ada2195526197a8f8f0620af93164a2263704c5f0efc900b5f9ad4dd29bdd27"
+ },
+ "reproducible": false,
+ "note": "The encoder stamps the time of the encode into the file; the file is committed as written, and checked by its content."
+}

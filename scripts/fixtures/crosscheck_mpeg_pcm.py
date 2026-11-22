@@ -53,6 +53,18 @@ EXPLAINED = {
     "mc-forbidden-values.mp2": {"mctoolamed": "dyn_cross_mode 15 of 3/2 and a nonzero tc_allocation with dematrix_procedure 3, which 13818-3 2.5.2.15 forbids, are in the fixture and read differently by the two decoders (each alone, in every frame of a variant, differs; the valid lfe_allocation 15 and a scalefactor index of 63 agree)"},
     "mc-second-stereo-crosstalk.mp2": {"mctoolamed": "tc_allocation 3, which 13818-3 2.5.2.15 leaves unassigned in 3/0 + 2/0, is in the fixture"},
     "mc-center-reserved-second-stereo.mp2": {"mctoolamed": "the reserved center value 2 (13818-3 2.5.2.13: not defined), which the analyzer reads as no center"},
+    "external-nero-rom-mp3pro-cbr64.mp3": {
+        "ffmpeg": "in the granules 327 to 355 (positions 188,352 to 205,056; intensity stereo frames of a tone in the left channel, where the right channel codes no lines and has "
+                  "scalefac_compress 90) FFmpeg 6.1.1 and 8.0.1 put the tone into the right channel as well (RMS 0.21 to 0.25 of full scale, the analyzer's 0.003 or less); observed "
+                  "with the same file, mpg123 1.32.5 (`mpg123 -e f32 --no-gapless`) does the same and madplay 0.15.2b (`madplay -S -o raw:`) decodes the right channel as silent, as "
+                  "minimp3 and the analyzer do, and the right channel of the kit's source music-44k-stereo.wav has an RMS of 0 from 8.6 to 9.2 s. The comparison with FFmpeg "
+                  "leaves those positions out (FFMPEG_RANGES)"
+    },
+    "external-nero-rom-mp3pro-vbr-low.mp3": {
+        "ffmpeg": "the same difference in the granules 327 to 355 (positions 188,352 to 205,056), where the right channel again has scalefac_compress 90, and in the granules 233 and "
+                  "234 (positions 134,208 to 135,360; intensity stereo, MPEG-2) a largest difference of 1.2e-4 of full scale in 18 and 24 samples above the bound. The comparison "
+                  "with FFmpeg leaves those positions out (FFMPEG_RANGES); observed with the same file, madplay 0.15.2b decodes the first as the analyzer does"
+    },
     "external-xing-mpeg2.mp3": {
         "ffmpeg": "the references disagree: in the granules of frames 61 to 64 of this tompg file (MPEG-2 joint stereo, intensity and mid/side stereo, a transient after near silence) the largest "
                   "differences are 0.0236 of full scale between minimp3 and FFmpeg 6.1.1 (mp3float and mp3 agree to 3e-5), 0.0221 between minimp3 and mpg123 1.32.5 and 0.0174 between FFmpeg and "
@@ -155,11 +167,19 @@ def minimp3_reference(binary, path, work):
     return bytes(out), channels, skipped, decoded[0]["layer"], decoded[0]["hz"]
 
 
+# The positions of a file that the comparison with FFmpeg leaves out because FFmpeg differs there for a reason listed in EXPLAINED: [first, end), end exclusive. A difference
+# outside them fails, so a change elsewhere in these files is not hidden by the listing.
+FFMPEG_RANGES = {
+    "external-nero-rom-mp3pro-cbr64.mp3": [[188352, 205056]],
+    "external-nero-rom-mp3pro-vbr-low.mp3": [[134208, 135360], [188352, 205056]],
+}
+
 # The positions only minimp3 outputs, which the analyzer does not, in the fixtures that have them: the frames it does not decode (a truncated or cut frame, a VBR header
 # frame) and the output it withholds after a gap or an unavailable frame. Pinned, so that a change in what is withheld fails here, B2's return (nothing withheld after an
 # unavailable frame) included; each span is also held to the rules: whole frames, then at most the withheld span (1,056 samples in Layer III, 480 in Layers I and II).
 ONLY_IN_MINIMP3 = {
     "damaged-bitrate.mp3": [[3456, 4608]],
+    "external-nero-rom-mp3pro-vbr-low.mp3": [[221184, 222336]],
     "external-blade080-stereo.mp3": [[69120, 73632], [87552, 88704]],
     "external-blade082-stereo.mp3": [[87552, 88704]],
     "external-shine-joint.mp3": [[87552, 88704]],
@@ -347,6 +367,10 @@ def main(argv=None):
                 notes.append("ffmpeg decodes nothing")
             else:
                 outcome, found = compare(manifest, second, streams[0]["channels"], "ffmpeg")
+                if found and path.name in FFMPEG_RANGES:
+                    _, again = compare(manifest, second, streams[0]["channels"], "ffmpeg", [a for first, end in FFMPEG_RANGES[path.name] for a in ("--exclude", f"{first}:{end}")])
+                    # Listed (and so removed below) only if the bound holds outside the ranges; the message of a failure there has no "ffmpeg:" prefix to be listed by.
+                    found = ["ffmpeg: outside the bound only at the positions of FFMPEG_RANGES"] if not again else [f"FFmpeg is outside the bound beyond the positions of FFMPEG_RANGES ({again[0]})"]
                 problems += found
                 if outcome is not None:
                     only = outcome["notComparedOnlyInAnalyzer"] + outcome["notComparedOnlyInReference"]

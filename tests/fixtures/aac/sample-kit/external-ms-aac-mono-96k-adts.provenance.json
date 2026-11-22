@@ -1,0 +1,22 @@
+{
+ "description": "Microsoft AAC Audio Encoder MFT (Media Foundation) mfAACEnc.dll 10.0.19041.1: the AAC MFT at 96 kbit/s (12000 bytes/s), mono, raw ADTS output, on the synthetic source music-44k-mono.wav.",
+ "encoder": {
+  "tool": "Microsoft AAC Audio Encoder MFT (Media Foundation)",
+  "version": "mfAACEnc.dll 10.0.19041.1",
+  "note": "Driven through the transform's documented interface (ADTS) or Microsoft's Sink Writer (MP4).",
+  "settings": "the AAC MFT at 96 kbit/s (12000 bytes/s), mono, raw ADTS output"
+ },
+ "input": {
+  "name": "music-44k-mono.wav",
+  "sha256": "5e1561907808ac2eca1c9073e3cc45a5ae03e143e7bd551ea1c2082035741c9a",
+  "generator": "sources/make_sources.py of the sample kit (written from nothing, reproducible byte for byte)"
+ },
+ "selected_for": "Microsoft's ADTS headers",
+ "file": {
+  "name_in_kit": "music-44k-mono-ms-aac-96k.aac",
+  "bytes": 112218,
+  "sha256": "35ed4d0fbcc79261069a2b636dfce1c386455ddefc4f5520f5b124fb9ba3880f"
+ },
+ "reproducible": false,
+ "note": "The encoder stamps the time of the encode into the file; the file is committed as written, and checked by its content."
+}
