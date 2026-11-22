@@ -377,7 +377,7 @@ public sealed partial class Mp4Parser
     {
         foreach (StreamInfo stream in state.Context.Streams.Skip(streamsBefore).ToList())
         {
-            if (entry.Channels <= 0 || stream.Channels <= 0 || entry.Channels == stream.Channels || stream.Codec.Contains("explicitly", StringComparison.Ordinal))
+            if (entry.Channels <= 0 || stream.Channels <= 0 || entry.Channels == stream.Channels || stream.Protection is { IsEncrypted: true } || stream.Codec.Contains("explicitly", StringComparison.Ordinal))
             {
                 continue;
             }
