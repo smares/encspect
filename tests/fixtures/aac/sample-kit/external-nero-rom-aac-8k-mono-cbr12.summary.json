@@ -1,0 +1,32 @@
+{
+  "format": "MP4",
+  "topLevel": [
+    "MP4"
+  ],
+  "streams": [
+    {
+      "codec": "AAC LC",
+      "kind": "Audio",
+      "sampleRate": 8000,
+      "channels": 1,
+      "channelMode": "Mono",
+      "channelLayout": "mono",
+      "samples": 81920,
+      "lostSamples": 0,
+      "duration": "10.240",
+      "averageBitrate": "6.2",
+      "isVbr": true,
+      "encoder": null,
+      "encoderConfidence": null,
+      "writer": "Nero AAC codec / 1.7.27.0",
+      "writerConfidence": "Low"
+    }
+  ],
+  "findings": [
+    {
+      "severity": "Warning",
+      "code": "mp4.gapless-disagree",
+      "count": 1
+    }
+  ]
+}

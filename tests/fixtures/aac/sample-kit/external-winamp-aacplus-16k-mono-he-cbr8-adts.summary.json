@@ -1,0 +1,34 @@
+{
+  "format": "AAC",
+  "topLevel": [
+    "ID3v2",
+    "ADTS",
+    "ID3v1"
+  ],
+  "streams": [
+    {
+      "codec": "HE-AAC",
+      "kind": "Audio",
+      "sampleRate": 16000,
+      "channels": 1,
+      "channelMode": "Mono",
+      "channelLayout": "mono",
+      "samples": 167936,
+      "lostSamples": 0,
+      "duration": "10.496",
+      "averageBitrate": "8.0",
+      "isVbr": false,
+      "encoder": null,
+      "encoderConfidence": null,
+      "writer": null,
+      "writerConfidence": null
+    }
+  ],
+  "findings": [
+    {
+      "severity": "Info",
+      "code": "aac.implicit-sbr",
+      "count": 1
+    }
+  ]
+}

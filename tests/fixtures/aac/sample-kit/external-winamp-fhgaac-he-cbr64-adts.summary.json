@@ -1,0 +1,32 @@
+{
+  "format": "AAC",
+  "topLevel": [
+    "ADTS"
+  ],
+  "streams": [
+    {
+      "codec": "HE-AAC",
+      "kind": "Audio",
+      "sampleRate": 44100,
+      "channels": 2,
+      "channelMode": "Stereo",
+      "channelLayout": "stereo",
+      "samples": 446464,
+      "lostSamples": 0,
+      "duration": "10.124",
+      "averageBitrate": "65.2",
+      "isVbr": true,
+      "encoder": null,
+      "encoderConfidence": null,
+      "writer": null,
+      "writerConfidence": null
+    }
+  ],
+  "findings": [
+    {
+      "severity": "Info",
+      "code": "aac.implicit-sbr",
+      "count": 1
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "format": "MPEG Audio",
+  "topLevel": [
+    "ID3v2",
+    "MPEG Audio"
+  ],
+  "streams": [
+    {
+      "codec": "MPEG-2 Layer III",
+      "kind": "Audio",
+      "sampleRate": 22050,
+      "channels": 1,
+      "channelMode": "Mono",
+      "channelLayout": "mono",
+      "samples": 222336,
+      "lostSamples": 0,
+      "duration": "10.083",
+      "averageBitrate": "32.0",
+      "isVbr": false,
+      "encoder": "mp3PRO encoder",
+      "encoderConfidence": "Medium",
+      "writer": null,
+      "writerConfidence": null
+    }
+  ],
+  "findings": [
+    {
+      "severity": "Warning",
+      "code": "id3v2.frame-empty",
+      "count": 1
+    },
+    {
+      "severity": "Info",
+      "code": "mpeg-audio.mp3pro",
+      "count": 1
+    }
+  ]
+}
