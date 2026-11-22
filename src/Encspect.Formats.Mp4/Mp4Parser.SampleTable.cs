@@ -94,6 +94,7 @@ public sealed partial class Mp4Parser
         // version 1 keeps version 0's layout, so as in ffmpeg, the QuickTime layout applies where the
         // file is QuickTime's or the stsd box is of version 0.
         bool quickTime = state.IsQuickTime || state.HasQuickTimeBrand || (stsdVersion == 0 && version > 0);
+        entry.IsChannelCountBinding = !quickTime && version == 1;
         if (quickTime && version == 1 && f.Remaining >= 16)
         {
             f.U32(node, "Samples Per Packet", Explain.SamplesPerPacket);

@@ -19,7 +19,7 @@ internal enum MainDataProblem
 }
 
 // IsLost: some of the frame's main data lie in bytes that are gone (the missing part of a cut frame) or behind junk big enough to have held a frame, so a decoder cannot have them.
-internal readonly record struct MainDataPlacement(long Reservoir, int Earlier, MainDataProblem Problem, bool Overflows, bool IsLost = false);
+internal readonly record struct MainDataPlacement(long Reservoir, int Earlier, MainDataProblem Problem, bool Overflows, bool IsLost = false, int MainDataBegin = 0);
 
 // The Layer III bit reservoir (ISO/IEC 11172-3 2.4.2.7, main_data_begin): main data runs
 // through the data of consecutive frames of one stream, the bytes after each frame's side
@@ -128,7 +128,7 @@ internal sealed class BitReservoir(ChunkedList<MainDataRun> runs, Func<long, lon
         _recent.RemoveAll(a => a.Start + a.Length <= _position - Reach);
 
         _junk = dataLength == 0 ? _junk : 0;
-        return new MainDataPlacement(reservoir, earlier, problem, mainEnd > end && !truncated, isLost);
+        return new MainDataPlacement(reservoir, earlier, problem, mainEnd > end && !truncated, isLost, mainDataBegin);
     }
 
     // Whether the bytes from begin to start are not all there: the stream positions between the kept areas are the missing parts of cut frames, and junk of at least a

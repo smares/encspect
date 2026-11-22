@@ -87363,6 +87363,25 @@
         ]
       }
     ],
-    "findings": []
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "mp4.channels-differ",
+        "message": "The sample entry of track 1 states 2 channels, but the AAC LC stream has 1 (from its configuration, or from its blocks where they carry parametric stereo); the entry's count may be ignored where the codec states its own (ISO/IEC 14496-12 12.2.3).",
+        "offset": 406,
+        "length": 87,
+        "path": [
+          0,
+          1,
+          3,
+          3,
+          4,
+          4,
+          2,
+          5
+        ],
+        "count": 1
+      }
+    ]
   }
 ]
