@@ -114,6 +114,8 @@ public sealed partial class Mp4Parser
     {
         string? mean = null;
         string? name = null;
+        int dataAtoms = 0;
+        string? text = null;
         ReadChildren(state, node, f.Position, header.End, depth + 1, custom: (s, child, h, fields, d) =>
         {
             switch (h.Type)
@@ -129,7 +131,11 @@ public sealed partial class Mp4Parser
                     child.Value = name;
                     break;
                 case "data":
-                    NodeValue? value = Data(s, node, child, fields, header.Type, name);
+                    NodeValue? value = Data(s, node, child, fields, header.Type, name, out uint dataType);
+                    dataAtoms++;
+                    // Only text data types (1 to 5) are compared with Nero's copy, and only of an item with one data atom.
+                    text = dataType is >= 1 and <= 5 && value?.AsText() is { } t ? t.TrimEnd('\0') : null;
+
                     if (node.Value is null || node.Value == BoxNames.Describe(header.Type))
                     {
                         node.Value = value;
@@ -146,6 +152,11 @@ public sealed partial class Mp4Parser
             }
         });
 
+        if (dataAtoms == 1 && text is not null && (header.Type != "----" || name is not null) && state.ItunesText.Count < MaxNeroFieldsKept)
+        {
+            state.ItunesText.TryAdd(header.Type == "----" ? name! : header.Type, text);
+        }
+
         if (header.Type == "----" && name is not null)
         {
             node.Value = node.Value is null ? $"{mean}:{name}" : node.Value;
@@ -154,14 +165,20 @@ public sealed partial class Mp4Parser
 
     // Apple's iTunes metadata format, "Data atom": a type (one byte of type set, then three of the
     // well-known type), a locale and the value.
-    private static NodeValue? Data(State state, Node item, Node node, BoxFields f, string itemType, string? freeform)
+    private static NodeValue? Data(State state, Node item, Node node, BoxFields f, string itemType, string? freeform, out uint dataType)
     {
         uint type = (uint)f.Field(node, "Data Type", 4, Explain.DataType, v => $"{v & 0xFFFFFF} ({DataTypeName((int)(v & 0xFFFFFF))})") & 0xFFFFFF;
         f.U32(node, "Locale", Explain.Locale);
         long at = f.Position;
         byte[] bytes = f.TakeBytes(f.Remaining);
+        dataType = type;
         NodeValue value = Value((int)type, bytes, itemType, freeform);
         Node shown = node.Add(new Node("Value", at, bytes.Length, value) { Description = Explain.DataValue });
+        if (itemType == "covr")
+        {
+            state.ItunesCovers.Add((at, bytes.Length));
+        }
+
         node.Value = value;
         string? text = value.AsText();
         // Only text counts: the other data types render as hexadecimal or numbers, which name no software.
@@ -419,7 +436,7 @@ public sealed partial class Mp4Parser
 
     // Nero's chapter list: a full box, four more bytes in version 1, a chapter count, then each
     // chapter's start in 100-nanosecond units and its title (as ffmpeg reads it).
-    private static void NeroChapters(Node node, BoxFields f)
+    private static void NeroChapters(State state, Node node, BoxFields f)
     {
         int version = FullBox(node, f).Version;
         if (version != 0)
@@ -433,13 +450,21 @@ public sealed partial class Mp4Parser
             long at = f.Position;
             ulong start = f.Take(8);
             int length = (int)f.Take(1);
-            string title = Latin1OrUtf8(f.TakeBytes(Math.Min(length, f.Remaining)));
+            byte[] titleBytes = f.TakeBytes(Math.Min(length, f.Remaining));
+            string title = Latin1OrUtf8(titleBytes);
             TimeSpan time = TimeSpan.FromTicks((long)Math.Min(start, (ulong)TimeSpan.MaxValue.Ticks));
             var chapter = new Node("Chapter", at, f.Position - at, $"{time.ToString(@"hh\:mm\:ss\.fff", CultureInfo.InvariantCulture)} {title}") { Description = Explain.Chapter };
             chapter.Add(new Node("Start", at, 8, NodeValue.Decimal(start / 1e7, 3, "s")) { Description = Explain.ChapterStart });
             chapter.Add(new Node("Title Length", at + 8, 1, NodeValue.Integer(length, "bytes")) { Description = Explain.ChapterTitleLength });
             chapter.Add(new Node("Title", at + 9, f.Position - at - 9, title) { Description = Explain.ChapterTitle });
             node.Add(chapter);
+            if (!state.HasChapterList && state.ChapterTitles.Count < MaxNeroFieldsKept)
+            {
+                state.ChapterTitles.Add((title, titleBytes));
+            }
         }
+
+        // Only the first chapter list is compared with Nero's segments, which count the chapters of the movie.
+        state.HasChapterList = true;
     }
 }
