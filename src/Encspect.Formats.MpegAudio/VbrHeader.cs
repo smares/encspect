@@ -310,6 +310,13 @@ internal sealed class VbrHeader
         }
 
         End = Math.Min(position, _frame.Length);
+
+        // M3E 0.99a writes four bytes its flags do not name before its version text ("M3E 0.99a beta (Q:0)"), in both VBR modes of Encspect's test files.
+        if (!IsTruncated && (Flags & 8) == 0 && position + 8 <= _frame.Length && _frame.AsSpan(position + 4, 4).SequenceEqual("M3E "u8))
+        {
+            position += 4;
+        }
+
         if (IsTruncated || position + 9 > _frame.Length || !IsEncoderString(_frame.AsSpan(position, 9)))
         {
             return;

@@ -46,7 +46,11 @@ RELEASES = {
     "0.93.6": dict(archive="bladeenc-0.93.7-src-unstable-2.tar.gz", url=SITE, timestamp="20010612055911",
                    sha256="5cf51575deba81a81b2178aa1739ad4398620fd57ae6bc5eb17951fdf92fae33"),
     "0.94.2": dict(archive="bladeenc-0.94.2-src-stable.tar.gz", url=SITE, timestamp="20010611193234",
-                   sha256="c5e9dd180f28d1865599d0755e36fa1a4c146bb5e1b7ba9ad099955261fc1164"),
+                   sha256="c5e9dd180f28d1865599d0755e36fa1a4c146bb5e1b7ba9ad099955261fc1164",
+                   # The Wayback Machine is out of reach from some networks; the private repository keeps the same source as a plain tar
+                   # (the archive's gzip layer was lost in the download), pinned by its own SHA-256.
+                   tar=dict(archive="bladeenc-0.94.2-src-stable.tar", sha256="9593d03e83ca245f3e78355a0bb192a73dc81fb5fca969c8bb5ab5e16c132d33",
+                            private="mirrors/tools/encoders/bladeenc-0.94.2-src-stable.tar")),
 }
 
 
@@ -64,7 +68,21 @@ def build(version="0.94.2"):
     # The Wayback Machine resets connections now and then, so a checked copy is kept and reused.
     CACHE.mkdir(parents=True, exist_ok=True)
     path = CACHE / release["archive"]
-    downloads.fetch(addresses(release), release["sha256"], path)
+    tar = release.get("tar")
+    if tar and (CACHE / tar["archive"]).exists() and downloads.sha256(CACHE / tar["archive"]) == tar["sha256"]:
+        path = CACHE / tar["archive"]
+    elif tar:
+        # The public release first; where no address serves it, the plain tar of the private repository.
+        try:
+            downloads.fetch(addresses(release), release["sha256"], path)
+        except SystemExit as public:
+            path = CACHE / tar["archive"]
+            try:
+                downloads.fetch([downloads.private(tar["private"])], tar["sha256"], path)
+            except SystemExit as private:
+                raise SystemExit(f"{public}; and the plain tar: {private}") from None
+    else:
+        downloads.fetch(addresses(release), release["sha256"], path)
     with tarfile.open(path) as archive:
         archive.extractall(directory / "src", filter="data")
     # The tarballs nest their sources differently; the encoder is the directory with the most C files.

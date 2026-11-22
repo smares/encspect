@@ -400,7 +400,7 @@ public sealed partial class MpegAudioParser
             return context.Signature is { Text: "GOGO" } ? Encoder("Gogo", "Medium", xing, context.Ancillary!) : Encoder("Gogo", "Medium", xing);
         }
 
-        if (vbr.EncoderString is { } old && LameName(old) is { } oldName)
+        if (vbr.EncoderString is { } old && VersionStringName(old) is { } oldName)
         {
             return Encoder(oldName, "Medium", Evidence(tagNode, "Version string after the Xing header"));
         }
@@ -497,7 +497,7 @@ public sealed partial class MpegAudioParser
             return (name, "LAME tag");
         }
 
-        return vbr.EncoderString is { } old && LameName(old) is { } oldName ? (oldName, "Version string") : null;
+        return vbr.EncoderString is { } old && VersionStringName(old) is { } oldName ? (oldName, "Version string") : null;
     }
 
     private static bool IsFfmpeg(string text) => text.StartsWith("Lavc", StringComparison.Ordinal) || text.StartsWith("Lavf", StringComparison.Ordinal);
@@ -586,6 +586,10 @@ public sealed partial class MpegAudioParser
     // A signature names Gogo, or LAME with its version unless that may be cut short.
     private static string SignatureName(Signature signature) =>
         signature.Text == "GOGO" ? "Gogo" : signature.IsCut ? "LAME" : LameRelease.Parse(signature.Text)?.Name ?? LameName(signature.Text)!;
+
+    // The encoder a version string after a Xing header names: LAME before 3.90, or M3E ("M3E 0.99a beta (Q:0)" as "M3E 0.99a beta").
+    private static string? VersionStringName(string text) =>
+        text.StartsWith("M3E ", StringComparison.Ordinal) ? text.Split(" (")[0].TrimEnd(' ') : LameName(text);
 
     // "LAME3.88 (beta)" as "LAME 3.88 (beta)" where the version is not one LameRelease reads.
     private static string? LameName(string text)

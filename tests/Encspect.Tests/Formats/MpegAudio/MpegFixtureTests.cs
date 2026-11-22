@@ -199,7 +199,7 @@ public class MpegFixtureTests
         if (manifest.TryGetProperty("mp3guessenc", out JsonElement guessenc))
         {
             CheckGuessencStatistics(guessenc, frames);
-            CheckStatisticsAgainstGuessenc(guessenc, report, frames.Length);
+            CheckStatisticsAgainstGuessenc(guessenc, report, frames.Length, false);
         }
 
         Assert.Equal(
@@ -357,10 +357,14 @@ public class MpegFixtureTests
         if (manifest.TryGetProperty("mp3guessenc", out JsonElement guessenc))
         {
             // mp3guessenc leaves a truncated frame out of its statistics unless all of its main data
-            // is there (BladeEnc 0.80 to 0.83 cut only stuffing off the last frame).
-            Node[] counted = audioFrames.Where(f => !truncated.Contains(f.Offset) || HasAllMainData(f)).ToArray();
+            // is there (BladeEnc 0.80 to 0.83 cut only stuffing off the last frame). A manifest that says
+            // it reads the stream otherwise (guessenc_reads_otherwise, with the reason) names a segment of
+            // ancillary data that runs into the truncated last frame: mp3guessenc counts its bytes before
+            // the cut and leaves the frame out, as the statistics leave out the segment.
+            bool otherwise = manifest.TryGetProperty("guessenc_reads_otherwise", out _);
+            Node[] counted = audioFrames.Where(f => !truncated.Contains(f.Offset) || (!otherwise && HasAllMainData(f))).ToArray();
             CheckGuessencStatistics(guessenc, counted);
-            CheckStatisticsAgainstGuessenc(guessenc, report, counted.Length);
+            CheckStatisticsAgainstGuessenc(guessenc, report, counted.Length, otherwise);
         }
 
         if (manifest.TryGetProperty("vbr_header_fields", out JsonElement vbrFields))
@@ -655,7 +659,7 @@ public class MpegFixtureTests
     // The region's coding statistics against mp3guessenc's, where it counts the frames the statistics
     // count: not where it also counts a truncated last frame whose main data is all there, or a
     // file has several regions. mp3guessenc's "switch" granules are start, stop and reserved ones.
-    private static void CheckStatisticsAgainstGuessenc(JsonElement expected, Report report, int guessencFrames)
+    private static void CheckStatisticsAgainstGuessenc(JsonElement expected, Report report, int guessencFrames, bool ancillaryDiffers)
     {
         Node[] all = Streams(report).SelectMany(r => r.Children.Where(c => c.Name == "Statistics")).ToArray();
         if (all.Length != 1 || Value(all[0], "Frames") != guessencFrames.ToString(CultureInfo.InvariantCulture))
@@ -684,7 +688,17 @@ public class MpegFixtureTests
         }
 
         long[] ancillary = expected.GetProperty("ancillary").EnumerateArray().Select(a => a.GetInt64()).ToArray();
-        Assert.Equal(ancillary, new long[] { Count("Ancillary Data"), Count("Ancillary Data/Smallest Nonzero Amount"), Count("Ancillary Data/Largest Amount") });
+        long[] ours = [Count("Ancillary Data"), Count("Ancillary Data/Smallest Nonzero Amount"), Count("Ancillary Data/Largest Amount")];
+        if (ancillaryDiffers)
+        {
+            // The manifest says mp3guessenc reads these otherwise; the entry fails once the two agree.
+            Assert.NotEqual(ancillary, ours);
+        }
+        else
+        {
+            Assert.Equal(ancillary, ours);
+        }
+
         Assert.Equal(Counted(expected.GetProperty("max_main_data_begin").GetInt32(), "byte", "bytes"), Value(statistics, "Maximum Main Data Begin"));
         Assert.Equal(expected.GetProperty("scalefac_scale_used").GetBoolean() ? "true" : "false", Value(statistics, "UsesScalefactorScaling"));
         Assert.Equal(expected.GetProperty("scfsi_used").GetBoolean() ? "true" : "false", Value(statistics, "UsesScfsi"));

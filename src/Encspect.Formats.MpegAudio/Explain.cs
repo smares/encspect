@@ -166,7 +166,7 @@ internal static class Explain
     public const string TocEntry = "Where this percentage of the playing time is reached, in 256ths of the byte count.";
     public const string Quality = "A quality indicator the encoder chose; what its number means depends on the encoder.";
     public const string GogoQuality = "Gogo writes \"GOGO\" here instead of a quality indicator.";
-    public const string EncoderString = "Text after the Xing header that does not start a LAME tag, such as the version string of LAME before 3.90.";
+    public const string EncoderString = "Text after the Xing header that does not start a LAME tag, such as the version string of LAME before 3.90 or the name, version and setting M3E writes.";
 
     public const string LameTag = "The LAME tag (Mp3 Info Tag revision 1): the encoder's version and settings, gapless delay and padding, ReplayGain and two CRCs (LAME tag specification, Gabriel Bouvigne).";
     public const string LameEncoder = "The encoder's short version string, nine bytes.";
