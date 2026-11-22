@@ -58,9 +58,9 @@ public class AacGraphsTests
                 ("Coded Bandwidth", "Coded Bandwidth"),
                 ("Bit Distribution", "Bitrate"),
                 ("Other", "Window Shapes"),
-                ("Other", "Channel Streams With TNS"),
-                ("Other", "Channel Streams With Pulse Data"),
-                ("Other", "Noise-Substituted Channel Streams"),
+                ("Other", "TNS"),
+                ("Other", "Pulse Data"),
+                ("Other", "Noise Substitution"),
             ],
             window.Model.Graphs.Choices.Select(c => (c.Heading, c.Title)));
         Assert.Equal(["Over Time", "Frames", "Summary", "Frame Map"], window.Model.Graphs.Choices.Single(c => c.Title == "Block Usage").Forms.Select(f => f.Title));

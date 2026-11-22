@@ -114,11 +114,11 @@ internal sealed class CodingRecorder(StreamSetup setup)
     private readonly List<byte> _sbr = [];
     private readonly List<byte> _ps = [];
     private readonly CategorySeriesBuilder _shapeSeries = new("Window Shapes", CodingCategories.WindowShapes, "channel stream");
-    private readonly CategorySeriesBuilder _tnsSeries = new("Channel Streams With TNS", CodingCategories.WithTns, "channel stream");
-    private readonly CategorySeriesBuilder _pulseSeries = new("Channel Streams With Pulse Data", CodingCategories.WithPulses, "channel stream");
-    private readonly CategorySeriesBuilder _noiseSeries = new("Noise-Substituted Channel Streams", CodingCategories.WithNoise, "channel stream");
-    private readonly CategorySeriesBuilder _sbrSeries = new("Raw Data Blocks With SBR", CodingCategories.WithSbr, "raw data block");
-    private readonly CategorySeriesBuilder _psSeries = new("Raw Data Blocks With Parametric Stereo", CodingCategories.WithParametricStereo, "raw data block");
+    private readonly CategorySeriesBuilder _tnsSeries = new("TNS", CodingCategories.WithTns, "channel stream");
+    private readonly CategorySeriesBuilder _pulseSeries = new("Pulse Data", CodingCategories.WithPulses, "channel stream");
+    private readonly CategorySeriesBuilder _noiseSeries = new("Noise Substitution", CodingCategories.WithNoise, "channel stream");
+    private readonly CategorySeriesBuilder _sbrSeries = new("SBR", CodingCategories.WithSbr, "raw data block");
+    private readonly CategorySeriesBuilder _psSeries = new("Parametric Stereo", CodingCategories.WithParametricStereo, "raw data block");
 
     // The mid/side bands and the bands of common window pairs of the unit being read, and per unit the share of them in tenths of a percent, -1 for a unit without such bands.
     private int _unitMidSide;

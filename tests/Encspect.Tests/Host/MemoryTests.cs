@@ -142,7 +142,7 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         (Report many, long kept) = MeasureKept("many.aac", AdtsFrames(frames), warmUp);
 
         CheckCodingGrowth(few, many, fewer, frames, categoryBytes: 17, numericBytes: 8,
-            names: ["Block Usage", "Block Sizes", "Stereo Coding", "Window Shapes", "Channel Streams With TNS", "Channel Streams With Pulse Data", "Noise-Substituted Channel Streams"]);
+            names: ["Block Usage", "Block Sizes", "Stereo Coding", "Window Shapes", "TNS", "Pulse Data", "Noise Substitution"]);
         double keptPerFrame = (kept - fewerKept) / (double)(frames - fewer);
         Output.WriteLine($"{Hundredths(keptPerFrame)} bytes kept per further frame");
         Assert.True(keptPerFrame < 220, $"The report keeps {keptPerFrame:F2} bytes per further frame.");

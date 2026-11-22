@@ -29,8 +29,7 @@ public sealed class CapitalizationTests
     private static readonly HashSet<string> Exceptions = new(StringComparer.Ordinal)
     {
         "Blocks With Block Switching", "Blocks With Coupling", "Blocks With Rematrixing", "Blocks With Spectral Extension",
-        "Rice With 5-Bit Parameters", "Subframes With Wasted Bits", "Channel Streams With TNS", "Channel Streams With Pulse Data",
-        "Raw Data Blocks With SBR", "Raw Data Blocks With Parametric Stereo",
+        "Rice With 5-Bit Parameters", "Subframes With Wasted Bits",
     };
 
     [Theory]

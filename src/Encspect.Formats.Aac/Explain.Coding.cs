@@ -37,11 +37,11 @@ internal static partial class Explain
     public const string FlagWithoutTns = "Channel streams without temporal noise shaping data.";
     public const string FlagWithPulses = "Channel streams that carry pulse data (pulse_data_present, ISO/IEC 14496-3, 4.6.3).";
     public const string FlagWithoutPulses = "Channel streams without pulse data.";
-    public const string FlagWithNoise = "Channel streams that code at least one band with perceptual noise substitution (codebook 13).";
+    public const string FlagWithNoise = "Channel streams that code at least one band with perceptual noise substitution (codebook 13, ISO/IEC 14496-3, 4.6.2).";
     public const string FlagWithoutNoise = "Channel streams without a band coded with perceptual noise substitution.";
-    public const string FlagWithSbr = "Raw data blocks that hold SBR data in a fill element.";
+    public const string FlagWithSbr = "Raw data blocks that hold SBR data in a fill element (an extension_payload, ISO/IEC 14496-3, 4.4.2.7 and 4.5.2).";
     public const string FlagWithoutSbr = "Raw data blocks without SBR data, and those that could not be read.";
-    public const string FlagWithPs = "Raw data blocks whose SBR data carries the parametric stereo extension.";
+    public const string FlagWithPs = "Raw data blocks whose SBR data carries the parametric stereo extension (ISO/IEC 14496-3, 4.4.2.7 and 4.5.2).";
     public const string FlagWithoutPs = "Raw data blocks without the parametric stereo extension, and those that could not be read.";
     public const string WindowShapesSeries = "The window shape of every channel stream of every unit, sine or Kaiser-Bessel derived (ISO/IEC 14496-3, 4.5.2), as the tally of Window Shapes counts them.";
     public const string TnsSeries = "Whether each channel stream of every unit carries temporal noise shaping data, as the tally of TNS counts them.";

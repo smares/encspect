@@ -219,8 +219,8 @@ public class AacCodingSeriesTests
         Report report = Fixtures.AnalyzeMpeg("aac/ffmpeg-adts.aac");
         StreamInfo stream = Assert.Single(report.Streams);
 
-        Assert.Equal(["Block Usage", "Block Sizes", "Stereo Coding"], stream.CategorySeries.Select(s => s.Name));
-        Assert.Equal([GraphConcept.BlockSwitching, GraphConcept.BlockSwitching, GraphConcept.StereoCoding], stream.CategorySeries.Select(s => s.Concept));
+        Assert.Equal(["Block Usage", "Block Sizes", "Stereo Coding", "Window Shapes", "TNS", "Pulse Data", "Noise Substitution"], stream.CategorySeries.Select(s => s.Name));
+        Assert.Equal([GraphConcept.BlockSwitching, GraphConcept.BlockSwitching, GraphConcept.StereoCoding, GraphConcept.None, GraphConcept.None, GraphConcept.None, GraphConcept.None], stream.CategorySeries.Select(s => s.Concept));
         Assert.All(stream.CategorySeries, s => Assert.Equal(s.Name, s.Anchor!.Name));
         Assert.All(stream.CategorySeries, s => Assert.Equal("Bitrate", s.XSeries!.Name));
         Assert.All(stream.CategorySeries, s => Assert.NotNull(s.Time));
@@ -263,7 +263,7 @@ public class AacCodingSeriesTests
         Report report = Fixtures.AnalyzeMpeg("aac/ffmpeg-mono-faststart.m4a");
         StreamInfo stream = Assert.Single(report.Streams);
 
-        Assert.Equal(["Block Usage", "Block Sizes"], stream.CategorySeries.Select(s => s.Name));
+        Assert.Equal(["Block Usage", "Block Sizes", "Window Shapes", "TNS", "Pulse Data", "Noise Substitution"], stream.CategorySeries.Select(s => s.Name));
         Assert.DoesNotContain(Fixtures.Resolve(stream.Nodes[0], "Statistics").Single().Children, c => c.Name == "Stereo Coding");
     }
 
