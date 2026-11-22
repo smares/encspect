@@ -44,8 +44,9 @@ SIMPLE = {"AC-3": "AC-3", "FLAC": "FLAC", "Vorbis": "Vorbis", "ALAC": "Apple Los
 # analyzer's nor the listed one fails.
 MEDIAINFO_DURATIONS = {
     "external-nero-rom-mp3pro-vbr-low": (
-        10.522, "MediaInfo 26.01 divides the VBRI header's byte count (52,610) by the 40 kbit/s it reports as the stream's bitrate (52,610 x 8 / 40,000 = 10.522 s); the stream's "
-                "386 frames of 576 samples at 22,050 Hz are 10.083 s, which the analyzer reports and the header's frame count (387, its own frame included) agrees with"),
+        10.522, "MediaInfo 26.01 reported 10.522 s in the sample-kit-crosscheck job of #382, which equals the VBRI byte count over the 40 kbit/s MediaInfo reports as the "
+                "stream's bitrate (52,610 x 8 / 40,000); the stream's 386 frames of 576 samples at 22,050 Hz are 10.083 s, which the analyzer reports, and the header's frame count "
+                "(387, its own frame included) agrees with"),
 }
 
 SKIPS = {}
@@ -155,7 +156,7 @@ def check_mediainfo(name, stem, path):
             fail(name, f"MediaInfo's sample rate is {rate}, the analyzer's {ours['sampleRate']}")
         if "Duration" in found:
             seconds = float(found["Duration"])
-            listed = MEDIAINFO_DURATIONS.get(stem.name.removeprefix("external-"), None) or MEDIAINFO_DURATIONS.get(stem.name)
+            listed = MEDIAINFO_DURATIONS.get(stem.name)
             if listed and abs(seconds - listed[0]) < 0.001:
                 skip(name, "MediaInfo duration", listed[1])
             elif abs(seconds - float(ours["duration"])) > 0.15:
