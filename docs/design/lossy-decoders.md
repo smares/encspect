@@ -562,7 +562,7 @@ A frame past a ceiling is `decode.frame-too-large`, and `MemoryTests` gets a lon
 What the recommendations change outside the decoders, so that none of it arrives unannounced:
 
 - **Goldens:**
-  - decision 2(a): the streams of codings that define a checksum (MPEG audio, ADTS, AC-3, E-AC-3, DTS, Musepack SV8) gain a `verification` block in their `.report.json`, and the text report a "Verified" line: about 540 goldens, counted from the codecs the committed goldens name (492 in `mpeg`, `aac`, `adts`, `ac3` and `dts`, 47 Musepack SV8, and the AC-3 and E-AC-3 tracks of `mp4` and `matroska`). AC-3 and E-AC-3 streams read "yes (lossy stream; …)", the others "unknown" or that they store no checksum;
+  - decision 2(a): the streams of codings that define a checksum (MPEG audio, ADTS, AC-3, E-AC-3, DTS, Musepack SV8) gain a `verification` block in their `.report.json`, and the text report a "Verified" line: about 540 goldens, counted from the codecs the committed goldens name (492 in `mpeg`, `aac`, `adts`, `ac3` and `dts`, 47 Musepack SV8, and the AC-3 and E-AC-3 tracks of `mp4` and `matroska`). AC-3 and E-AC-3 streams read "yes (the coded data matches the stored checksums; lossy stream; …)", the others "unknown" or that they store no checksum;
   - decision 14: `.decode.json` goldens of lossy fixtures gain `pcmSha256`, a field no `.decode.json` has today (771 files hold none);
   - decision 8(a): every measured stream with a syntax trim gains `trimmedSamples`; TrueHD's goldens do not change (the decoder never writes the samples a marker drops);
   - decision 4: `.measure.json` goldens with gaps gain `withheldSamples`;

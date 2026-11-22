@@ -41,6 +41,35 @@ public class DecodeAudioTests
         Assert.Equal("Spectrogram", model.Graphs.Selected!.Title);
     }
 
+    // The evidence line words each figure as the text report does: the basis once measured, and the reason where a figure cannot exist.
+    [Fact]
+    public void The_evidence_line_gives_the_basis_of_the_measured_figures_and_says_why_low_bits_unused_of_a_float_output_is_absent()
+    {
+        var ui = new TestDispatcher();
+        using var model = new DetailViewModel(Analyzer.CreateDefault(), ui.Post);
+        Task load = model.LoadAsync(Fixtures.Flac("external-16-stereo-l5.flac"));
+        ui.Until(() => load.IsCompleted);
+
+        Assert.Equal("Spectral Cutoff: not measured (decode the audio to measure it) \u00b7 Low Bits Unused: not measured (decode the audio to measure it)", model.EvidenceText);
+
+        Task decode = model.DecodeAudioAsync();
+        ui.Until(() => decode.IsCompleted);
+
+        Assert.Contains("Spectral Cutoff: ", model.EvidenceText, StringComparison.Ordinal);
+        Assert.Contains("(measured from the decoded audio) \u00b7 Low Bits Unused: ", model.EvidenceText, StringComparison.Ordinal);
+        Assert.EndsWith("(measured from the decoded audio)", model.EvidenceText, StringComparison.Ordinal);
+        Assert.DoesNotContain("not measured", model.EvidenceText, StringComparison.Ordinal);
+
+        using var lossy = new DetailViewModel(Analyzer.CreateDefault(), ui.Post);
+        Task loadLossy = lossy.LoadAsync(Fixtures.Mpeg("external-lame-cbr128-joint.mp3"));
+        ui.Until(() => loadLossy.IsCompleted);
+        Task decodeLossy = lossy.DecodeAudioAsync();
+        ui.Until(() => decodeLossy.IsCompleted);
+
+        Assert.EndsWith("Low Bits Unused: not defined for floating-point samples", lossy.EvidenceText, StringComparison.Ordinal);
+        Assert.DoesNotContain("decode the audio", lossy.EvidenceText, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void A_stream_whose_stored_md5_differs_is_verified_as_no()
     {

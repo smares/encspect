@@ -165,4 +165,64 @@ public class CodingClassTests
         Assert.Equal("lossy", document.RootElement[0].GetProperty("streams")[0].GetProperty("codingClass").GetString());
         Assert.Equal(Array.IndexOf(names, "codec") + 1, Array.IndexOf(names, "codingClass"));
     }
+
+    private static Report Measure(string path, MeasurementKinds? kinds = null)
+    {
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions { Include = kinds } } };
+        using FileStream file = File.OpenRead(path);
+        return Analyzer.CreateDefault().Analyze(path, file, options);
+    }
+
+    private static string Evidence(Report report, bool placeholders = false)
+    {
+        StreamInfo stream = report.Streams.Single();
+        IReadOnlyList<MeasurementLine>? lines = stream.Measurements is { } m ? MeasurementText.Lines(m, stream.Verification?.IsLossy == true) : null;
+        return string.Join("\n", CodingText.Evidence(stream, lines, placeholders).Select(e => $"{e.Name}: {e.Text}"));
+    }
+
+    private static readonly string Brickwall = Path.Combine(Fixtures.FixtureDirectory, "measurement", "synthetic-lines-16000-44100.flac");
+
+    [Fact]
+    public void MeasuredFiguresBesideTheCodingNameTheirBasis()
+    {
+        string evidence = Evidence(Measure(Brickwall));
+
+        Assert.Matches(@"^Spectral Cutoff: 16,0\d\d Hz .* \(measured from the decoded audio\)\nLow Bits Unused: .* \(measured from the decoded audio\)$", evidence);
+    }
+
+    [Fact]
+    public void LowBitsUnusedOfAFloatDecoderOutputSaysItIsNotDefinedForFloats()
+    {
+        string evidence = Evidence(Measure(Path.Combine(Fixtures.FixtureDirectory, "mpeg-audio", "external-lame-cbr128-joint.mp3")));
+
+        Assert.Contains("Spectral Cutoff: ", evidence, StringComparison.Ordinal);
+        Assert.EndsWith("Low Bits Unused: not defined for floating-point samples", evidence, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AFigureOfAKindThatWasNotAskedForSaysSo()
+    {
+        Assert.EndsWith("Low Bits Unused: not measured (levels were not asked for)", Evidence(Measure(Brickwall, MeasurementKinds.Spectrum)), StringComparison.Ordinal);
+        Assert.StartsWith("Spectral Cutoff: not measured (the spectrum was not asked for)", Evidence(Measure(Brickwall, MeasurementKinds.Levels)), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void WithoutMeasurementsThePlaceholdersSayNotMeasuredAndTheTextReportLeavesTheFiguresOut()
+    {
+        Report report = Analyzer.CreateDefault().Analyze(Brickwall, File.OpenRead(Brickwall));
+
+        Assert.Equal("", Evidence(report));
+        Assert.Equal("Spectral Cutoff: not measured (decode the audio to measure it)\nLow Bits Unused: not measured (decode the audio to measure it)", Evidence(report, placeholders: true));
+    }
+
+    [Theory]
+    [InlineData(MeasurementStatus.Failed, null, "not measured (the measurement failed)")]
+    [InlineData(MeasurementStatus.NotPossible, "no decoder handles this coding", "not measured (no decoder handles this coding)")]
+    [InlineData(MeasurementStatus.NotPossible, null, "not measured")]
+    public void AFigureOfAMeasurementThatFailedOrCannotRunSaysWhy(MeasurementStatus status, string? reason, string expected)
+    {
+        var stream = new StreamInfo { Nodes = [new Node("X", 0, 1)], Codec = "FLAC", CodingClass = CodingClass.Lossless, Measurements = new StreamMeasurements { Status = status, Reason = reason } };
+
+        Assert.All(CodingText.Evidence(stream, [], placeholders: true), e => Assert.Equal(expected, e.Text));
+    }
 }
