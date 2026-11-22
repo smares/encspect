@@ -9540,6 +9540,72 @@
             ]
           },
           {
+            "name": "Global Gain",
+            "unit": "steps",
+            "axis": "frameOffset",
+            "quantity": "Global Gain",
+            "x": [
+              208,
+              730,
+              1200,
+              1461,
+              1643,
+              1825,
+              2007,
+              2189,
+              2397,
+              2553,
+              2735,
+              2943,
+              3125,
+              3307,
+              3489,
+              3671,
+              3879,
+              4061,
+              4243,
+              4451,
+              4868,
+              5390
+            ],
+            "values": [
+              170,
+              161,
+              144,
+              146,
+              145,
+              144,
+              145,
+              145,
+              146,
+              145,
+              145,
+              145,
+              145,
+              145,
+              145,
+              145,
+              145,
+              145,
+              145,
+              176,
+              176,
+              210
+            ]
+          },
+          {
+            "name": "Global Gain Over Time",
+            "unit": "steps",
+            "axis": "seconds",
+            "quantity": "Global Gain",
+            "x": [
+              0
+            ],
+            "values": [
+              210
+            ]
+          },
+          {
             "name": "Channel Bit Share",
             "unit": "%",
             "axis": "frameOffset",
@@ -9850,6 +9916,36 @@
               2,
               0,
               3
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Scalefactor Scaling",
+            "valueLabel": "granule and channel",
+            "valuesPerUnit": 2,
+            "valueNames": [
+              "granule 1, channel 1",
+              "granule 1, channel 2"
+            ],
+            "categories": [
+              {
+                "name": "With scalefactor scaling",
+                "count": 0
+              },
+              {
+                "name": "Without scalefactor scaling",
+                "count": 44
+              }
+            ],
+            "total": 44,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                1,
+                44
+              ]
             ],
             "seconds": [
               0

@@ -8636,6 +8636,48 @@
             "values": [
               0
             ]
+          },
+          {
+            "name": "Global Gain",
+            "unit": "steps",
+            "axis": "frameOffset",
+            "quantity": "Global Gain",
+            "x": [
+              417,
+              834,
+              1252,
+              1670,
+              2088,
+              3223,
+              3640,
+              4058,
+              4476,
+              4894
+            ],
+            "values": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "name": "Global Gain Over Time",
+            "unit": "steps",
+            "axis": "seconds",
+            "quantity": "Global Gain",
+            "x": [
+              0
+            ],
+            "values": [
+              0
+            ]
           }
         ],
         "categorySeries": [
@@ -8838,6 +8880,38 @@
               2,
               0,
               3
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Scalefactor Scaling",
+            "valueLabel": "granule and channel",
+            "valuesPerUnit": 4,
+            "valueNames": [
+              "granule 1, channel 1",
+              "granule 1, channel 2",
+              "granule 2, channel 1",
+              "granule 2, channel 2"
+            ],
+            "categories": [
+              {
+                "name": "With scalefactor scaling",
+                "count": 0
+              },
+              {
+                "name": "Without scalefactor scaling",
+                "count": 40
+              }
+            ],
+            "total": 40,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                1,
+                40
+              ]
             ],
             "seconds": [
               0

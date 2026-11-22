@@ -30202,6 +30202,149 @@
             ]
           },
           {
+            "name": "Mid/Side Bands",
+            "unit": "%",
+            "axis": "frameOffset",
+            "concept": "stereoCoding",
+            "quantity": "Mid/Side Bands",
+            "x": [
+              44,
+              619,
+              2120,
+              2543,
+              2885,
+              3244,
+              3573,
+              3929,
+              4272,
+              4624,
+              4966,
+              5322,
+              5668,
+              6015,
+              6363,
+              6689,
+              7021,
+              7369,
+              7717,
+              8062,
+              8415,
+              8747,
+              9089,
+              9427,
+              9747,
+              10090,
+              10435,
+              10783,
+              11115,
+              11449,
+              11781,
+              12133,
+              12472,
+              12823,
+              13151,
+              13497,
+              13842,
+              14185,
+              14523,
+              14864,
+              15222,
+              15547,
+              15864,
+              16194,
+              16537,
+              16871,
+              17210,
+              17535,
+              17873,
+              18205,
+              18540,
+              18873,
+              19213,
+              19547,
+              19872,
+              20208,
+              20547,
+              20868,
+              21209,
+              21539,
+              21869,
+              22193,
+              22525,
+              22864,
+              23200,
+              23726
+            ],
+            "values": [
+              27.7,
+              46.2,
+              10.6,
+              29.8,
+              34,
+              34,
+              34,
+              31.9,
+              34,
+              36.2,
+              34,
+              34,
+              29.8,
+              27.7,
+              36.2,
+              27.7,
+              29.8,
+              27.7,
+              31.9,
+              25.5,
+              23.4,
+              27.7,
+              27.7,
+              38.3,
+              27.7,
+              34,
+              31.9,
+              23.4,
+              36.2,
+              27.7,
+              34,
+              31.9,
+              34,
+              27.7,
+              44.7,
+              23.4,
+              21.3,
+              36.2,
+              25.5,
+              27.7,
+              25.5,
+              34,
+              31.9,
+              31.9,
+              27.7,
+              25.5,
+              29.8,
+              21.3,
+              29.8,
+              34,
+              25.5,
+              38.3,
+              29.8,
+              23.4,
+              25.5,
+              29.8,
+              31.9,
+              23.4,
+              27.7,
+              29.8,
+              34,
+              31.9,
+              17,
+              29.8,
+              31.9,
+              29.8
+            ]
+          },
+          {
             "name": "Intensity Stereo Bound",
             "unit": "Hz",
             "axis": "frameOffset",
@@ -30630,6 +30773,146 @@
               [
                 3,
                 64
+              ]
+            ],
+            "seconds": [
+              0,
+              44
+            ]
+          },
+          {
+            "name": "Window Shapes",
+            "valueLabel": "channel stream",
+            "categories": [
+              {
+                "name": "Sine",
+                "count": 4
+              },
+              {
+                "name": "KBD",
+                "count": 128
+              }
+            ],
+            "total": 132,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                66
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                4
+              ],
+              [
+                1,
+                128
+              ]
+            ],
+            "seconds": [
+              0,
+              44
+            ]
+          },
+          {
+            "name": "TNS",
+            "valueLabel": "channel stream",
+            "categories": [
+              {
+                "name": "With TNS",
+                "count": 0
+              },
+              {
+                "name": "Without TNS",
+                "count": 132
+              }
+            ],
+            "total": 132,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                66
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                132
+              ]
+            ],
+            "seconds": [
+              0,
+              44
+            ]
+          },
+          {
+            "name": "Pulse Data",
+            "valueLabel": "channel stream",
+            "categories": [
+              {
+                "name": "With pulse data",
+                "count": 0
+              },
+              {
+                "name": "Without pulse data",
+                "count": 132
+              }
+            ],
+            "total": 132,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                66
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                132
+              ]
+            ],
+            "seconds": [
+              0,
+              44
+            ]
+          },
+          {
+            "name": "Noise Substitution",
+            "valueLabel": "channel stream",
+            "categories": [
+              {
+                "name": "With noise substitution",
+                "count": 2
+              },
+              {
+                "name": "Without noise substitution",
+                "count": 130
+              }
+            ],
+            "total": 132,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                66
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                2
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                128
               ]
             ],
             "seconds": [

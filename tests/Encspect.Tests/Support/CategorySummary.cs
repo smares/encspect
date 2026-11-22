@@ -147,8 +147,22 @@ internal sealed partial class CategorySummary
                 return;
             }
 
-            long tally = anchors.Sum(a => Count(a.Value) ?? 0);
             long with = series.Sum(s => s.Counts[entry.WithCategory]);
+
+            // A tally that states its share as a decimal percent ("Scalefactor Scaling": 12.3 %) holds that share, to a tenth rounded half to even, of the denominator.
+            if (anchors.Count > 0 && anchors.All(a => a.Value?.AsInteger() is null && Count(a.Value) is null && a.Value?.AsDouble() is not null))
+            {
+                double share = denominator == 0 ? 0 : Math.Round(with * 1000.0 / denominator, MidpointRounding.ToEven) / 10;
+                double stated = anchors.Sum(a => a.Value!.AsDouble()!.Value);
+                if (Math.Abs(share - stated) > 1e-9)
+                {
+                    problems.Add($"{name}: {series[0].Categories[entry.WithCategory].Name} is {share}% in the series and {stated}% in the tally");
+                }
+
+                return;
+            }
+
+            long tally = anchors.Sum(a => Count(a.Value) ?? 0);
             Compare(name, series[0].Categories[entry.WithCategory].Name, with, tally, mayBeSmaller, problems);
             return;
         }

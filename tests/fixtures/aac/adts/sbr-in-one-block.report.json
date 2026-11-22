@@ -4867,6 +4867,37 @@
             ]
           },
           {
+            "name": "Mid/Side Bands",
+            "unit": "%",
+            "axis": "frameOffset",
+            "concept": "stereoCoding",
+            "quantity": "Mid/Side Bands",
+            "x": [
+              0,
+              46,
+              92,
+              138,
+              185,
+              252,
+              299,
+              346,
+              392,
+              438
+            ],
+            "values": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
             "name": "Coded Bandwidth",
             "unit": "Hz",
             "axis": "frameOffset",
@@ -5017,6 +5048,200 @@
             "runs": [
               [
                 0,
+                10
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Window Shapes",
+            "valueLabel": "channel stream",
+            "categories": [
+              {
+                "name": "Sine",
+                "count": 0
+              },
+              {
+                "name": "KBD",
+                "count": 20
+              }
+            ],
+            "total": 20,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                10
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                20
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "TNS",
+            "valueLabel": "channel stream",
+            "categories": [
+              {
+                "name": "With TNS",
+                "count": 0
+              },
+              {
+                "name": "Without TNS",
+                "count": 20
+              }
+            ],
+            "total": 20,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                10
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                20
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Pulse Data",
+            "valueLabel": "channel stream",
+            "categories": [
+              {
+                "name": "With pulse data",
+                "count": 0
+              },
+              {
+                "name": "Without pulse data",
+                "count": 20
+              }
+            ],
+            "total": 20,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                10
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                20
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Noise Substitution",
+            "valueLabel": "channel stream",
+            "categories": [
+              {
+                "name": "With noise substitution",
+                "count": 0
+              },
+              {
+                "name": "Without noise substitution",
+                "count": 20
+              }
+            ],
+            "total": 20,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                10
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                20
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "SBR",
+            "valueLabel": "raw data block",
+            "categories": [
+              {
+                "name": "With SBR",
+                "count": 1
+              },
+              {
+                "name": "Without SBR",
+                "count": 9
+              }
+            ],
+            "total": 10,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                10
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                4
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                5
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Parametric Stereo",
+            "valueLabel": "raw data block",
+            "categories": [
+              {
+                "name": "With parametric stereo",
+                "count": 0
+              },
+              {
+                "name": "Without parametric stereo",
+                "count": 10
+              }
+            ],
+            "total": 10,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                10
+              ]
+            ],
+            "runs": [
+              [
+                1,
                 10
               ]
             ],

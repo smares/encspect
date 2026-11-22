@@ -231,7 +231,7 @@ Decided by the lead, 2026-11-20: every recommendation below.
 6. **The container checksums over MPEG audio, AC-3 and E-AC-3, DTS, and TrueHD and MLP packets:** the frames flagged from the packets they lie in, the DTS decoder's span.
 
 - **Recommended:** this order, not all at once. Each group touches other decoders and reviewers, and each brings its own goldens. The contract comes with a user, so it is not reviewed in the abstract.
-- Later decoders (TAK, item 13; the WavPack pair, item 3; AAC and WMA in 0.5) apply the rule in their own pull requests.
+- Later decoders (TAK, item 12; the WavPack pair, item 3; AAC and WMA in 0.5) apply the rule in their own pull requests.
 
 ## As built, pull request 2
 

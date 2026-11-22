@@ -8926,6 +8926,52 @@
             "values": [
               0
             ]
+          },
+          {
+            "name": "Global Gain",
+            "unit": "steps",
+            "axis": "frameOffset",
+            "quantity": "Global Gain",
+            "x": [
+              641,
+              1058,
+              1475,
+              1892,
+              2309,
+              2726,
+              3143,
+              3560,
+              3977,
+              4394,
+              4811,
+              5228
+            ],
+            "values": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "name": "Global Gain Over Time",
+            "unit": "steps",
+            "axis": "seconds",
+            "quantity": "Global Gain",
+            "x": [
+              0
+            ],
+            "values": [
+              0
+            ]
           }
         ],
         "categorySeries": [
@@ -9094,6 +9140,38 @@
               2,
               0,
               3
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Scalefactor Scaling",
+            "valueLabel": "granule and channel",
+            "valuesPerUnit": 4,
+            "valueNames": [
+              "granule 1, channel 1",
+              "granule 1, channel 2",
+              "granule 2, channel 1",
+              "granule 2, channel 2"
+            ],
+            "categories": [
+              {
+                "name": "With scalefactor scaling",
+                "count": 0
+              },
+              {
+                "name": "Without scalefactor scaling",
+                "count": 48
+              }
+            ],
+            "total": 48,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                1,
+                48
+              ]
             ],
             "seconds": [
               0

@@ -306,6 +306,8 @@ internal static class Explain
     public const string UsesPadding = "Whether any frame carries a padding slot.";
     public const string UsesScfsi = "Whether any frame reuses granule 0's scalefactors through scfsi.";
     public const string UsesScaling = "Whether any granule sets scalefac_scale.";
+    public const string ScalingWith = "Granules and channels whose scalefac_scale is 1 (ISO/IEC 11172-3, 2.4.2.7).";
+    public const string ScalingWithout = "Granules and channels whose scalefac_scale is 0 (ISO/IEC 11172-3, 2.4.2.7).";
     public const string ScalingShare = "The share of granules, counted per channel, with scalefac_scale set (EncSpot's 'Scalefac').";
     public const string AverageMainDataBegin = "The mean main_data_begin, how far back frames start their main data (EncSpot's 'Av. Reservoir', which truncates it to whole bytes).";
     public const string MaximumMainDataBegin = "The largest main_data_begin of any frame (EncSpot's 'Max. Reservoir', mp3guessenc's 'Max reservoir').";
@@ -331,6 +333,8 @@ internal static class SeriesText
     public const string ReservoirFill = "The free bytes in the bit reservoir as each frame starts, which the frame may borrow for its main data.";
     public const string ReservoirFillOverTime = "The mean bit reservoir fill of the frames that start in each second of audio.";
     public const string CodedBandwidth = "The coded bandwidth of each frame in whole hertz: in Layers I and II the upper edge of the highest subband with a bit allocation other than 0 in either channel (ISO/IEC 11172-3 2.4.2.5, 2.4.2.6), in Layer III the upper edge of the highest line that the big-values and count1 regions of its granules code (2.4.2.7). It is the bound the frame's own data states, read without reconstructing audio; a band below it may still be quiet, and it is not the encoder's lowpass setting.";
+    public const string GlobalGain = "The highest global_gain of each complete Layer III audio frame over its granules and channels (ISO/IEC 11172-3, 2.4.2.7): the field gives the quantizer step size of a granule and channel; a frame without side information has none.";
+    public const string GlobalGainOverTime = "The highest global_gain of the frames that start in each second of audio.";
     public const string CodedBandwidthOverTime = "The highest coded bandwidth of the frames that start in each second of audio.";
     public const string DynamicCrosstalkUse = "How many of each frame's 12 subband groups use dynamic crosstalk, in the frames with the multichannel extension: none, up to half or more than half. A channel that crosstalk leaves out copies another channel's samples and sends only its scalefactors.";
     public const string PredictionUse = "How many of each frame's 8 subband groups that can use prediction do so, in the frames with the multichannel extension: none, up to half or more than half. A predicted channel sends only its difference from a prediction from the two base channels.";
@@ -351,6 +355,7 @@ internal static class SeriesText
     public const string JointStereoModesSeries = "The Layer III stereo coding of each joint stereo frame, which its mode_extension selects (ISO/IEC 11172-3 2.4.2.3); frames of the other channel modes have no value.";
     public const string IntensityStereoBoundsSeries = "The subband from which each joint stereo frame of Layer I or II codes intensity stereo, which its mode_extension selects (ISO/IEC 11172-3 2.4.2.3); frames of the other channel modes have no value.";
     public const string IntensityStereoBound = "The lowest frequency from which each joint stereo frame codes intensity stereo, in whole hertz: in Layers I and II the lower edge of the bound subband, the first that its mode_extension codes in intensity stereo (ISO/IEC 11172-3 2.4.2.3), in Layer III the lower edge of the first scalefactor band, in any granule, whose right channel carries intensity positions (2.4.3.4.9.3; ISO/IEC 13818-3 for MPEG-2 and 2.5). A frame without such a band has none.";
+    public const string ScalingSeries = "Whether each granule and channel of every complete Layer III audio frame has scalefac_scale set, counted per channel as the tally of Scalefactor Scaling counts them; a frame without side information has none.";
     public const string BlockUsageSeries = "The block type of each granule and channel of every complete Layer III audio frame, counted per channel as the Block Usage statistics count them (ISO/IEC 11172-3 2.4.2.7); the second channel of a mono frame has no value.";
     public const string BlockSizesSeries = "The granules of Block Usage grouped by the size of their transform, as EncSpot counts them: long with start and stop blocks, short, mixed, and the reserved block type apart.";
 }

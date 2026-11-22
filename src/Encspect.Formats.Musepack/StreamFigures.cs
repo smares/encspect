@@ -21,6 +21,9 @@ internal sealed class StreamFigures(int sampleRate)
     private readonly ChunkedList<(long Second, byte Bands)> _bandwidthSeconds = new();
     private readonly SortedDictionary<byte, int> _bandwidthCounts = [];
 
+    // The subband channels coded with noise substitution in each of those units (the sum over the frames of an SV8 packet), in the same order.
+    private readonly ChunkedList<ushort> _noise = new();
+
     public int Count => _points.Count;
 
     public long Units { get; private set; }
@@ -43,11 +46,12 @@ internal sealed class StreamFigures(int sampleRate)
     // inSeries false leaves the unit out of the per-unit series: a frame without data (a damaged
     // length of 0) would cost a point per 20 bits of input.
     // bands: the subbands from the lowest that the unit codes (the highest of its frames), or -1 where it has none (a unit that is cut or damaged).
-    public void Add(long offset, long bits, long samples, bool inSeries = true, int bands = -1)
+    public void Add(long offset, long bits, long samples, bool inSeries = true, int bands = -1, int noise = 0)
     {
         if (bands >= 0)
         {
             AddBandwidth(offset, (byte)bands, sampleRate > 0 ? CodedSamples / sampleRate : 0);
+            _noise.Add((ushort)Math.Min(noise, ushort.MaxValue));
         }
 
         double bitrate = samples > 0 && sampleRate > 0 ? bits * (double)sampleRate / samples / 1000 : 0;
@@ -105,6 +109,9 @@ internal sealed class StreamFigures(int sampleRate)
     // The node of the coded bandwidth figures, once AddTo has made it.
     public Node? BandwidthNode { get; private set; }
 
+    // The statistics node of the noise-substituted subband channels, which the series of the units is anchored to; set by the parser.
+    public Node? NoiseNode { get; set; }
+
     // Per unit, its bitrate at its offset; per second of audio that a unit starts in, the bits of the
     // units that start in it over their duration, rounded half to even.
     public List<Series> Series(Node? anchor, CancellationToken cancellation)
@@ -152,9 +159,35 @@ internal sealed class StreamFigures(int sampleRate)
             series.Add(new("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, values, anchor) { Description = Explain.BitrateOverTimeSeries, Concept = GraphConcept.BitDistribution, Quantity = "Bitrate" });
         }
 
-        if (_bandwidth.Count > 0 && BandwidthNode is not null)
+        double[]? unitX = null;
+        if (_bandwidth.Count > 0 && (BandwidthNode is not null || NoiseNode is not null))
         {
-            var x = new double[_bandwidth.Count];
+            unitX = new double[_bandwidth.Count];
+            for (int i = 0; i < unitX.Length; i++)
+            {
+                if (i % 4096 == 0)
+                {
+                    cancellation.ThrowIfCancellationRequested();
+                }
+
+                unitX[i] = _bandwidth[i].Offset;
+            }
+        }
+
+        if (unitX is not null && NoiseNode is not null)
+        {
+            var noise = new double[_noise.Count];
+            for (int i = 0; i < noise.Length; i++)
+            {
+                noise[i] = _noise[i];
+            }
+
+            series.Add(new Series("Noise-Substituted Channels", "channels", SeriesAxis.FrameOffset, unitX, noise, NoiseNode) { Description = Explain.NoiseSeries, Quantity = "Noise-Substituted Channels" });
+        }
+
+        if (unitX is not null && BandwidthNode is not null)
+        {
+            var x = unitX;
             var hertz = new double[_bandwidth.Count];
             for (int i = 0; i < x.Length; i++)
             {
@@ -163,7 +196,6 @@ internal sealed class StreamFigures(int sampleRate)
                     cancellation.ThrowIfCancellationRequested();
                 }
 
-                x[i] = _bandwidth[i].Offset;
                 hertz[i] = Bandwidth(_bandwidth[i].Bands);
             }
 

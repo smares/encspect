@@ -171,7 +171,8 @@ public sealed class MusepackAndContainerMemoryTests(ITestOutputHelper output) : 
         (Report few, long fewerKept) = MeasureKept("few.m4a", Mp4Samples(fewer), warmUp);
         (Report many, long kept) = MeasureKept("many.m4a", Mp4Samples(samples), warmUp);
 
-        CheckCodingGrowth(few, many, fewer, samples, categoryBytes: 5, numericBytes: 8);
+        CheckCodingGrowth(few, many, fewer, samples, categoryBytes: 17, numericBytes: 8,
+            names: ["Block Usage", "Block Sizes", "Stereo Coding", "Window Shapes", "TNS", "Pulse Data", "Noise Substitution"]);
         double keptPerSample = (kept - fewerKept) / (double)(samples - fewer);
         Output.WriteLine($"{Hundredths(keptPerSample)} bytes kept per further sample");
         Assert.True(keptPerSample < 110, $"The report keeps {keptPerSample:F2} bytes per further sample.");

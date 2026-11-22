@@ -192,6 +192,7 @@ internal sealed partial class BlockReader
         if (_tally is not null)
         {
             _tally.Blocks++;
+            _recorder?.Block(_hasSbr, _hasPs);
             if (_setup.ExpectedSce >= 0 && (sce != _setup.ExpectedSce || cpe != _setup.ExpectedCpe || lfe != _setup.ExpectedLfe))
             {
                 _tally.Mismatched++;
@@ -227,6 +228,7 @@ internal sealed partial class BlockReader
         {
             _tally.Blocks++;
             _tally.DamagedBlocks++;
+            _recorder?.Block(false, false);
         }
     }
 
@@ -376,6 +378,8 @@ internal sealed partial class BlockReader
 
         bool intensity = false;
         bool midSide = false;
+        int midSideBands = 0;
+        int pairBands = 0;
         for (int g = 0; g < second.Groups; g++)
         {
             for (int sfb = 0; sfb < second.MaxSfb; sfb++)
@@ -385,6 +389,7 @@ internal sealed partial class BlockReader
                 bool flagged = common && mask != 0 && mask != 3 && _midSide[band];
                 tally.ChannelBands++;
                 tally.PairBands += common ? 1 : 0;
+                pairBands += common ? 1 : 0;
                 if (book is 14 or 15)
                 {
                     intensity = true;
@@ -401,10 +406,12 @@ internal sealed partial class BlockReader
                 {
                     midSide = true;
                     tally.MidSideBands++;
+                    midSideBands++;
                 }
             }
         }
 
+        _recorder?.PairBands(midSideBands, pairBands);
         tally.IntensityPairs += intensity ? 1 : 0;
         byte code = mask == 3 && common ? CodingCategories.CodeReserved
             : intensity ? (midSide ? CodingCategories.CodeMidSideAndIntensity : CodingCategories.CodeIntensity)
@@ -488,7 +495,6 @@ internal sealed partial class BlockReader
         CodingTally tally = _tally!;
         tally.ChannelStreams++;
         tally.WindowSequences[ics.WindowSequence]++;
-        _recorder?.Stream(ics.WindowSequence, ics.Offsets[ics.MaxSfb]);
         tally.WindowShapes[ics.WindowShape]++;
         if (tns)
         {
@@ -531,6 +537,8 @@ internal sealed partial class BlockReader
         }
 
         tally.NoiseStreams += noise ? 1 : 0;
+        _recorder?.Stream(ics.WindowSequence, ics.Offsets[ics.MaxSfb]);
+        _recorder?.Tools(ics.WindowShape, tns, pulse, noise);
         tally.Gain(_channel + channel, gain);
     }
 
