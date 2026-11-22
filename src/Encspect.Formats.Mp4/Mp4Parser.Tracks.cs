@@ -328,6 +328,12 @@ public sealed partial class Mp4Parser
     // sample rate, the channels and, for FLAC, the bits of a sample. A rate the entry's 16.16 field cannot hold (above 65,535 Hz) is not compared.
     private static void CompareEntry(State state, SampleEntry entry, string? codec, int streamsBefore, string label)
     {
+        if (codec == "aac")
+        {
+            CompareAacChannels(state, entry, streamsBefore, label);
+            return;
+        }
+
         if (codec is not ("flac" or "truehd"))
         {
             return;
@@ -358,6 +364,22 @@ public sealed partial class Mp4Parser
             {
                 state.Findings.AddNow(Severity.Warning, "mp4.bit-depth-differs",
                     $"The sample entry of {label} states samples of {Counts.Of(entry.SampleSize, "bit", "bits")}, but its {stream.Codec} stream has {bits}.", entry.Node);
+            }
+        }
+    }
+
+    // An AAC stream's channels come from its AudioSpecificConfig and, where the blocks carry parametric stereo, from that (implicit signaling): a sample entry that
+    // states fewer is the core's count, which HE-AAC v2 allows, so only an entry that states more than the stream decodes to is a difference. ISO/IEC 14496-12 12.2.3
+    // defines channelcount as the number of channels, and 2 is its default; the finding is information, not a fault.
+    private static void CompareAacChannels(State state, SampleEntry entry, int streamsBefore, string label)
+    {
+        foreach (StreamInfo stream in state.Context.Streams.Skip(streamsBefore).ToList())
+        {
+            if (stream.Channels > 0 && entry.Channels > stream.Channels)
+            {
+                state.Findings.AddNow(Severity.Info, "mp4.channels-differ",
+                    $"The sample entry of {label} states {Counts.Of(entry.Channels, "channel", "channels")}, but its {stream.Codec} stream has {stream.Channels}"
+                    + " (its AudioSpecificConfig and, for parametric stereo, its blocks decide what is decoded; the report gives the stream's count).", entry.Node);
             }
         }
     }

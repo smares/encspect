@@ -223,6 +223,7 @@ The rules by which the analyzer finds the ancillary data of each frame, counts i
 - **A frame's main data:**
   - It starts main_data_begin bytes before the position where that frame's own frame data begins.
   - Its length is the sum of part2_3_length over its granules and channels, in bits, rounded up to whole bytes.
+  - **A pointer that reaches bytes the reservoir does not hold or that another frame owns** is reported (`mpeg-audio.main-data-overlap`) even where the frame's own main data is empty (every granule of part2_3_length 0): the syntax gives main_data_begin as where the main data begin (ISO/IEC 11172-3 2.4.2.7; the standard's text was not available, so this is read from the syntax, and no rule was found that exempts a frame that reads none). The decision of plan item 17 on `external-nero-rom-mp3pro-vbr-low.mp3`: its last mono frame (0xD134) states a main_data_begin of 253 bytes with a reservoir of 14 and a granule of 0 bits, which no conforming encoder writes, so the finding stays and the frame and the one after it are withheld, where minimp3 and FFmpeg decode them as silence (`ONLY_IN_MINIMP3` of `crosscheck_mpeg_pcm.py` pins the span). A reader that treats such a frame as silent is tolerant, not more correct; the finding's text says that the pointer may be wrong as well as that frames may be missing.
 - **First frame:** the stream's first frame that has side information, not counting a VBR header frame.
 
 ### R1. Segments

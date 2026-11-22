@@ -113635,6 +113635,24 @@
       },
       {
         "severity": "Info",
+        "code": "mp4.channels-differ",
+        "message": "The sample entry of track 1 states 2 channels, but its AAC LC stream has 1 (its AudioSpecificConfig and, for parametric stereo, its blocks decide what is decoded; the report gives the stream's count).",
+        "offset": 53240,
+        "length": 89,
+        "path": [
+          0,
+          3,
+          4,
+          3,
+          4,
+          4,
+          2,
+          5
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Info",
         "code": "aac.config-trailing-bits",
         "message": "The AudioSpecificConfig holds 16 bits after its last field.",
         "offset": 53319,

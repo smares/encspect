@@ -399,7 +399,12 @@
   "MP4/moov/trak/Gapless/Samples (iTunSMPB)": "22050 samples",
   "MP4/moov/trak/Gapless/Encoder Padding (iTunSMPB)": "406 samples"
  },
- "findings": [],
+ "findings": [
+  [
+   "mp4.channels-differ",
+   "states 2 channels, but its ER AAC LD stream has 1"
+  ]
+ ],
  "crosscheck": {
   "ffprobe": true,
   "mp4box": true,

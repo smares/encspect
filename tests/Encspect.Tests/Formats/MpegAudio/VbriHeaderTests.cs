@@ -78,6 +78,14 @@ public class VbriHeaderTests
     }
 
     [Fact]
+    public void Mpeg2MonoAcceptsSetBytesAfterItsNineBytesOfSideInformation()
+    {
+        Assert.NotNull(Read(Mpeg2, Mono, (13, 1), (30, 7)));
+        Assert.Null(Read(Mpeg2, Mono, (4, 1)));
+        Assert.Null(Read(Mpeg2, Mono, (12, 1)));
+    }
+
+    [Fact]
     public void ACrcDoesNotCountAsSideInformationAndShortensTheSpanInMpeg1Stereo()
     {
         Assert.NotNull(Read(Mpeg1WithCrc, Stereo, (4, 0xAB), (5, 0xCD)));

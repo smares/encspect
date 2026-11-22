@@ -321,7 +321,12 @@
   "MP4/moov/trak/Gapless/Encoder Padding (iTunSMPB)": "1438 samples",
   "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig/Sync Extension": "SBR present"
  },
- "findings": [],
+ "findings": [
+  [
+   "mp4.channels-differ",
+   "states 2 channels, but its HE-AAC stream has 1"
+  ]
+ ],
  "crosscheck": {
   "ffprobe": true,
   "mp4box": true,

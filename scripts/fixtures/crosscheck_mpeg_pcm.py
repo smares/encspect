@@ -168,7 +168,7 @@ def minimp3_reference(binary, path, work):
 
 
 # The positions of a file that the comparison with FFmpeg leaves out because FFmpeg differs there for a reason listed in EXPLAINED: [first, end), end exclusive. A difference
-# outside them fails, so a change elsewhere in these files is not hidden by the listing.
+# outside them fails, so a change elsewhere in these files is not hidden by the listing, and an entry whose file is within the bound without it fails as stale.
 FFMPEG_RANGES = {
     "external-nero-rom-mp3pro-cbr64.mp3": [[188352, 205056]],
     "external-nero-rom-mp3pro-vbr-low.mp3": [[134208, 135360], [188352, 205056]],
@@ -178,8 +178,8 @@ FFMPEG_RANGES = {
 # frame) and the output it withholds after a gap or an unavailable frame. Pinned, so that a change in what is withheld fails here, B2's return (nothing withheld after an
 # unavailable frame) included; each span is also held to the rules: whole frames, then at most the withheld span (1,056 samples in Layer III, 480 in Layers I and II).
 ONLY_IN_MINIMP3 = {
-    "damaged-bitrate.mp3": [[3456, 4608]],
     "external-nero-rom-mp3pro-vbr-low.mp3": [[221184, 222336]],
+    "damaged-bitrate.mp3": [[3456, 4608]],
     "external-blade080-stereo.mp3": [[69120, 73632], [87552, 88704]],
     "external-blade082-stereo.mp3": [[87552, 88704]],
     "external-shine-joint.mp3": [[87552, 88704]],
@@ -367,6 +367,8 @@ def main(argv=None):
                 notes.append("ffmpeg decodes nothing")
             else:
                 outcome, found = compare(manifest, second, streams[0]["channels"], "ffmpeg")
+                if not found and path.name in FFMPEG_RANGES:
+                    problems.append("the comparison with FFmpeg is within the bound without the positions of FFMPEG_RANGES: remove the entry")
                 if found and path.name in FFMPEG_RANGES:
                     _, again = compare(manifest, second, streams[0]["channels"], "ffmpeg", [a for first, end in FFMPEG_RANGES[path.name] for a in ("--exclude", f"{first}:{end}")])
                     # Listed (and so removed below) only if the bound holds outside the ranges; the message of a failure there has no "ffmpeg:" prefix to be listed by.
