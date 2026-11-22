@@ -9,6 +9,21 @@ Tag parsers are separate from the format parsers. The host finds the tags of a f
 | Lyrics3 v1 and v2 | [lyrics3.md](lyrics3.md) |
 | Vorbis comments | [vorbis-comments.md](vorbis-comments.md) |
 
+## Containers' own metadata
+
+Containers that define their own metadata are read by their format parsers, and shown in the tree as the container's tags. A tag of a type above that a container holds goes to the tag parser.
+
+- **ASF and WMA:** Content Description, Extended Content Description (the `WM/` attributes), Metadata and Metadata Library, with `WM/Picture` decoded and an `ID3` attribute handed to the ID3v2 parser ([asf-wma.md](../formats/asf-wma.md#tags-and-tag-detection)).
+- **MP4 and M4A:**
+  - iTunes metadata (`ilst`) with every data type and QuickTime's international text atoms in `udta`;
+  - an `ID32` box's ID3v2 tag;
+  - Nero's chapters (`chpl`) and Nero's `tags` box ([mp4.md](../formats/mp4.md), with [Nero's tags box](../formats/mp4.md#neros-tags-box)).
+- **Matroska and WebM:** Tags, Chapters and Attachments, shown and not interpreted ([matroska.md](../formats/matroska.md#what-is-read)).
+- **WAV:** the `LIST` chunk's `INFO` texts; an `id3 ` or `ID3 ` chunk goes to the ID3v2 parser ([wav.md](../formats/wav.md#what-is-read)).
+- **AIFF:** the `NAME`, `AUTH`, `(c) ` and `ANNO` text chunks; an `ID3 ` or `id3 ` chunk goes to the ID3v2 parser ([aiff.md](../formats/aiff.md#what-is-read)).
+- **FLAC, Ogg Vorbis, Opus and Speex:** their comment blocks and headers go to the Vorbis comment parser.
+- **Musepack SV8:** chapters with their APEv2 tags ([musepack.md](../formats/musepack.md#what-is-read)).
+
 ## How tags are found
 
 Tags are found by position and structure, never by a signature alone, because short signatures collide with each other and with audio data. The rules and the fixtures that prove them are below; the decision behind them is in [architecture.md, "Tag detection and false positives"](../architecture.md#tag-detection-and-false-positives).
