@@ -362,6 +362,11 @@ The more formats of [planned.md](formats/planned.md#after-05-more-formats), as l
   - **Generated:** `docs/reference-tool-differences.md`, written by a script from those entries and checked in CI to match them, grouped by tool and version.
   - **A kind per entry:** the tool breaks a specification (FFmpeg 6.1.1 applying a Matroska block's DiscardPadding to every laced frame, RFC 9559), the tool reads otherwise within what the specification allows (MediaInfo taking the LAME tag's ABR target as the bitrate), or open (the cause not established).
   - **What it is for:** the starting point for reporting the violations upstream, which stays the lead's decision per report.
+- **The GUI closer to each desktop platform** (the lead, 2026-11-22; its place is set when 0.5 is done, as the reference tools' page's is):
+  - **Places** at the top of the directory tree on every platform: Desktop, Documents, Music, Downloads, the drives and mounted volumes, from each system's known-folder and volume APIs, with the system's icons.
+  - **Windows' own navigation tree:** the shell's `INameSpaceTreeControl` (This PC, Network, Libraries, OneDrive, the Recycle Bin), hosted in the left pane through Avalonia's `NativeControlHost`, with Encspect's own tree on the other platforms. An item without a file system path is browsed, not analyzed; the control's theme follows the system's.
+  - **File-type icons in the file list,** from the system: the Windows shell's, macOS's workspace icons and the freedesktop icon theme on Linux.
+  - **The Windows 11 look:** the Mica or acrylic window backdrop (Avalonia's transparency levels) and controls styled like WinUI's, and macOS's vibrancy where the platform offers it. Whether a managed theme library may be used for the controls is the lead's decision when the item starts.
 
 ## Not planned
 
