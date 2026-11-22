@@ -354,6 +354,56 @@
               ]
             },
             {
+              "name": "Compression Level",
+              "value": "5",
+              "offset": 0,
+              "length": 48755,
+              "children": [
+                {
+                  "name": "Confidence",
+                  "value": "Medium",
+                  "offset": 0,
+                  "length": 48755
+                },
+                {
+                  "name": "Evidence",
+                  "value": "The block size is 4,096 samples in every frame but the last; levels 3 to 8 use it.",
+                  "offset": 0,
+                  "length": 48755
+                },
+                {
+                  "name": "Evidence",
+                  "value": "The highest linear predictor order is 8; 6 of 10 subframes are linear predictors.",
+                  "offset": 0,
+                  "length": 48755
+                },
+                {
+                  "name": "Evidence",
+                  "value": "The highest partition order is 5.",
+                  "offset": 0,
+                  "length": 48755
+                },
+                {
+                  "name": "Evidence",
+                  "value": "3 of 5 frames code the channels as left/side, side/right or mid/side, which levels 0 and 3 never do.",
+                  "offset": 0,
+                  "length": 48755
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Level 5 sets a highest linear predictor order of 8, a highest partition order of 5 and a block size of 4,096 samples.",
+                  "offset": 0,
+                  "length": 48755
+                },
+                {
+                  "name": "Evidence",
+                  "value": "The highest linear predictor order of the frames equals what the named levels set, and so does the highest partition order, which at least a fifth of the subframes use.",
+                  "offset": 0,
+                  "length": 48755
+                }
+              ]
+            },
+            {
               "name": "Statistics",
               "kind": "Statistics",
               "offset": 0,
@@ -572,6 +622,12 @@
                   "name": "Escaped Partitions",
                   "value": 0,
                   "unit": "partitions",
+                  "offset": 0,
+                  "length": 48755
+                },
+                {
+                  "name": "Compression Level",
+                  "value": "5",
                   "offset": 0,
                   "length": 48755
                 },
@@ -4352,7 +4408,7 @@
         "length": 3124,
         "path": [
           0,
-          7
+          8
         ],
         "count": 1
       }
