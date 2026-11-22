@@ -1443,9 +1443,12 @@ def check(path, manifest, tools):
             if settings.get("bitrate") and int(stream["bit_rate"]) != settings["bitrate"] * 1000:
                 problems.append(f"ffprobe bitrate {stream['bit_rate']} differs from {settings['bitrate']} kbps")
         # Plugger writes a CRC of 0000 with the protection bit: libmad fails every whole frame (the manifest lists mpeg-audio.crc-mismatch).
-        expected_failures = len(manifest["ffprobe_packets"]) - ("mpeg-audio.frame-truncated" in manifest["findings"]) if "mpeg-audio.crc-mismatch" in manifest["findings"] else 0
-        if settings.get("protected") and madplay_crc_failures(path) != expected_failures:
-            problems.append(f"madplay reports {madplay_crc_failures(path)} CRC failures in an encoder-protected stream, expected {expected_failures}")
+        if settings.get("protected"):
+            findings = manifest.get("findings", [])
+            expected_failures = len(manifest["ffprobe_packets"]) - ("mpeg-audio.frame-truncated" in findings) if "mpeg-audio.crc-mismatch" in findings else 0
+            failures = madplay_crc_failures(path)
+            if failures != expected_failures:
+                problems.append(f"madplay reports {failures} CRC failures in an encoder-protected stream, expected {expected_failures}")
 
     return problems
 
