@@ -119,7 +119,11 @@ public class CodingClassTests
     {
         Report report = ReportOf(node => new StreamInfo
         {
-            Nodes = [node], Codec = "FLAC", CodingClass = CodingClass.Lossless, Processor = "lossyWAV 1.4.2", ProcessorConfidence = Confidence.High,
+            Nodes = [node],
+            Codec = "FLAC",
+            CodingClass = CodingClass.Lossless,
+            Processor = "lossyWAV 1.4.2",
+            ProcessorConfidence = Confidence.High,
             Verification = new StreamVerification
             {
                 Decoding = DecodeStatus.Decoded,
