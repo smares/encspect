@@ -326,6 +326,9 @@ The scope is confirmed when 0.4 is done. The decoders follow steps 9 to 15 of [l
 5. **USAC** (xHE-AAC).
 6. **WMA Voice** (the lead, 2026-11-08): after its clean-room supplement. The lead wants it covered, as Speex is (decision 12 of [lossy-decoders.md](design/lossy-decoders.md#decisions)).
    - **The patent decision** comes before HE-AAC, USAC and WMA Professional.
+7. **PCM and MPEG Layer I and II in ASF** (the lead, 2026-11-22, from the review of the "Show Only Audio" switch): ASF audio streams with these format tags are now only `asf.codec-not-analyzed`, so the test files hold 46 ASF files whose audio reaches no parser and no stream ([asf-wma.md](formats/asf-wma.md#asf-what-is-reported)).
+   - **The routes:** PCM to the PCM description and feed the WAV and AIFF parsers share (`PcmCoding`, `PcmFeed`), and `0x0050` to the MPEG audio parser, as `0x0055` already goes there.
+   - **With the WMA work,** since both read the same stream properties.
 
 ### After 0.5
 
