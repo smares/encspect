@@ -10,7 +10,7 @@ Box by box:
 - the movie, track and media headers;
 - sample descriptions, with their esds box and QuickTime's sound descriptions;
 - the sample tables, edit lists, roll groups and movie fragments;
-- iTunes metadata with every data type, iTunSMPB, Encoding Params, an ID32 box's ID3v2 tag and Nero's chapters;
+- iTunes metadata with every data type, iTunSMPB, Encoding Params, an ID32 box's ID3v2 tag, Nero's chapters and Nero's `tags` box;
 - QuickTime's user data text atoms (the © atoms of `udta`), in a user data tag: see "QuickTime user data text";
 - QuickTime's chan atom (Core Audio's layout tags, channel bitmap and channel labels) and the ISO chnl box;
 - protection: the sinf box of a protected sample entry (frma, schm, schi with tenc), pssh, senc, saiz and saio boxes, the `seig` sample group, and the entries and boxes of iTunes protection and Audible (see "Protected tracks").
@@ -27,7 +27,7 @@ Box by box:
   - QuickTime's sound sample descriptions of version 1 and 2, with their wave box, are read where the file is QuickTime's (without ftyp, or with the brand `qt  `) or the stsd box is of version 0, as ffmpeg reads them.
   - ISO/IEC 14496-12's own version 1 keeps version 0's layout.
 - **Fragments:** mvex, mehd, trex, moof, mfhd, traf, tfhd, tfdt, trun, sidx, mfra, tfra and mfro.
-- **Metadata boxes:** udta with QuickTime's international text atoms, meta (a full box, or QuickTime's plain container), keys, ilst, ID32 and Nero's chpl.
+- **Metadata boxes:** udta with QuickTime's international text atoms, meta (a full box, or QuickTime's plain container), keys, ilst, ID32, Nero's chpl and Nero's tags box.
 
 **Metadata:**
 
@@ -98,7 +98,21 @@ The © atoms of `udta` in `moov` and `trak` are international text (QuickTime Fi
 - **Limits:** at most 1,000 items of an atom, and 10,000 of the whole file, are shown as nodes; the rest are counted in a "More Text Items" node. Atoms in boxes past the node budget build no item nodes at all; their items are only walked for the findings and the first text.
 - **Writer:** the first text of `©swr` and `©too` is a claim about the writer (see "Encoder detection"); an item list's `©too` adds one for each text data atom.
 - **MediaInfo** reads a movie's `©nam` as a version, flags and one UTF-8 text to the end of the atom, so it matches the analyzer only for an atom of one item; its other fields in `udta` are compared (title, artist, album, encoding application).
-- **Not covered:** the atoms of `udta` that are not international text (`name`, `tnam`, `tagc`, `LOOP`, `WLOC` and the like) are shown as boxes and not read. Nero's `tags` box, neroAacTag's own tag format beside the iTunes metadata, is shown as a box and not read; reading it is planned ([plan.md](../plan.md), 0.4).
+- **Not covered:** the atoms of `udta` that are not international text (`name`, `tnam`, `tagc`, `LOOP`, `WLOC` and the like) are shown as boxes and not read. Nero's `tags` box is read (next section) only where it holds Nero's boxes.
+
+## Nero's tags box
+
+neroAacTag writes its tags twice: as iTunes metadata and in a `tags` box of its own in `moov/udta`. No specification is known; the layout is read from the bytes of four files neroAacEnc and neroAacTag 1.5.4.0 wrote (`tests/fixtures/aac/sample-kit/external-neroaactag-*`), with neroAacTag's own listings (`-list-meta`, `-list-covers`, `-list-chapters`) as the cross-check. Nothing of Nero's code is read; leave-outs are what the files do not show.
+
+- **The tag:** a `tags` box whose first box is `meta`, `cvrx` or `tseg` is the tag "Nero Tags", of kind Tag, so the summary, `--hide tags` and the CSV Tags column see it; any other `tags` box stays an unread box.
+- **Fields** (`meta` in the box, and in a segment): a 32-bit count, then for each field a flags byte, a 16-bit key length and the key, a 16-bit value type (1: text) and a 32-bit value length with the value, UTF-8 in the files seen. A field is named as the iTunes item of the same meaning (Title, Artist, Album, Comment, Encoding Tool for `tool`) or by its key (`cdec`, `iTunSMPB`, `track`, a name given with `-meta-user`). The flags byte is 0x80 in most fields and 0 in `iTunSMPB` and `tool`; what it selects is not known.
+- **Covers** (`cvrx`): two 32-bit values (0 and 1 in the cover seen, meaning unknown), the kind of cover as text ("front cover"), a 16-bit type (0) and a 32-bit length, then the image. The box states no image type; the analyzer names JPEG, PNG and BMP by their first bytes.
+- **Segments** (`tseg`): a `tshd` header with the segment's number from 0 and, in the file with chapters, a field list with the chapter's `title` and `track`. A file without chapters has one segment and no fields in it.
+- **Text:** the unicode file holds UTF-8 Cyrillic and Japanese letters in the box and in the iTunes items, though neroAacTag's listing prints question marks for them and shows the German letters in the console's code page.
+- **Chapter starts:** in the four files the `chpl` start of each chapter is neroAacTag's listed start plus the encoder delay of iTunSMPB (2,624 samples: 59.5 ms), which `NeroTagsTests` holds.
+- **Findings:** a field of the box whose text differs from the iTunes item of the same meaning (`mp4.nero-field-differs`; `cdec`, `iTunSMPB`, a user field and `tool` against the freeform or `©too` item of the same name), a segment's title that differs from the `chpl` chapter of the same number (`mp4.nero-chapter-differs`), a cover whose bytes differ from the iTunes `covr` image (`mp4.nero-cover-differs`); a value that states more bytes than its list holds (`mp4.nero-field-size-invalid`), and a field count that is not the number of fields (`mp4.nero-field-count-invalid`).
+- **Not covered:** what the unknown values and the flags byte mean; other value types than text; fields no file shows (neroAacTag has more options than the four files use); the second and later covers' layout (one cover is seen).
+- **Cross-check:** `NeroTagsTests` holds the parsed fields, covers and chapters to the listings in the provenance records, and the finding cases to patched copies of the files. ffprobe, MediaInfo and MP4Box show the same fields and chapters from the iTunes metadata and `chpl` (their first chapter at 0.059 s, as `chpl` states it); no field of the four files is only in the tags box, so no tool is a second reader of it.
 
 ## Protected tracks
 

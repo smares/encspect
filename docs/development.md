@@ -1789,7 +1789,7 @@ Apple's encoders run on macOS only, so a workflow writes the fixtures on GitHub'
   - qaac 3.07 with Core Audio 7.10.9.0 (6) and iTunes 12.13.12.3's AAC (4) and MP3 (3) encoders;
   - Winamp's Fraunhofer AAC encoder 1.0.8 (5), aacPlus encoder 1.3 (4), and Vorbis encoders of 5.666 and 5.9.2 (2);
   - Windows 10's Media Foundation encoders: AAC (ADTS and MP4), the MP3 ACM wrapper over Fraunhofer's `l3codeca`, MPEG-2 audio Layer II, AC-3, and one FLAC and one ALAC file.
-- **Left out:** the rest of the kit. Bitrate and quality ladders of every encoder; the rest of Media Foundation's lossless files (FLAC and ALAC at 16 and 24 bits, mono, stereo and 5.1: 2.7 MB of FLAC and 3.3 MB of ALAC), its AC-3 above 64 kbit/s (up to 560 KB each), its Layer I file (480 KB), its AC-3 in MP4 and its 5.1 AAC; the 5.1 and 24-bit files of the neroAacEnc builds; the tagged files of neroAacTag, which belong to the plan's item on Nero's `tags` box; and the files of encoders outside the list (Audiocatalyst, Windows Media Player, Windows XP's ACM codecs, the macOS encoders that `import_macos_aac_fixtures.py` covers).
+- **Left out:** the rest of the kit. Bitrate and quality ladders of every encoder; the rest of Media Foundation's lossless files (FLAC and ALAC at 16 and 24 bits, mono, stereo and 5.1: 2.7 MB of FLAC and 3.3 MB of ALAC), its AC-3 above 64 kbit/s (up to 560 KB each), its Layer I file (480 KB), its AC-3 in MP4 and its 5.1 AAC; the 5.1 and 24-bit files of the neroAacEnc builds; the files of neroAacTag are the next item's (below); and the files of encoders outside the list (Audiocatalyst, Windows Media Player, Windows XP's ACM codecs, the macOS encoders that `import_macos_aac_fixtures.py` covers).
 - **Next to each file:**
   - `<name>.provenance.json`: the encoder, version, build and package (name and SHA-256), the settings, the source WAV and its SHA-256, why the file was chosen, and the file's size and SHA-256; Nero's license limits how the software is used, not the files it writes, and the record says so;
   - `<name>.expected.json`: the manifest, from ffprobe alone (codec, profile, rate, channels, duration and packets), never from the analyzer;
@@ -1801,6 +1801,13 @@ Apple's encoders run on macOS only, so a workflow writes the fixtures on GitHub'
 - **Open, to look at in the parsers (plan item 17):**
   - `external-nero-rom-mp3pro-vbr-low.mp3`: its first frame (0x400, an MPEG-2 stereo header of 144 kbit/s) holds a VBRI header at byte 36 (version 1, 387 frames, 52,610 bytes) after zero side information (17 bytes) and three non-zero bytes at 21 to 23. `VbrHeader.TryRead` demanded zeros up to byte 36, so the analyzer read the frame as audio and named no encoder; fixed in #382 (zero side information of the frame's own length), and the file is named "Fraunhofer" (high) from the header. Open (plan item 17): its last two frames (0xD134, a mono frame with a `main_data_begin` of 253 bytes and no coded bits, and the frame after it) raise `mpeg-audio.main-data-overlap` (0xD134) and are withheld; minimp3 and FFmpeg decode both as silence;
   - the Fraunhofer M4A of 8 kHz mono (`external-winamp-fhgaac-8k-mono-cbr16.m4a`) has two channels in its sample entry and one in its AudioSpecificConfig, which no finding says.
+
+### neroAacTag fixtures
+
+- **What they are:** four files (`tests/fixtures/aac/sample-kit/external-neroaactag-{cover,unicode,userfield,chapters}.m4a`, 0.17 to 0.49 MB) that neroAacEnc 1.5.4.0 encoded from the sample kit's `music-44k-stereo.wav` and neroAacTag 1.5.4.0 tagged on Windows: a cover in both formats, text in German, Cyrillic and Japanese letters, a user field and a comment, and three chapters with titles of their own. They show Nero's `tags` box ([mp4.md](formats/mp4.md#neros-tags-box)).
+- **Imported by** `import_neroaactag_fixtures.py <folder>`, which writes, as `import_sample_kit_fixtures.py` does, a provenance record (tool, version, the commands, the file's size and SHA-256), an ffprobe manifest and, from the tests, the golden report. The commands are as the contributor's log gave them; the log stays private.
+- **The listings** of neroAacTag (`-list-meta`, `-list-covers`, `-list-chapters`) are in each provenance record under `listings`, as the tool printed them (on the Windows console it printed question marks for the Cyrillic and Japanese text). `NeroTagsTests` holds the parsed fields, covers and chapters to them.
+- **Checked** as the other sample-kit files are (`SampleKitFixtureTests`, `crosscheck_sample_kit_fixtures.py`).
 
 ### Protection fixtures
 
