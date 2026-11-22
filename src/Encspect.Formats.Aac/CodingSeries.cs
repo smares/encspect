@@ -117,8 +117,12 @@ internal sealed class CodingRecorder(StreamSetup setup)
     private readonly CategorySeriesBuilder _tnsSeries = new("TNS", CodingCategories.WithTns, "channel stream");
     private readonly CategorySeriesBuilder _pulseSeries = new("Pulse Data", CodingCategories.WithPulses, "channel stream");
     private readonly CategorySeriesBuilder _noiseSeries = new("Noise Substitution", CodingCategories.WithNoise, "channel stream");
-    private readonly CategorySeriesBuilder _sbrSeries = new("SBR", CodingCategories.WithSbr, "raw data block");
-    private readonly CategorySeriesBuilder _psSeries = new("Parametric Stereo", CodingCategories.WithParametricStereo, "raw data block");
+
+    // The SBR and parametric stereo series exist from the first raw data block with SBR data, so that a stream without it keeps nothing for them but
+    // the number of raw data blocks of each unit, which the units before that block get as values without SBR.
+    private CategorySeriesBuilder? _sbrSeries;
+    private CategorySeriesBuilder? _psSeries;
+    private ChunkedList<byte>? _blockCounts = new();
 
     // The mid/side bands and the bands of common window pairs of the unit being read, and per unit the share of them in tenths of a percent, -1 for a unit without such bands.
     private int _unitMidSide;
@@ -195,6 +199,33 @@ internal sealed class CodingRecorder(StreamSetup setup)
         return (int)Math.Min(int.MaxValue, CodingStatistics.RoundHalfEven((long)line * setup.SampleRate, 2 * lines));
     }
 
+    private void AddSbr()
+    {
+        if (_sbrSeries is null && _sbr.Contains(0))
+        {
+            _sbrSeries = new("SBR", CodingCategories.WithSbr, "raw data block");
+            _psSeries = new("Parametric Stereo", CodingCategories.WithParametricStereo, "raw data block");
+            byte[] without = new byte[CategorySeries.MaxValuesPerUnit];
+            Array.Fill(without, (byte)1);
+            for (int unit = 0; unit < _blockCounts!.Count; unit++)
+            {
+                _sbrSeries.Add(without.AsSpan(0, _blockCounts[unit]));
+                _psSeries.Add(without.AsSpan(0, _blockCounts[unit]));
+            }
+
+            _blockCounts = null;
+        }
+
+        if (_sbrSeries is null)
+        {
+            _blockCounts!.Add((byte)Math.Min(_sbr.Count, CategorySeries.MaxValuesPerUnit));
+            return;
+        }
+
+        _sbrSeries.Add(CollectionsMarshal.AsSpan(_sbr));
+        _psSeries!.Add(CollectionsMarshal.AsSpan(_ps));
+    }
+
     public void EndUnit()
     {
         _windowSeries.Add(CollectionsMarshal.AsSpan(_windows));
@@ -202,8 +233,7 @@ internal sealed class CodingRecorder(StreamSetup setup)
         _tnsSeries.Add(CollectionsMarshal.AsSpan(_tns));
         _pulseSeries.Add(CollectionsMarshal.AsSpan(_pulses));
         _noiseSeries.Add(CollectionsMarshal.AsSpan(_noise));
-        _sbrSeries.Add(CollectionsMarshal.AsSpan(_sbr));
-        _psSeries.Add(CollectionsMarshal.AsSpan(_ps));
+        AddSbr();
         _midSideShare.Add(_unitPairBands == 0 ? (short)-1 : (short)Math.Round(_unitMidSide * 1000.0 / _unitPairBands, MidpointRounding.ToEven));
         _shareUnits += _unitPairBands == 0 ? 0 : 1;
         if (_pairs.Count > 0 && _pairSeries is null)
@@ -291,8 +321,11 @@ internal sealed class CodingRecorder(StreamSetup setup)
         Add(_tnsSeries, nodes.Tns, Explain.TnsSeries, Topics.Tns);
         Add(_pulseSeries, nodes.Pulses, Explain.PulseSeries, Topics.PulseData);
         Add(_noiseSeries, nodes.Noise, Explain.NoiseSeries, Topics.Pns);
-        Add(_sbrSeries, nodes.Sbr, Explain.SbrSeries, Topics.Sbr);
-        Add(_psSeries, nodes.ParametricStereo, Explain.PsSeries, Topics.ParametricStereo);
+        if (_sbrSeries is not null)
+        {
+            Add(_sbrSeries, nodes.Sbr, Explain.SbrSeries, Topics.Sbr);
+            Add(_psSeries!, nodes.ParametricStereo, Explain.PsSeries, Topics.ParametricStereo);
+        }
         AddMidSideBands(offsets, nodes.MidSideBands, series, cancellation);
         AddBound(offsets, nodes.IntensityBound, series, cancellation);
         AddBandwidth(offsets, nodes.CodedBandwidth, time, series, cancellation);
