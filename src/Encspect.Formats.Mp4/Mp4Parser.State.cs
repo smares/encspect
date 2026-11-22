@@ -104,6 +104,23 @@ public sealed partial class Mp4Parser
 
         public GaplessInfo? Smpb { get; set; }
 
+        // What Nero's tags box holds, for the comparison with the iTunes metadata and the chapter list once the boxes are read: its text fields, its covers, the
+        // number of the segment being read and the field count; the iTunes items' text by key (the item's type, or a freeform item's name), their cover images,
+        // and the chapter titles of the chpl box.
+        public List<NeroField> NeroFields { get; } = [];
+
+        public List<(long Offset, long Length, Node Node)> NeroCovers { get; } = [];
+
+        public int? NeroSegment { get; set; }
+
+        public int NeroFieldCount { get; set; }
+
+        public Dictionary<string, (string Text, Node Node)> ItunesText { get; } = [];
+
+        public List<(long Offset, long Length)> ItunesCovers { get; } = [];
+
+        public List<string> ChapterTitles { get; } = [];
+
         public EncodingParams? EncodingParams { get; set; }
 
         // The sample entry whose boxes are being read, which its esds box describes.
@@ -334,6 +351,8 @@ public sealed partial class Mp4Parser
     // iTunSMPB: the encoder delay, padding and the samples between them, in the hexadecimal words
     // Apple's encoder writes.
     private sealed record GaplessInfo(long Delay, long Padding, long Samples, Node Node);
+
+    private sealed record NeroField(string Key, string Text, Node Node, int? Segment);
 
     // Apple's Encoding Params: the encoder's bitrate mode (acbf) and bitrate (brat).
     private sealed record EncodingParams(int? Mode, long? Bitrate, Node Node);

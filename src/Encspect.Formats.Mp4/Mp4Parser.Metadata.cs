@@ -130,6 +130,11 @@ public sealed partial class Mp4Parser
                     break;
                 case "data":
                     NodeValue? value = Data(s, node, child, fields, header.Type, name);
+                    if (value?.AsText() is { } text && (header.Type != "----" || name is not null))
+                    {
+                        s.ItunesText.TryAdd(header.Type == "----" ? name! : header.Type, (text, node));
+                    }
+
                     if (node.Value is null || node.Value == BoxNames.Describe(header.Type))
                     {
                         node.Value = value;
@@ -162,6 +167,11 @@ public sealed partial class Mp4Parser
         byte[] bytes = f.TakeBytes(f.Remaining);
         NodeValue value = Value((int)type, bytes, itemType, freeform);
         Node shown = node.Add(new Node("Value", at, bytes.Length, value) { Description = Explain.DataValue });
+        if (itemType == "covr")
+        {
+            state.ItunesCovers.Add((at, bytes.Length));
+        }
+
         node.Value = value;
         string? text = value.AsText();
         // Only text counts: the other data types render as hexadecimal or numbers, which name no software.
@@ -419,7 +429,7 @@ public sealed partial class Mp4Parser
 
     // Nero's chapter list: a full box, four more bytes in version 1, a chapter count, then each
     // chapter's start in 100-nanosecond units and its title (as ffmpeg reads it).
-    private static void NeroChapters(Node node, BoxFields f)
+    private static void NeroChapters(State state, Node node, BoxFields f)
     {
         int version = FullBox(node, f).Version;
         if (version != 0)
@@ -440,6 +450,10 @@ public sealed partial class Mp4Parser
             chapter.Add(new Node("Title Length", at + 8, 1, NodeValue.Integer(length, "bytes")) { Description = Explain.ChapterTitleLength });
             chapter.Add(new Node("Title", at + 9, f.Position - at - 9, title) { Description = Explain.ChapterTitle });
             node.Add(chapter);
+            if (state.ChapterTitles.Count < MaxNeroFieldsKept)
+            {
+                state.ChapterTitles.Add(title);
+            }
         }
     }
 }
