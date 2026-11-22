@@ -18,8 +18,10 @@ namespace Encspect.Formats.MpegAudio;
 // into the frame (ffmpeg 6.1 libavformat/mp3dec.c): version, delay, quality, byte and frame
 // counts, and a TOC of byte counts.
 //
-// The header counts only when every byte between the frame header, or its CRC, and the header is
-// zero, as mpg123 requires, so audio data that happens to hold the magic is not taken for it.
+// Xing and Info count only when every byte between the frame header, or its CRC, and the header is
+// zero, as mpg123 requires; VBRI when the side information of the frame's own length is zero (the
+// bytes after it, up to byte 36, are free in MPEG-2 and mono frames). So audio data that happens to
+// hold the magic is not taken for a header.
 internal sealed class VbrHeader
 {
     public const int LameTagSize = 36;
@@ -78,9 +80,6 @@ internal sealed class VbrHeader
 
     // The VBRI version, of which only 1 is known; ffmpeg ignores the header otherwise.
     public int? VbriVersion { get; private set; }
-
-    // The bytes between the header and a VBRI header are not all zero.
-    public bool HasSideInformation { get; private set; }
 
     // A VBRI TOC entry size other than the 1 to 4 bytes Fraunhofer's reader supports, with entries.
     public int? InvalidEntrySize { get; private set; }
@@ -144,11 +143,12 @@ internal sealed class VbrHeader
         }
 
         int dataStart = header.IsProtected ? 6 : 4;
-        if (Matches(frame, VbriOffset, "VBRI") && (IsZero(frame, dataStart, VbriOffset) || HasPlausibleVbriFields(frame)))
+        // The side information of the frame's own length must be zero; in MPEG-1 stereo that is 32 bytes, up to the header at 36 (less with a CRC), and in MPEG-2 or
+        // mono fewer, so main-data bytes before the header may be set (Nero's mp3PRO plug-in writes three there).
+        if (Matches(frame, VbriOffset, "VBRI") && IsZero(frame, dataStart, Math.Min(dataStart + Layer3SideInfo.Size(header), VbriOffset)))
         {
             var vbri = new VbrHeader(frame, VbriOffset, "VBRI");
             vbri.ReadVbri();
-            vbri.HasSideInformation = !IsZero(frame, dataStart, VbriOffset);
             return vbri;
         }
 
@@ -236,23 +236,6 @@ internal sealed class VbrHeader
 
     private static bool Matches(byte[] frame, int offset, string magic) =>
         offset + 4 <= frame.Length && Encoding.ASCII.GetString(frame, offset, 4) == magic;
-
-    // Nero's mp3PRO plug-in writes a VBRI header frame whose side information is not zero. Without the zero bytes, the fields decide: version 1, a TOC entry
-    // size of 1 to 4 bytes whose table fits the frame, and counts that are not zero.
-    private static bool HasPlausibleVbriFields(byte[] frame)
-    {
-        int position = VbriOffset + 4;
-        if (frame.Length < position + VbriFixedSize - 4)
-        {
-            return false;
-        }
-
-        uint Be32(int at) => ((uint)frame[at] << 24) | ((uint)frame[at + 1] << 16) | ((uint)frame[at + 2] << 8) | frame[at + 3];
-        int Be16(int at) => (frame[at] << 8) | frame[at + 1];
-        int entries = Be16(position + 14);
-        int entrySize = Be16(position + 18);
-        return Be16(position) == 1 && Be32(position + 6) != 0 && Be32(position + 10) != 0 && entrySize is >= 1 and <= 4 && VbriFixedSize + ((long)entries * entrySize) <= frame.Length;
-    }
 
     private static bool IsZero(byte[] frame, int from, int to)
     {
@@ -430,7 +413,7 @@ internal sealed class VbrHeader
         End = TocOffset + TocLength;
     }
 
-    // The frame's nodes after its header and CRC: the zero side information before the header,
+    // The frame's nodes after its header and CRC: the zero side information and any bytes after it before the header,
     // the header and the LAME tag, and what follows them up to the frame's end.
     public List<Node> ToNodes(long frameOffset, int dataStart, int? musicCrc)
     {
@@ -440,7 +423,7 @@ internal sealed class VbrHeader
             nodes.Add(new Node("Side Info", frameOffset + dataStart, Offset - dataStart)
             {
                 Kind = NodeKind.SideInfo,
-                Description = HasSideInformation ? Explain.HeaderFrameSideInfoNotZero : Explain.HeaderFrameSideInfo,
+                Description = Explain.HeaderFrameSideInfo,
                 Topic = Topics.XingHeader,
             });
         }

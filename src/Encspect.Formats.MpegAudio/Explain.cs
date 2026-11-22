@@ -76,8 +76,7 @@ internal static class Explain
     public const string ComputedCrc = "The CRC the analyzer computed over the same bits. Where it differs from the stored one, those bits changed after encoding.";
 
     public const string SideInfo = "Layer III side information: where the frame's main data starts and, for each granule and channel, how its spectrum is coded (ISO/IEC 11172-3 2.4.1.7, 2.4.2.7).";
-    public const string HeaderFrameSideInfo = "The zero side information of the VBR header frame: it declares no main data, so a decoder that does not know the header plays the frame as silence.";
-    public const string HeaderFrameSideInfoNotZero = "The bytes of side information before the VBRI header, which are not zero here (Nero's mp3PRO plug-in writes them): the frame holds no audio, and the header's fields say what the stream holds.";
+    public const string HeaderFrameSideInfo = "The side information of the VBR header frame, which is zero and declares no main data, so a decoder that does not know the header plays the frame as silence, and any bytes after it up to the header.";
     public const string MainDataBegin = "How many bytes back from this frame's header its main data starts, not counting the bytes of headers and side information in between, in earlier frames' unused space, the bit reservoir. 0 means the frame does not borrow (ISO/IEC 11172-3 2.4.2.7).";
     public const string ReservoirFill = "The free bytes in the bit reservoir when this frame starts: what earlier frames left unused and main_data_begin can reach. Computed, not stored, so it points at main_data_begin, which it bounds.";
     public const string PrivateBits = "Bits left to the encoder's own use; the standard gives them no meaning.";
