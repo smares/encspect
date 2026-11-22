@@ -85,6 +85,7 @@ public sealed partial class MpegAudioParser
             region.Nodes.BlockSizes = sizes;
 
             Node gain = node.Add(new Node("Global Gain", start, length) { Description = Explain.GainRange, Topic = Topics.GlobalGain });
+            region.Nodes.GlobalGain = gain;
             for (int ch = 0; ch < 2; ch++)
             {
                 if (tally.MaximumGain[ch] >= 0)

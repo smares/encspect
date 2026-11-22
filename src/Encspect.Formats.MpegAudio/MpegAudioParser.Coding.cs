@@ -132,6 +132,8 @@ public sealed partial class MpegAudioParser
 
         public Node? ScalefactorScaling { get; set; }
 
+        public Node? GlobalGain { get; set; }
+
         public Node? BlockSizes { get; set; }
 
         public Node? CodedBandwidth { get; set; }
@@ -191,6 +193,7 @@ public sealed partial class MpegAudioParser
         private readonly byte[] _blockCodes = [];
         private readonly int _channels;
         private readonly Numeric? _bandwidth;
+        private readonly Numeric? _gain;
         private readonly Numeric? _share;
         private readonly Numeric? _intensityBound;
         private readonly CategorySeriesBuilder? _crosstalk;
@@ -219,6 +222,7 @@ public sealed partial class MpegAudioParser
                 }
 
                 _bandwidth = new Numeric(count, offsets);
+                _gain = Has(r => r.Nodes.GlobalGain) ? new Numeric(count, offsets) : null;
             }
             else
             {
@@ -252,6 +256,8 @@ public sealed partial class MpegAudioParser
                 AddBlocks(frame, header);
             }
 
+            _gain?.Add(_unit, second, HighestGain(frame, header), 0);
+
             if (_bandwidth is not null || _share is not null || _intensityBound is not null)
             {
                 FrameFigures.Figure figure = FigureOf(_build, frame, header);
@@ -280,6 +286,27 @@ public sealed partial class MpegAudioParser
             }
 
             _unit++;
+        }
+
+        // The highest global_gain over the frame's granules and channels; none for a frame without side information.
+        private double? HighestGain(in Entry frame, MpegHeader header)
+        {
+            if (!frame.HasSideInfo)
+            {
+                return null;
+            }
+
+            ReadOnlySpan<byte> sideInfo = _build.Store.Span(frame.Data, frame.DataLength);
+            int highest = 0;
+            for (int gr = 0; gr < FrameFigures.Granules(header); gr++)
+            {
+                for (int ch = 0; ch < (header.IsMono ? 1 : 2); ch++)
+                {
+                    highest = Math.Max(highest, FrameFigures.GlobalGain(sideInfo, header, gr, ch));
+                }
+            }
+
+            return highest;
         }
 
         private void AddBlocks(in Entry frame, MpegHeader header)
@@ -344,6 +371,13 @@ public sealed partial class MpegAudioParser
                 series.Add(bandwidthSeries);
                 series.Add(_bandwidth.PerSecond("Coded Bandwidth Over Time", "Hz", SeriesText.CodedBandwidthOverTime, GraphConcept.CodedBandwidth, "Coded Bandwidth", secondStarts,
                     anchor, share: false));
+            }
+
+            if (_gain?.Count > 0)
+            {
+                Node? anchor = Anchor(r => r.Nodes.GlobalGain);
+                series.Add(_gain.PerFrame("Global Gain", "steps", SeriesText.GlobalGain, GraphConcept.None, "Global Gain", anchor, _gain.X));
+                series.Add(_gain.PerSecond("Global Gain Over Time", "steps", SeriesText.GlobalGainOverTime, GraphConcept.None, "Global Gain", secondStarts, anchor, share: false));
             }
 
             BuildTransmission(x, bitrate, time, series, categories);

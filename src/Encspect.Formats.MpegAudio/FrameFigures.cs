@@ -146,6 +146,10 @@ internal static class FrameFigures
         return (byte)Bits(sideInfo, windowSwitching + 1 + 22 + (header.IsMpeg1 ? 1 : 0), 1);
     }
 
+    // global_gain of one granule and channel (2.4.2.7): 8 bits after part2_3_length and big_values.
+    public static int GlobalGain(ReadOnlySpan<byte> sideInfo, MpegHeader header, int granule, int channel) =>
+        Bits(sideInfo, GranuleStart(header, granule, channel) + 12 + 9, 8);
+
     public static int Granules(MpegHeader header) => header.IsMpeg1 ? 2 : 1;
 
     // The side information has a fixed layout: main_data_begin, private bits and, in MPEG-1, scfsi come first, then every
