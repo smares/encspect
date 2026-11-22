@@ -269,4 +269,54 @@ public class NeroTagsTests
         Assert.Single(report.Findings, f => f.Code == "mp4.nero-field-size-invalid");
         Assert.DoesNotContain(report.Findings, f => f.Code == "mp4.nero-cover-differs");
     }
+
+    private static byte[] FieldList(params (string Key, string Value)[] fields) =>
+        Mp4Builder.Box("meta", [Mp4Builder.U32(fields.Length), .. fields.Select(f =>
+            Mp4Builder.Join([0x80, 0, (byte)f.Key.Length], Encoding.UTF8.GetBytes(f.Key), [0, 1], Mp4Builder.U32(Encoding.UTF8.GetByteCount(f.Value)), Encoding.UTF8.GetBytes(f.Value)))]);
+
+    private static byte[] Chapters(params byte[][] titles) =>
+        Mp4Builder.Box("chpl", [1, 0, 0, 0], Mp4Builder.U32(0), [(byte)titles.Length], Mp4Builder.Join([.. titles.Select(t => Mp4Builder.Join(new byte[8], [(byte)t.Length], t))]));
+
+    private static Report AnalyzeUserData(params byte[][] boxes) =>
+        Analyze(Mp4Builder.Join(Mp4Builder.Ftyp(), Mp4Builder.Box("moov", Mp4Builder.Mvhd(), Mp4Builder.Box("udta", boxes))));
+
+    private static byte[] Header(int index) => Mp4Builder.Box("tshd", Mp4Builder.U32(index));
+
+    [Fact]
+    public void ASegmentInsideASegmentKeepsItsOwnNumber()
+    {
+        byte[] inner = Mp4Builder.Box("tseg", Header(0), FieldList(("title", "Chapter 1")));
+        byte[] tags = Mp4Builder.Box("tags", Mp4Builder.Box("tseg", Header(1), inner));
+
+        Report report = AnalyzeUserData(Chapters("Chapter 1"u8.ToArray(), "Chapter 2"u8.ToArray()), tags);
+
+        Assert.DoesNotContain(report.Findings, f => f.Code == "mp4.nero-chapter-differs");
+    }
+
+    [Fact]
+    public void ANonAsciiTitleCutAt255BytesInTheChapterListIsTheSameTitle()
+    {
+        string title = new('\u00C4', 150);
+        byte[] cut = Encoding.UTF8.GetBytes(title)[..255];
+        byte[] tags = Mp4Builder.Box("tags", Mp4Builder.Box("tseg", Header(0), FieldList(("title", title))));
+
+        Report report = AnalyzeUserData(Chapters(cut), tags);
+
+        Assert.DoesNotContain(report.Findings, f => f.Code == "mp4.nero-chapter-differs");
+    }
+
+    [Theory]
+    [InlineData("Composer", false)]
+    [InlineData("Other", true)]
+    public void AFieldWithoutAnItemOfItsMeaningIsComparedWithTheFreeformItemOfItsName(string composer, bool differs)
+    {
+        byte[] item = Mp4Builder.Box("----", Mp4Builder.FullBox("mean", "com.apple.iTunes"u8.ToArray()), Mp4Builder.FullBox("name", "composer"u8.ToArray()),
+            Mp4Builder.Box("data", Mp4Builder.U32(1), Mp4Builder.U32(0), "Composer"u8.ToArray()));
+        byte[] meta = Mp4Builder.FullBox("meta", Mp4Builder.Box("hdlr", new byte[8], "mdirappl"u8.ToArray(), new byte[9]), Mp4Builder.Box("ilst", item));
+        byte[] tags = Mp4Builder.Box("tags", FieldList(("composer", composer)));
+
+        Report report = AnalyzeUserData(meta, tags);
+
+        Assert.Equal(differs, report.Findings.Any(f => f.Code == "mp4.nero-field-differs"));
+    }
 }
