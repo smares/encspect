@@ -42,6 +42,10 @@ All from OptimFROG 5.100 (`tests/fixtures/optimfrog`, [development.md](../develo
 - **Float files:** `off` writes the main block's ID as `OFRX` and a block `DETA` after the data blocks, neither defined by the specification. The fields of `OFRX` are those of `OFR ` (the SDK library does not open these files, so the cross-check compares the manifest's channels, sample rate, samples and bits per sample with the recorded input that `off` decoded each file back to, and runs `off --info`, which has to exit with 0), so the analyzer reads it as the main block and shows `DETA` as a block of its own. `off` writes `.ofr` files: it appends the extension to any other name it is given. Both are read without a finding: `OFRX` is the main block `off` writes, and `DETA` is shown as a known, undocumented block. Its `--sampletype FLOAT32_1`, `FLOAT32_16` and `FLOAT32_24` give the same file as no option (sample type 8, `FLOAT32_0`), `--mantissabits` leaves the main block unchanged, and `off` refuses an integer WAVE file.
 - **DualStream:** `ofs` writes the same blocks with a main block that differs from a lossless file's only in the minimum decoder version (4.520; a lossless file stores 4.600, or 4.520 at preset 0) and in the reserved bytes of its data blocks. It writes a correction file (`.ofc`) beside the `.ofs` with `--correction`, a run of `CORR` blocks with a CRC-32 each, and the `.ofs` is the same file with and without it, so its header does not say whether a correction file was written and no `IsCorrectionFileCreated` is reported. The `.ofc` fixtures are named `*-correction-data.ofc` so that their manifests do not take the stem of the `.ofs`.
 
+## Coding class
+
+OptimFROG is lossless coding, and hybrid coding where the file makes the DualStream lossy-part claim: lossless with its consistent `.ofc` file, lossy without it ([the class table](../cli.md#the-coding-class-of-a-stream), [The DualStream pair](#the-dualstream-pair)).
+
 ## Damage
 
 - A block whose CRC-32 fails (`optimfrog.block-crc-mismatch`, once with a count).

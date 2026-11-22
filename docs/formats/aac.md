@@ -68,6 +68,10 @@ AAC in [MP4](mp4.md), and raw AAC files as ADTS or ADIF. A container that hands 
   - the frames are not nodes of their own: the stream's nodes are the access units, at the bytes of the file the frame's raw data block is in.
 - **ADTS frames of several blocks:** an unprotected frame that holds fewer raw data blocks than its header declares is reported (`aac.blocks-missing`) and counted by the blocks it holds; bytes after its last declared block are reported like those of a single block.
 
+## Coding class
+
+AAC in every object type is lossy coding, MPEG-4 ALS and DST are lossless coding, and SLS has no class: its enhancement layer can be truncated short of lossless, so the stream alone does not say ([the class table](../cli.md#the-coding-class-of-a-stream)).
+
 ## Statistics
 
 - **Bitrate Mode** (the mode the stream or its container states where it states one (the nominal bitrates of AC-3 and of DTS without extension substreams, 0x7FF in ADTS (any other value, 0 included, states a constant bitrate), the variable flag of ASF), else variable or constant by the units' own bitrates, unknown for one unit) and **Bitrate Distribution** (the units' bitrates counted in ranges of 32 kbps, with each range's share), beside the minimum and maximum bitrate.

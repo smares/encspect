@@ -38,6 +38,10 @@ WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correctio
 - the bitrate per block and per second, as series, with the smallest and largest block, a distribution and the bitrate mode: variable or constant for two sets or more, unknown for a single set, which shows no variation (`IsVbr` is false then);
 - the bits per sample as the sample size less the left shift; a shift that leaves no bits is a finding and the bit depth is then not reported.
 
+## Coding class
+
+WavPack lossless is lossless coding; a hybrid file (`WavPack hybrid`, or `WavPack lossy` where blocks are lossy) is hybrid coding, lossless with its consistent correction file and lossy without it ([the class table](../cli.md#the-coding-class-of-a-stream), [Hybrid mode and correction files](#hybrid-mode-and-correction-files)).
+
 ## Wasted Bits
 
 - **What it counts:** the number of audio blocks with each count of Zero Bits (the INT32_INFO sub-block; 0 where a block has none), and **Changes**: the blocks whose count differs from the count of the block at the same place in the previous block set. It is FLAC's **Wasted Bits** statistic under the same name, with blocks in place of subframes. The count of a block holds for all its channels (the smallest of theirs), so a stereo file has one count where FLAC has two.

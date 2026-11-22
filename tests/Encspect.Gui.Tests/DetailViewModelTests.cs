@@ -22,7 +22,7 @@ public class DetailViewModelTests
         Assert.Equal("external-lame-cbr128-joint.mp3", model.Title);
         Assert.Same(model.Report!.Root, model.Tree!.Root.Node);
         Assert.Same(model.Tree.Root, model.SelectedNode);
-        Assert.Equal("MPEG-1 Layer III · 44.1 kHz · Joint stereo · stereo (front left, front right) · 0:00.5 · 128 kbps CBR · LAME 3.100 (high)", model.StreamsText);
+        Assert.Equal("MPEG-1 Layer III · lossy coding · 44.1 kHz · Joint stereo · stereo (front left, front right) · 0:00.5 · 128 kbps CBR · LAME 3.100 (high)", model.StreamsText);
         Assert.DoesNotContain("written by", model.StreamsText, StringComparison.Ordinal);
         Assert.NotNull(model.Document);
         Assert.True(model.HasNoFindings);
@@ -350,5 +350,20 @@ public class DetailViewModelTests
         ui.Until(() => load.IsCompleted);
 
         Assert.EndsWith(" · processed by lossyWAV 1.4.2 (high)", model.StreamsText, StringComparison.Ordinal);
+    }
+
+    // The class of the coding follows the codec, and the evidence about the file's history stands under the streams.
+    [Fact]
+    public void A_stream_line_states_the_coding_class_and_the_evidence_under_it_reads_not_measured_until_decoded()
+    {
+        var ui = new TestDispatcher();
+        using var model = new DetailViewModel(Analyzer.CreateDefault(), ui.Post);
+
+        Task load = model.LoadAsync(Path.Combine(Fixtures.Directory, "flac", "external-lossyflac-b512-foreign.flac"));
+        ui.Until(() => load.IsCompleted);
+
+        Assert.StartsWith("FLAC · lossless coding · ", model.StreamsText, StringComparison.Ordinal);
+        Assert.True(model.HasEvidenceText);
+        Assert.Equal("Processor: lossyWAV 1.4.2 (high) · Spectral Cutoff: not measured · Low Bits Unused: not measured", model.EvidenceText);
     }
 }
