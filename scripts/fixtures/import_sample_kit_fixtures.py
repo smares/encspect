@@ -21,8 +21,8 @@ encoders stamp the time of the encode, so the files are committed once and check
 The kit's logs and INFO.txt files stay private: they hold the contributor's paths and machine. Nothing from them is copied but the encoder's name,
 version, build and settings. A file that is already there is left alone unless it is the same bytes or --force is given.
 
-The analyzer's reading is held by SampleKitFixtureTests (tests/Encspect.Tests/Host), against <name>.summary.json, a compact golden: a full golden
-report of a ten second file is about 10 MB, so these files have none. --list prints the selection and its sizes.
+The analyzer's reading is held by SampleKitFixtureTests (tests/Encspect.Tests/Host), against <name>.report.json, the full golden report that
+ENCSPECT_UPDATE_GOLDEN=1 writes, as for the other fixtures. --list prints the selection and its sizes.
 """
 
 import hashlib

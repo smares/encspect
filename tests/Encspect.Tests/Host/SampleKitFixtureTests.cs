@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Security.Cryptography;
 using System.Text.Json;
 using Encspect.Core;
@@ -8,8 +7,7 @@ namespace Encspect.Tests;
 
 // The files of the private sample kit that import_sample_kit_fixtures.py took into tests/fixtures/<format>/sample-kit (docs/development.md, "Sample kit
 // fixtures"): encodes by Nero Burning ROM, neroAacEnc, qaac, iTunes, Winamp and Windows' Media Foundation encoders. Each has a provenance record, a manifest of
-// what ffprobe reads (the analyzer is never its source) and a compact golden summary of the analysis. A full golden report of a ten second file is about
-// 10 MB, so the summary holds the figures and findings instead; ENCSPECT_UPDATE_GOLDEN=1 rewrites it.
+// what ffprobe reads (the analyzer is never its source) and the full golden report (ENCSPECT_UPDATE_GOLDEN=1 rewrites it).
 public class SampleKitFixtureTests
 {
     public static TheoryData<string> Names()
@@ -33,60 +31,6 @@ public class SampleKitFixtureTests
     }
 
     private static string Companion(string stem, string suffix) => Path.Combine(Fixtures.FixtureDirectory, stem + suffix);
-
-    private static string Summarize(Report report)
-    {
-        using var stream = new MemoryStream();
-        using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true }))
-        {
-            writer.WriteStartObject();
-            writer.WriteString("format", ReportSummary.From(report).Format);
-            writer.WriteStartArray("topLevel");
-            foreach (Node child in report.Root.Children)
-            {
-                writer.WriteStringValue(child.Name);
-            }
-
-            writer.WriteEndArray();
-            writer.WriteStartArray("streams");
-            foreach (StreamInfo s in report.Streams)
-            {
-                writer.WriteStartObject();
-                writer.WriteString("codec", s.Codec);
-                writer.WriteString("kind", s.Kind.ToString());
-                writer.WriteNumber("sampleRate", s.SampleRate);
-                writer.WriteNumber("channels", s.Channels);
-                writer.WriteString("channelMode", s.ChannelMode);
-                writer.WriteString("channelLayout", s.ChannelLayoutName);
-                writer.WriteNumber("samples", s.Samples);
-                writer.WriteNumber("lostSamples", s.LostSamples);
-                writer.WriteString("duration", s.Duration.ToString("0.000", CultureInfo.InvariantCulture));
-                writer.WriteString("averageBitrate", s.AverageBitrate?.ToString("0.0", CultureInfo.InvariantCulture));
-                writer.WriteBoolean("isVbr", s.IsVbr);
-                writer.WriteString("encoder", s.Encoder);
-                writer.WriteString("encoderConfidence", s.EncoderConfidence?.ToString());
-                writer.WriteString("writer", s.Writer);
-                writer.WriteString("writerConfidence", s.WriterConfidence?.ToString());
-                writer.WriteEndObject();
-            }
-
-            writer.WriteEndArray();
-            writer.WriteStartArray("findings");
-            foreach (Finding f in report.Findings.OrderBy(f => f.Code, StringComparer.Ordinal))
-            {
-                writer.WriteStartObject();
-                writer.WriteString("severity", f.Severity.ToString());
-                writer.WriteString("code", f.Code);
-                writer.WriteNumber("count", f.Count);
-                writer.WriteEndObject();
-            }
-
-            writer.WriteEndArray();
-            writer.WriteEndObject();
-        }
-
-        return System.Text.Encoding.UTF8.GetString(stream.ToArray()).ReplaceLineEndings("\n") + "\n";
-    }
 
     private static Report Analyze(string path)
     {
@@ -137,17 +81,18 @@ public class SampleKitFixtureTests
 
     [Theory]
     [MemberData(nameof(Names))]
-    public void TheSummaryMatchesTheGolden(string stem)
+    public void TheReportMatchesTheGolden(string stem)
     {
-        string actual = Summarize(Analyze(FileOf(stem)));
-        string path = Companion(stem, ".summary.json");
+        string file = FileOf(stem);
+        string actual = Fixtures.ToGoldenJson(Path.GetRelativePath(Fixtures.FixtureDirectory, file), Analyze(file));
+        string path = Companion(stem, ".report.json");
         if (Fixtures.UpdateGolden)
         {
             File.WriteAllText(path, actual);
             return;
         }
 
-        Assert.True(File.Exists(path), $"Missing golden summary {path}; run the tests with ENCSPECT_UPDATE_GOLDEN=1 to create it.");
+        Assert.True(File.Exists(path), $"Missing golden report {path}; run the tests with ENCSPECT_UPDATE_GOLDEN=1 to create it.");
         Assert.Equal(File.ReadAllText(path).ReplaceLineEndings("\n"), actual);
     }
 

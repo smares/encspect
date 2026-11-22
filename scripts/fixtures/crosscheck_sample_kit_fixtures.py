@@ -8,7 +8,7 @@ MediaInfo 26.01 of Ubuntu 26.04. Neither tool is a reference whose source was re
 - ffprobe reads the file as the manifest (<name>.expected.json, written from ffprobe's reading when the file was imported) says: the codec, the sample
   rate, the channels and the duration (within 10 ms; not for ADTS, whose duration ffprobe estimates from the bitrate), and the packets it counts.
 - ffmpeg decodes the whole file to nothing with `-v error`: no message, except those a fixture is known for (EXPECTED_ERRORS, each with its reason).
-- MediaInfo, against the analyzer's golden summary (<name>.summary.json, which SampleKitFixtureTests holds to the analysis): the format, for MPEG audio
+- MediaInfo, against the analyzer's golden summary (<name>.report.json, which SampleKitFixtureTests holds to the analysis): the format, for MPEG audio
   and AAC the version, layer and profile, the channels, the sample rate (or half of it, for an HE-AAC stream whose rate MediaInfo reports without SBR),
   and the duration (within 150 ms).
 
@@ -126,10 +126,11 @@ def codec_text(audio):
 
 
 def check_mediainfo(name, stem, path):
-    golden = json.loads(stem.with_name(stem.name + ".summary.json").read_text(encoding="utf-8"))
+    golden = json.loads(stem.with_name(stem.name + ".report.json").read_text(encoding="utf-8"))
+    golden = golden[0] if isinstance(golden, list) else golden
     tracks = mi.read(path)
     audio = tracks["Audio"]
-    expected = [s for s in golden["streams"] if s["kind"] == "Audio"]
+    expected = [s for s in golden["streams"] if s.get("kind", "Audio") == "Audio"]
     if len(audio) != len(expected):
         fail(name, f"MediaInfo finds {len(audio)} audio streams, the analyzer {len(expected)}")
         return
