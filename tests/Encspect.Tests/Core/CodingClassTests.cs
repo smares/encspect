@@ -107,11 +107,11 @@ public class CodingClassTests
         Assert.Null(CodingText.Word(null));
     }
 
-    private static Report ReportOf(StreamInfo Make(Node node))
+    private static Report ReportOf(Func<Node, StreamInfo> make)
     {
         var root = new Node("File", 0, 100, "Test");
         Node node = root.Add("Stream", 0, 100);
-        return new Report("test.bin", root, [], [Make(node)]);
+        return new Report("test.bin", root, [], [make(node)]);
     }
 
     [Fact]

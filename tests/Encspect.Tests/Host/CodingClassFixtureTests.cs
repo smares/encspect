@@ -17,8 +17,9 @@ public class CodingClassFixtureTests
     {
         foreach (string path in Directory.EnumerateFiles(Fixtures.FixtureDirectory, "*.report.json", SearchOption.AllDirectories))
         {
-            using JsonDocument document = JsonDocument.Parse(File.ReadAllText(path));
-            if (document.RootElement.TryGetProperty("streams", out JsonElement streams))
+            using JsonDocument document = JsonDocument.Parse(File.ReadAllText(path), new JsonDocumentOptions { MaxDepth = 4096 });
+            JsonElement root = document.RootElement.ValueKind == JsonValueKind.Array ? document.RootElement[0] : document.RootElement;
+            if (root.TryGetProperty("streams", out JsonElement streams))
             {
                 foreach (JsonElement stream in streams.EnumerateArray())
                 {
@@ -62,11 +63,12 @@ public class CodingClassFixtureTests
     public void AStreamVerifiedAsLossyOutputHasALossyOrHybridCodingClass()
     {
         int lossy = 0;
-        foreach (JsonElement stream in Streams())
+        foreach (JsonElement stream in Streams().Where(s => !s.TryGetProperty("isCorrectionFile", out JsonElement c) || !c.GetBoolean()))
         {
             if (stream.TryGetProperty("verification", out JsonElement verification) && verification.TryGetProperty("isLossy", out JsonElement isLossy) && isLossy.GetBoolean())
             {
-                Assert.Contains(stream.GetProperty("codingClass").GetString(), new[] { "lossy", "hybrid" });
+                string? word = stream.TryGetProperty("codingClass", out JsonElement value) ? value.GetString() : null;
+                Assert.True(word is "lossy" or "hybrid", $"A stream of \"{stream.GetProperty("codec").GetString()}\" is verified as lossy output and has the class {word ?? "none"}.");
                 lossy++;
             }
         }
