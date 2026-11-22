@@ -1,17 +1,26 @@
 # Tags
 
-Tag parsers are separate from the format parsers. The host finds the tags of a file and hands each one to its parser; containers hand the tags they hold to the same parsers.
+Encspect reads two kinds of tags:
 
-| Tag | Page |
-|---|---|
-| ID3v1 and ID3v2 | [id3.md](id3.md) |
-| APEv1 and APEv2 | [ape.md](ape.md) |
-| Lyrics3 v1 and v2 | [lyrics3.md](lyrics3.md) |
-| Vorbis comments | [vorbis-comments.md](vorbis-comments.md) |
+- **Tag formats** that can sit in many kinds of file (ID3, APE, Lyrics3, Vorbis comments) have parsers of their own. The host finds these tags in a file and hands each one to its parser; containers hand the ones they hold to the same parsers.
+- **Containers' own metadata** (WMA's, MP4's, Matroska's, RIFF's and AIFF's) is read by the container's format parser and shown in the tree as the file's tags, like any other.
+
+| Tags | Read by | Page |
+|---|---|---|
+| ID3v1 and ID3v2 | tag parser | [id3.md](id3.md) |
+| APEv1 and APEv2 | tag parser | [ape.md](ape.md) |
+| Lyrics3 v1 and v2 | tag parser | [lyrics3.md](lyrics3.md) |
+| Vorbis comments (FLAC, Ogg Vorbis, Opus, Speex) | tag parser | [vorbis-comments.md](vorbis-comments.md) |
+| ASF and WMA metadata (`WM/` attributes, `WM/Picture`) | ASF parser | [asf-wma.md](../formats/asf-wma.md#tags-and-tag-detection) |
+| MP4 and M4A metadata (iTunes, QuickTime text, Nero's chapters and tags) | MP4 parser | [mp4.md](../formats/mp4.md#what-is-read) |
+| Matroska and WebM Tags, Chapters and Attachments | Matroska parser | [matroska.md](../formats/matroska.md#what-is-read) |
+| RIFF `INFO` and the other WAV metadata chunks | WAV parser | [wav.md](../formats/wav.md#what-is-read) |
+| AIFF text chunks | AIFF parser | [aiff.md](../formats/aiff.md#what-is-read) |
+| Musepack SV8 chapters | Musepack parser | [musepack.md](../formats/musepack.md#what-is-read) |
 
 ## Containers' own metadata
 
-Containers that define their own metadata are read by their format parsers, and shown in the tree as the container's tags. A tag of a type above that a container holds goes to the tag parser.
+What each format parser reads; a tag of one of the tag formats that a container holds goes to its tag parser.
 
 - **ASF and WMA:** Content Description, Extended Content Description (the `WM/` attributes), Metadata and Metadata Library, with `WM/Picture` decoded and an `ID3` attribute handed to the ID3v2 parser ([asf-wma.md](../formats/asf-wma.md#tags-and-tag-detection)).
 - **MP4 and M4A:**
