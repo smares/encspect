@@ -1,0 +1,22 @@
+{
+ "description": "qaac (Apple's AAC encoder in CoreAudioToolbox) qaac 3.07, CoreAudioToolbox 7.10.9.0: qaac -c 32, 16000 Hz mono source, on the synthetic source music-16k-mono.wav.",
+ "encoder": {
+  "tool": "qaac (Apple's AAC encoder in CoreAudioToolbox)",
+  "version": "qaac 3.07, CoreAudioToolbox 7.10.9.0",
+  "component": "the CoreAudioToolbox of Apple's standalone iTunes 12.13.12.3 installer",
+  "settings": "qaac -c 32, 16000 Hz mono source"
+ },
+ "input": {
+  "name": "music-16k-mono.wav",
+  "sha256": "1eb286d400d98e12b74d1289f05220bd65e36bbf8073787cc01cf5cc4b70c00f",
+  "generator": "sources/make_sources.py of the sample kit (written from nothing, reproducible byte for byte)"
+ },
+ "selected_for": "Core Audio's AAC-LC at 16 kHz in an M4A with qaac's writer string",
+ "file": {
+  "name_in_kit": "music-16k-mono-lc-cbr32.m4a",
+  "bytes": 42436,
+  "sha256": "1c77b75fe60467b838f6045ba195816b031301478ac0bea828d04d410bf31786"
+ },
+ "reproducible": false,
+ "note": "The encoder stamps the time of the encode into the file; the file is committed as written, and checked by its content."
+}

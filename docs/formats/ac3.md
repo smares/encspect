@@ -158,7 +158,7 @@ Dolby Atmos in Dolby Digital Plus adds object audio to an ordinary E-AC-3 stream
 
 ## Encoder detection
 
-No encoder is named from the frames, since no fixture confirms anything that identifies one. An ID3v2 TSSE frame names the encoder with low confidence (`ac-3.encoder-claim` for a second one). The writer is resolved apart from claims of the writer role: an APEv2 Encoder item, ffmpeg's muxer version, and a container's tool atom; two that name different software are `ac-3.writer-claim-differs`, and software known to write another format is `ac-3.writer-other-format`.
+No encoder is named from the frames, since no fixture confirms anything that identifies one. The one file of Windows 10's Media Foundation Dolby Digital encoder (`ac3/sample-kit/external-ms-ac3-44k-mono-64k.ac3`, mono at 44.1 kHz and 64 kbit/s, from the private sample kit) is no exception: it carries no tag, and the analyzer names no encoder. An ID3v2 TSSE frame names the encoder with low confidence (`ac-3.encoder-claim` for a second one). The writer is resolved apart from claims of the writer role: an APEv2 Encoder item, ffmpeg's muxer version, and a container's tool atom; two that name different software are `ac-3.writer-claim-differs`, and software known to write another format is `ac-3.writer-other-format`.
 
 ## Reference for sample counts
 

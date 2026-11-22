@@ -146,6 +146,12 @@ AREAS = {
         "scripts": ["crosscheck_truehd_fixtures.py", "check_truehd_samples.py"],
         "globs": ["scripts/fixtures/make_*truehd*", "scripts/fixtures/truehd_*", "tests/conformance/truehd-samples.json"],
     },
+    "sample-kit-crosscheck": {
+        "projects": [],
+        "fixtures": [],
+        "scripts": ["crosscheck_sample_kit_fixtures.py"],
+        "globs": ["scripts/fixtures/import_sample_kit*", "tests/fixtures/*/sample-kit/**"],
+    },
 }
 
 # A change here concerns every job: the analysis every format goes through, the front end the
@@ -268,7 +274,8 @@ def area_matches(area, path, closure):
     spec = AREAS[area]
     if any(path.startswith(f"src/{p}/") for p in spec["projects"]):
         return True
-    if any(path.startswith(f"tests/fixtures/{d}/") for d in spec["fixtures"]):
+    # The sample kit's folders are read by the sample-kit job alone: the other jobs walk the top of their fixture folders.
+    if any(path.startswith(f"tests/fixtures/{d}/") for d in spec["fixtures"]) and not ("/sample-kit/" in path and area != "sample-kit-crosscheck"):
         return True
     if path.startswith(FIXTURE_SCRIPTS + "/") and path.count("/") == 2 and path.rsplit("/", 1)[1] in closure:
         return True

@@ -38,6 +38,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     private FolderItem? _selectedFolder;
     private FileRow? _selectedRow;
     private bool _includeSubfolders;
+    private bool _showOnlyAudio;
     private bool _isRunning;
     private int _total;
     private int _analyzed;
@@ -55,7 +56,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         _post = post ?? UiThread.Post;
         _cache = cache;
         Parallelism = parallelism ?? Math.Clamp(Environment.ProcessorCount / 2, 1, 4);
-        RowsView = new DataGridCollectionView(Rows);
+        RowsView = new DataGridCollectionView(Rows) { Filter = row => !_showOnlyAudio || !((FileRow)row).HasNoAudio };
         Folders = roots ?? FolderRoots.Create(_post);
     }
 
@@ -121,6 +122,29 @@ public sealed class MainViewModel : ObservableObject, IDisposable
             }
         }
     }
+
+    // Hides the files in which the analysis found no audio, by what it found and never by the file name. It only filters the view: the files stay analyzed,
+    // listed in Rows, counted in Total and held by the summary cache.
+    public bool ShowOnlyAudio
+    {
+        get => _showOnlyAudio;
+        set
+        {
+            if (Set(ref _showOnlyAudio, value))
+            {
+                RefreshView();
+            }
+        }
+    }
+
+    // How many listed files the list does not show now, so the count and the rows always agree: a file whose analysis found no audio leaves the view at its next
+    // refresh (SortAgain, at most every quarter second while the run goes on, and once when it ends), and is counted from then on.
+    public int HiddenCount => _showOnlyAudio ? Rows.Count - RowsView.Count : 0;
+
+    public bool HasHidden => HiddenCount > 0;
+
+    // Says how many files the list hides, or nothing when it hides none.
+    public string HiddenText => HiddenCount > 0 ? $"{Format.Count(HiddenCount, "file", "files")} without audio hidden" : string.Empty;
 
     public bool IsRunning
     {
@@ -204,18 +228,24 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     // needs nothing.
     public void SortAgain()
     {
-        if (RowsView.SortDescriptions.All(d => d.PropertyPath == nameof(FileRow.Name)))
+        // Files whose analysis found no audio leave the view as the filter looks at them again, which takes the same refresh.
+        if (!_showOnlyAudio && RowsView.SortDescriptions.All(d => d.PropertyPath == nameof(FileRow.Name)))
         {
             return;
         }
 
+        RefreshView();
+    }
+
+    private void RefreshView()
+    {
         var cost = Stopwatch.StartNew();
         FileRow? selected = _selectedRow;
         _isSorting = true;
         try
         {
             RowsView.Refresh();
-            SelectedRow = selected;
+            SelectedRow = selected is not null && RowsView.Contains(selected) ? selected : null;
         }
         finally
         {
@@ -223,6 +253,8 @@ public sealed class MainViewModel : ObservableObject, IDisposable
             _sortCost = cost.Elapsed;
             _sinceSort.Restart();
         }
+
+        RaiseHidden();
     }
 
     // Lists and analyzes the source again; with a cache, only the files that changed are analyzed.
@@ -257,13 +289,29 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         ArgumentNullException.ThrowIfNull(row);
 
         int index = RowsView.IndexOf(row);
-        if (index < 0)
+        if (index >= 0)
+        {
+            int target = index + delta;
+            return target >= 0 && target < RowsView.Count ? (FileRow)RowsView.GetItemAt(target)! : null;
+        }
+
+        // A row the switch hides, which a detail window may still show: it takes the place the list's sort would give it among the rows the list shows, and the
+        // neighbor is the shown row before or after that place. Without a sort the list is in the order the files were listed.
+        if (Rows.IndexOf(row) < 0)
         {
             return null;
         }
 
-        int target = index + delta;
-        return target >= 0 && target < RowsView.Count ? (FileRow)RowsView.GetItemAt(target)! : null;
+        IEnumerable<object> merged = Rows.Where(r => r == row || !_showOnlyAudio || !r.HasNoAudio);
+        IOrderedEnumerable<object>? ordered = null;
+        foreach (DataGridSortDescription sort in RowsView.SortDescriptions)
+        {
+            ordered = ordered is null ? sort.OrderBy(merged) : sort.ThenBy(ordered);
+        }
+
+        List<object> places = [.. ordered ?? merged];
+        int place = places.IndexOf(row) + delta;
+        return place >= 0 && place < places.Count ? (FileRow)places[place] : null;
     }
 
     public void Dispose()
@@ -449,7 +497,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
                 _analyzed++;
             }
 
-            if (_reselectPath is not null && row.Path == _reselectPath)
+            if (_reselectPath is not null && row.Path == _reselectPath && !(_showOnlyAudio && row.HasNoAudio))
             {
                 SelectedRow = row;
             }
@@ -578,6 +626,14 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         Raise(nameof(Analyzed));
         Raise(nameof(IsListed));
         Raise(nameof(Status));
+        RaiseHidden();
+    }
+
+    private void RaiseHidden()
+    {
+        Raise(nameof(HiddenCount));
+        Raise(nameof(HasHidden));
+        Raise(nameof(HiddenText));
     }
 
     private sealed class Run

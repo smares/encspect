@@ -1,0 +1,22 @@
+{
+ "description": "Coding Technologies aacPlus encoder in Winamp's enc_aacplus.dll (aacPlus encoding 1998-2009 Coding Technologies, v1.3) Winamp 5.572: aacPlus (HE-AAC) Encoder v1.3, raw, 8 kbit/s, mono, 16000 Hz, on the synthetic source music-16k-mono.wav.",
+ "encoder": {
+  "tool": "Coding Technologies aacPlus encoder in Winamp's enc_aacplus.dll (aacPlus encoding 1998-2009 Coding Technologies, v1.3)",
+  "version": "Winamp 5.572",
+  "component": "enc_aacplus.dll, 912,896 bytes, SHA-256 F4333EB10A78C26772026BEC6A9182A9C6811E52B2C93BFF586E49C69F25EC91, no version resource; Format Converter",
+  "settings": "aacPlus (HE-AAC) Encoder v1.3, raw, 8 kbit/s, mono, 16000 Hz"
+ },
+ "input": {
+  "name": "music-16k-mono.wav",
+  "sha256": "1eb286d400d98e12b74d1289f05220bd65e36bbf8073787cc01cf5cc4b70c00f",
+  "generator": "sources/make_sources.py of the sample kit (written from nothing, reproducible byte for byte)"
+ },
+ "selected_for": "the lowest HE-AAC rate",
+ "file": {
+  "name_in_kit": "music-16k-mono-he-cbr8-mono.aac",
+  "bytes": 12672,
+  "sha256": "9a0583554db4c18c22bd98af3d72e420a767815b71231388e2622e68420f84c8"
+ },
+ "reproducible": false,
+ "note": "The encoder stamps the time of the encode into the file; the file is committed as written, and checked by its content."
+}

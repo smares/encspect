@@ -265,6 +265,7 @@ public partial class MainWindow : Window
         var view = Shortcuts.Submenu(
             "View",
             Shortcuts.Item(this, "Include Subfolders", Shortcuts.WithCommand(Key.I), () => Model.IncludeSubfolders = !Model.IncludeSubfolders),
+            Shortcuts.Item(this, "Show Only Audio", null, () => Model.ShowOnlyAudio = !Model.ShowOnlyAudio),
             Shortcuts.Item(this, "Refresh", OperatingSystem.IsMacOS() ? Shortcuts.WithCommand(Key.R) : new KeyGesture(Key.F5), Model.Refresh),
             Shortcuts.Item(this, "Stop Analysis", Shortcuts.WithCommand(Key.OemPeriod), Model.Cancel));
         if (Model.Cache is not null)

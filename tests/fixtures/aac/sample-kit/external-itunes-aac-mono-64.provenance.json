@@ -1,0 +1,22 @@
+{
+ "description": "iTunes AAC encoder (Apple's CoreAudioToolbox 7.10.9.0) iTunes 12.13.12.3, converted through iTunes' ConvertFile2: AAC Encoder, custom, 64 kbit/s, channels mono, 44100 Hz mono source, on the synthetic source music-44k-mono.wav.",
+ "encoder": {
+  "tool": "iTunes AAC encoder (Apple's CoreAudioToolbox 7.10.9.0)",
+  "version": "iTunes 12.13.12.3, converted through iTunes' ConvertFile2",
+  "note": "At low bitrates iTunes picks the output rate itself.",
+  "settings": "AAC Encoder, custom, 64 kbit/s, channels mono, 44100 Hz mono source"
+ },
+ "input": {
+  "name": "music-44k-mono.wav",
+  "sha256": "5e1561907808ac2eca1c9073e3cc45a5ae03e143e7bd551ea1c2082035741c9a",
+  "generator": "sources/make_sources.py of the sample kit (written from nothing, reproducible byte for byte)"
+ },
+ "selected_for": "iTunes picks 32 kHz for mono at 64 kbit/s",
+ "file": {
+  "name_in_kit": "music-44k-mono-lc-64-mono.m4a",
+  "bytes": 40784,
+  "sha256": "7056a3501d72b46b2d56ba2c876c9180da891e0be1b2164e99e6d9e570df7c74"
+ },
+ "reproducible": false,
+ "note": "The encoder stamps the time of the encode into the file; the file is committed as written, and checked by its content."
+}

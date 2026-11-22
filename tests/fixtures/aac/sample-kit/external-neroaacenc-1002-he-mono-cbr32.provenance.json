@@ -1,0 +1,27 @@
+{
+ "description": "neroAacEnc (Nero AAC Codec) 1.0.0.2: neroAacEnc -he -cbr 32000, 44100 Hz mono source, on the synthetic source music-44k-mono.wav.",
+ "encoder": {
+  "tool": "neroAacEnc (Nero AAC Codec)",
+  "version": "1.0.0.2",
+  "build": "win32",
+  "package": "NeroAACCodec-1.0.0.2.zip",
+  "package_sha256": "24a7c56a9b5bc3b9528f4cbf8ff9a693c8727ba48a13af25f16e1ad99fe7297c",
+  "package_build_date": "May 26 2006",
+  "run_under": "Wine 9.0",
+  "settings": "neroAacEnc -he -cbr 32000, 44100 Hz mono source"
+ },
+ "input": {
+  "name": "music-44k-mono.wav",
+  "sha256": "5e1561907808ac2eca1c9073e3cc45a5ae03e143e7bd551ea1c2082035741c9a",
+  "generator": "sources/make_sources.py of the sample kit (written from nothing, reproducible byte for byte)"
+ },
+ "selected_for": "the 1.0.0.2 build's HE-AAC mono file",
+ "file": {
+  "name_in_kit": "music-44k-mono-he-cbr32.m4a",
+  "bytes": 46357,
+  "sha256": "52d5f172f18b293a19b50fc98be026c5b9244afa4c061140687d9bdac4aab0cd"
+ },
+ "reproducible": false,
+ "note": "The encoder stamps the time of the encode into the file; the file is committed as written, and checked by its content.",
+ "license": "Nero's license limits how the software is used, not the files it writes."
+}

@@ -1,0 +1,21 @@
+{
+ "description": "Microsoft Dolby Digital Encoder MFT (Media Foundation) msac3enc.dll 10.0.19041.1: the Dolby Digital MFT at 64 kbit/s, mono, on the synthetic source music-44k-mono.wav.",
+ "encoder": {
+  "tool": "Microsoft Dolby Digital Encoder MFT (Media Foundation)",
+  "version": "msac3enc.dll 10.0.19041.1",
+  "settings": "the Dolby Digital MFT at 64 kbit/s, mono"
+ },
+ "input": {
+  "name": "music-44k-mono.wav",
+  "sha256": "5e1561907808ac2eca1c9073e3cc45a5ae03e143e7bd551ea1c2082035741c9a",
+  "generator": "sources/make_sources.py of the sample kit (written from nothing, reproducible byte for byte)"
+ },
+ "selected_for": "Microsoft's AC-3 at 44.1 kHz",
+ "file": {
+  "name_in_kit": "music-44k-mono-ms-ac3-64k.ac3",
+  "bytes": 80064,
+  "sha256": "8f83d158720d44be6f283c48d346a193ef96302b4deb2578a22a1f8ab6a6b880"
+ },
+ "reproducible": false,
+ "note": "The encoder stamps the time of the encode into the file; the file is committed as written, and checked by its content."
+}
