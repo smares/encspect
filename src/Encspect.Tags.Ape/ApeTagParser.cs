@@ -284,7 +284,7 @@ public sealed class ApeTagParser : ITagParser
 
         public TagProbe Build(long tagStart, long tagEnd, long itemsStart, long itemsEnd)
         {
-            var tag = new Node("APE", tagStart, tagEnd - tagStart, IsV1 ? "1.0" : "2.0") { Kind = NodeKind.Tag, Description = Explain.Tag, Topic = Topics.ApeTag };
+            var tag = new Node("APE", tagStart, tagEnd - tagStart, IsV1 ? "1.0" : "2.0") { Kind = NodeKind.Tag, Description = IsV1 ? Explain.V1Tag : Explain.V2Tag, Topic = Topics.ApeTag };
             if (Header is { } header)
             {
                 AddBlock(tag, "Header", header.Offset, header.Block);
@@ -328,7 +328,7 @@ public sealed class ApeTagParser : ITagParser
             // header."
             if (IsLeading)
             {
-                _findings.Add(new Finding(Severity.Info, "ape.at-start", "The APEv2 tag is at the beginning of the file, which the APEv2 specification calls \"strongly unrecommended\".", tag));
+                _findings.Add(new Finding(Severity.Info, "ape.at-start", "The APEv2 tag is at the beginning of the file, which its specification calls \"strongly unrecommended\".", tag));
             }
 
             foreach (string key in _order)

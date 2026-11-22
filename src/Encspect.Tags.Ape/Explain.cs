@@ -12,7 +12,8 @@ internal static class Topics
 // ReplayGain and MP3Gain write.
 internal static class Explain
 {
-    public const string Tag = "An APEv1 or APEv2 tag: items of a key and a value between an optional header and a footer of 32 bytes each (APEv1 and APEv2 specifications).";
+    public const string V1Tag = "An APEv1 tag: items of a key and a value, then a footer of 32 bytes (APEv1 specification).";
+    public const string V2Tag = "An APEv2 tag: items of a key and a value between an optional header and a footer of 32 bytes each (APEv2 specification).";
     public const string Header = "The 32-byte header, which repeats the footer so the tag can also be read from its start.";
     public const string Footer = "The 32-byte footer, which readers find at the end of the file to read the tag from there.";
     public const string Preamble = "The signature APETAGEX.";

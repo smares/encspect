@@ -716,7 +716,7 @@ public sealed partial class Analyzer
             Severity.Warning,
             "tag.rejected",
             probe.SignatureOffset,
-            (_, _) => $"{TagNames.Of(parser.Name, probe.Tag)} candidate at {where} rejected: {probe.RejectionReason}.");
+            (_, _) => $"{TagNames.Of(parser.Name)} candidate at {where} rejected: {probe.RejectionReason}.");
     }
 
     private static PendingFinding NearMiss(ITagParser parser, TagProbe probe, Claim? owner, ByteReader reader)

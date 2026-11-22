@@ -84,7 +84,7 @@ internal sealed class ParserRouter(IReadOnlyList<ICodecParser> codecs, IReadOnly
         }
         catch (Exception ex) when (Analyzer.IsParserBug(ex))
         {
-            caller.AddFinding(Severity.Error, "parse.failed", $"The {TagNames.Of(parser.Name)} parser failed parsing a tag at 0x{start:X}: {ex.GetType().Name}: {ex.Message}", parent);
+            caller.AddFinding(Severity.Error, "parse.failed", $"The {parser.Name} parser failed parsing a tag at 0x{start:X}: {ex.GetType().Name}: {ex.Message}", parent);
             probe = TagProbe.Reject(start, $"the parser failed with {ex.GetType().Name}");
         }
         finally
@@ -100,7 +100,7 @@ internal sealed class ParserRouter(IReadOnlyList<ICodecParser> codecs, IReadOnly
 
         if (probe.Tag is not { } tag)
         {
-            caller.AddFinding(Severity.Warning, "tag.rejected", $"{TagNames.Of(parser.Name, probe.Tag)} candidate at 0x{probe.SignatureOffset:X} rejected: {probe.RejectionReason}.", parent);
+            caller.AddFinding(Severity.Warning, "tag.rejected", $"{TagNames.Of(parser.Name)} candidate at 0x{probe.SignatureOffset:X} rejected: {probe.RejectionReason}.", parent);
             return null;
         }
 

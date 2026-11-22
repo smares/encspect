@@ -153,7 +153,7 @@ public sealed record ReportSummary(
             encoded?.EncoderConfidence,
             written?.Writer,
             written?.WriterConfidence,
-            TagNames(report.Root),
+            CollectTagNames(report.Root),
             findings.Count(f => f.Severity == Severity.Error),
             findings.Count(f => f.Severity == Severity.Warning),
             findings.Count(f => f.Severity == Severity.Info),
@@ -191,7 +191,7 @@ public sealed record ReportSummary(
     // Only plain details are searched below, as a container's chunks are, never streams, frames or
     // other sections that parsers build by the thousand. Inside a tag, only what is held in memory is searched (for a tag
     // nested in it); children that are built on demand never are.
-    private static List<string> TagNames(Node root)
+    private static List<string> CollectTagNames(Node root)
     {
         var names = new List<string>();
         var pending = new Stack<(Node Node, int Depth, bool InTag)>();
@@ -202,7 +202,7 @@ public sealed record ReportSummary(
             bool isTag = node.Kind == NodeKind.Tag;
             if (isTag)
             {
-                names.Add(node.Name);
+                names.Add(TagNames.Of(node.Name, node));
             }
 
             // A tag may hold another (QuickTime's user data holds an item list or an ID3v2 tag): in and below a tag, the tags and plain

@@ -56,7 +56,7 @@ public sealed class CacheTests : IDisposable
     [Fact]
     public void The_store_format_was_bumped_for_the_writer_the_protection_the_dropped_verdict_and_the_companions()
     {
-        Assert.Equal(9, SummaryCache.FormatVersion);
+        Assert.Equal(10, SummaryCache.FormatVersion);
     }
 
     [Fact]
