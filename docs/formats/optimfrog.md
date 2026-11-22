@@ -44,7 +44,7 @@ All from OptimFROG 5.100 (`tests/fixtures/optimfrog`, [development.md](../develo
 
 ## Coding class
 
-OptimFROG is lossless coding, and hybrid coding where the file makes the DualStream lossy-part claim: lossless with its consistent `.ofc` file, lossy without it ([the class table](../cli.md#the-coding-class-of-a-stream), [The DualStream pair](#the-dualstream-pair)).
+The parser states the class from its evidence about the DualStream ([The DualStream pair](#the-dualstream-pair)): hybrid coding where every whole data block shows the pattern of the `.ofs` files (lossless with its consistent `.ofc` file, lossy without it), lossless coding where every whole data block shows the pattern of a lossless file, and no class for a mixture of blocks or a file without a whole data block ([the class table](../cli.md#the-coding-class-of-a-stream)).
 
 ## Damage
 

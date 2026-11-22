@@ -283,7 +283,7 @@ The `--measure` goldens compare figures byte for byte on all six CI platforms an
   - Vorbis, Opus, Speex, WMA: none of their own. Ogg's page CRCs and Matroska's CRC-32 elements are the container's and stay out of a codec's verification.
 - Decision 4 of [decoders.md](decoders.md) makes a stream verified where at least one compared checksum covers all of its audio, "coded or decoded"; a TTA stream "is verified without decoding". Its line 732 deferred giving the lossy formats' CRCs a verification. Declaring them now settles that, so decision 2 sets out the options:
   - **(a) Declare the coded checksums with their coverage, as for TTA.** No rule changes.
-    - AC-3 and E-AC-3 streams whose CRCs all hold, with no gap, become "Verified: yes (lossy stream; CRC1 1,000 of 1,000, CRC2 1,000 of 1,000)" in every analysis.
+    - AC-3 and E-AC-3 streams whose CRCs all hold, with no gap, become "Verified: yes (the coded data matches the stored checksums; lossy stream; CRC1 1,000 of 1,000, CRC2 1,000 of 1,000)" in every analysis.
     - MPEG and ADTS streams that store CRCs read "unknown", with their CRC-16 tallies, since those cover no audio or not all of it; those without one (most MP3 files lack the protection bit) read that the stream stores no checksum.
     - Codings that define no checksum of their own (Vorbis, Opus, Speex, WMA, and raw AAC in MP4 and ADIF) get no verification block at all, as WAV streams have none today.
   - **(b) Exempt lossy codings from the declare rule.** Nothing changes in any report. [CLAUDE.md](../../CLAUDE.md)'s item becomes "Parsers of lossless codings declare every checksum a stream stores"; a lossy parser keeps reporting its CRCs as statistics and findings, as now.

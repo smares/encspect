@@ -317,7 +317,7 @@ public class CompanionTests
         ReportTextWriter.Write(report, text, showOffsets: false);
         string[] lines = text.ToString().ReplaceLineEndings("\n").Split('\n');
         Assert.Contains(lines, l => l.TrimStart() == "Correction file: consistent (song.ofc), lossless with its correction file");
-        Assert.Contains(lines, l => l.TrimStart().StartsWith("Verified: yes (the coded data matches its stored checksums; with correction file; block CRC-32 1 of 1, correction block CRC-32 1 of 1", StringComparison.Ordinal));
+        Assert.Contains(lines, l => l.TrimStart().StartsWith("Verified: yes (the coded data matches the stored checksums; with correction file; block CRC-32 1 of 1, correction block CRC-32 1 of 1", StringComparison.Ordinal));
         Assert.Contains(lines, l => l.EndsWith("song.ofc (correction file)", StringComparison.Ordinal));
         Assert.Contains(lines, l => l.TrimStart() == "Correction File: OptimFROG");
 

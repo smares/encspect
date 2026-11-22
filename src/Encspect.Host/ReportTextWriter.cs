@@ -109,15 +109,9 @@ public static class ReportTextWriter
                 : null;
             if (CodingText.Describe(stream) is { } coding)
             {
-                var beside = new List<(string, string, string, string?)>();
-                if (CodingText.Processor(stream) is { } processor)
-                {
-                    beside.Add(("Processor", processor, CodingText.ProcessorDescription, null));
-                }
-
+                var beside = CodingText.Evidence(filter.ShowsMeasurements ? stream : stream with { Measurements = null }, lines, placeholders: false).Select(e => (e.Name, e.Text, e.Description, e.Topic)).ToList();
                 if (lines is not null)
                 {
-                    beside.AddRange(lines.Where(l => CodingText.IsBesideCoding(l.Figure)).Select(l => (l.Name, l.Text, l.Description, l.Topic)));
                     lines = [.. lines.Where(l => !CodingText.IsBesideCoding(l.Figure))];
                 }
 

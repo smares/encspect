@@ -49,7 +49,7 @@ public class VerificationOutputTests
     {
         string text = Text(ReportWith(Holds));
 
-        Assert.Contains("    Stream\n      Verified: yes (the decoded audio matches its stored checksum; frame header CRC-8 40 of 40, frame CRC-16 40 of 40, STREAMINFO MD5 1 of 1)\n", text);
+        Assert.Contains("    Stream\n      Verified: yes (the decoded audio matches the stored checksums; frame header CRC-8 40 of 40, frame CRC-16 40 of 40, STREAMINFO MD5 1 of 1)\n", text);
         Assert.True(Holds.IsVerified);
     }
 
@@ -112,7 +112,7 @@ public class VerificationOutputTests
             Checksums = [Tally("block header CRC", ChecksumCoverage.DecodedAudio, 120, 120, all: true)],
         };
 
-        Assert.Equal("yes (the decoded audio matches its stored checksum; lossy stream; block header CRC 120 of 120)", VerificationText.Describe(hybrid));
+        Assert.Equal("yes (the decoded audio matches the stored checksums; lossy stream; block header CRC 120 of 120)", VerificationText.Describe(hybrid));
         Assert.Equal("unknown (block header CRC not compared: decoding was not asked for)", VerificationText.Describe(hybrid with { Decoding = DecodeStatus.NotRequested, Checksums = [Tally("block header CRC", ChecksumCoverage.DecodedAudio, 120, 0, all: true)] }));
     }
 

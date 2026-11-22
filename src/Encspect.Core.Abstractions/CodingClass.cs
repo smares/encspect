@@ -14,7 +14,7 @@ public enum CodingClass
     Hybrid,
 }
 
-// The class of each coding by the name its parser reports, for the streams a parser leaves without one. A coding whose class the stream alone does not
+// The class of each coding by the name its parser reports, for the streams a parser leaves without one. The parsers whose coding depends on the stream (WavPack, OptimFROG) state it themselves. A coding whose class the stream alone does not
 // settle (MPEG-4 SLS, whose enhancement layer may be cut short of lossless), an unlisted coding and a stream that is not audio have none.
 public static class CodingClasses
 {
@@ -32,11 +32,6 @@ public static class CodingClasses
             return null;
         }
 
-        if (stream.Codec is "OptimFROG")
-        {
-            return stream.Claims.Any(c => c.Kind == StreamClaim.LossyPart) ? CodingClass.Hybrid : CodingClass.Lossless;
-        }
-
         return OfName(stream.Codec);
     }
 
@@ -44,19 +39,17 @@ public static class CodingClasses
     {
         ArgumentNullException.ThrowIfNull(codec);
 
-        if (codec is "WavPack hybrid" or "WavPack lossy")
-        {
-            return CodingClass.Hybrid;
-        }
-
-        if (codec is "PCM" or "PCM (floating-point)" or "FLAC" or "Apple Lossless" or "Monkey's Audio" or "TTA" or "TAK" or "WavPack lossless"
+        if (codec is "PCM" or "PCM (floating-point)" or "FLAC" or "Apple Lossless" or "Monkey's Audio" or "TTA" or "TAK"
             or "Dolby TrueHD" or "MLP" or "Windows Media Audio Lossless" or "DST"
             || codec.StartsWith("DTS-HD Master Audio", StringComparison.Ordinal) || codec.StartsWith("ALS", StringComparison.Ordinal))
         {
             return CodingClass.Lossless;
         }
 
-        if (codec is "Other" or "Video" or "Encrypted audio" or "Encrypted video" or "RealAudio" or "WavPack" or "MPEG-4 audio" or "SLS" or "SLS non-core")
+        if (codec is "Other" or "Video" or "Encrypted audio" or "Encrypted video" or "RealAudio" or "WavPack" or "MPEG-4 audio" or "SLS" or "SLS non-core"
+            or "DTS-HD" or "MAT" or "Sonarc" or "MSN Audio" or "Control Resources VQLPC" or "Control Resources CR10" or "Echo Speech EchoSC1" or "Audiofile AF36" or "Audiofile AF10"
+            or "DSP Solutions DIGISTD" or "DSP Solutions DIGIFIX" or "DSP Solutions DIGIREAL" or "DRM" or "Raw SPORT" or "unknown" or "extensible"
+            or "null" or "SBR" or "PS" or "TTSI" or "Main synthetic" or "Wavetable synthesis" or "Microsoft ACM audio" or "QuickTime audio" or "Reserved" or "reserved" or "General MIDI" or "Algorithmic synthesis and audio effects" or "Audio Sync" or "SMR Simple" or "SMR Main" or "other")
         {
             return null;
         }
@@ -65,7 +58,7 @@ public static class CodingClasses
         [
             "MPEG", "AAC", "HE-AAC", "xHE-AAC", "ER ", "Layer-", "SSC", "USAC", "SAOC", "A-law", "Mu-law", "IBM mu-law", "IBM A-law", "IMA ADPCM", "Microsoft ADPCM",
             "GSM", "MACE", "ACE ", "ATRAC", "Sony ATRAC", "Vorbis", "Opus", "Speex", "Musepack", "AC-3", "E-AC-3", "Dolby AC-3", "Dolby AC-2", "DTS", "Windows Media Audio",
-            "VSELP", "IBM CVSD", "G.7", "Intel G.7", "Microsoft G.7", "DSP Group TrueSpeech", "aptX",
+            "VSELP", "IBM CVSD", "G.7", "Intel G.7", "Microsoft G.7", "DSP Group TrueSpeech", "aptX", "WMA", "ESS Technology AC-3", "AC-4", "AMR", "13K Voice", "ima4", "sevc", "sqcp", "QDM2", "TwinVQ", "CELP", "HVXC", "LD MPEG Surround", "ER TwinVQ", "ER CELP", "ER HVXC", "HILN", "ER HILN", "Parametric", "ER Parametric",
         ];
         foreach (string prefix in lossyPrefixes)
         {

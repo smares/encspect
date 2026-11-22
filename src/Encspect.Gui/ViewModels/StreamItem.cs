@@ -84,7 +84,7 @@ public sealed class StreamItem(StreamInfo stream)
                 parts.Add("written by " + Format.Encoder(writer, Stream.WriterConfidence));
             }
 
-            if (Stream.Processor is { } processor)
+            if (Stream.Processor is { } processor && CodingText.Describe(Stream) is null)
             {
                 parts.Add("processed by " + Format.Encoder(processor, Stream.ProcessorConfidence));
             }
@@ -96,39 +96,16 @@ public sealed class StreamItem(StreamInfo stream)
 
             if (Stream.Correction is { } pairing)
             {
-                parts.Add(FileSummary.CorrectionLine(pairing));
+                parts.Add(Stream.CodingClass == CodingClass.Hybrid ? FileSummary.CorrectionDetails(pairing) : FileSummary.CorrectionLine(pairing));
             }
 
             return string.Join(" · ", parts);
         }
     }
 
-    // The evidence about the file's history that stands beside the coding: the processor claim and the spectral cutoff and the low bits unused, which read "not measured" until the audio
-    // is decoded and measured; empty for a stream whose coding has no class.
-    public IReadOnlyList<string> Evidence
-    {
-        get
-        {
-            if (CodingText.Describe(Stream) is null)
-            {
-                return [];
-            }
-
-            var lines = new List<string>();
-            if (CodingText.Processor(Stream) is { } processor)
-            {
-                lines.Add("Processor: " + processor);
-            }
-
-            IReadOnlyList<MeasurementLine> measured = Stream.Measurements is { } m ? MeasurementText.Lines(m, Stream.Verification?.IsLossy == true) : [];
-            foreach ((MeasurementFigure figure, string name) in new[] { (MeasurementFigure.SpectralCutoff, "Spectral Cutoff"), (MeasurementFigure.LowBitsUnused, "Low Bits Unused") })
-            {
-                lines.Add($"{name}: {measured.FirstOrDefault(l => l.Figure == figure)?.Text ?? "not measured"}");
-            }
-
-            return lines;
-        }
-    }
+    // The evidence about the file's history that stands beside the coding, worded as the text report words it, with "not measured" where no measurement ran; empty for a stream whose coding has no class.
+    public IReadOnlyList<CodingText.EvidenceLine> Evidence =>
+        CodingText.Describe(Stream) is null ? [] : CodingText.Evidence(Stream, Stream.Measurements is { } m ? MeasurementText.Lines(m, Stream.Verification?.IsLossy == true) : null, placeholders: true);
 
     // "encrypted: Common Encryption, AES-CTR (cenc); DRM systems: Widevine Content Protection, Microsoft PlayReady": the scheme, then the
     // DRM systems the file names; "protected, not encrypted:" where the scheme covers samples that are in the clear.

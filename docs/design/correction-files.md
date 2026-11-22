@@ -74,8 +74,8 @@ Status: draft for the lead, 2026-11-18. Milestone 0.4, item 3 of the [plan](../p
 | Case | Pairing | Lossless wording | Verification |
 |---|---|---|---|
 | Pair consistent, not decoded | `consistent` | lossless with its correction file | WavPack: "unknown (block header CRC and MD5 not compared: decoding was not asked for)", the block checksums of both files compared; OptimFROG: the CRC-32s of both files, "yes (with correction file; …)" where it stores no MD5 |
-| Pair consistent, decoded (WavPack) | `consistent` | lossless with its correction file | "yes (with correction file; block checksum …, correction block checksum …, block header CRC …, MD5 1 of 1)", `IsLossy` false |
-| Companion missing | `missing` | lossy without its correction file | as today: "yes (lossy stream; …)", the MD5 or `crc2` not compared |
+| Pair consistent, decoded (WavPack) | `consistent` | lossless with its correction file | "yes (the decoded audio matches the stored checksums; with correction file; block checksum …, correction block checksum …, block header CRC …, MD5 1 of 1)", `IsLossy` false |
+| Companion missing | `missing` | lossy without its correction file | as today: "yes (the decoded audio matches the stored checksums; lossy stream; …)", the MD5 or `crc2` not compared |
 | Companion inconsistent | `inconsistent` | lossy without its correction file | decoded as [Inconsistent pairs](#inconsistent-pairs) says; never `withCorrection` unless a correction block was applied |
 | Unchecked | `unchecked` | lossy without its correction file | as for a missing companion |
 

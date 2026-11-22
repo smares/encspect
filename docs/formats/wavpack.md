@@ -40,7 +40,7 @@ WavPack 4 and 5 files: `.wv` (lossless, hybrid and DSD) and the `.wvc` correctio
 
 ## Coding class
 
-WavPack lossless is lossless coding; a hybrid file (`WavPack hybrid`, or `WavPack lossy` where blocks are lossy) is hybrid coding, lossless with its consistent correction file and lossy without it ([the class table](../cli.md#the-coding-class-of-a-stream), [Hybrid mode and correction files](#hybrid-mode-and-correction-files)).
+The parsers state the class. WavPack lossless is lossless coding; a hybrid file (`WavPack hybrid`: the hybrid flag) is hybrid coding, lossless with its consistent correction file and lossy without it ([the class table](../cli.md#the-coding-class-of-a-stream), [Hybrid mode and correction files](#hybrid-mode-and-correction-files)). The old lossy mode of versions 1 to 3 (`WavPack lossy` of a legacy file) is lossy coding, with no correction file; `WavPack lossy` of a version 4 or 5 file (blocks whose extra bitstream is missing) has no class, since the stream alone does not say whether the coding is lossy or the data are damaged.
 
 ## Wasted Bits
 

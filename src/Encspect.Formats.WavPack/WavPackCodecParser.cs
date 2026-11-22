@@ -600,6 +600,7 @@ public sealed class WavPackCodecParser : ICodecParser
             {
                 Nodes = [context.Parent],
                 Codec = first.IsHybrid ? "WavPack hybrid" : _hasLossyBlocks ? "WavPack lossy" : "WavPack lossless",
+                CodingClass = first.IsHybrid ? CodingClass.Hybrid : _hasLossyBlocks ? null : CodingClass.Lossless,
                 SampleRate = _rate,
                 Channels = _channels,
                 ChannelMode = Summary.ChannelModeOf(_channels, _stereoBlocks, _jointStereoBlocks),

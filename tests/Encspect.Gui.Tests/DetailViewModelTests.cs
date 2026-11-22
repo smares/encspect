@@ -336,12 +336,12 @@ public class DetailViewModelTests
         ui.Until(() => load.IsCompleted);
 
         // The pairing comes last; no .ofc of this name lies beside the fixture.
-        Assert.EndsWith(" · lossy part of a DualStream (medium) · Correction file: missing (external-ofs-quality3.ofc), lossy without its correction file", model.StreamsText, StringComparison.Ordinal);
+        Assert.EndsWith(" · lossy part of a DualStream (medium) · Correction file: missing (external-ofs-quality3.ofc)", model.StreamsText, StringComparison.Ordinal);
     }
 
-    // The processor comes last in the stream's line.
+    // A stream with a coding class leaves the processor to the evidence line under the streams.
     [Fact]
-    public void A_stream_line_names_the_processor_after_the_writer()
+    public void A_stream_line_leaves_the_processor_to_the_evidence_line()
     {
         var ui = new TestDispatcher();
         using var model = new DetailViewModel(Analyzer.CreateDefault(), ui.Post);
@@ -349,7 +349,8 @@ public class DetailViewModelTests
         Task load = model.LoadAsync(Path.Combine(Fixtures.Directory, "flac", "external-lossyflac-b512-foreign.flac"));
         ui.Until(() => load.IsCompleted);
 
-        Assert.EndsWith(" · processed by lossyWAV 1.4.2 (high)", model.StreamsText, StringComparison.Ordinal);
+        Assert.DoesNotContain("processed by", model.StreamsText, StringComparison.Ordinal);
+        Assert.StartsWith("Processor: lossyWAV 1.4.2 (high)", model.EvidenceText, StringComparison.Ordinal);
     }
 
     // The class of the coding follows the codec, and the evidence about the file's history stands under the streams.
@@ -364,6 +365,6 @@ public class DetailViewModelTests
 
         Assert.StartsWith("FLAC · lossless coding · ", model.StreamsText, StringComparison.Ordinal);
         Assert.True(model.HasEvidenceText);
-        Assert.Equal("Processor: lossyWAV 1.4.2 (high) · Spectral Cutoff: not measured · Low Bits Unused: not measured", model.EvidenceText);
+        Assert.Equal("Processor: lossyWAV 1.4.2 (high) · Spectral Cutoff: not measured (decode the audio to measure it) · Low Bits Unused: not measured (decode the audio to measure it)", model.EvidenceText);
     }
 }

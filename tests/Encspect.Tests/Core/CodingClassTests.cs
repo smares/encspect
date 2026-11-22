@@ -15,7 +15,6 @@ public class CodingClassTests
     [InlineData("Monkey's Audio", CodingClass.Lossless)]
     [InlineData("TTA", CodingClass.Lossless)]
     [InlineData("TAK", CodingClass.Lossless)]
-    [InlineData("WavPack lossless", CodingClass.Lossless)]
     [InlineData("Dolby TrueHD", CodingClass.Lossless)]
     [InlineData("MLP", CodingClass.Lossless)]
     [InlineData("Windows Media Audio Lossless", CodingClass.Lossless)]
@@ -41,8 +40,6 @@ public class CodingClassTests
     [InlineData("Musepack SV8", CodingClass.Lossy)]
     [InlineData("Windows Media Audio 2", CodingClass.Lossy)]
     [InlineData("Windows Media Audio Voice", CodingClass.Lossy)]
-    [InlineData("WavPack hybrid", CodingClass.Hybrid)]
-    [InlineData("WavPack lossy", CodingClass.Hybrid)]
     public void ACodingHasTheClassItsDefinitionGives(string codec, CodingClass expected) => Assert.Equal(expected, CodingClasses.OfName(codec));
 
     [Theory]
@@ -53,18 +50,20 @@ public class CodingClassTests
     [InlineData("SLS")]
     [InlineData("SLS non-core")]
     [InlineData("A coding nobody listed")]
+    [InlineData("WavPack hybrid")]
+    [InlineData("WavPack lossy")]
+    [InlineData("WavPack lossless")]
+    [InlineData("OptimFROG")]
     public void ACodingWhoseClassTheStreamAloneDoesNotSettleHasNone(string codec) => Assert.Null(CodingClasses.OfName(codec));
 
     [Fact]
-    public void OptimFrogIsHybridOnlyWhereTheStreamMakesTheLossyPartClaim()
+    public void AStreamWithoutAClassOrAnOptimFrogOrWavPackNameStaysWithoutOne()
     {
         Node node = new("OptimFROG", 0, 10);
         var plain = new StreamInfo { Nodes = [node], Codec = "OptimFROG" };
-        var dual = plain with { Claims = [new StreamClaim(StreamClaim.LossyPart, "DualStream", Confidence.Low, "the reserved field")] };
 
-        Assert.Equal(CodingClass.Lossless, CodingClasses.Of(plain));
-        Assert.Equal(CodingClass.Hybrid, CodingClasses.Of(dual));
-        Assert.Null(CodingClasses.Of(plain with { IsCorrectionFile = true }));
+        Assert.Null(CodingClasses.Of(plain));
+        Assert.Null(CodingClasses.Of(plain with { IsCorrectionFile = true, CodingClass = null }));
         Assert.Null(CodingClasses.Of(plain with { Kind = StreamKind.Video }));
     }
 
@@ -134,7 +133,7 @@ public class CodingClassTests
         ReportTextWriter.Write(report, writer, showOffsets: false);
         string text = writer.ToString().ReplaceLineEndings("\n");
 
-        Assert.Contains("    Stream\n      Coding: lossless coding\n        Processor: lossyWAV 1.4.2 (high)\n      Verified: yes (the decoded audio matches its stored checksum; STREAMINFO MD5 1 of 1)\n", text);
+        Assert.Contains("    Stream\n      Coding: lossless coding\n        Processor: lossyWAV 1.4.2 (high)\n      Verified: yes (the decoded audio matches the stored checksums; STREAMINFO MD5 1 of 1)\n", text);
     }
 
     [Fact]

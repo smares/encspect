@@ -210,6 +210,8 @@ internal static partial class Legacy
         {
             Nodes = [stream],
             Codec = codec,
+            // The old lossy mode of versions 1 to 3 has no correction file; only the hybrid mode of version 3 does.
+            CodingClass = h.IsHybrid ? CodingClass.Hybrid : h.IsLossy ? CodingClass.Lossy : CodingClass.Lossless,
             SampleRate = (int)Math.Min(int.MaxValue, rate),
             Channels = channels,
             ChannelMode = channelMode,
