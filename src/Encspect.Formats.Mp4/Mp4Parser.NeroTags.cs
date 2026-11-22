@@ -85,9 +85,13 @@ public sealed partial class Mp4Parser
                     state.NeroSegment = outer;
                 }
 
+                // Fields of a segment inside this one have their own number already.
                 for (int i = firstField; i < state.NeroFields.Count; i++)
                 {
-                    state.NeroFields[i].Segment = number;
+                    if (state.NeroFields[i].Segment == -1)
+                    {
+                        state.NeroFields[i].Segment = number;
+                    }
                 }
 
                 break;
