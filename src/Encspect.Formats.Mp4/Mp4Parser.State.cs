@@ -228,8 +228,8 @@ public sealed partial class Mp4Parser
 
         public int Channels { get; set; }
 
-        // Whether the entry's channel count must be correct: ISO/IEC 14496-12's AudioSampleEntryV1 (entry version 1 outside QuickTime's layout) or QuickTime's
-        // sound sample description version 2, against version 0's, whose count a codec that states its own may override (ISO/IEC 14496-12 12.2.3).
+        // Whether the entry's channel count must be correct: ISO/IEC 14496-12's AudioSampleEntryV1 (entry version 1 outside QuickTime's layout), against version 0's,
+        // whose count a codec that states its own may override (ISO/IEC 14496-12 12.2.3).
         public bool IsChannelCountBinding { get; set; }
 
         public int SampleSize { get; set; }
