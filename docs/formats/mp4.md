@@ -19,7 +19,7 @@ Box by box:
 
 - **Headers:** the 32-bit size, the 64-bit size after a size of 1, size 0 to the end of its parent, a uuid box's user type, and a full box's version and flags. The file's boxes sit under one MP4 node; bytes after the last box are trailing data.
 - **The run of top-level boxes** ends at the first type ISO/IEC 14496-12 does not place at the top level, which is also the end `DeclaredEnd` gives.
-  - A trailing ID3v1 or APE tag after the boxes is the file's; a `TAG` inside the last box is the container's (a near miss).
+  - A trailing ID3v1, APEv1 or APEv2 tag after the boxes is the file's; a `TAG` inside the last box is the container's (a near miss).
   - A last box of size 0 declares no end.
 - **Movie and track:** ftyp and styp; moov, mvhd, trak, tkhd, edts and elst, mdia, mdhd (with its packed language), hdlr (QuickTime's component type and Pascal string name too), minf, smhd, dinf and dref.
 - **Sample tables:** stbl with stsd and its sample entries, stts, ctts, stsc, stsz, stz2, stco, co64, stss, sgpd (roll and pre-roll distances) and sbgp. They are read a block at a time into arrays of the entries the box holds, never more, whatever count it declares.

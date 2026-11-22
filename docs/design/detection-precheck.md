@@ -7,7 +7,7 @@ Status: recorded, not to be built. The project lead decided on 2026-10-26 to bui
 - **Neither reuse nor the pre-check is built.** The project lead decided so on 2026-10-26.
 - **Why the gains are small in practice:**
   - Detection costs under 2 ms a file in the NativeAOT build (the 300 short files take about 0.54 s in all), so even the best case saves a few seconds a scan of 10,000 files.
-  - Reuse is off for a file with a trailing ID3v1 or APE tag, which most real MP3 collections carry; on the tagged folder it gained about 4%.
+  - Reuse is off for a file with a trailing ID3v1, APEv1 or APEv2 tag, which most real MP3 collections carry; on the tagged folder it gained about 4%.
   - The runs read files from the page cache; a first scan from disk spends a larger share reading, so the share detection saves is smaller still.
   - The pre-check needs a contract change for every format parser, a checking wrapper, a fuzz mode and a rule, and clears the bar only for lossless container libraries and long Ogg and WAV files, which are already quick to detect.
 - **Where the effort goes instead:** parallel decoding ([parallel-decoding.md](parallel-decoding.md)), which shortens the waits users notice (`--verify` of large Monkey's Audio and WavPack files).
@@ -68,7 +68,7 @@ Percentages are against `main` of the same batch, as the fastest of 7 runs and a
 | all fixtures, 1,000 junk bytes in front | 2502 | 1.713 | - | -25% / -24% | +22% | -23% / -20% | +2% / +5% |
 | **Tagged and untagged MP3 (new)** | | | | | | | |
 | the same 120 MP3 files without tags | 120 | 0.222 | - | -25% / -27% | -3% | -15% / -19% | +14% / +10% |
-| 120 MP3 files with ID3v2, 90 of them also with ID3v1 or APE | 120 | 0.249 | - | -4% / -14% | -2% | -14% / -12% | -10% / +3% |
+| 120 MP3 files with ID3v2, 90 of them also with ID3v1 or APEv2 | 120 | 0.249 | - | -4% / -14% | -2% | -14% / -12% | -10% / +3% |
 | tagged folder: those 120 and the 145 `tags` fixtures | 265 | 0.285 | - | +0% / -15% | -1% | -9% / -19% | -9% / -5% |
 | **Fixture folders of the raw streams** | | | | | | | |
 | `mpeg` | 164 | 0.161 | 52% | -13% / -18% | -4% | -13% / -25% | -0% / -8% |
@@ -137,7 +137,7 @@ The two-byte check: the design without and with it, against `main`:
 | 300 short MP3 and AAC files | -24% | -20% |
 | all fixtures, 1,000 junk bytes in front | -23% | -23% |
 | the same 120 MP3 files without tags | -15% | -18% |
-| 120 MP3 files with ID3v2, 90 of them also with ID3v1 or APE | -14% | -9% |
+| 120 MP3 files with ID3v2, 90 of them also with ID3v1 or APEv2 | -14% | -9% |
 | `mpeg` | -13% | -20% |
 | `layer3` | -17% | -24% |
 | `adts` | -15% | -18% |
@@ -164,7 +164,7 @@ The project's bar is a gain of about 15%. A row is listed only where both the fa
 
 - **Pass 1** (`Analyzer.FindContainer`): after the leading tags, every parser sniffs the data up to the end of the file, to find the best format and ask it for its declared end (`IFormatParser.DeclaredEnd`). That end must be known before the trailing tags are looked for, since a trailing candidate that starts before it is the container's own chunk ([architecture.md, "Tag detection and false positives"](../architecture.md#tag-detection-and-false-positives), rule 4; once the plan's rule 3).
 - **Pass 2** (`Analyzer.ParseData`): every parser sniffs again, on the window without the trailing tags and with `SniffContext.FirstEmbeddedTag`. Its ranking picks the parser that runs and the alternatives the report lists; `Describe` asks the best for its declared end again when there are other candidates.
-- **The two can differ:** a sniff reads to the end of its window. WavPack's class 100 for a single block needs the block to end at the end of the data or at the first embedded tag, Musepack's version 4 to 6 frames must end there, MPEG audio, ADTS, AC-3 and DTS count frames up to it, and Musepack and WavPack stop at the first embedded tag. Pass 1 sees a trailing ID3v1 or APE tag as data; pass 2 does not.
+- **The two can differ:** a sniff reads to the end of its window. WavPack's class 100 for a single block needs the block to end at the end of the data or at the first embedded tag, Musepack's version 4 to 6 frames must end there, MPEG audio, ADTS, AC-3 and DTS count frames up to it, and Musepack and WavPack stop at the first embedded tag. Pass 1 sees a trailing ID3v1, APEv1 or APEv2 tag as data; pass 2 does not.
 - **`--only-format`** adds `Analyzer.DetectFormat`, which runs pass 1 and then the ranking again on the data without the trailing tags (never with `FirstEmbeddedTag`): four sniffs of every parser for a file that is analyzed, two for one that is skipped.
 - **Is the first pass reusable?** Only where both passes see the same bytes: no trailing tag and no embedded tag, so that the window, the extension hint and `FirstEmbeddedTag` are equal. A sniff reads nothing else, so it returns the same result. Where a trailing tag shortens the window (most tagged MP3 files), both passes stay.
 

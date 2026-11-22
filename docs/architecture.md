@@ -11,7 +11,7 @@ flowchart TD
     CLI["CLI<br/>text, JSON and CSV output"] --> Host
     GUI["GUI (Avalonia)<br/>tree, hex view, graphs"] --> Host
     Host -.->|"measurements of the decoded audio"| GUI
-    Host["Host<br/>sniffs the format, runs tag and format parsers,<br/>assembles one report"] --> Tags["Tag parsers<br/>ID3v1, ID3v2, Lyrics3, APE, Vorbis comments"]
+    Host["Host<br/>sniffs the format, runs tag and format parsers,<br/>assembles one report"] --> Tags["Tag parsers<br/>ID3v1, ID3v2, Lyrics3 v1, Lyrics3 v2, APEv1, APEv2, Vorbis comments"]
     Host --> Formats["Format parsers, one project each,<br/>with their optional decoders<br/>MPEG audio, FLAC, Ogg, MP4, Matroska, ..."]
     Host --> Codecs["Codec parsers<br/>MPEG audio, AAC, Vorbis, Opus, ALAC, ..."]
     Formats -.->|"payloads, packets, tags and frames to decode,<br/>through the host's routes"| Host
@@ -22,7 +22,7 @@ flowchart TD
 
 - The host sniffs the format, lets tag parsers claim their regions, then hands the rest to a format parser.
 - A container hands what it holds back to the host, which passes it on to a codec or tag parser.
-- **Tags are separate from formats,** because ID3, APE and Lyrics3 appear in many of them.
+- **Tags are separate from formats,** because ID3v1, ID3v2, APEv1, APEv2, Lyrics3 v1 and Lyrics3 v2 appear in many of them.
 - **Decoders** are optional and live in their format's project, in its `Decoding` namespace, apart from its parsers.
   - Parsers reach them only through the host, so no parser depends on one; `DecodingBoundaryTests` checks this in the compiled assemblies.
   - The contract is [decoders.md](design/decoders.md).
@@ -41,7 +41,7 @@ flowchart TD
   - JSON writes numbers and booleans as such, with `unit` beside them: `"value": 128, "unit": "kbps"`.
 - **Node kinds:** `NodeKind` says what a node stands for: a Tag (wherever it sits), a Stream (a stretch of a format's audio data, such as an MPEG Audio region), a Frame, its SideInfo, Statistics, or, by default, a Detail.
   - Front ends find sections by kind, never by name: `--hide` and the summary's tags read kinds.
-  - So an APE item named "Frame" is tag content, and a Monkey's Audio stream named "APE" is no tag.
+  - So an APEv1 or APEv2 item named "Frame" is tag content, and a Monkey's Audio stream named "APE" is no tag.
 - **Bit positions:** a field that does not cover whole bytes also carries its bit offset within its first byte and its width in bits (`Node.FromBits`), so the hex view can mark the exact bits.
   - Its byte offset and length still cover every byte it touches.
   - Bits count from the most significant bit.
@@ -326,11 +326,11 @@ Each format parser's `Sniff` returns a `SniffResult` (`Core.Abstractions`), and 
 ## Tag detection and false positives
 
 - **Decision:** tags are found by position, structural validation and byte ownership, never by a signature alone.
-- **Why:** short signatures collide with each other and with audio data. `APETAGEX` holds `TAG` at offset 3, so a 131-byte APE tag at the end of a file puts a false ID3v1 signature at EOF-128.
+- **Why:** short signatures collide with each other and with audio data. `APETAGEX` holds `TAG` at offset 3, so a 131-byte APEv2 tag at the end of a file puts a false ID3v1 signature at EOF-128.
 - **What follows:**
   - each tag type is looked for only where its specification allows;
   - structural validation decides confidence, not existence: a tag that breaks its specification is reported with findings, not dropped;
-  - when candidates compete for the same bytes, the strongest evidence wins, and the order APE, Lyrics3, ID3v2, ID3v1 only breaks ties;
+  - when candidates compete for the same bytes, the strongest evidence wins, and the order APEv1 and APEv2, Lyrics3 v1 and v2, ID3v2, ID3v1 only breaks ties;
   - a container that states its size owns the trailing candidates that start before its end (see "Declared end" under [Parser contract](#parser-contract));
   - a frame header only counts as MPEG sync when a chain of consistent frames follows it.
 - **The rules and the fixtures that prove them:** [tags/README.md, "How tags are found"](tags/README.md#how-tags-are-found).

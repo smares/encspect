@@ -28,7 +28,7 @@ Sources:
   - `adtl`: `labl`, `note`, `ltxt` and `file`;
   - `wavl`: `data` and `slnt` chunks.
 - `bext` (EBU broadcast extension: description, originator, time reference, version, UMID and, from version 2, the loudness values), `cue ` (cue points), `plst` (playlist), `smpl` (sampler: manufacturer, MIDI unity note, loops), `inst` (instrument), `chna` (channel allocation of the Audio Definition Model), `iXML` and `axml` (XML as text), `bxml` (the compression method; the compressed XML is not decompressed) and `sxml` (its header; the sub-chunks and alignment points are not read), `CSET`, `JUNK` and `PAD ` (filler).
-- `id3 ` and `ID3 `: the chunk's data is handed to the ID3 tag parser through `ParseTag`, so an ID3v2 tag in a WAVE file is shown as any other.
+- `id3 ` and `ID3 `: the chunk's data is handed to the ID3v2 parser through `ParseTag`, so an ID3v2 tag in a WAVE file is shown as any other.
 - `levl`, `link`, `dbmd`, `qlty` and `r64m` are named and sized; their contents are not read.
 - Limits, so that a small file cannot ask for a large report:
   - at most 2,048 chunks are listed at one level (`wav.chunk-limit`), and tables inside chunks (cue points, loops, `ds64` and `chna` entries) list at most 1,024 entries;

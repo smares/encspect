@@ -1,4 +1,4 @@
-# APE tags
+# APEv1 and APEv2 tags
 
 - APEv1 and APEv2.
 - Found through the footer at the end of the file or just before another trailing tag. An APEv2 tag can also be found through its header at the start of the file or directly after a leading tag; APEv1 has no header.
@@ -7,7 +7,7 @@
   - a footer that does not claim to be missing;
   - items that end exactly at the footer;
   - text items in UTF-8.
-- An APE tag whose header puts `TAG` at 128 bytes before the end of the file wins over a supposed ID3v1 tag there. [How tags are found](README.md#the-ape-and-id3v1-collision) explains this collision.
+- An APEv2 tag whose header puts `TAG` at 128 bytes before the end of the file wins over a supposed ID3v1 tag there. [How tags are found](README.md#the-apev2-and-id3v1-collision) explains this collision.
 - Musepack SV8 chapters hold APEv2 items, which go to this parser.
 - Item limit, so that a tag of millions of items (11 bytes each at the least) cannot grow the report:
   - every item is checked;

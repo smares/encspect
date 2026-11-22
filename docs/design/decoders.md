@@ -478,7 +478,7 @@ MD5 and CRC-32 in managed code, for the new parsers, the decoders and the tests:
 
 ```csharp
 // MD5 (RFC 1321). System.Security.Cryptography's MD5 goes to the system's OpenSSL on Linux, which refuses MD5 in FIPS
-// mode, so verification would fail on such a system. The ID3 parser's SHA256.HashData takes the same path, but
+// mode, so verification would fail on such a system. The ID3v1 and ID3v2 parser's SHA256.HashData takes the same path, but
 // SHA-256 is approved in FIPS mode.
 public sealed class Md5
 {

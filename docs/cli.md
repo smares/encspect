@@ -47,7 +47,7 @@ Adds the byte offset and length of each node, and of the node each finding point
 
 ### `--hide tags,frames,side-info,statistics,measurements`
 
-Leaves those sections out of the text tree and JSON; it does not apply to `--csv`. Sections are recognized by the kind the parser gives a node, not by its name, so an APE item named `Frame` stays.
+Leaves those sections out of the text tree and JSON; it does not apply to `--csv`. Sections are recognized by the kind the parser gives a node, not by its name, so an APEv1 or APEv2 item named `Frame` stays.
 
 - **Paths in JSON** index the tree as written. With sections hidden, a finding's `path` and the paths in a stream's `nodes` count the siblings that are kept, so following them through the written `children` arrays reaches the node they name.
 - **`measurements`** hides the measurement lines of the text tree and the `measurements` object of the JSON (see `--measure`); it is the one section that is not a kind of node.
