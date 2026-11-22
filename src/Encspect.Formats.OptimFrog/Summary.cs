@@ -418,6 +418,8 @@ internal static class Summary
         {
             Nodes = [stream],
             Codec = CodecName,
+            // Hybrid where the DualStream claim is made, lossless where every whole data block shows the pattern of a lossless file; a mixture, or no whole block, settles nothing.
+            CodingClass = claim is not null ? CodingClass.Hybrid : against is not null ? CodingClass.Lossless : null,
             SampleRate = (int)Math.Min(rate, int.MaxValue),
             Channels = m.Channels,
             ChannelMode = m.Channels == 1 ? "Mono" : "Stereo",

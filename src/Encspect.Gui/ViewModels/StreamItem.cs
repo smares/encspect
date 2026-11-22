@@ -1,5 +1,6 @@
 using System.Globalization;
 using Encspect.Core;
+using Encspect.Host;
 
 namespace Encspect.Gui.ViewModels;
 
@@ -14,6 +15,11 @@ public sealed class StreamItem(StreamInfo stream)
         get
         {
             var parts = new List<string> { Stream.Codec };
+            if (CodingText.Describe(Stream) is { } coding)
+            {
+                parts.Add(coding);
+            }
+
             if (Stream.SampleRate > 0)
             {
                 parts.Add(Format.SampleRate(Stream.SampleRate));
@@ -78,7 +84,7 @@ public sealed class StreamItem(StreamInfo stream)
                 parts.Add("written by " + Format.Encoder(writer, Stream.WriterConfidence));
             }
 
-            if (Stream.Processor is { } processor)
+            if (Stream.Processor is { } processor && CodingText.Describe(Stream) is null)
             {
                 parts.Add("processed by " + Format.Encoder(processor, Stream.ProcessorConfidence));
             }
@@ -90,12 +96,16 @@ public sealed class StreamItem(StreamInfo stream)
 
             if (Stream.Correction is { } pairing)
             {
-                parts.Add(FileSummary.CorrectionLine(pairing));
+                parts.Add(Stream.CodingClass == CodingClass.Hybrid ? FileSummary.CorrectionDetails(pairing) : FileSummary.CorrectionLine(pairing));
             }
 
             return string.Join(" · ", parts);
         }
     }
+
+    // The evidence about the file's history that stands beside the coding, worded as the text report words it, with "not measured" where no measurement ran; empty for a stream whose coding has no class.
+    public IReadOnlyList<CodingText.EvidenceLine> Evidence =>
+        CodingText.Describe(Stream) is null ? [] : CodingText.Evidence(Stream, Stream.Measurements is { } m ? MeasurementText.Lines(m, Stream.Verification?.IsLossy == true) : null, placeholders: true);
 
     // "encrypted: Common Encryption, AES-CTR (cenc); DRM systems: Widevine Content Protection, Microsoft PlayReady": the scheme, then the
     // DRM systems the file names; "protected, not encrypted:" where the scheme covers samples that are in the clear.

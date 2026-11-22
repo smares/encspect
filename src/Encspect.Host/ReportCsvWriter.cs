@@ -8,7 +8,7 @@ public static class ReportCsvWriter
 {
     private static readonly string[] Columns =
     [
-        "Path", "Format", "Streams", "Codec", "Duration (s)", "Samples", "Lost Samples", "Average Bitrate (kbps)", "Sample Rate (Hz)", "Channel Mode",
+        "Path", "Format", "Streams", "Codec", "Coding Class", "Duration (s)", "Samples", "Lost Samples", "Average Bitrate (kbps)", "Sample Rate (Hz)", "Channel Mode",
         "Channel Layout", "Encoder", "Encoder Confidence", "Writer", "Writer Confidence", "Processor", "Processor Confidence", "Lossy Part", "Lossy Part Confidence", "Correction File", "Tags", "Errors", "Warnings", "Infos", "Has Object Audio", "JOC Object Count",
         "Is Protected", "Protection Scheme", "DRM Systems", "Is Verified", "Spectral Cutoff (Hz)", "Spectral Bandwidth (Hz)", "Spectral Slope (dB/kHz)", "Partial Cutoff (Hz)", "Side Cutoff (Hz)", "Spectral Holes (%)", "Sample Peak (dBFS)", "Maximum True Peak Level (dBTP)", "Clipping Runs",
         "Integrated Loudness (LUFS)", "Loudness Range (LU)", "Digital Silence Stretches", "Changes of Low Bits Unused", "Grid of the Changes (samples)",
@@ -33,7 +33,7 @@ public static class ReportCsvWriter
             ReportSummary s = ReportSummary.From(report);
             WriteRow(writer,
             [
-                s.Source, s.Format, Count(s.Streams), s.Codec, Fixed(s.Duration, 3), s.Samples?.ToString(CultureInfo.InvariantCulture),
+                s.Source, s.Format, Count(s.Streams), s.Codec, CodingText.Word(s.CodingClass), Fixed(s.Duration, 3), s.Samples?.ToString(CultureInfo.InvariantCulture),
                 s.Samples is null ? null : s.LostSamples.ToString(CultureInfo.InvariantCulture),
                 Fixed(s.AverageBitrate, 1), s.SampleRate?.ToString(CultureInfo.InvariantCulture), s.ChannelMode, s.ChannelLayoutText, s.Encoder,
                 s.EncoderConfidence?.ToString(), s.Writer, s.WriterConfidence?.ToString(), s.Processor, s.ProcessorConfidence?.ToString(), s.LossyPart, s.LossyPartConfidence?.ToString(), s.Correction is { } correction ? CorrectionText.Word(correction) : null, string.Join(", ", s.Tags), Count(s.Errors), Count(s.Warnings), Count(s.Infos),

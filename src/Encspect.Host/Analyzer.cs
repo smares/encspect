@@ -292,7 +292,7 @@ public sealed partial class Analyzer
             options.CancellationToken.ThrowIfCancellationRequested();
         }
 
-        streams = streams.Select(s => s with { NodePaths = s.Nodes.Select(paths.Find).ToList(), Measurements = WithChannelReason(s, decodeRun?.RecordFor(s) ?? s.Measurements) }).ToList();
+        streams = streams.Select(s => s with { CodingClass = CodingClasses.Of(s), NodePaths = s.Nodes.Select(paths.Find).ToList(), Measurements = WithChannelReason(s, decodeRun?.RecordFor(s) ?? s.Measurements) }).ToList();
         progress?.Report(reader.Length);
         return new Report(source, root, ordered, streams, detection, companions);
     }

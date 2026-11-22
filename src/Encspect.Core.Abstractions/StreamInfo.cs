@@ -15,6 +15,11 @@ public sealed record StreamInfo
     // The format's name for the coding, such as "MPEG-1 Layer III".
     public required string Codec { get; init; }
 
+    // How the coding reconstructs audio (lossless, lossy, or a lossy stream with an optional correction file), a property of the coding and never of the
+    // audio's history. A parser may state it; where it leaves it null the host takes the class of the coding's name (CodingClasses.Of), and a coding
+    // with no class (an unlisted one, MPEG-4 SLS, a stream that is not audio) stays null.
+    public CodingClass? CodingClass { get; init; }
+
     public int SampleRate { get; init; }
 
     public int Channels { get; init; }

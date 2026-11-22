@@ -177,7 +177,8 @@ public sealed class CorrectionFileTests : IDisposable
         (string main, _) = Consistent();
         using DetailViewModel model = Load(main, out _);
 
-        Assert.EndsWith("Correction file: consistent (song.wvc), lossless with its correction file", model.StreamsText, StringComparison.Ordinal);
+        Assert.EndsWith("Correction file: consistent (song.wvc)", model.StreamsText, StringComparison.Ordinal);
+        Assert.Contains(" · hybrid coding (lossless with its correction file) · ", model.StreamsText, StringComparison.Ordinal);
     }
 
     [Fact]

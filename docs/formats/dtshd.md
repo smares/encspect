@@ -39,6 +39,11 @@ The `.dtshd` container of DTS-HD: chunks of metadata around a DTS stream. Writte
 - `dts-hd.chunk-truncated` (the data ends inside a chunk), `dts-hd.chunk-size` (a size under 4, which FFmpeg refuses, or too small for the chunk's fields), `dts-hd.chunk-header` (bytes where a chunk should start that are no header, or a size beyond 2^61: the rest is not read), `dts-hd.chunk-misaligned` (a chunk off a 32-bit boundary), `dts-hd.trailing-data` (fewer than 16 bytes after the last chunk), `dts-hd.header-first` (the first chunk is not DTSHDHDR, reachable by forcing the format), `dts-hd.header-repeated`, `dts-hd.stream-repeated`, `dts-hd.no-stream-data`, `dts-hd.reserved-value` (the reference clock code 3, a frame rate above 7, reserved flags), `dts-hd.table-size`, `dts-hd.metadata-differs`, `dts-hd.stream-not-analyzed`, `dts-hd.chunk-count` (more than 1,024 chunks: the rest is not read).
 - Findings that can occur at every chunk (`dts-hd.chunk-size`, `dts-hd.chunk-misaligned`, `dts-hd.reserved-value`, `dts-hd.table-size`, `dts-hd.header-repeated`, `dts-hd.stream-repeated`) are reported once for each field or cause, with a count, pointing at the first case ("First case: ... (N times in the file.)"). The report orders findings by the offset of their node, so these stay in file order.
 
+## Coding class
+
+- **DTS-HD Master Audio is lossless coding and High Resolution Audio is lossy coding**, as for every stream by the codec's name ([the class table](../cli.md#the-coding-class-of-a-stream)).
+- **The core** of a Master Audio stream is a lossy DTS core that the lossless extension corrects; the class is that of the stream as a whole, and the core's own frames are in the tree.
+
 ## Not covered
 
 - The entries of the tables, the values of the residuals of the time code, the meaning of LSB trim (the standard does not give it) and a check of the frame count against the stream.

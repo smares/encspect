@@ -25,10 +25,10 @@ namespace Encspect.Gui.Cache;
 // Format, little-endian as BinaryWriter writes it: the magic line, the format version, the
 // analyzer versions in use, the number of entries, the entries (path, fingerprint, analyzer version
 // index, schema version, when last used, the summary but its source, which is the path, then the
-// summary's correction line and its companions), and a SHA-256 of all that.
+// summary's correction line, its coding class and its companions), and a SHA-256 of all that.
 public sealed class SummaryCache : IDisposable
 {
-    public const int FormatVersion = 8;
+    public const int FormatVersion = 9;
 
     // Coarse file systems keep times to two seconds.
     private static readonly TimeSpan TimestampGranularity = TimeSpan.FromSeconds(2);
@@ -450,6 +450,7 @@ public sealed class SummaryCache : IDisposable
         string? problem = ReadText(reader);
         summary = ReadProtection(reader, summary);
         string? correction = ReadText(reader);
+        summary = summary with { CodingClass = reader.ReadBoolean() ? (CodingClass)reader.ReadInt32() : null };
         var companions = new CompanionKey[Bounded(reader.ReadInt32(), 1 << 10)];
         for (int i = 0; i < companions.Length; i++)
         {
@@ -621,6 +622,7 @@ public sealed class SummaryCache : IDisposable
         WriteText(writer, entry.Summary.Problem);
         WriteProtection(writer, summary);
         WriteText(writer, entry.Summary.Correction);
+        WriteOptional(writer, (int?)summary.CodingClass, writer.Write);
         writer.Write(entry.Companions.Count);
         foreach (CompanionKey companion in entry.Companions)
         {

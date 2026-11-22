@@ -44,6 +44,21 @@ public sealed record FileSummary(ReportSummary Summary, bool? IsVbr, string? Pro
     // The line the stream's pairing gets in the command line's text output.
     internal static string CorrectionLine(CorrectionPairing pairing) => "Correction file: " + CorrectionText.Describe(pairing);
 
+    // The pairing without the sentence about what it means for the stream, which the coding line of a hybrid stream already says.
+    internal static string CorrectionDetails(CorrectionPairing pairing)
+    {
+        string line = CorrectionText.Describe(pairing);
+        foreach (string meaning in new[] { ", lossless with its correction file", ", lossy without its correction file" })
+        {
+            if (line.EndsWith(meaning, StringComparison.Ordinal))
+            {
+                line = line[..^meaning.Length];
+            }
+        }
+
+        return "Correction file: " + line;
+    }
+
     private static List<(string Path, long? Length)> LookedFor(Report report)
     {
         var paths = new List<(string Path, long? Length)>();

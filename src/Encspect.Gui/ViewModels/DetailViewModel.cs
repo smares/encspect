@@ -110,7 +110,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
     // checksum, included: its decoding is for the measurements).
     public bool CanDecodeAudio => _report is not null && !_isLoading && !_isDecoding && _report.Streams.Any(s => s.Verification is { Decoding: DecodeStatus.NotRequested });
 
-    // "Verified: yes (frame CRC-16 40 of 40, STREAMINFO MD5 1 of 1)", a line for each stream with a verification; null where none has.
+    // "Verified: yes (the decoded audio matches the stored checksums; STREAMINFO MD5 1 of 1)", a line for each stream with a verification; null where none has.
     public string? VerificationText
     {
         get
@@ -333,9 +333,38 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
             if (Set(ref _streams, value))
             {
                 Raise(nameof(StreamsText));
+                Raise(nameof(EvidenceText));
+                Raise(nameof(HasEvidenceText));
             }
         }
     }
+
+    // One line per stream whose coding has a class: the figures beside the coding class, labeled with the stream where the file has several audio streams.
+    public string EvidenceText
+    {
+        get
+        {
+            if (_isLoading)
+            {
+                return string.Empty;
+            }
+
+            bool several = _streams.Count(s => s.Stream.Kind == StreamKind.Audio) > 1;
+            var result = new List<string>();
+            for (int i = 0; i < _streams.Count; i++)
+            {
+                IReadOnlyList<CodingText.EvidenceLine> evidence = _streams[i].Evidence;
+                if (evidence.Count > 0)
+                {
+                    result.Add((several ? $"Stream {i + 1}: " : string.Empty) + string.Join(" · ", evidence.Select(e => $"{e.Name}: {e.Text}")));
+                }
+            }
+
+            return string.Join(Environment.NewLine, result);
+        }
+    }
+
+    public bool HasEvidenceText => EvidenceText.Length > 0;
 
     public string StreamsText => _isLoading ? "Analyzing…" : _streams.Count > 0 ? string.Join(Environment.NewLine, _streams.Select(s => s.Text)) : (_report?.Root.Value?.ToString() ?? string.Empty);
 
@@ -841,6 +870,8 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         Progress = 1;
         Streams = report.Streams.Select(s => new StreamItem(s)).ToList();
         Raise(nameof(StreamsText));
+        Raise(nameof(EvidenceText));
+        Raise(nameof(HasEvidenceText));
         Graphs.Load(report, showAudio);
         Raise(nameof(HasNoGraphs));
         RaiseDetection();

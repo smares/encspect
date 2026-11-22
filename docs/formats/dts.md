@@ -27,6 +27,10 @@ DTS Coherent Acoustics: core streams in raw `.dts` files and in [MP4](mp4.md), w
   - **What the walk takes from the specification's text:** the Huffman books of the bit allocation (D.5.6) list ABITS 1 to 12 and are read as the values themselves (the real files and FFmpeg's encoder files confirm it: with ABITS minus 1, the walk of FFmpeg's files fails at the end of the subframe); ABITS 0 has no code in them, so a channel that codes it uses the linear 4-bit or 5-bit forms. A quantizer without further encoding (ABITS 8 and above, and ABITS 11 and above always) is a two's complement number of ABITS minus 3 bits (5.6, Table 5-26). The linear scale factor and joint scale forms are read as unsigned (scale factors) and two's complement numbers (joint scale factors, `JOIN_SHUFF` 5 and 6, which the specification leaves open; no fixture uses them).
   - **A subframe with a partial subsubframe** (PSC above 0, a termination frame) is not walked: 5.5.1 does not say how its samples are coded (`dts.subframe-partial`).
 
+## Coding class
+
+A DTS core, DTS-ES, 96/24 and Express stream is lossy coding; a stream with the lossless extension is reported as DTS-HD Master Audio and is lossless coding ([the class table](../cli.md#the-coding-class-of-a-stream)).
+
 ## Frames and sync
 
 - A sync word only starts a stream when a chain of frames follows it: two more units at the lengths the headers give, in the same form and at the same sampling frequency, or units that end exactly at the end of the data. A header must also be plausible (FSIZE of at least 96 bytes, at least 6 blocks, a defined sampling frequency).

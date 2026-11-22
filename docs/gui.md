@@ -13,7 +13,7 @@ dotnet run -c Release --project src/Encspect.Gui [-- <file-or-folder>...]
 
 The main window lists a folder's files on the right, with these columns:
 
-- format and codec (for a file with a correction file, the codec cell's tooltip gives the pairing, worded as the command line words it: "Correction file: consistent (song.wvc), lossless with its correction file");
+- format and codec (the coding class is in the detail window's streams line; for a file with a correction file, the codec cell's tooltip gives the pairing, worded as the command line words it: "Correction file: consistent (song.wvc), lossless with its correction file");
 - duration;
 - bitrate (VBR or CBR);
 - sample rate and channel mode;
@@ -89,6 +89,7 @@ Only the other files are analyzed.
 - **Position:** it opens centered over the main window the first time, and where it was after that, also in later sessions (`settings.json` in the user's application data folder, under `Encspect`).
 - **Analysis:** the detail window always analyzes the file again.
 - **Contents:**
+  - the streams at the top, each with the class of its coding after the codec ("lossless coding", "lossy coding", "hybrid coding (lossless with its correction file)"; a stream whose coding has no class has none), and under them one line per such stream with the evidence about the file's history: the processor claim where there is one, and the spectral cutoff and the low bits unused, which read "not measured" until the audio is decoded and measured (Decode Audio), or "not measured (no decoder for this coding)" where none exists, then give the figure with the basis it was measured on or say why there is none, worded as the command line words it ("not defined for floating-point samples", "not measured (the spectrum was not asked for)"); with several audio streams each line starts with its stream's number. The figures are evidence with their basis, never a verdict; the Coding class article under Topics says what the class and the figures can and cannot show;
   - the streams at the top, each with its channel layout and speakers, the lost samples of a stream that has any ("1,152 lost samples", after the duration), and the object audio and JOC object count of a stream that has them, and the protection of a protected one ("encrypted: Common Encryption, AES-CTR (cenc); DRM systems: Widevine Content Protection", or "protected, not encrypted" where its samples are in the clear);
   - the structure tree, whose rows are made only as they are shown and whose children are read only when expanded, so a stream of 100,000 frames opens at once;
   - a hex view read from the file as it scrolls. Selecting a node marks its bytes, all its ranges where they are not contiguous, and, for a field of a few bits, the bits themselves, also in the bit strip below.
