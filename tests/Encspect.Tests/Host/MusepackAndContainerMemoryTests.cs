@@ -336,7 +336,6 @@ public sealed class MusepackAndContainerMemoryTests(ITestOutputHelper output) : 
         Output.WriteLine($"{kept / frames} bytes kept and {peak / frames} bytes peak per frame");
         Assert.True(kept < frames * MusepackKeptBound, $"The report keeps {kept / frames} bytes per frame.");
         Assert.True(peak < frames * MusepackPeakBound, $"The live heap grew by {peak / frames} bytes per frame.");
-
         GC.KeepAlive(report);
     }
 

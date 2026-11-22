@@ -499,9 +499,14 @@ internal static class Sv8Parser
         }
 
         state.Stereo.AddAll(feed.Codes.AsSpan(0, frames));
-        state.Bandwidths[index] = highest;
-        state.Noises[index] = noise;
+        // One entry for the packet: the highest used subband plus 1 (0 for none) in the low 6 bits and the noise-substituted channels of its frames above them, held to 24 bits.
+        state.Bandwidths[index] = (Math.Min(noise, 0xFFFFFF) << 6) | (highest + 1);
     }
+
+    // The used subbands of a packet's frames from Bandwidths' entry, -1 where the packet has none; and its noise-substituted subband channels.
+    private static int Bands(State state, int packet) => state.Bandwidths.TryGetValue(packet, out int entry) ? (entry & 63) - 1 : -1;
+
+    private static int Noise(State state, int packet) => state.Bandwidths.TryGetValue(packet, out int entry) ? entry >> 6 : 0;
 
     private static void MissingFrames(State state, SubbandFeed feed, int index, Packet packet, long firstSample, long missing)
     {
@@ -1315,7 +1320,7 @@ internal static class Sv8Parser
             }
 
             frames += count;
-            figures.Add(packet.Offset, packet.Length * 8, count * Sv7Parser.FrameSamples, bands: state.Bandwidths.GetValueOrDefault(state.AudioPackets[i], -1), noise: state.Noises.GetValueOrDefault(state.AudioPackets[i]));
+            figures.Add(packet.Offset, packet.Length * 8, count * Sv7Parser.FrameSamples, bands: Bands(state, state.AudioPackets[i]), noise: Noise(state, state.AudioPackets[i]));
         }
 
         // libmpcdec r495 outputs the header's samples less the beginning silence, and no more than
@@ -1605,9 +1610,6 @@ internal static class Sv8Parser
 
         // The coded bandwidth of each audio packet that was walked, in subbands, by the packet's index in Packets (-1 where its frames could not be read).
         public Dictionary<int, int> Bandwidths { get; } = [];
-
-        // The noise-substituted subband channels of the frames of each audio packet.
-        public Dictionary<int, int> Noises { get; } = [];
 
         public UnitCategoryTally Stereo { get; } = new("Stereo Coding", Sv7Parser.StereoCodings, "frame", GraphConcept.StereoCoding, isVariable: true);
 

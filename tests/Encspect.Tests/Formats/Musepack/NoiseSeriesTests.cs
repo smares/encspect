@@ -22,6 +22,9 @@ public class NoiseSeriesTests
 
         Assert.Equal(bandwidth.Values.Length, noise.Values.Length);
         Assert.True(MemoryMarshal.TryGetArray(noise.X, out ArraySegment<double> own) && MemoryMarshal.TryGetArray(bandwidth.X, out ArraySegment<double> shared) && ReferenceEquals(own.Array, shared.Array));
+
+        // 8 bytes of values for each unit (docs/design/coding-graphs.md, "Memory budget"), in an array without slack, and no x array of its own.
+        Assert.True(MemoryMarshal.TryGetArray(noise.Values, out ArraySegment<double> values) && values.Array!.Length == noise.Values.Length);
         Assert.Equal("channels", noise.Unit);
         Assert.Equal(GraphConcept.None, noise.Concept);
         Node tally = Fixtures.Resolve(stream.Nodes[0], "Statistics/Noise-Substituted Channels").Single();
