@@ -51,6 +51,7 @@ public class SampleKitFixtureTests
         string text = File.ReadAllText(Companion(stem, ".provenance.json"));
         Assert.DoesNotContain(":\\", text, StringComparison.Ordinal);
         Assert.DoesNotContain("/home/", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("/Users/", text, StringComparison.Ordinal);
     }
 
     [Theory]

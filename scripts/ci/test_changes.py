@@ -146,7 +146,7 @@ class ChangesTests(unittest.TestCase):
                      "scripts/fixtures/import_sample_kit_fixtures.py"):
             self.assertIn("sample-kit-crosscheck", run(path), path)
         self.assertEqual(run("scripts/fixtures/crosscheck_sample_kit_fixtures.py"), {"sample-kit-crosscheck", "fixtures"})
-        # The script reads the committed files, manifests and summaries with ffprobe, ffmpeg and MediaInfo, never the analyzer.
+        # The script reads the committed files, manifests and golden reports with ffprobe, ffmpeg and MediaInfo, never the analyzer.
         self.assertNotIn("sample-kit-crosscheck", run("src/Encspect.Formats.Aac/AacParser.cs"))
 
     def test_optimfrog_parser_scripts_and_fixtures_belong_to_the_optimfrog_job(self):

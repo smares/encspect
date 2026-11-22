@@ -8,7 +8,7 @@ MediaInfo 26.01 of Ubuntu 26.04. Neither tool is a reference whose source was re
 - ffprobe reads the file as the manifest (<name>.expected.json, written from ffprobe's reading when the file was imported) says: the codec, the sample
   rate, the channels and the duration (within 10 ms; not for ADTS, whose duration ffprobe estimates from the bitrate), and the packets it counts.
 - ffmpeg decodes the whole file to nothing with `-v error`: no message, except those a fixture is known for (EXPECTED_ERRORS, each with its reason).
-- MediaInfo, against the analyzer's golden summary (<name>.report.json, which SampleKitFixtureTests holds to the analysis): the format, for MPEG audio
+- MediaInfo, against the analyzer's golden report (<name>.report.json, which SampleKitFixtureTests holds to the analysis): the format, for MPEG audio
   and AAC the version, layer and profile, the channels, the sample rate (or half of it, for an HE-AAC stream whose rate MediaInfo reports without SBR),
   and the duration (within 150 ms).
 

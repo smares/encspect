@@ -62,7 +62,7 @@ Native FLAC files (`.flac`, RFC 9639) and FLAC in Ogg (`.oga` and `.ogg`, throug
 
 ## Encoder detection
 
-- Observed in Encspect's test file from the private sample kit (`flac/sample-kit`; [development](../development.md#sample-kit-fixtures)): Windows 10's Media Foundation FLAC encoder (`MSFlacEncoder.dll`) writes the vendor string "libFLAC 1.3.0 (20130526)" and is named so, with high confidence; the string names the library the encoder is built on, not Microsoft's program, which the file names nowhere.
+- Observed in Encspect's test file from the private sample kit (`flac/sample-kit`; [development](../development.md#sample-kit-fixtures)): Windows 10's Media Foundation FLAC encoder (`MSFlacEncoder.dll`) writes the vendor string "reference libFLAC 1.3.0 20130526" and is named "libFLAC 1.3.0 (20130526)", with high confidence; the string names the library the encoder is built on, not Microsoft's program, which the file names nowhere.
 - libFLAC: the Vorbis comment vendor string `reference libFLAC <version> <date>` is the encoder, with high confidence. A vendor string of that form with a version the analyzer cannot parse is "libFLAC" alone.
 - FFmpeg's native encoder: an `ENCODER` comment of the form `Lavc<version> flac` is the encoder, with medium confidence, since the comment is a tag any tool may write.
 - An ID3v2 or APEv2 claim of the encoder or writer weighs in as in the other formats (`flac.writer-claim-differs`, `flac.writer-other-format`, `flac.encoder-other-format`).

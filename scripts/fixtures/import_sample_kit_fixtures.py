@@ -138,7 +138,7 @@ SELECTION = [
     ("mp3/nero-burning-rom-28.0.1.7/music-44k-stereo-cbr128.mp3", "mpeg-audio", "nero-rom-mp3-cbr128", "nero-rom-mp3", "44k-stereo",
      "list entry MP3 128 kbit/s 44100 Hz stereo, constant bitrate, quality Medium, padding ISO", "the plug-in's plain MP3, tagged with an empty ID3v2 PRIV frame"),
     ("mp3/nero-burning-rom-28.0.1.7/music-44k-stereo-vbr-highest.mp3", "mpeg-audio", "nero-rom-mp3-vbr-highest", "nero-rom-mp3", "44k-stereo",
-     "variable bitrate on, quality Highest, list entry MP3 64 kbit/s 22050 Hz stereo (the file is 44100 Hz)", "a VBR file with a Xing header and a main_data_begin the buffer cannot hold"),
+     "variable bitrate on, quality Highest, list entry MP3 64 kbit/s 22050 Hz stereo (the file is 44100 Hz)", "a VBR file with a VBRI header and a main_data_begin the buffer cannot hold"),
     ("mp3/nero-burning-rom-28.0.1.7/music-8k-mono-cbr8.mp3", "mpeg-audio", "nero-rom-mp3-8k-mono-cbr8", "nero-rom-mp3", "8k-mono",
      "list entry MP3 8 kbit/s 8000 Hz mono, constant bitrate, quality Medium, padding ISO", "MPEG 2.5 at the lowest rate"),
     ("mp3/nero-burning-rom-28.0.1.7/music-44k-stereo-pro-cbr64.mp3", "mpeg-audio", "nero-rom-mp3pro-cbr64", "nero-rom-mp3", "44k-stereo",
@@ -155,7 +155,7 @@ SELECTION = [
     ("mp3/itunes-12.13.12.3-windows/music-44k-mono-cbr64.mp3", "mpeg-audio", "itunes-mp3-mono-cbr64", "itunes-mp3", "44k-mono",
      "MP3, 64 kbit/s, mono, sample rate and channels automatic", "iTunes resamples to 22.05 kHz at this rate"),
     ("mp3/itunes-12.13.12.3-windows/music-44k-stereo-vbr-hoechste.mp3", "mpeg-audio", "itunes-mp3-vbr-highest", "itunes-mp3", "44k-stereo",
-     "variable bitrate on, quality Highest, list entry MP3 64 kbit/s 22050 Hz stereo (the file is 44100 Hz)", "iTunes' Xing header; its table of contents is not increasing"),
+     "128 kbit/s, variable bitrate on, quality 7 (Highest), joint stereo, sample rate and channels automatic", "iTunes' Xing header; its table of contents is not increasing"),
     # Media Foundation's ACM wrapper and MPEG-2 audio encoder.
     ("windows-media-foundation/windows-10-22h2-19045.7846/music-16k-mono-ms-mp3acm-32k.mp3", "mpeg-audio", "ms-mp3acm-16k-mono-32k", "ms-mp3acm", "16k-mono",
      "MP3, 32 kbit/s, 16000 Hz, mono", "Fraunhofer's l3codeca behind Windows' wrapper, MPEG-2 at 16 kHz"),
@@ -257,9 +257,6 @@ SELECTION = [
     ("windows-media-foundation/windows-10-22h2-19045.7846/music-44k-mono-ms-alac-16bit.m4a", "alac", "ms-alac-44k-mono-16", "ms-alac", "44k-mono",
      "16 bits per sample, mono", "Microsoft's Apple Lossless encoder and its MP4 layout"),
 ]
-
-KEY_ENCODER = {}  # filled by the entries' encoder keys
-
 
 def sha256(data):
     return hashlib.sha256(data).hexdigest()
