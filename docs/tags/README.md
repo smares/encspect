@@ -2,7 +2,7 @@
 
 Encspect reads two kinds of tags:
 
-- **Tag formats** that can sit in many kinds of file (ID3, APE, Lyrics3, Vorbis comments) have parsers of their own. The host finds these tags in a file and hands each one to its parser; containers hand the ones they hold to the same parsers.
+- **Tag formats** that can sit in many kinds of file (ID3v1 and ID3v2, APEv1 and APEv2, Lyrics3 v1 and v2, Vorbis comments) have parsers of their own. The host finds these tags in a file and hands each one to its parser; containers hand the ones they hold to the same parsers.
 - **Containers' own metadata** (WMA's, MP4's, Matroska's, RIFF's and AIFF's) is read by the container's format parser and shown in the tree as the file's tags, like any other.
 
 | Tags | Read by | Page |
