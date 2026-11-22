@@ -206,6 +206,26 @@ ONLY_IN_MINIMP3 = {
     "external-lame357w-vbr.mp3": [[87552, 88704]],
     "external-lame370w-cbr.mp3": [[88704, 89856]],
     "external-lame370w-vbr.mp3": [[88704, 89856]],
+    # The encoders of the old Wine fixtures (Plugger, 8hz-MP3, M3E and Fraunhofer's ACM codecs through acmenc) end every file of its test files with a frame cut short (mpeg-audio.frame-truncated, which each manifest lists):
+    # the analyzer decodes whole frames only, as ISO/IEC 11172-3 and 13818-3 define a frame by its length, and so do mpg123 and libmad (checked on external-plugger-cbr and
+    # external-fhg-acm19-mono-16k with mpg123 1.32 and madplay 0.15.2b: 76 and 52 frames, the analyzer's samples); only minimp3 outputs the last frame's samples.
+    "external-8hz-48k.mp3": [[95616, 96768]],
+    "external-8hz-cbr.mp3": [[87552, 88704]],
+    "external-8hz-flags.mp3": [[87552, 88704]],
+    "external-8hz-mono.mp3": [[87552, 88704]],
+    "external-fhg-acm19-mono-16k.mp3": [[29952, 30528]],
+    "external-fhg-acm19-mpeg2.mp3": [[42624, 43200]],
+    "external-m3e-48k.mp3": [[97920, 99072]],
+    "external-m3e-cbr.mp3": [[24192, 25344]],
+    "external-m3e-mono.mp3": [[91008, 92160]],
+    "external-m3e-vbr.mp3": [[88704, 89856]],
+    "external-m3e-vbr4.mp3": [[88704, 89856]],
+    "external-plugger-48k.mp3": [[95616, 96768]],
+    "external-plugger-cbr.mp3": [[87552, 88704]],
+    "external-plugger-flags.mp3": [[21888, 23040]],
+    "external-plugger-mono.mp3": [[87552, 88704]],
+    "external-plugger-original.mp3": [[87552, 88704]],
+    "external-plugger-pro-cbr.mp3": [[87552, 88704]],
 }
 
 
