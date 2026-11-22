@@ -40,9 +40,9 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         // The coding series of the stream (docs/design/coding-graphs.md, "Memory budget"): a Layer III stereo frame adds at most 27 bytes (scalefactor scaling 4 of them),
         // channel modes 1, stereo coding 1, joint stereo modes 1, block usage 4 and channel bit share 16 (a value and its own x); block
         // sizes is a grouping and costs its map. This frame is stereo, not joint stereo, and has a share, so its x values are the bitrate series'. The coded bandwidth
-        // of the entropy pass adds 8 bytes (its values; its x values are the bitrate series' too), so the numeric series keep 16.
+        // of the entropy pass adds 8 bytes (its values; its x values are the bitrate series' too), and the highest global_gain 8 more in the same way, so the numeric series keep 24.
         StreamInfo stream = Assert.Single(report.Streams);
-        CheckCodingBytes(stream, categoryBytesPerFrame: 10, numericBytesPerFrame: 16);
+        CheckCodingBytes(stream, categoryBytesPerFrame: 10, numericBytesPerFrame: 24);
         Output.WriteLine($"{stream.CategorySeries.Sum(c => c.StorageBytes) / Frames} bytes of category series per frame");
         GC.KeepAlive(report);
     }
@@ -76,7 +76,7 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         Assert.True(categories <= (Frames * (long)categoryBytesPerFrame) + index, $"The category series keep {categories / (double)Frames} bytes per frame.");
         Series bitrate = stream.Series.Single(s => s.Name == "Bitrate");
         long numeric = 0;
-        foreach (Series series in stream.Series.Where(s => s.Name is "Coded Bandwidth" or "Channel Bit Share"))
+        foreach (Series series in stream.Series.Where(s => s.Name is "Coded Bandwidth" or "Channel Bit Share" or "Global Gain"))
         {
             numeric += series.Values.Length * 8L;
             if (series.Values.Length == Frames)
