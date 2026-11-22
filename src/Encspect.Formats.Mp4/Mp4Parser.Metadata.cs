@@ -460,7 +460,7 @@ public sealed partial class Mp4Parser
             node.Add(chapter);
             if (!state.HasChapterList && state.ChapterTitles.Count < MaxNeroFieldsKept)
             {
-                state.ChapterTitles.Add((title, titleBytes.Length));
+                state.ChapterTitles.Add((title, titleBytes));
             }
         }
 

@@ -119,7 +119,7 @@ public sealed partial class Mp4Parser
 
         public List<(long Offset, long Length)> ItunesCovers { get; } = [];
 
-        public List<(string Title, int Bytes)> ChapterTitles { get; } = [];
+        public List<(string Title, byte[] Raw)> ChapterTitles { get; } = [];
 
         public bool HasChapterList { get; set; }
 

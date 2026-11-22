@@ -258,8 +258,9 @@ public sealed partial class Mp4Parser
     }
 
     // A chpl title holds at most 255 bytes, so a longer title of Nero's is the same where the chpl title is its beginning.
-    private static bool SameTitle((string Title, int Bytes) chapter, string title) =>
-        chapter.Title == title || (chapter.Bytes == 255 && title.StartsWith(chapter.Title, StringComparison.Ordinal));
+    // Compared as bytes, since the cut may fall inside a UTF-8 character.
+    private static bool SameTitle((string Title, byte[] Raw) chapter, string title) =>
+        chapter.Title == title || (chapter.Raw.Length == 255 && System.Text.Encoding.UTF8.GetBytes(title).AsSpan().StartsWith(chapter.Raw));
 
     private static string Shorten(string text) => text.Length <= 60 ? text : string.Concat(text.AsSpan(0, 57), "...");
 
