@@ -39,6 +39,11 @@ Columns sort by the figures behind them, so durations and bitrates sort as numbe
   - File, Open Folder (Cmd+O on macOS, Ctrl+O elsewhere).
   - Drop files and folders onto the window.
   - Files and folders named on the command line open the same way.
+- **Show Only Audio:**
+  - A checkbox above the list, also View, Show Only Audio, hides the files in which the analysis found no audio. It is off when the window opens and not remembered, like Include Subfolders.
+  - **What "no audio" means:** the analysis ran and its report holds no stream of kind audio (a text file, an image, an empty file, a file whose format is not detected, a container with only video). It comes from what the parsers found, as `--only-format` selects by the detected format, and never from the file name: audio under a `.txt` name is shown, and a text file under an `.mp3` name is hidden.
+  - **Never hidden:** a file not analyzed yet, one stopped before its turn, one that could not be read and a folder that could not be listed. Nothing is known about them, and they show their reason as always.
+  - **Only the view changes:** hidden files are still analyzed, listed in the summary cache and counted in the status line's total. The status bar says how many the switch hides, for example "3 files without audio hidden"; a file whose analysis finds no audio leaves the list as its row fills in.
 - **Analysis:**
   - Files are analyzed in the background, a few at a time, and rows fill in as they are done. A list sorted by a column sorts again as they do, keeping the selected row.
   - Stop cancels, and choosing another folder cancels the run before it.
