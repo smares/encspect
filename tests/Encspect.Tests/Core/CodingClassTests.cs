@@ -187,7 +187,7 @@ public class CodingClassTests
     {
         string evidence = Evidence(Measure(Brickwall));
 
-        Assert.Matches(@"^Spectral Cutoff: 16,0\d\d Hz .* \(measured from the decoded audio\)\nLow Bits Unused: .* \(measured from the decoded audio\)$", evidence);
+        Assert.Matches(@"^Spectral Cutoff: 16,0\d\d Hz .*, measured from the decoded audio\nLow Bits Unused: .*, measured from the decoded audio$", evidence);
     }
 
     [Fact]
@@ -202,8 +202,11 @@ public class CodingClassTests
     [Fact]
     public void AFigureOfAKindThatWasNotAskedForSaysSo()
     {
-        Assert.EndsWith("Low Bits Unused: not measured (levels were not asked for)", Evidence(Measure(Brickwall, MeasurementKinds.Spectrum)), StringComparison.Ordinal);
-        Assert.StartsWith("Spectral Cutoff: not measured (the spectrum was not asked for)", Evidence(Measure(Brickwall, MeasurementKinds.Levels)), StringComparison.Ordinal);
+        Assert.EndsWith("Low Bits Unused: not measured (levels were not asked for)", Evidence(Measure(Brickwall, MeasurementKinds.Spectrum), placeholders: true), StringComparison.Ordinal);
+        Assert.StartsWith("Spectral Cutoff: not measured (the spectrum was not asked for)", Evidence(Measure(Brickwall, MeasurementKinds.Levels), placeholders: true), StringComparison.Ordinal);
+
+        // The text report says an absence once, under "Measured:", and leaves it out here.
+        Assert.DoesNotContain("not asked for", Evidence(Measure(Brickwall, MeasurementKinds.Spectrum)), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -224,5 +227,45 @@ public class CodingClassTests
         var stream = new StreamInfo { Nodes = [new Node("X", 0, 1)], Codec = "FLAC", CodingClass = CodingClass.Lossless, Measurements = new StreamMeasurements { Status = status, Reason = reason } };
 
         Assert.All(CodingText.Evidence(stream, [], placeholders: true), e => Assert.Equal(expected, e.Text));
+    }
+
+    [Theory]
+    [InlineData(DecodeStatus.NotRequested, "not measured (decode the audio to measure it)")]
+    [InlineData(DecodeStatus.NoDecoder, "not measured (no decoder for this coding)")]
+    [InlineData(DecodeStatus.NotPossible, "not measured (the stream cannot be decoded)")]
+    [InlineData(DecodeStatus.Decoded, "not measured")]
+    public void WithoutMeasurementsThePlaceholderFollowsTheStreamsDecodingState(DecodeStatus status, string expected)
+    {
+        var stream = new StreamInfo { Nodes = [new Node("X", 0, 1)], Codec = "FLAC", CodingClass = CodingClass.Lossless, Verification = new StreamVerification { Decoding = status } };
+
+        Assert.All(CodingText.Evidence(stream, null, placeholders: true), e => Assert.Equal(expected, e.Text));
+    }
+
+    [Fact]
+    public void AStreamWithNoVerificationHasNoDecoder()
+    {
+        var stream = new StreamInfo { Nodes = [new Node("X", 0, 1)], Codec = "AAC LC", CodingClass = CodingClass.Lossy };
+
+        Assert.All(CodingText.Evidence(stream, null, placeholders: true), e => Assert.Equal("not measured (no decoder for this coding)", e.Text));
+        Assert.Empty(CodingText.Evidence(stream, null, placeholders: false));
+    }
+
+    [Fact]
+    public void AStoppedMeasurementOfNoSamplesIsNotShownAsAFigure()
+    {
+        var stream = new StreamInfo { Nodes = [new Node("X", 0, 1)], Codec = "FLAC", CodingClass = CodingClass.Lossless, Measurements = new StreamMeasurements { Status = MeasurementStatus.Stopped } };
+
+        Assert.All(CodingText.Evidence(stream, [], placeholders: true), e => Assert.Equal("not measured (nothing was measured before the measuring stopped)", e.Text));
+    }
+
+    [Fact]
+    public void TheBasisNamesAFormatChange()
+    {
+        Report report = Measure(Brickwall);
+        StreamInfo stream = report.Streams.Single();
+        StreamInfo changed = stream with { Measurements = stream.Measurements! with { Status = MeasurementStatus.FormatChanged } };
+        IReadOnlyList<MeasurementLine> lines = MeasurementText.Lines(changed.Measurements!, isLossy: false);
+
+        Assert.Contains(CodingText.Evidence(changed, lines, placeholders: false), e => e.Text.EndsWith(", measured from the decoded audio, measuring stopped where the format of the decoded blocks changed", StringComparison.Ordinal));
     }
 }

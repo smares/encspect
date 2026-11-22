@@ -39,11 +39,16 @@ public static class CodingClasses
     {
         ArgumentNullException.ThrowIfNull(codec);
 
-        if (codec is "PCM" or "PCM (floating-point)" or "FLAC" or "Apple Lossless" or "Monkey's Audio" or "TTA" or "TAK"
+        if (codec is "PCM" or "PCM (floating-point)" or "integer PCM" or "floating-point PCM" or "linear PCM" or "FLAC" or "Apple Lossless" or "Monkey's Audio" or "TTA" or "TAK"
             or "Dolby TrueHD" or "MLP" or "Windows Media Audio Lossless" or "DST"
             || codec.StartsWith("DTS-HD Master Audio", StringComparison.Ordinal) || codec.StartsWith("ALS", StringComparison.Ordinal))
         {
             return CodingClass.Lossless;
+        }
+
+        if (codec.StartsWith("SLS", StringComparison.Ordinal))
+        {
+            return null;
         }
 
         if (codec is "Other" or "Video" or "Encrypted audio" or "Encrypted video" or "RealAudio" or "WavPack" or "MPEG-4 audio" or "SLS" or "SLS non-core"

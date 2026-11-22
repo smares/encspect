@@ -235,7 +235,7 @@ public static class MeasurementSets
 
 ```
       Coding: lossless coding
-        Spectral Cutoff: 17,054 Hz (a step of 60.4 dB, transition from 16,559 Hz, in 644 of 644 frames with signal) (measured from the decoded audio)
+        Spectral Cutoff: 17,054 Hz (a step of 60.4 dB, transition from 16,559 Hz, in 644 of 644 frames with signal), measured from the decoded audio
       Verified: yes (the decoded audio matches the stored checksums; frame header CRC-8 3230 of 3230, frame CRC-16 3230 of 3230, STREAMINFO MD5 1 of 1)
       Measured: 300.0 s of 2 channels
         Sample Peak: -0.3 dBFS (front left -0.3, front right -0.5)

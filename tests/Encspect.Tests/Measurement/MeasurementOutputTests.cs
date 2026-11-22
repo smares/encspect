@@ -42,7 +42,7 @@ public class MeasurementOutputTests
         // The spectral cutoff and the low bits unused stand beside the coding line, one level in, ahead of the verification.
         int coding = Array.FindIndex(lines, l => l.TrimStart().StartsWith("Coding: lossless coding", StringComparison.Ordinal));
         Assert.True(coding >= 0 && coding < verified);
-        Assert.Matches(@"^\s+Spectral Cutoff: 16,0\d\d Hz \(a step of 81\.6 dB, transition from 1[56],\d{3} Hz, in 20 of 20 frames with signal\) \(measured from the decoded audio\)$", lines[coding + 1]);
+        Assert.Matches(@"^\s+Spectral Cutoff: 16,0\d\d Hz \(a step of 81\.6 dB, transition from 1[56],\d{3} Hz, in 20 of 20 frames with signal\), measured from the decoded audio$", lines[coding + 1]);
         Assert.StartsWith("Low Bits Unused: ", lines[coding + 2].TrimStart(), StringComparison.Ordinal);
         Assert.Equal(2, lines[coding + 1].Length - lines[coding + 1].TrimStart().Length - (lines[coding].Length - lines[coding].TrimStart().Length));
         Assert.Equal(lines[coding + 1].Length - lines[coding + 1].TrimStart().Length, lines[coding + 2].Length - lines[coding + 2].TrimStart().Length);
@@ -212,7 +212,7 @@ public class MeasurementOutputTests
         (int code, string output, _) = Run("--measure", "loudness,true-peak", "--hide", "frames,tags,statistics", Fixture("synthetic-loudness-sine-mono-48000.flac"));
 
         Assert.Equal(CommandLine.Success, code);
-        Assert.Contains("Spectral Cutoff: not measured (the spectrum was not asked for)", output);
+        Assert.DoesNotContain("Spectral Cutoff", output);
         Assert.DoesNotContain("Sample Peak", output);
         Assert.Matches(@"Integrated Loudness: -23\.0 LUFS", output);
         Assert.Matches(@"Loudness Range: 0\.0 LU", output);

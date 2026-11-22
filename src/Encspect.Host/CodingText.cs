@@ -56,8 +56,10 @@ public static class CodingText
     public sealed record EvidenceLine(string Name, string Text, string Description, string? Topic);
 
     // The evidence about the file's history that stands beside the coding line, for the text report and the GUI alike: the processor claim, then the
-    // spectral cutoff and the low bits unused with the basis they were measured on, or, where the figure is not there, why. Without measurements the figures
-    // are left out, or, with placeholders, read "not measured".
+    // spectral cutoff and the low bits unused with the basis they were measured on. Where a figure is not there, the GUI (placeholders) says why in every case,
+    // from the stream's state: "decode the audio" where decoding can still run, "no decoder for this coding" where none exists, the measurer's own reason,
+    // "not defined for floating-point samples". The text report states an absence once, under "Measured:", and adds only the one that line does not say
+    // (floating-point samples); without measurements it leaves the figures out.
     public static IReadOnlyList<EvidenceLine> Evidence(StreamInfo stream, IReadOnlyList<MeasurementLine>? lines, bool placeholders)
     {
         ArgumentNullException.ThrowIfNull(stream);
@@ -73,8 +75,15 @@ public static class CodingText
         {
             if (placeholders)
             {
-                evidence.Add(new EvidenceLine("Spectral Cutoff", "not measured (decode the audio to measure it)", MeasurementText.SpectralCutoffDescription, MeasurementText.SpectralCutoffTopic));
-                evidence.Add(new EvidenceLine("Low Bits Unused", "not measured (decode the audio to measure it)", MeasurementText.LowBitsUnusedDescription, MeasurementText.BitDepthUsageTopic));
+                string text = stream.Verification switch
+                {
+                    { Decoding: DecodeStatus.NotRequested } => "not measured (decode the audio to measure it)",
+                    null or { Decoding: DecodeStatus.NoDecoder } => "not measured (no decoder for this coding)",
+                    { Decoding: DecodeStatus.NotPossible } => "not measured (the stream cannot be decoded)",
+                    _ => "not measured",
+                };
+                evidence.Add(new EvidenceLine("Spectral Cutoff", text, MeasurementText.SpectralCutoffDescription, MeasurementText.SpectralCutoffTopic));
+                evidence.Add(new EvidenceLine("Low Bits Unused", text, MeasurementText.LowBitsUnusedDescription, MeasurementText.BitDepthUsageTopic));
             }
 
             return evidence;
@@ -88,8 +97,14 @@ public static class CodingText
         })
         {
             MeasurementLine? line = lines?.FirstOrDefault(l => l.Figure == figure);
-            string text = line is not null ? $"{line.Text} ({basis})" : Absence(m, figure);
-            evidence.Add(new EvidenceLine(name, text, description, topic));
+            if (line is not null && m.Samples > 0)
+            {
+                evidence.Add(new EvidenceLine(name, $"{line.Text}, {basis}", description, topic));
+            }
+            else if (Absence(m, figure, placeholders) is { } absence)
+            {
+                evidence.Add(new EvidenceLine(name, absence, description, topic));
+            }
         }
 
         return evidence;
@@ -100,20 +115,35 @@ public static class CodingText
         string basis = "measured from the decoded audio";
         basis += m.Status switch
         {
-            MeasurementStatus.Stopped => "; measuring stopped early",
-            MeasurementStatus.Incomplete => "; some frames were not decoded or delivered in part",
+            MeasurementStatus.Stopped => ", measuring stopped early",
+            MeasurementStatus.FormatChanged => ", measuring stopped where the format of the decoded blocks changed",
+            MeasurementStatus.Incomplete => ", some frames were not decoded or delivered in part",
             _ => string.Empty,
         };
-        return m.Gaps > 0 || m.WithheldSamples > 0 ? basis + "; see Measured for the gaps and withheld samples" : basis;
+        return m.Gaps > 0 || m.WithheldSamples > 0 ? basis + ", with gaps or withheld samples counted under Measured" : basis;
     }
 
-    private static string Absence(StreamMeasurements m, MeasurementFigure figure) => m.Status switch
+    // Null where the text report has nothing to add to what "Measured:" says.
+    private static string? Absence(StreamMeasurements m, MeasurementFigure figure, bool placeholders)
     {
-        MeasurementStatus.NotPossible => m.Reason is { } reason ? $"not measured ({reason})" : "not measured",
-        MeasurementStatus.Failed => "not measured (the measurement failed)",
-        _ when figure == MeasurementFigure.LowBitsUnused && m.Levels is { } levels && levels.Format != SampleFormat.Integer => "not defined for floating-point samples",
-        _ when figure == MeasurementFigure.LowBitsUnused && m.Levels is null => "not measured (levels were not asked for)",
-        _ when figure == MeasurementFigure.SpectralCutoff && m.Spectrum is null => "not measured (the spectrum was not asked for)",
-        _ => "not measured",
-    };
+        if (figure == MeasurementFigure.LowBitsUnused && m.Status is not (MeasurementStatus.NotPossible or MeasurementStatus.Failed) && m.Levels is { } levels && levels.Format != SampleFormat.Integer)
+        {
+            return "not defined for floating-point samples";
+        }
+
+        if (!placeholders)
+        {
+            return null;
+        }
+
+        return m.Status switch
+        {
+            MeasurementStatus.NotPossible => m.Reason is { } reason ? $"not measured ({reason})" : "not measured",
+            MeasurementStatus.Failed => "not measured (the measurement failed)",
+            _ when m.Samples == 0 => "not measured (nothing was measured before the measuring stopped)",
+            _ when figure == MeasurementFigure.LowBitsUnused && m.Levels is null => "not measured (levels were not asked for)",
+            _ when figure == MeasurementFigure.SpectralCutoff && m.Spectrum is null => "not measured (the spectrum was not asked for)",
+            _ => "not measured",
+        };
+    }
 }

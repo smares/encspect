@@ -21,7 +21,7 @@ public partial class CodingClassFixtureTests
         "Sonarc", "MSN Audio", "Control Resources VQLPC", "Control Resources CR10", "Echo Speech EchoSC1", "Audiofile AF36", "Audiofile AF10",
         "DSP Solutions DIGISTD", "DSP Solutions DIGIFIX", "DSP Solutions DIGIREAL", "DRM", "Raw SPORT", "unknown", "extensible", "null", "reserved", "General MIDI",
         "Algorithmic synthesis and audio effects", "Audio Sync", "SMR Simple", "SMR Main", "PS", "SBR", "TTSI", "Main synthetic", "Wavetable synthesis", "Microsoft ACM audio", "QuickTime audio", "other", "iTunes protected audio", "iTunes protected video",
-        "integer PCM", "floating-point PCM", "linear PCM", "WavPack hybrid", "WavPack lossy", "WavPack lossless", "WavPack correction data", "OptimFROG", "OptimFROG correction data",
+        "WavPack hybrid", "WavPack lossy", "WavPack lossless", "WavPack correction data", "OptimFROG", "OptimFROG correction data",
     ];
 
     private static readonly string[] MatroskaCodecIds = [.. Regex.Matches(File.ReadAllText(Path.Combine(Fixtures.FixtureDirectory, "..", "..", "src", "Encspect.Formats.Matroska", "Codecs.cs")), "\"([AVS]_[^\"]*)\"").Select(m => m.Groups[1].Value).Distinct()];
@@ -60,6 +60,39 @@ public partial class CodingClassFixtureTests
             yield return Mp4Parser.StreamCodecName(format, null);
         }
 
+        // The names the parsers build from their own figures: AAC's composites, MPEG audio's version and layer, Musepack and Speex.
+        foreach (string core in Enumerable.Range(0, 47).Select(AacTables.ObjectTypeName).Where(c => c != "DST" && (CodingClasses.OfName(c) is not null || c.StartsWith("SLS", StringComparison.Ordinal))).Distinct())
+        {
+            yield return $"{core} with SBR";
+            yield return $"{core} with SBR and PS";
+            yield return $"{core} (no SBR signaled explicitly)";
+        }
+
+        foreach (string name in new[] { "HE-AAC", "HE-AAC v2", "HE-AAC (no PS signaled explicitly)", "xHE-AAC (USAC)", "ER AAC ELD with SBR" })
+        {
+            yield return name;
+        }
+
+        foreach (int type in Enumerable.Range(0, 256))
+        {
+            yield return Mp4Parser.StreamCodecName("mp4a", type);
+        }
+
+        foreach (string version in new[] { "MPEG-1", "MPEG-2", "MPEG-2.5" })
+        {
+            foreach (string layer in new[] { "I", "II", "III" })
+            {
+                yield return $"{version} Layer {layer}";
+            }
+        }
+
+        foreach (string name in new[] { "Musepack SV4", "Musepack SV5", "Musepack SV6", "Musepack SV7", "Musepack SV8", "Speex", "Speex narrowband", "Speex wideband", "Speex ultra-wideband",
+            "Vorbis", "Opus", "DTS", "DTS-ES", "DTS 96/24", "DTS Express", "DTS-HD High Resolution Audio", "DTS-HD Master Audio", "DTS-HD Master Audio + DTS:X", "DTS-HD Master Audio + DTS:X IMAX",
+            "Windows Media Audio 1", "Windows Media Audio 2", "Windows Media Audio Professional", "Windows Media Audio Voice", "Windows Media Audio Lossless", "Dolby TrueHD", "MLP", "E-AC-3", "AC-3" })
+        {
+            yield return name;
+        }
+
         foreach (FieldInfo field in typeof(CodecNames).GetFields(BindingFlags.Public | BindingFlags.Static).Where(f => f.IsLiteral))
         {
             yield return (string)field.GetRawConstantValue()!;
@@ -78,7 +111,7 @@ public partial class CodingClassFixtureTests
         string[] names = [.. CodingNames().Distinct()];
         Assert.True(names.Length > 100);
 
-        string[] missing = [.. names.Where(n => CodingClasses.OfName(n) is null && !NamesWithoutAClass.Contains(n))];
+        string[] missing = [.. names.Where(n => CodingClasses.OfName(n) is null && !NamesWithoutAClass.Contains(n) && !n.StartsWith("SLS", StringComparison.Ordinal))];
         Assert.True(missing.Length == 0, $"These coding names have no class and are not listed as ones that have none: {string.Join(", ", missing.Select(n => $"\"{n}\""))}.");
 
         foreach (string name in NamesWithoutAClass.Where(n => n is not ("WavPack hybrid" or "WavPack lossy" or "WavPack lossless" or "OptimFROG" or "OptimFROG correction data" or "WavPack correction data")))
@@ -100,6 +133,11 @@ public partial class CodingClassFixtureTests
     [InlineData("LD MPEG Surround", CodingClass.Lossy)]
     [InlineData("ALS", CodingClass.Lossless)]
     public void TheClassesTheReviewNamed(string name, CodingClass expected) => Assert.Equal(expected, CodingClasses.OfName(name));
+
+    [Theory]
+    [InlineData("SLS with SBR")]
+    [InlineData("SLS (no SBR signaled explicitly)")]
+    public void ASlsCompositeKeepsTheNoClassOfSls(string name) => Assert.Null(CodingClasses.OfName(name));
 
     [Fact]
     public void AMp4DtsHdTrackNoParserReadsHasNoClass() => Assert.Null(CodingClasses.OfName(Mp4Parser.StreamCodecName("dtsh", null)));

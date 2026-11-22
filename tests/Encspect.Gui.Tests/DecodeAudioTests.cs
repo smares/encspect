@@ -56,8 +56,8 @@ public class DecodeAudioTests
         ui.Until(() => decode.IsCompleted);
 
         Assert.Contains("Spectral Cutoff: ", model.EvidenceText, StringComparison.Ordinal);
-        Assert.Contains("(measured from the decoded audio) \u00b7 Low Bits Unused: ", model.EvidenceText, StringComparison.Ordinal);
-        Assert.EndsWith("(measured from the decoded audio)", model.EvidenceText, StringComparison.Ordinal);
+        Assert.Contains(", measured from the decoded audio \u00b7 Low Bits Unused: ", model.EvidenceText, StringComparison.Ordinal);
+        Assert.EndsWith(", measured from the decoded audio", model.EvidenceText, StringComparison.Ordinal);
         Assert.DoesNotContain("not measured", model.EvidenceText, StringComparison.Ordinal);
 
         using var lossy = new DetailViewModel(Analyzer.CreateDefault(), ui.Post);
@@ -68,6 +68,19 @@ public class DecodeAudioTests
 
         Assert.EndsWith("Low Bits Unused: not defined for floating-point samples", lossy.EvidenceText, StringComparison.Ordinal);
         Assert.DoesNotContain("decode the audio", lossy.EvidenceText, StringComparison.Ordinal);
+    }
+
+    // AAC has no decoder: Decode Audio is not offered, and the evidence line says so instead of asking for it.
+    [Fact]
+    public void The_evidence_line_of_a_coding_without_a_decoder_says_so_and_does_not_ask_to_decode()
+    {
+        var ui = new TestDispatcher();
+        using var model = new DetailViewModel(Analyzer.CreateDefault(), ui.Post);
+        Task load = model.LoadAsync(Fixtures.Aac(Path.Combine("apple", "apple-he-m4a-cbr-mono22.m4a")));
+        ui.Until(() => load.IsCompleted);
+
+        Assert.False(model.CanDecodeAudio);
+        Assert.Equal("Spectral Cutoff: not measured (no decoder for this coding) \u00b7 Low Bits Unused: not measured (no decoder for this coding)", model.EvidenceText);
     }
 
     [Fact]
