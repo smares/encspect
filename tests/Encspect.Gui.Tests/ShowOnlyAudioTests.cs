@@ -1,3 +1,5 @@
+using System.ComponentModel;
+using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Encspect.Gui.Cache;
@@ -211,6 +213,28 @@ public class ShowOnlyAudioTests
         Assert.Equal("c.mp3", model.Neighbor(hidden, 1)!.Name);
         Assert.Equal("a.mp3", model.Neighbor(hidden, -1)!.Name);
         main.Close();
+    }
+
+    [Fact]
+    public void A_hidden_row_steps_by_the_lists_sort()
+    {
+        using var temp = new TempFolder();
+        temp.Copy(Fixtures.Mpeg("external-lame-cbr128-joint.mp3"), "a.mp3");
+        temp.Write("b.txt", "not audio"u8.ToArray());
+        temp.Copy(Fixtures.Mpeg("external-lame-vbr-v2.mp3"), "c.mp3");
+        (MainViewModel model, _) = Open(temp.Path);
+        model.ShowOnlyAudio = true;
+        FileRow hidden = model.Rows.Single(r => r.Name == "b.txt");
+
+        // Sorted by name, descending, the order is c, b, a.
+        model.RowsView.SortDescriptions.Add(DataGridSortDescription.FromPath(nameof(FileRow.Name), ListSortDirection.Descending));
+        Assert.Equal("a.mp3", model.Neighbor(hidden, 1)!.Name);
+        Assert.Equal("c.mp3", model.Neighbor(hidden, -1)!.Name);
+
+        model.RowsView.SortDescriptions.Clear();
+        model.RowsView.SortDescriptions.Add(DataGridSortDescription.FromPath(nameof(FileRow.Name), ListSortDirection.Ascending));
+        Assert.Equal("c.mp3", model.Neighbor(hidden, 1)!.Name);
+        Assert.Equal("a.mp3", model.Neighbor(hidden, -1)!.Name);
     }
 
     [AvaloniaFact]

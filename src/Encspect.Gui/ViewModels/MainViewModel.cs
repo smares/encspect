@@ -295,17 +295,23 @@ public sealed class MainViewModel : ObservableObject, IDisposable
             return target >= 0 && target < RowsView.Count ? (FileRow)RowsView.GetItemAt(target)! : null;
         }
 
-        // A row the switch hides, which a detail window may still show: the nearest row the list shows, walking the full list in the order it was listed.
-        int full = Rows.IndexOf(row);
-        for (int i = full + delta; full >= 0 && i >= 0 && i < Rows.Count; i += delta)
+        // A row the switch hides, which a detail window may still show: it takes the place the list's sort would give it among the rows the list shows, and the
+        // neighbor is the shown row before or after that place. Without a sort the list is in the order the files were listed.
+        if (Rows.IndexOf(row) < 0)
         {
-            if (!_showOnlyAudio || !Rows[i].HasNoAudio)
-            {
-                return Rows[i];
-            }
+            return null;
         }
 
-        return null;
+        IEnumerable<object> merged = Rows.Where(r => r == row || !_showOnlyAudio || !r.HasNoAudio);
+        IOrderedEnumerable<object>? ordered = null;
+        foreach (DataGridSortDescription sort in RowsView.SortDescriptions)
+        {
+            ordered = ordered is null ? sort.OrderBy(merged) : sort.ThenBy(ordered);
+        }
+
+        List<object> places = [.. ordered ?? merged];
+        int place = places.IndexOf(row) + delta;
+        return place >= 0 && place < places.Count ? (FileRow)places[place] : null;
     }
 
     public void Dispose()
