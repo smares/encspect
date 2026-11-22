@@ -512,7 +512,7 @@ public sealed partial class Analyzer
         var finding = new Finding(
             Severity.Warning,
             $"layout.{Slug(parser.Name)}-without-{Slug(required)}",
-            $"The {TagLabel(parser.Name)} at 0x{tag.Offset:X} is not directly followed by an {TagLabel(required)}, which its specification requires.",
+            $"The {TagLabel(parser.Name, tag)} at 0x{tag.Offset:X} is not directly followed by an {TagLabel(required)}, which its specification requires.",
             tag);
         Confidence lowered = Effective(probe) == Confidence.High ? Confidence.Medium : Confidence.Low;
         return new Claim(parser, probe, lowered, [finding]);
@@ -521,7 +521,7 @@ public sealed partial class Analyzer
     private static string Slug(string name) => name.ToLowerInvariant().Replace(' ', '-');
 
     // "Lyrics3 tag", but "Enhanced TAG" rather than "Enhanced TAG tag".
-    private static string TagLabel(string name) => name.EndsWith("TAG", StringComparison.Ordinal) ? name : name + " tag";
+    private static string TagLabel(string name, Node? tag = null) => TagNames.Of(name, tag) is var shown && shown.EndsWith("TAG", StringComparison.Ordinal) ? shown : shown + " tag";
 
     private const long MaxNextTagSearch = 1 << 20;
 
@@ -555,7 +555,7 @@ public sealed partial class Analyzer
             }
 
             Node tag = claim.Tag;
-            string label = $"The {claim.Parser.Name} tag at 0x{tag.Offset:X} says the next one starts at 0x{target:X} or later";
+            string label = $"The {TagLabel(claim.Parser.Name, tag)} at 0x{tag.Offset:X} says the next one starts at 0x{target:X} or later";
             if (target > reader.Length)
             {
                 findings.Add(new Finding(Severity.Warning, "tag.next-beyond-file", $"{label}, beyond the end of the file.", tag));
@@ -716,7 +716,7 @@ public sealed partial class Analyzer
             Severity.Warning,
             "tag.rejected",
             probe.SignatureOffset,
-            (_, _) => $"{parser.Name} candidate at {where} rejected: {probe.RejectionReason}.");
+            (_, _) => $"{TagNames.Of(parser.Name, probe.Tag)} candidate at {where} rejected: {probe.RejectionReason}.");
     }
 
     private static PendingFinding NearMiss(ITagParser parser, TagProbe probe, Claim? owner, ByteReader reader)
@@ -730,11 +730,11 @@ public sealed partial class Analyzer
             {
                 if (owner is not null && owner.Tag.Offset <= probe.SignatureOffset && probe.SignatureOffset < owner.Tag.End)
                 {
-                    return $"{parser.Name} signature at {where} rejected: part of {PathTo(root, node)}.";
+                    return $"{TagNames.Of(parser.Name, probe.Tag)} signature at {where} rejected: part of {PathTo(root, node)}.";
                 }
 
-                string ownerName = owner is null ? "another tag" : $"the {owner.Parser.Name} tag at 0x{owner.Tag.Offset:X}";
-                return $"{parser.Name} signature at {where} rejected: the candidate overlaps {ownerName}.";
+                string ownerName = owner is null ? "another tag" : $"the {TagLabel(owner.Parser.Name, owner.Tag)} at 0x{owner.Tag.Offset:X}";
+                return $"{TagNames.Of(parser.Name, probe.Tag)} signature at {where} rejected: the candidate overlaps {ownerName}.";
             });
     }
 
@@ -745,7 +745,7 @@ public sealed partial class Analyzer
             Severity.Info,
             "tag.near-miss",
             probe.SignatureOffset,
-            (_, _) => $"{parser.Name} signature at {where} rejected: part of the {container.Format} data, which by its own size extends to 0x{container.End:X}.");
+            (_, _) => $"{TagNames.Of(parser.Name, probe.Tag)} signature at {where} rejected: part of the {container.Format} data, which by its own size extends to 0x{container.End:X}.");
     }
 
     // The end the format declares for itself (IFormatParser.DeclaredEnd), asked of the parser that
@@ -1092,7 +1092,7 @@ public sealed partial class Analyzer
                 findings.Add(new Finding(
                     Severity.Warning,
                     "layout.id3v1-not-last",
-                    $"The ID3v1 tag at 0x{tag.Offset:X} is followed by the {TagLabel(next.Parser.Name)} at 0x{next.Tag.Offset:X}; readers expect ID3v1 in the last 128 bytes.",
+                    $"The ID3v1 tag at 0x{tag.Offset:X} is followed by the {TagLabel(next.Parser.Name, next.Tag)} at 0x{next.Tag.Offset:X}; readers expect ID3v1 in the last 128 bytes.",
                     tag));
             }
 
