@@ -115,11 +115,13 @@ public sealed partial class Mp4Parser
 
         public int NeroFieldCount { get; set; }
 
-        public Dictionary<string, (string Text, Node Node)> ItunesText { get; } = [];
+        public Dictionary<string, string> ItunesText { get; } = [];
 
         public List<(long Offset, long Length)> ItunesCovers { get; } = [];
 
-        public List<string> ChapterTitles { get; } = [];
+        public List<(string Title, int Bytes)> ChapterTitles { get; } = [];
+
+        public bool HasChapterList { get; set; }
 
         public EncodingParams? EncodingParams { get; set; }
 
@@ -352,7 +354,17 @@ public sealed partial class Mp4Parser
     // Apple's encoder writes.
     private sealed record GaplessInfo(long Delay, long Padding, long Samples, Node Node);
 
-    private sealed record NeroField(string Key, string Text, Node Node, int? Segment);
+    private sealed class NeroField(string key, string text, Node node, int? segment)
+    {
+        public string Key { get; } = key;
+
+        public string Text { get; } = text;
+
+        public Node Node { get; } = node;
+
+        // The segment's number, -1 for a segment without a header; null for a field of the box itself.
+        public int? Segment { get; set; } = segment;
+    }
 
     // Apple's Encoding Params: the encoder's bitrate mode (acbf) and bitrate (brat).
     private sealed record EncodingParams(int? Mode, long? Bitrate, Node Node);

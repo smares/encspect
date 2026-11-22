@@ -41,7 +41,17 @@ public sealed partial class Mp4Parser
     private static void NeroTags(State state, Node node, BoxHeader header, BoxFields f, int depth)
     {
         int before = state.NeroFieldCount;
-        ReadChildren(state, node, f.Position, header.End, depth + 1, custom: NeroChild, naming: h => NeroNaming(state, h));
+        int? outerSegment = state.NeroSegment;
+        state.NeroSegment = null;
+        try
+        {
+            ReadChildren(state, node, f.Position, header.End, depth + 1, custom: NeroChild, naming: h => NeroNaming(state, h));
+        }
+        finally
+        {
+            state.NeroSegment = outerSegment;
+        }
+
         node.Value = NodeValue.Integer(state.NeroFieldCount - before, "fields", "field");
     }
 
@@ -56,21 +66,35 @@ public sealed partial class Mp4Parser
                 NeroCover(state, node, f);
                 break;
             case "tseg":
+                // The header may follow the fields, so the segment's fields take its number once it is read; without one they are no one's.
                 int? outer = state.NeroSegment;
-                state.NeroSegment = null;
+                int firstField = state.NeroFields.Count;
+                state.NeroSegment = -1;
+                int number;
                 try
                 {
                     ReadChildren(state, node, f.Position, header.End, depth + 1, custom: NeroChild, naming: h => NeroNaming(state, h));
                 }
                 finally
                 {
+                    number = state.NeroSegment ?? -1;
                     state.NeroSegment = outer;
+                }
+
+                for (int i = firstField; i < state.NeroFields.Count; i++)
+                {
+                    state.NeroFields[i].Segment = number;
                 }
 
                 break;
             case "tshd":
-                state.NeroSegment = (int)Math.Min(f.U32(node, "Segment Index", Explain.NeroSegmentIndex), int.MaxValue);
-                node.Value = NodeValue.Integer(state.NeroSegment.Value);
+                int index = (int)Math.Min(f.U32(node, "Segment Index", Explain.NeroSegmentIndex), int.MaxValue);
+                node.Value = NodeValue.Integer(index);
+                if (state.NeroSegment is not null)
+                {
+                    state.NeroSegment = index;
+                }
+
                 break;
             default:
                 if (f.Remaining > 0)
@@ -190,17 +214,17 @@ public sealed partial class Mp4Parser
         {
             if (field.Segment is { } segment)
             {
-                if (field.Key == "title" && segment < state.ChapterTitles.Count && state.ChapterTitles[segment] != field.Text)
+                if (field.Key == "title" && segment >= 0 && segment < state.ChapterTitles.Count && !SameTitle(state.ChapterTitles[segment], field.Text))
                 {
-                    string chapter = state.ChapterTitles[segment];
+                    string chapter = state.ChapterTitles[segment].Title;
                     state.Findings.Add(Severity.Warning, "mp4.nero-chapter-differs", field.Node, times =>
                         $"{(times == 1 ? $"The title of segment {segment} in Nero's tags box, \"{Shorten(field.Text)}\", differs from that of chapter {segment + 1} in the chpl box, \"{Shorten(chapter)}\"" : $"{times} chapter titles in Nero's tags box differ from those of the chpl box, first segment {segment}")}.");
                 }
             }
-            else if (state.ItunesText.TryGetValue(ItunesKeyOf(field.Key), out (string Text, Node Node) item) && item.Text != field.Text)
+            else if (state.ItunesText.TryGetValue(ItunesKeyOf(field.Key), out string? item) && item != field.Text.TrimEnd('\0'))
             {
                 state.Findings.Add(Severity.Warning, "mp4.nero-field-differs", field.Node, times =>
-                    $"{(times == 1 ? $"The field {field.Key} of Nero's tags box, \"{Shorten(field.Text)}\", differs from the iTunes metadata beside it, \"{Shorten(item.Text)}\"" : $"{times} fields of Nero's tags box differ from the iTunes metadata, first {field.Key}")}.");
+                    $"{(times == 1 ? $"The field {field.Key} of Nero's tags box, \"{Shorten(field.Text)}\", differs from the iTunes metadata beside it, \"{Shorten(item)}\"" : $"{times} fields of Nero's tags box differ from the iTunes metadata, first {field.Key}")}.");
             }
         }
 
@@ -216,6 +240,10 @@ public sealed partial class Mp4Parser
             }
         }
     }
+
+    // A chpl title holds at most 255 bytes, so a longer title of Nero's is the same where the chpl title is its beginning.
+    private static bool SameTitle((string Title, int Bytes) chapter, string title) =>
+        chapter.Title == title || (chapter.Bytes == 255 && title.StartsWith(chapter.Title, StringComparison.Ordinal));
 
     private static string Shorten(string text) => text.Length <= 60 ? text : string.Concat(text.AsSpan(0, 57), "...");
 
