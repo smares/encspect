@@ -41,7 +41,7 @@ MP3 came first, then the other lossy formats, then the lossless ones. Each phase
   - The core model was settled here; why it is not declared stable yet is in [library.md](library.md#later-nuget-packages-for-net).
 - **Gate 2** (2026-10-18, fa4e0c5): ten independent reviews, each followed by a review of its fixes and a verification.
   - Areas: ASF and WMA; WavPack; AAC; Ogg, Speex, Vorbis and Opus; AC-3 and E-AC-3; Musepack; MP4; DTS; Matroska and WebM; the host, contract and front ends.
-  - Every finding was fixed in #98 to #110, one pull request per area. Also fixed: the shared record containers, QuickTime user data as tags, one stream-change rule for the raw stream formats with the APE item budget, and the host's contract and naming.
+  - Every finding was fixed in #98 to #110, one pull request per area. Also fixed: the shared record containers, QuickTime user data as tags, one stream-change rule for the raw stream formats with the APEv1 and APEv2 item budget, and the host's contract and naming.
   - Release 0.1.0 followed it; Gate 3 work started after that.
 - **Gate 3** (2026-11-01, 5f054cc): ten independent reviews, each followed by a review of its fixes.
   - Areas: the decoder host; FLAC; WavPack; Monkey's Audio; TrueHD and MLP; TTA and ALAC; WAV and AIFF; WMA Lossless; the measurements; the front ends.
@@ -63,7 +63,7 @@ MP3 came first, then the other lossy formats, then the lossless ones. Each phase
 - **Why MP3 first:** it forced the shared model and parser interface into shape before any second format existed. Building it first, with the verification stages, answered the two largest risks: a wrong core contract and spec details that no reviewer catches by eye.
 - **MPEG audio** (MP1, MP2, MP3): frames, side information, the bit reservoir, Layer II allocation and the MPEG-2 multichannel extension, Xing, Info, LAME and VBRI headers, mp3PRO and MP3 Surround, encoder detection and the coding statistics: [mpeg-audio.md](formats/mpeg-audio.md).
 - **v1 stopped** at headers, side information and metadata: scalefactor and Huffman-table level analysis was a non-goal for v1. It comes with the MPEG audio decoder in 0.3.
-- **Tags:** ID3v1, ID3v2, APE and Lyrics3, and the tag detection rules: [tags](tags/README.md). The region and sync rules are in [mpeg-audio.md, "Frames and sync"](formats/mpeg-audio.md#frames-and-sync).
+- **Tags:** ID3v1, ID3v2, APEv1, APEv2, Lyrics3 v1 and Lyrics3 v2, and the tag detection rules: [tags](tags/README.md). The region and sync rules are in [mpeg-audio.md, "Frames and sync"](formats/mpeg-audio.md#frames-and-sync).
 
 ## Phase 2: the lossy formats
 

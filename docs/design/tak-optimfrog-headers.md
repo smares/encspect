@@ -104,7 +104,7 @@ Walked on the real files from samples.ffmpeg.org's archive (2026-11-09, by this 
   - a block of an unknown ID goes on the walk only when a valid block header follows it or it ends exactly at the end of the data (`optimfrog.block-unknown`, info); otherwise the walk stops before it;
   - a length that does not fit ends the walk with a finding and no guess at where the next block starts (no resync);
   - a known block whose length breaks the specification (an `MD5 ` block of other than 16 bytes, a main block under 15) is `optimfrog.block-size-invalid`, read as far as it holds fields.
-- **Declared end:** the end of the last block the walk accepts. The bytes after it go to the host's search for trailing tags (APEv2 with or without its header, Lyrics3, ID3v1), and bytes that are no tag are `optimfrog.data-after-blocks`. The specification lists ID3v1 and APEv2 among its blocks, but they are the host's, as in every other format; a tag-like run of bytes inside a `COMP` block is no tag (`tag.near-miss`).
+- **Declared end:** the end of the last block the walk accepts. The bytes after it go to the host's search for trailing tags (APEv2 with or without its header, Lyrics3 v1 and v2, ID3v1), and bytes that are no tag are `optimfrog.data-after-blocks`. The specification lists ID3v1 and APEv2 among its blocks, but they are the host's, as in every other format; a tag-like run of bytes inside a `COMP` block is no tag (`tag.near-miss`).
 
 ### OptimFROG DualStream
 
@@ -187,7 +187,7 @@ The lead's requirement (2026-11-09): a DualStream file behaves as a WavPack hybr
 - **Speedup** was deprecated in 4.506 and is not offered by 5.100. `luckynight.ofr` (4.509) stores 4x, but it is not committed and no script checks it, so no document or description states it: a pinned `check_optimfrog_samples.py` (as `check_tak_samples.py` does for TAK) would bring the statement back, as would a committed fixture. The Linux amd64 4.600ex build (its address on the previous releases page is a PHP page that serves the zip, so it can be pinned) is tried with `--speedup`; whether it still writes a speedup above 1x is unverified.
 - **Hand-built** (`make_optimfrog_fixtures.py`, from the committed files):
   - a failing `COMP` CRC-32, a file cut in a block, a block length past the data (the walk stops), an unknown block followed by a valid one and an unknown block at the end, a missing middle `COMP` block (`optimfrog.samples-mismatch`), a missing `TAIL`, a main size of 21 with unknown fields after `minDecoderVersion`, an ID3v2 tag before `OFR `;
-  - tags after the blocks: APEv2 with its header, APEv2 footer only, APEv2 and ID3v1, Lyrics3 and ID3v1, an ID3v1 tag whose title has 1 or 2 characters (its first bytes read as a printable ID, `TAGx`, with a small length, as in DTS-HD's case), and junk that is no tag (`optimfrog.data-after-blocks`);
+  - tags after the blocks: APEv2 with its header, APEv2 footer only, APEv2 and ID3v1, Lyrics3 v2 and ID3v1, an ID3v1 tag whose title has 1 or 2 characters (its first bytes read as a printable ID, `TAGx`, with a small length, as in DTS-HD's case), and junk that is no tag (`optimfrog.data-after-blocks`);
   - an `MD5 ` block whose length is not 16 (`optimfrog.block-size-invalid`);
   - tag-like bytes (`APETAGEX`, `TAG`) inside a `COMP` block (`tag.near-miss`).
 

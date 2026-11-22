@@ -26,6 +26,7 @@ The output is a text tree by default; `encspect --help` lists the options.
 - `--json`: one JSON array of reports.
 - `--ndjson`: one compact report per line, which stays usable line by line if a long run stops early.
 - `--csv`: one summary row per file.
+  - The `Tags` column lists the tags found, each with its version where the tag is parsed (`ID3v2`, `ID3v1`, `APEv2`, `Lyrics3 v2`); the GUI's Tags column shows the same values.
 
 Reports are written as each file is analyzed. All output is UTF-8 without a byte order mark, text from files included; JSON writes non-ASCII characters as they are, not as `\u` escapes. A CSV field that starts with `=`, `+`, `-` or `@` gets a leading apostrophe, so a spreadsheet does not run it as a formula; the columns the writer formats from numbers (the counts, duration, samples, bitrate, sample rate, `JOC Object Count` and the measured columns) skip the guard, as a number cannot start one. Against version 0.1.0 the CSV has twenty-two more columns (45 in all, 23 before). `Lost Samples` stands directly after `Samples`; `Processor`, `Processor Confidence`, `Lossy Part` and `Lossy Part Confidence` stand after `Writer Confidence`; `Correction File` stands after `Lossy Part Confidence`; `Is Verified` stands after `DRM Systems`; and fourteen measured columns come last, in the order of their meaning: `Spectral Cutoff (Hz)`, then the level figures `Sample Peak (dBFS)`, `Maximum True Peak Level (dBTP)` and `Clipping Runs`, then `Integrated Loudness (LUFS)` and `Loudness Range (LU)`, then `Digital Silence Stretches`, `Changes of Low Bits Unused` and `Grid of the Changes (samples)`. The columns are grouped by meaning, so one moved against earlier versions: `Is Verified` was between `Is Protected` and `Protection Scheme`. `Coding Class` stands directly after `Codec`, so every column after `Codec` is one further on than in 0.3.0. A reader that addresses columns by index must be changed.
 
@@ -47,7 +48,7 @@ Adds the byte offset and length of each node, and of the node each finding point
 
 ### `--hide tags,frames,side-info,statistics,measurements`
 
-Leaves those sections out of the text tree and JSON; it does not apply to `--csv`. Sections are recognized by the kind the parser gives a node, not by its name, so an APE item named `Frame` stays.
+Leaves those sections out of the text tree and JSON; it does not apply to `--csv`. Sections are recognized by the kind the parser gives a node, not by its name, so an APEv1 or APEv2 item named `Frame` stays.
 
 - **Paths in JSON** index the tree as written. With sections hidden, a finding's `path` and the paths in a stream's `nodes` count the siblings that are kept, so following them through the written `children` arrays reaches the node they name.
 - **`measurements`** hides the measurement lines of the text tree and the `measurements` object of the JSON (see `--measure`); it is the one section that is not a kind of node.

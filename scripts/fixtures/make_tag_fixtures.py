@@ -1911,7 +1911,7 @@ def id3v1_then_ape():
     f.audio()
     f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
     f.tag("APE", "2.0", basic_ape(), "High", BASIC_APE_FIELDS)
-    f.finding("layout.id3v1-not-last", f"is followed by the APE tag at {hex_offset(f.size - len(basic_ape()))};")
+    f.finding("layout.id3v1-not-last", f"is followed by the APEv2 tag at {hex_offset(f.size - len(basic_ape()))};")
     return f
 
 
@@ -2089,7 +2089,7 @@ def lyrics3v1_stacked_after_lyrics3v1():
     f.tag("ID3v1", "1.0", space_padded_id3v1(), "Medium", {"Title": "Old title"})
     f.tag("Lyrics3", "1.00", lyrics3v1("New lyrics\r\nline two"), "High", {"Lyrics": "New lyrics\r\nline two"})
     f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
-    f.finding("layout.id3v1-not-last", "is followed by the Lyrics3 tag")
+    f.finding("layout.id3v1-not-last", "is followed by the Lyrics3 v1 tag")
     return f
 
 
@@ -2105,7 +2105,7 @@ def lyrics3v1_stacked_after_lyrics3v2():
     f.tag("ID3v1", "1.0", space_padded_id3v1(), "Medium", {"Title": "Old title"})
     f.tag("Lyrics3", "1.00", lyrics3v1("New lyrics"), "High", {"Lyrics": "New lyrics"})
     f.tag("ID3v1", "1.1", basic_id3v1(), "Medium", BASIC_ID3V1_FIELDS)
-    f.finding("layout.id3v1-not-last", "is followed by the Lyrics3 tag")
+    f.finding("layout.id3v1-not-last", "is followed by the Lyrics3 v1 tag")
     return f
 
 

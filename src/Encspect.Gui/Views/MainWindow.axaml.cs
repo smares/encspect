@@ -29,7 +29,7 @@ public partial class MainWindow : Window
         ["Channel Layout"] = "Which speakers the first stream's channels feed, by the layout's common name such as stereo or 5.1; the cell's tooltip lists the speakers in the stream's channel order. Discrete channels feed no speaker of their own, such as the two programs of dual channel.",
         ["Encoder"] = "Which program encoded the file, and how sure the analysis is: high when the encoder wrote its name, low when only its habits match.",
         ["Written by"] = "Which software wrote the file around the audio, such as the muxer or the container writer, and how sure the analysis is. It need not be the encoder: a remuxed file keeps the encoder of its audio.",
-        ["Tags"] = "The metadata tags the file holds, such as ID3v2 or APE.",
+        ["Tags"] = "The metadata tags the file holds, such as ID3v2 or APEv2.",
         ["Protection"] = "Protected where a stream is encrypted or covered by a protection scheme such as Common Encryption or Windows Media DRM; the cell's tooltip names the scheme and the DRM systems. The analyzer reads no encrypted frames.",
         ["Findings"] = "Problems and notes found, by severity: errors, warnings and infos.",
     };
