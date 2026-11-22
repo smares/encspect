@@ -455,7 +455,7 @@ public sealed class ApeTagParser : ITagParser
                     && string.Join("; ", TextValues(IsV1, value)) is { Length: > 0 } encoder && !string.IsNullOrWhiteSpace(encoder))
                 {
                     _encoderClaims++;
-                    _claims.Add(new EncoderClaim(encoder, itemNode(), "APEv1 or APEv2 Encoder item", ClaimRoles.Of(ClaimRole.Writer, encoder)));
+                    _claims.Add(new EncoderClaim(encoder, itemNode(), IsV1 ? "APEv1 Encoder item" : "APEv2 Encoder item", ClaimRoles.Of(ClaimRole.Writer, encoder)));
                 }
 
                 if (IsV1 && flags != 0)

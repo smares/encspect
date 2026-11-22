@@ -131,7 +131,7 @@ public partial class WriterRoleTests
     public void ClaimsThatNameOtherSoftwareConflictWithinTheRoleOnly()
     {
         var lavf = new EncoderClaim("Lavf60.16.100", At(), "ID3v2 TSSE frame", ClaimRole.Writer);
-        var other = new EncoderClaim("Foo Muxer 1.0", At(), "APEv1 or APEv2 Encoder item", ClaimRole.Writer);
+        var other = new EncoderClaim("Foo Muxer 1.0", At(), "APEv2 Encoder item", ClaimRole.Writer);
         var again = new EncoderClaim("ffmpeg 6.1", At(), "MP4 ©too atom", ClaimRole.Writer);
         var differing = new List<(string Text, string Winner)>();
         Node? writer = WriterDetection.Detect([lavf, other, again], Cover, (claim, text, winner) => differing.Add((text, winner)));
@@ -139,7 +139,7 @@ public partial class WriterRoleTests
         Assert.Equal([("Foo Muxer 1.0", "the ID3v2 TSSE frame names \"FFmpeg (Lavf60.16.100)\"")], differing);
         Assert.Equal(2, writer!.Children.Count(c => c.Name == "Evidence"));
         Assert.Equal(
-            "The APEv1 or APEv2 Encoder item names \"Foo Muxer 1.0\", but the ID3v2 TSSE frame names \"FFmpeg (Lavf60.16.100)\"; other software may have rewritten the file, and kept one of them.",
+            "The APEv2 Encoder item names \"Foo Muxer 1.0\", but the ID3v2 TSSE frame names \"FFmpeg (Lavf60.16.100)\"; other software may have rewritten the file, and kept one of them.",
             WriterDetection.Disagreement(other, "Foo Muxer 1.0", differing[0].Winner));
     }
 
@@ -271,7 +271,7 @@ public partial class WriterRoleTests
 
         Report conflict = Analyze("conflict.ac3", [.. TestFiles.Id3v23(("TSSE", "Lavf60.16.100")), .. ac3, .. TestFiles.ApeText("Encoder", "Foo Muxer 1.0")]);
         Finding finding = Assert.Single(conflict.Findings, f => f.Code == "ac-3.writer-claim-differs");
-        Assert.Contains("APEv1 or APEv2 Encoder item names \"Foo Muxer 1.0\"", finding.Message, StringComparison.Ordinal);
+        Assert.Contains("APEv2 Encoder item names \"Foo Muxer 1.0\"", finding.Message, StringComparison.Ordinal);
         Assert.NotNull(finding.Path);
     }
 
@@ -363,9 +363,9 @@ public partial class WriterRoleTests
     {
         var found = new List<(string Message, string Node)>();
         var format = new WriterDetection.StreamFormat(KnownWriters.WavPack, "WavPack", (claim, message, node) => found.Add((message, node.Name)));
-        Node? writer = WriterDetection.Detect([new EncoderClaim("LAME 3.100", At("item"), "APEv1 or APEv2 Encoder item", ClaimRole.Writer)], Cover, (_, _, _) => { }, format: format);
+        Node? writer = WriterDetection.Detect([new EncoderClaim("LAME 3.100", At("item"), "APEv2 Encoder item", ClaimRole.Writer)], Cover, (_, _, _) => { }, format: format);
         Assert.Equal("LAME 3.100", writer?.Value?.ToString());
-        Assert.Equal([("The APEv1 or APEv2 Encoder item names \"LAME 3.100\", which writes MPEG audio, not WavPack.", "item")], found);
+        Assert.Equal([("The APEv2 Encoder item names \"LAME 3.100\", which writes MPEG audio, not WavPack.", "item")], found);
 
         // a differing writer is no finding by itself, and neither is FFmpeg on any format or unknown software
         found.Clear();
@@ -381,7 +381,7 @@ public partial class WriterRoleTests
         Finding Only(Report report, string code) => Assert.Single(report.Findings, f => f.Code == code);
 
         Finding mpeg = Only(WithApe("mpeg-audio/external-lame-cbr128-joint.mp3", "a.mp3", "Encoder", "FAAC 1.30"), "mpeg-audio.writer-other-format");
-        Assert.Equal("The APEv1 or APEv2 Encoder item names \"FAAC 1.30\", which writes AAC, not MPEG audio.", mpeg.Message);
+        Assert.Equal("The APEv2 Encoder item names \"FAAC 1.30\", which writes AAC, not MPEG audio.", mpeg.Message);
         Assert.NotNull(mpeg.Path);
         // the finding points at the tag item that states the claim, not at the encoder's evidence
         Report pointed = WithApe("wavpack/external-lossless-16-stereo.wv", "p.wv", "Encoder", "LAME 3.100");
