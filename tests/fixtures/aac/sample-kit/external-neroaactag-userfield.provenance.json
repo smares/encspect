@@ -1,0 +1,45 @@
+{
+ "description": "neroAacEnc 1.5.4.0 and neroAacTag 1.5.4.0: neroAacEnc -lc -cbr 128000 -if music-44k-stereo.wav; neroAacTag -meta-user:encspect=\"user field test\" -meta:comment=\"Encspect comment\", on the synthetic source music-44k-stereo.wav.",
+ "encoder": {
+  "tool": "neroAacEnc (Nero AAC Codec) with neroAacTag",
+  "version": "1.5.4.0",
+  "build": "win32",
+  "package_build_date": "Feb 18 2010",
+  "settings": "neroAacEnc -lc -cbr 128000, then neroAacTag",
+  "commands": [
+   "neroAacEnc -lc -cbr 128000 -if music-44k-stereo.wav",
+   "neroAacTag -meta-user:encspect=\"user field test\" -meta:comment=\"Encspect comment\""
+  ]
+ },
+ "input": {
+  "name": "music-44k-stereo.wav",
+  "sha256": "5272121c7f1c5b652f3f94287cd87cdbe5e2351a299a276d973557974166aa27",
+  "generator": "sources/make_sources.py of the sample kit (written from nothing, reproducible byte for byte)"
+ },
+ "selected_for": "a user field and a comment in neroAacTag's box and in the iTunes metadata",
+ "file": {
+  "name_in_kit": "music-44k-stereo-lc-cbr128-userfield.m4a",
+  "bytes": 164654,
+  "sha256": "51774357c55ba454074d112e87d43fb8e639ec71e04385d438b16f5076a77f27"
+ },
+ "listings": {
+  "tool": "neroAacTag 1.5.4.0 -list-meta, -list-covers and -list-chapters",
+  "meta": {
+   "cdec": "ndaudio 1.5.4.0 / -cbr 128000 -lc",
+   "comment": "Encspect comment",
+   "encspect": "user field test",
+   "itunsmpb": " 00000000 00000A40 00000318 000000000006BAA8 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000",
+   "tool": "Nero AAC codec / 1.5.4.0"
+  },
+  "covers": [],
+  "chapters": [
+   {
+    "start": "0:00.000",
+    "end": "0:10.000"
+   }
+  ]
+ },
+ "reproducible": false,
+ "note": "The encoder stamps the time of the encode into the file; the file is committed as written, and checked by its content.",
+ "license": "Nero's license limits how the software is used, not the files it writes."
+}
