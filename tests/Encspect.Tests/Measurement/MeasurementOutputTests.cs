@@ -212,7 +212,7 @@ public class MeasurementOutputTests
         (int code, string output, _) = Run("--measure", "loudness,true-peak", "--hide", "frames,tags,statistics", Fixture("synthetic-loudness-sine-mono-48000.flac"));
 
         Assert.Equal(CommandLine.Success, code);
-        Assert.DoesNotContain("Spectral Cutoff", output);
+        Assert.Contains("Spectral Cutoff: not measured (the spectrum was not asked for)", output);
         Assert.DoesNotContain("Sample Peak", output);
         Assert.Matches(@"Integrated Loudness: -23\.0 LUFS", output);
         Assert.Matches(@"Loudness Range: 0\.0 LU", output);
