@@ -38,6 +38,8 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     private FolderItem? _selectedFolder;
     private FileRow? _selectedRow;
     private bool _includeSubfolders;
+    private bool _showOnlyAudio;
+    private int _withoutAudio;
     private bool _isRunning;
     private int _total;
     private int _analyzed;
@@ -55,7 +57,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         _post = post ?? UiThread.Post;
         _cache = cache;
         Parallelism = parallelism ?? Math.Clamp(Environment.ProcessorCount / 2, 1, 4);
-        RowsView = new DataGridCollectionView(Rows);
+        RowsView = new DataGridCollectionView(Rows) { Filter = row => !_showOnlyAudio || !((FileRow)row).HasNoAudio };
         Folders = roots ?? FolderRoots.Create(_post);
     }
 
@@ -121,6 +123,31 @@ public sealed class MainViewModel : ObservableObject, IDisposable
             }
         }
     }
+
+    // Hides the files in which the analysis found no audio, by what it found and never by the file name. It only filters the view: the files stay analyzed,
+    // listed in Rows, counted in Total and held by the summary cache.
+    public bool ShowOnlyAudio
+    {
+        get => _showOnlyAudio;
+        set
+        {
+            if (Set(ref _showOnlyAudio, value))
+            {
+                RefreshView();
+                Raise(nameof(HiddenCount));
+                Raise(nameof(HasHidden));
+                Raise(nameof(HiddenText));
+            }
+        }
+    }
+
+    // How many listed files the switch hides now; 0 with it off.
+    public int HiddenCount => _showOnlyAudio ? _withoutAudio : 0;
+
+    public bool HasHidden => HiddenCount > 0;
+
+    // Says how many files the list hides, or nothing when it hides none.
+    public string HiddenText => HiddenCount > 0 ? $"{Format.Count(HiddenCount, "file", "files")} without audio hidden" : string.Empty;
 
     public bool IsRunning
     {
@@ -204,18 +231,24 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     // needs nothing.
     public void SortAgain()
     {
-        if (RowsView.SortDescriptions.All(d => d.PropertyPath == nameof(FileRow.Name)))
+        // Files whose analysis found no audio leave the view as the filter looks at them again, which takes the same refresh.
+        if (!_showOnlyAudio && RowsView.SortDescriptions.All(d => d.PropertyPath == nameof(FileRow.Name)))
         {
             return;
         }
 
+        RefreshView();
+    }
+
+    private void RefreshView()
+    {
         var cost = Stopwatch.StartNew();
         FileRow? selected = _selectedRow;
         _isSorting = true;
         try
         {
             RowsView.Refresh();
-            SelectedRow = selected;
+            SelectedRow = selected is not null && RowsView.Contains(selected) ? selected : null;
         }
         finally
         {
@@ -291,6 +324,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         Rows.Clear();
         _total = 0;
         _analyzed = 0;
+        _withoutAudio = 0;
         _isListed = false;
         _wasCanceled = false;
         Error = null;
@@ -449,6 +483,11 @@ public sealed class MainViewModel : ObservableObject, IDisposable
                 _analyzed++;
             }
 
+            if (row.HasNoAudio)
+            {
+                _withoutAudio++;
+            }
+
             if (_reselectPath is not null && row.Path == _reselectPath)
             {
                 SelectedRow = row;
@@ -564,6 +603,10 @@ public sealed class MainViewModel : ObservableObject, IDisposable
             if (result.Row.IsListed)
             {
                 _analyzed++;
+                if (result.Row.HasNoAudio)
+                {
+                    _withoutAudio++;
+                }
             }
 
             isApplied = true;
@@ -578,6 +621,9 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         Raise(nameof(Analyzed));
         Raise(nameof(IsListed));
         Raise(nameof(Status));
+        Raise(nameof(HiddenCount));
+        Raise(nameof(HasHidden));
+        Raise(nameof(HiddenText));
     }
 
     private sealed class Run

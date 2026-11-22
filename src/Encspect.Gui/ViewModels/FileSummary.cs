@@ -20,6 +20,10 @@ public sealed record FileSummary(ReportSummary Summary, bool? IsVbr, string? Pro
     // files as they are once the analysis is done, and does not keep a summary a companion that changed meanwhile contradicts.
     public IReadOnlyList<long?> CompanionLengths { get; init; } = [];
 
+    // Whether the analysis found an audio stream: the summary's codec, duration and the other figures of the audio come from the first stream of kind audio and
+    // are null without one. The file name never enters.
+    public bool HasAudio => Summary.Duration is not null;
+
     public static FileSummary From(Report report)
     {
         ArgumentNullException.ThrowIfNull(report);
