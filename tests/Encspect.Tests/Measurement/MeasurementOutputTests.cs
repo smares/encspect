@@ -37,9 +37,16 @@ public class MeasurementOutputTests
         string[] lines = output.ReplaceLineEndings("\n").Split('\n');
         int verified = Array.FindIndex(lines, l => l.TrimStart().StartsWith("Verified: ", StringComparison.Ordinal));
         Assert.StartsWith("Measured: 1.0 s of 1 channel", lines[verified + 1].TrimStart());
-        Assert.Matches(@"^\s+Spectral Cutoff: 16,0\d\d Hz \(a step of 81\.6 dB, transition from 1[56],\d{3} Hz, in 20 of 20 frames with signal\)$", lines[verified + 2]);
         Assert.Equal(lines[verified].Length - lines[verified].TrimStart().Length, lines[verified + 1].Length - lines[verified + 1].TrimStart().Length);
-        Assert.Equal(2, lines[verified + 2].Length - lines[verified + 2].TrimStart().Length - (lines[verified + 1].Length - lines[verified + 1].TrimStart().Length));
+
+        // The spectral cutoff and the low bits unused stand beside the coding line, one level in, ahead of the verification.
+        int coding = Array.FindIndex(lines, l => l.TrimStart().StartsWith("Coding: lossless coding", StringComparison.Ordinal));
+        Assert.True(coding >= 0 && coding < verified);
+        Assert.Matches(@"^\s+Spectral Cutoff: 16,0\d\d Hz \(a step of 81\.6 dB, transition from 1[56],\d{3} Hz, in 20 of 20 frames with signal\), measured from the decoded audio$", lines[coding + 1]);
+        Assert.StartsWith("Low Bits Unused: ", lines[coding + 2].TrimStart(), StringComparison.Ordinal);
+        Assert.Equal(2, lines[coding + 1].Length - lines[coding + 1].TrimStart().Length - (lines[coding].Length - lines[coding].TrimStart().Length));
+        Assert.Equal(lines[coding + 1].Length - lines[coding + 1].TrimStart().Length, lines[coding + 2].Length - lines[coding + 2].TrimStart().Length);
+        Assert.DoesNotContain(lines.Skip(verified), l => l.TrimStart().StartsWith("Spectral Cutoff:", StringComparison.Ordinal));
     }
 
     [Fact]

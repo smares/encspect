@@ -102,6 +102,9 @@ public sealed record ReportSummary(
 
     public IReadOnlyList<string> DrmSystems { get; init; } = DrmSystems ?? [];
 
+    // The first audio stream's coding class, null where it has none.
+    public CodingClass? CodingClass { get; init; }
+
     // The layout's common name, such as "5.1", or null.
     public string? ChannelLayoutName => ChannelLayout is { } layout ? ChannelLayouts.CommonName(layout) : null;
 
@@ -165,6 +168,7 @@ public sealed record ReportSummary(
             ProcessorConfidence = processed?.ProcessorConfidence,
             LossyPart = lossyPart?.Value,
             LossyPartConfidence = lossyPart?.Confidence,
+            CodingClass = first?.CodingClass,
             Correction = first?.Correction?.Status,
             LostSamples = lost,
             SpectralCutoff = first?.Measurements?.Spectrum?.Cutoff is { IsFound: true } cutoff ? cutoff.Frequency : null,

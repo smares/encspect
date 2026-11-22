@@ -27,7 +27,7 @@ The output is a text tree by default; `encspect --help` lists the options.
 - `--ndjson`: one compact report per line, which stays usable line by line if a long run stops early.
 - `--csv`: one summary row per file.
 
-Reports are written as each file is analyzed. All output is UTF-8 without a byte order mark, text from files included; JSON writes non-ASCII characters as they are, not as `\u` escapes. A CSV field that starts with `=`, `+`, `-` or `@` gets a leading apostrophe, so a spreadsheet does not run it as a formula; the columns the writer formats from numbers (the counts, duration, samples, bitrate, sample rate, `JOC Object Count` and the measured columns) skip the guard, as a number cannot start one. Against version 0.1.0 the CSV has twenty-one more columns (44 in all, 23 before). `Lost Samples` stands directly after `Samples`; `Processor`, `Processor Confidence`, `Lossy Part` and `Lossy Part Confidence` stand after `Writer Confidence`; `Correction File` stands after `Lossy Part Confidence`; `Is Verified` stands after `DRM Systems`; and fourteen measured columns come last, in the order of their meaning: `Spectral Cutoff (Hz)`, then the level figures `Sample Peak (dBFS)`, `Maximum True Peak Level (dBTP)` and `Clipping Runs`, then `Integrated Loudness (LUFS)` and `Loudness Range (LU)`, then `Digital Silence Stretches`, `Changes of Low Bits Unused` and `Grid of the Changes (samples)`. The columns are grouped by meaning, so one moved against earlier versions: `Is Verified` was between `Is Protected` and `Protection Scheme`. A reader that addresses columns by index must be changed.
+Reports are written as each file is analyzed. All output is UTF-8 without a byte order mark, text from files included; JSON writes non-ASCII characters as they are, not as `\u` escapes. A CSV field that starts with `=`, `+`, `-` or `@` gets a leading apostrophe, so a spreadsheet does not run it as a formula; the columns the writer formats from numbers (the counts, duration, samples, bitrate, sample rate, `JOC Object Count` and the measured columns) skip the guard, as a number cannot start one. Against version 0.1.0 the CSV has twenty-two more columns (45 in all, 23 before). `Lost Samples` stands directly after `Samples`; `Processor`, `Processor Confidence`, `Lossy Part` and `Lossy Part Confidence` stand after `Writer Confidence`; `Correction File` stands after `Lossy Part Confidence`; `Is Verified` stands after `DRM Systems`; and fourteen measured columns come last, in the order of their meaning: `Spectral Cutoff (Hz)`, then the level figures `Sample Peak (dBFS)`, `Maximum True Peak Level (dBTP)` and `Clipping Runs`, then `Integrated Loudness (LUFS)` and `Loudness Range (LU)`, then `Digital Silence Stretches`, `Changes of Low Bits Unused` and `Grid of the Changes (samples)`. The columns are grouped by meaning, so one moved against earlier versions: `Is Verified` was between `Is Protected` and `Protection Scheme`. `Coding Class` stands directly after `Codec`, so every column after `Codec` is one further on than in 0.3.0. A reader that addresses columns by index must be changed.
 
 ## Options
 
@@ -84,10 +84,12 @@ Decodes, verifies and measures each file's audio, for the codings that have a de
 - **Cost:** about 16 to 21 ns for each sample of each channel for everything on the machine the work weights were measured on (`MeasurementWorkTests` prints them), of which the levels are about 2 ns at 16 and 24 bits (`--measure levels` alone), counted in work units of its own, apart from the decoders': past the larger of 2^35 units and the allowance the decoding earns (the bytes of the units each stream is given times the units a byte of its coding), measuring stops with an info finding (`measure.limit`) and decoding and verification go on. The state of the measurements of one file is bounded at 64 MiB, and at most 32 channels are measured.
 - **PCM files:** WAV, Wave64 and AIFF (including AIFF-C `sowt`, `in24`, `in32`, `raw `, `fl32`, `fl64`, `alaw` and `ulaw`) are decoded by the `pcm` decoder for the measurements, which read the container's samples as stored (see [wav.md](formats/wav.md#decoding)). A file of integers wider than 32 bits says `not measured` with the reason, and the stream has `decode.not-possible` (info).
 - **Formats without a decoder:** the stream says why it has no figures (`not measured (no decoder for <codec>)`, for a parser that starts a decode session for a codec no decoder has, which no format does today); the other formats whose parsers start no decode session get no measurements at all, and so do WAV and AIFF streams that are not PCM (ADPCM, a codec parser's data, IEC 61937 bursts). PCM streams whose layout the file does not state consistently also get no session and no record, and no reason, among them: a block alignment that is not the channels times the width, data in a `wavl` list, 0 channels, 0 bits per sample, floats of other than 32 or 64 bits, A-law or mu-law of other than 8 bits, and an AIFF sample size of 0. Integers wider than 32 bits, in WAV and in AIFF, are refused with `decode.not-possible`. WavPack's DSD is not measured.
-- **Text tree:** lines under the stream's first node, after the `Verified:` line.
+- **Text tree:** lines under the stream's first node, after the `Verified:` line. `Spectral Cutoff:` and `Low Bits Unused:` stand beside the `Coding:` line instead (each with its basis, `measured from the decoded audio`, then `measuring stopped early`, `measuring stopped where the format of the decoded blocks changed` or `some frames were not decoded or delivered in part` where that is so; where a figure is not there, `Measured:` says why, and the one thing it does not say is added: `Low Bits Unused: not defined for floating-point samples`) where the stream has one ("The coding class of a stream").
 
+      Coding: lossless coding
+        Spectral Cutoff: 16,796 Hz (a step of 59.1 dB, transition from 16,538 Hz, in 20 of 20 frames with signal), measured from the decoded audio
+        Low Bits Unused: 0 of 16, the highest magnitude 12,090, measured from the decoded audio
       Measured: 1.0 s of 1 channel
-        Spectral Cutoff: 16,796 Hz (a step of 59.1 dB, transition from 16,538 Hz, in 20 of 20 frames with signal)
         Spectral Bandwidth: 16,882 Hz, 20 dB or more above a floor of -129.4 dB from there to the top
         Spectral Holes: 0.3 % of the cells with signal from 1,981 to 16,796 Hz
         Sample Peak: -8.7 dBFS
@@ -96,7 +98,6 @@ Decodes, verifies and measures each file's audio, for the codings that have a de
         Clipping: none
         Digital Silence: none
         Zero Samples: 6 samples
-        Low Bits Unused: 0 of 16, the highest magnitude 12,090
         Low Bits Unused per Span: 0 bits in 1,379 spans
         Spans Above the Stream's Low Bits Unused: 0.0% (0 of 1,379 spans)
         Changes of Low Bits Unused: 0 changes (at 0 moments)
@@ -180,11 +181,11 @@ Measurements raise no finding about the audio, since a figure is not a verdict; 
 A stream of a coding that declares its checksums has a verification, with or without `--verify`. FLAC (frame header CRC-8, frame CRC-16 and STREAMINFO MD5), WavPack, Monkey's Audio, TrueHD and MLP, TTA, MPEG audio (the frame CRC-16, a header checksum), OptimFROG (the CRC-32 of every data block and the MD5, which no decoder compares) and TAK (the CRC-24 of every metadata object, which is compared, the CRC-24s of the frames and the MD5, which are not) declare theirs. The model also carries a verification for the streams of WAV, Wave64 and AIFF, which declare no checksum: it says only whether the audio was decoded (`notRequested`, or `decoded` with `--measure`), the front ends read it, and the text tree, the JSON and the GUI's `Verified` line leave out a verification that declares no checksum, so those reports are the same with and without it. A stream is verified when every checksum it stores was compared and holds, and at least one of them covers all of its audio (`encspect --learn verification` explains it).
 
 - **Text tree:** a line under the stream's first node.
-  - `Verified: yes (frame header CRC-8 40 of 40, frame CRC-16 40 of 40, STREAMINFO MD5 1 of 1)`: each checksum with the values compared of those stored.
+  - `Verified: yes (the decoded audio matches the stored checksums; frame header CRC-8 40 of 40, frame CRC-16 40 of 40, STREAMINFO MD5 1 of 1)`: a `yes` starts with what it rests on, from the checksums that cover all of the audio: `the decoded audio matches the stored checksums` where one of them is over decoded audio (an MD5), `the coded data matches the stored checksums` where they are over coded data (frame CRCs). It says what was compared and nothing about where the audio came from. Each checksum follows with the values compared of those stored.
   - `Verified: no (STREAMINFO MD5 1 of 1 differ)`: a stored checksum differs.
   - `Verified: unknown (STREAMINFO MD5 not compared: decoding was not asked for)`: something stored was not compared, or nothing compared covers all of the audio.
-  - `Verified: yes (lossy stream; block header CRC 120 of 120)`: the checksums vouch for the output of a lossy coding (a WavPack hybrid file without its correction file).
-  - `Verified: yes (with correction file; block CRC-32 1 of 1, correction block CRC-32 1 of 1)`: the checksums vouch for the stream together with its correction file, a consistent pair.
+  - `Verified: yes (the decoded audio matches the stored checksums; lossy stream; block header CRC 120 of 120)`: the checksums vouch for the output of a lossy coding (a WavPack hybrid file without its correction file).
+  - `Verified: yes (the coded data matches the stored checksums; with correction file; block CRC-32 1 of 1, correction block CRC-32 1 of 1)`: the checksums vouch for the stream together with its correction file, a consistent pair.
 - **JSON:** `verification` in the stream, after `protection`:
   - `isVerified`, written where it is not null;
   - `isLossy` and `withCorrection`, written where they are true;
@@ -222,6 +223,21 @@ Prints `encspect <version>` and exits with 0, for example `encspect 0.3.0+4da770
 - **Same string everywhere:** it is the `version` in a JSON report's `tool` object and the version the GUI's About window shows.
 - **Commit suffix:** the part after `+` names the commit the build was made from, so a bug report identifies the exact source. A build without Git metadata has no suffix.
 - **Alone:** with any other argument it is wrong usage.
+
+### The coding class of a stream
+
+Every stream states whether its coding is lossless, lossy or hybrid, a property of the coding and never of the audio's history ([the article](../src/Encspect.Host/Topics/coding-class.md), `encspect --learn coding-class`).
+
+- **Text tree:** a line under the stream's first node, before `Verified`: `Coding: lossless coding`, `Coding: lossy coding`, `Coding: hybrid coding (lossless with its correction file)`, `Coding: hybrid coding (lossy without its correction file)` or `Coding: hybrid coding (lossy, no correction file written)`, with `Coding (stream 2): ...` for several streams. The evidence about the file's history stands beside it, one level in: `Processor: lossyWAV 1.4.2 (high)` where a processor claim is made and, with `--measure`, `Spectral Cutoff:` and `Low Bits Unused:` with the basis they were measured on, which then are not repeated among the measurements' lines (their sub-figures, such as `Low Bits Unused per Span`, stay under `Measured:`). A stream whose coding has no class has no `Coding:` line.
+- **JSON:** `codingClass`, after `codec`.
+- **CSV:** `Coding Class`, after `Codec`.
+- **Where it comes from:** the parsers' codec names map to a class in one table (`CodingClasses` in `Encspect.Core.Abstractions`), applied by the host to a stream a parser left without one; `CodingClassFixtureTests` holds every golden stream to it.
+- **The classes:**
+  - lossless: linear and floating-point PCM, FLAC, Apple Lossless, Monkey's Audio, TTA, TAK (also its lossyWAV codec), OptimFROG where every whole data block shows the pattern of a lossless file, WavPack lossless, TrueHD and MLP, WMA Lossless, DTS-HD Master Audio, MPEG-4 ALS and DST;
+  - lossy: A-law and mu-law (ITU-T G.711 rounds 13- or 14-bit samples to 8 bits), the ADPCM codings, MACE and ACE, GSM and the other speech codings, MPEG audio, AAC in all its object types, AC-3 and E-AC-3, DTS (core, ES, 96/24, Express) and DTS-HD High Resolution Audio, Vorbis, Opus, Speex, Musepack, WMA 1, 2, Professional and Voice, ATRAC, and the legacy lossy mode of WavPack 1 to 3 (`WavPack lossy`, which has no correction file);
+  - hybrid: WavPack 4 and 5 and version 3 hybrid files (`WavPack hybrid`), and OptimFROG files that make the DualStream lossy-part claim. A pair is lossless with its consistent correction file and lossy without it ("The correction file of a stream"), which `StreamVerification.IsLossy` follows for the audio its checksums vouch for;
+  - none: an unlisted coding (`Other`), a `WavPack lossy` stream of version 4 or 5 (an extra bitstream is missing), an OptimFROG file whose data blocks mix the patterns or has no whole one, a DTS-HD track that no parser reads, encrypted audio, streams that are not audio, correction files, and MPEG-4 SLS, whose enhancement layer can be cut short of lossless, so the class is not in the stream alone.
+- **lossyWAV:** a file it processed keeps the class of its coding, with the processor claim beside it.
 
 ### The correction file of a stream
 
@@ -283,6 +299,7 @@ A JSON report (schema version 1) is an object:
   - `children`.
 - **Streams** are the audio streams as the format defines them; an MPEG stream continues across a tag embedded in it and ends where the version, layer or sample rate changes.
   - `nodes` are the paths of the nodes that hold the stream.
+  - `codingClass` follows `codec`: `lossless`, `lossy` or `hybrid` (see "The coding class of a stream"); left out for a stream whose coding has no class.
   - `duration` is in seconds and `averageBitrate` in kbps.
   - `playbackGroup` is present on streams that play at the same time (the tracks of an MP4 movie or of a Matroska Segment, the streams of one link of an Ogg chain, the streams of one ASF file, the independent substreams of an E-AC-3 file or track); streams with the same number are one presentation, and a summary counts the longest of them once (a movie with one audio track has a group of one). Streams without it, and streams of different groups, follow one another and add up.
     - An MP4 or Matroska track whose codec parser reports several streams that play together (E-AC-3 independent substreams) gives all of them its movie's or Segment's group. Several streams of a track that follow one another (a configuration change) are not grouped: no one number says that they follow each other beside the other tracks.
@@ -356,7 +373,7 @@ The lines follow the anchor and its entries (the tally's own lines, not shown he
 The CSV row of a file has:
 
 - its format and the number of streams;
-- the first audio stream's codec;
+- the first audio stream's codec and, in the column after it, its coding class (`Coding Class`: `lossless`, `lossy` or `hybrid`, empty where it has none);
 - the duration and samples of the audio streams together, where streams that play at the same time (a playback group: the tracks of a movie or a Matroska Segment, the streams of one Ogg chain link, the streams of one ASF file, the independent substreams of an E-AC-3 file or track) count the longest once;
 - their average bitrate, weighted by duration;
 - the first audio stream's sample rate, channel mode and channel layout (`5.1 (front left, front right, front center, back left, back right, LFE)`, or only the speakers where the layout has no common name);

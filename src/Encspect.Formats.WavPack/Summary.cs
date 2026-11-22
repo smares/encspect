@@ -429,6 +429,8 @@ internal static partial class Summary
         {
             Nodes = [stream],
             Codec = codec,
+            // A hybrid file is lossy without its correction file; "WavPack lossy" is a stream whose extra bitstream is missing, which the stream alone does not settle.
+            CodingClass = isCorrection ? null : isHybrid ? CodingClass.Hybrid : s.HasLossyBlocks ? null : CodingClass.Lossless,
             SampleRate = (int)Math.Min(int.MaxValue, nativeRate),
             Channels = channels,
             ChannelMode = channelMode,
