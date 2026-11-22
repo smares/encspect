@@ -1,0 +1,72 @@
+{
+ "description": "neroAacEnc 1.5.4.0 and neroAacTag 1.5.4.0: neroAacEnc -lc -cbr 128000 -if music-44k-stereo.wav (three times; the log does not say how the three encodes were joined); neroAacTag -meta:album=\"Encspect chapters\"; neroAacTag -chapter:1 -meta:title=\"Chapter 1\"; neroAacTag -chapter:2 -meta:title=\"Chapter 2\"; neroAacTag -chapter:3 -meta:title=\"Chapter 3\", on the synthetic source music-44k-stereo.wav.",
+ "encoder": {
+  "tool": "neroAacEnc (Nero AAC Codec) with neroAacTag",
+  "version": "1.5.4.0",
+  "build": "win32",
+  "package_build_date": "Feb 18 2010",
+  "settings": "neroAacEnc -lc -cbr 128000, then neroAacTag",
+  "commands": [
+   "neroAacEnc -lc -cbr 128000 -if music-44k-stereo.wav (three times; the log does not say how the three encodes were joined)",
+   "neroAacTag -meta:album=\"Encspect chapters\"",
+   "neroAacTag -chapter:1 -meta:title=\"Chapter 1\"",
+   "neroAacTag -chapter:2 -meta:title=\"Chapter 2\"",
+   "neroAacTag -chapter:3 -meta:title=\"Chapter 3\""
+  ]
+ },
+ "input": {
+  "name": "music-44k-stereo.wav",
+  "sha256": "5272121c7f1c5b652f3f94287cd87cdbe5e2351a299a276d973557974166aa27",
+  "generator": "sources/make_sources.py of the sample kit (written from nothing, reproducible byte for byte)"
+ },
+ "selected_for": "three chapters with titles of their own in neroAacTag's box and in the chapter list",
+ "file": {
+  "name_in_kit": "music-44k-stereo-lc-cbr128-chapters.m4a",
+  "bytes": 488719,
+  "sha256": "9e1357690bcf83c2a4f06885ed5056ef272b0bd3111d973c56cf3ba0c25a3739"
+ },
+ "listings": {
+  "tool": "neroAacTag 1.5.4.0 -list-meta, -list-covers and -list-chapters",
+  "meta": {
+   "album": "Encspect chapters",
+   "cdec": "ndaudio 1.5.4.0 / -cbr 128000 -lc",
+   "itunsmpb": " 00000000 00000A40 000001C8 0000000000142FF8 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000",
+   "tool": "Nero AAC codec / 1.5.4.0"
+  },
+  "meta_per_chapter": [
+   {
+    "title": "Chapter 1",
+    "track": "1"
+   },
+   {
+    "title": "Chapter 2",
+    "track": "2"
+   },
+   {
+    "title": "Chapter 3",
+    "track": "3"
+   }
+  ],
+  "covers": [],
+  "chapters": [
+   {
+    "start": "0:00.000",
+    "end": "0:10.000",
+    "title": "Chapter 1"
+   },
+   {
+    "start": "0:10.000",
+    "end": "0:20.000",
+    "title": "Chapter 2"
+   },
+   {
+    "start": "0:20.000",
+    "end": "0:30.000",
+    "title": "Chapter 3"
+   }
+  ]
+ },
+ "reproducible": false,
+ "note": "The encoder stamps the time of the encode into the file; the file is committed as written, and checked by its content.",
+ "license": "Nero's license limits how the software is used, not the files it writes."
+}

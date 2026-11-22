@@ -156,7 +156,10 @@ public sealed partial class Mp4Parser
                 Id32(state, node, f);
                 return true;
             case "chpl":
-                NeroChapters(node, f);
+                NeroChapters(state, node, f);
+                return true;
+            case "tags" when IsNeroTags(state, header):
+                NeroTags(state, node, header, f, depth);
                 return true;
             case "mehd" or "trex" or "mfhd" or "tfhd" or "tfdt" or "trun" or "sidx" or "tfra" or "mfro":
                 FragmentBox(state, node, header, f);

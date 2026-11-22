@@ -7,6 +7,7 @@ internal static class Topics
     public const string SampleTables = "mp4-sample-tables";
     public const string EditListsAndPriming = "edit-lists-and-priming";
     public const string ItunesMetadata = "itunes-metadata";
+    public const string NeroTags = "nero-tags";
     public const string QuickTimeUserData = "quicktime-user-data";
     public const string FragmentedMp4 = "fragmented-mp4";
     public const string AudioSpecificConfig = "audio-specific-config";
@@ -270,6 +271,27 @@ internal static class Explain
     public const string ParamsValue = "The setting's 32-bit value.";
 
     public const string Id3Language = "The language of the ID3v2 tag that follows, three letters of ISO 639-2/T packed in 5 bits each (ID3v2 in ISO base media files, as the MP4 registration authority lists it).";
+    public const string NeroTags = "Nero's tags box: the fields, covers and chapter fields that Nero's encoders and neroAacTag write in a tags box of the movie's user data, beside the iTunes metadata. No specification is known; the layout is read from files that neroAacEnc 1.0.0.2 to 1.3.3.0, Nero Burning ROM and neroAacTag 1.5.4.0 wrote.";
+    public const string NeroFields = "A list of fields of Nero's tag: a 32-bit count, then each field's flags, key and value.";
+    public const string NeroFieldCount = "The number of fields in the list.";
+    public const string NeroField = "A field of Nero's tag: a key and a value, which is text in every field seen.";
+    public const string NeroFieldFlags = "A byte before the key's length: 0x00 in every iTunSMPB and tool field of the files seen and in the cdec field of neroAacEnc 1.3.3.0, 0x80 in every other field. The files do not show what it selects.";
+    public const string NeroKeyLength = "The length of the key in bytes.";
+    public const string NeroKey = "The field's name, as the files show it: title, artist, album, album artist, composer, genre, year and comment, a name a user gave a field of their own (neroAacTag's -meta-user), the chapter's number as track, and cdec (the encoder's command line), iTunSMPB and tool, which the encoders write.";
+    public const string NeroValueType = "A 16-bit type of the value: 1 for the text of every field seen, 0 for the image of the cover seen.";
+    public const string NeroValueLength = "The length of the value in bytes.";
+    public const string NeroValue = "The field's value: text, UTF-8 in the files seen; empty in many fields of Nero Burning ROM's files.";
+    public const string NeroMoreFields = "The fields past the number that are listed as nodes; they are not read.";
+    public const string NeroCover = "A cover image of Nero's tag: two 32-bit values, a text naming the kind of cover and the image, each with its length.";
+    public const string NeroCoverFirst = "A 32-bit value that is 0 in the cover seen. The file does not show what it means.";
+    public const string NeroCoverSecond = "A 32-bit value that is 1 in the cover seen. The file does not show what it means.";
+    public const string NeroCoverTypeLength = "The length of the text that names the kind of cover, in bytes.";
+    public const string NeroCoverType = "A text naming the kind of cover: \"front cover\" in the cover seen.";
+    public const string NeroImageLength = "The length of the image in bytes.";
+    public const string NeroImage = "The cover's image as stored; the box states no image type, so it is recognized by its first bytes.";
+    public const string NeroSegment = "A segment of Nero's tag: its header and, where the segment has fields of its own, a list of them. The files seen have one for each chapter, and one where the file has none.";
+    public const string NeroSegmentHeader = "The header of a segment: its number.";
+    public const string NeroSegmentIndex = "The segment's number, counting from 0: 0, 1 and 2 for the three chapters of the file that has them, 0 in the files without chapters.";
     public const string ChaptersReserved = "Four bytes that version 1 of Nero's chapter box adds, as ffmpeg reads it.";
     public const string ChapterCount = "The number of chapters in Nero's list.";
     public const string Chapter = "A chapter of Nero's list: its start and title.";

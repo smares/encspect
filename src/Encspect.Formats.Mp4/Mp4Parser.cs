@@ -139,6 +139,7 @@ public sealed partial class Mp4Parser : IFormatParser
             state.Findings.AddNow(Severity.Warning, "mp4.trailing-data", $"{Counts.Of(reader.End - end, "byte", "bytes")} after the last box at 0x{end:X} {Counts.Agree(reader.End - end, "is", "are")} not a box.", data);
         }
 
+        CompareNeroTags(state);
         Check(state, file);
         RouteTracks(state);
         file.Value = Describe(state);
@@ -334,6 +335,11 @@ public sealed partial class Mp4Parser : IFormatParser
         if (header.Type == "ilst")
         {
             return new(state.MetaHandler == "mdta" ? "QuickTime Metadata" : "iTunes Metadata", NodeKind.Tag, Explain.Box(header.Type), Topics.ItunesMetadata);
+        }
+
+        if (header.Type == "tags" && IsNeroTags(state, header))
+        {
+            return new(NeroTagsName, NodeKind.Tag, Explain.NeroTags, Topics.NeroTags);
         }
 
         if (header.Type == "udta" && HoldsTextAtom(state, header))
