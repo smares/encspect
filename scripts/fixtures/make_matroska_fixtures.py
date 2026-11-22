@@ -1517,7 +1517,7 @@ def _():
          "Cluster, a second Cluster after it, and a header-less APEv2 tag whose size is 300 bytes too large, so that it reaches back into the first Cluster: the Cluster after the "
          "unknown element vouches for the recording before it, so both Clusters are read and the damaged tag is not accepted.",
          findings=[("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown"), ("matroska.unknown-element", "0x5441"),
-                   ("matroska.element-header-invalid", "No element can be read"), ("tag.near-miss", "APE signature")], streams=[OPUS], valid=False)
+                   ("matroska.element-header-invalid", "No element can be read"), ("tag.near-miss", "APEv2 signature")], streams=[OPUS], valid=False)
 def _():
     recording = live_file_of([cluster(0, *blocks(count=3), E(0x5441, bytes(0x700)), *blocks(count=2, start=60, first=3), unknown=True), cluster(1000, *blocks(count=5, first=5), unknown=True)])
     start = recording.index(b"\x54\x41\x47\x00")
@@ -1543,14 +1543,14 @@ def false_footer(target):
 @fixture("live-false-ape-footer-block", "A live recording whose last block's payload ends in bytes that read as an APEv2 footer whose tag size reaches back to the start of that "
          "block: the tag would be the block, but the elements from there run through known elements to the end of the data and the \"items\" are no items, so the "
          "recording keeps its bytes and the candidate is a near miss.",
-         findings=[("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown"), ("tag.near-miss", "APE signature")], streams=[OPUS], valid=False)
+         findings=[("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown"), ("tag.near-miss", "APEv2 signature")], streams=[OPUS], valid=False)
 def _():
     return false_footer("block")
 
 
 @fixture("live-false-ape-footer-info", "As live-false-ape-footer-block with a tag size that reaches back to the Segment's first child (Info): a Top-Level Element starts there, "
          "and the elements from there run through to the end of the data, so the Segment keeps its Info, Tracks and Cluster.",
-         findings=[("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown"), ("tag.near-miss", "APE signature")], streams=[OPUS], valid=False)
+         findings=[("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown"), ("tag.near-miss", "APEv2 signature")], streams=[OPUS], valid=False)
 def _():
     return false_footer("info")
 
@@ -1587,7 +1587,7 @@ def false_items(variant):
     return bytes(data)
 
 
-FALSE_ITEMS = [("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown"), ("tag.near-miss", "APE signature")]
+FALSE_ITEMS = [("matroska.segment-size-unknown", "unknown"), ("matroska.cluster-size-unknown", "unknown"), ("tag.near-miss", "APEv2 signature")]
 FALSE_ITEMS_BLOCKS = FALSE_ITEMS + [("matroska.timestamps-backwards", "go back in time")]
 PCM_STREAM = [("PCM", 8000, 1)]
 
