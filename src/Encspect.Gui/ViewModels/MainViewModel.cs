@@ -39,7 +39,6 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     private FileRow? _selectedRow;
     private bool _includeSubfolders;
     private bool _showOnlyAudio;
-    private int _withoutAudio;
     private bool _isRunning;
     private int _total;
     private int _analyzed;
@@ -134,15 +133,13 @@ public sealed class MainViewModel : ObservableObject, IDisposable
             if (Set(ref _showOnlyAudio, value))
             {
                 RefreshView();
-                Raise(nameof(HiddenCount));
-                Raise(nameof(HasHidden));
-                Raise(nameof(HiddenText));
             }
         }
     }
 
-    // How many listed files the switch hides now; 0 with it off.
-    public int HiddenCount => _showOnlyAudio ? _withoutAudio : 0;
+    // How many listed files the list does not show now, so the count and the rows always agree: a file whose analysis found no audio leaves the view at its next
+    // refresh (SortAgain, at most every quarter second while the run goes on, and once when it ends), and is counted from then on.
+    public int HiddenCount => _showOnlyAudio ? Rows.Count - RowsView.Count : 0;
 
     public bool HasHidden => HiddenCount > 0;
 
@@ -256,6 +253,8 @@ public sealed class MainViewModel : ObservableObject, IDisposable
             _sortCost = cost.Elapsed;
             _sinceSort.Restart();
         }
+
+        RaiseHidden();
     }
 
     // Lists and analyzes the source again; with a cache, only the files that changed are analyzed.
@@ -290,13 +289,23 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         ArgumentNullException.ThrowIfNull(row);
 
         int index = RowsView.IndexOf(row);
-        if (index < 0)
+        if (index >= 0)
         {
-            return null;
+            int target = index + delta;
+            return target >= 0 && target < RowsView.Count ? (FileRow)RowsView.GetItemAt(target)! : null;
         }
 
-        int target = index + delta;
-        return target >= 0 && target < RowsView.Count ? (FileRow)RowsView.GetItemAt(target)! : null;
+        // A row the switch hides, which a detail window may still show: the nearest row the list shows, walking the full list in the order it was listed.
+        int full = Rows.IndexOf(row);
+        for (int i = full + delta; full >= 0 && i >= 0 && i < Rows.Count; i += delta)
+        {
+            if (!_showOnlyAudio || !Rows[i].HasNoAudio)
+            {
+                return Rows[i];
+            }
+        }
+
+        return null;
     }
 
     public void Dispose()
@@ -324,7 +333,6 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         Rows.Clear();
         _total = 0;
         _analyzed = 0;
-        _withoutAudio = 0;
         _isListed = false;
         _wasCanceled = false;
         Error = null;
@@ -483,12 +491,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
                 _analyzed++;
             }
 
-            if (row.HasNoAudio)
-            {
-                _withoutAudio++;
-            }
-
-            if (_reselectPath is not null && row.Path == _reselectPath)
+            if (_reselectPath is not null && row.Path == _reselectPath && !(_showOnlyAudio && row.HasNoAudio))
             {
                 SelectedRow = row;
             }
@@ -603,10 +606,6 @@ public sealed class MainViewModel : ObservableObject, IDisposable
             if (result.Row.IsListed)
             {
                 _analyzed++;
-                if (result.Row.HasNoAudio)
-                {
-                    _withoutAudio++;
-                }
             }
 
             isApplied = true;
@@ -621,6 +620,11 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         Raise(nameof(Analyzed));
         Raise(nameof(IsListed));
         Raise(nameof(Status));
+        RaiseHidden();
+    }
+
+    private void RaiseHidden()
+    {
         Raise(nameof(HiddenCount));
         Raise(nameof(HasHidden));
         Raise(nameof(HiddenText));

@@ -195,6 +195,14 @@ public sealed class DetailWindows
     private void ShowNeighbors(DetailWindow window)
     {
         ListNeighbors neighbors = _neighbors[window];
+        if (!neighbors.IsListed && window.Row is { } row)
+        {
+            // A row the list hides (Show Only Audio) is not in the list but has neighbors all the same.
+            window.Model.CanGoPrevious = _model.Neighbor(row, -1) is not null;
+            window.Model.CanGoNext = _model.Neighbor(row, 1) is not null;
+            return;
+        }
+
         window.Model.CanGoPrevious = neighbors.HasPrevious;
         window.Model.CanGoNext = neighbors.HasNext;
     }

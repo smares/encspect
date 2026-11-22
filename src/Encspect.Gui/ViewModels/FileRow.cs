@@ -24,7 +24,7 @@ public sealed class FileRow : ObservableObject
         nameof(BitrateText), nameof(SampleRate), nameof(SampleRateText), nameof(ChannelMode), nameof(ChannelLayout),
         nameof(ChannelLayoutTip), nameof(Encoder), nameof(EncoderConfidence),
         nameof(EncoderText), nameof(Writer), nameof(WriterConfidence), nameof(WriterText), nameof(Tags), nameof(Errors), nameof(Warnings), nameof(Infos), nameof(ErrorsText), nameof(WarningsText),
-        nameof(InfosText), nameof(FindingsRank), nameof(Problem), nameof(IsProtected), nameof(ProtectionText), nameof(ProtectionTip), nameof(HasAudio),
+        nameof(InfosText), nameof(FindingsRank), nameof(Problem), nameof(IsProtected), nameof(ProtectionText), nameof(ProtectionTip),
     ];
 
     private FileState _state;
@@ -145,11 +145,8 @@ public sealed class FileRow : ObservableObject
     // Why the file was not analyzed, as its single error finding says.
     public string? Problem => _summary?.Problem;
 
-    // Whether the analysis found an audio stream; null until the file is analyzed.
-    public bool? HasAudio => _summary?.HasAudio;
-
-    // Whether the analysis ran and found no audio. A file that could not be read, or whose folder could not be listed, is not one: nothing was found out about it.
-    internal bool HasNoAudio => _state == FileState.Analyzed && FolderError is null && Problem is null && HasAudio == false;
+    // Whether the analysis ran and found no audio (FileSummary.FoundNoAudio). A file that could not be read, or whose folder could not be listed, is not one: nothing was found out about it.
+    internal bool HasNoAudio => _state == FileState.Analyzed && FolderError is null && Problem is null && _summary is { FoundNoAudio: true };
 
     // Whether the summary came from the summary cache rather than an analysis of the file.
     public bool IsCached { get; private set; }

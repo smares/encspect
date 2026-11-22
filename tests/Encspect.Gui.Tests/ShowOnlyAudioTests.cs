@@ -1,5 +1,8 @@
+using Avalonia.Controls;
+using Avalonia.Headless.XUnit;
 using Encspect.Gui.Cache;
 using Encspect.Gui.ViewModels;
+using Encspect.Gui.Views;
 using Encspect.Host;
 
 namespace Encspect.Gui.Tests;
@@ -79,8 +82,8 @@ public class ShowOnlyAudioTests
         model.ShowOnlyAudio = true;
 
         Assert.Equal(["audio-named.txt"], Shown(model));
-        Assert.True(model.Rows.Single(r => r.Name == "audio-named.txt").HasAudio);
-        Assert.False(model.Rows.Single(r => r.Name == "text-named.mp3").HasAudio);
+        Assert.False(model.Rows.Single(r => r.Name == "audio-named.txt").HasNoAudio);
+        Assert.True(model.Rows.Single(r => r.Name == "text-named.mp3").HasNoAudio);
         Assert.Equal(1, model.HiddenCount);
     }
 
@@ -108,4 +111,135 @@ public class ShowOnlyAudioTests
         Assert.Equal(["song.mp3"], Shown(model));
         Assert.Equal(1, model.HiddenCount);
     }
+
+    // A detected format without a stream (a damaged header, a parser that keeps its audio out of the streams) says nothing about the audio.
+    [Fact]
+    public void A_file_with_a_format_and_no_stream_is_not_hidden()
+    {
+        using var temp = new TempFolder();
+        temp.Copy(Path.Combine(Fixtures.Directory, "asf", "broadcast.asf"), "broadcast.asf");
+        temp.Copy(Fixtures.Wav("built-format-too-short.wav"), "short.wav");
+        temp.Write("notes.txt", "not audio"u8.ToArray());
+        (MainViewModel model, _) = Open(temp.Path);
+
+        model.ShowOnlyAudio = true;
+
+        Assert.Equal(["broadcast.asf", "short.wav"], Shown(model));
+        Assert.Equal(1, model.HiddenCount);
+    }
+
+    // The count is what the list does not show, at every step of a run.
+    [Fact]
+    public void The_hidden_count_agrees_with_the_rows_shown_during_the_run()
+    {
+        using var temp = new TempFolder();
+        for (int i = 0; i < 40; i++)
+        {
+            temp.Write($"n{i:D2}.txt", "not audio"u8.ToArray());
+            temp.Copy(Fixtures.Mpeg("external-lame-cbr128-joint.mp3"), $"s{i:D2}.mp3");
+        }
+
+        var ui = new TestDispatcher();
+        var model = new MainViewModel(Analyzer.CreateDefault(), ui.Post, parallelism: 1, roots: []) { ShowOnlyAudio = true };
+        model.Open(FileSource.ForFolder(temp.Path));
+        do
+        {
+            ui.RunPending();
+            Assert.Equal(model.Rows.Count - Shown(model).Length, model.HiddenCount);
+            Assert.Equal(model.HiddenCount == 0 ? string.Empty : $"{model.HiddenCount} {(model.HiddenCount == 1 ? "file" : "files")} without audio hidden", model.HiddenText);
+            Thread.Sleep(2);
+        }
+        while (model.IsRunning);
+
+        ui.RunPending();
+        Assert.Equal(40, model.HiddenCount);
+        Assert.Equal(40, Shown(model).Length);
+    }
+
+    [Fact]
+    public void A_row_filled_from_the_cache_is_hidden_like_an_analyzed_one()
+    {
+        using var temp = new TempFolder();
+        temp.Copy(Fixtures.Mpeg("external-lame-cbr128-joint.mp3"), "song.mp3");
+        temp.Write("notes.txt", "not audio"u8.ToArray());
+        using var cacheFolder = new TempFolder();
+        using var cache = new SummaryCache(cacheFolder["cache.bin"], "test", flushDelay: TimeSpan.FromHours(1));
+        Open(temp.Path, cache);
+
+        (MainViewModel model, _) = Open(temp.Path, cache);
+        model.ShowOnlyAudio = true;
+
+        Assert.All(model.Rows, r => Assert.True(r.IsCached));
+        Assert.Equal(["song.mp3"], Shown(model));
+        Assert.Equal(1, model.HiddenCount);
+    }
+
+    [Fact]
+    public void Refresh_does_not_select_a_hidden_row_again()
+    {
+        using var temp = new TempFolder();
+        temp.Copy(Fixtures.Mpeg("external-lame-cbr128-joint.mp3"), "song.mp3");
+        temp.Write("notes.txt", "not audio"u8.ToArray());
+        (MainViewModel model, TestDispatcher ui) = Open(temp.Path);
+        model.ShowOnlyAudio = true;
+        model.SelectedRow = model.Rows.Single(r => r.Name == "notes.txt");
+
+        model.Refresh();
+        ui.Until(() => !model.IsRunning);
+
+        Assert.Null(model.SelectedRow);
+    }
+
+    [AvaloniaFact]
+    public void A_detail_window_on_a_row_that_becomes_hidden_still_steps_to_its_neighbors()
+    {
+        using var temp = new TempFolder();
+        temp.Copy(Fixtures.Mpeg("external-lame-cbr128-joint.mp3"), "a.mp3");
+        temp.Write("b.txt", "not audio"u8.ToArray());
+        temp.Copy(Fixtures.Mpeg("external-lame-vbr-v2.mp3"), "c.mp3");
+        (MainViewModel model, _) = Open(temp.Path);
+        var main = new MainWindow(Analyzer.CreateDefault(), new Settings(), model);
+        main.Show();
+        FileRow hidden = model.Rows.Single(r => r.Name == "b.txt");
+        DetailWindow window = main.DetailWindows.Open(hidden);
+
+        model.ShowOnlyAudio = true;
+
+        Assert.DoesNotContain(hidden, model.RowsView.Cast<FileRow>());
+        Assert.True(window.Model.CanGoPrevious);
+        Assert.True(window.Model.CanGoNext);
+        Assert.Equal("c.mp3", model.Neighbor(hidden, 1)!.Name);
+        Assert.Equal("a.mp3", model.Neighbor(hidden, -1)!.Name);
+        main.Close();
+    }
+
+    [AvaloniaFact]
+    public void The_checkbox_and_the_menu_item_toggle_the_switch()
+    {
+        var model = new MainViewModel(Analyzer.CreateDefault(), roots: []);
+        var main = new MainWindow(Analyzer.CreateDefault(), new Settings(), model);
+        main.Show();
+        CheckBox box = main.FindControl<CheckBox>("OnlyAudioToggle")!;
+        Assert.Equal("Show Only Audio", box.Content);
+
+        box.IsChecked = true;
+        Assert.True(model.ShowOnlyAudio);
+        box.IsChecked = false;
+        Assert.False(model.ShowOnlyAudio);
+
+        NativeMenuItem item = NativeMenu.GetMenu(main)!.Items.OfType<NativeMenuItem>().Single(i => i.Header == "View")
+            .Menu!.Items.OfType<NativeMenuItem>().Single(i => i.Header == "Show Only Audio");
+        Click(item);
+        Assert.True(model.ShowOnlyAudio);
+        Assert.True(box.IsChecked);
+        Click(item);
+        Assert.False(model.ShowOnlyAudio);
+        main.Close();
+    }
+
+    // What the platform's menu does when the user chooses an item; Avalonia keeps the method off its public surface.
+    private static void Click(NativeMenuItem item) =>
+        typeof(NativeMenuItem).GetMethods(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic)
+            .First(m => m.Name.EndsWith("RaiseClick", StringComparison.Ordinal) || m.Name.EndsWith("RaiseClicked", StringComparison.Ordinal))
+            .Invoke(item, null);
 }
