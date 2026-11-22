@@ -585,7 +585,7 @@ public class WavPackTests
         // FFmpeg's APE item names its muxer: the writer, apart from the WavPack 4 stream's encoder.
         Assert.StartsWith("FFmpeg (Lavf", stream.Writer, StringComparison.Ordinal);
         Node writer = Stream(ffmpeg).Children.Single(c => c.Name == "Writer");
-        Assert.Contains(writer.Children, c => c.Name == "Evidence" && c.Value!.ToString().Contains("APE Encoder item", StringComparison.Ordinal) && c.Value!.ToString().Contains("Lavf", StringComparison.Ordinal));
+        Assert.Contains(writer.Children, c => c.Name == "Evidence" && c.Value!.ToString().Contains("APEv1 or APEv2 Encoder item", StringComparison.Ordinal) && c.Value!.ToString().Contains("Lavf", StringComparison.Ordinal));
         Assert.DoesNotContain(ffmpeg.Findings, f => f.Code is "wavpack.encoder-claim-differs" or "wavpack.writer-claim-differs");
 
         StreamInfo five = AnalyzeFixture("external-lossless-16-stereo.wv").Streams.Single();
@@ -606,7 +606,7 @@ public class WavPackTests
         Report agrees = AnalyzeFixture("built-ape-encoder-wavpack.wv");
         Assert.DoesNotContain(agrees.Findings, f => f.Code is "wavpack.encoder-claim-differs" or "wavpack.writer-claim-differs");
         Node writer = Stream(agrees).Children.Single(c => c.Name == "Writer");
-        Assert.Contains(writer.Children, c => c.Name == "Evidence" && c.Value!.ToString().Contains("APE Encoder item", StringComparison.Ordinal) && c.Value!.ToString().Contains("WavPack 5.6.0", StringComparison.Ordinal));
+        Assert.Contains(writer.Children, c => c.Name == "Evidence" && c.Value!.ToString().Contains("APEv1 or APEv2 Encoder item", StringComparison.Ordinal) && c.Value!.ToString().Contains("WavPack 5.6.0", StringComparison.Ordinal));
     }
 
     // An ID3v2 TSSE frame is the encoder's, as the specification defines it; one that differs from the blocks is a conflict within the role.

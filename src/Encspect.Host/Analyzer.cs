@@ -1127,7 +1127,7 @@ public sealed partial class Analyzer
                 findings.Add(new Finding(
                     Severity.Warning,
                     "lyrics3.extended-mismatch",
-                    $"The Lyrics3 {field} field does not start with the ID3v1 {v1Field.ToLowerInvariant()} \"{v1}\", so readers show the ID3v1 value.",
+                    $"The Lyrics3 v2 {field} field does not start with the ID3v1 {v1Field.ToLowerInvariant()} \"{v1}\", so readers show the ID3v1 value.",
                     extended));
             }
             else if (text.Length <= 30)
@@ -1135,7 +1135,7 @@ public sealed partial class Analyzer
                 findings.Add(new Finding(
                     Severity.Info,
                     "lyrics3.extended-unneeded",
-                    $"The Lyrics3 {field} field is not longer than the 30 characters the ID3v1 {v1Field.ToLowerInvariant()} already holds.",
+                    $"The Lyrics3 v2 {field} field is not longer than the 30 characters the ID3v1 {v1Field.ToLowerInvariant()} already holds.",
                     extended));
             }
         }

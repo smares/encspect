@@ -1168,7 +1168,7 @@
                     },
                     {
                       "name": "Evidence",
-                      "value": "APE Encoder item at 0xD78 names \"bar 2.0\"",
+                      "value": "APEv1 or APEv2 Encoder item at 0xD78 names \"bar 2.0\"",
                       "offset": 200,
                       "length": 274
                     }
@@ -1219,7 +1219,7 @@
                         },
                         {
                           "name": "Evidence",
-                          "value": "APE Encoder item at 0xD78 names \"bar 2.0\"",
+                          "value": "APEv1 or APEv2 Encoder item at 0xD78 names \"bar 2.0\"",
                           "offset": 481,
                           "length": 2935
                         }
@@ -4644,7 +4644,7 @@
       {
         "severity": "Info",
         "code": "pcm.writer-claim-differs",
-        "message": "The Segment MuxingApp element names \"foo 1.0\", but the APE Encoder item names \"bar 2.0\"; other software may have rewritten the file, and kept one of them.",
+        "message": "The Segment MuxingApp element names \"foo 1.0\", but the APEv1 or APEv2 Encoder item names \"bar 2.0\"; other software may have rewritten the file, and kept one of them.",
         "offset": 69,
         "length": 10,
         "path": [
@@ -4658,7 +4658,7 @@
       {
         "severity": "Info",
         "code": "pcm.writer-claim-differs",
-        "message": "The Segment WritingApp element names \"foo 1.0\", but the APE Encoder item names \"bar 2.0\"; other software may have rewritten the file, and kept one of them.",
+        "message": "The Segment WritingApp element names \"foo 1.0\", but the APEv1 or APEv2 Encoder item names \"bar 2.0\"; other software may have rewritten the file, and kept one of them.",
         "offset": 79,
         "length": 10,
         "path": [
@@ -4672,7 +4672,7 @@
       {
         "severity": "Info",
         "code": "aac.writer-claim-differs",
-        "message": "The Segment WritingApp element names \"foo 1.0\", but the APE Encoder item names \"bar 2.0\"; other software may have rewritten the file, and kept one of them.",
+        "message": "The Segment WritingApp element names \"foo 1.0\", but the APEv1 or APEv2 Encoder item names \"bar 2.0\"; other software may have rewritten the file, and kept one of them.",
         "offset": 79,
         "length": 10,
         "path": [

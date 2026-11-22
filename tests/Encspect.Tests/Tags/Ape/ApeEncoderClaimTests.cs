@@ -67,7 +67,7 @@ public class ApeEncoderClaimTests
         StreamInfo stream = Assert.Single(report.Streams);
         Assert.Equal("FFmpeg (Lavf60.16.100)", stream.Writer);
         Finding finding = Assert.Single(report.Findings, f => f.Code == "mpeg-audio.writer-claim-differs");
-        Assert.Contains("APE Encoder item names \"Shine 3.1\"", finding.Message, StringComparison.Ordinal);
+        Assert.Contains("APEv1 or APEv2 Encoder item names \"Shine 3.1\"", finding.Message, StringComparison.Ordinal);
         Assert.DoesNotContain(report.Findings, f => f.Code == "mpeg-audio.encoder-claim-differs");
     }
 
