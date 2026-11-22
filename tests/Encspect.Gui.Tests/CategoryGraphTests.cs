@@ -322,6 +322,7 @@ public class CategoryGraphTests
                 ("Bit Distribution", "Reservoir Fill"),
                 ("Bit Distribution", "Channel Bit Share"),
                 ("Other", "Submodes"),
+                ("Other", "Global Gain"),
             ],
             graphs.Choices.Select(c => (c.Heading, c.Title)));
         Assert.Equal(["Summary", "Stereo Coding", "Block Switching", "Coded Bandwidth", "Bit Distribution", "Other", "Audio"], graphs.ChoiceGroups.Select(g => g.Heading));
