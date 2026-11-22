@@ -77,7 +77,7 @@ Formats read so far ([details](docs/formats/README.md)):
 - WAV (`.wav`; RIFF, RIFX, RF64 and BW64), Wave64 (`.w64`) and AIFF (`.aif`, `.aiff`, `.aifc`) with all their chunks; PCM, floating-point and compressed formats at header level (PCM, floating-point, A-law and mu-law samples are decoded for `--measure`), and MPEG audio, AC-3, E-AC-3 and DTS in WAV read by their parsers, and AC-3, E-AC-3, DTS and AAC also as IEC 61937 bursts in the samples
 - Matroska and WebM (`.mka`, `.mkv`, `.webm`) with AAC, AC-3, E-AC-3, DTS, Vorbis, Opus, FLAC, WavPack, Dolby TrueHD, MLP, Apple Lossless and TTA audio read by their parsers
 
-Tags ([details](docs/tags/README.md)): ID3v1, ID3v2, APE, Lyrics3 and Vorbis comments, and the containers' own metadata: ASF and WMA, MP4 (iTunes, QuickTime and Nero), Matroska, WAV and AIFF.
+Tags ([details](docs/tags/README.md)): ID3v1, ID3v2, APEv1, APEv2, Lyrics3 v1, Lyrics3 v2 and Vorbis comments, and the containers' own metadata: ASF and WMA, MP4 (iTunes, QuickTime and Nero), Matroska, WAV and AIFF.
 
 Protection: streams that a container encrypts or locks are reported with their scheme and DRM systems, without decrypting: Common Encryption in MP4, iTunes protection and Audible entries, Windows Media DRM in ASF, and ContentEncryption in Matroska.
 

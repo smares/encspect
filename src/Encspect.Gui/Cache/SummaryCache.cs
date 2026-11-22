@@ -28,7 +28,7 @@ namespace Encspect.Gui.Cache;
 // summary's correction line, its coding class and its companions), and a SHA-256 of all that.
 public sealed class SummaryCache : IDisposable
 {
-    public const int FormatVersion = 9;
+    public const int FormatVersion = 10;
 
     // Coarse file systems keep times to two seconds.
     private static readonly TimeSpan TimestampGranularity = TimeSpan.FromSeconds(2);

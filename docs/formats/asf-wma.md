@@ -51,9 +51,9 @@ Protection is reported on the streams (`StreamInfo.Protection`), in the JSON, th
 
 ## Tags and tag detection
 
-- ASF has its own metadata, so no ID3 or APE tag is looked for inside it.
+- ASF has its own metadata, so no ID3v1, ID3v2, APEv1 or APEv2 tag is looked for inside it.
 - A leading ID3v2 tag is the host's, before the ASF header.
-- `DeclaredEnd` is the File Properties Object's file size; for a broadcast file or a size that cannot be right, the end of the chain of top-level objects. An ID3v1 or APE tag after it is the file's.
+- `DeclaredEnd` is the File Properties Object's file size; for a broadcast file or a size that cannot be right, the end of the chain of top-level objects. An ID3v1, APEv1 or APEv2 tag after it is the file's.
 
 ## ASF: damaged and large files
 

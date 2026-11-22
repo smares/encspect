@@ -60,7 +60,7 @@ internal sealed class ParserRouter(IReadOnlyList<ICodecParser> codecs, IReadOnly
     private Node? RunTag(AnalysisContext caller, string tagName, Node parent, long start, long end, Func<ITagParser, TagProbe?> parse)
     {
         ITagParser? parser = tags.FirstOrDefault(t => t.Name == tagName);
-        if (parser is null || !Enter(caller, $"the {tagName} tag", parent))
+        if (parser is null || !Enter(caller, $"the {TagNames.Of(tagName)} tag", parent))
         {
             return null;
         }
@@ -94,13 +94,13 @@ internal sealed class ParserRouter(IReadOnlyList<ICodecParser> codecs, IReadOnly
 
         if (probe is null)
         {
-            caller.AddFinding(Severity.Warning, "tag.not-found", $"No {parser.Name} tag starts at 0x{start:X}, where the container places one.", parent);
+            caller.AddFinding(Severity.Warning, "tag.not-found", $"No {TagNames.Of(parser.Name)} tag starts at 0x{start:X}, where the container places one.", parent);
             return null;
         }
 
         if (probe.Tag is not { } tag)
         {
-            caller.AddFinding(Severity.Warning, "tag.rejected", $"{parser.Name} candidate at 0x{probe.SignatureOffset:X} rejected: {probe.RejectionReason}.", parent);
+            caller.AddFinding(Severity.Warning, "tag.rejected", $"{TagNames.Of(parser.Name)} candidate at 0x{probe.SignatureOffset:X} rejected: {probe.RejectionReason}.", parent);
             return null;
         }
 

@@ -1,4 +1,4 @@
-# ID3
+# ID3v1 and ID3v2
 
 ## ID3v1
 

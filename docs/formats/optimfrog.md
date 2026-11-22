@@ -15,14 +15,14 @@ Sources:
 - `HEAD` and `TAIL`: the stored bytes of the source file's header and footer, named as Monkey's Audio names them ("WAV Header Data", "WAV Terminating Data"). A RIFF, RF64, BW64 or Wave64 header gives its format tag, channels and channel mask by the reader Monkey's Audio shares (`WavHeader` in the core library); the RIFF chunks of the header and the footer are listed, and lossyWAV's `fact` chunk is read with `FactText`. A header that is no WAVE header (`ofr --raw --headersize`, as in `external-raw-headersize.ofr`) is shown as bytes, and so is a footer after such a header (the footer is a list of RIFF chunks only after a RIFF, RF64 or BW64 header).
 - Every `COMP` block: the CRC-32 (the plain IEEE CRC-32 of zlib over the block's data after the CRC field), compared; the samples (values over all channels), the sample type, the channel configuration, the two bytes the specification calls reserved for internal use (shown; only their low byte is used, as the sign of a DualStream's lossy part, below), the encoder ID and the compressed data.
 - `MD5 ` (shown, not compared: it covers the decoded audio), `RECV` (shown, not interpreted) and blocks of unknown ID (by ID and length). In a correction file every ID but `CORR` is unknown, `HEAD`, `COMP` and `OFR ` included.
-- Tags: an ID3v2 tag before the file, and APEv2, Lyrics3 and ID3v1 tags after the last block are the host's. The file declares its end (`DeclaredEnd`: the end of the last block the walk accepts).
+- Tags: an ID3v2 tag before the file, and APEv2, Lyrics3 v1 and v2, and ID3v1 tags after the last block are the host's. The file declares its end (`DeclaredEnd`: the end of the last block the walk accepts).
 
 ## The walk
 
 - A block header is four printable ASCII bytes and a length. The walk never stops on a tag's signature, only on a header that is none (the rule DTS-HD's chunk walk follows, [dtshd.md](dtshd.md)).
 - A block of a known ID whose length runs past the data is cut (`optimfrog.block-cut`): it is read as far as it goes, its CRC-32 is not compared, and it ends the walk.
 - A block of an unknown ID goes on the walk only when it fits and either ends the data or is followed by a block header whose length fits too (`optimfrog.block-unknown`, Info); otherwise the walk stops before it and the bytes are left to the host's search for tags, and are `optimfrog.data-after-blocks` if they are no tag.
-- An unknown block is never accepted if it starts at or runs over the start of a trailing tag that validates structurally (an ID3v1 tag at the end, an APEv2 footer or a Lyrics3 end marker before it): an ID3v1 tag whose title has two characters reads as a header `TAGx` with a length, and the tag is the stronger evidence ([architecture.md](../architecture.md#tag-detection-and-false-positives)).
+- An unknown block is never accepted if it starts at or runs over the start of a trailing tag that validates structurally (an ID3v1 tag at the end, an APEv2 footer or a Lyrics3 v2 end marker before it): an ID3v1 tag whose title has two characters reads as a header `TAGx` with a length, and the tag is the stronger evidence ([architecture.md](../architecture.md#tag-detection-and-false-positives)).
 - The report keeps at most 1,048,576 blocks one by one (`Records.MaxBlocks`); the rest are counted and their CRC-32s compared (`optimfrog.blocks-limit`).
 
 ## Detection

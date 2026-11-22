@@ -52,11 +52,11 @@ public sealed class CacheTests : IDisposable
         Assert.Equal(Encspect.Core.Confidence.Low, read.Summary.WriterConfidence);
     }
 
-    // The writer (version 4) and the protection (version 5) changed what a summary holds and so the store's layout, and version 7 dropped the verification verdict, which nothing read, and version 8 added the correction line and the companion files' fingerprints: an older store reads as empty, and the folder is analyzed again.
+    // The writer (version 4) and the protection (version 5) changed what a summary holds and so the store's layout, and version 7 dropped the verification verdict, which nothing read, and version 8 added the correction line and the companion files' fingerprints, and version 10 the tag names with their versions ("APEv2", "Lyrics3 v2"): an older store reads as empty, and the folder is analyzed again.
     [Fact]
-    public void The_store_format_was_bumped_for_the_writer_the_protection_the_dropped_verdict_and_the_companions()
+    public void The_store_format_was_bumped_for_the_writer_the_protection_the_dropped_verdict_the_companions_and_the_versioned_tag_names()
     {
-        Assert.Equal(9, SummaryCache.FormatVersion);
+        Assert.Equal(10, SummaryCache.FormatVersion);
     }
 
     [Fact]

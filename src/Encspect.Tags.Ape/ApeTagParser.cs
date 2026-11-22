@@ -284,7 +284,7 @@ public sealed class ApeTagParser : ITagParser
 
         public TagProbe Build(long tagStart, long tagEnd, long itemsStart, long itemsEnd)
         {
-            var tag = new Node("APE", tagStart, tagEnd - tagStart, IsV1 ? "1.0" : "2.0") { Kind = NodeKind.Tag, Description = Explain.Tag, Topic = Topics.ApeTag };
+            var tag = new Node("APE", tagStart, tagEnd - tagStart, IsV1 ? "1.0" : "2.0") { Kind = NodeKind.Tag, Description = IsV1 ? Explain.V1Tag : Explain.V2Tag, Topic = Topics.ApeTag };
             if (Header is { } header)
             {
                 AddBlock(tag, "Header", header.Offset, header.Block);
@@ -328,7 +328,7 @@ public sealed class ApeTagParser : ITagParser
             // header."
             if (IsLeading)
             {
-                _findings.Add(new Finding(Severity.Info, "ape.at-start", "The APE tag is at the beginning of the file, which the APEv2 specification calls \"strongly unrecommended\".", tag));
+                _findings.Add(new Finding(Severity.Info, "ape.at-start", "The APEv2 tag is at the beginning of the file, which its specification calls \"strongly unrecommended\".", tag));
             }
 
             foreach (string key in _order)
@@ -455,7 +455,7 @@ public sealed class ApeTagParser : ITagParser
                     && string.Join("; ", TextValues(IsV1, value)) is { Length: > 0 } encoder && !string.IsNullOrWhiteSpace(encoder))
                 {
                     _encoderClaims++;
-                    _claims.Add(new EncoderClaim(encoder, itemNode(), "APE Encoder item", ClaimRoles.Of(ClaimRole.Writer, encoder)));
+                    _claims.Add(new EncoderClaim(encoder, itemNode(), IsV1 ? "APEv1 Encoder item" : "APEv2 Encoder item", ClaimRoles.Of(ClaimRole.Writer, encoder)));
                 }
 
                 if (IsV1 && flags != 0)
@@ -685,7 +685,7 @@ public sealed class ApeTagParser : ITagParser
             Node reserved = node.Add("Reserved", offset + 24, 8, null, Explain.Reserved);
             if (!block.IsReservedZero)
             {
-                _findings.Add(new Finding(Severity.Warning, "ape.reserved-not-zero", $"The reserved bytes of the APE {name.ToLowerInvariant()} are not zero.", reserved));
+                _findings.Add(new Finding(Severity.Warning, "ape.reserved-not-zero", $"The reserved bytes of the {(block.Version == 1000 ? "APEv1" : "APEv2")} {name.ToLowerInvariant()} are not zero.", reserved));
             }
         }
 
