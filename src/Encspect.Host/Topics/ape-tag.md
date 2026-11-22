@@ -5,7 +5,7 @@ related: tag-placement, replaygain, id3v1, musepack-sv8-packets
 references: APEv1 and APEv2 specifications (Monkey's Audio, wiki.hydrogenaud.io)
 ---
 
-**What it is.** APE tags (APEv1 and APEv2) come from Monkey's Audio, a lossless format, and are also used by Musepack, WavPack and other formats, and in MP3 files by some taggers and MP3Gain. Each is a list of items, each a key and a value: keys are free text such as "Title" or "REPLAYGAIN_TRACK_GAIN", values are UTF-8 text in APEv2 (any number of values, separated by zero bytes), binary data such as a cover picture, or a link.
+**What it is.** APEv1 and APEv2 tags come from Monkey's Audio, a lossless format, and are also used by Musepack, WavPack and other formats, and in MP3 files by some taggers and MP3Gain. Each is a list of items, each a key and a value: keys are free text such as "Title" or "REPLAYGAIN_TRACK_GAIN", values are UTF-8 text in APEv2 (any number of values, separated by zero bytes), binary data such as a cover picture, or a link.
 
 **Where it sits.** An APEv1 or APEv2 tag ends with a 32-byte footer starting "APETAGEX", which gives the version, the tag's size and the number of items. Readers find the footer at the end of the file, or just before an ID3v1 tag, and read the tag from there, so it can be added or changed without touching the audio. APEv2 tags may also have a header that repeats the footer.
 

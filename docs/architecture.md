@@ -330,7 +330,7 @@ Each format parser's `Sniff` returns a `SniffResult` (`Core.Abstractions`), and 
 - **What follows:**
   - each tag type is looked for only where its specification allows;
   - structural validation decides confidence, not existence: a tag that breaks its specification is reported with findings, not dropped;
-  - when candidates compete for the same bytes, the strongest evidence wins, and the order APEv1 and APEv2, Lyrics3 v1 and v2, ID3v2, ID3v1 only breaks ties;
+  - when candidates compete for the same bytes, the strongest evidence wins, and the order APEv1 or APEv2, then Lyrics3 v1 or v2, then ID3v2, then ID3v1 only breaks ties;
   - a container that states its size owns the trailing candidates that start before its end (see "Declared end" under [Parser contract](#parser-contract));
   - a frame header only counts as MPEG sync when a chain of consistent frames follows it.
 - **The rules and the fixtures that prove them:** [tags/README.md, "How tags are found"](tags/README.md#how-tags-are-found).

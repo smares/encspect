@@ -68,7 +68,7 @@ Percentages are against `main` of the same batch, as the fastest of 7 runs and a
 | all fixtures, 1,000 junk bytes in front | 2502 | 1.713 | - | -25% / -24% | +22% | -23% / -20% | +2% / +5% |
 | **Tagged and untagged MP3 (new)** | | | | | | | |
 | the same 120 MP3 files without tags | 120 | 0.222 | - | -25% / -27% | -3% | -15% / -19% | +14% / +10% |
-| 120 MP3 files with ID3v2, 90 of them also with ID3v1 or APEv2 | 120 | 0.249 | - | -4% / -14% | -2% | -14% / -12% | -10% / +3% |
+| 120 MP3 files with ID3v2, 90 of them also with ID3v1, APEv1 or APEv2 | 120 | 0.249 | - | -4% / -14% | -2% | -14% / -12% | -10% / +3% |
 | tagged folder: those 120 and the 145 `tags` fixtures | 265 | 0.285 | - | +0% / -15% | -1% | -9% / -19% | -9% / -5% |
 | **Fixture folders of the raw streams** | | | | | | | |
 | `mpeg` | 164 | 0.161 | 52% | -13% / -18% | -4% | -13% / -25% | -0% / -8% |
@@ -137,7 +137,7 @@ The two-byte check: the design without and with it, against `main`:
 | 300 short MP3 and AAC files | -24% | -20% |
 | all fixtures, 1,000 junk bytes in front | -23% | -23% |
 | the same 120 MP3 files without tags | -15% | -18% |
-| 120 MP3 files with ID3v2, 90 of them also with ID3v1 or APEv2 | -14% | -9% |
+| 120 MP3 files with ID3v2, 90 of them also with ID3v1, APEv1 or APEv2 | -14% | -9% |
 | `mpeg` | -13% | -20% |
 | `layer3` | -17% | -24% |
 | `adts` | -15% | -18% |

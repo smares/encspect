@@ -67,7 +67,7 @@ Tags are found by position and structure, never by a signature alone, because sh
 
 - Tags are looked for only at anchors. When several candidates claim the same anchor, the one with the strongest evidence wins.
 - **Equal confidence:** the longer candidate wins. They all end at the anchor, so the shorter one's signature lies inside the longer one's structure, which owns those bytes (a `TAG` in an Enhanced TAG's artist field).
-- **Remaining ties:** the order APEv1 and APEv2, Lyrics3 v1 and v2, ID3v2 found through its footer, ID3v1, Enhanced TAG breaks them.
+- **Remaining ties:** the order APEv1 or APEv2, then Lyrics3 v1 or v2, then ID3v2 found through its footer, then ID3v1, then the Enhanced TAG breaks them.
 - **A tag its specification places before another** (Lyrics3 v1 and v2, and the Enhanced TAG before ID3v1) is reported without it too, with a finding and one level less confidence, so a correctly placed competitor wins.
 - **The claim map:** the host keeps one, so a signature inside an already claimed region (an image in an ID3v2 tag, an APEv1 or APEv2 item, an ID3v1 field) is rejected.
 - **Containers that state their size** own their bytes the same way: a trailing candidate that starts before the declared end is one of the container's chunks, a near miss, which the container parser hands to the tag parser itself.
