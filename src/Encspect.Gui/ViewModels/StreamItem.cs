@@ -1,5 +1,6 @@
 using System.Globalization;
 using Encspect.Core;
+using Encspect.Host;
 
 namespace Encspect.Gui.ViewModels;
 
@@ -14,6 +15,11 @@ public sealed class StreamItem(StreamInfo stream)
         get
         {
             var parts = new List<string> { Stream.Codec };
+            if (CodingText.Describe(Stream) is { } coding)
+            {
+                parts.Add(coding);
+            }
+
             if (Stream.SampleRate > 0)
             {
                 parts.Add(Format.SampleRate(Stream.SampleRate));
@@ -94,6 +100,33 @@ public sealed class StreamItem(StreamInfo stream)
             }
 
             return string.Join(" · ", parts);
+        }
+    }
+
+    // The evidence about the file's history that stands beside the coding: the processor claim and the spectral cutoff and the low bits unused, which read "not measured" until the audio
+    // is decoded and measured; empty for a stream whose coding has no class.
+    public IReadOnlyList<string> Evidence
+    {
+        get
+        {
+            if (CodingText.Describe(Stream) is null)
+            {
+                return [];
+            }
+
+            var lines = new List<string>();
+            if (CodingText.Processor(Stream) is { } processor)
+            {
+                lines.Add("Processor: " + processor);
+            }
+
+            IReadOnlyList<MeasurementLine> measured = Stream.Measurements is { } m ? MeasurementText.Lines(m, Stream.Verification?.IsLossy == true) : [];
+            foreach ((MeasurementFigure figure, string name) in new[] { (MeasurementFigure.SpectralCutoff, "Spectral Cutoff"), (MeasurementFigure.LowBitsUnused, "Low Bits Unused") })
+            {
+                lines.Add($"{name}: {measured.FirstOrDefault(l => l.Figure == figure)?.Text ?? "not measured"}");
+            }
+
+            return lines;
         }
     }
 

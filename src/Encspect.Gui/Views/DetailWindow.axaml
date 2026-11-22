@@ -14,7 +14,10 @@
         <StackPanel Spacing="3" VerticalAlignment="Center">
           <TextBlock Name="TitleText" Text="{Binding Title}" Classes="title" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Path}" />
           <TextBlock Name="StreamsText" Text="{Binding StreamsText}" Classes="secondary" TextWrapping="Wrap"
-                     ToolTip.Tip="Each line is one audio stream: its codec, sample rate, channel mode, channel layout with the speakers in the stream's channel order, playing time, average bitrate with CBR or VBR, object audio with its object count where the stream carries it, the encoder with how sure the analysis is, and the software that wrote the file, which need not be the encoder, with how sure the analysis is." />
+                     ToolTip.Tip="Each line is one audio stream: its codec, the class of its coding (lossless, lossy or hybrid; see the article Coding Class under Topics), sample rate, channel mode, channel layout with the speakers in the stream's channel order, playing time, average bitrate with CBR or VBR, object audio with its object count where the stream carries it, the encoder with how sure the analysis is, and the software that wrote the file, which need not be the encoder, with how sure the analysis is." />
+          <TextBlock Name="EvidenceText" Text="{Binding EvidenceText}" Classes="secondary" TextWrapping="Wrap"
+                     IsVisible="{Binding HasEvidenceText}"
+                     ToolTip.Tip="The figures that stand beside the coding class, as evidence and never as a verdict: the software that processed the audio before it was encoded, from a mark it left, the spectral cutoff and the low bits unused of the decoded audio. The two measured figures read not measured until the audio is decoded: choose Decode Audio." />
           <TextBlock Name="VerificationText" Text="{Binding VerificationText}" Classes="secondary" TextWrapping="Wrap"
                      IsVisible="{Binding HasVerificationText}"
                      ToolTip.Tip="Whether the checksums the stream stores hold. A checksum over the decoded audio is compared only when the audio is decoded: choose Decode Audio." />

@@ -92,25 +92,55 @@ public static class ReportTextWriter
             }
         }
 
+        // The coding line, with the evidence about a file's history beside it: the processor claim and, where measured, the spectral cutoff and the low
+        // bits unused, which then leave the measurements' lines.
+        Dictionary<Node, List<(int Stream, string Text, List<(string Name, string Text, string Description, string? Topic)> Beside)>> coded = new(ReferenceEqualityComparer.Instance);
         Dictionary<Node, List<(int Stream, IReadOnlyList<MeasurementLine> Lines)>> measured = new(ReferenceEqualityComparer.Instance);
-        if (filter.ShowsMeasurements)
+        for (int i = 0; i < report.Streams.Count; i++)
         {
-            for (int i = 0; i < report.Streams.Count; i++)
+            StreamInfo stream = report.Streams[i];
+            if (stream.Nodes.Count == 0)
             {
-                StreamInfo stream = report.Streams[i];
-                if (stream.Measurements is not null && stream.Nodes.Count > 0)
-                {
-                    if (!measured.TryGetValue(stream.Nodes[0], out List<(int, IReadOnlyList<MeasurementLine>)>? list))
-                    {
-                        measured[stream.Nodes[0]] = list = [];
-                    }
+                continue;
+            }
 
-                    list.Add((i + 1, MeasurementText.Lines(stream.Measurements, stream.Verification?.IsLossy == true)));
+            IReadOnlyList<MeasurementLine>? lines = filter.ShowsMeasurements && stream.Measurements is not null
+                ? MeasurementText.Lines(stream.Measurements, stream.Verification?.IsLossy == true)
+                : null;
+            if (CodingText.Describe(stream) is { } coding)
+            {
+                var beside = new List<(string, string, string, string?)>();
+                if (CodingText.Processor(stream) is { } processor)
+                {
+                    beside.Add(("Processor", processor, CodingText.ProcessorDescription, null));
                 }
+
+                if (lines is not null)
+                {
+                    beside.AddRange(lines.Where(l => CodingText.IsBesideCoding(l.Figure)).Select(l => (l.Name, l.Text, l.Description, l.Topic)));
+                    lines = [.. lines.Where(l => !CodingText.IsBesideCoding(l.Figure))];
+                }
+
+                if (!coded.TryGetValue(stream.Nodes[0], out var codedList))
+                {
+                    coded[stream.Nodes[0]] = codedList = [];
+                }
+
+                codedList.Add((i + 1, coding, beside));
+            }
+
+            if (lines is not null)
+            {
+                if (!measured.TryGetValue(stream.Nodes[0], out List<(int, IReadOnlyList<MeasurementLine>)>? list))
+                {
+                    measured[stream.Nodes[0]] = list = [];
+                }
+
+                list.Add((i + 1, lines));
             }
         }
 
-        WriteNode(report.Root, writer, new Options(showOffsets, explain, filter, verified, shares) { Measured = measured, Corrections = corrections }, 0, anchored);
+        WriteNode(report.Root, writer, new Options(showOffsets, explain, filter, verified, shares) { Measured = measured, Corrections = corrections, Coded = coded }, 0, anchored);
 
         if (report.Detection is { } detection)
         {
@@ -168,6 +198,32 @@ public static class ReportTextWriter
         if (options.Explain)
         {
             WriteExplanation(node.Description, node.Topic, writer, depth);
+        }
+
+        if (options.Coded.TryGetValue(node, out var codings))
+        {
+            foreach ((int stream, string coding, var beside) in codings)
+            {
+                Indent(writer, depth + 1);
+                writer.Write(codings.Count > 1 ? $"Coding (stream {stream}): " : "Coding: ");
+                writer.WriteLine(Escape(coding));
+                if (options.Explain)
+                {
+                    WriteExplanation(CodingText.Description, CodingText.Topic, writer, depth + 1);
+                }
+
+                foreach ((string name, string text, string description, string? topic) in beside)
+                {
+                    Indent(writer, depth + 2);
+                    writer.Write(name);
+                    writer.Write(": ");
+                    writer.WriteLine(Escape(text));
+                    if (options.Explain)
+                    {
+                        WriteExplanation(description, topic, writer, depth + 2);
+                    }
+                }
+            }
         }
 
         if (options.Verified.TryGetValue(node, out List<(int Stream, string Text)>? verifications))
@@ -371,6 +427,8 @@ public static class ReportTextWriter
         public Dictionary<Node, List<(int Stream, IReadOnlyList<MeasurementLine> Lines)>> Measured { get; init; } = new(ReferenceEqualityComparer.Instance);
 
         public Dictionary<Node, List<(int Stream, string Text)>> Corrections { get; init; } = new(ReferenceEqualityComparer.Instance);
+
+        public Dictionary<Node, List<(int Stream, string Text, List<(string Name, string Text, string Description, string? Topic)> Beside)>> Coded { get; init; } = new(ReferenceEqualityComparer.Instance);
     }
 
     // Values from the file are text and escaped; numbers are written without a string per node.

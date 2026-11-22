@@ -4,7 +4,7 @@ namespace Encspect.Host;
 
 // How a stream's verification reads in the text output and in the front ends: "yes (frame CRC-16 40 of 40, STREAMINFO MD5
 // 1 of 1)", "no (STREAMINFO MD5 1 of 1 differ)" or "unknown (STREAMINFO MD5 not compared: decoding was not asked for)".
-// A stream checked with its correction file starts with "with correction file", as a lossy one with "lossy stream". "n of m" is the values compared of the values stored; a failed checksum reads "n of m differ", the differing values of
+// A "yes" starts with what it rests on ("the decoded audio matches its stored checksum", or for checksums over coded data "the coded data matches its stored checksums"). A stream checked with its correction file starts with "with correction file", as a lossy one with "lossy stream". "n of m" is the values compared of the values stored; a failed checksum reads "n of m differ", the differing values of
 // those compared.
 public static class VerificationText
 {
@@ -40,7 +40,12 @@ public static class VerificationText
             parts.Add(verification.Checksums.Any(t => t.Stored > 0) ? "no checksum that was compared covers all of the audio" : "the stream stores no checksum");
         }
 
-        string details = lead is null ? string.Join(", ", parts) : parts.Count == 0 ? lead : $"{lead}; {string.Join(", ", parts)}";
+        // What a "yes" rests on, from the checksums that were compared and cover all of the audio: it vouches for the audio they cover and for nothing about where it came from.
+        string? basis = verification.IsVerified != true ? null
+            : verification.Checksums.Any(t => t.CoversAllAudio && t.Checked > 0 && t.Covers == ChecksumCoverage.DecodedAudio) ? "the decoded audio matches its stored checksum"
+            : "the coded data matches its stored checksums";
+        string[] leading = [.. new[] { basis, lead }.OfType<string>()];
+        string details = leading.Length == 0 ? string.Join(", ", parts) : parts.Count == 0 ? string.Join("; ", leading) : $"{string.Join("; ", leading)}; {string.Join(", ", parts)}";
 
         string verdict = verification.IsVerified switch { true => "yes", false => "no", null => "unknown" };
         return details.Length == 0 ? verdict : $"{verdict} ({details})";

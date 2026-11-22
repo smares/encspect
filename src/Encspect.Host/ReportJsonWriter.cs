@@ -12,7 +12,8 @@ namespace Encspect.Host;
 // severity, code, message, offset, length, path and count. A report whose format is not the
 // plain detected one (other formats match, or the analysis was forced) also has detection, with
 // the format that ran, its evidence, whether it was forced, the format detection would have chosen
-// then, and the alternatives with their evidence (class, offset, frames, verifiedFrames, note). A stream of a coding that
+// then, and the alternatives with their evidence (class, offset, frames, verifiedFrames, note). A stream whose coding has a class has codingClass
+// after codec (lossless, lossy or hybrid). A stream of a coding that
 // stores checksums has verification after protection: isVerified (where known), isLossy and withCorrection (where true), decoding,
 // decodedSamples and checksums (name, covers, coversAllAudio, stored, checked, failed). A stream with category series
 // has categorySeries after series (name, concept, valueLabel, valuesPerUnit, valueNames, categories with their counts
@@ -265,6 +266,11 @@ public static class ReportJsonWriter
 
         writer.WriteEndArray();
         writer.WriteString("codec", stream.Codec);
+        if (CodingText.Word(stream.CodingClass) is { } codingClass)
+        {
+            writer.WriteString("codingClass", codingClass);
+        }
+
         if (stream.Kind == StreamKind.Audio)
         {
             writer.WriteNumber("sampleRate", stream.SampleRate);
