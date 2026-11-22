@@ -76,8 +76,55 @@ Native FLAC files (`.flac`, RFC 9639) and FLAC in Ogg (`.oga` and `.ogg`, throug
   - On Encspect's test files it names the 512-sample codings of the −70 dBFS noise-floor signal, the −100 dBFS noise-floor files at every tested rate (frames as long as the block) and the six-channel file; it does not name the 4,096-sample codings, the 16-bit files (no bit removed) or the synthetic files with pure tones.
   - **A tool that zeroes bits per block of 4,096 samples** (the simulated `synthetic-lowbits-other-4096.flac`), coded in frames of 512, is not named: its changes are at multiples of 4,096. A tool that zeroes per block of exactly lossyWAV's length would read the same as lossyWAV; the confidence is low for that reason, and the claim names a pattern, not a cause.
   - Audio that lossyWAV did not touch is not named: `crosscheck_lossywav_behavior.py` codes the 157 FLAC fixtures of the repository that are not lossyWAV's output again, in frames of their rate's lossyWAV block and in frames of 512 (and, where their rate is not a tested one, at 44.1 kHz): none is named, and none has more than 3 changes of wasted bits but the simulated `synthetic-lowbits-other-4096.flac`, whose 58 are by construction (A-law audio expanded to 16 bits has none in frames of 512 and 111 in frames of 64, on a grid of 64; 16-bit audio in 24 bits coded by FFmpeg in frames of 512 with some mid/side frames, `external-ffmpeg-16-in-24-mid-side-b512.flac`, has none because mid and side subframes are not compared). The edits after lossyWAV (a gain, dither) leave no wasted bits at all.
-- The compression level is not detected: the frames do not say which level wrote them. The statistics (block size, predictor orders, partition orders, the share of stereo assignments) show what the encoder chose.
-- A guess at the level from those statistics is planned for 0.4 ([plan.md](../plan.md#04-free-decoders-and-routes-complete)).
+- The compression level is not stored: the frames do not say which level wrote them. A level is guessed from the settings the frames fit, below ("Compression level"), and named as a claim of its own next to the encoder, with its confidence.
+
+## Compression level
+
+- **What it is:** a **Compression Level** node (and a statistic of the same name) after the Encoder node, naming the levels of the encoder whose limits the frames fit, such as "7 or 8", with a Confidence and Evidence nodes: the block size, the highest linear predictor order, the highest partition order, the stereo coding and the settings of the levels named. It is a claim about settings ("fit", "consistent with"), never a verdict, and it adds no finding. Article: `flac-compression-levels`.
+- **When it is made:** the encoder is known (below), the stream has fixed blocks (STREAMINFO's smallest and largest block size are equal and the frames agree), at least 3 frames and 8 fixed or linear predictor subframes, and at least one level fits. Otherwise there is no node.
+- **Which encoders:**
+  - libFLAC 1.2.1 to 1.5.0, named by the vendor string (the confidence of the Encoder node caps the claim). Releases before 1.2.1 and after 1.5.0 are not guessed: their tables were not run. The Windows 10 Media Foundation encoder writes libFLAC 1.3.0's vendor string; its file (private sample kit) fits no level and is not named.
+  - FFmpeg's native encoder of libavcodec 60 (FFmpeg 6.x), named by the `Lavc60` ENCODER comment of an Ogg stream (as the Encoder) or by the `Lavf60` vendor string of a native file (the Writer). In the second case the claim holds at most medium confidence where every linear predictor has FFmpeg's coefficient precision of 15 bits, and low where the stream has no linear predictor (levels 0 to 2) and no precision shows it.
+- **The rule:**
+  - A level fits when the block size is its size, the highest linear predictor order and the highest partition order of the stream do not exceed its limits, no fixed predictor is above its limit (FFmpeg's level 0 stops at order 3), and, for libFLAC with two channels, the stream has no mid/side, left/side or side/right frame unless the level decorrelates (levels 0 and 3 never do).
+  - Where the stream reaches the highest linear predictor order and the highest partition order (and, for levels without a linear predictor, the highest fixed order) of some of the levels that fit, those are named, at medium confidence. Where it reaches the limits of none, every level that fits is named, at low confidence.
+  - Levels whose limits are the same are always named together, whatever the stream shows (libFLAC's 7 and 8 from release 1.3.1; FFmpeg's 5, 6 and 7, 8, 9 and 10, 11 and 12). Levels 0, 1 and 2 of libFLAC differ only in how stereo is chosen, which a left/right stream does not show, so a stream with no mid/side frame is "0, 1 or 2".
+- **libFLAC's levels** (the text of `flac --help` of every release from 1.2.1 to 1.5.0, `flac_tool.py --levels`; BSD-3-Clause, built from the release tarballs pinned in `flac_tool.py` and used as a program only):
+
+| Level | Block size | Highest order | Highest partition order | Stereo coding |
+|---|---|---|---|---|
+| 0 | 1,152 | none (fixed predictors) | 3 | none |
+| 1 | 1,152 | none | 3 | adaptive (`-M`) |
+| 2 | 1,152 | none | 3 | every assignment tried (`-m`) |
+| 3 | 4,096 | 6 | 4 | none |
+| 4 | 4,096 | 8 | 4 | adaptive |
+| 5 | 4,096 | 8 | 5 | every assignment |
+| 6 | 4,096 | 8 | 6 | every assignment |
+| 7 | 4,096 | 8 up to 1.3.0, 12 from 1.3.1 | 6 | every assignment |
+| 8 | 4,096 | 12 | 6 | every assignment |
+
+  - Levels 0 to 5 read the same in every release. The help text also names the analysis windows of levels 6 to 8: none in 1.2.1 and 1.3.0; `tukey(0.5)` and `partial_tukey(2)`, with `punchout_tukey(3)` at level 8, in 1.3.1 to 1.4.0; `subdivide_tukey(2)`, `(3)` at level 8, from 1.4.1. Levels 7 and 8 up to 1.3.0 add an exhaustive model search (`-e`). None of this shows in the frames, so none of it tells levels apart.
+  - Checked by running every release at every level on the signal `levels` (`flac_signal.py`): the highest orders in the frames equal the table, in the stereo fixtures `external-level-<n>-stereo.flac` (1.4.3, the flac package of Ubuntu 24.04) and `external-level-<n>-stereo-libflac-<release>.flac` (1.2.1, 1.3.0, 1.3.1 and 1.5.0). The mono fixtures `external-level-<n>-mono.flac` have no decorrelation to show.
+  - The coefficient precision is 12 bits at 4,096 samples (1.2.1 to 1.5.0) and is not used in the rule.
+  - **Not used, and why:** the stereo assignments of the adaptive levels. In Encspect's test files (`levels` and `music`, 20 s of stereo) release 1.3.4's levels 1 and 4 chose left/side and side/right frames as well as mid/side ones, while 1.5.0's chose left/right and mid/side only, so left/side or side/right says nothing about the level; only a frame that is not left/right rules out levels 0 and 3.
+- **FFmpeg's levels** (6.1.1's `-compression_level 0` to `12`, as black box: the files it writes from the signal `levels`, `external-ffmpeg-level-<n>-stereo.flac` and `-mono.flac`; the highest orders confirmed by encoding with `-max_partition_order` and `-max_prediction_order` set to the same values, which write the same bytes as the level):
+
+| Level | Predictors | Highest order | Highest partition order | Note |
+|---|---|---|---|---|
+| 0 | fixed | 3 (orders up to 3) | 2 | small blocks |
+| 1 | fixed | 4 | 2 | small blocks; level 0 with `-max_prediction_order 4` |
+| 2 | fixed | 4 | 3 | small blocks |
+| 3 | linear | 6 | 3 | large blocks, precision 15 |
+| 4 | linear | 8 | 3 | |
+| 5, 6, 7 | linear | 8 | 8 | the same limits |
+| 8, 9, 10 | linear | 12 | 8 | the same limits |
+| 11, 12 | linear | 32 | 8 | the same limits |
+
+  - Blocks by sample rate (small for levels 0 to 2, large for 3 to 12): 8 kHz 192 and 576; 11.025, 12 and 16 kHz 256 and 1,152; 22.05, 24 and 32 kHz 576 and 2,304; 44.1, 48 and 64 kHz 1,152 and 4,608; 88.2 and 96 kHz 2,304 and 8,192; 176.4 and 192 kHz 4,608 and 16,384. A rate that was not run is not guessed.
+  - The stereo assignment is chosen per frame at every level (`-ch_mode auto`), so it says nothing. Mono and stereo fixtures reach the same limits.
+  - Only FFmpeg 6.1.1 (libavcodec 60.31) was run, so streams of other libavcodec versions are not guessed. Levels 5 to 12 reach their highest partition order of 8 only in some files (7 in `external-ffmpeg-level-5-stereo.flac`), which then are named at low confidence.
+- **Observed in Encspect's test files:** every fixture written at a known level has that level among the ones named (`FlacCompressionLevelTests`); `external-16-stereo-b576.flac` and the other files written with a block size that is no level's, and the lossyWAV files in frames of 512 samples, are not named.
+- **Fixtures:** `make_external_flac_fixtures.py` writes `external-level-<n>-stereo` and `-mono` (libFLAC 1.4.3, levels 0 to 8), `external-level-<n>-stereo-libflac-<release>` (1.2.1: 6, 7, 8; 1.3.0: 7, 8; 1.3.1: 7; 1.5.0: 1, 7) and `external-ffmpeg-level-<n>-stereo` and `-mono` (levels 0 to 12).
 
 ## Ogg FLAC
 

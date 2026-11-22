@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Writes the encoder-made FLAC fixtures in tests/fixtures/flac (external-*.flac, and external-*-ogg.* for Ogg FLAC).
 
-They come from flac 1.4.3 of Ubuntu 24.04 (the flac package, libFLAC 1.4.3) and FFmpeg 6.1.1's native FLAC encoder: every compression
-level, block sizes the 4-bit code names and sizes it does not (stated in 8 and in 16 bits), every channel assignment, 1 to 8 channels, bit
+They come from flac 1.4.3 of Ubuntu 24.04 (the flac package, libFLAC 1.4.3) and FFmpeg 6.1.1's native FLAC encoder (and, for the
+compression levels, from the releases flac_tool.py builds): every compression level, block sizes the 4-bit code names and sizes it does not (stated in 8 and in 16 bits), every channel assignment, 1 to 8 channels, bit
 depths of 8, 16, 20, 24 and 32 bits (among them the 33-bit side channel of a 32-bit stream), the sample rates the header codes and those it
 states, silence, loud noise, samples with wasted bits, seek points, tags, a cue sheet and a picture, and Ogg FLAC. FFmpeg's encoder writes
 a Vorbis comment of its own, and, to a pipe, a STREAMINFO block that does not know the MD5 or the length. The inputs are deterministic
@@ -24,6 +24,7 @@ import zlib
 
 import flac_model as m
 import flac_signal as sig
+import flac_tool
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 OUT = ROOT / "tests" / "fixtures" / "flac"
@@ -97,6 +98,25 @@ FFMPEG_FIXTURES = {
     "ogg-ffmpeg-16-stereo": (("music", 44100, 2, 16, SHORT), ["-c:a", "flac", "-f", "ogg"], "ogg"),
 }
 
+# The compression levels, for the guess of docs/formats/flac.md ("Compression level"): the signal "levels" in stereo (1.2 s, 26 subframes at 4096 samples) and
+# in mono (2 s), at every level of libFLAC 1.4.3 and of FFmpeg 6.1.1; and, from the releases flac_tool.py builds, the levels whose table differs from 1.4.3's
+# (level 7 sets a highest predictor order of 8 up to 1.3.0 and of 12 from 1.3.1; 1.5.0 chooses stereo coding differently at level 1).
+LEVELS_STEREO = ("levels", 44100, 2, 16, 52920)
+LEVELS_MONO = ("levels", 44100, 1, 16, 88200)
+for level in range(9):
+    FLAC_FIXTURES[f"level-{level}-stereo"] = (LEVELS_STEREO, [f"-{level}"])
+    FLAC_FIXTURES[f"level-{level}-mono"] = (LEVELS_MONO, [f"-{level}"])
+for level in range(13):
+    FFMPEG_FIXTURES[f"ffmpeg-level-{level}-stereo"] = (LEVELS_STEREO, ["-c:a", "flac", "-compression_level", str(level)], "flac")
+    FFMPEG_FIXTURES[f"ffmpeg-level-{level}-mono"] = (LEVELS_MONO, ["-c:a", "flac", "-compression_level", str(level)], "flac")
+
+# name: (release, input, arguments of flac).
+FLAC_RELEASE_FIXTURES = {
+    f"level-{level}-stereo-libflac-{release}": (release, LEVELS_STEREO, [f"-{level}"])
+    for release, found in {"1.2.1": (6, 7, 8), "1.3.0": (7, 8), "1.3.1": (7,), "1.5.0": (1, 7)}.items()
+    for level in found
+}
+
 CUE = 'FILE "in.wav" WAVE\n  TRACK 01 AUDIO\n    INDEX 01 00:00:00\n  TRACK 02 AUDIO\n    INDEX 01 00:00:20\n'
 
 
@@ -123,7 +143,7 @@ def tool_version(command):
     return (result.stdout or result.stderr).splitlines()[0].strip()
 
 
-def encode_flac(name, spec, arguments, work):
+def encode_flac(name, spec, arguments, work, release=None):
     target = OUT / f"external-{name}.{'ogg' if '--ogg' in arguments else 'flac'}"
     for old in OUT.glob(f"external-{name}.*"):
         old.unlink()
@@ -132,12 +152,14 @@ def encode_flac(name, spec, arguments, work):
     (work / "cover.png").write_bytes(png())
     out = work / "out.flac"
     out.unlink(missing_ok=True)
-    result = subprocess.run(["flac", "-s", "-f", *arguments, "in.wav", "-o", str(out)], cwd=work, capture_output=True, text=True)
+    program = str(flac_tool.build(release)) if release else "flac"
+    result = subprocess.run([program, "-s", "-f", *arguments, "in.wav", "-o", str(out)], cwd=work, capture_output=True, text=True)
     if result.returncode != 0 or not out.exists():
         raise SystemExit(f"flac failed for {name}: {result.stderr}")
     shutil.copy(out, target)
     # "Ubuntu 24.04" is the provenance of the committed files these tools wrote; the cross-check job runs Ubuntu 26.04 (tool_versions.py).
-    return target, {"tool": f"{tool_version(['flac', '--version'])} (flac package of Ubuntu 24.04)", "arguments": arguments, "input": describe(spec)}
+    provenance = f"{tool_version([program, '--version'])} ({'built from its release tarball by flac_tool.py' if release else 'flac package of Ubuntu 24.04'})"
+    return target, {"tool": provenance, "arguments": arguments, "input": describe(spec)}
 
 
 def encode_ffmpeg(name, spec, arguments, mode, work):
@@ -224,9 +246,11 @@ def main():
             raise SystemExit(f"Missing {', '.join(missing)}; install flac and ffmpeg, or pass --manifests-only.")
     OUT.mkdir(parents=True, exist_ok=True)
     count = 0
-    everything = {**{n: ("flac", s, a, None) for n, (s, a) in FLAC_FIXTURES.items()}, **{n: ("ffmpeg", s, a, mode) for n, (s, a, mode) in FFMPEG_FIXTURES.items()}}
+    everything = {**{n: ("flac", s, a, None, None) for n, (s, a) in FLAC_FIXTURES.items()},
+                  **{n: ("flac", s, a, None, r) for n, (r, s, a) in FLAC_RELEASE_FIXTURES.items()},
+                  **{n: ("ffmpeg", s, a, mode, None) for n, (s, a, mode) in FFMPEG_FIXTURES.items()}}
     with tempfile.TemporaryDirectory() as work:
-        for name, (tool, spec, arguments, mode) in everything.items():
+        for name, (tool, spec, arguments, mode, release) in everything.items():
             ogg = "--ogg" in arguments or mode == "ogg"
             path = OUT / f"external-{name}.{'ogg' if ogg else 'flac'}"
             if only_manifests or (chosen and name not in chosen):
@@ -234,7 +258,7 @@ def main():
                     raise SystemExit(f"No fixture or manifest for {name} to take the encoder from; run the script without --manifests-only.")
                 encoder = json.loads(manifest_path(path).read_text(encoding="utf-8"))["encoder"]
             elif tool == "flac":
-                path, encoder = encode_flac(name, spec, arguments, pathlib.Path(work))
+                path, encoder = encode_flac(name, spec, arguments, pathlib.Path(work), release)
             else:
                 path, encoder = encode_ffmpeg(name, spec, arguments, mode, pathlib.Path(work))
             manifest_path(path).write_text(json.dumps(build_manifest(path, encoder), indent=1, ensure_ascii=False) + "\n", encoding="utf-8")

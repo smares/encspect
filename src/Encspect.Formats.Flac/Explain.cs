@@ -264,7 +264,7 @@ internal static class Explain
     public const string Confidence = "How sure the analyzer is: high where the vendor string has the form libFLAC writes, medium where only an ENCODER comment names ffmpeg's encoder or the vendor string is in libFLAC's form but of no release the analyzer knows.";
     public const string Evidence = "Something in the file that points to the encoder.";
     public const string CompressionLevel = "The compression levels of the named encoder whose settings the frames fit: the block size, the highest linear predictor order, the highest partition order and whether the channels are decorrelated. The frames do not store the level, so levels that set the same figures are named together.";
-    public const string LevelConfidence = "How sure the analyzer is: medium where the frames reach the highest linear predictor order and partition order of the levels named, low where they fit the levels but reach neither, so every level they fit is named; never above the confidence in the encoder.";
+    public const string LevelConfidence = "How sure the analyzer is: medium where the frames reach the highest linear predictor order and partition order of the levels named (the partition order in at least a fifth of the subframes), low where they fit the levels but reach neither, so every level they fit is named; never above the confidence in the encoder.";
     public const string LevelEvidence = "A figure of the frames, or a setting of the levels named, that the claim rests on.";
     public const string StatCompressionLevel = "The compression levels of the encoder whose settings the frames fit, as the Compression Level node states with its evidence.";
 }

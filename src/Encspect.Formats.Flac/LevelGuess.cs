@@ -13,6 +13,10 @@ internal static partial class LevelGuess
     private const int MinimumFrames = 3;
     private const int MinimumResiduals = 8;
 
+    // The share of the subframes (one in MinimumTopShare) that must use the highest partition order for it to count as reached: 20%. In Encspect's level
+    // fixtures libFLAC's levels reach it with 31% to 91% of the subframes, and a level 5 file whose highest order is 4 has 10% at 4.
+    private const int MinimumTopShare = 5;
+
     // The coefficient precision FFmpeg writes in every linear predictor at every level; libFLAC chooses its own by block size (12 at 4,096 samples).
     private const int FfmpegPrecision = 15;
 
@@ -23,8 +27,9 @@ internal static partial class LevelGuess
     [GeneratedRegex(@"^FFmpeg \(Lav([cf])(\d+)\b", RegexOptions.CultureInvariant)]
     private static partial Regex FfmpegName();
 
-    // What one level limits. A block size of 0 is the family's small size for the sample rate, 1 its large size.
-    private readonly record struct Level(int Number, int Block, int MaxLpcOrder, int MaxPartitionOrder, bool Decorrelates, int MaxFixedOrder = 4);
+    // What one level limits. Block: the family's small or large size for the sample rate. IsTopPartitionRare: the level's highest partition order is used by few subframes
+    // (in Encspect's files 4% to 10% of FFmpeg's at order 8), so reaching it is no sign of the limit.
+    private readonly record struct Level(int Number, int Block, int MaxLpcOrder, int MaxPartitionOrder, bool Decorrelates, int MaxFixedOrder = 4, bool IsTopPartitionRare = false);
 
     private const int Small = 0;
     private const int Large = 1;
@@ -54,14 +59,14 @@ internal static partial class LevelGuess
         new(2, Small, 0, 3, true),
         new(3, Large, 6, 3, true),
         new(4, Large, 8, 3, true),
-        new(5, Large, 8, 8, true),
-        new(6, Large, 8, 8, true),
-        new(7, Large, 8, 8, true),
-        new(8, Large, 12, 8, true),
-        new(9, Large, 12, 8, true),
-        new(10, Large, 12, 8, true),
-        new(11, Large, 32, 8, true),
-        new(12, Large, 32, 8, true),
+        new(5, Large, 8, 8, true, IsTopPartitionRare: true),
+        new(6, Large, 8, 8, true, IsTopPartitionRare: true),
+        new(7, Large, 8, 8, true, IsTopPartitionRare: true),
+        new(8, Large, 12, 8, true, IsTopPartitionRare: true),
+        new(9, Large, 12, 8, true, IsTopPartitionRare: true),
+        new(10, Large, 12, 8, true, IsTopPartitionRare: true),
+        new(11, Large, 32, 8, true, IsTopPartitionRare: true),
+        new(12, Large, 32, 8, true, IsTopPartitionRare: true),
     ];
 
     // FFmpeg's block sizes by sample rate (small, large), as the files it writes show; a rate not listed was not run.
@@ -160,10 +165,19 @@ internal static partial class LevelGuess
             return null;
         }
 
-        bool Reaches(Level l) => highestOrder == l.MaxLpcOrder && highestPartition == l.MaxPartitionOrder && (l.MaxLpcOrder > 0 || highestFixed == l.MaxFixedOrder);
+        bool Reaches(Level l)
+        {
+            // Where the level's own highest order is rare, the one below it counts as well.
+            int top = l.MaxPartitionOrder - (l.IsTopPartitionRare ? 1 : 0);
+            return highestOrder == l.MaxLpcOrder && highestPartition <= l.MaxPartitionOrder && SubframesFrom(s, top) * MinimumTopShare >= s.ResidualSubframes && (l.MaxLpcOrder > 0 || highestFixed == l.MaxFixedOrder);
+        }
+
         List<Level> reached = [.. fitting.Where(Reaches)];
         bool isReached = reached.Count > 0;
         List<Level> named = isReached ? reached : fitting;
+
+        // Levels that limit the same figures cannot be told apart, so where all the levels the frames fit are such, the frames leave no doubt among them.
+        bool isOneGroup = fitting.All(l => l.Block == fitting[0].Block && l.MaxLpcOrder == fitting[0].MaxLpcOrder && l.MaxPartitionOrder == fitting[0].MaxPartitionOrder && l.MaxFixedOrder == fitting[0].MaxFixedOrder);
         int[] numbers = [.. named.Select(l => l.Number)];
 
         int[] blockLevels = [.. levels.Where(l => block(l) == s.MaxBlockSize).Select(l => l.Number)];
@@ -190,9 +204,23 @@ internal static partial class LevelGuess
 
         evidence.Add($"{Noun(named.Count, true)} {Join(numbers)} {(named.Count == 1 ? "sets" : "set")} {Settings(named, s.MaxBlockSize)}.");
         evidence.Add(isReached
-            ? "The highest linear predictor order and the highest partition order of the frames equal what the named levels set."
-            : "The frames do not reach the highest linear predictor order and partition order of any level they fit, so every level they fit is named.");
-        return new Guess(family, numbers, isReached, isFromWriter, !isLibFlac && lpc > 0, evidence);
+            ? "The highest linear predictor order of the frames equals what the named levels set" + (named.Any(l => l.IsTopPartitionRare) ? "; their highest partition order, or the one below it, is used by at least a fifth of the subframes." : ", and so does the highest partition order, which at least a fifth of the subframes use.")
+            : isOneGroup
+                ? "Every level the frames fit sets the same figures, so none of the others is left."
+                : "The frames do not reach the highest linear predictor order and partition order of any level they fit (a fifth of the subframes must use the partition order), so every level they fit is named.");
+        return new Guess(family, numbers, isReached || isOneGroup, isFromWriter, !isLibFlac && lpc > 0, evidence);
+    }
+
+    // The subframes whose partition order is at least order: a level's highest order only shows as a limit where many subframes use it.
+    private static long SubframesFrom(State s, int order)
+    {
+        long count = 0;
+        for (int i = order; i < s.PartitionOrders.Length; i++)
+        {
+            count += s.PartitionOrders[i];
+        }
+
+        return count;
     }
 
     private static string Settings(List<Level> named, int size)
