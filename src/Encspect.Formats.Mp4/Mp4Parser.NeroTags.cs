@@ -232,7 +232,8 @@ public sealed partial class Mp4Parser
                         $"{(times == 1 ? $"The title of segment {segment} in Nero's tags box, \"{Shorten(field.Text)}\", differs from that of chapter {segment + 1} in the chpl box, \"{Shorten(chapter)}\"" : $"{times} chapter titles in Nero's tags box differ from those of the chpl box, first segment {segment}")}.");
                 }
             }
-            else if (state.ItunesText.TryGetValue(ItunesKeyOf(field.Key), out string? item) && item != field.Text.TrimEnd('\0'))
+            // Nero Burning ROM writes composer as a freeform item, not as ©wrt, so the item of the same name is the fallback.
+            else if ((state.ItunesText.TryGetValue(ItunesKeyOf(field.Key), out string? item) || state.ItunesText.TryGetValue(field.Key, out item)) && item != field.Text.TrimEnd('\0'))
             {
                 state.Findings.Add(Severity.Warning, "mp4.nero-field-differs", field.Node, times =>
                     $"{(times == 1 ? $"The field {field.Key} of Nero's tags box, \"{Shorten(field.Text)}\", differs from the iTunes metadata beside it, \"{Shorten(item)}\"" : $"{times} fields of Nero's tags box differ from the iTunes metadata, first {field.Key}")}.");

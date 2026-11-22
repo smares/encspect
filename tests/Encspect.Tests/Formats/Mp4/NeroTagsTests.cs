@@ -253,4 +253,20 @@ public class NeroTagsTests
         Assert.Equal("Image", cut.Node!.Name);
         Assert.DoesNotContain(report.Findings, f => f.Code == "mp4.nero-cover-differs");
     }
+
+    [Fact]
+    public void ACutCoverKeepsItsSlotSoLaterCoversMeetTheirOwnImages()
+    {
+        byte[] first = [0xFF, 0xD8, 0xFF, 0xE0, .. Enumerable.Repeat((byte)'A', 200), 0xFF, 0xD9];
+        byte[] second = [0xFF, 0xD8, 0xFF, 0xE0, .. Enumerable.Repeat((byte)'B', 300), 0xFF, 0xD9];
+        byte[] Data(byte[] image) => Mp4Builder.Box("data", Mp4Builder.U32(13), Mp4Builder.U32(0), image);
+        byte[] Cover(byte[] image, int stated) => Mp4Builder.Box("cvrx", Mp4Builder.U32(0), Mp4Builder.U32(1), [0, 11], "front cover"u8.ToArray(), [0, 0], Mp4Builder.U32(stated), image);
+        byte[] meta = Mp4Builder.FullBox("meta", Mp4Builder.Box("hdlr", new byte[8], "mdirappl"u8.ToArray(), new byte[9]), Mp4Builder.Box("ilst", Mp4Builder.Box("covr", Data(first), Data(second))));
+        byte[] tags = Mp4Builder.Box("tags", Cover(first[..50], first.Length), Cover(second, second.Length));
+
+        Report report = Analyze(Mp4Builder.Join(Mp4Builder.Ftyp(), Mp4Builder.Box("moov", Mp4Builder.Mvhd(), Mp4Builder.Box("udta", meta, tags))));
+
+        Assert.Single(report.Findings, f => f.Code == "mp4.nero-field-size-invalid");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "mp4.nero-cover-differs");
+    }
 }
