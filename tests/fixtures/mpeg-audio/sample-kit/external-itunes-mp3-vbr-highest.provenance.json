@@ -1,0 +1,21 @@
+{
+ "description": "iTunes MP3 encoder iTunes 12.13.12.3, converted through iTunes' ConvertFile2: variable bitrate on, quality Highest, list entry MP3 64 kbit/s 22050 Hz stereo (the file is 44100 Hz), on the synthetic source music-44k-stereo.wav.",
+ "encoder": {
+  "tool": "iTunes MP3 encoder",
+  "version": "iTunes 12.13.12.3, converted through iTunes' ConvertFile2",
+  "settings": "variable bitrate on, quality Highest, list entry MP3 64 kbit/s 22050 Hz stereo (the file is 44100 Hz)"
+ },
+ "input": {
+  "name": "music-44k-stereo.wav",
+  "sha256": "5272121c7f1c5b652f3f94287cd87cdbe5e2351a299a276d973557974166aa27",
+  "generator": "sources/make_sources.py of the sample kit (written from nothing, reproducible byte for byte)"
+ },
+ "selected_for": "iTunes' Xing header; its table of contents is not increasing",
+ "file": {
+  "name_in_kit": "music-44k-stereo-vbr-hoechste.mp3",
+  "bytes": 190687,
+  "sha256": "8c0cc68d1fbe62fd9dd0a95b2e6956b71eafa2d741e06176b2546f07b3e2d2b4"
+ },
+ "reproducible": false,
+ "note": "The encoder stamps the time of the encode into the file; the file is committed as written, and checked by its content."
+}

@@ -1,0 +1,22 @@
+{
+ "description": "iTunes AAC encoder (Apple's CoreAudioToolbox 7.10.9.0) iTunes 12.13.12.3, converted through iTunes' ConvertFile2: AAC Encoder, custom, 128 kbit/s, variable bitrate off, sample rate and channels automatic; tagged through iTunes, on the synthetic source music-44k-stereo.wav.",
+ "encoder": {
+  "tool": "iTunes AAC encoder (Apple's CoreAudioToolbox 7.10.9.0)",
+  "version": "iTunes 12.13.12.3, converted through iTunes' ConvertFile2",
+  "note": "At low bitrates iTunes picks the output rate itself.",
+  "settings": "AAC Encoder, custom, 128 kbit/s, variable bitrate off, sample rate and channels automatic; tagged through iTunes"
+ },
+ "input": {
+  "name": "music-44k-stereo.wav",
+  "sha256": "5272121c7f1c5b652f3f94287cd87cdbe5e2351a299a276d973557974166aa27",
+  "generator": "sources/make_sources.py of the sample kit (written from nothing, reproducible byte for byte)"
+ },
+ "selected_for": "iTunes' MP4 layout with its tags",
+ "file": {
+  "name_in_kit": "music-44k-stereo-lc-128-vbroff-tagged.m4a",
+  "bytes": 131850,
+  "sha256": "4266552c7cc7e8559e2766d7b6febe31239917628d4f10857f96845358975486"
+ },
+ "reproducible": false,
+ "note": "The encoder stamps the time of the encode into the file; the file is committed as written, and checked by its content."
+}

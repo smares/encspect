@@ -1,0 +1,24 @@
+{
+ "description": "Nero Burning ROM 2026 (28.0.1.7), Extras > Encode Files, Nero AAC output 28.0.1.7: mode Variable bitrate (VBR), quality 0.50, 48000 Hz 5.1 source, on the synthetic source music-48k-5.1.wav.",
+ "encoder": {
+  "tool": "Nero Burning ROM 2026 (28.0.1.7), Extras > Encode Files, Nero AAC output",
+  "version": "28.0.1.7",
+  "component": "APM_NeroDigital.dll, NeroDigital Audio Plugin, file version 28.0.1.3, product version 1.0.0.2",
+  "note": "The profile is Nero's choice; the dialog offers none.",
+  "settings": "mode Variable bitrate (VBR), quality 0.50, 48000 Hz 5.1 source"
+ },
+ "input": {
+  "name": "music-48k-5.1.wav",
+  "sha256": "157d5f1ec49a1692162919ef91d5013b8c5185b01d94ee122d8248df85f30861",
+  "generator": "sources/make_sources.py of the sample kit (written from nothing, reproducible byte for byte)"
+ },
+ "selected_for": "5.1 channels",
+ "file": {
+  "name_in_kit": "music-48k-5.1-auto-vbr-q0.50.mp4",
+  "bytes": 172285,
+  "sha256": "018595bcaf750045b4590b3da3176b435401b5ecec3d26c04fbdece172553233"
+ },
+ "reproducible": false,
+ "note": "The encoder stamps the time of the encode into the file; the file is committed as written, and checked by its content.",
+ "license": "Nero's license limits how the software is used, not the files it writes."
+}

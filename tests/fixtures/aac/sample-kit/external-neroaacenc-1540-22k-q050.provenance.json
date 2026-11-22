@@ -1,0 +1,24 @@
+{
+ "description": "neroAacEnc (Nero AAC Codec) 1.5.4.0: neroAacEnc -q 0.5 on a 22050 Hz source, on the synthetic source music-22k-stereo.wav.",
+ "encoder": {
+  "tool": "neroAacEnc (Nero AAC Codec)",
+  "version": "1.5.4.0",
+  "build": "win32",
+  "package_build_date": "Feb 18 2010",
+  "settings": "neroAacEnc -q 0.5 on a 22050 Hz source"
+ },
+ "input": {
+  "name": "music-22k-stereo.wav",
+  "sha256": "18d1afb33029a623bfdc6bd16772dc528c008f3dcc7996773b9ae9f1b017fd10",
+  "generator": "sources/make_sources.py of the sample kit (written from nothing, reproducible byte for byte)"
+ },
+ "selected_for": "variable bitrate at 22.05 kHz, the profile the encoder chose",
+ "file": {
+  "name_in_kit": "music-22k-stereo-auto-q0.5.m4a",
+  "bytes": 53486,
+  "sha256": "36ff9bfc90ec86c116ad542005a3fdbad86a2f66f6237d78cdcd4b39809a16e3"
+ },
+ "reproducible": false,
+ "note": "The encoder stamps the time of the encode into the file; the file is committed as written, and checked by its content.",
+ "license": "Nero's license limits how the software is used, not the files it writes."
+}

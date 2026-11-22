@@ -1,0 +1,21 @@
+{
+ "description": "MP3 Encoder ACM Wrapper MFT (Media Foundation) over the ACM codec l3codeca.acm mfcore.dll 10.0.19041.1; l3codeca.acm 1.9.0.401, Fraunhofer IIS: MP3, 64 kbit/s, 44100 Hz, mono, on the synthetic source music-44k-mono.wav.",
+ "encoder": {
+  "tool": "MP3 Encoder ACM Wrapper MFT (Media Foundation) over the ACM codec l3codeca.acm",
+  "version": "mfcore.dll 10.0.19041.1; l3codeca.acm 1.9.0.401, Fraunhofer IIS",
+  "settings": "MP3, 64 kbit/s, 44100 Hz, mono"
+ },
+ "input": {
+  "name": "music-44k-mono.wav",
+  "sha256": "5e1561907808ac2eca1c9073e3cc45a5ae03e143e7bd551ea1c2082035741c9a",
+  "generator": "sources/make_sources.py of the sample kit (written from nothing, reproducible byte for byte)"
+ },
+ "selected_for": "the same codec at an MPEG-1 rate",
+ "file": {
+  "name_in_kit": "music-44k-mono-ms-mp3acm-64k.mp3",
+  "bytes": 80080,
+  "sha256": "4d412b76b67576015e0e2b2fac8b77bed2867a29786f5a9a5cf7f2d5019f5782"
+ },
+ "reproducible": false,
+ "note": "The encoder stamps the time of the encode into the file; the file is committed as written, and checked by its content."
+}

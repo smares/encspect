@@ -1,0 +1,21 @@
+{
+ "description": "Winamp's Ogg Vorbis encoder plug-in, Format Converter, quality 5 Winamp 5.9.2 build 10042, enc_vorbis.dll 1.58.0.0: Format Converter, Ogg Vorbis, quality 5 (160 kbit/s nominal), on the synthetic source music-44k-stereo.wav.",
+ "encoder": {
+  "tool": "Winamp's Ogg Vorbis encoder plug-in, Format Converter, quality 5",
+  "version": "Winamp 5.9.2 build 10042, enc_vorbis.dll 1.58.0.0",
+  "settings": "Format Converter, Ogg Vorbis, quality 5 (160 kbit/s nominal)"
+ },
+ "input": {
+  "name": "music-44k-stereo.wav",
+  "sha256": "5272121c7f1c5b652f3f94287cd87cdbe5e2351a299a276d973557974166aa27",
+  "generator": "sources/make_sources.py of the sample kit (written from nothing, reproducible byte for byte)"
+ },
+ "selected_for": "libvorbis 1.3.7's vendor string, and the last 1.044 s of the source missing",
+ "file": {
+  "name_in_kit": "music-44k-stereo-vorbis-q5.ogg",
+  "bytes": 90159,
+  "sha256": "fc3ac8ffa93dd1c04706a13fb0946ed7b232036c7bc64c30f5309d824a94ae1e"
+ },
+ "reproducible": false,
+ "note": "The encoder stamps the time of the encode into the file; the file is committed as written, and checked by its content."
+}

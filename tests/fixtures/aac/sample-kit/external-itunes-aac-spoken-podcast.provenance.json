@@ -1,0 +1,22 @@
+{
+ "description": "iTunes AAC encoder (Apple's CoreAudioToolbox 7.10.9.0) iTunes 12.13.12.3, converted through iTunes' ConvertFile2: AAC Encoder, preset Spoken Podcasts, on the synthetic source music-44k-stereo.wav.",
+ "encoder": {
+  "tool": "iTunes AAC encoder (Apple's CoreAudioToolbox 7.10.9.0)",
+  "version": "iTunes 12.13.12.3, converted through iTunes' ConvertFile2",
+  "note": "At low bitrates iTunes picks the output rate itself.",
+  "settings": "AAC Encoder, preset Spoken Podcasts"
+ },
+ "input": {
+  "name": "music-44k-stereo.wav",
+  "sha256": "5272121c7f1c5b652f3f94287cd87cdbe5e2351a299a276d973557974166aa27",
+  "generator": "sources/make_sources.py of the sample kit (written from nothing, reproducible byte for byte)"
+ },
+ "selected_for": "the preset's 22.05 kHz output",
+ "file": {
+  "name_in_kit": "music-44k-stereo-preset-spoken-podcast.m4a",
+  "bytes": 56310,
+  "sha256": "816f581afdd694eb528cf997e822759f678dafd011453b226373f06c65b48058"
+ },
+ "reproducible": false,
+ "note": "The encoder stamps the time of the encode into the file; the file is committed as written, and checked by its content."
+}

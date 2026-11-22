@@ -1,0 +1,27 @@
+{
+ "description": "neroAacEnc (Nero AAC Codec) 1.3.3.0: neroAacEnc -hev2 -cbr 32000, 44100 Hz stereo source, on the synthetic source music-44k-stereo.wav.",
+ "encoder": {
+  "tool": "neroAacEnc (Nero AAC Codec)",
+  "version": "1.3.3.0",
+  "build": "win32",
+  "package": "NeroAACCodec-1.3.3.zip",
+  "package_sha256": "1801df16797ffd38709bd5938785d32f534413d71a3c0fb4016a7a6ed35daaa3",
+  "package_build_date": "Sep 17 2008",
+  "run_under": "Wine 9.0",
+  "settings": "neroAacEnc -hev2 -cbr 32000, 44100 Hz stereo source"
+ },
+ "input": {
+  "name": "music-44k-stereo.wav",
+  "sha256": "5272121c7f1c5b652f3f94287cd87cdbe5e2351a299a276d973557974166aa27",
+  "generator": "sources/make_sources.py of the sample kit (written from nothing, reproducible byte for byte)"
+ },
+ "selected_for": "the 1.3.3.0 build's HE-AAC v2 file",
+ "file": {
+  "name_in_kit": "music-44k-stereo-hev2-cbr32.m4a",
+  "bytes": 43140,
+  "sha256": "3e7d37939f309411fc7468d4a53d4b245f941fd22c84313a1232cd0d12780a0e"
+ },
+ "reproducible": false,
+ "note": "The encoder stamps the time of the encode into the file; the file is committed as written, and checked by its content.",
+ "license": "Nero's license limits how the software is used, not the files it writes."
+}
