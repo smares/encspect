@@ -112,6 +112,13 @@ Later milestones, in this order.
 - **What:** the lossless compressors and speech codecs (vocoders) no item above names. Each is named, with its sources and fixtures, when its turn comes.
 - **Moved here** from "not planned" by the lead on 2026-11-16: Shorten (item 11), AMR (item 6) and WMA Voice are already planned, so the blanket exclusion no longer held.
 
+### 16. HALAC
+
+- **What:** `.halac`, a lossless codec (a lossy mode since 1.6.1) by Hakan Abbas, under the MIT license (github.com/Hakan-Abbas/HALAC-High-Availability-Lossless-Audio-Compression).
+- **Specification:** none; the repository holds the source of 0.1.9, while the releases are at 1.6.1 (Windows x64 binaries).
+- **Why late:** no stated file signature and no statement that the format is stable (the levels were renumbered in 0.5.7); it starts once the source of the current format is published or the format is stated stable.
+- **Fixtures:** the release's own encoder, whose MIT license allows committing its output.
+
 ## Not planned
 
 - **Sequenced formats** (MIDI, tracker modules and chiptunes): dropped by the project lead on 2026-11-08, as a different domain from bitstream and encoder analysis. The scope they had is recorded in [history.md](../history.md#dropped-plans).
