@@ -148,6 +148,7 @@ jobs:
           python3 scripts/ci/test_official_decoders.py
           python3 scripts/ci/test_compare_pcm.py
           python3 scripts/fixtures/test_crosscheck_ac3_coreaudio.py
+          python3 scripts/fixtures/test_tak_sdk_pairs.py
 
   build-test:
     name: build and test (${{ matrix.os }})
