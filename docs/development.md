@@ -557,7 +557,7 @@ What changed (each its own commit; `--json` and `--csv` of every fixture folder 
   - Locally, about three minutes each, against ten for the whole project in one process. Move a class between shards by editing `shards.json` when one shard's job takes clearly longer than the others'; `check_shards.py` stays green whatever the split.
 - `shard-guard`: `scripts/ci/check_shards.py` lists the tests that `dotnet test --list-tests` reports under each shard's filter and under none, and fails unless every listed entry is in exactly one shard. The list has one entry per theory row it can enumerate and one for a theory it cannot (such as `UsacLayoutTests.NotExhale`), so a shard may run more tests than it lists (the `rest` shard listed 5,288 and ran 5,306). Run it locally after building the tests in Release.
 - `fuzz`, `format`, `fixtures` (the hand-built fixtures are reproducible) and one cross-check job per format family, as before.
-- `docs`: links and indexes of the documentation (`scripts/ci/check_docs.py`) and the Python tests of the pipeline scripts. It runs on every change, so a documentation-only pull request still gets a check.
+- `docs`: links and indexes of the documentation, and the plan's status lines against the items marked done (`scripts/ci/check_docs.py`) and the Python tests of the pipeline scripts. It runs on every change, so a documentation-only pull request still gets a check.
 
 ### Path filter
 
