@@ -1,0 +1,356 @@
+{
+ "description": "An A_MS/ACM PCM track whose WAVEFORMATEX states one channel at 44100 Hz while the Audio element states two at 48000 Hz.",
+ "length": 5984,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 173,
+     "length": 5811,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 6
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "duration": 100.0,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "encspect fixtures"
+   },
+   "length": 5944,
+   "declared_end": 5984
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   5944,
+   [
+    [
+     "Info",
+     46,
+     63,
+     [
+      [
+       "TimestampScale",
+       51,
+       7
+      ],
+      [
+       "Duration",
+       58,
+       11
+      ],
+      [
+       "MuxingApp",
+       69,
+       20
+      ],
+      [
+       "WritingApp",
+       89,
+       20
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     109,
+     64,
+     [
+      [
+       "TrackEntry",
+       114,
+       59,
+       [
+        [
+         "TrackNumber",
+         116,
+         3
+        ],
+        [
+         "TrackUID",
+         119,
+         5
+        ],
+        [
+         "TrackType",
+         124,
+         3
+        ],
+        [
+         "CodecID",
+         127,
+         10
+        ],
+        [
+         "CodecPrivate",
+         137,
+         21
+        ],
+        [
+         "Audio",
+         158,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           160,
+           10
+          ],
+          [
+           "Channels",
+           170,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     173,
+     5811,
+     [
+      [
+       "Timestamp",
+       179,
+       3
+      ],
+      [
+       "SimpleBlock",
+       182,
+       967
+      ],
+      [
+       "SimpleBlock",
+       1149,
+       967
+      ],
+      [
+       "SimpleBlock",
+       2116,
+       967
+      ],
+      [
+       "SimpleBlock",
+       3083,
+       967
+      ],
+      [
+       "SimpleBlock",
+       4050,
+       967
+      ],
+      [
+       "SimpleBlock",
+       5017,
+       967
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 182,
+   "length": 967,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     189,
+     960
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 1149,
+   "length": 967,
+   "track": 1,
+   "timestamp": 10,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     1156,
+     960
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 2116,
+   "length": 967,
+   "track": 1,
+   "timestamp": 20,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     2123,
+     960
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 3083,
+   "length": 967,
+   "track": 1,
+   "timestamp": 30,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     3090,
+     960
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 4050,
+   "length": 967,
+   "track": 1,
+   "timestamp": 40,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     4057,
+     960
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 5017,
+   "length": 967,
+   "track": 1,
+   "timestamp": 50,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     5024,
+     960
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_MS/ACM",
+   "private": [
+    140,
+    18
+   ],
+   "channels": 2,
+   "rate": 48000.0,
+   "bits": null,
+   "delay": 0,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "writers": [
+  {
+   "name": "encspect fixtures",
+   "confidence": "Low"
+  }
+ ],
+ "streams": [
+  {
+   "codec": "PCM",
+   "sample_rate": 44100,
+   "channels": 1
+  }
+ ],
+ "findings": [
+  {
+   "code": "matroska.waveformat-differs",
+   "contains": "states 2 channels in its Audio element, but its WAVEFORMATEX states 1"
+  },
+  {
+   "code": "matroska.waveformat-differs",
+   "contains": "48000 Hz in its Audio element, but its WAVEFORMATEX states 44100 Hz"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

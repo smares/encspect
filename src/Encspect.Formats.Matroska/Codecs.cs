@@ -27,6 +27,9 @@ internal static class Codecs
         _ => null,
     };
 
+    // Microsoft's Audio Compression Manager: the CodecPrivate is a WAVEFORMATEX, whose format tag names the coding (draft-ietf-cellar-codec, section 3.4).
+    public const string Acm = "A_MS/ACM";
+
     // The ID of the host's codec parser for PCM samples a container stores as they are.
     public const string PcmSamples = "pcm-samples";
 
@@ -65,8 +68,41 @@ internal static class Codecs
         };
     }
 
+    // How the samples of an A_MS/ACM PCM track are laid out, from its WAVEFORMATEX as WAV reads it (WaveFormatRoutes.PcmEncodingOf): the width of a sample is the
+    // wBitsPerSample, and the block alignment, where stated, is one sample frame. Null with the reason where the structure gives no layout.
+    public static PcmCoding? PcmOf(WaveFormatEx format, out string why)
+    {
+        why = string.Empty;
+        int bits = format.Bits;
+        if (WaveFormatRoutes.PcmEncodingOf(format.CodingTag, bits, bits) is not { } encoding || bits % 8 != 0 || bits is 0 or > 64)
+        {
+            why = $"states a WAVEFORMATEX with {Counts.Of(bits, "bit", "bits")} per sample, which is no sample width the coding {WaveFormatNames.Show(format.CodingTag)} is read with";
+            return null;
+        }
+
+        if (format.Channels is 0 or > PcmCoding.MaxChannels)
+        {
+            why = $"states {format.Channels} channels in its WAVEFORMATEX, where 1 to {PcmCoding.MaxChannels} are read as samples";
+            return null;
+        }
+
+        if (format.BlockAlign != 0 && format.BlockAlign != (bits / 8) * format.Channels)
+        {
+            why = $"states a block alignment of {format.BlockAlign} bytes in its WAVEFORMATEX, which is not one sample frame of {(bits / 8) * format.Channels} bytes";
+            return null;
+        }
+
+        return new PcmCoding
+        {
+            Encoding = encoding,
+            IsBigEndian = false,
+            ContainerBits = bits,
+            SampleRate = (int)Math.Min(format.SampleRate, int.MaxValue),
+        };
+    }
+
     // The kind of stream KnownWriters knows the codec ID's coding as, or null for a coding no parser reads.
-    public static string? WriterKind(string codecId) => RouteOf(codecId) switch
+    public static string? WriterKind(string codecId, string? acmRoute = null) => (acmRoute ?? RouteOf(codecId)) switch
     {
         "aac" => KnownWriters.Aac,
         "mpeg-audio" => KnownWriters.MpegAudio,
@@ -79,6 +115,7 @@ internal static class Codecs
         "flac" => KnownWriters.Flac,
         "wavpack" => KnownWriters.WavPack,
         "truehd" or "mlp" => KnownWriters.TrueHd,
+        "wma" or "wma-pro" or "wma-lossless" or "wma-voice" => KnownWriters.WindowsMedia,
         _ => null,
     };
 
@@ -111,7 +148,7 @@ internal static class Codecs
         "A_PCM/INT/LIT" => CodecNames.Pcm,
         "A_PCM/INT/BIG" => CodecNames.Pcm,
         "A_PCM/FLOAT/IEEE" => CodecNames.PcmFloat,
-        "A_MS/ACM" => "Microsoft ACM audio",
+        Acm => "Microsoft ACM audio",
         "A_ATRAC/AT1" => "ATRAC1",
         _ when codecId.StartsWith("A_REAL/", StringComparison.Ordinal) => "RealAudio",
         _ when codecId.StartsWith("A_QUICKTIME", StringComparison.Ordinal) => "QuickTime audio",

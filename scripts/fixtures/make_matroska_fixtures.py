@@ -1896,6 +1896,115 @@ def _():
     return coded_track("A_AAC", channels, float(rate), frames, 1024 * 1000 / rate, strip=common_prefix(frames, 2) or None, private=config)
 
 
+# --- A_MS/ACM: a WAVEFORMATEX in the CodecPrivate (draft-ietf-cellar-codec section 3.4; the structure of Microsoft's WAVEFORMATEX and mmreg.h) ---------------------
+# No muxer the project runs writes A_MS/ACM for these codings (FFmpeg's muxer writes it for ADPCM, A-law, mu-law, GSM and Windows Media Audio: the external-ffmpeg-acm-*
+# files; mkvmerge 82.0 refuses ADPCM, WMA and the other codings, and writes MPEG audio, AC-3 and PCM under their own IDs), so these files put the frames of the committed
+# files under the ID with the WAVEFORMATEX a muxer of the AVI kind would copy.
+
+PCM_SUBFORMAT = bytes.fromhex("0100000000001000800000aa00389b71")
+AC3_SUBFORMAT = bytes.fromhex("2c806de046dbcf11b4d100805f6cbbea")
+
+
+def wfx(tag, channels, rate, average, align, bits, extra=b"", cb=None):
+    """A WAVEFORMATEX: the format tag, channels, rate, bytes per second, block alignment, bits per sample, cbSize and the codec-specific data."""
+    return struct.pack("<HHIIHHH", tag, channels, rate, average, align, bits, len(extra) if cb is None else cb) + extra
+
+
+def wfx_extensible(sub_format, channels, rate, bits, valid, mask, align=None, extra=b""):
+    """A WAVEFORMATEXTENSIBLE: tag 0xFFFE, the valid bits, the channel mask and the sub-format GUID after cbSize."""
+    return wfx(0xFFFE, channels, rate, rate * channels * bits // 8, align if align is not None else channels * bits // 8, bits, struct.pack("<HI", valid, mask) + sub_format + extra)
+
+
+def acm_track(private, frames, step_ms, channels=2, rate=48000.0, **track):
+    entry = audio_track(1, "A_MS/ACM", channels, rate, private=private, **track)
+    items = [simple_block(1, round(i * step_ms), frame, key=True) for i, frame in enumerate(frames)]
+    return build(standard(cluster(0, *items), track=[entry]))
+
+
+def pcm_frames(count, channels=2, width=2, length=480):
+    return [bytes((i * 37 + k * 11) & 0xFF for k in range(length * channels * width)) for i in range(count)]
+
+
+@fixture("acm-mpeg-layer3", "Eight frames of MPEG-1 Layer III in an A_MS/ACM track whose WAVEFORMATEX has the format tag 0x0055 and the 12 bytes of an MPEGLAYER3WAVEFORMAT: routed to the MPEG audio parser "
+         "as A_MPEG/L3 is.", streams=[("MPEG-1 Layer III", 44100, 2)])
+def _():
+    return acm_track(wfx(0x0055, 2, 44100, 16000, 1, 0, struct.pack("<HIHHH", 1, 2, 417, 1, 1393)), mp3_frames(8), MP3_STEP, rate=44100.0)
+
+
+@fixture("acm-ac3", "Six frames of stereo AC-3 in an A_MS/ACM track whose WAVEFORMATEX has the format tag 0x2000 and no codec-specific data: routed to the AC-3 parser as A_AC3 is, which is "
+         "given no configuration.", streams=[("AC-3", 48000, 2)])
+def _():
+    return acm_track(wfx(0x2000, 2, 48000, 24000, 768, 0), ac3_stereo_frames(6), 32)
+
+
+@fixture("acm-dts", "Six core frames of 5.1 DTS in an A_MS/ACM track whose WAVEFORMATEX has the format tag 0x2001.", streams=[("DTS", 48000, 6)])
+def _():
+    return acm_track(wfx(0x2001, 6, 48000, 96000, 1, 0), dts_frames(6), 21.333, channels=6)
+
+
+@fixture("acm-pcm-s16", "Ten blocks of 16-bit stereo PCM in an A_MS/ACM track whose WAVEFORMATEX has the format tag 1: read as the samples of an A_PCM/INT/LIT track, from the WAVEFORMATEX's width, "
+         "since an A_MS/ACM track has no BitDepth of its own.", streams=[("PCM", 48000, 2)])
+def _():
+    return acm_track(wfx(0x0001, 2, 48000, 192000, 4, 16), pcm_frames(10), 10)
+
+
+@fixture("acm-extensible-pcm-s24", "Ten blocks of 24-bit stereo PCM in an A_MS/ACM track whose WAVEFORMATEX is the extensible form (0xFFFE) with the PCM sub-format, 24 valid bits and the channel mask 3.",
+         streams=[("PCM", 48000, 2)])
+def _():
+    return acm_track(wfx_extensible(PCM_SUBFORMAT, 2, 48000, 24, 24, 3), pcm_frames(10, width=3), 10)
+
+
+@fixture("acm-extensible-ac3", "Six frames of stereo AC-3 in an A_MS/ACM track whose WAVEFORMATEX is the extensible form with the sub-format GUID of AC-3 (MEDIASUBTYPE_DOLBY_AC3), which has no format tag: "
+         "routed by the GUID, as WAV does.", streams=[("AC-3", 48000, 2)])
+def _():
+    return acm_track(wfx_extensible(AC3_SUBFORMAT, 2, 48000, 16, 16, 3, align=768), ac3_stereo_frames(6), 32)
+
+
+@fixture("acm-unlisted-tag", "Frames of an A_MS/ACM track whose WAVEFORMATEX has a format tag (0x1234) that no table lists: the track is reported from its TrackEntry, with the WAVEFORMATEX shown.",
+         findings=[("matroska.codec-not-analyzed", "format tag 0x1234")], streams=[("an unlisted coding", 48000, 2)])
+def _():
+    return acm_track(wfx(0x1234, 2, 48000, 16000, 512, 4, b"\x01\x02"), pcm_frames(6, length=64), 10)
+
+
+@fixture("acm-private-missing", "An A_MS/ACM track with no CodecPrivate: its coding is unknown and the track is reported from its TrackEntry.",
+         findings=[("matroska.codec-private-missing", "its WAVEFORMATEX")], streams=[("Microsoft ACM audio", 48000, 2)], valid=False)
+def _():
+    return acm_track(None, pcm_frames(4, length=64), 10)
+
+
+@fixture("acm-private-short", "An A_MS/ACM track whose CodecPrivate holds 10 bytes, too few for the 16 of a WAVEFORMATEX.",
+         findings=[("matroska.codec-private-invalid", "too few for a WAVEFORMATEX")], streams=[("Microsoft ACM audio", 48000, 2)], valid=False)
+def _():
+    return acm_track(wfx(0x0001, 2, 48000, 192000, 4, 16)[:10], pcm_frames(4, length=64), 10)
+
+
+@fixture("acm-cbsize-cut", "An A_MS/ACM track whose WAVEFORMATEX (format tag 0x1234) states 20 bytes of codec-specific data but holds 6: read as far as it goes.",
+         findings=[("matroska.codec-private-invalid", "states 20 bytes of codec-specific data, but 6 follow"), ("matroska.codec-not-analyzed", "format tag 0x1234")],
+         streams=[("an unlisted coding", 48000, 2)], valid=False)
+def _():
+    return acm_track(wfx(0x1234, 2, 48000, 16000, 512, 4, b"abcdef", cb=20), pcm_frames(4, length=64), 10)
+
+
+@fixture("acm-extensible-short", "An A_MS/ACM track whose WAVEFORMATEX has the extensible tag 0xFFFE but a cbSize of 2, too few for the 22 bytes of the extension: the sub-format is unknown.",
+         findings=[("matroska.codec-private-invalid", "needs a codec-specific data size of 22 or more"), ("matroska.codec-not-analyzed", "format tag 0xFFFE")],
+         streams=[("an unlisted coding", 48000, 2)], valid=False)
+def _():
+    return acm_track(wfx(0xFFFE, 2, 48000, 192000, 4, 16, b"\x10\x00"), pcm_frames(4, length=64), 10)
+
+
+@fixture("acm-differs", "An A_MS/ACM PCM track whose WAVEFORMATEX states one channel at 44100 Hz while the Audio element states two at 48000 Hz.",
+         findings=[("matroska.waveformat-differs", "states 2 channels in its Audio element, but its WAVEFORMATEX states 1"), ("matroska.waveformat-differs", "48000 Hz in its Audio element, but its WAVEFORMATEX states 44100 Hz")],
+         streams=[("PCM", 44100, 1)], valid=False)
+def _():
+    return acm_track(wfx(0x0001, 1, 44100, 88200, 2, 16), pcm_frames(6, channels=1), 10)
+
+
+@fixture("acm-pcm-layout", "An A_MS/ACM PCM track whose WAVEFORMATEX states 12 bits per sample, which is no sample width PCM is read with.",
+         findings=[("matroska.pcm-layout-not-read", "12 bits per sample")], streams=[("PCM", 48000, 2)], valid=False)
+def _():
+    return acm_track(wfx(0x0001, 2, 48000, 144000, 3, 12), pcm_frames(4, length=64), 10)
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     for name, spec in FIXTURES.items():
