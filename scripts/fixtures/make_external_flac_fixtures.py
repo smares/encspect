@@ -144,9 +144,9 @@ FLAC_RELEASE_FIXTURES.update({
 # FFmpeg releases other than 6.1.1, built from their tarballs by ffmpeg_tool.py: the signal in ten large blocks, mono, at level 5 (the default) and at the levels whose
 # orders differ in the releases up to 1.0.x (6 and 8, which wrote orders of 7 and 10). name: (release, input, arguments of ffmpeg).
 FFMPEG_RELEASE_FIXTURES = {
-    f"ffmpeg-level-{level}-mono-ffmpeg-{release}": (release, ("levels", 44100, 1, 16, 46080), ["-c:a", "flac", "-compression_level", str(level)])
+    f"ffmpeg-level-{level}-mono-ffmpeg-{'7.1.0' if release == '7.1' else release}": (release, ("levels", 44100, 1, 16, 46080), ["-c:a", "flac", "-compression_level", str(level)])
     for release, found in {"0.11.5": (5, 6, 8), "1.0.10": (5, 6, 8), "1.2.12": (5,), "2.4.14": (5,), "2.8.22": (5,), "3.4.14": (5,), "4.3.9": (5,), "4.4.6": (5,), "5.0.3": (5,),
-                           "5.1.8": (5,), "6.0.1": (5,), "7.0.2": (5,), "7.1.3": (5,), "8.0.1": (5, 8)}.items()
+                           "5.1.8": (5,), "6.0.1": (5,), "7.0.2": (5,), "7.1": (5,), "7.1.3": (5,), "8.0.1": (5, 8)}.items()
     for level in found
 }
 
@@ -182,7 +182,7 @@ def tool_version(command):
 
 def encode_flac(name, spec, arguments, work, release=None):
     target = OUT / f"external-{name}.{'ogg' if '--ogg' in arguments else 'flac'}"
-    for old in OUT.glob(f"external-{name}.*"):
+    for old in [*OUT.glob(f"external-{name}.flac"), *OUT.glob(f"external-{name}.ogg")]:
         old.unlink()
     (work / "in.wav").write_bytes(make_input(spec))
     (work / "cue.cue").write_text(CUE)
@@ -203,7 +203,7 @@ def encode_flac(name, spec, arguments, work, release=None):
 def encode_ffmpeg(name, spec, arguments, mode, work, release=None):
     suffix = "ogg" if mode == "ogg" else "flac"
     target = OUT / f"external-{name}.{'ogg' if mode == 'ogg' else 'flac'}"
-    for old in OUT.glob(f"external-{name}.*"):
+    for old in [*OUT.glob(f"external-{name}.flac"), *OUT.glob(f"external-{name}.ogg")]:
         old.unlink()
     (work / "in.wav").write_bytes(make_input(spec))
     out = work / f"out.{suffix}"

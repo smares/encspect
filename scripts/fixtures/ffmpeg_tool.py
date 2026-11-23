@@ -39,6 +39,7 @@ SOURCES = {
     "5.1.8": ("ffmpeg-5.1.8.tar.xz", "56d4daf10c17330a45c8fe11bc260997677ca2432d3d5951dbeb5515c26028cb"),
     "6.0.1": ("ffmpeg-6.0.1.tar.xz", "9b16b8731d78e596b4be0d720428ca42df642bb2d78342881ff7f5bc29fc9623"),
     "7.0.2": ("ffmpeg-7.0.2.tar.xz", "8646515b638a3ad303e23af6a3587734447cb8fc0a0c064ecdb8e95c4fd8b389"),
+    "7.1": ("ffmpeg-7.1.tar.xz", "40973d44970dbc83ef302b0609f2e74982be2d85916dd2ee7472d30678a7abe6"),
     "7.1.3": ("ffmpeg-7.1.3.tar.xz", "f0bf043299db9e3caacb435a712fc541fbb07df613c4b893e8b77e67baf3adbe"),
     "8.0.1": ("ffmpeg-8.0.1.tar.xz", "05ee0b03119b45c0bdb4df654b96802e909e0a752f72e4fe3794f487229e5a41"),
 }
