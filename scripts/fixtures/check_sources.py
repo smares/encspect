@@ -165,7 +165,7 @@ def member_name(member):
 def entries():
     """(kind, name, SHA-256 or commit, address) of everything the full run checks: "download" for a file,
     "member" for a file of FFmpeg's release that must be in the archive (the archive's digest and address),
-    "svn" for a LAME tree (its digest is the tree digest), "tag" for a FAAC tag in one repository or a libvorbis tag, "commit" for the commit of Apple's ALAC source , of lossyWAV for POSIX and of the Helix A1 fork."""
+    "svn" for a LAME tree (its digest is the tree digest), "tag" for a FAAC tag in one repository or a libvorbis tag, "commit" for the commit of Apple's ALAC source, of lossyWAV for POSIX and of the Helix A1 fork."""
     for name, digest, addresses in sources():
         for address in addresses:
             yield "download", name, digest, address
