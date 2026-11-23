@@ -157,7 +157,7 @@ public class MeasurementDeterminismTests
     [Fact]
     public void TheCompensatedFloatSumsHashToAConstant()
     {
-        double[] samples = [.. Enumerable.Range(0, 1 << 20).Select(i => (1000.0 * Math.Round(Math.Sin(i * 0.6180339887498949) * 8388608.0) / 8388608.0) + (i % 3 == 0 ? 1e-9 : 0.0))];
+        double[] samples = [.. Enumerable.Range(0, 1 << 20).Select(i => (1000.0 * Math.Round(DetMath.Sin(i * 0.6180339887498949) * 8388608.0) / 8388608.0) + (i % 3 == 0 ? 1e-9 : 0.0))];
         var meter = new LevelsMeter(1, SampleFormat.Float64, 64, 48000);
         double plain = 0;
         double plainSquares = 0;
