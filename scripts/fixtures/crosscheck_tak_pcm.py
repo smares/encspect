@@ -21,8 +21,9 @@ TAK's own decoder runs on Windows only (Takc.exe and the SDK's decoder library, 
   sample count must equal the manifest's, and no call may report an error; the script fails where they do not.
 - For every other committed TAK fixture that has a record (the damaged ones, `built-*`), the script lists the sample positions the SDK reports as damaged (the callback's items, and the
   calls that returned tak_res_ssd_FrameDamaged) and the positions the analyzer's decoder withholds (the gaps between the runs PcmDump writes, and the samples missing at the end of the
-  stream), and says per file whether they agree or in what they differ. This is a report: a difference does not fail the run, until the differences of the first run have been seen
-  and pinned (docs/development.md, "TAK decoding (clean-room)"). `--no-damaged` leaves it out.
+  stream), and says per file whether they agree or in what they differ. A file the SDK library refuses and the analyzer decodes no stream of is the same outcome, and where
+  neither side reports damage and the SDK returns every sample, PcmDump's MD5 must equal the SDK's. A difference fails the run unless the file is in EXPLAINED (a table of the
+  file and the reason, empty now: all 13 agree; docs/development.md, "TAK decoding (clean-room)"). `--no-damaged` leaves it out.
 
 For each file:
 
@@ -81,7 +82,7 @@ def subtract(a, b):
 
 def sdk_damage(read):
     """The [start, end) sample intervals the SDK reports as damaged in a `sdkRead` record: the callback's items and the calls that returned tak_res_ssd_FrameDamaged (3)."""
-    intervals = [[d["position"], d["position"] + d["samples"]] for d in read.get("damage", [])]
+    intervals = [[d["position"], d["position"] + d["samples"]] for d in read.get("damage") or []]
     calls = []
     for call in read.get("calls", []):
         if call.get("result") == 3:
@@ -95,7 +96,11 @@ def analyzer_withheld(runs, total):
     return subtract([[0, total]], merge([[start, start + length] for start, length in runs]))
 
 
-def damaged_report(path, read, total, runs):
+# The damaged fixtures whose outcome differs from the SDK's on purpose, each with the reason; a difference of any other file fails the run. Empty: all 13 agree.
+EXPLAINED = {}
+
+
+def damaged_report(path, read, total, runs, dumped_md5=None):
     """(agree, text) for one damaged file: the SDK's damaged intervals against the analyzer's withheld ones."""
     if "error" in read:
         return None, f"the SDK library did not read the file ({read['error']}); the analyzer decodes {sum(length for _, length in runs)} of {total} samples"
@@ -107,6 +112,8 @@ def damaged_report(path, read, total, runs):
         lines.append(f"the SDK's callback items {items} differ from its damaged calls {calls}")
     if read.get("fatalResult"):
         lines.append(f"the SDK stops at a fatal result {read['fatalResult']} after {read.get('samples')} samples")
+    if sdk == mine and not lines and not sdk and read.get("samples") == total and dumped_md5 is not None and read.get("pcmMd5") != dumped_md5:
+        return False, f"differ: the SDK and the analyzer report no damage, but the MD5 of the samples differ (SDK {read.get('pcmMd5')}, analyzer {dumped_md5})"
     if sdk == mine and not lines:
         return True, f"agree: the SDK reports {sdk or 'no damage'} and the analyzer withholds {mine or 'nothing'} (SDK returned {read.get('samples')} of {total} samples)"
     only_sdk, only_mine = subtract(sdk, mine), subtract(mine, sdk)
@@ -126,7 +133,7 @@ def read_problems(manifest, record):
         problems.append(f"tak_SSD_ReadAudio returns {read.get('samples')} samples with MD5 {read.get('pcmMd5')}, the manifest says {manifest['decoded_samples']} and {manifest['decoded_pcm_md5']}")
     bad = [c for c in read.get("calls", []) if c.get("result")]
     if bad or read.get("damage"):
-        problems.append(f"tak_SSD_ReadAudio reports damage or errors in an encoder-written file: {bad[:3]} {read.get('damage')[:3]}")
+        problems.append(f"tak_SSD_ReadAudio reports damage or errors in an encoder-written file: {bad[:3]} {(read.get('damage') or [])[:3]}")
     return problems
 
 
@@ -189,8 +196,9 @@ def damaged_files(records):
 
 
 def report_damaged(args, records, base):
-    """Prints, for every other committed fixture, how the SDK's damage positions and the analyzer's withheld ones compare; returns (agreed, differed)."""
-    agreed = differed = 0
+    """Prints, for every other committed fixture, how the SDK's damage positions and the analyzer's withheld ones compare; returns (agreed, the names that differ and are not in EXPLAINED)."""
+    agreed = 0
+    unexplained = []
     for index, path in enumerate(damaged_files(records)):
         record = records["files"][path.name]
         manifest = manifest_of(path)
@@ -201,15 +209,27 @@ def report_damaged(args, records, base):
         dump_manifest = dump / f"0000-{path.name}.pcm.json"
         if result.returncode == 0 and dump_manifest.exists():
             streams = json.loads(dump_manifest.read_text())["streams"]
+        read = record["sdkRead"]
         if len(streams) != 1:
-            print(f"note {path.name}: the analyzer decodes {len(streams)} streams (PcmDump exit {result.returncode}); the SDK read {record['sdkRead'].get('samples', record['sdkRead'].get('error'))} samples")
-            differed += 1
+            if not streams and "error" in read:
+                print(f"same {path.name}: agree: the SDK library refuses the file ({read['error']}) and the analyzer decodes no stream")
+                agreed += 1
+                continue
+            print(f"differ {path.name}: the analyzer decodes {len(streams)} streams (PcmDump exit {result.returncode}); the SDK read {read.get('samples', read.get('error'))} samples")
+            if path.name not in EXPLAINED:
+                unexplained.append(path.name)
             continue
-        agree, text = damaged_report(path, record["sdkRead"], total, streams[0]["runs"])
-        print(f"{'same' if agree else 'note'} {path.name}: {text}")
-        agreed += 1 if agree else 0
-        differed += 0 if agree else 1
-    return agreed, differed
+        pcm = dump / streams[0]["pcm"] if "pcm" in streams[0] else None
+        dumped_md5 = hashlib.md5(pcm.read_bytes()).hexdigest() if pcm is not None and pcm.exists() else None
+        agree, text = damaged_report(path, read, total, streams[0]["runs"], dumped_md5)
+        print(f"{'same' if agree else 'differ'} {path.name}: {text}")
+        if agree:
+            agreed += 1
+        elif path.name in EXPLAINED:
+            print(f"     explained: {EXPLAINED[path.name]}")
+        else:
+            unexplained.append(path.name)
+    return agreed, unexplained
 
 
 def main(argv=None):
@@ -271,8 +291,11 @@ def main(argv=None):
                 column = "Takc -d (records) and ffmpeg" if records is not None else "Takc -d (the provenance's decode check) and ffmpeg"
                 print(f"ok   {path.name}: {entry['samples']} samples per channel equal {column}")
         if not args.no_damaged and records is not None:
-            agreed, differed = report_damaged(args, records, base)
-            print(f"damaged fixtures against the SDK's audio read: {agreed} agree, {differed} differ (a report, not a failure)")
+            agreed, unexplained = report_damaged(args, records, base)
+            print(f"damaged fixtures against the SDK's audio read: {agreed} agree, {len(unexplained)} differ and are not explained")
+            if unexplained:
+                print("FAIL: " + ", ".join(unexplained) + " differ from the SDK's read and are not in EXPLAINED")
+                failed += 1
     if compared == 0:
         print("FAIL: no stream was compared")
         return 1
