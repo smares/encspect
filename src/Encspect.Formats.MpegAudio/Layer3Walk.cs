@@ -121,6 +121,7 @@ internal sealed class Layer3Walker
         int maxBlocks = left.ShortBandCount != 0 ? 3 : 1;
         Span<int> maxBand = stackalloc int[3];
         maxBand[0] = maxBand[1] = maxBand[2] = -1;
+        int longTop = -1;
         int position = 0;
         for (int i = 0; i < bandCount && position + widths[i] <= values.Length; i++)
         {
@@ -128,7 +129,15 @@ internal sealed class Layer3Walker
             {
                 if (values[position + k] != 0 || values[position + k + 1] != 0)
                 {
-                    maxBand[i % 3] = i;
+                    if (i < left.LongBandCount)
+                    {
+                        longTop = i;
+                    }
+                    else
+                    {
+                        maxBand[(i - left.LongBandCount) % 3] = i;
+                    }
+
                     break;
                 }
             }
@@ -136,9 +145,9 @@ internal sealed class Layer3Walker
             position += widths[i];
         }
 
-        if (left.LongBandCount != 0)
+        for (int w = 0; w < 3; w++)
         {
-            maxBand[0] = maxBand[1] = maxBand[2] = Math.Max(Math.Max(maxBand[0], maxBand[1]), maxBand[2]);
+            maxBand[w] = Math.Max(maxBand[w], longTop);
         }
 
         Span<byte> complete = stackalloc byte[LentLayout.Scalefactors];
@@ -147,7 +156,7 @@ internal sealed class Layer3Walker
         {
             int top = bandCount - maxBlocks + i;
             int previous = top - maxBlocks;
-            complete[top] = maxBand[i] >= previous ? (byte)(header.IsMpeg1 ? 3 : 0) : complete[previous];
+            complete[top] = BoundOf(maxBand, left.LongBandCount, top) >= previous ? (byte)(header.IsMpeg1 ? 3 : 0) : complete[previous];
         }
 
         uint maxPosition = header.IsMpeg1 ? 7u : 64u;
@@ -155,7 +164,7 @@ internal sealed class Layer3Walker
         for (int i = 0; i < LentLayout.Scalefactors && widths[i] != 0; i++)
         {
             int groupStart = i >= left.LongBandCount ? offset - ((i - left.LongBandCount) % 3 * widths[i]) : offset;
-            if (i > maxBand[i % 3] && complete[i] < maxPosition)
+            if (i > BoundOf(maxBand, left.LongBandCount, i) && complete[i] < maxPosition)
             {
                 return groupStart;
             }
@@ -165,6 +174,9 @@ internal sealed class Layer3Walker
 
         return -1;
     }
+
+    // The last band of band i's window that the right channel codes: the long bands of a mixed block answer to the highest of the three windows (the decoder's BoundOf).
+    private static int BoundOf(ReadOnlySpan<int> maxBand, int longBands, int i) => i < longBands ? Math.Max(Math.Max(maxBand[0], maxBand[1]), maxBand[2]) : maxBand[(i - longBands) % 3];
 
     // The upper edge, in the 576-line scale of a granule, of the first coded lines in the order the data comes in: where a short block's windows each have 192 lines, the
     // band of a line sets its frequency.
