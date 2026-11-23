@@ -116,12 +116,13 @@ for rate, large in {8000: 576, 22050: 2304, 48000: 4608, 96000: 8192, 192000: 16
     for level in (0, 5):
         FFMPEG_FIXTURES[f"ffmpeg-level-{level}-mono-{rate}"] = (("levels", rate, 1, 16, large * 10), ["-c:a", "flac", "-compression_level", str(level)], "flac")
 
-# Frames of a higher level that do not use its extra room look like a lower level's, so the guess names every level the frames fit: the signal "music" (tones, then
-# noise) is such a case at libFLAC's level 6 and FFmpeg's levels 1 and 5.
-MUSIC_LEVELS = ("music", 44100, 2, 16, 44100)
-FLAC_FIXTURES["level-6-music-stereo"] = (MUSIC_LEVELS, ["-6"])
-FFMPEG_FIXTURES["ffmpeg-level-5-music-stereo"] = (MUSIC_LEVELS, ["-c:a", "flac", "-compression_level", "5"], "flac")
-FFMPEG_FIXTURES["ffmpeg-level-1-music-stereo"] = (MUSIC_LEVELS, ["-c:a", "flac", "-compression_level", "1"], "flac")
+# Frames of a higher level that do not use its extra room look like a lower level's, so the guess names every level the frames fit. Two committed measurement signals,
+# decoded and coded again, show it: libFLAC 1.4.3's level 6 of the mono lines signal never uses partition order 6 (the earlier rule named "5" alone, at medium
+# confidence), and FFmpeg 6.1.1's level 5 of the 24-bit stereo low-bits signal reaches order 8 and partition order 7 only (named "4" alone). name: (source, tool, arguments).
+RECODES = {
+    "level-6-from-lines-slope-mono": ("measurement/synthetic-lines-slope-15000-17000.flac", "flac", ["-6"]),
+    "ffmpeg-level-5-from-lowbits-mixed-stereo": ("measurement/synthetic-lowbits-mixed-16-24.flac", "ffmpeg", ["-c:a", "flac", "-compression_level", "5"]),
+}
 
 # name: (release, input, arguments of flac).
 FLAC_RELEASE_FIXTURES = {
@@ -278,6 +279,25 @@ def main():
                 path, encoder = encode_flac(name, spec, arguments, pathlib.Path(work), release)
             else:
                 path, encoder = encode_ffmpeg(name, spec, arguments, mode, pathlib.Path(work))
+            manifest_path(path).write_text(json.dumps(build_manifest(path, encoder), indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+            count += 1
+        for name, (source, tool, arguments) in RECODES.items():
+            path = OUT / f"external-{name}.flac"
+            if only_manifests or (chosen and name not in chosen):
+                encoder = json.loads(manifest_path(path).read_text(encoding="utf-8"))["encoder"]
+            else:
+                work_dir = pathlib.Path(work)
+                decoded = work_dir / "recode.wav"
+                subprocess.run(["flac", "-d", "-s", "-f", "-o", str(decoded), str(OUT.parent / source)], check=True)
+                if tool == "flac":
+                    result = subprocess.run(["flac", "-s", "-f", *arguments, str(decoded), "-o", str(path)], capture_output=True, text=True)
+                    version = f"{tool_version(['flac', '--version'])} (flac package of Ubuntu 24.04)"
+                else:
+                    result = subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(decoded), *arguments, str(path)], capture_output=True, text=True)
+                    version = f"{tool_version(['ffmpeg', '-version'])} (ffmpeg package of Ubuntu 24.04)"
+                if result.returncode != 0:
+                    raise SystemExit(f"{tool} failed for {name}: {result.stderr}")
+                encoder = {"tool": version, "arguments": arguments, "recoded": f"tests/fixtures/{source}, decoded by flac -d"}
             manifest_path(path).write_text(json.dumps(build_manifest(path, encoder), indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
             count += 1
         for name, source in REMUXES.items():

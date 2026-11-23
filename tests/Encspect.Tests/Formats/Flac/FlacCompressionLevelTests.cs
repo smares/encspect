@@ -111,10 +111,11 @@ public class FlacCompressionLevelTests
     [InlineData("flac/external-ffmpeg-16-in-24-mid-side-b512.flac")]
     public void SettingsOfTheirOwnAreNotNamed(string name) => Assert.Null(LevelNode(Fixtures.AnalyzeMpeg(name)));
 
-    // Frames of a higher level that do not use its extra room look like a lower level's: the higher level stays named, and the confidence is low.
+    // Frames of a higher level that do not use its extra room look like a lower level's: the higher levels stay named. Both files are committed measurement signals
+    // coded again (make_external_flac_fixtures.py, RECODES); the rule that named only the levels whose limits the frames reach named "5" and "4" alone here, at medium.
     [Theory]
-    [InlineData("flac/external-level-6-music-stereo.flac", "libFLAC 4 to 8", "Low")]
-    [InlineData("flac/external-ffmpeg-level-5-music-stereo.flac", "FFmpeg 5 to 12", "Low")]
+    [InlineData("flac/external-level-6-from-lines-slope-mono.flac", "libFLAC 5 to 8", "Medium")]
+    [InlineData("flac/external-ffmpeg-level-5-from-lowbits-mixed-stereo.flac", "FFmpeg 4 to 12", "Medium")]
     public void AFittingLevelIsNeverDropped(string name, string levels, string confidence)
     {
         Node node = LevelNode(Fixtures.AnalyzeMpeg(name))!;
