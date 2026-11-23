@@ -3,7 +3,7 @@ using Encspect.Core;
 namespace Encspect.Formats.Tak;
 
 // The coding series of the frames (docs/design/coding-graphs.md, the TAK survey), one unit for each frame that has a bitrate point, recorded while the frames are walked: the
-// stereo mode of a frame of two channels, the subframes' types, the channels with wasted bits, and the highest prediction order and precision of a frame. The names, units and axes
+// stereo mode of a frame of two channels, the subframes' types, the channels with wasted bits, and the highest prediction order, precision and residual mode of a frame. The names, units and axes
 // are those of FLAC's, TTA's, WavPack's and Monkey's Audio's where the concept is the same.
 internal sealed class CodingSeries
 {
@@ -206,7 +206,8 @@ internal sealed class CodingSeries
         return (series, categories);
     }
 
-    // The frames that have a predictor have an order and a precision both, so the series share one x: the bitrate series' where every frame has one, else the offsets of those that do.
+    // A series' x is the bitrate series' where every frame has a value, else the offsets of the frames that do (the order and the precision have the same frames, as every frame
+    // with a predictor has both).
     // Values are stored with offset added, 0 meaning none; the series holds the frames that have one, and its Over Time form the highest in each second that has one.
     private void Numeric(List<Series> series, Series bitrate, ChunkedList<ushort> values, string name, string unit, string description, string overTimeName, string overTimeDescription,
         ChunkedList<ushort> perSecond, Node anchor, int offset, GraphConcept concept, CancellationToken cancellation)
