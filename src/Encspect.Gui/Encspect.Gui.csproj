@@ -17,8 +17,9 @@
     <PackageReference Include="Avalonia.Wayland" />
   </ItemGroup>
   <ItemGroup>
-    <!-- The window icon and the About window's picture; the .ico and the .icns serve the executable and a macOS bundle. -->
+    <!-- The window icon and the About window's picture; on Windows the window icon is built from the .ico, which also serves the executable. -->
     <AvaloniaResource Include="Assets\Icon\encspect-*.png" />
+    <AvaloniaResource Include="Assets\Icon\encspect.ico" />
   </ItemGroup>
   <ItemGroup>
     <!-- Shown by the About window; the file itself also ships beside the executables. -->
