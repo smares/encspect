@@ -215,7 +215,7 @@ public class TakFixtureTests
 
     private static void CheckVerification(JsonElement manifest, StreamVerification verification)
     {
-        Assert.Equal(DecodeStatus.NoDecoder, verification.Decoding);
+        Assert.Equal(DecodeStatus.NotRequested, verification.Decoding);
         JsonElement checksums = manifest.GetProperty("checksums");
         ChecksumTally tally = verification.Checksums.Single(c => c.Name == "metadata CRC-24");
         Assert.Equal(checksums.GetProperty("compared").GetInt64(), tally.Stored);

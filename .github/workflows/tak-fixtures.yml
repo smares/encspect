@@ -5,6 +5,8 @@ name: TAK fixtures
 # the output of `Takc -fi` and of the SDK's decoder library, the decoding check and whether a second encode wrote the same
 # bytes (scripts/fixtures/windows/make_windows_tak_fixtures.ps1; the signals and the plan are scripts/fixtures/tak_cases.py).
 # Takc.exe and the library run on this runner only, as black boxes; only the files they write are committed, never the archive.
+# The `decode` job decodes the committed fixtures with `Takc -d` the same way and uploads what it gives (tak-decoded: sdk-decoded.json), which
+# crosscheck_tak_pcm.py compares with the manifests and the analyzer's decoder (docs/development.md, "TAK decoding (clean-room)").
 # Run by hand (Actions, "TAK fixtures", Run workflow). Nothing is released and no build is uploaded: only the fixture files, for
 # 90 days. scripts/fixtures/import_windows_tak_fixtures.py takes them into tests/fixtures/tak. The design is
 # docs/design/tak-optimfrog-headers.md, "Fixtures".
@@ -44,5 +46,26 @@ jobs:
         with:
           name: tak-fixtures
           path: tak-out
+          retention-days: 90
+          if-no-files-found: error
+
+  decode:
+    name: decode the committed fixtures on windows-2025
+    runs-on: windows-2025
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Decode with Takc
+        shell: powershell
+        env:
+          ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/fixtures/windows/decode_windows_tak_fixtures.ps1 -Out tak-decoded
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: tak-decoded
+          path: tak-decoded
           retention-days: 90
           if-no-files-found: error

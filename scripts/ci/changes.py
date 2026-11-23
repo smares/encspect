@@ -97,7 +97,7 @@ AREAS = {
     "tak-crosscheck": {
         "projects": ["Encspect.Formats.Tak", "Encspect.Tags.Ape"],
         "fixtures": ["tak"],
-        "scripts": ["crosscheck_tak_fixtures.py", "tak_tool.py", "check_tak_samples.py"],
+        "scripts": ["crosscheck_tak_fixtures.py", "crosscheck_tak_pcm.py", "compare_pcm.py", "tak_tool.py", "check_tak_samples.py"],
         "globs": ["scripts/fixtures/make_*tak*", "scripts/fixtures/import_windows_tak*", "scripts/fixtures/tak_*", "scripts/fixtures/windows/*tak*", "scripts/fixtures/windows/TakTools.cs",
                   "tests/conformance/tak-samples.json"],
     },

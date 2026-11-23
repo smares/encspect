@@ -71,6 +71,8 @@ FILES = [
     "libavformat/matroskadec.c",
     "libavformat/riff.c", "libavformat/riff.h", "libavformat/riffdec.c", "libavformat/riffenc.c", "libavformat/wavdec.c", "libavformat/wavenc.c",
     "libavformat/aiff.c", "libavformat/aiff.h", "libavformat/aiffdec.c", "libavformat/aiffenc.c", "libavformat/pcm.c",
+    "libavcodec/tak.c", "libavcodec/tak.h", "libavcodec/takdec.c", "libavcodec/takdsp.c", "libavcodec/takdsp.h",
+    "libavcodec/tak_parser.c", "libavcodec/unary.h", "libavformat/takdec.c",
 ]
 
 
