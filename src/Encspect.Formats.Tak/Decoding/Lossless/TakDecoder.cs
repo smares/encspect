@@ -12,8 +12,8 @@ public sealed class TakDecoder : IDecoder
 
     public string Id => Summary.CodecId;
 
-    // A frame of silence takes a few bytes for 16,384 samples of six channels of 24 bits; derived in docs/design/decoders.md, "As built: the TAK decoder".
-    public long WorkPerInputByte => 1 << 16;
+    // A frame of silence takes a few bytes for 16,384 samples of six channels (about 76,000 units a byte at its worst, DecoderChargeTests); derived in docs/design/decoders.md, "As built: the TAK decoder".
+    public long WorkPerInputByte => 1 << 17;
 
     public IFrameDecoder Open(DecodeContext context)
     {

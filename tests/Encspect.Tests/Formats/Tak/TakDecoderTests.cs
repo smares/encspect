@@ -674,6 +674,24 @@ public class TakDecoderTests
         Assert.Single(report.Findings, f => f.Code == "decode.not-possible");
     }
 
+    // The worst legitimate frame for the work a byte pays for: six channels of 16,384 samples of silence (at 96,000 Hz or more), each channel one subframe of no prediction and
+    // one residual block of mode 0, with the most wasted bits, so that a channel takes the fewest bits. The allowance is the decoder's WorkPerInputByte for each byte of the frame.
+    [Theory]
+    [InlineData(8, 7)]
+    [InlineData(16, 15)]
+    [InlineData(24, 16)]
+    public void AFrameOfSilenceChargesLessThanTheAllowanceForItsBytes(int bits, int wasted)
+    {
+        int[][] samples = Signal("silence", 6, bits, 6 * 16384);
+        Encoder.Built built = Encoder.Build(samples, new Encoder.Settings { Codec = 4, Bits = bits, Rate = 96000, WastedBits = wasted, Subframes = 1, Prediction = 0, Partitions = 0, DifferenceOrder = 0 }, 1, sizeType: 6);
+
+        long units = DecoderWorkTests.TakCases.Units(built.Data);
+
+        long allowance = built.Lengths.Sum() * new TakDecoder().WorkPerInputByte;
+        Assert.True(units <= allowance, $"{units} units for {built.Lengths.Sum()} bytes: {units / (double)built.Lengths.Sum():F0} a byte, the allowance is {new TakDecoder().WorkPerInputByte}");
+        Assert.True(units > allowance / 3, $"{units / (double)built.Lengths.Sum():F0} units a byte is far below the allowance: the derivation is out of date");
+    }
+
     [Fact]
     public void TheDecoderRunsWithoutAFrontEndThatWantsSamplesBecauseTheMd5IsAChecksum()
     {

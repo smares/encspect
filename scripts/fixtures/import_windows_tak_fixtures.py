@@ -15,7 +15,8 @@ SHA-256, whether it is reproducible, Takc's `-fi` output, the decoding check, wh
 does not print, the encoder info, the wave data sizes and the MD5), the runner and the tools. Cases that wrote the same bytes are committed
 once (a preset before an option, then the shortest name) and the others are listed as `identicalCases`. The settings Takc was asked for
 are compared with what the SDK reads from the file (preset, evaluation, sample format); a difference stops the import, because it is something
-to decide before the file is committed. Files over 600 KB are refused unless --allow-large is given.
+to decide before the file is committed. Files over 600 KB are refused unless --allow-large is given. At the end tak_decoded.py adds to each manifest the samples a
+decoder must give back (decoded_samples, decoded_pcm_md5), from the signal the file was encoded from.
 """
 
 import hashlib
