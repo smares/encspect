@@ -36,7 +36,7 @@ Black box: [github.com/MEDVEDx64/wav2pasc](https://github.com/MEDVEDx64/wav2pasc
 - **Input:** the 3-second `tones` and `quiet` signals of `scripts/fixtures/wma_signals.py` at 44.1 and 48 kHz, 16 bits, stereo; the WAVs and outputs are not committed.
 - **Layer I output (`-f 1`), all four files:**
   - Every header is `FF FF C0 00` (padding 0) or `FF FF C2 00` (padding 1) at 44.1 kHz and `FF FF C4 00` at 48 kHz: version 1, Layer I, protection bit 1, 384 kbit/s, stereo, mode extension 0, copyright 0, original 0, emphasis 0, private bit 0.
-  - 44.1 kHz: 344 frames of 416 bytes (176) or 420 (168); padding bits `0101...` and the pair `00` at frame 48 and 0 of the next cycle, 24 of every 49 padded, . The slot a padding bit adds is zero in every padded frame (168 of 168).
+  - 44.1 kHz: 344 frames of 416 bytes (176) or 420 (168); padding bits `0101...` and the pair `00` at frame 48 and 0 of the next cycle, 24 of every 49 padded. The slot a padding bit adds is zero in every padded frame (168 of 168).
   - 48 kHz: 375 frames of 384 bytes, no padding.
   - No allocation 15 anywhere; the highest value is 14. A frame has 4 to 16 bits left over before its padding slot (checked by a script, in the scratchpad).
 - **`.mpp` output (`-f 0`):**
@@ -64,4 +64,4 @@ Black box: [github.com/MEDVEDx64/wav2pasc](https://github.com/MEDVEDx64/wav2pasc
 ## If it is picked up again
 
 - Evidence that would justify a rule: two or more files whose origin is a DCC recorder or DCC-Studio, with the stated rate and settings, showing header bits or allocation behavior that the repository's Layer I fixtures (tompg, Gogo-no-coda, FFmpeg's `mp1`) do not.
-- A cheaper claim worth stating on its own, with no verdict: a Layer I stream that fits the subset above (384 kbit/s, stereo, no CRC, one of the three rates, zero padding slots, original bit 0) can be a PASC stream; it is also what a Layer I encoder set to those values writes. `.mpp` files themselves (the 2-byte preamble and 420-byte records) could be detected as a container for the frames, once a real file shows the preamble and `.lvl`/`.trk` relation.
+- A cheaper claim worth stating on its own, with no verdict: a Layer I stream that fits the subset above (384 kbit/s, stereo, no CRC, one of the three rates, zero padding slots) can be a PASC stream; it is also what a Layer I encoder set to those values writes. `.mpp` files themselves (the 2-byte preamble and 420-byte records) could be detected as a container for the frames, once a real file shows the preamble and `.lvl`/`.trk` relation.
