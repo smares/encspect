@@ -325,7 +325,7 @@ The GUI stays a self-contained single file (`PublishSingleFile`, no ReadyToRun, 
 - **Regenerate:** `python3 scripts/make_icons.py` after changing an SVG, and commit the result. It renders the SVGs with Playwright's Chromium (`scripts/icons/render_svg.js`; `npm install playwright` and `npx playwright install chromium`, with `NODE_PATH` naming the module folder if it is installed globally) and writes the `.ico` container itself with PNG entries, so Pillow is not needed.
 - **Where it is used:**
   - the `.ico` is the GUI executable's `ApplicationIcon`;
-  - the 256-pixel PNG is every window's icon (`AppIcon.Window`), and the 128-pixel PNG is drawn at 64 pixels in the About window;
+  - the `.ico` is every window's icon on Windows and the 256-pixel PNG elsewhere (`AppIcon.Window`), and the 128-pixel PNG is drawn at 64 pixels in the About window;
   - no macOS `.icns` and no square-cornered variant are kept: the release workflow builds no macOS app bundle (the archives hold the bare executables), so there is no `Info.plist` to carry `CFBundleIconFile`. A bundle would add them from `E.svg`.
   - the CLI has no icon: a console program's file is not an app to find in a launcher.
 

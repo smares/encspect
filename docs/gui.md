@@ -298,8 +298,9 @@ The form "Frame Map" draws every unit of a series (a frame, packet or block; the
 
 ## The icon
 
-- **Window icon:** every window (the main window, the detail windows, About, the notices and the error window) carries the app icon, from an image embedded in the executable.
-- **Executable:** the Windows executable has the icon too, so Explorer and the taskbar show it.
+- **Window icon:** every window (the main window, the detail windows, About, the notices and the error window) is given the app icon, from an image embedded in the executable. On Windows it is built from the `.ico`, so the title bar and the taskbar take the entry closest to their size; elsewhere from a 256-pixel PNG.
+- **Where it shows:** on Windows and on Linux under X11 only. On macOS Avalonia.Native's `SetIcon` does nothing and no app bundle is built, so the Dock shows the generic icon; with `ENCSPECT_GUI_BACKEND=wayland` the icon is not set either, and no `.desktop` file ships to name one.
+- **Executable:** the Windows executable has the icon too, so Explorer shows it.
 - **Where it comes from:** [development.md](development.md#the-app-icon).
 
 ## Look and platform
