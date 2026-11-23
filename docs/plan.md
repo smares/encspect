@@ -231,6 +231,11 @@ The order (the lead, 2026-11-17): the milestone's own items first, then cheap it
 
 **Status:** in progress: items 1 to 5, 7 and 16 are done.
 
+**The gate** (the lead, 2026-11-23, after a shard move whose description, note and docs said what `shards.json` did not): besides the independent reviews of the code against the specifications, the milestone review runs two passes, each by an agent that wrote none of what it checks:
+
+- **Claims audit:** every claim of 0.4's Built lines, of its pull request descriptions, and of `docs/`, the README and the topic articles as they stand at the gate (they describe every milestone so far), checked against the code, the tests and the fixtures; a claim without backing is a finding.
+- **Catch-all audit:** every default and allow-list that takes what nothing names: the `rest` shard (`damagedInputClasses` guards it since 2026-11-23), CI scoping (`areas.json`, `scope.py`), the cross-checks' tables of explained differences (`EXPLAINED`, `ONLY_IN_*`, `FFMPEG_RANGES`), the tests' exclusion and exception lists (`Excluded` in `DecoderSessionInvariantTests`, the exceptions of `SamplesDefinitionTests`, the golden-change lists) and the routes' fallbacks (`*.codec-not-analyzed`). For each entry: whether it is still needed, whether it is as narrow as it can be, and whether anything lands in a default without being named; where a mechanical guard is cheap, the audit proposes it.
+
 1. **The Musepack, DTS core and Speex decoders** (done, 2026-11-16, #319, #321 and #322): with the same definition of done as in 0.3.
    - **Musepack** (done, 2026-11-16, #319): SV7 and SV8, and SV4 to SV6 as libmpcdec 1.2.6 decodes them, bit for bit libmpcdec's floating-point output; the entropy pass of every stream version in every analysis, with "Coded Bandwidth" for all of them and the stereo coding figures for SV8. [As built: Musepack](design/lossy-decoders.md#as-built-musepack).
    - **DTS core** (done, 2026-11-16, #321): the entropy pass (the subframes of every core frame are walked in every analysis, with "Coded Bandwidth" and "Subframes With Block Switching") and the decoder, its vector tables (D.10.1 and D.10.2, not in the PDF) generated from FFmpeg 6.1.1 as format data. [As built: DTS core](design/lossy-decoders.md#as-built-dts-core).
