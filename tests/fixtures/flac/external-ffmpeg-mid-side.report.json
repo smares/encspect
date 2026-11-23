@@ -312,6 +312,56 @@
               ]
             },
             {
+              "name": "Compression Level",
+              "value": "FFmpeg 5 to 12",
+              "offset": 0,
+              "length": 51595,
+              "children": [
+                {
+                  "name": "Confidence",
+                  "value": "Low",
+                  "offset": 0,
+                  "length": 51595
+                },
+                {
+                  "name": "Evidence",
+                  "value": "The block size is 4,608 samples in every frame but the last; levels 3 to 12 use it.",
+                  "offset": 0,
+                  "length": 51595
+                },
+                {
+                  "name": "Evidence",
+                  "value": "The highest linear predictor order is 8; 12 of 12 subframes are linear predictors.",
+                  "offset": 0,
+                  "length": 51595
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Every linear predictor has a coefficient precision of 15 bits, the precision FFmpeg 6.1.1 wrote in every level fixture of Encspect's tests.",
+                  "offset": 0,
+                  "length": 51595
+                },
+                {
+                  "name": "Evidence",
+                  "value": "The highest partition order is 6.",
+                  "offset": 0,
+                  "length": 51595
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Levels 5 to 12 set differing highest linear predictor orders, a highest partition order of 8 and a block size of 4,608 samples.",
+                  "offset": 0,
+                  "length": 51595
+                },
+                {
+                  "name": "Evidence",
+                  "value": "The frames do not reach the highest linear predictor order and partition order of the lowest level they fit (the partition order in at least a fifth of the subframes), so they say nothing against the levels above.",
+                  "offset": 0,
+                  "length": 51595
+                }
+              ]
+            },
+            {
               "name": "Statistics",
               "kind": "Statistics",
               "offset": 0,
@@ -521,6 +571,12 @@
                   "name": "Escaped Partitions",
                   "value": 0,
                   "unit": "partitions",
+                  "offset": 0,
+                  "length": 51595
+                },
+                {
+                  "name": "Compression Level",
+                  "value": "FFmpeg 5 to 12",
                   "offset": 0,
                   "length": 51595
                 },
