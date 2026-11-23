@@ -364,12 +364,64 @@ public class MeasurementOutputTests
         string[] header = lines[0].Split(',');
         string[] row = lines[1].Split(',');
         int cutoff = Array.IndexOf(header, "Spectral Cutoff (Hz)");
-        Assert.Equal(["Spectral Bandwidth (Hz)", "Spectral Slope (dB/kHz)", "Partial Cutoff (Hz)", "Side Cutoff (Hz)", "Spectral Holes (%)"], header[(cutoff + 1)..(cutoff + 6)]);
+        Assert.Equal(["Spectral Bandwidth (Hz)", "Spectral Slope (dB/kHz)", "Partial Cutoff (Hz)", "Side Cutoff (Hz)", "Inter-Channel Coherence From (Hz)", "Spectral Holes (%)"], header[(cutoff + 1)..(cutoff + 7)]);
 
         // Quoted fields before the figures hold commas, so the columns are counted from the end.
         string FromEnd(string column) => row[row.Length - (header.Length - Array.IndexOf(header, column))];
         Assert.InRange(int.Parse(FromEnd("Side Cutoff (Hz)"), System.Globalization.CultureInfo.InvariantCulture), 10900, 11150);
         Assert.Matches(@"^\d+\.\d$", FromEnd("Spectral Holes (%)"));
+    }
+
+    // Step 8: the text line, the JSON object, and the CSV column of the inter-channel coherence (after the side cutoff, empty where none is found).
+    [Fact]
+    public void TheTextTheJsonAndTheCsvCarryTheInterChannelCoherence()
+    {
+        string path = Fixture("synthetic-coherence-above-4000.flac");
+        (_, string text, _) = Run("--measure", "--explain", "--hide", "frames,tags,statistics", path);
+        (_, string json, _) = Run("--measure", "--json", "--explain", path);
+        (_, string csv, _) = Run("--measure", "--csv", path);
+        (_, string none, _) = Run("--measure", "--hide", "frames,tags,statistics", Fixture("synthetic-coherence-side-12-db.flac"));
+        (_, string noneCsv, _) = Run("--measure", "--csv", Fixture("synthetic-coherence-side-12-db.flac"));
+
+        Assert.Contains("Inter-Channel Coherence: 85 % or more from 3,919 to 20,026 Hz, in 11 of 11 frames with signal", text, StringComparison.Ordinal);
+        Assert.Contains("Inter-Channel Coherence: none found (the top band reads 79.0 %)", none, StringComparison.Ordinal);
+        Assert.DoesNotContain("stated intensity stereo bound has", none, StringComparison.Ordinal);
+
+        using JsonDocument document = JsonDocument.Parse(json);
+        JsonElement coherence = document.RootElement[0].GetProperty("streams")[0].GetProperty("measurements").GetProperty("spectrum").GetProperty("coherence");
+        Assert.Equal("inter-channel-coherence", coherence.GetProperty("topic").GetString());
+        Assert.True(coherence.GetProperty("isFound").GetBoolean());
+        Assert.Equal(3919, coherence.GetProperty("fromFrequency").GetProperty("value").GetInt32());
+        Assert.Equal("Hz", coherence.GetProperty("toFrequency").GetProperty("unit").GetString());
+        Assert.Equal(11, coherence.GetProperty("frames").GetInt32());
+        Assert.Equal(512, coherence.GetProperty("rows").GetProperty("values").GetArrayLength());
+        Assert.Equal("%", coherence.GetProperty("shares").GetProperty("unit").GetString());
+        Assert.Equal(10, coherence.GetProperty("shares").GetProperty("valuesPerUnit").GetInt32());
+        Assert.Equal(JsonValueKind.Null, coherence.GetProperty("stated").ValueKind);
+
+        string[] header = csv.Split("\r\n", StringSplitOptions.RemoveEmptyEntries)[0].Split(',');
+        string[] row = csv.Split("\r\n", StringSplitOptions.RemoveEmptyEntries)[1].Split(',');
+        int column = Array.IndexOf(header, "Inter-Channel Coherence From (Hz)");
+        Assert.Equal(Array.IndexOf(header, "Side Cutoff (Hz)") + 1, column);
+        Assert.Equal("3919", row[row.Length - (header.Length - column)]);
+        string[] noneRow = noneCsv.Split("\r\n", StringSplitOptions.RemoveEmptyEntries)[1].Split(',');
+        Assert.Equal(string.Empty, noneRow[noneRow.Length - (header.Length - column)]);
+    }
+
+    // Step 8: a stream that states an intensity stereo bound has its median, the count and the difference beside the start, as figures.
+    [Fact]
+    public void TheStatedIntensityStereoBoundStandsBesideTheStart()
+    {
+        string path = Path.Combine(Fixtures.FixtureDirectory, "mpeg-audio", "external-xing-mpeg2.mp3");
+        (_, string text, _) = Run("--measure", "--hide", "frames,tags,statistics,side-info", path);
+        (_, string json, _) = Run("--measure", "--json", path);
+
+        Assert.Contains("Inter-Channel Coherence: 85 % or more from 2,347 to 10,142 Hz, in 18 of 33 frames with signal; the stated intensity stereo bound has a median of 3,216 Hz over 74 frames, 869 Hz apart", text, StringComparison.Ordinal);
+        using JsonDocument document = JsonDocument.Parse(json);
+        JsonElement stated = document.RootElement[0].GetProperty("streams")[0].GetProperty("measurements").GetProperty("spectrum").GetProperty("coherence").GetProperty("stated");
+        Assert.Equal(3216, stated.GetProperty("median").GetProperty("value").GetInt32());
+        Assert.Equal(74, stated.GetProperty("units").GetInt32());
+        Assert.Equal(-869, stated.GetProperty("difference").GetProperty("value").GetInt32());
     }
 
     // Step 7b: the text prints the slope where the cutoff is not found, the JSON always, and the CSV column holds dB per kHz.

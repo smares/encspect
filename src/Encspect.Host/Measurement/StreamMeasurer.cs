@@ -261,6 +261,11 @@ internal sealed class StreamMeasurer
     // The counters of each measured channel, then of the combined spectrum, then of the mid and of the side spectrum where there is a pair (the tests pin their raw output).
     internal IReadOnlyList<CutoffCounters> CounterSets => _counters;
 
+    // The counters of the pair's coherence and the stream's sums of the cross rows (the real parts, then the imaginary ones), which the tests pin; null or empty without a pair.
+    internal CoherenceCounters? CoherenceCounterSet => _coherence;
+
+    internal double[] CrossSums => _crossSums;
+
     // The state of a stream of this format, in bytes, for the memory bound (decided before anything is allocated).
     public static long EstimateBytes(PcmFormat format, MeasureOptions options)
     {
