@@ -149,6 +149,11 @@ FFMPEG_RELEASE_FIXTURES = {
                            "5.1.8": (5,), "6.0.1": (5,), "7.0.2": (5,), "7.1": (5,), "7.1.3": (5,), "8.0.1": (5, 8)}.items()
     for level in found
 }
+# FFmpeg 0.11.5 and 1.0.10 write ENCODER=Lavf... in Ogg, not Lavc...: the guess reads their Ogg files through the writer. name: (release, input, arguments).
+FFMPEG_OGG_RELEASE_FIXTURES = {
+    f"ogg-ffmpeg-level-5-mono-ffmpeg-{release}": (release, ("levels", 44100, 1, 16, 46080), ["-c:a", "flac", "-compression_level", "5", "-f", "ogg"])
+    for release in ("0.11.5", "1.0.10")
+}
 
 # name: the committed fixture whose stream FFmpeg copies into a new file. The remuxed file names FFmpeg's muxer in its vendor string over libFLAC's frames, which the
 # guess of the compression level must not take for FFmpeg's encoder.
@@ -289,7 +294,8 @@ def main():
     everything = {**{n: ("flac", s, a, None, None) for n, (s, a) in FLAC_FIXTURES.items()},
                   **{n: ("flac", s, a, None, r) for n, (r, s, a) in FLAC_RELEASE_FIXTURES.items()},
                   **{n: ("ffmpeg", s, a, mode, None) for n, (s, a, mode) in FFMPEG_FIXTURES.items()},
-                  **{n: ("ffmpeg", s, a, "file", r) for n, (r, s, a) in FFMPEG_RELEASE_FIXTURES.items()}}
+                  **{n: ("ffmpeg", s, a, "file", r) for n, (r, s, a) in FFMPEG_RELEASE_FIXTURES.items()},
+                  **{n: ("ffmpeg", s, a, "ogg", r) for n, (r, s, a) in FFMPEG_OGG_RELEASE_FIXTURES.items()}}
     with tempfile.TemporaryDirectory() as work:
         for name, (tool, spec, arguments, mode, release) in everything.items():
             ogg = "--ogg" in arguments or mode == "ogg"

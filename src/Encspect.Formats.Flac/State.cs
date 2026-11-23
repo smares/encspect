@@ -430,7 +430,7 @@ internal sealed class State
         }
 
         AssignmentFrames[(int)header.Assignment]++;
-        TrackAdaptive(header, first, followsGap);
+        TrackAdaptive(header, first, followsGap || (status & (EntryStatus.Crc8Fails | EntryStatus.Cut | EntryStatus.Unreadable)) != 0);
         MinBlockSize = Math.Min(MinBlockSize, header.BlockSize);
         MaxBlockSize = Math.Max(MaxBlockSize, header.BlockSize);
         int detail = -1;
