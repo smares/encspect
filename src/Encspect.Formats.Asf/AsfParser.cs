@@ -15,16 +15,8 @@ namespace Encspect.Formats.Asf;
 public sealed partial class AsfParser : IFormatParser
 {
     // The codec parsers' IDs by the format tag of an audio stream (ASF specification, section 11.1).
-    private static readonly IReadOnlyDictionary<int, string> DefaultRoutes = new Dictionary<int, string>
-    {
-        [0x0160] = "wma",
-        [0x0161] = "wma",
-        [0x0162] = "wma-pro",
-        [0x0163] = "wma-lossless",
-        [0x000A] = "wma-voice",
-        [0x0055] = "mpeg-audio",
-        [0x2000] = "ac-3",
-    };
+    private static readonly IReadOnlyDictionary<int, string> DefaultRoutes = new int[] { 0x0160, 0x0161, 0x0162, 0x0163, 0x000A, 0x0055, 0x2000 }
+        .ToDictionary(tag => tag, tag => WaveFormatRoutes.WindowsMediaCodecId(tag) ?? WaveFormatRoutes.CodecId(tag)!);
 
     private readonly IReadOnlyDictionary<int, string> _routes;
 

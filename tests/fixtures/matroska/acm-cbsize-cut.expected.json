@@ -1,0 +1,314 @@
+{
+ "description": "An A_MS/ACM track whose WAVEFORMATEX (format tag 0x1234) states 20 bytes of codec-specific data but holds 6: read as far as it goes.",
+ "length": 1240,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 179,
+     "length": 1061,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 4
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "duration": 100.0,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "encspect fixtures"
+   },
+   "length": 1200,
+   "declared_end": 1240
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   1200,
+   [
+    [
+     "Info",
+     46,
+     63,
+     [
+      [
+       "TimestampScale",
+       51,
+       7
+      ],
+      [
+       "Duration",
+       58,
+       11
+      ],
+      [
+       "MuxingApp",
+       69,
+       20
+      ],
+      [
+       "WritingApp",
+       89,
+       20
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     109,
+     70,
+     [
+      [
+       "TrackEntry",
+       114,
+       65,
+       [
+        [
+         "TrackNumber",
+         116,
+         3
+        ],
+        [
+         "TrackUID",
+         119,
+         5
+        ],
+        [
+         "TrackType",
+         124,
+         3
+        ],
+        [
+         "CodecID",
+         127,
+         10
+        ],
+        [
+         "CodecPrivate",
+         137,
+         27
+        ],
+        [
+         "Audio",
+         164,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           166,
+           10
+          ],
+          [
+           "Channels",
+           176,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     179,
+     1061,
+     [
+      [
+       "Timestamp",
+       185,
+       3
+      ],
+      [
+       "SimpleBlock",
+       188,
+       263
+      ],
+      [
+       "SimpleBlock",
+       451,
+       263
+      ],
+      [
+       "SimpleBlock",
+       714,
+       263
+      ],
+      [
+       "SimpleBlock",
+       977,
+       263
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 188,
+   "length": 263,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     195,
+     256
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 451,
+   "length": 263,
+   "track": 1,
+   "timestamp": 10,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     458,
+     256
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 714,
+   "length": 263,
+   "track": 1,
+   "timestamp": 20,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     721,
+     256
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 977,
+   "length": 263,
+   "track": 1,
+   "timestamp": 30,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     984,
+     256
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_MS/ACM",
+   "private": [
+    140,
+    24
+   ],
+   "channels": 2,
+   "rate": 48000.0,
+   "bits": null,
+   "delay": 0,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "writers": [
+  {
+   "name": "encspect fixtures",
+   "confidence": "Low"
+  }
+ ],
+ "streams": [
+  {
+   "codec": "Microsoft ACM audio",
+   "sample_rate": 48000,
+   "channels": 2
+  }
+ ],
+ "findings": [
+  {
+   "code": "matroska.codec-private-invalid",
+   "contains": "states 20 bytes of codec-specific data, but 6 follow"
+  },
+  {
+   "code": "matroska.codec-not-analyzed",
+   "contains": "format tag 0x1234"
+  }
+ ],
+ "crosscheck": {
+  "valid": false
+ }
+}

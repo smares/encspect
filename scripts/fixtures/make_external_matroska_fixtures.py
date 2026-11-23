@@ -40,6 +40,7 @@ MKVMERGE = "mkvmerge"
 NOT_READ = ("matroska.codec-not-analyzed", "frames are not analyzed yet")
 LAME_VS_MKVMERGE = ("mpeg-audio.writer-claim-differs", "Lavc60.31")
 VORBIS_VENDOR = ("vorbis.writer-claim-differs", "Lavf60.16.100")
+NOT_READ_ACM = ("matroska.codec-not-analyzed", "A_MS/ACM, format tag")
 
 FIXTURES = {
     "external-ffmpeg-aac-lc": ("ffmpeg", ["aac/faac-1.50.m4a"], ["-c", "copy"], [("AAC", 44100, 2)], [], "mka"),
@@ -139,6 +140,20 @@ FIXTURES = {
                                    ["--title", "A title", "--track-name", "0:A track", "--language", "0:fra", "--chapters", "chapters.txt", "--global-tags", "tags.xml",
                                     "--attach-file", "cover.jpg", "--attachment-mime-type", "image/jpeg"], [("Opus", 48000, 2)],
                                    [], "mka"),
+    # FFmpeg's muxer writes A_MS/ACM, a WAVEFORMATEX in the CodecPrivate, for the codings that have no Matroska ID of their own, copied here from the committed WAV and
+    # ASF files: Windows Media Audio, ADPCM, GSM 6.10, A-law and mu-law (mkvmerge 82.0 refuses the ADPCM and WMA tracks of an AVI file, and the releases of 4.5.0 to 5.9.0
+    # could not be run under Wine in the session that looked: docs/development.md). MPEG audio, AC-3, DTS and PCM get their own IDs from it, so those routes are hand-built
+    # (make_matroska_fixtures.py, acm-*).
+    "external-ffmpeg-acm-wma1": ("ffmpeg", ["asf/external-ffmpeg-wmav1-stereo-44k-128k.wma"], ["-c", "copy"], [("Windows Media Audio 1", 44100, 2)], [], "mka"),
+    "external-ffmpeg-acm-wma2": ("ffmpeg", ["asf/external-ffmpeg-wmav2-stereo-44k-128k.wma"], ["-c", "copy"], [("Windows Media Audio 2", 44100, 2)], [], "mka"),
+    "external-ffmpeg-acm-wma-pro": ("ffmpeg", ["asf/external-windows-wma10pro-cbr-stereo-44k-128.wma"], ["-c", "copy"], [("Windows Media Audio Professional", 44100, 2)], [], "mka"),
+    "external-ffmpeg-acm-wma-lossless": ("ffmpeg", ["asf/external-windows-wma92lossless-stereo-44k-16.wma"], ["-c", "copy"], [("Windows Media Audio Lossless", 44100, 2)], [], "mka"),
+    "external-ffmpeg-acm-wma-voice": ("ffmpeg", ["asf/external-windows-wmavoice-cbr-mono-16k-16.wma"], ["-c", "copy"], [("Windows Media Audio Voice", 16000, 1)], [], "mka"),
+    "external-ffmpeg-acm-adpcm-ms": ("ffmpeg", ["wav/external-adpcm-ms.wav"], ["-c", "copy"], [("Microsoft ADPCM", 44100, 2)], [NOT_READ_ACM], "mka"),
+    "external-ffmpeg-acm-adpcm-ima": ("ffmpeg", ["wav/external-adpcm-ima.wav"], ["-c", "copy"], [("IMA ADPCM", 44100, 2)], [NOT_READ_ACM], "mka"),
+    "external-ffmpeg-acm-gsm": ("ffmpeg", ["wav/external-gsm-ms.wav"], ["-c", "copy"], [("GSM 6.10", 8000, 1)], [NOT_READ_ACM], "mka"),
+    "external-ffmpeg-acm-alaw": ("ffmpeg", ["wav/external-alaw-mono-8000.wav"], ["-c", "copy"], [("A-law", 8000, 1)], [], "mka"),
+    "external-ffmpeg-acm-mulaw": ("ffmpeg", ["wav/external-mulaw-mono-8000.wav"], ["-c", "copy"], [("Mu-law", 8000, 1)], [], "mka"),
 }
 
 

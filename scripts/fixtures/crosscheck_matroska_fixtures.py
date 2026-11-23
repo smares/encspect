@@ -68,7 +68,39 @@ def pcm_name(track):
     return f"pcm_s{bits}{'be' if track['codec'] == 'A_PCM/INT/BIG' else 'le'}"
 
 
-def expected_codec_of(track):
+# A_MS/ACM: the format tag of the WAVEFORMATEX in the CodecPrivate (for the extensible form 0xFFFE, the tag in the first 32 bits of the sub-format GUID, or the
+# GUID of AC-3, which has none), ffprobe's names for the codings the fixtures hold (riff.c's tags) and MediaInfo's formats for them. MediaInfo names the extensible
+# form "Extensible" and A-law and mu-law "ADPCM" with a profile; those are its own names, so the codec of the extensible files and the profile are not compared.
+ACM_FFPROBE = {0x0002: "adpcm_ms", 0x0006: "pcm_alaw", 0x0007: "pcm_mulaw", 0x0011: "adpcm_ima_wav", 0x0031: "gsm_ms", 0x0050: "mp2", 0x0055: "mp3", 0x2000: "ac3", 0x2001: "dts",
+               0x0160: "wmav1", 0x0161: "wmav2", 0x0162: "wmapro", 0x0163: "wmalossless", 0x000A: "wmavoice"}
+ACM_MEDIAINFO = {0x0002: "ADPCM", 0x0006: "ADPCM", 0x0007: "ADPCM", 0x0011: "ADPCM", 0x0031: "GSM 6.10", 0x0055: "MPEG Audio", 0x2000: "AC-3", 0x2001: "DTS",
+                 0x0160: "WMA", 0x0161: "WMA", 0x0162: "WMA", 0x0163: "WMA", 0x000A: "WMA", 0x0001: "PCM"}
+AC3_SUBFORMAT = bytes.fromhex("2c806de046dbcf11b4d100805f6cbbea")
+
+
+def acm_tag(track, data):
+    """The coding's format tag, from the track's CodecPrivate in the file's bytes, or None where there is no WAVEFORMATEX to read."""
+    if not track.get("private"):
+        return None
+    start, length = track["private"]
+    head = data[start:start + length]
+    if length < 16:
+        return None
+    tag = int.from_bytes(head[:2], "little")
+    if tag == 0xFFFE and length >= 40:
+        guid = head[24:40]
+        return 0x2000 if guid == AC3_SUBFORMAT else int.from_bytes(guid[:4], "little")
+    return tag
+
+
+def expected_codec_of(track, data=b""):
+    if track["codec"] == "A_MS/ACM":
+        tag = acm_tag(track, data)
+        if tag == 0x0001:
+            bits = int.from_bytes(data[track["private"][0] + 14:track["private"][0] + 16], "little")
+            # The container is wBitsPerSample rounded up to whole bytes, as WAV reads it: ffprobe names 20-bit PCM pcm_s24le.
+            return pcm_name({"codec": "A_PCM/INT/LIT", "bits": (bits + 7) // 8 * 8})
+        return ACM_FFPROBE.get(tag)
     return pcm_name(track) if track["codec"].startswith("A_PCM/") else FFPROBE_CODECS.get(track["codec"])
 MEDIAINFO_FORMATS = {
     "opus": "Opus", "vorbis": "Vorbis", "ac3": "AC-3", "eac3": "E-AC-3", "dts": "DTS", "aac": "AAC", "mp3": "MPEG Audio", "mp2": "MPEG Audio",
@@ -198,6 +230,7 @@ def check_protection(name, manifest, path, problems, tally, report):
 
 
 def check_ffprobe(manifest, path, problems):
+    coded = path.read_bytes()
     code, data, errors = ffprobe_json(path, "-show_streams", "-show_packets")
     if code != 0:
         problems.append(f"ffprobe failed: {errors.strip().splitlines()[:1]}")
@@ -209,7 +242,7 @@ def check_ffprobe(manifest, path, problems):
         return
     scale = next((s["info"].get("timestamp_scale", 1_000_000) for s in manifest["segments"] if "info" in s), 1_000_000)
     for stream, track in zip(streams, audio_tracks):
-        expected = expected_codec_of(track)
+        expected = expected_codec_of(track, coded)
         if expected is not None and stream["codec_name"] != expected:
             problems.append(f"track {track['number']}: ffprobe says {stream['codec_name']}, the manifest {track['codec']}")
         # An absent SamplingFrequency is 8000 Hz (RFC 9559, section 5.1.4.1.29.1).
@@ -315,7 +348,13 @@ def check_mediainfo(name, manifest, path, tally, report):
         return
     for info, track, stream in zip(tracks["Audio"], audio_tracks, report["streams"]):
         expected_codec = FFPROBE_CODECS.get(track["codec"])
-        if expected_codec in MEDIAINFO_FORMATS:
+        if track["codec"] == "A_MS/ACM":
+            coded = path.read_bytes()
+            tag = acm_tag(track, coded)
+            is_extensible = int.from_bytes(coded[track["private"][0]:track["private"][0] + 2], "little") == 0xFFFE
+            if tag in ACM_MEDIAINFO and not is_extensible:
+                tally.compare("codec", info.get("Format"), ACM_MEDIAINFO[tag])
+        elif expected_codec in MEDIAINFO_FORMATS:
             tally.compare("codec", info.get("Format"), MEDIAINFO_FORMATS[expected_codec])
         elif track["codec"].startswith("A_PCM/") and track.get("bits") in (8, 16, 24, 32, 64):
             tally.compare("codec", info.get("Format"), "PCM")
