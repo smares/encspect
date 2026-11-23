@@ -487,11 +487,13 @@ internal sealed class LoudnessMeter
 
         int lowBin = Percentile(_shortCounts, _shortSums, gate, passed2, 10);
         int highBin = Percentile(_shortCounts, _shortSums, gate, passed2, 95);
+        double lowMean = _shortSums[lowBin] / _shortCounts[lowBin];
+        double highMean = _shortSums[highBin] / _shortCounts[highBin];
         return figures with
         {
-            RangeTenths = RangeOf(_shortSums[highBin] / _shortCounts[highBin], _shortSums[lowBin] / _shortCounts[lowBin]),
-            RangeLowTenths = (((2 * lowBin) + 11) / 20) - 700,
-            RangeHighTenths = (((2 * highBin) + 11) / 20) - 700,
+            RangeTenths = RangeOf(highMean, lowMean),
+            RangeLowTenths = Tenths(lowMean),
+            RangeHighTenths = Tenths(highMean),
             ShortTerm = BuildSeries(),
         };
     }
