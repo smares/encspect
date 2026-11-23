@@ -102,7 +102,9 @@ internal static partial class LevelGuess
     public static Guess? Of(State s, string? encoder, string? writer)
     {
         if (encoder is null && writer is null || s.Info is not { } info || info.MinBlockSize != info.MaxBlockSize || s.VariableFrames != 0
-            || s.Frames - s.CutFrames < MinimumFrames || s.ResidualSubframes < MinimumResiduals || s.MaxBlockSize != info.MaxBlockSize)
+            || s.Frames - s.CutFrames < MinimumFrames || s.ResidualSubframes < MinimumResiduals
+            // Every frame but the last has STREAMINFO's block size, and the frames agree with STREAMINFO on the rate and the channels the guess reads.
+            || s.FirstBlockSize != info.MaxBlockSize || s.DifferentBlockFrames != (s.IsLatestBlockDifferent ? 1 : 0) || s.FirstRate != info.SampleRate || s.FirstChannels != info.Channels)
         {
             return null;
         }
@@ -161,7 +163,7 @@ internal static partial class LevelGuess
         }
 
         bool Fits(Level l) =>
-            block(l) == s.MaxBlockSize
+            block(l) == s.FirstBlockSize
             && highestOrder <= l.MaxLpcOrder
             && highestPartition <= l.MaxPartitionOrder
             && (!isLibFlac || info.Channels != 2 || l.Decorrelates || decorrelated == 0)
@@ -190,10 +192,10 @@ internal static partial class LevelGuess
         bool isOneGroup = fitting.All(l => l.Block == fitting[0].Block && l.MaxLpcOrder == fitting[0].MaxLpcOrder && l.MaxPartitionOrder == fitting[0].MaxPartitionOrder && l.MaxFixedOrder == fitting[0].MaxFixedOrder);
         int[] numbers = [.. named.Select(l => l.Number)];
 
-        int[] blockLevels = [.. levels.Where(l => block(l) == s.MaxBlockSize).Select(l => l.Number)];
+        int[] blockLevels = [.. levels.Where(l => block(l) == s.FirstBlockSize).Select(l => l.Number)];
         var evidence = new List<string>
         {
-            $"The block size is {Format(s.MaxBlockSize)} samples in every frame but the last; {Noun(blockLevels.Length)} {Join(blockLevels)} {(blockLevels.Length == 1 ? "uses" : "use")} it.",
+            $"The block size is {Format(s.FirstBlockSize)} samples in every frame but the last; {Noun(blockLevels.Length)} {Join(blockLevels)} {(blockLevels.Length == 1 ? "uses" : "use")} it.",
         };
         long lpc = s.SubframeTypes[(int)SubframeType.Lpc];
         evidence.Add(lpc == 0
@@ -213,7 +215,7 @@ internal static partial class LevelGuess
                 : $"{Format(decorrelated)} of {Format(s.AssignmentFrames.Sum())} frames code the channels as left/side, side/right or mid/side, which levels 0 and 3 never do.");
         }
 
-        evidence.Add($"{Noun(named.Count, true)} {Join(numbers)} {(named.Count == 1 ? "sets" : "set")} {Settings(named, s.MaxBlockSize)}.");
+        evidence.Add($"{Noun(named.Count, true)} {Join(numbers)} {(named.Count == 1 ? "sets" : "set")} {Settings(named, s.FirstBlockSize)}.");
         evidence.Add(isOneGroup
             ? "Every level the frames fit sets the same figures: the frames exceed the limits of all the others."
             : isReached
