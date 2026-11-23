@@ -57,6 +57,23 @@ internal sealed class WalkedFrame
     public int[] Parameters = new int[1024];
     public int ParameterCount;
     public readonly List<DecorrelationRecord> Decorrelations = [];
+    private readonly List<short[]> _filters = [];
+
+    // The coefficients of the filter of the decorrelation at an index, kept from frame to frame.
+    public short[] Filter(int index, int order)
+    {
+        while (_filters.Count <= index)
+        {
+            _filters.Add([]);
+        }
+
+        if (_filters[index].Length != order)
+        {
+            _filters[index] = new short[order];
+        }
+
+        return _filters[index];
+    }
 
     // The stereo mode of a frame of codec 2 with two channels (u(3)), else -1.
     public int StereoMode = -1;
@@ -357,7 +374,7 @@ internal sealed class FrameSyntax
             int order = bits.ReadBit() ? 16 : 8;
             record.IsHeadAdded = bits.ReadBit();
             record.IsTailAdded = bits.ReadBit();
-            short[] g = new short[order];
+            short[] g = frame.Filter(frame.Decorrelations.Count, order);
             for (int i = 0; i < order; i += 4)
             {
                 int width = 14 - (int)bits.Read(3);

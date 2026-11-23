@@ -41,6 +41,7 @@ internal static class Feeding
         FrameFacts f = r.Frames;
         var syntax = new FrameSyntax(info);
         var walked = new WalkedFrame();
+        byte[] buffer = [];
         shared.Current = walked;
         var coding = new CodingSeries(info.SampleRate, info.Codec == 2 && info.Channels == 2);
         long frameLength = Layout.FrameSamples(info.FrameSizeType, info.SampleRate);
@@ -75,8 +76,19 @@ internal static class Feeding
 
             bool isDecoding = session.IsDecoding;
             MappedBytes? bytes = isDecoding ? ReadFrame(reader, e) : null;
-            byte[]? plain = isDecoding ? null : reader.ReadBytesAt(e.Offset, (int)e.Length);
-            ReadOnlySpan<byte> all = bytes is not null ? bytes.Span : (ReadOnlySpan<byte>)plain;
+            if (!isDecoding)
+            {
+                // One buffer for the walk of a stream that is not decoded, grown to the longest frame.
+                if (buffer.Length < e.Length)
+                {
+                    buffer = new byte[e.Length];
+                }
+
+                reader.Position = e.Offset;
+                reader.Read(buffer.AsSpan(0, (int)e.Length));
+            }
+
+            ReadOnlySpan<byte> all = bytes is not null ? bytes.Span : buffer.AsSpan(0, (int)e.Length);
             ReadOnlySpan<byte> coded = all.Slice(e.HeaderLength, all.Length - e.HeaderLength - Layout.CrcLength);
             bool isWalked = false;
             if (samples > 0)
@@ -88,7 +100,7 @@ internal static class Feeding
                 }
                 catch (Exception ex) when (ex is InvalidDataException or EndOfStreamException)
                 {
-                    string why = ex is EndOfStreamException ? "the data ends inside the frame's coded fields" : ex.Message.TrimEnd('.');
+                    string why = ex is EndOfStreamException ? "the data ends inside the frame's coded fields" : char.ToLowerInvariant(ex.Message[0]) + ex.Message[1..].TrimEnd('.');
                     long index = i;
                     long offset = e.Offset;
                     s.Findings.Add(Severity.Warning, "tak.frame-syntax-invalid", () => FrameNodes.Entry(records, (int)index), count =>
@@ -105,7 +117,7 @@ internal static class Feeding
                     long index = i;
                     long offset = e.Offset;
                     s.Findings.Add(Severity.Info, "tak.frame-bytes-after-data", () => FrameNodes.Entry(records, (int)index), count =>
-                        $"The coded data of the frame at 0x{offset:X} ends {Counts.Of(after, "byte", "bytes")} before its CRC-24; the bytes after the last field are not read, as TAK's decoder does not read them either{(count > 1 ? $"; {Counts.Of(count - 1, "more frame", "more frames")} {Counts.Agree(count - 1, "has", "have")} such bytes" : string.Empty)}.");
+                        $"The coded data of the frame at 0x{offset:X} ends {Counts.Of(after, "byte", "bytes")} before its CRC-24; the description reads nothing after the last field{(count > 1 ? $"; {Counts.Of(count - 1, "more frame", "more frames")} {Counts.Agree(count - 1, "has", "have")} such bytes" : string.Empty)}.");
                 }
             }
             else if (samples > 0)
