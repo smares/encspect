@@ -579,7 +579,7 @@ public static class MeasurementText
             };
         if (coherence.Stated is { } stated)
         {
-            text += $"; the stated intensity stereo bound has a median of {Hertz(stated.MedianFrequency)} over {Counts.Of(stated.Units, "frame", "frames")}";
+            text += $"; the stated intensity stereo bound has a median of {Hertz(stated.MedianFrequency)} over {Counts.Of(stated.Units, "unit", "units")}";
             if (stated.Difference is { } difference)
             {
                 text += $", {Hertz(Math.Abs(difference))} apart";
