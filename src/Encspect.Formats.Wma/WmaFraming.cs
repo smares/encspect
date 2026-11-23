@@ -13,7 +13,7 @@ internal sealed class PacketTable
 
     public int Count => _packets.Count;
 
-    // A packet of no bytes (an empty block of a Matroska track) has no ranges; it is kept as one empty range at where it would start, so every
+    // A packet of no bytes (an empty ASF media object or an empty Matroska block) has no ranges; it is kept as one empty range at where it would start, so every
     // packet has a first and a last range.
     public void Add(IReadOnlyList<ByteRange> ranges, long emptyOffset)
     {

@@ -66,6 +66,13 @@ Protection is reported on the streams (`StreamInfo.Protection`), in the JSON, th
 - **Broadcast files:** a Data Object of size 0 runs to the end of the file, so what is at its end is the Data Object's, not a tag.
 - The packets are read twice: the first pass keeps a compact record per packet and payload (the first 65,536 packets are detailed, the rest counted), and builds nodes on demand; the second pass puts media objects together as they are needed.
 
+## Empty media objects
+
+- An ASF media object or a Matroska block of no bytes reaches the WMA parsers as a packet with no bytes; each codec handles it its own way.
+- **Versions 1 and 2:** it is kept as a superframe of no bytes, which the superframe findings (`wma.superframe-short`) report.
+- **Professional and Lossless:** it is kept as a packet of no bytes, shorter than the block alignment, with the finding `wma.packet-short`; its node has length 0.
+- **Voice:** it is dropped, as FFmpeg's decoder skips it, and adds no packet.
+
 ## WMA versions 1 and 2
 
 Format tags 0x0160 and 0x0161, routed as the codec "wma". The syntax is described in [wma-standard-format.md](../design/wma-standard-format.md); no audio is rebuilt.
