@@ -1296,7 +1296,7 @@ def mp3pro_ofl_exceeds_stream():
 
 # Band widths of the short part of a mixed block, from short band 3 on (the long part covers the first 36 lines), 44,100 Hz (MPEG-1) and 22,050 Hz (MPEG-2): ISO/IEC 11172-3
 # and 13818-3 Table B.8 / B.2.
-MIXED_SHORT_WIDTHS = {"1": [4, 6, 8, 10, 12, 14, 18, 22, 30, 56], "2": [6, 8, 10, 12, 14, 18, 24, 32, 44, 12]}
+MIXED_SHORT_WIDTHS = {"1": [4, 6, 8, 10, 12, 14, 18, 22, 30, 56], "2": [6, 6, 8, 10, 14, 18, 26, 32, 42, 18]}
 MIXED_LONG_BANDS = {"1": [4, 4, 4, 4, 4, 4, 6, 6], "2": [6, 6, 6, 6, 6, 6]}
 TABLE1_PAIR = {(0, 0): "1", (0, 1): "001", (1, 0): "01", (1, 1): "000"}
 
