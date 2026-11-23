@@ -801,7 +801,7 @@ The cross-check jobs run Ubuntu 26.04's packages. `tool_versions.py` holds the v
   - minimp3 (a pinned commit, built in CI) confirms every side-information field and the bit reservoir before each frame;
   - mp3guessenc confirms block usage, stereo modes, global gain, the largest main_data_begin, the ancillary data and the frame sizes;
   - EncSpot confirms the mean and largest main_data_begin and the scalefactor scaling share;
-  - the hand-built frames carry main data that ffmpeg, mpg123 and libmad must decode to pure silence, which they only do when every granule's bits sit where the side information and the reservoir say.
+  - the hand-built frames carry main data that ffmpeg, mpg123 and libmad must decode to pure silence (but the two `intensity-mixed-windows` files, whose spectra FFmpeg, mpg123 and madplay decode as the analyzer does and minimp3 does not, see [mpeg-audio.md](formats/mpeg-audio.md#decoding)), which they only do when every granule's bits sit where the side information and the reservoir say.
 - **Layer II:** minimp3 confirms every allocation, scfsi and scalefactor; the hand-built frames decode to silence in the same decoders; mctoolamed and mp3guessenc confirm the multichannel extension.
 - **ISO/IEC 13818-4:** the report on all 35 audio conformance streams must match their manifest.
 - **Xing, Info, LAME and VBRI headers:**
