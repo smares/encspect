@@ -71,7 +71,7 @@ Protection is reported on the streams (`StreamInfo.Protection`), in the JSON, th
 - An ASF media object or a Matroska block of no bytes reaches the WMA parsers as a packet with no bytes; each codec handles it its own way.
 - **Versions 1 and 2:** it is kept as a superframe of no bytes, which the superframe findings (`wma.superframe-short`) report.
 - **Professional and Lossless:** it is kept as a packet of no bytes, shorter than the block alignment, with the finding `wma.packet-short`; its node has length 0.
-- **Voice:** it is dropped, as FFmpeg's decoder skips it, and adds no packet.
+- **Voice:** it is dropped and adds no packet.
 
 ## WMA versions 1 and 2
 
