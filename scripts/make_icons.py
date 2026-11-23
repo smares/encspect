@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Regenerates the raster icon files of the GUI from the SVG sources in src/Encspect.Gui/Assets/Icon.
 
-Sources: F2.svg (the small form, 16 to 32 px), E.svg (the large form, 48 px and up; rounded tile). Rendered with
+Sources: F2.svg (the small form, 16 to 32 px), E.svg (the large form, 40 px and up; rounded tile). The .ico holds
+Microsoft's set 16, 20, 24, 32, 40, 48, 64 and 256, plus 128; 40 px is the large form, which is legible there. Rendered with
 Playwright's Chromium (scripts/icons/render_svg.js), light-theme colors. The .ico and .icns containers are written here
 directly (PNG-compressed entries), so no imaging library is needed.
 
@@ -17,8 +18,8 @@ ROOT = Path(__file__).resolve().parent.parent
 ICON = ROOT / "src" / "Encspect.Gui" / "Assets" / "Icon"
 RENDER = Path(__file__).resolve().parent / "icons" / "render_svg.js"
 
-SMALL = {"F2.svg": [16, 24, 32]}
-LARGE = {"E.svg": [16, 32, 48, 64, 128, 256, 512, 1024]}
+SMALL = {"F2.svg": [16, 20, 24, 32]}
+LARGE = {"E.svg": [16, 32, 40, 48, 64, 128, 256, 512, 1024]}
 # icns entry types holding PNG data, by pixel size (macOS names them for the point size and scale)
 ICNS_TYPES = [(16, b"icp4"), (32, b"icp5"), (64, b"icp6"), (128, b"ic07"), (256, b"ic08"), (512, b"ic09"), (1024, b"ic10")]
 
@@ -57,7 +58,7 @@ def main():
         folder = Path(tmp)
         small = render(SMALL, folder)
         large = render(LARGE, folder)
-    ico = [(s, p) for (_, s), p in small.items()] + [(s, p) for (_, s), p in large.items() if s <= 256 and s >= 48]
+    ico = [(s, p) for (_, s), p in small.items()] + [(s, p) for (_, s), p in large.items() if s >= 40 and s <= 256]
     write_ico(ico, ICON / "encspect.ico")
     # The icns takes the large form at every size: macOS draws its icons on tiles of their own.
     by_size = {s: p for (_, s), p in large.items()}
