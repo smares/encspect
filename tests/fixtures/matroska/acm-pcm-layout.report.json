@@ -621,7 +621,7 @@
       {
         "severity": "Warning",
         "code": "matroska.pcm-layout-not-read",
-        "message": "Track 1 (A_MS/ACM) states a WAVEFORMATEX with 12 bits per sample, which is no sample width the coding 0x0001 (PCM) is read with, so its samples cannot be read.",
+        "message": "Track 1 (A_MS/ACM) has a WAVEFORMATEX that states a block alignment of 3 bytes, which is not one sample frame of 4 bytes (2 bytes for each of 2 channels), so its samples cannot be read.",
         "offset": 140,
         "length": 18,
         "path": [

@@ -343,19 +343,11 @@
  "findings": [
   {
    "code": "matroska.waveformat-differs",
-   "contains": "states 2 channels in its Audio element, but its WAVEFORMATEX states 1"
+   "contains": "states 2 channels in its Audio element, but its WAVEFORMATEX states 1; the stream is reported with the WAVEFORMATEX's figures"
   },
   {
    "code": "matroska.waveformat-differs",
-   "contains": "48000 Hz in its Audio element, but its WAVEFORMATEX states 44100 Hz"
-  },
-  {
-   "code": "matroska.sample-rate-differs",
-   "contains": "48000 Hz, but its PCM frames are coded at 44100 Hz"
-  },
-  {
-   "code": "matroska.channels-differ",
-   "contains": "states 2 channels, but its PCM frames hold 1"
+   "contains": "48000 Hz in its Audio element, but its WAVEFORMATEX states 44100 Hz; the stream is reported with the WAVEFORMATEX's figures"
   }
  ],
  "crosscheck": {

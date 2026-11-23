@@ -1993,8 +1993,8 @@ def _():
 
 
 @fixture("acm-differs", "An A_MS/ACM PCM track whose WAVEFORMATEX states one channel at 44100 Hz while the Audio element states two at 48000 Hz.",
-         findings=[("matroska.waveformat-differs", "states 2 channels in its Audio element, but its WAVEFORMATEX states 1"), ("matroska.waveformat-differs", "48000 Hz in its Audio element, but its WAVEFORMATEX states 44100 Hz"),
-                   ("matroska.sample-rate-differs", "48000 Hz, but its PCM frames are coded at 44100 Hz"), ("matroska.channels-differ", "states 2 channels, but its PCM frames hold 1")],
+         findings=[("matroska.waveformat-differs", "states 2 channels in its Audio element, but its WAVEFORMATEX states 1; the stream is reported with the WAVEFORMATEX's figures"),
+                   ("matroska.waveformat-differs", "48000 Hz in its Audio element, but its WAVEFORMATEX states 44100 Hz; the stream is reported with the WAVEFORMATEX's figures")],
          streams=[("PCM", 44100, 1)], valid=False)
 def _():
     return acm_track(wfx(0x0001, 1, 44100, 88200, 2, 16), pcm_frames(6, channels=1), 10)

@@ -878,7 +878,7 @@
       {
         "severity": "Warning",
         "code": "matroska.waveformat-differs",
-        "message": "Track 1 states 2 channels in its Audio element, but its WAVEFORMATEX states 1.",
+        "message": "Track 1 states 2 channels in its Audio element, but its WAVEFORMATEX states 1; the stream is reported with the WAVEFORMATEX's figures.",
         "offset": 142,
         "length": 2,
         "path": [
@@ -895,7 +895,7 @@
       {
         "severity": "Warning",
         "code": "matroska.waveformat-differs",
-        "message": "Track 1 states a sampling frequency of 48000 Hz in its Audio element, but its WAVEFORMATEX states 44100 Hz.",
+        "message": "Track 1 states a sampling frequency of 48000 Hz in its Audio element, but its WAVEFORMATEX states 44100 Hz; the stream is reported with the WAVEFORMATEX's figures.",
         "offset": 144,
         "length": 4,
         "path": [
@@ -906,38 +906,6 @@
           4,
           0,
           2
-        ],
-        "count": 1
-      },
-      {
-        "severity": "Warning",
-        "code": "matroska.sample-rate-differs",
-        "message": "Track 1 states a sampling frequency of 48000 Hz, but its PCM frames are coded at 44100 Hz.",
-        "offset": 160,
-        "length": 10,
-        "path": [
-          0,
-          1,
-          1,
-          0,
-          5,
-          0
-        ],
-        "count": 1
-      },
-      {
-        "severity": "Warning",
-        "code": "matroska.channels-differ",
-        "message": "Track 1 states 2 channels, but its PCM frames hold 1.",
-        "offset": 170,
-        "length": 3,
-        "path": [
-          0,
-          1,
-          1,
-          0,
-          5,
-          1
         ],
         "count": 1
       }

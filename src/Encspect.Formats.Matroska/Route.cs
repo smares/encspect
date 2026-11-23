@@ -217,17 +217,22 @@ internal sealed partial class FileReader
         track.AcmRoute = route;
         if (track.HasAudio)
         {
+            // Matroska's specifications do not say which of the two wins; the report follows the coding's parser: the structure for the codings read from it, the
+            // frames for the ones whose frames state their own figures, the Audio element for a track no parser reads.
+            string used = route is null ? "the track is reported with the Audio element's figures"
+                : route == Codecs.PcmSamples || route.StartsWith("wma", StringComparison.Ordinal) ? "the stream is reported with the WAVEFORMATEX's figures"
+                : "the stream is reported with the figures of its frames";
             if ((ulong)format.Channels != (track.Channels ?? 1))
             {
                 _findings.AddNow(Severity.Warning, "matroska.waveformat-differs",
-                    $"{label} states {Counts.Of(track.Channels ?? 1, "channel", "channels")} in its Audio element, but its WAVEFORMATEX states {format.Channels}.", wave.Children.First(c => c.Name == "Channels"));
+                    $"{label} states {Counts.Of(track.Channels ?? 1, "channel", "channels")} in its Audio element, but its WAVEFORMATEX states {format.Channels}; {used}.", wave.Children.First(c => c.Name == "Channels"));
             }
 
             bool rateKnown = track.SamplingFrequency is { } rate && Codecs.IsRate(rate);
             if (rateKnown && format.SampleRate != RoundedRate(track.SamplingFrequency) && format.SampleRate != RoundedRate(track.OutputSamplingFrequency))
             {
                 _findings.AddNow(Severity.Warning, "matroska.waveformat-differs",
-                    $"{label} states a sampling frequency of {track.SamplingFrequency!.Value.ToString("0.###", CultureInfo.InvariantCulture)} Hz in its Audio element, but its WAVEFORMATEX states {format.SampleRate} Hz.", wave.Children.First(c => c.Name == "Samples Per Second"));
+                    $"{label} states a sampling frequency of {track.SamplingFrequency!.Value.ToString("0.###", CultureInfo.InvariantCulture)} Hz in its Audio element, but its WAVEFORMATEX states {format.SampleRate} Hz; {used}.", wave.Children.First(c => c.Name == "Samples Per Second"));
             }
         }
 
@@ -303,7 +308,7 @@ internal sealed partial class FileReader
         {
             // The AAC, AC-3, DTS and MPEG audio parsers place their nodes at the offsets of contiguous file bytes, which frames put together from
             // stripped or inflated bytes do not have.
-            problem = $"stores its frames with {plan.Frames.Kinds}, which the {Codecs.NameOf(codecId)} parser cannot map back to the bytes of the file";
+            problem = $"stores its frames with {plan.Frames.Kinds}, which the {NameOf(track)} parser cannot map back to the bytes of the file";
         }
 
         if (problem is not null)
@@ -577,7 +582,12 @@ internal sealed partial class FileReader
                     length, added[0].SampleRate, Explain.ContainerSamples, Explain.ContainerDuration);
             }
 
-            CompareStreams(track, label, codec, added);
+            // The PCM and Windows Media Audio parsers take their figures from the WAVEFORMATEX, so a disagreement with the Audio element is already
+            // matroska.waveformat-differs; the other codecs' frames state figures of their own, which are compared as for any track.
+            if (acm is null || !(codec == Codecs.PcmSamples || codec.StartsWith("wma", StringComparison.Ordinal)))
+            {
+                CompareStreams(track, label, codec, added);
+            }
         }
     }
 
