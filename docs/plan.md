@@ -419,6 +419,7 @@ Parked items carry the trigger that would bring them back. The formats at the en
   - the MPEG-2 multichannel extension bitstream and multilingual channels (ISO/IEC 13818-3, at hand);
   - Monkey's Audio versions outside 3.80 to 3.99 and 4.11 (the SDK is BSD);
   - TAK codecs 0, 1 and 3, the TAK 1.0 files among them (a clean-room description extended from FFmpeg's decoder).
+- **Decoding without a source we may follow** (the lead, 2026-11-23): OptimFROG's coding (no public description or source; read at header level), and the data of mp3PRO and MP3 Surround (decoded as their core or downmix only). **Trigger:** a published description or permissively licensed source; for mp3PRO's band replication, libxaac's SBR (0.5) may show how close it is to HE-AAC's.
 - **What the lossy decoders leave out** (the signed-off design, [lossy-decoders.md, "Scope" and "What each decoder covers"](design/lossy-decoders.md#what-each-decoder-covers)): each with the condition the design states.
   - E-AC-3 at a reduced sample rate (fscod2) and AC-3 with bsid 9 and 10: A/52 does not specify their bit allocation, and no free source for it is known;
   - AAC SSR gain control, which FDK AAC refuses; MPEG Surround beyond USAC's 2-1-2; DRC and loudness normalization, and every other decoder-side gain but Opus's output gain (decision 9);
