@@ -712,26 +712,32 @@ public class ComplexityTests
     }
 
     // Thousands of audio tracks routed to a codec parser and many blocks of one of them: each track was routed by a pass over all the blocks, so
-    // 4,000 tracks and 3 million blocks took 95 s. The time is compared with one track's over the same blocks, so a slow machine does not fail it.
+    // 4,000 tracks and 3 million blocks took 95 s. The time is compared with the same tracks and one block, so a slow machine does not fail it: the blocks cost under a second, a pass of each of the 4,000 tracks over them 16 s or more.
     [Fact]
     public void ManyRoutedTracksAndManyBlocks()
     {
         const int blocks = 500_000;
-        byte[] one = RoutedTracksAndBlocks(1, blocks);
+        byte[] few = RoutedTracksAndBlocks(4000, 1);
         byte[] many = RoutedTracksAndBlocks(4000, blocks);
 
-        TimeSpan oneTime = TimedMatroska(one, 1);
-        TimeSpan manyTime = TimedMatroska(many, 4000);
-        Assert.True(manyTime < (3 * oneTime) + TimeSpan.FromSeconds(1), $"4,000 tracks took {manyTime.TotalSeconds:F1} s, one track {oneTime.TotalSeconds:F1} s");
+        TimeSpan oneTime = Min(TimedMatroska(few, null), TimedMatroska(few, null));
+        TimeSpan manyTime = Min(TimedMatroska(many, 4000), TimedMatroska(many, 4000));
+        Assert.True(manyTime < (3 * oneTime) + TimeSpan.FromSeconds(1), $"500,000 blocks took {manyTime.TotalSeconds:F1} s, one block {oneTime.TotalSeconds:F1} s");
     }
 
+    private static TimeSpan Min(TimeSpan a, TimeSpan b) => a < b ? a : b;
+
+    // The first track holds every block and has a codec nobody parses, so that the blocks cost little to walk; the other tracks are Opus tracks routed to
+    // a codec parser, one block each.
     private static byte[] RoutedTracksAndBlocks(int tracks, int blocks)
     {
         var stream = new MemoryStream();
         stream.Write(MatroskaBuilder.Header());
         stream.Write([0x18, 0x53, 0x80, 0x67, 0x01, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]);
         stream.Write(MatroskaBuilder.Info());
-        stream.Write(MatroskaBuilder.Element(0x1654AE6B, [.. Enumerable.Range(1, tracks).Select(n => MatroskaBuilder.OpusTrack((uint)n))]));
+        stream.Write(MatroskaBuilder.Element(0x1654AE6B, [.. Enumerable.Range(1, tracks).Select(n => n == 1
+            ? MatroskaBuilder.Element(0xAE, MatroskaBuilder.Unsigned(0xD7, 1), MatroskaBuilder.Unsigned(0x73C5, 1), MatroskaBuilder.Unsigned(0x83, 2), MatroskaBuilder.Text(0x86, "A_UNKNOWN"))
+            : MatroskaBuilder.OpusTrack((uint)n))]));
         byte[] first = MatroskaBuilder.SimpleBlockOf(1, 0, [0xFC, 0xFF, 0xFE]);
         stream.Write(MatroskaBuilder.WithSize(0x1F43B675, 3 + (((long)blocks + tracks - 1) * first.Length), []));
         stream.Write(MatroskaBuilder.Unsigned(0xE7, 0));
@@ -749,13 +755,17 @@ public class ComplexityTests
     }
 
     // The hang guard is the shared Bound; the comparison of the caller is the test.
-    private static TimeSpan TimedMatroska(byte[] data, int tracks)
+    private static TimeSpan TimedMatroska(byte[] data, int? tracks)
     {
         var watch = Stopwatch.StartNew();
         Report report = Analyzer.CreateDefault().Analyze("tracks.mkv", new MemoryStream(data));
         watch.Stop();
         Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
-        Assert.Equal(tracks, report.Streams.Count);
+        if (tracks is not null)
+        {
+            Assert.Equal(tracks, report.Streams.Count);
+        }
+
         Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
         return watch.Elapsed;
     }
