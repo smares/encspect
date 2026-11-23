@@ -37,7 +37,7 @@ from make_measurement_fixtures import Lcg, pink
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 OUT = ROOT / "tests" / "fixtures" / "measurement"
 
-TOOLS = "LAME 3.100, vorbis-tools 1.4.2 (oggenc, oggdec), FFmpeg 6.1.1-3ubuntu5 (aac), opus-tools 0.2 with libopus 1.4 (opusenc, opusdec), flac 1.4.3 (Ubuntu 24.04)"
+TOOLS = "LAME 3.100, TwoLAME 0.4.0, vorbis-tools 1.4.2 (oggenc, oggdec), FFmpeg 6.1.1-3ubuntu5 (aac, and the decoder of the MPEG audio files), opus-tools 0.2 with libopus 1.4 (opusenc, opusdec), flac 1.4.3 (Ubuntu 24.04)"
 SECONDS = 1
 
 # The stereo files (docs/design/spectral-analysis.md, Step 7 (c) and (d)): 2 s of a pink mid signal and a pink side signal 12 dB lower, from two generators, as left = mid + side
@@ -51,6 +51,13 @@ STEREO = {
     "stereo-oggenc-q0": ("oggenc", 44100, "-q 0", ["0"]),
     "stereo-aac-64k": ("aac", 44100, "-b:a 64k", ["64k"]),
     "stereo-opus-48k": ("opus", 48000, "--bitrate 48", ["48"]),
+    # Step 8 (inter-channel coherence): TwoLAME 0.4.0 with intensity stereo at two bitrates and the stereo counterpart, opusenc at a bitrate under the 48 kbps one, and FFmpeg's aac with
+    # perceptual noise substitution off. The "equal" set of each is the source with channels that are uncorrelated (a mid and a side signal of equal power).
+    "stereo-twolame-j-b128": ("twolame", 44100, "-m j -b 128", ["-m", "j", "-b", "128"]),
+    "stereo-twolame-j-b192": ("twolame", 44100, "-m j -b 192", ["-m", "j", "-b", "192"]),
+    "stereo-twolame-s-b128": ("twolame", 44100, "-m s -b 128", ["-m", "s", "-b", "128"]),
+    "stereo-opus-24k": ("opus", 48000, "--bitrate 24", ["24"]),
+    "stereo-aac-64k-nopns": ("aac", 44100, "-b:a 64k -aac_pns 0", ["64k", "-aac_pns", "0"]),
 }
 # The same six runs with a side signal as loud as the mid ("stereo-equal-<tool>"): a pink mid and a pink side, both at -20 dBFS RMS, from two generators. The first set's side is
 # 12 dB lower; the two together show what a side cutoff under the mid's and the holes follow (the coder or the side's level).
@@ -249,10 +256,17 @@ def encode_all(names):
                          "stated": None}
             elif tool == "aac":
                 m4a = temp / f"{name}.m4a"
-                run("ffmpeg", "-v", "error", "-y", "-i", source, "-c:a", "aac", "-b:a", args[0], m4a)
+                run("ffmpeg", "-v", "error", "-y", "-i", source, "-c:a", "aac", "-b:a", args[0], *args[1:], m4a)
                 run("ffmpeg", "-v", "error", "-y", "-i", m4a, "-c:a", "pcm_s16le", decoded)
-                entry = {"description": f"FFmpeg 6.1.1's aac encoder at {args[0]}bps on 2 s of stereo pink noise (a mid signal and {level}) at {rate} Hz, decoded with FFmpeg.",
+                entry = {"description": f"FFmpeg 6.1.1's aac encoder at {args[0]}bps{' with perceptual noise substitution off' if len(args) > 1 else ''} on 2 s of stereo pink noise (a mid signal and {level}) at {rate} Hz, decoded with FFmpeg.",
                          "encoder": {"name": "FFmpeg aac", "version": "6.1.1", "settings": settings, "command": f"ffmpeg -i in.wav -c:a aac {settings} out.m4a; ffmpeg -i out.m4a -c:a pcm_s16le out.wav"},
+                         "stated": None}
+            elif tool == "twolame":
+                mp2 = temp / f"{name}.mp2"
+                run("twolame", "--quiet", *args, source, mp2)
+                run("ffmpeg", "-v", "error", "-y", "-i", mp2, "-c:a", "pcm_s16le", decoded)
+                entry = {"description": f"TwoLAME 0.4.0 {settings} on 2 s of stereo pink noise (a mid signal and {level}) at {rate} Hz, decoded with FFmpeg.",
+                         "encoder": {"name": "TwoLAME", "version": "0.4.0", "settings": settings, "command": f"twolame --quiet {settings} in.wav out.mp2; ffmpeg -i out.mp2 -c:a pcm_s16le out.wav"},
                          "stated": None}
             else:
                 opus = temp / f"{name}.opus"
