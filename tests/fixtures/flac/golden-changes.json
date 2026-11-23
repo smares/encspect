@@ -1,58 +1,75 @@
 {
-  "goldens": [
-    "tests/fixtures/flac/"
-  ],
-  "changed": [
-    {
-      "path": [
-        "FLAC",
-        "Processor",
-        "Evidence"
-      ],
-      "fields": [
-        "value"
-      ]
-    },
-    {
-      "path": [
-        "FLAC",
-        "Statistics",
-        "Wasted Bits",
-        "Changes"
-      ],
-      "fields": [
-        "value"
-      ]
-    }
-  ],
-  "removed": [
-    {
-      "parent": [
-        "Ogg",
-        "Logical Stream",
-        "Statistics"
-      ],
-      "name": "Container Duration",
-      "goldens": [
-        "tests/fixtures/flac/external-ogg-16-mono-l8.report.json",
-        "tests/fixtures/flac/external-ogg-16-stereo.report.json",
-        "tests/fixtures/flac/external-ogg-24-8ch-tags.report.json",
-        "tests/fixtures/flac/external-ogg-24-stereo-spanning.report.json"
-      ]
-    },
-    {
-      "parent": [
-        "Ogg",
-        "Logical Stream",
-        "Statistics"
-      ],
-      "name": "Container Samples",
-      "goldens": [
-        "tests/fixtures/flac/external-ogg-16-mono-l8.report.json",
-        "tests/fixtures/flac/external-ogg-16-stereo.report.json",
-        "tests/fixtures/flac/external-ogg-24-8ch-tags.report.json",
-        "tests/fixtures/flac/external-ogg-24-stereo-spanning.report.json"
-      ]
-    }
-  ]
+ "goldens": [
+  "tests/fixtures/flac/"
+ ],
+ "added": [
+  {
+   "scope": "node",
+   "parent": [
+    "FLAC"
+   ],
+   "name": "Compression Level"
+  },
+  {
+   "scope": "node",
+   "parent": [
+    "FLAC",
+    "Statistics"
+   ],
+   "name": "Compression Level"
+  },
+  {
+   "scope": "node",
+   "parent": [
+    "FLAC",
+    "Compression Level"
+   ],
+   "name": "Confidence"
+  },
+  {
+   "scope": "node",
+   "parent": [
+    "FLAC",
+    "Compression Level"
+   ],
+   "name": "Evidence",
+   "last": 8
+  },
+  {
+   "scope": "node",
+   "parent": [
+    "Ogg",
+    "Logical Stream"
+   ],
+   "name": "Compression Level"
+  },
+  {
+   "scope": "node",
+   "parent": [
+    "Ogg",
+    "Logical Stream",
+    "Statistics"
+   ],
+   "name": "Compression Level"
+  },
+  {
+   "scope": "node",
+   "parent": [
+    "Ogg",
+    "Logical Stream",
+    "Compression Level"
+   ],
+   "name": "Confidence"
+  },
+  {
+   "scope": "node",
+   "parent": [
+    "Ogg",
+    "Logical Stream",
+    "Compression Level"
+   ],
+   "name": "Evidence",
+   "last": 8
+  }
+ ]
 }

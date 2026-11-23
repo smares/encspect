@@ -354,6 +354,56 @@
               ]
             },
             {
+              "name": "Compression Level",
+              "value": "libFLAC 7 or 8",
+              "offset": 0,
+              "length": 44726,
+              "children": [
+                {
+                  "name": "Confidence",
+                  "value": "Medium",
+                  "offset": 0,
+                  "length": 44726
+                },
+                {
+                  "name": "Evidence",
+                  "value": "The block size is 4,096 samples in every frame but the last; levels 3 to 8 use it.",
+                  "offset": 0,
+                  "length": 44726
+                },
+                {
+                  "name": "Evidence",
+                  "value": "The highest linear predictor order is 12; 8 of 12 subframes are linear predictors.",
+                  "offset": 0,
+                  "length": 44726
+                },
+                {
+                  "name": "Evidence",
+                  "value": "The highest partition order is 5.",
+                  "offset": 0,
+                  "length": 44726
+                },
+                {
+                  "name": "Evidence",
+                  "value": "2 of 6 frames code the channels as left/side, side/right or mid/side, which levels 0 and 3 never do.",
+                  "offset": 0,
+                  "length": 44726
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Levels 7 or 8 set a highest linear predictor order of 12, a highest partition order of 6 and a block size of 4,096 samples.",
+                  "offset": 0,
+                  "length": 44726
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Every level the frames fit sets the same figures: the frames exceed the limits of all the others.",
+                  "offset": 0,
+                  "length": 44726
+                }
+              ]
+            },
+            {
               "name": "Statistics",
               "kind": "Statistics",
               "offset": 0,
@@ -566,6 +616,12 @@
                   "name": "Escaped Partitions",
                   "value": 0,
                   "unit": "partitions",
+                  "offset": 0,
+                  "length": 44726
+                },
+                {
+                  "name": "Compression Level",
+                  "value": "libFLAC 7 or 8",
                   "offset": 0,
                   "length": 44726
                 },

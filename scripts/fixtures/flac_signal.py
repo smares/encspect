@@ -25,10 +25,53 @@ def lossywav_samples(kind, count):
     return iter(frames[:count])
 
 
+def level_samples(rate, channels, count, bits):
+    """A signal that gives every setting of an encoder's compression levels something to choose: plucked harmonic tones whose pitch glides
+    (high predictor orders pay), noise shaped by resonators that bursts of loudness interrupt (high partition orders pay), and channels that
+    move between alike, opposed in level and independent (every stereo assignment pays somewhere)."""
+    scale = 1 << (bits - 1)
+    state = 777
+    # Four resonators in series, so the noise needs a predictor of high order.
+    poles = [(0.97, 0.05), (0.95, 0.31), (0.93, 0.83), (0.9, 1.6)]
+    coefficients = [(2 * r * math.cos(w), -r * r) for r, w in poles]
+    memory = [[[0.0, 0.0] for _ in poles] for _ in range(channels)]
+    for i in range(count):
+        t = i / rate
+        phase = i / count
+        pitch = 180 + 90 * phase
+        pluck = math.exp(-((t * 4) % 1.0) * 5)
+        tone = sum(math.sin(2 * math.pi * k * pitch * t + 0.4 * k) / (k * 1.3) for k in range(1, 11)) * pluck * 0.18
+        burst = 1.0 if (i // 700) % 5 == 0 else 0.06
+        frame = []
+        for channel in range(channels):
+            state = (state * 1103515245 + 12345) & 0x7FFFFFFF
+            white = (((state >> 8) & 0x3FFF) - 0x2000) / 0x2000
+            x = white * 0.012 * burst
+            for index, (a, b) in enumerate(coefficients):
+                y = x + a * memory[channel][index][0] + b * memory[channel][index][1]
+                memory[channel][index][1] = memory[channel][index][0]
+                memory[channel][index][0] = y
+                x = y * 0.35
+            if phase < 0.34:
+                weight = 1.0 if channel == 0 else 0.97
+            elif phase < 0.67:
+                weight = 1.0 if channel == 0 else 0.35
+            else:
+                weight = 0.5 if channel == 0 else 1.0
+            independent = channel * 0.5 + 0.5 if phase >= 0.34 else 0.1
+            value = tone * weight + x * (0.3 + independent)
+            v = int(value * scale)
+            frame.append(max(-scale, min(scale - 1, v)))
+        yield frame
+
+
 def samples(kind, rate, channels, count, bits, shift=0):
     """count frames of channels integers each, in the range of bits (signed)."""
     if kind.startswith("lossywav-"):
         yield from lossywav_samples(kind, count)
+        return
+    if kind == "levels":
+        yield from level_samples(rate, channels, count, bits)
         return
     scale = 1 << (bits - 1)
     state = 12345
