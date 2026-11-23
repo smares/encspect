@@ -14,6 +14,7 @@ public sealed class ErrorWindow : Window
         ArgumentNullException.ThrowIfNull(exception);
 
         Title = "Encspect";
+        Icon = AppIcon.Window;
         Width = 600;
         SizeToContent = SizeToContent.Height;
         CanResize = false;

@@ -51,6 +51,7 @@ public partial class MainWindow : Window
     public MainWindow(Analyzer analyzer, Settings settings, MainViewModel? model = null, SummaryCache? cache = null)
     {
         InitializeComponent();
+        Icon = AppIcon.Window;
         Model = model ?? new MainViewModel(analyzer, cache: cache);
         DataContext = Model;
         DetailWindows = new DetailWindows(this, Model, analyzer, settings);

@@ -55,6 +55,8 @@ public partial class AboutWindow : Window
     public AboutWindow()
     {
         InitializeComponent();
+        Icon = AppIcon.Window;
+        IconImage.Source = AppIcon.Picture();
         VersionText.Text = VersionLine;
         DescriptionText.Text = "Reports what is knowable about an audio file's structure.";
         CopyrightText.Text = "Copyright (c) 2026 Sebastian Mares. Released under the MIT License.";

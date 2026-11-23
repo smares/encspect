@@ -32,6 +32,7 @@ public partial class DetailWindow : Window
     public DetailWindow(DetailViewModel model)
     {
         InitializeComponent();
+        Icon = AppIcon.Window;
         Model = model;
         DataContext = model;
         PickExportTarget = PickExportTargetAsync;

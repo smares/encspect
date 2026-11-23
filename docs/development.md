@@ -316,6 +316,20 @@ The GUI stays a self-contained single file (`PublishSingleFile`, no ReadyToRun, 
 - **Packaging would change too:** NativeAOT cannot bundle native libraries in the file, so the archive would hold `encspect-gui` next to `libSkiaSharp` and `libHarfBuzzSharp` (and ANGLE's and Avalonia.Native's libraries on Windows and macOS, not tried here): three files instead of one on Linux, the release's copy step, the Windows and macOS self-checks and the package README all change, and none of the Windows and macOS packaging could be tried here.
 - **What it would gain** (linux-x64, one pinned core, minimum of 5 under Xvfb): `--self-check` 0.033 s against 0.49 s; the window with the 456-file folder up in 0.52 s against 2.5 s; 37.5 MB for the program and 51 MB with the two libraries against a 104.7 MB single file, and an archive of about 22 MB against 43 MB (gzip); resident memory about the same (230 to 300 MB after the folder is listed, both).
 
+### The app icon
+
+- **Sources:** `src/Encspect.Gui/Assets/Icon/` holds the SVGs, which are the source of truth:
+  - `F2.svg`, the small form (16 to 32 pixels): the glass alone, with the light blue `#3b4cca` and a white waveform, and a dark variant (`#9aa8ff` with `#10142e`) under `prefers-color-scheme`;
+  - `E.svg`, the large form (48 pixels and up): the rounded blue tile with the white lens and the waveform cut out;
+  - `E-square.svg`, the same without rounded corners, for a platform that rounds icons itself (not used by a file yet).
+- **Generated files** in the same folder, committed: `encspect.ico` (16, 24 and 32 from `F2.svg`; 48, 64, 128 and 256 from `E.svg`), `encspect.icns` (`E.svg` from 16 to 1024 pixels) and `encspect-256.png` and `encspect-128.png` (`E.svg`). They use the light colors; no platform file takes the dark variant.
+- **Regenerate:** `python3 scripts/make_icons.py` after changing an SVG, and commit the result. It renders the SVGs with Playwright's Chromium (`scripts/icons/render_svg.js`; `npm install playwright` and `npx playwright install chromium`, with `NODE_PATH` naming the module folder if it is installed globally) and writes the `.ico` and `.icns` containers itself with PNG entries, so Pillow is not needed; Pillow can read both files to check them.
+- **Where it is used:**
+  - the `.ico` is the GUI executable's `ApplicationIcon`;
+  - the 256-pixel PNG is every window's icon (`AppIcon.Window`), and the 128-pixel PNG is drawn at 64 pixels in the About window;
+  - the `.icns` is not used yet: the release workflow builds no macOS app bundle (the archives hold the bare executables), so there is no `Info.plist` to carry `CFBundleIconFile`. A bundle would add it.
+  - the CLI has no icon: a console program's file is not an app to find in a launcher.
+
 ## Vector paths of the decoders
 
 - **Where:** Monkey's Audio's neural network filters (`NnVectors`: the dot product of 16-bit history and weights with the multiply-and-add-adjacent-pairs instruction of AVX-512BW, AVX2, SSE2 or Arm's widening multiply-add, and the weights' step in portable vectors) and FLAC's linear predictor (`Prediction.RestoreLpc`: the oldest taps of a window of 12 or more in vectors, the newest four to eleven in scalar code, because a vector load that overlaps the store of the previous sample stalls).

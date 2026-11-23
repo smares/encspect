@@ -4,6 +4,8 @@
     <AssemblyName>encspect-gui</AssemblyName>
     <RootNamespace>Encspect.Gui</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- The Windows executable's icon; scripts/make_icons.py writes it from the SVGs beside it (docs/development.md, "The app icon"). -->
+    <ApplicationIcon>Assets\Icon\encspect.ico</ApplicationIcon>
     <!-- A single-file publish carries Skia's and HarfBuzz's native libraries inside the file. -->
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
   </PropertyGroup>
@@ -13,6 +15,10 @@
     <PackageReference Include="Avalonia.Desktop" />
     <PackageReference Include="Avalonia.Themes.Fluent" />
     <PackageReference Include="Avalonia.Wayland" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The window icon and the About window's picture; the .ico and the .icns serve the executable and a macOS bundle. -->
+    <AvaloniaResource Include="Assets\Icon\encspect-*.png" />
   </ItemGroup>
   <ItemGroup>
     <!-- Shown by the About window; the file itself also ships beside the executables. -->

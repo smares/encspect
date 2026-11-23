@@ -5,8 +5,13 @@
         Width="420" SizeToContent="Height" CanResize="False" CanMinimize="False" CanMaximize="False"
         WindowStartupLocation="CenterOwner">
   <StackPanel Margin="32,24" Spacing="6">
-    <TextBlock Text="Encspect" FontSize="20" FontWeight="SemiBold" />
-    <SelectableTextBlock Name="VersionText" Classes="secondary" TextWrapping="Wrap" />
+    <StackPanel Orientation="Horizontal" Spacing="16">
+      <Image Name="IconImage" Width="64" Height="64" VerticalAlignment="Center" />
+      <StackPanel VerticalAlignment="Center" Spacing="2">
+        <TextBlock Text="Encspect" FontSize="20" FontWeight="SemiBold" />
+        <SelectableTextBlock Name="VersionText" Classes="secondary" TextWrapping="Wrap" />
+      </StackPanel>
+    </StackPanel>
     <TextBlock Name="DescriptionText" Margin="0,8,0,0" TextWrapping="Wrap" />
     <TextBlock Name="CopyrightText" Classes="secondary" TextWrapping="Wrap" />
     <TextBlock Name="NoticesText" Classes="secondary" TextWrapping="Wrap" />
