@@ -104,7 +104,8 @@ public sealed class AboutTests
             // The version is one line: its text is not wrapped.
             TextBlock version = window.FindControl<TextBlock>("VersionText")!;
             Assert.Equal(Avalonia.Media.TextWrapping.NoWrap, version.TextWrapping);
-            Assert.True(version.Bounds.Width >= version.DesiredSize.Width);
+            Assert.NotNull(version.TextLayout);
+            Assert.True(version.Bounds.Width >= version.TextLayout.WidthIncludingTrailingWhitespace, $"The version needs {version.TextLayout.WidthIncludingTrailingWhitespace:F0} px, it has {version.Bounds.Width:F0}.");
 
             window.Close();
         }
