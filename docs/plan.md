@@ -337,8 +337,8 @@ The most common formats without a free specification are decoded, on clean-room 
 
 The scope is confirmed when 0.4 is done. The decoders follow steps 9 to 15 of [lossy-decoders.md, "Order"](design/lossy-decoders.md#order), with the definition of done of 0.3:
 
-1. **AAC LC:** following libxaac, as decision 1 of [lossy-decoders.md](design/lossy-decoders.md#decisions) now reads (the lead, 2026-11-23); after its clean-room description only if the reading of libxaac's license finds conditions narrower than Apache 2.0.
-   - **First step of the milestone:** that reading: libxaac's `LICENSE` and the header of every file the decoders would follow, for an ISO/IEC disclaimer like the PacketVideo decoder's, with the result in [lossy-decoders.md](design/lossy-decoders.md#decisions).
+1. **AAC LC:** following libxaac, as decision 1 of [lossy-decoders.md](design/lossy-decoders.md#decisions) now reads (the lead, 2026-11-23).
+   - **The license reading** (done, 2026-11-23): libxaac's `LICENSE` and every file header hold Apache 2.0 and no ISO/IEC disclaimer like the PacketVideo decoder's ([lossy-decoders.md](design/lossy-decoders.md#decisions)).
    - Its decoder needs the Vorbis parser's feed delay for a Matroska DiscardPadding (the padding is per block and the decoder must be told before the frames it takes samples from; see the Opus item of 0.3).
 2. **HE-AAC** (SBR and parametric stereo): with the replicated bands as a measurement of the decoded audio (SBR, E-AC-3's spectral extension, CELT's folding), whose fixtures it brings (decision S10 of [spectral-analysis.md](design/spectral-analysis.md#decisions-for-the-lead-1)).
 3. **WMA standard, Professional and Lossless:** each after its clean-room supplement, with Microsoft's decoder as the reference.
