@@ -22,7 +22,6 @@ TYPES = ("add", "mid/side", "scaled", "filter")
 def read_table(data, start, channels):
     """The entries [(channel, type or None, partner or None)] of the channel table at the byte start, or None where the table is a plain channel order."""
     bits = tak_model.Bits(data[start:start + 4 + 16 * 2])
-    bits.overflow = False
     if not bits.get(1):
         return None
     entries = []
@@ -33,13 +32,16 @@ def read_table(data, start, channels):
             entries.append((channel, kind, bits.get(4)))
         else:
             entries.append((channel, None, None))
+    if bits.overflow:
+        raise ValueError("the channel table runs past the bytes read")
     return entries
 
 
 def summarize(path):
     """{frames, codec, channels, tableFrames, pairedFrames, pairedEntries, types: {name: count}} of a file."""
     data = pathlib.Path(path).read_bytes()
-    objects, audio = tak_model.walk(data)
+    walked = tak_model.manifest(data)
+    audio, end = walked["audio_start"], walked["end"]
     result = {"frames": 0, "codec": None, "channels": None, "tableFrames": 0, "pairedFrames": 0, "pairedEntries": 0, "types": {name: 0 for name in TYPES}}
     if audio is None:
         return result
@@ -48,7 +50,7 @@ def summarize(path):
     if info is None:
         return result
     result["codec"], result["channels"] = info["codec"], info["channels"]
-    frames = tak_model.walk_frames(data, audio, len(data))
+    frames = tak_model.walk_frames(data, audio, end, walked.get("declared_end"))
     result["frames"] = len(frames)
     if info["codec"] != 4:
         return result
