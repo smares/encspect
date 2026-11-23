@@ -64,7 +64,7 @@ internal static partial class LevelGuess
     private const int Large = 1;
 
     // libFLAC's levels 0 to 8 (the table of "flac --help" of each release, and the table in the source of the releases that have none in the help text of -0 to -8:
-    // flac_tool.py --levels; docs/formats/flac.md). Two tables over the releases from 1.1.0 (the first whose files carry a vendor string): up to 1.1.3 the blocks are 1,152 and
+    // flac_tool.py --levels; docs/formats/flac.md). Two tables over the releases from 1.1.0 (the first built and run that writes a vendor string; 1.0.3 writes none and 1.0.4 does not build): up to 1.1.3 the blocks are 1,152 and
     // 4,608 samples and the highest partition orders 2, 2, 3, 3, 3, 3, 4, 6, 6; from 1.1.4 the blocks are 1,152 and 4,096 and the orders 3, 3, 3, 4, 4, 5, 6, 6, 6.
     // Level 7 sets a highest order of 8 before release 1.3.1 and of 12 from it. Blocks: 1152 samples where no linear predictor is used (libFLAC's default when -l is 0).
     // Decorrelation: level 0 and 3 code the channels as they are; 1 and 4 choose adaptively (-M), the others try every assignment (-m).

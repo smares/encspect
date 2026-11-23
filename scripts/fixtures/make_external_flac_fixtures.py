@@ -125,7 +125,7 @@ RECODES = {
     "ffmpeg-level-5-from-lowbits-mixed-stereo": ("measurement/synthetic-lowbits-mixed-16-24.flac", "ffmpeg", ["-c:a", "flac", "-compression_level", "5"]),
 }
 
-# name: (release, input, arguments of flac). The releases before 1.2.1 (1.1.0 is the first whose files carry a vendor string) write the signal in six blocks of their
+# name: (release, input, arguments of flac). The releases before 1.2.1 (1.1.0 is the first that was built and run and whose files carry a vendor string; 1.0.3 writes none and 1.0.4 does not build) write the signal in six blocks of their
 # size (1.1.0 to 1.1.3: 4,608 samples; from 1.1.4: 4,096), which keeps the goldens small; 1.1.0 and 1.1.2 to 1.1.3 have the table of the earlier releases
 # (partition orders 2, 2, 3, 3, 3, 3, 4, 6, 6), 1.1.4 and 1.2.0 the one of the later ones.
 LEVELS_STEREO_OLD = ("levels", 44100, 2, 16, 27648)
