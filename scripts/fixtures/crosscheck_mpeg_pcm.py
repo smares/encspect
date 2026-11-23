@@ -191,16 +191,14 @@ def minimp3_reference(binary, path, work):
 FFMPEG_RANGES = {
     "external-nero-rom-mp3pro-cbr64.mp3": [[188352, 205056]],
     "external-nero-rom-mp3pro-vbr-low.mp3": [[134208, 135360], [188352, 205056]],
-    # Plugger+ 0.4, 8hz-MP3 0.2b and Fraunhofer's l3codecp 3.4 (old Wine encoders). Only FFmpeg differs from the analyzer on the MPEG-1 files, in 3 to 5 granules of channel 0 with tails into
+    # Plugger+ 0.4 and 8hz-MP3 0.2b (old Wine encoders; Fraunhofer's l3codecp 3.4 file listed below is MPEG-2). Only FFmpeg differs from the analyzer on the MPEG-1 files, in 3 to 5 granules of channel 0 with tails into
     # the next ones (up to 0.026 of full scale): mpg123 1.32.5 (`mpg123 -e f32 --no-gapless`), madplay 0.15.2b and minimp3 all match the analyzer (largest difference 8e-7, 1.4e-6 and 3e-7),
     # FFmpeg 6.1.1 differs from all four. The first granules are the ones listed in the ranges; the granules where it begins hold long blocks of plain stereo (no intensity or
     # mid/side stereo, no mixed blocks), e.g. external-plugger-pro-cbr granule 92: channel 0 has no big values and a part2_3_length of 2 bits (count1 region only), channel 1 288 big values.
-    # On the two MPEG-2 files (joint stereo, mid/side and intensity stereo together in ext 3 frames; the ranges start at the first such frames) FFmpeg and mpg123 agree with each other (largest
-    # difference to the analyzer 0.0095, with the same granules) and the analyzer agrees with madplay and minimp3 (1.1e-6, 3e-7); the source signal cannot decide it (the error of the analyzer
-    # against the source's band is equal to mpg123's or smaller in the windows tried). Observed with FFmpeg 6.1.1 and mpg123 1.32.5.
+    # The two MPEG-2 files (l3codeca 1.9 and l3codecp 3.4, joint stereo with mid/side and intensity stereo together) differ for the two causes in R2; their ranges are the granules where they show.
     "external-plugger-pro-cbr.mp3": [[52992, 54720]],
-    "external-plugger-cbr.mp3": [[43776, 45504], [70272, 71424]],
-    "external-plugger-original.mp3": [[43776, 45504], [70272, 71424]],
+    "external-plugger-cbr.mp3": [[43776, 45504], [70848, 71424]],
+    "external-plugger-original.mp3": [[43776, 45504], [70848, 71424]],
     "external-plugger-48k.mp3": [[65664, 67392]],
     "external-8hz-flags.mp3": [[52992, 54720]],
     "external-fhg-acm19-mpeg2.mp3": [[1152, 1728], [36288, 37440]],
@@ -239,7 +237,7 @@ ONLY_IN_MINIMP3 = {
     "external-lame357w-vbr.mp3": [[87552, 88704]],
     "external-lame370w-cbr.mp3": [[88704, 89856]],
     "external-lame370w-vbr.mp3": [[88704, 89856]],
-    # The encoders of the old Wine fixtures (Plugger, 8hz-MP3, M3E and Fraunhofer's ACM codecs through acmenc) end every file of its test files with a frame cut short (mpeg-audio.frame-truncated, which each manifest lists):
+    # Plugger+, 8hz-MP3, M3E and Fraunhofer's l3codeca 1.9 (through acmenc) end every one of their test files with a frame cut short (l3codecp 3.3 and 3.4's files end whole) (mpeg-audio.frame-truncated, which each manifest lists):
     # the analyzer decodes whole frames only, as ISO/IEC 11172-3 and 13818-3 define a frame by its length, and so do mpg123 and libmad (checked on external-plugger-cbr and
     # external-fhg-acm19-mono-16k with mpg123 1.32 and madplay 0.15.2b: 76 and 52 frames, the analyzer's samples); only minimp3 outputs the last frame's samples.
     "external-8hz-48k.mp3": [[95616, 96768]],
