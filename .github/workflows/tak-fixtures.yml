@@ -58,6 +58,8 @@ jobs:
 
       - name: Decode with Takc
         shell: powershell
+        env:
+          ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
         run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/fixtures/windows/decode_windows_tak_fixtures.ps1 -Out tak-decoded
 
       - uses: actions/upload-artifact@v7

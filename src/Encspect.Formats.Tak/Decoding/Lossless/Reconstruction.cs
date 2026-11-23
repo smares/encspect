@@ -8,9 +8,6 @@ namespace Encspect.Formats.Tak.Decoding.Lossless;
 // freely: integers give the same bits everywhere.
 internal static class Reconstruction
 {
-    // Section 5, the order table: the entry for u(4); 15 means no prediction filter.
-    public static ReadOnlySpan<int> Orders => [4, 8, 12, 16, 24, 32, 48, 64, 80, 96, 128, 160, 192, 224, 256, 0];
-
     public const int MaxOrder = 256;
 
     // From the parameters (k) of a filter of order k.Length to its coefficients, in the order of the history: coefficient d (the value d places back) lands at
