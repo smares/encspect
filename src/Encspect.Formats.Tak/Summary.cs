@@ -7,7 +7,7 @@ internal static class Summary
 {
     public const string CodecName = "TAK";
 
-    // The codec ID a decoder would register under; none exists, so the host reports that no decoder handles the coding.
+    // The codec ID the decoder registers under.
     public const string CodecId = "tak";
 
     public static void Finish(State s, ByteReader reader, long start, long end)
@@ -41,7 +41,7 @@ internal static class Summary
         };
         s.Context.Root.Add(stream);
         Checks(s, stream, end);
-        Statistics(s, stream, start, end);
+        Statistics(s, reader, stream, start, end);
         s.Findings.Flush(s.Context);
     }
 
@@ -299,7 +299,7 @@ internal static class Summary
         return info.Channels switch { 1 => ChannelLayouts.Mono, 2 => ChannelLayouts.Stereo, _ => null };
     }
 
-    private static void Statistics(State s, Node stream, long start, long end)
+    private static void Statistics(State s, ByteReader reader, Node stream, long start, long end)
     {
         Records r = s.Records;
         Node Cover(string name, NodeValue? value, string description, string? topic = null) => new(name, start, Math.Max(0, end - start), value) { Description = description, Topic = topic };
@@ -354,14 +354,20 @@ internal static class Summary
             return;
         }
 
-        IDecodeSession session = s.Context.StartDecoding(CodecId, new DecodeSetup { Stream = stream, Channels = info.Channels, BitsPerSample = info.BitsPerSample, Samples = info.Samples });
+        uint? mask = r.WaveDataObject?.WavHeader?.Format?.Mask;
+        IReadOnlyList<Speaker>? layout = LayoutOf(info, mask);
+        var shared = new DecodeShared { Info = info, Md5 = r.Md5, Md5At = r.Md5Object?.DataOffset ?? 0, Layout = layout };
+        IDecodeSession session = s.Context.StartDecoding(CodecId, new DecodeSetup { Stream = stream, Channels = info.Channels, BitsPerSample = info.BitsPerSample, Samples = info.Samples, Shared = shared });
+        if (session.IsDecoding)
+        {
+            Feeding.Run(s, reader, session);
+        }
+
         StreamVerification verification = session.Finish(tallies);
 
         var statistics = new Node("Statistics", start, Math.Max(0, end - start)) { Kind = NodeKind.Statistics, Description = Explain.Statistics };
         long rate = info.SampleRate;
         double duration = rate > 0 ? info.Samples / (double)rate : 0;
-        uint? mask = r.WaveDataObject?.WavHeader?.Format?.Mask;
-        IReadOnlyList<Speaker>? layout = LayoutOf(info, mask);
         // Without an encoder info object the evaluation level is unknown (the SDK tells applications to show it so), so the profile does not read as a standard-evaluation preset.
         string preset = r.HasEncoderInfo ? Layout.PresetName(r.Preset, r.Evaluation) : $"-p{info.Profile} (evaluation unknown)";
         statistics.Add(Cover("Codec", Layout.CodecName(info.Codec) ?? $"undefined ({info.Codec})", Explain.StatCodec));
