@@ -89,6 +89,7 @@ internal static class MeasurementFindings
     public static string DisplayName(string codecId) => codecId switch
     {
         "tta" => "TTA",
+        "tak" => "TAK",
         "alac" => "ALAC",
         "flac" => "FLAC",
         "wavpack" => "WavPack",

@@ -692,6 +692,55 @@ public class TakDecoderTests
         Assert.True(units > allowance / 3, $"{units / (double)built.Lengths.Sum():F0} units a byte is far below the allowance: the derivation is out of date");
     }
 
+    // Bits of the coded data changed at random: whatever the decoder makes of them, it is a finding and never a failure of the decoder or the parser, and it stops. In the files
+    // the encoder writes the changes are made before the frames' CRC-24s are computed, so the parser hands the frames over as sound and the syntax is what fails; in the
+    // fixtures the CRC-24s fail, and the frames are decoded all the same.
+    [Theory]
+    [InlineData("encoder-stereo", 1)]
+    [InlineData("encoder-codec4", 2)]
+    [InlineData("fixture-p4m", 3)]
+    [InlineData("fixture-6ch", 4)]
+    public void ChangedCodedBytesAreFindingsAndNeverFailures(string source, int seed)
+    {
+        var random = new Random(seed);
+        int invalid = 0;
+        for (int round = 0; round < 80; round++)
+        {
+            byte[] file;
+            if (source.StartsWith("encoder", StringComparison.Ordinal))
+            {
+                int[][] samples = source == "encoder-stereo" ? Signal("sine", 2, 16, 2048) : Signal("noise", 6, 16, 1536);
+                Encoder.Settings settings = source == "encoder-stereo" ? new() { StereoMode = 6 } : new() { Codec = 4, Table = TableOf("chain") };
+                file = Encoder.File(samples, settings, 9, damage: (_, coded) =>
+                {
+                    byte[] changed = (byte[])coded.Clone();
+                    for (int k = random.Next(1, 4); k > 0; k--)
+                    {
+                        changed[random.Next(changed.Length)] ^= (byte)(1 << random.Next(8));
+                    }
+
+                    return changed;
+                });
+            }
+            else
+            {
+                file = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "tak", source == "fixture-p4m" ? "external-preset-p4m.tak" : "external-format-6ch-nomask.tak"));
+                for (int k = random.Next(1, 4); k > 0; k--)
+                {
+                    file[random.Next(200, file.Length)] ^= (byte)(1 << random.Next(8));
+                }
+            }
+
+            (Report report, _) = Decode(file);
+
+            Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed" or "decode.limit");
+            invalid += report.Findings.Count(f => f.Code == "decode.frame-invalid");
+        }
+
+        // Most changes still decode (a residual is a number whatever its bits), and some break the syntax.
+        Assert.InRange(invalid, source.StartsWith("encoder", StringComparison.Ordinal) ? 1 : 0, int.MaxValue);
+    }
+
     [Fact]
     public void TheDecoderRunsWithoutAFrontEndThatWantsSamplesBecauseTheMd5IsAChecksum()
     {
