@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Writes MPEG audio fixtures with real encoders: LAME 3.100, TwoLAME 0.4.0, Shine 3.1.1, ffmpeg 6.1 with
-libmp3lame, libshine and its own MP2 encoder, the Helix MP3 Encoder 5.2.4 and 5.0 r11 (helix_tool.py),
+libmp3lame, libshine and its own MP2 encoder, the Helix MP3 Encoder 5.2.4, its A1 re-coding fork and 5.0 r11 (helix_tool.py),
 Fraunhofer's MP3 Surround encoder 1.5 (fhg_tool.py), which also writes plain MP3, VBRI headers and
 Original File Length (OFL) blocks, Xing's tompg 3.0 under Wine (xing_tool.py), the only external
 source of Layer I here, BladeEnc 0.80 to 0.94.2 (blade_tool.py), LAME 3.90.1 to 3.94 beta 1, 3.98 beta 8, 3.99 alpha 12,
@@ -291,6 +291,16 @@ FIXTURES = [
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=True, signal="music")),
     ("external-helix-vbr", ".mp3", 44100, 2, ["hmp3", "-V60"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    # The fork with the A1 re-coding (helix_tool.A1_COMMIT) in MPEG-1 VBR: "hmp3-a1" runs it as it is by default, "hmp3-a1-keep-gain"
+    # with HMP3_A1=1, which keeps every global_gain. The CBR file is the same encode as external-helix-cbr, which A1 does not touch.
+    ("external-helix-a1-vbr", ".mp3", 44100, 2, ["hmp3-a1", "-V60"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-helix-a1-keep-gain-vbr", ".mp3", 44100, 2, ["hmp3-a1-keep-gain", "-V60"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-helix-a1-no-tag-vbr", ".mp3", 44100, 2, ["hmp3-a1", "-V60", "-X0"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=False, signal="music")),
+    ("external-helix-a1-cbr", ".mp3", 44100, 2, ["hmp3-a1", "-B64"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=True, signal="music")),
     ("external-helix-no-tag", ".mp3", 44100, 2, ["hmp3", "-B64", "-X0"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False, signal="music")),
     ("external-helix-no-tag-mono", ".mp3", 32000, 1, ["hmp3", "-B48", "-X0"],
@@ -1075,7 +1085,7 @@ def detected_encoder(command, tag, settings, rows, path):
         return json.loads((OUT / f"{pathlib.Path(remuxed).stem}.expected.json").read_text(encoding="utf-8"))["detected_encoder"]
     if command[0] == "tomp3":
         return {"name": "Helix MP3 Encoder", "confidence": "Low"}
-    if command[0] == "hmp3":
+    if command[0] in HELIX_HEADS:
         lame = tag.get("lame") if tag else None
         if lame is None:
             return {"name": "Helix MP3 Encoder", "confidence": "Low"}
@@ -1211,6 +1221,9 @@ def encode(command, source, path, temp):
     if command[0] == "hmp3":
         helix_tool.encode(HELIX_ENCODER[0], command[1:], source, path)
         return
+    if command[0] in HELIX_A1_HEADS:
+        helix_tool.encode(HELIX_A1_ENCODER[0], command[1:], source, path, HELIX_A1_HEADS[command[0]])
+        return
     if command[0] == "tomp3":
         helix_tool.encode_r11(HELIX_R11_ENCODER[0], command[1:], source, path)
         return
@@ -1324,6 +1337,10 @@ def write_manifest(name, path, rate, channels, command, settings, dumper):
 FHG_ENCODER = []
 HELIX_ENCODER = []
 HELIX_R11_ENCODER = []
+HELIX_A1_ENCODER = []
+# The A1 fork's command names and the variables each sets; the default leaves HMP3_A1 as the fork reads it when it is not set.
+HELIX_A1_HEADS = {"hmp3-a1": {}, "hmp3-a1-keep-gain": {"HMP3_A1": "1"}}
+HELIX_HEADS = ("hmp3", *HELIX_A1_HEADS)
 XING_ENCODER = []
 BLADE_ENCODERS = {}
 GOGO_ENCODER = []
@@ -1361,6 +1378,8 @@ def main(names):
         FHG_ENCODER.append(fhg_tool.fetch())
     if "hmp3" in heads:
         HELIX_ENCODER.append(helix_tool.build())
+    if heads & set(HELIX_A1_HEADS):
+        HELIX_A1_ENCODER.append(helix_tool.build_a1())
     if "tomp3" in heads:
         HELIX_R11_ENCODER.append(helix_tool.build_r11())
     if "tompg" in heads:

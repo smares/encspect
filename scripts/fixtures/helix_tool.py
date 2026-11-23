@@ -71,7 +71,8 @@ def commit_problems(only=None):
 
 def encode(binary, arguments, source, path, environment=None):
     """environment holds the variables to add, such as {"HMP3_A1": "1"} for the fork."""
-    env = {**os.environ, **environment} if environment else None
+    env = {key: value for key, value in os.environ.items() if key not in ("HMP3_A1", "HMP3_A1STATS")}
+    env.update(environment or {})
     result = subprocess.run([str(binary), str(source), str(path), "-D", *arguments], capture_output=True, text=True, env=env)
     if result.returncode != 0 or not path.exists():
         raise SystemExit(f"hmp3 {' '.join(arguments)} failed: {result.stdout[-500:]}")
