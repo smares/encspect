@@ -225,7 +225,7 @@ The common lossy formats are decoded, so their files get the spectrum, cutoff, l
 
 ### 0.4: Free decoders and routes complete
 
-Every coding with a free source is decoded, the DTS extensions aside, and every codec reaches its parser in the containers that known writers fill.
+Every coding whose specification or permissively licensed code was free when the milestone was planned is decoded (AAC, WMA, OptimFROG and the DTS extensions are not), and every codec reaches its parser in the containers that known writers fill.
 
 The order (the lead, 2026-11-17): the milestone's own items first, then cheap items users see, fixture work before the detection that needs it, large or uncertain items after them, and items that wait for an outside file last.
 
