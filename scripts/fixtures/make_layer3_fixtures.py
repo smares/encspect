@@ -128,6 +128,7 @@ class Granule:
         self.tables = tuple(tables[:2]) if self.switched else tuple(tables)
         self.preflag, self.scalefac_scale, self.count1_table = preflag, scalefac_scale, count1_table
         self.quads, self.length_override = quads, part2_3_length
+        self.part2 = self.data = None  # explicit scalefactor and Huffman bits, where the granule is not zero-valued
         assert big_values * 2 + quads * 4 <= 576 or big_values > 288
 
     def zero_pair_code(self):
@@ -182,6 +183,10 @@ class Layer3Frame(Frame):
         return sum(s * n for s, n in zip(slen, NR_OF_SFB[table][kind]))
 
     def granule_bits(self, gr, ch):
+        g = self.granules[gr][ch]
+        if g.data is not None:
+            assert len(g.part2) == self.part2_bits(gr, ch), (len(g.part2), self.part2_bits(gr, ch))
+            return g.part2 + g.data
         return [0] * self.part2_bits(gr, ch) + self.granules[gr][ch].huffman_bits()
 
     def part2_3_length(self, gr, ch):
@@ -1285,6 +1290,97 @@ def mp3pro_ofl_exceeds_stream():
         "samples at twice the core rate that the twelve frames hold.",
         segments, "Fraunhofer IIS mp3PRO encoder with OFL", {"name": "mp3PRO encoder", "confidence": "Medium"},
         {"delay": 1500, "length": 13000}, **MP3PRO)
+
+
+# --- Intensity stereo bounds in mixed blocks -------------------------------------------------------
+
+# Band widths of the short part of a mixed block, from short band 3 on (the long part covers the first 36 lines), 44,100 Hz (MPEG-1) and 22,050 Hz (MPEG-2): ISO/IEC 11172-3
+# and 13818-3 Table B.8 / B.2.
+MIXED_SHORT_WIDTHS = {"1": [4, 6, 8, 10, 12, 14, 18, 22, 30, 56], "2": [6, 8, 10, 12, 14, 18, 24, 32, 44, 12]}
+MIXED_LONG_BANDS = {"1": [4, 4, 4, 4, 4, 4, 6, 6], "2": [6, 6, 6, 6, 6, 6]}
+TABLE1_PAIR = {(0, 0): "1", (0, 1): "001", (1, 0): "01", (1, 1): "000"}
+
+
+def mixed_granule(version, scalefac_compress, sf_bits, last_bands, long_last):
+    """One channel of a mixed block (Huffman table 1, values 0 and 1) whose nonzero lines end, in each of the three windows, in the short band last_bands[w] (3 to 12; None for
+    no nonzero line) and, in the long part, in the long band long_last (or None); every band up to those has a nonzero pair at its start. sf_bits: the scalefactor bits."""
+    long_bands, short = MIXED_LONG_BANDS[version], MIXED_SHORT_WIDTHS[version]
+    values = [0] * 576
+    if long_last is not None:
+        start = 0
+        for band, width in enumerate(long_bands):
+            if band <= long_last:
+                values[start] = 1
+            start += width
+    start = sum(long_bands)
+    for k, width in enumerate(short):
+        for w in range(3):
+            if last_bands[w] is not None and k + 3 <= last_bands[w]:
+                values[start + w * width] = 1
+        start += 3 * width
+    used = max(i for i, v in enumerate(values) if v) + 1
+    pairs = (used + 1) // 2
+    data = Bits()
+    for i in range(pairs):
+        x, y = values[2 * i], values[2 * i + 1]
+        data.put_code(TABLE1_PAIR[(x, y)])
+        data.bits += [0] * (x + y)
+    g = Granule(big_values=pairs, global_gain=185, scalefac_compress=scalefac_compress, block_type=SHORT, mixed=1, tables=(1, 1, 0), subblock_gain=(0, 0, 0),
+                part2_3_length=len(sf_bits) + len(data.bits))
+    g.part2, g.data = sf_bits, data.bits
+    return g
+
+
+def scalefactor_bits(values, size):
+    bits = Bits()
+    for v in values:
+        bits.put(v, size)
+    return bits.bits
+
+
+def mixed_intensity_frames(version, rate, bitrate, windows):
+    """Joint stereo frames with intensity stereo whose granules are mixed blocks in both channels. windows lists, for each granule, the short band in which the right channel's
+    last nonzero pair lies in each window, and the long band; the left channel codes every band up to short band 11 in all windows. The right channel's scalefactors are the
+    intensity positions 0 to 6, different in each band."""
+    mpeg1 = version == "1"
+    row = []
+    for k, (bands, long_last) in enumerate(windows):
+        sfc_right = 13 if mpeg1 else 258 + k % 2  # slen 3, 3 and 3 (intensity_scale 0, then 1 in MPEG-2)
+        count = 35 if mpeg1 else 33
+        positions = [(i * 5 + 2) % 7 for i in range(count)]
+        left = mixed_granule(version, 13 if mpeg1 else 0, scalefactor_bits([1] * 35, 3) if mpeg1 else [], [11, 11, 11], 5)
+        right = mixed_granule(version, sfc_right, scalefactor_bits(positions, 3), bands, long_last)
+        row.append([left, right])
+    count = 2 if mpeg1 else 1
+    specs = [dict(mode_ext=1, granules=row[i : i + count]) for i in range(0, len(row), count)]
+    return frames_with_padding(specs, bitrate, rate, version=version, mode="Joint stereo")
+
+
+MIXED_WINDOWS = [([5, 8, 4], 0), ([8, 4, 6], 0), ([4, 11, 7], 1), ([None, 6, None], 5)]
+
+
+@fixture
+def mixed_intensity_mpeg1():
+    f = Layer3Fixture(
+        "mixed-intensity-windows",
+        "MPEG-1 Layer III joint stereo at 44100 Hz with intensity stereo and mixed blocks in both channels: the right channel's nonzero lines end in a different short band "
+        "in each of the three windows, so each window has its own intensity stereo bound (ISO/IEC 13818-3 2.4.3.2, 11172-3 2.4.3.4.9.3).",
+        silent=False,
+        guessenc=False,
+    )
+    return f.add_frames(pack(mixed_intensity_frames("1", 44100, 128, MIXED_WINDOWS)))
+
+
+@fixture
+def mixed_intensity_mpeg2():
+    f = Layer3Fixture(
+        "mixed-intensity-windows-mpeg2",
+        "MPEG-2 Layer III joint stereo at 22050 Hz with intensity stereo and mixed blocks in both channels: the right channel's nonzero lines end in a different short band "
+        "in each of the three windows, so each window has its own intensity stereo bound (ISO/IEC 13818-3 2.4.3.2).",
+        silent=False,
+        guessenc=False,
+    )
+    return f.add_frames(pack(mixed_intensity_frames("2", 22050, 64, MIXED_WINDOWS)))
 
 
 # --- Encoder traits ------------------------------------------------------------------------------
