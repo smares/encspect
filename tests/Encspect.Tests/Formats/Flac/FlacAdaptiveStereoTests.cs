@@ -110,6 +110,17 @@ public class FlacAdaptiveStereoTests
         Assert.False(HasBreaks(LevelNode(Stream(Libflac, 44100, 4096, ChangeAtAnOrdinaryFrame, damage: 5))));
     }
 
+    // From 1.4.0 a left/side frame rules out levels 1 and 4, unless its header checksum fails.
+    [Theory]
+    [InlineData("reference libFLAC 1.4.2 20221022")]
+    [InlineData("reference libFLAC 1.5.0 20250211")]
+    public void ALeftSideFrameWithAFailingHeaderChecksumKeepsTheAdaptiveLevels(string vendor)
+    {
+        int[] frames = [Lr, Lr, Lr, Lr, Lr, Ls, Lr, Lr, Lr];
+        Assert.True(HasBreaks(LevelNode(Stream(vendor, 44100, 4096, frames))));
+        Assert.False(HasBreaks(LevelNode(Stream(vendor, 44100, 4096, frames, damage: 5))));
+    }
+
     [Fact]
     public void AGapAndAFirstSampleThatIsNotZeroEndTheRule()
     {

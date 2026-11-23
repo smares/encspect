@@ -110,6 +110,9 @@ internal sealed class State
     // elsewhere, so a left/side or side/right frame between two such frames, or a change between left/right and another assignment, is a break.
     public long AdaptiveBreaks { get; private set; }
 
+    // The left/side and side/right frames of a stereo stream whose header CRC-8 holds and that are neither cut nor unreadable: releases 1.4.0 and later never write them at levels 1 and 4.
+    public long SideFrames { get; private set; }
+
     private ChannelAssignment _previousAssignment;
     private bool _hasPreviousAssignment;
 
@@ -430,6 +433,11 @@ internal sealed class State
         }
 
         AssignmentFrames[(int)header.Assignment]++;
+        if (header.Assignment is ChannelAssignment.LeftSide or ChannelAssignment.SideRight && header.Channels == 2 && (status & (EntryStatus.Crc8Fails | EntryStatus.Cut | EntryStatus.Unreadable)) == 0)
+        {
+            SideFrames++;
+        }
+
         TrackAdaptive(header, first, followsGap || (status & (EntryStatus.Crc8Fails | EntryStatus.Cut | EntryStatus.Unreadable)) != 0);
         MinBlockSize = Math.Min(MinBlockSize, header.BlockSize);
         MaxBlockSize = Math.Max(MaxBlockSize, header.BlockSize);

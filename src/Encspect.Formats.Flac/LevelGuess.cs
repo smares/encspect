@@ -177,7 +177,7 @@ internal static partial class LevelGuess
             block = l => l.Block == Small ? 1152 : large;
             // The adaptive levels (-M) of 1.4.0 and later never write left/side or side/right (1.5.0 chooses between left/right and mid/side by the sum of the first
             // differences, 1.4.0 to 1.4.3 test only those two on every Nth frame); the earlier ones are as State.AdaptiveBreaks says.
-            adaptiveBreaks = version.CompareTo((1, 4, 0)) >= 0 ? s.AssignmentFrames[(int)ChannelAssignment.LeftSide] + s.AssignmentFrames[(int)ChannelAssignment.SideRight] : s.AdaptiveBreaks;
+            adaptiveBreaks = version.CompareTo((1, 4, 0)) >= 0 ? s.SideFrames : s.AdaptiveBreaks;
         }
         else if (FindFfmpeg(encoder, writer, s, out FfmpegRelease release, out isFromWriter) && FfmpegBlocks.TryGetValue(rate, out (int Small, int Large) sizes))
         {
