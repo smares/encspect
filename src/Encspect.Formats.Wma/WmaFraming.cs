@@ -13,8 +13,15 @@ internal sealed class PacketTable
 
     public int Count => _packets.Count;
 
-    public void Add(IReadOnlyList<ByteRange> ranges)
+    // A packet of no bytes (an empty block of a Matroska track) has no ranges; it is kept as one empty range at where it would start, so every
+    // packet has a first and a last range.
+    public void Add(IReadOnlyList<ByteRange> ranges, long emptyOffset)
     {
+        if (ranges.Count == 0)
+        {
+            ranges = [new ByteRange(emptyOffset, 0)];
+        }
+
         _packets.Add((_ranges.Count, ranges.Count));
         foreach (ByteRange range in ranges)
         {
