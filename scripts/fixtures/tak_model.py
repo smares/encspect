@@ -247,8 +247,10 @@ def manifest(data, extra=None):
     objects, audio = walk(data, start)
     result["objects"] = [dict(o) for o in objects]
     result["audio_start"] = audio
-    if audio is None or any(o.get("resync") for o in objects):
+    if audio is None:
         findings.append({"code": "tak.metadata-cut"})
+    elif any(o.get("resync") for o in objects):
+        findings.append({"code": "tak.object-size-invalid"})
     elif not objects or objects[-1]["id"] != 0:
         findings.append({"code": "tak.end-missing"})
     by_id = {}
