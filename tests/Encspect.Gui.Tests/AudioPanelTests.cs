@@ -505,7 +505,7 @@ public class AudioPanelTests
 
         Choose(window, "Spectrum");
         Assert.True(window.Model.Graphs.HasForms);
-        Assert.Equal(["Combined", "Per Channel", "Mid/Side"], window.Model.Graphs.Forms.Select(f => f.Title));
+        Assert.Equal(["Combined", "Per Channel", "Mid/Side", "Coherence"], window.Model.Graphs.Forms.Select(f => f.Title));
         Choose(window, "Spectrum", GraphForm.PerChannel);
         var spectrum = (SpectrumGraph)window.Graph.Graph!;
         Assert.Equal(6, spectrum.Lines);
@@ -536,7 +536,7 @@ public class AudioPanelTests
     {
         DetailWindow window = Open(Fixtures.Flac("external-16-stereo-l5.flac"));
         Choose(window, "Spectrum");
-        Assert.Equal(["Combined", "Per Channel", "Mid/Side"], window.Model.Graphs.Forms.Select(f => f.Title));
+        Assert.Equal(["Combined", "Per Channel", "Mid/Side", "Coherence"], window.Model.Graphs.Forms.Select(f => f.Title));
         Choose(window, "Spectrum", GraphForm.MidSide);
         var spectrum = (SpectrumGraph)window.Graph.Graph!;
 
@@ -552,6 +552,29 @@ public class AudioPanelTests
         window.Close();
     }
 
+    // Step 8: the Coherence form draws the coherence of each row and the share of frames as two lines from 0 to 100 %, with the start and the stated bound as lines.
+    [AvaloniaFact]
+    public void The_coherence_form_has_the_rows_and_the_shares_of_the_pair_as_percent()
+    {
+        DetailWindow window = Open(Fixtures.Flac("external-16-stereo-l5.flac"));
+        Choose(window, "Spectrum");
+        Choose(window, "Spectrum", GraphForm.Coherence);
+        var spectrum = (SpectrumGraph)window.Graph.Graph!;
+
+        Assert.Equal(2, spectrum.Lines);
+        Assert.Equal("%", spectrum.Unit);
+        Assert.Equal((0, 100), (spectrum.AxisBottom, spectrum.AxisTop));
+        Assert.Equal(["inter-channel coherence", "share of frames"], Enumerable.Range(0, 2).Select(spectrum.LineName));
+        Assert.True(spectrum.Line(0).Span.SequenceEqual(spectrum.Spectrum.Coherence!.Rows.Span));
+        Assert.True(spectrum.Line(1).Span.SequenceEqual(spectrum.Spectrum.Coherence!.Shares.Span));
+        Assert.Contains("Inter-channel coherence: ", spectrum.CoherenceText, StringComparison.Ordinal);
+        window.MouseMove(Window(window, window.Graph.PointOfCell(40)));
+        Assert.Contains("inter-channel coherence ", window.Graph.HoverText, StringComparison.Ordinal);
+        Assert.Contains(" %", window.Graph.HoverText, StringComparison.Ordinal);
+        Assert.Contains("Legend: inter-channel coherence, share of frames", AutomationProperties.GetHelpText(window.Graph), StringComparison.Ordinal);
+        window.Close();
+    }
+
     [AvaloniaFact]
     public void The_figures_name_the_mid_and_side_cutoffs_and_the_holes()
     {
@@ -560,6 +583,7 @@ public class AudioPanelTests
         string[] names = [.. window.Model.Graphs.Figures!.Select(l => l.Name)];
 
         Assert.Contains("Mid/Side", names);
+        Assert.Contains("Inter-Channel Coherence", names);
         Assert.Contains("Spectral Holes", names);
         window.Close();
     }
