@@ -12,8 +12,10 @@ public sealed class TakDecoder : IDecoder
 
     public string Id => Summary.CodecId;
 
-    // A frame of silence takes a few bytes for 16,384 samples of six channels (about 76,000 units a byte at its worst, DecoderChargeTests); derived in docs/design/decoders.md, "As built: the TAK decoder".
-    public long WorkPerInputByte => 1 << 17;
+    // The range of ALAC's and Monkey's Audio's. A frame of silence takes a few bytes for 16,384 samples of six channels and charges about 76,000 units a byte, which the fixed
+    // per-sample work of DecodeWork.ForSample (the floor the host checks) makes the least it can charge; such a stream is stopped past the 2^35 floor, as FLAC's are
+    // (docs/design/decoders.md, "As built: the TAK decoder").
+    public long WorkPerInputByte => 1 << 14;
 
     public IFrameDecoder Open(DecodeContext context)
     {
