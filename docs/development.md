@@ -500,7 +500,7 @@ What changed (each its own commit; `--json` and `--csv` of every fixture folder 
 
 ### macOS on pull requests
 
-- A pull request runs one macOS job, `build and test (macos-latest)`: the build, the GUI tests and the NativeAOT checks. Its seven test shards run only on a push to main, the nightly run and a manual run (macOS arm64 and, there, macOS x64).
+- A pull request runs one macOS job, `build and test (macos-latest)`: the build, the GUI tests and the NativeAOT checks. Its test shards (seven on a push, nine with the two timing shards in the nightly and a manual run) run only on a push to main, the nightly run and a manual run (macOS arm64 and, there, macOS x64).
 - **Why:** GitHub gives this repository about three macOS runners at a time, and a run started about eight macOS jobs. A queued macOS job that waits 35 to 40 minutes without a runner is dropped without a message (runner ID 0), so pull request runs went red three times on 2026-11-23 with every test that ran passing (runs 45219178695 and 45263806345, #392 and #393).
 - **Consequence:** a test that fails only on macOS shows on main's push run, not on the pull request. `scripts/ci_report.py` at the start of a session reports it.
 - The filter is `test_platforms` in `scripts/ci/changes.py`, the one place that builds the `test-matrix`; the `build-matrix` is unchanged. The `all checks passed` job needs no change: a platform left out of the matrix creates no job, so nothing waits for it.
