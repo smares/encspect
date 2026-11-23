@@ -262,6 +262,117 @@
                       "length": 30361
                     }
                   ]
+                },
+                {
+                  "name": "Residual Modes",
+                  "value": 256,
+                  "unit": "partitions",
+                  "offset": 0,
+                  "length": 30361,
+                  "children": [
+                    {
+                      "name": "Mode 11",
+                      "value": "1 partition (0.4%)",
+                      "offset": 0,
+                      "length": 30361
+                    },
+                    {
+                      "name": "Mode 12",
+                      "value": "13 partitions (5.1%)",
+                      "offset": 0,
+                      "length": 30361
+                    },
+                    {
+                      "name": "Mode 13",
+                      "value": "66 partitions (25.8%)",
+                      "offset": 0,
+                      "length": 30361
+                    },
+                    {
+                      "name": "Mode 14",
+                      "value": "34 partitions (13.3%)",
+                      "offset": 0,
+                      "length": 30361
+                    },
+                    {
+                      "name": "Mode 15",
+                      "value": "57 partitions (22.3%)",
+                      "offset": 0,
+                      "length": 30361
+                    },
+                    {
+                      "name": "Mode 16",
+                      "value": "10 partitions (3.9%)",
+                      "offset": 0,
+                      "length": 30361
+                    },
+                    {
+                      "name": "Mode 19",
+                      "value": "26 partitions (10.2%)",
+                      "offset": 0,
+                      "length": 30361
+                    },
+                    {
+                      "name": "Mode 20",
+                      "value": "13 partitions (5.1%)",
+                      "offset": 0,
+                      "length": 30361
+                    },
+                    {
+                      "name": "Mode 29",
+                      "value": "1 partition (0.4%)",
+                      "offset": 0,
+                      "length": 30361
+                    },
+                    {
+                      "name": "Mode 30",
+                      "value": "2 partitions (0.8%)",
+                      "offset": 0,
+                      "length": 30361
+                    },
+                    {
+                      "name": "Mode 35",
+                      "value": "10 partitions (3.9%)",
+                      "offset": 0,
+                      "length": 30361
+                    },
+                    {
+                      "name": "Mode 36",
+                      "value": "3 partitions (1.2%)",
+                      "offset": 0,
+                      "length": 30361
+                    },
+                    {
+                      "name": "Mode 37",
+                      "value": "3 partitions (1.2%)",
+                      "offset": 0,
+                      "length": 30361
+                    },
+                    {
+                      "name": "Mode 38",
+                      "value": "1 partition (0.4%)",
+                      "offset": 0,
+                      "length": 30361
+                    },
+                    {
+                      "name": "Mode 39",
+                      "value": "1 partition (0.4%)",
+                      "offset": 0,
+                      "length": 30361
+                    },
+                    {
+                      "name": "Mode 40",
+                      "value": "3 partitions (1.2%)",
+                      "offset": 0,
+                      "length": 30361
+                    },
+                    {
+                      "name": "Mode 41",
+                      "value": "12 partitions (4.7%)",
+                      "offset": 0,
+                      "length": 30361
+                    }
+                  ]
                 }
               ]
             },
@@ -1357,6 +1468,19 @@
             ]
           },
           {
+            "name": "Highest Predictor Order Over Time",
+            "unit": "order",
+            "axis": "seconds",
+            "concept": "prediction",
+            "quantity": "Highest Predictor Order",
+            "x": [
+              0
+            ],
+            "values": [
+              24
+            ]
+          },
+          {
             "name": "Highest Predictor Order",
             "unit": "order",
             "axis": "frameOffset",
@@ -1369,6 +1493,19 @@
             "values": [
               8,
               24
+            ]
+          },
+          {
+            "name": "Coefficient Precision Over Time",
+            "unit": "bits",
+            "axis": "seconds",
+            "concept": "prediction",
+            "quantity": "Coefficient Precision",
+            "x": [
+              0
+            ],
+            "values": [
+              10
             ]
           },
           {
@@ -1485,6 +1622,794 @@
               [
                 1,
                 4
+              ]
+            ]
+          },
+          {
+            "name": "Residual Modes",
+            "valueLabel": "partition",
+            "categories": [
+              {
+                "name": "Mode 0",
+                "count": 0
+              },
+              {
+                "name": "Mode 1",
+                "count": 0
+              },
+              {
+                "name": "Mode 2",
+                "count": 0
+              },
+              {
+                "name": "Mode 3",
+                "count": 0
+              },
+              {
+                "name": "Mode 4",
+                "count": 0
+              },
+              {
+                "name": "Mode 5",
+                "count": 0
+              },
+              {
+                "name": "Mode 6",
+                "count": 0
+              },
+              {
+                "name": "Mode 7",
+                "count": 0
+              },
+              {
+                "name": "Mode 8",
+                "count": 0
+              },
+              {
+                "name": "Mode 9",
+                "count": 0
+              },
+              {
+                "name": "Mode 10",
+                "count": 0
+              },
+              {
+                "name": "Mode 11",
+                "count": 1
+              },
+              {
+                "name": "Mode 12",
+                "count": 13
+              },
+              {
+                "name": "Mode 13",
+                "count": 66
+              },
+              {
+                "name": "Mode 14",
+                "count": 34
+              },
+              {
+                "name": "Mode 15",
+                "count": 57
+              },
+              {
+                "name": "Mode 16",
+                "count": 10
+              },
+              {
+                "name": "Mode 17",
+                "count": 0
+              },
+              {
+                "name": "Mode 18",
+                "count": 0
+              },
+              {
+                "name": "Mode 19",
+                "count": 26
+              },
+              {
+                "name": "Mode 20",
+                "count": 13
+              },
+              {
+                "name": "Mode 21",
+                "count": 0
+              },
+              {
+                "name": "Mode 22",
+                "count": 0
+              },
+              {
+                "name": "Mode 23",
+                "count": 0
+              },
+              {
+                "name": "Mode 24",
+                "count": 0
+              },
+              {
+                "name": "Mode 25",
+                "count": 0
+              },
+              {
+                "name": "Mode 26",
+                "count": 0
+              },
+              {
+                "name": "Mode 27",
+                "count": 0
+              },
+              {
+                "name": "Mode 28",
+                "count": 0
+              },
+              {
+                "name": "Mode 29",
+                "count": 1
+              },
+              {
+                "name": "Mode 30",
+                "count": 2
+              },
+              {
+                "name": "Mode 31",
+                "count": 0
+              },
+              {
+                "name": "Mode 32",
+                "count": 0
+              },
+              {
+                "name": "Mode 33",
+                "count": 0
+              },
+              {
+                "name": "Mode 34",
+                "count": 0
+              },
+              {
+                "name": "Mode 35",
+                "count": 10
+              },
+              {
+                "name": "Mode 36",
+                "count": 3
+              },
+              {
+                "name": "Mode 37",
+                "count": 3
+              },
+              {
+                "name": "Mode 38",
+                "count": 1
+              },
+              {
+                "name": "Mode 39",
+                "count": 1
+              },
+              {
+                "name": "Mode 40",
+                "count": 3
+              },
+              {
+                "name": "Mode 41",
+                "count": 12
+              },
+              {
+                "name": "Mode 42",
+                "count": 0
+              },
+              {
+                "name": "Mode 43",
+                "count": 0
+              },
+              {
+                "name": "Mode 44",
+                "count": 0
+              },
+              {
+                "name": "Mode 45",
+                "count": 0
+              },
+              {
+                "name": "Mode 46",
+                "count": 0
+              },
+              {
+                "name": "Mode 47",
+                "count": 0
+              },
+              {
+                "name": "Mode 48",
+                "count": 0
+              },
+              {
+                "name": "Mode 49",
+                "count": 0
+              },
+              {
+                "name": "Mode 50",
+                "count": 0
+              }
+            ],
+            "total": 256,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                128,
+                2
+              ]
+            ],
+            "runs": [
+              [
+                40,
+                1
+              ],
+              [
+                41,
+                4
+              ],
+              [
+                40,
+                1
+              ],
+              [
+                36,
+                1
+              ],
+              [
+                37,
+                1
+              ],
+              [
+                36,
+                1
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                15,
+                2
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                15,
+                2
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                15,
+                2
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                15,
+                2
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                15,
+                2
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                15,
+                2
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                15,
+                2
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                15,
+                19
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                15,
+                2
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                15,
+                2
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                15,
+                2
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                15,
+                2
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                15,
+                1
+              ],
+              [
+                29,
+                1
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                15,
+                1
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                15,
+                1
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                15,
+                1
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                15,
+                1
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                15,
+                4
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                15,
+                2
+              ],
+              [
+                13,
+                1
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                13,
+                3
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                13,
+                2
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                13,
+                1
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                13,
+                1
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                13,
+                1
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                13,
+                3
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                13,
+                2
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                13,
+                1
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                13,
+                1
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                13,
+                1
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                13,
+                6
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                13,
+                1
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                13,
+                1
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                13,
+                1
+              ],
+              [
+                14,
+                1
+              ],
+              [
+                13,
+                6
+              ],
+              [
+                20,
+                1
+              ],
+              [
+                13,
+                5
+              ],
+              [
+                12,
+                2
+              ],
+              [
+                13,
+                2
+              ],
+              [
+                12,
+                1
+              ],
+              [
+                13,
+                2
+              ],
+              [
+                12,
+                1
+              ],
+              [
+                13,
+                2
+              ],
+              [
+                12,
+                1
+              ],
+              [
+                13,
+                2
+              ],
+              [
+                12,
+                1
+              ],
+              [
+                13,
+                2
+              ],
+              [
+                11,
+                1
+              ],
+              [
+                13,
+                2
+              ],
+              [
+                12,
+                1
+              ],
+              [
+                13,
+                2
+              ],
+              [
+                12,
+                1
+              ],
+              [
+                13,
+                2
+              ],
+              [
+                12,
+                1
+              ],
+              [
+                13,
+                1
+              ],
+              [
+                35,
+                7
+              ],
+              [
+                39,
+                1
+              ],
+              [
+                41,
+                4
+              ],
+              [
+                38,
+                1
+              ],
+              [
+                35,
+                3
+              ],
+              [
+                16,
+                2
+              ],
+              [
+                15,
+                1
+              ],
+              [
+                16,
+                2
+              ],
+              [
+                15,
+                1
+              ],
+              [
+                16,
+                2
+              ],
+              [
+                15,
+                1
+              ],
+              [
+                16,
+                2
+              ],
+              [
+                15,
+                1
+              ],
+              [
+                16,
+                2
+              ],
+              [
+                15,
+                1
+              ],
+              [
+                30,
+                1
+              ],
+              [
+                12,
+                1
+              ],
+              [
+                13,
+                4
+              ],
+              [
+                12,
+                1
+              ],
+              [
+                13,
+                3
+              ],
+              [
+                12,
+                1
+              ],
+              [
+                13,
+                3
+              ],
+              [
+                12,
+                1
+              ],
+              [
+                13,
+                2
+              ],
+              [
+                37,
+                1
+              ],
+              [
+                36,
+                1
+              ],
+              [
+                37,
+                1
+              ],
+              [
+                40,
+                1
+              ],
+              [
+                41,
+                4
+              ],
+              [
+                30,
+                1
+              ],
+              [
+                19,
+                3
+              ],
+              [
+                20,
+                1
+              ],
+              [
+                19,
+                3
+              ],
+              [
+                20,
+                2
+              ],
+              [
+                19,
+                2
+              ],
+              [
+                20,
+                1
+              ],
+              [
+                19,
+                8
+              ],
+              [
+                20,
+                2
+              ],
+              [
+                19,
+                2
+              ],
+              [
+                20,
+                2
+              ],
+              [
+                19,
+                3
+              ],
+              [
+                20,
+                1
+              ],
+              [
+                19,
+                3
+              ],
+              [
+                20,
+                2
+              ],
+              [
+                19,
+                2
+              ],
+              [
+                20,
+                1
               ]
             ]
           }
