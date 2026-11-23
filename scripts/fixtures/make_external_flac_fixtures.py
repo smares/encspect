@@ -110,6 +110,12 @@ for level in range(13):
     FFMPEG_FIXTURES[f"ffmpeg-level-{level}-stereo"] = (LEVELS_STEREO, ["-c:a", "flac", "-compression_level", str(level)], "flac")
     FFMPEG_FIXTURES[f"ffmpeg-level-{level}-mono"] = (LEVELS_MONO, ["-c:a", "flac", "-compression_level", str(level)], "flac")
 
+# FFmpeg sizes its blocks by the sample rate, and the guess knows only the rates below, each with a file at a small-block level (0) and a large-block level (5), mono, of
+# ten large blocks; 44.1 kHz has the level fixtures above.
+for rate, large in {8000: 576, 22050: 2304, 48000: 4608, 96000: 8192, 192000: 16384}.items():
+    for level in (0, 5):
+        FFMPEG_FIXTURES[f"ffmpeg-level-{level}-mono-{rate}"] = (("levels", rate, 1, 16, large * 10), ["-c:a", "flac", "-compression_level", str(level)], "flac")
+
 # Frames of a higher level that do not use its extra room look like a lower level's, so the guess names every level the frames fit: the signal "music" (tones, then
 # noise) is such a case at libFLAC's level 6 and FFmpeg's levels 1 and 5.
 MUSIC_LEVELS = ("music", 44100, 2, 16, 44100)

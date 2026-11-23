@@ -355,7 +355,7 @@
             },
             {
               "name": "Compression Level",
-              "value": "3",
+              "value": "libFLAC 3 to 8",
               "offset": 0,
               "length": 52370,
               "children": [
@@ -385,13 +385,13 @@
                 },
                 {
                   "name": "Evidence",
-                  "value": "Level 3 sets a highest linear predictor order of 6, a highest partition order of 4 and a block size of 4,096 samples.",
+                  "value": "Levels 3 to 8 set differing highest linear predictor orders, differing highest partition orders and a block size of 4,096 samples.",
                   "offset": 0,
                   "length": 52370
                 },
                 {
                   "name": "Evidence",
-                  "value": "The highest linear predictor order of the frames equals what the named levels set, and so does the highest partition order, which at least a fifth of the subframes use.",
+                  "value": "The frames reach the highest linear predictor order and partition order of the lowest level they fit (the partition order in at least a fifth of the subframes).",
                   "offset": 0,
                   "length": 52370
                 }
@@ -600,7 +600,7 @@
                 },
                 {
                   "name": "Compression Level",
-                  "value": "3",
+                  "value": "libFLAC 3 to 8",
                   "offset": 0,
                   "length": 52370
                 },

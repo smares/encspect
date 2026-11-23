@@ -767,7 +767,7 @@
             },
             {
               "name": "Compression Level",
-              "value": "5 to 8",
+              "value": "libFLAC 5 to 8",
               "offset": 0,
               "length": 52648,
               "children": [
@@ -809,7 +809,7 @@
                 },
                 {
                   "name": "Evidence",
-                  "value": "The frames do not reach the highest linear predictor order and partition order of any level they fit (a fifth of the subframes must use the partition order), so every level they fit is named.",
+                  "value": "The frames do not reach the highest linear predictor order and partition order of the lowest level they fit (the partition order in at least a fifth of the subframes), so they say nothing against the levels above.",
                   "offset": 0,
                   "length": 52648
                 }
@@ -1039,7 +1039,7 @@
                 },
                 {
                   "name": "Compression Level",
-                  "value": "5 to 8",
+                  "value": "libFLAC 5 to 8",
                   "offset": 0,
                   "length": 52648
                 },

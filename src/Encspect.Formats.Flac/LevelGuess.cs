@@ -74,22 +74,15 @@ internal static partial class LevelGuess
         new(12, Large, 32, 8, true, IsTopPartitionRare: true),
     ];
 
-    // FFmpeg's block sizes by sample rate (small, large), as the files it writes show; a rate not listed was not run.
+    // FFmpeg's block sizes by sample rate (small, large), as the files it writes show; only the rates that have a committed fixture at level 0 and at level 5
+    // (tests/fixtures/flac/external-ffmpeg-level-<n>-mono-<rate>) are guessed.
     private static readonly Dictionary<int, (int Small, int Large)> FfmpegBlocks = new()
     {
         [8000] = (192, 576),
-        [11025] = (256, 1152),
-        [12000] = (256, 1152),
-        [16000] = (256, 1152),
         [22050] = (576, 2304),
-        [24000] = (576, 2304),
-        [32000] = (576, 2304),
         [44100] = (1152, 4608),
         [48000] = (1152, 4608),
-        [64000] = (1152, 4608),
-        [88200] = (2304, 8192),
         [96000] = (2304, 8192),
-        [176400] = (4608, 16384),
         [192000] = (4608, 16384),
     };
 
