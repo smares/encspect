@@ -9,9 +9,9 @@ internal sealed class CodingSeries
 {
     private static readonly Category[] StereoCodings =
     [
-        new("Left/right stereo", Explain.StatIndependent) { Topic = Topics.MidSide },
+        new("Left/right stereo", Explain.StatIndependent) { Topic = Topics.LeftSide },
         new("Left/side stereo", Explain.StatLeftSide) { Topic = Topics.LeftSide },
-        new("Side/right stereo", Explain.StatSideRight) { Topic = Topics.MidSide },
+        new("Side/right stereo", Explain.StatSideRight) { Topic = Topics.LeftSide },
         new("Mid/side stereo", Explain.StatMidSide) { Topic = Topics.MidSide },
         new("Scaled prediction", Explain.StatScaledPrediction) { Topic = Topics.Prediction },
         new("Filter prediction", Explain.StatFilterPrediction) { Topic = Topics.Prediction },
@@ -20,7 +20,7 @@ internal sealed class CodingSeries
     private static readonly Category[] Types =
     [
         new("Residuals only", Explain.StatResidualsOnly) { Topic = Topics.Prediction },
-        new("Predictor", Explain.StatPredictor) { Topic = Topics.Prediction },
+        new("Linear Predictor", Explain.StatPredictor) { Topic = Topics.Prediction },
     ];
 
     private static readonly Category[] Wasted =
