@@ -1362,7 +1362,7 @@ MIXED_WINDOWS = [([5, 8, 4], 0), ([8, 4, 6], 0), ([4, 11, 7], 1), ([None, 6, Non
 @fixture
 def mixed_intensity_mpeg1():
     f = Layer3Fixture(
-        "mixed-intensity-windows",
+        "intensity-mixed-windows",
         "MPEG-1 Layer III joint stereo at 44100 Hz with intensity stereo and mixed blocks in both channels: the right channel's nonzero lines end in a different short band "
         "in each of the three windows, so each window has its own intensity stereo bound (ISO/IEC 13818-3 2.4.3.2, 11172-3 2.4.3.4.9.3).",
         silent=False,
@@ -1374,7 +1374,7 @@ def mixed_intensity_mpeg1():
 @fixture
 def mixed_intensity_mpeg2():
     f = Layer3Fixture(
-        "mixed-intensity-windows-mpeg2",
+        "intensity-mixed-windows-mpeg2",
         "MPEG-2 Layer III joint stereo at 22050 Hz with intensity stereo and mixed blocks in both channels: the right channel's nonzero lines end in a different short band "
         "in each of the three windows, so each window has its own intensity stereo bound (ISO/IEC 13818-3 2.4.3.2).",
         silent=False,

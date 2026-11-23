@@ -65,6 +65,14 @@ EXPLAINED = {
     "mc-forbidden-values.mp2": {"mctoolamed": "dyn_cross_mode 15 of 3/2 and a nonzero tc_allocation with dematrix_procedure 3, which 13818-3 2.5.2.15 forbids, are in the fixture and read differently by the two decoders (each alone, in every frame of a variant, differs; the valid lfe_allocation 15 and a scalefactor index of 63 agree)"},
     "mc-second-stereo-crosstalk.mp2": {"mctoolamed": "tc_allocation 3, which 13818-3 2.5.2.15 leaves unassigned in 3/0 + 2/0, is in the fixture"},
     "mc-center-reserved-second-stereo.mp2": {"mctoolamed": "the reserved center value 2 (13818-3 2.5.2.13: not defined), which the analyzer reads as no center"},
+    "intensity-mixed-windows.mp3": {
+        "minimp3": "minimp3 (as of commit ea99364f) takes one intensity stereo bound for the three windows of a mixed block, where ISO/IEC 13818-3 2.4.3.2 (bullet 3) finds each window's bound individually; "
+                   "its output differs from the analyzer's by 0.031 of full scale, and FFmpeg 6.1.1 (8.9e-8), mpg123 1.32.5 (3.7e-8) and madplay 0.15.2b (4.1e-7) match the analyzer; "
+                   "a scratch build of minimp3 that takes the bound of each window (the long bands the highest of the three) is bit-identical to the analyzer's output"
+    },
+    "intensity-mixed-windows-mpeg2.mp3": {
+        "minimp3": "the same cause in an MPEG-2 frame (0.045 of full scale): FFmpeg 6.1.1 (2.7e-7) and madplay 0.15.2b (4.0e-7) match the analyzer",
+    },
     "external-plugger-pro-cbr.mp3": {"ffmpeg": R1},
     "external-plugger-cbr.mp3": {"ffmpeg": R1},
     "external-plugger-original.mp3": {"ffmpeg": R1},
