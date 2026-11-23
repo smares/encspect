@@ -23,6 +23,7 @@ internal static class CoherenceFinder
         left > 0 && right > 0 && 20.0 * ((crossRe * crossRe) + (crossIm * crossIm)) >= 17.0 * left * right;
 
     // The coherence in tenths of a percent, rounded to the nearest (halves up) from one IEEE division; NoPower where a channel has none.
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
     private static short Tenths(double crossRe, double crossIm, double left, double right)
     {
         if (!(left > 0) || !(right > 0))
@@ -34,6 +35,7 @@ internal static class CoherenceFinder
         return (short)Math.Clamp(Math.Floor((1000.0 * c) + 0.5), 0.0, 1000.0);
     }
 
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
     public static CoherenceFigures Find(
         CutoffGeometry geometry,
         int frames,
