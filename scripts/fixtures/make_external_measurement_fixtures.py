@@ -37,7 +37,10 @@ from make_measurement_fixtures import Lcg, pink
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 OUT = ROOT / "tests" / "fixtures" / "measurement"
 
-TOOLS = "LAME 3.100, TwoLAME 0.4.0, vorbis-tools 1.4.2 (oggenc, oggdec), FFmpeg 6.1.1-3ubuntu5 (aac, and the decoder of the MPEG audio files), opus-tools 0.2 with libopus 1.4 (opusenc, opusdec), flac 1.4.3 (Ubuntu 24.04)"
+TOOLS = "LAME 3.100, vorbis-tools 1.4.2 (oggenc, oggdec), FFmpeg 6.1.1-3ubuntu5 (aac), opus-tools 0.2 with libopus 1.4 (opusenc, opusdec), flac 1.4.3 (Ubuntu 24.04)"
+
+# The files of TwoLAME 0.4.0 name it too, and FFmpeg 6.1.1-3ubuntu5 as the decoder of its streams, which no other file used.
+TWOLAME_TOOLS = "TwoLAME 0.4.0, FFmpeg 6.1.1-3ubuntu5 (the decoder of the MPEG audio streams), flac 1.4.3 (Ubuntu 24.04)"
 SECONDS = 1
 
 # The stereo files (docs/design/spectral-analysis.md, Step 7 (c) and (d)): 2 s of a pink mid signal and a pink side signal 12 dB lower, from two generators, as left = mid + side
@@ -294,7 +297,7 @@ def write_manifest(name, entry):
     prefix = prefix_of(name)
     data = (OUT / f"{prefix}-{name}.flac").read_bytes()
     entry = dict(entry)
-    entry["tools"] = TOOLS
+    entry["tools"] = TOOLS if entry.get("encoder", {}).get("name") != "TwoLAME" else TWOLAME_TOOLS
     entry["length"] = len(data)
     entry["model"] = mm.measure(data)
     found = entry["model"]["cutoff"]["is_found"]

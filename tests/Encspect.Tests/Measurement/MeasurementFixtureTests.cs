@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Encspect.Core;
 using Encspect.Host;
+using Encspect.Host.Measurement;
 
 namespace Encspect.Tests.Measurement;
 
@@ -538,6 +539,29 @@ public class MeasurementFixtureTests
     // The cells are counts of tests of the model's rows against the analyzer's, which differ by about 1e-12 relative: a cell at the edge of a level of the
     // counters (a coherent signal's power can sit on a power of two) or of a threshold can fall on the other side, so a few percent of the cells may differ (3 %, 6 % for a pure tone)
     // (a pure tone at 8,000 Hz with 3.2 %); the range is exact where the cutoff and the bandwidth it comes from are (a signal that is not unspecified).
+    // The coherence fixtures are built to have a start (or none): found exactly where the construction says, and within one band of 1 kHz of it.
+    [Theory]
+    [InlineData("synthetic-coherence-side-12-db")]
+    [InlineData("synthetic-coherence-above-4000")]
+    [InlineData("synthetic-coherence-factor-384")]
+    [InlineData("synthetic-coherence-factor-1152")]
+    [InlineData("synthetic-coherence-sign-960")]
+    [InlineData("synthetic-coherence-delay-1-ms")]
+    public void TheCoherenceIsWhereTheSignalWasBuiltToHaveIt(string name)
+    {
+        JsonElement from = Manifest(name).GetProperty("construction").GetProperty("coherence_from_hz");
+        StreamMeasurements m = Analyze(name, new MeasureOptions()).Streams.Single().Measurements!;
+        CoherenceFigures coherence = m.Spectrum!.Coherence!;
+
+        Assert.Equal(from.ValueKind == JsonValueKind.Number, coherence.IsFound);
+        if (coherence.IsFound)
+        {
+            var geometry = new CutoffGeometry(m.SampleRate, m.Spectrum.FftSize);
+            int bandHertz = geometry.Hertz(geometry.BandRows);
+            Assert.InRange(coherence.FromFrequency, from.GetInt32() - bandHertz, from.GetInt32() + bandHertz);
+        }
+    }
+
     private static void AssertCoherence(JsonElement model, CoherenceFigures actual, JsonElement spectrum, string name)
     {
         Assert.Equal(model.GetProperty("left_channel").GetInt32(), actual.LeftChannel);

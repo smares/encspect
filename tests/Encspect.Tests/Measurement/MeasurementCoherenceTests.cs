@@ -130,6 +130,68 @@ public class MeasurementCoherenceTests
         Assert.Equal(expected, CoherenceFinder.IsCoherent(0, Math.Sqrt(squared * left * right), left, right));
     }
 
+    // Where every band is exactly at the threshold (17 and 20 are the powers, 17 the cross-spectrum: 20 x 17^2 = 17 x 17 x 20), every band is coherent and the walk reaches the start.
+    [Fact]
+    public void BandsExactlyAtTheThresholdAreCoherentAndTheWalkReachesTheStart()
+    {
+        var geometry = new CutoffGeometry(44100, 4096);
+        double[] left = Enumerable.Repeat(17.0, 512).ToArray();
+        double[] right = Enumerable.Repeat(20.0, 512).ToArray();
+        double[] cross = Enumerable.Repeat(17.0, 512).ToArray();
+
+        CoherenceFigures figures = CoherenceFinder.Find(geometry, 20, left, right, cross, new double[512], new CoherenceCounters(), new SpectralCutoff(), new SpectralBandwidth(), 0, 1);
+
+        Assert.Equal(CoherenceReason.ReachesStart, figures.Reason);
+        Assert.Equal(850, figures.TopBandTenths);
+        Assert.All(figures.Rows.ToArray(), v => Assert.Equal(850, v));
+    }
+
+    // A range that ends under the first full band (a cutoff's edge at row 10 where a band is 23 rows) has no band to test.
+    [Fact]
+    public void ARangeUnderTheFirstFullBandIsTooShort()
+    {
+        var geometry = new CutoffGeometry(44100, 4096);
+        double[] ones = Enumerable.Repeat(1.0, 512).ToArray();
+        var cutoff = new SpectralCutoff { IsFound = true, Frequency = geometry.Hertz(11) };
+
+        CoherenceFigures figures = CoherenceFinder.Find(geometry, 20, ones, ones, ones, new double[512], new CoherenceCounters(), cutoff, new SpectralBandwidth(), 0, 1);
+
+        Assert.Equal(CoherenceReason.TooShort, figures.Reason);
+    }
+
+    // A stretch of independent noise that a failed unit's checksum leaves out is not in the figure: the same as a stream that has a gap there instead.
+    [Fact]
+    public void AWithheldStretchOfIndependentNoiseChangesNothingBeyondTheGapItLeaves()
+    {
+        double[] shared = Noise(160_000, 7);
+        int[] left = MeasurementSignals.ToIntegers([.. shared.Zip(Noise(160_000, 8, 0.05), (a, b) => a + b)], 16);
+        int[] right = MeasurementSignals.ToIntegers([.. shared.Zip(Noise(160_000, 9, 0.05), (a, b) => (0.5 * a) + b)], 16);
+        int[] stray = MeasurementSignals.ToIntegers(Noise(40_000, 10), 16);
+
+        CoherenceFigures Run(bool withStray)
+        {
+            var measurer = new StreamMeasurer(new PcmFormat(Rate, 2, 16, SampleFormat.Integer), new MeasureOptions { Include = MeasurementKinds.Spectrum }, CancellationToken.None, _ => true);
+            void Write(long start, int count, int[] l, int[] r, int offset) => measurer.Write(new PcmBlock(start, count, 2, count, [.. l.AsSpan(offset, count), .. r.AsSpan(offset, count)]));
+            Write(0, 60_000, left, right, 0);
+            if (withStray)
+            {
+                measurer.WithholdWritten(60_000, 40_000);
+                Write(60_000, 40_000, stray, stray.Select(v => -v).ToArray(), 0);
+            }
+
+            Write(100_000, 60_000, left, right, 100_000);
+            return measurer.Result(MeasurementStatus.Complete, null).Spectrum!.Coherence!;
+        }
+
+        CoherenceFigures withStray = Run(true);
+        CoherenceFigures gap = Run(false);
+
+        Assert.True(withStray.Frames > 0 && withStray.Frames == gap.Frames);
+        Assert.True(withStray.Rows.Span.SequenceEqual(gap.Rows.Span));
+        Assert.True(withStray.Shares.Span.SequenceEqual(gap.Shares.Span));
+        Assert.Equal((gap.IsFound, gap.Reason, gap.FromFrequency), (withStray.IsFound, withStray.Reason, withStray.FromFrequency));
+    }
+
     private static StreamInfo StreamWith(params double[] bounds) => new()
     {
         Nodes = [],

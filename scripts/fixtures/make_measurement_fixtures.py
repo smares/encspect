@@ -412,14 +412,14 @@ def build():
         [quantize(white(n44, 95, -20.0), 16), quantize(white(n44, 96, -20.0), 16)], rate44, 16, {"cutoff_hz": None, "no_cutoff": True, "mid_and_side_alike": True})
 
     # Inter-channel coherence (docs/design/spectral-analysis.md, Step 8), 0.6 s (11 frames) of lines at the bin centers in each channel, each with TPDF dither of one least significant bit:
-    # a side 12 dB under the mid (the coherence of the two channels is 0.81 in every band: none found), independent low bands under 3.9 kHz with the same high signal above 4.1 kHz in both
+    # a side 12 dB under the mid (the coherence of the two channels is about 0.78, 79 % at the top band: none found), independent low bands under 3.9 kHz with the same high signal above 4.1 kHz in both
     # channels at half the level in the right (coherence 1: a run from about 4 kHz), the same with the right's factor alternating between 1 and a half every 384 samples (a Layer II scale
     # factor part) and every 1,152 (a Layer III granule pair), with its sign flipping every 960 samples (the sign that cancels the cross-spectrum: none found), and the right channel the
     # left delayed by 1 ms (the phase turns once round a kilohertz: none found).
     short = int(rate44 * 0.6)
     mid_c, side_c = lines(rate44, 20000, -20.0, 111, short), lines(rate44, 20000, -32.0, 112, short)
     add("coherence-side-12-db", "Stereo, 0.6 s: left is mid + side and right mid - side, the mid signal lines at the bin centers from 40 Hz to 20 kHz (-20 dBFS RMS) and the side signal lines 12 dB lower, "
-        "each channel with TPDF dither of one least significant bit: the coherence of the pair is 0.81 in every band, so no inter-channel coherence is found.",
+        "each channel with TPDF dither of one least significant bit: the coherence of the pair is about 0.78 (79 % at the top band), so no inter-channel coherence is found.",
         [quantize([a + b for a, b in zip(mid_c, side_c)], 16, dither_seed=113), quantize([a - b for a, b in zip(mid_c, side_c)], 16, dither_seed=114)], rate44, 16,
         {"cutoff_hz": None, "unspecified": True, "coherence_from_hz": None})
     low_l, low_r = lines(rate44, 3900, -20.0, 115, short), lines(rate44, 3900, -20.0, 116, short)
