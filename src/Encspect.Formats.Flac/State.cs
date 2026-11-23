@@ -145,6 +145,13 @@ internal sealed class State
 
     public int MinBlockSize { get; private set; } = int.MaxValue;
 
+    // The first frame's block size, how many frames differ from it, and whether the latest does: a stream of one block size has at most its last frame different.
+    public int FirstBlockSize { get; private set; }
+
+    public long DifferentBlockFrames { get; private set; }
+
+    public bool IsLatestBlockDifferent { get; private set; }
+
     public int MaxBlockSize { get; private set; }
 
     public int FirstChannels { get; private set; }
@@ -286,6 +293,17 @@ internal sealed class State
         }
 
         NextSample = first + header.BlockSize;
+        if (!_hasFrame)
+        {
+            FirstBlockSize = header.BlockSize;
+        }
+
+        IsLatestBlockDifferent = header.BlockSize != FirstBlockSize;
+        if (IsLatestBlockDifferent)
+        {
+            DifferentBlockFrames++;
+        }
+
         _hasFrame = true;
 
         CheckAgainstStreamInfo(header, coded, offset, index, isCut);

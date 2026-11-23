@@ -45,7 +45,7 @@ public class TakFindingTests
         Assert.Equal("TAK 2.3.3", stream.Encoder);
         Assert.Equal(Confidence.High, stream.EncoderConfidence);
         Assert.True(stream.Verification!.IsVerified);
-        Assert.Equal(DecodeStatus.NoDecoder, stream.Verification.Decoding);
+        Assert.Equal(DecodeStatus.NotRequested, stream.Verification.Decoding);
         ChecksumTally header = stream.Verification.Checksums.Single(c => c.Name == "metadata CRC-24");
         Assert.Equal((4, 4, 0), (header.Stored, header.Checked, header.Failed));
         // Both frames are walked and compared: the first an info frame, the last flagged as such, 5512 and 1000 samples.

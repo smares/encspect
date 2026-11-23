@@ -22,6 +22,8 @@ import minimp3_coded  # noqa: E402
 # Files whose frames minimp3 reads differently from the specification.
 EXPLAINED = {
     "side-info-long-blocks.mp3": "the private bits are 111, which minimp3 reads as scfsi bits of the first granule, so its Huffman data of the second channel start 35 bits early",
+    "intensity-mixed-windows.mp3": "the right channel's windows of a mixed block end in different short bands; the analyzer takes the intensity stereo bound per window as ISO/IEC 11172-3 2.4.3.4.9.3 and ISO/IEC 13818-3 2.4.3.2 require, minimp3 takes one bound for the block",
+    "intensity-mixed-windows-mpeg2.mp3": "the right channel's windows of a mixed block end in different short bands; the analyzer takes the intensity stereo bound per window as ISO/IEC 11172-3 2.4.3.4.9.3 and ISO/IEC 13818-3 2.4.3.2 require, minimp3 takes one bound for the block",
 }
 
 FIXTURES = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "mpeg-audio"

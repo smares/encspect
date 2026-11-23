@@ -41,6 +41,7 @@ import faac_tool
 import ffmpeg_sources
 import fhg_acm_tool
 import fhg_tool
+import flac_tool
 import gogo_tool
 import hz8_mp3_tool
 import gpac_tool
@@ -143,6 +144,7 @@ def sources():
     yield from libtta_tool.sources()
     yield from optimfrog_tool.sources()
     yield from tak_tool.sources()
+    yield from flac_tool.sources()
     yield from make_lossywav_fixtures.sources()
     yield from lossywav_tool.sources()
     yield asf_specs.NAME, asf_specs.SHA256, asf_specs.ADDRESSES

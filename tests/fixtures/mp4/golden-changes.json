@@ -1,82 +1,47 @@
 {
-  "goldens": [
-    "tests/fixtures/mp4/external-ffmpeg-truehd-51-in-mp4.report.json"
-  ],
-  "added": [
-    {
-      "scope": "stream",
-      "key": "categorySeries"
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "Dolby TrueHD",
-        "Statistics"
-      ],
-      "name": "Stereo Coding"
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "Dolby TrueHD",
-        "Statistics",
-        "Stereo Coding"
-      ],
-      "name": "Left/right stereo"
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "Dolby TrueHD",
-        "Statistics",
-        "Stereo Coding"
-      ],
-      "name": "Left/side stereo"
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "Dolby TrueHD",
-        "Statistics",
-        "Stereo Coding"
-      ],
-      "name": "Side/right stereo"
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "Dolby TrueHD",
-        "Statistics",
-        "Stereo Coding"
-      ],
-      "name": "Mid/side stereo"
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "MP4",
-        "mdat",
-        "Track 1 Samples",
-        "Dolby TrueHD",
-        "Statistics",
-        "Stereo Coding"
-      ],
-      "name": "Weighted mix"
-    }
-  ]
+ "goldens": [
+  "tests/fixtures/mp4/external-ffmpeg-flac-in-mp4.report.json"
+ ],
+ "added": [
+  {
+   "scope": "node",
+   "parent": [
+    "MP4",
+    "mdat",
+    "Track 1 Samples"
+   ],
+   "name": "Compression Level"
+  },
+  {
+   "scope": "node",
+   "parent": [
+    "MP4",
+    "mdat",
+    "Track 1 Samples",
+    "Statistics"
+   ],
+   "name": "Compression Level"
+  },
+  {
+   "scope": "node",
+   "parent": [
+    "MP4",
+    "mdat",
+    "Track 1 Samples",
+    "Compression Level"
+   ],
+   "name": "Confidence"
+  },
+  {
+   "scope": "node",
+   "parent": [
+    "MP4",
+    "mdat",
+    "Track 1 Samples",
+    "Compression Level"
+   ],
+   "name": "Evidence",
+   "last": 8
+  }
+ ]
 }

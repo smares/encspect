@@ -252,6 +252,11 @@ public class SamplesDefinitionTests
         ["truehd/external-truehd-stereo-48k-24-odd-length.decode.json"] = Reasons.truehd,
         #endregion
 
+        #region TAK
+        ["tak/built-cut-metadata.decode.json"] = Reasons.tak,
+        ["tak/built-object-past-data.decode.json"] = Reasons.tak,
+        #endregion
+
         #region WavPack
         ["wavpack/built-block-size-too-large.decode.json"] = Reasons.wavpack,
         ["wavpack/built-channel-info-after-bad-block.decode.json"] = Reasons.wavpack,
@@ -289,6 +294,9 @@ public class SamplesDefinitionTests
 
         public const string tta =
             "the frames of the hand-built files hold bytes in place of coded samples, so the decoder refuses the frames the parser reads (their CRC-32s hold) and decodes none, or only the ones that happen to read";
+
+        public const string tak =
+            "the metadata ends inside an object before any frame, so no unit is in the file: the samples are those the stream info states, which are missing samples and not declared ones (samples-definition.md, \"Missing samples\" and \"Stated samples\"), and the decoder has no frame to decode";
 
         public const string truehd =
             "the decoder refuses units that the parser reads without flagging them (a change of the stream's parameters, an odd-length end trimmed from the samples)";

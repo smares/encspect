@@ -1,7 +1,7 @@
 ---
 id: encoder-detection
 title: Encoder detection and confidence
-related: writer-detection, wavpack-blocks, wavpack-sub-blocks, lame-tag, vbri-header, ancillary-data, id3v2, aac-raw-data-blocks, usac, sbr, vorbis-comments, musepack-sv8-packets, asf-metadata
+related: flac-compression-levels, writer-detection, wavpack-blocks, wavpack-sub-blocks, lame-tag, vbri-header, ancillary-data, id3v2, aac-raw-data-blocks, usac, sbr, vorbis-comments, musepack-sv8-packets, asf-metadata
 references: mp3guessenc; EncSpot; LAME tag specification (Gabriel Bouvigne); lib/info.c of libvorbis and aoTuV
 ---
 

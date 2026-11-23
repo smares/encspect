@@ -46,7 +46,7 @@ internal static class TakBuilder
     }
 
     // The stream info's bits. speakers adds the extension with a speaker assignment (one value per channel); validBits adds it without one.
-    public static byte[] StreamInfoBits(int codec = 2, int profile = 2, int sizeType = 1, long samples = 6512, int rate = 44100, int bits = 16, int channels = 2, int dataType = 0,
+    public static byte[] StreamInfoBits(int codec = 3, int profile = 2, int sizeType = 1, long samples = 6512, int rate = 44100, int bits = 16, int channels = 2, int dataType = 0,
         int[]? speakers = null, int? validBits = null, int? bitsCode = null)
     {
         BitWriter w = new BitWriter().Put(codec, 6).Put(profile, 4).Put(sizeType, 4).Put(samples & 0xFFFFFF, 24).Put(samples >> 24, 11).Put(dataType, 3).Put(rate - 6000, 18)
@@ -74,7 +74,7 @@ internal static class TakBuilder
         return [.. BitConverter.GetBytes(header), .. data, .. tail];
     }
 
-    public static byte[] StreamInfo(int codec = 2, int profile = 2, int sizeType = 1, long samples = 6512, int rate = 44100, int bits = 16, int channels = 2, int dataType = 0,
+    public static byte[] StreamInfo(int codec = 3, int profile = 2, int sizeType = 1, long samples = 6512, int rate = 44100, int bits = 16, int channels = 2, int dataType = 0,
         int[]? speakers = null, int? validBits = null, int? bitsCode = null, uint? crc = null) =>
         Object(1, StreamInfoBits(codec, profile, sizeType, samples, rate, bits, channels, dataType, speakers, validBits, bitsCode), crc: crc);
 

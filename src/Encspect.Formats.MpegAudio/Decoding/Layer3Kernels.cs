@@ -134,12 +134,15 @@ internal static class Layer3Kernels
         }
     }
 
-    // The highest band of each window (index modulo 3) in which the right channel has a nonzero pair (minimp3's L3_stereo_top_band). The parser's Layer3Walker.IntensityStart
-    // applies the same rule to the quantized values to report the intensity stereo bound; keep the two together.
+    // The highest band in which the right channel has a nonzero pair (minimp3's L3_stereo_top_band), for each window of a short block, mixed or not, as ISO/IEC 13818-3 2.4.3.2
+    // asks for and minimp3 does not do in a mixed block. The short bands come three at a time, one per window, after the long ones; a window's bound is its own last nonzero
+    // short band or the last nonzero long band, whichever is higher. The long bands of a mixed block have one bound, the highest of the three (BoundOf). The parser's
+    // Layer3Walker.IntensityStart applies the same rule to the quantized values to report the intensity stereo bound; keep the two together.
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static void TopBands(ReadOnlySpan<float> right, ReadOnlySpan<byte> widths, int bandCount, Span<int> maxBand)
+    private static void TopBands(ReadOnlySpan<float> right, ReadOnlySpan<byte> widths, int longBands, int bandCount, Span<int> maxBand)
     {
         maxBand[0] = maxBand[1] = maxBand[2] = -1;
+        int longTop = -1;
         int position = 0;
         for (int i = 0; i < bandCount; i++)
         {
@@ -147,14 +150,30 @@ internal static class Layer3Kernels
             {
                 if (right[position + k] != 0 || right[position + k + 1] != 0)
                 {
-                    maxBand[i % 3] = i;
+                    if (i < longBands)
+                    {
+                        longTop = i;
+                    }
+                    else
+                    {
+                        maxBand[(i - longBands) % 3] = i;
+                    }
+
                     break;
                 }
             }
 
             position += widths[i];
         }
+
+        for (int w = 0; w < 3; w++)
+        {
+            maxBand[w] = Math.Max(maxBand[w], longTop);
+        }
     }
+
+    // The last band of band i's window that the right channel codes: the long bands answer to the highest of the windows.
+    private static int BoundOf(ReadOnlySpan<int> maxBand, int longBands, int i) => i < longBands ? Math.Max(Math.Max(maxBand[0], maxBand[1]), maxBand[2]) : maxBand[(i - longBands) % 3];
 
     // Intensity stereo (and mid/side stereo in the bands below the intensity ones), minimp3's L3_intensity_stereo and L3_stereo_process: left and right hold the
     // channels' requantized lines; positions are the right channel's intensity positions (255 where illegal), which the call completes for the top bands.
@@ -165,18 +184,13 @@ internal static class Layer3Kernels
         Span<int> maxBand = stackalloc int[3];
         int bandCount = left.LongBandCount + left.ShortBandCount;
         int maxBlocks = left.ShortBandCount != 0 ? 3 : 1;
-        TopBands(rightLines, widths, bandCount, maxBand);
-        if (left.LongBandCount != 0)
-        {
-            maxBand[0] = maxBand[1] = maxBand[2] = Math.Max(Math.Max(maxBand[0], maxBand[1]), maxBand[2]);
-        }
-
+        TopBands(rightLines, widths, left.LongBandCount, bandCount, maxBand);
         for (int i = 0; i < maxBlocks; i++)
         {
             int defaultPosition = header.IsMpeg1 ? 3 : 0;
             int top = bandCount - maxBlocks + i;
             int previous = top - maxBlocks;
-            positions[top] = maxBand[i] >= previous ? (byte)defaultPosition : positions[previous];
+            positions[top] = BoundOf(maxBand, left.LongBandCount, top) >= previous ? (byte)defaultPosition : positions[previous];
         }
 
         int mpeg2Shift = right.ScalefacCompress & 1;
@@ -186,7 +200,7 @@ internal static class Layer3Kernels
         {
             uint position = positions[i];
             int width = widths[i];
-            if (i > maxBand[i % 3] && position < maxPosition)
+            if (i > BoundOf(maxBand, left.LongBandCount, i) && position < maxPosition)
             {
                 float kl;
                 float kr;

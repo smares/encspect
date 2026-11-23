@@ -245,6 +245,39 @@ public class MpegWalkTests
         Assert.Equal(longLines, Layer3Walker.IntensityStart(new MpegHeader(0xFFFB1050), granule, values, new byte[40]));
     }
 
+    // ISO/IEC 13818-3 2.4.3.2 (bullet 3): the bound of a short block is found for each window, in a mixed block too; the long bands have the highest of the windows.
+    [Fact]
+    public void IntensityInMixedBlocksHasABoundForEachWindow()
+    {
+        // 44,100 Hz mixed row: long bands 0 to 7 (36 lines), then short bands 3 to 12 as bands 8 to 37, band k's window w at index 8 + 3 * (k - 3) + w.
+        var granule = new GranuleSyntax { Bands = BandKind.Mixed, BandRow = 5, LongBandCount = 8, ShortBandCount = 30 };
+        ReadOnlySpan<byte> widths = Layer3Syntax.BandWidths(granule);
+        int[] starts = new int[39];
+        for (int i = 0; i < 38; i++)
+        {
+            starts[i + 1] = starts[i] + widths[i];
+        }
+
+        var header = new MpegHeader(0xFFFB1050);
+        int[] values = new int[576];
+
+        // Window 0 codes up to short band 5 (index 14), window 1 up to short band 8 (index 24), window 2 up to short band 4 (index 13); the long part has a pair in band 0.
+        values[0] = 1;
+        values[starts[14]] = 1;
+        values[starts[24]] = 1;
+        values[starts[13]] = 1;
+
+        // Band 5 of window 2 (index 16) is the first intensity band, whose triple starts at band 5's first window; one bound for all windows (band 8 of window 1) would
+        // start at the triple of band 8.
+        Assert.Equal(starts[14], Layer3Walker.IntensityStart(header, granule, values, new byte[40]));
+
+        // A window with no nonzero short band has its bound in the long part: long band 5 and window 1 up to short band 4 (index 12) leave window 0's band 3 (index 8) free.
+        values = new int[576];
+        values[starts[5]] = 1;
+        values[starts[12]] = 1;
+        Assert.Equal(starts[8], Layer3Walker.IntensityStart(header, granule, values, new byte[40]));
+    }
+
     [Fact]
     public void AnIllegalMpeg2PositionIsSkippedAsInMpeg1()
     {
