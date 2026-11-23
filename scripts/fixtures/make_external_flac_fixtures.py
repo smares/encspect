@@ -118,7 +118,7 @@ for rate, large in {8000: 576, 22050: 2304, 48000: 4608, 96000: 8192, 192000: 16
 
 # Frames of a higher level that do not use its extra room look like a lower level's, so the guess names every level the frames fit. Two committed measurement signals,
 # decoded and coded again, show it: libFLAC 1.4.3's level 6 of the mono lines signal never uses partition order 6 (the earlier rule named "5" alone, at medium
-# confidence), and FFmpeg 6.1.1's level 5 of the 24-bit stereo low-bits signal reaches order 8 and partition order 7 only (named "4" alone). name: (source, tool, arguments).
+# confidence), and FFmpeg 6.1.1's level 5 of the 24-bit stereo low-bits signal reaches order 8 and partition order 3 only (named "4" alone). name: (source, tool, arguments).
 RECODES = {
     "level-6-from-lines-slope-mono": ("measurement/synthetic-lines-slope-15000-17000.flac", "flac", ["-6"]),
     "ffmpeg-level-5-from-lowbits-mixed-stereo": ("measurement/synthetic-lowbits-mixed-16-24.flac", "ffmpeg", ["-c:a", "flac", "-compression_level", "5"]),
