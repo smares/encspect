@@ -406,16 +406,26 @@ internal sealed class FrameDecoder : IFrameDecoder
             boundaries[i] = (int)bits.Read(6);
         }
 
+        // The subframes are the boundaries' multiples of the unit and the rest, each at least 1 sample (section 4): checked before any is read, so that none runs past the channel.
+        for (int i = 1; i < count; i++)
+        {
+            if (boundaries[i] <= boundaries[i - 1])
+            {
+                throw new InvalidDataException($"A subframe of a channel has {(boundaries[i] - boundaries[i - 1]) * _unit} samples, and at least 1 is needed");
+            }
+        }
+
+        int rest = n - 1 - (boundaries[count - 1] * _unit);
+        if (rest < 1)
+        {
+            throw new InvalidDataException($"The last subframe of a channel has {rest} samples, and at least 1 is needed");
+        }
+
         int position = 1;
         int previous = 0;
         for (int i = 0; i < count; i++)
         {
-            int length = i < count - 1 ? (boundaries[i + 1] - boundaries[i]) * _unit : n - 1 - (boundaries[i] * _unit);
-            if (length < 1 || (i < count - 1 && boundaries[i + 1] <= boundaries[i]))
-            {
-                throw new InvalidDataException($"A subframe of a channel has {length} samples, and at least 1 is needed");
-            }
-
+            int length = i < count - 1 ? (boundaries[i + 1] - boundaries[i]) * _unit : rest;
             ReadSubframe(ref bits, x, position, length, i == 0, previous);
             position += length;
             previous = length;

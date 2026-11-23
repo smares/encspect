@@ -25,6 +25,7 @@ import re
 import shutil
 import sys
 
+import tak_decoded
 import tak_model
 import tak_tool
 
@@ -153,6 +154,8 @@ def main():
         written += 1
     skipped = [c["name"] for c in encodes["cases"] if c["status"] != "ok"]
     print(f"Imported {written} files into {OUT}" + (f"; cases without a file: {', '.join(skipped)}" if skipped else ""))
+    # What the decoder must give back, from the signal each file was encoded from (tak_decoded.py).
+    tak_decoded.update()
 
 
 if __name__ == "__main__":
