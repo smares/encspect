@@ -917,9 +917,9 @@ public class MeasurementDeterminismTests
     private const string CountersHash = "4f5426dc2722f4934c96217ecbb4d6353b3774a7101d98267310015205a46751|6bbb4daa9b23cc7b5e00c5b611f94fe3e9bb463c35d133bade76c969902e0c26";
     private const string LevelsHash = "a49171a81aeb8ad635eab6462075ed9b9cb95c07c78541b77b7ac741119e0a80";
     private const string LowBitsPerSpanHash = "ea09e332c5c4afca329c637317fa945f31ffb6e645748a782a29bfb7175e3018";
-    private const string KWeightingHash = "f6048a6ea38eab1d0c9da05b4f9590e11f6090e6ad1942b442b98b24b94e44f6";
-    private const string LoudnessHash = "436f003bd4cbd71d3728431622583423b26e3917f29dd4544a7be3bf929f9b12";
-    private const string LoudnessRawHashes = "fbe68095d1d1bf5f4db95b77e1d2f3449f85cff5b687dcf8812f47d63fbfd44e|f82afd7a3245c2a833c86bd213284821b58ad0b680534ee7175b6cc3ac0c7eb7";
+    private const string KWeightingHash = "61b0554b0117989a7109f4ebfb3cdf59fc5641706e982b853c8beefbfe435e86";
+    private const string LoudnessHash = "08f2e82b486b357428d23716be0f5590f8e7c32c1a61734be5f9847a48193011";
+    private const string LoudnessRawHashes = "fbe68095d1d1bf5f4db95b77e1d2f3449f85cff5b687dcf8812f47d63fbfd44e|7eb78386c879b2200ad48f423be1252dd3c2e807b9de6e15e45cc02aee7eb87c";
     private const string TruePeakHash = "0461b026bc6590cab1f7574b47c344005fa715234296d6fc59f01b111b7c612f";
     private const string MathHash = "6654c27b9dc93be9cabd9f70dad935929bf08d83c724028dff4dd2334949a8c1";
 }

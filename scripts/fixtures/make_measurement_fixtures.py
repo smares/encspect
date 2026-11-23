@@ -793,13 +793,13 @@ def add_loudness():
     # bin whole is wrong by up to -10 log10(1 - p) LU, here by 2 LU). 24-bit, so that two tones 0.02 % apart in amplitude are still different codes: 2 s at
     # -6 dBFS, then 4 s each at amplitudes 580,220 x (1 + 1e-4) and x (1 - 1e-4) of 2^23 codes, 0.5 s of silence between. 580,220 was found by bisection on
     # the gate: the gate (10 LU below the mean of the 105 blocks above -70 LUFS) lies between the two quiet tones' blocks, 4258.389 and 4258.563 in
-    # floor(1000 log10(z) + 6930.9) with the gate at 4258.468: one bin. 56 blocks pass (the loud tone's and the first quiet tone's): -14.9 LUFS; all 105
-    # would read -16.9 and the loud tone alone -10.6.
+    # floor(1000 log10(z) + 6930.9) with the gate at 4258.468: one bin. 56 blocks pass (the loud tone's and the first quiet tone's): -15.1 LUFS; all 105
+    # would read about -17.1 and the loud tone alone about -10.8 (0.2 LU lower than before the K-weighting at 8 kHz kept the 48 kHz passband gain, decision 13).
     def quiet(amplitude, seconds):
         return [round(amplitude * math.sin(2 * math.pi * low * i / r8)) for i in range(int(seconds * r8))]
     straddle = quantize(tone(r8, 2.0, -6.0, low), 24) + [0] * (r8 // 2) + quiet(580220 * (1 + 1e-4), 4.0) + [0] * (r8 // 2) + quiet(580220 * (1 - 1e-4), 4.0)
-    add("loudness-gate-straddle-8000", "A mono sine of 125 Hz at 8 kHz, 24-bit: 2 s at -6 dBFS, then two quiet tones of 4 s whose blocks straddle the relative gate within one 0.01 LU step (amplitudes differing by 0.02 %): only the first quiet tone passes the gate, -14.9 LUFS.",
-        [straddle], r8, 24, dict(unspecified, loudness={"straddle": True, "integrated": -14.9, "tolerance": 0.1, "source": "BS.1770-5 equation 7, each block on its own"}))
+    add("loudness-gate-straddle-8000", "A mono sine of 125 Hz at 8 kHz, 24-bit: 2 s at -6 dBFS, then two quiet tones of 4 s whose blocks straddle the relative gate within one 0.01 LU step (amplitudes differing by 0.02 %): only the first quiet tone passes the gate, -15.1 LUFS.",
+        [straddle], r8, 24, dict(unspecified, loudness={"straddle": True, "integrated": -15.1, "tolerance": 0.1, "source": "BS.1770-5 equation 7, each block on its own"}))
 
     # Back channels: 7.1 has a rear pair (weight 1.00) beside its side pair, 5.1 a surround pair (1.41); the same tone in the back pair reads 1.49 dB louder in 5.1.
     back = quantize(tone(r8, 0.8, -20.0, low), 16)
