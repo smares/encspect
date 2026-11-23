@@ -98,7 +98,8 @@ def expected_codec_of(track, data=b""):
         tag = acm_tag(track, data)
         if tag == 0x0001:
             bits = int.from_bytes(data[track["private"][0] + 14:track["private"][0] + 16], "little")
-            return pcm_name({"codec": "A_PCM/INT/LIT", "bits": bits})
+            # The container is wBitsPerSample rounded up to whole bytes, as WAV reads it: ffprobe names 20-bit PCM pcm_s24le.
+            return pcm_name({"codec": "A_PCM/INT/LIT", "bits": (bits + 7) // 8 * 8})
         return ACM_FFPROBE.get(tag)
     return pcm_name(track) if track["codec"].startswith("A_PCM/") else FFPROBE_CODECS.get(track["codec"])
 MEDIAINFO_FORMATS = {
