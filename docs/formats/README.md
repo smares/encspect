@@ -44,9 +44,9 @@ Which container hands which codec to its codec parser, and which codecs are deco
 | Codec | MP4 | Matroska | Ogg | ASF | WAV, Wave64, BW64 | Own file | Decoded |
 |---|---|---|---|---|---|---|---|
 | AAC | routed | routed | not planned | not planned | routed, as the ADTS frames of IEC 61937 bursts | ADTS, ADIF | no |
-| MPEG audio | routed, as packets, whatever the number of stretches | routed (`A_MPEG/L1`, `L2`, `L3`) | not planned | routed (format tag 0x0055) | routed, by the format tag or the sub-format GUID, and as IEC 61937 bursts | yes | yes (measured) |
-| AC-3, E-AC-3 | routed | routed | not planned | routed (AC-3, format tag 0x2000; E-AC-3 not planned) | routed, by the format tag or the sub-format GUID, and as IEC 61937 bursts | yes | yes (measured) |
-| DTS | routed | routed | not planned | not planned | routed, by the format tag, as a stream in 16-bit stereo PCM samples, and as IEC 61937 bursts | yes, and `.dtshd` | no |
+| MPEG audio | routed, as packets, whatever the number of stretches | routed (`A_MPEG/L1`, `L2`, `L3`, and `A_MS/ACM` with format tag 0x0050 or 0x0055) | not planned | routed (format tag 0x0055) | routed, by the format tag or the sub-format GUID, and as IEC 61937 bursts | yes | yes (measured) |
+| AC-3, E-AC-3 | routed | routed (also `A_MS/ACM`, by the format tag 0x2000 or the sub-format GUID) | not planned | routed (AC-3, format tag 0x2000; E-AC-3 not planned) | routed, by the format tag or the sub-format GUID, and as IEC 61937 bursts | yes | yes (measured) |
+| DTS | routed | routed (also `A_MS/ACM`, by the format tag 0x0008 or 0x2001) | not planned | not planned | routed, by the format tag, as a stream in 16-bit stereo PCM samples, and as IEC 61937 bursts | yes, and `.dtshd` | no |
 | Vorbis | not planned | routed | routed | not planned | not planned | no | yes (measured) |
 | Opus | routed | routed | routed | not planned | not planned | no | yes (measured) |
 | Speex | not planned | not planned | routed | not planned | not planned | no | yes (measured) |
@@ -57,13 +57,13 @@ Which container hands which codec to its codec parser, and which codecs are deco
 | OptimFROG | not planned | not planned | not planned | not planned | not planned | yes | no |
 | TAK | not planned | not planned | not planned | not planned | not planned | yes | no |
 | Dolby TrueHD, MLP | routed (`mlpa`; an unprotected track) | routed | not planned | not planned | planned after 0.5 as IEC 61937 MAT bursts ([plan](../plan.md#after-05), item 9); the bursts are named and timed until then | yes | yes |
-| WMA (versions 1 and 2, Professional, Lossless, Voice) | not planned | later, through `A_MS/ACM` | not planned | routed | not planned | ASF | no |
+| WMA (versions 1 and 2, Professional, Lossless, Voice) | not planned | routed (`A_MS/ACM`, by the format tag) | not planned | routed | not planned | ASF | no |
 | Monkey's Audio | not planned | not planned | not planned | not planned | not planned | yes | yes |
 | Musepack | not planned | not planned | not planned | not planned | not planned | yes | yes (measured) |
-| PCM | routed (`ipcm`, `fpcm` and QuickTime's `sowt`, `twos`, `in24`, `in32`, `fl32`, `fl64`, `raw `, `alaw`, `ulaw` and `lpcm`) | routed (`A_PCM/INT/LIT`, `A_PCM/INT/BIG` and `A_PCM/FLOAT/IEEE`) | not planned | named, not analyzed (`asf.codec-not-analyzed`) | the container's own stream | AIFF and AIFF-C too | in WAV, Wave64, AIFF, MP4 and Matroska |
+| PCM | routed (`ipcm`, `fpcm` and QuickTime's `sowt`, `twos`, `in24`, `in32`, `fl32`, `fl64`, `raw `, `alaw`, `ulaw` and `lpcm`) | routed (`A_PCM/INT/LIT`, `A_PCM/INT/BIG` and `A_PCM/FLOAT/IEEE`, and `A_MS/ACM` with format tag 1, 3, 6 or 7) | not planned | named, not analyzed (`asf.codec-not-analyzed`) | the container's own stream | AIFF and AIFF-C too | in WAV, Wave64, AIFF, MP4 and Matroska |
 
 - **AIFF and AIFF-C** route no codec; their uncompressed, float, A-law and mu-law samples are decoded for measurements.
-- **`A_MS/ACM`** in older Matroska files holds a WAVEFORMATEX; routing it by its format tag, which reaches every codec parser the format tag names, comes once a real file from a muxer that writes it is committed as a fixture.
+- **`A_MS/ACM`** in Matroska holds a WAVEFORMATEX in its CodecPrivate; its format tag (or the extensible form's sub-format GUID) routes the track to the codec parser the WAV and ASF routes use for that coding (`WaveFormatRoutes`). Real files come from FFmpeg's muxer, which writes it for Windows Media Audio, ADPCM, GSM 6.10, A-law and mu-law (the Windows Media Audio, A-law and mu-law tracks are analyzed, the others reported from the TrackEntry); the MPEG audio, AC-3, DTS and PCM routes of the ID are held by hand-built files, since the muxers that were run write those codings under their own IDs.
 - **Decoded** means a decoder verifies the stream's checksums and feeds the measurements, wherever a route reaches the codec.
 
 ## Depth by format
