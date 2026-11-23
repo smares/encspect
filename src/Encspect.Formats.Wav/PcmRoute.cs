@@ -24,14 +24,7 @@ internal static class PcmRoute
         }
 
         int bits = bytes * 8;
-        PcmEncoding? encoding = format.CodingTag switch
-        {
-            FormatTags.Pcm => bits == 8 ? PcmEncoding.UnsignedInteger : PcmEncoding.SignedInteger,
-            FormatTags.IeeeFloat when bits is 32 or 64 && format.Bits == bits => PcmEncoding.Float,
-            FormatTags.ALaw when format.Bits == 8 => PcmEncoding.ALaw,
-            FormatTags.MuLaw when format.Bits == 8 => PcmEncoding.MuLaw,
-            _ => null,
-        };
+        PcmEncoding? encoding = WaveFormatRoutes.PcmEncodingOf(format.CodingTag, bits, format.Bits);
         if (encoding is null)
         {
             return null;
