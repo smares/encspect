@@ -711,35 +711,62 @@ public class ComplexityTests
         Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
     }
 
-    // Thousands of audio tracks routed to a codec parser and millions of blocks of one of them: each track was routed by a pass over all the blocks, so
-    // 4,000 tracks and 3 million blocks took 95 s.
+    // Thousands of audio tracks routed to a codec parser and many blocks of one of them: each track was routed by a pass over all the blocks, so
+    // 4,000 tracks and 3 million blocks took 95 s. The time is compared with the same tracks and one block, so a slow machine does not fail it: the blocks cost under a second, a pass of each of the 4,000 tracks over them 16 s or more.
     [Fact]
     public void ManyRoutedTracksAndManyBlocks()
     {
-        const int tracks = 4000;
-        const int blocks = 3_000_000;
+        const int blocks = 500_000;
+        byte[] few = RoutedTracksAndBlocks(4000, 1);
+        byte[] many = RoutedTracksAndBlocks(4000, blocks);
+
+        TimeSpan oneTime = Min(TimedMatroska(few, 4000), TimedMatroska(few, 4000));
+        TimeSpan manyTime = Min(TimedMatroska(many, 4000), TimedMatroska(many, 4000));
+        Assert.True(manyTime < (3 * oneTime) + TimeSpan.FromSeconds(1), $"500,000 blocks took {manyTime.TotalSeconds:F1} s, one block {oneTime.TotalSeconds:F1} s");
+    }
+
+    private static TimeSpan Min(TimeSpan a, TimeSpan b) => a < b ? a : b;
+
+    // The first track holds every block and has a codec nobody parses, so that the blocks cost little to walk; the other tracks are Opus tracks routed to
+    // a codec parser, one block each.
+    private static byte[] RoutedTracksAndBlocks(int tracks, int blocks)
+    {
         var stream = new MemoryStream();
         stream.Write(MatroskaBuilder.Header());
         stream.Write([0x18, 0x53, 0x80, 0x67, 0x01, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]);
         stream.Write(MatroskaBuilder.Info());
-        stream.Write(MatroskaBuilder.Element(0x1654AE6B, [.. Enumerable.Range(1, tracks).Select(n => MatroskaBuilder.OpusTrack((uint)n))]));
+        stream.Write(MatroskaBuilder.Element(0x1654AE6B, [.. Enumerable.Range(1, tracks).Select(n => n == 1
+            ? MatroskaBuilder.Element(0xAE, MatroskaBuilder.Unsigned(0xD7, 1), MatroskaBuilder.Unsigned(0x73C5, 1), MatroskaBuilder.Unsigned(0x83, 2), MatroskaBuilder.Text(0x86, "A_UNKNOWN"))
+            : MatroskaBuilder.OpusTrack((uint)n))]));
         byte[] first = MatroskaBuilder.SimpleBlockOf(1, 0, [0xFC, 0xFF, 0xFE]);
-        stream.Write(MatroskaBuilder.WithSize(0x1F43B675, 3 + (((long)blocks + tracks - 1) * first.Length), []));
-        stream.Write(MatroskaBuilder.Unsigned(0xE7, 0));
+        var body = new MemoryStream();
+        body.Write(MatroskaBuilder.Unsigned(0xE7, 0));
         for (uint n = 2; n <= tracks; n++)
         {
-            stream.Write(MatroskaBuilder.SimpleBlockOf(n, 0, [0xFC, 0xFF, 0xFE]));
+            body.Write(MatroskaBuilder.SimpleBlockOf(n, 0, [0xFC, 0xFF, 0xFE]));
         }
 
         for (int i = 0; i < blocks; i++)
         {
-            stream.Write(first);
+            body.Write(first);
         }
 
-        Report report = Timed(stream.ToArray());
+        // The size is the blocks' own: those of the tracks from 127 on have a track number of two bytes.
+        stream.Write(MatroskaBuilder.WithSize(0x1F43B675, body.Length, []));
+        stream.Write(body.ToArray());
+        return stream.ToArray();
+    }
 
+    // The hang guard is the shared Bound; the comparison of the caller is the test.
+    private static TimeSpan TimedMatroska(byte[] data, int tracks)
+    {
+        var watch = Stopwatch.StartNew();
+        Report report = Analyzer.CreateDefault().Analyze("tracks.mkv", new MemoryStream(data));
+        watch.Stop();
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
         Assert.Equal(tracks, report.Streams.Count);
-        Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "matroska.element-overruns-parent" or "matroska.element-header-invalid");
+        return watch.Elapsed;
     }
 
     // 90,000 empty mdat boxes (within the box budget) and then 400,000 samples of one byte in the last one: finding the mdat box that holds a sample was a scan over
