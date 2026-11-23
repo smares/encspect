@@ -172,11 +172,13 @@ internal static partial class LevelGuess
             return highestOrder == l.MaxLpcOrder && highestPartition <= l.MaxPartitionOrder && SubframesFrom(s, top) * MinimumTopShare >= s.ResidualSubframes && (l.MaxLpcOrder > 0 || highestFixed == l.MaxFixedOrder);
         }
 
-        List<Level> reached = [.. fitting.Where(Reaches)];
-        bool isReached = reached.Count > 0;
-        List<Level> named = isReached ? reached : fitting;
+        // Every level the frames fit is named: frames that do not use the extra room of a higher level look like the lower level's. Whether the frames press against
+        // the limits of the lowest level they fit only sets the confidence.
+        Level lowest = fitting.OrderBy(l => l.MaxLpcOrder).ThenBy(l => l.MaxPartitionOrder).ThenBy(l => l.MaxFixedOrder).First();
+        bool isReached = Reaches(lowest);
+        List<Level> named = fitting;
 
-        // Levels that limit the same figures cannot be told apart, so where all the levels the frames fit are such, the frames leave no doubt among them.
+        // Levels that limit the same figures cannot be told apart, so where all the levels the frames fit are such, the frames exceed the limits of every other level.
         bool isOneGroup = fitting.All(l => l.Block == fitting[0].Block && l.MaxLpcOrder == fitting[0].MaxLpcOrder && l.MaxPartitionOrder == fitting[0].MaxPartitionOrder && l.MaxFixedOrder == fitting[0].MaxFixedOrder);
         int[] numbers = [.. named.Select(l => l.Number)];
 
@@ -203,11 +205,11 @@ internal static partial class LevelGuess
         }
 
         evidence.Add($"{Noun(named.Count, true)} {Join(numbers)} {(named.Count == 1 ? "sets" : "set")} {Settings(named, s.MaxBlockSize)}.");
-        evidence.Add(isReached
-            ? "The highest linear predictor order of the frames equals what the named levels set" + (named.Any(l => l.IsTopPartitionRare) ? "; their highest partition order, or the one below it, is used by at least a fifth of the subframes." : ", and so does the highest partition order, which at least a fifth of the subframes use.")
-            : isOneGroup
-                ? "Every level the frames fit sets the same figures, so none of the others is left."
-                : "The frames do not reach the highest linear predictor order and partition order of any level they fit (a fifth of the subframes must use the partition order), so every level they fit is named.");
+        evidence.Add(isOneGroup
+            ? "Every level the frames fit sets the same figures: the frames exceed the limits of all the others."
+            : isReached
+                ? "The frames reach the highest linear predictor order and partition order of the lowest level they fit (the partition order in at least a fifth of the subframes)."
+                : "The frames do not reach the highest linear predictor order and partition order of the lowest level they fit (the partition order in at least a fifth of the subframes), so they say nothing against the levels above.");
         return new Guess(family, numbers, isReached || isOneGroup, isFromWriter, !isLibFlac && lpc > 0, evidence);
     }
 

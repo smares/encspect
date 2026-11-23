@@ -110,6 +110,13 @@ for level in range(13):
     FFMPEG_FIXTURES[f"ffmpeg-level-{level}-stereo"] = (LEVELS_STEREO, ["-c:a", "flac", "-compression_level", str(level)], "flac")
     FFMPEG_FIXTURES[f"ffmpeg-level-{level}-mono"] = (LEVELS_MONO, ["-c:a", "flac", "-compression_level", str(level)], "flac")
 
+# Frames of a higher level that do not use its extra room look like a lower level's, so the guess names every level the frames fit: the signal "music" (tones, then
+# noise) is such a case at libFLAC's level 6 and FFmpeg's levels 1 and 5.
+MUSIC_LEVELS = ("music", 44100, 2, 16, 44100)
+FLAC_FIXTURES["level-6-music-stereo"] = (MUSIC_LEVELS, ["-6"])
+FFMPEG_FIXTURES["ffmpeg-level-5-music-stereo"] = (MUSIC_LEVELS, ["-c:a", "flac", "-compression_level", "5"], "flac")
+FFMPEG_FIXTURES["ffmpeg-level-1-music-stereo"] = (MUSIC_LEVELS, ["-c:a", "flac", "-compression_level", "1"], "flac")
+
 # name: (release, input, arguments of flac).
 FLAC_RELEASE_FIXTURES = {
     f"level-{level}-stereo-libflac-{release}": (release, LEVELS_STEREO, [f"-{level}"])

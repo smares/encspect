@@ -84,15 +84,15 @@ public class FlacCompressionLevelTests
 
     [Theory]
     [InlineData("flac/external-level-0-stereo.flac", "0, 1 or 2", "Medium")]
-    [InlineData("flac/external-level-3-stereo.flac", "3", "Medium")]
-    [InlineData("flac/external-level-4-stereo.flac", "4", "Medium")]
-    [InlineData("flac/external-level-5-stereo.flac", "5", "Medium")]
-    [InlineData("flac/external-level-6-stereo.flac", "6", "Medium")]
+    [InlineData("flac/external-level-3-stereo.flac", "3 to 8", "Medium")]
+    [InlineData("flac/external-level-4-stereo.flac", "4 to 8", "Medium")]
+    [InlineData("flac/external-level-5-stereo.flac", "5 to 8", "Medium")]
+    [InlineData("flac/external-level-6-stereo.flac", "6, 7 or 8", "Medium")]
     [InlineData("flac/external-level-7-stereo.flac", "7 or 8", "Medium")]
     [InlineData("flac/external-level-8-stereo.flac", "7 or 8", "Medium")]
-    [InlineData("flac/external-level-7-stereo-libflac-1.2.1.flac", "6 or 7", "Medium")]
+    [InlineData("flac/external-level-7-stereo-libflac-1.2.1.flac", "6, 7 or 8", "Medium")]
     [InlineData("flac/external-level-8-stereo-libflac-1.2.1.flac", "8", "Medium")]
-    [InlineData("flac/external-level-7-stereo-libflac-1.3.0.flac", "6 or 7", "Medium")]
+    [InlineData("flac/external-level-7-stereo-libflac-1.3.0.flac", "6, 7 or 8", "Medium")]
     [InlineData("flac/external-level-7-stereo-libflac-1.3.1.flac", "7 or 8", "Medium")]
     public void LevelsThatShareTheirSettingsAreNamedTogether(string name, string levels, string confidence)
     {
@@ -109,6 +109,17 @@ public class FlacCompressionLevelTests
     [InlineData("flac/external-lossyflac-b512.flac")]
     [InlineData("flac/external-ffmpeg-16-in-24-mid-side-b512.flac")]
     public void SettingsOfTheirOwnAreNotNamed(string name) => Assert.Null(LevelNode(Fixtures.AnalyzeMpeg(name)));
+
+    // Frames of a higher level that do not use its extra room look like a lower level's: the higher level stays named, and the confidence is low.
+    [Theory]
+    [InlineData("flac/external-level-6-music-stereo.flac", "4 to 8", "Low")]
+    [InlineData("flac/external-ffmpeg-level-5-music-stereo.flac", "5 to 12", "Low")]
+    public void AFittingLevelIsNeverDropped(string name, string levels, string confidence)
+    {
+        Node node = LevelNode(Fixtures.AnalyzeMpeg(name))!;
+        Assert.Equal(levels, node.Value!.ToString());
+        Assert.Equal(confidence, node.Children.Single(c => c.Name == "Confidence").Value!.ToString());
+    }
 
     [Fact]
     public void TheClaimStaysBelowTheConfidenceInTheEncoder()
