@@ -74,8 +74,9 @@ public class FlacCompressionLevelTests
 
         if (node is null)
         {
-            // A stream too short or of a rate the tables lack is not named; the level fixtures are never in that case.
-            Assert.DoesNotContain("level-", name, StringComparison.Ordinal);
+            // A short stream, or one of a rate the tables lack, is not named; the level fixtures are, but for FFmpeg's levels 0 to 2, which write no linear
+            // predictors, so a native file's muxer string alone does not name its encoder.
+            Assert.True(!name.Contains("level-", StringComparison.Ordinal) || (name.Contains("ffmpeg-level-", StringComparison.Ordinal) && level <= 2), name);
             return;
         }
 
@@ -83,17 +84,17 @@ public class FlacCompressionLevelTests
     }
 
     [Theory]
-    [InlineData("flac/external-level-0-stereo.flac", "0, 1 or 2", "Medium")]
-    [InlineData("flac/external-level-3-stereo.flac", "3 to 8", "Medium")]
-    [InlineData("flac/external-level-4-stereo.flac", "4 to 8", "Medium")]
-    [InlineData("flac/external-level-5-stereo.flac", "5 to 8", "Medium")]
-    [InlineData("flac/external-level-6-stereo.flac", "6, 7 or 8", "Medium")]
-    [InlineData("flac/external-level-7-stereo.flac", "7 or 8", "Medium")]
-    [InlineData("flac/external-level-8-stereo.flac", "7 or 8", "Medium")]
-    [InlineData("flac/external-level-7-stereo-libflac-1.2.1.flac", "6, 7 or 8", "Medium")]
-    [InlineData("flac/external-level-8-stereo-libflac-1.2.1.flac", "8", "Medium")]
-    [InlineData("flac/external-level-7-stereo-libflac-1.3.0.flac", "6, 7 or 8", "Medium")]
-    [InlineData("flac/external-level-7-stereo-libflac-1.3.1.flac", "7 or 8", "Medium")]
+    [InlineData("flac/external-level-0-stereo.flac", "libFLAC 0, 1 or 2", "Medium")]
+    [InlineData("flac/external-level-3-stereo.flac", "libFLAC 3 to 8", "Medium")]
+    [InlineData("flac/external-level-4-stereo.flac", "libFLAC 4 to 8", "Medium")]
+    [InlineData("flac/external-level-5-stereo.flac", "libFLAC 5 to 8", "Medium")]
+    [InlineData("flac/external-level-6-stereo.flac", "libFLAC 6, 7 or 8", "Medium")]
+    [InlineData("flac/external-level-7-stereo.flac", "libFLAC 7 or 8", "Medium")]
+    [InlineData("flac/external-level-8-stereo.flac", "libFLAC 7 or 8", "Medium")]
+    [InlineData("flac/external-level-7-stereo-libflac-1.2.1.flac", "libFLAC 6, 7 or 8", "Medium")]
+    [InlineData("flac/external-level-8-stereo-libflac-1.2.1.flac", "libFLAC 8", "Medium")]
+    [InlineData("flac/external-level-7-stereo-libflac-1.3.0.flac", "libFLAC 6, 7 or 8", "Medium")]
+    [InlineData("flac/external-level-7-stereo-libflac-1.3.1.flac", "libFLAC 7 or 8", "Medium")]
     public void LevelsThatShareTheirSettingsAreNamedTogether(string name, string levels, string confidence)
     {
         Node node = LevelNode(Fixtures.AnalyzeMpeg(name))!;
@@ -112,8 +113,8 @@ public class FlacCompressionLevelTests
 
     // Frames of a higher level that do not use its extra room look like a lower level's: the higher level stays named, and the confidence is low.
     [Theory]
-    [InlineData("flac/external-level-6-music-stereo.flac", "4 to 8", "Low")]
-    [InlineData("flac/external-ffmpeg-level-5-music-stereo.flac", "5 to 12", "Low")]
+    [InlineData("flac/external-level-6-music-stereo.flac", "libFLAC 4 to 8", "Low")]
+    [InlineData("flac/external-ffmpeg-level-5-music-stereo.flac", "FFmpeg 5 to 12", "Low")]
     public void AFittingLevelIsNeverDropped(string name, string levels, string confidence)
     {
         Node node = LevelNode(Fixtures.AnalyzeMpeg(name))!;
@@ -122,14 +123,22 @@ public class FlacCompressionLevelTests
     }
 
     [Fact]
-    public void TheClaimStaysBelowTheConfidenceInTheEncoder()
+    public void TheValueSaysWhoseLevelsAndTheClaimStaysBelowTheEncoder()
     {
-        // The writer's muxer string alone names FFmpeg, so a stream without linear predictors (no precision to show it) is named at low confidence.
-        Node node = LevelNode(Fixtures.AnalyzeMpeg("flac/external-ffmpeg-level-1-stereo.flac"))!;
-        Assert.Equal("Low", node.Children.Single(c => c.Name == "Confidence").Value!.ToString());
+        Assert.Equal("libFLAC 7 or 8", LevelNode(Fixtures.AnalyzeMpeg("flac/external-level-7-stereo.flac"))!.Value!.ToString());
         Node linear = LevelNode(Fixtures.AnalyzeMpeg("flac/external-ffmpeg-level-3-stereo.flac"))!;
+        Assert.Equal("FFmpeg 3 to 12", linear.Value!.ToString());
+        // FFmpeg's muxer string over linear predictors of its precision: capped at medium.
         Assert.Equal("Medium", linear.Children.Single(c => c.Name == "Confidence").Value!.ToString());
     }
+
+    // FFmpeg's muxer writes its vendor string over a libFLAC stream it copies: the muxer's string alone does not name the encoder, so a stream without linear
+    // predictors (levels 0 to 2) is not guessed, and libFLAC's own linear predictors do not have FFmpeg's precision.
+    [Theory]
+    [InlineData("flac/external-ffmpeg-remux-libflac-level-2-stereo.flac")]
+    [InlineData("flac/external-ffmpeg-remux-libflac-level-5-stereo.flac")]
+    [InlineData("flac/external-ffmpeg-level-1-stereo.flac")]
+    public void AMuxerStringAloneDoesNotNameTheEncoder(string name) => Assert.Null(LevelNode(Fixtures.AnalyzeMpeg(name)));
 
     [Fact]
     public void EveryLevelClaimHasEvidenceAndADescription()

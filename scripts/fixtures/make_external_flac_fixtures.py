@@ -124,6 +124,10 @@ FLAC_RELEASE_FIXTURES = {
     for level in found
 }
 
+# name: the committed fixture whose stream FFmpeg copies into a new file. The remuxed file names FFmpeg's muxer in its vendor string over libFLAC's frames, which the
+# guess of the compression level must not take for FFmpeg's encoder.
+REMUXES = {"ffmpeg-remux-libflac-level-2-stereo": "external-level-2-stereo.flac", "ffmpeg-remux-libflac-level-5-stereo": "external-level-5-stereo.flac"}
+
 CUE = 'FILE "in.wav" WAVE\n  TRACK 01 AUDIO\n    INDEX 01 00:00:00\n  TRACK 02 AUDIO\n    INDEX 01 00:00:20\n'
 
 
@@ -268,6 +272,17 @@ def main():
                 path, encoder = encode_flac(name, spec, arguments, pathlib.Path(work), release)
             else:
                 path, encoder = encode_ffmpeg(name, spec, arguments, mode, pathlib.Path(work))
+            manifest_path(path).write_text(json.dumps(build_manifest(path, encoder), indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+            count += 1
+        for name, source in REMUXES.items():
+            path = OUT / f"external-{name}.flac"
+            if only_manifests or (chosen and name not in chosen):
+                encoder = json.loads(manifest_path(path).read_text(encoding="utf-8"))["encoder"]
+            else:
+                result = subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(OUT / source), "-c", "copy", str(path)], capture_output=True)
+                if result.returncode != 0:
+                    raise SystemExit(f"ffmpeg failed for {name}: {result.stderr}")
+                encoder = {"tool": f"{tool_version(['ffmpeg', '-version'])} (ffmpeg package of Ubuntu 24.04)", "arguments": ["-c", "copy"], "remuxed": source}
             manifest_path(path).write_text(json.dumps(build_manifest(path, encoder), indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
             count += 1
     print(f"Wrote {count} {'manifests' if only_manifests else 'fixtures'} to {OUT}")

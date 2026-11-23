@@ -228,8 +228,8 @@ internal static partial class Summary
         }
 
         Confidence confidence = guess.IsReached ? Confidence.Medium : Confidence.Low;
-        Confidence named = guess.IsFromWriter ? (guess.IsSignedByPrecision ? Confidence.Medium : Confidence.Low) : ClaimRoles.Resolved(encoder).Confidence ?? Confidence.Low;
-        var node = new Node("Compression Level", start, end - start, LevelGuess.Join([.. guess.Levels])) { Ranges = s.Stream.Ranges, Description = Explain.CompressionLevel, Topic = Topics.CompressionLevels };
+        Confidence named = guess.IsFromWriter ? Confidence.Medium : ClaimRoles.Resolved(encoder).Confidence ?? Confidence.Low;
+        var node = new Node("Compression Level", start, end - start, $"{guess.Name} {LevelGuess.Join([.. guess.Levels])}") { Ranges = s.Stream.Ranges, Description = Explain.CompressionLevel, Topic = Topics.CompressionLevels };
         node.Add("Confidence", start, end - start, (confidence < named ? confidence : named).ToString(), Explain.LevelConfidence);
         foreach (string text in guess.Evidence)
         {

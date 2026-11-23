@@ -17,15 +17,20 @@ internal static partial class LevelGuess
     // fixtures libFLAC's levels reach it with 31% to 91% of the subframes, and a level 5 file whose highest order is 4 has 10% at 4.
     private const int MinimumTopShare = 5;
 
-    // The coefficient precision FFmpeg writes in every linear predictor at every level; libFLAC chooses its own by block size (12 at 4,096 samples).
+    // The coefficient precision FFmpeg 6.1.1 wrote in every linear predictor at every level. libFLAC chooses its own by block size and bit depth: 12 at 4,096 samples and
+    // 16 bits, but 15 above 16 bits, so the precision tells the encoders apart only up to 16 bits per sample.
     private const int FfmpegPrecision = 15;
 
     [GeneratedRegex(@"^libFLAC (\d+)\.(\d+)\.(\d+)\b", RegexOptions.CultureInvariant)]
     private static partial Regex LibFlacName();
 
-    // FFmpeg names itself in two places: the Vorbis comment of an Ogg stream names its encoder (Lavc), the vendor string of a native file its muxer (Lavf).
-    [GeneratedRegex(@"^FFmpeg \(Lav([cf])(\d+)\b", RegexOptions.CultureInvariant)]
-    private static partial Regex FfmpegName();
+    // FFmpeg names itself in two places: the Vorbis comment of an Ogg stream names its encoder (Lavc), the vendor string of a native file its muxer (Lavf). Only the
+    // versions of FFmpeg 6.1 that were run (libavcodec 60.31, libavformat 60.16) are known.
+    [GeneratedRegex(@"^FFmpeg \(Lavc60\.31\.\d+ flac\)$", RegexOptions.CultureInvariant)]
+    private static partial Regex FfmpegEncoderName();
+
+    [GeneratedRegex(@"^FFmpeg \(Lavf60\.16\.\d+\)$", RegexOptions.CultureInvariant)]
+    private static partial Regex FfmpegWriterName();
 
     // What one level limits. Block: the family's small or large size for the sample rate. IsTopPartitionRare: the level's highest partition order is used by few subframes
     // (in Encspect's files 4% to 10% of FFmpeg's at order 8), so reaching it is no sign of the limit.
@@ -88,9 +93,9 @@ internal static partial class LevelGuess
         [192000] = (4608, 16384),
     };
 
-    // IsFromWriter: the family comes from the writer the file names (FFmpeg's muxer), not from an encoder claim; the claim then holds at most medium
-    // confidence, and only where the linear predictors' precision is FFmpeg's (IsSignedByPrecision).
-    public sealed record Guess(string Name, IReadOnlyList<int> Levels, bool IsReached, bool IsFromWriter, bool IsSignedByPrecision, IReadOnlyList<string> Evidence);
+    // Name: whose levels these are ("libFLAC", "FFmpeg"). IsFromWriter: the family comes from the writer the file names (FFmpeg's muxer) and the stream's linear
+    // predictors, not from an encoder claim; the claim then holds at most medium confidence.
+    public sealed record Guess(string Name, IReadOnlyList<int> Levels, bool IsReached, bool IsFromWriter, IReadOnlyList<string> Evidence);
 
     // The levels the stream fits, or null where the encoder is not one whose levels are known, the stream is too short, or no level fits (settings
     // of the person's own, a block size that is not a level's).
@@ -119,7 +124,10 @@ internal static partial class LevelGuess
             family = "libFLAC";
             block = l => l.Block == Small ? 1152 : 4096;
         }
-        else if ((FfmpegName().Match(encoder ?? string.Empty) is { Success: true, Groups: [_, { Value: "c" }, { Value: "60" }] } || (isFromWriter = FfmpegName().Match(writer ?? string.Empty) is { Success: true, Groups: [_, { Value: "f" }, { Value: "60" }] }))
+        else if (((encoder is not null && FfmpegEncoderName().IsMatch(encoder))
+                // The muxer's string alone does not name the encoder (FFmpeg also remuxes other encoders' streams): the stream must show FFmpeg's, by linear predictors of
+                // its precision, and a stream that names another encoder is not read through the writer.
+                || (isFromWriter = encoder is null && writer is not null && FfmpegWriterName().IsMatch(writer) && s.SubframeTypes[(int)SubframeType.Lpc] > 0))
             && FfmpegBlocks.TryGetValue(rate, out (int Small, int Large) sizes))
         {
             levels = FfmpegLevels;
@@ -193,7 +201,8 @@ internal static partial class LevelGuess
             : $"The highest linear predictor order is {highestOrder}; {Format(lpc)} of {Format(s.Subframes)} subframes are linear predictors.");
         if (!isLibFlac && lpc > 0)
         {
-            evidence.Add($"Every linear predictor has a coefficient precision of {FfmpegPrecision} bits, the one FFmpeg's encoder writes.");
+            evidence.Add($"Every linear predictor has a coefficient precision of {FfmpegPrecision} bits, the precision FFmpeg 6.1.1 wrote in every level fixture of Encspect's tests."
+                + (info.BitsPerSample > 16 ? " At more than 16 bits per sample libFLAC also writes it, so here only the block size tells the two encoders apart." : string.Empty));
         }
 
         evidence.Add($"The highest partition order is {highestPartition}.");
@@ -210,7 +219,7 @@ internal static partial class LevelGuess
             : isReached
                 ? "The frames reach the highest linear predictor order and partition order of the lowest level they fit (the partition order in at least a fifth of the subframes)."
                 : "The frames do not reach the highest linear predictor order and partition order of the lowest level they fit (the partition order in at least a fifth of the subframes), so they say nothing against the levels above.");
-        return new Guess(family, numbers, isReached || isOneGroup, isFromWriter, !isLibFlac && lpc > 0, evidence);
+        return new Guess(family, numbers, isReached || isOneGroup, isFromWriter, evidence);
     }
 
     // The subframes whose partition order is at least order: a level's highest order only shows as a limit where many subframes use it.
