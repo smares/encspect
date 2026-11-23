@@ -206,7 +206,10 @@ def encode(name, tool, rate, channels, seconds, arguments, work):
         subprocess.run(["opusenc", "--quiet", *arguments, str(source), str(target)], check=True)
     else:
         subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(source), *arguments, str(target)], check=True)
-    return {"tool": version(tool), "arguments": arguments, "rate": rate, "channels": channels, "seconds": seconds}
+    result = {"tool": version(tool), "arguments": arguments, "rate": rate, "channels": channels, "seconds": seconds}
+    if "-pink-" in name:
+        result["signal"] = "stereo pink noise, a mid signal and a side signal " + ("12 dB lower" if "-side-12-db" in name else "as loud (uncorrelated channels)")
+    return result
 
 
 def manifest(name, encoder, detected, findings):

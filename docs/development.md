@@ -832,6 +832,8 @@ The cross-check jobs run Ubuntu 26.04's packages. `tool_versions.py` holds the v
 - **Encoders licensed for private evaluation only** (Fraunhofer's l3enc 2.60 and 2.61, the mp3enc 3.0 and 3.1 demos, Thomson's mp3PRO encoder) are run by hand with `check_restricted_encoders.py`, which keeps nothing they write. The Fraunhofer trait rule, mp3guessenc and the mp3PRO OFL block are checked on their output.
 - **Fraunhofer's MP3 Surround encoder** 1.5 (`fhg_tool.py`) is used under its limited-use license, which the project's owner accepted for this non-commercial project.
 
+- **Inter-channel coherence streams** (step 8): `external-twolame-joint-pink-b128`, `-b192`, `-pink-side-12-db-b128` and `-b192` are TwoLAME 0.4.0 `-m j` (intensity stereo in Layer II) on 2 s of the measurement fixtures' stereo pink noise (uncorrelated channels, or a side signal 12 dB under the mid), written by `make_external_mpeg_fixtures.py`; each has a `.measure.json` through `MpegDecoderFixtureTests`, and their FLAC decodes are `measurement/lossy-stereo-*twolame-j-*`.
+
 ### MPEG audio: sources of the tables
 
 The rules these were written from are in [`docs/design/mpeg-clean-room-rules.md`](design/mpeg-clean-room-rules.md); none of them is ported from LGPL or GPL code.
@@ -909,6 +911,8 @@ The decoder ([opus.md](formats/opus.md#decoding)) is written from RFC 6716 as RF
 - **Determinism:** `OpusDecoderFixtureTests` pins the hash of the PCM of every fixture with an Opus stream in its `.decode.json` golden (`pcmSha256`); the float code is scalar single precision with no fused multiply-add, the cosines and powers come from `DetMath`, and `MeasurementDeterminismTests` scans the assembly for a banned call.
 - **Notices:** libopus is named in [`THIRD-PARTY-NOTICES.md`](../THIRD-PARTY-NOTICES.md) (its `COPYING`, extracted by `make_notices.py --fetch` from `opus-1.5.2.tar.gz`, pinned by SHA-256 in `opus_tool.py`) and in the files that follow it.
 - **Cost:** `DecoderWorkTests` has `opus-*` cases (speech, music, 5 ms frames, 5.1, mono, FFmpeg's encoder); `MemoryTests.DecodingManyOpusPacketsHoldsNothingPerPacket` holds the decoder's memory flat.
+
+- **Inter-channel coherence streams** (step 8): `ogg/external-opusenc-24-pink-equal` and `-pink-side-12-db` are opusenc 0.2 (libopus 1.4) at 24 kbit/s on 2 s of the measurement fixtures' stereo pink noise (the manifests' `encoder.signal` says which), written by `make_external_vorbis_opus_fixtures.py`, with a `.measure.json` through `OpusDecoderFixtureTests`; their FLAC decodes are `measurement/lossy-stereo-*opus-24k`.
 
 ### Speex decoding
 

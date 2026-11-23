@@ -1912,7 +1912,7 @@ The measurement through the analyzer's own decoders and the numpy prototype of t
 
   | Stream | Start | Stated median | Difference |
   | --- | --- | --- | --- |
-  | TwoLAME 0.4.0 `-m j -b 128`, uncorrelated channels / side 12 dB under | 2,756 / 2,283 Hz | 2,756 Hz over 77 frames | 0 / 473 Hz |
-  | TwoLAME 0.4.0 `-m j -b 192`, uncorrelated channels / side 12 dB under | 11,025 / 10,810 Hz | 11,025 Hz over 77 frames | 0 / 215 Hz |
-  | opusenc 0.2 `--bitrate 24`, uncorrelated channels / side 12 dB under | 9,422 / 7,688 Hz | 8,000 Hz over 101 units | 1,422 / 312 Hz |
+  | TwoLAME 0.4.0 `-m j -b 128`, uncorrelated channels / side 12 dB under | 2,756 / 2,283 Hz | 2,756 Hz over 77 frames | 0 / -473 Hz |
+  | TwoLAME 0.4.0 `-m j -b 192`, uncorrelated channels / side 12 dB under | 11,025 / 10,810 Hz | 11,025 Hz over 77 frames | 0 / -215 Hz |
+  | opusenc 0.2 `--bitrate 24`, uncorrelated channels / side 12 dB under | 9,422 / 7,688 Hz | 8,000 Hz over 101 units | +1,422 / -312 Hz |
 - **FAAC** (`faac_tool.py`, 1.40.0 and 2.2.0 built from their pinned commits) was tried on the same two sources at 64 kbit/s (decoded by FFmpeg, since the AAC decoder is [0.5](../plan.md#05-aac-and-wma)'s): FAAC 1.40.0 states an "Intensity Stereo Bound" of 689 Hz in all 88 frames of both files, yet its decodes show no rise on uncorrelated channels (the top band reads 0.2 %), and on the side-12 dB source the decode reads 85 % or more from 431 Hz, as the source itself does; FAAC 2.2.0 (HE-AAC, two stated values) shows none (top bands of 0.0 and 3.4 %). So FAAC gives no AAC case of a rise; no FAAC file is committed. FFmpeg's `aac` shows none either, with and without noise substitution (top bands of 14.7 % and 0.0 %).

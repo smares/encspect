@@ -1292,7 +1292,8 @@ def encode(command, source, path, temp):
 
 def write_manifest(name, path, rate, channels, command, settings, dumper):
     signal = {"clicks": "0.5 s of a quiet 440/660 Hz tone with a click every 50 ms", "music": "2 s of tones, noise with clicks and a chord",
-              "long-music": "6 s of tones, noise with clicks and a chord, three times, different in each channel", "silence": "0.5 s of silence"}.get(settings.get("signal"), "0.5 s of a 440/660 Hz tone")
+              "long-music": "6 s of tones, noise with clicks and a chord, three times, different in each channel", "silence": "0.5 s of silence",
+              "pink-equal": "2 s of stereo pink noise, a mid signal and a side signal as loud (uncorrelated channels)", "pink-side-12-db": "2 s of stereo pink noise, a mid signal and a side signal 12 dB lower"}.get(settings.get("signal"), "0.5 s of a 440/660 Hz tone")
     if channels == 6:
         signal = f"0.5 s of a 5.1 tone of {'/'.join(map(str, SURROUND_FREQUENCIES))} Hz"
     elif channels > 2:

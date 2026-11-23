@@ -8,7 +8,7 @@ references: P. D. Welch (1967), IEEE Trans. Audio and Electroacoustics 15(2); Ca
 
 **How it works.** The magnitude-squared coherence at a frequency is the squared magnitude of the cross-spectrum of the two channels divided by the product of their power spectra, averaged over the frames. It runs from 0 % to 100 % and is 100 % where one channel is the other through a fixed filter, such as a gain. The analyzer uses the front left and right channels (or the two channels of a stream without a layout) and bands of 1 kHz. It walks down from the end of the content while the band stays at 85 % or more, and reports where it stops, if the band under it is less coherent.
 
-**Where the start is approximate.** Where the coherence rises slowly through 85 % (one tompg 3.0 stream reads 82 % at 3.4 kHz and 86 % at 5 kHz), the start moves with the threshold, by about 600 Hz for each percent: it is approximate there, and the threshold decides whether a start is found, not exactly where it lies.
+**Where the start is approximate.** Where the coherence rises slowly through 85 % (one tompg 3.0 stream reads 82 % at 3.4 kHz and 86 % at 5 kHz), the start moves with the threshold, by about 400 to 700 Hz for each percent: it is approximate there, and the threshold decides whether a start is found, not exactly where it lies.
 
 **What lowers it.** A gain that changes inside a frame (85 to 170 ms), a sign that flips, a delay between the channels.
 
