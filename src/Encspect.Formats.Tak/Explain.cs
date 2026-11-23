@@ -4,7 +4,7 @@ namespace Encspect.Formats.Tak;
 // the SDK's documentation (tak_deco_lib.h and the Doc pages) and the files Takc.exe wrote in Encspect's tests; where a sentence states what those files show, it says so.
 internal static class Explain
 {
-    public const string Stream = "A TAK file: the stream ID, metadata objects each protected by a CRC-24, and the audio frames (takStream.pas). The analyzer reads the metadata, finds the frames and compares their CRC-24s; the coded audio is not read.";
+    public const string Stream = "A TAK file: the stream ID, metadata objects each protected by a CRC-24, and the audio frames (takStream.pas). The analyzer reads the metadata, finds the frames, compares their CRC-24s and walks their coded data for the statistics and graphs.";
     public const string StreamId = "The 4 characters \"tBaK\" that every TAK file starts with (takStream.pas, tak_str_StreamId).";
 
     public const string ObjectId = "The kind of metadata object, 7 bits: 0 End, 1 stream info, 2 seek table, 3 wave data, 4 encoder info, 5 padding, 6 MD5, 7 last frame info (takStream.pas).";
@@ -121,4 +121,27 @@ internal static class Explain
     public const string DistributionBin = "The frames whose bitrate falls in this range, and their share.";
     public const string BitrateSeries = "The bitrate of each frame: its bits over the time its samples last.";
     public const string BitrateOverTimeSeries = "The bitrate of each second of audio: the bits of the frames that start in that second over the time their samples last.";
+
+    public const string StatStereoCoding = "How the two channels of each frame are coded, one entry for each frame of two channels (codec 2): each channel by itself, one channel as the difference from the other, mid and side, or one channel predicted from the other by a gain or by a filter (the stereo modes of the frame, tak-format.md section 6.1).";
+    public const string StatIndependent = "The two channels coded each by itself (the stereo mode none).";
+    public const string StatLeftSide = "The left channel, and the right channel as its difference from the left (the stereo mode that adds the first channel to the second).";
+    public const string StatSideRight = "The left channel as the difference of right and left, and the right channel by itself (the stereo mode that subtracts the first channel from the second).";
+    public const string StatMidSide = "Mid and side: the first channel as the mid, rounded down, and the second as the difference of the channels.";
+    public const string StatScaledPrediction = "One channel coded as the difference from a scaled copy of the other (the stereo modes that scale one channel by a gain).";
+    public const string StatFilterPrediction = "One channel coded as the difference from a filter of 8 or 16 taps over the other (the stereo modes that predict one channel by a filter).";
+    public const string StereoCodingSeries = "The stereo mode of each frame of two channels, drawn over the frames.";
+
+    public const string StatSubframeTypes = "How each subframe of each channel is coded: its values as residuals only, or predicted by a filter of 4 to 256 taps from the values before it (section 5). A channel has 1 to 8 subframes.";
+    public const string StatResidualsOnly = "A subframe whose values are stored as residual codes without prediction.";
+    public const string StatPredictor = "A subframe predicted by a filter whose coefficients come from the parameters the subframe stores.";
+    public const string SubframeTypesSeries = "The coding of each subframe, drawn over the frames.";
+    public const string StatAverageOrder = "The mean number of taps of the filters of the predicted subframes.";
+    public const string StatHighestOrder = "The most taps of any prediction filter in the stream.";
+    public const string StatPrecision = "The precision, 3 to 10 bits, with which the filters' coefficients are rounded (the range over the predicted subframes).";
+    public const string HighestOrderSeries = "The most taps of the prediction filters of each frame that has one.";
+    public const string PrecisionSeries = "The highest coefficient precision of the prediction filters of each frame that has one.";
+    public const string StatWasted = "The channels of each frame whose samples have low bits that are all zero, which the encoder leaves out (the wasted bits of the channel data, section 4).";
+    public const string CategoryWasted = "A channel with wasted bits.";
+    public const string CategoryNoWasted = "A channel without wasted bits.";
+    public const string WastedSeries = "Whether each channel of each frame has wasted bits, drawn over the frames.";
 }

@@ -23,6 +23,10 @@ internal static class Topics
     public const string WaveFormatExtensible = "wave-format-extensible";
     public const string Verification = "verification";
     public const string Frames = "tak-frames";
+    public const string MidSide = "mid-side-stereo";
+    public const string LeftSide = "left-side-stereo";
+    public const string Prediction = "linear-prediction";
+    public const string WastedBits = "wasted-bits";
 }
 
 // One metadata object as the walk read it.

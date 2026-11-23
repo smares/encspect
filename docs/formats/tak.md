@@ -1,12 +1,12 @@
 # TAK
 
-TAK (Tom's lossless Audio Kompressor, `.tak`): the metadata objects with their CRC-24s, the stream info, the encoder's version and preset, the stored WAV header and footer, the end of the audio the last frame info gives, and the frames: each frame's header, its data and the two CRC-24s, compared. The coded audio is not read: a decoder needs a clean-room description of the coding, which only FFmpeg's LGPL decoder gives.
+TAK (Tom's lossless Audio Kompressor, `.tak`): the metadata objects with their CRC-24s, the stream info, the encoder's version and preset, the stored WAV header and footer, the end of the audio the last frame info gives, and the frames: each frame's header, its data and the two CRC-24s, compared. The coded samples are read by the decoder ([Decoding](#decoding)), which follows a clean-room description of the coding (the only detailed source of which is FFmpeg's LGPL decoder), for the MD5, the measurements and the front ends' output.
 
 Sources:
 
 - TAK 2.3.3 (2022-06-30) by Thomas Becker: `Sdk/Source/takStream.pas`, the author's own source of the container ("Do with it, whatever you want", asking that the module is not distributed without the SDK and that a modified version says it is not an official release), the SDK's documentation (read, not copied) and the applications' readme. The author's page is http://www.thbeck.de/Tak/Tak.html. The parser follows takStream.pas where the files agree with it, carries its notice in `src/Encspect.Formats.Tak/Layout.cs` and in [THIRD-PARTY-NOTICES.md](../../THIRD-PARTY-NOTICES.md), and **is not an official release of TAK**.
 - Takc.exe 2.3.3 and the SDK's x64 decoder library as black-box writers and readers of the files in Encspect's tests (run in CI on Windows only, `.github/workflows/tak-fixtures.yml`), and two real files of the FFmpeg sample archive (`lostchord-tak_1_0.tak`, TAK 1.0, and `lostchord-tak_2_2_0.tak`, 2.2.0), walked by `check_tak_samples.py`.
-- MediaInfoLib's `File_Tak.cpp` (BSD) as a second reader in the cross-check. Nothing is read from FFmpeg, libav, mutagen or getID3: FFmpeg's TAK decoder is LGPL.
+- MediaInfoLib's `File_Tak.cpp` (BSD) as a second reader in the cross-check. Nothing is read from FFmpeg, libav, mutagen or getID3 by the parser or the decoder: FFmpeg's TAK decoder is LGPL, so the decoder follows [a description of the coded samples](../design/tak-format.md) that one agent wrote from it and another implemented from without reading it ([development.md](../development.md#tak-decoding-clean-room)); FFmpeg runs as a black box in the cross-check.
 
 ## What is read
 
@@ -86,18 +86,37 @@ The files win. Each departure holds in every file Takc wrote, and a test asserts
 
 ## Verification
 
-Four checksums are declared; no decoder exists, so the host reports that no decoder handles the coding.
+Four checksums are declared. The three CRC-24s are compared by the parser; the MD5 is compared by the decoder, so it is checked where the front end decodes: with `--verify` (the decoder declares a checksum over decoded audio, so the host decodes without being asked for samples), `--measure` or an output sink.
 
 | Checksum | Covers | Compared |
 |---|---|---|
 | metadata CRC-24 | a metadata object's data | yes, every object that has one |
 | frame header CRC-24 | a frame's header | yes, every frame whose header the data holds |
 | frame data CRC-24 | a frame's coded data | yes, every frame the data holds whole |
-| MD5 | the raw audio | never: it needs a decoder |
+| MD5 | the raw audio, as a WAVE file's data chunk holds it | by the decoder, when every sample of the stream was decoded, in order and without a gap (`tak.md5-mismatch`, Warning, on the MD5 field of the MD5 object) |
 
-- A stream is verified (without decoding) when every CRC-24 holds, the stream info's CRC-24 holds, the frames are all there in order up to the one flagged as the last, none is cut, nothing was skipped and their samples are the count the stream info states: the frame data CRC-24 then covers all the audio.
-- A stream that stores an MD5 is not verified until a decoder compares it, as FLAC's is not with its MD5 unchecked.
+- A stream is verified when every CRC-24 holds, the stream info's CRC-24 holds, the frames are all there in order up to the one flagged as the last, none is cut, nothing was skipped and their samples are the count the stream info states: the frame data CRC-24 then covers all the audio. One that stores an MD5 is verified when the decoder has compared it too.
+- Takc writes the MD5 object only with `-md5`; of the encoder-written fixtures `external-md5.tak` has one, and the decoded audio matches it.
 - The frame CRC-24 covers the coded data, not the decoded audio: it says the bytes are as the encoder wrote them, not what they decode to.
+
+## Decoding
+
+- **The walk:** the parser reads the coded data of every frame in every analysis, for the statistics below, with the same code the decoder reads with (`FrameSyntax`); a frame whose syntax breaks is `tak.frame-syntax-invalid` (Warning, with a count) and is not decoded, and whole bytes left after the last field are the info `tak.frame-bytes-after-data`. Streams of codecs 0, 1 and 3, of other depths or more channels are not walked.
+- **Coding statistics and graphs:** "Stereo Coding" (the stereo mode of each frame of two channels: left/right, left/side, side/right, mid/side, scaled prediction, filter prediction), "Subframe Types" (residuals only or predictor), "Average Predictor Order", "Highest Predictor Order", "Coefficient Precision" and "Channels With Wasted Bits", with the category series and the two numeric series per frame, under the names, units and axes of FLAC's, TTA's and WavPack's.
+- **When:** the decoder declares a checksum (the MD5), so the host decodes every TAK stream in an analysis that asks for decoding (`--verify`, `--measure`, a sink), whether or not the stream stores an MD5. Without decoding the verification says so (`notRequested`) and the tree is the same.
+- **What it reads:** codec 2 (mono and stereo) and codec 4 (up to six channels), data type 0, 8, 16 and 24 bits per sample. Anything else is refused when the decoder opens (`decode.not-possible`): codecs 0, 1 and 3 (their coding is not known; TAK 1.0 files are not decoded), other bit depths, more than two channels in codec 2, more than six in codec 4, and a frame size the stream info states that is not valid for the sample rate. The channel layout is the one the report shows.
+- **The frame:** after the header's CRC-24 and before the data CRC-24, per channel the wasted bits, the first sample, a difference order and up to eight subframes; a subframe is stored as residuals or predicted by a filter of 4 to 256 taps whose coefficients come from up to 256 parameters, with a warm-up or a continuation of the subframe before; two channels (or the entries of codec 4's channel table) are then decorrelated by one of add, subtract, mid/side, scaled prediction or a filter of 8 or 16 taps. Frames shorter than 16 samples are stored. [The description](../design/tak-format.md) has the fields and the arithmetic, which is 32-bit with wraparound.
+- **Output:** signed integers at the stream's depth, interleaved by the sink in channel order, one block per frame; 8-bit streams decode to values around 0.
+- **Every frame decodes on its own:** no state passes from one frame to the next, so a frame that is damaged, lost or skipped costs only itself.
+- **Checked against:** a test-side encoder that inverts the description (round trips over every residual mode, prediction order, difference order, wasted-bits value, stereo mode, the paired entries of the channel table, the sample rates and 8, 16 and 24 bits), the worked examples of the description, the manifests of the 33 encoder-written files (the samples of the signal Takc was given), and the TAK decoder's own output and FFmpeg's on those files, which `scripts/fixtures/crosscheck_tak_pcm.py` runs in CI ([development.md](../development.md#tak-decoding-clean-room)).
+- **Damage:**
+  - the syntax the description lists as damage, which the walk reports as `tak.frame-syntax-invalid` (a wasted-bits count of the sample width or more, subframes that rise out of the frame or have no sample, an order above the subframe, a warm-up difference order of 3, a precision below 3, a partition count outside 2 to 128, a residual mode above 50 or below 0, an escape of more than 29 bits, a filter mode on fewer than 257 samples, a channel table that lists a channel twice, not at all or beyond the count, or pairs it with a partner it may not have), coded data that ends inside a field or fields that run past it): the frame is not decoded, nothing of it is written, and the next frame decodes on its own; a sample outside the range of the depth is the decoder's `decode.frame-invalid`;
+  - a frame whose header or data CRC-24 fails is decoded all the same and written, but the measurements leave its positions out as withheld samples ("checksum failed") and the next frame follows a gap ([the design](../design/damaged-units.md)); the MD5 is still compared, and fails where the audio changed (`tak.md5-mismatch`), as FLAC's does;
+  - a frame cut by the end of the data is not decoded.
+- **Not decoded:** the frames past the first 1,048,576 (`tak.frames-limit`).
+- **Memory:** one frame (at most 4 MiB, `FrameWalker`), up to 16,384 samples of each channel for the samples and a few kilobytes of scratch.
+- **Work:** `DecodeContext.AddWork` is charged before the work (the reading of the coded data is the parser's): the fixed work of `DecodeWork.ForSample` plus 4 for each sample of each channel, and for each predicted subframe one unit a tap for each predicted sample and N * N units for the N coefficients, and the filter mode's taps for each sample. The decoder states 16,384 units an input byte (`IDecoder.WorkPerInputByte`), as ALAC does; a frame of silence charges about 64,000 to 76,000 for each of its few bytes, so a stream of such frames is stopped by the budget past the floor of 2^35 units ([the measurement](../design/decoders.md#as-built-the-tak-decoder)).
+- **What the description left unsure** and how the decoder treats it: [development.md](../development.md#tak-decoding-clean-room).
 
 ## Observations from Encspect's test files
 
@@ -111,8 +130,8 @@ All from Takc 2.3.3 (`tests/fixtures/tak`, [development.md](../development.md));
 
 ## Not covered
 
-- Decoding, so no MD5 comparison, measurement, entropy figures or coding graphs. A decoder needs a clean-room split (one reader of FFmpeg's LGPL decoder writes a description, another implements from it).
-- The coded syntax of a frame: its predictors, filters and residuals, which only a decoder reads; so no per-frame coding graphs, no figures of the entropy pass.
+- TAK 1.0 (codec 0), the experimental and lossyWAV codecs (1 and 3), bit depths other than 8, 16 and 24, and more than six channels: the description does not cover them, and the decoder refuses them.
+- The coded syntax of a frame as nodes (only the statistics and the series above), the residual modes and the paired types of codec 4's channel table as series, and the "Over Time" forms of the two numeric series: queued ([the survey](../design/coding-graphs.md#optimfrog-and-tak-new-in-the-re-survey)).
 - Frames in a TAK stream inside another container (none is routed).
 - The info frame's stream info against the metadata's (a disagreement is not a finding), and the previous distance against the position of the previous info frame.
 - A file cut or damaged inside its last frame when no last frame info states the end: only the data CRC-24 fails (the walk cannot tell damage from a cut).
