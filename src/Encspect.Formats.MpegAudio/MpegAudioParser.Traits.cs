@@ -38,13 +38,17 @@ public sealed partial class MpegAudioParser
             }
 
             // BladeEnc codes plain stereo or mono at a constant bitrate, MPEG-1 only, never uses
-            // scalefactor scaling, and leaves ancillary data at most in its last frame (mp3guessenc).
+            // scalefactor scaling, sets the copyright or the original bit in every frame (the original
+            // bit by default) and leaves ancillary data at most in its last frame (mp3guessenc).
             // 0.80 and 0.81 also drain an overflowing reservoir into ancillary data mid-stream, as the
-            // ISO dist10 encoder does, which leaves those encodes unnamed.
-            if (first.IsMpeg1 && switching && !scaling && traits.AreAllPlainAtFirstBitrate
+            // ISO dist10 encoder does, which leaves those encodes unnamed. The flag bits keep the default encodes
+            // of 8hz-MP3 and Plugger, which code the same way and set neither bit, from being named. The limits: those two
+            // encoders with the original bit set (8hz-MP3 -c -o, Plugger -y -o) are named BladeEnc, and BladeEnc with
+            // neither bit set (0.94.2 with `-copy` alone, external-blade-copy) is not named.
+            if (first.IsMpeg1 && switching && !scaling && traits.AreAllPlainAtFirstBitrate && traits.AreAllFlagged
                 && region.Ancillary is { } ancillary && ancillary.Bytes == ancillary.LastSegmentBytes)
             {
-                return TraitNode("BladeEnc", "Short blocks without scalefactor scaling, plain stereo or mono at one bitrate, and ancillary data at most in the last frame, as BladeEnc writes them");
+                return TraitNode("BladeEnc", "Short blocks without scalefactor scaling, plain stereo or mono at one bitrate, a copyright or original bit in every frame, and ancillary data at most in the last frame, as BladeEnc writes them");
             }
 
             // scfsi only exists in MPEG-1.
@@ -104,6 +108,9 @@ public sealed partial class MpegAudioParser
 
         public bool AreAllOriginals { get; private set; } = true;
 
+        // At least one of the copyright and original bits, in every frame.
+        public bool AreAllFlagged { get; private set; } = true;
+
         // Stereo or mono, at the first frame's bitrate.
         public bool AreAllPlainAtFirstBitrate { get; private set; } = true;
 
@@ -131,6 +138,7 @@ public sealed partial class MpegAudioParser
             AreAllMainDataBeginsZero &= info.MainDataBegin.Value == 0;
             AreAllCopyrightedOriginals &= header is { IsCopyrighted: true, IsOriginal: true };
             AreAllOriginals &= header.IsOriginal;
+            AreAllFlagged &= header.IsCopyrighted || header.IsOriginal;
             AreAllPlainAtFirstBitrate &= header.ChannelModeBits is 0 or 3 && header.BitrateIndex == First.Value.BitrateIndex;
         }
     }

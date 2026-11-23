@@ -39,8 +39,10 @@ import downloads
 import dts_specs
 import faac_tool
 import ffmpeg_sources
+import fhg_acm_tool
 import fhg_tool
 import gogo_tool
+import hz8_mp3_tool
 import gpac_tool
 import helix_tool
 import lame_win_tool
@@ -50,11 +52,13 @@ import lossywav_tool
 import make_lossywav_fixtures
 import matroska_specs
 import mctoolame_tool
+import m3e_tool
 import mctoolamed_tool
 import monkeys_audio_tool
 import optimfrog_tool
 import qtff_specs
 import philips_mc_tool
+import plugger_tool
 import musepack_tool
 import old_lame_tool
 import speex_tool
@@ -110,8 +114,16 @@ def sources():
     yield "tompg.zip", xing_tool.SHA256, xing_tool.ADDRESSES
     for release in blade_tool.RELEASES.values():
         yield release["archive"], release["sha256"], blade_tool.addresses(release)
+        if "tar" in release:
+            yield release["tar"]["archive"], release["tar"]["sha256"], [downloads.private(release["tar"]["private"])]
     yield "helix_mp3enc_5.0r11.tar.gz", helix_tool.R11_SHA256, helix_tool.R11_ADDRESSES
     yield "gogo3.12.zip", gogo_tool.SHA256, gogo_tool.ADDRESSES
+    yield plugger_tool.ARCHIVE, plugger_tool.SHA256, plugger_tool.ADDRESSES
+    yield hz8_mp3_tool.ARCHIVE, hz8_mp3_tool.SHA256, hz8_mp3_tool.ADDRESSES
+    yield m3e_tool.ARCHIVE, m3e_tool.SHA256, m3e_tool.ADDRESSES
+    yield fhg_acm_tool.ACMENC[0], fhg_acm_tool.ACMENC[1], [fhg_acm_tool.ACMENC[2]]
+    for codec in fhg_acm_tool.CODECS.values():
+        yield codec["archive"], codec["sha256"], [codec["address"]]
     for build in lame_win_tool.BUILDS.values():
         yield build["archive"], build["sha256"], build["addresses"]
     for version, digest in old_lame_tool.RELEASES.items():
