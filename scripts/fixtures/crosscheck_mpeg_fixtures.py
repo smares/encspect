@@ -526,8 +526,12 @@ def check_vbr_header(path, manifest):
             problems.append(f"ffprobe start time {stream.get('start_time')}, the manifest implies {start}")
         valid = lame is not None and lame["tag_crc"] == lame["tag_crc_computed"]
         encoder = stream.get("tags", {}).get("encoder")
-        if encoder != (lame["encoder"] if valid else None):
-            problems.append(f"ffprobe encoder {encoder!r}, the manifest implies {lame['encoder'] if valid else None!r}")
+        # acmenc writes the vendor string --tv gives (or none: empty) where LAME's tag has its version, with no LAME tag fields after it; ffprobe 6.1.1 reads
+        # it from the same place whatever the CRC after it holds and reports an empty one as an empty tag, which later versions may not.
+        acmenc = manifest.get("encoder", {}).get("command", [""])[0].startswith("acmenc-")
+        expected_encoder = (tag.get("encoder_string", ""), None) if acmenc else (lame["encoder"] if valid else None,)
+        if encoder not in expected_encoder:
+            problems.append(f"ffprobe encoder {encoder!r}, the manifest implies {expected_encoder[0]!r}")
         gains = valid and (lame["radio_gain"] >> 13 == 1 or lame["audiophile_gain"] >> 13 == 2)
         has_gain = any(d.get("side_data_type") == "Replay Gain" for d in stream.get("side_data_list", []))
         if has_gain != bool(gains):
@@ -833,6 +837,12 @@ def guessenc_frames_differ(path, manifest, counted, ours):
     as the statistics do, but counts one whose main data is all there (BladeEnc 0.80 to 0.83 cut
     only stuffing off the last frame), which the statistics leave out like every truncated frame."""
     codes = {f["code"] if isinstance(f, dict) else f for f in manifest.get("findings", [])}
+    # Plugger writes a CRC of 0000 with the protection bit, and mp3guessenc leaves out every frame whose CRC fails, so it finds no stream.
+    if manifest.get("encoder", {}).get("guessenc_skips_frames"):
+        # Stale once mp3guessenc reads the frames: it must still find fewer than the file holds.
+        if counted is not None and counted >= ours:
+            return f"mp3guessenc now counts {counted} of {ours} frames, drop guessenc_skips_frames for no known reason"
+        return "mp3guessenc leaves out every frame whose CRC fails and finds no stream"
     if manifest.get("gaps"):
         return "mp3guessenc reads the bit reservoir anew after data it resyncs over"
     for code in sorted(codes & set(GUESSENC_READS_OTHERWISE)):
@@ -903,17 +913,23 @@ def guessenc_coding_problems(path, manifest):
         problems.append(f"mp3guessenc: global gain {actual['gains']}, the manifest {gains}")
 
     total = count_of(fields["Statistics/Ancillary Data"])
-    compare("ancillary bytes", total, actual["ancillary"])
-    compare("smallest ancillary amount", count_of(fields.get("Statistics/Ancillary Data/Smallest Nonzero Amount")), actual.get("Min packet", 0))
-    compare("largest ancillary amount", count_of(fields.get("Statistics/Ancillary Data/Largest Amount")), actual.get("Max packet", 0))
-    # Its share is of the frames' lengths, which its histogram lists, and its data rate over their duration.
-    length = sum(n * size for _, _, sizes in actual["histogram"].values() for n, size in sizes)
-    exact_share = stream_stats.Fraction(total * 100, length)
-    if not stream_stats.agrees(actual["ancillary_share"], exact_share, tenth) or fields["Statistics/Ancillary Data/Share"] != stream_stats.tenths_text(exact_share, "%"):
-        problems.append(f"mp3guessenc: ancillary share {actual['ancillary_share']}%, the manifest {fields['Statistics/Ancillary Data/Share']}")
-    exact_rate = stream_stats.Fraction(total * 8 * int(actual["Audio frequency"]), actual["Number of frames"] * actual["Audio samples per frame"] * 1000)
-    if not stream_stats.agrees(actual["Bitrate"], exact_rate, tenth) or fields["Statistics/Ancillary Data/Data Rate"] != stream_stats.tenths_text(exact_rate, "kbps"):
-        problems.append(f"mp3guessenc: ancillary data rate {actual['Bitrate']} kbps, the manifest {fields['Statistics/Ancillary Data/Data Rate']}")
+    if manifest.get("guessenc_reads_otherwise"):
+        # The ancillary figures are the ones the manifest says mp3guessenc reads otherwise (a segment that runs into the truncated last
+        # frame); they must still differ, so the entry fails once the two agree.
+        if total == actual["ancillary"]:
+            problems.append(f"mp3guessenc: ancillary bytes {actual['ancillary']} now equal the statistics', drop guessenc_reads_otherwise")
+    else:
+        compare("ancillary bytes", total, actual["ancillary"])
+        compare("smallest ancillary amount", count_of(fields.get("Statistics/Ancillary Data/Smallest Nonzero Amount")), actual.get("Min packet", 0))
+        compare("largest ancillary amount", count_of(fields.get("Statistics/Ancillary Data/Largest Amount")), actual.get("Max packet", 0))
+        # Its share is of the frames' lengths, which its histogram lists, and its data rate over their duration.
+        length = sum(n * size for _, _, sizes in actual["histogram"].values() for n, size in sizes)
+        exact_share = stream_stats.Fraction(total * 100, length)
+        if not stream_stats.agrees(actual["ancillary_share"], exact_share, tenth) or fields["Statistics/Ancillary Data/Share"] != stream_stats.tenths_text(exact_share, "%"):
+            problems.append(f"mp3guessenc: ancillary share {actual['ancillary_share']}%, the manifest {fields['Statistics/Ancillary Data/Share']}")
+        exact_rate = stream_stats.Fraction(total * 8 * int(actual["Audio frequency"]), actual["Number of frames"] * actual["Audio samples per frame"] * 1000)
+        if not stream_stats.agrees(actual["Bitrate"], exact_rate, tenth) or fields["Statistics/Ancillary Data/Data Rate"] != stream_stats.tenths_text(exact_rate, "kbps"):
+            problems.append(f"mp3guessenc: ancillary data rate {actual['Bitrate']} kbps, the manifest {fields['Statistics/Ancillary Data/Data Rate']}")
     compare("max reservoir", count_of(fields["Statistics/Maximum Main Data Begin"]), actual["Max reservoir"])
     for key, name in [("Scalefactor scaling used", "UsesScalefactorScaling"), ("Scalefactor selection information used", "UsesScfsi"),
                       ("Padding used", "UsesPadding")]:
@@ -1105,6 +1121,16 @@ HELIX_SCALING = ("Gogo (after 3.0)", "short blocks with scfsi and scalefactor sc
 HELIX_PLAIN = ("Lame (old) or m3e", "short blocks with scfsi but no scalefactor scaling name old LAME or m3e in EncSpot's guess; the analyzer "
                "knows Helix without its tag from the copyright and original bits with scfsi and scalefactor scaling in other frames")
 PRE_380_CBR = "LAME before 3.80 writes nothing that names it into a CBR stream, so the analyzer names no encoder; EncSpot guesses from the frames' habits"
+PLUGGER_NAMED = ("Plugger", "EncSpot's rule for Plugger (plain stereo without scalefactor scaling or the original bit) names Plugger's stereo encodes, which the "
+                 "committed Plugger files confirm; the analyzer has no rule for it: nothing in its frames tells it from the other encoders' habits")
+PLUGGER_AS_XING = ("Xing (old)", "Plugger's mono encode and its encode with the copyright and original bits set (and a CRC of 0000) are not plain stereo without the "
+                   "original bit, so EncSpot's Plugger rule does not apply and its old Xing rule (no short blocks, no scfsi) does; the analyzer names no encoder")
+HZ8_AS_GOGO = ("Gogo (before 3.0)", "EncSpot names 8hz-MP3's default encodes as it names BladeEnc's, Gogo before 3.0 (which is built on 8hz-MP3); the analyzer names none, since "
+               "its BladeEnc rule wants a copyright or original bit in every frame, which 8hz-MP3 does not set by default")
+M3E_NAMED = ("Lame (old) or m3e", "EncSpot's guess for M3E's frames is old LAME or M3E; the analyzer names none from frames alone, as it has no habit rule for M3E")
+M3E_VBR_NAMED = ("Lame (old) or m3e", "EncSpot's guess for M3E's frames is old LAME or M3E; the analyzer names M3E from the version text its VBR modes write after the Xing header")
+ACM_NAMED = ("FhG (ACM or producer pro)", "EncSpot names the Fraunhofer ACM codec's frames, which the analyzer's Fraunhofer rule leaves unnamed for MPEG-2, where "
+             "scfsi, the habit its rule excludes, does not exist")
 ENCSPOT_ENCODER_DIFFERENCES = {
     "external-lame320w-cbr": ("Gogo (before 3.0)", PRE_380_CBR),
     "external-lame334w-cbr": ("Gogo (before 3.0)", PRE_380_CBR),
@@ -1115,6 +1141,7 @@ ENCSPOT_ENCODER_DIFFERENCES = {
                                  "name Gogo after 3.0; the analyzer reads LAME's version from the ancillary data behind ffmpeg's tag"),
     "external-blade-crc": BLADE_AS_GOGO,
     "external-blade-mono": BLADE_AS_GOGO,
+    "external-blade-copy": ("Gogo (before 3.0)", "BladeEnc 0.94.2 with -copy alone sets neither flag bit, so the analyzer's BladeEnc rule, which wants one in every frame, names none; EncSpot names it as it names the other BladeEnc encodes"),
     "external-blade-stereo": BLADE_AS_GOGO,
     "external-blade082-stereo": BLADE_AS_GOGO,
     "external-blade084-stereo": BLADE_AS_GOGO,
@@ -1141,6 +1168,24 @@ ENCSPOT_ENCODER_DIFFERENCES = {
     "external-helix-no-tag": HELIX_PLAIN,
     "external-helix-r11-cbr": HELIX_PLAIN,
     "external-helix-r11-vbr": HELIX_PLAIN,
+    "external-plugger-cbr": PLUGGER_NAMED,
+    "external-plugger-48k": PLUGGER_NAMED,
+    "external-plugger-pro-cbr": PLUGGER_NAMED,
+    "external-plugger-mono": PLUGGER_AS_XING,
+    "external-plugger-flags": PLUGGER_AS_XING,
+    "external-8hz-cbr": HZ8_AS_GOGO,
+    "external-8hz-mono": HZ8_AS_GOGO,
+    "external-8hz-48k": HZ8_AS_GOGO,
+    "external-8hz-flags": ("Gogo (before 3.0)", "EncSpot names 8hz-MP3's encodes as it names BladeEnc's; with the copyright and original bits set (-c -o) the analyzer's BladeEnc rule, which these habits fit, names it BladeEnc (low)"),
+    "external-plugger-original": ("Xing (old)", "with the original bit set (-y -o) Plugger is not EncSpot's Plugger (its rule wants the original bit clear), so its old Xing rule applies; the analyzer's BladeEnc rule, which these habits fit, names it BladeEnc (low)"),
+    "external-m3e-cbr": M3E_NAMED,
+    "external-m3e-mono": M3E_NAMED,
+    "external-m3e-vbr": M3E_VBR_NAMED,
+    "external-m3e-vbr4": M3E_VBR_NAMED,
+    "external-m3e-48k": ("Gogo (after 3.0)", "short blocks with scfsi and scalefactor scaling name Gogo after 3.0 in EncSpot's guess; the analyzer names none, as it has no habit rule for M3E"),
+    "external-fhg-acm19-mono-16k": ACM_NAMED,
+    "external-fhg-acm19-mpeg2": ACM_NAMED,
+    "external-fhg-acm34-mpeg2": ACM_NAMED,
 }
 
 # EncSpot's names by the analyzer's: the start of EncSpot's name for each encoder the analyzer names.
@@ -1397,8 +1442,13 @@ def check(path, manifest, tools):
                 problems.append(f"ffprobe channels {stream['channels']} differ from {settings['channel_mode']}")
             if settings.get("bitrate") and int(stream["bit_rate"]) != settings["bitrate"] * 1000:
                 problems.append(f"ffprobe bitrate {stream['bit_rate']} differs from {settings['bitrate']} kbps")
-        if settings.get("protected") and madplay_crc_failures(path) != 0:
-            problems.append("madplay reports CRC failures in an encoder-protected stream")
+        # Plugger writes a CRC of 0000 with the protection bit: libmad fails every whole frame (the manifest lists mpeg-audio.crc-mismatch).
+        if settings.get("protected"):
+            findings = manifest.get("findings", [])
+            expected_failures = len(manifest["ffprobe_packets"]) - ("mpeg-audio.frame-truncated" in findings) if "mpeg-audio.crc-mismatch" in findings else 0
+            failures = madplay_crc_failures(path)
+            if failures != expected_failures:
+                problems.append(f"madplay reports {failures} CRC failures in an encoder-protected stream, expected {expected_failures}")
 
     return problems
 

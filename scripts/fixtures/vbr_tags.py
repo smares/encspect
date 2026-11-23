@@ -120,6 +120,9 @@ def read_xing(frame, offset, music):
 
     # What follows the Xing fields, raw: decoders read their delay from it whatever it holds.
     tag["after_fields"] = frame[position : position + LAME_TAG_SIZE].hex()
+    # M3E 0.99a writes four bytes its flags do not name before its version text ("M3E 0.99a beta (Q:0)").
+    if tag["flags"] is not None and not tag["flags"] & 8 and frame[position + 4 : position + 8] == b"M3E ":
+        position += 4
     string = frame[position : position + 9]
     if len(string) == 9 and printable(string):
         text = string.rstrip(b"\0").decode("ascii")

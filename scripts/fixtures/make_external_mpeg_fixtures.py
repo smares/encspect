@@ -84,9 +84,13 @@ import tempfile
 import wave
 
 import blade_tool
+import fhg_acm_tool
 import fhg_tool
 import gogo_tool
+import hz8_mp3_tool
 import lame_win_tool
+import m3e_tool
+import plugger_tool
 import helix_tool
 import mctoolame_tool
 import minimp3_tool
@@ -322,6 +326,10 @@ FIXTURES = [
      dict(version="1", layer=3, sample_rate=32000, channel_mode="Stereo", bitrate=96, protected=True, info_frame=False, signal="music")),
     ("external-blade-flags", ".mp3", 44100, 2, ["bladeenc", "-320", "-p", "-c", "-copy"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=320, info_frame=False, signal="music")),
+    # BladeEnc 0.94.2's -copy alone clears the original bit and sets no copyright bit (-c is its other flag option, set in external-blade-flags), so no frame
+    # carries a flag bit: the flag-bit condition of the analyzer's BladeEnc rule leaves it unnamed.
+    ("external-blade-copy", ".mp3", 44100, 2, ["bladeenc", "-128", "-copy"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=128, info_frame=False, signal="music")),
     # One encode per older release that writes other bytes. 0.80 and 0.81 drain the bit reservoir
     # into ancillary data mid-stream, as the ISO dist10 encoder does, so neither the analyzer nor
     # mp3guessenc names the encoder of this one.
@@ -610,6 +618,58 @@ FIXTURES = [
     ("layer2/external-philips-5-1-music", ".mp2", 48000, 6, ["pub_enc", "-L"],
      dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=384, info_frame=False,
           multichannel=dict(configuration="3/2", has_lfe=True, decoded_channels=6), signal="music")),
+    # Plugger+ 0.4 (1998), 8hz-MP3 0.2b (1999) and M3E 0.99a (2000), the small Windows encoders, and Fraunhofer's MP3 ACM codecs
+    # (l3codeca 1.9, l3codecp 3.3 and 3.4) through nyaochi's acmenc, under Wine. The first three write no tag and no Info frame
+    # (M3E's VBR modes write a Xing header); acmenc always writes an Info frame, whose vendor string only --tv sets.
+    ("external-plugger-cbr", ".mp3", 44100, 2, ["plugger", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=128, info_frame=False, signal="music")),
+    ("external-plugger-mono", ".mp3", 44100, 2, ["plugger", "-b", "64", "-dm"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Mono", bitrate=64, info_frame=False, signal="music")),
+    ("external-plugger-48k", ".mp3", 48000, 2, ["plugger", "-b", "160"],
+     dict(version="1", layer=3, sample_rate=48000, channel_mode="Stereo", bitrate=160, info_frame=False, signal="music")),
+    ("external-plugger-flags", ".mp3", 44100, 2, ["plugger", "-b", "192", "-c", "-y", "-o"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=192, protected=True, copyright=True, original=True, info_frame=False,
+          guessenc_skips_frames=True)),
+    ("external-plugger-original", ".mp3", 44100, 2, ["plugger", "-b", "128", "-y", "-o"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=128, copyright=True, original=True, info_frame=False, signal="music")),
+    ("external-plugger-pro-cbr", ".mp3", 44100, 2, ["plugger-pro", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=128, info_frame=False, signal="music")),
+    ("external-8hz-cbr", ".mp3", 44100, 2, ["8hz-mp3", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=128, info_frame=False, signal="music")),
+    ("external-8hz-mono", ".mp3", 44100, 1, ["8hz-mp3", "-b", "64"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Mono", bitrate=64, info_frame=False, signal="music")),
+    ("external-8hz-48k", ".mp3", 48000, 2, ["8hz-mp3", "-b", "160"],
+     dict(version="1", layer=3, sample_rate=48000, channel_mode="Stereo", bitrate=160, info_frame=False, signal="music")),
+    ("external-8hz-flags", ".mp3", 44100, 2, ["8hz-mp3", "-b", "192", "-c", "-o", "-crc"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=192, copyright=True, original=True, info_frame=False, signal="music")),
+    ("external-m3e-cbr", ".mp3", 44100, 2, ["m3ec", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False, signal="clicks")),
+    ("external-m3e-vbr", ".mp3", 44100, 2, ["m3ec", "-v", "1"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-m3e-vbr4", ".mp3", 44100, 2, ["m3ec", "-v", "4"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
+    ("external-m3e-mono", ".mp3", 44100, 1, ["m3ec", "-b", "64"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Mono", bitrate=64, info_frame=False, signal="music")),
+    # The repository's "music" signal at 48 kHz: M3E selects Huffman table 4, which ISO/IEC 11172-3 leaves unused, in a short-block granule.
+    ("external-m3e-48k", ".mp3", 48000, 2, ["m3ec", "-b", "160"],
+     dict(version="1", layer=3, sample_rate=48000, channel_mode="Joint stereo", bitrate=160, info_frame=False, signal="music",
+          guessenc_reads_otherwise="a segment of ancillary data runs from the last complete frame into the truncated last frame: mp3guessenc counts its 36 bytes before the cut, and the analyzer's statistics leave the whole segment out with the truncated frame, which they do not count")),
+    ("external-fhg-acm34-cbr", ".mp3", 44100, 2, ["acmenc-3.4", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=True, signal="music")),
+    ("external-fhg-acm34-mono", ".mp3", 44100, 1, ["acmenc-3.4", "-b", "64"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Mono", bitrate=64, info_frame=True, signal="music")),
+    ("external-fhg-acm34-mpeg2", ".mp3", 22050, 2, ["acmenc-3.4", "-b", "64"],
+     dict(version="2", layer=3, sample_rate=22050, channel_mode="Joint stereo", bitrate=64, info_frame=True, signal="music")),
+    ("external-fhg-acm34-vendor", ".mp3", 44100, 2, ["acmenc-3.4", "-b", "128", "--tv", "FIIS3.4", "--enc-delay", "672"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=True, signal="music")),
+    ("external-fhg-acm33-cbr", ".mp3", 44100, 2, ["acmenc-3.3", "-b", "128"],
+     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=True, signal="music")),
+    ("external-fhg-acm33-48k", ".mp3", 48000, 2, ["acmenc-3.3", "-b", "160"],
+     dict(version="1", layer=3, sample_rate=48000, channel_mode="Joint stereo", bitrate=160, info_frame=True, signal="music")),
+    ("external-fhg-acm19-mpeg2", ".mp3", 22050, 2, ["acmenc-1.9", "-b", "56"],
+     dict(version="2", layer=3, sample_rate=22050, channel_mode="Joint stereo", bitrate=56, info_frame=True, signal="music")),
+    ("external-fhg-acm19-mono-16k", ".mp3", 16000, 1, ["acmenc-1.9", "-b", "24"],
+     dict(version="2", layer=3, sample_rate=16000, channel_mode="Mono", bitrate=24, info_frame=False, signal="music")),
 ]
 
 
@@ -772,6 +832,45 @@ def last_frame_ancillary(path, packets):
     return max(area - ((part2_3 + 7) // 8 - main_data_begin), 0)
 
 
+def crc16(data):
+    """The CRC-16 of ISO/IEC 11172-3 (polynomial 0x8005, start value 0xFFFF)."""
+    crc = 0xFFFF
+    for byte in data:
+        crc ^= byte << 8
+        for _ in range(8):
+            crc = ((crc << 1) ^ 0x8005 if crc & 0x8000 else crc << 1) & 0xFFFF
+    return crc
+
+
+def crc_findings(path, packets):
+    """"mpeg-audio.crc-mismatch" where a Layer III frame that says it is protected stores another CRC than the one over its
+    header's last two bytes and its side information (ISO/IEC 11172-3 2.4.3.1), computed here, not by the analyzer."""
+    data = path.read_bytes()
+    for offset, length in packets:
+        if data[offset + 1] & 1 or length < 6:
+            continue
+        side = side_info_lengths(data, offset)[2]
+        if int.from_bytes(data[offset + 4 : offset + 6], "big") != crc16(data[offset + 2 : offset + 4] + data[offset + 6 : offset + 6 + side]):
+            return ["mpeg-audio.crc-mismatch"]
+    return []
+
+
+def table_findings(rows):
+    """"mpeg-audio.huffman-table-undefined" where minimp3's side information selects table 4 or 14, which Table B.7 of ISO/IEC 11172-3
+    leaves unused, for a region that holds lines: the first region of a granule with big values, or the second region of a short-block
+    granule, which starts after 36 lines. A table elsewhere would need the scalefactor band tables."""
+    found = False
+    for row in rows:
+        for g in row.get("granules", []):
+            tables = g["table_select"]
+            used = [g["big_values"] > 0, g["block_type"] == 2 and g["big_values"] * 2 > 36, False]
+            if any(t in (4, 14) and u for t, u in zip(tables, used)):
+                found = True
+            elif any(t in (4, 14) for t in tables) and g["big_values"] > 0 and g["block_type"] != 2:
+                raise SystemExit(f"a long-block granule at {row['offset']} selects table 4 or 14 beyond its first region")
+    return ["mpeg-audio.huffman-table-undefined"] if found else []
+
+
 def side_info_lengths(data, offset):
     """main_data_begin, the sum of part2_3_length and the side information's size of the Layer III
     frame at offset (ISO/IEC 11172-3 2.4.1.7, 13818-3 2.4.1.7)."""
@@ -879,6 +978,40 @@ def granules(rows):
     return [g for row in rows if "granules" in row for g in row["granules"]]
 
 
+# The encoders with no tag of their own whose streams only the traits of their frames can name: the analyzer's rules
+# in its order (MpegAudioParser.Traits.cs), which each head's fixtures are held to. 8hz-MP3's habits match BladeEnc's rule, and
+# Plugger's and M3E's can (the fixtures show which), and Fraunhofer's ACM codecs write the frames its rule names.
+TRAIT_HEADS = ("plugger", "plugger-pro", "8hz-mp3", "m3ec", "acmenc-1.9", "acmenc-3.3", "acmenc-3.4")
+
+
+def trait_encoder(command, settings, rows, path):
+    """What the traits name, as the analyzer's rules for BladeEnc and Fraunhofer apply them (low confidence). A stream of fewer
+    than 20 frames shows too few habits, and the Xing and Helix rules come first. BladeEnc's rule needs a copyright or original
+    bit in every frame, which BladeEnc sets by default and 8hz-MP3 and Plugger do not."""
+    found = granules(rows)
+    packets = ffprobe_packets(path)
+    # Only complete frames count, and a stream of fewer than 20 shows too few habits.
+    if len(packets) - truncated_last(path, packets) < 20 or not found:
+        return None
+    data = path.read_bytes()
+    flags = [data[offset + 3] >> 2 & 3 for offset, _ in packets]
+    scaling, scfsi, switching = any(g["scalefac_scale"] for g in found), any(g.get("scfsi") for g in found), any(g["block_type"] for g in found)
+    if all(f == 3 for f in flags) and scfsi and scaling:
+        return {"name": "Helix MP3 Encoder", "confidence": "Low"}
+    if not switching and not scfsi and all(f & 1 for f in flags):
+        return {"name": "Xing", "confidence": "Low"}
+    mpeg1 = settings["version"] == "1"
+    # mp3guessenc's total ancillary bytes must all be the last frame's (BladeEnc 0.80 and 0.81 drain the reservoir into one segment mid-stream).
+    ancillary = guessenc_summary(path)["ancillary"]
+    # Stereo or mono, at the first frame's bitrate.
+    plain = all(data[offset + 3] >> 6 in (0, 3) and data[offset + 2] >> 4 == data[packets[0][0] + 2] >> 4 for offset, _ in packets)
+    if (mpeg1 and switching and not scaling and plain and all(f for f in flags) and ancillary[0] == last_frame_ancillary(path, packets)):
+        return {"name": "BladeEnc", "confidence": "Low"}
+    if mpeg1 and scaling and not scfsi and switching:
+        return {"name": "Fraunhofer", "confidence": "Low"}
+    return None
+
+
 def detected_encoder(command, tag, settings, rows, path):
     """The encoder the analyzer must name, from what each encoder is known to write.
 
@@ -922,15 +1055,11 @@ def detected_encoder(command, tag, settings, rows, path):
         if settings["layer"] == 3 and not any(g["block_type"] for g in found) and not any(g.get("scfsi") for g in found) and original:
             return {"name": "Xing", "confidence": "Low"}
         return None
-    if command[0].startswith("bladeenc"):
-        found = granules(rows)
-        # mp3guessenc's total ancillary bytes must all be the last frame's (BladeEnc 0.80 and 0.81
-        # drain the reservoir into one segment mid-stream).
-        ancillary = guessenc_summary(path)["ancillary"]
-        if (any(g["block_type"] for g in found) and not any(g["scalefac_scale"] for g in found)
-                and ancillary[0] == last_frame_ancillary(path, ffprobe_packets(path))):
-            return {"name": "BladeEnc", "confidence": "Low"}
-        return None
+    if tag is not None and tag.get("encoder_string", "").startswith("M3E "):
+        # M3E's name and version stand after the Xing header's fields (medium confidence, as LAME's before 3.90).
+        return {"name": tag["encoder_string"].split(" (")[0].rstrip(" "), "confidence": "Medium"}
+    if command[0].startswith("bladeenc") or command[0] in TRAIT_HEADS:
+        return trait_encoder(command, settings, rows, path)
     if command[0] in ("mctoolame", "pub_enc"):
         return {"name": "TwoLAME or Xing", "confidence": "Low"} if uses_index63(rows) else None
     if command[0] == "shineenc":
@@ -1056,6 +1185,13 @@ def describe_tag(path, command, manifest):
         manifest["vbr_findings"] = [{"code": code, "contains": contains} for code, contains in vbr_tags.findings(tag, start)]
         # ffprobe lists the frames after the header; LAME 3.94 beta 1 counts the header too.
         packets = manifest.get("ffprobe_packets")
+        if packets and tag["type"] != "VBRI":
+            # The counts the header claims against ffprobe's frames (the header's own frame counted or not), as stream_stats.header_findings has them.
+            counted = length + sum(size for _, size in packets)
+            if tag.get("frames") is not None and tag["frames"] not in (len(packets), len(packets) + 1):
+                manifest["vbr_findings"].append({"code": "mpeg-audio.vbr-frame-count-mismatch", "contains": f"0x{start:X}"})
+            if tag.get("bytes") is not None and tag["bytes"] not in (counted, counted - length):
+                manifest["vbr_findings"].append({"code": "mpeg-audio.vbr-byte-count-mismatch", "contains": f"0x{start:X}"})
         if tag.get("lame") and packets and tag.get("frames") == len(packets) + 1:
             samples = 1152 if manifest["encoder"]["version"] == "1" else 576
             manifest["vbr_findings"].append({"code": "mpeg-audio.vbr-frame-count-includes-header", "contains": f"play {samples} samples more"})
@@ -1090,6 +1226,18 @@ def encode(command, source, path, temp):
         return
     if command[0] == "pub_enc":
         philips_mc_tool.encode(PHILIPS_ENCODER[0], command[1:], source, path)
+        return
+    if command[0] in ("plugger", "plugger-pro"):
+        plugger_tool.encode(PLUGGER_ENCODERS[command[0]], command[1:], source, path)
+        return
+    if command[0] == "8hz-mp3":
+        hz8_mp3_tool.encode(HZ8_ENCODER[0], command[1:], source, path)
+        return
+    if command[0] == "m3ec":
+        m3e_tool.encode(M3E_ENCODER[0], command[1:], source, path)
+        return
+    if command[0].startswith("acmenc-"):
+        fhg_acm_tool.encode(FHG_ACM_DIRECTORY[0], command[0][len("acmenc-"):], command[1:], source, path)
         return
     if command[0] == "mctoolame":
         mctoolame_tool.encode(MCTOOLAME_ENCODER[0], command[1:], source, path)
@@ -1150,8 +1298,12 @@ def write_manifest(name, path, rate, channels, command, settings, dumper):
         manifest.setdefault("findings", []).append("mpeg-audio.scalefactors-exceed-granule")
     if settings["layer"] == 3 and "ffprobe_packets" in manifest:
         manifest["findings"] += main_data_findings(path, manifest["ffprobe_packets"], manifest["minimp3_side_info"])
-    if settings["layer"] == 3:
+        manifest["findings"] += crc_findings(path, manifest["ffprobe_packets"]) + table_findings(manifest["minimp3_side_info"])
+    # mp3guessenc leaves out every frame whose CRC fails (Plugger writes 0000), so it has no statistics of that stream to hold.
+    if settings["layer"] == 3 and not settings.get("guessenc_skips_frames"):
         manifest["mp3guessenc"] = guessenc_summary(path)
+    if settings.get("guessenc_reads_otherwise"):
+        manifest["guessenc_reads_otherwise"] = settings["guessenc_reads_otherwise"]
     describe_tag(path, command, manifest)
     manifest["mp3guessenc_stream"] = guessenc_stream(path)
     manifest["mp3guessenc_guess"] = guessenc_guess(path)
@@ -1177,6 +1329,10 @@ BLADE_ENCODERS = {}
 GOGO_ENCODER = []
 MCTOOLAME_ENCODER = []
 PHILIPS_ENCODER = []
+PLUGGER_ENCODERS = {}
+HZ8_ENCODER = []
+M3E_ENCODER = []
+FHG_ACM_DIRECTORY = []
 OLD_LAME = {}
 WIN_LAME = {}
 
@@ -1218,6 +1374,14 @@ def main(names):
         PHILIPS_ENCODER.append(philips_mc_tool.fetch())
     if "mctoolame" in heads:
         MCTOOLAME_ENCODER.append(mctoolame_tool.build())
+    if heads & {"plugger", "plugger-pro"}:
+        PLUGGER_ENCODERS.update(plugger_tool.fetch())
+    if "8hz-mp3" in heads:
+        HZ8_ENCODER.append(hz8_mp3_tool.fetch())
+    if "m3ec" in heads:
+        M3E_ENCODER.append(m3e_tool.fetch())
+    if acm := sorted(h[len("acmenc-"):] for h in heads if h.startswith("acmenc-")):
+        FHG_ACM_DIRECTORY.append(fhg_acm_tool.fetch(acm))
     for version in ("3.90.1", "3.91", "3.92", "3.93.1", "3.94b1", "3.95.1", "3.96.1", "3.97", "3.98.4", "3.98b8", "3.99a12", "3.99.5", "3.101", "4.0"):
         if "lame-" + version in heads:
             OLD_LAME[version] = old_lame_tool.build(version)

@@ -11,7 +11,7 @@ The Ogg container (RFC 3533). Its codecs have their own pages: [Speex](speex.md)
   - Sniffing needs the same chain, so "OggS" inside other data is not taken for Ogg. A chain that starts after up to 64 KiB of other data sniffs weaker (60) than MPEG audio (90).
 - **Declared end:** Ogg states no size, but each page states its own length, so the chain of pages from the start of the data ends where the next bytes are not a page that fits and the last page passes its CRC.
   - A trailing tag signature before that end lies inside the last pages and is a near miss.
-  - ID3v2 before the Ogg data and APE and ID3v1 after it, which taggers write, are the file's tags.
+  - ID3v2 before the Ogg data and APEv1, APEv2 and ID3v1 after it, which taggers write, are the file's tags.
 - **Two passes:** the scan keeps a 56-byte record and the segment table of each page and follows each stream's packets through their lacing values, reporting what breaks the specification, without building nodes.
   - Then each stream's packets are read again page by page and handed on, so the packets a codec gets are the ones the scan counted.
   - Page nodes are built in blocks of 1,024 when read.

@@ -708,7 +708,7 @@
       {
         "severity": "Warning",
         "code": "layout.id3v1-not-last",
-        "message": "The ID3v1 tag at 0x22E is followed by the APE tag at 0x2AE; readers expect ID3v1 in the last 128 bytes.",
+        "message": "The ID3v1 tag at 0x22E is followed by the APEv2 tag at 0x2AE; readers expect ID3v1 in the last 128 bytes.",
         "offset": 558,
         "length": 128,
         "path": [
@@ -719,7 +719,7 @@
       {
         "severity": "Warning",
         "code": "layout.lyrics3-without-id3v1",
-        "message": "The Lyrics3 tag at 0x31E is not directly followed by an ID3v1 tag, which its specification requires.",
+        "message": "The Lyrics3 v2 tag at 0x31E is not directly followed by an ID3v1 tag, which its specification requires.",
         "offset": 798,
         "length": 68,
         "path": [

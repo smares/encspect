@@ -19,7 +19,7 @@ Sources:
 - `MARK` (markers), `INST` (instrument: base note, detune, gains, sustain and release loops), `COMT` (comments with a time stamp, a marker ID and text), `AESD` (audio recording), `MIDI` and `APPL` (application specific, with the signature).
 - `NAME`, `AUTH`, `(c) ` and `ANNO`: text chunks.
 - `CHAN` (Channel Layout Chunk): Core Audio's layout tag, channel bitmap and channel descriptions (label, flags, coordinates); see Channel layout below.
-- `ID3 ` and `id3 `: the chunk's data is handed to the ID3 tag parser through `ParseTag`.
+- `ID3 ` and `id3 `: the chunk's data is handed to the ID3v2 parser through `ParseTag`.
 - Limits, so that a small file cannot ask for a large report:
   - at most 2,048 chunks are listed (`aiff.chunk-limit`) and tables inside chunks (markers, comments, channel descriptions) list at most 1,024 entries;
   - the tree holds at most 250,000 nodes in all, as MP4's and Matroska's do: past that the rest of the FORM is one "Chunks Not Shown" node and is not read (`aiff.node-limit`, warning);

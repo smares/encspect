@@ -12,7 +12,8 @@ internal static class Topics
 // ReplayGain and MP3Gain write.
 internal static class Explain
 {
-    public const string Tag = "An APE tag: items of a key and a value between an optional header and a footer of 32 bytes each (APEv1 and APEv2 specifications).";
+    public const string V1Tag = "An APEv1 tag: items of a key and a value, then a footer of 32 bytes (APEv1 specification).";
+    public const string V2Tag = "An APEv2 tag: items of a key and a value between an optional header and a footer of 32 bytes each (APEv2 specification).";
     public const string Header = "The 32-byte header, which repeats the footer so the tag can also be read from its start.";
     public const string Footer = "The 32-byte footer, which readers find at the end of the file to read the tag from there.";
     public const string Preamble = "The signature APETAGEX.";
@@ -34,7 +35,7 @@ internal static class Explain
     public const string Key = "The item's key, 2 to 255 ASCII characters, compared without regard to case.";
     public const string Value = "The item's value. A text value may hold several values, separated by zero bytes.";
     public const string BinaryValue = "The item's binary value, such as a picture.";
-    public const string UnknownItem = "An item under a key that is not among the standard ones; APE keys are free text.";
+    public const string UnknownItem = "An item under a key that is not among the standard ones; APEv1 and APEv2 keys are free text.";
 
     private static readonly Dictionary<string, string> Keys = new(StringComparer.OrdinalIgnoreCase)
     {

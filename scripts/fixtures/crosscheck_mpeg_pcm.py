@@ -43,6 +43,18 @@ DEFAULT_PCMDUMP = "dotnet " + str(ROOT / "tests" / "Encspect.PcmDump" / "bin" / 
 
 # Fixtures a reference decodes differently, by reference ("minimp3" or "ffmpeg"), with what is known. An entry is a pending item for the lead, not an explanation: the
 # bound is not widened for it (docs/design/lossy-decoders.md, "The PCM cross-checks").
+R1 = (
+    "FFmpeg 6.1.1 alone differs, in a few granules of channel 0 (long blocks of plain stereo; up to 0.026 of full scale at its largest, on external-plugger-pro-cbr, granule 92: no big values and a part2_3_length of 2 bits in channel 0) and the tails into the next ones: the analyzer matches mpg123 1.32.5 (largest difference 8e-7), madplay 0.15.2b (1.4e-6) and minimp3 (3e-7), the ranges are FFMPEG_RANGES; the cause in FFmpeg is not known (black box)")
+R2 = (
+    "FFmpeg 6.1.1 and mpg123 1.32.5 agree with each other and differ from the analyzer by up to 0.0095 (madplay 0.15.2b 1.1e-6 and minimp3 3e-7 agree with the analyzer), in two ways. "
+    "(1) In a frame of intensity stereo (MPEG-2 LSF) with mid/side stereo they take the largest value a position's slen can code as an ordinary intensity position, where ISO/IEC 13818-3 "
+    "2.4.3.2 (bullet 2) makes it the illegal position, whose band is decoded with the mid/side equations (left/right without mid/side stereo), as the analyzer does; the first differing granule "
+    "of external-fhg-acm34-mpeg2 holds positions 15 and 1 (slen 4 and 1) in bands 11 to 16, above the intensity bound. "
+    "(2) For the top band, which has no transmitted position (long band 21, short band 12 per window; Table B.2 says its scalefactor is not transmitted), they copy band 20's (11's) position, "
+    "where the analyzer, as minimp3, uses the center position when band 20 (11) lies below the bound and band 20's otherwise; neither standard defines a position there. "
+    "A scratch build of minimp3 with both changes (no illegal MPEG-2 position, the top band always copying) matches FFmpeg to 4.6e-5 and mpg123 to 2.7e-4 (FFmpeg's last two granules excluded), "
+    "with either change alone it does not (acm34 against mpg123: 0.0049 with (1) alone, 0.0095 with (2) alone). The analyzer follows the standard where it speaks (1) and minimp3's choice where it does not (2)")
+
 EXPLAINED = {
     "mc-3-1-crosstalk-decided.mp2": {"mctoolamed": "dyn_cross_mode 5 to 7, which 13818-3 2.5.2.15 forbids in 3/1, are in the fixture and read differently by the two decoders; the allowed modes of 3/1, 3/2, 3/0, 2/1 and the second stereo program agree within 1 LSB (see development.md, \"Multichannel extension\")"},
     "mc-3-1-crosstalk-side.mp2": {"mctoolamed": "forbidden dyn_cross_mode values (5 to 7) and the copy sources the text and the reference software read differently (13818-3 2.5.2.15, the base channel of a copy)"},
@@ -53,6 +65,13 @@ EXPLAINED = {
     "mc-forbidden-values.mp2": {"mctoolamed": "dyn_cross_mode 15 of 3/2 and a nonzero tc_allocation with dematrix_procedure 3, which 13818-3 2.5.2.15 forbids, are in the fixture and read differently by the two decoders (each alone, in every frame of a variant, differs; the valid lfe_allocation 15 and a scalefactor index of 63 agree)"},
     "mc-second-stereo-crosstalk.mp2": {"mctoolamed": "tc_allocation 3, which 13818-3 2.5.2.15 leaves unassigned in 3/0 + 2/0, is in the fixture"},
     "mc-center-reserved-second-stereo.mp2": {"mctoolamed": "the reserved center value 2 (13818-3 2.5.2.13: not defined), which the analyzer reads as no center"},
+    "external-plugger-pro-cbr.mp3": {"ffmpeg": R1},
+    "external-plugger-cbr.mp3": {"ffmpeg": R1},
+    "external-plugger-original.mp3": {"ffmpeg": R1},
+    "external-plugger-48k.mp3": {"ffmpeg": R1},
+    "external-8hz-flags.mp3": {"ffmpeg": R1},
+    "external-fhg-acm19-mpeg2.mp3": {"ffmpeg": R2},
+    "external-fhg-acm34-mpeg2.mp3": {"ffmpeg": R2},
     "external-nero-rom-mp3pro-cbr64.mp3": {
         "ffmpeg": "in the granules 327 to 355 (positions 188,352 to 205,056; intensity stereo frames of a tone in the left channel, where the right channel codes no lines and has "
                   "scalefac_compress 90) FFmpeg 6.1.1 and 8.0.1 put the tone into the right channel as well (RMS 0.21 to 0.25 of full scale, the analyzer's 0.003 or less); observed "
@@ -172,6 +191,18 @@ def minimp3_reference(binary, path, work):
 FFMPEG_RANGES = {
     "external-nero-rom-mp3pro-cbr64.mp3": [[188352, 205056]],
     "external-nero-rom-mp3pro-vbr-low.mp3": [[134208, 135360], [188352, 205056]],
+    # Plugger+ 0.4 and 8hz-MP3 0.2b (old Wine encoders; Fraunhofer's l3codecp 3.4 file listed below is MPEG-2). Only FFmpeg differs from the analyzer on the MPEG-1 files, in 3 to 5 granules of channel 0 with tails into
+    # the next ones (up to 0.026 of full scale): mpg123 1.32.5 (`mpg123 -e f32 --no-gapless`), madplay 0.15.2b and minimp3 all match the analyzer (largest difference 8e-7, 1.4e-6 and 3e-7),
+    # FFmpeg 6.1.1 differs from all four. The first granules are the ones listed in the ranges; the granules where it begins hold long blocks of plain stereo (no intensity or
+    # mid/side stereo, no mixed blocks), e.g. external-plugger-pro-cbr granule 92: channel 0 has no big values and a part2_3_length of 2 bits (count1 region only), channel 1 288 big values.
+    # The two MPEG-2 files (l3codeca 1.9 and l3codecp 3.4, joint stereo with mid/side and intensity stereo together) differ for the two causes in R2; their ranges are the granules where they show.
+    "external-plugger-pro-cbr.mp3": [[52992, 54720]],
+    "external-plugger-cbr.mp3": [[43776, 45504], [70848, 71424]],
+    "external-plugger-original.mp3": [[43776, 45504], [70848, 71424]],
+    "external-plugger-48k.mp3": [[65664, 67392]],
+    "external-8hz-flags.mp3": [[52992, 54720]],
+    "external-fhg-acm19-mpeg2.mp3": [[1152, 1728], [36288, 37440]],
+    "external-fhg-acm34-mpeg2.mp3": [[0, 1728], [5760, 10944], [17856, 20736], [22464, 24192], [26496, 29376], [31680, 33408], [35712, 36864], [44928, 46080]],
 }
 
 # The positions only minimp3 outputs, which the analyzer does not, in the fixtures that have them: the frames it does not decode (a truncated or cut frame, a VBR header
@@ -206,6 +237,26 @@ ONLY_IN_MINIMP3 = {
     "external-lame357w-vbr.mp3": [[87552, 88704]],
     "external-lame370w-cbr.mp3": [[88704, 89856]],
     "external-lame370w-vbr.mp3": [[88704, 89856]],
+    # Plugger+, 8hz-MP3, M3E and Fraunhofer's l3codeca 1.9 (through acmenc) end every one of their test files with a frame cut short (l3codecp 3.3 and 3.4's files end whole) (mpeg-audio.frame-truncated, which each manifest lists):
+    # the analyzer decodes whole frames only, as ISO/IEC 11172-3 and 13818-3 define a frame by its length, and so do mpg123 and libmad (checked on external-plugger-cbr and
+    # external-fhg-acm19-mono-16k with mpg123 1.32 and madplay 0.15.2b: 76 and 52 frames, the analyzer's samples); only minimp3 outputs the last frame's samples.
+    "external-8hz-48k.mp3": [[95616, 96768]],
+    "external-8hz-cbr.mp3": [[87552, 88704]],
+    "external-8hz-flags.mp3": [[87552, 88704]],
+    "external-8hz-mono.mp3": [[87552, 88704]],
+    "external-fhg-acm19-mono-16k.mp3": [[29952, 30528]],
+    "external-fhg-acm19-mpeg2.mp3": [[42624, 43200]],
+    "external-m3e-48k.mp3": [[97920, 99072]],
+    "external-m3e-cbr.mp3": [[24192, 25344]],
+    "external-m3e-mono.mp3": [[91008, 92160]],
+    "external-m3e-vbr.mp3": [[88704, 89856]],
+    "external-m3e-vbr4.mp3": [[88704, 89856]],
+    "external-plugger-48k.mp3": [[95616, 96768]],
+    "external-plugger-cbr.mp3": [[87552, 88704]],
+    "external-plugger-flags.mp3": [[21888, 23040]],
+    "external-plugger-mono.mp3": [[87552, 88704]],
+    "external-plugger-original.mp3": [[87552, 88704]],
+    "external-plugger-pro-cbr.mp3": [[87552, 88704]],
 }
 
 
