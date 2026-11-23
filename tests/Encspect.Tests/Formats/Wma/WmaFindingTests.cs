@@ -167,8 +167,8 @@ public class WmaFindingTests
         {
             stream.Objects.Insert(0, []);
             CodecContext context = stream.Run(parser);
-            Node packets = Descendants(context.Parent).First(n => n.Name == "Packets");
-            Assert.Empty(Descendants(context.Parent).Where(n => n.Name == "Error"));
+            Node packets = Descendants(context.Parent).First(n => n.Name == "Packets" && n.Children.Count > 0);
+            Assert.DoesNotContain(Descendants(context.Parent), n => n.Name == "Error");
             Assert.Equal(0, packets.Children[0].Length);
         }
     }
