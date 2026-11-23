@@ -120,6 +120,11 @@ public sealed record WaveFormatEx
         codecSpecific = null;
         if (StatedExtraSize is not { } stated)
         {
+            if (data.Length > FixedSize)
+            {
+                node.Add(Node.FromMapped("Extra Data", data, FixedSize, data.Length, NodeValue.Integer(data.Length - FixedSize, "bytes", "byte"), description: Descriptions.ExtraData));
+            }
+
             return node;
         }
 
@@ -127,7 +132,7 @@ public sealed record WaveFormatEx
         if (ValidBits is { } valid && ChannelMask is { } mask && SubFormat is { } sub)
         {
             node.Add(Node.FromMapped("Valid Bits Per Sample", data, 18, 20, NodeValue.Integer(valid, "bits", "bit"), description: Descriptions.ValidBitsPerSample));
-            node.Add(Node.FromMapped("Channel Mask", data, 20, 24, NodeValue.Hex(mask, 8), description: Descriptions.ChannelMask));
+            node.Add(Node.FromMapped("Channel Mask", data, 20, 24, NodeValue.Hex(mask, 8), description: Descriptions.ChannelMask, topic: "channel-layouts"));
             string? known = WaveFormatRoutes.TagOfSubFormat(sub) is { } tag ? WaveFormatNames.NameOf(tag) ?? "unlisted coding" : WaveFormatRoutes.NamedSubFormat(sub)?.Name;
             node.Add(Node.FromMapped("Sub-Format", data, 24, 40, NodeValue.Text(known is null ? sub.ToString() : $"{sub} ({known})"), description: Descriptions.SubFormat));
         }
