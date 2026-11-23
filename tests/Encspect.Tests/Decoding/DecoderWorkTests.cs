@@ -353,14 +353,14 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             Add("tta-" + label, () => new Case("tta-" + label, TtaCases.Repeated(file)));
         }
 
-        // TAK: prediction orders 32 and 256 (the taps), the filter of the stereo decorrelation, noise (the longest codes), 24 bits, 8 bits, and silence, which takes a few
+        // TAK: prediction orders 32, 64 and 256 (the taps), the filter of the stereo decorrelation, noise in six channels, 24 bits, 8 bits, and silence, which takes a few
         // bytes for the most samples (frames of 16,384 samples of six channels at 96,000 Hz). Each case repeats one frame the test-side encoder wrote.
         foreach ((string label, int sizeType, int channels, string kind, TakEncoder.Settings settings) in new (string, int, int, string, TakEncoder.Settings)[]
         {
             ("16-stereo-order-32", 4, 2, "sine", new() { Rate = 44100, OrderIndex = 5, Prediction = 1, Subframes = 1, DifferenceOrder = 1, WastedBits = 0, StereoMode = 3 }),
             ("16-stereo-order-256", 4, 2, "sine", new() { Rate = 44100, OrderIndex = 14, Prediction = 1, Subframes = 1, DifferenceOrder = 1, WastedBits = 0, StereoMode = 3 }),
             ("16-stereo-filter", 4, 2, "sine", new() { Rate = 44100, OrderIndex = 3, Prediction = 1, Subframes = 2, WastedBits = 0, StereoMode = 6, LongFilter = true }),
-            ("24-stereo-noise", 4, 2, "noise", new() { Rate = 44100, Bits = 24, Prediction = 0.5, Subframes = 3, WastedBits = 0 }),
+            ("24-stereo-order-64", 4, 2, "sine", new() { Rate = 44100, Bits = 24, OrderIndex = 7, Prediction = 1, Subframes = 1, WastedBits = 0 }),
             ("8-mono", 4, 1, "sine", new() { Rate = 44100, Bits = 8, OrderIndex = 8, Prediction = 1, Subframes = 2, WastedBits = 0 }),
             ("16-mono-silence", 4, 1, "silence", new() { Rate = 44100 }),
             ("16-6-channels-silence", 6, 6, "silence", new() { Rate = 96000, Codec = 4 }),

@@ -95,7 +95,7 @@ How far into each coding Encspect sees today, on the depth levels of the [plan](
 | Monkey's Audio | walked by the decoder | verified and measured (versions 3.80 to 3.99 and 4.11) | none |
 | TTA | walked by the decoder; the frames' CRC-32s are checked over the coded bytes | measured (audio format 1) | none |
 | OptimFROG | the blocks are walked and their CRC-32s checked over the compressed data; the data itself is not read | no decoder | none |
-| TAK | the metadata objects are walked and their CRC-24s checked; the frames are walked by their sync words and their header and data CRC-24s checked over the coded data; the coded syntax is read by the decoder | verified (the MD5 where there is one) and measured (codec 2 and 4) | none (queued) |
+| TAK | the metadata objects are walked and their CRC-24s checked; the frames are walked by their sync words and their header and data CRC-24s checked over the coded data; the coded syntax is walked by the parser | verified (the MD5 where there is one) and measured (codec 2 and 4) | Stereo Coding |
 | ALAC | walked by the parser | measured (no checksum to verify) | Element Coding, Stereo Coding |
 | Dolby TrueHD, MLP | walked by the parser | verified and measured | none (Stereo Coding: 0.4) |
 | PCM, float, A-law, mu-law (WAV, Wave64, AIFF) | none to walk | measured | none |
