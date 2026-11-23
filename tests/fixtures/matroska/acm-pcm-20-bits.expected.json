@@ -1,0 +1,431 @@
+{
+ "description": "Ten blocks of stereo PCM in an A_MS/ACM track whose WAVEFORMATEX states 20 bits per sample and a block alignment of 6 bytes: read as WAV reads it, in a 24-bit container.",
+ "length": 29054,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 174,
+     "length": 28880,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 10
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "duration": 100.0,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "encspect fixtures"
+   },
+   "length": 29014,
+   "declared_end": 29054
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   29014,
+   [
+    [
+     "Info",
+     47,
+     63,
+     [
+      [
+       "TimestampScale",
+       52,
+       7
+      ],
+      [
+       "Duration",
+       59,
+       11
+      ],
+      [
+       "MuxingApp",
+       70,
+       20
+      ],
+      [
+       "WritingApp",
+       90,
+       20
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     110,
+     64,
+     [
+      [
+       "TrackEntry",
+       115,
+       59,
+       [
+        [
+         "TrackNumber",
+         117,
+         3
+        ],
+        [
+         "TrackUID",
+         120,
+         5
+        ],
+        [
+         "TrackType",
+         125,
+         3
+        ],
+        [
+         "CodecID",
+         128,
+         10
+        ],
+        [
+         "CodecPrivate",
+         138,
+         21
+        ],
+        [
+         "Audio",
+         159,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           161,
+           10
+          ],
+          [
+           "Channels",
+           171,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     174,
+     28880,
+     [
+      [
+       "Timestamp",
+       181,
+       3
+      ],
+      [
+       "SimpleBlock",
+       184,
+       2887
+      ],
+      [
+       "SimpleBlock",
+       3071,
+       2887
+      ],
+      [
+       "SimpleBlock",
+       5958,
+       2887
+      ],
+      [
+       "SimpleBlock",
+       8845,
+       2887
+      ],
+      [
+       "SimpleBlock",
+       11732,
+       2887
+      ],
+      [
+       "SimpleBlock",
+       14619,
+       2887
+      ],
+      [
+       "SimpleBlock",
+       17506,
+       2887
+      ],
+      [
+       "SimpleBlock",
+       20393,
+       2887
+      ],
+      [
+       "SimpleBlock",
+       23280,
+       2887
+      ],
+      [
+       "SimpleBlock",
+       26167,
+       2887
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 184,
+   "length": 2887,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     191,
+     2880
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 3071,
+   "length": 2887,
+   "track": 1,
+   "timestamp": 10,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     3078,
+     2880
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 5958,
+   "length": 2887,
+   "track": 1,
+   "timestamp": 20,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     5965,
+     2880
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 8845,
+   "length": 2887,
+   "track": 1,
+   "timestamp": 30,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     8852,
+     2880
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 11732,
+   "length": 2887,
+   "track": 1,
+   "timestamp": 40,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     11739,
+     2880
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 14619,
+   "length": 2887,
+   "track": 1,
+   "timestamp": 50,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     14626,
+     2880
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 17506,
+   "length": 2887,
+   "track": 1,
+   "timestamp": 60,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     17513,
+     2880
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 20393,
+   "length": 2887,
+   "track": 1,
+   "timestamp": 70,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     20400,
+     2880
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 23280,
+   "length": 2887,
+   "track": 1,
+   "timestamp": 80,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     23287,
+     2880
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 26167,
+   "length": 2887,
+   "track": 1,
+   "timestamp": 90,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     26174,
+     2880
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_MS/ACM",
+   "private": [
+    141,
+    18
+   ],
+   "channels": 2,
+   "rate": 48000.0,
+   "bits": null,
+   "delay": 0,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "writers": [
+  {
+   "name": "encspect fixtures",
+   "confidence": "Low"
+  }
+ ],
+ "streams": [
+  {
+   "codec": "PCM",
+   "sample_rate": 48000,
+   "channels": 2
+  }
+ ],
+ "findings": [],
+ "crosscheck": {
+  "valid": true
+ }
+}

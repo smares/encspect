@@ -1,0 +1,347 @@
+{
+ "description": "Six frames of stereo AC-3 in an A_MS/ACM track whose WAVEFORMATEX has the format tag 0x2000 and no codec-specific data: routed to the AC-3 parser as A_AC3 is, which is given no configuration.",
+ "length": 4832,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 173,
+     "length": 4659,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 6
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "duration": 100.0,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "encspect fixtures"
+   },
+   "length": 4792,
+   "declared_end": 4832
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   4792,
+   [
+    [
+     "Info",
+     46,
+     63,
+     [
+      [
+       "TimestampScale",
+       51,
+       7
+      ],
+      [
+       "Duration",
+       58,
+       11
+      ],
+      [
+       "MuxingApp",
+       69,
+       20
+      ],
+      [
+       "WritingApp",
+       89,
+       20
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     109,
+     64,
+     [
+      [
+       "TrackEntry",
+       114,
+       59,
+       [
+        [
+         "TrackNumber",
+         116,
+         3
+        ],
+        [
+         "TrackUID",
+         119,
+         5
+        ],
+        [
+         "TrackType",
+         124,
+         3
+        ],
+        [
+         "CodecID",
+         127,
+         10
+        ],
+        [
+         "CodecPrivate",
+         137,
+         21
+        ],
+        [
+         "Audio",
+         158,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           160,
+           10
+          ],
+          [
+           "Channels",
+           170,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     173,
+     4659,
+     [
+      [
+       "Timestamp",
+       179,
+       3
+      ],
+      [
+       "SimpleBlock",
+       182,
+       775
+      ],
+      [
+       "SimpleBlock",
+       957,
+       775
+      ],
+      [
+       "SimpleBlock",
+       1732,
+       775
+      ],
+      [
+       "SimpleBlock",
+       2507,
+       775
+      ],
+      [
+       "SimpleBlock",
+       3282,
+       775
+      ],
+      [
+       "SimpleBlock",
+       4057,
+       775
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 182,
+   "length": 775,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     189,
+     768
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 957,
+   "length": 775,
+   "track": 1,
+   "timestamp": 32,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     964,
+     768
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 1732,
+   "length": 775,
+   "track": 1,
+   "timestamp": 64,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     1739,
+     768
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 2507,
+   "length": 775,
+   "track": 1,
+   "timestamp": 96,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     2514,
+     768
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 3282,
+   "length": 775,
+   "track": 1,
+   "timestamp": 128,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     3289,
+     768
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 4057,
+   "length": 775,
+   "track": 1,
+   "timestamp": 160,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     4064,
+     768
+    ]
+   ]
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_MS/ACM",
+   "private": [
+    140,
+    18
+   ],
+   "channels": 2,
+   "rate": 48000.0,
+   "bits": null,
+   "delay": 0,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "writers": [
+  {
+   "name": "encspect fixtures",
+   "confidence": "Low"
+  }
+ ],
+ "streams": [
+  {
+   "codec": "AC-3",
+   "sample_rate": 48000,
+   "channels": 2
+  }
+ ],
+ "findings": [],
+ "crosscheck": {
+  "valid": true
+ }
+}

@@ -43,9 +43,9 @@ internal sealed partial class FileReader
                 StreamInfo stream = original;
                 // A codec parser that finds no tag to put a Writer in (an Opus track has no comment packet) names no writer: the claims of the
                 // Segment and the file's tags are weighed here.
-                if (made.Count == 1 && stream.Writer is null && stream.Nodes.Count > 0 && Codecs.WriterKind(track.CodecId ?? string.Empty) is { } kind)
+                if (made.Count == 1 && stream.Writer is null && stream.Nodes.Count > 0 && Codecs.WriterKind(track.CodecId ?? string.Empty, track.AcmRoute) is { } kind)
                 {
-                    Node? writer = ResolveWriter(segment, stream.Nodes[0], kind, Codecs.NameOf(track.CodecId ?? string.Empty) ?? kind);
+                    Node? writer = ResolveWriter(segment, stream.Nodes[0], kind, NameOf(track) ?? kind);
                     (string? writerName, Confidence? writerConfidence) = ClaimRoles.Resolved(writer);
                     stream = stream with { Writer = writerName, WriterConfidence = writerConfidence };
                 }
@@ -146,6 +146,117 @@ internal sealed partial class FileReader
     private static string FamilyIn(SegmentState segment, string text) =>
         IsMuxingLibrary(segment, text) && segment.WritingApp is { } writing && !string.IsNullOrWhiteSpace(writing) ? ClaimRoles.FamilyOf(writing) : ClaimRoles.FamilyOf(text);
 
+    // The name of the track's coding: the A_MS/ACM track's is the WAVEFORMATEX format tag's, else the codec ID's.
+    private static string? NameOf(TrackInfo track) => track.AcmName ?? Codecs.NameOf(track.CodecId ?? string.Empty);
+
+    // What the WAVEFORMATEX in an A_MS/ACM track's CodecPrivate gives the route: the structure with its nodes, and the codec parser its coding goes to.
+    private sealed record AcmTrack(WaveFormatEx Format, MappedBytes Data, Node Wave, Node? Specific, string? Route);
+
+    // Reads the CodecPrivate of an A_MS/ACM track as a WAVEFORMATEX and shows it, then routes by its format tag (or, for the extensible form, the tag
+    // or named GUID of its sub-format) to the codec parsers WAV routes to, and for the Windows Media Audio tags those ASF routes to. Null, with the finding,
+    // where there is no structure to route by: the coding is then unknown and the track is reported from its TrackEntry.
+    private AcmTrack? ReadAcm(TrackInfo track, string label, EncodingPlan plan, Node anchor)
+    {
+        Node where = track.CodecPrivateNode ?? anchor;
+        if (track.CodecPrivateOffset < 0 || track.CodecPrivateLength == 0)
+        {
+            _findings.AddNow(Severity.Warning, "matroska.codec-private-missing",
+                $"{label} is coded as {Codecs.NameOf(Codecs.Acm)} but has no CodecPrivate, which holds its WAVEFORMATEX (draft-ietf-cellar-codec, section 3.4); its coding is unknown, so its frames cannot be analyzed.", anchor);
+            return null;
+        }
+
+        if (plan.Private.Describe() is { } privateProblem)
+        {
+            _findings.AddNow(Severity.Info, plan.Private.IsEncrypted ? "matroska.codec-private-encrypted" : "matroska.codec-private-not-read",
+                $"The CodecPrivate of {label} ({Codecs.Acm}) {privateProblem}, so its coding is unknown and its frames cannot be analyzed.", where);
+            return null;
+        }
+
+        if (track.CodecPrivateLength > MaxCodecPrivate)
+        {
+            return null;
+        }
+
+        MappedBytes data;
+        try
+        {
+            data = plan.Private.Decoder is not { } decoder
+                ? new MappedBytes(ReadAt(track.CodecPrivateOffset, (int)track.CodecPrivateLength), track.CodecPrivateOffset)
+                : decoder.Decode(ReadAt(track.CodecPrivateOffset, (int)track.CodecPrivateLength), track.CodecPrivateOffset, this);
+        }
+        catch (InvalidDataException ex)
+        {
+            _findings.AddNow(Severity.Warning, "matroska.codec-private-invalid",
+                $"The CodecPrivate of {label} cannot be read back from its ContentEncodings (RFC 9559, section 5.1.4.1.31): {ex.Message} Its frames cannot be analyzed.", where);
+            return null;
+        }
+
+        if (WaveFormatEx.Read(data.Span) is not { } format)
+        {
+            _findings.AddNow(Severity.Warning, "matroska.codec-private-invalid",
+                $"The CodecPrivate of {label} holds {Counts.Of(data.Length, "byte", "bytes")}, too few for a WAVEFORMATEX ({WaveFormatEx.FixedSize} bytes); its coding is unknown, so its frames cannot be analyzed.", where);
+            return null;
+        }
+
+        Node wave = format.AddNodes(where, data, out Node? specific);
+        if (format.IsDataCut)
+        {
+            _findings.AddNow(Severity.Warning, "matroska.codec-private-invalid",
+                $"The WAVEFORMATEX of {label} states {Counts.Of(format.StatedExtraSize ?? 0, "byte", "bytes")} of codec-specific data, but {format.HeldExtraSize} follow; they are read as far as they go.",
+                wave.Children.FirstOrDefault(c => c.Name == "Codec Specific Data Size") ?? wave);
+        }
+        else if (format.Tag == WaveFormatRoutes.Extensible && format.SubFormat is null)
+        {
+            _findings.AddNow(Severity.Warning, "matroska.codec-private-invalid",
+                $"The WAVEFORMATEX of {label} has the extensible format tag 0xFFFE, which needs a codec-specific data size of {WaveFormatEx.ExtensionSize} or more for the valid bits, the channel mask and the sub-format (it states {(format.StatedExtraSize is { } stated ? Counts.Of(stated, "byte", "bytes") : "none")}), so its coding is unknown.",
+                wave.Children.FirstOrDefault(c => c.Name == "Format Tag") ?? wave);
+        }
+
+        track.AcmName = format.CodingName is null or "unknown" or "extensible" ? null : format.CodingName;
+        string? route = format.CodingTag is WaveFormatRoutes.Pcm or WaveFormatRoutes.IeeeFloat or WaveFormatRoutes.ALaw or WaveFormatRoutes.MuLaw ? Codecs.PcmSamples : format.CodecId;
+        track.AcmRoute = route;
+        if (track.HasAudio)
+        {
+            // Matroska's specifications do not say which of the two wins; the report follows the coding's parser: the structure for the codings read from it, the
+            // frames for the ones whose frames state their own figures, the Audio element for a track no parser reads.
+            string used = route is null ? "the track is reported with the Audio element's figures"
+                : route == Codecs.PcmSamples || route.StartsWith("wma", StringComparison.Ordinal) ? "the stream is reported with the WAVEFORMATEX's figures"
+                : "the stream is reported with the figures of its frames";
+            if ((ulong)format.Channels != (track.Channels ?? 1))
+            {
+                _findings.AddNow(Severity.Warning, "matroska.waveformat-differs",
+                    $"{label} states {Counts.Of(track.Channels ?? 1, "channel", "channels")} in its Audio element, but its WAVEFORMATEX states {format.Channels}; {used}.", wave.Children.First(c => c.Name == "Channels"));
+            }
+
+            double? stated = track.SamplingFrequency is { } rate && Codecs.IsRate(rate) ? rate
+                : track.OutputSamplingFrequency is { } output && Codecs.IsRate(output) ? output : null;
+            if (stated is { } statedRate && format.SampleRate != RoundedRate(track.SamplingFrequency) && format.SampleRate != RoundedRate(track.OutputSamplingFrequency))
+            {
+                _findings.AddNow(Severity.Warning, "matroska.waveformat-differs",
+                    $"{label} states a sampling frequency of {statedRate.ToString("0.###", CultureInfo.InvariantCulture)} Hz in its Audio element, but its WAVEFORMATEX states {format.SampleRate} Hz; {used}.", wave.Children.First(c => c.Name == "Samples Per Second"));
+            }
+        }
+
+        return new AcmTrack(format, data, wave, specific, route);
+    }
+
+    // The configuration of an A_MS/ACM track's codec parser: the Windows Media Audio parsers are given the WAVEFORMATEX and the codec-specific data after it, as
+    // ASF gives them; the others take their frames alone (AC-3 would read the structure's extra bytes as a dac3 or dec3 box).
+    private static CodecConfiguration? AcmConfiguration(AcmTrack acm, bool areFramesEncrypted, double seconds)
+    {
+        if (acm.Route is not ("wma" or "wma-pro" or "wma-lossless" or "wma-voice"))
+        {
+            return null;
+        }
+
+        return new CodecConfiguration(acm.Data.Slice(acm.Format.DataStart, acm.Format.DataLength), acm.Specific ?? acm.Wave)
+        {
+            Format = acm.Format.ToAudioFormat(),
+            AreSamplesEncrypted = areFramesEncrypted,
+            Duration = seconds > 0 ? seconds : null,
+        };
+    }
+
     private void RouteAudio(SegmentState segment, TrackInfo track, string label)
     {
         TrackStatistics statistics = track.Statistics;
@@ -173,6 +284,19 @@ internal sealed partial class FileReader
             return;
         }
 
+        AcmTrack? acm = null;
+        if (codecId == Codecs.Acm)
+        {
+            acm = ReadAcm(track, label, plan, anchor);
+            if (acm is null)
+            {
+                AddContainerStream(segment, track, null, plan.Protection);
+                return;
+            }
+
+            codec = acm.Route;
+        }
+
         bool areFramesEncrypted = plan.Frames.IsEncrypted;
         string? problem = plan.Frames.Describe();
         // Vorbis, Opus and FLAC cannot be set up without their CodecPrivate.
@@ -185,7 +309,7 @@ internal sealed partial class FileReader
         {
             // The AAC, AC-3, DTS and MPEG audio parsers place their nodes at the offsets of contiguous file bytes, which frames put together from
             // stripped or inflated bytes do not have.
-            problem = $"stores its frames with {plan.Frames.Kinds}, which the {Codecs.NameOf(codecId)} parser cannot map back to the bytes of the file";
+            problem = $"stores its frames with {plan.Frames.Kinds}, which the {NameOf(track)} parser cannot map back to the bytes of the file";
         }
 
         if (problem is not null)
@@ -201,7 +325,8 @@ internal sealed partial class FileReader
         else if (codec is null)
         {
             _findings.AddNow(Severity.Info, "matroska.codec-not-analyzed",
-                Codecs.NameOf(codecId) is { } name
+                acm is not null ? $"{label} is coded as {NameOf(track)} ({codecId}, format tag 0x{acm.Format.CodingTag:X4}), whose frames are not analyzed yet; the track is reported from its TrackEntry."
+                : Codecs.NameOf(codecId) is { } name
                     ? $"{label} is coded as {name} ({codecId}), whose frames are not analyzed yet; the track is reported from its TrackEntry."
                     : $"{label} has the codec ID \"{codecId}\", which the Matroska codec mapping does not define for audio, so its frames are not analyzed.",
                 anchor);
@@ -214,7 +339,7 @@ internal sealed partial class FileReader
 
         // The codec mapping defines a CodecPrivate for A_AAC, A_VORBIS, A_OPUS, A_FLAC (the marker and metadata blocks), A_WAVPACK4 (the stream version), A_ALAC (whose private data is ALAC's magic cookie) and A_TTA1 (the TTA header) only (A_OPUS/EXPERIMENTAL, which the mapping does not list, is read as A_OPUS; draft-ietf-cellar-codec, section 3.4: "Initialization: none" for the rest,
         // the legacy A_AAC/MPEG2/* and A_AAC/MPEG4/* IDs included, whose configuration comes from the ID), so no other codec ID is handed one, whatever its coding.
-        if (hasPrivate && !(codec is "vorbis" or "opus" or "alac" or "tta" or "flac" or "wavpack" || codecId == "A_AAC"))
+        if (hasPrivate && acm is null && !(codec is "vorbis" or "opus" or "alac" or "tta" or "flac" or "wavpack" || codecId == "A_AAC"))
         {
             _findings.AddNow(Severity.Info, "matroska.codec-private-unexpected",
                 $"{label} ({codecId}) has a CodecPrivate, which the codec mapping does not define for it (draft-ietf-cellar-codec, section 3.4), so it is not handed to the codec parser.",
@@ -301,7 +426,8 @@ internal sealed partial class FileReader
 
         // Encrypted frames give the codec parser no length to count, so the container's timing stands in, as in MP4's RouteEncrypted.
         double seconds = areFramesEncrypted ? EncryptedDuration(segment, track, privateData) : 0;
-        CodecConfiguration? configuration = privateData is not null && configurationNode is { } privateNode
+        CodecConfiguration? configuration = acm is not null ? AcmConfiguration(acm, areFramesEncrypted, seconds)
+            : privateData is not null && configurationNode is { } privateNode
             ? new CodecConfiguration(privateData, privateNode)
             {
                 Delay = track.CodecDelayNode is null ? null : track.CodecDelay / 1e9,
@@ -318,15 +444,16 @@ internal sealed partial class FileReader
             return;
         }
 
-        // PCM has no CodecPrivate; the Audio element says how its samples are laid out.
+        // PCM has no CodecPrivate; the Audio element says how its samples are laid out (an A_MS/ACM track's WAVEFORMATEX does).
         PcmCoding? pcm = null;
+        string pcmWhy;
         if (codec == Codecs.PcmSamples)
         {
-            pcm = Codecs.PcmOf(codecId, track.BitDepth, track.Channels, track.SamplingFrequency, out string pcmWhy);
+            pcm = acm is not null ? Codecs.PcmOf(acm.Format, out pcmWhy) : Codecs.PcmOf(codecId, track.BitDepth, track.Channels, track.SamplingFrequency, out pcmWhy);
             if (pcm is null)
             {
                 _findings.AddNow(Severity.Warning, "matroska.pcm-layout-not-read",
-                    $"{label} ({codecId}) {pcmWhy}, so its samples cannot be read.", track.AudioNode ?? anchor);
+                    $"{label} ({codecId}) {pcmWhy}, so its samples cannot be read.", acm?.Wave ?? track.AudioNode ?? anchor);
                 AddContainerStream(segment, track, null, plan.Protection);
                 return;
             }
@@ -408,7 +535,7 @@ internal sealed partial class FileReader
             configuration = new CodecConfiguration(MappedBytes.Opaque(ReadOnlyMemory<byte>.Empty, node.Offset, node.Offset), node)
             {
                 Pcm = pcm,
-                Format = new AudioFormat(0, (int)(track.Channels ?? 1), pcm.SampleRate, 0, 0, pcm.ContainerBits),
+                Format = acm is not null ? acm.Format.ToAudioFormat() with { BitsPerSample = pcm.ContainerBits } : new AudioFormat(0, (int)(track.Channels ?? 1), pcm.SampleRate, 0, 0, pcm.ContainerBits),
                 DataBytes = statistics.Bytes,
             };
         }
@@ -456,7 +583,12 @@ internal sealed partial class FileReader
                     length, added[0].SampleRate, Explain.ContainerSamples, Explain.ContainerDuration);
             }
 
-            CompareStreams(track, label, codec, added);
+            // The PCM and Windows Media Audio parsers take their figures from the WAVEFORMATEX, so a disagreement with the Audio element is already
+            // matroska.waveformat-differs; the other codecs' frames state figures of their own, which are compared as for any track.
+            if (acm is null || !(codec == Codecs.PcmSamples || codec.StartsWith("wma", StringComparison.Ordinal)))
+            {
+                CompareStreams(track, label, codec, added);
+            }
         }
     }
 
@@ -682,13 +814,13 @@ internal sealed partial class FileReader
             : track.HasAudio ? 8000 : 0;
         int channels = track.HasAudio ? (int)Math.Min(track.Channels ?? 1, int.MaxValue) : 0;
         Node streamNode = frames ?? track.Node;
-        Node? writer = ResolveWriter(segment, streamNode, Codecs.RouteOf(codecId) is { } route ? Codecs.WriterKind(codecId) ?? route : codecId, Codecs.NameOf(codecId) ?? codecId);
+        Node? writer = ResolveWriter(segment, streamNode, (track.AcmRoute ?? Codecs.RouteOf(codecId)) is { } route ? Codecs.WriterKind(codecId, track.AcmRoute) ?? route : codecId, NameOf(track) ?? codecId);
         (string? writerName, Confidence? writerConfidence) = ClaimRoles.Resolved(writer);
         _context.AddStream(new StreamInfo
         {
             Protection = protection,
             Nodes = [streamNode],
-            Codec = Codecs.NameOf(codecId) ?? (codecId.Length == 0 ? CodecNames.Other : codecId),
+            Codec = NameOf(track) ?? (codecId.Length == 0 ? CodecNames.Other : codecId),
             SampleRate = (int)Math.Min(rate, int.MaxValue),
             Channels = channels,
             BitsPerSample = track.BitDepth is { } depth && codecId.StartsWith("A_PCM", StringComparison.Ordinal) ? (int)depth : null,

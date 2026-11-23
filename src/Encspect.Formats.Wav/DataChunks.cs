@@ -311,18 +311,5 @@ internal static class DataChunks
     // The speakers of a stream's channels: the assignment of the channel mask (a mask that names fewer speakers than there are channels leaves the
     // rest without a position, one that names more has its extra bits ignored), else, for the plain WAVEFORMATEX, front left and right for two
     // channels and the front center for one (ksmedia.h, KSAUDIO_SPEAKER_MONO).
-    public static IReadOnlyList<Speaker>? StreamLayout(WaveFormat format)
-    {
-        if (format.Channels is < 1 or > 64)
-        {
-            return null;
-        }
-
-        if (format.IsExtensible && format.ChannelMask is { } mask && mask != 0)
-        {
-            return ChannelLayouts.FromWaveMask(mask, format.Channels);
-        }
-
-        return format.Channels switch { 1 => ChannelLayouts.Mono, 2 => ChannelLayouts.Stereo, _ => null };
-    }
+    public static IReadOnlyList<Speaker>? StreamLayout(WaveFormat format) => WaveFormatRoutes.StreamLayout(format.Channels, format.IsExtensible, format.ChannelMask);
 }
