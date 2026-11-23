@@ -111,7 +111,7 @@ internal sealed class Layer3Walker
 
     // The lowest line, in the 576-line scale, of the bands from which a granule's right channel codes intensity positions, or -1 where it has none: the bands above the
     // last one in which the right channel has a nonzero pair, whose position is legal (ISO/IEC 11172-3 2.4.3.4.9.3), found as the decoder finds them (minimp3's
-    // L3_stereo_top_band and L3_intensity_stereo). left supplies the band layout, as it does there (the right granule's is not read); positions are the right channel's as coded
+    // L3_stereo_top_band and L3_intensity_stereo, except that each window of a short block, mixed or not, has its own bound, ISO/IEC 13818-3 2.4.3.2). left supplies the band layout, as it does there (the right granule's is not read); positions are the right channel's as coded
     // and are not changed. The decoder's Layer3Kernels.TopBands and IntensityStereo apply the same rule to the requantized lines: the two are kept together (all band widths are even, and
     // a requantized line is nonzero exactly where its integer is), and a change to one is a change to the other.
     internal static int IntensityStart(MpegHeader header, in GranuleSyntax left, ReadOnlySpan<int> values, ReadOnlySpan<byte> positions)
