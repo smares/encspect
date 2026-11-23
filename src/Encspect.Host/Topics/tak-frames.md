@@ -11,6 +11,6 @@ references: TAK 2.3.3 SDK, Sdk/Source/takStream.pas ("Audio frames", "Frame-Info
 
 **What the analyzer does.** It finds each frame by its sync word and accepts it when the header's CRC-24 holds or, where it fails, when the frame number is the one expected or the data CRC-24 before it holds. A data CRC-24 that differs and a break in the frame numbers are findings. The coded audio is not read.
 
-**What the files show.** In the 33 files Takc 2.3.3 wrote for Encspect's tests, which last at most a second, every header CRC-24 and every data CRC-24 holds, the first and the last frame are info frames, only the last is flagged as the last frame and states its samples, and no info frame states a previous distance. The CRC-24 over the data covers the bytes between the header's CRC-24 and its own.
+**What the files show.** In the 42 files Takc 2.3.3 wrote for Encspect's tests, which last at most two seconds, every header CRC-24 and every data CRC-24 holds, the first and the last frame are info frames, only the last is flagged as the last frame and states its samples, and no info frame states a previous distance. The CRC-24 over the data covers the bytes between the header's CRC-24 and its own.
 
 **What you see.** Each frame with its header fields and both CRC-24s as stored and as computed, its bitrate in the graphs, and the frames and checksums counted in the statistics. A stream whose CRC-24s all hold, with all the frames its sample count calls for, is verified without decoding ([verification](verification)).

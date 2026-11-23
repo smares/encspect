@@ -1361,7 +1361,7 @@
     "findings": [
       {
         "severity": "Warning",
-        "code": "tak.metadata-cut",
+        "code": "tak.object-size-invalid",
         "message": "The wave data object at 0x2F states 1000000 bytes, which runs past the data; the first frame, with a header whose CRC-24 holds, begins 57 bytes into its data at 0x6C, so the object is taken to end there.",
         "offset": 47,
         "length": 61,

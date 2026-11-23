@@ -403,9 +403,10 @@ public class TakFindingTests
 
         Report report = Analyze(file);
 
-        Finding cut = Single(report, "tak.metadata-cut");
+        Finding cut = Single(report, "tak.object-size-invalid");
         Assert.Equal("Wave Data Object", cut.Node?.Name);
         Assert.Contains("runs past the data", cut.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain(report.Findings, f => f.Code == "tak.metadata-cut");
         Node stream = report.Root.Children.Single(n => n.Name == "TAK");
         Assert.Equal(2, stream.Children.Count(c => c.Name == "Frame"));
         Assert.Equal(DecodeStatus.NotRequested, report.Streams.Single().Verification!.Decoding);
@@ -425,6 +426,56 @@ public class TakFindingTests
         Finding cut = Single(report, "tak.metadata-cut");
         Assert.Contains("The stream has no frame", cut.Message, StringComparison.Ordinal);
         Assert.DoesNotContain(report.Root.Children.Single(n => n.Name == "TAK").Children, c => c.Name == "Frame");
+    }
+
+    [Fact]
+    public void AnObjectWhoseSizeRunsPastTheDataIsNotResyncedOnASyncWordWhoseHeaderFails()
+    {
+        byte[] file = Builder.Standard();
+        int waveAt = 4 + Builder.StreamInfo().Length + Builder.LastFrameInfo(0, 0).Length + Builder.EncoderInfo().Length;
+        file[waveAt + 1] = 0x40;
+        file[waveAt + 2] = 0x42;
+        file[waveAt + 3] = 0x0F;
+        byte[] cutShort = [.. file[..(waveAt + 30)], 0xFF, 0xA0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+
+        Report report = Analyze(cutShort);
+
+        Single(report, "tak.metadata-cut");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "tak.object-size-invalid");
+        Assert.DoesNotContain(report.Root.Children.Single(n => n.Name == "TAK").Children, c => c.Name == "Frame");
+    }
+
+    [Fact]
+    public void CancelingWhileLookingForAFrameInAnObjectOfSyncWordsStopsTheAnalysis()
+    {
+        byte[] file = Builder.Standard();
+        int waveAt = 4 + Builder.StreamInfo().Length + Builder.LastFrameInfo(0, 0).Length + Builder.EncoderInfo().Length;
+        file[waveAt + 1] = 0xFF;
+        file[waveAt + 2] = 0xFF;
+        file[waveAt + 3] = 0x7F;
+        byte[] data = new byte[waveAt + 4 + (8 << 20)];
+        file.AsSpan(0, waveAt + 4).CopyTo(data);
+        for (int i = waveAt + 4; i + 1 < data.Length; i += 2)
+        {
+            data[i] = 0xFF;
+            data[i + 1] = 0xA0;
+        }
+
+        using var cancellation = new CancellationTokenSource();
+        var progress = new CancelAt(cancellation, data.Length / 4);
+
+        Assert.Throws<OperationCanceledException>(() => Analyze(data, new AnalysisOptions { CancellationToken = cancellation.Token, BytesRead = progress }));
+    }
+
+    private sealed class CancelAt(CancellationTokenSource source, long at) : IProgress<long>
+    {
+        public void Report(long value)
+        {
+            if (value >= at)
+            {
+                source.Cancel();
+            }
+        }
     }
 
     [Fact]
