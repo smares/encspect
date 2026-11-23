@@ -363,6 +363,13 @@ The scope is confirmed when 0.4 is done. The decoders follow steps 9 to 15 of [l
    - **The routes:** PCM to the PCM description and feed the WAV and AIFF parsers share (`PcmCoding`, `PcmFeed`), and `0x0050` to the MPEG audio parser, as `0x0055` already goes there.
    - **With the WMA work,** since both read the same stream properties.
 
+8. **Decoding limits that need no new source** (the lead, 2026-11-23, from the limits the 0.4.0 notes list): each with its fixtures.
+   - **Opus mapping family 3:** apply the Ambisonics demixing matrix the decoder already reads (RFC 8486), with files libopus writes.
+   - **The Vorbis codebook limit:** raise the 4 Mi-entry bound toward libvorbis's 8 Mi only if a real file needs it; the memory bound per stream stays.
+   - **ADPCM and GSM 6.10 in WAV and AIFF** (Microsoft ADPCM, IMA ADPCM, GSM 6.10 and the codings of the same kind the parsers name): decoders from their published descriptions, with files FFmpeg writes.
+   - **DSD to PCM** for WavPack DSD, so its streams are measured: a conversion the DSF and DSDIFF items after 0.5 reuse, designed with its determinism and work budget first.
+   - **TTA's password-protected streams** (audio format 2): a way to pass the password, and the scheme from a clean-room description of libtta-c (LGPL).
+
 ### After 0.5
 
 The more formats of [planned.md](formats/planned.md#after-05-more-formats), as later milestones in this order (the lead, 2026-11-17): formats whose audio the existing parsers and decoders already read come first, since they cost a container or a transport and no codec; among the rest, the better documented a format is, the sooner it comes.
@@ -407,6 +414,11 @@ Parked items carry the trigger that would bring them back. The formats at the en
 - **The detection pre-check** (the lead, 2026-10-26; [detection-precheck.md](design/detection-precheck.md)): recorded, not to be built. The design stays as a record. **Trigger:** detection becomes a bottleneck.
 - **Offering the library as packages:** not planned yet ([library.md](library.md)). **Trigger:** the milestones no longer extend the library's contract.
 - **Sequenced formats** (MIDI, tracker modules and chiptunes; the lead, 2026-11-08): dropped ([history.md](history.md#dropped-plans)). **Reason:** a different domain from bitstream and encoder analysis.
+- **Decoding limits that wait for files** (the lead, 2026-11-23): sources exist, but no test file does, and no decoder is built without fixtures. **Trigger:** real files of the kind, or an encoder that writes them.
+  - DTS core channel arrangements 10 to 15 and user-defined ones (TS 102 114 defines them);
+  - the MPEG-2 multichannel extension bitstream and multilingual channels (ISO/IEC 13818-3, at hand);
+  - Monkey's Audio versions outside 3.80 to 3.99 and 4.11 (the SDK is BSD);
+  - TAK codecs 0, 1 and 3, the TAK 1.0 files among them (a clean-room description extended from FFmpeg's decoder).
 - **What the lossy decoders leave out** (the signed-off design, [lossy-decoders.md, "Scope" and "What each decoder covers"](design/lossy-decoders.md#what-each-decoder-covers)): each with the condition the design states.
   - E-AC-3 at a reduced sample rate (fscod2) and AC-3 with bsid 9 and 10: A/52 does not specify their bit allocation, and no free source for it is known;
   - AAC SSR gain control, which FDK AAC refuses; MPEG Surround beyond USAC's 2-1-2; DRC and loudness normalization, and every other decoder-side gain but Opus's output gain (decision 9);
