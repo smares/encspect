@@ -393,6 +393,41 @@ public class TakFindingTests
     }
 
     [Fact]
+    public void AnObjectWhoseSizeRunsPastTheDataEndsAtTheFirstFrameWhoseHeaderHolds()
+    {
+        byte[] file = Builder.Standard();
+        int waveAt = 4 + Builder.StreamInfo().Length + Builder.LastFrameInfo(0, 0).Length + Builder.EncoderInfo().Length;
+        file[waveAt + 1] = 0x40;
+        file[waveAt + 2] = 0x42;
+        file[waveAt + 3] = 0x0F;
+
+        Report report = Analyze(file);
+
+        Finding cut = Single(report, "tak.metadata-cut");
+        Assert.Equal("Wave Data Object", cut.Node?.Name);
+        Assert.Contains("runs past the data", cut.Message, StringComparison.Ordinal);
+        Node stream = report.Root.Children.Single(n => n.Name == "TAK");
+        Assert.Equal(2, stream.Children.Count(c => c.Name == "Frame"));
+        Assert.Equal(DecodeStatus.NotRequested, report.Streams.Single().Verification!.Decoding);
+    }
+
+    [Fact]
+    public void AnObjectWhoseSizeRunsPastTheDataWithoutAFrameInItStaysCut()
+    {
+        byte[] file = Builder.Standard();
+        int waveAt = 4 + Builder.StreamInfo().Length + Builder.LastFrameInfo(0, 0).Length + Builder.EncoderInfo().Length;
+        file[waveAt + 1] = 0x40;
+        file[waveAt + 2] = 0x42;
+        file[waveAt + 3] = 0x0F;
+
+        Report report = Analyze(file[..(waveAt + 30)]);
+
+        Finding cut = Single(report, "tak.metadata-cut");
+        Assert.Contains("The stream has no frame", cut.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain(report.Root.Children.Single(n => n.Name == "TAK").Children, c => c.Name == "Frame");
+    }
+
+    [Fact]
     public void MetadataThatEndsWithoutAnEndObjectOrAFrameIsReported()
     {
         byte[] objects = File("tBaK"u8.ToArray(), Builder.StreamInfo(), Builder.EncoderInfo());

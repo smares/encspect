@@ -118,6 +118,15 @@ internal static class Summary
                 $"The CRC-24 of the {name} object at 0x{first.Offset:X} is {stored:x6}, but its data gives {computed:x6}{(count > 1 ? $"; {Counts.Of(count - 1, "more object", "more objects")} {Counts.Agree(count - 1, "differs", "differ")}" : string.Empty)}.", failed.Length);
         }
 
+        if (r.ResyncedObject is { } past)
+        {
+            long stated = past.Size;
+            long held = past.Held;
+            string name = Layout.ObjectName(past.Id).ToLowerInvariant();
+            s.Findings.Add(Severity.Warning, "tak.metadata-cut", Of(past), _ =>
+                $"The {name} object at 0x{past.Offset:X} states {Counts.Of(stated, "byte", "bytes")}, which runs past the data; the first frame, with a header whose CRC-24 holds, begins {Counts.Of(held, "byte", "bytes")} into its data at 0x{r.AudioStart:X}, so the object is taken to end there.");
+        }
+
         if (r.IsMetadataCut)
         {
             ObjectRecord? cut = r.Objects.FirstOrDefault(o => o.IsCut);

@@ -34,12 +34,13 @@
    "offset": 47,
    "reserved": 0,
    "size": 1000000,
-   "end": 1000051,
+   "end": 108,
    "crc_ok": null,
-   "cut": true
+   "cut": true,
+   "resync": true
   }
  ],
- "audio_start": null,
+ "audio_start": 108,
  "stream_info_first": true,
  "stream_info": {
   "codec": 2,
@@ -65,17 +66,44 @@
  "last_frame": {
   "position": 4116,
   "size": 6750,
-  "end": null,
+  "end": 10974,
   "crc_ok": true
  },
  "checksums": {
   "compared": 3,
   "failed": 0
  },
- "first_frame": null,
+ "first_frame": {
+  "info": true,
+  "last": false,
+  "length": 19
+ },
  "end": 10974,
  "declared_end": 10974,
- "frames": [],
+ "frames": [
+  {
+   "offset": 108,
+   "length": 4116,
+   "number": 0,
+   "last": false,
+   "info": true,
+   "header_length": 19,
+   "samples": null,
+   "cut": false,
+   "data_crc_ok": true
+  },
+  {
+   "offset": 4224,
+   "length": 6750,
+   "number": 1,
+   "last": true,
+   "info": true,
+   "header_length": 21,
+   "samples": 5512,
+   "cut": false,
+   "data_crc_ok": true
+  }
+ ],
  "summary": {
   "codec": 2,
   "codec_name": "Integer 24 bit (TAK 2.0)",
