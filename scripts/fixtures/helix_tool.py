@@ -39,8 +39,13 @@ R11_VERSION = "file-file MPEG Layer III audio encode v5.0 TEST [CML MOD r11]"
 def build(repository=REPOSITORY, commit=COMMIT):
     """Clones the pinned commit (the fork's with A1_REPOSITORY and A1_COMMIT) and builds the release binary in a temporary directory."""
     directory = pathlib.Path(tempfile.mkdtemp(prefix="hmp3-"))
-    subprocess.run(["git", "clone", "-q", repository, str(directory)], check=True)
-    subprocess.run(["git", "-C", str(directory), "checkout", "-q", commit], check=True)
+    # Fetched by hash, as commit_problems asks for it, so that a rewritten branch cannot pass the check and fail the build.
+    subprocess.run(["git", "init", "-q", str(directory)], check=True)
+    subprocess.run(["git", "-C", str(directory), "fetch", "-q", "--depth", "1", repository, commit], check=True)
+    subprocess.run(["git", "-C", str(directory), "checkout", "-q", "--detach", "FETCH_HEAD"], check=True)
+    head = subprocess.run(["git", "-C", str(directory), "rev-parse", "HEAD"], capture_output=True, text=True, check=True).stdout.strip()
+    if head != commit:
+        raise SystemExit(f"{directory} is at {head}, not the pinned commit {commit}.")
     subprocess.run(["make", "-s", "-j4"], cwd=directory, check=True, capture_output=True)
     binary = directory / "builds" / "release" / "hmp3"
     result = subprocess.run([str(binary)], capture_output=True, text=True)
@@ -55,8 +60,8 @@ def build_a1():
 
 
 def commit_problems(only=None):
-    """For check_sources.py: the problem, if any, with the fork serving its pinned commit on a branch; only, if given, is a set of
-    addresses to check."""
+    """For check_sources.py: the problem, if any, with the repository serving the fork's pinned commit by its hash, which build()
+    fetches the same way; only, if given, is a set of addresses to check."""
     address = f"{A1_REPOSITORY} {A1_COMMIT}"
     if only is not None and address not in only:
         return []
