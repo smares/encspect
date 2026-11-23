@@ -172,6 +172,12 @@ internal static class ResidualCodes
         bool isStored = !values.IsEmpty;
 
         (int k, uint t, uint s, uint a, uint b) = Rows[mode];
+        // Every code of the mode reads at least k bits, so a run that the bits left cannot hold is truncation, found before it loops over a declared count.
+        if ((long)count * k > bits.Length - bits.Position)
+        {
+            throw new EndOfStreamException();
+        }
+
         unchecked
         {
             for (int i = 0; i < count; i++)

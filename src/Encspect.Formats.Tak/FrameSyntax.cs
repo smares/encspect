@@ -147,6 +147,11 @@ internal sealed class FrameSyntax
         var bits = new LsbBitCursor(coded);
         if (n < ShortFrame)
         {
+            if ((long)n * _channels * _bits > coded.Length * 8L)
+            {
+                throw new EndOfStreamException();
+            }
+
             for (int c = 0; c < _channels; c++)
             {
                 for (int i = 0; i < n; i++)

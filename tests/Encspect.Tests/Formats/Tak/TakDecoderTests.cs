@@ -568,7 +568,7 @@ public class TakDecoderTests
         "partition-count" => (OneFrame(w => Start(w).Put(0, 3).Put(0, 1).Put(1, 1), n: 100), "1 partitions"),
         "mode-above-50" => (OneFrame(w => Start(w).Put(0, 3).Put(0, 1).Put(0, 1).Put(51, 6)), "residual mode is 51"),
         "mode-below-0" => (OneFrame(w => Start(w).Put(0, 3).Put(0, 1).Put(1, 1).Put(0, 6).Put(0, 1).Put(1, 1)), "mode is -1"),
-        "escape-width" => (OneFrame(w => Start(w).Put(0, 3).Put(0, 1).Put(0, 1).Put(1, 6).Put(1, 1).Put(1, 1).Put(0, 9).Put(7, 3).Put(23, 5)), "escape width of 30"),
+        "escape-width" => (OneFrame(w => Start(w).Put(0, 3).Put(0, 1).Put(0, 1).Put(1, 6).Put(1, 1).Put(1, 1).Put(0, 9).Put(7, 3).Put(23, 5).Put(0, 600)), "escape width of 30"),
         "filter-on-short-frame" => (OneFrame(w =>
         {
             ZeroChannel(w);
@@ -741,6 +741,40 @@ public class TakDecoderTests
 
         // Most changes still decode (a residual is a number whatever its bits), and some break the syntax.
         Assert.InRange(invalid, source.StartsWith("encoder", StringComparison.Ordinal) ? 1 : 0, int.MaxValue);
+    }
+
+    // A run of a declared count of values over bytes that cannot hold them: the walk (which runs in every analysis) must stop before it loops over the count, so its time follows
+    // the bits present and not the samples the header declares.
+    [Fact]
+    public void ARunOfValuesTheBytesCannotHoldIsTruncationFoundBeforeItLoops()
+    {
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        for (int mode = 1; mode <= 50; mode++)
+        {
+            Assert.Throws<EndOfStreamException>(() =>
+            {
+                var bits = new LsbBitCursor(new byte[4]);
+                ResidualCodes.ReadRun(ref bits, mode, [], int.MaxValue);
+            });
+        }
+
+        Assert.True(stopwatch.Elapsed < TimeSpan.FromSeconds(1), $"{stopwatch.Elapsed.TotalSeconds:F1} s");
+    }
+
+    [Fact]
+    public void FramesOf15BytesThatDeclareSixteenThousandValuesAreUnreadableAndQuick()
+    {
+        // 65,536 Hz mono, frames of 16,384 samples: one subframe of no prediction and one block of mode 1, in 4 coded bytes.
+        var w = new Builder.BitWriter();
+        Start(w).Put(0, 3).Put(0, 1).Put(0, 1).Put(1, 6);
+        byte[] coded = w.ToArray();
+        byte[] file = Encoder.Assemble(new Encoder.Settings { Rate = 65536 }, 1, 3000L * 16384, 6, [.. Enumerable.Repeat(coded, 3000)]).Data;
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+        Report report = Analyzer.CreateDefault().Analyze("t.tak", new MemoryStream(file));
+
+        Assert.Equal(3000, Assert.Single(report.Findings, f => f.Code == "tak.frame-syntax-invalid").Count);
+        Assert.True(stopwatch.Elapsed < TimeSpan.FromSeconds(10), $"{stopwatch.Elapsed.TotalSeconds:F1} s");
     }
 
     [Fact]
