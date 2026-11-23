@@ -711,13 +711,22 @@ public class ComplexityTests
         Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
     }
 
-    // Thousands of audio tracks routed to a codec parser and millions of blocks of one of them: each track was routed by a pass over all the blocks, so
-    // 4,000 tracks and 3 million blocks took 95 s.
+    // Thousands of audio tracks routed to a codec parser and many blocks of one of them: each track was routed by a pass over all the blocks, so
+    // 4,000 tracks and 3 million blocks took 95 s. The time is compared with one track's over the same blocks, so a slow machine does not fail it.
     [Fact]
     public void ManyRoutedTracksAndManyBlocks()
     {
-        const int tracks = 4000;
-        const int blocks = 3_000_000;
+        const int blocks = 500_000;
+        byte[] one = RoutedTracksAndBlocks(1, blocks);
+        byte[] many = RoutedTracksAndBlocks(4000, blocks);
+
+        TimeSpan oneTime = TimedMatroska(one, 1);
+        TimeSpan manyTime = TimedMatroska(many, 4000);
+        Assert.True(manyTime < (3 * oneTime) + TimeSpan.FromSeconds(1), $"4,000 tracks took {manyTime.TotalSeconds:F1} s, one track {oneTime.TotalSeconds:F1} s");
+    }
+
+    private static byte[] RoutedTracksAndBlocks(int tracks, int blocks)
+    {
         var stream = new MemoryStream();
         stream.Write(MatroskaBuilder.Header());
         stream.Write([0x18, 0x53, 0x80, 0x67, 0x01, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]);
@@ -736,10 +745,19 @@ public class ComplexityTests
             stream.Write(first);
         }
 
-        Report report = Timed(stream.ToArray());
+        return stream.ToArray();
+    }
 
+    // The hang guard is the shared Bound; the comparison of the caller is the test.
+    private static TimeSpan TimedMatroska(byte[] data, int tracks)
+    {
+        var watch = Stopwatch.StartNew();
+        Report report = Analyzer.CreateDefault().Analyze("tracks.mkv", new MemoryStream(data));
+        watch.Stop();
+        Assert.True(watch.Elapsed < Bound, $"Took {watch.Elapsed.TotalSeconds:F1} s");
         Assert.Equal(tracks, report.Streams.Count);
         Assert.DoesNotContain(report.Findings, f => f.Code == "parse.failed");
+        return watch.Elapsed;
     }
 
     // 90,000 empty mdat boxes (within the box budget) and then 400,000 samples of one byte in the last one: finding the mdat box that holds a sample was a scan over
