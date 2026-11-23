@@ -9,6 +9,6 @@
     {"name": "hammers", "classes": ["LongReportWriteTests", "ParallelAnalysisTests", "LongListReadTests", "BlockedChildrenTests", "CorruptAlacFileTests", "CorruptAlacBuiltFileTests"]},
     {"name": "timing-decoders", "nightly": true, "classes": ["DecoderWorkTests"]},
     {"name": "timing-measurements", "nightly": true, "classes": ["MeasurementWorkTests"]},
-    {"name": "rest", "classes": null}
+    {"name": "rest", "classes": null, "damagedInputClasses": ["CorruptOggFileTests", "CorruptOptimFrogFileTests", "CorruptTakFileTests", "CorruptTtaBuiltFileTests", "CorruptTtaFileTests"]}
   ]
 }
