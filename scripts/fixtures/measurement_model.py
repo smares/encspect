@@ -268,7 +268,7 @@ def find_coherence(sum_left, sum_right, sum_re, sum_im, counters, frames, cutoff
     shares = [None] * ROWS
     first_row = w - 1
     for r in range(first_row, 506):
-        with_signal, coherent = frames_at(counters, r, counters.show)
+        with_signal, coherent = frames_at(counters, r, counters.show, counts_silence=False)
         if with_signal > 0:
             shares[r] = (2000 * coherent + with_signal) // (2 * with_signal)
     result = {"is_searched": True, "frames": frames, "rows": rows, "shares": shares, "is_found": False, "reason": "", "from_frequency": 0, "to_frequency": 0,
@@ -290,7 +290,7 @@ def find_coherence(sum_left, sum_right, sum_re, sum_im, counters, frames, cutoff
     if end == first_row:
         result["reason"] = "reachesStart"
         return result
-    with_signal, showing = frames_at(counters, end, counters.show)
+    with_signal, showing = frames_at(counters, end, counters.show, counts_silence=False)
     result.update(is_found=True, from_frequency=hertz(end - w + 1, rate, size, bins), to_frequency=hertz(last + 1, rate, size, bins),
                   frames_with_signal=with_signal, frames_showing=showing)
     return result

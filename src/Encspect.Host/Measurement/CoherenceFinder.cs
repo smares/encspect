@@ -99,7 +99,7 @@ internal static class CoherenceFinder
         int firstRow = w - 1;
         for (int r = firstRow; r <= CutoffGeometry.LastCandidate; r++)
         {
-            (int withSignal, int coherent) = CutoffFinder.Frames(counters.All, r, counters.Coherent);
+            (int withSignal, int coherent) = CutoffFinder.Frames(counters.All, r, counters.Coherent, countsSilence: false);
             if (withSignal > 0)
             {
                 shares[r] = (short)(((2000L * coherent) + withSignal) / (2L * withSignal));
@@ -137,7 +137,7 @@ internal static class CoherenceFinder
         }
 
         // The frames of the run's first full band: the band of W rows that starts at the start frequency, which ends at row end.
-        (int withSignalFrames, int showingFrames) = CutoffFinder.Frames(counters.All, end, counters.Coherent);
+        (int withSignalFrames, int showingFrames) = CutoffFinder.Frames(counters.All, end, counters.Coherent, countsSilence: false);
         return figures with
         {
             IsFound = true,
