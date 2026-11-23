@@ -71,7 +71,7 @@ EXPLAINED = {
                    "a scratch build of minimp3 that takes the bound of each window (the long bands the highest of the three) is bit-identical to the analyzer's output"
     },
     "intensity-mixed-windows-mpeg2.mp3": {
-        "minimp3": "the same cause in an MPEG-2 frame (0.045 of full scale): FFmpeg 6.1.1 (2.7e-7) and madplay 0.15.2b (4.0e-7) match the analyzer",
+        "minimp3": "the same cause in an MPEG-2 frame (0.058 of full scale): FFmpeg 6.1.1 (2.2e-7) and madplay 0.15.2b (4.4e-7) match the analyzer; mpg123 1.32.5 differs (0.023) for another reason, listed in docs/formats/mpeg-audio.md (it applies position 0 to short band 11 of windows 1 and 2 of an MPEG-2 mixed block)",
     },
     "external-plugger-pro-cbr.mp3": {"ffmpeg": R1},
     "external-plugger-cbr.mp3": {"ffmpeg": R1},
