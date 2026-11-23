@@ -66,6 +66,8 @@ public class OpusDecoderFixtureTests
         "ogg/external-opusenc-hard-cbr.opus",
         "ogg/external-libopus-stereo-hybrid-20ms.opus",
         "ogg/external-ffmpeg-opus.opus",
+        "ogg/external-opusenc-24-pink-equal.opus",
+        "ogg/external-opusenc-24-pink-side-12-db.opus",
     };
 
     [Theory]
