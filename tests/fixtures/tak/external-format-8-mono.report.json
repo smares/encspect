@@ -198,6 +198,55 @@
                   "unit": "frames",
                   "offset": 0,
                   "length": 3056
+                },
+                {
+                  "name": "Subframe Types",
+                  "value": 5,
+                  "unit": "subframes",
+                  "offset": 0,
+                  "length": 3056,
+                  "children": [
+                    {
+                      "name": "Predictor",
+                      "value": "5 subframes (100.0%)",
+                      "offset": 0,
+                      "length": 3056
+                    }
+                  ]
+                },
+                {
+                  "name": "Average Predictor Order",
+                  "value": 6.4,
+                  "offset": 0,
+                  "length": 3056
+                },
+                {
+                  "name": "Highest Predictor Order",
+                  "value": 16,
+                  "offset": 0,
+                  "length": 3056
+                },
+                {
+                  "name": "Coefficient Precision",
+                  "value": 10,
+                  "unit": "bits",
+                  "offset": 0,
+                  "length": 3056
+                },
+                {
+                  "name": "Channels With Wasted Bits",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 0,
+                  "length": 3056,
+                  "children": [
+                    {
+                      "name": "Without wasted bits",
+                      "value": "2 channels (100.0%)",
+                      "offset": 0,
+                      "length": 3056
+                    }
+                  ]
                 }
               ]
             },
@@ -1289,6 +1338,99 @@
             ],
             "values": [
               26.7
+            ]
+          },
+          {
+            "name": "Highest Predictor Order",
+            "unit": "order",
+            "axis": "frameOffset",
+            "concept": "prediction",
+            "quantity": "Highest Predictor Order",
+            "x": [
+              108,
+              1480
+            ],
+            "values": [
+              4,
+              16
+            ]
+          },
+          {
+            "name": "Coefficient Precision",
+            "unit": "bits",
+            "axis": "frameOffset",
+            "concept": "prediction",
+            "quantity": "Coefficient Precision",
+            "x": [
+              108,
+              1480
+            ],
+            "values": [
+              10,
+              10
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Subframe Types",
+            "concept": "prediction",
+            "valueLabel": "subframe",
+            "categories": [
+              {
+                "name": "Residuals only",
+                "count": 0
+              },
+              {
+                "name": "Predictor",
+                "count": 5
+              }
+            ],
+            "total": 5,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                1
+              ],
+              [
+                3,
+                1
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                5
+              ]
+            ]
+          },
+          {
+            "name": "Channels With Wasted Bits",
+            "valueLabel": "channel",
+            "categories": [
+              {
+                "name": "With wasted bits",
+                "count": 0
+              },
+              {
+                "name": "Without wasted bits",
+                "count": 2
+              }
+            ],
+            "total": 2,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                2
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                2
+              ]
             ]
           }
         ]

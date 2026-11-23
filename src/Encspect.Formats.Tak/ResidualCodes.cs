@@ -1,9 +1,9 @@
 using System.Runtime.CompilerServices;
 using Encspect.Core;
 
-namespace Encspect.Formats.Tak.Decoding.Lossless;
+namespace Encspect.Formats.Tak;
 
-// The residual coding of docs/design/tak-format.md, section 3: a block of values, split into partitions whose modes follow one another, each value one code from a mode's
+// The residual coding of docs/design/tak-format.md, section 3, parser code that the decoder reads with: a block of values, split into partitions whose modes follow one another, each value one code from a mode's
 // row of the table (the bits of the code, the thresholds and the steps of its escapes).
 internal static class ResidualCodes
 {
@@ -76,16 +76,16 @@ internal static class ResidualCodes
         return sampleRate < 11025 ? g * 8 : sampleRate < 22050 ? g * 4 : sampleRate < 44100 ? g * 2 : g;
     }
 
-    // Reads a residual block of values.Length values (which may be none).
-    public static void Read(ref LsbBitCursor bits, Span<int> values, int partitionLength)
+    // Reads a residual block of length values (which may be none). They are stored in values, which holds them all, or left out where it is empty (the walk of a stream that is
+    // not decoded).
+    public static void Read(ref LsbBitCursor bits, Span<int> values, int length, int partitionLength)
     {
         if (!bits.ReadBit())
         {
-            ReadRun(ref bits, ReadMode(ref bits), values);
+            ReadRun(ref bits, ReadMode(ref bits), values, length);
             return;
         }
 
-        int length = values.Length;
         int quotient = length / partitionLength;
         int rest = length - (quotient * partitionLength);
         int count;
@@ -143,7 +143,7 @@ internal static class ResidualCodes
         for (int i = 0; i < count; i++)
         {
             int run = i == count - 1 ? last : partitionLength;
-            ReadRun(ref bits, modes[i], values.Slice(at, run));
+            ReadRun(ref bits, modes[i], values.IsEmpty ? values : values.Slice(at, run), run);
             at += run;
         }
     }
@@ -161,7 +161,7 @@ internal static class ResidualCodes
 
     // The values of one partition, all of one mode. The codes are unsigned 32-bit with wraparound (section 3).
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    internal static void ReadRun(ref LsbBitCursor bits, int mode, Span<int> values)
+    internal static void ReadRun(ref LsbBitCursor bits, int mode, Span<int> values, int count)
     {
         if (mode == 0)
         {
@@ -169,10 +169,12 @@ internal static class ResidualCodes
             return;
         }
 
+        bool isStored = !values.IsEmpty;
+
         (int k, uint t, uint s, uint a, uint b) = Rows[mode];
         unchecked
         {
-            for (int i = 0; i < values.Length; i++)
+            for (int i = 0; i < count; i++)
             {
                 uint v = bits.Read(k);
                 uint code;
@@ -212,7 +214,10 @@ internal static class ResidualCodes
                     }
                 }
 
-                values[i] = (int)(code >> 1) ^ -(int)(code & 1);
+                if (isStored)
+                {
+                    values[i] = (int)(code >> 1) ^ -(int)(code & 1);
+                }
             }
         }
 

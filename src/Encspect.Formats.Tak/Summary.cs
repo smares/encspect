@@ -358,10 +358,7 @@ internal static class Summary
         IReadOnlyList<Speaker>? layout = LayoutOf(info, mask);
         var shared = new DecodeShared { Info = info, Md5 = r.Md5, Md5At = r.Md5Object?.DataOffset ?? 0, Layout = layout };
         IDecodeSession session = s.Context.StartDecoding(CodecId, new DecodeSetup { Stream = stream, Channels = info.Channels, BitsPerSample = info.BitsPerSample, Samples = info.Samples, Shared = shared });
-        if (session.IsDecoding)
-        {
-            Feeding.Run(s, reader, session);
-        }
+        CodingSeries? coding = Feeding.Run(s, reader, session, shared);
 
         StreamVerification verification = session.Finish(tallies);
 
@@ -427,9 +424,18 @@ internal static class Summary
             statistics.Add(Cover("Failed Frame Checksums", NodeValue.Integer(frames.DataFailures, "frames", "frame"), Explain.StatFrameChecksumsFailed, Topics.Crc));
         }
 
+        CodingSeries.Anchors? anchors = coding?.AddTo(statistics, (name, value, description, topic) => Cover(name, value, description, topic));
         s.Leading.Insert(0, statistics);
         List<Series> series = figures?.Series(anchor, s.Context.CancellationToken) ?? [];
         CompressionRatio.AddTo(series, CompressionRatio.PcmBitsPerSecond(rate, info.Channels, info.BitsPerSample), ratio, s.Context.CancellationToken, figures?.SecondKbps);
+        var categories = new List<CategorySeries>();
+        if (coding is not null && anchors is not null && series.Count > 0)
+        {
+            (List<Series> numeric, List<CategorySeries> built) = coding.Build(series[0], anchors, s.Context.CancellationToken);
+            series.AddRange(numeric);
+            categories.AddRange(built);
+        }
+
         s.Context.AddStream(new StreamInfo
         {
             Nodes = [stream],
@@ -452,6 +458,7 @@ internal static class Summary
             IsVbr = figures is { Units: > 0 } f && f.MaximumBitrate > f.MinimumBitrate,
             Verification = verification,
             Series = series,
+            CategorySeries = categories,
         });
     }
 

@@ -14,31 +14,42 @@ internal sealed class DecodeShared
     public long Md5At { get; init; }
 
     public IReadOnlyList<Speaker>? Layout { get; init; }
+
+    // The frame the parser walked last, which the decoder reconstructs when it is handed the frame.
+    public WalkedFrame? Current { get; set; }
 }
 
-// Hands the frames of the records to the decoder, in stream order.
+// Walks the coded data of every frame the records hold, for the coding statistics and graphs, and hands the frames to the decoder, in stream order.
 internal static class Feeding
 {
     private const int NumberMask = (1 << 21) - 1;
 
     private const string FrameName = "Frame";
 
-    // Every frame the records hold (the first FrameFacts.MaxEntries): a frame cut by the end of the data is not decoded, and the one after a skipped stretch or a break in the
-    // numbers follows a gap. A frame's position is its number times the frame length where its header's CRC-24 holds, so frames lost between two show as a jump.
-    public static void Run(State s, ByteReader reader, IDecodeSession session)
+    // Every frame the records hold (the first FrameFacts.MaxEntries): a frame cut by the end of the data is not read, and the one after a skipped stretch or a break in the numbers
+    // follows a gap. A frame's position is its number times the frame length where its header's CRC-24 holds, so frames lost between two show as a jump. The walk reads each frame
+    // once (FrameSyntax); with a decoding session it also stores the values, which the decoder reconstructs from. Returns the coding series of the frames that have a bitrate point,
+    // or null where the stream is one the walk does not understand.
+    public static CodingSeries? Run(State s, ByteReader reader, IDecodeSession session, DecodeShared shared)
     {
         Records r = s.Records;
-        if (r.Stream is not { } info || !Layout.IsFrameSizeValid(info.FrameSizeType, info.SampleRate))
+        if (r.Stream is not { } info || FrameSyntax.Refusal(info) is not null)
         {
-            return;
+            return null;
         }
 
         FrameFacts f = r.Frames;
+        var syntax = new FrameSyntax(info);
+        var walked = new WalkedFrame();
+        shared.Current = walked;
+        var coding = new CodingSeries(info.SampleRate, info.Codec == 2 && info.Channels == 2);
         long frameLength = Layout.FrameSamples(info.FrameSizeType, info.SampleRate);
         long expected = 0;
         bool followsGap = false;
-        for (int i = 0; i < f.Entries.Count && session.IsDecoding; i++)
+        Records records = r;
+        for (int i = 0; i < f.Entries.Count; i++)
         {
+            reader.CancellationToken.ThrowIfCancellationRequested();
             Entry e = f.Entries[i];
             if (e.IsSkipped)
             {
@@ -53,16 +64,70 @@ internal static class Feeding
             int samples = (int)((e.Flags & EntryFlags.IsLast) != 0 ? e.Samples : frameLength);
             if (e.IsCut)
             {
-                session.Decode(new CodedFrame(new MappedBytes(ReadOnlyMemory<byte>.Empty, e.Offset), FrameName, first, samples) { IsUnreadable = true, FollowsGap = followsGap });
+                if (session.IsDecoding)
+                {
+                    session.Decode(new CodedFrame(new MappedBytes(ReadOnlyMemory<byte>.Empty, e.Offset), FrameName, first, samples) { IsUnreadable = true, FollowsGap = followsGap });
+                }
+
                 followsGap = true;
                 continue;
             }
 
-            reader.Position = e.Offset;
-            MappedBytes bytes = MappedBytes.Read(reader, [new ByteRange(e.Offset, e.Length)]);
-            bool fails = !e.IsHeaderCrcValid || !e.IsDataCrcValid;
-            session.Decode(new CodedFrame(bytes, FrameName, first, samples) { IsDamaged = fails, FailsChecksum = fails, FollowsGap = followsGap });
+            bool isDecoding = session.IsDecoding;
+            MappedBytes? bytes = isDecoding ? ReadFrame(reader, e) : null;
+            byte[]? plain = isDecoding ? null : reader.ReadBytesAt(e.Offset, (int)e.Length);
+            ReadOnlySpan<byte> all = bytes is not null ? bytes.Span : (ReadOnlySpan<byte>)plain;
+            ReadOnlySpan<byte> coded = all.Slice(e.HeaderLength, all.Length - e.HeaderLength - Layout.CrcLength);
+            bool isWalked = false;
+            if (samples > 0)
+            {
+                try
+                {
+                    syntax.Read(coded, samples, walked, isDecoding);
+                    isWalked = true;
+                }
+                catch (Exception ex) when (ex is InvalidDataException or EndOfStreamException)
+                {
+                    string why = ex is EndOfStreamException ? "the data ends inside the frame's coded fields" : ex.Message.TrimEnd('.');
+                    long index = i;
+                    long offset = e.Offset;
+                    s.Findings.Add(Severity.Warning, "tak.frame-syntax-invalid", () => FrameNodes.Entry(records, (int)index), count =>
+                        $"The coded data of the frame at 0x{offset:X} cannot be read: {why}{(count > 1 ? $"; {Counts.Of(count - 1, "more frame", "more frames")} {Counts.Agree(count - 1, "is", "are")} unreadable too" : string.Empty)}.");
+                }
+            }
+
+            if (isWalked)
+            {
+                coding.AddFrame(walked);
+                if (walked.ConsumedBytes < coded.Length)
+                {
+                    long after = coded.Length - walked.ConsumedBytes;
+                    long index = i;
+                    long offset = e.Offset;
+                    s.Findings.Add(Severity.Info, "tak.frame-bytes-after-data", () => FrameNodes.Entry(records, (int)index), count =>
+                        $"The coded data of the frame at 0x{offset:X} ends {Counts.Of(after, "byte", "bytes")} before its CRC-24; the bytes after the last field are not read, as TAK's decoder does not read them either{(count > 1 ? $"; {Counts.Of(count - 1, "more frame", "more frames")} {Counts.Agree(count - 1, "has", "have")} such bytes" : string.Empty)}.");
+                }
+            }
+            else if (samples > 0)
+            {
+                coding.AddEmpty();
+            }
+
+            if (isDecoding)
+            {
+                bool fails = !e.IsHeaderCrcValid || !e.IsDataCrcValid;
+                session.Decode(new CodedFrame(bytes!, FrameName, first, samples) { IsDamaged = fails, FailsChecksum = fails, FollowsGap = followsGap, IsUnreadable = !isWalked });
+            }
+
             followsGap = false;
         }
+
+        return coding;
+    }
+
+    private static MappedBytes ReadFrame(ByteReader reader, Entry e)
+    {
+        reader.Position = e.Offset;
+        return MappedBytes.Read(reader, [new ByteRange(e.Offset, e.Length)]);
     }
 }

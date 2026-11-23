@@ -24,33 +24,11 @@ public sealed class TakDecoder : IDecoder
             throw new InvalidDataException("The stream has no stream info object, so the decoder does not know its format");
         }
 
-        StreamInfoFields info = setup.Info;
-        if (info.Codec is not (2 or 4))
+        if (FrameSyntax.Refusal(setup.Info) is { } refusal)
         {
-            throw new InvalidDataException($"The stream info states the codec {info.Codec}{(Layout.CodecName(info.Codec) is { } name ? $" ({name})" : string.Empty)}; the decoder takes 2 (TAK 2.0) and 4 (TAK 2.2)");
+            throw new InvalidDataException(char.ToUpperInvariant(refusal[0]) + refusal[1..]);
         }
 
-        if (info.DataType != 0)
-        {
-            throw new InvalidDataException($"The stream info states the data type {info.DataType}; the decoder takes 0 (PCM)");
-        }
-
-        if (info.BitsPerSample is not (8 or 16 or 24))
-        {
-            throw new InvalidDataException($"The stream info states {info.BitsPerSample} bits per sample; the decoder takes 8, 16 and 24");
-        }
-
-        int limit = info.Codec == 2 ? 2 : 6;
-        if (info.Channels > limit)
-        {
-            throw new InvalidDataException($"The stream info states {Counts.Of(info.Channels, "channel", "channels")}; the decoder takes up to {limit} for the codec {info.Codec}");
-        }
-
-        if (!Layout.IsFrameSizeValid(info.FrameSizeType, info.SampleRate))
-        {
-            throw new InvalidDataException("The stream info states a frame size that is not valid for its sample rate, so the frames' lengths are not known");
-        }
-
-        return new FrameDecoder(context, setup, Layout.FrameSamples(info.FrameSizeType, info.SampleRate));
+        return new FrameDecoder(context, setup);
     }
 }

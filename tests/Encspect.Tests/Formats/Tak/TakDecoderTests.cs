@@ -1,4 +1,5 @@
 using Encspect.Core;
+using Encspect.Formats.Tak;
 using Encspect.Formats.Tak.Decoding.Lossless;
 using Encspect.Host;
 using Builder = Encspect.Tests.TakBuilder;
@@ -105,7 +106,7 @@ public class TakDecoderTests
         var bits = new LsbBitCursor(data);
         int[] values = new int[5];
 
-        ResidualCodes.ReadRun(ref bits, 5, values);
+        ResidualCodes.ReadRun(ref bits, 5, values, values.Length);
 
         Assert.Equal([-4, -7, 8, 13, 36], values);
         Assert.Equal(41, bits.Position);
@@ -591,8 +592,9 @@ public class TakDecoderTests
 
         (Report report, CollectingSink sink) = Decode(file);
 
-        Finding finding = Assert.Single(report.Findings, f => f.Code == "decode.frame-invalid");
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "tak.frame-syntax-invalid");
         Assert.Contains(message, finding.Message);
+        Assert.DoesNotContain(report.Findings, f => f.Code == "decode.frame-invalid");
         Assert.Equal(0, report.Streams.Single().Verification!.DecodedSamples);
         Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
         Assert.Empty(sink.Starts);
@@ -618,7 +620,7 @@ public class TakDecoderTests
 
         (Report report, CollectingSink sink) = Decode(file);
 
-        Finding finding = Assert.Single(report.Findings, f => f.Code == "decode.frame-invalid");
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "tak.frame-syntax-invalid");
         Assert.Equal(1, finding.Count);
         Assert.Equal(512, report.Streams.Single().Verification!.DecodedSamples);
         Assert.Equal(512, sink.Channels[0].Count);
@@ -734,7 +736,7 @@ public class TakDecoderTests
             (Report report, _) = Decode(file);
 
             Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed" or "decode.limit");
-            invalid += report.Findings.Count(f => f.Code == "decode.frame-invalid");
+            invalid += report.Findings.Count(f => f.Code is "decode.frame-invalid" or "tak.frame-syntax-invalid");
         }
 
         // Most changes still decode (a residual is a number whatever its bits), and some break the syntax.
