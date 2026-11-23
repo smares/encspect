@@ -5,9 +5,9 @@ namespace Encspect.Core;
 // A category series and the tally node it is held equal to, for a format whose units each have one value (a frame's channel assignment): a parser
 // calls Add once for each unit of its per-unit series, in the order of the units, AddTo to make the tally and Build to make the series. Memory is
 // the series' (one code per unit) and one counter for each category.
-public sealed class UnitCategoryTally(string name, IReadOnlyList<Category> categories, string valueLabel, GraphConcept concept, bool isVariable = false)
+public sealed class UnitCategoryTally(string name, IReadOnlyList<Category> categories, string valueLabel, GraphConcept concept, bool isVariable = false, bool isOrdered = false)
 {
-    private readonly CategorySeriesBuilder _builder = new(name, categories, valueLabel, isVariable ? 0 : 1, concept: concept);
+    private readonly CategorySeriesBuilder _builder = new(name, categories, valueLabel, isVariable ? 0 : 1, isOrdered: isOrdered, concept: concept);
     private readonly long[] _counts = new long[categories.Count];
 
     // The units counted with a category.

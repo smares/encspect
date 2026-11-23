@@ -140,6 +140,16 @@ internal static class Explain
     public const string StatPrecision = "The precision, 3 to 10 bits, with which the filters' coefficients are rounded (the range over the predicted subframes).";
     public const string HighestOrderSeries = "The most taps of the prediction filters of each frame that has one.";
     public const string PrecisionSeries = "The highest coefficient precision of the prediction filters of each frame that has one.";
+    public const string HighestOrderOverTimeSeries = "The most taps of the prediction filters in each second of audio, over the frames that start in it.";
+    public const string PrecisionOverTimeSeries = "The highest coefficient precision of the prediction filters in each second of audio, over the frames that start in it.";
+    public const string StatResidualModes = "How many partitions of the residual blocks use each residual mode (section 3): the mode picks the code that every value of the partition is read with.";
+    public const string ResidualModesSeries = "The residual mode of each partition of the residual blocks of each frame, in the order they were read, drawn over the frames.";
+
+    // Mode 0 stores no bits; every other mode names a row of the code table by the bits its first read takes.
+    public static string ModeCategory(int mode) => mode == 0
+        ? "Partitions whose values are all zero and take no bits (section 3, mode 0)."
+        : $"Partitions whose values are read with the code of mode {mode}, whose first read takes {ResidualCodes.Row(mode).K} bits (section 3).";
+
     public const string StatWasted = "The channels of each frame whose samples have low bits that are all zero, which the encoder leaves out (the wasted bits of the channel data, section 4).";
     public const string CategoryWasted = "A channel with wasted bits.";
     public const string CategoryNoWasted = "A channel without wasted bits.";

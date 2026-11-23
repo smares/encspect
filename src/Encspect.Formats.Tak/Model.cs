@@ -27,6 +27,7 @@ internal static class Topics
     public const string LeftSide = "left-side-stereo";
     public const string Prediction = "linear-prediction";
     public const string WastedBits = "wasted-bits";
+    public const string Residual = "tak-residual-coding";
 }
 
 // One metadata object as the walk read it.
