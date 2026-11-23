@@ -319,7 +319,7 @@ The GUI stays a self-contained single file (`PublishSingleFile`, no ReadyToRun, 
 ### The app icon
 
 - **Sources:** `src/Encspect.Gui/Assets/Icon/` holds the SVGs, which are the source of truth:
-  - `F2.svg`, the small form (16 to 32 pixels): the glass alone, with the light blue `#3b4cca` and a white waveform, and a dark variant (`#9aa8ff` with `#10142e`) under `prefers-color-scheme`;
+  - `F2.svg`, the small form (16 to 32 pixels): the glass alone, with the light-theme blue `#3b4cca` and a white waveform, and a dark variant (`#9aa8ff` with `#10142e`) under `prefers-color-scheme`;
   - `E.svg`, the large form (48 pixels and up): the rounded blue tile with the white lens and the waveform cut out;
 - **Generated files** in the same folder, committed: `encspect.ico` (16, 20, 24 and 32 from `F2.svg`; 40, 48, 64, 128 and 256 from `E.svg`, which is legible at 40) and `encspect-256.png` and `encspect-128.png` (`E.svg`). They use the light colors; no platform file takes the dark variant.
 - **Regenerate:** `python3 scripts/make_icons.py` after changing an SVG, and commit the result. It renders the SVGs with Playwright's Chromium (`scripts/icons/render_svg.js`; `npm install playwright` and `npx playwright install chromium`, with `NODE_PATH` naming the module folder if it is installed globally) and writes the `.ico` container itself with PNG entries, so Pillow is not needed.
