@@ -1960,8 +1960,8 @@ def _():
     return acm_track(wfx_extensible(AC3_SUBFORMAT, 2, 48000, 16, 16, 3, align=768), ac3_stereo_frames(6), 32)
 
 
-@fixture("acm-unlisted-tag", "Frames of an A_MS/ACM track whose WAVEFORMATEX has a format tag (0x1234) that no table lists: the track is reported from its TrackEntry, with the WAVEFORMATEX shown.",
-         findings=[("matroska.codec-not-analyzed", "format tag 0x1234")], streams=[("an unlisted coding", 48000, 2)])
+@fixture("acm-unlisted-tag", "Frames of an A_MS/ACM track whose WAVEFORMATEX has a format tag (0x1234) that no table lists: the track is reported from its TrackEntry, with the WAVEFORMATEX shown. ",
+         findings=[("matroska.codec-not-analyzed", "format tag 0x1234")], streams=[("Microsoft ACM audio", 48000, 2)])
 def _():
     return acm_track(wfx(0x1234, 2, 48000, 16000, 512, 4, b"\x01\x02"), pcm_frames(6, length=64), 10)
 
@@ -1980,20 +1980,21 @@ def _():
 
 @fixture("acm-cbsize-cut", "An A_MS/ACM track whose WAVEFORMATEX (format tag 0x1234) states 20 bytes of codec-specific data but holds 6: read as far as it goes.",
          findings=[("matroska.codec-private-invalid", "states 20 bytes of codec-specific data, but 6 follow"), ("matroska.codec-not-analyzed", "format tag 0x1234")],
-         streams=[("an unlisted coding", 48000, 2)], valid=False)
+         streams=[("Microsoft ACM audio", 48000, 2)], valid=False)
 def _():
     return acm_track(wfx(0x1234, 2, 48000, 16000, 512, 4, b"abcdef", cb=20), pcm_frames(4, length=64), 10)
 
 
 @fixture("acm-extensible-short", "An A_MS/ACM track whose WAVEFORMATEX has the extensible tag 0xFFFE but a cbSize of 2, too few for the 22 bytes of the extension: the sub-format is unknown.",
          findings=[("matroska.codec-private-invalid", "needs a codec-specific data size of 22 or more"), ("matroska.codec-not-analyzed", "format tag 0xFFFE")],
-         streams=[("an unlisted coding", 48000, 2)], valid=False)
+         streams=[("Microsoft ACM audio", 48000, 2)], valid=False)
 def _():
     return acm_track(wfx(0xFFFE, 2, 48000, 192000, 4, 16, b"\x10\x00"), pcm_frames(4, length=64), 10)
 
 
 @fixture("acm-differs", "An A_MS/ACM PCM track whose WAVEFORMATEX states one channel at 44100 Hz while the Audio element states two at 48000 Hz.",
-         findings=[("matroska.waveformat-differs", "states 2 channels in its Audio element, but its WAVEFORMATEX states 1"), ("matroska.waveformat-differs", "48000 Hz in its Audio element, but its WAVEFORMATEX states 44100 Hz")],
+         findings=[("matroska.waveformat-differs", "states 2 channels in its Audio element, but its WAVEFORMATEX states 1"), ("matroska.waveformat-differs", "48000 Hz in its Audio element, but its WAVEFORMATEX states 44100 Hz"),
+                   ("matroska.sample-rate-differs", "48000 Hz, but its PCM frames are coded at 44100 Hz"), ("matroska.channels-differ", "states 2 channels, but its PCM frames hold 1")],
          streams=[("PCM", 44100, 1)], valid=False)
 def _():
     return acm_track(wfx(0x0001, 1, 44100, 88200, 2, 16), pcm_frames(6, channels=1), 10)
