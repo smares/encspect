@@ -143,6 +143,15 @@ public class FlacCompressionLevelTests
         Assert.Equal(confidence, node.Children.Single(c => c.Name == "Confidence").Value!.ToString());
     }
 
+    // From 1.4.0 the adaptive levels never write left/side or side/right, so only those frames count against them: 1.4.3's level 5 file has one such frame (and two
+    // changes between left/right and mid/side, which the earlier releases' rule would count too).
+    [Fact]
+    public void FromRelease140AnyLeftSideOrSideRightFrameRulesOutTheAdaptiveLevels()
+    {
+        Node node = LevelNode(Fixtures.AnalyzeMpeg("flac/external-level-5-stereo.flac"))!;
+        Assert.Contains(node.Children, c => c.Name == "Evidence" && c.Value!.ToString()!.StartsWith("1 frame has a stereo assignment", StringComparison.Ordinal));
+    }
+
     [Fact]
     public void TheValueSaysWhoseLevelsAndTheClaimStaysBelowTheEncoder()
     {
