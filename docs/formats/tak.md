@@ -131,6 +131,7 @@ All from Takc 2.3.3 (`tests/fixtures/tak`, [development.md](../development.md));
 ## Not covered
 
 - TAK 1.0 (codec 0), the experimental and lossyWAV codecs (1 and 3), bit depths other than 8, 16 and 24, and more than six channels: the description does not cover them, and the decoder refuses them.
+- The channel table's paired entries (types 0 to 3) are checked on crafted files only until a Takc encode pairs channels: the `pair-*` cases of the TAK fixtures workflow try ([development.md](../development.md#tak-decoding-clean-room)).
 - The coded syntax of a frame as nodes (only the statistics and the series above), the residual modes and the paired types of codec 4's channel table as series, and the "Over Time" forms of the two numeric series: queued ([the survey](../design/coding-graphs.md#optimfrog-and-tak-new-in-the-re-survey)).
 - Frames in a TAK stream inside another container (none is routed).
 - The info frame's stream info against the metadata's (a disagreement is not a finding), and the previous distance against the position of the previous info frame.

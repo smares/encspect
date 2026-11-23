@@ -15,7 +15,8 @@ SHA-256, whether it is reproducible, Takc's `-fi` output, the decoding check, wh
 does not print, the encoder info, the wave data sizes and the MD5), the runner and the tools. Cases that wrote the same bytes are committed
 once (a preset before an option, then the shortest name) and the others are listed as `identicalCases`. The settings Takc was asked for
 are compared with what the SDK reads from the file (preset, evaluation, sample format); a difference stops the import, because it is something
-to decide before the file is committed. Files over 600 KB are refused unless --allow-large is given. At the end tak_decoded.py adds to each manifest the samples a
+to decide before the file is committed. Files over 600 KB are refused unless --allow-large is given. The `pair-*` cases (tak_cases.py) are kept only where the file's channel tables pair channels in at
+least one frame (tak_pairs.py reads the table of every frame); the others are not committed and are listed, with what their tables hold, in `pairs-tried.json`. At the end tak_decoded.py adds to each manifest the samples a
 decoder must give back (decoded_samples, decoded_pcm_md5), from the signal the file was encoded from.
 """
 
@@ -28,6 +29,7 @@ import sys
 
 import tak_decoded
 import tak_model
+import tak_pairs
 import tak_tool
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -105,6 +107,21 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     for stale in [*OUT.glob("external-*")]:
         stale.unlink()
+    tried = []
+    kept = []
+    for case in cases:
+        if not case["name"].startswith("pair-"):
+            kept.append(case)
+            continue
+        found = tak_pairs.summarize(artifact / "tak" / case["output"])
+        record = {"case": case["name"], "arguments": case["arguments"], "input": case["input"], "size": case["size"], "sha256": case["sha256"], **found}
+        tried.append(record)
+        if found["pairedFrames"]:
+            kept.append(case)
+        else:
+            print(f"{case['name']}: no frame pairs channels ({found['tableFrames']} of {found['frames']} frames have a table); not committed")
+    cases = kept
+    (OUT / "pairs-tried.json").write_text(json.dumps({"tool": SOURCE, "cases": tried}, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     groups = {}
     for case in cases:
         groups.setdefault(case["sha256"], []).append(case)
