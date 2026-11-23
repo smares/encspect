@@ -88,20 +88,31 @@ public sealed class AboutTests
     {
         Avalonia.Application.Current!.RequestedThemeVariant = variant == "dark" ? Avalonia.Styling.ThemeVariant.Dark : Avalonia.Styling.ThemeVariant.Light;
         var owner = new Window();
-        owner.Show();
-        AboutWindow.ShowFor(owner);
-        AboutWindow window = AboutWindow.Current!;
+        try
+        {
+            owner.Show();
+            AboutWindow.ShowFor(owner);
+            AboutWindow window = AboutWindow.Current!;
 
-        Assert.NotNull(window.Icon);
-        Image image = window.FindControl<Image>("IconImage")!;
-        Assert.Equal(64, image.Width);
-        Assert.Equal(64, image.Height);
-        Assert.Equal(128, ((Avalonia.Media.Imaging.Bitmap)image.Source!).PixelSize.Width);
-        ScreenshotTests.Save(window, $"about-{variant}.png");
+            Assert.NotNull(window.Icon);
+            Image image = window.FindControl<Image>("IconImage")!;
+            Assert.Equal(64, image.Width);
+            Assert.Equal(64, image.Height);
+            Assert.Equal(128, ((Avalonia.Media.Imaging.Bitmap)image.Source!).PixelSize.Width);
+            ScreenshotTests.Save(window, $"about-{variant}.png");
 
-        window.Close();
-        owner.Close();
-        Avalonia.Application.Current.RequestedThemeVariant = Avalonia.Styling.ThemeVariant.Default;
+            // The version is one line: its text is not wrapped.
+            TextBlock version = window.FindControl<TextBlock>("VersionText")!;
+            Assert.Equal(Avalonia.Media.TextWrapping.NoWrap, version.TextWrapping);
+            Assert.True(version.Bounds.Width >= version.DesiredSize.Width);
+
+            window.Close();
+        }
+        finally
+        {
+            owner.Close();
+            Avalonia.Application.Current.RequestedThemeVariant = Avalonia.Styling.ThemeVariant.Default;
+        }
     }
 
     [AvaloniaFact]
@@ -112,6 +123,9 @@ public sealed class AboutTests
         MainWindow main = OpenMain();
         Assert.NotNull(main.Icon);
         main.Close();
+        var detail = new DetailWindow(new DetailViewModel(Analyzer.CreateDefault()));
+        Assert.NotNull(detail.Icon);
+        detail.Close();
     }
 
     [AvaloniaTheory]
