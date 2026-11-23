@@ -337,12 +337,16 @@ The most common formats without a free specification are decoded, on clean-room 
 
 The scope is confirmed when 0.4 is done. The decoders follow steps 9 to 15 of [lossy-decoders.md, "Order"](design/lossy-decoders.md#order), with the definition of done of 0.3:
 
-1. **AAC LC:** after its clean-room description.
+1. **AAC LC:** following libxaac, as decision 1 of [lossy-decoders.md](design/lossy-decoders.md#decisions) now reads (the lead, 2026-11-23); after its clean-room description only if the reading of libxaac's license finds conditions narrower than Apache 2.0.
+   - **First step of the milestone:** that reading: libxaac's `LICENSE` and the header of every file the decoders would follow, for an ISO/IEC disclaimer like the PacketVideo decoder's, with the result in [lossy-decoders.md](design/lossy-decoders.md#decisions).
    - Its decoder needs the Vorbis parser's feed delay for a Matroska DiscardPadding (the padding is per block and the decoder must be told before the frames it takes samples from; see the Opus item of 0.3).
 2. **HE-AAC** (SBR and parametric stereo): with the replicated bands as a measurement of the decoded audio (SBR, E-AC-3's spectral extension, CELT's folding), whose fixtures it brings (decision S10 of [spectral-analysis.md](design/spectral-analysis.md#decisions-for-the-lead-1)).
 3. **WMA standard, Professional and Lossless:** each after its clean-room supplement, with Microsoft's decoder as the reference.
 4. **AAC Main, LTP and ER AAC.**
-5. **USAC** (xHE-AAC).
+5. **USAC** (xHE-AAC): following libxaac, as item 1.
+   - **Fraunhofer's own encoder** (the lead, 2026-11-23): Fraunhofer's xHE-AAC encoder (MPEG-D USAC with MPEG-D DRC) is published in AOSP's `platform/external/aac` (`xhe-aac/`, version 1.0, Android 17; `MODULE_LICENSE_FRAUNHOFER`, the license of fdk-aac, whose output the fixtures already hold), and fdk-aac `v3.0.0` (github.com/mstorsjo/fdk-aac) ships it as `libfdk-xhe-aac`. `fdk_tool.py` builds `v3.0.0` from its tag's commit with a front end: AOSP's example encoder (`xhe-aac-enc`, LOAS output) where the release carries it, or the fdkaac 2.0.3 patch shared on Hydrogenaudio (`-p 42`, VBR `-m 0` to `6`, `--xhe-loudness-mode 0` to `2`), pinned by SHA-256 and kept private unless its license is clear. It runs as a black box over its modes; no one who writes the USAC decoder reads its source.
+   - **libxaac's encoder** (Apache 2.0; USAC at 64 and 96 kbps only, as its README says) gives a second, independent USAC encoder for fixtures.
+   - **What the fixtures show the parsers:** the Hydrogenaudio patch's first versions wrote sync samples (`stss`) and AudioPreRoll groups (`sbgp` and `sgpd` of type `prol`) that disagree with `usacIndependencyFlag` (MediaInfo reported it in the thread "fdkaac encoder with xhe-aac support", 2026-07-13); the MP4 parser gains findings for that disagreement (ISO/IEC 14496-12 8.6.2 and 8.9, and ISO/IEC 23003-3's AudioPreRoll), with hand-built fixtures. In its loudness mode 1 the stream's program loudness is the value given on the command line (default -23 LUFS), not a measurement; the loudness measured from the decoded audio stands beside it as a figure, without a verdict.
 6. **WMA Voice** (the lead, 2026-11-08): after its clean-room supplement. The lead wants it covered, as Speex is (decision 12 of [lossy-decoders.md](design/lossy-decoders.md#decisions)).
    - **The patent decision** comes before HE-AAC, USAC and WMA Professional.
 7. **PCM and MPEG Layer I and II in ASF** (the lead, 2026-11-22, from the review of the "Show Only Audio" switch): ASF audio streams with these format tags are now only `asf.codec-not-analyzed`, so the test files hold 46 ASF files whose audio reaches no parser and no stream ([asf-wma.md](formats/asf-wma.md#asf-what-is-reported)).
@@ -360,7 +364,7 @@ The more formats of [planned.md](formats/planned.md#after-05-more-formats), as l
 3. **AAC in LATM and LOAS**
 4. **Sun AU, VOC, IRCAM and NIST SPHERE**
 5. **DSF and DSDIFF**
-6. **AMR and AMR-WB**
+6. **AMR and AMR-WB:** with a decoder following opencore-amr (the AOSP codecs extracted, Apache 2.0: the AMR-NB decoder and encoder and the AMR-WB decoder; [planned.md](formats/planned.md#6-amr-and-amr-wb)), whose encoders also write fixtures.
 7. **MPEG-4 ALS**
 8. **AC-4**
 9. **Dolby TrueHD as IEC 61937 MAT bursts in WAV** (the lead, 2026-11-17, in place of the routes decision's "not planned"): a clean-room description of the MAT frame first, since FFmpeg's LGPL spdif muxer is the only detailed source known; then the walk of the multichannel high-bit-rate carriers, which hold MAT bursts, and the route that hands the TrueHD access units to the TrueHD parser as file ranges, rejoining the pieces a MAT code cuts. Its fixtures come from FFmpeg's spdif muxer, run as a program.
@@ -370,6 +374,7 @@ The more formats of [planned.md](formats/planned.md#after-05-more-formats), as l
 13. **The formats whose only detailed public source is FFmpeg** (clean-room): OSQ; ATRAC, ATRAC3 and ATRAC3plus; RealAudio; TwinVQ; QDesign Music; Nellymoser.
 14. **Game and console middleware** (the lead, 2026-11-16): ADX, HCA, BRSTM, VAG, FSB and Bink.
 15. **The older lossless compressors and speech codecs (vocoders) no item above names** (the lead, 2026-11-16): each named with its sources when its turn comes.
+17. **LC3 and LC3plus** (the lead, 2026-11-23; [planned.md](formats/planned.md#17-lc3-and-lc3plus)): the codec of Bluetooth LE Audio, with Google's liblc3 (Apache 2.0) as the reference to follow and its tools as the fixture encoder.
 
 - **Follow-up decoders:** the DTS extensions (XCh, XXCH, X96, XBR, LBR and DTS-HD's lossless extension XLL), which [lossy-decoders.md](design/lossy-decoders.md#what-each-decoder-covers) leaves as follow-ups of the DTS core decoder. Their place among the formats above is set when 0.5 is done.
 - **The AC-4 and MPEG-H decoders** (the lead, 2026-11-16): after their parsers (items 8 and 10), each after a design of its own as [lossy-decoders.md](design/lossy-decoders.md#scope) requires; AC-4's specification is free, MPEG-H's is not.
