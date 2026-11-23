@@ -39,6 +39,7 @@ import downloads
 import dts_specs
 import faac_tool
 import ffmpeg_sources
+import ffmpeg_tool
 import fhg_acm_tool
 import fhg_tool
 import flac_tool
@@ -145,6 +146,7 @@ def sources():
     yield from optimfrog_tool.sources()
     yield from tak_tool.sources()
     yield from flac_tool.sources()
+    yield from ffmpeg_tool.sources()
     yield from make_lossywav_fixtures.sources()
     yield from lossywav_tool.sources()
     yield asf_specs.NAME, asf_specs.SHA256, asf_specs.ADDRESSES

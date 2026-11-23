@@ -24,6 +24,7 @@ import zlib
 
 import flac_model as m
 import flac_signal as sig
+import ffmpeg_tool
 import flac_tool
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -124,10 +125,28 @@ RECODES = {
     "ffmpeg-level-5-from-lowbits-mixed-stereo": ("measurement/synthetic-lowbits-mixed-16-24.flac", "ffmpeg", ["-c:a", "flac", "-compression_level", "5"]),
 }
 
-# name: (release, input, arguments of flac).
+# name: (release, input, arguments of flac). The releases before 1.2.1 (1.1.0 is the first whose files carry a vendor string) write the signal in six blocks of their
+# size (1.1.0 to 1.1.3: 4,608 samples; from 1.1.4: 4,096), which keeps the goldens small; 1.1.0 and 1.1.2 to 1.1.3 have the table of the earlier releases
+# (partition orders 2, 2, 3, 3, 3, 3, 4, 6, 6), 1.1.4 and 1.2.0 the one of the later ones.
+LEVELS_STEREO_OLD = ("levels", 44100, 2, 16, 27648)
+LEVELS_STEREO_1_1_4 = ("levels", 44100, 2, 16, 24576)
 FLAC_RELEASE_FIXTURES = {
     f"level-{level}-stereo-libflac-{release}": (release, LEVELS_STEREO, [f"-{level}"])
     for release, found in {"1.2.1": (6, 7, 8), "1.3.0": (7, 8), "1.3.1": (7,), "1.5.0": (1, 7)}.items()
+    for level in found
+}
+FLAC_RELEASE_FIXTURES.update({
+    f"level-{level}-stereo-libflac-{release}": (release, LEVELS_STEREO_OLD if release < "1.1.4" else LEVELS_STEREO_1_1_4, [f"-{level}"])
+    for release, found in {"1.1.0": (1, 6, 8), "1.1.2": (4, 7), "1.1.3": (1, 6), "1.1.4": (1, 5, 8), "1.2.0": (4, 6)}.items()
+    for level in found
+})
+
+# FFmpeg releases other than 6.1.1, built from their tarballs by ffmpeg_tool.py: the signal in ten large blocks, mono, at level 5 (the default) and at the levels whose
+# orders differ in the releases up to 1.0.x (6 and 8, which wrote orders of 7 and 10). name: (release, input, arguments of ffmpeg).
+FFMPEG_RELEASE_FIXTURES = {
+    f"ffmpeg-level-{level}-mono-ffmpeg-{release}": (release, ("levels", 44100, 1, 16, 46080), ["-c:a", "flac", "-compression_level", str(level)])
+    for release, found in {"0.11.5": (5, 6, 8), "1.0.10": (5, 6, 8), "1.2.12": (5,), "2.4.14": (5,), "2.8.22": (5,), "3.4.14": (5,), "4.3.9": (5,), "4.4.6": (5,), "5.0.3": (5,),
+                           "5.1.8": (5,), "6.0.1": (5,), "7.0.2": (5,), "7.1.3": (5,), "8.0.1": (5, 8)}.items()
     for level in found
 }
 
@@ -171,7 +190,8 @@ def encode_flac(name, spec, arguments, work, release=None):
     out = work / "out.flac"
     out.unlink(missing_ok=True)
     program = str(flac_tool.build(release)) if release else "flac"
-    result = subprocess.run([program, "-s", "-f", *arguments, "in.wav", "-o", str(out)], cwd=work, capture_output=True, text=True)
+    # 1.1.0 does not know -f; the output was removed above.
+    result = subprocess.run([program, "-s", *([] if release else ["-f"]), *arguments, "in.wav", "-o", str(out)], cwd=work, capture_output=True, text=True)
     if result.returncode != 0 or not out.exists():
         raise SystemExit(f"flac failed for {name}: {result.stderr}")
     shutil.copy(out, target)
@@ -180,7 +200,7 @@ def encode_flac(name, spec, arguments, work, release=None):
     return target, {"tool": provenance, "arguments": arguments, "input": describe(spec)}
 
 
-def encode_ffmpeg(name, spec, arguments, mode, work):
+def encode_ffmpeg(name, spec, arguments, mode, work, release=None):
     suffix = "ogg" if mode == "ogg" else "flac"
     target = OUT / f"external-{name}.{'ogg' if mode == 'ogg' else 'flac'}"
     for old in OUT.glob(f"external-{name}.*"):
@@ -188,15 +208,17 @@ def encode_ffmpeg(name, spec, arguments, mode, work):
     (work / "in.wav").write_bytes(make_input(spec))
     out = work / f"out.{suffix}"
     out.unlink(missing_ok=True)
+    program = str(ffmpeg_tool.build(release)) if release else "ffmpeg"
     if mode == "pipe":
-        result = subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(work / "in.wav"), *arguments, "-f", "flac", "pipe:1"], capture_output=True)
+        result = subprocess.run([program, "-y", "-loglevel", "error", "-i", str(work / "in.wav"), *arguments, "-f", "flac", "pipe:1"], capture_output=True)
         out.write_bytes(result.stdout)
     else:
-        result = subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(work / "in.wav"), *arguments, str(out)], capture_output=True)
+        result = subprocess.run([program, "-y", "-loglevel", "error", "-i", str(work / "in.wav"), *arguments, str(out)], capture_output=True)
     if result.returncode != 0 or not out.exists() or out.stat().st_size == 0:
         raise SystemExit(f"ffmpeg failed for {name}: {result.stderr}")
     shutil.copy(out, target)
-    return target, {"tool": f"{tool_version(['ffmpeg', '-version'])} (ffmpeg package of Ubuntu 24.04)", "arguments": arguments, "input": describe(spec)}
+    provenance = "built from its release tarball by ffmpeg_tool.py" if release else "ffmpeg package of Ubuntu 24.04"
+    return target, {"tool": f"{tool_version([program, '-version'])} ({provenance})", "arguments": arguments, "input": describe(spec)}
 
 
 def manifest_path(path):
@@ -266,7 +288,8 @@ def main():
     count = 0
     everything = {**{n: ("flac", s, a, None, None) for n, (s, a) in FLAC_FIXTURES.items()},
                   **{n: ("flac", s, a, None, r) for n, (r, s, a) in FLAC_RELEASE_FIXTURES.items()},
-                  **{n: ("ffmpeg", s, a, mode, None) for n, (s, a, mode) in FFMPEG_FIXTURES.items()}}
+                  **{n: ("ffmpeg", s, a, mode, None) for n, (s, a, mode) in FFMPEG_FIXTURES.items()},
+                  **{n: ("ffmpeg", s, a, "file", r) for n, (r, s, a) in FFMPEG_RELEASE_FIXTURES.items()}}
     with tempfile.TemporaryDirectory() as work:
         for name, (tool, spec, arguments, mode, release) in everything.items():
             ogg = "--ogg" in arguments or mode == "ogg"
@@ -278,7 +301,7 @@ def main():
             elif tool == "flac":
                 path, encoder = encode_flac(name, spec, arguments, pathlib.Path(work), release)
             else:
-                path, encoder = encode_ffmpeg(name, spec, arguments, mode, pathlib.Path(work))
+                path, encoder = encode_ffmpeg(name, spec, arguments, mode, pathlib.Path(work), release)
             manifest_path(path).write_text(json.dumps(build_manifest(path, encoder), indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
             count += 1
         for name, (source, tool, arguments) in RECODES.items():
