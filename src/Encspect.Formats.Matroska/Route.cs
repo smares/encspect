@@ -228,11 +228,12 @@ internal sealed partial class FileReader
                     $"{label} states {Counts.Of(track.Channels ?? 1, "channel", "channels")} in its Audio element, but its WAVEFORMATEX states {format.Channels}; {used}.", wave.Children.First(c => c.Name == "Channels"));
             }
 
-            bool rateKnown = track.SamplingFrequency is { } rate && Codecs.IsRate(rate);
-            if (rateKnown && format.SampleRate != RoundedRate(track.SamplingFrequency) && format.SampleRate != RoundedRate(track.OutputSamplingFrequency))
+            double? stated = track.SamplingFrequency is { } rate && Codecs.IsRate(rate) ? rate
+                : track.OutputSamplingFrequency is { } output && Codecs.IsRate(output) ? output : null;
+            if (stated is { } statedRate && format.SampleRate != RoundedRate(track.SamplingFrequency) && format.SampleRate != RoundedRate(track.OutputSamplingFrequency))
             {
                 _findings.AddNow(Severity.Warning, "matroska.waveformat-differs",
-                    $"{label} states a sampling frequency of {track.SamplingFrequency!.Value.ToString("0.###", CultureInfo.InvariantCulture)} Hz in its Audio element, but its WAVEFORMATEX states {format.SampleRate} Hz; {used}.", wave.Children.First(c => c.Name == "Samples Per Second"));
+                    $"{label} states a sampling frequency of {statedRate.ToString("0.###", CultureInfo.InvariantCulture)} Hz in its Audio element, but its WAVEFORMATEX states {format.SampleRate} Hz; {used}.", wave.Children.First(c => c.Name == "Samples Per Second"));
             }
         }
 
