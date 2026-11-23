@@ -292,15 +292,13 @@ FIXTURES = [
     ("external-helix-vbr", ".mp3", 44100, 2, ["hmp3", "-V60"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
     # The fork with the A1 re-coding (helix_tool.A1_COMMIT) in MPEG-1 VBR: "hmp3-a1" runs it as it is by default, "hmp3-a1-keep-gain"
-    # with HMP3_A1=1, which keeps every global_gain. The CBR file is the same encode as external-helix-cbr, which A1 does not touch.
+    # with HMP3_A1=1, which keeps every global_gain.
     ("external-helix-a1-vbr", ".mp3", 44100, 2, ["hmp3-a1", "-V60"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
     ("external-helix-a1-keep-gain-vbr", ".mp3", 44100, 2, ["hmp3-a1-keep-gain", "-V60"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="music")),
     ("external-helix-a1-no-tag-vbr", ".mp3", 44100, 2, ["hmp3-a1", "-V60", "-X0"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=None, info_frame=False, signal="music")),
-    ("external-helix-a1-cbr", ".mp3", 44100, 2, ["hmp3-a1", "-B64"],
-     dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=True, signal="music")),
     ("external-helix-no-tag", ".mp3", 44100, 2, ["hmp3", "-B64", "-X0"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False, signal="music")),
     ("external-helix-no-tag-mono", ".mp3", 32000, 1, ["hmp3", "-B48", "-X0"],
