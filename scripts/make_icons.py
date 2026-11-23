@@ -3,7 +3,7 @@
 
 Sources: F2.svg (the small form, 16 to 32 px), E.svg (the large form, 40 px and up; rounded tile). The .ico holds
 Microsoft's set 16, 20, 24, 32, 40, 48, 64 and 256, plus 128; 40 px is the large form, which is legible there. Rendered with
-Playwright's Chromium (scripts/icons/render_svg.js), light-theme colors. The .ico and .icns containers are written here
+Playwright's Chromium (scripts/icons/render_svg.js), light-theme colors. The .ico container is written here
 directly (PNG-compressed entries), so no imaging library is needed.
 
 Usage: python3 scripts/make_icons.py     (needs node, and playwright for node: NODE_PATH may name its folder)
@@ -19,9 +19,7 @@ ICON = ROOT / "src" / "Encspect.Gui" / "Assets" / "Icon"
 RENDER = Path(__file__).resolve().parent / "icons" / "render_svg.js"
 
 SMALL = {"F2.svg": [16, 20, 24, 32]}
-LARGE = {"E.svg": [16, 32, 40, 48, 64, 128, 256, 512, 1024]}
-# icns entry types holding PNG data, by pixel size (macOS names them for the point size and scale)
-ICNS_TYPES = [(16, b"icp4"), (32, b"icp5"), (64, b"icp6"), (128, b"ic07"), (256, b"ic08"), (512, b"ic09"), (1024, b"ic10")]
+LARGE = {"E.svg": [40, 48, 64, 128, 256]}
 
 
 def render(jobs, folder):
@@ -48,11 +46,6 @@ def write_ico(entries, target):
     target.write_bytes(header + directory + data)
 
 
-def write_icns(pngs, target):
-    body = b"".join(kind + struct.pack(">I", 8 + len(pngs[size])) + pngs[size] for size, kind in ICNS_TYPES)
-    target.write_bytes(b"icns" + struct.pack(">I", 8 + len(body)) + body)
-
-
 def main():
     with tempfile.TemporaryDirectory() as tmp:
         folder = Path(tmp)
@@ -60,12 +53,10 @@ def main():
         large = render(LARGE, folder)
     ico = [(s, p) for (_, s), p in small.items()] + [(s, p) for (_, s), p in large.items() if s >= 40 and s <= 256]
     write_ico(ico, ICON / "encspect.ico")
-    # The icns takes the large form at every size: macOS draws its icons on tiles of their own.
     by_size = {s: p for (_, s), p in large.items()}
-    write_icns(by_size, ICON / "encspect.icns")
     (ICON / "encspect-256.png").write_bytes(by_size[256])
     (ICON / "encspect-128.png").write_bytes(by_size[128])
-    print("wrote", ", ".join(sorted(p.name for p in ICON.iterdir() if p.suffix in (".ico", ".icns", ".png"))))
+    print("wrote", ", ".join(sorted(p.name for p in ICON.iterdir() if p.suffix in (".ico", ".png"))))
 
 
 if __name__ == "__main__":
