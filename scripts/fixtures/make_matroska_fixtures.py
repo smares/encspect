@@ -2000,10 +2000,21 @@ def _():
     return acm_track(wfx(0x0001, 1, 44100, 88200, 2, 16), pcm_frames(6, channels=1), 10)
 
 
-@fixture("acm-pcm-layout", "An A_MS/ACM PCM track whose WAVEFORMATEX states 12 bits per sample, which is no sample width PCM is read with.",
-         findings=[("matroska.pcm-layout-not-read", "12 bits per sample")], streams=[("PCM", 48000, 2)], valid=False)
+@fixture("acm-pcm-layout", "An A_MS/ACM PCM track whose WAVEFORMATEX states 12 bits per sample (a 16-bit container, 4 bytes a stereo frame) and a block alignment of 3 bytes, which is not one sample frame.",
+         findings=[("matroska.pcm-layout-not-read", "block alignment of 3 bytes")], streams=[("PCM", 48000, 2)], valid=False)
 def _():
     return acm_track(wfx(0x0001, 2, 48000, 144000, 3, 12), pcm_frames(4, length=64), 10)
+
+
+@fixture("acm-pcm-20-bits", "Ten blocks of stereo PCM in an A_MS/ACM track whose WAVEFORMATEX states 20 bits per sample and a block alignment of 6 bytes: read as WAV reads it, in a 24-bit container.",
+         streams=[("PCM", 48000, 2)])
+def _():
+    return acm_track(wfx(0x0001, 2, 48000, 288000, 6, 20), pcm_frames(10, width=3), 10)
+
+
+@fixture("acm-pcm-float", "Ten blocks of 32-bit floating-point stereo samples in an A_MS/ACM track whose WAVEFORMATEX has the format tag 3.", streams=[("PCM (floating-point)", 48000, 2)])
+def _():
+    return acm_track(wfx(0x0003, 2, 48000, 384000, 8, 32), pcm_frames(10, width=4), 10)
 
 
 def main():

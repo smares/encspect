@@ -68,37 +68,20 @@ internal static class Codecs
         };
     }
 
-    // How the samples of an A_MS/ACM PCM track are laid out, from its WAVEFORMATEX as WAV reads it (WaveFormatRoutes.PcmEncodingOf): the width of a sample is the
-    // wBitsPerSample, and the block alignment, where stated, is one sample frame. Null with the reason where the structure gives no layout.
+    // How the samples of an A_MS/ACM PCM track are laid out, from its WAVEFORMATEX by the rule WAV reads one with (WaveFormatRoutes.PcmCodingOf), the speakers from the
+    // extensible format's channel mask. Null with the reason where the structure gives no layout.
     public static PcmCoding? PcmOf(WaveFormatEx format, out string why)
     {
-        why = string.Empty;
-        int bits = format.Bits;
-        if (WaveFormatRoutes.PcmEncodingOf(format.CodingTag, bits, bits) is not { } encoding || bits % 8 != 0 || bits is 0 or > 64)
-        {
-            why = $"states a WAVEFORMATEX with {Counts.Of(bits, "bit", "bits")} per sample, which is no sample width the coding {WaveFormatNames.Show(format.CodingTag)} is read with";
-            return null;
-        }
-
-        if (format.Channels is 0 or > PcmCoding.MaxChannels)
+        if (format.Channels > PcmCoding.MaxChannels)
         {
             why = $"states {format.Channels} channels in its WAVEFORMATEX, where 1 to {PcmCoding.MaxChannels} are read as samples";
             return null;
         }
 
-        if (format.BlockAlign != 0 && format.BlockAlign != (bits / 8) * format.Channels)
-        {
-            why = $"states a block alignment of {format.BlockAlign} bytes in its WAVEFORMATEX, which is not one sample frame of {(bits / 8) * format.Channels} bytes";
-            return null;
-        }
-
-        return new PcmCoding
-        {
-            Encoding = encoding,
-            IsBigEndian = false,
-            ContainerBits = bits,
-            SampleRate = (int)Math.Min(format.SampleRate, int.MaxValue),
-        };
+        PcmCoding? coding = WaveFormatRoutes.PcmCodingOf(format.CodingTag, format.Channels, format.Bits, format.BlockAlign, format.SampleRate, false,
+            WaveFormatRoutes.StreamLayout(format.Channels, format.IsExtensible, format.ChannelMask), out why);
+        why = why.Length == 0 ? why : $"has a WAVEFORMATEX that {why}";
+        return coding;
     }
 
     // The kind of stream KnownWriters knows the codec ID's coding as, or null for a coding no parser reads.

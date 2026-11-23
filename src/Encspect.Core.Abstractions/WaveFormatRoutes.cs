@@ -84,4 +84,58 @@ public static class WaveFormatRoutes
         MuLaw when statedBits == 8 => PcmEncoding.MuLaw,
         _ => null,
     };
+
+    // The speakers of a stream's channels: the assignment of the channel mask of an extensible format (a mask that names fewer speakers than there are channels
+    // leaves the rest without a position, one that names more has its extra bits ignored), else, for the plain WAVEFORMATEX, front left and right for two
+    // channels and the front center for one (ksmedia.h, KSAUDIO_SPEAKER_MONO).
+    public static IReadOnlyList<Speaker>? StreamLayout(int channels, bool isExtensible, uint? mask)
+    {
+        if (channels is < 1 or > 64)
+        {
+            return null;
+        }
+
+        if (isExtensible && mask is { } assigned and not 0)
+        {
+            return ChannelLayouts.FromWaveMask(assigned, channels);
+        }
+
+        return channels switch { 1 => ChannelLayouts.Mono, 2 => ChannelLayouts.Stereo, _ => null };
+    }
+
+    // How the samples of a linear coding stored in a WAVEFORMATEX are laid out, which WAV and Matroska's A_MS/ACM read the same way: a sample takes the whole bytes
+    // wBitsPerSample rounds up to (12 and 20 bits are read in 16 and 24-bit containers), and a block alignment that is stated is one sample frame of them. Null with
+    // the reason where the tag is no linear coding, the width does not fit it, there are no channels or the alignment is not one sample frame.
+    public static PcmCoding? PcmCodingOf(int tag, int channels, int bits, int blockAlign, long sampleRate, bool isBigEndian, IReadOnlyList<Speaker>? layout, out string why)
+    {
+        why = string.Empty;
+        int bytes = (bits + 7) / 8;
+        if (channels < 1 || bytes < 1)
+        {
+            why = channels < 1 ? "states no channels" : "states no sample width";
+            return null;
+        }
+
+        long frameBytes = (long)bytes * channels;
+        if (blockAlign != 0 && blockAlign != frameBytes)
+        {
+            why = $"states a block alignment of {blockAlign} bytes, which is not one sample frame of {frameBytes} bytes ({Counts.Of(bytes, "byte", "bytes")} for each of {Counts.Of(channels, "channel", "channels")})";
+            return null;
+        }
+
+        if (PcmEncodingOf(tag, bytes * 8, bits) is not { } encoding)
+        {
+            why = $"states {Counts.Of(bits, "bit", "bits")} per sample, which is no sample width the coding {WaveFormatNames.Show(tag)} is read with";
+            return null;
+        }
+
+        return new PcmCoding
+        {
+            Encoding = encoding,
+            IsBigEndian = isBigEndian,
+            ContainerBits = bytes * 8,
+            SampleRate = (int)Math.Min(sampleRate, int.MaxValue),
+            ChannelLayout = layout,
+        };
+    }
 }

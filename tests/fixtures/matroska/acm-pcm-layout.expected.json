@@ -1,5 +1,5 @@
 {
- "description": "An A_MS/ACM PCM track whose WAVEFORMATEX states 12 bits per sample, which is no sample width PCM is read with.",
+ "description": "An A_MS/ACM PCM track whose WAVEFORMATEX states 12 bits per sample (a 16-bit container, 4 bytes a stereo frame) and a block alignment of 3 bytes, which is not one sample frame.",
  "length": 1234,
  "format": "Matroska",
  "ebml": {
@@ -301,7 +301,7 @@
  "findings": [
   {
    "code": "matroska.pcm-layout-not-read",
-   "contains": "12 bits per sample"
+   "contains": "block alignment of 3 bytes"
   }
  ],
  "crosscheck": {
