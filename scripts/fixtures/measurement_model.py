@@ -503,7 +503,10 @@ def kweighting(rate):
     f1, q1 = 38.13547087602444, 0.5003270373238773
     k1 = math.tan(math.pi * f1 / rate)
     d = 1 + k1 / q1 + k1 * k1
-    return ((vh + vb * k / q + k * k) / a0, 2 * (k * k - vh) / a0, (vh - vb * k / q + k * k) / a0, 2 * (k * k - 1) / a0, (1 - k / q + k * k) / a0,
+    # The highpass numerator 1, -2, 1 gives the passband gain d; the gain of the 48 kHz filter (d48) is restored by scaling the shelf's numerator.
+    k48 = math.tan(math.pi * f1 / 48000)
+    g = (1 + k48 / q1 + k48 * k48) / d
+    return (g * (vh + vb * k / q + k * k) / a0, g * 2 * (k * k - vh) / a0, g * (vh - vb * k / q + k * k) / a0, 2 * (k * k - 1) / a0, (1 - k / q + k * k) / a0,
             2 * (k1 * k1 - 1) / d, (1 - k1 / q1 + k1 * k1) / d)
 
 

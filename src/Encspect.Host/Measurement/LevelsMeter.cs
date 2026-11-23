@@ -174,6 +174,8 @@ internal sealed class LevelsMeter
         double high = state.High;
         double sum = state.SumDouble;
         double squares = state.SumSquaresDouble;
+        double sumError = state.SumError;
+        double squaresError = state.SquaresError;
         bool only16 = state.Only16;
         bool only24 = state.Only24;
         bool grid16 = _only16;
@@ -206,8 +208,16 @@ internal sealed class LevelsMeter
             }
             else
             {
-                sum += v;
-                squares += v * v;
+                // Kahan summation: one sequential double sum over up to 1.7e10 samples (24 hours at 192 kHz) loses digits of a steady stream's DC.
+                // The compensation is part of the channel's state, so the result does not depend on how the decoder cuts blocks.
+                double yv = v - sumError;
+                double tv = sum + yv;
+                sumError = (tv - sum) - yv;
+                sum = tv;
+                double ys = (v * v) - squaresError;
+                double ts = squares + ys;
+                squaresError = (ts - squares) - ys;
+                squares = ts;
                 if (only24)
                 {
                     double y = v * 8388608.0;
@@ -278,6 +288,8 @@ internal sealed class LevelsMeter
         state.High = high;
         state.SumDouble = sum;
         state.SumSquaresDouble = squares;
+        state.SumError = sumError;
+        state.SquaresError = squaresError;
         state.Only16 = only16;
         state.Only24 = only24;
         state.RunLength = runLength;
@@ -958,6 +970,8 @@ internal sealed class LevelsMeter
         public double High = double.MinValue;
         public double SumDouble;
         public double SumSquaresDouble;
+        public double SumError;
+        public double SquaresError;
         public bool Only16 = true;
         public bool Only24 = true;
         public long RunLength;

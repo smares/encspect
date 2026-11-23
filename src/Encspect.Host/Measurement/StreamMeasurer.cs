@@ -1518,24 +1518,28 @@ internal sealed class StreamMeasurer
         for (int c = 0; c < _measured; c++)
         {
             perChannel[c] = Levels(_average.AsSpan(c * rows, rows));
-            cutoffs.Add(CutoffFinder.Find(perChannel[c], _counters.Length > 0 ? _counters[c] : null, _geometry));
-            bandwidths.Add(CutoffFinder.FindBandwidth(perChannel[c], _geometry));
-            slopes.Add(CutoffFinder.FindSlope(perChannel[c], _geometry));
+            int[] fine = FineLevels(_average.AsSpan(c * rows, rows));
+            cutoffs.Add(CutoffFinder.Find(fine, _counters.Length > 0 ? _counters[c] : null, _geometry));
+            bandwidths.Add(CutoffFinder.FindBandwidth(fine, _geometry));
+            slopes.Add(CutoffFinder.FindSlope(fine, _geometry));
         }
 
         short[] combined = Levels(_average.AsSpan(_measured * rows, rows));
-        SpectralCutoff cutoff = CutoffFinder.Find(combined, _counters.Length > 0 ? _counters[_measured] : null, _geometry);
-        SpectralBandwidth combinedBandwidth = CutoffFinder.FindBandwidth(combined, _geometry);
+        int[] combinedFine = FineLevels(_average.AsSpan(_measured * rows, rows));
+        SpectralCutoff cutoff = CutoffFinder.Find(combinedFine, _counters.Length > 0 ? _counters[_measured] : null, _geometry);
+        SpectralBandwidth combinedBandwidth = CutoffFinder.FindBandwidth(combinedFine, _geometry);
         MidSideFigures? midSide = null;
         if (HasPair)
         {
             // The mid and side spectra have a cutoff and holes of their own; the bandwidth only bounds their holes.
             short[] mid = Levels(_average.AsSpan((_measured + 1) * rows, rows));
             short[] side = Levels(_average.AsSpan((_measured + 2) * rows, rows));
+            int[] midFine = FineLevels(_average.AsSpan((_measured + 1) * rows, rows));
+            int[] sideFine = FineLevels(_average.AsSpan((_measured + 2) * rows, rows));
             CutoffCounters? midCounters = _counters.Length > 0 ? _counters[_measured + 1] : null;
             CutoffCounters? sideCounters = _counters.Length > 0 ? _counters[_measured + 2] : null;
-            SpectralCutoff midCutoff = CutoffFinder.Find(mid, midCounters, _geometry);
-            SpectralCutoff sideCutoff = CutoffFinder.Find(side, sideCounters, _geometry);
+            SpectralCutoff midCutoff = CutoffFinder.Find(midFine, midCounters, _geometry);
+            SpectralCutoff sideCutoff = CutoffFinder.Find(sideFine, sideCounters, _geometry);
             midSide = new MidSideFigures
             {
                 LeftChannel = _pairLeft,
@@ -1544,8 +1548,8 @@ internal sealed class StreamMeasurer
                 Side = side,
                 MidCutoff = midCutoff,
                 SideCutoff = sideCutoff,
-                MidHoles = CutoffFinder.FindHoles(midCounters, _geometry, midCutoff, CutoffFinder.FindBandwidth(mid, _geometry)),
-                SideHoles = CutoffFinder.FindHoles(sideCounters, _geometry, sideCutoff, CutoffFinder.FindBandwidth(side, _geometry)),
+                MidHoles = CutoffFinder.FindHoles(midCounters, _geometry, midCutoff, CutoffFinder.FindBandwidth(midFine, _geometry)),
+                SideHoles = CutoffFinder.FindHoles(sideCounters, _geometry, sideCutoff, CutoffFinder.FindBandwidth(sideFine, _geometry)),
             };
         }
 
@@ -1561,7 +1565,7 @@ internal sealed class StreamMeasurer
                 ChannelCutoffs = cutoffs,
                 Bandwidth = combinedBandwidth,
                 ChannelBandwidths = bandwidths,
-                Slope = CutoffFinder.FindSlope(combined, _geometry),
+                Slope = CutoffFinder.FindSlope(combinedFine, _geometry),
                 ChannelSlopes = slopes,
                 PartialCutoff = CutoffFinder.FindPartial(_counters.Length > 0 ? _counters[_measured] : null, _geometry),
                 Holes = CutoffFinder.FindHoles(_counters.Length > 0 ? _counters[_measured] : null, _geometry, cutoff, combinedBandwidth),
@@ -1588,6 +1592,18 @@ internal sealed class StreamMeasurer
         for (int r = 0; r < sums.Length; r++)
         {
             result[r] = _frames == 0 || sums[r] <= 0 ? MeasurementLimits.NoPower : (short)Math.Clamp(DetMath.Tenths(sums[r] / _frames), short.MinValue + 1, short.MaxValue);
+        }
+
+        return result;
+    }
+
+    // The levels the searches use, in thousandths of a dB, so that a figure is rounded to tenths once (CutoffFinder).
+    private int[] FineLevels(ReadOnlySpan<double> sums)
+    {
+        var result = new int[sums.Length];
+        for (int r = 0; r < sums.Length; r++)
+        {
+            result[r] = _frames == 0 || sums[r] <= 0 ? CutoffFinder.NoPower : CutoffFinder.FineLevel(sums[r] / _frames);
         }
 
         return result;

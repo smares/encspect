@@ -53,6 +53,44 @@ public class LoudnessMeterTests
         Assert.True(worst <= bound, $"{rate} Hz: {worst:F3} dB");
     }
 
+    // BS.1770-5: other rates "provide the same frequency response" as the 48 kHz filter. The highpass's passband gain moves with the rate, so the derived
+    // filter scales it back (decision 13); what is left from 20 Hz to 1 kHz is the shelf's bilinear warping, which grows toward the Nyquist frequency.
+    [Theory]
+    [InlineData(8000, 0.06)]
+    [InlineData(16000, 0.015)]
+    [InlineData(44100, 0.003)]
+    [InlineData(96000, 0.003)]
+    [InlineData(192000, 0.003)]
+    public void TheDerivedFilterHasThe48kHzResponseFrom20HzTo1kHz(int rate, double bound)
+    {
+        double worst = 0;
+        for (double hertz = 20; hertz <= 1000; hertz *= 1.05)
+        {
+            worst = Math.Max(worst, Math.Abs(ResponseDb(KWeighting.For(rate), hertz, rate) - ResponseDb(KWeighting.At48000, hertz, 48000)));
+        }
+
+        Assert.True(worst <= bound, $"{rate} Hz, 20 Hz to 1 kHz: {worst:F4} dB");
+        Assert.True(Math.Abs(ResponseDb(KWeighting.For(rate), 1000, rate) - ResponseDb(KWeighting.At48000, 1000, 48000)) <= bound);
+    }
+
+    // A 10th percentile of -19.997 LUFS and a 95th of -14.951 LUFS are 5.046 LU apart, which is 5.0; rounding each to hundredths first read 5.1.
+    [Fact]
+    public void TheLoudnessRangeIsRoundedOnce()
+    {
+        double low = Math.Pow(10, (-19.997 + 0.691) / 10);
+        double high = Math.Pow(10, (-14.951 + 0.691) / 10);
+
+        Assert.Equal(50, LoudnessMeter.RangeOf(high, low));
+        Assert.Equal(0, LoudnessMeter.RangeOf(low, low));
+    }
+
+    [Fact]
+    public void TheAbsoluteGateIsTheDoubleNearest10ToTheMinus6Point9309()
+    {
+        Assert.Equal(1.1724653045822956e-07, LoudnessMeter.AbsoluteGate);
+        Assert.True(Math.Abs(LoudnessMeter.AbsoluteGate - Math.Pow(10, -6.9309)) <= 4e-23);
+    }
+
     [Fact]
     public void TheDerivedFilterIsStableAtEveryRateFrom8kHz()
     {

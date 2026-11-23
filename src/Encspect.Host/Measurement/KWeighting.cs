@@ -10,7 +10,7 @@ namespace Encspect.Host.Measurement;
 // The K-weighting of ITU-R BS.1770-5 Annex 1: a high-shelf pre-filter (Table 1) and a highpass (Table 2), two second-order sections.
 // The Recommendation gives the coefficients for 48 kHz only and says that other rates "should be chosen to provide the same frequency
 // response that the specified filter provides at 48 kHz". At 48,000 Hz the published coefficients are used as written; at every other rate
-// they are derived from the analog parameters the published ones come from (docs/design/spectral-analysis.md, decision 13).
+// they are derived from the analog parameters the published ones come from, with the passband gain of the 48 kHz filter (docs/design/spectral-analysis.md, decision 13).
 internal readonly record struct KWeighting(double B0, double B1, double B2, double A1, double A2, double HighpassA1, double HighpassA2)
 {
     // Table 1 and Table 2 of BS.1770-5 (the highpass numerator is 1, -2, 1).
@@ -38,6 +38,12 @@ internal readonly record struct KWeighting(double B0, double B1, double B2, doub
         q = 0.5003270373238773;
         k = DetMath.Tan(DetMath.Pi * f0 / rate);
         double d = 1.0 + (k / q) + (k * k);
-        return new KWeighting(b0, b1, b2, a1, a2, 2.0 * ((k * k) - 1.0) / d, (1.0 - (k / q) + (k * k)) / d);
+
+        // The highpass with the numerator 1, -2, 1 has the passband gain d (its denominator is divided by d), which is 1.004994 at 48 kHz and moves
+        // with the rate; the gain d48 / d is applied to the shelf's numerator (the two sections multiply, so it is the same cascade) so that the
+        // cascade has the 48 kHz passband gain at every rate, as BS.1770-5 asks. libebur128 and FFmpeg do not do this (decision 13).
+        double k48 = DetMath.Tan(DetMath.Pi * f0 / 48000);
+        double gain48 = (1.0 + (k48 / q) + (k48 * k48)) / d;
+        return new KWeighting(b0 * gain48, b1 * gain48, b2 * gain48, a1, a2, 2.0 * ((k * k) - 1.0) / d, (1.0 - (k / q) + (k * k)) / d);
     }
 }
