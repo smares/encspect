@@ -36,7 +36,8 @@ The files win. Each departure holds in every file Takc wrote, and a test asserts
 - Each object is read by its size. A frame's sync word 0xA0FF, stored as the bytes `FF A0`, would read as an object of ID 127 with the reserved bit set, so a frame is tested first: the metadata ends at the first frame whose header CRC-24 holds, and a missing End object is `tak.end-missing`. The walk never stops on a sync word alone.
 - An object of ID 127 with the reserved bit set whose bytes are no frame header is read as an unknown object. An unknown ID (8 to 127) is skipped by its size (`tak.object-unknown`, Info); a reserved bit that is set is `tak.object-reserved-bit` (Info).
 - The stream info must come first (`tak.stream-info-not-first`; none at all is `tak.stream-info-missing`). The report keeps at most 4096 objects (`tak.objects-limit`).
-- Data that ends inside the metadata, or inside an object whose size runs past the data, is `tak.metadata-cut`.
+- Data that ends inside the metadata is `tak.metadata-cut`.
+- An object whose stated size runs past the data is searched for the first frame header whose CRC-24 holds (the check the frame walk uses). Where there is one, the object is taken to end there, is reported as cut with `tak.metadata-cut` (Warning), and the frames are walked and decoded from that header, as the SDK's `tak_SSD_ReadAudio` reads such a file (`built-object-past-data.tak`). Where there is none, the object is cut and the stream has no frame.
 
 ## The frame walk
 
