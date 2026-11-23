@@ -192,6 +192,55 @@
                   "unit": "frames",
                   "offset": 0,
                   "length": 34715
+                },
+                {
+                  "name": "Subframe Types",
+                  "value": 33,
+                  "unit": "subframes",
+                  "offset": 0,
+                  "length": 34715,
+                  "children": [
+                    {
+                      "name": "Linear Predictor",
+                      "value": "33 subframes (100.0%)",
+                      "offset": 0,
+                      "length": 34715
+                    }
+                  ]
+                },
+                {
+                  "name": "Average Predictor Order",
+                  "value": 14.545454545454545,
+                  "offset": 0,
+                  "length": 34715
+                },
+                {
+                  "name": "Highest Predictor Order",
+                  "value": 32,
+                  "offset": 0,
+                  "length": 34715
+                },
+                {
+                  "name": "Coefficient Precision",
+                  "value": 10,
+                  "unit": "bits",
+                  "offset": 0,
+                  "length": 34715
+                },
+                {
+                  "name": "Channels With Wasted Bits",
+                  "value": 12,
+                  "unit": "channels",
+                  "offset": 0,
+                  "length": 34715,
+                  "children": [
+                    {
+                      "name": "Without wasted bits",
+                      "value": "12 channels (100.0%)",
+                      "offset": 0,
+                      "length": 34715
+                    }
+                  ]
                 }
               ]
             },
@@ -1192,7 +1241,7 @@
         "isVbr": true,
         "verification": {
           "isVerified": true,
-          "decoding": "noDecoder",
+          "decoding": "notRequested",
           "decodedSamples": 0,
           "checksums": [
             {
@@ -1278,6 +1327,99 @@
             ],
             "values": [
               24
+            ]
+          },
+          {
+            "name": "Highest Predictor Order",
+            "unit": "order",
+            "axis": "frameOffset",
+            "concept": "prediction",
+            "quantity": "Highest Predictor Order",
+            "x": [
+              108,
+              17155
+            ],
+            "values": [
+              32,
+              32
+            ]
+          },
+          {
+            "name": "Coefficient Precision",
+            "unit": "bits",
+            "axis": "frameOffset",
+            "concept": "prediction",
+            "quantity": "Coefficient Precision",
+            "x": [
+              108,
+              17155
+            ],
+            "values": [
+              10,
+              10
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Subframe Types",
+            "concept": "prediction",
+            "valueLabel": "subframe",
+            "categories": [
+              {
+                "name": "Residuals only",
+                "count": 0
+              },
+              {
+                "name": "Linear Predictor",
+                "count": 33
+              }
+            ],
+            "total": 33,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                16,
+                1
+              ],
+              [
+                17,
+                1
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                33
+              ]
+            ]
+          },
+          {
+            "name": "Channels With Wasted Bits",
+            "valueLabel": "channel",
+            "categories": [
+              {
+                "name": "With wasted bits",
+                "count": 0
+              },
+              {
+                "name": "Without wasted bits",
+                "count": 12
+              }
+            ],
+            "total": 12,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                6,
+                2
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                12
+              ]
             ]
           }
         ]

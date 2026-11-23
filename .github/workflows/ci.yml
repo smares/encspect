@@ -1399,7 +1399,7 @@ jobs:
         run: python3 scripts/fixtures/crosscheck_optimfrog_fixtures.py
 
   tak-crosscheck:
-    name: TAK fixtures agree with Takc's records, FFmpeg and MediaInfo
+    name: TAK fixtures agree with Takc's records, FFmpeg and MediaInfo, and the decoded PCM with Takc's and FFmpeg's
     runs-on: ubuntu-26.04
     needs: changes
     if: needs.changes.outputs.tak-crosscheck == 'true'
@@ -1419,6 +1419,18 @@ jobs:
 
       - name: Cross-check the TAK fixtures
         run: python3 scripts/fixtures/crosscheck_tak_fixtures.py
+
+      - uses: ./.github/actions/setup-dotnet
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build the PCM dump tool
+        run: dotnet build --configuration Release tests/Encspect.PcmDump
+
+      # The analyzer's decoded samples equal FFmpeg's for every encoder-written file and the manifests' (the signal Takc was given); TAK's own decoder is the
+      # records of the Windows runs (the provenance's decode check, and tests/fixtures/tak/sdk-decoded.json where the `decode` job of tak-fixtures.yml has written it).
+      - name: Compare the decoded PCM of the TAK fixtures
+        run: python3 scripts/fixtures/crosscheck_tak_pcm.py
 
   alac-crosscheck:
     name: ALAC fixtures agree with FFmpeg, MediaInfo and Apple's reference decoder, and the decoded PCM with Apple's

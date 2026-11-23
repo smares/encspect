@@ -192,6 +192,70 @@
                   "unit": "frames",
                   "offset": 0,
                   "length": 10371
+                },
+                {
+                  "name": "Stereo Coding",
+                  "value": 1,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 10371,
+                  "children": [
+                    {
+                      "name": "Left/right stereo",
+                      "value": "1 frame (100.0%)",
+                      "offset": 0,
+                      "length": 10371
+                    }
+                  ]
+                },
+                {
+                  "name": "Subframe Types",
+                  "value": 10,
+                  "unit": "subframes",
+                  "offset": 0,
+                  "length": 10371,
+                  "children": [
+                    {
+                      "name": "Linear Predictor",
+                      "value": "10 subframes (100.0%)",
+                      "offset": 0,
+                      "length": 10371
+                    }
+                  ]
+                },
+                {
+                  "name": "Average Predictor Order",
+                  "value": 28.4,
+                  "offset": 0,
+                  "length": 10371
+                },
+                {
+                  "name": "Highest Predictor Order",
+                  "value": 128,
+                  "offset": 0,
+                  "length": 10371
+                },
+                {
+                  "name": "Coefficient Precision",
+                  "value": 10,
+                  "unit": "bits",
+                  "offset": 0,
+                  "length": 10371
+                },
+                {
+                  "name": "Channels With Wasted Bits",
+                  "value": 2,
+                  "unit": "channels",
+                  "offset": 0,
+                  "length": 10371,
+                  "children": [
+                    {
+                      "name": "Without wasted bits",
+                      "value": "2 channels (100.0%)",
+                      "offset": 0,
+                      "length": 10371
+                    }
+                  ]
                 }
               ]
             },
@@ -970,7 +1034,7 @@
         "isVbr": false,
         "verification": {
           "isVerified": true,
-          "decoding": "noDecoder",
+          "decoding": "notRequested",
           "decodedSamples": 0,
           "checksums": [
             {
@@ -1052,6 +1116,130 @@
             ],
             "values": [
               23.3
+            ]
+          },
+          {
+            "name": "Highest Predictor Order",
+            "unit": "order",
+            "axis": "frameOffset",
+            "concept": "prediction",
+            "quantity": "Highest Predictor Order",
+            "x": [
+              108
+            ],
+            "values": [
+              128
+            ]
+          },
+          {
+            "name": "Coefficient Precision",
+            "unit": "bits",
+            "axis": "frameOffset",
+            "concept": "prediction",
+            "quantity": "Coefficient Precision",
+            "x": [
+              108
+            ],
+            "values": [
+              10
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 1
+              },
+              {
+                "name": "Left/side stereo",
+                "count": 0
+              },
+              {
+                "name": "Side/right stereo",
+                "count": 0
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 0
+              },
+              {
+                "name": "Scaled prediction",
+                "count": 0
+              },
+              {
+                "name": "Filter prediction",
+                "count": 0
+              }
+            ],
+            "total": 1,
+            "xSeries": "Bitrate",
+            "runs": [
+              [
+                0,
+                1
+              ]
+            ]
+          },
+          {
+            "name": "Subframe Types",
+            "concept": "prediction",
+            "valueLabel": "subframe",
+            "categories": [
+              {
+                "name": "Residuals only",
+                "count": 0
+              },
+              {
+                "name": "Linear Predictor",
+                "count": 10
+              }
+            ],
+            "total": 10,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                10,
+                1
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                10
+              ]
+            ]
+          },
+          {
+            "name": "Channels With Wasted Bits",
+            "valueLabel": "channel",
+            "categories": [
+              {
+                "name": "With wasted bits",
+                "count": 0
+              },
+              {
+                "name": "Without wasted bits",
+                "count": 2
+              }
+            ],
+            "total": 2,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                1
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                2
+              ]
             ]
           }
         ]

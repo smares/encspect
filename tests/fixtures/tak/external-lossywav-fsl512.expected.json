@@ -1078,5 +1078,9 @@
   "case": "lossywav-fsl512",
   "mode": "file",
   "input": "lossywav-fsl512"
- }
+ },
+ "decoded_samples": 44100,
+ "decoded_pcm_md5": "3307c33171ecb87a9fc8b1e5964bfce3",
+ "decoded_pcm_source": "FFmpeg's decoding, accepted because the stored WAV header, the PCM and the stored footer have the input's SHA-256 (lossyWAV's output cannot be written again here)",
+ "decode_findings": []
 }

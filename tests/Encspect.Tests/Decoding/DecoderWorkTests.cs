@@ -9,6 +9,7 @@ using Encspect.Formats.MpegAudio.Decoding;
 using Encspect.Formats.Musepack.Decoding;
 using Encspect.Formats.Opus.Decoding;
 using Encspect.Formats.Speex.Decoding;
+using Encspect.Formats.Tak.Decoding.Lossless;
 using Encspect.Formats.Tta.Decoding;
 using Encspect.Formats.Vorbis.Decoding;
 using Encspect.Formats.WavPack.Decoding;
@@ -201,6 +202,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         _ when name.StartsWith("alac", StringComparison.Ordinal) => new Encspect.Formats.Alac.Decoding.AlacDecoder(),
         _ when name.StartsWith("monkeys-audio", StringComparison.Ordinal) => new MonkeysAudioDecoder(),
         _ when name.StartsWith("tta", StringComparison.Ordinal) => new TtaDecoder(),
+        _ when name.StartsWith("tak", StringComparison.Ordinal) => new TakDecoder(),
         _ when name.StartsWith("mpeg", StringComparison.Ordinal) => new MpegDecoder(),
         _ when name.StartsWith("vorbis", StringComparison.Ordinal) => new VorbisDecoder(),
         _ when name.StartsWith("opus", StringComparison.Ordinal) => new OpusDecoder(),
@@ -221,6 +223,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         _ when name.StartsWith("monkeys-audio", StringComparison.Ordinal) => ".ape",
         _ when name.StartsWith("tta-matroska", StringComparison.Ordinal) => ".mka",
         _ when name.StartsWith("tta", StringComparison.Ordinal) => ".tta",
+        _ when name.StartsWith("tak", StringComparison.Ordinal) => ".tak",
         _ when name.StartsWith("mpeg-layer2", StringComparison.Ordinal) => ".mp2",
         _ when name.StartsWith("mpeg-layer1", StringComparison.Ordinal) => ".mp1",
         _ when name.StartsWith("mpeg", StringComparison.Ordinal) => ".mp3",
@@ -348,6 +351,23 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         })
         {
             Add("tta-" + label, () => new Case("tta-" + label, TtaCases.Repeated(file)));
+        }
+
+        // TAK: prediction orders 32, 64 and 256 (the taps), the filter of the stereo decorrelation, noise in six channels, 24 bits, 8 bits, and silence, which takes a few
+        // bytes for the most samples (frames of 16,384 samples of six channels at 96,000 Hz). Each case repeats one frame the test-side encoder wrote.
+        foreach ((string label, int sizeType, int channels, string kind, TakEncoder.Settings settings) in new (string, int, int, string, TakEncoder.Settings)[]
+        {
+            ("16-stereo-order-32", 4, 2, "sine", new() { Rate = 44100, OrderIndex = 5, Prediction = 1, Subframes = 1, DifferenceOrder = 1, WastedBits = 0, StereoMode = 3 }),
+            ("16-stereo-order-256", 4, 2, "sine", new() { Rate = 44100, OrderIndex = 14, Prediction = 1, Subframes = 1, DifferenceOrder = 1, WastedBits = 0, StereoMode = 3 }),
+            ("16-stereo-filter", 4, 2, "sine", new() { Rate = 44100, OrderIndex = 3, Prediction = 1, Subframes = 2, WastedBits = 0, StereoMode = 6, LongFilter = true }),
+            ("24-stereo-order-64", 4, 2, "sine", new() { Rate = 44100, Bits = 24, OrderIndex = 7, Prediction = 1, Subframes = 1, WastedBits = 0 }),
+            ("8-mono", 4, 1, "sine", new() { Rate = 44100, Bits = 8, OrderIndex = 8, Prediction = 1, Subframes = 2, WastedBits = 0 }),
+            ("16-mono-silence", 4, 1, "silence", new() { Rate = 44100 }),
+            ("16-6-channels-silence", 6, 6, "silence", new() { Rate = 96000, Codec = 4 }),
+            ("24-6-channels-noise", 4, 6, "noise", new() { Rate = 44100, Codec = 4, Bits = 24, Prediction = 0.5, WastedBits = 0 }),
+        })
+        {
+            Add("tak-" + label, () => new Case("tak-" + label, TakCases.Repeated(settings, sizeType, channels, kind)));
         }
 
         // MPEG audio: the shapes of the worst frames the stages cost (short blocks with intensity stereo at the smallest frames, one granule in MPEG-2 and 2.5, free format,
@@ -923,6 +943,36 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             long unitsPerFrame = (block * 2 * (16 + 1)) + (16L * (subframes.Length + 14));
             int frames = (int)(target / unitsPerFrame);
             return Stream(block, 2, 16, (long)frames * block, Enumerable.Range(0, frames).Select(number => FlacBuilder.FrameOf(number, block, Rate, 1, 16, subframes)));
+        }
+    }
+
+    // Files of copies of one frame written by the test-side encoder, sized to charge about Target units: a TAK frame decodes by itself, so the copies are a file of as much audio.
+    internal static class TakCases
+    {
+        public static byte[] Repeated(TakEncoder.Settings settings, int sizeType, int channels, string kind, long target = Target)
+        {
+            int length = TakEncoder.FrameLength(sizeType);
+            var random = new Random(11);
+            int max = (1 << (settings.Bits - 1)) - 1;
+            int[][] samples = [.. Enumerable.Range(0, channels).Select(c => Enumerable.Range(0, length).Select(t => kind switch
+            {
+                "silence" => 0,
+                "noise" => random.Next(-max - 1, max + 1),
+                _ => (int)(Math.Sin((t * 0.02) + c) * max * 0.4) + random.Next(-2, 3),
+            }).ToArray())];
+            byte[] coded = TakEncoder.Frame(samples, settings, random);
+            byte[] Build(int copies) => TakEncoder.Assemble(settings, channels, (long)copies * length, sizeType, [.. Enumerable.Repeat(coded, copies)]).Data;
+            long perCopy = Math.Max(1, Units(Build(2)) / 2);
+            return Build((int)Math.Clamp(target / perCopy, 2, 1 << 20));
+        }
+
+        public static long Units(byte[] file)
+        {
+            var counting = new CountingDecoder(new TakDecoder());
+            var analyzer = new Analyzer(DefaultParsers.Tags, DefaultParsers.Formats, DefaultParsers.Codecs, [counting]);
+            Report report = analyzer.Analyze("probe.tak", new MemoryStream(file), new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = long.MaxValue, Output = _ => new NullSink() } });
+            Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed" or "decode.limit" or "decode.frame-invalid");
+            return counting.Units;
         }
     }
 
