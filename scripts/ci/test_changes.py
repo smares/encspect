@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Tests of changes.py against the repository's own scripts: python3 scripts/ci/test_changes.py"""
 
+import json
 import pathlib
 import re
 import subprocess
@@ -738,6 +739,42 @@ class ScopeTests(unittest.TestCase):
                 if literal in text and area != tag:
                     self.assertIn(area, self.config["tags"][tag], f"{area} names the tag {literal}")
 
+
+
+class ShardGuardTests(unittest.TestCase):
+    """The last shard runs only the damaged-input classes it names, so a class a shard loses cannot fall into it unnoticed."""
+
+    def write(self, shards):
+        handle = tempfile.NamedTemporaryFile("w", suffix=".json", delete=False)
+        with handle:
+            json.dump({"note": "", "shards": shards}, handle)
+        self.addCleanup(pathlib.Path(handle.name).unlink)
+        return handle.name
+
+    def test_the_committed_split_leaves_no_damaged_input_class_to_the_rest_unnamed(self):
+        shards = changes.shard_config.load()
+        classes = {c for s in shards[:-1] for c in s["classes"]} | set(shards[-1].get("damagedInputClasses", []))
+        self.assertEqual([], changes.shard_config.damaged_input_in_rest(shards, classes))
+
+    def test_a_class_a_shard_lost_is_named(self):
+        path = self.write([{"name": "a", "classes": ["CorruptMpegFileTests"]},
+                           {"name": "rest", "classes": None, "damagedInputClasses": ["CorruptOggFileTests"]}])
+        shards = changes.shard_config.load(path)
+        found = changes.shard_config.damaged_input_in_rest(
+            shards, {"CorruptMpegFileTests", "CorruptOggFileTests", "CorruptLayerFileTests", "GoldenTests"})
+        self.assertEqual(["CorruptLayerFileTests"], found)
+
+    def test_only_the_last_shard_names_damaged_input_classes(self):
+        path = self.write([{"name": "a", "classes": ["CorruptMpegFileTests"], "damagedInputClasses": []},
+                           {"name": "rest", "classes": None}])
+        with self.assertRaises(SystemExit):
+            changes.shard_config.load(path)
+
+    def test_a_class_cannot_be_both_in_a_shard_and_meant_for_the_rest(self):
+        path = self.write([{"name": "a", "classes": ["CorruptMpegFileTests"]},
+                           {"name": "rest", "classes": None, "damagedInputClasses": ["CorruptMpegFileTests"]}])
+        with self.assertRaises(SystemExit):
+            changes.shard_config.load(path)
 
 
 if __name__ == "__main__":
