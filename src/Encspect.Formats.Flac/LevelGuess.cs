@@ -165,7 +165,8 @@ internal static partial class LevelGuess
         if (LibFlacName().Match(encoder ?? string.Empty) is { Success: true } flac)
         {
             var version = (int.Parse(flac.Groups[1].Value, CultureInfo.InvariantCulture), int.Parse(flac.Groups[2].Value, CultureInfo.InvariantCulture), int.Parse(flac.Groups[3].Value, CultureInfo.InvariantCulture));
-            if (version.CompareTo((1, 1, 0)) < 0 || version.CompareTo((1, 5, 0)) > 0)
+            // 1.1.1 does not build with a current toolchain, so no run confirms its table (which its source gives as 1.1.0's and 1.1.2's).
+            if (version.CompareTo((1, 1, 0)) < 0 || version.CompareTo((1, 5, 0)) > 0 || version == (1, 1, 1))
             {
                 return null;
             }
@@ -271,7 +272,7 @@ internal static partial class LevelGuess
 
         evidence.Add($"{Noun(named.Count, true)} {Join(numbers)} {(named.Count == 1 ? "sets" : "set")} {Settings(named, s.FirstBlockSize)}.");
         evidence.Add(isOneGroup
-            ? "Every level the frames fit sets the same figures: the frames exceed the limits of all the others."
+            ? "Every level the frames fit sets the same figures: the frames exceed the limits of all the others, or, with two channels, their stereo coding rules the others out."
             : isReached
                 ? "The frames reach the highest linear predictor order and partition order of the lowest level they fit (the partition order in at least a fifth of the subframes)."
                 : "The frames do not reach the highest linear predictor order and partition order of the lowest level they fit (the partition order in at least a fifth of the subframes), so they say nothing against the levels above.");
