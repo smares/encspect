@@ -110,7 +110,7 @@ internal static class Feeding
 
             if (isWalked)
             {
-                coding.AddFrame(walked, first);
+                coding.AddFrame(walked);
                 if (walked.ConsumedBytes < coded.Length)
                 {
                     long after = coded.Length - walked.ConsumedBytes;
@@ -122,7 +122,7 @@ internal static class Feeding
             }
             else if (samples > 0)
             {
-                coding.AddEmpty(first);
+                coding.AddEmpty(samples);
             }
 
             if (isDecoding)

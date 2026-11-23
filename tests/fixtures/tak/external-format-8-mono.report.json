@@ -249,61 +249,10 @@
                   ]
                 },
                 {
-                  "name": "Residual Modes",
-                  "value": 29,
-                  "unit": "partitions",
+                  "name": "Highest Residual Mode",
+                  "value": 11,
                   "offset": 0,
-                  "length": 3056,
-                  "children": [
-                    {
-                      "name": "Mode 1",
-                      "value": "4 partitions (13.8%)",
-                      "offset": 0,
-                      "length": 3056
-                    },
-                    {
-                      "name": "Mode 3",
-                      "value": "10 partitions (34.5%)",
-                      "offset": 0,
-                      "length": 3056
-                    },
-                    {
-                      "name": "Mode 4",
-                      "value": "1 partition (3.4%)",
-                      "offset": 0,
-                      "length": 3056
-                    },
-                    {
-                      "name": "Mode 5",
-                      "value": "2 partitions (6.9%)",
-                      "offset": 0,
-                      "length": 3056
-                    },
-                    {
-                      "name": "Mode 6",
-                      "value": "1 partition (3.4%)",
-                      "offset": 0,
-                      "length": 3056
-                    },
-                    {
-                      "name": "Mode 7",
-                      "value": "2 partitions (6.9%)",
-                      "offset": 0,
-                      "length": 3056
-                    },
-                    {
-                      "name": "Mode 9",
-                      "value": "8 partitions (27.6%)",
-                      "offset": 0,
-                      "length": 3056
-                    },
-                    {
-                      "name": "Mode 11",
-                      "value": "1 partition (3.4%)",
-                      "offset": 0,
-                      "length": 3056
-                    }
-                  ]
+                  "length": 3056
                 }
               ]
             },
@@ -1398,6 +1347,21 @@
             ]
           },
           {
+            "name": "Highest Predictor Order",
+            "unit": "order",
+            "axis": "frameOffset",
+            "concept": "prediction",
+            "quantity": "Highest Predictor Order",
+            "x": [
+              108,
+              1480
+            ],
+            "values": [
+              4,
+              16
+            ]
+          },
+          {
             "name": "Highest Predictor Order Over Time",
             "unit": "order",
             "axis": "seconds",
@@ -1411,18 +1375,18 @@
             ]
           },
           {
-            "name": "Highest Predictor Order",
-            "unit": "order",
+            "name": "Coefficient Precision",
+            "unit": "bits",
             "axis": "frameOffset",
             "concept": "prediction",
-            "quantity": "Highest Predictor Order",
+            "quantity": "Coefficient Precision",
             "x": [
               108,
               1480
             ],
             "values": [
-              4,
-              16
+              10,
+              10
             ]
           },
           {
@@ -1439,18 +1403,29 @@
             ]
           },
           {
-            "name": "Coefficient Precision",
-            "unit": "bits",
+            "name": "Highest Residual Mode",
+            "unit": "mode",
             "axis": "frameOffset",
-            "concept": "prediction",
-            "quantity": "Coefficient Precision",
+            "quantity": "Highest Residual Mode",
             "x": [
               108,
               1480
             ],
             "values": [
-              10,
-              10
+              11,
+              9
+            ]
+          },
+          {
+            "name": "Highest Residual Mode Over Time",
+            "unit": "mode",
+            "axis": "seconds",
+            "quantity": "Highest Residual Mode",
+            "x": [
+              0
+            ],
+            "values": [
+              11
             ]
           }
         ],
@@ -1513,278 +1488,6 @@
               [
                 1,
                 2
-              ]
-            ]
-          },
-          {
-            "name": "Residual Modes",
-            "valueLabel": "partition",
-            "categories": [
-              {
-                "name": "Mode 0",
-                "count": 0
-              },
-              {
-                "name": "Mode 1",
-                "count": 4
-              },
-              {
-                "name": "Mode 2",
-                "count": 0
-              },
-              {
-                "name": "Mode 3",
-                "count": 10
-              },
-              {
-                "name": "Mode 4",
-                "count": 1
-              },
-              {
-                "name": "Mode 5",
-                "count": 2
-              },
-              {
-                "name": "Mode 6",
-                "count": 1
-              },
-              {
-                "name": "Mode 7",
-                "count": 2
-              },
-              {
-                "name": "Mode 8",
-                "count": 0
-              },
-              {
-                "name": "Mode 9",
-                "count": 8
-              },
-              {
-                "name": "Mode 10",
-                "count": 0
-              },
-              {
-                "name": "Mode 11",
-                "count": 1
-              },
-              {
-                "name": "Mode 12",
-                "count": 0
-              },
-              {
-                "name": "Mode 13",
-                "count": 0
-              },
-              {
-                "name": "Mode 14",
-                "count": 0
-              },
-              {
-                "name": "Mode 15",
-                "count": 0
-              },
-              {
-                "name": "Mode 16",
-                "count": 0
-              },
-              {
-                "name": "Mode 17",
-                "count": 0
-              },
-              {
-                "name": "Mode 18",
-                "count": 0
-              },
-              {
-                "name": "Mode 19",
-                "count": 0
-              },
-              {
-                "name": "Mode 20",
-                "count": 0
-              },
-              {
-                "name": "Mode 21",
-                "count": 0
-              },
-              {
-                "name": "Mode 22",
-                "count": 0
-              },
-              {
-                "name": "Mode 23",
-                "count": 0
-              },
-              {
-                "name": "Mode 24",
-                "count": 0
-              },
-              {
-                "name": "Mode 25",
-                "count": 0
-              },
-              {
-                "name": "Mode 26",
-                "count": 0
-              },
-              {
-                "name": "Mode 27",
-                "count": 0
-              },
-              {
-                "name": "Mode 28",
-                "count": 0
-              },
-              {
-                "name": "Mode 29",
-                "count": 0
-              },
-              {
-                "name": "Mode 30",
-                "count": 0
-              },
-              {
-                "name": "Mode 31",
-                "count": 0
-              },
-              {
-                "name": "Mode 32",
-                "count": 0
-              },
-              {
-                "name": "Mode 33",
-                "count": 0
-              },
-              {
-                "name": "Mode 34",
-                "count": 0
-              },
-              {
-                "name": "Mode 35",
-                "count": 0
-              },
-              {
-                "name": "Mode 36",
-                "count": 0
-              },
-              {
-                "name": "Mode 37",
-                "count": 0
-              },
-              {
-                "name": "Mode 38",
-                "count": 0
-              },
-              {
-                "name": "Mode 39",
-                "count": 0
-              },
-              {
-                "name": "Mode 40",
-                "count": 0
-              },
-              {
-                "name": "Mode 41",
-                "count": 0
-              },
-              {
-                "name": "Mode 42",
-                "count": 0
-              },
-              {
-                "name": "Mode 43",
-                "count": 0
-              },
-              {
-                "name": "Mode 44",
-                "count": 0
-              },
-              {
-                "name": "Mode 45",
-                "count": 0
-              },
-              {
-                "name": "Mode 46",
-                "count": 0
-              },
-              {
-                "name": "Mode 47",
-                "count": 0
-              },
-              {
-                "name": "Mode 48",
-                "count": 0
-              },
-              {
-                "name": "Mode 49",
-                "count": 0
-              },
-              {
-                "name": "Mode 50",
-                "count": 0
-              }
-            ],
-            "total": 29,
-            "xSeries": "Bitrate",
-            "valueCounts": [
-              [
-                10,
-                1
-              ],
-              [
-                19,
-                1
-              ]
-            ],
-            "runs": [
-              [
-                11,
-                1
-              ],
-              [
-                9,
-                4
-              ],
-              [
-                7,
-                1
-              ],
-              [
-                5,
-                2
-              ],
-              [
-                4,
-                1
-              ],
-              [
-                1,
-                3
-              ],
-              [
-                3,
-                7
-              ],
-              [
-                7,
-                1
-              ],
-              [
-                9,
-                4
-              ],
-              [
-                6,
-                1
-              ],
-              [
-                3,
-                3
-              ],
-              [
-                1,
-                1
               ]
             ]
           }
