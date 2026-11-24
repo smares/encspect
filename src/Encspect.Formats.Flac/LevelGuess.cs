@@ -250,7 +250,7 @@ internal static partial class LevelGuess
         long lpc = s.SubframeTypes[(int)SubframeType.Lpc];
         evidence.Add(lpc == 0
             ? "No subframe is a linear predictor, so the highest linear predictor order is 0."
-            : $"The highest linear predictor order is {highestOrder}; {Format(lpc)} of {Format(s.Subframes)} subframes are linear predictors.");
+            : $"The highest linear predictor order is {highestOrder}; {Format(lpc)} of {Format(s.Subframes)} subframes {(lpc == 1 ? "is a linear predictor" : "are linear predictors")}.");
         if (!isLibFlac && lpc > 0)
         {
             evidence.Add($"Every linear predictor has a coefficient precision of {FfmpegPrecision} bits, the precision every FFmpeg release run wrote in every level fixture of Encspect's tests."
