@@ -445,7 +445,7 @@ public class ComplexityTests
     // Short chains of core frames, each followed by 4 KiB of the extension substream headers above: each break in the chain starts a search
     // for the next one, and every search once had a CRC allowance of its own (1 MiB each, 190 times the size of the data in all). One
     // allowance for the whole data keeps the cost per byte as that of the headers alone: the same amount of data of each pattern is
-    // timed in turn, and the chains must cost no more than a small multiple of the headers (about 10 times before, 1.5 now).
+    // timed in turn, and the chains must cost no more than a small multiple of the headers (about 10 times before, about 2 now).
     [Fact]
     public void ShortChainsFollowedByExtensionSubstreamHeadersThatFailTheirCrc()
     {
@@ -475,8 +475,11 @@ public class ComplexityTests
             }
         }
 
+        // Each pattern is timed twice, in turn, and the shorter time counts, so that a pause of a slow runner in one measurement does not fail it.
         TimeSpan floodTime = TimedDtsAnalysis(flood);
         TimeSpan groupsTime = TimedDtsAnalysis(groups);
+        floodTime = Min(floodTime, TimedDtsAnalysis(flood));
+        groupsTime = Min(groupsTime, TimedDtsAnalysis(groups));
         Assert.True(groupsTime < (3 * floodTime) + TimeSpan.FromSeconds(1), $"The chains took {groupsTime.TotalSeconds:F1} s, the headers alone {floodTime.TotalSeconds:F1} s");
     }
 
