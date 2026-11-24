@@ -320,7 +320,7 @@ Mono, stereo, or the two discrete programs of dual channel. Where the file carri
 - **LAME** writes `LAME3.100` (possibly cut short to `LAME`) into ancillary data mid-stream and into the padding of the last frame, even when the Info tag is disabled.
   - A version that runs to the end of the ancillary data may be cut short there (`LAME3.10`), so a whole one elsewhere is preferred, and a cut one names only LAME.
   - The string starts wherever the main data ends, at any bit position, and can run on into the next frame's data. So it is searched at every bit offset in the ancillary data the bit reservoir split identifies, joined across frames, not in raw frame bytes.
-  - Found alone, it is low confidence.
+  - Found alone, it is low confidence: the text can be cut short where the ancillary data ends, so a version read from it can lack a marker (beta, alpha) or a patch level, or be no more than `LAME` (the lead, 2026-11-24).
   - The version may be up to 36 bytes long: 3.87 writes `LAME3.87 (beta 1, Sep 29 2000)`.
 - **TwoLAME** writes zeros.
 - **Gogo-no-coda** (3.12) fills the bits no frame uses with `GOGO` over and over, found at any bit position as two in a row (low confidence alone). In VBR it writes `GOGO` where its Xing header's quality belongs, which names it with medium confidence and is shown as such instead of a number.
