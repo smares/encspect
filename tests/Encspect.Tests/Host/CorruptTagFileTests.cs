@@ -126,10 +126,21 @@ public class CorruptMusepackFileTests
     public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
 }
 
-// The FLAC fixtures written by flac and FFmpeg, each analyzed with and without decoding.
+// The FLAC fixtures written by flac and FFmpeg, each analyzed with and without decoding, but for the compression-level ones.
 public class CorruptFlacFileTests
 {
-    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("flac/external-", StringComparison.Ordinal));
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("flac/external-", StringComparison.Ordinal) && !n.Contains("-level-", StringComparison.Ordinal));
+
+    [Theory]
+    [MemberData(nameof(Names))]
+    public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
+}
+
+// The compression-level fixtures of flac and FFmpeg (external-level-*, external-ffmpeg-level-*), in a class of their own so that they run
+// beside the others: with them, the one FLAC class took 53 minutes on macos-15-intel and its shard ran into the 60-minute limit.
+public class CorruptFlacLevelFileTests
+{
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("flac/external-", StringComparison.Ordinal) && n.Contains("-level-", StringComparison.Ordinal));
 
     [Theory]
     [MemberData(nameof(Names))]
