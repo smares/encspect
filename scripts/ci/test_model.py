@@ -240,7 +240,7 @@ def aes_cipher_mode_zero():  # Table 56: 0 not valid, named by number
 def slope_run_stops_at_the_first_candidate():  # spectral-analysis.md 7b: the run goes down to the first candidate row, not one below it
     rate, size = 44100, 4096
     w, first, bins = measurement_model.band_rows(rate, size)
-    slope = measurement_model.find_slope([-100 - 5 * r for r in range(512)], rate, size)  # falls 0.5 dB a row from row 0 to the top
+    slope = measurement_model.find_slope([-10000 - 500 * r for r in range(512)], rate, size)  # thousandths of a dB: falls 0.5 dB a row from row 0 to the top
     assert slope["is_found"] and slope["from_frequency"] == measurement_model.hertz(first + 1, rate, size, bins) == 2024
 
 if __name__ == "__main__":
