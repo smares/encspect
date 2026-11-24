@@ -330,6 +330,19 @@ class ChangesTests(unittest.TestCase):
         self.assertEqual(len(changes.platforms("schedule")), 6)
         self.assertEqual(len(changes.platforms("workflow_dispatch")), 6)
 
+    def test_a_pull_request_runs_one_macos_job_and_no_macos_shard(self):
+        shards = changes.shard_config.load()
+        pr = changes.test_platforms("pull_request")
+        self.assertEqual([p["os"] for p in changes.platforms("pull_request") if p["os"].startswith("macos-")], ["macos-latest"])
+        self.assertFalse([p for p in pr if p["os"].startswith("macos-")])
+        self.assertEqual(len(pr), 3)
+        self.assertFalse([e for e in changes.test_matrix(pr, shards, False) if e["os"].startswith("macos-")])
+        for event in ("push", "schedule", "workflow_dispatch"):
+            self.assertEqual(changes.test_platforms(event), changes.platforms(event), event)
+            macos = {e["os"] for e in changes.test_matrix(changes.test_platforms(event), shards, event in changes.NIGHTLY_EVENTS)
+                     if e["os"].startswith("macos-")}
+            self.assertEqual(macos, {"macos-latest", "macos-15-intel"}, event)
+
     def test_the_linux_platforms_use_the_pinned_ubuntu_26_04_images(self):
         def labels(event):
             return [p["os"] for p in changes.platforms(event)]
@@ -355,11 +368,11 @@ class ChangesTests(unittest.TestCase):
         self.assertTrue(nightly)
         for event in ("pull_request", "push", "schedule", "workflow_dispatch"):
             include = event in changes.NIGHTLY_EVENTS
-            matrix = changes.test_matrix(changes.platforms(event), shards, include)
+            matrix = changes.test_matrix(changes.test_platforms(event), shards, include)
             names = {entry["shard"] for entry in matrix}
             for name in nightly:
                 self.assertEqual(name in names, include, (event, name))
-            self.assertEqual(len(matrix), len(changes.platforms(event)) * len(names), event)
+            self.assertEqual(len(matrix), len(changes.test_platforms(event)) * len(names), event)
 
     def test_a_shard_filter_without_the_nightly_tests_keeps_its_own_clauses(self):
         shards = changes.shard_config.load()
@@ -399,7 +412,7 @@ def named_paths(text, root_files=()):
 
 def scoped(*files, event="pull_request"):
     flags, reason, scope = changes.decide_with_scope(event, list(files))
-    return scope, reason, changes.test_matrix(changes.platforms(event), changes.shard_config.load(), event in changes.NIGHTLY_EVENTS, scope)
+    return scope, reason, changes.test_matrix(changes.test_platforms(event), changes.shard_config.load(), event in changes.NIGHTLY_EVENTS, scope)
 
 
 def shard_names(matrix):
@@ -486,7 +499,7 @@ class ScopeTests(unittest.TestCase):
 
     def test_a_scoped_run_drops_the_shards_it_leaves_no_test(self):
         _, _, matrix = scoped("src/Encspect.Formats.WavPack/WavPackParser.cs")
-        self.assertEqual(len(matrix), len(changes.platforms("pull_request")) * len(shard_names(matrix)))
+        self.assertEqual(len(matrix), len(changes.test_platforms("pull_request")) * len(shard_names(matrix)))
         self.assertLess(len(shard_names(matrix)), len([s for s in self.shards if not s.get("nightly")]))
 
     def test_whatever_is_not_an_area_runs_the_whole_suite(self):
@@ -643,7 +656,7 @@ class ScopeTests(unittest.TestCase):
             self.assertIsNone(chosen)
             include = event in changes.NIGHTLY_EVENTS
             self.assertEqual([(e["shard"], e["filter"]) for e in matrix], [(s["name"], changes.shard_config.filter_for(self.shards, s["name"], include))
-                                                                             for p in changes.platforms(event) for s in self.shards if changes.shard_config.runs(s, include)])
+                                                                             for p in changes.test_platforms(event) for s in self.shards if changes.shard_config.runs(s, include)])
         _, _, chosen = changes.decide_with_scope("pull_request", None)
         self.assertIsNone(chosen)
 

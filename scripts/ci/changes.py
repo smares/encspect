@@ -422,6 +422,14 @@ def platforms(event):
     return PULL_REQUEST_PLATFORMS if event == "pull_request" else FULL_PLATFORMS
 
 
+def test_platforms(event):
+    """The platforms whose unit-test shards the event runs. A pull request runs the build and the GUI tests on macOS (one job) but
+    no macOS shard: GitHub gives this repository about three macOS runners at a time and drops a queued macOS job that waits 35 to
+    40 minutes (no message, runner ID 0), which turned pull request runs red with every test passing. A macOS-only test failure
+    shows on main's push run instead."""
+    return [p for p in platforms(event) if not (event == "pull_request" and p["os"].startswith("macos-"))]
+
+
 def decide_with_scope(event, files, removed=(), root=ROOT):
     """decide, and the scope of the unit tests when the change allows one (the reason then names it)."""
     flags, reason = decide(event, files, root, removed)
@@ -471,7 +479,7 @@ def main():
     outputs["reason"] = reason
     outputs["build-matrix"] = json.dumps(os_list, separators=(",", ":"))
     include_nightly = args.event in NIGHTLY_EVENTS
-    outputs["test-matrix"] = json.dumps(test_matrix(os_list, shards, include_nightly, scope), separators=(",", ":"))
+    outputs["test-matrix"] = json.dumps(test_matrix(test_platforms(args.event), shards, include_nightly, scope), separators=(",", ":"))
     lines = [f"{k}={v}" for k, v in outputs.items()]
     if args.print or "GITHUB_OUTPUT" not in os.environ:
         print("\n".join(lines))
