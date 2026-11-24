@@ -716,8 +716,8 @@ public class ComplexityTests
 
     // Thousands of audio tracks routed to a codec parser and many blocks of one of them: each track was routed by a pass over all the blocks, so
     // 4,000 tracks and 3 million blocks took 95 s. The time is compared with what its two parts cost apart, the same tracks with one block and the
-    // same blocks with one track, so that a slow machine slows both sides alike: the parts add up to about the whole, a pass of each of the 4,000
-    // tracks over the blocks costs thousands of times the blocks' own walk. Each file is timed twice, in turn, and the shorter time counts.
+    // same blocks with one track, so that a slow machine slows both sides alike: the parts add up to about the whole, while the 4,000 passes over
+    // the blocks cost 16 s or more on x64, where the parts take under a second together. Each file is timed twice, in turn, and the shorter time counts.
     [Fact]
     public void ManyRoutedTracksAndManyBlocks()
     {
