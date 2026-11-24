@@ -271,6 +271,12 @@
                       "length": 175494
                     }
                   ]
+                },
+                {
+                  "name": "Highest Residual Mode",
+                  "value": 27,
+                  "offset": 0,
+                  "length": 175494
                 }
               ]
             },
@@ -2317,6 +2323,21 @@
             ]
           },
           {
+            "name": "Highest Predictor Order Over Time",
+            "unit": "order",
+            "axis": "seconds",
+            "concept": "prediction",
+            "quantity": "Highest Predictor Order",
+            "x": [
+              0,
+              1
+            ],
+            "values": [
+              160,
+              160
+            ]
+          },
+          {
             "name": "Coefficient Precision",
             "unit": "bits",
             "axis": "frameOffset",
@@ -2341,6 +2362,61 @@
               10,
               10,
               10
+            ]
+          },
+          {
+            "name": "Coefficient Precision Over Time",
+            "unit": "bits",
+            "axis": "seconds",
+            "concept": "prediction",
+            "quantity": "Coefficient Precision",
+            "x": [
+              0,
+              1
+            ],
+            "values": [
+              10,
+              10
+            ]
+          },
+          {
+            "name": "Highest Residual Mode",
+            "unit": "mode",
+            "axis": "frameOffset",
+            "quantity": "Highest Residual Mode",
+            "x": [
+              138,
+              21057,
+              41675,
+              66490,
+              86404,
+              107514,
+              133069,
+              153954
+            ],
+            "values": [
+              26,
+              26,
+              25,
+              25,
+              26,
+              26,
+              27,
+              26
+            ]
+          },
+          {
+            "name": "Highest Residual Mode Over Time",
+            "unit": "mode",
+            "axis": "seconds",
+            "quantity": "Highest Residual Mode",
+            "x": [
+              0,
+              1
+            ],
+            "values": [
+              26,
+              27
             ]
           }
         ],

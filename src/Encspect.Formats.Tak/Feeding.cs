@@ -122,7 +122,7 @@ internal static class Feeding
             }
             else if (samples > 0)
             {
-                coding.AddEmpty();
+                coding.AddEmpty(samples);
             }
 
             if (isDecoding)

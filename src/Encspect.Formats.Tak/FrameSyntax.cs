@@ -54,6 +54,9 @@ internal sealed class WalkedFrame
     public readonly int[] Wasted = new int[16];
     public readonly int[] DifferenceOrder = new int[16];
     public readonly List<SubframeRecord> Subframes = [];
+
+    // The residual mode of each partition of every residual block, in the order they were read.
+    public readonly List<byte> Modes = [];
     public int[] Parameters = new int[1024];
     public int ParameterCount;
     public readonly List<DecorrelationRecord> Decorrelations = [];
@@ -93,6 +96,7 @@ internal sealed class WalkedFrame
         }
 
         Subframes.Clear();
+        Modes.Clear();
         Decorrelations.Clear();
         ParameterCount = 0;
         StereoMode = -1;
@@ -453,7 +457,7 @@ internal sealed class FrameSyntax
         var record = new SubframeRecord { Channel = channel, Position = position, Length = length };
         if (!bits.ReadBit())
         {
-            ResidualCodes.Read(ref bits, Slice(position, length), length, _partition);
+            ResidualCodes.Read(ref bits, Slice(position, length), length, _partition, frame.Modes);
             frame.Subframes.Add(record);
             return;
         }
@@ -484,7 +488,7 @@ internal sealed class FrameSyntax
                 throw new InvalidDataException("A subframe's warm-up values have the difference order 3");
             }
 
-            ResidualCodes.Read(ref bits, Slice(position, order), order, _partition);
+            ResidualCodes.Read(ref bits, Slice(position, order), order, _partition, frame.Modes);
             warm = order;
         }
 
@@ -502,7 +506,7 @@ internal sealed class FrameSyntax
 
         record.ParametersAt = frame.ParameterCount;
         ReadParameters(ref bits, order, width, frame);
-        ResidualCodes.Read(ref bits, Slice(position + warm, length - warm), length - warm, _partition);
+        ResidualCodes.Read(ref bits, Slice(position + warm, length - warm), length - warm, _partition, frame.Modes);
         frame.Subframes.Add(record);
     }
 

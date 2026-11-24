@@ -263,6 +263,12 @@
                       "length": 9974
                     }
                   ]
+                },
+                {
+                  "name": "Highest Residual Mode",
+                  "value": 25,
+                  "offset": 0,
+                  "length": 9974
                 }
               ]
             },
@@ -1349,6 +1355,19 @@
             ]
           },
           {
+            "name": "Highest Predictor Order Over Time",
+            "unit": "order",
+            "axis": "seconds",
+            "concept": "prediction",
+            "quantity": "Highest Predictor Order",
+            "x": [
+              0
+            ],
+            "values": [
+              12
+            ]
+          },
+          {
             "name": "Coefficient Precision",
             "unit": "bits",
             "axis": "frameOffset",
@@ -1359,6 +1378,43 @@
             ],
             "values": [
               10
+            ]
+          },
+          {
+            "name": "Coefficient Precision Over Time",
+            "unit": "bits",
+            "axis": "seconds",
+            "concept": "prediction",
+            "quantity": "Coefficient Precision",
+            "x": [
+              0
+            ],
+            "values": [
+              10
+            ]
+          },
+          {
+            "name": "Highest Residual Mode",
+            "unit": "mode",
+            "axis": "frameOffset",
+            "quantity": "Highest Residual Mode",
+            "x": [
+              108
+            ],
+            "values": [
+              25
+            ]
+          },
+          {
+            "name": "Highest Residual Mode Over Time",
+            "unit": "mode",
+            "axis": "seconds",
+            "quantity": "Highest Residual Mode",
+            "x": [
+              0
+            ],
+            "values": [
+              25
             ]
           }
         ],
