@@ -5,29 +5,23 @@
     "tests/fixtures/tta/",
     "tests/fixtures/matroska/",
     "tests/fixtures/ac3/",
-    "tests/fixtures/mpeg-audio/"
+    "tests/fixtures/mpeg-audio/",
+    "tests/fixtures/ogg/",
+    "tests/fixtures/flac/",
+    "tests/fixtures/musepack/",
+    "tests/fixtures/monkeys-audio/",
+    "tests/fixtures/tak/",
+    "tests/fixtures/truehd/",
+    "tests/fixtures/wavpack/"
   ],
-  "reason": "Gate 0.3 fix: the slope's two frequencies are named fromFrequency and toFrequency, as the holes' are (they were from and to); no value changes. The same renames are in the ALAC, TTA, Matroska, AC-3 and MPEG audio measurement goldens, which this one file covers.",
-  "renamedKeys": [
+  "reason": "Item 13 (inter-channel coherence): every measurement golden gains spectrum.coherence (null without a pair of channels, the rows and shares of a stream with one as hashes); no existing figure changes. The same key is in the goldens of the other formats' folders, which this one file covers.",
+  "added": [
     {
-      "path": ["spectrum", "slope"],
-      "from": "from",
-      "to": "fromFrequency"
-    },
-    {
-      "path": ["spectrum", "slope"],
-      "from": "to",
-      "to": "toFrequency"
-    },
-    {
-      "path": ["spectrum", "channelSlopes"],
-      "from": "from",
-      "to": "fromFrequency"
-    },
-    {
-      "path": ["spectrum", "channelSlopes"],
-      "from": "to",
-      "to": "toFrequency"
+      "scope": "measurement",
+      "path": [
+        "spectrum"
+      ],
+      "key": "coherence"
     }
   ]
 }

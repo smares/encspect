@@ -76,13 +76,19 @@ internal static class ResidualCodes
         return sampleRate < 11025 ? g * 8 : sampleRate < 22050 ? g * 4 : sampleRate < 44100 ? g * 2 : g;
     }
 
-    // Reads a residual block of length values (which may be none). They are stored in values, which holds them all, or left out where it is empty (the walk of a stream that is
+    // Reads a residual block of length values (which may be none); modesRead, where given, takes the mode of each partition (one for an unsplit block that has values). They are stored in values, which holds them all, or left out where it is empty (the walk of a stream that is
     // not decoded).
-    public static void Read(ref LsbBitCursor bits, Span<int> values, int length, int partitionLength)
+    public static void Read(ref LsbBitCursor bits, Span<int> values, int length, int partitionLength, List<byte>? modesRead = null)
     {
         if (!bits.ReadBit())
         {
-            ReadRun(ref bits, ReadMode(ref bits), values, length);
+            int single = ReadMode(ref bits);
+            if (length > 0)
+            {
+                modesRead?.Add((byte)single);
+            }
+
+            ReadRun(ref bits, single, values, length);
             return;
         }
 
@@ -137,6 +143,14 @@ internal static class ResidualCodes
             }
 
             modes[i] = mode;
+        }
+
+        if (modesRead is not null)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                modesRead.Add((byte)modes[i]);
+            }
         }
 
         int at = 0;

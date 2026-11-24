@@ -600,7 +600,7 @@ public sealed partial class OpusParser
                 {
                     Description = SeriesText.IntensityStereoBound,
                     Concept = GraphConcept.StereoCoding,
-                    Quantity = "Intensity Stereo Bound",
+                    Quantity = SeriesQuantities.IntensityStereoBound,
                 });
             }
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Fails unless the shard filters of shards.json partition the tests of Encspect.Tests: every test, theory
-row included, is listed by exactly one shard, and no shard is empty or names a class that does not exist.
+row included, is listed by exactly one shard, and no shard is empty or names a class that does not exist. A damaged-input
+class (Corrupt*Tests) may run in the last shard only where that shard names it (damagedInputClasses in shards.json).
 
 It also checks the scoped filters of a pull request (scope.py): with no area selected, they list no test of an excluded class or
 method, and the shards the scope drops list nothing.
@@ -41,6 +42,11 @@ def main():
         for name in shard["classes"]:
             if name not in classes:
                 problems.append(f"shard {shard['name']} lists {name}, which is not a test class")
+    for name in shards[-1].get("damagedInputClasses", []):
+        if name not in classes:
+            problems.append(f"shard {shards[-1]['name']} names {name} among its damaged-input classes, which is not a test class")
+    problems += [f"{name} falls into the shard {shards[-1]['name']}, which does not name it among its damaged-input classes: put it in a shard"
+                 f" or add it to damagedInputClasses" for name in shard_config.damaged_input_in_rest(shards, classes)]
 
     owners = collections.defaultdict(list)
     for shard in shards:

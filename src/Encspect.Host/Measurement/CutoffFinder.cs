@@ -435,13 +435,15 @@ internal static class CutoffFinder
     // those at most ten levels (30.1 dB) below it; the second figure counts those that show their own step there.
     // countsSilence false (the holes): a row whose reference level is the lowest cell (no power, or less than 2^-63) has no frames with signal, as a side signal that is
     // exactly 0 has none; the cutoff and the partial cutoff keep counting them.
-    private static (int WithSignal, int Showing) Frames(CutoffCounters counters, int row, int[] shows, bool countsSilence = true)
+    private static (int WithSignal, int Showing) Frames(CutoffCounters counters, int row, int[] shows, bool countsSilence = true) => Frames(counters.All, row, shows, countsSilence);
+
+    internal static (int WithSignal, int Showing) Frames(int[] all, int row, int[] shows, bool countsSilence = true)
     {
         int baseIndex = row * CutoffCounters.Levels;
         long total = 0;
         for (int l = 0; l < CutoffCounters.Levels; l++)
         {
-            total += counters.All[baseIndex + l];
+            total += all[baseIndex + l];
         }
 
         int withSignal = 0;
@@ -452,7 +454,7 @@ internal static class CutoffFinder
             int reference = 0;
             for (int l = CutoffCounters.Levels - 1; l >= 0; l--)
             {
-                cumulative += counters.All[baseIndex + l];
+                cumulative += all[baseIndex + l];
                 if (cumulative * 100 >= total)
                 {
                     reference = l;
@@ -467,7 +469,7 @@ internal static class CutoffFinder
 
             for (int l = Math.Max(0, reference - 10); l < CutoffCounters.Levels; l++)
             {
-                withSignal += counters.All[baseIndex + l];
+                withSignal += all[baseIndex + l];
                 showing += shows[baseIndex + l];
             }
         }
@@ -475,7 +477,7 @@ internal static class CutoffFinder
         return (withSignal, showing);
     }
 
-    private static long FloorDivide(long a, long b)
+    internal static long FloorDivide(long a, long b)
     {
         long q = a / b;
         return (a % b != 0 && (a < 0) != (b < 0)) ? q - 1 : q;

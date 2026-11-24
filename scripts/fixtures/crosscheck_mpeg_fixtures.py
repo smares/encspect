@@ -1166,6 +1166,7 @@ ENCSPOT_ENCODER_DIFFERENCES = {
     "external-helix-no-tag-mono": HELIX_SCALING,
     "external-helix-r11-mono": HELIX_SCALING,
     "external-helix-no-tag": HELIX_PLAIN,
+    "external-helix-a1-no-tag-vbr": HELIX_PLAIN,
     "external-helix-r11-cbr": HELIX_PLAIN,
     "external-helix-r11-vbr": HELIX_PLAIN,
     "external-plugger-cbr": PLUGGER_NAMED,

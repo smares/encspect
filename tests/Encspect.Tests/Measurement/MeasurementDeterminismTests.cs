@@ -385,6 +385,62 @@ public class MeasurementDeterminismTests
         Assert.True(MidSideCountersHash == all, $"MidSideCountersHash = {all} ({figures})");
     }
 
+    // The cross rows of the pair from the stored bins, for the same synthetic stereo signal as the mid and side rows.
+    [Fact]
+    public void TheCrossRowsOfASyntheticStereoSignalHashToAConstant()
+    {
+        var plan = new FftPlan(4096);
+        double[] left = Signal();
+        double[] right = [.. left.Select((v, i) => (0.5 * v) + (0.3 * MeasurementSignals.Noise(1, (uint)i + 7)[0]))];
+        double[] re = plan.NewScratch();
+        double[] im = plan.NewScratch();
+        double[][] bins = [new double[plan.Half], new double[plan.Half], new double[plan.Half], new double[plan.Half]];
+        double[] cross = new double[1024];
+        var crossRows = new List<double>();
+        for (int start = 0; start + 4096 <= left.Length; start += 2048)
+        {
+            plan.Bins(left.AsSpan(start, 4096), re, im, bins[0], bins[1]);
+            plan.Bins(right.AsSpan(start, 4096), re, im, bins[2], bins[3]);
+            plan.CrossRows(bins[0], bins[1], bins[2], bins[3], cross.AsSpan(0, 512), cross.AsSpan(512, 512));
+            crossRows.AddRange(cross);
+        }
+
+        Assert.True(CrossRowsHash == HashBits(crossRows), "CrossRowsHash = " + HashBits(crossRows));
+    }
+
+    // The coherence's counter set and the stream's cross sums of the stereo signal of the mid and side counters (a mid and a side that are lines, then noise), which do not depend
+    // on how the stream is cut into blocks, with the figure they give.
+    [Fact]
+    public void TheCoherenceCountersAndCrossSumsOfASyntheticStereoSignalHashToConstants()
+    {
+        double[] mid = [.. LinesWithGap(300_000, 1500, 0.004, 3, 700, 740), .. MeasurementSignals.Noise(100_000, 17).Select(v => v * 0.2)];
+        double[] side = [.. LinesWithGap(300_000, 1000, 0.0012, 4, 400, 440), .. MeasurementSignals.Noise(100_000, 18).Select(v => v * 0.1)];
+        int[] left = MeasurementSignals.ToIntegers([.. mid.Zip(side, (a, b) => a + b)], 16);
+        int[] right = MeasurementSignals.ToIntegers([.. mid.Zip(side, (a, b) => a - b)], 16);
+        string[] hashes = new string[2];
+        string figures = string.Empty;
+        for (int pass = 0; pass < 2; pass++)
+        {
+            var measurer = new StreamMeasurer(new PcmFormat(44100, 2, 16, SampleFormat.Integer), new MeasureOptions { Include = MeasurementKinds.Spectrum }, CancellationToken.None, _ => true);
+            int block = pass == 0 ? 4096 : 7777;
+            for (int start = 0; start < left.Length; start += block)
+            {
+                int n = Math.Min(block, left.Length - start);
+                measurer.Write(new PcmBlock(start, n, 2, n, [.. left.AsSpan(start, n), .. right.AsSpan(start, n)]));
+            }
+
+            StreamMeasurements m = measurer.Result(MeasurementStatus.Complete, null);
+            CoherenceCounters counters = measurer.CoherenceCounterSet!;
+            hashes[pass] = HashCounts([counters.All, counters.Coherent]) + "/" + HashBits(measurer.CrossSums);
+            CoherenceFigures c = m.Spectrum!.Coherence!;
+            figures = $"{c.IsFound},{c.Reason},{c.FromFrequency},{c.ToFrequency},{c.TopBandTenths},{c.FramesShowing},{c.FramesWithSignal},{c.Frames};{string.Join(",", c.Rows.ToArray().Where((_, i) => i % 16 == 0))};{string.Join(",", c.Shares.ToArray().Where((_, i) => i % 16 == 0))}";
+        }
+
+        Assert.True(hashes[0] == hashes[1], "the counters or the cross sums differ between blocks of 4,096 and 7,777 samples");
+        string all = hashes[0] + "|" + Convert.ToHexStringLower(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(figures)));
+        Assert.True(CoherenceHash == all, $"CoherenceHash = {all} ({figures})");
+    }
+
     // BandLimited.Lines with the bins from gapFrom to gapTo - 1 left out: holes of 10 rows in every frame.
     private static double[] LinesWithGap(int length, int highestBin, double amplitude, uint seed, int gapFrom, int gapTo)
     {
@@ -941,6 +997,8 @@ public class MeasurementDeterminismTests
     private const string Rows1024Hash = "7b9f9a01c21fcdb6c2e71db025b77d5ed5bacae23ff1b5aea23500e15f67bd83";
     private const string Rows32768Hash = "2dc1e2f59ef7e098f0fe240d9e135e79620e30793f6bacbfaaf2986babec6236";
     private const string MidSideRowsHash = "84882138a074dfcaedf5056831c9f6d39eae5e8f887877a60f3a25ca7339645a";
+    private const string CrossRowsHash = "c99f9dc1f1fb9df797acbfcd1c1614735a2f5294cfab80a1a2848b7448c65940";
+    private const string CoherenceHash = "33f110c129ecacb177c818b58ce7fd9332de770145a9649a73d678d32b883d2c/f2e131e46ea55a82cad02f675f69f13e0e4f5e787a2de17cb937b05b47c6298e|a64728f9bdbb33a9b809460e8b3ad664615e5042f48453e0fe00b96bec42d94a";
     private const string MidSideCountersHash = "a8c32911289b3666eaa26a92b7c4af09a801486b034ab251eaeff902b8e2e39a|36eda7f42111bbb6cef5ed2c64ce6dd58a584515d14a64da4f4085a4bc72c971";
     private const string CountersHash = "4f5426dc2722f4934c96217ecbb4d6353b3774a7101d98267310015205a46751|6bbb4daa9b23cc7b5e00c5b611f94fe3e9bb463c35d133bade76c969902e0c26";
     private const string CompensatedSumsHash = "cb658a607c5f316a1300bb8874be95b8cdf1d08f29eb62c66768cb95829351a9";

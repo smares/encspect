@@ -4,7 +4,8 @@
 // TakRun starts a program with the arguments as one string, optionally writing a file's bytes to its standard input
 // (a pipe; PowerShell's own pipeline would re-encode them) and collecting its output and exit code.
 // TakSdk opens a TAK file with the 64-bit decoder library (tak_deco_lib.dll 2.3.3, a black box) and reads what the SDK
-// documents: the stream info, the encoder info, the wave data sizes and the MD5. The structures are packed, as the SDK asks
+// documents: the stream info, the encoder info, the wave data sizes and the MD5. ReadAll reads all the audio of a file through
+// tak_SSD_ReadAudio (signature in the SDK header tak_deco_lib.h and ssd_ref.html), call by call, with the damage callback. The structures are packed, as the SDK asks
 // (Sdk.html: "Structures have to be packed"), and the functions are cdecl.
 using System;
 using System.Collections.Generic;
@@ -12,6 +13,7 @@ using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Encspect
@@ -224,6 +226,14 @@ namespace Encspect
         delegate int StateInfoFn(IntPtr decoder, ref StateInfo info);
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         delegate int TextFn(int value, byte[] text, int size);
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        delegate int ReadAudioFn(IntPtr decoder, byte[] samples, int sampleNum, out int readNum);
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        delegate long ReadPosFn(IntPtr decoder);
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        delegate void DamageCallbackFn(IntPtr user, IntPtr item);
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        delegate int ErrorStringFn(int error, byte[] text, int size);
 
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         static extern IntPtr LoadLibraryW(string path);
@@ -382,6 +392,147 @@ namespace Encspect
             finally
             {
                 destroy(decoder);
+            }
+
+            return r;
+        }
+
+        // Reads all audio of the file with tak_SSD_ReadAudio, one frame (tak_SSD_GetFrameSize samples) per call as the SDK suggests for a sequential read, until a call
+        // reads no samples, fails fatally (tak_res_ssd_FatalErrorFirst, 4, and above) or 100000 calls have been made. Per call: the position before it, the samples asked
+        // and returned, the result code (tak_res_ssd_FrameDamaged is 3, "no fatal error") and the position after it. The damage callback's items (position and size in samples)
+        // are listed apart, and tak_SSD_GetStateInfo is read at the end. pcmMd5 is the MD5 of the samples returned in total, in the canonical layout of the manifests
+        // (signed, little-endian, whole bytes; 8-bit data, which the library gives unsigned, is converted).
+        public static OrderedDictionary ReadAll(string library, string file)
+        {
+            OrderedDictionary r = new OrderedDictionary();
+            IntPtr module = LoadLibraryW(library);
+            if (module == IntPtr.Zero)
+            {
+                r["error"] = "LoadLibrary failed: " + Marshal.GetLastWin32Error();
+                return r;
+            }
+
+            CreateFromFileFn create = Function<CreateFromFileFn>(module, "tak_SSD_Create_FromFile");
+            DecoderFn valid = Function<DecoderFn>(module, "tak_SSD_Valid");
+            DecoderFn frameSize = Function<DecoderFn>(module, "tak_SSD_GetFrameSize");
+            DestroyFn destroy = Function<DestroyFn>(module, "tak_SSD_Destroy");
+            StreamInfoFn streamInfo = Function<StreamInfoFn>(module, "tak_SSD_GetStreamInfo_V22");
+            StateInfoFn stateInfo = Function<StateInfoFn>(module, "tak_SSD_GetStateInfo");
+            ReadAudioFn readAudio = Function<ReadAudioFn>(module, "tak_SSD_ReadAudio");
+            ReadPosFn readPos = Function<ReadPosFn>(module, "tak_SSD_GetReadPos");
+            ErrorStringFn errorString = Function<ErrorStringFn>(module, "tak_SSD_GetErrorString");
+
+            List<OrderedDictionary> damage = new List<OrderedDictionary>();
+            // TtakSSDDamageItem: SamplePosition and SampleSize, both Int64.
+            DamageCallbackFn callback = delegate (IntPtr user, IntPtr item)
+            {
+                OrderedDictionary d = new OrderedDictionary();
+                d["position"] = Marshal.ReadInt64(item, 0);
+                d["samples"] = Marshal.ReadInt64(item, 8);
+                damage.Add(d);
+            };
+            IntPtr callbackPointer = Marshal.GetFunctionPointerForDelegate(callback);
+
+            SsdOptions options = new SsdOptions();
+            options.Cpu = 0x3FF; // tak_Cpu_Any
+            options.Flags = 0;
+            IntPtr decoder = create(file, ref options, callbackPointer, IntPtr.Zero);
+            if (decoder == IntPtr.Zero)
+            {
+                r["error"] = "tak_SSD_Create_FromFile returned NULL";
+                return r;
+            }
+
+            try
+            {
+                r["valid"] = valid(decoder);
+                StreamInfoV22 si = new StreamInfoV22();
+                si.SpeakerAssignment = new byte[16];
+                int siResult = streamInfo(decoder, ref si);
+                r["streamInfoResult"] = siResult;
+                if (siResult != 0 || valid(decoder) == 0 || si.ChannelNum < 1 || si.SampleBits < 1)
+                {
+                    r["error"] = "the library does not take the file as valid, or gives no stream info";
+                    return r;
+                }
+
+                int bytesPerSample = (si.SampleBits + 7) / 8;
+                int sampleFrame = si.ChannelNum * bytesPerSample;
+                int perCall = frameSize(decoder);
+                if (perCall < 1 || perCall > 1 << 20)
+                {
+                    perCall = 4096;
+                }
+
+                r["samplesPerCall"] = perCall;
+                byte[] buffer = new byte[perCall * sampleFrame];
+                MD5 md5 = MD5.Create();
+                md5.Initialize();
+                long total = 0;
+                int fatal = 0;
+                List<OrderedDictionary> calls = new List<OrderedDictionary>();
+                for (int call = 0; call < 100000; call++)
+                {
+                    OrderedDictionary c = new OrderedDictionary();
+                    c["position"] = readPos(decoder);
+                    int read;
+                    int result = readAudio(decoder, buffer, perCall, out read);
+                    c["asked"] = perCall;
+                    c["read"] = read;
+                    c["result"] = result;
+                    if (result != 0)
+                    {
+                        byte[] text = new byte[128];
+                        int ok = errorString(result, text, text.Length - 1);
+                        int length = 0;
+                        while (length < text.Length && text[length] != 0) { length++; }
+                        c["resultText"] = ok == 0 ? Encoding.ASCII.GetString(text, 0, length) : "(result " + ok + ")";
+                    }
+
+                    c["positionAfter"] = readPos(decoder);
+                    calls.Add(c);
+                    if (read > 0 && read <= perCall)
+                    {
+                        int count = read * sampleFrame;
+                        if (si.SampleBits <= 8)
+                        {
+                            for (int i = 0; i < count; i++) { buffer[i] = (byte)((buffer[i] - 128) & 255); }
+                        }
+
+                        md5.TransformBlock(buffer, 0, count, null, 0);
+                        total += read;
+                    }
+
+                    if (result >= 4) { fatal = result; break; }
+                    if (read <= 0) { break; }
+                }
+
+                md5.TransformFinalBlock(new byte[0], 0, 0);
+                StringBuilder hex = new StringBuilder();
+                foreach (byte b in md5.Hash) { hex.Append(b.ToString("x2")); }
+                r["calls"] = calls.ToArray();
+                r["callCount"] = calls.Count;
+                r["samples"] = total;
+                r["pcmMd5"] = hex.ToString();
+                r["fatalResult"] = fatal;
+                r["damage"] = damage.ToArray();
+                StateInfo st = new StateInfo();
+                int stResult = stateInfo(decoder, ref st);
+                r["stateInfoResult"] = stResult;
+                if (stResult == 0)
+                {
+                    r["openResult"] = st.OpenResult;
+                    r["sumResult"] = st.SumResult;
+                    r["streamSampleCount"] = st.StreamSampleNum;
+                    r["readSampleCount"] = st.ReadSampleNum;
+                    r["damagedSampleCount"] = st.DamagedSampleNum;
+                    r["skippedDataBlockCount"] = st.SkippedDataBlockNum;
+                }
+            }
+            finally
+            {
+                destroy(decoder);
+                GC.KeepAlive(callback);
             }
 
             return r;

@@ -161,7 +161,7 @@ public sealed partial class Analyzer
                     .Select(f => f with { Path = paths.Find(f.Node) })
                     .ToList();
                 List<StreamInfo> streams = run.Context.Streams
-                    .Select(s => s with { CodingClass = CodingClasses.Of(s), NodePaths = s.Nodes.Select(paths.Find).ToList(), Measurements = WithChannelReason(s, decoding?.RecordFor(s) ?? s.Measurements) })
+                    .Select(s => s with { CodingClass = CodingClasses.Of(s), NodePaths = s.Nodes.Select(paths.Find).ToList(), Measurements = StatedBound.Attach(s, WithChannelReason(s, decoding?.RecordFor(s) ?? s.Measurements)) })
                     .ToList();
                 reports.Add(new CompanionReport(CompanionReport.Correction, new Report(run.Lookup.Path, root, ordered, streams)));
             }

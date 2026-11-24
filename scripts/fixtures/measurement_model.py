@@ -22,6 +22,9 @@ The model follows the design's text:
   power of every row above it (up to row 506), the row with the most frames showing, the walk down while half of that maximum shows, found from a tenth of
   the frames with signal;
 - the mid and side spectra (step 7): the rows of (left + right) / 2 and (left - right) / 2 from the pair's bins, each with its own cutoff counters;
+- the inter-channel coherence (step 8): the magnitude-squared coherence of the pair per row from the stream's sums of the two power rows and the cross rows, the walk
+  down from the top of the range (the holes') while the band of W rows under each row is at or over 85 % (20 |C|^2 >= 17 Sxx Syy), found where the run stops above
+  0 Hz and the stream has at least 10 frames, with the frames of the run's first full band counted per frame and row in a counter set of the pair;
 - the spectral holes (step 7): the share of the cells with signal in which a row stands at least 30 dB under both the W rows under it and the W rows over it,
   per row and over the cells from the first candidate to the cutoff's edge, else the bandwidth's, else row 505.
 
@@ -198,6 +201,109 @@ def count_frame(rows, counters, w, first):
             below = suffix[r - w] - suffix[r]
             if below > 0 and over > 0 and own * w <= below and own * above_rows <= over:
                 counters.holes[r][level] += 1
+
+
+COHERENCE_NUMERATOR = 20.0
+COHERENCE_DENOMINATOR = 17.0
+MINIMUM_COHERENCE_FRAMES = 10
+
+
+def is_coherent(cross_re, cross_im, left, right):
+    """The test of the design: 20 |C|^2 >= 17 Sxx Syy, both powers over 0 (0.85)."""
+    return left > 0 and right > 0 and COHERENCE_NUMERATOR * (cross_re * cross_re + cross_im * cross_im) >= COHERENCE_DENOMINATOR * left * right
+
+
+def count_coherence(left, right, cross_re, cross_im, counters, w):
+    """One frame's counters of the pair: for each row from the first full band, the level of the pair's mean power under it and whether that band is coherent."""
+    sl = [0.0] * (ROWS + 1)
+    sr = [0.0] * (ROWS + 1)
+    sc = [0.0] * (ROWS + 1)
+    si = [0.0] * (ROWS + 1)
+    for r in range(TOP_ROW, -1, -1):
+        sl[r] = sl[r + 1] + left[r]
+        sr[r] = sr[r + 1] + right[r]
+        sc[r] = sc[r + 1] + cross_re[r]
+        si[r] = si[r + 1] + cross_im[r]
+    for r in range(w - 1, 506):
+        ul = sl[r - w + 1] - sl[r + 1]
+        ur = sr[r - w + 1] - sr[r + 1]
+        mean = (ul + ur) * 0.5 / w
+        exponent = math.frexp(mean)[1] - 1 if mean > 0 else -1023
+        level = min(max(exponent, -64), 7) + 64
+        counters.all[r][level] += 1
+        if is_coherent(sc[r - w + 1] - sc[r + 1], si[r - w + 1] - si[r + 1], ul, ur):
+            counters.show[r][level] += 1
+
+
+def coherence_tenths(cross_re, cross_im, left, right):
+    if not (left > 0 and right > 0):
+        return None
+    return int(max(0.0, min(1000.0, math.floor(1000.0 * (((cross_re * cross_re + cross_im * cross_im) / left) / right) + 0.5))))
+
+
+def row_of_upper_edge(h, rate, size, bins):
+    for r in range(ROWS):
+        edge = hertz(r + 1, rate, size, bins)
+        if edge == h:
+            return r
+        if edge > h:
+            break
+    return -1
+
+
+def find_coherence(sum_left, sum_right, sum_re, sum_im, counters, frames, cutoff, bandwidth, rate, size):
+    """The inter-channel coherence of the pair (docs/design/spectral-analysis.md, Step 8) from the stream's sums and the pair's frame counters."""
+    if rate < 8000:
+        return {"is_searched": False}
+    w, _, bins = band_rows(rate, size)
+    rows = [coherence_tenths(sum_re[r], sum_im[r], sum_left[r], sum_right[r]) for r in range(ROWS)]
+    sl = [0.0] * (ROWS + 1)
+    sr = [0.0] * (ROWS + 1)
+    sc = [0.0] * (ROWS + 1)
+    si = [0.0] * (ROWS + 1)
+    for r in range(TOP_ROW, -1, -1):
+        sl[r] = sl[r + 1] + sum_left[r]
+        sr[r] = sr[r + 1] + sum_right[r]
+        sc[r] = sc[r + 1] + sum_re[r]
+        si[r] = si[r + 1] + sum_im[r]
+
+    def band(e):
+        return sc[e - w + 1] - sc[e + 1], si[e - w + 1] - si[e + 1], sl[e - w + 1] - sl[e + 1], sr[e - w + 1] - sr[e + 1]
+
+    last = 505
+    if cutoff.get("is_found") and (edge := row_of_upper_edge(cutoff["frequency"], rate, size, bins)) >= 0:
+        last = min(last, edge)
+    elif bandwidth.get("is_found") and (content := row_of_upper_edge(bandwidth["frequency"], rate, size, bins)) >= 0:
+        last = min(last, content)
+    shares = [None] * ROWS
+    first_row = w - 1
+    for r in range(first_row, 506):
+        with_signal, coherent = frames_at(counters, r, counters.show, counts_silence=False)
+        if with_signal > 0:
+            shares[r] = (2000 * coherent + with_signal) // (2 * with_signal)
+    result = {"is_searched": True, "frames": frames, "rows": rows, "shares": shares, "is_found": False, "reason": "", "from_frequency": 0, "to_frequency": 0,
+              "top_band_tenths": 0, "frames_showing": 0, "frames_with_signal": 0}
+    if frames < MINIMUM_COHERENCE_FRAMES:
+        result["reason"] = "tooFewFrames"
+        return result
+    if last < first_row:
+        result["reason"] = "tooShort"
+        return result
+    top = coherence_tenths(*band(last))
+    result["top_band_tenths"] = 0 if top is None else top
+    if not is_coherent(*band(last)):
+        result["reason"] = "notCoherent"
+        return result
+    end = last
+    while end - 1 >= first_row and is_coherent(*band(end - 1)):
+        end -= 1
+    if end == first_row:
+        result["reason"] = "reachesStart"
+        return result
+    with_signal, showing = frames_at(counters, end, counters.show, counts_silence=False)
+    result.update(is_found=True, from_frequency=hertz(end - w + 1, rate, size, bins), to_frequency=hertz(last + 1, rate, size, bins),
+                  frames_with_signal=with_signal, frames_showing=showing)
+    return result
 
 
 def floor_div(a, b):
@@ -717,6 +823,9 @@ def measure(data, layout=None):
     sets = measured + 1 + (2 if pair else 0)
     sums = [[0.0] * ROWS for _ in range(sets)]
     counters = [Counters() for _ in range(sets)]
+    coherence_counters = Counters()
+    cross_re = [0.0] * ROWS
+    cross_im = [0.0] * ROWS
     frames = 0
     samples = lost = gaps = withheld = 0
     pending_withheld = 0
@@ -752,6 +861,23 @@ def measure(data, layout=None):
                     sums[measured + offset][r] += derived_rows[r]
                 if searched:
                     count_frame(derived_rows, counters[measured + offset], w, first_candidate)
+            # The cross-spectrum rows: the sum over the bins of a row of L R*, scaled as the power rows are (16 / (n n bins)).
+            scale_rows = 16.0 / (size * size)
+            per_row = size // (ROWS * 2)
+            frame_re = [0.0] * ROWS
+            frame_im = [0.0] * ROWS
+            for r in range(ROWS):
+                total_re = total_im = 0.0
+                for k in range(r * per_row, (r + 1) * per_row):
+                    a, b = left[k], right[k]
+                    total_re += a.real * b.real + a.imag * b.imag
+                    total_im += a.imag * b.real - a.real * b.imag
+                frame_re[r] = total_re * scale_rows / per_row
+                frame_im[r] = total_im * scale_rows / per_row
+                cross_re[r] += frame_re[r]
+                cross_im[r] += frame_im[r]
+            if searched:
+                count_coherence(per[pair[0]], per[pair[1]], frame_re, frame_im, coherence_counters, w)
         frames += 1
 
     blocks = segments(stream)
@@ -816,6 +942,11 @@ def measure(data, layout=None):
                     "mid_holes": find_holes(counters[measured + 1], rate, size, cutoffs[measured + 1], bandwidths[measured + 1]),
                     "side_holes": find_holes(counters[measured + 2], rate, size, cutoffs[measured + 2], bandwidths[measured + 2])}
 
+    coherence = None
+    if pair:
+        coherence = find_coherence(sums[pair[0]], sums[pair[1]], cross_re, cross_im, coherence_counters, frames, cutoffs[measured], bandwidths[measured], rate, size)
+        coherence = {"left_channel": pair[0], "right_channel": pair[1], **coherence}
+
     last_hop = max(h for _, h in mins) if mins else 0
     shift = 0
     while (last_hop >> shift) >= 1024:
@@ -841,6 +972,6 @@ def measure(data, layout=None):
         "sample_rate": rate, "channels": channels, "channels_measured": measured, "bits": bits, "samples": samples, "first_position": first_position or 0,
         "lost_samples": lost, **({"withheld_samples": withheld} if withheld else {}), "gaps": gaps, "fft_size": size, "frames": frames, "combined": levels[measured], "per_channel": levels[:measured],
         "cutoff": cutoffs[measured], "channel_cutoffs": cutoffs[:measured], "bandwidth": bandwidths[measured],
-        "channel_bandwidths": bandwidths[:measured], "slope": slopes[measured], "channel_slopes": slopes[:measured], "partial_cutoff": partial, "holes": holes, "mid_side": mid_side, "levels": levels_of(runs, measured, bits, rate),
+        "channel_bandwidths": bandwidths[:measured], "slope": slopes[measured], "channel_slopes": slopes[:measured], "partial_cutoff": partial, "holes": holes, "mid_side": mid_side, "coherence": coherence, "levels": levels_of(runs, measured, bits, rate),
         "loudness": loudness_of(runs, measured, bits, rate, layout), "true_peak": true_peak_of(runs, measured, bits, rate), "spectrogram_columns": columns, "hops_per_column": 1 << shift, "waveform": waveform,
     }

@@ -411,6 +411,42 @@ def build():
     add("stereo-independent-noise", "Stereo with white noise from two generators in the channels, -20 dBFS RMS each: the mid and side spectra are alike.",
         [quantize(white(n44, 95, -20.0), 16), quantize(white(n44, 96, -20.0), 16)], rate44, 16, {"cutoff_hz": None, "no_cutoff": True, "mid_and_side_alike": True})
 
+    # Inter-channel coherence (docs/design/spectral-analysis.md, Step 8), 0.6 s (11 frames) of lines at the bin centers in each channel, each with TPDF dither of one least significant bit:
+    # a side 12 dB under the mid (the coherence of the two channels is about 0.78, 79 % at the top band: none found), independent low bands under 3.9 kHz with the same high signal above 4.1 kHz in both
+    # channels at half the level in the right (coherence 1: a run from about 4 kHz), the same with the right's factor alternating between 1 and a half every 384 samples (a Layer II scale
+    # factor part) and every 1,152 (a Layer III granule pair), with its sign flipping every 960 samples (the sign that cancels the cross-spectrum: none found), and the right channel the
+    # left delayed by 1 ms (the phase turns once round a kilohertz: none found).
+    short = int(rate44 * 0.6)
+    mid_c, side_c = lines(rate44, 20000, -20.0, 111, short), lines(rate44, 20000, -32.0, 112, short)
+    add("coherence-side-12-db", "Stereo, 0.6 s: left is mid + side and right mid - side, the mid signal lines at the bin centers from 40 Hz to 20 kHz (-20 dBFS RMS) and the side signal lines 12 dB lower, "
+        "each channel with TPDF dither of one least significant bit: the coherence of the pair is about 0.78 (79 % at the top band), so no inter-channel coherence is found.",
+        [quantize([a + b for a, b in zip(mid_c, side_c)], 16, dither_seed=113), quantize([a - b for a, b in zip(mid_c, side_c)], 16, dither_seed=114)], rate44, 16,
+        {"cutoff_hz": None, "unspecified": True, "coherence_from_hz": None})
+    low_l, low_r = lines(rate44, 3900, -20.0, 115, short), lines(rate44, 3900, -20.0, 116, short)
+    high = lines(rate44, 20000, -20.0, 117, short, lowest_hz=4100.0)
+
+    def shaped(gains):
+        return [h * g for h, g in zip(high, gains)]
+
+    steady = [0.5] * short
+    cases = [
+        ("coherence-above-4000", "the right channel's high signal half the left's all the time", steady, "a run of coherence 1 from about 4 kHz", 4000),
+        ("coherence-factor-384", "the right channel's high factor alternating between 1 and 0.5 every 384 samples", [1.0 if (i // 384) % 2 == 0 else 0.5 for i in range(short)],
+         "a run from about 4 kHz (the coherence of a factor that changes is 0.9)", 4000),
+        ("coherence-factor-1152", "the right channel's high factor alternating between 1 and 0.5 every 1,152 samples", [1.0 if (i // 1152) % 2 == 0 else 0.5 for i in range(short)],
+         "a run from about 4 kHz (0.9)", 4000),
+        ("coherence-sign-960", "the right channel's high signal flipping its sign every 960 samples", [0.5 if (i // 960) % 2 == 0 else -0.5 for i in range(short)],
+         "none found: the sign flips cancel the cross-spectrum", None),
+    ]
+    for name, what, gains, result, from_hz in cases:
+        add(name, f"Stereo, 0.6 s: independent lines under 3.9 kHz in each channel and the same lines from 4.1 kHz to 20 kHz in both, -20 dBFS RMS, {what}, each channel with TPDF dither of one least significant bit: {result}.",
+            [quantize([a + b for a, b in zip(low_l, high)], 16, dither_seed=118), quantize([a + b for a, b in zip(low_r, shaped(gains))], 16, dither_seed=119)], rate44, 16,
+            {"cutoff_hz": None, "unspecified": True, "coherence_from_hz": from_hz})
+    full = lines(rate44, 20000, -20.0, 121, short + 44)
+    add("coherence-delay-1-ms", "Stereo, 0.6 s: lines at the bin centers from 40 Hz to 20 kHz in the left channel and the same signal 44 samples (1 ms) later in the right, each channel with TPDF dither of one least significant bit: "
+        "the phase of the cross-spectrum turns once round a kilohertz, so no inter-channel coherence is found.",
+        [quantize(full[44:], 16, dither_seed=122), quantize(full[:short], 16, dither_seed=123)], rate44, 16, {"cutoff_hz": None, "unspecified": True, "coherence_from_hz": None})
+
     # Spectral holes (Step 7 (d)): lines at every bin center to 20 kHz with bands of 2, 4, 8 and 16 rows (4 bins a row at 4,096 points) left out in every frame, at rows 80, 160, 240 and 360;
     # a row of a band that is next to content reads the window's leakage, so only the inner rows are holes (none for the band of 2 rows). And one band of 8 rows at row 200 left out in the second half of the stream only.
     bands = [(80 * 4, 2 * 4), (160 * 4, 4 * 4), (240 * 4, 8 * 4), (360 * 4, 16 * 4)]
