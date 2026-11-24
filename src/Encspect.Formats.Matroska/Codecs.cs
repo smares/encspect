@@ -27,6 +27,9 @@ internal static class Codecs
         _ => null,
     };
 
+    // Microsoft's Audio Compression Manager: the CodecPrivate is a WAVEFORMATEX, whose format tag names the coding (draft-ietf-cellar-codec, section 3.4).
+    public const string Acm = "A_MS/ACM";
+
     // The ID of the host's codec parser for PCM samples a container stores as they are.
     public const string PcmSamples = "pcm-samples";
 
@@ -65,8 +68,24 @@ internal static class Codecs
         };
     }
 
+    // How the samples of an A_MS/ACM PCM track are laid out, from its WAVEFORMATEX by the rule WAV reads one with (WaveFormatRoutes.PcmCodingOf), the speakers from the
+    // extensible format's channel mask. Null with the reason where the structure gives no layout.
+    public static PcmCoding? PcmOf(WaveFormatEx format, out string why)
+    {
+        if (format.Channels > PcmCoding.MaxChannels)
+        {
+            why = $"states {format.Channels} channels in its WAVEFORMATEX, where 1 to {PcmCoding.MaxChannels} are read as samples";
+            return null;
+        }
+
+        PcmCoding? coding = WaveFormatRoutes.PcmCodingOf(format.CodingTag, format.Channels, format.Bits, format.BlockAlign, format.SampleRate, false,
+            WaveFormatRoutes.StreamLayout(format.Channels, format.IsExtensible, format.ChannelMask), out why);
+        why = why.Length == 0 ? why : $"has a WAVEFORMATEX that {why}";
+        return coding;
+    }
+
     // The kind of stream KnownWriters knows the codec ID's coding as, or null for a coding no parser reads.
-    public static string? WriterKind(string codecId) => RouteOf(codecId) switch
+    public static string? WriterKind(string codecId, string? acmRoute = null) => (acmRoute ?? RouteOf(codecId)) switch
     {
         "aac" => KnownWriters.Aac,
         "mpeg-audio" => KnownWriters.MpegAudio,
@@ -79,6 +98,7 @@ internal static class Codecs
         "flac" => KnownWriters.Flac,
         "wavpack" => KnownWriters.WavPack,
         "truehd" or "mlp" => KnownWriters.TrueHd,
+        "wma" or "wma-pro" or "wma-lossless" or "wma-voice" => KnownWriters.WindowsMedia,
         _ => null,
     };
 
@@ -111,7 +131,7 @@ internal static class Codecs
         "A_PCM/INT/LIT" => CodecNames.Pcm,
         "A_PCM/INT/BIG" => CodecNames.Pcm,
         "A_PCM/FLOAT/IEEE" => CodecNames.PcmFloat,
-        "A_MS/ACM" => "Microsoft ACM audio",
+        Acm => "Microsoft ACM audio",
         "A_ATRAC/AT1" => "ATRAC1",
         _ when codecId.StartsWith("A_REAL/", StringComparison.Ordinal) => "RealAudio",
         _ when codecId.StartsWith("A_QUICKTIME", StringComparison.Ordinal) => "QuickTime audio",

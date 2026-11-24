@@ -149,6 +149,11 @@ internal sealed class TrackInfo
 
     public Node? CodecPrivateNode { get; set; }
 
+    // For A_MS/ACM, what the WAVEFORMATEX in the CodecPrivate says: the codec parser its format tag is routed to (null where it has none) and the name of the coding.
+    public string? AcmRoute { get; set; }
+
+    public string? AcmName { get; set; }
+
     public ulong CodecDelay { get; set; }
 
     public Node? CodecDelayNode { get; set; }

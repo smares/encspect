@@ -16,35 +16,7 @@ internal static class PcmRoute
             return null;
         }
 
-        int bytes = format.BytesPerSample;
-        long frameBytes = (long)bytes * format.Channels;
-        if (bytes < 1 || (format.BlockAlign != 0 && format.BlockAlign != frameBytes))
-        {
-            return null;
-        }
-
-        int bits = bytes * 8;
-        PcmEncoding? encoding = format.CodingTag switch
-        {
-            FormatTags.Pcm => bits == 8 ? PcmEncoding.UnsignedInteger : PcmEncoding.SignedInteger,
-            FormatTags.IeeeFloat when bits is 32 or 64 && format.Bits == bits => PcmEncoding.Float,
-            FormatTags.ALaw when format.Bits == 8 => PcmEncoding.ALaw,
-            FormatTags.MuLaw when format.Bits == 8 => PcmEncoding.MuLaw,
-            _ => null,
-        };
-        if (encoding is null)
-        {
-            return null;
-        }
-
-        return new PcmCoding
-        {
-            Encoding = encoding.Value,
-            IsBigEndian = s.IsBigEndian,
-            ContainerBits = bits,
-            SampleRate = (int)Math.Min(format.SampleRate, int.MaxValue),
-            ChannelLayout = DataChunks.StreamLayout(format),
-        };
+        return WaveFormatRoutes.PcmCodingOf(format.CodingTag, format.Channels, format.Bits, format.BlockAlign, format.SampleRate, s.IsBigEndian, DataChunks.StreamLayout(format), out _);
     }
 
     // Starts the session, feeds it the samples and finishes it with no checksum (PCM stores none); null where there is no coding.
