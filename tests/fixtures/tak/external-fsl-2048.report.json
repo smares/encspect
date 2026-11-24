@@ -292,6 +292,12 @@
                       "length": 10417
                     }
                   ]
+                },
+                {
+                  "name": "Highest Residual Mode",
+                  "value": 26,
+                  "offset": 0,
+                  "length": 10417
                 }
               ]
             },
@@ -1842,6 +1848,19 @@
             ]
           },
           {
+            "name": "Highest Predictor Order Over Time",
+            "unit": "order",
+            "axis": "seconds",
+            "concept": "prediction",
+            "quantity": "Highest Predictor Order",
+            "x": [
+              0
+            ],
+            "values": [
+              32
+            ]
+          },
+          {
             "name": "Coefficient Precision",
             "unit": "bits",
             "axis": "frameOffset",
@@ -1862,6 +1881,53 @@
               10,
               10,
               10
+            ]
+          },
+          {
+            "name": "Coefficient Precision Over Time",
+            "unit": "bits",
+            "axis": "seconds",
+            "concept": "prediction",
+            "quantity": "Coefficient Precision",
+            "x": [
+              0
+            ],
+            "values": [
+              10
+            ]
+          },
+          {
+            "name": "Highest Residual Mode",
+            "unit": "mode",
+            "axis": "frameOffset",
+            "quantity": "Highest Residual Mode",
+            "x": [
+              108,
+              2299,
+              3498,
+              4743,
+              7629,
+              9903
+            ],
+            "values": [
+              25,
+              14,
+              11,
+              25,
+              26,
+              12
+            ]
+          },
+          {
+            "name": "Highest Residual Mode Over Time",
+            "unit": "mode",
+            "axis": "seconds",
+            "quantity": "Highest Residual Mode",
+            "x": [
+              0
+            ],
+            "values": [
+              26
             ]
           }
         ],

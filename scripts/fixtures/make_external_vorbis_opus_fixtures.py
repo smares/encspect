@@ -100,6 +100,9 @@ FIXTURES = {
     "external-opusenc-cvbr": ("opusenc", 44100, 2, 1.5, ["--bitrate", "64", "--cvbr"], OPUSENC, []),
     "external-opusenc-speech": ("opusenc", 16000, 1, 1.5, ["--bitrate", "12", "--speech", "--framesize", "60"], OPUSENC, []),
     "external-opusenc-music-5ms": ("opusenc", 48000, 2, 1.0, ["--bitrate", "128", "--music", "--framesize", "5"], OPUSENC, []),
+    # Step 8 (inter-channel coherence): 2 s of the measurement fixtures' pink noise at 24 kbit/s, which states an intensity stereo bound; the FLAC decodes are measurement/lossy-stereo-*opus-24k.
+    "external-opusenc-24-pink-equal": ("opusenc", 48000, 2, 2.0, ["--bitrate", "24"], OPUSENC, []),
+    "external-opusenc-24-pink-side-12-db": ("opusenc", 48000, 2, 2.0, ["--bitrate", "24"], OPUSENC, []),
     "external-opusenc-51": ("opusenc", 48000, 6, 1.0, ["--bitrate", "192"], OPUSENC, []),
     # libopus 1.5.2's own encoder (opus_enc.c, built by opus_tool.py), for the syntax the others do not write: arguments are application, bitrate, frame length in ms, in-band FEC, the highest
     # bandwidth and the mode the encoder is forced to. Stereo SILK frames of 40 and 60 ms with FEC read their LBRR flags after both channels' header bits (RFC 6716, section 4.2.4).
@@ -155,6 +158,16 @@ def signal(rate, channels, seconds):
     return bytes(out)
 
 
+def pink_signal(rate, quiet_side):
+    """2 s of stereo pink noise, the measurement fixtures' source (docs/design/spectral-analysis.md, Step 8): left = mid + side, right = mid - side, the mid signal at -20 dBFS RMS and
+    the side signal as loud (uncorrelated channels) or 12 dB lower."""
+    from make_measurement_fixtures import pink
+    mid = pink(rate * 2, 201, -20.0, tone_db=-200.0, rate=rate)
+    side = pink(rate * 2, 202, -32.0 if quiet_side else -20.0, tone_db=-200.0, rate=rate)
+    clamp = lambda v: max(-32768, min(32767, math.floor(v * 32768 + 0.5)))
+    return b"".join(struct.pack("<hh", clamp(a + b), clamp(a - b)) for a, b in zip(mid, side))
+
+
 def wav(raw, rate, channels):
     return (b"RIFF" + struct.pack("<I", 36 + len(raw)) + b"WAVEfmt " + struct.pack("<IHHIIHH", 16, 1, channels, rate, rate * channels * 2, channels * 2, 16)
             + b"data" + struct.pack("<I", len(raw)) + raw)
@@ -170,7 +183,7 @@ def encode(name, tool, rate, channels, seconds, arguments, work):
     arguments = [*arguments, "-s", str(SERIALS[name])] if name in SERIALS else arguments
     target = OUT / (name + extension(name))
     source = work / f"in-{rate}-{channels}-{seconds}.wav"
-    source.write_bytes(wav(signal(rate, channels, seconds), rate, channels))
+    source.write_bytes(wav(pink_signal(rate, "-side-12-db" in name) if "-pink-" in name else signal(rate, channels, seconds), rate, channels))
     if tool == "oggenc":
         subprocess.run(["oggenc", "-Q", *arguments, "-o", str(target), str(source)], check=True)
     elif tool.startswith("aotuv:"):
@@ -193,7 +206,10 @@ def encode(name, tool, rate, channels, seconds, arguments, work):
         subprocess.run(["opusenc", "--quiet", *arguments, str(source), str(target)], check=True)
     else:
         subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(source), *arguments, str(target)], check=True)
-    return {"tool": version(tool), "arguments": arguments, "rate": rate, "channels": channels, "seconds": seconds}
+    result = {"tool": version(tool), "arguments": arguments, "rate": rate, "channels": channels, "seconds": seconds}
+    if "-pink-" in name:
+        result["signal"] = "stereo pink noise, a mid signal and a side signal " + ("12 dB lower" if "-side-12-db" in name else "as loud (uncorrelated channels)")
+    return result
 
 
 def manifest(name, encoder, detected, findings):

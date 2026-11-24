@@ -359,7 +359,7 @@ public sealed partial class MpegAudioParser
 
             if (_intensityBound?.Count > 0)
             {
-                series.Add(_intensityBound.PerFrame("Intensity Stereo Bound", "Hz", SeriesText.IntensityStereoBound, GraphConcept.StereoCoding, "Intensity Stereo Bound",
+                series.Add(_intensityBound.PerFrame("Intensity Stereo Bound", "Hz", SeriesText.IntensityStereoBound, GraphConcept.StereoCoding, SeriesQuantities.IntensityStereoBound,
                     Anchor(r => r.Nodes.IntensityStereoBoundHz), _intensityBound.X));
             }
 

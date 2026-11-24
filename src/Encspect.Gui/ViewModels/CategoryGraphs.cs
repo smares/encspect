@@ -32,6 +32,9 @@ public enum GraphForm
     PerChannel,
     MidSide,
 
+    // The inter-channel coherence of the pair per row, and the share of frames in which each band is coherent, as percent.
+    Coherence,
+
     // Every unit of a series as a square, in rows like text (FrameMapGraph).
     Map,
 }

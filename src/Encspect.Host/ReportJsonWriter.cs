@@ -906,6 +906,8 @@ public static class ReportJsonWriter
                 writer.WriteNull("midSide");
             }
 
+            WriteCoherence(writer, spectrum.Coherence, explain);
+
             writer.WriteEndObject();
         }
 
@@ -1385,6 +1387,93 @@ public static class ReportJsonWriter
         }
 
         WriteCutoffFields(writer, cutoff);
+        writer.WriteEndObject();
+    }
+
+    // The inter-channel coherence of the pair: an object where the stream has a pair, null otherwise.
+    private static void WriteCoherence(Utf8JsonWriter writer, CoherenceFigures? coherence, bool explain)
+    {
+        if (coherence is null)
+        {
+            writer.WriteNull("coherence");
+            return;
+        }
+
+        writer.WriteStartObject("coherence");
+        if (explain)
+        {
+            writer.WriteString("description", MeasurementText.InterChannelCoherenceDescription);
+            writer.WriteString("topic", MeasurementText.InterChannelCoherenceTopic);
+        }
+
+        if (!coherence.IsSearched)
+        {
+            writer.WriteBoolean("isSearched", false);
+            writer.WriteEndObject();
+            return;
+        }
+
+        writer.WriteNumber("leftChannel", coherence.LeftChannel);
+        writer.WriteNumber("rightChannel", coherence.RightChannel);
+        writer.WriteNumber("frames", coherence.Frames);
+        writer.WriteBoolean("isFound", coherence.IsFound);
+        if (coherence.IsFound)
+        {
+            WriteQuantity(writer, "fromFrequency", coherence.FromFrequency, "Hz");
+            WriteQuantity(writer, "toFrequency", coherence.ToFrequency, "Hz");
+            writer.WriteNumber("framesShowing", coherence.FramesShowing);
+            writer.WriteNumber("framesWithSignal", coherence.FramesWithSignal);
+        }
+        else
+        {
+            writer.WriteString("reason", coherence.Reason switch
+            {
+                CoherenceReason.TooFewFrames => "tooFewFrames",
+                CoherenceReason.TooShort => "tooShort",
+                CoherenceReason.ReachesStart => "reachesStart",
+                _ => "notCoherent",
+            });
+        }
+
+        if (coherence.Reason is CoherenceReason.NotCoherent or CoherenceReason.ReachesStart || coherence.IsFound)
+        {
+            writer.WriteStartObject("topBand");
+            writer.WriteNumber("value", coherence.TopBandTenths / 10m);
+            writer.WriteString("unit", "%");
+            writer.WriteEndObject();
+        }
+
+        writer.WriteStartObject("rows");
+        writer.WriteString("unit", "%");
+        writer.WriteNumber("valuesPerUnit", 10);
+        WriteRow(writer, "values", coherence.Rows.Span);
+        writer.WriteEndObject();
+        writer.WriteStartObject("shares");
+        writer.WriteString("unit", "%");
+        writer.WriteNumber("valuesPerUnit", 10);
+        WriteRow(writer, "values", coherence.Shares.Span);
+        writer.WriteEndObject();
+        if (coherence.Stated is { } stated)
+        {
+            writer.WriteStartObject("stated");
+            WriteQuantity(writer, "median", stated.MedianFrequency, "Hz");
+            writer.WriteNumber("units", stated.Units);
+            if (stated.Difference is { } difference)
+            {
+                WriteQuantity(writer, "difference", difference, "Hz");
+            }
+            else
+            {
+                writer.WriteNull("difference");
+            }
+
+            writer.WriteEndObject();
+        }
+        else
+        {
+            writer.WriteNull("stated");
+        }
+
         writer.WriteEndObject();
     }
 

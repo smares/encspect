@@ -397,7 +397,7 @@ internal sealed class CodingRecorder(StreamSetup setup)
         {
             Description = Explain.IntensityStereoBoundSeries,
             Concept = GraphConcept.StereoCoding,
-            Quantity = "Intensity Stereo Bound",
+            Quantity = SeriesQuantities.IntensityStereoBound,
         });
     }
 

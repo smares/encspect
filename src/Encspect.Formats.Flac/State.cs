@@ -105,6 +105,17 @@ internal sealed class State
 
     public long[] AssignmentFrames { get; } = new long[4];
 
+    // Frames of a stereo stream, counted from frame 0 without a gap before them, that libFLAC's adaptive levels (-M) before 1.5.0 could not have written: they try
+    // every assignment only on every Nth frame (N is 0.4 s in frames) and otherwise keep left/right where the frame before was left/right and write mid/side
+    // elsewhere, so a left/side or side/right frame between two such frames, or a change between left/right and another assignment, is a break.
+    public long AdaptiveBreaks { get; private set; }
+
+    // The left/side and side/right frames of a stereo stream whose header CRC-8 holds and that are neither cut nor unreadable: releases 1.4.0 and later never write them at levels 1 and 4.
+    public long SideFrames { get; private set; }
+
+    private ChannelAssignment _previousAssignment;
+    private bool _hasPreviousAssignment;
+
     public static readonly Category[] StereoCodings =
     [
         new("Left/right stereo", Explain.StatIndependent) { Topic = Topics.ChannelAssignment },
@@ -228,6 +239,28 @@ internal sealed class State
         Records records = Records;
         Findings.Add(Severity.Warning, "flac.data-skipped", () => Nodes.Skipped(records, index), count =>
             $"{Counts.Of(length, "byte", "bytes")} at 0x{offset:X} {Counts.Agree(length, "holds", "hold")} no frame{(count > 1 ? $", and {Counts.Of(count - 1, "more such stretch", "more such stretches")} {Counts.Agree(count - 1, "does", "do")}" : string.Empty)}; frames are found again after {(length == 1 ? "it" : "them")}.");
+    }
+
+    private void TrackAdaptive(in FrameHeader header, long first, bool followsGap)
+    {
+        if (header.Channels != 2 || header.IsVariable || followsGap || FirstSample != 0 || FirstBlockSize <= 0 || first % FirstBlockSize != 0)
+        {
+            _hasPreviousAssignment = false;
+            return;
+        }
+
+        // The same arithmetic as the encoder's: the double product of the rate and 0.4, over the block size, plus one half, truncated.
+        long frames = Math.Max(1, (long)((double)FirstRate * 0.4 / FirstBlockSize + 0.5));
+        long number = first / FirstBlockSize;
+        if (_hasPreviousAssignment && number % frames != 0
+            && (header.Assignment is ChannelAssignment.LeftSide or ChannelAssignment.SideRight
+                || (header.Assignment == ChannelAssignment.Independent) != (_previousAssignment == ChannelAssignment.Independent)))
+        {
+            AdaptiveBreaks++;
+        }
+
+        _previousAssignment = header.Assignment;
+        _hasPreviousAssignment = true;
     }
 
     // Adds a frame, in stream order. failsContainerChecksum: the container's check over the frame's packet failed (MappedBytes.FailsChecksum), which keeps the frame out of the measurements like its own CRC-16 does and is no tally of the stream's. bytes are the frame's bytes to its end, as far as it has one; for a cut frame, as far as the data goes.
@@ -400,6 +433,12 @@ internal sealed class State
         }
 
         AssignmentFrames[(int)header.Assignment]++;
+        if (header.Assignment is ChannelAssignment.LeftSide or ChannelAssignment.SideRight && header.Channels == 2 && (status & (EntryStatus.Crc8Fails | EntryStatus.Cut | EntryStatus.Unreadable)) == 0)
+        {
+            SideFrames++;
+        }
+
+        TrackAdaptive(header, first, followsGap || (status & (EntryStatus.Crc8Fails | EntryStatus.Cut | EntryStatus.Unreadable)) != 0);
         MinBlockSize = Math.Min(MinBlockSize, header.BlockSize);
         MaxBlockSize = Math.Max(MaxBlockSize, header.BlockSize);
         int detail = -1;
