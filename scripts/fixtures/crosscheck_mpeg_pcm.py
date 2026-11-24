@@ -45,16 +45,15 @@ DEFAULT_PCMDUMP = "dotnet " + str(ROOT / "tests" / "Encspect.PcmDump" / "bin" / 
 # bound is not widened for it (docs/design/lossy-decoders.md, "The PCM cross-checks").
 R1 = (
     "FFmpeg 6.1.1 alone differs, in a few granules of channel 0 (long blocks of plain stereo; up to 0.026 of full scale at its largest, on external-plugger-pro-cbr, granule 92: no big values and a part2_3_length of 2 bits in channel 0) and the tails into the next ones: the analyzer matches mpg123 1.32.5 (largest difference 8e-7), madplay 0.15.2b (1.4e-6) and minimp3 (3e-7), the ranges are FFMPEG_RANGES; the cause in FFmpeg is not known (black box)")
-M1 = (
-    "minimp3 takes the largest value a position's slen can code in MPEG-2 and 2.5 as the illegal position and decodes the band as mid/side; the analyzer reads it as an ordinary position, as FFmpeg 9.1 and mpg123 1.33.7 do "
-    "(see intensity-mpeg2-largest-position.mp3); this file's differences from minimp3 are in granules of intensity stereo with mid/side stereo")
-
 R2 = (
-    "FFmpeg and mpg123 1.32.5 agree with each other and differ from the analyzer by up to 0.0095 in frames of intensity stereo (MPEG-2 LSF) with mid/side stereo (madplay 0.15.2b 1.1e-6 and minimp3 3e-7 agree with the analyzer). "
-    "The first cause is solved: the largest value a position's slen can code is an ordinary intensity position, as they read it (see intensity-mpeg2-largest-position.mp3), and FFmpeg 9.1 matches the analyzer in the granules where it alone showed. "
-    "What is left, in the ranges below (acm34's granules at 5,760 to 10,944 and 44,928 to 46,080), is not explained: for the top band, which has no transmitted position (long band 21, short band 12 per window; Table B.2 says its scalefactor is not transmitted), "
-    "they may copy band 20's (11's) position, where the analyzer, as minimp3, uses the center position when band 20 (11) lies below the bound and band 20's otherwise; neither standard defines a position there. "
-    "Copying always (MPEG-2 only) in a scratch build makes acm34 match FFmpeg in most of the ranges, not in these two, so that alone is not the whole difference")
+    "FFmpeg 6.1.1 and mpg123 1.32.5 agree with each other and differ from the analyzer by up to 0.0095 (madplay 0.15.2b 1.1e-6 and minimp3 3e-7 agree with the analyzer), in two ways. "
+    "(1) In a frame of intensity stereo (MPEG-2 LSF) with mid/side stereo they take the largest value a position's slen can code as an ordinary intensity position, where ISO/IEC 13818-3 "
+    "2.4.3.2 (bullet 2) makes it the illegal position, whose band is decoded with the mid/side equations (left/right without mid/side stereo), as the analyzer does; the first differing granule "
+    "of external-fhg-acm34-mpeg2 holds positions 15 and 1 (slen 4 and 1) in bands 11 to 16, above the intensity bound. "
+    "(2) For the top band, which has no transmitted position (long band 21, short band 12 per window; Table B.2 says its scalefactor is not transmitted), they copy band 20's (11's) position, "
+    "where the analyzer, as minimp3, uses the center position when band 20 (11) lies below the bound and band 20's otherwise; neither standard defines a position there. "
+    "A scratch build of minimp3 with both changes (no illegal MPEG-2 position, the top band always copying) matches FFmpeg to 4.6e-5 and mpg123 to 2.7e-4 (FFmpeg's last two granules excluded), "
+    "with either change alone it does not (acm34 against mpg123: 0.0049 with (1) alone, 0.0095 with (2) alone). The analyzer follows the standard where it speaks (1) and minimp3's choice where it does not (2)")
 
 EXPLAINED = {
     "mc-3-1-crosstalk-decided.mp2": {"mctoolamed": "dyn_cross_mode 5 to 7, which 13818-3 2.5.2.15 forbids in 3/1, are in the fixture and read differently by the two decoders; the allowed modes of 3/1, 3/2, 3/0, 2/1 and the second stereo program agree within 1 LSB (see development.md, \"Multichannel extension\")"},
@@ -66,10 +65,6 @@ EXPLAINED = {
     "mc-forbidden-values.mp2": {"mctoolamed": "dyn_cross_mode 15 of 3/2 and a nonzero tc_allocation with dematrix_procedure 3, which 13818-3 2.5.2.15 forbids, are in the fixture and read differently by the two decoders (each alone, in every frame of a variant, differs; the valid lfe_allocation 15 and a scalefactor index of 63 agree)"},
     "mc-second-stereo-crosstalk.mp2": {"mctoolamed": "tc_allocation 3, which 13818-3 2.5.2.15 leaves unassigned in 3/0 + 2/0, is in the fixture"},
     "mc-center-reserved-second-stereo.mp2": {"mctoolamed": "the reserved center value 2 (13818-3 2.5.2.13: not defined), which the analyzer reads as no center"},
-    "intensity-mpeg2-largest-position.mp3": {
-        "minimp3": "minimp3 takes the largest value a position's slen can code (MPEG-2 and 2.5) as the illegal position and decodes the band as mid/side; FFmpeg 9.1 and mpg123 1.33.7, which agree with each other and with the analyzer, "
-                   "read it as an ordinary position (0.0196 of full scale; the right channel of the fixture is all zero, so every band is intensity coded)"
-    },
     "intensity-mixed-windows.mp3": {
         "minimp3": "minimp3 (as of commit ea99364f) takes one intensity stereo bound for the three windows of a mixed block, where ISO/IEC 13818-3 2.4.3.2 (bullet 3) finds each window's bound individually; "
                    "its output differs from the analyzer's by 0.031 of full scale, and FFmpeg 6.1.1 (8.9e-8), mpg123 1.32.5 (3.7e-8) and madplay 0.15.2b (4.1e-7) match the analyzer; "
@@ -83,8 +78,8 @@ EXPLAINED = {
     "external-plugger-original.mp3": {"ffmpeg": R1},
     "external-plugger-48k.mp3": {"ffmpeg": R1},
     "external-8hz-flags.mp3": {"ffmpeg": R1},
-    "external-fhg-acm19-mpeg2.mp3": {"ffmpeg": R2, "minimp3": M1},
-    "external-fhg-acm34-mpeg2.mp3": {"ffmpeg": R2, "minimp3": M1},
+    "external-fhg-acm19-mpeg2.mp3": {"ffmpeg": R2},
+    "external-fhg-acm34-mpeg2.mp3": {"ffmpeg": R2},
     "external-nero-rom-mp3pro-cbr64.mp3": {
         "ffmpeg": "in the granules 327 to 355 (positions 188,352 to 205,056; intensity stereo frames of a tone in the left channel, where the right channel codes no lines and has "
                   "scalefac_compress 90) FFmpeg 6.1.1 and 8.0.1 put the tone into the right channel as well (RMS 0.21 to 0.25 of full scale, the analyzer's 0.003 or less); observed "
@@ -98,8 +93,9 @@ EXPLAINED = {
                   "with FFmpeg leaves those positions out (FFMPEG_RANGES); observed with the same file, madplay 0.15.2b decodes the first as the analyzer does"
     },
     "external-xing-mpeg2.mp3": {
-        "minimp3": "in the granules of frames 61 to 64 of this tompg file (MPEG-2 joint stereo, intensity and mid/side stereo, a transient after near silence) minimp3 differs from the analyzer, FFmpeg 9.1 and mpg123 1.33.7 by 0.0236 "
-                   "of full scale, for the cause of intensity-mpeg2-largest-position.mp3 (the largest value a position's slen can code is an ordinary position in MPEG-2 and 2.5)"
+        "ffmpeg": "the references disagree: in the granules of frames 61 to 64 of this tompg file (MPEG-2 joint stereo, intensity and mid/side stereo, a transient after near silence) the largest "
+                  "differences are 0.0236 of full scale between minimp3 and FFmpeg 6.1.1 (mp3float and mp3 agree to 3e-5), 0.0221 between minimp3 and mpg123 1.32.5 and 0.0174 between FFmpeg and "
+                  "mpg123; the analyzer keeps minimp3, the reference it follows operation by operation"
     },
     "external-lame357w-vbr.mp3": {
         "minimp3": "in one granule (frame 42, granule 0, side channel: big_values 1, a count1 region of 144 quadruples) the last quadruple starts at line 574 and does not fit in the 576 lines; "
@@ -207,13 +203,14 @@ FFMPEG_RANGES = {
     # the next ones (up to 0.026 of full scale): mpg123 1.32.5 (`mpg123 -e f32 --no-gapless`), madplay 0.15.2b and minimp3 all match the analyzer (largest difference 8e-7, 1.4e-6 and 3e-7),
     # FFmpeg 6.1.1 differs from all four. The first granules are the ones listed in the ranges; the granules where it begins hold long blocks of plain stereo (no intensity or
     # mid/side stereo, no mixed blocks), e.g. external-plugger-pro-cbr granule 92: channel 0 has no big values and a part2_3_length of 2 bits (count1 region only), channel 1 288 big values.
-    # The two MPEG-2 files (l3codeca 1.9 and l3codecp 3.4, joint stereo with mid/side and intensity stereo together) differ for the causes in R2; their ranges are the granules where they show.
+    # The two MPEG-2 files (l3codeca 1.9 and l3codecp 3.4, joint stereo with mid/side and intensity stereo together) differ for the two causes in R2; their ranges are the granules where they show.
     "external-plugger-pro-cbr.mp3": [[52992, 54720]],
     "external-plugger-cbr.mp3": [[43776, 45504], [70848, 71424]],
     "external-plugger-original.mp3": [[43776, 45504], [70848, 71424]],
     "external-plugger-48k.mp3": [[65664, 67392]],
     "external-8hz-flags.mp3": [[52992, 54720]],
-        "external-fhg-acm34-mpeg2.mp3": [[5760, 10944], [17856, 20736], [22464, 24192], [26496, 29376], [31680, 33408], [44928, 46080]],
+    "external-fhg-acm19-mpeg2.mp3": [[1152, 1728], [36288, 37440]],
+    "external-fhg-acm34-mpeg2.mp3": [[0, 1728], [5760, 10944], [17856, 20736], [22464, 24192], [26496, 29376], [31680, 33408], [35712, 36864], [44928, 46080]],
 }
 
 # The positions only minimp3 outputs, which the analyzer does not, in the fixtures that have them: the frames it does not decode (a truncated or cut frame, a VBR header
