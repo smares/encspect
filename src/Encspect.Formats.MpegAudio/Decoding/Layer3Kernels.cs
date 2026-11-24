@@ -4,7 +4,7 @@ using Encspect.Core;
 namespace Encspect.Formats.MpegAudio.Decoding;
 
 // The reconstruction stages of Layer III after the entropy pass: requantization, stereo processing, reordering, the antialias butterflies and the inverse transforms.
-// The arithmetic follows minimp3 (CC0 1.0, https://github.com/lieff/minimp3, commit ea99364f; copied in third_party/minimp3) operation by operation, in single
+// The arithmetic follows minimp3 (CC0 1.0, https://github.com/lieff/minimp3, commit ea99364f; copied in third_party/minimp3) operation by operation (but for the step size of a band, which is one power of two of the gain and scalefactor together), in single
 // precision, so the results are the same on every platform: no fused multiply-add, no platform math library (the powers come from DetMath), every sum in one fixed order.
 internal static class Layer3Kernels
 {
@@ -75,11 +75,13 @@ internal static class Layer3Kernels
         }
 
         int gainExponent = gr.GlobalGain + (BitsDequantizerOut * 4) - 210 - (isMidSide ? 2 : 0);
-        float gain = LdexpQ2(1 << (MaxScalefactorIndex / 4), MaxScalefactorIndex - gainExponent);
+        // One power of two for the gain and the scalefactor together, where minimp3 rounds the gain first: a stream whose gain and scalefactors split the
+        // same total another way (the Helix encoder's A1 re-coding) then decodes to the same floats. This departs from minimp3 in the last bit.
+        int baseExponent = MaxScalefactorIndex - gainExponent;
         int bands = gr.LongBandCount + gr.ShortBandCount;
         for (int i = 0; i < bands; i++)
         {
-            scale[i] = LdexpQ2(gain, iscf[i] << shift);
+            scale[i] = LdexpQ2(1 << (MaxScalefactorIndex / 4), baseExponent + (iscf[i] << shift));
         }
     }
 

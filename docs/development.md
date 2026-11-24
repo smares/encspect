@@ -826,7 +826,8 @@ The cross-check jobs run Ubuntu 26.04's packages. `tool_versions.py` holds the v
   - it skips the first frame it finds and, without a VBR header, starts 2000 bytes into the stream, so elsewhere the check compares it with an emulation of how it reads the file;
   - its tagless encoder guesses, which follow the encoders of 2002, are compared with the analyzer's encoder for encoder-written fixtures; where they differ, the cross-check lists EncSpot's name and why.
 - **Encoder-written fixtures:**
-  - LAME, TwoLAME, Shine, ffmpeg, Fraunhofer's MP3 Surround encoder, and the Helix encoder (5.2.4 and 5.0 r11 from source);
+  - LAME, TwoLAME, Shine, ffmpeg, Fraunhofer's MP3 Surround encoder, and the Helix encoder (5.2.4, its A1 re-coding fork and 5.0 r11 from source);
+    - **The A1 fork** (`external-helix-a1-vbr`, `-keep-gain-vbr`, `-no-tag-vbr`; the signal and arguments of `external-helix-vbr`) was run as a black box, from its README only. Checked on 2026-11-23: the fork with `HMP3_A1=0` writes the bytes of the committed `external-helix-vbr`; with `-B64` the fork writes the bytes of `external-helix-cbr` (no fixture); FFmpeg 6.1.1 and the analyzer's decoder decode every A1 file to the same floats as `external-helix-vbr` (the analyzer's after the step size of a band became one power of two of gain and scalefactor together, 0.4 item 21 of the plan; before it, the default and `-X0` files differed by at most 1.6e-7 of full scale); no frame is larger (11 of 81 smaller by default, 9 with `HMP3_A1=1`), and the VBR files are 1.8 % and 1.4 % smaller. What the analyzer reports of them is in [mpeg-audio.md](formats/mpeg-audio.md#encoder-detection).
   - BladeEnc 0.80, 0.82, 0.84, 0.92.0, 0.92.7, 0.93.6 and 0.94.2, built from source (where the Wayback Machine cannot be reached, 0.94.2 comes from a plain tar in the private repository, pinned by its own SHA-256; `blade_tool.py`), one release per group that writes the same bytes; those before 0.92 as 32-bit programs, as they assume a 32-bit long;
   - LAME 3.90.1, 3.91, 3.92, 3.93.1, 3.94 beta 1, 3.98 beta 8, 3.99 alpha 12, 3.99.5, 3.101 and 4.0, built from source (the betas, the alpha and 3.99.5 from tags of LAME's Subversion repository); 3.101 writes "LAME3.101" with no room for the release marker, 4.0 writes "LAME4.0 " and a NUL byte;
   - LAME 3.95.1, 3.96.1, 3.97 and 3.98.4 from their release tarballs (configure; 3.95.1 calls itself 3.95, 3.96.1 and 3.98.4 write "LAME3.96r" and "LAME3.98r"): `external-lame395-*`, `396`, `397` and `3984` with CBR, `--preset standard`, `--abr 128` and, for 3.96.1 and 3.98.4, `--r3mix`;
@@ -1942,7 +1943,7 @@ The DTS tables below are specification data: the specification is the source and
 
 These are built or fetched by helper scripts:
 
-- the Helix MP3 Encoder: `helix_tool.py`
+- the Helix MP3 Encoder: `helix_tool.py` (hmp3 5.2.4 by its commit; the A1 fork `IgorCv2/hmp3` at commit `e3a5993463ca99ed8af2b6e6fd8358d6f8b26ba7`, which `check_sources.py` asks the repository for like the other commit pins; the fork's variables are set per fixture through the command's name, `hmp3-a1` for its default and `hmp3-a1-keep-gain` for `HMP3_A1=1`)
 - Fraunhofer's MP3 Surround encoder: `fhg_tool.py`
 - Plugger+, 8hz-MP3 and M3E under Wine: `plugger_tool.py`, `hz8_mp3_tool.py`, `m3e_tool.py`; Fraunhofer's MP3 ACM codecs with acmenc under Wine: `fhg_acm_tool.py`
 - fdk-aac: `fdk_tool.py`
