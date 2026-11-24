@@ -475,8 +475,11 @@ public class ComplexityTests
             }
         }
 
+        // Each pattern is timed twice, in turn, and the shorter time counts, so that a pause of a slow runner in one measurement does not fail it.
         TimeSpan floodTime = TimedDtsAnalysis(flood);
         TimeSpan groupsTime = TimedDtsAnalysis(groups);
+        floodTime = Min(floodTime, TimedDtsAnalysis(flood));
+        groupsTime = Min(groupsTime, TimedDtsAnalysis(groups));
         Assert.True(groupsTime < (3 * floodTime) + TimeSpan.FromSeconds(1), $"The chains took {groupsTime.TotalSeconds:F1} s, the headers alone {floodTime.TotalSeconds:F1} s");
     }
 
