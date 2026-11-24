@@ -715,17 +715,24 @@ public class ComplexityTests
     }
 
     // Thousands of audio tracks routed to a codec parser and many blocks of one of them: each track was routed by a pass over all the blocks, so
-    // 4,000 tracks and 3 million blocks took 95 s. The time is compared with the same tracks and one block, so a slow machine does not fail it: the blocks cost under a second, a pass of each of the 4,000 tracks over them 16 s or more.
+    // 4,000 tracks and 3 million blocks took 95 s. The time is compared with what its two parts cost apart, the same tracks with one block and the
+    // same blocks with one track, so that a slow machine slows both sides alike: the parts add up to about the whole, while the 4,000 passes over
+    // the blocks cost 16 s or more on x64, where the parts take under a second together. Each file is timed twice, in turn, and the shorter time counts.
     [Fact]
     public void ManyRoutedTracksAndManyBlocks()
     {
         const int blocks = 500_000;
         byte[] few = RoutedTracksAndBlocks(4000, 1);
+        byte[] plain = RoutedTracksAndBlocks(1, blocks);
         byte[] many = RoutedTracksAndBlocks(4000, blocks);
 
-        TimeSpan oneTime = Min(TimedMatroska(few, 4000), TimedMatroska(few, 4000));
-        TimeSpan manyTime = Min(TimedMatroska(many, 4000), TimedMatroska(many, 4000));
-        Assert.True(manyTime < (3 * oneTime) + TimeSpan.FromSeconds(1), $"500,000 blocks took {manyTime.TotalSeconds:F1} s, one block {oneTime.TotalSeconds:F1} s");
+        TimeSpan oneTime = TimedMatroska(few, 4000);
+        TimeSpan plainTime = TimedMatroska(plain, 1);
+        TimeSpan manyTime = TimedMatroska(many, 4000);
+        oneTime = Min(oneTime, TimedMatroska(few, 4000));
+        plainTime = Min(plainTime, TimedMatroska(plain, 1));
+        manyTime = Min(manyTime, TimedMatroska(many, 4000));
+        Assert.True(manyTime < (2 * (oneTime + plainTime)) + TimeSpan.FromSeconds(0.5), $"4,000 tracks and 500,000 blocks took {manyTime.TotalSeconds:F2} s, the tracks with one block {oneTime.TotalSeconds:F2} s, the blocks with one track {plainTime.TotalSeconds:F2} s");
     }
 
     private static TimeSpan Min(TimeSpan a, TimeSpan b) => a < b ? a : b;
