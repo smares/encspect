@@ -12,6 +12,7 @@ docs/design/tak-optimfrog-headers.md, "Fixtures", "TAK, on Windows".
 - A case is a name, an input, Takc's arguments, how the input reaches Takc (`file`, or `pipe`: Takc reads standard input, the script
   writing the WAV's bytes to it), whether the case may fail without failing the run (`optional`, with the reason), and for the lossyWAV
   case the preprocessing (`lossywav`) whose output is the input.
+- The `pair-*` cases look for files whose channel table pairs channels (codec 4's types 0 to 3, which no other case has produced); the importer keeps only those.
 - The file names say what the settings are; the importer names the committed files after what the headers say (the stream info and
   the encoder info), as the WMA importer does, and keeps the request in the provenance.
 """
@@ -41,7 +42,37 @@ INPUTS = {
     "cd-16-stereo-chunks": (44100, 2, 16, 11024, "tones", {"chunks": True}),
     "cd-16-stereo-unknown-size": (44100, 2, 16, 11024, "tones", {"unknown_size": True}),
     "lossywav-source": (44100, 2, 16, 44100, "tones", {}),
+    # Six channels in three pairs (0 and 1, 2 and 3, 4 and 5) that Takc's encoder may enter into the channel table as paired (docs/formats/tak.md, "Decoding";
+    # tak-format.md, 6.2): the second channel of a pair equals the first, differs by noise of 2 LSB, or is the first at another gain. About 2 s.
+    "pairs-identical": (48000, 6, 16, 96000, "pairs-identical", {"mask": 0x3F}),
+    "pairs-noisy": (48000, 6, 16, 96000, "pairs-noisy", {"mask": 0x3F}),
+    "pairs-gains": (48000, 6, 16, 96000, "pairs-gains", {"mask": 0x3F}),
 }
+
+PAIR_PRESETS = ("-p2m", "-p3e", "-p4m")
+PAIR_GAINS = ((3, 5), (7, 4), (-1, 2))
+
+
+def pair_samples(rate, bits, frames, kind):
+    """The interleaved samples of a pairs-* signal: three base channels (the tones signal of wma_signals.py), each followed by its partner."""
+    base = list(itertools.islice(wma_signals.samples(rate, 3, bits, frames / rate + 1, "tones"), frames * 3))
+    full = (1 << (bits - 1)) - 1
+    seed = 4242
+    out = []
+    for i in range(frames):
+        for k in range(3):
+            x = base[i * 3 + k]
+            if kind == "pairs-identical":
+                y = x
+            elif kind == "pairs-noisy":
+                seed = (seed * 1103515245 + 12345) & 0x7FFFFFFF
+                y = x + ((seed >> 16) % 5) - 2
+            else:
+                numerator, denominator = PAIR_GAINS[k]
+                y = x * numerator // denominator
+            out.append(x)
+            out.append(max(-full - 1, min(full, y)))
+    return out
 
 
 def chunk(tag, payload):
@@ -50,7 +81,10 @@ def chunk(tag, payload):
 
 
 def wav_bytes(rate, channels, bits, frames, kind, options):
-    values = itertools.islice(wma_signals.samples(rate, channels, bits, frames / rate + 1, kind), frames * channels)
+    if kind.startswith("pairs-"):
+        values = pair_samples(rate, bits, frames, kind)
+    else:
+        values = itertools.islice(wma_signals.samples(rate, channels, bits, frames / rate + 1, kind), frames * channels)
     if bits == 8:
         data = bytes(v + 128 for v in values)
     elif bits == 16:
@@ -107,6 +141,11 @@ def cases():
         optional="a WAV with unknown sizes is the case -ihs exists for, but Takc's reaction to the sizes is not documented")
     add("pipe-wm1024", "cd-16-stereo", ["-p2", "-wm1024"], mode="pipe",
         optional="reserves 1024 bytes for the wave data, which should leave unused space in the metadata")
+    # Encodes that may pair channels in the channel table: import_windows_tak_fixtures.py reads the table of every frame and commits only the files in which
+    # one is paired; the others are listed in tests/fixtures/tak/pairs-tried.json.
+    for signal in ("identical", "noisy", "gains"):
+        for preset in PAIR_PRESETS:
+            add(f"pair-{signal}{preset}", f"pairs-{signal}", [preset], optional="may not pair channels; the importer commits only a file whose channel tables pair")
     add("lossywav-fsl512", "lossywav-source", ["-p2", "-fsl512"],
         optional="needs lossyWAV 1.4.2 from the private repository (ENCSPECT_PRIVATE_TOKEN)",
         lossywav={"arguments": ["-q", "S"], "from": "lossywav-source"})

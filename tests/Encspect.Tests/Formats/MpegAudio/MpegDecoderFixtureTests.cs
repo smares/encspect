@@ -71,6 +71,19 @@ public class MpegDecoderFixtureTests
         "mpeg-audio/external-lame-stereo-music.mp3",
         "mpeg-audio/external-lame-forced-ms.mp3",
         "mpeg-audio/external-shine-joint.mp3",
+
+        // The streams that state an intensity stereo bound (docs/design/spectral-analysis.md, Step 8): tompg 3.0 and l3codeca 1.9, whose inter-channel coherence starts near the stated
+        // bound, and l3codecp 3.4, whose bound is stated in frames with little above it and whose figure is not found.
+        "mpeg-audio/external-xing-mpeg2.mp3",
+        "mpeg-audio/external-xing-joint.mp3",
+        "mpeg-audio/external-fhg-acm19-mpeg2.mp3",
+        "mpeg-audio/external-fhg-acm34-mpeg2.mp3",
+
+        // TwoLAME's joint stereo (intensity stereo in Layer II) on the measurement fixtures' pink noise: its stated bounds beside the measured start.
+        "mpeg-audio/external-twolame-joint-pink-b128.mp2",
+        "mpeg-audio/external-twolame-joint-pink-b192.mp2",
+        "mpeg-audio/external-twolame-joint-pink-side-12-db-b128.mp2",
+        "mpeg-audio/external-twolame-joint-pink-side-12-db-b192.mp2",
     };
 
     [Theory]

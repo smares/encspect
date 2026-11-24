@@ -1,0 +1,194 @@
+{
+ "tool": "TAK 2.3.3 (Takc.exe), http://www.thbeck.de/Tak/Tak.html",
+ "cases": [
+  {
+   "case": "pair-identical-p2m",
+   "arguments": [
+    "-p2m"
+   ],
+   "input": "pairs-identical",
+   "size": 153938,
+   "sha256": "50ea5662c6b1c9269cda9e40346e7d71da49014f55ff98d4d30bd53a1e7a97b9",
+   "frames": 16,
+   "codec": 4,
+   "channels": 6,
+   "tableFrames": 16,
+   "pairedFrames": 16,
+   "pairedEntries": 33,
+   "types": {
+    "add": 33,
+    "mid/side": 0,
+    "scaled": 0,
+    "filter": 0
+   }
+  },
+  {
+   "case": "pair-identical-p3e",
+   "arguments": [
+    "-p3e"
+   ],
+   "input": "pairs-identical",
+   "size": 160853,
+   "sha256": "992caf3fb0e2f9eb905f8defe2900715c2492b3db0848a6784b6ba0c4e3b25be",
+   "frames": 12,
+   "codec": 4,
+   "channels": 6,
+   "tableFrames": 12,
+   "pairedFrames": 12,
+   "pairedEntries": 24,
+   "types": {
+    "add": 24,
+    "mid/side": 0,
+    "scaled": 0,
+    "filter": 0
+   }
+  },
+  {
+   "case": "pair-identical-p4m",
+   "arguments": [
+    "-p4m"
+   ],
+   "input": "pairs-identical",
+   "size": 175494,
+   "sha256": "a94abc4c02da597afcf51cc55ed6ba95ba2e3907598f752cebad9900c611ef0c",
+   "frames": 8,
+   "codec": 4,
+   "channels": 6,
+   "tableFrames": 8,
+   "pairedFrames": 8,
+   "pairedEntries": 16,
+   "types": {
+    "add": 16,
+    "mid/side": 0,
+    "scaled": 0,
+    "filter": 0
+   }
+  },
+  {
+   "case": "pair-noisy-p2m",
+   "arguments": [
+    "-p2m"
+   ],
+   "input": "pairs-noisy",
+   "size": 237156,
+   "sha256": "5ba35d86b3be6402fe9b9b7ecdd7a38681bc4a947d1d222c56e1651ec01bc2d4",
+   "frames": 16,
+   "codec": 4,
+   "channels": 6,
+   "tableFrames": 16,
+   "pairedFrames": 16,
+   "pairedEntries": 33,
+   "types": {
+    "add": 23,
+    "mid/side": 0,
+    "scaled": 0,
+    "filter": 10
+   }
+  },
+  {
+   "case": "pair-noisy-p3e",
+   "arguments": [
+    "-p3e"
+   ],
+   "input": "pairs-noisy",
+   "size": 241145,
+   "sha256": "82b1c876f62d2ec47abe9384359b5818c55f3b385a415c99856b3acab675f5f2",
+   "frames": 12,
+   "codec": 4,
+   "channels": 6,
+   "tableFrames": 12,
+   "pairedFrames": 12,
+   "pairedEntries": 24,
+   "types": {
+    "add": 24,
+    "mid/side": 0,
+    "scaled": 0,
+    "filter": 0
+   }
+  },
+  {
+   "case": "pair-noisy-p4m",
+   "arguments": [
+    "-p4m"
+   ],
+   "input": "pairs-noisy",
+   "size": 250662,
+   "sha256": "ab5f5b07ab11c3e2376c844e20f13707870b940755fd8a33747ba3cb07d18a58",
+   "frames": 8,
+   "codec": 4,
+   "channels": 6,
+   "tableFrames": 8,
+   "pairedFrames": 8,
+   "pairedEntries": 16,
+   "types": {
+    "add": 16,
+    "mid/side": 0,
+    "scaled": 0,
+    "filter": 0
+   }
+  },
+  {
+   "case": "pair-gains-p2m",
+   "arguments": [
+    "-p2m"
+   ],
+   "input": "pairs-gains",
+   "size": 216089,
+   "sha256": "70a7b8254c575cb0354d7b9f364891a9f2602675f12e659d1dcae1a9ed876efc",
+   "frames": 16,
+   "codec": 4,
+   "channels": 6,
+   "tableFrames": 16,
+   "pairedFrames": 16,
+   "pairedEntries": 35,
+   "types": {
+    "add": 3,
+    "mid/side": 0,
+    "scaled": 22,
+    "filter": 10
+   }
+  },
+  {
+   "case": "pair-gains-p3e",
+   "arguments": [
+    "-p3e"
+   ],
+   "input": "pairs-gains",
+   "size": 234183,
+   "sha256": "2cf730f351fd2d643dbb15b783ebb688cee8a03479b67942719277adcef02b3f",
+   "frames": 12,
+   "codec": 4,
+   "channels": 6,
+   "tableFrames": 12,
+   "pairedFrames": 12,
+   "pairedEntries": 24,
+   "types": {
+    "add": 0,
+    "mid/side": 0,
+    "scaled": 21,
+    "filter": 3
+   }
+  },
+  {
+   "case": "pair-gains-p4m",
+   "arguments": [
+    "-p4m"
+   ],
+   "input": "pairs-gains",
+   "size": 249015,
+   "sha256": "d57ffa4cc838f3287177801611754b621fda0da3c31e593170cd2ef6633a1b45",
+   "frames": 8,
+   "codec": 4,
+   "channels": 6,
+   "tableFrames": 8,
+   "pairedFrames": 8,
+   "pairedEntries": 16,
+   "types": {
+    "add": 5,
+    "mid/side": 0,
+    "scaled": 11,
+    "filter": 0
+   }
+  }
+ ]
+}

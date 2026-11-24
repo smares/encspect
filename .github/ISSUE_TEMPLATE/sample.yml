@@ -1,0 +1,49 @@
+name: Sample file
+description: Offer an audio file whose origin you know, to help Encspect recognize encoders.
+title: "Sample: "
+labels: ["sample"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for offering a sample. Encspect learns an encoder's traces only from files whose origin is known, so the more you know about how the file was made, the more it helps. "Unknown" is a fine answer for anything you cannot recall.
+
+        Please do not attach or link music you have no right to share, and remove personal data from the file's tags (names, e-mail addresses, account or license IDs) or blank it with characters of the same length.
+  - type: input
+    id: link
+    attributes:
+      label: Link to the File
+      description: A download link on any file host. Short files are fine (ten to thirty seconds, or a few megabytes). You can also attach a ZIP of the file below in the details.
+      placeholder: https://...
+    validations:
+      required: true
+  - type: input
+    id: encoder
+    attributes:
+      label: Encoder and Version
+      description: The program that wrote the file, with its exact version, or the device for a hardware player, recorder or phone.
+      placeholder: "e.g. LAME 3.100, fdkaac 1.0.0 with libfdk-aac 2.0.2, a music player's built-in ripper"
+    validations:
+      required: true
+  - type: textarea
+    id: settings
+    attributes:
+      label: Settings
+      description: The command line, or the bitrate mode, quality, preset and any other options you chose.
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: The operating system, whether the file was changed after encoding (tagged, trimmed, converted, remuxed), whether the program added tags by itself, what Encspect reports for it if you ran it, and anything odd that happened.
+  - type: dropdown
+    id: use
+    attributes:
+      label: How May the File Be Used?
+      options:
+        - Only for checking Encspect, not published
+        - Also as a test file in the public project, released under CC0 (no rights reserved)
+        - Not sure yet
+    validations:
+      required: true

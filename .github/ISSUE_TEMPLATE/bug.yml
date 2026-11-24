@@ -1,0 +1,59 @@
+name: Bug report
+description: Something Encspect reports wrongly, a crash, a hang, or a window that misbehaves.
+title: "Bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a problem. The more exactly the steps and the file are described, the faster it can be found.
+  - type: input
+    id: version
+    attributes:
+      label: Encspect Version
+      description: Shown by `encspect --version`, or in the graphical app under About Encspect (the Help menu; on macOS the application menu).
+      placeholder: "e.g. 0.3.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Windows x64
+        - Windows ARM64
+        - macOS (Apple silicon)
+        - macOS (Intel)
+        - Linux x64
+        - Linux ARM64
+    validations:
+      required: true
+  - type: dropdown
+    id: frontend
+    attributes:
+      label: Where It Happens
+      options:
+        - Command line (encspect)
+        - Graphical app (encspect-gui)
+        - Both
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps
+      description: The command line, or what you clicked, and on which file. Name the file's format and the program that wrote it if you know it.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What Happened and What You Expected
+      description: For a wrong figure or encoder, say what Encspect reports and what you believe is right, and how you know (another tool's output, the encoder's settings).
+    validations:
+      required: true
+  - type: textarea
+    id: files
+    attributes:
+      label: Report or File
+      description: Attach the JSON report (`encspect --json file > report.json`) or a small file that shows the problem, zipped, or link to it on any file host. Remove personal data from tags first, and attach only files you have the right to share.
