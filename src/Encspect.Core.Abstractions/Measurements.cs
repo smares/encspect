@@ -133,6 +133,11 @@ public static class MeasurementLimits
     // The spectrogram's cell value of a level of 0 dB is this offset plus 0; a cell of 0 means no data.
     public const int GridOffset = 200;
 
+    // The inter-channel coherence that counts as near 1 (decision S20: 85 %), in tenths of a percent, and the fewest frames its figure needs.
+    public const int CoherenceThresholdTenths = 850;
+
+    public const int MinimumCoherenceFrames = 10;
+
     // The sentinel of a spectrum row that holds no power at all.
     public const short NoPower = short.MinValue;
 
@@ -326,6 +331,82 @@ public sealed record SpectrumFigures
 
     // The mid and side spectra of one pair of channels; null where the stream has no pair (see the mid-side-spectra topic).
     public MidSideFigures? MidSide { get; init; }
+
+    // The inter-channel coherence of the same pair; null where the stream has no pair (see the inter-channel-coherence topic).
+    public CoherenceFigures? Coherence { get; init; }
+}
+
+// Why no inter-channel coherence run is found.
+public enum CoherenceReason
+{
+    None,
+
+    // The top band of the range is under the threshold.
+    NotCoherent,
+
+    // Every band down to 0 Hz is at or over the threshold.
+    ReachesStart,
+
+    // No full band of 1 kHz lies in the range.
+    TooShort,
+
+    // Fewer frames than MeasurementLimits.MinimumCoherenceFrames.
+    TooFewFrames,
+}
+
+// What a parser states about the intensity stereo bound over the units of the stream, set beside the measured start of the coherence: the lower median of the
+// values of the series named SeriesQuantities.IntensityStereoBound, in whole hertz (halves up), over the units that have one.
+public sealed record StatedIntensityBound
+{
+    public int MedianFrequency { get; init; }
+
+    public int Units { get; init; }
+
+    // The measured start minus the stated median, in hertz; null where no start is found.
+    public int? Difference { get; init; }
+}
+
+// The inter-channel coherence of the pair of channels of MidSideFigures (front left and right, or the two channels of a stream without a layout): the
+// magnitude-squared coherence of the averaged cross-spectrum and power spectra, per row, and the lowest frequency from which it stays at or over
+// MeasurementLimits.CoherenceThresholdTenths up to the top of the range. A figure of the decoded audio, not a statement about the encoder.
+public sealed record CoherenceFigures
+{
+    // False for a rate under 8,000 Hz, where nothing is searched.
+    public bool IsSearched { get; init; } = true;
+
+    public int LeftChannel { get; init; }
+
+    public int RightChannel { get; init; }
+
+    // The frames the averages hold.
+    public int Frames { get; init; }
+
+    // The coherence of each of the 512 rows from the stream's sums, in tenths of a percent; MeasurementLimits.NoPower where either channel has no power in the row.
+    public ReadOnlyMemory<short> Rows { get; init; }
+
+    public bool IsFound { get; init; }
+
+    public CoherenceReason Reason { get; init; }
+
+    // Whole hertz: the lower edge of the run's lowest row and the upper edge of the range's last row; 0 where none is found.
+    public int FromFrequency { get; init; }
+
+    public int ToFrequency { get; init; }
+
+    // The coherence of the top band of the range, in tenths of a percent (the figure of a run that is not found because of it).
+    public int TopBandTenths { get; init; }
+
+    // The frames with signal at the run's first full band, and those of them in which that band is at or over the threshold.
+    public int FramesShowing { get; init; }
+
+    public int FramesWithSignal { get; init; }
+
+    // For each of the 512 rows, the share of the frames with signal in which the band of 1 kHz under the row is at or over the threshold, in tenths of a percent;
+    // MeasurementLimits.NoPower for a row that is not a candidate or has no frame with signal.
+    public ReadOnlyMemory<short> Shares { get; init; }
+
+    // The parser's stated bound beside the figure; null where the stream has none.
+    public StatedIntensityBound? Stated { get; init; }
 }
 
 // The mid and side spectra of the pair of channels the layout names front left and front right, or of channels 0 and 1 of a stream of two

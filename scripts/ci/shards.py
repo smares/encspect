@@ -2,7 +2,9 @@
 """The shards Encspect.Tests is split into on CI, as dotnet test filters.
 
 shards.json names the classes of each shard but the last, whose classes are null: it runs every test no
-other shard lists, so a new test class lands in a shard by itself. A class is matched by its dotted name
+other shard lists, so a new test class lands in a shard by itself. The last shard also names the damaged-input
+classes (Corrupt*Tests) it is meant to run (damagedInputClasses), so that check_shards.py fails when another one
+falls into it because a shard lost it. A class is matched by its dotted name
 inside the fully qualified one (".Name."), so a class whose name starts with another's is not caught by it.
 
     shards.py names                  # one shard name per line
@@ -36,7 +38,19 @@ def load(path=CONFIG):
     classes = [c for s in shards[:-1] for c in s["classes"]]
     if len(set(classes)) != len(classes):
         raise SystemExit("shards.json: a class is listed in two shards")
+    if any("damagedInputClasses" in s for s in shards[:-1]):
+        raise SystemExit("shards.json: only the last shard names its damagedInputClasses")
+    if set(shards[-1].get("damagedInputClasses", [])) & set(classes):
+        raise SystemExit("shards.json: a class of the last shard's damagedInputClasses is listed in another shard")
     return shards
+
+
+def damaged_input_in_rest(shards, test_classes):
+    """The damaged-input classes (Corrupt*Tests) that fall into the last shard without being named in its
+    damagedInputClasses: a class a shard lost, which the last shard would otherwise run unnoticed."""
+    named = {c for s in shards[:-1] for c in s["classes"]}
+    meant = set(shards[-1].get("damagedInputClasses", []))
+    return sorted(c for c in test_classes if c.startswith("Corrupt") and c.endswith("Tests") and c not in named and c not in meant)
 
 
 def runs(shard, include_nightly):

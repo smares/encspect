@@ -40,6 +40,7 @@ Opus in [Ogg](ogg.md) (RFC 6716, RFC 7845), in [Matroska](matroska.md) and in [M
 - the bitrates;
 - **Block Sizes** (the CELT frames that use one long transform and those that split it into short blocks, as Vorbis words it: entries "Long" and "Short"; series "Block Sizes", per packet) and **Stereo Coding** (each stereo CELT frame once, as MPEG and AAC name the codings: "Left/right stereo" for dual stereo, "Mid/side stereo", "Intensity stereo" for intensity stereo over left and right, "Mid/side and intensity stereo"; series "Stereo Coding"), from the entropy pass;
 - **Intensity Stereo Bound** (the lowest and highest hertz from which a CELT frame codes intensity stereo, and the series "Intensity Stereo Bound", per packet: the lowest bound of the packet's frames, 21 bands of 5 ms frames mapped to hertz as 200 Hz per bin);
+  - The host reads the series by the quantity `SeriesQuantities.IntensityStereoBound` and, with `--measure`, sets its median beside the start of the inter-channel coherence of the decoded audio as figures ([cli.md](../cli.md)).
 - **Frames With Redundancy** (frames that end with a redundant CELT frame that bridges a mode change, RFC 6716 section 4.5.1) and the SILK frames read.
 
 ## Channel layout

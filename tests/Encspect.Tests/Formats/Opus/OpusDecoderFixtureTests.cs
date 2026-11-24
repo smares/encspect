@@ -58,6 +58,37 @@ public class OpusDecoderFixtureTests
         return (Analyzer.CreateDefault().Analyze(Path.GetFileName(name), stream, options), sinks);
     }
 
+    // The fixtures that state an intensity stereo bound are measured too (docs/design/spectral-analysis.md, Step 8): what the inter-channel coherence reads beside the stated bound.
+    public static TheoryData<string> MeasuredNames => new()
+    {
+        "ogg/external-opusenc-cvbr.opus",
+        "ogg/external-opusenc-music-5ms.opus",
+        "ogg/external-opusenc-hard-cbr.opus",
+        "ogg/external-libopus-stereo-hybrid-20ms.opus",
+        "ogg/external-ffmpeg-opus.opus",
+        "ogg/external-opusenc-24-pink-equal.opus",
+        "ogg/external-opusenc-24-pink-side-12-db.opus",
+    };
+
+    [Theory]
+    [MemberData(nameof(MeasuredNames))]
+    public void MeasuringAddsWhatTheMeasureGoldenHolds(string name)
+    {
+        using FileStream stream = File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, name));
+        var options = new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions() } };
+        Report report = Analyzer.CreateDefault().Analyze(Path.GetFileName(name), stream, options);
+        string actual = Encspect.Tests.Measurement.MeasurementFixtureTests.Golden(report, Path.GetFileNameWithoutExtension(name));
+        string path = Fixtures.MpegCompanion(name, ".measure.json");
+        if (Fixtures.UpdateGolden)
+        {
+            File.WriteAllText(path, actual);
+            return;
+        }
+
+        Assert.True(File.Exists(path), $"Missing golden file {path}; run the tests with ENCSPECT_UPDATE_GOLDEN=1 to create it.");
+        Assert.Equal(File.ReadAllText(path).ReplaceLineEndings("\n"), actual);
+    }
+
     [Theory]
     [MemberData(nameof(Names))]
     public void DecodingChangesNoNode(string name)

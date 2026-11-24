@@ -7,6 +7,11 @@
 # per channel and their MD5 in the canonical layout of decoded_pcm_md5 (signed, little-endian, as many whole bytes as the depth needs: 8-bit WAVE data is unsigned
 # and is converted). The channels and the depth are those of the stream info, which the manifests hold; the script reads the WAVE header only for the data chunk.
 #
+# The same records also hold `sdkRead`: the file opened with the SDK's decoder library (Deco_Lib\x64\tak_deco_lib.dll, TakTools.cs, TakSdk.ReadAll) and read with tak_SSD_ReadAudio, one
+# frame per call, to the end: per call the position, the samples asked and returned, the result code (3 is tak_res_ssd_FrameDamaged) and the position after it; the damage callback's
+# items (position and size in samples); tak_SSD_GetStateInfo; and `pcmMd5` and `samples` of what the calls returned in total (canonical layout). Damaged files are read the same way;
+# a file the library does not take has an `error` and no calls. crosscheck_tak_pcm.py compares these (docs/development.md, "TAK decoding (clean-room)").
+#
 # Writes into -Out: sdk-decoded.json (the records), environment.json and log.txt. tests/fixtures/tak/sdk-decoded.json is the file of a run copied in. A file Takc
 # refuses (a damaged one) has a record with its exit status and no samples; only the encoder-written files (external-*) are compared with the manifests.
 param(
@@ -38,9 +43,18 @@ if (-not (Test-Path -LiteralPath $takc)) {
     exit 1
 }
 
+$library = Join-Path $tool 'Deco_Lib\x64\tak_deco_lib.dll'
+if (-not (Test-Path -LiteralPath $library)) {
+    Write-Host ('missing: ' + $library)
+    Stop-Transcript | Out-Null
+    exit 1
+}
+
 $environment = [ordered]@{
     takVersion = '2.3.3'
     takcSha256 = Get-Sha256 $takc
+    librarySha256 = Get-Sha256 $library
+    libraryFileVersion = (Get-Item $library).VersionInfo.FileVersion
     runnerImageOS = $env:ImageOS
     runnerImageVersion = $env:ImageVersion
 }
@@ -72,10 +86,14 @@ foreach ($tak in (Get-ChildItem -LiteralPath (Join-Path $repository 'tests\fixtu
             $record['samples'] = [long]($span[1] / ($channels * ($bits / 8)))
         }
     }
+    try { $record['sdkRead'] = [Encspect.TakSdk]::ReadAll($library, $tak.FullName) }
+    catch { $record['sdkRead'] = [ordered]@{ error = $_.Exception.Message } }
+    $sdk = $record['sdkRead']
+    Write-Host ('SDK read: ' + $(if ($sdk['error']) { 'error ' + $sdk['error'] } else { [string]$sdk['samples'] + ' samples in ' + $sdk['callCount'] + ' calls, ' + $sdk['damage'].Count + ' damage items, md5 ' + $sdk['pcmMd5'] }))
     $files[$tak.Name] = $record
 }
 
-$result = [ordered]@{ tool = 'Takc.exe 2.3.3 -d'; files = $files }
-[IO.File]::WriteAllText((Join-Path $Out 'sdk-decoded.json'), ($result | ConvertTo-Json -Depth 6) + "`n", (New-Object Text.UTF8Encoding $false))
+$result = [ordered]@{ tool = 'Takc.exe 2.3.3 -d; tak_deco_lib.dll 2.3.3 tak_SSD_ReadAudio'; files = $files }
+[IO.File]::WriteAllText((Join-Path $Out 'sdk-decoded.json'), ($result | ConvertTo-Json -Depth 8) + "`n", (New-Object Text.UTF8Encoding $false))
 Write-Host ('=== ' + $files.Count + ' files ===')
 Stop-Transcript | Out-Null

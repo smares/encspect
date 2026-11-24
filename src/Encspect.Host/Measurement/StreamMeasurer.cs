@@ -15,7 +15,7 @@ internal sealed class StreamMeasurer
 
     // The work per sample of a channel of the pair for the stored bins, the mid and side rows and their counters (docs/design/spectral-analysis.md,
     // Step 7, "Cost, memory and determinism": about 6 units of 0.6 ns, 3.6 ns, a sample of each channel of the pair).
-    internal const int PairWeight = 6;
+    internal const int PairWeight = 8;
 
     private const int CheckEvery = 1 << 16;
 
@@ -78,6 +78,10 @@ internal sealed class StreamMeasurer
     private readonly double _inverseBand;
     private readonly double _ratioTimesBand;
     private readonly double[] _average = [];
+    private readonly double[] _crossSums = [];
+    private readonly double[] _crossRows = [];
+    private readonly double[][] _coherenceSuffix = [];
+    private CoherenceCounters? _coherence;
     private CutoffCounters[] _counters = [];
     private float[] _cells = [];
     private readonly int[] _counts = new int[MeasurementLimits.MaxColumns];
@@ -196,6 +200,11 @@ internal sealed class StreamMeasurer
         {
             _pairUnits = 2L * PairWeight;
             _bins = [new double[_plan.Half], new double[_plan.Half], new double[_plan.Half], new double[_plan.Half]];
+
+            // The stream's sums of the cross rows (real, then imaginary), the frame's cross rows, and the four suffix arrays of the frame's test.
+            _crossSums = new double[2 * MeasurementLimits.Rows];
+            _crossRows = new double[2 * MeasurementLimits.Rows];
+            _coherenceSuffix = [new double[MeasurementLimits.Rows + 1], new double[MeasurementLimits.Rows + 1], new double[MeasurementLimits.Rows + 1], new double[MeasurementLimits.Rows + 1]];
         }
         _buffers = new double[_measured][];
         for (int c = 0; c < _measured; c++)
@@ -252,6 +261,11 @@ internal sealed class StreamMeasurer
     // The counters of each measured channel, then of the combined spectrum, then of the mid and of the side spectrum where there is a pair (the tests pin their raw output).
     internal IReadOnlyList<CutoffCounters> CounterSets => _counters;
 
+    // The counters of the pair's coherence and the stream's sums of the cross rows (the real parts, then the imaginary ones), which the tests pin; null or empty without a pair.
+    internal CoherenceCounters? CoherenceCounterSet => _coherence;
+
+    internal double[] CrossSums => _crossSums;
+
     // The state of a stream of this format, in bytes, for the memory bound (decided before anything is allocated).
     public static long EstimateBytes(PcmFormat format, MeasureOptions options)
     {
@@ -302,6 +316,9 @@ internal sealed class StreamMeasurer
             // The stored bins of the two channels of the pair (16 N bytes), and the mid and side rows and averages.
             bytes += 16L * size;
             bytes += 2L * 2 * rows * 8 * 2;
+
+            // The stream's sums of the cross rows and the frame's (2 x 2 x 512 doubles), the four suffix arrays, and the figure's rows and shares.
+            bytes += (2L * 2 * rows * 8) + (4L * (rows + 1) * 8) + (4L * (rows + 1) * 8) + (2L * 2 * rows);
         }
 
         if (format.SampleRate >= CutoffGeometry.MinimumRate)
@@ -310,6 +327,7 @@ internal sealed class StreamMeasurer
             if (hasPair)
             {
                 bytes += 2 * (CutoffCounters.Bytes + CutoffCounters.HolesBytes);
+                bytes += CoherenceCounters.Bytes;
             }
         }
 
@@ -1205,6 +1223,11 @@ internal sealed class StreamMeasurer
             }
         }
 
+        if (_geometry.IsSearched && HasPair)
+        {
+            _coherence = new CoherenceCounters();
+        }
+
         _cells = new float[MeasurementLimits.MaxColumns * MeasurementLimits.Rows];
         return true;
     }
@@ -1296,6 +1319,17 @@ internal sealed class StreamMeasurer
                     Count(setRows, _counters[set]);
                 }
             }
+
+            plan.CrossRows(_bins[0], _bins[1], _bins[2], _bins[3], _crossRows.AsSpan(0, rows), _crossRows.AsSpan(rows, rows));
+            for (int i = 0; i < 2 * rows; i++)
+            {
+                _crossSums[i] += _crossRows[i];
+            }
+
+            if (_coherence is not null)
+            {
+                CountCoherence(_rows.AsSpan(_pairLeft * rows, rows), _rows.AsSpan(_pairRight * rows, rows), _coherence);
+            }
         }
 
         long hopIndex = (_bufferStart - _origin) / _hop;
@@ -1382,6 +1416,48 @@ internal sealed class StreamMeasurer
         }
     }
 
+    // The counters of the pair's coherence for one frame: the band of W rows under each row from the first full band, as Count forms its bands, the pair's mean power
+    // selecting the level and the test of CoherenceFinder deciding the second counter.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private void CountCoherence(ReadOnlySpan<double> left, ReadOnlySpan<double> right, CoherenceCounters counters)
+    {
+        int rows = MeasurementLimits.Rows;
+        double[] sl = _coherenceSuffix[0];
+        double[] sr = _coherenceSuffix[1];
+        double[] scr = _coherenceSuffix[2];
+        double[] sci = _coherenceSuffix[3];
+        int top = CutoffGeometry.TopRow;
+        sl[top + 1] = 0;
+        sr[top + 1] = 0;
+        scr[top + 1] = 0;
+        sci[top + 1] = 0;
+        for (int r = top; r >= 0; r--)
+        {
+            sl[r] = sl[r + 1] + left[r];
+            sr[r] = sr[r + 1] + right[r];
+            scr[r] = scr[r + 1] + _crossRows[r];
+            sci[r] = sci[r + 1] + _crossRows[rows + r];
+        }
+
+        int w = _geometry.BandRows;
+        double inverseBand = _inverseBand;
+        int[] all = counters.All;
+        int[] coherent = counters.Coherent;
+        for (int r = w - 1; r <= CutoffGeometry.LastCandidate; r++)
+        {
+            double underLeft = sl[r - w + 1] - sl[r + 1];
+            double underRight = sr[r - w + 1] - sr[r + 1];
+            int exponent = (int)((BitConverter.DoubleToInt64Bits((underLeft + underRight) * 0.5 * inverseBand) >> 52) & 0x7FF) - 1023;
+            exponent = exponent < CutoffCounters.FirstExponent ? 0 : exponent > CutoffCounters.FirstExponent + CutoffCounters.Levels - 1 ? CutoffCounters.Levels - 1 : exponent - CutoffCounters.FirstExponent;
+            int cell = (r * CutoffCounters.Levels) + exponent;
+            all[cell]++;
+            if (CoherenceFinder.IsCoherent(scr[r - w + 1] - scr[r + 1], sci[r - w + 1] - sci[r + 1], underLeft, underRight))
+            {
+                coherent[cell]++;
+            }
+        }
+    }
+
     // The bytes a record keeps in the report: the grids and the rows. It stays reserved in the memory bound until the analysis ends.
     public static long RecordBytes(StreamMeasurements record)
     {
@@ -1399,6 +1475,11 @@ internal sealed class StreamMeasurer
             if (spectrum.MidSide is { } midSide)
             {
                 bytes += 2L * (midSide.Mid.Length + midSide.Side.Length + midSide.MidHoles.RowShares.Length + midSide.SideHoles.RowShares.Length) + 256;
+            }
+
+            if (spectrum.Coherence is { } coherence)
+            {
+                bytes += (2L * (coherence.Rows.Length + coherence.Shares.Length)) + 128;
             }
         }
 
@@ -1518,24 +1599,28 @@ internal sealed class StreamMeasurer
         for (int c = 0; c < _measured; c++)
         {
             perChannel[c] = Levels(_average.AsSpan(c * rows, rows));
-            cutoffs.Add(CutoffFinder.Find(perChannel[c], _counters.Length > 0 ? _counters[c] : null, _geometry));
-            bandwidths.Add(CutoffFinder.FindBandwidth(perChannel[c], _geometry));
-            slopes.Add(CutoffFinder.FindSlope(perChannel[c], _geometry));
+            int[] fine = FineLevels(_average.AsSpan(c * rows, rows));
+            cutoffs.Add(CutoffFinder.Find(fine, _counters.Length > 0 ? _counters[c] : null, _geometry));
+            bandwidths.Add(CutoffFinder.FindBandwidth(fine, _geometry));
+            slopes.Add(CutoffFinder.FindSlope(fine, _geometry));
         }
 
         short[] combined = Levels(_average.AsSpan(_measured * rows, rows));
-        SpectralCutoff cutoff = CutoffFinder.Find(combined, _counters.Length > 0 ? _counters[_measured] : null, _geometry);
-        SpectralBandwidth combinedBandwidth = CutoffFinder.FindBandwidth(combined, _geometry);
+        int[] combinedFine = FineLevels(_average.AsSpan(_measured * rows, rows));
+        SpectralCutoff cutoff = CutoffFinder.Find(combinedFine, _counters.Length > 0 ? _counters[_measured] : null, _geometry);
+        SpectralBandwidth combinedBandwidth = CutoffFinder.FindBandwidth(combinedFine, _geometry);
         MidSideFigures? midSide = null;
         if (HasPair)
         {
             // The mid and side spectra have a cutoff and holes of their own; the bandwidth only bounds their holes.
             short[] mid = Levels(_average.AsSpan((_measured + 1) * rows, rows));
             short[] side = Levels(_average.AsSpan((_measured + 2) * rows, rows));
+            int[] midFine = FineLevels(_average.AsSpan((_measured + 1) * rows, rows));
+            int[] sideFine = FineLevels(_average.AsSpan((_measured + 2) * rows, rows));
             CutoffCounters? midCounters = _counters.Length > 0 ? _counters[_measured + 1] : null;
             CutoffCounters? sideCounters = _counters.Length > 0 ? _counters[_measured + 2] : null;
-            SpectralCutoff midCutoff = CutoffFinder.Find(mid, midCounters, _geometry);
-            SpectralCutoff sideCutoff = CutoffFinder.Find(side, sideCounters, _geometry);
+            SpectralCutoff midCutoff = CutoffFinder.Find(midFine, midCounters, _geometry);
+            SpectralCutoff sideCutoff = CutoffFinder.Find(sideFine, sideCounters, _geometry);
             midSide = new MidSideFigures
             {
                 LeftChannel = _pairLeft,
@@ -1544,11 +1629,14 @@ internal sealed class StreamMeasurer
                 Side = side,
                 MidCutoff = midCutoff,
                 SideCutoff = sideCutoff,
-                MidHoles = CutoffFinder.FindHoles(midCounters, _geometry, midCutoff, CutoffFinder.FindBandwidth(mid, _geometry)),
-                SideHoles = CutoffFinder.FindHoles(sideCounters, _geometry, sideCutoff, CutoffFinder.FindBandwidth(side, _geometry)),
+                MidHoles = CutoffFinder.FindHoles(midCounters, _geometry, midCutoff, CutoffFinder.FindBandwidth(midFine, _geometry)),
+                SideHoles = CutoffFinder.FindHoles(sideCounters, _geometry, sideCutoff, CutoffFinder.FindBandwidth(sideFine, _geometry)),
             };
         }
 
+        CoherenceFigures? coherenceFigures = HasPair
+            ? CoherenceFinder.Find(_geometry, _frames, _average.AsSpan(_pairLeft * rows, rows), _average.AsSpan(_pairRight * rows, rows), _crossSums.AsSpan(0, rows), _crossSums.AsSpan(rows, rows), _coherence, cutoff, combinedBandwidth, _pairLeft, _pairRight)
+            : null;
         return record with
         {
             Spectrum = new SpectrumFigures
@@ -1561,11 +1649,12 @@ internal sealed class StreamMeasurer
                 ChannelCutoffs = cutoffs,
                 Bandwidth = combinedBandwidth,
                 ChannelBandwidths = bandwidths,
-                Slope = CutoffFinder.FindSlope(combined, _geometry),
+                Slope = CutoffFinder.FindSlope(combinedFine, _geometry),
                 ChannelSlopes = slopes,
                 PartialCutoff = CutoffFinder.FindPartial(_counters.Length > 0 ? _counters[_measured] : null, _geometry),
                 Holes = CutoffFinder.FindHoles(_counters.Length > 0 ? _counters[_measured] : null, _geometry, cutoff, combinedBandwidth),
                 MidSide = midSide,
+                Coherence = coherenceFigures,
             },
             Spectrogram = Grid(),
             Waveform = Wave(),
@@ -1588,6 +1677,18 @@ internal sealed class StreamMeasurer
         for (int r = 0; r < sums.Length; r++)
         {
             result[r] = _frames == 0 || sums[r] <= 0 ? MeasurementLimits.NoPower : (short)Math.Clamp(DetMath.Tenths(sums[r] / _frames), short.MinValue + 1, short.MaxValue);
+        }
+
+        return result;
+    }
+
+    // The levels the searches use, in thousandths of a dB, so that a figure is rounded to tenths once (CutoffFinder).
+    private int[] FineLevels(ReadOnlySpan<double> sums)
+    {
+        var result = new int[sums.Length];
+        for (int r = 0; r < sums.Length; r++)
+        {
+            result[r] = _frames == 0 || sums[r] <= 0 ? CutoffFinder.NoPower : CutoffFinder.FineLevel(sums[r] / _frames);
         }
 
         return result;

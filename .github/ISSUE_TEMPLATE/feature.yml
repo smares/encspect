@@ -1,0 +1,24 @@
+name: Feature request
+description: A format, a figure, a graph or a change to the command line or the graphical app you would like.
+title: "Feature: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What You Would Like
+      description: The format, figure, graph or behavior, as concretely as you can.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why It Helps
+      description: What you want to find out about your files, and what you do today instead (another tool, by hand).
+    validations:
+      required: true
+  - type: textarea
+    id: sources
+    attributes:
+      label: Sources and Example Files
+      description: For a new format or field, a specification, reference implementation or tool that reads it, and where example files come from. Open source references help most when their license is permissive (BSD, MIT, Apache).

@@ -27,6 +27,7 @@ internal static class Topics
     public const string LeftSide = "left-side-stereo";
     public const string Prediction = "linear-prediction";
     public const string WastedBits = "wasted-bits";
+    public const string Residual = "tak-residual-coding";
 }
 
 // One metadata object as the walk read it.
@@ -41,7 +42,7 @@ internal sealed class ObjectRecord
     // The size the header states, and the bytes of data after the header that the input holds.
     public long Size { get; init; }
 
-    public long Held { get; init; }
+    public long Held { get; set; }
 
     // The End object holds no data whatever size its header states.
     public bool IsCut => Id != Layout.End && Held < Size;
@@ -92,6 +93,9 @@ internal sealed class Records
 
     // The data ended inside the metadata: before an End object or a frame, or inside an object.
     public bool IsMetadataCut { get; set; }
+
+    // The object whose stated size runs past the data and that holds the first frame; the audio starts inside it.
+    public ObjectRecord? ResyncedObject { get; set; }
 
     public bool IsLimitReached { get; set; }
 

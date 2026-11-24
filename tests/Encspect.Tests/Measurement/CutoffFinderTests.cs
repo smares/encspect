@@ -64,7 +64,7 @@ public class CutoffFinderTests
             }
         }
 
-        short[] rows = [.. mean.Select(p => (short)Math.Floor((100 * Math.Log10(p)) + 0.5))];
+        int[] rows = [.. mean.Select(p => (int)Math.Floor((10000 * Math.Log10(p)) + 0.5))];
         return CutoffFinder.Find(rows, counters, Geometry);
     }
 
@@ -117,12 +117,15 @@ public class CutoffFinderTests
     // The average spectrum in tenths of a dB of a stand-in: a level for each row.
     private static short[] Rows(Func<int, int> tenths) => [.. Enumerable.Range(0, MeasurementLimits.Rows).Select(r => (short)tenths(r))];
 
+    // The searches take thousandths of a dB; the stand-ins here are given in tenths.
+    private static int[] Fine(short[] tenths) => [.. tenths.Select(t => t == MeasurementLimits.NoPower ? CutoffFinder.NoPower : t * 100)];
+
     // A floor that reaches the top of the search: the bandwidth is the lowest row of the run within 3 dB of it, which is the edge of the content
     // (the run's lowest band ends one band above the edge: the shift by W - 1 rows of the cutoff's edge), and the floor is the mean of the top band.
     [Fact]
     public void AContentEdgeOnAFlatFloorIsTheBandwidth()
     {
-        SpectralBandwidth bandwidth = CutoffFinder.FindBandwidth(Rows(r => r < 400 ? -300 : -1300), Geometry);
+        SpectralBandwidth bandwidth = CutoffFinder.FindBandwidth(Fine(Rows(r => r < 400 ? -300 : -1300)), Geometry);
 
         Assert.True(bandwidth.IsFound);
         Assert.Equal(Geometry.Hertz(400), bandwidth.Frequency);
@@ -134,8 +137,8 @@ public class CutoffFinderTests
     [Fact]
     public void AToneInTheFloorDoesNotEndTheRun()
     {
-        SpectralBandwidth plain = CutoffFinder.FindBandwidth(Rows(r => r < 400 ? -300 : -1300), Geometry);
-        SpectralBandwidth toned = CutoffFinder.FindBandwidth(Rows(r => r < 400 ? -300 : r == 450 ? -800 : -1300), Geometry);
+        SpectralBandwidth plain = CutoffFinder.FindBandwidth(Fine(Rows(r => r < 400 ? -300 : -1300)), Geometry);
+        SpectralBandwidth toned = CutoffFinder.FindBandwidth(Fine(Rows(r => r < 400 ? -300 : r == 450 ? -800 : -1300)), Geometry);
 
         Assert.True(toned.IsFound);
         Assert.Equal(plain.Frequency, toned.Frequency);
@@ -146,11 +149,11 @@ public class CutoffFinderTests
     {
         foreach (int floor in new[] { -1900, -1300, -700 })
         {
-            Assert.True(CutoffFinder.FindBandwidth(Rows(r => r < 300 ? floor + 400 : floor), Geometry).IsFound, floor.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            Assert.True(CutoffFinder.FindBandwidth(Fine(Rows(r => r < 300 ? floor + 400 : floor)), Geometry).IsFound, floor.ToString(System.Globalization.CultureInfo.InvariantCulture));
         }
 
         // Rows without power read -200 dB.
-        SpectralBandwidth silent = CutoffFinder.FindBandwidth(Rows(r => r < 300 ? -300 : MeasurementLimits.NoPower), Geometry);
+        SpectralBandwidth silent = CutoffFinder.FindBandwidth(Fine(Rows(r => r < 300 ? -300 : MeasurementLimits.NoPower)), Geometry);
         Assert.True(silent.IsFound);
         Assert.Equal(-2000, silent.FloorTenthsOfDb);
     }
@@ -159,7 +162,7 @@ public class CutoffFinderTests
     [Fact]
     public void AFlatSpectrumReachesTheTop()
     {
-        SpectralBandwidth bandwidth = CutoffFinder.FindBandwidth(Rows(_ => -500), Geometry);
+        SpectralBandwidth bandwidth = CutoffFinder.FindBandwidth(Fine(Rows(_ => -500)), Geometry);
 
         Assert.False(bandwidth.IsFound);
         Assert.Equal(SpectralBandwidthReason.ReachesTop, bandwidth.Reason);
@@ -171,7 +174,7 @@ public class CutoffFinderTests
     [Fact]
     public void ASlopeIsNotAFloor()
     {
-        SpectralBandwidth bandwidth = CutoffFinder.FindBandwidth(Rows(r => -1 * r), Geometry);
+        SpectralBandwidth bandwidth = CutoffFinder.FindBandwidth(Fine(Rows(r => -1 * r)), Geometry);
 
         Assert.False(bandwidth.IsFound);
         Assert.Equal(SpectralBandwidthReason.Slope, bandwidth.Reason);
@@ -181,8 +184,8 @@ public class CutoffFinderTests
     [Fact]
     public void TheStepThresholdOf20DbIsInclusive()
     {
-        Assert.True(CutoffFinder.FindBandwidth(Rows(r => r < 300 ? -1100 : -1300), Geometry).IsFound);
-        Assert.Equal(SpectralBandwidthReason.Slope, CutoffFinder.FindBandwidth(Rows(r => r < 300 ? -1101 : -1300), Geometry).Reason);
+        Assert.True(CutoffFinder.FindBandwidth(Fine(Rows(r => r < 300 ? -1100 : -1300)), Geometry).IsFound);
+        Assert.Equal(SpectralBandwidthReason.Slope, CutoffFinder.FindBandwidth(Fine(Rows(r => r < 300 ? -1101 : -1300)), Geometry).Reason);
     }
 
     // The mean of the W rows that end at a row, in tenths of a dB, as a fraction over W: the sum (the reference of the slope tests, written with loops and no prefix sums).
@@ -245,7 +248,7 @@ public class CutoffFinderTests
     public void ARunThatReachesTheFirstCandidateStopsAtIt()
     {
         short[] rows = Rows(r => -100 - (5 * r));
-        SpectralSlope found = CutoffFinder.FindSlope(rows, Geometry);
+        SpectralSlope found = CutoffFinder.FindSlope(Fine(rows), Geometry);
 
         Assert.True(found.IsFound);
         Assert.Equal(Geometry.Hertz(Geometry.FirstCandidate + 1), found.FromFrequency);
@@ -256,7 +259,7 @@ public class CutoffFinderTests
     [Fact]
     public void AFlatTopHasNoSlopeAndATopStepOfZero()
     {
-        SpectralSlope slope = CutoffFinder.FindSlope(Rows(_ => -500), Geometry);
+        SpectralSlope slope = CutoffFinder.FindSlope(Fine(Rows(_ => -500)), Geometry);
 
         Assert.True(slope.IsSearched);
         Assert.False(slope.IsFound);
@@ -271,7 +274,7 @@ public class CutoffFinderTests
     [Fact]
     public void AFallStartsAtExactlyFiveDecibels()
     {
-        SpectralSlope found = CutoffFinder.FindSlope(Rows(r => r < 484 ? -500 : -550), Geometry);
+        SpectralSlope found = CutoffFinder.FindSlope(Fine(Rows(r => r < 484 ? -500 : -550)), Geometry);
 
         Assert.True(found.IsFound);
         Assert.Equal(Geometry.Hertz(475), found.FromFrequency);
@@ -280,7 +283,7 @@ public class CutoffFinderTests
         Assert.Equal(50, found.TopStepTenthsOfDb);
         AssertSlope(ReferenceSlope(Rows(r => r < 484 ? -500 : -550), Geometry), found);
 
-        SpectralSlope under = CutoffFinder.FindSlope(Rows(r => r < 484 ? -500 : -549), Geometry);
+        SpectralSlope under = CutoffFinder.FindSlope(Fine(Rows(r => r < 484 ? -500 : -549)), Geometry);
 
         Assert.False(under.IsFound);
         Assert.Equal(49, under.TopStepTenthsOfDb);
@@ -292,7 +295,7 @@ public class CutoffFinderTests
     public void ALinearFallFromAKneeGivesItsFallAndSlope()
     {
         short[] rows = Rows(r => r < 400 ? -300 : -300 - (10 * (r - 400)));
-        SpectralSlope slope = CutoffFinder.FindSlope(rows, Geometry);
+        SpectralSlope slope = CutoffFinder.FindSlope(Fine(rows), Geometry);
 
         Assert.True(slope.IsFound);
         AssertSlope(ReferenceSlope(rows, Geometry), slope);
@@ -338,14 +341,14 @@ public class CutoffFinderTests
         foreach ((int rate, int size) in new[] { (8000, 1024), (22050, 2048), (44100, 4096), (48000, 4096), (96000, 8192), (192000, 16384) })
         {
             var geometry = new CutoffGeometry(rate, size);
-            AssertSlope(ReferenceSlope(rows, geometry), CutoffFinder.FindSlope(rows, geometry));
+            AssertSlope(ReferenceSlope(rows, geometry), CutoffFinder.FindSlope(Fine(rows), geometry));
         }
     }
 
     [Fact]
     public void ARiseAtTheTopHasANegativeTopStep()
     {
-        SpectralSlope slope = CutoffFinder.FindSlope(Shape("rise"), Geometry);
+        SpectralSlope slope = CutoffFinder.FindSlope(Fine(Shape("rise")), Geometry);
 
         Assert.False(slope.IsFound);
         Assert.Equal(-50, slope.TopStepTenthsOfDb);
@@ -355,7 +358,7 @@ public class CutoffFinderTests
     [Fact]
     public void ARunStopsAtTheFirstCandidate()
     {
-        SpectralSlope slope = CutoffFinder.FindSlope(Shape("reaches-first-candidate"), Geometry);
+        SpectralSlope slope = CutoffFinder.FindSlope(Fine(Shape("reaches-first-candidate")), Geometry);
 
         Assert.True(slope.IsFound);
         Assert.Equal(Geometry.Hertz(Geometry.FirstCandidate + 1), slope.FromFrequency);
@@ -365,7 +368,7 @@ public class CutoffFinderTests
     [Fact]
     public void ARunThatDipsUnderThreeDecibelsStopsAtTheDip()
     {
-        SpectralSlope slope = CutoffFinder.FindSlope(Shape("dip"), Geometry);
+        SpectralSlope slope = CutoffFinder.FindSlope(Fine(Shape("dip")), Geometry);
 
         Assert.True(slope.IsFound);
         Assert.True(slope.FromFrequency > Geometry.Hertz(380), $"from {slope.FromFrequency}");
@@ -374,7 +377,7 @@ public class CutoffFinderTests
     [Fact]
     public void ARateUnder8000HertzIsNotSearchedForASlope()
     {
-        SpectralSlope slope = CutoffFinder.FindSlope(Rows(r => -(6 * r)), new CutoffGeometry(4000, 1024));
+        SpectralSlope slope = CutoffFinder.FindSlope(Fine(Rows(r => -(6 * r))), new CutoffGeometry(4000, 1024));
 
         Assert.False(slope.IsSearched);
         Assert.False(slope.IsFound);
@@ -385,7 +388,7 @@ public class CutoffFinderTests
     {
         var low = new CutoffGeometry(4000, 1024);
 
-        Assert.False(CutoffFinder.FindBandwidth(Rows(_ => -500), low).IsSearched);
+        Assert.False(CutoffFinder.FindBandwidth(Fine(Rows(_ => -500)), low).IsSearched);
         Assert.False(CutoffFinder.FindPartial(new CutoffCounters(hasCeiling: true), low).IsSearched);
         Assert.False(CutoffFinder.FindPartial(null, Geometry).IsSearched);
     }
@@ -468,5 +471,22 @@ public class CutoffFinderTests
 
         Assert.Equal(10, partial.FramesWithSignal);
         Assert.True(partial.IsFound);
+    }
+
+    // The rows are rounded once, at the end. A band at -50.04 dB over a top band at -55.06 dB stands 5.02 dB over it, which is 5.0 dB; the same rows
+    // rounded to tenths first (-50.0 and -55.1) would give 5.1 dB.
+    [Fact]
+    public void AStepIsRoundedOnceFromRowsInThousandths()
+    {
+        var geometry = new CutoffGeometry(44100, 4096);
+        int[] rows = new int[MeasurementLimits.Rows];
+        for (int r = 0; r < rows.Length; r++)
+        {
+            rows[r] = r < 484 ? -50_040 : -55_060;
+        }
+
+        SpectralSlope found = CutoffFinder.FindSlope(rows, geometry);
+
+        Assert.Equal(50, found.TopStepTenthsOfDb);
     }
 }

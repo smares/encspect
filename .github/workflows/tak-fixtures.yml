@@ -6,7 +6,7 @@ name: TAK fixtures
 # bytes (scripts/fixtures/windows/make_windows_tak_fixtures.ps1; the signals and the plan are scripts/fixtures/tak_cases.py).
 # Takc.exe and the library run on this runner only, as black boxes; only the files they write are committed, never the archive.
 # The `decode` job decodes the committed fixtures with `Takc -d` the same way and uploads what it gives (tak-decoded: sdk-decoded.json), which
-# crosscheck_tak_pcm.py compares with the manifests and the analyzer's decoder (docs/development.md, "TAK decoding (clean-room)").
+# crosscheck_tak_pcm.py compares with the manifests and the analyzer's decoder; it also reads each fixture with the library's tak_SSD_ReadAudio (`sdkRead`) (docs/development.md, "TAK decoding (clean-room)").
 # Run by hand (Actions, "TAK fixtures", Run workflow). Nothing is released and no build is uploaded: only the fixture files, for
 # 90 days. scripts/fixtures/import_windows_tak_fixtures.py takes them into tests/fixtures/tak. The design is
 # docs/design/tak-optimfrog-headers.md, "Fixtures".

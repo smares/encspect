@@ -1,7 +1,7 @@
 ---
 id: mid-side-spectra
 title: Mid/side spectra
-related: mid-side-stereo, joint-stereo, spectral-cutoff, spectral-holes, spectrogram, measurements
+related: mid-side-stereo, joint-stereo, spectral-cutoff, spectral-holes, inter-channel-coherence, spectrogram, measurements
 references: Encspect design, docs/design/spectral-analysis.md
 ---
 **The problem.** A joint stereo coder may code the mid and the side signal with different precision. The decoded left and right channels do not show how the two were coded; their sum and difference do.

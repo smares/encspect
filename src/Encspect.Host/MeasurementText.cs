@@ -16,6 +16,7 @@ public enum MeasurementFigure
     SpectralSlope,
     PartialCutoff,
     MidSide,
+    InterChannelCoherence,
     SpectralHoles,
     Loudness,
     IntegratedLoudness,
@@ -53,6 +54,10 @@ public static class MeasurementText
     public const string PartialCutoffDescription = "The frequency at which the most frames with signal show a ceiling of their own: the band under it at least 30 dB above the mean power of everything above it, up to 99 % of Nyquist. It finds an edge that only part of the stream has (lossy tracks joined with others, a lossy intro), which the average spectrum hides. It is a count of frames, not a verdict.";
 
     public const string MidSideDescription = "The spectral cutoff of the average spectra of the mid signal ((left + right) / 2) and the side signal ((left - right) / 2) of the pair of channels the layout names front left and front right, or of the two channels of a stream without a layout, worked out from the complex bins of each frame. The frames with signal are those of each spectrum itself. They are views of the pair, not channels: the combined spectrum and the other figures do not include them.";
+
+    public const string InterChannelCoherenceDescription = "The lowest frequency from which the magnitude-squared coherence of the pair of channels (front left and right, or the two channels of a stream without a layout) stays at 85 % or more up to the end of the content, found in 1 kHz bands of the cross-spectrum averaged over the stream, where the band under it is less coherent. Coherence is the share of one channel's power that a fixed linear filter from the other channel predicts. It is a figure of the decoded audio: intensity stereo, a side signal that was coded as nothing and content that is nearly mono all read near 100 %, and the figure does not tell them apart. A parser's stated intensity stereo bound is set beside it as figures.";
+
+    public const string InterChannelCoherenceTopic = Topics.InterChannelCoherence;
 
     public const string SpectralSlopeDescription = "Where the average spectrum is still falling at the top of the search (99 % of Nyquist): the run of 1 kHz bands, from the top band down, that each stand 3 dB or more above the band over them, started where the top band is at least 5 dB under the band below it, with how far the spectrum falls over it and how fast. It is found whether or not a cutoff or a bandwidth is found, since a fall can end in a floor less than 2 kHz wide (at least the top band, short of the band under it); the text line shows it only where no cutoff is found. It is measured at the top of the search, not a line fitted over the whole spectrum.";
 
@@ -163,6 +168,11 @@ public static class MeasurementText
             if (spectrum.MidSide is { } midSide)
             {
                 lines.Add(new MeasurementLine(MeasurementFigure.MidSide, "Mid/Side", $"mid cutoff {PairCutoff(midSide.MidCutoff)}, side cutoff {PairCutoff(midSide.SideCutoff)}", MidSideDescription, MidSideTopic));
+            }
+
+            if (spectrum.Coherence is { IsSearched: true } coherence)
+            {
+                lines.Add(new MeasurementLine(MeasurementFigure.InterChannelCoherence, "Inter-Channel Coherence", Coherence(coherence), InterChannelCoherenceDescription, InterChannelCoherenceTopic));
             }
 
             if (spectrum.Holes.IsSearched)
@@ -551,6 +561,32 @@ public static class MeasurementText
         return cutoff.IsFound
             ? $"{Hertz(cutoff.Frequency)} (step {Tenths(cutoff.StepTenthsOfDb)} dB, {cutoff.FramesShowing.ToString("N0", CultureInfo.InvariantCulture)} of {cutoff.FramesWithSignal.ToString("N0", CultureInfo.InvariantCulture)} frames)"
             : $"none found (largest step {Tenths(cutoff.StepTenthsOfDb)} dB)";
+    }
+
+    // "85 % or more from 2,756 to 17,270 Hz, in 123 of 128 frames with signal; the stated intensity stereo bound has a median of 2,756 Hz over 230 frames, 0 Hz apart",
+    // or "none found (the top band reads 3.2 %)".
+    public static string Coherence(CoherenceFigures coherence)
+    {
+        string threshold = Tenths(MeasurementLimits.CoherenceThresholdTenths).Replace(".0", string.Empty, StringComparison.Ordinal) + " %";
+        string text = coherence.IsFound
+            ? $"{threshold} or more from {coherence.FromFrequency.ToString("N0", CultureInfo.InvariantCulture)} to {Hertz(coherence.ToFrequency)}, in {coherence.FramesShowing.ToString("N0", CultureInfo.InvariantCulture)} of {coherence.FramesWithSignal.ToString("N0", CultureInfo.InvariantCulture)} frames with signal"
+            : coherence.Reason switch
+            {
+                CoherenceReason.TooFewFrames => $"none found (fewer than {MeasurementLimits.MinimumCoherenceFrames} frames)",
+                CoherenceReason.TooShort => "none found (no band of 1 kHz in the range)",
+                CoherenceReason.ReachesStart => $"none found ({threshold} or more at every frequency from 0 Hz)",
+                _ => $"none found (the top band reads {Percent(coherence.TopBandTenths)})",
+            };
+        if (coherence.Stated is { } stated)
+        {
+            text += $"; the stated intensity stereo bound has a median of {Hertz(stated.MedianFrequency)} over {Counts.Of(stated.Units, "unit", "units")}";
+            if (stated.Difference is { } difference)
+            {
+                text += $", {Hertz(Math.Abs(difference))} apart";
+            }
+        }
+
+        return text;
     }
 
     // "2.4 % of the cells with signal from 2,003 to 16,021 Hz; mid 1.1 %, side 9.8 %".

@@ -4,7 +4,7 @@ and checks its SHA-256 (and that FFmpeg's release holds every file ffmpeg_source
 of its copies stops serving it, before the fallback is all that is left. A Wayback Machine address that fails while another address of
 the same file serves its pinned bytes is a warning, not a problem: the Wayback Machine answers 404 now and then for captures
 it lists (BladeEnc 0.92.0, 2026-11-08), and the file is still at hand. A file that no address serves is always a problem. FAAC's releases are pinned by
-the commits of their tags (faac_tool.py), which it asks both repositories for, Apple's ALAC source by its commit (alac_tool.py), lossyWAV for POSIX by its commit (lossywav_tool.py), and Xiph's libvorbis releases by the commits of their tags (xiph_tool.py).
+the commits of their tags (faac_tool.py), which it asks both repositories for, Apple's ALAC source by its commit (alac_tool.py), lossyWAV for POSIX by its commit (lossywav_tool.py), the Helix A1 fork by its commit (helix_tool.py), and Xiph's libvorbis releases by the commits of their tags (xiph_tool.py).
 
 Usage: python3 scripts/fixtures/check_sources.py [--list | --only FILE]
   --list       prints every (name, SHA-256, address, kind) as sorted JSON, without downloading; the LAME svn trees
@@ -39,6 +39,7 @@ import downloads
 import dts_specs
 import faac_tool
 import ffmpeg_sources
+import ffmpeg_tool
 import fhg_acm_tool
 import fhg_tool
 import flac_tool
@@ -145,6 +146,7 @@ def sources():
     yield from optimfrog_tool.sources()
     yield from tak_tool.sources()
     yield from flac_tool.sources()
+    yield from ffmpeg_tool.sources()
     yield from make_lossywav_fixtures.sources()
     yield from lossywav_tool.sources()
     yield asf_specs.NAME, asf_specs.SHA256, asf_specs.ADDRESSES
@@ -165,7 +167,7 @@ def member_name(member):
 def entries():
     """(kind, name, SHA-256 or commit, address) of everything the full run checks: "download" for a file,
     "member" for a file of FFmpeg's release that must be in the archive (the archive's digest and address),
-    "svn" for a LAME tree (its digest is the tree digest), "tag" for a FAAC tag in one repository or a libvorbis tag, "commit" for the commit of Apple's ALAC source and of lossyWAV for POSIX."""
+    "svn" for a LAME tree (its digest is the tree digest), "tag" for a FAAC tag in one repository or a libvorbis tag, "commit" for the commit of Apple's ALAC source, of lossyWAV for POSIX and of the Helix A1 fork."""
     for name, digest, addresses in sources():
         for address in addresses:
             yield "download", name, digest, address
@@ -180,6 +182,7 @@ def entries():
     for tag, commit in xiph_tool.TAGS.values():
         yield "tag", tag, f"commit:{commit}", f"{xiph_tool.REPOSITORY} refs/tags/{tag}"
     yield "commit", alac_tool.NAME, f"commit:{alac_tool.COMMIT}", f"{alac_tool.REPOSITORY} {alac_tool.COMMIT}"
+    yield "commit", helix_tool.A1_NAME, f"commit:{helix_tool.A1_COMMIT}", f"{helix_tool.A1_REPOSITORY} {helix_tool.A1_COMMIT}"
     yield "commit", lossywav_tool.NAME, f"commit:{lossywav_tool.COMMIT}", f"{lossywav_tool.REPOSITORY} {lossywav_tool.COMMIT}"
 
 
@@ -330,6 +333,13 @@ def main():
     if wanted_entry(lossywav_tool.NAME, f"commit:{lossywav_tool.COMMIT}", lossywav_address):
         checked += 1
         for problem in lossywav_tool.commit_problems({lossywav_address}):
+            problems += 1
+            print(problem)
+    # The Helix A1 fork is pinned by its commit the same way.
+    helix_address = f"{helix_tool.A1_REPOSITORY} {helix_tool.A1_COMMIT}"
+    if wanted_entry(helix_tool.A1_NAME, f"commit:{helix_tool.A1_COMMIT}", helix_address):
+        checked += 1
+        for problem in helix_tool.commit_problems({helix_address}):
             problems += 1
             print(problem)
     warn = f", {len(warned)} warnings" if warned else ""

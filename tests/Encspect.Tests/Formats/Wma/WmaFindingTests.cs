@@ -159,6 +159,32 @@ public class WmaFindingTests
         Assert.DoesNotContain(context.Findings, f => f.Code is "wma.packet-short" or "wma.packet-long");
     }
 
+    // An empty media object (a Matroska block of no bytes) is a packet with no file ranges; its node is empty and its children build.
+    [Fact]
+    public void AnEmptyMediaObjectGivesAnEmptyPacketNode()
+    {
+        foreach ((WmaStream stream, ICodecParser parser) in new[] { (WmaStream.LoadPro(), (ICodecParser)new WmaProParser()), (WmaStream.LoadLossless(), new WmaLosslessParser()) })
+        {
+            stream.Objects.Insert(0, []);
+            CodecContext context = stream.Run(parser);
+            Node packets = Descendants(context.Parent).First(n => n.Name == "Packets" && n.Children.Count > 0);
+            Assert.DoesNotContain(Descendants(context.Parent), n => n.Name == "Error");
+            Assert.Equal(0, packets.Children[0].Length);
+        }
+    }
+
+    private static IEnumerable<Node> Descendants(Node node)
+    {
+        foreach (Node child in node.Children)
+        {
+            yield return child;
+            foreach (Node inner in Descendants(child))
+            {
+                yield return inner;
+            }
+        }
+    }
+
     // Four superframes of 87 bits fill a block of 46 bytes after its header of 20 bits, and the header counts a fifth: a decoder reads the
     // four, finds the packet used up and goes on with the next, so that no superframe is reported as running past the packet.
     [Fact]

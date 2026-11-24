@@ -299,7 +299,7 @@ internal sealed class WmaPacketReader
         int index = Data.Packets.Count;
         _currentPacket = index;
         int length = Math.Min(packet.Length, p.BlockAlignment);
-        Data.Table.Add(packet.FileRanges(0, length));
+        Data.Table.Add(packet.FileRanges(0, length), packet.FileStart);
         var record = new PacketRecord();
         _framesInCall = 0;
         _isReturnedInCall = false;

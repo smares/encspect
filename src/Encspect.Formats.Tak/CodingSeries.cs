@@ -3,7 +3,7 @@ using Encspect.Core;
 namespace Encspect.Formats.Tak;
 
 // The coding series of the frames (docs/design/coding-graphs.md, the TAK survey), one unit for each frame that has a bitrate point, recorded while the frames are walked: the
-// stereo mode of a frame of two channels, the subframes' types, the channels with wasted bits, and the highest prediction order and precision of a frame. The names, units and axes
+// stereo mode of a frame of two channels, the subframes' types, the channels with wasted bits, and the highest prediction order, precision and residual mode of a frame. The names, units and axes
 // are those of FLAC's, TTA's, WavPack's and Monkey's Audio's where the concept is the same.
 internal sealed class CodingSeries
 {
@@ -30,20 +30,33 @@ internal sealed class CodingSeries
     ];
 
     private readonly bool _isStereo;
+    private readonly long _sampleRate;
     private readonly UnitCategoryTally _stereo = new("Stereo Coding", StereoCodings, "frame", GraphConcept.StereoCoding);
     private readonly UnitCategoryTally _types = new("Subframe Types", Types, "subframe", GraphConcept.Prediction, isVariable: true);
     private readonly UnitCategoryTally _wasted = new("Channels With Wasted Bits", Wasted, "channel", GraphConcept.None, isVariable: true);
-    private readonly ChunkedList<byte> _orders = new();
-    private readonly ChunkedList<byte> _precisions = new();
+    private readonly ChunkedList<ushort> _orders = new();
+    private readonly ChunkedList<ushort> _precisions = new();
+
+    // The highest residual mode of each frame, plus one: 0 is a frame without a residual block that has values.
+    private readonly ChunkedList<ushort> _modes = new();
     private long _predicted;
     private long _orderTotal;
     private int _orderMax;
     private int _precisionMin = int.MaxValue;
     private int _precisionMax;
 
+    // The seconds a frame starts in, and the highest order and precision of the frames that start in each.
+    private readonly ChunkedList<long> _seconds = new();
+    private readonly ChunkedList<ushort> _secondOrders = new();
+    private readonly ChunkedList<ushort> _secondPrecisions = new();
+    private readonly ChunkedList<ushort> _secondModes = new();
+    private long _coded;
+    private int _modeMax = -1;
+
     public CodingSeries(long sampleRate, bool isStereo)
     {
         _isStereo = isStereo;
+        _sampleRate = sampleRate;
     }
 
     public int Units => _types.Units;
@@ -79,18 +92,49 @@ internal sealed class CodingSeries
         }
 
         _wasted.AddAll(wasted);
-        _orders.Add((byte)Math.Min(order, 255));
-        _precisions.Add((byte)precision);
+        int mode = -1;
+        foreach (byte m in frame.Modes)
+        {
+            mode = Math.Max(mode, m);
+        }
+
+        _modeMax = Math.Max(_modeMax, mode);
+        Finish(frame.Samples, order, precision, mode + 1);
+    }
+
+    private void Finish(int samples, int order, int precision, int mode)
+    {
+        _orders.Add((ushort)order);
+        _precisions.Add((ushort)precision);
+        _modes.Add((ushort)mode);
+        if (_sampleRate > 0)
+        {
+            long second = _coded / _sampleRate;
+            if (_seconds.Count > 0 && _seconds[_seconds.Count - 1] == second)
+            {
+                _secondOrders.SetLast((ushort)Math.Max(_secondOrders[_secondOrders.Count - 1], order));
+                _secondPrecisions.SetLast((ushort)Math.Max(_secondPrecisions[_secondPrecisions.Count - 1], precision));
+                _secondModes.SetLast((ushort)Math.Max(_secondModes[_secondModes.Count - 1], mode));
+            }
+            else
+            {
+                _seconds.Add(second);
+                _secondOrders.Add((ushort)order);
+                _secondPrecisions.Add((ushort)precision);
+                _secondModes.Add((ushort)mode);
+            }
+        }
+
+        _coded += samples;
     }
 
     // A frame whose coded data could not be read: a unit with no values.
-    public void AddEmpty()
+    public void AddEmpty(int samples)
     {
         _stereo.Add(null);
         _types.AddAll([]);
         _wasted.AddAll([]);
-        _orders.Add(0);
-        _precisions.Add(0);
+        Finish(samples, 0, 0, 0);
     }
 
     // The tallies, under the stream's statistics. Returns the nodes the series hang under.
@@ -108,7 +152,8 @@ internal sealed class CodingSeries
         }
 
         Node? wasted = _wasted.AddTo(statistics, cover, Explain.StatWasted, Topics.WastedBits, "Channel", "Channels");
-        return new Anchors(stereo, types, wasted, order, precision);
+        Node? modes = _modeMax >= 0 ? statistics.Add(cover("Highest Residual Mode", NodeValue.Integer(_modeMax), Explain.StatHighestMode, Topics.Residual)) : null;
+        return new Anchors(stereo, types, wasted, order, precision, modes);
     }
 
     public (List<Series> Series, List<CategorySeries> Categories) Build(Series bitrate, Anchors nodes, CancellationToken cancellation)
@@ -145,19 +190,27 @@ internal sealed class CodingSeries
 
         if (nodes.Order is not null)
         {
-            Numeric(series, bitrate, _orders, "Highest Predictor Order", "order", Explain.HighestOrderSeries, cancellation);
+            Numeric(series, bitrate, _orders, "Highest Predictor Order", "order", Explain.HighestOrderSeries, "Highest Predictor Order Over Time", Explain.HighestOrderOverTimeSeries, _secondOrders, nodes.Order, 0, GraphConcept.Prediction, cancellation);
         }
 
         if (nodes.Precision is not null)
         {
-            Numeric(series, bitrate, _precisions, "Coefficient Precision", "bits", Explain.PrecisionSeries, cancellation);
+            Numeric(series, bitrate, _precisions, "Coefficient Precision", "bits", Explain.PrecisionSeries, "Coefficient Precision Over Time", Explain.PrecisionOverTimeSeries, _secondPrecisions, nodes.Precision, 0, GraphConcept.Prediction, cancellation);
+        }
+
+        if (nodes.Modes is not null)
+        {
+            Numeric(series, bitrate, _modes, "Highest Residual Mode", "mode", Explain.HighestModeSeries, "Highest Residual Mode Over Time", Explain.HighestModeOverTimeSeries, _secondModes, nodes.Modes, 1, GraphConcept.None, cancellation);
         }
 
         return (series, categories);
     }
 
-    // The frames that have a predictor have an order and a precision both, so the series share one x: the bitrate series' where every frame has one, else the offsets of those that do.
-    private static void Numeric(List<Series> series, Series bitrate, ChunkedList<byte> values, string name, string unit, string description, CancellationToken cancellation)
+    // A series' x is the bitrate series' where every frame has a value, else the offsets of the frames that do (the order and the precision have the same frames, as every frame
+    // with a predictor has both).
+    // Values are stored with offset added, 0 meaning none; the series holds the frames that have one, and its Over Time form the highest in each second that has one.
+    private void Numeric(List<Series> series, Series bitrate, ChunkedList<ushort> values, string name, string unit, string description, string overTimeName, string overTimeDescription,
+        ChunkedList<ushort> perSecond, Node anchor, int offset, GraphConcept concept, CancellationToken cancellation)
     {
         int count = 0;
         for (int i = 0; i < values.Count; i++)
@@ -170,25 +223,45 @@ internal sealed class CodingSeries
             count += values[i] > 0 ? 1 : 0;
         }
 
-        if (count == 0)
+        if (count > 0)
         {
-            return;
-        }
-
-        var x = new double[count];
-        var y = new double[count];
-        ReadOnlySpan<double> offsets = bitrate.X.Span;
-        for (int i = 0, n = 0; i < values.Count; i++)
-        {
-            if (values[i] > 0)
+            var x = new double[count];
+            var y = new double[count];
+            ReadOnlySpan<double> offsets = bitrate.X.Span;
+            for (int i = 0, n = 0; i < values.Count; i++)
             {
-                x[n] = offsets[i];
-                y[n++] = values[i];
+                if (values[i] > 0)
+                {
+                    x[n] = offsets[i];
+                    y[n++] = values[i] - offset;
+                }
             }
+
+            series.Add(new Series(name, unit, SeriesAxis.FrameOffset, x, y) { Description = description, Concept = concept, Quantity = name });
         }
 
-        series.Add(new Series(name, unit, SeriesAxis.FrameOffset, x, y) { Description = description, Concept = GraphConcept.Prediction, Quantity = name });
+        int valued = 0;
+        for (int i = 0; i < perSecond.Count; i++)
+        {
+            valued += perSecond[i] > 0 ? 1 : 0;
+        }
+
+        if (valued > 0)
+        {
+            var starts = new double[valued];
+            var highest = new double[valued];
+            for (int i = 0, n = 0; i < perSecond.Count; i++)
+            {
+                if (perSecond[i] > 0)
+                {
+                    starts[n] = _seconds[i];
+                    highest[n++] = perSecond[i] - offset;
+                }
+            }
+
+            series.Add(new Series(overTimeName, unit, SeriesAxis.Seconds, starts, highest, anchor) { Description = overTimeDescription, Concept = concept, Quantity = name });
+        }
     }
 
-    public sealed record Anchors(Node? Stereo, Node? Types, Node? Wasted, Node? Order, Node? Precision);
+    public sealed record Anchors(Node? Stereo, Node? Types, Node? Wasted, Node? Order, Node? Precision, Node? Modes);
 }
