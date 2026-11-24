@@ -1686,3 +1686,233 @@ The spectral slope of [Step 7b](#step-7b-spectral-slope), S11 to S17 as decided 
 ### Measured
 
 The model and the analyzer agree on every fixture, and every figure of the table in Step 7b stands: 13.3 dB from 21,328 to 23,766 Hz, 6.8 dB per kHz for FFmpeg's default resampler from 44.1 to 48 kHz; 15.6 dB from 20,953 Hz at 6.7 dB per kHz, 33.4 dB from 17,829 Hz at 9.5 and 7.9 dB from 20,026 Hz at 6.0 for the synthetic slopes, none (top step 1.8 dB) for the fourth; none for `resampled-ffmpeg-48000-to-44100` (top step 3.7 dB), `-44100-to-96000` (cutoff 25,406 Hz, bandwidth 25,594 Hz) and the soxr file (cutoff 21,703 Hz, bandwidth 21,750 Hz, top step 1.0 dB).
+
+## Step 8: inter-channel coherence
+
+Status: signed off by the lead, 2026-11-23, every decision as recommended (S18 to S26, numbered after step 7b's S11 to S17), with S20's 0.85 confirmed on the committed and new fixtures in the implementation (the margin is thin, see [As built: step 8](#as-built-step-8)); built. It designs item 13 of [plan.md, 0.4](../plan.md#04-free-decoders-and-routes-complete), which replaced decision S10's "Not planned" for coherence. Host code in the measurer, on the pair of [Step 7](#c-midside-spectra) (`StreamMeasurer.FindPair`, `FftPlan.Bins`); no parser, decoder or session change, and no finding about the audio (decision 6).
+
+- **Where the numbers come from:** a throwaway prototype of this draft (numpy, its own FFT and the rules below, not committed), run on:
+  - three 6 s stereo pink noise inputs at 44.1 and 48 kHz, 16 bits: independent channels, and a pink mid with an independent pink side 4.8 dB and 12 dB under it (the source's own coherence 0.00, 0.31 and 0.81 in every band);
+  - their encodes by TwoLAME 0.4.0 (`-m j -b 64` to `-b 192`, `-m s -b 128`), FFmpeg 6.1.1's `aac` (48 to 96 kbps, with its defaults and with `-aac_pns 0`), opusenc 0.2 with libopus 1.4 (24 to 64 kbps) and LAME 3.100 (`-m j -b 128`), decoded by FFmpeg 6.1.1 (opusdec for Opus) to floats;
+  - the committed `mpeg-audio/external-xing-mpeg2`, `external-xing-joint`, `external-fhg-acm19-mpeg2` and `external-fhg-acm34-mpeg2`, decoded by FFmpeg, and the committed `measurement/lossy-stereo-*` FLAC files;
+  - the stated bounds are the analyzer's own "Intensity Stereo Bound" series of each encode (the CLI built at 1ae45c1b8). No music was among the inputs.
+- **Examples of text** below show the format; their numbers are the prototype's.
+
+### What the figure can and cannot show
+
+- **Magnitude-squared coherence** of two channels x and y at a frequency f is γ²(f) = |S_xy(f)|² / (S_xx(f) S_yy(f)), from the averaged cross-spectrum and the two averaged power spectra (Welch 1967; Carter, Knapp and Nuttall 1973). It runs from 0 to 1. It is 1 where one channel is the other through a filter that stays the same over the averaging (a gain, a sign, a delay), and 0 where no such filter relates them. Read as a share: the part of one channel's power at f that a fixed linear filter from the other channel predicts.
+- **Intensity stereo** codes one signal above a bound and rebuilds both channels from it, each scaled by its own factor per band and coding unit:
+  - Layers I and II: above the bound subband the samples are coded once and each channel keeps its own scale factors (ISO/IEC 11172-3 2.4.2.3, read: "In Layer I and II the joint-stereo mode is intensity-stereo"), so the factor changes every 384 samples (one scale factor part);
+  - Layer III: an intensity position per scale factor band and granule of 576 samples (2.4.3.4.9.3); a position of 0 or 6 in MPEG-1 silences one channel there;
+  - AAC: a position per band and frame, with a sign from codebook 14 or 15 and ms_used (ISO/IEC 14496-3 4.6.8.2.3, as [coding-graphs.md](coding-graphs.md) cites it);
+  - Opus: bands from the `intensity` band up are coded with one shape for both channels (`compute_theta` sets `qn = 1`, so the angle is 0), each channel scaled by its own band energy per CELT frame, with an `inv` flag per band that flips the sign where the band has bits for it (libopus 1.5.2 `celt/bands.c`, BSD-3-Clause, read for this draft).
+- **So the coherence is near 1 only where the factor holds over the FFT frame.** A frame lasts 85 to 170 ms and spans several coding units, so a factor that changes inside it lowers the coherence, and a sign that flips inside it cancels the cross-spectrum. In the prototype, above the stated bound and under the encoder's lowpass:
+  - TwoLAME `-m j -b 128` and `-b 192`: 0.89 to 0.92 on independent channels, 0.94 to 0.96 with the side 12 dB under the mid;
+  - libopus at 24 kbps: 0.91 to 0.95 on independent channels, 0.96 to 0.99 with the side 12 dB under; at 48 kbps on independent channels the stated bound is 3,200 Hz but the coherence rises only at 12,000 Hz (0.61 to 0.76) and 15,600 Hz (0.99): below, the bands have the bits to code `inv`, whose sign follows the noise from one CELT frame to the next (**inference** from the source, not traced in the stream);
+  - FFmpeg 6.1.1's `aac` at 64 and 96 kbps: no band between its stated bound (median 5,685 to 9,647 Hz) and its lowpass reaches 0.86, with or without perceptual noise substitution; at 48 kbps only the band at the lowpass does, for one source, and no run is found. Noise substitution decorrelates on its own: at 64 kbps the side-12 dB source falls from 0.86 at 3 kHz to 0.01 at 12 kHz with it, from 0.95 at 4 kHz to 0.20 at 12 kHz without. Why there is no rise is **unverified**: the stated figure is the lowest band of codebook 14 or 15, so the bands above it need not all be intensity coded, and the signs may change per frame.
+- **Coherence near 1 has other causes,** which the figure cannot tell apart and the article names:
+  - mono or near-mono content, one source panned between the channels, a mono bass;
+  - a side channel that mid/side coding quantized to nothing (LAME 3.100 `-m j -b 128` writes no intensity stereo, yet the side-12 dB source reads 0.85 or more from 10,853 Hz; the committed `lossy-stereo-lame-j-b128` from 11,456 Hz, where step 7 measured the side cutoff under the mid's);
+  - libopus at 64 kbps on the side-12 dB source: coherent from the lowest band, the bands under the intensity bound coded with a narrow angle;
+  - libvorbis's channel coupling at low quality: the committed `lossy-stereo-oggenc-q0` reads 0.85 or more from 689 Hz, `lossy-stereo-equal-oggenc-q0` from 5,168 Hz (the Vorbis parser states no bound; the mechanism is **unverified**, libvorbis not read).
+- **Real stereo recordings are not assumed to stay low.** The plan's draft said they "stay well below it"; the prototype's source with a side 12 dB under the mid reads 0.81 in every band, and a near-mono recording reads near 1. The figure therefore looks for a **rise**: coherent above a frequency, less coherent under it.
+- **A delay between the channels** keeps each bin's coherence but turns the cross-spectrum's phase across a band, so the band sums below cancel: a delay of 1 ms turns the phase once around per kHz (**estimate**). The figure measures scaled copies without delay, which is what intensity stereo leaves; spaced microphones read low.
+
+### What is computed
+
+- **The pair** is step 7's: front left and front right, or the two channels of a stream without a layout (decision S18). No pair, no coherence.
+- **Per frame, the cross-spectrum rows:** from the bins `FftPlan.Bins` already stores for the pair, per bin X_L X_R\* = (Lr Rr + Li Ri) + i (Li Rr − Lr Ri), summed per row in bin order and scaled by the plan's `_scale`, as `RowsFromBins` sums the powers. The two power rows are the pair's channel rows, which exist.
+- **Over the stream:** the real and imaginary sums of each row over every frame (512 complex accumulators, 8 KiB), beside the pair's power sums that `_average` already holds. The averaging is the spectrum's: every frame of the periodic Hann window, 85 to 170 ms, hop half, the same frames as every spectral figure, so gaps and withheld spans are left out as there.
+- **Bands:** the figure tests the band of W rows (1 kHz, the cutoff's band) under a row r, from the sums of its rows: 80 to 128 bins (92 at 44.1 kHz and 4,096 points, 84 at 48 kHz, 128 at 8 kHz, 80 at 192 kHz).
+- **Rows for the report:** each row's coherence from the stream sums of its own bins, for the JSON and the GUI; a row where either channel has no power has none.
+
+### The estimator's bias and the minimum count
+
+- **Independent averages:** adjacent Hann bins correlate with an amplitude coefficient of 2/3, and bins two apart with 1/6 (worked out from the window's squared Fourier series), so B adjacent bins count as about B / 1.94 independent averages: 41 to 66 for a band in one frame. Frames overlapped by half add about 0.8 each (half-overlapped Hann windows correlate as 1/3; Welch 1967). **Estimates** from the window, checked at zero coherence below.
+- **Bias and spread** with n_d averages (Bendat and Piersol; Carter, Knapp and Nuttall; quoted, **unverified** against a copy here): at zero true coherence the estimate averages 1 / n_d; in general it is biased up by about (1 − γ²)² / n_d, with a random error of about √2 (1 − γ²) / (|γ| √n_d) of γ².
+  - **Checked at zero:** independent channels read a median band coherence per frame of 0.013 to 0.021 (1 / 47 = 0.021 is the mean), and row coherences over 128 frames of 0.002 to 0.004 (1 / 216 = 0.005).
+- **What that gives:**
+  - one frame's band test is usable on its own: with no true coherence it cannot reach 0.85 (the chance is about 0.15^40); with a true 0.81 its error is about 0.035, so roughly one frame in eight passes 0.85 (**estimate**);
+  - the stream's band coherence over 10 frames has an error of about 0.012 at a true 0.81, so 0.85 is 3.3 errors away; **at least 10 frames** (about 0.5 s at 44.1 kHz) are needed for the figure, "none found: fewer than 10 frames" otherwise;
+  - the rows of the report (2 to 8 bins each) have a bias of about 1 / (1.6 F) at zero for F frames: 0.03 at 20 frames, 0.005 at 128. The JSON gives the frame count beside them; the figure never reads a single row.
+
+### The figure
+
+- **Near 1 is 0.85** (decision S20): `20 |S_xy|² ≥ 17 S_xx S_yy` over the band, in doubles, both powers above 0. The basis, from the prototype: the highest band coherence of an input without intensity stereo is 0.81 (the side-12 dB source), the lowest of a band inside an intensity stereo run 0.85 to 0.89 (Xing's `external-xing-joint`, TwoLAME on independent channels). The margin is thin; the fixtures fix it, as the cutoff's thresholds were fixed.
+- **The range** is the holes' (see [As built: step 7, second change](#as-built-step-7-second-change)): from the band ending at the combined spectrum's cutoff edge where found, else at the last row of its spectral bandwidth's content, else at row 505. Above an encoder's lowpass every frame has "signal" against the floor of its own row, and the floor is incoherent, so the search must end at the content's edge.
+- **The run ("stays"):** walking down from the top of the range one row at a time, while the stream's band of W rows under the row is coherent; the run's lowest band starts at the **start frequency**, the lower edge of that band's lowest row. Every band of the run is coherent; there are no exceptions.
+- **Found** where the stream has at least 10 frames, the run is at least W rows (1 kHz) long, and it stops above 0 Hz (a band under it is not coherent: the rise). Otherwise none found, with a reason:
+  - `notCoherent`: the top band is not coherent; the text gives its coherence;
+  - `reachesStart`: every band down to 0 Hz is coherent (near-mono content, identical channels, or intensity stereo from below 1 kHz);
+  - `tooShort`, `tooFewFrames`.
+- **The share of frames that show it:** per frame and candidate row r, the same test on that frame's own band under r, counted in a counter set of the pair (`All` at the level of the pair's mean power under r, as the cutoff's counters; `Coherent` beside it, 2 × 147,456 B). At the end, for each row, the frames with signal by the cutoff's rule (the level 1 % of the row's frames reach, ten exponents under it) and those of them coherent: 512 shares in tenths of a percent. The figure's frames are those of the run's first full band (the band of W rows that starts at the start frequency): "in 123 of 128 frames with signal".
+- **Why the stream sums decide the frequency and the frames give the share** (decision S19): the stream's sums average over every frame, so their error is the smallest; the frame test counts where the factor held within one frame. A walk on the per-row shares (at least half the frames coherent) finds intensity stereo used in part of the stream or with factors that change between frames, which the stream sums dilute: libopus at 24 kbps on independent channels 8,203 Hz against 9,375 Hz from the stream sums (stated 8,000), at 48 kbps 11,953 against 15,281 Hz.
+- **Unit** (decision S22): coherence in percent, tenths in the integers, as the holes' shares are (`unit` "%", `valuesPerUnit` 10): 85 % is 0.85.
+- **Text,** after `Mid/Side`, where the stream has a pair and the spectrum is searched:
+  - `Inter-Channel Coherence: 85 % or more from 2,756 to 17,270 Hz, in 123 of 128 frames with signal`;
+  - `Inter-Channel Coherence: none found (the top band reads 3.2 %)`, `… none found (85 % or more at every frequency from 0 Hz)`;
+  - for a stream whose parser states a bound, the comparison follows (below).
+
+### Beside the stated bound
+
+- **What the parsers state:** "Intensity Stereo Bound" per unit, as a series with that quantity (MPEG audio all layers, AAC, Opus), in Hz at the units that have one: the bound subband's lower edge (Layers I and II), the lowest line of the intensity positions over the frame's granules (Layer III), the lowest band of codebook 14 or 15 (AAC), the first intensity band (Opus).
+- **What the host reads:** the stream's series of that quantity, never a node name; its values sorted, the lower median (the value at (n − 1) / 2), and n. A constant for the quantity in `Core.Abstractions`, which the three parsers and the host share, replaces the three string literals (decision S21).
+- **What is reported:** the measured start, the stated median and its count, and their difference in Hz (measured minus stated), all as figures:
+  - `Inter-Channel Coherence: 85 % or more from 2,756 to 17,270 Hz, in 123 of 128 frames with signal; the stated intensity stereo bound has a median of 2,756 Hz over 230 frames, 0 Hz apart`;
+  - `Inter-Channel Coherence: none found (the top band reads 2.1 %); the stated intensity stereo bound has a median of 842 Hz over 57 frames`.
+- **No finding, no word that judges** (decision S21): not "agrees", "mismatch" or "fake". A difference has known causes that the article lists with the fixtures that show them:
+  - the bound stated in frames with little above it: `external-fhg-acm34-mpeg2` states 842 Hz in 57 of its 80 frames, all in its tone and chord sections, whose only content above 1 kHz is a 3,300 Hz tone in both channels; its noise section states no bound, and there the decoded audio (the analyzer's decoder: side as loud as the mid in step 7's rows) is not coherent;
+  - content coherent under the bound: `external-xing-mpeg2` reads 2,347 Hz against a median of 3,216 Hz, its 3,300 Hz tone being in both channels; TwoLAME on the side-12 dB source 2,239 against 2,756 Hz;
+  - factors or signs that change inside an FFT frame (Opus's `inv`, above), or a stated figure that is only the lowest intensity band (AAC);
+  - frames that state 0 Hz (`external-xing-*`: frames 58 to 60 of 74, in the pause of the signal, by their position), which the median passes over.
+- **Decoded lossless streams** have no stated bound: the line is the measurement alone, worded as the spectral cutoff is ("measured from the decoded audio"), and the article says what it is consistent with (intensity stereo, a side quantized to nothing by mid/side coding, near-mono content) and that the analyzer names no encoder from it.
+
+### The prototype's table
+
+At 0.85, W rows of 1 kHz, the range end crudely set at the last row within 60 dB of the loudest (the build uses the holes' range); "stated" is the median of the analyzer's per-unit series and the units that have one:
+
+| Input | Frames | Start (stream sums) | Start (shares, at least half) | Frames at the first full band | Stated |
+| --- | --- | --- | --- | --- | --- |
+| the three sources, TwoLAME `-m s -b 128`, LAME `-m j` on independent channels | 128 | none | none | | none |
+| TwoLAME `-m j -b 128`, independent / side 12 dB under | 128 | 2,756 / 2,239 Hz | 2,713 / 2,196 Hz | 123 / 128 of 128 | 2,756 Hz, 230 of 230 frames |
+| TwoLAME `-m j -b 192`, independent / side 12 dB under | 128 | 11,025 / 10,767 Hz | 10,982 / 10,724 Hz | 123 / 125 of 128 | 11,025 Hz (8,269 to 11,025), 230 / 227 frames |
+| LAME 3.100 `-m j -b 128`, side 12 dB under | 128 | 10,853 Hz | 10,724 Hz | 83 of 128 | none |
+| opusenc 24 kbps, independent / side 12 dB under | 139 | 9,375 / 7,594 Hz | 8,203 / 7,594 Hz | 127 / 139 of 139 | 8,000 Hz, 301 of 301 packets |
+| opusenc 48 kbps, independent / side 12 dB under | 139 | 15,281 / 7,312 Hz | 11,953 / 7,312 Hz | 139 of 139 | 3,200 / 8,000 Hz |
+| opusenc 64 kbps, independent / side 12 dB under | 139 | 15,562 Hz / reaches 0 Hz | 15,516 Hz / reaches 0 Hz | 139 of 139 | 5,600 Hz |
+| FFmpeg `aac` 64 kbps, defaults and `-aac_pns 0`, both sources | 128 | none | none | | 5,685 to 8,958 Hz, 113 to 259 of 260 frames |
+| `external-xing-mpeg2` (tompg 3.0, MPEG-2, 22.05 kHz) | 40 | 2,347 Hz | 2,606 Hz | 21 of 21 | 3,216 Hz, 74 of 74 frames |
+| `external-xing-joint` (tompg 3.0, MPEG-1, 44.1 kHz) | 40 | 4,307 Hz | 2,326 Hz | 15 of 18 | 2,833 Hz, 74 of 74 |
+| `external-fhg-acm19-mpeg2` (l3codeca 1.9, MPEG-2) | 41 | 2,326 Hz | 2,304 Hz | 33 of 33 | 2,680 Hz, 40 of 74 |
+| `external-fhg-acm34-mpeg2` (l3codecp 3.4, MPEG-2) | 44 | none | none | | 842 Hz, 57 of 80 |
+| `lossy-stereo-opus-48k` / `-equal-opus-48k` (FLAC) | 45 | 7,406 / 15,562 Hz | 7,359 / 15,516 Hz | 45 of 45 | (lossless) |
+| `lossy-stereo-oggenc-q0` / `-equal-oggenc-q0` | 42 | 689 / 5,168 Hz | 646 / 4,996 Hz | 42 of 42 | (lossless) |
+| `lossy-stereo-lame-j-b128` / `-j-b64` (24 kHz) | 42 / 45 | 11,456 / 5,367 Hz | 11,413 / 4,758 Hz | 29 of 42 / 26 of 45 | (lossless) |
+| `lossy-stereo-aac-64k`, `-equal-*` but oggenc and opus, `lossy-stereo-lame-s-b128` | 42 to 45 | none | none | | (lossless) |
+
+- **At 0.80** the side-12 dB source reaches 0 Hz (no rise, not found), TwoLAME on it starts at 1,981 Hz and LAME's joint stereo at 7,020 Hz; **at 0.90** TwoLAME on independent channels starts at 14,470 Hz (its bands read 0.89 to 0.92) and `external-xing-joint` at 12,618 Hz. Hence 0.85 (S20).
+
+### Cost, memory and determinism
+
+- **Work (estimates; `MeasurementWorkTests` sets them):** per frame the cross rows (two products and an add for each part, and the row sums: about as much as `MidSideRows`), the stream sums (1,024 adds), and per candidate row of the frame four band sums, three products and a compare, then one counter increment: about 1 ns a sample of each channel of the pair, so `PairWeight` rises from 6 to about 8 units. Nothing at the end beyond 512 rows and one walk.
+- **Memory** per stream with a pair: the stream sums 8 KiB, the frame's cross rows 8 KiB, four suffix arrays 16 KiB, the counter set 294,912 B, the record's rows and shares 2 KiB: about 330 KB, so CD stereo goes from about 5.2 to 5.5 MiB and the 32-channel pair at 32,768 points from about 27.5 to 27.8 MiB; two of the largest still fit the bound of 64 MiB. `StreamMeasurer.EstimateBytes` adds each, and the 65,535-channel header test holds the estimate.
+- **Determinism:**
+  - the products are formed as written, two roundings each, never fused; the parts of a bin are added in bin order, the rows over frames in frame order (the stream's order), the band sums from suffix sums from row 506 down, as `Count` forms them; `Vector128` element-wise at most;
+  - no logarithm, no trigonometry, nothing from `DetMath` but what the FFT already uses; the tests compare products (`20 |C|² ≥ 17 S_xx S_yy`), and the reported coherence is one IEEE division per row, `floor(1000 γ² + 0.5)` in tenths of a percent, halves up;
+  - inputs are already clamped and cleaned of non-finite values, and there is no recursive state, so nothing to flush;
+  - `MeasurementDeterminismTests` keeps every existing constant (the rows of the pair do not change) and adds hashes of the cross rows, the stream sums and the counter set for its synthetic stereo signal, equal across two block sizes.
+- **Cancellation, the budget's stop and the exception boundary** are unchanged: the work runs in `ProcessFrame` and is charged with the block.
+
+### Model, goldens, CSV, GUI, docs
+
+- **The record:** `SpectrumFigures.Coherence` (`CoherenceFigures`, null without a pair): the pair's channel indices, `Rows` (512, tenths of a percent, `NoPower` where a channel has none), `Frames`, `IsSearched`, `IsFound`, `Reason`, `FromFrequency`, `ToFrequency`, `TopBandTenths`, `FramesShowing`, `FramesWithSignal`, `Shares` (512, tenths of a percent), and `Stated` (median, units, difference; null without a stated series).
+- **JSON:** `spectrum.coherence`, an object or `null`, always written where the spectrum is; frequencies as `{ "value", "unit": "Hz" }`, the rows and shares with `unit` and `valuesPerUnit`, `stated` an object or `null`.
+- **Text:** as above. **CSV (decision S24):** `Inter-Channel Coherence From (Hz)` after `Side Cutoff (Hz)`, empty where none is found; the stated median stays in the text and the JSON.
+- **GUI (decision S23):** the Figures line, and a "Coherence" form of the Spectrum panel where the stream has a pair: the rows from 0 to 100 %, the per-row share of frames as a second line, the start as a dashed line, and the parser's stated median as a second dashed line in another hue where there is one.
+- **The model** (`measurement_model.py`) computes the figure in its own code, as the prototype did; the tests hold the analyzer to it: frequencies exact, rows and shares within one tenth.
+- **Goldens:** every measurement golden gains `spectrum.coherence` (`null` without a pair); `golden_additions.py` lists it, and no existing figure may change. One regeneration.
+- **Articles,** under 400 words, from the specifications, the fixtures and the model:
+  - new `inter-channel-coherence`: the estimate, the band and the frames, the 85 %, what a rise is consistent with (intensity stereo, a side quantized to nothing, near-mono content) and what lowers it (factors and signs that change inside a frame, delays), the comparison with the stated bound and its known causes, and the observations the committed fixtures back, with versions and settings;
+  - `intensity-stereo` (417 words already: a swap, not an addition) and `mid-side-spectra` (400) link it through `related`.
+- **Docs:** [cli.md](../cli.md), [gui.md](../gui.md), [development.md](../development.md) (fixtures, model), the formats' "What is reported" where they state the bound ([mpeg-audio.md](../formats/mpeg-audio.md), [aac.md](../formats/aac.md), [opus.md](../formats/opus.md)), an "As built: step 8" section here, and [plan.md](../plan.md) marks item 13.
+
+### Fixtures and tests
+
+- **Committed, lossy, measured through the analyzer's decoders** (each gains a `.measure.json` golden where it has none):
+  - `mpeg-audio/external-xing-mpeg2` and `external-xing-joint` (tompg 3.0) and `external-fhg-acm19-mpeg2`: a start near the stated median (above);
+  - `external-fhg-acm34-mpeg2`: a stated bound and no figure, the first known cause of a difference;
+  - the Opus fixtures that state a bound (`ogg/external-opusenc-*`, `external-libopus-stereo-*`): measured; what they show is **unverified**;
+  - the stereo files that have measurement goldens (`external-lame-joint-music`, `-stereo-music`, `-forced-ms`, `external-shine-joint`): no stated bound, the figure as measured.
+- **Committed, lossless:** the twelve `measurement/lossy-stereo-*` files of step 7 (above): Opus and Vorbis show a rise, LAME's joint stereo too (its side), FFmpeg's `aac` and the left/right counterparts do not.
+- **To make, external** (`make_external_measurement_fixtures.py`, 2 s of stereo, the step 7 source with the side 12 dB under the mid, and a new one with independent channels; each lossy stream also committed under its format's folder for the comparison, and decoded to FLAC by its own decoder or FFmpeg as a black box):
+  - **Layer II:** TwoLAME 0.4.0 `-m j -b 128` and `-b 192` (bounds 2,756 and 11,025 Hz in the prototype) and `-m s -b 128`, the counterpart; the plan's first fixture;
+  - **Opus:** opusenc at 24 kbps on both sources (a start at the stated 8,000 Hz), and at 48 kbps on independent channels (the `inv` case);
+  - **AAC:** FFmpeg's `aac` at 64 kbps (`-aac_is 1`, its default, and `-aac_pns 0`) on both sources, the stated bound without a rise; FAAC through `faac_tool.py` on both, to find an AAC encoder whose intensity stereo shows a rise (**unverified**: not run here). Their lossy streams are measured once the AAC decoder of [0.5](../plan.md#05-aac-and-wma) exists; until then only their FLAC decodes are, without a stated bound.
+- **To make, synthetic** (`make_measurement_fixtures.py`, exact by construction): independent channels (none); a side 12 dB under the mid (0.81 everywhere, none); identical channels (reaches 0 Hz); independent noise under 4 kHz and the right channel half the left above it (a start at 4 kHz, coherence 1); the same with the factor changing every 384 samples (Layer II's part) and every 1,152 samples, and with the sign flipping every 960 samples (the `inv` case, none); the right channel the left delayed by 1 ms (none); 16-bit TPDF dither in each case.
+- **Unit tests** (scripted decoders, as `MeasurementLevelsTests`): each reason, ties of the walk, the 10-frame minimum, a row where one channel is silent, the pair's rows unchanged, every cutting of a stream into blocks giving the same figures, and the stated median (odd and even counts, a stream without the series).
+- **Work and memory:** `MeasurementWorkTests` with a pair at every FFT size and 32 channels with a pair; `MemoryTests` holds the estimate.
+
+### Pull request
+
+- **One change:** the figure, the comparison, the quantity constant in the three parsers (their goldens do not change), the model, the fixtures, one regeneration of the goldens, the article and the docs, with the checks of [CLAUDE.md](../../CLAUDE.md) for the host, the measurement tests and the MPEG audio, Opus and AAC tests.
+
+### Decisions for the lead
+
+The lead took the recommendation of each decision on 2026-11-23: S18(a) to S26(a); S20's 0.85 is confirmed on the committed and new fixtures in the implementation pull request and comes back to the lead if it does not hold. The options are kept for the record.
+
+- **S18. Which channels.** (a) Recommended: step 7's one pair (front left and right, or the two channels without a layout). (b) Every pair a layout names, surround pairs too: AAC and Opus can code those in intensity stereo, but no fixture shows it, and each pair costs about 330 KB and a text line. **Taken: (a), 2026-11-23.**
+- **S19. What decides the frequency.** (a) Recommended: the stream's band sums (the plan's running cross-spectrum), with the frames' share at the run's first band beside it; the smallest error, but intensity stereo used in part of the stream, or with signs that flip between frames, is diluted (libopus at 48 kbps on independent channels: 15,281 Hz). (b) The per-row shares, a run where at least half the frames are coherent: follows partial use (11,953 Hz there) but rests on one-frame tests with an error of about 0.035. (c) Both, as two figures: more text for a difference the shares already hold in the JSON. **Taken: (a), 2026-11-23.**
+- **S20. Near 1.** (a) Recommended: 0.85, between the side-12 dB source's 0.81 and the lowest band of an intensity stereo run, 0.85 to 0.89; fixed by the fixtures. (b) 0.90: TwoLAME on independent channels and `external-xing-joint` start 9 to 12 kHz above their bound. (c) 0.80: content coherent at 0.80 to 0.85 under a bound pulls the start down (TwoLAME on the side-12 dB source: 1,981 Hz against 2,756). **Taken: (a), 2026-11-23,** to be confirmed on the fixtures in the implementation pull request.
+- **S21. The comparison with the stated bound.** (a) Recommended: the stated median, its count and the difference as figures beside the measured start, no finding, the host reading the series by a shared quantity constant. (b) As (a) with an info finding `measure.intensity-bound-differs` beyond 1 kHz: through `--fail-on info` it acts as a verdict, and the known causes (acm34's frames without content, content coherent under the bound) are not errors of the file. (c) No comparison: the reader sets the parser's series beside the figure. **Taken: (a), 2026-11-23.**
+- **S22. The unit.** (a) Recommended: percent, in tenths, as the holes' shares: the writers and the CSV handle it, and 85 % reads as the share of one channel's power the other predicts. (b) A number from 0 to 1 in thousandths, as the literature writes coherence: a figure without a unit, which no writer has yet. **Taken: (a), 2026-11-23.**
+- **S23. GUI.** (a) Recommended: the Figures line and a Coherence form of the Spectrum panel (rows, shares, the start and the stated median as lines). (b) The Figures line only. **Taken: (a), 2026-11-23.**
+- **S24. CSV.** (a) Recommended: `Inter-Channel Coherence From (Hz)` after `Side Cutoff (Hz)`. (b) No column. **Taken: (a), 2026-11-23.**
+- **S25. The name.** (a) Recommended: "inter-channel coherence", the plan's and the literature's term (`inter-channel-coherence`). (b) "Stereo coherence": shorter, but the pair can be the front pair of a surround stream. (c) "Channel correlation": correlation is another measure (signed, at zero lag, over all frequencies). **Taken: (a), 2026-11-23.**
+- **S26. AAC fixtures.** (a) Recommended: FFmpeg's `aac` as the case of a stated bound without a rise, and FAAC tried for one with a rise in the pull request, its lossy streams compared once the AAC decoder lands. (b) Leave AAC to the AAC decoder's pull request in 0.5. **Taken: (a), 2026-11-23.**
+
+### Unverified claims and estimates
+
+- The prototype ran on synthetic noise only; how music behaves (panned sources, reverberation, a mono bass), and so the margin of 0.85, is **unverified** until fixtures with music are measured.
+- The cost and memory figures are estimates from the arrays and from the mid/side work of step 7; the bias formulas beyond zero coherence are quoted from the literature, not checked against a copy here; the effect of a delay is worked out, not measured.
+- Why FFmpeg's `aac` shows no rise above its stated bound, and how libvorbis couples its channels at low quality, are not established; libopus's `inv` is an inference from its source.
+
+### Sources for this step
+
+- ISO/IEC 11172-3:1993 2.4.2.3 (the mode and mode_extension, read); 2.4.3.4.9.3 and ISO/IEC 14496-3 4.6.8.2.3 as [coding-graphs.md](coding-graphs.md) and the parsers cite them; libopus 1.5.2 `celt/bands.c` (`compute_theta`, `quant_band_stereo`) and `celt/rate.c` (the intensity parameter), BSD-3-Clause, read on 2026-11-23.
+- P. D. Welch (1967), above; G. C. Carter, C. H. Knapp and A. H. Nuttall, "Estimation of the magnitude-squared coherence function via overlapped fast Fourier transform processing", IEEE Transactions on Audio and Electroacoustics 21(4) (1973); J. S. Bendat and A. G. Piersol, "Random Data: Analysis and Measurement Procedures" (Wiley), its coherence error formulas; the last two not read for this draft.
+- The tools of the prototype: TwoLAME 0.4.0, FFmpeg 6.1.1 (Ubuntu's 6.1.1-3ubuntu5), opus-tools 0.2 with libopus 1.4, LAME 3.100, numpy 2.5.3; `lame --longhelp` for LAME's modes and `ffmpeg -h encoder=aac` for `-aac_is` and `-aac_pns` (both on by default).
+
+## As built: step 8
+
+The inter-channel coherence of [Step 8](#step-8-inter-channel-coherence), S18 to S26 as decided (option (a) each), with S20's 0.85 confirmed on the fixtures below.
+
+### Departures and readings
+
+- **Code:**
+  - `FftPlan.CrossRows` (the cross-spectrum of the pair per row, from the stored bins, two products and an add for each part, never fused, scaled as the power rows are);
+  - `StreamMeasurer` adds the frame's cross rows to the stream's sums (1,024 doubles) and counts the frame in a `CoherenceCounters` set (`All` and `Coherent`, 2 × 147,456 B) from the first full band of 1 kHz (row W - 1) to row 505, with the test `20 |C|² ≥ 17 Sxx Syy` in `CoherenceFinder.IsCoherent`, shared with the stream's walk;
+  - `CoherenceFinder.Find` does the walk on the suffix sums of the stream's power and cross rows, once at the close of the stream; `CutoffFinder.Frames` (now `internal`, on the `All` array) gives the frames with signal;
+  - `PairWeight` is 8 (was 6), and `EstimateBytes` and `RecordBytes` add the arrays (about 330 KB);
+  - `SpectrumFigures.Coherence` (`CoherenceFigures`), `CoherenceReason`, `StatedIntensityBound`, `MeasurementLimits.CoherenceThresholdTenths` and `MinimumCoherenceFrames`.
+- **The range** is the holes' (the combined cutoff's edge, else the bandwidth's content, else row 505). The top band is the band of W rows that ends at its last row; `tooShort` is a range without a full band.
+- **The reasons** are tested in this order: `tooFewFrames` (under 10 frames), `tooShort`, `notCoherent` (the top band), `reachesStart` (the walk reaches the first full band, row W - 1, with every band coherent).
+- **The frames of the figure** are those of the run's first full band (the band of W rows that starts at the start frequency), counted from the counters at the row where that band ends. The design's prototype table gave 21 of 21, 33 of 33 and 15 of 18 for `external-xing-mpeg2`, `external-fhg-acm19-mpeg2` and `external-xing-joint`; the build reads 18 of 33, 17 of 33 and 14 of 19. The frames with signal agree for the second; the per-frame test is the design's, and `external-fhg-acm19-mpeg2` has 16 coherent frames (its tone and chord sections) against 17 of noise-section frames that are not (checked frame by frame in numpy).
+- **The stated bound** is attached by the host (`StatedBound.Attach`, at the two places the report's measurements are set): the lower median of the values of the series whose `Quantity` is `SeriesQuantities.IntensityStereoBound`, rounded to whole hertz (halves up), over the series' values, and the difference to the start where one is found.
+- **Output:**
+  - text line `Inter-Channel Coherence` after `Mid/Side` (the design's wording; the stated clause counts "units", the word that covers a frame and an Opus packet);
+  - JSON `spectrum.coherence` (an object, `null` without a pair; `rows` and `shares` with `unit` "%" and `valuesPerUnit` 10; `stated` an object or `null`; with `--explain` the description and the topic `inter-channel-coherence`);
+  - CSV `Inter-Channel Coherence From (Hz)` after `Side Cutoff (Hz)`;
+  - the GUI's Figures line and a "Coherence" form of the Spectrum panel (the rows and the shares as two lines from 0 to 100 %, the start and the stated median dashed).
+- **The model** (`find_coherence`, `count_coherence` in `measurement_model.py`) is its own code from the design's text on its own bins; `MeasurementFixtureTests` holds the analyzer to it (frequencies, reason and frame counts exact, the 512 rows and shares within a tenth of a percent, rows under the levels' rounding noise left out).
+- **Determinism:** `MeasurementDeterminismTests` keeps every existing constant and adds `CrossRowsHash` (the raw cross rows) and `CoherenceHash` (the counter set, the stream's cross sums and the figures, equal for blocks of 4,096 and of 7,777 samples).
+- **Goldens:** every measurement golden (and the ALAC, TTA, Matroska, AC-3, MPEG audio, Ogg, FLAC, Musepack, Monkey's Audio, TAK, TrueHD and WavPack ones) gains `spectrum.coherence`; `golden_additions.py` checks 365 goldens and finds no other change. The goldens of `external-xing-*`, `external-fhg-acm19-mpeg2` and `external-fhg-acm34-mpeg2` and of five Opus fixtures are new (`MpegDecoderFixtureTests`, `OpusDecoderFixtureTests`).
+- **Article:** new `inter-channel-coherence`; `intensity-stereo` and `mid-side-spectra` link it in `related`, with no words added.
+
+### S20's threshold on the fixtures
+
+The measurement through the analyzer's own decoders and the numpy prototype of the design agree on every start (2,347, 4,307 and 2,326 Hz for the three MPEG streams, and the starts of the `lossy-stereo-*` files below). Band coherence, 1 kHz bands (23 rows at 44.1 kHz, 46 at 22.05 kHz):
+
+| Input | The run's lowest band, and the band under it | Start |
+| --- | --- | --- |
+| the sources: side 12 dB under the mid, 44.1 and 48 kHz | no run: 0.8065 and 0.8031, the highest band of each | none |
+| `external-xing-mpeg2` (tompg 3.0) | 0.8553, 0.8485 | 2,347 Hz (stated median 3,216) |
+| `external-xing-joint` (tompg 3.0) | 0.8508, 0.8493 (0.849 to 0.851 only from 4.2 to 4.4 kHz, a slow rise around it) | 4,307 Hz (stated 2,833) |
+| `external-fhg-acm19-mpeg2` | 0.9249, 0.5072 | 2,326 Hz (stated 2,680) |
+| `lossy-stereo-twolame-j-b128`, `-equal-` | 0.8518, 0.8415; 0.8712, 0.8309 | 2,283; 2,756 Hz |
+| `lossy-stereo-twolame-j-b192`, `-equal-` | 0.8582, 0.8419; 0.8736, 0.8434 | 10,810; 11,025 Hz |
+| `lossy-stereo-opus-24k`, `-equal-` | 0.8509, 0.8324; 0.8666, 0.8373 | 7,688; 9,422 Hz |
+| `lossy-stereo-opus-48k`, `-equal-` | 0.8649, 0.8483; 0.9020, 0.8424 | 7,406; 15,563 Hz |
+| `lossy-stereo-oggenc-q0`, `-equal-` | 0.8502, 0.8428; 0.8526, 0.8413 | 689; 5,168 Hz |
+| `lossy-stereo-lame-j-b128`, `-j-b64` (side 12 dB under) | 0.8507, 0.8446; 0.8524, 0.8500 | 11,456; 5,367 Hz |
+| `lossy-stereo-twolame-s-b128`, `-lame-s-b128`, `-aac-64k` and `-aac-64k-nopns` (both sources), `-equal-lame-j-*` | no run: top bands of 0.0 to 34.8 % | none |
+
+- **The margin is thin where the coherence rises slowly through the threshold.** The side-12 dB source stays under 0.81, and every run's lowest band reads 0.8502 or more (`lossy-stereo-lame-j-b64` has 0.8500 under its run: a band of 0.85 either side of the threshold), but `external-xing-joint` rises slowly through the threshold (0.823 at 3.4 kHz, 0.841 at 3.9 kHz, 0.849 to 0.851 only for the bands from 4.2 to 4.4 kHz, 0.858 at 4.6 kHz and 0.861 at 5 kHz; its factor changes inside the frames), so its start moves with the threshold: 3,747 Hz at 0.83, 4,307 Hz at 0.85, 4,996 Hz at 0.86 and 12,317 Hz at 0.88 (the stated median is 2,833 Hz). At 0.80 the start of `external-xing-joint` is 2,326 Hz. Where a run's band readings are this close to the threshold, the start frequency is a reading of the band, not an edge: it is approximate where the rise is slow, and the threshold decides found versus none, not the exact start. The share of frames and the stated median stand beside it for that reason. The lead kept 0.85 on 2026-11-23 with this caveat.
+- **The larger corpus** (every MPEG audio and Opus fixture of the repository, 266 files, measured once): a run is found in `external-lame-v0-replaygain`, `-vbr-v2`, `external-ffmpeg-remux` and `-vbr` (one or two frames with signal at 12.6 to 16.2 kHz, test signals with the same tones in both channels), in the fhg surround files (947 Hz, a base stereo of a surround stream) and in `external-m3e-*`; no other file without a stated bound has one, and 24 files report none for fewer than 10 frames. The Opus files that state a bound start within 187 to 328 Hz of it (`external-opusenc-music-5ms` 11,813 against 12,000 Hz, `external-opusenc-cvbr` 5,344 against 5,600 Hz, `external-opusenc-96` 11,672 against 12,000 Hz), and four start 2.2 to 9.8 kHz under it (`external-ffmpeg-opus`, `external-libopus-stereo-hybrid-20ms`, `external-opusenc-hard-cbr`, `external-libopus-stereo-celt-lowdelay`): the known cause of content coherent under the bound.
+- **The lossy streams of TwoLAME and opusenc** are committed under their formats' folders, from the same pink-noise sources as the FLAC decodes (`make_external_mpeg_fixtures.py`, `make_external_vorbis_opus_fixtures.py`; each with its manifest and goldens, and a `.measure.json`): `mpeg-audio/external-twolame-joint-pink-b128`, `-b192`, `-pink-side-12-db-b128` and `-b192` (32 and 48 KB), `ogg/external-opusenc-24-pink-equal` and `-pink-side-12-db` (6 KB). The measured start beside the stated median:
+
+  | Stream | Start | Stated median | Difference |
+  | --- | --- | --- | --- |
+  | TwoLAME 0.4.0 `-m j -b 128`, uncorrelated channels / side 12 dB under | 2,756 / 2,283 Hz | 2,756 Hz over 77 frames | 0 / -473 Hz |
+  | TwoLAME 0.4.0 `-m j -b 192`, uncorrelated channels / side 12 dB under | 11,025 / 10,810 Hz | 11,025 Hz over 77 frames | 0 / -215 Hz |
+  | opusenc 0.2 `--bitrate 24`, uncorrelated channels / side 12 dB under | 9,422 / 7,688 Hz | 8,000 Hz over 101 units | +1,422 / -312 Hz |
+- **FAAC** (`faac_tool.py`, 1.40.0 and 2.2.0 built from their pinned commits) was tried on the same two sources at 64 kbit/s, decoded by FFmpeg 6.1.1 (the AAC decoder is [0.5](../plan.md#05-aac-and-wma)'s). FAAC 1.40.0 states an "Intensity Stereo Bound" of 689 Hz in all 88 frames of both files. On the side-12 dB source its decode reads 85 % or more from 431 Hz to 11,886 Hz, in 30 of 42 frames with signal (a start 258 Hz under the stated bound, with the stated median 689 Hz over 88 frames): the AAC case of a stated bound with a start near it that S26 asked for, though the source itself reads none (79.3 % at the top band), so the decode is more coherent than the source (the committed `aac/faac-1.40-pink-side-12-db-adts`, measured through an FFmpeg decode, which is not committed, until the AAC decoder exists). On the uncorrelated source the decode reads none (the top band reads 1.1 %), with the same stated bound. FAAC 2.2.0 (HE-AAC) shows none on either source (top bands of 0.2 and 3.2 %) and states 2,067 Hz in two and three units. FFmpeg's `aac` shows none with and without noise substitution (top bands of 14.7 % and 0.0 %). The two FAAC 1.40.0 streams are committed (`aac/faac-1.40-pink-equal-adts`, `aac/faac-1.40-pink-side-12-db-adts`, with manifests and goldens).

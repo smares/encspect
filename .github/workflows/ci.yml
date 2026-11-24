@@ -41,6 +41,7 @@ jobs:
   # Decides, from the files a pull request changes, which jobs it needs (scripts/ci/changes.py). Every
   # job's output is named like the job; the aggregate job accepts a skipped job only when its output is
   # false. Anything but a pull request, and anything the script cannot place, runs everything.
+  # A pull request runs no macOS test shard (scripts/ci/changes.py, test_platforms: GitHub drops queued macOS jobs).
   changes:
     name: what changed
     runs-on: ubuntu-26.04

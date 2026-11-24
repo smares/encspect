@@ -5,7 +5,8 @@
   (read with git ls-tree, so the job's sparse checkout does not matter);
 - no reference to a Markdown file of the tree is left as plain text or in backticks: it is a link (a file name pattern such
   as docs/formats/<name>.md, and anything in a code block, is not a reference);
-- every page in docs/formats and docs/tags is linked from its folder's README.md.
+- every page in docs/formats and docs/tags is linked from its folder's README.md;
+- in docs/plan.md, the status line of a milestone in progress names as done exactly the items whose own heading says done.
 
 Anchors (#section) are not followed.
 """
@@ -78,6 +79,43 @@ def unlinked_references(page, known):
                 yield number, token
 
 
+STATUS_DONE = re.compile(r"items ([0-9][0-9 ,toand]*?) (?:is|are) done")
+ITEM = re.compile(r"^(\d+)\. \*\*.+?\*\* \((.*?)\):")
+
+
+def numbers(text):
+    """The item numbers of a list such as "1 to 12 and 16 to 18" or "1 to 5, 7 and 16"."""
+    result = set()
+    for part in re.split(r",\s*|\s+and\s+", text.strip()):
+        bounds = [int(n) for n in re.findall(r"\d+", part)]
+        if len(bounds) == 2 and " to " in part:
+            result.update(range(bounds[0], bounds[1] + 1))
+        elif len(bounds) == 1:
+            result.add(bounds[0])
+    return result
+
+
+def stale_statuses(text):
+    """(line, message) for each milestone in progress whose status line and items disagree on which items are done."""
+    problems = []
+    sections = re.split(r"(?m)^(?=### )", text)
+    offset = 0
+    for section in sections:
+        lines = section.splitlines()
+        status = next(((i, line) for i, line in enumerate(lines) if line.startswith("**Status:** in progress")), None)
+        if status is not None:
+            claimed = STATUS_DONE.search(status[1])
+            done = {int(m.group(1)) for line in lines if (m := ITEM.match(line)) and re.search(r"\bdone\b", m.group(2))}
+            named = numbers(claimed.group(1)) if claimed else set()
+            if named != done:
+                missing = sorted(done - named)
+                extra = sorted(named - done)
+                detail = "; ".join(filter(None, [f"done but not named: {missing}" if missing else "", f"named but not done: {extra}" if extra else ""]))
+                problems.append((offset + status[0] + 1, f"the status line does not match the items marked done ({detail})"))
+        offset += len(lines)
+    return problems
+
+
 def main():
     problems = []
     known = tracked()
@@ -100,6 +138,9 @@ def main():
         for page in sorted((ROOT / "docs" / folder).glob("*.md")):
             if page.name != "README.md" and f"({page.name})" not in text:
                 problems.append(f"docs/{folder}/README.md does not list {page.name}")
+    plan = ROOT / "docs" / "plan.md"
+    for number, message in stale_statuses(plan.read_text(encoding="utf-8")):
+        problems.append(f"docs/plan.md:{number}: {message}")
     for problem in problems:
         print(f"::error::{problem}")
     print(f"Checked {len(pages)} pages, {len(problems)} problems.")
