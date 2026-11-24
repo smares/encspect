@@ -157,6 +157,11 @@ FIXTURES = [
     ("faac-1.40", ".m4a", ["{faac 1.40}", "-o", "{out}", "{in}"],
      [stream("AAC LC", 44100, 2, "Stereo", 1024, True, ("FAAC 1.40.0", "High"), "LC", writer=("FAAC 1.40.0", "Low"))], {}, [MOOV_AFTER, ["mp4.duration-mismatch", "mdhd box of track 1"]],
      {"faad": {"label": "LC AAC", "channels": 2, "rate": 44100}}),
+    # Step 8 (inter-channel coherence): FAAC 1.40.0 states an intensity stereo bound in all its frames; its decodes of the two pink-noise sources are measured beside it (docs/design/spectral-analysis.md, "As built: step 8").
+    ("faac-1.40-pink-equal-adts", ".aac", ["{faac 1.40}", "-b", "64", "-o", "{out}", "{pink_equal}"],
+     [stream("AAC LC", 44100, 2, "Stereo", 1024, True, ("FAAC 1.40.0", "High"), "LC")], {}, [], {"faad": "adts"}),
+    ("faac-1.40-pink-side-12-db-adts", ".aac", ["{faac 1.40}", "-b", "64", "-o", "{out}", "{pink_side}"],
+     [stream("AAC LC", 44100, 2, "Stereo", 1024, True, ("FAAC 1.40.0", "High"), "LC")], {}, [], {"faad": "adts"}),
     ("faac-1.40-adts", ".aac", ["{faac 1.40}", "-o", "{out}", "{in}"],
      [stream("AAC LC", 44100, 2, "Stereo", 1024, True, ("FAAC 1.40.0", "High"), "LC")], {}, [], {"faad": "adts"}),
     ("faac-1.50", ".m4a", ["{faac 1.50}", "-o", "{out}", "{in}"],
@@ -284,6 +289,23 @@ def write_tone(path, channels, rate=44100):
     subprocess.run(["ffmpeg", "-v", "error", "-y", *sources, "-ac", str(channels), "-c:a", "pcm_s16le", str(path)], check=True)
 
 
+def write_pink(path, side_db):
+    """2 s of the measurement fixtures' stereo pink noise at 44.1 kHz (docs/design/spectral-analysis.md, Step 8): left = mid + side, right = mid - side, the mid signal at -20 dBFS RMS and the
+    side signal at side_db (-20, uncorrelated channels, or -32)."""
+    import math
+    import struct
+    import wave
+    from make_measurement_fixtures import pink
+    mid = pink(88200, 201, -20.0, tone_db=-200.0, rate=44100)
+    side = pink(88200, 202, side_db, tone_db=-200.0, rate=44100)
+    clamp = lambda v: max(-32768, min(32767, math.floor(v * 32768 + 0.5)))
+    with wave.open(str(path), "wb") as out:
+        out.setnchannels(2)
+        out.setsampwidth(2)
+        out.setframerate(44100)
+        out.writeframes(b"".join(struct.pack("<hh", clamp(a + b), clamp(a - b)) for a, b in zip(mid, side)))
+
+
 def write_surround(path):
     """Six tones, one per channel of a 5.1 layout, for 1.5 seconds."""
     sources = [arg for frequency in (440, 660, 550, 330, 880, 110) for arg in ("-f", "lavfi", "-i", f"sine=f={frequency}:d=1.5:r=44100")]
@@ -318,6 +340,8 @@ def run(command, values, library):
 def description(command):
     if command[0] == "afconvert":
         return f"{' '.join(command)} on the deterministic signal of wma_signals.py ({command[-2]})."
+    if "{pink_equal}" in command or "{pink_side}" in command:
+        return f"{' '.join(command)} on 2 s of stereo pink noise, a mid signal and a side signal {'as loud (uncorrelated channels)' if '{pink_equal}' in command else '12 dB lower'}."
     return f"{' '.join(command)} on 1.5 s of {'pink noise with a 440 Hz tone' if '{mix}' in command else 'a 440/660 Hz tone'}."
 
 
@@ -413,9 +437,13 @@ def main(names):
         write_mix(mix)
         six = temp / "six.wav"
         write_surround(six)
+        pink_equal = temp / "pink-equal.wav"
+        pink_side = temp / "pink-side-12-db.wav"
+        write_pink(pink_equal, -20.0)
+        write_pink(pink_side, -32.0)
         for name, extension, command, streams, fields, findings, check in selected:
             path = OUT / (name + extension)
-            values = {"in": str(stereo), "mono": str(mono), "mono48": str(mono48), "six": str(six), "mix": str(mix), "out": str(path), "fdkaac": str(fdkaac),
+            values = {"in": str(stereo), "mono": str(mono), "mono48": str(mono48), "six": str(six), "mix": str(mix), "pink_equal": str(pink_equal), "pink_side": str(pink_side), "out": str(path), "fdkaac": str(fdkaac),
                       "exhale": str(exhale), "faacs": faacs, "checker": checker, "library": library}
             # FAAC refuses to overwrite its output.
             path.unlink(missing_ok=True)

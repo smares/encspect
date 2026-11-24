@@ -128,6 +128,19 @@ def write_tone(path, rate, channels, seconds=0.5, signal="tone"):
         seconds = 2.0
     elif signal == "long-music":
         signal, seconds, loop = "music", 6.0, 2.0
+    if signal in ("pink-equal", "pink-side-12-db"):
+        # 2 s of stereo pink noise, the measurement fixtures' sources: a mid signal and a side signal as loud (uncorrelated channels) or 12 dB lower, left = mid + side, right = mid - side.
+        from make_measurement_fixtures import pink
+        count = int(rate * 2.0)
+        mid = pink(count, 201, -20.0, tone_db=-200.0, rate=rate)
+        side = pink(count, 202, -20.0 if signal == "pink-equal" else -32.0, tone_db=-200.0, rate=rate)
+        clamp = lambda v: max(-32768, min(32767, math.floor(v * 32768 + 0.5)))
+        with wave.open(str(path), "wb") as out:
+            out.setnchannels(2)
+            out.setsampwidth(2)
+            out.setframerate(rate)
+            out.writeframes(b"".join(struct.pack("<hh", clamp(a + b), clamp(a - b)) for a, b in zip(mid, side)))
+        return
     rng = random.Random(7)
     frames = int(rate * seconds)
     with wave.open(str(path), "wb") as out:
@@ -508,6 +521,16 @@ FIXTURES = [
      dict(version="1", layer=2, sample_rate=44100, channel_mode="Dual channel", bitrate=192, info_frame=False, signal="long-music", golden_hides=["frames"])),
     ("external-twolame-music", ".mp2", 48000, 2, ["twolame", "--quiet", "-b", "192", "-m", "s"],
      dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=192, info_frame=False, signal="music")),
+    # Step 8 (inter-channel coherence, docs/design/spectral-analysis.md): TwoLAME's joint stereo is intensity stereo in Layer II, on the pink noise of the measurement fixtures
+    # (uncorrelated channels, and a side signal 12 dB under the mid); their FLAC decodes are measurement/lossy-stereo-*twolame-j-*.
+    ("external-twolame-joint-pink-b128", ".mp2", 44100, 2, ["twolame", "--quiet", "-b", "128", "-m", "j"],
+     dict(version="1", layer=2, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False, signal="pink-equal", golden_hides=["frames"])),
+    ("external-twolame-joint-pink-b192", ".mp2", 44100, 2, ["twolame", "--quiet", "-b", "192", "-m", "j"],
+     dict(version="1", layer=2, sample_rate=44100, channel_mode="Joint stereo", bitrate=192, info_frame=False, signal="pink-equal", golden_hides=["frames"])),
+    ("external-twolame-joint-pink-side-12-db-b128", ".mp2", 44100, 2, ["twolame", "--quiet", "-b", "128", "-m", "j"],
+     dict(version="1", layer=2, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False, signal="pink-side-12-db", golden_hides=["frames"])),
+    ("external-twolame-joint-pink-side-12-db-b192", ".mp2", 44100, 2, ["twolame", "--quiet", "-b", "192", "-m", "j"],
+     dict(version="1", layer=2, sample_rate=44100, channel_mode="Joint stereo", bitrate=192, info_frame=False, signal="pink-side-12-db", golden_hides=["frames"])),
     ("external-ffmpeg-mp2", ".mp2", 48000, 2, ["ffmpeg", "-v", "error", "-y", "-i", "{in}", "-c:a", "mp2", "-b:a", "192k", "{out}"],
      dict(version="1", layer=2, sample_rate=48000, channel_mode="Stereo", bitrate=192, info_frame=False, signal="music")),
     ("external-twolame-192-stereo", ".mp2", 48000, 2, ["twolame", "--quiet", "-b", "192", "-m", "s"],
@@ -1269,7 +1292,8 @@ def encode(command, source, path, temp):
 
 def write_manifest(name, path, rate, channels, command, settings, dumper):
     signal = {"clicks": "0.5 s of a quiet 440/660 Hz tone with a click every 50 ms", "music": "2 s of tones, noise with clicks and a chord",
-              "long-music": "6 s of tones, noise with clicks and a chord, three times, different in each channel", "silence": "0.5 s of silence"}.get(settings.get("signal"), "0.5 s of a 440/660 Hz tone")
+              "long-music": "6 s of tones, noise with clicks and a chord, three times, different in each channel", "silence": "0.5 s of silence",
+              "pink-equal": "2 s of stereo pink noise, a mid signal and a side signal as loud (uncorrelated channels)", "pink-side-12-db": "2 s of stereo pink noise, a mid signal and a side signal 12 dB lower"}.get(settings.get("signal"), "0.5 s of a 440/660 Hz tone")
     if channels == 6:
         signal = f"0.5 s of a 5.1 tone of {'/'.join(map(str, SURROUND_FREQUENCIES))} Hz"
     elif channels > 2:

@@ -49,6 +49,7 @@ Later milestones, in this order.
 
 - **What:** the `.amr` storage format, and 3GP's `samr` and `sawb` entries in the MP4 routes.
 - **Specifications:** RFC 4867 for the storage format; 3GPP TS 26.101 and 26.201 (free) for the frames.
+- **Reference code** (the lead, 2026-11-23): opencore-amr (sourceforge.net/projects/opencore-amr), the AMR codecs extracted from the Android Open Source Project under the Apache License 2.0: OpenCORE's AMR-NB decoder and encoder and AMR-WB decoder, and VisualOn's AMR-WB encoder (vo-amrwbenc, whose license is read when the item starts). The decoders follow it with its notice; its encoders write fixtures.
 
 ### 7. MPEG-4 ALS
 
@@ -118,6 +119,13 @@ Later milestones, in this order.
 - **Specification:** none; the repository holds the source of 0.1.9, while the releases are at 1.6.1 (Windows x64 binaries).
 - **Why late:** no stated file signature and no statement that the format is stable (the levels were renumbered in 0.5.7); it starts once the source of the current format is published or the format is stated stable.
 - **Fixtures:** the release's own encoder, whose MIT license allows committing its output.
+
+### 17. LC3 and LC3plus
+
+- **What:** the Low Complexity Communication Codec of Bluetooth LE Audio, and LC3plus.
+- **Specifications:** the Bluetooth SIG's LC3 specification and ETSI TS 103 634 (LC3plus), both free.
+- **Reference code:** Google's liblc3 (github.com/google/liblc3, Apache 2.0), which implements both; the decoder follows it with its notice.
+- **Fixtures:** liblc3's tools `elc3` and `dlc3`. Their files use the non-standard format of the reference encoder and decoder tools, as liblc3's README says, so the format they write is the one read first, and any other container (such as LC3 in MP4 or Matroska) when one is found.
 
 ## Not planned
 
