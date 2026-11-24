@@ -11,30 +11,47 @@ public sealed partial class MpegAudioParser
     // A short stream has too few frames to show an encoder's habits.
     private const int MinTraitFrames = 20;
 
-    private static Node? TraitEncoder(RegionState region)
+    // Receives the names of every habit rule a region matches, in rule order, whatever evidence
+    // names the encoder in the end. Tests read it to keep the lookalike lists of the rules current.
+    [ThreadStatic]
+    internal static Action<IReadOnlyList<string>>? TraitRuleProbe;
+
+    // The lookalike lines are constants per rule: the encoders whose committed test files match
+    // the rule too, kept in step with docs/formats/mpeg-audio.md by TraitLookalikeTests.
+    internal static readonly IReadOnlyDictionary<string, string> TraitLookalikes = new Dictionary<string, string>(StringComparer.Ordinal)
     {
+        ["Xing"] = "Encspect's test files of Shine 3.1.1 (its MPEG-2 file at 22.05 kHz and its silent file) match this rule too",
+        ["BladeEnc"] = "Encspect's test files of 8hz-MP3 0.2b with -c -o and Plugger+ 0.4 with -y -o match this rule too",
+        ["Fraunhofer"] = "Encspect's test files of iTunes 12.13.12.3's MP3 encoder and Nero Burning ROM 2026's MP3 plug-in match this rule too",
+    };
+
+    private sealed record TraitRule(string Name, string Evidence);
+
+    // Every rule the region matches, in the order the first one names the encoder.
+    private static List<TraitRule> MatchingTraitRules(RegionState region)
+    {
+        var rules = new List<TraitRule>();
         Layer3Traits traits = region.Traits;
         if (traits.Frames >= MinTraitFrames && traits.First is { } first)
         {
             (bool scaling, bool scfsi, bool switching) = (traits.UsesScaling, traits.UsesScfsi, traits.UsesSwitching);
-            Node span = new("Evidence", traits.Start, traits.End - traits.Start);
 
             if (IsShine(region, traits))
             {
-                return TraitNode("Shine", "No frame uses the bit reservoir, short blocks, scalefactor scaling or ancillary data, as Shine writes them");
+                rules.Add(new("Shine", "No frame uses the bit reservoir, short blocks, scalefactor scaling or ancillary data, as Shine writes them"));
             }
 
             // Helix sets both bits by default; LAME, Shine and Fraunhofer's encoders set neither.
             if (traits.AreAllCopyrightedOriginals && scfsi && scaling)
             {
-                return TraitNode("Helix MP3 Encoder", "Copyright and original bits set in every frame, with scfsi and scalefactor scaling, as the Helix encoder writes them without its tag");
+                rules.Add(new("Helix MP3 Encoder", "Copyright and original bits set in every frame, with scfsi and scalefactor scaling, as the Helix encoder writes them without its tag"));
             }
 
             // mp3guessenc: "the Xing encoder never uses short blocks"; the Helix encoder that grew out of
             // it does, as do LAME, Fraunhofer's encoders and BladeEnc, even at the onset of a tone.
             if (!switching && !scfsi && traits.AreAllOriginals)
             {
-                return TraitNode("Xing", "No short blocks or scfsi in any frame and the original bit in every one, as Xing's encoder writes them");
+                rules.Add(new("Xing", "No short blocks or scfsi in any frame and the original bit in every one, as Xing's encoder writes them"));
             }
 
             // BladeEnc codes plain stereo or mono at a constant bitrate, MPEG-1 only, never uses
@@ -48,35 +65,71 @@ public sealed partial class MpegAudioParser
             if (first.IsMpeg1 && switching && !scaling && traits.AreAllPlainAtFirstBitrate && traits.AreAllFlagged
                 && region.Ancillary is { } ancillary && ancillary.Bytes == ancillary.LastSegmentBytes)
             {
-                return TraitNode("BladeEnc", "Short blocks without scalefactor scaling, plain stereo or mono at one bitrate, a copyright or original bit in every frame, and ancillary data at most in the last frame, as BladeEnc writes them");
+                rules.Add(new("BladeEnc", "Short blocks without scalefactor scaling, plain stereo or mono at one bitrate, a copyright or original bit in every frame, and ancillary data at most in the last frame, as BladeEnc writes them"));
             }
 
             // scfsi only exists in MPEG-1.
             if (first.IsMpeg1 && scaling && !scfsi && switching)
             {
-                return TraitNode("Fraunhofer", "Scalefactor scaling and short blocks but no scfsi in any frame, as Fraunhofer's encoders write them");
+                rules.Add(new("Fraunhofer", "Scalefactor scaling and short blocks but no scfsi in any frame, as Fraunhofer's encoders write them"));
             }
+        }
 
-            Node TraitNode(string name, string evidence)
-            {
-                Node node = EncoderNode(span.Offset, span.Length, name);
-                node.Add("Confidence", span.Offset, span.Length, "Low", Explain.Confidence);
-                node.Add("Evidence", span.Offset, span.Length, evidence, Explain.Evidence);
-                return node;
-            }
+        return rules;
+    }
+
+    private static Node? TraitEncoder(RegionState region)
+    {
+        Layer3Traits traits = region.Traits;
+        if (MatchingTraitRules(region) is [{ } rule, ..])
+        {
+            Node span = new("Evidence", traits.Start, traits.End - traits.Start);
+            Node node = EncoderNode(span.Offset, span.Length, rule.Name);
+            node.Add("Confidence", span.Offset, span.Length, "Low", Explain.Confidence);
+            node.Add("Evidence", span.Offset, span.Length, rule.Evidence, Explain.Evidence);
+            AddLookalikes(node, rule.Name, span.Offset, span.Length);
+            return node;
         }
 
         // TwoLAME and Xing's tompg both write it.
         if (region.Layer2Frames >= MinTraitFrames && region.UndefinedScalefactor is { } undefined)
         {
-            Node node = EncoderNode(undefined.Offset, undefined.Length, "TwoLAME or Xing");
+            Node node = EncoderNode(undefined.Offset, undefined.Length, TwoLameOrXing);
             node.Add("Confidence", undefined.Offset, undefined.Length, "Low", Explain.Confidence);
             node.Add("Evidence", undefined.Offset, undefined.Length, "Scalefactor index 63, which TwoLAME and Xing's encoder write and Table B.1 of ISO/IEC 11172-3 leaves undefined",
                 Explain.Evidence);
+            AddLookalikes(node, TwoLameOrXing, undefined.Offset, undefined.Length);
             return node;
         }
 
         return null;
+    }
+
+    private const string TwoLameOrXing = "TwoLAME or Xing";
+
+    private static void AddLookalikes(Node encoder, string rule, long offset, long length)
+    {
+        if (TraitLookalikes.TryGetValue(rule, out string? text))
+        {
+            encoder.Add("Evidence", offset, length, text, Explain.Evidence);
+        }
+    }
+
+    // Every habit rule the region matches, reported to the probe and not to the report.
+    private static void ProbeTraitRules(RegionState region)
+    {
+        if (TraitRuleProbe is not { } probe)
+        {
+            return;
+        }
+
+        var names = MatchingTraitRules(region).Select(r => r.Name).ToList();
+        if (region.Layer2Frames >= MinTraitFrames && region.UndefinedScalefactor is not null)
+        {
+            names.Add(TwoLameOrXing);
+        }
+
+        probe(names);
     }
 
     // Shine 3.1.1 never points main_data_begin back, codes every granule with long blocks and

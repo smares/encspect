@@ -342,6 +342,20 @@ Mono, stereo, or the two discrete programs of dual channel. Where the file carri
   - The flag bits are in the rule because of 8hz-MP3 and Plugger: Encspect's test files of those two encoders, which code like BladeEnc (see below), matched the rule without them and were named BladeEnc. Both encoders write neither bit unless asked to, and BladeEnc's test files all set one.
   - **Two limits of the flag bits:** 8hz-MP3 with `-c -o` and Plugger with `-y -o` set the bits and are named BladeEnc (low; `external-8hz-flags`, `external-plugger-original`), and BladeEnc 0.94.2 with `-copy` alone writes neither bit and is not named (`external-blade-copy`; `-copy` also cleared the original bit in `external-blade-flags`, where `-c` set the copyright bit).
   - 0.80 and 0.81 drain an overflowing bit reservoir into ancillary data mid-stream, as the ISO dist10 encoder does, and mp3guessenc does not name them either.
+- **Lookalikes:** where a rule names the encoder, its encoder node carries a second evidence line naming the other encoders whose test files match the rule. `TraitLookalikeTests` evaluates every rule on every fixture of `tests/fixtures/mpeg-audio` whose manifest names the encoder, whatever evidence finally names it, and fails when a fixture newly matches a rule of another encoder. Observed in Encspect's test files:
+
+  | Rule | Other encoders' files that match | Settings |
+  | --- | --- | --- |
+  | Shine | none | |
+  | Helix MP3 Encoder | none | |
+  | Xing | Shine 3.1.1 (`external-shine-mpeg2`, `external-shine-silence`; named Shine, since that rule comes first) | `shineenc -q -b 64` at 22.05 kHz (MPEG-2); `-q -b 128` on silence |
+  | BladeEnc | 8hz-MP3 0.2b-04J (`external-8hz-flags`); Plugger+ 0.4 (`external-plugger-original`) | `-b 192 -c -o -crc`; `-b 128 -y -o` |
+  | Fraunhofer | iTunes 12.13.12.3's MP3 encoder (`external-itunes-mp3-cbr128-joint`, `external-itunes-mp3-vbr-highest`); Nero Burning ROM 2026's MP3 plug-in (`external-nero-rom-mp3-cbr128`, `external-nero-rom-mp3-vbr-highest`) | 128 kbit/s CBR and VBR, highest quality |
+  | TwoLAME or Xing | none (both encoders the rule names) | |
+
+  - The Fraunhofer line leaves out Fraunhofer's own codecs (mp3sEncoder, acmenc over l3codeca and l3codecp) and Windows 10's wrapper over l3codeca, whose files the rule is written for.
+  - Hand-built fixtures without an encoder in their manifest (`layer3/shine-traits`, `vbr/lame-tag-lavf-remux`) are not counted.
+  - The line is a constant per rule and lists encoders and settings, not files: a reader sees that the low-confidence name is not exclusive.
 - **Fraunhofer's encoders** use scalefactor scaling and short blocks but never scfsi (MPEG-1 only, since MPEG-2 has no scfsi).
   - Observed in Encspect's test files from the private sample kit (`mpeg-audio/sample-kit`, 14 files; [development](../development.md#sample-kit-fixtures)); the analyzer applies the rules above (this habit, the VBRI header, the mp3PRO signature) and no other:
   - Nero Burning ROM 2026's MP3 plug-in: its 44.1 kHz CBR file is named "Fraunhofer" (low) by the habit; its VBR file by the VBRI header (high), a frame of zero side information in front of the stream; the 8 kHz MPEG-2.5 file is not named. Every file starts with an ID3v2.3 tag of 1,024 bytes whose frames are empty (TALB, TIT2, TPE1, TCON, TCOM, a TXXX "ALBUM ARTIST", a COMM and, at 0xA7, a PRIV, which draws `id3v2.frame-empty`) apart from a track number of 0.
