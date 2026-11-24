@@ -344,7 +344,7 @@ internal static class Layer3Syntax
     public static ReadOnlySpan<byte> BandWidths(in GranuleSyntax gr) => Bands(gr);
 
     // Reads the scalefactors of one granule and channel (minimp3's L3_read_scalefactors and the partition choice of L3_decode_scalefactors) into
-    // scalefactors (the values as coded) and positions (the same: the largest value a partition's length codes is an ordinary intensity position in MPEG-2 and 2.5, which FFmpeg and mpg123 read so and minimp3's illegal mark 255 does not), which
+    // scalefactors (the values as coded) and positions (the same, with the intensity stereo illegal value marked 255 as minimp3 keeps it), which
     // carry over to the next granule through scfsi. Both are 40 bytes: the bands and three zeros.
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static void ReadScalefactors(ref BitSource bits, MpegHeader header, in GranuleSyntax gr, int channel, bool isIntensityStereo, Span<byte> scalefactors, Span<byte> positions)
@@ -403,10 +403,11 @@ internal static class Layer3Syntax
                 }
                 else
                 {
+                    int maxScalefactor = scfsi < 0 ? (1 << width) - 1 : -1;
                     for (int j = 0; j < count; j++)
                     {
                         int s = (int)bits.Read(width);
-                        positions[offset + j] = (byte)s;
+                        positions[offset + j] = (byte)(s == maxScalefactor ? 255 : s);
                         scalefactors[offset + j] = (byte)s;
                     }
                 }
