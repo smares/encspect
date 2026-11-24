@@ -115,6 +115,19 @@ public class MpegDecoderFixtureTests
         Assert.Equal(Tree(plain.Root), Tree(decoded.Root));
     }
 
+    // The Helix encoder's A1 re-coding changes global_gain and the scalefactors against each other for the same step sizes (the fixtures' encoder is
+    // docs/development.md, "Encoder-written fixtures"): the step of a band is one power of two of both together, so the decoded floats are the stock encode's.
+    [Theory]
+    [InlineData("mpeg-audio/external-helix-a1-vbr.mp3")]
+    [InlineData("mpeg-audio/external-helix-a1-keep-gain-vbr.mp3")]
+    [InlineData("mpeg-audio/external-helix-a1-no-tag-vbr.mp3")]
+    public void AnA1ReCodingOfAStreamDecodesToTheSameFloatsAsTheStockEncode(string name)
+    {
+        string stock = Assert.Single(Decode("mpeg-audio/external-helix-vbr.mp3").Sinks).Hash();
+
+        Assert.Equal(stock, Assert.Single(Decode(name).Sinks).Hash());
+    }
+
     // Name, value, offset, length and children of the first levels and of a sample of the frames: the tree without anything a front end could add.
     private static string Tree(Node root)
     {

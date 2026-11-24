@@ -229,7 +229,7 @@ Every coding with a free source is decoded, the DTS extensions aside, and every 
 
 The order (the lead, 2026-11-17): the milestone's own items first, then cheap items users see, fixture work before the detection that needs it, large or uncertain items after them, and items that wait for an outside file last.
 
-**Status:** in progress: items 1 to 13 and 15 to 19 are done; 14 is under [Not planned](#not-planned) since 2026-11-23. What remains: the follow-ups the items below name, then the milestone gate.
+**Status:** in progress: items 1 to 13, 15 to 19 and 21 are done; 14 is under [Not planned](#not-planned) since 2026-11-23. What remains: the follow-ups the items below name, then the milestone gate.
 
 **The gate** (the lead, 2026-11-23, after a shard move whose description, note and docs said what `shards.json` did not): besides the independent reviews of the code against the specifications, the milestone review runs two passes, each by an agent that wrote none of what it checks:
 
@@ -343,6 +343,10 @@ The order (the lead, 2026-11-17): the milestone's own items first, then cheap it
     - **CLI and GUI pages** on the site, in its design, in place of the links to [cli.md](cli.md) and [gui.md](gui.md) on GitHub.
     - **The link line under Download** ("Command-line documentation · The graphical app"), whose separator wraps to the start of a line in Safari on macOS.
     - **The GitHub links** with the GitHub mark (Octicons' `mark-github`, MIT-licensed; GitHub's logo guidelines allow it for a link to GitHub).
+21. **Fixtures from the Helix encoder's A1 re-coding fork** (done, 2026-11-23; the lead, 2026-11-23): `IgorCv2/hmp3`, branch `exhaustive-huffman-partition`, commit `e3a5993` (one commit on hmp3 5.2.4: each MPEG-1 VBR frame is re-coded with the cheapest Huffman coding and side information of the same quantized values), run as a black box.
+    - **Built** (2026-11-23): `helix_tool.py` pins the fork by its commit and `check_sources.py` asks the repository for it; three fixtures, `external-helix-a1-vbr`, `external-helix-a1-keep-gain-vbr` (`HMP3_A1=1`) and `external-helix-a1-no-tag-vbr` (`-X0`), with manifests and goldens from the generator.
+    - **Result:** with `-B64` the fork writes the bytes of `external-helix-cbr` (no fixture); the VBR files are 1.8 % (default) and 1.4 % (`HMP3_A1=1`) smaller with no frame larger; FFmpeg 6.1.1's PCM is bit for bit the same as `external-helix-vbr`'s, and so is the analyzer's since the fix below. Detection is unchanged (the tag names "Helix MP3 Encoder 5.24"; the tagless file is named at low confidence); the coding statistics change widely (tables, regions, count1 table, scfsi).
+    - **Decoder fix** (found by the review, 2026-11-23; built): `Layer3Kernels.Scalefactors` rounded the gain's power of two and then the scalefactor's, as minimp3 does, so A1's codings of the same step decoded to floats up to 1.6e-7 apart; it takes one combined exponent now. `MpegDecoderFixtureTests.AnA1ReCodingOfAStreamDecodesToTheSameFloatsAsTheStockEncode` holds the three A1 files' PCM hashes to `external-helix-vbr`'s. The decoded PCM of 166 of 476 MPEG fixture streams changed, and of 9 MP3 streams in ASF (7) and WAV (2), by at most 9.7e-7 of full scale; their `.decode.json` goldens are regenerated, and `crosscheck_mpeg_pcm.py` still passes. Details in [mpeg-audio.md](formats/mpeg-audio.md#encoder-detection) and [development.md](development.md#encoders).
 
 ### 0.5: AAC and WMA
 
