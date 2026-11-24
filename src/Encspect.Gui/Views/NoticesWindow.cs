@@ -18,6 +18,7 @@ public sealed class NoticesWindow : Window
     public NoticesWindow()
     {
         Title = "Third-Party Notices";
+        Icon = AppIcon.Window;
         Width = 760;
         Height = 560;
         MinWidth = 400;

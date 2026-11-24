@@ -1,8 +1,8 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
-using Avalonia.Data.Converters;
 using Avalonia.Data;
+using Avalonia.Data.Converters;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
@@ -51,6 +51,7 @@ public partial class MainWindow : Window
     public MainWindow(Analyzer analyzer, Settings settings, MainViewModel? model = null, SummaryCache? cache = null)
     {
         InitializeComponent();
+        Icon = AppIcon.Window;
         Model = model ?? new MainViewModel(analyzer, cache: cache);
         DataContext = Model;
         DetailWindows = new DetailWindows(this, Model, analyzer, settings);
