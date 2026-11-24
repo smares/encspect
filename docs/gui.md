@@ -290,11 +290,18 @@ The form "Frame Map" draws every unit of a series (a frame, packet or block; the
 "About Encspect" shows what build this is.
 
 - **Where:** on macOS in the application menu, as usual there; on Windows and Linux in the Help menu, the menu bar's last menu.
-- **Shows:** the name, the version, one line on what Encspect does, the copyright and the MIT License.
+- **Shows:** the app icon at 64 pixels (drawn from a 128-pixel image, so it stays sharp on high-density displays) beside the name and the version, then one line on what Encspect does, the copyright and the MIT License.
 - **Version:** the same string as `encspect --version` prints after the program name and as `tool.version` in JSON reports (`0.3.0+<commit>`), read from the same place in the host. It can be selected and copied for a bug report.
 - **Third-Party Notices:** the button opens a window with the text of [`THIRD-PARTY-NOTICES.md`](../THIRD-PARTY-NOTICES.md): the licenses of Avalonia, Skia, HarfBuzz, ANGLE and the .NET runtime. The text is embedded in the executable, so it is there in a single-file build too and is the same file the download carries next to the executables.
 - **Keyboard:** Esc and Enter close the window; the Close button has the focus when it opens. Tab reaches the notices button and the version.
 - **One window:** choosing About again brings the open window forward.
+
+## The icon
+
+- **Window icon:** every window (the main window, the detail windows, About, the notices and the error window) is given the app icon, from an image embedded in the executable. On Windows it is built from the `.ico`, so the title bar and the taskbar take the entry closest to their size; elsewhere from a 256-pixel PNG.
+- **Where it shows:** on Windows and on Linux under X11 only. On macOS Avalonia.Native's `SetIcon` does nothing and no app bundle is built, so the Dock shows the generic icon; with `ENCSPECT_GUI_BACKEND=wayland` the icon is not set either, and no `.desktop` file ships to name one.
+- **Executable:** the Windows executable has the icon too, so Explorer shows it.
+- **Where it comes from:** [development.md](development.md#the-app-icon).
 
 ## Look and platform
 

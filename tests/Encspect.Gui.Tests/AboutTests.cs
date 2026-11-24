@@ -82,6 +82,54 @@ public sealed class AboutTests
     }
 
     [AvaloniaTheory]
+    [InlineData("light")]
+    [InlineData("dark")]
+    public void The_window_shows_the_app_icon_at_64_pixels_from_a_larger_image(string variant)
+    {
+        Avalonia.Application.Current!.RequestedThemeVariant = variant == "dark" ? Avalonia.Styling.ThemeVariant.Dark : Avalonia.Styling.ThemeVariant.Light;
+        var owner = new Window();
+        try
+        {
+            owner.Show();
+            AboutWindow.ShowFor(owner);
+            AboutWindow window = AboutWindow.Current!;
+
+            Assert.NotNull(window.Icon);
+            Image image = window.FindControl<Image>("IconImage")!;
+            Assert.Equal(64, image.Width);
+            Assert.Equal(64, image.Height);
+            Assert.Equal(128, ((Avalonia.Media.Imaging.Bitmap)image.Source!).PixelSize.Width);
+            ScreenshotTests.Save(window, $"about-{variant}.png");
+
+            // The version is one line: its text is not wrapped.
+            TextBlock version = window.FindControl<TextBlock>("VersionText")!;
+            Assert.Equal(Avalonia.Media.TextWrapping.NoWrap, version.TextWrapping);
+            Assert.NotNull(version.TextLayout);
+            Assert.True(version.Bounds.Width >= version.TextLayout.WidthIncludingTrailingWhitespace, $"The version needs {version.TextLayout.WidthIncludingTrailingWhitespace:F0} px, it has {version.Bounds.Width:F0}.");
+
+            window.Close();
+        }
+        finally
+        {
+            owner.Close();
+            Avalonia.Application.Current.RequestedThemeVariant = Avalonia.Styling.ThemeVariant.Default;
+        }
+    }
+
+    [AvaloniaFact]
+    public void Every_window_carries_the_app_icon()
+    {
+        Assert.NotNull(new NoticesWindow().Icon);
+        Assert.NotNull(new ErrorWindow("x", new InvalidOperationException("y"), "Close").Icon);
+        MainWindow main = OpenMain();
+        Assert.NotNull(main.Icon);
+        main.Close();
+        var detail = new DetailWindow(new DetailViewModel(Analyzer.CreateDefault()));
+        Assert.NotNull(detail.Icon);
+        detail.Close();
+    }
+
+    [AvaloniaTheory]
     [InlineData(Key.Escape, PhysicalKey.Escape)]
     [InlineData(Key.Enter, PhysicalKey.Enter)]
     public void Escape_and_Enter_close_the_window(Key key, PhysicalKey physical)

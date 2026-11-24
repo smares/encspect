@@ -2,11 +2,16 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Encspect.Gui.Views.AboutWindow"
         Title="About Encspect"
-        Width="420" SizeToContent="Height" CanResize="False" CanMinimize="False" CanMaximize="False"
+        Width="580" SizeToContent="Height" CanResize="False" CanMinimize="False" CanMaximize="False"
         WindowStartupLocation="CenterOwner">
   <StackPanel Margin="32,24" Spacing="6">
-    <TextBlock Text="Encspect" FontSize="20" FontWeight="SemiBold" />
-    <SelectableTextBlock Name="VersionText" Classes="secondary" TextWrapping="Wrap" />
+    <Grid ColumnDefinitions="Auto,*">
+      <Image Name="IconImage" Width="64" Height="64" Margin="0,0,16,0" VerticalAlignment="Center" />
+      <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+        <TextBlock Text="Encspect" FontSize="20" FontWeight="SemiBold" />
+        <SelectableTextBlock Name="VersionText" Classes="secondary" TextWrapping="NoWrap" />
+      </StackPanel>
+    </Grid>
     <TextBlock Name="DescriptionText" Margin="0,8,0,0" TextWrapping="Wrap" />
     <TextBlock Name="CopyrightText" Classes="secondary" TextWrapping="Wrap" />
     <TextBlock Name="NoticesText" Classes="secondary" TextWrapping="Wrap" />
