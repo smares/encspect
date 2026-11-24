@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Tests of changes.py against the repository's own scripts: python3 scripts/ci/test_changes.py"""
 
+import json
 import pathlib
 import re
 import subprocess
@@ -329,6 +330,19 @@ class ChangesTests(unittest.TestCase):
         self.assertEqual(len(changes.platforms("schedule")), 6)
         self.assertEqual(len(changes.platforms("workflow_dispatch")), 6)
 
+    def test_a_pull_request_runs_one_macos_job_and_no_macos_shard(self):
+        shards = changes.shard_config.load()
+        pr = changes.test_platforms("pull_request")
+        self.assertEqual([p["os"] for p in changes.platforms("pull_request") if p["os"].startswith("macos-")], ["macos-latest"])
+        self.assertFalse([p for p in pr if p["os"].startswith("macos-")])
+        self.assertEqual(len(pr), 3)
+        self.assertFalse([e for e in changes.test_matrix(pr, shards, False) if e["os"].startswith("macos-")])
+        for event in ("push", "schedule", "workflow_dispatch"):
+            self.assertEqual(changes.test_platforms(event), changes.platforms(event), event)
+            macos = {e["os"] for e in changes.test_matrix(changes.test_platforms(event), shards, event in changes.NIGHTLY_EVENTS)
+                     if e["os"].startswith("macos-")}
+            self.assertEqual(macos, {"macos-latest", "macos-15-intel"}, event)
+
     def test_the_linux_platforms_use_the_pinned_ubuntu_26_04_images(self):
         def labels(event):
             return [p["os"] for p in changes.platforms(event)]
@@ -354,11 +368,11 @@ class ChangesTests(unittest.TestCase):
         self.assertTrue(nightly)
         for event in ("pull_request", "push", "schedule", "workflow_dispatch"):
             include = event in changes.NIGHTLY_EVENTS
-            matrix = changes.test_matrix(changes.platforms(event), shards, include)
+            matrix = changes.test_matrix(changes.test_platforms(event), shards, include)
             names = {entry["shard"] for entry in matrix}
             for name in nightly:
                 self.assertEqual(name in names, include, (event, name))
-            self.assertEqual(len(matrix), len(changes.platforms(event)) * len(names), event)
+            self.assertEqual(len(matrix), len(changes.test_platforms(event)) * len(names), event)
 
     def test_a_shard_filter_without_the_nightly_tests_keeps_its_own_clauses(self):
         shards = changes.shard_config.load()
@@ -398,7 +412,7 @@ def named_paths(text, root_files=()):
 
 def scoped(*files, event="pull_request"):
     flags, reason, scope = changes.decide_with_scope(event, list(files))
-    return scope, reason, changes.test_matrix(changes.platforms(event), changes.shard_config.load(), event in changes.NIGHTLY_EVENTS, scope)
+    return scope, reason, changes.test_matrix(changes.test_platforms(event), changes.shard_config.load(), event in changes.NIGHTLY_EVENTS, scope)
 
 
 def shard_names(matrix):
@@ -485,7 +499,7 @@ class ScopeTests(unittest.TestCase):
 
     def test_a_scoped_run_drops_the_shards_it_leaves_no_test(self):
         _, _, matrix = scoped("src/Encspect.Formats.WavPack/WavPackParser.cs")
-        self.assertEqual(len(matrix), len(changes.platforms("pull_request")) * len(shard_names(matrix)))
+        self.assertEqual(len(matrix), len(changes.test_platforms("pull_request")) * len(shard_names(matrix)))
         self.assertLess(len(shard_names(matrix)), len([s for s in self.shards if not s.get("nightly")]))
 
     def test_whatever_is_not_an_area_runs_the_whole_suite(self):
@@ -642,7 +656,7 @@ class ScopeTests(unittest.TestCase):
             self.assertIsNone(chosen)
             include = event in changes.NIGHTLY_EVENTS
             self.assertEqual([(e["shard"], e["filter"]) for e in matrix], [(s["name"], changes.shard_config.filter_for(self.shards, s["name"], include))
-                                                                             for p in changes.platforms(event) for s in self.shards if changes.shard_config.runs(s, include)])
+                                                                             for p in changes.test_platforms(event) for s in self.shards if changes.shard_config.runs(s, include)])
         _, _, chosen = changes.decide_with_scope("pull_request", None)
         self.assertIsNone(chosen)
 
@@ -725,6 +739,42 @@ class ScopeTests(unittest.TestCase):
                 if literal in text and area != tag:
                     self.assertIn(area, self.config["tags"][tag], f"{area} names the tag {literal}")
 
+
+
+class ShardGuardTests(unittest.TestCase):
+    """The last shard runs only the damaged-input classes it names, so a class a shard loses cannot fall into it unnoticed."""
+
+    def write(self, shards):
+        handle = tempfile.NamedTemporaryFile("w", suffix=".json", delete=False)
+        with handle:
+            json.dump({"note": "", "shards": shards}, handle)
+        self.addCleanup(pathlib.Path(handle.name).unlink)
+        return handle.name
+
+    def test_the_committed_split_leaves_no_damaged_input_class_to_the_rest_unnamed(self):
+        shards = changes.shard_config.load()
+        classes = {c for s in shards[:-1] for c in s["classes"]} | set(shards[-1].get("damagedInputClasses", []))
+        self.assertEqual([], changes.shard_config.damaged_input_in_rest(shards, classes))
+
+    def test_a_class_a_shard_lost_is_named(self):
+        path = self.write([{"name": "a", "classes": ["CorruptMpegFileTests"]},
+                           {"name": "rest", "classes": None, "damagedInputClasses": ["CorruptOggFileTests"]}])
+        shards = changes.shard_config.load(path)
+        found = changes.shard_config.damaged_input_in_rest(
+            shards, {"CorruptMpegFileTests", "CorruptOggFileTests", "CorruptLayerFileTests", "GoldenTests"})
+        self.assertEqual(["CorruptLayerFileTests"], found)
+
+    def test_only_the_last_shard_names_damaged_input_classes(self):
+        path = self.write([{"name": "a", "classes": ["CorruptMpegFileTests"], "damagedInputClasses": []},
+                           {"name": "rest", "classes": None}])
+        with self.assertRaises(SystemExit):
+            changes.shard_config.load(path)
+
+    def test_a_class_cannot_be_both_in_a_shard_and_meant_for_the_rest(self):
+        path = self.write([{"name": "a", "classes": ["CorruptMpegFileTests"]},
+                           {"name": "rest", "classes": None, "damagedInputClasses": ["CorruptMpegFileTests"]}])
+        with self.assertRaises(SystemExit):
+            changes.shard_config.load(path)
 
 
 if __name__ == "__main__":

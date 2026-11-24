@@ -7,6 +7,8 @@ A cross-platform GUI and CLI tool that reports everything technically knowable a
 
 Think EncSpot, but modern and with many more formats.
 
+Website: [encspect.org](https://encspect.org), with the [samples wanted](https://encspect.org/samples.html) to improve encoder detection.
+
 ## Screenshots
 
 <picture>
@@ -89,6 +91,7 @@ The decoders exist for analysis only: Encspect does not play or convert audio, a
 
 ## Documentation
 
+- [Website](https://encspect.org): an overview, the download and [Samples Wanted](https://encspect.org/samples.html)
 - [Command line](docs/cli.md)
 - [GUI](docs/gui.md)
 - [Formats](docs/formats/README.md) and [tags](docs/tags/README.md)

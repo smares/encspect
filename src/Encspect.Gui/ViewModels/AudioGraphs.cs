@@ -246,10 +246,20 @@ public sealed class SpectrumGraph : AudioGraph
     private readonly int _bottom;
 
     public SpectrumGraph(StreamInfo stream, StreamMeasurements measurements, GraphForm view)
-        : base("Spectrum", "dB", stream, measurements)
+        : base("Spectrum", view == GraphForm.Coherence ? "%" : "dB", stream, measurements)
     {
         Spectrum = measurements.Spectrum ?? throw new ArgumentException("No spectrum was measured.");
         View = view;
+        if (view == GraphForm.Coherence)
+        {
+            _ = Spectrum.Coherence ?? throw new ArgumentException("No coherence was measured.");
+
+            // A fixed axis from 0 to 100 %.
+            _top = 100;
+            _bottom = 0;
+            return;
+        }
+
         short? high = null;
         short? low = null;
         IEnumerable<ReadOnlyMemory<short>> drawn = view switch
@@ -281,10 +291,10 @@ public sealed class SpectrumGraph : AudioGraph
 
     public GraphForm View { get; }
 
-    public override string? Description => MeasurementText.SpectrumDescription;
+    public override string? Description => View == GraphForm.Coherence ? MeasurementText.InterChannelCoherenceDescription : MeasurementText.SpectrumDescription;
 
     // The article that defines the average spectrum; the spectral cutoff is a figure read from it.
-    public override string? Topic => MeasurementText.SpectrogramTopic;
+    public override string? Topic => View == GraphForm.Coherence ? MeasurementText.InterChannelCoherenceTopic : MeasurementText.SpectrogramTopic;
 
     public override int Count => MeasurementLimits.Rows;
 
@@ -296,13 +306,30 @@ public sealed class SpectrumGraph : AudioGraph
     public override double Maximum => _top;
 
     // Whether the graph draws more than the one line of the combined spectrum, each in its own color with a legend.
-    public bool HasLegend => View is GraphForm.PerChannel or GraphForm.MidSide;
+    public bool HasLegend => View is GraphForm.PerChannel or GraphForm.MidSide or GraphForm.Coherence;
 
-    public int Lines => View == GraphForm.PerChannel ? Spectrum.PerChannel.Count : View == GraphForm.MidSide ? 2 : 1;
+    public int Lines => View == GraphForm.PerChannel ? Spectrum.PerChannel.Count : View is GraphForm.MidSide or GraphForm.Coherence ? 2 : 1;
 
-    public ReadOnlyMemory<short> Line(int index) => View == GraphForm.PerChannel ? Spectrum.PerChannel[index] : View == GraphForm.MidSide ? (index == 0 ? Spectrum.MidSide!.Mid : Spectrum.MidSide!.Side) : Spectrum.Combined;
+    public ReadOnlyMemory<short> Line(int index) => View == GraphForm.PerChannel ? Spectrum.PerChannel[index]
+        : View == GraphForm.MidSide ? (index == 0 ? Spectrum.MidSide!.Mid : Spectrum.MidSide!.Side)
+        : View == GraphForm.Coherence ? (index == 0 ? Spectrum.Coherence!.Rows : Spectrum.Coherence!.Shares)
+        : Spectrum.Combined;
 
-    public string LineName(int index) => View == GraphForm.PerChannel ? Names[Math.Min(index, Names.Count - 1)] : View == GraphForm.MidSide ? (index == 0 ? "mid" : "side") : "all channels but the LFE";
+    public string LineName(int index) => View == GraphForm.PerChannel ? Names[Math.Min(index, Names.Count - 1)]
+        : View == GraphForm.MidSide ? (index == 0 ? "mid" : "side")
+        : View == GraphForm.Coherence ? (index == 0 ? "inter-channel coherence" : "share of frames")
+        : "all channels but the LFE";
+
+    // The coherence view's start of the run and the parser's stated bound, as lines over frequency; null where there is none.
+    public int? CoherenceStart => View == GraphForm.Coherence && Spectrum.Coherence is { IsFound: true } found ? found.FromFrequency : null;
+
+    public int? StatedBound => View == GraphForm.Coherence ? Spectrum.Coherence?.Stated?.MedianFrequency : null;
+
+    // "Inter-channel coherence: 85 % or more from 2,756 to 17,270 Hz, ..." in the coherence view, else null.
+    public string? CoherenceText => View == GraphForm.Coherence ? "Inter-channel coherence: " + MeasurementText.Coherence(Spectrum.Coherence!) : null;
+
+    // A level in the unit of the view: dB, or percent in the coherence view.
+    private string LevelOf(int tenths) => View == GraphForm.Coherence ? MeasurementText.Percent(tenths) : Level(tenths);
 
     // The cutoff of a line of the mid and side view where one is found; the other views draw the combined spectrum's (AudioGraph.Cutoff).
     public SpectralCutoff? LineCutoff(int index) =>
@@ -328,7 +355,7 @@ public sealed class SpectrumGraph : AudioGraph
         for (int i = 0; i < Lines; i++)
         {
             short tenths = Line(i).Span[index];
-            string level = tenths == MeasurementLimits.NoPower ? "no power" : Level(tenths);
+            string level = tenths == MeasurementLimits.NoPower ? (View == GraphForm.Coherence ? "none" : "no power") : LevelOf(tenths);
             levels.Add(HasLegend ? $"{LineName(i)} {level}" : level);
         }
 
@@ -546,6 +573,11 @@ public static class AudioPanels
             if (m.Spectrum.MidSide is not null)
             {
                 forms.Add(new GraphFormChoice(GraphForm.MidSide, "Mid/Side", "The average spectrum of the mid and the side signal of the pair of channels (front left and right, or the two channels of a stream without a layout)", new SpectrumGraph(stream, m, GraphForm.MidSide)));
+            }
+
+            if (m.Spectrum.Coherence is { IsSearched: true })
+            {
+                forms.Add(new GraphFormChoice(GraphForm.Coherence, "Coherence", "The inter-channel coherence of the pair of channels in percent at each row, and the share of frames in which the band of 1 kHz under the row is coherent", new SpectrumGraph(stream, m, GraphForm.Coherence)));
             }
 
             entries.Add(new GraphChoice(SpectrumTitle, GraphHeadings.Audio, combined.Description, forms));

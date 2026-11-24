@@ -71,6 +71,9 @@ public sealed record ReportSummary(
     // share of the cells with signal that are spectral holes, in tenths of a percent (null where there are none with signal).
     public int? SideCutoff { get; init; }
 
+    // The frequency in hertz from which the inter-channel coherence of the pair stays at 85 % or more, where one was found.
+    public int? CoherenceFrom { get; init; }
+
     public int? SpectralHolesTenths { get; init; }
 
     // The sample peak in tenths of a dB relative to full scale, the highest over the channels of the first audio stream, where
@@ -176,6 +179,7 @@ public sealed record ReportSummary(
             SpectralSlopeTenths = first?.Measurements?.Spectrum?.Slope is { IsFound: true } slope ? slope.TenthsOfDbPerKilohertz : null,
             PartialCutoff = first?.Measurements?.Spectrum?.PartialCutoff is { IsFound: true } partial ? partial.Frequency : null,
             SideCutoff = first?.Measurements?.Spectrum?.MidSide?.SideCutoff is { IsFound: true } side ? side.Frequency : null,
+            CoherenceFrom = first?.Measurements?.Spectrum?.Coherence is { IsFound: true } coherence ? coherence.FromFrequency : null,
             SpectralHolesTenths = first?.Measurements?.Spectrum?.Holes is { CellsWithSignal: > 0 } holes ? holes.ShareTenths : null,
             SamplePeakTenths = first?.Measurements?.Levels?.Stream.SamplePeakTenths is { } peak && peak != MeasurementLimits.NoLevel ? peak : null,
             ClippingRuns = first?.Measurements?.Levels?.Stream.ClippingRuns,

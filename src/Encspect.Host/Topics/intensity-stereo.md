@@ -1,7 +1,7 @@
 ---
 id: intensity-stereo
 title: Intensity stereo
-related: joint-stereo, mid-side-stereo, subband-coding, musepack-sv7-stream
+related: joint-stereo, mid-side-stereo, inter-channel-coherence, subband-coding, musepack-sv7-stream
 references: ISO/IEC 11172-3 2.4.2.3 (mode_extension), 2.4.3.4.9.3 (Layer III decoding); ISO/IEC 13818-3 2.4.3.2; ISO/IEC 14496-3 4.6.8.2; ffmpeg libavcodec/aacdec_template.c
 ---
 

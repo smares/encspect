@@ -254,7 +254,6 @@ public class SamplesDefinitionTests
 
         #region TAK
         ["tak/built-cut-metadata.decode.json"] = Reasons.tak,
-        ["tak/built-object-past-data.decode.json"] = Reasons.tak,
         #endregion
 
         #region WavPack

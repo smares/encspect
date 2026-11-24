@@ -368,3 +368,10 @@ public sealed class ValueRange
         return new ValueRange(ReadOnlyMemory<double>.Empty, minimum, maximum);
     }
 }
+
+// The quantities that the host reads from a stream's series by their text, and that the parsers which state them share (Series.Quantity).
+public static class SeriesQuantities
+{
+    // The lowest frequency a unit codes in intensity stereo, in hertz, at the units that have one (MPEG audio, AAC, Opus).
+    public const string IntensityStereoBound = "Intensity Stereo Bound";
+}
