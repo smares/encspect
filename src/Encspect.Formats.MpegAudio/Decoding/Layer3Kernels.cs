@@ -178,7 +178,7 @@ internal static class Layer3Kernels
     private static int BoundOf(ReadOnlySpan<int> maxBand, int longBands, int i) => i < longBands ? Math.Max(Math.Max(maxBand[0], maxBand[1]), maxBand[2]) : maxBand[(i - longBands) % 3];
 
     // Intensity stereo (and mid/side stereo in the bands below the intensity ones), minimp3's L3_intensity_stereo and L3_stereo_process: left and right hold the
-    // channels' requantized lines; positions are the right channel's intensity positions (255 where illegal), which the call completes for the top bands.
+    // channels' requantized lines; positions are the right channel's intensity positions as coded (only 7 in MPEG-1 is illegal), which the call completes for the top bands.
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static void IntensityStereo(MpegHeader header, in GranuleSyntax left, in GranuleSyntax right, Span<float> leftLines, Span<float> rightLines, Span<byte> positions, bool isMidSide)
     {
