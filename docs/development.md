@@ -476,7 +476,7 @@ What changed (each its own commit; `--json` and `--csv` of every fixture folder 
 
 - **Decision:** GitHub Actions is the single source of truth for "does it build and pass on every platform", so the work can be verified without anyone's computer being on.
 - **The repository** is public, which keeps hosted-runner minutes free.
-- **The matrix:** Windows, macOS and Linux, on x64 and ARM64 where a hosted runner exists. Pull requests run the jobs their change needs on four platforms; a push to main and the nightly run run everything on all six.
+- **The matrix:** Windows, macOS and Linux, on x64 and ARM64 where a hosted runner exists. Pull requests run the jobs their change needs on four platforms, with one macOS job; a push to main and the nightly run run everything on all six.
 - **No moving labels:** every Linux job runs on `ubuntu-26.04`, and the cross-checks fail when a tool's version differs from the one their script expects.
 - **Cloud sessions** install the .NET SDK through a SessionStart hook, so the fast checks run locally before pushing; CI covers the platforms a session cannot run.
 
@@ -491,11 +491,19 @@ What changed (each its own commit; `--json` and `--csv` of every fixture folder 
 |---|---|---|---|
 | Jobs | those the change needs (path filter) | all | all |
 | Unit tests | the whole suite, or only the tests of the changed formats and tags ([below](#unit-tests-scoped-to-the-changed-areas)) | whole suite | whole suite |
-| `build-test` and `unit-tests` platforms | Linux x64, Windows x64, macOS arm64, Windows arm64 (Linux arm64 and macOS x64 are accepted as left to main and the nightly run) | those and Linux arm64, macOS x64 | those as on main |
+| `build-test` platforms | Linux x64, Windows x64, macOS arm64, Windows arm64 (Linux arm64 and macOS x64 are accepted as left to main and the nightly run) | those and Linux arm64, macOS x64 | those as on main |
+| `unit-tests` platforms | Linux x64, Windows x64, Windows arm64; no macOS shard ([below](#macos-on-pull-requests)) | all six | those as on main |
 | Thread-safety tests | whole fixture corpus; long reports written by one writer on three threads | same | the same corpus; every long input, all three writers on four threads (`ENCSPECT_FULL_THREAD_TESTS=1`) |
 | Decoder and measurement timing (`DecoderWorkTests` and `MeasurementWorkTests`, `Category=Nightly`) | not run | not run | all of it, on all six platforms |
 | Fuzzing | 300 s | 300 s | 1,800 s |
 | Concurrency | a new push cancels the running checks | each run has a group of its own and is never canceled | same |
+
+### macOS on pull requests
+
+- A pull request runs one macOS job, `build and test (macos-latest)`: the build, the GUI tests and the NativeAOT checks. Its test shards (seven on a push, nine with the two timing shards in the nightly and a manual run) run only on a push to main, the nightly run and a manual run (macOS arm64 and, there, macOS x64).
+- **Why:** GitHub gives this repository about three macOS runners at a time, and a run started about eight macOS jobs. A queued macOS job that waits 35 to 40 minutes without a runner is dropped without a message (runner ID 0), so pull request runs went red three times on 2026-11-23 with every test that ran passing (runs 45219178695 and 45263806345, #392 and #393).
+- **Consequence:** a test that fails only on macOS shows on main's push run, not on the pull request. `scripts/ci_report.py` at the start of a session reports it.
+- The filter is `test_platforms` in `scripts/ci/changes.py`, the one place that builds the `test-matrix`; the `build-matrix` is unchanged. The `all checks passed` job needs no change: a platform left out of the matrix creates no job, so nothing waits for it.
 
 ### Unit tests scoped to the changed areas
 
