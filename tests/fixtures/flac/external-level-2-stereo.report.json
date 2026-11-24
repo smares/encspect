@@ -355,7 +355,7 @@
             },
             {
               "name": "Compression Level",
-              "value": "libFLAC 1 or 2",
+              "value": "libFLAC 2",
               "offset": 0,
               "length": 62001,
               "children": [
@@ -391,13 +391,19 @@
                 },
                 {
                   "name": "Evidence",
-                  "value": "Levels 1 or 2 set no linear predictor, a highest partition order of 3 and a block size of 1,152 samples.",
+                  "value": "18 frames have a stereo assignment that the adaptive choice of levels 1 and 4 does not write in this release, which rules those levels out.",
                   "offset": 0,
                   "length": 62001
                 },
                 {
                   "name": "Evidence",
-                  "value": "Every level the frames fit sets the same figures: the frames exceed the limits of all the others.",
+                  "value": "Level 2 sets no linear predictor, a highest partition order of 3 and a block size of 1,152 samples.",
+                  "offset": 0,
+                  "length": 62001
+                },
+                {
+                  "name": "Evidence",
+                  "value": "Every level the frames fit sets the same figures: the frames exceed the limits of all the others, or, with two channels, their stereo coding rules the others out.",
                   "offset": 0,
                   "length": 62001
                 }
@@ -638,7 +644,7 @@
                 },
                 {
                   "name": "Compression Level",
-                  "value": "libFLAC 1 or 2",
+                  "value": "libFLAC 2",
                   "offset": 0,
                   "length": 62001
                 },

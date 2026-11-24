@@ -391,13 +391,19 @@
                 },
                 {
                   "name": "Evidence",
+                  "value": "1 frame has a stereo assignment that the adaptive choice of levels 1 and 4 does not write in this release, which rules those levels out.",
+                  "offset": 0,
+                  "length": 58819
+                },
+                {
+                  "name": "Evidence",
                   "value": "Levels 7 or 8 set a highest linear predictor order of 12, a highest partition order of 6 and a block size of 4,096 samples.",
                   "offset": 0,
                   "length": 58819
                 },
                 {
                   "name": "Evidence",
-                  "value": "Every level the frames fit sets the same figures: the frames exceed the limits of all the others.",
+                  "value": "Every level the frames fit sets the same figures: the frames exceed the limits of all the others, or, with two channels, their stereo coding rules the others out.",
                   "offset": 0,
                   "length": 58819
                 }

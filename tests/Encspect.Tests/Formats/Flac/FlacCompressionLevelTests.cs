@@ -95,6 +95,26 @@ public class FlacCompressionLevelTests
     [InlineData("flac/external-level-8-stereo-libflac-1.2.1.flac", "libFLAC 8", "Medium")]
     [InlineData("flac/external-level-7-stereo-libflac-1.3.0.flac", "libFLAC 6, 7 or 8", "Medium")]
     [InlineData("flac/external-level-7-stereo-libflac-1.3.1.flac", "libFLAC 7 or 8", "Medium")]
+    // Releases 1.1.0 to 1.1.3 have blocks of 4,608 samples and the partition orders 2, 2, 3, 3, 3, 3, 4, 6, 6; 1.1.4 and 1.2.0 the table of the later releases.
+    [InlineData("flac/external-level-1-stereo-libflac-1.1.0.flac", "libFLAC 0, 1 or 2", "Medium")]
+    [InlineData("flac/external-level-6-stereo-libflac-1.1.0.flac", "libFLAC 6, 7 or 8", "Medium")]
+    [InlineData("flac/external-level-8-stereo-libflac-1.1.0.flac", "libFLAC 7 or 8", "Low")]
+    [InlineData("flac/external-level-4-stereo-libflac-1.1.2.flac", "libFLAC 4 to 8", "Medium")]
+    [InlineData("flac/external-level-7-stereo-libflac-1.1.2.flac", "libFLAC 7 or 8", "Low")]
+    [InlineData("flac/external-level-6-stereo-libflac-1.1.3.flac", "libFLAC 6, 7 or 8", "Low")]
+    [InlineData("flac/external-level-5-stereo-libflac-1.1.4.flac", "libFLAC 5 to 8", "Medium")]
+    [InlineData("flac/external-level-8-stereo-libflac-1.1.4.flac", "libFLAC 6, 7 or 8", "Low")]
+    [InlineData("flac/external-level-4-stereo-libflac-1.2.0.flac", "libFLAC 4 to 8", "Medium")]
+    // The adaptive levels (1 and 4) write left/side and side/right frames only on every Nth frame and change between left/right and another assignment only there (1.5.0:
+    // never left/side or side/right), so a file with such a frame is not theirs: level 2 of 1.4.3 is "2", and level 1 of 1.5.0 is "1 or 2" since a mid/side frame rules out level 0.
+    [InlineData("flac/external-level-2-stereo.flac", "libFLAC 2", "Medium")]
+    [InlineData("flac/external-level-1-stereo-libflac-1.5.0.flac", "libFLAC 1 or 2", "Medium")]
+    // FFmpeg's releases from 0.11.5 to 8.0.1 write the same levels; those up to 1.0.x write orders of 7 and 10 at levels 6 and 8, below the limit of 8 and 12.
+    [InlineData("flac/external-ffmpeg-level-5-mono-ffmpeg-0.11.5.flac", "FFmpeg 5 to 12", "Medium")]
+    [InlineData("flac/external-ffmpeg-level-6-mono-ffmpeg-1.0.10.flac", "FFmpeg 5 to 12", "Low")]
+    [InlineData("flac/external-ffmpeg-level-8-mono-ffmpeg-0.11.5.flac", "FFmpeg 8 to 12", "Low")]
+    [InlineData("flac/external-ffmpeg-level-5-mono-ffmpeg-4.4.6.flac", "FFmpeg 5 to 12", "Medium")]
+    [InlineData("flac/external-ffmpeg-level-8-mono-ffmpeg-8.0.1.flac", "FFmpeg 8 to 12", "Medium")]
     public void LevelsThatShareTheirSettingsAreNamedTogether(string name, string levels, string confidence)
     {
         Node node = LevelNode(Fixtures.AnalyzeMpeg(name))!;
@@ -121,6 +141,15 @@ public class FlacCompressionLevelTests
         Node node = LevelNode(Fixtures.AnalyzeMpeg(name))!;
         Assert.Equal(levels, node.Value!.ToString());
         Assert.Equal(confidence, node.Children.Single(c => c.Name == "Confidence").Value!.ToString());
+    }
+
+    // From 1.4.0 the adaptive levels never write left/side or side/right, so only those frames count against them: 1.4.3's level 5 file has one such frame (and two
+    // changes between left/right and mid/side, which the earlier releases' rule would count too).
+    [Fact]
+    public void FromRelease140AnyLeftSideOrSideRightFrameRulesOutTheAdaptiveLevels()
+    {
+        Node node = LevelNode(Fixtures.AnalyzeMpeg("flac/external-level-5-stereo.flac"))!;
+        Assert.Contains(node.Children, c => c.Name == "Evidence" && c.Value!.ToString()!.StartsWith("1 frame has a stereo assignment", StringComparison.Ordinal));
     }
 
     [Fact]
