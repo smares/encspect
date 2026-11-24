@@ -168,8 +168,14 @@ internal sealed class FrameScanner(ByteReader reader, long end)
     public long FindStrict(long from)
     {
         long position = from;
+        int candidates = 0;
         while ((position = FindSync(position, end)) >= 0)
         {
+            if (++candidates % 4096 == 0)
+            {
+                reader.CancellationToken.ThrowIfCancellationRequested();
+            }
+
             if (HeaderAt(position).Fault == HeaderFault.None)
             {
                 return position;

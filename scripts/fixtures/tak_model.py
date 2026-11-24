@@ -146,6 +146,17 @@ def walk(data, start=0):
         data_end = pos + 4 + size
         if data_end > len(data):
             entry["cut"] = True
+            # The stated size runs past the data: the first frame header whose CRC-24 holds inside the object ends it, and the audio starts there.
+            at = pos + 4
+            while True:
+                at = data.find(SYNC, at)
+                if at < 0 or frame_header(data, at) is not None:
+                    break
+                at += 1
+            if at >= 0:
+                entry["end"] = at
+                entry["resync"] = True
+                audio = at
             objects.append(entry)
             pos = len(data)
             break
@@ -238,6 +249,8 @@ def manifest(data, extra=None):
     result["audio_start"] = audio
     if audio is None:
         findings.append({"code": "tak.metadata-cut"})
+    elif any(o.get("resync") for o in objects):
+        findings.append({"code": "tak.object-size-invalid"})
     elif not objects or objects[-1]["id"] != 0:
         findings.append({"code": "tak.end-missing"})
     by_id = {}
