@@ -32,8 +32,8 @@ public class MeasurementFixtureTests
         return Analyzer.CreateDefault().Analyze(name + ".flac", stream, new AnalysisOptions { Decoding = new DecodeOptions { Measure = measure, MaxWork = maxWork } });
     }
 
-    // Many blocks sit in the one 0.01 LU bin of the relative gate: a histogram that takes the bin whole reads -16.9 (all 105 blocks) or -10.6 (the
-    // loud tone's 20); BS.1770-5 equation 7 keeps the 56 blocks above the gate: -14.9 LUFS.
+    // Many blocks sit in the one 0.01 LU bin of the relative gate: a histogram that takes the bin whole reads about -17.1 (all 105 blocks) or -10.8 (the
+    // loud tone's 20); BS.1770-5 equation 7 keeps the 56 blocks above the gate: -15.1 LUFS.
     [Fact]
     public void ManyBlocksInTheBinOfTheRelativeGateAreGatedOneByOne()
     {
@@ -42,7 +42,7 @@ public class MeasurementFixtureTests
         Assert.True(l.IsGatedExactly);
         Assert.Equal(105, l.BlocksAboveAbsoluteGate);
         Assert.Equal(56, l.BlocksAboveRelativeGate);
-        Assert.Equal(-149, l.IntegratedTenths);
+        Assert.Equal(-151, l.IntegratedTenths);
     }
 
     private static JsonElement Manifest(string name) => JsonDocument.Parse(File.ReadAllText(Path.Combine(Directory_, name + ".expected.json"))).RootElement;

@@ -174,6 +174,8 @@ internal sealed class LevelsMeter
         double high = state.High;
         double sum = state.SumDouble;
         double squares = state.SumSquaresDouble;
+        double sumError = state.SumError;
+        double squaresError = state.SquaresError;
         bool only16 = state.Only16;
         bool only24 = state.Only24;
         bool grid16 = _only16;
@@ -206,8 +208,16 @@ internal sealed class LevelsMeter
             }
             else
             {
-                sum += v;
-                squares += v * v;
+                // Neumaier (Kahan-Babuska) summation: one sequential double sum over up to 1.7e10 samples (24 hours at 192 kHz) loses digits of a
+                // steady stream's DC, and plain Kahan's error is relative to the sum of the magnitudes, so a mean that cancels to near 0 came out wrong.
+                // The compensation is part of the channel's state (the total is the sum plus it), so the result does not depend on how the decoder cuts blocks.
+                double tv = sum + v;
+                sumError += Math.Abs(sum) >= Math.Abs(v) ? (sum - tv) + v : (v - tv) + sum;
+                sum = tv;
+                double sq = v * v;
+                double ts = squares + sq;
+                squaresError += squares >= sq ? (squares - ts) + sq : (sq - ts) + squares;
+                squares = ts;
                 if (only24)
                 {
                     double y = v * 8388608.0;
@@ -278,6 +288,8 @@ internal sealed class LevelsMeter
         state.High = high;
         state.SumDouble = sum;
         state.SumSquaresDouble = squares;
+        state.SumError = sumError;
+        state.SquaresError = squaresError;
         state.Only16 = only16;
         state.Only24 = only24;
         state.RunLength = runLength;
@@ -848,7 +860,7 @@ internal sealed class LevelsMeter
     // The mean of a is farther from 0 than b's (the channels have the same number of samples, so the sums compare): from the sums, not from the
     // rounded figures, so that a channel with an offset of its own always beats one with none.
     private bool LargerOffset(ChannelState a, ChannelState b) =>
-        _isFloat ? Math.Abs(a.SumDouble) > Math.Abs(b.SumDouble) : Abs(a.Sum) > Abs(b.Sum);
+        _isFloat ? Math.Abs(a.Total) > Math.Abs(b.Total) : Abs(a.Sum) > Abs(b.Sum);
 
     private static UInt128 Abs(Int128 value) => value < 0 ? (UInt128)(-value) : (UInt128)value;
 
@@ -889,13 +901,13 @@ internal sealed class LevelsMeter
     {
         SilenceState silence = state.Silence.Complete(minimumStretch);
         double peak = Math.Max(state.High, -state.Low);
-        double mean = state.SumDouble / state.Count;
+        double mean = state.Total / state.Count;
         double magnitude = Math.Abs(mean);
         long micro = (long)Math.Floor((magnitude * 1e8) + 0.5);
         return new ChannelLevels
         {
             SamplePeakTenths = peak > 0 ? Tenths(peak * peak) : MeasurementLimits.NoLevel,
-            RmsTenths = state.SumSquaresDouble > 0 ? Tenths(state.SumSquaresDouble / state.Count) : MeasurementLimits.NoLevel,
+            RmsTenths = state.SquaresTotal > 0 ? Tenths(state.SquaresTotal / state.Count) : MeasurementLimits.NoLevel,
             DcOffsetMicropercent = mean < 0 ? -micro : micro,
             DcOffsetTenths = magnitude > 0 ? Tenths(magnitude * magnitude) : MeasurementLimits.NoLevel,
             ClippingRuns = state.Runs,
@@ -930,10 +942,17 @@ internal sealed class LevelsMeter
         double squares = 0;
         foreach (ChannelState state in _channels)
         {
-            squares += state.SumSquaresDouble;
+            squares += state.SquaresTotal;
         }
 
         return squares > 0 ? Tenths(squares / ((double)_channels[0].Count * _channels.Length)) : MeasurementLimits.NoLevel;
+    }
+
+    // The running sums and their compensations of a channel's float samples, for the determinism test.
+    internal (double Sum, double SumError, double Squares, double SquaresError) RawFloatSums(int channel)
+    {
+        ChannelState state = _channels[channel];
+        return (state.SumDouble, state.SumError, state.SumSquaresDouble, state.SquaresError);
     }
 
     // A power under 1e-300 would be a subnormal number of no use; it reads as -3,000 dB.
@@ -958,6 +977,12 @@ internal sealed class LevelsMeter
         public double High = double.MinValue;
         public double SumDouble;
         public double SumSquaresDouble;
+        public double SumError;
+        public double SquaresError;
+
+        public double Total => SumDouble + SumError;
+
+        public double SquaresTotal => SumSquaresDouble + SquaresError;
         public bool Only16 = true;
         public bool Only24 = true;
         public long RunLength;

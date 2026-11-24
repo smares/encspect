@@ -140,6 +140,16 @@ def tenths(power):
     return math.floor(100 * math.log10(power) + 0.5)
 
 
+def thousandths(power):
+    """The level in thousandths of a dB: the searches below run on these, and a figure is rounded to tenths once, at the end."""
+    return math.floor(10000 * math.log10(power) + 0.5)
+
+
+def round_tenths(numerator, denominator):
+    """A quotient in thousandths of a dB as tenths, to the nearest with halves up."""
+    return (2 * numerator + 100 * denominator) // (200 * denominator)
+
+
 def band_rows(rate, size):
     """(W, first candidate row, bins a row): 1 kHz in rows and the first row whose upper edge reaches 2 kHz."""
     bins = size // (ROWS * 2)
@@ -323,11 +333,11 @@ def frames_at(counters, r, shows=None, counts_silence=True):
 
 
 def find_cutoff(level_tenths, counters, rate, size):
-    """The spectral cutoff of a spectrum given as 512 tenths of a dB (None for a row without power) and its counters."""
+    """The spectral cutoff of a spectrum given as 512 thousandths of a dB (None for a row without power) and its counters."""
     if rate < 8000:
         return {"is_searched": False}
     w, first, bins = band_rows(rate, size)
-    level = [-2000 if v is None else v for v in level_tenths]
+    level = [-200000 if v is None else v for v in level_tenths]
     prefix = [0]
     for v in level:
         prefix.append(prefix[-1] + v)
@@ -342,11 +352,11 @@ def find_cutoff(level_tenths, counters, rate, size):
         if best is None or numerator * best[2] > best[1] * denominator:
             best = (r, numerator, denominator)
     r, numerator, denominator = best
-    step = floor_div(2 * numerator + denominator, 2 * denominator)
+    step = round_tenths(numerator, denominator)
     with_signal, showing = frames_at(counters, r)
     result = {"is_searched": True, "is_found": False, "frequency": 0, "transition_start": 0, "step_frequency": hertz(r + 1, rate, size, bins),
               "step_tenths": step, "frames_showing": showing, "frames_with_signal": with_signal}
-    if step >= 250 and with_signal > 0 and 2 * showing >= with_signal:
+    if numerator >= 25000 * denominator and with_signal > 0 and 2 * showing >= with_signal:
         last = r
         while last < 505:
             signal_next, showing_next = frames_at(counters, last + 1)
@@ -357,7 +367,7 @@ def find_cutoff(level_tenths, counters, rate, size):
         under_sum = prefix[r + 1] - prefix[r - w + 1]
         start = r + 1
         i = r
-        while i >= 0 and level[i] * w < under_sum - 30 * w:
+        while i >= 0 and level[i] * w < under_sum - 3000 * w:
             start = i
             i -= 1
         result.update(is_found=True, frequency=hertz(edge + 1, rate, size, bins), transition_start=hertz(start, rate, size, bins))
@@ -365,40 +375,40 @@ def find_cutoff(level_tenths, counters, rate, size):
 
 
 def find_bandwidth(level_tenths, rate, size):
-    """The spectral bandwidth of a spectrum given as 512 tenths of a dB: the floor is the mean level of the band of W rows that ends at row 506;
+    """The spectral bandwidth of a spectrum given as 512 thousandths of a dB: the floor is the mean level of the band of W rows that ends at row 506;
     the run goes down while the band that ends at the row has a mean within 3 dB of the floor; found where the band of W rows under the run's
     lowest row (the lowest row of the lowest such band) is at least 20 dB above the floor. Sums of W integers are compared."""
     if rate < 8000:
         return {"is_searched": False}
     w, first, bins = band_rows(rate, size)
-    level = [-2000 if v is None else v for v in level_tenths]
+    level = [-200000 if v is None else v for v in level_tenths]
     prefix = [0]
     for v in level:
         prefix.append(prefix[-1] + v)
     floor_sum = prefix[TOP_ROW + 1] - prefix[TOP_ROW - w + 1]
     end = TOP_ROW
-    while end >= w and abs(prefix[end] - prefix[end - w] - floor_sum) <= 30 * w:
+    while end >= w and abs(prefix[end] - prefix[end - w] - floor_sum) <= 3000 * w:
         end -= 1
     lowest = end - w + 1
     result = {"is_searched": True, "is_found": False, "frequency": 0, "floor_tenths": 0, "reason": "none"}
     if lowest < first or lowest < w:
         result["reason"] = "reaches_top"
-    elif prefix[lowest] - prefix[lowest - w] < floor_sum + 200 * w:
+    elif prefix[lowest] - prefix[lowest - w] < floor_sum + 20000 * w:
         result["reason"] = "slope"
     else:
-        result.update(is_found=True, frequency=hertz(lowest, rate, size, bins), floor_tenths=(2 * floor_sum + w) // (2 * w))
+        result.update(is_found=True, frequency=hertz(lowest, rate, size, bins), floor_tenths=round_tenths(floor_sum, w))
     return result
 
 
 def find_slope(level_tenths, rate, size):
-    """The spectral slope of a spectrum given as 512 tenths of a dB, worked out in its own code: the top band is the band of W rows that ends at
+    """The spectral slope of a spectrum given as 512 thousandths of a dB, worked out in its own code: the top band is the band of W rows that ends at
     row 506; found where the band of W rows under it is at least 5 dB above it; the run goes down one row at a time while the band that ends at the
     row is at least 3 dB above the W rows over it, down to the first candidate. The fall is the mean of the band that ends at the run's lowest row
     less the top band's, the slope that fall over the distance from the row's upper edge to the middle of the top band (a row is rate / 1,024 Hz)."""
     if rate < 8000:
         return {"is_searched": False}
     w, first, bins = band_rows(rate, size)
-    level = [-2000 if v is None else v for v in level_tenths]
+    level = [-200000 if v is None else v for v in level_tenths]
     prefix = [0]
     for v in level:
         prefix.append(prefix[-1] + v)
@@ -408,18 +418,18 @@ def find_slope(level_tenths, rate, size):
 
     top_sum = band(TOP_ROW)
     row = TOP_ROW - w
-    top_step = (2 * (band(row) - top_sum) + w) // (2 * w)
+    top_step = round_tenths(band(row) - top_sum, w)
     result = {"is_searched": True, "is_found": False, "from_frequency": 0, "to_frequency": 0, "fall_tenths": 0, "tenths_per_kilohertz": 0, "top_step_tenths": top_step}
-    if band(row) - top_sum < 50 * w:
+    if band(row) - top_sum < 5000 * w:
         return result
     fc = first
-    while row - 1 >= fc and band(row - 1) - band(row - 1 + w) >= 30 * w:
+    while row - 1 >= fc and band(row - 1) - band(row - 1 + w) >= 3000 * w:
         row -= 1
     fall = band(row) - top_sum
     distance = 2 * (TOP_ROW - row) - w
     result.update(is_found=True, from_frequency=hertz(row + 1, rate, size, bins), to_frequency=hertz(TOP_ROW + 1, rate, size, bins),
-                  fall_tenths=(2 * fall + w) // (2 * w),
-                  tenths_per_kilohertz=(2 * fall * 2048000 + w * distance * rate) // (2 * w * distance * rate))
+                  fall_tenths=round_tenths(fall, w),
+                  tenths_per_kilohertz=(2 * fall * 2048000 + 100 * w * distance * rate) // (200 * w * distance * rate))
     return result
 
 
@@ -609,7 +619,10 @@ def kweighting(rate):
     f1, q1 = 38.13547087602444, 0.5003270373238773
     k1 = math.tan(math.pi * f1 / rate)
     d = 1 + k1 / q1 + k1 * k1
-    return ((vh + vb * k / q + k * k) / a0, 2 * (k * k - vh) / a0, (vh - vb * k / q + k * k) / a0, 2 * (k * k - 1) / a0, (1 - k / q + k * k) / a0,
+    # The highpass numerator 1, -2, 1 gives the passband gain d; the gain of the 48 kHz filter (d48) is restored by scaling the shelf's numerator.
+    k48 = math.tan(math.pi * f1 / 48000)
+    g = (1 + k48 / q1 + k48 * k48) / d
+    return (g * (vh + vb * k / q + k * k) / a0, g * 2 * (k * k - vh) / a0, g * (vh - vb * k / q + k * k) / a0, 2 * (k * k - 1) / a0, (1 - k / q + k * k) / a0,
             2 * (k1 * k1 - 1) / d, (1 - k1 / q1 + k1 * k1) / d)
 
 
@@ -916,9 +929,10 @@ def measure(data, layout=None):
         process([b + [0] * (size - len(b)) for b in buffers])
 
     levels = [[None if sums[c][r] <= 0 or frames == 0 else tenths(sums[c][r] / frames) for r in range(ROWS)] for c in range(sets)]
-    cutoffs = [find_cutoff(levels[c], counters[c], rate, size) for c in range(sets)]
-    bandwidths = [find_bandwidth(levels[c], rate, size) for c in range(sets)]
-    slopes = [find_slope(levels[c], rate, size) for c in range(sets)]
+    fine = [[None if sums[c][r] <= 0 or frames == 0 else thousandths(sums[c][r] / frames) for r in range(ROWS)] for c in range(sets)]
+    cutoffs = [find_cutoff(fine[c], counters[c], rate, size) for c in range(sets)]
+    bandwidths = [find_bandwidth(fine[c], rate, size) for c in range(sets)]
+    slopes = [find_slope(fine[c], rate, size) for c in range(sets)]
     partial = find_partial(counters[measured], rate, size)
     holes = find_holes(counters[measured], rate, size, cutoffs[measured], bandwidths[measured])
     mid_side = None

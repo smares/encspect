@@ -151,6 +151,34 @@ public class MeasurementDeterminismTests
         Assert.True(LowBitsPerSpanHash == hash, $"LowBitsPerSpanHash = {hash} ({text})");
     }
 
+    // The compensated sums of the float levels over a cancelling input (a sine of 2^20 samples, 24-bit values scaled by 1000 and a small offset on every third, so that the
+    // partial sums run far from 0 and back): the raw bits of the running sums and their compensations hash to a constant, so a platform that
+    // reassociates or contracts the Neumaier sum fails; the compensated total differs from the plain sum, which the input is chosen to show.
+    [Fact]
+    public void TheCompensatedFloatSumsHashToAConstant()
+    {
+        double[] samples = [.. Enumerable.Range(0, 1 << 20).Select(i => (1000.0 * Math.Round(DetMath.Sin(i * 0.6180339887498949) * 8388608.0) / 8388608.0) + (i % 3 == 0 ? 1e-9 : 0.0))];
+        var meter = new LevelsMeter(1, SampleFormat.Float64, 64, 48000);
+        double plain = 0;
+        double plainSquares = 0;
+        foreach (double v in samples)
+        {
+            plain += v;
+            plainSquares += v * v;
+        }
+
+        for (int at = 0; at < samples.Length; at += 4096)
+        {
+            meter.AddDoubles(0, samples.AsSpan(at, 4096));
+        }
+
+        (double sum, double sumError, double squares, double squaresError) = meter.RawFloatSums(0);
+        Assert.NotEqual(plain, sum + sumError);
+        Assert.NotEqual(plainSquares, squares + squaresError);
+        string hash = HashBits([sum, sumError, squares, squaresError]);
+        Assert.True(CompensatedSumsHash == hash, "CompensatedSumsHash = " + hash);
+    }
+
     // The K-weighting coefficients of every rate the tests use (the derived ones come from DetMath's tangent and power).
     [Fact]
     public void TheDerivedKWeightingCoefficientsHashToAConstant()
@@ -973,11 +1001,12 @@ public class MeasurementDeterminismTests
     private const string CoherenceHash = "33f110c129ecacb177c818b58ce7fd9332de770145a9649a73d678d32b883d2c/f2e131e46ea55a82cad02f675f69f13e0e4f5e787a2de17cb937b05b47c6298e|a64728f9bdbb33a9b809460e8b3ad664615e5042f48453e0fe00b96bec42d94a";
     private const string MidSideCountersHash = "a8c32911289b3666eaa26a92b7c4af09a801486b034ab251eaeff902b8e2e39a|36eda7f42111bbb6cef5ed2c64ce6dd58a584515d14a64da4f4085a4bc72c971";
     private const string CountersHash = "4f5426dc2722f4934c96217ecbb4d6353b3774a7101d98267310015205a46751|6bbb4daa9b23cc7b5e00c5b611f94fe3e9bb463c35d133bade76c969902e0c26";
+    private const string CompensatedSumsHash = "cb658a607c5f316a1300bb8874be95b8cdf1d08f29eb62c66768cb95829351a9";
     private const string LevelsHash = "a49171a81aeb8ad635eab6462075ed9b9cb95c07c78541b77b7ac741119e0a80";
     private const string LowBitsPerSpanHash = "ea09e332c5c4afca329c637317fa945f31ffb6e645748a782a29bfb7175e3018";
-    private const string KWeightingHash = "f6048a6ea38eab1d0c9da05b4f9590e11f6090e6ad1942b442b98b24b94e44f6";
-    private const string LoudnessHash = "436f003bd4cbd71d3728431622583423b26e3917f29dd4544a7be3bf929f9b12";
-    private const string LoudnessRawHashes = "fbe68095d1d1bf5f4db95b77e1d2f3449f85cff5b687dcf8812f47d63fbfd44e|f82afd7a3245c2a833c86bd213284821b58ad0b680534ee7175b6cc3ac0c7eb7";
+    private const string KWeightingHash = "61b0554b0117989a7109f4ebfb3cdf59fc5641706e982b853c8beefbfe435e86";
+    private const string LoudnessHash = "08f2e82b486b357428d23716be0f5590f8e7c32c1a61734be5f9847a48193011";
+    private const string LoudnessRawHashes = "fbe68095d1d1bf5f4db95b77e1d2f3449f85cff5b687dcf8812f47d63fbfd44e|7eb78386c879b2200ad48f423be1252dd3c2e807b9de6e15e45cc02aee7eb87c";
     private const string TruePeakHash = "0461b026bc6590cab1f7574b47c344005fa715234296d6fc59f01b111b7c612f";
     private const string MathHash = "6654c27b9dc93be9cabd9f70dad935929bf08d83c724028dff4dd2334949a8c1";
 }

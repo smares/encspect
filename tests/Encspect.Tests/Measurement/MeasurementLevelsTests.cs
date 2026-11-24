@@ -555,4 +555,26 @@ public class MeasurementLevelsTests
         Assert.Equal(32, m.Levels!.Channels.Count);
         Assert.True(allocated < estimate, $"allocated {allocated:N0}, estimated {estimate:N0}");
     }
+
+    // A steady stream of 2^25 samples of 0.7000000049: the exact DC offset is 70,000,000.49 micropercent, which reads 70,000,000. One sequential double sum
+    // drifts to 70,000,000.54 here and reads 70,000,001; the Kahan sums do not, whatever the pieces the decoder cuts the stream into.
+    [Theory]
+    [InlineData(16384)]
+    [InlineData(4096)]
+    [InlineData(1000)]
+    public void ALongConstantStreamHasTheExactDcOffset(int piece)
+    {
+        const int Length = 1 << 25;
+        double[] block = new double[piece];
+        Array.Fill(block, 0.7000000049);
+        var meter = new LevelsMeter(1, SampleFormat.Float64, 64, 48000);
+        for (long done = 0; done < Length;)
+        {
+            int count = (int)Math.Min(piece, Length - done);
+            meter.AddDoubles(0, block.AsSpan(0, count));
+            done += count;
+        }
+
+        Assert.Equal(70_000_000, meter.Build()!.Stream.DcOffsetMicropercent);
+    }
 }

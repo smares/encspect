@@ -67,7 +67,8 @@ internal sealed class LoudnessMeter
 
     // The energy of -70 LUFS; a block or a short-term value passes the absolute gate when it is above it (BS.1770-5 and Tech 3342 both
     // say "above"), one exactly at it does not.
-    internal static readonly double AbsoluteGate = DetMath.Pow(10.0, -6.9309);
+    // 10^-6.9309 as the correctly rounded double (DetMath.Pow reads 11 ulp low there).
+    internal static readonly double AbsoluteGate = 1.1724653045822956e-07;
 
     internal static bool IsAboveAbsoluteGate(double energy) => energy > AbsoluteGate;
 
@@ -471,7 +472,7 @@ internal sealed class LoudnessMeter
             double high = _shortEnergies[first + (int)Rank(passedCount, 95)];
             return figures with
             {
-                RangeTenths = (int)((Hundredths(high) - Hundredths(low) + 5) / 10),
+                RangeTenths = RangeOf(high, low),
                 RangeLowTenths = Tenths(low),
                 RangeHighTenths = Tenths(high),
                 ShortTerm = BuildSeries(),
@@ -486,11 +487,13 @@ internal sealed class LoudnessMeter
 
         int lowBin = Percentile(_shortCounts, _shortSums, gate, passed2, 10);
         int highBin = Percentile(_shortCounts, _shortSums, gate, passed2, 95);
+        double lowMean = _shortSums[lowBin] / _shortCounts[lowBin];
+        double highMean = _shortSums[highBin] / _shortCounts[highBin];
         return figures with
         {
-            RangeTenths = (highBin - lowBin + 5) / 10,
-            RangeLowTenths = (((2 * lowBin) + 11) / 20) - 700,
-            RangeHighTenths = (((2 * highBin) + 11) / 20) - 700,
+            RangeTenths = RangeOf(highMean, lowMean),
+            RangeLowTenths = Tenths(lowMean),
+            RangeHighTenths = Tenths(highMean),
             ShortTerm = BuildSeries(),
         };
     }
@@ -498,8 +501,8 @@ internal sealed class LoudnessMeter
     // The rank of the p-th percentile among n values in ascending order, round((n - 1) p / 100) (Tech 3342).
     private static long Rank(long n, int p) => (((n - 1) * p) + 50) / 100;
 
-    // An energy in hundredths of a LU, relative to nothing: only differences are used.
-    private static long Hundredths(double energy) => (long)Math.Floor((1000.0 * DetMath.Log10(energy)) + 0.5);
+    // The spread of two energies in tenths of a LU, rounded once: floor(100 log10(high / low) + 0.5).
+    internal static int RangeOf(double high, double low) => (int)Math.Floor((100.0 * DetMath.Log10(high / low)) + 0.5);
 
     // The count and the energy sum of the kept values, summed in the order they were kept.
     private static (long Count, double Sum) ExactTotals(double[] energies, int count)

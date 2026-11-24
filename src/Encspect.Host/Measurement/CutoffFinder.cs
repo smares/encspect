@@ -118,22 +118,32 @@ internal readonly struct CutoffGeometry
 
 internal static class CutoffFinder
 {
-    // The level of a row without power in the search, in tenths of a dB: -200 dB.
-    private const int SilentTenths = -2000;
+    // The searches run on rows in thousandths of a dB (the rows' tenths would be rounded once more in every band mean and difference; a figure is
+    // rounded to tenths once, at the end). A row without power holds NoPower.
+    public const int NoPower = int.MinValue;
 
-    private const int StepThresholdTenths = 250;
+    // The level of a row without power in the search: -200 dB.
+    private const int SilentLevel = -200_000;
+
+    private const int StepThreshold = 25_000;
 
     // The floor's run stays within 3 dB of the floor; the band under it must be 20 dB above it.
-    private const int BandwidthToleranceTenths = 30;
+    private const int BandwidthTolerance = 3_000;
 
-    private const int BandwidthStepTenths = 200;
+    private const int BandwidthStep = 20_000;
 
     // The slope starts where the top band is 5 dB under the band below it and goes on while a band is 3 dB under the W rows over it.
-    private const int SlopeStartTenths = 50;
+    private const int SlopeStart = 5_000;
 
-    private const int SlopeContinueTenths = 30;
+    private const int SlopeContinue = 3_000;
 
-    public static SpectralCutoff Find(ReadOnlySpan<short> rows, CutoffCounters? counters, CutoffGeometry geometry)
+    // The rows' level in thousandths of a dB from the mean power: floor(10000 log10(mean) + 0.5), the half up.
+    public static int FineLevel(double meanPower) => (int)Math.Clamp(Math.Floor((10000.0 * DetMath.Log10(meanPower)) + 0.5), -2_000_000.0, 2_000_000.0);
+
+    // A quotient in thousandths of a dB, as tenths rounded to the nearest with halves up: floor(numerator / denominator / 100 + 0.5).
+    private static int Tenths(long numerator, long denominator) => (int)FloorDivide((2 * numerator) + (100 * denominator), 200 * denominator);
+
+    public static SpectralCutoff Find(ReadOnlySpan<int> rows, CutoffCounters? counters, CutoffGeometry geometry)
     {
         if (!geometry.IsSearched || counters is null)
         {
@@ -146,7 +156,7 @@ internal static class CutoffFinder
         Span<int> level = stackalloc int[rowCount];
         for (int r = 0; r < rowCount; r++)
         {
-            level[r] = rows[r] == MeasurementLimits.NoPower ? SilentTenths : rows[r];
+            level[r] = rows[r] == NoPower ? SilentLevel : rows[r];
             prefix[r + 1] = prefix[r] + level[r];
         }
 
@@ -176,12 +186,12 @@ internal static class CutoffFinder
             return new SpectralCutoff { IsSearched = false };
         }
 
-        int stepTenths = (int)FloorDivide((2 * bestNumerator) + bestDenominator, 2 * bestDenominator);
+        int stepTenths = Tenths(bestNumerator, bestDenominator);
 
         (int withSignal, int showing) = Frames(counters, best, counters.Show);
 
         int stepHertz = geometry.Hertz(best + 1);
-        bool isFound = stepTenths >= StepThresholdTenths && withSignal > 0 && 2L * showing >= withSignal;
+        bool isFound = bestNumerator >= (long)StepThreshold * bestDenominator && withSignal > 0 && 2L * showing >= withSignal;
         if (!isFound)
         {
             return new SpectralCutoff { StepFrequency = stepHertz, StepTenthsOfDb = stepTenths, FramesShowing = showing, FramesWithSignal = withSignal };
@@ -208,7 +218,7 @@ internal static class CutoffFinder
         // The transition starts at the lowest row, walking down from the step, still more than 3 dB below the mean of the band under it.
         long underSum = prefix[best + 1] - prefix[best - w + 1];
         int start = best + 1;
-        for (int r = best; r >= 0 && (long)level[r] * w < underSum - (30L * w); r--)
+        for (int r = best; r >= 0 && (long)level[r] * w < underSum - ((long)SlopeContinue * w); r--)
         {
             start = r;
         }
@@ -229,7 +239,7 @@ internal static class CutoffFinder
     // the top row of the search; the run goes down while the band that ends at the row has a mean within 3 dB of the floor, and the
     // bandwidth is the run's lowest row where the band of W rows under it is at least 20 dB above the floor. Sums of W integers are
     // compared, so it is exact.
-    public static SpectralBandwidth FindBandwidth(ReadOnlySpan<short> rows, CutoffGeometry geometry)
+    public static SpectralBandwidth FindBandwidth(ReadOnlySpan<int> rows, CutoffGeometry geometry)
     {
         if (!geometry.IsSearched)
         {
@@ -242,7 +252,7 @@ internal static class CutoffFinder
         Span<long> prefix = stackalloc long[rowCount + 1];
         for (int r = 0; r < rowCount; r++)
         {
-            prefix[r + 1] = prefix[r] + (rows[r] == MeasurementLimits.NoPower ? SilentTenths : rows[r]);
+            prefix[r + 1] = prefix[r] + (rows[r] == NoPower ? SilentLevel : rows[r]);
         }
 
         long floorSum = prefix[top + 1] - prefix[top - w + 1];
@@ -250,7 +260,7 @@ internal static class CutoffFinder
         while (end - 1 >= w - 1)
         {
             long band = prefix[end] - prefix[end - w];
-            if (Math.Abs(band - floorSum) > BandwidthToleranceTenths * w)
+            if (Math.Abs(band - floorSum) > (long)BandwidthTolerance * w)
             {
                 break;
             }
@@ -266,7 +276,7 @@ internal static class CutoffFinder
         }
 
         long under = prefix[lowest] - prefix[lowest - w];
-        if (under < floorSum + (BandwidthStepTenths * w))
+        if (under < floorSum + ((long)BandwidthStep * w))
         {
             return new SpectralBandwidth { Reason = SpectralBandwidthReason.Slope };
         }
@@ -275,14 +285,14 @@ internal static class CutoffFinder
         {
             IsFound = true,
             Frequency = geometry.Hertz(lowest),
-            FloorTenthsOfDb = (int)FloorDivide((2 * floorSum) + w, 2L * w),
+            FloorTenthsOfDb = Tenths(floorSum, w),
         };
     }
 
     // The spectral slope of docs/design/spectral-analysis.md, Step 7b, in integers: the top band is the band of W rows that ends at the top
     // row; the figure is found where the band under it is at least 5 dB above it; the run goes down from there while the cutoff's step at the
     // row is at least 3 dB, and stops at the first candidate.
-    public static SpectralSlope FindSlope(ReadOnlySpan<short> rows, CutoffGeometry geometry)
+    public static SpectralSlope FindSlope(ReadOnlySpan<int> rows, CutoffGeometry geometry)
     {
         if (!geometry.IsSearched)
         {
@@ -295,15 +305,15 @@ internal static class CutoffFinder
         Span<long> prefix = stackalloc long[rowCount + 1];
         for (int r = 0; r < rowCount; r++)
         {
-            prefix[r + 1] = prefix[r] + (rows[r] == MeasurementLimits.NoPower ? SilentTenths : rows[r]);
+            prefix[r + 1] = prefix[r] + (rows[r] == NoPower ? SilentLevel : rows[r]);
         }
 
         // The sum of the band of W rows that ends at row e.
         long topSum = prefix[top + 1] - prefix[top - w + 1];
         int start = top - w;
         long startSum = prefix[start + 1] - prefix[start - w + 1];
-        int topStep = (int)FloorDivide((2 * (startSum - topSum)) + w, 2L * w);
-        if (startSum - topSum < SlopeStartTenths * w)
+        int topStep = Tenths(startSum - topSum, w);
+        if (startSum - topSum < (long)SlopeStart * w)
         {
             return new SpectralSlope { TopStepTenthsOfDb = topStep };
         }
@@ -313,7 +323,7 @@ internal static class CutoffFinder
         {
             long band = prefix[row] - prefix[row - w];
             long over = prefix[row + w] - prefix[row];
-            if (band - over < SlopeContinueTenths * w)
+            if (band - over < (long)SlopeContinue * w)
             {
                 break;
             }
@@ -328,8 +338,8 @@ internal static class CutoffFinder
             IsFound = true,
             FromFrequency = geometry.Hertz(row + 1),
             ToFrequency = geometry.Hertz(top + 1),
-            FallTenthsOfDb = (int)FloorDivide((2 * fallSum) + w, 2L * w),
-            TenthsOfDbPerKilohertz = (int)FloorDivide((2 * fallSum * 2_048_000L) + (w * distance * geometry.SampleRate), 2 * w * distance * geometry.SampleRate),
+            FallTenthsOfDb = Tenths(fallSum, w),
+            TenthsOfDbPerKilohertz = (int)FloorDivide((2 * fallSum * 2_048_000L) + (100L * w * distance * geometry.SampleRate), 200L * w * distance * geometry.SampleRate),
             TopStepTenthsOfDb = topStep,
         };
     }
