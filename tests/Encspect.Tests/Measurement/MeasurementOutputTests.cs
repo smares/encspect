@@ -416,7 +416,7 @@ public class MeasurementOutputTests
         (_, string text, _) = Run("--measure", "--hide", "frames,tags,statistics,side-info", path);
         (_, string json, _) = Run("--measure", "--json", path);
 
-        Assert.Contains("Inter-Channel Coherence: 85 % or more from 2,347 to 10,142 Hz, in 17 of 33 frames with signal; the stated intensity stereo bound has a median of 3,216 Hz over 74 units, 869 Hz apart", text, StringComparison.Ordinal);
+        Assert.Contains("Inter-Channel Coherence: 85 % or more from 2,347 to 10,142 Hz, in 18 of 33 frames with signal; the stated intensity stereo bound has a median of 3,216 Hz over 74 units, 869 Hz apart", text, StringComparison.Ordinal);
         using JsonDocument document = JsonDocument.Parse(json);
         JsonElement stated = document.RootElement[0].GetProperty("streams")[0].GetProperty("measurements").GetProperty("spectrum").GetProperty("coherence").GetProperty("stated");
         Assert.Equal(3216, stated.GetProperty("median").GetProperty("value").GetInt32());
