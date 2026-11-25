@@ -114,21 +114,22 @@ internal static class CorruptFiles
     private static bool IsCostlyDecoder(string name) =>
         name.StartsWith("monkeys-audio/", StringComparison.Ordinal) || name.StartsWith("wavpack/", StringComparison.Ordinal) || name.StartsWith("truehd/", StringComparison.Ordinal) || name.StartsWith("tak/", StringComparison.Ordinal) || name.StartsWith("tta/", StringComparison.Ordinal);
 
-    // The lossy decoders (MPEG audio, Vorbis, Opus, Speex, AC-3 and E-AC-3, DTS) and the containers that carry them: a sparser selection still, every twelfth change, the
-    // prefixed files and one truncation in 128, since there are far more of these files than of the others (the fuzzer, which runs on every pull request, covers their decoders at random).
-    private static bool IsLossyDecoder(string name) =>
-        name.StartsWith("mpeg-audio/", StringComparison.Ordinal) || name.StartsWith("ogg/", StringComparison.Ordinal) || name.StartsWith("ac3/", StringComparison.Ordinal) || name.StartsWith("dts/", StringComparison.Ordinal)
-        || name.StartsWith("mp4/", StringComparison.Ordinal) || name.StartsWith("matroska/", StringComparison.Ordinal) || name.StartsWith("asf/", StringComparison.Ordinal);
+    // The decoders cheap enough to decode every variant: a frame costs a few microseconds (FLAC, ALAC, WAV, Wave64, AIFF) or about 100 (Musepack). Every other decoder, one added later
+    // included, takes the sparsest selection by default (every twelfth change, the prefixed files and one truncation in 128, since there are far more lossy files than others and
+    // the fuzzer, which runs on every pull request, covers their decoders at random), with the budget of the costly ones.
+    private static bool IsCheapDecoder(string name) =>
+        name.StartsWith("flac/", StringComparison.Ordinal) || name.StartsWith("musepack/", StringComparison.Ordinal) || name.StartsWith("alac/", StringComparison.Ordinal) || name.StartsWith("wav/", StringComparison.Ordinal)
+        || name.StartsWith("aiff/", StringComparison.Ordinal);
 
     internal static bool IsDecoded(string name) => !NotDecoded.Any(n => name.StartsWith(n.Prefix, StringComparison.Ordinal));
 
     private static bool IsDecoded(string name, VariantKind kind, int number) =>
-        IsDecoded(name) && (kind, IsCostlyDecoder(name), IsLossyDecoder(name)) switch
+        IsDecoded(name) && (kind, IsCheapDecoder(name), IsCostlyDecoder(name)) switch
         {
-            (VariantKind.Change, true, _) => number % 3 == 0,
-            (VariantKind.Change, _, true) => number % 12 == 0,
-            (VariantKind.Truncation, true, _) => number % 64 == 0,
-            (VariantKind.Truncation, _, true) => number % 128 == 0,
+            (VariantKind.Change, false, true) => number % 3 == 0,
+            (VariantKind.Change, false, false) => number % 12 == 0,
+            (VariantKind.Truncation, false, true) => number % 64 == 0,
+            (VariantKind.Truncation, false, false) => number % 128 == 0,
             _ => true,
         };
 
@@ -147,7 +148,7 @@ internal static class CorruptFiles
                 Task work = Task.Run(() =>
                 {
                     started.SetResult();
-                    AnalyzeAndCheck(variant, IsDecoded(name, kind, number), IsCostlyDecoder(name) || IsLossyDecoder(name) ? MonkeysAudioBudget : 1L << 30);
+                    AnalyzeAndCheck(variant, IsDecoded(name, kind, number), IsCheapDecoder(name) ? 1L << 30 : MonkeysAudioBudget);
                 });
                 await started.Task;
                 await work.WaitAsync(VariantLimit);
