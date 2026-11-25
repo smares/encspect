@@ -448,11 +448,16 @@ def main(argv=None):
                     if only:
                         notes.append(f"ffmpeg: positions only one side has: analyzer {outcome['notComparedOnlyInAnalyzer']}, reference {outcome['notComparedOnlyInReference']}")
             note = "; ".join(notes)
+            compared_with = {"minimp3"} if reference is not None else set()
+            if second is not None:
+                compared_with.add("ffmpeg")
             for reference, reason in EXPLAINED.get(path.name, {}).items():
                 listed = [p for p in problems if p.startswith(reference + ":")]
                 if listed:
                     problems = [p for p in problems if p not in listed]
                     note = (note + "; " if note else "") + f"{reference} listed: {reason}"
+                elif reference in compared_with:
+                    problems.append(f"{reference} is within the bound: remove its entry from EXPLAINED")
             if problems:
                 failed += 1
                 print(f"FAIL {path.name}: " + "; ".join(problems))
