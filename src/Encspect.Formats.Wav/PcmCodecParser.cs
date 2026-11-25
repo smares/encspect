@@ -161,6 +161,30 @@ public sealed class PcmCodecParser : ICodecParser
             {
                 int take = Math.Min(data.Length - position, capacity - held);
 
+                // The slice ends where the failing packets begin or end, so that only the sample frames of failing packets are withheld. A sample frame that spans a good and a
+                // failing packet goes with the failing side.
+                if (held > 0 && fails != packet.FailsChecksum)
+                {
+                    int partial = held % (int)frameBytes;
+                    if (fails && partial > 0)
+                    {
+                        take = Math.Min(take, (int)frameBytes - partial);
+                    }
+                    else
+                    {
+                        done = Hand(session, buffer, held, pieces, node, frameBytes, done, frames, fails);
+                        DropFront(buffer, pieces, held - partial);
+                        held = partial;
+                        fails = packet.FailsChecksum;
+                        if (done >= frames)
+                        {
+                            break;
+                        }
+
+                        take = Math.Min(data.Length - position, capacity - held);
+                    }
+                }
+
                 // A slice that spans packets lies in the runs of the file the packets came from, which need not follow one another.
                 foreach (ByteRange piece in packet.FileRanges(position, position + take))
                 {
@@ -175,7 +199,7 @@ public sealed class PcmCodecParser : ICodecParser
                 }
 
                 data.Slice(position, take).CopyTo(buffer.AsSpan(held));
-                fails |= packet.FailsChecksum && take > 0;
+                fails |= packet.FailsChecksum;
                 held += take;
                 position += take;
                 if (held == capacity)
@@ -191,6 +215,31 @@ public sealed class PcmCodecParser : ICodecParser
         if (held >= frameBytes && done < frames)
         {
             Hand(session, buffer, held, pieces, node, frameBytes, done, frames, fails);
+        }
+    }
+
+    private static void DropFront(byte[] buffer, List<ByteRange> pieces, int count)
+    {
+        if (count < 1)
+        {
+            return;
+        }
+
+        Buffer.BlockCopy(buffer, count, buffer, 0, buffer.Length - count);
+        long left = count;
+        while (left > 0 && pieces.Count > 0)
+        {
+            ByteRange first = pieces[0];
+            if (first.Length <= left)
+            {
+                left -= first.Length;
+                pieces.RemoveAt(0);
+            }
+            else
+            {
+                pieces[0] = first with { Offset = first.Offset + left, Length = first.Length - left };
+                left = 0;
+            }
         }
     }
 
