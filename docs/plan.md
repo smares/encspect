@@ -123,6 +123,7 @@ Each milestone is something a user can do that they could not do before. Its ite
 - **0.1.0** was released after Gate 2; Gate 3 and the work after it lead into 0.2 ([history.md](history.md)).
 - **0.2.0** follows Gate 0.2, passed on 2026-11-10 ([history.md](history.md#gates-in-detail)); its notes are [releases/0.2.0.md](releases/0.2.0.md).
 - **0.3.0** follows Gate 0.3, passed on 2026-11-16 ([history.md](history.md#gates-in-detail)); its notes are [releases/0.3.0.md](releases/0.3.0.md).
+- **0.4.0** follows Gate 0.4, passed on 2026-11-25 ([history.md](history.md#gates-in-detail)); its notes are [releases/0.4.0.md](releases/0.4.0.md).
 
 ### 0.2: Lossless complete
 
@@ -225,11 +226,11 @@ The common lossy formats are decoded, so their files get the spectrum, cutoff, l
 
 ### 0.4: Free decoders and routes complete
 
-Every coding whose specification or permissively licensed code was free when the milestone was planned is decoded (AAC, WMA, OptimFROG and the DTS extensions are not), and every codec reaches its parser in the containers that known writers fill.
+Every coding whose specification or permissively licensed code was free when the milestone was planned is decoded (AAC, WMA, OptimFROG and the DTS extensions are not), and every codec reaches its parser in most containers that known writers fill (PCM and MPEG Layer I and II in ASF are 0.5's).
 
 The order (the lead, 2026-11-17): the milestone's own items first, then cheap items users see, fixture work before the detection that needs it, large or uncertain items after them, and items that wait for an outside file last.
 
-**Status:** in progress: items 1 to 13, 15 to 19 and 21 to 23 are done; 14 is under [Not planned](#not-planned) since 2026-11-23. What remains: the follow-ups the items below name, then the milestone gate.
+**Status:** done: items 1 to 13, 15 to 19 and 21 to 23 are done; 14 is under [Not planned](#not-planned) since 2026-11-23. The gate passed on 2026-11-25 at 501a00790, with three independent reviews and their fixes (#405).
 
 **The gate** (the lead, 2026-11-23, after a shard move whose description, note and docs said what `shards.json` did not): besides the independent reviews of the code against the specifications, the milestone review runs two passes, each by an agent that wrote none of what it checks:
 
