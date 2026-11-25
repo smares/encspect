@@ -350,10 +350,10 @@ Mono, stereo, or the two discrete programs of dual channel. Where the file carri
   | Helix MP3 Encoder | none | |
   | Xing | Shine 3.1.1 (`external-shine-mpeg2`, `external-shine-silence`; named Shine, since that rule comes first) | `shineenc -q -b 64` at 22.05 kHz (MPEG-2); `-q -b 128` on silence |
   | BladeEnc | 8hz-MP3 0.2b-04J (`external-8hz-flags`); Plugger+ 0.4 (`external-plugger-original`) | `-b 192 -c -o -crc`; `-b 128 -y -o` |
-  | Fraunhofer | iTunes 12.13.12.3's MP3 encoder (`external-itunes-mp3-cbr128-joint`, `external-itunes-mp3-vbr-highest`); Nero Burning ROM 2026's MP3 plug-in (`external-nero-rom-mp3-cbr128`, `external-nero-rom-mp3-vbr-highest`) | 128 kbit/s CBR and VBR, highest quality |
+  | Fraunhofer | none (iTunes' and Nero's encoders count as Fraunhofer's) | |
   | TwoLAME or Xing | none (both encoders the rule names) | |
 
-  - The Fraunhofer line leaves out Fraunhofer's own codecs (mp3sEncoder, acmenc over l3codeca and l3codecp) and Windows 10's wrapper over l3codeca, whose files the rule is written for.
+  - The Fraunhofer line counts Fraunhofer's own codecs (mp3sEncoder, acmenc over l3codeca and l3codecp), its licensees' encoders (iTunes 12.13.12.3, Nero Burning ROM 2026's MP3 plug-in) and Windows 10's wrapper over l3codeca as the rule's own files, which the rule is written for.
   - Hand-built fixtures without an encoder in their manifest (`layer3/shine-traits`, `vbr/lame-tag-lavf-remux`) are not counted.
   - The line is a constant per rule and lists encoders and settings, not files: a reader sees that the low-confidence name is not exclusive.
 - **Fraunhofer's encoders** use scalefactor scaling and short blocks but never scfsi (MPEG-1 only, since MPEG-2 has no scfsi).

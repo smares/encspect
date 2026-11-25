@@ -19,7 +19,7 @@ public class TraitLookalikeTests
         ["Helix MP3 Encoder"] = ["hmp3", "tomp3"],
         ["Xing"] = ["tompg"],
         ["BladeEnc"] = ["bladeenc"],
-        ["Fraunhofer"] = ["mp3sEncoder", "acmenc", "MP3 Encoder ACM Wrapper"],
+        ["Fraunhofer"] = ["mp3sEncoder", "acmenc", "MP3 Encoder ACM Wrapper", "iTunes MP3 encoder", "Nero Burning ROM"],
         ["TwoLAME or Xing"] = ["twolame", "tompg"],
     };
 
@@ -34,10 +34,6 @@ public class TraitLookalikeTests
     [
         "BladeEnc: external-8hz-flags.mp3",
         "BladeEnc: external-plugger-original.mp3",
-        "Fraunhofer: sample-kit/external-itunes-mp3-cbr128-joint.mp3",
-        "Fraunhofer: sample-kit/external-itunes-mp3-vbr-highest.mp3",
-        "Fraunhofer: sample-kit/external-nero-rom-mp3-cbr128.mp3",
-        "Fraunhofer: sample-kit/external-nero-rom-mp3-vbr-highest.mp3",
         "Xing: external-shine-mpeg2.mp3",
         "Xing: external-shine-silence.mp3",
     ];
