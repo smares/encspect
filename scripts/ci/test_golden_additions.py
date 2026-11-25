@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Tests of golden_additions.py: python3 scripts/ci/test_golden_additions.py"""
 
+import contextlib
+import io
 import json
 import pathlib
 import subprocess
@@ -541,10 +543,16 @@ class RepositoryTests(unittest.TestCase):
         self.write("tests/fixtures/mpeg-audio/d.decode.json", changed)
         self.commit()
         self.assertEqual(golden_additions.run(self.dir, "main", "HEAD", files), 1)
-        self.write("tests/fixtures/mpeg-audio/d.decode.json", golden(100))
-        self.write(files[0], {"goldens": ["tests/fixtures/mpeg-audio/a.report.json"], "added": []})
+        # A changed decode golden that the change file does not cover fails, and the output names it.
+        self.write("tests/fixtures/mpeg-audio/d.decode.json", golden(101, "Stopped", "isCorrected"))
+        self.write("tests/fixtures/mpeg-audio/a.report.json", [report([node("Frames", value=99), *OLD_STATS[1:]])])
+        self.write(files[0], {"goldens": ["tests/fixtures/mpeg-audio/a.report.json"], "changed": [{"path": ["MPEG Audio", "Statistics", "Frames"], "fields": ["value"]}]})
         self.commit()
-        self.assertEqual(golden_additions.run(self.dir, "main", "HEAD", files), 1)
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            status = golden_additions.run(self.dir, "main", "HEAD", files)
+        self.assertEqual(status, 1)
+        self.assertIn("d.decode.json: changed, and no change file covers it", output.getvalue())
 
     def test_a_key_renamed_in_the_streams_of_a_report_golden_is_put_back(self):
         old = report(OLD_STATS, streams=[{"nodes": [[1]], "verification": {"withCorrection": True}}])
