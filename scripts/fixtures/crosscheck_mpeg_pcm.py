@@ -66,7 +66,7 @@ EXPLAINED = {
     "mc-second-stereo-crosstalk.mp2": {"mctoolamed": "tc_allocation 3, which 13818-3 2.5.2.15 leaves unassigned in 3/0 + 2/0, is in the fixture"},
     "mc-center-reserved-second-stereo.mp2": {"mctoolamed": "the reserved center value 2 (13818-3 2.5.2.13: not defined), which the analyzer reads as no center"},
     "intensity-mpeg2-largest-position.mp3": {
-        "ffmpeg": "FFmpeg 6.1.1 differs from the analyzer by 0.0196 of full scale (minimp3 and the analyzer agree; the entry was first seen with FFmpeg 9.1 and mpg123 1.33.7 on another machine, not run in CI, and was not rechecked with CI's FFmpeg 8.0.1): "
+        "ffmpeg": "FFmpeg 6.1.1 differs from the analyzer by 0.0196 of full scale (minimp3 and the analyzer agree): "
                   "it decodes the largest value a position's slen can code (1 of slen 1, 3 of slen 2, 7 of slen 3, in this MPEG-2 fixture) as an ordinary intensity position, where ISO/IEC 13818-3 2.4.3.2 (bullet 2) makes it "
                   "the illegal position, whose band is decoded with the mid/side equations; the right channel of the fixture is all zero, so every band is intensity coded. mpg123 1.32.5 (not a reference of this script) "
                   "does the same for slen 1 and 2 and follows the analyzer for slen 3. The analyzer and minimp3 follow the standard",
@@ -456,7 +456,8 @@ def main(argv=None):
                 if listed:
                     problems = [p for p in problems if p not in listed]
                     note = (note + "; " if note else "") + f"{reference} listed: {reason}"
-                elif reference in compared_with:
+                elif reference in compared_with and not any(reference.lower() in p.lower() for p in problems):
+                    # A failure of this reference that is not listed by its prefix (outside the bound beyond FFMPEG_RANGES, another channel count) already fails the run.
                     problems.append(f"{reference} is within the bound: remove its entry from EXPLAINED")
             if problems:
                 failed += 1
