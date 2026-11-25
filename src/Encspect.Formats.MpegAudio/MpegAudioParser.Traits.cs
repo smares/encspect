@@ -110,7 +110,7 @@ public sealed partial class MpegAudioParser
     {
         if (TraitLookalikes.TryGetValue(rule, out string? text))
         {
-            encoder.Add("Evidence", offset, length, text, Explain.Evidence);
+            encoder.Add("Evidence", offset, length, text, Explain.Lookalikes);
         }
     }
 

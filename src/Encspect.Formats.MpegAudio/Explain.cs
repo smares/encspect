@@ -315,6 +315,8 @@ internal static class Explain
     public const string Encoder = "Which program encoded these frames, as the analyzer concludes from the evidence below.";
     public const string Confidence = "How sure the naming is: high when the encoder wrote its name into a header whose checks hold, medium for weaker but specific evidence, low when only habits or text other software may have written point to it.";
     public const string Evidence = "What points to the encoder, at the bytes it was found in.";
+
+    public const string Lookalikes = "Other encoders whose files in Encspect's test set match the same habits, so the name given is not exclusive to this encoder.";
     public const string Enhancement = "An extension carried in the ancillary data of every frame, found by its signature.";
     public const string EnhancementBytes = "The ancillary bytes that carry the extension.";
     public const string EnhancementRate = "The data rate of those bytes.";
