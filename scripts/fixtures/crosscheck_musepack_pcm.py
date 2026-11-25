@@ -13,8 +13,9 @@ For each file:
 - libmpcdec decodes the same file through musepack_pcm.c (musepack_tool.py builds libmpcdec of musepack_src r495 from its pinned archive for stream versions 7 and 8, and libmpcdec 1.2.6 for
   versions 4 to 6, with floating-point arithmetic and no fused multiply-add) and writes floats; its first sample is at 481 plus the beginning silence at the coded stage, which the
   program prints.
-- compare_pcm.py compares by position within the bounds of the design (per channel the RMS of the difference at most 2^-15 / sqrt(12) of full scale, its largest magnitude at
-  most 2^-14); the decoder follows libmpcdec operation by operation, so the figures are 0 on every file libmpcdec decodes.
+- compare_pcm.py compares by position, and the libmpcdec column is held to equality (per channel the RMS of the difference and its largest magnitude both 0): the decoder
+  follows libmpcdec operation by operation, so the figures are 0 on every file libmpcdec decodes, which is the claim of docs/formats/musepack.md, "Accuracy". The FFmpeg column
+  has the bound of a 16-bit reference (below).
 - Positions only the analyzer has are the 481 samples of the synthesis filter's delay and the beginning silence and, after the end, the frames that carry no sample libmpcdec outputs
   (they are trimmed); positions only libmpcdec has are listed and must be pinned in EXPECTED.
 - FFmpeg's mpc and mpc8 decoders (a black box here, no source read) are a second reference for the stream versions 7 and 8: when they output as many samples as libmpcdec does, they are
@@ -150,7 +151,8 @@ def main(argv=None):
                 if streams[0]["channels"] != channels:
                     problems.append(f"the analyzer decoded {streams[0]['channels']} channels, libmpcdec {channels}")
                 else:
-                    outcome, bad = compare(manifest, raw, channels, first, "libmpcdec")
+                    # The decoder follows libmpcdec operation by operation (docs/formats/musepack.md, "Accuracy"), so its floats are held to libmpcdec's exactly, not to the design's bound.
+                    outcome, bad = compare(manifest, raw, channels, first, "libmpcdec", ["--max-abs", "0", "--rms", "0"])
                     problems += bad
                     if outcome is not None:
                         compared += 1
