@@ -33,8 +33,15 @@ public sealed class AreasTagsTests
                 continue;
             }
 
+            // Most goldens hold no tag: only one with a Tag node is parsed.
+            string text = File.ReadAllText(path);
+            if (!text.Contains("\"kind\": \"Tag\"", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
             string area = listed[0].GetString()!;
-            using JsonDocument golden = JsonDocument.Parse(File.ReadAllText(path), new JsonDocumentOptions { MaxDepth = 1024 });
+            using JsonDocument golden = JsonDocument.Parse(text, new JsonDocumentOptions { MaxDepth = 1024 });
             foreach (string tag in TagsIn(golden.RootElement).Distinct())
             {
                 if (!tags.GetProperty(tag).EnumerateArray().Any(a => a.GetString() == area))
