@@ -196,9 +196,10 @@ def damaged_files(records):
 
 
 def report_damaged(args, records, base):
-    """Prints, for every other committed fixture, how the SDK's damage positions and the analyzer's withheld ones compare; returns (agreed, the names that differ and are not in EXPLAINED)."""
+    """Prints, for every other committed fixture, how the SDK's damage positions and the analyzer's withheld ones compare; returns (agreed, the names that differ and are not in EXPLAINED, the names in EXPLAINED that agree)."""
     agreed = 0
     unexplained = []
+    needless = []
     for index, path in enumerate(damaged_files(records)):
         record = records["files"][path.name]
         manifest = manifest_of(path)
@@ -225,11 +226,13 @@ def report_damaged(args, records, base):
         print(f"{'same' if agree else 'differ'} {path.name}: {text}")
         if agree:
             agreed += 1
+            if path.name in EXPLAINED:
+                needless.append(path.name)
         elif path.name in EXPLAINED:
             print(f"     explained: {EXPLAINED[path.name]}")
         else:
             unexplained.append(path.name)
-    return agreed, unexplained
+    return agreed, unexplained, needless
 
 
 def main(argv=None):
@@ -291,10 +294,13 @@ def main(argv=None):
                 column = "Takc -d (records) and ffmpeg" if records is not None else "Takc -d (the provenance's decode check) and ffmpeg"
                 print(f"ok   {path.name}: {entry['samples']} samples per channel equal {column}")
         if not args.no_damaged and records is not None:
-            agreed, unexplained = report_damaged(args, records, base)
+            agreed, unexplained, needless = report_damaged(args, records, base)
             print(f"damaged fixtures against the SDK's audio read: {agreed} agree, {len(unexplained)} differ and are not explained")
             if unexplained:
                 print("FAIL: " + ", ".join(unexplained) + " differ from the SDK's read and are not in EXPLAINED")
+                failed += 1
+            if needless:
+                print("FAIL: " + ", ".join(needless) + " agree with the SDK's read, so their EXPLAINED entries are not needed: remove them")
                 failed += 1
     if compared == 0:
         print("FAIL: no stream was compared")

@@ -133,6 +133,8 @@ def main(argv=None):
             raw = base / f"{path.stem}.libmpcdec.f32"
             found = reference(binaries[version], path, raw)
             problems, notes = [], []
+            if found is not None and name in NOT_COMPARED:
+                problems.append("libmpcdec decodes samples of the file, so its NOT_COMPARED entry is not needed: remove it")
             if found is None:
                 if streams and streams[0]["samples"]:
                     if name in NOT_COMPARED:

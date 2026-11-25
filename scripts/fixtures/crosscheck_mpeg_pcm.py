@@ -148,9 +148,28 @@ def mixed_variant(source, directory, binary):
     return target
 
 
+# The files of several decoded streams (a change of stream in the file): the comparison takes the positions of one stream, so they are not compared. A file that has several streams
+# and is not listed, or a listed one that has one, fails the run.
+MULTIPLE_STREAMS = (
+    "cut-frame-stream-change.mp3", "free-format-to-fixed.mp3", "layer-change.mp3", "ancillary-streams-apart.mp3", "mp3pro-then-mpeg1.mp3", "ofl-in-each-stream.mp3", "reservoir-free-to-fixed.mp3",
+    "reservoir-stream-change.mp3", "sample-rate-change.mp3", "sample-rate-change-statistics.mp3", "stream-change-after-gap.mp3", "streams-limited.mp3", "lame-after-joined-frames.mp3",
+    "lame-before-joined-frames.mp3",
+)
+
+# The fixtures the default run leaves out, each with the reason; a name that is no fixture, or a fixture that is left out unlisted, fails the run.
+NOT_COMPARED = {
+    "ape-encoder-lavc.mp3": "a tag fixture of eight frames, written for the encoder claims of the tag parsers: its audio is no decoder test",
+    "id3v22-tss-names-encoder.mp3": "a tag fixture of eight frames, written for the encoder claims of the tag parsers: its audio is no decoder test",
+    "id3v24-tsse-ffmpeg.mp3": "a tag fixture of eight frames, written for the encoder claims of the tag parsers: its audio is no decoder test",
+}
+
+
 def default_files():
-    skip = ("external-mp3pro", "ape-", "id3")
-    return [p for p in sorted(FIXTURES.glob("mpeg-audio/**/*.mp3")) + sorted(FIXTURES.glob("mpeg-audio/**/*.mp2")) + sorted(FIXTURES.glob("mpeg-audio/**/*.mp1")) if not p.name.startswith(skip)]
+    every = sorted(FIXTURES.glob("mpeg-audio/**/*.mp3")) + sorted(FIXTURES.glob("mpeg-audio/**/*.mp2")) + sorted(FIXTURES.glob("mpeg-audio/**/*.mp1"))
+    unknown = sorted(set(NOT_COMPARED) - {p.name for p in every})
+    if unknown:
+        raise SystemExit(f"NOT_COMPARED names no fixture: {', '.join(unknown)}")
+    return [p for p in every if p.name not in NOT_COMPARED]
 
 
 def is_header_frame(data, offset, length):
@@ -363,6 +382,7 @@ def main(argv=None):
         return 2
     binary = minimp3_tool.build_pcm()
     failed = compared = multichannel = 0
+    seen_multiple = set()
     decoder = None
     mixed_directory = pathlib.Path(tempfile.mkdtemp(prefix="mixed-"))
     if not args.files:
@@ -380,12 +400,18 @@ def main(argv=None):
             manifest = dump / f"0000-{path.name}.pcm.json"
             streams = json.loads(manifest.read_text())["streams"] if manifest.exists() else []
             if len(streams) != 1:
-                print(f"skip {path.name}: {len(streams)} decoded streams (one is compared)")
+                seen_multiple.add(path.name)
+                if path.name in MULTIPLE_STREAMS:
+                    print(f"skip {path.name}: {len(streams)} decoded streams (one is compared)")
+                else:
+                    print(f"FAIL {path.name}: {len(streams)} decoded streams, and the file is not in MULTIPLE_STREAMS")
+                    failed += 1
                 continue
             work = base / f"work{number}"
             work.mkdir(exist_ok=True)
             problems = []
             notes = []
+            agreeing = set()
             if streams[0]["channels"] > 2:
                 # The multichannel extension: minimp3 and FFmpeg decode the base stereo only, so mctoolamed is the reference.
                 decoder = decoder or mctoolamed_tool.build()
@@ -397,6 +423,8 @@ def main(argv=None):
                     if listed:
                         problems = [p for p in problems if p not in listed]
                         note += f"; {name} listed: {reason}"
+                    elif name == "mctoolamed" and reference is not None:
+                        problems.append(f"{name} agrees with the analyzer, so its EXPLAINED entry for {path.name} is not needed: remove it")
                 multichannel += 1
                 failed += 1 if problems else 0
                 print(f"FAIL {path.name}: " + "; ".join(problems) if problems else f"ok   {path.name} ({note})")
@@ -414,6 +442,8 @@ def main(argv=None):
                     problems += found
                     if outcome is not None:
                         compared += 1
+                        if not found:
+                            agreeing.add("minimp3")
                         only = outcome["notComparedOnlyInAnalyzer"] + outcome["notComparedOnlyInReference"]
                         if only:
                             notes.append(f"minimp3: positions only one side has: analyzer {outcome['notComparedOnlyInAnalyzer']}, reference {outcome['notComparedOnlyInReference']}")
@@ -426,6 +456,8 @@ def main(argv=None):
                 notes.append("ffmpeg decodes nothing")
             else:
                 outcome, found = compare(manifest, second, streams[0]["channels"], "ffmpeg")
+                if outcome is not None and not found:
+                    agreeing.add("ffmpeg")
                 for number_, stale in enumerate(FFMPEG_RANGES.get(path.name, [])):
                     # A range is needed only if the bound fails with every other range left out and this one not.
                     others = [r for k, r in enumerate(FFMPEG_RANGES[path.name]) if k != number_]
@@ -447,11 +479,17 @@ def main(argv=None):
                 if listed:
                     problems = [p for p in problems if p not in listed]
                     note = (note + "; " if note else "") + f"{reference} listed: {reason}"
+                elif reference in agreeing:
+                    problems.append(f"{reference} agrees with the analyzer, so its EXPLAINED entry for {path.name} is not needed: remove it")
             if problems:
                 failed += 1
                 print(f"FAIL {path.name}: " + "; ".join(problems))
             else:
                 print(f"ok   {path.name}" + (f" ({note})" if note else ""))
+    if not args.files:
+        for name in sorted(set(MULTIPLE_STREAMS) - seen_multiple):
+            print(f"FAIL {name}: listed in MULTIPLE_STREAMS and has one decoded stream: remove it")
+            failed += 1
     print(f"{compared} files compared with minimp3, {multichannel} with mctoolamed, {failed} failed")
     return 1 if failed else 0
 

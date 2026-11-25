@@ -256,6 +256,7 @@ def check(args, lib, path, work):
     long_data, long_frames = repeated(original, frames, copies) if path.name.startswith("external-") else (b"", [])
     long_path = work / (path.stem + ".repeated.ac3")
     long_path.write_bytes(long_data)
+    ffmpeg_differs = ffmpeg_compared = False
     variants = [("strict", stripped, frames)]
     if path.name.startswith("external-"):
         # The hand-built files hold no mantissa bits (their SNR offsets are 0): they are silent, and a band of silence cannot be compared.
@@ -278,11 +279,15 @@ def check(args, lib, path, work):
             lines.append(f"  ffmpeg {variant}: no output")
             continue
         found, result = compare(dump, ffmpeg, channels, f"ffmpeg-{variant}", extra)
+        ffmpeg_compared = True
+        ffmpeg_differs = ffmpeg_differs or bool(found)
         if path.name in FFMPEG_DIFFERS:
             lines.append(f"  ffmpeg {variant}: {'agrees' if not found else 'differs, as pinned: ' + FFMPEG_DIFFERS[path.name]}{band_summary(result)}")
         else:
             problems += found
             lines.append(f"  ffmpeg {variant}: {'ok' if not found else 'OUTSIDE THE BOUND'}{band_summary(result)}")
+    if path.name in FFMPEG_DIFFERS and ffmpeg_compared and not ffmpeg_differs:
+        problems.append(f"ffmpeg agrees with the analyzer on {path.name}, so its FFMPEG_DIFFERS entry is not needed: remove it")
     return problems, lines
 
 
