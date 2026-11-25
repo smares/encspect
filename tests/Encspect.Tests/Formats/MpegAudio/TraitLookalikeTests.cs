@@ -76,13 +76,29 @@ public class TraitLookalikeTests
     }
 
     [Fact]
-    public void DocsListTheLookalikes()
+    public void TheLinesNameTheListedEncodersAndSettings()
+    {
+        Assert.Equal(
+            "Encspect's test files of Shine 3.1.1 (MPEG-2 at 22.05 kHz, and silence as input) match these habits too",
+            MpegAudioParser.TraitLookalikes["Xing"]);
+        Assert.Equal(
+            "Encspect's test files of 8hz-MP3 0.2b-04J with -c -o and Plugger+ 0.4 with -y -o match these habits too",
+            MpegAudioParser.TraitLookalikes["BladeEnc"]);
+    }
+
+    [Fact]
+    public void DocsListTheLookalikesInTheirRows()
     {
         string docs = File.ReadAllText(Path.Combine(Fixtures.FixtureDirectory, "..", "..", "docs", "formats", "mpeg-audio.md"));
+        string[] rows = [.. docs.Split('\n').Select(l => l.Trim()).Where(l => l.StartsWith("| ", StringComparison.Ordinal))];
         foreach (string entry in Listed)
         {
-            string fixture = entry[(entry.IndexOf(": ", StringComparison.Ordinal) + 2)..];
-            Assert.Contains($"`{Path.GetFileNameWithoutExtension(fixture)}`", docs, StringComparison.Ordinal);
+            int colon = entry.IndexOf(": ", StringComparison.Ordinal);
+            string rule = entry[..colon];
+            string fixture = Path.GetFileNameWithoutExtension(entry[(colon + 2)..]);
+            string? row = rows.FirstOrDefault(r => r.StartsWith($"| {rule} |", StringComparison.Ordinal));
+            Assert.NotNull(row);
+            Assert.Contains($"`{fixture}`", row, StringComparison.Ordinal);
         }
     }
 
