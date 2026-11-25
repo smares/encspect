@@ -111,28 +111,19 @@ public class ReadmeScreenshotTests
         window.Close();
     }
 
-    // Sixty seconds of the block switching of a joint stereo file with its LAME tag, which is the same two seconds thirty times.
+    // The bitrate of a whole recording, Mozart's Magic Flute overture (the music folder's fixture), at one square per frame. Its block types hardly change (99.8% long blocks), its bitrate follows the music.
     private static void FrameMap(string variant)
     {
-        using var folder = new TempFolder();
-        byte[] one = File.ReadAllBytes(Fixtures.Mpeg("external-lame3101-vbr.mp3"));
-        using (FileStream output = File.Create(folder["minute.mp3"]))
-        {
-            for (int copy = 0; copy < 30; copy++)
-            {
-                output.Write(one);
-            }
-        }
-
-        DetailWindow window = Open(folder["minute.mp3"], decode: false, 760);
-        AudioPanelTests.Choose(window, "Block Usage", GraphForm.Map);
+        DetailWindow window = Open(MagicFlute, decode: false, 760);
+        AudioPanelTests.Choose(window, "Bitrate", GraphForm.Map);
         var map = (FrameMapGraph)window.Graph.Graph!;
-        Assert.True(map.Count > 2000);
-        int shortFrame = Enumerable.Range(map.Count / 2, map.Count / 2).First(s => Enumerable.Range(0, 4).Any(v => map.CategorySeries![map.UnitOf(s), v] == 2));
-        FitTree(window, () => window.Model.SelectFrameAt(map.OffsetOf(shortFrame)));
+        Assert.True(map.Count > 10000);
+        FitTree(window, () => window.Model.SelectFrameAt(map.OffsetOf(map.Count * 3 / 5)));
         Save(window, $"readme-frame-map-{variant}.png");
         window.Close();
     }
+
+    private static string MagicFlute => Fixtures.Mpeg("music/external-lame-magic-flute-v4.mp3");
 
     // The tree pane is half the window's body; a height that holds a whole number of rows keeps a row from being cut at the pane's edge.
     private static void FitTree(DetailWindow window, Action select)
@@ -161,10 +152,7 @@ public class ReadmeScreenshotTests
 
     private static void Audio(string variant)
     {
-        using var folder = new TempFolder();
-        // A stream of more than 47 seconds has merged columns, so its spectrogram has no strip of columns without data at the end.
-        File.WriteAllBytes(folder["music.wav"], MusicWav.Build(Environment.GetEnvironmentVariable("ENCSPECT_SCREENSHOTS") is { Length: > 0 } ? 50 : 6));
-        DetailWindow window = Open(folder["music.wav"], decode: true, 760);
+        DetailWindow window = Open(MagicFlute, decode: true, 760);
         var spectrogram = (SpectrogramGraph)window.Graph.Graph!;
         Assert.NotNull(spectrogram.Cutoff);
         Save(window, $"readme-spectrogram-{variant}.png");
