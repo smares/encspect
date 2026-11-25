@@ -152,7 +152,16 @@ public class ReadmeScreenshotTests
 
     private static void Audio(string variant)
     {
-        DetailWindow window = Open(MagicFlute, decode: true, 760);
+        // Decoding the whole recording takes seconds a test run should not pay; the images are rendered with ENCSPECT_SCREENSHOTS set.
+        using var folder = new TempFolder();
+        string path = MagicFlute;
+        if (Environment.GetEnvironmentVariable("ENCSPECT_SCREENSHOTS") is not { Length: > 0 })
+        {
+            path = folder["music.mp3"];
+            File.WriteAllBytes(path, File.ReadAllBytes(MagicFlute).AsSpan(0, 100_000).ToArray());
+        }
+
+        DetailWindow window = Open(path, decode: true, 760);
         var spectrogram = (SpectrogramGraph)window.Graph.Graph!;
         Assert.NotNull(spectrogram.Cutoff);
         Save(window, $"readme-spectrogram-{variant}.png");
