@@ -75,7 +75,7 @@ internal static class CorruptFiles
         }
     }
 
-    // The media files of tests/fixtures that no damaged-input class mutates, by folder, with the reason; CorruptFilesTests holds every other media file to All().
+    // The media files of tests/fixtures that no damaged-input class mutates, by folder, with the reason; DamagedInputCoverageTests holds every other media file to All().
     public static readonly (string Prefix, string Reason)[] NotMutated =
     [
         ("fuzz/", "regression inputs of FuzzRegressionTests, each a file the fuzzer broke a parser with"),

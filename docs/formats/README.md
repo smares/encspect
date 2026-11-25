@@ -100,7 +100,7 @@ How far into each coding Encspect sees today, on the depth levels of the [plan](
 | Dolby TrueHD, MLP | walked by the parser | verified and measured | Stereo Coding, Highest Predictor Order |
 | PCM, float, A-law, mu-law (WAV, Wave64, AIFF) | none to walk | measured | none |
 
-- **Graphs of coding choices** are built for every format with a decoder or a walk of its coded data; the ones still queued are in [coding-graphs.md](../design/coding-graphs.md#the-survey)).
+- **Graphs of coding choices** are built for every format with a decoder or a walk of its coded data; the ones still queued are in [coding-graphs.md](../design/coding-graphs.md#the-survey).
 
 ## Common to every format
 
