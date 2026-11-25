@@ -111,14 +111,14 @@ public class ReadmeScreenshotTests
         window.Close();
     }
 
-    // Sixty seconds of the block switching of a joint stereo file, which is the same six seconds ten times.
+    // Sixty seconds of the block switching of a joint stereo file with its LAME tag, which is the same two seconds thirty times.
     private static void FrameMap(string variant)
     {
         using var folder = new TempFolder();
-        byte[] one = File.ReadAllBytes(Fixtures.Mpeg("external-lame-joint-music.mp3"));
+        byte[] one = File.ReadAllBytes(Fixtures.Mpeg("external-lame3101-vbr.mp3"));
         using (FileStream output = File.Create(folder["minute.mp3"]))
         {
-            for (int copy = 0; copy < 10; copy++)
+            for (int copy = 0; copy < 30; copy++)
             {
                 output.Write(one);
             }
