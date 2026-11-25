@@ -159,7 +159,7 @@ MULTIPLE_STREAMS = (
 # The files that decode no stream (no chain of frames, so nothing is decoded and there is nothing to compare). A listed file that decodes one, and an unlisted file that decodes none, fails the run.
 NO_STREAM = (
     "no-frames.mp3", "free-format-period-4.mp3", "free-format-weak-chain.mp3", "protected-weak-chain.mp3", "lone-frame-overflow.mp1", "lone-frames-forbidden-allocation.mp1",
-    "lone-frame-invalid-side-info.mp3",
+    "lone-frame-invalid-side-info.mp3", "scalefactor-overflow.mp2", "mpeg1-layer1-allocation-overflow.mp1", "mpeg1-layer1-overflow.mp1",
 )
 
 # The fixtures the default run leaves out, each with the reason; a name that is no fixture, or a fixture that is left out unlisted, fails the run.
