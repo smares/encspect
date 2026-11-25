@@ -173,7 +173,7 @@ public sealed class PcmCodecParser : ICodecParser
                     else
                     {
                         done = Hand(session, buffer, held, pieces, node, frameBytes, done, frames, fails);
-                        DropFront(buffer, pieces, held - partial);
+                        DropFront(buffer, pieces, held - partial, held);
                         held = partial;
                         fails = packet.FailsChecksum;
                         if (done >= frames)
@@ -218,14 +218,14 @@ public sealed class PcmCodecParser : ICodecParser
         }
     }
 
-    private static void DropFront(byte[] buffer, List<ByteRange> pieces, int count)
+    private static void DropFront(byte[] buffer, List<ByteRange> pieces, int count, int held)
     {
         if (count < 1)
         {
             return;
         }
 
-        Buffer.BlockCopy(buffer, count, buffer, 0, buffer.Length - count);
+        Buffer.BlockCopy(buffer, count, buffer, 0, held - count);
         long left = count;
         while (left > 0 && pieces.Count > 0)
         {
