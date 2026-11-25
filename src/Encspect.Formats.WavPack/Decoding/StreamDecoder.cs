@@ -292,12 +292,12 @@ internal sealed class StreamDecoder : IFrameDecoder, ICorrectionDecoder
             throw;
         }
 
-        _isSetDamaged |= frame.FailsChecksum || !isCrcValid || (hasExtra && !isExtraValid);
+        // A hybrid block of a pair that has no correction block is decoded as the lossy part and its lossy CRC holds, but libwavpack counts it as an error
+        // (read_wvc_block), and the stream is not the lossless audio the pair stands for: the block counts as failed and its set is withheld.
+        bool isMissing = !isCorrected && header.IsHybrid && _context.Setup.HasCorrection;
+        _isSetDamaged |= frame.FailsChecksum || !isCrcValid || (hasExtra && !isExtraValid) || isMissing;
         _crcChecked++;
 
-        // A hybrid block of a pair that has no correction block is decoded as the lossy part and its lossy CRC holds, but libwavpack counts it as an error
-        // (read_wvc_block), and the stream is not the lossless audio the pair stands for.
-        bool isMissing = !isCorrected && header.IsHybrid && _context.Setup.HasCorrection;
         if (isMissing && isCrcValid)
         {
             _crcFailed++;
