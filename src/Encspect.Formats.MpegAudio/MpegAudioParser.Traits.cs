@@ -20,8 +20,8 @@ public sealed partial class MpegAudioParser
     // the rule too, kept in step with docs/formats/mpeg-audio.md by TraitLookalikeTests.
     internal static readonly IReadOnlyDictionary<string, string> TraitLookalikes = new Dictionary<string, string>(StringComparer.Ordinal)
     {
-        ["Xing"] = "Encspect's test files of Shine 3.1.1 (its MPEG-2 file at 22.05 kHz and its silent file) match this rule too",
-        ["BladeEnc"] = "Encspect's test files of 8hz-MP3 0.2b-04J with -c -o and Plugger+ 0.4 with -y -o match this rule too",
+        ["Xing"] = "Encspect's test files of Shine 3.1.1 (its MPEG-2 file at 22.05 kHz and its silent file) match these habits too",
+        ["BladeEnc"] = "Encspect's test files of 8hz-MP3 0.2b-04J with -c -o and Plugger+ 0.4 with -y -o match these habits too",
     };
 
     private sealed record TraitRule(string Name, string Evidence);
