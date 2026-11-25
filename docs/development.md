@@ -703,6 +703,7 @@ Every format has three kinds of fixture:
 - **Encoder-written fixtures**, written by real encoders. A manifest that lists the encoder a stream must be named by lists its writer too (`writer`; the MPEG manifests' `detected_writer`, present only where a writer is named, which `make_external_mpeg_fixtures.py --writers-only` recomputes in CI), since the two are resolved apart. `--manifests-only` recomputes their manifests from the committed files without the encoders.
 - **A cross-check script**, which confirms the manifests with other tools in its own CI job.
 
+- **Finding coverage:** `FindingCoverageTests.EveryCodeOfEveryProjectIsAsserted` holds every code of every `src/Encspect.Formats.*` and `src/Encspect.Tags.*` project, and the `decode.*` codes of the host, to a test that names it, or a manifest, decode golden or report golden that lists it; a project without a row in the test's `Prefixes` fails it. The codes no input raises yet are in its `NotYetCovered`, each with the reason, and an entry that is asserted now fails the test (the list only gets shorter). The per-project tests above it remain, and are stricter (a code counts there only where a table of crafted inputs or a manifest raises it).
 - **Shared misreadings:** where a model written for this project and the one reference tool agree (faad2's trace for AAC, mctoolamed for MPEG-2 multichannel), a misreading both share would pass. Second opinions and real files narrow it; the details are in each format's page and in the sections below.
 
 | Format | Fixtures | Scripts | Checked against |
