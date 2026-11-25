@@ -1195,7 +1195,7 @@ def detected_writer(tag, path):
 
 def add_writers():
     """Adds "detected_writer" to the manifests of the committed files whose writer is named, from the files and the tags the manifests hold, with no encoder."""
-    for path in sorted(OUT.glob("*.expected.json")):
+    for path in sorted([*OUT.glob("*.expected.json"), *(OUT / "music").glob("*.expected.json")]):
         manifest = json.loads(path.read_text(encoding="utf-8"))
         data = path.with_name(path.name[: -len(".expected.json")] + ".mp3")
         if "vbr_header" not in manifest or "encoder" not in manifest or not data.exists():
