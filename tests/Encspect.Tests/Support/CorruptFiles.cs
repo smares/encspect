@@ -33,7 +33,10 @@ internal static class CorruptFiles
 
         foreach (string name in Fixtures.MpegFixtures())
         {
-            yield return name;
+            if (!IsNotMutated(name))
+            {
+                yield return name;
+            }
         }
 
         foreach (string name in Fixtures.Mp4FixtureNames())
