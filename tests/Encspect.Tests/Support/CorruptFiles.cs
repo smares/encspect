@@ -103,16 +103,16 @@ internal static class CorruptFiles
         ("optimfrog/", "OptimFROG has no decoder"),
     ];
 
-    // FLAC, Musepack (a frame costs about 100 microseconds), ALAC, TTA, WAV, Wave64 and AIFF decode every variant (a frame costs a few microseconds). A Monkey's Audio frame costs a
+    // FLAC, Musepack (a frame costs about 100 microseconds), ALAC, WAV, Wave64 and AIFF decode every variant (a frame costs a few microseconds). A Monkey's Audio frame costs a
     // thousand times what a FLAC frame does, so only some variants are decoded: every third of the byte changes (the damage the decoder meets), the prefixed ones, and one truncation in 64.
     // Each is decoded for up to 2^28 units of work: the fixtures of the lower levels are decoded to their last frame, so damage in a later frame is
     // decoded too, and at the highest levels the budget ends the decoding of a variant early.
     private const long MonkeysAudioBudget = 1L << 28;
 
-    // WavPack, TAK, TrueHD and MLP (the truehd folder), and the hand-built Monkey's Audio files (three frames of 160,000 samples), decode a block or a unit at the cost of a few
+    // WavPack, TAK, TTA (decoding every variant took the TTA fixtures 6.5 minutes), TrueHD and MLP (the truehd folder), and the hand-built Monkey's Audio files (three frames of 160,000 samples), decode a block or a unit at the cost of a few
     // hundred FLAC frames, so they are decoded like Monkey's Audio (the same selection of variants and the same budget). FLAC includes the Ogg FLAC files of its folder.
     private static bool IsCostlyDecoder(string name) =>
-        name.StartsWith("monkeys-audio/", StringComparison.Ordinal) || name.StartsWith("wavpack/", StringComparison.Ordinal) || name.StartsWith("truehd/", StringComparison.Ordinal) || name.StartsWith("tak/", StringComparison.Ordinal);
+        name.StartsWith("monkeys-audio/", StringComparison.Ordinal) || name.StartsWith("wavpack/", StringComparison.Ordinal) || name.StartsWith("truehd/", StringComparison.Ordinal) || name.StartsWith("tak/", StringComparison.Ordinal) || name.StartsWith("tta/", StringComparison.Ordinal);
 
     // The lossy decoders (MPEG audio, Vorbis, Opus, Speex, AC-3 and E-AC-3, DTS) and the containers that carry them: a sparser selection still, every twelfth change, the
     // prefixed files and one truncation in 128, since there are far more of these files than of the others (the fuzzer, which runs on every pull request, covers their decoders at random).
