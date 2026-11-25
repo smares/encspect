@@ -40,7 +40,10 @@ public partial class FindingCoverageTests
     };
 
     // The codes no test, manifest or decode golden asserts yet, each with why (0.5 works the list down): the code, then the reason.
-    private const string NoInputYet = "no fixture, crafted input or manifest raises it yet: the damage it reports is in none of the committed files, and a crafted file for it is on the 0.5 list";
+    private const string NoInputYet = "the damage it reports is in none of the committed files, and no crafted input raises it yet";
+    private const string ClaimNoInput = "an encoder or writer claim the parser reports only in a case no committed file shows (for example a claim that differs from another)";
+    private const string NotCheckedNoInput = "a note that a checksum or a signaling is not checked: no committed file has the field that triggers it";
+    private const string RouteNoInput = "a stream or object the parser reads no further (no audio, an unread payload, an object type not analyzed): no committed file takes the route that reports it";
 
     private static readonly Dictionary<string, string> NotYetCovered = new(StringComparer.Ordinal)
     {
@@ -50,15 +53,15 @@ public partial class FindingCoverageTests
         ["aac.block-positions-invalid"] = NoInputYet,
         ["aac.buffer-fullness-mixed"] = NoInputYet,
         ["aac.config-truncated"] = NoInputYet,
-        ["aac.crc-not-verified"] = NoInputYet,
+        ["aac.crc-not-verified"] = NotCheckedNoInput,
         ["aac.discard-padding-large"] = NoInputYet,
         ["aac.empty-access-units"] = NoInputYet,
-        ["aac.encoder-claim-differs"] = NoInputYet,
-        ["aac.error-protection-not-analyzed"] = NoInputYet,
+        ["aac.encoder-claim-differs"] = ClaimNoInput,
+        ["aac.error-protection-not-analyzed"] = RouteNoInput,
         ["aac.extension3"] = NoInputYet,
         ["aac.fill-payload-overrun"] = NoInputYet,
-        ["aac.implicit-signaling-not-checked"] = NoInputYet,
-        ["aac.object-type-not-analyzed"] = NoInputYet,
+        ["aac.implicit-signaling-not-checked"] = NotCheckedNoInput,
+        ["aac.object-type-not-analyzed"] = RouteNoInput,
         ["aac.pce-without-channels"] = NoInputYet,
         ["aac.predictor-reset-group-invalid"] = NoInputYet,
         ["aac.pulse-out-of-range"] = NoInputYet,
@@ -75,7 +78,7 @@ public partial class FindingCoverageTests
         ["ac-3.config-truncated"] = NoInputYet,
         ["ac-3.dependent-after-converted"] = NoInputYet,
         ["ac-3.emdf-limit"] = NoInputYet,
-        ["ac-3.encoder-claim"] = NoInputYet,
+        ["ac-3.encoder-claim"] = ClaimNoInput,
         ["ac-3.header-overrun"] = NoInputYet,
         ["ac-3.little-endian"] = NoInputYet,
         ["ac-3.mix-data-overrun"] = NoInputYet,
@@ -85,7 +88,7 @@ public partial class FindingCoverageTests
         ["ape.item-type-reserved"] = NoInputYet,
         ["ape.reserved-not-zero"] = NoInputYet,
         ["decode.frame-too-large"] = NoInputYet,
-        ["id3v2.crc-not-verified"] = NoInputYet,
+        ["id3v2.crc-not-verified"] = NotCheckedNoInput,
         ["id3v2.footer-mismatch"] = NoInputYet,
         ["id3v2.frame-content-truncated"] = NoInputYet,
         ["id3v2.frame-encrypted"] = NoInputYet,
@@ -111,21 +114,21 @@ public partial class FindingCoverageTests
         ["mp4.stz2-field-size"] = NoInputYet,
         ["mpeg-audio.multichannel-in-extension"] = NoInputYet,
         ["mpeg-audio.multichannel-too-long"] = NoInputYet,
-        ["musepack.writer-claim-differs"] = NoInputYet,
+        ["musepack.writer-claim-differs"] = ClaimNoInput,
         ["ogg.packet-too-large"] = NoInputYet,
         ["ogg.pages-across-links"] = NoInputYet,
         ["opus.frame-overrun"] = NoInputYet,
         ["opus.granule-inconsistent"] = NoInputYet,
-        ["opus.no-audio"] = NoInputYet,
-        ["opus.payload-not-analyzed"] = NoInputYet,
-        ["pcm.processor-claim-differs"] = NoInputYet,
+        ["opus.no-audio"] = RouteNoInput,
+        ["opus.payload-not-analyzed"] = RouteNoInput,
+        ["pcm.processor-claim-differs"] = ClaimNoInput,
         ["speex.comment-missing"] = NoInputYet,
         ["speex.comment-trailing-data"] = NoInputYet,
         ["speex.end-trimming-large"] = NoInputYet,
         ["speex.extra-headers-missing"] = NoInputYet,
         ["speex.header-extra-data"] = NoInputYet,
-        ["speex.no-audio"] = NoInputYet,
-        ["speex.payload-not-analyzed"] = NoInputYet,
+        ["speex.no-audio"] = RouteNoInput,
+        ["speex.payload-not-analyzed"] = RouteNoInput,
         ["speex.rate-invalid"] = NoInputYet,
         ["vorbis-comment.truncated"] = NoInputYet,
         ["vorbis.codebook-invalid"] = NoInputYet,
@@ -133,8 +136,8 @@ public partial class FindingCoverageTests
         ["vorbis.header-granule"] = NoInputYet,
         ["vorbis.header-missing"] = NoInputYet,
         ["vorbis.header-short"] = NoInputYet,
-        ["vorbis.no-audio"] = NoInputYet,
-        ["vorbis.payload-not-analyzed"] = NoInputYet,
+        ["vorbis.no-audio"] = RouteNoInput,
+        ["vorbis.payload-not-analyzed"] = RouteNoInput,
     };
 
     [GeneratedRegex("\"((?:[a-z0-9]+(?:-[a-z0-9]+)*)\\.[a-z0-9]+(?:-[a-z0-9]+)*)\"")]
