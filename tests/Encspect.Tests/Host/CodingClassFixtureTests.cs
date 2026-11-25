@@ -11,7 +11,7 @@ using Encspect.Host;
 namespace Encspect.Tests;
 
 // Every coding name the code can write has a class or is listed as one without, so a new codec needs a decision; every golden stream holds the class its
-// parser states, and the verification's IsLossy and withCorrection agree with it.
+// parser states, and the verification's IsLossy and isCorrected agree with it.
 public partial class CodingClassFixtureTests
 {
     // Names whose class the stream or the name alone does not settle, or that are no coding of audio.
@@ -213,10 +213,10 @@ public partial class CodingClassFixtureTests
         Assert.True(found >= 10);
     }
 
-    // IsLossy and withCorrection agree with the class: lossy output only from a lossy or a hybrid coding, never where a consistent correction file is applied, and a
+    // IsLossy and isCorrected agree with the class: lossy output only from a lossy or a hybrid coding, never where a consistent correction file is applied, and a
     // correction file only for a hybrid coding.
     [Fact]
-    public void TheVerificationsIsLossyAndWithCorrectionAgreeWithTheClass()
+    public void TheVerificationsIsLossyAndIsCorrectedAgreeWithTheClass()
     {
         int lossy = 0;
         foreach (JsonElement stream in Streams().Where(s => !IsCorrectionFile(s)))
@@ -228,17 +228,17 @@ public partial class CodingClassFixtureTests
 
             string? word = Word(stream);
             bool isLossy = verification.TryGetProperty("isLossy", out JsonElement l) && l.GetBoolean();
-            bool withCorrection = verification.TryGetProperty("withCorrection", out JsonElement w) && w.GetBoolean();
+            bool isCorrected = verification.TryGetProperty("isCorrected", out JsonElement w) && w.GetBoolean();
             string codec = stream.GetProperty("codec").GetString()!;
 
             if (isLossy)
             {
                 Assert.True(word is "lossy" or "hybrid" || word is null && codec == "WavPack lossy", $"A stream of \"{codec}\" is verified as lossy output and has the class {word ?? "none"}.");
-                Assert.False(withCorrection, $"A stream of \"{codec}\" is verified as lossy output and with its correction file.");
+                Assert.False(isCorrected, $"A stream of \"{codec}\" is verified as lossy output and with its correction file.");
                 lossy++;
             }
 
-            if (withCorrection)
+            if (isCorrected)
             {
                 Assert.Equal("hybrid", word);
             }

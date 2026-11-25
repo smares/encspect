@@ -190,7 +190,7 @@ A stream of a coding that declares its checksums has a verification, with or wit
   - `Verified: yes (the coded data matches the stored checksums; with correction file; block CRC-32 1 of 1, correction block CRC-32 1 of 1)`: the checksums vouch for the stream together with its correction file, a consistent pair.
 - **JSON:** `verification` in the stream, after `protection`:
   - `isVerified`, written where it is not null;
-  - `isLossy` and `withCorrection`, written where they are true;
+  - `isLossy` and `isCorrected`, written where they are true;
   - `decoding`: `notRequested`, `noDecoder`, `notPossible`, `decoded`, `stopped` or `failed`;
   - `decodedSamples`, the samples per channel the decoder decoded;
   - `checksums`, each with `name`, `covers` (`header`, `codedData` or `decodedAudio`), `coversAllAudio`, `stored`, `checked` and `failed`.

@@ -58,7 +58,7 @@ public class WavPackLegacyPairTests
         Assert.Equal(CorrectionBasis.DecodedAudio, pairing.Basis);
         Assert.Equal(errors == 0 && !isEmpty ? CorrectionStatus.Consistent : CorrectionStatus.Inconsistent, pairing.Status);
         Assert.Equal(pairing.Status == CorrectionStatus.Consistent || isEmpty, Stream(report).Verification!.IsVerified == true);
-        Assert.Equal(!isEmpty, Stream(report).Verification!.WithCorrection);
+        Assert.Equal(!isEmpty, Stream(report).Verification!.IsCorrected);
         Assert.Equal(pairing.Status == CorrectionStatus.Consistent, report.Findings.All(f => !f.Code.StartsWith("correction.", StringComparison.Ordinal)));
     }
 
@@ -138,7 +138,7 @@ public class WavPackLegacyPairTests
 
         StreamInfo stream = Stream(report);
         Assert.Equal((CorrectionStatus.Consistent, "song.wvc"), (stream.Correction!.Status, stream.Correction.Source));
-        Assert.Equal((true, true, false), (stream.Verification!.IsVerified == true, stream.Verification.WithCorrection, stream.Verification.IsLossy));
+        Assert.Equal((true, true, false), (stream.Verification!.IsVerified == true, stream.Verification.IsCorrected, stream.Verification.IsLossy));
         Assert.DoesNotContain(report.Findings, f => f.Code == "wavpack.legacy-crc2-needs-correction-file");
         StreamInfo correction = Assert.Single(Assert.Single(report.Companions).Report.Streams);
         Assert.True(correction.IsCorrectionFile);
@@ -155,7 +155,7 @@ public class WavPackLegacyPairTests
         Assert.Equal(CorrectionStatus.Missing, Stream(report).Correction!.Status);
         Assert.Contains(report.Findings, f => f.Code == "correction.missing");
         Assert.Contains(report.Findings, f => f.Code == "wavpack.legacy-crc2-needs-correction-file");
-        Assert.Equal((true, false), (Stream(report).Verification!.IsLossy, Stream(report).Verification!.WithCorrection));
+        Assert.Equal((true, false), (Stream(report).Verification!.IsLossy, Stream(report).Verification!.IsCorrected));
         Assert.Empty(report.Companions);
     }
 

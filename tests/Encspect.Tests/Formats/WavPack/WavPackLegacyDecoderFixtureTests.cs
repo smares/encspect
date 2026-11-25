@@ -143,9 +143,9 @@ public class WavPackLegacyDecoderFixtureTests
                     writer.WriteBoolean("isLossy", true);
                 }
 
-                if (v.WithCorrection)
+                if (v.IsCorrected)
                 {
-                    writer.WriteBoolean("withCorrection", true);
+                    writer.WriteBoolean("isCorrected", true);
                 }
 
                 writer.WriteStartArray("checksums");

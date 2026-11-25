@@ -65,7 +65,7 @@ Status: draft for the lead, 2026-11-18. Milestone 0.4, item 3 of the [plan](../p
   - `NotWritten` and `Consistent` raise none.
 - **The wording**, the same for both formats, with the status in the JSON word:
   - text: a line under the stream, `Correction file: consistent (x.wvc)`, `inconsistent (x.wvc: 3 correction blocks missing)`, `missing (x.wvc)`, `none written`, `unchecked (no folder to look in: the input is a stream)`;
-  - JSON: `correction` in the stream (`status`, `source`, `basis`, `problems`, `reason`), `companions` in the report (each `role` and the fields of a report), and `withCorrection` in the verification where it is true; fields are added, so the schema version stays 1;
+  - JSON: `correction` in the stream (`status`, `source`, `basis`, `problems`, `reason`), `companions` in the report (each `role` and the fields of a report), and `isCorrected` in the verification where it is true; fields are added, so the schema version stays 1;
   - CSV: `Correction File`, the first audio stream's status, after `Lossy Part Confidence`, beside the claim the pair confirms; empty for a stream without the concept;
   - the companion's correction data stream is not counted in the file's duration, samples or bitrate.
 
@@ -76,7 +76,7 @@ Status: draft for the lead, 2026-11-18. Milestone 0.4, item 3 of the [plan](../p
 | Pair consistent, not decoded | `consistent` | lossless with its correction file | WavPack: "unknown (block header CRC and MD5 not compared: decoding was not asked for)", the block checksums of both files compared; OptimFROG: the CRC-32s of both files, "yes (with correction file; …)" where it stores no MD5 |
 | Pair consistent, decoded (WavPack) | `consistent` | lossless with its correction file | "yes (the decoded audio matches the stored checksums; with correction file; block checksum …, correction block checksum …, block header CRC …, MD5 1 of 1)", `IsLossy` false |
 | Companion missing | `missing` | lossy without its correction file | as today: "yes (the decoded audio matches the stored checksums; lossy stream; …)", the MD5 or `crc2` not compared |
-| Companion inconsistent | `inconsistent` | lossy without its correction file | decoded as [Inconsistent pairs](#inconsistent-pairs) says; never `withCorrection` unless a correction block was applied |
+| Companion inconsistent | `inconsistent` | lossy without its correction file | decoded as [Inconsistent pairs](#inconsistent-pairs) says; never `isCorrected` unless a correction block was applied |
 | Unchecked | `unchecked` | lossy without its correction file | as for a missing companion |
 
 - **"Lossless with its correction file"** is said only of a consistent pair, which is what the plan asks; until item 6 adds the coding line, it is the text of the pairing line and the GUI's streams line.
@@ -111,7 +111,7 @@ The parser walks the companion in step with the main file, as libwavpack's `read
 
 ### Inconsistent pairs
 
-- **The companion belongs** (it is correction data of the same stream: no `NotCorrectionData` or `StreamDiffers`): it is used block by block where a block matches and its checksum holds, and the other blocks are decoded lossy, as libwavpack does (decision 6). The verification is `withCorrection`, the MD5 is not compared, and the blocks decoded without correction count as libwavpack counts them (`crc_errors`), which the cross-check holds to `WavpackGetNumErrors`.
+- **The companion belongs** (it is correction data of the same stream: no `NotCorrectionData` or `StreamDiffers`): it is used block by block where a block matches and its checksum holds, and the other blocks are decoded lossy, as libwavpack does (decision 6). The verification is `isCorrected`, the MD5 is not compared, and the blocks decoded without correction count as libwavpack counts them (`crc_errors`), which the cross-check holds to `WavpackGetNumErrors`.
 - **It does not belong:** it is not used; the stream is decoded as its lossy part, `IsLossy` true, as with no companion.
 
 ## OptimFROG
@@ -121,7 +121,7 @@ The parser walks the companion in step with the main file, as libwavpack's `read
   - one `CORR` block for each data block of the `.ofs` (`BlocksMissing`, `BlocksUnmatched` by the difference);
   - every `CORR` CRC-32 holds (`ChecksumsFail`), no block is cut and nothing follows the chain (`Cut`).
 - **What it cannot see:** a `CORR` block holds no sample count, rate or position that is known, so an `.ofc` of another encode with as many blocks passes. The design of 0.2 hoped to compare rate, channels, sample type and each block's samples; the fixtures showed the `.ofc` stores none of them that can be read. The hand-built fixtures pin this limit, and the article says it.
-- **Verification:** the tallies "block CRC-32" and "correction block CRC-32" (coded data); the MD5 stays declared and not compared. `withCorrection` is true for a consistent pair.
+- **Verification:** the tallies "block CRC-32" and "correction block CRC-32" (coded data); the MD5 stays declared and not compared. `isCorrected` is true for a consistent pair.
 
 ## Front ends
 
