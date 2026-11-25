@@ -123,7 +123,7 @@ import vbr_tags
 from conformance_mpeg_audio import guessenc as guessenc_multichannel
 
 ROOT = pathlib.Path(__file__).resolve().parents[2] / "tests" / "fixtures"
-DIRECTORIES = [ROOT / "mpeg-audio", ROOT / "mpeg-audio" / "layer3", ROOT / "mpeg-audio" / "layer2", ROOT / "mpeg-audio" / "vbr", ROOT / "mpeg-audio" / "stats"]
+DIRECTORIES = [ROOT / "mpeg-audio", ROOT / "mpeg-audio" / "layer3", ROOT / "mpeg-audio" / "layer2", ROOT / "mpeg-audio" / "vbr", ROOT / "mpeg-audio" / "stats", ROOT / "mpeg-audio" / "music"]
 TAGS = ROOT / "tags"
 CHANNELS = {"Mono": 1}
 GUESSENC_MODES = {"Simple stereo": "0", "Intensity stereo": "1", "Mid-side stereo": "2", "Intensity and mid-side stereo": "3"}

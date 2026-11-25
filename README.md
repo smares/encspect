@@ -27,21 +27,21 @@ The detail window: a file's findings, each pointing to the bytes it was read fro
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/readme-frame-map-dark.png">
-  <img src="docs/images/readme-frame-map-light.png" alt="The Frame Map of a one-minute MP3 file with one square per frame colored by block type" width="800">
+  <img src="docs/images/readme-frame-map-light.png" alt="The Frame Map of a 6:41 MP3 file with one square per frame colored by its bitrate" width="800">
 </picture>
 
-The Frame Map: one square per frame, here the block types of every granule of a minute of joint stereo audio.
+The Frame Map: one square per frame, here the bitrate of every frame of a joint stereo recording of almost seven minutes.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/readme-spectrogram-dark.png">
-  <img src="docs/images/readme-spectrogram-light.png" alt="The spectrogram of a decoded WAV file with a dashed line at its spectral cutoff of 16,150 Hz" width="800">
+  <img src="docs/images/readme-spectrogram-light.png" alt="The spectrogram of a decoded MP3 file with a dashed line at its spectral cutoff of 16,078 Hz" width="800">
 </picture>
 
-The Audio panels: the spectrogram of a decoded file with its spectral cutoff marked at 16,150 Hz.
+The Audio panels: the spectrogram of a decoded file with its spectral cutoff marked at 16,078 Hz.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/readme-waveform-dark.png">
-  <img src="docs/images/readme-waveform-light.png" alt="The waveform of a decoded stereo WAV file with a lane for the front left and the front right channel" width="800">
+  <img src="docs/images/readme-waveform-light.png" alt="The waveform of a decoded stereo MP3 file with a lane for the front left and the front right channel" width="800">
 </picture>
 
 The waveform of the same file, one lane per channel.
