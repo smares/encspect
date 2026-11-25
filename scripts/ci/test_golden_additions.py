@@ -499,6 +499,60 @@ class RepositoryTests(unittest.TestCase):
         self.commit()
         self.assertEqual(self.run_check(), 0)
 
+    def test_more_than_twenty_changed_goldens_without_a_change_file_fail(self):
+        def many(count):
+            for number in range(count):
+                self.write(f"tests/fixtures/mpeg-audio/many-{number}.report.json", [report(OLD_STATS)])
+            self.git("add", "-A")
+            self.git("commit", "-qm", "many")
+            self.git("checkout", "-q", "main")
+            self.git("merge", "-q", "--ff-only", "pr")
+            self.git("checkout", "-qb", "next")
+            for number in range(count):
+                self.write(f"tests/fixtures/mpeg-audio/many-{number}.report.json", [report([node("Frames", value=99), *OLD_STATS[1:]])])
+            self.commit()
+
+        many(20)
+        self.assertEqual(golden_additions.run(self.dir, "main", "HEAD", []), 0, "twenty are reviewed by eye")
+        self.write("tests/fixtures/mpeg-audio/a.report.json", [report([node("Frames", value=99), *OLD_STATS[1:]])])
+        self.commit()
+        self.assertEqual(golden_additions.run(self.dir, "main", "HEAD", []), 1, "the twenty-first needs a change file")
+
+    def test_a_decode_golden_may_change_only_the_fields_and_keys_the_change_file_lists(self):
+        def golden(samples, decoding="Decoded", key="withCorrection"):
+            return {"verification": {"decoding": decoding, "decodedSamples": samples, "isVerified": True, key: True, "checksums": [{"name": "MD5", "checked": 1}]}, "findings": []}
+        self.write("tests/fixtures/mpeg-audio/d.decode.json", golden(100))
+        self.git("add", "-A")
+        self.git("commit", "-qm", "decode base")
+        self.git("checkout", "-q", "main")
+        self.git("merge", "-q", "--ff-only", "pr")
+        self.git("checkout", "-qb", "pr6")
+        files = ["tests/fixtures/mpeg-audio/golden-changes.json"]
+        self.write(files[0], {"goldens": ["tests/fixtures/mpeg-audio/"],
+                              "changed": [{"scope": "decode", "fields": ["decodedSamples", "decoding"]}],
+                              "renamedKeys": [{"scope": "decode", "path": ["verification"], "from": "withCorrection", "to": "isCorrected"}]})
+        self.write("tests/fixtures/mpeg-audio/d.decode.json", golden(101, "Stopped", "isCorrected"))
+        self.commit()
+        self.assertEqual(golden_additions.run(self.dir, "main", "HEAD", files), 0)
+
+        # A field the change file does not list, and a decode golden no change file covers, fail.
+        changed = golden(101, "Stopped", "isCorrected")
+        changed["verification"]["isVerified"] = False
+        self.write("tests/fixtures/mpeg-audio/d.decode.json", changed)
+        self.commit()
+        self.assertEqual(golden_additions.run(self.dir, "main", "HEAD", files), 1)
+        self.write("tests/fixtures/mpeg-audio/d.decode.json", golden(100))
+        self.write(files[0], {"goldens": ["tests/fixtures/mpeg-audio/a.report.json"], "added": []})
+        self.commit()
+        self.assertEqual(golden_additions.run(self.dir, "main", "HEAD", files), 1)
+
+    def test_a_key_renamed_in_the_streams_of_a_report_golden_is_put_back(self):
+        old = report(OLD_STATS, streams=[{"nodes": [[1]], "verification": {"withCorrection": True}}])
+        new = report(OLD_STATS, streams=[{"nodes": [[1]], "verification": {"isCorrected": True}}])
+        change = {"renamedKeys": [{"scope": "stream", "path": ["verification"], "from": "withCorrection", "to": "isCorrected"}]}
+        self.assertEqual(golden_additions.check_golden([old], [new], change), [])
+        self.assertTrue(golden_additions.check_golden([old], [new], {}))
+
     def test_a_covered_addition_passes_and_an_uncovered_change_fails(self):
         added = report([*OLD_STATS, node("Added", value=1)])
         self.write("tests/fixtures/mpeg-audio/a.report.json", [added])
