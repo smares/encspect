@@ -55,7 +55,7 @@ The Coding Summary: the count and share of channel modes, joint stereo modes, st
 
 ## Status
 
-Version 0.3.0, a pre-release in development. Download builds for Windows, macOS and Linux from the [releases page](https://github.com/smares/encspect/releases); they are not signed (see the release notes). The plan is in [docs/plan.md](docs/plan.md).
+Version 0.4.0, a pre-release in development. Download builds for Windows, macOS and Linux from the [releases page](https://github.com/smares/encspect/releases); they are not signed (see the release notes). The plan is in [docs/plan.md](docs/plan.md).
 
 Formats read so far ([details](docs/formats/README.md)):
 
@@ -67,17 +67,17 @@ Formats read so far ([details](docs/formats/README.md)):
 - AC-3 and E-AC-3, raw and in MP4, with the object audio (JOC) that Dolby Atmos adds; both are decoded for `--measure`
 - DTS (core, XCh, X96, XXCH and the DTS-HD extension substreams with the lossless extension's channel sets and the DTS:X signal), raw and in MP4; the core's subframes are read for "Coded Bandwidth" and block switching, and the core is decoded for `--measure`
 - DTS-HD files (`.dtshd`)
-- WavPack (lossless, hybrid and DSD), `.wv` and `.wvc`, with an optional decode that verifies the CRCs and the MD5 of the audio; the files of WavPack 1 to 3 are read at header level and decoded, with the CRC of version 3 compared
+- WavPack (lossless, hybrid and DSD), `.wv` and `.wvc`, a `.wv` read and decoded with its `.wvc` beside it, with an optional decode that verifies the CRCs and the MD5 of the audio; the files of WavPack 1 to 3 are read at header level and decoded, with the CRC of version 3 compared
 - FLAC (`.flac`, and in Ogg, MP4 and Matroska), with an optional decode that verifies the MD5 of the audio
 - Monkey's Audio (`.ape`), with an optional decode of files of versions 3.80 to 3.99 and 4.11 that verifies the CRC or checksum of every frame
 - TTA (`.tta`), verified by the CRC-32s of its header, seek table and frames, and decoded for `--measure` (audio format 1)
-- OptimFROG (`.ofr`, `.ofs`, `.ofc`) at header level: its blocks, stored WAV header and encoder settings, verified by the CRC-32 of every data block
-- TAK (`.tak`): its metadata objects with their CRC-24s, stream info, encoder preset and stored WAV header, and its frames with their header and data CRC-24s, decoded (codec 2 and 4, 8 to 24 bits) to compare the MD5 where the stream stores one and for `--measure`
+- OptimFROG (`.ofr`, `.ofs`, `.ofc`) at header level, an `.ofs` read with its `.ofc` beside it: its blocks, stored WAV header and encoder settings, verified by the CRC-32 of every data block
+- TAK (`.tak`): its metadata objects with their CRC-24s, stream info, encoder preset and stored WAV header, and its frames with their header and data CRC-24s, decoded (codecs 2 and 4; 8, 16 and 24 bits) to compare the MD5 where the stream stores one and for `--measure`
 - Apple Lossless (ALAC) frame by frame in MP4 and M4A and in Matroska, with its elements, filters and residual codes walked, and decoded for `--measure` (ALAC stores no checksum to verify)
 - Dolby TrueHD and MLP (`.thd`, `.mlp`, and in MP4 and Matroska), with an optional decode that verifies the lossless checks of the audio
-- ASF (`.wma`, `.wmv`, `.asf`) with Windows Media Audio (versions 1 and 2, Professional, Lossless and Voice frame by frame), and MPEG audio, AC-3 and E-AC-3 read by their parsers
+- ASF (`.wma`, `.wmv`, `.asf`) with Windows Media Audio (versions 1 and 2, Professional, Lossless and Voice frame by frame), and MP3 and AC-3 read by their parsers
 - WAV (`.wav`; RIFF, RIFX, RF64 and BW64), Wave64 (`.w64`) and AIFF (`.aif`, `.aiff`, `.aifc`) with all their chunks; PCM, floating-point and compressed formats at header level (PCM, floating-point, A-law and mu-law samples are decoded for `--measure`), and MPEG audio, AC-3, E-AC-3 and DTS in WAV read by their parsers, and AC-3, E-AC-3, DTS, AAC and MPEG audio also as IEC 61937 bursts in the samples
-- Matroska and WebM (`.mka`, `.mkv`, `.webm`) with MPEG audio, AAC, AC-3, E-AC-3, DTS, Vorbis, Opus, FLAC, WavPack, Dolby TrueHD, MLP, Apple Lossless, TTA and PCM audio read by their parsers, and the codings that `A_MS/ACM` carries (Windows Media Audio, PCM, A-law and mu-law)
+- Matroska and WebM (`.mka`, `.mkv`, `.webm`) with MPEG audio, AAC, AC-3, E-AC-3, DTS, Vorbis, Opus, FLAC, WavPack, Dolby TrueHD, MLP, Apple Lossless, TTA and PCM audio read by their parsers, and the codings that `A_MS/ACM` carries (Windows Media Audio, PCM, A-law, mu-law, MPEG audio, AC-3, E-AC-3 and DTS)
 
 Tags ([details](docs/tags/README.md)): ID3v1, ID3v2, APEv1, APEv2, Lyrics3 v1, Lyrics3 v2 and Vorbis comments, and the containers' own metadata: ASF and WMA, MP4 (iTunes, QuickTime and Nero), Matroska, WAV and AIFF.
 
@@ -85,7 +85,7 @@ Protection: streams that a container encrypts or locks are reported with their s
 
 Measurements: with `--measure`, the formats that have a decoder (FLAC, WavPack, Monkey's Audio, ALAC, TTA, TAK, Dolby TrueHD and MLP, MPEG audio Layers I to III, Vorbis, Opus, Musepack, Speex, AC-3, E-AC-3, the DTS core, and the samples of WAV, Wave64 and AIFF) get the average spectrum, the spectral cutoff and its companions (spectral bandwidth, spectral slope, partial cutoff, mid and side spectra, the inter-channel coherence and spectral holes) of their decoded audio, the spectrogram and waveform behind them, the levels (sample peak, RMS level, DC offset, clipping runs, digital silence and bit-depth usage), the loudness (integrated, range, maxima; ITU-R BS.1770-5 and EBU R 128) and the true peak ([details](docs/cli.md)). The GUI's detail window decodes and measures a file with Decode Audio and draws the waveform, the spectrogram, the spectrum and the loudness under the heading Audio of its Graphs tab ([details](docs/gui.md)).
 
-Version 0.3 adds the first lossy decoders (MPEG audio Layers I to III, Vorbis, Opus, AC-3 and E-AC-3), so lossy files are measured too. Next: 0.4, in progress: the Musepack, DTS core and Speex decoders and the container routes that known writers produce are merged ([plan](docs/plan.md#milestones); what each format reads by depth is in [formats](docs/formats/README.md#depth-by-format)).
+Version 0.4 adds the Musepack, DTS core, Speex, TAK and WavPack 1 to 3 decoders, reads the codecs in most containers that known writers fill (PCM and MPEG Layer I and II in ASF follow in 0.5), and leaves units whose checksum fails out of the measurements. Next: 0.5, the AAC and Windows Media Audio decoders ([plan](docs/plan.md#milestones); what each format reads by depth is in [formats](docs/formats/README.md#depth-by-format)).
 
 The decoders exist for analysis only: Encspect does not play or convert audio, and users are responsible for the laws where they live ([details](docs/cli.md#what-the-decoders-are-for)).
 
@@ -100,7 +100,7 @@ The decoders exist for analysis only: Encspect does not play or convert audio, a
 - [Using Encspect from other programs](docs/library.md): the JSON output today, NuGet packages and a native library later
 - [Plan](docs/plan.md): goals, decisions, the milestones and what is not planned
 - [History](docs/history.md): the phases and gates passed, and what each built
-- [Release notes](docs/releases/0.3.0.md)
+- [Release notes](docs/releases/0.4.0.md)
 
 ## Quick start
 

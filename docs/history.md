@@ -29,6 +29,7 @@ MP3 came first, then the other lossy formats, then the lossless ones. Each phase
 | 3, continued | Official-decoder cross-checks (built); lossyWAV and lossyFLAC detection (paused, then made the first item of 0.2) | built, and moved |
 | Gate 0.2 | Pipeline green, review findings fixed | passed, 2026-11-10 at a858ea0b |
 | Gate 0.3 | Pipeline green, review findings fixed | passed, 2026-11-16 at 752cd3f9 |
+| Gate 0.4 | Pipeline green, review findings fixed | passed, 2026-11-25 at 501a00790 |
 
 - **Release 0.1.0:** a GitHub pre-release after Gate 2 (the project lead, 2026-10-17). It replaced the earlier rule of no public version until development ends.
 - **Phases 4 to 6** were planned as TAK and OptimFROG at header level, more formats, and the sequenced formats. The milestones of the [plan](plan.md#milestones) replaced them on 2026-11-08.
@@ -56,6 +57,10 @@ MP3 came first, then the other lossy formats, then the lossless ones. Each phase
   - Every finding was fixed in #310 to #314, one pull request per area, and the fix review's findings in #316; #315 recorded the fifth run of Dolby's decoder (the 7.1 real samples) and the lead's decision on `lame_enc.dll`. #318 fixed what the push run of #316 fuzzed (an Opus header from another codec's box in MP4).
   - The full suite with the nightly-only tests ran green on every platform (a manual run on 2026-11-15, after the fixes of #309 for the red nightly runs of 2026-11-12 to 2026-11-15).
   - Release 0.3.0 follows it.
+- **Gate 0.4** (2026-11-25, 501a00790): three independent reviews on 2026-11-25, then a review of their fixes.
+  - Areas: the milestone review (the code of 0.4 against the specifications and designs), the claims audit (the plan's Built lines, the README, the docs and the pull request descriptions against code, tests and fixtures) and the catch-all audit (the defaults and allow-lists that take what nothing names).
+  - Every finding was fixed in #405, the fix review's findings among them.
+  - Release 0.4.0 follows it.
 - Each gate's push run and nightly run were green on every platform.
 
 ## Phase 1 (v1): MP3
