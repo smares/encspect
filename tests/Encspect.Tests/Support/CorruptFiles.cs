@@ -46,12 +46,25 @@ internal static class CorruptFiles
             yield return name;
         }
 
-        foreach (string family in new[] { "dts", "ac3", "matroska", "musepack", "flac", "monkeys-audio", "optimfrog", "tak", "tta", "alac", "truehd", "wavpack", "wav", "aiff" })
+        foreach (string family in new[] { "dts", "ac3", "matroska", "musepack", "flac", "monkeys-audio", "optimfrog", "tak", "tta", "alac", "truehd", "wavpack", "wav", "aiff", "asf" })
         {
             foreach (string path in Directory.EnumerateFiles(Path.Combine(Fixtures.FixtureDirectory, family), "*", SearchOption.TopDirectoryOnly).Order(StringComparer.Ordinal)
                 .Where(p => !p.EndsWith(".json", StringComparison.Ordinal)))
             {
                 yield return $"{family}/{Path.GetFileName(path)}";
+            }
+        }
+
+        // The real files of encoders the CI cannot run (sample-kit), the files with one stored checksum changed (damaged-units) and the files of Apple's encoder: the most foreign input of their formats.
+        foreach (string directory in Directory.EnumerateDirectories(Fixtures.FixtureDirectory, "*", SearchOption.AllDirectories).Order(StringComparer.Ordinal))
+        {
+            string relative = Path.GetRelativePath(Fixtures.FixtureDirectory, directory).Replace('\\', '/');
+            if (Path.GetFileName(directory) is "sample-kit" or "damaged-units" || relative == "aac/apple")
+            {
+                foreach (string path in Directory.EnumerateFiles(directory, "*", SearchOption.TopDirectoryOnly).Order(StringComparer.Ordinal).Where(p => !p.EndsWith(".json", StringComparison.Ordinal)))
+                {
+                    yield return $"{relative}/{Path.GetFileName(path)}";
+                }
             }
         }
 
@@ -62,6 +75,18 @@ internal static class CorruptFiles
         }
     }
 
+    // The media files of tests/fixtures that no damaged-input class mutates, by folder, with the reason; DamagedInputCoverageTests holds every other media file to All().
+    public static readonly (string Prefix, string Reason)[] NotMutated =
+    [
+        ("fuzz/", "regression inputs of FuzzRegressionTests, each a file the fuzzer broke a parser with"),
+        ("ogg/fuzz/", "regression inputs of FuzzRegressionTests"),
+        ("measurement/", "synthetic PCM signals of the measurement tests, in the WAV, AIFF and FLAC forms the families above are damaged in"),
+    ];
+
+    // The correction files of WavPack 1 to 3 are no format alone.
+    public static bool IsNotMutated(string name) =>
+        NotMutated.Any(n => name.StartsWith(n.Prefix, StringComparison.Ordinal)) || name.EndsWith(".wvc", StringComparison.Ordinal);
+
     private enum VariantKind
     {
         Truncation,
@@ -69,28 +94,44 @@ internal static class CorruptFiles
         Prefix,
     }
 
-    // The fixtures of these families are also decoded. FLAC, Musepack (a frame costs about 100 microseconds), ALAC, WAV, Wave64 and AIFF decode every variant (PCM costs a few microseconds a frame). A Monkey's Audio frame costs a thousand times what a FLAC frame does, so
-    // only some variants are decoded: every third of the byte changes (the damage the decoder meets), the prefixed ones, and one truncation in 64.
+    // Every fixture is also decoded where a decoder can read it, unless its folder is named here with the reason. A folder or a decoder added later is decoded by default.
+    // The folders of containers (mp4, matroska, ogg, asf) hold streams of several codings and are decoded for the ones that have a decoder.
+    internal static readonly (string Prefix, string Reason)[] NotDecoded =
+    [
+        ("tags/", "the audio of a tag fixture is a few frames; the tag parsers are what these fixtures test"),
+        ("aac/", "AAC has no decoder"),
+        ("optimfrog/", "OptimFROG has no decoder"),
+    ];
+
+    // FLAC, Musepack (a frame costs about 100 microseconds), ALAC, WAV, Wave64 and AIFF decode every variant (a frame costs a few microseconds). A Monkey's Audio frame costs a
+    // thousand times what a FLAC frame does, so only some variants are decoded: every third of the byte changes (the damage the decoder meets), the prefixed ones, and one truncation in 64.
     // Each is decoded for up to 2^28 units of work: the fixtures of the lower levels are decoded to their last frame, so damage in a later frame is
     // decoded too, and at the highest levels the budget ends the decoding of a variant early.
     private const long MonkeysAudioBudget = 1L << 28;
 
-    // WavPack, TrueHD and MLP (the truehd folder) decode a block or a unit at the cost of a few hundred FLAC frames, so they are decoded like Monkey's Audio
-    // (the same selection of variants and the same budget). FLAC includes the Ogg FLAC files of its folder.
+    // WavPack, TAK, TTA (decoding every variant took the TTA fixtures 6.5 minutes), TrueHD and MLP (the truehd folder), and the hand-built Monkey's Audio files (three frames of 160,000 samples), decode a block or a unit at the cost of a few
+    // hundred FLAC frames, so they are decoded like Monkey's Audio (the same selection of variants and the same budget). FLAC includes the Ogg FLAC files of its folder.
     private static bool IsCostlyDecoder(string name) =>
-        name.StartsWith("monkeys-audio/", StringComparison.Ordinal) || name.StartsWith("wavpack/", StringComparison.Ordinal) || name.StartsWith("truehd/", StringComparison.Ordinal);
+        name.StartsWith("monkeys-audio/", StringComparison.Ordinal) || name.StartsWith("wavpack/", StringComparison.Ordinal) || name.StartsWith("truehd/", StringComparison.Ordinal) || name.StartsWith("tak/", StringComparison.Ordinal) || name.StartsWith("tta/", StringComparison.Ordinal);
 
-    private static bool IsDecoded(string name) =>
-        name.StartsWith("flac/", StringComparison.Ordinal) || name.StartsWith("musepack/", StringComparison.Ordinal) || name.StartsWith("alac/", StringComparison.Ordinal) || name.StartsWith("wav/", StringComparison.Ordinal) || name.StartsWith("aiff/", StringComparison.Ordinal) || name.StartsWith("monkeys-audio/external-", StringComparison.Ordinal) || name.StartsWith("monkeys-audio/legacy-", StringComparison.Ordinal)
-        || name.StartsWith("wavpack/", StringComparison.Ordinal) || name.StartsWith("truehd/", StringComparison.Ordinal);
+    // The decoders cheap enough to decode every variant: a frame costs a few microseconds (FLAC, ALAC, WAV, Wave64, AIFF) or about 100 (Musepack). Every other decoder, one added later
+    // included, takes the sparsest selection by default (every twelfth change, the prefixed files and one truncation in 128, since there are far more lossy files than others and
+    // the fuzzer, which runs on every pull request, covers their decoders at random), with the budget of the costly ones.
+    private static bool IsCheapDecoder(string name) =>
+        name.StartsWith("flac/", StringComparison.Ordinal) || name.StartsWith("musepack/", StringComparison.Ordinal) || name.StartsWith("alac/", StringComparison.Ordinal) || name.StartsWith("wav/", StringComparison.Ordinal)
+        || name.StartsWith("aiff/", StringComparison.Ordinal);
+
+    internal static bool IsDecoded(string name) => !NotDecoded.Any(n => name.StartsWith(n.Prefix, StringComparison.Ordinal));
 
     private static bool IsDecoded(string name, VariantKind kind, int number) =>
-        IsDecoded(name) && (!IsCostlyDecoder(name) || kind switch
+        IsDecoded(name) && (kind, IsCheapDecoder(name), IsCostlyDecoder(name)) switch
         {
-            VariantKind.Change => number % 3 == 0,
-            VariantKind.Prefix => true,
-            _ => number % 64 == 0,
-        });
+            (VariantKind.Change, false, true) => number % 3 == 0,
+            (VariantKind.Change, false, false) => number % 12 == 0,
+            (VariantKind.Truncation, false, true) => number % 64 == 0,
+            (VariantKind.Truncation, false, false) => number % 128 == 0,
+            _ => true,
+        };
 
     public static async Task MutatedFixturesProduceReports(string name)
     {
@@ -107,7 +148,7 @@ internal static class CorruptFiles
                 Task work = Task.Run(() =>
                 {
                     started.SetResult();
-                    AnalyzeAndCheck(variant, IsDecoded(name, kind, number), IsCostlyDecoder(name) ? MonkeysAudioBudget : 1L << 30);
+                    AnalyzeAndCheck(variant, IsDecoded(name, kind, number), IsCheapDecoder(name) ? 1L << 30 : MonkeysAudioBudget);
                 });
                 await started.Task;
                 await work.WaitAsync(VariantLimit);

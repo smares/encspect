@@ -1,8 +1,6 @@
 {
   "goldens": [
-    "tests/fixtures/wavpack/built-leading-block-without-set-md5.report.json",
-    "tests/fixtures/wavpack/built-set-without-final-limit.report.json",
-    "tests/fixtures/wavpack/built-set-without-initial.report.json"
+    "tests/fixtures/wavpack/"
   ],
   "added": [
     {
@@ -11,11 +9,40 @@
         "WavPack",
         "Statistics"
       ],
-      "name": "Lost Samples"
+      "name": "Compression Ratio",
+      "goldens": [
+        "tests/fixtures/wavpack/legacy/"
+      ]
     },
     {
+      "scope": "node",
+      "parent": [
+        "WavPack",
+        "Statistics",
+        "Compression Ratio"
+      ],
+      "name": "Overall",
+      "goldens": [
+        "tests/fixtures/wavpack/legacy/"
+      ]
+    }
+  ],
+  "renamedKeys": [
+    {
       "scope": "stream",
-      "key": "lostSamples"
+      "path": [
+        "verification"
+      ],
+      "from": "withCorrection",
+      "to": "isCorrected"
+    },
+    {
+      "scope": "decode",
+      "path": [
+        "verification"
+      ],
+      "from": "withCorrection",
+      "to": "isCorrected"
     }
   ]
 }

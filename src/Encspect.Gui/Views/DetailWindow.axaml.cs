@@ -4,8 +4,8 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
-using Avalonia.Threading;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Encspect.Gui.ViewModels;
 using Encspect.Host;
@@ -32,6 +32,7 @@ public partial class DetailWindow : Window
     public DetailWindow(DetailViewModel model)
     {
         InitializeComponent();
+        Icon = AppIcon.Window;
         Model = model;
         DataContext = model;
         PickExportTarget = PickExportTargetAsync;

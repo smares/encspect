@@ -116,23 +116,39 @@
  },
  "tags": {
   "Id3": [
+   "Aac",
    "Aiff",
    "Asf",
+   "Dts",
+   "Flac",
+   "Matroska",
+   "MonkeysAudio",
    "Mp4",
    "MpegAudio",
-   "Wav"
+   "Musepack",
+   "Ogg",
+   "OptimFrog",
+   "Tak",
+   "Tta",
+   "Wav",
+   "WavPack"
   ],
   "Ape": [
+   "Dts",
+   "Flac",
+   "Matroska",
    "MonkeysAudio",
    "MpegAudio",
    "Musepack",
+   "Ogg",
    "OptimFrog",
    "Tak",
    "Tta",
    "WavPack"
   ],
   "Lyrics3": [
-   "MpegAudio"
+   "MpegAudio",
+   "OptimFrog"
   ],
   "VorbisComment": [
    "Flac",
@@ -287,6 +303,9 @@
   "CorruptFlacFileTests": [
    "Flac"
   ],
+  "CorruptFlacLevelFileTests": [
+   "Flac"
+  ],
   "CorruptFlacBuiltFileTests": [
    "Flac"
   ],
@@ -340,6 +359,14 @@
   ],
   "CorruptWavPackBuiltFileTests": [
    "WavPack"
+  ],
+  "CorruptKitFileTests": [
+   "MpegAudio",
+   "Flac",
+   "WavPack"
+  ],
+  "CorruptAsfFileTests": [
+   "Asf"
   ]
  },
  "methods": {

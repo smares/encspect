@@ -167,6 +167,54 @@ public class MatroskaDamagedUnitsTests
         Assert.DoesNotContain(report.Findings, f => f.Code is "decode.failed" or "measure.failed");
     }
 
+    // PCM keeps no state, so a Cluster whose CRC-32 fails withholds exactly its own sample frames, not the 64 KiB slices the packets are handed on in: the Clusters before and
+    // after it, whose CRC-32 holds, are measured whole, also where a sample frame spans the packets of two Clusters.
+    [Theory]
+    [InlineData(16, 2, 8192)]
+    [InlineData(24, 1, 8190)]
+    [InlineData(24, 1, 8191)]
+    public void APcmClusterThatFailsItsCrcWithholdsOnlyItsOwnSampleFrames(int bits, int channels, int blockBytes)
+    {
+        int frameBytes = bits / 8 * channels;
+        const int clusters = 5;
+        const int blocksPerCluster = 5;
+        const int failing = 2;
+        byte[] audio = MatroskaBuilder.Element(0xE1, MatroskaBuilder.Element(0xB5, [0x40, 0xE7, 0x70, 0, 0, 0, 0, 0]),
+            MatroskaBuilder.Unsigned(0x9F, (ulong)channels), MatroskaBuilder.Unsigned(0x6264, (ulong)bits));
+        byte[] entry = MatroskaBuilder.Element(0xAE, MatroskaBuilder.Unsigned(0xD7, 1), MatroskaBuilder.Unsigned(0x73C5, 1), MatroskaBuilder.Unsigned(0x83, 2), MatroskaBuilder.Text(0x86, "A_PCM/INT/LIT"), audio);
+        var parts = new List<byte[]> { MatroskaBuilder.Info(), MatroskaBuilder.Element(0x1654AE6B, entry) };
+        for (int c = 0; c < clusters; c++)
+        {
+            var blocks = new List<byte[]> { MatroskaBuilder.Unsigned(0xE7, (ulong)c * 100) };
+            for (int b = 0; b < blocksPerCluster; b++)
+            {
+                byte[] media = new byte[blockBytes];
+                for (int i = 0; i < media.Length; i++)
+                {
+                    media[i] = (byte)((i * 31 >> 3) + c);
+                }
+
+                blocks.Add(MatroskaBuilder.SimpleBlock(1, b, media));
+            }
+
+            byte[] body = MatroskaBuilder.Concat([.. blocks]);
+            uint crc = Crc32(body) ^ (c == failing ? 0x55u : 0u);
+            byte[] element = [0xBF, 0x84, (byte)crc, (byte)(crc >> 8), (byte)(crc >> 16), (byte)(crc >> 24)];
+            parts.Add(MatroskaBuilder.Element(0x1F43B675, MatroskaBuilder.Concat(element, body)));
+        }
+
+        (Report report, _) = Analyze("pcm-clusters.mka", MatroskaBuilder.File([.. parts]));
+        StreamMeasurements m = report.Streams[0].Measurements!;
+
+        long total = (long)clusters * blocksPerCluster * blockBytes / frameBytes;
+        long ownFrames = (long)blocksPerCluster * blockBytes / frameBytes;
+        Assert.Equal(total, report.Streams[0].Samples);
+        Assert.Contains(report.Findings, f => f.Code == "matroska.crc-mismatch");
+        Assert.InRange(m.WithheldSamples, ownFrames, ownFrames + 1);
+        Assert.Equal(total, m.Samples + m.WithheldSamples);
+        Assert.DoesNotContain(report.Findings, f => f.Code is "decode.failed" or "measure.failed");
+    }
+
     // The Segment's CRC-32 covers every Cluster: the same file with a CRC-32 that holds withholds nothing, and one that does not withholds every block.
     [Theory]
     [InlineData(false, 0)]

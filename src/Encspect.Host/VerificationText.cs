@@ -14,7 +14,7 @@ public static class VerificationText
         ArgumentNullException.ThrowIfNull(verification);
 
         var parts = new List<string>();
-        string? lead = verification.IsVerified == true && verification.IsLossy ? "lossy stream" : verification.WithCorrection ? "with correction file" : null;
+        string? lead = verification.IsVerified == true && verification.IsLossy ? "lossy stream" : verification.IsCorrected ? "with correction file" : null;
 
         bool anyProblem = false;
         foreach (ChecksumTally tally in verification.Checksums.Where(t => t.Stored > 0))
@@ -55,7 +55,7 @@ public static class VerificationText
         verification is { Decoding: DecodeStatus.Decoded, IsLossy: true } && tally.Checked == 0
         && verification.Checksums.Where(t => t.Stored > 0 && t.Covers == ChecksumCoverage.DecodedAudio && t != tally).All(t => t.NotChecked == 0)
             ? "the stream decodes to lossy audio, and the checksum is of the lossless audio"
-            : verification is { Decoding: DecodeStatus.Decoded, WithCorrection: true } && tally.Covers == ChecksumCoverage.DecodedAudio
+            : verification is { Decoding: DecodeStatus.Decoded, IsCorrected: true } && tally.Covers == ChecksumCoverage.DecodedAudio
                 ? "a block was decoded without its correction block, or the decoded stream is incomplete: a frame was not decoded, a frame is missing, or the samples differ from the stated count"
                 : Reason(verification.Decoding);
 

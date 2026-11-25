@@ -1,12 +1,12 @@
 {
- "description": "A mono sine of 125 Hz at 8 kHz, 24-bit: 2 s at -6 dBFS, then two quiet tones of 4 s whose blocks straddle the relative gate within one 0.01 LU step (amplitudes differing by 0.02 %): only the first quiet tone passes the gate, -14.9 LUFS.",
+ "description": "A mono sine of 125 Hz at 8 kHz, 24-bit: 2 s at -6 dBFS, then two quiet tones of 4 s whose blocks straddle the relative gate within one 0.01 LU step (amplitudes differing by 0.02 %): only the first quiet tone passes the gate, -15.1 LUFS.",
  "length": 84135,
  "construction": {
   "cutoff_hz": null,
   "unspecified": true,
   "loudness": {
    "straddle": true,
-   "integrated": -14.9,
+   "integrated": -15.1,
    "tolerance": 0.1,
    "source": "BS.1770-5 equation 7, each block on its own"
   }
@@ -100,6 +100,7 @@
    "row_shares": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, null, null, null, null, null, null]
   },
   "mid_side": null,
+  "coherence": null,
   "levels": {
    "bits": 24,
    "bits_in_use": 24,
@@ -145,27 +146,27 @@
    "weights": [100],
    "blocks": 107,
    "momentary": {
-    "tenths": -102,
+    "tenths": -104,
     "absence": "none"
    },
    "short_term": {
-    "tenths": -120,
+    "tenths": -122,
     "absence": "none"
    },
    "blocks_above_absolute_gate": 105,
    "blocks_above_relative_gate": 56,
    "integrated": {
-    "tenths": -149,
+    "tenths": -151,
     "absence": "none"
    },
    "range": {
     "tenths": 153,
     "absence": "none"
    },
-   "range_low_tenths": -282,
-   "range_high_tenths": -129,
+   "range_low_tenths": -284,
+   "range_high_tenths": -131,
    "short_term_values": 81,
-   "short_term_first_tenths": -120
+   "short_term_first_tenths": -122
   },
   "true_peak": {
    "oversampling": 4,

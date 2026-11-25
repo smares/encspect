@@ -8,8 +8,8 @@ The order follows two rules: formats whose audio the existing parsers and decode
 
 - **TAK and OptimFROG:** what their headers reveal. OptimFROG and TAK are done ([optimfrog.md](optimfrog.md), [tak.md](tak.md)).
 - **Encoder settings:** where a header stores them (OptimFROG's mode and speedup, TAK's preset), they are read and named, once a verifiable source and files the encoders write confirm the fields.
-- **OptimFROG DualStream:** an `.ofs` is named "OptimFROG" with a claim that it is the lossy part of a DualStream (low confidence from the data blocks' reserved bytes, medium when the file name ends in `.ofs`), and a correction file opened alone "OptimFROG correction data"; the pair is checked in 0.4 with WavPack's ([tak-optimfrog-headers.md](../design/tak-optimfrog-headers.md#optimfrog-dualstream)).
-- **Why no deeper in 0.2:** both are poorly documented. TAK gets a decoder in 0.4 through a clean-room description of FFmpeg's decoder; OptimFROG has no open source for its coding, so no decoder is planned ([plan](../plan.md#not-planned)).
+- **OptimFROG DualStream:** an `.ofs` is named "OptimFROG" with a claim that it is the lossy part of a DualStream (low confidence from the data blocks' reserved bytes, medium when the file name ends in `.ofs`), and a correction file opened alone "OptimFROG correction data"; the pair is checked with WavPack's, as built in 0.4 ([tak-optimfrog-headers.md](../design/tak-optimfrog-headers.md#optimfrog-dualstream)).
+- **Why no deeper in 0.2:** both are poorly documented. TAK got a decoder in 0.4 through a clean-room description of FFmpeg's decoder ([tak.md](tak.md)); OptimFROG has no open source for its coding, so no decoder is planned ([plan](../plan.md#not-planned)).
 
 ## After 0.5: more formats
 
@@ -49,6 +49,7 @@ Later milestones, in this order.
 
 - **What:** the `.amr` storage format, and 3GP's `samr` and `sawb` entries in the MP4 routes.
 - **Specifications:** RFC 4867 for the storage format; 3GPP TS 26.101 and 26.201 (free) for the frames.
+- **Reference code** (the lead, 2026-11-23): opencore-amr (sourceforge.net/projects/opencore-amr), the AMR codecs extracted from the Android Open Source Project under the Apache License 2.0: OpenCORE's AMR-NB decoder and encoder and AMR-WB decoder, and VisualOn's AMR-WB encoder (vo-amrwbenc, whose license is read when the item starts). The decoders follow it with its notice; its encoders write fixtures.
 
 ### 7. MPEG-4 ALS
 
@@ -118,6 +119,13 @@ Later milestones, in this order.
 - **Specification:** none; the repository holds the source of 0.1.9, while the releases are at 1.6.1 (Windows x64 binaries).
 - **Why late:** no stated file signature and no statement that the format is stable (the levels were renumbered in 0.5.7); it starts once the source of the current format is published or the format is stated stable.
 - **Fixtures:** the release's own encoder, whose MIT license allows committing its output.
+
+### 17. LC3 and LC3plus
+
+- **What:** the Low Complexity Communication Codec of Bluetooth LE Audio, and LC3plus.
+- **Specifications:** the Bluetooth SIG's LC3 specification and ETSI TS 103 634 (LC3plus), both free.
+- **Reference code:** Google's liblc3 (github.com/google/liblc3, Apache 2.0), which implements both; the decoder follows it with its notice.
+- **Fixtures:** liblc3's tools `elc3` and `dlc3`. Their files use the non-standard format of the reference encoder and decoder tools, as liblc3's README says, so the format they write is the one read first, and any other container (such as LC3 in MP4 or Matroska) when one is found.
 
 ## Not planned
 

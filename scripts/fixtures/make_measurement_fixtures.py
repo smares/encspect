@@ -411,6 +411,42 @@ def build():
     add("stereo-independent-noise", "Stereo with white noise from two generators in the channels, -20 dBFS RMS each: the mid and side spectra are alike.",
         [quantize(white(n44, 95, -20.0), 16), quantize(white(n44, 96, -20.0), 16)], rate44, 16, {"cutoff_hz": None, "no_cutoff": True, "mid_and_side_alike": True})
 
+    # Inter-channel coherence (docs/design/spectral-analysis.md, Step 8), 0.6 s (11 frames) of lines at the bin centers in each channel, each with TPDF dither of one least significant bit:
+    # a side 12 dB under the mid (the coherence of the two channels is about 0.78, 79 % at the top band: none found), independent low bands under 3.9 kHz with the same high signal above 4.1 kHz in both
+    # channels at half the level in the right (coherence 1: a run from about 4 kHz), the same with the right's factor alternating between 1 and a half every 384 samples (a Layer II scale
+    # factor part) and every 1,152 (a Layer III granule pair), with its sign flipping every 960 samples (the sign that cancels the cross-spectrum: none found), and the right channel the
+    # left delayed by 1 ms (the phase turns once round a kilohertz: none found).
+    short = int(rate44 * 0.6)
+    mid_c, side_c = lines(rate44, 20000, -20.0, 111, short), lines(rate44, 20000, -32.0, 112, short)
+    add("coherence-side-12-db", "Stereo, 0.6 s: left is mid + side and right mid - side, the mid signal lines at the bin centers from 40 Hz to 20 kHz (-20 dBFS RMS) and the side signal lines 12 dB lower, "
+        "each channel with TPDF dither of one least significant bit: the coherence of the pair is about 0.78 (79 % at the top band), so no inter-channel coherence is found.",
+        [quantize([a + b for a, b in zip(mid_c, side_c)], 16, dither_seed=113), quantize([a - b for a, b in zip(mid_c, side_c)], 16, dither_seed=114)], rate44, 16,
+        {"cutoff_hz": None, "unspecified": True, "coherence_from_hz": None})
+    low_l, low_r = lines(rate44, 3900, -20.0, 115, short), lines(rate44, 3900, -20.0, 116, short)
+    high = lines(rate44, 20000, -20.0, 117, short, lowest_hz=4100.0)
+
+    def shaped(gains):
+        return [h * g for h, g in zip(high, gains)]
+
+    steady = [0.5] * short
+    cases = [
+        ("coherence-above-4000", "the right channel's high signal half the left's all the time", steady, "a run of coherence 1 from about 4 kHz", 4000),
+        ("coherence-factor-384", "the right channel's high factor alternating between 1 and 0.5 every 384 samples", [1.0 if (i // 384) % 2 == 0 else 0.5 for i in range(short)],
+         "a run from about 4 kHz (the coherence of a factor that changes is 0.9)", 4000),
+        ("coherence-factor-1152", "the right channel's high factor alternating between 1 and 0.5 every 1,152 samples", [1.0 if (i // 1152) % 2 == 0 else 0.5 for i in range(short)],
+         "a run from about 4 kHz (0.9)", 4000),
+        ("coherence-sign-960", "the right channel's high signal flipping its sign every 960 samples", [0.5 if (i // 960) % 2 == 0 else -0.5 for i in range(short)],
+         "none found: the sign flips cancel the cross-spectrum", None),
+    ]
+    for name, what, gains, result, from_hz in cases:
+        add(name, f"Stereo, 0.6 s: independent lines under 3.9 kHz in each channel and the same lines from 4.1 kHz to 20 kHz in both, -20 dBFS RMS, {what}, each channel with TPDF dither of one least significant bit: {result}.",
+            [quantize([a + b for a, b in zip(low_l, high)], 16, dither_seed=118), quantize([a + b for a, b in zip(low_r, shaped(gains))], 16, dither_seed=119)], rate44, 16,
+            {"cutoff_hz": None, "unspecified": True, "coherence_from_hz": from_hz})
+    full = lines(rate44, 20000, -20.0, 121, short + 44)
+    add("coherence-delay-1-ms", "Stereo, 0.6 s: lines at the bin centers from 40 Hz to 20 kHz in the left channel and the same signal 44 samples (1 ms) later in the right, each channel with TPDF dither of one least significant bit: "
+        "the phase of the cross-spectrum turns once round a kilohertz, so no inter-channel coherence is found.",
+        [quantize(full[44:], 16, dither_seed=122), quantize(full[:short], 16, dither_seed=123)], rate44, 16, {"cutoff_hz": None, "unspecified": True, "coherence_from_hz": None})
+
     # Spectral holes (Step 7 (d)): lines at every bin center to 20 kHz with bands of 2, 4, 8 and 16 rows (4 bins a row at 4,096 points) left out in every frame, at rows 80, 160, 240 and 360;
     # a row of a band that is next to content reads the window's leakage, so only the inner rows are holes (none for the band of 2 rows). And one band of 8 rows at row 200 left out in the second half of the stream only.
     bands = [(80 * 4, 2 * 4), (160 * 4, 4 * 4), (240 * 4, 8 * 4), (360 * 4, 16 * 4)]
@@ -793,13 +829,13 @@ def add_loudness():
     # bin whole is wrong by up to -10 log10(1 - p) LU, here by 2 LU). 24-bit, so that two tones 0.02 % apart in amplitude are still different codes: 2 s at
     # -6 dBFS, then 4 s each at amplitudes 580,220 x (1 + 1e-4) and x (1 - 1e-4) of 2^23 codes, 0.5 s of silence between. 580,220 was found by bisection on
     # the gate: the gate (10 LU below the mean of the 105 blocks above -70 LUFS) lies between the two quiet tones' blocks, 4258.389 and 4258.563 in
-    # floor(1000 log10(z) + 6930.9) with the gate at 4258.468: one bin. 56 blocks pass (the loud tone's and the first quiet tone's): -14.9 LUFS; all 105
-    # would read -16.9 and the loud tone alone -10.6.
+    # floor(1000 log10(z) + 6930.9) with the gate at 4258.468: one bin. 56 blocks pass (the loud tone's and the first quiet tone's): -15.1 LUFS; all 105
+    # would read about -17.1 and the loud tone alone about -10.8 (0.2 LU lower than before the K-weighting at 8 kHz kept the 48 kHz passband gain, decision 13).
     def quiet(amplitude, seconds):
         return [round(amplitude * math.sin(2 * math.pi * low * i / r8)) for i in range(int(seconds * r8))]
     straddle = quantize(tone(r8, 2.0, -6.0, low), 24) + [0] * (r8 // 2) + quiet(580220 * (1 + 1e-4), 4.0) + [0] * (r8 // 2) + quiet(580220 * (1 - 1e-4), 4.0)
-    add("loudness-gate-straddle-8000", "A mono sine of 125 Hz at 8 kHz, 24-bit: 2 s at -6 dBFS, then two quiet tones of 4 s whose blocks straddle the relative gate within one 0.01 LU step (amplitudes differing by 0.02 %): only the first quiet tone passes the gate, -14.9 LUFS.",
-        [straddle], r8, 24, dict(unspecified, loudness={"straddle": True, "integrated": -14.9, "tolerance": 0.1, "source": "BS.1770-5 equation 7, each block on its own"}))
+    add("loudness-gate-straddle-8000", "A mono sine of 125 Hz at 8 kHz, 24-bit: 2 s at -6 dBFS, then two quiet tones of 4 s whose blocks straddle the relative gate within one 0.01 LU step (amplitudes differing by 0.02 %): only the first quiet tone passes the gate, -15.1 LUFS.",
+        [straddle], r8, 24, dict(unspecified, loudness={"straddle": True, "integrated": -15.1, "tolerance": 0.1, "source": "BS.1770-5 equation 7, each block on its own"}))
 
     # Back channels: 7.1 has a rear pair (weight 1.00) beside its side pair, 5.1 a surround pair (1.41); the same tone in the back pair reads 1.49 dB louder in 5.1.
     back = quantize(tone(r8, 0.8, -20.0, low), 16)

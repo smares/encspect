@@ -140,6 +140,13 @@ public class SamplesDefinitionTests
         ["monkeys-audio/built-frame-data-bytes-too-small.decode.json"] = "frame 2 ends in a partial word past the descriptor's size, is flagged cut and decodes in full",
         #endregion
 
+        #region Musepack
+        ["musepack/sv6-seek-tag.decode.json"] = Reasons.musepacksv6,
+        ["musepack/derived-mppsv5-vbr-as-sv6.decode.json"] = Reasons.musepacksv6,
+        ["musepack/sv6-padding-word.decode.json"] = Reasons.musepacksv6,
+        ["musepack/sv6-last-frame-samples-invalid.decode.json"] = Reasons.musepacksv6,
+        #endregion
+
         #region ALAC
         ["alac/built-channels-missing.decode.json"] = "the frame holds elements for fewer channels than the cookie states, and the decoder does not decode it (decode.frame-invalid) though the parser counts its samples",
         ["alac/built-element-samples-differ.decode.json"] = "the frame's elements state different sample counts, and the decoder does not decode it (decode.frame-invalid) though the parser counts its samples",
@@ -147,6 +154,26 @@ public class SamplesDefinitionTests
         ["alac/built-tuning-kb-zero.decode.json"] = "every compressed frame is unreadable for the cookie's maximum Golomb parameter (alac.tuning-invalid), which the parser does not count as lost samples, and none is decoded",
         #endregion
     };
+
+    // The decoded samples of the streams of a decode golden: the lossless decoders' golden holds one `verification`, the lossy decoders' a `streams` array (one entry per decoded
+    // stream, in the report's order).
+    private static List<(string Decoding, long Samples)> DecodedStreams(JsonElement root)
+    {
+        var found = new List<(string, long)>();
+        if (root.TryGetProperty("verification", out JsonElement verification))
+        {
+            found.Add((verification.GetProperty("decoding").GetString()!, verification.GetProperty("decodedSamples").GetInt64()));
+        }
+        else if (root.TryGetProperty("streams", out JsonElement streams))
+        {
+            foreach (JsonElement stream in streams.EnumerateArray())
+            {
+                found.Add((stream.GetProperty("decoding").GetString()!, stream.GetProperty("decodedSamples").GetInt64()));
+            }
+        }
+
+        return found;
+    }
 
     [Fact]
     public void DecodedSamplesNeverExceedTheCodedStageLessTheLostSamples()
@@ -162,28 +189,28 @@ public class SamplesDefinitionTests
             }
 
             using JsonDocument decode = JsonDocument.Parse(File.ReadAllText(path));
-            if (!decode.RootElement.TryGetProperty("verification", out JsonElement verification))
-            {
-                continue;
-            }
-
+            List<(string Decoding, long Samples)> decodedStreams = DecodedStreams(decode.RootElement);
             Scan scan = ReadGolden(reportPath);
-            if (scan.Streams.Count != 1)
+            if (decodedStreams.Count == 0 || scan.Streams.Count != decodedStreams.Count)
             {
                 continue;
             }
 
-            compared++;
-            long decoded = verification.GetProperty("decodedSamples").GetInt64();
-            (long samples, long lost, _) = scan.Streams[0];
-            long coded = Math.Max(samples, scan.Coded);
-            if (decoded > coded - lost && !InvariantExceptions.ContainsKey(Path.GetRelativePath(Fixtures.FixtureDirectory, path).Replace('\\', '/')))
+            string name = Path.GetRelativePath(Fixtures.FixtureDirectory, path).Replace('\\', '/');
+            for (int i = 0; i < decodedStreams.Count; i++)
             {
-                failures.Add($"{Path.GetRelativePath(Fixtures.FixtureDirectory, path)}: decoded {decoded}, coded stage {coded}, lost {lost}");
+                compared++;
+                long decoded = decodedStreams[i].Samples;
+                (long samples, long lost, _) = scan.Streams[i];
+                long coded = Math.Max(samples, scan.Coded);
+                if (decoded > coded - lost && !InvariantExceptions.ContainsKey(name))
+                {
+                    failures.Add($"{name}: stream {i} decoded {decoded}, coded stage {coded}, lost {lost}");
+                }
             }
         }
 
-        Assert.True(compared > 700, $"Only {compared} decode goldens were compared.");
+        Assert.True(compared > 1700, $"Only {compared} decoded streams were compared.");
         Assert.Empty(failures);
     }
 
@@ -254,7 +281,6 @@ public class SamplesDefinitionTests
 
         #region TAK
         ["tak/built-cut-metadata.decode.json"] = Reasons.tak,
-        ["tak/built-object-past-data.decode.json"] = Reasons.tak,
         #endregion
 
         #region WavPack
@@ -300,6 +326,9 @@ public class SamplesDefinitionTests
 
         public const string truehd =
             "the decoder refuses units that the parser reads without flagging them (a change of the stream's parameters, an odd-length end trimmed from the samples)";
+
+        public const string musepacksv6 =
+            "after the last frame of an SV6 stream whose last frame gives no samples (0) or more than 670, libmpcdec 1.2.6 synthesizes one more frame of no coded subband, the synthesis filter's decay (mpc_decoder_decode_internal), and outputs the samples the stream states from it; the decoder decodes that frame too, so its decoded samples at the coded stage, before the trimming, are one frame more than the frames the stream codes (the cross-check finds the output of libmpcdec and of the decoder equal)";
 
         public const string wavpackdsd =
             "the stream decodes to DSD, which counts at the DSD rate and decodes to one eighth";

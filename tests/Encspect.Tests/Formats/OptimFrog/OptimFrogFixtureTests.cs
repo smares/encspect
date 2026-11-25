@@ -111,7 +111,7 @@ public class OptimFrogFixtureTests
         Assert.Equal(CorrectionBasis.Structure, pairing.Basis);
         bool isConsistent = pairing.Status == CorrectionStatus.Consistent;
         Assert.Equal(isConsistent, manifest.GetProperty("verification").TryGetProperty("with_correction", out JsonElement with) && with.GetBoolean());
-        Assert.Equal(isConsistent, stream.Verification!.WithCorrection);
+        Assert.Equal(isConsistent, stream.Verification!.IsCorrected);
         if (!manifest.TryGetProperty("companion", out JsonElement companion))
         {
             Assert.Equal(CorrectionStatus.Unchecked, pairing.Status);

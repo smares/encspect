@@ -74,7 +74,7 @@ public sealed record StreamVerification
 
     // True where the checksums vouch for the stream together with its correction file (a consistent pair): the text output and the front ends then say
     // "with correction file". The host copies it from DecodeSetup.HasCorrection.
-    public bool WithCorrection { get; init; }
+    public bool IsCorrected { get; init; }
 
     public IReadOnlyList<ChecksumTally> Checksums { get; init; } = [];
 

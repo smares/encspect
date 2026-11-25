@@ -192,7 +192,7 @@
             "unit": "Hz"
           },
           "step": {
-            "value": 1,
+            "value": 0.9,
             "unit": "dB"
           },
           "framesShowing": 0,
@@ -253,6 +253,28 @@
             "values": "sha256:3340419846d9a674d52630c299b612e977835b10e511662e022fab3b8e1f7c9f"
           }
         }
+      },
+      "coherence": {
+        "leftChannel": 0,
+        "rightChannel": 1,
+        "frames": 47,
+        "isFound": false,
+        "reason": "notCoherent",
+        "topBand": {
+          "value": 0,
+          "unit": "%"
+        },
+        "rows": {
+          "unit": "%",
+          "valuesPerUnit": 10,
+          "values": "sha256:7453b632fdb1fe6b8c9547aca80e4bdd58b5ca749f11e57119289f6bfc9e4166"
+        },
+        "shares": {
+          "unit": "%",
+          "valuesPerUnit": 10,
+          "values": "sha256:50555e0925b6c3ea359bc0ca552aa6400e5ac0d386d0d5bf9c33bab7b99f777b"
+        },
+        "stated": null
       }
     },
     "levels": {
@@ -378,7 +400,7 @@
     "loudness": {
       "channelWeights": [1, 1],
       "integratedLoudness": {
-        "value": 1.2,
+        "value": 1.1,
         "unit": "LUFS"
       },
       "loudnessRange": {

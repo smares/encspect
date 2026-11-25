@@ -6,7 +6,7 @@ namespace Encspect.Formats.Tak;
 // The walk over the metadata objects (takStream.pas, "MetaData"): after the stream ID each object is a header of 4 bytes (a 7-bit ID, a reserved bit, a 24-bit size), the data and
 // the CRC-24 that ends it, which the size counts; the End object (ID 0) has neither. The walk ends at the End object, or, where it is missing, at the first frame: a frame's sync word
 // 0xA0FF is stored as the bytes FF A0, which read as an object header give ID 127 with the reserved bit set and a size made of the 24 bits after that byte (A0 and the next two bytes), so a frame is tested first, and only a header whose
-// CRC-24 holds counts. It never stops on a signature alone.
+// CRC-24 holds counts. It never stops on a signature alone. An object whose size runs past the data is searched for the first such frame, where the audio then starts.
 internal static class Walk
 {
     private const int ReadChunk = 1 << 16;
@@ -69,6 +69,17 @@ internal static class Walk
             r.Objects.Add(o);
             if (o.IsCut)
             {
+                // The stated size runs past the data: the frames may begin inside the object, so the first frame header whose CRC-24 holds ends it there.
+                long found = new FrameScanner(reader, reader.End).FindStrict(dataAt);
+                if (found >= 0)
+                {
+                    o.Held = found - dataAt;
+                    r.ResyncedObject = o;
+                    r.AudioStart = found;
+                    r.FirstFrameHeaderLength = Layout.FrameHeaderLength(reader, found);
+                    return;
+                }
+
                 r.IsMetadataCut = true;
                 return;
             }

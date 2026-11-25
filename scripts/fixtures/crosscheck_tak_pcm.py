@@ -16,6 +16,15 @@ TAK's own decoder runs on Windows only (Takc.exe and the SDK's decoder library, 
   number of samples of what `Takc -d` decodes, in the canonical layout); the default is tests/fixtures/tak/sdk-decoded.json where it exists. Each record of an
   encoder-written file must equal the manifest's decoded_pcm_md5 and decoded_samples. Without a file the column is the provenance records alone.
 
+- Each record also holds `sdkRead`: the file opened with the SDK's decoder library and read with `tak_SSD_ReadAudio`, call by call (TakTools.cs, `TakSdk.ReadAll`), with the samples,
+  the result code and the position of each call, the damage callback's items and the MD5 of the PCM the calls returned in total. For an encoder-written file that MD5 and the
+  sample count must equal the manifest's, and no call may report an error; the script fails where they do not.
+- For every other committed TAK fixture that has a record (the damaged ones, `built-*`), the script lists the sample positions the SDK reports as damaged (the callback's items, and the
+  calls that returned tak_res_ssd_FrameDamaged) and the positions the analyzer's decoder withholds (the gaps between the runs PcmDump writes, and the samples missing at the end of the
+  stream), and says per file whether they agree or in what they differ. A file the SDK library refuses and the analyzer decodes no stream of is the same outcome, and where
+  neither side reports damage and the SDK returns every sample, PcmDump's MD5 must equal the SDK's. A difference fails the run unless the file is in EXPLAINED (a table of the
+  file and the reason, empty now: all 13 agree; docs/development.md, "TAK decoding (clean-room)"). `--no-damaged` leaves it out.
+
 For each file:
 
 - PcmDump writes the samples of the decoded stream, in the canonical layout and with the runs of positions they cover.
@@ -42,6 +51,90 @@ FIXTURES = ROOT / "tests" / "fixtures"
 DEFAULT_PCMDUMP = "dotnet " + str(ROOT / "tests" / "Encspect.PcmDump" / "bin" / "Release" / "net10.0" / "Encspect.PcmDump.dll")
 DEFAULT_RECORDS = FIXTURES / "tak" / "sdk-decoded.json"
 FORMATS = {8: ("int8", "s8"), 16: ("int16", "s16le"), 24: ("int24", "s24le")}
+
+
+def merge(intervals):
+    """Sorted, merged [start, end) intervals; empty ones are dropped."""
+    out = []
+    for start, end in sorted(i for i in intervals if i[1] > i[0]):
+        if out and start <= out[-1][1]:
+            out[-1][1] = max(out[-1][1], end)
+        else:
+            out.append([start, end])
+    return out
+
+
+def subtract(a, b):
+    """The parts of the merged intervals a that the merged intervals b do not cover."""
+    out = []
+    for start, end in a:
+        cursor = start
+        for b_start, b_end in b:
+            if b_end <= cursor or b_start >= end:
+                continue
+            if b_start > cursor:
+                out.append([cursor, b_start])
+            cursor = max(cursor, b_end)
+        if cursor < end:
+            out.append([cursor, end])
+    return out
+
+
+def sdk_damage(read):
+    """The [start, end) sample intervals the SDK reports as damaged in a `sdkRead` record: the callback's items and the calls that returned tak_res_ssd_FrameDamaged (3)."""
+    intervals = [[d["position"], d["position"] + d["samples"]] for d in read.get("damage") or []]
+    calls = []
+    for call in read.get("calls", []):
+        if call.get("result") == 3:
+            end = max(call["positionAfter"], call["position"] + call["read"])
+            calls.append([call["position"], end])
+    return merge(intervals), merge(calls)
+
+
+def analyzer_withheld(runs, total):
+    """The [start, end) positions of 0 .. total that no run of the analyzer's decoder covers."""
+    return subtract([[0, total]], merge([[start, start + length] for start, length in runs]))
+
+
+# The damaged fixtures whose outcome differs from the SDK's on purpose, each with the reason; a difference of any other file fails the run. Empty: all 13 agree.
+EXPLAINED = {}
+
+
+def damaged_report(path, read, total, runs, dumped_md5=None):
+    """(agree, text) for one damaged file: the SDK's damaged intervals against the analyzer's withheld ones."""
+    if "error" in read:
+        return None, f"the SDK library did not read the file ({read['error']}); the analyzer decodes {sum(length for _, length in runs)} of {total} samples"
+    items, calls = sdk_damage(read)
+    sdk = merge(items + calls)
+    mine = analyzer_withheld(runs, total)
+    lines = []
+    if items != calls:
+        lines.append(f"the SDK's callback items {items} differ from its damaged calls {calls}")
+    if read.get("fatalResult"):
+        lines.append(f"the SDK stops at a fatal result {read['fatalResult']} after {read.get('samples')} samples")
+    if sdk == mine and not lines and not sdk and read.get("samples") == total and dumped_md5 is not None and read.get("pcmMd5") != dumped_md5:
+        return False, f"differ: the SDK and the analyzer report no damage, but the MD5 of the samples differ (SDK {read.get('pcmMd5')}, analyzer {dumped_md5})"
+    if sdk == mine and not lines:
+        return True, f"agree: the SDK reports {sdk or 'no damage'} and the analyzer withholds {mine or 'nothing'} (SDK returned {read.get('samples')} of {total} samples)"
+    only_sdk, only_mine = subtract(sdk, mine), subtract(mine, sdk)
+    lines.append(f"SDK damaged {sdk}, analyzer withholds {mine}; only the SDK: {only_sdk}, only the analyzer: {only_mine}; SDK returned {read.get('samples')} of {total} samples")
+    return sdk == mine, "differ: " + "; ".join(lines)
+
+
+def read_problems(manifest, record):
+    """The encoder-written file against the SDK's audio read of it."""
+    read = record.get("sdkRead") if record else None
+    if read is None:
+        return []
+    if "error" in read:
+        return [f"the SDK's audio read failed: {read['error']}"]
+    problems = []
+    if read.get("pcmMd5") != manifest["decoded_pcm_md5"] or read.get("samples") != manifest["decoded_samples"]:
+        problems.append(f"tak_SSD_ReadAudio returns {read.get('samples')} samples with MD5 {read.get('pcmMd5')}, the manifest says {manifest['decoded_samples']} and {manifest['decoded_pcm_md5']}")
+    bad = [c for c in read.get("calls", []) if c.get("result")]
+    if bad or read.get("damage"):
+        problems.append(f"tak_SSD_ReadAudio reports damage or errors in an encoder-written file: {bad[:3]} {(read.get('damage') or [])[:3]}")
+    return problems
 
 
 def default_files():
@@ -92,7 +185,54 @@ def sdk_problems(path, manifest, provenance, records):
             problems.append(f"{path.name} has no record in the SDK records")
         elif record.get("pcmMd5") != manifest["decoded_pcm_md5"] or record.get("samples") != manifest["decoded_samples"]:
             problems.append(f"Takc -d decodes {record.get('samples')} samples with MD5 {record.get('pcmMd5')}, the manifest says {manifest['decoded_samples']} and {manifest['decoded_pcm_md5']}")
+        problems += read_problems(manifest, record)
     return problems
+
+
+def damaged_files(records):
+    """The committed TAK fixtures that are not encoder-written and have a record with an audio read, as paths."""
+    names = sorted(n for n, r in (records or {}).get("files", {}).items() if not n.startswith("external-") and "sdkRead" in r)
+    return [FIXTURES / "tak" / n for n in names if (FIXTURES / "tak" / n).exists()]
+
+
+def report_damaged(args, records, base):
+    """Prints, for every other committed fixture, how the SDK's damage positions and the analyzer's withheld ones compare; returns (agreed, the names that differ and are not in EXPLAINED, the names in EXPLAINED that agree)."""
+    agreed = 0
+    unexplained = []
+    needless = []
+    for index, path in enumerate(damaged_files(records)):
+        record = records["files"][path.name]
+        manifest = manifest_of(path)
+        total = (manifest.get("stream_info") or {}).get("samples") or 0
+        dump = base / f"damaged-{index}"
+        result = subprocess.run(shlex.split(args.pcmdump) + [str(dump), str(path)], capture_output=True)
+        streams = []
+        dump_manifest = dump / f"0000-{path.name}.pcm.json"
+        if result.returncode == 0 and dump_manifest.exists():
+            streams = json.loads(dump_manifest.read_text())["streams"]
+        read = record["sdkRead"]
+        if len(streams) != 1:
+            if not streams and "error" in read:
+                print(f"same {path.name}: agree: the SDK library refuses the file ({read['error']}) and the analyzer decodes no stream")
+                agreed += 1
+                continue
+            print(f"differ {path.name}: the analyzer decodes {len(streams)} streams (PcmDump exit {result.returncode}); the SDK read {read.get('samples', read.get('error'))} samples")
+            if path.name not in EXPLAINED:
+                unexplained.append(path.name)
+            continue
+        pcm = dump / streams[0]["pcm"] if "pcm" in streams[0] else None
+        dumped_md5 = hashlib.md5(pcm.read_bytes()).hexdigest() if pcm is not None and pcm.exists() else None
+        agree, text = damaged_report(path, read, total, streams[0]["runs"], dumped_md5)
+        print(f"{'same' if agree else 'differ'} {path.name}: {text}")
+        if agree:
+            agreed += 1
+            if path.name in EXPLAINED:
+                needless.append(path.name)
+        elif path.name in EXPLAINED:
+            print(f"     explained: {EXPLAINED[path.name]}")
+        else:
+            unexplained.append(path.name)
+    return agreed, unexplained, needless
 
 
 def main(argv=None):
@@ -101,6 +241,7 @@ def main(argv=None):
     parser.add_argument("--pcmdump", default=DEFAULT_PCMDUMP)
     parser.add_argument("--ffmpeg", default="ffmpeg")
     parser.add_argument("--sdk-records", type=pathlib.Path, default=DEFAULT_RECORDS)
+    parser.add_argument("--no-damaged", action="store_true", help="leave out the report on the damaged fixtures")
     parser.add_argument("--keep", type=pathlib.Path, help="keep the dumps and the references in this folder")
     args = parser.parse_args(argv)
     files = args.files or default_files()
@@ -152,6 +293,15 @@ def main(argv=None):
                 compared += 1
                 column = "Takc -d (records) and ffmpeg" if records is not None else "Takc -d (the provenance's decode check) and ffmpeg"
                 print(f"ok   {path.name}: {entry['samples']} samples per channel equal {column}")
+        if not args.no_damaged and records is not None:
+            agreed, unexplained, needless = report_damaged(args, records, base)
+            print(f"damaged fixtures against the SDK's audio read: {agreed} agree, {len(unexplained)} differ and are not explained")
+            if unexplained:
+                print("FAIL: " + ", ".join(unexplained) + " differ from the SDK's read and are not in EXPLAINED")
+                failed += 1
+            if needless:
+                print("FAIL: " + ", ".join(needless) + " agree with the SDK's read, so their EXPLAINED entries are not needed: remove them")
+                failed += 1
     if compared == 0:
         print("FAIL: no stream was compared")
         return 1

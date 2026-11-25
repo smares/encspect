@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Tests of changes.py against the repository's own scripts: python3 scripts/ci/test_changes.py"""
 
+import json
 import pathlib
 import re
 import subprocess
@@ -329,6 +330,19 @@ class ChangesTests(unittest.TestCase):
         self.assertEqual(len(changes.platforms("schedule")), 6)
         self.assertEqual(len(changes.platforms("workflow_dispatch")), 6)
 
+    def test_a_pull_request_runs_one_macos_job_and_no_macos_shard(self):
+        shards = changes.shard_config.load()
+        pr = changes.test_platforms("pull_request")
+        self.assertEqual([p["os"] for p in changes.platforms("pull_request") if p["os"].startswith("macos-")], ["macos-latest"])
+        self.assertFalse([p for p in pr if p["os"].startswith("macos-")])
+        self.assertEqual(len(pr), 3)
+        self.assertFalse([e for e in changes.test_matrix(pr, shards, False) if e["os"].startswith("macos-")])
+        for event in ("push", "schedule", "workflow_dispatch"):
+            self.assertEqual(changes.test_platforms(event), changes.platforms(event), event)
+            macos = {e["os"] for e in changes.test_matrix(changes.test_platforms(event), shards, event in changes.NIGHTLY_EVENTS)
+                     if e["os"].startswith("macos-")}
+            self.assertEqual(macos, {"macos-latest", "macos-15-intel"}, event)
+
     def test_the_linux_platforms_use_the_pinned_ubuntu_26_04_images(self):
         def labels(event):
             return [p["os"] for p in changes.platforms(event)]
@@ -354,11 +368,11 @@ class ChangesTests(unittest.TestCase):
         self.assertTrue(nightly)
         for event in ("pull_request", "push", "schedule", "workflow_dispatch"):
             include = event in changes.NIGHTLY_EVENTS
-            matrix = changes.test_matrix(changes.platforms(event), shards, include)
+            matrix = changes.test_matrix(changes.test_platforms(event), shards, include)
             names = {entry["shard"] for entry in matrix}
             for name in nightly:
                 self.assertEqual(name in names, include, (event, name))
-            self.assertEqual(len(matrix), len(changes.platforms(event)) * len(names), event)
+            self.assertEqual(len(matrix), len(changes.test_platforms(event)) * len(names), event)
 
     def test_a_shard_filter_without_the_nightly_tests_keeps_its_own_clauses(self):
         shards = changes.shard_config.load()
@@ -398,7 +412,7 @@ def named_paths(text, root_files=()):
 
 def scoped(*files, event="pull_request"):
     flags, reason, scope = changes.decide_with_scope(event, list(files))
-    return scope, reason, changes.test_matrix(changes.platforms(event), changes.shard_config.load(), event in changes.NIGHTLY_EVENTS, scope)
+    return scope, reason, changes.test_matrix(changes.test_platforms(event), changes.shard_config.load(), event in changes.NIGHTLY_EVENTS, scope)
 
 
 def shard_names(matrix):
@@ -447,8 +461,8 @@ class ScopeTests(unittest.TestCase):
         for path in ("src/Encspect.Formats.WavPack/WavPackParser.cs", "src/Encspect.Formats.WavPack/Decoding/WavPackDecoder.cs",
                      "tests/Encspect.Tests/Formats/WavPack/WavPackTests.cs", "tests/fixtures/wavpack/a.wv"):
             chosen, reason, matrix = scoped(path)
-            self.assertEqual(chosen.selected, {"WavPack", "Matroska", "Ape"}, path)
-            self.assertIn("unit tests scoped to WavPack, Ape, Matroska", reason)
+            self.assertEqual(chosen.selected, {"WavPack", "Matroska", "Ape", "Id3"}, path)
+            self.assertIn("unit tests scoped to WavPack, Ape, Id3, Matroska", reason)
             names = shard_names(matrix)
             self.assertNotIn("corrupt-c", names, "its classes belong to other formats, so nothing is left of it")
             self.assertIn("rest", names)
@@ -474,18 +488,18 @@ class ScopeTests(unittest.TestCase):
 
     def test_a_codec_change_scopes_to_the_containers_that_carry_it_and_a_tag_change_to_what_holds_the_tag(self):
         self.assertEqual(scoped("src/Encspect.Formats.Opus/OpusParser.cs")[0].selected, {"Opus", "Ogg", "Matroska", "Mp4", "VorbisComment"})
-        self.assertEqual(scoped("src/Encspect.Formats.Dts/DtsParser.cs")[0].selected, {"Dts", "Mp4", "Matroska", "Wav", "DtsHd"})
-        self.assertEqual(scoped("src/Encspect.Tags.Lyrics3/Lyrics3TagParser.cs")[0].selected, {"Lyrics3", "MpegAudio"})
+        self.assertEqual(scoped("src/Encspect.Formats.Dts/DtsParser.cs")[0].selected, {"Dts", "Mp4", "Matroska", "Wav", "DtsHd", "Ape", "Id3"})
+        self.assertEqual(scoped("src/Encspect.Tags.Lyrics3/Lyrics3TagParser.cs")[0].selected, {"Lyrics3", "MpegAudio", "OptimFrog"})
         self.assertIn("Aiff", scoped("src/Encspect.Formats.Wav/WavParser.cs")[0].selected)
 
     def test_several_areas_and_a_fixture_folder_of_a_container_select_its_codecs(self):
         chosen = scoped("src/Encspect.Formats.WavPack/WavPackParser.cs", "src/Encspect.Formats.Tta/TtaParser.cs", "docs/formats/tta.md")[0]
-        self.assertEqual(chosen.selected, {"WavPack", "Tta", "Matroska", "Ape"})
+        self.assertEqual(chosen.selected, {"WavPack", "Tta", "Matroska", "Ape", "Id3"})
         self.assertLessEqual({"Matroska", "Opus", "Vorbis", "WavPack", "Flac"}, scoped("tests/fixtures/matroska/a.mka")[0].selected)
 
     def test_a_scoped_run_drops_the_shards_it_leaves_no_test(self):
         _, _, matrix = scoped("src/Encspect.Formats.WavPack/WavPackParser.cs")
-        self.assertEqual(len(matrix), len(changes.platforms("pull_request")) * len(shard_names(matrix)))
+        self.assertEqual(len(matrix), len(changes.test_platforms("pull_request")) * len(shard_names(matrix)))
         self.assertLess(len(shard_names(matrix)), len([s for s in self.shards if not s.get("nightly")]))
 
     def test_whatever_is_not_an_area_runs_the_whole_suite(self):
@@ -508,7 +522,7 @@ class ScopeTests(unittest.TestCase):
         chosen, reason, matrix = scoped("src/Encspect.Formats.WavPack/WavPackParser.cs", "tests/Encspect.Tests/Host/MemoryTests.cs",
                                         "tests/Encspect.Tests/Decoding/DecoderChargeTests.cs", "tests/Encspect.Tests/Measurement/MeasurementTests.cs",
                                         "tests/Encspect.Tests/Core/NodeTests.cs", "tests/Encspect.Tests/Cli/CommandLineTests.cs")
-        self.assertEqual(chosen.selected, {"WavPack", "Matroska", "Ape"})
+        self.assertEqual(chosen.selected, {"WavPack", "Matroska", "Ape", "Id3"})
         corrupt_b = next(e["filter"] for e in matrix if e["shard"] == "corrupt-b")
         self.assertNotIn("MemoryTests.ManySpeexPacketsStayCompact", corrupt_b, "the changed file's classes run whole")
         only = scoped("tests/Encspect.Tests/Host/AnalyzerTests.cs")
@@ -542,7 +556,7 @@ class ScopeTests(unittest.TestCase):
         # With other changes, those decide.
         mixed = scoped("src/Encspect.Host/Topics/mid-side-stereo.md", "src/Encspect.Formats.WavPack/WavPackParser.cs")[0]
         self.assertIsNone(mixed.only)
-        self.assertEqual(mixed.selected, {"WavPack", "Matroska", "Ape"})
+        self.assertEqual(mixed.selected, {"WavPack", "Matroska", "Ape", "Id3"})
         self.assertIsNone(scoped("src/Encspect.Host/Topics/mid-side-stereo.md", "src/Encspect.Host/Analyzer.cs")[0])
         self.assertIsNone(scoped("src/Encspect.Host/Topics/mid-side-stereo.md", "tests/Encspect.Tests/Support/Fixtures.cs")[0])
 
@@ -567,8 +581,8 @@ class ScopeTests(unittest.TestCase):
         self.assertNotIn("Aiff", scoped("src/Encspect.Formats.Dts/DtsParser.cs")[0].selected)
         opus = scoped("src/Encspect.Formats.Opus/OpusParser.cs")[0].selected
         self.assertEqual(opus, {"Opus", "Ogg", "Matroska", "Mp4", "VorbisComment"})
-        self.assertEqual(scoped("src/Encspect.Formats.WavPack/WavPackParser.cs")[0].selected, {"WavPack", "Matroska", "Ape"})
-        self.assertEqual(scoped("src/Encspect.Tags.Ape/ApeTagParser.cs")[0].selected, {"Ape", "MonkeysAudio", "MpegAudio", "Musepack", "OptimFrog", "Tak", "Tta", "WavPack"})
+        self.assertEqual(scoped("src/Encspect.Formats.WavPack/WavPackParser.cs")[0].selected, {"WavPack", "Matroska", "Ape", "Id3"})
+        self.assertEqual(scoped("src/Encspect.Tags.Ape/ApeTagParser.cs")[0].selected, {"Ape", "Dts", "Flac", "Matroska", "MonkeysAudio", "MpegAudio", "Musepack", "Ogg", "OptimFrog", "Tak", "Tta", "WavPack"})
 
     def test_every_fixture_folder_lists_the_containers_of_its_files(self):
         containers = {"m4a": "Mp4", "mp4": "Mp4", "m4b": "Mp4", "3gp": "Mp4", "mov": "Mp4", "mka": "Matroska", "mkv": "Matroska", "webm": "Matroska",
@@ -629,7 +643,7 @@ class ScopeTests(unittest.TestCase):
 
     def test_documentation_and_fixture_scripts_do_not_widen_a_scope(self):
         chosen = scoped("src/Encspect.Formats.WavPack/WavPackParser.cs", "docs/formats/wavpack.md", "scripts/fixtures/make_wavpack_fixtures.py")[0]
-        self.assertEqual(chosen.selected, {"WavPack", "Matroska", "Ape"})
+        self.assertEqual(chosen.selected, {"WavPack", "Matroska", "Ape", "Id3"})
         self.assertIsNone(scoped("docs/formats/wavpack.md")[0])
 
     def test_a_deleted_script_runs_everything(self):
@@ -642,7 +656,7 @@ class ScopeTests(unittest.TestCase):
             self.assertIsNone(chosen)
             include = event in changes.NIGHTLY_EVENTS
             self.assertEqual([(e["shard"], e["filter"]) for e in matrix], [(s["name"], changes.shard_config.filter_for(self.shards, s["name"], include))
-                                                                             for p in changes.platforms(event) for s in self.shards if changes.shard_config.runs(s, include)])
+                                                                             for p in changes.test_platforms(event) for s in self.shards if changes.shard_config.runs(s, include)])
         _, _, chosen = changes.decide_with_scope("pull_request", None)
         self.assertIsNone(chosen)
 
@@ -725,6 +739,42 @@ class ScopeTests(unittest.TestCase):
                 if literal in text and area != tag:
                     self.assertIn(area, self.config["tags"][tag], f"{area} names the tag {literal}")
 
+
+
+class ShardGuardTests(unittest.TestCase):
+    """The last shard runs only the damaged-input classes it names, so a class a shard loses cannot fall into it unnoticed."""
+
+    def write(self, shards):
+        handle = tempfile.NamedTemporaryFile("w", suffix=".json", delete=False)
+        with handle:
+            json.dump({"note": "", "shards": shards}, handle)
+        self.addCleanup(pathlib.Path(handle.name).unlink)
+        return handle.name
+
+    def test_the_committed_split_leaves_no_damaged_input_class_to_the_rest_unnamed(self):
+        shards = changes.shard_config.load()
+        classes = {c for s in shards[:-1] for c in s["classes"]} | set(shards[-1].get("damagedInputClasses", []))
+        self.assertEqual([], changes.shard_config.damaged_input_in_rest(shards, classes))
+
+    def test_a_class_a_shard_lost_is_named(self):
+        path = self.write([{"name": "a", "classes": ["CorruptMpegFileTests"]},
+                           {"name": "rest", "classes": None, "damagedInputClasses": ["CorruptOggFileTests"]}])
+        shards = changes.shard_config.load(path)
+        found = changes.shard_config.damaged_input_in_rest(
+            shards, {"CorruptMpegFileTests", "CorruptOggFileTests", "CorruptLayerFileTests", "GoldenTests"})
+        self.assertEqual(["CorruptLayerFileTests"], found)
+
+    def test_only_the_last_shard_names_damaged_input_classes(self):
+        path = self.write([{"name": "a", "classes": ["CorruptMpegFileTests"], "damagedInputClasses": []},
+                           {"name": "rest", "classes": None}])
+        with self.assertRaises(SystemExit):
+            changes.shard_config.load(path)
+
+    def test_a_class_cannot_be_both_in_a_shard_and_meant_for_the_rest(self):
+        path = self.write([{"name": "a", "classes": ["CorruptMpegFileTests"]},
+                           {"name": "rest", "classes": None, "damagedInputClasses": ["CorruptMpegFileTests"]}])
+        with self.assertRaises(SystemExit):
+            changes.shard_config.load(path)
 
 
 if __name__ == "__main__":

@@ -41,6 +41,7 @@ jobs:
   # Decides, from the files a pull request changes, which jobs it needs (scripts/ci/changes.py). Every
   # job's output is named like the job; the aggregate job accepts a skipped job only when its output is
   # false. Anything but a pull request, and anything the script cannot place, runs everything.
+  # A pull request runs no macOS test shard (scripts/ci/changes.py, test_platforms: GitHub drops queued macOS jobs).
   changes:
     name: what changed
     runs-on: ubuntu-26.04
@@ -114,7 +115,8 @@ jobs:
         with:
           # The golden is the real report test_golden_additions.py checks the script against; the conformance
           # lists are what test_sources_plan.py lists the addresses of; the Matroska element table is what
-          # matroska_model.py, which test_alac_model.py imports, reads its schema from; src and the test sources are what test_changes.py checks areas.json against.
+          # matroska_model.py, which test_alac_model.py imports, reads its schema from; src and the test sources are what test_changes.py checks areas.json against;
+          # the six-channel TAK fixture is the file test_tak_sdk_pairs.py walks.
           sparse-checkout: |
             /docs/
             /scripts/
@@ -123,6 +125,7 @@ jobs:
             /README.md
             /CLAUDE.md
             /tests/fixtures/mpeg-audio/channel-mode-change.report.json
+            /tests/fixtures/tak/external-format-5.1-mask.tak
             /tests/conformance/
             /.github/workflows/sources.yml
           sparse-checkout-cone-mode: false
@@ -148,6 +151,7 @@ jobs:
           python3 scripts/ci/test_official_decoders.py
           python3 scripts/ci/test_compare_pcm.py
           python3 scripts/fixtures/test_crosscheck_ac3_coreaudio.py
+          python3 scripts/fixtures/test_tak_sdk_pairs.py
 
   build-test:
     name: build and test (${{ matrix.os }})
@@ -561,8 +565,8 @@ jobs:
         with:
           fetch-depth: 2
 
-      # Opt-in (docs/development.md, "Golden-change files"): only a pull request that adds or changes a
-      # tests/fixtures/*/golden-changes.json is checked; any other pull request passes it. The goldens it changes
+      # A pull request that changes more than 20 goldens needs a tests/fixtures/*/golden-changes.json (docs/development.md,
+      # "Golden-change files"); one that adds or changes such a file has its goldens checked against it. The goldens it changes
       # must differ from the base's only as the change files list.
       - name: Check the golden additions
         if: github.event_name == 'pull_request'

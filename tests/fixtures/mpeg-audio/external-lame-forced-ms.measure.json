@@ -17,8 +17,8 @@
       "rows": {
         "unit": "dB",
         "valuesPerUnit": 10,
-        "combined": "sha256:53584a6d2cad6b69cb9b754b992fa0f99f1807c986ac83dfbd57ff659f4f852a",
-        "perChannel": ["sha256:9b684d82fc00c63c82915602a73198bfa4b8a458062895fd6caa250c8b0f642d", "sha256:048f32f4555a58536ce6900eb3e1236bbd6ad2296e62c34a95855fb9936b2855"]
+        "combined": "sha256:5a71e1a4e66a194cad31dcb05b750c47789713a9362a5b767b021899806a9f05",
+        "perChannel": ["sha256:7e76a14e25d69e836182e60b577c12e06124e9f9a8fcd19233a8981361687a3d", "sha256:1c646f344d98ea1d92c683cdf3eed51df318922b9458b59d40aaad01e30ac7e4"]
       },
       "cutoff": {
         "isFound": false,
@@ -27,7 +27,7 @@
           "unit": "Hz"
         },
         "step": {
-          "value": 23.1,
+          "value": 23,
           "unit": "dB"
         },
         "framesShowing": 0,
@@ -122,7 +122,7 @@
             "unit": "dB"
           },
           "topStep": {
-            "value": -6.2,
+            "value": -6.3,
             "unit": "dB"
           },
           "slope": {
@@ -145,7 +145,7 @@
             "unit": "dB"
           },
           "topStep": {
-            "value": -1,
+            "value": -1.1,
             "unit": "dB"
           },
           "slope": {
@@ -164,10 +164,10 @@
         "framesWithSignal": 10
       },
       "holes": {
-        "holeCells": 873,
+        "holeCells": 880,
         "cellsWithSignal": 3150,
         "share": {
-          "value": 27.7,
+          "value": 27.9,
           "unit": "%"
         },
         "fromFrequency": {
@@ -181,7 +181,7 @@
         "rowShares": {
           "unit": "%",
           "valuesPerUnit": 10,
-          "values": "sha256:a3543761351c386c49f20f8cf16d7f60c489b0e71cb521e73815a4e815272006"
+          "values": "sha256:6355854a4980f96ee528c8ac5fb2cb166e2e7f0f602f76d957dc9e83459a9c6c"
         }
       },
       "midSide": {
@@ -190,8 +190,8 @@
         "rows": {
           "unit": "dB",
           "valuesPerUnit": 10,
-          "mid": "sha256:3b44320437e2b802d9d4415832b235e968b3ccc852f5b8a4a711ba797de78d14",
-          "side": "sha256:940c54543afdec4439866573e649fe738cd3720ac5f14ff5d4a9271224fb9cb6"
+          "mid": "sha256:9603e3da68379b645c5945e38f4616347fc9e958568869503692b87f0d15510a",
+          "side": "sha256:6404022c4feeaf517507639b04eb377fd914b74d3c5b4d87e3f9523dbd0222a9"
         },
         "midCutoff": {
           "isFound": false,
@@ -213,17 +213,17 @@
             "unit": "Hz"
           },
           "step": {
-            "value": 22.9,
+            "value": 23,
             "unit": "dB"
           },
           "framesShowing": 0,
           "framesWithSignal": 10
         },
         "midHoles": {
-          "holeCells": 949,
+          "holeCells": 945,
           "cellsWithSignal": 2792,
           "share": {
-            "value": 34,
+            "value": 33.8,
             "unit": "%"
           },
           "fromFrequency": {
@@ -237,11 +237,11 @@
           "rowShares": {
             "unit": "%",
             "valuesPerUnit": 10,
-            "values": "sha256:4f039e72e807d58523f4ae6addafc6144a5712e068efabccfcd4cc24f432669f"
+            "values": "sha256:cf84a09c5782748394bb94a5543c913e98336f2e909b49064341323a39ad54b5"
           }
         },
         "sideHoles": {
-          "holeCells": 1098,
+          "holeCells": 1097,
           "cellsWithSignal": 4085,
           "share": {
             "value": 26.9,
@@ -258,9 +258,31 @@
           "rowShares": {
             "unit": "%",
             "valuesPerUnit": 10,
-            "values": "sha256:e8d518ff147fcef077cb055c994b8ec13b269d97ff4f108774cd014d71dce990"
+            "values": "sha256:0ff1a1b9e5e0c0823ded364faf9b9e5bee56c6c4b8fce08531267bea15f60db0"
           }
         }
+      },
+      "coherence": {
+        "leftChannel": 0,
+        "rightChannel": 1,
+        "frames": 10,
+        "isFound": false,
+        "reason": "notCoherent",
+        "topBand": {
+          "value": 0,
+          "unit": "%"
+        },
+        "rows": {
+          "unit": "%",
+          "valuesPerUnit": 10,
+          "values": "sha256:11786f31f0b4e1093bd89296c56813caa20f86f3bdb7746160ebfb0ca480b33c"
+        },
+        "shares": {
+          "unit": "%",
+          "valuesPerUnit": 10,
+          "values": "sha256:9e225141a5f759c06fa50d45e59c5433df03083142763b9081897ffc25b0fe56"
+        },
+        "stated": null
       }
     },
     "levels": {
@@ -388,7 +410,7 @@
       "unit": "dB",
       "valueOffset": 200,
       "noData": 0,
-      "power": "sha256:e9f633db136ea69a7f556d2413afc17d4494a3fc6a182f04542f5011000a7fd0"
+      "power": "sha256:94eecd6da84a3665ff10c119b480ee7909decec5ccc4bcf76d9a7b0c4d6b11c6"
     },
     "waveform": {
       "columns": 12,

@@ -38,11 +38,12 @@ make_external_measurement_fixtures.py):
 - Loudness and true peak (step 5): the manifest's loudness and true peak (measurement_model.py's, which MeasurementFixtureTests holds the analyzer to) against
     - libebur128 v1.2.6 built from its pinned tag by ebur128_tool.py and run by ebur128_driver.c with an explicit channel map (back channels beside side
       channels are M+-135, which FFmpeg weights 1.41 and Table 4 weights 1.0, so every layout is compared here): integrated loudness, maximum momentary and
-      short-term loudness within 0.1 LU, the loudness range within 1 LU (Tech 3342's tolerance; libebur128 takes its short-term values once a second, the
+      short-term loudness within 0.1 LU of the analyzer's plus the explained offset of the rate (LOUDNESS_RATE_OFFSET_LU: both tools keep the K-weighting
+      highpass's own passband gain, the analyzer restores the 48 kHz filter's, so they read 0.21 LU above at 8 kHz and 0.03 below at 192 kHz; none at 44.1 and 48 kHz), the loudness range within 1 LU (Tech 3342's tolerance; libebur128 takes its short-term values once a second, the
       analyzer every 100 ms), the sample peak within 0.1 dB and the true peak within 0.7 dB (libebur128 interpolates with a 49-tap windowed sinc, the
       analyzer with the 48-tap filter of BS.1770-5 Annex 2: on a sine at a quarter of the rate they differ by up to 0.3 dB, and on wideband noise up to 0.6 dB);
     - FFmpeg's ebur128 (peak=true+sample), for the layouts where FFmpeg's channel weights are Table 4's (mono, stereo, 3.0, 5.0, 5.1): integrated loudness
-      within 0.1 LU, the loudness range within 1 LU, the sample peak within 0.1 dB and the true peak with the tolerance of the design, FFmpeg's figure
+      within 0.1 LU of the analyzer's plus the same offset, the loudness range within 1 LU, the sample peak within 0.1 dB and the true peak with the tolerance of the design, FFmpeg's figure
       between 0.3 dB under and 0.7 dB over the analyzer's, both limits included (the difference is taken in whole tenths of a dB, as FFmpeg prints one decimal; the
       version of FFmpeg and the difference are printed for each fixture, so the log shows the margin) (FFmpeg's resampler-based true peak reads up to 0.6 dB over the Annex 2 filter on a sine at a
       quarter of the rate, and 0.2 dB under it on a sine at 4 kHz, where the Annex 2 filter's ripple lifts its figure above the sine's amplitude). Fixtures with a back and a side pair are left out for FFmpeg and printed.
@@ -287,10 +288,18 @@ FFMPEG_TRUE_PEAK_UNDER_TENTHS = -3
 FFMPEG_TRUE_PEAK_OVER_TENTHS = 7
 
 
-def tenths_close(figure, value, tolerance, what="figure"):
+# libebur128 and FFmpeg leave the K-weighting highpass's passband gain at the value of its own rate (d = 1 + k/Q + k^2, 1.004994 at 48 kHz), where the
+# analyzer restores the 48 kHz filter's gain at every rate as BS.1770-5 asks (docs/design/spectral-analysis.md, decision 13): the tools read this many LU
+# above the analyzer, for the levels in the passband, at the rates of the fixtures: 20 log10(d(fs) / d(48 kHz)) to the hundredth. A rate that is not here
+# is a rate whose difference is not explained, and the cross-check fails on it instead of widening a tolerance.
+LOUDNESS_RATE_OFFSET_LU = {8000: 0.21, 11025: 0.14, 16000: 0.09, 22050: 0.05, 24000: 0.04, 32000: 0.02, 44100: 0.00, 48000: 0.00, 88200: -0.02, 96000: -0.02, 192000: -0.03}
+
+
+def tenths_close(figure, value, tolerance, what="figure", offset=0.0):
+    """Whether the tool's value is the figure plus the explained offset (in LU) within the tolerance; the worst distance is recorded for the report."""
     if figure is not None and value is not None and math.isfinite(value):
-        WORST[what] = max(WORST.get(what, 0.0), abs(figure / 10.0 - value))
-    return figure is not None and value is not None and abs(figure / 10.0 - value) <= tolerance + 1e-9
+        WORST[what] = max(WORST.get(what, 0.0), abs(figure / 10.0 + offset - value))
+    return figure is not None and value is not None and abs(figure / 10.0 + offset - value) <= tolerance + 1e-9
 
 
 def check_libebur128(path, expected, driver, found):
@@ -320,18 +329,23 @@ def check_libebur128(path, expected, driver, found):
         name, *rest = line.split()
         values[name if name not in ("true_peak", "sample_peak") else f"{name}{rest[0]}"] = float(rest[-1])
 
-    def compare(what, tenths, got, tolerance):
+    rate = stream.info["sample_rate"]
+    if rate not in LOUDNESS_RATE_OFFSET_LU:
+        found.append(f"no explained K-weighting offset for {rate} Hz")
+        return True
+
+    def compare(what, tenths, got, tolerance, offset=0.0):
         if tenths is None:
             return
         if got is None or not math.isfinite(got):
             found.append(f"libebur128 has no {what}, the model {tenths / 10.0}")
-        elif not tenths_close(tenths, got, tolerance, "libebur128 " + what.split(" of channel")[0]):
-            found.append(f"{what}: libebur128 {got:.2f}, the model {tenths / 10.0:.1f}, more than {tolerance} apart")
+        elif not tenths_close(tenths, got, tolerance, "libebur128 " + what.split(" of channel")[0], offset):
+            found.append(f"{what}: libebur128 {got:.2f}, the model {tenths / 10.0:.1f} plus {offset} for the K-weighting gain, more than {tolerance} apart")
 
     if path.stem not in HISTOGRAM_GATED:
-        compare("integrated loudness", loud["integrated"]["tenths"], values.get("integrated"), 0.1)
-    compare("maximum momentary loudness", loud["momentary"]["tenths"], values.get("momentary_max"), 0.1)
-    compare("maximum short-term loudness", loud["short_term"]["tenths"], values.get("short_term_max"), 0.1)
+        compare("integrated loudness", loud["integrated"]["tenths"], values.get("integrated"), 0.1, LOUDNESS_RATE_OFFSET_LU[rate])
+    compare("maximum momentary loudness", loud["momentary"]["tenths"], values.get("momentary_max"), 0.1, LOUDNESS_RATE_OFFSET_LU[rate])
+    compare("maximum short-term loudness", loud["short_term"]["tenths"], values.get("short_term_max"), 0.1, LOUDNESS_RATE_OFFSET_LU[rate])
     if loud["range"]["tenths"] is not None and loud["short_term_values"] >= LRA_VALUES:
         compare("loudness range", loud["range"]["tenths"], values.get("range"), 1.0)
         RANGES["libebur128"].append(path.stem)
@@ -379,8 +393,10 @@ def check_ffmpeg_ebur128(path, expected, info, found, skipped):
         return
     if path.stem in HISTOGRAM_GATED:
         skipped.append(f"{path.stem}: the integrated loudness of FFmpeg's ebur128 (it gates on a histogram)")
-    elif loud["integrated"]["tenths"] is not None and not tenths_close(loud["integrated"]["tenths"], got["I"], 0.1, "FFmpeg integrated loudness"):
-        found.append(f"integrated loudness: FFmpeg {got['I']}, the model {loud['integrated']['tenths'] / 10.0}")
+    elif info["sample_rate"] not in LOUDNESS_RATE_OFFSET_LU:
+        found.append(f"no explained K-weighting offset for {info['sample_rate']} Hz")
+    elif loud["integrated"]["tenths"] is not None and not tenths_close(loud["integrated"]["tenths"], got["I"], 0.1, "FFmpeg integrated loudness", LOUDNESS_RATE_OFFSET_LU[info["sample_rate"]]):
+        found.append(f"integrated loudness: FFmpeg {got['I']}, the model {loud['integrated']['tenths'] / 10.0} plus {LOUDNESS_RATE_OFFSET_LU[info['sample_rate']]} for the K-weighting gain")
     if loud["range"]["tenths"] is not None and loud["short_term_values"] >= LRA_VALUES:
         RANGES["FFmpeg"].append(path.stem)
         if not tenths_close(loud["range"]["tenths"], got["LRA"], 1.0, "FFmpeg loudness range"):

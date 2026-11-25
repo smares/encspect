@@ -80,7 +80,7 @@ internal static class Explain
     public const string HeaderCrc = "The CRC-24 the header stores in its last 3 bytes, over the header's bytes before it, the sync word included. The analyzer compares it in every analysis.";
     public const string HeaderComputedCrc = "The CRC-24 the analyzer computed over the bytes of the header before the stored CRC-24.";
     public const string HeaderIsCrcValid = "Whether the stored CRC-24 of the header equals the one computed.";
-    public const string FrameData = "The coded audio of the frame; the analyzer does not read its coding.";
+    public const string FrameData = "The coded audio of the frame: the channel data, its subframes and residuals, and the decorrelation fields.";
     public const string CutFrameData = "The bytes of the frame that the data holds; the data ends before the frame does.";
     public const string DataCrc = "The CRC-24 the frame stores in its last 3 bytes, over its coded data and not its header (takStream.pas, \"Footer (Data-Crc)\"). The analyzer compares it in every analysis.";
     public const string DataComputedCrc = "The CRC-24 the analyzer computed over the coded data of the frame.";
@@ -140,6 +140,12 @@ internal static class Explain
     public const string StatPrecision = "The precision, 3 to 10 bits, with which the filters' coefficients are rounded (the range over the predicted subframes).";
     public const string HighestOrderSeries = "The most taps of the prediction filters of each frame that has one.";
     public const string PrecisionSeries = "The highest coefficient precision of the prediction filters of each frame that has one.";
+    public const string HighestOrderOverTimeSeries = "The most taps of the prediction filters in each second of audio, over the frames that start in it.";
+    public const string PrecisionOverTimeSeries = "The highest coefficient precision of the prediction filters in each second of audio, over the frames that start in it.";
+    public const string StatHighestMode = "The highest residual mode of any partition in the stream (section 3): the mode picks the code that every value of the partition is read with, 0 meaning all zeros.";
+    public const string HighestModeSeries = "The highest residual mode of the partitions of each frame that has a residual block with values.";
+    public const string HighestModeOverTimeSeries = "The highest residual mode in each second of audio, over the frames that start in it.";
+
     public const string StatWasted = "The channels of each frame whose samples have low bits that are all zero, which the encoder leaves out (the wasted bits of the channel data, section 4).";
     public const string CategoryWasted = "A channel with wasted bits.";
     public const string CategoryNoWasted = "A channel without wasted bits.";

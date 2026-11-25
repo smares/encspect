@@ -17,8 +17,8 @@
       "rows": {
         "unit": "dB",
         "valuesPerUnit": 10,
-        "combined": "sha256:ad9dc3def16a95fb0f340859017912b7d331c8f6472c4e5784bb6b45931d8a6b",
-        "perChannel": ["sha256:38e6f43723ce872b70f930685a5040c92afebda3165be04ecf2c84dc235ba9f5", "sha256:5468271a735aa2b6bf88d95c45b54463e9728d2de041752bbb2aaf625c6bae7e"]
+        "combined": "sha256:c2ebb503fd427fd06619e3e7dbddb252ec111496ea5f318873bf22ee592e9d94",
+        "perChannel": ["sha256:2ff8535a09683b973a6c7d18bbf8b642024f36ceba707be9c3ae6c7b6390af88", "sha256:c67f2ccf5f5f56d323837c2b647d6b305652f8894791f7c0a151f22393d50030"]
       },
       "cutoff": {
         "isFound": true,
@@ -35,7 +35,7 @@
           "unit": "Hz"
         },
         "step": {
-          "value": 69.3,
+          "value": 69.4,
           "unit": "dB"
         },
         "framesShowing": 53,
@@ -70,11 +70,11 @@
             "unit": "Hz"
           },
           "transitionStart": {
-            "value": 16624,
+            "value": 16581,
             "unit": "Hz"
           },
           "stepFrequency": {
-            "value": 16882,
+            "value": 16839,
             "unit": "Hz"
           },
           "step": {
@@ -197,7 +197,7 @@
         "rowShares": {
           "unit": "%",
           "valuesPerUnit": 10,
-          "values": "sha256:d48a944a833422b7a0c29631586448638fd73394652b61dcbb8cbb09218364f4"
+          "values": "sha256:df4358c9413ec76da81cea17c52cf5e674964e575b8685a7e07f5e186482449c"
         }
       },
       "midSide": {
@@ -206,8 +206,8 @@
         "rows": {
           "unit": "dB",
           "valuesPerUnit": 10,
-          "mid": "sha256:2ce228a55a5587b8b9e35c51654681540a23f12c9d6d0b63d10574e3b7eefb6f",
-          "side": "sha256:f10a021ebc47e50ecf115e520d18b2325244a87d6e1b6112d194ccd02f8a242c"
+          "mid": "sha256:e0817d2fb5c848854c537633fa39d011689b5e8b239350f80265822952771a5d",
+          "side": "sha256:bf12b9871e4bce4708732c80681d0fbaf165ffb9a0e41dc16354082d90cd1c7e"
         },
         "midCutoff": {
           "isFound": true,
@@ -290,9 +290,31 @@
           "rowShares": {
             "unit": "%",
             "valuesPerUnit": 10,
-            "values": "sha256:946c1335ccd7e30a97b33971218980cc7554d68ac39d678b8ef5f622d1c25fa9"
+            "values": "sha256:8dd00374086a0d75cf4e6a794e239ccbbce1c8fd46c701a01130835837141de7"
           }
         }
+      },
+      "coherence": {
+        "leftChannel": 0,
+        "rightChannel": 1,
+        "frames": 128,
+        "isFound": false,
+        "reason": "notCoherent",
+        "topBand": {
+          "value": 0.3,
+          "unit": "%"
+        },
+        "rows": {
+          "unit": "%",
+          "valuesPerUnit": 10,
+          "values": "sha256:d42ad1b34b905450a6f674f3ab4db6169ce11cc741bb80a0db67d2576772cc00"
+        },
+        "shares": {
+          "unit": "%",
+          "valuesPerUnit": 10,
+          "values": "sha256:ad7b9fb67ca816e1243a293d7e969ba976e676e697c6a4d02d1a5d85eb6e0d23"
+        },
+        "stated": null
       }
     },
     "levels": {
@@ -434,7 +456,7 @@
       "unit": "dB",
       "valueOffset": 200,
       "noData": 0,
-      "power": "sha256:df575f06e8c5795fbffd5ac83ebd76169de04d46e47664e1b6e7acd184be3d9f"
+      "power": "sha256:72a57ebd61cba25b51d8bee9641271b659e31b35e6ef55543274d3b76d60876b"
     },
     "waveform": {
       "columns": 130,

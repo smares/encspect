@@ -199,6 +199,33 @@ internal sealed class FftPlan
         }
     }
 
+    // The 512 rows of the cross-spectrum of two channels from their bins: per bin X_L X_R* = (Lr Rr + Li Ri) + i (Li Rr - Lr Ri), each part summed over the bins of a row
+    // in bin order and scaled as the power rows are, so that |cross|^2 against the product of the two power rows is the coherence of the row. The products are formed as
+    // written, two roundings each, never fused.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public void CrossRows(double[] leftRe, double[] leftIm, double[] rightRe, double[] rightIm, Span<double> re, Span<double> im)
+    {
+        int bins = BinsPerRow;
+        for (int row = 0; row < MeasurementLimits.Rows; row++)
+        {
+            double realSum = 0;
+            double imaginarySum = 0;
+            int first = row * bins;
+            for (int k = first; k < first + bins; k++)
+            {
+                double lr = leftRe[k];
+                double li = leftIm[k];
+                double rr = rightRe[k];
+                double ri = rightIm[k];
+                realSum += (lr * rr) + (li * ri);
+                imaginarySum += (li * rr) - (lr * ri);
+            }
+
+            re[row] = realSum * _scale;
+            im[row] = imaginarySum * _scale;
+        }
+    }
+
     // Windows N samples and runs the complex transform of N / 2 in place in re and im (the input z[n] = x[2n] + i x[2n + 1]).
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void Transform(ReadOnlySpan<double> samples, double[] re, double[] im)

@@ -3,8 +3,8 @@
 
     crosscheck_dts_pcm.py [--pcmdump CMD] [--ffmpeg PATH] [--keep DIR] [--work DIR] [FILE ...]
 
-CMD runs a built tests/Encspect.PcmDump, as for crosscheck_musepack_pcm.py. With no FILE the script takes every file of tests/fixtures/dts the decoder decodes: FFmpeg's encoder files
-(external-ffmpeg-*.dts) and the hand-built subframes-reconstruct-* files, which use no prediction and no vector quantization (frames with prediction and vector quantization decode with the tables of Annex D.10, which dts_tables.py reads from FFmpeg 6.1.1 because the PDF omits them).
+CMD runs a built tests/Encspect.PcmDump, as for crosscheck_musepack_pcm.py. With no FILE the script takes every file of tests/fixtures/dts the decoder decodes, the ones with a decode golden: FFmpeg's encoder files
+(external-ffmpeg-*.dts) and the hand-built subframes-* files, the reconstruct ones of which use no prediction and no vector quantization (frames with prediction and vector quantization decode with the tables of Annex D.10, which dts_tables.py reads from FFmpeg 6.1.1 because the PDF omits them).
 
 The three real DTS-HD Master Audio files of tests/conformance/dts-hd-samples.json, if downloaded to .cache/dts-hd (check_dts_hd_samples.py does it), are compared too, their first 3 MB, as cores (`-core_only 1`): they use vector quantization.
 
@@ -33,6 +33,7 @@ Exit status 0 where every bound holds, 1 where one fails, 2 for a usage error.
 
 import argparse
 import json
+import os
 import pathlib
 import array
 import math
@@ -69,7 +70,8 @@ def reorder(reference, layout):
 
 
 def default_files():
-    return sorted(p for p in FIXTURES.glob("*.dts") if p.name.startswith(("external-ffmpeg-", "subframes-reconstruct-", "subframes-")))
+    """The files the decoder decodes: those with a decode golden, so that this list and the decoder's fixture tests cannot drift."""
+    return sorted(p for p in FIXTURES.glob("*.dts") if p.with_suffix(".decode.json").exists())
 
 
 def real_files(work):
@@ -99,6 +101,8 @@ def build_libdca(work):
     tool = work / "dca_pcm"
     result = subprocess.run(["cc", "-O2", "-o", str(tool), str(HERE / "dca_pcm.c"), "-ldca"], capture_output=True, text=True)
     if result.returncode != 0:
+        if os.environ.get("CI"):
+            raise SystemExit("libdca is not available, which a CI run needs as the second reference (install libdca-dev): " + result.stderr[:200])
         print("libdca is not available, its comparison is not made:", result.stderr[:200])
         return None
     return tool

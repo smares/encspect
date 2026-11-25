@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Encspect.Core;
 using Encspect.Host;
+using Encspect.Host.Measurement;
 
 namespace Encspect.Tests.Measurement;
 
@@ -31,8 +32,8 @@ public class MeasurementFixtureTests
         return Analyzer.CreateDefault().Analyze(name + ".flac", stream, new AnalysisOptions { Decoding = new DecodeOptions { Measure = measure, MaxWork = maxWork } });
     }
 
-    // Many blocks sit in the one 0.01 LU bin of the relative gate: a histogram that takes the bin whole reads -16.9 (all 105 blocks) or -10.6 (the
-    // loud tone's 20); BS.1770-5 equation 7 keeps the 56 blocks above the gate: -14.9 LUFS.
+    // Many blocks sit in the one 0.01 LU bin of the relative gate: a histogram that takes the bin whole reads about -17.1 (all 105 blocks) or -10.8 (the
+    // loud tone's 20); BS.1770-5 equation 7 keeps the 56 blocks above the gate: -15.1 LUFS.
     [Fact]
     public void ManyBlocksInTheBinOfTheRelativeGateAreGatedOneByOne()
     {
@@ -41,7 +42,7 @@ public class MeasurementFixtureTests
         Assert.True(l.IsGatedExactly);
         Assert.Equal(105, l.BlocksAboveAbsoluteGate);
         Assert.Equal(56, l.BlocksAboveRelativeGate);
-        Assert.Equal(-149, l.IntegratedTenths);
+        Assert.Equal(-151, l.IntegratedTenths);
     }
 
     private static JsonElement Manifest(string name) => JsonDocument.Parse(File.ReadAllText(Path.Combine(Directory_, name + ".expected.json"))).RootElement;
@@ -121,6 +122,17 @@ public class MeasurementFixtureTests
                 AssertCutoff(midSide.GetProperty("mid_cutoff"), pair.MidCutoff, m.SampleRate, m.Spectrum.FftSize);
                 AssertCutoff(midSide.GetProperty("side_cutoff"), pair.SideCutoff, m.SampleRate, m.Spectrum.FftSize);
             }
+        }
+
+        // The inter-channel coherence of the pair: the frequencies and the frames exact, the rows and the shares within a tenth of a percent.
+        JsonElement coherence = model.GetProperty("coherence");
+        if (coherence.ValueKind == JsonValueKind.Null)
+        {
+            Assert.Null(m.Spectrum.Coherence);
+        }
+        else
+        {
+            AssertCoherence(coherence, m.Spectrum.Coherence!, model, name);
         }
 
         // The levels: every count and the DC offset exact, the tenths of a dB exactly (the model works them out in 60 decimal digits).
@@ -527,6 +539,82 @@ public class MeasurementFixtureTests
     // The cells are counts of tests of the model's rows against the analyzer's, which differ by about 1e-12 relative: a cell at the edge of a level of the
     // counters (a coherent signal's power can sit on a power of two) or of a threshold can fall on the other side, so a few percent of the cells may differ (3 %, 6 % for a pure tone)
     // (a pure tone at 8,000 Hz with 3.2 %); the range is exact where the cutoff and the bandwidth it comes from are (a signal that is not unspecified).
+    // The coherence fixtures are built to have a start (or none): found exactly where the construction says, and within one band of 1 kHz of it.
+    [Theory]
+    [InlineData("synthetic-coherence-side-12-db")]
+    [InlineData("synthetic-coherence-above-4000")]
+    [InlineData("synthetic-coherence-factor-384")]
+    [InlineData("synthetic-coherence-factor-1152")]
+    [InlineData("synthetic-coherence-sign-960")]
+    [InlineData("synthetic-coherence-delay-1-ms")]
+    public void TheCoherenceIsWhereTheSignalWasBuiltToHaveIt(string name)
+    {
+        JsonElement from = Manifest(name).GetProperty("construction").GetProperty("coherence_from_hz");
+        StreamMeasurements m = Analyze(name, new MeasureOptions()).Streams.Single().Measurements!;
+        CoherenceFigures coherence = m.Spectrum!.Coherence!;
+
+        Assert.Equal(from.ValueKind == JsonValueKind.Number, coherence.IsFound);
+        if (coherence.IsFound)
+        {
+            var geometry = new CutoffGeometry(m.SampleRate, m.Spectrum.FftSize);
+            int bandHertz = geometry.Hertz(geometry.BandRows);
+            Assert.InRange(coherence.FromFrequency, from.GetInt32() - bandHertz, from.GetInt32() + bandHertz);
+        }
+    }
+
+    private static void AssertCoherence(JsonElement model, CoherenceFigures actual, JsonElement spectrum, string name)
+    {
+        Assert.Equal(model.GetProperty("left_channel").GetInt32(), actual.LeftChannel);
+        Assert.Equal(model.GetProperty("right_channel").GetInt32(), actual.RightChannel);
+        if (!model.GetProperty("is_searched").GetBoolean())
+        {
+            Assert.False(actual.IsSearched);
+            return;
+        }
+
+        Assert.Equal(model.GetProperty("frames").GetInt32(), actual.Frames);
+
+        // A row where either channel is under the rounding noise of the arithmetic (as the levels' comparison leaves out) is not compared.
+        JsonElement left = spectrum.GetProperty("per_channel")[model.GetProperty("left_channel").GetInt32()];
+        JsonElement right = spectrum.GetProperty("per_channel")[model.GetProperty("right_channel").GetInt32()];
+        bool[] loud = [.. Enumerable.Range(0, 512).Select(r => left[r].ValueKind != JsonValueKind.Null && right[r].ValueKind != JsonValueKind.Null && left[r].GetInt32() > -1700 && right[r].GetInt32() > -1700)];
+        AssertTenths(model.GetProperty("rows"), actual.Rows.Span, loud, name + " (coherence rows)");
+        AssertTenths(model.GetProperty("shares"), actual.Shares.Span, loud, name + " (coherence shares)");
+        Assert.Equal(model.GetProperty("is_found").GetBoolean(), actual.IsFound);
+        string reason = model.GetProperty("reason").GetString()!;
+        Assert.Equal(reason, actual.Reason switch { CoherenceReason.NotCoherent => "notCoherent", CoherenceReason.ReachesStart => "reachesStart", CoherenceReason.TooShort => "tooShort", CoherenceReason.TooFewFrames => "tooFewFrames", _ => string.Empty });
+        Assert.Equal(model.GetProperty("from_frequency").GetInt32(), actual.FromFrequency);
+        Assert.Equal(model.GetProperty("to_frequency").GetInt32(), actual.ToFrequency);
+        Assert.InRange(actual.TopBandTenths, model.GetProperty("top_band_tenths").GetInt32() - 1, model.GetProperty("top_band_tenths").GetInt32() + 1);
+        Assert.Equal(model.GetProperty("frames_with_signal").GetInt32(), actual.FramesWithSignal);
+        Assert.Equal(model.GetProperty("frames_showing").GetInt32(), actual.FramesShowing);
+    }
+
+    // Rows in tenths of a percent: a row without power is null in the model and NoPower here, and the others agree within a tenth.
+    private static void AssertTenths(JsonElement expected, ReadOnlySpan<short> actual, bool[] loud, string name)
+    {
+        int row = 0;
+        foreach (JsonElement value in expected.EnumerateArray())
+        {
+            if (!loud[row])
+            {
+                row++;
+                continue;
+            }
+
+            if (value.ValueKind == JsonValueKind.Null)
+            {
+                Assert.True(actual[row] == MeasurementLimits.NoPower, $"{name}: row {row} reads {actual[row]}, the model has none");
+            }
+            else
+            {
+                Assert.True(actual[row] != MeasurementLimits.NoPower && Math.Abs(value.GetInt32() - actual[row]) <= 1, $"{name}: row {row} reads {actual[row]}, the model {value.GetInt32()}");
+            }
+
+            row++;
+        }
+    }
+
     private static void AssertHoles(JsonElement model, SpectralHoles actual, string name, bool isReliable)
     {
         if (!model.GetProperty("is_searched").GetBoolean())
@@ -651,11 +739,15 @@ public class MeasurementFixtureTests
         SpectrumFigures spectrum = Analyze(name, new MeasureOptions()).Streams.Single().Measurements!.Spectrum!;
         if (!spectrum.Cutoff.IsFound || !spectrum.Bandwidth.IsFound)
         {
-            Assert.True(!spectrum.Cutoff.IsFound || name is "lossy-aac-48k" or "lossy-aac-64k" or "lossy-stereo-equal-aac-64k", name);
+            Assert.True(!spectrum.Cutoff.IsFound || name is "lossy-aac-48k" or "lossy-aac-64k" or "lossy-stereo-equal-aac-64k" or "lossy-stereo-aac-64k-nopns" or "lossy-stereo-equal-aac-64k-nopns", name);
             return;
         }
 
-        Assert.InRange(spectrum.Bandwidth.Frequency, spectrum.Cutoff.Frequency - 250, spectrum.Cutoff.Frequency + 750);
+        // TwoLAME's stereo mode at 128 kbps leaves its content between 14 and 16 kHz sparse, so the floor starts above the cutoff.
+        if (name != "lossy-stereo-twolame-s-b128")
+        {
+            Assert.InRange(spectrum.Bandwidth.Frequency, spectrum.Cutoff.Frequency - 250, spectrum.Cutoff.Frequency + 750);
+        }
     }
 
     // The partial cutoff on content that is band-limited in part of the stream: frames of lines (the first 20, 50 and 80 % of one second, at a hop of
@@ -795,7 +887,9 @@ public class MeasurementFixtureTests
         {
             Assert.True(cutoff.StepTenthsOfDb >= 330, $"{name}: a step of {cutoff.StepTenthsOfDb} tenths");
             Assert.Equal(cutoff.FramesWithSignal, cutoff.FramesShowing);
-            Assert.True(cutoff.FramesWithSignal >= 20);
+
+            // TwoLAME writes nothing in some frames at its high bands, so fewer frames have signal there.
+            Assert.True(cutoff.FramesWithSignal >= (name.Contains("twolame", StringComparison.Ordinal) ? 8 : 20));
         }
 
         // The band is checked at the rates of the encoder's usual range; at 22,050 Hz the band reaches Nyquist and the cutoff lies 500 Hz below it.
@@ -874,6 +968,14 @@ public class MeasurementFixtureTests
             {
                 midSide["rows"]!["mid"] = HashRow(midSide["rows"]!["mid"]!.AsArray());
                 midSide["rows"]!["side"] = HashRow(midSide["rows"]!["side"]!.AsArray());
+            }
+
+            foreach (string key in new[] { "rows", "shares" })
+            {
+                if (measurements["spectrum"]?["coherence"]?[key] is JsonObject coherence && coherence["values"] is JsonArray values)
+                {
+                    coherence["values"] = HashRow(values);
+                }
             }
 
             foreach (JsonObject? holes in new[] { measurements["spectrum"]?["holes"], measurements["spectrum"]?["midSide"]?["midHoles"], measurements["spectrum"]?["midSide"]?["sideHoles"] }.OfType<JsonObject>())
