@@ -56,6 +56,30 @@ public class CorruptVbrFileTests
     public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
 }
 
+// The real files of encoders the CI cannot run (sample-kit) and the files with one stored checksum changed (damaged-units) of the MPEG audio, FLAC and WavPack folders; those of the
+// other formats are in their format's class.
+public class CorruptKitFileTests
+{
+    private static readonly string[] Folders = ["mpeg-audio/sample-kit/", "mpeg-audio/damaged-units/", "flac/sample-kit/", "flac/damaged-units/", "wavpack/damaged-units/"];
+
+    public static TheoryData<string> Names => CorruptFiles.Names(n => Folders.Any(f => n.StartsWith(f, StringComparison.Ordinal)));
+
+    [Theory]
+    [MemberData(nameof(Names))]
+    public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
+}
+
+// The fixtures in tests/fixtures/asf: the hand-built files of every object, the Windows Media files and the ones FFmpeg's muxer wrote, each analyzed with and without decoding the
+// streams that have a decoder (MPEG audio and AC-3).
+public class CorruptAsfFileTests
+{
+    public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("asf/", StringComparison.Ordinal));
+
+    [Theory]
+    [MemberData(nameof(Names))]
+    public Task MutatedFixturesProduceReports(string name) => CorruptFiles.MutatedFixturesProduceReports(name);
+}
+
 // The fixtures in tests/fixtures/mp4.
 public class CorruptMp4FileTests
 {
