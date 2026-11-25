@@ -565,8 +565,8 @@ jobs:
         with:
           fetch-depth: 2
 
-      # Opt-in (docs/development.md, "Golden-change files"): only a pull request that adds or changes a
-      # tests/fixtures/*/golden-changes.json is checked; any other pull request passes it. The goldens it changes
+      # A pull request that changes more than 20 goldens needs a tests/fixtures/*/golden-changes.json (docs/development.md,
+      # "Golden-change files"); one that adds or changes such a file has its goldens checked against it. The goldens it changes
       # must differ from the base's only as the change files list.
       - name: Check the golden additions
         if: github.event_name == 'pull_request'

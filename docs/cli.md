@@ -28,7 +28,7 @@ The output is a text tree by default; `encspect --help` lists the options.
 - `--csv`: one summary row per file.
   - The `Tags` column lists the tags found, each with its version where the tag is parsed (`ID3v2`, `ID3v1`, `APEv2`, `Lyrics3 v2`); the GUI's Tags column shows the same values.
 
-Reports are written as each file is analyzed. All output is UTF-8 without a byte order mark, text from files included; JSON writes non-ASCII characters as they are, not as `\u` escapes. A CSV field that starts with `=`, `+`, `-` or `@` gets a leading apostrophe, so a spreadsheet does not run it as a formula; the columns the writer formats from numbers (the counts, duration, samples, bitrate, sample rate, `JOC Object Count` and the measured columns) skip the guard, as a number cannot start one. Against version 0.1.0 the CSV has twenty-two more columns (45 in all, 23 before). `Lost Samples` stands directly after `Samples`; `Processor`, `Processor Confidence`, `Lossy Part` and `Lossy Part Confidence` stand after `Writer Confidence`; `Correction File` stands after `Lossy Part Confidence`; `Is Verified` stands after `DRM Systems`; and fourteen measured columns come last, in the order of their meaning: `Spectral Cutoff (Hz)`, then the level figures `Sample Peak (dBFS)`, `Maximum True Peak Level (dBTP)` and `Clipping Runs`, then `Integrated Loudness (LUFS)` and `Loudness Range (LU)`, then `Digital Silence Stretches`, `Changes of Low Bits Unused` and `Grid of the Changes (samples)`. The columns are grouped by meaning, so one moved against earlier versions: `Is Verified` was between `Is Protected` and `Protection Scheme`. `Coding Class` stands directly after `Codec`, so every column after `Codec` is one further on than in 0.3.0. A reader that addresses columns by index must be changed.
+Reports are written as each file is analyzed. All output is UTF-8 without a byte order mark, text from files included; JSON writes non-ASCII characters as they are, not as `\u` escapes. A CSV field that starts with `=`, `+`, `-` or `@` gets a leading apostrophe, so a spreadsheet does not run it as a formula; the columns the writer formats from numbers (the counts, duration, samples, bitrate, sample rate, `JOC Object Count` and the measured columns) skip the guard, as a number cannot start one. Against version 0.1.0 the CSV has twenty-three more columns (46 in all, 23 before). `Lost Samples` stands directly after `Samples`; `Processor`, `Processor Confidence`, `Lossy Part` and `Lossy Part Confidence` stand after `Writer Confidence`; `Correction File` stands after `Lossy Part Confidence`; `Is Verified` stands after `DRM Systems`; and fifteen measured columns come last, in the order of their meaning: the spectral figures (`Spectral Cutoff (Hz)`, `Spectral Bandwidth (Hz)`, `Spectral Slope (dB/kHz)`, `Partial Cutoff (Hz)`, `Side Cutoff (Hz)`, `Inter-Channel Coherence From (Hz)` and `Spectral Holes (%)`), then the level figures `Sample Peak (dBFS)`, `Maximum True Peak Level (dBTP)` and `Clipping Runs`, then `Integrated Loudness (LUFS)` and `Loudness Range (LU)`, then `Digital Silence Stretches`, `Changes of Low Bits Unused` and `Grid of the Changes (samples)`. The columns are grouped by meaning, so one moved against earlier versions: `Is Verified` was between `Is Protected` and `Protection Scheme`. `Coding Class` stands directly after `Codec`, so every column after `Codec` is one further on than in 0.3.0. A reader that addresses columns by index must be changed.
 
 ## Options
 
@@ -190,7 +190,7 @@ A stream of a coding that declares its checksums has a verification, with or wit
   - `Verified: yes (the coded data matches the stored checksums; with correction file; block CRC-32 1 of 1, correction block CRC-32 1 of 1)`: the checksums vouch for the stream together with its correction file, a consistent pair.
 - **JSON:** `verification` in the stream, after `protection`:
   - `isVerified`, written where it is not null;
-  - `isLossy` and `withCorrection`, written where they are true;
+  - `isLossy` and `isCorrected`, written where they are true;
   - `decoding`: `notRequested`, `noDecoder`, `notPossible`, `decoded`, `stopped` or `failed`;
   - `decodedSamples`, the samples per channel the decoder decoded;
   - `checksums`, each with `name`, `covers` (`header`, `codedData` or `decodedAudio`), `coversAllAudio`, `stored`, `checked` and `failed`.
@@ -220,7 +220,7 @@ A stream of a coding that declares its checksums has a verification, with or wit
 
 ### `--version`
 
-Prints `encspect <version>` and exits with 0, for example `encspect 0.3.0+4da770c4bc662c9524f4f219682b00c7634a48fc`.
+Prints `encspect <version>` and exits with 0, for example `encspect 0.4.0+4da770c4bc662c9524f4f219682b00c7634a48fc`.
 
 - **Same string everywhere:** it is the `version` in a JSON report's `tool` object and the version the GUI's About window shows.
 - **Commit suffix:** the part after `+` names the commit the build was made from, so a bug report identifies the exact source. A build without Git metadata has no suffix.
@@ -278,7 +278,7 @@ A JSON report (schema version 1) is an object:
 ```json
 {
   "schemaVersion": 1,
-  "tool": { "name": "encspect", "version": "0.3.0+…" },
+  "tool": { "name": "encspect", "version": "0.4.0+…" },
   "source": "song.mp3",
   "root": { "name": "File", "value": "MPEG Audio", "offset": 0, "length": 4096, "children": [
     { "name": "MPEG Audio", "kind": "Stream", "value": 10, "unit": "frames", "offset": 0, "length": 4096, "children": [ … ] } ] },

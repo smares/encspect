@@ -57,6 +57,7 @@ import mctoolame_tool
 import m3e_tool
 import mctoolamed_tool
 import monkeys_audio_tool
+import musopen_tool
 import optimfrog_tool
 import qtff_specs
 import philips_mc_tool
@@ -119,6 +120,7 @@ def sources():
         if "tar" in release:
             yield release["tar"]["archive"], release["tar"]["sha256"], [downloads.private(release["tar"]["private"])]
     yield "helix_mp3enc_5.0r11.tar.gz", helix_tool.R11_SHA256, helix_tool.R11_ADDRESSES
+    yield musopen_tool.ARCHIVE, musopen_tool.SHA256, musopen_tool.ADDRESSES
     yield "gogo3.12.zip", gogo_tool.SHA256, gogo_tool.ADDRESSES
     yield plugger_tool.ARCHIVE, plugger_tool.SHA256, plugger_tool.ADDRESSES
     yield hz8_mp3_tool.ARCHIVE, hz8_mp3_tool.SHA256, hz8_mp3_tool.ADDRESSES

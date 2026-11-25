@@ -131,7 +131,7 @@ One rule that meets these requirements is the one the license audit proposed: ch
 **The check:**
 
 - `TagFixtureTests` (manifest and golden report of each tag fixture).
-- `FindingCoverageTests.EveryCodeTheParsersEmitIsAsserted` (both codes must stay asserted by a manifest).
+- `FindingCoverageTests.EveryCodeOfEveryProjectIsAsserted` (both codes are asserted by a manifest or a test; the generic test covers every format and tag project, and names the codes not yet asserted in `NotYetCovered`).
 - `DescriptionTests`, `CorruptTagFileTests` (mutated tag fixtures and random files produce reports).
 - `TagLibCrossCheckTests`, whose `Explained` entries for `id3v24-itunes-plain-sizes` and `id3v24-plain-frame-sizes` record that TagLib# reads those sizes as syncsafe.
 - The other formats' fixture tests, for ID3v2.4 tags inside their files.

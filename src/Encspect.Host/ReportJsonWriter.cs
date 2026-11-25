@@ -14,7 +14,7 @@ namespace Encspect.Host;
 // the format that ran, its evidence, whether it was forced, the format detection would have chosen
 // then, and the alternatives with their evidence (class, offset, frames, verifiedFrames, note). A stream whose coding has a class has codingClass
 // after codec (lossless, lossy or hybrid). A stream of a coding that
-// stores checksums has verification after protection: isVerified (where known), isLossy and withCorrection (where true), decoding,
+// stores checksums has verification after protection: isVerified (where known), isLossy and isCorrected (where true), decoding,
 // decodedSamples and checksums (name, covers, coversAllAudio, stored, checked, failed). A stream with category series
 // has categorySeries after series (name, concept, valueLabel, valuesPerUnit, valueNames, categories with their counts
 // and isReserved, total, uncodedValues, xSeries or x, valueCounts, runs of [code, length], weights, seconds, or groupOf
@@ -1703,9 +1703,9 @@ public static class ReportJsonWriter
             writer.WriteBoolean("isLossy", true);
         }
 
-        if (verification.WithCorrection)
+        if (verification.IsCorrected)
         {
-            writer.WriteBoolean("withCorrection", true);
+            writer.WriteBoolean("isCorrected", true);
         }
 
         writer.WriteString("decoding", verification.Decoding switch

@@ -32,9 +32,10 @@ public partial class DescriptionTests
 
     public static IEnumerable<string> FixtureNames()
     {
-        string[] extensions = [".mp1", ".mp2", ".mp3", ".m4a", ".mp4", ".mov", ".aac", ".ogg", ".spx", ".opus", ".mpc", ".ac3", ".eac3", ".wma", ".asf", ".wv", ".wvc", ".ape", ".flac", ".tta", ".tak", ".ofr", ".off", ".ofs", ".ofc", ".wav", ".aiff", ".aifc", ".thd", ".mlp", ".dts", ".dtshd", ".mka", ".mkv", ".webm", ".bin"];
+        // Every file but the goldens, manifests and notes: a container of a new extension is walked by default.
+        string[] skipped = [".json", ".md", ".txt", ".py"];
         foreach (string path in Directory.EnumerateFiles(Fixtures.FixtureDirectory, "*", SearchOption.AllDirectories)
-            .Where(p => extensions.Contains(Path.GetExtension(p), StringComparer.Ordinal)).Order(StringComparer.Ordinal))
+            .Where(p => !skipped.Contains(Path.GetExtension(p), StringComparer.OrdinalIgnoreCase)).Order(StringComparer.Ordinal))
         {
             yield return Path.GetRelativePath(Fixtures.FixtureDirectory, path).Replace('\\', '/');
         }
