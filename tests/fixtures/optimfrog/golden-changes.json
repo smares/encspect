@@ -1,0 +1,23 @@
+{
+  "goldens": [
+    "tests/fixtures/optimfrog/"
+  ],
+  "renamedKeys": [
+    {
+      "scope": "stream",
+      "path": [
+        "verification"
+      ],
+      "from": "withCorrection",
+      "to": "isCorrected"
+    },
+    {
+      "scope": "decode",
+      "path": [
+        "verification"
+      ],
+      "from": "withCorrection",
+      "to": "isCorrected"
+    }
+  ]
+}
