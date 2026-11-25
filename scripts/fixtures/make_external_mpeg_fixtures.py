@@ -94,6 +94,7 @@ import plugger_tool
 import helix_tool
 import mctoolame_tool
 import minimp3_tool
+import musopen_tool
 import old_lame_tool
 import philips_mc_tool
 import stream_stats
@@ -124,6 +125,9 @@ def write_tone(path, rate, channels, seconds=0.5, signal="tone"):
     then noise with clicks, then a pause and a chord. "long-music": that, three times, in six seconds, with
     different content in each channel. "silence": all zeros."""
     loop = None
+    if signal == "magic-flute":
+        musopen_tool.write_wav(path)
+        return
     if signal == "music":
         seconds = 2.0
     elif signal == "long-music":
@@ -525,6 +529,10 @@ FIXTURES = [
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=False, signal="long-music", golden_hides=["frames"])),
     ("external-lame-stereo-music", ".mp3", 44100, 2, ["lame", "--quiet", "-t", "-b", "128", "-m", "s"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Stereo", bitrate=128, info_frame=False, signal="long-music", golden_hides=["frames"])),
+    # A real recording, not a synthesized signal: the whole of the Magic Flute overture from Musopen (musopen_tool.py), for the README's screenshots. LAME writes its tag (no -t);
+    # the manifest leaves out the per-frame side information and the golden the frames.
+    ("music/external-lame-magic-flute-v4", ".mp3", 48000, 2, ["lame", "--quiet", "-V", "4", "-m", "j"],
+     dict(version="1", layer=3, sample_rate=48000, channel_mode="Joint stereo", bitrate=None, info_frame=True, signal="magic-flute", golden_hides=["frames"], omit_side_info=True)),
     ("external-twolame-dual-music", ".mp2", 44100, 2, ["twolame", "--quiet", "-b", "192", "-m", "d"],
      dict(version="1", layer=2, sample_rate=44100, channel_mode="Dual channel", bitrate=192, info_frame=False, signal="long-music", golden_hides=["frames"])),
     ("external-twolame-music", ".mp2", 48000, 2, ["twolame", "--quiet", "-b", "192", "-m", "s"],
@@ -1303,7 +1311,7 @@ def encode(command, source, path, temp):
 
 def write_manifest(name, path, rate, channels, command, settings, dumper):
     signal = {"clicks": "0.5 s of a quiet 440/660 Hz tone with a click every 50 ms", "music": "2 s of tones, noise with clicks and a chord",
-              "long-music": "6 s of tones, noise with clicks and a chord, three times, different in each channel", "silence": "0.5 s of silence",
+              "long-music": "6 s of tones, noise with clicks and a chord, three times, different in each channel", "silence": "0.5 s of silence", "magic-flute": "Mozart's Magic Flute overture (400.8 s, 16-bit PCM from the 24-bit FLAC that Musopen released into the public domain)",
               "pink-equal": "2 s of stereo pink noise, a mid signal and a side signal as loud (uncorrelated channels)", "pink-side-12-db": "2 s of stereo pink noise, a mid signal and a side signal 12 dB lower"}.get(settings.get("signal"), "0.5 s of a 440/660 Hz tone")
     if channels == 6:
         signal = f"0.5 s of a 5.1 tone of {'/'.join(map(str, SURROUND_FREQUENCIES))} Hz"
@@ -1312,7 +1320,7 @@ def write_manifest(name, path, rate, channels, command, settings, dumper):
     manifest = {
         "description": f"{' '.join(command)} on {signal}, {rate} Hz, {channels} channels.",
         "crosscheck": True,
-        "encoder": {"command": command, **{k: v for k, v in settings.items() if k != "golden_hides"}},
+        "encoder": {"command": command, **{k: v for k, v in settings.items() if k not in ("golden_hides", "omit_side_info")}},
     }
     if settings.get("golden_hides"):
         manifest["golden_hides"] = settings["golden_hides"]
@@ -1352,6 +1360,9 @@ def write_manifest(name, path, rate, channels, command, settings, dumper):
     if manifest["vbr_header"] and manifest["vbr_header"].get("lame"):
         manifest["decoded_samples"] = decoded_samples(path, CHANNELS.get(settings["channel_mode"], 2))
     manifest["statistics"] = coding_statistics(path, manifest)
+    if settings.get("omit_side_info"):
+        # Every frame's side information would be megabytes for a recording of minutes; what is derived from it (the findings above) stays.
+        del manifest["minimp3_side_info"]
     text = json.dumps(manifest, indent=1, ensure_ascii=False) + "\n"
     (OUT / f"{name}.expected.json").write_text(text, encoding="utf-8", newline="\n")
 
