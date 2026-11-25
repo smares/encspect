@@ -37,7 +37,7 @@ public sealed record DecodeSetup
     // file); the host copies it into StreamVerification.IsLossy.
     public bool IsLossy { get; init; }
 
-    // True where the stream's audio is checked together with its correction file, a consistent pair (StreamVerification.WithCorrection).
+    // True where the stream's audio is checked together with its correction file, a consistent pair (StreamVerification.IsCorrected).
     public bool HasCorrection { get; init; }
 }
 

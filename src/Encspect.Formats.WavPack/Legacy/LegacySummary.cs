@@ -153,6 +153,14 @@ internal static partial class Legacy
         }
 
         statistics.Add(Cover("Average Bitrate", bitrate is { } kbps ? NodeValue.Decimal(kbps, 1, "kbps") : "none", LegacyExplain.StatAverageBitrate));
+        long pcmBits = placement.IsCompanion ? 0 : CompressionRatio.PcmBitsPerSecond(rate, channels, bits);
+        if (bitrate is { } averageKbps && pcmBits > 0)
+        {
+            // Only the overall figure: the stream has no units to take the lowest and highest of.
+            Node ratio = statistics.Add(Cover(CompressionRatio.Name, null, CompressionRatio.StatisticDescription, null));
+            ratio.Add(Cover("Overall", NodeValue.Decimal(CompressionRatio.Percent(averageKbps, pcmBits), 1, "%"), CompressionRatio.OverallDescription, null));
+        }
+
         leading.Add(statistics);
 
         if (!isUsable)

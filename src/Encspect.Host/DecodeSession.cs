@@ -310,7 +310,7 @@ internal sealed class DecodeSession : IDecodeSession
             DecodedSamples = _decodedSamples,
             // The decoder knows which blocks it applied the correction file to: a stream whose file was applied to none is the lossy part, one it was applied to is not.
             IsLossy = _appliedCorrection is { } applied ? !applied && (_setup.IsLossy || _setup.HasCorrection) : _setup.IsLossy,
-            WithCorrection = _appliedCorrection ?? _setup.HasCorrection,
+            IsCorrected = _appliedCorrection ?? _setup.HasCorrection,
             Checksums = tallies,
         };
         if (_record is not null)

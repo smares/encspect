@@ -533,7 +533,7 @@ def decoded_with_correction(result, entries, pair, passed):
     for mode, tallies in result["verification"].items():
         by_name = {t["name"]: t for t in tallies["checksums"]}
         by_name["extended CRC"]["stored"] = extra_stored
-        tallies["withCorrection"] = True
+        tallies["isCorrected"] = True
         tallies.pop("isLossy", None)
         if mode == "verify":
             by_name["block header CRC"]["failed"] = failed + missing
@@ -543,7 +543,7 @@ def decoded_with_correction(result, entries, pair, passed):
                 md5["checked"], md5["failed"] = 1, 1 if failed else 0
             if not used:
                 tallies["isLossy"] = True
-                tallies["withCorrection"] = False
+                tallies["isCorrected"] = False
     # The findings: the lossless audio's MD5 is compared (or not) where the decoding says so, and a block whose CRC fails is one finding for each block.
     verify = result["verification"]["verify"]
     findings = [f for f in result["decode_findings"] if f["code"] not in ("wavpack.md5-needs-correction-file", "wavpack.audio-crc-mismatch", "wavpack.md5-mismatch", "wavpack.correction-block-missing")]

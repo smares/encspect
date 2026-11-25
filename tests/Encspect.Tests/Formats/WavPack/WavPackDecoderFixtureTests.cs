@@ -104,7 +104,7 @@ public class WavPackDecoderFixtureTests
     {
         FlacFixtureTests.CheckVerification(expected, actual, status);
         Assert.Equal(expected.TryGetProperty("isLossy", out JsonElement lossy) && lossy.GetBoolean(), actual!.IsLossy);
-        Assert.Equal(expected.TryGetProperty("withCorrection", out JsonElement withCorrection) && withCorrection.GetBoolean(), actual.WithCorrection);
+        Assert.Equal(expected.TryGetProperty("isCorrected", out JsonElement isCorrected) && isCorrected.GetBoolean(), actual.IsCorrected);
     }
 
     [Theory]
@@ -177,9 +177,9 @@ public class WavPackDecoderFixtureTests
                     writer.WriteBoolean("isLossy", true);
                 }
 
-                if (v.WithCorrection)
+                if (v.IsCorrected)
                 {
-                    writer.WriteBoolean("withCorrection", true);
+                    writer.WriteBoolean("isCorrected", true);
                 }
 
                 writer.WriteStartArray("checksums");

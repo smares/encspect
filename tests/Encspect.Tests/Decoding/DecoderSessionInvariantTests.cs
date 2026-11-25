@@ -9,12 +9,25 @@ namespace Encspect.Tests;
 // here", which is only true where its container does not hand it to its codec's parser (`*.codec-not-analyzed`).
 public class DecoderSessionInvariantTests
 {
-    // The directories of the fixtures of each registered decoder's codec, and of the containers that may carry it.
-    private static readonly string[] Directories = ["flac", "wavpack", "monkeys-audio", "truehd", "wav", "aiff", "matroska", "mp4", "ogg", "measurement", "tta", "alac", "mpeg-audio", "ac3", "musepack", "dts", "tak"];
+    // Every fixture folder is walked, with its topic folders, but these: regression inputs of the fuzzer that are built to break a parser.
+    private static readonly string[] SkippedFolders = ["fuzz", "ogg/fuzz"];
 
     // The codec name each registered decoder's parser reports, by the decoder's ID.
     private static readonly Dictionary<string, string> DecoderOfCodec = new(StringComparer.Ordinal)
     {
+        // The names a container or an extension gives where the parser reports a stream of its own: DTS-HD (its core starts the session), Speex without its mode, ASF's and
+        // MP4's names of MPEG audio, WavPack in Matroska.
+        ["DTS Express"] = "dts",
+        ["WavPack correction data"] = "wavpack",
+        ["DTS-HD Master Audio"] = "dts",
+        ["DTS-HD High Resolution Audio"] = "dts",
+        ["DTS-HD Master Audio + DTS:X"] = "dts",
+        ["DTS-HD Master Audio + DTS:X IMAX"] = "dts",
+        ["Speex"] = "speex",
+        ["WavPack"] = "wavpack",
+        [CodecNames.MpegAudioLayerIAndII] = "mpeg-audio",
+        [CodecNames.MpegAudioLayerIII] = "mpeg-audio",
+        ["MPEG-1 audio"] = "mpeg-audio",
         ["FLAC"] = "flac",
         ["WavPack lossless"] = "wavpack",
         ["WavPack hybrid"] = "wavpack",
@@ -121,6 +134,12 @@ public class DecoderSessionInvariantTests
         ["alac/built-cookie-missing-mka.mka"] = "the track has no CodecPrivate, so the stream is the container's own and the codec parser reads no frame (alac.cookie-missing)",
         ["matroska/pcm-layouts-unsupported.mka"] = "the Audio element states no sample layout the PCM parser reads (matroska.pcm-layout-not-read), so the streams are the container's own and no session starts",
         ["matroska/track-fields.mka"] = "the PCM track states no BitDepth (matroska.pcm-layout-not-read), so its stream is the container's own and no session starts",
+        ["matroska/external-mkvmerge-zlib-wavpack.mka"] = "the track's frames are compressed with zlib, which the parser cannot map back to the file (matroska.track-encoding-not-read), so the stream is the container's own and no session starts",
+        ["mp4/cenc-mpeg-audio.m4a"] = "the samples are encrypted (mp4.samples-encrypted), so the container hands over no MPEG audio frame",
+        ["mp4/ffmpeg-cenc-mp3.mp4"] = "the samples are encrypted (mp4.samples-encrypted), so the container hands over no MPEG audio frame",
+        ["ogg/header-bad-mode.spx"] = "a header mode that decoders reject (speex.mode-invalid), so its frames are not read and the stream is parsed and not decoded",
+        ["dts/exss-only-static-first-only.dts"] = "a DTS Express stream: an extension substream with no core frame, and the DTS session starts at the first core frame",
+        ["dts/exss-only.dts"] = "a DTS Express stream: an extension substream with no core frame, and the DTS session starts at the first core frame",
         ["aiff/built-chunk-id-invalid.aiff"] = NotDescribable,
         ["aiff/built-chunk-limit.aiff"] = NotDescribable,
         ["aiff/built-no-frames.aiff"] = NotDescribable,
@@ -138,37 +157,44 @@ public class DecoderSessionInvariantTests
 
         var checkedStreams = new Dictionary<string, int>(StringComparer.Ordinal);
         var failures = new List<string>();
-        foreach (string directory in Directories)
+        foreach (string path in Directory.EnumerateFiles(Fixtures.FixtureDirectory, "*", SearchOption.AllDirectories).Order(StringComparer.Ordinal)
+            .Where(p => Path.GetExtension(p) is not (".json" or ".md" or ".txt" or ".py")))
         {
-            foreach (string path in Directory.EnumerateFiles(Path.Combine(Fixtures.FixtureDirectory, directory)).Order(StringComparer.Ordinal)
-                .Where(p => Path.GetExtension(p) is not (".json" or ".md" or ".txt" or ".py")))
+            string directory = Path.GetRelativePath(Fixtures.FixtureDirectory, Path.GetDirectoryName(path)!).Replace('\\', '/');
+            if (SkippedFolders.Any(f => directory == f || directory.StartsWith(f + "/", StringComparison.Ordinal)))
             {
-                Report report = analyzer.AnalyzeFile(path);
+                continue;
+            }
 
-                // A container states the finding once for each stream it does not hand over, at the track's sample entry, which no node of
-                // the stream's own covers: the findings are a budget of streams that may lack a session, not a pass for the whole file.
-                int notAnalyzed = report.Findings.Count(f => f.Code.EndsWith(".codec-not-analyzed", StringComparison.Ordinal)
-                    || f.Code is "matroska.codec-private-missing" or "matroska.codec-private-invalid");
-                var withoutSession = new List<string>();
-                foreach (StreamInfo stream in report.Streams.Where(s => DecoderOfCodec.ContainsKey(s.Codec)))
+            Report report = analyzer.AnalyzeFile(path);
+
+            // A container states the finding once for each stream it does not hand over, at the track's sample entry, which no node of
+            // the stream's own covers: the findings are a budget of streams that may lack a session, not a pass for the whole file.
+            int notAnalyzed = report.Findings.Count(f => f.Code.EndsWith(".codec-not-analyzed", StringComparison.Ordinal)
+                || f.Code is "matroska.codec-private-missing" or "matroska.codec-private-invalid");
+            var withoutSession = new List<string>();
+            foreach (StreamInfo stream in report.Streams.Where(s => DecoderOfCodec.ContainsKey(s.Codec)))
+            {
+                string id = DecoderOfCodec[stream.Codec];
+                string name = $"{directory}/{Path.GetFileName(path)}";
+                if (stream.Verification is { Decoding: DecodeStatus.NotRequested })
                 {
-                    string id = DecoderOfCodec[stream.Codec];
-                    string name = $"{directory}/{Path.GetFileName(path)}";
-                    if (stream.Verification is { Decoding: DecodeStatus.NotRequested })
-                    {
-                        checkedStreams[id] = checkedStreams.GetValueOrDefault(id) + 1;
-                    }
-                    else if (!Excluded.ContainsKey(name))
-                    {
-                        withoutSession.Add($"{name}: a {stream.Codec} stream has {(stream.Verification is null ? "no verification" : stream.Verification.Decoding.ToString())}");
-                    }
+                    checkedStreams[id] = checkedStreams.GetValueOrDefault(id) + 1;
                 }
-
-                if (withoutSession.Count > notAnalyzed)
+                else if (!Excluded.ContainsKey(name))
                 {
-                    failures.AddRange(withoutSession);
+                    withoutSession.Add($"{name}: a {stream.Codec} stream has {(stream.Verification is null ? "no verification" : stream.Verification.Decoding.ToString())}");
                 }
             }
+
+            if (withoutSession.Count > notAnalyzed)
+            {
+                failures.AddRange(withoutSession);
+            }
+
+            // A stream that has a session under a codec name this test does not know would be skipped above: the map has to name it.
+            failures.AddRange(report.Streams.Where(s => !DecoderOfCodec.ContainsKey(s.Codec) && s.Verification is { Decoding: DecodeStatus.NotRequested })
+                .Select(s => $"{directory}/{Path.GetFileName(path)}: a {s.Codec} stream has a decoding session, but DecoderOfCodec has no entry for the codec"));
         }
 
         Assert.True(failures.Count == 0, string.Join(Environment.NewLine, failures));

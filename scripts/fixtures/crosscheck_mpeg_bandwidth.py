@@ -97,6 +97,9 @@ def main(argv):
                 mismatches.append(f"frame at {frame['offset']}: intensity stereo bound {bounds.get(frame['offset'])} Hz, minimp3 gives {expected}")
         if mismatches and path.name in EXPLAINED:
             print(f"ok   {path.name}: {len(mismatches)} frames differ, listed: {EXPLAINED[path.name]}")
+        elif not mismatches and path.name in EXPLAINED:
+            failed += 1
+            print(f"FAIL {path.name}: minimp3 agrees with the analyzer in every frame, so its EXPLAINED entry is not needed: remove it")
         elif mismatches:
             failed += 1
             print(f"FAIL {path.name}: {len(mismatches)} frames differ; the first: {mismatches[0]}")

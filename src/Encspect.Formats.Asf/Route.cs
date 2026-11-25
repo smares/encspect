@@ -158,7 +158,7 @@ public sealed partial class AsfParser
             if (codec is null)
             {
                 state.Findings.AddNow(Severity.Info, "asf.codec-not-analyzed",
-                    $"Stream {stream.Number} is coded as {CodecNameOf(format.EffectiveTag)} (format tag 0x{format.EffectiveTag:X4}), which has no parser here; its media objects are not analyzed.", anchor);
+                    $"Stream {stream.Number} is coded as {CodecNameOf(format.EffectiveTag)} (format tag 0x{format.EffectiveTag:X4}), which is not routed from ASF to a codec parser; its media objects are not analyzed.", anchor);
                 AddProtectedStream(state, stream);
                 continue;
             }

@@ -100,7 +100,7 @@ public class CompanionTests
         Assert.Equal(("correction.missing", Severity.Info), (finding.Code, finding.Severity));
         Assert.Contains("song.ofc", finding.Message);
         Assert.Empty(report.Companions);
-        Assert.False(Stream(report).Verification!.WithCorrection);
+        Assert.False(Stream(report).Verification!.IsCorrected);
     }
 
     [Fact]
@@ -187,7 +187,7 @@ public class CompanionTests
         Assert.Equal(["ofc"], asked);
         Assert.Equal((CorrectionStatus.Consistent, "whatever.ofc"), (Stream(report).Correction!.Status, Stream(report).Correction!.Source));
         Assert.Equal(Confidence.High, Stream(report).Claims.Single().Confidence);
-        Assert.True(Stream(report).Verification!.WithCorrection);
+        Assert.True(Stream(report).Verification!.IsCorrected);
 
         // The host owns the stream and disposes it with the analysis.
         Assert.All(opened, s => Assert.True(s.IsDisposed));
@@ -264,7 +264,7 @@ public class CompanionTests
         Finding finding = Assert.Single(report.Findings);
         Assert.Equal(("correction.inconsistent", Severity.Warning), (finding.Code, finding.Severity));
         Assert.Contains(report.Companions.Single().Report.Findings, f => f.Code == "file.empty");
-        Assert.False(Stream(report).Verification!.WithCorrection);
+        Assert.False(Stream(report).Verification!.IsCorrected);
         Assert.Equal(Confidence.Medium, Stream(report).Claims.Single().Confidence);
     }
 
@@ -329,7 +329,7 @@ public class CompanionTests
         Assert.Equal(("consistent", "song.ofc", "structure"), (stream.GetProperty("correction").GetProperty("status").GetString(), stream.GetProperty("correction").GetProperty("source").GetString(),
             stream.GetProperty("correction").GetProperty("basis").GetString()));
         Assert.Equal(0, stream.GetProperty("correction").GetProperty("problems").GetArrayLength());
-        Assert.True(stream.GetProperty("verification").GetProperty("withCorrection").GetBoolean());
+        Assert.True(stream.GetProperty("verification").GetProperty("isCorrected").GetBoolean());
         JsonElement companion = Assert.Single(root.GetProperty("companions").EnumerateArray());
         Assert.Equal("correction", companion.GetProperty("role").GetString());
         Assert.False(companion.TryGetProperty("schemaVersion", out _));

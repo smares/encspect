@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""libFLAC's releases (BSD-3-Clause), built from their source tarballs, for the fixtures that show what each compression level writes and for
+"""libFLAC's releases (libFLAC is BSD-3-Clause; the flac program is GPL-2.0-or-later and is only run, never read), built from their source tarballs, for the fixtures that show what each compression level writes and for
 the table of the levels in docs/formats/flac.md.
 
 The tarballs are pinned by SHA-256 in SOURCES and come from Xiph.Org's release server. build(version) compiles a release's flac program in
@@ -49,8 +49,8 @@ SOURCES = {
     "1.5.0": ("flac-1.5.0.tar.xz", "f2c1c76592a82ffff8413ba3c4a1299b6c7ab06c734dee03fd88630485c2b920"),
 }
 
-# Releases whose program does not compile with a current toolchain: their tarballs are pinned (the tables of the levels are read from the source of
-# src/flac/main.c, and 1.0.4's and 1.1.1's are the ones of 1.1.0 and 1.1.2), but no program is built.
+# Releases whose program does not compile with a current toolchain: their tarballs are pinned (the tables of 1.0.4 and 1.1.1 were read from src/flac/main.c, GPL-2.0-or-later, when the fixtures were made, and gave the ones of 1.1.0 and
+# 1.1.2; the analyzer does not use them and no code or table from it is in the repository), but no program is built.
 NOT_BUILT = {"1.0.4", "1.1.1"}
 
 # 1.2.0's encode.c does not compile without Ogg support, which the other releases build without.

@@ -107,8 +107,8 @@ public class WavPackDamagedUnitsTests
         Assert.Equal(plain.Findings.Select(f => f.Code).Order(), measured.Findings.Where(f => !f.Code.StartsWith("measure.", StringComparison.Ordinal)).Select(f => f.Code).Order());
     }
 
-    // A block of the main file of a hybrid pair whose stored checksum is changed (its data intact; the second block, since a first block that fails its checksum is not one libwavpack opens the file with) is withheld whether or not the correction file is beside it; the correction file's own blocks are not decoded
-    // (applying it is a later pull request), so damage there withholds nothing.
+    // A block of the main file of a hybrid pair whose stored checksum is changed (its data intact; the second block, since a first block that fails its checksum is not one libwavpack opens the file with) is withheld whether or not the correction file is beside it; a correction block
+    // that fails its checksum leaves its main block decoded as the lossy audio, which counts as a failed block (wavpack.correction-block-missing), so its set is withheld too.
     [Fact]
     public void AFailedBlockOfAPairIsWithheldWithAndWithoutItsCorrectionFile()
     {
@@ -138,6 +138,7 @@ public class WavPackDamagedUnitsTests
         Assert.Equal(3936, withoutCorrection.WithheldByReason[WithholdReason.ChecksumFailed]);
         Assert.Equal(withoutCorrection.WithheldByReason[WithholdReason.ChecksumFailed], withCorrection.WithheldByReason[WithholdReason.ChecksumFailed]);
         Assert.Equal(pair.Streams[0].Verification!.DecodedSamples, withCorrection.Samples + withCorrection.WithheldSamples);
-        Assert.Equal(0, brokenCorrection.Streams[0].Measurements!.WithheldSamples);
+        Assert.Contains(brokenCorrection.Findings, f => f.Code == "wavpack.correction-block-missing");
+        Assert.Equal(11025, brokenCorrection.Streams[0].Measurements!.WithheldByReason[WithholdReason.ChecksumFailed]);
     }
 }
