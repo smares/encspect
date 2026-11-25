@@ -1383,10 +1383,10 @@ def mixed_intensity_mpeg2():
     return f.add_frames(pack(mixed_intensity_frames("2", 22050, 64, MIXED_WINDOWS)))
 
 
-# --- Intensity positions at the largest value their length codes (MPEG-2 and 2.5) --------------------
+# --- Intensity positions at the largest value their length codes (MPEG-2) --------------------
 
 
-# Long band widths at 22,050 Hz (ISO/IEC 13818-3 Table B.2), without the last band, which has no scalefactor.
+# Long band widths at 22050 Hz (ISO/IEC 13818-3 Table B.2), without the last band, which has no scalefactor.
 LSF_LONG_WIDTHS = [6, 6, 6, 6, 6, 8, 10, 12, 14, 16, 20, 24, 28, 32, 38, 46, 52, 60, 68, 58, 54]
 
 
@@ -1416,7 +1416,7 @@ def mpeg2_intensity_largest_position():
     f = Layer3Fixture(
         "intensity-mpeg2-largest-position",
         "MPEG-2 Layer III joint stereo at 22050 Hz with mid/side and intensity stereo whose right channel is all zero, so every band is intensity coded: the intensity positions are "
-        "the largest value their scalefactor length codes (1 of 1 bit, 3 of 2 bits, 7 of 3 bits) and the one below it, as an encoder that sends one position for the whole spectrum writes them.",
+        "the largest value their scalefactor length codes (1 of 1 bit, 3 of 2 bits, 7 of 3 bits), in some granules alone and in others among smaller values.",
         silent=False,
         guessenc=False,
     )
