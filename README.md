@@ -55,7 +55,7 @@ The Coding Summary: the count and share of channel modes, joint stereo modes, st
 
 ## Status
 
-Version 0.3.0, a pre-release in development. Download builds for Windows, macOS and Linux from the [releases page](https://github.com/smares/encspect/releases); they are not signed (see the release notes). The plan is in [docs/plan.md](docs/plan.md).
+Version 0.4.0, a pre-release in development. Download builds for Windows, macOS and Linux from the [releases page](https://github.com/smares/encspect/releases); they are not signed (see the release notes). The plan is in [docs/plan.md](docs/plan.md).
 
 Formats read so far ([details](docs/formats/README.md)):
 
@@ -85,7 +85,7 @@ Protection: streams that a container encrypts or locks are reported with their s
 
 Measurements: with `--measure`, the formats that have a decoder (FLAC, WavPack, Monkey's Audio, ALAC, TTA, TAK, Dolby TrueHD and MLP, MPEG audio Layers I to III, Vorbis, Opus, Musepack, Speex, AC-3, E-AC-3, the DTS core, and the samples of WAV, Wave64 and AIFF) get the average spectrum, the spectral cutoff and its companions (spectral bandwidth, spectral slope, partial cutoff, mid and side spectra, the inter-channel coherence and spectral holes) of their decoded audio, the spectrogram and waveform behind them, the levels (sample peak, RMS level, DC offset, clipping runs, digital silence and bit-depth usage), the loudness (integrated, range, maxima; ITU-R BS.1770-5 and EBU R 128) and the true peak ([details](docs/cli.md)). The GUI's detail window decodes and measures a file with Decode Audio and draws the waveform, the spectrogram, the spectrum and the loudness under the heading Audio of its Graphs tab ([details](docs/gui.md)).
 
-Version 0.3 adds the first lossy decoders (MPEG audio Layers I to III, Vorbis, Opus, AC-3 and E-AC-3), so lossy files are measured too. Next: 0.4, in progress: the Musepack, DTS core and Speex decoders and the container routes that known writers produce are merged ([plan](docs/plan.md#milestones); what each format reads by depth is in [formats](docs/formats/README.md#depth-by-format)).
+Version 0.4 adds the Musepack, DTS core, Speex, TAK and WavPack 1 to 3 decoders, reads the codecs in the containers that known writers fill, and leaves units whose checksum fails out of the measurements. Next: 0.5, the AAC and Windows Media Audio decoders ([plan](docs/plan.md#milestones); what each format reads by depth is in [formats](docs/formats/README.md#depth-by-format)).
 
 The decoders exist for analysis only: Encspect does not play or convert audio, and users are responsible for the laws where they live ([details](docs/cli.md#what-the-decoders-are-for)).
 
