@@ -33,7 +33,10 @@ internal static class CorruptFiles
 
         foreach (string name in Fixtures.MpegFixtures())
         {
-            yield return name;
+            if (!IsNotMutated(name))
+            {
+                yield return name;
+            }
         }
 
         foreach (string name in Fixtures.Mp4FixtureNames())
@@ -80,6 +83,7 @@ internal static class CorruptFiles
     [
         ("fuzz/", "regression inputs of FuzzRegressionTests, each a file the fuzzer broke a parser with"),
         ("ogg/fuzz/", "regression inputs of FuzzRegressionTests"),
+        ("mpeg-audio/music/", "a full-length recording (7 MB) kept for the README and website screenshots; the smaller LAME fixtures cover the same coding under damage"),
         ("measurement/", "synthetic PCM signals of the measurement tests, in the WAV, AIFF and FLAC forms the families above are damaged in"),
     ];
 

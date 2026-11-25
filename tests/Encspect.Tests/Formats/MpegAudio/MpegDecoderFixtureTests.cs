@@ -84,6 +84,9 @@ public class MpegDecoderFixtureTests
         "mpeg-audio/external-twolame-joint-pink-b192.mp2",
         "mpeg-audio/external-twolame-joint-pink-side-12-db-b128.mp2",
         "mpeg-audio/external-twolame-joint-pink-side-12-db-b192.mp2",
+
+        // A whole recording: the spectral cutoff and the levels of real music.
+        "mpeg-audio/music/external-lame-magic-flute-v4.mp3",
     };
 
     [Theory]
