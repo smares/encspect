@@ -156,6 +156,12 @@ MULTIPLE_STREAMS = (
     "lame-before-joined-frames.mp3",
 )
 
+# The files that decode no stream (no chain of frames, so nothing is decoded and there is nothing to compare). A listed file that decodes one, and an unlisted file that decodes none, fails the run.
+NO_STREAM = (
+    "no-frames.mp3", "free-format-period-4.mp3", "free-format-weak-chain.mp3", "protected-weak-chain.mp3", "lone-frame-overflow.mp1", "lone-frames-forbidden-allocation.mp1",
+    "lone-frame-invalid-side-info.mp3",
+)
+
 # The fixtures the default run leaves out, each with the reason; a name that is no fixture, or a fixture that is left out unlisted, fails the run.
 NOT_COMPARED = {
     "ape-encoder-lavc.mp3": "a tag fixture of eight frames, written for the encoder claims of the tag parsers: its audio is no decoder test",
@@ -383,6 +389,7 @@ def main(argv=None):
     binary = minimp3_tool.build_pcm()
     failed = compared = multichannel = 0
     seen_multiple = set()
+    seen_none = set()
     decoder = None
     mixed_directory = pathlib.Path(tempfile.mkdtemp(prefix="mixed-"))
     if not args.files:
@@ -400,11 +407,12 @@ def main(argv=None):
             manifest = dump / f"0000-{path.name}.pcm.json"
             streams = json.loads(manifest.read_text())["streams"] if manifest.exists() else []
             if len(streams) != 1:
-                seen_multiple.add(path.name)
-                if path.name in MULTIPLE_STREAMS:
+                table, seen = (NO_STREAM, seen_none) if not streams else (MULTIPLE_STREAMS, seen_multiple)
+                seen.add(path.name)
+                if path.name in table:
                     print(f"skip {path.name}: {len(streams)} decoded streams (one is compared)")
                 else:
-                    print(f"FAIL {path.name}: {len(streams)} decoded streams, and the file is not in MULTIPLE_STREAMS")
+                    print(f"FAIL {path.name}: {len(streams)} decoded streams, and the file is not in {'NO_STREAM' if not streams else 'MULTIPLE_STREAMS'}")
                     failed += 1
                 continue
             work = base / f"work{number}"
@@ -489,6 +497,9 @@ def main(argv=None):
     if not args.files:
         for name in sorted(set(MULTIPLE_STREAMS) - seen_multiple):
             print(f"FAIL {name}: listed in MULTIPLE_STREAMS and has one decoded stream: remove it")
+            failed += 1
+        for name in sorted(set(NO_STREAM) - seen_none):
+            print(f"FAIL {name}: listed in NO_STREAM and decodes a stream: remove it")
             failed += 1
     print(f"{compared} files compared with minimp3, {multichannel} with mctoolamed, {failed} failed")
     return 1 if failed else 0
