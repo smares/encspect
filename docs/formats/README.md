@@ -46,7 +46,7 @@ Which container hands which codec to its codec parser, and which codecs are deco
 | AAC | routed | routed | not planned | not planned | routed, as the ADTS frames of IEC 61937 bursts | ADTS, ADIF | no |
 | MPEG audio | routed, as packets, whatever the number of stretches | routed (`A_MPEG/L1`, `L2`, `L3`, and `A_MS/ACM` with format tag 0x0050 or 0x0055) | not planned | routed (format tag 0x0055) | routed, by the format tag or the sub-format GUID, and as IEC 61937 bursts | yes | yes (measured) |
 | AC-3, E-AC-3 | routed | routed (also `A_MS/ACM`, by the format tag 0x2000 or the sub-format GUID) | not planned | routed (AC-3, format tag 0x2000; E-AC-3 not planned) | routed, by the format tag or the sub-format GUID, and as IEC 61937 bursts | yes | yes (measured) |
-| DTS | routed | routed (also `A_MS/ACM`, by the format tag 0x0008 or 0x2001) | not planned | not planned | routed, by the format tag, as a stream in 16-bit stereo PCM samples, and as IEC 61937 bursts | yes, and `.dtshd` | no |
+| DTS | routed | routed (also `A_MS/ACM`, by the format tag 0x0008 or 0x2001) | not planned | not planned | routed, by the format tag, as a stream in 16-bit stereo PCM samples, and as IEC 61937 bursts | yes, and `.dtshd` | yes (measured: the core) |
 | Vorbis | not planned | routed | routed | not planned | not planned | no | yes (measured) |
 | Opus | routed | routed | routed | not planned | not planned | no | yes (measured) |
 | Speex | not planned | not planned | routed | not planned | not planned | no | yes (measured) |
@@ -55,7 +55,7 @@ Which container hands which codec to its codec parser, and which codecs are deco
 | WavPack | not planned | routed | not planned | not planned | not planned | yes | yes |
 | TTA | not planned | routed | not planned | not planned | not planned | yes | yes |
 | OptimFROG | not planned | not planned | not planned | not planned | not planned | yes | no |
-| TAK | not planned | not planned | not planned | not planned | not planned | yes | no |
+| TAK | not planned | not planned | not planned | not planned | not planned | yes | yes (measured) |
 | Dolby TrueHD, MLP | routed (`mlpa`; an unprotected track) | routed | not planned | not planned | planned after 0.5 as IEC 61937 MAT bursts ([plan](../plan.md#after-05), item 9); the bursts are named and timed until then | yes | yes |
 | WMA (versions 1 and 2, Professional, Lossless, Voice) | not planned | routed (`A_MS/ACM`, by the format tag) | not planned | routed | not planned | ASF | no |
 | Monkey's Audio | not planned | not planned | not planned | not planned | not planned | yes | yes |
@@ -70,7 +70,7 @@ Which container hands which codec to its codec parser, and which codecs are deco
 
 How far into each coding Encspect sees today, on the depth levels of the [plan](../plan.md#breadth-and-depth); a milestone in parentheses is where the missing level is planned. Each format's page has the detail.
 
-- **Container structure:** every container (MP4, Matroska and WebM, Ogg, ASF, WAV, Wave64, BW64, AIFF, `.dtshd`) is read at its own level, and each raw stream format by its frames, so the table leaves that level out. The exceptions are the contents of ASF script commands and markers (0.4), and WavPack 1 to 3, whose files are read at header level (the stored WAV header, the WavPack header, the bitstream as one region, the trailer and the stream figures) and whose audio is decoded on request ([WavPack 1 to 3](wavpack.md#wavpack-1-to-3)).
+- **Container structure:** every container (MP4, Matroska and WebM, Ogg, ASF, WAV, Wave64, BW64, AIFF, `.dtshd`) is read at its own level, and each raw stream format by its frames, so the table leaves that level out. The exception is WavPack 1 to 3, whose files are read at header level (the stored WAV header, the WavPack header, the bitstream as one region, the trailer and the stream figures) and whose audio is decoded on request ([WavPack 1 to 3](wavpack.md#wavpack-1-to-3)).
 - **Codec syntax:** the headers and frame-level fields of every coding are read, so the table leaves that level out too; WMA Voice is read down to the sizes that end a frame and the fields that name it.
 - **Entropy-coded data:** whether the parser or the decoder walks the coded values (Huffman, Golomb, range or run-level codes).
 - **Decoded audio:** verified means a decoder checks a checksum stored over the decoded audio; measured means `--measure` gets the spectrum, levels and loudness.
@@ -78,29 +78,29 @@ How far into each coding Encspect sees today, on the depth levels of the [plan](
 
 | Coding | Entropy-coded data | Decoded audio | Graphs of coding choices |
 |---|---|---|---|
-| MPEG audio | Layer III scalefactors and Huffman data (the entropy pass, every analysis); Layers I and II up to the samples, and their samples where decoded | measured (Layers I to III) | Stereo Coding, Channel Modes, Joint Stereo Modes, Intensity Stereo Bounds, Intensity Stereo Bound, Block Usage, Block Sizes, Coded Bandwidth, Channel Bit Share |
-| AAC | Main, LC, SSR and LTP: every raw data block with its spectral data; ER, ELD and USAC not read (0.5) | no (0.5) | Block Usage, Block Sizes, Stereo Coding, Intensity Stereo Bound, Coded Bandwidth |
+| MPEG audio | Layer III scalefactors and Huffman data (the entropy pass, every analysis); Layers I and II up to the samples, and their samples where decoded | measured (Layers I to III) | Stereo Coding, Channel Modes, Joint Stereo Modes, Intensity Stereo Bounds, Intensity Stereo Bound, Block Usage, Block Sizes, Scalefactor Scaling, Global Gain, Coded Bandwidth, Channel Bit Share |
+| AAC | Main, LC, SSR and LTP: every raw data block with its spectral data; ER, ELD and USAC not read (0.5) | no (0.5) | Block Usage, Block Sizes, Window Shapes, TNS, Pulse Data, Noise Substitution, SBR, Parametric Stereo, Stereo Coding, Mid/Side Bands, Intensity Stereo Bound, Coded Bandwidth |
 | AC-3, E-AC-3 | every audio block with its mantissa codes (the entropy pass, every analysis); the adaptive hybrid transform and enhanced coupling read too; the audio blocks at the reduced rates not read (not planned) | measured (the CRCs verify the coded data: "lossy stream") | Blocks With Block Switching, Blocks With Coupling, Blocks With Rematrixing, Blocks With Spectral Extension (E-AC-3), Coded Bandwidth ([ac3.md](ac3.md#what-is-graphed)) |
-| DTS | core subframes not read (0.4); the extensions' data not read (follow-ups after 0.5) | no (core: 0.4; extensions: follow-ups after 0.5) | Stereo Coding of the core |
-| Vorbis | floors and residues of every packet (the entropy pass, every analysis) | measured | Block Sizes, Coded Bandwidth |
-| Opus | every SILK and CELT frame to its final range coder state (the entropy pass, every analysis) | measured | Coded Bandwidth (from the TOC bytes), Block Sizes, Stereo Coding, Intensity Stereo Bound (CELT) |
-| Speex | every frame's parameters (the entropy pass, every analysis) | measured (libspeex 1.2.1's fixed-point decoder, bit for bit) | none yet |
-| Musepack | every frame's resolutions, scalefactors and samples (the entropy pass, every analysis); the SV4 to SV6 streams libmpcdec 1.2.6 refuses not read | measured (SV7 and SV8; SV4 to SV6 as libmpcdec 1.2.6 decodes them) | Stereo Coding, Coded Bandwidth |
-| WMA versions 1 and 2 | walked to the end of every frame, with the run-level coefficients | no (0.5) | Stereo Coding |
-| WMA Professional | walked to the end of every frame | no (0.5) | Stereo Coding |
-| WMA Voice | the sizes that end a frame | no (0.5, if the lead wants it) | none |
-| WMA Lossless | walked to the end of every frame | no (0.5) | Stereo Coding |
-| FLAC | walked by the parser | verified and measured | Stereo Coding |
-| WavPack | walked by the decoder | verified and measured | Stereo Coding |
-| Monkey's Audio | walked by the decoder | verified and measured (versions 3.80 to 3.99 and 4.11) | none |
+| DTS | the core's subframes walked in every analysis; the extensions' data not read (follow-ups after 0.5) | measured (the core; extensions: follow-ups after 0.5) | Stereo Coding, Coded Bandwidth, Subframes With Block Switching |
+| Vorbis | floors and residues of every packet (the entropy pass, every analysis) | measured | Block Sizes, Modes, Coded Bandwidth |
+| Opus | every SILK and CELT frame to its final range coder state (the entropy pass, every analysis) | measured | Modes, Frame Sizes, Channel Coding, Coded Bandwidth (from the TOC bytes), Block Sizes, Stereo Coding, Intensity Stereo Bound (CELT) |
+| Speex | every frame's parameters (the entropy pass, every analysis) | measured (libspeex 1.2.1's fixed-point decoder, bit for bit) | Narrowband Submodes, Wideband Submodes, Ultra-Wideband Submodes |
+| Musepack | every frame's resolutions, scalefactors and samples (the entropy pass, every analysis); the SV4 to SV6 streams libmpcdec 1.2.6 refuses not read | measured (SV7 and SV8; SV4 to SV6 as libmpcdec 1.2.6 decodes them) | Stereo Coding, Noise-Substituted Channels, Coded Bandwidth |
+| WMA versions 1 and 2 | walked to the end of every frame, with the run-level coefficients | no (0.5) | Stereo Coding, Block Sizes, Noise-Substituted Blocks, Coded Bandwidth |
+| WMA Professional | walked to the end of every frame | no (0.5) | Stereo Coding, Subframe Sizes |
+| WMA Voice | the sizes that end a frame | no (0.5, if the lead wants it) | Frame Types |
+| WMA Lossless | walked to the end of every frame | no (0.5) | Stereo Coding, Subframe Sizes |
+| FLAC | walked by the parser | verified and measured | Stereo Coding, Subframe Types, Fixed Predictor Orders, Partition Orders, Rice With 5-Bit Parameters, Highest Predictor Order, Coefficient Precision, Block Size |
+| WavPack | walked by the decoder | verified and measured | Stereo Coding, Decorrelation Passes |
+| Monkey's Audio | walked by the decoder | verified and measured (versions 3.80 to 3.99 and 4.11) | Stereo Coding, Silent Frames |
 | TTA | walked by the decoder; the frames' CRC-32s are checked over the coded bytes | measured (audio format 1) | none |
 | OptimFROG | the blocks are walked and their CRC-32s checked over the compressed data; the data itself is not read | no decoder | none |
-| TAK | the metadata objects are walked and their CRC-24s checked; the frames are walked by their sync words and their header and data CRC-24s checked over the coded data; the coded syntax is walked by the parser | verified (the MD5 where there is one) and measured (codec 2 and 4) | Stereo Coding |
-| ALAC | walked by the parser | measured (no checksum to verify) | Element Coding, Stereo Coding |
-| Dolby TrueHD, MLP | walked by the parser | verified and measured | none (Stereo Coding: 0.4) |
+| TAK | the metadata objects are walked and their CRC-24s checked; the frames are walked by their sync words and their header and data CRC-24s checked over the coded data; the coded syntax is walked by the parser | verified (the MD5 where there is one) and measured (codec 2 and 4) | Stereo Coding, Subframe Types, Average Predictor Order, Highest Predictor Order, Coefficient Precision, Channels With Wasted Bits, Highest Residual Mode |
+| ALAC | walked by the parser | measured (no checksum to verify) | Element Coding, Stereo Coding, Highest Predictor Order |
+| Dolby TrueHD, MLP | walked by the parser | verified and measured | Stereo Coding, Highest Predictor Order |
 | PCM, float, A-law, mu-law (WAV, Wave64, AIFF) | none to walk | measured | none |
 
-- **Graphs of coding choices** for the formats whose data the parsers already read come in 0.4; those that need the entropy pass come with each format's decoder ([coding-graphs.md](../design/coding-graphs.md#the-survey)).
+- **Graphs of coding choices** are built for every format with a decoder or a walk of its coded data; the ones still queued are in [coding-graphs.md](../design/coding-graphs.md#the-survey).
 
 ## Common to every format
 

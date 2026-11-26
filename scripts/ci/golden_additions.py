@@ -11,8 +11,8 @@ reverses what it lists as renamed or moved, ignores the fields it lists as chang
 streams through the nodes that shifted, and requires the rest to equal the old tree.
 
 Without change-file arguments the change files are those the pull request adds or changes,
-tests/fixtures/*/golden-changes.json; with none the check is not asked for and passes. A changed golden that no change
-file covers fails. Names below are node names, as a path from the report's root (the root itself is []); a step matches
+tests/fixtures/*/golden-changes.json; with none, a pull request that changes at most 20 goldens passes (it is reviewed by eye) and one that
+changes more fails. A changed golden that no change file covers fails. Names below are node names, as a path from the report's root (the root itself is []); a step matches
 every child of that name. A change file:
 
     {
@@ -39,6 +39,11 @@ every child of that name. A change file:
       "bitrate": [{"goldens": ["tests/fixtures/mp4/some.report.json"], "reason": "why the average bitrate differs"}]  # goldens whose averageBitrate may differ without lost samples
     }
 
+A decode golden (*.decode.json, the JSON object {"verification": ..., "findings": ...} or {"streams": [...]} that the decoder fixture tests write) is compared the same way,
+with {"scope": "decode", "fields": ["decodedSamples", "decoding"]} under "changed" (the fields may differ wherever they occur, "goldens" names the files) and
+{"scope": "decode", "path": ["verification"], "from": "withCorrection", "to": "isCorrected"} under "renamedKeys". A key renamed in the streams of a report golden is
+listed the same way with "scope": "stream" (the path starts at the stream).
+
 A measurement golden (tests/fixtures/measurement/*.measure.json, the JSON object {"measurements": ..., "findings": ...} that MeasurementFixtureTests writes) is
 compared the same way, with two kinds of entry: {"scope": "measurement", "path": ["levels"], "key": "lowBitsPerSpan"} under "added" takes the key out of the object
 at the path under "measurements" (a step that names an array goes into each of its elements, so "perChannel" reaches every channel), and
@@ -64,6 +69,9 @@ import sys
 
 TAG = "__path"
 CHANGE_FILES = "tests/fixtures/*/golden-changes.json"
+GOLDENS = (".report.json", ".measure.json", ".decode.json")
+# A pull request that changes more goldens than this without a change file fails: the changes of that many files are not reviewed by eye.
+UNSTATED_LIMIT = 20
 
 
 class ChangeError(Exception):
@@ -348,6 +356,8 @@ def validate(change):
     for entry in change.get("changed", []):
         if entry.get("scope") == "stream" and "array" in entry and "name" not in entry:
             raise ChangeError(f"changed: an entry with the scope stream and an array needs name: {json.dumps(entry)}")
+        if entry.get("scope") == "decode" and "fields" not in entry:
+            raise ChangeError(f"changed: an entry with the scope decode needs fields: {json.dumps(entry)}")
         if entry.get("scope") == "measurement":
             for field in ("path", "fields", "to"):
                 if field not in entry:
@@ -436,6 +446,10 @@ def check_golden(old, new, change):
             expected = transform(after, change, before)
         except ChangeError as error:
             return [str(error)]
+        for stream in expected.get("streams", []):
+            problem = rename_keys(stream, [e for e in change.get("renamedKeys", []) if e.get("scope") == "stream"])
+            if problem:
+                return [problem]
         problems += differences(before, expected, f"[{index}]")
     return problems
 
@@ -452,6 +466,47 @@ def measurement_targets(root, steps):
     return nodes
 
 
+def rename_keys(root, entries):
+    """Puts the keys the entries rename back under their old names in root (the new golden): the new golden has the key under "to", the old one under "from". Returns a problem or None."""
+    for entry in entries:
+        for field in ("path", "from", "to"):
+            if field not in entry:
+                return f"renamedKeys: an entry needs {field}: {json.dumps(entry)}"
+        for target in measurement_targets(root, entry["path"]):
+            if entry["to"] in target and entry["from"] not in target:
+                target[entry["from"]] = target.pop(entry["to"])
+    return None
+
+
+def check_decode_golden(old, new, change):
+    """The problems of one decode golden (the verification and findings, or the streams, that a decoder fixture test writes): the keys the change renames put back
+    and the fields it lets change (decodedSamples, decoding) set back to the old values; the rest must equal the old golden."""
+    try:
+        validate(change)
+    except ChangeError as error:
+        return [str(error)]
+    expected = copy.deepcopy(new)
+    problem = rename_keys(expected, [e for e in change.get("renamedKeys", []) if e.get("scope") == "decode"])
+    if problem:
+        return [problem]
+    fields = {field for entry in change.get("changed", []) if entry.get("scope") == "decode" for field in entry["fields"]}
+
+    def restore(before, after):
+        if isinstance(before, dict) and isinstance(after, dict):
+            for key in after:
+                if key in before:
+                    if key in fields and not isinstance(after[key], (dict, list)):
+                        after[key] = before[key]
+                    else:
+                        restore(before[key], after[key])
+        elif isinstance(before, list) and isinstance(after, list):
+            for x, y in zip(before, after):
+                restore(x, y)
+
+    restore(old, expected)
+    return differences(old, expected)
+
+
 def check_measurement_golden(old, new, change):
     """The problems of one measurement golden: what the change adds (keys under "measurements") taken out of the new golden, and the fields it lets change
     set back to the old value where the new one is the stated one; the rest must equal the old."""
@@ -460,13 +515,9 @@ def check_measurement_golden(old, new, change):
     except ChangeError as error:
         return [str(error)]
     expected = copy.deepcopy(new)
-    for entry in change.get("renamedKeys", []):
-        for field in ("path", "from", "to"):
-            if field not in entry:
-                return [f"renamedKeys: an entry needs {field}: {json.dumps(entry)}"]
-        for target in measurement_targets(expected.get("measurements"), entry["path"]):
-            if entry["to"] in target and entry["from"] not in target:
-                target[entry["from"]] = target.pop(entry["to"])
+    problem = rename_keys(expected.get("measurements"), [e for e in change.get("renamedKeys", []) if e.get("scope", "measurement") == "measurement"])
+    if problem:
+        return [problem]
     for entry in change.get("added", []):
         if entry.get("scope") == "measurement":
             for target in measurement_targets(expected.get("measurements"), entry["path"]):
@@ -527,14 +578,19 @@ def run(repo, base, head, change_files):
             if code[0] in "AM" and fnmatch.fnmatch(path, CHANGE_FILES):
                 changes[path] = json.loads(git(repo, "show", f"{head}:{path}"))
     if not changes:
-        print("No change file added or changed: the golden check is not asked for.")
+        unstated = [line.partition("\t")[2] for line in status if line[0] in "MD" and line.partition("\t")[2].endswith(GOLDENS)]
+        if len(unstated) > UNSTATED_LIMIT:
+            print(f"{len(unstated)} goldens are changed and no change file is added or changed (at most {UNSTATED_LIMIT} may change without one): "
+                  "state the change in tests/fixtures/<folder>/golden-changes.json (docs/development.md, \"Golden-change files\").")
+            return 1
+        print(f"No change file added or changed, and {len(unstated)} golden(s) changed (at most {UNSTATED_LIMIT} may change without one): reviewed as before.")
         return 0
 
     problems = []
     checked = 0
     for line in status:
         code, _, path = line.partition("\t")
-        if not path.endswith((".report.json", ".measure.json")):
+        if not path.endswith(GOLDENS):
             continue
         if code[0] == "A":
             continue
@@ -547,13 +603,13 @@ def run(repo, base, head, change_files):
             continue
         old = json.loads(git(repo, "show", f"{merge_base}:{path}"))
         new = json.loads(git(repo, "show", f"{head}:{path}"))
-        check = check_measurement_golden if path.endswith(".measure.json") else check_golden
+        check = check_measurement_golden if path.endswith(".measure.json") else check_decode_golden if path.endswith(".decode.json") else check_golden
         found = [check(old, new, scoped(changes[owner], path)) for owner in owners]
         if all(found):
             problems += [f"{path}: {d}" for d in found[0]]
         checked += 1
     for name, change in changes.items():
-        if not any(covers(change, line.partition("\t")[2]) for line in status if line.partition("\t")[2].endswith((".report.json", ".measure.json"))):
+        if not any(covers(change, line.partition("\t")[2]) for line in status if line.partition("\t")[2].endswith(GOLDENS)):
             problems.append(f"{name}: covers no changed golden")
     for problem in problems:
         print(problem)

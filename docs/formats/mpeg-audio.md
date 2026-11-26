@@ -224,7 +224,7 @@ The rules by which the analyzer finds the ancillary data of each frame, counts i
 - **A frame's main data:**
   - It starts main_data_begin bytes before the position where that frame's own frame data begins.
   - Its length is the sum of part2_3_length over its granules and channels, in bits, rounded up to whole bytes.
-  - **A pointer that reaches past the free bytes** is reported (`mpeg-audio.main-data-overlap`: main_data_begin is larger than the bytes the frames before leave free) even where the frame's own main data is empty (every granule of part2_3_length 0). The syntax gives main_data_begin as where the main data begin (ISO/IEC 11172-3 2.4.2.7); the standard's text was not available, and no rule was found that exempts a frame that reads none. In `external-nero-rom-mp3pro-vbr-low.mp3`, 387 frames run back to back from 0x400 to the end of the file (the VBRI header's frame count) and the frame at 0xD134 is the one case: its fourth header byte is 0xFF (mono, mode extension 3, copyright set, emphasis CCITT J.17), where the 385 other audio frames have 0x44 or 0x54 (joint stereo, no copyright, no emphasis); its main_data_begin is 253 bytes (byte 0xFD) against 14 free bytes, its part2_3_length is 0, and the bytes after main_data_begin equal the stereo frames' side information byte for byte. The finding is kept because the pointer reaches past the free bytes, so the frame and the one after it are withheld (`ONLY_IN_MINIMP3` of `crosscheck_mpeg_pcm.py` pins the span where minimp3 outputs them).
+  - **A pointer that reaches past the free bytes** is reported (`mpeg-audio.main-data-overlap`: main_data_begin is larger than the bytes the frames before leave free) even where the frame's own main data is empty (every granule of part2_3_length 0). The syntax gives main_data_begin as where the main data begin (ISO/IEC 11172-3 2.4.2.7). Withholding a frame whose main_data_begin reaches past the free reservoir, also where its granules read no main data, is Encspect's choice for a frame that breaks the main-data placement of ISO/IEC 11172-3 2.4.3.4; the standard does not require it. In `external-nero-rom-mp3pro-vbr-low.mp3`, 387 frames run back to back from 0x400 to the end of the file (the VBRI header's frame count) and the frame at 0xD134 is the one case: its fourth header byte is 0xFF (mono, mode extension 3, copyright set, emphasis CCITT J.17), where the 385 other audio frames have 0x44 or 0x54 (joint stereo, no copyright, no emphasis); its main_data_begin is 253 bytes (byte 0xFD) against 14 free bytes, its part2_3_length is 0, and the bytes after main_data_begin equal the stereo frames' side information byte for byte. The finding is kept, and the frame and the one after it are withheld (`ONLY_IN_MINIMP3` of `crosscheck_mpeg_pcm.py` pins the span where minimp3 outputs them).
 - **First frame:** the stream's first frame that has side information, not counting a VBR header frame.
 
 ### R1. Segments
@@ -320,7 +320,7 @@ Mono, stereo, or the two discrete programs of dual channel. Where the file carri
 - **LAME** writes `LAME3.100` (possibly cut short to `LAME`) into ancillary data mid-stream and into the padding of the last frame, even when the Info tag is disabled.
   - A version that runs to the end of the ancillary data may be cut short there (`LAME3.10`), so a whole one elsewhere is preferred, and a cut one names only LAME.
   - The string starts wherever the main data ends, at any bit position, and can run on into the next frame's data. So it is searched at every bit offset in the ancillary data the bit reservoir split identifies, joined across frames, not in raw frame bytes.
-  - Found alone, it is low confidence.
+  - Found alone, it is low confidence: the text can be cut short where the ancillary data ends, so a version read from it can lack a marker (beta, alpha) or a patch level, or be no more than `LAME` (the lead, 2026-11-24).
   - The version may be up to 36 bytes long: 3.87 writes `LAME3.87 (beta 1, Sep 29 2000)`.
 - **TwoLAME** writes zeros.
 - **Gogo-no-coda** (3.12) fills the bits no frame uses with `GOGO` over and over, found at any bit position as two in a row (low confidence alone). In VBR it writes `GOGO` where its Xing header's quality belongs, which names it with medium confidence and is shown as such instead of a number.
@@ -342,6 +342,20 @@ Mono, stereo, or the two discrete programs of dual channel. Where the file carri
   - The flag bits are in the rule because of 8hz-MP3 and Plugger: Encspect's test files of those two encoders, which code like BladeEnc (see below), matched the rule without them and were named BladeEnc. Both encoders write neither bit unless asked to, and BladeEnc's test files all set one.
   - **Two limits of the flag bits:** 8hz-MP3 with `-c -o` and Plugger with `-y -o` set the bits and are named BladeEnc (low; `external-8hz-flags`, `external-plugger-original`), and BladeEnc 0.94.2 with `-copy` alone writes neither bit and is not named (`external-blade-copy`; `-copy` also cleared the original bit in `external-blade-flags`, where `-c` set the copyright bit).
   - 0.80 and 0.81 drain an overflowing bit reservoir into ancillary data mid-stream, as the ISO dist10 encoder does, and mp3guessenc does not name them either.
+- **Lookalikes:** where other encoders' test files match the rule that names the encoder, its encoder node carries a second evidence line naming them. `TraitLookalikeTests` evaluates every rule on every fixture of `tests/fixtures/mpeg-audio` whose manifest names the encoder, whatever evidence finally names it, and fails when a fixture newly matches a rule of another encoder. Observed in Encspect's test files:
+
+  | Rule | Other encoders' files that match | Settings |
+  | --- | --- | --- |
+  | Shine | none | |
+  | Helix MP3 Encoder | none | |
+  | Xing | Shine 3.1.1 (`external-shine-mpeg2`, `external-shine-silence`; named Shine, since that rule comes first) | `shineenc -q -b 64` at 22.05 kHz (MPEG-2); `-q -b 128` on silence |
+  | BladeEnc | 8hz-MP3 0.2b-04J (`external-8hz-flags`); Plugger+ 0.4 (`external-plugger-original`) | `-b 192 -c -o -crc`; `-b 128 -y -o` |
+  | Fraunhofer | none (iTunes' and Nero's encoders count as Fraunhofer's) | |
+  | TwoLAME or Xing | none (both encoders the rule names) | |
+
+  - The Fraunhofer line counts Fraunhofer's own codecs (mp3sEncoder, acmenc over l3codeca and l3codecp), its licensees' encoders (iTunes 12.13.12.3, Nero Burning ROM 2026's MP3 plug-in) and Windows 10's wrapper over l3codeca as the rule's own files, which the rule is written for.
+  - Hand-built fixtures without an encoder in their manifest (`layer3/shine-traits`, `vbr/lame-tag-lavf-remux`) are not counted.
+  - The line is a constant per rule and lists encoders and settings, not files: a reader sees that the low-confidence name is not exclusive.
 - **Fraunhofer's encoders** use scalefactor scaling and short blocks but never scfsi (MPEG-1 only, since MPEG-2 has no scfsi).
   - Observed in Encspect's test files from the private sample kit (`mpeg-audio/sample-kit`, 14 files; [development](../development.md#sample-kit-fixtures)); the analyzer applies the rules above (this habit, the VBRI header, the mp3PRO signature) and no other:
   - Nero Burning ROM 2026's MP3 plug-in: its 44.1 kHz CBR file is named "Fraunhofer" (low) by the habit; its VBR file by the VBRI header (high), a frame of zero side information in front of the stream; the 8 kHz MPEG-2.5 file is not named. Every file starts with an ID3v2.3 tag of 1,024 bytes whose frames are empty (TALB, TIT2, TPE1, TCON, TCOM, a TXXX "ALBUM ARTIST", a COMM and, at 0xA7, a PRIV, which draws `id3v2.frame-empty`) apart from a track number of 0.

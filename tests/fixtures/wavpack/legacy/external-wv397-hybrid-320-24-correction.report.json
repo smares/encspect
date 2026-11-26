@@ -147,6 +147,20 @@
                   "unit": "kbps",
                   "offset": 0,
                   "length": 2512
+                },
+                {
+                  "name": "Compression Ratio",
+                  "offset": 0,
+                  "length": 2512,
+                  "children": [
+                    {
+                      "name": "Overall",
+                      "value": 15,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 2512
+                    }
+                  ]
                 }
               ]
             },
@@ -528,7 +542,7 @@
         "averageBitrate": 317.7813333333333,
         "isVbr": false,
         "verification": {
-          "withCorrection": true,
+          "isCorrected": true,
           "decoding": "notRequested",
           "decodedSamples": 0,
           "checksums": [
