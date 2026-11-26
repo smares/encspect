@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
@@ -35,6 +36,32 @@ internal static class Shortcuts
             });
         }
 
+        return item;
+    }
+
+    // An item that shows a checkmark while the setting it toggles is on, kept in step with the
+    // setting however it is changed (a checkbox, the shortcut, the item itself); `enabled`, where
+    // given, says whether the setting can be changed now.
+    public static NativeMenuItem CheckItem(Window window, string header, KeyGesture? gesture, INotifyPropertyChanged source, Func<bool> isOn, Action<bool> set, Func<bool>? enabled = null)
+    {
+        NativeMenuItem item = Item(window, header, gesture, () =>
+        {
+            if (enabled?.Invoke() ?? true)
+            {
+                set(!isOn());
+            }
+        });
+        item.ToggleType = MenuItemToggleType.CheckBox;
+        void Sync()
+        {
+            item.IsChecked = isOn();
+            item.IsEnabled = enabled?.Invoke() ?? true;
+        }
+
+        Sync();
+        // The click toggles the mark by itself on some platforms; the setting decides what it shows.
+        item.Click += (_, _) => Sync();
+        source.PropertyChanged += (_, _) => Sync();
         return item;
     }
 

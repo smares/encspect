@@ -48,7 +48,7 @@ Columns sort by the figures behind them, so durations and bitrates sort as numbe
 - **Analysis:**
   - Files are analyzed in the background, a few at a time, and rows fill in as they are done. A list sorted by a column sorts again as they do, keeping the selected row.
   - Stop cancels, and choosing another folder cancels the run before it.
-  - "Include Subfolders" walks the whole tree as the CLI does.
+  - "Include Subfolders" walks the whole tree as the CLI does. In the View menu, Include Subfolders and Show Only Audio are check items: each shows a checkmark while its setting is on and is bound to the same setting as the checkbox above the list, so a change in either shows in the other; Include Subfolders is dimmed while nothing is open.
   - Rows keep a file's summary, not its report.
 
 ## Summary cache

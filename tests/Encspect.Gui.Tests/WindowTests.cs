@@ -303,6 +303,40 @@ public sealed class WindowTests : IDisposable
         main.Close();
     }
 
+    [AvaloniaFact]
+    public void The_view_menus_check_items_follow_the_same_settings_as_the_checkboxes()
+    {
+        MainWindow main = OpenMain();
+        NativeMenuItem[] view = [.. NativeMenu.GetMenu(main)!.Items.OfType<NativeMenuItem>().Single(i => i.Header == "View").Menu!.Items.OfType<NativeMenuItem>()];
+        NativeMenuItem subfolders = view.Single(i => i.Header == "Include Subfolders");
+        NativeMenuItem onlyAudio = view.Single(i => i.Header == "Show Only Audio");
+        CheckBox subfoldersBox = main.FindControl<CheckBox>("SubfoldersToggle")!;
+        CheckBox onlyAudioBox = main.FindControl<CheckBox>("OnlyAudioToggle")!;
+        Assert.All(new[] { subfolders, onlyAudio }, i => Assert.Equal(MenuItemToggleType.CheckBox, i.ToggleType));
+
+        Assert.False(onlyAudio.IsChecked);
+        Click(onlyAudio);
+        Assert.True(main.Model.ShowOnlyAudio);
+        Assert.True(onlyAudio.IsChecked);
+        Assert.True(onlyAudioBox.IsChecked);
+
+        // The checkbox changes the setting and the menu follows.
+        onlyAudioBox.IsChecked = false;
+        Assert.False(onlyAudio.IsChecked);
+        subfoldersBox.IsChecked = true;
+        Assert.True(subfolders.IsChecked);
+        Click(subfolders);
+        Assert.False(main.Model.IncludeSubfolders);
+        Assert.False(subfolders.IsChecked);
+        Assert.False(subfoldersBox.IsChecked);
+        main.Close();
+    }
+
+    private static void Click(NativeMenuItem item) =>
+        typeof(NativeMenuItem).GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+            .First(m => m.Name.EndsWith("RaiseClick", StringComparison.Ordinal) || m.Name.EndsWith("RaiseClicked", StringComparison.Ordinal))
+            .Invoke(item, null);
+
     private static void AssertFits(DetailWindow window, PixelRect area, double scaling)
     {
         UiPump.Until(() => true);
