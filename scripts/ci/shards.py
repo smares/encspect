@@ -9,8 +9,9 @@ inside the fully qualified one (".Name."), so a class whose name starts with ano
 
 A class that alone outlasts the time budget (docs/development.md, "Shards") is split by test name: it is listed in each of
 the shards that share it, and each of them has an entry under "cases" for it, a list of strings that a test's display name
-(method and theory row, such as `ATime...(name: "flac-fixed-order-4")`; a quotation mark cannot be written in the filter, so a string starts at the case name) contains, or null for the shard that takes every test of the
-class no other shard names. The strings of different shards must not repeat, and check_shards.py proves that every test lands in exactly one shard.
+(the full name: namespace, class, method and theory row, matched without regard to case, such as `ATime...(name: "flac-fixed-order-4")`; a quotation mark cannot be written in the filter, so a string starts at the case name) contains, or null for the shard that takes every test of the
+class no other shard names. A short string (Wav, Tak, Ape) also catches a later test whose name contains it: nothing is lost, the case
+moves to that shard. The strings of different shards must not repeat, and check_shards.py proves that every test lands in exactly one shard.
 
     shards.py names                  # one shard name per line
     shards.py filter <name>          # the --filter expression of a shard, every test of it
