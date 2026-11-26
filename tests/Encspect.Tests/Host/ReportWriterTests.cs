@@ -36,7 +36,7 @@ public class ReportWriterTests
     {
         Report report = CreateReport();
         Node header = report.Root.Children[0];
-        header.Add("Size", 0, 2, 7);
+        header.Add("Size", 0, 2, "7");
         var writer = new StringWriter();
 
         ReportTextWriter.WriteNode(report, header, writer, showOffsets: true, ReportFilter.All);

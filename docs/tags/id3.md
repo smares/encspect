@@ -21,6 +21,9 @@
   - at least one frame;
   - a data length indicator with every compressed ID3v2.4 frame.
 - A size that is not syncsafe in the tag header leaves the tag's extent unknown, so the candidate is rejected. A size that runs past the end of the file does not say where the tag ends either, so the tag ends where its frames and the zero padding after them stop, and what follows is left to the other parsers.
+- **Frame descriptions by the tag's version:** a frame's description cites the specification of the version of the tag it is in, with the section that version gives the frame: ID3v2.2 section 4 for the three-letter IDs ("The ID3v2.2 form of TIT2. … (ID3v2.2 section 4.2.1)"), ID3v2.3.0 section 4 for an ID3v2.3 tag, and the ID3v2.4.0 frames document's section 4 for an ID3v2.4 tag (experimental IDs: ID3v2.2 section 3.2, ID3v2.3.0 section 3.3, ID3v2.4.0 structure section 4).
+  - A frame the version does not define says so: TDRC in an ID3v2.3 tag "(ID3v2.4.0 frames section 4.2.5; not part of ID3v2.3)", TYER in an ID3v2.4 tag "(ID3v2.3.0 section 4.2.1; not part of ID3v2.4, which replaced it with TDRC)".
+  - The section numbers come from the headings of the documents on id3.org, which `scripts/fixtures/id3_specs.py` downloads pinned by SHA-256 (the summary table of the ID3v2.4.0 frames document gives 4.2.2 for TXXX, whose section is 4.2.6; the section's own heading is followed). `Id3v2FrameDescriptionTests` holds the wording per version.
 - **Compressed frames** are decompressed (zlib, which .NET provides) up to the 1 MiB limit of other decoded data, and the declared size and the zlib checksum are checked.
 - **Data after the terminator** of an ID3v2.3 text is an info finding, since section 4.2 says to ignore it.
 - Two writer bugs are read, each with a finding:
