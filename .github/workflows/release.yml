@@ -137,7 +137,10 @@ jobs:
           # which the builds package and the glibc step reads). Anything else builds.
           builds=true
           if [ "$GITHUB_EVENT_NAME" = pull_request ] && git rev-parse --verify --quiet HEAD^2 > /dev/null; then
-            if ! git diff --name-only HEAD^1 HEAD | grep -qE '^(\.github/workflows/release\.yml|\.github/actions/setup-dotnet/|scripts/release/|docs/releases/package-readme\.md|THIRD-PARTY-NOTICES\.md|Directory\.Build\.props)'; then
+            # Read into a variable first: a failing git diff stops this step (bash -e) instead of reading as "no change".
+            # --no-renames lists both paths of a move, so a file moved out of scripts/release/ still counts.
+            changed=$(git diff --no-renames --name-only HEAD^1 HEAD)
+            if ! grep -qE '^(\.github/workflows/release\.yml|\.github/actions/setup-dotnet/|scripts/release/|docs/releases/package-readme\.md|THIRD-PARTY-NOTICES\.md|Directory\.Build\.props)' <<< "$changed"; then
               builds=false
             fi
           fi
