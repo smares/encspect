@@ -77,7 +77,7 @@ public sealed class ReleaseWorkflowTests
         Assert.Contains("    if: needs.check-tag.outputs.builds == 'true'", string.Join('\n', Job("build")), StringComparison.Ordinal);
         Assert.Contains("builds: ${{ steps.check.outputs.builds }}", string.Join('\n', Job("check-tag")), StringComparison.Ordinal);
 
-        Match found = Regex.Match(text, @"changed=\$\(git diff --no-renames --name-only HEAD\^1 HEAD\)\s+if ! grep -qE '([^']+)' <<< \"\$changed\"; then");
+        Match found = Regex.Match(text, @"changed=\$\(git diff --no-renames --name-only HEAD\^1 HEAD\)\s+if ! grep -qE '([^']+)' <<< ""\$changed""; then");
         Assert.True(found.Success, "check-tag does not decide from the changed files");
         var builds = new Regex(found.Groups[1].Value);
 
