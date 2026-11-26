@@ -29,6 +29,8 @@ internal sealed class FrameDecoder : IFrameDecoder
     private readonly int _channels;
     private readonly int _outputChannels;
     private readonly bool _isSbr;
+    private readonly bool _isPs;
+    private PsDecoder? _ps;
     private readonly SbrElement?[] _elements;
     private readonly float[] _sbrPlanar;
     private readonly ushort[] _longOffsets;
@@ -66,7 +68,8 @@ internal sealed class FrameDecoder : IFrameDecoder
         _config = config;
         _outputChannels = context.Setup.Channels;
         _isSbr = config.IsSbrSignaled;
-        _channels = _outputChannels;
+        _isPs = config.IsSbrSignaled && config.IsPsSignaled;
+        _channels = _isPs ? 1 : _outputChannels;
         _elements = new SbrElement?[_channels];
         _sbrPlanar = _isSbr ? new float[_outputChannels * 2 * Lines] : [];
         int index = Math.Min(config.SampleRateIndex, BandTables.Long.Length - 1);
@@ -205,6 +208,19 @@ internal sealed class FrameDecoder : IFrameDecoder
             }
 
             element.Process(_planar, ch, Lines, slot);
+            if (_isPs)
+            {
+                // Parametric stereo: the single channel's QMF domain becomes two, which the two syntheses turn into the output's left and right.
+                PsDecoder ps = _ps ??= new PsDecoder();
+                ReadOnlySpan<int> data = !slot.IsEmpty && slot[SbrRecord.HasPs] == 1 ? slot.Slice(SbrRecord.Ps) : default;
+                ps.Process(element.Real(0), element.Imaginary(0), data, element.K2);
+                element.Synthesize(0, ps.LeftRe, ps.LeftIm, _sbrPlanar.AsSpan(0, 2 * Lines));
+                element.SynthesizeSecond(ps.RightRe, ps.RightIm, _sbrPlanar.AsSpan(2 * Lines, 2 * Lines));
+                output += 2;
+                ch += width;
+                continue;
+            }
+
             for (int c = 0; c < width; c++)
             {
                 element.Synthesize(c, element.Real(c), element.Imaginary(c), _sbrPlanar.AsSpan((output + c) * 2 * Lines, 2 * Lines));
@@ -263,6 +279,7 @@ internal sealed class FrameDecoder : IFrameDecoder
             Array.Clear(_overlap[ch]);
             _previousShape[ch] = 0;
             _elements[ch]?.Reset();
+            _ps?.Reset();
         }
 
         _seed = 0;

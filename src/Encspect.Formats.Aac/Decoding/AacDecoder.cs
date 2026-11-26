@@ -8,7 +8,7 @@ namespace Encspect.Formats.Aac.Decoding;
 // (C) The Android Open Source Project; the notice is in THIRD-PARTY-NOTICES.md) where the specification leaves details to the decoder: the order of the tools, noise
 // substitution's generator and its correlation with mid/side stereo, and the TNS filter ranges. It computes in single precision, where libxaac computes in fixed point.
 // The stream stores no checksum over its audio, so the decoder runs only where a front end asks for the samples. HE-AAC (SBR) is decoded on top of the
-// core (SbrElement); parametric stereo (HE-AAC v2), downsampled SBR, AAC Main, LTP and SSR, ER AAC, USAC and frames of 960 samples are not (docs/formats/aac.md).
+// core (SbrElement) and HE-AAC v2 (parametric stereo) on top of that (PsDecoder); downsampled SBR, AAC Main, LTP and SSR, ER AAC, USAC and frames of 960 samples are not (docs/formats/aac.md).
 public sealed class AacDecoder : IDecoder
 {
     public string Id => DecodeFeed.CodecId;
@@ -36,11 +36,6 @@ public sealed class AacDecoder : IDecoder
         if (config.ObjectType != 2 || config.FrameLength != 1024)
         {
             throw new InvalidDataException("Only AAC LC with frames of 1,024 samples is decoded");
-        }
-
-        if (config.IsPsSignaled)
-        {
-            throw new InvalidDataException("Parametric stereo (HE-AAC v2) is not decoded yet");
         }
 
         if (config.IsDownsampled)

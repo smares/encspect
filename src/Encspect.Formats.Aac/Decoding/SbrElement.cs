@@ -23,6 +23,7 @@ internal sealed class SbrElement
     private readonly int[] _header = new int[16];
     private readonly float[] _chirp = new float[8];
     private readonly float[] _scaled = new float[FrameSamples];
+    private readonly SbrQmf _secondQmf = new();
     private SbrLayout? _layout;
     private bool _hasHeader;
     private int _previousKx = 32;
@@ -63,6 +64,7 @@ internal sealed class SbrElement
             channel.Reset();
         }
 
+        _secondQmf.Reset();
         _hasHeader = false;
         _layout = null;
         _previousKx = 32;
@@ -155,12 +157,17 @@ internal sealed class SbrElement
     }
 
     // The 64-band synthesis of a channel's QMF domain (or of a domain parametric stereo made) into 2,048 samples.
-    public void Synthesize(int channel, ReadOnlySpan<float> re, ReadOnlySpan<float> im, Span<float> output)
+    public void Synthesize(int channel, ReadOnlySpan<float> re, ReadOnlySpan<float> im, Span<float> output) => Synthesize(_channel[channel].Qmf, re, im, output);
+
+    // The same for the second channel parametric stereo makes from a single channel element's.
+    public void SynthesizeSecond(ReadOnlySpan<float> re, ReadOnlySpan<float> im, Span<float> output) => Synthesize(_secondQmf, re, im, output);
+
+    private static void Synthesize(SbrQmf qmf, ReadOnlySpan<float> re, ReadOnlySpan<float> im, Span<float> output)
     {
         Span<float> block = stackalloc float[64];
         for (int l = 0; l < SbrQmf.Slots; l++)
         {
-            _channel[channel].Synthesize(re.Slice(l * 64, 64), im.Slice(l * 64, 64), block, 64);
+            qmf.Synthesize(re.Slice(l * 64, 64), im.Slice(l * 64, 64), block, 64);
             for (int k = 0; k < 64; k++)
             {
                 output[(l * 64) + k] = block[k] * OutputScale;

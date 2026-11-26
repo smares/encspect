@@ -124,7 +124,7 @@ internal sealed class SbrChannel
         }
     }
 
-    public void Synthesize(ReadOnlySpan<float> re, ReadOnlySpan<float> im, Span<float> output, int bands) => _qmf.Synthesize(re, im, output, bands);
+    internal SbrQmf Qmf => _qmf;
 
     // ixheaacd_generate_hf: the high band's QMF columns from the low band's, patch by patch, with the inverse filter of each noise floor band.
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
