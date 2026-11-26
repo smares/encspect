@@ -663,13 +663,13 @@ def id3v23_padding_size_mismatch():
 def id3v23_text_after_terminator():
     f = Fixture(
         "id3v23-text-after-terminator",
-        "ID3v2.3 TPE1 frame holding two artists separated by $00, as ID3v2.4 writes a list; ID3v2.3 has no lists, so "
-        "readers show only the first.",
+        "ID3v2.3 TPE1 frame holding two artists separated by $00, as Mp3tag writes them and as ID3v2.4 writes a list; "
+        "ID3v2.3 section 4.2 says to ignore what follows the terminator, so the analyzer shows both strings and says so.",
     )
     frames = [frame23("TIT2", text_frame_data(LATIN1, ["Duet"])), frame23("TPE1", text_frame_data(LATIN1, ["First", "Second"]))]
-    f.tag("ID3v2", "2.3.0", id3v2(3, frames, padding=8), "High", {"TPE1/Text": "First"})
+    f.tag("ID3v2", "2.3.0", id3v2(3, frames, padding=8), "High", {"TPE1/Text": ["First", "Second"]})
     f.audio()
-    f.finding("id3v2.text-after-terminator", "Frame TPE1")
+    f.finding("id3v2.text-after-terminator", "Frame TPE1 has 2 strings")
     return f
 
 

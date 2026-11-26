@@ -279,7 +279,7 @@ internal sealed class Id3v2FrameDecoder
         return encoding;
     }
 
-    // Text frames hold one string in 2.2 and 2.3 and a terminator-separated list in 2.4.
+    // Text frames hold one string in 2.2 and 2.3 and a terminator-separated list in 2.4; strings after the first terminator of an older frame are shown too.
     private List<string> AddTextValues(string name, int start, byte encoding, string description)
     {
         int width = Id3v2Text.TerminatorWidth(encoding);
@@ -304,13 +304,14 @@ internal sealed class Id3v2FrameDecoder
 
         if (_major < 4 && ranges.Count > 1)
         {
-            // ID3v2.3 section 4.2 allows it: "all the following information should be ignored".
+            // ID3v2.2 and 2.3 section 4.2: after a terminator "all the following information should be
+            // ignored and not be displayed". Writers such as Mp3tag still separate several values by
+            // terminators, as ID3v2.4 does, so each string is shown and the finding says which reading is the specification's.
             _findings.Add(new Finding(
                 Severity.Info,
                 "id3v2.text-after-terminator",
-                $"Frame {_id} has data after its terminated string, which ID3v2.{_major} says to ignore.",
+                $"Frame {_id} has {ranges.Count} strings separated by terminators; ID3v2.{_major} section 4.2 says to ignore what follows the first, and ID3v2.4 separates values this way. Each string is shown.",
                 _frame));
-            ranges.RemoveRange(1, ranges.Count - 1);
         }
 
         var values = new List<string>(ranges.Count);
