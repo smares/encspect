@@ -68,6 +68,31 @@ public sealed class ReleaseWorkflowTests
         Assert.Contains("git merge-base --is-ancestor HEAD refs/remotes/origin/main", check, StringComparison.Ordinal);
     }
 
+    // A pull request whose only release-relevant change is the notes (docs/releases/) runs the check of the version and the notes
+    // and no build; every other path of the workflow's trigger still builds.
+    [Fact]
+    public void APullRequestThatChangesOnlyTheNotesBuildsNothing()
+    {
+        string text = Workflow();
+        Assert.Contains("    if: needs.check-tag.outputs.builds == 'true'", string.Join('\n', Job("build")), StringComparison.Ordinal);
+        Assert.Contains("builds: ${{ steps.check.outputs.builds }}", string.Join('\n', Job("check-tag")), StringComparison.Ordinal);
+
+        Match found = Regex.Match(text, @"git diff --name-only HEAD\^1 HEAD \| grep -qE '([^']+)'");
+        Assert.True(found.Success, "check-tag does not decide from the changed files");
+        var builds = new Regex(found.Groups[1].Value);
+
+        string[] triggers = [.. Regex.Match(text, @"(?s)\n  pull_request:\n    paths:\n((?:      - [^\n]+\n)+)").Groups[1].Value
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(l => l[8..])];
+        Assert.Contains("docs/releases/**", triggers);
+        foreach (string trigger in triggers.Where(t => t != "docs/releases/**"))
+        {
+            string path = trigger.EndsWith("/**", StringComparison.Ordinal) ? trigger[..^2] + "x.txt" : trigger;
+            Assert.Matches(builds, path);
+        }
+
+        Assert.DoesNotMatch(builds, "docs/releases/0.5.0.md");
+    }
+
     // A pull request that changes the release files runs the builds, so the release-only steps run before a tag; it must
     // neither upload nor publish.
     [Fact]

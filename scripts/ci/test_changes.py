@@ -777,5 +777,40 @@ class ShardGuardTests(unittest.TestCase):
             changes.shard_config.load(path)
 
 
+    def split(self, first, second):
+        return self.write([{"name": "a", "classes": ["BigTests", "Other"], "cases": {"BigTests": first}},
+                           {"name": "b", "classes": ["BigTests"], "cases": {"BigTests": second}},
+                           {"name": "rest", "classes": None}])
+
+    def test_a_split_class_is_filtered_by_display_name_and_the_last_part_takes_the_remainder(self):
+        shards = changes.shard_config.load(self.split(["flac-", "ape-"], None))
+        self.assertEqual(changes.shard_config.filter_for(shards, "a"),
+                         "(FullyQualifiedName~.BigTests.&(DisplayName~flac-|DisplayName~ape-))|FullyQualifiedName~.Other.")
+        self.assertEqual(changes.shard_config.filter_for(shards, "b"), "(FullyQualifiedName~.BigTests.&DisplayName!~flac-&DisplayName!~ape-)")
+        self.assertEqual(changes.shard_config.filter_for(shards, "rest"), "FullyQualifiedName!~.BigTests.&FullyQualifiedName!~.Other.")
+
+    def test_a_split_class_needs_a_remainder_and_distinct_strings(self):
+        for first, second in ((["a"], ["b"]), (None, None), (["a"], ["a"]), ([], None), (["a", "a"], None)):
+            with self.subTest(first=first, second=second), self.assertRaises(SystemExit):
+                changes.shard_config.load(self.split(first, second))
+
+    def test_a_class_listed_twice_without_a_split_or_split_in_a_shard_that_lacks_it_is_refused(self):
+        twice = self.write([{"name": "a", "classes": ["BigTests"]}, {"name": "b", "classes": ["BigTests"]}, {"name": "rest", "classes": None}])
+        with self.assertRaises(SystemExit):
+            changes.shard_config.load(twice)
+        lone = self.write([{"name": "a", "classes": ["BigTests"], "cases": {"BigTests": None}}, {"name": "rest", "classes": None}])
+        with self.assertRaises(SystemExit):
+            changes.shard_config.load(lone)
+        stray = self.write([{"name": "a", "classes": ["X"], "cases": {"BigTests": ["a"]}}, {"name": "rest", "classes": None}])
+        with self.assertRaises(SystemExit):
+            changes.shard_config.load(stray)
+
+    def test_the_committed_split_classes_are_shared_by_shards_that_keep_the_nightly_flag_together(self):
+        shards = changes.shard_config.load()
+        for name in {c for s in shards[:-1] for c in s.get("cases", {})}:
+            sharing = [s for s in shards[:-1] if name in s.get("cases", {})]
+            self.assertEqual(1, len({bool(s.get("nightly")) for s in sharing}), name)
+
+
 if __name__ == "__main__":
     unittest.main()
