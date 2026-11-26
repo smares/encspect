@@ -141,6 +141,24 @@ public class AacDecoderTests
         }
     }
 
+    // Intensity stereo follows the second channel's own window sequence and groups over the first channel's spectrum, whatever the pair's windows are (libxaac's
+    // ixheaacd_intensity_stereo_process): in block 10 of stereo-coding.aac the first channel is one long window and the second eight short ones with bands of intensity stereo.
+    [Fact]
+    public void Intensity_stereo_applies_to_a_pair_whose_windows_differ()
+    {
+        (_, CollectingSink sink) = Decode(File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "aac", "adts", "stereo-coding.aac")), "stereo-coding.aac");
+
+        float[] block = sink.Blocks[10 * 1024L];
+        float peak = 0;
+        for (int i = 1024; i < 2048; i++)
+        {
+            peak = Math.Max(peak, Math.Abs(block[i]));
+        }
+
+        // Without the intensity bands the second channel keeps only what the overlap and the coded bands give (9e-5); with them it is 0.12.
+        Assert.True(peak > 0.01f, $"The second channel of block 10 lacks its intensity stereo bands (peak {peak:G3}).");
+    }
+
     // A Matroska block's DiscardPadding (RFC 9559, 5.1.3.5.7) is the end trimming of the track's last block: the decoder is told before the frame the padding takes samples from,
     // so the measurements leave those samples out as trimmed and the measured samples are the stream's.
     [Theory]

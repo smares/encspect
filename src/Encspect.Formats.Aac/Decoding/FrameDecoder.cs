@@ -436,38 +436,33 @@ internal sealed class FrameDecoder : IFrameDecoder
         return value < 0 ? -magnitude : magnitude;
     }
 
-    // Mid/side stereo (4.6.8.1) where the pair's common window sets it, then intensity stereo (4.6.8.2) from the first channel into the bands of the second that code it,
-    // as libxaac does: mid/side first on every band whose flag is set but those where both channels code noise (their noise is the same, NoiseSubstitution), then intensity.
+    // Mid/side stereo (4.6.8.1) where the pair's common window sets it, then intensity stereo (4.6.8.2) from the first channel into the bands of the second that code it, as libxaac
+    // does: mid/side first on every band whose flag is set but those where both channels code noise (their noise is the same, NoiseSubstitution), then intensity. Mid/side needs
+    // the common window, so both channels share their layout; intensity stereo follows the second channel's own layout (its window sequence, groups and bands) over the first
+    // channel's spectrum at the same lines, whatever the first channel's window is (ixheaacd_intensity_stereo_process).
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void Stereo(ReadOnlySpan<int> first, ReadOnlySpan<int> second, int ch)
     {
         float[] left = _spectrum[ch];
         float[] right = _spectrum[ch + 1];
-        bool isShort = first[BlockRecord.WindowSequence] == 2;
-        if (isShort != (second[BlockRecord.WindowSequence] == 2))
-        {
-            return;
-        }
-
         int mask = first[BlockRecord.MsMask];
-        int groups = first[BlockRecord.Groups];
-        int lengths = first[BlockRecord.GroupLengths];
-        if (groups != second[BlockRecord.Groups] || lengths != second[BlockRecord.GroupLengths])
-        {
-            return;
-        }
-
+        bool isMidSide = mask is 1 or 2 && first[BlockRecord.WindowSequence] == second[BlockRecord.WindowSequence]
+            && first[BlockRecord.Groups] == second[BlockRecord.Groups] && first[BlockRecord.GroupLengths] == second[BlockRecord.GroupLengths];
+        bool isShort = second[BlockRecord.WindowSequence] == 2;
+        int groups = second[BlockRecord.Groups];
+        int lengths = second[BlockRecord.GroupLengths];
         ushort[] offsets = isShort ? _shortOffsets : _longOffsets;
-        int maxSfb = Math.Min(first[BlockRecord.MaxSfb], isShort ? _shortBands : _longBands);
-        int rightMaxSfb = Math.Min(second[BlockRecord.MaxSfb], isShort ? _shortBands : _longBands);
+        int bands = isShort ? _shortBands : _longBands;
+        int maxSfb = Math.Min(first[BlockRecord.MaxSfb], bands);
+        int rightMaxSfb = Math.Min(second[BlockRecord.MaxSfb], bands);
         int window = 0;
         for (int g = 0; g < groups; g++)
         {
             int length = isShort ? (lengths >> (4 * g)) & 15 : 1;
-            for (int sfb = 0; sfb < Math.Max(maxSfb, rightMaxSfb); sfb++)
+            for (int sfb = 0; sfb < Math.Max(isMidSide ? maxSfb : 0, rightMaxSfb); sfb++)
             {
                 int band = (g * 64) + sfb;
-                bool flagged = mask is 1 or 2 && sfb < maxSfb && (mask == 2 || first[BlockRecord.MidSide + band] != 0);
+                bool flagged = isMidSide && sfb < maxSfb && (mask == 2 || first[BlockRecord.MidSide + band] != 0);
                 int rightBook = sfb < rightMaxSfb ? second[BlockRecord.Codebooks + band] : 0;
                 if (flagged && !(first[BlockRecord.Codebooks + band] == 13 && rightBook == 13))
                 {
