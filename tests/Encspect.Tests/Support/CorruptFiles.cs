@@ -103,7 +103,6 @@ internal static class CorruptFiles
     internal static readonly (string Prefix, string Reason)[] NotDecoded =
     [
         ("tags/", "the audio of a tag fixture is a few frames; the tag parsers are what these fixtures test"),
-        ("aac/", "AAC has no decoder"),
         ("optimfrog/", "OptimFROG has no decoder"),
     ];
 

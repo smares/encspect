@@ -49,6 +49,7 @@ public sealed class DamagedInputCoverageTests
         ["mpeg-audio"] = "mpeg-audio/",
         ["musepack"] = "musepack/",
         ["dts"] = "dts/",
+        ["aac"] = "aac/",
         ["pcm"] = "wav/",
     };
 
