@@ -190,8 +190,8 @@ public sealed class StructureTree : IReadOnlyList<TreeRow>, IList, INotifyCollec
 
     // The deepest row below the top-level row at rootIndex whose node holds the byte at offset,
     // with every row on the way expanded; null when the top-level row does not hold it. At each
-    // level the first child that holds the byte is taken. Children in offset order (as parsers
-    // write them) are searched by bisection, so that a list of a million frames is not built whole.
+    // level the shortest child that holds the byte is taken (see FindChild), without building a list
+    // of a million frames whole.
     public TreeRow? DeepestAt(int rootIndex, long offset)
     {
         if ((uint)rootIndex >= (uint)Roots.Count || !Holds(Roots[rootIndex].Node, offset))
@@ -216,45 +216,62 @@ public sealed class StructureTree : IReadOnlyList<TreeRow>, IList, INotifyCollec
         return row;
     }
 
+    // Among the children that hold the byte the shortest, which is the most specific (a summary
+    // node that spans the frames holds the byte too). The first and last few children are looked at
+    // one by one, since a list often starts with nodes out of order (the encoder, the statistics)
+    // and ends with one; the rest is taken as sorted by offset and bisected, with no scan of it when
+    // the bisection finds nothing, so that a byte between two frames is held by neither.
     private static int FindChild(IReadOnlyList<Node> children, long offset)
     {
+        const int Edge = 16;
         int count = children.Count;
-        if (count > 8 && children[0].Offset <= children[count - 1].Offset)
+        int best = -1;
+        void Consider(int i)
         {
-            // The last child that starts at or before the byte, then the ones before it that share its start.
-            int low = 0;
-            int high = count - 1;
-            while (low < high)
+            if (Holds(children[i], offset) && (best < 0 || children[i].Length < children[best].Length))
             {
-                int middle = low + ((high - low + 1) / 2);
-                if (children[middle].Offset <= offset)
-                {
-                    low = middle;
-                }
-                else
-                {
-                    high = middle - 1;
-                }
-            }
-
-            for (int i = low; i >= 0 && i > low - 8; i--)
-            {
-                if (Holds(children[i], offset))
-                {
-                    return i;
-                }
+                best = i;
             }
         }
 
-        for (int i = 0; i < count; i++)
+        if (count <= 4 * Edge)
         {
-            if (Holds(children[i], offset))
+            for (int i = 0; i < count; i++)
             {
-                return i;
+                Consider(i);
+            }
+
+            return best;
+        }
+
+        for (int i = 0; i < Edge; i++)
+        {
+            Consider(i);
+            Consider(count - 1 - i);
+        }
+
+        // The last child of the middle that starts at or before the byte, then the ones before it that share its start.
+        int low = Edge;
+        int high = count - Edge - 1;
+        while (low < high)
+        {
+            int middle = low + ((high - low + 1) / 2);
+            if (children[middle].Offset <= offset)
+            {
+                low = middle;
+            }
+            else
+            {
+                high = middle - 1;
             }
         }
 
-        return -1;
+        for (int i = low; i >= Edge && i > low - 8; i--)
+        {
+            Consider(i);
+        }
+
+        return best;
     }
 
     private static bool Holds(Node node, long offset)
