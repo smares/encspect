@@ -589,11 +589,22 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         }
     }
 
-    // The confirmation once a copy is on the clipboard, in the place errors appear.
+    // The confirmation once a copy is on the clipboard, in the place errors appear, in binary units
+    // like the 16 MiB cap. A copy that finishes while a node is being copied leaves that status alone.
     public void CopyDone(string text)
     {
+        if (_copying is not null)
+        {
+            return;
+        }
+
         long bytes = System.Text.Encoding.UTF8.GetByteCount(text);
-        CommandStatus = "Copied " + (bytes < 1000 ? $"{bytes} bytes" : bytes < 1_000_000 ? $"{bytes / 1000.0:0.#} KB" : $"{bytes / 1_000_000.0:0.#} MB");
+        var invariant = System.Globalization.CultureInfo.InvariantCulture;
+        CommandStatus = "Copied " + (bytes < 1024
+            ? string.Create(invariant, $"{bytes} bytes")
+            : bytes < 1024 * 1024
+                ? string.Create(invariant, $"{bytes / 1024.0:0.#} KiB")
+                : string.Create(invariant, $"{bytes / (1024.0 * 1024):0.#} MiB"));
     }
 
     private void RaiseCopyState()
@@ -685,7 +696,8 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
             {
                 _post(() =>
                 {
-                    if (generation != _generation || report is null)
+                    // A Stop that came after the worker had finished still keeps what was shown.
+                    if (generation != _generation || report is null || (keepShown && cancellation.IsCancellationRequested))
                     {
                         DisposeAll(documents);
                         if (keepShown && generation == _generation)

@@ -35,6 +35,15 @@ internal sealed class TestDispatcher
 
     public int WithheldCount => _withheld.Count;
 
+    // Lets the withheld posts run, in the order they were posted, on the next pump.
+    public void ReleaseWithheld()
+    {
+        while (_withheld.TryDequeue(out Action? action))
+        {
+            _queue.Enqueue(action);
+        }
+    }
+
     public Action<Action> Post => action =>
     {
         if (Withhold?.Invoke(action) == true)

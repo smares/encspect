@@ -100,18 +100,38 @@ public class CopyStopTests
             Assert.NotNull(copied);
             Assert.Null(window.Model.CommandError);
 
-            window.Model.CopyDone(new string('a', 1_200_000));
-            Assert.Equal("Copied 1.2 MB", window.Model.CommandStatus);
-            window.Model.CopyDone(new string('a', 12_500));
-            Assert.Equal("Copied 12.5 KB", window.Model.CommandStatus);
-            window.Model.CopyDone("abc");
-            Assert.Equal("Copied 3 bytes", window.Model.CommandStatus);
+            window.Model.CopyDone(new string('a', 1_300_000));
+            Assert.Equal("Copied 1.2 MiB", window.Model.CommandStatus);
+            window.Model.CopyDone(new string('a', 12_800));
+            Assert.Equal("Copied 12.5 KiB", window.Model.CommandStatus);
+            window.Model.CopyDone(new string('a', 1023));
+            Assert.Equal("Copied 1023 bytes", window.Model.CommandStatus);
+            window.Model.CopyDone(new string('a', 1024));
+            Assert.Equal("Copied 1 KiB", window.Model.CommandStatus);
         }
         finally
         {
             Copying.Observer = null;
             window.Close();
         }
+    }
+
+    [AvaloniaFact]
+    public void A_copy_that_finishes_during_a_node_copy_leaves_the_nodes_status()
+    {
+        DetailWindow window = Open();
+        var blocked = new BlockedCopy();
+        Task<string?> copy = window.Model.PrepareCopyAsync("the node", blocked.Write);
+        UiPump.Until(() => blocked.Started.IsSet);
+
+        window.Model.CopyDone("selection");
+        Assert.Equal("Copying the node…", window.Model.CommandStatus);
+
+        window.Model.Stop();
+        UiPump.Until(() => copy.IsCompleted);
+        window.Model.CopyDone("selection");
+        Assert.Equal("Copied 9 bytes", window.Model.CommandStatus);
+        window.Close();
     }
 
     [AvaloniaFact]
@@ -158,6 +178,39 @@ public class CopyStopTests
         Assert.False(model.CanStop);
         Assert.Same(before, model.Report);
         Assert.Null(model.CommandError);
+    }
+
+    // The worker has ended and its result is posted, but the UI thread has not run it when Stop comes.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void A_stop_between_the_end_of_the_worker_and_its_callback_keeps_what_was_shown(bool decodeAudio)
+    {
+        bool hold = false;
+        var ui = new TestDispatcher { Withhold = _ => hold };
+        var parser = new DecodeBlockingParser { BlockFrom = 100 };
+        using var model = new DetailViewModel(parser.Analyzer(), ui.Post);
+        using var folder = new TempFolder();
+        string path = folder.Write("a.vblk", DecodeBlockingParser.File);
+        Task load = model.LoadAsync(path);
+        ui.Until(() => load.IsCompleted);
+        Task first = model.DecodeAudioAsync();
+        ui.Until(() => first.IsCompleted);
+        Report before = model.Report!;
+
+        hold = true;
+        Task again = decodeAudio ? model.DecodeAudioAsync() : model.ReloadAsync();
+        ui.Until(() => parser.Started == 3);
+        Thread.Sleep(500);
+        Assert.True(model.IsDecoding);
+        model.Stop();
+        hold = false;
+        ui.ReleaseWithheld();
+        ui.Until(() => again.IsCompleted);
+
+        Assert.Same(before, model.Report);
+        Assert.False(model.IsDecoding);
+        Assert.False(model.CanStop);
     }
 
     [Fact]
