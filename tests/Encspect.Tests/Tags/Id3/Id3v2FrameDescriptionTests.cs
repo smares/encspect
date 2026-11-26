@@ -34,12 +34,12 @@ public class Id3v2FrameDescriptionTests
         Dictionary<string, string?> d = Descriptions(2, "TT2", "TYE", "TXX", "WAF", "COM", "XYZ");
 
         Assert.Equal("The ID3v2.2 form of TIT2. Title of the track or piece (ID3v2.2 section 4.2.1).", d["TT2"]);
-        Assert.Equal("The ID3v2.2 form of TYER. Year of the recording; ID3v2.4 replaced it with TDRC (ID3v2.2 section 4.2.1).", d["TYE"]);
+        Assert.Equal("The ID3v2.2 form of TYER. Year of the recording; ID3v2.4 replaced it with TDRC (ID3v2.2 section 4.2.1; ID3v2.4.0 changes section 4).", d["TYE"]);
         Assert.Contains("(ID3v2.2 section 4.2.2)", d["TXX"]);
         Assert.Contains("(ID3v2.2 section 4.3.1)", d["WAF"]);
         Assert.Contains("(ID3v2.2 section 4.11)", d["COM"]);
         Assert.Contains("(ID3v2.2 section 3.2)", d["XYZ"]);
-        Assert.All(d.Values, v => Assert.DoesNotContain("ID3v2.4.0", v));
+        Assert.All(d.Values, v => Assert.DoesNotContain("ID3v2.4.0 frames", v));
     }
 
     [Fact]
@@ -51,7 +51,7 @@ public class Id3v2FrameDescriptionTests
         Assert.Contains("(ID3v2.3.0 section 4.2.2)", d["TXXX"]);
         Assert.Contains("(ID3v2.3.0 section 4.11)", d["COMM"]);
         Assert.Contains("(ID3v2.3.0 section 4.20)", d["AENC"]);
-        Assert.Equal("Year of the recording; ID3v2.4 replaced it with TDRC (ID3v2.3.0 section 4.2.1).", d["TYER"]);
+        Assert.Equal("Year of the recording; ID3v2.4 replaced it with TDRC (ID3v2.3.0 section 4.2.1; ID3v2.4.0 changes section 4).", d["TYER"]);
         Assert.Equal("Recording time, the date ID3v2.4 uses for the year (ID3v2.4.0 frames section 4.2.5; not part of ID3v2.3).", d["TDRC"]);
         Assert.Contains("(ID3v2.3.0 section 3.3)", d["XYZ1"]);
         Assert.DoesNotContain("ID3v2.4.0 frames section 4.2.1", d["TIT2"]);
@@ -67,14 +67,14 @@ public class Id3v2FrameDescriptionTests
         Assert.Contains("(ID3v2.4.0 frames section 4.10)", d["COMM"]);
         Assert.Contains("(ID3v2.4.0 frames section 4.19)", d["AENC"]);
         Assert.Contains("(ID3v2.4.0 frames section 4.2.5)", d["TDRC"]);
-        Assert.Equal("Year of the recording (ID3v2.3.0 section 4.2.1; not part of ID3v2.4, which replaced it with TDRC).", d["TYER"]);
+        Assert.Equal("Year of the recording (ID3v2.3.0 section 4.2.1; not part of ID3v2.4, which replaced it with TDRC, ID3v2.4.0 changes section 4).", d["TYER"]);
         Assert.Contains("(ID3v2.4.0 structure section 4)", d["XYZ1"]);
     }
 
     [Theory]
     [InlineData(3, "TDRC", "Frame TDRC is defined in ID3v2.4 (frames section 4.2.5), not in ID3v2.3, the version of this tag.")]
-    [InlineData(4, "IPLS", "Frame IPLS is defined in ID3v2.3 (section 4.4), not in ID3v2.4, the version of this tag; ID3v2.4 replaced it with TIPL and TMCL.")]
-    [InlineData(4, "TSIZ", "Frame TSIZ is defined in ID3v2.3 (section 4.2.1), not in ID3v2.4, the version of this tag; ID3v2.4 dropped it.")]
+    [InlineData(4, "IPLS", "Frame IPLS is defined in ID3v2.3 (section 4.4), not in ID3v2.4, the version of this tag; ID3v2.4 replaced it with TIPL and TMCL (ID3v2.4.0 changes section 4).")]
+    [InlineData(4, "TSIZ", "Frame TSIZ is defined in ID3v2.3 (section 4.2.1), not in ID3v2.4, the version of this tag; ID3v2.4 deprecated it (ID3v2.4.0 changes section 4).")]
     [InlineData(4, "TIT2", null)]
     [InlineData(3, "TIT2", null)]
     [InlineData(4, "PRIV", null)]

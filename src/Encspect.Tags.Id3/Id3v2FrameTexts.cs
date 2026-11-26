@@ -13,7 +13,8 @@ internal static class Id3v2FrameTexts
     private const string ExperimentalV23 = "An experimental frame: IDs starting with X, Y or Z are free for experiments (ID3v2.3.0 section 3.3).";
     private const string ExperimentalV24 = "An experimental frame: IDs starting with X, Y or Z are free for experiments (ID3v2.4.0 structure section 4).";
 
-    // gone: what ID3v2.4 did with a frame it does not define, worded after "ID3v2.4 ".
+    // gone: what ID3v2.4 did with a frame it does not define, worded after "ID3v2.4 " as section 4 of
+    // the ID3v2.4.0 changes document words it ("replaced it with TDRC", "deprecated it").
     private readonly record struct FrameDefinition(string Body, string? V23, string? V24, string? Gone = null);
 
     private static readonly Dictionary<string, FrameDefinition> Definitions = new(StringComparer.Ordinal)
@@ -89,7 +90,7 @@ internal static class Id3v2FrameTexts
         ["TRDA"] = new("Recording dates as free text", "4.2.1", null, "replaced it with TDRC"),
         ["TRSN"] = new("Internet radio station name", "4.2.1", "4.2.4"),
         ["TRSO"] = new("Internet radio station owner", "4.2.1", "4.2.4"),
-        ["TSIZ"] = new("Size of the audio in bytes, without the tag", "4.2.1", null, "dropped it"),
+        ["TSIZ"] = new("Size of the audio in bytes, without the tag", "4.2.1", null, "deprecated it"),
         ["TSOA"] = new("Album sort order: the album title as lists should sort it", null, "4.2.5"),
         ["TSOP"] = new("Performer sort order: the artist as lists should sort it", null, "4.2.5"),
         ["TSOT"] = new("Title sort order: the title as lists should sort it", null, "4.2.5"),
@@ -126,7 +127,7 @@ internal static class Id3v2FrameTexts
     private static readonly Dictionary<string, string> V23Frames = Definitions.ToDictionary(
         p => p.Key,
         p => p.Value.V23 is { } section
-            ? $"{p.Value.Body}{Gone(p.Value)} (ID3v2.3.0 section {section})."
+            ? $"{p.Value.Body}{Gone(p.Value)} (ID3v2.3.0 section {section}{Changes(p.Value)})."
             : $"{p.Value.Body} (ID3v2.4.0 frames section {p.Value.V24}; not part of ID3v2.3).",
         StringComparer.Ordinal);
 
@@ -134,7 +135,7 @@ internal static class Id3v2FrameTexts
         p => p.Key,
         p => p.Value.V24 is { } section
             ? $"{p.Value.Body} (ID3v2.4.0 frames section {section})."
-            : $"{p.Value.Body} (ID3v2.3.0 section {p.Value.V23}; not part of ID3v2.4, which {p.Value.Gone}).",
+            : $"{p.Value.Body} (ID3v2.3.0 section {p.Value.V23}; not part of ID3v2.4, which {p.Value.Gone}, {ChangesText}).",
         StringComparer.Ordinal);
 
     // ID3v2.2 section 4 names the same frames with three letters, each in the section given here.
@@ -206,7 +207,7 @@ internal static class Id3v2FrameTexts
 
     private static readonly Dictionary<string, string> V22Frames = V22Ids.ToDictionary(
         p => p.Key,
-        p => $"The ID3v2.2 form of {p.Value.Frame}. {Definitions[p.Value.Frame].Body}{Gone(Definitions[p.Value.Frame])} (ID3v2.2 section {p.Value.Section}).",
+        p => $"The ID3v2.2 form of {p.Value.Frame}. {Definitions[p.Value.Frame].Body}{Gone(Definitions[p.Value.Frame])} (ID3v2.2 section {p.Value.Section}{Changes(Definitions[p.Value.Frame])}).",
         StringComparer.Ordinal);
 
     private const string EncryptedMeta = "Encrypted meta frame: other frames, encrypted together (ID3v2.2 section 4.20).";
@@ -235,10 +236,14 @@ internal static class Id3v2FrameTexts
         return major switch
         {
             3 when frame.V23 is null => $"Frame {id} is defined in ID3v2.4 (frames section {frame.V24}), not in ID3v2.3, the version of this tag.",
-            4 when frame.V24 is null => $"Frame {id} is defined in ID3v2.3 (section {frame.V23}), not in ID3v2.4, the version of this tag; ID3v2.4 {frame.Gone}.",
+            4 when frame.V24 is null => $"Frame {id} is defined in ID3v2.3 (section {frame.V23}), not in ID3v2.4, the version of this tag; ID3v2.4 {frame.Gone} ({ChangesText}).",
             _ => null,
         };
     }
+
+    private const string ChangesText = "ID3v2.4.0 changes section 4";
+
+    private static string Changes(FrameDefinition frame) => frame.Gone is null ? string.Empty : "; " + ChangesText;
 
     private static string Gone(FrameDefinition frame) => frame.Gone is { } gone ? $"; ID3v2.4 {gone}" : string.Empty;
 
