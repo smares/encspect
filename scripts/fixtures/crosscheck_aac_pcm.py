@@ -113,6 +113,7 @@ LIBXAAC_DIFFERENCES = {
 # Files whose output FFmpeg's decoder differs from the analyzer's, with the reason. The analyzer follows libxaac (docs/design/lossy-decoders.md, decision 1); the differences are
 # in what the specification leaves to the decoder and the hand-built files exercise.
 DIFFERENCES = {
+    "tns-overflow.aac": ("samples", "a TNS filter on the largest scalefactors: FFmpeg's float decoder overflows to infinity and NaN, the analyzer saturates the spectrum"),
     "stereo-coding-reserved.aac": ("samples", "ms_mask_present 3, which the specification reserves: FFmpeg refuses those blocks, the analyzer decodes them without mid/side stereo"),
     "corrupt-soft.aac": ("positions", "raw data blocks with more channel streams than the stream's configuration states: the analyzer does not decode them (decode.frame-invalid), FFmpeg decodes the channels it can"),
     "sbr-in-one-block.aac": ("positions", "a raw data block with SBR data in a stream that signals none: the analyzer does not decode the block (HE-AAC comes with its own decoder), FFmpeg decodes its core"),
