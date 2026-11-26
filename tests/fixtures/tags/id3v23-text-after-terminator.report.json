@@ -154,7 +154,7 @@
             },
             {
               "name": "TPE1",
-              "value": "First",
+              "value": "First; Second",
               "offset": 25,
               "length": 23,
               "children": [
@@ -232,6 +232,12 @@
                   "value": "First",
                   "offset": 36,
                   "length": 5
+                },
+                {
+                  "name": "Text",
+                  "value": "Second",
+                  "offset": 42,
+                  "length": 6
                 }
               ]
             },
@@ -294,7 +300,7 @@
       {
         "severity": "Info",
         "code": "id3v2.text-after-terminator",
-        "message": "Frame TPE1 has data after its terminated string, which ID3v2.3 says to ignore.",
+        "message": "Frame TPE1 has 2 strings separated by terminators; ID3v2.3 section 4.2 says to ignore what follows the first, and ID3v2.4 separates values this way. Each string is shown.",
         "offset": 25,
         "length": 23,
         "path": [

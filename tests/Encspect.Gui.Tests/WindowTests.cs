@@ -248,6 +248,123 @@ public sealed class WindowTests : IDisposable
         main.Close();
     }
 
+    // A 1,366 by 768 screen at 100 % and at 125 %, the lead's laptop: the 1,120 by 780 window does not fit.
+    [AvaloniaTheory]
+    [InlineData(1.0)]
+    [InlineData(1.25)]
+    public void A_detail_window_fits_a_small_screen_with_its_title_bar_on_it(double scaling)
+    {
+        var area = new PixelRect(0, 0, 1366, 768);
+        string settingsPath = _folder["settings/settings.json"];
+        var settings = Settings.Load(settingsPath);
+        MainWindow main = OpenMain(settings);
+        main.DetailWindows.ScreenOverride = (area, scaling);
+
+        // Opened for the first time, centered over a main window that is itself too big.
+        main.Position = new PixelPoint(-200, -100);
+        DetailWindow first = main.DetailWindows.Open(main.Model.Rows[0]);
+        AssertFits(first, area, scaling);
+        first.Close();
+
+        // A saved placement that is too big, or that put the title bar above the top edge.
+        settings.DetailWindow = new WindowPlacement(100, -60, 1120, 780, false);
+        DetailWindow saved = main.DetailWindows.Open(main.Model.Rows[1]);
+        AssertFits(saved, area, scaling);
+        saved.Close();
+
+        DetailWindow another = main.DetailWindows.OpenNew(main.Model.Rows[2]);
+        AssertFits(another, area, scaling);
+        main.Close();
+    }
+
+    // A second monitor to the left of and above the primary one: negative coordinates.
+    [AvaloniaFact]
+    public void Windows_fit_a_screen_at_a_negative_position_and_the_cascade_stays_on_it()
+    {
+        var area = new PixelRect(-1920, -200, 1920, 1080);
+        MainWindow main = OpenMain();
+        main.DetailWindows.ScreenOverride = (area, 1.0);
+        main.Position = new PixelPoint(-1500, 700);
+
+        DetailWindow first = main.DetailWindows.Open(main.Model.Rows[0]);
+        AssertFits(first, area, 1.0);
+        for (int i = 1; i < 12; i++)
+        {
+            AssertFits(main.DetailWindows.OpenNew(main.Model.Rows[i % 4]), area, 1.0);
+        }
+
+        main.Close();
+    }
+
+    [Theory]
+    [InlineData(1.0)]
+    [InlineData(1.25)]
+    public void Screen_fit_caps_the_size_and_keeps_the_title_bar_on_the_area(double scaling)
+    {
+        var area = new PixelRect(0, 0, 1366, 768);
+        Size capped = ScreenFit.Cap(new Size(1400, 800), area, scaling);
+        Assert.True(capped.Width * scaling <= 1366);
+        Assert.True((capped.Height + ScreenFit.Chrome) * scaling <= 768 + 0.001);
+
+        PixelPoint moved = ScreenFit.Clamp(new PixelPoint(-50, -300), capped, area, scaling);
+        Assert.Equal(new PixelPoint(0, 0), moved);
+        PixelPoint low = ScreenFit.Clamp(new PixelPoint(5000, 5000), capped, area, scaling);
+        Assert.True(low.X >= 0 && low.Y >= 0 && low.Y + (capped.Height + ScreenFit.Chrome) * scaling <= 768 + 1);
+    }
+
+    [AvaloniaFact]
+    public void The_main_window_first_size_is_capped_at_the_screen()
+    {
+        MainWindow main = OpenMain();
+        main.FitToScreen(new PixelRect(0, 0, 1366, 768), 1.25);
+        Assert.True(main.Width * 1.25 <= 1366);
+        Assert.True(main.Height * 1.25 <= 768);
+        main.Close();
+    }
+
+    [AvaloniaFact]
+    public void The_view_menus_check_items_follow_the_same_settings_as_the_checkboxes()
+    {
+        MainWindow main = OpenMain();
+        NativeMenuItem[] view = [.. NativeMenu.GetMenu(main)!.Items.OfType<NativeMenuItem>().Single(i => i.Header == "View").Menu!.Items.OfType<NativeMenuItem>()];
+        NativeMenuItem subfolders = view.Single(i => i.Header == "Include Subfolders");
+        NativeMenuItem onlyAudio = view.Single(i => i.Header == "Show Only Audio");
+        CheckBox subfoldersBox = main.FindControl<CheckBox>("SubfoldersToggle")!;
+        CheckBox onlyAudioBox = main.FindControl<CheckBox>("OnlyAudioToggle")!;
+        Assert.All(new[] { subfolders, onlyAudio }, i => Assert.Equal(MenuItemToggleType.CheckBox, i.ToggleType));
+
+        Assert.False(onlyAudio.IsChecked);
+        Click(onlyAudio);
+        Assert.True(main.Model.ShowOnlyAudio);
+        Assert.True(onlyAudio.IsChecked);
+        Assert.True(onlyAudioBox.IsChecked);
+
+        // The checkbox changes the setting and the menu follows.
+        onlyAudioBox.IsChecked = false;
+        Assert.False(onlyAudio.IsChecked);
+        subfoldersBox.IsChecked = true;
+        Assert.True(subfolders.IsChecked);
+        Click(subfolders);
+        Assert.False(main.Model.IncludeSubfolders);
+        Assert.False(subfolders.IsChecked);
+        Assert.False(subfoldersBox.IsChecked);
+        main.Close();
+    }
+
+    private static void Click(NativeMenuItem item) =>
+        typeof(NativeMenuItem).GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+            .First(m => m.Name.EndsWith("RaiseClick", StringComparison.Ordinal) || m.Name.EndsWith("RaiseClicked", StringComparison.Ordinal))
+            .Invoke(item, null);
+
+    private static void AssertFits(DetailWindow window, PixelRect area, double scaling)
+    {
+        UiPump.Until(() => true);
+        Assert.True(window.Width * scaling <= area.Width, $"width {window.Width}");
+        Assert.True(window.Height * scaling <= area.Height, $"height {window.Height}");
+        Assert.True(window.Position.X >= area.X && window.Position.Y >= area.Y, $"position {window.Position}");
+        Assert.True(window.Position.Y + window.Height * scaling <= area.Bottom, $"bottom {window.Position}");
+    }
+
     [Fact]
     public void An_old_settings_file_with_a_position_still_loads()
     {

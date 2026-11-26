@@ -21,16 +21,48 @@ public sealed class HexView : Grid
         AvaloniaProperty.Register<HexView, HexHighlight?>(nameof(Highlight));
 
     private readonly HexCanvas _canvas = new();
+    private readonly TextBlock _status = new() { Margin = new Thickness(12, 3), FontSize = 12, TextTrimming = TextTrimming.CharacterEllipsis };
     private readonly ScrollBar _scrollBar = new() { Orientation = Orientation.Vertical, SmallChange = 1 };
     private bool _updatingScrollBar;
 
     public HexView()
     {
         ColumnDefinitions = new ColumnDefinitions("*,Auto");
+        RowDefinitions = new RowDefinitions("*,Auto");
         Children.Add(_canvas);
         SetColumn(_scrollBar, 1);
         Children.Add(_scrollBar);
+        SetRow(_status, 1);
+        SetColumnSpan(_status, 2);
+        _status.Classes.Add("secondary");
+        ToolTip.SetTip(_status, "The byte the cursor is on: its offset in the file and its value. Click a byte or use the arrow and page keys to move the cursor; double-click selects the deepest node of the tree that holds the byte.");
+        Children.Add(_status);
+        UpdateStatus();
         _canvas.ViewChanged += (_, _) => UpdateScrollBar();
+        _canvas.ByteCursorChanged += (_, _) =>
+        {
+            UpdateStatus();
+            ByteCursorChanged?.Invoke(this, EventArgs.Empty);
+        };
+        _canvas.ByteActivated += (_, offset) => ByteActivated?.Invoke(this, offset);
+
+        var copy = new MenuItem { Header = "Copy Selection" };
+        copy.Click += async (_, _) =>
+        {
+            if (SelectedRowsText() is { } rows)
+            {
+                if (await Copying.SetTextAsync(this, rows) is { } error)
+                {
+                    CopyFailed?.Invoke(this, error);
+                }
+                else
+                {
+                    Copied?.Invoke(this, rows);
+                }
+            }
+        };
+        ContextMenu = new ContextMenu { Items = { copy } };
+        ContextMenu.Opening += (_, _) => copy.IsEnabled = CanCopySelection;
         _scrollBar.PropertyChanged += (_, e) =>
         {
             if (e.Property == RangeBase.ValueProperty && !_updatingScrollBar)
@@ -52,6 +84,79 @@ public sealed class HexView : Grid
         set => SetValue(HighlightProperty, value);
     }
 
+    // The byte cursor, independent of the highlight: the highlight is the tree's selection, the
+    // cursor is where the reader is looking. Null until a byte is clicked or a key moves it.
+    public long? ByteCursor
+    {
+        get => _canvas.ByteCursor;
+        set => _canvas.ByteCursor = value;
+    }
+
+    public event EventHandler? ByteCursorChanged;
+
+    // A double click on a byte, with its offset.
+    public event EventHandler<long>? ByteActivated;
+
+    // The most bytes Copy Selection takes: a node can be as big as the file.
+    public const long MaxCopyBytes = 1 << 20;
+
+    // The rows the selection touches, as they are displayed: the offset, the 16 bytes in hex and
+    // the text column with a dot for a byte that has no character. Null without a selection or a
+    // document, or where the selection is over MaxCopyBytes.
+    public bool CanCopySelection => Document is not null && Highlight is { } highlight && RowsSpan(highlight) is { } span && span.End > span.Start && span.End - span.Start <= MaxCopyBytes;
+
+    private (long Start, long End)? RowsSpan(HexHighlight highlight) =>
+        Document is { } document ? (highlight.Start / 16 * 16, Math.Min(document.Length, (highlight.End + 15) / 16 * 16)) : null;
+
+    public string? SelectedRowsText()
+    {
+        if (Document is not { } document || Highlight is not { } highlight)
+        {
+            return null;
+        }
+
+        long start = highlight.Start / 16 * 16;
+        long end = Math.Min(document.Length, ((highlight.End + 15) / 16) * 16);
+        if (end <= start || end - start > MaxCopyBytes)
+        {
+            return null;
+        }
+
+        return RowsText(document, start, end);
+    }
+
+    // The rows from the row holding start to the one holding the byte before end, in the display's layout.
+    public static string RowsText(HexDocument document, long start, long end)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+
+        int digits = HexCanvas.DigitsFor(document.Length);
+        var text = new System.Text.StringBuilder();
+        byte[] row = new byte[16];
+        for (long offset = start / 16 * 16; offset < end; offset += 16)
+        {
+            int count = document.Read(offset, row);
+            if (count == 0)
+            {
+                break;
+            }
+
+            text.Append(HexCanvas.RowText(offset, row.AsSpan(0, count), digits)).Append('\n');
+        }
+
+        return text.ToString();
+    }
+
+    internal Point? CellCenter(long offset) => _canvas.HexCellCenter(offset);
+
+    // The text a copy put on the clipboard.
+    public event EventHandler<string>? Copied;
+
+    // Why a copy failed.
+    public event EventHandler<string>? CopyFailed;
+
+    public string StatusText => _status.Text ?? string.Empty;
+
     // The first row on screen; exposed for tests.
     public long TopRow => _canvas.TopRow;
 
@@ -63,11 +168,25 @@ public sealed class HexView : Grid
         if (change.Property == DocumentProperty)
         {
             _canvas.Document = Document;
+            UpdateStatus();
         }
         else if (change.Property == HighlightProperty)
         {
             _canvas.Highlight = Highlight;
         }
+    }
+
+    private void UpdateStatus()
+    {
+        if (_canvas.ByteCursor is not { } offset)
+        {
+            _status.Text = "Cursor: none";
+            return;
+        }
+
+        byte[] one = new byte[1];
+        string value = Document?.Read(offset, one) == 1 ? $" · Byte 0x{one[0]:X2} ({one[0]})" : string.Empty;
+        _status.Text = $"Cursor: offset 0x{offset:X} ({offset:N0}){value}";
     }
 
     private void UpdateScrollBar()
@@ -98,6 +217,8 @@ internal sealed class HexCanvas : Control
     private HexDocument? _document;
     private HexHighlight? _highlight;
     private long _topRow;
+    private long? _cursor;
+    private int _rowsBefore;
     private double _charWidth;
     private double _lineHeight;
     private Typeface _typeface;
@@ -116,6 +237,33 @@ internal sealed class HexCanvas : Control
 
     public event EventHandler? ViewChanged;
 
+    public event EventHandler? ByteCursorChanged;
+
+    public event EventHandler<long>? ByteActivated;
+
+    // The cursor of a file that is shown no more is gone, and one past the end is not a byte.
+    public long? ByteCursor
+    {
+        get => _cursor;
+        set
+        {
+            long? next = value is { } v && _document is { } d && v >= 0 && v < d.Length ? v : null;
+            if (next == _cursor)
+            {
+                return;
+            }
+
+            _cursor = next;
+            if (next is { } offset)
+            {
+                RevealRow(offset / BytesPerRow);
+            }
+
+            InvalidateVisual();
+            ByteCursorChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
     public HexDocument? Document
     {
         get => _document;
@@ -123,6 +271,7 @@ internal sealed class HexCanvas : Control
         {
             _document = value;
             _topRow = 0;
+            ByteCursor = null;
             OnViewChanged();
         }
     }
@@ -174,9 +323,9 @@ internal sealed class HexCanvas : Control
         IBrush bitFill = Palette.AccentFill(this, 0.18);
         IBrush bitBar = Palette.AccentFill(this, 1);
 
-        int digits = Math.Max(8, (int)Math.Ceiling(Math.Log(Math.Max(16, _document.Length), 16)));
-        double hexX = Padding + ((digits + 2) * _charWidth);
-        double asciiX = hexX + ((BytesPerRow * 3) + 2) * _charWidth;
+        (int digits, double hexX, double asciiX) = Columns();
+        IBrush cursorFill = Palette.CursorFill(this);
+        var cursorPen = new Pen(Palette.CursorLine(this), 1.5);
 
         DrawText(context, string.Join(' ', Enumerable.Range(0, 8).Select(i => i.ToString("X2", CultureInfo.InvariantCulture))), hexX, Padding, secondary);
         DrawText(context, string.Join(' ', Enumerable.Range(8, 8).Select(i => i.ToString("X2", CultureInfo.InvariantCulture))), hexX + (HexColumn(8) * _charWidth), Padding, secondary);
@@ -219,6 +368,15 @@ internal sealed class HexCanvas : Control
                 }
             }
 
+            if (_cursor is { } at && at >= offset && at < offset + inRow)
+            {
+                int i = (int)(at - offset);
+                var hexCell = new Rect(hexX + (HexColumn(i) * _charWidth) - (_charWidth / 2), y, 3 * _charWidth, _lineHeight);
+                var textCell = new Rect(asciiX + (i * _charWidth), y, _charWidth, _lineHeight);
+                context.DrawRectangle(cursorFill, cursorPen, hexCell);
+                context.DrawRectangle(cursorFill, cursorPen, textCell);
+            }
+
             DrawText(context, offset.ToString("X" + digits.ToString(CultureInfo.InvariantCulture), CultureInfo.InvariantCulture), Padding, y, secondary);
             DrawText(context, new string(hex), hexX, y, foreground);
             DrawText(context, new string(ascii, 0, inRow), asciiX, y, foreground);
@@ -235,8 +393,23 @@ internal sealed class HexCanvas : Control
     protected override void OnSizeChanged(SizeChangedEventArgs e)
     {
         base.OnSizeChanged(e);
+
+        // A cursor that was on screen stays on screen when the view gets lower, even on its last
+        // row (the bit strip or the description under the view may take a row more with another
+        // font); without one the selection is brought into view.
+        long? cursorRow = _cursor / BytesPerRow;
+        bool cursorWasShown = cursorRow is { } row && row >= _topRow && row < _topRow + _rowsBefore;
         _topRow = Math.Clamp(_topRow, 0, MaxTopRow);
-        Reveal();
+        if (cursorWasShown)
+        {
+            RevealRow(cursorRow!.Value);
+        }
+        else
+        {
+            Reveal();
+        }
+
+        _rowsBefore = VisibleRows;
         OnViewChanged();
     }
 
@@ -251,24 +424,136 @@ internal sealed class HexCanvas : Control
     {
         base.OnPointerPressed(e);
         Focus();
+        PointerPoint point = e.GetCurrentPoint(this);
+        if (point.Properties.IsLeftButtonPressed && ByteAt(point.Position) is { } offset)
+        {
+            ByteCursor = offset;
+            if (e.ClickCount == 2)
+            {
+                ByteActivated?.Invoke(this, offset);
+            }
+
+            e.Handled = true;
+        }
+    }
+
+    // The offset of the byte under a point in the hex or the text column, null elsewhere or past the end.
+    internal long? ByteAt(Point point)
+    {
+        EnsureMetrics();
+        if (_document is null)
+        {
+            return null;
+        }
+
+        int row = (int)Math.Floor((point.Y - Padding) / _lineHeight) - 1;
+        if (row < 0 || row >= VisibleRows)
+        {
+            return null;
+        }
+
+        (_, double hexX, double asciiX) = Columns();
+        int index = -1;
+        for (int i = 0; i < BytesPerRow; i++)
+        {
+            double start = hexX + (HexColumn(i) * _charWidth) - (_charWidth / 2);
+            double end = i == BytesPerRow - 1 ? start + (3 * _charWidth) : hexX + (HexColumn(i + 1) * _charWidth) - (_charWidth / 2);
+            if (point.X >= start && point.X < end)
+            {
+                index = i;
+                break;
+            }
+        }
+
+        if (index < 0 && point.X >= asciiX && point.X < asciiX + (BytesPerRow * _charWidth))
+        {
+            index = (int)((point.X - asciiX) / _charWidth);
+        }
+
+        if (index < 0)
+        {
+            return null;
+        }
+
+        long offset = ((_topRow + row) * BytesPerRow) + index;
+        return offset < _document.Length ? offset : null;
+    }
+
+    internal static int DigitsFor(long length) => Math.Max(8, (int)Math.Ceiling(Math.Log(Math.Max(16, length), 16)));
+
+    // One row as Render draws it: the offset, two spaces, the hex of up to 16 bytes with an extra
+    // space after the eighth, padded to its column, a space, and the text column.
+    internal static string RowText(long offset, ReadOnlySpan<byte> bytes, int digits)
+    {
+        var hex = new char[(BytesPerRow * 3) + 1];
+        Array.Fill(hex, ' ');
+        var ascii = new char[bytes.Length];
+        for (int i = 0; i < bytes.Length; i++)
+        {
+            int column = HexColumn(i);
+            hex[column] = "0123456789ABCDEF"[bytes[i] >> 4];
+            hex[column + 1] = "0123456789ABCDEF"[bytes[i] & 15];
+            ascii[i] = bytes[i] is >= 0x20 and < 0x7F ? (char)bytes[i] : '.';
+        }
+
+        return offset.ToString("X" + digits.ToString(CultureInfo.InvariantCulture), CultureInfo.InvariantCulture) + "  " + new string(hex) + " " + new string(ascii);
+    }
+
+    // The width of the offset column in digits and where the hex and the text columns start.
+    internal (int Digits, double HexX, double AsciiX) Columns()
+    {
+        int digits = DigitsFor(_document?.Length ?? 0);
+        double hexX = Padding + ((digits + 2) * _charWidth);
+        return (digits, hexX, hexX + (((BytesPerRow * 3) + 2) * _charWidth));
+    }
+
+    // Where a byte is drawn, for tests: the center of its cell in the hex column, in the canvas's coordinates.
+    internal Point? HexCellCenter(long offset)
+    {
+        EnsureMetrics();
+        long row = (offset / BytesPerRow) - _topRow;
+        if (row < 0 || row >= VisibleRows)
+        {
+            return null;
+        }
+
+        (_, double hexX, _) = Columns();
+        int i = (int)(offset % BytesPerRow);
+        return new Point(hexX + ((HexColumn(i) + 1) * _charWidth), Padding + ((row + 1) * _lineHeight) + (_lineHeight / 2));
     }
 
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
-        long? target = e.Key switch
+        bool toFile = e.KeyModifiers is KeyModifiers.Control or KeyModifiers.Meta;
+        if (e.KeyModifiers != KeyModifiers.None && !(toFile && e.Key is Key.Home or Key.End))
         {
-            Key.Up => _topRow - 1,
-            Key.Down => _topRow + 1,
-            Key.PageUp => _topRow - Math.Max(1, VisibleRows - 1),
-            Key.PageDown => _topRow + Math.Max(1, VisibleRows - 1),
-            Key.Home => 0,
-            Key.End => MaxTopRow,
+            return;
+        }
+
+        if (_document is not { Length: > 0 } document)
+        {
+            return;
+        }
+
+        int page = Math.Max(1, VisibleRows - 1) * BytesPerRow;
+        // Where the key takes the cursor from, which the first key sets on the selection or the top row.
+        long from = _cursor ?? _highlight?.Start ?? (_topRow * BytesPerRow);
+        long? to = e.Key switch
+        {
+            Key.Left => from - 1,
+            Key.Right => from + 1,
+            Key.Up => from - BytesPerRow,
+            Key.Down => from + BytesPerRow,
+            Key.PageUp => from - page,
+            Key.PageDown => from + page,
+            Key.Home => toFile ? 0 : from / BytesPerRow * BytesPerRow,
+            Key.End => toFile ? document.Length - 1 : (from / BytesPerRow * BytesPerRow) + BytesPerRow - 1,
             _ => null,
         };
-        if (target is { } row)
+        if (to is { } target)
         {
-            TopRow = row;
+            ByteCursor = _cursor is null && e.Key is not (Key.Home or Key.End) ? Math.Clamp(from, 0, document.Length - 1) : Math.Clamp(target, 0, document.Length - 1);
             e.Handled = true;
         }
     }
@@ -285,10 +570,31 @@ internal sealed class HexCanvas : Control
             return;
         }
 
+        // A cursor on screen inside the selection is where the reader is looking, as after a double click.
+        if (_cursor is { } at && _highlight.Contains(at) && IsOnScreen(at / BytesPerRow))
+        {
+            return;
+        }
+
         long row = _highlight.Start / BytesPerRow;
-        if (row < _topRow || row >= _topRow + VisibleRows)
+        if (!IsOnScreen(row))
         {
             TopRow = row - (VisibleRows / 4);
+        }
+    }
+
+    private bool IsOnScreen(long row) => row >= _topRow && row < _topRow + VisibleRows;
+
+    // Scrolls just far enough for a row to be on screen.
+    private void RevealRow(long row)
+    {
+        if (row < _topRow)
+        {
+            TopRow = row;
+        }
+        else if (row >= _topRow + VisibleRows)
+        {
+            TopRow = row - VisibleRows + 1;
         }
     }
 

@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
@@ -422,6 +423,9 @@ public class CategoryViewTests
         Assert.Equal(window.Model.Graphs.Choices.Select(c => c.Title), entries.Select(b => ((TextBlock)b.Content!).Text));
         Assert.Equal(window.Model.Graphs.ChoiceGroups.Select(g => g.Heading), headings.Select(h => h.Text));
         Assert.True(window.GraphList.Bounds.Width <= 240);
+
+        // A tooltip is anchored to its entry, to its right, so that it never covers the next entry under the pointer.
+        Assert.All(entries, b => Assert.Equal(PlacementMode.Right, ToolTip.GetPlacement(b)));
         Assert.True(window.Graph.Bounds.Width > window.GraphList.Bounds.Width * 2);
         Assert.True(entries.All(b => b.TranslatePoint(new Point(), window)!.Value.X < window.Graph.TranslatePoint(new Point(), window)!.Value.X));
         Assert.Equal(entries.Count, entries.Select(b => b.TranslatePoint(new Point(), window)!.Value.Y).Distinct().Count());
