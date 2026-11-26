@@ -12,7 +12,7 @@ Each license text below is copied from a file, never written by hand (the attrib
 - **libmpcdec:** the `COPYING` of libmpcdec 1.2.6 (`libmpcdec-1.2.6.tar.bz2`), which is the same as that of `musepack_src` r495, and the license comment at the top of r495's `huffman.c`, which gives the copyright as 2005-2009; both archives are pinned by SHA-256 in `scripts/fixtures/musepack_tool.py` and `make_notices.py --fetch` checks them and refreshes `scripts/release/licenses/libmpcdec.txt` and `libmpcdec-r495-header.txt`.
 - **Monkey's Audio SDK:** the `License.txt` of Monkey's Audio SDK 13.44, extracted from `MAC_1344_SDK.zip`, the archive `scripts/fixtures/monkeys_audio_tool.py` pins by SHA-256 (`0c5c16432552f30ba715de44358b43accdf99b1a81546cd467cd32410f9d954e`); `make_notices.py --fetch` checks the hash and refreshes the committed copy `scripts/release/licenses/monkeys-audio.txt`.
 - **Apple's ALAC reference implementation:** the `LICENSE` (Apache License 2.0) of github.com/macosforge/alac at the commit `scripts/fixtures/alac_tool.py` pins (`c38887c5c5e64a4b31108733bd79ca9b2496d987`), which git checks against the tree; `make_notices.py --fetch` refreshes the committed copy `scripts/release/licenses/alac.txt`.
-- **Ittiam's libxaac:** the `LICENSE` (Apache License 2.0) of github.com/ittiam-systems/libxaac at the commit `scripts/fixtures/libxaac_tool.py` pins (`2fbadd57bca46693b7a077bcf1513131106d960c`), which git checks against the tree; `make_notices.py --fetch` refreshes the committed copy `scripts/release/licenses/libxaac.txt`.
+- **Ittiam's libxaac:** the `LICENSE` (Apache License 2.0) of github.com/ittiam-systems/libxaac at the commit `scripts/fixtures/libxaac_tool.py` pins (`2fbadd57bca46693b7a077bcf1513131106d960c`), which git checks against the tree, and its `NOTICE`; `make_notices.py --fetch` refreshes the committed copies `scripts/release/licenses/libxaac.txt` and `libxaac-notice.txt`.
 - **TAK's takStream.pas:** the header of `Sdk/Source/takStream.pas` of TAK 2.3.3 (its copyright and its license, "Do with it, whatever you want", with the request that a modified version says it is not an official release), extracted from `TAK_2.3.3.zip`, the archive `scripts/fixtures/tak_tool.py` pins by SHA-256 (`40d26992266f1377d576b88b84b88d2ab256dc321e47f90314402a80692aba6a`); `make_notices.py --fetch` checks the hash and refreshes `scripts/release/licenses/tak-stream.txt`. The module itself is not committed.
 - **libebur128:** the `COPYING` (MIT) of libebur128 v1.2.6, pinned by its SHA-256 (`d6b4754bb67bdd08b97d5d11b2d7434997a371585a78fe77007149df3af8d09c`); `make_notices.py --fetch` checks the hash and refreshes `scripts/release/licenses/libebur128.txt`.
 - **minimp3:** the dedication at the top of `minimp3.h` (CC0 1.0), copied into `scripts/release/licenses/minimp3.txt`; the source is vendored in `third_party/minimp3` at commit `ea99364f`.
@@ -3103,7 +3103,31 @@ If the Work includes a "NOTICE" text file as part of its distribution, then any 
 
 ## Ittiam's libxaac
 
-Encspect's AAC decoder (`src/Encspect.Formats.Aac/Decoding`) and the parts of the AAC parser that store what the decoder reconstructs (`BlockRecord.cs`, `DecodeFeed.cs`, the storing branches of `BlockReader.cs`) are written in C#, from ISO/IEC 14496-3 as far as it is known without the standard and from Ittiam's libxaac (github.com/ittiam-systems/libxaac, commit 2fbadd57bca46693b7a077bcf1513131106d960c) where the specification leaves details to the decoder: the order of the tools (`ixheaacd_channel.c`), mid/side and intensity stereo (`ixheaacd_stereo.c`), the noise substitution generator and its correlation with mid/side stereo and the TNS filter ranges (`ixheaacd_pns_js_thumb.c`), the scalefactors and noise energies (`ixheaacd_longblock.c`), the windows and the overlap of the filter bank (`ixheaacd_lpfuncs.c`) and the numeric tables (`ixheaacd_aac_rom.c`, format data). The source files that follow it say so (`Decoding/*.cs`). 628 of the 630 C source and header files of libxaac carry "Copyright (C) The Android Open Source Project" and the Apache License header, and none holds an ISO/IEC disclaimer. The `LICENSE` of libxaac:
+Encspect's AAC decoder (`src/Encspect.Formats.Aac/Decoding`) and the parts of the AAC parser that store what the decoder reconstructs (`BlockRecord.cs`, `DecodeFeed.cs`, the storing branches of `BlockReader.cs`) are written in C#, from ISO/IEC 14496-3 as far as it is known without the standard and from Ittiam's libxaac (github.com/ittiam-systems/libxaac, commit 2fbadd57bca46693b7a077bcf1513131106d960c) where the specification leaves details to the decoder: the order of the tools (`ixheaacd_channel.c`), mid/side and intensity stereo (`ixheaacd_stereo.c`), the noise substitution generator and its correlation with mid/side stereo and the TNS filter ranges (`ixheaacd_pns_js_thumb.c`), the scalefactors and noise energies (`ixheaacd_longblock.c`), the windows and the overlap of the filter bank (`ixheaacd_lpfuncs.c`) and the numeric tables (`ixheaacd_aac_rom.c`, format data). The source files that follow it say so (`Decoding/*.cs`). 628 of the 630 C source and header files of libxaac carry "Copyright (C) The Android Open Source Project" and the Apache License header, and none holds an ISO/IEC disclaimer. The `NOTICE` of libxaac, which Apache License 2.0 section 4(d) asks derivative works to carry:
+
+```
+/******************************************************************************
+ *                                                                            *
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at:
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *****************************************************************************
+ * Originally developed and contributed by Ittiam Systems Pvt. Ltd, Bangalore
+*/
+```
+
+The `LICENSE` of libxaac:
 
 ```
 

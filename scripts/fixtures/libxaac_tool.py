@@ -73,5 +73,11 @@ def build(directory=None):
     return binary
 
 
+def notice_text(directory=None):
+    """The NOTICE of the repository (the copyright line and the attribution to Ittiam that the Apache License asks derivative works to carry)."""
+    directory = pathlib.Path(directory or tempfile.mkdtemp(prefix="libxaac-"))
+    return (fetch(directory) / "NOTICE").read_text(encoding="utf-8")
+
+
 if __name__ == "__main__":
     print(fetch(sys.argv[1] if len(sys.argv) > 1 else tempfile.mkdtemp(prefix="libxaac-")))
