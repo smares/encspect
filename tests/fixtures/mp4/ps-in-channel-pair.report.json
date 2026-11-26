@@ -1675,6 +1675,47 @@
                               ]
                             },
                             {
+                              "name": "Last Non-Zero Coefficient",
+                              "offset": 652,
+                              "length": 1824,
+                              "children": [
+                                {
+                                  "name": "Lowest",
+                                  "value": 1238,
+                                  "unit": "Hz",
+                                  "offset": 652,
+                                  "length": 1824
+                                },
+                                {
+                                  "name": "Most Common",
+                                  "value": 1249,
+                                  "unit": "Hz",
+                                  "offset": 652,
+                                  "length": 1824
+                                },
+                                {
+                                  "name": "Highest",
+                                  "value": 1249,
+                                  "unit": "Hz",
+                                  "offset": 652,
+                                  "length": 1824
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Non-Zero Coefficients",
+                              "value": 2128,
+                              "unit": "coefficients",
+                              "offset": 652,
+                              "length": 1824
+                            },
+                            {
+                              "name": "Escape-Coded Coefficients",
+                              "value": "61 coefficients (2.9%)",
+                              "offset": 652,
+                              "length": 1824
+                            },
+                            {
                               "name": "Global Gain",
                               "offset": 652,
                               "length": 1824,
@@ -6653,6 +6694,88 @@
             ],
             "values": [
               1249
+            ]
+          },
+          {
+            "name": "Last Non-Zero Coefficient",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "codedBandwidth",
+            "quantity": "Last Non-Zero Coefficient",
+            "x": [
+              652,
+              805,
+              957,
+              1108,
+              1260,
+              1414,
+              1566,
+              1719,
+              1870,
+              2023,
+              2174,
+              2324
+            ],
+            "values": [
+              1249,
+              1249,
+              1238,
+              1249,
+              1249,
+              1249,
+              1249,
+              1238,
+              1249,
+              1249,
+              1249,
+              1249
+            ]
+          },
+          {
+            "name": "Last Non-Zero Coefficient Over Time",
+            "unit": "Hz",
+            "axis": "seconds",
+            "concept": "codedBandwidth",
+            "quantity": "Last Non-Zero Coefficient",
+            "x": [
+              0
+            ],
+            "values": [
+              1249
+            ]
+          },
+          {
+            "name": "Escape-Coded Coefficients",
+            "unit": "%",
+            "axis": "frameOffset",
+            "quantity": "Escape-Coded Coefficients",
+            "x": [
+              652,
+              805,
+              957,
+              1108,
+              1260,
+              1414,
+              1566,
+              1719,
+              1870,
+              2023,
+              2174,
+              2324
+            ],
+            "values": [
+              2.8,
+              2.8,
+              2.8,
+              3.4,
+              3.4,
+              2.8,
+              2.8,
+              2.3,
+              2.8,
+              2.8,
+              2.8,
+              2.8
             ]
           }
         ],

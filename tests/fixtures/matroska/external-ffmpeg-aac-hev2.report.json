@@ -3146,6 +3146,47 @@
                           ]
                         },
                         {
+                          "name": "Last Non-Zero Coefficient",
+                          "offset": 763,
+                          "length": 4963,
+                          "children": [
+                            {
+                              "name": "Lowest",
+                              "value": 1206,
+                              "unit": "Hz",
+                              "offset": 763,
+                              "length": 4963
+                            },
+                            {
+                              "name": "Most Common",
+                              "value": 8613,
+                              "unit": "Hz",
+                              "offset": 763,
+                              "length": 4963
+                            },
+                            {
+                              "name": "Highest",
+                              "value": 8613,
+                              "unit": "Hz",
+                              "offset": 763,
+                              "length": 4963
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Non-Zero Coefficients",
+                          "value": 5404,
+                          "unit": "coefficients",
+                          "offset": 763,
+                          "length": 4963
+                        },
+                        {
+                          "name": "Escape-Coded Coefficients",
+                          "value": "56 coefficients (1.0%)",
+                          "offset": 763,
+                          "length": 4963
+                        },
+                        {
                           "name": "Global Gain",
                           "offset": 763,
                           "length": 4963,
@@ -19675,6 +19716,134 @@
             "values": [
               9302,
               9302
+            ]
+          },
+          {
+            "name": "Last Non-Zero Coefficient",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "codedBandwidth",
+            "quantity": "Last Non-Zero Coefficient",
+            "x": [
+              897,
+              1213,
+              1365,
+              1517,
+              1764,
+              2165,
+              2489,
+              2624,
+              2735,
+              3089,
+              3272,
+              3410,
+              3515,
+              3860,
+              4095,
+              4250,
+              4351,
+              4464,
+              4832,
+              5028,
+              5167,
+              5279,
+              5610
+            ],
+            "values": [
+              8613,
+              8613,
+              8613,
+              8613,
+              8613,
+              8613,
+              8603,
+              8495,
+              8613,
+              8613,
+              8613,
+              8495,
+              8613,
+              8613,
+              8613,
+              8613,
+              8613,
+              8613,
+              8613,
+              8581,
+              8570,
+              8613,
+              1206
+            ]
+          },
+          {
+            "name": "Last Non-Zero Coefficient Over Time",
+            "unit": "Hz",
+            "axis": "seconds",
+            "concept": "codedBandwidth",
+            "quantity": "Last Non-Zero Coefficient",
+            "x": [
+              0,
+              1
+            ],
+            "values": [
+              8613,
+              8613
+            ]
+          },
+          {
+            "name": "Escape-Coded Coefficients",
+            "unit": "%",
+            "axis": "frameOffset",
+            "quantity": "Escape-Coded Coefficients",
+            "x": [
+              897,
+              1213,
+              1365,
+              1517,
+              1764,
+              2165,
+              2489,
+              2624,
+              2735,
+              3089,
+              3272,
+              3410,
+              3515,
+              3860,
+              4095,
+              4250,
+              4351,
+              4464,
+              4832,
+              5028,
+              5167,
+              5279,
+              5610
+            ],
+            "values": [
+              4.2,
+              0,
+              0,
+              2.3,
+              0.6,
+              1.7,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              2.7,
+              0,
+              0,
+              0,
+              0,
+              0.8,
+              0,
+              0,
+              0,
+              0.2,
+              0
             ]
           }
         ],

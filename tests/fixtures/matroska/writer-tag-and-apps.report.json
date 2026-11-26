@@ -1687,6 +1687,47 @@
                           ]
                         },
                         {
+                          "name": "Last Non-Zero Coefficient",
+                          "offset": 481,
+                          "length": 2935,
+                          "children": [
+                            {
+                              "name": "Lowest",
+                              "value": 10314,
+                              "unit": "Hz",
+                              "offset": 481,
+                              "length": 2935
+                            },
+                            {
+                              "name": "Most Common",
+                              "value": 10314,
+                              "unit": "Hz",
+                              "offset": 481,
+                              "length": 2935
+                            },
+                            {
+                              "name": "Highest",
+                              "value": 22050,
+                              "unit": "Hz",
+                              "offset": 481,
+                              "length": 2935
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Non-Zero Coefficients",
+                          "value": 4914,
+                          "unit": "coefficients",
+                          "offset": 481,
+                          "length": 2935
+                        },
+                        {
+                          "name": "Escape-Coded Coefficients",
+                          "value": "143 coefficients (2.9%)",
+                          "offset": 481,
+                          "length": 2935
+                        },
+                        {
                           "name": "Global Gain",
                           "offset": 481,
                           "length": 2935,
@@ -4362,6 +4403,64 @@
             "values": [
               22050
             ]
+          },
+          {
+            "name": "Last Non-Zero Coefficient",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "codedBandwidth",
+            "quantity": "Last Non-Zero Coefficient",
+            "x": [
+              481,
+              852,
+              1228,
+              1599,
+              2354,
+              3047
+            ],
+            "values": [
+              10314,
+              10314,
+              10314,
+              22050,
+              22050,
+              10314
+            ]
+          },
+          {
+            "name": "Last Non-Zero Coefficient Over Time",
+            "unit": "Hz",
+            "axis": "seconds",
+            "concept": "codedBandwidth",
+            "quantity": "Last Non-Zero Coefficient",
+            "x": [
+              0
+            ],
+            "values": [
+              22050
+            ]
+          },
+          {
+            "name": "Escape-Coded Coefficients",
+            "unit": "%",
+            "axis": "frameOffset",
+            "quantity": "Escape-Coded Coefficients",
+            "x": [
+              481,
+              852,
+              1228,
+              1599,
+              2354,
+              3047
+            ],
+            "values": [
+              0.6,
+              0.6,
+              0.6,
+              10,
+              1.4,
+              0.6
+            ]
           }
         ],
         "categorySeries": [
@@ -4682,6 +4781,24 @@
           3
         ],
         "count": 2
+      },
+      {
+        "severity": "Info",
+        "code": "aac.window-sequence-invalid",
+        "message": "3 raw data blocks hold a window sequence that cannot follow the one of the same channel stream in the block before it: the left slope of its window does not match the right slope of the previous window, as a long window followed by eight short ones does not; the first at 0x78D.",
+        "offset": 1933,
+        "length": 1,
+        "path": [
+          0,
+          3,
+          0,
+          5,
+          0,
+          4,
+          1,
+          1
+        ],
+        "count": 3
       }
     ]
   }

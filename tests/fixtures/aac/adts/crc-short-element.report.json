@@ -282,6 +282,47 @@
                   ]
                 },
                 {
+                  "name": "Last Non-Zero Coefficient",
+                  "offset": 0,
+                  "length": 162,
+                  "children": [
+                    {
+                      "name": "Lowest",
+                      "value": 86,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 162
+                    },
+                    {
+                      "name": "Most Common",
+                      "value": 86,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 162
+                    },
+                    {
+                      "name": "Highest",
+                      "value": 86,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 162
+                    }
+                  ]
+                },
+                {
+                  "name": "Non-Zero Coefficients",
+                  "value": 18,
+                  "unit": "coefficients",
+                  "offset": 0,
+                  "length": 162
+                },
+                {
+                  "name": "Escape-Coded Coefficients",
+                  "value": "0 coefficients (0.0%)",
+                  "offset": 0,
+                  "length": 162
+                },
+                {
                   "name": "Global Gain",
                   "offset": 0,
                   "length": 162,
@@ -2833,6 +2874,64 @@
             ],
             "values": [
               86
+            ]
+          },
+          {
+            "name": "Last Non-Zero Coefficient",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "codedBandwidth",
+            "quantity": "Last Non-Zero Coefficient",
+            "x": [
+              0,
+              27,
+              54,
+              81,
+              108,
+              135
+            ],
+            "values": [
+              86,
+              86,
+              86,
+              86,
+              86,
+              86
+            ]
+          },
+          {
+            "name": "Last Non-Zero Coefficient Over Time",
+            "unit": "Hz",
+            "axis": "seconds",
+            "concept": "codedBandwidth",
+            "quantity": "Last Non-Zero Coefficient",
+            "x": [
+              0
+            ],
+            "values": [
+              86
+            ]
+          },
+          {
+            "name": "Escape-Coded Coefficients",
+            "unit": "%",
+            "axis": "frameOffset",
+            "quantity": "Escape-Coded Coefficients",
+            "x": [
+              0,
+              27,
+              54,
+              81,
+              108,
+              135
+            ],
+            "values": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
             ]
           }
         ],
