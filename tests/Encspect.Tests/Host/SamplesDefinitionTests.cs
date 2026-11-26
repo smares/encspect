@@ -147,6 +147,11 @@ public class SamplesDefinitionTests
         ["musepack/sv6-last-frame-samples-invalid.decode.json"] = Reasons.musepacksv6,
         #endregion
 
+        #region AAC
+        ["matroska/aac-discard-padding.decode.json"] = Reasons.aacdiscardpadding,
+        ["matroska/aac-discard-padding-large.decode.json"] = Reasons.aacdiscardpadding,
+        #endregion
+
         #region ALAC
         ["alac/built-channels-missing.decode.json"] = "the frame holds elements for fewer channels than the cookie states, and the decoder does not decode it (decode.frame-invalid) though the parser counts its samples",
         ["alac/built-element-samples-differ.decode.json"] = "the frame's elements state different sample counts, and the decoder does not decode it (decode.frame-invalid) though the parser counts its samples",
@@ -312,6 +317,9 @@ public class SamplesDefinitionTests
 
     private static class Reasons
     {
+        public const string aacdiscardpadding =
+            "Matroska's DiscardPadding trims the stream's samples, which is all the AAC report states (it has no Coded Samples figure), while the decoder decodes the coded stage";
+
         public const string flac =
             "the decoder refuses every frame because the frame's block size disagrees with STREAMINFO; the parser reads the frames";
 

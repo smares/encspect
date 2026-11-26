@@ -42,6 +42,9 @@
           <TextBlock Name="FileChangedText" Text="Changed on disk since it was analyzed" Classes="secondary" Margin="0,0,6,0"
                      VerticalAlignment="Center" ToolTip.Tip="{Binding FileChangedTip}"
                      IsVisible="{Binding HasFileChanged}" />
+          <TextBlock Name="CommandStatusText" Text="{Binding CommandStatus}" Classes="secondary" MaxWidth="320" Margin="0,0,6,0"
+                     VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding CommandStatus}"
+                     IsVisible="{Binding CommandStatus, Converter={x:Static ObjectConverters.IsNotNull}}" />
           <TextBlock Name="CommandErrorText" Text="{Binding CommandError}" Classes="error" MaxWidth="320" Margin="0,0,6,0"
                      VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding CommandError}"
                      IsVisible="{Binding CommandError, Converter={x:Static ObjectConverters.IsNotNull}}" />
@@ -52,10 +55,10 @@
             <PathIcon Width="12" Height="12" Data="{x:Static views:Icons.Down}" />
           </Button>
           <Button Name="TopicsButton" Content="Topics" Classes.active="{Binding IsTopicOpen}" Click="OnTopics" Margin="6,0,0,0" />
-          <Button Name="DecodeAudioButton" Content="Decode Audio" Click="OnDecodeAudio" IsEnabled="{Binding CanDecodeAudio}" IsVisible="{Binding !IsDecoding}"
+          <Button Name="DecodeAudioButton" Content="Decode Audio" Click="OnDecodeAudio" IsEnabled="{Binding CanDecodeAudio}" IsVisible="{Binding !CanStop}"
                   ToolTip.Tip="Decode the audio to compare the checksums over it, such as FLAC's MD5 of the samples, and to measure it: the waveform, the spectrogram, the spectrum, the spectral cutoff, the levels, the loudness and the true peak. It reads the whole file again and takes longer than the analysis." />
-          <Button Name="StopDecodingButton" Content="Stop" Click="OnStopDecoding" IsVisible="{Binding IsDecoding}"
-                  ToolTip.Tip="Stop decoding; the analysis stays as it is." />
+          <Button Name="StopDecodingButton" Content="Stop" Click="OnStopDecoding" IsVisible="{Binding CanStop}"
+                  ToolTip.Tip="Stop what runs: a copy, which copies nothing, or decoding (also of a reload), which leaves the analysis as it is." />
           <Button Name="AnalyzeAsButton" Content="Analyze as…" IsEnabled="{Binding HasReport}"
                   ToolTip.Tip="Analyze the file as a format of your choice, for a file whose format is not detected or is detected wrongly." />
           <Button Name="ExportButton" Content="Export…" Click="OnExport" IsEnabled="{Binding HasReport}" />
@@ -63,7 +66,7 @@
       </Grid>
     </Border>
 
-    <ProgressBar Grid.Row="1" Height="2" MinHeight="2" Maximum="1" Value="{Binding Progress}" IsVisible="{Binding IsProgressShown}" />
+    <ProgressBar Grid.Row="1" Height="2" MinHeight="2" Maximum="1" Value="{Binding Progress}" IsIndeterminate="{Binding IsProgressIndeterminate}" IsVisible="{Binding IsProgressShown}" />
 
     <Grid Grid.Row="2" Name="Body" ColumnDefinitions="*,Auto,0">
       <Grid Name="Panes" ColumnDefinitions="5*,1,6*">
@@ -106,10 +109,10 @@
                            IsVisible="{Binding LearnMoreText, Converter={x:Static ObjectConverters.IsNotNull}}" Tapped="OnLearnMore"
                            ToolTip.Tip="Open the background article in a side pane." />
               </Grid>
-              <TextBlock Name="SelectionDescription" Text="{Binding SelectionDescription}" Classes="secondary" FontSize="12" TextWrapping="Wrap"
-                         MaxLines="3" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding SelectionDescription}"
-                         IsVisible="{Binding SelectionDescription, Converter={x:Static ObjectConverters.IsNotNull}}" />
-              <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+              <!-- Three lines of a fixed height whatever the node says, so that selecting a node never resizes the hex view above. -->
+              <TextBlock Name="SelectionDescription" Text="{Binding SelectionDescription}" Classes="secondary" FontSize="12" LineHeight="16" Height="48" TextWrapping="Wrap"
+                         MaxLines="3" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding SelectionDescription}" />
+              <ScrollViewer Name="BitsScroll" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                 <views:BitStripView Name="Bits" Strip="{Binding BitStrip}" HorizontalAlignment="Left" />
               </ScrollViewer>
             </StackPanel>
@@ -202,13 +205,13 @@
                       <StackPanel>
                         <TextBlock Text="{Binding Heading}" Classes="secondary heading" />
                         <TextBlock Text="{Binding Caption}" Classes="secondary caption" IsVisible="{Binding HasCaption}" AutomationProperties.Name="{Binding Caption}" />
-                        <Button Content="Decode Audio" Classes="decode" IsVisible="{Binding OffersDecode}" IsEnabled="{Binding Owner.CanDecode}" Click="OnGraphDecode"
+                        <Button Content="Decode Audio" Classes="decode" IsVisible="{Binding OffersDecode}" IsEnabled="{Binding Owner.CanDecode}" Click="OnGraphDecode" ToolTip.Placement="Right" ToolTip.HorizontalOffset="6"
                                 ToolTip.Tip="Decode the audio to measure it: the waveform, the spectrogram, the spectrum, the spectral cutoff, the levels, the loudness and the true peak. It reads the whole file again and takes longer than the analysis." />
                         <ItemsControl ItemsSource="{Binding Choices}">
                           <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="vm:GraphChoice">
                               <!-- A long name wraps at the list's width, never cut; the tooltip names the entry first, then says what it shows. -->
-                              <Button Classes="entry" Classes.selected="{Binding IsSelected}" Click="OnGraphChoice" ToolTip.Tip="{Binding ToolTipText}"
+                              <Button Classes="entry" Classes.selected="{Binding IsSelected}" Click="OnGraphChoice" ToolTip.Tip="{Binding ToolTipText}" ToolTip.Placement="Right" ToolTip.HorizontalOffset="6"
                                       AutomationProperties.Name="{Binding Title}">
                                 <TextBlock Text="{Binding Title}" TextWrapping="Wrap" />
                               </Button>

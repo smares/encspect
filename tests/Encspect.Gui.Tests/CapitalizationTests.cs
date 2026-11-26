@@ -118,9 +118,16 @@ public sealed class CapitalizationTests
         labels.AddRange(menu.Items.OfType<MenuItem>().Select(i => (string)i.Header!));
         menu.Hide();
 
+        foreach (ContextMenu? contextMenu in new[] { window.TreeList.ContextMenu, window.FindingList.ContextMenu, window.Hex.ContextMenu })
+        {
+            labels.AddRange(contextMenu!.Items.OfType<MenuItem>().Select(i => (string)i.Header!));
+        }
+
         Assert.Contains("Analyze as…", labels);
         Assert.Contains("Findings", labels);
         Assert.Contains("Graphs", labels);
+        Assert.Contains("Copy Message with Code and Position", labels);
+        Assert.Contains("Copy Selection", labels);
         AssertTitleCase(labels);
         window.Close();
     }

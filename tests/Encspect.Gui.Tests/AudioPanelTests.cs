@@ -105,8 +105,8 @@ public class AudioPanelTests
     [AvaloniaFact]
     public void A_stream_the_analysis_does_not_decode_says_so_with_the_codec_and_never_that_no_decoder_exists()
     {
-        // AAC has no decoder yet; WavPack has one, but Matroska does not hand zlib-compressed WavPack frames to its codec parser.
-        foreach ((string path, string codec) in new[] { (Fixtures.Aac("faac-1.40-adts.aac"), "AAC LC"), (Fixtures.Matroska("external-mkvmerge-zlib-wavpack.mka"), "WavPack") })
+        // OptimFROG has no decoder; WavPack has one, but Matroska does not hand zlib-compressed WavPack frames to its codec parser.
+        foreach ((string path, string codec) in new[] { (Fixtures.OptimFrog("external-24-stereo.ofr"), "OptimFROG"), (Fixtures.Matroska("external-mkvmerge-zlib-wavpack.mka"), "WavPack") })
         {
             DetailWindow window = Open(path, decode: false);
             AudioCaption caption = window.Model.Graphs.SelectedStream!.Caption!;
@@ -192,13 +192,13 @@ public class AudioPanelTests
         window.Close();
     }
 
-    // An AAC stream has no verification (its parser starts no session); the NoDecoder caption is covered by the synthetic test above.
+    // An OptimFROG stream has no verification (its parser starts no session); the NoDecoder caption is covered by the synthetic test above.
     [AvaloniaFact]
     public void A_stream_without_a_decoder_offers_no_command_and_is_not_decoded()
     {
-        DetailWindow window = Open(Fixtures.Aac("faac-1.40-adts.aac"));
+        DetailWindow window = Open(Fixtures.OptimFrog("external-24-stereo.ofr"));
         Assert.False(window.Model.CanDecodeAudio);
-        Assert.Equal("The audio of this AAC LC stream is not decoded here.", window.Model.Graphs.SelectedStream!.Caption!.Text);
+        Assert.Equal("The audio of this OptimFROG stream is not decoded here.", window.Model.Graphs.SelectedStream!.Caption!.Text);
         Assert.Null(window.Model.Report!.Streams.Single().Measurements);
         window.Close();
     }

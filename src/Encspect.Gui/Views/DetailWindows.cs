@@ -130,7 +130,8 @@ public sealed class DetailWindows
         int step = (_independent.Count + 1) * CascadeStep;
         if (CanPlace)
         {
-            window.Position = new PixelPoint(window.Position.X + step, window.Position.Y + step);
+            (PixelRect area, double scaling) = ScreenOf(null);
+            window.Position = ScreenFit.Clamp(new PixelPoint(window.Position.X + step, window.Position.Y + step), new Size(window.Width, window.Height), area, scaling);
         }
 
         _independent.Add(window);
@@ -154,6 +155,22 @@ public sealed class DetailWindows
     internal bool? CanPlaceOverride { get; set; }
 
     private bool CanPlace => CanPlaceOverride ?? PlatformBackend.CanPlaceWindows(_main);
+
+    // The screen's working area and scaling the window is placed on, in tests set by hand: the
+    // screen under the point, or the main window's, or the primary one.
+    internal (PixelRect WorkingArea, double Scaling)? ScreenOverride { get; set; }
+
+    private (PixelRect WorkingArea, double Scaling) ScreenOf(PixelPoint? point)
+    {
+        if (ScreenOverride is { } screenOverride)
+        {
+            return screenOverride;
+        }
+
+        Avalonia.Platform.Screen? screen = point is { } p ? _main.Screens.ScreenFromPoint(p) : null;
+        screen ??= _main.Screens.ScreenFromWindow(_main) ?? _main.Screens.Primary;
+        return screen is null ? (new PixelRect(0, 0, 100000, 100000), 1) : (screen.WorkingArea, screen.Scaling);
+    }
 
     private DetailWindow Create()
     {
@@ -216,16 +233,21 @@ public sealed class DetailWindows
     }
 
     // Where the window was last, when that is still on a screen; otherwise centered over the main
-    // window. Returns the placement used, or null when centered.
+    // window. The size is capped at the screen's working area and the position moved so that the
+    // title bar is on it. Returns the placement used, or null when centered.
     private WindowPlacement? Place(Window window, WindowPlacement? placement)
     {
-        if (placement is { Width: > 0, Height: > 0 } && (!CanPlace || (placement is { X: { } x, Y: { } y } && _main.Screens.ScreenFromPoint(new PixelPoint(x + 40, y + 20)) is not null)))
+        PixelPoint? saved = placement is { X: { } x, Y: { } y } ? new PixelPoint(x, y) : null;
+        bool onScreen = saved is { } at && (ScreenOverride is not null || _main.Screens.ScreenFromPoint(new PixelPoint(at.X + 40, at.Y + 20)) is not null);
+        if (placement is { Width: > 0, Height: > 0 } && (!CanPlace || onScreen))
         {
+            (PixelRect area, double scaling) = ScreenOf(saved is { } p ? new PixelPoint(p.X + 40, p.Y + 20) : null);
             window.Width = placement.Width;
             window.Height = placement.Height;
+            ScreenFit.CapSize(window, area, scaling);
             if (CanPlace)
             {
-                window.Position = new PixelPoint(placement.X!.Value, placement.Y!.Value);
+                window.Position = ScreenFit.Clamp(saved!.Value, new Size(window.Width, window.Height), area, scaling);
             }
 
             if (placement.IsMaximized)
@@ -236,13 +258,19 @@ public sealed class DetailWindows
             return placement with { IsMaximized = false };
         }
 
+        (PixelRect mainArea, double mainScaling) = ScreenOf(null);
+        ScreenFit.CapSize(window, mainArea, mainScaling);
         if (CanPlace)
         {
             double scaling = _main.DesktopScaling;
             Size main = _main.ClientSize;
-            window.Position = new PixelPoint(
-                _main.Position.X + (int)((main.Width - window.Width) * scaling / 2),
-                _main.Position.Y + (int)((main.Height - window.Height) * scaling / 2));
+            window.Position = ScreenFit.Clamp(
+                new PixelPoint(
+                    _main.Position.X + (int)((main.Width - window.Width) * scaling / 2),
+                    _main.Position.Y + (int)((main.Height - window.Height) * scaling / 2)),
+                new Size(window.Width, window.Height),
+                mainArea,
+                mainScaling);
         }
 
         return null;

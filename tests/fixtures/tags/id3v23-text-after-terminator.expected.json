@@ -1,5 +1,5 @@
 {
-  "description": "ID3v2.3 TPE1 frame holding two artists separated by $00, as ID3v2.4 writes a list; ID3v2.3 has no lists, so readers show only the first.",
+  "description": "ID3v2.3 TPE1 frame holding two artists separated by $00, as some taggers write them and as ID3v2.4 writes a list; ID3v2.3 section 4.2 says to ignore what follows the terminator, so the analyzer shows both strings and says so.",
   "length": 568,
   "regions": [
     {
@@ -7,7 +7,10 @@
       "version": "2.3.0",
       "confidence": "High",
       "fields": {
-        "TPE1/Text": "First"
+        "TPE1/Text": [
+          "First",
+          "Second"
+        ]
       },
       "offset": 0,
       "length": 56
@@ -21,7 +24,7 @@
   "findings": [
     {
       "code": "id3v2.text-after-terminator",
-      "contains": "Frame TPE1"
+      "contains": "Frame TPE1 has 2 strings"
     }
   ]
 }

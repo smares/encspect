@@ -34,6 +34,7 @@ KIND_MODULES = {
     "scripts/fixtures/faac_tool.py": ("tag",),
     "scripts/fixtures/xiph_tool.py": ("tag",),
     "scripts/fixtures/alac_tool.py": ("commit",),
+    "scripts/fixtures/libxaac_tool.py": ("commit",),
     "scripts/fixtures/ffmpeg_sources.py": ("member", "archive"),
 }
 

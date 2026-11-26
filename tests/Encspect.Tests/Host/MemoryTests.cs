@@ -2079,6 +2079,28 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         Assert.True(heldPerPacket < DecodingFrameBound, $"Decoding held {heldPerPacket:F2} more bytes per further packet at the last packet than the analysis ends with. {RuntimeSettings()}");
     }
 
+    // The decoding of an AAC file holds one block's record, the spectra, the overlaps and the output of its channels, so what it holds does not grow with the frames. Measured as the Vorbis
+    // test above does, at 50,000 and 200,000 ADTS frames of silence (the first frame of adts/cbr.aac, repeated).
+    [Fact]
+    public void DecodingManyAacFramesHoldsNothingPerFrame()
+    {
+        const int fewer = 50_000;
+        const int frames = 200_000;
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "aac", "adts", "cbr.aac"));
+        byte[] frame = source[..(((source[3] & 3) << 11) | (source[4] << 3) | (source[5] >> 5))];
+
+        Analyzer.CreateDefault().Analyze("warm-up", new MemoryStream(Unpooled.Repeat(frame, 500)), new AnalysisOptions { Decoding = new DecodeOptions { Output = _ => new DecoderWorkTests.NullSink() } });
+
+        (long fewerHeld, long fewerKept) = LastFrameReading("frames.aac", Unpooled.Repeat(frame, fewer), fewer, 1024);
+        (long held, long kept) = LastFrameReading("frames.aac", Unpooled.Repeat(frame, frames), frames, 1024);
+        (_, long plainKept) = LastFrameReading("frames.aac", Unpooled.Repeat(frame, frames), frames, 1024, isDecoding: false);
+
+        double heldPerFrame = (held - fewerHeld) / (double)(frames - fewer);
+        Output.WriteLine($"{kept} bytes kept with decoding and {plainKept} without; held above the end state at the last frame: {fewerHeld} at {fewer} frames and {held} at {frames} ({Hundredths(heldPerFrame)} per further frame)");
+        Assert.True(kept < plainKept + 1_000_000, $"Decoding made the report keep {(kept - plainKept) / (double)frames:F2} bytes more per frame.");
+        Assert.True(heldPerFrame < DecodingFrameBound, $"Decoding held {heldPerFrame:F2} more bytes per further frame at the last frame than the analysis ends with. {RuntimeSettings()}");
+    }
+
     // An Opus stream keeps a 24-byte record per stream of each packet, 2 bytes per frame and its
     // per-packet series, including those of the entropy pass, plus its share of the page records:
     // 62 bytes in all on linux-x64, and a peak of 67 (measured 2026-11-15). The bounds leave

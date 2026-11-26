@@ -1,0 +1,63 @@
+{
+ "description": "Mono frames at a level near -30 dBFS with pulse data (up to four pulses, amplitudes 1 to 15) and TNS filters in each window sequence.",
+ "length": 2247,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "channel_layout": [
+    "front center"
+   ],
+   "samples": 5120,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   461
+  ],
+  [
+   461,
+   449
+  ],
+  [
+   910,
+   433
+  ],
+  [
+   1343,
+   456
+  ],
+  [
+   1799,
+   448
+  ]
+ ],
+ "fields": {
+  "ADTS/Statistics/Block Usage/Only Long": "2 channel streams (40.0%)",
+  "ADTS/Statistics/Block Usage/Long Start": "1 channel stream (20.0%)",
+  "ADTS/Statistics/Block Usage/Eight Short": "1 channel stream (20.0%)",
+  "ADTS/Statistics/Block Usage/Long Stop": "1 channel stream (20.0%)",
+  "ADTS/Statistics/Window Shapes/Sine": "2 channel streams (40.0%)",
+  "ADTS/Statistics/Window Shapes/KBD": "3 channel streams (60.0%)",
+  "ADTS/Statistics/Codebooks/Codebook 0": "16 bands (7.4%)",
+  "ADTS/Statistics/Codebooks/Codebook 3": "32 bands (14.8%)",
+  "ADTS/Statistics/Codebooks/Codebook 5": "52 bands (24.1%)",
+  "ADTS/Statistics/Codebooks/Codebook 7": "52 bands (24.1%)",
+  "ADTS/Statistics/Codebooks/Codebook 9": "64 bands (29.6%)"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "faad": {
+   "seconds": "0.116",
+   "rate": 44100
+  }
+ }
+}

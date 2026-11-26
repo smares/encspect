@@ -10,6 +10,8 @@ internal static class Fixtures
 
     public static string Aac(string name) => Path.Combine(Directory, "aac", name);
 
+    public static string OptimFrog(string name) => Path.Combine(Directory, "optimfrog", name);
+
     public static string Ac3(string name) => Path.Combine(Directory, "ac3", name);
 
     public static string Dts(string name) => Path.Combine(Directory, "dts", name);

@@ -13,6 +13,7 @@ Usage: python3 scripts/fixtures/check_sources.py [--list | --only FILE]
   --only FILE  checks only the entries in FILE, in that form (the pull request check passes the ones it adds or changes)
 """
 
+import id3_specs
 import json
 import pathlib
 import sys
@@ -21,6 +22,7 @@ import time
 
 import a52_trace_tool
 import alac_tool
+import libxaac_tool
 import aotuv_tool
 import old_mkvmerge_tool
 import asf_specs
@@ -155,6 +157,7 @@ def sources():
     for name, digest, addresses in matroska_specs.SPECS:
         yield name, digest, addresses
     yield qtff_specs.NAME, qtff_specs.SHA256, qtff_specs.ADDRESSES
+    yield from id3_specs.SPECS
     yield dts_specs.NAME, dts_specs.SHA256, dts_specs.ADDRESSES
     yield libdca_source.ARCHIVE, libdca_source.SHA256, libdca_source.ADDRESSES
     yield from gpac_tool.sources()
@@ -184,6 +187,7 @@ def entries():
     for tag, commit in xiph_tool.TAGS.values():
         yield "tag", tag, f"commit:{commit}", f"{xiph_tool.REPOSITORY} refs/tags/{tag}"
     yield "commit", alac_tool.NAME, f"commit:{alac_tool.COMMIT}", f"{alac_tool.REPOSITORY} {alac_tool.COMMIT}"
+    yield "commit", libxaac_tool.NAME, f"commit:{libxaac_tool.COMMIT}", f"{libxaac_tool.REPOSITORY} {libxaac_tool.COMMIT}"
     yield "commit", helix_tool.A1_NAME, f"commit:{helix_tool.A1_COMMIT}", f"{helix_tool.A1_REPOSITORY} {helix_tool.A1_COMMIT}"
     yield "commit", lossywav_tool.NAME, f"commit:{lossywav_tool.COMMIT}", f"{lossywav_tool.REPOSITORY} {lossywav_tool.COMMIT}"
 
@@ -328,6 +332,13 @@ def main():
     if wanted_entry(alac_tool.NAME, f"commit:{alac_tool.COMMIT}", alac_address):
         checked += 1
         for problem in alac_tool.commit_problems({alac_address}):
+            problems += 1
+            print(problem)
+    # Ittiam's libxaac, which the AAC decoder follows, is pinned by one commit as well.
+    libxaac_address = f"{libxaac_tool.REPOSITORY} {libxaac_tool.COMMIT}"
+    if wanted_entry(libxaac_tool.NAME, f"commit:{libxaac_tool.COMMIT}", libxaac_address):
+        checked += 1
+        for problem in libxaac_tool.commit_problems({libxaac_address}):
             problems += 1
             print(problem)
     # lossyWAV for POSIX is pinned the same way; the check only fetches the commit, nothing of it is read.

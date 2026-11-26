@@ -27,6 +27,7 @@ internal sealed partial class BlockReader
     private readonly Ics[] _ics = [new(), new()];
     private readonly bool[] _midSide = new bool[MaxGroups * MaxBands];
 
+    private RecordStore? _store;
     private bool _nodes;
     private UnitBytes _where;
     private int _anchor;
@@ -39,6 +40,7 @@ internal sealed partial class BlockReader
     private bool _hasSbr;
     private bool _hasSbrEvidence;
     private bool _hasPs;
+    private bool _hasCoupling;
 
     public BlockReader(StreamSetup setup, CodingTally? tally, CodingRecorder? recorder = null)
     {
@@ -58,8 +60,11 @@ internal sealed partial class BlockReader
 
     // Reads the block in data from bit start, within limit, counting its coding; blockIndex is the
     // access unit's index in the stream. where places nodes the soft findings point to.
-    public BlockResult Read(ReadOnlySpan<byte> data, int start, int limit, int blockIndex, UnitBytes where)
+    // With store, the block's values are stored in it as well (BlockRecord): the walk then decodes the spectral values, which it otherwise only steps over.
+    public BlockResult Read(ReadOnlySpan<byte> data, int start, int limit, int blockIndex, UnitBytes where, RecordStore? store = null)
     {
+        _store = store;
+        store?.Reset();
         _nodes = false;
         _where = where;
         _block = blockIndex;
@@ -70,6 +75,7 @@ internal sealed partial class BlockReader
     // The block's nodes, read from its bytes; error is what stopped the reading, with its node.
     public List<Node> Nodes(ReadOnlySpan<byte> data, int start, int limit, UnitBytes where, out BlockError? error)
     {
+        _store = null;
         _nodes = true;
         _where = where;
         var bits = new AacBits(data, start, limit);
@@ -82,6 +88,7 @@ internal sealed partial class BlockReader
     // The block's nodes, read again from what the store kept of it; where is the block's bytes.
     public List<Node> Nodes(UnitStore.Entry entry, UnitBytes where)
     {
+        _store = null;
         _nodes = true;
         _where = where;
         var root = new Node("Scratch", 0, 0);
@@ -104,6 +111,7 @@ internal sealed partial class BlockReader
         _hasSbr = false;
         _hasSbrEvidence = false;
         _hasPs = false;
+        _hasCoupling = false;
         int sce = 0;
         int cpe = 0;
         int lfe = 0;
@@ -219,6 +227,11 @@ internal sealed partial class BlockReader
             }
         }
 
+        if (_store is not null)
+        {
+            _store.Flags = (_hasSbr ? BlockRecord.BlockHasSbr : 0) | (_hasPs ? BlockRecord.BlockHasPs : 0) | (_hasCoupling ? BlockRecord.BlockHasCoupling : 0);
+        }
+
         return new BlockResult(true, bits.Original, Packed(), _hasSbr, _hasPs, null, _hasSbrEvidence);
     }
 
@@ -248,6 +261,7 @@ internal sealed partial class BlockReader
             Int(n, "Element Instance Tag", start + 3, start + 7, tag, Explain.ElementInstanceTag);
             _lastChannelElement = id;
             _lastChannelTag = tag;
+            _ics[0].Slot = _store?.Begin(id == 0 ? BlockRecord.KindSingle : BlockRecord.KindLfe, tag) ?? -1;
             ChannelStream(ref bits, n, _ics[0], false, 0, "Channel", start + 7);
             _elements.Add(new ElementSpan(id, start, bits.Original, -1));
             if (parent is not null)
@@ -286,10 +300,13 @@ internal sealed partial class BlockReader
             Ics first = _ics[0];
             Ics second = _ics[1];
             second.Ltp = false;
+            first.Slot = _store?.Begin(BlockRecord.KindPairFirst, tag) ?? -1;
+            second.Slot = _store?.Begin(BlockRecord.KindPairSecond, tag) ?? -1;
             if (common)
             {
                 IcsInfo(ref bits, n, first, true);
                 second.CopyWindow(first);
+                StoreWindow(second);
                 int maskStart = bits.Original;
                 mask = (int)bits.Read(2);
                 Field(n, "Mid/Side Mask Present", maskStart, maskStart + 2, MaskText(mask), Explain.MsMaskPresent, Topics.MidSide);
@@ -318,6 +335,7 @@ internal sealed partial class BlockReader
                 }
 
                 msEnd = bits.Original;
+                StoreMidSide(first, second, mask);
                 if (n is not null && mask == 1)
                 {
                     n.Add(_where.Bits("Mid/Side Bands", msStart, msEnd, BandList(first, (g, sfb) => _midSide[(g * MaxBands) + sfb]), Explain.MidSideBands, Topics.MidSide));
@@ -430,6 +448,8 @@ internal sealed partial class BlockReader
         {
             gain = (int)bits.Read(8);
             Int(n, "Global Gain", start, start + 8, gain, Explain.GlobalGain);
+            Put(ics, BlockRecord.GlobalGain, gain);
+            Put(ics, BlockRecord.Flags, common ? BlockRecord.FlagCommonWindow : 0);
             if (!common)
             {
                 IcsInfo(ref bits, n, ics, false);
@@ -445,6 +465,7 @@ internal sealed partial class BlockReader
             int flagStart = bits.Original;
             bool pulse = bits.ReadBit();
             Field(n, "HasPulseData", flagStart, flagStart + 1, NodeValue.Boolean(pulse), Explain.HasPulseData, Topics.PulseData);
+            Or(ics, BlockRecord.Flags, pulse ? BlockRecord.FlagPulse : 0);
             if (pulse)
             {
                 PulseData(ref bits, n, ics, flagStart);
@@ -453,6 +474,7 @@ internal sealed partial class BlockReader
             flagStart = bits.Original;
             bool tns = bits.ReadBit();
             Field(n, "HasTnsData", flagStart, flagStart + 1, NodeValue.Boolean(tns), Explain.HasTnsData, Topics.Tns);
+            Or(ics, BlockRecord.Flags, tns ? BlockRecord.FlagTns : 0);
             int filters = 0;
             if (tns)
             {
@@ -610,6 +632,7 @@ internal sealed partial class BlockReader
                 }
             }
 
+            StoreWindow(ics);
             if (parent is not null)
             {
                 string summary = $"{WindowSequenceName(ics.WindowSequence)}, {(ics.WindowShape == 0 ? "sine" : "KBD")}, max_sfb {ics.MaxSfb}"
@@ -767,6 +790,7 @@ internal sealed partial class BlockReader
 
             ics.SectionStart = start;
             ics.SectionEnd = bits.Original;
+            StoreCodebooks(ics);
         }
         catch (Exception e) when (n is not null && e is BlockError or BlockOverrun)
         {
@@ -791,6 +815,10 @@ internal sealed partial class BlockReader
             int scalefactor = gain;
             bool firstNoise = true;
             bool outOfRange = false;
+            Span<int> stored = _store is not null && ics.Slot >= 0 ? _store.At(ics.Slot).Slice(BlockRecord.ScaleFactors, 512) : default;
+            // The noise energy and the intensity position are coded as differences of their own (ISO/IEC 14496-3 4.6.2 and 4.6.3, as libxaac's ixheaacd_read_scale_factor_data takes them).
+            int noise = gain - 90;
+            int position = 0;
             for (int g = 0; g < ics.Groups; g++)
             {
                 for (int sfb = 0; sfb < ics.MaxSfb; sfb++)
@@ -804,7 +832,11 @@ internal sealed partial class BlockReader
                     if (book == 13 && firstNoise)
                     {
                         firstNoise = false;
-                        bits.Skip(9);
+                        noise += (int)bits.Read(9) - 256;
+                        if (!stored.IsEmpty)
+                        {
+                            stored[(g * MaxBands) + sfb] = noise;
+                        }
                     }
                     else
                     {
@@ -813,6 +845,23 @@ internal sealed partial class BlockReader
                         {
                             scalefactor += difference;
                             outOfRange |= scalefactor is < 0 or > 255;
+                            if (!stored.IsEmpty)
+                            {
+                                stored[(g * MaxBands) + sfb] = scalefactor;
+                            }
+                        }
+                        else if (!stored.IsEmpty)
+                        {
+                            if (book == 13)
+                            {
+                                noise += difference;
+                                stored[(g * MaxBands) + sfb] = noise;
+                            }
+                            else
+                            {
+                                position += difference;
+                                stored[(g * MaxBands) + sfb] = position;
+                            }
                         }
                     }
                 }
@@ -849,6 +898,8 @@ internal sealed partial class BlockReader
         Int(n, "Pulses", start, start + 2, count, Explain.PulseCount);
         int startBand = (int)bits.Read(6);
         Int(n, "Pulse Start SFB", start + 2, start + 8, startBand, Explain.PulseStartSfb);
+        Put(ics, BlockRecord.PulseCount, count);
+        Put(ics, BlockRecord.PulseStart, startBand);
         int line = startBand < ics.Offsets.Length ? ics.Offsets[startBand] : int.MaxValue;
         bool invalid = startBand >= ics.Bands;
         int end = ics.Offsets[Math.Min(ics.Bands, ics.Offsets.Length - 1)];
@@ -857,6 +908,8 @@ internal sealed partial class BlockReader
             int at = bits.Original;
             int offset = (int)bits.Read(5);
             int amplitude = (int)bits.Read(4);
+            Put(ics, BlockRecord.Pulses + (2 * i), offset);
+            Put(ics, BlockRecord.Pulses + (2 * i) + 1, amplitude);
             line = line == int.MaxValue ? line : line + offset;
             invalid |= line >= end;
             Field(n, "Pulse", at, at + 9, n is null ? null : $"offset {offset}, amplitude {amplitude}", Explain.Pulse);
@@ -921,8 +974,20 @@ internal sealed partial class BlockReader
                     Int(filter, "Coefficient Compression", at + 1, at + 2, compress, Explain.TnsCompression);
                     int coefficientBits = 3 + resolution - compress;
                     int coefficientsStart = bits.Original;
-                    bits.Skip(order * coefficientBits);
+                    if (_store is not null && ics.Slot >= 0)
+                    {
+                        StoreFilter(ref bits, ics, w, length, order, downward, resolution, compress, coefficientBits);
+                    }
+                    else
+                    {
+                        bits.Skip(order * coefficientBits);
+                    }
                     Field(filter, "Coefficients", coefficientsStart, bits.Original, n is null ? null : $"{order} of {Counts.Of(coefficientBits, "bit", "bits")}", Explain.TnsCoefficients);
+                }
+
+                if (order == 0 && _store is not null && ics.Slot >= 0)
+                {
+                    StoreFilter(ref bits, ics, w, length, 0, false, resolution, 0, 0);
                 }
 
                 total++;
@@ -997,6 +1062,12 @@ internal sealed partial class BlockReader
         {
             length = Cut(ref bits, CutKind.Spectral);
         }
+        else if (_store is not null && ics.Slot >= 0)
+        {
+            SpectralValues(ref bits, ics);
+            length = bits.Original - start;
+            _cuts.Add(new BlockCut(CutKind.Spectral, start, length, -1));
+        }
         else
         {
             bool eight = ics.WindowSequence == 2;
@@ -1063,6 +1134,223 @@ internal sealed partial class BlockReader
         parent?.Add(_where.Bits("Spectral Data", start, start + length, NodeValue.Integer(length, "bits"), Explain.SpectralData, Topics.Codebooks));
     }
 
+    // The same walk as the one above, reading the values: per band of a codebook from 1 to 11 the symbol's values (the index in the codebook's table, split by the
+    // codebook's range as ISO/IEC 14496-3 4.6.3.3 lays them out), then the sign bits, then the escape sequences. The values go into the record in the order they are coded;
+    // the lines of the other bands stay zero.
+    private void SpectralValues(ref AacBits bits, Ics ics)
+    {
+        Span<int> record = _store!.At(ics.Slot);
+        Span<int> spectrum = record.Slice(BlockRecord.Spectrum, 1024);
+        Span<int> values = stackalloc int[4];
+        bool eight = ics.WindowSequence == 2;
+        int position = 0;
+        for (int g = 0; g < ics.Groups; g++)
+        {
+            int windows = eight ? ics.GroupLengths[g] : 1;
+            for (int sfb = 0; sfb < ics.MaxSfb; sfb++)
+            {
+                int book = ics.Codebooks[(g * MaxBands) + sfb];
+                int lines = (ics.Offsets[sfb + 1] - ics.Offsets[sfb]) * windows;
+                if (book is 0 or > 11)
+                {
+                    position += lines;
+                    continue;
+                }
+
+                int dimension = Codebooks.Dimension(book);
+                Huffman huffman = Codebooks.Spectral[book];
+                for (int i = 0; i < lines / dimension; i++)
+                {
+                    bits.Check();
+                    int symbol = huffman.Decode(ref bits);
+                    switch (book)
+                    {
+                        case <= 2:
+                            values[0] = (symbol / 27) - 1;
+                            values[1] = ((symbol / 9) % 3) - 1;
+                            values[2] = ((symbol / 3) % 3) - 1;
+                            values[3] = (symbol % 3) - 1;
+                            break;
+                        case <= 4:
+                            values[0] = symbol / 27;
+                            values[1] = (symbol / 9) % 3;
+                            values[2] = (symbol / 3) % 3;
+                            values[3] = symbol % 3;
+                            break;
+                        case <= 6:
+                            values[0] = (symbol / 9) - 4;
+                            values[1] = (symbol % 9) - 4;
+                            break;
+                        case <= 8:
+                            values[0] = symbol / 8;
+                            values[1] = symbol % 8;
+                            break;
+                        case <= 10:
+                            values[0] = symbol / 13;
+                            values[1] = symbol % 13;
+                            break;
+                        default:
+                            values[0] = symbol / 17;
+                            values[1] = symbol % 17;
+                            break;
+                    }
+
+                    if (book is not (1 or 2 or 5 or 6))
+                    {
+                        for (int k = 0; k < dimension; k++)
+                        {
+                            if (values[k] != 0 && bits.ReadBit())
+                            {
+                                values[k] = -values[k];
+                            }
+                        }
+                    }
+
+                    if (book == 11)
+                    {
+                        for (int k = 0; k < 2; k++)
+                        {
+                            if (Math.Abs(values[k]) == 16)
+                            {
+                                int escape = EscapeValue(ref bits);
+                                values[k] = values[k] < 0 ? -escape : escape;
+                            }
+                        }
+                    }
+
+                    for (int k = 0; k < dimension; k++)
+                    {
+                        spectrum[position++] = values[k];
+                    }
+                }
+
+                bits.Check();
+            }
+        }
+    }
+
+    // escape_prefix and escape_word (4.6.3.3): the value is 2^N plus the N-bit word, N being 4 plus the ones before the zero.
+    private static int EscapeValue(ref AacBits bits)
+    {
+        int ones = 0;
+        while (bits.ReadBit())
+        {
+            if (++ones > 8)
+            {
+                throw new BlockError("aac.escape-too-long", "holds an escape sequence of more than 8 leading ones, for a value above 8191", null);
+            }
+        }
+
+        return (1 << (ones + 4)) + (int)bits.Read(ones + 4);
+    }
+
+    private void Put(Ics ics, int index, int value)
+    {
+        if (_store is not null && ics.Slot >= 0)
+        {
+            _store.At(ics.Slot)[index] = value;
+        }
+    }
+
+    private void Or(Ics ics, int index, int value)
+    {
+        if (_store is not null && ics.Slot >= 0)
+        {
+            _store.At(ics.Slot)[index] |= value;
+        }
+    }
+
+    private void StoreWindow(Ics ics)
+    {
+        if (_store is null || ics.Slot < 0)
+        {
+            return;
+        }
+
+        Span<int> record = _store.At(ics.Slot);
+        record[BlockRecord.WindowSequence] = ics.WindowSequence;
+        record[BlockRecord.WindowShape] = ics.WindowShape;
+        record[BlockRecord.MaxSfb] = ics.MaxSfb;
+        record[BlockRecord.Groups] = ics.Groups;
+        int lengths = 0;
+        for (int g = 0; g < ics.Groups; g++)
+        {
+            lengths |= ics.GroupLengths[g] << (4 * g);
+        }
+
+        record[BlockRecord.GroupLengths] = lengths;
+    }
+
+    private void StoreCodebooks(Ics ics)
+    {
+        if (_store is null || ics.Slot < 0)
+        {
+            return;
+        }
+
+        Span<int> codebooks = _store.At(ics.Slot).Slice(BlockRecord.Codebooks, 512);
+        for (int g = 0; g < ics.Groups; g++)
+        {
+            for (int sfb = 0; sfb < ics.MaxSfb; sfb++)
+            {
+                codebooks[(g * MaxBands) + sfb] = ics.Codebooks[(g * MaxBands) + sfb];
+            }
+        }
+    }
+
+    // The pair's mid/side mask and flags: the flags go with the first channel's slot, the mask with both.
+    private void StoreMidSide(Ics first, Ics second, int mask)
+    {
+        if (_store is null)
+        {
+            return;
+        }
+
+        Put(first, BlockRecord.MsMask, mask);
+        Put(second, BlockRecord.MsMask, mask);
+        if (first.Slot < 0 || mask is 0 or 3)
+        {
+            return;
+        }
+
+        Span<int> flags = _store.At(first.Slot).Slice(BlockRecord.MidSide, 512);
+        for (int g = 0; g < first.Groups; g++)
+        {
+            for (int sfb = 0; sfb < first.MaxSfb; sfb++)
+            {
+                flags[(g * MaxBands) + sfb] = _midSide[(g * MaxBands) + sfb] ? 1 : 0;
+            }
+        }
+    }
+
+    // One TNS filter (4.4.2.11): its coefficients are read as coded, up to the 20 a slot holds; the decoder takes the filter's range from the length and the ones before it.
+    private void StoreFilter(ref AacBits bits, Ics ics, int window, int length, int order, bool downward, int resolution, int compress, int coefficientBits)
+    {
+        Span<int> record = _store!.At(ics.Slot);
+        int count = record[BlockRecord.TnsFilters];
+        for (int i = 0; i < order; i++)
+        {
+            int value = (int)bits.Read(coefficientBits);
+            if (count < BlockRecord.TnsMaxFilters && i < BlockRecord.TnsMaxCoefficients)
+            {
+                record[BlockRecord.Tns + (count * BlockRecord.TnsFilterInts) + 6 + i] = value;
+            }
+        }
+
+        if (count < BlockRecord.TnsMaxFilters)
+        {
+            int at = BlockRecord.Tns + (count * BlockRecord.TnsFilterInts);
+            record[at] = window;
+            record[at + 1] = length;
+            record[at + 2] = order;
+            record[at + 3] = downward ? 1 : 0;
+            record[at + 4] = 3 + resolution;
+            record[at + 5] = compress;
+        }
+
+        record[BlockRecord.TnsFilters] = count + 1;
+    }
+
     private void Escape(ref AacBits bits)
     {
         int ones = 0;
@@ -1085,6 +1373,9 @@ internal sealed partial class BlockReader
 
     private sealed class Ics
     {
+        // The slot of the block's record this stream stores into, or -1.
+        public int Slot { get; set; } = -1;
+
         public int WindowSequence { get; set; }
 
         public int WindowShape { get; set; }

@@ -32,6 +32,31 @@ public class ReportWriterTests
     }
 
     [Fact]
+    public void A_node_is_written_alone_in_the_reports_form()
+    {
+        Report report = CreateReport();
+        Node header = report.Root.Children[0];
+        header.Add("Size", 0, 2, "7");
+        var writer = new StringWriter();
+
+        ReportTextWriter.WriteNode(report, header, writer, showOffsets: true, ReportFilter.All);
+
+        Assert.Equal("  Header [0x0, 4 bytes]" + Environment.NewLine + "    Size: 7 [0x0, 2 bytes]" + Environment.NewLine, writer.ToString());
+        var plain = new StringWriter();
+        ReportTextWriter.WriteNode(report, header, plain, showOffsets: false, ReportFilter.All);
+        Assert.Equal("  Header" + Environment.NewLine + "    Size: 7" + Environment.NewLine, plain.ToString());
+    }
+
+    [Fact]
+    public void A_finding_is_described_as_its_line_in_the_report()
+    {
+        Finding finding = CreateReport().Findings[0];
+
+        Assert.Equal("[Warning] test.code: Something odd [0x0, 4 bytes]", ReportTextWriter.Describe(finding, showOffsets: true));
+        Assert.Equal("[Warning] test.code: Something odd", ReportTextWriter.Describe(finding, showOffsets: false));
+    }
+
+    [Fact]
     public void TextOutputLocatesFindingsWithOffsets()
     {
         var writer = new StringWriter();

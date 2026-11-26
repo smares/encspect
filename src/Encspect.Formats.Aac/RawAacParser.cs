@@ -80,7 +80,7 @@ public sealed class RawAacParser : IFormatParser
             return;
         }
 
-        var state = new State(new BlockCache(reader), context.CancellationToken);
+        var state = new State(new BlockCache(reader), context.CancellationToken, context);
         long position = reader.Start;
         foreach (Node? tag in (embedded ?? []).OrderBy(t => t.Offset).Append<Node?>(null))
         {
@@ -289,6 +289,11 @@ public sealed class RawAacParser : IFormatParser
         {
             state.Findings.AddNow(Severity.Warning, "aac.sync-lost", $"ADTS sync is lost for {Counts.Of(length, "byte", "bytes")} at 0x{start:X}.", node);
         }
+
+        if (!leading && state.Logs.Count > 0)
+        {
+            state.Logs[^1].Log.Feed?.Gap();
+        }
     }
 
     private static void AddFrame(State state, Region region, long position, long end, AdtsHeader header, byte[] buffer, bool truncated = false, bool cut = false)
@@ -331,7 +336,7 @@ public sealed class RawAacParser : IFormatParser
             return;
         }
 
-        FrameDetails details = Analyze(bytes, position, header, length < header.FrameLength || cut, log, () => node, state.Findings);
+        FrameDetails details = Analyze(bytes, buffer.AsMemory(0, length), position, header, length < header.FrameLength || cut, log, () => node, state.Findings);
         log.EndUnit();
         if (details.CrcState == CrcState.Mismatch)
         {
@@ -386,12 +391,18 @@ public sealed class RawAacParser : IFormatParser
     // elements. A block that cannot be read to its end leaves its CRC unverified. Blocks of an
     // unprotected frame lie one after another; a damaged or cut frame's blocks are read without
     // reporting what breaks in them, which the frame's own finding covers.
-    private static FrameDetails Analyze(ReadOnlySpan<byte> frame, long offset, AdtsHeader header, bool damaged, BlockLog log, Func<Node> frameNode, FindingCollector findings)
+    private static FrameDetails Analyze(ReadOnlySpan<byte> frame, ReadOnlyMemory<byte> memory, long offset, AdtsHeader header, bool damaged, BlockLog log, Func<Node> frameNode, FindingCollector findings)
     {
+        DecodeFeed? feed = log.Feed;
         int headerLength = header.HeaderLength;
         int blocks = header.RawDataBlocks;
         if (frame.Length < headerLength)
         {
+            for (int i = 0; i < blocks; i++)
+            {
+                feed?.Lost(new MappedBytes(ReadOnlyMemory<byte>.Empty, offset), "Frame", frameNode());
+            }
+
             return new FrameDetails([new Block(headerLength, 0, -1, -1, -1, CrcState.None)], [], -1, CrcState.None, false, null, -1, blocks);
         }
 
@@ -428,6 +439,7 @@ public sealed class RawAacParser : IFormatParser
 
         var result = new List<Block>(blocks);
         var reads = new List<(BlockResult Read, int Index)>(blocks);
+        MappedBytes? deferred = null;
         CrcState overall = CrcState.None;
         int next = headerLength;
         bool readable = true;
@@ -465,9 +477,10 @@ public sealed class RawAacParser : IFormatParser
             ReadOnlySpan<byte> data = frame[start..end];
             var where = new UnitBytes(offset + start, end - start, null);
             int logIndex = log.Count;
-            (long skeleton, BlockResult read) = log.Read(data, 0, data.Length * 8, where, frameNode, report: !damaged);
+            (long skeleton, BlockResult read) = log.Read(data, 0, data.Length * 8, where, frameNode, report: !damaged, decode: !damaged);
             reads.Add((read, logIndex));
             readable = read.Ok;
+            var blockBytes = feed is null ? null : new MappedBytes(memory.Slice(start, end - start), offset + start);
             if (read.Ok && (separate || i == blocks - 1) && read.End < data.Length * 8 && !damaged)
             {
                 Node trailing = TrailingNode(where, read.End, data.Length);
@@ -482,6 +495,22 @@ public sealed class RawAacParser : IFormatParser
             {
                 var block = new Crc16();
                 state = Verdict(read, data, ref block, blockCrc, log);
+            }
+
+            if (feed is not null)
+            {
+                if (damaged || !read.Ok)
+                {
+                    feed.Lost(blockBytes!, "Frame", frameNode());
+                }
+                else if (separate || blocks > 1 || !header.IsProtected)
+                {
+                    feed.Decode(blockBytes!, "Frame", frameNode(), state == CrcState.Mismatch);
+                }
+                else
+                {
+                    deferred = blockBytes;
+                }
             }
 
             // The last block of an unprotected frame reaches the frame's end, so bytes after its END element lie inside it.
@@ -531,6 +560,20 @@ public sealed class RawAacParser : IFormatParser
             {
                 crc16.AddElements(frame[headerLength..], log.LastElements);
                 overall = crc16.Value == crc ? CrcState.Verified : CrcState.Mismatch;
+            }
+        }
+
+        if (feed is not null)
+        {
+            // A single raw data block of a protected frame waits for the verdict of the frame's CRC; the blocks a break or the end of the data kept the reading from reaching are lost.
+            if (deferred is not null)
+            {
+                feed.Decode(deferred, "Frame", frameNode(), overall == CrcState.Mismatch);
+            }
+
+            for (int i = reads.Count; i < (held >= 0 ? held : blocks); i++)
+            {
+                feed.Lost(new MappedBytes(ReadOnlyMemory<byte>.Empty, offset), "Frame", frameNode());
             }
         }
 
@@ -883,6 +926,7 @@ public sealed class RawAacParser : IFormatParser
         long vbr = 0;
         long frames = 0;
         long appleHeaders = 0;
+        long crcsStored = 0;
         for (int i = start; i < end; i++)
         {
             if (i % 4096 == 0)
@@ -907,6 +951,8 @@ public sealed class RawAacParser : IFormatParser
             {
                 figures.AddChecksum(frame.CrcState == CrcState.Verified);
             }
+
+            crcsStored += frame.Crc >= 0 && frame.CrcState != CrcState.OutsideStreams ? 1 : 0;
 
             vbr += frameHeader.IsVbr ? 1 : 0;
             appleHeaders += IsAppleHeader(frameHeader) ? 1 : 0;
@@ -999,8 +1045,18 @@ public sealed class RawAacParser : IFormatParser
             WriterConfidence = writerConfidence,
             Series = series,
             CategorySeries = categories,
+            Verification = found.Feed?.Finish(crcsStored == 0 ? [] : [new ChecksumTally
+            {
+                Name = FrameCrc,
+                Covers = ChecksumCoverage.CodedData,
+                Stored = crcsStored,
+                Checked = figures.VerifiedChecksums + figures.FailedChecksums,
+                Failed = figures.FailedChecksums,
+            }]),
         });
     }
+
+    internal const string FrameCrc = "frame CRC-16";
 
     internal enum CrcState
     {
@@ -1150,7 +1206,7 @@ public sealed class RawAacParser : IFormatParser
         }
     }
 
-    private sealed class State(BlockCache cache, CancellationToken cancellation)
+    private sealed class State(BlockCache cache, CancellationToken cancellation, AnalysisContext context)
     {
         public BlockCache Cache => cache;
 
@@ -1197,6 +1253,11 @@ public sealed class RawAacParser : IFormatParser
                 }
 
                 var log = new BlockLog(new StreamSetup(header.Config), Findings);
+                if (Regions.Count > 0 && Regions[^1].Node is { } stream)
+                {
+                    log.Feed = BlockLog.CreateFeed(context, stream, header.Config);
+                }
+
                 Logs.Add((index, header, log));
                 Records.AddUnits(index, log.Setup, log.Store);
             }

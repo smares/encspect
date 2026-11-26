@@ -70,12 +70,22 @@ internal static class Adif
         {
             long length = reader.End - dataStart;
             leading.Add(new Node("Raw Data Blocks", dataStart, length, NodeValue.Integer(length, "bytes")) { Description = Explain.AdifBlocks, Topic = Topics.RawDataBlocks });
-            context.AddStream(new StreamInfo { Nodes = [region], Codec = config.Codec, SampleRate = config.OutputSampleRate, Channels = header.Channels, ChannelMode = config.ChannelMode, ChannelLayout = config.OutputLayout, IsVbr = header.IsVbr });
+            context.AddStream(new StreamInfo
+            {
+                Nodes = [region],
+                Codec = config.Codec,
+                SampleRate = config.OutputSampleRate,
+                Channels = header.Channels,
+                ChannelMode = config.ChannelMode,
+                ChannelLayout = config.OutputLayout,
+                IsVbr = header.IsVbr,
+                Verification = BlockLog.CreateFeed(context, region, config).Finish([]),
+            });
             return;
         }
 
         var findings = new FindingCollector();
-        var log = new BlockLog(new StreamSetup(config), findings);
+        var log = new BlockLog(new StreamSetup(config), findings) { Feed = BlockLog.CreateFeed(context, region, config) };
         kept.Store = log.Store;
         kept.Setup = log.Setup;
         (string Text, int Index, long Offset)? signature = null;
@@ -192,6 +202,7 @@ internal static class Adif
             WriterConfidence = writerConfidence,
             Series = series,
             CategorySeries = categories,
+            Verification = log.Feed?.Finish([]),
         });
     }
 
@@ -251,10 +262,12 @@ internal static class Adif
             {
                 // The block that breaks reaches as far as a block can, where its finding places it.
                 blocks.Add(new Block(position, available, read.Elements, skeleton, false));
+                log.Feed?.Lost(new MappedBytes(ReadOnlyMemory<byte>.Empty, position), "Raw Data Block", null);
                 return position + available;
             }
 
             int length = (read.End + 7) / 8;
+            log.Feed?.Decode(new MappedBytes(window.AsMemory(at, length), position), "Raw Data Block", null, false);
             blocks.Add(new Block(position, length, read.Elements, skeleton, true));
             if (signature is null && log.Tally.FirstText is { } text)
             {
