@@ -51,6 +51,11 @@ public partial class MainWindow : Window
     public MainWindow(Analyzer analyzer, Settings settings, MainViewModel? model = null, SummaryCache? cache = null)
     {
         InitializeComponent();
+        if (Screens.Primary is { } screen)
+        {
+            FitToScreen(screen.WorkingArea, screen.Scaling);
+        }
+
         Icon = AppIcon.Window;
         Model = model ?? new MainViewModel(analyzer, cache: cache);
         DataContext = Model;
@@ -95,6 +100,9 @@ public partial class MainWindow : Window
             Model.Cache?.Flush();
         };
     }
+
+    // Caps the first size at the screen, which the window then opens centered on.
+    internal void FitToScreen(PixelRect workingArea, double scaling) => ScreenFit.CapSize(this, workingArea, scaling);
 
     public MainViewModel Model { get; }
 

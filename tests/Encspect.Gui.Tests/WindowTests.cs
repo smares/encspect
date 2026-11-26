@@ -248,6 +248,70 @@ public sealed class WindowTests : IDisposable
         main.Close();
     }
 
+    // A 1,366 by 768 screen at 100 % and at 125 %, the lead's laptop: the 1,120 by 780 window does not fit.
+    [AvaloniaTheory]
+    [InlineData(1.0)]
+    [InlineData(1.25)]
+    public void A_detail_window_fits_a_small_screen_with_its_title_bar_on_it(double scaling)
+    {
+        var area = new PixelRect(0, 0, 1366, 768);
+        string settingsPath = _folder["settings/settings.json"];
+        var settings = Settings.Load(settingsPath);
+        MainWindow main = OpenMain(settings);
+        main.DetailWindows.ScreenOverride = (area, scaling);
+
+        // Opened for the first time, centered over a main window that is itself too big.
+        main.Position = new PixelPoint(-200, -100);
+        DetailWindow first = main.DetailWindows.Open(main.Model.Rows[0]);
+        AssertFits(first, area, scaling);
+        first.Close();
+
+        // A saved placement that is too big, or that put the title bar above the top edge.
+        settings.DetailWindow = new WindowPlacement(100, -60, 1120, 780, false);
+        DetailWindow saved = main.DetailWindows.Open(main.Model.Rows[1]);
+        AssertFits(saved, area, scaling);
+        saved.Close();
+
+        DetailWindow another = main.DetailWindows.OpenNew(main.Model.Rows[2]);
+        AssertFits(another, area, scaling);
+        main.Close();
+    }
+
+    [Theory]
+    [InlineData(1.0)]
+    [InlineData(1.25)]
+    public void Screen_fit_caps_the_size_and_keeps_the_title_bar_on_the_area(double scaling)
+    {
+        var area = new PixelRect(0, 0, 1366, 768);
+        Size capped = ScreenFit.Cap(new Size(1400, 800), area, scaling);
+        Assert.True(capped.Width * scaling <= 1366);
+        Assert.True((capped.Height + ScreenFit.Chrome) * scaling <= 768 + 0.001);
+
+        PixelPoint moved = ScreenFit.Clamp(new PixelPoint(-50, -300), capped, area, scaling);
+        Assert.Equal(new PixelPoint(0, 0), moved);
+        PixelPoint low = ScreenFit.Clamp(new PixelPoint(5000, 5000), capped, area, scaling);
+        Assert.True(low.X >= 0 && low.Y >= 0 && low.Y + (capped.Height + ScreenFit.Chrome) * scaling <= 768 + 1);
+    }
+
+    [AvaloniaFact]
+    public void The_main_window_first_size_is_capped_at_the_screen()
+    {
+        MainWindow main = OpenMain();
+        main.FitToScreen(new PixelRect(0, 0, 1366, 768), 1.25);
+        Assert.True(main.Width * 1.25 <= 1366);
+        Assert.True(main.Height * 1.25 <= 768);
+        main.Close();
+    }
+
+    private static void AssertFits(DetailWindow window, PixelRect area, double scaling)
+    {
+        UiPump.Until(() => true);
+        Assert.True(window.Width * scaling <= area.Width, $"width {window.Width}");
+        Assert.True(window.Height * scaling <= area.Height, $"height {window.Height}");
+        Assert.True(window.Position.X >= area.X && window.Position.Y >= area.Y, $"position {window.Position}");
+        Assert.True(window.Position.Y + window.Height * scaling <= area.Bottom, $"bottom {window.Position}");
+    }
+
     [Fact]
     public void An_old_settings_file_with_a_position_still_loads()
     {
