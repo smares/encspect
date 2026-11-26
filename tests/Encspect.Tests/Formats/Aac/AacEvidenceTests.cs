@@ -4,16 +4,15 @@ using Encspect.Host;
 
 namespace Encspect.Tests.Formats.Aac;
 
-// What turns an AAC LC stream into HE-AAC (SBR data after a channel element in at least half of the blocks of intact frames), and the bound on
+// What turns an AAC LC stream into HE-AAC (SBR data after a channel element in the first block read to its end of an intact frame), and the bound on
 // the graph of bitrate over time.
 public class AacEvidenceTests
 {
     public static TheoryData<int> Seeds => new(Enumerable.Range(0, 300));
 
     // ffmpeg's AAC LC stream with forty frames of random bytes under the stream's own header after its twentieth: about one random block
-    // in fifty reads to its END element with a fill element of SBR data, and a few of those follow a channel element. A few blocks of the
-    // stream's 106 do not make it HE-AAC: SBR data has to be in at least two blocks and half of them (the fixtures sbr-in-one-block and
-    // sbr-in-three-blocks cover the rule with exact counts).
+    // in fifty reads to its END element with a fill element of SBR data, and a few of those follow a channel element. The stream's first
+    // block holds none, which decides it (the fixtures sbr-in-one-block and sbr-in-first-block-only cover the rule with exact counts).
     [Theory]
     [MemberData(nameof(Seeds))]
     public void RandomFramesInsideAnLcStreamLeaveItLc(int seed)
@@ -97,15 +96,31 @@ public class AacEvidenceTests
         Assert.Empty(RunSplitter.Pieces(5, 0));
     }
 
-    // SBR data in one block of ten does not make the stream HE-AAC.
-    [Fact]
-    public void SbrDataInAFewBlocksOnlyIsReported()
+    // SBR data in one block of ten, not the first, does not make the stream HE-AAC: the first block decides.
+    [Theory]
+    [InlineData("sbr-in-one-block.aac")]
+    [InlineData("sbr-in-three-blocks.aac")]
+    public void SbrDataAfterAFirstBlockWithoutItIsReported(string name)
     {
-        Report report = Fixtures.AnalyzeMpeg("aac/adts/sbr-in-one-block.aac");
+        Report report = Fixtures.AnalyzeMpeg("aac/adts/" + name);
 
         Assert.Equal("AAC LC", Assert.Single(report.Streams).Codec);
         Assert.Contains(report.Findings, f => f.Code == "aac.sbr-data-sparse");
         Assert.DoesNotContain(report.Findings, f => f.Code == "aac.implicit-sbr");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "aac.sbr-inconsistent");
+    }
+
+    // SBR data in the first block makes it HE-AAC, however few later blocks hold it; most blocks disagreeing is a warning.
+    [Theory]
+    [InlineData("sbr-in-first-block-only.aac")]
+    [InlineData("sbr-in-first-three-blocks.aac")]
+    public void SbrDataInTheFirstBlockDecidesTheStream(string name)
+    {
+        Report report = Fixtures.AnalyzeMpeg("aac/adts/" + name);
+
+        Assert.Equal("HE-AAC", Assert.Single(report.Streams).Codec);
+        Assert.Contains(report.Findings, f => f.Code == "aac.implicit-sbr");
+        Assert.Contains(report.Findings, f => f.Code == "aac.sbr-inconsistent" && f.Severity == Severity.Warning);
     }
 
     // The graph of bitrate over time keeps at most MaxSeconds entries whatever the sample rate; neighbors merge, and what they hold is

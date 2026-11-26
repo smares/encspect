@@ -1,0 +1,87 @@
+{
+ "description": "ADTS at 22050 Hz of ten channel pairs, the first three blocks of ten followed by an SBR payload (the first with an SBR header): the first block decides, so the stream is HE-AAC at 44100 Hz, and most blocks disagree.",
+ "length": 520,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "HE-AAC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 20480,
+   "is_vbr": true,
+   "ffprobe_profile": "LC"
+  }
+ ],
+ "units": [
+  [
+   0,
+   66
+  ],
+  [
+   66,
+   64
+  ],
+  [
+   130,
+   64
+  ],
+  [
+   194,
+   47
+  ],
+  [
+   241,
+   47
+  ],
+  [
+   288,
+   47
+  ],
+  [
+   335,
+   47
+  ],
+  [
+   382,
+   46
+  ],
+  [
+   428,
+   46
+  ],
+  [
+   474,
+   46
+  ]
+ ],
+ "fields": {
+  "ADTS/Statistics/SBR": "3 access units (30.0%)"
+ },
+ "findings": [
+  [
+   "aac.implicit-sbr",
+   "3 of 10 raw data blocks hold SBR data: the stream is HE-AAC"
+  ],
+  [
+   "aac.sbr-inconsistent",
+   "but 3 of 10 raw data blocks hold SBR data; the first block that disagrees is raw data block 4"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "ffprobe_streams": false,
+  "faad": null,
+  "skip": {
+   "faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold.",
+   "ffprobe_streams": "ffmpeg takes implicit SBR from the first block's payload.",
+   "decode": "ffmpeg prints \"No quantized data read for sbr_dequant\" for the blocks after the first."
+  }
+ }
+}

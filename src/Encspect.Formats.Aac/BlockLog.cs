@@ -39,7 +39,7 @@ internal sealed class BlockLog
     // The decoding of a stream: every AAC stream has a session, where a decoder is registered, and the decoder takes the configurations CanDecode names and refuses the others.
     public static DecodeFeed CreateFeed(AnalysisContext context, Node stream, AacConfig config, IReadOnlyList<Speaker>? layout = null, string? refusal = null) =>
         new(context, stream, new DecodeConfig(config.ObjectType, config.CoreSampleRate, StreamSetup.SampleRateIndex(config.CoreSampleRate), config.CoreFrameLength,
-            config.Sbr == true, config.Ps == true, layout ?? config.OutputLayout, refusal, config.Ps == false, IsDownsampled(config)), refusal is null && CanDecode(config), config.Channels ?? 1);
+            config.Sbr == true, config.Ps == true, layout ?? config.OutputLayout, refusal, config.Ps == false, IsDownsampled(config), config.Sbr == false), refusal is null && CanDecode(config), config.Channels ?? 1);
 
     public CodingTally Tally { get; } = new();
 
@@ -215,15 +215,12 @@ internal sealed class BlockLog
 
         if (config.IsSbrImplicit)
         {
-            string first = tally.FirstSbrEvidenceBlock > 0
-                ? $" The first is in raw data block {tally.FirstSbrEvidenceBlock + 1}, not the first, so ffmpeg's decoder, which takes implicit SBR only where it starts with the stream, plays the core alone."
-                : string.Empty;
             string codec = config.HasPs ? "HE-AAC v2" : "HE-AAC";
             string ps = config.HasPs ? $", and {tally.PsEvidenceBlocks} carry the parametric stereo extension" : string.Empty;
             findings.AddNow(Severity.Info, "aac.implicit-sbr",
                 $"{(where == "ADTS" ? "ADTS cannot signal SBR or PS explicitly" : $"{where} signals no SBR")}, but {units} hold SBR data{ps}: the stream is {codec}, signaled only implicitly, with an output rate of {config.OutputSampleRate} Hz. "
                 + (config.CoreSampleRate > 24000 ? $"faad2 doubles only a core rate of up to 24 kHz, so it plays this one at {config.CoreSampleRate} Hz. " : string.Empty)
-                + $"Decoders without SBR play the {AacTables.ObjectTypeName(config.ObjectType)} core at {config.CoreSampleRate} Hz.{first}", node);
+                + $"Decoders without SBR play the {AacTables.ObjectTypeName(config.ObjectType)} core at {config.CoreSampleRate} Hz.", node);
         }
         else if (config.IsPsImplicit)
         {
@@ -234,7 +231,7 @@ internal sealed class BlockLog
         else if (config.Sbr is null && tally.SbrEvidenceBlocks > 0)
         {
             findings.AddNow(Severity.Info, "aac.sbr-data-sparse",
-                $"{where} signals no SBR, and only {units} hold SBR data after a channel element: too few for the stream to count as HE-AAC, which takes SBR data in at least two blocks and in half of the blocks that are read to their end and not in a damaged frame. The report shows the {AacTables.ObjectTypeName(config.ObjectType)} core alone.", node);
+                $"{where} signals no SBR, and the first raw data block that is read to its end and not in a damaged frame holds none, which decides the stream as plain {AacTables.ObjectTypeName(config.ObjectType)} as players do, so the report shows the core alone; {units} hold SBR data after a channel element.", node);
         }
     }
 }

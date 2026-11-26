@@ -230,7 +230,7 @@ internal sealed partial class BlockReader
 
         if (_store is not null)
         {
-            _store.Flags = (_hasSbr ? BlockRecord.BlockHasSbr : 0) | (_hasPs ? BlockRecord.BlockHasPs : 0) | (_hasCoupling ? BlockRecord.BlockHasCoupling : 0);
+            _store.Flags = (_hasSbr ? BlockRecord.BlockHasSbr : 0) | (_hasPs ? BlockRecord.BlockHasPs : 0) | (_hasCoupling ? BlockRecord.BlockHasCoupling : 0) | (_hasSbrEvidence ? BlockRecord.BlockHasSbrEvidence : 0);
         }
 
         return new BlockResult(true, bits.Original, Packed(), _hasSbr, _hasPs, null, _hasSbrEvidence);

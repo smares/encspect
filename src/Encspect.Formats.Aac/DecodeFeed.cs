@@ -5,7 +5,7 @@ namespace Encspect.Formats.Aac;
 // What the decoder takes from the parser about a stream (DecodeSetup.Shared): the configuration the raw data blocks are read with, and the speakers of the channels where
 // the stream states them.
 internal sealed record DecodeConfig(int ObjectType, int SampleRate, int SampleRateIndex, int FrameLength, bool IsSbrSignaled, bool IsPsSignaled, IReadOnlyList<Speaker>? Layout,
-    string? Refusal = null, bool IsPsDenied = false, bool IsDownsampled = false)
+    string? Refusal = null, bool IsPsDenied = false, bool IsDownsampled = false, bool IsSbrDenied = false)
 {
     // Samples a block decodes to, per channel: SBR doubles the core's.
     public int OutputLength => IsSbrSignaled ? 2 * FrameLength : FrameLength;
@@ -32,6 +32,8 @@ internal sealed class DecodeFeed
     private bool _hasTrim;
     private readonly bool _canDecode;
     private readonly int _channels;
+    private bool _awaiting;
+    private readonly List<Pending> _undecided = [];
 
     // canDecode: the stream's configuration is one the decoder takes. Where it is not, the session starts at once and the decoder refuses it (decode.not-possible), so every
     // AAC stream has a session whose verification says what was asked for; channels is then the configuration's.
@@ -42,6 +44,7 @@ internal sealed class DecodeFeed
         _config = config;
         _canDecode = canDecode;
         _channels = channels;
+        _awaiting = canDecode && !config.IsDownsampled && ((!config.IsSbrSignaled && !config.IsSbrDenied) || (!config.IsPsSignaled && !config.IsPsDenied && channels == 1));
         if (!canDecode)
         {
             _session = Start(channels, config);
@@ -58,25 +61,48 @@ internal sealed class DecodeFeed
     }
 
     // The next block follows bytes that held no block (ADTS sync was lost).
-    public void Gap() => _followsGap = true;
+    public void Gap()
+    {
+        if (_awaiting)
+        {
+            _undecided.Add(new Pending(PendingKind.Gap, null, string.Empty, null, false, null));
+            return;
+        }
 
-    // A block that was read to its end and walked into the store. frame: its bytes; nodeName and node: where findings about it point.
-    public void Decode(MappedBytes frame, string nodeName, Node? node, bool failsChecksum)
+        _followsGap = true;
+    }
+
+    // A block that was read to its end and walked into the store. frame: its bytes; nodeName and node: where findings about it point. isEvidence: the block counts for the decision
+    // about implicit SBR and PS, as it does for the parser's tally (BlockLog.AddEvidence: not a block of a damaged frame or of one that fails its CRC); the blocks before the
+    // first one that does wait, with their values, until it is known.
+    public void Decode(MappedBytes frame, string nodeName, Node? node, bool failsChecksum, bool isEvidence = true)
     {
         if (!_canDecode)
         {
             return;
         }
 
-        if (_session is null && !_store.IsOverflow)
+        if (_awaiting)
         {
-            FindImplicitSbr();
+            if (!isEvidence)
+            {
+                _undecided.Add(new Pending(PendingKind.Block, frame, nodeName, node, failsChecksum, _store.IsOverflow ? null : Snapshot()));
+                return;
+            }
+
+            Decide(true);
         }
 
+        DecodeBlock(frame, nodeName, node, failsChecksum, null, false);
+    }
+
+    private void DecodeBlock(MappedBytes frame, string nodeName, Node? node, bool failsChecksum, int[]? replay, bool replaying)
+    {
+        bool overflow = replaying ? replay is null : _store.IsOverflow;
         long first = _next;
         _next += _config.OutputLength;
 
-        if (_session is null && _store.IsOverflow)
+        if (_session is null && overflow)
         {
             Lose(frame, nodeName, node, first);
             return;
@@ -92,18 +118,53 @@ internal sealed class DecodeFeed
         _followsGap = false;
         if (_hold > 0)
         {
-            Enqueue(unit with { Record = _store.IsOverflow ? null : Snapshot() });
+            Enqueue(unit with { Record = replaying ? replay : overflow ? null : Snapshot() });
             return;
         }
 
-        Give(unit, _store.IsOverflow ? default : _store.Seal());
+        if (replaying)
+        {
+            Give(unit, replay);
+        }
+        else
+        {
+            Give(unit, overflow ? default : _store.Seal());
+        }
+    }
+
+    // The decision is made, and the blocks that waited for it are decoded.
+    private void Decide(bool findImplicit)
+    {
+        _awaiting = false;
+        if (findImplicit && !_store.IsOverflow)
+        {
+            FindImplicitSbr();
+        }
+
+        foreach (Pending pending in _undecided)
+        {
+            switch (pending.Kind)
+            {
+                case PendingKind.Gap:
+                    Gap();
+                    break;
+                case PendingKind.Lost:
+                    Lost(pending.Frame!, pending.NodeName, pending.Node);
+                    break;
+                default:
+                    DecodeBlock(pending.Frame!, pending.NodeName, pending.Node, pending.FailsChecksum, pending.Record, true);
+                    break;
+            }
+        }
+
+        _undecided.Clear();
     }
 
     // The first block that can be read decides what the configuration left open (ffmpeg's rule: implicit signaling counts where the stream starts with it): SBR data in it makes the
     // stream HE-AAC with twice the core's rate, and the PS extension in a single channel's SBR data makes it HE-AAC v2 with two channels.
     private void FindImplicitSbr()
     {
-        bool hasSbr = _config.IsSbrSignaled || ((_store.Flags & BlockRecord.BlockHasSbr) != 0 && !_config.IsDownsampled);
+        bool hasSbr = _config.IsSbrSignaled || (!_config.IsSbrDenied && (_store.Flags & BlockRecord.BlockHasSbrEvidence) != 0);
         if (hasSbr && !_config.IsSbrSignaled)
         {
             _config = _config with { IsSbrSignaled = true };
@@ -121,6 +182,12 @@ internal sealed class DecodeFeed
     {
         if (!_canDecode)
         {
+            return;
+        }
+
+        if (_awaiting)
+        {
+            _undecided.Add(new Pending(PendingKind.Lost, frame, nodeName, node, false, null));
             return;
         }
 
@@ -142,6 +209,12 @@ internal sealed class DecodeFeed
     // The end of the stream: the blocks held back are decoded, and the session ends with what the parser compared.
     public StreamVerification? Finish(IReadOnlyList<ChecksumTally> stored)
     {
+        if (_awaiting)
+        {
+            // No block counted as evidence: the stream stays as its configuration says.
+            Decide(false);
+        }
+
         if (_session is null)
         {
             // No block could be read: the stream has its session all the same, whose blocks were all lost.
@@ -253,6 +326,10 @@ internal sealed class DecodeFeed
             Node = unit.Node,
         });
     }
+
+    private enum PendingKind { Block, Lost, Gap }
+
+    private sealed record Pending(PendingKind Kind, MappedBytes? Frame, string NodeName, Node? Node, bool FailsChecksum, int[]? Record);
 
     private sealed record Held(MappedBytes Frame, string NodeName, Node? Node, long First, bool FollowsGap, bool FailsChecksum, bool IsLost, int[]? Record);
 }

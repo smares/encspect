@@ -36,7 +36,9 @@ public class AacDecoderFixtureTests
 
     private static bool IsMedia(string path) => Path.GetExtension(path) is ".aac" or ".adts" or ".mka" or ".mkv" or ".webm" or ".m4a" or ".mp4" or ".mp3";
 
-    private static bool HasDecodedAac(string name) => Fixtures.AnalyzeMpeg(name).Streams.Any(s => s.Codec == "AAC LC");
+    private static bool HasDecodedAac(string name) => Fixtures.AnalyzeMpeg(name).Streams.Any(s => IsAac(s.Codec));
+
+    private static bool IsAac(string? codec) => codec == "AAC LC" || codec?.StartsWith("HE-AAC", StringComparison.Ordinal) == true;
 
     private static (Report Report, List<PcmHashSink> Sinks) Decode(string name)
     {
@@ -94,7 +96,7 @@ public class AacDecoderFixtureTests
         (Report report, List<PcmHashSink> sinks) = Decode(name);
 
         Assert.DoesNotContain(report.Findings, f => f.Code is "decode.failed" or "parse.failed" or "decode.frame-too-large");
-        foreach (StreamInfo stream in report.Streams.Where(s => s.Codec == "AAC LC" && s.Verification is not null))
+        foreach (StreamInfo stream in report.Streams.Where(s => IsAac(s.Codec) && s.Verification is not null))
         {
             StreamVerification verification = stream.Verification!;
             // A stream that signals SBR only in its blocks (an LC stream with SBR payloads) is HE-AAC to the decoder, which does not decode it yet.
@@ -105,6 +107,23 @@ public class AacDecoderFixtureTests
         }
 
         Assert.Equal(report.Streams.Sum(s => s.Verification?.DecodedSamples ?? 0), sinks.Sum(s => s.Samples));
+    }
+
+    // The decoder decides implicit SBR on the blocks the report counts: the output has the samples the report states, the first block that counts deciding (a first frame
+    // that fails its CRC is no evidence).
+    [Theory]
+    [InlineData("aac/adts/sbr-in-first-block-only.aac", 10 * 2048)]
+    [InlineData("aac/adts/sbr-after-first-frame-failing-crc.aac", 10 * 2048)]
+    [InlineData("aac/adts/sbr-in-all-but-first-block.aac", 10 * 1024)]
+    [InlineData("aac/adts/sbr-in-frames-failing-crc.aac", 12 * 1024)]
+    public void TheDecoderDecidesOnTheBlocksTheReportCounts(string name, long samples)
+    {
+        (Report report, List<PcmHashSink> sinks) = Decode(name);
+
+        StreamInfo info = Assert.Single(report.Streams);
+        Assert.Equal(samples, info.Samples);
+        Assert.Equal(samples, info.Verification!.DecodedSamples);
+        Assert.Equal(samples, sinks.Sum(s => s.Samples));
     }
 
     [Theory]

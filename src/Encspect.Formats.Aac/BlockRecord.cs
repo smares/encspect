@@ -62,6 +62,9 @@ internal static class BlockRecord
     public const int BlockHasSbr = 1;
     public const int BlockHasCoupling = 2;
     public const int BlockHasPs = 4;
+
+    // An SBR payload after a single channel, channel pair or LFE element: the evidence that makes an unsignaled stream HE-AAC (BlockResult.HasSbrEvidence).
+    public const int BlockHasSbrEvidence = 8;
 }
 
 // The slots of the block being read, in an array of the reader's own that the block log copies into the buffers the session lends.

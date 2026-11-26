@@ -1114,19 +1114,51 @@ def sbr_evidence():
     data, rows = concat(adts_frames(blocks, rate=core, channels=2))
     out.append(("adts", "sbr-in-one-block.aac", data, manifest(
         "ADTS at 22050 Hz of ten channel pairs, the fifth followed by a readable SBR payload with an SBR header and no other holding any: "
-        "too few for the stream to be HE-AAC, so it stays AAC LC at 22050 Hz.", data, rows,
+        "the first block holds none, which decides the stream, so it stays AAC LC at 22050 Hz.", data, rows,
         [stream("AAC LC", core, 2, "Stereo", 10 * 1024)], {"ADTS/Statistics/SBR": share(1, 10, "access unit")},
-        [["aac.sbr-data-sparse", "only 1 of 10 raw data blocks hold SBR data after a channel element"]],
+        [["aac.sbr-data-sparse", "1 of 10 raw data blocks hold SBR data after a channel element"]],
         skip={**skip, "decode": "ffmpeg prints \"No quantized data read for sbr_dequant\" for the SBR payload in the middle of the stream."}, rate=core)))
-    # Three blocks of ten hold SBR data after a channel element: fewer than half, so the stream stays AAC LC.
+    # Three blocks of ten hold SBR data after a channel element, not the first, so the stream stays AAC LC.
     blocks = [pair(i, M.Element(M.FIL, payload=M.sbr_payload(counts, SBR_HEADER if i == 1 else None, pair=True)) if i in (1, 4, 7) else None) for i in range(10)]
     data, rows = concat(adts_frames(blocks, rate=core, channels=2))
     out.append(("adts", "sbr-in-three-blocks.aac", data, manifest(
         "ADTS at 22050 Hz of ten channel pairs, the second, fifth and eighth followed by an SBR payload (the first with an SBR header): three blocks "
-        "of ten, which is fewer than half of them, so the stream stays AAC LC at 22050 Hz.", data, rows,
+        "of ten, but the first block holds none, which decides the stream, so it stays AAC LC at 22050 Hz.", data, rows,
         [stream("AAC LC", core, 2, "Stereo", 10 * 1024)], {"ADTS/Statistics/SBR": share(3, 10, "access unit")},
-        [["aac.sbr-data-sparse", "only 3 of 10 raw data blocks hold SBR data after a channel element"]],
+        [["aac.sbr-data-sparse", "3 of 10 raw data blocks hold SBR data after a channel element"]],
         skip={**skip, "decode": "ffmpeg prints \"No quantized data read for sbr_dequant\" for the SBR payloads in the middle of the stream."}, rate=core)))
+    # The first block decides, as in ffmpeg: SBR data in it makes the stream HE-AAC whatever the later blocks hold (aac.sbr-inconsistent says so where most disagree).
+    ffmpeg_he = {"ffprobe_streams": "ffmpeg takes implicit SBR from the first block's payload.", "decode": "ffmpeg prints \"No quantized data read for sbr_dequant\" for the blocks after the first."}
+    for name, present, text in (
+            ("sbr-in-first-block-only.aac", (0,), "the first block of ten followed by an SBR payload with an SBR header and no other holding any"),
+            ("sbr-in-first-three-blocks.aac", (0, 1, 2), "the first three blocks of ten followed by an SBR payload (the first with an SBR header)")):
+        blocks = [pair(i, M.Element(M.FIL, payload=M.sbr_payload(counts, SBR_HEADER if i == 0 else None, pair=True)) if i in present else None) for i in range(10)]
+        data, rows = concat(adts_frames(blocks, rate=core, channels=2))
+        out.append(("adts", name, data, manifest(
+            f"ADTS at 22050 Hz of ten channel pairs, {text}: the first block decides, so the stream is HE-AAC at 44100 Hz, and most blocks disagree.",
+            data, rows, [stream("HE-AAC", 2 * core, 2, "Stereo", 10 * 2048, ffprobe_profile="LC")], {"ADTS/Statistics/SBR": share(len(present), 10, "access unit")},
+            [["aac.implicit-sbr", f"{len(present)} of 10 raw data blocks hold SBR data: the stream is HE-AAC"],
+             ["aac.sbr-inconsistent", f"but {len(present)} of 10 raw data blocks hold SBR data; the first block that disagrees is raw data block {len(present) + 1}"]],
+            skip={**skip, **ffmpeg_he}, rate=core)))
+    # Most blocks hold SBR data, but not the first: the stream stays AAC LC.
+    blocks = [pair(i, M.Element(M.FIL, payload=M.sbr_payload(counts, SBR_HEADER if i == 1 else None, pair=True)) if i > 0 else None) for i in range(10)]
+    data, rows = concat(adts_frames(blocks, rate=core, channels=2))
+    out.append(("adts", "sbr-in-all-but-first-block.aac", data, manifest(
+        "ADTS at 22050 Hz of ten channel pairs, all but the first followed by an SBR payload (the second with an SBR header): the first block decides, so the "
+        "stream stays AAC LC at 22050 Hz, and most blocks disagree.", data, rows,
+        [stream("AAC LC", core, 2, "Stereo", 10 * 1024)], {"ADTS/Statistics/SBR": share(9, 10, "access unit")},
+        [["aac.sbr-data-sparse", "9 of 10 raw data blocks hold SBR data after a channel element"],
+         ["aac.sbr-inconsistent", "but 9 of 10 raw data blocks hold SBR data; the first block that disagrees is raw data block 2"]],
+        skip={**skip, "decode": "ffmpeg prints \"No quantized data read for sbr_dequant\" for the SBR payloads after the first block."}, rate=core)))
+    # The first frame fails its CRC and holds no SBR data, and it is no evidence: the second block decides, so the stream is HE-AAC.
+    blocks = [pair(i, M.Element(M.FIL, payload=M.sbr_payload(counts, SBR_HEADER if i == 1 else None, pair=True)) if i > 0 else None) for i in range(10)]
+    data, rows = concat(adts_frames(blocks, rate=core, channels=2, protect=True, damage=[0]))
+    out.append(("adts", "sbr-after-first-frame-failing-crc.aac", data, manifest(
+        "Protected ADTS frames at 22050 Hz of ten channel pairs, the first with a wrong CRC and no SBR data and the others followed by an SBR payload: the "
+        "first frame is no evidence, so the second block decides and the stream is HE-AAC at 44100 Hz.", data, rows,
+        [stream("HE-AAC", 2 * core, 2, "Stereo", 10 * 2048, ffprobe_profile="LC")], {"ADTS/Frame/CRC/Check": "mismatch"},
+        [["aac.crc-mismatch", "1 ADTS frame fails the CRC check"], ["aac.implicit-sbr", "9 of 9 raw data blocks hold SBR data: the stream is HE-AAC"]],
+        skip={**skip, **ffmpeg_he, "ffprobe": "ffmpeg does not check ADTS CRCs, and its first block holds no SBR data.", "decode": "ffmpeg does not check ADTS CRCs, and its first block holds no SBR data."}, rate=core)))
     # SBR data after a coupling channel element: fdk-aac excludes it from the elements SBR follows, faad2 rejects it, and only ffmpeg keeps the
     # coupling element as the previous one (where a program config element gives it a channel). It counts for nothing.
     blocks = []
