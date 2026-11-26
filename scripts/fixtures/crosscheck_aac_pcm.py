@@ -83,7 +83,6 @@ NOISE = {
     "windows.aac": "codes noise substitution",
     "loud-noise-pair.aac": "codes noise substitution",
     "intensity-noise.aac": "codes noise substitution",
-    "loud-noise-pair.aac": "codes noise substitution",
     "apple-intel-passthru-m4a-from-faac-m4a.m4a": "codes noise substitution",
     "apple-intel-passthru-m4a-from-ffmpeg-adts.m4a": "codes noise substitution",
     "apple-passthru-adts-from-ffmpeg-adts.aac": "codes noise substitution",
