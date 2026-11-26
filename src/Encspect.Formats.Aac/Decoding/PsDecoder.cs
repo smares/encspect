@@ -7,13 +7,14 @@ namespace Encspect.Formats.Aac.Decoding;
 // signal is decorrelated by all-pass chains and delays, and each frame's intensity differences (IID) and coherences (ICC) mix it with the original in two-by-two matrices that are interpolated
 // between the envelope borders. The structure and the tables follow libxaac (github.com/ittiam-systems/libxaac at 2fbadd5, Apache 2.0, Copyright (C) The Android Open Source Project; the
 // notice is in THIRD-PARTY-NOTICES.md), ixheaacd_ps_dec_flt.c and ixheaacd_ps_bitdec.c, in single precision; the 34-band mode, which libxaac maps to 20 bands, is computed in 34.
-// The hybrid analysis looks 6 slots ahead, so the output is 6 slots (384 samples at the output rate) behind the input, as decoders without this delay compensation have it; no inter-channel
-// phase differences are decoded (the baseline profile skips them).
+// The hybrid analysis looks 6 slots ahead: the six slots after the frame are the low band's analysis slots the SBR buffer already holds (the standard's delay of the SBR data, as libxaac takes
+// them), so the output is not later than the input; no inter-channel phase differences are decoded (the baseline profile skips them).
 internal sealed class PsDecoder
 {
     public const int Slots = 32;
     private const int Bands = 64;
-    private const int History = 12;
+    private const int History = 6;
+    private const int LookAhead = 6;
     private const int MaxSub = 32;
     private const int Links = 3;
     private const int HighDelay = 14;
@@ -31,8 +32,8 @@ internal sealed class PsDecoder
     private static readonly float[] FineMix = BuildMix(15, PsTableData.ScaleFactorsFineFlt);
 
     // The input and the hybrid analysis: the last 12 slots of the QMF domain and this frame's.
-    private readonly float[] _extRe = new float[(History + Slots) * Bands];
-    private readonly float[] _extIm = new float[(History + Slots) * Bands];
+    private readonly float[] _extRe = new float[(History + Slots + LookAhead) * Bands];
+    private readonly float[] _extIm = new float[(History + Slots + LookAhead) * Bands];
     private readonly float[] _hybLeftRe = new float[Slots * MaxSub];
     private readonly float[] _hybLeftIm = new float[Slots * MaxSub];
     private readonly float[] _hybRightRe = new float[Slots * MaxSub];
@@ -149,10 +150,10 @@ internal sealed class PsDecoder
         Array.Clear(_serIm);
     }
 
-    // One frame: the QMF domain of the mono channel (32 slots of 64 bands) and the frame's ps_data (the stored SbrRecord.Ps values) or none, with the first band above the SBR range, whose
-    // all-pass state is cleared. The outputs are the two channels' QMF domains, 6 slots behind.
+    // One frame: the QMF domain of the mono channel (32 slots of 64 bands) and the frame's ps_data (the stored SbrRecord.Ps values) or none, the six slots of the low band that follow the frame, with the first band above the SBR range, whose
+    // all-pass state is cleared. The outputs are the two channels' QMF domains.
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public void Process(ReadOnlySpan<float> re, ReadOnlySpan<float> im, ReadOnlySpan<int> ps, int upperBand)
+    public void Process(ReadOnlySpan<float> re, ReadOnlySpan<float> im, ReadOnlySpan<float> lookAheadRe, ReadOnlySpan<float> lookAheadIm, ReadOnlySpan<int> ps, int upperBand)
     {
         FlushStates();
         bool wide = Parameters(ps);
@@ -160,6 +161,8 @@ internal sealed class PsDecoder
         Array.Copy(_extIm, Slots * Bands, _extIm, 0, History * Bands);
         re[..(Slots * Bands)].CopyTo(_extRe.AsSpan(History * Bands));
         im[..(Slots * Bands)].CopyTo(_extIm.AsSpan(History * Bands));
+        lookAheadRe[..(LookAhead * Bands)].CopyTo(_extRe.AsSpan((History + Slots) * Bands));
+        lookAheadIm[..(LookAhead * Bands)].CopyTo(_extIm.AsSpan((History + Slots) * Bands));
         for (int sb = Math.Clamp(upperBand, 0, Bands); sb < Bands; sb++)
         {
             for (int m = 0; m < Links; m++)
@@ -186,11 +189,11 @@ internal sealed class PsDecoder
         int bins = wide ? 34 : 20;
 
         HybridAnalysis(wide);
-        // The delayed QMF domain of the bands the hybrid bank leaves alone, and the hybrid bands' sum of their subbands later.
+        // The QMF domain of the bands the hybrid bank leaves alone, and the hybrid bands' sum of their subbands later.
         for (int l = 0; l < Slots; l++)
         {
-            Array.Copy(_extRe, (l + History - 6) * Bands, _leftRe, l * Bands, Bands);
-            Array.Copy(_extIm, (l + History - 6) * Bands, _leftIm, l * Bands, Bands);
+            Array.Copy(_extRe, (l + History) * Bands, _leftRe, l * Bands, Bands);
+            Array.Copy(_extIm, (l + History) * Bands, _leftIm, l * Bands, Bands);
         }
 
         if (wide != _wasWide)

@@ -215,7 +215,7 @@ internal sealed class FrameDecoder : IFrameDecoder
                 // Parametric stereo: the single channel's QMF domain becomes two, which the two syntheses turn into the output's left and right.
                 PsDecoder ps = _ps ??= new PsDecoder();
                 ReadOnlySpan<int> data = !slot.IsEmpty && slot[SbrRecord.HasPs] == 1 ? slot.Slice(SbrRecord.Ps) : default;
-                ps.Process(element.Real(0), element.Imaginary(0), data, element.K2);
+                ps.Process(element.Real(0), element.Imaginary(0), element.LookAheadReal(0), element.LookAheadImaginary(0), data, element.K2);
                 element.Synthesize(0, ps.LeftRe, ps.LeftIm, _sbrPlanar.AsSpan(0, 2 * Lines));
                 element.SynthesizeSecond(ps.RightRe, ps.RightIm, _sbrPlanar.AsSpan(2 * Lines, 2 * Lines));
                 output += 2;

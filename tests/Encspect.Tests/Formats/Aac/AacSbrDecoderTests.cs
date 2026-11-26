@@ -37,13 +37,13 @@ public class AacSbrDecoderTests
         Assert.InRange(Math.Sqrt(power), 0.5 / Math.Sqrt(2) * 0.97, 0.5 / Math.Sqrt(2) * 1.03);
     }
 
-    // Without parametric stereo data the channels are the mono channel's, 6 slots late (the hybrid analysis looks 6 slots ahead).
+    // Without parametric stereo data the channels are the mono channel's, in the same slots (the hybrid analysis looks 6 slots ahead, into the slots the SBR buffer holds).
     [Fact]
-    public void WithoutParametersBothChannelsAreTheDelayedMonoChannel()
+    public void WithoutParametersBothChannelsAreTheMonoChannel()
     {
         var ps = new PsDecoder();
         var random = new Random(7);
-        var previous = new float[6 * 64];
+        float[] ahead = new float[6 * 64];
         for (int frame = 0; frame < 4; frame++)
         {
             float[] re = new float[32 * 64];
@@ -54,24 +54,15 @@ public class AacSbrDecoderTests
                 im[i] = (float)random.NextDouble() - 0.5f;
             }
 
-            ps.Process(re, im, default, 64);
-            if (frame == 0)
-            {
-                previous = re.AsSpan(26 * 64, 6 * 64).ToArray();
-                continue;
-            }
-
+            ps.Process(re, im, ahead, ahead, default, 64);
             for (int l = 0; l < 32; l++)
             {
                 for (int band = 10; band < 64; band++)
                 {
-                    float expected = l < 6 ? previous[(l * 64) + band] : re[((l - 6) * 64) + band];
-                    Assert.Equal(expected, ps.LeftRe[(l * 64) + band], 1e-6f);
-                    Assert.Equal(expected, ps.RightRe[(l * 64) + band], 1e-6f);
+                    Assert.Equal(re[(l * 64) + band], ps.LeftRe[(l * 64) + band], 1e-6f);
+                    Assert.Equal(re[(l * 64) + band], ps.RightRe[(l * 64) + band], 1e-6f);
                 }
             }
-
-            previous = re.AsSpan(26 * 64, 6 * 64).ToArray();
         }
     }
 
@@ -98,13 +89,14 @@ public class AacSbrDecoderTests
             im[i] = (i % 5) - 2f;
         }
 
-        ps.Process(re, im, data, 64);
-        ps.Process(re, im, data, 64);
+        float[] ahead = new float[6 * 64];
+        ps.Process(re, im, ahead, ahead, data, 64);
+        ps.Process(re, im, ahead, ahead, data, 64);
 
-        // Alpha for a coherence of 1 is 0, so the matrices are diagonal: left = 1.4119827747 and right = 0.0794016272 times the delayed input.
+        // Alpha for a coherence of 1 is 0, so the matrices are diagonal: left = 1.4119827747 and right = 0.0794016272 times the input.
         for (int band = 12; band < 60; band++)
         {
-            float input = re[((20 - 6) * 64) + band];
+            float input = re[(20 * 64) + band];
             Assert.Equal(1.4119827747f * input, ps.LeftRe[(20 * 64) + band], 1e-4f);
             Assert.Equal(0.0794016272f * input, ps.RightRe[(20 * 64) + band], 1e-4f);
         }

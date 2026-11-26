@@ -49,6 +49,11 @@ internal sealed class SbrElement
 
     public ReadOnlySpan<float> Imaginary(int channel) => _im[channel];
 
+    // The six low band slots that follow the frame's (analysis slots 26 to 31 of the frame, carried to the front of the buffer): parametric stereo's hybrid analysis looks that far ahead.
+    public ReadOnlySpan<float> LookAheadReal(int channel) => _channel[channel].LowRe.AsSpan(SbrChannel.Offset * 64, 6 * 64);
+
+    public ReadOnlySpan<float> LookAheadImaginary(int channel) => _channel[channel].LowIm.AsSpan(SbrChannel.Offset * 64, 6 * 64);
+
     public SbrChannel Channel(int channel) => _channel[channel];
 
     public bool IsActive { get; private set; }
