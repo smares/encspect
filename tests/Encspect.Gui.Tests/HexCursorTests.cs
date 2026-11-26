@@ -1,3 +1,4 @@
+using System.Text;
 using Avalonia;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -103,7 +104,7 @@ public class HexCursorTests
         TreeRow selected = window.Model.SelectedNode!;
         Assert.NotSame(tree.Root, selected);
         Assert.True(selected.Node.Offset <= target && target < selected.Node.End);
-        Assert.DoesNotContain(selected.Node.Children, c => c.Length > 0 && c.Offset <= target && target < c.End && c.Ranges is null);
+        Assert.False(selected.Node.Children.Any(c => c.Length > 0 && c.Offset <= target && target < c.End && c.Ranges is null), $"{selected.Name} @{selected.Node.Offset}+{selected.Node.Length} target {target} children {string.Join(",", selected.Node.Children.Select(c => $"{c.Name}@{c.Offset}+{c.Length}"))}");
         Assert.Equal(target, window.Hex.ByteCursor);
         window.Close();
     }
@@ -122,6 +123,23 @@ public class HexCursorTests
 
     private static void Click(Avalonia.Controls.MenuItem item) => item.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Avalonia.Controls.MenuItem.ClickEvent));
 
+    // What a menu item copies: the copy of Copy Node runs on a background thread, so the UI is pumped until it arrives.
+    private static string Copied(Avalonia.Controls.MenuItem item)
+    {
+        string? copied = null;
+        Copying.Observer = text => copied = text;
+        try
+        {
+            Click(item);
+            UiPump.Until(() => copied is not null);
+            return copied!;
+        }
+        finally
+        {
+            Copying.Observer = null;
+        }
+    }
+
     // Opening the menu is what enables its items.
     private static Avalonia.Controls.MenuItem Item(Avalonia.Controls.ContextMenu? menu, string header)
     {
@@ -131,7 +149,7 @@ public class HexCursorTests
     }
 
     [AvaloniaFact]
-    public void The_trees_menu_copies_a_nodes_value_and_the_node_with_the_nodes_under_it()
+    public void The_trees_menu_copies_a_nodes_value_and_the_node_as_the_full_report_writes_it()
     {
         DetailWindow window = Open();
         StructureTree tree = window.Model.Tree!;
@@ -140,22 +158,52 @@ public class HexCursorTests
         TreeRow frame = Enumerable.Range(0, stream.LoadChildren().Count).Select(i => stream.RowAt(i)).First(r => r.Kind == NodeKind.Frame);
 
         window.Model.SelectedNode = frame;
-        Click(Item(window.TreeList.ContextMenu, "Copy Node"));
-        string text = Copying.Last!;
-        Assert.StartsWith("  " + frame.Name, text);
-        Assert.Contains(Environment.NewLine + "    ", text);
-        Assert.Equal(text, window.Model.NodeText(frame));
-        Assert.Contains($"[0x{frame.Node.Offset:X}, ", text);
+        string text = Copied(Item(window.TreeList.ContextMenu, "Copy Node"));
+
+        // The same lines, at the node's depth, in the report the command line writes.
+        var full = new StringWriter();
+        ReportTextWriter.Write(window.Model.Report!, full, showOffsets: true);
+        string[] lines = full.ToString().Split(Environment.NewLine);
+        string[] copy = text.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+        int indent = (frame.Depth + 1) * 2;
+        int start = Array.IndexOf(lines, new string(' ', indent) + copy[0].TrimStart());
+        Assert.True(start >= 0);
+        List<string> expected = [];
+        for (int i = start; i < lines.Length && (i == start || lines[i].StartsWith(new string(' ', indent + 2), StringComparison.Ordinal)); i++)
+        {
+            expected.Add(lines[i][(indent - 2)..]);
+        }
+
+        Assert.True(expected.Count > 1);
+        Assert.Equal(expected, copy);
 
         TreeRow field = Enumerable.Range(0, frame.LoadChildren().Count).Select(i => { tree.Expand(frame); return frame.RowAt(i); }).First(r => r.Value is not null);
         window.Model.SelectedNode = field;
-        Click(Item(window.TreeList.ContextMenu, "Copy Value"));
-        Assert.Equal(field.Value, Copying.Last);
+        Assert.Equal(field.Value, Copied(Item(window.TreeList.ContextMenu, "Copy Value")));
 
         // A node with no value has nothing to copy as one.
         window.Model.SelectedNode = tree.Root;
         Assert.Equal(tree.Root.Value is not null, Item(window.TreeList.ContextMenu, "Copy Value").IsEnabled);
         window.Close();
+    }
+
+    [Fact]
+    public void A_node_whose_text_is_over_the_cap_is_not_built()
+    {
+        var root = new Node("File", 0, 10_000_000);
+        for (int i = 0; i < 700_000; i++)
+        {
+            root.Add("Frame", i * 10L, 8);
+        }
+
+        var report = new Report("big.mp3", root, []);
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        Assert.Null(DetailViewModel.TryNodeText(report, root, DetailViewModel.MaxNodeTextChars));
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(20));
+
+        string text = DetailViewModel.TryNodeText(report, root.Children[5], DetailViewModel.MaxNodeTextChars)!;
+        Assert.Equal("  Frame [0x32, 8 bytes]" + Environment.NewLine, text);
+        Assert.Equal("Not copied: the node's text is over 16 MiB; export the report instead", DetailViewModel.NodeTextTooLong);
     }
 
     [AvaloniaFact]
@@ -168,12 +216,11 @@ public class HexCursorTests
         FindingItem finding = window.Model.Findings.First(f => f.Finding.Node is not null);
         window.Model.SelectedFinding = finding;
 
-        Click(Item(window.FindingList.ContextMenu, "Copy Message"));
-        Assert.Equal(finding.Message, Copying.Last);
-        Click(Item(window.FindingList.ContextMenu, "Copy Message with Code and Position"));
-        Assert.StartsWith($"[{finding.Severity}] {finding.Code}: ", Copying.Last);
-        Assert.Contains(finding.Message, Copying.Last);
-        Assert.Contains($"[0x{finding.Finding.Node!.Offset:X}", Copying.Last);
+        Assert.Equal(finding.Message, Copied(Item(window.FindingList.ContextMenu, "Copy Message")));
+        string full = Copied(Item(window.FindingList.ContextMenu, "Copy Message with Code and Position"));
+        Assert.StartsWith($"[{finding.Severity}] {finding.Code}: ", full);
+        Assert.Contains(finding.Message, full);
+        Assert.Contains($"[0x{finding.Finding.Node!.Offset:X}", full);
         window.Close();
     }
 
@@ -184,13 +231,72 @@ public class HexCursorTests
         window.Model.SelectedNode = window.Model.Tree!.Root.RowAt(0);
         UiPump.Until(() => true);
         HexHighlight highlight = window.Model.Highlight!;
+        byte[] file = File.ReadAllBytes(Fixtures.Mpeg("external-lame-vbr-v2.mp3"));
 
-        Click(Item(window.Hex.ContextMenu, "Copy Selection"));
-        string text = Copying.Last!;
-        string[] rows = text.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-        Assert.Equal(((highlight.End + 15) / 16) - (highlight.Start / 16), rows.Length);
-        Assert.StartsWith($"{highlight.Start / 16 * 16:X8}  ", rows[0]);
-        Assert.Equal(text, HexView.RowsText(window.Model.Document!, highlight.Start, highlight.End));
+        string text = Copied(Item(window.Hex.ContextMenu, "Copy Selection"));
+
+        // Built here from the file's bytes, a row at a time.
+        long first = highlight.Start / 16 * 16;
+        long last = Math.Min(file.Length, (highlight.End + 15) / 16 * 16);
+        var expected = new StringBuilder();
+        for (long offset = first; offset < last; offset += 16)
+        {
+            byte[] row = file[(int)offset..(int)Math.Min(file.Length, offset + 16)];
+            string left = string.Join(' ', row.Take(8).Select(b => b.ToString("X2")));
+            string right = string.Join(' ', row.Skip(8).Select(b => b.ToString("X2")));
+            string hex = row.Length > 8 ? left + "  " + right : left;
+            string chars = new([.. row.Select(b => b is >= 0x20 and < 0x7F ? (char)b : '.')]);
+            expected.Append(offset.ToString("X8")).Append("  ").Append(hex.PadRight(49)).Append(' ').Append(chars).Append('\n');
+        }
+
+        Assert.Equal(expected.ToString(), text);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void A_double_click_leaves_the_view_where_it_is_when_the_cursor_is_inside_the_new_selection_and_on_screen()
+    {
+        DetailWindow window = Open();
+        StructureTree tree = window.Model.Tree!;
+        TreeRow stream = tree.Root.RowAt(0);
+        tree.Expand(stream);
+        TreeRow big = Enumerable.Range(0, stream.LoadChildren().Count).Select(i => stream.RowAt(i)).First(r => r.Kind != NodeKind.Frame && r.Node.Length > 5000);
+
+        // A byte deep inside a large node, scrolled to by the cursor.
+        long deep = big.Node.Offset + 3000;
+        window.Hex.ByteCursor = deep;
+        UiPump.Until(() => true);
+        long top = window.Hex.TopRow;
+        Assert.True(top > big.Node.Offset / 16);
+
+        window.Model.SelectedNode = big;
+        UiPump.Until(() => true);
+
+        Assert.Equal(top, window.Hex.TopRow);
+        Assert.Equal(deep, window.Hex.ByteCursor);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void Home_and_end_move_the_cursor_in_the_row_and_with_control_in_the_file()
+    {
+        DetailWindow window = Open();
+        long length = window.Model.Document!.Length;
+        Point point = Cell(window, 37);
+        window.MouseDown(point, MouseButton.Left);
+        window.MouseUp(point, MouseButton.Left);
+        Assert.Equal(37, window.Hex.ByteCursor);
+
+        Press(window, Key.Home, PhysicalKey.Home);
+        Assert.Equal(32, window.Hex.ByteCursor);
+        Press(window, Key.End, PhysicalKey.End);
+        Assert.Equal(47, window.Hex.ByteCursor);
+        window.KeyPress(Key.End, RawInputModifiers.Control, PhysicalKey.End, null);
+        Assert.Equal(length - 1, window.Hex.ByteCursor);
+        Press(window, Key.End, PhysicalKey.End);
+        Assert.Equal(length - 1, window.Hex.ByteCursor);
+        window.KeyPress(Key.Home, RawInputModifiers.Control, PhysicalKey.Home, null);
+        Assert.Equal(0, window.Hex.ByteCursor);
         window.Close();
     }
 }

@@ -277,6 +277,25 @@ public sealed class WindowTests : IDisposable
         main.Close();
     }
 
+    // A second monitor to the left of and above the primary one: negative coordinates.
+    [AvaloniaFact]
+    public void Windows_fit_a_screen_at_a_negative_position_and_the_cascade_stays_on_it()
+    {
+        var area = new PixelRect(-1920, -200, 1920, 1080);
+        MainWindow main = OpenMain();
+        main.DetailWindows.ScreenOverride = (area, 1.0);
+        main.Position = new PixelPoint(-1500, 700);
+
+        DetailWindow first = main.DetailWindows.Open(main.Model.Rows[0]);
+        AssertFits(first, area, 1.0);
+        for (int i = 1; i < 12; i++)
+        {
+            AssertFits(main.DetailWindows.OpenNew(main.Model.Rows[i % 4]), area, 1.0);
+        }
+
+        main.Close();
+    }
+
     [Theory]
     [InlineData(1.0)]
     [InlineData(1.25)]
