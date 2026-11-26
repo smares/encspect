@@ -33,16 +33,10 @@ internal sealed class BlockLog
     // Whether a stream of this configuration is decoded: AAC LC with frames of 1,024 samples that signals no SBR or PS (HE-AAC is a later step).
     public static bool CanDecode(AacConfig config) => config is { ObjectType: 2, CoreFrameLength: 1024, Sbr: not true, Ps: not true };
 
-    public static DecodeFeed? CreateFeed(AnalysisContext context, Node stream, AacConfig config, IReadOnlyList<Speaker>? layout = null)
-    {
-        if (!CanDecode(config))
-        {
-            return null;
-        }
-
-        return new DecodeFeed(context, stream, new DecodeConfig(config.ObjectType, config.CoreSampleRate, StreamSetup.SampleRateIndex(config.CoreSampleRate), config.CoreFrameLength,
-            config.Sbr == true, config.Ps == true, layout ?? config.OutputLayout));
-    }
+    // The decoding of a stream: every AAC stream has a session, where a decoder is registered, and the decoder takes the configurations CanDecode names and refuses the others.
+    public static DecodeFeed CreateFeed(AnalysisContext context, Node stream, AacConfig config, IReadOnlyList<Speaker>? layout = null) =>
+        new(context, stream, new DecodeConfig(config.ObjectType, config.CoreSampleRate, StreamSetup.SampleRateIndex(config.CoreSampleRate), config.CoreFrameLength,
+            config.Sbr == true, config.Ps == true, layout ?? config.OutputLayout), CanDecode(config), config.Channels ?? 1);
 
     public CodingTally Tally { get; } = new();
 

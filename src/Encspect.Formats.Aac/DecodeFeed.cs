@@ -25,17 +25,27 @@ internal sealed class DecodeFeed
     private bool _followsGap;
     private int _hold;
     private bool _hasTrim;
+    private readonly bool _canDecode;
+    private readonly int _channels;
     private bool _isDeclined;
 
-    public DecodeFeed(AnalysisContext context, Node stream, DecodeConfig config)
+    // canDecode: the stream's configuration is one the decoder takes. Where it is not, the session starts at once and the decoder refuses it (decode.not-possible), so every
+    // AAC stream has a session whose verification says what was asked for; channels is then the configuration's.
+    public DecodeFeed(AnalysisContext context, Node stream, DecodeConfig config, bool canDecode, int channels)
     {
         _context = context;
         _stream = stream;
         _config = config;
+        _canDecode = canDecode;
+        _channels = channels;
+        if (!canDecode)
+        {
+            _session = Start(channels, config);
+        }
     }
 
     // The store the block reader fills, or null where nothing is decoded: the session ended.
-    public RecordStore? Store => _isDeclined || _session is { IsDecoding: false } ? null : _store;
+    public RecordStore? Store => !_canDecode || _isDeclined || _session is { IsDecoding: false } ? null : _store;
 
     // The last blocks of the track that wait for the end trimming the container states (Matroska's DiscardPadding), which Trim must state before the blocks it reaches.
     public int Hold
@@ -49,7 +59,7 @@ internal sealed class DecodeFeed
     // A block that was read to its end and walked into the store. frame: its bytes; nodeName and node: where findings about it point.
     public void Decode(MappedBytes frame, string nodeName, Node? node, bool failsChecksum)
     {
-        if (_isDeclined)
+        if (_isDeclined || !_canDecode)
         {
             return;
         }
@@ -58,9 +68,10 @@ internal sealed class DecodeFeed
         _next += _config.FrameLength;
         if (_session is null && (_store.Flags & (BlockRecord.BlockHasSbr | BlockRecord.BlockHasPs)) != 0)
         {
-            // The first block that can be read holds SBR data: the stream is HE-AAC signaled implicitly, which is decoded in a later step, so no session starts.
+            // The first block that can be read holds SBR data: the stream is HE-AAC signaled implicitly, which is decoded in a later step, so the decoder refuses it.
             _isDeclined = true;
             _pendingLost = 0;
+            _session = Start(Math.Max(1, _store.Slots), _config with { IsSbrSignaled = true });
             return;
         }
 
@@ -90,7 +101,7 @@ internal sealed class DecodeFeed
     // A block that is lost: cut by the data, or with syntax that breaks.
     public void Lost(MappedBytes frame, string nodeName, Node? node)
     {
-        if (_isDeclined)
+        if (_isDeclined || !_canDecode)
         {
             return;
         }
@@ -103,7 +114,7 @@ internal sealed class DecodeFeed
     // The container's end trimming: the blocks waiting are the ones it reaches. The positions are those of the coded stage.
     public void Trim(long endPosition)
     {
-        if (_session is not null && !_hasTrim)
+        if (_session is not null && _canDecode && !_hasTrim)
         {
             _hasTrim = true;
             _session.Trim(0, Math.Max(0, endPosition));
@@ -115,7 +126,14 @@ internal sealed class DecodeFeed
     {
         if (_session is null)
         {
-            return null;
+            // No block could be read: the stream has its session all the same, whose blocks were all lost.
+            _session = Start(_channels, _config);
+            for (long i = 0; i < _pendingLost && _session.IsDecoding; i++)
+            {
+                _session.Decode(new CodedFrame(new MappedBytes(ReadOnlyMemory<byte>.Empty, 0), "Access Unit", i * _config.FrameLength, _config.FrameLength) { IsUnreadable = true, FollowsGap = i > 0, Node = _stream });
+            }
+
+            _pendingLost = 0;
         }
 
         while (_held.Count > 0)
@@ -153,14 +171,7 @@ internal sealed class DecodeFeed
             return;
         }
 
-        _session = _context.StartDecoding(CodecId, new DecodeSetup
-        {
-            Stream = _stream,
-            Channels = Math.Max(1, _store.Slots),
-            BitsPerSample = 32,
-            IsLossy = true,
-            Shared = _config with { Layout = _config.Layout is { } layout && layout.Count == _store.Slots ? layout : null },
-        });
+        _session = Start(Math.Max(1, _store.Slots), _config with { Layout = _config.Layout is { } layout && layout.Count == _store.Slots ? layout : null });
         // The blocks before the first one that could be read were lost.
         long lost = _pendingLost;
         _pendingLost = 0;
@@ -170,6 +181,15 @@ internal sealed class DecodeFeed
                 { IsUnreadable = true, FollowsGap = i > 0, Node = node });
         }
     }
+
+    private IDecodeSession Start(int channels, DecodeConfig config) => _context.StartDecoding(CodecId, new DecodeSetup
+    {
+        Stream = _stream,
+        Channels = Math.Clamp(channels, 1, 64),
+        BitsPerSample = 32,
+        IsLossy = true,
+        Shared = config,
+    });
 
     private void Enqueue(Held unit)
     {

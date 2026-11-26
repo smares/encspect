@@ -66,10 +66,15 @@ public sealed class AacCodecParser : ICodecParser
             Topic = config switch { { IsUsac: true } => Topics.Usac, { HasSbr: true } => Topics.Sbr, _ => Topics.ObjectTypes },
         });
         var log = new UnitLog(config, findings);
-        if (config is not null && log.Blocks is { } blockLog && context.Configuration is not { AreSamplesEncrypted: true })
+        DecodeFeed? feed = config is null ? null : BlockLog.CreateFeed(context, stream, config);
+        if (feed is not null)
         {
-            blockLog.Feed = BlockLog.CreateFeed(context, stream, config);
-            if (blockLog.Feed is { } feed && context.Configuration?.DiscardPadding is not null)
+            if (log.Blocks is { } blockLog)
+            {
+                blockLog.Feed = feed;
+            }
+
+            if (context.Configuration?.DiscardPadding is not null)
             {
                 feed.Hold = Math.Max(1, context.Configuration.DiscardPaddingFrames ?? 1);
             }
@@ -97,7 +102,7 @@ public sealed class AacCodecParser : ICodecParser
             }
         }
 
-        Report(context, parent, config, configNode, log, findings, stream, records);
+        Report(context, parent, config, configNode, log, findings, stream, records, feed);
         findings.Flush(context);
     }
 
@@ -107,7 +112,7 @@ public sealed class AacCodecParser : ICodecParser
         public IReadOnlyList<Node> Children { get; set; } = [];
     }
 
-    private static void Report(CodecContext context, Node parent, AacConfig? config, Node? configNode, UnitLog log, FindingCollector findings, Node stream, ChildrenOf holder)
+    private static void Report(CodecContext context, Node parent, AacConfig? config, Node? configNode, UnitLog log, FindingCollector findings, Node stream, ChildrenOf holder, DecodeFeed? feed)
     {
         Node Cover(string name, NodeValue? value, string description, NodeKind kind = NodeKind.Detail, string? topic = null) =>
             new(name, parent.Offset, parent.Length, value) { Kind = kind, Ranges = parent.Ranges, Description = description, Topic = topic };
@@ -152,10 +157,10 @@ public sealed class AacCodecParser : ICodecParser
             }
 
             figures.TrimEnd(Math.Min(samples, held));
-            log.Blocks?.Feed?.Trim(figures.Samples);
+            feed?.Trim(figures.Samples);
         }
 
-        StreamVerification? verification = log.Blocks?.Feed?.Finish([]);
+        StreamVerification? verification = feed?.Finish([]);
 
         var leading = new List<Node>();
         bool encrypted = context.Configuration is { AreSamplesEncrypted: true };
