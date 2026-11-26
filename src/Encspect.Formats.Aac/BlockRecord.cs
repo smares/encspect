@@ -49,6 +49,9 @@ internal static class BlockRecord
     public const int KindPairSecond = 3;
     public const int KindLfe = 4;
 
+    // The values of an SBR payload (SbrRecord), after the channel streams.
+    public const int KindSbr = 5;
+
     public const int FlagPulse = 1;
     public const int FlagTns = 2;
     public const int FlagCommonWindow = 4;

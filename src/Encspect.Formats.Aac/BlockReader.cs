@@ -21,6 +21,7 @@ internal sealed partial class BlockReader
     private readonly CodingRecorder? _recorder;
     private readonly Dictionary<int, SbrHeader> _sbr = [];
     private readonly Dictionary<int, int> _sbrHeaderBlock = [];
+    private readonly Dictionary<int, int[]> _psState = [];
     private readonly List<BlockCut> _cuts = [];
     private readonly List<ElementSpan> _elements = [];
     private readonly List<SoftFinding> _soft = [];

@@ -15,12 +15,16 @@ internal sealed class Huffman
     public Huffman(IReadOnlyList<uint> codes, IReadOnlyList<byte> lengths)
     {
         MaxLength = lengths.Max();
+        Offset = (codes.Count - 1) / 2;
         var entries = new List<int>();
         Build(entries, Enumerable.Range(0, codes.Count).ToList(), codes, lengths, 0, Math.Min(RootBits, MaxLength));
         _table = [.. entries];
     }
 
     public int MaxLength { get; }
+
+    // Where the zero lies among the symbols of a codebook of differences: they run from -Offset to Offset.
+    public int Offset { get; }
 
     // The bits the root is indexed by.
     public int RootWidth => Math.Min(RootBits, MaxLength);
