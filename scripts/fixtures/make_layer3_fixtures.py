@@ -1383,6 +1383,61 @@ def mixed_intensity_mpeg2():
     return f.add_frames(pack(mixed_intensity_frames("2", 22050, 64, MIXED_WINDOWS)))
 
 
+# --- Intensity positions at the largest value their length codes (MPEG-2) --------------------
+
+
+# Long band widths at 22050 Hz (ISO/IEC 13818-3 Table B.2), without the last band, which has no scalefactor.
+LSF_LONG_WIDTHS = [6, 6, 6, 6, 6, 8, 10, 12, 14, 16, 20, 24, 28, 32, 38, 46, 52, 60, 68, 58, 54]
+
+
+def long_granule(global_gain, scalefac_compress, sf_bits, last_band):
+    """One channel of a long block (Huffman table 1, values 0 and 1) with a nonzero pair at the start of every band up to last_band (None: all lines zero)."""
+    values = [0] * 576
+    start = 0
+    for band, width in enumerate(LSF_LONG_WIDTHS + [576 - sum(LSF_LONG_WIDTHS)]):
+        if last_band is not None and band <= last_band:
+            values[start] = 1
+        start += width
+    used = max((i for i, v in enumerate(values) if v), default=-1) + 1
+    pairs = (used + 1) // 2
+    data = Bits()
+    for i in range(pairs):
+        x, y = values[2 * i], values[2 * i + 1]
+        data.put_code(TABLE1_PAIR[(x, y)])
+        data.bits += [0] * (x + y)
+    g = Granule(big_values=pairs, global_gain=global_gain, scalefac_compress=scalefac_compress, tables=(1, 1, 1), regions=(7, 7),
+                part2_3_length=len(sf_bits) + len(data.bits))
+    g.part2, g.data = sf_bits, data.bits
+    return g
+
+
+@fixture
+def mpeg2_intensity_largest_position():
+    f = Layer3Fixture(
+        "intensity-mpeg2-largest-position",
+        "MPEG-2 Layer III joint stereo at 22050 Hz with mid/side and intensity stereo whose right channel is all zero, so every band is intensity coded: the intensity positions are "
+        "the largest value their scalefactor length codes (1 of 1 bit, 3 of 2 bits, 7 of 3 bits), in some granules alone and in others among smaller values.",
+        silent=False,
+        guessenc=False,
+    )
+    row = []
+    # The intensity right channel's scalefac_compress / 2 is slen1 * 36 + slen2 * 6 + slen3 (13818-3 2.4.3.2): 86 and 87 give slen 1, 1 and 1, 172 and 173 give 2, 2 and 2, 258 and 259 give 3, 3 and 3,
+    # each over 7, 7 and 7 bands; the odd value sets intensity_scale.
+    for k, (sfc, size, positions) in enumerate([
+        (86, 1, [1] * 21),
+        (87, 1, [1, 0, 1, 1, 0, 1, 1] * 3),
+        (172, 2, [3] * 21),
+        (173, 2, [3, 2, 1, 0, 3, 3, 2] * 3),
+        (258, 3, [7] * 21),
+        (259, 3, [7, 6, 5, 7, 4, 7, 7] * 3),
+    ]):
+        left = long_granule(180, 0, [], 20)
+        right = long_granule(180, sfc, scalefactor_bits(positions, size), None)
+        row.append([left, right])
+    specs = [dict(mode_ext=3, granules=[granules]) for granules in row]
+    return f.add_frames(pack(frames_with_padding(specs, 64, 22050, version="2", mode="Joint stereo")))
+
+
 # --- Encoder traits ------------------------------------------------------------------------------
 
 
