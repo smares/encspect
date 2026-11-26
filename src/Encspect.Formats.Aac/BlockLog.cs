@@ -113,6 +113,16 @@ internal sealed class BlockLog
             return;
         }
 
+        if (Tally.EvidenceBlocks == 0)
+        {
+            Tally.FirstBlockHasSbr = result.HasSbrEvidence;
+            Tally.FirstBlockHasPs = result.HasPs;
+        }
+        else if (Tally.FirstDisagreeingBlock < 0 && result.HasSbrEvidence != Tally.FirstBlockHasSbr)
+        {
+            Tally.FirstDisagreeingBlock = index;
+        }
+
         Tally.EvidenceBlocks++;
         if (result.HasSbrEvidence)
         {
@@ -197,6 +207,12 @@ internal sealed class BlockLog
         }
 
         string units = $"{tally.SbrEvidenceBlocks} of {tally.EvidenceBlocks} raw data blocks";
+        if (config.Sbr is null && tally.IsSbrInconsistent)
+        {
+            findings.AddNow(Severity.Warning, "aac.sbr-inconsistent",
+                $"The first raw data block that is read to its end {(tally.FirstBlockHasSbr ? "holds SBR data" : "holds none")}, which decides the stream as {(tally.FirstBlockHasSbr ? "HE-AAC" : "plain")} as players do, but {units} hold SBR data; the first block that disagrees is raw data block {tally.FirstDisagreeingBlock + 1}.", node);
+        }
+
         if (config.IsSbrImplicit)
         {
             string first = tally.FirstSbrEvidenceBlock > 0

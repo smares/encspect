@@ -116,14 +116,21 @@ internal sealed class CodingTally
 
     public int FirstSbrEvidenceBlock { get; set; } = -1;
 
-    // The rule for inferring SBR (and PS) from the blocks: in at least two of them, or in the only one
-    // there is, and in at least half. A damaged frame's blocks, a payload before any channel element and
-    // a lone occurrence in an otherwise plain stream therefore do not turn it into HE-AAC.
-    public bool IsSbrEvident => IsEvident(SbrEvidenceBlocks);
+    // Whether the first block read to its end (not in a damaged frame) holds an SBR payload after a channel element, and the PS extension: implicit signaling is decided there, as players do
+    // (ffmpeg, faad2 and fdk-aac take implicit SBR where the stream starts with it), and the decoder (DecodeFeed.FindImplicitSbr) decides on the same block.
+    public bool FirstBlockHasSbr { get; set; }
 
-    public bool IsPsEvident => IsEvident(PsEvidenceBlocks);
+    public bool FirstBlockHasPs { get; set; }
 
-    private bool IsEvident(long count) => count > 0 && count >= Math.Min(2, EvidenceBlocks) && count * 2 >= EvidenceBlocks;
+    // The first later block that disagrees with the first one about SBR, or -1.
+    public int FirstDisagreeingBlock { get; set; } = -1;
+
+    public bool IsSbrEvident => EvidenceBlocks > 0 && FirstBlockHasSbr;
+
+    public bool IsPsEvident => EvidenceBlocks > 0 && FirstBlockHasPs;
+
+    // Whether most blocks disagree with the first one about SBR: it is missing from most later blocks, or present in most where the first had none.
+    public bool IsSbrInconsistent => EvidenceBlocks > 1 && (FirstBlockHasSbr ? SbrEvidenceBlocks * 2 < EvidenceBlocks : SbrEvidenceBlocks * 2 > EvidenceBlocks);
 
     public int FirstSbrBlock { get; set; } = -1;
 
