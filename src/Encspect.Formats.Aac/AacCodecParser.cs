@@ -56,7 +56,25 @@ public sealed class AacCodecParser : ICodecParser
     internal static void ReadUnits(CodecContext context, AacConfig? config, Node? configNode, string where, FindingCollector findings, IEnumerable<MappedBytes> packets)
     {
         Node parent = context.Parent;
+        var records = new ChildrenOf();
+        // The stream's node is made first, since the decoding states it as the stream the findings of its decoder point to; its value and children follow the units.
+        Node stream = parent.Add(new Node("AAC", parent.Offset, parent.Length, null, () => records.Children)
+        {
+            Kind = NodeKind.Stream,
+            Ranges = parent.Ranges,
+            Description = Explain.Stream,
+            Topic = config switch { { IsUsac: true } => Topics.Usac, { HasSbr: true } => Topics.Sbr, _ => Topics.ObjectTypes },
+        });
         var log = new UnitLog(config, findings);
+        if (config is not null && log.Blocks is { } blockLog && context.Configuration is not { AreSamplesEncrypted: true })
+        {
+            blockLog.Feed = BlockLog.CreateFeed(context, stream, config);
+            if (blockLog.Feed is { } feed && context.Configuration?.DiscardPadding is not null)
+            {
+                feed.Hold = Math.Max(1, context.Configuration.DiscardPaddingFrames ?? 1);
+            }
+        }
+
         int index = 0;
         foreach (MappedBytes packet in packets)
         {
@@ -79,11 +97,17 @@ public sealed class AacCodecParser : ICodecParser
             }
         }
 
-        Report(context, parent, config, configNode, log, findings);
+        Report(context, parent, config, configNode, log, findings, stream, records);
         findings.Flush(context);
     }
 
-    private static void Report(CodecContext context, Node parent, AacConfig? config, Node? configNode, UnitLog log, FindingCollector findings)
+    // The children of a stream node whose units are read after the node is made.
+    private sealed class ChildrenOf
+    {
+        public IReadOnlyList<Node> Children { get; set; } = [];
+    }
+
+    private static void Report(CodecContext context, Node parent, AacConfig? config, Node? configNode, UnitLog log, FindingCollector findings, Node stream, ChildrenOf holder)
     {
         Node Cover(string name, NodeValue? value, string description, NodeKind kind = NodeKind.Detail, string? topic = null) =>
             new(name, parent.Offset, parent.Length, value) { Kind = kind, Ranges = parent.Ranges, Description = description, Topic = topic };
@@ -128,7 +152,10 @@ public sealed class AacCodecParser : ICodecParser
             }
 
             figures.TrimEnd(Math.Min(samples, held));
+            log.Blocks?.Feed?.Trim(figures.Samples);
         }
+
+        StreamVerification? verification = log.Blocks?.Feed?.Finish([]);
 
         var leading = new List<Node>();
         bool encrypted = context.Configuration is { AreSamplesEncrypted: true };
@@ -211,15 +238,8 @@ public sealed class AacCodecParser : ICodecParser
         }
 
         UnitRecords records = log.Records;
-        var children = new BlockedChildren(leading, records.Units.Count, i => UnitNode(records, i, withChildren: true));
-        NodeValue streamValue = encrypted ? NodeValue.Text("frames not read: encrypted") : NodeValue.Integer(log.Units.Count, "access units", "access unit");
-        Node stream = parent.Add(new Node("AAC", parent.Offset, parent.Length, streamValue, () => children)
-        {
-            Kind = NodeKind.Stream,
-            Ranges = parent.Ranges,
-            Description = Explain.Stream,
-            Topic = config switch { { IsUsac: true } => Topics.Usac, { HasSbr: true } => Topics.Sbr, _ => Topics.ObjectTypes },
-        });
+        holder.Children = new BlockedChildren(leading, records.Units.Count, i => UnitNode(records, i, withChildren: true));
+        stream.Value = encrypted ? NodeValue.Text("frames not read: encrypted") : NodeValue.Integer(log.Units.Count, "access units", "access unit");
 
         if (config is null)
         {
@@ -251,6 +271,7 @@ public sealed class AacCodecParser : ICodecParser
             WriterConfidence = writerConfidence,
             Series = series,
             CategorySeries = categories,
+            Verification = verification,
         });
     }
 
@@ -423,6 +444,7 @@ public sealed class AacCodecParser : ICodecParser
                 // A packet the container cut: its bytes are no access unit's, so it is neither read nor counted in the unit figures; its declared samples are
                 // counted and lost.
                 flags |= IsCutPacket;
+                Blocks?.Feed?.Lost(packet, "Access Unit", null);
             }
             else if (_config is { IsUsac: true })
             {
@@ -442,6 +464,18 @@ public sealed class AacCodecParser : ICodecParser
                 flags |= IsRead;
                 var where = new UnitBytes(packet.FileStart, packet.Length, ranges.Count > 1 ? ranges : null);
                 (skeleton, BlockResult result) = Blocks.Read(packet.Span, 0, packet.Length * 8, where, () => UnitNodeAt(packet, ranges), report: !packet.IsCut);
+                if (Blocks.Feed is { } feed && packet.Length > 0)
+                {
+                    if (result.Ok)
+                    {
+                        feed.Decode(packet, "Access Unit", null, packet.FailsChecksum);
+                    }
+                    else
+                    {
+                        feed.Lost(packet, "Access Unit", null);
+                    }
+                }
+
                 isLost |= !result.Ok && packet.Length > 0;
                 Blocks.EndUnit();
                 elements = result.Elements;

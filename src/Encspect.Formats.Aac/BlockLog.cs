@@ -27,6 +27,23 @@ internal sealed class BlockLog
 
     public StreamSetup Setup => setup;
 
+    // The decoding of the stream, or null where its coding is not decoded: the walk then stores values for the blocks it is given the feed for.
+    public DecodeFeed? Feed { get; set; }
+
+    // Whether a stream of this configuration is decoded: AAC LC with frames of 1,024 samples that signals no SBR or PS (HE-AAC is a later step).
+    public static bool CanDecode(AacConfig config) => config is { ObjectType: 2, CoreFrameLength: 1024, Sbr: not true, Ps: not true };
+
+    public static DecodeFeed? CreateFeed(AnalysisContext context, Node stream, AacConfig config, IReadOnlyList<Speaker>? layout = null)
+    {
+        if (!CanDecode(config))
+        {
+            return null;
+        }
+
+        return new DecodeFeed(context, stream, new DecodeConfig(config.ObjectType, config.CoreSampleRate, StreamSetup.SampleRateIndex(config.CoreSampleRate), config.CoreFrameLength,
+            config.Sbr == true, config.Ps == true, layout ?? config.OutputLayout));
+    }
+
     public CodingTally Tally { get; } = new();
 
     public UnitStore Store { get; } = new();
@@ -45,11 +62,11 @@ internal sealed class BlockLog
     // Reads the block at bits [start, limit) of data, which where places; unitNode makes the node of
     // its access unit or frame for findings that have no node of their own. Returns where the store
     // keeps it and what reading it came to.
-    public (long Position, BlockResult Result) Read(ReadOnlySpan<byte> data, int start, int limit, UnitBytes where, Func<Node> unitNode, bool report = true)
+    public (long Position, BlockResult Result) Read(ReadOnlySpan<byte> data, int start, int limit, UnitBytes where, Func<Node> unitNode, bool report = true, bool decode = true)
     {
         limit = Math.Min(limit, start + (MaxBlockBytes * 8));
         BlockReader reader = _reader;
-        BlockResult result = reader.Read(data, start, limit, Count, where);
+        BlockResult result = reader.Read(data, start, limit, Count, where, decode ? Feed?.Store : null);
         long position;
         if (result.Ok)
         {

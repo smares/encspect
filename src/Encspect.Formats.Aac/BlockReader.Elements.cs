@@ -57,6 +57,8 @@ internal sealed partial class BlockReader
             _lastChannelElement = 2;
             _lastChannelTag = tag;
             Ics ics = _ics[0];
+            ics.Slot = -1;
+            _hasCoupling = true;
             ChannelStream(ref bits, n, ics, false, 0, "Channel", bits.Original);
             int gainsStart = bits.Original;
             int length;
