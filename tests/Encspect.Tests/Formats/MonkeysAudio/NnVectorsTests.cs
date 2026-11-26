@@ -1,6 +1,6 @@
 using Encspect.Formats.MonkeysAudio.Decoding;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.MonkeysAudio;
 
 // The loops of the neural network filters against plain loops, on every length from 0 to 300 (so every remainder of 8, 16 and 32), at
 // misaligned offsets, with extreme values and with lengths that differ. Each loop is reached through its public entry, which takes the widest

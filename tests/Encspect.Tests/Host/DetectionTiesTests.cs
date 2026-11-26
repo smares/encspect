@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // Inputs built in code on which two formats reach the same class, so that the order of the parser
 // list would decide if the evidence did not: each is detected as the evidence says, in the default

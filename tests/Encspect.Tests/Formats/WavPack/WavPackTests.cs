@@ -4,7 +4,7 @@ using Encspect.Core;
 using Encspect.Formats.WavPack;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.WavPack;
 
 // What the fixtures' manifests do not pin: how a stream is recognized, tags inside the blocks, files
 // of many blocks and sub-blocks, what the statistics derive from the configuration and the hybrid

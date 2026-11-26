@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Opus;
 
 // The padding of Opus packets (an Ogg Opus file built from pages).
 public class OpusPaddingTests

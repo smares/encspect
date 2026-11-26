@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // One concept has one name in every format: the codec of a coding, the arrangement of channels, the software behind a Lavc or Lavf text, a DRM
 // system ID, a protection scheme, and a unit that reads in the singular for one. Checked over the streams and trees of every fixture.
@@ -84,33 +84,33 @@ public partial class CrossFormatNamingTests
     public void ContainersNameTheCodingsTheirCodecParsersDoNotReadInTheParsersForms()
     {
         // MP4: what the sample entry and the object type state.
-        Assert.Equal("MPEG-1 audio", Formats.Mp4.Mp4Parser.StreamCodecName("mp4a", 0x6B));
-        Assert.Equal("MPEG-2 audio", Formats.Mp4.Mp4Parser.StreamCodecName("mp4a", 0x69));
-        Assert.Equal("MPEG-4 audio", Formats.Mp4.Mp4Parser.StreamCodecName("mp4a", 0x40));
-        Assert.Equal("AAC LC", Formats.Mp4.Mp4Parser.StreamCodecName("mp4a", 0x67));
-        Assert.Equal("Other", Formats.Mp4.Mp4Parser.StreamCodecName("mp4a", 0x01));
-        Assert.Equal("MPEG Layer III", Formats.Mp4.Mp4Parser.StreamCodecName(".mp3", null));
-        Assert.Equal("DTS-HD Master Audio", Formats.Mp4.Mp4Parser.StreamCodecName("dtsl", null));
-        Assert.Equal("DTS Express", Formats.Mp4.Mp4Parser.StreamCodecName("dtse", null));
-        Assert.Equal("Apple Lossless", Formats.Mp4.Mp4Parser.StreamCodecName("alac", null));
-        Assert.Equal("PCM", Formats.Mp4.Mp4Parser.StreamCodecName("sowt", null));
-        Assert.Equal("Encrypted audio", Formats.Mp4.Mp4Parser.StreamCodecName("enca", null));
+        Assert.Equal("MPEG-1 audio", Encspect.Formats.Mp4.Mp4Parser.StreamCodecName("mp4a", 0x6B));
+        Assert.Equal("MPEG-2 audio", Encspect.Formats.Mp4.Mp4Parser.StreamCodecName("mp4a", 0x69));
+        Assert.Equal("MPEG-4 audio", Encspect.Formats.Mp4.Mp4Parser.StreamCodecName("mp4a", 0x40));
+        Assert.Equal("AAC LC", Encspect.Formats.Mp4.Mp4Parser.StreamCodecName("mp4a", 0x67));
+        Assert.Equal("Other", Encspect.Formats.Mp4.Mp4Parser.StreamCodecName("mp4a", 0x01));
+        Assert.Equal("MPEG Layer III", Encspect.Formats.Mp4.Mp4Parser.StreamCodecName(".mp3", null));
+        Assert.Equal("DTS-HD Master Audio", Encspect.Formats.Mp4.Mp4Parser.StreamCodecName("dtsl", null));
+        Assert.Equal("DTS Express", Encspect.Formats.Mp4.Mp4Parser.StreamCodecName("dtse", null));
+        Assert.Equal("Apple Lossless", Encspect.Formats.Mp4.Mp4Parser.StreamCodecName("alac", null));
+        Assert.Equal("PCM", Encspect.Formats.Mp4.Mp4Parser.StreamCodecName("sowt", null));
+        Assert.Equal("Encrypted audio", Encspect.Formats.Mp4.Mp4Parser.StreamCodecName("enca", null));
 
         // Matroska and ASF: the layer alone, and the other codings.
-        Assert.Equal("MPEG Layer II", Formats.Matroska.Codecs.NameOf("A_MPEG/L2"));
-        Assert.Equal("MPEG Layer III", Formats.Matroska.Codecs.NameOf("A_MPEG/L3"));
-        Assert.Equal("DTS-HD Master Audio", Formats.Matroska.Codecs.NameOf("A_DTS/LOSSLESS"));
-        Assert.Equal("Apple Lossless", Formats.Matroska.Codecs.NameOf("A_ALAC"));
-        Assert.Equal("PCM", Formats.Matroska.Codecs.NameOf("A_PCM/INT/BIG"));
-        Assert.Equal("MPEG Layer III", Formats.Asf.AsfParser.CodecNameOf(0x0055));
-        Assert.Equal("MPEG Layer I and II", Formats.Asf.AsfParser.CodecNameOf(0x0050));
-        Assert.Equal("PCM (floating-point)", Formats.Asf.AsfParser.CodecNameOf(0x0003));
+        Assert.Equal("MPEG Layer II", Encspect.Formats.Matroska.Codecs.NameOf("A_MPEG/L2"));
+        Assert.Equal("MPEG Layer III", Encspect.Formats.Matroska.Codecs.NameOf("A_MPEG/L3"));
+        Assert.Equal("DTS-HD Master Audio", Encspect.Formats.Matroska.Codecs.NameOf("A_DTS/LOSSLESS"));
+        Assert.Equal("Apple Lossless", Encspect.Formats.Matroska.Codecs.NameOf("A_ALAC"));
+        Assert.Equal("PCM", Encspect.Formats.Matroska.Codecs.NameOf("A_PCM/INT/BIG"));
+        Assert.Equal("MPEG Layer III", Encspect.Formats.Asf.AsfParser.CodecNameOf(0x0055));
+        Assert.Equal("MPEG Layer I and II", Encspect.Formats.Asf.AsfParser.CodecNameOf(0x0050));
+        Assert.Equal("PCM (floating-point)", Encspect.Formats.Asf.AsfParser.CodecNameOf(0x0003));
 
-        Assert.Equal("AC-3", Formats.Asf.AsfParser.CodecNameOf(0x2000));
-        Assert.Equal("Other", Formats.Asf.AsfParser.CodecNameOf(0x0002));
-        Assert.Equal("AAC LC", Formats.Matroska.Codecs.NameOf("A_AAC/MPEG4/LC"));
-        Assert.Equal("HE-AAC", Formats.Matroska.Codecs.NameOf("A_AAC/MPEG2/LC/SBR"));
-        Assert.Equal("AAC Main", Formats.Matroska.Codecs.NameOf("A_AAC/MPEG4/MAIN"));
+        Assert.Equal("AC-3", Encspect.Formats.Asf.AsfParser.CodecNameOf(0x2000));
+        Assert.Equal("Other", Encspect.Formats.Asf.AsfParser.CodecNameOf(0x0002));
+        Assert.Equal("AAC LC", Encspect.Formats.Matroska.Codecs.NameOf("A_AAC/MPEG4/LC"));
+        Assert.Equal("HE-AAC", Encspect.Formats.Matroska.Codecs.NameOf("A_AAC/MPEG2/LC/SBR"));
+        Assert.Equal("AAC Main", Encspect.Formats.Matroska.Codecs.NameOf("A_AAC/MPEG4/MAIN"));
     }
 
     // One coding, one name: a container's fallback name for a coding that a codec parser reads elsewhere is the name that parser gives it, with only what

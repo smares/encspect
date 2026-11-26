@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // The host's routes for containers (ParseStream, ParsePackets, ParseTag) and the end a container
 // declares, through the test-only containers in TestContainers.

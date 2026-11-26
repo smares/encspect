@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Ci;
 
 // The ruleset requires only the all-checks job, so a job missing from its needs list would go
 // unchecked. The workflow is read as text: job keys are the two-space-indented keys under "jobs:".

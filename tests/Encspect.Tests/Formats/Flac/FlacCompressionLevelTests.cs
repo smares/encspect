@@ -2,7 +2,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Encspect.Core;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Flac;
 
 // The guess at the compression level (docs/formats/flac.md, "Compression level"): every fixture written with a known level must have that level among
 // the ones named, and a fixture written with settings of its own must not be named. The exact claim of each fixture is pinned by its golden report.

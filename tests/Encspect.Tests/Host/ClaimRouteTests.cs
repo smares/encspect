@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // CodecConfiguration.Claims: what a container says about one stream reaches the codec parser through the router, after the file's claims, and
 // never goes back to the container's context, so a second stream does not see it.

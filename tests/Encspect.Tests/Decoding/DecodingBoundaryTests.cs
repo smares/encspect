@@ -3,7 +3,7 @@ using Encspect.Core;
 using Encspect.Host;
 using Encspect.Tests.BoundarySamples;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Decoding;
 
 // Parser code never references the Decoding namespace of its own project (docs/design/decoders.md, "How a test enforces
 // it"), checked in the compiled assemblies of the format and codec parsers the host lists.
@@ -157,6 +157,7 @@ public class DecodingBoundaryTests
     [InlineData("Encspect.Formats.Flac", false)]
     [InlineData("Encspect.Formats.Flac.Decoder", false)]
     [InlineData("", false)]
+    [InlineData("Encspect.Tests.Decoding", false)]
     public void ANamespaceIsDecodingCodeWhereDecodingIsAWholeSegment(string ns, bool expected) =>
         Assert.Equal(expected, BoundaryScanner.IsDecodingNamespace(ns));
 }

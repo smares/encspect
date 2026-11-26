@@ -2,7 +2,7 @@ using System.Buffers.Binary;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Matroska;
 
 // The DiscardPadding of Matroska block groups, which only crafted input reaches.
 public class MatroskaDiscardPaddingTests

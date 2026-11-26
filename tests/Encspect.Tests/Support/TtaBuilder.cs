@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
 using Encspect.Core;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // Builds TTA1 streams byte by byte from the TTA format description (header, seek table, frames, each with a CRC-32), so a test changes one thing and
 // nothing else. The frames hold bytes in place of coded samples: the analyzer compares CRC-32s and does not decode.

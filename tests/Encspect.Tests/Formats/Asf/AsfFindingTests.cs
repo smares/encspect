@@ -4,7 +4,7 @@ using Encspect.Core;
 using Encspect.Formats.Asf;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Asf;
 
 // One damaged or unusual file for each finding the ASF parser emits that no hand-built fixture's manifest lists:
 // a fixture of tests/fixtures/asf with the bytes of one field changed (or a file built in memory), and the finding

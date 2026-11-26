@@ -2,7 +2,7 @@ using System.Text.Json;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Ac3;
 
 // Dependent substreams that replace channels, name more channels than are coded, are lost to a gap or disagree with their independent frame (A/52 Annex E 2.3.1.2, 3.8.2).
 public class Eac3DependentTests

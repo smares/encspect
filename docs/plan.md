@@ -364,10 +364,11 @@ The most common formats without a free specification are decoded, from permissiv
 
 The scope is confirmed when 0.4 is done. The decoders follow steps 9 to 15 of [lossy-decoders.md, "Order"](design/lossy-decoders.md#order), with the definition of done of 0.3:
 
-**First, before the numbered items** (the lead, 2026-11-23): **the test namespaces follow the folders.** The test files of `tests/Encspect.Tests` sit in folders that mirror `src` but keep the namespace `Encspect.Tests` (23 Measurement files already differ), so a filter by area (`FullyQualifiedName~Encspect.Tests.Formats.Flac`) matches nothing and the IDE's default namespace fights the rule.
+**First, before the numbered items** (the lead, 2026-11-23; done, 2026-11-26): **the test namespaces follow the folders.** The test files of `tests/Encspect.Tests` sit in folders that mirror `src` but keep the namespace `Encspect.Tests` (23 Measurement files already differ), so a filter by area (`FullyQualifiedName~Encspect.Tests.Formats.Flac`) matches nothing and the IDE's default namespace fights the rule.
    - Every test file takes the namespace of its folder (`Encspect.Tests.Formats.Flac`, `Encspect.Tests.Support`, ...), with `global using`s for `Support`, and the names that then resolve inside `Encspect.Tests.Formats` first are qualified.
    - A test holds every file's namespace to its folder; [CLAUDE.md](../CLAUDE.md) and [development.md](development.md) change in the same pull request. The shard filters (class names) and the scope (folders) need no change.
    - It runs right after the 0.4.0 release, before other 0.5 branches start, because it touches every test file.
+   - **Built:** 316 files took their folder's namespace, `Ci/TestNamespaceTests` holds it, and the per-shard test listings are the same before and after but for that test. Besides the namespaces: `scope.py`'s exact method exclusions look up the class's namespace, the fallback step's filters name classes as `.Class`, the Opus, Vorbis and Speex fixture checks are static classes called from `OggFixtureTests`, and `DecodingBoundaryTests` leaves the tests' own `Encspect.Tests.Decoding` namespace out of its scan.
 
 1. **AAC LC:** following libxaac, as decision 1 of [lossy-decoders.md](design/lossy-decoders.md#decisions) now reads (the lead, 2026-11-23).
    - **The license reading** (done, 2026-11-23): libxaac's `LICENSE` and every file header hold Apache 2.0 and no ISO/IEC disclaimer like the PacketVideo decoder's ([lossy-decoders.md](design/lossy-decoders.md#decisions)).

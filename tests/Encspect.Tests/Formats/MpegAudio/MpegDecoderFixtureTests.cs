@@ -3,7 +3,7 @@ using System.Text.Json;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.MpegAudio;
 
 // Decodes every MPEG audio fixture that has a stream with a hashing sink: decoding changes no node, and what it adds to the report (the verification with the
 // frame CRC-16, the decode findings and the hash of the PCM) is compared with <name>.decode.json (docs/design/lossy-decoders.md, decision 14: the hash pins the

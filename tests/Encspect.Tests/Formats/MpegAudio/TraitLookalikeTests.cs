@@ -3,7 +3,7 @@ using Encspect.Formats.MpegAudio;
 using Encspect.Host;
 using Xunit;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.MpegAudio;
 
 // The habit rules of the MPEG audio parser (MpegAudioParser.Traits.cs) are evaluated on every
 // fixture whose manifest states the encoder that wrote it, whatever evidence finally names the

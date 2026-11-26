@@ -3,7 +3,7 @@ using Encspect.Core;
 using Encspect.Formats.Asf;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Asf;
 
 // Checks every hand-built ASF fixture against its manifest (make_asf_fixtures.py, worked out by
 // asf_model.py apart from the analyzer and confirmed by crosscheck_asf_fixtures.py): the objects at the

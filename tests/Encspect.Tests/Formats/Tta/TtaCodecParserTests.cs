@@ -2,7 +2,7 @@ using Encspect.Core;
 using Encspect.Formats.Tta;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Tta;
 
 // The "tta" codec parser, which a container that stores each frame in a packet, without the header and the seek table, hands packets to
 // (Matroska's A_TTA1, whose codec mapping keeps the frame whole with its CRC-32 and puts the header in the CodecPrivate; the route is a later

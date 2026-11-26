@@ -4,7 +4,7 @@ using Encspect.Core;
 using Encspect.Host;
 using Encspect.Host.Measurement;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Dts;
 
 // Decodes the DTS fixtures the core decoder reconstructs with a hashing sink: decoding changes no node, and what it adds to the report (the verification, the decode findings and the
 // hash of the PCM) is compared with <name>.decode.json. The hash pins the analyzer's own output for determinism and says nothing about correctness, which crosscheck_dts_pcm.py checks

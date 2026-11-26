@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // Reports build the nodes of repeated parts when they are read, in blocks, from compact records, hold
 // them weakly and build them again after a collection; two threads reading one block may both build

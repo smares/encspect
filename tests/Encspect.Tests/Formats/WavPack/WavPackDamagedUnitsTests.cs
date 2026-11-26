@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.WavPack;
 
 // Blocks whose checksum or CRC fails (docs/design/damaged-units.md): WavPack's parser flags a block whose checksum fails or is missing, its decoder a set
 // with a block whose CRC or extra CRC fails, a muted block included, and the measurements leave out the whole set as withheld samples ("checksum failed")

@@ -2,8 +2,9 @@ using System.Buffers.Binary;
 using System.Diagnostics;
 using Encspect.Core;
 using Encspect.Host;
+using Encspect.Tests.Decoding;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 [CollectionDefinition(nameof(ComplexityTests), DisableParallelization = true)]
 public class ComplexityCollection;

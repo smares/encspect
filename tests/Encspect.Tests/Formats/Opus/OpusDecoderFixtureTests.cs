@@ -3,7 +3,7 @@ using System.Text.Json;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Opus;
 
 // Decodes every fixture with an Opus stream with a hashing sink: decoding changes no node, and what it adds to the report (the verification, the decode findings and the
 // hash of the PCM) is compared with <name>.decode.json (docs/design/lossy-decoders.md, decision 14: the hash pins the analyzer's own output for determinism and says

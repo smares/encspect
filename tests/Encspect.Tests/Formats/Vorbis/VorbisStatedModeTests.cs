@@ -1,6 +1,6 @@
 using Encspect.Formats.Vorbis;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Vorbis;
 
 // The bitrate mode the identification header's three hints state (Vorbis I, section 4.2.2).
 public class VorbisStatedModeTests

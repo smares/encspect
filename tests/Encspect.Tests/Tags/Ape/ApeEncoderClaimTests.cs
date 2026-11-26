@@ -3,7 +3,7 @@ using System.Text;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Tags.Ape;
 
 // An APEv2 text item with the key Encoder, in any case, is a claim of the writer role, which the format
 // parsers that weigh claims (MPEG audio, Musepack and WavPack among them) resolve apart from the encoder.

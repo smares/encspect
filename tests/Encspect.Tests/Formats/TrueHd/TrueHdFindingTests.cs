@@ -2,7 +2,7 @@ using Encspect.Core;
 using Encspect.Formats.TrueHd;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.TrueHd;
 
 // One damaged or unusual file for each finding the TrueHD parser emits that no fixture's manifest lists, built from an encoder-written fixture
 // with a bit flipped or bytes added, the checks that the change leaves alone worked out again, and the finding that must come out.

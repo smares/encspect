@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // One analyzer, and so one instance of every parser, serves all threads (DefaultParsers), so
 // parsers keep no per-call state; reports read on several threads at once build the same nodes.

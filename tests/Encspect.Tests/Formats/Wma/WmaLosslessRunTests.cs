@@ -2,7 +2,7 @@ using System.Buffers.Binary;
 using Encspect.Core;
 using Encspect.Formats.Wma;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Wma;
 
 // Windows Media Audio Lossless: which frames of a saved run are decoded, what a frame that runs past the kept bits and an end trim of F or more
 // do, and what the arithmetic coding flag leaves behind (docs/design/wma-lossless-format.md, "Frames in packets", "Frame", "Validity rules and

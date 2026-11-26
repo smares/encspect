@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Formats.Wma;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Wma;
 
 // The series over the blocks of Windows Media Audio versions 1 and 2 (block sizes, noise substitution, coded bandwidth), over the subframes of
 // Professional and the frames of Voice.

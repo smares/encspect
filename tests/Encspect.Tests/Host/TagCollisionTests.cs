@@ -2,7 +2,7 @@ using System.Text.Json;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // User text inside a valid tag that spells another tag's identifier exactly where a probe looks
 // for it must not change which tags are found, and must not produce warnings or errors beyond

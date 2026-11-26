@@ -1,6 +1,6 @@
 using System.Buffers.Binary;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // Writes FLAC streams for tests (RFC 9639): metadata blocks and frames of constant or verbatim subframes, the smallest frames there are,
 // with the CRC-8 and CRC-16 the specification defines (bit by bit, apart from the analyzer's tables).

@@ -1,6 +1,6 @@
 using Encspect.Core;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.WavPack;
 
 // The stereo blocks of WavPack.
 public class WavPackStereoBlocksTests

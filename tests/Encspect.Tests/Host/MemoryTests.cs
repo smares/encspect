@@ -6,9 +6,10 @@ using Encspect.Formats.Aac;
 using Encspect.Formats.TrueHd;
 using Encspect.Formats.WavPack;
 using Encspect.Host;
+using Encspect.Tests.Decoding;
 using Xunit.Abstractions;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 [CollectionDefinition(nameof(MemoryTests), DisableParallelization = true)]
 public class MemoryCollection;
@@ -1708,7 +1709,7 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
     public void TrueHdUnitsPastTheLimitOfRecordsCostOnlyTheirFigures()
     {
         const int limit = 6_000;
-        const double RealRecordLimit = Formats.TrueHd.Analysis.MaxRecords;
+        const double RealRecordLimit = Encspect.Formats.TrueHd.Analysis.MaxRecords;
         Analyzer limited = new(DefaultParsers.Tags, [.. DefaultParsers.Formats.Select(f => f is TrueHdParser ? new TrueHdParser { RecordLimit = limit } : f)], DefaultParsers.Codecs, DefaultParsers.Decoders);
 
         // What a unit costs while it has a record, from two sizes under the limit, and what it costs past the limit, from two sizes beyond it.

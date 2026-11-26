@@ -1,6 +1,6 @@
 using Encspect.Core;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // Long reports written on several threads while a thread forces collections (see ThreadSafetyTests). In
 // the collection that runs alone: a thread that forces collections stalls every other test of the

@@ -3,7 +3,7 @@ using System.Text.Json;
 using Encspect.Core;
 using Encspect.Formats.Tak;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Tak;
 
 // Checks every TAK fixture against its manifest (import_windows_tak_fixtures.py, worked out by tak_model.py, a reading of takStream.pas apart from the analyzer, and
 // confirmed by crosscheck_tak_fixtures.py): the metadata objects with their CRC-24s, the stream info, the encoder info, the wave data, the last frame info, the stream info of the

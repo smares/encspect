@@ -1,8 +1,11 @@
 using System.Globalization;
 using System.Text.Json;
 using Encspect.Core;
+using Encspect.Tests.Formats.Opus;
+using Encspect.Tests.Formats.Speex;
+using Encspect.Tests.Formats.Vorbis;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Ogg;
 
 // Checks every Ogg fixture against its manifest (make_ogg_fixtures.py, make_external_ogg_fixtures.py,
 // confirmed by crosscheck_ogg_fixtures.py): the regions, every page and gap with its header fields
@@ -11,7 +14,7 @@ namespace Encspect.Tests;
 // statistics and the encoder, for Vorbis and Opus the headers, every packet's block or TOC bytes and
 // the statistics (make_vorbis_opus_fixtures.py); the streams the summary reads; and exactly the
 // findings listed.
-public partial class OggFixtureTests
+public class OggFixtureTests
 {
     public static TheoryData<string> Names => Fixtures.OggFixtures();
 
@@ -107,13 +110,13 @@ public partial class OggFixtureTests
 
             if (stream.TryGetProperty("vorbis", out JsonElement vorbis))
             {
-                CheckVorbis(vorbis, node, where);
+                VorbisFixtureChecks.CheckVorbis(vorbis, node, where);
                 continue;
             }
 
             if (stream.TryGetProperty("opus", out JsonElement opus))
             {
-                CheckOpus(opus, node, where);
+                OpusFixtureChecks.CheckOpus(opus, node, where);
                 continue;
             }
 
@@ -123,11 +126,11 @@ public partial class OggFixtureTests
                 continue;
             }
 
-            CheckSpeex(speex, node, where);
+            SpeexFixtureChecks.CheckSpeex(speex, node, where);
         }
     }
 
-    private static void CheckFields(JsonElement expected, Node node, string where)
+    internal static void CheckFields(JsonElement expected, Node node, string where)
     {
         foreach (JsonProperty field in expected.EnumerateObject())
         {
@@ -135,7 +138,7 @@ public partial class OggFixtureTests
         }
     }
 
-    private static void CheckComment(JsonElement codec, Node stream)
+    internal static void CheckComment(JsonElement codec, Node stream)
     {
         if (codec.TryGetProperty("comment", out JsonElement comment))
         {
@@ -150,7 +153,7 @@ public partial class OggFixtureTests
     }
 
     // Every audio packet's offset, length and file ranges.
-    private static List<Node> CheckPackets(JsonElement codec, Node stream, string where)
+    internal static List<Node> CheckPackets(JsonElement codec, Node stream, string where)
     {
         Node? packets = stream.Children.SingleOrDefault(c => c.Name == "Audio Packets");
         JsonElement[] expected = codec.GetProperty("packets").EnumerateArray().ToArray();
@@ -177,7 +180,7 @@ public partial class OggFixtureTests
         return actual;
     }
 
-    private static void CheckStatistics(JsonElement codec, Node stream, string where, bool isOpus = false)
+    internal static void CheckStatistics(JsonElement codec, Node stream, string where, bool isOpus = false)
     {
         if (codec.GetProperty("statistics").ValueKind == JsonValueKind.Object)
         {
@@ -199,7 +202,7 @@ public partial class OggFixtureTests
         }
     }
 
-    private static void CheckEncoder(JsonElement codec, Node stream)
+    internal static void CheckEncoder(JsonElement codec, Node stream)
     {
         if (codec.TryGetProperty("encoder", out JsonElement encoder))
         {
@@ -212,7 +215,7 @@ public partial class OggFixtureTests
     }
 
     // The writer is resolved apart from the encoder: a manifest that lists one lists the other where there is one.
-    private static void CheckWriter(JsonElement codec, Node stream)
+    internal static void CheckWriter(JsonElement codec, Node stream)
     {
         if (codec.TryGetProperty("writer", out JsonElement writer))
         {
@@ -223,11 +226,11 @@ public partial class OggFixtureTests
     }
 
     // Statistics figures, and the entries of each list among them, as the manifest names them.
-    private static IEnumerable<Node> Leaves(Node statistics) => statistics.Children.SelectMany(c => c.Children.Count > 0 ? [c, .. c.Children] : new[] { c });
+    internal static IEnumerable<Node> Leaves(Node statistics) => statistics.Children.SelectMany(c => c.Children.Count > 0 ? [c, .. c.Children] : new[] { c });
 
-    private static bool IsComment(Node node) => node.Children.Any(c => c.Name is "Field Name" or "Text");
+    internal static bool IsComment(Node node) => node.Children.Any(c => c.Name is "Field Name" or "Text");
 
-    private static string CommentText(Node node) =>
+    internal static string CommentText(Node node) =>
         node.Children.FirstOrDefault(c => c.Name == "Text") is { } text
             ? text.Value!.ToString()!
             : $"{Field(node, "Field Name")}={Field(node, "Value")}";
@@ -299,14 +302,14 @@ public partial class OggFixtureTests
         Assert.All(findings, f => Assert.True(f.Path is not null, $"The node of {f.Code} is not in the tree."));
     }
 
-    private static string Describe(IEnumerable<Finding> findings) => string.Join("; ", findings.Select(f => $"{f.Code}: {f.Message}"));
+    internal static string Describe(IEnumerable<Finding> findings) => string.Join("; ", findings.Select(f => $"{f.Code}: {f.Message}"));
 
-    private static Node? Find(Node node, string name) =>
+    internal static Node? Find(Node node, string name) =>
         node.Name == name ? node : node.Children.Select(c => Find(c, name)).FirstOrDefault(n => n is not null);
 
-    private static string? Field(Node node, string name) => node.Children.FirstOrDefault(c => c.Name == name)?.Value?.ToString();
+    internal static string? Field(Node node, string name) => node.Children.FirstOrDefault(c => c.Name == name)?.Value?.ToString();
 
-    private static string Count(int count, string singular, string plural) => $"{count} {(count == 1 ? singular : plural)}";
+    internal static string Count(int count, string singular, string plural) => $"{count} {(count == 1 ? singular : plural)}";
 
-    private static string Kind(NodeKind kind) => kind.ToString();
+    internal static string Kind(NodeKind kind) => kind.ToString();
 }

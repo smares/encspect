@@ -2,7 +2,7 @@ using System.Text.RegularExpressions;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // The encoder and the writer of a stream are resolved apart, each from the claims of its own role: a writer that
 // differs from the encoder is a fact, only two claims of one role can conflict, and each tag goes where its

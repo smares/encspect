@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Decoding;
 
 // The invariant the GUI's captions rest on (docs/design/spectral-analysis.md, "GUI"): a stream a parser reports through a codec route
 // (ParseStream, ParsePackets) or as its own format, with the codec of a registered decoder, starts a decoding session in every analysis,

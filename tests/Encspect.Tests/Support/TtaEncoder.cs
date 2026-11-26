@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
 using Encspect.Core;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // An encoder of TTA1 audio format 1, the inverse of the clean-room description the decoder follows (docs/development.md, "TTA decoding"), so that tests can
 // round-trip samples the encoders at hand never write (full-scale noise, long unary runs, every depth and channel count) and craft damage. It shares no code with

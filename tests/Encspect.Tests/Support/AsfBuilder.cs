@@ -3,7 +3,7 @@ using Encspect.Core;
 using Encspect.Formats.Asf;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // ASF files built in memory for the tests that need many packets: a header with one stream (the Stream
 // Properties Object of a fixture) and a Data Object whose packets each hold one payload, a whole media object.

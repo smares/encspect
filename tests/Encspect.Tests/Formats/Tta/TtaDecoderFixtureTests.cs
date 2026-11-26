@@ -2,8 +2,9 @@ using System.Text;
 using System.Text.Json;
 using Encspect.Core;
 using Encspect.Host;
+using Encspect.Tests.Formats.Flac;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Tta;
 
 // Decodes every TTA fixture with a hashing sink and holds the analyzer to its manifest: for the encoder-written files the samples and the MD5 of the signal
 // the encoder was given (decoded_samples, decoded_pcm_md5: crosscheck_tta_pcm.py confirms them with `tta -d` and FFmpeg), and the decode findings. It also checks

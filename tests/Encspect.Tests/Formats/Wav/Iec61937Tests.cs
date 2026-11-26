@@ -2,7 +2,7 @@ using System.Buffers.Binary;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Wav;
 
 // IEC 61937 data-bursts in the samples of a WAVE file: the fields of a burst, the routes to the codec parsers, what is no chain, and the bounds. The
 // fixtures' manifests (wav_model.py) check the bursts and findings of each file; these tests check fields and cases a file cannot.

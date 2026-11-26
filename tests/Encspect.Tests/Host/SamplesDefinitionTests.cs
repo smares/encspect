@@ -5,7 +5,7 @@ using Encspect.Host;
 using Encspect.Host.Measurement;
 using Encspect.Tests.Measurement;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // What a stream's samples and lost samples mean (docs/design/samples-definition.md): the figure's output, the checks every golden must
 // pass, the invariant between lost samples and what the decoder decodes, and one committed fixture per case of the rule, pinned by value.

@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Matroska;
 
 // "Container Samples" of a Matroska track is the length its blocks' timestamps give: a laced block holds several frames, so the last block's
 // step is its frames' share, not an average block.

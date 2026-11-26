@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
 using Encspect.Core;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Core;
 
 public class WaveFormatExTests
 {

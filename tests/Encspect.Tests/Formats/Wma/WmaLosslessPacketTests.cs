@@ -3,7 +3,7 @@ using Encspect.Formats.Asf;
 using Encspect.Formats.Wma;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Wma;
 
 // Windows Media Audio Lossless: short and cut media objects, the bits that finish a frame whose start was lost, the end of the stream and the length
 // prefix (docs/design/wma-lossless-format.md, "Media objects and packets", "Sequence numbers and loss", "Frame").

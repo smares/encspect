@@ -2,7 +2,7 @@ using System.Numerics;
 using Encspect.Formats.Ac3;
 using Encspect.Formats.Vorbis;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Decoding;
 
 // The integer code that replaced a platform math call in a parser (docs/design/lossy-decoders.md, "How it is held"), against the call it replaced.
 public class IntegerReplacementTests

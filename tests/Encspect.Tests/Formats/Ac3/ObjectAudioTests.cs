@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Ac3;
 
 // Object audio in E-AC-3 (ETSI TS 103 420): the addbsi extension, the EMDF containers in the auxiliary
 // data and skip fields with their JOC and OAMD payloads, dec3's extension, and what each finding

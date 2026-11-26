@@ -6,7 +6,7 @@ using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
 using System.Text.RegularExpressions;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Decoding;
 
 // One edge the boundary forbids. From is the outermost type the edge starts in (a parser type; for an inversion, the
 // Decoding type), To the type it reaches, Member where in From.
@@ -62,7 +62,11 @@ internal static partial class BoundaryScanner
     }
 
     // A namespace is decoding code where Decoding is one of its segments: X.Decoding and X.Decoding.Y, not X.DecodingTables.
-    public static bool IsDecodingNamespace(string ns) => ns.Split('.').Contains("Decoding", StringComparer.Ordinal);
+    // The tests' own folder namespace (Encspect.Tests.Decoding) is not decoding code; the control's types sit in Encspect.Tests.BoundarySamples.
+    public static bool IsDecodingNamespace(string ns) => ns != TestsFolder && !ns.StartsWith(TestsFolder + ".", StringComparison.Ordinal)
+        && ns.Split('.').Contains("Decoding", StringComparer.Ordinal);
+
+    private const string TestsFolder = "Encspect.Tests.Decoding";
 
     public static IReadOnlyList<BoundaryViolation> Scan(Assembly assembly, ScanPath disabled = ScanPath.None)
     {

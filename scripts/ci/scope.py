@@ -25,6 +25,7 @@ TESTS = "tests/Encspect.Tests"
 SHARED_TEST_FOLDERS = ("Host", "Decoding", "Measurement", "Core", "Cli")
 
 CLASS = re.compile(r"^(?:(?:public|internal)\s+)?(?:(?:sealed|static|abstract|partial)\s+)*class\s+(\w+)", re.MULTILINE)
+NAMESPACE = re.compile(r"^namespace\s+([\w.]+)", re.MULTILINE)
 TEST_METHOD = re.compile(r"^\s+\[(?:Fact|Theory)[^\]]*\](?:\s*\[[^\]]*\])*\s*public\s+(?:async\s+)?(?:void|Task|ValueTask)\s+(\w+)\s*\(", re.MULTILINE)
 
 
@@ -233,6 +234,19 @@ def only_classes(scope, shard, shards):
     return sorted(c for c in scope.only if c not in named)
 
 
+@functools.lru_cache(maxsize=None)
+def namespaces(root=ROOT):
+    """Test class -> its namespace, from the sources (a test class takes the namespace of its folder)."""
+    found = {}
+    for file in sources_of(root):
+        text = file.read_text(encoding="utf-8", errors="replace")
+        namespace = NAMESPACE.search(text)
+        if namespace:
+            for name, _, _ in class_extent(text):
+                found.setdefault(name, namespace.group(1))
+    return found
+
+
 def exclusion(scope, shard, shards):
     """The clauses of the filter that leave out of this shard the tests the scope excludes. A shard that names its classes
     needs only those of them; the rest shard already excludes the classes the others name."""
@@ -243,7 +257,8 @@ def exclusion(scope, shard, shards):
         return name in mine if mine is not None else name not in named
 
     clauses = [f"FullyQualifiedName!~.{c}." for c in scope.excluded_classes if counts(c)]
-    clauses += [f"FullyQualifiedName!=Encspect.Tests.{c}.{m}" for c, gone in sorted(scope.excluded_methods.items()) if counts(c) for m in gone]
+    where = namespaces()
+    clauses += [f"FullyQualifiedName!={where.get(c, 'Encspect.Tests')}.{c}.{m}" for c, gone in sorted(scope.excluded_methods.items()) if counts(c) for m in gone]
     return clauses
 
 

@@ -3,7 +3,7 @@ using Encspect.Core;
 using Encspect.Formats.Asf;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Asf;
 
 // The routes of ASF to MPEG audio (format tag 0x0055) and AC-3 (0x2000): the files ffmpeg's muxer wrote from the committed elementary streams
 // (make_external_asf_fixtures.py) have the stream of their source in the report and decode to the same samples as the source does, whatever

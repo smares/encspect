@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Formats.Wma;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Wma;
 
 // The nodes, statistics and series of Windows Media Audio Voice streams, read from the files the Windows Media Format
 // SDK's writer wrote and the hand-built ones: what the codec data, the packets, the superframes and the frames report, and that the nodes tile the

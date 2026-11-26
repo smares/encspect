@@ -3,8 +3,9 @@ using System.Text;
 using Encspect.Core;
 using Encspect.Formats.DtsHd;
 using Encspect.Host;
+using Encspect.Tests.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.DtsHd;
 
 // What the DTS-HD file parser promises that no one fixture shows: the sniff's classes against damage and against the other formats, the
 // end of the chunk chain, the BUILDVER claim, and a forced analysis of data that is no .dtshd file.

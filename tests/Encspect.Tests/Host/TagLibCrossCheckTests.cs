@@ -2,7 +2,7 @@ using Encspect.Core;
 using TagLib;
 using TagLib.Id3v2;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // Cross-checks the tag parsers against TagLib#, an independent implementation, on every
 // fixture: the same tag types must be found and the values both tools decode must agree.

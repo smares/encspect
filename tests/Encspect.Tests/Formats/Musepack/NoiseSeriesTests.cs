@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Musepack;
 
 // The numeric series "Noise-Substituted Channels" of Musepack SV7 and SV8 (docs/design/coding-graphs.md, "Musepack SV4 to SV8"): one value for each frame (SV8: each
 // audio packet) that has a coded bandwidth, with the same x values, which add up to the tally's figure where no frame is cut or damaged.

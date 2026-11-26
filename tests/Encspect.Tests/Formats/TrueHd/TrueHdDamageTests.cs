@@ -2,7 +2,7 @@ using Encspect.Core;
 using Encspect.Formats.TrueHd;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.TrueHd;
 
 // What the review of the TrueHD and MLP parser and decoder found, kept as tests: a decoder that fails a unit and then decodes on stale state, a damaged
 // unit next to the end of the read window, MLP the analyzer does not read, the figures of a stream that is not damaged but is not read, and the statistics.

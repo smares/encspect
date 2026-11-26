@@ -1,6 +1,6 @@
 using Encspect.Core;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Core;
 
 // The counts of wasted bits that FLAC and WavPack share, and the rule that reads lossyWAV's pattern from them.
 public class WastedBitsTallyTests

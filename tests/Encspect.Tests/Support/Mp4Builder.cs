@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // MP4 files built in memory for the tests that need many boxes, entries or samples: a movie of one audio track whose sample tables
 // and boxes the caller chooses, in front of or behind the media data.

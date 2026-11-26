@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // Tests that hammer one list with more threads than the machine has cores, or force collections while
 // threads read. They run alone: beside other tests that keep the cores busy, a list that reads its hint

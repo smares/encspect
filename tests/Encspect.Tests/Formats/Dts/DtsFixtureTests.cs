@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Encspect.Core;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Dts;
 
 // Checks every DTS fixture against its manifest (make_dts_fixtures.py, make_external_dts_fixtures.py,
 // confirmed by crosscheck_dts_fixtures.py): the format, every frame and gap, the top-level regions

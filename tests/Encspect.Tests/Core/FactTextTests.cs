@@ -2,7 +2,7 @@ using System.Buffers.Binary;
 using System.Text;
 using Encspect.Core;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Core;
 
 // The reader of lossyWAV's fact chunk text: the bounds that keep a damaged or hostile body from becoming a long name or a long walk.
 public class FactTextTests

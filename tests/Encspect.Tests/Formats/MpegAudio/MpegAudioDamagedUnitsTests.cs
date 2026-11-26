@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.MpegAudio;
 
 // Frames whose CRC-16 fails (docs/design/damaged-units.md): MPEG audio's parser flags a protected frame whose CRC does not match, and its decoder withholds the span
 // after it that a gap's reset would withhold too (1,056 samples of Layer III, 480 of Layers I and II), since the decoder keeps the overlap and the synthesis history the

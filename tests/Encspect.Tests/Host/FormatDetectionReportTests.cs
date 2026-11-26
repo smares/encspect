@@ -2,7 +2,7 @@ using System.Text;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // What the report writers show of the format detection: the alternatives and the forced format.
 public class FormatDetectionReportTests

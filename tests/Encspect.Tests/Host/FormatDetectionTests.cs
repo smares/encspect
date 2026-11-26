@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // How the host ranks the formats that match, reports the others whose evidence is real, and runs the
 // format a caller forces.

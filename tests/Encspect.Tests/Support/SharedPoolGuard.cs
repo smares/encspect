@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // The memory tests add what the shared array pools drop back into their readings (PoolAccounting), so a drop does not move them. This
 // guard, made for each memory test, first registers the pools of the assemblies loaded since the last test (so that registering never

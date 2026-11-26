@@ -1,4 +1,4 @@
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // The committed lossyWAV files with their text changed, for the fact text no lossyWAV version is known to write.
 internal static class LossyWavFiles

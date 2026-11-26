@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Dts;
 
 // The lossless extension's channel set sub-headers, its navigation index and the DTS:X signal after its band data, field by field
 // (ETSI TS 102 114 8.3.2, 8.4.2; FFmpeg's dca_xll.c), for the hand-built fixtures; the real files are checked by check_dts_hd_samples.py.

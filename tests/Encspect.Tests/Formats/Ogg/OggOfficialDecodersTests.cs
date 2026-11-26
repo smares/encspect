@@ -3,7 +3,7 @@ using System.Text.Json;
 using Encspect.Core;
 using Xunit.Abstractions;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Ogg;
 
 // Holds the analyzer's figures that the official decoders speak to to tests/fixtures/ogg/official-decoders.json (docs/design/official-decoder-crosschecks.md,
 // "Records and the comparison"): for each fixture the reference figure of each stage (libopus and libvorbis fed packet by packet at the coded stage, "Coded Samples";

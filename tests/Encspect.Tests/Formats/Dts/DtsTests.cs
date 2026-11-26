@@ -2,7 +2,7 @@ using Encspect.Core;
 using Encspect.Formats.Dts;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Dts;
 
 // What the DTS parser promises that no one fixture shows: the sync search against the other formats' files and
 // the junk in front of its own, and the four forms of the core stream reading to the same fields.

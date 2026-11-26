@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Encspect.Core;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Mp4;
 
 // Checks every MP4 and raw AAC fixture against its manifest: the boxes with their offsets and sizes,
 // the streams the codecs report, every access unit or frame, the fields the manifest names and exactly

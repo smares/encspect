@@ -3,7 +3,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Encspect.Core;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // Holds every category series of a report equal to the tally node it is anchored to, by the table in
 // category-summary.json (docs/design/coding-graphs.md, "The summary over the stream"). The tally covers a region and the

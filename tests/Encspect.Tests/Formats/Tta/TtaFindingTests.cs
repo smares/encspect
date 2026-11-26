@@ -2,7 +2,7 @@ using Encspect.Core;
 using Encspect.Formats.Tta;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Tta;
 
 // What the TTA format parser does with input the fixtures do not hold: how its sniff ranks a header, the second version's signature and data
 // that is none, a forced parse of data that begins with no signature, the end the stream declares, and the findings the writer of a tag raises.

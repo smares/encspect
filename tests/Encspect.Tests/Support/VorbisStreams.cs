@@ -2,7 +2,7 @@ using Encspect.Core;
 using Encspect.Formats.Vorbis;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // Helpers for the Vorbis tests: the packets of an Ogg file's first stream, a bit writer in Vorbis's order, and a sink that keeps what a decoder writes.
 internal static class VorbisStreams

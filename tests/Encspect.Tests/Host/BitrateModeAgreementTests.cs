@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // One rule in every format: the stream's isVbr is "variable" by the same decision as the stream's "Bitrate Mode" statistic (the mode the stream or its
 // container states, else the units' own bitrates; BitrateDistribution.IsVariable). Checked over the golden reports of every fixture.

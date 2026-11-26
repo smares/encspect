@@ -1,7 +1,7 @@
 using System.Text;
 using Encspect.Formats.Tak;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // Builds TAK files object by object from takStream.pas and the departures docs/formats/tak.md lists (an object's size counts its CRC-24, the wave data has one CRC-24 at its end,
 // the End object has neither a CRC-24 nor data, the padding has no CRC-24), so a test changes one thing and nothing else. The frames hold bytes in place of coded audio: the

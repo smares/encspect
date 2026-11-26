@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Ogg;
 
 // Packets on an Ogg page whose CRC fails (docs/design/damaged-units.md, decision 2): the container marks every packet with a byte on the page (MappedBytes.FailsChecksum), the codec
 // parsers hand them on as CodedFrame.FailsChecksum, and the measurements leave their positions out as withheld samples ("checksum failed"), with the span after them that the

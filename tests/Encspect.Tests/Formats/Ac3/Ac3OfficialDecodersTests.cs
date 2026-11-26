@@ -3,7 +3,7 @@ using System.Text.Json;
 using Encspect.Core;
 using Xunit.Abstractions;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Ac3;
 
 // Holds the analyzer's AC-3 and E-AC-3 sample counts to tests/fixtures/ac3/official-decoders.json (docs/design/official-decoder-crosschecks.md, "Records and the comparison"): for each
 // fixture the total of Core Audio's AudioConverter (macOS), fed the units of the file one at a time, with the constant by which that decoder is short of the coded stage (288 frames

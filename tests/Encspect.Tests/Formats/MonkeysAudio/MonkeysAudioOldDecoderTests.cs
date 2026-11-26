@@ -2,7 +2,7 @@ using System.Buffers.Binary;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.MonkeysAudio;
 
 // The files before version 3.93 that the SDK's old decoder (Old/UnMACOld.cpp) refuses or reads as something else are not decoded, with the reason: each case below
 // changes one field of a file of the legacy-* fixtures (make_legacy_monkeys_audio_fixtures.py) and says what the decoder must answer.

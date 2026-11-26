@@ -2,7 +2,7 @@ using System.Buffers.Binary;
 using Encspect.Core;
 using Encspect.Formats.Wma;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // A Windows Media Audio Professional or Lossless stream of a fixture, handed to its codec parser as an ASF file would hand it: the media objects
 // (which a test may change), the WAVEFORMATEX and the codec data. The result is the parser's node, stream, and findings.

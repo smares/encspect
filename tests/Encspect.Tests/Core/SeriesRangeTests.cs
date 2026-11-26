@@ -3,7 +3,7 @@ using System.Text.Json;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Core;
 
 // The declared range of a series (docs/design/frame-map.md, "Declared ranges"): the model's validation and the JSON writer.
 public class SeriesRangeTests

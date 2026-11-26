@@ -4,7 +4,7 @@ using Encspect.Core;
 using Encspect.Host;
 using Encspect.Host.Measurement;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Vorbis;
 
 // How the Vorbis parser counts its start and end trimming, against what libvorbis counts.
 public class VorbisTrimTests

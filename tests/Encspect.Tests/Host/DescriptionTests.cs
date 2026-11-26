@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // Every node a parser or the host makes says what it is (Node.Description), and every topic a
 // node points to exists (Node.Topic). Checked over the trees of every fixture with the default

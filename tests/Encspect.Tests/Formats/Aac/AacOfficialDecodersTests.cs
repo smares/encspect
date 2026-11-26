@@ -3,7 +3,7 @@ using System.Text.Json;
 using Encspect.Core;
 using Xunit.Abstractions;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Aac;
 
 // Holds the analyzer's AAC sample counts to tests/fixtures/{aac,adts,mp4}/official-decoders.json (docs/design/official-decoder-crosschecks.md, "Records and the comparison"):
 // for each fixture the reference figure of the coded stage, which is what Fraunhofer's FDK AAC decoder (2.0.2, concealment method 1) output when it was fed the units of the

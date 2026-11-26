@@ -2,7 +2,7 @@ using System.Globalization;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // Streams of one playback group play at the same time, so the summary and the CSV count the longest once; streams of different
 // groups and streams without one follow one another and add up.
@@ -159,7 +159,7 @@ public class PlaybackGroupTests
         byte[][] frames = [.. sources.Select(f =>
         {
             byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, f));
-            return source[..Formats.Ac3.SyncFrame.Read(source).FrameLength];
+            return source[..Encspect.Formats.Ac3.SyncFrame.Read(source).FrameLength];
         })];
         byte[][] units = Eac3AccessUnits();
         byte[] rate = new byte[8];
@@ -185,7 +185,7 @@ public class PlaybackGroupTests
         byte[][] frames = [.. sources.Select(f =>
         {
             byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, f));
-            return source[..Formats.Ac3.SyncFrame.Read(source).FrameLength];
+            return source[..Encspect.Formats.Ac3.SyncFrame.Read(source).FrameLength];
         })];
         byte[] entry = Mp4Builder.Box("ac-3", [new byte[6], [0, 1], new byte[8], [0, 2, 0, 16, 0, 0, 0, 0, 0xBB, 0x80, 0, 0]]);
         byte[] data = Mp4Builder.FileWithMoov(
@@ -216,9 +216,9 @@ public class PlaybackGroupTests
         var units = new List<byte[]>();
         int start = 0;
         int at = 0;
-        while (at + Formats.Ac3.SyncFrame.Length <= source.Length)
+        while (at + Encspect.Formats.Ac3.SyncFrame.Length <= source.Length)
         {
-            var frame = Formats.Ac3.SyncFrame.Read(source.AsSpan(at));
+            var frame = Encspect.Formats.Ac3.SyncFrame.Read(source.AsSpan(at));
             int length = frame.FrameLength;
             if (frame.SubstreamId == 0 && frame.StreamType == 0 && at > start)
             {

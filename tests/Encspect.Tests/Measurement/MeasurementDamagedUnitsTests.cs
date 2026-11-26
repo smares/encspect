@@ -1,6 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 using Encspect.Host.Measurement;
+using Encspect.Tests.Decoding;
 
 namespace Encspect.Tests.Measurement;
 

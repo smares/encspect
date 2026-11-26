@@ -4,7 +4,7 @@ using Encspect.Core;
 using Encspect.Formats.OptimFrog;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.OptimFrog;
 
 // Checks every OptimFROG fixture against its manifest (import_optimfrog_fixtures.py, worked out by optimfrog_model.py, a reading of the author's
 // specification apart from the analyzer, and confirmed by crosscheck_optimfrog_fixtures.py): the blocks, the main block's fields, every data block with its

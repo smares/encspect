@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Flac;
 
 // The series of the concept "Prediction" (docs/design/coding-graphs.md, "Prediction"): FLAC's subframe tallies as category series and numeric series, and the
 // predictor order or passes of ALAC, TrueHD and WavPack under the same concept. CategorySummaryTests holds each category series equal to its tally on every fixture.

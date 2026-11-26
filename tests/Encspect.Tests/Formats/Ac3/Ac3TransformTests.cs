@@ -1,6 +1,6 @@
 using Encspect.Formats.Ac3.Decoding;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Ac3;
 
 // The tables and transforms of the AC-3 decoder against the specification: the window of A/52:2018 Table 7.33 (copied from the specification, five digits each), and the
 // inverse transforms of 7.9.4 computed as the pseudo code writes them, with the sums over k and n done directly, in double precision.

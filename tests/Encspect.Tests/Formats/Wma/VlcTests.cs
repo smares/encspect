@@ -1,6 +1,6 @@
 using Encspect.Formats.Wma;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Wma;
 
 // Every code of every variable-length code table the WMA parsers read, read back as the symbol the table gives it
 // and with the length its code has, whatever bits follow. The high-band gain table has symbols below zero.

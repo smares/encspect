@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // The claims a codec parser makes (the comment of a Vorbis stream) are about its stream: they stay with it, and the claims a container makes about
 // one stream (the route's claims) reach that stream's codec parser alone.

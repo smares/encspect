@@ -5,7 +5,7 @@ using Encspect.Core;
 using Encspect.Formats.OptimFrog;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // The host's companion files (docs/design/correction-files.md): where the host looks (CompanionSource), how the file is prepared and reported
 // (Report.Companions), and how the pairing reads in the findings, the text, the JSON and the CSV. OptimFROG's pair is the smallest consumer: its parser asks

@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // The format detection takes the evidence, never the order of the parser list: every fixture, as it is
 // and with random leading bytes of two lengths in front of it, is detected with the parsers in

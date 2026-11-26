@@ -2,7 +2,7 @@ using System.Buffers.Binary;
 using Encspect.Core;
 using Encspect.Formats.Wma;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Wma;
 
 // Windows Media Audio Professional: what the frame-level reader finds in the committed fixtures (the figures of docs/design/wma-pro-format.md,
 // which ffmpeg's decoder confirms through crosscheck_asf_fixtures.py), and what it does with damaged packets.

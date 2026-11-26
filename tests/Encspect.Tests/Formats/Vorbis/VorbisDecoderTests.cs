@@ -3,7 +3,7 @@ using Encspect.Formats.Vorbis;
 using Encspect.Formats.Vorbis.Decoding;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Vorbis;
 
 // The reconstruction of the Vorbis decoder: the transform and the windows against their definitions, and the decoder's output against its own rules for refused
 // packets, lost pages and the overlap of blocks of different sizes. Correctness against libvorbis is crosscheck_vorbis_pcm.py's; the hash of each fixture's samples is the

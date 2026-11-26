@@ -1,6 +1,6 @@
 using Encspect.Core;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Core;
 
 // BitrateDistribution and UnitCategoryTally, the helpers that the formats with units of varying size share.
 public class SharedTallyTests

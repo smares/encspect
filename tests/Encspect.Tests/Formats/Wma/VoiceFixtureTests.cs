@@ -2,7 +2,7 @@ using System.Text.Json;
 using Encspect.Core;
 using Encspect.Formats.Wma;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Wma;
 
 // The hand-built Windows Media Audio Voice fixtures (make_voice_fixtures.py, written bit by bit by voice_model.py) hold what the writer put
 // in them: the manifest lists, for each superframe, the frame types of its three frames and the samples it states. The analyzer must read

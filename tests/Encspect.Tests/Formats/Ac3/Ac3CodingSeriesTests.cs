@@ -1,8 +1,9 @@
 using System.Globalization;
 using System.Text.Json;
 using Encspect.Core;
+using Encspect.Tests.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Ac3;
 
 // The coding series of an AC-3 or E-AC-3 stream (docs/design/coding-graphs.md): the block switching, coupling, rematrixing and spectral
 // extension of every audio block read, and the coded bandwidth of every program frame (an AC-3 syncframe, or an E-AC-3 independent frame with

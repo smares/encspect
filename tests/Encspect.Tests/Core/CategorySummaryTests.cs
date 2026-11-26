@@ -1,6 +1,7 @@
 using Encspect.Core;
+using Encspect.Tests.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Core;
 
 // A category series carries the counts of the tally node it is anchored to, under the same names, and a test holds the two
 // equal on every fixture from a table (category-summary.json). No parser produces a series yet, so the table is empty and the

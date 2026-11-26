@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Formats.Opus;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Opus;
 
 // The final range coder state of every packet of RFC 6716's and RFC 8251's test vectors (RFC 6716, section 6: a conforming decoder ends each frame with the state the
 // encoder ended with; the .bit files of opus_demo store it after each packet's length). The vectors are downloaded, never committed (their license is unverified,

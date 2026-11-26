@@ -483,8 +483,8 @@ class ScopeTests(unittest.TestCase):
         for never in ("DescriptionTests", "FindingCoverageTests", "DecoderDeterminismTests", "AnalyzerTests", "MeasurementDeterminismTests"):
             self.assertNotIn(never, rest)
         corrupt_b = next(e["filter"] for e in matrix if e["shard"] == "corrupt-b")
-        self.assertIn("FullyQualifiedName!=Encspect.Tests.MemoryTests.ManySpeexPacketsStayCompact", corrupt_b)
-        self.assertNotIn("FullyQualifiedName!=Encspect.Tests.MemoryTests.ManyWavPackBlocksStayCompact", corrupt_b)
+        self.assertIn("FullyQualifiedName!=Encspect.Tests.Host.MemoryTests.ManySpeexPacketsStayCompact", corrupt_b)
+        self.assertNotIn("FullyQualifiedName!=Encspect.Tests.Host.MemoryTests.ManyWavPackBlocksStayCompact", corrupt_b)
 
     def test_a_codec_change_scopes_to_the_containers_that_carry_it_and_a_tag_change_to_what_holds_the_tag(self):
         self.assertEqual(scoped("src/Encspect.Formats.Opus/OpusParser.cs")[0].selected, {"Opus", "Ogg", "Matroska", "Mp4", "VorbisComment"})

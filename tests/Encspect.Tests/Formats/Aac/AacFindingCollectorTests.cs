@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Formats.Aac;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Aac;
 
 public class AacFindingCollectorTests
 {

@@ -2,7 +2,7 @@ using System.Buffers.Binary;
 using System.Security.Cryptography;
 using Encspect.Core;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // Takes the frames of a Monkey's Audio file of the current format apart, in the order of the stream they are coded in (the bytes of every aligned word
 // are reversed in the file), and puts frames together again into a file with a descriptor, header and seek table that are right, so a test changes

@@ -4,7 +4,7 @@ using System.Diagnostics.Tracing;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // The bytes the shared array pools (ArrayPool<T>.Shared) have dropped since the accounting started (with the first memory test), which the
 // memory tests add to every reading of the live heap (MemoryTestBase.Collected): a dropped array reads as if it were still there, so the
@@ -269,7 +269,7 @@ internal sealed class PoolAccounting : EventListener
             .Select(method => $"{method!.DeclaringType?.FullName}.{method.Name}");
         string[] all = [.. names];
         int caller = Array.FindLastIndex(all, name => name.Contains("ArrayPool", StringComparison.Ordinal) || name.Contains("System.Diagnostics.Tracing.", StringComparison.Ordinal)
-            || name.StartsWith("Encspect.Tests.PoolAccounting", StringComparison.Ordinal) || name.StartsWith("Encspect.Tests.SharedPoolGuard", StringComparison.Ordinal)) + 1;
+            || name.StartsWith("Encspect.Tests.Support.PoolAccounting", StringComparison.Ordinal) || name.StartsWith("Encspect.Tests.Support.SharedPoolGuard", StringComparison.Ordinal)) + 1;
         return string.Join(" < ", all.Skip(caller).Take(count));
     }
 

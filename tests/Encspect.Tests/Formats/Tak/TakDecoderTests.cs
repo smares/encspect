@@ -2,10 +2,11 @@ using Encspect.Core;
 using Encspect.Formats.Tak;
 using Encspect.Formats.Tak.Decoding.Lossless;
 using Encspect.Host;
-using Builder = Encspect.Tests.TakBuilder;
-using Encoder = Encspect.Tests.TakEncoder;
+using Encspect.Tests.Decoding;
+using Builder = Encspect.Tests.Support.TakBuilder;
+using Encoder = Encspect.Tests.Support.TakEncoder;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Tak;
 
 // The TAK decoder against the worked examples of the clean-room description (the residual codes, the filter's coefficients and the prediction they give) and against
 // TakEncoder, an inverse of the same description, for every residual mode, prediction order, difference order, wasted bits and stereo mode, the paired entries of the channel

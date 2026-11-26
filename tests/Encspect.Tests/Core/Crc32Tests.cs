@@ -2,7 +2,7 @@ using Encspect.Core;
 using MatroskaCrc = Encspect.Formats.Matroska.Crc32;
 using MusepackCrc = Encspect.Formats.Musepack.Crc32;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Core;
 
 public class Crc32Tests
 {

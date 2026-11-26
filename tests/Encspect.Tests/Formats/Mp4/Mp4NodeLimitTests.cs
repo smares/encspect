@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Mp4;
 
 // What the parser does with the boxes past its node budget (Mp4Parser.MaxNodes): they are read and not shown, and everything the report says about them
 // still points to a node of the tree.

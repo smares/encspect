@@ -4,7 +4,7 @@ using Encspect.Formats.MonkeysAudio;
 using Encspect.Formats.MonkeysAudio.Decoding;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.MonkeysAudio;
 
 // The Gate 3 review of Monkey's Audio (monkeys-audio-1 to -11): inputs built from a fixture's frames, each of which failed before the fix.
 public class MonkeysAudioReviewFixTests

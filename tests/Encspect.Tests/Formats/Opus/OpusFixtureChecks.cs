@@ -1,15 +1,16 @@
 using System.Globalization;
 using System.Text.Json;
 using Encspect.Core;
+using static Encspect.Tests.Formats.Ogg.OggFixtureTests;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Opus;
 
 // The Opus part of the Ogg fixture manifests (OggFixtureTests).
-public partial class OggFixtureTests
+internal static class OpusFixtureChecks
 {
     // Opus: OpusHead's fields, the comment and the data after it, every audio packet with each
     // stream's TOC, the statistics and the encoder.
-    private static void CheckOpus(JsonElement opus, Node stream, string where)
+    internal static void CheckOpus(JsonElement opus, Node stream, string where)
     {
         if (opus.GetProperty("header").ValueKind == JsonValueKind.Object)
         {

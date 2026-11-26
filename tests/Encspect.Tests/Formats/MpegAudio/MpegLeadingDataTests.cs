@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.MpegAudio;
 
 // Streams behind more than a megabyte of leading bytes, built in memory rather than committed as
 // fixtures. The search for the first frame looks 1 MiB past any leading zero bytes.

@@ -2,7 +2,7 @@ using System.Text;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Decoding;
 
 // Damaged and absurd PCM files analyzed with decoding and measuring: a finding, never an exception or a hang (CLAUDE.md, "Architecture rules"). The route reads
 // whole sample frames of what the file holds, so a data chunk cut short, a size that is not a multiple of the frame, a block alignment that disagrees with the

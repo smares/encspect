@@ -3,7 +3,7 @@ using System.Text.Json;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // The files of the private sample kit that import_sample_kit_fixtures.py took into tests/fixtures/<format>/sample-kit (docs/development.md, "Sample kit
 // fixtures"): encodes by Nero Burning ROM, neroAacEnc, qaac, iTunes, Winamp and Windows' Media Foundation encoders. Each has a provenance record, a manifest of

@@ -1,6 +1,6 @@
 using Encspect.Formats.MonkeysAudio.Decoding;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.MonkeysAudio;
 
 // The filter of 16 taps of the old high predictor against a plain loop; the 128-bit, 256-bit and scalar entries are all reached, whatever the processor.
 public sealed class OldVectorsTests

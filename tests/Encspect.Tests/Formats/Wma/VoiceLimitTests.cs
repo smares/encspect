@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Wma;
 
 // A Voice stream is described up to 262,144 media objects, 262,144 packets and 524,288 superframes; what lies beyond is not read, and one info
 // finding says so (wma.records-limit). The statistics and the stream's figures cover what was read.

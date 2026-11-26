@@ -1,6 +1,6 @@
 using Encspect.Formats.Speex;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Speex;
 
 // The reading of a frame's parameters takes exactly the bits libspeex's tables say each submode takes (bits_per_frame of modes.c and modes_wb.c), and keeps the values it reads.
 public class SpeexSyntaxTests

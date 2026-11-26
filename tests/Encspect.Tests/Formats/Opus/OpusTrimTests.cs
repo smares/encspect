@@ -2,7 +2,7 @@ using Encspect.Core;
 using Encspect.Host;
 using Encspect.Host.Measurement;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Opus;
 
 // What the report states for an Opus stream (its Samples: the decoded samples less the pre-skip and the end trimming) is what the measurements keep and skip: measured +
 // the samples lost + the samples withheld (docs/design/samples-definition.md). The trims come first: positions the syntax trims are not samples of the stream, so a span a

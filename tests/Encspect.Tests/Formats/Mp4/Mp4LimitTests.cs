@@ -2,7 +2,7 @@ using Encspect.Core;
 using Encspect.Formats.Mp4;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Mp4;
 
 public class Mp4LimitTests
 {

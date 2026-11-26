@@ -18,6 +18,7 @@
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />
+    <Using Include="Encspect.Tests.Support" />
   </ItemGroup>
   <ItemGroup>
     <!-- Thread pool threads do not exit when idle: an exiting thread's arrays in the shared array pools would leave the heap with no event

@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Matroska;
 
 // A file cut inside a laced block: the lace is valid, the file is cut. The frames that are whole in the file are handed to the codec
 // parser, the one the file ends inside as cut (its samples are lost), the frames after it not at all, and no `matroska.lacing-invalid`

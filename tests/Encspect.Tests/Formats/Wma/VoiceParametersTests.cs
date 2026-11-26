@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Formats.Wma;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Wma;
 
 // The configuration of Windows Media Audio Voice: the checks of the codec data and the widths that follow from the sample rate
 // (docs/design/wma-voice-format.md, "Codec data").

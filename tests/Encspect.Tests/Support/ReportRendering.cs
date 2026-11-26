@@ -2,7 +2,7 @@ using System.Text;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // A report written every way the front ends write it, with the explanations (descriptions and topics),
 // which Fixtures.ToJson leaves out: what two readings of one report, or of two analyses of one file,

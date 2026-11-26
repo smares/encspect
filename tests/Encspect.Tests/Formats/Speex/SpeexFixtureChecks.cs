@@ -1,13 +1,14 @@
 using System.Globalization;
 using System.Text.Json;
 using Encspect.Core;
+using static Encspect.Tests.Formats.Ogg.OggFixtureTests;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Speex;
 
 // The Speex part of the Ogg fixture manifests (OggFixtureTests).
-public partial class OggFixtureTests
+internal static class SpeexFixtureChecks
 {
-    private static void CheckSpeex(JsonElement speex, Node stream, string where)
+    internal static void CheckSpeex(JsonElement speex, Node stream, string where)
     {
         Node header = stream.Children.Single(c => c.Name == "Speex Header");
         if (speex.GetProperty("header").ValueKind == JsonValueKind.Object)

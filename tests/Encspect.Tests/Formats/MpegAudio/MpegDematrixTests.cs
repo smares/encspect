@@ -1,6 +1,6 @@
 using Encspect.Formats.MpegAudio.Decoding;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.MpegAudio;
 
 // The dematrixing equations of the MPEG-2 multichannel extension (ISO/IEC 13818-3 2.5.3.2.1.1) as the decoder holds them: for every configuration, dematrix procedure and
 // tc_allocation, signals matrixed forward (the base channels Lo and Ro from the presentation channels, the additional transmission channels as tc_allocation names

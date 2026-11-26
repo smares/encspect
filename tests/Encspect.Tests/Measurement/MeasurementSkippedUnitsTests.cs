@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Measurement;
 
 // Every sample a report states is measured, counted lost, or explained by a finding (docs/design/samples-definition.md): units the decoder does not
 // decode, because libwavpack reads past them or the decoder does not follow a change of the stream, are handed to the decoding as unreadable ones.

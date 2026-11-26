@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Ac3;
 
 // A mantissa code that its quantizer has no value for (7 of the 7-level quantizer, 15 of the 15-level one: Tables 7.21 and 7.23) is a finding of its own, worded without the
 // numbered checks of A/52 7.10.2, which do not list it.

@@ -4,7 +4,7 @@ using System.Text.Json;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Flac;
 
 // Decodes every FLAC fixture with a hashing sink and holds the analyzer to its manifest (the samples and the MD5 of the canonical layout that
 // flac_model.py's decoder gives, which crosscheck_flac_fixtures.py confirms with flac and FFmpeg, and the verification by the rule of

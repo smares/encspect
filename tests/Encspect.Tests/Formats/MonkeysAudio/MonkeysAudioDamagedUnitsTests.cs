@@ -2,7 +2,7 @@ using Encspect.Core;
 using Encspect.Formats.MonkeysAudio.Decoding;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.MonkeysAudio;
 
 // Frames whose CRC fails (docs/design/damaged-units.md): the CRC is known only after the frame is decoded, so the decoder holds every frame until it is
 // (the 24-bit retry's machinery, up to 2^23 samples over all channels; a larger frame is decoded twice) and reports a failed frame to the measurements

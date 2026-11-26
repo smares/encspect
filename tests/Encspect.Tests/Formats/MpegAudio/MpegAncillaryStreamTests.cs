@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.MpegAudio;
 
 // The ancillary data rules of docs/formats/mpeg-audio.md, "Ancillary data", on streams built in
 // memory: each stream of a region has its own signature, counts and Original File Length block, and

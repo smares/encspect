@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Ac3;
 
 // Random bytes after the audio blocks (the unused bits and auxiliary data of frames with the adaptive hybrid
 // transform and of plain ones) with the EMDF sync word planted at random bit positions are no container: the structural

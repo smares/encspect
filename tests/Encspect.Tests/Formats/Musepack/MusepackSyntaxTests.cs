@@ -1,6 +1,6 @@
 using Encspect.Formats.Musepack;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Musepack;
 
 // The Huffman tables of the entropy pass (scripts/fixtures/musepack_tables.py writes them from libmpcdec's sources): each is searched as libmpcdec's decoder searches it, and the
 // lookup on the first 6 bits that answers the short codes changes no result.

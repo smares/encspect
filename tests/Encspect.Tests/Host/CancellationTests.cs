@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // Cancellation and progress through the default parsers, on a file of a few MiB of MPEG or AC-3
 // frames.

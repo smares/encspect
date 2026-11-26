@@ -2,7 +2,7 @@ using System.Buffers.Binary;
 using Encspect.Core;
 using Encspect.Formats.Wma;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Wma;
 
 // One damaged or unusual stream for each finding the Windows Media Audio parsers emit: the media objects of a
 // fixture with a field changed, handed to the parser as an ASF file would hand them, with the configuration the

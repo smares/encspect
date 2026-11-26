@@ -3,7 +3,7 @@ using Encspect.Formats.Ogg;
 using Encspect.Host;
 using Encspect.Tags.VorbisComment;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Ogg;
 
 // The Ogg parser's sync and declared end, the packets it hands a codec with their granule
 // positions, and the Vorbis comment through both forms of the ParseTag route.

@@ -4,8 +4,9 @@ using System.Text.Json;
 using Encspect.Core;
 using Encspect.Formats.TrueHd;
 using Encspect.Host;
+using Encspect.Tests.Formats.Flac;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.TrueHd;
 
 // Decodes every Dolby TrueHD and MLP fixture with a hashing sink and holds the analyzer to its manifest: the samples and the MD5 of the canonical layout
 // that FFmpeg's decoder gives (which crosscheck_truehd_fixtures.py confirms), the verification by the rule of docs/design/decoders.md, and the findings the

@@ -1,6 +1,6 @@
 using Encspect.Formats.MpegAudio;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.MpegAudio;
 
 // The side information check of MPEG audio, held to the code it replaced.
 public class MpegSpeedPathTests

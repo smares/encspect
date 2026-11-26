@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Formats.Vorbis;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Vorbis;
 
 // The setup model and the walk of the audio packets (the entropy pass): codebooks as the specification assigns their codewords, libvorbis's refusals, and the
 // figures the walk gives, which the manifests' independent Python walk (scripts/fixtures/vorbis_walk.py) holds for every fixture.

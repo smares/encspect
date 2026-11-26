@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Tags.VorbisComment;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Tags.VorbisComment;
 
 // The Vorbis comment tag parser: read from bytes held whole, and the counting of its findings.
 public class VorbisCommentTests

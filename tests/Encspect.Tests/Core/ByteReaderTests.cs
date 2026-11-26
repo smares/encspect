@@ -1,7 +1,7 @@
 using System.IO.Compression;
 using Encspect.Core;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Core;
 
 public class ByteReaderTests
 {

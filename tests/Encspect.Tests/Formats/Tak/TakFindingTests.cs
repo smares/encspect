@@ -1,9 +1,9 @@
 using Encspect.Core;
 using Encspect.Formats.Tak;
 using Encspect.Host;
-using Builder = Encspect.Tests.TakBuilder;
+using Builder = Encspect.Tests.Support.TakBuilder;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Tak;
 
 // What the TAK format parser does with input the fixtures do not hold: how its sniff ranks a stream ID, the end the last frame info declares, the walk's rule for the
 // end of the metadata (a frame whose header CRC-24 holds, never a sync word alone), the CRC-24 comparisons, and each finding the walk and the checks raise.

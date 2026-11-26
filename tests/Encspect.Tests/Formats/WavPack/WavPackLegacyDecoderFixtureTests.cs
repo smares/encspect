@@ -3,7 +3,7 @@ using System.Text.Json;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.WavPack;
 
 // Decodes every WavPack fixture of versions 1 to 3 with a hashing sink. The encoder-written files' PCM must match the MD5 of the original decoder's output stored in
 // the manifest (each release's own unpacker: WVUNPACK 1.0 to 3.4 under DOSBox, wvunpack 3.97 on Windows); every file's verification, samples, PCM MD5 and decode findings are held to

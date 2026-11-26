@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // Not in the "Thread hammers" collection: it forces no collections and needs no idle machine, so it
 // runs beside the other tests.

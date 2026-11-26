@@ -2,7 +2,7 @@ using System.Buffers.Binary;
 using System.Security.Cryptography;
 using Encspect.Core;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // Hashes what a decoder writes, as the .decode.json goldens of lossy fixtures hold it (pcmSha256, docs/design/lossy-decoders.md, decision 14): SHA-256 over
 // the blocks' samples in the canonical layout (CanonicalPcm: interleaved, little-endian, floats as IEEE 754 singles), in stream order, with the new

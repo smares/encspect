@@ -14,10 +14,12 @@ using Encspect.Formats.Tta.Decoding;
 using Encspect.Formats.Vorbis.Decoding;
 using Encspect.Formats.WavPack.Decoding;
 using Encspect.Host;
+using Encspect.Tests.Formats.TrueHd;
+using Encspect.Tests.Host;
 using Xunit.Abstractions;
 using TrueHdDecoder = Encspect.Formats.TrueHd.Decoding.TrueHdDecoder;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Decoding;
 
 // Holds every decoder to the time per work unit that the budget's bounds assume (docs/design/decoders.md, "How a decoder that
 // under-reports is caught"). A decoder charges the work it does (DecodeContext.AddWork); if it charges too little for a stage, a crafted file

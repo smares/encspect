@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Ci;
 
 // A folder committed to the root by accident (matroska-specs, in #226) stays unnoticed in review; the root holds
 // only what is listed here, so adding an entry is a decision made in this file.

@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Ci;
 
 // The "tags" table of scripts/ci/areas.json lists, per tag parser's area, the areas whose tests reach it, which a pull request that changes the tag parser selects. The goldens say
 // where the host finds each tag, so a folder whose goldens hold the tag has its first area in the tag's list, or a change to the tag parser would pass without running that format's

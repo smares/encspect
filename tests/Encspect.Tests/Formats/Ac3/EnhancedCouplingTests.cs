@@ -1,6 +1,6 @@
 using Encspect.Formats.Ac3.Decoding;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Ac3;
 
 // Enhanced coupling's reconstruction of A/52:2018 Annex E 3.5.5 against what its construction implies: the coupling channel is moved to a complex spectrum and back through
 // the lapped transform of the blocks around the current one, so with an amplitude of 1, an angle of 0 and no chaos it returns the current block's coefficients, whatever the

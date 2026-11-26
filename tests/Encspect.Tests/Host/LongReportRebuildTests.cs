@@ -1,6 +1,6 @@
 using Encspect.Core;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // Not in the "Thread hammers" collection: it forces one collection from its own thread, no collector thread.
 public class LongReportRebuildTests

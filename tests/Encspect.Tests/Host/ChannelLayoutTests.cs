@@ -3,7 +3,7 @@ using Encspect.Formats.Aac;
 using Encspect.Formats.Mp4;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // The speakers each format's streams report (StreamInfo.ChannelLayout), their common names, and how
 // the summary and the CSV show them.

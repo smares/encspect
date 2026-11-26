@@ -3,7 +3,7 @@ using Encspect.Core;
 using Encspect.Formats.Dts;
 using Encspect.Formats.MpegAudio;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // The searches of the DTS sniffer and the MPEG frame walk, each held to the one it replaced.
 public class ScanSpeedPathTests

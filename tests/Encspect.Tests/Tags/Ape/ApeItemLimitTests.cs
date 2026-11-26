@@ -2,8 +2,9 @@ using System.Buffers.Binary;
 using System.Text;
 using Encspect.Core;
 using Encspect.Host;
+using Encspect.Tests.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Tags.Ape;
 
 // The first 1,024 items of an APE tag become nodes, the next ones are listed in blocks from the bytes kept for them (up to a
 // budget), and the others are checked and counted (ape.items-limited). The findings about items are one per kind with a count.

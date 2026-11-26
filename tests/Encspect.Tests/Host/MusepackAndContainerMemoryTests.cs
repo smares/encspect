@@ -6,9 +6,10 @@ using Encspect.Formats.Aac;
 using Encspect.Formats.TrueHd;
 using Encspect.Formats.WavPack;
 using Encspect.Host;
+using Encspect.Tests.Decoding;
 using Xunit.Abstractions;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // The memory tests of Musepack, Matroska and MP4, split from MemoryTests to halve its time (CI shards, scripts/ci/shards.json), measured the same way.
 // The classes share the non-parallel collection, so they never overlap each other or any other test.
