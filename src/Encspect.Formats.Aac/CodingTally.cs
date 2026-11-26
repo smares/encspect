@@ -121,8 +121,8 @@ internal sealed class CodingTally
 
     public int FirstSbrEvidenceBlock { get; set; } = -1;
 
-    // Whether the first block read to its end (not in a damaged frame) holds an SBR payload after a channel element, and the PS extension: implicit signaling is decided there, as players do
-    // (ffmpeg, faad2 and fdk-aac take implicit SBR where the stream starts with it), and the decoder (DecodeFeed.FindImplicitSbr) decides on the same block.
+    // Whether the first block read to its end (not in a damaged frame) holds an SBR payload after a channel element, and the PS extension: implicit signaling is decided there, as ffmpeg 6.1.1 does
+    // (it takes implicit SBR where the stream starts with it; sbr-in-first-block-only.aac and sbr-in-all-but-first-block.aac hold it), and the decoder (DecodeFeed.FindImplicitSbr) decides on the same block.
     public bool FirstBlockHasSbr { get; set; }
 
     public bool FirstBlockHasPs { get; set; }

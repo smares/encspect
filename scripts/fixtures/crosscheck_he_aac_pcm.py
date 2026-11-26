@@ -11,7 +11,7 @@ first channel over the whole file (the five highest peaks, the one with the smal
 RMS of the difference relative to FFmpeg's RMS (MAX_RATIO, 6 %): both decoders reconstruct the high band from envelope data in single precision and differ by about 1 % for SBR and
 up to 4 % where parametric stereo's decorrelators differ in the last details.
 
-NOT_COMPARED lists the files whose channels the two decoders do not give alike, each with the reason. Exit status 0 where every bound holds, 1 where one fails, 2 for a usage
+A mono core with SBR and no parametric stereo is compared with the first of FFmpeg's two (equal) channels, and a stream of more than two channels in FFmpeg's WAV order, mapped from the analyzer's layout as crosscheck_aac_pcm.py maps it. NOT_COMPARED lists the files whose channels the two decoders do not give alike, each with the reason. Exit status 0 where every bound holds, 1 where one fails, 2 for a usage
 error. Needs numpy.
 """
 
@@ -34,19 +34,30 @@ MAX_RATIO = 0.06
 
 # Files that are not compared sample by sample, each with the reason (the channels of the two decoders are not the same ones).
 NOT_COMPARED = {
-    "faac-2.2-he-mono-adts.aac": "a mono core with SBR and no parametric stereo signaled: FFmpeg outputs two channels (it takes the stream for HE-AAC v2), the analyzer decodes one",
-    "external-winamp-aacplus-16k-mono-he-cbr8-adts.aac": "a mono core with SBR and no parametric stereo signaled: FFmpeg outputs two channels, the analyzer one",
-    "external-winamp-fhgaac-8k-mono-cbr16.m4a": "a mono core with SBR and no parametric stereo signaled: FFmpeg outputs two channels, the analyzer one",
-    "apple-he-m4a-cbr-mono22.m4a": "a mono core with SBR and no parametric stereo signaled: FFmpeg outputs two channels, the analyzer one",
-    "apple-intel-he-m4a-cbr-mono22.m4a": "a mono core with SBR and no parametric stereo signaled: FFmpeg outputs two channels, the analyzer one",
-    "apple-he-m4a-cbr-mono44.m4a": "a mono core with SBR and no parametric stereo signaled: FFmpeg outputs two channels, the analyzer one",
+    "faac-2.1-he-51-adts.aac": "FAAC 2.1's 5.1 SBR payload follows no element FFmpeg can apply it to (\"cannot apply SBR to element type 3\"), and four of its six channels differ from the analyzer's below 6 kHz too",
+    "faac-2.2-he-51-adts.aac": "four of the six channels differ from the analyzer's below 6 kHz, where SBR has no part (only the left and the back right channel agree), so the difference is not SBR's; not investigated",
     "ps-in-multichannel-sce.aac": "the parametric stereo extension in a core of more than one channel, which the analyzer applies to no stream (aac.ps-without-mono-core); FFmpeg's channels differ (not investigated)",
     "ps-in-pce-multichannel.aac": "as the file above",
     "sbr-in-frames-failing-crc.aac": "the analyzer takes no evidence from frames that fail their CRC and stays AAC LC; FFmpeg checks no CRC and decodes HE-AAC (docs/formats/aac.md, Reference for sample counts)",
-    "faac-2.1-he-51-adts.aac": "5.1 in the coded order of the channels, as the file above",
-    "faac-2.2-he-51-adts.aac": "5.1 in the coded order of the channels, which FFmpeg's WAV order does not follow (crosscheck_aac_pcm.py maps it for AAC LC; not mapped here)",
-    "external-qaac-51-he-cbr160.m4a": "5.1 in the coded order of the channels, as the file above",
 }
+
+
+# FFmpeg's channel order for more than two channels is the WAV one.
+WAV_ORDER = ["front left", "front right", "front center", "LFE", "back left", "back right", "front left of center", "front right of center", "back center", "side left", "side right"]
+
+
+def to_ffmpeg_order(samples, layout):
+    """The analyzer's channels in the order FFmpeg writes them, where the layout names every channel with a WAV position."""
+    if samples.shape[1] <= 2 or not layout or any(name not in WAV_ORDER for name in layout):
+        return samples
+    order = sorted(range(samples.shape[1]), key=lambda c: WAV_ORDER.index(layout[c]))
+    return samples[:, order]
+
+
+def ffmpeg_channels(path, channels):
+    """The channels FFmpeg writes: those of the analyzer, but two for a mono core in ADTS (without an explicit configuration FFmpeg takes SBR on a single channel for HE-AAC v2)."""
+    result = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "a:0", "-show_entries", "stream=channels", "-of", "csv=p=0", str(path)], capture_output=True, text=True)
+    return int(result.stdout.strip()) if result.returncode == 0 and result.stdout.strip().isdigit() else channels
 
 
 def decode_ffmpeg(ffmpeg, path, channels):
@@ -124,10 +135,17 @@ def main():
             continue
         if path.name in NOT_COMPARED:
             continue
-        reference = decode_ffmpeg(args.ffmpeg, path, samples.shape[1])
+        samples = to_ffmpeg_order(samples, fmt.get("channelLayout"))
+        # FFmpeg takes a mono core with SBR for HE-AAC v2 and outputs two channels; without parametric stereo they are equal and the analyzer's one is compared with the first.
+        reference = decode_ffmpeg(args.ffmpeg, path, ffmpeg_channels(path, samples.shape[1]))
+        if reference is not None and samples.shape[1] == 1:
+            reference = reference[:, :1]
         if reference is None or float(np.sqrt(np.mean(reference ** 2))) < 1e-4:
             continue
         found = best_shift(samples, reference)
+        if found is None:
+            print(f"{path.name}: not compared, fewer than 8,192 samples remain after the 4,096 at each end that are left out")
+            continue
         passes = found is not None and max(found[1]) <= args.max_ratio
         compared += 1
         print(f"{path.name}: shift {found[0] if found else None}, RMS of the difference to FFmpeg's {[round(r, 4) for r in found[1]] if found else None}{'' if passes else '  FAILS'}")

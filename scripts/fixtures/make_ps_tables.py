@@ -3,7 +3,9 @@
 (github.com/ittiam-systems/libxaac at 2fbadd5, Apache License 2.0): ixheaacd_aac_dec_ps_tables in decoder/ixheaacd_sbr_rom.c, in the order
 of ia_ps_tables_struct (decoder/ixheaacd_sbr_rom.h).
 
-    python3 -I scripts/fixtures/make_ps_tables.py <libxaac checkout>
+    python3 -I scripts/fixtures/make_ps_tables.py [--check] <libxaac checkout>
+
+With --check the file is compared with what the tables give and nothing is written.
 
 The tables are format data (filter prototypes, modulation tables, band groupings, phase factors); the file lists them as float or int arrays."""
 import re
@@ -66,7 +68,8 @@ def dims(node):
 
 
 def main():
-    root = Path(sys.argv[1])
+    check = "--check" in sys.argv
+    root = Path([a for a in sys.argv[1:] if a != "--check"][0])
     source = (root / "decoder/ixheaacd_sbr_rom.c").read_text()
     body = source[source.index("const ia_ps_tables_struct ixheaacd_aac_dec_ps_tables = {"):]
     body = body[body.index("{"):]
@@ -103,7 +106,13 @@ def main():
     lines.pop()
     lines.append("}")
     out = Path(__file__).resolve().parents[2] / "src/Encspect.Formats.Aac/Decoding/PsTableData.cs"
-    out.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    text = "\n".join(lines) + "\n"
+    if check:
+        if out.read_text(encoding="utf-8") != text:
+            sys.exit(f"{out} differs from what libxaac's tables give")
+        print(f"{out.name} equals libxaac's tables")
+        return
+    out.write_text(text, encoding="utf-8")
     print(f"wrote {out}")
 
 

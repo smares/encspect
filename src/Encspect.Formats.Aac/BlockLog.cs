@@ -222,7 +222,7 @@ internal sealed class BlockLog
         if (config.Sbr is null && tally.IsSbrInconsistent)
         {
             findings.AddNow(Severity.Warning, "aac.sbr-inconsistent",
-                $"The first raw data block that is read to its end {(tally.FirstBlockHasSbr ? "holds SBR data" : "holds none")}, which decides the stream as {(tally.FirstBlockHasSbr ? "HE-AAC" : "plain")} as players do, but {units} hold SBR data; the first block that disagrees is raw data block {tally.FirstDisagreeingBlock + 1}.", node);
+                $"The first raw data block that is read to its end {(tally.FirstBlockHasSbr ? "holds SBR data" : "holds none")}, which decides the stream as {(tally.FirstBlockHasSbr ? "HE-AAC" : "plain")} as FFmpeg 6.1.1 does, but {units} hold SBR data; the first block that disagrees is raw data block {tally.FirstDisagreeingBlock + 1}.", node);
         }
 
         if (config.IsSbrImplicit)
@@ -243,7 +243,7 @@ internal sealed class BlockLog
         else if (config.Sbr is null && tally.SbrEvidenceBlocks > 0)
         {
             findings.AddNow(Severity.Info, "aac.sbr-data-sparse",
-                $"{where} signals no SBR, and the first raw data block that is read to its end and not in a damaged frame holds none, which decides the stream as plain {AacTables.ObjectTypeName(config.ObjectType)} as players do, so the report shows the core alone; {units} hold SBR data after a channel element.", node);
+                $"{where} signals no SBR, and the first raw data block that is read to its end and not in a damaged frame holds none, which decides the stream as plain {AacTables.ObjectTypeName(config.ObjectType)} as FFmpeg 6.1.1 does, so the report shows the core alone; {units} hold SBR data after a channel element.", node);
         }
     }
 }
