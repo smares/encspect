@@ -815,16 +815,77 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         return new TreePlace(selected.RootIndex, path);
     }
 
+    // The most text Copy Node puts on the clipboard, in characters.
+    public const int MaxNodeTextChars = 16 * 1024 * 1024;
+
+    public const string NodeTextTooLong = "Not copied: the node's text is over 16 MiB; export the report instead";
+
     // The text Copy Node puts on the clipboard: the node and the nodes under it as the text report
-    // writes them, with offsets, from the report of the file the node's tree belongs to.
-    public string NodeText(TreeRow row)
+    // writes them, with offsets, from the report of the file the node's tree belongs to. Written on
+    // a background thread and cut off at MaxNodeTextChars, where nothing is copied: a node as big
+    // as a long file's frame list would otherwise freeze the window and outgrow a string.
+    // Null with an error when the text is over the cap.
+    public async Task<(string? Text, string? Error)> NodeTextAsync(TreeRow row)
     {
         ArgumentNullException.ThrowIfNull(row);
 
         Report report = row.RootIndex > 0 && _report is { } main ? main.Companions[row.RootIndex - 1].Report : _report ?? throw new InvalidOperationException("No file is analyzed.");
-        using var writer = new StringWriter(System.Globalization.CultureInfo.InvariantCulture);
-        ReportTextWriter.WriteNode(report, row.Node, writer, showOffsets: true, ReportFilter.All);
+        Node node = row.Node;
+        string? text = await Task.Run(() => TryNodeText(report, node, MaxNodeTextChars));
+        return text is null ? (null, NodeTextTooLong) : (text, null);
+    }
+
+    internal static string? TryNodeText(Report report, Node node, int cap)
+    {
+        using var writer = new CappedWriter(cap);
+        try
+        {
+            ReportTextWriter.WriteNode(report, node, writer, showOffsets: true, ReportFilter.All);
+        }
+        catch (CappedWriter.CapExceededException)
+        {
+            return null;
+        }
+
         return writer.ToString();
+    }
+
+    // Stops the write, by throwing, as soon as it would pass the cap, so the text is never built.
+    private sealed class CappedWriter(int cap) : TextWriter(System.Globalization.CultureInfo.InvariantCulture)
+    {
+        private readonly System.Text.StringBuilder _text = new();
+
+        public override System.Text.Encoding Encoding => System.Text.Encoding.Unicode;
+
+        public override void Write(char value) => Add(1, () => _text.Append(value));
+
+        public override void Write(string? value) => Add(value?.Length ?? 0, () => _text.Append(value));
+
+        public override void Write(ReadOnlySpan<char> buffer)
+        {
+            if (_text.Length + buffer.Length > cap)
+            {
+                throw new CapExceededException();
+            }
+
+            _text.Append(buffer);
+        }
+
+        public override void Write(char[] buffer, int index, int count) => Write(buffer.AsSpan(index, count));
+
+        public override string ToString() => _text.ToString();
+
+        private void Add(int length, Action append)
+        {
+            if (_text.Length + length > cap)
+            {
+                throw new CapExceededException();
+            }
+
+            append();
+        }
+
+        public sealed class CapExceededException : Exception;
     }
 
     // What Copy Message puts on the clipboard, or with the code and the position of the node the

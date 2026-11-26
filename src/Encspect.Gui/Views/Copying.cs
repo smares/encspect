@@ -7,12 +7,12 @@ namespace Encspect.Gui.Views;
 // is reported by its message and never thrown to the UI loop.
 internal static class Copying
 {
-    // Text put on the clipboard last, for tests: the headless platform has no system clipboard to read back reliably.
-    internal static string? Last { get; private set; }
+    // Tests set it to see what is copied: the headless platform has no system clipboard to read back, and nothing keeps the text.
+    internal static Action<string>? Observer { get; set; }
 
     public static async Task<string?> SetTextAsync(Control control, string text)
     {
-        Last = text;
+        Observer?.Invoke(text);
         try
         {
             if (TopLevel.GetTopLevel(control)?.Clipboard is { } clipboard)

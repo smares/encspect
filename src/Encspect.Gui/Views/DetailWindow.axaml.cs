@@ -165,7 +165,21 @@ public partial class DetailWindow : Window
         var value = new MenuItem { Header = "Copy Value" };
         value.Click += async (_, _) => await CopyAsync(Model.SelectedNode?.Value);
         var node = new MenuItem { Header = "Copy Node" };
-        node.Click += async (_, _) => await CopyAsync(Model.SelectedNode is { } row ? Model.NodeText(row) : null);
+        node.Click += async (_, _) =>
+        {
+            if (Model.SelectedNode is { } row)
+            {
+                (string? text, string? error) = await Model.NodeTextAsync(row);
+                if (error is not null)
+                {
+                    Model.FailCommand(error);
+                }
+                else
+                {
+                    await CopyAsync(text);
+                }
+            }
+        };
         var menu = new ContextMenu { Items = { value, node } };
         menu.Opening += (_, _) =>
         {
