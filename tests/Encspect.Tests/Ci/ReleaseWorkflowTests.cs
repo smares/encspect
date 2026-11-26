@@ -91,6 +91,7 @@ public sealed class ReleaseWorkflowTests
         }
 
         Assert.DoesNotMatch(builds, "docs/releases/0.5.0.md");
+        Assert.Matches(builds, "docs/releases/package-readme.md");
     }
 
     // A pull request that changes the release files runs the builds, so the release-only steps run before a tag; it must

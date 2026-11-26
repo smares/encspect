@@ -133,10 +133,11 @@ jobs:
             exit 1
           fi
           # A pull request that changes none of the release files but the notes (docs/releases/) needs no build: the paths
-          # below are the others of this workflow's pull_request trigger. Anything else builds.
+          # below are the others of this workflow's pull_request trigger, with the README of the archives (package-readme.md,
+          # which the builds package and the glibc step reads). Anything else builds.
           builds=true
           if [ "$GITHUB_EVENT_NAME" = pull_request ] && git rev-parse --verify --quiet HEAD^2 > /dev/null; then
-            if ! git diff --name-only HEAD^1 HEAD | grep -qE '^(\.github/workflows/release\.yml|\.github/actions/setup-dotnet/|scripts/release/|THIRD-PARTY-NOTICES\.md|Directory\.Build\.props)'; then
+            if ! git diff --name-only HEAD^1 HEAD | grep -qE '^(\.github/workflows/release\.yml|\.github/actions/setup-dotnet/|scripts/release/|docs/releases/package-readme\.md|THIRD-PARTY-NOTICES\.md|Directory\.Build\.props)'; then
               builds=false
             fi
           fi

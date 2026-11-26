@@ -419,7 +419,7 @@ def shard_names(matrix):
     return {entry["shard"] for entry in matrix}
 
 
-FILTER_TOKEN = re.compile(r"\s*(\(|\)|&|\||FullyQualifiedName(?:!?~|!=)[A-Za-z0-9_.]+|Category!?=[A-Za-z]+)")
+FILTER_TOKEN = re.compile(r"\s*(\(|\)|&|\||(?:FullyQualifiedName|DisplayName)(?:!?~|!=)[A-Za-z0-9_.-]+|Category!?=[A-Za-z]+)")
 
 
 def valid_filter(expression):
@@ -466,7 +466,7 @@ class ScopeTests(unittest.TestCase):
             names = shard_names(matrix)
             self.assertNotIn("corrupt-c", names, "its classes belong to other formats, so nothing is left of it")
             self.assertIn("rest", names)
-            self.assertIn("corrupt-d", names, "CorruptWavPackBuiltFileTests")
+            self.assertIn("corrupt-e", names, "CorruptWavPackBuiltFileTests")
             for entry in matrix:
                 self.assertTrue(valid_filter(entry["filter"]), entry["filter"])
         corrupt_a = next(e["filter"] for e in matrix if e["shard"] == "corrupt-a")
