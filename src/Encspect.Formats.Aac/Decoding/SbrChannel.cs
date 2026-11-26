@@ -237,6 +237,7 @@ internal sealed class SbrChannel
         _ = kx;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void Covariance(int band, int length, out float phi01Re, out float phi01Im, out float phi02Re, out float phi02Im, out float phi11, out float phi12Re, out float phi12Im, out float phi22)
     {
         phi01Re = phi01Im = phi02Re = phi02Im = phi11 = phi12Re = phi12Im = phi22 = 0;

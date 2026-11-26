@@ -77,7 +77,13 @@ internal sealed class PsDecoder
     private bool _wasWide;
     private int _envelopes;
 
-    public PsDecoder() => Reset();
+    private readonly float[][] _states;
+
+    public PsDecoder()
+    {
+        _states = [_peak, _previousDifference, _energy, _subDelayRe, _subDelayIm, _delayRe, _delayIm, _subSerRe, _subSerIm, _serRe, _serIm];
+        Reset();
+    }
 
     public ReadOnlySpan<float> LeftRe => _leftRe;
 
@@ -123,7 +129,7 @@ internal sealed class PsDecoder
     // Recursive states below 1e-30 are zero at the start of each frame (the determinism rule for decoders).
     private void FlushStates()
     {
-        foreach (float[] state in new[] { _peak, _previousDifference, _energy, _subDelayRe, _subDelayIm, _delayRe, _delayIm, _subSerRe, _subSerIm, _serRe, _serIm })
+        foreach (float[] state in _states)
         {
             for (int i = 0; i < state.Length; i++)
             {
@@ -703,6 +709,7 @@ internal sealed class PsDecoder
     }
 
     // ixheaacd_hyb_synth: the hybrid bands' subbands add up to their QMF bands.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void Synthesize(int hybridBands, bool wide)
     {
         int offset = 0;
@@ -735,6 +742,7 @@ internal sealed class PsDecoder
     }
 
     // The matrices of the last envelope in the other resolution (ixheaacd_map_20_float_to_34 and ixheaacd_map_34_float_to_20).
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void MapMatrices(bool wide)
     {
         for (int c = 0; c < 4; c++)

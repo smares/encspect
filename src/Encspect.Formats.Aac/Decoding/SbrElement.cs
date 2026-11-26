@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Encspect.Core;
 
 namespace Encspect.Formats.Aac.Decoding;
@@ -162,6 +163,7 @@ internal sealed class SbrElement
     // The same for the second channel parametric stereo makes from a single channel element's.
     public void SynthesizeSecond(ReadOnlySpan<float> re, ReadOnlySpan<float> im, Span<float> output) => Synthesize(_secondQmf, re, im, output);
 
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void Synthesize(SbrQmf qmf, ReadOnlySpan<float> re, ReadOnlySpan<float> im, Span<float> output)
     {
         Span<float> block = stackalloc float[64];
@@ -215,6 +217,7 @@ internal sealed class SbrElement
 
     // The envelope and noise floor values of each channel: the sums of what is coded, across frequency from the start value or across time from the frame before, and then their energies
     // (ISO/IEC 14496-3 4.6.18.3.5 and 4.6.18.3.6; ixheaacd_process_del_cod_env_data, ixheaacd_calc_noise_floor and ixheaacd_sbr_env_dequant_coup).
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void DecodeValues(ReadOnlySpan<int> slot)
     {
         SbrLayout layout = _layout!;
@@ -329,7 +332,7 @@ internal sealed class SbrElement
             }
         }
 
-        int[] counts = new int[2];
+        Span<int> counts = stackalloc int[2];
         for (int c = 0; c < _channels; c++)
         {
             ReadOnlySpan<int> frame = slot.Slice(SbrRecord.FirstChannel + (c * SbrRecord.ChannelStride), SbrRecord.ChannelStride);
