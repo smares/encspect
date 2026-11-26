@@ -220,6 +220,9 @@ internal sealed class SbrElement
         {
             ReadOnlySpan<int> frame = slot.Slice(SbrRecord.FirstChannel + (c * SbrRecord.ChannelStride), SbrRecord.ChannelStride);
             SbrChannel state = _channel[c];
+
+            // A coupled pair's second channel codes the balance in steps of two (libxaac's env_data_tbl_comp_factor).
+            int step = coupled && c == 1 ? 2 : 1;
             Span<int> values = c == 0 ? level : second;
             Span<int> noises = c == 0 ? noise : secondNoise;
             int envelopes = frame[SbrRecord.EnvelopeCount];
@@ -238,11 +241,11 @@ internal sealed class SbrElement
                     int value;
                     if (time)
                     {
-                        value = previous[high ? k : LowToHigh(layout, k)] + coded[k];
+                        value = previous[high ? k : LowToHigh(layout, k)] + (coded[k] * step);
                     }
                     else
                     {
-                        value = k == 0 ? coded[0] : sum + coded[k];
+                        value = k == 0 ? coded[0] * step : sum + (coded[k] * step);
                         sum = value;
                     }
 
@@ -292,11 +295,11 @@ internal sealed class SbrElement
                     int value;
                     if (time)
                     {
-                        value = (n == 0 ? state.PreviousNoise[k] : noises[((n - 1) * 8) + k]) + coded[k];
+                        value = (n == 0 ? state.PreviousNoise[k] : noises[((n - 1) * 8) + k]) + (coded[k] * step);
                     }
                     else
                     {
-                        value = k == 0 ? coded[0] : sum + coded[k];
+                        value = k == 0 ? coded[0] * step : sum + (coded[k] * step);
                         sum = value;
                     }
 

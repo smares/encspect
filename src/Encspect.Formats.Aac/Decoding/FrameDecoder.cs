@@ -22,7 +22,6 @@ internal sealed class FrameDecoder : IFrameDecoder
     private const int NoiseUnits = 3;
     private const int LongTransformUnits = 22;
     private const int SbrUnits = 60;
-    private const int PsUnits = 40;
     private const int ShortTransformUnits = 16;
 
     private readonly DecodeContext _context;
@@ -31,7 +30,6 @@ internal sealed class FrameDecoder : IFrameDecoder
     private readonly int _outputChannels;
     private readonly bool _isSbr;
     private readonly SbrElement?[] _elements;
-    private readonly PsDecoder?[] _ps;
     private readonly float[] _sbrPlanar;
     private readonly ushort[] _longOffsets;
     private readonly ushort[] _shortOffsets;
@@ -68,9 +66,8 @@ internal sealed class FrameDecoder : IFrameDecoder
         _config = config;
         _outputChannels = context.Setup.Channels;
         _isSbr = config.IsSbrSignaled;
-        _channels = _isSbr && config.IsPsSignaled && _outputChannels == 2 ? 1 : _outputChannels;
+        _channels = _outputChannels;
         _elements = new SbrElement?[_channels];
-        _ps = new PsDecoder?[_channels];
         _sbrPlanar = _isSbr ? new float[_outputChannels * 2 * Lines] : [];
         int index = Math.Min(config.SampleRateIndex, BandTables.Long.Length - 1);
         _rateIndex = index;
@@ -208,23 +205,12 @@ internal sealed class FrameDecoder : IFrameDecoder
             }
 
             element.Process(_planar, ch, Lines, slot);
-            bool hasPs = _config.IsPsSignaled && width == 1 && _outputChannels == 2;
-            if (hasPs)
+            for (int c = 0; c < width; c++)
             {
-                PsDecoder ps = _ps[ch] ??= new PsDecoder();
-                ps.Process(element, slot, _sbrPlanar.AsSpan(output * 2 * Lines, 2 * Lines), _sbrPlanar.AsSpan((output + 1) * 2 * Lines, 2 * Lines));
-                output += 2;
-            }
-            else
-            {
-                for (int c = 0; c < width; c++)
-                {
-                    element.Synthesize(c, element.Real(c), element.Imaginary(c), _sbrPlanar.AsSpan((output + c) * 2 * Lines, 2 * Lines));
-                }
-
-                output += width;
+                element.Synthesize(c, element.Real(c), element.Imaginary(c), _sbrPlanar.AsSpan((output + c) * 2 * Lines, 2 * Lines));
             }
 
+            output += width;
             ch += width;
         }
     }
@@ -277,7 +263,6 @@ internal sealed class FrameDecoder : IFrameDecoder
             Array.Clear(_overlap[ch]);
             _previousShape[ch] = 0;
             _elements[ch]?.Reset();
-            _ps[ch]?.Reset();
         }
 
         _seed = 0;
@@ -290,10 +275,6 @@ internal sealed class FrameDecoder : IFrameDecoder
         if (_isSbr)
         {
             units += (long)SbrUnits * 2 * Lines * _outputChannels;
-            if (_outputChannels > _channels)
-            {
-                units += (long)PsUnits * 2 * Lines;
-            }
         }
 
         for (int ch = 0; ch < _channels; ch++)
