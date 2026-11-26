@@ -22,7 +22,7 @@ For each file:
   fails the run (the stale-entry rule of docs/development.md), as does a difference that has no entry.
 - With --libxaac the test decoder of libxaac (github.com/ittiam-systems/libxaac, the commit libxaac_tool.py pins, built with its default CMake options and no fused multiply-add)
   decodes each file to 16 bits with its peak limiter off, and the analyzer's floats are rounded to nearest and compared within 2 LSB and an RMS of 1 LSB, from the position
-  the script finds (libxaac's output starts later than the coded stage by a figure of its own).
+  the script finds (libxaac's output starts about 200 samples later than the coded stage, a figure of its own), the samples at full scale left out where it clips. A file with samples over full scale is not compared: libxaac's 16-bit output does not saturate them.
 
 Exit status 0 where every bound holds, 1 where one fails, 2 for a usage error.
 """
@@ -126,7 +126,8 @@ def to_ffmpeg_order(samples, layout):
 
 
 def find_start(analyzer, reference, channels, candidates=(0, 1024, 2112)):
-    """The number of analyzer samples before the reference's first one: the candidate (or the search over the first 4,200) with the smallest difference over a stretch."""
+    """The number of analyzer samples before the reference's first one (negative where the reference starts later than the coded stage, as libxaac's does): the candidate, or
+    the search from -1,500 to 4,200, with the smallest difference over a stretch."""
     count = min(len(analyzer), len(reference)) // channels
     stretch = min(2048, count // 4) * channels
     middle = (count // 2) * channels
@@ -140,7 +141,7 @@ def find_start(analyzer, reference, channels, candidates=(0, 1024, 2112)):
 
     best = min(candidates, key=error)
     if error(best) > 1e-9:
-        best = min(range(0, 4200), key=error)
+        best = min(range(-1500, 4200), key=error)
     return best
 
 
@@ -223,14 +224,16 @@ def main(argv=None):
                 problems.append(f"ffmpeg: {found}")
             elif outcome is not None and path.name not in NOISE and outcome["notComparedOnlyInAnalyzer"] + outcome["notComparedOnlyInReference"] and start == 0 and not outcome["notComparedOnlyInReference"]:
                 note = (note + "; " if note else "") + f"positions only the analyzer has: {outcome['notComparedOnlyInAnalyzer']}"
-            if xaac is not None and not problems:
+            if xaac is not None and not problems and max(abs(v) for v in mine) >= 1.0:
+                note = (note + "; " if note else "") + "libxaac not compared: the file has samples over full scale, which its 16-bit output does not saturate"
+            elif xaac is not None and not problems:
                 pcm = base / "xaac.pcm"
                 done = subprocess.run([str(xaac), f"-ifile:{path}", f"-ofile:{pcm}", "-pcmsz:16", "-peak_limiter_off:1"], capture_output=True)
                 if done.returncode == 0 and pcm.exists() and pcm.stat().st_size > 0 and channels <= 2:
                     values = array.array("h")
                     values.frombytes(pcm.read_bytes())
-                    lag = find_start([v / 32768.0 for v in mine], [v / 32768.0 for v in values], channels, (0, 1024, 2112, 209))
-                    outcome2, found2 = compare(manifest, pcm, channels, lag, extra, fmt="int16")
+                    lag = find_start([v / 32768.0 for v in mine], [v / 32768.0 for v in values], channels, (0, 1024, 2112, -209))
+                    outcome2, found2 = compare(manifest, pcm, channels, lag, [*extra, "--skip-full-scale"], fmt="int16")
                     if found2:
                         problems.append(f"libxaac: {found2}")
             key = path.name

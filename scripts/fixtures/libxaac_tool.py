@@ -60,7 +60,7 @@ def license_text(directory=None):
 def build(directory=None):
     """The path of xaacdec, the test decoder of libxaac, built in directory (a new temporary one by default) from the source at the pinned commit with CMake, the
     default options and no fused multiply-add (-ffp-contract=off)."""
-    directory = pathlib.Path(directory or tempfile.mkdtemp(prefix="libxaac-"))
+    directory = pathlib.Path(directory or tempfile.mkdtemp(prefix="libxaac-")).resolve()
     directory.mkdir(parents=True, exist_ok=True)
     binary = directory / "libxaac-build" / "xaacdec"
     if binary.exists():

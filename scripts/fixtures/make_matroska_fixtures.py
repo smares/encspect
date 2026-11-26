@@ -575,6 +575,28 @@ def _():
     return aac_with_delay(False)
 
 
+def aac_with_padding(padding, laced_frames=1):
+    """Six frames of an ADTS fixture of an encoder's music in an A_AAC track with an explicit AudioSpecificConfig, the last one in a BlockGroup with a DiscardPadding."""
+    object_type, rate_index, channels, frames = adts_frames("stereo")
+    rate = AAC_RATES[rate_index]
+    config = struct.pack(">H", (object_type << 11) | (rate_index << 7) | (channels << 3))
+    items = [simple_block(1, round(i * 1024 * 1000 / rate), frame, key=True) for i, frame in enumerate(frames[:5])]
+    items.append(block_group(1, round(5 * 1024 * 1000 / rate), frames[5], lacing="none", discard_padding=padding))
+    return build(standard(cluster(0, *items), track=[audio_track(codec="A_AAC", channels=channels, rate=float(rate), private=config)]))
+
+
+@fixture("aac-discard-padding", "An A_AAC track of six frames whose last block is a BlockGroup with a DiscardPadding of 11,609,977 ns, 512 samples at 44.1 kHz (RFC 9559 section 5.1.3.5.7): the end trimming "
+         "the AAC decoder is told before the last frame, which returns 512 of its 1,024 samples.", streams=[("AAC", 44100, 2)], valid=False)
+def _():
+    return aac_with_padding(11_609_977)
+
+
+@fixture("aac-discard-padding-large", "The same frames with a DiscardPadding of 60 ms (2,646 samples), more than the last frame returns (1,024): the end trimming is capped at what the frame holds.",
+         findings=[("aac.discard-padding-large", "DiscardPadding")], streams=[("AAC", 44100, 2)], valid=False)
+def _():
+    return aac_with_padding(60_000_000)
+
+
 @fixture("encrypted-aac-delay", "The frames of aac-delay encrypted: the encrypted track counts the samples and the length of the clear one, since only Opus drops the CodecDelay.",
          findings=[("matroska.track-encrypted", "is encrypted (AES-CTR)")], streams=[("AAC", 44100, 2)], valid=False)
 def _():

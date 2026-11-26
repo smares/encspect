@@ -891,6 +891,17 @@ jobs:
       - name: Cross-check the MP4 and AAC fixtures
         run: python3 scripts/fixtures/crosscheck_mp4_fixtures.py
 
+      - uses: ./.github/actions/setup-dotnet
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build the PCM dump tool
+        run: dotnet build --configuration Release tests/Encspect.PcmDump
+
+      # The analyzer's decoded samples equal FFmpeg's within the bounds of docs/development.md ("AAC decoding"), fixture by fixture.
+      - name: Compare the decoded PCM of the AAC fixtures
+        run: python3 scripts/fixtures/crosscheck_aac_pcm.py
+
       # The manifests of the encrypted files ffmpeg and MP4Box wrote are recomputed from the committed files, which need those tools.
       - name: Recompute the manifests of the encrypted MP4 fixtures
         run: |
