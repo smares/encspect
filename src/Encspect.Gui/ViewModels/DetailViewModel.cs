@@ -815,8 +815,8 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         return new TreePlace(selected.RootIndex, path);
     }
 
-    // The most text Copy Node puts on the clipboard, in characters.
-    public const int MaxNodeTextChars = 16 * 1024 * 1024;
+    // The most text Copy Node puts on the clipboard: 8 Mi characters, which are 16 MiB as a .NET string.
+    public const int MaxNodeTextChars = 8 * 1024 * 1024;
 
     public const string NodeTextTooLong = "Not copied: the node's text is over 16 MiB; export the report instead";
 
