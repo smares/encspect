@@ -49,6 +49,7 @@ public partial class DetailWindow : Window
             }
         };
         TreeList.AddHandler(KeyDownEvent, OnTreeKeyDown, RoutingStrategies.Tunnel);
+        Hex.ByteActivated += (_, offset) => Model.SelectNodeAt(offset);
         Graph.PointClicked += (_, index) => Model.Graphs.Activate(index);
         Graph.CategoryClicked += (_, category) => Model.Graphs.ActivateCategory(category);
         Topic.LinkActivated += (_, id) => Model.ShowTopic(id);

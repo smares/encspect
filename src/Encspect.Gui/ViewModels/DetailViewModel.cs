@@ -815,6 +815,18 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         return new TreePlace(selected.RootIndex, path);
     }
 
+    // Selects the deepest node of the tree of the file the hex view shows that holds the byte at offset.
+    public bool SelectNodeAt(long offset)
+    {
+        if (_tree?.DeepestAt(_selectedNode?.RootIndex ?? 0, offset) is { } row)
+        {
+            SelectedNode = row;
+            return true;
+        }
+
+        return false;
+    }
+
     private HexDocument? DocumentOf(TreeRow? row)
     {
         int index = row?.RootIndex ?? 0;

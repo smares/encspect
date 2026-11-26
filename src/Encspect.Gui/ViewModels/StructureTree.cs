@@ -188,6 +188,98 @@ public sealed class StructureTree : IReadOnlyList<TreeRow>, IList, INotifyCollec
         return row;
     }
 
+    // The deepest row below the top-level row at rootIndex whose node holds the byte at offset,
+    // with every row on the way expanded; null when the top-level row does not hold it. At each
+    // level the first child that holds the byte is taken. Children in offset order (as parsers
+    // write them) are searched by bisection, so that a list of a million frames is not built whole.
+    public TreeRow? DeepestAt(int rootIndex, long offset)
+    {
+        if ((uint)rootIndex >= (uint)Roots.Count || !Holds(Roots[rootIndex].Node, offset))
+        {
+            return null;
+        }
+
+        TreeRow row = Roots[rootIndex];
+        while (row.HasChildren)
+        {
+            IReadOnlyList<Node> children = row.LoadChildren();
+            int found = FindChild(children, offset);
+            if (found < 0)
+            {
+                break;
+            }
+
+            Expand(row);
+            row = row.RowAt(found);
+        }
+
+        return row;
+    }
+
+    private static int FindChild(IReadOnlyList<Node> children, long offset)
+    {
+        int count = children.Count;
+        if (count > 8 && children[0].Offset <= children[count - 1].Offset)
+        {
+            // The last child that starts at or before the byte, then the ones before it that share its start.
+            int low = 0;
+            int high = count - 1;
+            while (low < high)
+            {
+                int middle = low + ((high - low + 1) / 2);
+                if (children[middle].Offset <= offset)
+                {
+                    low = middle;
+                }
+                else
+                {
+                    high = middle - 1;
+                }
+            }
+
+            for (int i = low; i >= 0 && i > low - 8; i--)
+            {
+                if (Holds(children[i], offset))
+                {
+                    return i;
+                }
+            }
+        }
+
+        for (int i = 0; i < count; i++)
+        {
+            if (Holds(children[i], offset))
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    private static bool Holds(Node node, long offset)
+    {
+        if (node.Length == 0)
+        {
+            return false;
+        }
+
+        if (node.Ranges is { } ranges)
+        {
+            foreach (ByteRange range in ranges)
+            {
+                if (offset >= range.Offset && offset < range.End)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        return offset >= node.Offset && offset < node.End;
+    }
+
     public IEnumerator<TreeRow> GetEnumerator()
     {
         for (int i = 0; i < Count; i++)
