@@ -217,136 +217,136 @@ internal static partial class Sbr
                 Store(record, frameClass, count, noises[channel], ampRes[channel], transient, border, noiseBorder, resolution);
                 return null;
             case 1:
-            {
-                plain &= false;
-                int relative = (int)bits.Read(2);
-                int variable = (int)bits.Read(2);
-                count = variable + 1;
-                int edge = relative + 16;
-                border[0] = 0;
-                border[count] = edge;
-                for (int k = variable; k > 0; k--)
                 {
-                    edge = Math.Max(0, edge - (((int)bits.Read(2) * 2) + 2));
-                    border[k] = edge;
-                }
+                    plain &= false;
+                    int relative = (int)bits.Read(2);
+                    int variable = (int)bits.Read(2);
+                    count = variable + 1;
+                    int edge = relative + 16;
+                    border[0] = 0;
+                    border[count] = edge;
+                    for (int k = variable; k > 0; k--)
+                    {
+                        edge = Math.Max(0, edge - (((int)bits.Read(2) * 2) + 2));
+                        border[k] = edge;
+                    }
 
-                int pointer = (int)bits.Read(PointerBits[count]);
-                if (pointer > count + 1)
-                {
-                    return string.Create(CultureInfo.InvariantCulture, $"bs_pointer {pointer} points past the {Counts.Of(count, "envelope", "envelopes")} of the SBR frame");
-                }
+                    int pointer = (int)bits.Read(PointerBits[count]);
+                    if (pointer > count + 1)
+                    {
+                        return string.Create(CultureInfo.InvariantCulture, $"bs_pointer {pointer} points past the {Counts.Of(count, "envelope", "envelopes")} of the SBR frame");
+                    }
 
-                // bs_freq_res of a FIXVAR frame is sent for the last envelope first (4.4.2.8, sbr_grid).
-                for (int e = count - 1; e >= 0; e--)
-                {
-                    resolution[e] = (int)bits.Read(1);
-                }
+                    // bs_freq_res of a FIXVAR frame is sent for the last envelope first (4.4.2.8, sbr_grid).
+                    for (int e = count - 1; e >= 0; e--)
+                    {
+                        resolution[e] = (int)bits.Read(1);
+                    }
 
-                transient = pointer != 0 ? count + 1 - pointer : -1;
-                noiseBorder[1] = pointer is 0 or 1 ? border[variable] : border[transient];
-                noises[channel] = count > 1 ? 2 : 1;
-                noiseBorder[0] = border[0];
-                noiseBorder[noises[channel]] = border[count];
-                break;
-            }
+                    transient = pointer != 0 ? count + 1 - pointer : -1;
+                    noiseBorder[1] = pointer is 0 or 1 ? border[variable] : border[transient];
+                    noises[channel] = count > 1 ? 2 : 1;
+                    noiseBorder[0] = border[0];
+                    noiseBorder[noises[channel]] = border[count];
+                    break;
+                }
 
             case 2:
-            {
-                int relative = (int)bits.Read(2);
-                int variable = (int)bits.Read(2);
-                count = variable + 1;
-                int edge = relative;
-                border[0] = edge;
-                for (int k = 1; k <= variable; k++)
                 {
-                    edge = Math.Min(16, edge + (((int)bits.Read(2) * 2) + 2));
-                    border[k] = edge;
-                }
+                    int relative = (int)bits.Read(2);
+                    int variable = (int)bits.Read(2);
+                    count = variable + 1;
+                    int edge = relative;
+                    border[0] = edge;
+                    for (int k = 1; k <= variable; k++)
+                    {
+                        edge = Math.Min(16, edge + (((int)bits.Read(2) * 2) + 2));
+                        border[k] = edge;
+                    }
 
-                border[count] = 16;
-                int pointer = (int)bits.Read(PointerBits[count]);
-                if (pointer > count + 1)
-                {
-                    return string.Create(CultureInfo.InvariantCulture, $"bs_pointer {pointer} points past the {Counts.Of(count, "envelope", "envelopes")} of the SBR frame");
-                }
+                    border[count] = 16;
+                    int pointer = (int)bits.Read(PointerBits[count]);
+                    if (pointer > count + 1)
+                    {
+                        return string.Create(CultureInfo.InvariantCulture, $"bs_pointer {pointer} points past the {Counts.Of(count, "envelope", "envelopes")} of the SBR frame");
+                    }
 
-                transient = pointer is 0 or 1 ? -1 : pointer - 1;
-                for (int e = 0; e < count; e++)
-                {
-                    resolution[e] = (int)bits.Read(1);
-                }
+                    transient = pointer is 0 or 1 ? -1 : pointer - 1;
+                    for (int e = 0; e < count; e++)
+                    {
+                        resolution[e] = (int)bits.Read(1);
+                    }
 
-                noiseBorder[1] = pointer switch
-                {
-                    0 => border[1],
-                    1 => border[variable],
-                    _ => border[transient],
-                };
-                noises[channel] = count > 1 ? 2 : 1;
-                noiseBorder[0] = border[0];
-                noiseBorder[noises[channel]] = border[count];
-                plain &= true;
-                break;
-            }
+                    noiseBorder[1] = pointer switch
+                    {
+                        0 => border[1],
+                        1 => border[variable],
+                        _ => border[transient],
+                    };
+                    noises[channel] = count > 1 ? 2 : 1;
+                    noiseBorder[0] = border[0];
+                    noiseBorder[noises[channel]] = border[count];
+                    plain &= true;
+                    break;
+                }
 
             default:
-            {
-                plain = false;
-                int lead = (int)bits.Read(2);
-                int trail = (int)bits.Read(2);
-                int leadBorders = (int)bits.Read(2);
-                int trailBorders = (int)bits.Read(2);
-                count = leadBorders + trailBorders + 1;
-                if (count > MaxEnvelopes)
                 {
-                    return string.Create(CultureInfo.InvariantCulture, $"an SBR frame of class VARVAR with {count} envelopes, more than {MaxEnvelopes}");
-                }
+                    plain = false;
+                    int lead = (int)bits.Read(2);
+                    int trail = (int)bits.Read(2);
+                    int leadBorders = (int)bits.Read(2);
+                    int trailBorders = (int)bits.Read(2);
+                    count = leadBorders + trailBorders + 1;
+                    if (count > MaxEnvelopes)
+                    {
+                        return string.Create(CultureInfo.InvariantCulture, $"an SBR frame of class VARVAR with {count} envelopes, more than {MaxEnvelopes}");
+                    }
 
-                // The lead border and the trail border: bs_var_bord_0 and bs_var_bord_1, then the relative borders (bs_num_rel_0 and bs_num_rel_1).
-                int edge = lead;
-                border[0] = edge;
-                for (int k = 1; k <= leadBorders; k++)
-                {
-                    edge += ((int)bits.Read(2) * 2) + 2;
-                    border[k] = edge;
-                }
+                    // The lead border and the trail border: bs_var_bord_0 and bs_var_bord_1, then the relative borders (bs_num_rel_0 and bs_num_rel_1).
+                    int edge = lead;
+                    border[0] = edge;
+                    for (int k = 1; k <= leadBorders; k++)
+                    {
+                        edge += ((int)bits.Read(2) * 2) + 2;
+                        border[k] = edge;
+                    }
 
-                edge = trail + 16;
-                border[count] = edge;
-                for (int k = 0; k < trailBorders; k++)
-                {
-                    edge -= ((int)bits.Read(2) * 2) + 2;
-                    border[count - 1 - k] = edge;
-                }
+                    edge = trail + 16;
+                    border[count] = edge;
+                    for (int k = 0; k < trailBorders; k++)
+                    {
+                        edge -= ((int)bits.Read(2) * 2) + 2;
+                        border[count - 1 - k] = edge;
+                    }
 
-                int pointer = (int)bits.Read(PointerBits[count]);
-                if (pointer > count + 1)
-                {
-                    return string.Create(CultureInfo.InvariantCulture, $"bs_pointer {pointer} points past the {Counts.Of(count, "envelope", "envelopes")} of the SBR frame");
-                }
+                    int pointer = (int)bits.Read(PointerBits[count]);
+                    if (pointer > count + 1)
+                    {
+                        return string.Create(CultureInfo.InvariantCulture, $"bs_pointer {pointer} points past the {Counts.Of(count, "envelope", "envelopes")} of the SBR frame");
+                    }
 
-                transient = pointer != 0 ? count + 1 - pointer : -1;
-                for (int e = 0; e < count; e++)
-                {
-                    resolution[e] = (int)bits.Read(1);
-                }
+                    transient = pointer != 0 ? count + 1 - pointer : -1;
+                    for (int e = 0; e < count; e++)
+                    {
+                        resolution[e] = (int)bits.Read(1);
+                    }
 
-                noiseBorder[0] = lead;
-                if (count == 1)
-                {
-                    noiseBorder[1] = trail + 16;
-                    noises[channel] = 1;
-                }
-                else
-                {
-                    noiseBorder[1] = pointer is 0 or 1 ? border[count - 1] : border[transient];
-                    noiseBorder[2] = trail + 16;
-                    noises[channel] = 2;
-                }
+                    noiseBorder[0] = lead;
+                    if (count == 1)
+                    {
+                        noiseBorder[1] = trail + 16;
+                        noises[channel] = 1;
+                    }
+                    else
+                    {
+                        noiseBorder[1] = pointer is 0 or 1 ? border[count - 1] : border[transient];
+                        noiseBorder[2] = trail + 16;
+                        noises[channel] = 2;
+                    }
 
-                break;
-            }
+                    break;
+                }
         }
 
         envelopes[channel] = count;

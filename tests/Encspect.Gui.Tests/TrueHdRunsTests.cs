@@ -1,8 +1,8 @@
 using Avalonia.Headless.XUnit;
 using Encspect.Core;
 using Encspect.Gui.ViewModels;
-using Encspect.Host;
 using Encspect.Gui.Views;
+using Encspect.Host;
 
 namespace Encspect.Gui.Tests;
 
