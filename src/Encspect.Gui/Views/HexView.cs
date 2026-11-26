@@ -55,7 +55,7 @@ public sealed class HexView : Grid
             }
         };
         ContextMenu = new ContextMenu { Items = { copy } };
-        ContextMenu.Opening += (_, _) => copy.IsEnabled = SelectedRowsText() is not null;
+        ContextMenu.Opening += (_, _) => copy.IsEnabled = CanCopySelection;
         _scrollBar.PropertyChanged += (_, e) =>
         {
             if (e.Property == RangeBase.ValueProperty && !_updatingScrollBar)
@@ -96,6 +96,11 @@ public sealed class HexView : Grid
     // The rows the selection touches, as they are displayed: the offset, the 16 bytes in hex and
     // the text column with a dot for a byte that has no character. Null without a selection or a
     // document, or where the selection is over MaxCopyBytes.
+    public bool CanCopySelection => Document is not null && Highlight is { } highlight && RowsSpan(highlight) is { } span && span.End > span.Start && span.End - span.Start <= MaxCopyBytes;
+
+    private (long Start, long End)? RowsSpan(HexHighlight highlight) =>
+        Document is { } document ? (highlight.Start / 16 * 16, Math.Min(document.Length, (highlight.End + 15) / 16 * 16)) : null;
+
     public string? SelectedRowsText()
     {
         if (Document is not { } document || Highlight is not { } highlight)
@@ -494,40 +499,35 @@ internal sealed class HexCanvas : Control
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
-        if (e.KeyModifiers != KeyModifiers.None)
+        bool toFile = e.KeyModifiers is KeyModifiers.Control or KeyModifiers.Meta;
+        if (e.KeyModifiers != KeyModifiers.None && !(toFile && e.Key is Key.Home or Key.End))
+        {
+            return;
+        }
+
+        if (_document is not { Length: > 0 } document)
         {
             return;
         }
 
         int page = Math.Max(1, VisibleRows - 1) * BytesPerRow;
-        long? step = e.Key switch
+        // Where the key takes the cursor from, which the first key sets on the selection or the top row.
+        long from = _cursor ?? _highlight?.Start ?? (_topRow * BytesPerRow);
+        long? to = e.Key switch
         {
-            Key.Left => -1,
-            Key.Right => 1,
-            Key.Up => -BytesPerRow,
-            Key.Down => BytesPerRow,
-            Key.PageUp => -page,
-            Key.PageDown => page,
+            Key.Left => from - 1,
+            Key.Right => from + 1,
+            Key.Up => from - BytesPerRow,
+            Key.Down => from + BytesPerRow,
+            Key.PageUp => from - page,
+            Key.PageDown => from + page,
+            Key.Home => toFile ? 0 : from / BytesPerRow * BytesPerRow,
+            Key.End => toFile ? document.Length - 1 : (from / BytesPerRow * BytesPerRow) + BytesPerRow - 1,
             _ => null,
         };
-        if (step is { } by && _document is { Length: > 0 } document)
+        if (to is { } target)
         {
-            // The first key places the cursor on the selection, or on the first byte on screen.
-            long from = _cursor ?? _highlight?.Start ?? (_topRow * BytesPerRow);
-            ByteCursor = _cursor is null ? Math.Clamp(from, 0, document.Length - 1) : Math.Clamp(from + by, 0, document.Length - 1);
-            e.Handled = true;
-            return;
-        }
-
-        long? target = e.Key switch
-        {
-            Key.Home => 0,
-            Key.End => MaxTopRow,
-            _ => null,
-        };
-        if (target is { } row)
-        {
-            TopRow = row;
+            ByteCursor = _cursor is null && e.Key is not (Key.Home or Key.End) ? Math.Clamp(from, 0, document.Length - 1) : Math.Clamp(target, 0, document.Length - 1);
             e.Handled = true;
         }
     }
@@ -544,12 +544,20 @@ internal sealed class HexCanvas : Control
             return;
         }
 
+        // A cursor on screen inside the selection is where the reader is looking, as after a double click.
+        if (_cursor is { } at && _highlight.Contains(at) && IsOnScreen(at / BytesPerRow))
+        {
+            return;
+        }
+
         long row = _highlight.Start / BytesPerRow;
-        if (row < _topRow || row >= _topRow + VisibleRows)
+        if (!IsOnScreen(row))
         {
             TopRow = row - (VisibleRows / 4);
         }
     }
+
+    private bool IsOnScreen(long row) => row >= _topRow && row < _topRow + VisibleRows;
 
     // Scrolls just far enough for a row to be on screen.
     private void RevealRow(long row)
