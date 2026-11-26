@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // Inputs the fuzzer once failed on (tests/Encspect.Fuzz), kept so the fixes stay: each must yield a
 // report that the fuzzer would accept.

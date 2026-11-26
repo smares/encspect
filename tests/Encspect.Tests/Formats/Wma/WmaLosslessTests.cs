@@ -2,7 +2,7 @@ using System.Buffers.Binary;
 using Encspect.Core;
 using Encspect.Formats.Wma;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Wma;
 
 // Windows Media Audio Lossless: what the frame-level reader finds in the committed fixtures (the table of docs/design/wma-lossless-format.md,
 // which ffmpeg's decoder confirms through crosscheck_asf_fixtures.py) and what it does with damaged packets.

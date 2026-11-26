@@ -1,6 +1,6 @@
 using Encspect.Formats.Ac3.Decoding;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Ac3;
 
 // Transient pre-noise processing (A/52:2018 Annex E 3.7.2): the samples before the transient are replaced by a copy of those before the pre-noise, cross-faded at both ends.
 public class PreNoiseTests

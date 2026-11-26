@@ -2,7 +2,7 @@ using Encspect.Core;
 using Encspect.Formats.MpegAudio;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.MpegAudio;
 
 // The category series and the numeric series of an MPEG stream's coding (docs/design/coding-graphs.md): each unit's code is held
 // equal to what the frame's own nodes state, which the Layer3SideInfo, Layer1AudioData and Layer2AudioData readers build and the

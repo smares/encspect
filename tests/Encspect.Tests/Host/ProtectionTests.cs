@@ -2,7 +2,7 @@ using System.Text.Json;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // Protection on streams: the typed field in the report, its JSON, CSV and summary, and what the MP4 and ASF parsers read of the protection
 // objects. The fixtures' manifests (Mp4FixtureTests, AsfFixtureTests) hold the per-fixture figures; these tests hold the rules.

@@ -3,7 +3,7 @@ using Encspect.Core;
 using Encspect.Host;
 using Encspect.Tests.BoundarySamples;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Decoding;
 
 // Parser code never references the Decoding namespace of its own project (docs/design/decoders.md, "How a test enforces
 // it"), checked in the compiled assemblies of the format and codec parsers the host lists.

@@ -2,7 +2,7 @@ using Encspect.Core;
 using Encspect.Host;
 using Encspect.Host.Measurement;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Ac3;
 
 // What the report states for an AC-3 stream (its Samples: 256 for each audio block of every frame, cut and broken frames included) is what the measurements keep and skip:
 // measured + the samples lost + the samples withheld (docs/design/samples-definition.md). AC-3's syntax trims nothing (decision 8 of docs/design/lossy-decoders.md), and the

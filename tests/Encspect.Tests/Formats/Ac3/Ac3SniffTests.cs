@@ -4,7 +4,7 @@ using Encspect.Formats.Ac3;
 using Encspect.Formats.MpegAudio;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Ac3;
 
 // How the sniffs rank a chain that starts after junk, where another format's frames can repeat header-like bytes at a fixed distance: the
 // CRC-checked AC-3 chain against the ADTS and MPEG audio chains those bytes make.

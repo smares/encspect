@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Tta;
 
 // Units whose frame checksum fails (docs/design/damaged-units.md): Tta's parser flags them, and the measurements leave their positions out as
 // withheld samples ("checksum failed") while the decoded samples, the verification and the findings stay as the decoding gives them.

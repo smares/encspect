@@ -1,8 +1,9 @@
 using System.Runtime.CompilerServices;
 using Encspect.Core;
 using Encspect.Host;
+using Encspect.Tests.Decoding;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // A report outlives the stream it was read from (a caller may analyze many files and keep the reports),
 // so nothing its nodes are built from may hold the input: a node factory that captures a parse's state,

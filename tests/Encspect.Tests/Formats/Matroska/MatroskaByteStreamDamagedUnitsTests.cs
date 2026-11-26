@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Matroska;
 
 // A Matroska Cluster whose CRC-32 fails over MPEG audio, AC-3, E-AC-3, DTS, and TrueHD and MLP packets (docs/design/damaged-units.md, decision 2): these parsers read the packets as
 // frames of their own, so a frame is flagged (CodedFrame.FailsChecksum) when any of its bytes comes from a flagged packet, and the decoders withhold it and the output that depends on

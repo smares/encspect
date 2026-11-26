@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Ac3;
 
 // After a gap the decoder resets its overlap and its dither generator and withholds the first block (docs/formats/ac3.md, "Decoding"): what follows must equal what a fresh
 // decode of the same frames gives, sample for sample, dither included, since the generator starts from its seed at both.

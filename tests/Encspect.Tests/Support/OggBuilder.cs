@@ -1,6 +1,6 @@
 using System.Buffers.Binary;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // Writes Ogg pages for tests (RFC 3533, section 6), with the CRC-32 the specification defines:
 // polynomial 0x04C11DB7, initial value 0, no reflection, over the page with the CRC field zeroed.

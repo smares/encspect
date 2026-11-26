@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // A temporary folder of test inputs. FIFOs and names that are not valid UTF-8 are made with the
 // system's tools, since .NET cannot make them, so tests that need them run on Linux and macOS only.

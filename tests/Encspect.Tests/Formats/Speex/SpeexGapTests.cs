@@ -2,7 +2,7 @@ using Encspect.Core;
 using Encspect.Host;
 using Encspect.Host.Measurement;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Speex;
 
 // Damage in the coded data of a Speex stream: a packet whose frames the walk cannot read is lost (libspeex stops decoding at the frame), the decoder starts over at the next
 // packet it is handed and withholds the output that depends on what it lost: 20 frames of 20 ms (docs/design/lossy-decoders.md, "As built: Speex").

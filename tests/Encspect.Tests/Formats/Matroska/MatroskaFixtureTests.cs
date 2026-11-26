@@ -2,8 +2,9 @@ using System.Globalization;
 using System.Text.Json;
 using Encspect.Core;
 using Encspect.Host;
+using Encspect.Tests.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Matroska;
 
 // Checks every Matroska and WebM fixture against its manifest (make_matroska_fixtures.py and make_external_matroska_fixtures.py, worked out
 // by matroska_model.py from the bytes alone apart from the analyzer, and confirmed by crosscheck_matroska_fixtures.py): the tree of

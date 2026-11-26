@@ -2,7 +2,7 @@ using Encspect.Core;
 using Encspect.Formats.Flac;
 using Xunit;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Flac;
 
 public class FlacFieldMapTests
 {

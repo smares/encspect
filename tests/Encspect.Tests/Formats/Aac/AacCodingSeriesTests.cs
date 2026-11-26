@@ -3,7 +3,7 @@ using Encspect.Core;
 using Encspect.Formats.Aac;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Aac;
 
 // The category series and the numeric series of an AAC stream's coding (docs/design/coding-graphs.md): each unit's values are held equal
 // to what its raw data blocks' own nodes state, which the block reader builds on a second pass and the series do not use, so a code in

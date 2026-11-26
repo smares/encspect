@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.MpegAudio;
 
 // The decoder on files built in the test from the smallest Layer III frames there are (MPEG-2.5 at 8 kHz, mono, 72 bytes and 576 samples each, all zero after the
 // header, so each decodes to silence): what it writes, and what it withholds after a gap and where main data are missing (docs/design/lossy-decoders.md, "Withheld output").

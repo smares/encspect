@@ -2,9 +2,9 @@ using System.ComponentModel;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
-using static Encspect.Tests.BoundaryScanner;
+using static Encspect.Tests.Decoding.BoundaryScanner;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Decoding;
 
 // Small assemblies built with System.Reflection.Emit, in each of which exactly one way of reaching a type of the Decoding
 // namespace exists: a C# compiler adds evidence of its own (a constructor calls the base constructor, a property has

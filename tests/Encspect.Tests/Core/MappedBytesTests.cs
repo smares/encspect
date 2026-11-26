@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Core;
 
 // Mapped bytes, node ranges and how the writers show them.
 public class MappedBytesTests

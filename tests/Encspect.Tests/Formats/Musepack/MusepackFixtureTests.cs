@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Encspect.Core;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Musepack;
 
 // Checks every Musepack fixture against its manifest (make_musepack_fixtures.py,
 // make_external_musepack_fixtures.py, both worked out by musepack_model.py and confirmed by

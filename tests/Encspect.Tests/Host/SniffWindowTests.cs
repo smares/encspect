@@ -1,6 +1,6 @@
 using Encspect.Core;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 public class SniffWindowTests
 {

@@ -1,9 +1,9 @@
 using Encspect.Core;
 using Encspect.Formats.Tak;
 using Encspect.Host;
-using Builder = Encspect.Tests.TakBuilder;
+using Builder = Encspect.Tests.Support.TakBuilder;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Tak;
 
 // The walk over the frames: how it finds them by their sync words and headers, which of its findings a damaged header, damaged data, a cut frame, skipped bytes or a break in the frame
 // numbers raise, and what it counts. The frames here hold bytes in place of coded audio (TakBuilder.Frame); the analyzer compares their CRC-24s and does not read their coding.

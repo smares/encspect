@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Formats.Wma;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // Windows Media Audio version 1 and 2 streams built in the tests, bit by bit from the syntax in docs/design/wma-standard-format.md and the
 // tables of the format, and handed to the parser as an ASF file would hand them.

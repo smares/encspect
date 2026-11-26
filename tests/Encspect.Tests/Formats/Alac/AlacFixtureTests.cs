@@ -3,8 +3,9 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Encspect.Core;
 using Encspect.Host;
+using Encspect.Tests.Formats.Flac;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Alac;
 
 // Checks every ALAC fixture against its manifest (make_alac_fixtures.py and make_external_alac_fixtures.py, both worked out by alac_model.py, a reading of
 // Apple's reference decoder apart from the analyzer, and confirmed by crosscheck_alac_fixtures.py): the magic cookie, every frame and the elements of the

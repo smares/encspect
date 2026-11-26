@@ -2,6 +2,8 @@ using System.Diagnostics;
 using Encspect.Core;
 using Encspect.Host;
 using Encspect.Host.Measurement;
+using Encspect.Tests.Decoding;
+using Encspect.Tests.Host;
 using Xunit.Abstractions;
 
 namespace Encspect.Tests.Measurement;

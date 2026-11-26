@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Matroska;
 
 // Header stripping (RFC 9559, section 5.1.4.1.31.6) for the codecs that read their frames from the file: the stripped bytes are put back from the ContentCompSettings and the
 // frames are read as the unstripped track's are, so the same figures and the same audio come of them, and each frame's nodes lie in the ContentCompSettings element for the bytes

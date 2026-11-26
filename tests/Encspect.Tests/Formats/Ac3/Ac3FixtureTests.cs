@@ -2,7 +2,7 @@ using System.Text.Json;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Ac3;
 
 // Checks every AC-3 and E-AC-3 fixture against its manifest (make_ac3_fixtures.py,
 // make_external_ac3_fixtures.py, confirmed by crosscheck_ac3_fixtures.py): the format, every frame

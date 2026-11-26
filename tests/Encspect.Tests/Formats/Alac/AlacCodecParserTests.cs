@@ -2,7 +2,7 @@ using Encspect.Core;
 using Encspect.Formats.Alac;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Alac;
 
 // The "alac" codec parser, which a container that stores each frame in a packet hands packets to, with the cookie as the configuration (MP4's alac box,
 // Matroska's CodecPrivate). The frames are escape elements AlacBuilder writes; the packets follow one another in a test container's file.

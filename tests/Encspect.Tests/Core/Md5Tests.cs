@@ -2,7 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Encspect.Core;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Core;
 
 public class Md5Tests
 {

@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
 using Encspect.Core;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // Finds a count of one that is not written in the singular: "1 bytes", "1 audio packets", and "1 byte are". The plural nouns are the ones the code itself
 // counts with: the units of NodeValue.Integer that read in the singular for one, and every plural argument of the calls that count in running text

@@ -1,6 +1,6 @@
 using Encspect.Formats.MonkeysAudio.Decoding;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.MonkeysAudio;
 
 // How the values of the predictors become samples, where the SDK's checks of a sample's range apply (Prepare.cpp, CPrepare::Unprepare).
 public class MonkeysAudioUnprepareTests

@@ -1,4 +1,4 @@
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // Byte arrays joined and repeated without the shared array pools, which LINQ's ToArray takes the segments of a sequence of unknown length
 // from: the memory tests build their inputs with these (SharedPoolGuard).

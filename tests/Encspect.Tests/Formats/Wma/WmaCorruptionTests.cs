@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Wma;
 
 // Damaged ASF and Windows Media Audio files give findings, never an unhandled exception, and a report whose
 // nodes lie where they say: the real files of every codec with a stretch of their data flipped, zeroed, cut or

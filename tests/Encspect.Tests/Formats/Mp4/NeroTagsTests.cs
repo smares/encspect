@@ -3,7 +3,7 @@ using System.Text.Json;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Mp4;
 
 // Nero's tags box (plan 0.4, item 9) in the four files neroAacTag 1.5.4.0 tagged: the parsed fields against neroAacTag's own listings, which the provenance
 // records, and the findings for a copy that differs from the iTunes metadata or the chapter list beside it.

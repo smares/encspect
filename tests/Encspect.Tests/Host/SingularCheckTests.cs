@@ -1,4 +1,4 @@
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // The checker of CrossFormatNamingTests finds what it should, whatever words stand around the count, and lets pass what is not a count.
 public class SingularCheckTests

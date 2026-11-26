@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
-using Builder = Encspect.Tests.TakBuilder;
+using Builder = Encspect.Tests.Support.TakBuilder;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // An encoder of the coded samples of TAK 2.0 and 2.2, the inverse of the clean-room description the decoder follows (docs/design/tak-format.md; docs/development.md,
 // "TAK decoding (clean-room)"), so that tests can round-trip samples the encoders at hand never write (every residual mode and escape, every prediction order, wasted bits,

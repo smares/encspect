@@ -1,6 +1,6 @@
 using Encspect.Core;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // Wraps a decoder and sums the work units it charges, passing every charge on to the host, so the report is the real one
 // (docs/design/decoders.md, "How a decoder that under-reports is caught"). The wrapper replaces the registered decoder through the

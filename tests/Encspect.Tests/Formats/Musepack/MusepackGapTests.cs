@@ -2,7 +2,7 @@ using Encspect.Core;
 using Encspect.Host;
 using Encspect.Host.Measurement;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Musepack;
 
 // Damage in the coded data of a Musepack stream: a frame the walk cannot read is lost (libmpcdec stops decoding at it), the decoder starts again at the next frame it is
 // handed and withholds the output that depends on what it lost (docs/design/lossy-decoders.md, decisions 4 and 15): 32 frames in SV4 to SV7, 480 samples in SV8.

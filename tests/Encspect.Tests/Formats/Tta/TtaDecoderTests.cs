@@ -4,7 +4,7 @@ using Encspect.Formats.Tta;
 using Encspect.Formats.Tta.Decoding;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Tta;
 
 // The TTA decoder against the worked examples of the clean-room description (the Rice codes, the filter and predictor, the decorrelation) and against
 // TtaEncoder, an inverse of the same description, for every depth, channel counts, signals that reach the ends of the range and long unary runs; the

@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Formats.Aac;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Aac;
 
 // The buffer fullness of mixed ADTS headers, which only crafted input reaches.
 public class AacBufferFullnessTests

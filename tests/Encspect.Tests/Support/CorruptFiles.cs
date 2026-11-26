@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // The check behind the CorruptTagFileTests classes: truncated, byte-flipped and garbage-prefixed variants of a
 // fixture must yield a report, never an exception or a hang, and every node must stay inside the file and its

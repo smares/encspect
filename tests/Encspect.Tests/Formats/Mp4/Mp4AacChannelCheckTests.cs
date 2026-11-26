@@ -2,7 +2,7 @@ using Encspect.Core;
 using Encspect.Formats.Aac;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Mp4;
 
 // The MP4 parser decides whether an AAC stream is plain mono, and whether its blocks were not read, from the AAC parser's codec names (Mp4Parser.CompareAacChannels
 // matches "SBR", "HE-AAC" and "explicitly"), because a parser may not reference another. These tests fail if the names stop carrying what that check relies on.

@@ -4,7 +4,7 @@ using Encspect.Cli;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Cli;
 
 public class CommandLineTests
 {

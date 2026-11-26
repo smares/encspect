@@ -3,9 +3,10 @@ using System.Text;
 using System.Text.Json;
 using Encspect.Core;
 using Encspect.Host;
+using Encspect.Tests.Formats.Flac;
 using Encspect.Tests.Measurement;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Alac;
 
 // Decodes every ALAC fixture (MP4 and Matroska; the CAF files have no parser) with a hashing sink: the samples of the undamaged ones are the input of the
 // encoder (the hash of each channel in the manifest, which crosscheck_alac_fixtures.py confirms with Apple's decoder and FFmpeg), the lent and the unlent

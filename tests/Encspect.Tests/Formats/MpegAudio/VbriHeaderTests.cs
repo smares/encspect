@@ -1,6 +1,6 @@
 using Encspect.Formats.MpegAudio;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.MpegAudio;
 
 // A VBRI header is taken only after zero side information of the frame's own length (VbrHeader.TryRead): in MPEG-1 stereo that is 32 bytes, up to the header at
 // byte 36 (less with a CRC), and in MPEG-2 and in mono fewer, so bytes between the side information and the header may be set, as Nero's mp3PRO plug-in sets

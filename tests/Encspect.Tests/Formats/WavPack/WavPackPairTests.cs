@@ -3,7 +3,7 @@ using Encspect.Cli;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.WavPack;
 
 // The pair of a hybrid .wv file and its .wvc file found beside it (docs/design/correction-files.md, "WavPack"): the name rule on real files, the
 // statuses of the lookups, and the words around the pair. The damaged pairs are the fixtures' manifests (WavPackFixtureTests).

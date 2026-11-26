@@ -2,7 +2,7 @@ using Encspect.Core;
 using Encspect.Formats.Ac3;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Ac3;
 
 // The decoder never writes a value that is not finite or beyond what the specification's ranges allow, whatever the bits of a frame say: the mantissas of every frame of
 // some encoders' files are replaced by seeded random bits (so that the grouped codes no quantizer has, the extremes of every asymmetric quantizer and noise in every bin are

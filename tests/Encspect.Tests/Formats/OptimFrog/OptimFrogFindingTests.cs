@@ -1,9 +1,9 @@
 using Encspect.Core;
 using Encspect.Formats.OptimFrog;
 using Encspect.Host;
-using Builder = Encspect.Tests.OptimFrogBuilder;
+using Builder = Encspect.Tests.Support.OptimFrogBuilder;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.OptimFrog;
 
 // What the OptimFROG format parser does with input the fixtures do not hold: how its sniff ranks a main block, the end the blocks declare, the walk's
 // rule for unknown blocks and tags after the blocks, and each finding the walk and the checks across blocks raise. FindingCoverageTests checks that every

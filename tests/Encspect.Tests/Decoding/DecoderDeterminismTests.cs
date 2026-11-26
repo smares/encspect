@@ -2,8 +2,9 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 using Encspect.Core;
 using Encspect.Host;
+using Encspect.Tests.Formats.Flac;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Decoding;
 
 // The lossy decoders compute in floating point and fall under the determinism rules of the measurements (docs/design/lossy-decoders.md, "Decoders fall
 // under the determinism rules"): their raw output hashes to the same value on every platform and in the NativeAOT build. The decoders of the formats

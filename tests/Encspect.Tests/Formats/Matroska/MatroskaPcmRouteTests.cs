@@ -1,8 +1,9 @@
 using System.Text.Json;
 using Encspect.Core;
 using Encspect.Host;
+using Encspect.Tests.Formats.Flac;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Matroska;
 
 // The route of Matroska's A_PCM tracks to the PCM parser: the fixtures ffmpeg wrote (make_external_matroska_fixtures.py) decode to what ffmpeg decodes them to (the MD5 of the
 // canonical layout their manifests hold, which crosscheck_matroska_fixtures.py checks again), the decoding adds what the decode goldens hold and changes no node, the layout comes from

@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Ac3;
 
 // Frames whose CRC fails (docs/design/damaged-units.md): AC-3's parser flags a syncframe whose CRC1 or CRC2 fails, E-AC-3's one whose CRC fails, and a program frame in which
 // a dependent frame's fails; the decoders withhold the first block after it (256 samples), which depends on the overlap the failed frame left. The measurements leave all of it

@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
 using System.Text;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // Writes small Matroska files byte by byte for the tests that need what no fixture holds: sizes and counts past the parser's limits.
 internal static class MatroskaBuilder

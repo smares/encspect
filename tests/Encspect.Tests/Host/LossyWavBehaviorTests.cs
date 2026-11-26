@@ -2,7 +2,7 @@ using System.Text.Json;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // The claim from behavior: the counts of wasted bits FLAC and WavPack state show lossyWAV's pattern, at low confidence, named without a version. The
 // committed lossyWAV files come with the rule's answer for the file as coded (flacUnits.claim in the provenance), which the importer works out apart

@@ -1,6 +1,7 @@
 using Encspect.Core;
+using Encspect.Tests.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Core;
 
 // The heap is the whole process's, so the series' memory is measured alone, in the collection that MemoryTests runs in, and as
 // MemoryTests measures (docs/development.md, "Memory tests"): the live heap after full compacting collections, read from the

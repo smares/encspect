@@ -8,7 +8,7 @@ using Encspect.Formats.WavPack;
 using Encspect.Host;
 using Xunit.Abstractions;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // The measuring helpers of the memory tests, which run in the one non-parallel collection (see MemoryTests).
 public abstract class MemoryTestBase(ITestOutputHelper output) : IDisposable

@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Formats.Wma;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Wma;
 
 // The samples of standard Windows Media Audio streams: the rule fitted to the output of Microsoft's decoder in black-box runs
 // (docs/development.md, "Differences found", standard WMA; the records of runs 41252306359, 41375872453, 41409006544 and 41412867847).

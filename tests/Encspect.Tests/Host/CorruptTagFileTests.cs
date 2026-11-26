@@ -1,4 +1,4 @@
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // Damaged variants of every tag fixture (see CorruptFiles), and random bytes. The other fixtures have classes
 // of their own below so that the test runner takes them in parallel and the CI shards can divide them: one

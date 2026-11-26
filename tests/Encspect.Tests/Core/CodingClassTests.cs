@@ -2,7 +2,7 @@ using System.Text.Json;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Core;
 
 // The class of each coding by its name, the words it reads in, and how the verification's IsLossy stands to it.
 public class CodingClassTests

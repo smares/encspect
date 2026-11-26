@@ -8,7 +8,7 @@ using Encspect.Formats.Matroska;
 using Encspect.Formats.Mp4;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // Every coding name the code can write has a class or is listed as one without, so a new codec needs a decision; every golden stream holds the class its
 // parser states, and the verification's IsLossy and isCorrected agree with it.

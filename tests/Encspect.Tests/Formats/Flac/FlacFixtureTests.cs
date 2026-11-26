@@ -4,7 +4,7 @@ using System.Text.Json;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Flac;
 
 // Checks every FLAC fixture against its manifest (make_external_flac_fixtures.py, make_flac_fixtures.py, both worked out by flac_model.py, a
 // reading of RFC 9639 apart from the analyzer, and confirmed by crosscheck_flac_fixtures.py): the metadata blocks, every frame with its

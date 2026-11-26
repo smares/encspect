@@ -1,4 +1,4 @@
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // What the thread-safety tests cover on a pull request and what they cover in the nightly run. The fixture-wide
 // tests read the whole corpus in every mode: a sample of it once dropped the three DTS files that exposed a

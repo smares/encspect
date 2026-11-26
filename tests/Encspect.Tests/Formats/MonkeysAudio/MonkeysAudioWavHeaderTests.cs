@@ -2,7 +2,7 @@ using System.Buffers.Binary;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.MonkeysAudio;
 
 // The WAV header data a Monkey's Audio file stores: the fmt chunk is read for the channels and the channel mask, and a header data that is cut or malformed
 // gives findings and nothing else (the frames do not depend on it, so decoding goes on). The fixtures hold the intact cases (RIFF, BW64 and Wave64 headers)

@@ -2,7 +2,7 @@ using System.Text.Json;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // The marker lossyWAV leaves (the text of a fact chunk before the data) and the claim of the processor role it makes, in the four formats that keep it.
 // The committed files come with a provenance record: lossyWAV's own answer (--check) for the WAV each was made from, and the answer derived for the committed

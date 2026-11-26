@@ -1,6 +1,6 @@
 using Encspect.Core;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // The helper that explains a mismatch between two hashed renderings must itself be right.
 public class ReportRenderingTests

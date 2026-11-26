@@ -1,4 +1,4 @@
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 public class PoolElementSizesTests
 {

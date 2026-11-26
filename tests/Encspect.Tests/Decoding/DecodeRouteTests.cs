@@ -2,7 +2,7 @@ using System.Runtime.ExceptionServices;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Decoding;
 
 // The decode route, with test-only parsers and decoders (docs/design/decoders.md): what the host's sessions do with the
 // frames a parser hands them, the exception boundary, the work budget, the front end's stop and sink, and the

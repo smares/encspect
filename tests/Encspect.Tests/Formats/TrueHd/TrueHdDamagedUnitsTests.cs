@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.TrueHd;
 
 // Substreams whose parity byte or CRC-8 fails (docs/design/damaged-units.md): the parser flags the unit, and the decoder withholds the units after it up
 // to the next one that restarts every substream, since the filter histories and matrices they start from are the damaged unit's. A lossless check that

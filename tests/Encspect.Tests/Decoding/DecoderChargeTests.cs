@@ -7,7 +7,7 @@ using Encspect.Host;
 using MonkeysAudioDecoder = Encspect.Formats.MonkeysAudio.Decoding.MonkeysAudioDecoder;
 using MonkeysAudioFrameDecoder = Encspect.Formats.MonkeysAudio.Decoding.FrameDecoder;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Decoding;
 
 // What the FLAC and WavPack decoders charge, to the unit, for small inputs built the way DecoderWorkTests builds its large ones
 // (docs/design/decoders.md, "What each decoder counts"). DecoderWorkTests holds the weights to the time; these hold the counting to the design.
@@ -16,8 +16,8 @@ public class DecoderChargeTests
     private static long Units(byte[] data, string name, bool lends = true)
     {
         IDecoder inner = name.EndsWith(".flac", StringComparison.Ordinal) ? new FlacDecoder()
-            : name.EndsWith(".thd", StringComparison.Ordinal) ? Formats.TrueHd.Decoding.TrueHdDecoder.TrueHd
-            : name.EndsWith(".wav", StringComparison.Ordinal) || name.EndsWith(".aiff", StringComparison.Ordinal) ? new Formats.Wav.Decoding.PcmDecoder() : new WavPackDecoder();
+            : name.EndsWith(".thd", StringComparison.Ordinal) ? Encspect.Formats.TrueHd.Decoding.TrueHdDecoder.TrueHd
+            : name.EndsWith(".wav", StringComparison.Ordinal) || name.EndsWith(".aiff", StringComparison.Ordinal) ? new Encspect.Formats.Wav.Decoding.PcmDecoder() : new WavPackDecoder();
         var counting = new CountingDecoder(inner);
         IEnumerable<IFormatParser> formats = DefaultParsers.Formats.Select(p => !lends && p is FlacParser ? new FlacParser { LendsBuffers = false } : !lends && p is TrueHdParser ? new TrueHdParser { LendsBuffers = false } : p);
         var analyzer = new Analyzer(DefaultParsers.Tags, formats, DefaultParsers.Codecs, [counting]);
@@ -120,7 +120,7 @@ public class DecoderChargeTests
 
         // Per sample period: 19 units for each of the 2 channels, the period's own units, one unit for each of the 8 taps of a FIR filter and 4 of an IIR filter, of both channels, and for each
         // matrix its 2 channels and the 2 noise channels as inputs.
-        long period = (DecodeWork.ForSample(3) * 2) + Formats.TrueHd.Decoding.StreamDecoder.PeriodUnits + (Formats.TrueHd.Decoding.StreamDecoder.FilterTapUnits * 2 * ((fir > 0 ? 8 : 0) + (iir > 0 ? 4 : 0))) + (Formats.TrueHd.Decoding.StreamDecoder.MatrixTapUnits * matrices * 4);
+        long period = (DecodeWork.ForSample(3) * 2) + Encspect.Formats.TrueHd.Decoding.StreamDecoder.PeriodUnits + (Encspect.Formats.TrueHd.Decoding.StreamDecoder.FilterTapUnits * 2 * ((fir > 0 ? 8 : 0) + (iir > 0 ? 4 : 0))) + (Encspect.Formats.TrueHd.Decoding.StreamDecoder.MatrixTapUnits * matrices * 4);
         // The first unit is the one that starts the decoding session, so its walk has nothing to lend and the decoder reads its 16 units a byte itself.
         Assert.Equal((count * 160 * period) + (DecodeWork.PerCodedByte * unitBytes), units);
     }

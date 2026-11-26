@@ -3,8 +3,9 @@ using System.Text;
 using System.Text.Json;
 using Encspect.Core;
 using Encspect.Host;
+using Encspect.Tests.Formats.WavPack;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.MonkeysAudio;
 
 // Decodes every Monkey's Audio fixture with a hashing sink and holds the analyzer to its manifest: the samples and the MD5 of the canonical layout that
 // the signal given to the encoder makes (which crosscheck_monkeys_audio_fixtures.py confirms with mac and FFmpeg), the verification by the rule of

@@ -2,8 +2,9 @@ using System.Buffers.Binary;
 using System.Text.Json;
 using Encspect.Core;
 using Encspect.Host;
+using Encspect.Tests.Formats.Flac;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Mp4;
 
 // The routes of MP4 to FLAC, Dolby TrueHD and PCM: the fixtures ffmpeg's muxers wrote (make_external_mp4_fixtures.py) decode to what ffmpeg decodes them to (the MD5 of the
 // canonical layout their manifests hold, which crosscheck_mp4_fixtures.py checks again), the decoding adds what the decode goldens hold and changes no node, and a PCM track's samples

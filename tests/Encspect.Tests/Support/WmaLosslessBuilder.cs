@@ -2,7 +2,7 @@ using System.Buffers.Binary;
 using Encspect.Core;
 using Encspect.Formats.Wma;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // Windows Media Audio Lossless streams written bit by bit for the packet reader: frames of raw PCM samples or without any coded channel,
 // packed into media objects of a block alignment (docs/design/wma-lossless-format.md, "Packets", "Frame").

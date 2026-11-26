@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // Findings that no fixture reaches with a count of one, built here: the count reads in the singular, and its verb agrees.
 public class SingularFindingTests

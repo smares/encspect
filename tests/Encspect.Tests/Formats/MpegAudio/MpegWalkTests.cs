@@ -1,6 +1,6 @@
 using Encspect.Formats.MpegAudio;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.MpegAudio;
 
 // The entropy pass of Layer III (Layer3Syntax, Layer3Walker): frames written by hand in the test, so that what the walk reads is known.
 public class MpegWalkTests

@@ -1,7 +1,7 @@
 using Encspect.Host;
 using Xunit;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 public class ReportSummaryTagTests
 {

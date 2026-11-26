@@ -1,6 +1,6 @@
 using Encspect.Formats.TrueHd;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.TrueHd;
 
 // The rule that classifies the matrices of a two-channel presentation, on states filled by hand: the branches no committed file reaches.
 public class StereoCodingsTests

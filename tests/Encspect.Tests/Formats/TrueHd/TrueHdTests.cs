@@ -4,7 +4,7 @@ using Encspect.Core;
 using Encspect.Formats.TrueHd;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.TrueHd;
 
 // The checks and the example unit of docs/design/truehd-format.md, the sniffer, and the "truehd" and "mlp" codec parsers on the units of a fixture
 // handed over as packets and as one payload (the routes of MP4 and Matroska are a later change).

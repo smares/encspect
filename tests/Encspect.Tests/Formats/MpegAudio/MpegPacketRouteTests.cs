@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.MpegAudio;
 
 // MPEG audio that a container hands over as packets (MP4 samples in several stretches, Matroska blocks, the payloads of IEC 61937 bursts) is read as the same bytes in a file are:
 // the frames, the frame count and the decoded audio equal those of the stream's own file, and the container's bytes between the packets are no part of it.

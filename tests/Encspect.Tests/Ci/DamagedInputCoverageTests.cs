@@ -1,6 +1,6 @@
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Ci;
 
 // What the damaged-input classes (CorruptFiles) cover is a list of named exceptions, not an allow-list: every media file of tests/fixtures is mutated unless its folder is named in
 // CorruptFiles.NotMutated, and every file is also decoded unless its folder is named in CorruptFiles.NotDecoded, each with the reason. A folder or a decoder added later is covered by default.

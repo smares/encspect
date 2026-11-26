@@ -4,7 +4,7 @@ using Encspect.Core;
 using Encspect.Formats.WavPack;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.WavPack;
 
 // The "wavpack" codec parser, which a container that stores a block without its header hands packets to (Matroska's A_WAVPACK4;
 // the route is a later change). The packets are made from the blocks of a fixture as matroskadec.c's matroska_parse_wavpack takes them

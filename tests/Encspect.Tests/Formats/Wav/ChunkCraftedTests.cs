@@ -3,7 +3,7 @@ using System.Text;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Wav;
 
 // The WAV and AIFF findings that no committed fixture can hold, because the tag chain they depend on needs an ID3v2.4 SEEK frame that points at
 // offsets of the file, or a combination of claims. The files are built here; the codes are asserted for FindingCoverageTests.

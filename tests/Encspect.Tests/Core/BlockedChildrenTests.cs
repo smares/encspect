@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
 using Encspect.Core;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Core;
 
 // The one implementation of the weak, blocked list of a node's children that every format's long
 // lists use: blocks of 1,024 built when first read, held weakly, the block read last held strongly.

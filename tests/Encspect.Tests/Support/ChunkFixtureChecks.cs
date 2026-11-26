@@ -1,8 +1,9 @@
 using System.Text.Json;
 using Encspect.Core;
 using Encspect.Host;
+using Encspect.Tests.Formats.Flac;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // What the WAV and AIFF fixture tests check alike against a manifest (make_wav_fixtures.py, make_external_wav_fixtures.py, make_aiff_fixtures.py,
 // make_external_aiff_fixtures.py, worked out by wav_model.py and aiff_model.py from the specifications apart from the analyzer): the length, the

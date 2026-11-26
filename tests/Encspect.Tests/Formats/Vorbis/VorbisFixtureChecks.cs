@@ -1,15 +1,16 @@
 using System.Globalization;
 using System.Text.Json;
 using Encspect.Core;
+using static Encspect.Tests.Formats.Ogg.OggFixtureTests;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Vorbis;
 
 // The Vorbis part of the Ogg fixture manifests (OggFixtureTests).
-public partial class OggFixtureTests
+internal static class VorbisFixtureChecks
 {
     // Vorbis: the identification header's fields, the comment, the setup header's summary and
     // groups, every audio packet with its block, the statistics and the encoder.
-    private static void CheckVorbis(JsonElement vorbis, Node stream, string where)
+    internal static void CheckVorbis(JsonElement vorbis, Node stream, string where)
     {
         CheckFields(vorbis.GetProperty("header"), stream.Children.Single(c => c.Name == "Identification Header"), where);
         CheckComment(vorbis, stream);

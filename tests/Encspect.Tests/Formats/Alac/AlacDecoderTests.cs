@@ -4,7 +4,7 @@ using Encspect.Formats.Alac;
 using Encspect.Formats.Alac.Decoding;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Alac;
 
 // The ALAC decoder on what the builders write (uncompressed elements, whose samples are known), the walk it runs itself over a frame the parser did not store, and
 // the rule that it opens only where a front end asks for the samples (ALAC stores no checksum).

@@ -2,7 +2,7 @@ using System.Buffers.Binary;
 using System.Text;
 using Encspect.Core;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // Builds OptimFROG files block by block from the author's specification (format.txt: the main block, HEAD, COMP with its CRC-32, TAIL, MD5 and RECV),
 // so a test changes one thing and nothing else. The data blocks hold bytes in place of compressed audio: the analyzer compares CRC-32s and does not decode.

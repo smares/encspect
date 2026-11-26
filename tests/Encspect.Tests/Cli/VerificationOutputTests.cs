@@ -3,8 +3,9 @@ using System.Text.Json;
 using Encspect.Cli;
 using Encspect.Core;
 using Encspect.Host;
+using Encspect.Tests.Decoding;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Cli;
 
 // How the verification of a stream reads in the text tree, in JSON and in CSV, and what --verify does.
 public class VerificationOutputTests

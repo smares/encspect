@@ -1,6 +1,6 @@
 using Encspect.Core;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Core;
 
 // The category series of docs/design/coding-graphs.md: units with a fixed or variable number of values, the caps that
 // count values without coding them, weights, groupings, counts over ranges and the time index.

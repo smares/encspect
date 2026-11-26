@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Encspect.Core;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // Checks every tag fixture against the expectations its generator wrote down: regions in file
 // order, versions, confidence, selected field values and the exact set of findings.

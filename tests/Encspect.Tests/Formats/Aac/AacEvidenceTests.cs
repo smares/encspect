@@ -2,7 +2,7 @@ using Encspect.Core;
 using Encspect.Formats.Aac;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Aac;
 
 // What turns an AAC LC stream into HE-AAC (SBR data after a channel element in at least half of the blocks of intact frames), and the bound on
 // the graph of bitrate over time.

@@ -1,8 +1,9 @@
 using System.Diagnostics;
 using Encspect.Core;
 using Encspect.Host;
+using Encspect.Tests.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Ac3;
 
 // The programs of an AC-3 or E-AC-3 stream (an independent substream with one configuration, and the dependent
 // substreams after its frames): how many there are, what their figures and nodes cover, and how a summary adds

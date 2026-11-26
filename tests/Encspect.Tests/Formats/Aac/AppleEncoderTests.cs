@@ -4,7 +4,7 @@ using System.Text.Json;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Aac;
 
 // Apple's AudioToolbox is named from the way its files are written (AacEncoder, Mp4Parser.AppleEvidence): the encoder with medium confidence where
 // an sbtd box records the PCM source of an encode, the writer with low confidence otherwise, since the writer lays its layout around packets it only copied: the files afconvert wrote

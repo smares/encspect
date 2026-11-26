@@ -3,7 +3,7 @@
 
 using Encspect.Formats.WavPack.Decoding;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.WavPack;
 
 // The closed form of the exponent loop of libwavpack's float_values (unpack_floats.c 70-71 and 118-119) against the loop, ported unchanged:
 // the same value, exponent and shift count for every input, so the output and the CRC over the floats are the same

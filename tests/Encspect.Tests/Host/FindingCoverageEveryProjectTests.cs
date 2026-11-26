@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // Every finding code of every format and tag project, and the host's decode.* codes, is asserted by a test or listed by a fixture's manifest or decode golden, or named
 // below with the reason it is not yet. A project added without an entry in Prefixes fails, so that a new project cannot land outside this test.

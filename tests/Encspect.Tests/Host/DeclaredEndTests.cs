@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // The host asks the parser it picked for its declared end without looking at what the parser implements (reflection on the interface map is
 // not available under NativeAOT), so a parser that implements DeclaredEnd is heard however the set of parsers is made up.

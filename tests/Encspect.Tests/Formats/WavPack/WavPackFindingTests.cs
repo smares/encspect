@@ -2,7 +2,7 @@ using System.Buffers.Binary;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.WavPack;
 
 // One damaged or unusual file for each finding the WavPack parser emits that no fixture's manifest
 // lists, built from an encoder-written fixture with its blocks changed, and the finding that must come

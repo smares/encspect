@@ -2,7 +2,7 @@ using System.Text;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Flac;
 
 // The limits the compression level guess draws from the stereo assignments of libFLAC's adaptive levels (State.AdaptiveBreaks), from damaged frames and gaps, and from
 // the order allowance of the FFmpeg releases whose levels 6 and 8 name an order one above their highest (docs/formats/flac.md, "Compression level").

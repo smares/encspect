@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // Every finding code the ASF and Windows Media Audio parsers emit is asserted by a test or listed by a fixture's
 // manifest: a code that no input is known to raise is a code nobody knows still works.

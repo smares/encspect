@@ -2,8 +2,9 @@ using System.Globalization;
 using System.Text.Json;
 using Encspect.Core;
 using Encspect.Host;
+using Encspect.Tests.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.WavPack;
 
 // Checks every WavPack fixture of versions 1 to 3 (tests/fixtures/wavpack/legacy: the encoder-written external-* files and the hand-built built-legacy-* ones) against
 // its manifest, which wavpack_legacy_model.py works out from the bytes apart from the analyzer: the stored WAV header's chunks, the WavPack header's fields, the

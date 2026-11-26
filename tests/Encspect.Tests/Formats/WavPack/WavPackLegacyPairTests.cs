@@ -2,7 +2,7 @@ using System.Text.Json;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.WavPack;
 
 // The pair of a WavPack 3 hybrid file and its .wvc (docs/design/correction-files.md, "Version 3"): the correction file has no structure, so the pair is unchecked until the
 // decoder reads both and compares the second CRC of the header. The pairs' audio and the encoder-written ones' verdicts are held by WavPackLegacyDecoderFixtureTests;

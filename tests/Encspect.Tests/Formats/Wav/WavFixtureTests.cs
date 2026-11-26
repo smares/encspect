@@ -2,7 +2,7 @@ using System.Buffers.Binary;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Wav;
 
 // Checks every WAV fixture against its manifest (make_external_wav_fixtures.py, make_wav_fixtures.py, both worked out by wav_model.py, a reading of
 // the specifications apart from the analyzer, and confirmed by crosscheck_wav_fixtures.py), and the fields of some of them against the values they

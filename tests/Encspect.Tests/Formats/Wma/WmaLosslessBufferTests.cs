@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Formats.Wma;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Wma;
 
 // Windows Media Audio Lossless: the decoder's buffer for the saved run (32,768 bytes per channel) and Encspect's own limit on the frames it
 // records (docs/design/wma-lossless-format.md, "Frames in packets"; docs/formats/asf-wma.md, "WMA Lossless").

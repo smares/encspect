@@ -2,7 +2,7 @@ using System.Text;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Tags.Id3;
 
 // The decision whether an ID3v2.4 tag stores plain frame sizes, and whether a tag that sets the
 // extended header flag starts with a frame (docs/tags/id3.md); the fixtures cover the main cases.

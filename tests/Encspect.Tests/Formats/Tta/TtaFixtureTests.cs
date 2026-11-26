@@ -2,8 +2,9 @@ using System.Globalization;
 using System.Text.Json;
 using Encspect.Core;
 using Encspect.Host;
+using Encspect.Tests.Formats.Flac;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Tta;
 
 // Checks every TTA fixture against its manifest (make_external_tta_fixtures.py, make_tta_fixtures.py, both worked out by tta_model.py, a reading of
 // the TTA authors' format description apart from the analyzer, and confirmed by crosscheck_tta_fixtures.py): the header, the seek table, every

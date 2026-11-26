@@ -2,8 +2,9 @@ using System.Text;
 using System.Text.Json;
 using Encspect.Core;
 using Encspect.Host;
+using Encspect.Tests.Core;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // How the JSON and text writers show category series: the example of docs/design/coding-graphs.md, a stream of three
 // seconds of 40 frames with four values each, and what the other forms of a series write.

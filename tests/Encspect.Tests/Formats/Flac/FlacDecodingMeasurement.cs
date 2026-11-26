@@ -5,7 +5,7 @@ using Encspect.Formats.Flac.Decoding;
 using Encspect.Host;
 using Xunit.Abstractions;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Flac;
 
 // The measurement of docs/design/decoders.md ("The second entropy pass, measured again on the built decoder"). It runs only where
 // ENCSPECT_FLAC_MEASURE names a folder of .flac files, and then prints for each: A, the analysis without decoding; B, with decoding as built

@@ -2,7 +2,7 @@ using System.Buffers.Binary;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Asf;
 
 // "Container Samples": the File Properties Object's play duration less the preroll, in samples at the stream's rate, rounded to the nearest with halves up
 // (docs/formats/asf-wma.md). Each case patches the play duration, the preroll or the flags of a committed Windows-written file and reads the statistic back.

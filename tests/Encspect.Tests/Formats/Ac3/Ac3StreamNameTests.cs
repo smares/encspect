@@ -1,6 +1,6 @@
 using Encspect.Core;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Ac3;
 
 // A container's stream whose first frame is AC-3 (so its decoding session starts there) but that holds E-AC-3 dependent frames is named "E-AC-3", as it was before the node was made at
 // the first frame; the measurements of such a stream are found through the same node.

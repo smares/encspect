@@ -2,7 +2,7 @@ using Encspect.Core;
 using Encspect.Formats.Dts;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Dts;
 
 // The entropy pass over the subframes of the core (ETSI TS 102 114 5.5, 5.6): the books of Annex D.5 as decoders, and what the walk does with damaged input. What it reads of
 // the coded fixtures is asserted by their manifests (DtsFixtureTests), which a second writer (dts_coded.py) produced.

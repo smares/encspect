@@ -2,7 +2,7 @@ using System.Buffers.Binary;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.MonkeysAudio;
 
 // One crafted file for each finding the Monkey's Audio parser emits that no fixture's manifest lists, and the finding that must come out.
 // FindingCoverageTests checks that every code the parser emits is asserted somewhere.

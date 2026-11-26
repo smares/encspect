@@ -2,7 +2,7 @@ using Encspect.Core;
 using Encspect.Formats.Aac;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Aac;
 
 // The Huffman codebooks and band tables the raw data block reader uses, and the nodes a report
 // rebuilds from what it keeps of each block.

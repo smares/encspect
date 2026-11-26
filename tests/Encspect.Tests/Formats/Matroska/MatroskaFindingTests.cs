@@ -3,7 +3,7 @@ using Encspect.Core;
 using Encspect.Formats.Matroska;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Matroska;
 
 // One crafted file for each finding the Matroska parser emits that no fixture's manifest lists, and the finding that must come
 // out. FindingCoverageTests checks that every code the parser emits is asserted somewhere.

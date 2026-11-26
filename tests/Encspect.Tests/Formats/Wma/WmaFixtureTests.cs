@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Encspect.Core;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Wma;
 
 // Checks the WMA fixtures the encoders wrote (make_external_asf_fixtures.py: ffmpeg's wmav1 and wmav2; the
 // external-windows-* files from Microsoft's encoders, imported by import_windows_wma_fixtures.py) against what

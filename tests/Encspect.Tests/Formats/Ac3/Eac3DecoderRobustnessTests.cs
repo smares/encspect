@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Formats.Ac3;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Ac3;
 
 // The same holds for E-AC-3: whatever the bits of a frame say, the decoder writes finite samples within the ranges the specification allows, and decodes every frame the parser
 // reads. The mantissas of the hand-built files that use the adaptive hybrid transform, spectral extension and enhanced coupling (whose vectors, gains, tags, angles and noise all

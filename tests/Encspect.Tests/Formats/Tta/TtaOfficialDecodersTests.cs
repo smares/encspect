@@ -3,7 +3,7 @@ using System.Text.Json;
 using Encspect.Core;
 using Xunit.Abstractions;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Tta;
 
 // Holds the analyzer's TTA sample count to tests/fixtures/tta/official-decoders.json (docs/design/official-decoder-crosschecks.md, "Records and the comparison"):
 // for each fixture the reference figure, which is what libtta-c 2.3's `tta -d` wrote (`tta -dp secret` for the file written with that password), counted from the

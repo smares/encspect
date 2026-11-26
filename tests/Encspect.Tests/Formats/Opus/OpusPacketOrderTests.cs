@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Opus;
 
 // A container can hand over packets that do not lie in the file in order, so the audio span starts at the lowest packet offset: the Statistics node's ranges
 // must reach from its offset to its end (found by the fuzzer, seed 394485949, iteration 101519).

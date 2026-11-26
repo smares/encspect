@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Matroska;
 
 // Blocks inside a Matroska element whose CRC-32 fails (docs/design/damaged-units.md, decision 2): a Cluster's CRC-32 covers the Cluster's blocks and the Segment's every block, the
 // container marks the frames of each (MappedBytes.FailsChecksum), the codec parsers of packets hand them on as CodedFrame.FailsChecksum, and the measurements leave their positions out

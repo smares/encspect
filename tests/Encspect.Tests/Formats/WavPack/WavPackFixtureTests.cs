@@ -3,7 +3,7 @@ using System.Text.Json;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.WavPack;
 
 // Checks every WavPack fixture against its manifest (make_external_wavpack_fixtures.py,
 // make_wavpack_fixtures.py, both worked out by wavpack_model.py and confirmed by

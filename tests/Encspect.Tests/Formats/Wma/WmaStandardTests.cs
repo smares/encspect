@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Formats.Wma;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Wma;
 
 // Windows Media Audio versions 1 and 2, on streams written bit by bit in the test from docs/design/wma-standard-format.md.
 public class WmaStandardTests

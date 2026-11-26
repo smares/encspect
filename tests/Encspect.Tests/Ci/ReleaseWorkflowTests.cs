@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Ci;
 
 // release.yml is read as text, like ci.yml in CiWorkflowTests: job keys are the two-space-indented keys under "jobs:".
 public sealed class ReleaseWorkflowTests

@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Formats.Aac;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Aac;
 
 // The SBR layout of FAAC 2.x's HE-AAC encoder (libfaac/sbr_bitstream.c and sbr.c) as AacEncoder applies it
 // to a stream's tally: hand-made tallies, each one change away from what FAAC 2.2 writes. The encoder-written

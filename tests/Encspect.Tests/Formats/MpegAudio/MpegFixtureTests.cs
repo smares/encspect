@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Text.Json;
 using Encspect.Core;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.MpegAudio;
 
 // Checks every MPEG fixture against its manifest. Hand-built fixtures list every frame, gap and
 // finding, and for Layer III the side information and how each frame's data splits into main data,

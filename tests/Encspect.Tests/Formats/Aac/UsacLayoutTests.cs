@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Formats.Aac;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Aac;
 
 // The layout of a UsacConfig (ISO/IEC 23003-3 5.2) as AudioSpecificConfig reads it, and the exhale
 // rule AacEncoder applies to it: hand-built configurations, each one bit pattern away from what

@@ -1,4 +1,4 @@
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Wma;
 
 // WMA's bit reader reads the eight bytes at the position as one word; the byte loop it replaced is the reference.
 public class WmaBitsPeekTests

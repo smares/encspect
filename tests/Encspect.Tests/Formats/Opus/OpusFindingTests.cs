@@ -1,7 +1,8 @@
 using Encspect.Core;
 using Encspect.Host;
+using Encspect.Tests.Decoding;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Opus;
 
 // The findings of the entropy pass for frames that need more bits than they hold. A hybrid frame that states a redundant frame longer than its data, which libopus ignores while it
 // conceals the CELT part, is opus.redundancy-overrun. A CELT frame whose range decoder runs past its data, which libopus refuses with an internal error (celt_decoder.c, "ec_tell > 8*len"),

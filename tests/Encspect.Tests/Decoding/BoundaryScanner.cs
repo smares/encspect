@@ -6,7 +6,7 @@ using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
 using System.Text.RegularExpressions;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Decoding;
 
 // One edge the boundary forbids. From is the outermost type the edge starts in (a parser type; for an inversion, the
 // Decoding type), To the type it reaches, Member where in From.

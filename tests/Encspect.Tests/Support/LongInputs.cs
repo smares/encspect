@@ -3,7 +3,7 @@ using System.Text;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // Inputs built in memory whose lists of children run past two blocks of 1,024 entries, which no
 // committed fixture does: one for each implementation of a long list in the formats. Repeating a

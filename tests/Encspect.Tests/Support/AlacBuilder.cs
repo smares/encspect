@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
 using Encspect.Core;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // Builds ALAC cookies, frames and MP4 files bit by bit from Apple's cookie description and the element syntax of its decoder, so a test changes one thing and
 // nothing else. The frames hold uncompressed (escape) elements: the analyzer walks the syntax and does not decode.

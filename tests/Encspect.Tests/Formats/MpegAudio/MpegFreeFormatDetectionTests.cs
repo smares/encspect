@@ -2,7 +2,7 @@ using Encspect.Core;
 using Encspect.Formats.MpegAudio;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.MpegAudio;
 
 // A free-format stream is read as MPEG audio wherever the parser is asked to, with or without a CRC. A chain that data other than MPEG
 // audio could make has a low score and never identifies a file: it is reported as unrecognized, with the weak-candidate finding.

@@ -4,7 +4,7 @@ using Encspect.Formats.Ac3;
 using Encspect.Formats.Dts;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // ICodecParser.Recognizes: whether a payload starts with a stream of the coding, by the evidence of its raw files (a chain of consistent frames,
 // not a sync word alone), which a container asks where its own fields do not say what the data holds.

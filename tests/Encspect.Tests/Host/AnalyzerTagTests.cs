@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // The host's detection rules with fake tag parsers: anchor walks, evaluation order, ownership
 // of bytes, and what a format parser gets to see.

@@ -2,7 +2,7 @@ using System.Text;
 using Encspect.Core;
 using TagLib;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Mp4;
 
 // Cross-checks the iTunes metadata the MP4 parser reads against TagLib#'s AppleTag on every MP4
 // fixture that has some: every item whose data is text, the track and disc numbers, the tempo, the

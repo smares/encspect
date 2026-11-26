@@ -1,4 +1,4 @@
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Wma;
 
 // The stereo pairs of WMA Professional.
 public class WmaProfessionalPairTests

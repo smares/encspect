@@ -3,7 +3,7 @@ using Encspect.Core;
 using Encspect.Formats.Flac;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Flac;
 
 // One crafted file for each finding the FLAC parsers emit that no fixture's manifest lists, and the finding that must come out.
 // FindingCoverageTests checks that every code the parsers emit is asserted somewhere.

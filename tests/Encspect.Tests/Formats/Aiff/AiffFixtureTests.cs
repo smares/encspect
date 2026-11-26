@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Aiff;
 
 // Checks every AIFF and AIFF-C fixture against its manifest (make_external_aiff_fixtures.py, make_aiff_fixtures.py, both worked out by aiff_model.py, a
 // reading of the specifications apart from the analyzer, and confirmed by crosscheck_wav_fixtures.py), and the fields of some of them against the

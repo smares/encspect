@@ -1,6 +1,6 @@
 using System.Buffers.Binary;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // Takes WavPack blocks apart and puts them together again with sub-blocks changed, working the block
 // checksum out again as libwavpack does (open_utils.c WavpackVerifySingleBlock), so a test changes

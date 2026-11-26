@@ -1,6 +1,6 @@
 using System.IO.Compression;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Ci;
 
 // The Windows icon is committed (scripts/make_icons.py writes it from the SVGs); this checks the file's structure and that
 // the small entries come from the small form (the glass alone) and the large ones from the rounded tile.

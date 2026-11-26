@@ -1,4 +1,4 @@
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // Windows Media Audio Voice packets built bit by bit, for the tests that need many of them or one of a given shape: the layout
 // of wmavoice.c (a packet header, then superframes, each a speech bit, a sample count flag, residual LSPs, three frames and an

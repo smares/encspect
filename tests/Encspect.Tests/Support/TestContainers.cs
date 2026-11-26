@@ -3,7 +3,7 @@ using System.Text;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // Test-only containers for the host's routes, until the real RIFF, AIFF and Ogg parsers arrive.
 //

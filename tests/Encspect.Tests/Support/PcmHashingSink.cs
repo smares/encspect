@@ -2,7 +2,7 @@ using System.Security.Cryptography;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Support;
 
 // A sink that hashes the canonical layout of what a decoder writes (CanonicalPcm), as the manifests' decoded_pcm_md5 is, and keeps the stream's format.
 internal sealed class PcmHashingSink : IPcmSink

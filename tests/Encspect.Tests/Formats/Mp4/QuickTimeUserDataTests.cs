@@ -2,8 +2,9 @@ using System.Diagnostics;
 using System.Text;
 using Encspect.Core;
 using Encspect.Host;
+using Encspect.Tests.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Mp4;
 
 [Collection(nameof(ComplexityTests))]
 public class QuickTimeUserDataTests

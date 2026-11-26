@@ -1,6 +1,6 @@
 using Encspect.Formats.Aac;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Aac;
 
 // The SBR frequency band tables and grid checks, from the test vectors of docs/design/aac-sbr-frequency-tables.md.
 public class AacSbrFrequencyTablesTests

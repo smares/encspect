@@ -1,7 +1,8 @@
 using System.Text.Json;
 using Encspect.Core;
+using Encspect.Tests.Formats.Flac;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.TrueHd;
 
 // Checks every Dolby TrueHD and MLP fixture against its manifest (make_external_truehd_fixtures.py and make_truehd_fixtures.py, worked out by
 // truehd_model.py apart from the analyzer and confirmed by crosscheck_truehd_fixtures.py): the stream's units and skipped stretches with their
@@ -175,9 +176,9 @@ public class TrueHdFixtureTests
             Assert.Equal(expected[3].GetInt32() == 1, node.Children.Any(c => c.Name == "Major Sync"));
             string description = expected[4].GetString() switch
             {
-                "leading" or "after-damage" or "after-unsupported" => Formats.TrueHd.Explain.UnitBeforeSync,
-                "cut" => Formats.TrueHd.Explain.CutUnit,
-                _ => Formats.TrueHd.Explain.AccessUnit,
+                "leading" or "after-damage" or "after-unsupported" => Encspect.Formats.TrueHd.Explain.UnitBeforeSync,
+                "cut" => Encspect.Formats.TrueHd.Explain.CutUnit,
+                _ => Encspect.Formats.TrueHd.Explain.AccessUnit,
             };
             Assert.True(description == node.Description, $"{where} is {expected[4].GetString()}, but its description reads \"{node.Description}\"");
         }

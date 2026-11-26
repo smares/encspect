@@ -2,7 +2,7 @@ using Encspect.Core;
 using Encspect.Host;
 using Encspect.Host.Measurement;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Ac3;
 
 // The last block of a frame with enhanced coupling waits for the next frame's first block. Whether the stream ends, a frame is removed or junk replaces one, what the report states stays
 // what the measurements keep, lost and withheld: measured + lost + withheld = Samples.

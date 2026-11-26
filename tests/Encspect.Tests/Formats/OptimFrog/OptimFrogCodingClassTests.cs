@@ -1,8 +1,8 @@
 using Encspect.Core;
 using Encspect.Host;
-using Builder = Encspect.Tests.OptimFrogBuilder;
+using Builder = Encspect.Tests.Support.OptimFrogBuilder;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.OptimFrog;
 
 // The class the OptimFROG parser states: from its evidence about the DualStream and nothing else.
 public class OptimFrogCodingClassTests

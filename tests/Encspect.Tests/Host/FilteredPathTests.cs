@@ -2,7 +2,7 @@ using System.Text.Json;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // The paths in JSON (a finding's path, a stream's nodes) index the tree as written: with sections hidden
 // they count the kept siblings only, and a path to a hidden node, or below one, is left out (null in a

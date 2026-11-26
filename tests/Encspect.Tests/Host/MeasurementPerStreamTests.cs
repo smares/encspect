@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Host;
 
 // A file whose configuration changes has several streams, each with its own decoding session; each stream gets the measurements of its own session, not those of the first stream
 // (the records were kept by the stream's node, which the streams of one region share).

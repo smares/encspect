@@ -1,9 +1,9 @@
 using Encspect.Core;
 using Encspect.Formats.Tak;
 using Encspect.Host;
-using Encoder = Encspect.Tests.TakEncoder;
+using Encoder = Encspect.Tests.Support.TakEncoder;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Tak;
 
 // The numeric coding series of TAK's frames and their "Over Time" forms (docs/design/coding-graphs.md, the TAK survey): the highest value in each second of the frames that start in it,
 // counted in the samples coded so far, as FLAC's PredictionSeriesTests holds for FLAC.

@@ -3,7 +3,7 @@ using System.Text;
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.Wav;
 
 // Damaged and unusual WAVE and AIFF files that the committed fixtures do not hold, built here: chunks of the name data in other lists, size fields
 // that disagree with the ds64 chunk, bursts out of their period, and fields at the edge of their ranges.

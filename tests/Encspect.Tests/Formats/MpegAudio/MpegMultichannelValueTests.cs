@@ -1,7 +1,7 @@
 using Encspect.Core;
 using Encspect.Host;
 
-namespace Encspect.Tests;
+namespace Encspect.Tests.Formats.MpegAudio;
 
 // The values of the multichannel side information that ISO/IEC 13818-3 forbids or leaves unassigned (2.5.2.15) are a warning on the frames that hold them;
 // lfe_allocation 15 is valid (16-bit samples), as the conformance streams test01 and test17 use it.
