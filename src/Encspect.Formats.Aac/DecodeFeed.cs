@@ -25,6 +25,7 @@ internal sealed class DecodeFeed
     private bool _followsGap;
     private int _hold;
     private bool _hasTrim;
+    private bool _isDeclined;
 
     public DecodeFeed(AnalysisContext context, Node stream, DecodeConfig config)
     {
@@ -34,7 +35,7 @@ internal sealed class DecodeFeed
     }
 
     // The store the block reader fills, or null where nothing is decoded: the session ended.
-    public RecordStore? Store => _session is { IsDecoding: false } ? null : _store;
+    public RecordStore? Store => _isDeclined || _session is { IsDecoding: false } ? null : _store;
 
     // The last blocks of the track that wait for the end trimming the container states (Matroska's DiscardPadding), which Trim must state before the blocks it reaches.
     public int Hold
@@ -48,8 +49,21 @@ internal sealed class DecodeFeed
     // A block that was read to its end and walked into the store. frame: its bytes; nodeName and node: where findings about it point.
     public void Decode(MappedBytes frame, string nodeName, Node? node, bool failsChecksum)
     {
+        if (_isDeclined)
+        {
+            return;
+        }
+
         long first = _next;
         _next += _config.FrameLength;
+        if (_session is null && (_store.Flags & (BlockRecord.BlockHasSbr | BlockRecord.BlockHasPs)) != 0)
+        {
+            // The first block that can be read holds SBR data: the stream is HE-AAC signaled implicitly, which is decoded in a later step, so no session starts.
+            _isDeclined = true;
+            _pendingLost = 0;
+            return;
+        }
+
         if (_session is null && _store.IsOverflow)
         {
             Lose(frame, nodeName, node, first);
@@ -76,6 +90,11 @@ internal sealed class DecodeFeed
     // A block that is lost: cut by the data, or with syntax that breaks.
     public void Lost(MappedBytes frame, string nodeName, Node? node)
     {
+        if (_isDeclined)
+        {
+            return;
+        }
+
         long first = _next;
         _next += _config.FrameLength;
         Lose(frame, nodeName, node, first);
