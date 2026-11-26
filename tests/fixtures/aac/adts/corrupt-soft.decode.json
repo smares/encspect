@@ -1,0 +1,17 @@
+{
+  "streams": [
+    {
+      "decoding": "Decoded",
+      "decodedSamples": 19456,
+      "pcmSha256": "9f869c31edb3d94be6b8f116ac39a1773374f1b7c348b815ca667b50444f6131"
+    }
+  ],
+  "findings": [
+    {
+      "code": "decode.frame-invalid",
+      "severity": "Warning",
+      "count": 1,
+      "message": "The aac decoder could not decode the frame at 0x137: the block holds 2 channel streams, the stream 1."
+    }
+  ]
+}
