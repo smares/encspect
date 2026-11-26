@@ -57,7 +57,7 @@ public sealed class CategorySeriesMemoryTests : IDisposable
         // growth or a copy of its codes doubles every reading, so the smallest must pass the upper bound. A series keeps at least its
         // budget, less what two readings of Live can differ by: each stops when two collections in a row agree within 64 KB, so it
         // can be that far off, and their difference twice that. A reading the series does not show up in is off by millions of bytes,
-        // so the largest must pass the lower bound. The smallest cannot: once on ubuntu-26.04, at the end of the corrupt-b shard, the
+        // so the largest must pass the lower bound. The smallest cannot: once on ubuntu-26.04, at the end of the corrupt-b shard (then MemoryTests's, now memory-a and memory-b), the
         // smaller of two pairs read 3,909,728 bytes for a budget of 4,000,000, 124 KB under the 4,033,856 that 120 pairs read on
         // linux-x64 in a quiet process (33,688 to 34,024 bytes over the budget, 27,440 and 29,736 twice, and 122,696 for the very
         // first build, which allocates what the runtime needs to start).

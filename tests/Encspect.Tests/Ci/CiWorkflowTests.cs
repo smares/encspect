@@ -244,9 +244,17 @@ public sealed class CiWorkflowTests
             Assert.NotEmpty(classes);
             Assert.All(classes, c => Assert.True(testClasses.Contains(c), $"{c} is not a test class"));
             listed.AddRange(classes);
+
+            // A class that is listed again is split by test name: every shard that lists it says which tests it takes.
+            if (shard.TryGetProperty("cases", out JsonElement cases))
+            {
+                Assert.All(cases.EnumerateObject(), c => Assert.Contains(c.Name, classes));
+            }
         }
 
-        Assert.Equal(listed.Count, listed.Distinct().Count());
+        string[] split = [.. shards[..^1].Where(s => s.TryGetProperty("cases", out _))
+            .SelectMany(s => s.GetProperty("cases").EnumerateObject().Select(c => c.Name))];
+        Assert.All(listed.Distinct(), c => Assert.True(listed.Count(l => l == c) == 1 || split.Count(x => x == c) == listed.Count(l => l == c), $"{c} is listed twice without being split by every shard that lists it"));
         Assert.Contains("scripts/ci/check_shards.py", File.ReadAllText(Path.Combine(FindRepositoryRoot(), ".github", "workflows", "ci.yml")), StringComparison.Ordinal);
     }
 
