@@ -90,21 +90,25 @@ NOISE = {
     "apple-passthru-m4a-from-ffmpeg-adts.m4a": "codes noise substitution",
 }
 
-# libxaac computes in fixed point and interpolates its table of q^(4/3) above 128: on the music files its RMS is 0.6 LSB and its largest difference up to 18 LSB at peaks, so the
-# design's 2 LSB is widened to 32 for it (the RMS bound of 1 LSB stays).
+# libxaac computes in fixed point and interpolates its table of q^(4/3) linearly (at most about 12 LSB of the 16-bit output, at loud peaks): on the music files its RMS is 0.6 LSB and
+# the largest difference of an unlisted file is 21 LSB, so the design's 2 LSB is widened to 32 for it (the RMS bound of 1 LSB stays).
 LIBXAAC_MAX_LSB = 32
 
-# Files where libxaac's test decoder differs from the analyzer beyond 2 LSB (checked with --libxaac), with what is known.
+# Files where libxaac's test decoder differs from the analyzer beyond that, each with the reason, the blocks of 1,024 samples where it does (the positions at the coded stage) and the
+# largest difference in LSB it is expected not to pass: a change of the analyzer on these files, or a difference elsewhere in them, fails the run. The analyzer computes the
+# standard's arithmetic in each case, and FFmpeg's decoder agrees with it to about 10^-8 on the music files; four of the entries are one cause.
+LIBXAAC_TNS = ("libxaac's 16-bit path for TNS filters in one or two channels (ixheaacd_tns_decode_coef, ixheaacd_tns_parcor_lpc_convert and ixheaacd_tns_ar_filter in "
+               "ixheaacd_pns_js_thumb.c): the filter's coefficients are 16 bits, and near 0.996 the all-pole filter amplifies their rounding, where the analyzer filters with the "
+               "standard's real values (a libxaac build with 32-bit TNS agrees within 22 LSB on all four files)")
 LIBXAAC_DIFFERENCES = {
-    "loud-noise-pair.aac": "grouped short windows whose noise both channels share: libxaac starts the second channel from the seed of the first channel's last window of the group, not "
-                           "of the same window (ixheaacd_pns_js_thumb.c), so its second channel draws other noise there; the analyzer's is the same noise in both",
-    "stereo-coding.aac": "block 10, a pair without a common window whose second channel codes intensity stereo over a long first channel: libxaac reads the mid/side flags that a pair "
-                         "without a common window does not set from the pair before (decoding blocks 10 and 11 alone, they agree with the analyzer), so it inverts bands the analyzer does not",
-    "apple-win-lc-m4a-q127-cbr128-tones.m4a": "tones at full level: up to 57 LSB (RMS 1.2) in fixed point, where its table of q^(4/3) is interpolated",
-    "external-nero-rom-aac-22k-vbr-q050.mp4": "up to 154 LSB (RMS 0.8) at loud peaks in fixed point, where its table of q^(4/3) is interpolated",
-    "apple-win-lc-m4a-q127-cbr64-clicks.m4a": "clicks at full level: up to the same fixed-point interpolation error as the tones",
-    "loud-pulse-tns.aac": "libxaac's blocks with pulse data or a long-window TNS filter differ by up to 1.5 % of the peak (RMS 12 LSB in the first block), where FFmpeg's decoder agrees with "
-                          "the analyzer to 3 x 10^-5 of the peak; not explained (an open difference for the lead)",
+    "loud-noise-pair.aac": ("grouped short windows whose noise both channels share: libxaac reuses the first channel's seed variable for the second, which starts from the first channel's "
+                            "last window of the group (ixheaacd_pns_js_thumb.c), so the second channel draws other noise there; the analyzer gives both the same noise in each window", [1, 2], 4862),
+    "stereo-coding.aac": ("block 10, a pair without a common window: libxaac reads the mid/side flags only for a common window and never clears them (ixheaacd_read_ms_data), so its "
+                          "intensity stereo inverts bands by the pair before's flags, where the standard transmits none and inverts nothing", [10], 8111),
+    "apple-win-lc-m4a-q127-cbr128-tones.m4a": (LIBXAAC_TNS, [130], 57),
+    "external-nero-rom-aac-22k-vbr-q050.mp4": (LIBXAAC_TNS, [146], 154),
+    "apple-win-lc-m4a-q127-cbr64-clicks.m4a": (LIBXAAC_TNS + "; up to 30 % of full scale at the clicks", [72, 85, 86, 103, 117, 148, 207, 238], 9739),
+    "loud-pulse-tns.aac": (LIBXAAC_TNS + "; blocks 0 and 3 hold the filters and blocks 1 and 4 their overlap (the pulses are applied alike)", [0, 1, 3, 4], 232),
 }
 
 # Each entry says what differs: "positions", positions that only one of the two decodes (a block the analyzer refuses, or one FFmpeg refuses), and the samples the two share then
@@ -183,6 +187,27 @@ def read_wav(path):
             return values
         at += 8 + size + (size & 1)
     return None
+
+
+def libxaac_difference(mine, values, channels, lag):
+    """The blocks of 1,024 samples where the analyzer's floats, rounded to 16 bits, differ from libxaac's samples by more than LIBXAAC_MAX_LSB, and the largest difference over the file
+    (the samples where either side is at full scale left out, as compare_pcm.py leaves them)."""
+    blocks = set()
+    largest = 0
+    for position in range(max(lag, 0), len(mine) // channels):
+        source = position - lag
+        if source * channels + channels > len(values):
+            break
+        for c in range(channels):
+            analyzer = mine[position * channels + c] * 32768.0
+            reference = values[source * channels + c]
+            if abs(analyzer) >= 32767.0 or abs(reference) >= 32767:
+                continue
+            difference = abs(math.floor(analyzer + 0.5) - reference)
+            largest = max(largest, difference)
+            if difference > LIBXAAC_MAX_LSB:
+                blocks.add(position // 1024)
+    return sorted(blocks), largest
 
 
 def compare(manifest, reference_file, channels, start, extra=(), fmt="float32"):
@@ -299,10 +324,14 @@ def main(argv=None):
                     lag = find_start([v * 32768.0 for v in mine], [float(v) for v in values], channels, (220, 0, 1024, 2112))
                     outcome2, found2 = compare(manifest, pcm, channels, lag, ["--skip-full-scale", "--max-lsb", str(LIBXAAC_MAX_LSB), "--rms-lsb", "1"], fmt="int16")
                     if path.name in LIBXAAC_DIFFERENCES:
+                        reason, expected_blocks, expected_largest = LIBXAAC_DIFFERENCES[path.name]
+                        blocks, largest = libxaac_difference(mine, values, channels, lag)
                         if found2 is None:
                             problems.append("listed in LIBXAAC_DIFFERENCES, but libxaac agrees")
+                        elif blocks != expected_blocks or largest > expected_largest:
+                            problems.append(f"libxaac differs otherwise than the entry says: blocks {blocks} (expected {expected_blocks}), largest {largest} LSB (at most {expected_largest})")
                         else:
-                            note = (note + "; " if note else "") + "libxaac differs: " + LIBXAAC_DIFFERENCES[path.name]
+                            note = (note + "; " if note else "") + f"libxaac differs in blocks {blocks} by {largest} LSB at the most: " + reason
                     elif found2:
                         problems.append(f"libxaac: {found2}")
                     else:
