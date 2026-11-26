@@ -4,7 +4,8 @@ namespace Encspect.Formats.Aac;
 
 // What the decoder takes from the parser about a stream (DecodeSetup.Shared): the configuration the raw data blocks are read with, and the speakers of the channels where
 // the stream states them.
-internal sealed record DecodeConfig(int ObjectType, int SampleRate, int SampleRateIndex, int FrameLength, bool IsSbrSignaled, bool IsPsSignaled, IReadOnlyList<Speaker>? Layout);
+internal sealed record DecodeConfig(int ObjectType, int SampleRate, int SampleRateIndex, int FrameLength, bool IsSbrSignaled, bool IsPsSignaled, IReadOnlyList<Speaker>? Layout,
+    string? Refusal = null);
 
 // The parser's side of the decoding of one stream of raw data blocks (docs/design/lossy-decoders.md, "The parser and decoder split"), for ADTS frames, ADIF blocks and the access
 // units of a container alike: the walk of BlockReader stores each block's values in the store, this copies them into the buffers the session lends and hands the block over
@@ -171,7 +172,8 @@ internal sealed class DecodeFeed
             return;
         }
 
-        _session = Start(Math.Max(1, _store.Slots), _config with { Layout = _config.Layout is { } layout && layout.Count == _store.Slots ? layout : null });
+        // A first block with no channel element says nothing about the channels: the configuration's do.
+        _session = Start(_store.Slots > 0 ? _store.Slots : _channels, _config with { Layout = _config.Layout is { } layout && layout.Count == _store.Slots ? layout : null });
         // The blocks before the first one that could be read were lost.
         long lost = _pendingLost;
         _pendingLost = 0;

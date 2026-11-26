@@ -159,6 +159,18 @@ public class AacDecoderTests
         Assert.True(peak > 0.01f, $"The second channel of block 10 lacks its intensity stereo bands (peak {peak:G3}).");
     }
 
+    // A TNS filter near its poles on the largest scalefactors reaches infinity in float, and an infinity minus an infinity is a NaN whose sign differs between x64 and ARM64: the
+    // spectrum saturates, so the output is finite and the hash is the same everywhere.
+    [Fact]
+    public void A_TNS_filter_on_crafted_values_saturates_and_stays_finite()
+    {
+        (Report report, CollectingSink sink) = Decode(File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "aac", "adts", "tns-overflow.aac")), "tns-overflow.aac");
+
+        Assert.Equal(3, sink.Blocks.Count);
+        Assert.All(sink.Blocks.Values, block => Assert.All(block, x => Assert.True(float.IsFinite(x))));
+        Assert.DoesNotContain(report.Findings, f => f.Code is "decode.failed" or "decode.frame-invalid");
+    }
+
     // A Matroska block's DiscardPadding (RFC 9559, 5.1.3.5.7) is the end trimming of the track's last block: the decoder is told before the frame the padding takes samples from,
     // so the measurements leave those samples out as trimmed and the measured samples are the stream's.
     [Theory]

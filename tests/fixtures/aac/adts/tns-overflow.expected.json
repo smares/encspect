@@ -1,0 +1,48 @@
+{
+ "description": "Mono frames with scalefactors near the largest and a TNS filter of order 12 with coefficients of 0.998: the decoded values saturate and stay finite.",
+ "length": 1806,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "channel_layout": [
+    "front center"
+   ],
+   "samples": 3072,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   602
+  ],
+  [
+   602,
+   602
+  ],
+  [
+   1204,
+   602
+  ]
+ ],
+ "fields": {
+  "ADTS/Statistics/Block Usage/Only Long": "3 channel streams (100.0%)",
+  "ADTS/Statistics/Window Shapes/KBD": "3 channel streams (100.0%)",
+  "ADTS/Statistics/Codebooks/Codebook 0": "27 bands (18.4%)",
+  "ADTS/Statistics/Codebooks/Codebook 9": "120 bands (81.6%)"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "faad": {
+   "seconds": "0.070",
+   "rate": 44100
+  }
+ }
+}

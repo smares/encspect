@@ -11,6 +11,8 @@ internal sealed class FrameDecoder : IFrameDecoder
 {
     private const int Lines = 1024;
     private const int ShortLines = 128;
+    private const int MaxTnsOrder = 12;
+    private const float SpectrumLimit = 1e30f;
 
     // The units each stage costs (docs/design/lossy-decoders.md, "Work units per format"): inverse quantization 2 for each coded line, mid/side and intensity stereo 1 for each line
     // of a pair, the inverse transform 2 per bit of its length for each output sample, the window and overlap 2, the TNS filter its order for each line it covers, noise substitution 3.
@@ -38,7 +40,7 @@ internal sealed class FrameDecoder : IFrameDecoder
     private readonly float[] _planar;
     private readonly float[] _raw = new float[2 * Lines];
     private readonly float[] _window = new float[2 * Lines];
-    private readonly float[] _partial = new float[2 * ShortLines * 2];
+    private readonly float[] _partial = new float[2 * ShortLines];
     private readonly int[] _quantized = new int[Lines];
     private readonly int[] _noiseSeeds = new int[8 * 64];
     private readonly bool[] _hasNoiseSeed = new bool[8 * 64];
@@ -92,6 +94,12 @@ internal sealed class FrameDecoder : IFrameDecoder
 
         ReadOnlySpan<int> record = lent.Narrow;
         Validate(record);
+        if ((record[BlockRecord.BlockFlags] & BlockRecord.BlockHasCoupling) != 0)
+        {
+            _context.AddFinding(Severity.Warning, "decode.coupling-not-applied",
+                $"The block at 0x{frame.Bytes.FileStart:X} holds a coupling channel element, whose channels are read and not applied, so the decoded audio lacks what they add to the channels they couple.");
+        }
+
         bool follows = frame.FollowsGap || _lostBefore;
         _lostBefore = false;
         if (follows)
@@ -181,10 +189,12 @@ internal sealed class FrameDecoder : IFrameDecoder
             int count = slot[BlockRecord.TnsFilters];
             for (int f = 0; f < count && f < BlockRecord.TnsMaxFilters; f++)
             {
-                if (slot[BlockRecord.Tns + (f * BlockRecord.TnsFilterInts) + 2] > BlockRecord.TnsMaxCoefficients)
+                // libxaac refuses a block whose long-window TNS filter has an order above 12 (MAX_ORDER_LONG, ixheaacd_channel.c); eight short windows allow 7 by their field.
+                int order = slot[BlockRecord.Tns + (f * BlockRecord.TnsFilterInts) + 2];
+                if (order > MaxTnsOrder)
                 {
                     _lostBefore = true;
-                    throw new InvalidDataException("a TNS filter has a higher order than the decoder takes");
+                    throw new InvalidDataException($"a TNS filter has the order {order}, above the {MaxTnsOrder} that libxaac accepts");
                 }
             }
 
@@ -270,6 +280,11 @@ internal sealed class FrameDecoder : IFrameDecoder
     // A channel stream with no quantized value, no noise substitution and no intensity stereo reconstructs to nothing.
     private static bool IsSilent(ReadOnlySpan<int> slot)
     {
+        if ((slot[BlockRecord.Flags] & BlockRecord.FlagPulse) != 0 && slot[BlockRecord.PulseCount] > 0)
+        {
+            return false;
+        }
+
         int groups = slot[BlockRecord.Groups];
         int maxSfb = slot[BlockRecord.MaxSfb];
         for (int g = 0; g < groups; g++)
@@ -566,6 +581,7 @@ internal sealed class FrameDecoder : IFrameDecoder
     }
 
     // ixheaacd_gen_rand_vec: seed = 1664525 * seed + 1013904223, each value the seed shifted right by 3, scaled to the energy 'gain' squared.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void Noise(Span<float> band, ref int seed, float gain)
     {
         double energy = 0;
@@ -685,6 +701,9 @@ internal sealed class FrameDecoder : IFrameDecoder
                     _history[j] = _history[j - 1];
                 }
 
+                // A filter near its poles on crafted values can reach infinity, and an infinity minus an infinity in the transform is a NaN whose sign depends on the platform: the values
+                // saturate, as libxaac's do (a spectrum of 10^30 sums to 10^33 over 1,024 lines).
+                y = Math.Clamp(y, -SpectrumLimit, SpectrumLimit);
                 _history[0] = y;
                 spectrum[line] = y;
             }

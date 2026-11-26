@@ -280,7 +280,14 @@ def loud_tools():
     second = manifest("Channel pairs at a level near -30 dBFS whose channels both code noise substitution in bands that the mid/side mask flags (masks 1 and 2, in long windows "
                       "and in eight short windows of groups of 3, 2, 2 and 1), which both channels fill with the same noise, and one pair without a flag.",
                       pairs, rows2, [stream("AAC LC", RATE, 2, "Stereo", 4 * 1024)], statistics("ADTS", streams))
-    return [("loud-pulse-tns.aac", data, first), ("loud-noise-pair.aac", pairs, second)]
+    # Scalefactors near the largest (250) with a TNS filter of order 12 whose coefficients are the largest magnitudes (4-bit indexes 7 and 8, 0.998 each way): the filter's gain over the
+    # band is far past what a float holds without a limit.
+    wild = [[(9, 40), (0, 9)]]
+    blow = [channel(M.ONLY_LONG, 1, wild, gain=250, tns=[[(40, 12, 0, 0, 1, [7, 8, 7, 8, 7, 8, 7, 8, 7, 8, 7, 8])]], seed=70 + n) for n in range(3)]
+    overflow, rows3 = concat(adts_frames([M.raw_data_block([M.Element(M.SCE, ics=ics)]) for ics in blow]))
+    third = manifest("Mono frames with scalefactors near the largest and a TNS filter of order 12 with coefficients of 0.998: the decoded values saturate and stay finite.",
+                     overflow, rows3, [stream("AAC LC", RATE, 1, "Mono", 3 * 1024)], statistics("ADTS", blow))
+    return [("loud-pulse-tns.aac", data, first), ("loud-noise-pair.aac", pairs, second), ("tns-overflow.aac", overflow, third)]
 
 
 STEREO_CODINGS = ["Left/right stereo", "Mid/side stereo", "Intensity stereo", "Mid/side and intensity stereo", "Reserved"]

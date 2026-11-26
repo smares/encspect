@@ -34,9 +34,9 @@ internal sealed class BlockLog
     public static bool CanDecode(AacConfig config) => config is { ObjectType: 2, CoreFrameLength: 1024, Sbr: not true, Ps: not true };
 
     // The decoding of a stream: every AAC stream has a session, where a decoder is registered, and the decoder takes the configurations CanDecode names and refuses the others.
-    public static DecodeFeed CreateFeed(AnalysisContext context, Node stream, AacConfig config, IReadOnlyList<Speaker>? layout = null) =>
+    public static DecodeFeed CreateFeed(AnalysisContext context, Node stream, AacConfig config, IReadOnlyList<Speaker>? layout = null, string? refusal = null) =>
         new(context, stream, new DecodeConfig(config.ObjectType, config.CoreSampleRate, StreamSetup.SampleRateIndex(config.CoreSampleRate), config.CoreFrameLength,
-            config.Sbr == true, config.Ps == true, layout ?? config.OutputLayout), CanDecode(config), config.Channels ?? 1);
+            config.Sbr == true, config.Ps == true, layout ?? config.OutputLayout, refusal), refusal is null && CanDecode(config), config.Channels ?? 1);
 
     public CodingTally Tally { get; } = new();
 

@@ -66,7 +66,7 @@ public sealed class AacCodecParser : ICodecParser
             Topic = config switch { { IsUsac: true } => Topics.Usac, { HasSbr: true } => Topics.Sbr, _ => Topics.ObjectTypes },
         });
         var log = new UnitLog(config, findings);
-        DecodeFeed? feed = config is null ? null : BlockLog.CreateFeed(context, stream, config);
+        DecodeFeed? feed = config is null ? null : BlockLog.CreateFeed(context, stream, config, refusal: context.Configuration is { AreSamplesEncrypted: true } ? "the samples are encrypted, so the container hands over no access unit" : null);
         if (feed is not null)
         {
             if (log.Blocks is { } blockLog)

@@ -6,5 +6,12 @@
       "pcmSha256": "10ab581ed3ac51fd5d98d7057428a093b238e24e4d2d34547a2eb3b538651aea"
     }
   ],
-  "findings": []
+  "findings": [
+    {
+      "code": "decode.coupling-not-applied",
+      "severity": "Warning",
+      "count": 4,
+      "message": "The block at 0x7 holds a coupling channel element, whose channels are read and not applied, so the decoded audio lacks what they add to the channels they couple."
+    }
+  ]
 }

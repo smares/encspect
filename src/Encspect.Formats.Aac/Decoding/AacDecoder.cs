@@ -28,6 +28,11 @@ public sealed class AacDecoder : IDecoder
             throw new InvalidDataException("The parser gave no configuration to decode AAC with");
         }
 
+        if (config.Refusal is { } refusal)
+        {
+            throw new InvalidDataException(refusal);
+        }
+
         if (config.ObjectType != 2 || config.FrameLength != 1024)
         {
             throw new InvalidDataException("Only AAC LC with frames of 1,024 samples is decoded");
