@@ -2123,6 +2123,44 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         GC.KeepAlive(report);
     }
 
+    // A stream whose frames fail their checksum is decided as its configuration says after DecodeFeed.MaxUndecided blocks and then decoded like any other: every frame is decoded and
+    // written, none is lost, and what the failed checksums withhold from the measurements is withheld as such.
+    private static (Report Report, StreamMeasurements Measurements) DecodeProtectedFrames(int failing, int good)
+    {
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "aac", "adts", "crc-mono.aac"));
+        byte[] frame = source[..(((source[3] & 3) << 11) | (source[4] << 3) | (source[5] >> 5))];
+        byte[] bad = (byte[])frame.Clone();
+        bad[7] ^= 0xFF;
+        byte[] data = [.. Unpooled.Repeat(bad, failing), .. Unpooled.Repeat(frame, good)];
+        Report report = Analyzer.CreateDefault().Analyze("crc.aac", new MemoryStream(data), new AnalysisOptions { Decoding = new DecodeOptions { Output = _ => new DecoderWorkTests.NullSink(), Measure = new MeasureOptions() } });
+        return (report, report.Streams.Single().Measurements!);
+    }
+
+    [Fact]
+    public void ManyAacFramesThatFailTheirChecksumAreAllDecodedAndWithheld()
+    {
+        (Report report, StreamMeasurements m) = DecodeProtectedFrames(100, 0);
+
+        Assert.Equal(100 * 1024L, report.Streams.Single().Verification!.DecodedSamples);
+        Assert.Equal(MeasurementStatus.Complete, m.Status);
+        Assert.Equal((0L, 0L, 100 * 1024L), (m.Samples, m.LostSamples, m.WithheldSamples));
+        Assert.Equal(m.WithheldSamples, m.WithheldByReason.ChecksumFailed);
+    }
+
+    [Fact]
+    public void AacFramesThatFailTheirChecksumBeforeGoodOnesLoseNothingAndInventNoGap()
+    {
+        (Report report, StreamMeasurements m) = DecodeProtectedFrames(40, 60);
+
+        Assert.Equal(100 * 1024L, report.Streams.Single().Verification!.DecodedSamples);
+        Assert.Equal(MeasurementStatus.Complete, m.Status);
+
+        // The 40 failed frames and the first good one, whose overlap holds the failed frame's state, are withheld as failed checksums; the other 59 are measured.
+        Assert.Equal((59 * 1024L, 0L, 41 * 1024L, 1), (m.Samples, m.LostSamples, m.WithheldSamples, m.Gaps));
+        Assert.Equal(m.WithheldSamples, m.WithheldByReason.ChecksumFailed);
+        Assert.Equal(0, m.WithheldByReason.AfterGap);
+    }
+
     // An Opus stream keeps a 24-byte record per stream of each packet, 2 bytes per frame and its
     // per-packet series, including those of the entropy pass, plus its share of the page records:
     // 62 bytes in all on linux-x64, and a peak of 67 (measured 2026-11-15). The bounds leave

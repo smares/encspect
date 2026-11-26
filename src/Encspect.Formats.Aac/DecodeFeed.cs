@@ -34,13 +34,11 @@ internal sealed class DecodeFeed
     private readonly int _channels;
     private bool _awaiting;
     private readonly List<Pending> _undecided = [];
-    private long _overflowLost;
-    private MappedBytes? _overflowFrame;
-    private string _overflowName = string.Empty;
-    private Node? _overflowNode;
+    private int _undecidedBlocks;
 
-    // How many blocks wait for the decision, each with its values: a stream whose frames all fail their checksum has no evidence block, and the wait must not grow with its length. The
-    // blocks past the limit are decoded as lost, since neither their values nor their bytes are kept.
+    // How many blocks wait for the decision, each with its values: a stream whose frames all fail their checksum has no evidence block, and the wait must not grow with its length. At the
+    // bound the stream is decided as its configuration says (as at the end of the stream, without evidence), the blocks that waited are decoded and so is every block after them; the
+    // parser's tally takes evidence only from the blocks before the bound (BlockLog.AddEvidence), so report and decoder decide alike.
     internal const int MaxUndecided = 32;
 
     // canDecode: the stream's configuration is one the decoder takes. Where it is not, the session starts at once and the decoder refuses it (decode.not-possible), so every
@@ -73,7 +71,7 @@ internal sealed class DecodeFeed
     {
         if (_awaiting)
         {
-            if (_undecided.Count < MaxUndecided)
+            if (_undecided.Count == 0 || _undecided[^1].Kind != PendingKind.Gap)
             {
                 _undecided.Add(new Pending(PendingKind.Gap, null, string.Empty, null, false, null));
             }
@@ -94,15 +92,16 @@ internal sealed class DecodeFeed
             return;
         }
 
+        if (_awaiting && _undecidedBlocks >= MaxUndecided)
+        {
+            Decide(false);
+        }
+
         if (_awaiting)
         {
             if (!isEvidence)
             {
-                if (Overflows(frame, nodeName, node))
-                {
-                    return;
-                }
-
+                _undecidedBlocks++;
                 _undecided.Add(new Pending(PendingKind.Block, frame, nodeName, node, failsChecksum, _store.IsOverflow ? null : Snapshot()));
                 return;
             }
@@ -111,24 +110,6 @@ internal sealed class DecodeFeed
         }
 
         DecodeBlock(frame, nodeName, node, failsChecksum, null, false);
-    }
-
-    // A block past the limit of the blocks that wait is counted, and decoded as lost once the decision is made.
-    private bool Overflows(MappedBytes frame, string nodeName, Node? node)
-    {
-        if (_undecided.Count < MaxUndecided)
-        {
-            return false;
-        }
-
-        if (_overflowLost++ == 0)
-        {
-            _overflowFrame = new MappedBytes(ReadOnlyMemory<byte>.Empty, frame.FileStart);
-            _overflowName = nodeName;
-            _overflowNode = node;
-        }
-
-        return true;
     }
 
     private void DecodeBlock(MappedBytes frame, string nodeName, Node? node, bool failsChecksum, int[]? replay, bool replaying)
@@ -193,13 +174,7 @@ internal sealed class DecodeFeed
         }
 
         _undecided.Clear();
-        for (; _overflowLost > 0; _overflowLost--)
-        {
-            Lost(_overflowFrame!, _overflowName, _overflowNode);
-        }
-
-        _overflowFrame = null;
-        _overflowNode = null;
+        _undecidedBlocks = 0;
     }
 
     // The first block that can be read decides what the configuration left open (ffmpeg's rule: implicit signaling counts where the stream starts with it): SBR data in it makes the
@@ -227,13 +202,15 @@ internal sealed class DecodeFeed
             return;
         }
 
+        if (_awaiting && _undecidedBlocks >= MaxUndecided)
+        {
+            Decide(false);
+        }
+
         if (_awaiting)
         {
-            if (!Overflows(frame, nodeName, node))
-            {
-                _undecided.Add(new Pending(PendingKind.Lost, frame, nodeName, node, false, null));
-            }
-
+            _undecidedBlocks++;
+            _undecided.Add(new Pending(PendingKind.Lost, frame, nodeName, node, false, null));
             return;
         }
 

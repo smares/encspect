@@ -34,8 +34,6 @@ MAX_RATIO = 0.06
 
 # Files that are not compared sample by sample, each with the reason (the channels of the two decoders are not the same ones).
 NOT_COMPARED = {
-    "faac-2.1-he-51-adts.aac": "FAAC 2.1's 5.1 SBR payload follows no element FFmpeg can apply it to (\"cannot apply SBR to element type 3\"), and four of its six channels differ from the analyzer's below 6 kHz too",
-    "faac-2.2-he-51-adts.aac": "four of the six channels differ from the analyzer's below 6 kHz, where SBR has no part (only the left and the back right channel agree), so the difference is not SBR's; not investigated",
     "ps-in-multichannel-sce.aac": "the parametric stereo extension in a core of more than one channel, which the analyzer applies to no stream (aac.ps-without-mono-core); FFmpeg's channels differ (not investigated)",
     "ps-in-pce-multichannel.aac": "as the file above",
     "sbr-in-frames-failing-crc.aac": "the analyzer takes no evidence from frames that fail their CRC and stays AAC LC; FFmpeg checks no CRC and decodes HE-AAC (docs/formats/aac.md, Reference for sample counts)",
@@ -52,6 +50,30 @@ def to_ffmpeg_order(samples, layout):
         return samples
     order = sorted(range(samples.shape[1]), key=lambda c: WAV_ORDER.index(layout[c]))
     return samples[:, order]
+
+
+# Files that use noise substitution in most of their channel streams: each decoder fills the substituted bands with its own noise (FFmpeg and libxaac differ from each other as much as
+# either does from the analyzer), so they are compared by the energy of each channel in bands of the spectrum, at most BAND_DB apart.
+NOISE_BANDS = ["faac-2.1-he-51-adts.aac", "faac-2.2-he-51-adts.aac"]
+BAND_EDGES = [0, 500, 1000, 2000, 4000, 8000, 16000]
+BAND_DB = 16.0
+
+
+def band_differences(a, b, shift, rate):
+    """The largest difference in dB between the energies of a and b in the bands of BAND_EDGES, over the channels, from the samples both have."""
+    start = max(0, -shift) + 4096
+    stop = min(len(a), len(b) - shift) - 4096
+    worst = 0.0
+    for ch in range(a.shape[1]):
+        x = np.abs(np.fft.rfft(a[start:stop, ch])) ** 2
+        y = np.abs(np.fft.rfft(b[start + shift:stop + shift, ch])) ** 2
+        freqs = np.fft.rfftfreq(stop - start, 1.0 / rate)
+        for low, high in zip(BAND_EDGES, BAND_EDGES[1:]):
+            mask = (freqs >= low) & (freqs < high)
+            ex, ey = float(x[mask].sum()), float(y[mask].sum())
+            if ex > 0 and ey > 0:
+                worst = max(worst, abs(10 * np.log10(ex / ey)))
+    return worst
 
 
 def ffmpeg_channels(path, channels):
@@ -141,6 +163,14 @@ def main():
         if reference is not None and samples.shape[1] == 1:
             reference = reference[:, :1]
         if reference is None or float(np.sqrt(np.mean(reference ** 2))) < 1e-4:
+            continue
+        if path.name in NOISE_BANDS:
+            shift = best_shift(samples[:, :1], reference[:, :1])
+            difference = band_differences(samples, reference, shift[0] if shift else 0, fmt["sampleRate"])
+            passes = difference <= BAND_DB
+            compared += 1
+            print(f"{path.name}: noise substitution, band energies differ by at most {difference:.2f} dB{'' if passes else '  FAILS'}")
+            failures += 0 if passes else 1
             continue
         found = best_shift(samples, reference)
         if found is None:

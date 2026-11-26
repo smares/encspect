@@ -116,7 +116,8 @@ internal sealed class BlockLog
     // frames they flag as damaged.
     public void AddEvidence(BlockResult result, int index)
     {
-        if (!result.Ok)
+        // The decoder decides at the first evidence block among the first blocks too (DecodeFeed.MaxUndecided), else as the configuration says.
+        if (!result.Ok || (Tally.EvidenceBlocks == 0 && index >= DecodeFeed.MaxUndecided))
         {
             return;
         }
