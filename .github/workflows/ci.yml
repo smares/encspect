@@ -873,7 +873,7 @@ jobs:
       - name: Install ffmpeg, faad and mediainfo
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg faad mediainfo
+          sudo apt-get install -y ffmpeg faad mediainfo build-essential cmake git
 
       # MP4Box from GPAC 2.2.1's source release, pinned by its SHA-256 and built minimal and static by gpac_tool.py,
       # which holds the pin and the configuration; the cache key holds it and the runner image, whose compiler built it.
@@ -890,6 +890,17 @@ jobs:
 
       - name: Cross-check the MP4 and AAC fixtures
         run: python3 scripts/fixtures/crosscheck_mp4_fixtures.py
+
+      - uses: ./.github/actions/setup-dotnet
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build the PCM dump tool
+        run: dotnet build --configuration Release tests/Encspect.PcmDump
+
+      # The analyzer's decoded samples equal FFmpeg's and libxaac's (built from its pinned commit, about a minute) within the bounds of docs/development.md ("AAC decoding"), fixture by fixture.
+      - name: Compare the decoded PCM of the AAC fixtures
+        run: python3 scripts/fixtures/crosscheck_aac_pcm.py --libxaac
 
       # The manifests of the encrypted files ffmpeg and MP4Box wrote are recomputed from the committed files, which need those tools.
       - name: Recompute the manifests of the encrypted MP4 fixtures

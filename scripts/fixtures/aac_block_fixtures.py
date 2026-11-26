@@ -247,6 +247,49 @@ def intensity_noise():
         "mask on some of them inverts the sign, and whose channels code other bands with noise substitution.",
         data, rows, [stream("AAC LC", RATE, 2, "Stereo", 4 * 1024)], fields)
 
+def loud_tools():
+    """Two files at a level that an agreement within 16-bit steps means something (the other hand-built files peak near -100 dBFS): a mono one with pulse data and TNS in every
+    window sequence, and a stereo one whose channels code the same bands with noise substitution, flagged mid/side, in grouped short windows and in long windows."""
+    loud = 150
+    tns_long = [[(20, 8, 1, 0, 1, [1, 2, 3, 4, 5, 6, 7, 8]), (12, 4, 0, 1, 1, [1, 2, 3, 0])]]
+    tns_short = [[(3, 2, 0, 0, 1, [3, 1])], [], [(4, 1, 1, 0, 0, [2])], [], [], [(5, 3, 0, 1, 1, [1, 2, 3])], [], []]
+    sections = [[(9, 12), (5, 10), (7, 10), (3, 8), (0, 4)]]
+    short = [[(9, 4), (5, 3), (7, 3)], [(9, 4), (5, 3), (7, 3)], [(9, 4), (5, 3), (7, 3)], [(9, 4), (5, 3), (7, 3)]]
+    mono = [
+        channel(M.ONLY_LONG, 1, sections, gain=loud, tns=tns_long, pulse=(2, [(3, 15), (10, 7), (4, 1), (6, 9)]), seed=61),
+        channel(M.LONG_START, 0, sections, gain=loud, pulse=(0, [(5, 12), (9, 3)]), seed=62),
+        channel(M.EIGHT_SHORT, 0, short, gain=loud, groups=(3, 2, 2, 1), tns=tns_short, seed=63),
+        channel(M.LONG_STOP, 1, sections, gain=loud, tns=tns_long, seed=64),
+        channel(M.ONLY_LONG, 1, sections, gain=loud, pulse=(4, [(1, 15)]), seed=65),
+    ]
+    data, rows = concat(adts_frames([M.raw_data_block([M.Element(M.SCE, ics=ics)]) for ics in mono]))
+    first = manifest("Mono frames at a level near -30 dBFS with pulse data (up to four pulses, amplitudes 1 to 15) and TNS filters in each window sequence.",
+                     data, rows, [stream("AAC LC", RATE, 1, "Mono", 5 * 1024)], statistics("ADTS", mono))
+
+    noisy = [[(9, 4), (13, 6), (5, 4), (13, 8), (0, 4)]]
+    noisy_short = [[(9, 3), (13, 5), (7, 3), (13, 3)] for _ in range(4)]
+    long_pair = (channel(M.ONLY_LONG, 1, noisy, gain=loud, seed=66), channel(M.ONLY_LONG, 1, noisy, gain=loud, seed=67))
+    short_pair = (channel(M.EIGHT_SHORT, 0, noisy_short, gain=loud, groups=(3, 2, 2, 1), seed=68),
+                  channel(M.EIGHT_SHORT, 0, noisy_short, gain=loud, groups=(3, 2, 2, 1), seed=69))
+    long_used = [[1 if b in (4, 5, 6, 7, 8, 9, 14, 15, 16, 17, 18, 19, 20, 21) else 0 for b in range(26)]]
+    short_used = [[0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0], [0] * 14, [0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1], [0] * 14]
+    made = [pair_block(1, long_used, first=long_pair[0], second=long_pair[1]), pair_block(1, short_used, first=short_pair[0], second=short_pair[1]),
+            pair_block(2, first=long_pair[0], second=long_pair[1]), pair_block(0, first=long_pair[0], second=long_pair[1])]
+    pairs, rows2 = concat(adts_frames([m[0] for m in made], channels=2))
+    streams = [t for m in made for t in m[1]]
+    second = manifest("Channel pairs at a level near -30 dBFS whose channels both code noise substitution in bands that the mid/side mask flags (masks 1 and 2, in long windows "
+                      "and in eight short windows of groups of 3, 2, 2 and 1), which both channels fill with the same noise, and one pair without a flag.",
+                      pairs, rows2, [stream("AAC LC", RATE, 2, "Stereo", 4 * 1024)], statistics("ADTS", streams))
+    # Scalefactors near the largest (250) with a TNS filter of order 12 whose coefficients are the largest magnitudes (4-bit indexes 7 and 8, 0.998 each way): the filter's gain over the
+    # band is far past what a float holds without a limit.
+    wild = [[(9, 40), (0, 9)]]
+    blow = [channel(M.ONLY_LONG, 1, wild, gain=250, tns=[[(40, 12, 0, 0, 1, [7, 8, 7, 8, 7, 8, 7, 8, 7, 8, 7, 8])]], seed=70 + n) for n in range(3)]
+    overflow, rows3 = concat(adts_frames([M.raw_data_block([M.Element(M.SCE, ics=ics)]) for ics in blow]))
+    third = manifest("Mono frames with scalefactors near the largest and a TNS filter of order 12 with coefficients of 0.998: the decoded values saturate and stay finite.",
+                     overflow, rows3, [stream("AAC LC", RATE, 1, "Mono", 3 * 1024)], statistics("ADTS", blow))
+    return [("loud-pulse-tns.aac", data, first), ("loud-noise-pair.aac", pairs, second), ("tns-overflow.aac", overflow, third)]
+
+
 STEREO_CODINGS = ["Left/right stereo", "Mid/side stereo", "Intensity stereo", "Mid/side and intensity stereo", "Reserved"]
 
 
@@ -1223,7 +1266,7 @@ def rate_fixtures():
 
 def fixtures():
     """(directory, name, data, manifest) of every fixture: "adts" or "mp4"."""
-    out = [("adts",) + f for f in [windows(), stereo(), stereo_coding(), stereo_coding_reserved(), stereo_coding_elements(), intensity_noise(), implicit_sbr_adts(), sbr_fixvar_adts(), fill_and_data()] + faac_style_fixtures() + crc_fixtures() + object_types() + corrupt()]
+    out = [("adts",) + f for f in [windows(), stereo(), stereo_coding(), stereo_coding_reserved(), stereo_coding_elements(), intensity_noise(), implicit_sbr_adts(), sbr_fixvar_adts(), fill_and_data()] + loud_tools() + faac_style_fixtures() + crc_fixtures() + object_types() + corrupt()]
     out += [("mp4",) + f for f in mp4_fixtures()]
     out += eld_ld_sbr() + parametric_stereo_cores() + signature_streams() + streams_limited() + sbr_evidence() + blocks_missing() + prediction_bands() + rate_fixtures()
     return out

@@ -213,6 +213,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         _ when name.StartsWith("dts", StringComparison.Ordinal) => new Encspect.Formats.Dts.Decoding.DtsDecoder(),
         _ when name.StartsWith("ac3", StringComparison.Ordinal) => new Ac3Decoder(),
         _ when name.StartsWith("eac3", StringComparison.Ordinal) => new Eac3Decoder(),
+        _ when name.StartsWith("aac", StringComparison.Ordinal) => new Encspect.Formats.Aac.Decoding.AacDecoder(),
         _ when name.StartsWith("truehd", StringComparison.Ordinal) => TrueHdDecoder.TrueHd,
         _ when name.StartsWith("mlp", StringComparison.Ordinal) => TrueHdDecoder.Mlp,
         _ => new WavPackDecoder(),
@@ -236,6 +237,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         _ when name.StartsWith("dts", StringComparison.Ordinal) => ".dts",
         _ when name.StartsWith("ac3", StringComparison.Ordinal) => ".ac3",
         _ when name.StartsWith("eac3", StringComparison.Ordinal) => ".eac3",
+        _ when name.StartsWith("aac", StringComparison.Ordinal) => ".aac",
         _ when name.StartsWith("truehd", StringComparison.Ordinal) => ".thd",
         _ when name.StartsWith("mlp", StringComparison.Ordinal) => ".mlp",
         _ when name.StartsWith("pcm-aiff", StringComparison.Ordinal) => ".aiff",
@@ -449,6 +451,22 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         })
         {
             Add("ac3-" + label, () => new Case("ac3-" + label, Ac3Cases.Repeated(file)));
+        }
+
+        // AAC LC: music in stereo from FAAC and FDK AAC, mono from Microsoft's encoder, the hand-built files that code every tool (every codebook, noise substitution, TNS, pulses,
+        // short windows, mid/side and intensity stereo), and silence. Each case repeats the ADTS frames of a file in one stream.
+        foreach ((string label, string file) in new[]
+        {
+            ("stereo-faac", "faac-2.2-adts.aac"),
+            ("stereo-fdk", "apple/apple-passthru-adts-from-fdkaac-m4a.aac"),
+            ("mono-96k", "sample-kit/external-ms-aac-mono-96k-adts.aac"),
+            ("tools-mono", "adts/windows.aac"),
+            ("tools-stereo", "adts/stereo.aac"),
+            ("intensity-and-noise", "adts/intensity-noise.aac"),
+            ("silent", "adts/cbr.aac"),
+        })
+        {
+            Add("aac-" + label, () => new Case("aac-" + label, AacCases.Repeated(file)));
         }
 
         // E-AC-3: 5.1 and stereo from FFmpeg's encoder (no tools beyond coupling), and the hand-built files with the adaptive hybrid transform, spectral extension and enhanced
@@ -1261,6 +1279,27 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             var analyzer = new Analyzer(DefaultParsers.Tags, DefaultParsers.Formats, DefaultParsers.Codecs, [counting]);
             using var stream = new MemoryStream(file, writable: false);
             analyzer.Analyze("probe.spx", stream, new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = long.MaxValue, Output = _ => new NullSink() } });
+            return counting.Units;
+        }
+    }
+
+    // The ADTS frames of an AAC fixture repeated until the decoding charges about Target units.
+    internal static class AacCases
+    {
+        public static byte[] Repeated(string fixture, long target = Target)
+        {
+            byte[] one = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "aac", fixture));
+            long perCopy = Math.Max(1, Units(one));
+            int copies = (int)Math.Clamp(target / perCopy, 2, 1 << 20);
+            return Unpooled.Repeat(one, copies);
+        }
+
+        public static long Units(byte[] file)
+        {
+            var counting = new CountingDecoder(new Encspect.Formats.Aac.Decoding.AacDecoder());
+            var analyzer = new Analyzer(DefaultParsers.Tags, DefaultParsers.Formats, DefaultParsers.Codecs, [counting]);
+            using var stream = new MemoryStream(file, writable: false);
+            analyzer.Analyze("probe.aac", stream, new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = long.MaxValue, Output = _ => new NullSink() } });
             return counting.Units;
         }
     }

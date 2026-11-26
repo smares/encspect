@@ -12,6 +12,7 @@ Each license text below is copied from a file, never written by hand (the attrib
 - **libmpcdec:** the `COPYING` of libmpcdec 1.2.6 (`libmpcdec-1.2.6.tar.bz2`), which is the same as that of `musepack_src` r495, and the license comment at the top of r495's `huffman.c`, which gives the copyright as 2005-2009; both archives are pinned by SHA-256 in `scripts/fixtures/musepack_tool.py` and `make_notices.py --fetch` checks them and refreshes `scripts/release/licenses/libmpcdec.txt` and `libmpcdec-r495-header.txt`.
 - **Monkey's Audio SDK:** the `License.txt` of Monkey's Audio SDK 13.44, extracted from `MAC_1344_SDK.zip`, the archive `scripts/fixtures/monkeys_audio_tool.py` pins by SHA-256 (`0c5c16432552f30ba715de44358b43accdf99b1a81546cd467cd32410f9d954e`); `make_notices.py --fetch` checks the hash and refreshes the committed copy `scripts/release/licenses/monkeys-audio.txt`.
 - **Apple's ALAC reference implementation:** the `LICENSE` (Apache License 2.0) of github.com/macosforge/alac at the commit `scripts/fixtures/alac_tool.py` pins (`c38887c5c5e64a4b31108733bd79ca9b2496d987`), which git checks against the tree; `make_notices.py --fetch` refreshes the committed copy `scripts/release/licenses/alac.txt`.
+- **Ittiam's libxaac:** the `LICENSE` (Apache License 2.0) of github.com/ittiam-systems/libxaac at the commit `scripts/fixtures/libxaac_tool.py` pins (`2fbadd57bca46693b7a077bcf1513131106d960c`), which git checks against the tree, and its `NOTICE`; `make_notices.py --fetch` refreshes the committed copies `scripts/release/licenses/libxaac.txt` and `libxaac-notice.txt`.
 - **TAK's takStream.pas:** the header of `Sdk/Source/takStream.pas` of TAK 2.3.3 (its copyright and its license, "Do with it, whatever you want", with the request that a modified version says it is not an official release), extracted from `TAK_2.3.3.zip`, the archive `scripts/fixtures/tak_tool.py` pins by SHA-256 (`40d26992266f1377d576b88b84b88d2ab256dc321e47f90314402a80692aba6a`); `make_notices.py --fetch` checks the hash and refreshes `scripts/release/licenses/tak-stream.txt`. The module itself is not committed.
 - **libebur128:** the `COPYING` (MIT) of libebur128 v1.2.6, pinned by its SHA-256 (`d6b4754bb67bdd08b97d5d11b2d7434997a371585a78fe77007149df3af8d09c`); `make_notices.py --fetch` checks the hash and refreshes `scripts/release/licenses/libebur128.txt`.
 - **minimp3:** the dedication at the top of `minimp3.h` (CC0 1.0), copied into `scripts/release/licenses/minimp3.txt`; the source is vendored in `third_party/minimp3` at commit `ea99364f`.
@@ -38,6 +39,7 @@ Each license text below is copied from a file, never written by hand (the attrib
 | libwavpack 5.6.0: the code of Encspect's WavPack decoder derived from it (the entropy decoder, the decorrelation passes, the hybrid lossless path with a correction file and the matching of correction blocks (`match_wvc_header`, `read_wvc_block`), the float restore, the DSD decoders, the sub-block reading) and of its parser and decoder of the legacy format of WavPack 1 to 3 (the header, the flags and the checks of `unpack3_open.c`, the entropy decoders and the decorrelation of `unpack3.c`, and for version 1 mono files the decoder of WavPack 3.97, `unpack.c` and `words2.c`, under the same license) | 5.6.0 | BSD 3-Clause | both builds, all platforms |
 | Monkey's Audio SDK 13.44: the code of Encspect's Monkey's Audio parser and decoder derived from it (the header and seek table layouts, the order of the bytes of a frame, the range decoders and Rice codes, the predictors of every version, the neural network filters, the frame checksum and the output of the samples) | 13.44 | BSD 3-Clause | both builds, all platforms |
 | Apple's ALAC reference implementation (commit c38887c5): the code of Encspect's ALAC parser and decoder derived from it (the magic cookie layout, the syntax of a frame's elements and the adaptive Golomb code of the residuals, which the walk of a frame follows; the adaptive predictor, the undoing of the channel mixing and the placing of the shifted bytes, which the decoder follows) | c38887c5 | Apache License 2.0 | both builds, all platforms |
+| Ittiam's libxaac (commit 2fbadd57): the code of Encspect's AAC decoder derived from it (the order of the tools, noise substitution's generator and its correlation with mid/side stereo, the ranges of the TNS filters, intensity stereo and the pulse data) and the numeric tables (format data) | 2fbadd57 | Apache License 2.0 | both builds, all platforms |
 | libspeex 1.2.1: the code of Encspect's Speex parser and decoder derived from it (the walk over a packet's frames and the reading of their parameters, the fixed-point arithmetic, the narrowband and sub-band CELP decoders, the line spectral pair conversions, the filters and the perceptual enhancer, the in-band stereo) and the tables of bits per submode and the codebooks | 1.2.1 | BSD 3-Clause | both builds, all platforms |
 | libvorbis 1.3.7: the code of Encspect's Vorbis decoder and of its entropy pass derived from it (the assignment and decoding of codebook codewords, the reading of the floors and residues and their end-of-packet behavior, the floor 1 and residue reconstruction, the overlap of the blocks) and the table of floor 1 amplitudes (format data, also in the specification) | 1.3.7 | BSD 3-Clause | both builds, all platforms |
 | libopus 1.5.2 and the reference decoder of RFC 6716: the code of Encspect's Opus decoder and of its entropy pass derived from them (the range decoder, the CELT and SILK frame syntax and reconstruction, the redundant frames and mode transitions) and the numeric tables (format data) | 1.5.2 | BSD 3-Clause | both builds, all platforms |
@@ -3097,6 +3099,228 @@ If the Work includes a "NOTICE" text file as part of its distribution, then any 
 8. Limitation of Liability. In no event and under no legal theory, whether in tort (including negligence), contract, or otherwise, unless required by applicable law (such as deliberate and grossly negligent acts) or agreed to in writing, shall any Contributor be liable to You for damages, including any direct, indirect, special, incidental, or consequential damages of any character arising as a result of this License or out of the use or inability to use the Work (including but not limited to damages for loss of goodwill, work stoppage, computer failure or malfunction, or any and all other commercial damages or losses), even if such Contributor has been advised of the possibility of such damages.
 
 9. Accepting Warranty or Additional Liability. While redistributing the Work or Derivative Works thereof, You may choose to offer, and charge a fee for, acceptance of support, warranty, indemnity, or other liability obligations and/or rights consistent with this License. However, in accepting such obligations, You may act only on Your own behalf and on Your sole responsibility, not on behalf of any other Contributor, and only if You agree to indemnify, defend, and hold each Contributor harmless for any liability incurred by, or claims asserted against, such Contributor by reason of your accepting any such warranty or additional liability.
+```
+
+## Ittiam's libxaac
+
+Encspect's AAC decoder (`src/Encspect.Formats.Aac/Decoding`) and the parts of the AAC parser that store what the decoder reconstructs (`BlockRecord.cs`, `DecodeFeed.cs`, the storing branches of `BlockReader.cs`) are written in C#, from ISO/IEC 14496-3 as far as it is known without the standard and from Ittiam's libxaac (github.com/ittiam-systems/libxaac, commit 2fbadd57bca46693b7a077bcf1513131106d960c) where the specification leaves details to the decoder: the order of the tools (`ixheaacd_channel.c`), mid/side and intensity stereo (`ixheaacd_stereo.c`), the noise substitution generator and its correlation with mid/side stereo and the TNS filter ranges (`ixheaacd_pns_js_thumb.c`), the scalefactors and noise energies (`ixheaacd_longblock.c`), the windows and the overlap of the filter bank (`ixheaacd_lpfuncs.c`) and the numeric tables (`ixheaacd_aac_rom.c`, format data). The source files that follow it say so (`Decoding/*.cs`). 628 of the 630 C source and header files of libxaac carry "Copyright (C) The Android Open Source Project" and the Apache License header, and none holds an ISO/IEC disclaimer. The `NOTICE` of libxaac, which Apache License 2.0 section 4(d) asks derivative works to carry:
+
+```
+/******************************************************************************
+ *                                                                            *
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at:
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *****************************************************************************
+ * Originally developed and contributed by Ittiam Systems Pvt. Ltd, Bangalore
+*/
+```
+
+The `LICENSE` of libxaac:
+
+```
+
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that is granting the License.
+
+      "Legal Entity" shall mean the union of the acting entity and all
+      other entities that control, are controlled by, or are under common
+      control with that entity. For the purposes of this definition,
+      "control" means (i) the power, direct or indirect, to cause the
+      direction or management of such entity, whether by contract or
+      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+      outstanding shares, or (iii) beneficial ownership of such entity.
+
+      "You" (or "Your") shall mean an individual or Legal Entity
+      exercising permissions granted by this License.
+
+      "Source" form shall mean the preferred form for making modifications,
+      including but not limited to software source code, documentation
+      source, and configuration files.
+
+      "Object" form shall mean any form resulting from mechanical
+      transformation or translation of a Source form, including but
+      not limited to compiled object code, generated documentation,
+      and conversions to other media types.
+
+      "Work" shall mean the work of authorship, whether in Source or
+      Object form, made available under the License, as indicated by a
+      copyright notice that is included in or attached to the work
+      (an example is provided in the Appendix below).
+
+      "Derivative Works" shall mean any work, whether in Source or Object
+      form, that is based on (or derived from) the Work and for which the
+      editorial revisions, annotations, elaborations, or other modifications
+      represent, as a whole, an original work of authorship. For the purposes
+      of this License, Derivative Works shall not include works that remain
+      separable from, or merely link (or bind by name) to the interfaces of,
+      the Work and Derivative Works thereof.
+
+      "Contribution" shall mean any work of authorship, including
+      the original version of the Work and any modifications or additions
+      to that Work or Derivative Works thereof, that is intentionally
+      submitted to Licensor for inclusion in the Work by the copyright owner
+      or by an individual or Legal Entity authorized to submit on behalf of
+      the copyright owner. For the purposes of this definition, "submitted"
+      means any form of electronic, verbal, or written communication sent
+      to the Licensor or its representatives, including but not limited to
+      communication on electronic mailing lists, source code control systems,
+      and issue tracking systems that are managed by, or on behalf of, the
+      Licensor for the purpose of discussing and improving the Work, but
+      excluding communication that is conspicuously marked or otherwise
+      designated in writing by the copyright owner as "Not a Contribution."
+
+      "Contributor" shall mean Licensor and any individual or Legal Entity
+      on behalf of whom a Contribution has been received by Licensor and
+      subsequently incorporated within the Work.
+
+   2. Grant of Copyright License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      copyright license to reproduce, prepare Derivative Works of,
+      publicly display, publicly perform, sublicense, and distribute the
+      Work and such Derivative Works in Source or Object form.
+
+   3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      (except as stated in this section) patent license to make, have made,
+      use, offer to sell, sell, import, and otherwise transfer the Work,
+      where such license applies only to those patent claims licensable
+      by such Contributor that are necessarily infringed by their
+      Contribution(s) alone or by combination of their Contribution(s)
+      with the Work to which such Contribution(s) was submitted. If You
+      institute patent litigation against any entity (including a
+      cross-claim or counterclaim in a lawsuit) alleging that the Work
+      or a Contribution incorporated within the Work constitutes direct
+      or contributory patent infringement, then any patent licenses
+      granted to You under this License for that Work shall terminate
+      as of the date such litigation is filed.
+
+   4. Redistribution. You may reproduce and distribute copies of the
+      Work or Derivative Works thereof in any medium, with or without
+      modifications, and in Source or Object form, provided that You
+      meet the following conditions:
+
+      (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
+
+      (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
+
+      (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
+
+      (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
+
+      You may add Your own copyright statement to Your modifications and
+      may provide additional or different license terms and conditions
+      for use, reproduction, or distribution of Your modifications, or
+      for any such Derivative Works as a whole, provided Your use,
+      reproduction, and distribution of the Work otherwise complies with
+      the conditions stated in this License.
+
+   5. Submission of Contributions. Unless You explicitly state otherwise,
+      any Contribution intentionally submitted for inclusion in the Work
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
+      Notwithstanding the above, nothing herein shall supersede or modify
+      the terms of any separate license agreement you may have executed
+      with Licensor regarding such Contributions.
+
+   6. Trademarks. This License does not grant permission to use the trade
+      names, trademarks, service marks, or product names of the Licensor,
+      except as required for reasonable and customary use in describing the
+      origin of the Work and reproducing the content of the NOTICE file.
+
+   7. Disclaimer of Warranty. Unless required by applicable law or
+      agreed to in writing, Licensor provides the Work (and each
+      Contributor provides its Contributions) on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied, including, without limitation, any warranties or conditions
+      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+      PARTICULAR PURPOSE. You are solely responsible for determining the
+      appropriateness of using or redistributing the Work and assume any
+      risks associated with Your exercise of permissions under this License.
+
+   8. Limitation of Liability. In no event and under no legal theory,
+      whether in tort (including negligence), contract, or otherwise,
+      unless required by applicable law (such as deliberate and grossly
+      negligent acts) or agreed to in writing, shall any Contributor be
+      liable to You for damages, including any direct, indirect, special,
+      incidental, or consequential damages of any character arising as a
+      result of this License or out of the use or inability to use the
+      Work (including but not limited to damages for loss of goodwill,
+      work stoppage, computer failure or malfunction, or any and all
+      other commercial damages or losses), even if such Contributor
+      has been advised of the possibility of such damages.
+
+   9. Accepting Warranty or Additional Liability. While redistributing
+      the Work or Derivative Works thereof, You may choose to offer,
+      and charge a fee for, acceptance of support, warranty, indemnity,
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
+
+   END OF TERMS AND CONDITIONS
+
+   Copyright (c) 2018, The Android Open Source Project
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
 ```
 
 ## libspeex

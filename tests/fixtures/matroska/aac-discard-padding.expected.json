@@ -1,0 +1,360 @@
+{
+ "description": "An A_AAC track of six frames whose last block is a BlockGroup with a DiscardPadding of 11,609,977 ns, 512 samples at 44.1 kHz (RFC 9559 section 5.1.3.5.7): the end trimming the AAC decoder is told before the last frame, which returns 512 of its 1,024 samples.",
+ "length": 3115,
+ "format": "Matroska",
+ "ebml": {
+  "version": 1,
+  "read_version": 1,
+  "max_id_length": 4,
+  "max_size_length": 8,
+  "doctype": "matroska",
+  "doctype_version": 4,
+  "doctype_read_version": 2
+ },
+ "segments": [
+  {
+   "offset": 40,
+   "clusters": [
+    {
+     "offset": 154,
+     "length": 2961,
+     "timestamp": 0,
+     "size_unknown": false,
+     "blocks": 6
+    }
+   ],
+   "size_unknown": false,
+   "header_missing": false,
+   "info": {
+    "timestamp_scale": 1000000,
+    "duration": 100.0,
+    "muxing_app": "encspect fixtures",
+    "writing_app": "encspect fixtures"
+   },
+   "length": 3075,
+   "declared_end": 3115
+  }
+ ],
+ "tree": [
+  [
+   "EBML",
+   0,
+   40,
+   [
+    [
+     "EBMLVersion",
+     5,
+     4
+    ],
+    [
+     "EBMLReadVersion",
+     9,
+     4
+    ],
+    [
+     "EBMLMaxIDLength",
+     13,
+     4
+    ],
+    [
+     "EBMLMaxSizeLength",
+     17,
+     4
+    ],
+    [
+     "DocType",
+     21,
+     11
+    ],
+    [
+     "DocTypeVersion",
+     32,
+     4
+    ],
+    [
+     "DocTypeReadVersion",
+     36,
+     4
+    ]
+   ]
+  ],
+  [
+   "Segment",
+   40,
+   3075,
+   [
+    [
+     "Info",
+     46,
+     63,
+     [
+      [
+       "TimestampScale",
+       51,
+       7
+      ],
+      [
+       "Duration",
+       58,
+       11
+      ],
+      [
+       "MuxingApp",
+       69,
+       20
+      ],
+      [
+       "WritingApp",
+       89,
+       20
+      ]
+     ]
+    ],
+    [
+     "Tracks",
+     109,
+     45,
+     [
+      [
+       "TrackEntry",
+       114,
+       40,
+       [
+        [
+         "TrackNumber",
+         116,
+         3
+        ],
+        [
+         "TrackUID",
+         119,
+         5
+        ],
+        [
+         "TrackType",
+         124,
+         3
+        ],
+        [
+         "CodecID",
+         127,
+         7
+        ],
+        [
+         "CodecPrivate",
+         134,
+         5
+        ],
+        [
+         "Audio",
+         139,
+         15,
+         [
+          [
+           "SamplingFrequency",
+           141,
+           10
+          ],
+          [
+           "Channels",
+           151,
+           3
+          ]
+         ]
+        ]
+       ]
+      ]
+     ]
+    ],
+    [
+     "Cluster",
+     154,
+     2961,
+     [
+      [
+       "Timestamp",
+       160,
+       3
+      ],
+      [
+       "SimpleBlock",
+       163,
+       371
+      ],
+      [
+       "SimpleBlock",
+       534,
+       376
+      ],
+      [
+       "SimpleBlock",
+       910,
+       371
+      ],
+      [
+       "SimpleBlock",
+       1281,
+       755
+      ],
+      [
+       "SimpleBlock",
+       2036,
+       693
+      ],
+      [
+       "BlockGroup",
+       2729,
+       386,
+       [
+        [
+         "Block",
+         2732,
+         376
+        ],
+        [
+         "DiscardPadding",
+         3108,
+         7
+        ]
+       ]
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "blocks": [
+  {
+   "name": "SimpleBlock",
+   "offset": 163,
+   "length": 371,
+   "track": 1,
+   "timestamp": 0,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     170,
+     364
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 534,
+   "length": 376,
+   "track": 1,
+   "timestamp": 23,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     541,
+     369
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 910,
+   "length": 371,
+   "track": 1,
+   "timestamp": 46,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     917,
+     364
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 1281,
+   "length": 755,
+   "track": 1,
+   "timestamp": 70,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     1288,
+     748
+    ]
+   ]
+  },
+  {
+   "name": "SimpleBlock",
+   "offset": 2036,
+   "length": 693,
+   "track": 1,
+   "timestamp": 93,
+   "cluster_timestamp": 0,
+   "flags": 128,
+   "lacing": "none",
+   "frames": [
+    [
+     2043,
+     686
+    ]
+   ]
+  },
+  {
+   "name": "Block",
+   "offset": 2732,
+   "length": 376,
+   "track": 1,
+   "timestamp": 116,
+   "cluster_timestamp": 0,
+   "flags": 0,
+   "lacing": "none",
+   "frames": [
+    [
+     2739,
+     369
+    ]
+   ],
+   "in_group": true
+  }
+ ],
+ "tracks": [
+  {
+   "number": 1,
+   "uid": 4097,
+   "type": 2,
+   "codec": "A_AAC",
+   "private": [
+    137,
+    2
+   ],
+   "channels": 2,
+   "rate": 44100.0,
+   "bits": null,
+   "delay": 0,
+   "encodings": [],
+   "lacing": true
+  }
+ ],
+ "writers": [
+  {
+   "name": "encspect fixtures",
+   "confidence": "Low"
+  }
+ ],
+ "streams": [
+  {
+   "codec": "AAC",
+   "sample_rate": 44100,
+   "channels": 2
+  }
+ ],
+ "findings": [],
+ "crosscheck": {
+  "valid": false
+ }
+}

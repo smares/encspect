@@ -43,7 +43,7 @@ Which container hands which codec to its codec parser, and which codecs are deco
 
 | Codec | MP4 | Matroska | Ogg | ASF | WAV, Wave64, BW64 | Own file | Decoded |
 |---|---|---|---|---|---|---|---|
-| AAC | routed | routed | not planned | not planned | routed, as the ADTS frames of IEC 61937 bursts | ADTS, ADIF | no |
+| AAC | routed | routed | not planned | not planned | routed, as the ADTS frames of IEC 61937 bursts | ADTS, ADIF | yes (measured: AAC LC) |
 | MPEG audio | routed, as packets, whatever the number of stretches | routed (`A_MPEG/L1`, `L2`, `L3`, and `A_MS/ACM` with format tag 0x0050 or 0x0055) | not planned | routed (format tag 0x0055) | routed, by the format tag or the sub-format GUID, and as IEC 61937 bursts | yes | yes (measured) |
 | AC-3, E-AC-3 | routed | routed (also `A_MS/ACM`, by the format tag 0x2000 or the sub-format GUID) | not planned | routed (AC-3, format tag 0x2000; E-AC-3 not planned) | routed, by the format tag or the sub-format GUID, and as IEC 61937 bursts | yes | yes (measured) |
 | DTS | routed | routed (also `A_MS/ACM`, by the format tag 0x0008 or 0x2001) | not planned | not planned | routed, by the format tag, as a stream in 16-bit stereo PCM samples, and as IEC 61937 bursts | yes, and `.dtshd` | yes (measured: the core) |
@@ -79,7 +79,7 @@ How far into each coding Encspect sees today, on the depth levels of the [plan](
 | Coding | Entropy-coded data | Decoded audio | Graphs of coding choices |
 |---|---|---|---|
 | MPEG audio | Layer III scalefactors and Huffman data (the entropy pass, every analysis); Layers I and II up to the samples, and their samples where decoded | measured (Layers I to III) | Stereo Coding, Channel Modes, Joint Stereo Modes, Intensity Stereo Bounds, Intensity Stereo Bound, Block Usage, Block Sizes, Scalefactor Scaling, Global Gain, Coded Bandwidth, Channel Bit Share |
-| AAC | Main, LC, SSR and LTP: every raw data block with its spectral data; ER, ELD and USAC not read (0.5) | no (0.5) | Block Usage, Block Sizes, Window Shapes, TNS, Pulse Data, Noise Substitution, SBR, Parametric Stereo, Stereo Coding, Mid/Side Bands, Intensity Stereo Bound, Coded Bandwidth |
+| AAC | Main, LC, SSR and LTP: every raw data block with its spectral data, stored where AAC LC is decoded; ER, ELD and USAC not read (0.5) | measured (AAC LC; HE-AAC, Main, LTP, ER AAC and USAC: 0.5) | Block Usage, Block Sizes, Window Shapes, TNS, Pulse Data, Noise Substitution, SBR, Parametric Stereo, Stereo Coding, Mid/Side Bands, Intensity Stereo Bound, Coded Bandwidth |
 | AC-3, E-AC-3 | every audio block with its mantissa codes (the entropy pass, every analysis); the adaptive hybrid transform and enhanced coupling read too; the audio blocks at the reduced rates not read (not planned) | measured (the CRCs verify the coded data: "lossy stream") | Blocks With Block Switching, Blocks With Coupling, Blocks With Rematrixing, Blocks With Spectral Extension (E-AC-3), Coded Bandwidth ([ac3.md](ac3.md#what-is-graphed)) |
 | DTS | the core's subframes walked in every analysis; the extensions' data not read (follow-ups after 0.5) | measured (the core; extensions: follow-ups after 0.5) | Stereo Coding, Coded Bandwidth, Subframes With Block Switching |
 | Vorbis | floors and residues of every packet (the entropy pass, every analysis) | measured | Block Sizes, Modes, Coded Bandwidth |

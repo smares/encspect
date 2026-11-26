@@ -22,6 +22,7 @@ import time
 
 import a52_trace_tool
 import alac_tool
+import libxaac_tool
 import aotuv_tool
 import old_mkvmerge_tool
 import asf_specs
@@ -186,6 +187,7 @@ def entries():
     for tag, commit in xiph_tool.TAGS.values():
         yield "tag", tag, f"commit:{commit}", f"{xiph_tool.REPOSITORY} refs/tags/{tag}"
     yield "commit", alac_tool.NAME, f"commit:{alac_tool.COMMIT}", f"{alac_tool.REPOSITORY} {alac_tool.COMMIT}"
+    yield "commit", libxaac_tool.NAME, f"commit:{libxaac_tool.COMMIT}", f"{libxaac_tool.REPOSITORY} {libxaac_tool.COMMIT}"
     yield "commit", helix_tool.A1_NAME, f"commit:{helix_tool.A1_COMMIT}", f"{helix_tool.A1_REPOSITORY} {helix_tool.A1_COMMIT}"
     yield "commit", lossywav_tool.NAME, f"commit:{lossywav_tool.COMMIT}", f"{lossywav_tool.REPOSITORY} {lossywav_tool.COMMIT}"
 
@@ -330,6 +332,13 @@ def main():
     if wanted_entry(alac_tool.NAME, f"commit:{alac_tool.COMMIT}", alac_address):
         checked += 1
         for problem in alac_tool.commit_problems({alac_address}):
+            problems += 1
+            print(problem)
+    # Ittiam's libxaac, which the AAC decoder follows, is pinned by one commit as well.
+    libxaac_address = f"{libxaac_tool.REPOSITORY} {libxaac_tool.COMMIT}"
+    if wanted_entry(libxaac_tool.NAME, f"commit:{libxaac_tool.COMMIT}", libxaac_address):
+        checked += 1
+        for problem in libxaac_tool.commit_problems({libxaac_address}):
             problems += 1
             print(problem)
     # lossyWAV for POSIX is pinned the same way; the check only fetches the commit, nothing of it is read.

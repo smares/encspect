@@ -54,7 +54,6 @@ public partial class FindingCoverageTests
         ["aac.buffer-fullness-mixed"] = NoInputYet,
         ["aac.config-truncated"] = NoInputYet,
         ["aac.crc-not-verified"] = NotCheckedNoInput,
-        ["aac.discard-padding-large"] = NoInputYet,
         ["aac.empty-access-units"] = NoInputYet,
         ["aac.encoder-claim-differs"] = ClaimNoInput,
         ["aac.error-protection-not-analyzed"] = RouteNoInput,

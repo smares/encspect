@@ -1,0 +1,58 @@
+{
+ "description": "Channel pairs at a level near -30 dBFS whose channels both code noise substitution in bands that the mid/side mask flags (masks 1 and 2, in long windows and in eight short windows of groups of 3, 2, 2 and 1), which both channels fill with the same noise, and one pair without a flag.",
+ "length": 1009,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 4096,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   116
+  ],
+  [
+   116,
+   669
+  ],
+  [
+   785,
+   112
+  ],
+  [
+   897,
+   112
+  ]
+ ],
+ "fields": {
+  "ADTS/Statistics/Block Usage/Only Long": "6 channel streams (75.0%)",
+  "ADTS/Statistics/Block Usage/Eight Short": "2 channel streams (25.0%)",
+  "ADTS/Statistics/Window Shapes/Sine": "2 channel streams (25.0%)",
+  "ADTS/Statistics/Window Shapes/KBD": "6 channel streams (75.0%)",
+  "ADTS/Statistics/Codebooks/Codebook 0": "24 bands (9.0%)",
+  "ADTS/Statistics/Codebooks/Codebook 5": "24 bands (9.0%)",
+  "ADTS/Statistics/Codebooks/Codebook 7": "24 bands (9.0%)",
+  "ADTS/Statistics/Codebooks/Codebook 9": "48 bands (17.9%)",
+  "ADTS/Statistics/Codebooks/Codebook 13": "148 bands (55.2%)"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "faad": {
+   "seconds": "0.093",
+   "rate": 44100
+  }
+ }
+}

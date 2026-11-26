@@ -22,6 +22,9 @@ Every text comes from a file, never from memory:
   --fetch extracts it from the archive scripts/fixtures/monkeys_audio_tool.py pins by SHA-256, so the text is the SDK's own and the hash is checked.
 - scripts/release/licenses/alac.txt: the LICENSE (Apache License 2.0) of Apple's ALAC reference implementation (github.com/macosforge/alac), whose code the ALAC parser and decoder
   follow. --fetch reads it from the commit scripts/fixtures/alac_tool.py pins, which git checks against the tree.
+- scripts/release/licenses/libxaac.txt: the LICENSE (Apache License 2.0) of Ittiam's libxaac (github.com/ittiam-systems/libxaac), whose decoder the AAC decoder follows where the
+  specification leaves details to the decoder, and scripts/release/licenses/libxaac-notice.txt its NOTICE (the attribution Apache License 2.0 section 4(d) asks derivative works to carry).
+  --fetch reads them from the commit scripts/fixtures/libxaac_tool.py pins, which git checks against the tree.
 - scripts/release/licenses/matplotlib-colormaps.txt: the license comment at the top of colormaps.py of github.com/BIDS/colormap (CC0, with a request for
   credit), whose table of matplotlib's magma colormap is the spectrogram's color ramp. --fetch reads the file and checks its SHA-256.
 - scripts/release/licenses/tak-stream.txt: the header of Sdk/Source/takStream.pas of TAK 2.3.3 (its copyright and license: "Do with it, whatever you want", with a request that a
@@ -57,6 +60,8 @@ LIBMPCDEC_COPYING = LICENSES / "libmpcdec.txt"
 LIBMPCDEC_HEADER = LICENSES / "libmpcdec-r495-header.txt"
 MONKEYS_AUDIO_LICENSE = LICENSES / "monkeys-audio.txt"
 ALAC_LICENSE = LICENSES / "alac.txt"
+LIBXAAC_LICENSE = LICENSES / "libxaac.txt"
+LIBXAAC_NOTICE = LICENSES / "libxaac-notice.txt"
 TAK_LICENSE = LICENSES / "tak-stream.txt"
 MINIMP3_LICENSE = LICENSES / "minimp3.txt"
 LIBEBUR128_LICENSE = LICENSES / "libebur128.txt"
@@ -257,6 +262,17 @@ def fetch_alac():
     print(f"ALAC: LICENSE of {alac_tool.REPOSITORY} at {alac_tool.COMMIT}")
 
 
+def fetch_libxaac():
+    """LICENSE of Ittiam's libxaac at the pinned commit; libxaac_tool.fetch checks the tree against the commit."""
+    import tempfile
+    sys.path.insert(0, str(ROOT / "scripts" / "fixtures"))
+    import libxaac_tool
+    with tempfile.TemporaryDirectory(prefix="libxaac-") as directory:
+        LIBXAAC_LICENSE.write_text(libxaac_tool.license_text(directory), encoding="utf-8", newline="\n")
+        LIBXAAC_NOTICE.write_text(libxaac_tool.notice_text(directory), encoding="utf-8", newline="\n")
+    print(f"libxaac: LICENSE of {libxaac_tool.REPOSITORY} at {libxaac_tool.COMMIT}")
+
+
 def fetch_colormaps():
     """The license comment of BIDS/colormap's colormaps.py, which comes before its first line of code; the file's SHA-256 is checked."""
     import hashlib
@@ -291,6 +307,7 @@ def fetch(packages, version_of):
     fetch_libmpcdec()
     fetch_monkeys_audio()
     fetch_alac()
+    fetch_libxaac()
     fetch_tak()
     for name, package, source in FETCHED:
         url, commit = nuspec_commit(nuspec(packages, package, version_of[package]))
@@ -322,6 +339,8 @@ def build(packages, version_of, runtime_deps):
     libmpcdec_header = read(LIBMPCDEC_HEADER)
     monkeys_audio = read(MONKEYS_AUDIO_LICENSE)
     alac = read(ALAC_LICENSE)
+    libxaac = read(LIBXAAC_LICENSE)
+    libxaac_notice = read(LIBXAAC_NOTICE)
     tak = read(TAK_LICENSE)
     colormaps = read(COLORMAPS_LICENSE)
     libebur128 = read(LIBEBUR128_LICENSE)
@@ -348,6 +367,7 @@ Each license text below is copied from a file, never written by hand (the attrib
 - **libmpcdec:** the `COPYING` of libmpcdec 1.2.6 (`libmpcdec-1.2.6.tar.bz2`), which is the same as that of `musepack_src` r495, and the license comment at the top of r495's `huffman.c`, which gives the copyright as 2005-2009; both archives are pinned by SHA-256 in `scripts/fixtures/musepack_tool.py` and `make_notices.py --fetch` checks them and refreshes `scripts/release/licenses/libmpcdec.txt` and `libmpcdec-r495-header.txt`.
 - **Monkey's Audio SDK:** the `License.txt` of Monkey's Audio SDK 13.44, extracted from `MAC_1344_SDK.zip`, the archive `scripts/fixtures/monkeys_audio_tool.py` pins by SHA-256 (`0c5c16432552f30ba715de44358b43accdf99b1a81546cd467cd32410f9d954e`); `make_notices.py --fetch` checks the hash and refreshes the committed copy `scripts/release/licenses/monkeys-audio.txt`.
 - **Apple's ALAC reference implementation:** the `LICENSE` (Apache License 2.0) of github.com/macosforge/alac at the commit `scripts/fixtures/alac_tool.py` pins (`c38887c5c5e64a4b31108733bd79ca9b2496d987`), which git checks against the tree; `make_notices.py --fetch` refreshes the committed copy `scripts/release/licenses/alac.txt`.
+- **Ittiam's libxaac:** the `LICENSE` (Apache License 2.0) of github.com/ittiam-systems/libxaac at the commit `scripts/fixtures/libxaac_tool.py` pins (`2fbadd57bca46693b7a077bcf1513131106d960c`), which git checks against the tree, and its `NOTICE`; `make_notices.py --fetch` refreshes the committed copies `scripts/release/licenses/libxaac.txt` and `libxaac-notice.txt`.
 - **TAK's takStream.pas:** the header of `Sdk/Source/takStream.pas` of TAK 2.3.3 (its copyright and its license, "Do with it, whatever you want", with the request that a modified version says it is not an official release), extracted from `TAK_2.3.3.zip`, the archive `scripts/fixtures/tak_tool.py` pins by SHA-256 (`40d26992266f1377d576b88b84b88d2ab256dc321e47f90314402a80692aba6a`); `make_notices.py --fetch` checks the hash and refreshes `scripts/release/licenses/tak-stream.txt`. The module itself is not committed.
 - **libebur128:** the `COPYING` (MIT) of libebur128 v1.2.6, pinned by its SHA-256 (`d6b4754bb67bdd08b97d5d11b2d7434997a371585a78fe77007149df3af8d09c`); `make_notices.py --fetch` checks the hash and refreshes `scripts/release/licenses/libebur128.txt`.
 - **minimp3:** the dedication at the top of `minimp3.h` (CC0 1.0), copied into `scripts/release/licenses/minimp3.txt`; the source is vendored in `third_party/minimp3` at commit `ea99364f`.
@@ -374,6 +394,7 @@ Each license text below is copied from a file, never written by hand (the attrib
 | libwavpack 5.6.0: the code of Encspect's WavPack decoder derived from it (the entropy decoder, the decorrelation passes, the hybrid lossless path with a correction file and the matching of correction blocks (`match_wvc_header`, `read_wvc_block`), the float restore, the DSD decoders, the sub-block reading) and of its parser and decoder of the legacy format of WavPack 1 to 3 (the header, the flags and the checks of `unpack3_open.c`, the entropy decoders and the decorrelation of `unpack3.c`, and for version 1 mono files the decoder of WavPack 3.97, `unpack.c` and `words2.c`, under the same license) | 5.6.0 | BSD 3-Clause | both builds, all platforms |
 | Monkey's Audio SDK 13.44: the code of Encspect's Monkey's Audio parser and decoder derived from it (the header and seek table layouts, the order of the bytes of a frame, the range decoders and Rice codes, the predictors of every version, the neural network filters, the frame checksum and the output of the samples) | 13.44 | BSD 3-Clause | both builds, all platforms |
 | Apple's ALAC reference implementation (commit c38887c5): the code of Encspect's ALAC parser and decoder derived from it (the magic cookie layout, the syntax of a frame's elements and the adaptive Golomb code of the residuals, which the walk of a frame follows; the adaptive predictor, the undoing of the channel mixing and the placing of the shifted bytes, which the decoder follows) | c38887c5 | Apache License 2.0 | both builds, all platforms |
+| Ittiam's libxaac (commit 2fbadd57): the code of Encspect's AAC decoder derived from it (the order of the tools, noise substitution's generator and its correlation with mid/side stereo, the ranges of the TNS filters, intensity stereo and the pulse data) and the numeric tables (format data) | 2fbadd57 | Apache License 2.0 | both builds, all platforms |
 | libspeex 1.2.1: the code of Encspect's Speex parser and decoder derived from it (the walk over a packet's frames and the reading of their parameters, the fixed-point arithmetic, the narrowband and sub-band CELP decoders, the line spectral pair conversions, the filters and the perceptual enhancer, the in-band stereo) and the tables of bits per submode and the codebooks | 1.2.1 | BSD 3-Clause | both builds, all platforms |
 | libvorbis 1.3.7: the code of Encspect's Vorbis decoder and of its entropy pass derived from it (the assignment and decoding of codebook codewords, the reading of the floors and residues and their end-of-packet behavior, the floor 1 and residue reconstruction, the overlap of the blocks) and the table of floor 1 amplitudes (format data, also in the specification) | 1.3.7 | BSD 3-Clause | both builds, all platforms |
 | libopus 1.5.2 and the reference decoder of RFC 6716: the code of Encspect's Opus decoder and of its entropy pass derived from them (the range decoder, the CELT and SILK frame syntax and reconstruction, the redundant frames and mode transitions) and the numeric tables (format data) | 1.5.2 | BSD 3-Clause | both builds, all platforms |
@@ -462,6 +483,18 @@ Encspect's ALAC parser and decoder are written in C#; the parts derived from App
 
 ```
 {alac}```
+
+## Ittiam's libxaac
+
+Encspect's AAC decoder (`src/Encspect.Formats.Aac/Decoding`) and the parts of the AAC parser that store what the decoder reconstructs (`BlockRecord.cs`, `DecodeFeed.cs`, the storing branches of `BlockReader.cs`) are written in C#, from ISO/IEC 14496-3 as far as it is known without the standard and from Ittiam's libxaac (github.com/ittiam-systems/libxaac, commit 2fbadd57bca46693b7a077bcf1513131106d960c) where the specification leaves details to the decoder: the order of the tools (`ixheaacd_channel.c`), mid/side and intensity stereo (`ixheaacd_stereo.c`), the noise substitution generator and its correlation with mid/side stereo and the TNS filter ranges (`ixheaacd_pns_js_thumb.c`), the scalefactors and noise energies (`ixheaacd_longblock.c`), the windows and the overlap of the filter bank (`ixheaacd_lpfuncs.c`) and the numeric tables (`ixheaacd_aac_rom.c`, format data). The source files that follow it say so (`Decoding/*.cs`). 628 of the 630 C source and header files of libxaac carry "Copyright (C) The Android Open Source Project" and the Apache License header, and none holds an ISO/IEC disclaimer. The `NOTICE` of libxaac, which Apache License 2.0 section 4(d) asks derivative works to carry:
+
+```
+{libxaac_notice}```
+
+The `LICENSE` of libxaac:
+
+```
+{libxaac}```
 
 ## libspeex
 
