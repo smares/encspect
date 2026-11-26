@@ -49,9 +49,16 @@ public sealed class HexView : Grid
         var copy = new MenuItem { Header = "Copy Selection" };
         copy.Click += async (_, _) =>
         {
-            if (SelectedRowsText() is { } rows && await Copying.SetTextAsync(this, rows) is { } error)
+            if (SelectedRowsText() is { } rows)
             {
-                CopyFailed?.Invoke(this, error);
+                if (await Copying.SetTextAsync(this, rows) is { } error)
+                {
+                    CopyFailed?.Invoke(this, error);
+                }
+                else
+                {
+                    Copied?.Invoke(this, rows);
+                }
             }
         };
         ContextMenu = new ContextMenu { Items = { copy } };
@@ -141,6 +148,9 @@ public sealed class HexView : Grid
     }
 
     internal Point? CellCenter(long offset) => _canvas.HexCellCenter(offset);
+
+    // The text a copy put on the clipboard.
+    public event EventHandler<string>? Copied;
 
     // Why a copy failed.
     public event EventHandler<string>? CopyFailed;

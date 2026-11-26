@@ -198,10 +198,10 @@ public class HexCursorTests
 
         var report = new Report("big.mp3", root, []);
         var watch = System.Diagnostics.Stopwatch.StartNew();
-        Assert.Null(DetailViewModel.TryNodeText(report, root, DetailViewModel.MaxNodeTextChars));
+        Assert.Null(DetailViewModel.TryNodeText(report, root, DetailViewModel.MaxNodeTextChars, TestContext.Current.CancellationToken));
         Assert.True(watch.Elapsed < TimeSpan.FromSeconds(20));
 
-        string text = DetailViewModel.TryNodeText(report, root.Children[5], DetailViewModel.MaxNodeTextChars)!;
+        string text = DetailViewModel.TryNodeText(report, root.Children[5], DetailViewModel.MaxNodeTextChars, TestContext.Current.CancellationToken)!;
         Assert.Equal("  Frame [0x32, 8 bytes]" + Environment.NewLine, text);
         Assert.Equal("Not copied: the node's text is over 16 MiB; export the report instead", DetailViewModel.NodeTextTooLong);
     }

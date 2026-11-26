@@ -98,13 +98,14 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         {
             if (Set(ref _isDecoding, value))
             {
+                Raise(nameof(CanStop));
                 Raise(nameof(IsProgressShown));
                 RaiseCanDecode();
             }
         }
     }
 
-    public bool IsProgressShown => _isLoading || _isDecoding;
+    public bool IsProgressShown => _isLoading || _isDecoding || _copying is not null;
 
     // A stream of the report has a decoder that did not run because decoding was not asked for (a PCM stream, which declares no
     // checksum, included: its decoding is for the measurements).
@@ -468,7 +469,8 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
 
         TreePlace? keep = PlaceOf(_selectedNode);
 
-        return Load(path, _folderError, keep, _forcedFormat, _isDecodeRequested, keepShown: false);
+        // A file that was decoded stays on screen while it is read again with decoding, which Stop ends.
+        return Load(path, _folderError, keep, _forcedFormat, _isDecodeRequested, keepShown: _isDecodeRequested && _report is not null);
     }
 
     // Analyzes the file shown again as the given format (the name of one of FormatNames), or by
@@ -483,7 +485,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
 
         TreePlace? keep = PlaceOf(_selectedNode);
 
-        return Load(path, _folderError, keep, format, _isDecodeRequested, keepShown: false);
+        return Load(path, _folderError, keep, format, _isDecodeRequested, keepShown: _isDecodeRequested && _report is not null);
     }
 
     // Analyzes the file shown again with its audio decoded, which compares the checksums over the samples and measures them (Decode
@@ -498,10 +500,11 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
 
         TreePlace? keep = PlaceOf(_selectedNode);
 
-        return Load(path, _folderError, keep, _forcedFormat, decode: true, keepShown: true);
+        return Load(path, _folderError, keep, _forcedFormat, decode: true, keepShown: true, showAudio: true);
     }
 
-    // Cancels a Decode Audio that is running, which leaves the analysis shown as it was.
+    // Cancels a Decode Audio, or a reload of a file that was decoded, that is running, which leaves
+    // the analysis shown as it was.
     public void StopDecoding()
     {
         if (_isDecoding)
@@ -510,7 +513,98 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         }
     }
 
-    private Task Load(string path, string? folderError, TreePlace? keep, string? forced, bool decode, bool keepShown)
+    // Stops what runs for a Stop button: a copy, else the decoding.
+    public void Stop()
+    {
+        if (_copying is { } copying)
+        {
+            copying.Cancel();
+        }
+        else
+        {
+            StopDecoding();
+        }
+    }
+
+    public bool CanStop => _isDecoding || _copying is not null;
+
+    public bool IsCopying => _copying is not null;
+
+    // The progress line has no known length while a copy is written.
+    public bool IsProgressIndeterminate => _copying is not null;
+
+    // What a command is doing or has done, next to CommandError: "Copying the node…", "Copied 1.2 MB", "Copy stopped".
+    public string? CommandStatus
+    {
+        get => _commandStatus;
+        private set => Set(ref _commandStatus, value);
+    }
+
+    private string? _commandStatus;
+    private CancellationTokenSource? _copying;
+
+    // Writes the text of a copy on a background thread, which Stop and Escape cancel, with the
+    // status "Copying …" and an indeterminate progress line while it runs. Returns the text to put on
+    // the clipboard, or null when nothing is to be copied: stopped, over the cap (write returns null)
+    // or a copy already running; the status says which. Call CopyDone once the text is on the clipboard.
+    public async Task<string?> PrepareCopyAsync(string what, Func<CancellationToken, string?> write)
+    {
+        if (_copying is not null)
+        {
+            return null;
+        }
+
+        var cancellation = new CancellationTokenSource();
+        _copying = cancellation;
+        CommandError = null;
+        CommandStatus = $"Copying {what}…";
+        RaiseCopyState();
+        try
+        {
+            string? text = await Task.Run(() => write(cancellation.Token));
+            if (cancellation.IsCancellationRequested)
+            {
+                CommandStatus = "Copy stopped";
+                return null;
+            }
+
+            if (text is null)
+            {
+                CommandStatus = null;
+                CommandError = NodeTextTooLong;
+            }
+
+            return text;
+        }
+        catch (OperationCanceledException)
+        {
+            CommandStatus = "Copy stopped";
+            return null;
+        }
+        finally
+        {
+            _copying = null;
+            cancellation.Dispose();
+            RaiseCopyState();
+        }
+    }
+
+    // The confirmation once a copy is on the clipboard, in the place errors appear.
+    public void CopyDone(string text)
+    {
+        long bytes = System.Text.Encoding.UTF8.GetByteCount(text);
+        CommandStatus = "Copied " + (bytes < 1000 ? $"{bytes} bytes" : bytes < 1_000_000 ? $"{bytes / 1000.0:0.#} KB" : $"{bytes / 1_000_000.0:0.#} MB");
+    }
+
+    private void RaiseCopyState()
+    {
+        Raise(nameof(IsCopying));
+        Raise(nameof(CanStop));
+        Raise(nameof(IsProgressShown));
+        Raise(nameof(IsProgressIndeterminate));
+    }
+
+    private Task Load(string path, string? folderError, TreePlace? keep, string? forced, bool decode, bool keepShown, bool showAudio = false)
     {
         ArgumentException.ThrowIfNullOrEmpty(path);
 
@@ -534,6 +628,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         if (keepShown)
         {
             CommandError = null;
+            CommandStatus = null;
             IsDecoding = true;
         }
         else
@@ -598,13 +693,13 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
                             IsDecoding = false;
                             if (failure is not null)
                             {
-                                CommandError = "Not decoded: " + failure;
+                                CommandError = (showAudio ? "Not decoded: " : "Not analyzed: ") + failure;
                             }
                         }
                     }
                     else
                     {
-                        Show(report, documents, keep, showAudio: decode && keepShown);
+                        Show(report, documents, keep, showAudio: showAudio);
                         _isDecodeRequested = decode;
                     }
 
@@ -755,6 +850,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
     public void Dispose()
     {
         _loading?.Cancel();
+        _copying?.Cancel();
         _generation++;
         Clear();
     }
@@ -825,19 +921,19 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
     // a background thread and cut off at MaxNodeTextChars, where nothing is copied: a node as big
     // as a long file's frame list would otherwise freeze the window and outgrow a string.
     // Null with an error when the text is over the cap.
-    public async Task<(string? Text, string? Error)> NodeTextAsync(TreeRow row)
+    // Null when the text is over the cap. The report and node are those of the row's file.
+    public Task<string?> PrepareNodeCopyAsync(TreeRow row)
     {
         ArgumentNullException.ThrowIfNull(row);
 
         Report report = row.RootIndex > 0 && _report is { } main ? main.Companions[row.RootIndex - 1].Report : _report ?? throw new InvalidOperationException("No file is analyzed.");
         Node node = row.Node;
-        string? text = await Task.Run(() => TryNodeText(report, node, MaxNodeTextChars));
-        return text is null ? (null, NodeTextTooLong) : (text, null);
+        return PrepareCopyAsync("the node", token => TryNodeText(report, node, MaxNodeTextChars, token));
     }
 
-    internal static string? TryNodeText(Report report, Node node, int cap)
+    internal static string? TryNodeText(Report report, Node node, int cap, CancellationToken token = default)
     {
-        using var writer = new CappedWriter(cap);
+        using var writer = new CappedWriter(cap, token);
         try
         {
             ReportTextWriter.WriteNode(report, node, writer, showOffsets: true, ReportFilter.All);
@@ -850,8 +946,8 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         return writer.ToString();
     }
 
-    // Stops the write, by throwing, as soon as it would pass the cap, so the text is never built.
-    private sealed class CappedWriter(int cap) : TextWriter(System.Globalization.CultureInfo.InvariantCulture)
+    // Stops the write, by throwing, as soon as it would pass the cap or the token is canceled, so the text is never built.
+    private sealed class CappedWriter(int cap, CancellationToken token) : TextWriter(System.Globalization.CultureInfo.InvariantCulture)
     {
         private readonly System.Text.StringBuilder _text = new();
 
@@ -863,6 +959,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
 
         public override void Write(ReadOnlySpan<char> buffer)
         {
+            token.ThrowIfCancellationRequested();
             if (_text.Length + buffer.Length > cap)
             {
                 throw new CapExceededException();
@@ -877,6 +974,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
 
         private void Add(int length, Action append)
         {
+            token.ThrowIfCancellationRequested();
             if (_text.Length + length > cap)
             {
                 throw new CapExceededException();
@@ -1016,6 +1114,7 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         RaiseDetection();
         RaiseCounts();
         CommandError = null;
+        CommandStatus = null;
         IsLoading = false;
     }
 

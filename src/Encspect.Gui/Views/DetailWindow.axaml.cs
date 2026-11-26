@@ -50,6 +50,7 @@ public partial class DetailWindow : Window
         };
         TreeList.AddHandler(KeyDownEvent, OnTreeKeyDown, RoutingStrategies.Tunnel);
         Hex.CopyFailed += (_, message) => Model.FailCommand(message);
+        Hex.Copied += (_, text) => Model.CopyDone(text);
         TreeList.ContextMenu = CreateTreeMenu();
         FindingList.ContextMenu = CreateFindingMenu();
         Hex.ByteActivated += (_, offset) => Model.SelectNodeAt(offset);
@@ -169,22 +170,23 @@ public partial class DetailWindow : Window
         {
             if (Model.SelectedNode is { } row)
             {
-                (string? text, string? error) = await Model.NodeTextAsync(row);
-                if (error is not null)
-                {
-                    Model.FailCommand(error);
-                }
-                else
-                {
-                    await CopyAsync(text);
-                }
+                await CopyAsync(await Model.PrepareNodeCopyAsync(row));
             }
         };
         var menu = new ContextMenu { Items = { value, node } };
         menu.Opening += (_, _) =>
         {
             value.IsEnabled = Model.SelectedNode?.Value is not null;
-            node.IsEnabled = Model.SelectedNode is not null;
+            node.IsEnabled = Model.SelectedNode is not null && !Model.IsCopying;
+        };
+
+        // Dimmed while a copy is written, however the menu was opened.
+        Model.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(DetailViewModel.IsCopying))
+            {
+                node.IsEnabled = Model.SelectedNode is not null && !Model.IsCopying;
+            }
         };
         return menu;
     }
@@ -202,9 +204,18 @@ public partial class DetailWindow : Window
 
     private async Task CopyAsync(string? text)
     {
-        if (text is not null && await Copying.SetTextAsync(this, text) is { } error)
+        if (text is null)
+        {
+            return;
+        }
+
+        if (await Copying.SetTextAsync(this, text) is { } error)
         {
             Model.FailCommand(error);
+        }
+        else
+        {
+            Model.CopyDone(text);
         }
     }
 
@@ -304,7 +315,7 @@ public partial class DetailWindow : Window
 
     private void OnGraphDecode(object? sender, RoutedEventArgs e) => Model.Graphs.RequestDecode();
 
-    private void OnStopDecoding(object? sender, RoutedEventArgs e) => Model.StopDecoding();
+    private void OnStopDecoding(object? sender, RoutedEventArgs e) => Model.Stop();
 
     private void OnCloseTopic(object? sender, RoutedEventArgs e) => Model.IsTopicOpen = false;
 
