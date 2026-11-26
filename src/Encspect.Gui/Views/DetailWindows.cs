@@ -130,7 +130,7 @@ public sealed class DetailWindows
         int step = (_independent.Count + 1) * CascadeStep;
         if (CanPlace)
         {
-            (PixelRect area, double scaling) = ScreenOf(_main.Position);
+            (PixelRect area, double scaling) = ScreenOf(null);
             window.Position = ScreenFit.Clamp(new PixelPoint(window.Position.X + step, window.Position.Y + step), new Size(window.Width, window.Height), area, scaling);
         }
 
