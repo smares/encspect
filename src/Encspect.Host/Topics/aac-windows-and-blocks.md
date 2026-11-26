@@ -9,6 +9,8 @@ references: ISO/IEC 14496-3 4.4.2, 4.5.2, 4.6.11; ffmpeg libavcodec/aacdec_templ
 
 **Window sequences.** ics_info gives each channel's window_sequence: one long window (only long), eight short windows of 128 lines each (eight short), and the transitions between them, long start before short windows and long stop after them, which let the overlapping halves match. [TNS](tns) is a second tool against pre-echo.
 
+**Which window follows which.** Windows overlap by the slopes they share, so a window may follow another only where its left slope matches the other's right one: long start and eight short before eight short or long stop, the others before only long or long start. A pair that breaks this is reported as information.
+
 **Window shapes.** window_shape picks the shape of the window's slopes: a sine window or a Kaiser-Bessel derived (KBD) window. Each frame's bit sets the shape of its window's second half.
 
 **Observed choices.** In Encspect's test files, and not used by the analyzer to name an encoder:
