@@ -9,6 +9,7 @@ internal static partial class Sbr
     private const int MaxEnvelopes = SbrRecord.MaxEnvelopes;
 
     // ceil(log2(envelopes + 1)): the bits of bs_pointer.
+    private static readonly string[] FrameClassNames = ["FIXFIX", "FIXVAR", "VARFIX", "VARVAR"];
     private static readonly int[] PointerBits = [0, 1, 2, 2, 3, 3];
 
     // What ReadData gives for the parametric stereo extension's ID in a channel pair's SBR data.
@@ -227,7 +228,7 @@ internal static partial class Sbr
                     border[count] = edge;
                     for (int k = variable; k > 0; k--)
                     {
-                        edge = Math.Max(0, edge - (((int)bits.Read(2) * 2) + 2));
+                        edge -= ((int)bits.Read(2) * 2) + 2;
                         border[k] = edge;
                     }
 
@@ -260,7 +261,7 @@ internal static partial class Sbr
                     border[0] = edge;
                     for (int k = 1; k <= variable; k++)
                     {
-                        edge = Math.Min(16, edge + (((int)bits.Read(2) * 2) + 2));
+                        edge += ((int)bits.Read(2) * 2) + 2;
                         border[k] = edge;
                     }
 
@@ -347,6 +348,18 @@ internal static partial class Sbr
 
                     break;
                 }
+        }
+
+        // 4.6.18.3.3: the envelope borders rise strictly, from 0..3 at the start to 16..19 at the end of the frame, which also keeps every border inside the 40 time slots the decoder holds.
+        bool ordered = border[0] is >= 0 and <= 3 && border[count] is >= 16 and <= 19;
+        for (int k = 1; ordered && k <= count; k++)
+        {
+            ordered = border[k] > border[k - 1];
+        }
+
+        if (!ordered)
+        {
+            return string.Create(CultureInfo.InvariantCulture, $"envelope borders of an SBR frame of class {FrameClassNames[frameClass]} that do not rise strictly from the start of the frame to its end");
         }
 
         envelopes[channel] = count;

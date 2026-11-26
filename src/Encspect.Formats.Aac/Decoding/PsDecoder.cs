@@ -289,7 +289,7 @@ internal sealed class PsDecoder
             _envelopes = 1;
             for (int i = 0; i < 34; i++)
             {
-                _iid[0, i] = _enableIid ? _iidPrevious[i] : 0;
+                _iid[0, i] = _enableIid ? Math.Clamp(_iidPrevious[i], -levels, levels) : 0;
                 _icc[0, i] = _enableIcc ? _iccPrevious[i] : 0;
             }
         }

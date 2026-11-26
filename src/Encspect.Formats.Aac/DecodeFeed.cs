@@ -34,6 +34,14 @@ internal sealed class DecodeFeed
     private readonly int _channels;
     private bool _awaiting;
     private readonly List<Pending> _undecided = [];
+    private long _overflowLost;
+    private MappedBytes? _overflowFrame;
+    private string _overflowName = string.Empty;
+    private Node? _overflowNode;
+
+    // How many blocks wait for the decision, each with its values: a stream whose frames all fail their checksum has no evidence block, and the wait must not grow with its length. The
+    // blocks past the limit are decoded as lost, since neither their values nor their bytes are kept.
+    internal const int MaxUndecided = 32;
 
     // canDecode: the stream's configuration is one the decoder takes. Where it is not, the session starts at once and the decoder refuses it (decode.not-possible), so every
     // AAC stream has a session whose verification says what was asked for; channels is then the configuration's.
@@ -65,7 +73,11 @@ internal sealed class DecodeFeed
     {
         if (_awaiting)
         {
-            _undecided.Add(new Pending(PendingKind.Gap, null, string.Empty, null, false, null));
+            if (_undecided.Count < MaxUndecided)
+            {
+                _undecided.Add(new Pending(PendingKind.Gap, null, string.Empty, null, false, null));
+            }
+
             return;
         }
 
@@ -86,6 +98,11 @@ internal sealed class DecodeFeed
         {
             if (!isEvidence)
             {
+                if (Overflows(frame, nodeName, node))
+                {
+                    return;
+                }
+
                 _undecided.Add(new Pending(PendingKind.Block, frame, nodeName, node, failsChecksum, _store.IsOverflow ? null : Snapshot()));
                 return;
             }
@@ -94,6 +111,24 @@ internal sealed class DecodeFeed
         }
 
         DecodeBlock(frame, nodeName, node, failsChecksum, null, false);
+    }
+
+    // A block past the limit of the blocks that wait is counted, and decoded as lost once the decision is made.
+    private bool Overflows(MappedBytes frame, string nodeName, Node? node)
+    {
+        if (_undecided.Count < MaxUndecided)
+        {
+            return false;
+        }
+
+        if (_overflowLost++ == 0)
+        {
+            _overflowFrame = new MappedBytes(ReadOnlyMemory<byte>.Empty, frame.FileStart);
+            _overflowName = nodeName;
+            _overflowNode = node;
+        }
+
+        return true;
     }
 
     private void DecodeBlock(MappedBytes frame, string nodeName, Node? node, bool failsChecksum, int[]? replay, bool replaying)
@@ -158,6 +193,13 @@ internal sealed class DecodeFeed
         }
 
         _undecided.Clear();
+        for (; _overflowLost > 0; _overflowLost--)
+        {
+            Lost(_overflowFrame!, _overflowName, _overflowNode);
+        }
+
+        _overflowFrame = null;
+        _overflowNode = null;
     }
 
     // The first block that can be read decides what the configuration left open (ffmpeg's rule: implicit signaling counts where the stream starts with it): SBR data in it makes the
@@ -187,7 +229,11 @@ internal sealed class DecodeFeed
 
         if (_awaiting)
         {
-            _undecided.Add(new Pending(PendingKind.Lost, frame, nodeName, node, false, null));
+            if (!Overflows(frame, nodeName, node))
+            {
+                _undecided.Add(new Pending(PendingKind.Lost, frame, nodeName, node, false, null));
+            }
+
             return;
         }
 
