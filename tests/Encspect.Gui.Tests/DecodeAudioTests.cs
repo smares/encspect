@@ -76,7 +76,7 @@ public class DecodeAudioTests
     {
         var ui = new TestDispatcher();
         using var model = new DetailViewModel(Analyzer.CreateDefault(), ui.Post);
-        Task load = model.LoadAsync(Fixtures.Aac(Path.Combine("apple", "apple-he-m4a-cbr-mono22.m4a")));
+        Task load = model.LoadAsync(Fixtures.OptimFrog("external-24-stereo.ofr"));
         ui.Until(() => load.IsCompleted);
 
         Assert.False(model.CanDecodeAudio);
@@ -129,7 +129,7 @@ public class DecodeAudioTests
     {
         var ui = new TestDispatcher();
         using var model = new DetailViewModel(Analyzer.CreateDefault(), ui.Post);
-        Task load = model.LoadAsync(Fixtures.Aac("faac-1.40-adts.aac"));
+        Task load = model.LoadAsync(Fixtures.OptimFrog("external-24-stereo.ofr"));
         ui.Until(() => load.IsCompleted);
 
         Assert.False(model.CanDecodeAudio);
@@ -285,7 +285,7 @@ public class DecodeAudioTests
         Assert.False(stop.IsEnabled);
         window.Close();
 
-        window = FrameMapViewTests.Open(Fixtures.Aac("faac-1.40-adts.aac"), 900, 600);
+        window = FrameMapViewTests.Open(Fixtures.OptimFrog("external-24-stereo.ofr"), 900, 600);
         decode = NativeMenu.GetMenu(window)!.Items.OfType<NativeMenuItem>().First(i => i.Header == "File").Menu!.Items.OfType<NativeMenuItem>().Single(i => i.Header == "Decode Audio");
         Assert.False(decode.IsEnabled);
         window.Close();
