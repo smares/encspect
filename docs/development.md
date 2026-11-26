@@ -10,7 +10,7 @@ The rules every change follows are in [CLAUDE.md](../CLAUDE.md); the architectur
 
 ## Tests
 
-- `tests/Encspect.Tests`: the core, host, parsers and CLI, on xUnit 2. The files are in folders that mirror `src`; each file's namespace is that of its folder (`Encspect.Tests.Formats.Flac`, `Encspect.Tests.Support`; `Encspect.Tests.Support` is a global using), so a filter by area is `FullyQualifiedName~Encspect.Tests.Formats.Flac.`; the root files keep `Encspect.Tests`, and `Decoding/BoundarySamples.cs` keeps the namespaces `DecodingBoundaryTests` matches (`Ci/TestNamespaceTests` checks the rest).
+- `tests/Encspect.Tests`: the core, host, parsers and CLI, on xUnit 2. The files are in folders that mirror `src`; each file's namespace is that of its folder (`Encspect.Tests.Formats.Flac`, `Encspect.Tests.Support`; `Encspect.Tests.Support` is a global using), so a filter by area is `FullyQualifiedName~Encspect.Tests.Formats.Flac.`; `Decoding/BoundarySamples.cs` keeps the namespaces `DecodingBoundaryTests` matches (`Ci/TestNamespaceTests` checks the rest).
   - `Core/`, `Host/`, `Cli/`: the tests of those projects; `Decoding/`: the decoder tests that cover several formats; `Measurement/`; `Ci/`: the tests of the workflows and of the repository root.
   - `Formats/<Format>/` and `Tags/<Tag>/`: the tests of one parser, named like its `src/Encspect.Formats.*` or `src/Encspect.Tags.*` project; `Tags/` holds the tests across tags.
   - `Support/`: the shared fixtures access, builders and helpers.

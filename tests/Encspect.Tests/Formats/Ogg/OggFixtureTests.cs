@@ -14,7 +14,7 @@ namespace Encspect.Tests.Formats.Ogg;
 // statistics and the encoder, for Vorbis and Opus the headers, every packet's block or TOC bytes and
 // the statistics (make_vorbis_opus_fixtures.py); the streams the summary reads; and exactly the
 // findings listed.
-public partial class OggFixtureTests
+public class OggFixtureTests
 {
     public static TheoryData<string> Names => Fixtures.OggFixtures();
 

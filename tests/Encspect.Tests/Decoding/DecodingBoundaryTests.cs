@@ -157,6 +157,7 @@ public class DecodingBoundaryTests
     [InlineData("Encspect.Formats.Flac", false)]
     [InlineData("Encspect.Formats.Flac.Decoder", false)]
     [InlineData("", false)]
+    [InlineData("Encspect.Tests.Decoding", false)]
     public void ANamespaceIsDecodingCodeWhereDecodingIsAWholeSegment(string ns, bool expected) =>
         Assert.Equal(expected, BoundaryScanner.IsDecodingNamespace(ns));
 }
