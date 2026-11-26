@@ -47,7 +47,7 @@ R1 = (
     "FFmpeg 6.1.1 alone differs, in a few granules of channel 0 (long blocks of plain stereo; up to 0.026 of full scale at its largest, on external-plugger-pro-cbr, granule 92: no big values and a part2_3_length of 2 bits in channel 0) and the tails into the next ones: the analyzer matches mpg123 1.32.5 (largest difference 8e-7), madplay 0.15.2b (1.4e-6) and minimp3 (3e-7), the ranges are FFMPEG_RANGES; the cause in FFmpeg is not known (black box)")
 R2 = (
     "FFmpeg 6.1.1 and mpg123 1.32.5 agree with each other and differ from the analyzer by up to 0.0095 (madplay 0.15.2b 1.1e-6 and minimp3 3e-7 agree with the analyzer), in two ways. "
-    "(1) In a frame of intensity stereo (MPEG-2 LSF) with mid/side stereo they take the largest value a position's slen can code as an ordinary intensity position, where ISO/IEC 13818-3 "
+    "(1) In a frame of intensity stereo (MPEG-2 LSF) with mid/side stereo they take the largest value a position's slen can code as an ordinary intensity position (on intensity-mpeg2-largest-position.mp3 FFmpeg 6.1.1 does so for all three lengths, mpg123 1.32.5 for position 1 of slen 1 and 3 of slen 2 but not 7 of slen 3), where ISO/IEC 13818-3 "
     "2.4.3.2 (bullet 2) makes it the illegal position, whose band is decoded with the mid/side equations (left/right without mid/side stereo), as the analyzer does; the first differing granule "
     "of external-fhg-acm34-mpeg2 holds positions 15 and 1 (slen 4 and 1) in bands 11 to 16, above the intensity bound. "
     "(2) For the top band, which has no transmitted position (long band 21, short band 12 per window; Table B.2 says its scalefactor is not transmitted), they copy band 20's (11's) position, "
@@ -65,6 +65,12 @@ EXPLAINED = {
     "mc-forbidden-values.mp2": {"mctoolamed": "dyn_cross_mode 15 of 3/2 and a nonzero tc_allocation with dematrix_procedure 3, which 13818-3 2.5.2.15 forbids, are in the fixture and read differently by the two decoders (each alone, in every frame of a variant, differs; the valid lfe_allocation 15 and a scalefactor index of 63 agree)"},
     "mc-second-stereo-crosstalk.mp2": {"mctoolamed": "tc_allocation 3, which 13818-3 2.5.2.15 leaves unassigned in 3/0 + 2/0, is in the fixture"},
     "mc-center-reserved-second-stereo.mp2": {"mctoolamed": "the reserved center value 2 (13818-3 2.5.2.13: not defined), which the analyzer reads as no center"},
+    "intensity-mpeg2-largest-position.mp3": {
+        "ffmpeg": "FFmpeg 6.1.1 differs from the analyzer by 0.0196 of full scale (minimp3 and the analyzer agree): "
+                  "it decodes the largest value a position's slen can code (1 of slen 1, 3 of slen 2, 7 of slen 3, in this MPEG-2 fixture) as an ordinary intensity position, where ISO/IEC 13818-3 2.4.3.2 (bullet 2) makes it "
+                  "the illegal position, whose band is decoded with the mid/side equations; the right channel of the fixture is all zero, so every band is intensity coded. mpg123 1.32.5 (not a reference of this script) "
+                  "does the same for slen 1 and 2 and follows the analyzer for slen 3. The analyzer and minimp3 follow the standard",
+    },
     "intensity-mixed-windows.mp3": {
         "minimp3": "minimp3 (as of commit ea99364f) takes one intensity stereo bound for the three windows of a mixed block, where ISO/IEC 13818-3 2.4.3.2 (bullet 3) finds each window's bound individually; "
                    "its output differs from the analyzer's by 0.031 of full scale, and FFmpeg 6.1.1 (8.9e-8), mpg123 1.32.5 (3.7e-8) and madplay 0.15.2b (4.1e-7) match the analyzer; "
