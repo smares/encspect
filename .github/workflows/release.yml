@@ -7,7 +7,8 @@ name: Release
 # an existing tag repeats a release (an existing release gets its files replaced); a missing one is created by the
 # release job at the head of main the run started from, after every build has passed. A pull request that changes the
 # release files runs the checks and the six builds on its merge commit, with no upload and no release, so the steps that
-# exist only here run before a tag does. CI itself uploads no build. See "Releases" in docs/development.md.
+# exist only here run before a tag does; one that changes nothing of them but docs/releases/ runs the check of the version
+# and the notes only. CI itself uploads no build. See "Releases" in docs/development.md.
 on:
   push:
     tags: ["v*.*.*"]
@@ -65,6 +66,7 @@ jobs:
       sha: ${{ steps.check.outputs.sha }}
       create_tag: ${{ steps.check.outputs.create_tag }}
       tag: ${{ steps.check.outputs.tag }}
+      builds: ${{ steps.check.outputs.builds }}
     steps:
       - name: Require a manual run to start from main
         if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
@@ -130,7 +132,20 @@ jobs:
             echo "::error::docs/releases/$version.md, the release notes, is missing."
             exit 1
           fi
+          # A pull request that changes none of the release files but the notes (docs/releases/) needs no build: the paths
+          # below are the others of this workflow's pull_request trigger, with the README of the archives (package-readme.md,
+          # which the builds package and the glibc step reads). Anything else builds.
+          builds=true
+          if [ "$GITHUB_EVENT_NAME" = pull_request ] && git rev-parse --verify --quiet HEAD^2 > /dev/null; then
+            # Read into a variable first: a failing git diff stops this step (bash -e) instead of reading as "no change".
+            # --no-renames lists both paths of a move, so a file moved out of scripts/release/ still counts.
+            changed=$(git diff --no-renames --name-only HEAD^1 HEAD)
+            if ! grep -qE '^(\.github/workflows/release\.yml|\.github/actions/setup-dotnet/|scripts/release/|docs/releases/package-readme\.md|THIRD-PARTY-NOTICES\.md|Directory\.Build\.props)' <<< "$changed"; then
+              builds=false
+            fi
+          fi
           {
+            echo "builds=$builds"
             echo "version=$version"
             echo "sha=$(git rev-parse HEAD)"
             echo "create_tag=$create_tag"
@@ -141,6 +156,7 @@ jobs:
   build:
     name: build (${{ matrix.rid }})
     needs: check-tag
+    if: needs.check-tag.outputs.builds == 'true'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     env:
