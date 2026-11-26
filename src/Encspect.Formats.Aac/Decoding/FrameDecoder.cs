@@ -21,11 +21,18 @@ internal sealed class FrameDecoder : IFrameDecoder
     private const int OverlapUnits = 2;
     private const int NoiseUnits = 3;
     private const int LongTransformUnits = 22;
+    private const int SbrUnits = 60;
+    private const int PsUnits = 40;
     private const int ShortTransformUnits = 16;
 
     private readonly DecodeContext _context;
     private readonly DecodeConfig _config;
     private readonly int _channels;
+    private readonly int _outputChannels;
+    private readonly bool _isSbr;
+    private readonly SbrElement?[] _elements;
+    private readonly PsDecoder?[] _ps;
+    private readonly float[] _sbrPlanar;
     private readonly ushort[] _longOffsets;
     private readonly ushort[] _shortOffsets;
     private readonly int _longBands;
@@ -59,7 +66,12 @@ internal sealed class FrameDecoder : IFrameDecoder
     {
         _context = context;
         _config = config;
-        _channels = context.Setup.Channels;
+        _outputChannels = context.Setup.Channels;
+        _isSbr = config.IsSbrSignaled;
+        _channels = _isSbr && config.IsPsSignaled && _outputChannels == 2 ? 1 : _outputChannels;
+        _elements = new SbrElement?[_channels];
+        _ps = new PsDecoder?[_channels];
+        _sbrPlanar = _isSbr ? new float[_outputChannels * 2 * Lines] : [];
         int index = Math.Min(config.SampleRateIndex, BandTables.Long.Length - 1);
         _rateIndex = index;
         _longOffsets = BandTables.Long[index];
@@ -141,6 +153,16 @@ internal sealed class FrameDecoder : IFrameDecoder
         }
 
         int count = Lines;
+        float[] pcm = _planar;
+        int stride = Lines;
+        if (_isSbr)
+        {
+            RunSbr(record);
+            count = 2 * Lines;
+            pcm = _sbrPlanar;
+            stride = 2 * Lines;
+        }
+
         if (follows)
         {
             _context.Withhold(frame.FirstSample, count, WithholdReason.AfterGap);
@@ -154,21 +176,63 @@ internal sealed class FrameDecoder : IFrameDecoder
         }
 
         _followsFailedUnit = frame.FailsChecksum;
-        _sink ??= _context.DeclareOutput(new PcmFormat(_config.SampleRate, _channels, 32, SampleFormat.Float32) { ChannelLayout = _config.Layout });
-        _sink.Write(new PcmBlock(frame.FirstSample, count, _channels, Lines, _planar));
+        _sink ??= _context.DeclareOutput(new PcmFormat(_isSbr ? 2 * _config.SampleRate : _config.SampleRate, _outputChannels, 32, SampleFormat.Float32) { ChannelLayout = _config.Layout });
+        _sink.Write(new PcmBlock(frame.FirstSample, count, _outputChannels, stride, pcm));
         return count;
+    }
+
+    // The SBR stage of every channel element of the block: the high band of its channels, and the 64-band synthesis to samples at twice the core's rate (ISO/IEC 14496-3 4.6.18).
+    private void RunSbr(ReadOnlySpan<int> record)
+    {
+        int channelSlots = record[BlockRecord.Slots];
+        int sbrSlots = record[BlockRecord.SbrSlots];
+        int ch = 0;
+        int output = 0;
+        while (ch < _channels)
+        {
+            int kind = record[(ch * BlockRecord.Stride) + BlockRecord.Kind];
+            int width = kind == BlockRecord.KindPairFirst ? 2 : 1;
+            SbrElement element = _elements[ch] ??= new SbrElement(width, 2 * _config.SampleRate);
+            ReadOnlySpan<int> slot = default;
+            if (kind != BlockRecord.KindLfe)
+            {
+                for (int s = 0; s < sbrSlots; s++)
+                {
+                    ReadOnlySpan<int> candidate = record.Slice((channelSlots + s) * BlockRecord.Stride, BlockRecord.Stride);
+                    if (candidate[SbrRecord.ChannelSlot] == ch)
+                    {
+                        slot = candidate;
+                        break;
+                    }
+                }
+            }
+
+            element.Process(_planar, ch, Lines, slot);
+            bool hasPs = _config.IsPsSignaled && width == 1 && _outputChannels == 2;
+            if (hasPs)
+            {
+                PsDecoder ps = _ps[ch] ??= new PsDecoder();
+                ps.Process(element, slot, _sbrPlanar.AsSpan(output * 2 * Lines, 2 * Lines), _sbrPlanar.AsSpan((output + 1) * 2 * Lines, 2 * Lines));
+                output += 2;
+            }
+            else
+            {
+                for (int c = 0; c < width; c++)
+                {
+                    element.Synthesize(c, element.Real(c), element.Imaginary(c), _sbrPlanar.AsSpan((output + c) * 2 * Lines, 2 * Lines));
+                }
+
+                output += width;
+            }
+
+            ch += width;
+        }
     }
 
     // What the walk stored must be something the reconstruction can take; a block that is not is not decoded, and what follows it follows a loss.
     private void Validate(ReadOnlySpan<int> record)
     {
         int slots = record[BlockRecord.Slots];
-        if ((record[BlockRecord.BlockFlags] & (BlockRecord.BlockHasSbr | BlockRecord.BlockHasPs)) != 0)
-        {
-            _lostBefore = true;
-            throw new InvalidDataException("the block holds SBR data, which is not applied yet (HE-AAC)");
-        }
-
         if (slots != _channels)
         {
             _lostBefore = true;
@@ -212,6 +276,8 @@ internal sealed class FrameDecoder : IFrameDecoder
         {
             Array.Clear(_overlap[ch]);
             _previousShape[ch] = 0;
+            _elements[ch]?.Reset();
+            _ps[ch]?.Reset();
         }
 
         _seed = 0;
@@ -220,7 +286,16 @@ internal sealed class FrameDecoder : IFrameDecoder
     // The work of the block before it is done: the floor of every output sample, and the stages of each channel that has anything to transform.
     private void Charge(ReadOnlySpan<int> record)
     {
-        long units = DecodeWork.ForSample(4) * Lines * _channels;
+        long units = DecodeWork.ForSample(4) * Lines * _outputChannels * (_isSbr ? 2 : 1);
+        if (_isSbr)
+        {
+            units += (long)SbrUnits * 2 * Lines * _outputChannels;
+            if (_outputChannels > _channels)
+            {
+                units += (long)PsUnits * 2 * Lines;
+            }
+        }
+
         for (int ch = 0; ch < _channels; ch++)
         {
             ReadOnlySpan<int> slot = record.Slice(ch * BlockRecord.Stride, BlockRecord.Stride);

@@ -791,10 +791,9 @@ internal sealed partial class BlockReader
         if (_store is not null && _lastChannelElement is 0 or 1 && _ics[0].Slot >= 0)
         {
             // The payload's values go to a slot of their own, after the channel streams; it stays invalid (the decoder then treats the frame as one without SBR data) until the data is read to its end.
-            int slot = _store.Begin(BlockRecord.KindSbr, _lastChannelTag);
-            if (slot >= 0)
+            record = _store.BeginSbr(_lastChannelTag);
+            if (!record.IsEmpty)
             {
-                record = _store.At(slot);
                 record[SbrRecord.ChannelSlot] = _ics[0].Slot;
                 record[SbrRecord.Pair] = _lastChannelElement == 1 ? 1 : 0;
                 record[SbrRecord.HasHeader] = header is null ? 0 : 1;

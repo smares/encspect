@@ -5,7 +5,11 @@ namespace Encspect.Formats.Aac;
 // What the decoder takes from the parser about a stream (DecodeSetup.Shared): the configuration the raw data blocks are read with, and the speakers of the channels where
 // the stream states them.
 internal sealed record DecodeConfig(int ObjectType, int SampleRate, int SampleRateIndex, int FrameLength, bool IsSbrSignaled, bool IsPsSignaled, IReadOnlyList<Speaker>? Layout,
-    string? Refusal = null);
+    string? Refusal = null, bool IsPsDenied = false, bool IsDownsampled = false)
+{
+    // Samples a block decodes to, per channel: SBR doubles the core's.
+    public int OutputLength => IsSbrSignaled ? 2 * FrameLength : FrameLength;
+}
 
 // The parser's side of the decoding of one stream of raw data blocks (docs/design/lossy-decoders.md, "The parser and decoder split"), for ADTS frames, ADIF blocks and the access
 // units of a container alike: the walk of BlockReader stores each block's values in the store, this copies them into the buffers the session lends and hands the block over
@@ -17,7 +21,7 @@ internal sealed class DecodeFeed
 
     private readonly AnalysisContext _context;
     private readonly Node _stream;
-    private readonly DecodeConfig _config;
+    private DecodeConfig _config;
     private readonly RecordStore _store = new();
     private readonly Queue<Held> _held = new();
     private IDecodeSession? _session;
@@ -28,7 +32,6 @@ internal sealed class DecodeFeed
     private bool _hasTrim;
     private readonly bool _canDecode;
     private readonly int _channels;
-    private bool _isDeclined;
 
     // canDecode: the stream's configuration is one the decoder takes. Where it is not, the session starts at once and the decoder refuses it (decode.not-possible), so every
     // AAC stream has a session whose verification says what was asked for; channels is then the configuration's.
@@ -46,7 +49,7 @@ internal sealed class DecodeFeed
     }
 
     // The store the block reader fills, or null where nothing is decoded: the session ended.
-    public RecordStore? Store => !_canDecode || _isDeclined || _session is { IsDecoding: false } ? null : _store;
+    public RecordStore? Store => !_canDecode || _session is { IsDecoding: false } ? null : _store;
 
     // The last blocks of the track that wait for the end trimming the container states (Matroska's DiscardPadding), which Trim must state before the blocks it reaches.
     public int Hold
@@ -60,21 +63,18 @@ internal sealed class DecodeFeed
     // A block that was read to its end and walked into the store. frame: its bytes; nodeName and node: where findings about it point.
     public void Decode(MappedBytes frame, string nodeName, Node? node, bool failsChecksum)
     {
-        if (_isDeclined || !_canDecode)
+        if (!_canDecode)
         {
             return;
         }
 
-        long first = _next;
-        _next += _config.FrameLength;
-        if (_session is null && (_store.Flags & (BlockRecord.BlockHasSbr | BlockRecord.BlockHasPs)) != 0)
+        if (_session is null && !_store.IsOverflow)
         {
-            // The first block that can be read holds SBR data: the stream is HE-AAC signaled implicitly, which is decoded in a later step, so the decoder refuses it.
-            _isDeclined = true;
-            _pendingLost = 0;
-            _session = Start(Math.Max(1, _store.Slots), _config with { IsSbrSignaled = true });
-            return;
+            FindImplicitSbr();
         }
+
+        long first = _next;
+        _next += _config.OutputLength;
 
         if (_session is null && _store.IsOverflow)
         {
@@ -99,16 +99,33 @@ internal sealed class DecodeFeed
         Give(unit, _store.IsOverflow ? default : _store.Seal());
     }
 
+    // The first block that can be read decides what the configuration left open (ffmpeg's rule: implicit signaling counts where the stream starts with it): SBR data in it makes the
+    // stream HE-AAC with twice the core's rate, and the PS extension in a single channel's SBR data makes it HE-AAC v2 with two channels.
+    private void FindImplicitSbr()
+    {
+        bool hasSbr = _config.IsSbrSignaled || ((_store.Flags & BlockRecord.BlockHasSbr) != 0 && !_config.IsDownsampled);
+        if (hasSbr && !_config.IsSbrSignaled)
+        {
+            _config = _config with { IsSbrSignaled = true };
+            _next *= 2;
+        }
+
+        if (hasSbr && !_config.IsPsSignaled && !_config.IsPsDenied && _store.Slots == 1 && (_store.Flags & BlockRecord.BlockHasPs) != 0)
+        {
+            _config = _config with { IsPsSignaled = true };
+        }
+    }
+
     // A block that is lost: cut by the data, or with syntax that breaks.
     public void Lost(MappedBytes frame, string nodeName, Node? node)
     {
-        if (_isDeclined || !_canDecode)
+        if (!_canDecode)
         {
             return;
         }
 
         long first = _next;
-        _next += _config.FrameLength;
+        _next += _config.OutputLength;
         Lose(frame, nodeName, node, first);
     }
 
@@ -131,7 +148,7 @@ internal sealed class DecodeFeed
             _session = Start(_channels, _config);
             for (long i = 0; i < _pendingLost && _session.IsDecoding; i++)
             {
-                _session.Decode(new CodedFrame(new MappedBytes(ReadOnlyMemory<byte>.Empty, 0), "Access Unit", i * _config.FrameLength, _config.FrameLength) { IsUnreadable = true, FollowsGap = i > 0, Node = _stream });
+                _session.Decode(new CodedFrame(new MappedBytes(ReadOnlyMemory<byte>.Empty, 0), "Access Unit", i * _config.OutputLength, _config.OutputLength) { IsUnreadable = true, FollowsGap = i > 0, Node = _stream });
             }
 
             _pendingLost = 0;
@@ -173,13 +190,16 @@ internal sealed class DecodeFeed
         }
 
         // A first block with no channel element says nothing about the channels: the configuration's do.
-        _session = Start(_store.Slots > 0 ? _store.Slots : _channels, _config with { Layout = _config.Layout is { } layout && layout.Count == _store.Slots ? layout : null });
+        int slots = _store.Slots > 0 ? _store.Slots : _channels;
+        bool hasPs = _config.IsSbrSignaled && _config.IsPsSignaled && slots == 1;
+        _config = _config with { Layout = hasPs ? ChannelLayouts.Stereo : _config.Layout is { } layout && layout.Count == _store.Slots ? layout : null, IsPsSignaled = hasPs };
+        _session = Start(hasPs ? 2 : slots, _config);
         // The blocks before the first one that could be read were lost.
         long lost = _pendingLost;
         _pendingLost = 0;
         for (long i = 0; i < lost && _session.IsDecoding; i++)
         {
-            _session.Decode(new CodedFrame(new MappedBytes(ReadOnlyMemory<byte>.Empty, frame.FileStart), nodeName, first - ((lost - i) * _config.FrameLength), _config.FrameLength)
+            _session.Decode(new CodedFrame(new MappedBytes(ReadOnlyMemory<byte>.Empty, frame.FileStart), nodeName, first - ((lost - i) * _config.OutputLength), _config.OutputLength)
             { IsUnreadable = true, FollowsGap = i > 0, Node = node });
         }
     }
@@ -215,7 +235,7 @@ internal sealed class DecodeFeed
 
         if (unit.IsLost)
         {
-            _session.Decode(new CodedFrame(unit.Frame, unit.NodeName, unit.First, _config.FrameLength) { IsUnreadable = true, FollowsGap = unit.FollowsGap, Node = unit.Node });
+            _session.Decode(new CodedFrame(unit.Frame, unit.NodeName, unit.First, _config.OutputLength) { IsUnreadable = true, FollowsGap = unit.FollowsGap, Node = unit.Node });
             return;
         }
 
@@ -225,7 +245,7 @@ internal sealed class DecodeFeed
             record.CopyTo(lent.Narrow);
         }
 
-        _session.Decode(new CodedFrame(unit.Frame, unit.NodeName, unit.First, _config.FrameLength)
+        _session.Decode(new CodedFrame(unit.Frame, unit.NodeName, unit.First, _config.OutputLength)
         {
             IsWalked = !lent.IsEmpty,
             FollowsGap = unit.FollowsGap,

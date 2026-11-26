@@ -31,12 +31,15 @@ internal sealed class BlockLog
     public DecodeFeed? Feed { get; set; }
 
     // Whether a stream of this configuration is decoded: AAC LC with frames of 1,024 samples that signals no SBR or PS (HE-AAC is a later step).
-    public static bool CanDecode(AacConfig config) => config is { ObjectType: 2, CoreFrameLength: 1024, Sbr: not true, Ps: not true };
+    public static bool CanDecode(AacConfig config) => config is { ObjectType: 2, CoreFrameLength: 1024 } && !IsDownsampled(config);
+
+    // SBR that works at the core's rate (the extension rate equals the core's, so SBR fills the band up to half of it): not decoded.
+    private static bool IsDownsampled(AacConfig config) => config.Sbr == true && config.ExtensionSampleRate is { } extension && extension <= config.CoreSampleRate;
 
     // The decoding of a stream: every AAC stream has a session, where a decoder is registered, and the decoder takes the configurations CanDecode names and refuses the others.
     public static DecodeFeed CreateFeed(AnalysisContext context, Node stream, AacConfig config, IReadOnlyList<Speaker>? layout = null, string? refusal = null) =>
         new(context, stream, new DecodeConfig(config.ObjectType, config.CoreSampleRate, StreamSetup.SampleRateIndex(config.CoreSampleRate), config.CoreFrameLength,
-            config.Sbr == true, config.Ps == true, layout ?? config.OutputLayout, refusal), refusal is null && CanDecode(config), config.Channels ?? 1);
+            config.Sbr == true, config.Ps == true, layout ?? config.OutputLayout, refusal, config.Ps == false, IsDownsampled(config)), refusal is null && CanDecode(config), config.Channels ?? 1);
 
     public CodingTally Tally { get; } = new();
 

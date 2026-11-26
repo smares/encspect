@@ -7,8 +7,8 @@ namespace Encspect.Formats.Aac.Decoding;
 // shaping, and the filter bank (inverse MDCT, windows, overlap-add). The reconstruction follows libxaac (github.com/ittiam-systems/libxaac at 2fbadd5, Apache 2.0, Copyright
 // (C) The Android Open Source Project; the notice is in THIRD-PARTY-NOTICES.md) where the specification leaves details to the decoder: the order of the tools, noise
 // substitution's generator and its correlation with mid/side stereo, and the TNS filter ranges. It computes in single precision, where libxaac computes in fixed point.
-// The stream stores no checksum over its audio, so the decoder runs only where a front end asks for the samples. HE-AAC (SBR, parametric stereo), AAC Main, LTP and SSR,
-// ER AAC, USAC and frames of 960 samples are not decoded (docs/formats/aac.md).
+// The stream stores no checksum over its audio, so the decoder runs only where a front end asks for the samples. HE-AAC (SBR and parametric stereo) is decoded on top of the
+// core (SbrElement, PsDecoder); downsampled SBR, AAC Main, LTP and SSR, ER AAC, USAC and frames of 960 samples are not (docs/formats/aac.md).
 public sealed class AacDecoder : IDecoder
 {
     public string Id => DecodeFeed.CodecId;
@@ -38,9 +38,9 @@ public sealed class AacDecoder : IDecoder
             throw new InvalidDataException("Only AAC LC with frames of 1,024 samples is decoded");
         }
 
-        if (config.IsSbrSignaled || config.IsPsSignaled)
+        if (config.IsDownsampled)
         {
-            throw new InvalidDataException("HE-AAC (SBR and parametric stereo) is not decoded yet");
+            throw new InvalidDataException("Downsampled SBR (the extension rate equals the core's) is not decoded");
         }
 
         if (config.SampleRate <= 0)
