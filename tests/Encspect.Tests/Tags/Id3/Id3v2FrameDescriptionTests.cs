@@ -70,4 +70,31 @@ public class Id3v2FrameDescriptionTests
         Assert.Equal("Year of the recording (ID3v2.3.0 section 4.2.1; not part of ID3v2.4, which replaced it with TDRC).", d["TYER"]);
         Assert.Contains("(ID3v2.4.0 structure section 4)", d["XYZ1"]);
     }
+
+    [Theory]
+    [InlineData(3, "TDRC", "Frame TDRC is defined in ID3v2.4 (frames section 4.2.5), not in ID3v2.3, the version of this tag.")]
+    [InlineData(4, "IPLS", "Frame IPLS is defined in ID3v2.3 (section 4.4), not in ID3v2.4, the version of this tag; ID3v2.4 replaced it with TIPL and TMCL.")]
+    [InlineData(4, "TSIZ", "Frame TSIZ is defined in ID3v2.3 (section 4.2.1), not in ID3v2.4, the version of this tag; ID3v2.4 dropped it.")]
+    [InlineData(4, "TIT2", null)]
+    [InlineData(3, "TIT2", null)]
+    [InlineData(4, "PRIV", null)]
+    [InlineData(3, "XYZ1", null)]
+    public void AFrameTheTagsVersionDoesNotDefineIsAnInfoFinding(int major, string id, string? message)
+    {
+        byte[] body = [.. Frame(major, id, Text), .. new byte[8]];
+        byte[] tag = [.. "ID3"u8.ToArray(), (byte)major, 0, 0, .. Syncsafe(body.Length), .. body];
+        Report report = Analyzer.CreateDefault().Analyze("test.mp3", new MemoryStream(tag));
+
+        Finding[] found = [.. report.Findings.Where(f => f.Code == "id3v2.frame-not-in-version")];
+        if (message is null)
+        {
+            Assert.Empty(found);
+            return;
+        }
+
+        Finding finding = Assert.Single(found);
+        Assert.Equal(Severity.Info, finding.Severity);
+        Assert.Equal(message, finding.Message);
+        Assert.Equal(id, finding.Node!.Name);
+    }
 }

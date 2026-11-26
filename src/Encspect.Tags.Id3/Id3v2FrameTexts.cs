@@ -222,6 +222,24 @@ internal static class Id3v2FrameTexts
         };
     }
 
+    // Why a frame is not one its tag's version defines, or null when the version defines it or no
+    // version does (a program's own frame, an experimental one). ID3v2.2 has no frame that only
+    // another version's tags can hold: its IDs have three letters, theirs four.
+    public static string? NotInVersion(int major, string id)
+    {
+        if (!Definitions.TryGetValue(id, out FrameDefinition frame))
+        {
+            return null;
+        }
+
+        return major switch
+        {
+            3 when frame.V23 is null => $"Frame {id} is defined in ID3v2.4 (frames section {frame.V24}), not in ID3v2.3, the version of this tag.",
+            4 when frame.V24 is null => $"Frame {id} is defined in ID3v2.3 (section {frame.V23}), not in ID3v2.4, the version of this tag; ID3v2.4 {frame.Gone}.",
+            _ => null,
+        };
+    }
+
     private static string Gone(FrameDefinition frame) => frame.Gone is { } gone ? $"; ID3v2.4 {gone}" : string.Empty;
 
     // The topic of a frame whose content has one beyond the tag's.

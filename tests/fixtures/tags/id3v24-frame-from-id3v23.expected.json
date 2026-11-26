@@ -1,0 +1,32 @@
+{
+  "description": "ID3v2.4 tag with TYER and TDAT, frames ID3v2.3 defines and ID3v2.4 replaced with TDRC.",
+  "length": 560,
+  "regions": [
+    {
+      "name": "ID3v2",
+      "version": "2.4.0",
+      "confidence": "High",
+      "fields": {
+        "TYER/Text": "2001",
+        "TDAT/Text": "0105"
+      },
+      "offset": 0,
+      "length": 48
+    },
+    {
+      "name": "Data",
+      "offset": 48,
+      "length": 512
+    }
+  ],
+  "findings": [
+    {
+      "code": "id3v2.frame-not-in-version",
+      "contains": "Frame TYER is defined in ID3v2.3 (section 4.2.1), not in ID3v2.4"
+    },
+    {
+      "code": "id3v2.frame-not-in-version",
+      "contains": "Frame TDAT is defined in ID3v2.3 (section 4.2.1), not in ID3v2.4, the version of this tag; ID3v2.4 replaced it with TDRC"
+    }
+  ]
+}
