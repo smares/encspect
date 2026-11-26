@@ -160,3 +160,48 @@ public class AacEvidenceTests
         return frames;
     }
 }
+
+// The decision about implicit SBR is taken from the first DecodeFeed.MaxUndecided blocks the decoder is offered; the tally counts the same blocks, the ones a frame declares and does not hold
+// (BlockLog.Skip, which the parser calls where it hands the decoder such a block as lost) among them.
+public class AacEvidenceBoundTests
+{
+    private static BlockLog Log() => new(new StreamSetup(new AacConfig { ObjectType = 2, CoreSampleRate = 44100, ChannelConfiguration = 2, CoreFrameLength = 1024 }), new FindingCollector());
+
+    private static readonly BlockResult Block = new(true, 8, 0, true, false, null, true);
+
+    [Theory]
+    [InlineData(0, 31, true)]
+    [InlineData(0, 32, false)]
+    [InlineData(24, 7, true)]
+    [InlineData(24, 8, false)]
+    [InlineData(31, 0, true)]
+    public void BlocksSkippedBeforeABlockCountTowardTheBoundOfTheDecision(int skipped, int index, bool counts)
+    {
+        BlockLog log = Log();
+        for (int i = 0; i < skipped; i++)
+        {
+            log.Skip();
+        }
+
+        log.AddEvidence(Block, index);
+
+        Assert.Equal(counts ? 1 : 0, log.Tally.EvidenceBlocks);
+        Assert.Equal(counts, log.Tally.IsSbrEvident);
+    }
+
+    [Fact]
+    public void BlocksSkippedAfterABlockInItsFrameDoNotMoveIt()
+    {
+        BlockLog log = Log();
+        log.Skip();
+        int skippedBefore = log.Skipped;
+        for (int i = 0; i < 3; i++)
+        {
+            log.Skip();
+        }
+
+        log.AddEvidence(Block, 27, skippedBefore);
+
+        Assert.Equal(1, log.Tally.EvidenceBlocks);
+    }
+}

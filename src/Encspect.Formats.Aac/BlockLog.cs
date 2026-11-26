@@ -56,6 +56,11 @@ internal sealed class BlockLog
 
     public int Count { get; private set; }
 
+    // Blocks the decoder is offered as lost that were not read: those a frame declares and does not hold, and a packet the container cut.
+    public int Skipped { get; private set; }
+
+    public void Skip() => Skipped++;
+
     // The elements of the block read last, for its CRC.
     public IReadOnlyList<ElementSpan> LastElements => _reader.Elements;
 
@@ -114,10 +119,12 @@ internal sealed class BlockLog
     // whose frame is intact; its SBR payload counts where it follows a channel element, readable or not
     // (BlockReader.TallySbr). index is the block's number in the log. The callers leave out the blocks of
     // frames they flag as damaged.
-    public void AddEvidence(BlockResult result, int index)
+    public void AddEvidence(BlockResult result, int index, int skipped = -1)
     {
+        // The block's place among the blocks the decoder is offered: those read, and those a frame declares and does not hold (Skip).
+        int place = index + (skipped < 0 ? Skipped : skipped);
         // The decoder decides at the first evidence block among the first blocks too (DecodeFeed.MaxUndecided), else as the configuration says.
-        if (!result.Ok || (Tally.EvidenceBlocks == 0 && index >= DecodeFeed.MaxUndecided))
+        if (!result.Ok || (Tally.EvidenceBlocks == 0 && place >= DecodeFeed.MaxUndecided))
         {
             return;
         }

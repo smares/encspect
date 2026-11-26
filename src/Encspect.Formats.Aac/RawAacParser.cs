@@ -401,6 +401,7 @@ public sealed class RawAacParser : IFormatParser
         {
             for (int i = 0; i < blocks; i++)
             {
+                log.Skip();
                 feed?.Lost(new MappedBytes(ReadOnlyMemory<byte>.Empty, offset), "Frame", frameNode());
             }
 
@@ -566,6 +567,7 @@ public sealed class RawAacParser : IFormatParser
             }
         }
 
+        int skippedBefore = log.Skipped;
         if (feed is not null)
         {
             // The blocks of a protected frame waited for the verdict of the frame's CRC; the blocks a break or the end of the data kept the reading from reaching are lost.
@@ -586,6 +588,7 @@ public sealed class RawAacParser : IFormatParser
 
             for (int i = reads.Count; i < (held >= 0 ? held : blocks); i++)
             {
+                log.Skip();
                 feed.Lost(new MappedBytes(ReadOnlyMemory<byte>.Empty, offset), "Frame", frameNode());
             }
         }
@@ -595,7 +598,7 @@ public sealed class RawAacParser : IFormatParser
         {
             foreach ((BlockResult read, int index) in reads)
             {
-                log.AddEvidence(read, index);
+                log.AddEvidence(read, index, skippedBefore);
             }
         }
 

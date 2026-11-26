@@ -52,11 +52,24 @@ def to_ffmpeg_order(samples, layout):
     return samples[:, order]
 
 
-# Files that use noise substitution in most of their channel streams: each decoder fills the substituted bands with its own noise (FFmpeg and libxaac differ from each other as much as
-# either does from the analyzer), so they are compared by the energy of each channel in bands of the spectrum, at most BAND_DB apart.
+# Files that use noise substitution in most of their channel streams: each decoder fills the substituted bands with its own noise, so they are compared by the energy of each channel in
+# bands of the spectrum (a Hann-windowed average over frames of 2,048 samples with half overlap, which keeps the strong band's leakage out of the weak ones), at most BAND_DB apart; a band
+# more than QUIET_DB below the channel's total is left out. Measured with FFmpeg 6.1.1: 1.24 dB for FAAC 2.2's file and 0.41 dB for 2.1's (libxaac's test decoder, the outlier, differs from both FFmpeg and
+# the analyzer by about 8.5 dB on the 2.2 file).
 NOISE_BANDS = ["faac-2.1-he-51-adts.aac", "faac-2.2-he-51-adts.aac"]
 BAND_EDGES = [0, 500, 1000, 2000, 4000, 8000, 16000]
-BAND_DB = 16.0
+BAND_DB = 3.0
+QUIET_DB = 50.0
+FRAME = 2048
+
+
+def band_energies(x, rate):
+    window = np.hanning(FRAME)
+    total = np.zeros(FRAME // 2 + 1)
+    for at in range(0, len(x) - FRAME + 1, FRAME // 2):
+        total += np.abs(np.fft.rfft(x[at:at + FRAME] * window)) ** 2
+    freqs = np.fft.rfftfreq(FRAME, 1.0 / rate)
+    return [float(total[(freqs >= low) & (freqs < high)].sum()) for low, high in zip(BAND_EDGES, BAND_EDGES[1:])]
 
 
 def band_differences(a, b, shift, rate):
@@ -65,13 +78,11 @@ def band_differences(a, b, shift, rate):
     stop = min(len(a), len(b) - shift) - 4096
     worst = 0.0
     for ch in range(a.shape[1]):
-        x = np.abs(np.fft.rfft(a[start:stop, ch])) ** 2
-        y = np.abs(np.fft.rfft(b[start + shift:stop + shift, ch])) ** 2
-        freqs = np.fft.rfftfreq(stop - start, 1.0 / rate)
-        for low, high in zip(BAND_EDGES, BAND_EDGES[1:]):
-            mask = (freqs >= low) & (freqs < high)
-            ex, ey = float(x[mask].sum()), float(y[mask].sum())
-            if ex > 0 and ey > 0:
+        x = band_energies(a[start:stop, ch], rate)
+        y = band_energies(b[start + shift:stop + shift, ch], rate)
+        loudest = max(max(x), max(y))
+        for ex, ey in zip(x, y):
+            if min(ex, ey) > 0 and max(ex, ey) > loudest * 10 ** (-QUIET_DB / 10):
                 worst = max(worst, abs(10 * np.log10(ex / ey)))
     return worst
 
