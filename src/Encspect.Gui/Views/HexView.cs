@@ -45,6 +45,17 @@ public sealed class HexView : Grid
             ByteCursorChanged?.Invoke(this, EventArgs.Empty);
         };
         _canvas.ByteActivated += (_, offset) => ByteActivated?.Invoke(this, offset);
+
+        var copy = new MenuItem { Header = "Copy Selection" };
+        copy.Click += async (_, _) =>
+        {
+            if (SelectedRowsText() is { } rows && await Copying.SetTextAsync(this, rows) is { } error)
+            {
+                CopyFailed?.Invoke(this, error);
+            }
+        };
+        ContextMenu = new ContextMenu { Items = { copy } };
+        ContextMenu.Opening += (_, _) => copy.IsEnabled = SelectedRowsText() is not null;
         _scrollBar.PropertyChanged += (_, e) =>
         {
             if (e.Property == RangeBase.ValueProperty && !_updatingScrollBar)
@@ -79,7 +90,55 @@ public sealed class HexView : Grid
     // A double click on a byte, with its offset.
     public event EventHandler<long>? ByteActivated;
 
+    // The most bytes Copy Selection takes: a node can be as big as the file.
+    public const long MaxCopyBytes = 1 << 20;
+
+    // The rows the selection touches, as they are displayed: the offset, the 16 bytes in hex and
+    // the text column with a dot for a byte that has no character. Null without a selection or a
+    // document, or where the selection is over MaxCopyBytes.
+    public string? SelectedRowsText()
+    {
+        if (Document is not { } document || Highlight is not { } highlight)
+        {
+            return null;
+        }
+
+        long start = highlight.Start / 16 * 16;
+        long end = Math.Min(document.Length, ((highlight.End + 15) / 16) * 16);
+        if (end <= start || end - start > MaxCopyBytes)
+        {
+            return null;
+        }
+
+        return RowsText(document, start, end);
+    }
+
+    // The rows from the row holding start to the one holding the byte before end, in the display's layout.
+    public static string RowsText(HexDocument document, long start, long end)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+
+        int digits = HexCanvas.DigitsFor(document.Length);
+        var text = new System.Text.StringBuilder();
+        byte[] row = new byte[16];
+        for (long offset = start / 16 * 16; offset < end; offset += 16)
+        {
+            int count = document.Read(offset, row);
+            if (count == 0)
+            {
+                break;
+            }
+
+            text.Append(HexCanvas.RowText(offset, row.AsSpan(0, count), digits)).Append('\n');
+        }
+
+        return text.ToString();
+    }
+
     internal Point? CellCenter(long offset) => _canvas.HexCellCenter(offset);
+
+    // Why a copy failed.
+    public event EventHandler<string>? CopyFailed;
 
     public string StatusText => _status.Text ?? string.Empty;
 
@@ -389,10 +448,30 @@ internal sealed class HexCanvas : Control
         return offset < _document.Length ? offset : null;
     }
 
+    internal static int DigitsFor(long length) => Math.Max(8, (int)Math.Ceiling(Math.Log(Math.Max(16, length), 16)));
+
+    // One row as Render draws it: the offset, two spaces, the hex of up to 16 bytes with an extra
+    // space after the eighth, padded to its column, a space, and the text column.
+    internal static string RowText(long offset, ReadOnlySpan<byte> bytes, int digits)
+    {
+        var hex = new char[(BytesPerRow * 3) + 1];
+        Array.Fill(hex, ' ');
+        var ascii = new char[bytes.Length];
+        for (int i = 0; i < bytes.Length; i++)
+        {
+            int column = HexColumn(i);
+            hex[column] = "0123456789ABCDEF"[bytes[i] >> 4];
+            hex[column + 1] = "0123456789ABCDEF"[bytes[i] & 15];
+            ascii[i] = bytes[i] is >= 0x20 and < 0x7F ? (char)bytes[i] : '.';
+        }
+
+        return offset.ToString("X" + digits.ToString(CultureInfo.InvariantCulture), CultureInfo.InvariantCulture) + "  " + new string(hex) + " " + new string(ascii);
+    }
+
     // The width of the offset column in digits and where the hex and the text columns start.
     internal (int Digits, double HexX, double AsciiX) Columns()
     {
-        int digits = Math.Max(8, (int)Math.Ceiling(Math.Log(Math.Max(16, _document?.Length ?? 0), 16)));
+        int digits = DigitsFor(_document?.Length ?? 0);
         double hexX = Padding + ((digits + 2) * _charWidth);
         return (digits, hexX, hexX + (((BytesPerRow * 3) + 2) * _charWidth));
     }

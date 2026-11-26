@@ -815,6 +815,29 @@ public sealed class DetailViewModel : ObservableObject, IDisposable
         return new TreePlace(selected.RootIndex, path);
     }
 
+    // The text Copy Node puts on the clipboard: the node and the nodes under it as the text report
+    // writes them, with offsets, from the report of the file the node's tree belongs to.
+    public string NodeText(TreeRow row)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+
+        Report report = row.RootIndex > 0 && _report is { } main ? main.Companions[row.RootIndex - 1].Report : _report ?? throw new InvalidOperationException("No file is analyzed.");
+        using var writer = new StringWriter(System.Globalization.CultureInfo.InvariantCulture);
+        ReportTextWriter.WriteNode(report, row.Node, writer, showOffsets: true, ReportFilter.All);
+        return writer.ToString();
+    }
+
+    // What Copy Message puts on the clipboard, or with the code and the position of the node the
+    // finding points to, as the text report words it.
+    public static string FindingText(FindingItem item, bool withCodeAndPosition)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+        return withCodeAndPosition ? ReportTextWriter.Describe(item.Finding, showOffsets: true) : item.Message;
+    }
+
+    // Shows why a copy failed, as the other commands show their failures.
+    public void FailCommand(string message) => CommandError = message;
+
     // Selects the deepest node of the tree of the file the hex view shows that holds the byte at offset.
     public bool SelectNodeAt(long offset)
     {

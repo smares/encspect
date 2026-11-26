@@ -120,6 +120,11 @@ Only the other files are analyzed.
   - A refresh, or analyzing the file as another format, keeps decoding for the file shown; it runs as an ordinary load, with no Stop button, since a file that was decoded once has shown it decodes and the load replaces the analysis as every reload does. Showing another file drops it. On macOS the command is File, Decode Audio, which is dimmed where there is nothing to decode or a decode is running, and File, Stop Decoding is enabled only while one runs. Only the detail window decodes: the file list and the summary cache never do, so a list's verdict comes from coded data alone.
   - A failure to decode (a file that went away, for instance) shows as "Not decoded: …" next to the buttons and leaves the analysis as it was.
 - **Findings:** can be filtered by severity. Selecting a finding selects its node.
+- **Copy from a context menu:** the right-click menus put plain text on the clipboard.
+  - **Tree node:** "Copy Value" is the value alone, as the row shows it (dimmed for a node with none); "Copy Node" is the node and the nodes under it in the form of the text report with offsets (`encspect --offsets`), written by the host's text writer (`ReportTextWriter.WriteNode`), so it is the report's own lines, indented as in the report. A lazily listed node such as a frame list is built whole for it.
+  - **Finding:** "Copy Message" is the message alone; "Copy Message with Code and Position" is the report's line, `[Warning] code: message [0x1A, 4 bytes]`.
+  - **Hex view:** "Copy Selection" is the rows the selected node touches, as displayed: the offset, the 16 bytes in hex and the text column with a dot for a byte without a character; a row at the edge of the selection is whole. A selection over 1 MiB is not copied (the item is dimmed).
+  - A failure of the system clipboard shows next to the buttons, as other commands' failures do.
 - **Export:** Cmd or Ctrl+S writes the report as text with offsets or as JSON, as `--offsets` and `--json` would.
 
 ## Graphs

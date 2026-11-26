@@ -33,7 +33,40 @@ public static class ReportTextWriter
         }
     }
 
-    private static void WriteBody(Report report, TextWriter writer, bool showOffsets, ReportFilter filter, bool explain)
+    // One node and the nodes under it, as the report writes them (with the lines that hang on a
+    // node, such as a stream's coding or a series anchored to it), the node's line indented as the
+    // report's root. For a front end's Copy Node: the same form, not a new one.
+    public static void WriteNode(Report report, Node node, TextWriter writer, bool showOffsets, ReportFilter filter)
+    {
+        ArgumentNullException.ThrowIfNull(report);
+        ArgumentNullException.ThrowIfNull(node);
+        ArgumentNullException.ThrowIfNull(writer);
+        ArgumentNullException.ThrowIfNull(filter);
+
+        WriteBody(report, writer, showOffsets, filter, explain: false, only: node);
+    }
+
+    // A finding as its line in the report's list: "[Warning] code: message", with its node's
+    // location after it where offsets are shown.
+    public static string Describe(Finding finding, bool showOffsets)
+    {
+        ArgumentNullException.ThrowIfNull(finding);
+
+        using var writer = new StringWriter(CultureInfo.InvariantCulture);
+        WriteFinding(finding, writer, showOffsets);
+        return writer.ToString();
+    }
+
+    private static void WriteFinding(Finding finding, TextWriter writer, bool showOffsets)
+    {
+        writer.Write($"[{finding.Severity}] {finding.Code}: {Escape(finding.Message)}");
+        if (showOffsets && finding.Node is not null)
+        {
+            WriteLocation(finding.Node, writer);
+        }
+    }
+
+    private static void WriteBody(Report report, TextWriter writer, bool showOffsets, ReportFilter filter, bool explain, Node? only = null)
     {
         Dictionary<Node, List<Series>> anchored = new(ReferenceEqualityComparer.Instance);
         foreach (Series series in report.Streams.SelectMany(s => s.Series).Where(s => s.Anchor is not null))
@@ -134,7 +167,11 @@ public static class ReportTextWriter
             }
         }
 
-        WriteNode(report.Root, writer, new Options(showOffsets, explain, filter, verified, shares) { Measured = measured, Corrections = corrections, Coded = coded }, 0, anchored);
+        WriteNode(only ?? report.Root, writer, new Options(showOffsets, explain, filter, verified, shares) { Measured = measured, Corrections = corrections, Coded = coded }, 0, anchored);
+        if (only is not null)
+        {
+            return;
+        }
 
         if (report.Detection is { } detection)
         {
@@ -158,12 +195,8 @@ public static class ReportTextWriter
             writer.WriteLine("Findings:");
             foreach (Finding finding in report.Findings)
             {
-                writer.Write($"  [{finding.Severity}] {finding.Code}: {Escape(finding.Message)}");
-                if (showOffsets && finding.Node is not null)
-                {
-                    WriteLocation(finding.Node, writer);
-                }
-
+                writer.Write("  ");
+                WriteFinding(finding, writer, showOffsets);
                 writer.WriteLine();
             }
         }

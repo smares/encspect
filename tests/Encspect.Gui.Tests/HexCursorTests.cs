@@ -119,4 +119,78 @@ public class HexCursorTests
         Assert.True(row.Node.Offset <= 0 && row.Node.End > 0);
         window.Close();
     }
+
+    private static void Click(Avalonia.Controls.MenuItem item) => item.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Avalonia.Controls.MenuItem.ClickEvent));
+
+    // Opening the menu is what enables its items.
+    private static Avalonia.Controls.MenuItem Item(Avalonia.Controls.ContextMenu? menu, string header)
+    {
+        menu!.Open();
+        menu.Close();
+        return menu.Items.OfType<Avalonia.Controls.MenuItem>().Single(i => (string?)i.Header == header);
+    }
+
+    [AvaloniaFact]
+    public void The_trees_menu_copies_a_nodes_value_and_the_node_with_the_nodes_under_it()
+    {
+        DetailWindow window = Open();
+        StructureTree tree = window.Model.Tree!;
+        TreeRow stream = tree.Root.RowAt(0);
+        tree.Expand(stream);
+        TreeRow frame = Enumerable.Range(0, stream.LoadChildren().Count).Select(i => stream.RowAt(i)).First(r => r.Kind == NodeKind.Frame);
+
+        window.Model.SelectedNode = frame;
+        Click(Item(window.TreeList.ContextMenu, "Copy Node"));
+        string text = Copying.Last!;
+        Assert.StartsWith("  " + frame.Name, text);
+        Assert.Contains(Environment.NewLine + "    ", text);
+        Assert.Equal(text, window.Model.NodeText(frame));
+        Assert.Contains($"[0x{frame.Node.Offset:X}, ", text);
+
+        TreeRow field = Enumerable.Range(0, frame.LoadChildren().Count).Select(i => { tree.Expand(frame); return frame.RowAt(i); }).First(r => r.Value is not null);
+        window.Model.SelectedNode = field;
+        Click(Item(window.TreeList.ContextMenu, "Copy Value"));
+        Assert.Equal(field.Value, Copying.Last);
+
+        // A node with no value has nothing to copy as one.
+        window.Model.SelectedNode = tree.Root;
+        Assert.Equal(tree.Root.Value is not null, Item(window.TreeList.ContextMenu, "Copy Value").IsEnabled);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void The_findings_menu_copies_the_message_alone_or_with_its_code_and_position()
+    {
+        var window = new DetailWindow(new DetailViewModel(Analyzer.CreateDefault())) { Width = 1100, Height = 760 };
+        window.Show();
+        Task load = window.Model.LoadAsync(Fixtures.Mpeg("damaged-bitrate.mp3"));
+        UiPump.Until(() => load.IsCompleted);
+        FindingItem finding = window.Model.Findings.First(f => f.Finding.Node is not null);
+        window.Model.SelectedFinding = finding;
+
+        Click(Item(window.FindingList.ContextMenu, "Copy Message"));
+        Assert.Equal(finding.Message, Copying.Last);
+        Click(Item(window.FindingList.ContextMenu, "Copy Message with Code and Position"));
+        Assert.StartsWith($"[{finding.Severity}] {finding.Code}: ", Copying.Last);
+        Assert.Contains(finding.Message, Copying.Last);
+        Assert.Contains($"[0x{finding.Finding.Node!.Offset:X}", Copying.Last);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void The_hex_views_menu_copies_the_rows_the_selection_touches()
+    {
+        DetailWindow window = Open();
+        window.Model.SelectedNode = window.Model.Tree!.Root.RowAt(0);
+        UiPump.Until(() => true);
+        HexHighlight highlight = window.Model.Highlight!;
+
+        Click(Item(window.Hex.ContextMenu, "Copy Selection"));
+        string text = Copying.Last!;
+        string[] rows = text.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        Assert.Equal(((highlight.End + 15) / 16) - (highlight.Start / 16), rows.Length);
+        Assert.StartsWith($"{highlight.Start / 16 * 16:X8}  ", rows[0]);
+        Assert.Equal(text, HexView.RowsText(window.Model.Document!, highlight.Start, highlight.End));
+        window.Close();
+    }
 }
