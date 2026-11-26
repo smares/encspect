@@ -639,7 +639,57 @@
                                   "name": "Parametric Stereo",
                                   "value": "36 access units (100.0%)",
                                   "offset": 48,
-                                  "length": 6688
+                                  "length": 6688,
+                                  "children": [
+                                    {
+                                      "name": "Parametric Stereo Envelopes",
+                                      "value": 36,
+                                      "unit": "raw data blocks",
+                                      "offset": 48,
+                                      "length": 6688,
+                                      "children": [
+                                        {
+                                          "name": "No envelopes",
+                                          "value": "28 raw data blocks (77.8%)",
+                                          "offset": 48,
+                                          "length": 6688
+                                        },
+                                        {
+                                          "name": "1 envelope",
+                                          "value": "6 raw data blocks (16.7%)",
+                                          "offset": 48,
+                                          "length": 6688
+                                        },
+                                        {
+                                          "name": "2 envelopes",
+                                          "value": "2 raw data blocks (5.6%)",
+                                          "offset": 48,
+                                          "length": 6688
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "name": "Parametric Stereo Bands",
+                                      "value": 36,
+                                      "unit": "raw data blocks",
+                                      "offset": 48,
+                                      "length": 6688,
+                                      "children": [
+                                        {
+                                          "name": "No parameters",
+                                          "value": "1 raw data block (2.8%)",
+                                          "offset": 48,
+                                          "length": 6688
+                                        },
+                                        {
+                                          "name": "20 bands",
+                                          "value": "35 raw data blocks (97.2%)",
+                                          "offset": 48,
+                                          "length": 6688
+                                        }
+                                      ]
+                                    }
+                                  ]
                                 },
                                 {
                                   "name": "SBR Headers",
@@ -647,6 +697,36 @@
                                   "unit": "headers",
                                   "offset": 48,
                                   "length": 6688
+                                },
+                                {
+                                  "name": "SBR Frame Classes",
+                                  "value": 36,
+                                  "unit": "SBR channels",
+                                  "offset": 48,
+                                  "length": 6688,
+                                  "children": [
+                                    {
+                                      "name": "FIXFIX",
+                                      "value": "36 SBR channels (100.0%)",
+                                      "offset": 48,
+                                      "length": 6688
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "SBR Envelopes",
+                                  "value": 36,
+                                  "unit": "SBR channels",
+                                  "offset": 48,
+                                  "length": 6688,
+                                  "children": [
+                                    {
+                                      "name": "1 envelope",
+                                      "value": "36 SBR channels (100.0%)",
+                                      "offset": 48,
+                                      "length": 6688
+                                    }
+                                  ]
                                 },
                                 {
                                   "name": "Start Frequency",
@@ -17821,6 +17901,222 @@
               [
                 1,
                 36
+              ]
+            ],
+            "seconds": [
+              0,
+              22
+            ]
+          },
+          {
+            "name": "SBR Frame Classes",
+            "valueLabel": "SBR channel",
+            "categories": [
+              {
+                "name": "FIXFIX",
+                "count": 36
+              },
+              {
+                "name": "FIXVAR",
+                "count": 0
+              },
+              {
+                "name": "VARFIX",
+                "count": 0
+              },
+              {
+                "name": "VARVAR",
+                "count": 0
+              }
+            ],
+            "total": 36,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                36
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                36
+              ]
+            ],
+            "seconds": [
+              0,
+              22
+            ]
+          },
+          {
+            "name": "SBR Envelopes",
+            "valueLabel": "SBR channel",
+            "categories": [
+              {
+                "name": "1 envelope",
+                "count": 36
+              },
+              {
+                "name": "2 envelopes",
+                "count": 0
+              },
+              {
+                "name": "3 envelopes",
+                "count": 0
+              },
+              {
+                "name": "4 envelopes",
+                "count": 0
+              },
+              {
+                "name": "5 envelopes",
+                "count": 0
+              }
+            ],
+            "total": 36,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                36
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                36
+              ]
+            ],
+            "seconds": [
+              0,
+              22
+            ]
+          },
+          {
+            "name": "Parametric Stereo Envelopes",
+            "valueLabel": "raw data block",
+            "categories": [
+              {
+                "name": "No envelopes",
+                "count": 28
+              },
+              {
+                "name": "1 envelope",
+                "count": 6
+              },
+              {
+                "name": "2 envelopes",
+                "count": 2
+              },
+              {
+                "name": "3 envelopes",
+                "count": 0
+              },
+              {
+                "name": "4 envelopes",
+                "count": 0
+              }
+            ],
+            "total": 36,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                36
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                2
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                4
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                9
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                9
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                5
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "seconds": [
+              0,
+              22
+            ]
+          },
+          {
+            "name": "Parametric Stereo Bands",
+            "valueLabel": "raw data block",
+            "categories": [
+              {
+                "name": "No parameters",
+                "count": 1
+              },
+              {
+                "name": "10 bands",
+                "count": 0
+              },
+              {
+                "name": "20 bands",
+                "count": 35
+              },
+              {
+                "name": "34 bands",
+                "count": 0
+              }
+            ],
+            "total": 36,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                36
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                1
+              ],
+              [
+                2,
+                35
               ]
             ],
             "seconds": [

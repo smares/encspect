@@ -71,6 +71,31 @@ internal static class CodingCategories
         new("Without parametric stereo", Explain.FlagWithoutPs) { Topic = Topics.ParametricStereo },
     ];
 
+    public static readonly Category[] SbrFrameClasses =
+    [
+        new("FIXFIX", Explain.SbrFrameClassFixFix) { Topic = Topics.Sbr },
+        new("FIXVAR", Explain.SbrFrameClassFixVar) { Topic = Topics.Sbr },
+        new("VARFIX", Explain.SbrFrameClassVarFix) { Topic = Topics.Sbr },
+        new("VARVAR", Explain.SbrFrameClassVarVar) { Topic = Topics.Sbr },
+    ];
+
+    public static readonly Category[] SbrEnvelopes = EnvelopeCategories(1, 5, Explain.SbrEnvelopeCount, Topics.Sbr);
+
+    // The first category is no envelopes: the parameters of the block before are kept.
+    public static readonly Category[] PsEnvelopes = [new("No envelopes", Explain.PsEnvelopeCount) { Topic = Topics.ParametricStereo }, .. EnvelopeCategories(1, 4, Explain.PsEnvelopeCount, Topics.ParametricStereo)];
+
+    // By the finer of iid_mode and icc_mode where they are enabled: 10, 20 or 34 bands.
+    public static readonly Category[] PsBands =
+    [
+        new("No parameters", Explain.PsBandCount) { Topic = Topics.ParametricStereo },
+        new("10 bands", Explain.PsBandCount) { Topic = Topics.ParametricStereo },
+        new("20 bands", Explain.PsBandCount) { Topic = Topics.ParametricStereo },
+        new("34 bands", Explain.PsBandCount) { Topic = Topics.ParametricStereo },
+    ];
+
+    private static Category[] EnvelopeCategories(int first, int last, string description, string topic) =>
+        [.. Enumerable.Range(first, last - first + 1).Select(n => new Category(n == 1 ? "1 envelope" : $"{n} envelopes", description) { Topic = topic })];
+
     public static readonly Category[] StereoCodings =
     [
         new("Left/right stereo", Explain.CodingLeftRight) { Topic = Topics.MidSide },
@@ -97,6 +122,14 @@ internal sealed record CodingNodes(Node? WindowSequences, Node? BlockSizes, Node
     public Node? Sbr { get; init; }
 
     public Node? ParametricStereo { get; init; }
+
+    public Node? SbrFrameClasses { get; init; }
+
+    public Node? SbrEnvelopes { get; init; }
+
+    public Node? PsEnvelopes { get; init; }
+
+    public Node? PsBands { get; init; }
 
     public Node? LastCoefficient { get; init; }
 
@@ -125,6 +158,10 @@ internal sealed class CodingRecorder(StreamSetup setup)
     // The SBR and parametric stereo series exist from the first raw data block with SBR data, so that a stream without it keeps nothing for them but
     // the number of raw data blocks of each unit, which the units before that block get as values without SBR.
     private CategorySeriesBuilder? _sbrSeries;
+    private readonly LazySeries _sbrFrameClasses = new("SBR Frame Classes", CodingCategories.SbrFrameClasses, "SBR channel");
+    private readonly LazySeries _sbrEnvelopes = new("SBR Envelopes", CodingCategories.SbrEnvelopes, "SBR channel");
+    private readonly LazySeries _psEnvelopes = new("Parametric Stereo Envelopes", CodingCategories.PsEnvelopes, "raw data block");
+    private readonly LazySeries _psBands = new("Parametric Stereo Bands", CodingCategories.PsBands, "raw data block");
     private CategorySeriesBuilder? _psSeries;
     private ChunkedList<byte>? _blockCounts = new();
 
@@ -185,6 +222,25 @@ internal sealed class CodingRecorder(StreamSetup setup)
         _tns.Add(hasTns ? (byte)0 : (byte)1);
         _pulses.Add(hasPulses ? (byte)0 : (byte)1);
         _noise.Add(hasNoise ? (byte)0 : (byte)1);
+    }
+
+    // An SBR payload read to its end, with the figures Sbr.ReadData states of it: the frame class and the envelope count of each channel, and the parametric stereo data's envelopes and modes.
+    public void SbrPayload(ReadOnlySpan<int> figures)
+    {
+        for (int c = 0; c < 2; c++)
+        {
+            if (figures[Sbr.FigureFrameClass + (2 * c)] >= 0)
+            {
+                _sbrFrameClasses.Values.Add((byte)figures[Sbr.FigureFrameClass + (2 * c)]);
+                _sbrEnvelopes.Values.Add((byte)(figures[Sbr.FigureEnvelopes + (2 * c)] - 1));
+            }
+        }
+
+        if (figures[Sbr.FigurePsEnvelopes] >= 0)
+        {
+            _psEnvelopes.Values.Add((byte)figures[Sbr.FigurePsEnvelopes]);
+            _psBands.Values.Add((byte)CodingTally.PsBandClass(figures));
+        }
     }
 
     // A raw data block: whether it holds SBR data and whether that carries parametric stereo; a block that could not be read has neither.
@@ -258,6 +314,10 @@ internal sealed class CodingRecorder(StreamSetup setup)
         _pulseSeries.Add(CollectionsMarshal.AsSpan(_pulses));
         _noiseSeries.Add(CollectionsMarshal.AsSpan(_noise));
         AddSbr();
+        _sbrFrameClasses.End(Count);
+        _sbrEnvelopes.End(Count);
+        _psEnvelopes.End(Count);
+        _psBands.End(Count);
         _midSideShare.Add(_unitPairBands == 0 ? (short)-1 : (short)Math.Round(_unitMidSide * 1000.0 / _unitPairBands, MidpointRounding.ToEven));
         _shareUnits += _unitPairBands == 0 ? 0 : 1;
         if (_pairs.Count > 0 && _pairSeries is null)
@@ -344,9 +404,9 @@ internal sealed class CodingRecorder(StreamSetup setup)
             categories.Add(_pairSeries.Build(offsets, shared, pairAnchor, Explain.StereoCodingSeries, Topics.MidSide, time));
         }
 
-        void Add(CategorySeriesBuilder builder, Node? anchor, string description, string topic)
+        void Add(CategorySeriesBuilder? builder, Node? anchor, string description, string topic)
         {
-            if (anchor is not null)
+            if (builder is not null && anchor is not null)
             {
                 categories.Add(builder.Build(offsets, shared, anchor, description, topic, time));
             }
@@ -356,6 +416,10 @@ internal sealed class CodingRecorder(StreamSetup setup)
         Add(_tnsSeries, nodes.Tns, Explain.TnsSeries, Topics.Tns);
         Add(_pulseSeries, nodes.Pulses, Explain.PulseSeries, Topics.PulseData);
         Add(_noiseSeries, nodes.Noise, Explain.NoiseSeries, Topics.Pns);
+        Add(_sbrFrameClasses.Builder, nodes.SbrFrameClasses, Explain.SbrFrameClassesSeries, Topics.Sbr);
+        Add(_sbrEnvelopes.Builder, nodes.SbrEnvelopes, Explain.SbrEnvelopesSeries, Topics.Sbr);
+        Add(_psEnvelopes.Builder, nodes.PsEnvelopes, Explain.PsEnvelopesSeries, Topics.ParametricStereo);
+        Add(_psBands.Builder, nodes.PsBands, Explain.PsBandsSeries, Topics.ParametricStereo);
         if (_sbrSeries is not null)
         {
             Add(_sbrSeries, nodes.Sbr, Explain.SbrSeries, Topics.Sbr);
@@ -567,5 +631,36 @@ internal sealed class CodingRecorder(StreamSetup setup)
                 Quantity = name,
             });
         }
+    }
+}
+
+// A category series that exists from the first unit with a value, so that a stream without any keeps nothing: the units before it get empty units.
+internal sealed class LazySeries(string name, IReadOnlyList<Category> categories, string valueLabel)
+{
+    private int _units;
+
+    public List<byte> Values { get; } = [];
+
+    public CategorySeriesBuilder? Builder { get; private set; }
+
+    // Ends the unit with index count.
+    public void End(int count)
+    {
+        if (Builder is null && Values.Count > 0)
+        {
+            Builder = new CategorySeriesBuilder(name, categories, valueLabel);
+            for (; _units < count; _units++)
+            {
+                Builder.Add([]);
+            }
+        }
+
+        if (Builder is not null)
+        {
+            Builder.Add(CollectionsMarshal.AsSpan(Values));
+            _units++;
+        }
+
+        Values.Clear();
     }
 }

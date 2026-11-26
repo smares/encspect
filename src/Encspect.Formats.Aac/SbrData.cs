@@ -20,7 +20,7 @@ internal static partial class Sbr
     // read, or null. With a record, the values are stored in it as SbrRecord lays them out (the header's fields are the caller's).
     // Plain is whether the data uses none of the optional coding tools an encoder may choose: no extra data bits, no channel coupling, only FIXFIX and VARFIX frame classes, no
     // envelope or noise floor coded across time, no sinusoids and no extended data (see FaacSbr).
-    public static (int PsAt, string? Error, bool Plain) ReadData(ref AacBits bits, SbrHeader header, bool pair, Span<int> output = default, Span<int> psState = default)
+    public static (int PsAt, string? Error, bool Plain) ReadData(ref AacBits bits, SbrHeader header, bool pair, Span<int> output = default, Span<int> psState = default, scoped Span<int> figures = default)
     {
         bool plain = true;
         SbrBands bands = header.Bands!.Value;
@@ -148,7 +148,7 @@ internal static partial class Sbr
                 if (id == 2)
                 {
                     ps = pair ? PsInPair : bits.Original - 2;
-                    if (!pair && stores && !psState.IsEmpty)
+                    if (!pair && !psState.IsEmpty)
                     {
                         left -= ReadPs(ref bits, left, record.Slice(SbrRecord.Ps), psState);
                         record[SbrRecord.HasPs] = record[SbrRecord.Ps + SbrRecord.PsEnvelopes] >= 0 ? 1 : 0;
@@ -159,8 +159,29 @@ internal static partial class Sbr
             bits.Skip(Math.Max(0, left));
         }
 
+        if (figures.Length >= Figures)
+        {
+            figures[FigureFrameClass] = record[SbrRecord.FirstChannel + SbrRecord.FrameClass];
+            figures[FigureEnvelopes] = record[SbrRecord.FirstChannel + SbrRecord.EnvelopeCount];
+            figures[FigureFrameClass + 2] = pair ? record[SbrRecord.FirstChannel + SbrRecord.ChannelStride + SbrRecord.FrameClass] : -1;
+            figures[FigureEnvelopes + 2] = pair ? record[SbrRecord.FirstChannel + SbrRecord.ChannelStride + SbrRecord.EnvelopeCount] : -1;
+            bool hasPs = record[SbrRecord.HasPs] == 1;
+            figures[FigurePsEnvelopes] = hasPs ? record[SbrRecord.Ps + SbrRecord.PsEnvelopes] : -1;
+            figures[FigurePsIidMode] = hasPs && record[SbrRecord.Ps + SbrRecord.PsEnableIid] != 0 ? record[SbrRecord.Ps + SbrRecord.PsIidMode] : -1;
+            figures[FigurePsIccMode] = hasPs && record[SbrRecord.Ps + SbrRecord.PsEnableIcc] != 0 ? record[SbrRecord.Ps + SbrRecord.PsIccMode] : -1;
+        }
+
         return (ps, null, plain);
     }
+
+    // What ReadData states of the payload in its figures: the frame class and envelope count of each channel (-1 for a second channel a single channel element does not have), and where
+    // the payload carries ps_data its envelope count and the IID and ICC modes (-1 where there is none or the parameter is not enabled).
+    public const int Figures = 7;
+    public const int FigureFrameClass = 0;
+    public const int FigureEnvelopes = 1;
+    public const int FigurePsEnvelopes = 4;
+    public const int FigurePsIidMode = 5;
+    public const int FigurePsIccMode = 6;
 
     // Where a payload that is not stored is read to (the read needs the values of its own channels): a buffer for each thread, cleared for each payload, so that nothing is allocated.
     [ThreadStatic]
@@ -168,7 +189,7 @@ internal static partial class Sbr
 
     private static Span<int> Scratch()
     {
-        int[] scratch = _scratch ??= new int[SbrRecord.FirstChannel + (2 * SbrRecord.ChannelStride)];
+        int[] scratch = _scratch ??= new int[SbrRecord.Ps + SbrRecord.PsIcc + (SbrRecord.PsMaxEnvelopes * SbrRecord.PsStride)];
         Array.Clear(scratch);
         return scratch;
     }

@@ -770,6 +770,36 @@
                                   "length": 4527
                                 },
                                 {
+                                  "name": "SBR Frame Classes",
+                                  "value": 68,
+                                  "unit": "SBR channels",
+                                  "offset": 36,
+                                  "length": 4527,
+                                  "children": [
+                                    {
+                                      "name": "FIXFIX",
+                                      "value": "68 SBR channels (100.0%)",
+                                      "offset": 36,
+                                      "length": 4527
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "SBR Envelopes",
+                                  "value": 68,
+                                  "unit": "SBR channels",
+                                  "offset": 36,
+                                  "length": 4527,
+                                  "children": [
+                                    {
+                                      "name": "1 envelope",
+                                      "value": "68 SBR channels (100.0%)",
+                                      "offset": 36,
+                                      "length": 4527
+                                    }
+                                  ]
+                                },
+                                {
                                   "name": "Start Frequency",
                                   "value": "15 (QMF band 32, about 11025 Hz)",
                                   "offset": 36,
@@ -21544,6 +21574,90 @@
               },
               {
                 "name": "Without noise substitution",
+                "count": 0
+              }
+            ],
+            "total": 68,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                34
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                68
+              ]
+            ],
+            "seconds": [
+              0,
+              22
+            ]
+          },
+          {
+            "name": "SBR Frame Classes",
+            "valueLabel": "SBR channel",
+            "categories": [
+              {
+                "name": "FIXFIX",
+                "count": 68
+              },
+              {
+                "name": "FIXVAR",
+                "count": 0
+              },
+              {
+                "name": "VARFIX",
+                "count": 0
+              },
+              {
+                "name": "VARVAR",
+                "count": 0
+              }
+            ],
+            "total": 68,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                34
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                68
+              ]
+            ],
+            "seconds": [
+              0,
+              22
+            ]
+          },
+          {
+            "name": "SBR Envelopes",
+            "valueLabel": "SBR channel",
+            "categories": [
+              {
+                "name": "1 envelope",
+                "count": 68
+              },
+              {
+                "name": "2 envelopes",
+                "count": 0
+              },
+              {
+                "name": "3 envelopes",
+                "count": 0
+              },
+              {
+                "name": "4 envelopes",
+                "count": 0
+              },
+              {
+                "name": "5 envelopes",
                 "count": 0
               }
             ],

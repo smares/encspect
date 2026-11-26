@@ -456,6 +456,42 @@
                       "length": 2568
                     },
                     {
+                      "name": "SBR Frame Classes",
+                      "value": 24,
+                      "unit": "SBR channels",
+                      "offset": 0,
+                      "length": 2568,
+                      "children": [
+                        {
+                          "name": "FIXVAR",
+                          "value": "24 SBR channels (100.0%)",
+                          "offset": 0,
+                          "length": 2568
+                        }
+                      ]
+                    },
+                    {
+                      "name": "SBR Envelopes",
+                      "value": 24,
+                      "unit": "SBR channels",
+                      "offset": 0,
+                      "length": 2568,
+                      "children": [
+                        {
+                          "name": "2 envelopes",
+                          "value": "12 SBR channels (50.0%)",
+                          "offset": 0,
+                          "length": 2568
+                        },
+                        {
+                          "name": "3 envelopes",
+                          "value": "12 SBR channels (50.0%)",
+                          "offset": 0,
+                          "length": 2568
+                        }
+                      ]
+                    },
+                    {
                       "name": "Start Frequency",
                       "value": "5 (QMF band 14, about 4823 Hz)",
                       "offset": 0,
@@ -7236,6 +7272,180 @@
               [
                 1,
                 24
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "SBR Frame Classes",
+            "valueLabel": "SBR channel",
+            "categories": [
+              {
+                "name": "FIXFIX",
+                "count": 0
+              },
+              {
+                "name": "FIXVAR",
+                "count": 24
+              },
+              {
+                "name": "VARFIX",
+                "count": 0
+              },
+              {
+                "name": "VARVAR",
+                "count": 0
+              }
+            ],
+            "total": 24,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                12
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                24
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "SBR Envelopes",
+            "valueLabel": "SBR channel",
+            "categories": [
+              {
+                "name": "1 envelope",
+                "count": 0
+              },
+              {
+                "name": "2 envelopes",
+                "count": 12
+              },
+              {
+                "name": "3 envelopes",
+                "count": 12
+              },
+              {
+                "name": "4 envelopes",
+                "count": 0
+              },
+              {
+                "name": "5 envelopes",
+                "count": 0
+              }
+            ],
+            "total": 24,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                12
+              ]
+            ],
+            "runs": [
+              [
+                2,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                1,
+                1
               ]
             ],
             "seconds": [

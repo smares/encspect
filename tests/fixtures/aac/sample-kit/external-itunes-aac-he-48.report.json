@@ -4678,6 +4678,78 @@
                                   "length": 39053
                                 },
                                 {
+                                  "name": "SBR Frame Classes",
+                                  "value": 436,
+                                  "unit": "SBR channels",
+                                  "offset": 8192,
+                                  "length": 39053,
+                                  "children": [
+                                    {
+                                      "name": "FIXFIX",
+                                      "value": "408 SBR channels (93.6%)",
+                                      "offset": 8192,
+                                      "length": 39053
+                                    },
+                                    {
+                                      "name": "FIXVAR",
+                                      "value": "11 SBR channels (2.5%)",
+                                      "offset": 8192,
+                                      "length": 39053
+                                    },
+                                    {
+                                      "name": "VARFIX",
+                                      "value": "11 SBR channels (2.5%)",
+                                      "offset": 8192,
+                                      "length": 39053
+                                    },
+                                    {
+                                      "name": "VARVAR",
+                                      "value": "6 SBR channels (1.4%)",
+                                      "offset": 8192,
+                                      "length": 39053
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "SBR Envelopes",
+                                  "value": 436,
+                                  "unit": "SBR channels",
+                                  "offset": 8192,
+                                  "length": 39053,
+                                  "children": [
+                                    {
+                                      "name": "1 envelope",
+                                      "value": "325 SBR channels (74.5%)",
+                                      "offset": 8192,
+                                      "length": 39053
+                                    },
+                                    {
+                                      "name": "2 envelopes",
+                                      "value": "98 SBR channels (22.5%)",
+                                      "offset": 8192,
+                                      "length": 39053
+                                    },
+                                    {
+                                      "name": "3 envelopes",
+                                      "value": "2 SBR channels (0.5%)",
+                                      "offset": 8192,
+                                      "length": 39053
+                                    },
+                                    {
+                                      "name": "4 envelopes",
+                                      "value": "10 SBR channels (2.3%)",
+                                      "offset": 8192,
+                                      "length": 39053
+                                    },
+                                    {
+                                      "name": "5 envelopes",
+                                      "value": "1 SBR channel (0.2%)",
+                                      "offset": 8192,
+                                      "length": 39053
+                                    }
+                                  ]
+                                },
+                                {
                                   "name": "Start Frequency",
                                   "value": "13 (QMF band 25, about 8613 Hz)",
                                   "offset": 8192,
@@ -112539,6 +112611,396 @@
               [
                 1,
                 436
+              ]
+            ],
+            "seconds": [
+              0,
+              22,
+              44,
+              65,
+              87,
+              108,
+              130,
+              151,
+              173,
+              194,
+              216
+            ]
+          },
+          {
+            "name": "SBR Frame Classes",
+            "valueLabel": "SBR channel",
+            "categories": [
+              {
+                "name": "FIXFIX",
+                "count": 408
+              },
+              {
+                "name": "FIXVAR",
+                "count": 11
+              },
+              {
+                "name": "VARFIX",
+                "count": 11
+              },
+              {
+                "name": "VARVAR",
+                "count": 6
+              }
+            ],
+            "total": 436,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                218
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                262
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                2,
+                2
+              ],
+              [
+                0,
+                7
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                0,
+                8
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                2,
+                2
+              ],
+              [
+                0,
+                7
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                0,
+                6
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                3,
+                2
+              ],
+              [
+                2,
+                2
+              ],
+              [
+                0,
+                7
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                0,
+                6
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                3,
+                4
+              ],
+              [
+                2,
+                2
+              ],
+              [
+                0,
+                102
+              ]
+            ],
+            "seconds": [
+              0,
+              22,
+              44,
+              65,
+              87,
+              108,
+              130,
+              151,
+              173,
+              194,
+              216
+            ]
+          },
+          {
+            "name": "SBR Envelopes",
+            "valueLabel": "SBR channel",
+            "categories": [
+              {
+                "name": "1 envelope",
+                "count": 325
+              },
+              {
+                "name": "2 envelopes",
+                "count": 98
+              },
+              {
+                "name": "3 envelopes",
+                "count": 2
+              },
+              {
+                "name": "4 envelopes",
+                "count": 10
+              },
+              {
+                "name": "5 envelopes",
+                "count": 1
+              }
+            ],
+            "total": 436,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                218
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                216
+              ],
+              [
+                1,
+                22
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                4
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                4
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                3,
+                2
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                0,
+                6
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                8
+              ],
+              [
+                3,
+                2
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                0,
+                6
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                6
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                3,
+                2
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                0,
+                6
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                3,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                6
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                3,
+                1
+              ],
+              [
+                4,
+                1
+              ],
+              [
+                3,
+                2
+              ],
+              [
+                1,
+                40
+              ],
+              [
+                0,
+                28
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                0,
+                10
+              ],
+              [
+                1,
+                4
+              ],
+              [
+                0,
+                20
               ]
             ],
             "seconds": [

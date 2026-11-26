@@ -32,6 +32,10 @@ internal static class CodingStatistics
         Node? pulseNode = null;
         Node? sbrNode = null;
         Node? psNode = null;
+        Node? sbrFrameClassesNode = null;
+        Node? sbrEnvelopesNode = null;
+        Node? psEnvelopesNode = null;
+        Node? psBandsNode = null;
         Node blocks = statistics.Add(cover("Raw Data Blocks", NodeValue.Integer(tally.Blocks, "blocks", "block"), Explain.StatBlocks, Topics.RawDataBlocks));
         if (tally.DamagedBlocks > 0)
         {
@@ -220,6 +224,10 @@ internal static class CodingStatistics
                 sbr.Add(cover("Unread SBR Data", NodeValue.Integer(tally.SbrUnread, "payloads", "payload"), Explain.StatSbrUnread, null));
             }
 
+            sbrFrameClassesNode = AddCategories(cover, sbr, "SBR Frame Classes", tally.SbrFrameClasses, CodingCategories.SbrFrameClasses, Explain.StatSbrFrameClasses, Topics.Sbr, "SBR channel");
+            sbrEnvelopesNode = AddCategories(cover, sbr, "SBR Envelopes", tally.SbrEnvelopeCounts[1..], CodingCategories.SbrEnvelopes, Explain.StatSbrEnvelopes, Topics.Sbr, "SBR channel");
+            psEnvelopesNode = AddCategories(cover, psNode, "Parametric Stereo Envelopes", tally.PsEnvelopeCounts, CodingCategories.PsEnvelopes, Explain.StatPsEnvelopes, Topics.ParametricStereo, "raw data block");
+            psBandsNode = AddCategories(cover, psNode, "Parametric Stereo Bands", tally.PsBandCounts, CodingCategories.PsBands, Explain.StatPsBands, Topics.ParametricStereo, "raw data block");
             if (tally.FirstHeader is { } header)
             {
                 int rate = setup.SbrSampleRate;
@@ -264,9 +272,34 @@ internal static class CodingStatistics
             Pulses = pulseNode,
             Sbr = sbrNode,
             ParametricStereo = psNode,
+            SbrFrameClasses = sbrFrameClassesNode,
+            SbrEnvelopes = sbrEnvelopesNode,
+            PsEnvelopes = psEnvelopesNode,
+            PsBands = psBandsNode,
             LastCoefficient = lastCoefficient,
             Escapes = escapes,
         };
+    }
+
+    // A node of the shares of a tally's categories, left out where nothing was counted, which the category series of the same name is anchored to.
+    private static Node? AddCategories(Func<string, NodeValue?, string, string?, Node> cover, Node parent, string name, long[] counts, IReadOnlyList<Category> categories, string description, string topic, string unit)
+    {
+        long total = counts.Sum();
+        if (total == 0)
+        {
+            return null;
+        }
+
+        Node node = parent.Add(cover(name, NodeValue.Integer(total, $"{unit}s", unit), description, topic));
+        for (int i = 0; i < counts.Length; i++)
+        {
+            if (counts[i] > 0)
+            {
+                node.Add(cover(categories[i].Name, Share(counts[i], total, unit), categories[i].Description, null));
+            }
+        }
+
+        return node;
     }
 
     private static void AddMaxSfb(Node statistics, string name, long[] counts, Func<string, NodeValue?, string, string?, Node> cover, string description)

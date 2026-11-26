@@ -612,7 +612,57 @@
                                   "name": "Parametric Stereo",
                                   "value": "219 access units (100.0%)",
                                   "offset": 32,
-                                  "length": 40681
+                                  "length": 40681,
+                                  "children": [
+                                    {
+                                      "name": "Parametric Stereo Envelopes",
+                                      "value": 219,
+                                      "unit": "raw data blocks",
+                                      "offset": 32,
+                                      "length": 40681,
+                                      "children": [
+                                        {
+                                          "name": "No envelopes",
+                                          "value": "116 raw data blocks (53.0%)",
+                                          "offset": 32,
+                                          "length": 40681
+                                        },
+                                        {
+                                          "name": "1 envelope",
+                                          "value": "92 raw data blocks (42.0%)",
+                                          "offset": 32,
+                                          "length": 40681
+                                        },
+                                        {
+                                          "name": "2 envelopes",
+                                          "value": "11 raw data blocks (5.0%)",
+                                          "offset": 32,
+                                          "length": 40681
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "name": "Parametric Stereo Bands",
+                                      "value": 219,
+                                      "unit": "raw data blocks",
+                                      "offset": 32,
+                                      "length": 40681,
+                                      "children": [
+                                        {
+                                          "name": "No parameters",
+                                          "value": "47 raw data blocks (21.5%)",
+                                          "offset": 32,
+                                          "length": 40681
+                                        },
+                                        {
+                                          "name": "20 bands",
+                                          "value": "172 raw data blocks (78.5%)",
+                                          "offset": 32,
+                                          "length": 40681
+                                        }
+                                      ]
+                                    }
+                                  ]
                                 },
                                 {
                                   "name": "SBR Headers",
@@ -620,6 +670,66 @@
                                   "unit": "headers",
                                   "offset": 32,
                                   "length": 40681
+                                },
+                                {
+                                  "name": "SBR Frame Classes",
+                                  "value": 219,
+                                  "unit": "SBR channels",
+                                  "offset": 32,
+                                  "length": 40681,
+                                  "children": [
+                                    {
+                                      "name": "FIXFIX",
+                                      "value": "201 SBR channels (91.8%)",
+                                      "offset": 32,
+                                      "length": 40681
+                                    },
+                                    {
+                                      "name": "FIXVAR",
+                                      "value": "9 SBR channels (4.1%)",
+                                      "offset": 32,
+                                      "length": 40681
+                                    },
+                                    {
+                                      "name": "VARFIX",
+                                      "value": "9 SBR channels (4.1%)",
+                                      "offset": 32,
+                                      "length": 40681
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "SBR Envelopes",
+                                  "value": 219,
+                                  "unit": "SBR channels",
+                                  "offset": 32,
+                                  "length": 40681,
+                                  "children": [
+                                    {
+                                      "name": "1 envelope",
+                                      "value": "156 SBR channels (71.2%)",
+                                      "offset": 32,
+                                      "length": 40681
+                                    },
+                                    {
+                                      "name": "2 envelopes",
+                                      "value": "54 SBR channels (24.7%)",
+                                      "offset": 32,
+                                      "length": 40681
+                                    },
+                                    {
+                                      "name": "3 envelopes",
+                                      "value": "6 SBR channels (2.7%)",
+                                      "offset": 32,
+                                      "length": 40681
+                                    },
+                                    {
+                                      "name": "4 envelopes",
+                                      "value": "3 SBR channels (1.4%)",
+                                      "offset": 32,
+                                      "length": 40681
+                                    }
+                                  ]
                                 },
                                 {
                                   "name": "Start Frequency",
@@ -85801,6 +85911,918 @@
               [
                 1,
                 219
+              ]
+            ],
+            "seconds": [
+              0,
+              22,
+              44,
+              65,
+              87,
+              108,
+              130,
+              151,
+              173,
+              194,
+              216
+            ]
+          },
+          {
+            "name": "SBR Frame Classes",
+            "valueLabel": "SBR channel",
+            "categories": [
+              {
+                "name": "FIXFIX",
+                "count": 201
+              },
+              {
+                "name": "FIXVAR",
+                "count": 9
+              },
+              {
+                "name": "VARFIX",
+                "count": 9
+              },
+              {
+                "name": "VARVAR",
+                "count": 0
+              }
+            ],
+            "total": 219,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                219
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                45
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                0,
+                84
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                0,
+                4
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                0,
+                4
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                0,
+                4
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                0,
+                34
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                0,
+                17
+              ]
+            ],
+            "seconds": [
+              0,
+              22,
+              44,
+              65,
+              87,
+              108,
+              130,
+              151,
+              173,
+              194,
+              216
+            ]
+          },
+          {
+            "name": "SBR Envelopes",
+            "valueLabel": "SBR channel",
+            "categories": [
+              {
+                "name": "1 envelope",
+                "count": 156
+              },
+              {
+                "name": "2 envelopes",
+                "count": 54
+              },
+              {
+                "name": "3 envelopes",
+                "count": 6
+              },
+              {
+                "name": "4 envelopes",
+                "count": 3
+              },
+              {
+                "name": "5 envelopes",
+                "count": 0
+              }
+            ],
+            "total": 219,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                219
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                22
+              ],
+              [
+                1,
+                4
+              ],
+              [
+                0,
+                19
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                57
+              ],
+              [
+                1,
+                17
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                0,
+                4
+              ],
+              [
+                3,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                0,
+                4
+              ],
+              [
+                3,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                4
+              ],
+              [
+                3,
+                1
+              ],
+              [
+                1,
+                21
+              ],
+              [
+                0,
+                14
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                5
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                11
+              ]
+            ],
+            "seconds": [
+              0,
+              22,
+              44,
+              65,
+              87,
+              108,
+              130,
+              151,
+              173,
+              194,
+              216
+            ]
+          },
+          {
+            "name": "Parametric Stereo Envelopes",
+            "valueLabel": "raw data block",
+            "categories": [
+              {
+                "name": "No envelopes",
+                "count": 116
+              },
+              {
+                "name": "1 envelope",
+                "count": 92
+              },
+              {
+                "name": "2 envelopes",
+                "count": 11
+              },
+              {
+                "name": "3 envelopes",
+                "count": 0
+              },
+              {
+                "name": "4 envelopes",
+                "count": 0
+              }
+            ],
+            "total": 219,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                219
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                4
+              ],
+              [
+                0,
+                9
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                4
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                4
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                2,
+                2
+              ],
+              [
+                1,
+                7
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                10
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                8
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                4
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                5
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                4
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                3
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                3
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                1,
+                3
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                2,
+                2
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                3
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                1,
+                3
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                3
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                0,
+                5
+              ],
+              [
+                2,
+                2
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                9
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                10
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                6
+              ]
+            ],
+            "seconds": [
+              0,
+              22,
+              44,
+              65,
+              87,
+              108,
+              130,
+              151,
+              173,
+              194,
+              216
+            ]
+          },
+          {
+            "name": "Parametric Stereo Bands",
+            "valueLabel": "raw data block",
+            "categories": [
+              {
+                "name": "No parameters",
+                "count": 47
+              },
+              {
+                "name": "10 bands",
+                "count": 0
+              },
+              {
+                "name": "20 bands",
+                "count": 172
+              },
+              {
+                "name": "34 bands",
+                "count": 0
+              }
+            ],
+            "total": 219,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                219
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                13
+              ],
+              [
+                2,
+                121
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                2,
+                3
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                2,
+                2
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                2,
+                3
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                2,
+                2
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                2,
+                3
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                2,
+                38
+              ],
+              [
+                0,
+                18
               ]
             ],
             "seconds": [

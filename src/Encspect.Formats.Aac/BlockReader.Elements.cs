@@ -833,7 +833,8 @@ internal sealed partial class BlockReader
             }
 
             int hasHeader = record.IsEmpty ? 0 : record[SbrRecord.HasHeader];
-            (int ps, string? error, bool plain) = Sbr.ReadData(ref sub, current, _lastChannelElement == 1, record, psState);
+            Span<int> figures = stackalloc int[Sbr.Figures];
+            (int ps, string? error, bool plain) = Sbr.ReadData(ref sub, current, _lastChannelElement == 1, record, psState, figures);
             if (!record.IsEmpty)
             {
                 record[SbrRecord.HasHeader] = hasHeader;
@@ -847,6 +848,8 @@ internal sealed partial class BlockReader
 
             tally.SbrPayloads++;
             tally.SbrPlainPayloads += plain ? 1 : 0;
+            tally.SbrFigures(figures);
+            _recorder?.SbrPayload(figures);
             if (ps == Sbr.PsInPair)
             {
                 Soft("aac.ps-in-channel-pair", "the parametric stereo extension's ID in a channel pair's SBR data, where only a single channel element can carry it, so decoders do not apply it",

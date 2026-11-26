@@ -456,6 +456,48 @@
                       "length": 4822
                     },
                     {
+                      "name": "SBR Frame Classes",
+                      "value": 64,
+                      "unit": "SBR channels",
+                      "offset": 0,
+                      "length": 4822,
+                      "children": [
+                        {
+                          "name": "FIXFIX",
+                          "value": "54 SBR channels (84.4%)",
+                          "offset": 0,
+                          "length": 4822
+                        },
+                        {
+                          "name": "FIXVAR",
+                          "value": "2 SBR channels (3.1%)",
+                          "offset": 0,
+                          "length": 4822
+                        },
+                        {
+                          "name": "VARFIX",
+                          "value": "8 SBR channels (12.5%)",
+                          "offset": 0,
+                          "length": 4822
+                        }
+                      ]
+                    },
+                    {
+                      "name": "SBR Envelopes",
+                      "value": 64,
+                      "unit": "SBR channels",
+                      "offset": 0,
+                      "length": 4822,
+                      "children": [
+                        {
+                          "name": "1 envelope",
+                          "value": "64 SBR channels (100.0%)",
+                          "offset": 0,
+                          "length": 4822
+                        }
+                      ]
+                    },
+                    {
                       "name": "Start Frequency",
                       "value": "15 (QMF band 32, about 11025 Hz)",
                       "offset": 0,
@@ -17305,6 +17347,126 @@
             "runs": [
               [
                 1,
+                64
+              ]
+            ],
+            "seconds": [
+              0,
+              22
+            ]
+          },
+          {
+            "name": "SBR Frame Classes",
+            "valueLabel": "SBR channel",
+            "categories": [
+              {
+                "name": "FIXFIX",
+                "count": 54
+              },
+              {
+                "name": "FIXVAR",
+                "count": 2
+              },
+              {
+                "name": "VARFIX",
+                "count": 8
+              },
+              {
+                "name": "VARVAR",
+                "count": 0
+              }
+            ],
+            "total": 64,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                32
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                6
+              ],
+              [
+                2,
+                2
+              ],
+              [
+                0,
+                12
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                0,
+                12
+              ],
+              [
+                2,
+                2
+              ],
+              [
+                0,
+                12
+              ],
+              [
+                2,
+                2
+              ],
+              [
+                0,
+                12
+              ],
+              [
+                2,
+                2
+              ]
+            ],
+            "seconds": [
+              0,
+              22
+            ]
+          },
+          {
+            "name": "SBR Envelopes",
+            "valueLabel": "SBR channel",
+            "categories": [
+              {
+                "name": "1 envelope",
+                "count": 64
+              },
+              {
+                "name": "2 envelopes",
+                "count": 0
+              },
+              {
+                "name": "3 envelopes",
+                "count": 0
+              },
+              {
+                "name": "4 envelopes",
+                "count": 0
+              },
+              {
+                "name": "5 envelopes",
+                "count": 0
+              }
+            ],
+            "total": 64,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                32
+              ]
+            ],
+            "runs": [
+              [
+                0,
                 64
               ]
             ],

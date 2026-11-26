@@ -444,6 +444,36 @@
                       "length": 627
                     },
                     {
+                      "name": "SBR Frame Classes",
+                      "value": 18,
+                      "unit": "SBR channels",
+                      "offset": 0,
+                      "length": 627,
+                      "children": [
+                        {
+                          "name": "FIXFIX",
+                          "value": "18 SBR channels (100.0%)",
+                          "offset": 0,
+                          "length": 627
+                        }
+                      ]
+                    },
+                    {
+                      "name": "SBR Envelopes",
+                      "value": 18,
+                      "unit": "SBR channels",
+                      "offset": 0,
+                      "length": 627,
+                      "children": [
+                        {
+                          "name": "1 envelope",
+                          "value": "18 SBR channels (100.0%)",
+                          "offset": 0,
+                          "length": 627
+                        }
+                      ]
+                    },
+                    {
                       "name": "Start Frequency",
                       "value": "5 (QMF band 14, about 4823 Hz)",
                       "offset": 0,
@@ -5837,6 +5867,96 @@
             ]
           },
           {
+            "name": "SBR Frame Classes",
+            "valueLabel": "SBR channel",
+            "categories": [
+              {
+                "name": "FIXFIX",
+                "count": 18
+              },
+              {
+                "name": "FIXVAR",
+                "count": 0
+              },
+              {
+                "name": "VARFIX",
+                "count": 0
+              },
+              {
+                "name": "VARVAR",
+                "count": 0
+              }
+            ],
+            "total": 18,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                0,
+                1
+              ],
+              [
+                2,
+                9
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                18
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "SBR Envelopes",
+            "valueLabel": "SBR channel",
+            "categories": [
+              {
+                "name": "1 envelope",
+                "count": 18
+              },
+              {
+                "name": "2 envelopes",
+                "count": 0
+              },
+              {
+                "name": "3 envelopes",
+                "count": 0
+              },
+              {
+                "name": "4 envelopes",
+                "count": 0
+              },
+              {
+                "name": "5 envelopes",
+                "count": 0
+              }
+            ],
+            "total": 18,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                0,
+                1
+              ],
+              [
+                2,
+                9
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                18
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
             "name": "SBR",
             "valueLabel": "raw data block",
             "categories": [
@@ -5909,7 +6029,7 @@
       {
         "severity": "Warning",
         "code": "aac.sbr-inconsistent",
-        "message": "The first raw data block that is read to its end holds none, which decides the stream as plain as players do, but 9 of 10 raw data blocks hold SBR data; the first block that disagrees is raw data block 2.",
+        "message": "The first raw data block that is read to its end holds none, which decides the stream as plain as FFmpeg 6.1.1 does, but 9 of 10 raw data blocks hold SBR data; the first block that disagrees is raw data block 2.",
         "offset": 0,
         "length": 46,
         "path": [
@@ -5921,7 +6041,7 @@
       {
         "severity": "Info",
         "code": "aac.sbr-data-sparse",
-        "message": "ADTS signals no SBR, and the first raw data block that is read to its end and not in a damaged frame holds none, which decides the stream as plain AAC LC as players do, so the report shows the core alone; 9 of 10 raw data blocks hold SBR data after a channel element.",
+        "message": "ADTS signals no SBR, and the first raw data block that is read to its end and not in a damaged frame holds none, which decides the stream as plain AAC LC as FFmpeg 6.1.1 does, so the report shows the core alone; 9 of 10 raw data blocks hold SBR data after a channel element.",
         "offset": 0,
         "length": 46,
         "path": [

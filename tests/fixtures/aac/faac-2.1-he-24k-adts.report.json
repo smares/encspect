@@ -651,6 +651,48 @@
                       "length": 4322
                     },
                     {
+                      "name": "SBR Frame Classes",
+                      "value": 68,
+                      "unit": "SBR channels",
+                      "offset": 0,
+                      "length": 4322,
+                      "children": [
+                        {
+                          "name": "FIXFIX",
+                          "value": "66 SBR channels (97.1%)",
+                          "offset": 0,
+                          "length": 4322
+                        },
+                        {
+                          "name": "VARFIX",
+                          "value": "2 SBR channels (2.9%)",
+                          "offset": 0,
+                          "length": 4322
+                        }
+                      ]
+                    },
+                    {
+                      "name": "SBR Envelopes",
+                      "value": 68,
+                      "unit": "SBR channels",
+                      "offset": 0,
+                      "length": 4322,
+                      "children": [
+                        {
+                          "name": "1 envelope",
+                          "value": "66 SBR channels (97.1%)",
+                          "offset": 0,
+                          "length": 4322
+                        },
+                        {
+                          "name": "2 envelopes",
+                          "value": "2 SBR channels (2.9%)",
+                          "offset": 0,
+                          "length": 4322
+                        }
+                      ]
+                    },
+                    {
                       "name": "Start Frequency",
                       "value": "15 (QMF band 32, about 11025 Hz)",
                       "offset": 0,
@@ -24079,6 +24121,98 @@
               {
                 "name": "Without noise substitution",
                 "count": 2
+              }
+            ],
+            "total": 68,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                34
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                66
+              ],
+              [
+                1,
+                2
+              ]
+            ],
+            "seconds": [
+              0,
+              22
+            ]
+          },
+          {
+            "name": "SBR Frame Classes",
+            "valueLabel": "SBR channel",
+            "categories": [
+              {
+                "name": "FIXFIX",
+                "count": 66
+              },
+              {
+                "name": "FIXVAR",
+                "count": 0
+              },
+              {
+                "name": "VARFIX",
+                "count": 2
+              },
+              {
+                "name": "VARVAR",
+                "count": 0
+              }
+            ],
+            "total": 68,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                34
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                66
+              ],
+              [
+                2,
+                2
+              ]
+            ],
+            "seconds": [
+              0,
+              22
+            ]
+          },
+          {
+            "name": "SBR Envelopes",
+            "valueLabel": "SBR channel",
+            "categories": [
+              {
+                "name": "1 envelope",
+                "count": 66
+              },
+              {
+                "name": "2 envelopes",
+                "count": 2
+              },
+              {
+                "name": "3 envelopes",
+                "count": 0
+              },
+              {
+                "name": "4 envelopes",
+                "count": 0
+              },
+              {
+                "name": "5 envelopes",
+                "count": 0
               }
             ],
             "total": 68,

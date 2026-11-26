@@ -58,6 +58,17 @@ internal static partial class Explain
     public const string NoiseSeries = "Whether each channel stream of every unit codes a band with perceptual noise substitution, as the tally of Noise Substitution counts them.";
     public const string SbrSeries = "Whether each raw data block holds SBR data, as the tally of SBR counts them; a block that could not be read has none.";
     public const string PsSeries = "Whether each raw data block's SBR data carries the parametric stereo extension, as the tally of Parametric Stereo counts them; a block that could not be read has none.";
+    public const string SbrFrameClassFixFix = "SBR frames of class FIXFIX: the envelopes divide the frame into equal parts, and the noise floor changes at its middle (ISO/IEC 14496-3, 4.4.2.8, sbr_grid).";
+    public const string SbrFrameClassFixVar = "SBR frames of class FIXVAR: the first envelope starts at the frame's start and the last border is sent, with relative borders back from it.";
+    public const string SbrFrameClassVarFix = "SBR frames of class VARFIX: the first border is sent, with relative borders after it, and the last envelope ends at the frame's end.";
+    public const string SbrFrameClassVarVar = "SBR frames of class VARVAR: the first and the last border are sent, each with relative borders toward the middle.";
+    public const string SbrFrameClassesSeries = "The frame class (bs_frame_class) of the SBR data of every channel, as the tally of SBR Frame Classes counts them (ISO/IEC 14496-3, 4.4.2.8).";
+    public const string SbrEnvelopeCount = "SBR frames of channels with this number of envelopes, the time segments with their own spectral envelope (ISO/IEC 14496-3, 4.4.2.8, bs_num_env).";
+    public const string SbrEnvelopesSeries = "The number of envelopes of the SBR data of every channel, as the tally of SBR Envelopes counts them.";
+    public const string PsEnvelopeCount = "Raw data blocks whose parametric stereo data states this number of envelopes, the time segments with their own intensity difference and coherence values (ISO/IEC 14496-3, 8.6.4, ps_data); none means the values of the block before are kept.";
+    public const string PsEnvelopesSeries = "The number of envelopes of the parametric stereo data of every raw data block that has some, as the tally of Parametric Stereo Envelopes counts them.";
+    public const string PsBandCount = "Raw data blocks whose parametric stereo data codes its intensity difference and coherence values in this many bands, the finer of the two parameters' resolutions (ISO/IEC 14496-3, 8.6.4, iid_mode and icc_mode).";
+    public const string PsBandsSeries = "The number of parameter bands of the parametric stereo data of every raw data block that has some, as the tally of Parametric Stereo Bands counts them.";
     public const string MidSideBandsSeries = "The share of the scalefactor bands of each unit's channel pairs with a common window that are coded as mid/side, leaving out intensity stereo bands, in percent; a unit without such a pair has none.";
     public const string WindowSequencesSeries = "The window sequence of every channel stream of every access unit, frame or block, as the Block Usage statistics count them (ISO/IEC 14496-3 4.5.2, 4.6.11); a raw data block of several elements gives a value for each of its channel streams.";
     public const string BlockSizesSeries = "The channel streams of Block Usage grouped by the size of their transform: long, with the long start and long stop windows, and short.";

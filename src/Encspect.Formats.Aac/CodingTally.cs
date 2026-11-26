@@ -110,6 +110,38 @@ internal sealed class CodingTally
 
     public long PsBlocks { get; set; }
 
+    // The SBR payloads read to their end by the frame class and the envelope count of each channel, and the parametric stereo data by its envelope count (none to four) and its bands
+    // (CodingCategories.PsBands).
+    public long[] SbrFrameClasses { get; } = new long[4];
+
+    public long[] SbrEnvelopeCounts { get; } = new long[6];
+
+    public long[] PsEnvelopeCounts { get; } = new long[5];
+
+    public long[] PsBandCounts { get; } = new long[4];
+
+    // The figures Sbr.ReadData states of a payload.
+    public void SbrFigures(ReadOnlySpan<int> figures)
+    {
+        for (int c = 0; c < 2; c++)
+        {
+            if (figures[Sbr.FigureFrameClass + (2 * c)] >= 0)
+            {
+                SbrFrameClasses[figures[Sbr.FigureFrameClass + (2 * c)]]++;
+                SbrEnvelopeCounts[figures[Sbr.FigureEnvelopes + (2 * c)]]++;
+            }
+        }
+
+        if (figures[Sbr.FigurePsEnvelopes] >= 0)
+        {
+            PsEnvelopeCounts[figures[Sbr.FigurePsEnvelopes]]++;
+            PsBandCounts[PsBandClass(figures)]++;
+        }
+    }
+
+    // The category of CodingCategories.PsBands: none where neither parameter is enabled, else 10, 20 or 34 bands by the finer of the two modes (mode 0, 1 or 2).
+    public static int PsBandClass(ReadOnlySpan<int> figures) => Math.Max(figures[Sbr.FigurePsIidMode], figures[Sbr.FigurePsIccMode]) + 1;
+
     // What SBR and PS are inferred from where the configuration does not signal them (see
     // BlockLog.AddEvidence): the blocks read to their end that are not in a damaged frame, those among
     // them with an SBR payload that was read in full, and with the parametric stereo extension.
