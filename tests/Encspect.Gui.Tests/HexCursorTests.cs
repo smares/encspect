@@ -277,6 +277,33 @@ public class HexCursorTests
         window.Close();
     }
 
+    // The cursor on the last row on screen, and the view gets a row lower (another font's metrics, a taller bit strip): the cursor stays on screen.
+    [AvaloniaFact]
+    public void A_cursor_on_the_last_row_stays_on_screen_when_the_view_gets_lower_and_a_node_is_selected()
+    {
+        DetailWindow window = Open();
+        StructureTree tree = window.Model.Tree!;
+        TreeRow stream = tree.Root.RowAt(0);
+        tree.Expand(stream);
+        TreeRow big = Enumerable.Range(0, stream.LoadChildren().Count).Select(i => stream.RowAt(i)).First(r => r.Kind != NodeKind.Frame && r.Node.Length > 5000);
+        long deep = big.Node.Offset + 3000;
+        window.Hex.ByteCursor = deep;
+        UiPump.Until(() => true);
+        Assert.Equal((deep / 16) - window.Hex.VisibleRows + 1, window.Hex.TopRow);
+
+        // Several rows lower, in two steps, with the selection changing in between.
+        for (int i = 0; i < 2; i++)
+        {
+            window.Height -= 40;
+            UiPump.Until(() => true);
+            window.Model.SelectedNode = i == 0 ? big : tree.Root;
+            UiPump.Until(() => true);
+            Assert.InRange(deep / 16, window.Hex.TopRow, window.Hex.TopRow + window.Hex.VisibleRows - 1);
+        }
+
+        window.Close();
+    }
+
     [AvaloniaFact]
     public void Home_and_end_move_the_cursor_in_the_row_and_with_control_in_the_file()
     {

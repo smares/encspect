@@ -218,6 +218,7 @@ internal sealed class HexCanvas : Control
     private HexHighlight? _highlight;
     private long _topRow;
     private long? _cursor;
+    private int _rowsBefore;
     private double _charWidth;
     private double _lineHeight;
     private Typeface _typeface;
@@ -392,8 +393,23 @@ internal sealed class HexCanvas : Control
     protected override void OnSizeChanged(SizeChangedEventArgs e)
     {
         base.OnSizeChanged(e);
+
+        // A cursor that was on screen stays on screen when the view gets lower, even on its last
+        // row (the bit strip or the description under the view may take a row more with another
+        // font); without one the selection is brought into view.
+        long? cursorRow = _cursor / BytesPerRow;
+        bool cursorWasShown = cursorRow is { } row && row >= _topRow && row < _topRow + _rowsBefore;
         _topRow = Math.Clamp(_topRow, 0, MaxTopRow);
-        Reveal();
+        if (cursorWasShown)
+        {
+            RevealRow(cursorRow!.Value);
+        }
+        else
+        {
+            Reveal();
+        }
+
+        _rowsBefore = VisibleRows;
         OnViewChanged();
     }
 
