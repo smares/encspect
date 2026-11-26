@@ -419,7 +419,7 @@ def shard_names(matrix):
     return {entry["shard"] for entry in matrix}
 
 
-FILTER_TOKEN = re.compile(r"\s*(\(|\)|&|\||FullyQualifiedName(?:!?~|!=)[A-Za-z0-9_.]+|Category!?=[A-Za-z]+)")
+FILTER_TOKEN = re.compile(r"\s*(\(|\)|&|\||(?:FullyQualifiedName|DisplayName)(?:!?~|!=)[A-Za-z0-9_.-]+|Category!?=[A-Za-z]+)")
 
 
 def valid_filter(expression):
@@ -464,7 +464,7 @@ class ScopeTests(unittest.TestCase):
             self.assertEqual(chosen.selected, {"WavPack", "Matroska", "Ape", "Id3"}, path)
             self.assertIn("unit tests scoped to WavPack, Ape, Id3, Matroska", reason)
             names = shard_names(matrix)
-            self.assertNotIn("corrupt-c", names, "its classes belong to other formats, so nothing is left of it")
+            self.assertNotIn("corrupt-b", names, "its classes belong to other formats, so nothing is left of it")
             self.assertIn("rest", names)
             self.assertIn("corrupt-d", names, "CorruptWavPackBuiltFileTests")
             for entry in matrix:
@@ -482,7 +482,7 @@ class ScopeTests(unittest.TestCase):
         self.assertNotIn("FullyQualifiedName!~.MatroskaFixtureTests.", rest)
         for never in ("DescriptionTests", "FindingCoverageTests", "DecoderDeterminismTests", "AnalyzerTests", "MeasurementDeterminismTests"):
             self.assertNotIn(never, rest)
-        corrupt_b = next(e["filter"] for e in matrix if e["shard"] == "corrupt-b")
+        corrupt_b = next(e["filter"] for e in matrix if e["shard"] == "memory-a")
         self.assertIn("FullyQualifiedName!=Encspect.Tests.Host.MemoryTests.ManySpeexPacketsStayCompact", corrupt_b)
         self.assertNotIn("FullyQualifiedName!=Encspect.Tests.Host.MemoryTests.ManyWavPackBlocksStayCompact", corrupt_b)
 
@@ -523,7 +523,7 @@ class ScopeTests(unittest.TestCase):
                                         "tests/Encspect.Tests/Decoding/DecoderChargeTests.cs", "tests/Encspect.Tests/Measurement/MeasurementTests.cs",
                                         "tests/Encspect.Tests/Core/NodeTests.cs", "tests/Encspect.Tests/Cli/CommandLineTests.cs")
         self.assertEqual(chosen.selected, {"WavPack", "Matroska", "Ape", "Id3"})
-        corrupt_b = next(e["filter"] for e in matrix if e["shard"] == "corrupt-b")
+        corrupt_b = next(e["filter"] for e in matrix if e["shard"] == "memory-a")
         self.assertNotIn("MemoryTests.ManySpeexPacketsStayCompact", corrupt_b, "the changed file's classes run whole")
         only = scoped("tests/Encspect.Tests/Host/AnalyzerTests.cs")
         self.assertEqual(only[0].selected, set())
@@ -775,6 +775,41 @@ class ShardGuardTests(unittest.TestCase):
                            {"name": "rest", "classes": None, "damagedInputClasses": ["CorruptMpegFileTests"]}])
         with self.assertRaises(SystemExit):
             changes.shard_config.load(path)
+
+
+    def split(self, first, second):
+        return self.write([{"name": "a", "classes": ["BigTests", "Other"], "cases": {"BigTests": first}},
+                           {"name": "b", "classes": ["BigTests"], "cases": {"BigTests": second}},
+                           {"name": "rest", "classes": None}])
+
+    def test_a_split_class_is_filtered_by_display_name_and_the_last_part_takes_the_remainder(self):
+        shards = changes.shard_config.load(self.split(["flac-", "ape-"], None))
+        self.assertEqual(changes.shard_config.filter_for(shards, "a"),
+                         "(FullyQualifiedName~.BigTests.&(DisplayName~flac-|DisplayName~ape-))|FullyQualifiedName~.Other.")
+        self.assertEqual(changes.shard_config.filter_for(shards, "b"), "(FullyQualifiedName~.BigTests.&DisplayName!~flac-&DisplayName!~ape-)")
+        self.assertEqual(changes.shard_config.filter_for(shards, "rest"), "FullyQualifiedName!~.BigTests.&FullyQualifiedName!~.Other.")
+
+    def test_a_split_class_needs_a_remainder_and_distinct_strings(self):
+        for first, second in ((["a"], ["b"]), (None, None), (["a"], ["a"]), ([], None), (["a", "a"], None)):
+            with self.subTest(first=first, second=second), self.assertRaises(SystemExit):
+                changes.shard_config.load(self.split(first, second))
+
+    def test_a_class_listed_twice_without_a_split_or_split_in_a_shard_that_lacks_it_is_refused(self):
+        twice = self.write([{"name": "a", "classes": ["BigTests"]}, {"name": "b", "classes": ["BigTests"]}, {"name": "rest", "classes": None}])
+        with self.assertRaises(SystemExit):
+            changes.shard_config.load(twice)
+        lone = self.write([{"name": "a", "classes": ["BigTests"], "cases": {"BigTests": None}}, {"name": "rest", "classes": None}])
+        with self.assertRaises(SystemExit):
+            changes.shard_config.load(lone)
+        stray = self.write([{"name": "a", "classes": ["X"], "cases": {"BigTests": ["a"]}}, {"name": "rest", "classes": None}])
+        with self.assertRaises(SystemExit):
+            changes.shard_config.load(stray)
+
+    def test_the_committed_split_classes_are_shared_by_shards_that_keep_the_nightly_flag_together(self):
+        shards = changes.shard_config.load()
+        for name in {c for s in shards[:-1] for c in s.get("cases", {})}:
+            sharing = [s for s in shards[:-1] if name in s.get("cases", {})]
+            self.assertEqual(1, len({bool(s.get("nightly")) for s in sharing}), name)
 
 
 if __name__ == "__main__":
