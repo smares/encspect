@@ -45,6 +45,13 @@ internal static class Palette
 
     public static IBrush AccentFill(Control control, double opacity) => new ImmutableSolidColorBrush(Accent(control), opacity);
 
+    // The hex view's byte cursor: an orange of its own, which neither the accent of the selection
+    // nor the text colors use.
+    public static IBrush CursorFill(Control control) =>
+        new ImmutableSolidColorBrush(Color.FromRgb(232, 133, 0), control.ActualThemeVariant == Avalonia.Styling.ThemeVariant.Dark ? 0.45 : 0.35);
+
+    public static IBrush CursorLine(Control control) => new ImmutableSolidColorBrush(Color.FromRgb(232, 133, 0));
+
     public static Typeface Monospace(Control control) =>
         new(control.TryFindResource("MonospaceFontFamily", control.ActualThemeVariant, out object? value) && value is FontFamily family ? family : FontFamily.Default);
 

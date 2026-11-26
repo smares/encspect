@@ -13,6 +13,7 @@ Usage: python3 scripts/fixtures/check_sources.py [--list | --only FILE]
   --only FILE  checks only the entries in FILE, in that form (the pull request check passes the ones it adds or changes)
 """
 
+import id3_specs
 import json
 import pathlib
 import sys
@@ -155,6 +156,7 @@ def sources():
     for name, digest, addresses in matroska_specs.SPECS:
         yield name, digest, addresses
     yield qtff_specs.NAME, qtff_specs.SHA256, qtff_specs.ADDRESSES
+    yield from id3_specs.SPECS
     yield dts_specs.NAME, dts_specs.SHA256, dts_specs.ADDRESSES
     yield libdca_source.ARCHIVE, libdca_source.SHA256, libdca_source.ADDRESSES
     yield from gpac_tool.sources()

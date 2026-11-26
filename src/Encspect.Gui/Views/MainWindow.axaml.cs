@@ -51,6 +51,11 @@ public partial class MainWindow : Window
     public MainWindow(Analyzer analyzer, Settings settings, MainViewModel? model = null, SummaryCache? cache = null)
     {
         InitializeComponent();
+        if (Screens.Primary is { } screen)
+        {
+            FitToScreen(screen.WorkingArea, screen.Scaling);
+        }
+
         Icon = AppIcon.Window;
         Model = model ?? new MainViewModel(analyzer, cache: cache);
         DataContext = Model;
@@ -95,6 +100,9 @@ public partial class MainWindow : Window
             Model.Cache?.Flush();
         };
     }
+
+    // Caps the first size at the screen, which the window then opens centered on.
+    internal void FitToScreen(PixelRect workingArea, double scaling) => ScreenFit.CapSize(this, workingArea, scaling);
 
     public MainViewModel Model { get; }
 
@@ -265,8 +273,8 @@ public partial class MainWindow : Window
 
         var view = Shortcuts.Submenu(
             "View",
-            Shortcuts.Item(this, "Include Subfolders", Shortcuts.WithCommand(Key.I), () => Model.IncludeSubfolders = !Model.IncludeSubfolders),
-            Shortcuts.Item(this, "Show Only Audio", null, () => Model.ShowOnlyAudio = !Model.ShowOnlyAudio),
+            Shortcuts.CheckItem(this, "Include Subfolders", Shortcuts.WithCommand(Key.I), Model, () => Model.IncludeSubfolders, on => Model.IncludeSubfolders = on, () => Model.CanIncludeSubfolders),
+            Shortcuts.CheckItem(this, "Show Only Audio", null, Model, () => Model.ShowOnlyAudio, on => Model.ShowOnlyAudio = on),
             Shortcuts.Item(this, "Refresh", OperatingSystem.IsMacOS() ? Shortcuts.WithCommand(Key.R) : new KeyGesture(Key.F5), Model.Refresh),
             Shortcuts.Item(this, "Stop Analysis", Shortcuts.WithCommand(Key.OemPeriod), Model.Cancel));
         if (Model.Cache is not null)

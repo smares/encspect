@@ -299,6 +299,9 @@ internal sealed class DecodeBlockingParser : IFormatParser
     private int _started;
     private int _canceled;
 
+    // The parse, counted from 1, from which the parser blocks until canceled.
+    public int BlockFrom { get; init; } = 2;
+
     public static byte[] File => "VBLK and some bytes"u8.ToArray();
 
     public string Name => "DecodeBlocking";
@@ -322,7 +325,7 @@ internal sealed class DecodeBlockingParser : IFormatParser
                 Checksums = [new ChecksumTally { Name = "test MD5", Covers = ChecksumCoverage.DecodedAudio, CoversAllAudio = true, Stored = 1 }],
             },
         });
-        if (number < 2)
+        if (number < BlockFrom)
         {
             return;
         }

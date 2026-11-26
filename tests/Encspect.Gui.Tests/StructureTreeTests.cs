@@ -195,4 +195,27 @@ public class StructureTreeTests
             }
         }
     }
+
+    [Fact]
+    public void The_deepest_row_at_an_offset_is_found_in_the_middle_of_a_sorted_list_and_not_in_a_gap()
+    {
+        var root = new Node("File", 0, 1000);
+        for (int i = 0; i < 100; i++)
+        {
+            Node frame = root.Add("Frame", i * 10L, 8);
+            frame.Add("Header", i * 10L, 4);
+        }
+
+        var tree = new StructureTree(root);
+
+        TreeRow inside = tree.DeepestAt(0, 507)!;
+        Assert.Equal("Frame", inside.Name);
+        Assert.Equal(500, inside.Node.Offset);
+        Assert.Equal("Header", tree.DeepestAt(0, 502)!.Name);
+
+        // Bytes 508 and 509 lie between two frames: only the file holds them.
+        Assert.Same(tree.Root, tree.DeepestAt(0, 508));
+        Assert.Same(tree.Root, tree.DeepestAt(0, 509));
+        Assert.Equal(990, tree.DeepestAt(0, 990)!.Node.Offset);
+    }
 }

@@ -663,13 +663,55 @@ def id3v23_padding_size_mismatch():
 def id3v23_text_after_terminator():
     f = Fixture(
         "id3v23-text-after-terminator",
-        "ID3v2.3 TPE1 frame holding two artists separated by $00, as ID3v2.4 writes a list; ID3v2.3 has no lists, so "
-        "readers show only the first.",
+        "ID3v2.3 TPE1 frame holding two artists separated by $00, as some taggers write them and as ID3v2.4 writes a list; "
+        "ID3v2.3 section 4.2 says to ignore what follows the terminator, so the analyzer shows both strings and says so.",
     )
     frames = [frame23("TIT2", text_frame_data(LATIN1, ["Duet"])), frame23("TPE1", text_frame_data(LATIN1, ["First", "Second"]))]
-    f.tag("ID3v2", "2.3.0", id3v2(3, frames, padding=8), "High", {"TPE1/Text": "First"})
+    f.tag("ID3v2", "2.3.0", id3v2(3, frames, padding=8), "High", {"TPE1/Text": ["First", "Second"]})
     f.audio()
-    f.finding("id3v2.text-after-terminator", "Frame TPE1")
+    f.finding("id3v2.text-after-terminator", "Frame TPE1 has 2 strings")
+    return f
+
+
+@fixture
+def id3v23_text_empty_strings():
+    f = Fixture(
+        "id3v23-text-empty-strings",
+        "ID3v2.3 TPE1 frame with an empty string between two artists: the empty string keeps its node but stays out of "
+        "the frame's value and of the count the finding gives.",
+    )
+    frames = [frame23("TIT2", text_frame_data(LATIN1, ["Gap"])), frame23("TPE1", text_frame_data(LATIN1, ["First", "", "Second"]))]
+    f.tag("ID3v2", "2.3.0", id3v2(3, frames, padding=8), "High", {"TPE1/Text": ["First", "", "Second"]})
+    f.audio()
+    f.finding("id3v2.text-after-terminator", "Frame TPE1 has 2 strings")
+    return f
+
+
+@fixture
+def id3v24_frame_from_id3v23():
+    f = Fixture(
+        "id3v24-frame-from-id3v23",
+        "ID3v2.4 tag with TYER and TDAT, frames ID3v2.3 defines and ID3v2.4 replaced with TDRC.",
+    )
+    frames = [frame24("TYER", text_frame_data(UTF8, ["2001"])), frame24("TDAT", text_frame_data(UTF8, ["0105"]))]
+    f.tag("ID3v2", "2.4.0", id3v2(4, frames, padding=8), "High", {"TYER/Text": "2001", "TDAT/Text": "0105"})
+    f.audio()
+    f.finding("id3v2.frame-not-in-version", "Frame TYER is defined in ID3v2.3 (section 4.2.1), not in ID3v2.4")
+    f.finding("id3v2.frame-not-in-version", "Frame TDAT is defined in ID3v2.3 (section 4.2.1), not in ID3v2.4, the version of this tag; ID3v2.4 replaced it with TDRC (ID3v2.4.0 changes section 4)")
+    return f
+
+
+@fixture
+def id3v23_frame_from_id3v24():
+    f = Fixture(
+        "id3v23-frame-from-id3v24",
+        "ID3v2.3 tag with TDRC and TSOA, frames only ID3v2.4 defines.",
+    )
+    frames = [frame23("TDRC", text_frame_data(LATIN1, ["2001-05"])), frame23("TSOA", text_frame_data(LATIN1, ["Album, The"]))]
+    f.tag("ID3v2", "2.3.0", id3v2(3, frames, padding=8), "High", {"TDRC/Text": "2001-05", "TSOA/Text": "Album, The"})
+    f.audio()
+    f.finding("id3v2.frame-not-in-version", "Frame TDRC is defined in ID3v2.4 (frames section 4.2.5), not in ID3v2.3")
+    f.finding("id3v2.frame-not-in-version", "Frame TSOA is defined in ID3v2.4 (frames section 4.2.5), not in ID3v2.3")
     return f
 
 

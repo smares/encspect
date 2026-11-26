@@ -879,6 +879,11 @@ public sealed class Id3v2TagParser : ITagParser
         state.Tag.Add(frame);
         state.Frames.Add(frame);
 
+        if (Id3v2FrameTexts.NotInVersion(major, id) is { } notInVersion)
+        {
+            findings.Add(new Finding(Severity.Info, "id3v2.frame-not-in-version", notInVersion, frame));
+        }
+
         FrameExtras extras = major switch
         {
             3 => FrameExtras.For23(flags),

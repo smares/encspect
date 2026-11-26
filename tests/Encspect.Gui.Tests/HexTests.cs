@@ -1,5 +1,6 @@
 using Encspect.Core;
 using Encspect.Gui.ViewModels;
+using Encspect.Gui.Views;
 
 namespace Encspect.Gui.Tests;
 
@@ -148,5 +149,25 @@ public class HexTests
 
         Assert.Equal(0, document.Read(0, new byte[16]));
         Assert.True(document.HasChanged);
+    }
+
+    [Fact]
+    public void Rows_are_copied_as_they_are_displayed_with_dots_in_the_text_column()
+    {
+        byte[] bytes = new byte[40];
+        "Hello, world!"u8.CopyTo(bytes);
+        bytes[5] = 0;
+        bytes[13] = 0xFF;
+        bytes[32] = 0x7F;
+        using var document = new HexDocument(new MemoryStream(bytes));
+
+        string text = HexView.RowsText(document, 0, 40);
+
+        string[] rows = text.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        Assert.Equal(3, rows.Length);
+        Assert.Equal("00000000  48 65 6C 6C 6F 00 20 77  6F 72 6C 64 21 FF 00 00  Hello. world!...", rows[0]);
+        Assert.Equal("00000010  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  ................", rows[1]);
+        // The last row holds eight bytes: its hex column is padded and its text column is short.
+        Assert.Equal("00000020  " + "7F 00 00 00 00 00 00 00".PadRight(49) + " " + "........", rows[2]);
     }
 }

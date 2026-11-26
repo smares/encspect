@@ -40,6 +40,13 @@ public partial class DetailWindow : Window
         GraphList.ScrollChanged += (_, _) => RequestListSnap();
         ((Control)GraphList.Parent!).SizeChanged += (_, _) => RequestListSnap();
         Loaded += (_, _) => RequestListSnap();
+
+        // The strip's area has the height of a strip and of the scrollbar under a long one, whether
+        // or not the selected node has bits to show, so that selecting a node never resizes the hex view.
+        void ReserveStripHeight() => BitsScroll.Height = Bits.StripHeight() + 18;
+        ReserveStripHeight();
+        ActualThemeVariantChanged += (_, _) => ReserveStripHeight();
+        Loaded += (_, _) => ReserveStripHeight();
         TreeList.AddHandler(TappedEvent, OnTreeTapped, RoutingStrategies.Bubble, handledEventsToo: true);
         TreeList.DoubleTapped += (_, e) =>
         {
@@ -49,6 +56,11 @@ public partial class DetailWindow : Window
             }
         };
         TreeList.AddHandler(KeyDownEvent, OnTreeKeyDown, RoutingStrategies.Tunnel);
+        Hex.CopyFailed += (_, message) => Model.FailCommand(message);
+        Hex.Copied += (_, text) => Model.CopyDone(text);
+        TreeList.ContextMenu = CreateTreeMenu();
+        FindingList.ContextMenu = CreateFindingMenu();
+        Hex.ByteActivated += (_, offset) => Model.SelectNodeAt(offset);
         Graph.PointClicked += (_, index) => Model.Graphs.Activate(index);
         Graph.CategoryClicked += (_, category) => Model.Graphs.ActivateCategory(category);
         Topic.LinkActivated += (_, id) => Model.ShowTopic(id);
@@ -156,6 +168,64 @@ public partial class DetailWindow : Window
         return new ExportTarget(file.TryGetLocalPath(), file, format);
     }
 
+    private ContextMenu CreateTreeMenu()
+    {
+        var value = new MenuItem { Header = "Copy Value" };
+        value.Click += async (_, _) => await CopyAsync(Model.SelectedNode?.Value);
+        var node = new MenuItem { Header = "Copy Node" };
+        node.Click += async (_, _) =>
+        {
+            if (Model.SelectedNode is { } row)
+            {
+                await CopyAsync(await Model.PrepareNodeCopyAsync(row));
+            }
+        };
+        var menu = new ContextMenu { Items = { value, node } };
+        menu.Opening += (_, _) =>
+        {
+            value.IsEnabled = Model.SelectedNode?.Value is not null;
+            node.IsEnabled = Model.SelectedNode is not null && !Model.IsCopying;
+        };
+
+        // Dimmed while a copy is written, however the menu was opened.
+        Model.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(DetailViewModel.IsCopying))
+            {
+                node.IsEnabled = Model.SelectedNode is not null && !Model.IsCopying;
+            }
+        };
+        return menu;
+    }
+
+    private ContextMenu CreateFindingMenu()
+    {
+        var message = new MenuItem { Header = "Copy Message" };
+        message.Click += async (_, _) => await CopyAsync(Model.SelectedFinding is { } finding ? DetailViewModel.FindingText(finding, withCodeAndPosition: false) : null);
+        var full = new MenuItem { Header = "Copy Message with Code and Position" };
+        full.Click += async (_, _) => await CopyAsync(Model.SelectedFinding is { } finding ? DetailViewModel.FindingText(finding, withCodeAndPosition: true) : null);
+        var menu = new ContextMenu { Items = { message, full } };
+        menu.Opening += (_, _) => message.IsEnabled = full.IsEnabled = Model.SelectedFinding is not null;
+        return menu;
+    }
+
+    private async Task CopyAsync(string? text)
+    {
+        if (text is null)
+        {
+            return;
+        }
+
+        if (await Copying.SetTextAsync(this, text) is { } error)
+        {
+            Model.FailCommand(error);
+        }
+        else
+        {
+            Model.CopyDone(text);
+        }
+    }
+
     private NativeMenuItem? _decodeMenuItem;
     private NativeMenuItem? _stopMenuItem;
 
@@ -252,7 +322,7 @@ public partial class DetailWindow : Window
 
     private void OnGraphDecode(object? sender, RoutedEventArgs e) => Model.Graphs.RequestDecode();
 
-    private void OnStopDecoding(object? sender, RoutedEventArgs e) => Model.StopDecoding();
+    private void OnStopDecoding(object? sender, RoutedEventArgs e) => Model.Stop();
 
     private void OnCloseTopic(object? sender, RoutedEventArgs e) => Model.IsTopicOpen = false;
 
