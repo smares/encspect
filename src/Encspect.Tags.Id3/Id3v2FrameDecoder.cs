@@ -134,7 +134,7 @@ internal sealed class Id3v2FrameDecoder
     {
         byte encoding = ReadEncoding();
         List<string> values = AddTextValues("Text", 1, encoding, Explain.Text);
-        return string.Join("; ", values);
+        return string.Join("; ", values.Where(v => v.Length > 0));
     }
 
     private string DecodeUserText()
@@ -142,7 +142,7 @@ internal sealed class Id3v2FrameDecoder
         byte encoding = ReadEncoding();
         (string description, int next) = AddTerminatedText("Description", 1, encoding, Explain.Description);
         List<string> values = AddTextValues("Text", next, encoding, Explain.Text);
-        return $"{description}: {string.Join("; ", values)}";
+        return $"{description}: {string.Join("; ", values.Where(v => v.Length > 0))}";
     }
 
     private string DecodeUrl()
@@ -305,12 +305,15 @@ internal sealed class Id3v2FrameDecoder
         if (_major < 4 && ranges.Count > 1)
         {
             // ID3v2.2 and 2.3 section 4.2: after a terminator "all the following information should be
-            // ignored and not be displayed". Writers such as Mp3tag still separate several values by
-            // terminators, as ID3v2.4 does, so each string is shown and the finding says which reading is the specification's.
+            // ignored and not be displayed". Some taggers still separate several values by terminators,
+            // as ID3v2.4 does, so each string is shown and the finding says which reading is the specification's.
+            int filled = ranges.Count(r => r.End > r.Start);
             _findings.Add(new Finding(
                 Severity.Info,
                 "id3v2.text-after-terminator",
-                $"Frame {_id} has {ranges.Count} strings separated by terminators; ID3v2.{_major} section 4.2 says to ignore what follows the first, and ID3v2.4 separates values this way. Each string is shown.",
+                filled > 1
+                    ? $"Frame {_id} has {filled} strings separated by terminators; ID3v2.{_major} section 4.2 says to ignore what follows the first, and ID3v2.4 separates values this way. Each string is shown."
+                    : $"Frame {_id} has data after a terminated empty string; ID3v2.{_major} section 4.2 says to ignore what follows the first terminator, and ID3v2.4 separates values this way. It is shown.",
                 _frame));
         }
 
