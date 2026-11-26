@@ -636,6 +636,7 @@ MEDIAINFO_READS_OTHERWISE = {
     "adts/sbr-in-one-block": dict.fromkeys(["format", "sample rate", "SBR signaling"], SBR_ANYWHERE),
     "adts/sbr-before-channel-element": dict.fromkeys(["format", "sample rate", "SBR signaling"], SBR_ANYWHERE),
     "adts/sbr-in-frames-failing-crc": dict.fromkeys(["format", "sample rate", "SBR signaling"], SBR_ANYWHERE),
+    "adts/sbr-in-all-but-first-block": dict.fromkeys(["format", "sample rate", "SBR signaling"], SBR_ANYWHERE),
     "adts/sbr-in-truncated-frame": {"streams": "MediaInfo 26.01 synchronizes an ADTS file on three consecutive frame headers or on frames that end exactly at the end of the file (File_Aac.cpp, Synchronize_ADTS); two frames and a cut third are neither, so it finds no audio stream"},
     "adts/ps-in-multichannel-sce": dict.fromkeys(["format", "channels", "channel layout", "PS signaling"], PS_ONE_CHANNEL),
     "adts/ps-in-pce-multichannel": {**dict.fromkeys(["format", "channels", "channel layout", "PS signaling"], PS_ONE_CHANNEL),
