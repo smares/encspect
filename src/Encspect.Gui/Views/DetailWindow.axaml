@@ -202,13 +202,13 @@
                       <StackPanel>
                         <TextBlock Text="{Binding Heading}" Classes="secondary heading" />
                         <TextBlock Text="{Binding Caption}" Classes="secondary caption" IsVisible="{Binding HasCaption}" AutomationProperties.Name="{Binding Caption}" />
-                        <Button Content="Decode Audio" Classes="decode" IsVisible="{Binding OffersDecode}" IsEnabled="{Binding Owner.CanDecode}" Click="OnGraphDecode"
+                        <Button Content="Decode Audio" Classes="decode" IsVisible="{Binding OffersDecode}" IsEnabled="{Binding Owner.CanDecode}" Click="OnGraphDecode" ToolTip.Placement="Right" ToolTip.HorizontalOffset="6"
                                 ToolTip.Tip="Decode the audio to measure it: the waveform, the spectrogram, the spectrum, the spectral cutoff, the levels, the loudness and the true peak. It reads the whole file again and takes longer than the analysis." />
                         <ItemsControl ItemsSource="{Binding Choices}">
                           <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="vm:GraphChoice">
                               <!-- A long name wraps at the list's width, never cut; the tooltip names the entry first, then says what it shows. -->
-                              <Button Classes="entry" Classes.selected="{Binding IsSelected}" Click="OnGraphChoice" ToolTip.Tip="{Binding ToolTipText}"
+                              <Button Classes="entry" Classes.selected="{Binding IsSelected}" Click="OnGraphChoice" ToolTip.Tip="{Binding ToolTipText}" ToolTip.Placement="Right" ToolTip.HorizontalOffset="6"
                                       AutomationProperties.Name="{Binding Title}">
                                 <TextBlock Text="{Binding Title}" TextWrapping="Wrap" />
                               </Button>
