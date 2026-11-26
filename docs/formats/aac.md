@@ -87,6 +87,7 @@ Each stream whose raw data blocks are read (AAC Main, LC, SSR and LTP) reports, 
 - channel pairs with a common window, mid/side masks and bands, intensity stereo, and **Stereo Coding**, how every channel pair codes its channels (below);
 - noise substitution, TNS per window sequence, pulse data, codebook use, max_sfb and global gain per channel;
 - **Coded Bandwidth**: the lowest, most common and highest coded bandwidth of the stream's access units or frames, in whole hertz (below);
+- **Last Non-Zero Coefficient**, **Non-Zero Coefficients** and **Escape-Coded Coefficients**, from the quantized values of the spectral data (below);
 - SBR's frequencies and the fill payloads;
 - **Verified Frame Checksums** and, above 0, **Failed Frame Checksums** for ADTS: the frames whose CRC-16 equals the one computed over the header and the elements it covers (a frame whose CRC could not be verified, because a raw data block was unreadable, or that lies in no stream, is in neither count).
 
@@ -105,6 +106,12 @@ The classification of a channel pair, per pair and independent of its window:
 - The value of an access unit or ADTS frame is the top of the highest band that any of its channel streams codes: band max_sfb of its window's table, long (1,024 or 960 lines) or short, at the core's sample rate, in whole hertz rounded half to even.
 - It is a bound the stream states. Bands below it may be coded as zero, as noise substitution or as intensity stereo, SBR adds content above the core, and it is not the encoder's lowpass. A channel stream with max_sfb 0 gives 0 Hz; a unit without a channel stream has no value.
 
+**The quantized values** (the walk of every analysis, whether or not the stream is decoded; names as WMA's "Non-Zero Coefficients" and "Escape-Coded Coefficients"):
+
+- **Last Non-Zero Coefficient:** the lowest, most common and highest, over the stream's units, of the upper edge of the highest nonzero quantized coefficient of the unit's channel streams, in whole hertz at the core's sample rate (a short window's line at an eighth of a long window's lines; of eight short windows, the highest line of any). It is read from the Huffman-coded values, so it lies at or below the Coded Bandwidth, which is what max_sfb states; pulse data (ISO/IEC 14496-3 4.6.3), noise substitution and intensity stereo add values this does not count. A unit whose coefficients are all zero has none.
+- **Non-Zero Coefficients** counts the nonzero quantized coefficients, and **Escape-Coded Coefficients** those coded with an escape sequence (a value of 16 or more in codebook 11, 4.6.3.3), with their share of the non-zero ones.
+- The walk takes the nonzero positions from a table of each codebook (`Codebooks.NonZero`: which values of a symbol are nonzero), not from decoded values, so the cost is a bit mask per codeword ([development.md](../development.md#analysis-speed-of-the-lossy-formats)); when a session decodes, the walk that stores the values counts the same figures, and a test holds the two to each other.
+
 ## Graphs
 
 Each stream whose blocks are read reports category series and numeric series for the Graphs tab:
@@ -121,9 +128,11 @@ Each stream whose blocks are read reports category series and numeric series for
 - **Numeric series** "Intensity Stereo Bound" (Hz, concept `stereoCoding`, a quantity of its own, per unit only): the lowest frequency from which the unit's channel pairs code intensity stereo, the lower edge of the lowest scalefactor band of any pair's second channel that uses codebook 14 or 15 (a short window's band at an eighth of a long window's lines), at the core's sample rate; a unit without such a band has no point. Its Statistics node of the same name holds the lowest and highest. It is what the stream states, not a measurement.
   - The host reads the series by the quantity `SeriesQuantities.IntensityStereoBound` and, with `--measure`, sets its median beside the start of the inter-channel coherence of the decoded audio as figures ([cli.md](../cli.md)).
 - **Numeric series** "Coded Bandwidth" (Hz, concept `codedBandwidth`) per unit, and "Coded Bandwidth Over Time", each second's highest, anchored to the Statistics node. A unit without a channel stream has no point, and the series then has its own x values; "Bitrate" and "Bitrate Over Time" get the concept `bitDistribution` and the quantity "Bitrate", as MPEG audio's.
+- **Numeric series** "Last Non-Zero Coefficient" (Hz, concept `codedBandwidth`, a quantity of its own) per unit and "Last Non-Zero Coefficient Over Time", each second's highest, anchored to the Statistics node of the same name, beside "Coded Bandwidth": the highest over the unit's channel streams, as that one; a unit without a nonzero coefficient has no point and the series then has its own x values.
+- **Numeric series** "Escape-Coded Coefficients" (%, a quantity of its own, per unit only): the share of the unit's nonzero coefficients that are escape-coded, in tenths of a percent; a unit without a nonzero coefficient has no point.
 - A stream without a channel pair has no "Stereo Coding" (a mono stream keeps nothing for it), and the series stop at the unit where `aac.frames-limit` or `aac.blocks-limit` stops the statistics.
 - An ADIF stream whose last block cannot be read to its end has that block as a unit of the series (its channel streams are in the tally) though it is no point of the bitrate graph, and the series then have the blocks' own offsets for x.
-- Memory: a stereo unit adds 5 bytes of codes and count bytes (the two channel streams' window sequences and the pair's coding, with a count byte for each series), and the coded bandwidth's 8 bytes. Measured on linux-x64, an ADTS frame of ffmpeg's encoder keeps 10 more bytes (126 against 116) and an MP4 sample 14 more (74 against 60), against bounds that stay as they were (`MemoryTests`, which also bounds the growth per further unit between two counts).
+- Memory: a stereo unit adds 5 bytes of codes and count bytes (the two channel streams' window sequences and the pair's coding, with a count byte for each series), and the coded bandwidth's 8 bytes, with 6 more for the last nonzero coefficient and the escape share. Measured on linux-x64, an ADTS frame of ffmpeg's encoder keeps 10 more bytes (126 against 116) and an MP4 sample 14 more (74 against 60), against bounds that stay as they were (`MemoryTests`, which also bounds the growth per further unit between two counts).
 
 Cross-checks: `crosscheck_mp4_fixtures.py` holds the series of every golden report to faad2's trace per unit (window sequences, the pair classification computed from its flags and codebooks, and the bandwidth from its max_sfb), and `AacCodingSeriesTests` holds them to the nodes of the units' own raw data blocks.
 

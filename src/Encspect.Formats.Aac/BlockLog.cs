@@ -51,6 +51,9 @@ internal sealed class BlockLog
     // Ends the unit (access unit, ADTS frame or ADIF block) whose blocks were read since the last one.
     public void EndUnit() => Recorder.EndUnit();
 
+    // The blocks read next follow bytes that were not read, so no window sequence follows one before.
+    public void Gap() => _reader.ForgetWindows();
+
     public int Count { get; private set; }
 
     // The elements of the block read last, for its CRC.
@@ -64,6 +67,11 @@ internal sealed class BlockLog
         limit = Math.Min(limit, start + (MaxBlockBytes * 8));
         BlockReader reader = _reader;
         BlockResult result = reader.Read(data, start, limit, Count, where, decode ? Feed?.Store : null);
+        if (!result.Ok || !report)
+        {
+            reader.ForgetWindows();
+        }
+
         long position;
         if (result.Ok)
         {
@@ -142,6 +150,10 @@ internal sealed class BlockLog
     private static Severity SeverityOf(string code) => code switch
     {
         "aac.sbr-before-header" => Severity.Info,
+
+        // FDK AAC's encoder writes such transitions in several of the fixtures, and the records of tests/fixtures/*/official-decoders.json list no unit of them that a decoder refuses
+        // or conceals: the finding states what the stream does, as information.
+        "aac.window-sequence-invalid" => Severity.Info,
         _ => Severity.Warning,
     };
 

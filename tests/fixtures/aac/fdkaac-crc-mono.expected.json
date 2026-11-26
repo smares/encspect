@@ -307,7 +307,12 @@
   "ADTS/Frame[1]/CRC/Check": "verified",
   "ADTS/Frame[40]/CRC/Check": "verified"
  },
- "findings": [],
+ "findings": [
+  [
+   "aac.window-sequence-invalid",
+   "a window sequence that cannot follow"
+  ]
+ ],
  "crosscheck": {
   "ffprobe": true,
   "mp4box": false,

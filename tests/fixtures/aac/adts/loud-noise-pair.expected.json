@@ -46,7 +46,12 @@
   "ADTS/Statistics/Codebooks/Codebook 9": "48 bands (17.9%)",
   "ADTS/Statistics/Codebooks/Codebook 13": "148 bands (55.2%)"
  },
- "findings": [],
+ "findings": [
+  [
+   "aac.window-sequence-invalid",
+   "a window sequence that cannot follow"
+  ]
+ ],
  "crosscheck": {
   "ffprobe": true,
   "decode": true,

@@ -97,6 +97,10 @@ internal sealed record CodingNodes(Node? WindowSequences, Node? BlockSizes, Node
     public Node? Sbr { get; init; }
 
     public Node? ParametricStereo { get; init; }
+
+    public Node? LastCoefficient { get; init; }
+
+    public Node? Escapes { get; init; }
 }
 
 // Records the coding series of a stream while its raw data blocks are read: the window sequence of every channel stream, the
@@ -134,6 +138,15 @@ internal sealed class CodingRecorder(StreamSetup setup)
     private CategorySeriesBuilder? _pairSeries;
     private readonly ChunkedList<int> _hertz = new();
     private int _unitHertz = -1;
+
+    // The highest nonzero line of the unit's channel streams in Hz (-1 where all their values are zero), and the share of its nonzero values that are escape-coded
+    // in tenths of a percent (-1 where it has none).
+    private readonly ChunkedList<int> _valueHertz = new();
+    private int _unitValueHertz = -1;
+    private readonly ChunkedList<short> _escapeShare = new();
+    private long _unitNonZero;
+    private long _unitEscapes;
+    private int _escapeUnits;
     private readonly ChunkedList<int> _boundHertz = new();
     private int _unitBound = -1;
     private int _pairUnits;
@@ -144,12 +157,23 @@ internal sealed class CodingRecorder(StreamSetup setup)
     // Units by coded bandwidth in whole hertz, for the statistics node: the highest over the unit's channel streams.
     public SortedDictionary<int, long> Bandwidths { get; } = [];
 
+    // The same by the highest nonzero line of the unit's channel streams.
+    public SortedDictionary<int, long> ValueBandwidths { get; } = [];
+
     // A channel stream of window_sequence windowSequence whose max_sfb bands end at line top of its window.
-    public void Stream(int windowSequence, int top)
+    // Its highest nonzero line ends at line last of its window (0 where every value is zero); it has nonZero nonzero values, escapes of them escape-coded.
+    public void Stream(int windowSequence, int top, int last, long nonZero, long escapes)
     {
         _windows.Add((byte)windowSequence);
         int hertz = Hertz(windowSequence == 2, top);
         _unitHertz = Math.Max(_unitHertz, hertz);
+        if (last > 0)
+        {
+            _unitValueHertz = Math.Max(_unitValueHertz, Hertz(windowSequence == 2, last));
+        }
+
+        _unitNonZero += nonZero;
+        _unitEscapes += escapes;
     }
 
     public void Pair(byte code) => _pairs.Add(code);
@@ -253,6 +277,14 @@ internal sealed class CodingRecorder(StreamSetup setup)
         }
 
         _hertz.Add(_unitHertz);
+        _valueHertz.Add(_unitValueHertz);
+        if (_unitValueHertz >= 0)
+        {
+            ValueBandwidths[_unitValueHertz] = ValueBandwidths.GetValueOrDefault(_unitValueHertz) + 1;
+        }
+
+        _escapeShare.Add(_unitNonZero == 0 ? (short)-1 : (short)CodingStatistics.RoundHalfEven(_unitEscapes * 1000, _unitNonZero));
+        _escapeUnits += _unitNonZero == 0 ? 0 : 1;
         _boundHertz.Add(_unitBound);
         if (_unitBound >= 0)
         {
@@ -277,6 +309,9 @@ internal sealed class CodingRecorder(StreamSetup setup)
         _unitPairBands = 0;
         _pairs.Clear();
         _unitHertz = -1;
+        _unitValueHertz = -1;
+        _unitNonZero = 0;
+        _unitEscapes = 0;
         _unitBound = -1;
         Count++;
     }
@@ -329,6 +364,8 @@ internal sealed class CodingRecorder(StreamSetup setup)
         AddMidSideBands(offsets, nodes.MidSideBands, series, cancellation);
         AddBound(offsets, nodes.IntensityBound, series, cancellation);
         AddBandwidth(offsets, nodes.CodedBandwidth, time, series, cancellation);
+        AddHertz(_valueHertz, "Last Non-Zero Coefficient", Explain.LastCoefficientSeries, Explain.LastCoefficientOverTimeSeries, offsets, nodes.LastCoefficient, time, series, cancellation);
+        AddEscapes(offsets, nodes.Escapes, series, cancellation);
         return categories;
     }
 
@@ -369,6 +406,42 @@ internal sealed class CodingRecorder(StreamSetup setup)
         });
     }
 
+    // "Escape-Coded Coefficients" per unit: the share of its non-zero coefficients that are escape-coded, in percent, at the units that have a non-zero coefficient.
+    private void AddEscapes(ReadOnlyMemory<double> offsets, Node? anchor, List<Series> series, CancellationToken cancellation)
+    {
+        if (_escapeUnits == 0 || anchor is null)
+        {
+            return;
+        }
+
+        var values = new double[_escapeUnits];
+        double[]? own = _escapeUnits == Count ? null : new double[_escapeUnits];
+        for (int i = 0, n = 0; i < Count; i++)
+        {
+            if (i % 4096 == 0)
+            {
+                cancellation.ThrowIfCancellationRequested();
+            }
+
+            if (_escapeShare[i] >= 0)
+            {
+                values[n] = _escapeShare[i] / 10.0;
+                if (own is not null)
+                {
+                    own[n] = offsets.Span[i];
+                }
+
+                n++;
+            }
+        }
+
+        series.Add(new Series("Escape-Coded Coefficients", "%", SeriesAxis.FrameOffset, own is null ? offsets : own, values, anchor)
+        {
+            Description = Explain.EscapesSeries,
+            Quantity = "Escape-Coded Coefficients",
+        });
+    }
+
     // "Intensity Stereo Bound" per unit, at the units that have one.
     private void AddBound(ReadOnlyMemory<double> offsets, Node? anchor, List<Series> series, CancellationToken cancellation)
     {
@@ -401,8 +474,12 @@ internal sealed class CodingRecorder(StreamSetup setup)
         });
     }
 
-    // "Coded Bandwidth" per unit, at the units that have a value, and "Coded Bandwidth Over Time", each interval's highest.
-    private void AddBandwidth(ReadOnlyMemory<double> offsets, Node? anchor, TimeIndex? time, List<Series> series, CancellationToken cancellation)
+    // "Coded Bandwidth" per unit, at the units that have a value, and "Coded Bandwidth Over Time", each interval's highest; the same for "Last Non-Zero Coefficient".
+    private void AddBandwidth(ReadOnlyMemory<double> offsets, Node? anchor, TimeIndex? time, List<Series> series, CancellationToken cancellation) =>
+        AddHertz(_hertz, "Coded Bandwidth", Explain.CodedBandwidthSeries, Explain.CodedBandwidthOverTimeSeries, offsets, anchor, time, series, cancellation);
+
+    private void AddHertz(ChunkedList<int> hertz, string name, string description, string overTimeDescription, ReadOnlyMemory<double> offsets, Node? anchor, TimeIndex? time, List<Series> series,
+        CancellationToken cancellation)
     {
         int valued = 0;
         for (int i = 0; i < Count; i++)
@@ -412,7 +489,7 @@ internal sealed class CodingRecorder(StreamSetup setup)
                 cancellation.ThrowIfCancellationRequested();
             }
 
-            valued += _hertz[i] >= 0 ? 1 : 0;
+            valued += hertz[i] >= 0 ? 1 : 0;
         }
 
         if (valued == 0)
@@ -430,9 +507,9 @@ internal sealed class CodingRecorder(StreamSetup setup)
                 cancellation.ThrowIfCancellationRequested();
             }
 
-            if (_hertz[i] >= 0)
+            if (hertz[i] >= 0)
             {
-                values[n] = _hertz[i];
+                values[n] = hertz[i];
                 if (own is not null)
                 {
                     own[n] = offsets.Span[i];
@@ -447,11 +524,11 @@ internal sealed class CodingRecorder(StreamSetup setup)
             x = own;
         }
 
-        series.Add(new Series("Coded Bandwidth", "Hz", SeriesAxis.FrameOffset, x, values)
+        series.Add(new Series(name, "Hz", SeriesAxis.FrameOffset, x, values)
         {
-            Description = Explain.CodedBandwidthSeries,
+            Description = description,
             Concept = GraphConcept.CodedBandwidth,
-            Quantity = "Coded Bandwidth",
+            Quantity = name,
         });
         if (time is null)
         {
@@ -471,7 +548,7 @@ internal sealed class CodingRecorder(StreamSetup setup)
             int max = -1;
             for (int unit = first[interval]; unit < (interval + 1 < first.Length ? first[interval + 1] : Count); unit++)
             {
-                max = Math.Max(max, _hertz[unit]);
+                max = Math.Max(max, hertz[unit]);
             }
 
             if (max >= 0)
@@ -483,11 +560,11 @@ internal sealed class CodingRecorder(StreamSetup setup)
 
         if (starts.Count > 0)
         {
-            series.Add(new Series("Coded Bandwidth Over Time", "Hz", SeriesAxis.Seconds, starts.ToArray(), highest.ToArray(), anchor)
+            series.Add(new Series($"{name} Over Time", "Hz", SeriesAxis.Seconds, starts.ToArray(), highest.ToArray(), anchor)
             {
-                Description = Explain.CodedBandwidthOverTimeSeries,
+                Description = overTimeDescription,
                 Concept = GraphConcept.CodedBandwidth,
-                Quantity = "Coded Bandwidth",
+                Quantity = name,
             });
         }
     }

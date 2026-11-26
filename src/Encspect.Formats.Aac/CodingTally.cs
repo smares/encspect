@@ -44,6 +44,11 @@ internal sealed class CodingTally
 
     public long Bands { get; set; }
 
+    // The quantized values of the spectral data that are nonzero, and those coded with an escape sequence (codebook 11).
+    public long NonZero { get; set; }
+
+    public long Escapes { get; set; }
+
     public long NoiseStreams { get; set; }
 
     public long NoiseBands { get; set; }

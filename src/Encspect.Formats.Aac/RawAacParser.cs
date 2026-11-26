@@ -293,6 +293,7 @@ public sealed class RawAacParser : IFormatParser
         if (!leading && state.Logs.Count > 0)
         {
             state.Logs[^1].Log.Feed?.Gap();
+            state.Logs[^1].Log.Gap();
         }
     }
 

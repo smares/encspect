@@ -23,6 +23,8 @@ internal static class CodingStatistics
         Node? stereo = null;
         Node? bandwidth = null;
         Node? intensityBound = null;
+        Node? lastCoefficient = null;
+        Node? escapes = null;
         Node? shapesNode = null;
         Node? midSideBandsNode = null;
         Node? noiseNode = null;
@@ -174,6 +176,21 @@ internal static class CodingStatistics
                 bandwidth.Add(cover("Highest", NodeValue.Integer(hertz.Keys.Last(), "Hz"), Explain.BandwidthHighest, null));
             }
 
+            if (log.Recorder.ValueBandwidths.Count > 0)
+            {
+                SortedDictionary<int, long> hertz = log.Recorder.ValueBandwidths;
+                lastCoefficient = statistics.Add(cover("Last Non-Zero Coefficient", null, Explain.StatLastCoefficient, Topics.CodedBandwidth));
+                lastCoefficient.Add(cover("Lowest", NodeValue.Integer(hertz.Keys.First(), "Hz"), Explain.LastCoefficientLowest, null));
+                lastCoefficient.Add(cover("Most Common", NodeValue.Integer(hertz.MaxBy(b => b.Value).Key, "Hz"), Explain.LastCoefficientMostCommon, null));
+                lastCoefficient.Add(cover("Highest", NodeValue.Integer(hertz.Keys.Last(), "Hz"), Explain.LastCoefficientHighest, null));
+            }
+
+            if (tally.NonZero > 0)
+            {
+                statistics.Add(cover("Non-Zero Coefficients", NodeValue.Integer(tally.NonZero, "coefficients", "coefficient"), Explain.StatNonZero, Topics.Codebooks));
+                escapes = statistics.Add(cover("Escape-Coded Coefficients", Share(tally.Escapes, tally.NonZero, "coefficient"), Explain.StatEscapes, Topics.Codebooks));
+            }
+
             if (log.Recorder.IntensityUnits > 0)
             {
                 intensityBound = statistics.Add(cover("Intensity Stereo Bound", null, Explain.StatIntensityBound, Topics.Intensity));
@@ -247,6 +264,8 @@ internal static class CodingStatistics
             Pulses = pulseNode,
             Sbr = sbrNode,
             ParametricStereo = psNode,
+            LastCoefficient = lastCoefficient,
+            Escapes = escapes,
         };
     }
 
