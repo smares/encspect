@@ -24,7 +24,7 @@ internal static partial class Sbr
         bool plain = true;
         SbrBands bands = header.Bands!.Value;
         bool stores = !output.IsEmpty;
-        Span<int> record = stores ? output : new int[SbrRecord.FirstChannel + (2 * SbrRecord.ChannelStride)];
+        Span<int> record = stores ? output : Scratch();
         Span<int> envelopes = stackalloc int[2];
         Span<int> noises = stackalloc int[2];
         Span<int> ampRes = stackalloc int[2];
@@ -159,6 +159,17 @@ internal static partial class Sbr
         }
 
         return (ps, null, plain);
+    }
+
+    // Where a payload that is not stored is read to (the read needs the values of its own channels): a buffer for each thread, cleared for each payload, so that nothing is allocated.
+    [ThreadStatic]
+    private static int[]? _scratch;
+
+    private static Span<int> Scratch()
+    {
+        int[] scratch = _scratch ??= new int[SbrRecord.FirstChannel + (2 * SbrRecord.ChannelStride)];
+        Array.Clear(scratch);
+        return scratch;
     }
 
     private static Span<int> Channel(Span<int> record, int channel) =>

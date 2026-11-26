@@ -805,7 +805,7 @@ internal sealed class PsDecoder
         }
     }
 
-    // The matrices of a coherence and an intensity difference: the intensity difference sets the channels' gains and the coherence rotates them apart (8.6.4.6.2, mixing procedure Ra).
+    // The matrices of a coherence and an intensity difference: the intensity difference sets the channels' gains and the coherence rotates them apart.
     private static float[] BuildMix(int steps, float[] scale)
     {
         int rows = (2 * steps) + 1;

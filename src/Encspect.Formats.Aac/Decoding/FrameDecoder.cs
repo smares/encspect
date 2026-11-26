@@ -21,7 +21,9 @@ internal sealed class FrameDecoder : IFrameDecoder
     private const int OverlapUnits = 2;
     private const int NoiseUnits = 3;
     private const int LongTransformUnits = 22;
-    private const int SbrUnits = 60;
+    // Per output sample of the SBR stage (the 64-band analysis and synthesis, the high band's generation and adjustment, and parametric stereo's hybrid bank, decorrelator and mixing
+    // for the second channel): measured with DecoderWorkTests (the HE-AAC cases), where the stage takes about 4 times what the core's stages charge in time per unit at 60.
+    private const int SbrUnits = 220;
     private const int ShortTransformUnits = 16;
 
     private readonly DecodeContext _context;

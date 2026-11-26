@@ -1,4 +1,4 @@
-// Format data of ISO/IEC 14496-3 4.6.18: the QMF prototype filter (Table 4.A.89, c[n] for n = 0 to 639) and the table of noise phases V (Table 4.A.91, 512 complex values).
+// Format data of ISO/IEC 14496-3 4.6.18: the QMF prototype filter (c[n] for n = 0 to 639) and the table of noise phases (V, 512 complex values).
 // Taken from libxaac (github.com/ittiam-systems/libxaac at 2fbadd5, Apache License 2.0, Copyright (C) The Android Open Source Project; the notice is in THIRD-PARTY-NOTICES.md):
 // decoder/ixheaacd_sbr_rom.c, esbr_qmf_c (31-bit integers, divided by 2^31) and common/ixheaac_esbr_rom.c, ixheaac_random_phase.
 namespace Encspect.Formats.Aac.Decoding;

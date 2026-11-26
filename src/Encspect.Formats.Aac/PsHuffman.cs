@@ -1,4 +1,4 @@
-// Format data of ISO/IEC 14496-3 8.6.4 (parametric stereo, the Huffman codebooks of Tables 8.18 to 8.21): the codewords as binary trees, a node per entry, whose high byte is the child after a 0 bit and whose low byte is the child
+// Format data of ISO/IEC 14496-3 8.6.4 (parametric stereo, the Huffman codebooks of the IID and ICC parameters): the codewords as binary trees, a node per entry, whose high byte is the child after a 0 bit and whose low byte is the child
 // after a 1 bit (a negative child is a leaf, the symbol being its value plus 64). Taken from libxaac (github.com/ittiam-systems/libxaac at 2fbadd5, Apache License 2.0, Copyright (C) The Android Open Source Project;
 // the notice is in THIRD-PARTY-NOTICES.md): decoder/ixheaacd_sbr_rom.c, the huff_iid_dt, huff_iid_df, huff_icc_dt, huff_icc_df and the fine variants of the first two, and the walk of ixheaacd_ssc_huff_dec.
 namespace Encspect.Formats.Aac;
