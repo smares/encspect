@@ -11,7 +11,7 @@ references: mp3guessenc; EncSpot; LAME tag specification (Gabriel Bouvigne); lib
 
 - A header naming the encoder: the [LAME tag](lame-tag) (high where its CRC holds, else medium) or Fraunhofer's [VBRI header](vbri-header), which has no CRC and is taken to name Fraunhofer (high).
 - A signature in the [ancillary data](ancillary-data): LAME's version text, or an extension (mp3PRO, MP3 Surround).
-- Habits (low): in Encspect's test files Shine 3.1.1 never used the bit reservoir or short blocks; a habit counts over 20 or more frames.
+- Habits (low): in Encspect's test files Shine 3.1.1 never used the bit reservoir or short blocks; a habit counts over 20 or more frames. Where Encspect's test files of other encoders match the same habit, a second evidence line names them: the name is not exclusive.
 - In AAC, ffmpeg's or FAAC 1.x's version text in a [fill element](aac-raw-data-blocks) (high); exhale's [xHE-AAC](usac) layout and FAAC 2.x's [SBR](sbr) layout (medium). afconvert (macOS 15.7) writes no text; in Encspect's test files its MP4 files hold an sbtd box (the PCM source of an encode), which with stream type byte 0x14 is taken for Apple's encoder (medium).
 - The [comment](vorbis-comments)'s vendor string in Vorbis, Opus and Speex; the version in Musepack ([SV8 packets](musepack-sv8-packets)).
 - In WavPack, a new config block or a block checksum, which libwavpack has written since 5.0 ([sub-blocks](wavpack-sub-blocks)) (medium). In WMA, only a claim in the file's metadata names an encoder (low): the frames of versions 1 and 2, Professional and Voice are not read, so no trait of the stream is used.

@@ -220,6 +220,7 @@ public sealed partial class MpegAudioParser
             }
         }
 
+        ProbeTraitRules(region);
         var context = new EncoderContext(state, region, FindSignature(state, region));
         if (headers.Count == 0)
         {
