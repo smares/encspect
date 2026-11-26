@@ -40,6 +40,13 @@ public partial class DetailWindow : Window
         GraphList.ScrollChanged += (_, _) => RequestListSnap();
         ((Control)GraphList.Parent!).SizeChanged += (_, _) => RequestListSnap();
         Loaded += (_, _) => RequestListSnap();
+
+        // The strip's area has the height of a strip and of the scrollbar under a long one, whether
+        // or not the selected node has bits to show, so that selecting a node never resizes the hex view.
+        void ReserveStripHeight() => BitsScroll.Height = Bits.StripHeight() + 18;
+        ReserveStripHeight();
+        ActualThemeVariantChanged += (_, _) => ReserveStripHeight();
+        Loaded += (_, _) => ReserveStripHeight();
         TreeList.AddHandler(TappedEvent, OnTreeTapped, RoutingStrategies.Bubble, handledEventsToo: true);
         TreeList.DoubleTapped += (_, e) =>
         {

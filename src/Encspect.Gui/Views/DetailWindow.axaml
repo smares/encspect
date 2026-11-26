@@ -109,10 +109,10 @@
                            IsVisible="{Binding LearnMoreText, Converter={x:Static ObjectConverters.IsNotNull}}" Tapped="OnLearnMore"
                            ToolTip.Tip="Open the background article in a side pane." />
               </Grid>
-              <TextBlock Name="SelectionDescription" Text="{Binding SelectionDescription}" Classes="secondary" FontSize="12" TextWrapping="Wrap"
-                         MaxLines="3" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding SelectionDescription}"
-                         IsVisible="{Binding SelectionDescription, Converter={x:Static ObjectConverters.IsNotNull}}" />
-              <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+              <!-- Three lines of a fixed height whatever the node says, so that selecting a node never resizes the hex view above. -->
+              <TextBlock Name="SelectionDescription" Text="{Binding SelectionDescription}" Classes="secondary" FontSize="12" LineHeight="16" Height="48" TextWrapping="Wrap"
+                         MaxLines="3" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding SelectionDescription}" />
+              <ScrollViewer Name="BitsScroll" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                 <views:BitStripView Name="Bits" Strip="{Binding BitStrip}" HorizontalAlignment="Left" />
               </ScrollViewer>
             </StackPanel>

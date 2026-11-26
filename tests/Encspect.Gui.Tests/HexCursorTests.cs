@@ -305,6 +305,45 @@ public class HexCursorTests
     }
 
     [AvaloniaFact]
+    public void Selecting_a_node_never_resizes_the_hex_view()
+    {
+        DetailWindow window = Open();
+        StructureTree tree = window.Model.Tree!;
+        TreeRow stream = tree.Root.RowAt(0);
+        tree.Expand(stream);
+        double height = window.Hex.Bounds.Height;
+        Assert.True(height > 0);
+
+        // Nodes with a long description and a short one, and a field of a few bits with its strip.
+        List<TreeRow> rows = [tree.Root, stream];
+        TreeRow frame = Enumerable.Range(0, stream.LoadChildren().Count).Select(i => stream.RowAt(i)).First(r => r.Kind == NodeKind.Frame);
+        tree.Expand(frame);
+        rows.Add(frame);
+        foreach (TreeRow child in Enumerable.Range(0, frame.LoadChildren().Count).Select(i => frame.RowAt(i)).ToList())
+        {
+            rows.Add(child);
+            if (child.HasChildren)
+            {
+                tree.Expand(child);
+                rows.AddRange(Enumerable.Range(0, child.LoadChildren().Count).Select(i => child.RowAt(i)));
+            }
+        }
+
+        Assert.Contains(rows, r => r.Node.BitLength is not null);
+        Assert.Contains(rows, r => (r.Description?.Length ?? 0) < 60);
+        Assert.Contains(rows, r => (r.Description?.Length ?? 0) > 150);
+
+        foreach (TreeRow row in rows)
+        {
+            window.Model.SelectedNode = row;
+            UiPump.Until(() => true);
+            Assert.Equal(height, window.Hex.Bounds.Height);
+        }
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public void Home_and_end_move_the_cursor_in_the_row_and_with_control_in_the_file()
     {
         DetailWindow window = Open();

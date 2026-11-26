@@ -84,6 +84,13 @@ public sealed class BitStripView : Control
         return new Size((strip.Bytes.Length * ((8 * cell) + GroupGap)) + 16, labelHeight + bitHeight);
     }
 
+    // The height of a strip, which the area that holds it reserves whether or not a node has one.
+    public double StripHeight()
+    {
+        (_, double labelHeight, double bitHeight) = Metrics();
+        return labelHeight + bitHeight;
+    }
+
     private (double Cell, double LabelHeight, double BitHeight) Metrics()
     {
         Typeface typeface = Palette.Monospace(this);
