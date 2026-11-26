@@ -464,9 +464,9 @@ class ScopeTests(unittest.TestCase):
             self.assertEqual(chosen.selected, {"WavPack", "Matroska", "Ape", "Id3"}, path)
             self.assertIn("unit tests scoped to WavPack, Ape, Id3, Matroska", reason)
             names = shard_names(matrix)
-            self.assertNotIn("corrupt-c", names, "its classes belong to other formats, so nothing is left of it")
+            self.assertNotIn("corrupt-b", names, "its classes belong to other formats, so nothing is left of it")
             self.assertIn("rest", names)
-            self.assertIn("corrupt-e", names, "CorruptWavPackBuiltFileTests")
+            self.assertIn("corrupt-d", names, "CorruptWavPackBuiltFileTests")
             for entry in matrix:
                 self.assertTrue(valid_filter(entry["filter"]), entry["filter"])
         corrupt_a = next(e["filter"] for e in matrix if e["shard"] == "corrupt-a")
@@ -482,7 +482,7 @@ class ScopeTests(unittest.TestCase):
         self.assertNotIn("FullyQualifiedName!~.MatroskaFixtureTests.", rest)
         for never in ("DescriptionTests", "FindingCoverageTests", "DecoderDeterminismTests", "AnalyzerTests", "MeasurementDeterminismTests"):
             self.assertNotIn(never, rest)
-        corrupt_b = next(e["filter"] for e in matrix if e["shard"] == "corrupt-b")
+        corrupt_b = next(e["filter"] for e in matrix if e["shard"] == "memory-a")
         self.assertIn("FullyQualifiedName!=Encspect.Tests.Host.MemoryTests.ManySpeexPacketsStayCompact", corrupt_b)
         self.assertNotIn("FullyQualifiedName!=Encspect.Tests.Host.MemoryTests.ManyWavPackBlocksStayCompact", corrupt_b)
 
@@ -523,7 +523,7 @@ class ScopeTests(unittest.TestCase):
                                         "tests/Encspect.Tests/Decoding/DecoderChargeTests.cs", "tests/Encspect.Tests/Measurement/MeasurementTests.cs",
                                         "tests/Encspect.Tests/Core/NodeTests.cs", "tests/Encspect.Tests/Cli/CommandLineTests.cs")
         self.assertEqual(chosen.selected, {"WavPack", "Matroska", "Ape", "Id3"})
-        corrupt_b = next(e["filter"] for e in matrix if e["shard"] == "corrupt-b")
+        corrupt_b = next(e["filter"] for e in matrix if e["shard"] == "memory-a")
         self.assertNotIn("MemoryTests.ManySpeexPacketsStayCompact", corrupt_b, "the changed file's classes run whole")
         only = scoped("tests/Encspect.Tests/Host/AnalyzerTests.cs")
         self.assertEqual(only[0].selected, set())
