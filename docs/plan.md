@@ -416,6 +416,10 @@ The scope is confirmed when 0.4 is done. The decoders follow steps 9 to 15 of [l
 
 14. **AAC LC's figures from the stored values** (the lead, 2026-11-26; a follow-up pull request right after the AAC LC decoder): the decoder's walk stores the quantized values and the window sequences, which gives two rows of the AAC survey of [coding-graphs.md](design/coding-graphs.md#aac-adts-adif-mp4-matroska): the last nonzero line of each channel stream beside "Coded Bandwidth", and the share of escape values; and a finding for window sequences the specification does not allow. They need the shortcut walk of the default analysis to decode values, whose cost the pull request measures first (the walk is at most 1.5 times slower, decision 10 of [lossy-decoders.md](design/lossy-decoders.md#decisions)).
 
+15. **A band edge at another sample rate's Nyquist frequency** (the lead, 2026-11-26, from Hydrogenaudio's sample rate conversion comparison): a measurement beside the spectral cutoff that says when the content ends in a steep edge at the Nyquist frequency of a lower common sample rate (22.05 kHz in a 48 kHz or 96 kHz file, 24 kHz in an 88.2 kHz file, and so on), as a figure with its basis ("Content ends at 22.05 kHz, the Nyquist frequency of 44.1 kHz"), never as a verdict about the file's history; and, where measurable, the level of the mirrored image above that edge.
+   - **First a design section** in [spectral-analysis.md](design/spectral-analysis.md): the rates tested, how steep an edge counts, the tolerance, how the image is measured, and the cases that look alike (an encoder's lowpass, a band-limited source).
+   - **Fixtures:** sweeps and music resampled by SoX (run as a black box) and r8brain (MIT) at several qualities, and the same content not resampled.
+
 ### After 0.5
 
 The more formats of [planned.md](formats/planned.md#after-05-more-formats), as later milestones in this order (the lead, 2026-11-17): formats whose audio the existing parsers and decoders already read come first, since they cost a container or a transport and no codec; among the rest, the better documented a format is, the sooner it comes.
