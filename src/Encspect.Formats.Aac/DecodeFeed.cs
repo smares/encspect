@@ -178,7 +178,7 @@ internal sealed class DecodeFeed
         for (long i = 0; i < lost && _session.IsDecoding; i++)
         {
             _session.Decode(new CodedFrame(new MappedBytes(ReadOnlyMemory<byte>.Empty, frame.FileStart), nodeName, first - ((lost - i) * _config.FrameLength), _config.FrameLength)
-                { IsUnreadable = true, FollowsGap = i > 0, Node = node });
+            { IsUnreadable = true, FollowsGap = i > 0, Node = node });
         }
     }
 
