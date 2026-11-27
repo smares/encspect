@@ -650,7 +650,7 @@ The implementer may read the files marked safe: they hold nothing taken from FFm
 **Never read, whatever the folder:**
 
 - FFmpeg source of any version, anywhere on the machine: the 6.1.1 archive and every other copy or checkout of it, including `libavcodec`, `libavformat` and `libavutil`.
-- These scratch folders and everything in them: `wmadesc-standard`, `wmadesc-standard-review`, `wma-audit-ffmpeg`, `wmadesc-pro`, `wmadesc-voice`, `wmal-*`, `ff801*`, and `audit-*`.
+- These scratch folders and everything in them: `wmadesc-standard`, `wmadesc-standard-decoding` (and the cache folder `.cache/wmadesc-standard-decoding`), `wmadesc-standard-review`, `wma-audit-ffmpeg`, `wmadesc-pro`, `wmadesc-voice`, `wmal-*`, `ff801*`, and `audit-*`.
 - Any review under `reviews/` named `wma-*.md`.
 - FFmpeg is run only as a black box, as [`docs/development.md`](../development.md) describes the cross-checks.
 
