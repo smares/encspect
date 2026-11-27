@@ -27,6 +27,11 @@ internal sealed partial class BlockReader
             bool independent = bits.ReadBit();
             _lastCceIsIndependent = independent;
             Field(n, "IsIndependentlySwitched", at, at + 1, NodeValue.Boolean(independent), Explain.CceIndependentlySwitched);
+            if (!independent && _setup.ObjectType == 4)
+            {
+                Soft("aac.ltp-with-dependent-coupling", "a dependently switched coupling channel element in a stream of the object type AAC LTP, where ISO/IEC 14496-3 4.6.7.4.3 allows none", at, at + 1, "IsIndependentlySwitched");
+            }
+
             int coupled = (int)bits.Read(3) + 1;
             Field(n, "Coupled Elements", at + 1, at + 4, NodeValue.Integer(coupled), Explain.CceCoupledElements);
             int lists = 0;

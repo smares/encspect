@@ -36,8 +36,17 @@ internal sealed class CodingTally
 
     public long PredictorResets { get; set; }
 
-    // AAC LTP: channel streams with ltp_data_present.
+    // The bands of the channel streams with predictor data that use prediction, of those up to min(max_sfb, PRED_SFB_MAX) (ISO/IEC 13818-7 Table 62).
+    public long PredictionBands { get; set; }
+
+    public long PredictionBandsAvailable { get; set; }
+
+    // AAC LTP: channel streams with ltp_data_present, and the bands of those that use it, of those up to min(max_sfb, 40).
     public long LongTermPrediction { get; set; }
+
+    public long LongTermPredictionBands { get; set; }
+
+    public long LongTermPredictionBandsAvailable { get; set; }
 
     // Scalefactor bands coded (window groups times max_sfb), per codebook.
     public long[] Codebooks { get; } = new long[16];

@@ -47,6 +47,18 @@ internal static class CodingCategories
         new("Without TNS", Explain.FlagWithoutTns) { Topic = Topics.Tns },
     ];
 
+    public static readonly Category[] WithPrediction =
+    [
+        new("With prediction", Explain.FlagWithPrediction) { Topic = Topics.Prediction },
+        new("Without prediction", Explain.FlagWithoutPrediction) { Topic = Topics.Prediction },
+    ];
+
+    public static readonly Category[] WithLtp =
+    [
+        new("With long-term prediction", Explain.FlagWithLtp) { Topic = Topics.LongTermPrediction },
+        new("Without long-term prediction", Explain.FlagWithoutLtp) { Topic = Topics.LongTermPrediction },
+    ];
+
     public static readonly Category[] WithPulses =
     [
         new("With pulse data", Explain.FlagWithPulses) { Topic = Topics.PulseData },
@@ -119,6 +131,12 @@ internal sealed record CodingNodes(Node? WindowSequences, Node? BlockSizes, Node
 
     public Node? Pulses { get; init; }
 
+    public Node? Prediction { get; init; }
+
+    public Node? PredictionBands { get; init; }
+
+    public Node? LongTermPrediction { get; init; }
+
     public Node? Sbr { get; init; }
 
     public Node? ParametricStereo { get; init; }
@@ -152,6 +170,16 @@ internal sealed class CodingRecorder(StreamSetup setup)
     private readonly List<byte> _ps = [];
     private readonly CategorySeriesBuilder _shapeSeries = new("Window Shapes", CodingCategories.WindowShapes, "channel stream");
     private readonly CategorySeriesBuilder _tnsSeries = new("TNS", CodingCategories.WithTns, "channel stream");
+    private readonly List<byte> _prediction = [];
+    private readonly List<byte> _ltp = [];
+
+    // Only the object types that have the tools keep their series, so that the others keep nothing for them.
+    private readonly CategorySeriesBuilder? _predictionSeries = setup.ObjectType == 1 ? new("Prediction", CodingCategories.WithPrediction, "channel stream") : null;
+    private readonly CategorySeriesBuilder? _ltpSeries = setup.ObjectType == 4 ? new("Long-Term Prediction", CodingCategories.WithLtp, "channel stream") : null;
+    private readonly ChunkedList<short> _predictionShare = new();
+    private int _predictionShareUnits;
+    private int _unitPredictionUsed;
+    private int _unitPredictionAvailable;
     private readonly CategorySeriesBuilder _pulseSeries = new("Pulse Data", CodingCategories.WithPulses, "channel stream");
     private readonly CategorySeriesBuilder _noiseSeries = new("Noise Substitution", CodingCategories.WithNoise, "channel stream");
 
@@ -222,6 +250,21 @@ internal sealed class CodingRecorder(StreamSetup setup)
         _tns.Add(hasTns ? (byte)0 : (byte)1);
         _pulses.Add(hasPulses ? (byte)0 : (byte)1);
         _noise.Add(hasNoise ? (byte)0 : (byte)1);
+    }
+
+    // The prediction of the channel stream: whether it has predictor data (AAC Main) and ltp_data (AAC LTP), and the bands of Main's that use it of those it can.
+    public void Prediction(bool hasPrediction, bool hasLtp, int used, int available)
+    {
+        if (setup.ObjectType == 1)
+        {
+            _prediction.Add(hasPrediction ? (byte)0 : (byte)1);
+            _unitPredictionUsed += used;
+            _unitPredictionAvailable += available;
+        }
+        else if (setup.ObjectType == 4)
+        {
+            _ltp.Add(hasLtp ? (byte)0 : (byte)1);
+        }
     }
 
     // An SBR payload read to its end, with the figures Sbr.ReadData states of it: the frame class and the envelope count of each channel, and the parametric stereo data's envelopes and modes.
@@ -313,6 +356,10 @@ internal sealed class CodingRecorder(StreamSetup setup)
         _tnsSeries.Add(CollectionsMarshal.AsSpan(_tns));
         _pulseSeries.Add(CollectionsMarshal.AsSpan(_pulses));
         _noiseSeries.Add(CollectionsMarshal.AsSpan(_noise));
+        _predictionSeries?.Add(CollectionsMarshal.AsSpan(_prediction));
+        _ltpSeries?.Add(CollectionsMarshal.AsSpan(_ltp));
+        _predictionShare.Add(_unitPredictionAvailable == 0 ? (short)-1 : (short)CodingStatistics.RoundHalfEven(_unitPredictionUsed * 1000, _unitPredictionAvailable));
+        _predictionShareUnits += _unitPredictionAvailable == 0 ? 0 : 1;
         AddSbr();
         _sbrFrameClasses.End(Count);
         _sbrEnvelopes.End(Count);
@@ -363,6 +410,10 @@ internal sealed class CodingRecorder(StreamSetup setup)
         _tns.Clear();
         _pulses.Clear();
         _noise.Clear();
+        _prediction.Clear();
+        _ltp.Clear();
+        _unitPredictionUsed = 0;
+        _unitPredictionAvailable = 0;
         _sbr.Clear();
         _ps.Clear();
         _unitMidSide = 0;
@@ -414,6 +465,8 @@ internal sealed class CodingRecorder(StreamSetup setup)
 
         Add(_shapeSeries, nodes.Shapes, Explain.WindowShapesSeries, Topics.Windows);
         Add(_tnsSeries, nodes.Tns, Explain.TnsSeries, Topics.Tns);
+        Add(_predictionSeries, nodes.Prediction, Explain.PredictionSeries, Topics.Prediction);
+        Add(_ltpSeries, nodes.LongTermPrediction, Explain.LtpSeries, Topics.LongTermPrediction);
         Add(_pulseSeries, nodes.Pulses, Explain.PulseSeries, Topics.PulseData);
         Add(_noiseSeries, nodes.Noise, Explain.NoiseSeries, Topics.Pns);
         Add(_sbrFrameClasses.Builder, nodes.SbrFrameClasses, Explain.SbrFrameClassesSeries, Topics.Sbr);
@@ -426,6 +479,7 @@ internal sealed class CodingRecorder(StreamSetup setup)
             Add(_psSeries!, nodes.ParametricStereo, Explain.PsSeries, Topics.ParametricStereo);
         }
         AddMidSideBands(offsets, nodes.MidSideBands, series, cancellation);
+        AddPredictionBands(offsets, nodes.PredictionBands, series, cancellation);
         AddBound(offsets, nodes.IntensityBound, series, cancellation);
         AddBandwidth(offsets, nodes.CodedBandwidth, time, series, cancellation);
         AddHertz(_valueHertz, "Last Non-Zero Coefficient", Explain.LastCoefficientSeries, Explain.LastCoefficientOverTimeSeries, offsets, nodes.LastCoefficient, time, series, cancellation);
@@ -467,6 +521,42 @@ internal sealed class CodingRecorder(StreamSetup setup)
             Description = Explain.MidSideBandsSeries,
             Concept = GraphConcept.StereoCoding,
             Quantity = "Mid/Side Bands",
+        });
+    }
+
+    // "Prediction Bands" per unit: the share of the bands of its channel streams with predictor data that use prediction, in percent, at the units that have such a channel stream.
+    private void AddPredictionBands(ReadOnlyMemory<double> offsets, Node? anchor, List<Series> series, CancellationToken cancellation)
+    {
+        if (_predictionShareUnits == 0 || anchor is null)
+        {
+            return;
+        }
+
+        var values = new double[_predictionShareUnits];
+        double[]? own = _predictionShareUnits == Count ? null : new double[_predictionShareUnits];
+        for (int i = 0, n = 0; i < Count; i++)
+        {
+            if (i % 4096 == 0)
+            {
+                cancellation.ThrowIfCancellationRequested();
+            }
+
+            if (_predictionShare[i] >= 0)
+            {
+                values[n] = _predictionShare[i] / 10.0;
+                if (own is not null)
+                {
+                    own[n] = offsets.Span[i];
+                }
+
+                n++;
+            }
+        }
+
+        series.Add(new Series("Prediction Bands", "%", SeriesAxis.FrameOffset, own is null ? offsets : own, values, anchor)
+        {
+            Description = Explain.PredictionBandsSeries,
+            Quantity = "Prediction Bands",
         });
     }
 

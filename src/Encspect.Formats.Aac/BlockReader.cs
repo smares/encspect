@@ -39,6 +39,10 @@ internal sealed partial class BlockReader
     private readonly int[] _previousSequence = Enumerable.Repeat(-1, BlockRecord.MaxSlots).ToArray();
     private bool _windowFlagged;
     private int _block;
+
+    // AAC Main: per channel stream (by its number in its block) the frames in which each of the 30 predictor reset groups was used since it was last reset (ISO/IEC 13818-7 13.3.3).
+    private readonly int[]? _groupActivity;
+    private bool _overdueFlagged;
     private int _lastChannelElement;
     private int _lastChannelTag;
     private int _elementCount;
@@ -57,6 +61,10 @@ internal sealed partial class BlockReader
         _setup = setup;
         _tally = tally;
         _recorder = recorder;
+        if (setup.ObjectType == 1 && tally is not null)
+        {
+            _groupActivity = new int[BlockRecord.MaxSlots * 30];
+        }
     }
 
     // What the last block's skeleton leaves out, in order.
@@ -115,6 +123,7 @@ internal sealed partial class BlockReader
         _anchor = bits.Original;
         _channel = 0;
         _windowFlagged = false;
+        _overdueFlagged = false;
         _lastChannelElement = -1;
         _lastChannelTag = 0;
         _elementCount = 0;
@@ -562,6 +571,48 @@ internal sealed partial class BlockReader
         }
     }
 
+    // A predictor reset group is used in a frame when a band that uses prediction holds one of its lines (Table 63: line k is in group k mod 30 + 1); it must be reset within 240 frames in
+    // which it is used (13818-7 13.3.3), and an eight-short block resets every group. The reset follows the frame's processing.
+    private void TrackPredictorGroups(Ics ics, int stream)
+    {
+        Span<int> activity = _groupActivity!.AsSpan(stream * 30, 30);
+        if (ics.WindowSequence == 2)
+        {
+            activity.Clear();
+            return;
+        }
+
+        if (ics.Predictor)
+        {
+            uint groups = 0;
+            for (int sfb = 0; sfb < Math.Min(ics.MaxSfb, _setup.PredictionBands); sfb++)
+            {
+                if (((ics.PredictionUsed >> sfb) & 1) != 0 && ics.Codebooks[sfb] < 13)
+                {
+                    for (int k = ics.Offsets[sfb]; k < ics.Offsets[sfb + 1]; k++)
+                    {
+                        groups |= 1u << (k % 30);
+                    }
+                }
+            }
+
+            for (int g = 0; g < 30; g++)
+            {
+                if (((groups >> g) & 1) != 0 && ++activity[g] == 241 && !_overdueFlagged)
+                {
+                    _overdueFlagged = true;
+                    Soft("aac.predictor-reset-overdue", $"predictor reset group {g + 1} used in more than 240 frames without a reset (ISO/IEC 13818-7 13.3.3 asks for one within 240 frames in which a group is used), so the encoder's predictors and the decoder's can drift apart",
+                        ics.PredictionAt, ics.PredictionEnd, "Prediction Used");
+                }
+            }
+
+            if (ics.PredictorReset && ics.PredictorGroup is >= 1 and <= 30)
+            {
+                activity[ics.PredictorGroup - 1] = 0;
+            }
+        }
+    }
+
     // The window sequences of the blocks read after this call follow no block read before it.
     internal void ForgetWindows() => Array.Fill(_previousSequence, -1);
 
@@ -631,13 +682,31 @@ internal sealed partial class BlockReader
 
         tally.Pulses += pulse ? 1 : 0;
         tally.GainControl += gainControl ? 1 : 0;
+        int predictionUsed = 0;
+        int predictionAvailable = 0;
         if (ics.Predictor)
         {
             tally.Prediction++;
             tally.PredictorResets += ics.PredictorReset ? 1 : 0;
+            predictionUsed = System.Numerics.BitOperations.PopCount(ics.PredictionUsed);
+            predictionAvailable = Math.Min(ics.MaxSfb, _setup.PredictionBands);
+            tally.PredictionBands += predictionUsed;
+            tally.PredictionBandsAvailable += predictionAvailable;
         }
 
-        tally.LongTermPrediction += ics.Ltp ? 1 : 0;
+        if (ics.Ltp)
+        {
+            tally.LongTermPrediction++;
+            tally.LongTermPredictionBands += System.Numerics.BitOperations.PopCount(ics.LtpUsed);
+            tally.LongTermPredictionBandsAvailable += Math.Min(ics.MaxSfb, 40);
+        }
+
+        if (_groupActivity is not null && stream < BlockRecord.MaxSlots)
+        {
+            TrackPredictorGroups(ics, stream);
+        }
+
+        _recorder?.Prediction(ics.Predictor, ics.Ltp, predictionUsed, predictionAvailable);
         if (ics.WindowSequence == 2)
         {
             tally.MaxSfbShort[ics.MaxSfb]++;
@@ -798,6 +867,8 @@ internal sealed partial class BlockReader
             }
 
             ics.PredictionUsed = flags;
+            ics.PredictionAt = usedStart;
+            ics.PredictionEnd = bits.Original;
             if (n is not null)
             {
                 n.Add(_where.Bits("Prediction Used", usedStart, bits.Original, FlagList(flags, used), Explain.PredictionUsed));
@@ -1586,6 +1657,10 @@ internal sealed partial class BlockReader
 
         public ulong PredictionUsed { get; set; }
 
+        public int PredictionAt { get; set; }
+
+        public int PredictionEnd { get; set; }
+
         public bool Ltp { get; set; }
 
         public int LtpLag { get; set; }
@@ -1622,6 +1697,8 @@ internal sealed partial class BlockReader
             PredictorReset = other.PredictorReset;
             PredictorGroup = other.PredictorGroup;
             PredictionUsed = other.PredictionUsed;
+            PredictionAt = other.PredictionAt;
+            PredictionEnd = other.PredictionEnd;
         }
     }
 }

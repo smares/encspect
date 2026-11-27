@@ -17,6 +17,8 @@ internal static class Topics
     public const string Windows = "aac-windows-and-blocks";
     public const string Codebooks = "aac-section-data-and-codebooks";
     public const string Tns = "tns";
+    public const string Prediction = "aac-prediction";
+    public const string LongTermPrediction = "long-term-prediction";
     public const string Pns = "pns";
     public const string PulseData = "aac-pulse-data";
     public const string DynamicRange = "aac-dynamic-range-control";

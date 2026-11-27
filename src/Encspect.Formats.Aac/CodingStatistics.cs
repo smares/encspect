@@ -29,6 +29,9 @@ internal static class CodingStatistics
         Node? midSideBandsNode = null;
         Node? noiseNode = null;
         Node? tnsStreams = null;
+        Node? predictionNode = null;
+        Node? predictionBandsNode = null;
+        Node? ltpNode = null;
         Node? pulseNode = null;
         Node? sbrNode = null;
         Node? psNode = null;
@@ -151,13 +154,21 @@ internal static class CodingStatistics
 
             if (tally.Prediction > 0 || setup.ObjectType == 1)
             {
-                Node prediction = statistics.Add(cover("Prediction", Share(tally.Prediction, streams, "channel stream"), Explain.StatPrediction, null));
+                Node prediction = predictionNode = statistics.Add(cover("Prediction", Share(tally.Prediction, streams, "channel stream"), Explain.StatPrediction, Topics.Prediction));
                 prediction.Add(cover("Predictor Resets", NodeValue.Integer(tally.PredictorResets, "channel streams", "channel stream"), Explain.StatPredictorResets, null));
+                if (tally.PredictionBandsAvailable > 0)
+                {
+                    predictionBandsNode = prediction.Add(cover("Prediction Bands", Percent(tally.PredictionBands, tally.PredictionBandsAvailable), Explain.StatPredictionBands, Topics.Prediction));
+                }
             }
 
             if (tally.LongTermPrediction > 0 || setup.ObjectType == 4)
             {
-                statistics.Add(cover("Long-Term Prediction", Share(tally.LongTermPrediction, streams, "channel stream"), Explain.StatLtp, null));
+                ltpNode = statistics.Add(cover("Long-Term Prediction", Share(tally.LongTermPrediction, streams, "channel stream"), Explain.StatLtp, Topics.LongTermPrediction));
+                if (tally.LongTermPredictionBandsAvailable > 0)
+                {
+                    ltpNode.Add(cover("Long-Term Prediction Bands", Percent(tally.LongTermPredictionBands, tally.LongTermPredictionBandsAvailable), Explain.StatLtpBands, Topics.LongTermPrediction));
+                }
             }
 
             Node codebooks = statistics.Add(cover("Codebooks", NodeValue.Integer(tally.Bands, "bands", "band"), Explain.StatCodebooks, Topics.Codebooks));
@@ -278,6 +289,9 @@ internal static class CodingStatistics
             MidSideBands = midSideBandsNode,
             Noise = noiseNode,
             Tns = tnsStreams,
+            Prediction = predictionNode,
+            PredictionBands = predictionBandsNode,
+            LongTermPrediction = ltpNode,
             Pulses = pulseNode,
             Sbr = sbrNode,
             ParametricStereo = psNode,

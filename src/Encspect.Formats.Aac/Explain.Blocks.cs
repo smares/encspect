@@ -116,6 +116,8 @@ internal static partial class Explain
     public const string StatGainControl = "Channel streams with AAC SSR gain control data.";
     public const string StatPrediction = "Channel streams with AAC Main predictor data.";
     public const string StatPredictorResets = "Channel streams that reset a group of AAC Main predictors.";
+    public const string StatPredictionBands = "The share of the scalefactor bands that use prediction, of those up to the highest band prediction can use (ISO/IEC 13818-7 Table 62) in channel streams with predictor data.";
+    public const string StatLtpBands = "The share of the scalefactor bands that use long-term prediction, of those up to min(max_sfb, 40) in channel streams with long-term prediction data (ISO/IEC 14496-3 4.6.7.2).";
     public const string StatLtp = "Channel streams with AAC LTP long-term prediction data.";
     public const string StatCodebooks = "The scalefactor bands of all channel streams by their codebook: 0 zero, 1 to 11 Huffman codebooks, 13 noise substitution, 14 and 15 intensity stereo. A short window group counts its bands once.";
     public const string StatCodebook = "The bands of this codebook, with their share of all coded bands.";

@@ -42,6 +42,13 @@ internal static partial class Explain
 
     public const string ShapeSine = "Channel streams whose window_shape selects the sine window (ISO/IEC 14496-3, 4.5.2).";
     public const string ShapeKbd = "Channel streams whose window_shape selects the Kaiser-Bessel derived window (ISO/IEC 14496-3, 4.5.2).";
+    public const string FlagWithPrediction = "Channel streams that carry predictor data (predictor_data_present, ISO/IEC 13818-7 13.3.1).";
+    public const string FlagWithoutPrediction = "Channel streams without predictor data.";
+    public const string FlagWithLtp = "Channel streams that carry long-term prediction data (ltp_data_present, ISO/IEC 14496-3 4.6.7).";
+    public const string FlagWithoutLtp = "Channel streams without long-term prediction data.";
+    public const string PredictionSeries = "Whether each channel stream of every unit carries predictor data, as the tally of Prediction counts them.";
+    public const string LtpSeries = "Whether each channel stream of every unit carries long-term prediction data, as the tally of Long-Term Prediction counts them.";
+    public const string PredictionBandsSeries = "The share of the scalefactor bands of each unit's channel streams with predictor data, up to the highest band prediction can use, that use prediction, in percent; a unit without such a channel stream has none.";
     public const string FlagWithTns = "Channel streams that carry temporal noise shaping data (tns_data_present, ISO/IEC 14496-3, 4.6.9).";
     public const string FlagWithoutTns = "Channel streams without temporal noise shaping data.";
     public const string FlagWithPulses = "Channel streams that carry pulse data (pulse_data_present, ISO/IEC 14496-3, 4.6.3).";
