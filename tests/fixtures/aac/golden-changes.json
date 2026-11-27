@@ -20,6 +20,13 @@
       "goldens": [
         "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
       ]
+    },
+    {
+      "scope": "finding",
+      "code": "aac.implicit-sbr",
+      "goldens": [
+        "tests/fixtures/aac/adts/sbr-before-channel-element.report.json"
+      ]
     }
   ],
   "changed": [
@@ -136,7 +143,8 @@
       "scope": "finding",
       "code": "aac.sbr-without-channel-element",
       "fields": [
-        "message"
+        "message",
+        "count"
       ],
       "goldens": [
         "tests/fixtures/aac/adts/sbr-before-channel-element.report.json",
@@ -214,7 +222,32 @@
         "count"
       ],
       "goldens": [
-        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
+        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json",
+        "tests/fixtures/aac/adts/sbr-before-channel-element.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "fields": [
+        "codec",
+        "sampleRate",
+        "samples"
+      ],
+      "goldens": [
+        "tests/fixtures/aac/adts/sbr-before-channel-element.report.json"
+      ]
+    },
+    {
+      "path": [
+        "ADTS",
+        "Statistics",
+        "Samples"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/aac/adts/sbr-before-channel-element.report.json"
       ]
     }
   ],
