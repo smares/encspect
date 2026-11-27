@@ -2,10 +2,10 @@
  "schema": 1,
  "format": "aac",
  "run": {
-  "id": "41674285735",
-  "commit": "ac605e9dee58b2c2496733db5dc6342cd5b66a12",
+  "id": "45974409807",
+  "commit": "f61a3bf037ac558896ffe8c818178b810347521a",
   "imageOS": "ubuntu26",
-  "imageVersion": "20261026.180.1",
+  "imageVersion": "20261116.202.1",
   "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
   "fdkAac": {
    "commit": "801f67f671929311e0c9952c5f92d6e147c7b003",
@@ -18,23 +18,23 @@
    "build": "24H232",
    "machine": "arm64",
    "imageOS": "macos15",
-   "imageVersion": "20261028.0489.1",
+   "imageVersion": "20261118.0550.1",
    "audioCodecs": "7.0",
    "audioToolbox": "1.14",
-   "runId": "41674285735",
-   "commit": "ac605e9dee58b2c2496733db5dc6342cd5b66a12"
+   "runId": "45974409807",
+   "commit": "f61a3bf037ac558896ffe8c818178b810347521a"
   },
   "mediaFoundation": {
    "windows": "Windows Server 2025 Datacenter 24H2",
-   "build": "26100.33674",
+   "build": "26100.33828",
    "machine": "AMD64",
    "imageOS": "win25-vs2026",
-   "imageVersion": "20261030.294.1",
+   "imageVersion": "20261123.321.1",
    "msAudDecMft": "10.0.26100.33438 (WinBuild.160101.0800)",
    "mfreadwrite": "10.0.26100.33296 (WinBuild.160101.0800)",
    "mfplat": "10.0.26100.32995 (WinBuild.160101.0800)",
-   "runId": "41674285735",
-   "commit": "ac605e9dee58b2c2496733db5dc6342cd5b66a12"
+   "runId": "45974409807",
+   "commit": "f61a3bf037ac558896ffe8c818178b810347521a"
   }
  },
  "statuses": [
@@ -4580,6 +4580,297 @@
    ]
   },
   {
+   "path": "fill-sbr-with-other-payload.aac",
+   "sha256": "6ae27fe655cd981f38502c63cf0d1791a4b6d3cefa941814b97dc5ebc3917106",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 12288,
+     "reference": 12288,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 12288
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 12288,
+       "decoderSamples": 6144,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 22050,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 12288,
+       "decoderSamples": 6144,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 22050,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 12288,
+       "decoderSamples": 12288,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "streamChangeUnits": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 2321995,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1390",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 12288
+      },
+      "reader": {
+       "samples": 12288,
+       "decoderSamples": 6144,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 22050,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 22050,
+        "channels": 2
+       }
+      }
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 6144,
+     "analyzer": 12288,
+     "status": "noted",
+     "kind": "rate-differs",
+     "reason": "Core Audio outputs 6,144 samples at 22050 Hz where the analyzer's runs are at 44100 Hz: the decoders disagree on whether SBR is applied; FDK and the analyzer agree, and the lead accepted on 2026-11-01 to take FDK as the reference and list Core Audio's figure as noted (probe question 3)",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [
+    {
+     "index": 0,
+     "offset": 0,
+     "length": 69,
+     "ranges": [
+      [
+       0,
+       69
+      ]
+     ],
+     "decoder": "decoded",
+     "samples": 2048,
+     "finding": "aac.fill-sbr-with-other-payload",
+     "findings": [
+      "aac.fill-sbr-with-other-payload"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 6,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "first-block-kbd.aac",
+   "sha256": "ff2e6d3c636f469a2ccc7ccb47d55dabc1a705ecec369ebb52b5f80ad9a5d482",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 2048,
+     "reference": 2048,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 2048
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 2048,
+       "decoderSamples": 2048,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 2048,
+       "decoderSamples": 2048,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 2048,
+       "decoderSamples": 2048,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 232199,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1208",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 2048
+      },
+      "reader": {
+       "samples": null,
+       "why": "refused: the file did not open"
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 2,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
    "path": "implicit-sbr.aac",
    "sha256": "7f0389043ba4c646340f688daf162825cbb263bd957199a8891048e01ad13c5e",
    "figures": [
@@ -5015,6 +5306,417 @@
     "cutUnits": 0,
     "skippedRanges": 2,
     "skippedBytes": 114
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "lfe-restrictions-pce.aac",
+   "sha256": "93d649dfe165ac666e2cd3a42b109c1e1206b0b8ff0d15692304809f488ac390",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 4096,
+     "reference": 4096,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 4096
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": null,
+       "why": "did not open (status 0xFFFFFFCE)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "did not open (status 0x666D743F)"
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 4096,
+       "decoderSamples": 4096,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 696598,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1200",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 4096
+      },
+      "reader": {
+       "samples": 4096,
+       "decoderSamples": 4096,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 2
+       }
+      }
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": null,
+     "analyzer": 4096,
+     "status": "explained",
+     "kind": "decoder-refuses-stream",
+     "ownersDisagree": true,
+     "reason": "Core Audio cannot build a converter for the stream (did not open (status 0xFFFFFFCE)); the analyzer equals the reference (fdk direct, 4,096): the owners' decoders disagree",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [
+    {
+     "index": 2,
+     "offset": 167,
+     "length": 113,
+     "ranges": [
+      [
+       167,
+       113
+      ]
+     ],
+     "decoder": "decoded",
+     "samples": 1024,
+     "finding": "aac.lfe-restrictions",
+     "findings": [
+      "aac.lfe-restrictions"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 4,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "loud-noise-pair.aac",
+   "sha256": "5cf92362123569e92503c187e460c74861d32c5034341cf339ebf924b665e973",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 4096,
+     "reference": 4096,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 4096
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 4096,
+       "decoderSamples": 4096,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 4096,
+       "decoderSamples": 4096,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 4096,
+       "decoderSamples": 4096,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 696598,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1210",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 4096
+      },
+      "reader": {
+       "samples": 4096,
+       "decoderSamples": 4096,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 2
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 4,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "loud-pulse-tns.aac",
+   "sha256": "2a1033b2c8c06ef418f626fa1eb3b31aff581cb2c89ac949a846c502175f17a1",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 5120,
+     "reference": 5120,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 5120
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 5120,
+       "decoderSamples": 5120,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 5120,
+       "decoderSamples": 5120,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 5120,
+       "decoderSamples": 5120,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 928798,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1208",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 5120
+      },
+      "reader": {
+       "samples": 5120,
+       "decoderSamples": 5120,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 1
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 1
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 5,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
    },
    "codecs": [
     "AAC LC"
@@ -6059,8 +6761,8 @@
    ]
   },
   {
-   "path": "sbr-after-coupling-element.aac",
-   "sha256": "7802d99c00a6f408c54153721fc3459576f4a401c9ef7b89be898faabeba770a",
+   "path": "sbr-after-coupling-channel.aac",
+   "sha256": "b2c914abd324750ba2a4b8408922ffc7b029d362e22aab321f971064e7e91cc8",
    "figures": [
     {
      "id": "samples",
@@ -6088,6 +6790,22 @@
       "aot": 2,
       "extAot": 0,
       "frameSize": 1024
+     },
+     "referenceAtAnalyzerRate": {
+      "samples": 24576,
+      "exact": true
+     },
+     "rateDiffers": {
+      "analyzerRates": [
+       44100
+      ],
+      "decoderRates": [
+       22050
+      ],
+      "decoderSamples": 12288,
+      "frames": 12,
+      "firstUnit": 0,
+      "ratio": "22050/44100"
      },
      "witnessErrors": {
       "ffmpeg": {
@@ -6160,22 +6878,6 @@
         "channels": 2
        }
       }
-     },
-     "referenceAtAnalyzerRate": {
-      "samples": 24576,
-      "exact": true
-     },
-     "rateDiffers": {
-      "analyzerRates": [
-       44100
-      ],
-      "decoderRates": [
-       22050
-      ],
-      "decoderSamples": 12288,
-      "frames": 12,
-      "firstUnit": 0,
-      "ratio": "22050/44100"
      }
     }
    ],
@@ -6185,11 +6887,10 @@
      "decoder": "fdk direct",
      "value": 12288,
      "analyzer": 24576,
-     "status": "keep",
+     "status": "pending",
      "kind": "rate-differs",
-     "reason": "FDK outputs 12 frames (12,288 samples) at 22050 Hz, from unit 0, where the analyzer's runs are at 44100 Hz (ratio 22050/44100): the decoders disagree on whether the SBR data after the coupling channel element is applied there",
-     "note": "decided 2026-11-27 by the project lead: the standard requires the SBR data after an independently switched coupling channel element (4.5.2.8.2.2, Table 4.57 note 1) and 1.6.5.2 item 1 takes it for implicit signaling, so the analyzer counts SBR; FDK excludes the element from those SBR follows, faad2 rejects it and ffmpeg cannot decode the file. The run's records were not repeated for this change.",
-     "statusSource": "reviewed"
+     "reason": "FDK outputs 12 frames (12,288 samples) at 22050 Hz, from unit 0, where the analyzer's runs are at 44100 Hz (ratio 22050/44100): the decoders disagree on whether SBR is applied there",
+     "statusSource": "rule"
     },
     {
      "figure": "samples",
@@ -6200,7 +6901,7 @@
      "status": "explained",
      "kind": "coreaudio-differs",
      "ownersDisagree": true,
-     "reason": "the analyzer equals the reference (fdk direct, 24,576 samples at the analyzer's 44,100 Hz) and Core Audio's converter outputs 0: the owners' decoders disagree",
+     "reason": "the analyzer equals the reference (fdk direct, 24,576) and Core Audio's converter outputs 0: the owners' decoders disagree",
      "statusSource": "rule"
     },
     {
@@ -6222,7 +6923,208 @@
      "reference": 24576,
      "status": "explained",
      "kind": "mediafoundation-differs",
-     "reason": "the analyzer equals the reference (fdk direct, 24,576 samples at the analyzer's 44,100 Hz) and Media Foundation's transform outputs 0; Learn says the decoder skips audio frames with coupling channel elements; the analyzer reports aac.coupling-without-program",
+     "reason": "the analyzer equals the reference (fdk direct, 24,576) and Media Foundation's transform outputs 0; Learn says the decoder skips audio frames with coupling channel elements; the analyzer reports aac.coupling-without-program",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [
+    {
+     "index": 0,
+     "offset": 0,
+     "length": 91,
+     "ranges": [
+      [
+       0,
+       91
+      ]
+     ],
+     "decoder": "decoded",
+     "samples": 1024,
+     "finding": "aac.coupling-without-program",
+     "findings": [
+      "aac.coupling-without-program"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 12,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "sbr-after-coupling-element.aac",
+   "sha256": "7802d99c00a6f408c54153721fc3459576f4a401c9ef7b89be898faabeba770a",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 24576,
+     "reference": 24576,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": null
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 22050,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "referenceAtAnalyzerRate": {
+      "samples": 24576,
+      "exact": true
+     },
+     "rateDiffers": {
+      "analyzerRates": [
+       44100
+      ],
+      "decoderRates": [
+       22050
+      ],
+      "decoderSamples": 12288,
+      "frames": 12,
+      "firstUnit": 0,
+      "ratio": "22050/44100"
+     },
+     "witnessErrors": {
+      "ffmpeg": {
+       "exit": 69,
+       "error": "[aac] channel element 2.0 is not allocated"
+      }
+     },
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 22050,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 9,
+       "noOutputUnits": 3,
+       "drainFrames": 0,
+       "refusesStream": "Core Audio's converter outputs nothing for any of its 12 units (9 refused, the others and the drain gave no output)"
+      },
+      "reader": {
+       "samples": null,
+       "why": "did not open (status 0x666D743F)"
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 12,
+       "drainFrames": 0,
+       "noOutputList": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        "..."
+       ],
+       "input": {
+        "config": "asStored",
+        "stored": "1390",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 0,
+       "refusesStream": "Media Foundation's transform outputs nothing for any of its 12 units (all 12 and the drain gave no output)"
+      },
+      "reader": {
+       "samples": 0,
+       "decoderSamples": 0,
+       "format": null,
+       "outputFormat": {
+        "sampleRate": 22050,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 22050,
+        "channels": 2
+       }
+      }
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": 12288,
+     "analyzer": 24576,
+     "status": "pending",
+     "kind": "rate-differs",
+     "reason": "FDK outputs 12 frames (12,288 samples) at 22050 Hz, from unit 0, where the analyzer's runs are at 44100 Hz (ratio 22050/44100): the decoders disagree on whether SBR is applied there",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 0,
+     "analyzer": 24576,
+     "reference": 24576,
+     "status": "explained",
+     "kind": "coreaudio-differs",
+     "ownersDisagree": true,
+     "reason": "the analyzer equals the reference (fdk direct, 24,576) and Core Audio's converter outputs 0: the owners' decoders disagree",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "media foundation reader",
+     "value": 0,
+     "analyzer": 24576,
+     "reference": 24576,
+     "status": "explained",
+     "kind": "witness-differs",
+     "reason": "the Source Reader reads to the end and outputs 0 samples against the analyzer's 24,576 and the reference's 24,576",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "media foundation transform",
+     "value": 0,
+     "analyzer": 24576,
+     "reference": 24576,
+     "status": "explained",
+     "kind": "mediafoundation-differs",
+     "reason": "the analyzer equals the reference (fdk direct, 24,576) and Media Foundation's transform outputs 0; Learn says the decoder skips audio frames with coupling channel elements; the analyzer reports aac.coupling-without-program",
      "statusSource": "rule"
     }
    ],
@@ -6258,7 +7160,198 @@
     "skippedBytes": 0
    },
    "codecs": [
-    "AAC LC"
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "sbr-after-first-frame-failing-crc.aac",
+   "sha256": "20de1b3bdb22e2ff751fb75f78dbf4afd3a2ea1814abb6468ac0dcd51b761d24",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 18432,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 10240
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 20480,
+       "decoderSamples": 10240,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 22050,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 20480,
+       "decoderSamples": 10240,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 22050,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 18432,
+       "decoderSamples": 18432,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 2,
+       "drainFrames": 2048,
+       "noOutputList": [
+        0,
+        1
+       ],
+       "streamChangeUnits": [
+        1
+       ],
+       "firstOutput": {
+        "unit": 2,
+        "time": 464399,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 4179591,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1390",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 18432
+      },
+      "reader": {
+       "samples": 18432,
+       "decoderSamples": 9216,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 22050,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 22050,
+        "channels": 2
+       }
+      }
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": 18432,
+     "analyzer": 20480,
+     "analyzerLost": 0,
+     "status": "noted",
+     "kind": "analyzer-differs",
+     "reason": "the analyzer's samples beyond FDK's cleanly decoded ones (2,048) are exactly the 1 blocks of flagged or covered units, which it counts by their declared samples and FDK refuses, outputs nothing for or conceals",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "ffmpeg",
+     "value": 10240,
+     "analyzer": 20480,
+     "reference": 18432,
+     "status": "noted",
+     "kind": "witness-differs",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 10240,
+     "analyzer": 20480,
+     "status": "pending",
+     "kind": "rate-differs",
+     "reason": "Core Audio outputs 10,240 samples at 22050 Hz where the analyzer's runs are at 44100 Hz: the decoders disagree on whether SBR is applied",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [
+    {
+     "index": 0,
+     "offset": 0,
+     "length": 48,
+     "ranges": [
+      [
+       0,
+       48
+      ]
+     ],
+     "decoder": "refused 0x0005",
+     "samples": 0,
+     "finding": "aac.crc-mismatch",
+     "findings": [
+      "aac.crc-mismatch"
+     ],
+     "verdict": "decoder refused, finding at the same bytes",
+     "status": "agree",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 10,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "HE-AAC"
    ]
   },
   {
@@ -6292,6 +7385,22 @@
       "extAot": 0,
       "frameSize": 1024
      },
+     "referenceAtAnalyzerRate": {
+      "samples": 24576,
+      "exact": true
+     },
+     "rateDiffers": {
+      "analyzerRates": [
+       44100
+      ],
+      "decoderRates": [
+       22050
+      ],
+      "decoderSamples": 12288,
+      "frames": 12,
+      "firstUnit": 0,
+      "ratio": "22050/44100"
+     },
      "witnessErrors": {
       "ffmpeg": {
        "exit": 69,
@@ -6301,7 +7410,7 @@
      "flushedSamples": 1024,
      "coreAudio": {
       "converter": {
-       "samples": 12288,
+       "samples": 24576,
        "decoderSamples": 12288,
        "format": {
         "rate": 22050,
@@ -6324,7 +7433,7 @@
      },
      "mediaFoundation": {
       "transform": {
-       "samples": 12288,
+       "samples": 24576,
        "decoderSamples": 12288,
        "format": {
         "rate": 22050,
@@ -6355,10 +7464,10 @@
         "extAot": 0
        },
        "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
-       "withoutTimestamps": 12288
+       "withoutTimestamps": 24576
       },
       "reader": {
-       "samples": 12288,
+       "samples": 24576,
        "decoderSamples": 12288,
        "format": {
         "rate": 22050,
@@ -6373,22 +7482,6 @@
         "channels": 1
        }
       }
-     },
-     "referenceAtAnalyzerRate": {
-      "samples": 24576,
-      "exact": true
-     },
-     "rateDiffers": {
-      "analyzerRates": [
-       44100
-      ],
-      "decoderRates": [
-       22050
-      ],
-      "decoderSamples": 12288,
-      "frames": 12,
-      "firstUnit": 0,
-      "ratio": "22050/44100"
      }
     }
    ],
@@ -6398,11 +7491,30 @@
      "decoder": "fdk direct",
      "value": 12288,
      "analyzer": 24576,
-     "status": "keep",
+     "status": "pending",
      "kind": "rate-differs",
-     "reason": "FDK outputs 12 frames (12,288 samples) at 22050 Hz, from unit 0, where the analyzer's runs are at 44100 Hz (ratio 22050/44100): the decoders disagree on whether an SBR payload before any channel element signals SBR",
-     "note": "decided 2026-11-27 by the project lead: 1.6.5.2 item 1 takes any EXT_SBR_DATA payload for implicit signaling, so the stream is HE-AAC; 4.5.2.8.2.2 gives the payload no AAC element to enhance, so it is reported and not applied. FDK, faad2 and ffmpeg (an error: \"SBR was found before the first channel element\") do not take it for SBR. The run's records were not repeated for this change.",
-     "statusSource": "reviewed"
+     "reason": "FDK outputs 12 frames (12,288 samples) at 22050 Hz, from unit 0, where the analyzer's runs are at 44100 Hz (ratio 22050/44100): the decoders disagree on whether SBR is applied there",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 12288,
+     "analyzer": 24576,
+     "status": "noted",
+     "kind": "rate-differs",
+     "reason": "Core Audio outputs 12,288 samples at 22050 Hz where the analyzer's runs are at 44100 Hz: the decoders disagree on whether SBR is applied; FDK and the analyzer agree, and the lead accepted on 2026-11-01 to take FDK as the reference and list Core Audio's figure as noted (probe question 3)",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "media foundation transform",
+     "value": 12288,
+     "analyzer": 24576,
+     "status": "noted",
+     "kind": "rate-differs",
+     "reason": "Media Foundation outputs 12,288 samples at 22050 Hz where the analyzer's runs are at 44100 Hz: the decoders disagree on whether SBR is applied; FDK and the analyzer agree, and the lead accepted on 2026-11-01 to take FDK as the reference and list the other decoder's figure as noted (probe question 3)",
+     "statusSource": "rule"
     }
    ],
    "units": [
@@ -6436,7 +7548,193 @@
     "skippedBytes": 0
    },
    "codecs": [
-    "AAC LC"
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "sbr-crc-checked.aac",
+   "sha256": "e9cf4a8a3447b99abbb50ee5ed0ef6f1120ac18aff9c71e63bff4ba4e3770a85",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 12288,
+     "reference": 12288,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 12288
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 8192,
+       "decoderSamples": 8192,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 2,
+       "drainFrames": 962,
+       "silentUnits": [
+        2,
+        4
+       ]
+      },
+      "reader": {
+       "samples": 8192,
+       "decoderSamples": 8192,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 12288,
+       "decoderSamples": 12288,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "streamChangeUnits": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 2321995,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1390",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 12288
+      },
+      "reader": {
+       "samples": 12288,
+       "decoderSamples": 6144,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 22050,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 22050,
+        "channels": 2
+       }
+      }
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 8192,
+     "analyzer": 12288,
+     "reference": 12288,
+     "status": "explained",
+     "kind": "witness-differs",
+     "reason": "ExtAudioFile outputs 8,192 samples (the file has no gapless data, so the coded stage) against the analyzer's 12,288",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 8192,
+     "analyzer": 12288,
+     "reference": 12288,
+     "status": "explained",
+     "kind": "coreaudio-differs",
+     "ownersDisagree": true,
+     "reason": "the analyzer equals the reference (fdk direct, 12,288) and Core Audio's converter outputs 8,192: the owners' decoders disagree; it gives no output for unit 2, 4 after its first output",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [
+    {
+     "index": 2,
+     "offset": 132,
+     "length": 65,
+     "ranges": [
+      [
+       132,
+       65
+      ]
+     ],
+     "decoder": "decoded",
+     "samples": 2048,
+     "finding": "aac.sbr-crc-mismatch",
+     "findings": [
+      "aac.sbr-crc-mismatch"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 6,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "HE-AAC"
    ]
   },
   {
@@ -6733,6 +8031,741 @@
     "kind": "adts",
     "codec": "aac",
     "units": 12,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "sbr-in-all-but-first-block.aac",
+   "sha256": "c60b809767778d15fb03750b2863df8473977b2b6c91ce49748218235f995bb5",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 10240,
+     "reference": 10240,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 10240
+     },
+     "analyzerRates": [
+      22050
+     ],
+     "format": {
+      "rate": 22050,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "unpaired": {
+      "rate": 22050,
+      "exact": true,
+      "decoder": [
+       [
+        22050,
+        2,
+        1024
+       ],
+       [
+        44100,
+        2,
+        18432
+       ]
+      ],
+      "analyzer": [
+       [
+        22050,
+        2,
+        10240
+       ]
+      ]
+     },
+     "rateDiffers": {
+      "analyzerRates": [
+       22050
+      ],
+      "decoderRates": [
+       44100
+      ],
+      "decoderSamples": 18432,
+      "frames": 9,
+      "firstUnit": 1,
+      "ratio": "44100/22050"
+     },
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 10240,
+       "decoderSamples": 10240,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 22050,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 10240,
+       "decoderSamples": 10240,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 22050,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 9216,
+       "decoderSamples": 18432,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 2,
+       "drainFrames": 2048,
+       "noOutputList": [
+        0,
+        1
+       ],
+       "streamChangeUnits": [
+        1
+       ],
+       "firstOutput": {
+        "unit": 2,
+        "time": 464399,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 4179591,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1390",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 9216
+      },
+      "reader": {
+       "samples": 9216,
+       "decoderSamples": 9216,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 22050,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 22050,
+        "channels": 2
+       }
+      }
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": 18432,
+     "analyzer": 10240,
+     "status": "pending",
+     "kind": "rate-differs",
+     "reason": "FDK outputs 9 frames (18,432 samples) at 44100 Hz, from unit 1, where the analyzer's runs are at 22050 Hz (ratio 44100/22050): the decoders disagree on whether SBR is applied there",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "media foundation reader",
+     "value": 9216,
+     "analyzer": 10240,
+     "reference": 10240,
+     "status": "explained",
+     "kind": "witness-differs",
+     "reason": "the Source Reader reads to the end and outputs 9,216 samples against the analyzer's 10,240 and the reference's 10,240",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "media foundation transform",
+     "value": 18432,
+     "analyzer": 10240,
+     "status": "noted",
+     "kind": "rate-differs",
+     "reason": "Media Foundation outputs 18,432 samples at 44100 Hz where the analyzer's runs are at 22050 Hz: the decoders disagree on whether SBR is applied; FDK and the analyzer agree, and the lead accepted on 2026-11-01 to take FDK as the reference and list the other decoder's figure as noted (probe question 3)",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "media foundation transform",
+     "value": 9216,
+     "analyzer": 10240,
+     "reference": 10240,
+     "status": "explained",
+     "kind": "mediafoundation-differs",
+     "ownersDisagree": true,
+     "reason": "the analyzer equals the reference (fdk direct, 10,240) and Media Foundation's transform outputs 9,216: the owners' decoders disagree",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [
+    {
+     "index": 0,
+     "offset": 0,
+     "length": 46,
+     "ranges": [
+      [
+       0,
+       46
+      ]
+     ],
+     "decoder": "decoded",
+     "samples": 1024,
+     "finding": "aac.sbr-inconsistent",
+     "findings": [
+      "aac.sbr-inconsistent"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 10,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "sbr-in-first-block-only.aac",
+   "sha256": "985f8df2352cc1dc2294449f3af4e07712cf79ecedf77eb2ff53d771273c68fd",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "unpaired": {
+      "rate": 44100,
+      "exact": true,
+      "decoder": [
+       [
+        44100,
+        2,
+        2048
+       ],
+       [
+        22050,
+        2,
+        9216
+       ]
+      ],
+      "analyzer": [
+       [
+        44100,
+        2,
+        20480
+       ]
+      ]
+     },
+     "rateDiffers": {
+      "analyzerRates": [
+       44100
+      ],
+      "decoderRates": [
+       22050
+      ],
+      "decoderSamples": 9216,
+      "frames": 9,
+      "firstUnit": 1,
+      "ratio": "22050/44100"
+     },
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 18432,
+       "decoderSamples": 18432,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 962,
+       "silentUnits": [
+        1
+       ]
+      },
+      "reader": {
+       "samples": 18432,
+       "decoderSamples": 18432,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 18432,
+       "decoderSamples": 9216,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 2,
+       "drainFrames": 1024,
+       "noOutputList": [
+        0,
+        1
+       ],
+       "streamChangeUnits": [
+        0,
+        1
+       ],
+       "firstOutput": {
+        "unit": 2,
+        "time": 464399,
+        "duration": 464399,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 4179591,
+        "duration": 464399,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1390",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 18432
+      },
+      "reader": {
+       "samples": 18432,
+       "decoderSamples": 9216,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 22050,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 22050,
+        "channels": 2
+       }
+      }
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": 9216,
+     "analyzer": 20480,
+     "status": "pending",
+     "kind": "rate-differs",
+     "reason": "FDK outputs 9 frames (9,216 samples) at 22050 Hz, from unit 1, where the analyzer's runs are at 44100 Hz (ratio 22050/44100): the decoders disagree on whether SBR is applied there",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 18432,
+     "analyzer": 20480,
+     "reference": 20480,
+     "status": "explained",
+     "kind": "witness-differs",
+     "reason": "ExtAudioFile outputs 18,432 samples (the file has no gapless data, so the coded stage) against the analyzer's 20,480",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 18432,
+     "analyzer": 20480,
+     "reference": 20480,
+     "status": "explained",
+     "kind": "coreaudio-differs",
+     "ownersDisagree": true,
+     "reason": "the analyzer equals the reference (fdk direct, 20,480) and Core Audio's converter outputs 18,432: the owners' decoders disagree; it gives no output for unit 1 after its first output",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "media foundation reader",
+     "value": 18432,
+     "analyzer": 20480,
+     "reference": 20480,
+     "status": "explained",
+     "kind": "witness-differs",
+     "reason": "the Source Reader reads to the end and outputs 18,432 samples against the analyzer's 20,480 and the reference's 20,480",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "media foundation transform",
+     "value": 9216,
+     "analyzer": 20480,
+     "status": "noted",
+     "kind": "rate-differs",
+     "reason": "Media Foundation outputs 9,216 samples at 22050 Hz where the analyzer's runs are at 44100 Hz: the decoders disagree on whether SBR is applied; FDK and the analyzer agree, and the lead accepted on 2026-11-01 to take FDK as the reference and list the other decoder's figure as noted (probe question 3)",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "media foundation transform",
+     "value": 18432,
+     "analyzer": 20480,
+     "reference": 20480,
+     "status": "explained",
+     "kind": "mediafoundation-differs",
+     "ownersDisagree": true,
+     "reason": "the analyzer equals the reference (fdk direct, 20,480) and Media Foundation's transform outputs 18,432: the owners' decoders disagree",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [
+    {
+     "index": 0,
+     "offset": 0,
+     "length": 66,
+     "ranges": [
+      [
+       0,
+       66
+      ]
+     ],
+     "decoder": "decoded",
+     "samples": 2048,
+     "finding": "aac.sbr-inconsistent",
+     "findings": [
+      "aac.sbr-inconsistent"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 10,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
+   "path": "sbr-in-first-three-blocks.aac",
+   "sha256": "11a7e412f4a19471a9ce2beb0c28ed1345adeab540e27d307227bfe46b3d1008",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 20480,
+     "reference": 20480,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 20480
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "unpaired": {
+      "rate": 44100,
+      "exact": true,
+      "decoder": [
+       [
+        44100,
+        2,
+        6144
+       ],
+       [
+        22050,
+        2,
+        7168
+       ]
+      ],
+      "analyzer": [
+       [
+        44100,
+        2,
+        20480
+       ]
+      ]
+     },
+     "rateDiffers": {
+      "analyzerRates": [
+       44100
+      ],
+      "decoderRates": [
+       22050
+      ],
+      "decoderSamples": 7168,
+      "frames": 7,
+      "firstUnit": 3,
+      "ratio": "22050/44100"
+     },
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 18432,
+       "decoderSamples": 18432,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 962,
+       "silentUnits": [
+        3
+       ]
+      },
+      "reader": {
+       "samples": 18432,
+       "decoderSamples": 18432,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 18432,
+       "decoderSamples": 11264,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "runs": [
+        [
+         44100,
+         2,
+         4096
+        ],
+        [
+         22050,
+         2,
+         7168
+        ]
+       ],
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 2,
+       "drainFrames": 1024,
+       "silentUnits": [
+        3
+       ],
+       "noOutputList": [
+        0,
+        3
+       ],
+       "streamChangeUnits": [
+        0,
+        3
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 4179591,
+        "duration": 464399,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1390",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 18432
+      },
+      "reader": {
+       "samples": null,
+       "why": "no figure: the transform signals a stream change at a unit that gives no output after its first output (units 3), where the Source Reader's result varies from run to run"
+      }
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": 7168,
+     "analyzer": 20480,
+     "status": "pending",
+     "kind": "rate-differs",
+     "reason": "FDK outputs 7 frames (7,168 samples) at 22050 Hz, from unit 3, where the analyzer's runs are at 44100 Hz (ratio 22050/44100): the decoders disagree on whether SBR is applied there",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio reader",
+     "value": 18432,
+     "analyzer": 20480,
+     "reference": 20480,
+     "status": "explained",
+     "kind": "witness-differs",
+     "reason": "ExtAudioFile outputs 18,432 samples (the file has no gapless data, so the coded stage) against the analyzer's 20,480",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "coreaudio converter",
+     "value": 18432,
+     "analyzer": 20480,
+     "reference": 20480,
+     "status": "explained",
+     "kind": "coreaudio-differs",
+     "ownersDisagree": true,
+     "reason": "the analyzer equals the reference (fdk direct, 20,480) and Core Audio's converter outputs 18,432: the owners' decoders disagree; it gives no output for unit 3 after its first output",
+     "statusSource": "rule"
+    },
+    {
+     "figure": "samples",
+     "decoder": "media foundation transform",
+     "value": 18432,
+     "analyzer": 20480,
+     "reference": 20480,
+     "status": "explained",
+     "kind": "mediafoundation-differs",
+     "ownersDisagree": true,
+     "reason": "the analyzer equals the reference (fdk direct, 20,480) and Media Foundation's transform outputs 18,432: the owners' decoders disagree; it gives no output for unit 3 after its first output",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [
+    {
+     "index": 0,
+     "offset": 0,
+     "length": 66,
+     "ranges": [
+      [
+       0,
+       66
+      ]
+     ],
+     "decoder": "decoded",
+     "samples": 2048,
+     "finding": "aac.sbr-inconsistent",
+     "findings": [
+      "aac.sbr-inconsistent"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 10,
     "cutUnits": 0,
     "skippedRanges": 0,
     "skippedBytes": 0
@@ -7525,6 +9558,164 @@
    ]
   },
   {
+   "path": "sbr-too-many-patches.aac",
+   "sha256": "981ea2bfb8f1e587a9ac51846823bdd46b38be1eda6750ade76ebd4bac50cbd6",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 12288,
+     "reference": 12288,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 12288
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 2048
+     },
+     "flushedSamples": 2048,
+     "coreAudio": {
+      "converter": {
+       "samples": 12288,
+       "decoderSamples": 12288,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 962
+      },
+      "reader": {
+       "samples": 12288,
+       "decoderSamples": 12288,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aach",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 2048
+       }
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 12288,
+       "decoderSamples": 12288,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 2048,
+       "noOutputList": [
+        0
+       ],
+       "streamChangeUnits": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": 0,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "drainOutput": {
+        "time": 2321995,
+        "duration": 464399,
+        "frames": 2048
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1390",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 12288
+      },
+      "reader": {
+       "samples": 12288,
+       "decoderSamples": 6144,
+       "format": {
+        "rate": 22050,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 22050,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 22050,
+        "channels": 2
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [
+    {
+     "index": 0,
+     "offset": 0,
+     "length": 77,
+     "ranges": [
+      [
+       0,
+       77
+      ]
+     ],
+     "decoder": "decoded",
+     "samples": 2048,
+     "finding": "aac.sbr-header-invalid",
+     "findings": [
+      "aac.sbr-header-invalid"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 6,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "HE-AAC"
+   ]
+  },
+  {
    "path": "ssr-gain-control.aac",
    "sha256": "035a3a5df8684a19a38bec4b87e94cc2cc080d5c88b7d1dc121fabb0f9b573a0",
    "figures": [
@@ -8121,6 +10312,140 @@
     "kind": "adts",
     "codec": "aac",
     "units": 16,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "stereo-tool-order.aac",
+   "sha256": "d99f25ae326fdee3caa6b14d16d26aa47fbb0f2d42054da552651d82be47fd02",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 15360,
+     "reference": 15360,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 15360
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 15360,
+       "decoderSamples": 15360,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 15360,
+       "decoderSamples": 15360,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 15360,
+       "decoderSamples": 15360,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 3250793,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1210",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 15360
+      },
+      "reader": {
+       "samples": 15360,
+       "decoderSamples": 15360,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 2
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 15,
     "cutUnits": 0,
     "skippedRanges": 0,
     "skippedBytes": 0
@@ -9667,6 +11992,324 @@
    ]
   },
   {
+   "path": "tns-order-above-12.aac",
+   "sha256": "8bf986fe1398ae7fef21c1937d7167d810b9fd10b4266a337f7ad0c08a50a684",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 5120,
+     "reference": 5120,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 2048
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "concealedSamples": 1024,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 5120,
+       "decoderSamples": 5120,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 5120,
+       "decoderSamples": 5120,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 5120,
+       "decoderSamples": 5120,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 928798,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1208",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 5120
+      },
+      "reader": {
+       "samples": 5120,
+       "decoderSamples": 5120,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 1
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 1
+       }
+      }
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "ffmpeg",
+     "value": 2048,
+     "analyzer": 5120,
+     "reference": 5120,
+     "status": "explained",
+     "kind": "witness-differs",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [
+    {
+     "index": 2,
+     "offset": 908,
+     "length": 454,
+     "ranges": [
+      [
+       908,
+       454
+      ]
+     ],
+     "decoder": "decoded",
+     "samples": 1024,
+     "finding": "aac.tns-order-too-high",
+     "findings": [
+      "aac.tns-order-too-high"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    },
+    {
+     "index": 4,
+     "offset": 1820,
+     "length": 463,
+     "ranges": [
+      [
+       1820,
+       463
+      ]
+     ],
+     "decoder": "concealed 0x400C",
+     "samples": 1024,
+     "finding": null,
+     "findings": [],
+     "verdict": "decoder concealed, no finding at its bytes (the file has findings that merge several cases or name samples outside the file: this may be one of them)",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 5,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "tns-overflow.aac",
+   "sha256": "836c2c31cd45881a1f7165710a7ce5a9a3057605399efc34894915dd7c6af484",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 3072,
+     "reference": 3072,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 3072
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 3072,
+       "decoderSamples": 3072,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 3072,
+       "decoderSamples": 3072,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 3072,
+       "decoderSamples": 3072,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 464399,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1208",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 3072
+      },
+      "reader": {
+       "samples": 3072,
+       "decoderSamples": 3072,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 1
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 1
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 3,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
    "path": "truncated.aac",
    "sha256": "7b39d29ad05a6553b65b8e04f1d57a82f9145333302a49532cba23c9d176e819",
    "figures": [
@@ -10072,6 +12715,140 @@
    ]
   },
   {
+   "path": "window-sequences-invalid.aac",
+   "sha256": "a3d78bdad708906dd920908e7ad918fe7ee714d4115624b8bf8dd43ea8d61aef",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 12288,
+     "reference": 12288,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 12288
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 1
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 12288,
+       "decoderSamples": 12288,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 12288,
+       "decoderSamples": 12288,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 1,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 12288,
+       "decoderSamples": 12288,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 2554195,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1208",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 12288
+      },
+      "reader": {
+       "samples": 12288,
+       "decoderSamples": 12288,
+       "format": {
+        "rate": 44100,
+        "channels": 1
+       },
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 1
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 1
+       }
+      }
+     }
+    }
+   ],
+   "differences": [],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 12,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
    "path": "windows.aac",
    "sha256": "df6b4a600f38d562ba2c93f57d5d6a8e95db17232dc8070d6dd8f4d2041d3cff",
    "figures": [
@@ -10207,8 +12984,8 @@
   }
  ],
  "counts": {
-  "files": 56,
-  "fed": 56,
+  "files": 72,
+  "fed": 72,
   "coreAudioCarried": 0,
   "mediaFoundationCarried": 0
  }
