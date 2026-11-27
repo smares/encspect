@@ -260,7 +260,7 @@ public class AacPsPhaseTests
         // Alternating phases, so that the history is not constant: a second smoothing of the appended envelope would differ from the held matrices.
         for (int frame = 0; frame < 6; frame++)
         {
-            data[SbrRecord.PsIpd] = frame % 2 == 0 ? 2 : 6;
+            data[SbrRecord.PsIpd] = frame % 2 == 0 ? 0 : 2;
             ps.Process(re, im, ahead, ahead, data, 64);
         }
 
