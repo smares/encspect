@@ -1216,9 +1216,8 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         // The decoder's buffer holds one frame at the highest bitrate (bitrate_index 14) at the
         // stream's sample rate, so main_data_begin plus the frame's length may not exceed that
         // frame's length, and main_data_begin is 0 at bitrate_index 14: ISO/IEC 11172-3's bit
-        // reservoir text, quoted in LAME's libmp3lame/reservoir.c. Only MPEG-1 is checked: LAME's
-        // --strictly-enforce-ISO applies the rule to MPEG-2 at 160 kbps (bitstream.c,
-        // MDB_STRICT_ISO), but that reading of ISO/IEC 13818-3 could not be confirmed.
+        // reservoir text. Only MPEG-1 is checked: LAME's --strictly-enforce-ISO applies the rule to MPEG-2 at 160 kbps,
+        // but that reading of ISO/IEC 13818-3 could not be confirmed.
         int mainDataBegin = info.MainDataBegin.Value;
         int buffer = new MpegHeader((info.Header.Raw & ~0xF200u) | (14u << 12)).FrameLength();
         if (info.Header.IsMpeg1 && mainDataBegin > 0 && mainDataBegin + frameLength > buffer)

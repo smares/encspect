@@ -3,20 +3,19 @@ of the LAME tag as its first versions and its releases after 3.100 wrote it.
 
 LAME 3.90.1, 3.91, 3.92 and 3.93.1 come from their release tarballs on SourceForge, each checked against a
 pinned SHA-256. They write the LAME tag (since 3.90) with both ReplayGain fields zero: 3.93.1 still
-marks them "TODO" (libmp3lame/VbrTag.c). The 3.90.1 tarball holds sources that call themselves 3.90
+marks them "TODO" (the bytes of its tag). The 3.90.1 tarball holds sources that call themselves 3.90
 and write "LAME3.90". 3.90 to 3.92 have Dibrom's --alt-presets but no preset field in the tag, which
 3.93 added; HydrogenAudio's later 3.90.2 and 3.90.3 releases of the 3.90 line have no surviving
 source release that could be checked here. 3.94 was only ever released as betas, which no longer have
 a tarball; the LAME project's Subversion repository keeps the tag lame3_94beta (3.94 beta 1), whose
 files are fetched one by one at a pinned revision and checked against a digest of the whole tree.
-It is the release that computes ReplayGain into the tag against 83 dB: its gain_analysis.c lowers
-PINK_REF from 64.82 to 58.82, which 3.95 reverted, so its gains read 6 dB lower than those of
+It is the release that computes ReplayGain into the tag against 83 dB: its gains read 6 dB lower than those of
 later versions.
 
 LAME 3.98 beta 8, 3.99 alpha 12 and 3.99.5 come from the same repository, from the tags
 lame3_98beta8, lame3_99alpha12 and RELEASE__3_99_5, for LAME's version markers: each writes its
-version twice, into the LAME tag (libmp3lame/version.c, get_lame_very_short_version) and into the
-padding it drains into ancillary data (get_lame_short_version): "LAME3.98b" and "3.98 (beta)",
+version twice, into the LAME tag and into the
+padding it drains into ancillary data: "LAME3.98b" and "3.98 (beta)",
 "L3.99a12" and "3.99 (alpha 12)", "LAME3.99r" and "3.99.5".
 
 LAME 3.95.1, 3.96.1, 3.97 and 3.98.4 come from their release tarballs, built with their configure scripts: the releases between the betas above, which

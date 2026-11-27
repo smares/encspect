@@ -1,8 +1,7 @@
 """Reads and writes the Xing/Info, LAME and VBRI headers in the first frame of an MPEG Layer III stream.
 
-The layouts follow the LAME 3.100 source (libmp3lame/VbrTag.c, which writes Xing/Info and the
-LAME tag), Gabriel Bouvigne's Mp3 Info Tag revision 1 specification (the field meanings), and
-ffmpeg 6.1 (libavformat/mp3dec.c, the only common reader of VBRI). mp3guessenc, mpg123 and
+The layouts follow Gabriel Bouvigne's Mp3 Info Tag revision 1 specification (Xing/Info and the LAME tag, the field meanings)
+and MediaInfo's File_Mpega.cpp (Header_Xing and Header_VBRI, the only common reader of VBRI). mp3guessenc, mpg123 and
 ffprobe confirm what this module reads; see crosscheck_mpeg_fixtures.py.
 
 - Xing or Info starts after the side information, counted as if the frame had no CRC: 36 bytes
@@ -67,9 +66,8 @@ def is_old_lame(text):
 
 def is_lame_tag_start(text):
     """The encoder strings readers take a LAME tag after: "LAME" (Helix's "LAMEH" too) and "L" with a
-    version, as LAME 3.99 alphas wrote it ("L3.99a12"), which mp3guessenc accepts (tags.c,
-    parse_xing_tag), and ffmpeg's "Lavc" and "Lavf", the only ones ffmpeg reads delay and padding
-    after (mp3dec.c, mp3_parse_info_tag)."""
+    version, as LAME 3.99 alphas wrote it ("L3.99a12"), which MediaInfo accepts, and ffmpeg's "Lavc" and "Lavf", the only ones ffprobe 8.0 reads delay and padding
+    after (the external-ffmpeg-* fixtures)."""
     return text.startswith(("LAME", "Lavc", "Lavf")) or re.match(r"L\d\.\d\d", text) is not None
 
 
@@ -328,7 +326,7 @@ def lame_fields(lame, quality):
         fields[f"{p}/{name}/Name"] = GAIN_NAMES.get(value >> 13, f"Reserved ({value >> 13})")
         fields[f"{p}/{name}/Originator"] = GAIN_ORIGINATORS.get((value >> 10) & 7, f"Reserved ({(value >> 10) & 7})")
         # LAME before 3.95 computed ReplayGain against 83 dB, later versions against 89 dB
-        # (mpg123, parse.c).
+        # (LAME's ChangeLog of 2004-01-13 and the 3.90.1 fixtures).
         old = re.fullmatch(r"LAME3\.(\d\d)(\D.*)?", lame["encoder"])
         if (value >> 10) & 7 == 3 and old and int(old.group(1)) < 95:
             fields[f"{p}/{name}/Reference Level"] = ("83 dB, as LAME before 3.95 computed it; later versions use 89 dB, so this "

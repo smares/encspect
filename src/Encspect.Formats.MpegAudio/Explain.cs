@@ -296,7 +296,7 @@ internal static class Explain
     public const string GainChannel = "This channel's range of global_gain.";
     public const string GainMinimum = "The smallest global_gain of the channel.";
     public const string GainMaximum = "The largest global_gain of the channel.";
-    public const string AncillaryTotal = "Bytes of ancillary data in the frames, as mp3guessenc counts them.";
+    public const string AncillaryTotal = "Bytes of ancillary data in the frames (the count mp3guessenc prints).";
     public const string AncillaryShare = "Their share of the frames' bytes.";
     public const string AncillaryRate = "Ancillary bits per second of audio.";
     public const string StatFrameChecksums = "The frames whose stored CRC-16 equals the one computed over the header bits and the side information or bit allocation it covers.";

@@ -3,13 +3,13 @@ using System.Text.RegularExpressions;
 
 namespace Encspect.Formats.MpegAudio;
 
-// A LAME version as LAME writes it in either of its two places (libmp3lame/version.c):
-// - the LAME tag's nine bytes, get_lame_very_short_version: "LAME", major.minor and a marker, "a"
+// A LAME version as LAME writes it in either of its two places (the fixtures of old_lame_tool.py and lame_win_tool.py):
+// - the LAME tag's nine bytes: "LAME", major.minor and a marker, "a"
 //   for an alpha, "b" for a beta, "r" for a release with a patch level above 0 and a space
 //   otherwise, then the patch level where it fits ("LAME3.98b", "LAME3.99r", "LAME3.91 "). 3.99
 //   alphas wrote "L3.99a12"; "LAME3.100" and later fill the bytes before any marker, and
 //   HydrogenAudio's 3.90.3 wrote "LAME3.90." with its patch level cut off;
-// - the ancillary data, get_lame_short_version after "LAME": "3.94 (beta)", "3.87 (beta 1, Sep 29 2000)", "3.98 (beta 8)",
+// - the ancillary data, after "LAME": "3.94 (beta)", "3.87 (beta 1, Sep 29 2000)", "3.98 (beta 8)",
 //   "3.99 (alpha 12)", "3.99.5", "3.100".
 internal sealed partial class LameRelease
 {

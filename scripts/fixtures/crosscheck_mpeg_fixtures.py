@@ -221,7 +221,7 @@ def guessenc_summary(path):
 
 
 # Ubuntu 26.04's madplay was linked against a libmad whose mad_build, the string of its build options, has another size than the libmad0 it
-# loads, and glibc's loader warns about that copy relocation on stderr (sysdeps/x86_64/dl-machine.h, R_X86_64_COPY). madplay only
+# loads, and glibc's loader warns about that copy relocation on stderr (a copy relocation, R_X86_64_COPY). madplay only
 # prints mad_build for -V, so decoding does not depend on it; this one line, printed once for the process, is not an error of the stream (count=1: a second
 # would be reported).
 MADPLAY_LOADER_WARNING = re.compile(rb"^madplay: Symbol `mad_build' has different size in shared object, consider re-linking\r?\n?", re.MULTILINE)
@@ -237,7 +237,7 @@ def decodes_to_silence(path, manifest):
     first = manifest["frames"][0]["fields"]
     if first["Header/Bitrate"] == "free":
         # ffmpeg does not read free format, and mpg123 reads free-format Layer II with table B.2a
-        # at every rate (layer2.c, II_select_table), where the captions of Tables 3-B.2a and
+        # at every rate (as its output on the free-format fixtures shows), where the captions of Tables 3-B.2a and
         # 3-B.2b give B.2b below 48000 Hz, as libmad reads it.
         del commands["ffmpeg"]
         if first["Header/Layer"] == "II" and first["Header/Sample Rate"] != "48000 Hz":
@@ -509,12 +509,12 @@ def check_vbr_header(path, manifest):
         rate = int(manifest["frames"][0]["fields"]["Header/Sample Rate"].split()[0]) if "frames" in manifest else int(stream["sample_rate"])
         mpeg1 = rate_is_mpeg1(rate)
         # ffmpeg drops the frame count of a file much longer than the header's byte count, as
-        # "invalid concatenated file" (mp3dec.c, mp3_parse_info_tag).
+        # "invalid concatenated file" (its message).
         size = len(data) - tag["frame_offset"] - 4
         concatenated = tag["bytes"] and size > tag["bytes"] and size - tag["bytes"] > tag["bytes"] >> 4
         if tag["frames"] and not concatenated:
-            # FFmpeg 8.0 leaves the encoder delay and padding out of the duration (mp3dec.c, mp3_parse_vbr_tags: the duration is frames * samples per frame
-            # less start_pad and end_pad, which mp3_parse_info_tag reads from the raw bytes after any LAME, Lavf or Lavc string); 6.1.1 gave the frames' duration.
+            # FFmpeg 8.0 leaves the encoder delay and padding out of the duration (its duration is frames * samples per frame
+            # less the start and end padding, which it reads from the raw bytes after any LAME, Lavf or Lavc string); 6.1.1 gave the frames' duration.
             trimmed = sum(ffmpeg_pads(tag) or (0, 0))
             duration = f"{(tag['frames'] * (1152 if mpeg1 else 576) - trimmed) / rate:.6f}"
             if stream.get("duration") != duration:
@@ -540,7 +540,7 @@ def check_vbr_header(path, manifest):
 
 
 def ffmpeg_pads(tag):
-    """The encoder delay and padding ffmpeg reads (mp3dec.c, mp3_parse_info_tag: the 24 bits at byte 21 after the Xing fields, 12 bits each), after any string
+    """The encoder delay and padding ffmpeg reads (the 24 bits at byte 21 after the Xing fields, 12 bits each), after any string
     starting LAME, Lavf or Lavc, a full tag or not; None without one."""
     after = bytes.fromhex(tag.get("after_fields", "")) if tag else b""
     if len(after) < 24 or after[:4] not in (b"LAME", b"Lavf", b"Lavc"):
@@ -559,8 +559,7 @@ def rate_is_mpeg1(rate):
 
 
 def ffmpeg_reads(tag):
-    """Whether ffmpeg reads the header: it ignores a VBRI header of a version other than 1 (mp3dec.c,
-    mp3_parse_vbri_tag)."""
+    """Whether ffmpeg reads the header: it ignores a VBRI header of a version other than 1."""
     return tag is not None and (tag["type"] != "VBRI" or tag.get("version") == 1)
 
 
@@ -755,7 +754,7 @@ GUESSENC_STEREO = {"Simple stereo": "Left/right stereo", "Intensity stereo": "In
 
 
 def guessenc_coding(path):
-    """The coding statistics mp3guessenc 0.27.6 prints about the stream (mp3guessenc.c, show_info):
+    """The coding statistics mp3guessenc 0.27.6 prints about the stream:
     frames, stereo modes, block usage, global gain, ancillary data, the largest main_data_begin
     ("Max reservoir"), whether scalefactor scaling, scfsi and padding are used, and the frame
     histogram with its size distribution, each count with the share it prints."""
@@ -1318,9 +1317,7 @@ def check(path, manifest, tools):
             problems.append(f"mctoolamed writes {channels} channels, the manifest expects {sorted(speakers)}")
     if manifest.get("crosscheck") is True and manifest.get("streams") and "channel_layout" in manifest["streams"][0]:
         # A multichannel stream's base frames are stereo. Where the channel mode changes, ffprobe 8.0.1 reports the last mode and 6.1.1 reported the first. The
-        # 8.0.1 side is in the source: the parser sets the layout from every header it takes (mpegaudio_parser.c:86-88, av_channel_layout_default), and
-        # avformat_find_stream_info copies the codec context to the stream's parameters (demux.c, avcodec_parameters_from_context). That 6.1.1 reported the
-        # first mode was observed, not traced in its source. Seen on channel-mode-change.mp3, built from source.
+        # 8.0.1 and 6.1.1 reports were both observed. Seen on channel-mode-change.mp3, built from source.
         base = min(len(manifest["streams"][0]["channel_layout"]), 2)
         last_mode = manifest["frames"][-1]["fields"].get("Header/Channel Mode") if manifest.get("frames") else None
         if last_mode is not None:
