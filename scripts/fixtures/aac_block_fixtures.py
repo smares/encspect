@@ -1262,7 +1262,7 @@ def sbr_evidence():
         fill = M.Element(M.FIL, payload=M.sbr_payload(counts, SBR_HEADER if i % 4 == 0 else None, pair=False))
         blocks.append(M.raw_data_block([cpe, cce, fill], rate_index=rate_index(core)))
     data, rows = concat(adts_frames(blocks, rate=core, channels=2))
-    out.append(("adts", "sbr-after-coupling-element.aac", data, manifest(
+    out.append(("adts", "sbr-after-coupling-channel.aac", data, manifest(
         "ADTS at 22050 Hz of a channel pair, a coupling channel element and a fill element of SBR data, twelve times, in a stream of channel "
         "configuration 2: the standard puts the SBR data of a coupling channel element after it (read as a single channel element's), so the stream is HE-AAC at 44100 Hz; "
         "fdk-aac and faad2 read no SBR after a coupling element.", data, rows,

@@ -632,7 +632,7 @@ MEDIAINFO_READS_OTHERWISE = {
     "adts/damaged-length": {"access units": ADTS_ERRORS + " (30 frames, 28 counted)"},
     "adts/raw-blocks": {"access units": "MediaInfo reads a crc_check in a frame of several raw data blocks also without protection (File_Aac_Main.cpp, adts_frame), which adts_header_error_check holds only when protection_absent is 0 (ISO/IEC 14496-3 1.A.2.2), so it misreads those blocks and counts none of the frames"},
     "adts/sbr-in-three-blocks": dict.fromkeys(["format", "sample rate", "SBR signaling"], SBR_ANYWHERE),
-    "adts/sbr-after-coupling-element": dict.fromkeys(["format", "sample rate", "SBR signaling"], SBR_ANYWHERE),
+    "adts/sbr-after-coupling-channel": dict.fromkeys(["format", "sample rate", "SBR signaling"], SBR_ANYWHERE),
     "adts/sbr-in-one-block": dict.fromkeys(["format", "sample rate", "SBR signaling"], SBR_ANYWHERE),
     "adts/sbr-before-channel-element": dict.fromkeys(["format", "sample rate", "SBR signaling"], SBR_ANYWHERE),
     "adts/sbr-in-frames-failing-crc": dict.fromkeys(["format", "sample rate", "SBR signaling"], SBR_ANYWHERE),

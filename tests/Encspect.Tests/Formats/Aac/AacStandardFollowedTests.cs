@@ -116,7 +116,7 @@ public class AacStandardFollowedTests
     [Fact]
     public void SBR_data_after_a_coupling_channel_element_is_read_and_counts()
     {
-        (Report report, _) = Decode("sbr-after-coupling-element.aac");
+        (Report report, _) = Decode("sbr-after-coupling-channel.aac");
 
         StreamInfo stream = report.Streams.Single();
         Assert.Equal("HE-AAC", stream.Codec);

@@ -13,13 +13,6 @@
         "tests/fixtures/aac/faac-2.1-he-51-adts.report.json",
         "tests/fixtures/aac/faac-2.2-he-51-adts.report.json"
       ]
-    },
-    {
-      "scope": "finding",
-      "code": "aac.implicit-sbr",
-      "goldens": [
-        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
-      ]
     }
   ],
   "changed": [
@@ -144,45 +137,14 @@
       ]
     },
     {
-      "scope": "stream",
-      "fields": [
-        "samples",
-        "duration",
-        "sampleRate",
-        "codec",
-        "channelMode"
-      ],
-      "goldens": [
-        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
-      ]
-    },
-    {
       "scope": "decode",
       "fields": [
         "decodedSamples",
         "count"
       ],
       "goldens": [
-        "tests/fixtures/aac/adts/corrupt-soft.decode.json",
-        "tests/fixtures/aac/adts/sbr-after-coupling-element.decode.json"
+        "tests/fixtures/aac/adts/corrupt-soft.decode.json"
       ]
-    }
-  ],
-  "removed": [
-    {
-      "scope": "finding",
-      "code": "aac.sbr-without-channel-element",
-      "goldens": [
-        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
-      ]
-    }
-  ],
-  "bitrate": [
-    {
-      "goldens": [
-        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
-      ],
-      "reason": "the stream is HE-AAC at twice the rate: its duration doubles in the samples and the bitrate halves"
     }
   ]
 }
