@@ -1,0 +1,66 @@
+{
+ "description": "ADTS of channel configuration 3 whose blocks alternate between a single channel element and a channel pair element and the two in the other order: the counts are the configuration's, the order of every block but the first is not the block before's, so each is withheld.",
+ "length": 923,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 3,
+   "channel_mode": "3.0",
+   "channel_layout": [
+    "front center",
+    "front left",
+    "front right"
+   ],
+   "samples": 6144,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   153
+  ],
+  [
+   153,
+   153
+  ],
+  [
+   306,
+   155
+  ],
+  [
+   461,
+   154
+  ],
+  [
+   615,
+   155
+  ],
+  [
+   770,
+   153
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "aac.layout-changed",
+   "5 raw data blocks hold channel elements in another order than the block before"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "faad": {
+   "seconds": "0.139",
+   "rate": 44100
+  },
+  "skip": {
+   "decode": "ffmpeg maps the elements by their order in each block.",
+   "faad_trace": "faad2 reads the elements by their order."
+  }
+ }
+}

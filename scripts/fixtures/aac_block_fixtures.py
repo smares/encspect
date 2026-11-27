@@ -995,7 +995,7 @@ def corrupt():
         "outside AAC SSR.",
         data, rows, [stream("AAC LC", RATE, 1, "Mono", len(rows) * 1024)],
         {"ADTS/Frame[1]/Raw Data Block/SCE/Channel/ICS Info/ICS Reserved Bit": "1"},
-        [[code, text] for _, code, text in soft] + [["aac.elements-mismatch", "other than channel configuration 1 defines"], ["aac.window-slopes-differ", "a window sequence whose left slope differs"]],
+        [[code, text] for _, code, text in soft] + [["aac.elements-mismatch", "other than channel configuration 1 defines"], ["aac.layout-changed", "channel elements in another order than the block before it"], ["aac.window-slopes-differ", "a window sequence whose left slope differs"]],
         skip={"ffprobe": "ffmpeg rejects some of the frames.", "faad": "faad2 rejects some of the frames.", "decode": "decoders reject some of the frames",
               "faad_trace": "faad2 stops at frames it rejects."})))
     return out
@@ -1380,9 +1380,26 @@ def rate_fixtures():
     return out
 
 
+def elements_order_changes():
+    """Channel configuration 3 (a single channel element and a channel pair element) with the two elements in the other order in every second block: the counts are what the configuration
+    defines, the order is not the first block's, and a decoder's per-element state no longer fits the block."""
+    blocks = []
+    for i in range(6):
+        sce = M.Element(M.SCE, ics=channel(M.ONLY_LONG, 1, [[(11, 4), (3, 10)]], gain=140, seed=i))
+        cpe = M.Element(M.CPE, ics=(channel(M.ONLY_LONG, 1, [[(9, 4), (3, 10)]], gain=140, seed=i + 20), channel(M.ONLY_LONG, 1, [[(9, 4), (1, 10)]], gain=140, seed=i + 40)), common=True, mask=0)
+        blocks.append(M.raw_data_block([cpe, sce] if i % 2 else [sce, cpe]))
+    data, rows = concat(adts_frames(blocks, channels=3))
+    return "elements-order-changes.aac", data, manifest(
+        "ADTS of channel configuration 3 whose blocks alternate between a single channel element and a channel pair element and the two in the other order: the counts are the configuration's, "
+        "the order of every block but the first is not the block before's, so each is withheld.", data, rows,
+        [stream("AAC LC", RATE, 3, "3.0", 6 * 1024, layout=["front center", "front left", "front right"])], {},
+        [["aac.layout-changed", "5 raw data blocks hold channel elements in another order than the block before"]],
+        skip={"decode": "ffmpeg maps the elements by their order in each block.", "faad_trace": "faad2 reads the elements by their order."})
+
+
 def fixtures():
     """(directory, name, data, manifest) of every fixture: "adts" or "mp4"."""
-    out = [("adts",) + f for f in [windows(), window_sequences_invalid(), stereo(), stereo_coding(), stereo_coding_reserved(), stereo_coding_elements(), intensity_noise(), implicit_sbr_adts(), sbr_fixvar_adts(), fill_and_data()] + loud_tools() + faac_style_fixtures() + crc_fixtures() + object_types() + corrupt()]
+    out = [("adts",) + f for f in [windows(), window_sequences_invalid(), stereo(), stereo_coding(), stereo_coding_reserved(), stereo_coding_elements(), intensity_noise(), implicit_sbr_adts(), sbr_fixvar_adts(), fill_and_data()] + loud_tools() + [elements_order_changes()] + [elements_order_changes()] + faac_style_fixtures() + crc_fixtures() + object_types() + corrupt()]
     out += [("mp4",) + f for f in mp4_fixtures()]
     out += eld_ld_sbr() + parametric_stereo_cores() + signature_streams() + streams_limited() + sbr_evidence() + blocks_missing() + prediction_bands() + rate_fixtures()
     return out
