@@ -6887,10 +6887,11 @@
      "decoder": "fdk direct",
      "value": 12288,
      "analyzer": 24576,
-     "status": "pending",
+     "status": "keep",
      "kind": "rate-differs",
      "reason": "FDK outputs 12 frames (12,288 samples) at 22050 Hz, from unit 0, where the analyzer's runs are at 44100 Hz (ratio 22050/44100): the decoders disagree on whether SBR is applied there",
-     "statusSource": "rule"
+     "statusSource": "reviewed",
+     "note": "decided by the lead, 2026-11-27: keep. ISO/IEC 14496-3 1.6.5.2 item 1: any EXT_SBR_DATA or EXT_SBR_DATA_CRC payload signals SBR implicitly, so the stream is HE-AAC (4.5.2.8.2.2 puts the SBR element of an independently switched coupling channel element after it); FDK excludes the coupling element from those SBR follows."
     },
     {
      "figure": "samples",
@@ -7088,10 +7089,11 @@
      "decoder": "fdk direct",
      "value": 12288,
      "analyzer": 24576,
-     "status": "pending",
+     "status": "keep",
      "kind": "rate-differs",
      "reason": "FDK outputs 12 frames (12,288 samples) at 22050 Hz, from unit 0, where the analyzer's runs are at 44100 Hz (ratio 22050/44100): the decoders disagree on whether SBR is applied there",
-     "statusSource": "rule"
+     "statusSource": "reviewed",
+     "note": "decided by the lead, 2026-11-27: keep. ISO/IEC 14496-3 1.6.5.2 item 1: any EXT_SBR_DATA or EXT_SBR_DATA_CRC payload signals SBR implicitly, so the stream is HE-AAC, whether the coupling channel element is switched independently or dependently; FDK excludes the coupling element from those SBR follows."
     },
     {
      "figure": "samples",
@@ -7314,10 +7316,11 @@
      "decoder": "coreaudio converter",
      "value": 10240,
      "analyzer": 20480,
-     "status": "pending",
+     "status": "keep",
      "kind": "rate-differs",
      "reason": "Core Audio outputs 10,240 samples at 22050 Hz where the analyzer's runs are at 44100 Hz: the decoders disagree on whether SBR is applied",
-     "statusSource": "rule"
+     "statusSource": "reviewed",
+     "note": "decided by the lead, 2026-11-27: keep. ISO/IEC 14496-3 1.6.5.2 item 1: an SBR payload signals SBR implicitly, and the SBR data counts as evidence despite the failed CRC of the frame."
     }
    ],
    "units": [
@@ -7491,10 +7494,11 @@
      "decoder": "fdk direct",
      "value": 12288,
      "analyzer": 24576,
-     "status": "pending",
+     "status": "keep",
      "kind": "rate-differs",
      "reason": "FDK outputs 12 frames (12,288 samples) at 22050 Hz, from unit 0, where the analyzer's runs are at 44100 Hz (ratio 22050/44100): the decoders disagree on whether SBR is applied there",
-     "statusSource": "rule"
+     "statusSource": "reviewed",
+     "note": "decided by the lead, 2026-11-27: keep. ISO/IEC 14496-3 1.6.5.2 item 1: any EXT_SBR_DATA payload signals SBR implicitly, wherever it lies, so the stream is HE-AAC; the payload has no AAC element to enhance (4.5.2.8.2.2) and is not applied."
     },
     {
      "figure": "samples",
@@ -8199,10 +8203,11 @@
      "decoder": "fdk direct",
      "value": 18432,
      "analyzer": 10240,
-     "status": "pending",
+     "status": "keep",
      "kind": "rate-differs",
      "reason": "FDK outputs 9 frames (18,432 samples) at 44100 Hz, from unit 1, where the analyzer's runs are at 22050 Hz (ratio 44100/22050): the decoders disagree on whether SBR is applied there",
-     "statusSource": "rule"
+     "statusSource": "reviewed",
+     "note": "decided by the lead, 2026-11-27: keep. ISO/IEC 14496-3 1.6.5.3, first method: the first block decides, and it holds no SBR data, so the stream is AAC LC."
     },
     {
      "figure": "samples",
@@ -8436,10 +8441,11 @@
      "decoder": "fdk direct",
      "value": 9216,
      "analyzer": 20480,
-     "status": "pending",
+     "status": "keep",
      "kind": "rate-differs",
      "reason": "FDK outputs 9 frames (9,216 samples) at 22050 Hz, from unit 1, where the analyzer's runs are at 44100 Hz (ratio 22050/44100): the decoders disagree on whether SBR is applied there",
-     "statusSource": "rule"
+     "statusSource": "reviewed",
+     "note": "decided by the lead, 2026-11-27: keep. ISO/IEC 14496-3 1.6.5.3, first method: the first block decides, and it holds SBR data, so the stream is HE-AAC."
     },
     {
      "figure": "samples",
@@ -8699,10 +8705,11 @@
      "decoder": "fdk direct",
      "value": 7168,
      "analyzer": 20480,
-     "status": "pending",
+     "status": "keep",
      "kind": "rate-differs",
      "reason": "FDK outputs 7 frames (7,168 samples) at 22050 Hz, from unit 3, where the analyzer's runs are at 44100 Hz (ratio 22050/44100): the decoders disagree on whether SBR is applied there",
-     "statusSource": "rule"
+     "statusSource": "reviewed",
+     "note": "decided by the lead, 2026-11-27: keep. ISO/IEC 14496-3 1.6.5.3, first method: the first block decides, and it holds SBR data, so the stream is HE-AAC."
     },
     {
      "figure": "samples",
