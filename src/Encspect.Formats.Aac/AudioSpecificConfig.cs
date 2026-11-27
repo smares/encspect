@@ -298,8 +298,8 @@ internal static class AudioSpecificConfig
             bool dualRate = f.Read(node, "Low Delay SBR Sampling Rate", 1, Explain.LowDelaySbrRate, v => v == 0 ? "downsampled SBR (core rate)" : "dual-rate SBR") != 0;
             f.Flag(node, "HasLowDelaySbrCrc", Explain.HasLowDelaySbrCrc);
             // One sbr_header() per single channel and channel pair element of the configuration; the low
-            // frequency elements carry none. fdk-aac's EldSpecificConfig_Parse (tpdec_asc.cpp) gives these
-            // counts and none for any other configuration, 13 included (MediaInfo's ld_sbr_header reads none for it either).
+            // frequency elements carry none. ISO/IEC 14496-3 Table 4.181 (ld_sbr_header()) gives these counts and none
+            // for any other configuration, 13 included (MediaInfo's ld_sbr_header reads none for it either).
             int headers = configuration switch
             {
                 1 or 2 => 1,
@@ -520,8 +520,8 @@ internal static class AudioSpecificConfig
 
                     bool fragmented = f.Flag(element, "HasPayloadFragmentation", Explain.PayloadFragmentation);
                     // UsacExtElementConfig() (ISO/IEC 23003-3 5.2) reads no configuration for a fill or
-                    // audio pre-roll element, whatever usacExtElementConfigLength says, as ffmpeg and
-                    // libxaac decode it; fdk-aac skips the bytes the length gives.
+                    // audio pre-roll element, whatever usacExtElementConfigLength says, as libxaac
+                    // decodes it.
                     if (extensionType is 0 or 3)
                     {
                         if (length > 0)
@@ -585,8 +585,7 @@ internal static class AudioSpecificConfig
     }
 
     // Mps212Config() (ISO/IEC 23003-3 5.2), the MPEG Surround 2-1-2 settings of a channel pair
-    // element whose stereoConfigIndex is 1 to 3, read as ffmpeg (aacdec_usac.c) and fdk-aac
-    // (sac_bitdec.cpp, SpatialDecParseMps212Config) read it.
+    // element whose stereoConfigIndex is 1 to 3, read as libxaac does (ixheaacd_ld_mps_config.c).
     private static void Mps212Config(BitFields f, Node element, long stereoConfigIndex)
     {
         int start = f.Position;

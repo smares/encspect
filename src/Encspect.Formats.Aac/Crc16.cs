@@ -42,7 +42,7 @@ internal struct Crc16()
     }
 
     // Adds the regions of a raw data block's elements that the ADTS CRC covers (ISO/IEC 14496-3
-    // 1.A.4.3, as fdk-aac's decoder reads its element lists in libFDK/src/FDK_tools_rom.cpp): after
+    // 1.A.4.3): after
     // each element's ID, the first 192 bits of a single channel, LFE or coupling element and of a
     // channel pair, the first 128 bits of the pair's second channel from its global_gain, and the
     // whole of a program config or data stream element, each filled up with zero bits where the

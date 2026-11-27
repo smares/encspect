@@ -105,7 +105,7 @@ internal sealed partial class BlockReader
             if (_setup.ChannelConfiguration > 0)
             {
                 Soft("aac.coupling-without-program",
-                    $"a coupling channel element, which channel configuration {_setup.ChannelConfiguration} does not provide for: fdk-aac's decoder drops such access units",
+                    $"a coupling channel element, which channel configuration {_setup.ChannelConfiguration} does not provide for",
                     start, start + 3, "Element ID");
             }
 
@@ -778,14 +778,10 @@ internal sealed partial class BlockReader
             _sbr[key] = header;
         }
 
-        // A payload after a single channel, channel pair or LFE element makes the stream HE-AAC for ffmpeg (aacdec_template.c,
-        // decode_extension_payload: m4ac.sbr = 1 before the data is read), faad2 (syntax.c, fill_element: sbr_present_flag = 1 before
-        // sbr_extension_data, for a fill element right after such an element) and fdk-aac (aacdecoder.cpp: SBR is parsed after an
-        // element that IS_CHANNEL_ELEMENT names, SCE, CPE and LFE, and enabled on a parse error too), whether or not the data can be
-        // read: before its header, with tables that cannot be built, past its fill element, or after an LFE element, where FAAC 2.0
-        // and 2.1 write theirs in 5.1. A coupling channel element is none of these: fdk-aac excludes it, faad2 rejects it (error 6
-        // without COUPLING_DEC, and error 24 for the fill element after it), and only ffmpeg keeps it as the previous element, where a
-        // program config element has given it a channel; its payload is reported and counts for nothing.
+        // A payload after a single channel, channel pair or LFE element makes the stream HE-AAC for ffprobe 6.1.1
+        // (faac-2.1-he-51-adts), whether or not the data can be read: before its header, with tables that cannot be built, past its
+        // fill element, or after an LFE element, where FAAC 2.0 and 2.1 write theirs in 5.1. A coupling channel element is none of
+        // these; its payload is reported and counts for nothing.
         _hasSbrEvidence |= _lastChannelElement is 0 or 1 or 3;
         Span<int> record = default;
         if (_store is not null && _lastChannelElement is 0 or 1 && _ics[0].Slot >= 0)
@@ -1004,8 +1000,7 @@ internal sealed partial class BlockReader
 
     // The intensity stereo bands of a pair's second channel, in phase (INTENSITY_HCB, 15) or out of
     // phase (INTENSITY_HCB2, 14), where ms_used inverts the sign (4.6.8.2.3). Only ms_mask_present 1
-    // inverts, as faad2 (invert_intensity, is.h) and fdk-aac (stereo.cpp clears the mid/side flags before
-    // intensity stereo) decode it; ffmpeg also inverts with ms_mask_present 2, which marks every band.
+    // inverts, as the specification has it; ffmpeg also inverts with ms_mask_present 2, which marks every band.
     private void IntensityNode(Node n, Ics ics, bool masked)
     {
         if (!HasBand(ics, b => b is 14 or 15))

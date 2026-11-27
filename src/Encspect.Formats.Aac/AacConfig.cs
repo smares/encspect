@@ -59,7 +59,7 @@ internal sealed record AacConfig
     // SBR as decoders apply it: signaled, or found where the configuration says nothing about it.
     public bool HasSbr => Sbr == true || (Sbr is null && SbrFound == true);
 
-    // Decoders apply PS only to a core of one channel (fdk-aac's sbrdecoder.cpp, ffmpeg's aacdec).
+    // PS applies only to a core of one channel: the parametric stereo extension sits in a single channel element's SBR data (ISO/IEC 14496-3 subpart 8).
     public bool IsPsPossible => Channels == 1;
 
     // PS data in a stream of SBR and a core of one channel: signaled, or found in any block (ISO/IEC 14496-3 1.6.6.3 has PS applied from whatever block its data starts in).
@@ -75,8 +75,8 @@ internal sealed record AacConfig
     // Whether each access unit is a raw_data_block whose first element ID can be read.
     public bool HasRawDataBlocks => AacTables.HasRawDataBlock(ObjectType);
 
-    // With implicit SBR, fdk-aac (sbrdecoder.cpp, "assume dual rate SBR") and ffmpeg double any core
-    // rate; faad2 doubles only a core rate of up to 24 kHz, which the implicit SBR finding says.
+    // With implicit SBR, FDK AAC 2.0.2 and ffmpeg output any core rate doubled; the faad CLI
+    // doubles only a core rate of up to 24 kHz, which the implicit SBR finding says.
     public int OutputSampleRate => UsacSampleRate ?? (Sbr == true ? ExtensionSampleRate ?? CoreSampleRate * 2
         : IsSbrImplicit ? CoreSampleRate * 2 : CoreSampleRate);
 

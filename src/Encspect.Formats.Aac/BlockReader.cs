@@ -354,9 +354,8 @@ internal sealed partial class BlockReader
             ChannelStream(ref bits, n, second, common, 1, "Channel 1", secondStart);
             if (!common && HasBand(second, b => b is 14 or 15))
             {
-                // fdk-aac applies intensity stereo only with a common window (channel.cpp) and its stereo.cpp quotes 4.6.8.2.3 as allowing the
-                // codebooks only there; FFmpeg and faad2 apply it anyway, and so is it counted.
-                Soft("aac.intensity-without-common-window", "intensity stereo bands in a channel pair without a common window, outside what ISO/IEC 14496-3 4.6.8.2.3 allows as fdk-aac's source quotes it, though FFmpeg and faad2 decode them",
+                // 4.6.8.2.3 signals intensity stereo only in a pair with a common ics_info(); FFmpeg and faad2 apply it anyway, and so is it counted.
+                Soft("aac.intensity-without-common-window", "intensity stereo bands in a channel pair without a common window, outside what ISO/IEC 14496-3 4.6.8.2.3 allows, though FFmpeg and faad2 decode them",
                     second.SectionStart, second.SectionEnd, "Intensity Stereo Bands");
             }
 
@@ -386,10 +385,8 @@ internal sealed partial class BlockReader
     // The pair's stereo coding (ISO/IEC 14496-3 4.6.8), whether or not it has a common window: intensity stereo is in any band of the
     // second channel with codebook 14 or 15, and mid/side stereo in any band whose ms_used flag is set (ms_mask_present 2 sets every
     // band, and the flags need a common window) where neither channel codes noise substitution (codebook 13) or intensity stereo:
-    // on such a band ms_used says something else, and decoders apply no mid/side there (FFmpeg 6.1.1 apply_mid_side_stereo requires
-    // both band types below NOISE_BT; faad2's ms_decode checks the first channel's noise and the second's intensity stereo, and
-    // fdk-aac's MapMidSideMaskToPnsCorrelation skips only bands where both channels code noise, so they differ on a band where only
-    // one channel does, and FFmpeg's rule is followed). ms_mask_present 3 is reserved
+    // on such a band ms_used says something else, and 4.6.8.1.3 applies no mid/side there (its is_noise takes no channel, and a band
+    // where either channel codes noise counts here). ms_mask_present 3 is reserved
     // and takes precedence.
     private void TallyPair(Ics first, Ics second, bool common, int mask)
     {
@@ -420,8 +417,8 @@ internal sealed partial class BlockReader
                     intensity = true;
                     tally.IntensityBands++;
                     _recorder?.Intensity(second.WindowSequence == 2, second.Offsets[sfb]);
-                    // 4.6.8.2.3: INTENSITY_HCB2 (14) codes out of phase; ms_used inverts the sign, with ms_mask_present 1 only: faad2 and
-                    // fdk-aac (stereo.cpp clears the mid/side flags before intensity stereo) leave mask 2 alone, FFmpeg inverts for it too.
+                    // 4.6.8.2.3: INTENSITY_HCB2 (14) codes out of phase; ms_used inverts the sign, with ms_mask_present 1 only (mask 2
+                    // transmits no ms_used bits); FFmpeg inverts for mask 2 too.
                     if ((book == 14) != (flagged && mask == 1))
                     {
                         tally.IntensityOutOfPhase++;
@@ -964,8 +961,8 @@ internal sealed partial class BlockReader
         int start = bits.Original;
         bool eight = ics.WindowSequence == 2;
         int windows = eight ? 8 : 1;
-        // TNS_MAX_ORDER: 12 for long windows of LC and SSR and 20 for Main, as ffmpeg checks; for LTP
-        // the references differ (ffmpeg 12, faad2 and fdk-aac 20), so only orders above 20 count.
+        // TNS_MAX_ORDER (Table 4.156): 20 for long windows of AAC Main and 12 for the other object types using TNS; LTP is
+        // counted with Main's 20 here, so for it only orders above 20 count.
         int maxOrder = eight ? 7 : _setup.ObjectType is 1 or 4 ? 20 : 12;
         int total = 0;
         bool tooHigh = false;

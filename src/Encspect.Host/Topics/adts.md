@@ -2,7 +2,7 @@
 id: adts
 title: ADTS and ADIF, raw AAC transports
 related: aac-raw-data-blocks, audio-specific-config, crc, bitrate-modes, frame-sync, sbr
-references: ISO/IEC 14496-3 1.A.2.1, 1.A.2.2, 1.A.3.2.1; ISO/IEC 13818-7 6.1, 6.2; fdk-aac
+references: ISO/IEC 14496-3 1.A.2.1, 1.A.2.2, 1.A.3.2.1; ISO/IEC 13818-7 6.1, 6.2
 ---
 
 **The problem.** [Raw data blocks](aac-raw-data-blocks) carry no sync word and no length, and a bare AAC stream has no [AudioSpecificConfig](audio-specific-config). Without a container, a decoder could neither find the frames nor know how to decode them.

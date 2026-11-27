@@ -2,7 +2,7 @@
 id: aac-windows-and-blocks
 title: AAC windows, block switching and grouping
 related: block-switching, coded-bandwidth, tns, aac-section-data-and-codebooks, aac-raw-data-blocks
-references: ISO/IEC 14496-3 4.4.2, 4.5.2, 4.6.11, 4.6.11.3.1; ffmpeg libavcodec/aacdec_template.c
+references: ISO/IEC 14496-3 4.4.2, 4.5.2, 4.6.11, 4.6.11.3.1
 ---
 
 **The problem.** AAC transforms each frame into 1024 frequency lines over a window of 2048 samples that overlaps its neighbors by half. Quantization noise spreads over the whole window, so ahead of a sudden attack it is heard as pre-echo, as in MP3 [block switching](block-switching).

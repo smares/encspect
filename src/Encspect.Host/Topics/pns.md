@@ -2,7 +2,7 @@
 id: pns
 title: Perceptual noise substitution (PNS)
 related: aac-section-data-and-codebooks, intensity-stereo, aac-raw-data-blocks
-references: ISO/IEC 14496-3 4.4.2, 4.6.2; ffmpeg libavcodec/aacdec_template.c
+references: ISO/IEC 14496-3 4.4.2, 4.6.2
 ---
 
 **The problem.** Some parts of a sound are noise: cymbals, breath, the hiss of a recording. Coding the exact waveform of noise spends bits on detail the ear cannot tell from any other noise of the same loudness in the same band.

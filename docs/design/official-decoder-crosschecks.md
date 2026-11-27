@@ -117,7 +117,7 @@ The direct paths of AAC and AC-3 do not each carry a reader of their own. Three 
   - The FDK repository's own example program is not used. It first appears in v3.0.0 (`aac-dec.c`; it is not in v2.0.2 or v2.0.3), reads only ADTS and LOAS and stops at the first failed decode.
 - **Concealment and the drain are fixed, because they change the direct total.**
   - Energy interpolation (method 2) "adds additional signal delay of one frame", as `aacdecoder_lib.h` says. The header also defines `AACDEC_FLUSH`, "Flush all filterbanks to get all delayed audio".
-  - The library's default depends on the object type: it opens with method 2, energy interpolation (`CConcealment_InitCommonData`, `conceal.cpp`; called with no user method, "auto mode"), and reverts to 1 itself for AAC-LD and AAC-ELD when the user set none, and always for USAC (`aacdecoder_lib.cpp`). An explicit 2 on a USAC stream fails with `AAC_DEC_SET_PARAM_FAIL`.
+  - The library's default depends on the object type, as `aacdecoder_lib.h` documents the methods: probe question 7 ran methods 0, 1 and 2 where each is accepted and shows the effect (`outputDelay` 661 under methods 0 and 1 and 1,685 under 2 for AAC-LC), and for USAC the library reverts the method itself and an explicit 2 fails with `AAC_DEC_SET_PARAM_FAIL`. The default of each object type with no method set is not asserted here.
   - The harness therefore sets method 1 (noise substitution) with `AAC_CONCEAL_METHOD` for every object type and records it. That is not the library's default for AAC-LC and HE-AAC; one method for all object types keeps the direct totals comparable, and method 1 adds no frame of delay. Probe question 7 compares methods 0, 1 and 2 where each is accepted.
   - There is no "off": method 0 (spectral muting) still outputs a frame for a damaged unit.
   - A unit counts as output only when `IS_OUTPUT_VALID` holds. The direct total is the samples of valid outputs during decoding; the frames that `AACDEC_FLUSH` drains are counted apart as `flushedSamples`, so the coded total stays "one frame per access unit". `outputDelay` is recorded.
@@ -760,7 +760,7 @@ The project lead accepted every recommendation below on 2026-11-01.
 - Fraunhofer IIS audio blog, "xHE-AAC Audio Codec now in Windows 11" (2022).
 - Apple, WWDC 2020 session 10158 (xHE-AAC playback); FFmpeg trac #9564 (reports on `AudioConverter` and `usac`).
 - actions/runner-images release notes for `win11-arm64` (OS build 26200).
-- github.com/mstorsjo/fdk-aac: the headers `aacdecoder_lib.h` and `FDK_audio.h`, `conceal.cpp` and `aacdecoder_lib.cpp`, under the "Software License for The Fraunhofer FDK AAC Codec Library for Android"; tags v2.0.2, v2.0.3 and v3.0.0.
+- github.com/mstorsjo/fdk-aac: the headers `aacdecoder_lib.h` and `FDK_audio.h`, under the "Software License for The Fraunhofer FDK AAC Codec Library for Android"; tags v2.0.2, v2.0.3 and v3.0.0.
 - libvorbis `lib/synthesis.c` and `lib/block.c` (BSD), for the granule handling of `vorbis_synthesis` and `vorbis_synthesis_blockin`.
 - The FDK and libvorbis sources above were read by the independent review of this design (findings D-1, D-4, D-5) and checked again in the fix review at 31d5db6, not by the author of this text; the quotes and the line-level claims come from those reviews.
 - No FFmpeg, faad2, liba52 or libdca source was read for this design, and no libtta source.

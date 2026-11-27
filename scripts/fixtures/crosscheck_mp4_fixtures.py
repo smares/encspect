@@ -14,7 +14,7 @@ For every fixture in tests/fixtures/mp4, tests/fixtures/aac/adts and tests/fixtu
   which ADTS can only signal implicitly ("ffprobe_sample_rate"). Where the
   manifest records ffprobe's profile ("ffprobe_profile"), it must match: for an MP4 track ffmpeg names a stream HE-AAC only
   once it finds SBR data in an access unit, which the hand-built ones do not carry, so those record none; for a raw ADTS stream it names the profile
-  of the ADTS header, since FFmpeg 8.0's parser sets it for every frame header (libavcodec/aac_ac3_parser.c, ff_aac_ac3_parse), after the decoder
+  of the ADTS header, since FFmpeg 8.0's parser sets it for every frame header, after the decoder
   has named the stream from its SBR data, so those record "LC".
   ffprobe's channel layout must feed the speakers of the stream's "channel_layout", in any order
   (channel_layouts.py), where ffprobe's channels are the manifest's: ffmpeg's decoder gives an AAC
@@ -461,9 +461,9 @@ def trace_unit(blocks, rate, is960=False):
 
 def trace_pair(books, applied):
     """The stereo coding of a channel pair from what faad2 decides (ISO/IEC 14496-3 4.6.8): intensity stereo where a band of the second
-    channel has codebook 14 or 15 ('e' or 'f' in the trace), and mid/side stereo where faad2's ms_decode applies mid/side to a band ("@@MS": ms_used or
-    mask 2, and neither intensity stereo in the second channel nor noise substitution in the first), also taking FFmpeg's rule that a noise band of the
-    second channel gets none (faad2 checks the first channel's only). The codes of ms_mask_present 3 are not traced: faad2 rejects it."""
+    channel has codebook 14 or 15 ('e' or 'f' in the trace), and mid/side stereo where the faad2 trace marks a band mid/side ("@@MS": ms_used or
+    mask 2, and neither intensity stereo in the second channel nor noise substitution in the first), also taking the rule of ISO/IEC 14496-3
+    4.6.8.1.3 that a noise band of the second channel gets none (the trace marks only the first channel's). The codes of ms_mask_present 3 are not traced: faad2 rejects it."""
     intensity = any(book in "ef" for book in books)
     midside = any(bit == "1" and books[band] != "d" for band, bit in enumerate(applied))
     return 3 if intensity and midside else 2 if intensity else 1 if midside else 0

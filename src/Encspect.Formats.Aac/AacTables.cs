@@ -227,8 +227,8 @@ internal static class AacTables
     };
 
     // 4.5.2.9, Table 4.121: the extension_type of a fill element's extension_payload, with the
-    // types later amendments add as fdk-aac names them (FDK_audio.h): EXT_DATA_LENGTH,
-    // EXT_LDSAC_DATA and EXT_SAOC_DATA.
+    // types later amendments add: EXT_DATA_LENGTH (3) and EXT_LDSAC_DATA (9) as libxaac names them
+    // (ixheaacd_aacdecoder.c, Apache-2.0); 10 is reserved in the 2009 edition, and no source at hand names it.
     public static string ExtensionTypeName(int type) => type switch
     {
         0 => "EXT_FILL",
@@ -236,7 +236,7 @@ internal static class AacTables
         2 => "EXT_DATA_ELEMENT",
         3 => "EXT_DATA_LENGTH",
         9 => "EXT_LDSAC_DATA",
-        10 => "EXT_SAOC_DATA",
+        10 => "reserved",
         11 => "EXT_DYNAMIC_RANGE",
         12 => "EXT_SAC_DATA",
         13 => "EXT_SBR_DATA",

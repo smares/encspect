@@ -2,7 +2,7 @@
 id: sbr
 title: Spectral band replication (SBR, HE-AAC)
 related: mp3pro, parametric-stereo, aac-object-types, audio-specific-config
-references: ISO/IEC 14496-3 1.6.2.1, 4.6.18; fdk-aac
+references: ISO/IEC 14496-3 1.6.2.1, 4.6.18
 ---
 
 **The problem.** At low bitrates there are too few bits to code the high frequencies, so a plain AAC encoder cuts them off and the result sounds muffled.

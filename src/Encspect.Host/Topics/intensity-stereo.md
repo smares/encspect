@@ -2,7 +2,7 @@
 id: intensity-stereo
 title: Intensity stereo
 related: joint-stereo, mid-side-stereo, inter-channel-coherence, subband-coding, musepack-sv7-stream
-references: ISO/IEC 11172-3 2.4.2.3 (mode_extension), 2.4.3.4.9.3 (Layer III decoding); ISO/IEC 13818-3 2.4.3.2; ISO/IEC 14496-3 4.6.8.2; ETSI TS 102 114 5.4.3, C.3.4 (DTS); ffmpeg libavcodec/aacdec_template.c
+references: ISO/IEC 11172-3 2.4.2.3 (mode_extension), 2.4.3.4.9.3 (Layer III decoding); ISO/IEC 13818-3 2.4.3.2; ISO/IEC 14496-3 4.6.8.2; ETSI TS 102 114 5.4.3, C.3.4 (DTS)
 ---
 
 **The problem.** At low bitrates there are not enough bits to code two full channels. Above a few kilohertz, ears place sounds mostly by how loud they are in each ear, not by the exact waveform, so the fine detail that differs between the channels adds little to where a sound seems to come from.
@@ -11,7 +11,7 @@ references: ISO/IEC 11172-3 2.4.2.3 (mode_extension), 2.4.3.4.9.3 (Layer III dec
 
 **In MPEG audio.** In Layers I and II the Mode Extension field gives a bound: subbands from 4, 8, 12 or 16 upward are coded once with a scalefactor for each channel. In Layer III it starts at the first scalefactor band above the highest nonzero line of the right channel (per window in short blocks), whose scalefactors there carry the direction (the intensity position, 0 to 6 in MPEG-1; 7 marks a band not intensity coded). It can combine with mid/side stereo below.
 
-**In AAC.** The second channel of a pair marks intensity bands with codebook 15, in phase, or 14, out of phase, where ms_used inverts the sign (only with ms_mask_present 1, which Encspect follows, as faad2 and fdk-aac do), and codes a position instead of a scalefactor (ISO/IEC 14496-3 4.6.8.2). Those codebooks count in any pair, as FFmpeg 6.1.1 and faad2 decode them (fdk-aac needs a common window); a pair without one is reported with a warning and counted as intensity stereo.
+**In AAC.** The second channel of a pair marks intensity bands with codebook 15, in phase, or 14, out of phase, where ms_used inverts the sign (only with ms_mask_present 1, as 4.6.8.2.3 has it), and codes a position instead of a scalefactor (ISO/IEC 14496-3 4.6.8.2). Those codebooks count in any pair, as FFmpeg 6.1.1 and faad2 decode them, though 4.6.8.2.3 signals intensity stereo only with a common window; a pair without one is reported with a warning and counted as intensity stereo.
 
 **What you see.** Mode Extension shows "Intensity stereo" or a band range, and AAC pairs their Intensity Stereo Bands. Intensity Stereo Bound, in MPEG audio, AAC and Opus, gives the lowest frequency, in hertz, from which each frame or unit codes intensity stereo.
 

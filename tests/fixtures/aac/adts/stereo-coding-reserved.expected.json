@@ -72,8 +72,8 @@
    "rate": 44100
   },
   "skip": {
-   "decode": "ffmpeg rejects ms_mask_present 3 (aacdec_template.c, decode_cpe: ms_present = 3 is reserved).",
-   "faad_trace": "faad2 rejects ms_mask_present 3 (syntax.c, error 32) and stops at the first frame it rejects."
+   "decode": "ffmpeg rejects ms_mask_present 3, which the specification reserves.",
+   "faad_trace": "faad2 rejects ms_mask_present 3 and stops at the first frame it rejects."
   }
  }
 }
