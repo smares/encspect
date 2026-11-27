@@ -15,6 +15,25 @@ internal static class StdCodebooks
     // are in groups of one level each, the table of levels giving the size of each group, and within a group the runs count up.
     public static readonly ushort[][] Runs = [.. Enumerable.Range(0, 6).Select(RunsOf)];
 
+    // Per codebook and symbol (index 2 and up): the level of the code, the number of its group.
+    public static readonly ushort[][] Levels = [.. Enumerable.Range(0, 6).Select(LevelsOf)];
+
+    private static ushort[] LevelsOf(int book)
+    {
+        ushort[] counts = Tables.CoefficientLevels[book];
+        ushort[] levels = new ushort[Tables.CoefficientLengths[book].Length];
+        int symbol = 2;
+        for (int group = 0; group < counts.Length; group++)
+        {
+            for (int i = 0; i < counts[group] && symbol < levels.Length; i++)
+            {
+                levels[symbol++] = (ushort)(group + 1);
+            }
+        }
+
+        return levels;
+    }
+
     private static ushort[] RunsOf(int book)
     {
         ushort[] levels = Tables.CoefficientLevels[book];

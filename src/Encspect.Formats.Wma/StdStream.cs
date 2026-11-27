@@ -126,8 +126,26 @@ internal sealed class StdStream
     // The frame the last superframe announces and no superframe finishes, among the unread frames. Microsoft's rule leaves it out of the samples.
     public long UnfinishedLast { get; private set; }
 
-    public void Read(IEnumerable<MappedBytes> packets, int limit, StdNodes nodes, FindingCollector findings, CancellationToken cancellationToken)
+    private StdDecodeFeed? _feed;
+
+    // The values of the frame being read where a session decodes, which the walk stores.
+    private StdRecordWriter? Writer => _feed?.Writer;
+
+    private void LoseUnread(long count, bool isUnfinished = false)
     {
+        UnreadFrames += count;
+        _feed?.Lost(count, isUnfinished);
+    }
+
+    // Hands a valid frame whose values the walk stored to the decoding.
+    private void Feed(ReadOnlyMemory<byte> bytes, in StdFrameRecord frame, int startBit, int frameIndex, StdNodes nodes)
+    {
+        _feed?.Frame(bytes, startBit, frame.Bits, _feed.IsDecoding ? nodes.Frame(frameIndex) : null);
+    }
+
+    public void Read(IEnumerable<MappedBytes> packets, int limit, StdNodes nodes, FindingCollector findings, StdDecodeFeed? feed, CancellationToken cancellationToken)
+    {
+        _feed = feed;
         StdParameters p = Parameters;
         int align = p.BlockAlign;
         byte[] buffer = new byte[align + 8];
@@ -159,7 +177,7 @@ internal sealed class StdStream
                 {
                     // A short object, cut or whole, whose first byte is there declares frames by it: those that start in it and, with the bit
                     // reservoir, the one in progress that it would finish. Not read, they are lost.
-                    UnreadFrames += p.UsesBitReservoir ? (packet.Span[0] & 15) + (reservoir.Bytes > 0 ? 1 : 0) : 1;
+                    LoseUnread(p.UsesBitReservoir ? (packet.Span[0] & 15) + (reservoir.Bytes > 0 ? 1 : 0) : 1);
                 }
 
                 reservoir.Bytes = 0;
@@ -223,8 +241,8 @@ internal sealed class StdStream
         // The frame the last superframe announces and no superframe finishes, whose bits the file does not hold whole: declared, unreadable, lost.
         if (p.UsesBitReservoir && reservoir.Bytes > 0 && !HasAnnouncedLast)
         {
-            UnreadFrames++;
             UnfinishedLast = 1;
+            LoseUnread(1, isUnfinished: true);
         }
     }
 
@@ -255,9 +273,10 @@ internal sealed class StdStream
         int total = 8 * at;
         var bits = new Bits(data, total) { Position = reservoir.FirstBit & 7 };
         int start = bits.Position;
-        FrameFault fault = StdFrameReader.Read(Parameters, bits, ref state, null, null, out _);
+        FrameFault fault = StdFrameReader.Read(Parameters, bits, ref state, null, null, out _, Writer);
         if (fault == FrameFault.None && bits.Position <= total)
         {
+            _feed?.Frame(data, start, bits.Position - start, null);
             HasAnnouncedLast = true;
             AnnouncedLastBits = bits.Position - start;
             AnnouncedLastMargin = total - bits.Position;
@@ -369,7 +388,7 @@ internal sealed class StdStream
             if (reservoir.Bytes + align - 1 > MaxReservoirAppended || reservoir.Middles >= MaxMiddles)
             {
                 // The frame in progress cannot be finished.
-                UnreadFrames++;
+                LoseUnread(1);
                 reservoir.Bytes = 0;
             }
             else
@@ -390,7 +409,7 @@ internal sealed class StdStream
         {
             record.State = SuperframeState.BitOffsetRejected;
             // The frames its header declares are not read, and neither is the frame in progress it would finish.
-            UnreadFrames += record.Count + (isInProgress ? 1 : 0);
+            LoseUnread(record.Count + (isInProgress ? 1 : 0));
             reservoir.Bytes = 0;
             Superframes.Add(record);
             findings.Add(Severity.Warning, "wma.bit-offset", () => nodes.Superframe(index), n => StdText.BitOffset(n, SuperframeOffset(index)));
@@ -406,7 +425,7 @@ internal sealed class StdStream
             framesHere++;
             if (spanningFault != FrameFault.None)
             {
-                UnreadFrames += record.Count;
+                LoseUnread(record.Count);
                 FinishSuperframe(index, framesHere, -1, 0);
                 reservoir.Bytes = 0;
                 return;
@@ -419,16 +438,21 @@ internal sealed class StdStream
         for (int i = 0; i < record.Count - 1; i++)
         {
             var frame = new StdFrameRecord { Superframe = index, StartSuperframe = index, StartBit = reader.Position, State = state.Pack() };
-            FrameFault fault = StdFrameReader.Read(p, reader, ref state, Totals, null, out int blocks);
+            FrameFault fault = StdFrameReader.Read(p, reader, ref state, Totals, null, out int blocks, Writer);
             frame.Blocks = blocks;
             frame.Fault = fault;
             frame.Bits = Math.Max(0, Math.Min(reader.Position, 8 * align) - frame.StartBit);
             framesHere++;
             int frameIndex = AddFrame(frame);
+            if (fault == FrameFault.None)
+            {
+                Feed(buffer, frame, frame.StartBit, frameIndex, nodes);
+            }
+
             if (fault != FrameFault.None)
             {
                 ReportInvalid(findings, nodes, frameIndex, index, fault, frame.StartBit / 8);
-                UnreadFrames += record.Count - 1 - i;
+                LoseUnread(record.Count - 1 - i);
                 FinishSuperframe(index, framesHere, -1, 0);
                 reservoir.Bytes = 0;
                 return;
@@ -441,7 +465,7 @@ internal sealed class StdStream
         if (left > MaxReservoir)
         {
             // The frame this superframe announces cannot be finished.
-            UnreadFrames++;
+            LoseUnread(1);
             reservoir.Bytes = 0;
             FinishSuperframe(index, framesHere, end, 0);
             findings.Add(Severity.Warning, "wma.reservoir-length", () => nodes.Superframe(index), n => StdText.ReservoirLength(n, true));
@@ -458,7 +482,7 @@ internal sealed class StdStream
         var frame = new StdFrameRecord { Superframe = index, StartSuperframe = first, StartBit = firstBit, State = state.Pack() };
         FrameBuffer buffer = BuildBuffer(frame, i => _window[i]);
         var bits = new Bits(buffer.Data, buffer.Total) { Position = buffer.Start };
-        FrameFault fault = StdFrameReader.Read(Parameters, bits, ref state, Totals, null, out int blocks);
+        FrameFault fault = StdFrameReader.Read(Parameters, bits, ref state, Totals, null, out int blocks, Writer);
         frame.Blocks = blocks;
         frame.Fault = fault;
         frame.Bits = Math.Max(0, Math.Min(bits.Position, buffer.Total) - buffer.Start);
@@ -476,6 +500,11 @@ internal sealed class StdStream
 
         SpanningFrames++;
         int frameIndex = AddFrame(frame);
+        if (fault == FrameFault.None)
+        {
+            Feed(buffer.Data, frame, buffer.Start, frameIndex, nodes);
+        }
+
         if (frame.Filler != FrameFiller.None)
         {
             ReportFiller(findings, nodes, frameIndex, index, frame.Filler == FrameFiller.Stuffing, frame.FillerBits);
@@ -521,6 +550,7 @@ internal sealed class StdStream
         else
         {
             InvalidFrames++;
+            _feed?.Lost(1);
         }
 
         long midSide = Totals.MidSide - _midSideSeen;
@@ -538,7 +568,7 @@ internal sealed class StdStream
         int align = p.BlockAlign;
         var frame = new StdFrameRecord { Superframe = index, StartSuperframe = index, StartBit = 0, State = state.Pack() };
         var bits = new Bits(buffer, 8 * align);
-        FrameFault fault = StdFrameReader.Read(p, bits, ref state, Totals, null, out int blocks);
+        FrameFault fault = StdFrameReader.Read(p, bits, ref state, Totals, null, out int blocks, Writer);
         frame.Blocks = blocks;
         frame.Fault = fault;
         frame.Bits = Math.Max(0, Math.Min(bits.Position, 8 * align));
@@ -565,6 +595,7 @@ internal sealed class StdStream
         }
 
         Superframes.Add(record);
+        Feed(buffer, frame, 0, frameIndex, nodes);
     }
 
     // Keeps the file ranges of a media object that is not one run of bytes.
