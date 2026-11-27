@@ -1,43 +1,38 @@
 {
- "goldens": [
-  "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
- ],
- "added": [
-  {
-   "scope": "node",
-   "parent": [
-    "Matroska",
-    "Track 1 Frames"
-   ],
-   "name": "Compression Level"
-  },
-  {
-   "scope": "node",
-   "parent": [
-    "Matroska",
-    "Track 1 Frames",
-    "Statistics"
-   ],
-   "name": "Compression Level"
-  },
-  {
-   "scope": "node",
-   "parent": [
-    "Matroska",
-    "Track 1 Frames",
-    "Compression Level"
-   ],
-   "name": "Confidence"
-  },
-  {
-   "scope": "node",
-   "parent": [
-    "Matroska",
-    "Track 1 Frames",
-    "Compression Level"
-   ],
-   "name": "Evidence",
-   "last": 8
-  }
- ]
+  "goldens": [
+    "tests/fixtures/matroska/"
+  ],
+  "changed": [
+    {
+      "path": [
+        "Matroska",
+        "Track 1 Frames",
+        "Windows Media Audio 1",
+        "Encoder",
+        "Evidence"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "path": [
+        "Matroska",
+        "Track 1 Frames",
+        "Windows Media Audio 2",
+        "Encoder",
+        "Evidence"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "scope": "finding",
+      "code": "mpeg-audio.writer-claim-differs",
+      "fields": [
+        "message"
+      ]
+    }
+  ]
 }
