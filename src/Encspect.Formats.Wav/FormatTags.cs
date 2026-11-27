@@ -42,10 +42,13 @@ internal static class FormatTags
     public static bool IsFloat(int tag) => tag == IeeeFloat;
 
     // Samples that are stored as they are, one after another, so the data chunk's size gives the sample count.
-    public static bool IsLinear(int tag) => tag is Pcm or IeeeFloat or ALaw or MuLaw;
+    public static bool IsLinear(int tag) => WaveFormatRoutes.IsLinear(tag);
 
     // The codec parser the data chunk goes to, or null where Encspect has none for the coding.
-    public static string? CodecId(int tag) => WaveFormatRoutes.CodecId(tag);
+    public static string? CodecId(int tag) => WaveFormatRoutes.CodecId(tag) ?? WaveFormatRoutes.WindowsMediaCodecId(tag);
+
+    // Whether the coding is one of the Windows Media Audio codings, whose parsers read blocks (packets) and not a stream.
+    public static bool IsWindowsMedia(int tag) => WaveFormatRoutes.WindowsMediaCodecId(tag) is not null;
 
     public static string Show(int tag) => WaveFormatNames.Show(tag);
 }

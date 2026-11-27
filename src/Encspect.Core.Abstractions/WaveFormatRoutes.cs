@@ -53,6 +53,16 @@ public static class WaveFormatRoutes
         return null;
     }
 
+    // The codec parser of the linear codings (PCM, IEEE floating point, A-law and mu-law) that containers other than WAV hand over as packets of samples.
+    public const string PcmSamples = "pcm-samples";
+
+    // Samples that are stored as they are, one after another.
+    public static bool IsLinear(int tag) => tag is Pcm or IeeeFloat or ALaw or MuLaw;
+
+    // The codec parser the audio of a format tag goes to in a container that hands it over as packets: the one table of WAV, Matroska's A_MS/ACM and ASF,
+    // which each take what their layout allows (WAV hands the linear codings to its own PCM route), or null where Encspect has no parser for the coding.
+    public static string? RouteOf(int tag) => IsLinear(tag) ? PcmSamples : CodecId(tag) ?? WindowsMediaCodecId(tag);
+
     // The codec parser of the audio frames a coding stores as a stream of its own (MPEG audio, AC-3 and DTS), or null: AC-3 under 0x2000 (mmreg.h
     // calls the tag WAVE_FORMAT_DVM) is the convention of the files FFmpeg's muxer writes, not a definition of the header.
     public static string? CodecId(int tag) => tag switch

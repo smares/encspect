@@ -64,8 +64,8 @@ REMUXES = [
 ]
 
 
-# name, the committed elementary stream it wraps, the stream the analyzer reports (codec, rate, channels): MPEG audio (format tag 0x0055) and AC-3 (0x2000, or the
-# extensible format with the AC-3 sub-format for six channels) as ffmpeg's ASF muxer writes them, `-c copy` from the elementary files, bit-exact.
+# name, the committed elementary stream it wraps, the stream the analyzer reports (codec, rate, channels): MPEG audio (format tag 0x0055 for Layer III, 0x0050 for Layer II), AC-3 (0x2000, or the
+# extensible format with the AC-3 sub-format for six channels) and PCM, IEEE float, A-law and mu-law (0x0001, 0x0003, 0x0006 and 0x0007) as ffmpeg's ASF muxer writes them, `-c copy` from the elementary files, bit-exact.
 ROUTED = [
     ("external-ffmpeg-mp3-cbr", "mpeg-audio/external-ffmpeg-cbr.mp3", "MPEG-1 Layer III", 44100, 2),
     ("external-ffmpeg-mp3-mono", "mpeg-audio/external-ffmpeg-mono.mp3", "MPEG-1 Layer III", 44100, 1),
@@ -73,6 +73,12 @@ ROUTED = [
     ("external-ffmpeg-ac3-51", "ac3/external-ffmpeg-5.1-448k.ac3", "AC-3", 48000, 6),
     ("external-ffmpeg-ac3-stereo", "ac3/external-ffmpeg-stereo-192k.ac3", "AC-3", 48000, 2),
     ("external-ffmpeg-ac3-mono", "ac3/external-ffmpeg-mono-96k.ac3", "AC-3", 48000, 1),
+    ("external-ffmpeg-mp2-stereo", "mpeg-audio/external-ffmpeg-mp2.mp2", "MPEG-1 Layer II", 48000, 2),
+    ("external-ffmpeg-pcm-s16-stereo", "wav/external-pcm-s16-stereo-44100.wav", "PCM", 44100, 2),
+    ("external-ffmpeg-pcm-s16-5-1", "wav/external-pcm-s16-5.1-48000.wav", "PCM", 48000, 6),
+    ("external-ffmpeg-pcm-f32-stereo", "wav/external-pcm-f32-stereo-44100.wav", "PCM", 44100, 2),
+    ("external-ffmpeg-alaw-mono", "wav/external-alaw-mono-8000.wav", "A-law", 8000, 1),
+    ("external-ffmpeg-mulaw-mono", "wav/external-mulaw-mono-8000.wav", "mu-law", 8000, 1),
 ]
 
 
@@ -182,7 +188,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--manifests-only", action="store_true")
     parser.add_argument("--remuxes-only", action="store_true")
-    parser.add_argument("--routed-only", action="store_true", help="write only the MPEG audio and AC-3 files (ffmpeg -c copy of the committed elementary streams)")
+    parser.add_argument("--routed-only", action="store_true", help="write only the MPEG audio, AC-3 and PCM files (ffmpeg -c copy of the committed elementary streams)")
     args = parser.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
     if args.remuxes_only:

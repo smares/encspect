@@ -10,16 +10,11 @@ namespace Encspect.Tests.Formats.Asf;
 // the container; the decode and measure goldens of every ASF fixture with a decodable stream are those of the decoders' fixture tests.
 public class AsfRouteTests
 {
-    // The tags WaveFormatRoutes routes for WAV and Matroska's A_MS/ACM that ASF does not take from it, with the codec each has there (planned for 0.5).
+    // The tags WaveFormatRoutes routes that ASF does not take from it, with the codec each goes to in WAV and Matroska's A_MS/ACM.
     private static readonly Dictionary<int, string> LeftOut = new()
     {
-        [WaveFormatRoutes.Pcm] = "the PCM parser",
-        [WaveFormatRoutes.IeeeFloat] = "the PCM parser",
-        [WaveFormatRoutes.ALaw] = "the PCM parser",
-        [WaveFormatRoutes.MuLaw] = "the PCM parser",
         [WaveFormatRoutes.DtsMicrosoft] = "dts",
         [WaveFormatRoutes.Dts] = "dts",
-        [WaveFormatRoutes.Mpeg] = "mpeg-audio (Layer I and II)",
     };
 
     [Fact]
@@ -28,8 +23,7 @@ public class AsfRouteTests
         var routed = new SortedSet<int>();
         for (int tag = 0; tag <= 0xFFFF; tag++)
         {
-            if (WaveFormatRoutes.CodecId(tag) is not null || WaveFormatRoutes.WindowsMediaCodecId(tag) is not null
-                || new[] { 8, 16, 24, 32, 64 }.Any(bits => WaveFormatRoutes.PcmEncodingOf(tag, bits, bits) is not null))
+            if (WaveFormatRoutes.RouteOf(tag) is not null)
             {
                 routed.Add(tag);
             }
@@ -38,6 +32,8 @@ public class AsfRouteTests
         Assert.Equal([], routed.Where(tag => !AsfParser.DefaultRoutes.ContainsKey(tag) && !LeftOut.ContainsKey(tag)).Select(tag => $"0x{tag:X4}"));
         Assert.Equal([], LeftOut.Keys.Where(tag => AsfParser.DefaultRoutes.ContainsKey(tag) || !routed.Contains(tag)).Select(tag => $"0x{tag:X4}"));
         Assert.Equal([], AsfParser.DefaultRoutes.Keys.Where(tag => !routed.Contains(tag)).Select(tag => $"0x{tag:X4}"));
+        Assert.Equal(routed.Where(tag => AsfParser.DefaultRoutes.ContainsKey(tag)).Select(tag => WaveFormatRoutes.RouteOf(tag)), routed.Where(tag => AsfParser.DefaultRoutes.ContainsKey(tag)).Select(tag => AsfParser.DefaultRoutes[tag]));
+        Assert.Equal(LeftOut.Keys.Order(), AsfParser.LeftOut.Order());
     }
 
     public static TheoryData<string> Names

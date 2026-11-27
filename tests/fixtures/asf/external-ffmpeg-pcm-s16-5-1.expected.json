@@ -1,0 +1,42 @@
+{
+ "description": "ffmpeg's -c copy remux of wav/external-pcm-s16-5.1-48000.wav into ASF: the stream's frames are the media objects, under the format tag ffmpeg's muxer gives the coding.",
+ "format": "ASF",
+ "encoder": "ffmpeg version 6.1.1-3ubuntu5",
+ "command": [
+  "ffmpeg",
+  "-i",
+  "wav/external-pcm-s16-5.1-48000.wav",
+  "-c",
+  "copy",
+  "-bitexact",
+  "external-ffmpeg-pcm-s16-5-1.asf"
+ ],
+ "input": {
+  "file": "wav/external-pcm-s16-5.1-48000.wav",
+  "sha256": "c10dcb6412a656a05c57d0fc89c87afcdf212d0af5b6aa4d700c33c9b1020ba2"
+ },
+ "sha256": "1f87fc4a8b936b262ad686fca4c3c4a4a29b861e3bc68d591d175d93b942a5af",
+ "reproducible": true,
+ "streams": [
+  {
+   "codec": "PCM",
+   "sample_rate": 48000,
+   "channels": 6
+  }
+ ],
+ "ffprobe": {
+  "codec": "pcm_s16le",
+  "channels": 6,
+  "rate": 48000,
+  "block_align": null,
+  "bit_rate": 4608000,
+  "extradata_size": 0,
+  "packets": 15,
+  "packet_sizes": [
+   312,
+   4092
+  ],
+  "decoded_samples": 4800,
+  "file_bytes": 90130
+ }
+}

@@ -9,7 +9,7 @@ namespace Encspect.Formats.Wav;
 public sealed class PcmCodecParser : ICodecParser
 {
     // Not the decoder's ID "pcm": Ogg names its PCM mapping by that ID, and no container hands this parser a layout but MP4 (and Matroska).
-    public const string CodecId = "pcm-samples";
+    public const string CodecId = WaveFormatRoutes.PcmSamples;
 
     public string Id => CodecId;
 

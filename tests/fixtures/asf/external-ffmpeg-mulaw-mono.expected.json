@@ -1,0 +1,41 @@
+{
+ "description": "ffmpeg's -c copy remux of wav/external-mulaw-mono-8000.wav into ASF: the stream's frames are the media objects, under the format tag ffmpeg's muxer gives the coding.",
+ "format": "ASF",
+ "encoder": "ffmpeg version 6.1.1-3ubuntu5",
+ "command": [
+  "ffmpeg",
+  "-i",
+  "wav/external-mulaw-mono-8000.wav",
+  "-c",
+  "copy",
+  "-bitexact",
+  "external-ffmpeg-mulaw-mono.asf"
+ ],
+ "input": {
+  "file": "wav/external-mulaw-mono-8000.wav",
+  "sha256": "31ff0dec149a68a5c56957586f1426ef15e9cebc68df9f0629110bc00da9b053"
+ },
+ "sha256": "a9dc699ce3c518dd837b9fb30830de0634215fd615af363332b42cf0db664ab0",
+ "reproducible": true,
+ "streams": [
+  {
+   "codec": "mu-law",
+   "sample_rate": 8000,
+   "channels": 1
+  }
+ ],
+ "ffprobe": {
+  "codec": "pcm_mulaw",
+  "channels": 1,
+  "rate": 8000,
+  "block_align": null,
+  "bit_rate": 64000,
+  "extradata_size": 0,
+  "packets": 1,
+  "packet_sizes": [
+   2000
+  ],
+  "decoded_samples": 2000,
+  "file_bytes": 3708
+ }
+}

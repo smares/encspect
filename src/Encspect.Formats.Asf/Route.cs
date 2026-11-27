@@ -155,10 +155,24 @@ public sealed partial class AsfParser
             }
 
             string? codec = state.Routes.GetValueOrDefault(format.EffectiveTag);
+            PcmCoding? pcm = null;
+            if (codec == WaveFormatRoutes.PcmSamples)
+            {
+                pcm = WaveFormatRoutes.PcmCodingOf(format.EffectiveTag, format.Channels, format.BitsPerSample, format.BlockAlign, format.SamplesPerSecond, false,
+                    WaveFormatRoutes.StreamLayout(format.Channels, format.Tag == WaveFormatRoutes.Extensible, format.ChannelMask), out string why);
+                if (pcm is null)
+                {
+                    state.Findings.AddNow(Severity.Info, "asf.codec-not-analyzed",
+                        $"Stream {stream.Number} is coded as {CodecNameOf(format.EffectiveTag)} (format tag 0x{format.EffectiveTag:X4}) and its WAVEFORMATEX {why}, so its samples are not read.", anchor);
+                    AddProtectedStream(state, stream);
+                    continue;
+                }
+            }
+
             if (codec is null)
             {
                 state.Findings.AddNow(Severity.Info, "asf.codec-not-analyzed",
-                    $"Stream {stream.Number} is coded as {CodecNameOf(format.EffectiveTag)} (format tag 0x{format.EffectiveTag:X4}), which is not routed from ASF to a codec parser; its media objects are not analyzed.", anchor);
+                    $"Stream {stream.Number} is coded as {CodecNameOf(format.EffectiveTag)} (format tag 0x{format.EffectiveTag:X4}), which ASF does not route to a codec parser; its media objects are not analyzed.", anchor);
                 AddProtectedStream(state, stream);
                 continue;
             }
@@ -181,6 +195,12 @@ public sealed partial class AsfParser
             {
                 state.Findings.AddNow(Severity.Info, "asf.stream-not-analyzed", $"Stream {stream.Number}'s codec-specific data cannot be read.", anchor);
                 continue;
+            }
+
+            if (pcm is not null)
+            {
+                // The samples are counted from the payloads' bytes; the packets are read only where the decoder runs.
+                configuration = configuration with { Pcm = pcm, DataBytes = state.Figures.Streams.GetValueOrDefault(stream.Number)?.PayloadBytes ?? 0 };
             }
 
             IEnumerable<MappedBytes> objects = MediaObjects(state, stream.Number);

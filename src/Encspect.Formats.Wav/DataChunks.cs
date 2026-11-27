@@ -100,6 +100,7 @@ internal static class DataChunks
         {
             isRouted = s.Burst is { } chain
                 ? Iec61937Route.ParseBursts(s, format, data, chain, codec)
+                : FormatTags.IsWindowsMedia(format.CodingTag) ? WindowsMediaRoute.Run(s, format, data, codec)
                 : context.ParseStream(codec, data.Node, context.Reader.Slice(data.Start, data.Available));
         }
         else if (codec is not null)
