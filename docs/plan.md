@@ -449,7 +449,7 @@ The more formats of [planned.md](formats/planned.md#after-05-more-formats), as l
 10. **MPEG-H 3D Audio**
 11. **Shorten**
 12. **mp3HD, the lossless extension of MP3** (the lead, 2026-11-11)
-13. **The formats whose only detailed public source is FFmpeg** (clean-room): OSQ; ATRAC, ATRAC3 and ATRAC3plus; RealAudio; TwinVQ; QDesign Music; Nellymoser.
+13. **The formats whose only detailed public source is FFmpeg** (clean-room): OSQ; ATRAC, ATRAC3 and ATRAC3plus; RealAudio, with ACELP.net (the lead, 2026-11-27); TwinVQ; QDesign Music; Nellymoser.
 14. **Game and console middleware** (the lead, 2026-11-16): ADX, HCA, BRSTM, VAG, FSB and Bink.
 15. **The older lossless compressors and speech codecs (vocoders) no item above names** (the lead, 2026-11-16): each named with its sources when its turn comes.
 16. **HALAC** (the lead, 2026-11-23; [planned.md](formats/planned.md#16-halac)): a lossless codec (`.halac`; a lossy mode since 1.6.1) by Hakan Abbas, under the MIT license (github.com/Hakan-Abbas/HALAC-High-Availability-Lossless-Audio-Compression).
