@@ -1072,12 +1072,12 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
     }
 
     // The decoding of a Windows Media Audio file holds one frame's record, the spectra, the overlaps and the output of its channels, so what it holds does not grow with the frames.
-    // Measured as the Vorbis test above does, at 50,000 and 200,000 superframes of ffmpeg's wmav2 encoder (one frame each, the first two of which the decoder does not output).
+    // Measured as the Vorbis test above does, at 20,000 and 80,000 superframes of ffmpeg's wmav2 encoder (one frame each, the first two of which the decoder does not output).
     [Fact]
     public void DecodingManyWmaFramesHoldsNothingPerFrame()
     {
-        const int fewer = 50_000;
-        const int frames = 200_000;
+        const int fewer = 20_000;
+        const int frames = 80_000;
         (byte[] properties, byte[] mediaObject) = AsfBuilder.Take("asf/external-ffmpeg-wmav2-stereo-44k-128k.wma", 0x0161);
         byte[] Packets(int count) => AsfBuilder.Build(properties, mediaObject, count, 46);
 

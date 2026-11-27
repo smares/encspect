@@ -137,10 +137,31 @@ internal sealed class StdStream
         _feed?.Lost(count, isUnfinished);
     }
 
+    // The media objects the container's own check failed (a Matroska CRC-32 element): the frames that lie in them are decoded and written, and left out of the measurements.
+    private readonly HashSet<int> _failedSuperframes = [];
+
+    private bool FailsChecksum(int first, int last)
+    {
+        if (_failedSuperframes.Count == 0)
+        {
+            return false;
+        }
+
+        for (int i = first; i <= last; i++)
+        {
+            if (_failedSuperframes.Contains(i))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     // Hands a valid frame whose values the walk stored to the decoding.
     private void Feed(ReadOnlyMemory<byte> bytes, in StdFrameRecord frame, int startBit, int frameIndex, StdNodes nodes)
     {
-        _feed?.Frame(bytes, startBit, frame.Bits, _feed.IsDecoding ? nodes.Frame(frameIndex) : null);
+        _feed?.Frame(bytes, startBit, frame.Bits, _feed.IsDecoding ? nodes.Frame(frameIndex) : null, FailsChecksum(frame.StartSuperframe, frame.Superframe));
     }
 
     public void Read(IEnumerable<MappedBytes> packets, int limit, StdNodes nodes, FindingCollector findings, StdDecodeFeed? feed, CancellationToken cancellationToken)
@@ -167,6 +188,11 @@ internal sealed class StdStream
             }
 
             int index = Superframes.Count;
+            if (packet.FailsChecksum)
+            {
+                _failedSuperframes.Add(index);
+            }
+
             var record = new SuperframeRecord { Length = Math.Min(packet.Length, align), RangesRef = uint.MaxValue, DataRef = uint.MaxValue, BitOffset = -1, FirstFrame = Frames.Count, EndBit = -1 };
             SetRanges(ref record, packet, record.Length);
 
@@ -211,6 +237,12 @@ internal sealed class StdStream
             {
                 _window[index] = buffer.AsSpan(0, align).ToArray();
                 ReadWithReservoir(record, index, buffer, ref state, ref reservoir, nodes, findings);
+            }
+
+            if (_failedSuperframes.Count > 0)
+            {
+                int oldest = p.UsesBitReservoir && reservoir.Bytes > 0 ? reservoir.First : index + 1;
+                _failedSuperframes.RemoveWhere(i => i < oldest);
             }
 
             if (p.UsesBitReservoir)
@@ -276,7 +308,7 @@ internal sealed class StdStream
         FrameFault fault = StdFrameReader.Read(Parameters, bits, ref state, null, null, out _, Writer);
         if (fault == FrameFault.None && bits.Position <= total)
         {
-            _feed?.Frame(data, start, bits.Position - start, null);
+            _feed?.Frame(data, start, bits.Position - start, null, FailsChecksum(reservoir.First, Superframes.Count - 1));
             HasAnnouncedLast = true;
             AnnouncedLastBits = bits.Position - start;
             AnnouncedLastMargin = total - bits.Position;

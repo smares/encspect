@@ -76,7 +76,7 @@ Protection is reported on the streams (`StreamInfo.Protection`), in the JSON, th
 
 ## WMA versions 1 and 2
 
-Format tags 0x0160 and 0x0161, routed as the codec "wma". The syntax is described in [wma-standard-format.md](../design/wma-standard-format.md); no audio is rebuilt.
+Format tags 0x0160 and 0x0161, routed as the codec "wma". The syntax is described in [wma-standard-format.md](../design/wma-standard-format.md) and the reconstruction of the audio in [wma-standard-decoding.md](../design/wma-standard-decoding.md); the analysis reads the syntax down to the end of the coefficients in every run, and the audio is rebuilt where a front end asks for it ([Decoding](#decoding-versions-1-and-2)).
 
 ### What is read
 
@@ -111,9 +111,22 @@ Format tags 0x0160 and 0x0161, routed as the codec "wma". The syntax is describe
 - ffmpeg's wmav1 and wmav2 encoders pad each superframe with 'N' bytes after the frame, with no bit reservoir and no variable block lengths; with two or more padded superframes the encoder is named with high confidence, with one with medium.
 - Microsoft's encoders: version 2, a Samples Per Block of 17 frames, the bit reservoir and variable block lengths name "Microsoft's Windows Media Audio encoder" with medium confidence.
 
+### Decoding (versions 1 and 2)
+
+Versions 1 and 2 are decoded for `--measure` and the front ends' output (the `wma` decoder, `src/Encspect.Formats.Wma/Decoding`), from the frames the walk of `StdFrameReader` reads: where a session decodes, the walk stores each valid frame's values (`StdRecordWriter`: the block sizes, the flags, the gain, the noise levels, the exponents as a value for every line or ten line spectral pair indexes, and the signed coefficient on every line) and `StdDecodeFeed` hands them over with the frame's position. The decoder follows [wma-standard-decoding.md](../design/wma-standard-decoding.md), a description written without code from a reading of FFmpeg's decoder by an agent that wrote no decoder, and uses nothing else of FFmpeg.
+
+- **What is rebuilt:** the dequantization with the exponents of both codings (scale factor codes and the line spectral pair curve, evaluated at the block's own angles), exponents reused across block sizes, noise substitution with the generator the description gives (8,192 values from a linear congruential sequence, a root mean square of 0.02 for scale factor codes and 0.04 for line spectral pairs, never restarted), mid/side stereo, the inverse transform and the sine windows with the overlap of blocks of different sizes.
+- **Arithmetic:** single precision for the transform and its overlap, double precision for the setup (the exponents, gains and the curve), `DetMath` for every power and trigonometric function, the exact fourth root where FFmpeg uses a table, no fused multiply-add. The output is the same on every platform; `.decode.json` goldens pin the hash of each fixture's samples. A gain is clamped to 1,000 (10^50) and a dequantized line to 10^30 so that nothing overflows.
+- **Positions and trims:** frame i's output lies at i times the frame length at the coded stage, and the first two frames' output is the start the syntax trims (`Trim`), so the first sample is at twice the frame length and the measured samples are those of "Samples". After the last frame the part of the last block's overlap that no block changes any more is written (at most half a frame, (F - min(B, L)) / 2 as in [Samples and duration](#reference-for-sample-counts)). The frame the last superframe announces is decoded too, which FFmpeg's decoder does not do; FFmpeg outputs the last overlap whole, complete or not, so the last frame of its output is left out of the comparison.
+- **Gaps and withheld output:** a frame the walk cannot read (and those its superframe declares after it) is lost. The next frame decodes with an empty overlap and its first F/2 + min(L, L_p)/2 samples, which depend on the lost overlap, are withheld ("after a gap"); a block that reuses exponents a lost frame may have replaced is withheld over its window until the channel sends exponents again. Noise values after a gap differ from an undamaged decode and are not withheld; their level does not.
+- **Cost:** 22 units a sample, 2 per dequantized line, 3 per line more with noise substitution, 12 for each line of a line spectral pair curve, 1 per line for mid/side, 2 per bit of the window's length for each output sample of the transform and 2 for the window and overlap; a block with no coded channel charges only the overlap. `DecoderWorkTests` holds eight `wma-*` cases to twice the FLAC reference's time per unit.
+- **Verification:** the stream stores no checksum, so `--verify` decodes nothing; `--measure` and the front ends' output do.
+- **Accuracy:** the output agrees with FFmpeg 6.1.1's to 3 x 10^-7 of full scale on every committed fixture ([development.md](../development.md#wma-versions-1-and-2-decoding)). Microsoft's decoder is the reference; its samples are written by a Windows run ([development.md](../development.md#wma-versions-1-and-2-decoding)). Where the description leaves a rule to FFmpeg's choice (the exponent of version 1 without noise substitution, the index across block sizes) the decoder follows FFmpeg's.
+- **Not decoded:** a stream the parser does not read (encrypted samples, an unsupported configuration, `wma.format-unsupported`) and the cases the description leaves open (version 1 with variable block lengths, version 2 at 49,048 Hz and above): such a stream has no session and says so in its report.
+
 ### What is not covered
 
-- The values of exponents, coefficients and noise levels, and any reconstruction of audio.
+- Microsoft's noise generator (its noise-substituted lines have the level of the description's, not its values) and Microsoft's own PCM for the fixtures until a Windows run's samples are compared.
 - Version 1 with variable block lengths and scale factor exponents, and version 2 at 49,048 Hz and above, where the format description leaves the band lists open (no file at hand).
 - FFmpeg's handling of a frame that spans a superframe inside a frame, short media objects and partial end checks differs from this analysis in places; the description lists each.
 - A standard file cut inside a media object reports more samples than the whole file can: a cut disables Microsoft's rule, which has no black-box evidence on cut streams, and the frames its first byte declares are counted and lost (the file cut 50 bytes into its last object: 135,168 against 133,632; the whole file's Coded Samples, which counts the announced frame, is 137,216).
@@ -260,11 +273,10 @@ The Encoder node and the Writer node of a stream each list their evidence and na
 
 ## Not yet covered
 
-- Decoding WMA Lossless (planned in 0.5, with the other WMA decoders).
-- The audio of any codec (no decoder is built).
+- Decoding WMA Professional, Lossless and Voice (planned in 0.5, with their clean-room descriptions); versions 1 and 2 are decoded ([Decoding](#decoding-versions-1-and-2)).
 - Decrypting protected content (out of scope; see "ASF: protection" for what is reported).
 
 ## Articles
 
-- **Articles:** `asf-container`, `asf-packets`, `asf-metadata`, `asf-index`, `asf-scripts-and-markers`, `waveformatex`, `mpeg-audio-and-ac-3-in-asf`, `wma-standard`, `wma-pro`, `wma-lossless`, `wma-voice`, `wma-superframes`, `wma-bit-reservoir`, `wma-frames-and-blocks`, `wma-voice-superframes`, `wma-voice-frames`, `wma-packets`, `wma-subframes`, `wma-channel-transforms`, `wma-scale-factors`, `wma-coefficients`, `wma-lossless-subframes`.
+- **Articles:** `asf-container`, `asf-packets`, `asf-metadata`, `asf-index`, `asf-scripts-and-markers`, `waveformatex`, `mpeg-audio-and-ac-3-in-asf`, `wma-standard`, `wma-pro`, `wma-lossless`, `wma-voice`, `wma-superframes`, `wma-bit-reservoir`, `wma-frames-and-blocks`, `wma-exponents`, `wma-voice-superframes`, `wma-voice-frames`, `wma-packets`, `wma-subframes`, `wma-channel-transforms`, `wma-scale-factors`, `wma-coefficients`, `wma-lossless-subframes`.
 - **Shared with other formats:** `encoder-detection`.

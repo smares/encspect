@@ -41,7 +41,7 @@ internal sealed class StdDecodeFeed
     private readonly StdRecordWriter _writer = new();
 
     // A valid frame whose values the walk stored in the writer. bytes and the bits in them: where the frame lies; node: the parser's node of the frame, where findings point.
-    public void Frame(ReadOnlyMemory<byte> bytes, int startBit, int bitCount, Node? node)
+    public void Frame(ReadOnlyMemory<byte> bytes, int startBit, int bitCount, Node? node, bool failsChecksum = false)
     {
         int length = _parameters.FrameLength;
         long first = _next++ * length;
@@ -61,7 +61,7 @@ internal sealed class StdDecodeFeed
         }
 
         Node at = node ?? _stream;
-        _session.Decode(new CodedFrame(new MappedBytes(bytes.Slice(from, to - from), at.Offset), "Frame", first, length) { IsWalked = !lent.IsEmpty, Node = at });
+        _session.Decode(new CodedFrame(new MappedBytes(bytes.Slice(from, to - from), at.Offset), "Frame", first, length) { IsWalked = !lent.IsEmpty, FailsChecksum = failsChecksum, Node = at });
     }
 
     // Frames the parser counts as lost: an invalid frame, and those that were declared after it or could not be finished. isUnfinished: the frame the last superframe
