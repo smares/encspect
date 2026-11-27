@@ -1,11 +1,522 @@
 {
   "goldens": [
-    "tests/fixtures/asf/"
+    "tests/fixtures/asf/",
+    "tests/fixtures/mp4/ipcm-partial-frame-in-mp4.report.json",
+    "tests/fixtures/matroska/live-false-ape-items-two-clusters.report.json"
+  ],
+  "added": [
+    {
+      "scope": "streams",
+      "codec": "PCM"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object"
+      ],
+      "name": "Stream 1 Media Objects"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 1 Media Objects"
+      ],
+      "name": "Statistics"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 1 Media Objects",
+        "Statistics"
+      ],
+      "name": "Codec"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 1 Media Objects",
+        "Statistics"
+      ],
+      "name": "Sample Frames"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 1 Media Objects",
+        "Statistics"
+      ],
+      "name": "Duration"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 1 Media Objects",
+        "Statistics"
+      ],
+      "name": "Sample Rate"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 1 Media Objects",
+        "Statistics"
+      ],
+      "name": "Channels"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 1 Media Objects",
+        "Statistics"
+      ],
+      "name": "Channel Layout"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 1 Media Objects",
+        "Statistics"
+      ],
+      "name": "Bits Per Sample"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 1 Media Objects",
+        "Statistics"
+      ],
+      "name": "Sample Format"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 1 Media Objects",
+        "Statistics"
+      ],
+      "name": "Byte Order"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 1 Media Objects",
+        "Statistics"
+      ],
+      "name": "Average Bitrate"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object"
+      ],
+      "name": "Stream 3 Media Objects"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 3 Media Objects"
+      ],
+      "name": "Statistics"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 3 Media Objects",
+        "Statistics"
+      ],
+      "name": "Codec"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 3 Media Objects",
+        "Statistics"
+      ],
+      "name": "Sample Frames"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 3 Media Objects",
+        "Statistics"
+      ],
+      "name": "Duration"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 3 Media Objects",
+        "Statistics"
+      ],
+      "name": "Sample Rate"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 3 Media Objects",
+        "Statistics"
+      ],
+      "name": "Channels"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 3 Media Objects",
+        "Statistics"
+      ],
+      "name": "Channel Layout"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 3 Media Objects",
+        "Statistics"
+      ],
+      "name": "Bits Per Sample"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 3 Media Objects",
+        "Statistics"
+      ],
+      "name": "Sample Format"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 3 Media Objects",
+        "Statistics"
+      ],
+      "name": "Byte Order"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 3 Media Objects",
+        "Statistics"
+      ],
+      "name": "Average Bitrate"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object"
+      ],
+      "name": "Stream 2 Media Objects"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 2 Media Objects"
+      ],
+      "name": "Statistics"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 2 Media Objects",
+        "Statistics"
+      ],
+      "name": "Codec"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 2 Media Objects",
+        "Statistics"
+      ],
+      "name": "Sample Frames"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 2 Media Objects",
+        "Statistics"
+      ],
+      "name": "Duration"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 2 Media Objects",
+        "Statistics"
+      ],
+      "name": "Sample Rate"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 2 Media Objects",
+        "Statistics"
+      ],
+      "name": "Channels"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 2 Media Objects",
+        "Statistics"
+      ],
+      "name": "Channel Layout"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 2 Media Objects",
+        "Statistics"
+      ],
+      "name": "Bits Per Sample"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 2 Media Objects",
+        "Statistics"
+      ],
+      "name": "Sample Format"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 2 Media Objects",
+        "Statistics"
+      ],
+      "name": "Byte Order"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 2 Media Objects",
+        "Statistics"
+      ],
+      "name": "Average Bitrate"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 1 Media Objects"
+      ],
+      "name": "Writer"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 1 Media Objects",
+        "Writer"
+      ],
+      "name": "Confidence"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "Stream 1 Media Objects",
+        "Writer"
+      ],
+      "name": "Evidence"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object"
+      ],
+      "name": "MPEG Audio"
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ASF",
+        "Data Object",
+        "MPEG Audio"
+      ],
+      "name": "Gap"
+    },
+    {
+      "scope": "finding",
+      "code": "mpeg-audio.packets-no-frame"
+    },
+    {
+      "scope": "finding",
+      "code": "pcm.partial-sample-frame"
+    },
+    {
+      "scope": "finding",
+      "code": "pcm.writer-claim-differs"
+    },
+    {
+      "scope": "finding",
+      "code": "asf.object-incomplete"
+    },
+    {
+      "scope": "finding",
+      "code": "asf.fragment-overrun"
+    }
+  ],
+  "removed": [
+    {
+      "scope": "finding",
+      "code": "asf.codec-not-analyzed",
+      "goldens": [
+        "tests/fixtures/asf/broadcast.report.json",
+        "tests/fixtures/asf/compressed-payloads.report.json",
+        "tests/fixtures/asf/content-description-findings.report.json",
+        "tests/fixtures/asf/data-size-zero.report.json",
+        "tests/fixtures/asf/ecc-bytes.report.json",
+        "tests/fixtures/asf/extended-stream-properties.report.json",
+        "tests/fixtures/asf/extensible-format.report.json",
+        "tests/fixtures/asf/file-id-differs.report.json",
+        "tests/fixtures/asf/file-size-wrong.report.json",
+        "tests/fixtures/asf/fragmented-objects.report.json",
+        "tests/fixtures/asf/header-count-wrong.report.json",
+        "tests/fixtures/asf/header-reserved.report.json",
+        "tests/fixtures/asf/index-kinds.report.json",
+        "tests/fixtures/asf/index-offset-unaligned.report.json",
+        "tests/fixtures/asf/index-offset-variable-packets.report.json",
+        "tests/fixtures/asf/index-parameters-missing-kinds.report.json",
+        "tests/fixtures/asf/index-specifiers-differ.report.json",
+        "tests/fixtures/asf/indexes.report.json",
+        "tests/fixtures/asf/length-field-short-cut-fields.report.json",
+        "tests/fixtures/asf/length-field-short-cut.report.json",
+        "tests/fixtures/asf/length-field-short.report.json",
+        "tests/fixtures/asf/length-field-zero.report.json",
+        "tests/fixtures/asf/metadata.report.json",
+        "tests/fixtures/asf/minimal.report.json",
+        "tests/fixtures/asf/missing-file-properties.report.json",
+        "tests/fixtures/asf/multiple-payloads.report.json",
+        "tests/fixtures/asf/object-size-large.report.json",
+        "tests/fixtures/asf/object-size-small.report.json",
+        "tests/fixtures/asf/other-streams.report.json",
+        "tests/fixtures/asf/packet-count-wrong.report.json",
+        "tests/fixtures/asf/packet-issues.report.json",
+        "tests/fixtures/asf/packet-sizes-differ.report.json",
+        "tests/fixtures/asf/padding-zero.report.json",
+        "tests/fixtures/asf/payload-overrun.report.json",
+        "tests/fixtures/asf/protected-advanced-no-object-records.report.json",
+        "tests/fixtures/asf/protected-advanced-no-records.report.json",
+        "tests/fixtures/asf/protected-advanced-unknown-stream-only.report.json",
+        "tests/fixtures/asf/script-commands-markers.report.json",
+        "tests/fixtures/asf/script-marker-findings.report.json",
+        "tests/fixtures/asf/signature-only.report.json",
+        "tests/fixtures/asf/single-payload-widths.report.json",
+        "tests/fixtures/asf/trailing-garbage.report.json",
+        "tests/fixtures/asf/truncated-data.report.json",
+        "tests/fixtures/asf/two-streams.report.json",
+        "tests/fixtures/asf/widths-large.report.json",
+        "tests/fixtures/asf/widths-none.report.json",
+        "tests/fixtures/asf/widths-small.report.json"
+      ],
+      "messageContains": "is not routed from ASF"
+    },
+    {
+      "scope": "finding",
+      "code": "asf.codec-not-analyzed",
+      "messageContains": "PCM",
+      "goldens": [
+        "tests/fixtures/asf/protected-advanced-data-size.report.json",
+        "tests/fixtures/asf/protected-advanced.report.json"
+      ]
+    }
   ],
   "changed": [
     {
       "scope": "finding",
       "code": "asf.codec-not-analyzed",
+      "fields": [
+        "message"
+      ]
+    },
+    {
+      "scope": "finding",
+      "code": "pcm.partial-sample-frame",
+      "fields": [
+        "message"
+      ]
+    },
+    {
+      "scope": "finding",
+      "code": "wma.superframe-short",
+      "fields": [
+        "message"
+      ]
+    },
+    {
+      "scope": "finding",
+      "code": "wma.packet-short",
       "fields": [
         "message"
       ]

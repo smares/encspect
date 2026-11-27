@@ -2317,6 +2317,172 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "name": "Stream 1 Media Objects",
+                  "value": 3,
+                  "unit": "media objects",
+                  "offset": 671,
+                  "length": 1074,
+                  "children": [
+                    {
+                      "name": "Statistics",
+                      "kind": "Statistics",
+                      "offset": 671,
+                      "length": 1074,
+                      "children": [
+                        {
+                          "name": "Codec",
+                          "value": "PCM",
+                          "offset": 671,
+                          "length": 1074
+                        },
+                        {
+                          "name": "Sample Frames",
+                          "value": 120,
+                          "unit": "sample frames",
+                          "offset": 671,
+                          "length": 1074
+                        },
+                        {
+                          "name": "Duration",
+                          "value": 0.015,
+                          "unit": "s",
+                          "offset": 671,
+                          "length": 1074
+                        },
+                        {
+                          "name": "Sample Rate",
+                          "value": 8000,
+                          "unit": "Hz",
+                          "offset": 671,
+                          "length": 1074
+                        },
+                        {
+                          "name": "Channels",
+                          "value": 1,
+                          "unit": "channels",
+                          "offset": 671,
+                          "length": 1074
+                        },
+                        {
+                          "name": "Channel Layout",
+                          "value": "mono (front center)",
+                          "offset": 671,
+                          "length": 1074
+                        },
+                        {
+                          "name": "Bits Per Sample",
+                          "value": 16,
+                          "unit": "bits",
+                          "offset": 671,
+                          "length": 1074
+                        },
+                        {
+                          "name": "Sample Format",
+                          "value": "signed integer",
+                          "offset": 671,
+                          "length": 1074
+                        },
+                        {
+                          "name": "Byte Order",
+                          "value": "little-endian",
+                          "offset": 671,
+                          "length": 1074
+                        },
+                        {
+                          "name": "Average Bitrate",
+                          "value": 128,
+                          "unit": "kbps",
+                          "offset": 671,
+                          "length": 1074
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Stream 3 Media Objects",
+                  "value": 3,
+                  "unit": "media objects",
+                  "offset": 671,
+                  "length": 1074,
+                  "children": [
+                    {
+                      "name": "Statistics",
+                      "kind": "Statistics",
+                      "offset": 671,
+                      "length": 1074,
+                      "children": [
+                        {
+                          "name": "Codec",
+                          "value": "PCM",
+                          "offset": 671,
+                          "length": 1074
+                        },
+                        {
+                          "name": "Sample Frames",
+                          "value": 120,
+                          "unit": "sample frames",
+                          "offset": 671,
+                          "length": 1074
+                        },
+                        {
+                          "name": "Duration",
+                          "value": 0.015,
+                          "unit": "s",
+                          "offset": 671,
+                          "length": 1074
+                        },
+                        {
+                          "name": "Sample Rate",
+                          "value": 8000,
+                          "unit": "Hz",
+                          "offset": 671,
+                          "length": 1074
+                        },
+                        {
+                          "name": "Channels",
+                          "value": 1,
+                          "unit": "channels",
+                          "offset": 671,
+                          "length": 1074
+                        },
+                        {
+                          "name": "Channel Layout",
+                          "value": "mono (front center)",
+                          "offset": 671,
+                          "length": 1074
+                        },
+                        {
+                          "name": "Bits Per Sample",
+                          "value": 16,
+                          "unit": "bits",
+                          "offset": 671,
+                          "length": 1074
+                        },
+                        {
+                          "name": "Sample Format",
+                          "value": "signed integer",
+                          "offset": 671,
+                          "length": 1074
+                        },
+                        {
+                          "name": "Byte Order",
+                          "value": "little-endian",
+                          "offset": 671,
+                          "length": 1074
+                        },
+                        {
+                          "name": "Average Bitrate",
+                          "value": 128,
+                          "unit": "kbps",
+                          "offset": 671,
+                          "length": 1074
+                        }
+                      ]
+                    }
+                  ]
                 }
               ]
             }
@@ -2324,36 +2490,58 @@
         }
       ]
     },
-    "streams": [],
-    "findings": [
+    "streams": [
       {
-        "severity": "Info",
-        "code": "asf.codec-not-analyzed",
-        "message": "Stream 1 is coded as PCM (format tag 0x0001), which is not routed from ASF to a codec parser; its media objects are not analyzed.",
-        "offset": 134,
-        "length": 96,
-        "path": [
-          0,
-          0,
-          6
+        "nodes": [
+          [
+            0,
+            1,
+            7
+          ]
         ],
-        "count": 1
+        "codec": "PCM",
+        "codingClass": "lossless",
+        "sampleRate": 8000,
+        "channels": 1,
+        "channelMode": "Mono",
+        "channelLayout": [
+          "front center"
+        ],
+        "channelLayoutName": "mono",
+        "bitsPerSample": 16,
+        "samples": 120,
+        "duration": 0.015,
+        "averageBitrate": 128,
+        "isVbr": false,
+        "playbackGroup": 1,
+        "series": []
       },
       {
-        "severity": "Info",
-        "code": "asf.codec-not-analyzed",
-        "message": "Stream 3 is coded as PCM (format tag 0x0001), which is not routed from ASF to a codec parser; its media objects are not analyzed.",
-        "offset": 575,
-        "length": 96,
-        "path": [
-          0,
-          0,
-          8,
-          6,
-          17
+        "nodes": [
+          [
+            0,
+            1,
+            8
+          ]
         ],
-        "count": 1
+        "codec": "PCM",
+        "codingClass": "lossless",
+        "sampleRate": 8000,
+        "channels": 1,
+        "channelMode": "Mono",
+        "channelLayout": [
+          "front center"
+        ],
+        "channelLayoutName": "mono",
+        "bitsPerSample": 16,
+        "samples": 120,
+        "duration": 0.015,
+        "averageBitrate": 128,
+        "isVbr": false,
+        "playbackGroup": 1,
+        "series": []
       }
-    ]
+    ],
+    "findings": []
   }
 ]

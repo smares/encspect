@@ -105,11 +105,12 @@ internal static class Explain
     public const string StatByteOrder = "The order of the bytes of a sample: little-endian in RIFF and RF64 files, big-endian in RIFX files.";
     public const string StatBitrate = "The average bitrate of the data chunk: its bytes times 8 over the length of the audio.";
 
-    // PCM samples in a container other than WAV, which states their layout in its sample entry (the codec parser "pcm").
-    public const string PcmSampleFrames = "The number of sample frames in the track's samples: their bytes divided by the bytes of one sample frame. A sample frame holds one sample of every channel.";
-    public const string PcmCodec = "The coding of the audio: linear PCM or floating-point PCM, as the container's sample entry states it.";
-    public const string PcmRate = "The sample rate in Hz, from the container's sample entry.";
-    public const string PcmChannels = "The number of channels, from the container's sample entry.";
+    // PCM samples in a container other than WAV, which states their layout in its header (the codec parser "pcm-samples").
+    public const string PcmSampleFrames = "The number of sample frames in the stream's samples: their bytes divided by the bytes of one sample frame. A sample frame holds one sample of every channel.";
+    public const string PcmCodec = "The coding of the audio: linear PCM or floating-point PCM, as the container's header states it.";
+    public const string PcmByteOrder = "The order of the bytes of a sample, as the container states it.";
+    public const string PcmRate = "The sample rate in Hz, from the container's header.";
+    public const string PcmChannels = "The number of channels, from the container's header.";
     public const string PcmBitrate = "The average bitrate of the samples: their bytes times 8 over the length of the audio.";
 
     public const string Ds64Chunk = "The ds64 chunk of an RF64 file: the 64-bit sizes of the RIFF chunk, of the data chunk and of the fact chunk's sample count, and the sizes of other large chunks. It comes first after the RF64 header (EBU Tech 3306-2009, section 3.4).";

@@ -1275,6 +1275,51 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "name": "MPEG Audio",
+                  "kind": "Stream",
+                  "value": 0,
+                  "unit": "frames",
+                  "offset": 518,
+                  "length": 334,
+                  "ranges": [
+                    {
+                      "offset": 518,
+                      "length": 100
+                    },
+                    {
+                      "offset": 635,
+                      "length": 100
+                    },
+                    {
+                      "offset": 752,
+                      "length": 100
+                    }
+                  ],
+                  "children": [
+                    {
+                      "name": "Gap",
+                      "value": 334,
+                      "unit": "bytes",
+                      "offset": 518,
+                      "length": 334,
+                      "ranges": [
+                        {
+                          "offset": 518,
+                          "length": 100
+                        },
+                        {
+                          "offset": 635,
+                          "length": 100
+                        },
+                        {
+                          "offset": 752,
+                          "length": 100
+                        }
+                      ]
+                    }
+                  ]
                 }
               ]
             }
@@ -1284,19 +1329,6 @@
     },
     "streams": [],
     "findings": [
-      {
-        "severity": "Info",
-        "code": "asf.codec-not-analyzed",
-        "message": "Stream 1 is coded as MPEG Layer I and II (format tag 0x0050), which is not routed from ASF to a codec parser; its media objects are not analyzed.",
-        "offset": 134,
-        "length": 96,
-        "path": [
-          0,
-          0,
-          6
-        ],
-        "count": 1
-      },
       {
         "severity": "Info",
         "code": "asf.stream-without-payloads",
@@ -1346,6 +1378,18 @@
           0,
           0,
           8
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
+        "code": "mpeg-audio.packets-no-frame",
+        "message": "The container hands over 334 bytes of MPEG audio in packets, but no frame header with a chain of frames after it is found in them.",
+        "offset": 437,
+        "length": 562,
+        "path": [
+          0,
+          1
         ],
         "count": 1
       }

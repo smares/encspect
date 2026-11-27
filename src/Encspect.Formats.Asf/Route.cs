@@ -158,7 +158,7 @@ public sealed partial class AsfParser
             if (codec is null)
             {
                 state.Findings.AddNow(Severity.Info, "asf.codec-not-analyzed",
-                    $"Stream {stream.Number} is coded as {CodecNameOf(format.EffectiveTag)} (format tag 0x{format.EffectiveTag:X4}), which is not routed from ASF to a codec parser; its media objects are not analyzed.", anchor);
+                    $"Stream {stream.Number} is coded as {CodecNameOf(format.EffectiveTag)} (format tag 0x{format.EffectiveTag:X4}), which ASF does not route to a codec parser; its media objects are not analyzed.", anchor);
                 AddProtectedStream(state, stream);
                 continue;
             }
@@ -167,6 +167,20 @@ public sealed partial class AsfParser
             {
                 RouteEncrypted(state, stream, codec, format, protection, anchor);
                 continue;
+            }
+
+            PcmCoding? pcm = null;
+            if (codec == WaveFormatRoutes.PcmSamples)
+            {
+                pcm = WaveFormatRoutes.PcmCodingOf(format.EffectiveTag, format.Channels, format.BitsPerSample, format.BlockAlign, format.SamplesPerSecond, false,
+                    WaveFormatRoutes.StreamLayout(format.Channels, format.Tag == WaveFormatRoutes.Extensible, format.ChannelMask), out string why);
+                if (pcm is null)
+                {
+                    state.Findings.AddNow(Severity.Warning, "asf.codec-not-analyzed",
+                        $"Stream {stream.Number} is coded as {CodecNameOf(format.EffectiveTag)} (format tag 0x{format.EffectiveTag:X4}) and its WAVEFORMATEX {why}, so its samples are not read; the stream is reported from the header.", anchor);
+                    AddHeaderStream(state, stream, "samples not read", Explain.UnreadableStream, null, null);
+                    continue;
+                }
             }
 
             if (stream.Spread is { Scrambles: true })
@@ -183,7 +197,20 @@ public sealed partial class AsfParser
                 continue;
             }
 
-            IEnumerable<MappedBytes> objects = MediaObjects(state, stream.Number);
+            if (pcm is not null)
+            {
+                // The samples are counted from the bytes the media objects hold (not the payloads': a compressed payload's length bytes, the fragments past an object's size and the
+                // dropped ones are no samples), which takes one walk over them; it makes the findings about damaged objects, so they do not wait for a decoder.
+                long held = 0;
+                foreach (MappedBytes mediaObject in MediaObjects(state, stream.Number))
+                {
+                    held += mediaObject.Length;
+                }
+
+                configuration = configuration with { Pcm = pcm, DataBytes = held };
+            }
+
+            IEnumerable<MappedBytes> objects = MediaObjects(state, stream.Number, report: pcm is null);
             if (codec == "mpeg-audio")
             {
                 // The MPEG audio parser reads the packets again from the file, a media object fragmented across packets as the pieces of it.
@@ -191,7 +218,19 @@ public sealed partial class AsfParser
             }
 
             int streamsBefore = state.Context.Streams.Count;
-            bool routed = state.Context.ParsePackets(codec, state.DataNode, objects, configuration);
+            Node parent = state.DataNode;
+            if (pcm is not null)
+            {
+                // The PCM parser describes the stream under the node it is handed, which is the stream's own, as the Data Object may hold several.
+                long figuresObjects = state.Figures.Streams.GetValueOrDefault(stream.Number)?.Objects ?? 0;
+                parent = state.DataNode.Add(new Node($"Stream {stream.Number} Media Objects", state.DataNode.Offset, state.DataNode.Length, NodeValue.Integer(figuresObjects, "media objects", "media object"))
+                {
+                    Description = Explain.PcmMediaObjects,
+                    Topic = Topics.PcmSamples,
+                });
+            }
+
+            bool routed = state.Context.ParsePackets(codec, parent, objects, configuration);
             if (!routed)
             {
                 state.Findings.AddNow(Severity.Info, "asf.codec-not-analyzed",
@@ -250,7 +289,8 @@ public sealed partial class AsfParser
     {
         state.Findings.AddNow(Severity.Info, "asf.codec-not-analyzed",
             $"Stream {stream.Number} is encrypted, so its media objects cannot be analyzed; the stream is described by its header.", anchor);
-        CodecConfiguration? configuration = ConfigurationOf(state, stream, format);
+        // The PCM parser describes samples; ciphertext has none to count, so the header's own account stands.
+        CodecConfiguration? configuration = codec == WaveFormatRoutes.PcmSamples ? null : ConfigurationOf(state, stream, format);
         int before = state.Context.Streams.Count;
         if (configuration is not null)
         {
@@ -278,13 +318,19 @@ public sealed partial class AsfParser
             return;
         }
 
+        AddHeaderStream(state, stream, "frames not read: encrypted", Explain.EncryptedStream, Topics.AsfContentProtection, protection);
+    }
+
+    // A stream the header describes and no codec parser does: the figures of its WAVEFORMATEX, under a node of the Data Object.
+    private static void AddHeaderStream(State state, StreamEntry stream, string value, string description, string? topic, StreamProtection? protection)
+    {
         Node parent = state.DataNode ?? stream.Properties!;
         string name = stream.Format is { } format && stream.IsAudio ? CodecNameOf(format.EffectiveTag) : stream.TypeName;
-        Node node = parent.Add(new Node($"Stream {stream.Number}", parent.Offset, parent.Length, NodeValue.Text("frames not read: encrypted"))
+        Node node = parent.Add(new Node($"Stream {stream.Number}", parent.Offset, parent.Length, NodeValue.Text(value))
         {
             Kind = NodeKind.Stream,
-            Description = Explain.EncryptedStream,
-            Topic = Topics.AsfContentProtection,
+            Description = description,
+            Topic = topic,
         });
         double duration = DurationOf(state) ?? 0;
         state.Context.AddStream(new StreamInfo
