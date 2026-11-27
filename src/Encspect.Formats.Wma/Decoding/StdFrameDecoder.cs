@@ -537,7 +537,7 @@ internal sealed class StdFrameDecoder : IFrameDecoder
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static double Curve(ReadOnlySpan<int> indexes, double[] angles, float[] x, int length)
     {
-        double[] lambda = new double[10];
+        Span<double> lambda = stackalloc double[10];
         for (int j = 0; j < 10; j++)
         {
             float[] row = Tables.LspCodebook[j];

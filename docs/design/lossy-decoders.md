@@ -201,6 +201,7 @@ The session lends the parser its sample buffers ([decoders.md](decoders.md#the-s
 | "Stereo Coding" | Opus CELT (intensity, dual stereo, mid/side of a band) | the range-coded bits ([coding-graphs.md](coding-graphs.md#the-survey), "later") |
 | "Coded Bandwidth" | xHE-AAC (USAC), AAC-ELD | their raw data blocks, steps 13 and 14 ([aac.md](../formats/aac.md)) |
 | "Stereo Coding" | TrueHD | the matrix parameters of the substream blocks ([truehd.md](../formats/truehd.md)) |
+| "Total Gain", the noise levels, exponent reuse and the share of escape-coded levels | WMA versions 1 and 2 | the values the decoder's walk stores per block (`StdRecordWriter`); queued under 0.5 item 6 ([coding-graphs.md](coding-graphs.md#wma-standard-pro-and-voice)) |
 
 - **DTS's stereo coding** is not in the table: [dts.md](../formats/dts.md) already reports the core's "Stereo Coding" from the header flags.
   - What it leaves open is the stereo coding of the extensions' channels, which comes with the extension decoders this design leaves out.
