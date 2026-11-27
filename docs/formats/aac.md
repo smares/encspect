@@ -354,6 +354,7 @@ AAC Main (object type 1), AAC LC (2) and AAC LTP (4), frames of 1,024 samples, w
 
 ## Not yet covered
 
+- The downmix metadata of 4.5.2.14 (`dmix_a_idx`, `dmix_b_idx` and the gains of the 7-to-5 and 5-to-2 channel downmixes), which Amendment 4 (2013) adds to ISO/IEC 14496-3:2009: not read, since the 2009 text the parser follows does not contain it and the amendment is not at hand. The decoder applies no downmix in any case (decision 9 of [lossy-decoders.md](../design/lossy-decoders.md)).
 - LATM: its bufferFullness is not read, so the LATM streams report no "Buffer Fullness".
 - Coded bandwidth for xHE-AAC (USAC) and AAC-ELD, and their window sequences and stereo coding: not covered yet. Their raw data blocks are not read element by element, which needs the frame-level parsing that comes with the format's decoder.
 - AAC SSR, ER AAC and USAC decoding, and downsampled SBR. The SBR envelope and noise floor values and the parametric stereo data are read, stored and decoded, but the nodes show only the header, the grid and the PS ID, and no graph of them is built yet (the queued rows of the AAC survey in [coding-graphs.md](../design/coding-graphs.md#the-survey)).
