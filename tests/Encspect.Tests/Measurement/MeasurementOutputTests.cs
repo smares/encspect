@@ -364,7 +364,7 @@ public class MeasurementOutputTests
         string[] header = lines[0].Split(',');
         string[] row = lines[1].Split(',');
         int cutoff = Array.IndexOf(header, "Spectral Cutoff (Hz)");
-        Assert.Equal(["Spectral Bandwidth (Hz)", "Spectral Slope (dB/kHz)", "Partial Cutoff (Hz)", "Side Cutoff (Hz)", "Inter-Channel Coherence From (Hz)", "Spectral Holes (%)"], header[(cutoff + 1)..(cutoff + 7)]);
+        Assert.Equal(["Spectral Bandwidth (Hz)", "Spectral Slope (dB/kHz)", "Partial Cutoff (Hz)", "Side Cutoff (Hz)", "Inter-Channel Coherence From (Hz)", "Replicated Bands From (Hz)", "Spectral Holes (%)"], header[(cutoff + 1)..(cutoff + 8)]);
 
         // Quoted fields before the figures hold commas, so the columns are counted from the end.
         string FromEnd(string column) => row[row.Length - (header.Length - Array.IndexOf(header, column))];
