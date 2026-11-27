@@ -176,6 +176,7 @@ internal sealed class BlockLog
     private static Severity SeverityOf(string code) => code switch
     {
         "aac.sbr-before-header" => Severity.Info,
+        "aac.layout-changed" => Severity.Info,
 
         // FDK AAC's encoder writes such transitions in several of the fixtures, and the records of tests/fixtures/*/official-decoders.json list no unit of them that a decoder refuses
         // or conceals: the finding states what the stream does, as information.
