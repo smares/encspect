@@ -1,10 +1,10 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Media;
-using Avalonia.VisualTree;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Media;
 using Avalonia.Styling;
+using Avalonia.VisualTree;
 using Encspect.Gui.ViewModels;
 using Encspect.Gui.Views;
 using Encspect.Host;

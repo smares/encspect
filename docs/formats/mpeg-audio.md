@@ -24,6 +24,16 @@ MP1, MP2 and MP3 (MPEG-1, MPEG-2 and MPEG-2.5, Layers I to III).
   - its one or two frames end exactly at the end of the data, and each passes the structural checks: in Layers I and II the audio data fits the frame and uses no forbidden bit allocation; in Layer III the side information fits, passes the side-information checks below, and holds no more main data than the frame and its main_data_begin.
   - So a file of one or two frames still parses, and a single 4-byte match in other data is not taken for audio.
 - **Leading junk:** the first frame is searched within 1 MiB after any leading zero bytes, which are common padding and cheap to skip.
+- **A VBR header frame with junk after it:** the one exception to the chain rule, decided by the lead (2026-11-27). A file can have a header frame (Xing, Info, VBRI) at the start of the audio with bytes that are not audio between it and the first audio frame (a private sample, "Invalid data after tag": a VBRI frame, about 100 bytes of garbage, then the audio).
+  - The header frame is accepted without a chain after it when all of these hold:
+    - it is a Layer III frame at the start of an MPEG Audio region, that is after any tags and zero bytes (a header frame after a tag in mid-file is not at the start of the audio, and stays lost sync);
+    - its signature is at the offset its version and channel mode give and its side information is zero (`VbrHeader.TryRead`);
+    - its fields are plausible: Xing and Info have at least one flag, no flag beyond the four defined, and either no frame count or one that is not zero; VBRI has version 1, TOC entries of 1 to 4 bytes and a frame count that is not zero;
+    - the whole frame is in the data, and a chain of audio frames of the same version, layer and sample rate starts after it.
+  - Everything between the frame's end and where that chain starts is the gap, whatever its first bytes are (junk that starts with a copy of a frame header is junk, not a cut frame). It is reported as `mpeg-audio.junk-after-vbr-header-frame` (a warning, naming the header's type and where the next frame starts), not as leading junk, which says "before the first frame".
+  - A LAME tag's music CRC covers the file's bytes, so it is not verified over such a gap (`mpeg-audio.music-crc-not-verified`); main data that reaches back into the header frame is `mpeg-audio.main-data-in-vbr-header-frame`, which is tested before `mpeg-audio.reservoir-across-gap`.
+  - Anything else stays junk: a header with the signature bytes and implausible fields (`xing-implausible-junk`), a header frame of another stream than the audio after it (`xing-other-stream-after`), a header frame after other junk (`xing-after-junk`), or a header frame with no audio after it.
+  - Fixtures, in `mpeg-audio/vbr`: `xing-junk-after`, `info-junk-after`, `vbri-junk-after`, `xing-junk-starts-with-header`, `main-data-in-header-frame-after-junk`, and the negative ones named above.
 - **Gaps:** everything between frames that is not a frame is a gap: junk before the first frame, lost sync between frames, data after the last one.
 - **Regions:** each stretch of data between tags is one "MPEG Audio" region. Findings of one kind are reported once per stream, with a count.
 - **Once in sync,** a frame is taken on its header only while a frame follows it.

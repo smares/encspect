@@ -307,7 +307,12 @@
   "ADTS/Frame[1]/CRC/Check": "verified",
   "ADTS/Frame[40]/CRC/Check": "verified"
  },
- "findings": [],
+ "findings": [
+  [
+   "aac.window-slopes-differ",
+   "a window sequence whose left slope differs"
+  ]
+ ],
  "crosscheck": {
   "ffprobe": true,
   "mp4box": false,

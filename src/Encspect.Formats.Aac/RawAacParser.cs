@@ -293,6 +293,7 @@ public sealed class RawAacParser : IFormatParser
         if (!leading && state.Logs.Count > 0)
         {
             state.Logs[^1].Log.Feed?.Gap();
+            state.Logs[^1].Log.Gap();
         }
     }
 
@@ -400,6 +401,7 @@ public sealed class RawAacParser : IFormatParser
         {
             for (int i = 0; i < blocks; i++)
             {
+                log.Skip();
                 feed?.Lost(new MappedBytes(ReadOnlyMemory<byte>.Empty, offset), "Frame", frameNode());
             }
 
@@ -439,7 +441,8 @@ public sealed class RawAacParser : IFormatParser
 
         var result = new List<Block>(blocks);
         var reads = new List<(BlockResult Read, int Index)>(blocks);
-        MappedBytes? deferred = null;
+        // The blocks of a protected frame wait for the verdict of its CRC, which decides whether they count as evidence for implicit SBR, as they do in the tally below.
+        List<(MappedBytes Bytes, bool IsLost, bool Fails)>? deferred = header.IsProtected && !damaged && feed is not null ? [] : null;
         CrcState overall = CrcState.None;
         int next = headerLength;
         bool readable = true;
@@ -499,17 +502,18 @@ public sealed class RawAacParser : IFormatParser
 
             if (feed is not null)
             {
-                if (damaged || !read.Ok)
+                bool isLost = damaged || !read.Ok;
+                if (deferred is not null)
+                {
+                    deferred.Add((blockBytes!, isLost, state == CrcState.Mismatch));
+                }
+                else if (isLost)
                 {
                     feed.Lost(blockBytes!, "Frame", frameNode());
                 }
-                else if (separate || blocks > 1 || !header.IsProtected)
-                {
-                    feed.Decode(blockBytes!, "Frame", frameNode(), state == CrcState.Mismatch);
-                }
                 else
                 {
-                    deferred = blockBytes;
+                    feed.Decode(blockBytes!, "Frame", frameNode(), false);
                 }
             }
 
@@ -563,16 +567,28 @@ public sealed class RawAacParser : IFormatParser
             }
         }
 
+        int skippedBefore = log.Skipped;
         if (feed is not null)
         {
-            // A single raw data block of a protected frame waits for the verdict of the frame's CRC; the blocks a break or the end of the data kept the reading from reaching are lost.
+            // The blocks of a protected frame waited for the verdict of the frame's CRC; the blocks a break or the end of the data kept the reading from reaching are lost.
             if (deferred is not null)
             {
-                feed.Decode(deferred, "Frame", frameNode(), overall == CrcState.Mismatch);
+                foreach ((MappedBytes bytes, bool isLost, bool fails) in deferred)
+                {
+                    if (isLost)
+                    {
+                        feed.Lost(bytes, "Frame", frameNode());
+                    }
+                    else
+                    {
+                        feed.Decode(bytes, "Frame", frameNode(), fails || overall == CrcState.Mismatch, overall != CrcState.Mismatch);
+                    }
+                }
             }
 
             for (int i = reads.Count; i < (held >= 0 ? held : blocks); i++)
             {
+                log.Skip();
                 feed.Lost(new MappedBytes(ReadOnlyMemory<byte>.Empty, offset), "Frame", frameNode());
             }
         }
@@ -582,7 +598,7 @@ public sealed class RawAacParser : IFormatParser
         {
             foreach ((BlockResult read, int index) in reads)
             {
-                log.AddEvidence(read, index);
+                log.AddEvidence(read, index, skippedBefore);
             }
         }
 

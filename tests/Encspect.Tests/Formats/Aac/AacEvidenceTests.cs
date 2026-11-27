@@ -4,16 +4,15 @@ using Encspect.Host;
 
 namespace Encspect.Tests.Formats.Aac;
 
-// What turns an AAC LC stream into HE-AAC (SBR data after a channel element in at least half of the blocks of intact frames), and the bound on
+// What turns an AAC LC stream into HE-AAC (SBR data after a channel element in the first block read to its end of an intact frame), and the bound on
 // the graph of bitrate over time.
 public class AacEvidenceTests
 {
     public static TheoryData<int> Seeds => new(Enumerable.Range(0, 300));
 
     // ffmpeg's AAC LC stream with forty frames of random bytes under the stream's own header after its twentieth: about one random block
-    // in fifty reads to its END element with a fill element of SBR data, and a few of those follow a channel element. A few blocks of the
-    // stream's 106 do not make it HE-AAC: SBR data has to be in at least two blocks and half of them (the fixtures sbr-in-one-block and
-    // sbr-in-three-blocks cover the rule with exact counts).
+    // in fifty reads to its END element with a fill element of SBR data, and a few of those follow a channel element. The stream's first
+    // block holds none, which decides it (the fixtures sbr-in-one-block and sbr-in-first-block-only cover the rule with exact counts).
     [Theory]
     [MemberData(nameof(Seeds))]
     public void RandomFramesInsideAnLcStreamLeaveItLc(int seed)
@@ -97,15 +96,31 @@ public class AacEvidenceTests
         Assert.Empty(RunSplitter.Pieces(5, 0));
     }
 
-    // SBR data in one block of ten does not make the stream HE-AAC.
-    [Fact]
-    public void SbrDataInAFewBlocksOnlyIsReported()
+    // SBR data in one block of ten, not the first, does not make the stream HE-AAC: the first block decides.
+    [Theory]
+    [InlineData("sbr-in-one-block.aac")]
+    [InlineData("sbr-in-three-blocks.aac")]
+    public void SbrDataAfterAFirstBlockWithoutItIsReported(string name)
     {
-        Report report = Fixtures.AnalyzeMpeg("aac/adts/sbr-in-one-block.aac");
+        Report report = Fixtures.AnalyzeMpeg("aac/adts/" + name);
 
         Assert.Equal("AAC LC", Assert.Single(report.Streams).Codec);
         Assert.Contains(report.Findings, f => f.Code == "aac.sbr-data-sparse");
         Assert.DoesNotContain(report.Findings, f => f.Code == "aac.implicit-sbr");
+        Assert.DoesNotContain(report.Findings, f => f.Code == "aac.sbr-inconsistent");
+    }
+
+    // SBR data in the first block makes it HE-AAC, however few later blocks hold it; most blocks disagreeing is a warning.
+    [Theory]
+    [InlineData("sbr-in-first-block-only.aac")]
+    [InlineData("sbr-in-first-three-blocks.aac")]
+    public void SbrDataInTheFirstBlockDecidesTheStream(string name)
+    {
+        Report report = Fixtures.AnalyzeMpeg("aac/adts/" + name);
+
+        Assert.Equal("HE-AAC", Assert.Single(report.Streams).Codec);
+        Assert.Contains(report.Findings, f => f.Code == "aac.implicit-sbr");
+        Assert.Contains(report.Findings, f => f.Code == "aac.sbr-inconsistent" && f.Severity == Severity.Warning);
     }
 
     // The graph of bitrate over time keeps at most MaxSeconds entries whatever the sample rate; neighbors merge, and what they hold is
@@ -143,5 +158,75 @@ public class AacEvidenceTests
         }
 
         return frames;
+    }
+}
+
+// The decision about implicit SBR is taken from the first DecodeFeed.MaxUndecided blocks the decoder is offered; the tally counts the same blocks, the ones a frame declares and does not hold
+// (BlockLog.Skip, which the parser calls where it hands the decoder such a block as lost) among them.
+public class AacEvidenceBoundTests
+{
+    private static BlockLog Log() => new(new StreamSetup(new AacConfig { ObjectType = 2, CoreSampleRate = 44100, ChannelConfiguration = 2, CoreFrameLength = 1024 }), new FindingCollector());
+
+    private static readonly BlockResult Block = new(true, 8, 0, true, false, null, true);
+
+    [Theory]
+    [InlineData(0, 31, true)]
+    [InlineData(0, 32, false)]
+    [InlineData(24, 7, true)]
+    [InlineData(24, 8, false)]
+    [InlineData(31, 0, true)]
+    public void BlocksSkippedBeforeABlockCountTowardTheBoundOfTheDecision(int skipped, int index, bool counts)
+    {
+        BlockLog log = Log();
+        for (int i = 0; i < skipped; i++)
+        {
+            log.Skip();
+        }
+
+        log.AddEvidence(Block, index);
+
+        Assert.Equal(counts ? 1 : 0, log.Tally.EvidenceBlocks);
+        Assert.Equal(counts, log.Tally.IsSbrEvident);
+    }
+
+    [Fact]
+    public void BlocksSkippedAfterABlockInItsFrameDoNotMoveIt()
+    {
+        BlockLog log = Log();
+        log.Skip();
+        int skippedBefore = log.Skipped;
+        for (int i = 0; i < 3; i++)
+        {
+            log.Skip();
+        }
+
+        log.AddEvidence(Block, 27, skippedBefore);
+
+        Assert.Equal(1, log.Tally.EvidenceBlocks);
+    }
+
+    // ISO/IEC 14496-3 1.6.6.3: a single channel with SBR is decoded to two channels unless PS is signaled absent, with PS applied from whatever block its data starts in.
+    [Fact]
+    public void ASingleChannelWithSbrCarriesTwoChannelsOnlyWhereParametricStereoDataIsSignaledOrFound()
+    {
+        var mono = new AacConfig { ObjectType = 2, CoreSampleRate = 22050, ChannelConfiguration = 1, Channels = 1, CoreFrameLength = 1024, Sbr = true, PsFound = false };
+
+        // The stream's channels are the coded ones; the decoder's two output channels are DecodeFeed's.
+        Assert.Equal(1, mono.OutputChannels);
+        Assert.Equal("HE-AAC", mono.Codec);
+        Assert.Equal(2, (mono with { Ps = true }).OutputChannels);
+        Assert.Equal("HE-AAC v2", (mono with { PsFound = true }).Codec);
+        Assert.Equal("Parametric stereo", (mono with { PsFound = true }).ChannelMode);
+        Assert.Equal(1, (mono with { Ps = false }).OutputChannels);
+        Assert.Equal(3, (mono with { Channels = 3, ChannelConfiguration = 4 }).OutputChannels);
+        Assert.Equal(3, (mono with { Channels = 3, ChannelConfiguration = 4, PsFound = true }).OutputChannels);
+    }
+
+    [Fact]
+    public void ParametricStereoThatStartsInTheSecondHalfOfAStreamMakesItHeAacV2()
+    {
+        var tally = new CodingTally { EvidenceBlocks = 106, PsEvidenceBlocks = 53, FirstBlockHasSbr = true };
+
+        Assert.True(tally.IsPsEvident);
     }
 }

@@ -791,6 +791,13 @@ jobs:
           ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
         run: python3 scripts/fixtures/check_mp3pro_samples.py .cache/mp3pro
 
+      # Thomson's decoder test items and a private set of MP3 test samples are not ours to publish: only the private repository serves them.
+      # Without the secret (a pull request from a fork) the files are skipped.
+      - name: Check the private MPEG sample manifests against the samples
+        env:
+          ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
+        run: python3 scripts/fixtures/check_mpeg_sample_sets.py .cache/mpeg-samples
+
       - uses: ./.github/actions/setup-dotnet
         with:
           dotnet-version: 10.0.x
@@ -803,6 +810,11 @@ jobs:
 
       - name: Check the analyzer against the mp3PRO manifest
         run: python3 scripts/fixtures/check_mp3pro_samples.py --analyzer src/Encspect.Cli/bin/Release/net10.0/encspect .cache/mp3pro
+
+      - name: Check the analyzer against the private MPEG sample manifests
+        env:
+          ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
+        run: python3 scripts/fixtures/check_mpeg_sample_sets.py --analyzer src/Encspect.Cli/bin/Release/net10.0/encspect .cache/mpeg-samples
 
       # What a job downloaded is kept whether it passes or not. A passing job saves the week's key (unless that key was restored
       # exactly); a failing or canceled one, which would otherwise lose its downloads, saves under a key of its own with the run ID
@@ -901,6 +913,19 @@ jobs:
       # The analyzer's decoded samples equal FFmpeg's and libxaac's (built from its pinned commit, about a minute) within the bounds of docs/development.md ("AAC decoding"), fixture by fixture.
       - name: Compare the decoded PCM of the AAC fixtures
         run: python3 scripts/fixtures/crosscheck_aac_pcm.py --libxaac
+
+      # The SBR and parametric stereo tables of the decoder equal what their generators read from libxaac's pinned commit.
+      - name: Check the HE-AAC tables against libxaac's
+        run: |
+          libxaac=$(python3 scripts/fixtures/libxaac_tool.py)
+          python3 -I scripts/fixtures/make_sbr_tables.py --check "$libxaac"
+          python3 -I scripts/fixtures/make_ps_tables.py --check "$libxaac"
+
+      # The HE-AAC streams (SBR, parametric stereo) against FFmpeg's decoder within 6 % of its RMS, at the shift the two decoders' cuts differ by (docs/development.md, "AAC decoding").
+      - name: Compare the decoded PCM of the HE-AAC fixtures
+        run: |
+          sudo apt-get install -y python3-numpy
+          python3 scripts/fixtures/crosscheck_he_aac_pcm.py
 
       # The manifests of the encrypted files ffmpeg and MP4Box wrote are recomputed from the committed files, which need those tools.
       - name: Recompute the manifests of the encrypted MP4 fixtures

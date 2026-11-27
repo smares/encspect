@@ -5,7 +5,8 @@
     crosscheck_aac_pcm.py [--pcmdump CMD] [--ffmpeg PATH] [--libxaac] [--keep DIR] [FILE ...]
 
 CMD runs a built tests/Encspect.PcmDump, for example "dotnet tests/Encspect.PcmDump/bin/Release/net10.0/Encspect.PcmDump.dll" (the default is that path relative to
-the repository). With no FILE the script takes every ADTS, M4A and MP4 file of tests/fixtures/aac whose first stream the analyzer decodes.
+the repository). With no FILE the script takes every ADTS, M4A and MP4 file of tests/fixtures/aac whose first stream the analyzer decodes. A stream the analyzer decodes as HE-AAC (SBR or parametric stereo; the stream's
+codec in PcmDump's manifest) is left to crosscheck_he_aac_pcm.py: its output is not the core's, which is all FFmpeg's and libxaac's decoders are compared with here.
 
 For each file:
 
@@ -119,8 +120,16 @@ DIFFERENCES = {
     "tns-overflow.aac": ("samples", "a TNS filter on the largest scalefactors: FFmpeg's float decoder overflows to infinity and NaN, the analyzer saturates the spectrum"),
     "stereo-coding-reserved.aac": ("samples", "ms_mask_present 3, which the specification reserves: FFmpeg refuses those blocks, the analyzer decodes them without mid/side stereo"),
     "corrupt-soft.aac": ("positions", "raw data blocks with more channel streams than the stream's configuration states: the analyzer does not decode them (decode.frame-invalid), FFmpeg decodes the channels it can"),
-    "sbr-in-one-block.aac": ("positions", "a raw data block with SBR data in a stream that signals none: the analyzer does not decode the block (HE-AAC comes with its own decoder), FFmpeg decodes its core"),
-    "sbr-in-three-blocks.aac": ("positions", "raw data blocks with SBR data in a stream that signals none: the analyzer does not decode them (HE-AAC comes with its own decoder), FFmpeg decodes their core"),
+    "window-sequences-invalid.aac": ("samples", "five windows whose slopes do not match those of the window before: FFmpeg windows those transitions differently, in the blocks that hold them and the "
+                                                "block after (a copy of the file 1,000 times as loud differs from FFmpeg's by up to 0.02 of full scale there and from libxaac's by 1 LSB at the most, so the analyzer follows libxaac; "
+                                                "this file's own peak, -88 dBFS, is 1.3 LSB of 16 bits, too quiet for libxaac's output to show it)"),
+    "sbr-in-one-block.aac": ("samples", "a raw data block with SBR data in a stream whose first block holds none, so that it stays AAC LC: FFmpeg reads the SBR data and its output differs in that block and the next "
+                                        "by up to 0.06 of full scale, where the analyzer decodes the core (the first block decides, aac.sbr-data-sparse)"),
+    "sbr-in-three-blocks.aac": ("samples", "raw data blocks with SBR data in a stream whose first block holds none, so that it stays AAC LC: FFmpeg reads the SBR data of the first of them (its output differs in that block and the next), where the analyzer decodes the core "
+                                           "(the first block decides, aac.sbr-data-sparse)"),
+    "sbr-in-all-but-first-block.aac": ("samples", "SBR data in every block but the first, which decides: the stream stays AAC LC at the core rate, and FFmpeg's output differs in every block that holds SBR data"),
+    "sbr-in-frames-failing-crc.aac": ("samples", "SBR data in frames that all fail their CRC: the analyzer takes no evidence from them and stays AAC LC at the core rate; FFmpeg checks no CRC and decodes HE-AAC at twice "
+                                                 "the rate, so it has twice the samples and the ones both have differ"),
 }
 
 
@@ -232,7 +241,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
     files = args.files or default_files()
     xaac = None
-    failed = compared = decoded = 0
+    failed = compared = decoded = hand_over = 0
     seen = set()
     with tempfile.TemporaryDirectory() as temporary:
         base = args.keep or pathlib.Path(temporary)
@@ -252,6 +261,11 @@ def main(argv=None):
                 continue
             decoded += 1
             stream = streams[0]
+            if stream.get("streamCodec", "").startswith("HE-AAC"):
+                # The analyzer decodes SBR (and parametric stereo) for this stream: its output is not the core's, and crosscheck_he_aac_pcm.py compares it.
+                hand_over += 1
+                print(f"ok   {path.name} (decoded as {stream['streamCodec']}: compared by crosscheck_he_aac_pcm.py)")
+                continue
             channels = stream["channels"]
             mine = array.array("f")
             mine.frombytes((dump / stream["pcm"]).read_bytes())
@@ -301,11 +315,12 @@ def main(argv=None):
                 problems.append(f"ffmpeg: {found}")
             elif outcome is not None and path.name not in NOISE and outcome["notComparedOnlyInAnalyzer"] + outcome["notComparedOnlyInReference"] and start == 0 and not outcome["notComparedOnlyInReference"]:
                 note = (note + "; " if note else "") + f"positions only the analyzer has: {outcome['notComparedOnlyInAnalyzer']}"
-            if xaac is not None and not problems and max(abs(v) for v in mine) >= 1.0:
+            owned = path.name in DIFFERENCES and DIFFERENCES[path.name][0] == "samples"
+            if xaac is not None and (not problems or owned) and max(abs(v) for v in mine) >= 1.0:
                 note = (note + "; " if note else "") + "libxaac not compared: the file has samples over full scale, which its 16-bit output does not saturate"
-            elif xaac is not None and not problems and channels > 2:
+            elif xaac is not None and (not problems or owned) and channels > 2:
                 note = (note + "; " if note else "") + "libxaac not compared: more than two channels"
-            elif xaac is not None and not problems:
+            elif xaac is not None and (not problems or owned):
                 wav = base / "xaac.wav"
                 source = path
                 if path.suffix != ".aac":
@@ -358,7 +373,7 @@ def main(argv=None):
             if key not in seen:
                 failed += 1
                 print(f"FAIL {key}: listed in DIFFERENCES, but the analyzer decodes no such file")
-    print(f"{decoded} files decoded, {compared} compared with FFmpeg, {failed} failed")
+    print(f"{decoded} files decoded, {hand_over} of them as HE-AAC (compared by crosscheck_he_aac_pcm.py), {compared} compared with FFmpeg, {failed} failed")
     return 1 if failed else 0
 
 

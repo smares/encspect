@@ -430,10 +430,10 @@ class Layer3Fixture(Fixture):
                         self.finding("mpeg-audio.main-data-before-stream", f"0x{entry['offset']:X}")
                     elif frame.main_data_begin > entry["reservoir"]:
                         self.finding("mpeg-audio.main-data-overlap", f"0x{entry['offset']:X}")
-                    elif begin < area_start and crosses_gap(chain, starts, begin, k):
-                        self.finding("mpeg-audio.reservoir-across-gap", f"0x{entry['offset']:X}")
                     elif begin < area_start and any(is_header(f) and begin < starts[j] + area_length(f) for j, (f, _) in enumerate(chain[:k])):
                         self.finding("mpeg-audio.main-data-in-vbr-header-frame", f"0x{entry['offset']:X}")
+                    elif begin < area_start and crosses_gap(chain, starts, begin, k):
+                        self.finding("mpeg-audio.reservoir-across-gap", f"0x{entry['offset']:X}")
                     if frame.mpeg1() and 0 < frame.main_data_begin and frame.main_data_begin + frame.length() > iso_buffer(frame):
                         self.finding("mpeg-audio.main-data-begin-exceeds-buffer", f"0x{entry['offset']:X}")
                 if end > area_end:

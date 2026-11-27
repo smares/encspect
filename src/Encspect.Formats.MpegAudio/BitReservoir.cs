@@ -99,13 +99,14 @@ internal sealed class BitReservoir(ChunkedList<MainDataRun> runs, Func<long, lon
         {
             problem = MainDataProblem.Overlap;
         }
+        else if (begin < start && _recent.Any(a => a.IsHeaderFrame && begin < a.Start + a.Length))
+        {
+            // Before the gap test: main data that reaches into the header frame says the stream was cut and the header written afterwards, even where junk lies between.
+            problem = MainDataProblem.InHeaderFrame;
+        }
         else if (begin < start && CrossesGap(begin, gapBefore, earlierAreas))
         {
             problem = MainDataProblem.AcrossGap;
-        }
-        else if (begin < start && _recent.Any(a => a.IsHeaderFrame && begin < a.Start + a.Length))
-        {
-            problem = MainDataProblem.InHeaderFrame;
         }
 
         long ownStart = Math.Max(Math.Max(begin, _previousEnd), 0);

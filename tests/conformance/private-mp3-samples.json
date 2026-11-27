@@ -1,0 +1,455 @@
+{
+ "description": "A private set of nine MP3 test samples with tag and header edge cases (names say what each tests). Most are commercial recordings, so they are never committed: they are fetched from the private repository (mirrors/samples/mp3-edge-cases) and checked against their SHA-256. Per file: what it tests, and what the analyzer must report (the frames, the tags with their kind and version, the stream, the gaps, the VBR header, the encoder and the findings), each checked against the file by hand.",
+ "private_folder": "mp3-edge-cases",
+ "samples": [
+  {
+   "file": "01 A Victory Of Love (two id3v2 tags).mp3",
+   "sha256": "f252e0a1026c428fe653c23edec550cb1d664b0e732d702818b7d31079241586",
+   "size": 4391561,
+   "tests": "Two ID3v2 tags in a row (ID3v2.3 of 4,096 bytes, then ID3v2.4 of 2,404 bytes), a LAME 3.97 stream with a Xing header and LAME tag, and an ID3v1.0 tag at the end. The ID3v2.3 tag holds empty WOAF, WOAR and WOAS frames.",
+   "frames": 9841,
+   "regions": [
+    {
+     "name": "ID3v2",
+     "kind": "Tag",
+     "value": "2.3.0",
+     "offset": 0,
+     "length": 4096
+    },
+    {
+     "name": "ID3v2",
+     "kind": "Tag",
+     "value": "2.4.0",
+     "offset": 4096,
+     "length": 2404
+    },
+    {
+     "name": "MPEG Audio",
+     "kind": "Stream",
+     "value": 9841,
+     "offset": 6500,
+     "length": 4384933
+    },
+    {
+     "name": "ID3v1",
+     "kind": "Tag",
+     "value": "1.0",
+     "offset": 4391433,
+     "length": 128
+    }
+   ],
+   "gaps": [],
+   "vbr_header": "Xing",
+   "lame_tag": true,
+   "stream": {
+    "codec": "MPEG-1 Layer III",
+    "sample_rate": 44100,
+    "channels": 2,
+    "channel_mode": "Joint stereo",
+    "samples": 11335680,
+    "is_vbr": true
+   },
+   "encoder": {
+    "name": "LAME 3.97",
+    "confidence": "High"
+   },
+   "findings": [
+    "id3v2.frame-empty",
+    "id3v2.frame-empty",
+    "id3v2.frame-empty",
+    "mpeg-audio.main-data-begin-exceeds-buffer"
+   ]
+  },
+  {
+   "file": "3718 (Invalid data after tag).mp3",
+   "sha256": "56e91a18b8ec1535138b0a293b68a93102577f9f2659adb2417d77345bb32d56",
+   "size": 5325017,
+   "tests": "An ID3v2.3 tag to 0x800, a 160 kbps VBRI header frame at 0x800, 102 bytes that are not audio, the first audio frame at 0xA70, and an ID3v1.1 tag at the end. The header frame counts on its own structure and the 102 bytes are junk after it (mpeg-audio.junk-after-vbr-header-frame), not leading junk. The first audio frames take main data from the header frame's unused bytes (main-data-in-vbr-header-frame), and the VBRI header claims more frames and bytes than the stream holds.",
+   "frames": 6544,
+   "regions": [
+    {
+     "name": "ID3v2",
+     "kind": "Tag",
+     "value": "2.3.0",
+     "offset": 0,
+     "length": 2048
+    },
+    {
+     "name": "MPEG Audio",
+     "kind": "Stream",
+     "value": 6544,
+     "offset": 2048,
+     "length": 5322841
+    },
+    {
+     "name": "ID3v1",
+     "kind": "Tag",
+     "value": "1.1",
+     "offset": 5324889,
+     "length": 128
+    }
+   ],
+   "gaps": [
+    {
+     "offset": 2570,
+     "length": 102
+    }
+   ],
+   "vbr_header": "VBRI",
+   "lame_tag": false,
+   "stream": {
+    "codec": "MPEG-1 Layer III",
+    "sample_rate": 44100,
+    "channels": 2,
+    "channel_mode": "Joint stereo",
+    "samples": 7537536,
+    "is_vbr": true
+   },
+   "encoder": {
+    "name": "Fraunhofer",
+    "confidence": "High"
+   },
+   "findings": [
+    "mpeg-audio.junk-after-vbr-header-frame",
+    "mpeg-audio.main-data-begin-exceeds-buffer",
+    "mpeg-audio.main-data-in-vbr-header-frame",
+    "mpeg-audio.vbr-byte-count-mismatch",
+    "mpeg-audio.vbr-frame-count-mismatch"
+   ]
+  },
+  {
+   "file": "Eloy - Ra - 02 - Sensations (headerless VBR file).mp3",
+   "sha256": "a9722b62d526a2af0cfed64a8f674656d3eeb5dd6091192ce9eadb78c2237106",
+   "size": 8404992,
+   "tests": "Variable bitrate audio with no Xing or VBRI header, between an ID3v2.3 tag and an ID3v1.1 tag.",
+   "frames": 12009,
+   "regions": [
+    {
+     "name": "ID3v2",
+     "kind": "Tag",
+     "value": "2.3.0",
+     "offset": 0,
+     "length": 339
+    },
+    {
+     "name": "MPEG Audio",
+     "kind": "Stream",
+     "value": 12009,
+     "offset": 339,
+     "length": 8404525
+    },
+    {
+     "name": "ID3v1",
+     "kind": "Tag",
+     "value": "1.1",
+     "offset": 8404864,
+     "length": 128
+    }
+   ],
+   "gaps": [],
+   "vbr_header": null,
+   "lame_tag": false,
+   "stream": {
+    "codec": "MPEG-1 Layer III",
+    "sample_rate": 44100,
+    "channels": 2,
+    "channel_mode": "Stereo",
+    "samples": 13834368,
+    "is_vbr": true
+   },
+   "encoder": {
+    "name": "LAME 3.88 (beta)",
+    "confidence": "Low"
+   },
+   "findings": [
+    "mpeg-audio.main-data-begin-exceeds-buffer"
+   ]
+  },
+  {
+   "file": "M. Filla (invalid attributes).mp3",
+   "sha256": "8df704483283a9fdb2760ce66133725785ebf197f07bbe7b788f1a4c87eb5100",
+   "size": 100000,
+   "tests": "A file cut at 100,000 bytes after an ID3v2.3 tag: 1,013 bytes of junk (holding the text LAME3.93) come before the first frame, whose main data begins before the stream, and the last frame is cut short.",
+   "frames": 93,
+   "regions": [
+    {
+     "name": "ID3v2",
+     "kind": "Tag",
+     "value": "2.3.0",
+     "offset": 0,
+     "length": 2146
+    },
+    {
+     "name": "MPEG Audio",
+     "kind": "Stream",
+     "value": 93,
+     "offset": 2146,
+     "length": 97854
+    }
+   ],
+   "gaps": [
+    {
+     "offset": 2146,
+     "length": 1013
+    }
+   ],
+   "vbr_header": null,
+   "lame_tag": false,
+   "stream": {
+    "codec": "MPEG-1 Layer III",
+    "sample_rate": 44100,
+    "channels": 2,
+    "channel_mode": "Joint stereo",
+    "samples": 107136,
+    "is_vbr": false
+   },
+   "encoder": {
+    "name": "LAME 3.93 (alpha)",
+    "confidence": "Low"
+   },
+   "findings": [
+    "mpeg-audio.frame-truncated",
+    "mpeg-audio.leading-junk",
+    "mpeg-audio.main-data-before-stream",
+    "mpeg-audio.main-data-begin-exceeds-buffer"
+   ]
+  },
+  {
+   "file": "Pulp Fiction (APEv2 detected as ID3v1).mp3",
+   "sha256": "5227fa56269245def58417b24a7d25b4a4384ef00cb65d5a5fbd389f00d7e1f4",
+   "size": 2396597,
+   "tests": "An APEv2 tag of 131 bytes at the end of the file: the TAG of its APETAGEX header lies exactly 128 bytes from the end, where an ID3v1 tag would start, so it must be read as APEv2 and the ID3v1 candidate rejected (tag.near-miss). The last audio frame is cut short where the tag starts.",
+   "frames": 5747,
+   "regions": [
+    {
+     "name": "MPEG Audio",
+     "kind": "Stream",
+     "value": 5747,
+     "offset": 0,
+     "length": 2396466
+    },
+    {
+     "name": "APE",
+     "kind": "Tag",
+     "value": "2.0",
+     "offset": 2396466,
+     "length": 131
+    }
+   ],
+   "gaps": [],
+   "vbr_header": null,
+   "lame_tag": false,
+   "stream": {
+    "codec": "MPEG-1 Layer III",
+    "sample_rate": 44100,
+    "channels": 2,
+    "channel_mode": "Joint stereo",
+    "samples": 6620544,
+    "is_vbr": false
+   },
+   "encoder": {
+    "name": "Fraunhofer",
+    "confidence": "Low"
+   },
+   "findings": [
+    "ape.items-unsorted",
+    "mpeg-audio.frame-truncated",
+    "tag.near-miss"
+   ]
+  },
+  {
+   "file": "test.mp3",
+   "sha256": "8a4af914ace9fb96c108ecb6bcefd846f6efbe0761255aa1c3e22e0c8f942fbe",
+   "size": 5658569,
+   "tests": "A file cut short, ending in an APEv2 tag, a Lyrics3 v2.00 tag and an ID3v1.1 tag: the Xing header (with a LAME 3.90.3 tag) counts 17,131 frames and 13,388,666 bytes, the file holds 7,853 frames, and the last frame is cut where the APEv2 tag starts. The Lyrics3 v2 tag has a CRC field, which v2.00 does not define.",
+   "frames": 7854,
+   "regions": [
+    {
+     "name": "MPEG Audio",
+     "kind": "Stream",
+     "value": 7854,
+     "offset": 0,
+     "length": 5658112
+    },
+    {
+     "name": "APE",
+     "kind": "Tag",
+     "value": "2.0",
+     "offset": 5658112,
+     "length": 277
+    },
+    {
+     "name": "Lyrics3",
+     "kind": "Tag",
+     "value": "2.00",
+     "offset": 5658389,
+     "length": 52
+    },
+    {
+     "name": "ID3v1",
+     "kind": "Tag",
+     "value": "1.1",
+     "offset": 5658441,
+     "length": 128
+    }
+   ],
+   "gaps": [],
+   "vbr_header": "Xing",
+   "lame_tag": true,
+   "stream": {
+    "codec": "MPEG-1 Layer III",
+    "sample_rate": 44100,
+    "channels": 2,
+    "channel_mode": "Joint stereo",
+    "samples": 9046656,
+    "is_vbr": true
+   },
+   "encoder": {
+    "name": "LAME 3.90.3",
+    "confidence": "High"
+   },
+   "findings": [
+    "ape.items-unsorted",
+    "lyrics3.unknown-field",
+    "mpeg-audio.frame-truncated",
+    "mpeg-audio.main-data-begin-exceeds-buffer",
+    "mpeg-audio.music-crc-not-verified",
+    "mpeg-audio.vbr-byte-count-mismatch",
+    "mpeg-audio.vbr-frame-count-mismatch"
+   ]
+  },
+  {
+   "file": "transmission0-dustlikesand (MPEG 2 Layer III).mp3",
+   "sha256": "fd1a8e6971dec56c5efe1ac0e105a7f3d2c959a45745f807a2014bde20c52dc8",
+   "size": 1610420,
+   "tests": "MPEG-2 Layer III at 22,050 Hz with mp3PRO ancillary data (84,774 bytes) and an ID3v1.0 tag.",
+   "frames": 5137,
+   "regions": [
+    {
+     "name": "MPEG Audio",
+     "kind": "Stream",
+     "value": 5137,
+     "offset": 0,
+     "length": 1610292
+    },
+    {
+     "name": "ID3v1",
+     "kind": "Tag",
+     "value": "1.0",
+     "offset": 1610292,
+     "length": 128
+    }
+   ],
+   "gaps": [],
+   "vbr_header": null,
+   "lame_tag": false,
+   "stream": {
+    "codec": "MPEG-2 Layer III",
+    "sample_rate": 22050,
+    "channels": 2,
+    "channel_mode": "Joint stereo",
+    "samples": 2958912,
+    "is_vbr": false
+   },
+   "encoder": {
+    "name": "mp3PRO encoder",
+    "confidence": "Medium"
+   },
+   "enhancement": "mp3PRO",
+   "findings": [
+    "mpeg-audio.mp3pro"
+   ]
+  },
+  {
+   "file": "transmission0-sanmiguel (MPEG 2 Layer III).mp3",
+   "sha256": "682a9bc9c8e794eee45f17a56535c1b20e9f6316567a26c4cbb9d779bda34d9f",
+   "size": 863736,
+   "tests": "MPEG-2 Layer III at 22,050 Hz with mp3PRO ancillary data (46,246 bytes) and an ID3v1.0 tag.",
+   "frames": 2755,
+   "regions": [
+    {
+     "name": "MPEG Audio",
+     "kind": "Stream",
+     "value": 2755,
+     "offset": 0,
+     "length": 863608
+    },
+    {
+     "name": "ID3v1",
+     "kind": "Tag",
+     "value": "1.0",
+     "offset": 863608,
+     "length": 128
+    }
+   ],
+   "gaps": [],
+   "vbr_header": null,
+   "lame_tag": false,
+   "stream": {
+    "codec": "MPEG-2 Layer III",
+    "sample_rate": 22050,
+    "channels": 2,
+    "channel_mode": "Joint stereo",
+    "samples": 1586880,
+    "is_vbr": false
+   },
+   "encoder": {
+    "name": "mp3PRO encoder",
+    "confidence": "Medium"
+   },
+   "enhancement": "mp3PRO",
+   "findings": [
+    "mpeg-audio.mp3pro"
+   ]
+  },
+  {
+   "file": "Volker Pispers-04-Dienstleistung.mp3",
+   "sha256": "7ae53242e09e58409aa210e7a42fc9d5fe4ca8858c9e523cd381ae851dbf53b8",
+   "size": 18098559,
+   "tests": "Variable bitrate audio with an APEv2 tag and an ID3v1.1 tag after it, and no VBR header.",
+   "frames": 30534,
+   "regions": [
+    {
+     "name": "MPEG Audio",
+     "kind": "Stream",
+     "value": 30534,
+     "offset": 0,
+     "length": 18098003
+    },
+    {
+     "name": "APE",
+     "kind": "Tag",
+     "value": "2.0",
+     "offset": 18098003,
+     "length": 428
+    },
+    {
+     "name": "ID3v1",
+     "kind": "Tag",
+     "value": "1.1",
+     "offset": 18098431,
+     "length": 128
+    }
+   ],
+   "gaps": [],
+   "vbr_header": null,
+   "lame_tag": false,
+   "stream": {
+    "codec": "MPEG-1 Layer III",
+    "sample_rate": 44100,
+    "channels": 2,
+    "channel_mode": "Joint stereo",
+    "samples": 35175168,
+    "is_vbr": true
+   },
+   "encoder": {
+    "name": "Fraunhofer",
+    "confidence": "Low"
+   },
+   "findings": [
+    "ape.items-unsorted",
+    "mpeg-audio.main-data-begin-exceeds-buffer"
+   ]
+  }
+ ]
+}

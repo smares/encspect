@@ -787,6 +787,21 @@ internal sealed partial class BlockReader
         // without COUPLING_DEC, and error 24 for the fill element after it), and only ffmpeg keeps it as the previous element, where a
         // program config element has given it a channel; its payload is reported and counts for nothing.
         _hasSbrEvidence |= _lastChannelElement is 0 or 1 or 3;
+        Span<int> record = default;
+        if (_store is not null && _lastChannelElement is 0 or 1 && _ics[0].Slot >= 0)
+        {
+            // The payload's values go to a slot of their own, after the channel streams; it stays invalid (the decoder then treats the frame as one without SBR data) until the data is read to its end.
+            record = _store.BeginSbr(_lastChannelTag);
+            if (!record.IsEmpty)
+            {
+                record[SbrRecord.ChannelSlot] = _ics[0].Slot;
+                record[SbrRecord.Pair] = _lastChannelElement == 1 ? 1 : 0;
+                record[SbrRecord.HasHeader] = header is null ? 0 : 1;
+                record[SbrRecord.Valid] = 0;
+                record[SbrRecord.HasPs] = 0;
+            }
+        }
+
         if (_lastChannelElement is not (0 or 1))
         {
             Soft("aac.sbr-without-channel-element", "SBR data that follows no single channel or channel pair element", dataStart, end, "SBR Data");
@@ -811,7 +826,19 @@ internal sealed partial class BlockReader
         var sub = bits.Window(dataStart, end);
         try
         {
-            (int ps, string? error, bool plain) = Sbr.ReadData(ref sub, current, _lastChannelElement == 1);
+            if (!_psState.TryGetValue(key, out int[]? psState))
+            {
+                psState = new int[8];
+                _psState[key] = psState;
+            }
+
+            int hasHeader = record.IsEmpty ? 0 : record[SbrRecord.HasHeader];
+            Span<int> figures = stackalloc int[Sbr.Figures];
+            (int ps, string? error, bool plain) = Sbr.ReadData(ref sub, current, _lastChannelElement == 1, record, psState, figures);
+            if (!record.IsEmpty)
+            {
+                record[SbrRecord.HasHeader] = hasHeader;
+            }
             if (error is not null)
             {
                 Soft("aac.sbr-data-invalid", $"SBR data with {error}", dataStart, end, "SBR Data");
@@ -821,6 +848,8 @@ internal sealed partial class BlockReader
 
             tally.SbrPayloads++;
             tally.SbrPlainPayloads += plain ? 1 : 0;
+            tally.SbrFigures(figures);
+            _recorder?.SbrPayload(figures);
             if (ps == Sbr.PsInPair)
             {
                 Soft("aac.ps-in-channel-pair", "the parametric stereo extension's ID in a channel pair's SBR data, where only a single channel element can carry it, so decoders do not apply it",

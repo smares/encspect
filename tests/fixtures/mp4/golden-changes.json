@@ -1,6 +1,7 @@
 {
  "goldens": [
-  "tests/fixtures/mp4/external-ffmpeg-flac-in-mp4.report.json"
+  "tests/fixtures/mp4/external-ffmpeg-flac-in-mp4.report.json",
+  "tests/fixtures/mp4/he-aac-mono.decode.json"
  ],
  "added": [
   {
@@ -42,6 +43,17 @@
    ],
    "name": "Evidence",
    "last": 8
+  }
+ ],
+ "changed": [
+  {
+   "scope": "decode",
+   "fields": [
+    "pcmSha256"
+   ],
+   "goldens": [
+    "tests/fixtures/mp4/he-aac-mono.decode.json"
+   ]
   }
  ]
 }

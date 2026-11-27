@@ -554,6 +554,29 @@ class RepositoryTests(unittest.TestCase):
         self.assertEqual(status, 1)
         self.assertIn("d.decode.json: changed, and no change file covers it", output.getvalue())
 
+    def test_a_decode_golden_may_gain_a_hash_and_swap_the_findings_the_change_file_lists(self):
+        refused = {"streams": [{"decoding": "NotPossible", "decodedSamples": 0}], "findings": [{"code": "decode.not-possible", "message": "not decoded", "count": 1}]}
+        decoded = {"streams": [{"decoding": "Decoded", "decodedSamples": 100, "pcmSha256": "ab"}], "findings": [{"code": "decode.frame-invalid", "message": "a frame", "count": 2}]}
+        self.write("tests/fixtures/aac/d.decode.json", refused)
+        self.git("add", "-A")
+        self.git("commit", "-qm", "decode base")
+        self.git("checkout", "-q", "main")
+        self.git("merge", "-q", "--ff-only", "pr")
+        self.git("checkout", "-qb", "pr7")
+        files = ["tests/fixtures/aac/golden-changes.json"]
+        change = {"goldens": ["tests/fixtures/aac/"], "changed": [{"scope": "decode", "fields": ["decodedSamples", "decoding", "pcmSha256"]}],
+                  "removed": [{"scope": "finding", "code": "decode.not-possible"}], "added": [{"scope": "finding", "code": "decode.frame-invalid"}]}
+        self.write(files[0], change)
+        self.write("tests/fixtures/aac/d.decode.json", decoded)
+        self.commit()
+        self.assertEqual(golden_additions.run(self.dir, "main", "HEAD", files), 0)
+
+        # A finding of another code that the change file does not list fails.
+        decoded["findings"].append({"code": "decode.other", "message": "x", "count": 1})
+        self.write("tests/fixtures/aac/d.decode.json", decoded)
+        self.commit()
+        self.assertEqual(golden_additions.run(self.dir, "main", "HEAD", files), 1)
+
     def test_a_key_renamed_in_the_streams_of_a_report_golden_is_put_back(self):
         old = report(OLD_STATS, streams=[{"nodes": [[1]], "verification": {"withCorrection": True}}])
         new = report(OLD_STATS, streams=[{"nodes": [[1]], "verification": {"isCorrected": True}}])

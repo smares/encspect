@@ -2,16 +2,9 @@
   "streams": [
     {
       "decoding": "Decoded",
-      "decodedSamples": 8192,
-      "pcmSha256": "e5f33430d1afef3c17a2a6aaf9697cd00b845361874336567f5684010e13959f"
+      "decodedSamples": 10240,
+      "pcmSha256": "f6a619a8953b107c329262ecec8e184951e2e10fe7bde79e8bf88d1666624c53"
     }
   ],
-  "findings": [
-    {
-      "code": "decode.frame-invalid",
-      "severity": "Warning",
-      "count": 1,
-      "message": "The aac decoder could not decode the frame at 0xC0: the block holds SBR data, which is not applied yet (HE-AAC)."
-    }
-  ]
+  "findings": []
 }
