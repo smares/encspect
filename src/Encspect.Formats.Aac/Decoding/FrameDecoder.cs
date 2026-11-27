@@ -246,18 +246,14 @@ internal sealed class FrameDecoder : IFrameDecoder
             NoiseSubstitution(ch, slot, ch > 0 && slot[BlockRecord.Kind] == BlockRecord.KindPairSecond ? record.Slice((ch - 1) * BlockRecord.Stride, BlockRecord.Stride) : default);
         }
 
-        // AAC Main's prediction follows mid/side stereo and the noise substitution that precedes intensity stereo, and runs on the channels that intensity stereo reads (the first of
-        // a pair) before it, and on the one it writes (the second) after it, since the predictors of an intensity band take the values intensity stereo gives (ISO/IEC 13818-7 12.2.4;
-        // ISO/IEC 14496-3 4.6.8.2.4).
+        // AAC Main's prediction follows mid/side stereo and the noise substitution that precedes intensity stereo, and precedes intensity stereo (ISO/IEC 13818-7 1.1, the decoder's order
+        // of tools). The predictors of an intensity band of the second channel take the zero the stream codes there, and the intensity values enter after them: the wording of
+        // 13818-7 12.2.4 and 14496-3 4.6.8.2.4 has them fed with the intensity values, which the ISO/IEC 14496-26 reference waveform of am02_44 does not follow (docs/formats/aac.md).
         if (_predictors is not null)
         {
             for (int ch = 0; ch < _channels; ch++)
             {
-                ReadOnlySpan<int> slot = record.Slice(ch * BlockRecord.Stride, BlockRecord.Stride);
-                if (slot[BlockRecord.Kind] != BlockRecord.KindPairSecond)
-                {
-                    Predict(ch, slot);
-                }
+                Predict(ch, record.Slice(ch * BlockRecord.Stride, BlockRecord.Stride));
             }
         }
 
@@ -267,18 +263,6 @@ internal sealed class FrameDecoder : IFrameDecoder
             if (slot[BlockRecord.Kind] == BlockRecord.KindPairFirst)
             {
                 IntensityStereo(slot, record.Slice((ch + 1) * BlockRecord.Stride, BlockRecord.Stride), ch);
-            }
-        }
-
-        if (_predictors is not null)
-        {
-            for (int ch = 0; ch < _channels; ch++)
-            {
-                ReadOnlySpan<int> slot = record.Slice(ch * BlockRecord.Stride, BlockRecord.Stride);
-                if (slot[BlockRecord.Kind] == BlockRecord.KindPairSecond)
-                {
-                    Predict(ch, slot);
-                }
             }
         }
 
