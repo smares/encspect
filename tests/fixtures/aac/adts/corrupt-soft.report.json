@@ -8416,12 +8416,14 @@
       {
         "severity": "Info",
         "code": "aac.layout-changed",
-        "message": "The raw data block at 0x15E holds channel elements in another order than the block before it, so the decoder starts the state of its channel slots again.",
-        "offset": 350,
-        "length": 92,
+        "message": "The raw data block at 0x165 holds channel elements in another order than the block before it, so the decoder starts the state of its channel slots again.",
+        "offset": 357,
+        "length": 84,
         "path": [
           0,
-          6
+          6,
+          15,
+          0
         ],
         "count": 1
       },
