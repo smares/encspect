@@ -19,8 +19,8 @@ For each file:
   fixtures agree to 3 x 10^-7, the rounding of single precision. Noise substitution draws the generator of docs/design/wma-standard-decoding.md, which FFmpeg's decoder draws too,
   so the files that code it agree sample by sample (Microsoft's generator is not known, see below).
 - DIFFERENCES lists the files whose output FFmpeg's decoder differs from the analyzer's on purpose, each with the reason; an entry that no longer differs fails the run (the
-  stale-entry rule of docs/development.md), as does a difference that has no entry. Eight committed fixtures have an entry, where the analyzer follows Microsoft's decoder (the version 1 coefficient limit, the exponents of a channel not coded); the line spectral pair
-  files of the private sample kit that have short blocks do too (the block's own angles, item 1 of "Points to settle against Microsoft's decoder" in docs/design/wma-standard-decoding.md); name them on the command line to see it.
+  stale-entry rule of docs/development.md), as does a difference that has no entry. Eight committed fixtures have an entry where the analyzer follows Microsoft's decoder (the version 1 coefficient limit, the exponents of a channel not coded), and six of the
+  sample kit files under asf/sample-kit have one for their line spectral pairs in short blocks; so do the files of the private sample kit that have them (the block's own angles, item 1 of "Points to settle against Microsoft's decoder" in docs/design/wma-standard-decoding.md); name them on the command line to see it.
 
 With --microsoft DIR (the artifact of the Windows run: `wma-decode-probe wma-pcm`, `.github/workflows/windows-wma-decode.yml`, a folder of <name>.f32 and <name>.json) the same
 files are compared with Microsoft's Source Reader output, which is the reference: the sample counts must be equal, and the RMS and the largest difference are printed for each file.
@@ -48,7 +48,7 @@ DEFAULT_PCMDUMP = "dotnet " + str(ROOT / "tests" / "Encspect.PcmDump" / "bin" / 
 RMS_BOUND = 2.0 ** -15 / math.sqrt(12)
 MAX_BOUND = 2.0 ** -14
 
-PATTERNS = ["external-ffmpeg-wmav*.wma", "external-windows-wma92-[cv]*.wma", "external-remux-ffmpeg-wma92-*.wma", "derived-ffmpeg-wmav2-*.asf"]
+PATTERNS = ["external-ffmpeg-wmav*.wma", "external-windows-wma92-[cv]*.wma", "external-remux-ffmpeg-wma92-*.wma", "derived-ffmpeg-wmav2-*.asf", "sample-kit/external-wme9-*.wma"]
 
 # The files that code noise substitution, whose output Microsoft's decoder cannot reproduce sample by sample.
 NOISE_PREFIXES = ("external-ffmpeg-wmav1-mono-22k", "external-ffmpeg-wmav2-stereo-44k-32k", "derived-ffmpeg-wmav2-noise", "external-windows-wma92-cbr-stereo-22k-20-sdk", "external-windows-wma92-cbr-stereo-44k-32-sdk",
@@ -67,6 +67,12 @@ DIFFERENCES = {
     "external-windows-wma92-cbr-stereo-22k-20-sdk.wma": CONVERSION,
     "external-windows-wma92-cbr-stereo-22k-32.wma": CONVERSION,
     "external-windows-wma92-cbr-stereo-44k-32-sdk.wma": CONVERSION,
+    "external-wme9-wma9-cbr-10k-16k-mono.wma": "line spectral pairs in short blocks",
+    "external-wme9-wma9-cbr-12k-16k-mono.wma": "line spectral pairs in short blocks",
+    "external-wme9-wma9-cbr-16k-16k-mono.wma": "line spectral pairs in short blocks",
+    "external-wme9-wma9-cbr2pass-16k-16k-mono.wma": "line spectral pairs in short blocks",
+    "external-wme9-wma9-cbr-16k-16k-stereo.wma": "line spectral pairs in short blocks",
+    "external-wme9-wma9-cbr-20k-16k-stereo.wma": "line spectral pairs in short blocks",
     "music-16k-mono-wma9-cbr-10_16_1.wma": "line spectral pairs in short blocks",
     "music-16k-mono-wma9-cbr-12_16_1.wma": "line spectral pairs in short blocks",
     "music-16k-mono-wma9-cbr-16_16_1.wma": "line spectral pairs in short blocks",

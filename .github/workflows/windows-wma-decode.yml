@@ -76,7 +76,7 @@ jobs:
         timeout-minutes: 10
         run: |
           mkdir -p decode-out/pcm
-          ./probe-bin/wma-decode-probe.exe wma-pcm decode-out/pcm tests/fixtures/asf/external-ffmpeg-wmav*.wma tests/fixtures/asf/external-windows-wma92-[cv]*.wma tests/fixtures/asf/external-remux-ffmpeg-wma92-*.wma tests/fixtures/asf/derived-ffmpeg-wmav2-*.asf 2>&1 | tee decode-out/pcm/log.txt
+          ./probe-bin/wma-decode-probe.exe wma-pcm decode-out/pcm tests/fixtures/asf/external-ffmpeg-wmav*.wma tests/fixtures/asf/external-windows-wma92-[cv]*.wma tests/fixtures/asf/external-remux-ffmpeg-wma92-*.wma tests/fixtures/asf/derived-ffmpeg-wmav2-*.asf tests/fixtures/asf/sample-kit/external-wme9-*.wma 2>&1 | tee decode-out/pcm/log.txt
 
       - name: Install ffmpeg for the sample counts
         if: always()
