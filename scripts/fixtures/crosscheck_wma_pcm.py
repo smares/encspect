@@ -9,17 +9,18 @@ the encoder files of ffmpeg, the Windows files, the remuxes and the derived nois
 
 For each file:
 
-- PcmDump writes the samples of the first decoded stream (floats at full scale 1.0, interleaved) with the runs of positions they cover. Positions are at the coded stage: the first
-  two frames' output is the start the stream's own syntax trims, so the first run begins at twice the frame length.
-- FFmpeg (a black box, as in the other cross-checks) decodes the file to 32-bit floats. It drops the same first two frames and so starts at the analyzer's first sample. It does not
+- PcmDump writes the samples of the first decoded stream (floats at full scale 1.0, interleaved) with the runs of positions they cover. Positions are at the coded stage: the
+  output of the first frames is the start the stream's own syntax trims (two frames with the bit reservoir, one without it, as Microsoft's decoder does), so the first run begins at
+  twice or once the frame length.
+- FFmpeg (a black box, as in the other cross-checks) decodes the file to 32-bit floats. It drops the first two frames, so it starts at the analyzer's first sample where the stream has the bit reservoir, and one frame after it where it has not. It does not
   decode the frame the last superframe announces, and outputs the last overlap whole, complete or not, so the last frame of its output is left out of the comparison (the analyzer's
   tail holds the frame it did not decode, and the samples its blocks no longer change).
 - Per channel the RMS of the difference must be at most 2^-15 / sqrt(12) of full scale and its largest magnitude 2^-14: floats against floats, nothing rounded to 16 bits. The
   fixtures agree to 3 x 10^-7, the rounding of single precision. Noise substitution draws the generator of docs/design/wma-standard-decoding.md, which FFmpeg's decoder draws too,
   so the files that code it agree sample by sample (Microsoft's generator is not known, see below).
 - DIFFERENCES lists the files whose output FFmpeg's decoder differs from the analyzer's on purpose, each with the reason; an entry that no longer differs fails the run (the
-  stale-entry rule of docs/development.md), as does a difference that has no entry. The committed fixtures have none: the line spectral pair files of the private sample kit that
-  have short blocks do (the block's own angles, item 1 of "Points to settle against Microsoft's decoder" in docs/design/wma-standard-decoding.md); name them on the command line to see it.
+  stale-entry rule of docs/development.md), as does a difference that has no entry. Eight committed fixtures have an entry, where the analyzer follows Microsoft's decoder (the version 1 coefficient limit, the exponents of a channel not coded); the line spectral pair
+  files of the private sample kit that have short blocks do too (the block's own angles, item 1 of "Points to settle against Microsoft's decoder" in docs/design/wma-standard-decoding.md); name them on the command line to see it.
 
 With --microsoft DIR (the artifact of the Windows run: `wma-decode-probe wma-pcm`, `.github/workflows/windows-wma-decode.yml`, a folder of <name>.f32 and <name>.json) the same
 files are compared with Microsoft's Source Reader output, which is the reference: the sample counts must be equal, and the RMS and the largest difference are printed for each file.
@@ -53,8 +54,19 @@ PATTERNS = ["external-ffmpeg-wmav*.wma", "external-windows-wma92-[cv]*.wma", "ex
 NOISE_PREFIXES = ("external-ffmpeg-wmav1-mono-22k", "external-ffmpeg-wmav2-stereo-44k-32k", "derived-ffmpeg-wmav2-noise", "external-windows-wma92-cbr-stereo-22k-20-sdk", "external-windows-wma92-cbr-stereo-44k-32-sdk",
                   "external-windows-wma92-cbr-stereo-44k-48-sdk", "external-remux-ffmpeg-wma92-cbr-stereo-22k-20-sdk")
 
-# Files of the private sample kit whose line spectral pair exponents sit in short blocks: ffmpeg evaluates the curve at the angles of a block as long as the frame.
+# Files whose output follows Microsoft's decoder where ffmpeg's differs (docs/design/wma-standard-decoding.md, "What Microsoft's output showed"), and the files of the private sample kit whose
+# line spectral pair exponents sit in short blocks: ffmpeg evaluates the curve at the angles of a block as long as the frame.
+LIMIT = "version 1 codes fewer positions (Microsoft's coefficient limit)"
+CONVERSION = "a channel not coded when exponents are sent is converted (Microsoft's rule)"
 DIFFERENCES = {
+    "external-ffmpeg-wmav1-mono-22k-24k.wma": LIMIT,
+    "external-ffmpeg-wmav1-stereo-44k-128k.wma": LIMIT,
+    "external-ffmpeg-wmav1-stereo-44k-48k.wma": LIMIT,
+    "external-remux-ffmpeg-wma92-cbr-stereo-22k-20-sdk.wma": CONVERSION,
+    "external-remux-ffmpeg-wma92-cbr-stereo-22k-32.wma": CONVERSION,
+    "external-windows-wma92-cbr-stereo-22k-20-sdk.wma": CONVERSION,
+    "external-windows-wma92-cbr-stereo-22k-32.wma": CONVERSION,
+    "external-windows-wma92-cbr-stereo-44k-32-sdk.wma": CONVERSION,
     "music-16k-mono-wma9-cbr-10_16_1.wma": "line spectral pairs in short blocks",
     "music-16k-mono-wma9-cbr-12_16_1.wma": "line spectral pairs in short blocks",
     "music-16k-mono-wma9-cbr-16_16_1.wma": "line spectral pairs in short blocks",
@@ -115,11 +127,14 @@ def check(path, args, work):
     runs = stream["runs"]
     messages = []
     failed = False
-    if len(runs) != 1 or runs[0][0] != 2 * frame:
-        return [f"the runs are {runs}, not one that starts at {2 * frame}"], True
+    if len(runs) != 1 or runs[0][0] not in (frame, 2 * frame):
+        return [f"the runs are {runs}, not one that starts at {frame} or {2 * frame}"], True
     reference = ffmpeg_pcm(path, folder / "ffmpeg.f32")
-    count = min(len(mine), len(reference) - frame * channels) // channels
-    figures = channel_figures(mine, reference, channels, max(count, 0))
+
+    # ffmpeg's output starts at twice the frame length; a stream without the bit reservoir starts one frame earlier here, and those samples are left out of this comparison.
+    ahead = (2 * frame - runs[0][0]) * channels
+    count = min(len(mine) - ahead, len(reference) - frame * channels) // channels
+    figures = channel_figures(mine[ahead:], reference, channels, max(count, 0))
     rms = max(f[0] for f in figures)
     largest = max(f[1] for f in figures)
     holds = rms <= RMS_BOUND and largest <= MAX_BOUND

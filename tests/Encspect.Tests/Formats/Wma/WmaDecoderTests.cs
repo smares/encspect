@@ -92,8 +92,8 @@ public class WmaDecoderTests
     {
         (Report report, RunSink sink) = Decode("asf/external-ffmpeg-wmav2-stereo-44k-128k.wma");
 
-        // 44 frames, the first two not written, and no tail (the last block is as long as the frame).
-        Assert.Equal([(4096L, 42 * 2048)], sink.Runs.Select(r => (r.First, r.Length)));
+        // 44 frames without the bit reservoir: only the first is not written (Microsoft's decoder drops one frame there), and there is no tail.
+        Assert.Equal([(2048L, 43 * 2048)], sink.Runs.Select(r => (r.First, r.Length)));
         Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("decode.", StringComparison.Ordinal));
     }
 

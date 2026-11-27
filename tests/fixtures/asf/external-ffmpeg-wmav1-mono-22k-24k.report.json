@@ -5463,26 +5463,6 @@
                   "length": 9650,
                   "children": [
                     {
-                      "name": "Encoder",
-                      "value": "FFmpeg (wmav1 encoder)",
-                      "offset": 354,
-                      "length": 9650,
-                      "children": [
-                        {
-                          "name": "Confidence",
-                          "value": "High",
-                          "offset": 354,
-                          "length": 9650
-                        },
-                        {
-                          "name": "Evidence",
-                          "value": "All 44 padded superframes have bytes after the frame that are all 'N' (0x4E), which ffmpeg's wmav1 encoder writes (wmaenc.c), with no bit reservoir and no variable block lengths",
-                          "offset": 354,
-                          "length": 9650
-                        }
-                      ]
-                    },
-                    {
                       "name": "Statistics",
                       "kind": "Statistics",
                       "value": "44 frames, 1.997 s",
@@ -5674,7 +5654,7 @@
                         },
                         {
                           "name": "Non-Zero Coefficients",
-                          "value": 3316,
+                          "value": 3312,
                           "offset": 354,
                           "length": 9650
                         },
@@ -5705,7 +5685,7 @@
                             },
                             {
                               "name": "Highest",
-                              "value": 10034,
+                              "value": 10002,
                               "unit": "Hz",
                               "offset": 354,
                               "length": 9650
@@ -5753,7 +5733,9 @@
                               "name": "Frame Data",
                               "value": "1 block",
                               "offset": 590,
-                              "length": 131
+                              "length": 131,
+                              "bitOffset": 0,
+                              "bitLength": 1042
                             },
                             {
                               "name": "Padding",
@@ -6581,16 +6563,14 @@
                               "name": "Frame Data",
                               "value": "1 block",
                               "offset": 6130,
-                              "length": 126,
-                              "bitOffset": 0,
-                              "bitLength": 1004
+                              "length": 124
                             },
                             {
                               "name": "Padding",
-                              "value": 13,
+                              "value": 15,
                               "unit": "bytes",
-                              "offset": 6256,
-                              "length": 13
+                              "offset": 6254,
+                              "length": 15
                             }
                           ]
                         },
@@ -6826,7 +6806,7 @@
                         {
                           "name": "Frame",
                           "kind": "Frame",
-                          "value": "1 block, 1048 bits",
+                          "value": "1 block, 1042 bits",
                           "offset": 590,
                           "length": 131,
                           "children": [
@@ -6870,11 +6850,11 @@
                                 },
                                 {
                                   "name": "Coefficients (channel 1)",
-                                  "value": "212 non-zero, last at 926",
+                                  "value": "211 non-zero, last at 906",
                                   "offset": 594,
                                   "length": 127,
                                   "bitOffset": 5,
-                                  "bitLength": 1011
+                                  "bitLength": 1005
                                 }
                               ]
                             }
@@ -8808,7 +8788,7 @@
                                 },
                                 {
                                   "name": "Coefficients (channel 1)",
-                                  "value": "212 non-zero, last at 928",
+                                  "value": "211 non-zero, last at 916",
                                   "offset": 5978,
                                   "length": 123,
                                   "bitOffset": 5,
@@ -8821,15 +8801,15 @@
                         {
                           "name": "Frame",
                           "kind": "Frame",
-                          "value": "1 block, 1004 bits",
+                          "value": "1 block, 992 bits",
                           "offset": 6130,
-                          "length": 126,
+                          "length": 124,
                           "children": [
                             {
                               "name": "Block",
                               "value": "1024 samples",
                               "offset": 6130,
-                              "length": 126,
+                              "length": 124,
                               "children": [
                                 {
                                   "name": "Channel 1 Coded",
@@ -8865,11 +8845,11 @@
                                 },
                                 {
                                   "name": "Coefficients (channel 1)",
-                                  "value": "225 non-zero, last at 927",
+                                  "value": "223 non-zero, last at 925",
                                   "offset": 6134,
-                                  "length": 122,
+                                  "length": 120,
                                   "bitOffset": 5,
-                                  "bitLength": 967
+                                  "bitLength": 955
                                 }
                               ]
                             }
@@ -9307,8 +9287,6 @@
         "averageBitrate": 24.501780523255814,
         "isVbr": true,
         "playbackGroup": 1,
-        "encoder": "FFmpeg (wmav1 encoder)",
-        "encoderConfidence": "High",
         "series": [
           {
             "name": "Bitrate",
@@ -9364,7 +9342,7 @@
             ],
             "values": [
               20.671875,
-              22.566796875,
+              22.437597656250002,
               4.758837890625,
               7.127490234375,
               7.23515625,
@@ -9399,7 +9377,7 @@
               5.749365234375,
               5.749365234375,
               21.813134765625,
-              21.6193359375,
+              21.360937500000002,
               6.352294921875,
               6.782958984375,
               5.3402343750000005,
@@ -9421,7 +9399,7 @@
             ],
             "values": [
               11.3,
-              9.7
+              9.6
             ]
           },
           {
@@ -9478,7 +9456,7 @@
             ],
             "values": [
               9927,
-              10013,
+              9798,
               484,
               517,
               538,
@@ -9512,8 +9490,8 @@
               560,
               484,
               484,
-              10034,
-              10024,
+              9905,
+              10002,
               484,
               560,
               484,
@@ -9534,8 +9512,8 @@
               1
             ],
             "values": [
-              10013,
-              10034
+              9991,
+              10002
             ]
           },
           {

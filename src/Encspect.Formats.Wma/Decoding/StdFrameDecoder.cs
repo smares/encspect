@@ -223,7 +223,7 @@ internal sealed class StdFrameDecoder : IFrameDecoder
             Array.Clear(_overlap[c], _frame, _frame);
         }
 
-        if (index >= 2)
+        if (index >= (_p.UsesBitReservoir ? 2 : 1))
         {
             written = Emit(frame.FirstSample, _frame);
         }
@@ -236,7 +236,7 @@ internal sealed class StdFrameDecoder : IFrameDecoder
     // The part of the last block's overlap that no block changes any more, at the end of the stream; frame.Samples is what the parser counts of it.
     private int Flush(in CodedFrame frame)
     {
-        if (!_hasLast)
+        if (!_hasLast || !_p.UsesBitReservoir)
         {
             return 0;
         }
@@ -492,6 +492,17 @@ internal sealed class StdFrameDecoder : IFrameDecoder
                 Dequantize(c, b.Size, length, gain, r, ch, !b.IsExponentsSent);
             }
 
+            if (b.IsExponentsSent)
+            {
+                for (int c = 0; c < _channels; c++)
+                {
+                    if (!b.Channels[c].IsCoded)
+                    {
+                        Convert(c, b.Size, length);
+                    }
+                }
+            }
+
             if ((b.Flags & StdRecordWriter.MidSideFlag) != 0 && _channels == 2)
             {
                 float[] first = _spectrum[0];
@@ -578,6 +589,44 @@ internal sealed class StdFrameDecoder : IFrameDecoder
         }
 
         return largest;
+    }
+
+    // A channel not coded in a block that sends exponents (A channel not coded when exponents are sent): the exponents it holds of a longer block are converted to the block's size, each
+    // band of the size's list taking the largest held value over the held lines it covers. Held exponents of a shorter block are left as they are (not determined).
+    private void Convert(int c, int size, int length)
+    {
+        int e = _heldSize[c];
+        if (e < 0 || e >= size)
+        {
+            return;
+        }
+
+        float[] held = _held[c];
+        int shift = size - e;
+        int last = (_frame >> e) - 1;
+        int[] bands = _p.ExponentBands[size];
+        float[] converted = _exponents[c];
+        int line = 0;
+        for (int band = 0; line < length; band++)
+        {
+            int width = band < bands.Length && bands[band] > 0 ? bands[band] : 4;
+            int to = Math.Min(line + width, length);
+            float largest = 0;
+            for (int i = Math.Min(line << shift, last); i <= Math.Min((to << shift) - 1, last); i++)
+            {
+                largest = Math.Max(largest, held[i]);
+            }
+
+            for (int i = line; i < to; i++)
+            {
+                converted[i] = largest;
+            }
+
+            line = to;
+        }
+
+        Array.Copy(converted, held, length);
+        _heldSize[c] = size;
     }
 
     // The exponents a block reuses (Exponents of another block size): the held values at the index of the line of the other block at the same frequency.
@@ -729,7 +778,9 @@ internal sealed class StdFrameDecoder : IFrameDecoder
             line += high[band];
         }
 
-        double edge = x[Math.Clamp(end - 1, 0, length - 1)];
+        // Lines from E_k on take one value: where the block reuses the exponents of a shorter block, the one Reuse stored at their start (the held value at the final base less 1).
+        bool isFromShorter = isReused && _heldSize[c] > size && end < length;
+        double edge = x[Math.Clamp(isFromShorter ? end : end - 1, 0, length - 1)];
         for (int i = end; i < length; i++)
         {
             spectrum[i] = Limit(_noise[at] * edge * m);

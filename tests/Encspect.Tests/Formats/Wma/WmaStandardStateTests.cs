@@ -17,7 +17,7 @@ public class WmaStandardStateTests
     {
         private int[] _record = [];
 
-        public Rig(int bytesPerSecond, byte options = 5)
+        public Rig(int bytesPerSecond, byte options = 7)
         {
             // Version 2, 44.1 kHz stereo with scale factor codes and variable block sizes.
             var format = new AudioFormat(0x0161, 2, 44_100, bytesPerSecond, 1000, 16);

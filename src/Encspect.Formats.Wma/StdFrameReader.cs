@@ -678,13 +678,24 @@ internal static class StdFrameReader
         nonZero = 0;
         last = 0;
         int escapes = 0;
-        while (position < n)
+
+        // Version 1 codes s positions fewer than the count states (Microsoft's rule, docs/design/wma-standard-decoding.md, "Coefficient values"): a code that falls at the limit or
+        // beyond places nothing, its sign bit is read, and the channel ends; where the reader aligns after each channel, what the encoder wrote past it is read as the next channel.
+        int limit = p.Version == 1 ? n - p.FirstCoefficient : n;
+        while (position < limit)
         {
             int symbol = vlc.Read(bits);
             if (symbol >= 2)
             {
                 position += runs[symbol];
-                Place(store, linesAt, length, p, size, high, flagged, position, levels[symbol], bits.Read(1) != 0);
+                bool isPositive = bits.Read(1) != 0;
+                if (position >= limit && p.Version == 1)
+                {
+                    position = limit;
+                    break;
+                }
+
+                Place(store, linesAt, length, p, size, high, flagged, position, levels[symbol], isPositive);
                 nonZero++;
                 last = position;
                 position++;
@@ -697,7 +708,14 @@ internal static class StdFrameReader
             {
                 int escaped = (int)bits.Read(escapeWidth);
                 position += (int)bits.Read(p.FrameBits);
-                Place(store, linesAt, length, p, size, high, flagged, position, escaped, bits.Read(1) != 0);
+                bool isPositive = bits.Read(1) != 0;
+                if (position >= limit && p.Version == 1)
+                {
+                    position = limit;
+                    break;
+                }
+
+                Place(store, linesAt, length, p, size, high, flagged, position, escaped, isPositive);
                 nonZero++;
                 escapes++;
                 last = position;

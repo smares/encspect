@@ -205,13 +205,13 @@ public class WmaBlockSeriesTests
         Assert.Equal(flaggedBlocks, Category(stream, "Noise-Substituted Blocks").Counts[0]);
     }
 
-    // The version 1 stream codes from line 3: its last position that fits is 1,860, so the edge is (3 + 1,860 + 1) × 22,050 / 2,048 Hz.
+    // The version 1 stream codes from line 3: it codes 1,858 positions (Microsoft's limit, s fewer than the count), so its last line is 1,860 and the edge (1,860 + 1) × 22,050 / 2,048 Hz.
     [Fact]
     public void AVersion1StreamCodesFromLine3()
     {
         StreamInfo stream = Fixtures.AnalyzeMpeg("asf/external-ffmpeg-wmav1-stereo-44k-128k.wma").Streams[0];
 
         Node highest = Assert.Single(Statistic(stream, "Coded Bandwidth").Children, c => c.Name == "Highest");
-        Assert.Equal(20_069, highest.Value!.AsInteger());
+        Assert.Equal(20_037, highest.Value!.AsInteger());
     }
 }
