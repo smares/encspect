@@ -56,6 +56,9 @@ internal sealed class SbrElement
 
     public SbrChannel Channel(int channel) => _channel[channel];
 
+    // How many channels the element's buffers are for: a block whose layout differs from the earlier blocks' (a single channel where a pair was) gets a new element.
+    public int Width => _channels;
+
     public bool IsActive { get; private set; }
 
     public int Kx => _layout?.Kx ?? 32;

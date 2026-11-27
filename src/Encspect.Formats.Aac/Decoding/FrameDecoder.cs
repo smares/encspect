@@ -194,7 +194,7 @@ internal sealed class FrameDecoder : IFrameDecoder
         {
             int kind = record[(ch * BlockRecord.Stride) + BlockRecord.Kind];
             int width = kind == BlockRecord.KindPairFirst ? 2 : 1;
-            SbrElement element = _elements[ch] ??= new SbrElement(width, 2 * _config.SampleRate);
+            SbrElement element = _elements[ch] is { } kept && kept.Width == width ? kept : (_elements[ch] = new SbrElement(width, 2 * _config.SampleRate));
             ReadOnlySpan<int> slot = default;
             if (kind != BlockRecord.KindLfe)
             {

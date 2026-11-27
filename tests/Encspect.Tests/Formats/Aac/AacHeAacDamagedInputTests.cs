@@ -33,4 +33,14 @@ public class AacHeAacDamagedInputTests
         Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
         Assert.Equal(DecodeStatus.Decoded, report.Streams.Single().Verification!.Decoding);
     }
+
+    // A block whose channel elements differ from the earlier blocks' (a single channel element where a channel pair was, in a stream whose frames all hold SBR data) gets an SBR
+    // element of its own width: the buffers of the earlier one hold one channel, and reading the second was an IndexOutOfRangeException.
+    [Fact]
+    public void ABlockWhoseElementLayoutChangesIsDecodedWithAnElementOfItsOwnWidth()
+    {
+        Report report = Decode("aac-sbr-element-width-changes.bin");
+
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+    }
 }
