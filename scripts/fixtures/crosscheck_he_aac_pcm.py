@@ -3,15 +3,15 @@
 
     crosscheck_he_aac_pcm.py [--pcmdump CMD] [--ffmpeg PATH] [--max-ratio R] [FILE ...]
 
-With no FILE the script takes every ADTS and M4A file of tests/fixtures/aac and the hand-built mp4/ps-34-bands.m4a (parametric stereo in 34 bands, which no encoder's file uses; it agrees with FFmpeg to under 5e-5) whose first audio stream FFprobe names HE-AAC (version 1 or 2; an implicit stream in ADTS, which FFprobe
-names LC, is not compared). FFmpeg (a black box, as in the other cross-checks; its source is not read) decodes to 32-bit floats with the edit list ignored.
+With no FILE the script takes every ADTS and M4A file of tests/fixtures/aac and the hand-built mp4/ps-34-bands.m4a (parametric stereo in 34 bands, which no encoder's file uses; it agrees with FFmpeg to under 5e-5) whose first decoded stream the analyzer reports as HE-AAC (version 1 or 2, SBR or parametric stereo, signaled or implicit: PcmDump's "streamCodec"). A stream it reports as AAC LC, SBR data in some blocks included, is
+crosscheck_aac_pcm.py's, which compares its core and lists what FFmpeg decodes otherwise. FFmpeg (a black box, as in the other cross-checks; its source is not read) decodes to 32-bit floats with the edit list ignored.
 
 The two decoders cut their output differently (priming, and parametric stereo's delay of 6 QMF slots), so the script finds the shift between them by the cross-correlation of the
 first channel over the whole file (the five highest peaks, the one with the smallest difference wins: a tonal file has many), and compares each channel from there. The bound is the
 RMS of the difference relative to FFmpeg's RMS (MAX_RATIO, 6 %): both decoders reconstruct the high band from envelope data in single precision and differ by about 1 % for SBR and
 up to 4 % where parametric stereo's decorrelators differ in the last details.
 
-A mono core with SBR and no parametric stereo is compared with the first of FFmpeg's two (equal) channels, and a stream of more than two channels in FFmpeg's WAV order, mapped from the analyzer's layout as crosscheck_aac_pcm.py maps it. NOT_COMPARED lists the files whose channels the two decoders do not give alike, each with the reason. Exit status 0 where every bound holds, 1 where one fails, 2 for a usage
+A mono core with SBR and no parametric stereo is compared with the first of FFmpeg's two (equal) channels, and a stream of more than two channels in FFmpeg's WAV order, mapped from the analyzer's layout as crosscheck_aac_pcm.py maps it. LAYOUTS names the layout of the one file whose PCM format carries none. Exit status 0 where every bound holds, 1 where one fails, 2 for a usage
 error. Needs numpy.
 """
 
@@ -29,14 +29,22 @@ HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 FIXTURES = ROOT / "tests" / "fixtures"
 DEFAULT_PCMDUMP = "dotnet " + str(ROOT / "tests" / "Encspect.PcmDump" / "bin" / "Release" / "net10.0" / "Encspect.PcmDump.dll")
-EXTENSIONS = {".aac", ".m4a"}
+EXTENSIONS = {".aac", ".m4a", ".mp4"}
 MAX_RATIO = 0.06
+# Samples left out at each end of the overlap (the two decoders' starts and ends differ), fewer in a file too short for that to leave an eighth of it.
+TRIM = 4096
 
-# Files that are not compared sample by sample, each with the reason (the channels of the two decoders are not the same ones).
-NOT_COMPARED = {
-    "ps-in-multichannel-sce.aac": "the parametric stereo extension in a core of more than one channel, which the analyzer applies to no stream (aac.ps-without-mono-core); FFmpeg's channels differ (not investigated)",
-    "ps-in-pce-multichannel.aac": "as the file above",
-    "sbr-in-frames-failing-crc.aac": "the analyzer takes no evidence from frames that fail their CRC and stays AAC LC; FFmpeg checks no CRC and decodes HE-AAC (docs/formats/aac.md, Reference for sample counts)",
+# Files that FFmpeg reads otherwise than the analyzer, each with the reason: the comparison runs and must fail (an entry that no longer differs fails the run, the stale-entry rule of
+# docs/development.md).
+DIFFERENCES = {
+    "sbr-after-first-frame-failing-crc.aac": "the first frame fails its CRC and holds no SBR data: the analyzer takes no evidence from it and decodes the stream as HE-AAC at twice the core rate, "
+                                              "where FFmpeg checks no CRC, finds no SBR data in its first block and decodes the core alone, at 22,050 Hz (docs/formats/aac.md, Reference for sample counts)",
+}
+
+# Files whose PCM format names no channel layout although the report does (a stream configured by a program config element in its blocks, not by an audio specific config or a
+# channel configuration): the layout the report states, so that the channels are mapped to FFmpeg's order like any other.
+LAYOUTS = {
+    "ps-in-pce-multichannel.aac": ["front center", "front left", "front right"],
 }
 
 
@@ -114,12 +122,6 @@ def analyzer_pcm(pcmdump, path, folder):
     return samples, fmt
 
 
-def is_he(path):
-    """Whether FFprobe names the stream HE-AAC (v1 or v2) from its configuration or its first frames."""
-    result = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "a:0", "-show_entries", "stream=profile", "-of", "csv=p=0", str(path)], capture_output=True, text=True)
-    return result.returncode == 0 and result.stdout.strip().startswith("HE-AAC")
-
-
 def best_shift(a, b):
     """The shift s with b[t + s] ~ a[t], from the five highest peaks of the cross-correlation of the first channels."""
     n = 1 << int(np.ceil(np.log2(len(a) + len(b))))
@@ -137,9 +139,12 @@ def best_shift(a, b):
 
 
 def ratios(a, b, shift):
-    start = max(0, -shift) + 4096
-    stop = min(len(a), len(b) - shift) - 4096
-    if stop - start < 8192:
+    start = max(0, -shift)
+    stop = min(len(a), len(b) - shift)
+    trim = min(TRIM, (stop - start) // 8)
+    start += trim
+    stop -= trim
+    if stop - start < 2048:
         return None
     out = []
     for ch in range(a.shape[1]):
@@ -158,17 +163,16 @@ def main():
     files = [pathlib.Path(f) for f in args.files] or sorted(p for p in (FIXTURES / "aac").rglob("*") if p.suffix in EXTENSIONS) + [FIXTURES / "mp4" / "ps-34-bands.m4a"]
     failures = 0
     compared = 0
+    listed = set()
     for path in files:
         with tempfile.TemporaryDirectory() as folder:
             dumped = analyzer_pcm(args.pcmdump, path, pathlib.Path(folder))
         if dumped is None:
             continue
         samples, fmt = dumped
-        if not is_he(path):
+        if not fmt.get("streamCodec", "").startswith("HE-AAC"):
             continue
-        if path.name in NOT_COMPARED:
-            continue
-        samples = to_ffmpeg_order(samples, fmt.get("channelLayout"))
+        samples = to_ffmpeg_order(samples, fmt.get("channelLayout") or LAYOUTS.get(path.name))
         # FFmpeg takes a mono core with SBR for HE-AAC v2 and outputs two channels; without parametric stereo they are equal and the analyzer's one is compared with the first.
         reference = decode_ffmpeg(args.ffmpeg, path, ffmpeg_channels(path, samples.shape[1]))
         if reference is not None and samples.shape[1] == 1:
@@ -184,13 +188,27 @@ def main():
             failures += 0 if passes else 1
             continue
         found = best_shift(samples, reference)
+        if found is None and path.name in DIFFERENCES:
+            listed.add(path.name)
+            compared += 1
+            print(f"{path.name}: differs as listed: {DIFFERENCES[path.name]}")
+            continue
         if found is None:
-            print(f"{path.name}: not compared, fewer than 8,192 samples remain after the 4,096 at each end that are left out")
+            print(f"{path.name}: not compared, fewer than 2,048 samples remain after the ends are left out")
             continue
         passes = found is not None and max(found[1]) <= args.max_ratio
         compared += 1
+        if path.name in DIFFERENCES:
+            listed.add(path.name)
+            print(f"{path.name}: {'listed in DIFFERENCES, but the decoders no longer differ on it  FAILS' if passes else 'differs as listed: ' + DIFFERENCES[path.name]}")
+            failures += 1 if passes else 0
+            continue
         print(f"{path.name}: shift {found[0] if found else None}, RMS of the difference to FFmpeg's {[round(r, 4) for r in found[1]] if found else None}{'' if passes else '  FAILS'}")
         failures += 0 if passes else 1
+    if not args.files:
+        for name in sorted(set(DIFFERENCES) - listed):
+            print(f"{name}: listed in DIFFERENCES, but the analyzer decodes no such file as HE-AAC  FAILS")
+            failures += 1
     print(f"{compared} files compared, {failures} failures")
     return 1 if failures else 0
 
