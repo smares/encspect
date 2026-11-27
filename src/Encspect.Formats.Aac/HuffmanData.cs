@@ -552,6 +552,7 @@ internal static class BandTables
 
     public static readonly byte[] NumShort120 = [12, 12, 12, 14, 14, 14, 15, 15, 15, 15, 15, 15, 15];
 
-    // AAC Main predicts the bands below this one (ISO/IEC 14496-3 4.6.6, PRED_SFB_MAX).
+    // AAC Main predicts the bands below this one: PRED_SFB_MAX per sampling frequency index, as ISO/IEC 13818-7:2004 Table 62 gives it for
+    // 96 to 8 kHz; 13818-7 has no 7,350 Hz entry, which repeats 8 kHz's.
     public static readonly byte[] PredictionMax = [33, 33, 38, 40, 40, 40, 41, 41, 37, 37, 37, 34, 34];
 }
