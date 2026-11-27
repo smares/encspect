@@ -2083,10 +2083,29 @@ The lead approved the recommendation of each decision on 2026-11-26: S27(a) to S
 - **S34. The name.** (a) Recommended: "replicated bands" (`replicated-bands`), the plan's and S10's term, which names what is measured, not a coder. (b) "Spectral band replication": SBR's own name, wrong for spectral extension and folding. (c) "Bandwidth extension": the family's name in the literature, but it reads as a claim about how the file was made.
 - **S35. E-AC-3 fixtures.** (a) Recommended: a hand-built 2 s spectral extension file (found by construction) and Dolby's downloaded file measured in CI (the weak case), since no free encoder writes spectral extension. (b) The hand-built file only. (c) Leave E-AC-3 to a later fixture from a real encoder: the article then states spectral extension from the specification alone.
 
+### Amendments after the build (2026-11-27)
+
+The lead decided S30 after the first build read above 60 units, with a time-boxed trial of (c) and of a lower share threshold. Both outcomes, measured on 344 files (every file of `tests/fixtures/measurement`, the sample kits' HE-AAC files, the Opus files, the E-AC-3 files and the files of the first probe), through the analyzer's own decoders:
+
+- **S30, amended: (a) stays, at about 100 units a sample.**
+  - Measured by `MeasurementWorkTests` (stereo noise, units a sample of the stream): 222 at 8 kHz, 139 at 22.05 kHz, 97 at 44.1 kHz, 59 at 88.2 kHz, 94.5 at 176.4 kHz, 18 at 352.8 kHz. The weights are set from these (rounded up), per transform size.
+  - What brought it from 258 to 97 units at 44.1 kHz: the products laid out by shift with four prefix chains running side by side, and a branchless test.
+  - **(c) was tried and does not find the same things.** Candidate shifts per frame from the autocorrelation of the fine structure over all rows (the peaks only; the counts of frames with signal kept for every shift, so a share keeps its denominator):
+    - 8 candidates: 10 files found of the 42 that (a) finds; 8 candidates and their neighbors at one row: 16; 16 candidates: 20.
+    - It loses the qaac, Winamp and iTunes HE-AAC files whose patches are the clearest (qaac's 9,388 to 20,284 Hz becomes "not at top"), and finds stretches (a) does not at other starts (the Nero HE-AAC files at 11,111 and 14,341 Hz against 8,742 Hz).
+    - A frame's autocorrelation is dominated by its strongest peaks (the harmonics under 1 kHz and the envelope), not by the replicated patch, which holds a quarter or less of the rows; the shift the patch needs is often not among the first 16 peaks.
+    - So the saving (about a sixth of the work) is not worth a different answer on the files that matter; (c) is not built.
+- **S28, amended: the share stays at 50 %; 45 % was tried and not taken.**
+  - At 45 %, 45 files are found against 42: `external-neroaacenc-1002-hev2-cbr32.m4a` and `-1070-hev2` (one band at 14,987 Hz, at 2,067 Hz offset where the same encoder's 1540 file reads 8,958 Hz, 45.9 %) and `external-nero-rom-aac-mono-cbr32.m4a` (47.1 %), and the starts of four Nero files move down by about 1.5 kHz.
+  - Files without replication come too close to it: the strongest non-periodic band outside the passing ones reads 46.9 % (`synthetic-replicated-glide`), 46.7 % (`external-libopus-mono-silk-60ms-fec.opus`), 45.5 % (`synthetic-upsampled-44100-to-96000`, which at 45 % gets stretches and the reason "not at top"), 43.8 % (`external-opusenc-speech.opus`), 40.0 % (`lossy-lame-b64`, `-b96`, `-v2`), then 36.4 % and lower; the LC and MP3 files of the sample kit read 26.2 and 21.4 %.
+  - **At 50 %** the weakest passing band is 50.0 % (`synthetic-replicated-blend-50`, built at half, and the Nero HE-AAC files), the strongest failing one 46.9 %: 3.1 points, a frame or two of 10 to 30. No file without replication is found at either threshold; what 45 % adds are replicated files at a wrong offset and negatives with stretches.
+  - Dolby's `csi_miami_stereo_128_spx.eac3` reads 48.3 % at 10,125 Hz, so it stays "not found" at 50 %, a real case of spectral extension that the threshold does not reach.
+- **Known limit, found by the 344 files:** a stationary signal whose frames all repeat (the synthetic `synthetic-lines-*` fixtures: fixed random lines, the same in every frame) matches some shift in 100 % of its frames by chance, so it reads as found at several offsets, at either threshold. Music does not repeat its fine structure from frame to frame, but a sustained synthetic chord can read this way; the documentation says so under what is not covered.
+
 ### Unverified claims and estimates
 
 - The prototype ran on synthetic sources only (the sample kit's "music" is synthetic too); how music behaves (vibrato, reverberation, dense harmonics) and so the margins of S28 and S29 are **unverified** until fixtures with music are measured.
-- The cost and memory are estimates from the operation counts; the candidate method of S30 (c) is not prototyped.
+- The memory is an estimate from the counters' sizes; the work is measured (see the amendments), and the candidate method of S30 (c) was tried and rejected.
 - Why neroAacEnc 1.5.4.0's first 1.4 kHz of SBR band do not pass, how libopus decides folding on the Opus fixtures, and the patch layouts behind the measured offsets are not traced in the streams.
 - The prototype decoded with FFmpeg; the analyzer's HE-AAC decoder agrees with it to 0.0 to 1.3 % RMS for SBR ([aac.md](../formats/aac.md#decoding) on the HE-AAC branch), which should not move a correlation test, but the build measures through the analyzer's own decoders.
 
