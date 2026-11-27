@@ -1040,7 +1040,7 @@ public class MeasurementDeterminismTests
     private const string MidSideRowsHash = "84882138a074dfcaedf5056831c9f6d39eae5e8f887877a60f3a25ca7339645a";
     private const string CrossRowsHash = "c99f9dc1f1fb9df797acbfcd1c1614735a2f5294cfab80a1a2848b7448c65940";
     private const string ReplicatedFineHash = "08eeca1b40733f28055c3fd918b338ff2d1cd9e3574f04d205306a814dd868c2";
-    private const string ReplicatedCountersHash = "649c246a4d12045d6479a7c8fb8c9e7478b3003f6baeb6cbcc82bfb25d8d97a1|2167d8b9d9e128d33db8059bf17ef19d2a7167c6ac23c6ca62bc94bd16df1799";
+    private const string ReplicatedCountersHash = "e2d2ae342a1cf907a2ba4db60f5cef77826de546c1ddac52d44982f6dd1d487a|312e0343a6d9b1571338cff938218ae8aa219f4a124437cf214bd11a46e26e14";
     private const string CoherenceHash = "33f110c129ecacb177c818b58ce7fd9332de770145a9649a73d678d32b883d2c/f2e131e46ea55a82cad02f675f69f13e0e4f5e787a2de17cb937b05b47c6298e|a64728f9bdbb33a9b809460e8b3ad664615e5042f48453e0fe00b96bec42d94a";
     private const string MidSideCountersHash = "a8c32911289b3666eaa26a92b7c4af09a801486b034ab251eaeff902b8e2e39a|36eda7f42111bbb6cef5ed2c64ce6dd58a584515d14a64da4f4085a4bc72c971";
     private const string CountersHash = "4f5426dc2722f4934c96217ecbb4d6353b3774a7101d98267310015205a46751|6bbb4daa9b23cc7b5e00c5b611f94fe3e9bb463c35d133bade76c969902e0c26";

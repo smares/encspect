@@ -231,7 +231,8 @@ public class AudioPanelTests
 
         // The Spectrum of one channel has one line; the figures are text, not a chart.
         Choose(window, "Spectrum");
-        Assert.False(window.Model.Graphs.HasForms);
+        Assert.True(window.Model.Graphs.HasForms);
+        Assert.Equal(["Combined", "Replicated Bands"], window.Model.Graphs.Forms.Select(f => f.Title));
         Choose(window, "Figures");
         Assert.True(window.FindControl<ScrollViewer>("FiguresScroll")!.IsEffectivelyVisible);
         Assert.False(window.Graph.IsEffectivelyVisible);
@@ -505,7 +506,7 @@ public class AudioPanelTests
 
         Choose(window, "Spectrum");
         Assert.True(window.Model.Graphs.HasForms);
-        Assert.Equal(["Combined", "Per Channel", "Mid/Side", "Coherence"], window.Model.Graphs.Forms.Select(f => f.Title));
+        Assert.Equal(["Combined", "Per Channel", "Mid/Side", "Coherence", "Replicated Bands"], window.Model.Graphs.Forms.Select(f => f.Title));
         Choose(window, "Spectrum", GraphForm.PerChannel);
         var spectrum = (SpectrumGraph)window.Graph.Graph!;
         Assert.Equal(6, spectrum.Lines);
@@ -536,7 +537,7 @@ public class AudioPanelTests
     {
         DetailWindow window = Open(Fixtures.Flac("external-16-stereo-l5.flac"));
         Choose(window, "Spectrum");
-        Assert.Equal(["Combined", "Per Channel", "Mid/Side", "Coherence"], window.Model.Graphs.Forms.Select(f => f.Title));
+        Assert.Equal(["Combined", "Per Channel", "Mid/Side", "Coherence", "Replicated Bands"], window.Model.Graphs.Forms.Select(f => f.Title));
         Choose(window, "Spectrum", GraphForm.MidSide);
         var spectrum = (SpectrumGraph)window.Graph.Graph!;
 
@@ -572,6 +573,27 @@ public class AudioPanelTests
         Assert.Contains("inter-channel coherence ", window.Graph.HoverText, StringComparison.Ordinal);
         Assert.Contains(" %", window.Graph.HoverText, StringComparison.Ordinal);
         Assert.Contains("Legend: inter-channel coherence, share of frames", AutomationProperties.GetHelpText(window.Graph), StringComparison.Ordinal);
+        window.Close();
+    }
+
+    // Step 9: the Replicated Bands form draws the share of frames in which each band matches the band an offset lower, in percent, with the offset in the hover text and the figure's text.
+    [AvaloniaFact]
+    public void The_replicated_bands_form_has_the_shares_of_the_bands_as_percent_and_names_the_offset()
+    {
+        DetailWindow window = Open(Fixtures.Measurement("synthetic-replicated-copy-5000.flac"));
+        Choose(window, "Spectrum");
+        Choose(window, "Spectrum", GraphForm.ReplicatedBands);
+        var spectrum = (SpectrumGraph)window.Graph.Graph!;
+
+        Assert.Equal(1, spectrum.Lines);
+        Assert.Equal("%", spectrum.Unit);
+        Assert.Equal((0, 100), (spectrum.AxisBottom, spectrum.AxisTop));
+        Assert.StartsWith("Replicated bands: from ", spectrum.ReplicatedText, StringComparison.Ordinal);
+        Assert.InRange(spectrum.ReplicatedStart!.Value, 7000, 8500);
+        window.MouseMove(Window(window, window.Graph.PointOfCell(250)));
+        Assert.Contains(" lower", window.Graph.HoverText, StringComparison.Ordinal);
+        Assert.Contains(" %", window.Graph.HoverText, StringComparison.Ordinal);
+        Assert.False(string.IsNullOrEmpty(spectrum.Description));
         window.Close();
     }
 

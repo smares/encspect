@@ -591,6 +591,21 @@ public class MeasurementFixtureTests
 
     // Where the cutoff the range comes from is not reliable (an unspecified signal) the frequencies are compared within a band of 1 kHz; the impulse files' rows are flat and their fine
     // structure is the rounding noise of the two FFTs, which the model and the analyzer do not share, so only their reasons are compared.
+    // The E-AC-3 case is found by construction too: one spectral extension layout throughout (bins 73 up copied from bin 37), so a stretch from about 6.8 kHz with offsets of 3,375 and 5,625 Hz.
+    [Fact]
+    public void TheSpectralExtensionFileReadsTheOffsetsItsLayoutGives()
+    {
+        using FileStream stream = File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, "ac3", "eac3-signal-spx-long.eac3"));
+        Report report = Analyzer.CreateDefault().Analyze("eac3-signal-spx-long.eac3", stream, new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions() } });
+        ReplicatedBandsFigures figures = report.Streams.Single().Measurements!.Spectrum!.ReplicatedBands!;
+
+        Assert.True(figures.IsFound);
+        Assert.InRange(figures.FromFrequency, 6000, 7700);
+        int[] offsets = [.. figures.Stretches[^1].Offsets.Select(o => o.Offset).Distinct()];
+        Assert.Contains(3375, offsets);
+        Assert.Contains(5625, offsets);
+    }
+
     private static void AssertReplicated(JsonElement model, StreamMeasurements m, string name, bool reliable)
     {
         ReplicatedBandsFigures? actual = m.Spectrum!.ReplicatedBands;
@@ -630,12 +645,15 @@ public class MeasurementFixtureTests
         {
             Assert.Equal(stretches[i].GetProperty("from_frequency").GetInt32(), actual.Stretches[i].FromFrequency);
             Assert.Equal(stretches[i].GetProperty("to_frequency").GetInt32(), actual.Stretches[i].ToFrequency);
+            Assert.InRange(actual.Stretches[i].LowestShareTenths, stretches[i].GetProperty("lowest_share").GetInt32() - 1, stretches[i].GetProperty("lowest_share").GetInt32() + 1);
+            Assert.InRange(actual.Stretches[i].HighestShareTenths, stretches[i].GetProperty("highest_share").GetInt32() - 1, stretches[i].GetProperty("highest_share").GetInt32() + 1);
             JsonElement[] offsets = [.. stretches[i].GetProperty("offsets").EnumerateArray()];
             Assert.Equal(offsets.Length, actual.Stretches[i].Offsets.Count);
             for (int k = 0; k < offsets.Length; k++)
             {
                 Assert.Equal(offsets[k].GetProperty("offset").GetInt32(), actual.Stretches[i].Offsets[k].Offset);
                 Assert.Equal(offsets[k].GetProperty("from_frequency").GetInt32(), actual.Stretches[i].Offsets[k].FromFrequency);
+                Assert.Equal(offsets[k].GetProperty("to_frequency").GetInt32(), actual.Stretches[i].Offsets[k].ToFrequency);
             }
         }
 
@@ -648,14 +666,14 @@ public class MeasurementFixtureTests
             Assert.Equal(bands[i].GetProperty("start_row").GetInt32(), band.StartRow);
             JsonElement share = bands[i].GetProperty("share");
             int modelShare = share.ValueKind == JsonValueKind.Null ? MeasurementLimits.NoPower : share.GetInt32();
-            if (modelShare != band.ShareTenths || bands[i].GetProperty("frames_with_signal").GetInt32() != band.FramesWithSignal
+            if (Math.Abs(modelShare - band.ShareTenths) > 1 || bands[i].GetProperty("frames_with_signal").GetInt32() != band.FramesWithSignal
                 || bands[i].GetProperty("passes").GetBoolean() != band.Passes || bands[i].GetProperty("offset").GetInt32() != band.Offset)
             {
                 differing++;
             }
         }
 
-        Assert.True(differing <= bands.Length / 20, $"{name}: {differing} of {bands.Length} replicated bands differ from the model");
+        Assert.True(differing == 0, $"{name}: {differing} of {bands.Length} replicated bands differ from the model");
     }
 
     private static void AssertCoherence(JsonElement model, CoherenceFigures actual, JsonElement spectrum, string name)

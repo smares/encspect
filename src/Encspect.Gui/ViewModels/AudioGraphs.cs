@@ -624,7 +624,7 @@ public static class AudioPanels
 
             if (m.Spectrum.ReplicatedBands is { IsSearched: true })
             {
-                forms.Add(new GraphFormChoice(GraphForm.ReplicatedBands, "Replicated Bands", "The share of the frames in which each band of 1 kHz matches the band an offset lower, in percent, at the band's frequency, with the offset in the hover text", new SpectrumGraph(stream, m, GraphForm.ReplicatedBands)));
+                forms.Add(new GraphFormChoice(GraphForm.ReplicatedBands, "Replicated Bands", "The share of the frames in which each band of 1 kHz (at least 21 rows) matches the band an offset lower, in percent, at the band's frequency, with the offset in the hover text", new SpectrumGraph(stream, m, GraphForm.ReplicatedBands)));
             }
 
             entries.Add(new GraphChoice(SpectrumTitle, GraphHeadings.Audio, combined.Description, forms));

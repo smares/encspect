@@ -119,6 +119,34 @@ public class MeasurementReplicatedBandsTests
         Assert.False(figures.IsTopBandPeriodic);
     }
 
+    // The review's B1: frames that repeat are one trial, not many. The same block 60 times, with its copy in it, counts for no band after the first frame.
+    [Fact]
+    public void FramesThatRepeatCountForNothingAfterTheFirst()
+    {
+        double[] block = Signal(1, 4, 1486, [(398, 650, 1486)]);
+        double[] samples = [.. Enumerable.Range(0, 60).SelectMany(_ => block)];
+        ReplicatedBandsFigures figures = Measure(samples);
+
+        Assert.False(figures.IsFound, Describe(figures));
+        Assert.Equal(ReplicatedBandsReason.NoSignal, figures.Reason);
+        Assert.All(figures.Bands, b => Assert.InRange(b.FramesWithSignal, 0, 1));
+    }
+
+    // The review's B2: a band is at least 21 rows, so that white noise at a high rate does not pass by chance (5 rows at 192 kHz read found in 3 of 3 seeds before).
+    [Theory]
+    [InlineData(96000, 21)]
+    [InlineData(192000, 21)]
+    public void WhiteNoiseAtAHighRateHasNoReplicatedBandsAndBandsOf21Rows(int rate, int rows)
+    {
+        for (uint seed = 1; seed <= 3; seed++)
+        {
+            ReplicatedBandsFigures figures = Measure([.. MeasurementSignals.Noise(rate * 3, seed).Select(v => v * 0.2)], 4096, rate);
+
+            Assert.False(figures.IsFound, $"seed {seed}: {Describe(figures)}");
+            Assert.Equal(rows, figures.BandRows);
+        }
+    }
+
     [Fact]
     public void AnOffsetThatChangesInEveryFrameMatchesTooLittle()
     {
@@ -128,7 +156,7 @@ public class MeasurementReplicatedBandsTests
     }
 
     [Fact]
-    public void AConstantHarmonicSoundIsPeriodicAndNotFound()
+    public void AConstantHarmonicSoundIsNotFoundBecauseItsFramesRepeat()
     {
         // Lines at every twentieth bin (215 Hz, exactly 5 rows apart) with random phases that repeat in every block: the fine structure repeats every 5 rows.
         double[] block = new double[Block];
@@ -143,9 +171,9 @@ public class MeasurementReplicatedBandsTests
 
         ReplicatedBandsFigures figures = Measure([.. Enumerable.Range(0, Block * 60).Select(i => block[i & (Block - 1)])]);
 
+        // Every block repeats the one before, so the bands count in the first frame only (the amendment to S28); a pitch that moves is the periodic case (the `synthetic-replicated-glide` fixture).
         Assert.False(figures.IsFound);
-        Assert.True(figures.IsTopBandPeriodic);
-        Assert.Equal(ReplicatedBandsReason.NotMatching, figures.Reason);
+        Assert.Equal(ReplicatedBandsReason.NoSignal, figures.Reason);
     }
 
     [Fact]
@@ -193,8 +221,8 @@ public class MeasurementReplicatedBandsTests
         ReplicatedBandsFigures mixed = Measure(CopiedSignal(60, mix: 0.6));
 
         Assert.True(copy.IsFound);
-        double Highest(ReplicatedBandsFigures f) => f.Bands.Where(b => b.StartRow > 200).Max(b => b.ShareTenths);
-        Assert.True(Highest(mixed) < Highest(copy), $"{Highest(mixed)} against {Highest(copy)}: {Describe(mixed)} / {Describe(copy)}");
+        double Mean(ReplicatedBandsFigures f) => f.Bands.Where(b => b.StartRow is > 180 and < 340 && b.ShareTenths != MeasurementLimits.NoPower).Average(b => b.ShareTenths);
+        Assert.True(Mean(mixed) < Mean(copy), $"{Mean(mixed)} against {Mean(copy)}: {Describe(mixed)} / {Describe(copy)}");
     }
 
     [Fact]

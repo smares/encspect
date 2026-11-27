@@ -14,9 +14,9 @@ internal sealed class StreamMeasurer
     private static readonly int[] SpectrumWeights = [29, 24, 23, 27, 27, 30];
 
     // The work per sample of the stream (not per channel) for the replicated bands, by FFT size 1,024 to 32,768 points: a frame costs about the same at every size (more
-    // bands where a row is wide, fewer at 8 kHz) and every second frame is used, so a sample costs a frame's work over the size. Measured 222, 139, 97, 59, 94.5 and 18 units
-    // at 8,000 to 352,800 Hz (MeasurementWorkTests; docs/design/spectral-analysis.md, Step 9, amendment to S30), and charged a little above.
-    private static readonly int[] ReplicationWeights = [230, 145, 100, 65, 100, 20];
+    // bands where a row is wide, fewer at 8 kHz) and every second frame is used, so a sample costs a frame's work over the size. Measured, at the worst rate of each size (MeasurementWorkTests; bands of at least 21 rows, so the bands, and the work, no longer grow above 48 kHz): 175 (8 kHz), 129 (24 kHz), 92 (48 kHz), 51 (96 kHz),
+    // 25 (192 kHz) and 13 units (352.8 kHz); docs/design/spectral-analysis.md, Step 9, amendments after the review. Charged a little above.
+    private static readonly int[] ReplicationWeights = [190, 145, 100, 65, 30, 15];
 
     // The work per sample of a channel of the pair for the stored bins, the mid and side rows and their counters (docs/design/spectral-analysis.md,
     // Step 7, "Cost, memory and determinism": about 6 units of 0.6 ns, 3.6 ns, a sample of each channel of the pair).

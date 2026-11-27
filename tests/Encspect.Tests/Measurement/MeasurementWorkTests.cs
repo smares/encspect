@@ -84,9 +84,13 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
     [Theory]
     [InlineData(8000)]
     [InlineData(22050)]
+    [InlineData(24000)]
     [InlineData(44100)]
+    [InlineData(48000)]
     [InlineData(88200)]
+    [InlineData(96000)]
     [InlineData(176400)]
+    [InlineData(192000)]
     [InlineData(352800)]
     public void TheReplicatedBandsAddAtMostTwiceTheirCharge(int rate)
     {
