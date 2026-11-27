@@ -60,11 +60,11 @@ public static class MeasurementText
 
     public const string InterChannelCoherenceTopic = Topics.InterChannelCoherence;
 
-    public const string ReplicatedBandsDescription = "The stretch of frequencies, from its lower edge up to the top of the content, whose fine structure repeats that of the band a fixed offset lower, frame after frame: the rows' logarithms minus their mean over 150 Hz on each side, correlated at 0.5 or more in at least half of the frames with signal, tested on every second frame in bands of 1 kHz. Spectral band replication, spectral extension and folding copy spectrum upward like this; the figure cannot tell them apart, nor from other copies, and a sustained harmonic sound matches itself too, which a check on offsets under 1 kHz leaves out. It is computed from the decoded audio, not written by the file's creator.";
+    public const string ReplicatedBandsDescription = "The stretch of frequencies, from its lower edge up to the top of the content, whose fine structure repeats that of the band a fixed offset lower, frame after frame: the rows' logarithms minus their mean over 150 Hz on each side, correlated at 0.5 or more in at least half of the frames with signal, tested on every second frame in bands of 1 kHz (at least 21 rows), counting a band's frame only where the band differs from the previous frame tested, so that a steady signal is not many trials. Spectral band replication, spectral extension and folding copy spectrum upward like this; the figure cannot tell them apart, nor from other copies, and a sustained harmonic sound matches itself too, which a check on offsets under 1 kHz leaves out. It is computed from the decoded audio, not written by the file's creator.";
 
     public const string ReplicatedBandsTopic = Topics.ReplicatedBands;
 
-    public const string ReplicatedBandsSeriesDescription = "For each band of 1 kHz from 1 kHz up, starting every quarter band, the share of the frames with signal in which its fine structure correlates at 0.5 or more with the band at the offset where it does so in the most frames; the offset is in the hover text.";
+    public const string ReplicatedBandsSeriesDescription = "For each band of 1 kHz (at least 21 rows) from 1 kHz up, starting every quarter band, the share of the frames with signal in which its fine structure correlates at 0.5 or more with the band at the offset where it does so in the most frames; the offset is in the hover text.";
 
     public const string SpectralSlopeDescription = "Where the average spectrum is still falling at the top of the search (99 % of Nyquist): the run of 1 kHz bands, from the top band down, that each stand 3 dB or more above the band over them, started where the top band is at least 5 dB under the band below it, with how far the spectrum falls over it and how fast. It is found whether or not a cutoff or a bandwidth is found, since a fall can end in a floor less than 2 kHz wide (at least the top band, short of the band under it); the text line shows it only where no cutoff is found. It is measured at the top of the search, not a line fitted over the whole spectrum.";
 
@@ -612,15 +612,7 @@ public static class MeasurementText
         if (figures.IsFound)
         {
             ReplicatedStretch stretch = figures.Stretches[^1];
-            var offsets = new List<string>();
-            foreach (ReplicatedOffset offset in stretch.Offsets)
-            {
-                string text = offset.Offset.ToString("N0", CultureInfo.InvariantCulture);
-                if (!offsets.Contains(text))
-                {
-                    offsets.Add(text);
-                }
-            }
+            List<string> offsets = [.. stretch.Offsets.Select(o => o.Offset).Distinct().Order().Select(o => o.ToString("N0", CultureInfo.InvariantCulture))];
 
             string list = offsets.Count == 1 ? offsets[0] : string.Join(", ", offsets.Take(offsets.Count - 1)) + " and " + offsets[^1];
             string shares = stretch.LowestShareTenths == stretch.HighestShareTenths ? Percent(stretch.LowestShareTenths) : $"{Tenths(stretch.LowestShareTenths)} to {Percent(stretch.HighestShareTenths)}";

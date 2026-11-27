@@ -146,6 +146,10 @@ public static class MeasurementLimits
 
     public const int MinimumReplicatedBandsFrames = 10;
 
+    // A band of the replicated bands is the rows of 1 kHz, but never fewer than this (the 48 kHz band): on fewer rows a correlation of 1/2 happens by chance among the many offsets
+    // tested, which the share of frames does not tell from a copy (docs/design/spectral-analysis.md, Step 9, the amendment to S27).
+    public const int MinimumReplicatedBandRows = 21;
+
     public const double ReplicatedBandsSignalFloor = 1e-10;
 
     // The sentinel of a spectrum row that holds no power at all.

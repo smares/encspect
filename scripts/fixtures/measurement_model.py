@@ -308,12 +308,14 @@ def find_coherence(sum_left, sum_right, sum_re, sum_im, counters, frames, cutoff
 
 REPLICATED_MINIMUM_FRAMES = 10
 REPLICATED_SIGNAL_FLOOR = 1e-10
+REPLICATED_MINIMUM_BAND_ROWS = 21
 
 
 class ReplicatedCounters:
     """The counters of the replicated bands (Step 9): per grid band and offset in rows, the frames with signal in both bands and those that match."""
 
     def __init__(self, w, rate):
+        w = max(w, REPLICATED_MINIMUM_BAND_ROWS)
         self.w = w
         self.step = max(1, w // 4)
         self.first_shift = max(1, (150 * 1024 + rate // 2) // rate)
@@ -324,6 +326,8 @@ class ReplicatedCounters:
         self.frames = [[0] * ROWS for _ in range(self.count)]
         self.matches = [[0] * ROWS for _ in range(self.count)]
         self.used = 0
+        self.previous = None
+        self.previous_ok = [False] * self.count
 
     def start(self, k):
         return self.w + k * self.step
@@ -338,13 +342,22 @@ def count_replicated(rows, counters):
     for r in range(ROWS):
         low, high = max(0, r - counters.half), min(ROWS - 1, r + counters.half)
         x.append(logs[r] - sum(logs[low:high + 1]) / (high - low + 1))
+    ok_now = []
     for k in range(counters.count):
         s = counters.start(k)
         target = x[s:s + w]
         power_t = sum(rows[s:s + w])
-        if not power_t >= w * REPLICATED_SIGNAL_FLOOR:
+        has_signal = power_t >= w * REPLICATED_SIGNAL_FLOOR
+        ok_now.append(has_signal)
+        if not has_signal:
             continue
         s_tt = sum(v * v for v in target)
+        # A band that correlates at 1/2 or more with itself in the previous frame used does not count (the amendment to S28).
+        if counters.previous is not None and counters.previous_ok[k]:
+            earlier = counters.previous[s:s + w]
+            s_tp = sum(a * b for a, b in zip(target, earlier))
+            if s_tp > 0 and 4.0 * s_tp * s_tp >= s_tt * sum(v * v for v in earlier):
+                continue
         for d in range(counters.first_shift, s):
             source = x[s - d:s - d + w]
             if not sum(rows[s - d:s - d + w]) >= w * REPLICATED_SIGNAL_FLOOR:
@@ -354,13 +367,16 @@ def count_replicated(rows, counters):
             s_ss = sum(v * v for v in source)
             if s_ts > 0 and 4.0 * s_ts * s_ts >= s_tt * s_ss:
                 counters.matches[k][d] += 1
+    counters.previous = x
+    counters.previous_ok = ok_now
 
 
 def find_replicated(counters, rate, size, cutoff, bandwidth):
     """The replicated bands of the combined spectrum (docs/design/spectral-analysis.md, Step 9) from the counters of the stream, in integers."""
     if rate < 8000:
         return {"is_searched": False}
-    w, _, bins = band_rows(rate, size)
+    _, _, bins = band_rows(rate, size)
+    w = counters.w
     bands = []
     shifts = []
     max_frames = 0

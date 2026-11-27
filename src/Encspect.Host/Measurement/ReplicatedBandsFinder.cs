@@ -28,6 +28,12 @@ internal sealed class ReplicatedBandsCounters
     private readonly bool[] _targetOk;
     private readonly bool[] _sourceOk = new bool[Rows];
 
+    // The fine structure of the previous frame used, and per band whether it had signal there: a frame counts for a band only where the band does not correlate at 1/2 or more with itself in
+    // the previous frame used, so that a stationary signal's frames are one trial, not many (the amendment to S28).
+    private readonly double[] _previous = new double[Rows + Padding];
+    private readonly bool[] _previousOk;
+    private bool _hasPrevious;
+
     // Frames with signal in both bands, and those that match, by shift and band (index shift * bands + band, so that the bands of one shift lie together).
     public readonly int[] Frames;
 
@@ -35,7 +41,7 @@ internal sealed class ReplicatedBandsCounters
 
     public ReplicatedBandsCounters(CutoffGeometry geometry)
     {
-        _bandRows = geometry.BandRows;
+        _bandRows = RowsOf(geometry);
         _step = Math.Max(1, _bandRows / 4);
         long rate = geometry.SampleRate;
         _firstShift = (int)Math.Max(1, ((150L * 1024) + (rate / 2)) / rate);
@@ -45,9 +51,13 @@ internal sealed class ReplicatedBandsCounters
         Matches = new int[BandCount * Rows];
         _targetSquares = new double[BandCount];
         _targetOk = new bool[BandCount];
+        _previousOk = new bool[BandCount];
     }
 
     public int BandCount { get; }
+
+    // The rows of a band: those of 1 kHz, and at least MeasurementLimits.MinimumReplicatedBandRows, so that the bands widen with the sample rate above 48 kHz.
+    public static int RowsOf(CutoffGeometry geometry) => Math.Max(geometry.BandRows, MeasurementLimits.MinimumReplicatedBandRows);
 
     // The fine structure of the frame counted last, which the tests pin.
     internal ReadOnlySpan<double> FineRows => _fine.AsSpan(Padding);
@@ -65,12 +75,12 @@ internal sealed class ReplicatedBandsCounters
     public static long Bytes(CutoffGeometry geometry)
     {
         int bands = CountBands(geometry);
-        return (2L * bands * Rows * sizeof(int)) + (long)(Rows * 5 * sizeof(double)) + (2L * bands * sizeof(double));
+        return (2L * bands * Rows * sizeof(int)) + (long)(((2 * (Rows + Padding)) + (4 * (Rows + 1)) + (3 * (Rows + 1)) + Rows) * sizeof(double)) + (2L * bands * sizeof(double));
     }
 
     private static int CountBands(CutoffGeometry geometry)
     {
-        int w = geometry.BandRows;
+        int w = RowsOf(geometry);
         int step = Math.Max(1, w / 4);
         int last = CutoffGeometry.LastCandidate;
         return last - (w - 1) >= w ? ((last - (w - 1) - w) / step) + 1 : 0;
@@ -120,6 +130,34 @@ internal sealed class ReplicatedBandsCounters
             targetOk[k] = power[s + w] - power[s] >= floor;
             targetSquares[k] = squares[s + w] - squares[s];
         }
+
+        double[] previous = _previous;
+        bool[] previousOk = _previousOk;
+        for (int k = 0; k < bands; k++)
+        {
+            bool hadSignal = targetOk[k];
+            if (hadSignal && _hasPrevious && previousOk[k])
+            {
+                int s = StartRow(k);
+                double product = 0;
+                double earlier = 0;
+                for (int j = s; j < s + w; j++)
+                {
+                    product += fine[j + Padding] * previous[j + Padding];
+                    earlier += previous[j + Padding] * previous[j + Padding];
+                }
+
+                if (product > 0 && 4.0 * (product * product) >= targetSquares[k] * earlier)
+                {
+                    targetOk[k] = false;
+                }
+            }
+
+            previousOk[k] = hadSignal;
+        }
+
+        Array.Copy(fine, previous, fine.Length);
+        _hasPrevious = true;
 
         // A source band is a band of W rows from row q = 1 up to the last band's start.
         int top = CutoffGeometry.LastCandidate;
@@ -208,7 +246,7 @@ internal static class ReplicatedBandsFinder
             return new ReplicatedBandsFigures { IsSearched = false };
         }
 
-        int w = geometry.BandRows;
+        int w = ReplicatedBandsCounters.RowsOf(geometry);
         int bandCount = counters.BandCount;
         var bands = new ReplicatedBand[bandCount];
         var shifts = new int[bandCount];
