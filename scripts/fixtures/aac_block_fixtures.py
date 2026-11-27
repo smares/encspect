@@ -1640,6 +1640,30 @@ def main_ltp_decoding():
         "feedback grows by 1.37 a block: the decoder holds the spectrum to a limit, so the output stays finite.", data, rows, [stream("AAC LTP", RATE, 1, "Mono", len(rows) * 1024)], {},
         skip={"faad": "faad2 reads ADTS profile 3 but its -i output names no LTP.", "decode": "ffmpeg's float output overflows to infinity and NaN here."})))
 
+    # A frame whose ADTS CRC fails in a Main stream that predicts in all 40 bands and resets one group each frame (the failed frame's own reset group is not trusted), and in an LTP
+    # stream that predicts but in two frames: what depends on the state the decoder kept from the failed block is withheld from the measurements.
+    blocks = []
+    for i in range(60):
+        ics = channel(M.ONLY_LONG, 1, [[(11, 4), (5, 36)]], seed=500 + i, predictor=(True, i % 30 + 1, [1] * 40))
+        blocks.append(M.raw_data_block([M.Element(M.SCE, ics=ics)], object_type=1))
+    data, rows = concat(adts_frames(blocks, profile=0, protect=True, damage=(10,)))
+    out.append(("main-prediction-crc-failed.aac", data, manifest(
+        "Protected AAC Main (ADTS profile 0) frames, mono: 60 frames that predict in all 40 bands and reset one group each, in a cycle of the 30, the CRC of frame 11 wrong, so that the "
+        "blocks that use a group not reset since (the failed block's own reset does not count) are written and left out of the measurements.", data, rows,
+        [stream("AAC Main", RATE, 1, "Mono", len(rows) * 1024)], {}, [["aac.crc-mismatch", "1 ADTS frame fails the CRC check"]],
+        skip={"ffprobe": "ffmpeg does not check ADTS CRCs, and decodes every frame", "faad": "faad2 reads Main but checks no CRC the manifest could state."})))
+    made = []
+    for i in range(24):
+        used = None if i in (12, 13) else ((100 + 61 * i % 900, i % 8, [1] * 30),)
+        a = channel(M.ONLY_LONG, 1, [[(11, 4), (5, 26)]], seed=550 + i, predictor=used)
+        made.append(M.raw_data_block([M.Element(M.SCE, ics=a)], object_type=4))
+    data, rows = concat(adts_frames(made, profile=3, protect=True, damage=(8,)))
+    out.append(("ltp-crc-failed.aac", data, manifest(
+        "Protected AAC LTP (MPEG-4 ADTS profile 3) frames, mono: 24 frames that use long-term prediction but 13 and 14, the CRC of frame 9 wrong, so that the blocks that predict from its output "
+        "are written and left out of the measurements until the pause of two frames.", data, rows, [stream("AAC LTP", RATE, 1, "Mono", len(rows) * 1024)], {},
+        [["aac.crc-mismatch", "1 ADTS frame fails the CRC check"]],
+        skip={"ffprobe": "ffmpeg does not check ADTS CRCs, and decodes every frame", "faad": "faad2 reads ADTS profile 3 but its -i output names no LTP."})))
+
     # A dependently switched coupling channel element in an LTP stream (4.6.7.4.3 allows none).
     blocks = []
     for n in range(4):

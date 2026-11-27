@@ -1,0 +1,277 @@
+{
+ "description": "Protected AAC Main (ADTS profile 0) frames, mono: 60 frames that predict in all 40 bands and reset one group each, in a cycle of the 30, the CRC of frame 11 wrong, so that the blocks that use a group not reset since (the failed block's own reset does not count) are written and left out of the measurements.",
+ "length": 26401,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC Main",
+   "sample_rate": 44100,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "channel_layout": [
+    "front center"
+   ],
+   "samples": 61440,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   440
+  ],
+  [
+   440,
+   441
+  ],
+  [
+   881,
+   439
+  ],
+  [
+   1320,
+   439
+  ],
+  [
+   1759,
+   440
+  ],
+  [
+   2199,
+   439
+  ],
+  [
+   2638,
+   439
+  ],
+  [
+   3077,
+   441
+  ],
+  [
+   3518,
+   440
+  ],
+  [
+   3958,
+   441
+  ],
+  [
+   4399,
+   441
+  ],
+  [
+   4840,
+   440
+  ],
+  [
+   5280,
+   440
+  ],
+  [
+   5720,
+   440
+  ],
+  [
+   6160,
+   439
+  ],
+  [
+   6599,
+   439
+  ],
+  [
+   7038,
+   440
+  ],
+  [
+   7478,
+   440
+  ],
+  [
+   7918,
+   440
+  ],
+  [
+   8358,
+   441
+  ],
+  [
+   8799,
+   441
+  ],
+  [
+   9240,
+   441
+  ],
+  [
+   9681,
+   441
+  ],
+  [
+   10122,
+   440
+  ],
+  [
+   10562,
+   439
+  ],
+  [
+   11001,
+   440
+  ],
+  [
+   11441,
+   439
+  ],
+  [
+   11880,
+   439
+  ],
+  [
+   12319,
+   440
+  ],
+  [
+   12759,
+   440
+  ],
+  [
+   13199,
+   440
+  ],
+  [
+   13639,
+   441
+  ],
+  [
+   14080,
+   441
+  ],
+  [
+   14521,
+   440
+  ],
+  [
+   14961,
+   441
+  ],
+  [
+   15402,
+   439
+  ],
+  [
+   15841,
+   439
+  ],
+  [
+   16280,
+   440
+  ],
+  [
+   16720,
+   439
+  ],
+  [
+   17159,
+   439
+  ],
+  [
+   17598,
+   441
+  ],
+  [
+   18039,
+   440
+  ],
+  [
+   18479,
+   441
+  ],
+  [
+   18920,
+   441
+  ],
+  [
+   19361,
+   440
+  ],
+  [
+   19801,
+   440
+  ],
+  [
+   20241,
+   440
+  ],
+  [
+   20681,
+   439
+  ],
+  [
+   21120,
+   439
+  ],
+  [
+   21559,
+   440
+  ],
+  [
+   21999,
+   440
+  ],
+  [
+   22439,
+   440
+  ],
+  [
+   22879,
+   441
+  ],
+  [
+   23320,
+   441
+  ],
+  [
+   23761,
+   441
+  ],
+  [
+   24202,
+   441
+  ],
+  [
+   24643,
+   440
+  ],
+  [
+   25083,
+   439
+  ],
+  [
+   25522,
+   440
+  ],
+  [
+   25962,
+   439
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "aac.crc-mismatch",
+   "1 ADTS frame fails the CRC check"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": true,
+  "faad": null,
+  "skip": {
+   "ffprobe": "ffmpeg does not check ADTS CRCs, and decodes every frame",
+   "faad": "faad2 reads Main but checks no CRC the manifest could state."
+  }
+ }
+}

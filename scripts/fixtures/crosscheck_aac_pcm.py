@@ -104,8 +104,8 @@ LIBXAAC_MAX_LSB = 32
 FIRST_BLOCK = 1024
 FIRST_BLOCK_KBD = {"blocks-missing.aac", "blocks-trailing-bytes.aac", "corrupt-syntax.aac", "crc-short-element.aac", "crc-stereo-damaged.aac", "crc-stereo.aac", "fill-and-data.aac",
                    "first-block-kbd.aac", "lfe-restrictions-pce.aac", "tns-order-above-12.aac", "loud-pulse-tns.aac", "sbr-in-truncated-frame.aac", "streams-limited.aac", "two-signature-streams.aac", "loud-noise-pair.aac",
-                   "windows.aac", "main-prediction.aac", "main-prediction-bands.aac", "main-prediction-gap.aac", "main-prediction-largest.aac", "main-prediction-overdue.aac", "main-prediction-reset-cycle.aac",
-                   "main-prediction-short.aac", "main-tns-order-20.aac", "ltp.aac", "ltp-feedback-growth.aac", "ltp-lags.aac", "ltp-gap.aac", "ltp-tns-noise.aac"}
+                   "windows.aac", "main-prediction.aac", "main-prediction-bands.aac", "main-prediction-crc-failed.aac", "main-prediction-gap.aac", "main-prediction-largest.aac", "main-prediction-overdue.aac", "main-prediction-reset-cycle.aac",
+                   "main-prediction-short.aac", "main-tns-order-20.aac", "ltp.aac", "ltp-crc-failed.aac", "ltp-feedback-growth.aac", "ltp-lags.aac", "ltp-gap.aac", "ltp-tns-noise.aac"}
 # Damaged files libxaac stops on after its first block: with the first block left out nothing is left to compare, which is no failure.
 LIBXAAC_FIRST_BLOCK_ONLY = {"blocks-missing.aac", "blocks-trailing-bytes.aac"}
 

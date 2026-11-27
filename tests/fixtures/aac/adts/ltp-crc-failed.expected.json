@@ -1,0 +1,133 @@
+{
+ "description": "Protected AAC LTP (MPEG-4 ADTS profile 3) frames, mono: 24 frames that use long-term prediction but 13 and 14, the CRC of frame 9 wrong, so that the blocks that predict from its output are written and left out of the measurements until the pause of two frames.",
+ "length": 5920,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LTP",
+   "sample_rate": 44100,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "channel_layout": [
+    "front center"
+   ],
+   "samples": 24576,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   247
+  ],
+  [
+   247,
+   247
+  ],
+  [
+   494,
+   248
+  ],
+  [
+   742,
+   248
+  ],
+  [
+   990,
+   247
+  ],
+  [
+   1237,
+   248
+  ],
+  [
+   1485,
+   247
+  ],
+  [
+   1732,
+   246
+  ],
+  [
+   1978,
+   247
+  ],
+  [
+   2225,
+   247
+  ],
+  [
+   2472,
+   246
+  ],
+  [
+   2718,
+   247
+  ],
+  [
+   2965,
+   242
+  ],
+  [
+   3207,
+   241
+  ],
+  [
+   3448,
+   248
+  ],
+  [
+   3696,
+   248
+  ],
+  [
+   3944,
+   247
+  ],
+  [
+   4191,
+   248
+  ],
+  [
+   4439,
+   247
+  ],
+  [
+   4686,
+   246
+  ],
+  [
+   4932,
+   247
+  ],
+  [
+   5179,
+   247
+  ],
+  [
+   5426,
+   246
+  ],
+  [
+   5672,
+   248
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "aac.crc-mismatch",
+   "1 ADTS frame fails the CRC check"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": true,
+  "faad": null,
+  "skip": {
+   "ffprobe": "ffmpeg does not check ADTS CRCs, and decodes every frame",
+   "faad": "faad2 reads ADTS profile 3 but its -i output names no LTP."
+  }
+ }
+}

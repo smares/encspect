@@ -36,6 +36,21 @@ public class AacMainLtpDecoderTests
         Assert.Equal(4 * 1024, stream.Measurements!.WithheldSamples);
     }
 
+    // A block whose ADTS CRC fails is written, and what depends on the state decoded from it is left out of the measurements as "checksum failed": Main's blocks that use a group not reset
+    // since (the failed block's own reset group is data under the failed CRC, and gives nothing back), LTP's blocks that predict from its output or its overlap.
+    [Theory]
+    [InlineData("main-prediction-crc-failed.aac")]
+    [InlineData("ltp-crc-failed.aac")]
+    public void WhatDependsOnABlockThatFailsItsChecksumIsWithheldFromTheMeasurements(string name)
+    {
+        StreamInfo stream = Measured(name);
+
+        Assert.True(stream.Measurements!.WithheldSamples > 0);
+        Assert.Equal(stream.Measurements.WithheldSamples, stream.Measurements.WithheldByReason.ChecksumFailed);
+        Assert.Equal(0, stream.Measurements.WithheldByReason.AfterGap);
+        Assert.Equal(name.StartsWith("main", StringComparison.Ordinal) ? 32 * 1024 : 5 * 1024, stream.Measurements.WithheldSamples);
+    }
+
     // The start of a stream is synchronized: long-term prediction in its first frames reads the zeros the specification starts with, and nothing is withheld.
     [Theory]
     [InlineData("ltp-lags.aac")]
