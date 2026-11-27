@@ -39,4 +39,16 @@ public class WindowsMediaRouteTests
         Assert.Equal("wav.coding-not-analyzed", finding.Code);
         Assert.Contains("block alignment", finding.Message, StringComparison.Ordinal);
     }
+
+    // A data chunk that ends inside a block hands the block over cut, and the analysis goes on without a failure.
+    [Fact]
+    public void ABlockTheDataEndsInsideIsHandedOverCut()
+    {
+        byte[] data = Fixture("external-wmav2-in-wav.wav");
+
+        Report report = Analyze(data[..^100]);
+
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+        Assert.Single(report.Streams);
+    }
 }
