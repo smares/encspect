@@ -334,6 +334,36 @@ public sealed record SpectrumFigures
 
     // The inter-channel coherence of the same pair; null where the stream has no pair (see the inter-channel-coherence topic).
     public CoherenceFigures? Coherence { get; init; }
+
+    // False for a rate under 8,000 Hz, where no Nyquist edge is searched.
+    public bool IsNyquistEdgeSearched { get; init; } = true;
+
+    // The steps of the combined spectrum at the Nyquist frequency of a lower common sample rate, highest first; empty where none is found or the
+    // stream is not searched (see the nyquist-edge topic).
+    public IReadOnlyList<NyquistEdge> NyquistEdges { get; init; } = [];
+}
+
+// A step of the combined spectrum at the Nyquist frequency of a lower common sample rate: where it lies, how large it is, and how far the band
+// above that frequency stands under the band it mirrors. Frequencies are whole hertz, levels in tenths of a dB. It names a coincidence of
+// frequency, not where the audio came from.
+public sealed record NyquistEdge
+{
+    // The lower sample rate in hertz, whose half is the Nyquist frequency (11,025 Hz for 5,512.5 Hz).
+    public int LowerRate { get; init; }
+
+    // The boundary of the step (a row's lower edge, as SpectralCutoff.StepFrequency).
+    public int StepFrequency { get; init; }
+
+    public int StepTenthsOfDb { get; init; }
+
+    // The mean level of the band of 1 kHz above the Nyquist frequency minus the mean level of the band it mirrors under it: an upper bound on
+    // what the band above holds of images, which holds the quantization floor and the window's leakage as well.
+    public int AboveTenthsOfDb { get; init; }
+
+    // The frames with signal at the step's row, and those of them that show an own step there, as the spectral cutoff counts them.
+    public int FramesShowing { get; init; }
+
+    public int FramesWithSignal { get; init; }
 }
 
 // Why no inter-channel coherence run is found.
