@@ -401,7 +401,7 @@ The scope is confirmed when 0.4 is done. The decoders follow steps 9 to 15 of [l
 **Other items.**
 
 9. **Decoding limits that need no new source** (the lead, 2026-11-23, from the limits the 0.4.0 notes list): each with its fixtures.
-   - **Opus mapping family 3:** apply the Ambisonics demixing matrix the decoder already reads (RFC 8486), with files libopus writes.
+   - **Opus mapping family 3** (done, 2026-11-27): the decoder applies the Ambisonics demixing matrix (RFC 8486, section 3.2) to the decoded channels, as libopus's projection decoder does and bit for bit with it; six fixtures written by libopus 1.5.2's projection encoder (orders 1 to 3, each with and without the non-diegetic stereo pair). [As built](design/lossy-decoders.md#as-built-opus).
    - **The Vorbis codebook limit:** raise the 4 Mi-entry bound toward libvorbis's 8 Mi only if a real file needs it; the memory bound per stream stays.
    - **ADPCM and GSM 6.10 in WAV and AIFF** (Microsoft ADPCM, IMA ADPCM, GSM 6.10 and the codings of the same kind the parsers name): decoders from their published descriptions, with files FFmpeg writes.
    - **DSD to PCM** for WavPack DSD, so its streams are measured: a conversion the DSF and DSDIFF items after 0.5 reuse, designed with its determinism and work budget first.

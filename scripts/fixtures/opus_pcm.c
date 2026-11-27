@@ -15,6 +15,7 @@
  */
 #include <ogg/ogg.h>
 #include <opus/opus_multistream.h>
+#include <opus/opus_projection.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,12 +24,15 @@
 #define MAX_FRAME 5760
 
 static float *buffer;
+static OpusProjectionDecoder *projection; /* family 3 (RFC 8486): the decoder is the projection decoder, which applies the demixing matrix */
 
 static int emit(OpusMSDecoder *decoder, FILE *out, long number, const unsigned char *data, long bytes, int channels, long stored)
 {
-    int samples = opus_multistream_decode_float(decoder, bytes > 0 ? data : NULL, (opus_int32)bytes, buffer, MAX_FRAME, 0);
+    int samples = projection ? opus_projection_decode_float(projection, bytes > 0 ? data : NULL, (opus_int32)bytes, buffer, MAX_FRAME, 0)
+        : opus_multistream_decode_float(decoder, bytes > 0 ? data : NULL, (opus_int32)bytes, buffer, MAX_FRAME, 0);
     opus_uint32 range = 0;
-    opus_multistream_decoder_ctl(decoder, OPUS_GET_FINAL_RANGE(&range));
+    if (projection) opus_projection_decoder_ctl(projection, OPUS_GET_FINAL_RANGE(&range));
+    else opus_multistream_decoder_ctl(decoder, OPUS_GET_FINAL_RANGE(&range));
     if (samples > 0)
     {
         fwrite(buffer, sizeof(float), (size_t)samples * channels, out);
@@ -146,6 +150,35 @@ static int run_ogg(const char *path, FILE *out)
                     int family = h[18];
                     int streams = 1, coupled = channels == 2 ? 1 : 0;
                     unsigned char mapping[255] = {0, 1};
+                    if (family == 3)
+                    {
+                        if (packet.bytes < 21)
+                        {
+                            fprintf(stderr, "short OpusHead\n");
+                            return 1;
+                        }
+                        streams = h[19];
+                        coupled = h[20];
+                        opus_int32 matrix_bytes = 2 * channels * (streams + coupled);
+                        if (packet.bytes < 21 + matrix_bytes)
+                        {
+                            fprintf(stderr, "short OpusHead\n");
+                            return 1;
+                        }
+                        int error = 0;
+                        projection = opus_projection_decoder_create(48000, channels, streams, coupled, (unsigned char *)h + 21, matrix_bytes, &error);
+                        if (!projection)
+                        {
+                            fprintf(stderr, "libopus does not accept the stream: %d\n", error);
+                            return 1;
+                        }
+                        opus_projection_decoder_ctl(projection, OPUS_SET_GAIN(gain));
+                        buffer = malloc(sizeof(float) * MAX_FRAME * channels);
+                        headers = 1;
+                        decoder = (OpusMSDecoder *)projection;
+                        printf("{\"packet\":%ld,\"bytes\":%ld,\"samples\":0}\n", number++, packet.bytes);
+                        continue;
+                    }
                     if (family != 0)
                     {
                         if (packet.bytes < 21 + channels)
