@@ -431,6 +431,47 @@
                   ]
                 },
                 {
+                  "name": "Last Non-Zero Coefficient",
+                  "offset": 0,
+                  "length": 6688,
+                  "children": [
+                    {
+                      "name": "Lowest",
+                      "value": 2864,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 6688
+                    },
+                    {
+                      "name": "Most Common",
+                      "value": 6460,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 6688
+                    },
+                    {
+                      "name": "Highest",
+                      "value": 6525,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 6688
+                    }
+                  ]
+                },
+                {
+                  "name": "Non-Zero Coefficients",
+                  "value": 5709,
+                  "unit": "coefficients",
+                  "offset": 0,
+                  "length": 6688
+                },
+                {
+                  "name": "Escape-Coded Coefficients",
+                  "value": "341 coefficients (6.0%)",
+                  "offset": 0,
+                  "length": 6688
+                },
+                {
                   "name": "Global Gain",
                   "offset": 0,
                   "length": 6688,
@@ -466,7 +507,57 @@
                       "name": "Parametric Stereo",
                       "value": "36 access units (100.0%)",
                       "offset": 0,
-                      "length": 6688
+                      "length": 6688,
+                      "children": [
+                        {
+                          "name": "Parametric Stereo Envelopes",
+                          "value": 36,
+                          "unit": "raw data blocks",
+                          "offset": 0,
+                          "length": 6688,
+                          "children": [
+                            {
+                              "name": "No envelopes",
+                              "value": "28 raw data blocks (77.8%)",
+                              "offset": 0,
+                              "length": 6688
+                            },
+                            {
+                              "name": "1 envelope",
+                              "value": "6 raw data blocks (16.7%)",
+                              "offset": 0,
+                              "length": 6688
+                            },
+                            {
+                              "name": "2 envelopes",
+                              "value": "2 raw data blocks (5.6%)",
+                              "offset": 0,
+                              "length": 6688
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Parametric Stereo Bands",
+                          "value": 36,
+                          "unit": "raw data blocks",
+                          "offset": 0,
+                          "length": 6688,
+                          "children": [
+                            {
+                              "name": "No parameters",
+                              "value": "1 raw data block (2.8%)",
+                              "offset": 0,
+                              "length": 6688
+                            },
+                            {
+                              "name": "20 bands",
+                              "value": "35 raw data blocks (97.2%)",
+                              "offset": 0,
+                              "length": 6688
+                            }
+                          ]
+                        }
+                      ]
                     },
                     {
                       "name": "SBR Headers",
@@ -474,6 +565,36 @@
                       "unit": "headers",
                       "offset": 0,
                       "length": 6688
+                    },
+                    {
+                      "name": "SBR Frame Classes",
+                      "value": 36,
+                      "unit": "SBR channels",
+                      "offset": 0,
+                      "length": 6688,
+                      "children": [
+                        {
+                          "name": "FIXFIX",
+                          "value": "36 SBR channels (100.0%)",
+                          "offset": 0,
+                          "length": 6688
+                        }
+                      ]
+                    },
+                    {
+                      "name": "SBR Envelopes",
+                      "value": 36,
+                      "unit": "SBR channels",
+                      "offset": 0,
+                      "length": 6688,
+                      "children": [
+                        {
+                          "name": "1 envelope",
+                          "value": "36 SBR channels (100.0%)",
+                          "offset": 0,
+                          "length": 6688
+                        }
+                      ]
                     },
                     {
                       "name": "Start Frequency",
@@ -20175,6 +20296,178 @@
               7020,
               7020
             ]
+          },
+          {
+            "name": "Last Non-Zero Coefficient",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "codedBandwidth",
+            "quantity": "Last Non-Zero Coefficient",
+            "x": [
+              371,
+              584,
+              761,
+              929,
+              1115,
+              1301,
+              1486,
+              1672,
+              1858,
+              2044,
+              2229,
+              2415,
+              2601,
+              2787,
+              2972,
+              3158,
+              3344,
+              3530,
+              3715,
+              3901,
+              4087,
+              4273,
+              4458,
+              4644,
+              4830,
+              5016,
+              5202,
+              5387,
+              5573,
+              5759,
+              5945,
+              6130,
+              6316,
+              6514
+            ],
+            "values": [
+              5512,
+              5954,
+              6460,
+              6525,
+              6460,
+              6449,
+              6503,
+              6503,
+              6245,
+              6481,
+              6525,
+              6460,
+              6008,
+              6449,
+              6460,
+              6449,
+              6525,
+              6460,
+              6525,
+              6460,
+              6460,
+              6460,
+              6503,
+              6460,
+              6245,
+              6460,
+              6460,
+              6460,
+              6449,
+              6449,
+              6460,
+              6460,
+              6008,
+              2864
+            ]
+          },
+          {
+            "name": "Last Non-Zero Coefficient Over Time",
+            "unit": "Hz",
+            "axis": "seconds",
+            "concept": "codedBandwidth",
+            "quantity": "Last Non-Zero Coefficient",
+            "x": [
+              0,
+              1
+            ],
+            "values": [
+              6525,
+              6503
+            ]
+          },
+          {
+            "name": "Escape-Coded Coefficients",
+            "unit": "%",
+            "axis": "frameOffset",
+            "quantity": "Escape-Coded Coefficients",
+            "x": [
+              371,
+              584,
+              761,
+              929,
+              1115,
+              1301,
+              1486,
+              1672,
+              1858,
+              2044,
+              2229,
+              2415,
+              2601,
+              2787,
+              2972,
+              3158,
+              3344,
+              3530,
+              3715,
+              3901,
+              4087,
+              4273,
+              4458,
+              4644,
+              4830,
+              5016,
+              5202,
+              5387,
+              5573,
+              5759,
+              5945,
+              6130,
+              6316,
+              6514
+            ],
+            "values": [
+              14.4,
+              7.3,
+              5,
+              6.9,
+              6.7,
+              4.4,
+              6.2,
+              5.7,
+              8.4,
+              7.7,
+              7.2,
+              5.2,
+              7.1,
+              5.5,
+              5.3,
+              3.8,
+              6.3,
+              6.8,
+              5.9,
+              5.3,
+              7.2,
+              3.6,
+              4.7,
+              5.2,
+              5.8,
+              5.9,
+              5.2,
+              6.5,
+              5.9,
+              9.8,
+              2.6,
+              5,
+              6.7,
+              1.1
+            ]
           }
         ],
         "categorySeries": [
@@ -20404,6 +20697,222 @@
               [
                 1,
                 36
+              ]
+            ],
+            "seconds": [
+              0,
+              22
+            ]
+          },
+          {
+            "name": "SBR Frame Classes",
+            "valueLabel": "SBR channel",
+            "categories": [
+              {
+                "name": "FIXFIX",
+                "count": 36
+              },
+              {
+                "name": "FIXVAR",
+                "count": 0
+              },
+              {
+                "name": "VARFIX",
+                "count": 0
+              },
+              {
+                "name": "VARVAR",
+                "count": 0
+              }
+            ],
+            "total": 36,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                36
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                36
+              ]
+            ],
+            "seconds": [
+              0,
+              22
+            ]
+          },
+          {
+            "name": "SBR Envelopes",
+            "valueLabel": "SBR channel",
+            "categories": [
+              {
+                "name": "1 envelope",
+                "count": 36
+              },
+              {
+                "name": "2 envelopes",
+                "count": 0
+              },
+              {
+                "name": "3 envelopes",
+                "count": 0
+              },
+              {
+                "name": "4 envelopes",
+                "count": 0
+              },
+              {
+                "name": "5 envelopes",
+                "count": 0
+              }
+            ],
+            "total": 36,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                36
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                36
+              ]
+            ],
+            "seconds": [
+              0,
+              22
+            ]
+          },
+          {
+            "name": "Parametric Stereo Envelopes",
+            "valueLabel": "raw data block",
+            "categories": [
+              {
+                "name": "No envelopes",
+                "count": 28
+              },
+              {
+                "name": "1 envelope",
+                "count": 6
+              },
+              {
+                "name": "2 envelopes",
+                "count": 2
+              },
+              {
+                "name": "3 envelopes",
+                "count": 0
+              },
+              {
+                "name": "4 envelopes",
+                "count": 0
+              }
+            ],
+            "total": 36,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                36
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                2
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                4
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                9
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                9
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                5
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "seconds": [
+              0,
+              22
+            ]
+          },
+          {
+            "name": "Parametric Stereo Bands",
+            "valueLabel": "raw data block",
+            "categories": [
+              {
+                "name": "No parameters",
+                "count": 1
+              },
+              {
+                "name": "10 bands",
+                "count": 0
+              },
+              {
+                "name": "20 bands",
+                "count": 35
+              },
+              {
+                "name": "34 bands",
+                "count": 0
+              }
+            ],
+            "total": 36,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                36
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                1
+              ],
+              [
+                2,
+                35
               ]
             ],
             "seconds": [

@@ -412,6 +412,47 @@
                   ]
                 },
                 {
+                  "name": "Last Non-Zero Coefficient",
+                  "offset": 0,
+                  "length": 6466,
+                  "children": [
+                    {
+                      "name": "Lowest",
+                      "value": 2285,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 6466
+                    },
+                    {
+                      "name": "Most Common",
+                      "value": 6445,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 6466
+                    },
+                    {
+                      "name": "Highest",
+                      "value": 12000,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 6466
+                    }
+                  ]
+                },
+                {
+                  "name": "Non-Zero Coefficients",
+                  "value": 10614,
+                  "unit": "coefficients",
+                  "offset": 0,
+                  "length": 6466
+                },
+                {
+                  "name": "Escape-Coded Coefficients",
+                  "value": "236 coefficients (2.2%)",
+                  "offset": 0,
+                  "length": 6466
+                },
+                {
                   "name": "Global Gain",
                   "offset": 0,
                   "length": 6466,
@@ -455,6 +496,42 @@
                       "unit": "headers",
                       "offset": 0,
                       "length": 6466
+                    },
+                    {
+                      "name": "SBR Frame Classes",
+                      "value": 38,
+                      "unit": "SBR channels",
+                      "offset": 0,
+                      "length": 6466,
+                      "children": [
+                        {
+                          "name": "FIXFIX",
+                          "value": "38 SBR channels (100.0%)",
+                          "offset": 0,
+                          "length": 6466
+                        }
+                      ]
+                    },
+                    {
+                      "name": "SBR Envelopes",
+                      "value": 38,
+                      "unit": "SBR channels",
+                      "offset": 0,
+                      "length": 6466,
+                      "children": [
+                        {
+                          "name": "1 envelope",
+                          "value": "1 SBR channel (2.6%)",
+                          "offset": 0,
+                          "length": 6466
+                        },
+                        {
+                          "name": "2 envelopes",
+                          "value": "37 SBR channels (97.4%)",
+                          "offset": 0,
+                          "length": 6466
+                        }
+                      ]
                     },
                     {
                       "name": "Start Frequency",
@@ -17607,6 +17684,186 @@
               12000,
               12000
             ]
+          },
+          {
+            "name": "Last Non-Zero Coefficient",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "codedBandwidth",
+            "quantity": "Last Non-Zero Coefficient",
+            "x": [
+              0,
+              189,
+              322,
+              435,
+              572,
+              704,
+              894,
+              1042,
+              1263,
+              1417,
+              1617,
+              1785,
+              1961,
+              2143,
+              2308,
+              2501,
+              2660,
+              2878,
+              3039,
+              3263,
+              3423,
+              3612,
+              3780,
+              3952,
+              4134,
+              4298,
+              4491,
+              4648,
+              4862,
+              5022,
+              5222,
+              5385,
+              5571,
+              5746,
+              5916,
+              6122
+            ],
+            "values": [
+              12000,
+              3609,
+              2285,
+              3574,
+              3328,
+              6445,
+              4207,
+              8215,
+              4055,
+              8203,
+              5402,
+              6375,
+              6445,
+              6363,
+              6445,
+              5402,
+              8203,
+              5414,
+              8215,
+              5332,
+              7008,
+              5402,
+              6211,
+              6445,
+              6211,
+              6445,
+              5332,
+              8133,
+              5402,
+              6445,
+              4535,
+              6445,
+              6445,
+              6363,
+              6445,
+              12000
+            ]
+          },
+          {
+            "name": "Last Non-Zero Coefficient Over Time",
+            "unit": "Hz",
+            "axis": "seconds",
+            "concept": "codedBandwidth",
+            "quantity": "Last Non-Zero Coefficient",
+            "x": [
+              0,
+              1
+            ],
+            "values": [
+              12000,
+              12000
+            ]
+          },
+          {
+            "name": "Escape-Coded Coefficients",
+            "unit": "%",
+            "axis": "frameOffset",
+            "quantity": "Escape-Coded Coefficients",
+            "x": [
+              0,
+              189,
+              322,
+              435,
+              572,
+              704,
+              894,
+              1042,
+              1263,
+              1417,
+              1617,
+              1785,
+              1961,
+              2143,
+              2308,
+              2501,
+              2660,
+              2878,
+              3039,
+              3263,
+              3423,
+              3612,
+              3780,
+              3952,
+              4134,
+              4298,
+              4491,
+              4648,
+              4862,
+              5022,
+              5222,
+              5385,
+              5571,
+              5746,
+              5916,
+              6122
+            ],
+            "values": [
+              3.9,
+              1.9,
+              2.4,
+              2.4,
+              2.6,
+              1.9,
+              2.6,
+              1.5,
+              1.2,
+              2.3,
+              1.7,
+              2.7,
+              1.4,
+              2.7,
+              1.9,
+              2.2,
+              1.8,
+              2.4,
+              1.7,
+              1.5,
+              2.3,
+              1.6,
+              2.7,
+              1.7,
+              2.8,
+              1.9,
+              2.2,
+              1.6,
+              2.5,
+              1.5,
+              1.7,
+              2.4,
+              1.6,
+              2.7,
+              4.3,
+              3.9
+            ]
           }
         ],
         "categorySeries": [
@@ -17824,6 +18081,94 @@
               [
                 1,
                 2
+              ]
+            ],
+            "seconds": [
+              0,
+              24
+            ]
+          },
+          {
+            "name": "SBR Frame Classes",
+            "valueLabel": "SBR channel",
+            "categories": [
+              {
+                "name": "FIXFIX",
+                "count": 38
+              },
+              {
+                "name": "FIXVAR",
+                "count": 0
+              },
+              {
+                "name": "VARFIX",
+                "count": 0
+              },
+              {
+                "name": "VARVAR",
+                "count": 0
+              }
+            ],
+            "total": 38,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                38
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                38
+              ]
+            ],
+            "seconds": [
+              0,
+              24
+            ]
+          },
+          {
+            "name": "SBR Envelopes",
+            "valueLabel": "SBR channel",
+            "categories": [
+              {
+                "name": "1 envelope",
+                "count": 1
+              },
+              {
+                "name": "2 envelopes",
+                "count": 37
+              },
+              {
+                "name": "3 envelopes",
+                "count": 0
+              },
+              {
+                "name": "4 envelopes",
+                "count": 0
+              },
+              {
+                "name": "5 envelopes",
+                "count": 0
+              }
+            ],
+            "total": 38,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                38
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                37
               ]
             ],
             "seconds": [

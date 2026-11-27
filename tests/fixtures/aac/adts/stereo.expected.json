@@ -74,7 +74,12 @@
   "ADTS/Statistics/Codebooks/Codebook 11": "54 bands (11.0%)",
   "ADTS/Statistics/Codebooks/Codebook 13": "8 bands (1.6%)"
  },
- "findings": [],
+ "findings": [
+  [
+   "aac.window-slopes-differ",
+   "a window sequence whose left slope differs"
+  ]
+ ],
  "crosscheck": {
   "ffprobe": true,
   "decode": true,

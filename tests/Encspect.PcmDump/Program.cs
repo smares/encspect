@@ -81,11 +81,12 @@ internal static class Program
 
         public void Dispose() => _file.Dispose();
 
-        public void WriteJson(Utf8JsonWriter writer, int reportIndex)
+        public void WriteJson(Utf8JsonWriter writer, int reportIndex, string streamCodec)
         {
             writer.WriteStartObject();
             writer.WriteNumber("index", reportIndex);
             writer.WriteString("codec", codec);
+            writer.WriteString("streamCodec", streamCodec);
             writer.WriteNumber("sampleRate", format.SampleRate);
             writer.WriteNumber("channels", format.Channels);
             writer.WriteString("format", format.Format == SampleFormat.Integer ? "integer" : format.Format == SampleFormat.Float32 ? "float32" : "float64");
@@ -154,7 +155,7 @@ internal static class Program
                 foreach (DumpSink sink in sinks)
                 {
                     int reportIndex = report.Streams.ToList().FindIndex(s => s.Nodes.Contains(sink.Node));
-                    sink.WriteJson(writer, reportIndex);
+                    sink.WriteJson(writer, reportIndex, reportIndex >= 0 ? report.Streams[reportIndex].Codec : "");
                 }
 
                 writer.WriteEndArray();

@@ -1,0 +1,88 @@
+{
+ "description": "Protected ADTS frames at 22050 Hz of ten channel pairs, the first with a wrong CRC and no SBR data and the others followed by an SBR payload: the first frame is no evidence, so the second block decides and the stream is HE-AAC at 44100 Hz.",
+ "length": 647,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "HE-AAC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 20480,
+   "is_vbr": true,
+   "ffprobe_profile": "LC"
+  }
+ ],
+ "units": [
+  [
+   0,
+   48
+  ],
+  [
+   48,
+   68
+  ],
+  [
+   116,
+   66
+  ],
+  [
+   182,
+   67
+  ],
+  [
+   249,
+   67
+  ],
+  [
+   316,
+   67
+  ],
+  [
+   383,
+   67
+  ],
+  [
+   450,
+   66
+  ],
+  [
+   516,
+   66
+  ],
+  [
+   582,
+   65
+  ]
+ ],
+ "fields": {
+  "ADTS/Frame/CRC/Check": "mismatch"
+ },
+ "findings": [
+  [
+   "aac.crc-mismatch",
+   "1 ADTS frame fails the CRC check"
+  ],
+  [
+   "aac.implicit-sbr",
+   "9 of 9 raw data blocks hold SBR data: the stream is HE-AAC"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": false,
+  "ffprobe_streams": false,
+  "faad": null,
+  "skip": {
+   "faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold.",
+   "ffprobe_streams": "ffmpeg takes implicit SBR from the first block's payload.",
+   "decode": "ffmpeg does not check ADTS CRCs, and its first block holds no SBR data.",
+   "ffprobe": "ffmpeg does not check ADTS CRCs, and its first block holds no SBR data."
+  }
+ }
+}

@@ -56,11 +56,13 @@ public class AacGraphsTests
                 ("Block Switching", "Block Usage"),
                 ("Block Switching", "Block Sizes"),
                 ("Coded Bandwidth", "Coded Bandwidth"),
+                ("Coded Bandwidth", "Last Non-Zero Coefficient"),
                 ("Bit Distribution", "Bitrate"),
                 ("Other", "Window Shapes"),
                 ("Other", "TNS"),
                 ("Other", "Pulse Data"),
                 ("Other", "Noise Substitution"),
+                ("Other", "Escape-Coded Coefficients"),
             ],
             window.Model.Graphs.Choices.Select(c => (c.Heading, c.Title)));
         Assert.Equal(["Over Time", "Frames", "Summary", "Frame Map"], window.Model.Graphs.Choices.Single(c => c.Title == "Block Usage").Forms.Select(f => f.Title));

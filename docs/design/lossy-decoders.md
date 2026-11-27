@@ -487,8 +487,7 @@ The unit of [decoders.md](decoders.md) applies unchanged: one predictor or filte
 | TNS, per coefficient filtered | its order | AAC |
 | AAC Main prediction, per coefficient | 10 | AAC Main |
 | LTP, per frame | a forward transform of the frame plus its taps | AAC LTP |
-| SBR, per output sample | 60 (analysis and synthesis banks, generation, adjustment) | HE-AAC, USAC |
-| parametric stereo, per output sample | 40 | HE-AAC v2 |
+| SBR and parametric stereo, per output sample | 220 (analysis and synthesis banks, generation, adjustment and, for HE-AAC v2, the hybrid bank, decorrelation and mixing; measured, one weight for both: the HE-AAC cases of `DecoderWorkTests` run at 1.4 to 1.6 times the FLAC reference's time per unit) | HE-AAC, USAC |
 | Vorbis floor, per coefficient | 2 | Vorbis |
 | CELT postfilter and de-emphasis, per sample | 6 | Opus |
 | SILK synthesis, per internal sample | the LPC order (10 or 16) plus 5 for LTP | Opus |
@@ -902,6 +901,17 @@ What the WMA standard pull request (rollout step 11) did. The decoder is `src/En
 - **Cost:** the weights of the table above: 22 units a sample, 2 per dequantized line, 3 more per line with noise substitution, 12 per line of a line spectral pair curve, 1 per line for mid/side, 2 per bit of the window for each output sample of the transform and 2 for the window and overlap; blocks with no coded channel charge only the overlap. `DecoderWorkTests` has eight `wma-*` cases (ffmpeg's encoder with and without noise substitution, version 1, Microsoft's encoder in stereo and mono at 22.05, 44.1 and 48 kHz). The declared 2,048 units a byte stands.
 - **Memory:** per channel two frames of overlap, a frame of spectrum, of exponents and of held exponents (floats) beside the output frame; `DecodingManyWmaFramesHoldsNothingPerFrame` holds nothing per further frame.
 - **Not built:** Professional, Lossless and Voice (their own steps); version 1 with variable block lengths and scale factor exponents, and version 2 at 49,048 Hz and above, which the format description leaves open.
+
+## As built: HE-AAC
+
+What the HE-AAC pull request (rollout step 10) added to the AAC decoder; the description is in [aac.md](../formats/aac.md#decoding).
+
+- **Sources and rules:** libxaac at commit 2fbadd57, as for AAC LC; the QMF prototype, the noise phases and the parametric stereo tables are format data generated from it (`make_sbr_tables.py` and `make_ps_tables.py`, each with `--check` in CI; [development.md](../development.md#where-the-format-tables-come-from)). SBR and parametric stereo are single precision, deterministic under the lossy decoders' rules (no fused multiply-add, `DetMath`, element-wise vectors only, `AggressiveOptimization` on each float kernel).
+- **The walk** stores the SBR data's values (`SbrRecord`, extra slots after the channel slots) and the parametric stereo data's, and validates what the specification limits (the envelope borders rise from 0..3 to 16..19, as 4.6.18.3.3 requires); data that breaks it is `aac.sbr-data-invalid` and the frame is decoded as one without SBR data. The parametric stereo data is read in every analysis, as the coding graphs count it.
+- **Implicit signaling** is decided at the first block that can be read, as FFmpeg 6.1.1 does (`DecodeFeed.Decide`): the blocks before it wait with their values, at most `MaxUndecided` (32) of them; at the bound the stream is decided as its configuration says, the waiting blocks are decoded and so is every later one (a failed checksum is withheld, never lost), and the parser's tally takes evidence only from the first 32 blocks (`BlockLog.AddEvidence`), so the report and the decoder decide alike. The wait does not grow with the stream (`MemoryTests.DecodingManyAacFramesThatFailTheirChecksumHoldsNothingPerFrame`; the outcome is held by `ManyAacFramesThatFailTheirChecksumAreAllDecodedAndWithheld` and `AacFramesThatFailTheirChecksumBeforeGoodOnesLoseNothingAndInventNoGap`).
+- **Parametric stereo** takes the six slots its hybrid analysis looks ahead from the low band slots the SBR buffer holds, so its output is as early as an SBR stream's and agrees with FFmpeg and libxaac to 4 x 10^-7 of the RMS on the Apple HE-AAC v2 file ([development.md](../development.md#aac-decoding)). The first version delayed the output by 6 slots and differed by 4 % in bursts, which the cross-check found.
+- **Cost:** 220 units per output sample for SBR (and parametric stereo) on top of the core's.
+- **Not built:** SBR with a core at the output rate (downsampled SBR, refused with `decode.not-possible`), inter-channel phase differences of parametric stereo (the baseline profile skips them), and SBR for USAC and ER AAC.
 
 ## Unverified claims and estimates
 

@@ -456,7 +456,8 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         }
 
         // AAC LC: music in stereo from FAAC and FDK AAC, mono from Microsoft's encoder, the hand-built files that code every tool (every codebook, noise substitution, TNS, pulses,
-        // short windows, mid/side and intensity stereo), and silence. Each case repeats the ADTS frames of a file in one stream.
+        // short windows, mid/side and intensity stereo), silence, and HE-AAC (SBR in stereo and mono, with parametric stereo from two encoders, and a stream of many envelope shapes).
+        // Each case repeats the ADTS frames of a file in one stream.
         foreach ((string label, string file) in new[]
         {
             ("stereo-faac", "faac-2.2-adts.aac"),
@@ -466,6 +467,11 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             ("tools-stereo", "adts/stereo.aac"),
             ("intensity-and-noise", "adts/intensity-noise.aac"),
             ("silent", "adts/cbr.aac"),
+            ("he-stereo", "fdkaac-he-adts.aac"),
+            ("he-mono", "faac-2.2-he-mono-adts.aac"),
+            ("he-v2", "fdkaac-he-v2-adts.aac"),
+            ("he-v2-apple", "apple-hev2-adts-cbr-st44.aac"),
+            ("he-envelopes", "adts/sbr-fixvar-resolutions.aac"),
         })
         {
             Add("aac-" + label, () => new Case("aac-" + label, AacCases.Repeated(file)));

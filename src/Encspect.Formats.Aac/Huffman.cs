@@ -15,12 +15,16 @@ internal sealed class Huffman
     public Huffman(IReadOnlyList<uint> codes, IReadOnlyList<byte> lengths)
     {
         MaxLength = lengths.Max();
+        Offset = (codes.Count - 1) / 2;
         var entries = new List<int>();
         Build(entries, Enumerable.Range(0, codes.Count).ToList(), codes, lengths, 0, Math.Min(RootBits, MaxLength));
         _table = [.. entries];
     }
 
     public int MaxLength { get; }
+
+    // Where the zero lies among the symbols of a codebook of differences: they run from -Offset to Offset.
+    public int Offset { get; }
 
     // The bits the root is indexed by.
     public int RootWidth => Math.Min(RootBits, MaxLength);
@@ -46,15 +50,16 @@ internal sealed class Huffman
     }
 
     // For each value of the root's bits, where a codeword no longer than them starts: its length plus
-    // the sign bits follow gives for its symbol in the low byte, and follow's escape flags (8 and
-    // 16) as bits 8 and 9; -1 where the codeword is longer, for Decode to read.
-    public int[] Shortcut(byte[] follow)
+    // the sign bits follow gives for its symbol in the low byte, follow's escape flags (8 and
+    // 16) as bits 8 and 9, and the symbol's nonzero mask as bits 10 to 13; -1 where the codeword is longer,
+    // for Decode to read.
+    public int[] Shortcut(byte[] follow, byte[] nonZero)
     {
         var table = new int[1 << RootWidth];
         for (int i = 0; i < table.Length; i++)
         {
             int entry = _table[i];
-            table[i] = entry < 0 ? -1 : ((entry & 0xFF) + (follow[entry >> 8] & 7)) | ((follow[entry >> 8] & 24) << 5);
+            table[i] = entry < 0 ? -1 : ((entry & 0xFF) + (follow[entry >> 8] & 7)) | ((follow[entry >> 8] & 24) << 5) | (nonZero[entry >> 8] << 10);
         }
 
         return table;
@@ -119,8 +124,11 @@ internal static class Codebooks
     // low 3 bits, 8 where the pair's first value escapes and 16 where its second does (codebook 11).
     public static readonly byte[][] Follow = BuildFollow();
 
-    // Per spectral codebook, Huffman.Shortcut of its Follow.
-    public static readonly int[][] Shortcuts = [[], .. Enumerable.Range(1, 11).Select(book => Spectral[book].Shortcut(Follow[book]))];
+    // Per spectral codebook and symbol: which of its values (bit k for value k, in coding order) are nonzero.
+    public static readonly byte[][] NonZero = BuildNonZero();
+
+    // Per spectral codebook, Huffman.Shortcut of its Follow and NonZero.
+    public static readonly int[][] Shortcuts = [[], .. Enumerable.Range(1, 11).Select(book => Spectral[book].Shortcut(Follow[book], NonZero[book]))];
 
     // Codebooks 1 to 4 code four lines per codeword, 5 to 11 two.
     public static int Dimension(int codebook) => codebook < 5 ? 4 : 2;
@@ -149,6 +157,37 @@ internal static class Codebooks
         }
 
         return books;
+    }
+
+    private static byte[][] BuildNonZero()
+    {
+        var masks = new byte[12][];
+        for (int book = 1; book <= 11; book++)
+        {
+            int count = book <= 6 ? 81 : book <= 8 ? 64 : book <= 10 ? 169 : 289;
+            masks[book] = new byte[count];
+            for (int index = 0; index < count; index++)
+            {
+                int[] values = book switch
+                {
+                    <= 2 => [(index / 27) - 1, ((index / 9) % 3) - 1, ((index / 3) % 3) - 1, (index % 3) - 1],
+                    <= 4 => [index / 27, (index / 9) % 3, (index / 3) % 3, index % 3],
+                    <= 6 => [(index / 9) - 4, (index % 9) - 4],
+                    <= 8 => [index / 8, index % 8],
+                    <= 10 => [index / 13, index % 13],
+                    _ => [index / 17, index % 17],
+                };
+                int mask = 0;
+                for (int k = 0; k < values.Length; k++)
+                {
+                    mask |= values[k] != 0 ? 1 << k : 0;
+                }
+
+                masks[book][index] = (byte)mask;
+            }
+        }
+
+        return masks;
     }
 
     // 4.6.3.3: codebooks 1, 2, 5 and 6 are signed; 3, 4 and 7 to 11 unsigned, with a sign bit after
