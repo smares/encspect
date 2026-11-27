@@ -688,10 +688,14 @@ internal sealed partial class BlockReader
         {
             tally.Prediction++;
             tally.PredictorResets += ics.PredictorReset ? 1 : 0;
-            predictionUsed = System.Numerics.BitOperations.PopCount(ics.PredictionUsed);
-            predictionAvailable = Math.Min(ics.MaxSfb, _setup.PredictionBands);
-            tally.PredictionBands += predictionUsed;
-            tally.PredictionBandsAvailable += predictionAvailable;
+            if (_setup.ObjectType == 1)
+            {
+                // The bands prediction_used flags are AAC Main's; in AAC LTP the flag announces ltp_data.
+                predictionUsed = System.Numerics.BitOperations.PopCount(ics.PredictionUsed);
+                predictionAvailable = Math.Min(ics.MaxSfb, _setup.PredictionBands);
+                tally.PredictionBands += predictionUsed;
+                tally.PredictionBandsAvailable += predictionAvailable;
+            }
         }
 
         if (ics.Ltp)

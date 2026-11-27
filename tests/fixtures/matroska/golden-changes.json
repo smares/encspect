@@ -1,6 +1,8 @@
 {
  "goldens": [
-  "tests/fixtures/matroska/external-ffmpeg-flac.report.json"
+  "tests/fixtures/matroska/external-ffmpeg-flac.report.json",
+  "tests/fixtures/matroska/aac-legacy-mpeg2-main.report.json",
+  "tests/fixtures/matroska/aac-legacy-ltp.report.json"
  ],
  "added": [
   {
@@ -38,6 +40,60 @@
    ],
    "name": "Evidence",
    "last": 8
+  },
+  {
+   "scope": "node",
+   "parent": [
+    "File",
+    "Matroska",
+    "Track 1 Frames",
+    "AAC",
+    "Statistics",
+    "Prediction"
+   ],
+   "name": "Prediction Bands",
+   "goldens": [
+    "tests/fixtures/matroska/aac-legacy-mpeg2-main.report.json"
+   ]
+  },
+  {
+   "scope": "stream",
+   "array": "series",
+   "name": "Prediction Bands",
+   "goldens": [
+    "tests/fixtures/matroska/aac-legacy-mpeg2-main.report.json"
+   ]
+  },
+  {
+   "scope": "stream",
+   "array": "categorySeries",
+   "name": "Prediction",
+   "goldens": [
+    "tests/fixtures/matroska/aac-legacy-mpeg2-main.report.json"
+   ]
+  },
+  {
+   "scope": "node",
+   "parent": [
+    "File",
+    "Matroska",
+    "Track 1 Frames",
+    "AAC",
+    "Statistics",
+    "Long-Term Prediction"
+   ],
+   "name": "Long-Term Prediction Bands",
+   "goldens": [
+    "tests/fixtures/matroska/aac-legacy-ltp.report.json"
+   ]
+  },
+  {
+   "scope": "stream",
+   "array": "categorySeries",
+   "name": "Long-Term Prediction",
+   "goldens": [
+    "tests/fixtures/matroska/aac-legacy-ltp.report.json"
+   ]
   }
  ]
 }

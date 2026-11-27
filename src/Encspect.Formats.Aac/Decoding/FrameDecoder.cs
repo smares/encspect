@@ -3,9 +3,9 @@ using Encspect.Core;
 
 namespace Encspect.Formats.Aac.Decoding;
 
-// Follows libxaac (ixheaacd_channel.c ixheaacd_channel_pair_process, ixheaacd_stereo.c, ixheaacd_pns_js_thumb.c, ixheaacd_imdct.c; Apache License 2.0, Copyright (C) 2018 The
-// Android Open Source Project; the notice is in THIRD-PARTY-NOTICES.md): the noise generator and its seed, intensity stereo over the second channel's own layout, and the ranges of
-// the TNS filters. The order of the tools is the standard's (Figure 4.2, 4.1.1.2): mid/side stereo, noise substitution, intensity stereo, temporal noise shaping, the filter bank.
+// Follows libxaac (ixheaacd_channel.c ixheaacd_channel_pair_process, ixheaacd_stereo.c, ixheaacd_pns_js_thumb.c, ixheaacd_imdct.c, and for long-term prediction ixheaacd_lt_predict.c; Apache License 2.0, Copyright (C) 2018 The
+// Android Open Source Project; the notice is in THIRD-PARTY-NOTICES.md): the noise generator and its seed, intensity stereo over the second channel's own layout, the ranges of
+// the TNS filters, and the structure of long-term prediction (its window, forward transform and TNS analysis filter), with the history of unrounded output of the standard's arithmetic instead of libxaac's 16 bits. The order of the tools is the standard's (Figure 4.2, 4.1.1.2): mid/side stereo, noise substitution, intensity stereo, temporal noise shaping, the filter bank.
 // The decoding state of one AAC LC stream: per channel the second half of the previous window's output (the overlap) and its window shape, and the noise generator's state.
 internal sealed class FrameDecoder : IFrameDecoder
 {
