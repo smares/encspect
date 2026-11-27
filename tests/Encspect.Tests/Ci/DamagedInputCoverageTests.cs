@@ -50,6 +50,7 @@ public sealed class DamagedInputCoverageTests
         ["musepack"] = "musepack/",
         ["dts"] = "dts/",
         ["aac"] = "aac/",
+        ["wma"] = "asf/",
         ["pcm"] = "wav/",
     };
 
