@@ -1,6 +1,6 @@
 {
- "description": "Mono AAC LC at 22050 Hz in its configuration whose core has no line below 344 Hz (the first four scalefactor bands are empty), with the parametric stereo extension of ps-phase-20-bands.m4a: HE-AAC v2, signaled only implicitly. FFmpeg's decoder differs from the standard's in the sub subbands of the lowest QMF channel, so this file tests the phases above it.",
- "length": 3135,
+ "description": "Mono AAC LC at 22050 Hz in its configuration whose core has no line below about 690 Hz (the first eight scalefactor bands are empty), with the parametric stereo extension of ps-phase-20-bands.m4a: HE-AAC v2, signaled only implicitly. the phases act on the QMF channels above the lowest, where FFmpeg's decoder and the analyzer's agree as closely as on any parametric stereo file at this level.",
+ "length": 3399,
  "format": "MP4",
  "boxes": [
   [
@@ -111,7 +111,7 @@
   [
    "mdat",
    644,
-   2491
+   2755
   ]
  ],
  "streams": [
@@ -132,51 +132,51 @@
  "units": [
   [
    652,
-   209
+   230
   ],
   [
-   861,
-   207
+   882,
+   228
   ],
   [
-   1068,
-   207
+   1110,
+   228
   ],
   [
-   1275,
-   206
+   1338,
+   228
   ],
   [
-   1481,
-   207
+   1566,
+   230
   ],
   [
-   1688,
-   206
+   1796,
+   229
   ],
   [
-   1894,
-   206
+   2025,
+   229
   ],
   [
-   2100,
-   206
+   2254,
+   229
   ],
   [
-   2306,
-   209
+   2483,
+   231
   ],
   [
-   2515,
-   206
+   2714,
+   228
   ],
   [
-   2721,
-   207
+   2942,
+   229
   ],
   [
-   2928,
-   207
+   3171,
+   228
   ]
  ],
  "fields": {

@@ -587,6 +587,22 @@ def ps_phase_adts():
         skip={"faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold."}, rate=22050)
 
 
+def ps_phase_then_none_adts():
+    """Six blocks with phase differences, then six whose parametric stereo data has enable_ext 0: the phases stop with them (8.4.2, enable_ext)."""
+    blocks = sbr_units(6, "mono", ps=("phase", 1, 4, 2), gain=135) + sbr_units(6, "mono", ps=True, gain=135)
+    data, rows = concat(adts_frames(blocks, rate=22050, channels=1))
+    stats = "ADTS/Statistics/SBR"
+    fields = {stats + "/Parametric Stereo": share(12, 12, "access unit"),
+              stats + "/Parametric Stereo/Parametric Stereo Phase/Phase differences": share(6, 12, "raw data block"),
+              stats + "/Parametric Stereo/Parametric Stereo Phase/No phase differences": share(6, 12, "raw data block")}
+    return "ps-phase-then-none.aac", data, manifest(
+        "ADTS at a core rate of 22050 Hz, mono, whose first six access units carry parametric stereo data with phase differences and mixing procedure Rb, and the last six parametric stereo data without the extension: "
+        "HE-AAC v2, signaled only implicitly.", data, rows,
+        [stream("HE-AAC v2", 44100, 2, "Parametric stereo", 12 * 2048, ffprobe_profile="LC", ffprobe_channels=1)], fields,
+        [["aac.implicit-sbr", "and 12 carry the parametric stereo extension: the stream is HE-AAC v2"]],
+        skip={"faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold."}, rate=22050)
+
+
 def sbr_fixvar_adts():
     """Channel pairs followed by SBR data whose grids are FIXVAR frames of two and three envelopes of different frequency resolutions in
     both channels, each envelope coded with another difference: the resolutions are sent last envelope first (4.4.2.8), so a reader that
@@ -757,10 +773,10 @@ def mp4_fixtures():
              "MP4/mdat/Track 1 Samples/AAC/Access Unit/FIL/Extension Payload/SBR Data/Parametric Stereo Extension": "2 (EXT_ID_PS)"},
             [["aac.implicit-sbr", "and 12 carry the parametric stereo extension: the stream is HE-AAC v2"]],
             {"label": "LC AAC", "channels": 2, "rate": 44100}, ffprobe_profile="HE-AACv2"))
-    units = [b for b, _ in sbr_units(12, "mono", ps=("phase", 1, 4, 2), gain=135, low=((0, 4),))]
+    units = [b for b, _ in sbr_units(12, "mono", ps=("phase", 1, 4, 2), gain=135, low=((0, 8),))]
     out.append(mp4_fixture(
-        "ps-phase-high-core", "Mono AAC LC at 22050 Hz in its configuration whose core has no line below 344 Hz (the first four scalefactor bands are empty), with the parametric stereo extension of ps-phase-20-bands.m4a: "
-        "HE-AAC v2, signaled only implicitly. FFmpeg's decoder differs from the standard's in the sub subbands of the lowest QMF channel, so this file tests the phases above it.", asc(2, 22050, 1), 22050, 1, units,
+        "ps-phase-high-core", "Mono AAC LC at 22050 Hz in its configuration whose core has no line below about 690 Hz (the first eight scalefactor bands are empty), with the parametric stereo extension of ps-phase-20-bands.m4a: "
+        "HE-AAC v2, signaled only implicitly. the phases act on the QMF channels above the lowest, where FFmpeg's decoder and the analyzer's agree as closely as on any parametric stereo file at this level.", asc(2, 22050, 1), 22050, 1, units,
         "HE-AAC v2", 44100, 2, "Parametric stereo",
         {stats + "/SBR/Parametric Stereo": share(12, 12, "access unit"),
          stats + "/SBR/Parametric Stereo/Parametric Stereo Phase/Phase differences": share(12, 12, "raw data block")},
@@ -1644,7 +1660,7 @@ def lfe_restrictions():
 
 def fixtures():
     """(directory, name, data, manifest) of every fixture: "adts" or "mp4"."""
-    out = [("adts",) + f for f in [windows(), window_sequences_invalid(), stereo(), stereo_coding(), stereo_coding_reserved(), stereo_coding_elements(), intensity_noise(), implicit_sbr_adts(), ps_phase_adts(), sbr_fixvar_adts(), fill_and_data()] + loud_tools() + [stereo_tool_order(), tns_order_above_12(), first_block_kbd(), fill_with_sbr_and_other_payload(), sbr_crc_checked(), sbr_too_many_patches(), lfe_restrictions()] + faac_style_fixtures() + crc_fixtures() + object_types() + corrupt()]
+    out = [("adts",) + f for f in [windows(), window_sequences_invalid(), stereo(), stereo_coding(), stereo_coding_reserved(), stereo_coding_elements(), intensity_noise(), implicit_sbr_adts(), ps_phase_adts(), ps_phase_then_none_adts(), sbr_fixvar_adts(), fill_and_data()] + loud_tools() + [stereo_tool_order(), tns_order_above_12(), first_block_kbd(), fill_with_sbr_and_other_payload(), sbr_crc_checked(), sbr_too_many_patches(), lfe_restrictions()] + faac_style_fixtures() + crc_fixtures() + object_types() + corrupt()]
     out += [("mp4",) + f for f in mp4_fixtures()]
     out += eld_ld_sbr() + parametric_stereo_cores() + signature_streams() + streams_limited() + sbr_evidence() + blocks_missing() + prediction_bands() + rate_fixtures()
     return out

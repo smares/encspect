@@ -468,6 +468,38 @@
       "goldens": [
         "tests/fixtures/aac/adts/sbr-before-channel-element.report.json"
       ]
+    },
+    {
+      "scope": "decode",
+      "fields": [
+        "pcmSha256"
+      ],
+      "goldens": [
+        "tests/fixtures/aac/adts/ps-phase.decode.json",
+        "tests/fixtures/aac/apple-hev2-adts-cbr-st44.decode.json",
+        "tests/fixtures/aac/apple-hev2-m4a-cbr-st44.decode.json",
+        "tests/fixtures/aac/fdkaac-he-v2-adts.decode.json",
+        "tests/fixtures/aac/fdkaac-he-v2-hierarchical.decode.json",
+        "tests/fixtures/aac/fdkaac-he-v2-implicit.decode.json",
+        "tests/fixtures/aac/fdkaac-he-v2.decode.json",
+        "tests/fixtures/aac/sample-kit/external-nero-rom-aac-abr32.decode.json",
+        "tests/fixtures/aac/sample-kit/external-neroaacenc-1002-hev2-cbr32.decode.json",
+        "tests/fixtures/aac/sample-kit/external-neroaacenc-1070-hev2-cbr32.decode.json",
+        "tests/fixtures/aac/sample-kit/external-neroaacenc-11342-hev2-cbr32.decode.json",
+        "tests/fixtures/aac/sample-kit/external-neroaacenc-1330-hev2-cbr32.decode.json",
+        "tests/fixtures/aac/sample-kit/external-neroaacenc-1530-hev2-cbr32.decode.json",
+        "tests/fixtures/aac/sample-kit/external-neroaacenc-1540-hev2-cbr32.decode.json",
+        "tests/fixtures/aac/sample-kit/external-winamp-aacplus-hev2-cbr32.decode.json",
+        "tests/fixtures/aac/sample-kit/external-winamp-fhgaac-hev2-cbr32.decode.json",
+        "tests/fixtures/matroska/external-ffmpeg-aac-hev2.decode.json",
+        "tests/fixtures/mp4/explicit-sbr-implicit-ps.decode.json",
+        "tests/fixtures/mp4/implicit-ps.decode.json",
+        "tests/fixtures/mp4/ps-34-bands.decode.json",
+        "tests/fixtures/mp4/ps-mixed-bands.decode.json",
+        "tests/fixtures/mp4/ps-phase-10-bands.decode.json",
+        "tests/fixtures/mp4/ps-phase-20-bands.decode.json",
+        "tests/fixtures/mp4/ps-phase-34-bands.decode.json"
+      ]
     }
   ],
   "removed": [

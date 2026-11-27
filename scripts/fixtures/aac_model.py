@@ -624,6 +624,8 @@ def ps_phase(w, iid_mode, icc_mode, envelopes, overrun=False, no_iid=False):
     inter-channel and overall phase differences (8.4.2, Tables 8.10, 8.13 and 8.14): as many as nr_ipdopd_par names (5, 11 or 17), each envelope's own, the first across frequency
     and the others across time, as differences modulo 8. Every band has a value of its own, which the envelope changes. overrun declares the extension two bytes shorter than its data
     (8.4.2: ps_extension_size); no_iid leaves the intensity differences out (enable_iid 0), which 8.4.2 does not allow with phase differences."""
+    if no_iid:
+        iid_mode = 0
     fine = iid_mode > 2
     iid_bands = PS_BANDS[iid_mode % 3]
     icc_bands = PS_BANDS[icc_mode % 3]

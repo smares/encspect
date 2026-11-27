@@ -1,0 +1,91 @@
+{
+ "description": "ADTS at a core rate of 22050 Hz, mono, whose first six access units carry parametric stereo data with phase differences and mixing procedure Rb, and the last six parametric stereo data without the extension: HE-AAC v2, signaled only implicitly.",
+ "length": 1788,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "HE-AAC v2",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Parametric stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 24576,
+   "is_vbr": true,
+   "ffprobe_profile": "LC",
+   "ffprobe_channels": 1
+  }
+ ],
+ "units": [
+  [
+   0,
+   200
+  ],
+  [
+   200,
+   200
+  ],
+  [
+   400,
+   199
+  ],
+  [
+   599,
+   200
+  ],
+  [
+   799,
+   202
+  ],
+  [
+   1001,
+   199
+  ],
+  [
+   1200,
+   98
+  ],
+  [
+   1298,
+   98
+  ],
+  [
+   1396,
+   97
+  ],
+  [
+   1493,
+   98
+  ],
+  [
+   1591,
+   100
+  ],
+  [
+   1691,
+   97
+  ]
+ ],
+ "fields": {
+  "ADTS/Statistics/SBR/Parametric Stereo": "12 access units (100.0%)",
+  "ADTS/Statistics/SBR/Parametric Stereo/Parametric Stereo Phase/Phase differences": "6 raw data blocks (50.0%)",
+  "ADTS/Statistics/SBR/Parametric Stereo/Parametric Stereo Phase/No phase differences": "6 raw data blocks (50.0%)"
+ },
+ "findings": [
+  [
+   "aac.implicit-sbr",
+   "and 12 carry the parametric stereo extension: the stream is HE-AAC v2"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "faad": null,
+  "skip": {
+   "faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold."
+  }
+ }
+}

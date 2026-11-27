@@ -1,4 +1,5 @@
 using Encspect.Core;
+using Encspect.Host;
 using Encspect.Formats.Aac;
 using Encspect.Formats.Aac.Decoding;
 
@@ -198,6 +199,86 @@ public class AacPsPhaseTests
         held[SbrRecord.PsEnableIpdopd] = 0;
         ps.Process(re, im, ahead, ahead, held, 64);
         Assert.Equal(re[row + 4], ps.RightRe[row + 4], 1e-4f);
+    }
+
+    // The flag of phase differences is the block's own, whether or not the walk stores its values for a decoder: after blocks with phases, blocks without the extension count as having none.
+    [Fact]
+    public void ABlockWithoutTheExtensionHasNoPhasesWhetherOrNotItIsDecoded()
+    {
+        byte[] file = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "aac", "adts", "ps-phase-then-none.aac"));
+        foreach (bool decode in new[] { false, true })
+        {
+            var options = new AnalysisOptions { Decoding = decode ? new DecodeOptions { MaxWork = long.MaxValue, Output = _ => new Encspect.Tests.Decoding.DecoderWorkTests.NullSink() } : null };
+            Report report = Analyzer.CreateDefault().Analyze("ps-phase-then-none.aac", new MemoryStream(file), options);
+            Node phase = Fixtures.Resolve(report.Streams.Single().Nodes[0], "Statistics/SBR/Parametric Stereo/Parametric Stereo Phase").Single();
+            Assert.Equal("6 raw data blocks (50.0%)", phase.Children.Single(c => c.Name == "Phase differences").Value!.ToString());
+        }
+    }
+
+    // Phases held through a frame without envelopes (Table 8.52) are the basis of the next frame's differences across time, and its smoothing history.
+    [Fact]
+    public void HeldPhasesAreTheBasisOfTheNextFramesDifferences()
+    {
+        var ps = new PsDecoder();
+        int[] data = Data(1, 4, 0, mixB: false);
+        (float[] re, float[] im) = Signal();
+        float[] ahead = new float[6 * 64];
+        for (int frame = 0; frame < 4; frame++)
+        {
+            ps.Process(re, im, ahead, ahead, data, 64);
+        }
+
+        int[] held = Data(1, 4, 0, mixB: false);
+        held[SbrRecord.PsEnvelopes] = 0;
+        ps.Process(re, im, ahead, ahead, held, 64);
+        int[] next = Data(1, 0, 0, mixB: false);
+        next[SbrRecord.PsIpdTime] = 1;
+        next[SbrRecord.PsOpdTime] = 1;
+        for (int frame = 0; frame < 4; frame++)
+        {
+            ps.Process(re, im, ahead, ahead, next, 64);
+        }
+
+        int row = 20 * 64;
+        Assert.Equal(-re[row + 4], ps.RightRe[row + 4], 1e-4f);
+    }
+
+    // The envelope that VAR_BORDERS appends after the last border holds the matrices of the envelope before it: the last region of the frame does not turn on.
+    [Fact]
+    public void TheAppendedEnvelopeHoldsTheLastMatrices()
+    {
+        var ps = new PsDecoder();
+        int[] data = Data(1, 2, 0, mixB: false);
+        data[SbrRecord.PsFrameClass] = 1;
+        data[SbrRecord.PsBorders + 1] = 16;
+        float[] re = new float[32 * 64];
+        float[] im = new float[32 * 64];
+        Array.Fill(re, 1f);
+        Array.Fill(im, 0.5f);
+        float[] ahead = new float[6 * 64];
+        for (int frame = 0; frame < 4; frame++)
+        {
+            ps.Process(re, im, ahead, ahead, data, 64);
+        }
+
+        Assert.Equal(ps.RightRe[20 * 64 + 4], ps.RightRe[30 * 64 + 4], 1e-4f);
+        Assert.Equal(ps.RightIm[20 * 64 + 4], ps.RightIm[30 * 64 + 4], 1e-4f);
+    }
+
+    // Until the first ps_data the output is the mono signal in both channels, and from it the matrices start at zero (8.6.4.6.4 a): the first slot is nearly silent and the gains ramp up.
+    [Fact]
+    public void TheMatricesOfTheFirstFrameStartAtZero()
+    {
+        var ps = new PsDecoder();
+        int[] data = Data(1, 0, 0, mixB: false);
+        data[SbrRecord.PsEnableIpdopd] = 0;
+        float[] re = new float[32 * 64];
+        float[] im = new float[32 * 64];
+        Array.Fill(re, 1f);
+        float[] ahead = new float[6 * 64];
+        ps.Process(re, im, ahead, ahead, data, 64);
+        Assert.True(Math.Abs(ps.LeftRe[(0 * 64) + 20]) < 0.1f);
+        Assert.Equal(1f, ps.LeftRe[(31 * 64) + 20], 0.05f);
     }
 
     private (float[] Re, float[] Im, PsDecoder Ps) RunWithMode(int iidMode, int ipd, int opd)
