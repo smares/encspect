@@ -73,8 +73,9 @@ def read_floats(path):
     return values
 
 
-def channel_figures(analyzer, reference, channels, count):
-    """The RMS of the difference and its largest magnitude, per channel, over the first count samples of each channel."""
+def channel_figures(analyzer, reference, channels, count, limit=None):
+    """The RMS of the difference and its largest magnitude, per channel, over the first count samples of each channel (the first limit where given)."""
+    count = count if limit is None else min(count, limit)
     figures = []
     for c in range(channels):
         total = 0.0
@@ -133,17 +134,22 @@ def check(path, args, work):
     status = "differs as listed" if known is not None and not holds else "ok" if holds else "differs"
     print(f"{path.name}: {count} samples against ffmpeg, RMS {rms:.2e}, largest {largest:.2e}: {status}")
     if args.microsoft:
-        messages += microsoft(path, mine, channels, args)
+        messages += microsoft(path, mine, channels, args, frame)
         failed |= any("failed" in m for m in messages)
     return messages, failed
 
 
-def microsoft(path, mine, channels, args):
+def microsoft(path, mine, channels, args, frame):
     pcm = pathlib.Path(args.microsoft) / (path.name + ".f32")
     if not pcm.exists():
         return [f"has no record of Microsoft's decoder in {args.microsoft}"]
     theirs = read_floats(pcm)
+    # The files written by ffmpeg carry no start time, so Microsoft's output begins one frame before the analyzer's first sample; the Windows files' begin with it.
+    lead = min((0, frame), key=lambda n: sum(f[0] for f in channel_figures(mine, theirs[n * channels:], channels, min(len(mine), len(theirs) - n * channels) // channels, 4 * frame)))
+    theirs = theirs[lead * channels:]
     note = []
+    if lead:
+        note.append(f"Microsoft's output starts {lead} samples before the analyzer's")
     if len(theirs) != len(mine):
         note.append(f"Microsoft's decoder gives {len(theirs) // channels} samples, the analyzer {len(mine) // channels}")
     count = min(len(theirs), len(mine)) // channels
