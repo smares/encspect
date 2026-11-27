@@ -1,5 +1,5 @@
 {
- "description": "ADTS of channel configuration 3 whose blocks alternate between a single channel element and a channel pair element and the two in the other order: the counts are the configuration's, the order of the odd blocks is not the first block's.",
+ "description": "ADTS of channel configuration 3 whose blocks alternate between a single channel element and a channel pair element and the two in the other order: the counts are the configuration's, the order of every block but the first is not the block before's, so each is withheld.",
  "length": 923,
  "format": "AAC",
  "boxes": [],
@@ -48,7 +48,7 @@
  "findings": [
   [
    "aac.layout-changed",
-   "3 raw data blocks hold channel elements in another order"
+   "5 raw data blocks hold channel elements in another order than the block before"
   ]
  ],
  "crosscheck": {

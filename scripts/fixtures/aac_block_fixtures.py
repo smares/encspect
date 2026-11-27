@@ -1004,7 +1004,7 @@ def corrupt():
         "outside AAC SSR.",
         data, rows, [stream("AAC LC", RATE, 1, "Mono", len(rows) * 1024)],
         {"ADTS/Frame[1]/Raw Data Block/SCE/Channel/ICS Info/ICS Reserved Bit": "1"},
-        [[code, text] for _, code, text in soft] + [["aac.elements-mismatch", "other than channel configuration 1 defines"], ["aac.window-slopes-differ", "a window sequence whose left slope differs"]],
+        [[code, text] for _, code, text in soft] + [["aac.elements-mismatch", "other than channel configuration 1 defines"], ["aac.layout-changed", "channel elements in another order than the block before it"], ["aac.window-slopes-differ", "a window sequence whose left slope differs"]],
         skip={"ffprobe": "ffmpeg rejects some of the frames.", "faad": "faad2 rejects some of the frames.", "decode": "decoders reject some of the frames",
               "faad_trace": "faad2 stops at frames it rejects."})))
     return out
@@ -1599,9 +1599,9 @@ def elements_order_changes():
     data, rows = concat(adts_frames(blocks, channels=3))
     return "elements-order-changes.aac", data, manifest(
         "ADTS of channel configuration 3 whose blocks alternate between a single channel element and a channel pair element and the two in the other order: the counts are the configuration's, "
-        "the order of the odd blocks is not the first block's.", data, rows,
+        "the order of every block but the first is not the block before's, so each is withheld.", data, rows,
         [stream("AAC LC", RATE, 3, "3.0", 6 * 1024, layout=["front center", "front left", "front right"])], {},
-        [["aac.layout-changed", "3 raw data blocks hold channel elements in another order"]],
+        [["aac.layout-changed", "5 raw data blocks hold channel elements in another order than the block before"]],
         skip={"decode": "ffmpeg maps the elements by their order in each block.", "faad_trace": "faad2 reads the elements by their order."})
 
 

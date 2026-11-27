@@ -4505,14 +4505,14 @@
       {
         "severity": "Info",
         "code": "aac.layout-changed",
-        "message": "3 raw data blocks hold channel elements in another order than the stream's first block holds them, so a decoder starts its per-element state again; the first at 0x99.",
+        "message": "5 raw data blocks hold channel elements in another order than the block before it, so the decoder starts the state of its channel slots again; the first at 0x99.",
         "offset": 153,
         "length": 153,
         "path": [
           0,
           2
         ],
-        "count": 3
+        "count": 5
       }
     ]
   }
