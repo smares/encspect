@@ -22,6 +22,7 @@ internal static class Topics
     public const string SpectralCutoff = "spectral-cutoff";
     public const string SpectralBandwidth = "spectral-bandwidth";
     public const string SpectralSlope = "spectral-slope";
+    public const string NyquistEdge = "nyquist-edge";
     public const string SpectralHoles = "spectral-holes";
     public const string MidSideSpectra = "mid-side-spectra";
     public const string InterChannelCoherence = "inter-channel-coherence";

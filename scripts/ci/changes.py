@@ -179,7 +179,7 @@ FIXTURE_ONLY = ["scripts/fixtures/*_tool.py", "scripts/fixtures/make_*.py", "scr
                 "scripts/fixtures/*_model.py", "scripts/fixtures/*_signal*.py", "scripts/fixtures/*_sources.py", "scripts/fixtures/*_source.py",
                 "scripts/fixtures/check_sources.py", "scripts/fixtures/check_restricted_encoders.py", "scripts/fixtures/check_faac_sbr.py",
                 "scripts/fixtures/ancillary_scan.py", "scripts/fixtures/vbr_tags.py", "scripts/fixtures/aac_tables.py",
-                "scripts/fixtures/macos/**"]
+                "scripts/fixtures/macos/**", "scripts/fixtures/r8brain_*"]
 
 # Files that unit tests (and the GUI's) read without being .NET input themselves: a change runs the jobs listed and only the test classes of the files that
 # name the token (scope.py), unless other changes decide otherwise. A background article is read by what loads the TopicLibrary; the GUI embeds the

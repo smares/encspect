@@ -27,6 +27,7 @@ PROGRAMS = {
     "oggz": (["oggz", "--version"], r"^oggz version (\S+)", "1.1.3"),
     "ogginfo": (["ogginfo", "-V"], r"^ogginfo from vorbis-tools (\S+)", "1.4.3"),
     "oggdec": (["oggdec", "--version"], r"^oggdec from vorbis-tools (\S+)", "1.4.3"),
+    "sox": (["sox", "--version"], r"SoX v(\S+)", "14.4.2"),
     "flac": (["flac", "--version"], r"^flac (\S+)", "1.5.0"),
     "metaflac": (["metaflac", "--version"], r"^metaflac (\S+)", "1.5.0"),
     # Built by ebur128_tool.py from the pinned tag of libebur128, with scripts/fixtures/ebur128_driver.c; found on PATH.

@@ -14,14 +14,21 @@
     "tests/fixtures/truehd/",
     "tests/fixtures/wavpack/"
   ],
-  "reason": "Item 13 (inter-channel coherence): every measurement golden gains spectrum.coherence (null without a pair of channels, the rows and shares of a stream with one as hashes); no existing figure changes. The same key is in the goldens of the other formats' folders, which this one file covers.",
+  "reason": "Nyquist edge (0.5 item 14): every measurement golden gains spectrum.nyquistEdges (an array, empty where none is found), and spectrum.isNyquistEdgeSearched where the sample rate is under 8,000 Hz; no existing figure changes. The same keys are in the goldens of the other formats' folders, which this one file covers.",
   "added": [
     {
       "scope": "measurement",
       "path": [
         "spectrum"
       ],
-      "key": "coherence"
+      "key": "nyquistEdges"
+    },
+    {
+      "scope": "measurement",
+      "path": [
+        "spectrum"
+      ],
+      "key": "isNyquistEdgeSearched"
     }
   ]
 }
