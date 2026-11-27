@@ -13,6 +13,13 @@
         "tests/fixtures/aac/faac-2.1-he-51-adts.report.json",
         "tests/fixtures/aac/faac-2.2-he-51-adts.report.json"
       ]
+    },
+    {
+      "scope": "finding",
+      "code": "aac.implicit-sbr",
+      "goldens": [
+        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
+      ]
     }
   ],
   "changed": [
