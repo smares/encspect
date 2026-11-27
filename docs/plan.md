@@ -425,6 +425,12 @@ The scope is confirmed when 0.4 is done. The decoders follow steps 9 to 15 of [l
 14. **A band edge at another sample rate's Nyquist frequency** (the lead, 2026-11-26, from Hydrogenaudio's sample rate conversion comparison): a measurement beside the spectral cutoff that says when the content ends in a steep edge at the Nyquist frequency of a lower common sample rate (22.05 kHz in a 48 kHz or 96 kHz file, 24 kHz in an 88.2 kHz file, and so on), as a figure with its basis ("Content ends at 22.05 kHz, the Nyquist frequency of 44.1 kHz"), never as a verdict about the file's history; and, where measurable, the level of the mirrored image above that edge.
    - **First a design section** in [spectral-analysis.md](design/spectral-analysis.md): the rates tested, how steep an edge counts, the tolerance, how the image is measured, and the cases that look alike (an encoder's lowpass, a band-limited source).
    - **Fixtures:** sweeps and music resampled by SoX (run as a black box) and r8brain (MIT) at several qualities, and the same content not resampled.
+15. **An audit of every citation of copyleft source** (the lead, 2026-11-27): the October audits looked for code that follows LGPL or GPL code closely, and passed facts taken from such code (names, field layouts, limits) as citations; the MP4 protection code took the iTunes atom names from VLC, the `aavd` layout from GStreamer and the `adrm` fields from FFmpeg, with no other source. Each citation of a copyleft source file in `src`, `docs`, `scripts` and the topics is put in one of four classes, each resolved in its own pull request:
+   - behavior seen by running the tool as a black box: the citation names the tool, not its source file;
+   - a fact that the specification or a permissive source also gives: that source is cited, and checked;
+   - a fact whose only detailed source is copyleft code: a clean-room split, as CLAUDE.md requires (a description by an agent that read the source, an implementer who did not);
+   - a source that is in fact permissive: the citation stays, with its notice where code follows it.
+   - The inventory is kept in the private repository; each pull request lists what it changed.
 
 ### After 0.5
 
