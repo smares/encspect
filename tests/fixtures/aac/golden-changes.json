@@ -13,79 +13,6 @@
         "tests/fixtures/aac/faac-2.1-he-51-adts.report.json",
         "tests/fixtures/aac/faac-2.2-he-51-adts.report.json"
       ]
-    },
-    {
-      "scope": "finding",
-      "code": "aac.implicit-sbr",
-      "goldens": [
-        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "ADTS",
-        "Statistics",
-        "SBR"
-      ],
-      "name": "SBR Frame Classes",
-      "goldens": [
-        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "ADTS",
-        "Statistics",
-        "SBR"
-      ],
-      "name": "SBR Envelopes",
-      "goldens": [
-        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "ADTS",
-        "Statistics",
-        "SBR",
-        "SBR Frame Classes"
-      ],
-      "name": "FIXFIX",
-      "goldens": [
-        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
-      ]
-    },
-    {
-      "scope": "node",
-      "parent": [
-        "ADTS",
-        "Statistics",
-        "SBR",
-        "SBR Envelopes"
-      ],
-      "name": "1 envelope",
-      "goldens": [
-        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
-      ]
-    },
-    {
-      "array": "categorySeries",
-      "name": "SBR Frame Classes",
-      "scope": "stream",
-      "goldens": [
-        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
-      ]
-    },
-    {
-      "array": "categorySeries",
-      "name": "SBR Envelopes",
-      "scope": "stream",
-      "goldens": [
-        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
-      ]
     }
   ],
   "changed": [
@@ -224,6 +151,34 @@
       "path": [
         "ADTS",
         "Statistics",
+        "SBR",
+        "SBR Headers"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
+      ]
+    },
+    {
+      "path": [
+        "ADTS",
+        "Statistics",
+        "SBR",
+        "Unread SBR Data"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
+      ]
+    },
+    {
+      "path": [
+        "ADTS",
+        "Statistics",
         "Samples"
       ],
       "fields": [
@@ -243,12 +198,27 @@
       "goldens": [
         "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
       ]
+    },
+    {
+      "scope": "finding",
+      "code": "aac.sbr-without-channel-element",
+      "fields": [
+        "message",
+        "count"
+      ],
+      "goldens": [
+        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
+      ]
     }
   ],
   "removed": [
     {
-      "scope": "finding",
-      "code": "aac.sbr-without-channel-element",
+      "parent": [
+        "ADTS",
+        "Statistics",
+        "SBR"
+      ],
+      "name": "Start Frequency",
       "goldens": [
         "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
       ]
@@ -259,7 +229,40 @@
         "Statistics",
         "SBR"
       ],
-      "name": "Unread SBR Data",
+      "name": "Stop Frequency",
+      "goldens": [
+        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "ADTS",
+        "Statistics",
+        "SBR"
+      ],
+      "name": "Crossover Band",
+      "goldens": [
+        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "ADTS",
+        "Statistics",
+        "SBR"
+      ],
+      "name": "Amplitude Resolution",
+      "goldens": [
+        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "ADTS",
+        "Statistics",
+        "SBR"
+      ],
+      "name": "HasHeaderChanges",
       "goldens": [
         "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
       ]
