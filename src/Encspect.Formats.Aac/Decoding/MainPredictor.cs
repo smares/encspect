@@ -93,7 +93,8 @@ internal sealed class MainPredictor
     }
 
     // One block of one channel: modes holds per line 0 for a line that takes its transmitted value, 1 for a line whose prediction is used (13.3.2.1: the estimate is added to the
-    // transmitted prediction error) and 2 for a line of noise substitution (4.6.13.4: the predictor is reset and updated with a value of zero, and the spectrum keeps the noise).
+    // transmitted prediction error) and 2 for a line of noise substitution (4.6.13.4: the predictor is reset and updated with a value of zero, and the spectrum keeps the noise). That
+    // reading is unverified: no reference stream combines Main with noise substitution, and 13818-7 13.3.3's order (the reset after the update) would leave VAR at 1, not 0.90625.
     // Every predictor runs whatever its mode, so that its coefficients follow the signal.
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public void Process(Span<float> spectrum, ReadOnlySpan<byte> modes)
