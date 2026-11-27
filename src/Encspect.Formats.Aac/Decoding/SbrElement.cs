@@ -14,7 +14,7 @@ internal sealed class SbrElement
     // The synthesis bank's gain for this analysis bank (measured by SbrQmfTests: the chain's gain on a sinusoid in a low band).
     internal const float OutputScale = 1f / (32768f * 64f);
 
-    private readonly int _channels;
+    private int _channels;
     private readonly int _rate;
     private readonly SbrChannel[] _channel;
     private readonly float[][] _re;
@@ -29,14 +29,15 @@ internal sealed class SbrElement
     private bool _hasHeader;
     private int _previousKx = 32;
 
-    public SbrElement(int channels, int rate)
+    // The buffers are for a channel pair; Configure sets how many channels the element serves.
+    public SbrElement(int rate)
     {
-        _channels = channels;
+        _channels = 1;
         _rate = rate;
-        _channel = new SbrChannel[channels];
-        _re = new float[channels][];
-        _im = new float[channels][];
-        for (int c = 0; c < channels; c++)
+        _channel = new SbrChannel[2];
+        _re = new float[2][];
+        _im = new float[2][];
+        for (int c = 0; c < 2; c++)
         {
             _channel[c] = new SbrChannel();
             _re[c] = new float[SbrQmf.Slots * 64];
@@ -55,6 +56,16 @@ internal sealed class SbrElement
     public ReadOnlySpan<float> LookAheadImaginary(int channel) => _channel[channel].LowIm.AsSpan(SbrChannel.Offset * 64, 6 * 64);
 
     public SbrChannel Channel(int channel) => _channel[channel];
+
+    // The element serves width channels from now on (1 or 2); a change of width starts its state again, and allocates nothing.
+    public void Configure(int width)
+    {
+        if (width != _channels)
+        {
+            _channels = width;
+            Reset();
+        }
+    }
 
     public bool IsActive { get; private set; }
 
@@ -124,9 +135,9 @@ internal sealed class SbrElement
             }
         }
 
-        foreach (SbrChannel channel in _channel)
+        for (int c = 0; c < _channels; c++)
         {
-            channel.Carry();
+            _channel[c].Carry();
         }
     }
 
