@@ -34,6 +34,7 @@ internal sealed class StdFrameDecoder : IFrameDecoder
     private readonly double[] _heldLargest;
     private readonly double[] _largest;
     private readonly bool[] _isTainted;
+    private readonly bool[] _isFromFailedFrame;
     private readonly float[] _y;
     private readonly float[] _planar;
     private readonly byte[] _marks;
@@ -48,6 +49,7 @@ internal sealed class StdFrameDecoder : IFrameDecoder
     private int _noiseAt;
     private bool _lostBefore;
     private bool _followsFailedUnit;
+    private bool _frameFails;
     private bool _hasLast;
     private int _lastSize;
     private int _lastNext;
@@ -74,8 +76,10 @@ internal sealed class StdFrameDecoder : IFrameDecoder
         _heldSize = new int[_channels];
         Array.Fill(_heldSize, -1);
         _heldLargest = new double[_channels];
+        Array.Fill(_heldLargest, 1.0);
         _largest = new double[_channels];
         _isTainted = new bool[_channels];
+        _isFromFailedFrame = new bool[_channels];
         _y = new float[2 * _frame];
         _planar = new float[_channels * _frame];
         _marks = new byte[2 * _frame];
@@ -163,6 +167,7 @@ internal sealed class StdFrameDecoder : IFrameDecoder
 
         bool follows = frame.FollowsGap || _lostBefore;
         _lostBefore = false;
+        _frameFails = frame.FailsChecksum;
         int count;
         try
         {
@@ -200,15 +205,11 @@ internal sealed class StdFrameDecoder : IFrameDecoder
         int span = (_frame / 2) + (Math.Min(firstLength, _frame >> _blocks[0].Previous) / 2);
         if (follows)
         {
-            Array.Clear(_marks, 0, _marks.Length);
             Array.Fill(_marks, (byte)1, 0, Math.Min(span, _frame));
         }
         else if (_followsFailedUnit)
         {
-            for (int i = 0; i < Math.Min(span, _frame); i++)
-            {
-                _marks[i] = Math.Max(_marks[i], (byte)2);
-            }
+            Mark(0, Math.Min(span, _frame), 2);
         }
 
         _followsFailedUnit = frame.FailsChecksum;
@@ -291,6 +292,18 @@ internal sealed class StdFrameDecoder : IFrameDecoder
         }
 
         return written;
+    }
+
+    // Marks output positions of the two-frame window: 1 withholds them (after a gap), 2 leaves them out of the measurements; a mark never weakens one that is set.
+    private void Mark(int from, int length, byte mark)
+    {
+        for (int i = Math.Max(from, 0); i < Math.Min(from + length, _marks.Length); i++)
+        {
+            if (mark == 1 || _marks[i] == 0)
+            {
+                _marks[i] = mark;
+            }
+        }
     }
 
     // A frame that is not decoded leaves the overlap and the exponents of a lost one behind.
@@ -451,6 +464,7 @@ internal sealed class StdFrameDecoder : IFrameDecoder
         }
 
         bool isTainted = false;
+        bool isFromFailed = false;
         if (b.CodedCount > 0)
         {
             double gain = Math.Min(b.Gain, MaxGain);
@@ -466,10 +480,12 @@ internal sealed class StdFrameDecoder : IFrameDecoder
                 {
                     Load(c, b.Size, length, r, ch);
                     _isTainted[c] = false;
+                    _isFromFailedFrame[c] = _frameFails;
                 }
                 else
                 {
-                    isTainted |= _isTainted[c];
+                    isTainted |= _isTainted[c] || _heldSize[c] < 0;
+                    isFromFailed |= _isFromFailedFrame[c];
                     Reuse(c, b.Size, length);
                 }
 
@@ -489,10 +505,15 @@ internal sealed class StdFrameDecoder : IFrameDecoder
             Synthesize(c, b.Size, b.Previous, b.Next, length, position);
         }
 
+        int windowAt = (_frame / 2) + position - (length / 2);
+        if (isFromFailed)
+        {
+            Mark(windowAt, 2 * length, 2);
+        }
+
         if (isTainted)
         {
-            int from = (_frame / 2) + position - (length / 2);
-            Array.Fill(_marks, (byte)1, from, Math.Min(2 * length, _marks.Length - from));
+            Mark(windowAt, 2 * length, 1);
         }
     }
 
@@ -560,6 +581,7 @@ internal sealed class StdFrameDecoder : IFrameDecoder
     }
 
     // The exponents a block reuses (Exponents of another block size): the held values at the index of the line of the other block at the same frequency.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void Reuse(int c, int size, int length)
     {
         float[] x = _exponents[c];
@@ -635,6 +657,7 @@ internal sealed class StdFrameDecoder : IFrameDecoder
     }
 
     // Dequantization (Dequantization) of a coded channel into its spectrum, with the noise substitution of the stream where it has one.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void Dequantize(int c, int size, int length, double gain, ReadOnlySpan<int> r, Chan ch, bool isReused)
     {
         int first = _p.FirstCoefficient;
@@ -718,6 +741,7 @@ internal sealed class StdFrameDecoder : IFrameDecoder
 
     // The mean of the squared exponents over each high band: the exponents of the block itself, or where it reuses those of a shorter block the held ones at the index its own
     // chain of bases gives (Exponents of another block size).
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void BandPowers(int c, int size, int[] high, int highStart, bool isReused)
     {
         float[] x = _exponents[c];
