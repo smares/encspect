@@ -351,6 +351,22 @@ def check_markers(path, problems):
     return True
 
 
+def check_spread(manifest, path, problems):
+    """Spread audio (section 9.1.1) of a PCM stream, decoded by ffmpeg: its output is the media objects' bytes as they are where the manifest says
+    "as is" and the same bytes in another order where it says "descrambled" (ffmpeg's ASF demuxer reorders them, asfdec_f.c's descrambling; this
+    is observed behavior). The analyzer's rule (SpreadAudio.Scrambles) is checked against the same pins by AsfSpreadTests."""
+    data = path.read_bytes()
+    raw = b"".join(data[offset:offset + length] for o in manifest["media_objects"] for offset, length in o[4])
+    code, pcm, errors = decode(path)
+    if code != 0 or errors:
+        problems.append(f"ffmpeg decoding: {errors or code}")
+    elif manifest["crosscheck"]["spread"] == "as is":
+        if pcm != raw:
+            problems.append("ffmpeg's output is not the media objects' bytes as they are")
+    elif pcm == raw or sorted(pcm) != sorted(raw):
+        problems.append(f"ffmpeg's output is not the media objects' bytes in another order ({len(pcm)} of {len(raw)} bytes, equal: {pcm == raw})")
+
+
 def check_hand_built(name, manifest, path, problems):
     crosscheck = manifest.get("crosscheck", {})
     check_protection(name, manifest, path, problems)
@@ -390,7 +406,9 @@ def check_hand_built(name, manifest, path, problems):
                 problems.append(f"packet of stream {g[0]}: ffprobe has size {g[1]} at {g[2]} ms, the model {w[1]} at {w[2]} ms")
                 break
     check_markers(path, problems)
-    if audio and all(s["tag"] == 1 for s in audio) and len(audio) == len(manifest["streams"]):
+    if "spread" in crosscheck:
+        check_spread(manifest, path, problems)
+    elif audio and all(s["tag"] == 1 for s in audio) and len(audio) == len(manifest["streams"]):
         code, pcm, errors = decode(path)
         if code != 0 or errors:
             problems.append(f"ffmpeg decoding: {errors or code}")

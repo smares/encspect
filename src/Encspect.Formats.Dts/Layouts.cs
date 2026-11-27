@@ -92,16 +92,18 @@ internal static class Layouts
         return positions;
     }
 
-    // The positions of a mask with a bit for each speaker, in the order of Table 6-22, lowest bit first: the channel mask of an XLL channel
-    // set, which FFmpeg's dca_xll.c reads in this order (the specification refers to its clause C.8 for it, which is about entropy coding).
+    // The positions of a mask with a bit for each speaker, in the order of Table 6-22, lowest bit first: the channel mask of an XLL channel set.
+    // Table 6-22 is the specification's list of loudspeaker bits; clause 8.3.2 (nChMask) sends to C.8 for the XLL mask, which is about entropy coding,
+    // so that this mask has the order of Table 6-22 rests on ffprobe, run as a program on one fixture for each bit (`dts/xll-mask-bit-*`,
+    // crosscheck_dts_fixtures.py), and on the real 7.1 sample. Table 6-22 reserves bits 28 to 31; no tool names them, so each stays an unnamed speaker.
     public static List<Position> SpeakerMask(uint mask)
     {
         var positions = new List<Position>();
-        for (int bit = 0; bit < (int)Position.None; bit++)
+        for (int bit = 0; bit < 32; bit++)
         {
             if ((mask & (1u << bit)) != 0)
             {
-                positions.Add((Position)bit);
+                positions.Add((Position)Math.Min(bit, (int)Position.None));
             }
         }
 

@@ -1,0 +1,407 @@
+{
+ "description": "A PCM stream whose error correction spreads the audio with a chunk size above the virtual packet length (span 2, virtual packet length 64, chunk size 128); each media object has 2 virtual packets.",
+ "format": "ASF",
+ "length": 2446,
+ "objects": [
+  [
+   "Header Object",
+   0,
+   284
+  ],
+  [
+   "Data Object",
+   284,
+   2162
+  ]
+ ],
+ "header_objects": [
+  [
+   "File Properties Object",
+   30,
+   104
+  ],
+  [
+   "Stream Properties Object",
+   134,
+   104
+  ],
+  [
+   "Header Extension Object",
+   238,
+   46
+  ]
+ ],
+ "extension_objects": [],
+ "streams": [
+  {
+   "number": 1,
+   "type": "F8699E40-5B4D-11CF-A8FD-00805F5C442B",
+   "error_correction": "BFC3CD50-618F-11CF-8BB2-00AA00B4E220",
+   "encrypted": false,
+   "type_length": 18,
+   "tag": 1,
+   "channels": 1,
+   "rate": 8000,
+   "avg_bytes": 16000,
+   "block_align": 2,
+   "bits": 16,
+   "codec_data": ""
+  }
+ ],
+ "packets": [
+  [
+   334,
+   176,
+   1
+  ],
+  [
+   510,
+   176,
+   1
+  ],
+  [
+   686,
+   176,
+   1
+  ],
+  [
+   862,
+   176,
+   1
+  ],
+  [
+   1038,
+   176,
+   1
+  ],
+  [
+   1214,
+   176,
+   1
+  ],
+  [
+   1390,
+   176,
+   1
+  ],
+  [
+   1566,
+   176,
+   1
+  ],
+  [
+   1742,
+   176,
+   1
+  ],
+  [
+   1918,
+   176,
+   1
+  ],
+  [
+   2094,
+   176,
+   1
+  ],
+  [
+   2270,
+   176,
+   1
+  ]
+ ],
+ "payloads": [
+  [
+   0,
+   1,
+   1,
+   0,
+   8,
+   128,
+   false,
+   true
+  ],
+  [
+   1,
+   1,
+   2,
+   0,
+   8,
+   128,
+   false,
+   true
+  ],
+  [
+   2,
+   1,
+   3,
+   0,
+   8,
+   128,
+   false,
+   true
+  ],
+  [
+   3,
+   1,
+   4,
+   0,
+   8,
+   128,
+   false,
+   true
+  ],
+  [
+   4,
+   1,
+   5,
+   0,
+   8,
+   128,
+   false,
+   true
+  ],
+  [
+   5,
+   1,
+   6,
+   0,
+   8,
+   128,
+   false,
+   true
+  ],
+  [
+   6,
+   1,
+   7,
+   0,
+   8,
+   128,
+   false,
+   true
+  ],
+  [
+   7,
+   1,
+   8,
+   0,
+   8,
+   128,
+   false,
+   true
+  ],
+  [
+   8,
+   1,
+   9,
+   0,
+   8,
+   128,
+   false,
+   true
+  ],
+  [
+   9,
+   1,
+   10,
+   0,
+   8,
+   128,
+   false,
+   true
+  ],
+  [
+   10,
+   1,
+   11,
+   0,
+   8,
+   128,
+   false,
+   true
+  ],
+  [
+   11,
+   1,
+   12,
+   0,
+   8,
+   128,
+   false,
+   true
+  ]
+ ],
+ "media_objects": [
+  [
+   1,
+   1,
+   128,
+   0,
+   [
+    [
+     365,
+     128
+    ]
+   ]
+  ],
+  [
+   1,
+   2,
+   128,
+   25,
+   [
+    [
+     541,
+     128
+    ]
+   ]
+  ],
+  [
+   1,
+   3,
+   128,
+   50,
+   [
+    [
+     717,
+     128
+    ]
+   ]
+  ],
+  [
+   1,
+   4,
+   128,
+   75,
+   [
+    [
+     893,
+     128
+    ]
+   ]
+  ],
+  [
+   1,
+   5,
+   128,
+   100,
+   [
+    [
+     1069,
+     128
+    ]
+   ]
+  ],
+  [
+   1,
+   6,
+   128,
+   125,
+   [
+    [
+     1245,
+     128
+    ]
+   ]
+  ],
+  [
+   1,
+   7,
+   128,
+   150,
+   [
+    [
+     1421,
+     128
+    ]
+   ]
+  ],
+  [
+   1,
+   8,
+   128,
+   175,
+   [
+    [
+     1597,
+     128
+    ]
+   ]
+  ],
+  [
+   1,
+   9,
+   128,
+   200,
+   [
+    [
+     1773,
+     128
+    ]
+   ]
+  ],
+  [
+   1,
+   10,
+   128,
+   225,
+   [
+    [
+     1949,
+     128
+    ]
+   ]
+  ],
+  [
+   1,
+   11,
+   128,
+   250,
+   [
+    [
+     2125,
+     128
+    ]
+   ]
+  ],
+  [
+   1,
+   12,
+   128,
+   275,
+   [
+    [
+     2301,
+     128
+    ]
+   ]
+  ]
+ ],
+ "file": {
+  "file_size": 2446,
+  "packets": 12,
+  "play_duration": 1000000,
+  "send_duration": 0,
+  "preroll": 0,
+  "flags": 2,
+  "min_packet": 176,
+  "max_packet": 176,
+  "max_bitrate": 0
+ },
+ "findings": [
+  {
+   "code": "asf.codec-not-analyzed",
+   "contains": "PCM"
+  }
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "spread": "as is",
+  "spread_audio": {
+   "span": 2,
+   "virtual_packet_length": 64,
+   "virtual_chunk_length": 128
+  }
+ }
+}

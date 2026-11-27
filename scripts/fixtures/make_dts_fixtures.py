@@ -730,6 +730,18 @@ def build_gate2():
                     "DTS/Frame[1]/Extension Substream/Header Size": "24 bytes",
                     "DTS/Frame[3]/Extension Substream/Asset 1 Data/XLL/Channel Set 1/IsPrimaryChannelSet": "true"},
             crosscheck=cc_lossless())
+    # 7.5.2: a header without static fields has one asset and one audio presentation (decoders set both counts to 1), also where no earlier header has stated the
+    # fields, as in the first two units here: each has one asset size, one asset descriptor and one backward compatible core flag, and no figures of the asset.
+    core_only = dict(components=["core"], sizes={"core": 96}, channels=2, mask=0x02)
+    parts = [unit(core_only, static=i >= 2) for i in range(4)]
+    fixture("exss-static-late", ".dts", "Four units of a stereo core frame and an extension substream with a core asset, of which only the last two state the static fields.",
+            b"".join(parts), rows(parts), [stream("DTS", 48000, STEREO, "2/0", 4 * 512, vbr=True)], [],
+            fields={"DTS/Frame[0]/Extension Substream/HasStaticFields": "false",
+                    "DTS/Frame[0]/Extension Substream/Asset Sizes/Asset 1": "96 bytes",
+                    "DTS/Frame[0]/Extension Substream/Asset Descriptor 1/Asset Index": "0",
+                    "DTS/Frame[0]/Extension Substream/Backward Compatible Cores/HasBackwardCompatibleCore 1": "false",
+                    "DTS/Frame[2]/Extension Substream/HasStaticFields": "true"},
+            crosscheck=cc(decode_whole=True, skip={"decode_alone": "a unit whose header omits the static fields is rejected by ffmpeg when decoded alone; the whole file decodes without an error"}))
     six = dict(components=["core", "xll"], sizes={"core": 96, "xll": 96}, channels=6, mask=0x0F, embedded_stereo=True, drc=40, drc_stereo=60)
     parts = [unit(six, static=i == 0) for i in range(4)]
     fixture("exss-static-embedded-stereo", ".dts", "Four units of a stereo core frame and an extension substream with a lossless 5.1 asset that has a dynamic range code and an embedded stereo downmix, of which only the first states the static fields.",

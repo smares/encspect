@@ -1,0 +1,50 @@
+{
+ "description": "Four units whose lossless channel set has one channel and the channel mask bit 13 (top front left) set.",
+ "length": 2928,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   732
+  ],
+  [
+   732,
+   732
+  ],
+  [
+   1464,
+   732
+  ],
+  [
+   2196,
+   732
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS-HD Master Audio",
+   "sample_rate": 48000,
+   "channels": 1,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "top front left"
+   ],
+   "samples": 2048,
+   "is_vbr": true
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": true,
+  "ffprobe_bitrate": false,
+  "libdca_channels": 2,
+  "xll_mask_bit": 13,
+  "skip": {
+   "ffprobe_bitrate": "ffmpeg's lossless decoder sets the bit rate to 0 (dca_xll.c: avctx->bit_rate = 0), so ffprobe lists none"
+  }
+ }
+}

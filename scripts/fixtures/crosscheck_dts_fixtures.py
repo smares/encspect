@@ -41,6 +41,7 @@ non-zero when anything disagrees.
 import json
 import os
 import pathlib
+import re
 import subprocess
 import sys
 import tempfile
@@ -91,6 +92,23 @@ def extension_rate(manifest):
     return int(value.split()[0]) if value else None
 
 
+# What ffprobe (run as a program on the `xll-mask-bit-*` fixtures, one channel set of one channel with one mask bit set) names the channel of each bit of an XLL channel
+# set's channel mask, in ffmpeg's channel names. Table 6-22 and the real 7.1 sample fix the other bits' order; ffprobe gives the pairs of bits that it merges
+# (3 and 9, 4 and 10, 5 and 16, 6 and 25, 7 and 26, 8 and 27, 11 and 17, 12 and 18, 13 and 20, 15 and 21) one name, which the fixtures' own layouts tell apart. A bit
+# that the table reserves (28 to 31) has no name.
+FFMPEG_NAMES = ["FC", "FL", "FR", "SL", "SR", "LFE", "BC", "BL", "BR", "SL", "SR", "FLC", "FRC", "TFL", "TFC", "TFR", "LFE", "FLC", "FRC", "TC", "TFL", "TFR", "TBC", "TBL", "TBR",
+                "BC", "BL", "BR"]
+FFMPEG_STANDARD = {"mono": ["FC"], "stereo": ["FL", "FR"]}
+
+
+def ffprobe_channel_names(layout):
+    """ffmpeg's names of the channels of a layout ffprobe printed: a standard name or `N channels (A+B)`, in any order."""
+    if layout in FFMPEG_STANDARD:
+        return sorted(FFMPEG_STANDARD[layout])
+    match = re.fullmatch(r"\d+ channels \((.*)\)", layout or "")
+    return sorted(match.group(1).split("+")) if match else None
+
+
 def normalized(speakers):
     speakers = list(speakers)
     if "side left" in speakers and "back left" not in speakers:
@@ -122,7 +140,12 @@ def check_ffprobe(path, manifest, report, problems):
     if check.get("ffprobe_profile", True) and actual.get("profile") != PROFILES[expected["codec"]]:
         problems.append(f"ffprobe's profile {actual.get('profile')}, expected {PROFILES[expected['codec']]}")
     known = channel_layouts.FFMPEG.get(actual.get("channel_layout"))
-    if "ffprobe_layout" in check:
+    if "xll_mask_bit" in check:
+        bits = check["xll_mask_bit"] if isinstance(check["xll_mask_bit"], list) else [check["xll_mask_bit"]]
+        wanted = sorted(FFMPEG_NAMES[bit] for bit in bits)
+        if ffprobe_channel_names(actual.get("channel_layout")) != wanted:
+            problems.append(f"ffprobe's channel layout {actual.get('channel_layout')}, the channel mask bits {bits} are {wanted} to it")
+    elif "ffprobe_layout" in check:
         # An explained difference (the reason is in the manifest's skip): the layout ffprobe gives must still be the one explained.
         if actual.get("channel_layout") != check["ffprobe_layout"]:
             problems.append(f"ffprobe's channel layout {actual.get('channel_layout')}, the explained difference says {check['ffprobe_layout']}")
@@ -383,7 +406,13 @@ def check_mediainfo(path, tally):
     # File_Dts.cpp, Streams_Fill: the DTS:X and IMAX cases add " Objects" to the layout.
     has_x = statistic(report, "HasDtsX") is True or statistic(report, "HasDtsXImax") is True
     tally.compare("objects in the channel layout", str(layout.endswith(" Objects")), str(has_x))
-    tally.compare("channel layout", mi.speakers(layout.removesuffix(" Objects")), mi.normalized(stream["channelLayout"]))
+    if path.stem.startswith(("xll-mask-bit-", "xll-mask-wide-")):
+        # The fixtures that pin the bit order of an XLL channel mask by ffprobe (check_ffprobe): their assets state no speaker activity mask, since Table 7-10's
+        # bits name pairs of speakers and the fixtures set one speaker, and the layout of a stream with an extension substream is not compared with MediaInfo's.
+        tally.skip("channel layout", "the order of an XLL channel mask's bits is pinned by ffprobe on these fixtures; MediaInfo 24.01 gives them no layout, which it takes from the "
+                   "asset's speaker activity mask (Table 7-10, pairs of speakers) that they have none of")
+    else:
+        tally.compare("channel layout", mi.speakers(layout.removesuffix(" Objects")), mi.normalized(stream["channelLayout"]))
     tally.compare("bit depth", audio.get("BitDepth"), str(stream.get("bitsPerSample")))
     if stream["codec"].startswith("DTS-HD Master Audio"):
         # File_Dts.cpp, Streams_Fill: the features "XLL", then "X" and "IMAX" (Extensions2 sets X for both words, IMAX for 0xF14000D0 alone).
