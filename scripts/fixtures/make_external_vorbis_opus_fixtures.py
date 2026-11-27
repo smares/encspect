@@ -115,6 +115,14 @@ FIXTURES = {
     "external-ffmpeg-libopus": ("ffmpeg", 48000, 2, 1.5, ["-c:a", "libopus", "-b:a", "96k"], FFMPEG_LIBOPUS, []),
     "external-ffmpeg-libopus-ambisonics": ("ffmpeg", 48000, 4, 0.5, ["-c:a", "libopus", "-mapping_family", "2"], FFMPEG_LIBOPUS, []),
     "external-ffmpeg-opus": ("ffmpeg", 48000, 2, 1.5, ["-strict", "-2", "-c:a", "opus", "-b:a", "96k"], FFMPEG_OPUS, []),
+    # Mapping family 3 (RFC 8486), written by libopus 1.5.2's projection encoder (opus_enc.c, the last argument "ambisonics"): an ambisonic signal of order 1 to 3, with and without the non-diegetic
+    # stereo pair, 16 kbit/s a channel. These come after every other entry because the serial number of a libopus fixture is its index.
+    "external-libopus-ambisonics-o1": ("libopus", 48000, 4, 0.5, ["audio", "64000", "20", "0", "fb", "auto", "ambisonics"], LIBOPUS_152, []),
+    "external-libopus-ambisonics-o1-stereo": ("libopus", 48000, 6, 0.5, ["audio", "96000", "20", "0", "fb", "auto", "ambisonics"], LIBOPUS_152, []),
+    "external-libopus-ambisonics-o2": ("libopus", 48000, 9, 0.5, ["audio", "144000", "20", "0", "fb", "auto", "ambisonics"], LIBOPUS_152, []),
+    "external-libopus-ambisonics-o2-stereo": ("libopus", 48000, 11, 0.5, ["audio", "176000", "20", "0", "fb", "auto", "ambisonics"], LIBOPUS_152, []),
+    "external-libopus-ambisonics-o3": ("libopus", 48000, 16, 0.5, ["audio", "256000", "20", "0", "fb", "auto", "ambisonics"], LIBOPUS_152, []),
+    "external-libopus-ambisonics-o3-stereo": ("libopus", 48000, 18, 0.5, ["audio", "288000", "20", "0", "fb", "auto", "ambisonics"], LIBOPUS_152, []),
 }
 
 
@@ -138,6 +146,8 @@ SERIALS = {
 SKIPS = {
     "external-ffmpeg-libopus-ambisonics": {"opusdec": "libopusfile 0.12, which opusdec reads with, refuses channel mapping family 2 (\"Failed to open\": info.c, opus_head_parse accepts families 0 and 1 only (OP_EIMPL for 255, OP_EBADHEADER otherwise); checked with 0.12 and opus-tools 0.2 of Ubuntu 26.04)"},
 }
+for _order in ("o1", "o1-stereo", "o2", "o2-stereo", "o3", "o3-stereo"):
+    SKIPS[f"external-libopus-ambisonics-{_order}"] = {"opusdec": "libopusfile 0.12, which opusdec reads with, refuses channel mapping family 3 (\"Failed to open\"; opusinfo lists the header); the PCM is compared with libopus's projection decoder by crosscheck_opus_pcm.py"}
 
 
 def extension(name):
@@ -154,6 +164,38 @@ def signal(rate, channels, seconds):
         click = 12000 if (i % (rate // 4)) < 8 else 0
         for channel in range(channels):
             value = envelope * (math.sin(2 * math.pi * 330 * t + channel) + 0.4 * math.sin(2 * math.pi * (1250 + 150 * channel) * t)) + click
+            out += struct.pack("<h", max(-32768, min(32767, int(value))))
+    return bytes(out)
+
+
+def ambisonic_signal(rate, channels, seconds):
+    """An ambisonic scene in ACN order and SN3D scaling, of order 1 to 3 (4, 9 or 16 channels), with the non-diegetic stereo pair after them when the count is 2 above: two sources, a tremolo
+    tone moving from the front left to the back and a click train from above, each panned with the spherical harmonics of its direction (RFC 8486, section 3.1), and for the pair
+    two other tones."""
+    order = next(n for n in range(1, 4) if channels in ((n + 1) ** 2, (n + 1) ** 2 + 2))
+    full = (order + 1) ** 2
+
+    def harmonics(az, el):
+        s, c, se, ce = math.sin(az), math.cos(az), math.sin(el), math.cos(el)
+        r3, r5, r15 = math.sqrt(3), math.sqrt(5), math.sqrt(15)
+        h = [1, s * ce, se, c * ce, r3 / 2 * math.sin(2 * az) * ce * ce, r3 / 2 * s * math.sin(2 * el), (3 * se * se - 1) / 2, r3 / 2 * c * math.sin(2 * el),
+             r3 / 2 * math.cos(2 * az) * ce * ce, math.sqrt(5 / 8) * math.sin(3 * az) * ce ** 3, r15 / 2 * math.sin(2 * az) * se * ce * ce, math.sqrt(3 / 8) * s * ce * (5 * se * se - 1),
+             se * (5 * se * se - 3) / 2, math.sqrt(3 / 8) * c * ce * (5 * se * se - 1), r15 / 2 * math.cos(2 * az) * se * ce * ce, math.sqrt(5 / 8) * math.cos(3 * az) * ce ** 3]
+        return h[:full]
+
+    out = bytearray()
+    count = int(seconds * rate)
+    for i in range(count):
+        t = i / rate
+        envelope = 9000 * (0.6 + 0.4 * math.sin(2 * math.pi * 2 * t))
+        tone = envelope * (math.sin(2 * math.pi * 330 * t) + 0.4 * math.sin(2 * math.pi * 1250 * t))
+        click = 12000 if (i % (rate // 4)) < 8 else 0
+        moving = harmonics(math.radians(45 + 270 * t / seconds), 0.0)
+        above = harmonics(0.0, math.radians(60))
+        values = [tone * a + click * b for a, b in zip(moving, above)]
+        if channels > full:
+            values += [4000 * math.sin(2 * math.pi * 440 * t), 4000 * math.sin(2 * math.pi * 660 * t + 1)]
+        for value in values:
             out += struct.pack("<h", max(-32768, min(32767, int(value))))
     return bytes(out)
 
@@ -183,7 +225,8 @@ def encode(name, tool, rate, channels, seconds, arguments, work):
     arguments = [*arguments, "-s", str(SERIALS[name])] if name in SERIALS else arguments
     target = OUT / (name + extension(name))
     source = work / f"in-{rate}-{channels}-{seconds}.wav"
-    source.write_bytes(wav(pink_signal(rate, "-side-12-db" in name) if "-pink-" in name else signal(rate, channels, seconds), rate, channels))
+    source.write_bytes(wav(pink_signal(rate, "-side-12-db" in name) if "-pink-" in name else ambisonic_signal(rate, channels, seconds) if "-ambisonics-" in name and tool == "libopus"
+                            else signal(rate, channels, seconds), rate, channels))
     if tool == "oggenc":
         subprocess.run(["oggenc", "-Q", *arguments, "-o", str(target), str(source)], check=True)
     elif tool.startswith("aotuv:"):
