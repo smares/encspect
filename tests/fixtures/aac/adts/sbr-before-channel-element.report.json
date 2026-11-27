@@ -33,7 +33,7 @@
                 },
                 {
                   "name": "Samples",
-                  "value": 12288,
+                  "value": 24576,
                   "unit": "samples",
                   "offset": 0,
                   "length": 461
@@ -5220,16 +5220,16 @@
             0
           ]
         ],
-        "codec": "AAC LC",
+        "codec": "HE-AAC",
         "codingClass": "lossy",
-        "sampleRate": 22050,
+        "sampleRate": 44100,
         "channels": 1,
         "channelMode": "Mono",
         "channelLayout": [
           "front center"
         ],
         "channelLayoutName": "mono",
-        "samples": 12288,
+        "samples": 24576,
         "duration": 0.5572789115646258,
         "averageBitrate": 6.61787109375,
         "isVbr": true,
@@ -5671,6 +5671,18 @@
       }
     ],
     "findings": [
+      {
+        "severity": "Info",
+        "code": "aac.implicit-sbr",
+        "message": "ADTS cannot signal SBR or PS explicitly, but 12 of 12 raw data blocks hold SBR data: the stream is HE-AAC, signaled only implicitly, with an output rate of 44100 Hz. Decoders without SBR play the AAC LC core at 22050 Hz.",
+        "offset": 0,
+        "length": 40,
+        "path": [
+          0,
+          1
+        ],
+        "count": 1
+      },
       {
         "severity": "Warning",
         "code": "aac.sbr-without-channel-element",

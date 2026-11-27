@@ -97,17 +97,22 @@ public class AacSbrFrequencyTablesTests
                                     hash.AppendData(System.Text.Encoding.UTF8.GetBytes(error ?? string.Empty));
                                     if (bands is not null)
                                     {
-                                        // The decoder's patches (libxaac's construction, which may start with a patch of no band) have the count Figure 4.48 gives, 5 at most (4.6.18.3.6).
                                         (SbrTables? tables, _) = Sbr.Tables(Header(start, stop, scale, alter, xover, noise), rate);
                                         var layout = new Encspect.Formats.Aac.Decoding.SbrLayout(tables!, rate);
-                                        int wide = 0;
-                                        for (int p = 0; p < layout.PatchCount; p++)
+
+                                        // The decoder's patches are the ones of Figure 4.48 the parser counts: as many, each as wide and as far from its source.
+                                        (int spec, int[] widths, int[] sources) = Sbr.Patches(tables!.Master, tables.Kx, rate);
+                                        Assert.Equal(spec, layout.PatchCount);
+                                        int at = tables.Kx;
+                                        for (int p = 0; p < spec; p++)
                                         {
-                                            wide += layout.PatchBands[p] > 0 ? 1 : 0;
+                                            Assert.Equal(at, layout.PatchStart[p]);
+                                            Assert.Equal(widths[p], layout.PatchBands[p]);
+                                            Assert.Equal(at - sources[p], layout.PatchStride[p]);
+                                            at += widths[p];
                                         }
 
-                                        Assert.Equal(Sbr.PatchCount(tables!.Master, tables.Kx, rate), wide);
-                                        Assert.True(wide <= Sbr.MaxPatches);
+                                        Assert.True(spec <= Sbr.MaxPatches);
                                     }
                                 }
                             }

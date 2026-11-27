@@ -633,7 +633,6 @@ MEDIAINFO_READS_OTHERWISE = {
     "adts/raw-blocks": {"access units": "MediaInfo reads a crc_check in a frame of several raw data blocks also without protection (File_Aac_Main.cpp, adts_frame), which adts_header_error_check holds only when protection_absent is 0 (ISO/IEC 14496-3 1.A.3.2.3), so it misreads those blocks and counts none of the frames"},
     "adts/sbr-in-three-blocks": dict.fromkeys(["format", "sample rate", "SBR signaling"], SBR_ANYWHERE),
     "adts/sbr-in-one-block": dict.fromkeys(["format", "sample rate", "SBR signaling"], SBR_ANYWHERE),
-    "adts/sbr-before-channel-element": dict.fromkeys(["format", "sample rate", "SBR signaling"], SBR_ANYWHERE),
     "adts/sbr-in-frames-failing-crc": dict.fromkeys(["format", "sample rate", "SBR signaling"], SBR_ANYWHERE),
     "adts/sbr-in-all-but-first-block": dict.fromkeys(["format", "sample rate", "SBR signaling"], SBR_ANYWHERE),
     "adts/sbr-in-truncated-frame": {"streams": "MediaInfo 26.01 synchronizes an ADTS file on three consecutive frame headers or on frames that end exactly at the end of the file (File_Aac.cpp, Synchronize_ADTS); two frames and a cut third are neither, so it finds no audio stream"},

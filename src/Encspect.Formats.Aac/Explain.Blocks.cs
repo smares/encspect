@@ -87,7 +87,7 @@ internal static partial class Explain
     public const string DrcHasReference = "prog_ref_level_present: whether the program's reference level follows (ISO/IEC 14496-3 4.5.2).";
     public const string DrcReferenceLevel = "prog_ref_level: the program's reference level below full scale, in steps of 0.25 dB (ISO/IEC 14496-3 4.5.2).";
     public const string DrcGain = "dyn_rng_sgn and dyn_rng_ctl: the band's gain change in steps of 0.25 dB, which a decoder may apply to compress the dynamic range (ISO/IEC 14496-3 4.5.2).";
-    public const string SbrCrc = "bs_sbr_crc_bits: a CRC over the SBR data of an EXT_SBR_DATA_CRC payload (ISO/IEC 14496-3 4.4.2).";
+    public const string SbrCrc = "bs_sbr_crc_bits: a CRC-10 over the SBR data of an EXT_SBR_DATA_CRC payload after it, fill bits included (ISO/IEC 14496-3 4.4.2, 4.5.2.8.1, 4.5.2.8.2.1).";
     public const string HasSbrHeader = "bs_header_flag: whether an SBR header follows; without one the last header holds (ISO/IEC 14496-3 4.4.2).";
     public const string SbrData = "sbr_data: the SBR envelopes, noise floors and other parameters of the frame, for the channel element before the fill element; shown by its bits (ISO/IEC 14496-3 4.4.2, 4.6.18).";
     public const string PsExtension = "bs_extension_id 2, EXT_ID_PS: parametric stereo data follows in the SBR data's extension (ISO/IEC 14496-3 4.4.2 and subpart 8).";
@@ -137,7 +137,7 @@ internal static partial class Explain
     public const string StatSbrHeaders = "SBR headers in the access units; encoders repeat them so decoders can start mid-stream.";
     public const string StatSbrChecksums = "The SBR payloads of type EXT_SBR_DATA_CRC whose CRC-10 equals the one computed over their data (ISO/IEC 14496-3 4.5.2.8.1).";
 
-    public const string StatSbrChecksumsFailed = "The SBR payloads of type EXT_SBR_DATA_CRC whose CRC-10 differs from the one computed.";
+    public const string StatSbrChecksumsFailed = "The SBR payloads of type EXT_SBR_DATA_CRC whose CRC-10 differs from the one computed (ISO/IEC 14496-3 4.5.2.8.1).";
 
     public const string StatSbrUnread = "SBR payloads whose data could not be read: before the first header, after a header whose frequency tables cannot be built, or broken; their findings say which.";
     public const string StatSbrStart = "bs_start_freq of the first SBR header, and the QMF band and frequency at the SBR output rate where SBR starts rebuilding the spectrum (kx).";

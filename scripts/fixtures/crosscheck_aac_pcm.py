@@ -95,8 +95,15 @@ NOISE = {
 LIBXAAC_MAX_LSB = 32
 
 # The first block's left window half has its own shape in the standard (4.6.11.3.2: for the first raw_data_block to be decoded the left and right halves have the same shape),
-# where FFmpeg's decoder and libxaac's start from the sine window; the analyzer follows the standard, so the first 1,024 samples (the first block's output) are left out of both comparisons.
+# where FFmpeg's decoder and libxaac's start from the sine window; the analyzer follows the standard, so for the files whose first block has the Kaiser-Bessel derived shape and differs
+# for that reason alone (FIRST_BLOCK_KBD, found by the run: a file that agrees with FFmpeg without the exclusion fails the run, as a stale entry does) the first 1,024 samples (the first
+# block's output) are left out of both comparisons.
 FIRST_BLOCK = 1024
+FIRST_BLOCK_KBD = {"blocks-missing.aac", "blocks-trailing-bytes.aac", "corrupt-syntax.aac", "crc-short-element.aac", "crc-stereo-damaged.aac", "crc-stereo.aac", "fill-and-data.aac",
+                   "first-block-kbd.aac", "lfe-restrictions-pce.aac", "tns-order-above-12.aac", "loud-pulse-tns.aac", "sbr-in-truncated-frame.aac", "streams-limited.aac", "two-signature-streams.aac", "loud-noise-pair.aac",
+                   "windows.aac"}
+# Damaged files libxaac stops on after its first block: with the first block left out nothing is left to compare, which is no failure.
+LIBXAAC_FIRST_BLOCK_ONLY = {"blocks-missing.aac", "blocks-trailing-bytes.aac"}
 
 # Files where libxaac's test decoder differs from the analyzer beyond that, each with the reason, the blocks of 1,024 samples where it does (the positions at the coded stage) and the
 # largest difference in LSB it is expected not to pass: a change of the analyzer on these files, or a difference elsewhere in them, fails the run. The analyzer computes the
@@ -105,18 +112,18 @@ LIBXAAC_TNS = ("libxaac's 16-bit path for TNS filters in one or two channels (ix
                "ixheaacd_pns_js_thumb.c): the filter's coefficients are 16 bits, and near 0.996 the all-pole filter amplifies their rounding, where the analyzer filters with the "
                "standard's real values (a libxaac build with 32-bit TNS agrees within 22 LSB on all four files)")
 LIBXAAC_ORDER = ("the order of the tools: libxaac generates noise after intensity stereo (ixheaacd_channel.c), so an intensity band over a noise band of the first channel copies zeros, where "
-                 "Figure 4.2 and 4.6.8.2.3 scale the noise (FFmpeg's decoder gives the second channel the noise too)")
+                 "Figure 4.2 and 4.6.8.2.3 scale the noise (FFmpeg's decoder gives the second channel the noise too); block 0 differs by the first block's window shape (4.6.11.3.2)")
 LIBXAAC_DIFFERENCES = {
-    "faac-1.31.1-adts.aac": (LIBXAAC_ORDER, [1], 340),
-    "faac-1.31.1.m4a": (LIBXAAC_ORDER, [1], 340),
-    "faac-1.40-adts.aac": (LIBXAAC_ORDER, [1], 340),
-    "faac-1.40.m4a": (LIBXAAC_ORDER, [1], 340),
+    "faac-1.31.1-adts.aac": (LIBXAAC_ORDER, [0, 1], 340),
+    "faac-1.31.1.m4a": (LIBXAAC_ORDER, [0, 1], 340),
+    "faac-1.40-adts.aac": (LIBXAAC_ORDER, [0, 1], 340),
+    "faac-1.40.m4a": (LIBXAAC_ORDER, [0, 1], 340),
     "faac-1.40-pink-equal-adts.aac": (LIBXAAC_ORDER, [3, 4, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86], 4723),
     "faac-1.40-pink-side-12-db-adts.aac": (LIBXAAC_ORDER, [8, 9, 12, 13, 14, 15, 16, 17, 18, 19, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 78, 79, 80, 81, 82, 83, 84, 85, 86], 2317),
-    "faac-1.50-adts.aac": (LIBXAAC_ORDER, [1], 340),
-    "faac-1.50.m4a": (LIBXAAC_ORDER, [1], 340),
-    "apple-passthru-m4a-from-faac-m4a.m4a": (LIBXAAC_ORDER, [1], 340),
-    "apple-intel-passthru-m4a-from-faac-m4a.m4a": (LIBXAAC_ORDER, [1], 340),
+    "faac-1.50-adts.aac": (LIBXAAC_ORDER, [0, 1], 340),
+    "faac-1.50.m4a": (LIBXAAC_ORDER, [0, 1], 340),
+    "apple-passthru-m4a-from-faac-m4a.m4a": (LIBXAAC_ORDER, [0, 1], 340),
+    "apple-intel-passthru-m4a-from-faac-m4a.m4a": (LIBXAAC_ORDER, [0, 1], 340),
     "loud-noise-pair.aac": ("grouped short windows whose noise both channels share: libxaac reuses the first channel's seed variable for the second, which starts from the first channel's "
                             "last window of the group (ixheaacd_pns_js_thumb.c), so the second channel draws other noise there; the analyzer gives both the same noise in each window", [1, 2], 4862),
     "stereo-coding.aac": ("block 10, a pair without a common window: libxaac reads the mid/side flags only for a common window and never clears them (ixheaacd_read_ms_data), so its "
@@ -134,8 +141,8 @@ LIBXAAC_DIFFERENCES = {
 DIFFERENCES = {
     "stereo-tool-order.aac": ("samples", "intensity bands under ms_mask_present 2, which FFmpeg's decoder inverts where 4.6.8.2.3 inverts under mask 1 alone (block 1, up to 0.03 of full scale), and noise substitution, "
                                          "where each decoder draws its own noise (blocks 5 to 14); the second channel of the blocks with mid/side flags over the first channel's noise equals the one without them in both decoders"),
+    "tns-order-above-12.aac": ("positions", "a TNS filter of an order above 12, which FFmpeg's decoder refuses (the analyzer takes its first 12 coefficients, 4.6.9.3, Table 4.156): FFmpeg decodes the blocks of order 12 only"),
     "tns-overflow.aac": ("samples", "a TNS filter on the largest scalefactors: FFmpeg's float decoder overflows to infinity and NaN, the analyzer saturates the spectrum"),
-    "stereo-coding-reserved.aac": ("samples", "ms_mask_present 3, which the specification reserves: FFmpeg refuses those blocks, the analyzer decodes them without mid/side stereo"),
     "corrupt-soft.aac": ("positions", "raw data blocks with more channel streams than the stream's configuration states: the analyzer does not decode them (decode.frame-invalid), FFmpeg decodes the channels it can"),
     "window-sequences-invalid.aac": ("samples", "five windows whose slopes do not match those of the window before: FFmpeg windows those transitions differently, in the blocks that hold them and the "
                                                 "block after (a copy of the file 1,000 times as loud differs from FFmpeg's by up to 0.02 of full scale there and from libxaac's by 1 LSB at the most, so the analyzer follows libxaac; "
@@ -215,12 +222,12 @@ def read_wav(path):
     return None
 
 
-def libxaac_difference(mine, values, channels, lag):
+def libxaac_difference(mine, values, channels, lag, first=0):
     """The blocks of 1,024 samples where the analyzer's floats, rounded to 16 bits, differ from libxaac's samples by more than LIBXAAC_MAX_LSB, and the largest difference over the file
     (the samples where either side is at full scale left out, as compare_pcm.py leaves them)."""
     blocks = set()
     largest = 0
-    for position in range(max(lag, FIRST_BLOCK), len(mine) // channels):
+    for position in range(max(lag, first), len(mine) // channels):
         source = position - lag
         if source * channels + channels > len(values):
             break
@@ -236,9 +243,9 @@ def libxaac_difference(mine, values, channels, lag):
     return sorted(blocks), largest
 
 
-def compare(manifest, reference_file, channels, start, extra=(), fmt="float32"):
+def compare(manifest, reference_file, channels, start, extra=(), fmt="float32", exclude_first=False):
     output = subprocess.run([sys.executable, str(HERE / "compare_pcm.py"), str(manifest), "--reference", str(reference_file), "--reference-format", fmt, "--reference-channels",
-                             str(channels), "--reference-first-position", str(start), "--exclude", f"0:{FIRST_BLOCK}", "--json", *extra], capture_output=True, text=True)
+                             str(channels), "--reference-first-position", str(start), *(["--exclude", f"0:{FIRST_BLOCK}"] if exclude_first else []), "--json", *extra], capture_output=True, text=True)
     if output.returncode == 2:
         return None, output.stderr.strip()
     result = json.loads(output.stdout)
@@ -315,10 +322,15 @@ def main(argv=None):
             # A hand-built file as quiet as -100 dBFS cannot fail the absolute bounds, so its bounds follow its level (FFmpeg's float tables agree within 3 x 10^-5 of the peak on loud-pulse-tns.aac, and within 5 x 10^-3 on the mixed channels of stereo-coding-elements.aac, whose peak is 22 steps of 16 bits).
             quiet = 0 < peak < 0.6
             bounds = ["--max-abs", str(min(2.0 ** -14, peak * 1e-2)), "--rms", str(min(2.0 ** -15 / math.sqrt(12.0), peak * 1e-3))] if quiet else []
-            outcome, found = compare(manifest, raw, channels, start, [*extra, *bounds] if path.name not in NOISE else extra)
+            first_kbd = path.name in FIRST_BLOCK_KBD
+            outcome, found = compare(manifest, raw, channels, start, [*extra, *bounds] if path.name not in NOISE else extra, exclude_first=first_kbd)
+            if first_kbd and path.name not in NOISE:
+                whole, whole_found = compare(manifest, raw, channels, start, [*extra, *bounds])
+                if whole is not None and not whole_found:
+                    problems.append("listed in FIRST_BLOCK_KBD, but the first block agrees with FFmpeg's")
             compared += 1
             if path.name in NOISE:
-                plain, plain_found = compare(manifest, raw, channels, start, bounds)
+                plain, plain_found = compare(manifest, raw, channels, start, bounds, exclude_first=first_kbd)
                 if plain is not None and not plain_found:
                     problems.append("listed in NOISE, but the samples agree with FFmpeg's")
             if path.name in NOISE and outcome is not None:
@@ -354,17 +366,17 @@ def main(argv=None):
                     pcm.write_bytes(values.tobytes())
                     # Both on the scale of 16-bit steps; libxaac starts 220 samples after the coded stage on every file tried (its own delay).
                     lag = find_start([v * 32768.0 for v in mine], [float(v) for v in values], channels, (220, 0, 1024, 2112))
-                    outcome2, found2 = compare(manifest, pcm, channels, lag, ["--skip-full-scale", "--max-lsb", str(LIBXAAC_MAX_LSB), "--rms-lsb", "1"], fmt="int16")
+                    outcome2, found2 = compare(manifest, pcm, channels, lag, ["--skip-full-scale", "--max-lsb", str(LIBXAAC_MAX_LSB), "--rms-lsb", "1"], fmt="int16", exclude_first=first_kbd)
                     if path.name in LIBXAAC_DIFFERENCES:
                         reason, expected_blocks, expected_largest = LIBXAAC_DIFFERENCES[path.name]
-                        blocks, largest = libxaac_difference(mine, values, channels, lag)
+                        blocks, largest = libxaac_difference(mine, values, channels, lag, FIRST_BLOCK if first_kbd else 0)
                         if found2 is None:
                             problems.append("listed in LIBXAAC_DIFFERENCES, but libxaac agrees")
                         elif blocks != expected_blocks or largest > expected_largest:
                             problems.append(f"libxaac differs otherwise than the entry says: blocks {blocks} (expected {expected_blocks}), largest {largest} LSB (at most {expected_largest})")
                         else:
                             note = (note + "; " if note else "") + f"libxaac differs in blocks {blocks} by {largest} LSB at the most: " + reason
-                    elif found2 and "no position is in both" in found2:
+                    elif found2 and "no position is in both" in found2 and path.name in LIBXAAC_FIRST_BLOCK_ONLY:
                         # libxaac decodes only the first block of a damaged file, which the comparison leaves out (FIRST_BLOCK).
                         note = (note + "; " if note else "") + "libxaac not compared: it decodes only the first block, which is left out"
                     elif found2:

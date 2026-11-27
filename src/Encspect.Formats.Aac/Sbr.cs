@@ -189,8 +189,9 @@ internal static partial class Sbr
     // The most patches an SBR range may need (4.6.18.3.6).
     public const int MaxPatches = 5;
 
-    // The number of patches of Figure 4.48 (4.6.18.6.3) for a master table, kx and the SBR rate: the patches' sources and widths are the decoder's, only their count matters here.
-    public static int PatchCount(int[] master, int kx, int rate)
+    // The patches of Figure 4.48 (4.6.18.6.3) for a master table, kx and the SBR rate: how many there are (numPatches), the width of each (patchNumSubbands) and the first QMF band each
+    // copies from (patchStartSubband). The decoder builds its patches from these and the parser checks their number against 4.6.18.3.6, so both see the same ones.
+    public static (int Count, int[] Widths, int[] Sources) Patches(int[] master, int kx, int rate)
     {
         int count = master.Length - 1;
         int lsb = master[0];
@@ -209,7 +210,8 @@ internal static partial class Sbr
             }
         }
 
-        int lastWidth = 0;
+        var widths = new int[40];
+        var sources = new int[40];
         int sb;
         int guard = 0;
         do
@@ -225,9 +227,10 @@ internal static partial class Sbr
             while (sb > lsb - 1 + msb - odd && j >= 0);
 
             int width = Math.Max(sb - usb, 0);
+            widths[patches] = width;
+            sources[patches] = lsb - odd - width;
             if (width > 0)
             {
-                lastWidth = width;
                 usb = sb;
                 msb = sb;
                 patches++;
@@ -242,10 +245,17 @@ internal static partial class Sbr
                 k = count;
             }
         }
-        while (sb != end && ++guard < 32);
+        while (sb != end && ++guard < 32 && patches < 39);
 
-        return lastWidth < 3 && patches > 1 ? patches - 1 : patches;
+        if (patches > 0 && widths[patches - 1] < 3 && patches > 1)
+        {
+            patches--;
+        }
+
+        return (patches, widths, sources);
     }
+
+    public static int PatchCount(int[] master, int kx, int rate) => Patches(master, kx, rate).Count;
 
     private static int Nearest(double value) => (int)Math.Floor(value + 0.5);
 

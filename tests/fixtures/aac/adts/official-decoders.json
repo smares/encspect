@@ -6272,15 +6272,15 @@
      "streams": [
       0
      ],
-     "analyzer": 12288,
-     "reference": 12288,
+     "analyzer": 24576,
+     "reference": 24576,
      "referencePath": "fdk direct",
      "referenceKind": "official",
      "witnesses": {
       "ffmpeg": null
      },
      "analyzerRates": [
-      22050
+      44100
      ],
      "format": {
       "rate": 22050,
@@ -6373,10 +6373,38 @@
         "channels": 1
        }
       }
+     },
+     "referenceAtAnalyzerRate": {
+      "samples": 24576,
+      "exact": true
+     },
+     "rateDiffers": {
+      "analyzerRates": [
+       44100
+      ],
+      "decoderRates": [
+       22050
+      ],
+      "decoderSamples": 12288,
+      "frames": 12,
+      "firstUnit": 0,
+      "ratio": "22050/44100"
      }
     }
    ],
-   "differences": [],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "fdk direct",
+     "value": 12288,
+     "analyzer": 24576,
+     "status": "keep",
+     "kind": "rate-differs",
+     "reason": "FDK outputs 12 frames (12,288 samples) at 22050 Hz, from unit 0, where the analyzer's runs are at 44100 Hz (ratio 22050/44100): the decoders disagree on whether an SBR payload before any channel element signals SBR",
+     "note": "decided 2026-11-27 by the project lead: 1.6.5.2 item 1 takes any EXT_SBR_DATA payload for implicit signaling, so the stream is HE-AAC; 4.5.2.8.2.2 gives the payload no AAC element to enhance, so it is reported and not applied. FDK, faad2 and ffmpeg (an error: \"SBR was found before the first channel element\") do not take it for SBR. The run's records were not repeated for this change.",
+     "statusSource": "reviewed"
+    }
+   ],
    "units": [
     {
      "index": 0,
