@@ -53,14 +53,16 @@ Read in libxaac at the pinned commit (`libxaac_tool.py`) and run as a black box,
 
 | Type or tool | Why it waits | Where it goes |
 | --- | --- | --- |
-| AAC SSR (3) | gain control and the PQF filter bank of 13818-7 clause 16; FDK, libxaac and Core Audio refuse it, no encoder in use is known; [lossy-decoders.md](lossy-decoders.md#what-each-decoder-covers) left it out | stays out (decision 1) |
-| AAC scalable (6), ER AAC scalable (20) | layered streams over several elementary streams, often with a CELP or TwinVQ core; libxaac refuses both and FFmpeg 6.1.1 the ER type, no encoder in use is known; the conformance set has `er_ac*` | "Not planned", trigger: a user's file (decision 1) |
-| ER BSAC (22) | a different coding: bit-sliced arithmetic coding with fine-grain scalability (4.5.2.6, with an arithmetic decoder of its own, 4.5.2.6.2.7); no permissive source (libxaac has none); used in Korean T-DMB broadcasts (**unverified**: no file of it read) | "Not planned", trigger: a user's file (decision 1) |
-| epConfig 1 | each error sensitivity category in an elementary stream of its own: the conformance file `er_al10_08_ep1.mp4` holds three tracks, the later ones synchronized on the first (MP4Box); the MP4 parser would have to join tracks | `decode.not-possible` with the reason, "Not planned" (decision 1) |
+| AAC SSR (3) | gain control and the PQF filter bank of 13818-7 clause 16; FDK, libxaac and Core Audio refuse it, no encoder in use is known; [lossy-decoders.md](lossy-decoders.md#what-each-decoder-covers) left it out | the item after 0.5 ([plan.md](../plan.md#after-05), decision 1 as the lead decided it) |
+| AAC scalable (6), ER AAC scalable (20) | layered streams over several elementary streams, often with a CELP or TwinVQ core; libxaac refuses both and FFmpeg 6.1.1 the ER type, no encoder in use is known; the conformance set has `er_ac*` | the item after 0.5 (decision 1 as the lead decided it) |
+| ER BSAC (22) | a different coding: bit-sliced arithmetic coding with fine-grain scalability (4.5.2.6, with an arithmetic decoder of its own, 4.5.2.6.2.7); no permissive source (libxaac has none); used in Korean T-DMB broadcasts (**unverified**: no file of it read) | the item after 0.5 (decision 1 as the lead decided it) |
+| SLS (37), the lossless layer of HD-AAC | scalable to lossless coding (subpart 12, with Technical Corrigendum 3 of 2012 to the 2009 edition); no conformance stream or file of it read here (**unverified** whether 14496-26 has any) | the item after 0.5: its configuration and layers at header level first, decoding decided when the item starts (the lead, 2026-11-27) |
+| epConfig 1 | each error sensitivity category in an elementary stream of its own: the conformance file `er_al10_08_ep1.mp4` holds three tracks, the later ones synchronized on the first (MP4Box); the MP4 parser would have to join tracks | `decode.not-possible` with the reason until the item after 0.5 (decision 1 as the lead decided it) |
 | epConfig 2 and 3 | the error protection tool (1.8): forward error correction, CRCs and interleaving over the classes; its ErrorProtectionSpecificConfig is not read | as epConfig 1; once read, its CRCs are checksums to declare |
 | ELDv2's low-delay MPEG Surround | MPEG Surround, which [lossy-decoders.md](lossy-decoders.md#what-each-decoder-covers) leaves out beyond USAC's 2-1-2 | with MPEG Surround |
 | SBR in ER AAC LC, LTP and LD payloads (4.5.2.8.2.3) | read by the walk, not decoded: no conformance stream or encoder holds it, so nothing would check it | `decode.not-possible` for such a stream |
 | Coupling channel elements | read, not applied, as today; LTP types may not carry dependently switched ones (4.6.7.4.3) | unchanged |
+| Downscaled ER AAC LD and ELD output | a playout option at a lower rate (4.6.20.5, which Technical Corrigendum 7 of 2015 adds to the 2009 edition: the LD window by spline interpolation, the LD-SBR filter banks with fewer bands); the stream does not ask for it | not built: the decoder outputs the stream's own rate |
 
 ## Main's prediction
 
