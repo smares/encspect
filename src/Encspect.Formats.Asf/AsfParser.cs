@@ -3,8 +3,7 @@ using Encspect.Core;
 namespace Encspect.Formats.Asf;
 
 // Advanced Systems Format (ASF), the container of Windows Media files (.wma, .wmv, .asf): the
-// Advanced Systems Format Specification, revision 01.20.03, with FFmpeg's asfdec_f.c as the
-// reference implementation. A file is a run of objects, each a 128-bit GUID, a 64-bit size and its
+// Advanced Systems Format Specification, revision 01.20.03. A file is a run of objects, each a 128-bit GUID, a 64-bit size and its
 // data: the Header Object (which holds the File Properties, Stream Properties, Header Extension and
 // the other header objects), the Data Object (fixed-size packets that carry the payloads of the
 // streams) and the index objects. Every object becomes a node with its fields at their bytes. The

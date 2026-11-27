@@ -45,7 +45,7 @@ public sealed class WmaVoiceParser : ICodecParser
         if (format.Channels != 1)
         {
             findings.AddNow(Severity.Info, "wma.voice-channels",
-                $"The container states {Counts.Of(format.Channels, "channel", "channels")}; FFmpeg's decoder outputs mono whatever the container says (wmavoice.c), and a superframe holds one channel.", config.Parent);
+                $"The container states {Counts.Of(format.Channels, "channel", "channels")}; FFmpeg's decoder outputs mono whatever the container says, and a superframe holds one channel.", config.Parent);
         }
 
         Node parent = context.Parent;
@@ -192,7 +192,7 @@ public sealed class WmaVoiceParser : ICodecParser
         {
             int group = parameters.OverfullGroup;
             findings.AddNow(Severity.Info, "wma.voice-frame-type-overlap",
-                $"The frame type table puts four frame types in group {group}; the fourth takes the first slot of the next group, which another type's entry may then overwrite. The comment of FFmpeg's decoder says a group should hold three (wmavoice.c).", table);
+                $"The frame type table puts four frame types in group {group}; the fourth takes the first slot of the next group, which another type's entry may then overwrite. The comment of FFmpeg's decoder says a group should hold three.", table);
         }
 
         int[] unreachable = [.. Enumerable.Range(0, VoiceParameters.FrameTypes).Where(t => parameters.SlotOfType[t] < 0)];

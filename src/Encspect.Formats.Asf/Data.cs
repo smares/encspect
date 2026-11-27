@@ -284,8 +284,8 @@ public sealed partial class AsfParser
         return figures;
     }
 
-    // How far to the next packet: the fixed packet size where the file has one (FFmpeg treats the difference to a
-    // shorter length field as padding, asfdec_f.c), else the packet's own length.
+    // How far to the next packet: the fixed packet size where the file has one (the difference to a
+    // shorter length field is padding, ASF specification 3.2, 5.2.2 and 8.2.15), else the packet's own length.
     internal static int StepOf(State state, ParsedPacket packet, int count, long remaining)
     {
         if (state.PacketSizeIsFixed)
@@ -303,8 +303,7 @@ public sealed partial class AsfParser
     {
         figures.PacketCount++;
         figures.PacketBytes += length;
-        // The bytes of the packet after what was parsed are padding, whatever the length field says (asfdec_f.c adds
-        // min_pktsize - packet_length to the padding), as the Padding node shows: only the bytes the file has count, and
+        // The bytes of the packet after what was parsed are padding, whatever the length field says (ASF specification 3.2 and 5.2.4), as the Padding node shows: only the bytes the file has count, and
         // a packet cut inside its header has none.
         int padding = Math.Max(0, length - Math.Max(packet.PayloadsEnd, packet.HeaderLength));
         figures.PaddingBytes += padding;

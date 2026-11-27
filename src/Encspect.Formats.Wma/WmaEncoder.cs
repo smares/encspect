@@ -7,7 +7,7 @@ namespace Encspect.Formats.Wma;
 // header and what its metadata says (EncoderClaim). Evidence of three strengths:
 //
 // - The stream's own trait: ffmpeg's wmav1 and wmav2 encoders pad every superframe with 'N' bytes
-//   (wmaenc.c), which no other encoder at hand does; with two or more padded superframes, high.
+//   (the external-ffmpeg-wmav* fixtures), which no other encoder at hand does; with two or more padded superframes, high.
 // - A pattern the project's fixtures show Microsoft's encoders keep, or the layout of the header of the
 //   Windows Media Format SDK's writer or Media Foundation's ASF sink: medium, since neither is in a
 //   specification and the fixtures come from one Windows build.
@@ -53,10 +53,10 @@ internal static partial class WmaEncoder
         }
 
         // Of claims of one confidence the first names the writer, and the claims are in file order. A muxer's own version goes first where it
-        // stands as ffmpeg's ASF muxer leaves it: ffmpeg copies every attribute of the file it reads (asfdec_f.c, asfenc.c) and writes its
-        // WM/EncodingSettings as the last of them (mux.c replaces "encoder" by removing it and appending it), so a remux of a Windows Media
+        // stands as ffmpeg's ASF muxer leaves it: ffmpeg copies every attribute of the file it reads (the external-ffmpeg remuxes) and writes its
+        // WM/EncodingSettings as the last of them (it replaces "encoder" by removing it and appending it), so a remux of a Windows Media
         // file carries the earlier writer's WMFSDKVersion or MediaFoundationVersion before the stamp of the program that wrote this file.
-        // The stamp is last after a plain remux. ffmpeg removes a creation_time given as metadata (asfenc.c) and any encoder-* key (mux.c), and
+        // The stamp is last after a plain remux. ffmpeg removes a creation_time given as metadata and any encoder-* key, and
         // each removal moves the stamp into the removed entry's place, so an explicit creation_time or encoder-* key can leave attributes after it.
         // No rule in a source tells those files from ones other software wrote, so a stamp with attributes after it keeps its place and the
         // copied claim stays first. The copy stays as a claim that differs; a layout (medium) still outranks the stamp.

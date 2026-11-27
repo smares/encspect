@@ -619,8 +619,8 @@ internal sealed class VoiceStream
     }
 
     private static string OverflowMessage(int count) => count == 1
-        ? "A packet starts or finishes a superframe that does not fit the 256 bytes a decoder keeps of one that goes on in the next packet, or whose spillover bits are not in the packet; FFmpeg's decoder copies none of the bits that do not fit (wmavoice.c), so it reads the cache's old bytes in their place."
-        : $"{count} packets start or finish a superframe that does not fit the 256 bytes a decoder keeps of one that goes on in the next packet, or whose spillover bits are not in the packet; FFmpeg's decoder copies none of the bits that do not fit (wmavoice.c), so it reads the cache's old bytes in their place.";
+        ? "A packet starts or finishes a superframe that does not fit the 256 bytes a decoder keeps of one that goes on in the next packet, or whose spillover bits are not in the packet; FFmpeg's decoder copies none of the bits that do not fit, so it reads the cache's old bytes in their place."
+        : $"{count} packets start or finish a superframe that does not fit the 256 bytes a decoder keeps of one that goes on in the next packet, or whose spillover bits are not in the packet; FFmpeg's decoder copies none of the bits that do not fit, so it reads the cache's old bytes in their place.";
 
     // The bits of the last byte written to the cache that lie after the put position are cleared.
     private void ClearAfterPut()
@@ -707,12 +707,12 @@ internal sealed class VoiceStream
     }
 
     private static string ShortMessage(int align, int count) => count == 1
-        ? $"A media object holds fewer bytes than the block alignment of {align}; a decoder takes it for the rest of a packet and reads no header in it: it drops the superframe that goes on from the packet before, and takes a superframe or the start of one from the bytes only where the packet before counted more superframes than it held, or none (wmavoice.c)."
-        : $"{count} media objects hold fewer bytes than the block alignment of {align}; a decoder takes them for the rest of a packet and reads no header in them: it drops the superframe that goes on from the packet before, and takes a superframe or the start of one from the bytes only where the packet before counted more superframes than it held, or none (wmavoice.c).";
+        ? $"A media object holds fewer bytes than the block alignment of {align}; a decoder takes it for the rest of a packet and reads no header in it: it drops the superframe that goes on from the packet before, and takes a superframe or the start of one from the bytes only where the packet before counted more superframes than it held, or none."
+        : $"{count} media objects hold fewer bytes than the block alignment of {align}; a decoder takes them for the rest of a packet and reads no header in them: it drops the superframe that goes on from the packet before, and takes a superframe or the start of one from the bytes only where the packet before counted more superframes than it held, or none.";
 
     private static string LongMessage(int align, int lead, int count) => count == 1
-        ? $"A media object is not a whole number of blocks of {align} bytes ({lead} bytes before its whole blocks); a decoder cuts blocks from the end of a media object (wmavoice.c), so it takes those bytes for the rest of a packet with no header, as for a media object shorter than a block."
-        : $"{count} media objects are not a whole number of blocks of {align} bytes (the first has {lead} bytes before them); a decoder cuts blocks from the end of a media object (wmavoice.c), so it takes those bytes for the rest of a packet with no header, as for a media object shorter than a block.";
+        ? $"A media object is not a whole number of blocks of {align} bytes ({lead} bytes before its whole blocks); a decoder cuts blocks from the end of a media object, so it takes those bytes for the rest of a packet with no header, as for a media object shorter than a block."
+        : $"{count} media objects are not a whole number of blocks of {align} bytes (the first has {lead} bytes before them); a decoder cuts blocks from the end of a media object, so it takes those bytes for the rest of a packet with no header, as for a media object shorter than a block.";
 
     // Reads the bits of the bytes given as the data, up to the bit end; beyond it zeros.
     private ref struct BitSource(ReadOnlySpan<byte> data, int end)

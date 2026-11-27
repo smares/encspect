@@ -3,7 +3,7 @@
 
 For every manifest in tests/fixtures/asf:
 
-- ffprobe (FFmpeg 8.0, the reference ASF demuxer asfdec_f.c): the streams' codec, channels and rate,
+- ffprobe (FFmpeg 8.0's ASF demuxer): the streams' codec, channels and rate,
   and the packets it reads. For a hand-built fixture the packets are the media objects the model
   works out from the payloads: the same count, and for each one the stream, the size and the
   presentation time, which also covers fragmented objects put together and compressed payloads split.
@@ -33,7 +33,7 @@ For every manifest in tests/fixtures/asf:
   the container states (the statistic "Nominal Bitrate"), and its SamplingCount the container's duration
   times the rate, which the analyzer's samples equal within a hundredth of a second.
 
-- the protection objects, on every hand-built fixture (those without any are the negative control): ffmpeg's ASF demuxer (asfdec_f.c) warns "DRM
+- the protection objects, on every hand-built fixture (those without any are the negative control): ffmpeg's ASF demuxer warns "DRM
   protected stream detected" for a Content Encryption Object and "Ext DRM protected stream detected" for an Extended Content Encryption Object, and
   never for the Advanced one, which it does not read; it exports the Content Encryption Object's protection type, key ID and license URL as the tags
   ASF_Protection_Type, ASF_Key_ID and ASF_License_URL, which equal the analyzer's nodes; MediaInfo reports the Encryption field "Encrypted" of an audio
@@ -116,7 +116,7 @@ def check_noise_line(pcm, channels, line, problems):
 
 def decode(path, fmt="s16le", level="error"):
     """Decodes every audio stream, one ffmpeg run each, and joins the PCM: ffmpeg 7.0 and later refuse a raw PCM output with more
-    than one audio stream (FF_OFMT_FLAG_MAX_ONE_OF_EACH in libavformat/pcmenc.c of 7.0 and 8.0.1), where 6.1 interleaved them. The samples
+    than one audio stream (ffmpeg 7.0 and 8.0.1 refuse it), where 6.1 interleaved them. The samples
     of all streams count, as before."""
     probe = run(["ffprobe", "-v", "error", "-select_streams", "a", "-show_entries", "stream=index", "-of", "csv=p=0", str(path)], text=True)
     count = max(1, len(probe.stdout.split()))
@@ -274,7 +274,7 @@ def check_voice_decode(name, manifest, path, problems):
                         + (f" and the manifest expects the analyzer's {crosscheck['analyzer']['samples']}" if "analyzer" in crosscheck else ""))
 
 
-# What ffprobe's wmavoice decoder says of each damaged configuration (wmavoice.c, wmavoice_decode_init), which it opens to read the stream.
+# What ffprobe's wmavoice decoder says of each damaged configuration (its wmavoice decoder's initialization), which it opens to read the stream.
 VOICE_CONFIG_REJECTED = {
     "voice-config-align": "ffprobe's decoder rejects the configuration: invalid block alignment 0",
     "voice-config-denoise": "ffprobe's decoder rejects the configuration: invalid denoise filter strength 12 (maximum 11)",
@@ -330,7 +330,7 @@ def check_protection(name, manifest, path, problems):
 
 
 def check_markers(path, problems):
-    """ffmpeg's ASF demuxer (asfdec_f.c, asf_read_marker) exports the Marker Object's entries as chapters: their start times and titles are
+    """ffmpeg's ASF demuxer exports the Marker Object's entries as chapters: their start times and titles are
     the golden report's markers' presentation times and descriptions. It reads no Script Command Object, so the commands have no second reading here."""
     report = golden_report(path)
     markers = [n for n in nodes_of(report["root"]) if n["name"] == "Marker" and any(c["name"] == "Presentation Time" for c in n.get("children", []))] if report else []
@@ -467,7 +467,7 @@ def check_against_report(audio, general, report, problems):
     figure it states is compared with the parser's node for it."""
     stream = report["streams"][0]
     is_vbr = named(report, "IsVBR")
-    # ffmpeg's ASF muxer writes the attributes it copies as Unicode strings (asfenc.c), and neither the analyzer nor MediaInfo takes the
+    # ffmpeg's ASF muxer writes the attributes it copies as Unicode strings (the external-ffmpeg remuxes), and neither the analyzer nor MediaInfo takes the
     # bit rate mode from a string: an ffmpeg remux's IsVBR is "0" or "1" as text, and MediaInfo states no mode for it.
     if is_vbr is not None and not isinstance(is_vbr, str):
         # The header's own statement: the stream's isVbr follows the Bitrate Mode decision, which the frames' bitrates may decide against it.

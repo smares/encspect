@@ -389,7 +389,7 @@ def zero_length_field_file():
 
 fixture("length-field-zero", "Packets of 256 bytes, the size every packet has, that carry a packet length field of 0, which states a packet of no bytes (FFmpeg rejects it): the packets are read at the file's size.",
         zero_length_field_file,
-        [finding("asf.packet-length", "3 packets")], {"ffprobe": False, "reason": "ffmpeg rejects a packet length of 0 (asfdec_f.c: invalid packet_length)."})
+        [finding("asf.packet-length", "3 packets")], {"ffprobe": False, "reason": "ffmpeg rejects a packet length of 0 ("invalid packet_length")."})
 
 
 def unaligned_offsets_file(variable):
@@ -577,7 +577,7 @@ def wma_codec(tag, extra, channels=2, rate=44100, align=743):
     return m.stream_properties(1, m.wave_format(tag, channels, rate, rate // 8, align, 16, extra), encrypted=True)
 
 
-# Professional and Lossless: the sample size, the channel mask, eight unknown bytes, the decode flags and two unknown bytes (18 bytes, as FFmpeg's wmaprodec.c and wmalosslessdec.c read them).
+# Professional and Lossless: the sample size, the channel mask, eight unknown bytes, the decode flags and two unknown bytes (18 bytes: Microsoft's WMAUDIO3WAVEFORMAT in mmreg.h, wValidBitsPerSample, dwChannelMask, dwReserved1 and dwReserved2, wEncodeOptions and wReserved3).
 PRO_DATA = struct.pack("<HIQHH", 16, 3, 0, 0x00E0, 0)
 
 
