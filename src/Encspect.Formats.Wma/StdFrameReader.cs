@@ -79,6 +79,26 @@ internal sealed class StdBlockNotes
 
     public void Noise() => Last().IsNoiseSubstituted = true;
 
+    public void Gain(long gain) => Last().Gain = gain;
+
+    public void Reuse() => Last().IsReusingExponents = true;
+
+    // One noise level of a flagged band, in decibels.
+    public void Level(int level)
+    {
+        ref Note note = ref Last();
+        note.LevelSum += level;
+        note.Levels++;
+    }
+
+    // One channel's non-zero coefficients and the escapes among them.
+    public void Coefficients(int nonZero, int escapes)
+    {
+        ref Note note = ref Last();
+        note.NonZero += nonZero;
+        note.Escapes += escapes;
+    }
+
     // The highest of a block's channels.
     public void Reach(int hertz) => Last().Hertz = Math.Max(Last().Hertz, hertz);
 
@@ -90,6 +110,14 @@ internal sealed class StdBlockNotes
         public byte Size;
         public bool IsNoiseSubstituted;
         public int Hertz;
+        public bool IsReusingExponents;
+
+        // 0 where the block stopped before its gain, which is 1 or more.
+        public long Gain;
+        public long LevelSum;
+        public int Levels;
+        public int NonZero;
+        public int Escapes;
     }
 }
 
@@ -319,6 +347,7 @@ internal static class StdFrameReader
             if (!isExponentsSent)
             {
                 totals.ReusingExponents++;
+                totals.Notes.Reuse();
             }
         }
 
@@ -366,6 +395,7 @@ internal static class StdFrameReader
         }
 
         gain = sum;
+        totals?.Notes.Gain(sum);
         store?.Set(headerAt + 4, (int)Math.Min(sum, int.MaxValue));
         fields?.Add(new TraceField(FieldKind.Gain, 0, gainAt, bits.Position, (int)Math.Min(sum, int.MaxValue), 0));
         int escapeWidth = sum < 15 ? 13 : sum < 32 ? 12 : sum < 40 ? 11 : sum < 45 ? 10 : 9;
@@ -437,6 +467,7 @@ internal static class StdFrameReader
                         }
 
                         store?.Add(level);
+                        totals?.Notes.Level(level);
                     }
                 }
 
@@ -683,6 +714,7 @@ internal static class StdFrameReader
         {
             totals.NonZero += nonZero;
             totals.Escapes += escapes;
+            totals.Notes.Coefficients(nonZero, escapes);
         }
 
         if (position > n)
