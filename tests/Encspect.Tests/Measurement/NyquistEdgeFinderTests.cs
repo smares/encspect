@@ -170,6 +170,6 @@ public class NyquistEdgeFinderTests
         Assert.Equal("a step of 70.0 dB at 5,513 Hz, 0.5 Hz over 5,512.5 Hz (the Nyquist frequency of 11,025 Hz), in 3 of 4 frames with signal; the band above 5,512.5 Hz is 0.5 dB over its mirror below", half);
 
         string on = MeasurementText.NyquistEdgeText(new NyquistEdge { LowerRate = 32000, StepFrequency = 16000, StepTenthsOfDb = 700, AboveTenthsOfDb = 0, FramesShowing = 1, FramesWithSignal = 1 });
-        Assert.Equal("a step of 70.0 dB at 16,000 Hz, at 16,000 Hz (the Nyquist frequency of 32,000 Hz), in 1 of 1 frames with signal; the band above 16,000 Hz is level with its mirror below", on);
+        Assert.Equal("a step of 70.0 dB at 16,000 Hz, the Nyquist frequency of 32,000 Hz, in 1 of 1 frames with signal; the band above 16,000 Hz is level with its mirror below", on);
     }
 }

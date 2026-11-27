@@ -535,8 +535,8 @@ public static class MeasurementText
         string nyquist = HalfHertz(edge.LowerRate);
         int offset = edge.LowerRate - (2 * edge.StepFrequency);
         string place = offset == 0
-            ? $"at {nyquist}"
-            : $"{HalfHertz(Math.Abs(offset))} {(offset > 0 ? "under" : "over")} {nyquist}";
+            ? $"the Nyquist frequency of {Hertz(edge.LowerRate)}"
+            : $"{HalfHertz(Math.Abs(offset))} {(offset > 0 ? "under" : "over")} {nyquist} (the Nyquist frequency of {Hertz(edge.LowerRate)})";
         string above = edge.AboveTenthsOfDb switch
         {
             < 0 => $"{Tenths(-edge.AboveTenthsOfDb)} dB under its mirror below",
@@ -544,7 +544,7 @@ public static class MeasurementText
             _ => $"{Tenths(edge.AboveTenthsOfDb)} dB over its mirror below",
         };
 
-        return $"a step of {Tenths(edge.StepTenthsOfDb)} dB at {Hertz(edge.StepFrequency)}, {place} (the Nyquist frequency of {Hertz(edge.LowerRate)}), in {Grouped(edge.FramesShowing)} of {Grouped(edge.FramesWithSignal)} frames with signal; the band above {nyquist} is {above}";
+        return $"a step of {Tenths(edge.StepTenthsOfDb)} dB at {Hertz(edge.StepFrequency)}, {place}, in {Grouped(edge.FramesShowing)} of {Grouped(edge.FramesWithSignal)} frames with signal; the band above {nyquist} is {above}";
     }
 
     // Half of a value in hertz twice over, written whole or with .5 (5,512.5 Hz).
