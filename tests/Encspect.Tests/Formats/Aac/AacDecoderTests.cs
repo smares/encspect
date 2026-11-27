@@ -1,6 +1,7 @@
 using Encspect.Core;
 using Encspect.Formats.Aac.Decoding;
 using Encspect.Host;
+using Encspect.Tests.Support;
 
 namespace Encspect.Tests.Formats.Aac;
 
@@ -86,6 +87,27 @@ public class AacDecoderTests
         public void End(long samples)
         {
         }
+    }
+
+    // The allowance per byte covers HE-AAC v2 at the lowest rate fdkaac 1.0.0 writes for 48 kHz of stereo output (-p 29 -b 4 is raised to 12 kbps: 3,603,064 bytes for
+    // 40 minutes, about 1,502 bytes a second; docs/design/lossy-decoders.md, "Per-byte allowance"): what the decoder charges a sample of each channel of an HE-AAC v2 fixture,
+    // at 96,000 such samples a second, fits in the allowance of 1,502 bytes, with room for the parametric stereo data's own work.
+    [Fact]
+    public void The_allowance_per_byte_covers_HE_AAC_v2_at_the_lowest_rate_fdkaac_writes()
+    {
+        var decoder = new CountingDecoder(new AacDecoder());
+        var analyzer = new Analyzer(DefaultParsers.Tags, DefaultParsers.Formats, DefaultParsers.Codecs, [decoder]);
+        byte[] file = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "aac", "fdkaac-he-v2-adts.aac"));
+
+        Report report = analyzer.Analyze("fdkaac-he-v2-adts.aac", new MemoryStream(file, writable: false),
+            new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = long.MaxValue, Output = _ => new Encspect.Tests.Decoding.DecoderWorkTests.NullSink() } });
+
+        StreamInfo info = Assert.Single(report.Streams);
+        Assert.Equal(2, info.Channels);
+        double perSampleOfEachChannel = (double)decoder.Units / (info.Samples * 2);
+        double perByte = perSampleOfEachChannel * 96_000 / 1_502;
+        Assert.InRange(perSampleOfEachChannel, 400, 500);
+        Assert.True(perByte * 1.1 <= new AacDecoder().WorkPerInputByte, $"{perByte:F0} units a byte");
     }
 
     private static (Report Report, CollectingSink Sink) Decode(byte[] file, string name)

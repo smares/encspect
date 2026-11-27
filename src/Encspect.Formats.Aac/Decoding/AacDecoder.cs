@@ -15,9 +15,10 @@ public sealed class AacDecoder : IDecoder
 
     public bool DeclaresChecksums => false;
 
-    // Silence is the cheapest legitimate case: 6 bytes for 1,024 samples of stereo, which cost 1,024 * 2 * 22 units and the floor of the stages (docs/design/lossy-decoders.md,
-    // "Per-byte allowance").
-    public long WorkPerInputByte => 8192;
+    // HE-AAC v2 at the lowest rate fdkaac writes is the cheapest legitimate case: 12 kbps for 48 kHz of stereo output, about 1,502 bytes a second for 96,000 samples
+    // that cost the SBR stage's 400 units and the floor of 22 each, about 27,000 units a byte; silence of AAC LC (6 bytes for 1,024 samples of stereo) needs about 8,200
+    // (docs/design/lossy-decoders.md, "Per-byte allowance").
+    public long WorkPerInputByte => 32768;
 
     public IFrameDecoder Open(DecodeContext context)
     {
