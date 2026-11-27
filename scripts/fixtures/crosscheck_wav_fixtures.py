@@ -116,7 +116,7 @@ def iec_family(name):
 
 
 # The manifest's stream "routed": the codec FFmpeg reads from the data chunk is not in the manifest, so only its presence is compared.
-ROUTED_FORMATS = {"mp3", "mp2", "ac3", "eac3", "dts"}
+ROUTED_FORMATS = {"mp3", "mp2", "ac3", "eac3", "dts", "wmav1", "wmav2", "wmapro", "wmalossless", "wmavoice"}
 
 
 # {fixture: {field: reason}}: a tool's own reading of a field on a fixture, with the evidence. The field must still differ from the manifest, so

@@ -198,6 +198,21 @@ class CheckTests(unittest.TestCase):
         change = {"added": [{"scope": "node", "parent": ["MPEG Audio", "Statistics"], "name": "Added"}]}
         self.assertTrue(self.check(report(OLD_STATS), new, change))
 
+    def test_streams_of_a_codec_that_the_new_report_gains_are_taken_back(self):
+        old = report(OLD_STATS)
+        new = report(OLD_STATS, streams=[{"nodes": [[0]], "codec": "PCM"}, {"nodes": [[1]], "codec": "MPEG-1 Layer III", "series": [{"name": "Bitrate"}]}])
+        self.assertEqual(self.check(old, new, {}) != [], True)
+        self.assertEqual(self.check(old, new, {"added": [{"scope": "streams", "codec": "PCM"}]}), [])
+        # A stream of the codec that the old report has stays.
+        both = report(OLD_STATS, streams=[{"nodes": [[0]], "codec": "PCM"}])
+        self.assertEqual(self.check(both, both, {"added": [{"scope": "streams", "codec": "PCM"}]}), [])
+
+    def test_a_removed_finding_can_be_limited_to_the_messages_that_have_a_text(self):
+        old = report(OLD_STATS, findings=[{"code": "asf.codec-not-analyzed", "message": "PCM is not routed"}, {"code": "asf.codec-not-analyzed", "message": "Stream 2 is encrypted"}])
+        new = report(OLD_STATS, findings=[{"code": "asf.codec-not-analyzed", "message": "Stream 2 is encrypted"}])
+        self.assertNotEqual(self.check(old, new, {"removed": [{"scope": "finding", "code": "asf.codec-not-analyzed"}]}), [])
+        self.assertEqual(self.check(old, new, {"removed": [{"scope": "finding", "code": "asf.codec-not-analyzed", "messageContains": "PCM"}]}), [])
+
     def test_a_rename_is_reversed(self):
         new = report([OLD_STATS[0], node("Coded Bandwidth", value=16000), *OLD_STATS[2:]])
         change = {"renamed": [{"parent": ["MPEG Audio", "Statistics"], "from": "Bandwidth", "to": "Coded Bandwidth"}]}
