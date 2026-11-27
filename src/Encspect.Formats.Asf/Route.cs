@@ -199,7 +199,7 @@ public sealed partial class AsfParser
 
             if (pcm is not null)
             {
-                                // The samples are counted from the bytes the media objects hold (not the payloads': a compressed payload's length bytes, the fragments past an object's size and the
+                // The samples are counted from the bytes the media objects hold (not the payloads': a compressed payload's length bytes, the fragments past an object's size and the
                 // dropped ones are no samples), which takes one walk over them; it makes the findings about damaged objects, so they do not wait for a decoder.
                 long held = 0;
                 foreach (MappedBytes mediaObject in MediaObjects(state, stream.Number))
