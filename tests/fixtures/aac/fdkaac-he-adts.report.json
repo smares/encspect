@@ -502,6 +502,47 @@
                   ]
                 },
                 {
+                  "name": "Last Non-Zero Coefficient",
+                  "offset": 0,
+                  "length": 9753,
+                  "children": [
+                    {
+                      "name": "Lowest",
+                      "value": 711,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 9753
+                    },
+                    {
+                      "name": "Most Common",
+                      "value": 721,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 9753
+                    },
+                    {
+                      "name": "Highest",
+                      "value": 7913,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 9753
+                    }
+                  ]
+                },
+                {
+                  "name": "Non-Zero Coefficients",
+                  "value": 3466,
+                  "unit": "coefficients",
+                  "offset": 0,
+                  "length": 9753
+                },
+                {
+                  "name": "Escape-Coded Coefficients",
+                  "value": "516 coefficients (14.9%)",
+                  "offset": 0,
+                  "length": 9753
+                },
+                {
                   "name": "Intensity Stereo Bound",
                   "offset": 0,
                   "length": 9753,
@@ -585,6 +626,60 @@
                       "unit": "headers",
                       "offset": 0,
                       "length": 9753
+                    },
+                    {
+                      "name": "SBR Frame Classes",
+                      "value": 70,
+                      "unit": "SBR channels",
+                      "offset": 0,
+                      "length": 9753,
+                      "children": [
+                        {
+                          "name": "FIXFIX",
+                          "value": "66 SBR channels (94.3%)",
+                          "offset": 0,
+                          "length": 9753
+                        },
+                        {
+                          "name": "FIXVAR",
+                          "value": "2 SBR channels (2.9%)",
+                          "offset": 0,
+                          "length": 9753
+                        },
+                        {
+                          "name": "VARFIX",
+                          "value": "2 SBR channels (2.9%)",
+                          "offset": 0,
+                          "length": 9753
+                        }
+                      ]
+                    },
+                    {
+                      "name": "SBR Envelopes",
+                      "value": 70,
+                      "unit": "SBR channels",
+                      "offset": 0,
+                      "length": 9753,
+                      "children": [
+                        {
+                          "name": "1 envelope",
+                          "value": "66 SBR channels (94.3%)",
+                          "offset": 0,
+                          "length": 9753
+                        },
+                        {
+                          "name": "2 envelopes",
+                          "value": "2 SBR channels (2.9%)",
+                          "offset": 0,
+                          "length": 9753
+                        },
+                        {
+                          "name": "4 envelopes",
+                          "value": "2 SBR channels (2.9%)",
+                          "offset": 0,
+                          "length": 9753
+                        }
+                      ]
                     },
                     {
                       "name": "Start Frequency",
@@ -24459,6 +24554,178 @@
               8269,
               8269
             ]
+          },
+          {
+            "name": "Last Non-Zero Coefficient",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "codedBandwidth",
+            "quantity": "Last Non-Zero Coefficient",
+            "x": [
+              278,
+              634,
+              924,
+              1115,
+              1393,
+              1672,
+              1951,
+              2229,
+              2508,
+              2787,
+              3065,
+              3344,
+              3622,
+              3901,
+              4180,
+              4458,
+              4737,
+              5016,
+              5294,
+              5573,
+              5852,
+              6130,
+              6409,
+              6687,
+              6966,
+              7245,
+              7523,
+              7802,
+              8081,
+              8359,
+              8638,
+              8917,
+              9195,
+              9511
+            ],
+            "values": [
+              4221,
+              7321,
+              6481,
+              6062,
+              7903,
+              6072,
+              711,
+              6072,
+              7838,
+              6062,
+              7903,
+              7892,
+              6008,
+              721,
+              7084,
+              6492,
+              7084,
+              7913,
+              7903,
+              711,
+              721,
+              721,
+              6062,
+              7289,
+              7903,
+              5997,
+              721,
+              6008,
+              6062,
+              711,
+              7913,
+              7913,
+              7913,
+              2304
+            ]
+          },
+          {
+            "name": "Last Non-Zero Coefficient Over Time",
+            "unit": "Hz",
+            "axis": "seconds",
+            "concept": "codedBandwidth",
+            "quantity": "Last Non-Zero Coefficient",
+            "x": [
+              0,
+              1
+            ],
+            "values": [
+              7913,
+              7913
+            ]
+          },
+          {
+            "name": "Escape-Coded Coefficients",
+            "unit": "%",
+            "axis": "frameOffset",
+            "quantity": "Escape-Coded Coefficients",
+            "x": [
+              278,
+              634,
+              924,
+              1115,
+              1393,
+              1672,
+              1951,
+              2229,
+              2508,
+              2787,
+              3065,
+              3344,
+              3622,
+              3901,
+              4180,
+              4458,
+              4737,
+              5016,
+              5294,
+              5573,
+              5852,
+              6130,
+              6409,
+              6687,
+              6966,
+              7245,
+              7523,
+              7802,
+              8081,
+              8359,
+              8638,
+              8917,
+              9195,
+              9511
+            ],
+            "values": [
+              22.6,
+              4.6,
+              50,
+              45.2,
+              7.2,
+              51.7,
+              60,
+              51.9,
+              7,
+              55,
+              6.3,
+              6.4,
+              51.7,
+              50,
+              43.3,
+              50,
+              42.4,
+              5.9,
+              6.5,
+              56.5,
+              45.2,
+              53.6,
+              50,
+              44.8,
+              5.9,
+              56,
+              56,
+              53.8,
+              48,
+              52.2,
+              8,
+              6.9,
+              6.8,
+              4.5
+            ]
           }
         ],
         "categorySeries": [
@@ -24754,6 +25021,114 @@
             ]
           },
           {
+            "name": "SBR Frame Classes",
+            "valueLabel": "SBR channel",
+            "categories": [
+              {
+                "name": "FIXFIX",
+                "count": 66
+              },
+              {
+                "name": "FIXVAR",
+                "count": 2
+              },
+              {
+                "name": "VARFIX",
+                "count": 2
+              },
+              {
+                "name": "VARVAR",
+                "count": 0
+              }
+            ],
+            "total": 70,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                35
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                4
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                2,
+                2
+              ],
+              [
+                0,
+                62
+              ]
+            ],
+            "seconds": [
+              0,
+              22
+            ]
+          },
+          {
+            "name": "SBR Envelopes",
+            "valueLabel": "SBR channel",
+            "categories": [
+              {
+                "name": "1 envelope",
+                "count": 66
+              },
+              {
+                "name": "2 envelopes",
+                "count": 2
+              },
+              {
+                "name": "3 envelopes",
+                "count": 0
+              },
+              {
+                "name": "4 envelopes",
+                "count": 2
+              },
+              {
+                "name": "5 envelopes",
+                "count": 0
+              }
+            ],
+            "total": 70,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                35
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                4
+              ],
+              [
+                3,
+                2
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                0,
+                62
+              ]
+            ],
+            "seconds": [
+              0,
+              22
+            ]
+          },
+          {
             "name": "SBR",
             "valueLabel": "raw data block",
             "categories": [
@@ -24829,6 +25204,22 @@
         "length": 278,
         "path": [
           0,
+          1
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Info",
+        "code": "aac.window-slopes-differ",
+        "message": "The raw data block at 0x11E holds a window sequence whose left slope differs from the right slope of the window before it in the same channel stream, as a long window followed by eight short ones does: ISO/IEC 14496-3 4.6.11.3.1 lists such transitions as possible and not as meaningful.",
+        "offset": 286,
+        "length": 1,
+        "path": [
+          0,
+          2,
+          15,
+          0,
+          3,
           1
         ],
         "count": 1

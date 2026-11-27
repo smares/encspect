@@ -449,6 +449,7 @@ public sealed class AacCodecParser : ICodecParser
                 // A packet the container cut: its bytes are no access unit's, so it is neither read nor counted in the unit figures; its declared samples are
                 // counted and lost.
                 flags |= IsCutPacket;
+                Blocks?.Skip();
                 Blocks?.Feed?.Lost(packet, "Access Unit", null);
             }
             else if (_config is { IsUsac: true })

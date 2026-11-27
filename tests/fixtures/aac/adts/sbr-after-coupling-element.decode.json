@@ -1,16 +1,17 @@
 {
   "streams": [
     {
-      "decoding": "NotPossible",
-      "decodedSamples": 0
+      "decoding": "Decoded",
+      "decodedSamples": 12288,
+      "pcmSha256": "c485e613c4cff9345947b7510692b1dfc6231946bf138450de7bd965d062b46e"
     }
   ],
   "findings": [
     {
-      "code": "decode.not-possible",
-      "severity": "Info",
-      "count": 1,
-      "message": "The stream was not decoded: HE-AAC (SBR and parametric stereo) is not decoded yet."
+      "code": "decode.coupling-not-applied",
+      "severity": "Warning",
+      "count": 12,
+      "message": "The block at 0x7 holds a coupling channel element, whose channels are read and not applied, so the decoded audio lacks what they add to the channels they couple."
     }
   ]
 }

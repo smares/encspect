@@ -1678,6 +1678,47 @@
                               ]
                             },
                             {
+                              "name": "Last Non-Zero Coefficient",
+                              "offset": 648,
+                              "length": 2914,
+                              "children": [
+                                {
+                                  "name": "Lowest",
+                                  "value": 10314,
+                                  "unit": "Hz",
+                                  "offset": 648,
+                                  "length": 2914
+                                },
+                                {
+                                  "name": "Most Common",
+                                  "value": 10314,
+                                  "unit": "Hz",
+                                  "offset": 648,
+                                  "length": 2914
+                                },
+                                {
+                                  "name": "Highest",
+                                  "value": 10314,
+                                  "unit": "Hz",
+                                  "offset": 648,
+                                  "length": 2914
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Non-Zero Coefficients",
+                              "value": 5408,
+                              "unit": "coefficients",
+                              "offset": 648,
+                              "length": 2914
+                            },
+                            {
+                              "name": "Escape-Coded Coefficients",
+                              "value": "32 coefficients (0.6%)",
+                              "offset": 648,
+                              "length": 2914
+                            },
+                            {
                               "name": "Global Gain",
                               "offset": 648,
                               "length": 2914,
@@ -4600,6 +4641,72 @@
             ],
             "values": [
               14470
+            ]
+          },
+          {
+            "name": "Last Non-Zero Coefficient",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "codedBandwidth",
+            "quantity": "Last Non-Zero Coefficient",
+            "x": [
+              648,
+              1012,
+              1376,
+              1740,
+              2106,
+              2470,
+              2834,
+              3198
+            ],
+            "values": [
+              10314,
+              10314,
+              10314,
+              10314,
+              10314,
+              10314,
+              10314,
+              10314
+            ]
+          },
+          {
+            "name": "Last Non-Zero Coefficient Over Time",
+            "unit": "Hz",
+            "axis": "seconds",
+            "concept": "codedBandwidth",
+            "quantity": "Last Non-Zero Coefficient",
+            "x": [
+              0
+            ],
+            "values": [
+              10314
+            ]
+          },
+          {
+            "name": "Escape-Coded Coefficients",
+            "unit": "%",
+            "axis": "frameOffset",
+            "quantity": "Escape-Coded Coefficients",
+            "x": [
+              648,
+              1012,
+              1376,
+              1740,
+              2106,
+              2470,
+              2834,
+              3198
+            ],
+            "values": [
+              0.6,
+              0.6,
+              0.6,
+              0.6,
+              0.6,
+              0.6,
+              0.6,
+              0.6
             ]
           }
         ],

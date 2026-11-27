@@ -914,6 +914,19 @@ jobs:
       - name: Compare the decoded PCM of the AAC fixtures
         run: python3 scripts/fixtures/crosscheck_aac_pcm.py --libxaac
 
+      # The SBR and parametric stereo tables of the decoder equal what their generators read from libxaac's pinned commit.
+      - name: Check the HE-AAC tables against libxaac's
+        run: |
+          libxaac=$(python3 scripts/fixtures/libxaac_tool.py)
+          python3 -I scripts/fixtures/make_sbr_tables.py --check "$libxaac"
+          python3 -I scripts/fixtures/make_ps_tables.py --check "$libxaac"
+
+      # The HE-AAC streams (SBR, parametric stereo) against FFmpeg's decoder within 6 % of its RMS, at the shift the two decoders' cuts differ by (docs/development.md, "AAC decoding").
+      - name: Compare the decoded PCM of the HE-AAC fixtures
+        run: |
+          sudo apt-get install -y python3-numpy
+          python3 scripts/fixtures/crosscheck_he_aac_pcm.py
+
       # The manifests of the encrypted files ffmpeg and MP4Box wrote are recomputed from the committed files, which need those tools.
       - name: Recompute the manifests of the encrypted MP4 fixtures
         run: |

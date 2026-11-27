@@ -32,6 +32,9 @@ internal static class BlockRecord
     public const int BlockFlags = 21;
     public const int Slots = 22;
 
+    // Slot 0 only: how many slots of SBR payloads (SbrRecord) follow the channel streams' slots.
+    public const int SbrSlots = 23;
+
     // Per band of a group, group g and band sfb at g * 64 + sfb.
     public const int Codebooks = 32;
     public const int ScaleFactors = Codebooks + 512;
@@ -49,6 +52,9 @@ internal static class BlockRecord
     public const int KindPairSecond = 3;
     public const int KindLfe = 4;
 
+    // The values of an SBR payload (SbrRecord), after the channel streams.
+    public const int KindSbr = 5;
+
     public const int FlagPulse = 1;
     public const int FlagTns = 2;
     public const int FlagCommonWindow = 4;
@@ -56,6 +62,9 @@ internal static class BlockRecord
     public const int BlockHasSbr = 1;
     public const int BlockHasCoupling = 2;
     public const int BlockHasPs = 4;
+
+    // An SBR payload after a single channel, channel pair or LFE element: the evidence that makes an unsignaled stream HE-AAC (BlockResult.HasSbrEvidence).
+    public const int BlockHasSbrEvidence = 8;
 }
 
 // The slots of the block being read, in an array of the reader's own that the block log copies into the buffers the session lends.
@@ -64,6 +73,11 @@ internal sealed class RecordStore
     private int[] _data = [];
 
     public int Slots { get; private set; }
+
+    private int[] _sbr = [];
+
+    // How many SBR payloads the block holds; their slots follow the channel streams' in what Seal returns.
+    public int SbrCount { get; private set; }
 
     // More channel streams than a slot count of MaxSlots: nothing is stored for the rest, and the block is handed over not walked.
     public bool IsOverflow { get; private set; }
@@ -86,12 +100,25 @@ internal sealed class RecordStore
         Span<int> first = At(0);
         first[BlockRecord.Slots] = Slots;
         first[BlockRecord.BlockFlags] = Flags;
-        return _data.AsSpan(0, Math.Max(1, Slots) * BlockRecord.Stride);
+        first[BlockRecord.SbrSlots] = SbrCount;
+        int channelSlots = Math.Max(1, Slots);
+        if (SbrCount > 0)
+        {
+            if (_data.Length < (channelSlots + SbrCount) * BlockRecord.Stride)
+            {
+                Array.Resize(ref _data, (channelSlots + SbrCount) * BlockRecord.Stride);
+            }
+
+            _sbr.AsSpan(0, SbrCount * BlockRecord.Stride).CopyTo(_data.AsSpan(channelSlots * BlockRecord.Stride));
+        }
+
+        return _data.AsSpan(0, (channelSlots + SbrCount) * BlockRecord.Stride);
     }
 
     public void Reset()
     {
         Slots = 0;
+        SbrCount = 0;
         IsOverflow = false;
         Flags = 0;
     }
@@ -118,6 +145,29 @@ internal sealed class RecordStore
         span[BlockRecord.Tag] = tag;
         return slot;
     }
+
+    // The next SBR payload's slot, cleared where the walk does not write every int; empty where the block holds more than MaxSbr.
+    public Span<int> BeginSbr(int tag)
+    {
+        if (SbrCount >= MaxSbr)
+        {
+            return default;
+        }
+
+        if (_sbr.Length < (SbrCount + 1) * BlockRecord.Stride)
+        {
+            Array.Resize(ref _sbr, Math.Min(MaxSbr, Math.Max(SbrCount + 1, _sbr.Length / BlockRecord.Stride * 2)) * BlockRecord.Stride);
+        }
+
+        Span<int> span = _sbr.AsSpan(SbrCount * BlockRecord.Stride, BlockRecord.Stride);
+        span[..SbrRecord.FirstChannel].Clear();
+        span[BlockRecord.Kind] = BlockRecord.KindSbr;
+        span[BlockRecord.Tag] = tag;
+        SbrCount++;
+        return span;
+    }
+
+    private const int MaxSbr = 16;
 
     public Span<int> At(int slot) => _data.AsSpan(slot * BlockRecord.Stride, BlockRecord.Stride);
 }

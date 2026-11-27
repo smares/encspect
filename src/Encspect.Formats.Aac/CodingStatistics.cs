@@ -23,6 +23,8 @@ internal static class CodingStatistics
         Node? stereo = null;
         Node? bandwidth = null;
         Node? intensityBound = null;
+        Node? lastCoefficient = null;
+        Node? escapes = null;
         Node? shapesNode = null;
         Node? midSideBandsNode = null;
         Node? noiseNode = null;
@@ -30,6 +32,10 @@ internal static class CodingStatistics
         Node? pulseNode = null;
         Node? sbrNode = null;
         Node? psNode = null;
+        Node? sbrFrameClassesNode = null;
+        Node? sbrEnvelopesNode = null;
+        Node? psEnvelopesNode = null;
+        Node? psBandsNode = null;
         Node blocks = statistics.Add(cover("Raw Data Blocks", NodeValue.Integer(tally.Blocks, "blocks", "block"), Explain.StatBlocks, Topics.RawDataBlocks));
         if (tally.DamagedBlocks > 0)
         {
@@ -174,6 +180,21 @@ internal static class CodingStatistics
                 bandwidth.Add(cover("Highest", NodeValue.Integer(hertz.Keys.Last(), "Hz"), Explain.BandwidthHighest, null));
             }
 
+            if (log.Recorder.ValueBandwidths.Count > 0)
+            {
+                SortedDictionary<int, long> hertz = log.Recorder.ValueBandwidths;
+                lastCoefficient = statistics.Add(cover("Last Non-Zero Coefficient", null, Explain.StatLastCoefficient, Topics.CodedBandwidth));
+                lastCoefficient.Add(cover("Lowest", NodeValue.Integer(hertz.Keys.First(), "Hz"), Explain.LastCoefficientLowest, null));
+                lastCoefficient.Add(cover("Most Common", NodeValue.Integer(hertz.MaxBy(b => b.Value).Key, "Hz"), Explain.LastCoefficientMostCommon, null));
+                lastCoefficient.Add(cover("Highest", NodeValue.Integer(hertz.Keys.Last(), "Hz"), Explain.LastCoefficientHighest, null));
+            }
+
+            if (tally.NonZero > 0)
+            {
+                statistics.Add(cover("Non-Zero Coefficients", NodeValue.Integer(tally.NonZero, "coefficients", "coefficient"), Explain.StatNonZero, Topics.Codebooks));
+                escapes = statistics.Add(cover("Escape-Coded Coefficients", Share(tally.Escapes, tally.NonZero, "coefficient"), Explain.StatEscapes, Topics.Codebooks));
+            }
+
             if (log.Recorder.IntensityUnits > 0)
             {
                 intensityBound = statistics.Add(cover("Intensity Stereo Bound", null, Explain.StatIntensityBound, Topics.Intensity));
@@ -203,6 +224,10 @@ internal static class CodingStatistics
                 sbr.Add(cover("Unread SBR Data", NodeValue.Integer(tally.SbrUnread, "payloads", "payload"), Explain.StatSbrUnread, null));
             }
 
+            sbrFrameClassesNode = AddCategories(cover, sbr, "SBR Frame Classes", tally.SbrFrameClasses, CodingCategories.SbrFrameClasses, Explain.StatSbrFrameClasses, Topics.Sbr, "SBR channel");
+            sbrEnvelopesNode = AddCategories(cover, sbr, "SBR Envelopes", tally.SbrEnvelopeCounts[1..], CodingCategories.SbrEnvelopes, Explain.StatSbrEnvelopes, Topics.Sbr, "SBR channel");
+            psEnvelopesNode = AddCategories(cover, psNode, "Parametric Stereo Envelopes", tally.PsEnvelopeCounts, CodingCategories.PsEnvelopes, Explain.StatPsEnvelopes, Topics.ParametricStereo, "raw data block");
+            psBandsNode = AddCategories(cover, psNode, "Parametric Stereo Bands", tally.PsBandCounts, CodingCategories.PsBands, Explain.StatPsBands, Topics.ParametricStereo, "raw data block");
             if (tally.FirstHeader is { } header)
             {
                 int rate = setup.SbrSampleRate;
@@ -247,7 +272,34 @@ internal static class CodingStatistics
             Pulses = pulseNode,
             Sbr = sbrNode,
             ParametricStereo = psNode,
+            SbrFrameClasses = sbrFrameClassesNode,
+            SbrEnvelopes = sbrEnvelopesNode,
+            PsEnvelopes = psEnvelopesNode,
+            PsBands = psBandsNode,
+            LastCoefficient = lastCoefficient,
+            Escapes = escapes,
         };
+    }
+
+    // A node of the shares of a tally's categories, left out where nothing was counted, which the category series of the same name is anchored to.
+    private static Node? AddCategories(Func<string, NodeValue?, string, string?, Node> cover, Node parent, string name, long[] counts, IReadOnlyList<Category> categories, string description, string topic, string unit)
+    {
+        long total = counts.Sum();
+        if (total == 0)
+        {
+            return null;
+        }
+
+        Node node = parent.Add(cover(name, NodeValue.Integer(total, $"{unit}s", unit), description, topic));
+        for (int i = 0; i < counts.Length; i++)
+        {
+            if (counts[i] > 0)
+            {
+                node.Add(cover(categories[i].Name, Share(counts[i], total, unit), categories[i].Description, null));
+            }
+        }
+
+        return node;
     }
 
     private static void AddMaxSfb(Node statistics, string name, long[] counts, Func<string, NodeValue?, string, string?, Node> cover, string description)

@@ -13,4 +13,6 @@ references: ISO/IEC 14496-3 4.4.2, 4.6.2, 4.6.3, Annex 4.A
 
 **How long.** The elements state no lengths: where a channel's data ends follows only from decoding every codeword, so a reader decodes the spectrum to find the next element.
 
-**What you see.** Each channel's sections with their codebooks, the bits of its scalefactors and spectral data, and the share of each codebook among all bands in the statistics.
+**The values.** The statistics also count the quantized coefficients that are not zero, how many of them are escape-coded, and the upper edge of the highest nonzero coefficient of each channel stream, which lies at or below the top of its last band (max_sfb) and shows where the values really end.
+
+**What you see.** Each channel's sections with their codebooks, the bits of its scalefactors and spectral data, the share of each codebook among all bands in the statistics, and the figures of the values above, with graphs of the last nonzero coefficient and of the share of escapes.
