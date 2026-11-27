@@ -777,7 +777,8 @@
  "crosscheck": {
   "valid": true,
   "skip": {
-   "opusdec": "libopusfile 0.12, which opusdec reads with, refuses channel mapping family 3 (\"Failed to open\"; opusinfo lists the header); the PCM is compared with libopus's projection decoder by crosscheck_opus_pcm.py"
+   "opusdec": "libopusfile 0.12, which opusdec reads with, refuses channel mapping family 3 (\"Failed to open\"; opusinfo lists the header); the PCM is compared with libopus's projection decoder by crosscheck_opus_pcm.py",
+   "ffprobe": "FFmpeg's Opus decoder refuses channel mapping family 3 (\"Mapping type 3 is not implemented\", so ffprobe lists no stream and no packets; seen with FFmpeg 6.1.1 and the pinned 8.0.1); oggz and opusinfo read the packets and the header"
   }
  }
 }

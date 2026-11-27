@@ -147,7 +147,8 @@ SKIPS = {
     "external-ffmpeg-libopus-ambisonics": {"opusdec": "libopusfile 0.12, which opusdec reads with, refuses channel mapping family 2 (\"Failed to open\": info.c, opus_head_parse accepts families 0 and 1 only (OP_EIMPL for 255, OP_EBADHEADER otherwise); checked with 0.12 and opus-tools 0.2 of Ubuntu 26.04)"},
 }
 for _order in ("o1", "o1-stereo", "o2", "o2-stereo", "o3", "o3-stereo"):
-    SKIPS[f"external-libopus-ambisonics-{_order}"] = {"opusdec": "libopusfile 0.12, which opusdec reads with, refuses channel mapping family 3 (\"Failed to open\"; opusinfo lists the header); the PCM is compared with libopus's projection decoder by crosscheck_opus_pcm.py"}
+    SKIPS[f"external-libopus-ambisonics-{_order}"] = {"opusdec": "libopusfile 0.12, which opusdec reads with, refuses channel mapping family 3 (\"Failed to open\"; opusinfo lists the header); the PCM is compared with libopus's projection decoder by crosscheck_opus_pcm.py",
+                                                       "ffprobe": "FFmpeg's Opus decoder refuses channel mapping family 3 (\"Mapping type 3 is not implemented\", so ffprobe lists no stream and no packets; seen with FFmpeg 6.1.1 and the pinned 8.0.1); oggz and opusinfo read the packets and the header"}
 
 
 def extension(name):
