@@ -111,6 +111,14 @@ public sealed partial class MpegAudioParser
                 continue;
             }
 
+            if (index + 1 < state.Build.Frames.Count && state.Build.Frames[index + 1].IsGap && state.Regions.Any(r => r.First == index))
+            {
+                // Only for the header frame that starts its region, which the parser accepted without a chain (junk-after-vbr-header-frame); the CRC covers the file's bytes, so junk after it would make it fail on audio that is unchanged.
+                state.Findings.Add(Severity.Info, "mpeg-audio.music-crc-not-verified", node, count =>
+                    $"The LAME tag of {Frames(count)} is followed by bytes that are not audio before the first audio frame, so the music CRC is not verified; the first at {state.Findings.At(position)}.");
+                continue;
+            }
+
             if (end > state.Blocks.End)
             {
                 // A stream cut short is reported by its own findings; otherwise the tag is wrong.

@@ -1,0 +1,5248 @@
+[
+  {
+    "schemaVersion": 1,
+    "tool": {
+      "name": "encspect",
+      "version": "(build)"
+    },
+    "source": "window-sequences-invalid.aac",
+    "root": {
+      "name": "File",
+      "value": "AAC",
+      "offset": 0,
+      "length": 2252,
+      "children": [
+        {
+          "name": "ADTS",
+          "kind": "Stream",
+          "offset": 0,
+          "length": 2252,
+          "children": [
+            {
+              "name": "Statistics",
+              "kind": "Statistics",
+              "offset": 0,
+              "length": 2252,
+              "children": [
+                {
+                  "name": "Frames",
+                  "value": 12,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 2252
+                },
+                {
+                  "name": "Samples",
+                  "value": 12288,
+                  "unit": "samples",
+                  "offset": 0,
+                  "length": 2252
+                },
+                {
+                  "name": "Duration",
+                  "value": 0.2786394557823129,
+                  "unit": "s",
+                  "offset": 0,
+                  "length": 2252
+                },
+                {
+                  "name": "Average Bitrate",
+                  "value": 64.65703125,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 2252
+                },
+                {
+                  "name": "Smallest Frame",
+                  "value": 117,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 2252
+                },
+                {
+                  "name": "Largest Frame",
+                  "value": 348,
+                  "unit": "bytes",
+                  "offset": 0,
+                  "length": 2252
+                },
+                {
+                  "name": "Minimum Bitrate",
+                  "value": 40.31015625,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 2252
+                },
+                {
+                  "name": "Maximum Bitrate",
+                  "value": 119.896875,
+                  "unit": "kbps",
+                  "offset": 0,
+                  "length": 2252
+                },
+                {
+                  "name": "Bitrate Mode",
+                  "value": "variable",
+                  "offset": 0,
+                  "length": 2252
+                },
+                {
+                  "name": "Bitrate Distribution",
+                  "offset": 0,
+                  "length": 2252,
+                  "children": [
+                    {
+                      "name": "32 to 63 kbps",
+                      "value": "7 frames (58.3%)",
+                      "offset": 0,
+                      "length": 2252
+                    },
+                    {
+                      "name": "64 to 95 kbps",
+                      "value": "3 frames (25.0%)",
+                      "offset": 0,
+                      "length": 2252
+                    },
+                    {
+                      "name": "96 to 127 kbps",
+                      "value": "2 frames (16.7%)",
+                      "offset": 0,
+                      "length": 2252
+                    }
+                  ]
+                },
+                {
+                  "name": "Frames Signaling Variable Bitrate",
+                  "value": 12,
+                  "unit": "frames",
+                  "offset": 0,
+                  "length": 2252
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 12,
+                  "unit": "blocks",
+                  "offset": 0,
+                  "length": 2252
+                },
+                {
+                  "name": "Elements",
+                  "value": 12,
+                  "unit": "elements",
+                  "offset": 0,
+                  "length": 2252,
+                  "children": [
+                    {
+                      "name": "SCE",
+                      "value": 12,
+                      "unit": "elements",
+                      "offset": 0,
+                      "length": 2252
+                    }
+                  ]
+                },
+                {
+                  "name": "Block Usage",
+                  "value": 12,
+                  "unit": "channel streams",
+                  "offset": 0,
+                  "length": 2252,
+                  "children": [
+                    {
+                      "name": "Only Long",
+                      "value": "5 channel streams (41.7%)",
+                      "offset": 0,
+                      "length": 2252
+                    },
+                    {
+                      "name": "Long Start",
+                      "value": "2 channel streams (16.7%)",
+                      "offset": 0,
+                      "length": 2252
+                    },
+                    {
+                      "name": "Eight Short",
+                      "value": "2 channel streams (16.7%)",
+                      "offset": 0,
+                      "length": 2252
+                    },
+                    {
+                      "name": "Long Stop",
+                      "value": "3 channel streams (25.0%)",
+                      "offset": 0,
+                      "length": 2252
+                    }
+                  ]
+                },
+                {
+                  "name": "Block Sizes",
+                  "value": 12,
+                  "unit": "channel streams",
+                  "offset": 0,
+                  "length": 2252,
+                  "children": [
+                    {
+                      "name": "Long, start and stop",
+                      "value": "10 channel streams (83.3%)",
+                      "offset": 0,
+                      "length": 2252
+                    },
+                    {
+                      "name": "Short",
+                      "value": "2 channel streams (16.7%)",
+                      "offset": 0,
+                      "length": 2252
+                    }
+                  ]
+                },
+                {
+                  "name": "Window Shapes",
+                  "value": 12,
+                  "unit": "channel streams",
+                  "offset": 0,
+                  "length": 2252,
+                  "children": [
+                    {
+                      "name": "Sine",
+                      "value": "4 channel streams (33.3%)",
+                      "offset": 0,
+                      "length": 2252
+                    },
+                    {
+                      "name": "KBD",
+                      "value": "8 channel streams (66.7%)",
+                      "offset": 0,
+                      "length": 2252
+                    }
+                  ]
+                },
+                {
+                  "name": "Noise Substitution",
+                  "value": "2 channel streams (16.7%)",
+                  "offset": 0,
+                  "length": 2252,
+                  "children": [
+                    {
+                      "name": "Noise Bands",
+                      "value": 2,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 2252
+                    }
+                  ]
+                },
+                {
+                  "name": "TNS",
+                  "value": "0 channel streams (0.0%)",
+                  "offset": 0,
+                  "length": 2252,
+                  "children": [
+                    {
+                      "name": "Only Long",
+                      "value": "0 of 5 (0.0%)",
+                      "offset": 0,
+                      "length": 2252
+                    },
+                    {
+                      "name": "Long Start",
+                      "value": "0 of 2 (0.0%)",
+                      "offset": 0,
+                      "length": 2252
+                    },
+                    {
+                      "name": "Eight Short",
+                      "value": "0 of 2 (0.0%)",
+                      "offset": 0,
+                      "length": 2252
+                    },
+                    {
+                      "name": "Long Stop",
+                      "value": "0 of 3 (0.0%)",
+                      "offset": 0,
+                      "length": 2252
+                    }
+                  ]
+                },
+                {
+                  "name": "Pulse Data",
+                  "value": "0 channel streams (0.0%)",
+                  "offset": 0,
+                  "length": 2252
+                },
+                {
+                  "name": "Codebooks",
+                  "value": 406,
+                  "unit": "bands",
+                  "offset": 0,
+                  "length": 2252,
+                  "children": [
+                    {
+                      "name": "Codebook 0",
+                      "value": "66 bands (16.3%)",
+                      "offset": 0,
+                      "length": 2252
+                    },
+                    {
+                      "name": "Codebook 1",
+                      "value": "8 bands (2.0%)",
+                      "offset": 0,
+                      "length": 2252
+                    },
+                    {
+                      "name": "Codebook 2",
+                      "value": "14 bands (3.4%)",
+                      "offset": 0,
+                      "length": 2252
+                    },
+                    {
+                      "name": "Codebook 3",
+                      "value": "36 bands (8.9%)",
+                      "offset": 0,
+                      "length": 2252
+                    },
+                    {
+                      "name": "Codebook 4",
+                      "value": "12 bands (3.0%)",
+                      "offset": 0,
+                      "length": 2252
+                    },
+                    {
+                      "name": "Codebook 5",
+                      "value": "102 bands (25.1%)",
+                      "offset": 0,
+                      "length": 2252
+                    },
+                    {
+                      "name": "Codebook 6",
+                      "value": "12 bands (3.0%)",
+                      "offset": 0,
+                      "length": 2252
+                    },
+                    {
+                      "name": "Codebook 7",
+                      "value": "8 bands (2.0%)",
+                      "offset": 0,
+                      "length": 2252
+                    },
+                    {
+                      "name": "Codebook 8",
+                      "value": "4 bands (1.0%)",
+                      "offset": 0,
+                      "length": 2252
+                    },
+                    {
+                      "name": "Codebook 9",
+                      "value": "38 bands (9.4%)",
+                      "offset": 0,
+                      "length": 2252
+                    },
+                    {
+                      "name": "Codebook 10",
+                      "value": "6 bands (1.5%)",
+                      "offset": 0,
+                      "length": 2252
+                    },
+                    {
+                      "name": "Codebook 11",
+                      "value": "92 bands (22.7%)",
+                      "offset": 0,
+                      "length": 2252
+                    },
+                    {
+                      "name": "Codebook 13",
+                      "value": "8 bands (2.0%)",
+                      "offset": 0,
+                      "length": 2252
+                    }
+                  ]
+                },
+                {
+                  "name": "Max SFB (Long Windows)",
+                  "value": 2,
+                  "unit": "values",
+                  "offset": 0,
+                  "length": 2252,
+                  "children": [
+                    {
+                      "name": "30",
+                      "value": "7 channel streams (70.0%)",
+                      "offset": 0,
+                      "length": 2252
+                    },
+                    {
+                      "name": "28",
+                      "value": "3 channel streams (30.0%)",
+                      "offset": 0,
+                      "length": 2252
+                    }
+                  ]
+                },
+                {
+                  "name": "Max SFB (Short Windows)",
+                  "value": 1,
+                  "unit": "values",
+                  "offset": 0,
+                  "length": 2252,
+                  "children": [
+                    {
+                      "name": "14",
+                      "value": "2 channel streams (100.0%)",
+                      "offset": 0,
+                      "length": 2252
+                    }
+                  ]
+                },
+                {
+                  "name": "Coded Bandwidth",
+                  "offset": 0,
+                  "length": 2252,
+                  "children": [
+                    {
+                      "name": "Lowest",
+                      "value": 6288,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 2252
+                    },
+                    {
+                      "name": "Most Common",
+                      "value": 7580,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 2252
+                    },
+                    {
+                      "name": "Highest",
+                      "value": 22050,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 2252
+                    }
+                  ]
+                },
+                {
+                  "name": "Last Non-Zero Coefficient",
+                  "offset": 0,
+                  "length": 2252,
+                  "children": [
+                    {
+                      "name": "Lowest",
+                      "value": 3445,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 2252
+                    },
+                    {
+                      "name": "Most Common",
+                      "value": 3445,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 2252
+                    },
+                    {
+                      "name": "Highest",
+                      "value": 22050,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 2252
+                    }
+                  ]
+                },
+                {
+                  "name": "Non-Zero Coefficients",
+                  "value": 2888,
+                  "unit": "coefficients",
+                  "offset": 0,
+                  "length": 2252
+                },
+                {
+                  "name": "Escape-Coded Coefficients",
+                  "value": "129 coefficients (4.5%)",
+                  "offset": 0,
+                  "length": 2252
+                },
+                {
+                  "name": "Global Gain",
+                  "offset": 0,
+                  "length": 2252,
+                  "children": [
+                    {
+                      "name": "Channel 0",
+                      "offset": 0,
+                      "length": 2252,
+                      "children": [
+                        {
+                          "name": "Minimum",
+                          "value": 100,
+                          "offset": 0,
+                          "length": 2252
+                        },
+                        {
+                          "name": "Maximum",
+                          "value": 100,
+                          "offset": 0,
+                          "length": 2252
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "131 bytes, 1 raw data block",
+              "offset": 0,
+              "length": 131,
+              "children": [
+                {
+                  "name": "Sync Word",
+                  "value": 4095,
+                  "offset": 0,
+                  "length": 2,
+                  "bitOffset": 0,
+                  "bitLength": 12
+                },
+                {
+                  "name": "Version",
+                  "value": "MPEG-4",
+                  "offset": 1,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Layer",
+                  "value": 0,
+                  "offset": 1,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 2
+                },
+                {
+                  "name": "IsProtected",
+                  "value": false,
+                  "offset": 1,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Profile",
+                  "value": "1 (AAC LC)",
+                  "offset": 2,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 2,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4
+                },
+                {
+                  "name": "IsPrivate",
+                  "value": false,
+                  "offset": 2,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "1 (mono)",
+                  "offset": 2,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 3
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 3,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 3,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Copyright ID Bit",
+                  "value": 0,
+                  "offset": 3,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsCopyrightIdStart",
+                  "value": false,
+                  "offset": 3,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 131,
+                  "unit": "bytes",
+                  "offset": 3,
+                  "length": 3,
+                  "bitOffset": 6,
+                  "bitLength": 13
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": "0x7FF (variable bitrate)",
+                  "offset": 5,
+                  "length": 2,
+                  "bitOffset": 3,
+                  "bitLength": 11
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 1,
+                  "offset": 6,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Raw Data Block",
+                  "value": "SCE",
+                  "offset": 7,
+                  "length": 124,
+                  "children": [
+                    {
+                      "name": "SCE",
+                      "value": "single channel element, tag 0",
+                      "offset": 7,
+                      "length": 124,
+                      "bitOffset": 0,
+                      "bitLength": 987,
+                      "children": [
+                        {
+                          "name": "Element ID",
+                          "value": "0 (SCE)",
+                          "offset": 7,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 3
+                        },
+                        {
+                          "name": "Element Instance Tag",
+                          "value": 0,
+                          "offset": 7,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Channel",
+                          "kind": "SideInfo",
+                          "value": "global gain 100",
+                          "offset": 7,
+                          "length": 124,
+                          "bitOffset": 7,
+                          "bitLength": 980,
+                          "children": [
+                            {
+                              "name": "Global Gain",
+                              "value": 100,
+                              "offset": 7,
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 8
+                            },
+                            {
+                              "name": "ICS Info",
+                              "kind": "SideInfo",
+                              "value": "only long, KBD, max_sfb 30",
+                              "offset": 8,
+                              "length": 3,
+                              "bitOffset": 7,
+                              "bitLength": 11,
+                              "children": [
+                                {
+                                  "name": "ICS Reserved Bit",
+                                  "value": 0,
+                                  "offset": 8,
+                                  "length": 1,
+                                  "bitOffset": 7,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Window Sequence",
+                                  "value": "0 (only long)",
+                                  "offset": 9,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "Window Shape",
+                                  "value": "1 (KBD)",
+                                  "offset": 9,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Max SFB",
+                                  "value": 30,
+                                  "offset": 9,
+                                  "length": 2,
+                                  "bitOffset": 3,
+                                  "bitLength": 6
+                                },
+                                {
+                                  "name": "HasPredictorData",
+                                  "value": false,
+                                  "offset": 10,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 1
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Section Data",
+                              "kind": "SideInfo",
+                              "value": 3,
+                              "unit": "sections",
+                              "offset": 10,
+                              "length": 4,
+                              "bitOffset": 2,
+                              "bitLength": 27,
+                              "children": [
+                                {
+                                  "name": "Section",
+                                  "value": "codebook 11 (unsigned pairs up to 16, which escapes to larger values), bands 0-9",
+                                  "offset": 10,
+                                  "length": 2,
+                                  "bitOffset": 2,
+                                  "bitLength": 9
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "codebook 5 (signed pairs up to 4), bands 10-21",
+                                  "offset": 11,
+                                  "length": 2,
+                                  "bitOffset": 3,
+                                  "bitLength": 9
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "codebook 0 (zero), bands 22-29",
+                                  "offset": 12,
+                                  "length": 2,
+                                  "bitOffset": 4,
+                                  "bitLength": 9
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Scale Factor Data",
+                              "kind": "SideInfo",
+                              "value": 96,
+                              "unit": "bits",
+                              "offset": 13,
+                              "length": 13,
+                              "bitOffset": 5,
+                              "bitLength": 96
+                            },
+                            {
+                              "name": "HasPulseData",
+                              "value": false,
+                              "offset": 25,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasTnsData",
+                              "value": false,
+                              "offset": 25,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasGainControlData",
+                              "value": false,
+                              "offset": 25,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Spectral Data",
+                              "value": 835,
+                              "unit": "bits",
+                              "offset": 26,
+                              "length": 105,
+                              "bitOffset": 0,
+                              "bitLength": 835
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "END",
+                      "value": "end of the raw data block",
+                      "offset": 130,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 3,
+                      "children": [
+                        {
+                          "name": "Element ID",
+                          "value": "7 (END)",
+                          "offset": 130,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Byte Alignment",
+                      "value": 2,
+                      "unit": "bits",
+                      "offset": 130,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "348 bytes, 1 raw data block",
+              "offset": 131,
+              "length": 348,
+              "children": [
+                {
+                  "name": "Sync Word",
+                  "value": 4095,
+                  "offset": 131,
+                  "length": 2,
+                  "bitOffset": 0,
+                  "bitLength": 12
+                },
+                {
+                  "name": "Version",
+                  "value": "MPEG-4",
+                  "offset": 132,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Layer",
+                  "value": 0,
+                  "offset": 132,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 2
+                },
+                {
+                  "name": "IsProtected",
+                  "value": false,
+                  "offset": 132,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Profile",
+                  "value": "1 (AAC LC)",
+                  "offset": 133,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 133,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4
+                },
+                {
+                  "name": "IsPrivate",
+                  "value": false,
+                  "offset": 133,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "1 (mono)",
+                  "offset": 133,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 3
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 134,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 134,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Copyright ID Bit",
+                  "value": 0,
+                  "offset": 134,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsCopyrightIdStart",
+                  "value": false,
+                  "offset": 134,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 348,
+                  "unit": "bytes",
+                  "offset": 134,
+                  "length": 3,
+                  "bitOffset": 6,
+                  "bitLength": 13
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": "0x7FF (variable bitrate)",
+                  "offset": 136,
+                  "length": 2,
+                  "bitOffset": 3,
+                  "bitLength": 11
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 1,
+                  "offset": 137,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Raw Data Block",
+                  "value": "SCE",
+                  "offset": 138,
+                  "length": 341,
+                  "children": [
+                    {
+                      "name": "SCE",
+                      "value": "single channel element, tag 0",
+                      "offset": 138,
+                      "length": 341,
+                      "bitOffset": 0,
+                      "bitLength": 2725,
+                      "children": [
+                        {
+                          "name": "Element ID",
+                          "value": "0 (SCE)",
+                          "offset": 138,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 3
+                        },
+                        {
+                          "name": "Element Instance Tag",
+                          "value": 0,
+                          "offset": 138,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Channel",
+                          "kind": "SideInfo",
+                          "value": "global gain 100",
+                          "offset": 138,
+                          "length": 341,
+                          "bitOffset": 7,
+                          "bitLength": 2718,
+                          "children": [
+                            {
+                              "name": "Global Gain",
+                              "value": 100,
+                              "offset": 138,
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 8
+                            },
+                            {
+                              "name": "ICS Info",
+                              "kind": "SideInfo",
+                              "value": "eight short, sine, max_sfb 14, 4 groups",
+                              "offset": 139,
+                              "length": 3,
+                              "bitOffset": 7,
+                              "bitLength": 15,
+                              "children": [
+                                {
+                                  "name": "ICS Reserved Bit",
+                                  "value": 0,
+                                  "offset": 139,
+                                  "length": 1,
+                                  "bitOffset": 7,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Window Sequence",
+                                  "value": "2 (eight short)",
+                                  "offset": 140,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "Window Shape",
+                                  "value": "0 (sine)",
+                                  "offset": 140,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Max SFB",
+                                  "value": 14,
+                                  "offset": 140,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Scale Factor Grouping",
+                                  "value": "0x6A (4 groups of 3, 2, 2, 1 windows)",
+                                  "offset": 140,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 7
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Section Data",
+                              "kind": "SideInfo",
+                              "value": 13,
+                              "unit": "sections",
+                              "offset": 141,
+                              "length": 13,
+                              "bitOffset": 6,
+                              "bitLength": 94,
+                              "children": [
+                                {
+                                  "name": "Section",
+                                  "value": "group 0: codebook 11 (unsigned pairs up to 16, which escapes to larger values), bands 0-1",
+                                  "offset": 141,
+                                  "length": 2,
+                                  "bitOffset": 6,
+                                  "bitLength": 7
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "group 0: codebook 5 (signed pairs up to 4), bands 2-4",
+                                  "offset": 142,
+                                  "length": 2,
+                                  "bitOffset": 5,
+                                  "bitLength": 7
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "group 0: codebook 1 (signed quadruples up to 1), bands 5-8",
+                                  "offset": 143,
+                                  "length": 2,
+                                  "bitOffset": 4,
+                                  "bitLength": 7
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "group 0: codebook 0 (zero), bands 9-13",
+                                  "offset": 144,
+                                  "length": 2,
+                                  "bitOffset": 3,
+                                  "bitLength": 7
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "group 1: codebook 9 (unsigned pairs up to 12), bands 0-3",
+                                  "offset": 145,
+                                  "length": 2,
+                                  "bitOffset": 2,
+                                  "bitLength": 7
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "group 1: codebook 3 (unsigned quadruples up to 2), bands 4-9",
+                                  "offset": 146,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 7
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "group 1: codebook 13 (noise substitution), bands 10-13",
+                                  "offset": 147,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 7
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "group 2: codebook 10 (unsigned pairs up to 12), bands 0-2",
+                                  "offset": 147,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 7
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "group 2: codebook 7 (unsigned pairs up to 7), bands 3-6",
+                                  "offset": 148,
+                                  "length": 2,
+                                  "bitOffset": 6,
+                                  "bitLength": 7
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "group 2: codebook 2 (signed quadruples up to 1), bands 7-13",
+                                  "offset": 149,
+                                  "length": 2,
+                                  "bitOffset": 5,
+                                  "bitLength": 10
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "group 3: codebook 4 (unsigned quadruples up to 2), bands 0-5",
+                                  "offset": 150,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 7
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "group 3: codebook 6 (signed pairs up to 4), bands 6-11",
+                                  "offset": 151,
+                                  "length": 2,
+                                  "bitOffset": 6,
+                                  "bitLength": 7
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "group 3: codebook 8 (unsigned pairs up to 7), bands 12-13",
+                                  "offset": 152,
+                                  "length": 2,
+                                  "bitOffset": 5,
+                                  "bitLength": 7
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Scale Factor Data",
+                              "kind": "SideInfo",
+                              "value": 228,
+                              "unit": "bits",
+                              "offset": 153,
+                              "length": 29,
+                              "bitOffset": 4,
+                              "bitLength": 228
+                            },
+                            {
+                              "name": "Noise Substitution Bands",
+                              "value": "group 1: 10-13",
+                              "offset": 141,
+                              "length": 13,
+                              "bitOffset": 6,
+                              "bitLength": 94
+                            },
+                            {
+                              "name": "HasPulseData",
+                              "value": false,
+                              "offset": 182,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasTnsData",
+                              "value": false,
+                              "offset": 182,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasGainControlData",
+                              "value": false,
+                              "offset": 182,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Spectral Data",
+                              "value": 2370,
+                              "unit": "bits",
+                              "offset": 182,
+                              "length": 297,
+                              "bitOffset": 3,
+                              "bitLength": 2370
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "END",
+                      "value": "end of the raw data block",
+                      "offset": 478,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 3,
+                      "children": [
+                        {
+                          "name": "Element ID",
+                          "value": "7 (END)",
+                          "offset": 478,
+                          "length": 1,
+                          "bitOffset": 5,
+                          "bitLength": 3
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "130 bytes, 1 raw data block",
+              "offset": 479,
+              "length": 130,
+              "children": [
+                {
+                  "name": "Sync Word",
+                  "value": 4095,
+                  "offset": 479,
+                  "length": 2,
+                  "bitOffset": 0,
+                  "bitLength": 12
+                },
+                {
+                  "name": "Version",
+                  "value": "MPEG-4",
+                  "offset": 480,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Layer",
+                  "value": 0,
+                  "offset": 480,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 2
+                },
+                {
+                  "name": "IsProtected",
+                  "value": false,
+                  "offset": 480,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Profile",
+                  "value": "1 (AAC LC)",
+                  "offset": 481,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 481,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4
+                },
+                {
+                  "name": "IsPrivate",
+                  "value": false,
+                  "offset": 481,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "1 (mono)",
+                  "offset": 481,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 3
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 482,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 482,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Copyright ID Bit",
+                  "value": 0,
+                  "offset": 482,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsCopyrightIdStart",
+                  "value": false,
+                  "offset": 482,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 130,
+                  "unit": "bytes",
+                  "offset": 482,
+                  "length": 3,
+                  "bitOffset": 6,
+                  "bitLength": 13
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": "0x7FF (variable bitrate)",
+                  "offset": 484,
+                  "length": 2,
+                  "bitOffset": 3,
+                  "bitLength": 11
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 1,
+                  "offset": 485,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Raw Data Block",
+                  "value": "SCE",
+                  "offset": 486,
+                  "length": 123,
+                  "children": [
+                    {
+                      "name": "SCE",
+                      "value": "single channel element, tag 0",
+                      "offset": 486,
+                      "length": 123,
+                      "bitOffset": 0,
+                      "bitLength": 979,
+                      "children": [
+                        {
+                          "name": "Element ID",
+                          "value": "0 (SCE)",
+                          "offset": 486,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 3
+                        },
+                        {
+                          "name": "Element Instance Tag",
+                          "value": 0,
+                          "offset": 486,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Channel",
+                          "kind": "SideInfo",
+                          "value": "global gain 100",
+                          "offset": 486,
+                          "length": 123,
+                          "bitOffset": 7,
+                          "bitLength": 972,
+                          "children": [
+                            {
+                              "name": "Global Gain",
+                              "value": 100,
+                              "offset": 486,
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 8
+                            },
+                            {
+                              "name": "ICS Info",
+                              "kind": "SideInfo",
+                              "value": "only long, KBD, max_sfb 30",
+                              "offset": 487,
+                              "length": 3,
+                              "bitOffset": 7,
+                              "bitLength": 11,
+                              "children": [
+                                {
+                                  "name": "ICS Reserved Bit",
+                                  "value": 0,
+                                  "offset": 487,
+                                  "length": 1,
+                                  "bitOffset": 7,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Window Sequence",
+                                  "value": "0 (only long)",
+                                  "offset": 488,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "Window Shape",
+                                  "value": "1 (KBD)",
+                                  "offset": 488,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Max SFB",
+                                  "value": 30,
+                                  "offset": 488,
+                                  "length": 2,
+                                  "bitOffset": 3,
+                                  "bitLength": 6
+                                },
+                                {
+                                  "name": "HasPredictorData",
+                                  "value": false,
+                                  "offset": 489,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 1
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Section Data",
+                              "kind": "SideInfo",
+                              "value": 3,
+                              "unit": "sections",
+                              "offset": 489,
+                              "length": 4,
+                              "bitOffset": 2,
+                              "bitLength": 27,
+                              "children": [
+                                {
+                                  "name": "Section",
+                                  "value": "codebook 11 (unsigned pairs up to 16, which escapes to larger values), bands 0-9",
+                                  "offset": 489,
+                                  "length": 2,
+                                  "bitOffset": 2,
+                                  "bitLength": 9
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "codebook 5 (signed pairs up to 4), bands 10-21",
+                                  "offset": 490,
+                                  "length": 2,
+                                  "bitOffset": 3,
+                                  "bitLength": 9
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "codebook 0 (zero), bands 22-29",
+                                  "offset": 491,
+                                  "length": 2,
+                                  "bitOffset": 4,
+                                  "bitLength": 9
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Scale Factor Data",
+                              "kind": "SideInfo",
+                              "value": 96,
+                              "unit": "bits",
+                              "offset": 492,
+                              "length": 13,
+                              "bitOffset": 5,
+                              "bitLength": 96
+                            },
+                            {
+                              "name": "HasPulseData",
+                              "value": false,
+                              "offset": 504,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasTnsData",
+                              "value": false,
+                              "offset": 504,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasGainControlData",
+                              "value": false,
+                              "offset": 504,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Spectral Data",
+                              "value": 827,
+                              "unit": "bits",
+                              "offset": 505,
+                              "length": 104,
+                              "bitOffset": 0,
+                              "bitLength": 827
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "END",
+                      "value": "end of the raw data block",
+                      "offset": 608,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 3,
+                      "children": [
+                        {
+                          "name": "Element ID",
+                          "value": "7 (END)",
+                          "offset": 608,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Byte Alignment",
+                      "value": 2,
+                      "unit": "bits",
+                      "offset": 608,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "117 bytes, 1 raw data block",
+              "offset": 609,
+              "length": 117,
+              "children": [
+                {
+                  "name": "Sync Word",
+                  "value": 4095,
+                  "offset": 609,
+                  "length": 2,
+                  "bitOffset": 0,
+                  "bitLength": 12
+                },
+                {
+                  "name": "Version",
+                  "value": "MPEG-4",
+                  "offset": 610,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Layer",
+                  "value": 0,
+                  "offset": 610,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 2
+                },
+                {
+                  "name": "IsProtected",
+                  "value": false,
+                  "offset": 610,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Profile",
+                  "value": "1 (AAC LC)",
+                  "offset": 611,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 611,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4
+                },
+                {
+                  "name": "IsPrivate",
+                  "value": false,
+                  "offset": 611,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "1 (mono)",
+                  "offset": 611,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 3
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 612,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 612,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Copyright ID Bit",
+                  "value": 0,
+                  "offset": 612,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsCopyrightIdStart",
+                  "value": false,
+                  "offset": 612,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 117,
+                  "unit": "bytes",
+                  "offset": 612,
+                  "length": 3,
+                  "bitOffset": 6,
+                  "bitLength": 13
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": "0x7FF (variable bitrate)",
+                  "offset": 614,
+                  "length": 2,
+                  "bitOffset": 3,
+                  "bitLength": 11
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 1,
+                  "offset": 615,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Raw Data Block",
+                  "value": "SCE",
+                  "offset": 616,
+                  "length": 110,
+                  "children": [
+                    {
+                      "name": "SCE",
+                      "value": "single channel element, tag 0",
+                      "offset": 616,
+                      "length": 110,
+                      "bitOffset": 0,
+                      "bitLength": 876,
+                      "children": [
+                        {
+                          "name": "Element ID",
+                          "value": "0 (SCE)",
+                          "offset": 616,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 3
+                        },
+                        {
+                          "name": "Element Instance Tag",
+                          "value": 0,
+                          "offset": 616,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Channel",
+                          "kind": "SideInfo",
+                          "value": "global gain 100",
+                          "offset": 616,
+                          "length": 110,
+                          "bitOffset": 7,
+                          "bitLength": 869,
+                          "children": [
+                            {
+                              "name": "Global Gain",
+                              "value": 100,
+                              "offset": 616,
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 8
+                            },
+                            {
+                              "name": "ICS Info",
+                              "kind": "SideInfo",
+                              "value": "long start, sine, max_sfb 30",
+                              "offset": 617,
+                              "length": 3,
+                              "bitOffset": 7,
+                              "bitLength": 11,
+                              "children": [
+                                {
+                                  "name": "ICS Reserved Bit",
+                                  "value": 0,
+                                  "offset": 617,
+                                  "length": 1,
+                                  "bitOffset": 7,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Window Sequence",
+                                  "value": "1 (long start)",
+                                  "offset": 618,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "Window Shape",
+                                  "value": "0 (sine)",
+                                  "offset": 618,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Max SFB",
+                                  "value": 30,
+                                  "offset": 618,
+                                  "length": 2,
+                                  "bitOffset": 3,
+                                  "bitLength": 6
+                                },
+                                {
+                                  "name": "HasPredictorData",
+                                  "value": false,
+                                  "offset": 619,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 1
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Section Data",
+                              "kind": "SideInfo",
+                              "value": 3,
+                              "unit": "sections",
+                              "offset": 619,
+                              "length": 4,
+                              "bitOffset": 2,
+                              "bitLength": 27,
+                              "children": [
+                                {
+                                  "name": "Section",
+                                  "value": "codebook 11 (unsigned pairs up to 16, which escapes to larger values), bands 0-9",
+                                  "offset": 619,
+                                  "length": 2,
+                                  "bitOffset": 2,
+                                  "bitLength": 9
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "codebook 3 (unsigned quadruples up to 2), bands 10-21",
+                                  "offset": 620,
+                                  "length": 2,
+                                  "bitOffset": 3,
+                                  "bitLength": 9
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "codebook 0 (zero), bands 22-29",
+                                  "offset": 621,
+                                  "length": 2,
+                                  "bitOffset": 4,
+                                  "bitLength": 9
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Scale Factor Data",
+                              "kind": "SideInfo",
+                              "value": 96,
+                              "unit": "bits",
+                              "offset": 622,
+                              "length": 13,
+                              "bitOffset": 5,
+                              "bitLength": 96
+                            },
+                            {
+                              "name": "HasPulseData",
+                              "value": false,
+                              "offset": 634,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasTnsData",
+                              "value": false,
+                              "offset": 634,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasGainControlData",
+                              "value": false,
+                              "offset": 634,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Spectral Data",
+                              "value": 724,
+                              "unit": "bits",
+                              "offset": 635,
+                              "length": 91,
+                              "bitOffset": 0,
+                              "bitLength": 724
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "END",
+                      "value": "end of the raw data block",
+                      "offset": 725,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 3,
+                      "children": [
+                        {
+                          "name": "Element ID",
+                          "value": "7 (END)",
+                          "offset": 725,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Byte Alignment",
+                      "value": 1,
+                      "unit": "bits",
+                      "offset": 725,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "131 bytes, 1 raw data block",
+              "offset": 726,
+              "length": 131,
+              "children": [
+                {
+                  "name": "Sync Word",
+                  "value": 4095,
+                  "offset": 726,
+                  "length": 2,
+                  "bitOffset": 0,
+                  "bitLength": 12
+                },
+                {
+                  "name": "Version",
+                  "value": "MPEG-4",
+                  "offset": 727,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Layer",
+                  "value": 0,
+                  "offset": 727,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 2
+                },
+                {
+                  "name": "IsProtected",
+                  "value": false,
+                  "offset": 727,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Profile",
+                  "value": "1 (AAC LC)",
+                  "offset": 728,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 728,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4
+                },
+                {
+                  "name": "IsPrivate",
+                  "value": false,
+                  "offset": 728,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "1 (mono)",
+                  "offset": 728,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 3
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 729,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 729,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Copyright ID Bit",
+                  "value": 0,
+                  "offset": 729,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsCopyrightIdStart",
+                  "value": false,
+                  "offset": 729,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 131,
+                  "unit": "bytes",
+                  "offset": 729,
+                  "length": 3,
+                  "bitOffset": 6,
+                  "bitLength": 13
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": "0x7FF (variable bitrate)",
+                  "offset": 731,
+                  "length": 2,
+                  "bitOffset": 3,
+                  "bitLength": 11
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 1,
+                  "offset": 732,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Raw Data Block",
+                  "value": "SCE",
+                  "offset": 733,
+                  "length": 124,
+                  "children": [
+                    {
+                      "name": "SCE",
+                      "value": "single channel element, tag 0",
+                      "offset": 733,
+                      "length": 124,
+                      "bitOffset": 0,
+                      "bitLength": 985,
+                      "children": [
+                        {
+                          "name": "Element ID",
+                          "value": "0 (SCE)",
+                          "offset": 733,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 3
+                        },
+                        {
+                          "name": "Element Instance Tag",
+                          "value": 0,
+                          "offset": 733,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Channel",
+                          "kind": "SideInfo",
+                          "value": "global gain 100",
+                          "offset": 733,
+                          "length": 124,
+                          "bitOffset": 7,
+                          "bitLength": 978,
+                          "children": [
+                            {
+                              "name": "Global Gain",
+                              "value": 100,
+                              "offset": 733,
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 8
+                            },
+                            {
+                              "name": "ICS Info",
+                              "kind": "SideInfo",
+                              "value": "only long, KBD, max_sfb 30",
+                              "offset": 734,
+                              "length": 3,
+                              "bitOffset": 7,
+                              "bitLength": 11,
+                              "children": [
+                                {
+                                  "name": "ICS Reserved Bit",
+                                  "value": 0,
+                                  "offset": 734,
+                                  "length": 1,
+                                  "bitOffset": 7,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Window Sequence",
+                                  "value": "0 (only long)",
+                                  "offset": 735,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "Window Shape",
+                                  "value": "1 (KBD)",
+                                  "offset": 735,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Max SFB",
+                                  "value": 30,
+                                  "offset": 735,
+                                  "length": 2,
+                                  "bitOffset": 3,
+                                  "bitLength": 6
+                                },
+                                {
+                                  "name": "HasPredictorData",
+                                  "value": false,
+                                  "offset": 736,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 1
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Section Data",
+                              "kind": "SideInfo",
+                              "value": 3,
+                              "unit": "sections",
+                              "offset": 736,
+                              "length": 4,
+                              "bitOffset": 2,
+                              "bitLength": 27,
+                              "children": [
+                                {
+                                  "name": "Section",
+                                  "value": "codebook 11 (unsigned pairs up to 16, which escapes to larger values), bands 0-9",
+                                  "offset": 736,
+                                  "length": 2,
+                                  "bitOffset": 2,
+                                  "bitLength": 9
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "codebook 5 (signed pairs up to 4), bands 10-21",
+                                  "offset": 737,
+                                  "length": 2,
+                                  "bitOffset": 3,
+                                  "bitLength": 9
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "codebook 0 (zero), bands 22-29",
+                                  "offset": 738,
+                                  "length": 2,
+                                  "bitOffset": 4,
+                                  "bitLength": 9
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Scale Factor Data",
+                              "kind": "SideInfo",
+                              "value": 96,
+                              "unit": "bits",
+                              "offset": 739,
+                              "length": 13,
+                              "bitOffset": 5,
+                              "bitLength": 96
+                            },
+                            {
+                              "name": "HasPulseData",
+                              "value": false,
+                              "offset": 751,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasTnsData",
+                              "value": false,
+                              "offset": 751,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasGainControlData",
+                              "value": false,
+                              "offset": 751,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Spectral Data",
+                              "value": 833,
+                              "unit": "bits",
+                              "offset": 752,
+                              "length": 105,
+                              "bitOffset": 0,
+                              "bitLength": 833
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "END",
+                      "value": "end of the raw data block",
+                      "offset": 856,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 3,
+                      "children": [
+                        {
+                          "name": "Element ID",
+                          "value": "7 (END)",
+                          "offset": 856,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Byte Alignment",
+                      "value": 4,
+                      "unit": "bits",
+                      "offset": 856,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "117 bytes, 1 raw data block",
+              "offset": 857,
+              "length": 117,
+              "children": [
+                {
+                  "name": "Sync Word",
+                  "value": 4095,
+                  "offset": 857,
+                  "length": 2,
+                  "bitOffset": 0,
+                  "bitLength": 12
+                },
+                {
+                  "name": "Version",
+                  "value": "MPEG-4",
+                  "offset": 858,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Layer",
+                  "value": 0,
+                  "offset": 858,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 2
+                },
+                {
+                  "name": "IsProtected",
+                  "value": false,
+                  "offset": 858,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Profile",
+                  "value": "1 (AAC LC)",
+                  "offset": 859,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 859,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4
+                },
+                {
+                  "name": "IsPrivate",
+                  "value": false,
+                  "offset": 859,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "1 (mono)",
+                  "offset": 859,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 3
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 860,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 860,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Copyright ID Bit",
+                  "value": 0,
+                  "offset": 860,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsCopyrightIdStart",
+                  "value": false,
+                  "offset": 860,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 117,
+                  "unit": "bytes",
+                  "offset": 860,
+                  "length": 3,
+                  "bitOffset": 6,
+                  "bitLength": 13
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": "0x7FF (variable bitrate)",
+                  "offset": 862,
+                  "length": 2,
+                  "bitOffset": 3,
+                  "bitLength": 11
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 1,
+                  "offset": 863,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Raw Data Block",
+                  "value": "SCE",
+                  "offset": 864,
+                  "length": 110,
+                  "children": [
+                    {
+                      "name": "SCE",
+                      "value": "single channel element, tag 0",
+                      "offset": 864,
+                      "length": 110,
+                      "bitOffset": 0,
+                      "bitLength": 874,
+                      "children": [
+                        {
+                          "name": "Element ID",
+                          "value": "0 (SCE)",
+                          "offset": 864,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 3
+                        },
+                        {
+                          "name": "Element Instance Tag",
+                          "value": 0,
+                          "offset": 864,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Channel",
+                          "kind": "SideInfo",
+                          "value": "global gain 100",
+                          "offset": 864,
+                          "length": 110,
+                          "bitOffset": 7,
+                          "bitLength": 867,
+                          "children": [
+                            {
+                              "name": "Global Gain",
+                              "value": 100,
+                              "offset": 864,
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 8
+                            },
+                            {
+                              "name": "ICS Info",
+                              "kind": "SideInfo",
+                              "value": "long start, sine, max_sfb 30",
+                              "offset": 865,
+                              "length": 3,
+                              "bitOffset": 7,
+                              "bitLength": 11,
+                              "children": [
+                                {
+                                  "name": "ICS Reserved Bit",
+                                  "value": 0,
+                                  "offset": 865,
+                                  "length": 1,
+                                  "bitOffset": 7,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Window Sequence",
+                                  "value": "1 (long start)",
+                                  "offset": 866,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "Window Shape",
+                                  "value": "0 (sine)",
+                                  "offset": 866,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Max SFB",
+                                  "value": 30,
+                                  "offset": 866,
+                                  "length": 2,
+                                  "bitOffset": 3,
+                                  "bitLength": 6
+                                },
+                                {
+                                  "name": "HasPredictorData",
+                                  "value": false,
+                                  "offset": 867,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 1
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Section Data",
+                              "kind": "SideInfo",
+                              "value": 3,
+                              "unit": "sections",
+                              "offset": 867,
+                              "length": 4,
+                              "bitOffset": 2,
+                              "bitLength": 27,
+                              "children": [
+                                {
+                                  "name": "Section",
+                                  "value": "codebook 11 (unsigned pairs up to 16, which escapes to larger values), bands 0-9",
+                                  "offset": 867,
+                                  "length": 2,
+                                  "bitOffset": 2,
+                                  "bitLength": 9
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "codebook 3 (unsigned quadruples up to 2), bands 10-21",
+                                  "offset": 868,
+                                  "length": 2,
+                                  "bitOffset": 3,
+                                  "bitLength": 9
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "codebook 0 (zero), bands 22-29",
+                                  "offset": 869,
+                                  "length": 2,
+                                  "bitOffset": 4,
+                                  "bitLength": 9
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Scale Factor Data",
+                              "kind": "SideInfo",
+                              "value": 96,
+                              "unit": "bits",
+                              "offset": 870,
+                              "length": 13,
+                              "bitOffset": 5,
+                              "bitLength": 96
+                            },
+                            {
+                              "name": "HasPulseData",
+                              "value": false,
+                              "offset": 882,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasTnsData",
+                              "value": false,
+                              "offset": 882,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasGainControlData",
+                              "value": false,
+                              "offset": 882,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Spectral Data",
+                              "value": 722,
+                              "unit": "bits",
+                              "offset": 883,
+                              "length": 91,
+                              "bitOffset": 0,
+                              "bitLength": 722
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "END",
+                      "value": "end of the raw data block",
+                      "offset": 973,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 3,
+                      "children": [
+                        {
+                          "name": "Element ID",
+                          "value": "7 (END)",
+                          "offset": 973,
+                          "length": 1,
+                          "bitOffset": 2,
+                          "bitLength": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Byte Alignment",
+                      "value": 3,
+                      "unit": "bits",
+                      "offset": 973,
+                      "length": 1,
+                      "bitOffset": 5,
+                      "bitLength": 3
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "348 bytes, 1 raw data block",
+              "offset": 974,
+              "length": 348,
+              "children": [
+                {
+                  "name": "Sync Word",
+                  "value": 4095,
+                  "offset": 974,
+                  "length": 2,
+                  "bitOffset": 0,
+                  "bitLength": 12
+                },
+                {
+                  "name": "Version",
+                  "value": "MPEG-4",
+                  "offset": 975,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Layer",
+                  "value": 0,
+                  "offset": 975,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 2
+                },
+                {
+                  "name": "IsProtected",
+                  "value": false,
+                  "offset": 975,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Profile",
+                  "value": "1 (AAC LC)",
+                  "offset": 976,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 976,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4
+                },
+                {
+                  "name": "IsPrivate",
+                  "value": false,
+                  "offset": 976,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "1 (mono)",
+                  "offset": 976,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 3
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 977,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 977,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Copyright ID Bit",
+                  "value": 0,
+                  "offset": 977,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsCopyrightIdStart",
+                  "value": false,
+                  "offset": 977,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 348,
+                  "unit": "bytes",
+                  "offset": 977,
+                  "length": 3,
+                  "bitOffset": 6,
+                  "bitLength": 13
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": "0x7FF (variable bitrate)",
+                  "offset": 979,
+                  "length": 2,
+                  "bitOffset": 3,
+                  "bitLength": 11
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 1,
+                  "offset": 980,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Raw Data Block",
+                  "value": "SCE",
+                  "offset": 981,
+                  "length": 341,
+                  "children": [
+                    {
+                      "name": "SCE",
+                      "value": "single channel element, tag 0",
+                      "offset": 981,
+                      "length": 341,
+                      "bitOffset": 0,
+                      "bitLength": 2724,
+                      "children": [
+                        {
+                          "name": "Element ID",
+                          "value": "0 (SCE)",
+                          "offset": 981,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 3
+                        },
+                        {
+                          "name": "Element Instance Tag",
+                          "value": 0,
+                          "offset": 981,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Channel",
+                          "kind": "SideInfo",
+                          "value": "global gain 100",
+                          "offset": 981,
+                          "length": 341,
+                          "bitOffset": 7,
+                          "bitLength": 2717,
+                          "children": [
+                            {
+                              "name": "Global Gain",
+                              "value": 100,
+                              "offset": 981,
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 8
+                            },
+                            {
+                              "name": "ICS Info",
+                              "kind": "SideInfo",
+                              "value": "eight short, sine, max_sfb 14, 4 groups",
+                              "offset": 982,
+                              "length": 3,
+                              "bitOffset": 7,
+                              "bitLength": 15,
+                              "children": [
+                                {
+                                  "name": "ICS Reserved Bit",
+                                  "value": 0,
+                                  "offset": 982,
+                                  "length": 1,
+                                  "bitOffset": 7,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Window Sequence",
+                                  "value": "2 (eight short)",
+                                  "offset": 983,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "Window Shape",
+                                  "value": "0 (sine)",
+                                  "offset": 983,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Max SFB",
+                                  "value": 14,
+                                  "offset": 983,
+                                  "length": 1,
+                                  "bitOffset": 3,
+                                  "bitLength": 4
+                                },
+                                {
+                                  "name": "Scale Factor Grouping",
+                                  "value": "0x6A (4 groups of 3, 2, 2, 1 windows)",
+                                  "offset": 983,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 7
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Section Data",
+                              "kind": "SideInfo",
+                              "value": 13,
+                              "unit": "sections",
+                              "offset": 984,
+                              "length": 13,
+                              "bitOffset": 6,
+                              "bitLength": 94,
+                              "children": [
+                                {
+                                  "name": "Section",
+                                  "value": "group 0: codebook 11 (unsigned pairs up to 16, which escapes to larger values), bands 0-1",
+                                  "offset": 984,
+                                  "length": 2,
+                                  "bitOffset": 6,
+                                  "bitLength": 7
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "group 0: codebook 5 (signed pairs up to 4), bands 2-4",
+                                  "offset": 985,
+                                  "length": 2,
+                                  "bitOffset": 5,
+                                  "bitLength": 7
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "group 0: codebook 1 (signed quadruples up to 1), bands 5-8",
+                                  "offset": 986,
+                                  "length": 2,
+                                  "bitOffset": 4,
+                                  "bitLength": 7
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "group 0: codebook 0 (zero), bands 9-13",
+                                  "offset": 987,
+                                  "length": 2,
+                                  "bitOffset": 3,
+                                  "bitLength": 7
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "group 1: codebook 9 (unsigned pairs up to 12), bands 0-3",
+                                  "offset": 988,
+                                  "length": 2,
+                                  "bitOffset": 2,
+                                  "bitLength": 7
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "group 1: codebook 3 (unsigned quadruples up to 2), bands 4-9",
+                                  "offset": 989,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 7
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "group 1: codebook 13 (noise substitution), bands 10-13",
+                                  "offset": 990,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 7
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "group 2: codebook 10 (unsigned pairs up to 12), bands 0-2",
+                                  "offset": 990,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 7
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "group 2: codebook 7 (unsigned pairs up to 7), bands 3-6",
+                                  "offset": 991,
+                                  "length": 2,
+                                  "bitOffset": 6,
+                                  "bitLength": 7
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "group 2: codebook 2 (signed quadruples up to 1), bands 7-13",
+                                  "offset": 992,
+                                  "length": 2,
+                                  "bitOffset": 5,
+                                  "bitLength": 10
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "group 3: codebook 4 (unsigned quadruples up to 2), bands 0-5",
+                                  "offset": 993,
+                                  "length": 2,
+                                  "bitOffset": 7,
+                                  "bitLength": 7
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "group 3: codebook 6 (signed pairs up to 4), bands 6-11",
+                                  "offset": 994,
+                                  "length": 2,
+                                  "bitOffset": 6,
+                                  "bitLength": 7
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "group 3: codebook 8 (unsigned pairs up to 7), bands 12-13",
+                                  "offset": 995,
+                                  "length": 2,
+                                  "bitOffset": 5,
+                                  "bitLength": 7
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Scale Factor Data",
+                              "kind": "SideInfo",
+                              "value": 228,
+                              "unit": "bits",
+                              "offset": 996,
+                              "length": 29,
+                              "bitOffset": 4,
+                              "bitLength": 228
+                            },
+                            {
+                              "name": "Noise Substitution Bands",
+                              "value": "group 1: 10-13",
+                              "offset": 984,
+                              "length": 13,
+                              "bitOffset": 6,
+                              "bitLength": 94
+                            },
+                            {
+                              "name": "HasPulseData",
+                              "value": false,
+                              "offset": 1025,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasTnsData",
+                              "value": false,
+                              "offset": 1025,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasGainControlData",
+                              "value": false,
+                              "offset": 1025,
+                              "length": 1,
+                              "bitOffset": 2,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Spectral Data",
+                              "value": 2369,
+                              "unit": "bits",
+                              "offset": 1025,
+                              "length": 297,
+                              "bitOffset": 3,
+                              "bitLength": 2369
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "END",
+                      "value": "end of the raw data block",
+                      "offset": 1321,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 3,
+                      "children": [
+                        {
+                          "name": "Element ID",
+                          "value": "7 (END)",
+                          "offset": 1321,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Byte Alignment",
+                      "value": 1,
+                      "unit": "bits",
+                      "offset": 1321,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "223 bytes, 1 raw data block",
+              "offset": 1322,
+              "length": 223,
+              "children": [
+                {
+                  "name": "Sync Word",
+                  "value": 4095,
+                  "offset": 1322,
+                  "length": 2,
+                  "bitOffset": 0,
+                  "bitLength": 12
+                },
+                {
+                  "name": "Version",
+                  "value": "MPEG-4",
+                  "offset": 1323,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Layer",
+                  "value": 0,
+                  "offset": 1323,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 2
+                },
+                {
+                  "name": "IsProtected",
+                  "value": false,
+                  "offset": 1323,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Profile",
+                  "value": "1 (AAC LC)",
+                  "offset": 1324,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 1324,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4
+                },
+                {
+                  "name": "IsPrivate",
+                  "value": false,
+                  "offset": 1324,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "1 (mono)",
+                  "offset": 1324,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 3
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 1325,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 1325,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Copyright ID Bit",
+                  "value": 0,
+                  "offset": 1325,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsCopyrightIdStart",
+                  "value": false,
+                  "offset": 1325,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 223,
+                  "unit": "bytes",
+                  "offset": 1325,
+                  "length": 3,
+                  "bitOffset": 6,
+                  "bitLength": 13
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": "0x7FF (variable bitrate)",
+                  "offset": 1327,
+                  "length": 2,
+                  "bitOffset": 3,
+                  "bitLength": 11
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 1,
+                  "offset": 1328,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Raw Data Block",
+                  "value": "SCE",
+                  "offset": 1329,
+                  "length": 216,
+                  "children": [
+                    {
+                      "name": "SCE",
+                      "value": "single channel element, tag 0",
+                      "offset": 1329,
+                      "length": 215,
+                      "bitOffset": 0,
+                      "bitLength": 1719,
+                      "children": [
+                        {
+                          "name": "Element ID",
+                          "value": "0 (SCE)",
+                          "offset": 1329,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 3
+                        },
+                        {
+                          "name": "Element Instance Tag",
+                          "value": 0,
+                          "offset": 1329,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Channel",
+                          "kind": "SideInfo",
+                          "value": "global gain 100",
+                          "offset": 1329,
+                          "length": 215,
+                          "bitOffset": 7,
+                          "bitLength": 1712,
+                          "children": [
+                            {
+                              "name": "Global Gain",
+                              "value": 100,
+                              "offset": 1329,
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 8
+                            },
+                            {
+                              "name": "ICS Info",
+                              "kind": "SideInfo",
+                              "value": "long stop, KBD, max_sfb 28",
+                              "offset": 1330,
+                              "length": 3,
+                              "bitOffset": 7,
+                              "bitLength": 11,
+                              "children": [
+                                {
+                                  "name": "ICS Reserved Bit",
+                                  "value": 0,
+                                  "offset": 1330,
+                                  "length": 1,
+                                  "bitOffset": 7,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Window Sequence",
+                                  "value": "3 (long stop)",
+                                  "offset": 1331,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "Window Shape",
+                                  "value": "1 (KBD)",
+                                  "offset": 1331,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Max SFB",
+                                  "value": 28,
+                                  "offset": 1331,
+                                  "length": 2,
+                                  "bitOffset": 3,
+                                  "bitLength": 6
+                                },
+                                {
+                                  "name": "HasPredictorData",
+                                  "value": false,
+                                  "offset": 1332,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 1
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Section Data",
+                              "kind": "SideInfo",
+                              "value": 3,
+                              "unit": "sections",
+                              "offset": 1332,
+                              "length": 4,
+                              "bitOffset": 2,
+                              "bitLength": 27,
+                              "children": [
+                                {
+                                  "name": "Section",
+                                  "value": "codebook 11 (unsigned pairs up to 16, which escapes to larger values), bands 0-5",
+                                  "offset": 1332,
+                                  "length": 2,
+                                  "bitOffset": 2,
+                                  "bitLength": 9
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "codebook 9 (unsigned pairs up to 12), bands 6-15",
+                                  "offset": 1333,
+                                  "length": 2,
+                                  "bitOffset": 3,
+                                  "bitLength": 9
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "codebook 5 (signed pairs up to 4), bands 16-27",
+                                  "offset": 1334,
+                                  "length": 2,
+                                  "bitOffset": 4,
+                                  "bitLength": 9
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Scale Factor Data",
+                              "kind": "SideInfo",
+                              "value": 122,
+                              "unit": "bits",
+                              "offset": 1335,
+                              "length": 16,
+                              "bitOffset": 5,
+                              "bitLength": 122
+                            },
+                            {
+                              "name": "HasPulseData",
+                              "value": false,
+                              "offset": 1350,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasTnsData",
+                              "value": false,
+                              "offset": 1351,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasGainControlData",
+                              "value": false,
+                              "offset": 1351,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Spectral Data",
+                              "value": 1541,
+                              "unit": "bits",
+                              "offset": 1351,
+                              "length": 193,
+                              "bitOffset": 2,
+                              "bitLength": 1541
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "END",
+                      "value": "end of the raw data block",
+                      "offset": 1543,
+                      "length": 2,
+                      "bitOffset": 7,
+                      "bitLength": 3,
+                      "children": [
+                        {
+                          "name": "Element ID",
+                          "value": "7 (END)",
+                          "offset": 1543,
+                          "length": 2,
+                          "bitOffset": 7,
+                          "bitLength": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Byte Alignment",
+                      "value": 6,
+                      "unit": "bits",
+                      "offset": 1544,
+                      "length": 1,
+                      "bitOffset": 2,
+                      "bitLength": 6
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "223 bytes, 1 raw data block",
+              "offset": 1545,
+              "length": 223,
+              "children": [
+                {
+                  "name": "Sync Word",
+                  "value": 4095,
+                  "offset": 1545,
+                  "length": 2,
+                  "bitOffset": 0,
+                  "bitLength": 12
+                },
+                {
+                  "name": "Version",
+                  "value": "MPEG-4",
+                  "offset": 1546,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Layer",
+                  "value": 0,
+                  "offset": 1546,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 2
+                },
+                {
+                  "name": "IsProtected",
+                  "value": false,
+                  "offset": 1546,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Profile",
+                  "value": "1 (AAC LC)",
+                  "offset": 1547,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 1547,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4
+                },
+                {
+                  "name": "IsPrivate",
+                  "value": false,
+                  "offset": 1547,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "1 (mono)",
+                  "offset": 1547,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 3
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 1548,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 1548,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Copyright ID Bit",
+                  "value": 0,
+                  "offset": 1548,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsCopyrightIdStart",
+                  "value": false,
+                  "offset": 1548,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 223,
+                  "unit": "bytes",
+                  "offset": 1548,
+                  "length": 3,
+                  "bitOffset": 6,
+                  "bitLength": 13
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": "0x7FF (variable bitrate)",
+                  "offset": 1550,
+                  "length": 2,
+                  "bitOffset": 3,
+                  "bitLength": 11
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 1,
+                  "offset": 1551,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Raw Data Block",
+                  "value": "SCE",
+                  "offset": 1552,
+                  "length": 216,
+                  "children": [
+                    {
+                      "name": "SCE",
+                      "value": "single channel element, tag 0",
+                      "offset": 1552,
+                      "length": 216,
+                      "bitOffset": 0,
+                      "bitLength": 1721,
+                      "children": [
+                        {
+                          "name": "Element ID",
+                          "value": "0 (SCE)",
+                          "offset": 1552,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 3
+                        },
+                        {
+                          "name": "Element Instance Tag",
+                          "value": 0,
+                          "offset": 1552,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Channel",
+                          "kind": "SideInfo",
+                          "value": "global gain 100",
+                          "offset": 1552,
+                          "length": 216,
+                          "bitOffset": 7,
+                          "bitLength": 1714,
+                          "children": [
+                            {
+                              "name": "Global Gain",
+                              "value": 100,
+                              "offset": 1552,
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 8
+                            },
+                            {
+                              "name": "ICS Info",
+                              "kind": "SideInfo",
+                              "value": "long stop, KBD, max_sfb 28",
+                              "offset": 1553,
+                              "length": 3,
+                              "bitOffset": 7,
+                              "bitLength": 11,
+                              "children": [
+                                {
+                                  "name": "ICS Reserved Bit",
+                                  "value": 0,
+                                  "offset": 1553,
+                                  "length": 1,
+                                  "bitOffset": 7,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Window Sequence",
+                                  "value": "3 (long stop)",
+                                  "offset": 1554,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "Window Shape",
+                                  "value": "1 (KBD)",
+                                  "offset": 1554,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Max SFB",
+                                  "value": 28,
+                                  "offset": 1554,
+                                  "length": 2,
+                                  "bitOffset": 3,
+                                  "bitLength": 6
+                                },
+                                {
+                                  "name": "HasPredictorData",
+                                  "value": false,
+                                  "offset": 1555,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 1
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Section Data",
+                              "kind": "SideInfo",
+                              "value": 3,
+                              "unit": "sections",
+                              "offset": 1555,
+                              "length": 4,
+                              "bitOffset": 2,
+                              "bitLength": 27,
+                              "children": [
+                                {
+                                  "name": "Section",
+                                  "value": "codebook 11 (unsigned pairs up to 16, which escapes to larger values), bands 0-5",
+                                  "offset": 1555,
+                                  "length": 2,
+                                  "bitOffset": 2,
+                                  "bitLength": 9
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "codebook 9 (unsigned pairs up to 12), bands 6-15",
+                                  "offset": 1556,
+                                  "length": 2,
+                                  "bitOffset": 3,
+                                  "bitLength": 9
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "codebook 5 (signed pairs up to 4), bands 16-27",
+                                  "offset": 1557,
+                                  "length": 2,
+                                  "bitOffset": 4,
+                                  "bitLength": 9
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Scale Factor Data",
+                              "kind": "SideInfo",
+                              "value": 122,
+                              "unit": "bits",
+                              "offset": 1558,
+                              "length": 16,
+                              "bitOffset": 5,
+                              "bitLength": 122
+                            },
+                            {
+                              "name": "HasPulseData",
+                              "value": false,
+                              "offset": 1573,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasTnsData",
+                              "value": false,
+                              "offset": 1574,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasGainControlData",
+                              "value": false,
+                              "offset": 1574,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Spectral Data",
+                              "value": 1543,
+                              "unit": "bits",
+                              "offset": 1574,
+                              "length": 194,
+                              "bitOffset": 2,
+                              "bitLength": 1543
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "END",
+                      "value": "end of the raw data block",
+                      "offset": 1767,
+                      "length": 1,
+                      "bitOffset": 1,
+                      "bitLength": 3,
+                      "children": [
+                        {
+                          "name": "Element ID",
+                          "value": "7 (END)",
+                          "offset": 1767,
+                          "length": 1,
+                          "bitOffset": 1,
+                          "bitLength": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Byte Alignment",
+                      "value": 4,
+                      "unit": "bits",
+                      "offset": 1767,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "131 bytes, 1 raw data block",
+              "offset": 1768,
+              "length": 131,
+              "children": [
+                {
+                  "name": "Sync Word",
+                  "value": 4095,
+                  "offset": 1768,
+                  "length": 2,
+                  "bitOffset": 0,
+                  "bitLength": 12
+                },
+                {
+                  "name": "Version",
+                  "value": "MPEG-4",
+                  "offset": 1769,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Layer",
+                  "value": 0,
+                  "offset": 1769,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 2
+                },
+                {
+                  "name": "IsProtected",
+                  "value": false,
+                  "offset": 1769,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Profile",
+                  "value": "1 (AAC LC)",
+                  "offset": 1770,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 1770,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4
+                },
+                {
+                  "name": "IsPrivate",
+                  "value": false,
+                  "offset": 1770,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "1 (mono)",
+                  "offset": 1770,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 3
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 1771,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 1771,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Copyright ID Bit",
+                  "value": 0,
+                  "offset": 1771,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsCopyrightIdStart",
+                  "value": false,
+                  "offset": 1771,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 131,
+                  "unit": "bytes",
+                  "offset": 1771,
+                  "length": 3,
+                  "bitOffset": 6,
+                  "bitLength": 13
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": "0x7FF (variable bitrate)",
+                  "offset": 1773,
+                  "length": 2,
+                  "bitOffset": 3,
+                  "bitLength": 11
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 1,
+                  "offset": 1774,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Raw Data Block",
+                  "value": "SCE",
+                  "offset": 1775,
+                  "length": 124,
+                  "children": [
+                    {
+                      "name": "SCE",
+                      "value": "single channel element, tag 0",
+                      "offset": 1775,
+                      "length": 124,
+                      "bitOffset": 0,
+                      "bitLength": 987,
+                      "children": [
+                        {
+                          "name": "Element ID",
+                          "value": "0 (SCE)",
+                          "offset": 1775,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 3
+                        },
+                        {
+                          "name": "Element Instance Tag",
+                          "value": 0,
+                          "offset": 1775,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Channel",
+                          "kind": "SideInfo",
+                          "value": "global gain 100",
+                          "offset": 1775,
+                          "length": 124,
+                          "bitOffset": 7,
+                          "bitLength": 980,
+                          "children": [
+                            {
+                              "name": "Global Gain",
+                              "value": 100,
+                              "offset": 1775,
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 8
+                            },
+                            {
+                              "name": "ICS Info",
+                              "kind": "SideInfo",
+                              "value": "only long, KBD, max_sfb 30",
+                              "offset": 1776,
+                              "length": 3,
+                              "bitOffset": 7,
+                              "bitLength": 11,
+                              "children": [
+                                {
+                                  "name": "ICS Reserved Bit",
+                                  "value": 0,
+                                  "offset": 1776,
+                                  "length": 1,
+                                  "bitOffset": 7,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Window Sequence",
+                                  "value": "0 (only long)",
+                                  "offset": 1777,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "Window Shape",
+                                  "value": "1 (KBD)",
+                                  "offset": 1777,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Max SFB",
+                                  "value": 30,
+                                  "offset": 1777,
+                                  "length": 2,
+                                  "bitOffset": 3,
+                                  "bitLength": 6
+                                },
+                                {
+                                  "name": "HasPredictorData",
+                                  "value": false,
+                                  "offset": 1778,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 1
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Section Data",
+                              "kind": "SideInfo",
+                              "value": 3,
+                              "unit": "sections",
+                              "offset": 1778,
+                              "length": 4,
+                              "bitOffset": 2,
+                              "bitLength": 27,
+                              "children": [
+                                {
+                                  "name": "Section",
+                                  "value": "codebook 11 (unsigned pairs up to 16, which escapes to larger values), bands 0-9",
+                                  "offset": 1778,
+                                  "length": 2,
+                                  "bitOffset": 2,
+                                  "bitLength": 9
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "codebook 5 (signed pairs up to 4), bands 10-21",
+                                  "offset": 1779,
+                                  "length": 2,
+                                  "bitOffset": 3,
+                                  "bitLength": 9
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "codebook 0 (zero), bands 22-29",
+                                  "offset": 1780,
+                                  "length": 2,
+                                  "bitOffset": 4,
+                                  "bitLength": 9
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Scale Factor Data",
+                              "kind": "SideInfo",
+                              "value": 96,
+                              "unit": "bits",
+                              "offset": 1781,
+                              "length": 13,
+                              "bitOffset": 5,
+                              "bitLength": 96
+                            },
+                            {
+                              "name": "HasPulseData",
+                              "value": false,
+                              "offset": 1793,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasTnsData",
+                              "value": false,
+                              "offset": 1793,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasGainControlData",
+                              "value": false,
+                              "offset": 1793,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Spectral Data",
+                              "value": 835,
+                              "unit": "bits",
+                              "offset": 1794,
+                              "length": 105,
+                              "bitOffset": 0,
+                              "bitLength": 835
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "END",
+                      "value": "end of the raw data block",
+                      "offset": 1898,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 3,
+                      "children": [
+                        {
+                          "name": "Element ID",
+                          "value": "7 (END)",
+                          "offset": 1898,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Byte Alignment",
+                      "value": 2,
+                      "unit": "bits",
+                      "offset": 1898,
+                      "length": 1,
+                      "bitOffset": 6,
+                      "bitLength": 2
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "223 bytes, 1 raw data block",
+              "offset": 1899,
+              "length": 223,
+              "children": [
+                {
+                  "name": "Sync Word",
+                  "value": 4095,
+                  "offset": 1899,
+                  "length": 2,
+                  "bitOffset": 0,
+                  "bitLength": 12
+                },
+                {
+                  "name": "Version",
+                  "value": "MPEG-4",
+                  "offset": 1900,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Layer",
+                  "value": 0,
+                  "offset": 1900,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 2
+                },
+                {
+                  "name": "IsProtected",
+                  "value": false,
+                  "offset": 1900,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Profile",
+                  "value": "1 (AAC LC)",
+                  "offset": 1901,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 1901,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4
+                },
+                {
+                  "name": "IsPrivate",
+                  "value": false,
+                  "offset": 1901,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "1 (mono)",
+                  "offset": 1901,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 3
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 1902,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 1902,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Copyright ID Bit",
+                  "value": 0,
+                  "offset": 1902,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsCopyrightIdStart",
+                  "value": false,
+                  "offset": 1902,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 223,
+                  "unit": "bytes",
+                  "offset": 1902,
+                  "length": 3,
+                  "bitOffset": 6,
+                  "bitLength": 13
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": "0x7FF (variable bitrate)",
+                  "offset": 1904,
+                  "length": 2,
+                  "bitOffset": 3,
+                  "bitLength": 11
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 1,
+                  "offset": 1905,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Raw Data Block",
+                  "value": "SCE",
+                  "offset": 1906,
+                  "length": 216,
+                  "children": [
+                    {
+                      "name": "SCE",
+                      "value": "single channel element, tag 0",
+                      "offset": 1906,
+                      "length": 215,
+                      "children": [
+                        {
+                          "name": "Element ID",
+                          "value": "0 (SCE)",
+                          "offset": 1906,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 3
+                        },
+                        {
+                          "name": "Element Instance Tag",
+                          "value": 0,
+                          "offset": 1906,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Channel",
+                          "kind": "SideInfo",
+                          "value": "global gain 100",
+                          "offset": 1906,
+                          "length": 215,
+                          "bitOffset": 7,
+                          "bitLength": 1713,
+                          "children": [
+                            {
+                              "name": "Global Gain",
+                              "value": 100,
+                              "offset": 1906,
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 8
+                            },
+                            {
+                              "name": "ICS Info",
+                              "kind": "SideInfo",
+                              "value": "long stop, KBD, max_sfb 28",
+                              "offset": 1907,
+                              "length": 3,
+                              "bitOffset": 7,
+                              "bitLength": 11,
+                              "children": [
+                                {
+                                  "name": "ICS Reserved Bit",
+                                  "value": 0,
+                                  "offset": 1907,
+                                  "length": 1,
+                                  "bitOffset": 7,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Window Sequence",
+                                  "value": "3 (long stop)",
+                                  "offset": 1908,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "Window Shape",
+                                  "value": "1 (KBD)",
+                                  "offset": 1908,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Max SFB",
+                                  "value": 28,
+                                  "offset": 1908,
+                                  "length": 2,
+                                  "bitOffset": 3,
+                                  "bitLength": 6
+                                },
+                                {
+                                  "name": "HasPredictorData",
+                                  "value": false,
+                                  "offset": 1909,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 1
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Section Data",
+                              "kind": "SideInfo",
+                              "value": 3,
+                              "unit": "sections",
+                              "offset": 1909,
+                              "length": 4,
+                              "bitOffset": 2,
+                              "bitLength": 27,
+                              "children": [
+                                {
+                                  "name": "Section",
+                                  "value": "codebook 11 (unsigned pairs up to 16, which escapes to larger values), bands 0-5",
+                                  "offset": 1909,
+                                  "length": 2,
+                                  "bitOffset": 2,
+                                  "bitLength": 9
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "codebook 9 (unsigned pairs up to 12), bands 6-15",
+                                  "offset": 1910,
+                                  "length": 2,
+                                  "bitOffset": 3,
+                                  "bitLength": 9
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "codebook 5 (signed pairs up to 4), bands 16-27",
+                                  "offset": 1911,
+                                  "length": 2,
+                                  "bitOffset": 4,
+                                  "bitLength": 9
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Scale Factor Data",
+                              "kind": "SideInfo",
+                              "value": 122,
+                              "unit": "bits",
+                              "offset": 1912,
+                              "length": 16,
+                              "bitOffset": 5,
+                              "bitLength": 122
+                            },
+                            {
+                              "name": "HasPulseData",
+                              "value": false,
+                              "offset": 1927,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasTnsData",
+                              "value": false,
+                              "offset": 1928,
+                              "length": 1,
+                              "bitOffset": 0,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasGainControlData",
+                              "value": false,
+                              "offset": 1928,
+                              "length": 1,
+                              "bitOffset": 1,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Spectral Data",
+                              "value": 1542,
+                              "unit": "bits",
+                              "offset": 1928,
+                              "length": 193,
+                              "bitOffset": 2,
+                              "bitLength": 1542
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "END",
+                      "value": "end of the raw data block",
+                      "offset": 2121,
+                      "length": 1,
+                      "bitOffset": 0,
+                      "bitLength": 3,
+                      "children": [
+                        {
+                          "name": "Element ID",
+                          "value": "7 (END)",
+                          "offset": 2121,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Byte Alignment",
+                      "value": 5,
+                      "unit": "bits",
+                      "offset": 2121,
+                      "length": 1,
+                      "bitOffset": 3,
+                      "bitLength": 5
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Frame",
+              "kind": "Frame",
+              "value": "130 bytes, 1 raw data block",
+              "offset": 2122,
+              "length": 130,
+              "children": [
+                {
+                  "name": "Sync Word",
+                  "value": 4095,
+                  "offset": 2122,
+                  "length": 2,
+                  "bitOffset": 0,
+                  "bitLength": 12
+                },
+                {
+                  "name": "Version",
+                  "value": "MPEG-4",
+                  "offset": 2123,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Layer",
+                  "value": 0,
+                  "offset": 2123,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 2
+                },
+                {
+                  "name": "IsProtected",
+                  "value": false,
+                  "offset": 2123,
+                  "length": 1,
+                  "bitOffset": 7,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Profile",
+                  "value": "1 (AAC LC)",
+                  "offset": 2124,
+                  "length": 1,
+                  "bitOffset": 0,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Sample Rate",
+                  "value": 44100,
+                  "unit": "Hz",
+                  "offset": 2124,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 4
+                },
+                {
+                  "name": "IsPrivate",
+                  "value": false,
+                  "offset": 2124,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Channel Configuration",
+                  "value": "1 (mono)",
+                  "offset": 2124,
+                  "length": 2,
+                  "bitOffset": 7,
+                  "bitLength": 3
+                },
+                {
+                  "name": "IsOriginal",
+                  "value": false,
+                  "offset": 2125,
+                  "length": 1,
+                  "bitOffset": 2,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsHome",
+                  "value": false,
+                  "offset": 2125,
+                  "length": 1,
+                  "bitOffset": 3,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Copyright ID Bit",
+                  "value": 0,
+                  "offset": 2125,
+                  "length": 1,
+                  "bitOffset": 4,
+                  "bitLength": 1
+                },
+                {
+                  "name": "IsCopyrightIdStart",
+                  "value": false,
+                  "offset": 2125,
+                  "length": 1,
+                  "bitOffset": 5,
+                  "bitLength": 1
+                },
+                {
+                  "name": "Frame Length",
+                  "value": 130,
+                  "unit": "bytes",
+                  "offset": 2125,
+                  "length": 3,
+                  "bitOffset": 6,
+                  "bitLength": 13
+                },
+                {
+                  "name": "Buffer Fullness",
+                  "value": "0x7FF (variable bitrate)",
+                  "offset": 2127,
+                  "length": 2,
+                  "bitOffset": 3,
+                  "bitLength": 11
+                },
+                {
+                  "name": "Raw Data Blocks",
+                  "value": 1,
+                  "offset": 2128,
+                  "length": 1,
+                  "bitOffset": 6,
+                  "bitLength": 2
+                },
+                {
+                  "name": "Raw Data Block",
+                  "value": "SCE",
+                  "offset": 2129,
+                  "length": 123,
+                  "children": [
+                    {
+                      "name": "SCE",
+                      "value": "single channel element, tag 0",
+                      "offset": 2129,
+                      "length": 123,
+                      "bitOffset": 0,
+                      "bitLength": 980,
+                      "children": [
+                        {
+                          "name": "Element ID",
+                          "value": "0 (SCE)",
+                          "offset": 2129,
+                          "length": 1,
+                          "bitOffset": 0,
+                          "bitLength": 3
+                        },
+                        {
+                          "name": "Element Instance Tag",
+                          "value": 0,
+                          "offset": 2129,
+                          "length": 1,
+                          "bitOffset": 3,
+                          "bitLength": 4
+                        },
+                        {
+                          "name": "Channel",
+                          "kind": "SideInfo",
+                          "value": "global gain 100",
+                          "offset": 2129,
+                          "length": 123,
+                          "bitOffset": 7,
+                          "bitLength": 973,
+                          "children": [
+                            {
+                              "name": "Global Gain",
+                              "value": 100,
+                              "offset": 2129,
+                              "length": 2,
+                              "bitOffset": 7,
+                              "bitLength": 8
+                            },
+                            {
+                              "name": "ICS Info",
+                              "kind": "SideInfo",
+                              "value": "only long, KBD, max_sfb 30",
+                              "offset": 2130,
+                              "length": 3,
+                              "bitOffset": 7,
+                              "bitLength": 11,
+                              "children": [
+                                {
+                                  "name": "ICS Reserved Bit",
+                                  "value": 0,
+                                  "offset": 2130,
+                                  "length": 1,
+                                  "bitOffset": 7,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Window Sequence",
+                                  "value": "0 (only long)",
+                                  "offset": 2131,
+                                  "length": 1,
+                                  "bitOffset": 0,
+                                  "bitLength": 2
+                                },
+                                {
+                                  "name": "Window Shape",
+                                  "value": "1 (KBD)",
+                                  "offset": 2131,
+                                  "length": 1,
+                                  "bitOffset": 2,
+                                  "bitLength": 1
+                                },
+                                {
+                                  "name": "Max SFB",
+                                  "value": 30,
+                                  "offset": 2131,
+                                  "length": 2,
+                                  "bitOffset": 3,
+                                  "bitLength": 6
+                                },
+                                {
+                                  "name": "HasPredictorData",
+                                  "value": false,
+                                  "offset": 2132,
+                                  "length": 1,
+                                  "bitOffset": 1,
+                                  "bitLength": 1
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Section Data",
+                              "kind": "SideInfo",
+                              "value": 3,
+                              "unit": "sections",
+                              "offset": 2132,
+                              "length": 4,
+                              "bitOffset": 2,
+                              "bitLength": 27,
+                              "children": [
+                                {
+                                  "name": "Section",
+                                  "value": "codebook 11 (unsigned pairs up to 16, which escapes to larger values), bands 0-9",
+                                  "offset": 2132,
+                                  "length": 2,
+                                  "bitOffset": 2,
+                                  "bitLength": 9
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "codebook 5 (signed pairs up to 4), bands 10-21",
+                                  "offset": 2133,
+                                  "length": 2,
+                                  "bitOffset": 3,
+                                  "bitLength": 9
+                                },
+                                {
+                                  "name": "Section",
+                                  "value": "codebook 0 (zero), bands 22-29",
+                                  "offset": 2134,
+                                  "length": 2,
+                                  "bitOffset": 4,
+                                  "bitLength": 9
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Scale Factor Data",
+                              "kind": "SideInfo",
+                              "value": 96,
+                              "unit": "bits",
+                              "offset": 2135,
+                              "length": 13,
+                              "bitOffset": 5,
+                              "bitLength": 96
+                            },
+                            {
+                              "name": "HasPulseData",
+                              "value": false,
+                              "offset": 2147,
+                              "length": 1,
+                              "bitOffset": 5,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasTnsData",
+                              "value": false,
+                              "offset": 2147,
+                              "length": 1,
+                              "bitOffset": 6,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "HasGainControlData",
+                              "value": false,
+                              "offset": 2147,
+                              "length": 1,
+                              "bitOffset": 7,
+                              "bitLength": 1
+                            },
+                            {
+                              "name": "Spectral Data",
+                              "value": 828,
+                              "unit": "bits",
+                              "offset": 2148,
+                              "length": 104,
+                              "bitOffset": 0,
+                              "bitLength": 828
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "END",
+                      "value": "end of the raw data block",
+                      "offset": 2251,
+                      "length": 1,
+                      "bitOffset": 4,
+                      "bitLength": 3,
+                      "children": [
+                        {
+                          "name": "Element ID",
+                          "value": "7 (END)",
+                          "offset": 2251,
+                          "length": 1,
+                          "bitOffset": 4,
+                          "bitLength": 3
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Byte Alignment",
+                      "value": 1,
+                      "unit": "bits",
+                      "offset": 2251,
+                      "length": 1,
+                      "bitOffset": 7,
+                      "bitLength": 1
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "streams": [
+      {
+        "nodes": [
+          [
+            0
+          ]
+        ],
+        "codec": "AAC LC",
+        "codingClass": "lossy",
+        "sampleRate": 44100,
+        "channels": 1,
+        "channelMode": "Mono",
+        "channelLayout": [
+          "front center"
+        ],
+        "channelLayoutName": "mono",
+        "samples": 12288,
+        "duration": 0.2786394557823129,
+        "averageBitrate": 64.65703125,
+        "isVbr": true,
+        "series": [
+          {
+            "name": "Bitrate",
+            "unit": "kbps",
+            "axis": "frameOffset",
+            "concept": "bitDistribution",
+            "quantity": "Bitrate",
+            "x": [
+              0,
+              131,
+              479,
+              609,
+              726,
+              857,
+              974,
+              1322,
+              1545,
+              1768,
+              1899,
+              2122
+            ],
+            "values": [
+              45.13359375,
+              119.896875,
+              44.7890625,
+              40.31015625,
+              45.13359375,
+              40.31015625,
+              119.896875,
+              76.83046875,
+              76.83046875,
+              45.13359375,
+              76.83046875,
+              44.7890625
+            ]
+          },
+          {
+            "name": "Bitrate Over Time",
+            "unit": "kbps",
+            "axis": "seconds",
+            "concept": "bitDistribution",
+            "quantity": "Bitrate",
+            "x": [
+              0
+            ],
+            "values": [
+              65
+            ]
+          },
+          {
+            "name": "Coded Bandwidth",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              0,
+              131,
+              479,
+              609,
+              726,
+              857,
+              974,
+              1322,
+              1545,
+              1768,
+              1899,
+              2122
+            ],
+            "values": [
+              7580,
+              22050,
+              7580,
+              7580,
+              7580,
+              7580,
+              22050,
+              6288,
+              6288,
+              7580,
+              6288,
+              7580
+            ]
+          },
+          {
+            "name": "Coded Bandwidth Over Time",
+            "unit": "Hz",
+            "axis": "seconds",
+            "concept": "codedBandwidth",
+            "quantity": "Coded Bandwidth",
+            "x": [
+              0
+            ],
+            "values": [
+              22050
+            ]
+          },
+          {
+            "name": "Last Non-Zero Coefficient",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "codedBandwidth",
+            "quantity": "Last Non-Zero Coefficient",
+            "x": [
+              0,
+              131,
+              479,
+              609,
+              726,
+              857,
+              974,
+              1322,
+              1545,
+              1768,
+              1899,
+              2122
+            ],
+            "values": [
+              3445,
+              22050,
+              3445,
+              3445,
+              3445,
+              3445,
+              22050,
+              6288,
+              6288,
+              3445,
+              6288,
+              3445
+            ]
+          },
+          {
+            "name": "Last Non-Zero Coefficient Over Time",
+            "unit": "Hz",
+            "axis": "seconds",
+            "concept": "codedBandwidth",
+            "quantity": "Last Non-Zero Coefficient",
+            "x": [
+              0
+            ],
+            "values": [
+              22050
+            ]
+          },
+          {
+            "name": "Escape-Coded Coefficients",
+            "unit": "%",
+            "axis": "frameOffset",
+            "quantity": "Escape-Coded Coefficients",
+            "x": [
+              0,
+              131,
+              479,
+              609,
+              726,
+              857,
+              974,
+              1322,
+              1545,
+              1768,
+              1899,
+              2122
+            ],
+            "values": [
+              8.9,
+              1.3,
+              8.9,
+              8.8,
+              8.9,
+              9.6,
+              1.5,
+              3,
+              3,
+              8.9,
+              3,
+              8.9
+            ]
+          }
+        ],
+        "categorySeries": [
+          {
+            "name": "Block Usage",
+            "concept": "blockSwitching",
+            "valueLabel": "channel stream",
+            "categories": [
+              {
+                "name": "Only Long",
+                "count": 5
+              },
+              {
+                "name": "Long Start",
+                "count": 2
+              },
+              {
+                "name": "Eight Short",
+                "count": 2
+              },
+              {
+                "name": "Long Stop",
+                "count": 3
+              }
+            ],
+            "total": 12,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                12
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                1
+              ],
+              [
+                3,
+                2
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                3,
+                1
+              ],
+              [
+                0,
+                1
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Block Sizes",
+            "concept": "blockSwitching",
+            "valueLabel": "channel stream",
+            "categories": [
+              {
+                "name": "Long, start and stop",
+                "count": 10
+              },
+              {
+                "name": "Short",
+                "count": 2
+              }
+            ],
+            "total": 12,
+            "xSeries": "Bitrate",
+            "groupOf": "Block Usage",
+            "map": [
+              0,
+              0,
+              1,
+              0
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Window Shapes",
+            "valueLabel": "channel stream",
+            "categories": [
+              {
+                "name": "Sine",
+                "count": 4
+              },
+              {
+                "name": "KBD",
+                "count": 8
+              }
+            ],
+            "total": 12,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                12
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                5
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "TNS",
+            "valueLabel": "channel stream",
+            "categories": [
+              {
+                "name": "With TNS",
+                "count": 0
+              },
+              {
+                "name": "Without TNS",
+                "count": 12
+              }
+            ],
+            "total": 12,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                12
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                12
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Pulse Data",
+            "valueLabel": "channel stream",
+            "categories": [
+              {
+                "name": "With pulse data",
+                "count": 0
+              },
+              {
+                "name": "Without pulse data",
+                "count": 12
+              }
+            ],
+            "total": 12,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                12
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                12
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Noise Substitution",
+            "valueLabel": "channel stream",
+            "categories": [
+              {
+                "name": "With noise substitution",
+                "count": 2
+              },
+              {
+                "name": "Without noise substitution",
+                "count": 10
+              }
+            ],
+            "total": 12,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                12
+              ]
+            ],
+            "runs": [
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                4
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                5
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          }
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "severity": "Info",
+        "code": "aac.window-slopes-differ",
+        "message": "5 raw data blocks hold a window sequence whose left slope differs from the right slope of the window before it in the same channel stream, as a long window followed by eight short ones does: ISO/IEC 14496-3 4.6.11.3.1 lists such transitions as possible and not as meaningful; the first at 0x8C.",
+        "offset": 140,
+        "length": 1,
+        "path": [
+          0,
+          2,
+          15,
+          0,
+          2,
+          1,
+          1
+        ],
+        "count": 5
+      }
+    ]
+  }
+]

@@ -454,7 +454,8 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         }
 
         // AAC LC: music in stereo from FAAC and FDK AAC, mono from Microsoft's encoder, the hand-built files that code every tool (every codebook, noise substitution, TNS, pulses,
-        // short windows, mid/side and intensity stereo), and silence. Each case repeats the ADTS frames of a file in one stream.
+        // short windows, mid/side and intensity stereo), silence, and HE-AAC (SBR in stereo and mono, with parametric stereo from two encoders, and a stream of many envelope shapes).
+        // Each case repeats the ADTS frames of a file in one stream.
         foreach ((string label, string file) in new[]
         {
             ("stereo-faac", "faac-2.2-adts.aac"),
@@ -464,6 +465,11 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             ("tools-stereo", "adts/stereo.aac"),
             ("intensity-and-noise", "adts/intensity-noise.aac"),
             ("silent", "adts/cbr.aac"),
+            ("he-stereo", "fdkaac-he-adts.aac"),
+            ("he-mono", "faac-2.2-he-mono-adts.aac"),
+            ("he-v2", "fdkaac-he-v2-adts.aac"),
+            ("he-v2-apple", "apple-hev2-adts-cbr-st44.aac"),
+            ("he-envelopes", "adts/sbr-fixvar-resolutions.aac"),
         })
         {
             Add("aac-" + label, () => new Case("aac-" + label, AacCases.Repeated(file)));
@@ -484,7 +490,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             Add("eac3-" + label, () => new Case("eac3-" + label, Ac3Cases.Repeated(file)));
         }
 
-        // Opus: SILK speech, CELT music at 96 kbps and in 5 ms frames, 5.1, mono at 24 kbps and hybrid. Each case repeats the audio packets of an encoder's file in one stream.
+        // Opus: SILK speech, CELT music at 96 kbps and in 5 ms frames, 5.1, mono at 24 kbps, hybrid, and ambisonics of order 1 and order 3 with the stereo pair (family 3: 18 channels, 18 decoded channels and a matrix of 324 coefficients), and a matrix of 171 by 171 coefficients over 171 mono streams, which dominates the work. Each case repeats the audio packets of an encoder's file in one stream.
         foreach ((string label, string file) in new[]
         {
             ("speech", "external-opusenc-speech.opus"),
@@ -494,6 +500,9 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             ("mono-24", "external-opusenc-24-mono.opus"),
             ("ffmpeg", "external-ffmpeg-libopus.opus"),
             ("hybrid-20ms", "external-libopus-stereo-hybrid-20ms.opus"),
+            ("ambisonics-o1", "external-libopus-ambisonics-o1.opus"),
+            ("ambisonics-o3-stereo", "external-libopus-ambisonics-o3-stereo.opus"),
+            ("ambisonics-matrix-171", "opus-ambisonics-family-3-dense.opus"),
         })
         {
             Add("opus-" + label, () => new Case("opus-" + label, OpusCases.Repeated(file)));

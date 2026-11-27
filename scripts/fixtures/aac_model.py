@@ -533,7 +533,9 @@ def sbr_data(w, counts, pair=False, coupled=False, ps=False, grid="FIXFIX", data
         sbr_noise(w, counts, 10, False)
         sbr_harmonics(w, counts, harmonic)
         sbr_harmonics(w, counts, False)
-    if ps:
+    if ps == "wide":
+        ps_wide(w)
+    elif ps:
         w.put(1, 1).put(2, 4)                        # bs_extended_data, two bytes of extensions
         w.put(2, 2)                                  # bs_extension_id EXT_ID_PS
         # ps_data: enable_ps_header, enable_iid 0, enable_icc 0, enable_ext 0, frame_class 0, num_env_idx 0.
@@ -544,6 +546,62 @@ def sbr_data(w, counts, pair=False, coupled=False, ps=False, grid="FIXFIX", data
         w.put(0, 2).put(0, 6)                        # bs_extension_id 0, which defines nothing, and its bits
     else:
         w.put(0, 1)
+
+
+def ps_codeword(tree_name, symbol):
+    """The codeword (bits as a string) of a symbol of one of the parametric stereo Huffman codebooks, found in the binary trees of src/Encspect.Formats.Aac/PsHuffman.cs
+    (libxaac's tables; the tree's node is a 16-bit entry whose high byte is the child after a 0 bit and whose low byte the child after a 1 bit, a negative child being a leaf of
+    the symbol plus 64)."""
+    import pathlib
+    import re
+    text = (pathlib.Path(__file__).resolve().parents[2] / "src/Encspect.Formats.Aac/PsHuffman.cs").read_text()
+    body = text[text.index(tree_name):]
+    body = body[body.index("["):body.index("];")]
+    tree = [int(x, 16) for x in re.findall(r"0x[0-9A-Fa-f]{4}", body)]
+
+    def signed(v, bits):
+        return v - (1 << bits) if v >= 1 << (bits - 1) else v
+
+    def walk(index, path):
+        if index < 0:
+            return path if index + 64 == symbol else None
+        node = tree[index]
+        for bit, child in ((0, signed(node >> 8, 8)), (1, signed(node & 0xFF, 8))):
+            found = walk(child, path + str(bit))
+            if found is not None:
+                return found
+        return None
+    result = walk(0, "")
+    assert result is not None, (tree_name, symbol)
+    return result
+
+
+def ps_wide(w):
+    """The parametric stereo extension with intensity differences and coherences of 34 bands (mode 2, coarse): one envelope, coded across frequency, every band's
+    difference 3 steps (left louder) and coherence index 2."""
+    bits = []
+    put = lambda v, n: bits.append((v, n))
+    put(1, 1)                                        # enable_ps_header
+    put(1, 1), put(2, 3)                             # enable_iid, iid_mode 2: 34 bands
+    put(1, 1), put(2, 3)                             # enable_icc, icc_mode 2: 34 bands
+    put(0, 1)                                        # enable_ext
+    put(0, 1), put(1, 2)                             # frame_class 0, one envelope
+    for tree, first in (("IidFrequencyTree", 3), ("IccFrequencyTree", 2)):
+        put(0, 1)                                    # coded across frequency
+        for band in range(34):
+            word = ps_codeword(tree, first if band == 0 else 0)
+            put(int(word, 2), len(word))
+    total = 2 + sum(n for _, n in bits)
+    size = (total + 7) // 8
+    w.put(1, 1)                                      # bs_extended_data
+    if size >= 15:
+        w.put(15, 4).put(size - 15, 8)
+    else:
+        w.put(size, 4)
+    w.put(2, 2)                                      # bs_extension_id EXT_ID_PS
+    for v, n in bits:
+        w.put(v, n)
+    w.put(0, size * 8 - total)                       # bs_fill_bits
 
 
 class Element:

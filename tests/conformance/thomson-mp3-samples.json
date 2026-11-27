@@ -1,0 +1,330 @@
+{
+ "description": "Thomson's \"mp3 Tips & Tricks for MP3 Decoder Implementations\" test items (2008): nine files built to trip a decoder up. Thomson's material, so they are never committed: they are fetched from the private repository (mirrors/samples/thomson-mp3-tips-and-tricks) and checked against their SHA-256. Per file: what it tests, and what the analyzer must report (the frames, the tags with their kind and version, the stream, the gaps, the VBR header, the encoder and the findings), each checked against the file by hand.",
+ "private_folder": "thomson-mp3-tips-and-tricks",
+ "samples": [
+  {
+   "file": "Big_Error.mp3",
+   "sha256": "2a1d4715980e348f6f2e17c072f4b45c9f006f72c862409aef66a053dcb6c7f6",
+   "size": 30709256,
+   "tests": "Raw 16-bit PCM in the middle of the audio: the first 159,732 bytes are audio, then 29,987,852 bytes (about 30 MB) of PCM, then the remaining audio from 30,147,584 (0x1CC0400). Sync is lost over the PCM and found again at the next frame; the frame before the PCM has Huffman-coded values that run past their granule.",
+   "frames": 691,
+   "regions": [
+    {
+     "name": "MPEG Audio",
+     "kind": "Stream",
+     "value": 691,
+     "offset": 0,
+     "length": 30709256
+    }
+   ],
+   "gaps": [
+    {
+     "offset": 159732,
+     "length": 29987852
+    }
+   ],
+   "vbr_header": null,
+   "lame_tag": false,
+   "stream": {
+    "codec": "MPEG-1 Layer III",
+    "sample_rate": 44100,
+    "channels": 2,
+    "channel_mode": "Joint stereo",
+    "samples": 796032,
+    "is_vbr": false
+   },
+   "encoder": {
+    "name": "Fraunhofer",
+    "confidence": "Low"
+   },
+   "findings": [
+    "mpeg-audio.huffman-overrun",
+    "mpeg-audio.sync-lost"
+   ]
+  },
+  {
+   "file": "ID3v2-3_modification.mp3",
+   "sha256": "e13a7fda7095399dab567fcb4fd40b5c8e0e7d1ec91d6644a7474c8dae5574bc",
+   "size": 837627,
+   "tests": "The reference stream's audio (721,404 bytes, 691 frames) after an ID3v2.3 tag of 116,223 bytes.",
+   "frames": 691,
+   "regions": [
+    {
+     "name": "ID3v2",
+     "kind": "Tag",
+     "value": "2.3.0",
+     "offset": 0,
+     "length": 116223
+    },
+    {
+     "name": "MPEG Audio",
+     "kind": "Stream",
+     "value": 691,
+     "offset": 116223,
+     "length": 721404
+    }
+   ],
+   "gaps": [],
+   "vbr_header": null,
+   "lame_tag": false,
+   "stream": {
+    "codec": "MPEG-1 Layer III",
+    "sample_rate": 44100,
+    "channels": 2,
+    "channel_mode": "Joint stereo",
+    "samples": 796032,
+    "is_vbr": false
+   },
+   "encoder": {
+    "name": "Fraunhofer",
+    "confidence": "Low"
+   },
+   "findings": []
+  },
+  {
+   "file": "ID3V2-4_footer.mp3",
+   "sha256": "1bc9749f3a6b9b4161e0d9f72ff05261e5d3eb3fb8392f20fc09a001996f4344",
+   "size": 516332,
+   "tests": "An ID3v2.4 tag of 316,671 bytes appended after the audio, with a footer (3DI) that locates it from the end of the file; no VBR header.",
+   "frames": 691,
+   "regions": [
+    {
+     "name": "MPEG Audio",
+     "kind": "Stream",
+     "value": 691,
+     "offset": 0,
+     "length": 199661
+    },
+    {
+     "name": "ID3v2",
+     "kind": "Tag",
+     "value": "2.4.0",
+     "offset": 199661,
+     "length": 316671
+    }
+   ],
+   "gaps": [],
+   "vbr_header": null,
+   "lame_tag": false,
+   "stream": {
+    "codec": "MPEG-1 Layer III",
+    "sample_rate": 44100,
+    "channels": 2,
+    "channel_mode": "Joint stereo",
+    "samples": 796032,
+    "is_vbr": true
+   },
+   "encoder": {
+    "name": "Fraunhofer",
+    "confidence": "Low"
+   },
+   "findings": []
+  },
+  {
+   "file": "ID3V2-4_xing_footer.mp3",
+   "sha256": "8fb35639e9402f55346e55a70800e5eb048725ed703edeea059675c7714e8a72",
+   "size": 517063,
+   "tests": "The same appended ID3v2.4 tag with a footer, after audio that starts with a Xing header frame.",
+   "frames": 692,
+   "regions": [
+    {
+     "name": "MPEG Audio",
+     "kind": "Stream",
+     "value": 692,
+     "offset": 0,
+     "length": 200392
+    },
+    {
+     "name": "ID3v2",
+     "kind": "Tag",
+     "value": "2.4.0",
+     "offset": 200392,
+     "length": 316671
+    }
+   ],
+   "gaps": [],
+   "vbr_header": "Xing",
+   "lame_tag": false,
+   "stream": {
+    "codec": "MPEG-1 Layer III",
+    "sample_rate": 44100,
+    "channels": 2,
+    "channel_mode": "Joint stereo",
+    "samples": 796032,
+    "is_vbr": true
+   },
+   "encoder": {
+    "name": "Fraunhofer",
+    "confidence": "Low"
+   },
+   "findings": []
+  },
+  {
+   "file": "LongID3V2-3.mp3",
+   "sha256": "ec9cd42187d3a3f2477408fe851fc4282e14e1eca471ee5e9410478d4e862f99",
+   "size": 51721238,
+   "tests": "An ID3v2.3 tag of 50,999,834 bytes (51 MB) before the audio: the tag must be skipped without being loaded whole.",
+   "frames": 691,
+   "regions": [
+    {
+     "name": "ID3v2",
+     "kind": "Tag",
+     "value": "2.3.0",
+     "offset": 0,
+     "length": 50999834
+    },
+    {
+     "name": "MPEG Audio",
+     "kind": "Stream",
+     "value": 691,
+     "offset": 50999834,
+     "length": 721404
+    }
+   ],
+   "gaps": [],
+   "vbr_header": null,
+   "lame_tag": false,
+   "stream": {
+    "codec": "MPEG-1 Layer III",
+    "sample_rate": 44100,
+    "channels": 2,
+    "channel_mode": "Joint stereo",
+    "samples": 796032,
+    "is_vbr": false
+   },
+   "encoder": {
+    "name": "Fraunhofer",
+    "confidence": "Low"
+   },
+   "findings": []
+  },
+  {
+   "file": "reference.mp3",
+   "sha256": "5ef40825fbc92a443cb3d52995e0acbd1a0be193c93c89a676a4752897cd7d54",
+   "size": 721404,
+   "tests": "The plain stream the other files are built from: MPEG-1 Layer III, 44.1 kHz joint stereo, 691 frames, no tags and no VBR header.",
+   "frames": 691,
+   "regions": [
+    {
+     "name": "MPEG Audio",
+     "kind": "Stream",
+     "value": 691,
+     "offset": 0,
+     "length": 721404
+    }
+   ],
+   "gaps": [],
+   "vbr_header": null,
+   "lame_tag": false,
+   "stream": {
+    "codec": "MPEG-1 Layer III",
+    "sample_rate": 44100,
+    "channels": 2,
+    "channel_mode": "Joint stereo",
+    "samples": 796032,
+    "is_vbr": false
+   },
+   "encoder": {
+    "name": "Fraunhofer",
+    "confidence": "Low"
+   },
+   "findings": []
+  },
+  {
+   "file": "VBR_clean.mp3",
+   "sha256": "8cd23c650dcc7065af63b0246c4218684ed768ad2fab551a6d7f97b1fd25f55d",
+   "size": 199661,
+   "tests": "Variable bitrate audio with no VBR header: the stream is variable from its frames alone.",
+   "frames": 691,
+   "regions": [
+    {
+     "name": "MPEG Audio",
+     "kind": "Stream",
+     "value": 691,
+     "offset": 0,
+     "length": 199661
+    }
+   ],
+   "gaps": [],
+   "vbr_header": null,
+   "lame_tag": false,
+   "stream": {
+    "codec": "MPEG-1 Layer III",
+    "sample_rate": 44100,
+    "channels": 2,
+    "channel_mode": "Joint stereo",
+    "samples": 796032,
+    "is_vbr": true
+   },
+   "encoder": {
+    "name": "Fraunhofer",
+    "confidence": "Low"
+   },
+   "findings": []
+  },
+  {
+   "file": "VBR_vbri.mp3",
+   "sha256": "a2fb91476cbc5f1e62f7df56ff967f03467d4feefa911ebe91a7585994009714",
+   "size": 227988,
+   "tests": "The same music, encoded again with a VBRI header frame in front (a separate encode, not the clean file plus a frame).",
+   "frames": 692,
+   "regions": [
+    {
+     "name": "MPEG Audio",
+     "kind": "Stream",
+     "value": 692,
+     "offset": 0,
+     "length": 227988
+    }
+   ],
+   "gaps": [],
+   "vbr_header": "VBRI",
+   "lame_tag": false,
+   "stream": {
+    "codec": "MPEG-1 Layer III",
+    "sample_rate": 44100,
+    "channels": 2,
+    "channel_mode": "Joint stereo",
+    "samples": 796032,
+    "is_vbr": true
+   },
+   "encoder": {
+    "name": "Fraunhofer",
+    "confidence": "High"
+   },
+   "findings": []
+  },
+  {
+   "file": "VBR_xing.mp3",
+   "sha256": "ee22a47367e4e871eea8d7aed5f5476121a9f84d34933e0b092699c7511b5830",
+   "size": 200392,
+   "tests": "The same audio with a Xing header frame in front.",
+   "frames": 692,
+   "regions": [
+    {
+     "name": "MPEG Audio",
+     "kind": "Stream",
+     "value": 692,
+     "offset": 0,
+     "length": 200392
+    }
+   ],
+   "gaps": [],
+   "vbr_header": "Xing",
+   "lame_tag": false,
+   "stream": {
+    "codec": "MPEG-1 Layer III",
+    "sample_rate": 44100,
+    "channels": 2,
+    "channel_mode": "Joint stereo",
+    "samples": 796032,
+    "is_vbr": true
+   },
+   "encoder": {
+    "name": "Fraunhofer",
+    "confidence": "Low"
+   },
+   "findings": []
+  }
+ ]
+}

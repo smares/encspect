@@ -524,9 +524,20 @@ def check_decode_golden(old, new, change):
     if problem:
         return [problem]
     fields = {field for entry in change.get("changed", []) if entry.get("scope") == "decode" for field in entry["fields"]}
+    # A decoder that starts decoding a stream it refused has the finding of its refusal gone and the findings of its decoding new: the change lists their codes as removed and added
+    # ({"scope": "finding", "code": ...}), and a field it lists as changed that only the new golden has (the hash of the samples) is the decoder's addition.
+    old = copy.deepcopy(old)
+    for entry in change.get("removed", []):
+        if entry.get("scope") == "finding" and isinstance(old, dict) and "findings" in old:
+            old["findings"] = [f for f in old["findings"] if f.get("code") != entry["code"]]
+    for entry in change.get("added", []):
+        if entry.get("scope") == "finding" and isinstance(expected, dict) and "findings" in expected:
+            expected["findings"] = [f for f in expected["findings"] if f.get("code") != entry["code"]]
 
     def restore(before, after):
         if isinstance(before, dict) and isinstance(after, dict):
+            for key in [k for k in after if k not in before and k in fields and not isinstance(after[k], (dict, list))]:
+                del after[key]
             for key in after:
                 if key in before:
                     if key in fields and not isinstance(after[key], (dict, list)):
