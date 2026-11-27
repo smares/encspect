@@ -295,6 +295,25 @@ public class AudioPanelTests
         window.Close();
     }
 
+    // A Nyquist edge is a dashed line at its rate's Nyquist frequency, and the hover near it says the step.
+    [AvaloniaFact]
+    public void The_spectrum_draws_and_names_a_Nyquist_edge()
+    {
+        DetailWindow window = Open(Fixtures.Measurement("synthetic-nyquist-lines-22050-48000.flac"));
+        Choose(window, "Spectrum");
+        var spectrum = (SpectrumGraph)window.Graph.Graph!;
+        NyquistEdge edge = Assert.Single(spectrum.NyquistEdges);
+        Assert.Equal(44100, edge.LowerRate);
+        Assert.Equal("Nyquist of 44,100 Hz", SpectrumGraph.NyquistEdgeLabel(edge));
+
+        int row = spectrum.RowOfHertz(22050);
+        Assert.True(spectrum.IsOnNyquistEdge(edge, row));
+        window.MouseMove(Window(window, window.Graph.PointOfCell(row)));
+        Assert.Contains("Nyquist edge: a step of ", window.Graph.HoverText, StringComparison.Ordinal);
+        Assert.Contains("(the Nyquist frequency of 44,100 Hz)", window.Graph.HoverText, StringComparison.Ordinal);
+        window.Close();
+    }
+
     [AvaloniaFact]
     public void Clicking_the_spectrogram_selects_the_frame_near_that_time()
     {
