@@ -8207,7 +8207,7 @@
      "kind": "rate-differs",
      "reason": "FDK outputs 9 frames (18,432 samples) at 44100 Hz, from unit 1, where the analyzer's runs are at 22050 Hz (ratio 44100/22050): the decoders disagree on whether SBR is applied there",
      "statusSource": "reviewed",
-     "note": "decided by the lead, 2026-11-27: keep. ISO/IEC 14496-3 1.6.5.3, first method: the first block decides, and it holds no SBR data, so the stream is AAC LC."
+     "note": "decided by the lead, 2026-11-27: keep. ISO/IEC 14496-3 1.6.5.3, first method: the first block decides, and it holds no SBR data, so the stream is AAC LC. Clause 1.6.5.3 allows both methods and does not say how far \"prior to decoding\" looks: the analyzer's first-block check is a compliant reading of method 1, and FDK's output at twice the rate (method 2, or a longer look-ahead) is compliant too."
     },
     {
      "figure": "samples",
