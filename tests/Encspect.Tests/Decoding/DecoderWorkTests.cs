@@ -453,8 +453,9 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             Add("ac3-" + label, () => new Case("ac3-" + label, Ac3Cases.Repeated(file)));
         }
 
-        // AAC LC: music in stereo from FAAC and FDK AAC, mono from Microsoft's encoder, the hand-built files that code every tool (every codebook, noise substitution, TNS, pulses,
-        // short windows, mid/side and intensity stereo), silence, and HE-AAC (SBR in stereo and mono, with parametric stereo from two encoders, and a stream of many envelope shapes).
+        // AAC LC, Main and LTP: music in stereo from FAAC and FDK AAC, mono from Microsoft's encoder, the hand-built files that code every tool (every codebook, noise substitution, TNS, pulses,
+        // short windows, mid/side and intensity stereo), silence, and HE-AAC (SBR in stereo and mono, with parametric stereo from two encoders, and a stream of many envelope shapes), then Main in stereo from FFmpeg, prediction in every band
+        // of a stereo pair, and long-term prediction in both channels and with TNS.
         // Each case repeats the ADTS frames of a file in one stream.
         foreach ((string label, string file) in new[]
         {
@@ -470,6 +471,10 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             ("he-v2", "fdkaac-he-v2-adts.aac"),
             ("he-v2-apple", "apple-hev2-adts-cbr-st44.aac"),
             ("he-envelopes", "adts/sbr-fixvar-resolutions.aac"),
+            ("main-stereo", "ffmpeg-main-no-noise.aac"),
+            ("main-prediction-every-band", "adts/main-prediction-reset-cycle.aac"),
+            ("ltp-both-channels", "adts/ltp-lags.aac"),
+            ("ltp-tns-noise", "adts/ltp-tns-noise.aac"),
         })
         {
             Add("aac-" + label, () => new Case("aac-" + label, AacCases.Repeated(file)));

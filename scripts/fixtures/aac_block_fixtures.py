@@ -1555,19 +1555,20 @@ def main_ltp_decoding():
         "decode as coded and the one of 31 takes its first 20 coefficients.", data, rows, [stream("AAC Main", RATE, 1, "Mono", len(rows) * 1024)], {},
         [["aac.tns-order-too-high", "a TNS filter of a higher order than the 20 its window allows"]])))
 
-    # The sync word of frame 13 overwritten, in a Main stream and in an LTP stream that predict on both sides of it.
+    # The sync word of frame 21 overwritten in a Main stream that predicts in all 40 bands of every frame and resets one group in each, in a cycle of the 30.
     blocks = []
-    for i in range(24):
-        ics = channel(M.ONLY_LONG, 1, [[(11, 4), (5, 36)]], seed=200 + i, predictor=(i % 6 == 5, i // 6 + 1, [1] * 40))
+    for i in range(60):
+        ics = channel(M.ONLY_LONG, 1, [[(11, 4), (5, 36)]], seed=200 + i, predictor=(True, i % 30 + 1, [1] * 40))
         blocks.append(M.raw_data_block([M.Element(M.SCE, ics=ics)], object_type=1))
     frames = adts_frames(blocks, profile=0)
-    frames[12] = b"\x00\x00" + frames[12][2:]
+    frames[20] = b"\x00\x00" + frames[20][2:]
     data, rows = concat(frames)
-    rows = [r for n, r in enumerate(rows) if n != 12]
+    rows = [r for n, r in enumerate(rows) if n != 20]
     out.append(("main-prediction-gap.aac", data, manifest(
-        "AAC Main (ADTS profile 0), mono: 24 frames that predict in all 40 bands and reset a group in every sixth, the sync word of frame 13 overwritten, so that the decoder starts again with "
-        "its predictors reset and withholds what depends on the groups not reset since.", data, rows, [stream("AAC Main", RATE, 1, "Mono", 23 * 1024)],
-        {}, [["aac.sync-lost", "ADTS sync is lost for"]], skip={"ffprobe": "ffmpeg resyncs after damage in its own way.", "faad": "faad2 stops at the damaged frame."})))
+        "AAC Main (ADTS profile 0), mono: 60 frames that predict in all 40 bands and reset one group each, in a cycle of the 30, the sync word of frame 21 overwritten, so that the decoder "
+        "starts again with its predictors reset and withholds the blocks that use a group not reset since: frames 22 to 52, 31 of the 39 after the gap.", data, rows,
+        [stream("AAC Main", RATE, 1, "Mono", 59 * 1024)], {}, [["aac.sync-lost", "ADTS sync is lost for"]],
+        skip={"ffprobe": "ffmpeg resyncs after damage in its own way.", "faad": "faad2 stops at the damaged frame."})))
 
     # LTP: lag 0 and 2047, ltp_long_used over bands 0 to 39 of a window with max_sfb 49, for both channels of a pair with a common window.
     made = []
@@ -1597,18 +1598,20 @@ def main_ltp_decoding():
         "a long start, eight short windows and a long stop.", data, rows, [stream("AAC LTP", RATE, 1, "Mono", len(rows) * 1024)], {},
         skip={"faad": "faad2 reads ADTS profile 3 but its -i output names no LTP."})))
 
-    # The sync word of frame 9 overwritten in an LTP stream.
+    # The sync word of frame 9 overwritten in an LTP stream that predicts in every frame but 13 and 14 (lags up to 1,000 samples).
     made = []
-    for i in range(16):
-        a = channel(M.ONLY_LONG, 1, [[(11, 4), (5, 26)]], seed=350 + i, predictor=((100 + 61 * i % 1500, i % 8, [1] * 30), None))
+    for i in range(24):
+        used = None if i in (12, 13) else ((100 + 61 * i % 900, i % 8, [1] * 30),)
+        a = channel(M.ONLY_LONG, 1, [[(11, 4), (5, 26)]], seed=350 + i, predictor=used)
         made.append(M.raw_data_block([M.Element(M.SCE, ics=a)], object_type=4))
     frames = adts_frames(made, profile=3)
     frames[8] = b"\x00\x00" + frames[8][2:]
     data, rows = concat(frames)
     rows = [r for n, r in enumerate(rows) if n != 8]
     out.append(("ltp-gap.aac", data, manifest(
-        "AAC LTP (MPEG-4 ADTS profile 3), mono: 16 frames that all use long-term prediction, the sync word of frame 9 overwritten, so that the decoder starts again with an empty history and "
-        "withholds the blocks that predict from it.", data, rows, [stream("AAC LTP", RATE, 1, "Mono", 15 * 1024)], {}, [["aac.sync-lost", "ADTS sync is lost for"]],
+        "AAC LTP (MPEG-4 ADTS profile 3), mono: 24 frames that use long-term prediction but 13 and 14, the sync word of frame 9 overwritten, so that the decoder starts again with an empty "
+        "history and withholds the blocks that predict from it or from output it withheld: frames 10 to 13, until the pause of two frames lets the history refill.", data, rows,
+        [stream("AAC LTP", RATE, 1, "Mono", 23 * 1024)], {}, [["aac.sync-lost", "ADTS sync is lost for"]],
         skip={"ffprobe": "ffmpeg resyncs after damage in its own way.", "faad": "faad2 stops at the damaged frame."})))
 
     # A dependently switched coupling channel element in an LTP stream (4.6.7.4.3 allows none).

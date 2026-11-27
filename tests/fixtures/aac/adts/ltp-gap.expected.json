@@ -1,6 +1,6 @@
 {
- "description": "AAC LTP (MPEG-4 ADTS profile 3), mono: 16 frames that all use long-term prediction, the sync word of frame 9 overwritten, so that the decoder starts again with an empty history and withholds the blocks that predict from it.",
- "length": 3920,
+ "description": "AAC LTP (MPEG-4 ADTS profile 3), mono: 24 frames that use long-term prediction but 13 and 14, the sync word of frame 9 overwritten, so that the decoder starts again with an empty history and withholds the blocks that predict from it or from output it withheld: frames 10 to 13, until the pause of two frames lets the history refill.",
+ "length": 5871,
  "format": "AAC",
  "boxes": [],
  "streams": [
@@ -12,7 +12,7 @@
    "channel_layout": [
     "front center"
    ],
-   "samples": 15360,
+   "samples": 23552,
    "is_vbr": true
   }
  ],
@@ -63,18 +63,50 @@
   ],
   [
    2941,
+   238
+  ],
+  [
+   3179,
+   240
+  ],
+  [
+   3419,
+   245
+  ],
+  [
+   3664,
+   245
+  ],
+  [
+   3909,
+   246
+  ],
+  [
+   4155,
+   246
+  ],
+  [
+   4401,
+   245
+  ],
+  [
+   4646,
+   246
+  ],
+  [
+   4892,
+   245
+  ],
+  [
+   5137,
    244
   ],
   [
-   3185,
+   5381,
    245
   ],
   [
-   3430,
-   245
-  ],
-  [
-   3675,
+   5626,
    245
   ]
  ],

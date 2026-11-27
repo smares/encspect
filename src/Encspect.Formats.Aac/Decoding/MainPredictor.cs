@@ -20,8 +20,8 @@ internal sealed class MainPredictor
     // 7-bit rounding.
     private const float FlushLimit = 1e-30f;
 
-    private static readonly float[] Mantissas = new float[128];
-    private static readonly float[] Exponents = new float[256];
+    internal static readonly float[] Mantissas = new float[128];
+    internal static readonly float[] Exponents = new float[256];
 
     private readonly float[] _state;
     private readonly int _lines;
@@ -152,11 +152,11 @@ internal sealed class MainPredictor
 
     // The upper 16 bits of a float's storage word (13.3.2.2).
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static float Truncate(float value) => BitConverter.Int32BitsToSingle(BitConverter.SingleToInt32Bits(value) & unchecked((int)0xFFFF0000));
+    internal static float Truncate(float value) => BitConverter.Int32BitsToSingle(BitConverter.SingleToInt32Bits(value) & unchecked((int)0xFFFF0000));
 
     // flt_round_inf of 13.3.2.3: the 7-bit mantissa, rounded half away from zero, by the specification's float arithmetic.
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static float RoundInfinity(float value)
+    internal static float RoundInfinity(float value)
     {
         int bits = BitConverter.SingleToInt32Bits(value);
         float truncated = BitConverter.Int32BitsToSingle(bits & unchecked((int)0xFFFF0000));

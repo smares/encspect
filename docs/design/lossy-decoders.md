@@ -52,7 +52,7 @@ Status: approved by the project lead on 2026-11-08, with every recommendation of
 | `musepack` (new; the format parser starts no session today) | SV7 and SV8; SV4 to SV6 as libmpcdec 1.2.6 decodes them | the SV4 to SV6 streams that libmpcdec 1.2.6 refuses (the parser reads their header only) |
 | `dts` | the core, at the core rate, in all four bitstream forms | every extension (XCh, XXCH, X96, XBR, LBR, XLL): follow-ups |
 | `speex` | narrowband, wideband and ultra-wideband, in-band stereo | nothing |
-| `aac` and `aac-adts` | step 1: AAC LC; step 2: SBR (HE-AAC) and parametric stereo (HE-AAC v2); step 3: AAC Main, LTP, ER AAC LC, LTP, LD and ELD (with low-delay SBR), designed in [aac-main-ltp-er.md](aac-main-ltp-er.md); step 4: USAC (xHE-AAC) | SSR gain control (FDK refuses it); MPEG Surround beyond USAC's 2-1-2; DRC and loudness normalization (decision 9) |
+| `aac` and `aac-adts` | step 1: AAC LC; step 2: SBR (HE-AAC) and parametric stereo (HE-AAC v2); step 3: AAC Main and LTP (built, [As built](#as-built-aac-main-and-ltp)), then ER AAC LC, LTP, LD and ELD (with low-delay SBR), designed in [aac-main-ltp-er.md](aac-main-ltp-er.md); step 4: USAC (xHE-AAC) | SSR gain control (FDK refuses it); MPEG Surround beyond USAC's 2-1-2; DRC and loudness normalization (decision 9) |
 | `wma`, `wma-pro`, `wma-voice` | versions 1 and 2, Professional, Voice | what the parsers leave open: version 1 with variable block lengths and scale factor exponents, and version 2 at 49,048 Hz and above ([asf-wma.md](../formats/asf-wma.md): the description leaves their band lists open); Professional frames that span three packets or exceed the 32,768 bytes a decoder buffers, and the default channel transform matrices, which the parser does not read ([asf-wma.md](../formats/asf-wma.md)); music superframes inside Voice. Each supplement (decision 12) states whether it closes these |
 
 ### Order
@@ -395,8 +395,8 @@ The lead's rule of 2026-11-01: a unit the decoder cannot decode is a gap, never 
 | MPEG Layers I and II | the synthesis history | 480 |
 | MPEG-2 multichannel Layer II | the synthesis history and the prediction's subband samples (up to 9 slots back) | 480 + 9 x 32 = 768 |
 | AAC LC | overlap (one frame) | 1,024 |
-| AAC LTP | overlap and LTP's history of two frames | 3,072 **estimate**; [aac-main-ltp-er.md](aac-main-ltp-er.md#long-term-prediction) proposes an exact rule |
-| AAC Main | backward-adaptive prediction over every earlier frame | until a frame whose predictor resets have reached every group, as the specification's resets intend; [aac-main-ltp-er.md](aac-main-ltp-er.md#gaps-and-withheld-output) refines it per group |
+| AAC LTP | overlap and LTP's history of two frames | exact, as built: the position up to which the output is not trustworthy ([As built: AAC Main and LTP](#as-built-aac-main-and-ltp)) |
+| AAC Main | backward-adaptive prediction over every earlier frame | per reset group, as built: a block is withheld while it uses a group not reset since the gap ([As built: AAC Main and LTP](#as-built-aac-main-and-ltp)) |
 | SBR, PS | QMF banks, time-differential envelope and noise coding, smoothing, PS's decorrelation | until the first SBR frame coded without time differences, plus the core's 1,024 |
 | AC-3, E-AC-3 | overlap (one block) | 256 |
 | DTS core | the synthesis history and the subband prediction | 480 for the history; the prediction converges within it (**estimate**). A frame of 256 samples is withheld whole and the next in part |
@@ -900,6 +900,19 @@ What the HE-AAC pull request (rollout step 10) added to the AAC decoder; the des
 - **Cost:** 220 units per output sample for SBR (and parametric stereo) on top of the core's.
 - **Not built:** SBR with a core at the output rate (downsampled SBR, refused with `decode.not-possible`), inter-channel phase differences of parametric stereo (the baseline profile skips them), and SBR for USAC and ER AAC.
 - **Patches (the lead, 2026-11-27):** the decoder builds the patches of the high band as Figure 4.48 of ISO/IEC 14496-3 gives them (`Sbr.Patches`, shared with the parser's check of 4.6.18.3.6: at most five), not as libxaac does (ixheaacd_generate_hf), which differs in some 2,371 header combinations of narrow ranges (a patch of fewer than 3 bands that the figure keeps, or one more). `AacSbrFrequencyTablesTests` holds the decoder to the figure for every rate and header the syntax can state. No committed file has such a header: the decoder's PCM of every fixture is unchanged, and the cross-checks with FFmpeg and libxaac show no difference from it.
+
+## As built: AAC Main and LTP
+
+What the first pull request of plan 0.5 item 3 ([aac-main-ltp-er.md](aac-main-ltp-er.md)) added to the AAC decoder; the description is in [aac.md](../formats/aac.md#decoding). The ER types and ELD are the next pull requests.
+
+- **The walk** stores prediction_used, the reset and its group, and ltp_data (lag, coefficient, ltp_long_used) in each slot of `BlockRecord` (nine ints after the TNS filters); the parser's tally, series and findings for them are in [coding-graphs.md](coding-graphs.md#aac-adts-adif-mp4-matroska).
+- **Main's prediction** (`MainPredictor`) follows ISO/IEC 13818-7 13.3.2 to 13.3.3 in single precision, as the design says (decisions 2 to 4 as recommended: the flush below 1e-30 at each block's start, the withholding per reset group after a gap, a stream's start synchronized). It runs after mid/side stereo and noise substitution and before intensity stereo, and the second channel of a pair is predicted before intensity stereo too: with the predictors of an intensity band fed the intensity values, as 14496-3 4.6.8.2.4 words it, the reference waveform of `am02_44` is missed by 24 LSB of 16 bits; with the zero the stream codes there it is met within 0.006 (the first decision the design did not settle: the standard's wording against its own reference output).
+- **LTP** follows libxaac's structure (`ixheaacd_lt_predict.c`: the window of the block, the forward transform, the TNS filter as an all-zero filter in the loop, the bands) and the standard's arithmetic (the history of unrounded output). The forward transform is the transpose of the inverse's sum, twice it, which `ap01_48`'s reference waveform fixes; it shares the inverse's DCT-IV (`InverseMdct.Forward`).
+- **Withheld output** (`DependencyTrust`, two instances for gaps and failed checksums): Main's mask of 30 reset groups, LTP's position of untrustworthy output and its overlap flag, exactly as the design's rules; `AacMainLtpDecoderTests` counts the withheld samples of the two hand-built gap files (31 and 4 blocks).
+- **TNS:** an order of up to 20 in AAC Main on long windows, 12 elsewhere; the decoder clamped to 12 before for every type.
+- **Cost:** 10 units per predicted line of every long block of every channel (the design's figure, kept: the Main cases measure 1.2 times the FLAC reference's time per unit, the LTP ones 0.8 to 0.9), LTP 26 per output sample of a channel that uses it and 1 per sample of every block of an LTP stream.
+- **Agreement** with the ISO/IEC 14496-26 reference waveforms of `am00_44`, `am01_44`, `am02_44`, `am04_44`, `am06_44` and `ap01_48` to `ap05_48`, and with FFmpeg 6.1.1 on the encoder-written Main files ([development.md](../development.md#aac-main-ltp-and-er-conformance)). `am05_44` (a coupling channel element, not applied) and `am07_44` (the elements change their order in every block, which the decoder treats as a layout change) are not in the subset.
+- **Not built:** the ER types, ELD and frames of 960 samples (the next pull requests), SSR, scalable and BSAC (an item after 0.5), and the elements' tags as the key of the per-slot state (am07).
 
 ## Unverified claims and estimates
 

@@ -47,9 +47,9 @@ AREAS = {
     "mp4-crosscheck": {
         "projects": ["Encspect.Formats.Mp4", "Encspect.Formats.Aac"],
         "fixtures": ["mp4", "aac", "alac"],
-        "scripts": ["crosscheck_mp4_fixtures.py", "crosscheck_aac_pcm.py", "crosscheck_he_aac_pcm.py", "make_sbr_tables.py", "make_ps_tables.py", "compare_pcm.py", "libxaac_tool.py", "check_usac_samples.py", "check_sbr_samples.py", "check_aac_tables.py", "dashif_systems.py", "gpac_tool.py"],
+        "scripts": ["crosscheck_mp4_fixtures.py", "crosscheck_aac_pcm.py", "crosscheck_he_aac_pcm.py", "make_sbr_tables.py", "make_ps_tables.py", "compare_pcm.py", "libxaac_tool.py", "check_usac_samples.py", "check_sbr_samples.py", "check_aac_conformance.py", "check_aac_tables.py", "dashif_systems.py", "gpac_tool.py"],
         "globs": ["scripts/fixtures/make_mp4*", "scripts/fixtures/aac_*", "scripts/fixtures/make_*aac*", "scripts/fixtures/make_*protection*",
-                  "tests/conformance/usac-samples.json", "tests/conformance/sbr-samples.json"],
+                  "tests/conformance/usac-samples.json", "tests/conformance/sbr-samples.json", "tests/conformance/aac-conformance.json"],
     },
     "ogg-crosscheck": {
         "projects": ["Encspect.Formats.Matroska", "Encspect.Formats.Ogg", "Encspect.Formats.Opus", "Encspect.Formats.Speex", "Encspect.Formats.Vorbis", "Encspect.Tags.VorbisComment"],

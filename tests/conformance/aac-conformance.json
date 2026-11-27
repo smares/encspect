@@ -1,0 +1,178 @@
+{
+ "description": "The ISO/IEC 14496-26 conformance streams of AAC Main (am) and AAC LTP (ap), with their reference waveforms (24-bit WAV, ISO's publicly available standards site, DVD1 compressedMp4 and DVD2 referencesWav; ISO's license permits electronic copies in their original format without modification for the purposes it states, docs/design/lossy-decoders.md, \"Conformance material per format\"). A subset of item 3's design (decision 7): epConfig 0 streams of the types the decoder takes, one rate each, whose output equals the reference waveform within the float bound of docs/design/lossy-decoders.md (the RMS of the difference at most 2^-15 / sqrt(12) of full scale, its largest magnitude at most 2^-14), the references read at 24 bits. Downloaded and checked against their SHA-256, never committed. am05_44 (a coupling channel element, read and not applied) and am07_44 (its channel elements change their order in every block) are outside it. Per stream: the MP4 file and the reference waveforms (one file per channel where the reference is several), and the figures of the last run (the RMS and the largest difference of the worst channel, in LSB of 16 bits).",
+ "source": "https://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_IEC_14496-26_2010_Bitstreams/",
+ "samples": [
+  {
+   "file": "am00_44.mp4",
+   "url": "https://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_IEC_14496-26_2010_Bitstreams/DVD1/mpeg4audio-conformance/compressedMp4/am00_44.mp4",
+   "sha256": "570eb004beb8fa25336d6d5991f7791c2fc6a91a32a66482f4ed728db3ed473c",
+   "description": "AAC Main, mono, 44.1 kHz, prediction with a long music stream (65 s)",
+   "channels": 1,
+   "private": "mirrors/samples/aac-conformance/am00_44.mp4",
+   "references": [
+    {
+     "file": "am00_44.wav",
+     "url": "https://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_IEC_14496-26_2010_Bitstreams/DVD2/mpeg4audio-conformance/referencesWav/am00_44.wav",
+     "sha256": "599faa8fcdbddba62b15de40b3598f24d70395c6d7a2fe88aa41c630534a6041",
+     "private": "mirrors/samples/aac-conformance/am00_44.wav"
+    }
+   ]
+  },
+  {
+   "file": "am01_44.mp4",
+   "url": "https://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_IEC_14496-26_2010_Bitstreams/DVD1/mpeg4audio-conformance/compressedMp4/am01_44.mp4",
+   "sha256": "aa5d7fd034a51ca6665dc32d71d1582851a3e0907849b08face60c4f94eb8a17",
+   "description": "AAC Main, mono, 44.1 kHz",
+   "channels": 1,
+   "private": "mirrors/samples/aac-conformance/am01_44.mp4",
+   "references": [
+    {
+     "file": "am01_44.wav",
+     "url": "https://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_IEC_14496-26_2010_Bitstreams/DVD2/mpeg4audio-conformance/referencesWav/am01_44.wav",
+     "sha256": "eba00f6ebd2882c73213ed319adb713a502d66b8a05d241f9f491a9ab0fb3b9c",
+     "private": "mirrors/samples/aac-conformance/am01_44.wav"
+    }
+   ]
+  },
+  {
+   "file": "am02_44.mp4",
+   "url": "https://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_IEC_14496-26_2010_Bitstreams/DVD1/mpeg4audio-conformance/compressedMp4/am02_44.mp4",
+   "sha256": "50e8a4e60a199b56599be3ae2fa72469475d59bc60793db3c275a8c88a522ef3",
+   "description": "AAC Main, stereo with a program config element: prediction with mid/side and intensity stereo",
+   "channels": 2,
+   "private": "mirrors/samples/aac-conformance/am02_44.mp4",
+   "references": [
+    {
+     "file": "am02_44.wav",
+     "url": "https://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_IEC_14496-26_2010_Bitstreams/DVD2/mpeg4audio-conformance/referencesWav/am02_44.wav",
+     "sha256": "8eeaccf7939da432cee7035c96bd553922a89881ae270a3b65d1551316bd2726",
+     "private": "mirrors/samples/aac-conformance/am02_44.wav"
+    }
+   ]
+  },
+  {
+   "file": "am04_44.mp4",
+   "url": "https://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_IEC_14496-26_2010_Bitstreams/DVD1/mpeg4audio-conformance/compressedMp4/am04_44.mp4",
+   "sha256": "664d2bb5695bb6ea903d92bffa01cf6fd0ead9b5a3d84b44c1db76570355fe96",
+   "description": "AAC Main, stereo",
+   "channels": 2,
+   "private": "mirrors/samples/aac-conformance/am04_44.mp4",
+   "references": [
+    {
+     "file": "am04_44.wav",
+     "url": "https://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_IEC_14496-26_2010_Bitstreams/DVD2/mpeg4audio-conformance/referencesWav/am04_44.wav",
+     "sha256": "80e6513b8ffa3ebd7e67b78a0be642f92802fd7562253aed92f3f127aa166eab",
+     "private": "mirrors/samples/aac-conformance/am04_44.wav"
+    }
+   ]
+  },
+  {
+   "file": "am06_44.mp4",
+   "url": "https://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_IEC_14496-26_2010_Bitstreams/DVD1/mpeg4audio-conformance/compressedMp4/am06_44.mp4",
+   "sha256": "1f7ec65fda670fa629becee7ab8dbe36c9650d0a56e1e1643bae8559ea6779fe",
+   "description": "AAC Main, a single channel element and a channel pair (three channels, a program config element), intensity stereo",
+   "channels": 3,
+   "private": "mirrors/samples/aac-conformance/am06_44.mp4",
+   "references": [
+    {
+     "file": "am06_44_f00.wav",
+     "url": "https://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_IEC_14496-26_2010_Bitstreams/DVD2/mpeg4audio-conformance/referencesWav/am06_44_f00.wav",
+     "sha256": "8ffc93472ab9d4cc40a5d67bbbdb2115b8b3878db03c4c43e8d68d543d76d543",
+     "private": "mirrors/samples/aac-conformance/am06_44_f00.wav"
+    },
+    {
+     "file": "am06_44_f01.wav",
+     "url": "https://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_IEC_14496-26_2010_Bitstreams/DVD2/mpeg4audio-conformance/referencesWav/am06_44_f01.wav",
+     "sha256": "47d41b7d09addb26428de4e64a08dd4bbbed48657cb537a5f62c906a60b33647",
+     "private": "mirrors/samples/aac-conformance/am06_44_f01.wav"
+    },
+    {
+     "file": "am06_44_f02.wav",
+     "url": "https://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_IEC_14496-26_2010_Bitstreams/DVD2/mpeg4audio-conformance/referencesWav/am06_44_f02.wav",
+     "sha256": "0a5a085362e85d2004486d1a1ff27bce0650b545aa77283cee6112faa82c2301",
+     "private": "mirrors/samples/aac-conformance/am06_44_f02.wav"
+    }
+   ]
+  },
+  {
+   "file": "ap01_48.mp4",
+   "url": "https://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_IEC_14496-26_2010_Bitstreams/DVD1/mpeg4audio-conformance/compressedMp4/ap01_48.mp4",
+   "sha256": "1e6c18053533c471db3474505e14a51af855790e2090319588e0c55084993bdd",
+   "description": "AAC LTP, mono, 48 kHz",
+   "channels": 1,
+   "private": "mirrors/samples/aac-conformance/ap01_48.mp4",
+   "references": [
+    {
+     "file": "ap01_48.wav",
+     "url": "https://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_IEC_14496-26_2010_Bitstreams/DVD2/mpeg4audio-conformance/referencesWav/ap01_48.wav",
+     "sha256": "b9395ada3568ec5371b36942e92ef69e4c7baba5d74fcfbfa6dd82344e39c198",
+     "private": "mirrors/samples/aac-conformance/ap01_48.wav"
+    }
+   ]
+  },
+  {
+   "file": "ap02_48.mp4",
+   "url": "https://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_IEC_14496-26_2010_Bitstreams/DVD1/mpeg4audio-conformance/compressedMp4/ap02_48.mp4",
+   "sha256": "af969a1b5f660bcb111711c8c806b52f5ab0bb9ae0a6e8ace4be203fb89a8924",
+   "description": "AAC LTP, stereo, 48 kHz",
+   "channels": 2,
+   "private": "mirrors/samples/aac-conformance/ap02_48.mp4",
+   "references": [
+    {
+     "file": "ap02_48.wav",
+     "url": "https://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_IEC_14496-26_2010_Bitstreams/DVD2/mpeg4audio-conformance/referencesWav/ap02_48.wav",
+     "sha256": "12324412ca05b79dc5ba3cb0417f185b5d1eec320c56988982373633661b2a80",
+     "private": "mirrors/samples/aac-conformance/ap02_48.wav"
+    }
+   ]
+  },
+  {
+   "file": "ap03_48.mp4",
+   "url": "https://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_IEC_14496-26_2010_Bitstreams/DVD1/mpeg4audio-conformance/compressedMp4/ap03_48.mp4",
+   "sha256": "2f43512728ead7ab8af76dbcb5dc089eecc19790f5c2aa86152dccfb16c01772",
+   "description": "AAC LTP, mono, 48 kHz",
+   "channels": 1,
+   "private": "mirrors/samples/aac-conformance/ap03_48.mp4",
+   "references": [
+    {
+     "file": "ap03_48.wav",
+     "url": "https://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_IEC_14496-26_2010_Bitstreams/DVD2/mpeg4audio-conformance/referencesWav/ap03_48.wav",
+     "sha256": "e4fbd1b873e2194f7bbbbdeb67e0e7e18d138e53b1117c7509048d33c1f20342",
+     "private": "mirrors/samples/aac-conformance/ap03_48.wav"
+    }
+   ]
+  },
+  {
+   "file": "ap04_48.mp4",
+   "url": "https://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_IEC_14496-26_2010_Bitstreams/DVD1/mpeg4audio-conformance/compressedMp4/ap04_48.mp4",
+   "sha256": "908687f9759378bc92efa1a29d388b21c9160fe330ce950f0cc433a7ffaf0d81",
+   "description": "AAC LTP, mono, 48 kHz",
+   "channels": 1,
+   "private": "mirrors/samples/aac-conformance/ap04_48.mp4",
+   "references": [
+    {
+     "file": "ap04_48.wav",
+     "url": "https://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_IEC_14496-26_2010_Bitstreams/DVD2/mpeg4audio-conformance/referencesWav/ap04_48.wav",
+     "sha256": "a2cf689978aa57b0397a8ec437e8813b338fb3b36bce0df4514f6c7de3372d68",
+     "private": "mirrors/samples/aac-conformance/ap04_48.wav"
+    }
+   ]
+  },
+  {
+   "file": "ap05_48.mp4",
+   "url": "https://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_IEC_14496-26_2010_Bitstreams/DVD1/mpeg4audio-conformance/compressedMp4/ap05_48.mp4",
+   "sha256": "8dc2c9a9f65c1fb7a6a797a4a9fd3574f4bffc1fa9d0b6e4550e9c530e4e2a76",
+   "description": "AAC LTP, stereo, 48 kHz",
+   "channels": 2,
+   "private": "mirrors/samples/aac-conformance/ap05_48.mp4",
+   "references": [
+    {
+     "file": "ap05_48.wav",
+     "url": "https://standards.iso.org/ittf/PubliclyAvailableStandards/ISO_IEC_14496-26_2010_Bitstreams/DVD2/mpeg4audio-conformance/referencesWav/ap05_48.wav",
+     "sha256": "6185a0b481dc9f5496fe591540e8bf53dcf33e0d28a8964e36e809add5c11687",
+     "private": "mirrors/samples/aac-conformance/ap05_48.wav"
+    }
+   ]
+  }
+ ]
+}

@@ -915,6 +915,12 @@ jobs:
       - name: Compare the decoded PCM of the AAC fixtures
         run: python3 scripts/fixtures/crosscheck_aac_pcm.py --libxaac
 
+      # The ISO/IEC 14496-26 streams of AAC Main and LTP and their reference waveforms (tests/conformance/aac-conformance.json), pinned by SHA-256: from ISO's site, else the private repository's copies.
+      - name: Check the AAC Main and LTP conformance streams
+        run: python3 scripts/fixtures/check_aac_conformance.py .cache/aac-conformance
+        env:
+          ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
+
       # The SBR and parametric stereo tables of the decoder equal what their generators read from libxaac's pinned commit.
       - name: Check the HE-AAC tables against libxaac's
         run: |

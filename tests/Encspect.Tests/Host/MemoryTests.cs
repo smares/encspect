@@ -2103,6 +2103,30 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         Assert.True(heldPerFrame < DecodingFrameBound, $"Decoding held {heldPerFrame:F2} more bytes per further frame at the last frame than the analysis ends with. {RuntimeSettings()}");
     }
 
+    // The state of AAC Main's predictors (a lines-by-six array a channel) and of LTP's history (four frames a channel) is fixed, whatever the number of frames: 10,000 and 40,000 ADTS
+    // frames of a hand-built stream that predicts in every band (adts/main-prediction-reset-cycle.aac: a channel pair, its first frame repeated) or in both channels (adts/ltp-lags.aac).
+    [Theory]
+    [InlineData("main-prediction-reset-cycle.aac")]
+    [InlineData("ltp-lags.aac")]
+    public void DecodingManyMainAndLtpFramesHoldsNothingPerFrame(string name)
+    {
+        const int fewer = 10_000;
+        const int frames = 40_000;
+        byte[] source = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "aac", "adts", name));
+        byte[] frame = source[..(((source[3] & 3) << 11) | (source[4] << 3) | (source[5] >> 5))];
+
+        Analyzer.CreateDefault().Analyze("warm-up", new MemoryStream(Unpooled.Repeat(frame, 500)), new AnalysisOptions { Decoding = new DecodeOptions { Output = _ => new DecoderWorkTests.NullSink() } });
+
+        (long fewerHeld, long fewerKept) = LastFrameReading("frames.aac", Unpooled.Repeat(frame, fewer), fewer, 1024);
+        (long held, long kept) = LastFrameReading("frames.aac", Unpooled.Repeat(frame, frames), frames, 1024);
+        (_, long plainKept) = LastFrameReading("frames.aac", Unpooled.Repeat(frame, frames), frames, 1024, isDecoding: false);
+
+        double heldPerFrame = (held - fewerHeld) / (double)(frames - fewer);
+        Output.WriteLine($"{name}: {kept} bytes kept with decoding and {plainKept} without; held above the end state at the last frame: {fewerHeld} at {fewer} frames and {held} at {frames} ({Hundredths(heldPerFrame)} per further frame)");
+        Assert.True(kept < plainKept + 1_000_000, $"Decoding made the report keep {(kept - plainKept) / (double)frames:F2} bytes more per frame.");
+        Assert.True(heldPerFrame < DecodingFrameBound, $"Decoding held {heldPerFrame:F2} more bytes per further frame at the last frame than the analysis ends with. {RuntimeSettings()}");
+    }
+
     // The decoder of an AAC stream whose implicit SBR and PS are open waits for the first block that counts as evidence, and holds the blocks before it. A stream whose frames all fail their
     // checksum has none, so the wait is bounded (DecodeFeed.MaxUndecided): 30,000 protected frames with a wrong checksum peak at what 3,000 do, within a few hundred bytes per further frame
     // (12 KB each, 470 MB in all, before the bound).
