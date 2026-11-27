@@ -123,9 +123,9 @@ TABLE_6_22 = [
     (22, "Chr", "top back center", "TBC", None),
     (23, "Lhr", "top back left", "TBL", None),
     (24, "Rhr", "top back right", "TBR", None),
-    (25, "Cl", "bottom front center", "BC", "back center for center in the plane lower than the listener's ears"),
-    (26, "Ll", "bottom front left", "BL", "back left for left in the plane lower than the listener's ears"),
-    (27, "Rl", "bottom front right", "BR", "back right for right in the plane lower than the listener's ears"),
+    (25, "Cl", "lower center", "BC", "back center for center in the plane lower than the listener's ears"),
+    (26, "Ll", "lower left", "BL", "back left for left in the plane lower than the listener's ears"),
+    (27, "Rl", "lower right", "BR", "back right for right in the plane lower than the listener's ears"),
 ]
 FFMPEG_NAMES = [row[3] for row in TABLE_6_22]
 FFMPEG_STANDARD = {"mono": ["FC"], "stereo": ["FL", "FR"]}

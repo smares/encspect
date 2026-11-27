@@ -160,9 +160,9 @@ internal static class Layouts
                 Position.CenterHeightRear => Speaker.TopBackCenter,
                 Position.LeftHeightRear => Speaker.TopBackLeft,
                 Position.RightHeightRear => Speaker.TopBackRight,
-                Position.CenterLow => Speaker.BottomFrontCenter,
-                Position.LeftLow => Speaker.BottomFrontLeft,
-                Position.RightLow => Speaker.BottomFrontRight,
+                Position.CenterLow => Speaker.LowerCenter,
+                Position.LeftLow => Speaker.LowerLeft,
+                Position.RightLow => Speaker.LowerRight,
                 _ => Speaker.Discrete,
             };
             speakers.Add(speaker != Speaker.Discrete && speakers.Contains(speaker) ? Speaker.Discrete : speaker);

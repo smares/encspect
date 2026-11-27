@@ -15,8 +15,8 @@ SEVEN_ONE = ["front center", "front left", "front right", "LFE", "back left", "b
 # Table 6-22's bits (one for each speaker) as the names the analyzer reports.
 SPEAKER_BITS = ["front center", "front left", "front right", "surround left", "surround right", "LFE", "back center", "back left", "back right", "side left", "side right",
                 "front left of center", "front right of center", "top front left", "top front center", "top front right", "LFE 2", "front left wide", "front right wide",
-                "top center", "top side left", "top side right", "top back center", "top back left", "top back right", "bottom front center", "bottom front left",
-                "bottom front right"]
+                "top center", "top side left", "top side right", "top back center", "top back left", "top back right", "lower center", "lower left",
+                "lower right"]
 
 
 def layout_of(mask):
