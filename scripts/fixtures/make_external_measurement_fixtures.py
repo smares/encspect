@@ -48,6 +48,7 @@ NYQUIST_TOOLS = {
     "SoX": "SoX 14.4.2 (Ubuntu 24.04; sox --version is checked), flac 1.4.3 (Ubuntu 24.04)",
     "r8brain-free-src": f"r8brain-free-src {r8brain_tool.COMMIT[:7]} (r8brain_resample.cpp built with g++ 13.3.0 -O2 -ffp-contract=off, Ubuntu 24.04), flac 1.4.3 (Ubuntu 24.04)",
     "FFmpeg swresample": "FFmpeg 6.1.1-3ubuntu5 (libswresample and the pcm_s16le writer), flac 1.4.3 (Ubuntu 24.04)",
+    "FFmpeg swresample with libsoxr": "FFmpeg 6.1.1-3ubuntu5 (libswresample with libsoxr, resampler=soxr, and the pcm_s16le writer), flac 1.4.3 (Ubuntu 24.04)",
     "FFmpeg wmav2": "FFmpeg 6.1.1-3ubuntu5 (the wmav2 encoder and decoder), flac 1.4.3 (Ubuntu 24.04)",
 }
 TWOLAME_TOOLS = "TwoLAME 0.4.0, FFmpeg 6.1.1-3ubuntu5 (the decoder of the MPEG audio streams), flac 1.4.3 (Ubuntu 24.04)"
@@ -437,6 +438,8 @@ def write_manifest(name, entry):
     data = (OUT / f"{prefix}-{name}.flac").read_bytes()
     entry = dict(entry)
     encoder_name = entry.get("encoder", {}).get("name")
+    if encoder_name == "FFmpeg swresample" and "soxr" in entry["encoder"].get("settings", ""):
+        encoder_name = "FFmpeg swresample with libsoxr"
     entry["tools"] = NYQUIST_TOOLS.get(encoder_name, TWOLAME_TOOLS if encoder_name == "TwoLAME" else TOOLS)
     entry["length"] = len(data)
     entry["model"] = mm.measure(data)
