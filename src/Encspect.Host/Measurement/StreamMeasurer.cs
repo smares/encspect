@@ -13,6 +13,10 @@ internal sealed class StreamMeasurer
     // The work per sample of a measured channel, in the decoders' unit (about 0.6 ns), by FFT size 1,024 to 32,768 points.
     private static readonly int[] SpectrumWeights = [29, 24, 23, 27, 27, 30];
 
+    // The work per sample of the stream (not per channel) for the replicated bands, by FFT size 1,024 to 32,768 points: a frame costs the same at every size
+    // and every second frame is used, so a sample costs a frame's work over the size.
+    private static readonly int[] ReplicationWeights = [0, 0, 0, 0, 0, 0];
+
     // The work per sample of a channel of the pair for the stored bins, the mid and side rows and their counters (docs/design/spectral-analysis.md,
     // Step 7, "Cost, memory and determinism": about 6 units of 0.6 ns, 3.6 ns, a sample of each channel of the pair).
     internal const int PairWeight = 8;
@@ -82,6 +86,11 @@ internal sealed class StreamMeasurer
     private readonly double[] _crossRows = [];
     private readonly double[][] _coherenceSuffix = [];
     private CoherenceCounters? _coherence;
+    private readonly bool _isMeasuringReplicatedBands;
+    private readonly bool _isReportingSpectrum;
+    private readonly long _replicationUnits;
+    private ReplicatedBandsCounters? _replicated;
+    private int _replicatedFrames;
     private CutoffCounters[] _counters = [];
     private float[] _cells = [];
     private readonly int[] _counts = new int[MeasurementLimits.MaxColumns];
@@ -135,7 +144,9 @@ internal sealed class StreamMeasurer
         _channels = format.Channels;
         _measured = Math.Min(format.Channels, MeasurementLimits.MaxChannels);
         MeasurementKinds kinds = options.Include ?? MeasurementSets.All;
-        _isMeasuringSpectrum = (kinds & MeasurementKinds.Spectrum) != 0 && format.SampleRate > 0;
+        _isMeasuringSpectrum = (kinds & (MeasurementKinds.Spectrum | MeasurementKinds.ReplicatedBands)) != 0 && format.SampleRate > 0;
+        _isReportingSpectrum = (kinds & MeasurementKinds.Spectrum) != 0 && format.SampleRate > 0;
+        _isMeasuringReplicatedBands = (kinds & MeasurementKinds.ReplicatedBands) != 0 && format.SampleRate >= CutoffGeometry.MinimumRate;
         if ((kinds & MeasurementKinds.Levels) != 0)
         {
             _levels = new LevelsMeter(_measured, format.Format, format.BitsPerSample, format.SampleRate);
@@ -195,6 +206,7 @@ internal sealed class StreamMeasurer
         _geometry = new CutoffGeometry(format.SampleRate, _plan.Size);
         _hop = _plan.Size / 2;
         _weight = SpectrumWeights[BitOperationsLog2(_plan.Size) - 10] + 1;
+        _replicationUnits = _isMeasuringReplicatedBands ? ReplicationWeights[BitOperationsLog2(_plan.Size) - 10] : 0;
         int sets = _measured + 1 + (HasPair ? 2 : 0);
         if (HasPair)
         {
@@ -272,7 +284,7 @@ internal sealed class StreamMeasurer
         int measured = Math.Min(format.Channels, MeasurementLimits.MaxChannels);
         long bytes = (64 * 1024) + (3L * MaxPendingSpans * 24);
         MeasurementKinds kinds = options.Include ?? MeasurementSets.All;
-        bool isMeasuringSpectrum = (kinds & MeasurementKinds.Spectrum) != 0 && format.SampleRate > 0;
+        bool isMeasuringSpectrum = (kinds & (MeasurementKinds.Spectrum | MeasurementKinds.ReplicatedBands)) != 0 && format.SampleRate > 0;
         if ((kinds & MeasurementKinds.Levels) != 0)
         {
             bytes += LevelsMeter.EstimateBytes(measured, format.Format, isMeasuringSpectrum);
@@ -328,6 +340,12 @@ internal sealed class StreamMeasurer
             {
                 bytes += 2 * (CutoffCounters.Bytes + CutoffCounters.HolesBytes);
                 bytes += CoherenceCounters.Bytes;
+            }
+
+            if ((kinds & MeasurementKinds.ReplicatedBands) != 0)
+            {
+                // The counters of the replicated bands, the frame's rows, and the figure's bands (a record of about 48 bytes each).
+                bytes += ReplicatedBandsCounters.Bytes(new CutoffGeometry(format.SampleRate, size)) + (48L * rows);
             }
         }
 
@@ -775,7 +793,7 @@ internal sealed class StreamMeasurer
             return;
         }
 
-        if (!_charge(((long)_measured * BlockUnitsPerChannel) + ((long)keep * _pairUnits) + ((long)keep * _measured * Math.Max(1, (_isMeasuringSpectrum ? _weight : 0) + (_levels is null ? 0 : _format.Format == SampleFormat.Integer ? IntegerLevelsWeight : FloatLevelsWeight) + (_loudness is null ? 0 : LoudnessWeight) + (_truePeak is null ? 0 : TruePeakWeights[BitOperationsLog2(_truePeak.Oversampling)])))))
+        if (!_charge(((long)_measured * BlockUnitsPerChannel) + ((long)keep * _pairUnits) + ((long)keep * _replicationUnits) + ((long)keep * _measured * Math.Max(1, (_isMeasuringSpectrum ? _weight : 0) + (_levels is null ? 0 : _format.Format == SampleFormat.Integer ? IntegerLevelsWeight : FloatLevelsWeight) + (_loudness is null ? 0 : LoudnessWeight) + (_truePeak is null ? 0 : TruePeakWeights[BitOperationsLog2(_truePeak.Oversampling)])))))
         {
             IsLimited = true;
             _isStopped = true;
@@ -1228,6 +1246,11 @@ internal sealed class StreamMeasurer
             _coherence = new CoherenceCounters();
         }
 
+        if (_geometry.IsSearched && _isMeasuringReplicatedBands)
+        {
+            _replicated = new ReplicatedBandsCounters(_geometry);
+        }
+
         _cells = new float[MeasurementLimits.MaxColumns * MeasurementLimits.Rows];
         return true;
     }
@@ -1333,6 +1356,12 @@ internal sealed class StreamMeasurer
         }
 
         long hopIndex = (_bufferStart - _origin) / _hop;
+        if (_replicated is not null && (hopIndex & 1) == 0)
+        {
+            _replicated.Count(combined);
+            _replicatedFrames++;
+        }
+
         EnsureColumns(hopIndex);
         int column = (int)(hopIndex >> _shift);
         _used = Math.Max(_used, column + 1);
@@ -1480,6 +1509,11 @@ internal sealed class StreamMeasurer
             if (spectrum.Coherence is { } coherence)
             {
                 bytes += (2L * (coherence.Rows.Length + coherence.Shares.Length)) + 128;
+            }
+
+            if (spectrum.ReplicatedBands is { } replicated)
+            {
+                bytes += (64L * replicated.Bands.Count) + (96L * replicated.Stretches.Count) + 128;
             }
         }
 
@@ -1637,6 +1671,27 @@ internal sealed class StreamMeasurer
         CoherenceFigures? coherenceFigures = HasPair
             ? CoherenceFinder.Find(_geometry, _frames, _average.AsSpan(_pairLeft * rows, rows), _average.AsSpan(_pairRight * rows, rows), _crossSums.AsSpan(0, rows), _crossSums.AsSpan(rows, rows), _coherence, cutoff, combinedBandwidth, _pairLeft, _pairRight)
             : null;
+        ReplicatedBandsFigures? replicatedFigures = _isMeasuringReplicatedBands
+            ? ReplicatedBandsFinder.Find(_geometry, _replicatedFrames, _replicated, cutoff, combinedBandwidth)
+            : null;
+        if (!_isReportingSpectrum)
+        {
+            // Asked alone, the replicated bands ran the transform; the spectrum's own figures are not reported.
+            return record with
+            {
+                Spectrum = new SpectrumFigures
+                {
+                    FftSize = _plan!.Size,
+                    Frames = _frames,
+                    Combined = Array.Empty<short>(),
+                    PerChannel = [],
+                    Cutoff = new SpectralCutoff(),
+                    ReplicatedBands = replicatedFigures,
+                    IsReplicatedBandsOnly = true,
+                },
+            };
+        }
+
         return record with
         {
             Spectrum = new SpectrumFigures
@@ -1655,6 +1710,7 @@ internal sealed class StreamMeasurer
                 Holes = CutoffFinder.FindHoles(_counters.Length > 0 ? _counters[_measured] : null, _geometry, cutoff, combinedBandwidth),
                 MidSide = midSide,
                 Coherence = coherenceFigures,
+                ReplicatedBands = replicatedFigures,
             },
             Spectrogram = Grid(),
             Waveform = Wave(),

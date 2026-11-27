@@ -34,10 +34,14 @@ public enum MeasurementKinds
 
     // The true peak of each channel (ITU-R BS.1770-5 Annex 2).
     TruePeak = 8,
+
+    // The stretches of the spectrum whose fine structure repeats that of the band an offset lower (SBR, spectral extension, folding); asked alone it runs the
+    // spectrum's transform without reporting the spectrum's figures.
+    ReplicatedBands = 16,
 }
 
 // The kinds the library has, as a property so that it is read when it runs (never a const or a field initializer in a caller).
 public static class MeasurementSets
 {
-    public static MeasurementKinds All => MeasurementKinds.Spectrum | MeasurementKinds.Levels | MeasurementKinds.Loudness | MeasurementKinds.TruePeak;
+    public static MeasurementKinds All => MeasurementKinds.Spectrum | MeasurementKinds.Levels | MeasurementKinds.Loudness | MeasurementKinds.TruePeak | MeasurementKinds.ReplicatedBands;
 }

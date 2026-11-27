@@ -17,6 +17,7 @@ public enum MeasurementFigure
     PartialCutoff,
     MidSide,
     InterChannelCoherence,
+    ReplicatedBands,
     SpectralHoles,
     Loudness,
     IntegratedLoudness,
@@ -58,6 +59,12 @@ public static class MeasurementText
     public const string InterChannelCoherenceDescription = "The lowest frequency from which the magnitude-squared coherence of the pair of channels (front left and right, or the two channels of a stream without a layout) stays at 85 % or more up to the end of the content, found in 1 kHz bands of the cross-spectrum averaged over the stream, where the band under it is less coherent. Coherence is the share of one channel's power that a fixed linear filter from the other channel predicts. It is a figure of the decoded audio: intensity stereo, a side signal that was coded as nothing and content that is nearly mono all read near 100 %, and the figure does not tell them apart. A parser's stated intensity stereo bound is set beside it as figures.";
 
     public const string InterChannelCoherenceTopic = Topics.InterChannelCoherence;
+
+    public const string ReplicatedBandsDescription = "The stretch of frequencies, from its lower edge up to the top of the content, whose fine structure repeats that of the band a fixed offset lower, frame after frame: the rows' logarithms minus their mean over 150 Hz on each side, correlated at 0.5 or more in at least half of the frames with signal, tested on every second frame in bands of 1 kHz. Spectral band replication, spectral extension and folding copy spectrum upward like this; the figure cannot tell them apart, nor from other copies, and a sustained harmonic sound matches itself too, which a check on offsets under 1 kHz leaves out. It is computed from the decoded audio, not written by the file's creator.";
+
+    public const string ReplicatedBandsTopic = Topics.ReplicatedBands;
+
+    public const string ReplicatedBandsSeriesDescription = "For each band of 1 kHz from 1 kHz up, starting every quarter band, the share of the frames with signal in which its fine structure correlates at 0.5 or more with the band at the offset where it does so in the most frames; the offset is in the hover text.";
 
     public const string SpectralSlopeDescription = "Where the average spectrum is still falling at the top of the search (99 % of Nyquist): the run of 1 kHz bands, from the top band down, that each stand 3 dB or more above the band over them, started where the top band is at least 5 dB under the band below it, with how far the spectrum falls over it and how fast. It is found whether or not a cutoff or a bandwidth is found, since a fall can end in a floor less than 2 kHz wide (at least the top band, short of the band under it); the text line shows it only where no cutoff is found. It is measured at the top of the search, not a line fitted over the whole spectrum.";
 
@@ -151,7 +158,11 @@ public static class MeasurementText
         ArgumentNullException.ThrowIfNull(m);
 
         var lines = new List<MeasurementLine> { new(MeasurementFigure.Measured, "Measured", Header(m, isLossy), MeasuredDescription, MeasuredTopic) };
-        if (m.Spectrum is { } spectrum && m.Status != MeasurementStatus.Failed)
+        if (m.Spectrum is { IsReplicatedBandsOnly: true, ReplicatedBands: { IsSearched: true } only } && m.Status != MeasurementStatus.Failed)
+        {
+            lines.Add(new MeasurementLine(MeasurementFigure.ReplicatedBands, "Replicated Bands", ReplicatedBands(only), ReplicatedBandsDescription, ReplicatedBandsTopic));
+        }
+        else if (m.Spectrum is { IsReplicatedBandsOnly: false } spectrum && m.Status != MeasurementStatus.Failed)
         {
             lines.Add(new MeasurementLine(MeasurementFigure.SpectralCutoff, "Spectral Cutoff", Cutoff(spectrum.Cutoff), SpectralCutoffDescription, SpectralCutoffTopic));
             lines.Add(new MeasurementLine(MeasurementFigure.SpectralBandwidth, "Spectral Bandwidth", Bandwidth(spectrum.Bandwidth), SpectralBandwidthDescription, SpectralBandwidthTopic));
@@ -173,6 +184,11 @@ public static class MeasurementText
             if (spectrum.Coherence is { IsSearched: true } coherence)
             {
                 lines.Add(new MeasurementLine(MeasurementFigure.InterChannelCoherence, "Inter-Channel Coherence", Coherence(coherence), InterChannelCoherenceDescription, InterChannelCoherenceTopic));
+            }
+
+            if (spectrum.ReplicatedBands is { IsSearched: true } replicated)
+            {
+                lines.Add(new MeasurementLine(MeasurementFigure.ReplicatedBands, "Replicated Bands", ReplicatedBands(replicated), ReplicatedBandsDescription, ReplicatedBandsTopic));
             }
 
             if (spectrum.Holes.IsSearched)
@@ -587,6 +603,38 @@ public static class MeasurementText
         }
 
         return text;
+    }
+
+    // "from 9,518 to 20,413 Hz, matching the rows 6,202 and 11,025 Hz lower, in 53.0 to 90.1 % of the frames with signal", or "none found (the top band matches in 12.3 %
+    // of the frames with signal)".
+    public static string ReplicatedBands(ReplicatedBandsFigures figures)
+    {
+        if (figures.IsFound)
+        {
+            ReplicatedStretch stretch = figures.Stretches[^1];
+            var offsets = new List<string>();
+            foreach (ReplicatedOffset offset in stretch.Offsets)
+            {
+                string text = offset.Offset.ToString("N0", CultureInfo.InvariantCulture);
+                if (!offsets.Contains(text))
+                {
+                    offsets.Add(text);
+                }
+            }
+
+            string list = offsets.Count == 1 ? offsets[0] : string.Join(", ", offsets.Take(offsets.Count - 1)) + " and " + offsets[^1];
+            string shares = stretch.LowestShareTenths == stretch.HighestShareTenths ? Percent(stretch.LowestShareTenths) : $"{Tenths(stretch.LowestShareTenths)} to {Percent(stretch.HighestShareTenths)}";
+            return $"from {stretch.FromFrequency.ToString("N0", CultureInfo.InvariantCulture)} to {Hertz(stretch.ToFrequency)}, matching the rows {list} Hz lower, in {shares} of the frames with signal";
+        }
+
+        return figures.Reason switch
+        {
+            ReplicatedBandsReason.TooFewFrames => $"none found (fewer than {MeasurementLimits.MinimumReplicatedBandsFrames} frames used)",
+            ReplicatedBandsReason.TooShort => "none found (no band of 1 kHz with an offset of 1 kHz or more in the range)",
+            ReplicatedBandsReason.NoSignal => $"none found (no band has signal in {MeasurementLimits.MinimumReplicatedBandsFrames} frames)",
+            ReplicatedBandsReason.NotAtTop => $"none found (from {figures.Stretches[^1].FromFrequency.ToString("N0", CultureInfo.InvariantCulture)} to {Hertz(figures.Stretches[^1].ToFrequency)}, below the top of the content)",
+            _ => figures.IsTopBandPeriodic ? "none found (the top band is periodic)" : $"none found (the top band matches in {Percent(figures.TopBandShareTenths)} of the frames with signal)",
+        };
     }
 
     // "2.4 % of the cells with signal from 2,003 to 16,021 Hz; mid 1.1 %, side 9.8 %".

@@ -25,6 +25,7 @@ internal static class Topics
     public const string SpectralHoles = "spectral-holes";
     public const string MidSideSpectra = "mid-side-spectra";
     public const string InterChannelCoherence = "inter-channel-coherence";
+    public const string ReplicatedBands = "replicated-bands";
     public const string Levels = "levels";
     public const string Clipping = "clipping";
     public const string DcOffset = "dc-offset";

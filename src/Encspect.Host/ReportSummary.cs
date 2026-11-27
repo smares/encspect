@@ -74,6 +74,9 @@ public sealed record ReportSummary(
     // The frequency in hertz from which the inter-channel coherence of the pair stays at 85 % or more, where one was found.
     public int? CoherenceFrom { get; init; }
 
+    // The frequency in hertz from which the combined spectrum's fine structure repeats that of the band an offset lower, up to the top of the content, where found.
+    public int? ReplicatedBandsFrom { get; init; }
+
     public int? SpectralHolesTenths { get; init; }
 
     // The sample peak in tenths of a dB relative to full scale, the highest over the channels of the first audio stream, where
@@ -180,6 +183,7 @@ public sealed record ReportSummary(
             PartialCutoff = first?.Measurements?.Spectrum?.PartialCutoff is { IsFound: true } partial ? partial.Frequency : null,
             SideCutoff = first?.Measurements?.Spectrum?.MidSide?.SideCutoff is { IsFound: true } side ? side.Frequency : null,
             CoherenceFrom = first?.Measurements?.Spectrum?.Coherence is { IsFound: true } coherence ? coherence.FromFrequency : null,
+            ReplicatedBandsFrom = first?.Measurements?.Spectrum?.ReplicatedBands is { IsFound: true } replicated ? replicated.FromFrequency : null,
             SpectralHolesTenths = first?.Measurements?.Spectrum?.Holes is { CellsWithSignal: > 0 } holes ? holes.ShareTenths : null,
             SamplePeakTenths = first?.Measurements?.Levels?.Stream.SamplePeakTenths is { } peak && peak != MeasurementLimits.NoLevel ? peak : null,
             ClippingRuns = first?.Measurements?.Levels?.Stream.ClippingRuns,

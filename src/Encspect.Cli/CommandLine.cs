@@ -489,7 +489,7 @@ internal static class CommandLine
         return UsageError;
     }
 
-    private static readonly Dictionary<string, MeasurementKinds> MeasurementNames = new(StringComparer.OrdinalIgnoreCase) { ["spectrum"] = MeasurementKinds.Spectrum, ["levels"] = MeasurementKinds.Levels, ["loudness"] = MeasurementKinds.Loudness, ["true-peak"] = MeasurementKinds.TruePeak };
+    private static readonly Dictionary<string, MeasurementKinds> MeasurementNames = new(StringComparer.OrdinalIgnoreCase) { ["spectrum"] = MeasurementKinds.Spectrum, ["levels"] = MeasurementKinds.Levels, ["loudness"] = MeasurementKinds.Loudness, ["true-peak"] = MeasurementKinds.TruePeak, ["replicated-bands"] = MeasurementKinds.ReplicatedBands };
 
     private static IEnumerable<string> KnownFormats => DefaultParsers.Formats.Select(p => p.Name);
 

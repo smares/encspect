@@ -822,7 +822,16 @@ public static class ReportJsonWriter
             writer.WriteNumber("nonFiniteSamples", m.NonFiniteSamples);
         }
 
-        if (m.Status != MeasurementStatus.Failed && m.Spectrum is { } spectrum)
+        if (m.Status != MeasurementStatus.Failed && m.Spectrum is { IsReplicatedBandsOnly: true } transformOnly)
+        {
+            // Asked alone, the replicated bands ran the transform and report no other figure of the spectrum.
+            writer.WriteStartObject("spectrum");
+            writer.WriteNumber("fftSize", transformOnly.FftSize);
+            writer.WriteNumber("frames", transformOnly.Frames);
+            WriteReplicatedBands(writer, transformOnly.ReplicatedBands, explain);
+            writer.WriteEndObject();
+        }
+        else if (m.Status != MeasurementStatus.Failed && m.Spectrum is { } spectrum)
         {
             writer.WriteStartObject("spectrum");
             writer.WriteNumber("fftSize", spectrum.FftSize);
@@ -907,6 +916,7 @@ public static class ReportJsonWriter
             }
 
             WriteCoherence(writer, spectrum.Coherence, explain);
+            WriteReplicatedBands(writer, spectrum.ReplicatedBands, explain);
 
             writer.WriteEndObject();
         }
@@ -1474,6 +1484,118 @@ public static class ReportJsonWriter
             writer.WriteNull("stated");
         }
 
+        writer.WriteEndObject();
+    }
+
+    private static void WriteShare(Utf8JsonWriter writer, string name, int tenths)
+    {
+        writer.WriteStartObject(name);
+        writer.WriteNumber("value", tenths / 10m);
+        writer.WriteString("unit", "%");
+        writer.WriteEndObject();
+    }
+
+    // The replicated bands of the combined spectrum: an object, null where the kind was not measured.
+    private static void WriteReplicatedBands(Utf8JsonWriter writer, ReplicatedBandsFigures? figures, bool explain)
+    {
+        if (figures is null)
+        {
+            writer.WriteNull("replicatedBands");
+            return;
+        }
+
+        writer.WriteStartObject("replicatedBands");
+        if (explain)
+        {
+            writer.WriteString("description", MeasurementText.ReplicatedBandsDescription);
+            writer.WriteString("topic", MeasurementText.ReplicatedBandsTopic);
+        }
+
+        if (!figures.IsSearched)
+        {
+            writer.WriteBoolean("isSearched", false);
+            writer.WriteEndObject();
+            return;
+        }
+
+        writer.WriteNumber("framesUsed", figures.FramesUsed);
+        writer.WriteBoolean("isFound", figures.IsFound);
+        if (figures.IsFound)
+        {
+            WriteQuantity(writer, "fromFrequency", figures.FromFrequency, "Hz");
+            WriteQuantity(writer, "toFrequency", figures.ToFrequency, "Hz");
+        }
+        else
+        {
+            writer.WriteString("reason", figures.Reason switch
+            {
+                ReplicatedBandsReason.TooFewFrames => "tooFewFrames",
+                ReplicatedBandsReason.TooShort => "tooShort",
+                ReplicatedBandsReason.NoSignal => "noSignal",
+                ReplicatedBandsReason.NotAtTop => "notAtTop",
+                _ => "notMatching",
+            });
+        }
+
+        if (figures.RangeFrequency > 0)
+        {
+            WriteQuantity(writer, "rangeFrequency", figures.RangeFrequency, "Hz");
+            writer.WriteStartObject("topBand");
+            writer.WriteNumber("value", figures.TopBandShareTenths / 10m);
+            writer.WriteString("unit", "%");
+            writer.WriteBoolean("isPeriodic", figures.IsTopBandPeriodic);
+            writer.WriteEndObject();
+        }
+
+        writer.WriteStartArray("stretches");
+        foreach (ReplicatedStretch stretch in figures.Stretches)
+        {
+            writer.WriteStartObject();
+            WriteQuantity(writer, "fromFrequency", stretch.FromFrequency, "Hz");
+            WriteQuantity(writer, "toFrequency", stretch.ToFrequency, "Hz");
+            writer.WriteStartArray("offsets");
+            foreach (ReplicatedOffset offset in stretch.Offsets)
+            {
+                writer.WriteStartObject();
+                WriteQuantity(writer, "offset", offset.Offset, "Hz");
+                WriteQuantity(writer, "fromFrequency", offset.FromFrequency, "Hz");
+                WriteQuantity(writer, "toFrequency", offset.ToFrequency, "Hz");
+                writer.WriteEndObject();
+            }
+
+            writer.WriteEndArray();
+            WriteShare(writer, "lowestShare", stretch.LowestShareTenths);
+            WriteShare(writer, "highestShare", stretch.HighestShareTenths);
+            writer.WriteEndObject();
+        }
+
+        writer.WriteEndArray();
+        writer.WriteStartObject("bands");
+        writer.WriteString("unit", "%");
+        writer.WriteNumber("valuesPerUnit", 10);
+        writer.WriteStartArray("values");
+        foreach (ReplicatedBand band in figures.Bands)
+        {
+            writer.WriteStartObject();
+            writer.WriteNumber("startRow", band.StartRow);
+            writer.WriteNumber("offset", band.Offset);
+            if (band.ShareTenths == MeasurementLimits.NoPower)
+            {
+                writer.WriteNull("share");
+            }
+            else
+            {
+                writer.WriteNumber("share", band.ShareTenths);
+            }
+
+            writer.WriteNumber("framesWithSignal", band.FramesWithSignal);
+            writer.WriteBoolean("isPeriodic", band.IsPeriodic);
+            writer.WriteBoolean("passes", band.Passes);
+            writer.WriteEndObject();
+        }
+
+        writer.WriteEndArray();
+        writer.WriteEndObject();
         writer.WriteEndObject();
     }
 

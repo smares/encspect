@@ -138,6 +138,16 @@ public static class MeasurementLimits
 
     public const int MinimumCoherenceFrames = 10;
 
+    // The replicated bands (decisions S28 and S29): a band matches the rows an offset lower in a frame at a correlation of 1/2 (4 S_ts^2 >= S_tt S_ss) and
+    // passes where it matches in at least half of the frames with signal (500 tenths of a percent), with at least this many frames with signal; the band of
+    // a periodic source is one whose offset under 1 kHz matches in at least half as many frames as its own offset does. Signal is a band mean of 10^-10
+    // in the rows' own scale (-100 dB), and the figure needs this many frames used.
+    public const int ReplicatedBandsThresholdTenths = 500;
+
+    public const int MinimumReplicatedBandsFrames = 10;
+
+    public const double ReplicatedBandsSignalFloor = 1e-10;
+
     // The sentinel of a spectrum row that holds no power at all.
     public const short NoPower = short.MinValue;
 
@@ -334,6 +344,110 @@ public sealed record SpectrumFigures
 
     // The inter-channel coherence of the same pair; null where the stream has no pair (see the inter-channel-coherence topic).
     public CoherenceFigures? Coherence { get; init; }
+
+    // The replicated bands of the combined spectrum (see the replicated-bands topic); null where the kind is not measured.
+    public ReplicatedBandsFigures? ReplicatedBands { get; init; }
+
+    // True where only the replicated bands were asked for: the transform ran, but the figures above (the spectra, cutoffs, holes, coherence) are not reported.
+    public bool IsReplicatedBandsOnly { get; init; }
+}
+
+// Why no replicated bands are found.
+public enum ReplicatedBandsReason
+{
+    None,
+
+    // The top band of the range does not pass (the match share, or the periodic check).
+    NotMatching,
+
+    // Bands pass, but no stretch of them reaches the top of the range.
+    NotAtTop,
+
+    // Fewer frames used than MeasurementLimits.MinimumReplicatedBandsFrames.
+    TooFewFrames,
+
+    // No band with an offset of 1 kHz or more to test ends in the range.
+    TooShort,
+
+    // No band has MeasurementLimits.MinimumReplicatedBandsFrames frames with signal at an offset of 1 kHz or more.
+    NoSignal,
+}
+
+// One grid band of the replicated-bands search: the band that starts at StartRow (W rows, 1 kHz), the offset of 1 kHz or more at which it matches in the
+// most frames, and the share of the frames with signal in which it matches there, in tenths of a percent (MeasurementLimits.NoPower where no frame had signal).
+public sealed record ReplicatedBand
+{
+    public int StartRow { get; init; }
+
+    // The offset in whole hertz; 0 where the band has no offset of 1 kHz or more to test.
+    public int Offset { get; init; }
+
+    public int ShareTenths { get; init; }
+
+    public int FramesWithSignal { get; init; }
+
+    public bool IsPeriodic { get; init; }
+
+    public bool Passes { get; init; }
+}
+
+// A run of passing bands that share an offset (within one row), inside a stretch.
+public sealed record ReplicatedOffset
+{
+    // Whole hertz: the lower edge of the run's first row and the upper edge of its last.
+    public int FromFrequency { get; init; }
+
+    public int ToFrequency { get; init; }
+
+    public int Offset { get; init; }
+}
+
+// A stretch of frequencies covered by passing bands, joined across gaps shorter than half a band.
+public sealed record ReplicatedStretch
+{
+    public int FromFrequency { get; init; }
+
+    public int ToFrequency { get; init; }
+
+    public IReadOnlyList<ReplicatedOffset> Offsets { get; init; } = [];
+
+    // The lowest and the highest share of its passing bands, in tenths of a percent.
+    public int LowestShareTenths { get; init; }
+
+    public int HighestShareTenths { get; init; }
+}
+
+// The replicated bands of the combined spectrum: stretches of frequencies near the top of the content whose rows, frame after frame, match the rows a fixed
+// offset lower (decisions S27 to S35). A figure of the decoded audio; it cannot tell SBR, spectral extension, folding or any other copy of spectrum upward apart.
+public sealed record ReplicatedBandsFigures
+{
+    // False for a rate under 8,000 Hz, where nothing is searched.
+    public bool IsSearched { get; init; } = true;
+
+    // The frames tested: every second frame of the spectrum.
+    public int FramesUsed { get; init; }
+
+    public bool IsFound { get; init; }
+
+    public ReplicatedBandsReason Reason { get; init; }
+
+    // Whole hertz: the lower and the upper edge of the highest stretch, which reaches the top of the range; 0 where none is found.
+    public int FromFrequency { get; init; }
+
+    public int ToFrequency { get; init; }
+
+    // The top band of the range: its share in tenths of a percent, and whether the periodic check rejected it.
+    public int TopBandShareTenths { get; init; }
+
+    public bool IsTopBandPeriodic { get; init; }
+
+    // The upper edge of the range the stretch has to reach, in whole hertz; 0 where there is no range.
+    public int RangeFrequency { get; init; }
+
+    public IReadOnlyList<ReplicatedStretch> Stretches { get; init; } = [];
+
+    // The grid bands from 1 kHz up, from low to high (at most 512).
+    public IReadOnlyList<ReplicatedBand> Bands { get; init; } = [];
 }
 
 // Why no inter-channel coherence run is found.
