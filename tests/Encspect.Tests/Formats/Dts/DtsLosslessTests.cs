@@ -4,7 +4,7 @@ using Encspect.Host;
 namespace Encspect.Tests.Formats.Dts;
 
 // The lossless extension's channel set sub-headers, its navigation index and the DTS:X signal after its band data, field by field
-// (ETSI TS 102 114 8.3.2, 8.4.2; FFmpeg's dca_xll.c), for the hand-built fixtures; the real files are checked by check_dts_hd_samples.py.
+// (ETSI TS 102 114 8.3.2, 8.4.2; MediaInfo's File_Dts.cpp), for the hand-built fixtures; the real files are checked by check_dts_hd_samples.py.
 public class DtsLosslessTests
 {
     private const string Xll = "DTS/Frame[0]/Extension Substream/Asset 1 Data/XLL";
@@ -145,7 +145,7 @@ public class DtsLosslessTests
         return node;
     }
 
-    // dca_xll.c: from the end of the band data, aligned to 32 bits from the sync word, the word is DTS:X's or DTS:X IMAX's; MediaInfo reads
+    // MediaInfo's Extensions_Padding and Extensions2: from the end of the band data, aligned to 32 bits from the sync word, the word is DTS:X's or DTS:X IMAX's; MediaInfo reads
     // 0xF14000D1 as DTS:X. The profile names follow FFmpeg's, written out.
     [Theory]
     [InlineData("xll-x", "DTS-HD Master Audio + DTS:X", "0x02000850", true, false)]
@@ -215,7 +215,7 @@ public class DtsLosslessTests
         Assert.Equal("(missing)", Field(report, "DTS/Statistics/Lossless Channels"));
     }
 
-    // dca_xll.c returns at a navigation index whose CRC-16 fails before it compares the word; so does MediaInfo's XLL().
+    // ffprobe returns at a navigation index whose CRC-16 fails before it compares the word; so does MediaInfo's XLL().
     [Fact]
     public void TheDtsXWordIsNotLookedForAfterAFailingNavigationIndex()
     {
@@ -225,8 +225,8 @@ public class DtsLosslessTests
         Assert.Equal("DTS-HD Master Audio", Assert.Single(report.Streams).Codec);
     }
 
-    // parse_sub_headers refuses a channel set whose resolution is beyond its width before dca_xll.c looks for the word; the analyzer follows
-    // FFmpeg here (MediaInfo 24.01 still reads the word).
+    // ffprobe refuses a channel set whose resolution is beyond its width before it looks for the word; the analyzer follows
+    // ffprobe here (MediaInfo 24.01 still reads the word).
     [Fact]
     public void TheDtsXWordIsNotLookedForAfterARejectedChannelSet()
     {

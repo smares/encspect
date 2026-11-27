@@ -3,8 +3,7 @@ using System.Buffers.Binary;
 namespace Encspect.Formats.Dts;
 
 // The static fields of an extension substream header (7.5.2, 7.5.3.2) as the last header that carried them gave them. When
-// bStaticFieldsPresent is 0 the header omits them and they keep their values, as FFmpeg's dca_exss.c does by keeping its parser state
-// between frames. The analysis holds one per extension substream index; a unit whose header omits the fields uses the one in force and
+// bStaticFieldsPresent is 0 the header omits them and they keep their values, (7.5.2: static over the duration of an encoded stream). The analysis holds one per extension substream index; a unit whose header omits the fields uses the one in force and
 // its record keeps a copy, so the node pass reads the unit as the analysis did.
 internal sealed class StaticState
 {

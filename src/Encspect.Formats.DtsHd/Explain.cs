@@ -8,7 +8,7 @@ internal static class Topics
 }
 
 // What each node of a DTS-HD file is, citing ATSC A/103:2014 Annex E (the DTS-HD file structure) by its clauses and tables, and
-// FFmpeg's libavformat/dtshddec.c and MediaInfo's File_Dts.cpp where they read a field.
+// MediaInfo's File_Dts.cpp where it reads a field.
 internal static class Explain
 {
     public const string ChunkSize = "The size of the chunk in bytes, a 64-bit big endian number, without the 8-byte ID and the 8-byte size field itself (A/103 E.2.1).";

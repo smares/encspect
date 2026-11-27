@@ -3,7 +3,7 @@ using Encspect.Core;
 namespace Encspect.Formats.Dts;
 
 // The tables of ETSI TS 102 114 V1.6.1 that the fields are named and counted with, and the places
-// where FFmpeg (dcadata.c, dca_syncwords.h) and libdca (tables.h) read a code the specification does
+// where MediaInfo's File_Dts.cpp (DTS_BitRate), ffprobe and libdca read a code the specification does
 // not list.
 internal static class Tables
 {
@@ -53,8 +53,8 @@ internal static class Tables
         _ => 0,
     };
 
-    // FFmpeg's ff_dca_bit_rates and libdca's dca_bit_rates give 896 kbit/s for code 16 where the specification's
-    // Table 5-7 gives 960, and list 1,920, 2,048, 3,072 and 3,840 kbit/s for codes 25 to 28, which the table calls invalid.
+    // ffprobe 6.1.1 and libdca give 896 kbit/s for code 16 (ffprobe on 16le-x96.dts with its RATE field set to 16) where the specification's
+    // Table 5-7 and MediaInfo's DTS_BitRate give 960, and MediaInfo's DTS_BitRate lists 1,920, 2,048, 3,072 and 3,840 kbit/s for codes 25 to 28, which the table calls invalid.
     public static int DecodersRateKbps(int rate) => rate switch
     {
         16 => 896,
@@ -266,7 +266,7 @@ internal static class Tables
     public const int ExtensionLbr = 512;
 
     // Flags beside those components, in the union that names a stream's profile: the lossless frame of the first asset carries the extension
-    // data that FFmpeg reads as DTS:X or as DTS:X IMAX (dca_xll.c). Not bits of Table E-2.
+    // data that ffprobe reads as DTS:X or as DTS:X IMAX. Not bits of Table E-2.
     public const int FlagDtsX = 1 << 16;
     public const int FlagDtsXImax = 1 << 17;
 
