@@ -616,11 +616,29 @@ internal static partial class Sbr
             int end = bits.Original + available;
             if (available > 7 && bits.Read(2) == 0 && bits.ReadBit())
             {
-                ReadPhase(ref bits, envelopes, state[1] switch { 0 => 5, 1 => 11, _ => 17 }, ps);
-                ps[SbrRecord.PsEnableIpdopd] = bits.Original <= end ? 1 : 0;
+                // Phase data that runs past the extension's size or the payload is damaged: the frame keeps its other parameters and has no phases.
+                bool isRead;
+                try
+                {
+                    ReadPhase(ref bits, envelopes, state[1] switch { 0 => 5, 1 => 11, _ => 17 }, ps);
+                    isRead = bits.Original <= end;
+                }
+                catch (BlockOverrun)
+                {
+                    isRead = false;
+                }
+
+                ps[SbrRecord.PsEnableIpdopd] = isRead ? 1 : 0;
             }
 
-            bits.Skip(Math.Max(0, end - bits.Original));
+            if (bits.Original > end)
+            {
+                bits.MoveTo(end);
+            }
+            else
+            {
+                bits.Skip(end - bits.Original);
+            }
         }
 
         ps[SbrRecord.PsEnvelopes] = envelopes;

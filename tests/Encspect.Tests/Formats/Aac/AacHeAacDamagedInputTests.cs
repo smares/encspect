@@ -33,4 +33,25 @@ public class AacHeAacDamagedInputTests
         Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
         Assert.Equal(DecodeStatus.Decoded, report.Streams.Single().Verification!.Decoding);
     }
+
+    // Bits flipped in the parametric stereo extension's IPD and OPD, its size and its coded values: whatever they come to, the stream is analyzed and decoded without an unhandled exception.
+    [Fact]
+    public void DamagedPhaseDifferencesNeverFailTheAnalysisOrTheDecoder()
+    {
+        byte[] file = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "aac", "adts", "ps-phase.aac"));
+        var random = new Random(20261127);
+        for (int round = 0; round < 150; round++)
+        {
+            byte[] damaged = (byte[])file.Clone();
+            for (int flip = 0; flip < 1 + (round % 4); flip++)
+            {
+                // The access units' bodies, after the ADTS header of the first frame.
+                int at = 7 + random.Next(damaged.Length - 7);
+                damaged[at] ^= (byte)(1 << random.Next(8));
+            }
+
+            Report report = Analyzer.CreateDefault().Analyze("damaged.aac", new MemoryStream(damaged), new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = long.MaxValue, Output = _ => new DecoderWorkTests.NullSink() } });
+            Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+        }
+    }
 }

@@ -914,6 +914,7 @@ internal sealed class PsDecoder
 
     // 8.6.4.6.3.2: the IPD and OPD of the envelope and of the two before it are smoothed as the angle of the sum of their phasors with the weights 1, 1/2 and 1/4 (the envelope the matrices are for counting most), and the matrices'
     // columns turn by the overall phase and by its difference to the inter-channel phase.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private void Rotate(int e, int bin)
     {
         int ipd = _ipd[e, bin];
