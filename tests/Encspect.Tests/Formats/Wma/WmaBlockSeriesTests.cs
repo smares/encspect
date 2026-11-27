@@ -54,6 +54,59 @@ public class WmaBlockSeriesTests
         Assert.Equal(1, sizes.ValueCount(0));
     }
 
+    // Gain value 20 is a total gain of 21; the flagged band's first level is 5 less 19.
+    [Fact]
+    public void TheTotalGainAndTheNoiseLevelOfABlockAreSeriesInDecibels()
+    {
+        StdParameters p = Parameters();
+        StreamInfo stream = Run(WmaStandardStreams.MonoFrame(p, 20, 10, flaggedBand: 0));
+
+        Series gain = Assert.Single(stream.Series, s => s.Name == "Total Gain");
+        Assert.Equal("dB", gain.Unit);
+        Assert.Equal([21d, 21d], gain.Values.ToArray());
+        Series gainOverTime = Assert.Single(stream.Series, s => s.Name == "Total Gain Over Time");
+        Assert.Equal([21d], gainOverTime.Values.ToArray());
+        Assert.Same(Statistic(stream, "Largest Total Gain"), gainOverTime.Anchor);
+        Series level = Assert.Single(stream.Series, s => s.Name == "Noise Level");
+        Assert.Equal("dB", level.Unit);
+        Assert.Equal([-14d, -14d], level.Values.ToArray());
+        Assert.Same(Statistic(stream, "Noise Level"), level.Anchor);
+        Assert.Equal(-14, Assert.Single(Statistic(stream, "Noise Level").Children, c => c.Name == "Lowest").Value!.AsInteger());
+        Assert.Equal(-14, Assert.Single(Statistic(stream, "Noise Level").Children, c => c.Name == "Highest").Value!.AsInteger());
+    }
+
+    [Fact]
+    public void ABlockWithoutAFlaggedBandHasNoNoiseLevel()
+    {
+        StreamInfo stream = Run(WmaStandardStreams.MonoFrame(Parameters(), 20, 10));
+
+        Assert.DoesNotContain(stream.Series, s => s.Name == "Noise Level");
+        Assert.DoesNotContain(stream.Nodes[0].Children.Single(c => c.Name == "Statistics").Children, c => c.Name == "Noise Level");
+    }
+
+    [Fact]
+    public void TheShareOfEscapeCodedCoefficientsIsAPercentPerBlock()
+    {
+        StdParameters p = Parameters();
+
+        Series none = Assert.Single(Run(WmaStandardStreams.MonoFrame(p, 20, 10)).Series, s => s.Name == "Escape-Coded Coefficients");
+        Assert.Equal("%", none.Unit);
+        Assert.Equal([0d, 0d], none.Values.ToArray());
+
+        StreamInfo escaped = Run(WmaStandardStreams.MonoFrame(p, 20, 0, flaggedBand: 0, escapeRun: 1798));
+        Assert.Equal([100d, 100d], Assert.Single(escaped.Series, s => s.Name == "Escape-Coded Coefficients").Values.ToArray());
+    }
+
+    [Fact]
+    public void ABlockThatSendsItsExponentsIsWithoutReusedExponents()
+    {
+        StreamInfo stream = Run(WmaStandardStreams.MonoFrame(Parameters(), 20, 10));
+
+        CategorySeries reuse = Category(stream, "Blocks Reusing Exponents");
+        Assert.Equal([0L, 2L], reuse.Counts.ToArray());
+        Assert.Same(Statistic(stream, "Blocks Reusing Exponents"), reuse.Anchor);
+    }
+
     [Fact]
     public void ABlockWithoutAFlaggedBandIsWithoutNoiseSubstitution()
     {
