@@ -19,10 +19,11 @@
   {
    "codec": "HE-AAC",
    "sample_rate": 48000,
-   "channels": 1,
-   "channel_mode": "Mono",
+   "channels": 2,
+   "channel_mode": "Mono, output on both channels",
    "channel_layout": [
-    "front center"
+    "front left",
+    "front right"
    ],
    "is_vbr": true,
    "encoder": [

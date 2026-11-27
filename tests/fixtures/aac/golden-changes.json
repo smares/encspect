@@ -49,12 +49,15 @@
   "tests/fixtures/aac/adts/tns-overflow.report.json",
   "tests/fixtures/aac/adts/two-signature-streams.report.json",
   "tests/fixtures/aac/adts/windows.report.json",
+  "tests/fixtures/aac/apple-he-m4a-cbr-mono44.decode.json",
   "tests/fixtures/aac/apple-he-m4a-cbr-mono44.report.json",
   "tests/fixtures/aac/apple-he-m4a-cbr-st44.report.json",
   "tests/fixtures/aac/apple-hev2-adts-cbr-st44.report.json",
   "tests/fixtures/aac/apple-hev2-m4a-cbr-st44.report.json",
   "tests/fixtures/aac/apple-lc-adts-cbr-st44.report.json",
   "tests/fixtures/aac/apple-lc-m4a-cbr-st44.report.json",
+  "tests/fixtures/aac/apple/apple-he-m4a-cbr-mono22.decode.json",
+  "tests/fixtures/aac/apple/apple-intel-he-m4a-cbr-mono22.decode.json",
   "tests/fixtures/aac/faac-1.31.1-adts.report.json",
   "tests/fixtures/aac/faac-1.31.1.report.json",
   "tests/fixtures/aac/faac-1.40-adts.report.json",
@@ -71,6 +74,7 @@
   "tests/fixtures/aac/faac-2.2-he-24k.report.json",
   "tests/fixtures/aac/faac-2.2-he-51-adts.report.json",
   "tests/fixtures/aac/faac-2.2-he-adts.report.json",
+  "tests/fixtures/aac/faac-2.2-he-mono-adts.decode.json",
   "tests/fixtures/aac/faac-2.2-he-mono-adts.report.json",
   "tests/fixtures/aac/faac-2.2-he-mono.report.json",
   "tests/fixtures/aac/faac-2.2-he.report.json",
@@ -135,10 +139,12 @@
   "tests/fixtures/aac/sample-kit/external-qaac-he-cbr64-adts.report.json",
   "tests/fixtures/aac/sample-kit/external-qaac-he-cbr64.report.json",
   "tests/fixtures/aac/sample-kit/external-qaac-mono-lc-tvbr91.report.json",
+  "tests/fixtures/aac/sample-kit/external-winamp-aacplus-16k-mono-he-cbr8-adts.decode.json",
   "tests/fixtures/aac/sample-kit/external-winamp-aacplus-16k-mono-he-cbr8-adts.report.json",
   "tests/fixtures/aac/sample-kit/external-winamp-aacplus-he-cbr64-adts.report.json",
   "tests/fixtures/aac/sample-kit/external-winamp-aacplus-hev2-cbr32.report.json",
   "tests/fixtures/aac/sample-kit/external-winamp-aacplus-lc-cbr128-mp4entry.report.json",
+  "tests/fixtures/aac/sample-kit/external-winamp-fhgaac-8k-mono-cbr16.decode.json",
   "tests/fixtures/aac/sample-kit/external-winamp-fhgaac-8k-mono-cbr16.report.json",
   "tests/fixtures/aac/sample-kit/external-winamp-fhgaac-he-cbr64-adts.report.json",
   "tests/fixtures/aac/sample-kit/external-winamp-fhgaac-he-cbr64.report.json",
@@ -3957,6 +3963,33 @@
    "goldens": [
     "tests/fixtures/aac/adts/sbr-in-one-block.decode.json",
     "tests/fixtures/aac/adts/sbr-in-three-blocks.decode.json"
+   ]
+  },
+  {
+   "scope": "stream",
+   "fields": [
+    "channels",
+    "channelMode",
+    "channelLayout",
+    "channelLayoutName"
+   ],
+   "goldens": [
+    "tests/fixtures/aac/apple-he-m4a-cbr-mono44.report.json",
+    "tests/fixtures/aac/faac-2.2-he-mono-adts.report.json"
+   ]
+  },
+  {
+   "scope": "decode",
+   "fields": [
+    "pcmSha256"
+   ],
+   "goldens": [
+    "tests/fixtures/aac/apple-he-m4a-cbr-mono44.decode.json",
+    "tests/fixtures/aac/apple/apple-he-m4a-cbr-mono22.decode.json",
+    "tests/fixtures/aac/apple/apple-intel-he-m4a-cbr-mono22.decode.json",
+    "tests/fixtures/aac/faac-2.2-he-mono-adts.decode.json",
+    "tests/fixtures/aac/sample-kit/external-winamp-aacplus-16k-mono-he-cbr8-adts.decode.json",
+    "tests/fixtures/aac/sample-kit/external-winamp-fhgaac-8k-mono-cbr16.decode.json"
    ]
   }
  ],

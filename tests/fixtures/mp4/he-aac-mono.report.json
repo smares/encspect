@@ -9184,12 +9184,13 @@
         "codec": "HE-AAC",
         "codingClass": "lossy",
         "sampleRate": 44100,
-        "channels": 1,
-        "channelMode": "Mono",
+        "channels": 2,
+        "channelMode": "Mono, output on both channels",
         "channelLayout": [
-          "front center"
+          "front left",
+          "front right"
         ],
-        "channelLayoutName": "mono",
+        "channelLayoutName": "stereo",
         "samples": 61440,
         "duration": 1.3931972789115645,
         "averageBitrate": 4.4961328125,

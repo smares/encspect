@@ -3,7 +3,7 @@ using Encspect.Core;
 namespace Encspect.Formats.Aac;
 
 // What the decoder takes from the parser about a stream (DecodeSetup.Shared): the configuration the raw data blocks are read with, and the speakers of the channels where
-// the stream states them.
+// the stream states them. IsPsSignaled: the configuration signals PS; the feed sets it once the session starts for a single channel with SBR that decodes to two channels (PS signaled absent leaves it unset).
 internal sealed record DecodeConfig(int ObjectType, int SampleRate, int SampleRateIndex, int FrameLength, bool IsSbrSignaled, bool IsPsSignaled, IReadOnlyList<Speaker>? Layout,
     string? Refusal = null, bool IsPsDenied = false, bool IsDownsampled = false, bool IsSbrDenied = false)
 {
@@ -50,7 +50,7 @@ internal sealed class DecodeFeed
         _config = config;
         _canDecode = canDecode;
         _channels = channels;
-        _awaiting = canDecode && !config.IsDownsampled && ((!config.IsSbrSignaled && !config.IsSbrDenied) || (!config.IsPsSignaled && !config.IsPsDenied && channels == 1));
+        _awaiting = canDecode && !config.IsDownsampled && !config.IsSbrSignaled && !config.IsSbrDenied;
         if (!canDecode)
         {
             _session = Start(channels, config);
@@ -178,7 +178,7 @@ internal sealed class DecodeFeed
     }
 
     // The first block that can be read decides what the configuration left open (ffmpeg's rule: implicit signaling counts where the stream starts with it): SBR data in it makes the
-    // stream HE-AAC with twice the core's rate, and the PS extension in a single channel's SBR data makes it HE-AAC v2 with two channels.
+    // stream HE-AAC with twice the core's rate. PS is not decided here: a single channel with SBR decodes to two channels whatever its blocks hold (StartSession).
     private void FindImplicitSbr()
     {
         bool hasSbr = _config.IsSbrSignaled || (!_config.IsSbrDenied && (_store.Flags & BlockRecord.BlockHasSbrEvidence) != 0);
@@ -186,11 +186,6 @@ internal sealed class DecodeFeed
         {
             _config = _config with { IsSbrSignaled = true };
             _next *= 2;
-        }
-
-        if (hasSbr && !_config.IsPsSignaled && !_config.IsPsDenied && _store.Slots == 1 && (_store.Flags & BlockRecord.BlockHasPs) != 0)
-        {
-            _config = _config with { IsPsSignaled = true };
         }
     }
 
@@ -287,9 +282,10 @@ internal sealed class DecodeFeed
 
         // A first block with no channel element says nothing about the channels: the configuration's do.
         int slots = _store.Slots > 0 ? _store.Slots : _channels;
-        bool hasPs = _config.IsSbrSignaled && _config.IsPsSignaled && slots == 1;
-        _config = _config with { Layout = hasPs ? ChannelLayouts.Stereo : _config.Layout is { } layout && layout.Count == _store.Slots ? layout : null, IsPsSignaled = hasPs };
-        _session = Start(hasPs ? 2 : slots, _config);
+        // A single channel with SBR is decoded to two channels unless PS is signaled absent (ISO/IEC 14496-3 1.6.6.3): the blocks that hold PS data apply it, the others map the channel to both.
+        bool stereo = _config.IsSbrSignaled && !_config.IsPsDenied && slots == 1;
+        _config = _config with { Layout = stereo ? ChannelLayouts.Stereo : _config.Layout is { } layout && layout.Count == _store.Slots ? layout : null, IsPsSignaled = stereo };
+        _session = Start(stereo ? 2 : slots, _config);
         // The blocks before the first one that could be read were lost.
         long lost = _pendingLost;
         _pendingLost = 0;

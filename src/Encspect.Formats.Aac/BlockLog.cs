@@ -132,7 +132,6 @@ internal sealed class BlockLog
         if (Tally.EvidenceBlocks == 0)
         {
             Tally.FirstBlockHasSbr = result.HasSbrEvidence;
-            Tally.FirstBlockHasPs = result.HasPs;
         }
         else if (Tally.FirstDisagreeingBlock < 0 && result.HasSbrEvidence != Tally.FirstBlockHasSbr)
         {

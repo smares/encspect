@@ -17468,12 +17468,13 @@
         "codec": "HE-AAC",
         "codingClass": "lossy",
         "sampleRate": 48000,
-        "channels": 1,
-        "channelMode": "Mono",
+        "channels": 2,
+        "channelMode": "Mono, output on both channels",
         "channelLayout": [
-          "front center"
+          "front left",
+          "front right"
         ],
-        "channelLayoutName": "mono",
+        "channelLayoutName": "stereo",
         "samples": 77824,
         "duration": 1.6213333333333333,
         "averageBitrate": 31.904605263157894,

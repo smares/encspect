@@ -69,9 +69,10 @@ public class Mp4AacChannelCheckTests
     }
 
     [Fact]
-    public void AnAudioSampleEntryV1OverAMonoStreamWithSbrIsNotComparedBecauseItsOutputCountIsNotSettled()
+    public void AnAudioSampleEntryV1OverAMonoStreamWithSbrIsComparedWithTheTwoChannelsItIsOutputOn()
     {
-        Assert.Empty(Differences(Patched("aac/apple-he-m4a-cbr-mono44.m4a", 1, 3)));
+        Finding finding = Assert.Single(Differences(Patched("aac/apple-he-m4a-cbr-mono44.m4a", 1, 3)));
+        Assert.Contains("has 2", finding.Message);
     }
 
     [Fact]

@@ -153,18 +153,17 @@ internal sealed class CodingTally
 
     public int FirstSbrEvidenceBlock { get; set; } = -1;
 
-    // Whether the first block read to its end (not in a damaged frame) holds an SBR payload after a channel element, and the PS extension: implicit signaling is decided there, as ffmpeg 6.1.1 does
+    // Whether the first block read to its end (not in a damaged frame) holds an SBR payload after a channel element: implicit SBR is decided there, as ffmpeg 6.1.1 does
     // (it takes implicit SBR where the stream starts with it; sbr-in-first-block-only.aac and sbr-in-all-but-first-block.aac hold it), and the decoder (DecodeFeed.FindImplicitSbr) decides on the same block.
+    // The PS extension is not decided there: ISO/IEC 14496-3 1.6.6.3 has the decoder of a single channel with SBR apply PS from whatever block its data starts in.
     public bool FirstBlockHasSbr { get; set; }
-
-    public bool FirstBlockHasPs { get; set; }
 
     // The first later block that disagrees with the first one about SBR, or -1.
     public int FirstDisagreeingBlock { get; set; } = -1;
 
     public bool IsSbrEvident => EvidenceBlocks > 0 && FirstBlockHasSbr;
 
-    public bool IsPsEvident => EvidenceBlocks > 0 && FirstBlockHasPs;
+    public bool IsPsEvident => PsEvidenceBlocks > 0;
 
     // Whether most blocks disagree with the first one about SBR: it is missing from most later blocks, or present in most where the first had none.
     public bool IsSbrInconsistent => EvidenceBlocks > 1 && (FirstBlockHasSbr ? SbrEvidenceBlocks * 2 < EvidenceBlocks : SbrEvidenceBlocks * 2 > EvidenceBlocks);
