@@ -19,7 +19,7 @@ It states FFmpeg's arithmetic as the rule where nothing contradicts it. No run o
 - `libavcodec/wmaprodec.c`: the scale factors and their carrying over, the channel transforms and their matrices, the dequantization, the inverse transform's scale, the windowing and overlap, the frame output, the trims, and the state kept across frames and losses.
 - `libavcodec/wmaprodata.h`: the critical band frequencies and the default channel transform matrices (tables).
 - `libavcodec/wma.c`: the large value and the run-level loop the coefficients share with versions 1 and 2 (how a value is placed).
-- `libavutil/tx_template.c` and `tx.h`: the definition and scale of the inverse transform (the reference inverse and the half-length output).
+- `libavutil/tx_template.c`: the definition and scale of the inverse transform (the reference inverse, the half-length output and where the scale enters).
 - `libavutil/float_dsp.c`: the portable versions of the windowing and scaling helpers.
 - `libavcodec/sinewin_tablegen.h`: the sine window.
 - `libavutil/ffmath.h`: the power of ten.
@@ -28,7 +28,7 @@ It states FFmpeg's arithmetic as the rule where nothing contradicts it. No run o
 **Test files:**
 
 - The 11 Microsoft-encoded fixtures `tests/fixtures/asf/external-windows-wma10pro-*.wma` ([wma-pro-format.md](wma-pro-format.md#sources)): stereo at 44.1 kHz (16 and 24 bits, 64 to 384 kbit/s and quality 10 to 98) and 5.1 at 48 kHz.
-- The 72 Professional files of the private sample kit, all by Windows Media Encoder 9 (9.0.0.2980 on Windows XP SP3): stereo at 44.1 and 48 kHz and 5.1 at 44.1 and 48 kHz, 16 and 24 bits, 128 to 768 kbit/s, constant, two-pass, peak-constrained and quality-based bitrates. 64 of them are encoded at their source's rate and channel count, from the kit's `sources`; the other 8 are 5.1 at 44.1 kHz from a 48 kHz source.
+- The 72 Professional files of the private sample kit, all by Windows Media Encoder 9 (9.0.0.2980 on Windows XP SP3): stereo at 44.1 and 48 kHz and 5.1 at 44.1 and 48 kHz, 16 and 24 bits, 128 to 768 kbit/s, constant, two-pass constant, peak-constrained variable, bitrate-based variable and quality-based variable bitrates. 64 of them are encoded at their source's rate and channel count, from the kit's `sources`; the other 8 are 5.1 at 44.1 kHz from a 48 kHz source.
 - Six public files of [wma-pro-format.md](wma-pro-format.md#sources), checked against the hashes listed there: `8_Channel_ID.wma` (8 channels), `latin_192_mulitchannel.wma` (5.1, WMFSDKVersion 9), `Classical_48_24_6_Q25_2_3.wma` (F = 512, M = 4), `Classical_96_24_2_Q75_2_3.wma` and `Classical_96_24_6_Q75_2_13.wma` (96 kHz, F = 1,024 and 4,096), and `classical_16_16_1_8000_off_0_off_1_29.wma` (16 kHz mono, F = 512).
 
 **How the text was checked:**
@@ -36,7 +36,7 @@ It states FFmpeg's arithmetic as the rule where nothing contradicts it. No run o
 - The author wrote a throwaway decoder from this description (Python, in the session's scratch folder, not committed: it was written by someone who read FFmpeg and must not reach the implementer). It reads the syntax by [wma-pro-format.md](wma-pro-format.md) and rebuilds the PCM by the rules below, in double precision, with the full-length inverse transform and the boundary windows of [Windows and overlap](#windows-and-overlap).
 - **Against ffmpeg 6.1.1:** on all 11 fixtures, all 72 kit files and the six public files, with FFmpeg's output rule ([The output of a stream](#the-output-of-a-stream)), it gives ffmpeg's sample count and its samples to within 2.7 × 10⁻⁷ of full scale, the rounding of single precision.
 - **Against the signals the files were encoded from:** with Microsoft's output rule, the output has the source's length, lag 0 and the source's polarity in all 11 fixtures (against `wma_signals.py`) and the 64 kit files encoded at their source's rate (against the kit's `sources`). Its gain against the source is within 2% of 1 in the fixtures and, in the kit, at 192 kbit/s and above and at quality 75 and above; the encodes at lower settings, which leave out more of the signal, give 0.67 to 0.99. The low-frequency channel of the fixtures decodes to near silence: their source's tone on that channel is 495 Hz, which Microsoft's encoder does not code there.
-- **What the files cover:** subframes of every size from 2,048 down to 128 samples (64 in the 512-sample public files), scale factors carried over from smaller and from larger subframes, stereo pairs with the transform on in all bands and in some, pairs of a multichannel stream, matrices sent as angles for groups of three, four and five channels, groups of six with the default matrix (`Classical_96_24_6_Q75_2_13.wma`), bands of a multichannel group with the transform off, quantization step modifiers, 8 channels, the low-frequency channel, and frames of 512, 1,024, 2,048 and 4,096 samples.
+- **What the files cover:** subframes of every size from 2,048 down to 128 samples at 44.1 and 48 kHz, scale factors carried over from smaller and from larger subframes, stereo pairs with the transform on in all bands and in some, pairs of a multichannel stream, matrices sent as angles for groups of three, four and five channels, groups of six with the default matrix (`Classical_96_24_6_Q75_2_13.wma`), bands of a multichannel group with the transform off, quantization step modifiers, 8 channels, the low-frequency channel, and frames of 512, 1,024, 2,048 and 4,096 samples.
 - **Not covered by any file:** default matrices for three to five channels, a channel whose scale factors are kept with no set sent in the frame ([Scale factors kept from an earlier frame](#scale-factors-kept-from-an-earlier-frame)), a run past the subframe's end, a postprocessing transform and a dynamic range gain other than 0.
 - **Microsoft's decoder** has written PCM only of versions 1 and 2 so far (runs 45947146147 and 45979958270 of `windows-wma-decode.yml`); its sample counts of the Professional fixtures, variants and public files are those of [wma-pro-format.md](wma-pro-format.md#what-microsofts-decoder-outputs).
 
@@ -45,7 +45,7 @@ It states FFmpeg's arithmetic as the rule where nothing contradicts it. No run o
 Those of [wma-pro-format.md](wma-pro-format.md#conventions), and:
 
 - k is the size index of the current subframe and L = F >> k its length; lines are numbered x = 0 to L − 1. The subframe starts at sample P of its frame (the sum of the channel's earlier subframes in the frame).
-- e_b is the edge list of size index k: band b covers lines e_b(b) to e_b(b + 1) − 1 ([Derived values and checks](wma-pro-format.md#derived-values-and-checks)); n_k is its band count.
+- e_k is the edge list of size index k: band b covers lines e_k(b) to e_k(b + 1) − 1 ([Derived values and checks](wma-pro-format.md#derived-values-and-checks)); n_k is its band count.
 - c(x) is the coded value of line x of a channel, an integer; c'(x) the value after the channel transform; X(x) the dequantized value.
 - 10^(v/20), the sines, cosines and roots are the real functions; [Precision](#precision) says where FFmpeg rounds, [Determinism](#determinism) what this project's decoder does.
 
@@ -53,7 +53,7 @@ Those of [wma-pro-format.md](wma-pro-format.md#conventions), and:
 
 | State | Per | Initial value | Changed by |
 | --- | --- | --- | --- |
-| overlap buffer: the second half of the last subframe's transform output, F/2 values | channel | all 0 | every subframe that holds the channel |
+| overlap: what the channel's last subframe adds after the frame's output, F/2 values in FFmpeg's form (the values before its falling window, then the second half of its transform output, unwindowed) | channel | all 0 | every subframe that holds the channel |
 | the length of the channel's last subframe | channel | F | every subframe that holds the channel |
 | the last scale factor set sent, its size index and its scale factor step | channel | none | every subframe in which the channel's set is sent |
 | whether the channel has sent a set in the current frame | channel | no | reset at every frame's start |
@@ -81,7 +81,7 @@ Applied first, to the integer values c(x) of each channel group whose transform 
 
 ### Pairs
 
-- **In a stereo stream** (C = 2): T = [[1, −1], [1, 1]]. The first channel (left) becomes a_1 − a_2 and the second (right) a_1 + a_2. There is no factor 1/2 or 1/√2; the dequantization absorbs it.
+- **In a stereo stream** (C = 2): T = [[1, −1], [1, 1]]. The first channel (left) becomes a_1 − a_2 and the second (right) a_1 + a_2. There is no factor 1/2 or 1/√2: with this matrix the decoded level is the source's (gain 1.0000 against the source at 256 kbit/s and above).
 - **Stereo bands with the transform off:** in a stereo stream, where the pair's transform is on but a band's flag is off, both channels' values of that band are multiplied by 181/128 (1.4140625). A pair whose transform is off has no such factor. See item 1 of [Points to settle](#points-to-settle-against-microsofts-decoder).
 - **In a stream of more than two channels:** T = [[q, −q], [q, q]] with q = 181/256 (0.70703125), and nothing is done in bands with the flag off.
 
@@ -93,7 +93,7 @@ For a group of n > 2 members whose matrix is sent ([Channel transform](wma-pro-f
 2. For i = 1 to n − 1, and within it for x = 0 to i − 1 (rows counted from 0), take the angle value r of index i(i − 1)/2 + x, θ = r × π / 64, s = sin θ and c = cos θ, and for every column y = 0 to i replace the pair of entries (x, y) and (i, y) by s × T(x, y) − c × T(i, y) and c × T(x, y) + s × T(i, y), both from the values before this replacement.
 3. The result is T. Each step rotates rows x and i, so T is orthogonal up to rounding.
 
-- θ runs from 0 to 63 × π / 64. FFmpeg takes s and c from a table of sin(i × π / 64) for i = 0 to 32: for r below 32, s = sin(r) and c = sin(32 − r) in table steps; from 32 on, s = sin(64 − r) and c = −sin(r − 32). These are sin θ and cos θ.
+- θ runs from 0 to 63 × π / 64. FFmpeg takes s and c from a table S(i) = sin(i × π / 64) for i = 0 to 32: for r below 32, s = S(r) and c = S(32 − r); from 32 on, s = S(64 − r) and c = −S(r − 32). These are sin θ and cos θ.
 - The steps run in the order above; each uses the rows as the steps before it left them.
 
 ### Default matrices
@@ -138,7 +138,7 @@ Where k_s = k the map is the identity. Both directions occur in every file: sets
 A channel whose first subframes in a frame lie in subframes where no channel sends coefficients has sent no set in this frame when it reaches a subframe that codes; there its flag bit may say "not sent".
 
 - **FFmpeg** then uses the contents of the second of its two buffers for the channel, which hold an older set or an older carried-over copy, with no carrying over to the current size.
-- **This text:** the channel's last sent set from any earlier frame, carried over to size k, with its scale factor step, as for "not sent" above. A channel that has never sent a set uses zeros with a step of 1 (such a stream's encoder would have to have sent nothing for that channel since the start).
+- **This text:** the channel's last sent set from any earlier frame, carried over to size k, with its scale factor step, as for "not sent" above. A channel that has never sent a set uses 0 in every band, so all its bands take E(b) = Q ([Dequantization](#dequantization)).
 - No file has the case (counted in all 89 files above). See item 6 of [Points to settle](#points-to-settle-against-microsofts-decoder).
 
 ## Dequantization
@@ -152,7 +152,7 @@ Notes:
 
 - The largest scale factor S is taken over the n_k values of this subframe's set, after any carrying over and differences.
 - Q may be negative; E(b) is then negative too.
-- Observed ranges: E(b) from −12 to 194 in the fixtures (Q from 18 to 194, scale factors from 1 to 84). The quantization step's start value grows with B (90 for 16 bits, 135 for 24), which keeps the output at the same scale for every B (see [Inverse transform](#inverse-transform)).
+- Observed ranges: E(b) from −12 to 194 in the fixtures (Q from 18 to 194, scale factors from 1 to 84), and from −35 to 202 over the fixtures, the kit and three of the public files (`8_Channel_ID.wma`, `latin_192_mulitchannel.wma` and the 16 kHz file). The quantization step's start value grows with B (90 for 16 bits, 135 for 24), which keeps the output at the same scale for every B (see [Inverse transform](#inverse-transform)).
 - **The low-frequency channel** is dequantized like any other. FFmpeg 6.1.1 prepares to zero its lines from a cutoff of clamp(floor((440 × L + 3 × floor(rate / 2) − 1) / rate), 4, L) on (about 220 Hz), but writes every line again afterwards, so nothing is zeroed.
   - In the fixtures, the kit's 5.1 files and three of the four public files with the channel, its lines from that cutoff on are all 0 after the channel transform, so the cutoff changes nothing.
   - In `Classical_96_24_6_Q75_2_13.wma`, whose groups of six use the default matrix, they are not 0 in 35,271 of the channel's 35,272 subframes: the matrix's 8-bit entries leak the other channels into it. Over its first 400 frames that part is 44 dB below the channel's level, at most 0.009 of full scale. See item 7 of [Points to settle](#points-to-settle-against-microsofts-decoder).
@@ -171,7 +171,7 @@ y(n) = −(2 / L) × 2^−(B − 1) × Σ_{q=0}^{L−1} X(q) × cos(π / L × (n
 
 ## Windows and overlap
 
-Each channel's subframes follow one another without gaps, also from one frame to the next. Subframe j of a channel (length L_j, starting at stream sample A_j = frame index × F + P) places its 2L_j outputs from stream position A_j + F/2 − L_j/2 on (the timeline of [The output of a stream](#the-output-of-a-stream) starts F/2 before the first frame's first sample, so the frame's sample P is position P + F/2 of its frame's span).
+Each channel's subframes follow one another without gaps, also from one frame to the next. Subframe j of a channel (length L_j, starting at stream sample A_j = frame index × F + P) places its 2L_j outputs from position A_j + F/2 − L_j/2 on. Positions are those of the timeline of [The output of a stream](#the-output-of-a-stream), which starts F/2 before the first frame's first sample: stream sample A is at position A + F/2.
 
 At each boundary between two consecutive subframes of a channel, the earlier one of length L_a and the later one of length L_b, the overlap uses the window of the shorter one, w = min(L_a, L_b), centered on the boundary:
 
@@ -217,7 +217,7 @@ The timeline starts at position 0, F/2 samples before the first frame's first sa
 
 **FFmpeg's output** differs:
 
-- It does not output the first frame decoded: its first output is frame 2's, positions F to 2F − 1. The start trim of the first frame (F in the files) is used up on that frame. So with the start trim of F, FFmpeg and Microsoft start at the same position.
+- It does not output the first frame decoded: its first output is the second frame's, positions F to 2F − 1. The start trim of the first frame (F in the files) is used up on that frame. So with the start trim of F, FFmpeg and Microsoft start at the same position.
 - Without a start trim, FFmpeg starts at position F, Microsoft at F/2 + L_first/2.
 - It applies each frame's trims to that frame's own F values, and outputs nothing after the last frame. So it ends at N × F less the last frame's end trim, (F − L_last)/2 positions before Microsoft's end where the last subframe is shorter than F: 512 fewer in the nine stereo fixtures.
 - The values are the same where both output a position.
@@ -255,7 +255,7 @@ What FFmpeg rounds to single precision, for a cross-check that aims at its last 
 - every coefficient value (as a float, exact up to 2^24);
 - the channel transforms in single precision: the sine table of the angles (sin(i × π / 64) rounded to single), each rotation step, the sums of the matrix products, starting from 0 and adding the members in order; the default matrices as six-decimal literals; 181/128 and 181/256 are exact;
 - the band multiplier: 10^(E/20) computed in double as 2^(E × log2(10) / 20), rounded to single, then multiplied by the line's value in single;
-- the inverse transform in single precision by a fast algorithm, with the factor 2/L × 2^−(B − 1) in its twiddles (its rounding depends on the build: x86 and ARM codelets differ);
+- the inverse transform in single precision by a fast algorithm, with the square root of the factor 2/L × 2^−(B − 1) in each of its two twiddle passes (its rounding depends on the build: x86 and ARM codelets differ);
 - the window: sin((i + 1/2) × π / (2w)) with the argument rounded to single and the sine of single precision; each output of the overlap as two products in single and their sum (or difference).
 
 ## Determinism
@@ -264,8 +264,8 @@ FFmpeg's last bits cannot be a target: its transform's rounding depends on the b
 
 - **Values:** the coefficient values as 64-bit integers (they need 33 bits), converted to single precision with rounding to nearest, ties to even.
 - **Channel transforms in single precision:** the matrix of angles built as in [Matrices sent as angles](#matrices-sent-as-angles) from a table of 33 values sin(i × π / 64) computed with `DetMath.SinCos(i, 128)` and rounded to single (so that s and c come from the same entries as FFmpeg's); the default matrices as k/256, which are exact in single; each product rounded, the sum taken in member order, no fused multiply-add. The stereo factor 181/128 and the pair's 181/256 are exact.
-- **Band multipliers:** E clamped to −128 to 384 (the files use −12 to 194), and 10^(E/20) taken from a table over that range, computed once in double with `DetMath.Exp(E × ln 10 / 20)` and rounded to single.
-  - At the clamp's ends the largest value, 2^31 + 99 times 10^19.2, times the matrix entries and summed over 8,192 lines, stays far below the single-precision maximum, and the smallest nonzero line value times 10^−6.4 and the transform's factor down to 2^−43 stays a normal number: no infinity, NaN or subnormal can arise from the dequantization.
+- **Band multipliers:** E clamped to −128 to 384 (the files use −35 to 202), and 10^(E/20) taken from a table over that range, computed once in double with `DetMath.Exp(E × ln 10 / 20)` and rounded to single.
+  - At the clamp's ends the largest value, 2^31 + 99 times 10^19.2, times the matrix entries and summed over 8,192 lines, stays far below the single-precision maximum, and a line value of 1 times 10^−6.4 and the transform's factor down to 2^−43 stays far above the subnormal range: no infinity or NaN can arise, and no subnormal from the dequantization.
   - Values outside the range do not occur in valid streams that Microsoft's encoders write; the clamp decides what a damaged or crafted stream gives.
 - **The inverse transform** in single precision by any fixed algorithm whose operations depend only on L, with twiddles from `DetMath.SinCos` rounded to single. The factor 2/L × 2^−(B − 1) is a power of two, so applying it before, inside or after the transform changes no bit (no product underflows).
 - **The window:** r(i) from `DetMath.SinCos(2i + 1, 8w)` (the sine of 2π(2i + 1)/(8w)), rounded to single; each overlapped output as y_a × r(w − 1 − i) + y_b × r(i), two rounded products and a rounded sum, no fused multiply-add.
@@ -295,7 +295,7 @@ The weights of [Work units per format](lossy-decoders.md#work-units-per-format) 
 
 FFmpeg's choices that the files at hand do not confirm as Microsoft's. Each is a candidate for the first PCM comparison with Microsoft's decoder.
 
-1. **The factor 181/128 of stereo bands with the transform off.** FFmpeg scales both channels of such a band by 181/128; a pair with its transform off entirely gets no factor. Against the source, over the samples the factor changes, the error energy is 2.7% (256 kbit/s) and 3.4% (384 kbit/s) lower with it in the fixtures, and the same within 0.2% at lower rates: weak evidence for the factor. The bands concerned hold few lines with values (2,500 to 5,900 per fixture).
+1. **The factor 181/128 of stereo bands with the transform off.** FFmpeg scales both channels of such a band by 181/128; a pair with its transform off entirely gets no factor. Against the source, over the samples the factor changes, the error energy is 2.7% (256 kbit/s) and 3.3% (384 kbit/s) lower with it in the fixtures, and the same within 0.1% at lower rates: weak evidence for the factor. The bands concerned hold few lines with values (590 to 5,900 per stereo fixture).
 2. **The end of the stream.** The (F − L_last)/2 positions after the last frame are in Microsoft's counts; their values are not compared.
 3. **The start without a start trim.** Microsoft's count starts at F/2 + L_first/2 (the variants of [wma-pro-format.md](wma-pro-format.md#what-microsofts-decoder-outputs)); whether its first values are the rising window's output as this text says is not compared.
 4. **The default matrices:** k/256 as this text takes them, or FFmpeg's six-decimal values (at most 4 × 10⁻⁷ apart); and whether Microsoft's matrices for three to five channels are these (only groups of six with the default matrix occur, in one public file).
@@ -309,9 +309,9 @@ Two differences need no comparison: FFmpeg's output rule at the start and end, a
 ## What Microsoft's output showed
 
 - **Sample counts** (runs 41252306359, 41362454853 and 41363084542, before this text): the rule of [wma-pro-format.md](wma-pro-format.md#what-microsofts-decoder-outputs), which [The output of a stream](#the-output-of-a-stream) derives from the timeline here: every position the transform has completed, from the start cut on.
-- **PCM:** none yet. Runs 45947146147 and 45979958270 of `windows-wma-decode.yml` wrote the Source Reader's samples of the version 1 and 2 files only; the step that writes them lists those files by name.
+- **PCM:** none yet. Runs 45947146147 and 45979958270 of `windows-wma-decode.yml` wrote the Source Reader's samples of the version 1 and 2 files only; the step that writes them selects those files by their names.
 - **Indirect evidence:** the description's output, cut by Microsoft's rule, matches the signals Microsoft's encoders were given in length, alignment (lag 0), polarity and level (gain within 2% of 1 at 192 kbit/s and above), in 75 files from two encoder generations (Media Foundation and the Format SDK of Windows Server 2025, and Windows Media Encoder 9). This is evidence of what the encoders intend, not of the decoder's last bits.
-- **Next step:** add the Professional fixtures to the step that writes PCM and run the workflow once; the comparison then settles items 1 to 3 on the fixtures (stereo bands with the transform off, the end, and, with a variant without the start trim, the start).
+- **Next step:** add the Professional fixtures to the step that writes PCM and run the workflow once; the comparison then settles items 1 to 3 on the fixtures (stereo bands with the transform off, the end, and, with a variant without the start trim, the start). `Classical_96_24_6_Q75_2_13.wma`, given to the same step, would settle items 4 (for six channels) and 7.
 
 ## Not determined
 
