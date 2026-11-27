@@ -899,6 +899,7 @@ What the HE-AAC pull request (rollout step 10) added to the AAC decoder; the des
 - **Parametric stereo** takes the six slots its hybrid analysis looks ahead from the low band slots the SBR buffer holds, so its output is as early as an SBR stream's and agrees with FFmpeg and libxaac to 4 x 10^-7 of the RMS on the Apple HE-AAC v2 file ([development.md](../development.md#aac-decoding)). The first version delayed the output by 6 slots and differed by 4 % in bursts, which the cross-check found.
 - **Cost:** 220 units per output sample for SBR (and parametric stereo) on top of the core's.
 - **Not built:** SBR with a core at the output rate (downsampled SBR, refused with `decode.not-possible`), inter-channel phase differences of parametric stereo (the baseline profile skips them), and SBR for USAC and ER AAC.
+- **Patches (the lead, 2026-11-27):** the decoder builds the patches of the high band as Figure 4.48 of ISO/IEC 14496-3 gives them (`Sbr.Patches`, shared with the parser's check of 4.6.18.3.6: at most five), not as libxaac does (ixheaacd_generate_hf), which differs in some 2,371 header combinations of narrow ranges (a patch of fewer than 3 bands that the figure keeps, or one more). `AacSbrFrequencyTablesTests` holds the decoder to the figure for every rate and header the syntax can state. No committed file has such a header: the decoder's PCM of every fixture is unchanged, and the cross-checks with FFmpeg and libxaac show no difference from it.
 
 ## Unverified claims and estimates
 

@@ -71,7 +71,6 @@ public class AacSbrFrequencyTablesTests
     [Fact]
     public void DerivedTablesOfEveryRateAndHeaderAreTheOnesTheLibraryMathGave()
     {
-        var differences = new SortedDictionary<(int Spec, int Layout), int>();
         using var hash = System.Security.Cryptography.IncrementalHash.CreateHash(System.Security.Cryptography.HashAlgorithmName.SHA256);
         Span<byte> record = stackalloc byte[24];
         foreach (int rate in new[] { 16000, 22050, 24000, 32000, 44100, 48000, 64000, 88200, 96000, 128000, 176400, 192000 })
@@ -98,19 +97,19 @@ public class AacSbrFrequencyTablesTests
                                     hash.AppendData(System.Text.Encoding.UTF8.GetBytes(error ?? string.Empty));
                                     if (bands is not null)
                                     {
-                                        // The decoder's patches (libxaac's construction, which may start with a patch of no band) have the count Figure 4.48 gives, 5 at most (4.6.18.3.6).
                                         (SbrTables? tables, _) = Sbr.Tables(Header(start, stop, scale, alter, xover, noise), rate);
                                         var layout = new Encspect.Formats.Aac.Decoding.SbrLayout(tables!, rate);
-                                        int wide = 0;
-                                        for (int p = 0; p < layout.PatchCount; p++)
-                                        {
-                                            wide += layout.PatchBands[p] > 0 ? 1 : 0;
-                                        }
 
-                                        int spec = Sbr.PatchCount(tables!.Master, tables.Kx, rate);
-                                        if (spec != wide)
+                                        // The decoder's patches are the ones of Figure 4.48 the parser counts: as many, each as wide and as far from its source.
+                                        (int spec, int[] widths, int[] sources) = Sbr.Patches(tables!.Master, tables.Kx, rate);
+                                        Assert.Equal(spec, layout.PatchCount);
+                                        int at = tables.Kx;
+                                        for (int p = 0; p < spec; p++)
                                         {
-                                            differences[(spec, wide)] = differences.GetValueOrDefault((spec, wide)) + 1;
+                                            Assert.Equal(at, layout.PatchStart[p]);
+                                            Assert.Equal(widths[p], layout.PatchBands[p]);
+                                            Assert.Equal(at - sources[p], layout.PatchStride[p]);
+                                            at += widths[p];
                                         }
 
                                         Assert.True(spec <= Sbr.MaxPatches);
@@ -123,11 +122,6 @@ public class AacSbrFrequencyTablesTests
             }
         }
 
-        // The decoder builds its patches as libxaac does, which differs from Figure 4.48 in 2,371 of the headers (counted for each rate and noise band setting) that give tables, all
-        // with a narrow SBR range or few bands: where the pair is (n, 0) the decoder's construction yields no patch with bands where the standard's has n, and (n, n + 1) one more. This pins
-        // the differences (a change of either construction shows here); the limit of 5 is the standard's count, which the parser checks.
-        string found = string.Join(';', differences.Select(d => $"({d.Key.Spec}, {d.Key.Layout})={d.Value}"));
-        Assert.True(found == "(1, 0)=1884;(1, 2)=100;(2, 0)=64;(2, 3)=98;(3, 0)=36;(3, 4)=62;(4, 0)=32;(4, 5)=51;(5, 0)=24;(5, 6)=20", found);
         string result = Convert.ToHexStringLower(hash.GetHashAndReset());
         Assert.True(result == "c253c80b362e46ef57c513e3415ac03ccec59da648ef930a115f7cd8a149cd20", result);
     }
