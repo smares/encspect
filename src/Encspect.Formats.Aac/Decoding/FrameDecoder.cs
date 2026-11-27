@@ -328,7 +328,7 @@ internal sealed class FrameDecoder : IFrameDecoder
         {
             for (int ch = 0; ch < _channels; ch++)
             {
-                Resynchronize(ch, record.Slice(ch * BlockRecord.Stride, BlockRecord.Stride));
+                Resynchronize(ch, record.Slice(ch * BlockRecord.Stride, BlockRecord.Stride), frame.FailsChecksum);
             }
         }
 
@@ -1135,17 +1135,25 @@ internal sealed class FrameDecoder : IFrameDecoder
     }
 
     // The trust the reset of a group gives back (DependencyTrust), after the block.
-    private void Resynchronize(int ch, ReadOnlySpan<int> slot)
+    // A block that fails its checksum gives nothing back to the failed-checksum trust: its window sequence and reset group are data the failed CRC covers, so the decoder's reset of a group
+    // may not be the encoder's.
+    private void Resynchronize(int ch, ReadOnlySpan<int> slot, bool failsChecksum)
     {
         if (slot[BlockRecord.WindowSequence] == 2)
         {
             _gap.ResynchronizeAll(ch);
-            _fail.ResynchronizeAll(ch);
+            if (!failsChecksum)
+            {
+                _fail.ResynchronizeAll(ch);
+            }
         }
         else if ((slot[BlockRecord.Prediction] & BlockRecord.PredictionReset) != 0 && slot[BlockRecord.PredictionGroup] is >= 1 and <= 30)
         {
             _gap.Resynchronize(ch, slot[BlockRecord.PredictionGroup]);
-            _fail.Resynchronize(ch, slot[BlockRecord.PredictionGroup]);
+            if (!failsChecksum)
+            {
+                _fail.Resynchronize(ch, slot[BlockRecord.PredictionGroup]);
+            }
         }
     }
 
