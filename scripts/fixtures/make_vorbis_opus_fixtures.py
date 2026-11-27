@@ -14,6 +14,7 @@ statistics. The expectations are worked out by vorbis_opus_model.py from the spe
 Standard library only and deterministic, so CI reruns it and fails when the committed files differ.
 """
 
+import random
 import struct
 
 import make_ogg_fixtures as hand
@@ -909,6 +910,42 @@ def opus_ambisonics3():
     f.write()
 
 
+def opus_ambisonics3_counts():
+    # Family 3 where the decoded channel count N + M differs from the output channel count C (RFC 8486, section 3.2 allows it): nine outputs from four decoded channels, five of
+    # them reached by no column (a row of zeros), and four outputs from six, where each sums two or three decoded channels. libopus's projection decoder refuses the first and drops
+    # the last two columns of the second, so the crosscheck skips both (crosscheck_opus_pcm.py, EXPECTED).
+    def q15(rows, cols, fn):
+        return list(b"".join(struct.pack("<h", fn(r, c)) for c in range(cols) for r in range(rows)))
+
+    for name, serial, channels, streams, matrix in (
+        ("opus-ambisonics-family-3-fewer-decoded", 0x0F0F0007, 9, 2, q15(9, 4, lambda r, c: 24576 if r == c else (-8192 if r == 4 and c == 1 else 0))),
+        ("opus-ambisonics-family-3-more-decoded", 0x0F0F0008, 4, 3, q15(4, 6, lambda r, c: 16384 if c % 4 == r else -4096)),
+    ):
+        audio = [multistream_packet([(31, 1, [40 + s], {}) for s in range(streams)]) for _ in range(15)]
+        head = v.opus_head(channels, family=3, streams=streams, coupled=streams, mapping=matrix)
+        packets, granules = opus_stream(head, audio)
+        f = single(name, packets, granules, opus_cuts(len(audio)), serial=serial, extension=".opus", codec="Opus")
+        f.crosscheck = {"valid": True, "skip": {
+            "opusdec": "libopusfile 0.12 refuses channel mapping family 3 (see opus-ambisonics-family-3)",
+            "ffprobe": "FFmpeg 8.0.1 returns AVERROR_PATCHWELCOME for family 3 (see opus-ambisonics-family-3)"}}
+        f.write()
+
+
+def opus_ambisonics3_dense():
+    # Family 3 with 171 mono streams and a 171 by 171 demixing matrix (58,482 bytes of the 65,004 the header can hold): the matrix costs 29,241 multiplies and adds a sample, far
+    # more than the streams' decoding, so DecoderWorkTests measures the demixing weight on it. Seeded coefficients, signed, summing to well under full scale.
+    rng = random.Random(171)
+    matrix = list(b"".join(struct.pack("<h", rng.randint(-600, 600)) for _ in range(171 * 171)))
+    head = v.opus_head(171, family=3, streams=171, coupled=0, mapping=matrix)
+    audio = [multistream_packet([(31, 0, [3 + (s + i) % 5], {}) for s in range(171)]) for i in range(15)]
+    packets, granules = opus_stream(head, audio)
+    f = single("opus-ambisonics-family-3-dense", packets, granules, opus_cuts(len(audio)), serial=0x0F0F0009, extension=".opus", codec="Opus")
+    f.crosscheck = {"valid": True, "skip": {
+        "opusdec": "libopusfile 0.12 refuses channel mapping family 3 (see opus-ambisonics-family-3)",
+        "ffprobe": "FFmpeg 8.0.1 returns AVERROR_PATCHWELCOME for family 3 (see opus-ambisonics-family-3)"}}
+    f.write()
+
+
 # oggz validate counts a stream's header pages by its header count (oggz-validate.c, "Terminal header page ..."). oggz 1.1.1 did not know Opus and used the
 # default 3 (oggz.c, oggz_add_stream), which the pages of opus-granule-edges and opus-tags-variants break and which made it give up on opus-head-invalid; oggz 1.1.3
 # sets 2 for a stream with a complete identification header (oggz_auto.c, auto_opus: oggz_stream_set_numheaders) and passes all three: their damage is in
@@ -1170,7 +1207,7 @@ def opus_cut_last_packet():
 FIXTURES = [
     vorbis_mono, vorbis_writer_claims_differ, vorbis_encoder_other_format, vorbis_encoder_vendor_wins, vorbis_encoder_fields, vorbis_stereo, vorbis_surround, vorbis_start_offset, vorbis_start_trim, vorbis_end_trim_large, vorbis_granule_errors, vorbis_packet_repeated, vorbis_granule_midstream, vorbis_granule_extreme, vorbis_empty_carrier, vorbis_end_page_repeated, vorbis_eos_then_eos, vorbis_eos_mid_then_more, vorbis_first_extreme, vorbis_skip_before_first, vorbis_skip_then_small, vorbis_short_start_trim, vorbis_packet_errors,
     vorbis_ident_invalid, vorbis_header_layout, vorbis_setup_truncated, vorbis_setup_invalid, vorbis_setup_rich, vorbis_vendors,
-    opus_toc_configs, opus_cbr, opus_multistream, opus_family255, opus_ambisonics2, opus_ambisonics3, opus_head_invalid, opus_granules,
+    opus_toc_configs, opus_cbr, opus_multistream, opus_family255, opus_ambisonics2, opus_ambisonics3, opus_ambisonics3_counts, opus_ambisonics3_dense, opus_head_invalid, opus_granules,
     opus_packets_corrupt, opus_writer_claims_differ, opus_encoder_other_format, opus_encoder_vendor_wins, opus_encoder_fields, opus_tags_variants,
     vorbis_cut_last_packet, opus_cut_last_packet,
 ]

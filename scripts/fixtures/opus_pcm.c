@@ -159,8 +159,14 @@ static int run_ogg(const char *path, FILE *out)
                         }
                         streams = h[19];
                         coupled = h[20];
+                        opus_int32 matrix_bytes = 2 * channels * (streams + coupled);
+                        if (packet.bytes < 21 + matrix_bytes)
+                        {
+                            fprintf(stderr, "short OpusHead\n");
+                            return 1;
+                        }
                         int error = 0;
-                        projection = opus_projection_decoder_create(48000, channels, streams, coupled, (unsigned char *)h + 21, (opus_int32)(packet.bytes - 21), &error);
+                        projection = opus_projection_decoder_create(48000, channels, streams, coupled, (unsigned char *)h + 21, matrix_bytes, &error);
                         if (!projection)
                         {
                             fprintf(stderr, "libopus does not accept the stream: %d\n", error);

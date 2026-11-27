@@ -18,8 +18,9 @@ internal sealed class FrameDecoder : IFrameDecoder
     private const int CeltUnits = 44;
     private const int SilkUnits = 24;
 
-    // The units a multiply and add of the demixing matrix costs (family 3), a coefficient times a sample added to the running sum of an output channel.
-    private const int DemixUnits = 2;
+    // The units a multiply and add of the demixing matrix costs (family 3), a coefficient times a sample added to the running sum of an output channel, measured with the matrix-dominated
+    // case of DecoderWorkTests (docs/design/decoders.md, "Opus").
+    private const int DemixUnits = 1;
 
     // What a CELT frame costs whatever its length (the energy and allocation passes, the band loop, the transform's set-up), measured on the frames of 5 ms, which are the cheapest per
     // sample to charge (docs/design/decoders.md, "Opus").
@@ -37,7 +38,6 @@ internal sealed class FrameDecoder : IFrameDecoder
     // left then right); null for the other families.
     private readonly float[]? _demix;
     private readonly int _decodedChannels;
-    private float[] _decoded = [];
     private float[][][] _streamPcm;
     private float[] _planar = [];
     private int _stride;
@@ -80,7 +80,7 @@ internal sealed class FrameDecoder : IFrameDecoder
 
         for (int c = 0; c < sources; c++)
         {
-            int m = head.Family == 0 ? c : head.Family == 3 ? c : head.Mapping[c];
+            int m = head.Family is 0 or 3 ? c : head.Mapping[c];
             if (m == 255)
             {
                 _isSilent[c] = true;
