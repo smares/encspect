@@ -427,6 +427,11 @@ public sealed record ReplicatedBandsFigures
     // The frames tested: every second frame of the spectrum.
     public int FramesUsed { get; init; }
 
+    // The rows of a band (1 kHz) and the rows between the starts of two grid bands.
+    public int BandRows { get; init; }
+
+    public int StepRows { get; init; }
+
     public bool IsFound { get; init; }
 
     public ReplicatedBandsReason Reason { get; init; }

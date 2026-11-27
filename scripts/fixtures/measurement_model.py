@@ -306,6 +306,151 @@ def find_coherence(sum_left, sum_right, sum_re, sum_im, counters, frames, cutoff
     return result
 
 
+REPLICATED_MINIMUM_FRAMES = 10
+REPLICATED_SIGNAL_FLOOR = 1e-10
+
+
+class ReplicatedCounters:
+    """The counters of the replicated bands (Step 9): per grid band and offset in rows, the frames with signal in both bands and those that match."""
+
+    def __init__(self, w, rate):
+        self.w = w
+        self.step = max(1, w // 4)
+        self.first_shift = max(1, (150 * 1024 + rate // 2) // rate)
+        self.half = max(2, self.first_shift)
+        self.count = 0
+        while self.start(self.count) + w - 1 <= 505:
+            self.count += 1
+        self.frames = [[0] * ROWS for _ in range(self.count)]
+        self.matches = [[0] * ROWS for _ in range(self.count)]
+        self.used = 0
+
+    def start(self, k):
+        return self.w + k * self.step
+
+
+def count_replicated(rows, counters):
+    """One used frame: the fine structure x = ln P minus the mean of ln P within 150 Hz on each side (cut at the spectrum's ends), and for every band and offset whether
+    both bands have signal and whether 4 S_ts^2 >= S_tt S_ss with S_ts > 0."""
+    w = counters.w
+    logs = [math.log(p if p >= 1e-30 else 1e-30) for p in rows]
+    x = []
+    for r in range(ROWS):
+        low, high = max(0, r - counters.half), min(ROWS - 1, r + counters.half)
+        x.append(logs[r] - sum(logs[low:high + 1]) / (high - low + 1))
+    for k in range(counters.count):
+        s = counters.start(k)
+        target = x[s:s + w]
+        power_t = sum(rows[s:s + w])
+        if not power_t >= w * REPLICATED_SIGNAL_FLOOR:
+            continue
+        s_tt = sum(v * v for v in target)
+        for d in range(counters.first_shift, s):
+            source = x[s - d:s - d + w]
+            if not sum(rows[s - d:s - d + w]) >= w * REPLICATED_SIGNAL_FLOOR:
+                continue
+            counters.frames[k][d] += 1
+            s_ts = sum(a * b for a, b in zip(target, source))
+            s_ss = sum(v * v for v in source)
+            if s_ts > 0 and 4.0 * s_ts * s_ts >= s_tt * s_ss:
+                counters.matches[k][d] += 1
+
+
+def find_replicated(counters, rate, size, cutoff, bandwidth):
+    """The replicated bands of the combined spectrum (docs/design/spectral-analysis.md, Step 9) from the counters of the stream, in integers."""
+    if rate < 8000:
+        return {"is_searched": False}
+    w, _, bins = band_rows(rate, size)
+    bands = []
+    shifts = []
+    max_frames = 0
+    for k in range(counters.count):
+        s = counters.start(k)
+        best, best_matches = -1, -1
+        for d in range(w, s):
+            max_frames = max(max_frames, counters.frames[k][d])
+            if counters.matches[k][d] > best_matches:
+                best, best_matches = d, counters.matches[k][d]
+        if best < 0:
+            bands.append({"start_row": s, "offset": 0, "share": None, "frames_with_signal": 0, "is_periodic": False, "passes": False})
+            shifts.append(0)
+            continue
+        n = counters.frames[k][best]
+        periodic = best_matches > 0 and any(2 * counters.matches[k][d] >= best_matches for d in range(counters.first_shift, min(w, s)))
+        shifts.append(best)
+        bands.append({"start_row": s, "offset": hertz(best, rate, size, bins), "share": (2000 * best_matches + n) // (2 * n) if n > 0 else None,
+                      "frames_with_signal": n, "is_periodic": periodic,
+                      "passes": n >= REPLICATED_MINIMUM_FRAMES and 2 * best_matches >= n and not periodic})
+    result = {"is_searched": True, "frames_used": counters.used, "is_found": False, "reason": "", "from_frequency": 0, "to_frequency": 0, "range_frequency": 0,
+              "top_band_share": 0, "is_top_band_periodic": False, "stretches": [], "bands": bands}
+    if counters.used < REPLICATED_MINIMUM_FRAMES:
+        result["reason"] = "tooFewFrames"
+        return result
+    last = 505
+    if cutoff.get("is_found") and (edge := row_of_upper_edge(cutoff["frequency"], rate, size, bins)) >= 0:
+        last = min(last, edge)
+    elif bandwidth.get("is_found") and (content := row_of_upper_edge(bandwidth["frequency"], rate, size, bins)) >= 0:
+        last = min(last, content)
+    top_band = -1
+    for k in range(counters.count):
+        if counters.start(k) + w - 1 <= last:
+            top_band = k
+    result["range_frequency"] = hertz(last + 1, rate, size, bins)
+    if top_band < 0:
+        result["reason"] = "tooShort"
+        return result
+    if max_frames < REPLICATED_MINIMUM_FRAMES:
+        result["reason"] = "noSignal"
+        return result
+    top = bands[top_band]
+    result["top_band_share"] = 0 if top["share"] is None else top["share"]
+    result["is_top_band_periodic"] = top["is_periodic"]
+    # The stretches: passing bands up to the range, joined across gaps shorter than half a band.
+    groups = []
+    for k in range(counters.count):
+        s = counters.start(k)
+        if s + w - 1 > last or not bands[k]["passes"]:
+            continue
+        if groups and 2 * (s - (groups[-1]["end"] + 1)) < w:
+            groups[-1]["end"] = max(groups[-1]["end"], s + w - 1)
+            groups[-1]["bands"].append(k)
+        else:
+            groups.append({"first": s, "end": s + w - 1, "bands": [k]})
+    stretches = []
+    for g in groups:
+        runs = []
+        for k in g["bands"]:
+            s = counters.start(k)
+            if runs and abs(shifts[k] - runs[-1]["shift"]) <= 1:
+                runs[-1]["end"] = s + w - 1
+                runs[-1]["count"] += 1
+            else:
+                runs.append({"first": s, "end": s + w - 1, "shift": shifts[k], "count": 1})
+        i = 0
+        while i < len(runs) and len(runs) > 1:
+            if runs[i]["count"] > 1:
+                i += 1
+                continue
+            if i > 0:
+                runs[i - 1]["end"] = max(runs[i - 1]["end"], runs[i]["end"])
+            else:
+                runs[i + 1]["first"] = runs[i]["first"]
+            del runs[i]
+        shares = [bands[k]["share"] for k in g["bands"]]
+        stretches.append({"from_frequency": hertz(g["first"], rate, size, bins), "to_frequency": hertz(g["end"] + 1, rate, size, bins), "end_row": g["end"],
+                          "offsets": [{"offset": hertz(r["shift"], rate, size, bins), "from_frequency": hertz(r["first"], rate, size, bins),
+                                       "to_frequency": hertz(r["end"] + 1, rate, size, bins)} for r in runs],
+                          "lowest_share": min(shares), "highest_share": max(shares)})
+    result["stretches"] = stretches
+    if not stretches:
+        result["reason"] = "notMatching"
+    elif last - stretches[-1]["end_row"] > w:
+        result["reason"] = "notAtTop"
+    else:
+        result.update(is_found=True, from_frequency=stretches[-1]["from_frequency"], to_frequency=stretches[-1]["to_frequency"])
+    return result
+
+
 def floor_div(a, b):
     return a // b
 
@@ -824,6 +969,7 @@ def measure(data, layout=None):
     sums = [[0.0] * ROWS for _ in range(sets)]
     counters = [Counters() for _ in range(sets)]
     coherence_counters = Counters()
+    replicated = ReplicatedCounters(w, rate) if searched else None
     cross_re = [0.0] * ROWS
     cross_im = [0.0] * ROWS
     frames = 0
@@ -851,6 +997,9 @@ def measure(data, layout=None):
             sums[measured][r] += combined[r]
         if searched:
             count_frame(combined, counters[measured], w, first_candidate)
+            if ((segment_start - origin) // hop) % 2 == 0:
+                count_replicated(combined, replicated)
+                replicated.used += 1
         if pair:
             left, right = bins[pair[0]], bins[pair[1]]
             # The mid bin is (L + R) / 2 and the side bin (L - R) / 2, per bin, so identical channels give a side of exactly 0.
@@ -935,6 +1084,7 @@ def measure(data, layout=None):
     slopes = [find_slope(fine[c], rate, size) for c in range(sets)]
     partial = find_partial(counters[measured], rate, size)
     holes = find_holes(counters[measured], rate, size, cutoffs[measured], bandwidths[measured])
+    replicated_bands = find_replicated(replicated, rate, size, cutoffs[measured], bandwidths[measured]) if searched else {"is_searched": False}
     mid_side = None
     if pair:
         mid_side = {"left_channel": pair[0], "right_channel": pair[1], "mid": levels[measured + 1], "side": levels[measured + 2],
@@ -972,6 +1122,6 @@ def measure(data, layout=None):
         "sample_rate": rate, "channels": channels, "channels_measured": measured, "bits": bits, "samples": samples, "first_position": first_position or 0,
         "lost_samples": lost, **({"withheld_samples": withheld} if withheld else {}), "gaps": gaps, "fft_size": size, "frames": frames, "combined": levels[measured], "per_channel": levels[:measured],
         "cutoff": cutoffs[measured], "channel_cutoffs": cutoffs[:measured], "bandwidth": bandwidths[measured],
-        "channel_bandwidths": bandwidths[:measured], "slope": slopes[measured], "channel_slopes": slopes[:measured], "partial_cutoff": partial, "holes": holes, "mid_side": mid_side, "coherence": coherence, "levels": levels_of(runs, measured, bits, rate),
+        "channel_bandwidths": bandwidths[:measured], "slope": slopes[measured], "channel_slopes": slopes[:measured], "partial_cutoff": partial, "holes": holes, "mid_side": mid_side, "coherence": coherence, "replicated_bands": replicated_bands, "levels": levels_of(runs, measured, bits, rate),
         "loudness": loudness_of(runs, measured, bits, rate, layout), "true_peak": true_peak_of(runs, measured, bits, rate), "spectrogram_columns": columns, "hops_per_column": 1 << shift, "waveform": waveform,
     }

@@ -1,7 +1,7 @@
 ---
 id: opus-celt
 title: Opus CELT: bands, energy and pulses
-related: opus-modes, block-switching, intensity-stereo, mid-side-stereo, opus-range-coder, coded-bandwidth
+related: opus-modes, block-switching, intensity-stereo, mid-side-stereo, opus-range-coder, coded-bandwidth, celt-folding
 references: RFC 6716, section 4.3
 ---
 

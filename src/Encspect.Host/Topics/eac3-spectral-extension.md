@@ -1,7 +1,7 @@
 ---
 id: eac3-spectral-extension
 title: Spectral extension in E-AC-3
-related: ac3-coupling, sbr, eac3-substreams
+related: ac3-coupling, sbr, eac3-substreams, replicated-bands
 references: ATSC A/52:2018 Annex E 2.3.2.24, 2.3.2.25, 2.3.3.1 to 2.3.3.13, 3.3, 3.6
 ---
 

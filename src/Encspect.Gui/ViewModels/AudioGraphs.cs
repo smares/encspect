@@ -244,9 +244,11 @@ public sealed class SpectrumGraph : AudioGraph
 {
     private readonly int _top;
     private readonly int _bottom;
+    private readonly short[] _bandShares = [];
+    private readonly int[] _bandOf = [];
 
     public SpectrumGraph(StreamInfo stream, StreamMeasurements measurements, GraphForm view)
-        : base("Spectrum", view == GraphForm.Coherence ? "%" : "dB", stream, measurements)
+        : base("Spectrum", view is GraphForm.Coherence or GraphForm.ReplicatedBands ? "%" : "dB", stream, measurements)
     {
         Spectrum = measurements.Spectrum ?? throw new ArgumentException("No spectrum was measured.");
         View = view;
@@ -257,6 +259,31 @@ public sealed class SpectrumGraph : AudioGraph
             // A fixed axis from 0 to 100 %.
             _top = 100;
             _bottom = 0;
+            return;
+        }
+
+        if (view == GraphForm.ReplicatedBands)
+        {
+            ReplicatedBandsFigures figures = Spectrum.ReplicatedBands ?? throw new ArgumentException("No replicated bands were measured.");
+            _top = 100;
+            _bottom = 0;
+
+            // Each grid band's share over the rows that lie nearest its center, as a step line.
+            _bandShares = new short[MeasurementLimits.Rows];
+            _bandOf = new int[MeasurementLimits.Rows];
+            Array.Fill(_bandShares, MeasurementLimits.NoPower);
+            Array.Fill(_bandOf, -1);
+            for (int k = 0; k < figures.Bands.Count; k++)
+            {
+                ReplicatedBand band = figures.Bands[k];
+                int first = band.StartRow + (figures.BandRows / 2) - (figures.StepRows / 2);
+                for (int row = Math.Max(0, first); row < Math.Min(MeasurementLimits.Rows, first + figures.StepRows); row++)
+                {
+                    _bandShares[row] = band.ShareTenths == MeasurementLimits.NoPower ? MeasurementLimits.NoPower : (short)band.ShareTenths;
+                    _bandOf[row] = k;
+                }
+            }
+
             return;
         }
 
@@ -291,10 +318,10 @@ public sealed class SpectrumGraph : AudioGraph
 
     public GraphForm View { get; }
 
-    public override string? Description => View == GraphForm.Coherence ? MeasurementText.InterChannelCoherenceDescription : MeasurementText.SpectrumDescription;
+    public override string? Description => View == GraphForm.Coherence ? MeasurementText.InterChannelCoherenceDescription : View == GraphForm.ReplicatedBands ? MeasurementText.ReplicatedBandsDescription : MeasurementText.SpectrumDescription;
 
     // The article that defines the average spectrum; the spectral cutoff is a figure read from it.
-    public override string? Topic => View == GraphForm.Coherence ? MeasurementText.InterChannelCoherenceTopic : MeasurementText.SpectrogramTopic;
+    public override string? Topic => View == GraphForm.Coherence ? MeasurementText.InterChannelCoherenceTopic : View == GraphForm.ReplicatedBands ? MeasurementText.ReplicatedBandsTopic : MeasurementText.SpectrogramTopic;
 
     public override int Count => MeasurementLimits.Rows;
 
@@ -313,12 +340,20 @@ public sealed class SpectrumGraph : AudioGraph
     public ReadOnlyMemory<short> Line(int index) => View == GraphForm.PerChannel ? Spectrum.PerChannel[index]
         : View == GraphForm.MidSide ? (index == 0 ? Spectrum.MidSide!.Mid : Spectrum.MidSide!.Side)
         : View == GraphForm.Coherence ? (index == 0 ? Spectrum.Coherence!.Rows : Spectrum.Coherence!.Shares)
+        : View == GraphForm.ReplicatedBands ? _bandShares
         : Spectrum.Combined;
 
     public string LineName(int index) => View == GraphForm.PerChannel ? Names[Math.Min(index, Names.Count - 1)]
         : View == GraphForm.MidSide ? (index == 0 ? "mid" : "side")
         : View == GraphForm.Coherence ? (index == 0 ? "inter-channel coherence" : "share of frames")
+        : View == GraphForm.ReplicatedBands ? "share of frames that match"
         : "all channels but the LFE";
+
+    // The replicated-bands view's start of the highest stretch, as a line over frequency; null where none is found.
+    public int? ReplicatedStart => View == GraphForm.ReplicatedBands && Spectrum.ReplicatedBands is { IsFound: true } found ? found.FromFrequency : null;
+
+    // "Replicated bands: from 9,518 to 20,413 Hz, matching the rows 6,202 and 11,025 Hz lower, ..." in the replicated-bands view, else null.
+    public string? ReplicatedText => View == GraphForm.ReplicatedBands ? "Replicated bands: " + MeasurementText.ReplicatedBands(Spectrum.ReplicatedBands!) : null;
 
     // The coherence view's start of the run and the parser's stated bound, as lines over frequency; null where there is none.
     public int? CoherenceStart => View == GraphForm.Coherence && Spectrum.Coherence is { IsFound: true } found ? found.FromFrequency : null;
@@ -329,7 +364,7 @@ public sealed class SpectrumGraph : AudioGraph
     public string? CoherenceText => View == GraphForm.Coherence ? "Inter-channel coherence: " + MeasurementText.Coherence(Spectrum.Coherence!) : null;
 
     // A level in the unit of the view: dB, or percent in the coherence view.
-    private string LevelOf(int tenths) => View == GraphForm.Coherence ? MeasurementText.Percent(tenths) : Level(tenths);
+    private string LevelOf(int tenths) => View is GraphForm.Coherence or GraphForm.ReplicatedBands ? MeasurementText.Percent(tenths) : Level(tenths);
 
     // The cutoff of a line of the mid and side view where one is found; the other views draw the combined spectrum's (AudioGraph.Cutoff).
     public SpectralCutoff? LineCutoff(int index) =>
@@ -355,11 +390,18 @@ public sealed class SpectrumGraph : AudioGraph
         for (int i = 0; i < Lines; i++)
         {
             short tenths = Line(i).Span[index];
-            string level = tenths == MeasurementLimits.NoPower ? (View == GraphForm.Coherence ? "none" : "no power") : LevelOf(tenths);
+            string level = tenths == MeasurementLimits.NoPower ? (View is GraphForm.Coherence or GraphForm.ReplicatedBands ? "none" : "no power") : LevelOf(tenths);
             levels.Add(HasLegend ? $"{LineName(i)} {level}" : level);
         }
 
         string text = $"{Hertz(RowCenterHertz(index))} · {string.Join(", ", levels)}";
+        if (View == GraphForm.ReplicatedBands)
+        {
+            return _bandOf[index] is >= 0 and var k && Spectrum.ReplicatedBands!.Bands[k] is { Offset: > 0 } band
+                ? $"{text} of the frames match the band {Hertz(band.Offset)} lower{(band.IsPeriodic ? ", periodic" : string.Empty)}"
+                : text;
+        }
+
         if (View == GraphForm.MidSide)
         {
             return string.Concat(Enumerable.Range(0, 2).Where(i => IsOnLineCutoff(i, index)).Select(i => $" · {LineName(i)} cutoff: {MeasurementText.Cutoff(LineCutoff(i)!)}")) is { Length: > 0 } onCutoff ? text + onCutoff : text;
@@ -561,7 +603,7 @@ public static class AudioPanels
             entries.Add(new GraphChoice(SpectrogramTitle, GraphHeadings.Audio, graph.Description, [new GraphFormChoice(GraphForm.Audio, SpectrogramTitle, graph.Description!, graph)]));
         }
 
-        if (m.Spectrum is not null)
+        if (m.Spectrum is { IsReplicatedBandsOnly: false })
         {
             var combined = new SpectrumGraph(stream, m, GraphForm.Combined);
             var forms = new List<GraphFormChoice> { new(GraphForm.Combined, "Combined", "The average spectrum of all channels together, but the LFE", combined) };
@@ -578,6 +620,11 @@ public static class AudioPanels
             if (m.Spectrum.Coherence is { IsSearched: true })
             {
                 forms.Add(new GraphFormChoice(GraphForm.Coherence, "Coherence", "The inter-channel coherence of the pair of channels in percent at each row, and the share of frames in which the band of 1 kHz under the row is coherent", new SpectrumGraph(stream, m, GraphForm.Coherence)));
+            }
+
+            if (m.Spectrum.ReplicatedBands is { IsSearched: true })
+            {
+                forms.Add(new GraphFormChoice(GraphForm.ReplicatedBands, "Replicated Bands", "The share of the frames in which each band of 1 kHz matches the band an offset lower, in percent, at the band's frequency, with the offset in the hover text", new SpectrumGraph(stream, m, GraphForm.ReplicatedBands)));
             }
 
             entries.Add(new GraphChoice(SpectrumTitle, GraphHeadings.Audio, combined.Description, forms));

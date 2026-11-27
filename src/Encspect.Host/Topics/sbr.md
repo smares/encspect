@@ -1,7 +1,7 @@
 ---
 id: sbr
 title: Spectral band replication (SBR, HE-AAC)
-related: mp3pro, parametric-stereo, aac-object-types, audio-specific-config
+related: mp3pro, parametric-stereo, aac-object-types, audio-specific-config, replicated-bands
 references: ISO/IEC 14496-3 1.6.2.1, 4.6.18; fdk-aac
 ---
 

@@ -23,6 +23,8 @@ internal sealed class StreamMeasurer
 
     private const int CheckEvery = 1 << 16;
 
+    internal static int ReplicationWeight(int fftSize) => ReplicationWeights[BitOperationsLog2(fftSize) - 10];
+
     // The work per sample of a measured channel for the levels, in the decoders' unit: 5 for integers, with the low bits unused per span (2 to 3 ns; the FLAC reference runs at 0.38 ns a unit on Windows ARM, where 32-bit stereo takes 3.06 ns), 14 for floats, which are converted
     // safely first and checked for the bit-depth grids (7.5 to 10.6 ns a sample measured for doubles of any magnitude, a ratio of 1.0 to 1.3 to the reference).
     private const int IntegerLevelsWeight = 5;

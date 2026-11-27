@@ -35,6 +35,9 @@ public enum GraphForm
     // The inter-channel coherence of the pair per row, and the share of frames in which each band is coherent, as percent.
     Coherence,
 
+    // The share of the frames in which each band of 1 kHz matches the band an offset lower, as percent, over the band's frequency.
+    ReplicatedBands,
+
     // Every unit of a series as a square, in rows like text (FrameMapGraph).
     Map,
 }

@@ -233,7 +233,7 @@ internal static class ReplicatedBandsFinder
             };
         }
 
-        var figures = new ReplicatedBandsFigures { FramesUsed = framesUsed, Bands = bands };
+        var figures = new ReplicatedBandsFigures { FramesUsed = framesUsed, BandRows = w, StepRows = counters.Step, Bands = bands };
         if (framesUsed < MeasurementLimits.MinimumReplicatedBandsFrames)
         {
             return figures with { Reason = ReplicatedBandsReason.TooFewFrames };

@@ -214,12 +214,13 @@ public sealed partial class GraphView
         {
             WaveformGraph waveform => $"{Format.Count(waveform.Channels, "channel", "channels")} over {Format.Timestamp(waveform.EndSeconds - waveform.StartSeconds)}, in 16-bit sample codes",
             SpectrogramGraph spectrogram => $"Time from {Format.Timestamp(spectrogram.StartSeconds)} to {Format.Timestamp(spectrogram.EndSeconds)}, frequency from 0 Hz to {AudioGraph.Hertz(spectrogram.NyquistHertz)}, level from {RampBottomDb} to {RampTopDb} dB",
+            SpectrumGraph { View: GraphForm.ReplicatedBands } replicated => $"Share of the frames that match in percent from 0 Hz to {AudioGraph.Hertz(replicated.NyquistHertz)}",
             SpectrumGraph { View: GraphForm.Coherence } coherence => $"Coherence in percent from 0 Hz to {AudioGraph.Hertz(coherence.NyquistHertz)}; Legend: " + string.Join(", ", Enumerable.Range(0, coherence.Lines).Select(coherence.LineName)),
             SpectrumGraph spectrum => $"Level in dB from 0 Hz to {AudioGraph.Hertz(spectrum.NyquistHertz)}" + (spectrum.HasLegend ? "; Legend: " + string.Join(", ", Enumerable.Range(0, spectrum.Lines).Select(spectrum.LineName)) : string.Empty),
             LoudnessGraph loudness => $"Short-term loudness in LUFS from {Format.Timestamp(loudness.StartSeconds)} to {Format.Timestamp(loudness.EndSeconds)}",
             _ => string.Empty,
         };
-        return string.Join(". ", new[] { what, graph is LoudnessGraph figures ? string.Join(", ", figures.Figures.Select(f => $"{f.Name} {f.Text}")) : string.Empty, graph is WaveformGraph or SpectrogramGraph or SpectrumGraph { View: not GraphForm.Coherence } ? graph.CutoffText ?? string.Empty : string.Empty, graph is SpectrumGraph { View: GraphForm.Coherence } coherenceText ? coherenceText.CoherenceText ?? string.Empty : string.Empty, graph is SpectrumGraph { View: GraphForm.MidSide } pair ? pair.LineCutoffText ?? string.Empty : string.Empty, HoverText ?? string.Empty }.Where(t => t.Length > 0));
+        return string.Join(". ", new[] { what, graph is LoudnessGraph figures ? string.Join(", ", figures.Figures.Select(f => $"{f.Name} {f.Text}")) : string.Empty, graph is WaveformGraph or SpectrogramGraph or SpectrumGraph { View: not (GraphForm.Coherence or GraphForm.ReplicatedBands) } ? graph.CutoffText ?? string.Empty : string.Empty, graph is SpectrumGraph { View: GraphForm.Coherence } coherenceText ? coherenceText.CoherenceText ?? string.Empty : string.Empty, graph is SpectrumGraph { View: GraphForm.ReplicatedBands } replicatedText ? replicatedText.ReplicatedText ?? string.Empty : string.Empty, graph is SpectrumGraph { View: GraphForm.MidSide } pair ? pair.LineCutoffText ?? string.Empty : string.Empty, HoverText ?? string.Empty }.Where(t => t.Length > 0));
     }
 
     private void ResetAudio()
@@ -551,7 +552,7 @@ public sealed partial class GraphView
     private void DrawSpectrum(DrawingContext context, SpectrumGraph graph, AudioLayout layout, IBrush secondary, IPen grid, Color accent)
     {
         Rect plot = layout.Plot;
-        context.DrawText(Text(graph.View == GraphForm.Coherence ? "%" : "dB", TextSize, secondary), new Point(4, 2));
+        context.DrawText(Text(graph.View is GraphForm.Coherence or GraphForm.ReplicatedBands ? "%" : "dB", TextSize, secondary), new Point(4, 2));
         double range = graph.AxisTop - graph.AxisBottom;
         double Y(double decibels) => plot.Bottom - (Math.Clamp(decibels - graph.AxisBottom, 0, range) / range * plot.Height);
         foreach (double tick in layout.Ticks)
@@ -677,7 +678,17 @@ public sealed partial class GraphView
             }
         }
 
-        if (graph.View is not (GraphForm.MidSide or GraphForm.Coherence) && graph.Cutoff is { } cutoff)
+        // The replicated-bands view draws the start of the highest stretch as a dashed line with its frequency.
+        if (graph.ReplicatedStart is { } replicatedStart)
+        {
+            double x = Math.Round(plot.Left + (replicatedStart / (double)Math.Max(1, graph.NyquistHertz) * plot.Width)) + 0.5;
+            context.DrawLine(new Pen(Palette.Foreground(this), 1.25, new DashStyle([4, 3], 0)), new Point(x, plot.Top), new Point(x, plot.Bottom));
+            FormattedText label = Text("start " + AudioGraph.Hertz(replicatedStart), AxisSize, Palette.Foreground(this));
+            double start = x + 6 + label.Width <= plot.Right ? x + 6 : x - 6 - label.Width;
+            context.DrawText(label, new Point(start, plot.Top + 2));
+        }
+
+        if (graph.View is not (GraphForm.MidSide or GraphForm.Coherence or GraphForm.ReplicatedBands) && graph.Cutoff is { } cutoff)
         {
             double x = Math.Round(plot.Left + (cutoff.Frequency / (double)Math.Max(1, graph.NyquistHertz) * plot.Width)) + 0.5;
             context.DrawLine(new Pen(Palette.Foreground(this), 1.25, new DashStyle([4, 3], 0)), new Point(x, plot.Top), new Point(x, plot.Bottom));

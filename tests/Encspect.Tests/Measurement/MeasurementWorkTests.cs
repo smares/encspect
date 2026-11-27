@@ -79,6 +79,45 @@ public sealed class MeasurementWorkTests(ITestOutputHelper output)
         Assert.True(paired / unpaired <= 1 + (4.0 * StreamMeasurer.PairWeight / 25), $"The pair makes the run {paired / unpaired:F2} times as slow.");
     }
 
+    // The replicated bands (docs/design/spectral-analysis.md, Step 9) beside the spectrum alone, per sample of the stream, in the reference's units of the round: the
+    // charge is StreamMeasurer.ReplicationWeight, and noise is the worst case (every band has signal in every frame, so every pair is tested).
+    [Theory]
+    [InlineData(8000)]
+    [InlineData(22050)]
+    [InlineData(44100)]
+    [InlineData(88200)]
+    [InlineData(176400)]
+    [InlineData(352800)]
+    public void TheReplicatedBandsAddAtMostTwiceTheirCharge(int rate)
+    {
+        int[][] data = Data(2, Signal.Noise);
+        const MeasurementKinds both = MeasurementKinds.Spectrum | MeasurementKinds.ReplicatedBands;
+        for (int warm = 0; warm < 3; warm++)
+        {
+            RunOnce(rate, 2, data, MeasurementKinds.Spectrum);
+            RunOnce(rate, 2, data, both);
+        }
+
+        DecoderWorkTests.ReferenceRoundNanosecondsPerUnit();
+        var added = new List<double>();
+        var references = new List<double>();
+        for (int round = 0; round < Rounds; round++)
+        {
+            double reference = DecoderWorkTests.ReferenceRoundNanosecondsPerUnit();
+            double spectrum = RunOnce(rate, 2, data, MeasurementKinds.Spectrum).Seconds;
+            double with = RunOnce(rate, 2, data, both).Seconds;
+            added.Add((with - spectrum) * 1e9 / Length);
+            references.Add(reference);
+        }
+
+        DecoderWorkTests.ReleaseReference();
+        double nanoseconds = Median(added);
+        double units = nanoseconds / Median(references);
+        int charge = StreamMeasurer.ReplicationWeight(FftPlan.SizeFor(rate));
+        output.WriteLine($"{rate} Hz, {FftPlan.SizeFor(rate)} points: the replicated bands add {nanoseconds:F1} ns a sample of the stream, {units:F1} units; charged {charge}");
+        Assert.True(units <= charge * Factor, $"The replicated bands take {units:F1} units a sample, {charge} are charged: the weight is too low.");
+    }
+
     // The sort of the loudness range's short-term values, the most it ever sorts, against the units it is charged (LoudnessMeter.SortUnits) at
     // the reference's time per unit of the same round.
     [Fact]
