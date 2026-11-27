@@ -14,7 +14,7 @@ public sealed partial class Mp4Parser
     // The bytes FFmpeg's mov_read_adrm takes from an adrm box: 8, a 56-byte blob, 4 and a 20-byte checksum.
     private const int AudibleDrmLength = 88;
 
-    // The extension boxes of Microsoft's PIFF, which GPAC names (gf_isom_solve_uuid_box): the sample encryption and the track encryption box.
+    // The extension boxes of Microsoft's PIFF, (Bocharov et al., "The Protected Interoperable File Format (PIFF)", section 5.3): the sample encryption and the track encryption box.
     private static readonly Guid PiffSampleEncryption = new("A2394F52-5A9B-4F14-A244-6C427C648DF4");
 
     private static readonly Guid PiffTrackEncryption = new("8974DBCE-7BE7-4C51-84F9-7148F9882554");

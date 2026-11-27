@@ -2,7 +2,7 @@
 id: common-encryption
 title: Common Encryption in MP4
 related: iso-base-media-format, fragmented-mp4, mp4-sample-tables
-references: ISO/IEC 23001-7 (Common encryption in ISO base media file format files); ISO/IEC 14496-12 8.12 (protected tracks); MP4 registration authority (scheme types and boxes); DASH-IF content protection identifiers; FFmpeg libavformat/mov.c
+references: ISO/IEC 23001-7 (Common encryption in ISO base media file format files); ISO/IEC 14496-12 8.12 (protected tracks); MP4 registration authority (scheme types and boxes); DASH-IF content protection identifiers
 ---
 
 **What problem it solves.** A streaming service wants to encrypt a file once and let phones, browsers and set-top boxes with different DRM systems play it. Common Encryption separates the two jobs: the file says how its samples are encrypted, and each DRM system supplies the keys in its own way.

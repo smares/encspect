@@ -292,7 +292,7 @@ internal static class Explain
     public const string NeroSegment = "A segment of Nero's tag: its header and, where the segment has fields of its own, a list of them. The files seen have one for each chapter, and one where the file has none.";
     public const string NeroSegmentHeader = "The header of a segment: its number.";
     public const string NeroSegmentIndex = "The segment's number, counting from 0: 0, 1 and 2 for the three chapters of the file that has them, 0 in the files without chapters.";
-    public const string ChaptersReserved = "Four bytes that version 1 of Nero's chapter box adds, as ffmpeg reads it.";
+    public const string ChaptersReserved = "Four bytes that version 1 of Nero's chapter box adds (MediaInfo's moov_udta_chpl skips eight bytes after the box header, the version and flags and four more).";
     public const string ChapterCount = "The number of chapters in Nero's list.";
     public const string Chapter = "A chapter of Nero's list: its start and title.";
     public const string ChapterStart = "Where the chapter starts, stored in units of 100 nanoseconds.";

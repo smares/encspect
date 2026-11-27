@@ -507,7 +507,7 @@ def schm(scheme, version=0x10000, uri=None):
 def tenc(is_protected=1, iv_size=8, kid=bytes(range(0x10, 0x20)), version=0, crypt=0, skip=0, constant_iv=None):
     """ISO/IEC 23001-7's track encryption box: a reserved byte, version 0's second reserved byte or version 1's
     crypt and skip blocks, then the default IsProtected, per-sample IV size and KID, and a constant IV where
-    protected samples carry none of their own (GPAC's tenc_box_read and FFmpeg's mov_read_tenc read the same)."""
+    protected samples carry none of their own."""
     body = u8(0) + (u8(0) if version == 0 else u8((crypt << 4) | skip)) + u8(is_protected) + u8(iv_size) + kid
     if constant_iv is not None:
         body += u8(len(constant_iv)) + constant_iv
@@ -553,7 +553,7 @@ def seig_entry(is_protected, iv_size, kid, crypt=0, skip=0, constant_iv=None):
 
 
 def sgpd_seig(entries, version=1, default=0, default_length=0):
-    """A sample group description of grouping type seig, laid out as FFmpeg's mov_read_sgpd and GPAC read it: default_length from version 1 and
+    """A sample group description of grouping type seig, laid out as ISO/IEC 14496-12's SampleGroupDescriptionBox: default_length from version 1 and
     default_sample_description_index from version 2, then the entry count; an entry has its length first where default_length is 0 (versions 1 and 2),
     and none in version 0, where a seig entry sizes itself."""
     head = b"seig" + (u32(default_length) if version >= 1 else b"") + (u32(default) if version >= 2 else b"") + u32(len(entries))

@@ -184,7 +184,7 @@ public sealed partial class Mp4Parser
         // Only text counts: the other data types render as hexadecimal or numbers, which name no software.
         if (itemType == "©too" && type is 1 or 2 or 3 or 4 or 5 && text is { Length: > 0 })
         {
-            // No Apple specification defines ©too, and ffmpeg's muxer writes its own version into it (movenc.c:4203-4204): the writer's, unless the text is a libavcodec encoder ID.
+            // No Apple specification defines ©too, and ffmpeg's muxer writes its own version into it (the external-ffmpeg-* fixtures): the writer's, unless the text is a libavcodec encoder ID.
             state.Context.AddEncoderClaim(new EncoderClaim(text, state.Findings.Resolve(item), "MP4 ©too atom", ClaimRoles.Of(ClaimRole.Writer, text)));
         }
 
