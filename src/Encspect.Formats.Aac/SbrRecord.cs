@@ -71,10 +71,23 @@ internal static class SbrRecord
     public const int PsFrameClass = 6;
     public const int PsEnvelopes = 7;
     public const int PsBorders = 8;
+
+    // 1 where the coherence mode (3 to 5, Table 8.27) selects mixing procedure Rb, 0 for Ra (modes 0 to 2); 1 where this frame's extension carries IPD and OPD (enable_ipdopd).
+    public const int PsMixingB = 14;
+    public const int PsEnableIpdopd = 15;
     public const int PsIidTime = 16;
     public const int PsIccTime = 22;
     public const int PsIid = 30;
     public const int PsIcc = 200;
     public const int PsStride = 34;
     public const int PsMaxEnvelopes = 5;
+
+    // The IPD and OPD of each envelope as coded: the differential direction (1 across time) and per envelope PsPhaseStride symbols of the Huffman codebooks (the differences, modulo 8 of the
+    // index), as many as the IID mode names (nr_ipdopd_par: 5, 11 or 17).
+    public const int PsIpdTime = 370;
+    public const int PsOpdTime = 375;
+    public const int PsIpd = 380;
+    public const int PsPhaseStride = 17;
+    public const int PsOpd = PsIpd + (PsMaxEnvelopes * PsPhaseStride);
+    public const int PsEnd = PsOpd + (PsMaxEnvelopes * PsPhaseStride);
 }

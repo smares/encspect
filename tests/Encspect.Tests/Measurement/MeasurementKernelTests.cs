@@ -43,6 +43,25 @@ public class MeasurementKernelTests
     }
 
     [Fact]
+    public void TheArctangentMatchesTheLibrary()
+    {
+        for (double x = -50; x < 50; x += 0.0137)
+        {
+            Assert.True(Math.Abs(DetMath.Atan(x) - Math.Atan(x)) < 2e-15, $"atan {x}");
+            for (double y = -3; y < 3; y += 0.37)
+            {
+                Assert.True(Math.Abs(DetMath.Atan2(y, x) - Math.Atan2(y, x)) < 4e-15, $"atan2 {y} {x}");
+            }
+        }
+
+        Assert.Equal(0.0, DetMath.Atan2(0, 0));
+        Assert.Equal(DetMath.HalfPi, DetMath.Atan2(2, 0), 15);
+        Assert.Equal(-DetMath.HalfPi, DetMath.Atan2(-2, 0), 15);
+        Assert.Equal(DetMath.Pi, DetMath.Atan2(0, -1), 15);
+        Assert.Equal(DetMath.Pi / 4, DetMath.Atan(1), 15);
+    }
+
+    [Fact]
     public void TheLogarithmExponentialPowerAndTangentMatchTheLibrary()
     {
         for (double x = 1e-12; x < 1e12; x *= 1.37)

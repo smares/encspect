@@ -189,7 +189,7 @@ internal static partial class Sbr
 
     private static Span<int> Scratch()
     {
-        int[] scratch = _scratch ??= new int[SbrRecord.Ps + SbrRecord.PsIcc + (SbrRecord.PsMaxEnvelopes * SbrRecord.PsStride)];
+        int[] scratch = _scratch ??= new int[SbrRecord.Ps + SbrRecord.PsEnd];
         Array.Clear(scratch);
         return scratch;
     }
@@ -535,6 +535,7 @@ internal static partial class Sbr
             state[4] = iccMode > 2 ? iccMode - 3 : iccMode;
             state[5] = bits.ReadBit() ? 1 : 0;
             state[6] = 1;
+            state[7] = iccMode > 2 ? 1 : 0;
         }
 
         ps[SbrRecord.PsEnableIid] = state[0];
@@ -542,6 +543,7 @@ internal static partial class Sbr
         ps[SbrRecord.PsIidFine] = state[2];
         ps[SbrRecord.PsEnableIcc] = state[3];
         ps[SbrRecord.PsIccMode] = state[4];
+        ps[SbrRecord.PsMixingB] = state[7];
         if (state[6] == 0 || state[1] > 2 || state[4] > 2)
         {
             // No header yet, or a mode above the 34 bands of mode 2 (the coding the standard marks reserved).
@@ -596,7 +598,8 @@ internal static partial class Sbr
             }
         }
 
-        // enable_ext of the last header: the extension's size and bytes, which the decoder does not use (the baseline decoders skip them).
+        // enable_ext of the last header: the extension's size and bytes. Extension 0 holds the IPD and OPD (Tables 8.10, 8.13 and 8.14), which the decoder applies; any other ID defines nothing
+        // and ends what is read of the extension.
         if (state[5] != 0 && left - (bits.Original - start) >= 4)
         {
             int count = (int)bits.Read(4);
@@ -605,11 +608,40 @@ internal static partial class Sbr
                 count += (int)bits.Read(8);
             }
 
-            bits.Skip(Math.Min(count * 8, Math.Max(0, left - (bits.Original - start))));
+            int available = Math.Min(count * 8, Math.Max(0, left - (bits.Original - start)));
+            int end = bits.Original + available;
+            if (available > 7 && bits.Read(2) == 0 && bits.ReadBit())
+            {
+                ReadPhase(ref bits, envelopes, state[1] switch { 0 => 5, 1 => 11, _ => 17 }, ps);
+                ps[SbrRecord.PsEnableIpdopd] = bits.Original <= end ? 1 : 0;
+            }
+
+            bits.Skip(Math.Max(0, end - bits.Original));
         }
 
         ps[SbrRecord.PsEnvelopes] = envelopes;
         return bits.Original - start;
+    }
+
+    // The IPD and OPD of every envelope (ipd_data and opd_data): the direction flag and the symbols of the codebook of that direction.
+    private static void ReadPhase(ref AacBits bits, int envelopes, int parameters, Span<int> ps)
+    {
+        for (int e = 0; e < envelopes; e++)
+        {
+            int time = bits.ReadBit() ? 1 : 0;
+            ps[SbrRecord.PsIpdTime + e] = time;
+            for (int b = 0; b < parameters; b++)
+            {
+                ps[SbrRecord.PsIpd + (e * SbrRecord.PsPhaseStride) + b] = time != 0 ? PsHuffman.DecodeIpdTime(ref bits) : PsHuffman.DecodeIpdFrequency(ref bits);
+            }
+
+            time = bits.ReadBit() ? 1 : 0;
+            ps[SbrRecord.PsOpdTime + e] = time;
+            for (int b = 0; b < parameters; b++)
+            {
+                ps[SbrRecord.PsOpd + (e * SbrRecord.PsPhaseStride) + b] = time != 0 ? PsHuffman.DecodeOpdTime(ref bits) : PsHuffman.DecodeOpdFrequency(ref bits);
+            }
+        }
     }
 
     private static int BandCount(int mode) => mode switch { 0 => 10, 1 => 20, _ => 34 };

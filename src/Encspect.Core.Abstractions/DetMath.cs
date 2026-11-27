@@ -276,4 +276,57 @@ public static class DetMath
 
     // The binary exponent of a positive double, from its bits (0 for zero and subnormals reads as -1023).
     public static int Exponent(double x) => (int)((BitConverter.DoubleToInt64Bits(x) >> 52) & 0x7FF) - 1023;
+
+    // The angle of the point (x, y) in (-pi, pi], and the arctangent as its special case: the ratio of the smaller to the larger magnitude is folded into [0, tan(pi / 8)] with
+    // the identities of the arctangent (a sum of an octant of pi and the arctangent of a smaller argument), halved once more by atan u = 2 atan (u / (1 + sqrt (1 + u^2))), and
+    // summed as a series; the octant and the signs then place it. Atan2(0, 0) is 0.
+    public static double Atan2(double y, double x)
+    {
+        double ax = Math.Abs(x);
+        double ay = Math.Abs(y);
+        if (ax == 0.0 && ay == 0.0)
+        {
+            return 0.0;
+        }
+
+        double angle = ay > ax ? HalfPi - AtanUnit(ax / ay) : AtanUnit(ay / ax);
+        if (x < 0.0)
+        {
+            angle = Pi - angle;
+        }
+
+        return y < 0.0 ? -angle : angle;
+    }
+
+    public static double Atan(double x) => Atan2(x, 1.0);
+
+    // atan t for t in [0, 1].
+    private static double AtanUnit(double t)
+    {
+        double octant = 0.0;
+        if (t > 0.41421356237309503)
+        {
+            octant = Pi / 4.0;
+            t = (t - 1.0) / (t + 1.0);
+        }
+
+        double v = t / (1.0 + Math.Sqrt(1.0 + (t * t)));
+        double v2 = v * v;
+
+        // v - v^3 / 3 + v^5 / 5 - ...: |v| is at most 0.2, so thirteen terms leave less than 1e-19.
+        double sum = -1.0 / 25.0;
+        sum = (sum * v2) + (1.0 / 23.0);
+        sum = (sum * v2) - (1.0 / 21.0);
+        sum = (sum * v2) + (1.0 / 19.0);
+        sum = (sum * v2) - (1.0 / 17.0);
+        sum = (sum * v2) + (1.0 / 15.0);
+        sum = (sum * v2) - (1.0 / 13.0);
+        sum = (sum * v2) + (1.0 / 11.0);
+        sum = (sum * v2) - (1.0 / 9.0);
+        sum = (sum * v2) + (1.0 / 7.0);
+        sum = (sum * v2) - (1.0 / 5.0);
+        sum = (sum * v2) + (1.0 / 3.0);
+        sum = (sum * v2) - 1.0;
+        return octant - (2.0 * v * sum);
+    }
 }
