@@ -117,6 +117,24 @@ class VbrLayer3Fixture(Layer3Fixture):
             self.finding(code, contains)
         return self
 
+    def add_stream_after_junk(self, tag_frame, junk_bytes, audio):
+        """Like add_stream, with bytes that are not audio between the header frame and the first audio frame."""
+        tag_frame.is_header = True
+        start = len(self.data)
+        self.add_frames([tag_frame])
+        self.gap(junk_bytes)
+        self.add_frames(audio)
+        tag = vbr_tags.read(bytes(self.data[start : start + tag_frame.length()]), b"".join(f.bytes() for f in audio))
+        tag_frame.tag_end = tag_end(tag)
+        entry = self.frames[-len(audio) - 1]
+        entry["fields"].update(vbr_tags.report_fields(tag))
+        tag["frame_offset"] = start
+        self.layout[-len(audio) - 1]["header"] = tag
+        self.headers.append(tag)
+        for code, contains in vbr_tags.findings(tag, start, cut_short(tag, self.frames[-len(audio) - 1 :])):
+            self.finding(code, contains)
+        return self
+
     def manifest(self):
         manifest = super().manifest()
         manifest["vbr_header"] = self.headers[0] if self.headers else None
@@ -773,7 +791,7 @@ def xing_junk_after():
     f = VbrFixture("xing-junk-after", "A Xing header frame, 100 bytes that are not audio, then the audio frames: the header frame is a "
                    "frame on its own structure, and the 100 bytes are junk between it and the audio, not leading junk.", crosscheck=False)
     f.add_stream_after_junk(xing_frame(audio), mpeg.junk(100, 31), audio)
-    return f.finding("mpeg-audio.junk-after-header-frame", "100 bytes after the Xing header frame")
+    return f.finding("mpeg-audio.junk-after-vbr-header-frame", "100 bytes after the Xing header frame")
 
 
 @fixture
@@ -781,16 +799,16 @@ def info_junk_after():
     audio = vbr_audio([128] * 8, rate=48000, mode="Stereo")
     f = VbrFixture("info-junk-after", "An Info header frame, 100 bytes that are not audio, then CBR audio frames.", crosscheck=False)
     f.add_stream_after_junk(xing_frame(audio, tag_id="Info"), mpeg.junk(100, 32), audio)
-    return f.finding("mpeg-audio.junk-after-header-frame", "100 bytes after the Info header frame")
+    return f.finding("mpeg-audio.junk-after-vbr-header-frame", "100 bytes after the Info header frame")
 
 
 @fixture
 def vbri_junk_after():
     audio = vbr_audio([128, 160, 96, 192, 112, 128, 224, 64], rate=44100, mode="Joint stereo")
-    f = VbrFixture("vbri-junk-after", "A VBRI header frame, 100 bytes that are not audio, then the audio frames, as the VBSpot sample "
-                   "\"Invalid data after tag\" has them.", encoder=encoder("Fraunhofer", "High"), crosscheck=False)
+    f = VbrFixture("vbri-junk-after", "A VBRI header frame, 100 bytes that are not audio, then the audio frames, as one of the private MP3 "
+                   "samples has them.", encoder=encoder("Fraunhofer", "High"), crosscheck=False)
     f.add_stream_after_junk(vbri_frame(audio, bitrate=128), mpeg.junk(100, 33), audio)
-    return f.finding("mpeg-audio.junk-after-header-frame", "100 bytes after the VBRI header frame")
+    return f.finding("mpeg-audio.junk-after-vbr-header-frame", "100 bytes after the VBRI header frame")
 
 
 @fixture
@@ -801,6 +819,59 @@ def xing_implausible_junk():
     f = VbrFixture("xing-implausible-junk", "A frame header with \"Xing\" at the right offset but flags no header sets and no chain of "
                    "frames after it: it is not accepted as a header frame, so it is part of the leading junk.", crosscheck=False)
     f.gap(frame.bytes() + mpeg.junk(100, 34))
+    f.add_frames(audio)
+    return f.finding("mpeg-audio.leading-junk", "bytes before the first frame")
+
+
+@fixture
+def main_data_in_header_frame_after_junk():
+    f = VbrLayer3Fixture(
+        "main-data-in-header-frame-after-junk",
+        "An Info frame with a LAME tag, 100 bytes that are not audio, then frames whose first main_data_begin is 200: its main "
+        "data begins in the Info frame's unused bytes, across the junk. The finding about the header frame names the file's shape, "
+        "not the one about a gap. The LAME tag's music CRC covers bytes the junk changed, so it is not verified.",
+        encoder=encoder("LAME 3.100", "High"), silent=False, crosscheck=False,
+    )
+    chain = layer3.reservoir_chain([(0, 0), (300, 200), (100, 0), (250, 50), (80, 0), (120, 0)])
+    assert chain[0].area_length() == INFO_AREA and chain[0].length() == 417
+    audio = chain[1:]
+    info = xing_frame(audio, tag_id="Info", lame=LAME_CBR)
+    start, tag = info.payload
+    reservoir = bytes(chain[0].area[INFO_AREA - 200 :])
+    info.payload = (start, tag + bytes(INFO_AREA - 200 - len(tag)) + reservoir)
+    f.add_stream_after_junk(info, mpeg.junk(100, 35), audio)
+    return f.finding("mpeg-audio.junk-after-vbr-header-frame", "100 bytes after the Info header frame").finding(
+        "mpeg-audio.music-crc-not-verified", "bytes that are not audio")
+
+
+@fixture
+def xing_junk_starts_with_header():
+    audio = vbr_audio([128, 160, 96, 192, 112, 128, 224, 64], rate=44100, mode="Joint stereo")
+    f = VbrFixture("xing-junk-starts-with-header", "A Xing header frame, then 100 bytes that are not audio and start with a copy of the audio "
+                   "frames' header: sync rests on the header frame alone, so everything up to the audio chain is junk, not a cut frame.",
+                   crosscheck=False)
+    f.add_stream_after_junk(xing_frame(audio), audio[0].header() + mpeg.junk(96, 36), audio)
+    return f.finding("mpeg-audio.junk-after-vbr-header-frame", "100 bytes after the Xing header frame")
+
+
+@fixture
+def xing_other_stream_after():
+    audio = vbr_audio([128, 160, 96, 192, 112, 128, 224, 64], rate=44100, mode="Joint stereo")
+    other = vbr_audio([128, 160, 96, 192, 112, 128, 224, 64], rate=48000, mode="Joint stereo")
+    f = VbrFixture("xing-other-stream-after", "A Xing header frame at 44100 Hz, 100 bytes that are not audio, then frames at 48000 Hz: "
+                   "the audio is not of the header frame's stream, so the header frame is not accepted and is part of the leading junk.",
+                   crosscheck=False)
+    f.gap(xing_frame(audio).bytes() + mpeg.junk(100, 37))
+    f.add_frames(other)
+    return f.finding("mpeg-audio.leading-junk", "bytes before the first frame")
+
+
+@fixture
+def xing_after_junk():
+    audio = vbr_audio([128, 160, 96, 192, 112, 128, 224, 64], rate=44100, mode="Joint stereo")
+    f = VbrFixture("xing-after-junk", "50 bytes that are not audio, then a Xing header frame, 100 more bytes and the audio frames: the "
+                   "exception holds only for a header frame at the start of the audio, so all of it is leading junk.", crosscheck=False)
+    f.gap(mpeg.junk(50, 38) + xing_frame(audio).bytes() + mpeg.junk(100, 39))
     f.add_frames(audio)
     return f.finding("mpeg-audio.leading-junk", "bytes before the first frame")
 

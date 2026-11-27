@@ -1,5 +1,5 @@
 {
- "description": "The test samples of VBSpot, the project lead's first audio analyzer (about 2008): nine files whose names say what each tests. Most are commercial recordings, so they are never committed: they are fetched from the private repository (mirrors/samples/vbspot) and checked against their SHA-256. Per file: what it tests, and what the analyzer must report (the frames, the tags with their kind and version, the stream, the VBR header, the encoder, the gaps and the findings), each checked against the file by hand.",
+ "description": "A private set of nine MP3 test samples with tag and header edge cases (names say what each tests). Most are commercial recordings, so they are never committed: they are fetched from the private repository (mirrors/samples/vbspot) and checked against their SHA-256. Per file: what it tests, and what the analyzer must report (the frames, the tags with their kind and version, the stream, the gaps, the VBR header, the encoder and the findings), each checked against the file by hand.",
  "private_folder": "vbspot",
  "samples": [
   {
@@ -64,7 +64,7 @@
    "file": "3718 (Invalid data after tag).mp3",
    "sha256": "56e91a18b8ec1535138b0a293b68a93102577f9f2659adb2417d77345bb32d56",
    "size": 5325017,
-   "tests": "An ID3v2.3 tag to 0x800, a 160 kbps VBRI header frame at 0x800, 102 bytes that are not audio, the first audio frame at 0xA70, and an ID3v1.1 tag at the end. The header frame counts on its own structure and the 102 bytes are junk after it (mpeg-audio.junk-after-header-frame), not leading junk. The VBRI header claims more frames and bytes than the stream holds.",
+   "tests": "An ID3v2.3 tag to 0x800, a 160 kbps VBRI header frame at 0x800, 102 bytes that are not audio, the first audio frame at 0xA70, and an ID3v1.1 tag at the end. The header frame counts on its own structure and the 102 bytes are junk after it (mpeg-audio.junk-after-vbr-header-frame), not leading junk. The first audio frames take main data from the header frame's unused bytes (main-data-in-vbr-header-frame), and the VBRI header claims more frames and bytes than the stream holds.",
    "frames": 6544,
    "regions": [
     {
@@ -89,7 +89,12 @@
      "length": 128
     }
    ],
-   "gaps": [],
+   "gaps": [
+    {
+     "offset": 2570,
+     "length": 102
+    }
+   ],
    "vbr_header": "VBRI",
    "lame_tag": false,
    "stream": {
@@ -105,9 +110,9 @@
     "confidence": "High"
    },
    "findings": [
-    "mpeg-audio.junk-after-header-frame",
+    "mpeg-audio.junk-after-vbr-header-frame",
     "mpeg-audio.main-data-begin-exceeds-buffer",
-    "mpeg-audio.reservoir-across-gap",
+    "mpeg-audio.main-data-in-vbr-header-frame",
     "mpeg-audio.vbr-byte-count-mismatch",
     "mpeg-audio.vbr-frame-count-mismatch"
    ]
@@ -182,7 +187,12 @@
      "length": 97854
     }
    ],
-   "gaps": [],
+   "gaps": [
+    {
+     "offset": 2146,
+     "length": 1013
+    }
+   ],
    "vbr_header": null,
    "lame_tag": false,
    "stream": {

@@ -274,6 +274,10 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         int freeLength = 0;
         // The type of the VBR header frame that the stream starts with while no audio frame follows it yet.
         string? headerFrameType = null;
+        // Where the audio chain begins after a header frame accepted without one: what lies before it is junk, whatever it starts with.
+        long junkEnd = -1;
+        long headerStart = -1;
+        int junkFreeLength = 0;
 
         // A stream change found where sync returns after a gap is reported on the frame there,
         // once its length is known.
@@ -283,7 +287,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         {
             state.CheckCancellation(frames);
             long at = position;
-            if (stream is { } current && at + 4 <= end && blocks.TryReadUInt32(at, out uint raw) && new MpegHeader(raw) is { IsValid: true } header)
+            if (stream is { } current && (junkEnd <= at || at == headerStart) && at + 4 <= end && blocks.TryReadUInt32(at, out uint raw) && new MpegHeader(raw) is { IsValid: true } header)
             {
                 if (header.IsSameStream(current))
                 {
@@ -369,8 +373,14 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             long next = FindStreamStart(blocks, stream is null ? position : position + 1, end, end, out int foundFreeLength);
             if (stream is null && frames == 0 && next > position && LeadingHeaderFrame(blocks, ZeroRunEnd(blocks, position, next), next, end) is { } headerAt)
             {
+                (junkEnd, junkFreeLength, headerStart) = (next, foundFreeLength, headerAt);
                 next = headerAt;
                 foundFreeLength = 0;
+            }
+            else if (junkEnd > position)
+            {
+                next = junkEnd;
+                foundFreeLength = junkFreeLength;
             }
 
             long gapEnd = next < 0 ? end : next;
@@ -432,7 +442,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             }
             else if (afterHeaderFrame is not null && !trailing)
             {
-                findings.AddNow(Severity.Warning, "mpeg-audio.junk-after-header-frame", $"{Counts.Of(length, "byte", "bytes")} after the {afterHeaderFrame} header frame, before the first audio frame at {findings.At(gapEnd)}, {Counts.Agree(length, "is", "are")} not audio.", GapNode(gap, state.Build.Stretches));
+                findings.AddNow(Severity.Warning, "mpeg-audio.junk-after-vbr-header-frame", $"{Counts.Of(length, "byte", "bytes")} after the {afterHeaderFrame} header frame, before the next frame at {findings.At(gapEnd)}, {Counts.Agree(length, "is", "are")} not audio.", GapNode(gap, state.Build.Stretches));
             }
             else if (trailing)
             {

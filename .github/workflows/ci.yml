@@ -791,7 +791,7 @@ jobs:
           ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
         run: python3 scripts/fixtures/check_mp3pro_samples.py .cache/mp3pro
 
-      # Thomson's decoder test items and the VBSpot samples are not ours to publish: only the private repository serves them.
+      # Thomson's decoder test items and a private set of MP3 test samples are not ours to publish: only the private repository serves them.
       # Without the secret (a pull request from a fork) the files are skipped.
       - name: Check the private MPEG sample manifests against the samples
         env:

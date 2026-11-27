@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Checks tests/conformance/thomson-mp3-samples.json and vbspot-mp3-samples.json against two private sets of MP3 files.
+"""Checks tests/conformance/thomson-mp3-samples.json and private-mp3-samples.json against two private sets of MP3 files.
 
 - Thomson's "mp3 Tips & Tricks for MP3 Decoder Implementations" (2008): nine files built to trip a decoder up, among them a
   51 MB ID3v2.3 tag, appended ID3v2.4 tags with a footer, VBR with and without a Xing or VBRI header, and 30 MB of raw PCM in the audio.
-- The test samples of VBSpot, the lead's first audio analyzer (about 2008): two ID3v2 tags, junk after a VBRI header frame, headerless
+- A private set of nine MP3 test samples with tag and header edge cases: two ID3v2 tags, junk after a VBRI header frame, headerless
   VBR, an APEv2 tag that looks like ID3v1, a cut file with APEv2, Lyrics3 v2 and ID3v1, and two mp3PRO files.
 
 The files are Thomson's material or commercial recordings, which this repository must not redistribute, so the only address is the
@@ -22,6 +22,7 @@ Usage:
 """
 
 import json
+import os
 import pathlib
 import subprocess
 import sys
@@ -32,7 +33,7 @@ import tool_versions
 from conformance_mpeg_audio import child, walk
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-MANIFESTS = ["thomson-mp3-samples.json", "vbspot-mp3-samples.json"]
+MANIFESTS = ["thomson-mp3-samples.json", "private-mp3-samples.json"]
 
 
 def addresses(manifest, sample):
@@ -72,7 +73,7 @@ def analyzer_problems(analyzer, path, sample):
     regions = [{"name": c["name"], "kind": c["kind"], "value": c.get("value"), "offset": c["offset"], "length": c["length"]} for c in report["root"]["children"]]
     differs("regions", regions, sample["regions"])
     stream_nodes = [c for c in report["root"]["children"] if c["kind"] == "Stream"]
-    gaps = [{"offset": g["offset"], "length": g["length"]} for s in stream_nodes for g in s.get("children", []) if g.get("kind") == "Gap"]
+    gaps = [{"offset": g["offset"], "length": g["length"]} for s in stream_nodes for g in s.get("children", []) if g["name"] == "Gap"]
     differs("gaps", gaps, sample["gaps"])
     header = lame = None
     if frames:
@@ -117,6 +118,9 @@ def main():
             for problem in analyzer_problems(analyzer, path, sample) if analyzer else tool_problems(path, sample):
                 problems += 1
                 print(f"{sample['file']}: {problem}")
+    if not checked and os.environ.get("GITHUB_EVENT_NAME") in ("push", "schedule", "workflow_dispatch"):
+        # Only a pull request from a fork has no secret; on main, the nightly run and a manual run a missing secret must not pass as a check.
+        sys.exit("No private MPEG sample was checked: ENCSPECT_PRIVATE_TOKEN is not set.")
     what = "Analyzed" if analyzer else "Checked"
     print(f"{what} {checked} private MPEG samples, {problems} problems.", file=sys.stderr)
     sys.exit(1 if problems else 0)

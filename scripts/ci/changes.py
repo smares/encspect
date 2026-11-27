@@ -42,7 +42,7 @@ AREAS = {
                     "mpeg_tables.py", "minimp3_tool.py", "crosscheck_mpeg_bandwidth.py", "minimp3_coded.py"],
         "globs": ["scripts/fixtures/*.c", "scripts/fixtures/*.php", "scripts/fixtures/make_*mpeg*", "scripts/fixtures/make_layer*",
                   "scripts/fixtures/make_vbr*", "scripts/fixtures/make_stats*", "scripts/fixtures/make_*tag*", "scripts/fixtures/stream_stats.py",
-                  "tests/conformance/mpeg2-audio.json", "tests/conformance/mp3pro-samples.json", "tests/conformance/thomson-mp3-samples.json", "tests/conformance/vbspot-mp3-samples.json", "third_party/**"],
+                  "tests/conformance/mpeg2-audio.json", "tests/conformance/mp3pro-samples.json", "tests/conformance/thomson-mp3-samples.json", "tests/conformance/private-mp3-samples.json", "third_party/**"],
     },
     "mp4-crosscheck": {
         "projects": ["Encspect.Formats.Mp4", "Encspect.Formats.Aac"],

@@ -1,5 +1,5 @@
 {
- "description": "Thomson's \"mp3 Tips & Tricks for MP3 Decoder Implementations\" test items (2008): nine files built to trip a decoder up. Thomson's material, so they are never committed: they are fetched from the private repository (mirrors/samples/thomson-mp3-tips-and-tricks) and checked against their SHA-256. Per file: what it tests, and what the analyzer must report (the frames, the tags with their kind and version, the stream, the VBR header, the encoder, the gaps and the findings), each checked against the file by hand.",
+ "description": "Thomson's \"mp3 Tips & Tricks for MP3 Decoder Implementations\" test items (2008): nine files built to trip a decoder up. Thomson's material, so they are never committed: they are fetched from the private repository (mirrors/samples/thomson-mp3-tips-and-tricks) and checked against their SHA-256. Per file: what it tests, and what the analyzer must report (the frames, the tags with their kind and version, the stream, the gaps, the VBR header, the encoder and the findings), each checked against the file by hand.",
  "private_folder": "thomson-mp3-tips-and-tricks",
  "samples": [
   {
@@ -17,7 +17,12 @@
      "length": 30709256
     }
    ],
-   "gaps": [],
+   "gaps": [
+    {
+     "offset": 159732,
+     "length": 29987852
+    }
+   ],
    "vbr_header": null,
    "lame_tag": false,
    "stream": {
@@ -261,7 +266,7 @@
    "file": "VBR_vbri.mp3",
    "sha256": "a2fb91476cbc5f1e62f7df56ff967f03467d4feefa911ebe91a7585994009714",
    "size": 227988,
-   "tests": "The same audio with a VBRI header frame in front.",
+   "tests": "The same music, encoded again with a VBRI header frame in front (a separate encode, not the clean file plus a frame).",
    "frames": 692,
    "regions": [
     {
