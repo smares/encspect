@@ -32,6 +32,7 @@ internal static class CodingStatistics
         Node? predictionNode = null;
         Node? predictionBandsNode = null;
         Node? ltpNode = null;
+        Node? ltpBandsNode = null;
         Node? pulseNode = null;
         Node? sbrNode = null;
         Node? psNode = null;
@@ -167,7 +168,7 @@ internal static class CodingStatistics
                 ltpNode = statistics.Add(cover("Long-Term Prediction", Share(tally.LongTermPrediction, streams, "channel stream"), Explain.StatLtp, Topics.LongTermPrediction));
                 if (tally.LongTermPredictionBandsAvailable > 0)
                 {
-                    ltpNode.Add(cover("Long-Term Prediction Bands", Percent(tally.LongTermPredictionBands, tally.LongTermPredictionBandsAvailable), Explain.StatLtpBands, Topics.LongTermPrediction));
+                    ltpBandsNode = ltpNode.Add(cover("Long-Term Prediction Bands", Percent(tally.LongTermPredictionBands, tally.LongTermPredictionBandsAvailable), Explain.StatLtpBands, Topics.LongTermPrediction));
                 }
             }
 
@@ -292,6 +293,7 @@ internal static class CodingStatistics
             Prediction = predictionNode,
             PredictionBands = predictionBandsNode,
             LongTermPrediction = ltpNode,
+            LongTermPredictionBands = ltpBandsNode,
             Pulses = pulseNode,
             Sbr = sbrNode,
             ParametricStereo = psNode,

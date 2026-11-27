@@ -137,6 +137,8 @@ internal sealed record CodingNodes(Node? WindowSequences, Node? BlockSizes, Node
 
     public Node? LongTermPrediction { get; init; }
 
+    public Node? LongTermPredictionBands { get; init; }
+
     public Node? Sbr { get; init; }
 
     public Node? ParametricStereo { get; init; }
@@ -178,6 +180,10 @@ internal sealed class CodingRecorder(StreamSetup setup)
     private readonly CategorySeriesBuilder? _ltpSeries = setup.ObjectType == 4 ? new("Long-Term Prediction", CodingCategories.WithLtp, "channel stream") : null;
     private readonly ChunkedList<short> _predictionShare = new();
     private int _predictionShareUnits;
+    private readonly ChunkedList<short> _ltpShare = new();
+    private int _ltpShareUnits;
+    private int _unitLtpUsed;
+    private int _unitLtpAvailable;
     private int _unitPredictionUsed;
     private int _unitPredictionAvailable;
     private readonly CategorySeriesBuilder _pulseSeries = new("Pulse Data", CodingCategories.WithPulses, "channel stream");
@@ -253,7 +259,7 @@ internal sealed class CodingRecorder(StreamSetup setup)
     }
 
     // The prediction of the channel stream: whether it has predictor data (AAC Main) and ltp_data (AAC LTP), and the bands of Main's that use it of those it can.
-    public void Prediction(bool hasPrediction, bool hasLtp, int used, int available)
+    public void Prediction(bool hasPrediction, bool hasLtp, int used, int available, int ltpUsed = 0, int ltpAvailable = 0)
     {
         if (setup.ObjectType == 1)
         {
@@ -264,6 +270,8 @@ internal sealed class CodingRecorder(StreamSetup setup)
         else if (setup.ObjectType == 4)
         {
             _ltp.Add(hasLtp ? (byte)0 : (byte)1);
+            _unitLtpUsed += ltpUsed;
+            _unitLtpAvailable += ltpAvailable;
         }
     }
 
@@ -360,6 +368,8 @@ internal sealed class CodingRecorder(StreamSetup setup)
         _ltpSeries?.Add(CollectionsMarshal.AsSpan(_ltp));
         _predictionShare.Add(_unitPredictionAvailable == 0 ? (short)-1 : (short)CodingStatistics.RoundHalfEven(_unitPredictionUsed * 1000, _unitPredictionAvailable));
         _predictionShareUnits += _unitPredictionAvailable == 0 ? 0 : 1;
+        _ltpShare.Add(_unitLtpAvailable == 0 ? (short)-1 : (short)CodingStatistics.RoundHalfEven(_unitLtpUsed * 1000, _unitLtpAvailable));
+        _ltpShareUnits += _unitLtpAvailable == 0 ? 0 : 1;
         AddSbr();
         _sbrFrameClasses.End(Count);
         _sbrEnvelopes.End(Count);
@@ -414,6 +424,8 @@ internal sealed class CodingRecorder(StreamSetup setup)
         _ltp.Clear();
         _unitPredictionUsed = 0;
         _unitPredictionAvailable = 0;
+        _unitLtpUsed = 0;
+        _unitLtpAvailable = 0;
         _sbr.Clear();
         _ps.Clear();
         _unitMidSide = 0;
@@ -480,6 +492,7 @@ internal sealed class CodingRecorder(StreamSetup setup)
         }
         AddMidSideBands(offsets, nodes.MidSideBands, series, cancellation);
         AddPredictionBands(offsets, nodes.PredictionBands, series, cancellation);
+        AddShare(_ltpShare, _ltpShareUnits, "Long-Term Prediction Bands", Explain.LtpBandsSeries, offsets, nodes.LongTermPredictionBands, series, cancellation);
         AddBound(offsets, nodes.IntensityBound, series, cancellation);
         AddBandwidth(offsets, nodes.CodedBandwidth, time, series, cancellation);
         AddHertz(_valueHertz, "Last Non-Zero Coefficient", Explain.LastCoefficientSeries, Explain.LastCoefficientOverTimeSeries, offsets, nodes.LastCoefficient, time, series, cancellation);
@@ -557,6 +570,42 @@ internal sealed class CodingRecorder(StreamSetup setup)
         {
             Description = Explain.PredictionBandsSeries,
             Quantity = "Prediction Bands",
+        });
+    }
+
+    // "Long-Term Prediction Bands" per unit, as "Prediction Bands".
+    private void AddShare(ChunkedList<short> shares, int units, string name, string description, ReadOnlyMemory<double> offsets, Node? anchor, List<Series> series, CancellationToken cancellation)
+    {
+        if (units == 0 || anchor is null)
+        {
+            return;
+        }
+
+        var values = new double[units];
+        double[]? own = units == Count ? null : new double[units];
+        for (int i = 0, n = 0; i < Count; i++)
+        {
+            if (i % 4096 == 0)
+            {
+                cancellation.ThrowIfCancellationRequested();
+            }
+
+            if (shares[i] >= 0)
+            {
+                values[n] = shares[i] / 10.0;
+                if (own is not null)
+                {
+                    own[n] = offsets.Span[i];
+                }
+
+                n++;
+            }
+        }
+
+        series.Add(new Series(name, "%", SeriesAxis.FrameOffset, own is null ? offsets : own, values, anchor)
+        {
+            Description = description,
+            Quantity = name,
         });
     }
 

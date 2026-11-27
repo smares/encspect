@@ -710,7 +710,8 @@ internal sealed partial class BlockReader
             TrackPredictorGroups(ics, stream);
         }
 
-        _recorder?.Prediction(ics.Predictor, ics.Ltp, predictionUsed, predictionAvailable);
+        _recorder?.Prediction(ics.Predictor, ics.Ltp, predictionUsed, predictionAvailable,
+            ics.Ltp ? System.Numerics.BitOperations.PopCount(ics.LtpUsed) : 0, ics.Ltp ? Math.Min(ics.MaxSfb, 40) : 0);
         if (ics.WindowSequence == 2)
         {
             tally.MaxSfbShort[ics.MaxSfb]++;
