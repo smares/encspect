@@ -98,11 +98,16 @@ public class NyquistEdgeFinderTests
         }
     }
 
-    // A ramp has the same step at every boundary: the lowest is taken, and the boundary under it is not smaller, so it is not a local maximum.
-    [Fact]
-    public void AStepThatEqualsTheBoundaryUnderItIsNotALocalMaximum()
+    // A middle row at 456 makes the steps at boundaries 456 and 457 equal and the largest; the window starts at 457, so the boundary under the best is equal, not smaller: no edge.
+    // The control, the same shape one row up, is the boundary over the best that is equal, which is taken.
+    [Theory]
+    [InlineData(456, false)]
+    [InlineData(457, true)]
+    public void AStepThatEqualsTheBoundaryUnderItIsNotALocalMaximum(int middleRow, bool isFound)
     {
-        Assert.Empty(Find(Rows(r => -60_000 - (3_000 * Math.Clamp(r - 400, 0, 40))), Geometry48));
+        int[] rows = Rows(r => r < middleRow ? Pass : r == middleRow ? (Pass + Floor) / 2 : Floor);
+
+        Assert.Equal(isFound, Find(rows, Geometry48).Count == 1);
     }
 
     // One row at the middle level beside the wall makes the steps at its boundary and the one under it equal and the largest: the lowest is taken, and an equal step over it is
