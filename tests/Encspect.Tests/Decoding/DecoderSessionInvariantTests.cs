@@ -134,7 +134,6 @@ public class DecoderSessionInvariantTests
         ["mp4/cenc-dts.m4a"] = "the samples are encrypted, so the container hands over the header and no frame, and the DTS session starts at the first core frame",
         ["ac3/bsid-9.ac3"] = "a bit stream ID of 9, which A/52 does not define: only its header is read, so the stream is parsed and not decoded",
         ["ac3/bsid-10.ac3"] = "a bit stream ID of 10, which A/52 does not define: only its header is read, so the stream is parsed and not decoded",
-        ["ogg/opus-ambisonics-family-3.opus"] = "mapping family 3 (the demixing matrix), which the decoder does not apply, so the stream is parsed and not decoded",
         ["ogg/opus-head-invalid.opus"] = "an identification header the decoder refuses, so the stream is parsed and not decoded",
         ["mp4/ffmpeg-cenc-opus.mp4"] = "the samples are encrypted, so the container hands over the header and no audio packet, and the Opus session starts at the first audio packet",
         ["ogg/vorbis-header-layout.ogg"] = "a header libvorbis refuses (the comment header's framing bit), so the stream is parsed and not decoded",
