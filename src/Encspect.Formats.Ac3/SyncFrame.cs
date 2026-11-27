@@ -7,8 +7,8 @@ namespace Encspect.Formats.Ac3;
 // for AC-3 the syncinfo (A/52 5.3.1) and the start of the bit stream information up to acmod and,
 // where the bits fit, lfeon (5.3.2); for E-AC-3 (Annex E 2.2.2) strmtyp, substreamid, frmsiz, fscod,
 // fscod2 or numblkscod, acmod, lfeon and bsid. bsid sits five bytes into the frame in both, so it
-// tells the syntaxes apart: up to 8 AC-3, 9 and 10 AC-3 at half and quarter rate as ffmpeg and
-// liba52 read them, which A/52 does not define, 11 to 16 E-AC-3.
+// tells the syntaxes apart: up to 8 AC-3, 9 and 10 AC-3 at half and quarter rate as ffprobe and
+// the liba52 harness read them, which A/52 does not define, 11 to 16 E-AC-3.
 internal readonly struct SyncFrame(ulong raw)
 {
     public const int Length = 8;
@@ -95,8 +95,7 @@ internal readonly struct SyncFrame(ulong raw)
         }
     }
 
-    // bsid 9 and 10 (ffmpeg's ac3_parser.c and liba52's a52_syncinfo read them as half and quarter
-    // rate).
+    // bsid 9 and 10 (ffprobe and the liba52 harness read them as half and quarter rate on the fixtures).
     public int HalfRateShift => IsEac3 ? 0 : Math.Max(0, Bsid - 8);
 
     // Nominal bitrate in kbps for AC-3 (Table 5.18), divided as the sample rate is for bsid 9 and 10.

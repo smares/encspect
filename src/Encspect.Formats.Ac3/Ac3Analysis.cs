@@ -433,7 +433,7 @@ internal sealed class Ac3Analysis
                 break;
             case Issue.UndefinedBsid:
                 Findings.Add(Severity.Info, CodeOf(issue), Field, count =>
-                    $"bsid 9 or 10 is not defined by A/52, whose Annex E 2.3.1.6 says decoders mute it; ffmpeg and liba52 decode it as AC-3 at half or a quarter of the sample rate, as the report does. Its audio blocks are not read. First in {at} ({Times(count)}).");
+                    $"bsid 9 or 10 is not defined by A/52, whose Annex E 2.3.1.6 says decoders mute it; ffmpeg and the liba52 harness decode it as AC-3 at half or a quarter of the sample rate, as the report does. Its audio blocks are not read. First in {at} ({Times(count)}).");
                 break;
             case Issue.ReducedRate:
                 Findings.Add(Severity.Info, CodeOf(issue), Field, count =>
@@ -481,7 +481,7 @@ internal sealed class Ac3Analysis
                 break;
             case Issue.DownmixModeReserved:
                 Findings.Add(Severity.Info, CodeOf(issue), Field, count =>
-                    $"dmixmod is 3, which A/52 Annex D Table D2.2 reserves (E-AC-3's mixing metadata has the same field and no table of its own). The decoder should still reproduce audio and may read it as not indicated; encoders use it to indicate Dolby Pro Logic II, as ffmpeg's ac3defs.h notes, and Dolby's own files write it. First in {at} ({Times(count)}).");
+                    $"dmixmod is 3, which A/52 Annex D Table D2.2 reserves (E-AC-3's mixing metadata has the same field and no table of its own). The decoder should still reproduce audio and may read it as not indicated; Dolby's own files write it. First in {at} ({Times(count)}).");
                 break;
             case Issue.MantissaNoValue:
                 Findings.Add(Severity.Warning, CodeOf(issue), Field, count =>
