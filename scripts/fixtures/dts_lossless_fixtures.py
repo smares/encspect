@@ -294,15 +294,15 @@ def build_dtshd(api):
     file("dtshd-stream-truncated", "A .dtshd file that ends 100 bytes inside the last unit of its STRMDATA chunk.", [header, presentation, ("STRMDATA", None)], parts,
          lossless_cut, findings=[("dts-hd.chunk-truncated", "STRMDATA chunk"), ("dts.frame-truncated", "The last frame")], cut=cut,
          frames=rows_[:-1] + [[rows_[-1][0], rows_[-1][1] - 100]],
-         crosscheck=cc_hd(cc, ffprobe=False, decode=False, skip={"ffprobe": "ffmpeg's demuxer skips the STRMDATA chunk by its size and fails at the end of the cut file (dtshddec.c: avio_skip: 'End of file')", "decode": "no container"}))
+         crosscheck=cc_hd(cc, ffprobe=False, decode=False, skip={"ffprobe": "ffmpeg's demuxer skips the STRMDATA chunk by its size and fails at the end of the cut file ('End of file')", "decode": "no container"}))
     data, _ = build_file([header, ("CORESSMD", m.dtshd_core_metadata(48000, 384, 0x0003, 512)), ("STRMDATA", None)], parts)
     file("dtshd-metadata-truncated", "A .dtshd file that ends inside its CORESSMD chunk, before any audio.", [header, ("CORESSMD", m.dtshd_core_metadata(48000, 384, 0x0003, 512)), ("STRMDATA", None)],
          parts, [], findings=[("dts-hd.chunk-truncated", "CORESSMD chunk"), ("dts-hd.no-stream-data", "no STRMDATA")], cut=16 + 16 + 16 + 8, frames=[],
-         crosscheck=cc(ffprobe=False, decode=False, libdca=False, skip={"ffprobe": "ffmpeg's demuxer finds no STRMDATA chunk in the cut file (dtshddec.c: end of file before the stream data)", "decode": "no stream", "libdca": "libdca reads raw DTS only."}))
+         crosscheck=cc(ffprobe=False, decode=False, libdca=False, skip={"ffprobe": "ffmpeg's demuxer finds no STRMDATA chunk in the cut file (end of file before the stream data)", "decode": "no stream", "libdca": "libdca reads raw DTS only."}))
     file("dtshd-chunk-size-too-small", "A .dtshd file whose FILEINFO chunk states a size of 0 bytes, less than the 4 that FFmpeg's demuxer accepts.",
          [header, ("FILEINFO", b"", 0), ("STRMDATA", None)], parts, lossless,
          findings=[("dts-hd.chunk-size", "FILEINFO chunk")], frames=None,
-         crosscheck=cc(ffprobe=False, decode=False, libdca=False, skip={"ffprobe": "ffmpeg's demuxer refuses a chunk size under 4 (dtshddec.c: 'chunk size too small')", "decode": "no container", "libdca": "libdca reads raw DTS only."}))
+         crosscheck=cc(ffprobe=False, decode=False, libdca=False, skip={"ffprobe": "ffmpeg's demuxer refuses a chunk size under 4 ('chunk size too small')", "decode": "no container", "libdca": "libdca reads raw DTS only."}))
     # Padding that does not bring the next chunk to a 32-bit boundary.
     misaligned = [header, ("FILEINFO", m.dtshd_text("odds"), 5), ("STRMDATA", None)]
     data = m.dtshd_chunk("DTSHDHDR", header[1]) + m.dtshd_chunk("FILEINFO", m.dtshd_text("odds"), pad=False)
@@ -316,7 +316,7 @@ def build_dtshd(api):
          [header, ("STRMDATA", None, short)], parts, lossless_cut,
          findings=[("dts-hd.chunk-header", "are not a chunk header"), ("dts.frame-truncated", "The last frame")],
          frames=frames[:-1] + [[frames[-1][0], frames[-1][1] - 100]],
-         crosscheck=cc_hd(cc, ffprobe=False, decode=False, skip={"ffprobe": "ffmpeg's demuxer reads the bytes after the chunk as a chunk header and refuses its size (dtshddec.c: 'chunk size too small' or 'chunk size too big')", "decode": "no container"}))
+         crosscheck=cc_hd(cc, ffprobe=False, decode=False, skip={"ffprobe": "ffmpeg's demuxer reads the bytes after the chunk as a chunk header and refuses its size ('chunk size too small' or 'chunk size too big')", "decode": "no container"}))
     file("dtshd-trailing-data", "A .dtshd file with five bytes after its last chunk.", [header, ("STRMDATA", None)], parts, lossless,
          findings=[("dts-hd.trailing-data", "5 bytes after the last chunk")], extra=b"\x01\x02\x03\x04\x05", crosscheck=cc_hd(cc))
     # An ID3v1 tag after the last chunk: its first sixteen bytes read as a chunk ID and, with a title of five characters padded with nulls, as a size of
@@ -326,9 +326,9 @@ def build_dtshd(api):
         size = len(m.dtshd_chunk("DTSHDHDR", header[1]) + m.dtshd_chunk("STRMDATA", b"".join(parts)))
         file(f"dtshd-id3v1-{label}-char-title", f"A .dtshd file with an ID3v1 tag whose title has {label} characters after its last chunk.", [header, ("STRMDATA", None)], parts, lossless,
              extra=tag, regions=[["ID3v1", size, 128]],
-             crosscheck=cc_hd(cc, ffprobe=False, decode=False, skip={"ffprobe": "ffmpeg's demuxer reads the tag as a chunk header and refuses its size (dtshddec.c: 'chunk size too small' or 'chunk size too big')", "decode": "no container"}))
+             crosscheck=cc_hd(cc, ffprobe=False, decode=False, skip={"ffprobe": "ffmpeg's demuxer reads the tag as a chunk header and refuses its size ('chunk size too small' or 'chunk size too big')", "decode": "no container"}))
     file("dtshd-no-stream-data", "A .dtshd file with a header and metadata, but no STRMDATA chunk.", [header, presentation], [], [], findings=[("dts-hd.no-stream-data", "no STRMDATA")], frames=[],
-         crosscheck=cc(ffprobe=False, decode=False, libdca=False, skip={"ffprobe": "ffmpeg's demuxer finds no STRMDATA chunk (dtshddec.c: end of file)", "decode": "no stream", "libdca": "libdca reads raw DTS only."}))
+         crosscheck=cc(ffprobe=False, decode=False, libdca=False, skip={"ffprobe": "ffmpeg's demuxer finds no STRMDATA chunk (end of file)", "decode": "no stream", "libdca": "libdca reads raw DTS only."}))
 
     # Reserved values, metadata that differs from the stream, chunks the standard does not define, tables that do not fit.
     reserved = ("DTSHDHDR", m.dtshd_header(clock_code=3, tc_rate=9, reserved_flags=0x0100, core=True, extension=True))

@@ -445,7 +445,7 @@ public sealed partial class MpegAudioParser
                 if (IsFfmpeg(text) || quirk)
                 {
                     all.Add(new EncoderClaim("FFmpeg", header.TagNode,
-                        $"LAME tag laid out as ffmpeg's mp3 muxer writes it (the external-ffmpeg-* fixtures), with the encoder string \"{text}\"{(quirk ? " and ffmpeg's tag CRC" : string.Empty)}", ClaimRole.Writer)
+                        $"LAME tag laid out as ffmpeg's mp3 muxer writes it, with the encoder string \"{text}\"{(quirk ? " and ffmpeg's tag CRC" : string.Empty)}", ClaimRole.Writer)
                     {
                         IsLayout = true,
                     });

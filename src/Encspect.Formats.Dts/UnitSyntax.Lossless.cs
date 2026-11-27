@@ -454,7 +454,8 @@ internal sealed partial class UnitSyntax
         }
     }
 
-    // MediaInfo's Extensions_Padding and Extensions2: when the frame is larger than its band data aligned to 32 bits (counted from the sync word), the word there is DTS:X's
+    // The words are MediaInfo's (Extensions2); the position is what ffprobe's reading of the DTS:X fixtures shows (MediaInfo skips one more
+    // byte per segment and zero padding before it reads the word): when the frame is larger than its band data aligned to 32 bits (counted from the sync word), the word there is DTS:X's
     // (0x02000850) or DTS:X IMAX's (0xF14000D0 or 0xF14000D1). A word needs its 4 bytes here; ffprobe reads it with 1 to 3 left too.
     private void ReadXllExtensionData(int at, int endBit, AssetFacts asset, long dataEnd, XllCommon common, bool isWordRead)
     {

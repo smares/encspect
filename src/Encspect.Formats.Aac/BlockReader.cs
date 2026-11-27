@@ -962,7 +962,7 @@ internal sealed partial class BlockReader
         bool eight = ics.WindowSequence == 2;
         int windows = eight ? 8 : 1;
         // TNS_MAX_ORDER (Table 4.156): 20 for long windows of AAC Main and 12 for the other object types using TNS; LTP is
-        // counted with Main's 20 here, so for it only orders above 20 count.
+        // counted with Main's 20 here, so for it only orders above 20 count: the decoders differ on LTP (FFmpeg 12; faad2 and FDK AAC 20, read from their sources).
         int maxOrder = eight ? 7 : _setup.ObjectType is 1 or 4 ? 20 : 12;
         int total = 0;
         bool tooHigh = false;

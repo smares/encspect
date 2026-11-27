@@ -59,7 +59,7 @@ internal sealed record AacConfig
     // SBR as decoders apply it: signaled, or found where the configuration says nothing about it.
     public bool HasSbr => Sbr == true || (Sbr is null && SbrFound == true);
 
-    // PS applies only to a core of one channel: the parametric stereo extension sits in a single channel element's SBR data (ISO/IEC 14496-3 subpart 8).
+    // PS applies only to a core of one channel: the parametric stereo extension sits in a single channel element's SBR data (ISO/IEC 14496-3 1.5.2.3).
     public bool IsPsPossible => Channels == 1;
 
     // PS data in a stream of SBR and a core of one channel: signaled, or found in any block (ISO/IEC 14496-3 1.6.6.3 has PS applied from whatever block its data starts in).

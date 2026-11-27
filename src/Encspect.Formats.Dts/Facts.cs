@@ -169,8 +169,8 @@ internal sealed class AssetFacts
     // lossless layer.
     public bool IsXllComplete { get; set; }
 
-    // The extension data after the band data of the lossless frame, as MediaInfo's File_Dts.cpp finds it (Extensions_Padding, Extensions2): the sync word of DTS:X or of
-    // DTS:X IMAX, or None.
+    // The extension data after the band data of the lossless frame, the sync word of DTS:X or of DTS:X IMAX (the words are MediaInfo's, File_Dts.cpp Extensions2; the position, right at the
+    // next 32-bit boundary, is what ffprobe's reading of the DTS:X fixtures shows), or None.
     public XllExtension XllExtension { get; set; }
 
     // LBR's decoder initialization: its sample rate, speaker mask and bit rate, or 0.

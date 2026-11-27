@@ -585,7 +585,7 @@ internal static class AudioSpecificConfig
     }
 
     // Mps212Config() (ISO/IEC 23003-3 5.2), the MPEG Surround 2-1-2 settings of a channel pair
-    // element whose stereoConfigIndex is 1 to 3, read as libxaac does (ixheaacd_ld_mps_config.c).
+    // element whose stereoConfigIndex is 1 to 3, read as libxaac's ixheaacd_mps212_config does (decoder/ixheaacd_init_config.c).
     private static void Mps212Config(BitFields f, Node element, long stereoConfigIndex)
     {
         int start = f.Position;

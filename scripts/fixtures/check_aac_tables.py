@@ -144,17 +144,16 @@ def spec_section(lines, start, end):
 
 def compare_rows(problems, name, rows, codes, bits):
     if sorted(rows) != list(range(len(codes))):
-        problems.append(f"{name}: the specification lists {len(rows)} entries, the table {len(codes)}")
+        problems.append(f"{name}: the number of entries differs from the specification's")
         return
     for index, (length, code) in rows.items():
         if (bits[index], codes[index]) != (length, code):
-            problems.append(f"{name} index {index}: {bits[index]} bits, 0x{codes[index]:X}; the specification gives {length} bits, 0x{code:X}")
+            problems.append(f"{name} index {index} differs from the specification's")
 
 
 def spec_codebook(lines, number, hexadecimal):
     """Rows of 'index length codeword', two to a line, of Table 4.A.<number>; the SBR tables print length and codeword as 0x values."""
     word = r"(0x[0-9A-Fa-f]+)" if hexadecimal else r"([0-9a-fA-F]+)"
-    pattern = re.compile(r"(\d+)\s+" + (word if hexadecimal else r"(\d+)") + r"\s+" + word)
     section = spec_section(lines, rf"Table 4\.A\.{number} [–-] ", r"Table 4\.A\.\d+ [–-] |^\s*4\.A\.\d")
     rows = {}
     for line in section[1:]:
@@ -209,6 +208,9 @@ def check_specification(path, problems):
             if [rows.get(i, (None,))[0] for i in range(len(offsets))] != list(offsets) or len(offsets) - 1 != counts:
                 problems.append(f"sampling frequency index {index}: offsets differ from Table {table}")
             # A value in brackets replaces the offset for 960 (or 120) lines, and "(-)" leaves the offset out.
+            if any(i not in rows for i in range(len(offsets))):
+                problems.append(f"sampling frequency index {index}: Table {table} has fewer rows")
+                continue
             expected = [rows[i][1] if rows[i][1] else rows[i][0] for i in range(len(offsets)) if rows[i][1] != 0]
             if expected != list(offsets960) or len(offsets960) - 1 != counts960:
                 problems.append(f"sampling frequency index {index}: offsets for 960 or 120 lines differ from Table {table}")
@@ -217,7 +219,7 @@ def check_specification(path, problems):
     found = [[int(v) for v in re.findall(r"-?\d+", row)] for row in re.findall(r"\[([^\]]*)\]", block)]
     found = [row for row in found if len(row) == 16]
     if found != T.SBR_OFFSET:
-        problems.append(f"SBR_OFFSET differs from 4.6.18.3.2.1: the specification gives {found}")
+        problems.append("SBR_OFFSET differs from 4.6.18.3.2.1")
 
 
 def main(arguments):

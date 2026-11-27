@@ -42,7 +42,8 @@ internal struct Crc16()
     }
 
     // Adds the regions of a raw data block's elements that the ADTS CRC covers (ISO/IEC 14496-3
-    // 1.A.4.3): after
+    // 1.A.4.3 refers to ISO/IEC 13818-7 for the ADTS semantics; the 192 and 128 bits are libxaac's CRC_ADTS_RAW_DATA_BLK_LEN and
+    // CRC_ADTS_RAW_IIND_ICS, decoder/ixheaacd_bitbuffer.h, Apache-2.0): after
     // each element's ID, the first 192 bits of a single channel, LFE or coupling element and of a
     // channel pair, the first 128 bits of the pair's second channel from its global_gain, and the
     // whole of a program config or data stream element, each filled up with zero bits where the

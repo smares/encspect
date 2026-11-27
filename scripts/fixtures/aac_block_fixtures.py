@@ -1066,7 +1066,7 @@ ELD_NAMES = {13: "22.2", 1: "mono", 2: "stereo", 3: "3.0: center, left/right", 4
 
 
 def parametric_stereo_cores():
-    """PS only applies to a core of one channel (ISO/IEC 14496-3 subpart 8)."""
+    """PS only applies to a core of one channel (ISO/IEC 14496-3 1.5.2.3)."""
     from make_mp4_fixtures import adts_header
     core = 22050
     counts = M.sbr_bands(SBR_HEADER, 2 * core)
@@ -1084,7 +1084,7 @@ def parametric_stereo_cores():
     out = [("adts", "ps-in-multichannel-sce.aac", data, manifest(
         "ADTS at a core rate of 22050 Hz with channel configuration 3 (a single channel element and a channel pair element), each followed by SBR "
         "data, and the single channel element's carrying the parametric stereo extension's ID: parametric stereo applies to a core of one "
-        "channel only (ISO/IEC 14496-3 subpart 8), so the stream is HE-AAC with three channels and the ID is reported.", data, rows,
+        "channel only (ISO/IEC 14496-3 1.5.2.3), so the stream is HE-AAC with three channels and the ID is reported.", data, rows,
         [stream("HE-AAC", 44100, 3, "3.0", 12 * 2048, ffprobe_profile="LC", layout=["front center", "front left", "front right"])],
         {stats: share(12, 12, "access unit"), stats + "/Parametric Stereo": share(12, 12, "access unit"),
          "ADTS/Frame/Raw Data Block/FIL/Extension Payload/SBR Data/Parametric Stereo Extension": "2 (EXT_ID_PS)"},
@@ -1132,7 +1132,7 @@ def parametric_stereo_cores():
     out.append(("mp4",) + mp4_only(
         "ps-signaled-over-stereo-core",
         "HE-AAC v2 signaled hierarchically (audio object type 29) over a core of channel configuration 2: parametric stereo applies to a core of "
-        "one channel only (ISO/IEC 14496-3 subpart 8), so the stream is HE-AAC with two channels and a "
+        "one channel only (ISO/IEC 14496-3 1.5.2.3), so the stream is HE-AAC with two channels and a "
         "warning says so.", asc(2, core, 2, sbr=True, ps=True, signaling="hierarchical", extension_rate=44100), core, 2, units, [1024] * 12,
         [stream("HE-AAC", 44100, 2, "Stereo", 12 * 2048, vbr=True, ffprobe_profile="HE-AAC")],
         {asc_path + "/Audio Object Type": "29 (PS)"},

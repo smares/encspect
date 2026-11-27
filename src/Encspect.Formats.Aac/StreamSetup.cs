@@ -70,7 +70,7 @@ internal sealed class StreamSetup
     public int ExpectedLfe { get; }
 
     // The sampling frequency index whose band tables a rate uses: for a rate stated explicitly, the
-    // nearest standard rate's, by the ranges of the sampling frequency table (ISO/IEC 14496-3 Table 1.18).
+    // nearest standard rate's, by the ranges of ISO/IEC 14496-3 Table 4.82, "Sampling frequency mapping".
     public static int SampleRateIndex(int rate) => rate switch
     {
         >= 92017 => 0,

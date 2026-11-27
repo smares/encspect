@@ -204,7 +204,7 @@ internal sealed class BlockLog
                 ? $"{(signaled.Length > 0 ? ", and " : string.Empty)}{tally.PsEvidenceBlocks} of {tally.EvidenceBlocks} raw data blocks carry the parametric stereo extension's ID"
                 : string.Empty;
             findings.AddNow(Severity.Warning, "aac.ps-without-mono-core",
-                $"{signaled}{found}, but the core has {config.Channels} channels; parametric stereo applies only to a core of one channel (ISO/IEC 14496-3 subpart 8), so the report shows the stream without it.", node);
+                $"{signaled}{found}, but the core has {config.Channels} channels; parametric stereo applies only to a core of one channel (ISO/IEC 14496-3 1.5.2.3), so the report shows the stream without it.", node);
         }
 
         if (tally.SbrBlocks == 0)

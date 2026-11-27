@@ -116,7 +116,7 @@ def cc(ffprobe=True, decode=True, libdca=True, skip=None, **extra):
 
 JOINT_INTENSITY_LIBDCA = ("libdca 0.0.7 does not decode joint intensity coding: it prints 'Joint stereo coding not supported' and rejects every frame "
                           "(measured with Ubuntu's libdca 0.0.7); ffmpeg decodes the frames")
-LOSSLESS_BITRATE = "ffmpeg's lossless decoder sets the bit rate to 0 (dca_xll.c: avctx->bit_rate = 0), so ffprobe lists none"
+LOSSLESS_BITRATE = "ffmpeg's lossless decoder sets the bit rate to 0 (avctx->bit_rate = 0), so ffprobe lists none"
 
 
 def cc_lossless(**extra):
@@ -127,7 +127,7 @@ def cc_lossless(**extra):
 
 CUT_NOTE = ("ffmpeg decodes the damaged frame without an error: the frame's silent subframes take a few dozen of its bytes, the rest is padding that no decoder reads, "
             "and a core frame without CRC words (CPF 0) has no other check of its own")
-PROFILE_STUB = ("ffmpeg's decoder sets the profile itself when it has decoded a frame (dca_core.c, dca_xll.c), and DTS-HD Master Audio or DTS-HD High Resolution Audio only after it has decoded the "
+PROFILE_STUB = ("ffmpeg's decoder sets the profile itself when it has decoded a frame (as ffprobe shows), and DTS-HD Master Audio or DTS-HD High Resolution Audio only after it has decoded the "
                 "extension, which the stub components do not allow")
 XLL_STUB = "ffmpeg rejects the XLL stub, a common header followed by filler, for its missing channel set sub-header ('Invalid XLL sub-header checksum')"
 
@@ -499,7 +499,7 @@ def build_substream_damage():
     data = b"".join(parts)
     fixture("exss-auxiliary-asset", ".dts", "Four units whose extension substream holds an asset with coding mode 3, auxiliary.", data, rows(parts),
             [stream("DTS", 48000, STEREO, "2/0", 4 * 512)], [("dts.coding-mode-auxiliary", "coding mode 3")],
-            crosscheck=cc(ffprobe_profile=False, skip={"ffprobe_profile": "ffmpeg reads no component of the auxiliary asset and leaves the profile DTS (dca_exss.c, coding mode 3 sets no extension mask)"}))
+            crosscheck=cc(ffprobe_profile=False, skip={"ffprobe_profile": "ffmpeg reads no component of the auxiliary asset and leaves the profile DTS (coding mode 3 sets no extension mask)"}))
     parts = [unit([dict(asset, size_field=4)]) for _ in range(4)]
     data = b"".join(parts)
     fixture("exss-descriptor-overrun", ".dts", "Four units whose asset descriptor gives a size of 4 bytes, less than its fields take.", data, rows(parts),
@@ -721,7 +721,7 @@ def build_gate2():
         return m.core_frame(size=512) + m.exss([dict(asset)], static=static, **options)
 
     # 7.5.2: where bStaticFieldsPresent is 0 the header omits the static fields, and they keep the values of the last header that had them.
-    # FFmpeg's dca_exss.c keeps them between frames, so its decoder plays every unit as the lossless stream the first one describes.
+    # ffmpeg keeps them between frames, so its decoder plays every unit as the lossless stream the first one describes.
     asset = dict(components=["core", "xll"], sizes={"core": 96, "xll": 64}, channels=2, mask=0x02)
     parts = [unit(asset, static=i == 0) for i in range(4)]
     fixture("exss-static-first-only", ".dts", "Four units of a stereo core frame and an extension substream with a lossless asset, of which only the first states the static fields.",

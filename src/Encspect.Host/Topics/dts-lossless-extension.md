@@ -17,4 +17,4 @@ Channel sets form a hierarchy. The 7.1 stream of the FFmpeg sample archive ("Mas
 
 **What you see.** Each sub-header and its fields, the navigation index, and the verdict of every CRC-16. The stream reports the source resolution, sampling frequency and layout of the channel sets. The band data is not decoded.
 
-**DTS:X.** No specification describes DTS:X. MediaInfo skips the navigation index's segments, then the padding up to a 32-bit boundary, and if bytes remain compares the word there: 0x02000850 and 0xF14000D1 are DTS:X, 0xF14000D0 IMAX. ffprobe 6.1.1 reads both 0xF14000D0 and 0xF14000D1 as DTS:X IMAX. The analyzer reports that word and nothing about the data behind it.
+**DTS:X.** No specification describes DTS:X. MediaInfo reads 0x02000850 and 0xF14000D1 as DTS:X and 0xF14000D0 as IMAX. The analyzer reads the word at the next 32-bit boundary after the band data, where ffprobe's reading of the DTS:X fixtures shows it (MediaInfo skips one more byte per segment and any zero padding first). ffprobe 6.1.1 reads both 0xF14000D0 and 0xF14000D1 as DTS:X IMAX. The analyzer reports that word and nothing about the data behind it.

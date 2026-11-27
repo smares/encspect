@@ -87,7 +87,7 @@ public sealed class VorbisCommentTagParser : ITagParser
                 if (vendor is not null && text is { Length: > 0 })
                 {
                     // The vendor string names the encoder (libvorbis writes its own), except that ffmpeg's Ogg muxer writes its version as
-                    // the vendor, "ffmpeg" when bit-exact (the external-ffmpeg-vorbis fixtures), which names the writer.
+                    // the vendor, "ffmpeg" when bit-exact (external-ffmpeg-libvorbis-bitexact.ogg), which names the writer.
                     _claims.Add(new EncoderClaim(text, vendor, "Vorbis comment vendor string", text == "ffmpeg" ? ClaimRole.Writer : ClaimRoles.Of(ClaimRole.Encoder, text)));
                 }
 
