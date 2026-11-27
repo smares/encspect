@@ -340,6 +340,8 @@ internal sealed class CodingRecorder(StreamSetup setup)
         _sbrEnvelopes.End(Count);
         _psEnvelopes.End(Count);
         _psBands.End(Count);
+        _psMixing.End(Count);
+        _psPhase.End(Count);
         _midSideShare.Add(_unitPairBands == 0 ? (short)-1 : (short)Math.Round(_unitMidSide * 1000.0 / _unitPairBands, MidpointRounding.ToEven));
         _shareUnits += _unitPairBands == 0 ? 0 : 1;
         if (_pairs.Count > 0 && _pairSeries is null)

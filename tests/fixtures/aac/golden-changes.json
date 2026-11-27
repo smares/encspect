@@ -86,6 +86,224 @@
       "goldens": [
         "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
       ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADTS",
+        "Statistics",
+        "SBR",
+        "Parametric Stereo"
+      ],
+      "name": "Parametric Stereo Mixing",
+      "goldens": [
+        "tests/fixtures/aac/adts/ps-in-multichannel-sce.report.json",
+        "tests/fixtures/aac/adts/ps-in-pce-multichannel.report.json",
+        "tests/fixtures/aac/apple-hev2-adts-cbr-st44.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2-adts.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADTS",
+        "Statistics",
+        "SBR",
+        "Parametric Stereo",
+        "Parametric Stereo Mixing"
+      ],
+      "name": "Procedure Ra",
+      "goldens": [
+        "tests/fixtures/aac/adts/ps-in-multichannel-sce.report.json",
+        "tests/fixtures/aac/adts/ps-in-pce-multichannel.report.json",
+        "tests/fixtures/aac/apple-hev2-adts-cbr-st44.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2-adts.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADTS",
+        "Statistics",
+        "SBR",
+        "Parametric Stereo"
+      ],
+      "name": "Parametric Stereo Phase",
+      "goldens": [
+        "tests/fixtures/aac/adts/ps-in-multichannel-sce.report.json",
+        "tests/fixtures/aac/adts/ps-in-pce-multichannel.report.json",
+        "tests/fixtures/aac/apple-hev2-adts-cbr-st44.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2-adts.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADTS",
+        "Statistics",
+        "SBR",
+        "Parametric Stereo",
+        "Parametric Stereo Phase"
+      ],
+      "name": "No phase differences",
+      "goldens": [
+        "tests/fixtures/aac/adts/ps-in-multichannel-sce.report.json",
+        "tests/fixtures/aac/adts/ps-in-pce-multichannel.report.json",
+        "tests/fixtures/aac/apple-hev2-adts-cbr-st44.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2-adts.report.json"
+      ]
+    },
+    {
+      "array": "categorySeries",
+      "name": "Parametric Stereo Mixing",
+      "scope": "stream",
+      "goldens": [
+        "tests/fixtures/aac/adts/ps-in-multichannel-sce.report.json",
+        "tests/fixtures/aac/adts/ps-in-pce-multichannel.report.json",
+        "tests/fixtures/aac/apple-hev2-adts-cbr-st44.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2-adts.report.json"
+      ]
+    },
+    {
+      "array": "categorySeries",
+      "name": "Parametric Stereo Phase",
+      "scope": "stream",
+      "goldens": [
+        "tests/fixtures/aac/adts/ps-in-multichannel-sce.report.json",
+        "tests/fixtures/aac/adts/ps-in-pce-multichannel.report.json",
+        "tests/fixtures/aac/apple-hev2-adts-cbr-st44.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2-adts.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "SBR",
+        "Parametric Stereo"
+      ],
+      "name": "Parametric Stereo Mixing",
+      "goldens": [
+        "tests/fixtures/aac/apple-hev2-m4a-cbr-st44.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2-hierarchical.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2-implicit.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2.report.json",
+        "tests/fixtures/mp4/explicit-sbr-implicit-ps.report.json",
+        "tests/fixtures/mp4/implicit-ps.report.json",
+        "tests/fixtures/mp4/ps-34-bands.report.json",
+        "tests/fixtures/mp4/ps-mixed-bands.report.json",
+        "tests/fixtures/mp4/ps-signaled-absent.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "SBR",
+        "Parametric Stereo",
+        "Parametric Stereo Mixing"
+      ],
+      "name": "Procedure Ra",
+      "goldens": [
+        "tests/fixtures/aac/apple-hev2-m4a-cbr-st44.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2-hierarchical.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2-implicit.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2.report.json",
+        "tests/fixtures/mp4/explicit-sbr-implicit-ps.report.json",
+        "tests/fixtures/mp4/implicit-ps.report.json",
+        "tests/fixtures/mp4/ps-34-bands.report.json",
+        "tests/fixtures/mp4/ps-mixed-bands.report.json",
+        "tests/fixtures/mp4/ps-signaled-absent.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "SBR",
+        "Parametric Stereo"
+      ],
+      "name": "Parametric Stereo Phase",
+      "goldens": [
+        "tests/fixtures/aac/apple-hev2-m4a-cbr-st44.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2-hierarchical.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2-implicit.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2.report.json",
+        "tests/fixtures/mp4/explicit-sbr-implicit-ps.report.json",
+        "tests/fixtures/mp4/implicit-ps.report.json",
+        "tests/fixtures/mp4/ps-34-bands.report.json",
+        "tests/fixtures/mp4/ps-mixed-bands.report.json",
+        "tests/fixtures/mp4/ps-signaled-absent.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "MP4",
+        "mdat",
+        "Track 1 Samples",
+        "AAC",
+        "Statistics",
+        "SBR",
+        "Parametric Stereo",
+        "Parametric Stereo Phase"
+      ],
+      "name": "No phase differences",
+      "goldens": [
+        "tests/fixtures/aac/apple-hev2-m4a-cbr-st44.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2-hierarchical.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2-implicit.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2.report.json",
+        "tests/fixtures/mp4/explicit-sbr-implicit-ps.report.json",
+        "tests/fixtures/mp4/implicit-ps.report.json",
+        "tests/fixtures/mp4/ps-34-bands.report.json",
+        "tests/fixtures/mp4/ps-mixed-bands.report.json",
+        "tests/fixtures/mp4/ps-signaled-absent.report.json"
+      ]
+    },
+    {
+      "array": "categorySeries",
+      "name": "Parametric Stereo Mixing",
+      "scope": "stream",
+      "goldens": [
+        "tests/fixtures/aac/apple-hev2-m4a-cbr-st44.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2-hierarchical.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2-implicit.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2.report.json",
+        "tests/fixtures/mp4/explicit-sbr-implicit-ps.report.json",
+        "tests/fixtures/mp4/implicit-ps.report.json",
+        "tests/fixtures/mp4/ps-34-bands.report.json",
+        "tests/fixtures/mp4/ps-mixed-bands.report.json",
+        "tests/fixtures/mp4/ps-signaled-absent.report.json"
+      ]
+    },
+    {
+      "array": "categorySeries",
+      "name": "Parametric Stereo Phase",
+      "scope": "stream",
+      "goldens": [
+        "tests/fixtures/aac/apple-hev2-m4a-cbr-st44.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2-hierarchical.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2-implicit.report.json",
+        "tests/fixtures/aac/fdkaac-he-v2.report.json",
+        "tests/fixtures/mp4/explicit-sbr-implicit-ps.report.json",
+        "tests/fixtures/mp4/implicit-ps.report.json",
+        "tests/fixtures/mp4/ps-34-bands.report.json",
+        "tests/fixtures/mp4/ps-mixed-bands.report.json",
+        "tests/fixtures/mp4/ps-signaled-absent.report.json"
+      ]
     }
   ],
   "changed": [
