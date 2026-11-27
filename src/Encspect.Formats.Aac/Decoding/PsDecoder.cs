@@ -34,8 +34,8 @@ internal sealed class PsDecoder
     private static readonly float[] FineMix = BuildMix(15, PsTableData.ScaleFactorsFineFlt);
 
     // The same for mixing procedure Rb (8.6.4.6.2.2).
-    private static readonly float[] CoarseMixB = BuildMixB(7, PsTableData.QuantizedIids);
-    private static readonly float[] FineMixB = BuildMixB(15, PsTableData.QuantizedIidsFine);
+    internal static readonly float[] CoarseMixB = BuildMixB(7, PsTableData.QuantizedIids);
+    internal static readonly float[] FineMixB = BuildMixB(15, PsTableData.QuantizedIidsFine);
 
     // cos and sin of k pi / 4, the quantization grid of the phase differences (Table 8.31).
     private static readonly double[] PhaseCos = BuildPhase(cosine: true);

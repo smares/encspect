@@ -93,6 +93,20 @@ internal static class CodingCategories
         new("34 bands", Explain.PsBandCount) { Topic = Topics.ParametricStereo },
     ];
 
+    // By the coherence mode (Table 8.27): 0 to 2 mix with procedure Ra, 3 to 5 with Rb.
+    public static readonly Category[] PsMixing =
+    [
+        new("Procedure Ra", Explain.PsMixingProcedure) { Topic = Topics.ParametricStereo },
+        new("Procedure Rb", Explain.PsMixingProcedure) { Topic = Topics.ParametricStereo },
+    ];
+
+    // Whether the extension of the block's parametric stereo data carries IPD and OPD (enable_ipdopd).
+    public static readonly Category[] PsPhase =
+    [
+        new("No phase differences", Explain.PsPhaseDifferences) { Topic = Topics.ParametricStereo },
+        new("Phase differences", Explain.PsPhaseDifferences) { Topic = Topics.ParametricStereo },
+    ];
+
     private static Category[] EnvelopeCategories(int first, int last, string description, string topic) =>
         [.. Enumerable.Range(first, last - first + 1).Select(n => new Category(n == 1 ? "1 envelope" : $"{n} envelopes", description) { Topic = topic })];
 
@@ -131,6 +145,10 @@ internal sealed record CodingNodes(Node? WindowSequences, Node? BlockSizes, Node
 
     public Node? PsBands { get; init; }
 
+    public Node? PsMixing { get; init; }
+
+    public Node? PsPhase { get; init; }
+
     public Node? LastCoefficient { get; init; }
 
     public Node? Escapes { get; init; }
@@ -162,6 +180,8 @@ internal sealed class CodingRecorder(StreamSetup setup)
     private readonly LazySeries _sbrEnvelopes = new("SBR Envelopes", CodingCategories.SbrEnvelopes, "SBR channel");
     private readonly LazySeries _psEnvelopes = new("Parametric Stereo Envelopes", CodingCategories.PsEnvelopes, "raw data block");
     private readonly LazySeries _psBands = new("Parametric Stereo Bands", CodingCategories.PsBands, "raw data block");
+    private readonly LazySeries _psMixing = new("Parametric Stereo Mixing", CodingCategories.PsMixing, "raw data block");
+    private readonly LazySeries _psPhase = new("Parametric Stereo Phase", CodingCategories.PsPhase, "raw data block");
     private CategorySeriesBuilder? _psSeries;
     private ChunkedList<byte>? _blockCounts = new();
 
@@ -240,6 +260,8 @@ internal sealed class CodingRecorder(StreamSetup setup)
         {
             _psEnvelopes.Values.Add((byte)figures[Sbr.FigurePsEnvelopes]);
             _psBands.Values.Add((byte)CodingTally.PsBandClass(figures));
+            _psMixing.Values.Add((byte)figures[Sbr.FigurePsMixing]);
+            _psPhase.Values.Add((byte)figures[Sbr.FigurePsPhase]);
         }
     }
 
@@ -420,6 +442,8 @@ internal sealed class CodingRecorder(StreamSetup setup)
         Add(_sbrEnvelopes.Builder, nodes.SbrEnvelopes, Explain.SbrEnvelopesSeries, Topics.Sbr);
         Add(_psEnvelopes.Builder, nodes.PsEnvelopes, Explain.PsEnvelopesSeries, Topics.ParametricStereo);
         Add(_psBands.Builder, nodes.PsBands, Explain.PsBandsSeries, Topics.ParametricStereo);
+        Add(_psMixing.Builder, nodes.PsMixing, Explain.PsMixingSeries, Topics.ParametricStereo);
+        Add(_psPhase.Builder, nodes.PsPhase, Explain.PsPhaseSeries, Topics.ParametricStereo);
         if (_sbrSeries is not null)
         {
             Add(_sbrSeries, nodes.Sbr, Explain.SbrSeries, Topics.Sbr);

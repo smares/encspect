@@ -169,19 +169,23 @@ internal static partial class Sbr
             figures[FigurePsEnvelopes] = hasPs ? record[SbrRecord.Ps + SbrRecord.PsEnvelopes] : -1;
             figures[FigurePsIidMode] = hasPs && record[SbrRecord.Ps + SbrRecord.PsEnableIid] != 0 ? record[SbrRecord.Ps + SbrRecord.PsIidMode] : -1;
             figures[FigurePsIccMode] = hasPs && record[SbrRecord.Ps + SbrRecord.PsEnableIcc] != 0 ? record[SbrRecord.Ps + SbrRecord.PsIccMode] : -1;
+            figures[FigurePsMixing] = hasPs ? record[SbrRecord.Ps + SbrRecord.PsMixingB] : -1;
+            figures[FigurePsPhase] = hasPs ? record[SbrRecord.Ps + SbrRecord.PsEnableIpdopd] : -1;
         }
 
         return (ps, null, plain);
     }
 
     // What ReadData states of the payload in its figures: the frame class and envelope count of each channel (-1 for a second channel a single channel element does not have), and where
-    // the payload carries ps_data its envelope count and the IID and ICC modes (-1 where there is none or the parameter is not enabled).
-    public const int Figures = 7;
+    // the payload carries ps_data its envelope count, the IID and ICC modes (-1 where there is none or the parameter is not enabled), whether the coherence mode selects mixing procedure Rb and whether the extension carries IPD and OPD (-1 where there is no ps_data).
+    public const int Figures = 9;
     public const int FigureFrameClass = 0;
     public const int FigureEnvelopes = 1;
     public const int FigurePsEnvelopes = 4;
     public const int FigurePsIidMode = 5;
     public const int FigurePsIccMode = 6;
+    public const int FigurePsMixing = 7;
+    public const int FigurePsPhase = 8;
 
     // Where a payload that is not stored is read to (the read needs the values of its own channels): a buffer for each thread, cleared for each payload, so that nothing is allocated.
     [ThreadStatic]

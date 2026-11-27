@@ -61,8 +61,6 @@ def conformance_files():
 DIFFERENCES = {
     "sbr-too-many-patches.aac": "the header's frequency tables need six patches, where 4.6.18.3.6 allows five: the analyzer reads none of the SBR data (aac.sbr-header-invalid) and upsamples the core, where FFmpeg builds the patches and "
                                 "applies the data",
-    "al_sbr_ps_04_new.mp4": "53 of its 106 blocks carry inter-channel phase differences in the parametric stereo extension, which the decoder ignores as the baseline's does, 8.A.4 (docs/formats/aac.md, Decoding): the second half, "
-                            "where parametric stereo starts, differs, and the first half, the one channel on both, agrees to the last digits",
     "sbr-after-first-frame-failing-crc.aac": "the first frame fails its CRC and holds no SBR data: the analyzer takes no evidence from it and decodes the stream as HE-AAC at twice the core rate, "
                                               "where FFmpeg checks no CRC, finds no SBR data in its first block and decodes the core alone, at 22,050 Hz (docs/formats/aac.md, Reference for sample counts)",
 }
