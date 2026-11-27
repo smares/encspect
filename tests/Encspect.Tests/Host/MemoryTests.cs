@@ -1085,9 +1085,10 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
 
         Analyzer.CreateDefault().Analyze("warm-up", new MemoryStream(Packets(500)), new AnalysisOptions { Decoding = new DecodeOptions { Output = _ => new DecoderWorkTests.NullSink() } });
 
-        (long fewerHeld, long fewerKept) = LastFrameReading("frames.wma", Packets(fewer), fewer - 2, 2048);
-        (long held, long kept) = LastFrameReading("frames.wma", Packets(frames), frames - 2, 2048);
-        (_, long plainKept) = LastFrameReading("frames.wma", Packets(frames), frames - 2, 2048, isDecoding: false);
+        // Without the bit reservoir the decoder drops the stream's first frame, as Microsoft's decoder does, so one frame fewer than the packets is output.
+        (long fewerHeld, long fewerKept) = LastFrameReading("frames.wma", Packets(fewer), fewer - 1, 2048);
+        (long held, long kept) = LastFrameReading("frames.wma", Packets(frames), frames - 1, 2048);
+        (_, long plainKept) = LastFrameReading("frames.wma", Packets(frames), frames - 1, 2048, isDecoding: false);
 
         double heldPerFrame = (held - fewerHeld) / (double)(frames - fewer);
         Output.WriteLine($"{kept} bytes kept with decoding and {plainKept} without; held above the end state at the last frame: {fewerHeld} at {fewer} frames and {held} at {frames} ({Hundredths(heldPerFrame)} per further frame)");
