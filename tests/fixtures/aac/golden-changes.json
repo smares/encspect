@@ -44,6 +44,32 @@
       "goldens": [
         "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
       ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADTS",
+        "Statistics",
+        "SBR",
+        "SBR Frame Classes"
+      ],
+      "name": "FIXFIX",
+      "goldens": [
+        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADTS",
+        "Statistics",
+        "SBR",
+        "SBR Envelopes"
+      ],
+      "name": "1 envelope",
+      "goldens": [
+        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
+      ]
     }
   ],
   "changed": [
