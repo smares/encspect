@@ -1145,8 +1145,9 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         double keptByGating = isMeasuring ? 2 * 2 * 8 * 16384 / 4410.0 : 0;
         Assert.True(heldPerSlice < DecodingFrameBound + keptByGating, $"The analysis held {heldPerSlice:F2} more bytes per further slice at the last slice than it ends with ({DecodingFrameBound + keptByGating:F0} allowed). {RuntimeSettings()}");
         // The spectrum of a stereo stream also holds the holes of its combined spectrum (147,456 bytes) and, for its pair, the stored bins, the mid and side
-        // rows and their two counter sets (988,160 bytes at this file's 44.1 kHz; StreamMeasurer.EstimateBytes): 1.14 MB over the 5 MB before the mid/side spectra.
-        Assert.True(held < (isMeasuring ? 6_150_000 : 500_000), $"The analysis held {held} bytes at the last slice above what it ends with.");
+        // rows and their two counter sets (988,160 bytes at this file's 44.1 kHz; StreamMeasurer.EstimateBytes): 1.14 MB over the 5 MB before the mid/side spectra; the
+        // replicated bands add their two counters per band and shift (93 bands of 506 shifts at 44.1 kHz: 0.38 MB) and the frame's rows (about 20 KiB).
+        Assert.True(held < (isMeasuring ? 6_550_000 : 500_000), $"The analysis held {held} bytes at the last slice above what it ends with.");
         Assert.True(kept < plainKept + (isMeasuring ? 1_000_000 : 100_000), $"The report keeps {kept - plainKept} bytes more.");
     }
 

@@ -104,6 +104,12 @@ FIXTURES = {
     "external-opusenc-24-pink-equal": ("opusenc", 48000, 2, 2.0, ["--bitrate", "24"], OPUSENC, []),
     "external-opusenc-24-pink-side-12-db": ("opusenc", 48000, 2, 2.0, ["--bitrate", "24"], OPUSENC, []),
     "external-opusenc-51": ("opusenc", 48000, 6, 1.0, ["--bitrate", "192"], OPUSENC, []),
+    # Step 9 (replicated bands): 4 s at 16 and 32 kbit/s of the same stereo pink noise (a side signal 12 dB lower) and of a harmonic source whose pitch changes every 0.5 s, for CELT's
+    # folding on content that is not noise alone; the FLAC decodes are measurement/lossy-opusenc-*.
+    "external-opusenc-16-pink-side-12-db": ("opusenc", 48000, 2, 4.0, ["--bitrate", "16"], OPUSENC, []),
+    "external-opusenc-32-pink-side-12-db": ("opusenc", 48000, 2, 4.0, ["--bitrate", "32"], OPUSENC, []),
+    "external-opusenc-16-harmonic": ("opusenc", 48000, 2, 4.0, ["--bitrate", "16"], OPUSENC, []),
+    "external-opusenc-32-harmonic": ("opusenc", 48000, 2, 4.0, ["--bitrate", "32"], OPUSENC, []),
     # libopus 1.5.2's own encoder (opus_enc.c, built by opus_tool.py), for the syntax the others do not write: arguments are application, bitrate, frame length in ms, in-band FEC, the highest
     # bandwidth and the mode the encoder is forced to. Stereo SILK frames of 40 and 60 ms with FEC read their LBRR flags after both channels' header bits (RFC 6716, section 4.2.4).
     "external-libopus-stereo-silk-40ms-fec": ("libopus", 48000, 2, 1.5, ["voip", "32000", "40", "1", "wb", "silk"], LIBOPUS_152, []),
@@ -158,12 +164,30 @@ def signal(rate, channels, seconds):
     return bytes(out)
 
 
-def pink_signal(rate, quiet_side):
-    """2 s of stereo pink noise, the measurement fixtures' source (docs/design/spectral-analysis.md, Step 8): left = mid + side, right = mid - side, the mid signal at -20 dBFS RMS and
+def harmonic_signal(rate, seconds):
+    """Stereo harmonics of a pitch that changes every 0.5 s (220, 247, 196, 262, 233, 175, 294 and 208 Hz, the phase carried across the changes), each harmonic h up to 16 kHz at 0.1 / h of
+    full scale in the left channel and at the phase h * 0.3 later in the right."""
+    pitches = [220.0, 247.0, 196.0, 262.0, 233.0, 175.0, 294.0, 208.0]
+    count = int(seconds * rate)
+    phase = 0.0
+    out = bytearray()
+    for i in range(count):
+        f0 = pitches[min(len(pitches) - 1, int(i / (0.5 * rate)))]
+        phase += 2 * math.pi * f0 / rate
+        left = right = 0.0
+        for h in range(1, int(16000 / f0) + 1):
+            left += math.sin(h * phase) / h
+            right += math.sin(h * phase + h * 0.3) / h
+        out += struct.pack("<hh", max(-32768, min(32767, round(3276.8 * left))), max(-32768, min(32767, round(3276.8 * right))))
+    return bytes(out)
+
+
+def pink_signal(rate, quiet_side, seconds=2):
+    """Stereo pink noise of seconds (2 unless given), the measurement fixtures' source (docs/design/spectral-analysis.md, Step 8): left = mid + side, right = mid - side, the mid signal at -20 dBFS RMS and
     the side signal as loud (uncorrelated channels) or 12 dB lower."""
     from make_measurement_fixtures import pink
-    mid = pink(rate * 2, 201, -20.0, tone_db=-200.0, rate=rate)
-    side = pink(rate * 2, 202, -32.0 if quiet_side else -20.0, tone_db=-200.0, rate=rate)
+    mid = pink(int(rate * seconds), 201, -20.0, tone_db=-200.0, rate=rate)
+    side = pink(int(rate * seconds), 202, -32.0 if quiet_side else -20.0, tone_db=-200.0, rate=rate)
     clamp = lambda v: max(-32768, min(32767, math.floor(v * 32768 + 0.5)))
     return b"".join(struct.pack("<hh", clamp(a + b), clamp(a - b)) for a, b in zip(mid, side))
 
@@ -183,7 +207,13 @@ def encode(name, tool, rate, channels, seconds, arguments, work):
     arguments = [*arguments, "-s", str(SERIALS[name])] if name in SERIALS else arguments
     target = OUT / (name + extension(name))
     source = work / f"in-{rate}-{channels}-{seconds}.wav"
-    source.write_bytes(wav(pink_signal(rate, "-side-12-db" in name) if "-pink-" in name else signal(rate, channels, seconds), rate, channels))
+    if "-harmonic" in name:
+        raw = harmonic_signal(rate, seconds)
+    elif "-pink-" in name:
+        raw = pink_signal(rate, "-side-12-db" in name, seconds)
+    else:
+        raw = signal(rate, channels, seconds)
+    source.write_bytes(wav(raw, rate, channels))
     if tool == "oggenc":
         subprocess.run(["oggenc", "-Q", *arguments, "-o", str(target), str(source)], check=True)
     elif tool.startswith("aotuv:"):
@@ -207,7 +237,9 @@ def encode(name, tool, rate, channels, seconds, arguments, work):
     else:
         subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(source), *arguments, str(target)], check=True)
     result = {"tool": version(tool), "arguments": arguments, "rate": rate, "channels": channels, "seconds": seconds}
-    if "-pink-" in name:
+    if "-harmonic" in name:
+        result["signal"] = "stereo harmonics up to 16 kHz of a pitch that changes every 0.5 s (harmonic_signal)"
+    elif "-pink-" in name:
         result["signal"] = "stereo pink noise, a mid signal and a side signal " + ("12 dB lower" if "-side-12-db" in name else "as loud (uncorrelated channels)")
     return result
 

@@ -86,6 +86,13 @@ LAME = {
 VORBIS = {"oggenc-q2": ("-q 2", "2", "found"), "oggenc-q5": ("-q 5", "5", "found"), "oggenc-q8": ("-q 8", "8", "none")}
 AAC = {"aac-48k": "48k", "aac-64k": "64k", "aac-96k": "96k"}
 OPUS = {"opus-48k": "48"}
+# Step 9 (replicated bands): the decodes of the committed 4 s Opus files of tests/fixtures/ogg (make_external_vorbis_opus_fixtures.py), by opusdec, so the FLAC file and the stream are one encode.
+COMMITTED_OPUS = {
+    "opusenc-16-pink-side-12-db": ("16", "stereo pink noise (a mid signal and a side signal 12 dB lower)"),
+    "opusenc-32-pink-side-12-db": ("32", "stereo pink noise (a mid signal and a side signal 12 dB lower)"),
+    "opusenc-16-harmonic": ("16", "stereo harmonics of a pitch that changes every 0.5 s"),
+    "opusenc-32-harmonic": ("32", "stereo harmonics of a pitch that changes every 0.5 s"),
+}
 
 
 def write_input(path, rate, seconds=SECONDS):
@@ -290,6 +297,16 @@ def encode_all(names):
                 "description": f"opusenc (opus-tools 0.2, libopus 1.4) at {kbps} kbit/s on pink noise at 48,000 Hz, decoded with opusdec.",
                 "encoder": {"name": "opusenc", "version": "opus-tools 0.2, libopus 1.4", "settings": f"--bitrate {kbps}", "command": f"opusenc --bitrate {kbps} in.wav out.opus; opusdec --rate 48000 out.opus out.wav"},
                 "stated": None, "expect_cutoff": "found"})
+        for name, (kbps, source) in COMMITTED_OPUS.items():
+            if names and name not in names:
+                continue
+            decoded = temp / f"{name}.wav"
+            opus = OUT.parent / "ogg" / f"external-{name}.opus"
+            run("opusdec", "--quiet", "--rate", "48000", opus, decoded)
+            finish(name, decoded, {
+                "description": f"The committed ogg/{opus.name} (opusenc, opus-tools 0.2, libopus 1.4, at {kbps} kbit/s, 4 s of {source} at 48,000 Hz), decoded with opusdec.",
+                "encoder": {"name": "opusenc", "version": "opus-tools 0.2, libopus 1.4", "settings": f"--bitrate {kbps}", "command": f"opusenc --bitrate {kbps} in.wav {opus.name}; opusdec --rate 48000 {opus.name} out.wav"},
+                "stated": None, "expect_cutoff": "any"})
     return made
 
 
