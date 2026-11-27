@@ -164,7 +164,35 @@ The analyzer's reports already follow these facts, so the goldens of the three f
 - The exception: the message of `mp4.adrm-short` names the layout, not a reader ("fewer than the 88 bytes of its layout", keeping "fewer than the 88", which the fixture's expected results test). The golden of `adrm-short.m4a` differs in that message only.
 - Descriptions and the topic cite this description, MediaInfo and the black-box behavior above, never the LGPL files.
 
+## Logic check
+
+The lead narrowed the copyleft rule on 2026-11-27 ([CLAUDE.md](../../CLAUDE.md), "Facts are not code"): names, values and field sizes may come from any source, cited to what they were checked against; only code and logic that follow copyleft code need a clean room. This item therefore became a check, made by the reader of the three LGPL files. Each tainted region of [Implementer's sources](#implementers-sources) was compared with `mov.c`, `qtdemux.c` and `libmp4.c` for control flow, the order of checks and the structure of the readers.
+
+**Result:** no region follows their logic beyond the facts. Several regions decide differently from every source, which shows they were not taken from them. No rewrite by an unexposed implementer is needed; what remains is citations and two corrections, listed per region.
+
+| Region | Logic compared | Follows LGPL logic? | Facts it uses, and the source to cite |
+| --- | --- | --- | --- |
+| `Mp4Parser.Protection.cs`, opening comment (9 to 11) | prose only | no | the entry and box names, cited as in the rows below |
+| `AudibleDrmLength` (14 to 15) | a constant | no | the 88 bytes of `adrm`: FFmpeg's `mov.c`; checked by ffprobe on `adrm-short.m4a`, which reads 48 bytes past a 40-byte payload |
+| `ItunesProtectionBox` (389 to 399) | shows the payload as one block of bytes that is not read | no: VLC's reader reads nothing and only warns; showing an unknown payload by size is the parser's general way with boxes it does not read | the four names `user`, `key `, `iviv`, `priv` and that they sit in `schi`: VLC's `libmp4.c` and `libmp4.h` (MediaInfo skips `schi` whole and names none of them) |
+| `AudibleDrm` (401 to 421) | checks the payload against 88 bytes first, then lays out four parts, then the rest as unread data | no: FFmpeg checks no size, reads past a short box and ignores bytes past 88; GStreamer reads no field. The four consecutive parts are the layout itself, not a reader's structure | the part sizes 8, 56, 4 and 20: FFmpeg's `mov.c`; the positions of the 20-byte checksum are checked by ffprobe, whose logged "file checksum" equals payload bytes 68 to 87 of `audible-aavd.m4a`; the 8, 56 and 4 split is in `mov.c` only (no black box can check it without activation bytes); the names "drm blob" and "file checksum" are ffprobe's messages; the short-box finding is the analyzer's own rule |
+| `Mp4Parser.Movie.cs` 114 to 118 | reads `adrm` only inside an `aavd` entry, and the four atoms only inside `sinf` | no: FFmpeg reads `adrm` anywhere (ffprobe on the `mp4a` mutation), VLC accepts the atoms under any parent, GStreamer requires `adrm` as a direct child and never reads the atoms. The placement is a fact the analyzer chose to rely on | `adrm` in `aavd`: GStreamer's `qtdemux.c` and the fixtures; the atoms in `schi`: VLC's `libmp4.c` |
+| `Mp4Parser.State.cs` 244 to 246 (`EffectiveFormat`) | the original format from `frma`, else `mp4a` for `aavd`, else the entry code | no: the `frma` step is 14496-12 8.12 and is the opposite of FFmpeg, which ignores `frma` for `drms`; the `aavd` fallback is one fact, not a reader's flow | `aavd` carries AAC in the layout of `mp4a`: GStreamer's `qtdemux.c`; checked by ffprobe and MP4Box, which read the entry as audio with its `esds` |
+| `Explain.cs` 178 to 182 and 444 to 450 | descriptions | no (text) | as the rows above; `drms` as "iTunes": MediaInfo's `File_Mpeg4_Elements.cpp` (BSD); `drmi`: VLC's `libmp4.c` (MediaInfo does not name it); see the corrections below |
+| [itunes-and-audible-protection.md](../../src/Encspect.Host/Topics/itunes-and-audible-protection.md) | article | no (text) | as the rows above |
+| `make_protection_fixtures.py` (`itunes()`, `audible()`, `adrm-short`) | builds boxes from the layouts | no: no source writes these structures | as the rows above; see the corrections below |
+| [mp4.md](../formats/mp4.md) 125, 138, 139 and [development.md](../development.md) 1923 | prose | no | as the rows above |
+
+**Corrections, in words:**
+
+- The `drms` builder's ffprobe skip says that ffmpeg 6.1 lists no audio stream for a `drms` entry. ffprobe 6.1.1 lists it as AAC LC with codec tag `drms` and warns that `frma` is ignored. The skip reason should say that, or the ffprobe cross-check should run and compare codec, rate and channels.
+- The `adrm-short` message says "fewer than the 88 FFmpeg's reader takes from it". It may keep FFmpeg as the cited source of the size under the narrowed rule; if it is reworded to name the layout instead, keep "fewer than the 88", which the expected results test, and update that one golden.
+- Citations that name a function (`mov_read_adrm`) may stay or be reduced to the file; under the narrowed rule either cites a fact. `drms` and its "iTunes" encryption cite MediaInfo first.
+- The fixture's brand `aax ` comes from no source read here; it is fixture input, not something the analyzer reports, so it needs no citation unless a description claims it.
+
 ## Implementer's sources
+
+Under the narrowed rule no region needs a rewrite (see [Logic check](#logic-check)); the lists below apply only if a region is reopened for one.
 
 **Safe:**
 
