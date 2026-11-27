@@ -1,0 +1,70 @@
+{
+ "description": "Channel pairs of a common window at a level near -30 dBFS: intensity bands under ms_mask_present 2 (not inverted); mid/side flags on bands where the first channel, the second or both code noise (no mid/side there; both the same noise); the second channel's intensity bands over the first channel's noise, without and with flags (the intensity stereo takes the scaled noise, as the order of the tools of the standard says).",
+ "length": 1029,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 4096,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   201
+  ],
+  [
+   201,
+   393
+  ],
+  [
+   594,
+   216
+  ],
+  [
+   810,
+   219
+  ]
+ ],
+ "fields": {
+  "ADTS/Frame[0]/Raw Data Block/CPE/Mid/Side Mask Present": "2 (all bands)",
+  "ADTS/Frame[1]/Raw Data Block/CPE/Mid/Side Mask Present": "1 (per band)",
+  "ADTS/Statistics/Channel Pairs/Intensity Stereo": "3 elements (75.0%)",
+  "ADTS/Statistics/Block Usage/Only Long": "8 channel streams (100.0%)",
+  "ADTS/Statistics/Window Shapes/KBD": "8 channel streams (100.0%)",
+  "ADTS/Statistics/Codebooks/Codebook 0": "4 bands (1.6%)",
+  "ADTS/Statistics/Codebooks/Codebook 1": "32 bands (12.7%)",
+  "ADTS/Statistics/Codebooks/Codebook 2": "12 bands (4.8%)",
+  "ADTS/Statistics/Codebooks/Codebook 3": "30 bands (11.9%)",
+  "ADTS/Statistics/Codebooks/Codebook 4": "4 bands (1.6%)",
+  "ADTS/Statistics/Codebooks/Codebook 5": "32 bands (12.7%)",
+  "ADTS/Statistics/Codebooks/Codebook 7": "12 bands (4.8%)",
+  "ADTS/Statistics/Codebooks/Codebook 9": "16 bands (6.3%)",
+  "ADTS/Statistics/Codebooks/Codebook 11": "16 bands (6.3%)",
+  "ADTS/Statistics/Codebooks/Codebook 13": "48 bands (19.0%)",
+  "ADTS/Statistics/Codebooks/Codebook 14": "16 bands (6.3%)",
+  "ADTS/Statistics/Codebooks/Codebook 15": "30 bands (11.9%)"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "faad": {
+   "seconds": "0.093",
+   "rate": 44100
+  },
+  "skip": {
+   "decode": "ffmpeg's decoder inverts intensity bands under ms_mask_present 2 and draws its own noise.",
+   "faad_trace": "faad2 checks the first channel's noise only for mid/side stereo, and the units' stereo codings may differ."
+  }
+ }
+}

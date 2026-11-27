@@ -1,0 +1,71 @@
+{
+ "description": "ADTS at 22050 Hz of six channel pairs followed by SBR payloads with a CRC-10 (EXT_SBR_DATA_CRC), the third and fifth with a wrong one: HE-AAC at 44100 Hz, four checksums verified and two failed.",
+ "length": 395,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "HE-AAC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 12288,
+   "is_vbr": true,
+   "ffprobe_profile": "LC"
+  }
+ ],
+ "units": [
+  [
+   0,
+   67
+  ],
+  [
+   67,
+   65
+  ],
+  [
+   132,
+   65
+  ],
+  [
+   197,
+   66
+  ],
+  [
+   263,
+   66
+  ],
+  [
+   329,
+   66
+  ]
+ ],
+ "fields": {
+  "ADTS/Statistics/SBR": "6 access units (100.0%)",
+  "ADTS/Statistics/SBR/Verified SBR Checksums": "4 payloads",
+  "ADTS/Statistics/SBR/Failed SBR Checksums": "2 payloads"
+ },
+ "findings": [
+  [
+   "aac.sbr-crc-mismatch",
+   "2 raw data blocks hold an SBR payload whose CRC differs"
+  ],
+  [
+   "aac.implicit-sbr",
+   "6 of 6 raw data blocks hold SBR data: the stream is HE-AAC"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "faad": null,
+  "skip": {
+   "faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold.",
+   "decode": "ffmpeg does not check the CRC and prints \"No quantized data read for sbr_dequant\" for the payloads after the first."
+  }
+ }
+}

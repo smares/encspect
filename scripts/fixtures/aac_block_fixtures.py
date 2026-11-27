@@ -717,6 +717,15 @@ def mp4_fixtures():
          "MP4/mdat/Track 1 Samples/AAC/Access Unit/FIL/Extension Payload/SBR Data/Parametric Stereo Extension": "2 (EXT_ID_PS)"},
         [["aac.implicit-sbr", "and 12 carry the parametric stereo extension: the stream is HE-AAC v2"]],
         {"label": "LC AAC", "channels": 2, "rate": 44100}, ffprobe_profile="HE-AACv2"))
+    units = [b for b, _ in sbr_units(12, "mono", ps="mixed")]
+    out.append(mp4_fixture(
+        "ps-mixed-bands", "Mono AAC LC at 22050 Hz in its configuration, whose access units carry SBR data with a parametric stereo extension of intensity differences in 34 bands "
+        "(mode 2) and coherences in 20 (mode 1), each band with a value of its own: HE-AAC v2, signaled only implicitly, whose decoder maps the 20 coherence bands onto 34 "
+        "with the averages of Table 8.45.", asc(2, 22050, 1), 22050, 1, units, "HE-AAC v2", 44100, 2, "Parametric stereo",
+        {stats + "/SBR/Parametric Stereo": share(12, 12, "access unit"),
+         "MP4/mdat/Track 1 Samples/AAC/Access Unit/FIL/Extension Payload/SBR Data/Parametric Stereo Extension": "2 (EXT_ID_PS)"},
+        [["aac.implicit-sbr", "and 12 carry the parametric stereo extension: the stream is HE-AAC v2"]],
+        {"label": "LC AAC", "channels": 2, "rate": 44100}, ffprobe_profile="HE-AACv2"))
     units = [b for b, _ in sbr_units(12, "stereo")]
     out.append(mp4_fixture(
         "sbr-downsampled", "HE-AAC signaled hierarchically with an extension rate equal to the core's 22050 Hz (downsampled SBR): decoders derive "
@@ -1243,20 +1252,22 @@ def sbr_evidence():
         [stream("HE-AAC", 2 * core, 2, "Stereo", 10 * 2048, ffprobe_profile="LC")], {"ADTS/Frame/CRC/Check": "mismatch"},
         [["aac.crc-mismatch", "1 ADTS frame fails the CRC check"], ["aac.implicit-sbr", "9 of 9 raw data blocks hold SBR data: the stream is HE-AAC"]],
         skip={**skip, **ffmpeg_he, "ffprobe": "ffmpeg does not check ADTS CRCs, and its first block holds no SBR data.", "decode": "ffmpeg does not check ADTS CRCs, and its first block holds no SBR data."}, rate=core)))
-    # SBR data after a coupling channel element: fdk-aac excludes it from the elements SBR follows, faad2 rejects it, and only ffmpeg keeps the
-    # coupling element as the previous one (where a program config element gives it a channel). It counts for nothing.
+    # SBR data after a coupling channel element: 4.5.2.8.2.2 puts an SBR element after each independently switched coupling channel element (id_aac ID_SCE,
+    # Table 4.57 note 1) and 1.6.5.2 takes any payload for implicit signaling, so the stream is HE-AAC. fdk-aac excludes the element from those SBR follows, faad2 rejects
+    # it, and only ffmpeg keeps it as the previous element (where a program config element gives it a channel).
     blocks = []
     for i in range(12):
         cpe = M.Element(M.CPE, ics=(channel(M.ONLY_LONG, 1, [[(11, 4)]], seed=i, rate=core), channel(M.ONLY_LONG, 1, [[(9, 4)]], seed=i + 1, rate=core)), mask=0)
         cce = M.Element(M.CCE, tag=0, independent=i % 2, targets=[(1, 0, 1, 1)], ics=channel(M.ONLY_LONG, 1, [[(11, 4), (3, 4)]], seed=i + 2, rate=core))
-        fill = M.Element(M.FIL, payload=M.sbr_payload(counts, SBR_HEADER if i % 4 == 0 else None, pair=True))
+        fill = M.Element(M.FIL, payload=M.sbr_payload(counts, SBR_HEADER if i % 4 == 0 else None, pair=False))
         blocks.append(M.raw_data_block([cpe, cce, fill], rate_index=rate_index(core)))
     data, rows = concat(adts_frames(blocks, rate=core, channels=2))
     out.append(("adts", "sbr-after-coupling-element.aac", data, manifest(
         "ADTS at 22050 Hz of a channel pair, a coupling channel element and a fill element of SBR data, twelve times, in a stream of channel "
-        "configuration 2: fdk-aac and faad2 read no SBR after a coupling element, so the stream stays AAC LC at 22050 Hz.", data, rows,
-        [stream("AAC LC", core, 2, "Stereo", 12 * 1024)], {"ADTS/Statistics/SBR": share(12, 12, "access unit")},
-        [["aac.sbr-without-channel-element", "12 raw data blocks hold SBR data that follows no single channel or channel pair element"],
+        "configuration 2: the standard puts the SBR data of a coupling channel element after it (read as a single channel element's), so the stream is HE-AAC at 44100 Hz; "
+        "fdk-aac and faad2 read no SBR after a coupling element.", data, rows,
+        [stream("HE-AAC", 2 * core, 2, "Stereo", 12 * 2048, ffprobe_profile="LC")], {"ADTS/Statistics/SBR": share(12, 12, "access unit")},
+        [["aac.implicit-sbr", "12 of 12 raw data blocks hold SBR data: the stream is HE-AAC"],
          ["aac.coupling-without-program", "12 raw data blocks hold a coupling channel element"]],
         skip={**skip, "ffprobe_streams": "ffmpeg cannot decode the frames (\"channel element 2.0 is not allocated\"), so it reports no sample rate.",
               "decode": "ffmpeg finds no channel for the coupling element in a stream of channel configuration 2.",
@@ -1380,9 +1391,171 @@ def rate_fixtures():
     return out
 
 
+# --- Where the decoder follows the standard (ISO/IEC 14496-3) and not libxaac's order of the tools -------------------------------------
+
+def stereo_tool_order():
+    """Channel pairs of a common window whose bands exercise the order of the tools of Figure 4.2 (4.1.1.2) and 4.6.8: mid/side stereo, noise substitution, intensity stereo.
+    Block 0: ms_mask_present 2 over intensity bands (4.6.8.2.3 inverts only under mask 1). Block 1: mask 1, mid/side flags on bands where only the first channel codes noise (no
+    mid/side there, 4.6.8.1.3), only the second does, and both do (the same noise in both, 4.6.13.3). Block 2: no mask, the first channel codes noise where the second codes
+    intensity stereo (the second takes the scaled noise). Block 3: the same under mask 1 with the flags set (inverted noise)."""
+    loud = 150
+    one = [(11, 4), (5, 8), (1, 18)]
+    two = [(9, 4), (3, 8), (15, 6), (14, 4), (15, 8)]
+    flags0 = [[1] * 30]
+    noisy = [[(11, 4), (13, 6), (5, 8), (13, 4), (1, 6), (7, 4), (0, 4)]]
+    other = [[(9, 4), (3, 6), (7, 8), (13, 4), (13, 6), (2, 4), (4, 4)]]
+    flags1 = [[1 if b < 32 else 0 for b in range(36)]]
+    first2 = [[(11, 4), (13, 8), (5, 8), (13, 6), (1, 4)]]
+    second2 = [[(9, 4), (15, 8), (3, 8), (14, 6), (2, 4)]]
+    flags3 = [[1] * 30]
+    made = [
+        pair_block(2, first=channel(M.ONLY_LONG, 1, [one], gain=loud, seed=71), second=channel(M.ONLY_LONG, 1, [two], gain=loud, seed=72)),
+        pair_block(1, flags1, first=channel(M.ONLY_LONG, 1, noisy, gain=loud, seed=73), second=channel(M.ONLY_LONG, 1, other, gain=loud, seed=74)),
+        pair_block(0, first=channel(M.ONLY_LONG, 1, first2, gain=loud, seed=75), second=channel(M.ONLY_LONG, 1, second2, gain=loud, seed=76)),
+        pair_block(1, flags3, first=channel(M.ONLY_LONG, 1, first2, gain=loud, seed=77), second=channel(M.ONLY_LONG, 1, second2, gain=loud, seed=78)),
+    ]
+    del flags0
+    data, rows = concat(adts_frames([m[0] for m in made], channels=2))
+    streams = [t for m in made for t in m[1]]
+    fields = {
+        "ADTS/Frame[0]/Raw Data Block/CPE/Mid/Side Mask Present": "2 (all bands)",
+        "ADTS/Frame[1]/Raw Data Block/CPE/Mid/Side Mask Present": "1 (per band)",
+        "ADTS/Statistics/Channel Pairs/Intensity Stereo": share(3, 4, "element"),
+        **statistics("ADTS", streams),
+    }
+    return "stereo-tool-order.aac", data, manifest(
+        "Channel pairs of a common window at a level near -30 dBFS: intensity bands under ms_mask_present 2 (not inverted); mid/side flags on bands where the first channel, the "
+        "second or both code noise (no mid/side there; both the same noise); the second channel's intensity bands over the first channel's noise, without and with flags "
+        "(the intensity stereo takes the scaled noise, as the order of the tools of the standard says).",
+        data, rows, [stream("AAC LC", RATE, 2, "Stereo", 4 * 1024)], fields,
+        skip={"decode": "ffmpeg's decoder inverts intensity bands under ms_mask_present 2 and draws its own noise.",
+              "faad_trace": "faad2 checks the first channel's noise only for mid/side stereo, and the units' stereo codings may differ."})
+
+
+def tns_order_above_12():
+    """Mono blocks with a TNS filter of order 13, 20 and 31 (the 5-bit field's largest) of long windows: the standard takes the first 12 coefficients (4.6.9.3, Table 4.156)."""
+    sections = [[(9, 12), (5, 10), (7, 10), (3, 8), (0, 4)]]
+    blocks = []
+    ics = []
+    for order in (13, 20, 31):
+        coefficients = [1 if i % 3 else 2 for i in range(order)]
+        tns = [[(30, order, 0, 0, 1, coefficients)]]
+        channel_ics = channel(M.ONLY_LONG, 1, sections, gain=150, tns=tns, seed=80 + order)
+        ics.append(channel_ics)
+        blocks.append(M.raw_data_block([M.Element(M.SCE, ics=channel_ics)]))
+    data, rows = concat(adts_frames(blocks))
+    return "tns-order-above-12.aac", data, manifest(
+        "Mono frames of long windows with a TNS filter of order 13, 20 and 31 over 30 bands: the standard limits the order to 12 and decodes the first 12 coefficients; the field "
+        "allows more, so the stream is reported.", data, rows, [stream("AAC LC", RATE, 1, "Mono", 3 * 1024)], statistics("ADTS", ics),
+        [["aac.tns-order-too-high", "a TNS filter of a higher order than the 12 its window allows"]],
+        skip={"decode": "ffmpeg refuses a TNS filter of an order above 12 (\"TNS filter order ... is greater than maximum\").",
+              "faad_trace": "faad2 does not trace the filter's order."})
+
+
+def first_block_kbd():
+    """Two mono blocks of a Kaiser-Bessel derived window with one spectral line each: the first block's left half has its own shape (4.6.11.3.2), so its first 1,024 samples are
+    the line's inverse transform times the Kaiser-Bessel derived rise."""
+    sections = [[(1, 1)]]
+    ics = [channel(M.ONLY_LONG, 1, sections, gain=140, values={(0, 0): [0, 0, 1, 0]}, seed=90 + i) for i in range(2)]
+    data, rows = concat(adts_frames([M.raw_data_block([M.Element(M.SCE, ics=i)]) for i in ics]))
+    return "first-block-kbd.aac", data, manifest(
+        "Two mono frames of the Kaiser-Bessel derived window with the single spectral line 2 of the lowest band: the first block of a stream has the same shape on both halves.",
+        data, rows, [stream("AAC LC", RATE, 1, "Mono", 2 * 1024)], statistics("ADTS", ics))
+
+
+def fill_with_sbr_and_other_payload():
+    """A fill element holding a dynamic range payload and then an SBR payload: 4.5.2.1.5.2 allows no other payload next to SBR data."""
+    core = 22050
+    counts = M.sbr_bands(SBR_HEADER, 2 * core)
+    blocks = []
+    for i in range(6):
+        payload = M.drc_payload() + M.sbr_payload(counts, SBR_HEADER if i == 0 else None, pair=True)
+        blocks.append(pair_block(0, rate=core, extra=[M.Element(M.FIL, payload=payload)], first=channel(M.ONLY_LONG, 1, [[(11, 4)]], seed=i, rate=core),
+                                 second=channel(M.ONLY_LONG, 1, [[(9, 4)]], seed=i + 1, rate=core))[0])
+    data, rows = concat(adts_frames(blocks, rate=core, channels=2))
+    return "fill-sbr-with-other-payload.aac", data, manifest(
+        "ADTS at 22050 Hz of six channel pairs, each followed by a fill element of a dynamic range payload and then SBR data: the fill element holds another payload next to the "
+        "SBR payload, which the standard does not allow.", data, rows, [stream("HE-AAC", 2 * core, 2, "Stereo", 6 * 2048, ffprobe_profile="LC")],
+        {"ADTS/Statistics/SBR": share(6, 6, "access unit")},
+        [["aac.fill-sbr-with-other-payload", "6 raw data blocks hold an SBR payload in a fill element with an extension payload of another type"],
+         ["aac.implicit-sbr", "6 of 6 raw data blocks hold SBR data: the stream is HE-AAC"]],
+        skip={"faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold.",
+              "decode": "ffmpeg reads the dynamic range payload and the SBR data in one fill element differently."}, rate=core)
+
+
+def sbr_crc_checked():
+    """Implicit SBR with EXT_SBR_DATA_CRC payloads, two of six with a wrong CRC."""
+    core = 22050
+    counts = M.sbr_bands(SBR_HEADER, 2 * core)
+    blocks = []
+    for i in range(6):
+        payload = M.sbr_payload(counts, SBR_HEADER if i == 0 else None, pair=True, crc="wrong" if i in (2, 4) else True)
+        blocks.append(pair_block(0, rate=core, extra=[M.Element(M.FIL, payload=payload)], first=channel(M.ONLY_LONG, 1, [[(11, 4)]], seed=i, rate=core),
+                                 second=channel(M.ONLY_LONG, 1, [[(9, 4)]], seed=i + 1, rate=core))[0])
+    data, rows = concat(adts_frames(blocks, rate=core, channels=2))
+    return "sbr-crc-checked.aac", data, manifest(
+        "ADTS at 22050 Hz of six channel pairs followed by SBR payloads with a CRC-10 (EXT_SBR_DATA_CRC), the third and fifth with a wrong one: HE-AAC at 44100 Hz, four "
+        "checksums verified and two failed.", data, rows, [stream("HE-AAC", 2 * core, 2, "Stereo", 6 * 2048, ffprobe_profile="LC")],
+        {"ADTS/Statistics/SBR": share(6, 6, "access unit"), "ADTS/Statistics/SBR/Verified SBR Checksums": "4 payloads", "ADTS/Statistics/SBR/Failed SBR Checksums": "2 payloads"},
+        [["aac.sbr-crc-mismatch", "2 raw data blocks hold an SBR payload whose CRC differs"], ["aac.implicit-sbr", "6 of 6 raw data blocks hold SBR data: the stream is HE-AAC"]],
+        skip={"faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold.",
+              "decode": "ffmpeg does not check the CRC and prints \"No quantized data read for sbr_dequant\" for the payloads after the first."}, rate=core)
+
+
+def sbr_too_many_patches():
+    """An SBR header at 44100 Hz (core 22050 Hz) whose frequency tables need six patches, where 4.6.18.3.6 allows five."""
+    core = 22050
+    header = {"amp_res": 1, "start": 0, "stop": 8, "xover": 0, "freq_scale": 0, "alter_scale": 0}
+    counts = M.sbr_bands(header, 2 * core)
+    blocks = []
+    for i in range(6):
+        payload = M.sbr_payload(counts, header if i == 0 else None, pair=True)
+        blocks.append(pair_block(0, rate=core, extra=[M.Element(M.FIL, payload=payload)], first=channel(M.ONLY_LONG, 1, [[(11, 4)]], seed=i, rate=core),
+                                 second=channel(M.ONLY_LONG, 1, [[(9, 4)]], seed=i + 1, rate=core))[0])
+    data, rows = concat(adts_frames(blocks, rate=core, channels=2))
+    return "sbr-too-many-patches.aac", data, manifest(
+        "ADTS at 22050 Hz of six channel pairs followed by SBR payloads whose header (start frequency 0, stop frequency 8, linear scale) needs six patches at 44100 Hz, where the "
+        "standard allows five: the payloads are not read, and the stream is HE-AAC from the payloads' presence.", data, rows,
+        [stream("HE-AAC", 2 * core, 2, "Stereo", 6 * 2048, ffprobe_profile="LC")], {"ADTS/Statistics/SBR": share(6, 6, "access unit")},
+        [["aac.sbr-header-invalid", "the frequency tables need 6 patches, more than the 5 the standard allows"], ["aac.implicit-sbr", "6 of 6 raw data blocks hold SBR data: the stream is HE-AAC"]],
+        skip={"faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold.",
+              "decode": "ffmpeg builds the patches of six and decodes the data."}, rate=core)
+
+
+def lfe_restrictions():
+    """A single channel element and an LFE element from a program config element, the LFE channel stream first within the restrictions of 4.5.2.1.3.1 and then with a Kaiser-Bessel
+    derived window, coefficients above the lowest 12 and TNS."""
+    def pce(w):
+        w.put(0, 4).put(1, 2).put(rate_index(RATE), 4)
+        w.put(1, 4).put(0, 4).put(0, 4).put(1, 2).put(0, 3).put(0, 4)
+        w.put(0, 1).put(0, 1).put(0, 1)
+        w.put(0, 1).put(0, 4)  # front single channel element 0
+        w.put(0, 4)            # LFE element 0
+        w.align()
+        w.put(0, 8)
+
+    blocks = []
+    lfes = []
+    for i in range(4):
+        sce = channel(M.ONLY_LONG, 1, [[(11, 4), (3, 10)]], gain=140, seed=i)
+        if i < 2:
+            lfe = channel(M.ONLY_LONG, 0, [[(11, 3)]], gain=140, seed=i + 10)
+        else:
+            lfe = channel(M.ONLY_LONG, 1, [[(11, 6), (5, 4)]], gain=140, seed=i + 10, tns=[[(8, 2, 0, 0, 1, [1, 2])]])
+        lfes.append(lfe)
+        blocks.append(M.raw_data_block([M.Element(M.PCE, write=pce), M.Element(M.SCE, ics=sce), M.Element(M.LFE, ics=lfe)]))
+    data, rows = concat(adts_frames(blocks, channels=0))
+    return "lfe-restrictions.aac", data, manifest(
+        "ADTS of channel configuration 0 with a program config element of a front single channel element and an LFE element: the LFE of the first two blocks keeps to its "
+        "restrictions, that of the last two has a Kaiser-Bessel derived window, coefficients above the lowest 12 and TNS.", data, rows,
+        [stream("AAC LC", RATE, 2, "2 channels", 4 * 1024, layout=["front center", "LFE"])], {},
+        [["aac.lfe-restrictions", "2 raw data blocks hold an LFE channel stream with a Kaiser-Bessel derived window"]],
+        skip={"decode": "ffmpeg's decoder differs on the filter bank of the LFE."})
+
+
 def fixtures():
     """(directory, name, data, manifest) of every fixture: "adts" or "mp4"."""
-    out = [("adts",) + f for f in [windows(), window_sequences_invalid(), stereo(), stereo_coding(), stereo_coding_reserved(), stereo_coding_elements(), intensity_noise(), implicit_sbr_adts(), sbr_fixvar_adts(), fill_and_data()] + loud_tools() + faac_style_fixtures() + crc_fixtures() + object_types() + corrupt()]
+    out = [("adts",) + f for f in [windows(), window_sequences_invalid(), stereo(), stereo_coding(), stereo_coding_reserved(), stereo_coding_elements(), intensity_noise(), implicit_sbr_adts(), sbr_fixvar_adts(), fill_and_data()] + loud_tools() + [stereo_tool_order(), tns_order_above_12(), first_block_kbd(), fill_with_sbr_and_other_payload(), sbr_crc_checked(), sbr_too_many_patches(), lfe_restrictions()] + faac_style_fixtures() + crc_fixtures() + object_types() + corrupt()]
     out += [("mp4",) + f for f in mp4_fixtures()]
     out += eld_ld_sbr() + parametric_stereo_cores() + signature_streams() + streams_limited() + sbr_evidence() + blocks_missing() + prediction_bands() + rate_fixtures()
     return out

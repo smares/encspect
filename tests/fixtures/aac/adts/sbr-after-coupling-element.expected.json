@@ -1,70 +1,71 @@
 {
- "description": "ADTS at 22050 Hz of a channel pair, a coupling channel element and a fill element of SBR data, twelve times, in a stream of channel configuration 2: fdk-aac and faad2 read no SBR after a coupling element, so the stream stays AAC LC at 22050 Hz.",
- "length": 1175,
+ "description": "ADTS at 22050 Hz of a channel pair, a coupling channel element and a fill element of SBR data, twelve times, in a stream of channel configuration 2: the standard puts the SBR data of a coupling channel element after it (read as a single channel element's), so the stream is HE-AAC at 44100 Hz; fdk-aac and faad2 read no SBR after a coupling element.",
+ "length": 1079,
  "format": "AAC",
  "boxes": [],
  "streams": [
   {
-   "codec": "AAC LC",
-   "sample_rate": 22050,
+   "codec": "HE-AAC",
+   "sample_rate": 44100,
    "channels": 2,
    "channel_mode": "Stereo",
    "channel_layout": [
     "front left",
     "front right"
    ],
-   "samples": 12288,
-   "is_vbr": true
+   "samples": 24576,
+   "is_vbr": true,
+   "ffprobe_profile": "LC"
   }
  ],
  "units": [
   [
    0,
-   99
+   91
   ],
   [
-   99,
-   98
+   91,
+   90
   ],
   [
-   197,
-   99
+   181,
+   91
   ],
   [
-   296,
-   98
+   272,
+   90
   ],
   [
-   394,
-   101
+   362,
+   93
   ],
   [
-   495,
-   97
+   455,
+   89
   ],
   [
-   592,
-   97
+   544,
+   89
   ],
   [
-   689,
-   97
+   633,
+   89
   ],
   [
-   786,
-   98
+   722,
+   90
   ],
   [
-   884,
-   97
+   812,
+   89
   ],
   [
-   981,
-   97
+   901,
+   89
   ],
   [
-   1078,
-   97
+   990,
+   89
   ]
  ],
  "fields": {
@@ -72,8 +73,8 @@
  },
  "findings": [
   [
-   "aac.sbr-without-channel-element",
-   "12 raw data blocks hold SBR data that follows no single channel or channel pair element"
+   "aac.implicit-sbr",
+   "12 of 12 raw data blocks hold SBR data: the stream is HE-AAC"
   ],
   [
    "aac.coupling-without-program",
