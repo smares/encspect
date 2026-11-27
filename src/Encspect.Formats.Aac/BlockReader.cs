@@ -246,7 +246,13 @@ internal sealed partial class BlockReader
                 _hasLayout = true;
                 if (!isFirst && (_setup.ExpectedSce < 0 || (sce == _setup.ExpectedSce && cpe == _setup.ExpectedCpe && lfe == _setup.ExpectedLfe)))
                 {
-                    Soft("aac.layout-changed", "channel elements in another order than the block before it, so the decoder starts the state of its channel slots again", 0, 0, null);
+                    // The block's first channel element (a block with none: its first element) is a node of the tree in every layout (ADTS, ADIF, MP4), as the other block-level findings of an
+                    // element point to.
+                    ElementSpan? first = _elements.Where(e => e.Id is 0 or 1 or 3).Cast<ElementSpan?>().FirstOrDefault() ?? _elements.Cast<ElementSpan?>().FirstOrDefault();
+                    if (first is { } at0)
+                    {
+                        Soft("aac.layout-changed", "channel elements in another order than the block before it, so the decoder starts the state of its channel slots again", at0.Start, at0.End, AacTables.ElementName(at0.Id));
+                    }
                 }
             }
 
