@@ -54,7 +54,7 @@ internal sealed class StdTotals
     public long NonZero;
     public long Escapes;
 
-    // Channels of version 1 whose coefficients stopped at Microsoft's limit: the encoder wrote more after it, which the walk leaves unread.
+    // Channels of version 1 stereo whose coefficients stopped at Microsoft's limit: the encoder wrote more after it, which the walk leaves unread.
     public long LimitStops;
 
     public long KnownSize => BySize.Sum();
@@ -682,9 +682,10 @@ internal static class StdFrameReader
         last = 0;
         int escapes = 0;
 
-        // Version 1 codes s positions fewer than the count states (Microsoft's rule, docs/design/wma-standard-decoding.md, "Coefficient values"): a code that falls at the limit or
+        // Version 1 in stereo codes s positions fewer than the count states (Microsoft's rule, which mono does not follow, docs/design/wma-standard-decoding.md, "Coefficient values"): a code that falls at the limit or
         // beyond places nothing, its sign bit is read, and the channel ends; where the reader aligns after each channel, what the encoder wrote past it is read as the next channel.
-        int limit = p.Version == 1 ? n - p.FirstCoefficient : n;
+        bool hasLimit = p.Version == 1 && p.Channels == 2;
+        int limit = hasLimit ? n - p.FirstCoefficient : n;
         bool isStoppedAtLimit = false;
         while (position < limit)
         {
@@ -693,7 +694,7 @@ internal static class StdFrameReader
             {
                 position += runs[symbol];
                 bool isPositive = bits.Read(1) != 0;
-                if (position >= limit && p.Version == 1)
+                if (position >= limit && hasLimit)
                 {
                     position = limit;
                     isStoppedAtLimit = true;
@@ -714,7 +715,7 @@ internal static class StdFrameReader
                 int escaped = (int)bits.Read(escapeWidth);
                 position += (int)bits.Read(p.FrameBits);
                 bool isPositive = bits.Read(1) != 0;
-                if (position >= limit && p.Version == 1)
+                if (position >= limit && hasLimit)
                 {
                     position = limit;
                     isStoppedAtLimit = true;
@@ -735,7 +736,7 @@ internal static class StdFrameReader
         }
 
         // A channel that fills every position up to the limit may also have more coded after it.
-        isStoppedAtLimit |= p.Version == 1 && position >= limit && !bits.IsOverrun;
+        isStoppedAtLimit |= hasLimit && position >= limit && !bits.IsOverrun;
         if (totals is not null)
         {
             totals.LimitStops += isStoppedAtLimit ? 1 : 0;

@@ -19,7 +19,7 @@ For each file:
   fixtures agree to 3 x 10^-7, the rounding of single precision. Noise substitution draws the generator of docs/design/wma-standard-decoding.md, which FFmpeg's decoder draws too,
   so the files that code it agree sample by sample (Microsoft's generator is not known, see below).
 - DIFFERENCES lists the files whose output FFmpeg's decoder differs from the analyzer's on purpose, each with the reason; an entry that no longer differs fails the run (the
-  stale-entry rule of docs/development.md), as does a difference that has no entry. Eight committed fixtures have an entry where the analyzer follows Microsoft's decoder (the version 1 coefficient limit, the exponents of a channel not coded), and six of the
+  stale-entry rule of docs/development.md), as does a difference that has no entry. Seven committed fixtures have an entry where the analyzer follows Microsoft's decoder (the version 1 stereo coefficient limit, the exponents of a channel not coded), and six of the
   sample kit files under asf/sample-kit have one for their line spectral pairs in short blocks; so do the files of the private sample kit that have them (the block's own angles, item 1 of "Points to settle against Microsoft's decoder" in docs/design/wma-standard-decoding.md); name them on the command line to see it.
 
 With --microsoft DIR (the artifact of the Windows run: `wma-decode-probe wma-pcm`, `.github/workflows/windows-wma-decode.yml`, a folder of <name>.f32 and <name>.json) the same
@@ -56,10 +56,9 @@ NOISE_PREFIXES = ("external-ffmpeg-wmav1-mono-22k", "external-ffmpeg-wmav2-stere
 
 # Files whose output follows Microsoft's decoder where ffmpeg's differs (docs/design/wma-standard-decoding.md, "What Microsoft's output showed"), and the files of the private sample kit whose
 # line spectral pair exponents sit in short blocks: ffmpeg evaluates the curve at the angles of a block as long as the frame.
-LIMIT = "version 1 codes fewer positions (Microsoft's coefficient limit)"
+LIMIT = "version 1 stereo codes fewer positions (Microsoft's coefficient limit)"
 CONVERSION = "a channel not coded when exponents are sent is converted (Microsoft's rule)"
 DIFFERENCES = {
-    "external-ffmpeg-wmav1-mono-22k-24k.wma": LIMIT,
     "external-ffmpeg-wmav1-stereo-44k-128k.wma": LIMIT,
     "external-ffmpeg-wmav1-stereo-44k-48k.wma": LIMIT,
     "external-remux-ffmpeg-wma92-cbr-stereo-22k-20-sdk.wma": CONVERSION,

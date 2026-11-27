@@ -97,6 +97,18 @@ public class WmaDecoderTests
         Assert.DoesNotContain(report.Findings, f => f.Code.StartsWith("decode.", StringComparison.Ordinal));
     }
 
+    // Without the bit reservoir the stream's own trim is one frame, as Microsoft's decoder drops: the measured samples are the stream's "Samples", the first frame included.
+    [Fact]
+    public void WithoutTheBitReservoirTheMeasurementsTrimOneFrame()
+    {
+        (Report report, _) = Decode("asf/external-ffmpeg-wmav2-stereo-44k-128k.wma", new MeasureOptions());
+        StreamInfo stream = Assert.Single(report.Streams);
+
+        Assert.Equal(43 * 2048, stream.Samples);
+        Assert.Equal(stream.Samples, stream.Measurements!.Samples);
+        Assert.Equal(2048, stream.Measurements.FirstPosition);
+    }
+
     // A frame that fails its syntax is lost; the frame after it decodes for its overlap and the span that depends on the lost frame is withheld (after a gap): the first half frame and
     // half of the first block's overlap, here a block as long as the frame.
     [Fact]

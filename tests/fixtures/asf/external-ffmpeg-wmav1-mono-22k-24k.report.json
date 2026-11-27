@@ -5674,7 +5674,7 @@
                         },
                         {
                           "name": "Non-Zero Coefficients",
-                          "value": 3312,
+                          "value": 3316,
                           "offset": 354,
                           "length": 9650
                         },
@@ -5705,7 +5705,7 @@
                             },
                             {
                               "name": "Highest",
-                              "value": 10002,
+                              "value": 10034,
                               "unit": "Hz",
                               "offset": 354,
                               "length": 9650
@@ -5753,9 +5753,7 @@
                               "name": "Frame Data",
                               "value": "1 block",
                               "offset": 590,
-                              "length": 131,
-                              "bitOffset": 0,
-                              "bitLength": 1042
+                              "length": 131
                             },
                             {
                               "name": "Padding",
@@ -6583,14 +6581,16 @@
                               "name": "Frame Data",
                               "value": "1 block",
                               "offset": 6130,
-                              "length": 124
+                              "length": 126,
+                              "bitOffset": 0,
+                              "bitLength": 1004
                             },
                             {
                               "name": "Padding",
-                              "value": 15,
+                              "value": 13,
                               "unit": "bytes",
-                              "offset": 6254,
-                              "length": 15
+                              "offset": 6256,
+                              "length": 13
                             }
                           ]
                         },
@@ -6826,7 +6826,7 @@
                         {
                           "name": "Frame",
                           "kind": "Frame",
-                          "value": "1 block, 1042 bits",
+                          "value": "1 block, 1048 bits",
                           "offset": 590,
                           "length": 131,
                           "children": [
@@ -6870,11 +6870,11 @@
                                 },
                                 {
                                   "name": "Coefficients (channel 1)",
-                                  "value": "211 non-zero, last at 906",
+                                  "value": "212 non-zero, last at 926",
                                   "offset": 594,
                                   "length": 127,
                                   "bitOffset": 5,
-                                  "bitLength": 1005
+                                  "bitLength": 1011
                                 }
                               ]
                             }
@@ -8808,7 +8808,7 @@
                                 },
                                 {
                                   "name": "Coefficients (channel 1)",
-                                  "value": "211 non-zero, last at 916",
+                                  "value": "212 non-zero, last at 928",
                                   "offset": 5978,
                                   "length": 123,
                                   "bitOffset": 5,
@@ -8821,15 +8821,15 @@
                         {
                           "name": "Frame",
                           "kind": "Frame",
-                          "value": "1 block, 992 bits",
+                          "value": "1 block, 1004 bits",
                           "offset": 6130,
-                          "length": 124,
+                          "length": 126,
                           "children": [
                             {
                               "name": "Block",
                               "value": "1024 samples",
                               "offset": 6130,
-                              "length": 124,
+                              "length": 126,
                               "children": [
                                 {
                                   "name": "Channel 1 Coded",
@@ -8865,11 +8865,11 @@
                                 },
                                 {
                                   "name": "Coefficients (channel 1)",
-                                  "value": "223 non-zero, last at 925",
+                                  "value": "225 non-zero, last at 927",
                                   "offset": 6134,
-                                  "length": 120,
+                                  "length": 122,
                                   "bitOffset": 5,
-                                  "bitLength": 955
+                                  "bitLength": 967
                                 }
                               ]
                             }
@@ -9364,7 +9364,7 @@
             ],
             "values": [
               20.671875,
-              22.437597656250002,
+              22.566796875,
               4.758837890625,
               7.127490234375,
               7.23515625,
@@ -9399,7 +9399,7 @@
               5.749365234375,
               5.749365234375,
               21.813134765625,
-              21.360937500000002,
+              21.6193359375,
               6.352294921875,
               6.782958984375,
               5.3402343750000005,
@@ -9421,7 +9421,7 @@
             ],
             "values": [
               11.3,
-              9.6
+              9.7
             ]
           },
           {
@@ -9478,7 +9478,7 @@
             ],
             "values": [
               9927,
-              9798,
+              10013,
               484,
               517,
               538,
@@ -9512,8 +9512,8 @@
               560,
               484,
               484,
-              9905,
-              10002,
+              10034,
+              10024,
               484,
               560,
               484,
@@ -9534,8 +9534,8 @@
               1
             ],
             "values": [
-              9991,
-              10002
+              10013,
+              10034
             ]
           },
           {

@@ -30,8 +30,11 @@ internal sealed class StdDecodeFeed
             IsLossy = true,
             Shared = parameters,
         });
-        _session.Trim(2L * parameters.FrameLength, long.MaxValue);
+        _session.Trim(DroppedFrames(parameters) * parameters.FrameLength, long.MaxValue);
     }
+
+    // The frames whose output the stream's own syntax trims: two with the bit reservoir, one without it (Microsoft's decoder, docs/design/wma-standard-decoding.md, "The output of a stream").
+    private static long DroppedFrames(StdParameters parameters) => parameters.UsesBitReservoir ? 2 : 1;
 
     public bool IsDecoding => _session.IsDecoding;
 
@@ -85,8 +88,9 @@ internal sealed class StdDecodeFeed
     public StreamVerification Finish(int blockSize, int nextSize)
     {
         int length = _parameters.FrameLength;
-        long tail = _isLastValid && _tailFrame >= 2 ? (length - Math.Min(length >> blockSize, length >> nextSize)) / 2 : 0;
-        _session.Trim(2L * length, Math.Max(2L * length, (_tailFrame * length) + tail));
+        long tail = _parameters.UsesBitReservoir && _isLastValid && _tailFrame >= 2 ? (length - Math.Min(length >> blockSize, length >> nextSize)) / 2 : 0;
+        long start = DroppedFrames(_parameters) * length;
+        _session.Trim(start, Math.Max(start, (_tailFrame * length) + tail));
         if (tail > 0 && _session.IsDecoding)
         {
             SampleBuffers lent = _session.Lend(1, 1);
