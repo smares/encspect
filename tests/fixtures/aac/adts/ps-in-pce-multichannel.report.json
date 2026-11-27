@@ -12711,7 +12711,7 @@
       {
         "severity": "Warning",
         "code": "aac.ps-without-mono-core",
-        "message": "12 of 12 raw data blocks carry the parametric stereo extension's ID, but the core has 3 channels; decoders apply parametric stereo only to a core of one channel (fdk-aac, ffmpeg), so the report shows the stream without it.",
+        "message": "12 of 12 raw data blocks carry the parametric stereo extension's ID, but the core has 3 channels; parametric stereo applies only to a core of one channel (ISO/IEC 14496-3 subpart 8), so the report shows the stream without it.",
         "offset": 0,
         "length": 256,
         "path": [
