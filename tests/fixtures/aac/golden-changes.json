@@ -20,6 +20,30 @@
       "goldens": [
         "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
       ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADTS",
+        "Statistics",
+        "SBR"
+      ],
+      "name": "SBR Frame Classes",
+      "goldens": [
+        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
+      ]
+    },
+    {
+      "scope": "node",
+      "parent": [
+        "ADTS",
+        "Statistics",
+        "SBR"
+      ],
+      "name": "SBR Envelopes",
+      "goldens": [
+        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
+      ]
     }
   ],
   "changed": [
@@ -155,13 +179,13 @@
       ]
     },
     {
-      "scope": "stream",
+      "path": [
+        "ADTS",
+        "Statistics",
+        "Samples"
+      ],
       "fields": [
-        "samples",
-        "duration",
-        "sampleRate",
-        "codec",
-        "channelMode"
+        "value"
       ],
       "goldens": [
         "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
@@ -175,14 +199,17 @@
       "goldens": [
         "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
       ]
-    }
-  ],
-  "bitrate": [
+    },
     {
+      "parent": [
+        "ADTS",
+        "Statistics",
+        "SBR"
+      ],
+      "name": "Unread SBR Data",
       "goldens": [
         "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
-      ],
-      "reason": "the stream is HE-AAC at twice the rate: its samples double and the bitrate halves"
+      ]
     }
   ]
 }
