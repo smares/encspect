@@ -2,7 +2,7 @@ using Encspect.Core;
 
 namespace Encspect.Formats.Aac;
 
-// adif_header (ISO/IEC 14496-3 1.A.2.1, Table 1.A.4; ISO/IEC 13818-7 6.1): one header, then raw data
+// adif_header (ISO/IEC 14496-3 1.A.3.1, Table 1.A.2; ISO/IEC 13818-7 6.1): one header, then raw data
 // blocks with no length or sync between them (raw_data_stream, Table 1.A.3), each byte-aligned after
 // its END element. Each block's end is only known once every element, the Huffman-coded spectral
 // data included, is read, so a block that cannot be read ends the reading: nothing marks where the

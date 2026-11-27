@@ -159,6 +159,11 @@ internal sealed class PsDecoder
         ClearAllPass();
     }
 
+    // Whether any of the decorrelator's state variables is not zero (for the tests of its resets).
+    internal bool HasDecorrelatorState => Any(_subDelayRe) || Any(_subDelayIm) || Any(_delayRe) || Any(_delayIm) || Any(_subSerRe) || Any(_subSerIm) || Any(_serRe) || Any(_serIm);
+
+    private static bool Any(float[] state) => Array.Exists(state, x => x != 0);
+
     private void ClearAllPass()
     {
         Array.Clear(_subSerRe);
@@ -400,7 +405,7 @@ internal sealed class PsDecoder
     // The 20-band index of each of the 34 bands (Table 8.45, 8.6.4.6.1); bands 1 and 4 are averages of two, which Spread forms.
     private static readonly int[] Wider = [0, 0, 1, 2, 2, 3, 4, 4, 5, 5, 6, 7, 8, 8, 9, 9, 10, 11, 12, 13, 14, 14, 15, 15, 16, 16, 17, 17, 18, 18, 18, 18, 19, 19];
 
-    private static void Spread(int[,] table, int e)
+    internal static void Spread(int[,] table, int e)
     {
         Span<int> copy = stackalloc int[20];
         for (int i = 0; i < 20; i++)

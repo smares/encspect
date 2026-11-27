@@ -536,7 +536,7 @@ def stereo_coding_elements():
         "Three frames of a 5.1 stream, each holding a single channel element, two channel pair elements and an LFE element: six channel streams "
         "and two pairs in every unit, with mid/side, intensity stereo, left/right, mid/side in long start windows, eight short windows and a pair "
         "without a common window.", data, rows, [stream("AAC LC", RATE, 6, "5.1", len(frames) * 1024)], fields,
-        [["aac.window-slopes-differ", "a window sequence whose left slope differs"]])
+        [["aac.lfe-restrictions", "3 raw data blocks hold an LFE channel stream"], ["aac.window-slopes-differ", "a window sequence whose left slope differs"]])
 
 
 SBR_HEADER = {"amp_res": 1, "start": 5, "stop": 9, "xover": 0}
@@ -1283,7 +1283,7 @@ def sbr_evidence():
         "ADTS at 22050 Hz of single channel elements, each preceded by a fill element of SBR data: the payloads follow no channel element, so decoders "
         "read none and the stream stays AAC LC at 22050 Hz.", data, rows,
         [stream("AAC LC", core, 1, "Mono", 12 * 1024)], {"ADTS/Statistics/SBR": share(12, 12, "access unit")},
-        [["aac.sbr-without-channel-element", "12 raw data blocks hold SBR data that follows no single channel or channel pair element"]],
+        [["aac.sbr-without-channel-element", "12 raw data blocks hold SBR data that follows no single channel, channel pair or coupling channel element"]],
         skip={**skip, "ffprobe_streams": "ffmpeg cannot decode the frames (\"SBR was found before the first channel element\"), so it reports no sample rate.",
               "decode": "ffmpeg reports that SBR was found before the first channel element, the condition the fixture tests.",
               "faad_trace": "faad2 does not read the stream: its SBR payload follows no channel element, and its trace holds one raw data block."}, rate=core)))
@@ -1394,40 +1394,55 @@ def rate_fixtures():
 # --- Where the decoder follows the standard (ISO/IEC 14496-3) and not libxaac's order of the tools -------------------------------------
 
 def stereo_tool_order():
-    """Channel pairs of a common window whose bands exercise the order of the tools of Figure 4.2 (4.1.1.2) and 4.6.8: mid/side stereo, noise substitution, intensity stereo.
-    Block 0: ms_mask_present 2 over intensity bands (4.6.8.2.3 inverts only under mask 1). Block 1: mask 1, mid/side flags on bands where only the first channel codes noise (no
-    mid/side there, 4.6.8.1.3), only the second does, and both do (the same noise in both, 4.6.13.3). Block 2: no mask, the first channel codes noise where the second codes
-    intensity stereo (the second takes the scaled noise). Block 3: the same under mask 1 with the flags set (inverted noise)."""
+    """Channel pairs of a common window that exercise the order of the tools of Figure 4.2 (4.1.1.2) and 4.6.8, each between silent pairs so that the block's output depends on
+    its own spectra only, and set against a block the standard makes equal: intensity bands under ms_mask_present 2 and under mask 1 with flags on the other bands only (4.6.8.2.3
+    inverts under mask 1 alone); mid/side flags over bands where only the first channel codes noise and the same pair without a mask (no mid/side where a channel codes noise,
+    4.6.8.1.3); a first channel of noise and a second of intensity stereo (position 0), whose output equals the first channel's (the second channel takes the noise), and with
+    the flags set under mask 1, whose output is the inverted first channel; and a pair that codes noise in both channels and in one."""
     loud = 150
+    quiet = M.Element
+    silent = lambda: pair_block(0, first=channel(M.ONLY_LONG, 1, [[(0, 1)]], gain=loud), second=channel(M.ONLY_LONG, 1, [[(0, 1)]], gain=loud))
     one = [(11, 4), (5, 8), (1, 18)]
     two = [(9, 4), (3, 8), (15, 6), (14, 4), (15, 8)]
-    flags0 = [[1] * 30]
+    first_noise = [[(11, 4), (13, 6), (5, 8), (13, 4), (1, 4)]]
+    second_huffman = [[(9, 4), (3, 6), (7, 8), (2, 4), (4, 4)]]
+    all_noise = [[(13, 30)]]
+    all_intensity = [[(15, 30)]]
+    zero_positions = {(0, b): 0 for b in range(30)}
     noisy = [[(11, 4), (13, 6), (5, 8), (13, 4), (1, 6), (7, 4), (0, 4)]]
     other = [[(9, 4), (3, 6), (7, 8), (13, 4), (13, 6), (2, 4), (4, 4)]]
-    flags1 = [[1 if b < 32 else 0 for b in range(36)]]
-    first2 = [[(11, 4), (13, 8), (5, 8), (13, 6), (1, 4)]]
-    second2 = [[(9, 4), (15, 8), (3, 8), (14, 6), (2, 4)]]
-    flags3 = [[1] * 30]
+    del quiet
     made = [
+        silent(),
         pair_block(2, first=channel(M.ONLY_LONG, 1, [one], gain=loud, seed=71), second=channel(M.ONLY_LONG, 1, [two], gain=loud, seed=72)),
-        pair_block(1, flags1, first=channel(M.ONLY_LONG, 1, noisy, gain=loud, seed=73), second=channel(M.ONLY_LONG, 1, other, gain=loud, seed=74)),
-        pair_block(0, first=channel(M.ONLY_LONG, 1, first2, gain=loud, seed=75), second=channel(M.ONLY_LONG, 1, second2, gain=loud, seed=76)),
-        pair_block(1, flags3, first=channel(M.ONLY_LONG, 1, first2, gain=loud, seed=77), second=channel(M.ONLY_LONG, 1, second2, gain=loud, seed=78)),
+        silent(),
+        pair_block(1, [[1] * 12 + [0] * 18], first=channel(M.ONLY_LONG, 1, [one], gain=loud, seed=71), second=channel(M.ONLY_LONG, 1, [two], gain=loud, seed=72)),
+        silent(),
+        pair_block(1, [[1 if 4 <= b < 10 or 18 <= b < 22 else 0 for b in range(26)]], first=channel(M.ONLY_LONG, 1, first_noise, gain=loud, seed=73), second=channel(M.ONLY_LONG, 1, second_huffman, gain=loud, seed=74)),
+        silent(),
+        pair_block(0, first=channel(M.ONLY_LONG, 1, first_noise, gain=loud, seed=73), second=channel(M.ONLY_LONG, 1, second_huffman, gain=loud, seed=74)),
+        silent(),
+        pair_block(0, first=channel(M.ONLY_LONG, 1, all_noise, gain=loud, seed=75), second=channel(M.ONLY_LONG, 1, all_intensity, gain=loud, seed=76, gains=dict(zero_positions))),
+        silent(),
+        pair_block(1, [[1] * 30], first=channel(M.ONLY_LONG, 1, all_noise, gain=loud, seed=77), second=channel(M.ONLY_LONG, 1, all_intensity, gain=loud, seed=78, gains=dict(zero_positions))),
+        silent(),
+        pair_block(1, [[1 if b < 32 else 0 for b in range(36)]], first=channel(M.ONLY_LONG, 1, noisy, gain=loud, seed=79), second=channel(M.ONLY_LONG, 1, other, gain=loud, seed=80)),
+        silent(),
     ]
-    del flags0
     data, rows = concat(adts_frames([m[0] for m in made], channels=2))
     streams = [t for m in made for t in m[1]]
     fields = {
-        "ADTS/Frame[0]/Raw Data Block/CPE/Mid/Side Mask Present": "2 (all bands)",
-        "ADTS/Frame[1]/Raw Data Block/CPE/Mid/Side Mask Present": "1 (per band)",
-        "ADTS/Statistics/Channel Pairs/Intensity Stereo": share(3, 4, "element"),
+        "ADTS/Frame[1]/Raw Data Block/CPE/Mid/Side Mask Present": "2 (all bands)",
+        "ADTS/Frame[3]/Raw Data Block/CPE/Mid/Side Mask Present": "1 (per band)",
+        "ADTS/Statistics/Channel Pairs/Intensity Stereo": share(4, 15, "element"),
         **statistics("ADTS", streams),
     }
     return "stereo-tool-order.aac", data, manifest(
-        "Channel pairs of a common window at a level near -30 dBFS: intensity bands under ms_mask_present 2 (not inverted); mid/side flags on bands where the first channel, the "
-        "second or both code noise (no mid/side there; both the same noise); the second channel's intensity bands over the first channel's noise, without and with flags "
-        "(the intensity stereo takes the scaled noise, as the order of the tools of the standard says).",
-        data, rows, [stream("AAC LC", RATE, 2, "Stereo", 4 * 1024)], fields,
+        "Channel pairs of a common window at a level near -30 dBFS, each between silent pairs: intensity bands under ms_mask_present 2 and the same pair under mask 1 with flags on "
+        "the other bands (equal output); mid/side flags on the bands where only the first channel codes noise and the same pair without a mask (equal second channel); a first "
+        "channel of noise and a second of intensity stereo, without a mask (the second channel equals the first) and with the flags under mask 1 (the inverted first channel); and "
+        "a pair with noise in both channels and in one.",
+        data, rows, [stream("AAC LC", RATE, 2, "Stereo", 15 * 1024)], fields,
         skip={"decode": "ffmpeg's decoder inverts intensity bands under ms_mask_present 2 and draws its own noise.",
               "faad_trace": "faad2 checks the first channel's noise only for mid/side stereo, and the units' stereo codings may differ."})
 
@@ -1545,7 +1560,7 @@ def lfe_restrictions():
         lfes.append(lfe)
         blocks.append(M.raw_data_block([M.Element(M.PCE, write=pce), M.Element(M.SCE, ics=sce), M.Element(M.LFE, ics=lfe)]))
     data, rows = concat(adts_frames(blocks, channels=0))
-    return "lfe-restrictions.aac", data, manifest(
+    return "lfe-restrictions-pce.aac", data, manifest(
         "ADTS of channel configuration 0 with a program config element of a front single channel element and an LFE element: the LFE of the first two blocks keeps to its "
         "restrictions, that of the last two has a Kaiser-Bessel derived window, coefficients above the lowest 12 and TNS.", data, rows,
         [stream("AAC LC", RATE, 2, "2 channels", 4 * 1024, layout=["front center", "LFE"])], {},

@@ -50552,9 +50552,26 @@
         "count": 1
       },
       {
+        "severity": "Info",
+        "code": "aac.lfe-restrictions",
+        "message": "34 raw data blocks hold an LFE channel stream with a window sequence but only long, which 4.5.2.1.3.1 does not allow in an LFE element; the first at 0xC1.",
+        "offset": 193,
+        "length": 1,
+        "path": [
+          0,
+          1,
+          15,
+          3,
+          2,
+          1,
+          1
+        ],
+        "count": 34
+      },
+      {
         "severity": "Warning",
         "code": "aac.sbr-without-channel-element",
-        "message": "34 raw data blocks hold SBR data that follows no single channel or channel pair element; the first at 0xD6.",
+        "message": "34 raw data blocks hold SBR data that follows no single channel, channel pair or coupling channel element, where 4.5.2.8.2.2 puts it; the first at 0xD6.",
         "offset": 214,
         "length": 11,
         "path": [

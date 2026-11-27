@@ -553,6 +553,6 @@ internal static class BandTables
 
     public static readonly byte[] NumShort120 = [12, 12, 12, 14, 14, 14, 15, 15, 15, 15, 15, 15, 15];
 
-    // AAC Main predicts the bands below this one (ISO/IEC 14496-3 4.6.6, PRED_SFB_MAX).
+    // AAC Main predicts the bands below this one (PRED_SFB_MAX of ISO/IEC 13818-7; 14496-3 4.6.6 refers to it).
     public static readonly byte[] PredictionMax = [33, 33, 38, 40, 40, 40, 41, 41, 37, 37, 37, 34, 34];
 }

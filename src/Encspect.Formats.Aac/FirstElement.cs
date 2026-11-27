@@ -56,7 +56,7 @@ internal readonly record struct FirstElement
         element = element with { Tag = tag };
         if (id == 6)
         {
-            // fill_element (4.4.2.7, Table 4.11): count, esc_count where count is 15, then count
+            // fill_element (4.4.2.1, Table 4.11): count, esc_count where count is 15, then count
             // bytes of extension_payload (Table 4.57), which starts with its extension type.
             int at = startBit + 7;
             int count = tag;
@@ -78,7 +78,7 @@ internal readonly record struct FirstElement
 
         if (id == 4 && bits >= 16)
         {
-            // data_stream_element (4.4.2.8, Table 4.10): tag, data_byte_align_flag, count,
+            // data_stream_element (4.4.2.1, Table 4.10): tag, data_byte_align_flag, count,
             // esc_count where count is 255, then the bytes, byte-aligned when the flag says so.
             bool aligned = Bits(unit, startBit + 7, 1) != 0;
             int count = (int)Bits(unit, startBit + 8, 8);

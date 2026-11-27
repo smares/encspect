@@ -356,9 +356,8 @@ internal sealed partial class BlockReader
             ChannelStream(ref bits, n, second, common, 1, "Channel 1", secondStart);
             if (!common && HasBand(second, b => b is 14 or 15))
             {
-                // fdk-aac applies intensity stereo only with a common window (channel.cpp) and its stereo.cpp quotes 4.6.8.2.3 as allowing the
-                // codebooks only there; FFmpeg and faad2 apply it anyway, and so is it counted.
-                Soft("aac.intensity-without-common-window", "intensity stereo bands in a channel pair without a common window, outside what ISO/IEC 14496-3 4.6.8.2.3 allows as fdk-aac's source quotes it, though FFmpeg and faad2 decode them",
+                // 4.6.8.2.3 allows the codebooks only with a common window, as fdk-aac applies them (channel.cpp); FFmpeg and faad2 apply it anyway, and so is it counted.
+                Soft("aac.intensity-without-common-window", "intensity stereo bands in a channel pair without a common window, outside what ISO/IEC 14496-3 4.6.8.2.3 allows (codebooks 14 and 15 only in the second channel of a pair with a common window), though FFmpeg and faad2 decode them",
                     second.SectionStart, second.SectionEnd, "Intensity Stereo Bands");
             }
 
@@ -938,7 +937,7 @@ internal sealed partial class BlockReader
             _cuts.Add(new BlockCut(CutKind.ScaleFactors, start, length, -1));
             if (outOfRange)
             {
-                Soft("aac.scalefactor-out-of-range", "a scalefactor outside 0 to 255, for which ffmpeg's decoder rejects the access unit", start, start + length,
+                Soft("aac.scalefactor-out-of-range", "a scalefactor outside 0 to 255 (4.6.2.3.2), for which ffmpeg's decoder rejects the access unit", start, start + length,
                     "Scale Factor Data");
             }
         }
@@ -993,7 +992,7 @@ internal sealed partial class BlockReader
         }
     }
 
-    // tns_data (ISO/IEC 14496-3 4.4.2): per window, up to three filters (one for each short window),
+    // tns_data (ISO/IEC 14496-3 4.4.2.7, Table 4.54): per window, up to three filters (one for each short window),
     // each with its length in bands, order, direction and coefficients (4.6.9). Returns the filters.
     private int TnsData(ref AacBits bits, Node? parent, Ics ics)
     {
@@ -1001,9 +1000,8 @@ internal sealed partial class BlockReader
         int start = bits.Original;
         bool eight = ics.WindowSequence == 2;
         int windows = eight ? 8 : 1;
-        // TNS_MAX_ORDER: 12 for long windows of LC and SSR and 20 for Main, as ffmpeg checks; for LTP
-        // the references differ (ffmpeg 12, faad2 and fdk-aac 20), so only orders above 20 count.
-        int maxOrder = eight ? 7 : _setup.ObjectType is 1 or 4 ? 20 : 12;
+        // TNS_MAX_ORDER (4.6.9.3, Table 4.156): 20 for AAC Main only, 12 for every other object type that uses TNS (LTP included), 7 for eight short windows.
+        int maxOrder = eight ? 7 : _setup.ObjectType == 1 ? 20 : 12;
         int total = 0;
         bool tooHigh = false;
         for (int w = 0; w < windows; w++)
@@ -1436,7 +1434,7 @@ internal sealed partial class BlockReader
         }
     }
 
-    // One TNS filter (4.4.2.11): its coefficients are read as coded, up to the 20 a slot holds; the decoder takes the filter's range from the length and the ones before it.
+    // One TNS filter (4.4.2.7, Table 4.54): its coefficients are read as coded, up to the 20 a slot holds; the decoder takes the filter's range from the length and the ones before it.
     private void StoreFilter(ref AacBits bits, Ics ics, int window, int length, int order, bool downward, int resolution, int compress, int coefficientBits)
     {
         Span<int> record = _store!.At(ics.Slot);

@@ -180,6 +180,9 @@ internal sealed class BlockLog
         // FDK AAC's encoder writes such transitions in several of the fixtures, and the records of tests/fixtures/*/official-decoders.json list no unit of them that a decoder refuses
         // or conceals: the finding states what the stream does, as information.
         "aac.window-slopes-differ" => Severity.Info,
+
+        // FAAC 2.1 and 2.2 write LFE channel streams with other window sequences in their 5.1 files, and FDK AAC decodes them: the standard's restrictions (4.5.2.1.3.1) are stated as information.
+        "aac.lfe-restrictions" => Severity.Info,
         _ => Severity.Warning,
     };
 

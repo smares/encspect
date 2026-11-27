@@ -3,8 +3,8 @@ using Encspect.Core;
 
 namespace Encspect.Formats.Aac;
 
-// Raw AAC files: ADTS (ISO/IEC 14496-3 1.A.2.2 and ISO/IEC 13818-7 6.2), a header before every
-// frame, and ADIF (1.A.2.1), one header before raw data blocks that nothing delimits. As with MPEG
+// Raw AAC files: ADTS (ISO/IEC 14496-3 1.A.3.2 and ISO/IEC 13818-7 6.2), a header before every
+// frame, and ADIF (1.A.3.1), one header before raw data blocks that nothing delimits. As with MPEG
 // sync, an ADTS header only starts a stream when a chain of consistent frames follows it: two more
 // with the same fixed header at the positions its length gives, or frames that end exactly at the
 // end of the data. Once in sync, frames are followed by their lengths; anything else is a gap, and
@@ -386,7 +386,7 @@ public sealed class RawAacParser : IFormatParser
     }
 
     // The raw data blocks of a frame, each read element by element (BlockReader), and the CRC verdict
-    // (1.A.2.2.2 and 1.A.3.2.2): with one raw data block, the CRC after the header covers the header
+    // (1.A.3.2.3, Tables 1.A.8 to 1.A.10, and ISO/IEC 13818-7): with one raw data block, the CRC after the header covers the header
     // and the regions of the block's elements that Crc16.AddElements gives; with more blocks it
     // covers the header and the block positions, and each block ends in its own CRC over its
     // elements. A block that cannot be read to its end leaves its CRC unverified. Blocks of an

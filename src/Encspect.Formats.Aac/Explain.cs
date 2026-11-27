@@ -170,7 +170,7 @@ internal static partial class Explain
     public const string FillExtensionType = "extension_type: what the fill element carries, such as 13 or 14 for SBR data, 11 for dynamic range control, 0 or 1 for plain filler (ISO/IEC 14496-3, fill_element).";
     public const string ElementText = "Readable text in the element's payload, such as an encoder's name and version.";
 
-    public const string Adts = "A run of ADTS frames: raw AAC with a header before every frame, so a decoder can start anywhere and needs no container (ISO/IEC 14496-3 1.A.2.2; ISO/IEC 13818-7 6.2).";
+    public const string Adts = "A run of ADTS frames: raw AAC with a header before every frame, so a decoder can start anywhere and needs no container (ISO/IEC 14496-3 1.A.3.2; ISO/IEC 13818-7 6.2).";
     public const string UnreadFrames = "The bytes after the frames the analyzer counted past its limit of 2,097,152 frame records, where the stream's frames do not continue, another stream starts, or the 4,096 sync losses it follows are used up; they are not analyzed.";
 
     public const string CountedFrames = "ADTS frames past the analyzer's limit of 2,097,152 frame records, counted from their headers in the stream's frames, samples, duration and bitrates; they have no node of their own and their raw data blocks are not read.";
@@ -180,8 +180,8 @@ internal static partial class Explain
     public const string CountedBlocks = "Raw data blocks past the analyzer's limit of 2,097,152 block records, read only for their length and counted in the stream's blocks, samples, duration and bitrates; they have no node of their own.";
 
     public const string Gap = "Bytes between ADTS frames that are not a frame: data before the first frame, where sync was lost, or after the last frame.";
-    public const string AdtsFrame = "One ADTS frame: a 7-byte header, a CRC where it is protected, then one to four raw data blocks of 1024 samples per channel each (ISO/IEC 14496-3 1.A.2.2).";
-    public const string SyncWord = "syncword: 12 set bits that start every ADTS header (ISO/IEC 14496-3 1.A.2.2.1).";
+    public const string AdtsFrame = "One ADTS frame: a 7-byte header, a CRC where it is protected, then one to four raw data blocks of 1024 samples per channel each (ISO/IEC 14496-3 1.A.3.2).";
+    public const string SyncWord = "syncword: 12 set bits that start every ADTS header (ISO/IEC 14496-3 1.A.3.2.1).";
     public const string AdtsVersion = "ID: 0 for MPEG-4 AAC, 1 for MPEG-2 AAC, as ISO/IEC 13818-7 defines it (ISO/IEC 14496-3 1.A.3.2.1).";
     public const string AdtsLayer = "layer: always 0 in ADTS, which keeps its headers apart from those of MPEG audio, whose layer is never 0 (ISO/IEC 14496-3 1.A.3.2.1).";
     public const string AdtsProtected = "Whether a CRC follows the header; the stored protection_absent bit is 0 when it does (ISO/IEC 14496-3 1.A.3.2.1).";
@@ -191,32 +191,32 @@ internal static partial class Explain
     public const string AdtsChannelConfiguration = "channel_configuration: the channel layout by number, 1 mono, 2 stereo; 0 leaves it to a program config element in the raw data block (ISO/IEC 14496-3 1.A.3.2.1).";
     public const string AdtsOriginal = "original_copy: set for an original, clear for a copy; encoders set it as they are configured (ISO/IEC 14496-3 1.A.3.2.1).";
     public const string AdtsHome = "home: a bit the specification leaves to the application (ISO/IEC 14496-3 1.A.3.2.1).";
-    public const string CopyrightIdBit = "copyright_identification_bit: one bit of a 72-bit copyright identifier that the frames carry one bit at a time (ISO/IEC 14496-3 1.A.3.2.1).";
-    public const string CopyrightIdStart = "copyright_identification_start: whether this frame's bit is the first of the copyright identifier (ISO/IEC 14496-3 1.A.3.2.1).";
-    public const string AdtsFrameLength = "aac_frame_length: the frame's length in bytes, header included, which gives where the next frame starts (ISO/IEC 14496-3 1.A.3.2.1).";
-    public const string BufferFullness = "adts_buffer_fullness: how full the decoder's input buffer is after this frame, in 32-bit words per channel, so a decoder can start mid-stream. 0x7FF marks a variable bitrate (ISO/IEC 14496-3 1.A.3.2.1).";
-    public const string RawDataBlockCount = "number_of_raw_data_blocks_in_frame plus one: how many raw data blocks of 1024 samples the frame holds (ISO/IEC 14496-3 1.A.3.2.1).";
+    public const string CopyrightIdBit = "copyright_identification_bit: one bit of a 72-bit copyright identifier that the frames carry one bit at a time (ISO/IEC 14496-3 1.A.3.2.2, Table 1.A.7; their meaning is ISO/IEC 13818-7's).";
+    public const string CopyrightIdStart = "copyright_identification_start: whether this frame's bit is the first of the copyright identifier (ISO/IEC 14496-3 1.A.3.2.2, Table 1.A.7; their meaning is ISO/IEC 13818-7's).";
+    public const string AdtsFrameLength = "aac_frame_length: the frame's length in bytes, header included, which gives where the next frame starts (ISO/IEC 14496-3 1.A.3.2.2, Table 1.A.7; their meaning is ISO/IEC 13818-7's).";
+    public const string BufferFullness = "adts_buffer_fullness: the state of the encoder's bit reservoir, divided by the number of channels and by 32, so in 32-bit words per channel (ISO/IEC 14496-3 4.5.3.2). 0x7FF marks a variable bitrate (ISO/IEC 13818-7).";
+    public const string RawDataBlockCount = "number_of_raw_data_blocks_in_frame plus one: how many raw data blocks of 1024 samples the frame holds (ISO/IEC 14496-3 1.A.3.2.2, Table 1.A.7; their meaning is ISO/IEC 13818-7's).";
     public const string RawDataBlockPosition = "raw_data_block_position: where a raw data block after the first starts, in bytes from the start of the first raw data block, which follows the header, the positions and the header CRC (ISO/IEC 14496-3 1.A.3.2.2).";
-    public const string Crc = "The CRC-16 the encoder stored over the header and the first bits of each channel element, so decoders can detect damage (ISO/IEC 14496-3 1.A.2.2.2, 1.A.4.3).";
-    public const string BlockCrc = "The CRC-16 of the raw data block before it, which a frame of several protected blocks stores after each (ISO/IEC 14496-3 1.A.2.2.2).";
+    public const string Crc = "The CRC-16 the encoder stored over the header and the first bits of each channel element, so decoders can detect damage (ISO/IEC 14496-3 1.A.3.2.3, ISO/IEC 13818-7).";
+    public const string BlockCrc = "The CRC-16 of the raw data block before it, which a frame of several protected blocks stores after each (ISO/IEC 14496-3 1.A.3.2.3).";
     public const string CrcCheck = "What the analyzer found when it computed the CRC over the same bits. Checking a channel element needs to know where it ends, which takes its spectral data.";
     public const string RawDataBlockUnread = "A raw data block that the analyzer did not read, since its frame is in no stream: it lies past the limit of 64 streams.";
     public const string CountedFramesPastStreams = "ADTS frames past the analyzer's limit of 2,097,152 frame records, counted from their headers; they are past the limit of 64 streams, so they are in no stream and are counted only in aac.streams-limited. They have no node of their own and their raw data blocks are not read.";
     public const string RawDataBlock = "One raw data block: the syntax elements of one frame, 1024 samples per channel, ending with an END element (ISO/IEC 14496-3 4.4.2.1).";
 
-    public const string Adif = "An ADIF stream: one header at the start of the file, then raw data blocks with no headers or lengths between them (ISO/IEC 14496-3 1.A.2.1; ISO/IEC 13818-7 6.1).";
-    public const string AdifHeader = "The ADIF header: copyright, bitrate and the program config elements that give the channel layout (ISO/IEC 14496-3 1.A.2.1).";
-    public const string AdifId = "adif_id: the four letters ADIF that start the file (ISO/IEC 14496-3 1.A.2.1).";
-    public const string HasCopyrightId = "copyright_id_present: whether a 72-bit copyright identifier follows (ISO/IEC 14496-3 1.A.2.1).";
-    public const string CopyrightId = "copyright_id: a 72-bit copyright identifier, shown in two parts (ISO/IEC 14496-3 1.A.2.1).";
-    public const string AdifOriginal = "original_copy: set for an original, clear for a copy (ISO/IEC 14496-3 1.A.2.1).";
-    public const string AdifHome = "home: a bit the specification leaves to the application (ISO/IEC 14496-3 1.A.2.1).";
-    public const string BitstreamType = "bitstream_type: 0 for a constant bitrate, 1 for a variable one (ISO/IEC 14496-3 1.A.2.1).";
-    public const string AdifBitrate = "bitrate: the constant bitrate, or for a variable bitrate the peak (ISO/IEC 14496-3 1.A.2.1).";
-    public const string PceCount = "num_program_config_elements plus one: how many programs the stream defines (ISO/IEC 14496-3 1.A.2.1).";
-    public const string AdifBufferFullness = "adif_buffer_fullness: how full the decoder's buffer is after the first raw data block, for a constant bitrate (ISO/IEC 14496-3 1.A.2.1).";
-    public const string AdifBlocks = "The raw data blocks after the header, back to back without lengths; finding their bounds needs every element parsed (ISO/IEC 14496-3 1.A.2.1).";
-    public const string AdifUnread = "The bytes after the longest extent of a raw data block that could not be read to its end: ADIF gives no block's length or start, so the blocks after one that breaks cannot be found (ISO/IEC 14496-3 1.A.2.1).";
+    public const string Adif = "An ADIF stream: one header at the start of the file, then raw data blocks with no headers or lengths between them (ISO/IEC 14496-3 1.A.3.1; ISO/IEC 13818-7 6.1).";
+    public const string AdifHeader = "The ADIF header: copyright, bitrate and the program config elements that give the channel layout (ISO/IEC 14496-3 1.A.3.1).";
+    public const string AdifId = "adif_id: the four letters ADIF that start the file (ISO/IEC 14496-3 1.A.3.1).";
+    public const string HasCopyrightId = "copyright_id_present: whether a 72-bit copyright identifier follows (ISO/IEC 14496-3 1.A.3.1).";
+    public const string CopyrightId = "copyright_id: a 72-bit copyright identifier, shown in two parts (ISO/IEC 14496-3 1.A.3.1).";
+    public const string AdifOriginal = "original_copy: set for an original, clear for a copy (ISO/IEC 14496-3 1.A.3.1).";
+    public const string AdifHome = "home: a bit the specification leaves to the application (ISO/IEC 14496-3 1.A.3.1).";
+    public const string BitstreamType = "bitstream_type: 0 for a constant bitrate, 1 for a variable one (ISO/IEC 14496-3 1.A.3.1).";
+    public const string AdifBitrate = "bitrate: the constant bitrate, or for a variable bitrate the peak (ISO/IEC 14496-3 1.A.3.1).";
+    public const string PceCount = "num_program_config_elements plus one: how many programs the stream defines (ISO/IEC 14496-3 1.A.3.1).";
+    public const string AdifBufferFullness = "adif_buffer_fullness: how full the decoder's buffer is after the first raw data block, for a constant bitrate (ISO/IEC 14496-3 1.A.3.1).";
+    public const string AdifBlocks = "The raw data blocks after the header, back to back without lengths; finding their bounds needs every element parsed (ISO/IEC 14496-3 1.A.3.1).";
+    public const string AdifUnread = "The bytes after the longest extent of a raw data block that could not be read to its end: ADIF gives no block's length or start, so the blocks after one that breaks cannot be found (ISO/IEC 14496-3 1.A.3.1).";
 
     public const string Statistics = "Figures the analyzer computed over the stream's access units or frames.";
     public const string StatUnits = "How many access units or frames the stream has.";
@@ -224,10 +224,10 @@ internal static partial class Explain
     public const string StatDuration = "The playing time of those samples, before any gapless trimming.";
     public const string AverageBitrate = "The bits of the access units divided by their playing time; container overhead and ADTS headers aside, the stream's bitrate.";
     public const string StatEndTrimming = "The samples a decoder drops from the end, as the container states them: the DiscardPadding of the track's last block (RFC 9559, section 5.1.3.5.7), at the sampling rate, rounded to the nearest sample, halves up, and no more than the samples counted. The Samples and the Duration are less by it.";
-    public const string StatMinimumFullness = "The lowest adts_buffer_fullness of the frames that state one, in 32-bit words per channel (ISO/IEC 14496-3 1.A.3.2.1): how full the encoder said the decoder's input buffer would be after the frame. Frames that signal a variable bitrate are not counted.";
+    public const string StatMinimumFullness = "The lowest adts_buffer_fullness of the frames that state one, in 32-bit words per channel (ISO/IEC 14496-3 4.5.3.2): the state of the encoder's bit reservoir. Frames that signal a variable bitrate are not counted.";
     public const string StatMaximumFullness = "The highest adts_buffer_fullness of the frames that state one, in 32-bit words per channel.";
     public const string StatAverageFullness = "The mean adts_buffer_fullness of the frames that state one, in 32-bit words per channel.";
-    public const string StatVariableSignaling = "The frames whose adts_buffer_fullness is 0x7FF, which signals a variable bitrate and states no fullness (ISO/IEC 14496-3 1.A.3.2.1).";
+    public const string StatVariableSignaling = "The frames whose adts_buffer_fullness is 0x7FF, which signals a variable bitrate and states no fullness (ISO/IEC 13818-7).";
     public const string BufferFullnessSeries = "The adts_buffer_fullness of each frame that states one, in 32-bit words per channel; a frame that signals a variable bitrate (0x7FF) has none.";
     public const string BufferFullnessOverTimeSeries = "The mean adts_buffer_fullness of the frames that start in each second of audio and state one.";
     public const string StatChecksums = "The frames whose ADTS CRC-16 equals the one computed over the header and the elements it covers.";
