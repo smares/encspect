@@ -108,6 +108,12 @@ internal sealed class PsDecoder
     private bool _holdMatrices;
     private bool _snapMatrices;
 
+    // Whether the last envelope is the copy that VAR_BORDERS appends where the last border lies before the frame's end: its matrices are the last real envelope's, held (8.6.4.6.4 b), and it adds no position to the smoothing.
+    private bool _hasExtraEnvelope;
+
+    // Whether a frame with ps_data has come since the start or a loss: the matrices before it are 0 (8.6.4.6.4 a).
+    private bool _isStarted;
+
     // Whether the previous frame held ps_data and whether this one does (ISO/IEC 14496-3 8.A.3: a frame after one without ps_data starts from reset decorrelator states).
     private bool _previousPresent;
 
@@ -167,6 +173,7 @@ internal sealed class PsDecoder
         _wasWide = false;
         _mixB = false;
         _phase = false;
+        _isStarted = false;
         _previousPresent = false;
         _present = false;
     }
@@ -288,6 +295,14 @@ internal sealed class PsDecoder
     {
         bool present = !ps.IsEmpty && ps[SbrRecord.PsEnvelopes] >= 0;
         _present = present;
+        if (present && !_isStarted)
+        {
+            // Until the first ps_data the output is the mono signal in both channels (8.6.5.1); from it the matrices start at 0.
+            _isStarted = true;
+            Array.Clear(_hPrevious);
+            Array.Clear(_hPreviousIm);
+        }
+
         int frameClass = 0;
         _envelopes = 0;
         _phase = false;
@@ -387,6 +402,7 @@ internal sealed class PsDecoder
             }
         }
 
+        _hasExtraEnvelope = false;
         _holdMatrices = _phase && _envelopes == 0;
         _snapMatrices = !_phase && _envelopes == 0 && HasPhase(_hPreviousIm);
 
@@ -397,8 +413,8 @@ internal sealed class PsDecoder
             {
                 _iid[0, i] = _enableIid ? Math.Clamp(_iidPrevious[i], -levels, levels) : 0;
                 _icc[0, i] = _enableIcc ? _iccPrevious[i] : 0;
-                _ipd[0, i] = 0;
-                _opd[0, i] = 0;
+                _ipd[0, i] = _phase ? _ipdPrevious[i] : 0;
+                _opd[0, i] = _phase ? _opdPrevious[i] : 0;
             }
         }
 
@@ -430,6 +446,7 @@ internal sealed class PsDecoder
 
             if (_border[_envelopes] < Slots)
             {
+                _hasExtraEnvelope = true;
                 _envelopes++;
                 _border[_envelopes] = Slots;
                 for (int i = 0; i < 34; i++)
@@ -819,7 +836,8 @@ internal sealed class PsDecoder
 
         for (int e = 0; e < _envelopes; e++)
         {
-            if (_holdMatrices)
+            bool isExtra = _hasExtraEnvelope && e == _envelopes - 1;
+            if (_holdMatrices || isExtra)
             {
                 Array.Copy(_hPrevious, _h, _h.Length);
                 Array.Copy(_hPreviousIm, _hIm, _hIm.Length);
@@ -904,10 +922,13 @@ internal sealed class PsDecoder
                     _hPreviousIm[(c * 34) + bin] = _hIm[(c * 34) + bin];
                 }
 
-                _ipdHistory2[bin] = _ipdHistory1[bin];
-                _opdHistory2[bin] = _opdHistory1[bin];
-                _ipdHistory1[bin] = _ipd[e, bin];
-                _opdHistory1[bin] = _opd[e, bin];
+                if (!isExtra)
+                {
+                    _ipdHistory2[bin] = _ipdHistory1[bin];
+                    _opdHistory2[bin] = _opdHistory1[bin];
+                    _ipdHistory1[bin] = _ipd[e, bin];
+                    _opdHistory1[bin] = _opd[e, bin];
+                }
             }
         }
     }

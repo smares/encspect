@@ -618,11 +618,12 @@ def ps_wide(w, iid_mode=2, icc_mode=2, varied=False):
     w.put(0, size * 8 - total)                       # bs_fill_bits
 
 
-def ps_phase(w, iid_mode, icc_mode, envelopes):
+def ps_phase(w, iid_mode, icc_mode, envelopes, overrun=False, no_iid=False):
     """The parametric stereo extension of the full decoder: intensity differences and coherences in the bands of iid_mode and icc_mode (0 to 2 coarse, 3 to 5 fine for the intensity
     differences and, for the coherences, mixing procedure Rb, Table 8.27), the first envelope coded across frequency and the others across time, and the extension with
     inter-channel and overall phase differences (8.4.2, Tables 8.10, 8.13 and 8.14): as many as nr_ipdopd_par names (5, 11 or 17), each envelope's own, the first across frequency
-    and the others across time, as differences modulo 8. Every band has a value of its own, which the envelope changes."""
+    and the others across time, as differences modulo 8. Every band has a value of its own, which the envelope changes. overrun declares the extension two bytes shorter than its data
+    (8.4.2: ps_extension_size); no_iid leaves the intensity differences out (enable_iid 0), which 8.4.2 does not allow with phase differences."""
     fine = iid_mode > 2
     iid_bands = PS_BANDS[iid_mode % 3]
     icc_bands = PS_BANDS[icc_mode % 3]
@@ -647,11 +648,16 @@ def ps_phase(w, iid_mode, icc_mode, envelopes):
                 put(int(word, 2), len(word))
 
     put(1, 1)                                        # enable_ps_header
-    put(1, 1), put(iid_mode, 3)
+    if no_iid:
+        iid_mode = 0
+        put(0, 1)
+    else:
+        put(1, 1), put(iid_mode, 3)
     put(1, 1), put(icc_mode, 3)
     put(1, 1)                                        # enable_ext
     put(0, 1), put({1: 1, 2: 2, 4: 3}[envelopes], 2)  # frame_class 0, num_env_idx
-    code(("IidFineFrequencyTree" if fine else "IidFrequencyTree", "IidFineTimeTree" if fine else "IidTimeTree"), iid, False)
+    if not no_iid:
+        code(("IidFineFrequencyTree" if fine else "IidFrequencyTree", "IidFineTimeTree" if fine else "IidTimeTree"), iid, False)
     code(("IccFrequencyTree", "IccTimeTree"), icc, False)
     ext_bits = [(0, 2), (1, 1)]                      # ps_extension_id 0, enable_ipdopd
     # Per envelope: ipd_dt, ipd_data, opd_dt, opd_data.
@@ -666,9 +672,10 @@ def ps_phase(w, iid_mode, icc_mode, envelopes):
     ext_bits.append((0, 1))                          # reserved_ps
     ext_length = sum(n for _, n in ext_bits)
     ext_size = (ext_length + 7) // 8
-    put(ext_size if ext_size < 15 else 15, 4)
-    if ext_size >= 15:
-        put(ext_size - 15, 8)
+    declared = ext_size - 2 if overrun else ext_size
+    put(declared if declared < 15 else 15, 4)
+    if declared >= 15:
+        put(declared - 15, 8)
     bits += ext_bits
     put(0, ext_size * 8 - ext_length)                # fill_bits
     total = 2 + sum(n for _, n in bits)

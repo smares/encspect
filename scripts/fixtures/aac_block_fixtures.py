@@ -542,7 +542,7 @@ def stereo_coding_elements():
 SBR_HEADER = {"amp_res": 1, "start": 5, "stop": 9, "xover": 0}
 
 
-def sbr_units(count, layout, ps=False, core=22050, coupled=False, crc=False, gain=100):
+def sbr_units(count, layout, ps=False, core=22050, coupled=False, crc=False, gain=100, low=()):
     """Blocks of a channel element at the core rate and an SBR fill element after it; every fourth carries the SBR header."""
     counts = M.sbr_bands(SBR_HEADER, 2 * core)
     out = []
@@ -551,7 +551,7 @@ def sbr_units(count, layout, ps=False, core=22050, coupled=False, crc=False, gai
         payload = M.sbr_payload(counts, header, pair=layout != "mono", coupled=coupled, ps=ps, crc=crc)
         fill = M.Element(M.FIL, payload=payload)
         if layout == "mono":
-            ics = channel(M.ONLY_LONG, 1, [[(11, 4), (3, 16)]], gain=gain, seed=i, rate=core)
+            ics = channel(M.ONLY_LONG, 1, [[*low, (11, 4), (3, 16)]], gain=gain, seed=i, rate=core)
             out.append(M.raw_data_block([M.Element(M.SCE, ics=ics), fill], rate_index=rate_index(core)))
         else:
             block, _ = pair_block(0, rate=core, extra=[fill], first=channel(M.ONLY_LONG, 1, [[(11, 4), (3, 16)]], seed=i, rate=core),
@@ -756,6 +756,27 @@ def mp4_fixtures():
              stats + "/SBR/Parametric Stereo/Parametric Stereo Phase/Phase differences": share(12, 12, "raw data block"),
              "MP4/mdat/Track 1 Samples/AAC/Access Unit/FIL/Extension Payload/SBR Data/Parametric Stereo Extension": "2 (EXT_ID_PS)"},
             [["aac.implicit-sbr", "and 12 carry the parametric stereo extension: the stream is HE-AAC v2"]],
+            {"label": "LC AAC", "channels": 2, "rate": 44100}, ffprobe_profile="HE-AACv2"))
+    units = [b for b, _ in sbr_units(12, "mono", ps=("phase", 1, 4, 2), gain=135, low=((0, 4),))]
+    out.append(mp4_fixture(
+        "ps-phase-high-core", "Mono AAC LC at 22050 Hz in its configuration whose core has no line below 344 Hz (the first four scalefactor bands are empty), with the parametric stereo extension of ps-phase-20-bands.m4a: "
+        "HE-AAC v2, signaled only implicitly. FFmpeg's decoder differs from the standard's in the sub subbands of the lowest QMF channel, so this file tests the phases above it.", asc(2, 22050, 1), 22050, 1, units,
+        "HE-AAC v2", 44100, 2, "Parametric stereo",
+        {stats + "/SBR/Parametric Stereo": share(12, 12, "access unit"),
+         stats + "/SBR/Parametric Stereo/Parametric Stereo Phase/Phase differences": share(12, 12, "raw data block")},
+        [["aac.implicit-sbr", "and 12 carry the parametric stereo extension: the stream is HE-AAC v2"]],
+        {"label": "LC AAC", "channels": 2, "rate": 44100}, ffprobe_profile="HE-AACv2"))
+    for name, options, what, code, text in (
+            ("ps-phase-overrun", {"overrun": True}, "whose extension states two bytes less than its phase data takes, so that the data runs past it", "aac.ps-extension-overrun",
+             "12 raw data blocks hold parametric stereo phase data that runs past its extension"),
+            ("ps-phase-without-intensity", {"no_iid": True}, "with phase differences but no intensity differences (enable_iid 0), which 8.4.2 does not allow",
+             "aac.ps-phase-without-intensity", "12 raw data blocks hold parametric stereo phase differences with enable_iid 0")):
+        units = [b for b, _ in sbr_units(12, "mono", ps=("phase", 1, 4, 2, options.get("overrun", False), options.get("no_iid", False)), gain=135)]
+        out.append(mp4_fixture(
+            name, f"Mono AAC LC at 22050 Hz in its configuration, whose access units carry SBR data with a parametric stereo extension in 20 bands and 2 envelopes {what}: HE-AAC v2, signaled only implicitly.",
+            asc(2, 22050, 1), 22050, 1, units, "HE-AAC v2", 44100, 2, "Parametric stereo",
+            {stats + "/SBR/Parametric Stereo": share(12, 12, "access unit")},
+            [["aac.implicit-sbr", "and 12 carry the parametric stereo extension: the stream is HE-AAC v2"], [code, text]],
             {"label": "LC AAC", "channels": 2, "rate": 44100}, ffprobe_profile="HE-AACv2"))
     units = [b for b, _ in sbr_units(12, "stereo")]
     out.append(mp4_fixture(

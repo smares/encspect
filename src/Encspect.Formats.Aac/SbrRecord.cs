@@ -75,6 +75,9 @@ internal static class SbrRecord
     // 1 where the coherence mode (3 to 5, Table 8.27) selects mixing procedure Rb, 0 for Ra (modes 0 to 2); 1 where this frame's extension carries IPD and OPD (enable_ipdopd).
     public const int PsMixingB = 14;
     public const int PsEnableIpdopd = 15;
+
+    // Bits of what is wrong with the phase data (Sbr.PsOverrun, Sbr.PsPhaseWithoutIntensity).
+    public const int PsIssues = 28;
     public const int PsIidTime = 16;
     public const int PsIccTime = 22;
     public const int PsIid = 30;

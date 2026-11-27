@@ -171,6 +171,7 @@ internal static partial class Sbr
             figures[FigurePsIccMode] = hasPs && record[SbrRecord.Ps + SbrRecord.PsEnableIcc] != 0 ? record[SbrRecord.Ps + SbrRecord.PsIccMode] : -1;
             figures[FigurePsMixing] = hasPs ? record[SbrRecord.Ps + SbrRecord.PsMixingB] : -1;
             figures[FigurePsPhase] = hasPs ? record[SbrRecord.Ps + SbrRecord.PsEnableIpdopd] : -1;
+            figures[FigurePsIssues] = hasPs ? record[SbrRecord.Ps + SbrRecord.PsIssues] : -1;
         }
 
         return (ps, null, plain);
@@ -178,7 +179,7 @@ internal static partial class Sbr
 
     // What ReadData states of the payload in its figures: the frame class and envelope count of each channel (-1 for a second channel a single channel element does not have), and where
     // the payload carries ps_data its envelope count, the IID and ICC modes (-1 where there is none or the parameter is not enabled), whether the coherence mode selects mixing procedure Rb and whether the extension carries IPD and OPD (-1 where there is no ps_data).
-    public const int Figures = 9;
+    public const int Figures = 10;
     public const int FigureFrameClass = 0;
     public const int FigureEnvelopes = 1;
     public const int FigurePsEnvelopes = 4;
@@ -186,6 +187,11 @@ internal static partial class Sbr
     public const int FigurePsIccMode = 6;
     public const int FigurePsMixing = 7;
     public const int FigurePsPhase = 8;
+
+    // What is wrong with the extension's phase data, as the bits of SbrRecord.PsIssues, or -1 where there is no ps_data.
+    public const int FigurePsIssues = 9;
+    public const int PsOverrun = 1;
+    public const int PsPhaseWithoutIntensity = 2;
 
     // Where a payload that is not stored is read to (the read needs the values of its own channels): a buffer for each thread, cleared for each payload, so that nothing is allocated.
     [ThreadStatic]
@@ -524,6 +530,8 @@ internal static partial class Sbr
     {
         int start = bits.Original;
         ps[SbrRecord.PsEnvelopes] = -1;
+        ps[SbrRecord.PsEnableIpdopd] = 0;
+        ps[SbrRecord.PsIssues] = 0;
         bool header = bits.ReadBit();
         ps[SbrRecord.PsHasHeader] = header ? 1 : 0;
         if (header)
@@ -602,8 +610,8 @@ internal static partial class Sbr
             }
         }
 
-        // enable_ext of the last header: the extension's size and bytes. Extension 0 holds the IPD and OPD (Tables 8.10, 8.13 and 8.14), which the decoder applies; any other ID defines nothing
-        // and ends what is read of the extension.
+        // enable_ext of the last header: the extension's size and bytes, read as Table 8.9 loops over them: extension 0 holds the IPD and OPD (Tables 8.10, 8.13 and 8.14), which the decoder applies,
+        // and any other ID defines nothing, so the next two bits are the next ID. Phase data that runs past the extension's size or the payload is damaged: the frame keeps its other parameters and has no phases.
         if (state[5] != 0 && left - (bits.Original - start) >= 4)
         {
             int count = (int)bits.Read(4);
@@ -614,21 +622,37 @@ internal static partial class Sbr
 
             int available = Math.Min(count * 8, Math.Max(0, left - (bits.Original - start)));
             int end = bits.Original + available;
-            if (available > 7 && bits.Read(2) == 0 && bits.ReadBit())
+            while (end - bits.Original > 7)
             {
-                // Phase data that runs past the extension's size or the payload is damaged: the frame keeps its other parameters and has no phases.
-                bool isRead;
-                try
+                if (bits.Read(2) != 0)
                 {
-                    ReadPhase(ref bits, envelopes, state[1] switch { 0 => 5, 1 => 11, _ => 17 }, ps);
-                    isRead = bits.Original <= end;
-                }
-                catch (BlockOverrun)
-                {
-                    isRead = false;
+                    continue;
                 }
 
-                ps[SbrRecord.PsEnableIpdopd] = isRead ? 1 : 0;
+                bool isPhase = bits.ReadBit();
+                if (isPhase)
+                {
+                    bool isRead;
+                    try
+                    {
+                        ReadPhase(ref bits, envelopes, state[1] switch { 0 => 5, 1 => 11, _ => 17 }, ps);
+                        isRead = bits.Original <= end;
+                    }
+                    catch (BlockOverrun)
+                    {
+                        isRead = false;
+                    }
+
+                    ps[SbrRecord.PsEnableIpdopd] = isRead ? 1 : 0;
+                    ps[SbrRecord.PsIssues] |= (isRead ? 0 : PsOverrun) | (state[0] == 0 ? PsPhaseWithoutIntensity : 0);
+                    if (!isRead)
+                    {
+                        break;
+                    }
+                }
+
+                // reserved_ps.
+                bits.ReadBit();
             }
 
             if (bits.Original > end)
