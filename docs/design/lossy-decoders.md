@@ -52,7 +52,7 @@ Status: approved by the project lead on 2026-11-08, with every recommendation of
 | `musepack` (new; the format parser starts no session today) | SV7 and SV8; SV4 to SV6 as libmpcdec 1.2.6 decodes them | the SV4 to SV6 streams that libmpcdec 1.2.6 refuses (the parser reads their header only) |
 | `dts` | the core, at the core rate, in all four bitstream forms | every extension (XCh, XXCH, X96, XBR, LBR, XLL): follow-ups |
 | `speex` | narrowband, wideband and ultra-wideband, in-band stereo | nothing |
-| `aac` and `aac-adts` | step 1: AAC LC; step 2: SBR (HE-AAC) and parametric stereo (HE-AAC v2); step 3: AAC Main, LTP, ER AAC LC, LD and ELD (with low-delay SBR); step 4: USAC (xHE-AAC) | SSR gain control (FDK refuses it); MPEG Surround beyond USAC's 2-1-2; DRC and loudness normalization (decision 9) |
+| `aac` and `aac-adts` | step 1: AAC LC; step 2: SBR (HE-AAC) and parametric stereo (HE-AAC v2); step 3: AAC Main, LTP, ER AAC LC, LTP, LD and ELD (with low-delay SBR), designed in [aac-main-ltp-er.md](aac-main-ltp-er.md); step 4: USAC (xHE-AAC) | SSR gain control (FDK refuses it); MPEG Surround beyond USAC's 2-1-2; DRC and loudness normalization (decision 9) |
 | `wma`, `wma-pro`, `wma-voice` | versions 1 and 2, Professional, Voice | what the parsers leave open: version 1 with variable block lengths and scale factor exponents, and version 2 at 49,048 Hz and above ([asf-wma.md](../formats/asf-wma.md): the description leaves their band lists open); Professional frames that span three packets or exceed the 32,768 bytes a decoder buffers, and the default channel transform matrices, which the parser does not read ([asf-wma.md](../formats/asf-wma.md)); music superframes inside Voice. Each supplement (decision 12) states whether it closes these |
 
 ### Order
@@ -395,8 +395,8 @@ The lead's rule of 2026-11-01: a unit the decoder cannot decode is a gap, never 
 | MPEG Layers I and II | the synthesis history | 480 |
 | MPEG-2 multichannel Layer II | the synthesis history and the prediction's subband samples (up to 9 slots back) | 480 + 9 x 32 = 768 |
 | AAC LC | overlap (one frame) | 1,024 |
-| AAC LTP | overlap and LTP's history of two frames | 3,072 **estimate** |
-| AAC Main | backward-adaptive prediction over every earlier frame | until a frame whose predictor resets have reached every group, as the specification's resets intend |
+| AAC LTP | overlap and LTP's history of two frames | 3,072 **estimate**; [aac-main-ltp-er.md](aac-main-ltp-er.md#long-term-prediction) proposes an exact rule |
+| AAC Main | backward-adaptive prediction over every earlier frame | until a frame whose predictor resets have reached every group, as the specification's resets intend; [aac-main-ltp-er.md](aac-main-ltp-er.md#gaps-and-withheld-output) refines it per group |
 | SBR, PS | QMF banks, time-differential envelope and noise coding, smoothing, PS's decorrelation | until the first SBR frame coded without time differences, plus the core's 1,024 |
 | AC-3, E-AC-3 | overlap (one block) | 256 |
 | DTS core | the synthesis history and the subband prediction | 480 for the history; the prediction converges within it (**estimate**). A frame of 256 samples is withheld whole and the next in part |
