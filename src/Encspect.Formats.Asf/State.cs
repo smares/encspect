@@ -72,11 +72,11 @@ internal sealed record WaveFormat(
 
 internal sealed record SpreadAudio(byte Span, ushort VirtualPacketLength, ushort VirtualChunkLength, ushort SilenceLength)
 {
-    // The audio counts as scrambled where its media objects are in another order than they are decoded in: the spread audio fields
-    // (9.1.1) give a span above 1 and a chunk size that divides the virtual packet length into more than one chunk. ffmpeg,
-    // run as a program on the PCM fixtures `asf/spread-*` (crosscheck_asf_fixtures.py, check_spread), reorders the bytes of exactly
-    // these and passes the others as they are: a chunk size of 0, equal to or above the virtual packet length, or not dividing it,
-    // and a span of 0. A span of 1 gives the same bytes either way.
+    // The audio counts as scrambled where the spread audio fields (9.1.1) give a span above 1 and a chunk size that divides the virtual packet length into
+    // more than one chunk. ffmpeg, run as a program on the PCM fixtures `asf/spread-*` (crosscheck_asf_fixtures.py, check_spread), reorders the bytes of media
+    // objects of the span times the virtual packet length in exactly these cases, and passes the others as they are: a chunk size of 0, equal to or above the
+    // virtual packet length, or not dividing it, and a span of 0. It decides per object, and passes an object of another size as it is; the rule is per stream,
+    // from the fields, since a file written with spread audio has whole objects. A span of 1 gives the same bytes either way.
     public bool Scrambles => Span > 1 && VirtualChunkLength > 0 && VirtualPacketLength / VirtualChunkLength > 1 && VirtualPacketLength % VirtualChunkLength == 0;
 }
 

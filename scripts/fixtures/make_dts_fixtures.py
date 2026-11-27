@@ -721,7 +721,7 @@ def build_gate2():
         return m.core_frame(size=512) + m.exss([dict(asset)], static=static, **options)
 
     # 7.5.2: where bStaticFieldsPresent is 0 the header omits the static fields, and they keep the values of the last header that had them.
-    # FFmpeg's dca_exss.c keeps them between frames, so its decoder plays every unit as the lossless stream the first one describes.
+    # ffmpeg, run as a program, keeps them between frames, so its decoder plays every unit as the lossless stream the first one describes.
     asset = dict(components=["core", "xll"], sizes={"core": 96, "xll": 64}, channels=2, mask=0x02)
     parts = [unit(asset, static=i == 0) for i in range(4)]
     fixture("exss-static-first-only", ".dts", "Four units of a stereo core frame and an extension substream with a lossless asset, of which only the first states the static fields.",
@@ -742,18 +742,35 @@ def build_gate2():
                     "DTS/Frame[0]/Extension Substream/Backward Compatible Cores/HasBackwardCompatibleCore 1": "false",
                     "DTS/Frame[2]/Extension Substream/HasStaticFields": "true"},
             crosscheck=cc(decode_whole=True, skip={"decode_alone": "a unit whose header omits the static fields is rejected by ffmpeg when decoded alone; the whole file decodes without an error"}))
-    # A stream none of whose headers states the static fields has no asset figures, so what a decoder outputs is the core: its channels and layout are the core's.
+    # A stream none of whose headers states the static fields has no asset figures, so its channels and layout are the core's: ffprobe gives the core's for a stream whose
+    # asset describes more, as the second fixture shows (7.5.2 does not say what a decoder outputs).
     parts = [unit(core_only, static=False) for _ in range(4)]
     fixture("exss-static-never", ".dts", "Four units of a stereo core frame and an extension substream with a core asset whose headers never state the static fields.",
             b"".join(parts), rows(parts), [stream("DTS", 48000, STEREO, "2/0", 4 * 512)], [],
             fields={"DTS/Frame[0]/Extension Substream/HasStaticFields": "false", "DTS/Frame[3]/Extension Substream/Asset Descriptor 1/Asset Index": "0"},
             crosscheck=cc(decode_whole=True, skip={"decode_alone": "a unit whose header omits the static fields is rejected by ffmpeg when decoded alone; the whole file decodes without an error"}))
+    five_one = dict(components=["core", "xll"], sizes={"core": 96, "xll": 96}, channels=6, mask=0x0F)
+    parts = [unit(five_one, static=False) for _ in range(4)]
+    fixture("exss-static-never-5-1", ".dts", "Four units of a stereo core frame and an extension substream with a lossless 5.1 asset whose headers never state the static fields, so the stream has the core's two channels.",
+            b"".join(parts), rows(parts), [stream(name, 48000, STEREO, "2/0", 4 * 512, vbr=True)], [],
+            crosscheck=cc_lossless(ffprobe_profile=False, decode_whole=True, skip={"ffprobe_profile": "ffmpeg's decoder does not decode the lossless extension without the asset's static fields, so ffprobe names the core's profile (DTS) and its two channels",
+                                                                                   "decode_alone": "a unit whose header omits the static fields is rejected by ffmpeg when decoded alone; the whole file decodes without an error"}))
+    # 7.5.2: the static fields stay in force when a header that states other ones has a CRC-16 that fails. ffmpeg, which checks the CRC-16 with -err_detect crccheck (the cross-check's
+    # setting), reports "Invalid EXSS header checksum" for the second unit and decodes the third and fourth, whose descriptors follow the first unit's fields (an embedded stereo
+    # downmix); with the fields of the second unit in force it reads past the end of their descriptors ("Read past end of EXSS asset descriptor").
+    first = dict(components=["core", "xll"], sizes={"core": 96, "xll": 96}, channels=6, mask=0x0F, embedded_stereo=True, drc=40, drc_stereo=60)
+    second = dict(components=["core", "xll"], sizes={"core": 96, "xll": 96}, channels=6, mask=0x0F)
+    parts = [unit(first, static=True), unit(second, static=True, bad_crc=True), unit(first, static=False), unit(first, static=False)]
+    fixture("exss-static-bad-crc", ".dts", "Four units whose second extension substream header states other static fields (no embedded stereo downmix) and has a CRC-16 that fails: the third and fourth units follow the first unit's fields.",
+            b"".join(parts), rows(parts), [stream(name, 48000, SURROUND_5_1, "2/0", 4 * 512, vbr=True)], [("dts.crc-mismatch", "extension substream header")],
+            crosscheck=cc_lossless(libdca_channels=2, decode_whole=True, whole_message="Invalid EXSS header checksum", whole_not="Read past end of EXSS asset descriptor",
+                                   skip={"decode_alone": "a unit whose header omits the static fields is rejected by ffmpeg when decoded alone; the whole file is decoded with its checksum error named"}))
     six = dict(components=["core", "xll"], sizes={"core": 96, "xll": 96}, channels=6, mask=0x0F, embedded_stereo=True, drc=40, drc_stereo=60)
     parts = [unit(six, static=i == 0) for i in range(4)]
     fixture("exss-static-embedded-stereo", ".dts", "Four units of a stereo core frame and an extension substream with a lossless 5.1 asset that has a dynamic range code and an embedded stereo downmix, of which only the first states the static fields.",
             b"".join(parts), rows(parts), [stream(name, 48000, SURROUND_5_1, "2/0", 4 * 512, vbr=True)], [],
             crosscheck=cc_lossless(libdca_channels=2, decode_whole=True,
-                                   skip={"decode_alone": "ffmpeg keeps the static fields between frames (dca_exss.c), so a unit whose header omits them decodes only after the first: each packet decoded alone is rejected "
+                                   skip={"decode_alone": "ffmpeg keeps the static fields between frames, so a unit whose header omits them decodes only after the first: each packet decoded alone is rejected "
                                                          "('Read past end of EXSS asset descriptor'), the whole file decodes without an error"}))
     lbr = dict(mode=2, channels=2, mask=0x02)
     parts = [m.exss([dict(lbr)], static=i == 0) for i in range(4)]

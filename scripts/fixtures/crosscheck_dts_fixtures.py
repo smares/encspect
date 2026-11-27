@@ -92,12 +92,42 @@ def extension_rate(manifest):
     return int(value.split()[0]) if value else None
 
 
-# What ffprobe (run as a program on the `xll-mask-bit-*` fixtures, one channel set of one channel with one mask bit set) names the channel of each bit of an XLL channel
-# set's channel mask, in ffmpeg's channel names. Table 6-22 and the real 7.1 sample fix the other bits' order; ffprobe gives the pairs of bits that it merges
-# (3 and 9, 4 and 10, 5 and 16, 6 and 25, 7 and 26, 8 and 27, 11 and 17, 12 and 18, 13 and 20, 15 and 21) one name, which the fixtures' own layouts tell apart. A bit
-# that the table reserves (28 to 31) has no name.
-FFMPEG_NAMES = ["FC", "FL", "FR", "SL", "SR", "LFE", "BC", "BL", "BR", "SL", "SR", "FLC", "FRC", "TFL", "TFC", "TFR", "LFE", "FLC", "FRC", "TC", "TFL", "TFR", "TBC", "TBL", "TBR",
-                "BC", "BL", "BR"]
+# TS 102 114 V1.6.1 Table 6-22: the speaker of each bit of a loudspeaker mask (the bits of XLL's channel mask included, clause 8.3.2), with the name the analyzer reports for a
+# lone bit (a surround pair without a rear pair is the back pair) and the name ffprobe, run as a program on the `xll-mask-bit-*` fixtures (one channel set of one channel with one
+# bit set), gives its channel. ffprobe gives a channel of the same kind everywhere, but under its own names; where its name is not the table's own, the row says how it differs.
+# Bits 28 to 31 are reserved in the table, and ffprobe finds no channel for them.
+TABLE_6_22 = [
+    # (bit, notation, analyzer, ffprobe, how ffprobe's name differs from the table's)
+    (0, "C", "front center", "FC", None),
+    (1, "L", "front left", "FL", None),
+    (2, "R", "front right", "FR", None),
+    (3, "Ls", "back left", "SL", "side left for the surround pair, where the analyzer reports back left unless a rear pair exists"),
+    (4, "Rs", "back right", "SR", "side right for the surround pair, where the analyzer reports back right unless a rear pair exists"),
+    (5, "LFE1", "LFE", "LFE", None),
+    (6, "Cs", "back center", "BC", None),
+    (7, "LSr", "back left", "BL", None),
+    (8, "Rsr", "back right", "BR", None),
+    (9, "Lss", "side left", "SL", None),
+    (10, "Rss", "side right", "SR", None),
+    (11, "Lc", "front left of center", "FLC", None),
+    (12, "Rc", "front right of center", "FRC", None),
+    (13, "Lh", "top front left", "TFL", None),
+    (14, "Ch", "top front center", "TFC", None),
+    (15, "Rh", "top front right", "TFR", None),
+    (16, "LFE2", "LFE 2", "LFE", "the first LFE for the second"),
+    (17, "Lw", "front left wide", "FLC", "front left of center for left on side in front (-60)"),
+    (18, "Rw", "front right wide", "FRC", "front right of center for right on side in front (60)"),
+    (19, "Oh", "top center", "TC", None),
+    (20, "Lhs", "top side left", "TFL", "top front left for left height on side"),
+    (21, "Rhs", "top side right", "TFR", "top front right for right height on side"),
+    (22, "Chr", "top back center", "TBC", None),
+    (23, "Lhr", "top back left", "TBL", None),
+    (24, "Rhr", "top back right", "TBR", None),
+    (25, "Cl", "bottom front center", "BC", "back center for center in the plane lower than the listener's ears"),
+    (26, "Ll", "bottom front left", "BL", "back left for left in the plane lower than the listener's ears"),
+    (27, "Rl", "bottom front right", "BR", "back right for right in the plane lower than the listener's ears"),
+]
+FFMPEG_NAMES = [row[3] for row in TABLE_6_22]
 FFMPEG_STANDARD = {"mono": ["FC"], "stereo": ["FL", "FR"]}
 
 
@@ -142,9 +172,16 @@ def check_ffprobe(path, manifest, report, problems):
     known = channel_layouts.FFMPEG.get(actual.get("channel_layout"))
     if "xll_mask_bit" in check:
         bits = check["xll_mask_bit"] if isinstance(check["xll_mask_bit"], list) else [check["xll_mask_bit"]]
-        wanted = sorted(FFMPEG_NAMES[bit] for bit in bits)
+        wanted = sorted(TABLE_6_22[bit][3] for bit in bits)
         if ffprobe_channel_names(actual.get("channel_layout")) != wanted:
             problems.append(f"ffprobe's channel layout {actual.get('channel_layout')}, the channel mask bits {bits} are {wanted} to it")
+        # The analyzer's layout for the same bits, from Table 6-22.
+        speakers = sorted(TABLE_6_22[bit][2] for bit in bits)
+        if sorted(expected["channel_layout"]) != speakers:
+            problems.append(f"the manifest's layout {expected['channel_layout']}, Table 6-22 names the bits {bits} {speakers}")
+        for bit in bits:
+            if TABLE_6_22[bit][4] and len(bits) == 1:
+                print(f"{path.name}: ffprobe names bit {bit} ({TABLE_6_22[bit][1]}) {TABLE_6_22[bit][3]}, {TABLE_6_22[bit][4]}")
     elif "ffprobe_layout" in check:
         # An explained difference (the reason is in the manifest's skip): the layout ffprobe gives must still be the one explained.
         if actual.get("channel_layout") != check["ffprobe_layout"]:
@@ -186,7 +223,11 @@ def check_decode(path, manifest, problems, work):
         # "decode_whole": the packets depend on one another (static fields carried over), so the file is decoded as one.
         source = ["-f", "dts"] if path.suffix == ".dts" else []
         result = subprocess.run(["ffmpeg", "-v", "error", "-err_detect", "crccheck", *source, "-i", str(path), "-f", "null", "-"], capture_output=True, text=True)
-        if result.stderr.strip():
+        if check.get("whole_message"):
+            # The messages the manifest names: it must print the first and not the second (the static fields stay in force past a header whose CRC-16 fails).
+            if check["whole_message"] not in result.stderr or check["whole_not"] in result.stderr:
+                problems.append(f"ffmpeg prints {result.stderr.strip()[:200]!r}, the manifest wants {check['whole_message']!r} and not {check['whole_not']!r}")
+        elif result.stderr.strip():
             problems.append(f"ffmpeg reports errors: {result.stderr.strip().splitlines()[0]}")
         return
     data = path.read_bytes()
@@ -349,6 +390,9 @@ MEDIAINFO_READS_OTHERWISE["exss-remapping-without-mask"] = {"channel layout": "F
     "set where SpkrMaskEnabled is), which this asset has not, and does not fall back to the core's arrangement (measured with MediaInfo 24.01: no layout)"}
 MEDIAINFO_READS_OTHERWISE["exss-only-static-first-only"] = {"bitrate": "MediaInfo's BitRate_Get(true) adds the substream size HD_size of the last extension substream header it parsed, here a unit without static fields "
     "of 52 bytes, to the frame duration code it kept from the first (39000 bit/s), where the manifest's first unit has 60 bytes (45000 bit/s) (measured with MediaInfo 24.01)"}
+MEDIAINFO_READS_OTHERWISE["exss-static-never-5-1"] = dict.fromkeys(["channels", "channel layout", "samples per frame"],
+    "MediaInfo gives a stream whose extension substream headers never state the static fields, with a lossless asset, no channels and no layout and a frame of 130,560 samples, "
+    "where the analyzer reports the core's two channels and 512 samples (measured with MediaInfo 24.01)")
 MEDIAINFO_READS_OTHERWISE["rate-lossless"] = {"bitrate": MEDIAINFO_READS_OTHERWISE["rate-code"]["bitrate"]}
 for amode in range(10, 16):
     MEDIAINFO_READS_OTHERWISE[f"amode-{amode}"] = {"channel layout": "MediaInfo's speaker positions for the arrangements above 9 differ from Table 5-4's (" + MEASURED + "); the analyzer's rest on the table"}
@@ -406,7 +450,7 @@ def check_mediainfo(path, tally):
     # File_Dts.cpp, Streams_Fill: the DTS:X and IMAX cases add " Objects" to the layout.
     has_x = statistic(report, "HasDtsX") is True or statistic(report, "HasDtsXImax") is True
     tally.compare("objects in the channel layout", str(layout.endswith(" Objects")), str(has_x))
-    if path.stem.startswith(("xll-mask-bit-", "xll-mask-wide-")):
+    if path.stem.startswith(("xll-mask-bit-", "xll-mask-eight-")):
         # The fixtures that pin the bit order of an XLL channel mask by ffprobe (check_ffprobe): their assets state no speaker activity mask, since Table 7-10's
         # bits name pairs of speakers and the fixtures set one speaker, and the layout of a stream with an extension substream is not compared with MediaInfo's.
         tally.skip("channel layout", "the order of an XLL channel mask's bits is pinned by ffprobe on these fixtures; MediaInfo 24.01 gives them no layout, which it takes from the "

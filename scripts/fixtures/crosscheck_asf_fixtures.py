@@ -353,13 +353,15 @@ def check_markers(path, problems):
 
 def check_spread(manifest, path, problems):
     """Spread audio (section 9.1.1) of a PCM stream, decoded by ffmpeg: its output is the media objects' bytes as they are where the manifest says
-    "as is" and the same bytes in another order where it says "descrambled" (ffmpeg's ASF demuxer reorders them, asfdec_f.c's descrambling; this
-    is observed behavior). The analyzer's rule (SpreadAudio.Scrambles) is checked against the same pins by AsfSpreadTests."""
+    "as is" and the same bytes in another order where it says "descrambled" (observed behavior). ffmpeg reorders only objects of the span times the virtual
+    packet length: for any other size it prints the message the manifest names ("spread_message") and passes them as they are. The analyzer's rule
+    (SpreadAudio.Scrambles) is checked against the manifest's "rule_scrambles" by AsfSpreadTests."""
     data = path.read_bytes()
     raw = b"".join(data[offset:offset + length] for o in manifest["media_objects"] for offset, length in o[4])
     code, pcm, errors = decode(path)
-    if code != 0 or errors:
-        problems.append(f"ffmpeg decoding: {errors or code}")
+    message = manifest["crosscheck"].get("spread_message")
+    if code != 0 or (errors if message is None else message not in errors):
+        problems.append(f"ffmpeg decoding: {errors or code}" + (f", expected the message {message!r}" if message else ""))
     elif manifest["crosscheck"]["spread"] == "as is":
         if pcm != raw:
             problems.append("ffmpeg's output is not the media objects' bytes as they are")
