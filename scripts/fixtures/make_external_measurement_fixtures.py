@@ -34,6 +34,7 @@ import wave
 
 import measurement_model as mm
 import r8brain_tool
+import tool_versions
 from make_measurement_fixtures import NYQUIST_SOURCES, Lcg, nyquist_source, pink, quantize
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -42,6 +43,13 @@ OUT = ROOT / "tests" / "fixtures" / "measurement"
 TOOLS = "LAME 3.100, vorbis-tools 1.4.2 (oggenc, oggdec), FFmpeg 6.1.1-3ubuntu5 (aac), opus-tools 0.2 with libopus 1.4 (opusenc, opusdec), flac 1.4.3 (Ubuntu 24.04)"
 
 # The files of TwoLAME 0.4.0 name it too, and FFmpeg 6.1.1-3ubuntu5 as the decoder of its streams, which no other file used.
+# The Nyquist edge files (Step 10) name what made them: the converter (and the compiler of r8brain's front end) and the FLAC writer.
+NYQUIST_TOOLS = {
+    "SoX": "SoX 14.4.2 (Ubuntu 24.04; sox --version is checked), flac 1.4.3 (Ubuntu 24.04)",
+    "r8brain-free-src": f"r8brain-free-src {r8brain_tool.COMMIT[:7]} (r8brain_resample.cpp built with g++ 13.3.0 -O2 -ffp-contract=off, Ubuntu 24.04), flac 1.4.3 (Ubuntu 24.04)",
+    "FFmpeg swresample": "FFmpeg 6.1.1-3ubuntu5 (libswresample and the pcm_s16le writer), flac 1.4.3 (Ubuntu 24.04)",
+    "FFmpeg wmav2": "FFmpeg 6.1.1-3ubuntu5 (the wmav2 encoder and decoder), flac 1.4.3 (Ubuntu 24.04)",
+}
 TWOLAME_TOOLS = "TwoLAME 0.4.0, FFmpeg 6.1.1-3ubuntu5 (the decoder of the MPEG audio streams), flac 1.4.3 (Ubuntu 24.04)"
 SECONDS = 1
 
@@ -178,13 +186,14 @@ def nyquist_resampled():
     for converter in ("sox-h", "sox-v", "sox-v-s", "r8brain-tb05", "r8brain-tb2", "r8brain-tb4", "r8brain-tb10"):
         add("pink", 44100, 48000, 24, converter, FOUND if converter != "r8brain-tb10" else None)
     # The other sources, and the other rate pairs, at the settings most used.
+    # The sweeps' frame test rests on one or two frames, so they claim nothing; the music files and the 48 to 88.2 kHz pair are found in 7 to 20 frames.
     for source in ("sweep", "music"):
         for converter in ("sox-v", "r8brain-tb2"):
-            add(source, 44100, 48000, 16, converter, None)
-            add(source, 44100, 96000, 24, converter, None)
+            add(source, 44100, 48000, 16, converter, FOUND if source == "music" else None)
+            add(source, 44100, 96000, 24, converter, FOUND if source == "music" else None)
     for source in ("pink", "music"):
         for converter in ("sox-v", "r8brain-tb2"):
-            add(source, 48000, 88200, 24, converter, None)
+            add(source, 48000, 88200, 24, converter, FOUND)
     for converter in ("sox-v", "r8brain-tb2"):
         add("pink", 44100, 96000, 24, converter, FOUND)
     for rate_in, rate_out in ((22050, 44100), (32000, 48000), (8000, 44100)):
@@ -221,6 +230,8 @@ def write_wav_bits(path, rate, bits, samples):
 def resample_nyquist(name, entry, temp, tools):
     """The converted source as integers of the entry's bits, and the entry for the manifest."""
     source, rate_in, rate_out, bits, converter, expect = entry
+    if converter in SOX and tool_versions.problems("sox"):
+        sys.exit("The SoX fixtures are made with " + "; ".join(tool_versions.problems("sox")))
     # The source: 16 bits with TPDF dither at its own rate, as the audio of a 16-bit file would be.
     original = quantize(nyquist_source(source, rate_in), 16, dither_seed=rate_in + 1 + len(source))
     wav = temp / f"{name}-in.wav"
@@ -425,7 +436,8 @@ def write_manifest(name, entry):
     prefix = prefix_of(name)
     data = (OUT / f"{prefix}-{name}.flac").read_bytes()
     entry = dict(entry)
-    entry["tools"] = TOOLS if entry.get("encoder", {}).get("name") != "TwoLAME" else TWOLAME_TOOLS
+    encoder_name = entry.get("encoder", {}).get("name")
+    entry["tools"] = NYQUIST_TOOLS.get(encoder_name, TWOLAME_TOOLS if encoder_name == "TwoLAME" else TOOLS)
     entry["length"] = len(data)
     entry["model"] = mm.measure(data)
     found = entry["model"]["cutoff"]["is_found"]

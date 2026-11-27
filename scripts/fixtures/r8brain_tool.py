@@ -3,7 +3,7 @@
 
 The commit is the pin, as for alac_tool.py: git checks the whole tree against it. check_sources.py asks the repository whether it still serves
 the commit. The library is header-only; r8brain_resample.cpp is this project's own front end (raw float64 samples in, `CDSPResampler::oneshot`,
-raw float64 samples out), compiled with g++ against the pinned tree. The converter is run as a black box on the fixtures' sources, never read.
+raw float64 samples out), compiled with g++ -O2 -ffp-contract=off (no fused multiply-add, no -march, so the doubles do not depend on the target) against the pinned tree. The converter is run as a black box on the fixtures' sources, never read.
 
 Usage: python3 scripts/fixtures/r8brain_tool.py [directory]    builds r8brain_resample in the directory and prints its path.
 """
@@ -47,7 +47,7 @@ def build(directory=None):
         raise SystemExit(f"{source} is at {head}, not the pinned commit {COMMIT}.")
     binary = directory / "r8brain_resample"
     if not binary.exists():
-        subprocess.run(["g++", "-O2", "-std=c++17", "-I", str(source), str(FRONT_END), "-o", str(binary)], check=True, stdout=sys.stderr)
+        subprocess.run(["g++", "-O2", "-ffp-contract=off", "-std=c++17", "-I", str(source), str(FRONT_END), "-o", str(binary)], check=True, stdout=sys.stderr)
     return binary
 
 
