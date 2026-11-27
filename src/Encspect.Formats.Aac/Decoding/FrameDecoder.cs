@@ -254,7 +254,9 @@ internal sealed class FrameDecoder : IFrameDecoder
 
         // AAC Main's prediction follows mid/side stereo and the noise substitution that precedes intensity stereo, and precedes intensity stereo (ISO/IEC 13818-7 1.1, the decoder's order
         // of tools). The predictors of an intensity band of the second channel take the zero the stream codes there, and the intensity values enter after them: the wording of
-        // 13818-7 12.2.4 and 14496-3 4.6.8.2.4 has them fed with the intensity values, which the ISO/IEC 14496-26 reference waveform of am02_44 does not follow (docs/formats/aac.md).
+        // 13818-7 12.2.4 and 14496-3 4.6.8.2.4 have them fed with the intensity values; this is a deliberate difference from that wording (the lead's decision, 2026-11-27): the reference
+        // waveform of am02_44 is 24.11 LSB of 16 bits RMS (largest 414.95) off in its second channel with the wording's reading and 0.0055 (0.097) with the zero, and the reference software
+        // feeds the values from before intensity stereo (Alex Converse, ffmpeg-devel, 2008-12-04, a record only; docs/formats/aac.md).
         if (_predictors is not null)
         {
             for (int ch = 0; ch < _channels; ch++)
