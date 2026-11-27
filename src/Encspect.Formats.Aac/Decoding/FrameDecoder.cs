@@ -27,6 +27,10 @@ internal sealed class FrameDecoder : IFrameDecoder
     // Per output sample of the SBR stage (the 64-band analysis and synthesis, the high band's generation and adjustment, and parametric stereo's hybrid bank, decorrelator and mixing
     // for the second channel): measured with DecoderWorkTests (the HE-AAC cases), where the stage takes about 4 times what the core's stages charge in time per unit at 60.
     private const int SbrUnits = 220;
+
+    // Parametric stereo's phases (and the matrices of procedure Rb, tabulated once): for each envelope and each of the 34 parameter bands, the smoothed angles, their cosines and sines and the rotation of
+    // the four matrices, about 40 times a unit's 0.6 ns apiece, with the double-precision functions of DetMath; charged for an envelope count of 5 at most.
+    private const int PsPhaseUnits = 700;
     private const int ShortTransformUnits = 16;
 
     private readonly DecodeContext _context;
@@ -294,6 +298,24 @@ internal sealed class FrameDecoder : IFrameDecoder
         _seed = 0;
     }
 
+    // The work of the phases a block's parametric stereo extension carries: every parameter band of every envelope, whatever the resolution.
+    private static long PsPhaseWork(ReadOnlySpan<int> record)
+    {
+        int channelSlots = record[BlockRecord.Slots];
+        int sbrSlots = record[BlockRecord.SbrSlots];
+        long units = 0;
+        for (int s = 0; s < sbrSlots; s++)
+        {
+            ReadOnlySpan<int> slot = record.Slice((channelSlots + s) * BlockRecord.Stride, BlockRecord.Stride);
+            if (slot[SbrRecord.HasPs] == 1 && slot[SbrRecord.Ps + SbrRecord.PsEnableIpdopd] != 0)
+            {
+                units += (long)PsPhaseUnits * 34 * (slot[SbrRecord.Ps + SbrRecord.PsEnvelopes] + 1);
+            }
+        }
+
+        return units;
+    }
+
     // The work of the block before it is done: the floor of every output sample, and the stages of each channel that has anything to transform.
     private void Charge(ReadOnlySpan<int> record)
     {
@@ -301,6 +323,11 @@ internal sealed class FrameDecoder : IFrameDecoder
         if (_isSbr)
         {
             units += (long)SbrUnits * 2 * Lines * _outputChannels;
+        }
+
+        if (_isPs)
+        {
+            units += PsPhaseWork(record);
         }
 
         for (int ch = 0; ch < _channels; ch++)

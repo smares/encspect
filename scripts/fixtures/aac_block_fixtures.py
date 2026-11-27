@@ -542,7 +542,7 @@ def stereo_coding_elements():
 SBR_HEADER = {"amp_res": 1, "start": 5, "stop": 9, "xover": 0}
 
 
-def sbr_units(count, layout, ps=False, core=22050, coupled=False, crc=False):
+def sbr_units(count, layout, ps=False, core=22050, coupled=False, crc=False, gain=100):
     """Blocks of a channel element at the core rate and an SBR fill element after it; every fourth carries the SBR header."""
     counts = M.sbr_bands(SBR_HEADER, 2 * core)
     out = []
@@ -551,7 +551,7 @@ def sbr_units(count, layout, ps=False, core=22050, coupled=False, crc=False):
         payload = M.sbr_payload(counts, header, pair=layout != "mono", coupled=coupled, ps=ps, crc=crc)
         fill = M.Element(M.FIL, payload=payload)
         if layout == "mono":
-            ics = channel(M.ONLY_LONG, 1, [[(11, 4), (3, 16)]], seed=i, rate=core)
+            ics = channel(M.ONLY_LONG, 1, [[(11, 4), (3, 16)]], gain=gain, seed=i, rate=core)
             out.append(M.raw_data_block([M.Element(M.SCE, ics=ics), fill], rate_index=rate_index(core)))
         else:
             block, _ = pair_block(0, rate=core, extra=[fill], first=channel(M.ONLY_LONG, 1, [[(11, 4), (3, 16)]], seed=i, rate=core),
@@ -726,6 +726,20 @@ def mp4_fixtures():
          "MP4/mdat/Track 1 Samples/AAC/Access Unit/FIL/Extension Payload/SBR Data/Parametric Stereo Extension": "2 (EXT_ID_PS)"},
         [["aac.implicit-sbr", "and 12 carry the parametric stereo extension: the stream is HE-AAC v2"]],
         {"label": "LC AAC", "channels": 2, "rate": 44100}, ffprobe_profile="HE-AACv2"))
+    # The full parametric stereo decoder's tools: inter-channel and overall phase differences in the extension, and mixing procedure Rb (coherence modes 3 to 5).
+    for name, iid_mode, icc_mode, envelopes, bands, quant in (("ps-phase-10-bands", 3, 3, 2, "10", "fine"), ("ps-phase-20-bands", 1, 4, 2, "20", "coarse"), ("ps-phase-34-bands", 2, 5, 2, "34", "coarse")):
+        units = [b for b, _ in sbr_units(12, "mono", ps=("phase", iid_mode, icc_mode, envelopes), gain=135)]
+        count = {"10": 5, "20": 11, "34": 17}[bands]
+        out.append(mp4_fixture(
+            name, f"Mono AAC LC at 22050 Hz in its configuration, whose access units carry SBR data with a parametric stereo extension of {quant} intensity differences and coherences in {bands} bands "
+            f"(modes {iid_mode} and {icc_mode}: mixing procedure Rb) in {envelopes} envelopes, and the inter-channel and overall phase differences of the extension, {count} to an envelope: HE-AAC v2, signaled "
+            "only implicitly, whose decoder applies the phases.", asc(2, 22050, 1), 22050, 1, units, "HE-AAC v2", 44100, 2, "Parametric stereo",
+            {stats + "/SBR/Parametric Stereo": share(12, 12, "access unit"),
+             stats + "/SBR/Parametric Stereo/Parametric Stereo Mixing/Procedure Rb": share(12, 12, "raw data block"),
+             stats + "/SBR/Parametric Stereo/Parametric Stereo Phase/Phase differences": share(12, 12, "raw data block"),
+             "MP4/mdat/Track 1 Samples/AAC/Access Unit/FIL/Extension Payload/SBR Data/Parametric Stereo Extension": "2 (EXT_ID_PS)"},
+            [["aac.implicit-sbr", "and 12 carry the parametric stereo extension: the stream is HE-AAC v2"]],
+            {"label": "LC AAC", "channels": 2, "rate": 44100}, ffprobe_profile="HE-AACv2"))
     units = [b for b, _ in sbr_units(12, "stereo")]
     out.append(mp4_fixture(
         "sbr-downsampled", "HE-AAC signaled hierarchically with an extension rate equal to the core's 22050 Hz (downsampled SBR): decoders derive "

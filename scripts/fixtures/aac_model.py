@@ -537,6 +537,8 @@ def sbr_data(w, counts, pair=False, coupled=False, ps=False, grid="FIXFIX", data
         ps_wide(w)
     elif ps == "mixed":
         ps_wide(w, 2, 1, varied=True)
+    elif isinstance(ps, tuple) and ps[0] == "phase":
+        ps_phase(w, *ps[1:])
     elif ps:
         w.put(1, 1).put(2, 4)                        # bs_extended_data, two bytes of extensions
         w.put(2, 2)                                  # bs_extension_id EXT_ID_PS
@@ -603,6 +605,72 @@ def ps_wide(w, iid_mode=2, icc_mode=2, varied=False):
             word = ps_codeword(tree, value - previous if varied else value)
             previous = value if varied else previous
             put(int(word, 2), len(word))
+    total = 2 + sum(n for _, n in bits)
+    size = (total + 7) // 8
+    w.put(1, 1)                                      # bs_extended_data
+    if size >= 15:
+        w.put(15, 4).put(size - 15, 8)
+    else:
+        w.put(size, 4)
+    w.put(2, 2)                                      # bs_extension_id EXT_ID_PS
+    for v, n in bits:
+        w.put(v, n)
+    w.put(0, size * 8 - total)                       # bs_fill_bits
+
+
+def ps_phase(w, iid_mode, icc_mode, envelopes):
+    """The parametric stereo extension of the full decoder: intensity differences and coherences in the bands of iid_mode and icc_mode (0 to 2 coarse, 3 to 5 fine for the intensity
+    differences and, for the coherences, mixing procedure Rb, Table 8.27), the first envelope coded across frequency and the others across time, and the extension with
+    inter-channel and overall phase differences (8.4.2, Tables 8.10, 8.13 and 8.14): as many as nr_ipdopd_par names (5, 11 or 17), each envelope's own, the first across frequency
+    and the others across time, as differences modulo 8. Every band has a value of its own, which the envelope changes."""
+    fine = iid_mode > 2
+    iid_bands = PS_BANDS[iid_mode % 3]
+    icc_bands = PS_BANDS[icc_mode % 3]
+    phase_bands = {0: 5, 1: 11, 2: 17}[iid_mode % 3]
+    spread = 10 if fine else 5
+    iid = [[(b * (7 if fine else 5) + e * (5 if fine else 3)) % (2 * spread + 1) - spread for b in range(iid_bands)] for e in range(envelopes)]
+    icc = [[(b * 3 + (b >> 2) + e) % 8 for b in range(icc_bands)] for e in range(envelopes)]
+    ipd = [[(b * 3 + e * 5 + 1) % 8 for b in range(phase_bands)] for e in range(envelopes)]
+    opd = [[(b * 5 + e * 3 + 2) % 8 for b in range(phase_bands)] for e in range(envelopes)]
+    bits = []
+    put = lambda v, n: bits.append((v, n))
+
+    def code(tree, table, modulo):
+        """One parameter's envelopes: the flag and the codewords of each, across frequency for the first and across time for the rest."""
+        for e, values in enumerate(table):
+            time = e > 0
+            put(1 if time else 0, 1)
+            for b, value in enumerate(values):
+                before = table[e - 1][b] if time else (values[b - 1] if b else 0)
+                symbol = (value - before) % 8 if modulo else value - before
+                word = ps_codeword(tree[time], symbol)
+                put(int(word, 2), len(word))
+
+    put(1, 1)                                        # enable_ps_header
+    put(1, 1), put(iid_mode, 3)
+    put(1, 1), put(icc_mode, 3)
+    put(1, 1)                                        # enable_ext
+    put(0, 1), put({1: 1, 2: 2, 4: 3}[envelopes], 2)  # frame_class 0, num_env_idx
+    code(("IidFineFrequencyTree" if fine else "IidFrequencyTree", "IidFineTimeTree" if fine else "IidTimeTree"), iid, False)
+    code(("IccFrequencyTree", "IccTimeTree"), icc, False)
+    ext_bits = [(0, 2), (1, 1)]                      # ps_extension_id 0, enable_ipdopd
+    # Per envelope: ipd_dt, ipd_data, opd_dt, opd_data.
+    for e in range(envelopes):
+        for table, trees in ((ipd, ("IpdFrequencyTree", "IpdTimeTree")), (opd, ("OpdFrequencyTree", "OpdTimeTree"))):
+            time = e > 0
+            ext_bits.append((1 if time else 0, 1))
+            for b, value in enumerate(table[e]):
+                before = table[e - 1][b] if time else (table[e][b - 1] if b else 0)
+                word = ps_codeword(trees[time], (value - before) % 8)
+                ext_bits.append((int(word, 2), len(word)))
+    ext_bits.append((0, 1))                          # reserved_ps
+    ext_length = sum(n for _, n in ext_bits)
+    ext_size = (ext_length + 7) // 8
+    put(ext_size if ext_size < 15 else 15, 4)
+    if ext_size >= 15:
+        put(ext_size - 15, 8)
+    bits += ext_bits
+    put(0, ext_size * 8 - ext_length)                # fill_bits
     total = 2 + sum(n for _, n in bits)
     size = (total + 7) // 8
     w.put(1, 1)                                      # bs_extended_data
