@@ -13,9 +13,10 @@ internal sealed class StreamMeasurer
     // The work per sample of a measured channel, in the decoders' unit (about 0.6 ns), by FFT size 1,024 to 32,768 points.
     private static readonly int[] SpectrumWeights = [29, 24, 23, 27, 27, 30];
 
-    // The work per sample of the stream (not per channel) for the replicated bands, by FFT size 1,024 to 32,768 points: a frame costs the same at every size
-    // and every second frame is used, so a sample costs a frame's work over the size.
-    private static readonly int[] ReplicationWeights = [0, 0, 0, 0, 0, 0];
+    // The work per sample of the stream (not per channel) for the replicated bands, by FFT size 1,024 to 32,768 points: a frame costs about the same at every size (more
+    // bands where a row is wide, fewer at 8 kHz) and every second frame is used, so a sample costs a frame's work over the size. PROVISIONAL: measured 222, 139, 97, 59, 94 and 18 units
+    // at 8,000 to 352,800 Hz (MeasurementWorkTests), over the 60 units of decision S30 at 44.1 kHz.
+    private static readonly int[] ReplicationWeights = [230, 145, 100, 65, 100, 20];
 
     // The work per sample of a channel of the pair for the stored bins, the mid and side rows and their counters (docs/design/spectral-analysis.md,
     // Step 7, "Cost, memory and determinism": about 6 units of 0.6 ns, 3.6 ns, a sample of each channel of the pair).
@@ -89,6 +90,7 @@ internal sealed class StreamMeasurer
     private readonly double[][] _coherenceSuffix = [];
     private CoherenceCounters? _coherence;
     private readonly bool _isMeasuringReplicatedBands;
+    private readonly bool _asksReplicatedBands;
     private readonly bool _isReportingSpectrum;
     private readonly long _replicationUnits;
     private ReplicatedBandsCounters? _replicated;
@@ -148,7 +150,8 @@ internal sealed class StreamMeasurer
         MeasurementKinds kinds = options.Include ?? MeasurementSets.All;
         _isMeasuringSpectrum = (kinds & (MeasurementKinds.Spectrum | MeasurementKinds.ReplicatedBands)) != 0 && format.SampleRate > 0;
         _isReportingSpectrum = (kinds & MeasurementKinds.Spectrum) != 0 && format.SampleRate > 0;
-        _isMeasuringReplicatedBands = (kinds & MeasurementKinds.ReplicatedBands) != 0 && format.SampleRate >= CutoffGeometry.MinimumRate;
+        _asksReplicatedBands = (kinds & MeasurementKinds.ReplicatedBands) != 0 && format.SampleRate > 0;
+        _isMeasuringReplicatedBands = _asksReplicatedBands && format.SampleRate >= CutoffGeometry.MinimumRate;
         if ((kinds & MeasurementKinds.Levels) != 0)
         {
             _levels = new LevelsMeter(_measured, format.Format, format.BitsPerSample, format.SampleRate);
@@ -279,6 +282,9 @@ internal sealed class StreamMeasurer
     internal CoherenceCounters? CoherenceCounterSet => _coherence;
 
     internal double[] CrossSums => _crossSums;
+
+    // The counters of the replicated bands, which the tests pin; null where the kind is not measured or nothing is searched.
+    internal ReplicatedBandsCounters? ReplicatedCounterSet => _replicated;
 
     // The state of a stream of this format, in bytes, for the memory bound (decided before anything is allocated).
     public static long EstimateBytes(PcmFormat format, MeasureOptions options)
@@ -1675,7 +1681,7 @@ internal sealed class StreamMeasurer
             : null;
         ReplicatedBandsFigures? replicatedFigures = _isMeasuringReplicatedBands
             ? ReplicatedBandsFinder.Find(_geometry, _replicatedFrames, _replicated, cutoff, combinedBandwidth)
-            : null;
+            : _asksReplicatedBands ? new ReplicatedBandsFigures { IsSearched = false } : null;
         if (!_isReportingSpectrum)
         {
             // Asked alone, the replicated bands ran the transform; the spectrum's own figures are not reported.

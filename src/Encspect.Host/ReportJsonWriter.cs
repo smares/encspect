@@ -1571,27 +1571,61 @@ public static class ReportJsonWriter
 
         writer.WriteEndArray();
         writer.WriteStartObject("bands");
+        writer.WriteNumber("bandRows", figures.BandRows);
+        writer.WriteNumber("stepRows", figures.StepRows);
+        writer.WriteStartArray("startRows");
+        foreach (ReplicatedBand band in figures.Bands)
+        {
+            writer.WriteNumberValue(band.StartRow);
+        }
+
+        writer.WriteEndArray();
+        writer.WriteStartObject("offsets");
+        writer.WriteString("unit", "Hz");
+        writer.WriteStartArray("values");
+        foreach (ReplicatedBand band in figures.Bands)
+        {
+            writer.WriteNumberValue(band.Offset);
+        }
+
+        writer.WriteEndArray();
+        writer.WriteEndObject();
+        writer.WriteStartObject("shares");
         writer.WriteString("unit", "%");
         writer.WriteNumber("valuesPerUnit", 10);
         writer.WriteStartArray("values");
         foreach (ReplicatedBand band in figures.Bands)
         {
-            writer.WriteStartObject();
-            writer.WriteNumber("startRow", band.StartRow);
-            writer.WriteNumber("offset", band.Offset);
             if (band.ShareTenths == MeasurementLimits.NoPower)
             {
-                writer.WriteNull("share");
+                writer.WriteNullValue();
             }
             else
             {
-                writer.WriteNumber("share", band.ShareTenths);
+                writer.WriteNumberValue(band.ShareTenths);
             }
+        }
 
-            writer.WriteNumber("framesWithSignal", band.FramesWithSignal);
-            writer.WriteBoolean("isPeriodic", band.IsPeriodic);
-            writer.WriteBoolean("passes", band.Passes);
-            writer.WriteEndObject();
+        writer.WriteEndArray();
+        writer.WriteEndObject();
+        writer.WriteStartArray("framesWithSignal");
+        foreach (ReplicatedBand band in figures.Bands)
+        {
+            writer.WriteNumberValue(band.FramesWithSignal);
+        }
+
+        writer.WriteEndArray();
+        writer.WriteStartArray("isPeriodic");
+        foreach (ReplicatedBand band in figures.Bands)
+        {
+            writer.WriteBooleanValue(band.IsPeriodic);
+        }
+
+        writer.WriteEndArray();
+        writer.WriteStartArray("passes");
+        foreach (ReplicatedBand band in figures.Bands)
+        {
+            writer.WriteBooleanValue(band.Passes);
         }
 
         writer.WriteEndArray();

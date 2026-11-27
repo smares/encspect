@@ -50,9 +50,10 @@ internal static class CommandLine
                                 digital silence, bit depth), the loudness (integrated loudness,
                                 loudness range, maximum momentary and short-term loudness) and
                                 the true peak. Kinds, comma-separated: spectrum, levels,
-                                loudness, true-peak. Costs more than --verify. With --csv, fills
-                                Is Verified, Spectral Cutoff, Sample Peak, Maximum True Peak
-                                Level, Integrated Loudness and Loudness Range.
+                                loudness, true-peak, replicated-bands. Costs more than
+                                --verify. With --csv, fills Is Verified, Spectral Cutoff,
+                                Replicated Bands From, Sample Peak, Maximum True Peak Level,
+                                Integrated Loudness and Loudness Range.
           --measure-grids       As --measure, and write the spectrogram and waveform grids into
                                 the JSON. The text and CSV never hold them.
 

@@ -1,0 +1,938 @@
+{
+ "description": "Mono, 3 s: harmonics of a fundamental gliding from 220 to 440 Hz (amplitude 1 / n, fixed random phases) up to 20 kHz, -30 dBFS RMS: periodic bands, none found.",
+ "length": 169289,
+ "construction": {
+  "cutoff_hz": null,
+  "unspecified": true,
+  "replicated_from_hz": null
+ },
+ "model": {
+  "sample_rate": 44100,
+  "channels": 1,
+  "channels_measured": 1,
+  "bits": 16,
+  "samples": 132300,
+  "first_position": 0,
+  "lost_samples": 0,
+  "gaps": 0,
+  "fft_size": 4096,
+  "frames": 63,
+  "combined": [-1213, -1181, -1122, -1013, -714, -404, -397, -403, -409, -414, -460, -482, -486, -490, -493, -488, -482, -485, -487, -490, -515, -526, -528, -530, -531, -531, -526, -527, -529, -531, -547, -555, -556, -557, -559, -560, -555, -556, -557, -558, -570, -578, -578, -579, -580, -581, -579, -578, -578, -579, -587, -597, -595, -596, -596, -597, -597, -595, -596, -597, -601, -613, -608, -611, -609, -613, -611, -610, -611, -610, -614, -626, -621, -621, -624, -625, -623, -621, -623, -624, -625, -635, -633, -633, -634, -635, -635, -634, -633, -634, -635, -644, -644, -643, -643, -644, -644, -644, -643, -643, -644, -652, -653, -651, -652, -653, -653, -654, -652, -651, -652, -659, -661, -660, -660, -660, -660, -660, -660, -661, -660, -665, -667, -669, -668, -666, -667, -670, -668, -665, -667, -674, -673, -674, -675, -673, -673, -676, -674, -672, -676, -677, -679, -684, -678, -680, -683, -678, -682, -681, -678, -685, -686, -686, -688, -683, -688, -686, -686, -688, -683, -690, -691, -691, -693, -689, -694, -689, -694, -690, -691, -693, -696, -698, -696, -698, -695, -698, -695, -699, -694, -699, -700, -704, -700, -703, -700, -703, -700, -704, -699, -703, -704, -709, -704, -709, -703, -709, -703, -710, -703, -708, -708, -712, -710, -711, -710, -709, -712, -708, -713, -707, -716, -714, -714, -717, -711, -718, -712, -717, -714, -713, -719, -716, -721, -717, -719, -719, -717, -721, -717, -720, -720, -722, -724, -720, -724, -721, -722, -724, -720, -724, -723, -725, -728, -723, -728, -726, -723, -729, -724, -726, -729, -726, -732, -729, -727, -732, -727, -729, -732, -727, -731, -734, -730, -734, -734, -730, -734, -733, -730, -735, -734, -733, -739, -735, -734, -739, -735, -734, -739, -735, -734, -742, -739, -736, -742, -740, -736, -741, -740, -736, -741, -743, -739, -742, -745, -740, -741, -745, -740, -741, -745, -744, -743, -747, -746, -743, -746, -746, -743, -745, -748, -745, -746, -750, -748, -746, -749, -749, -745, -747, -751, -748, -749, -753, -751, -748, -751, -753, -749, -749, -753, -753, -751, -753, -755, -752, -752, -755, -754, -751, -753, -757, -755, -754, -756, -757, -755, -754, -756, -757, -755, -756, -760, -759, -756, -757, -760, -759, -756, -757, -760, -759, -758, -761, -763, -760, -759, -761, -763, -760, -758, -762, -765, -763, -761, -763, -765, -763, -761, -762, -765, -764, -763, -765, -767, -765, -763, -765, -768, -766, -763, -764, -769, -770, -766, -765, -768, -770, -767, -765, -767, -770, -770, -768, -768, -771, -771, -769, -768, -770, -771, -770, -769, -771, -774, -772, -769, -770, -773, -774, -771, -769, -773, -777, -776, -771, -771, -775, -777, -774, -770, -772, -777, -779, -775, -773, -774, -778, -778, -774, -773, -775, -779, -780, -776, -775, -778, -780, -779, -776, -776, -778, -781, -780, -778, -778, -780, -781, -780, -777, -779, -777, -833, -906, -959, -995, -1021, -1040, -1055, -1068, -1079, -1091, -1098, -1107, -1113, -1119, -1125, -1130, -1137, -1141, -1145, -1148, -1158, -1154, -1159, -1160, -1162, -1168, -1170, -1172, -1175, -1177, -1181, -1179, -1180, -1181, -1186, -1181, -1186, -1181, -1184, -1188, -1192, -1189, -1190, -1182, -1190, -1194, -1188, -1195],
+  "per_channel": [
+   [-1213, -1181, -1122, -1013, -714, -404, -397, -403, -409, -414, -460, -482, -486, -490, -493, -488, -482, -485, -487, -490, -515, -526, -528, -530, -531, -531, -526, -527, -529, -531, -547, -555, -556, -557, -559, -560, -555, -556, -557, -558, -570, -578, -578, -579, -580, -581, -579, -578, -578, -579, -587, -597, -595, -596, -596, -597, -597, -595, -596, -597, -601, -613, -608, -611, -609, -613, -611, -610, -611, -610, -614, -626, -621, -621, -624, -625, -623, -621, -623, -624, -625, -635, -633, -633, -634, -635, -635, -634, -633, -634, -635, -644, -644, -643, -643, -644, -644, -644, -643, -643, -644, -652, -653, -651, -652, -653, -653, -654, -652, -651, -652, -659, -661, -660, -660, -660, -660, -660, -660, -661, -660, -665, -667, -669, -668, -666, -667, -670, -668, -665, -667, -674, -673, -674, -675, -673, -673, -676, -674, -672, -676, -677, -679, -684, -678, -680, -683, -678, -682, -681, -678, -685, -686, -686, -688, -683, -688, -686, -686, -688, -683, -690, -691, -691, -693, -689, -694, -689, -694, -690, -691, -693, -696, -698, -696, -698, -695, -698, -695, -699, -694, -699, -700, -704, -700, -703, -700, -703, -700, -704, -699, -703, -704, -709, -704, -709, -703, -709, -703, -710, -703, -708, -708, -712, -710, -711, -710, -709, -712, -708, -713, -707, -716, -714, -714, -717, -711, -718, -712, -717, -714, -713, -719, -716, -721, -717, -719, -719, -717, -721, -717, -720, -720, -722, -724, -720, -724, -721, -722, -724, -720, -724, -723, -725, -728, -723, -728, -726, -723, -729, -724, -726, -729, -726, -732, -729, -727, -732, -727, -729, -732, -727, -731, -734, -730, -734, -734, -730, -734, -733, -730, -735, -734, -733, -739, -735, -734, -739, -735, -734, -739, -735, -734, -742, -739, -736, -742, -740, -736, -741, -740, -736, -741, -743, -739, -742, -745, -740, -741, -745, -740, -741, -745, -744, -743, -747, -746, -743, -746, -746, -743, -745, -748, -745, -746, -750, -748, -746, -749, -749, -745, -747, -751, -748, -749, -753, -751, -748, -751, -753, -749, -749, -753, -753, -751, -753, -755, -752, -752, -755, -754, -751, -753, -757, -755, -754, -756, -757, -755, -754, -756, -757, -755, -756, -760, -759, -756, -757, -760, -759, -756, -757, -760, -759, -758, -761, -763, -760, -759, -761, -763, -760, -758, -762, -765, -763, -761, -763, -765, -763, -761, -762, -765, -764, -763, -765, -767, -765, -763, -765, -768, -766, -763, -764, -769, -770, -766, -765, -768, -770, -767, -765, -767, -770, -770, -768, -768, -771, -771, -769, -768, -770, -771, -770, -769, -771, -774, -772, -769, -770, -773, -774, -771, -769, -773, -777, -776, -771, -771, -775, -777, -774, -770, -772, -777, -779, -775, -773, -774, -778, -778, -774, -773, -775, -779, -780, -776, -775, -778, -780, -779, -776, -776, -778, -781, -780, -778, -778, -780, -781, -780, -777, -779, -777, -833, -906, -959, -995, -1021, -1040, -1055, -1068, -1079, -1091, -1098, -1107, -1113, -1119, -1125, -1130, -1137, -1141, -1145, -1148, -1158, -1154, -1159, -1160, -1162, -1168, -1170, -1172, -1175, -1177, -1181, -1179, -1180, -1181, -1186, -1181, -1186, -1181, -1184, -1188, -1192, -1189, -1190, -1182, -1190, -1194, -1188, -1195]
+  ],
+  "cutoff": {
+   "is_searched": true,
+   "is_found": true,
+   "frequency": 20112,
+   "transition_start": 19983,
+   "step_frequency": 20112,
+   "step_tenths": 318,
+   "frames_showing": 63,
+   "frames_with_signal": 63
+  },
+  "channel_cutoffs": [
+   {
+    "is_searched": true,
+    "is_found": true,
+    "frequency": 20112,
+    "transition_start": 19983,
+    "step_frequency": 20112,
+    "step_tenths": 318,
+    "frames_showing": 63,
+    "frames_with_signal": 63
+   }
+  ],
+  "bandwidth": {
+   "is_searched": true,
+   "is_found": true,
+   "frequency": 20370,
+   "floor_tenths": -1176,
+   "reason": "none"
+  },
+  "channel_bandwidths": [
+   {
+    "is_searched": true,
+    "is_found": true,
+    "frequency": 20370,
+    "floor_tenths": -1176,
+    "reason": "none"
+   }
+  ],
+  "slope": {
+   "is_searched": true,
+   "is_found": true,
+   "from_frequency": 19208,
+   "to_frequency": 21835,
+   "fall_tenths": 401,
+   "tenths_per_kilohertz": 188,
+   "top_step_tenths": 148
+  },
+  "channel_slopes": [
+   {
+    "is_searched": true,
+    "is_found": true,
+    "from_frequency": 19208,
+    "to_frequency": 21835,
+    "fall_tenths": 401,
+    "tenths_per_kilohertz": 188,
+    "top_step_tenths": 148
+   }
+  ],
+  "partial_cutoff": {
+   "is_searched": true,
+   "is_found": true,
+   "frequency": 20112,
+   "frames_showing": 63,
+   "frames_with_signal": 63
+  },
+  "holes": {
+   "is_searched": true,
+   "hole_cells": 4970,
+   "cells_with_signal": 26523,
+   "from_frequency": 1981,
+   "to_frequency": 20112,
+   "row_shares": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 571, 540, 540, 556, 571, 587, 603, 587, 571, 571, 571, 540, 540, 540, 571, 556, 587, 524, 587, 524, 556, 540, 492, 524, 524, 540, 540, 556, 508, 524, 524, 524, 476, 476, 492, 524, 524, 508, 524, 540, 492, 492, 476, 429, 460, 460, 460, 444, 429, 429, 444, 429, 444, 476, 492, 508, 476, 492, 492, 429, 429, 413, 429, 413, 429, 476, 429, 429, 429, 413, 444, 444, 381, 397, 397, 429, 429, 429, 397, 413, 429, 381, 397, 397, 333, 397, 397, 413, 381, 365, 381, 365, 349, 365, 349, 349, 365, 365, 349, 349, 397, 333, 317, 317, 349, 302, 333, 333, 365, 333, 317, 317, 302, 333, 302, 286, 286, 317, 349, 286, 349, 286, 286, 254, 254, 302, 270, 333, 270, 317, 238, 333, 238, 302, 254, 286, 254, 270, 270, 270, 254, 254, 238, 238, 238, 270, 222, 286, 222, 286, 190, 286, 159, 254, 159, 238, 175, 254, 175, 222, 222, 190, 238, 159, 238, 143, 222, 159, 238, 238, 159, 238, 127, 190, 143, 190, 206, 143, 222, 175, 190, 159, 127, 206, 111, 175, 111, 127, 206, 111, 175, 143, 127, 159, 111, 175, 143, 127, 159, 95, 175, 159, 79, 143, 127, 111, 127, 79, 143, 143, 95, 159, 111, 79, 127, 111, 95, 127, 95, 111, 111, 95, 111, 111, 48, 127, 111, 48, 143, 111, 48, 127, 95, 32, 127, 111, 32, 111, 95, 32, 127, 95, 16, 111, 79, 48, 95, 95, 95, 63, 79, 79, 32, 63, 79, 32, 79, 79, 32, 95, 63, 79, 79, 48, 48, 32, 63, 63, 32, 79, 48, 63, 48, 32, 48, 48, 63, 48, 48, 79, 32, 48, 32, 48, 32, 48, 48, 32, 48, 16, 48, 32, 48, 16, 16, 48, 48, 48, 0, 32, 32, 48, 16, 32, 0, 32, 32, 32, 32, 16, 32, 32, 32, 16, 32, 16, 32, 16, 32, 16, 32, 0, 32, 16, 16, 0, 32, 16, 16, 0, 32, 16, 16, 16, 16, 16, 16, 0, 16, 16, 16, 0, 16, 0, 0, 0, 16, 0, 0, 0, 16, 0, 0, 16, 16, 0, 16, 16, 16, 0, 16, 0, 0, 0, 0, 0, 16, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, null, null, null, null, null, null]
+  },
+  "mid_side": null,
+  "coherence": null,
+  "replicated_bands": {
+   "is_searched": true,
+   "frames_used": 32,
+   "is_found": false,
+   "reason": "notMatching",
+   "from_frequency": 0,
+   "to_frequency": 0,
+   "range_frequency": 20112,
+   "top_band_share": 500,
+   "is_top_band_periodic": true,
+   "stretches": [],
+   "bands": [
+    {
+     "start_row": 23,
+     "offset": 0,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 28,
+     "offset": 1163,
+     "share": 344,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 33,
+     "offset": 1120,
+     "share": 313,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 38,
+     "offset": 1593,
+     "share": 375,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 43,
+     "offset": 1163,
+     "share": 344,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 48,
+     "offset": 1163,
+     "share": 344,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 53,
+     "offset": 1120,
+     "share": 344,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 58,
+     "offset": 1163,
+     "share": 375,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 63,
+     "offset": 1163,
+     "share": 344,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 68,
+     "offset": 1163,
+     "share": 375,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 73,
+     "offset": 1120,
+     "share": 344,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 78,
+     "offset": 1163,
+     "share": 375,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 83,
+     "offset": 1163,
+     "share": 375,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 88,
+     "offset": 1163,
+     "share": 375,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 93,
+     "offset": 1163,
+     "share": 375,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 98,
+     "offset": 1163,
+     "share": 375,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 103,
+     "offset": 1163,
+     "share": 375,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 108,
+     "offset": 1163,
+     "share": 375,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 113,
+     "offset": 1249,
+     "share": 406,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 118,
+     "offset": 1163,
+     "share": 375,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 123,
+     "offset": 1163,
+     "share": 375,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 128,
+     "offset": 1249,
+     "share": 406,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 133,
+     "offset": 1163,
+     "share": 375,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 138,
+     "offset": 1163,
+     "share": 375,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 143,
+     "offset": 1249,
+     "share": 406,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 148,
+     "offset": 6029,
+     "share": 438,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 153,
+     "offset": 2498,
+     "share": 406,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 158,
+     "offset": 2541,
+     "share": 406,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 163,
+     "offset": 2498,
+     "share": 406,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 168,
+     "offset": 1206,
+     "share": 406,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 173,
+     "offset": 2498,
+     "share": 406,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 178,
+     "offset": 1249,
+     "share": 406,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 183,
+     "offset": 7321,
+     "share": 438,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 188,
+     "offset": 5556,
+     "share": 438,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 193,
+     "offset": 5556,
+     "share": 438,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 198,
+     "offset": 5556,
+     "share": 438,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 203,
+     "offset": 5556,
+     "share": 438,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 208,
+     "offset": 5556,
+     "share": 438,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 213,
+     "offset": 7321,
+     "share": 438,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 218,
+     "offset": 5556,
+     "share": 438,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 223,
+     "offset": 5556,
+     "share": 438,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 228,
+     "offset": 5556,
+     "share": 438,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 233,
+     "offset": 5556,
+     "share": 438,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 238,
+     "offset": 5556,
+     "share": 438,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 243,
+     "offset": 5556,
+     "share": 438,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 248,
+     "offset": 5556,
+     "share": 438,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 253,
+     "offset": 5556,
+     "share": 438,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 258,
+     "offset": 10896,
+     "share": 469,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 263,
+     "offset": 5556,
+     "share": 438,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 268,
+     "offset": 11370,
+     "share": 500,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 273,
+     "offset": 11370,
+     "share": 531,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 278,
+     "offset": 11370,
+     "share": 531,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 283,
+     "offset": 11370,
+     "share": 531,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 288,
+     "offset": 11370,
+     "share": 531,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 293,
+     "offset": 11370,
+     "share": 531,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 298,
+     "offset": 11370,
+     "share": 531,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 303,
+     "offset": 11370,
+     "share": 531,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 308,
+     "offset": 11370,
+     "share": 531,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 313,
+     "offset": 11370,
+     "share": 500,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 318,
+     "offset": 11370,
+     "share": 531,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 323,
+     "offset": 11370,
+     "share": 500,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 328,
+     "offset": 11370,
+     "share": 531,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 333,
+     "offset": 11370,
+     "share": 500,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 338,
+     "offset": 11370,
+     "share": 531,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 343,
+     "offset": 11111,
+     "share": 500,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 348,
+     "offset": 11370,
+     "share": 531,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 353,
+     "offset": 11370,
+     "share": 500,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 358,
+     "offset": 11370,
+     "share": 531,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 363,
+     "offset": 11370,
+     "share": 500,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 368,
+     "offset": 11370,
+     "share": 531,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 373,
+     "offset": 11370,
+     "share": 500,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 378,
+     "offset": 11370,
+     "share": 531,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 383,
+     "offset": 11370,
+     "share": 500,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 388,
+     "offset": 11370,
+     "share": 531,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 393,
+     "offset": 11370,
+     "share": 500,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 398,
+     "offset": 11370,
+     "share": 531,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 403,
+     "offset": 11370,
+     "share": 500,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 408,
+     "offset": 11370,
+     "share": 531,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 413,
+     "offset": 15332,
+     "share": 531,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 418,
+     "offset": 11370,
+     "share": 531,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 423,
+     "offset": 16710,
+     "share": 531,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 428,
+     "offset": 11370,
+     "share": 531,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 433,
+     "offset": 16710,
+     "share": 531,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 438,
+     "offset": 11370,
+     "share": 531,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 443,
+     "offset": 14083,
+     "share": 500,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 448,
+     "offset": 11886,
+     "share": 406,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 453,
+     "offset": 9991,
+     "share": 313,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 458,
+     "offset": 9087,
+     "share": 188,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 463,
+     "offset": 17528,
+     "share": 129,
+     "frames_with_signal": 31,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 468,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 473,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 478,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 483,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    }
+   ]
+  },
+  "levels": {
+   "bits": 16,
+   "bits_in_use": 16,
+   "minimum_silent_stretch": 441,
+   "stream": {
+    "sample_peak_tenths": -228,
+    "rms_tenths": -300,
+    "dc_micropercent": -1047,
+    "dc_tenths": -996,
+    "clipping_runs": 0,
+    "clipped_samples": 0,
+    "longest_clipping_run": 0,
+    "silent_at_start": 0,
+    "silent_at_end": 0,
+    "zero_samples": 60,
+    "silent_stretches": 0,
+    "silent_samples": 0,
+    "longest_silent_stretch": 0,
+    "low_bits_unused": 0,
+    "highest_magnitude": 2373
+   },
+   "channels": [
+    {
+     "sample_peak_tenths": -228,
+     "rms_tenths": -300,
+     "dc_micropercent": -1047,
+     "dc_tenths": -996,
+     "clipping_runs": 0,
+     "clipped_samples": 0,
+     "longest_clipping_run": 0,
+     "silent_at_start": 0,
+     "silent_at_end": 0,
+     "zero_samples": 60,
+     "silent_stretches": 0,
+     "silent_samples": 0,
+     "longest_silent_stretch": 0,
+     "low_bits_unused": 0,
+     "highest_magnitude": 2373
+    }
+   ]
+  },
+  "loudness": {
+   "weights": [100],
+   "blocks": 27,
+   "momentary": {
+    "tenths": -298,
+    "absence": "none"
+   },
+   "short_term": {
+    "tenths": -300,
+    "absence": "none"
+   },
+   "blocks_above_absolute_gate": 27,
+   "blocks_above_relative_gate": 27,
+   "integrated": {
+    "tenths": -300,
+    "absence": "none"
+   },
+   "range": {
+    "tenths": 0,
+    "absence": "none"
+   },
+   "range_low_tenths": -300,
+   "range_high_tenths": -300,
+   "short_term_values": 1,
+   "short_term_first_tenths": -300
+  },
+  "true_peak": {
+   "oversampling": 4,
+   "channels": [-228],
+   "stream": -228
+  },
+  "spectrogram_columns": 65,
+  "hops_per_column": 1,
+  "waveform": [
+   {
+    "minimum": [-2333, -2341, -2330, -2324, -2325, -2335, -2334, -2344, -2344, -2337, -2340, -2342, -2355, -2366, -2373, -2361, -2360, -2347, -2343, -2344, -2340, -2338, -2322, -2334, -2348, -2350, -2344, -2327, -2332, -2355, -2358, -2362, -2361, -2343, -2344, -2331, -2332, -2323, -2319, -2301, -2312, -2312, -2304, -2304, -2286, -2284, -2286, -2287, -2286, -2270, -2290, -2291, -2290, -2299, -2305, -2320, -2325, -2325, -2308, -2310, -2289, -2304, -2303, -2321, -2325],
+    "maximum": [1901, 1902, 1892, 1904, 1907, 1912, 1912, 1898, 1877, 1881, 1873, 1869, 1866, 1879, 1888, 1907, 1909, 1898, 1898, 1887, 1886, 1878, 1869, 1867, 1866, 1860, 1866, 1850, 1847, 1852, 1843, 1855, 1849, 1854, 1868, 1881, 1884, 1886, 1870, 1877, 1890, 1892, 1880, 1890, 1890, 1910, 1909, 1927, 1924, 1908, 1908, 1880, 1863, 1876, 1879, 1879, 1863, 1880, 1887, 1887, 1864, 1863, 1855, 1855, 1842]
+   }
+  ]
+ }
+}

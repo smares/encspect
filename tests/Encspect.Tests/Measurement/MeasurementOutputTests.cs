@@ -138,7 +138,7 @@ public class MeasurementOutputTests
         Assert.Equal(CommandLine.Success, inline);
         Assert.Contains("Spectral Cutoff:", inlineKinds);
         Assert.Equal(CommandLine.UsageError, unknown);
-        Assert.Contains("Unknown measurement: timbre. Measurements: spectrum, levels, loudness, true-peak.", errors);
+        Assert.Contains("Unknown measurement: timbre. Measurements: spectrum, levels, loudness, true-peak, replicated-bands.", errors);
     }
 
     [Fact]

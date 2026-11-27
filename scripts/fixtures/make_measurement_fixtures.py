@@ -197,6 +197,51 @@ def harmonics(rate, fundamental_hz, highest_hz, rms_db, seed, length):
     return [v * gain for v in out]
 
 
+def patched(rate, seconds, highest_hz, patches, seed, mix=1.0, rms_db=-30.0, changing=0):
+    """Blocks of one frame (the analyzer's FFT size at this rate), each with spectral lines at the bin centers from 40 Hz to highest_hz of random amplitude (Rayleigh) and phase from a
+    generator of its own, so that the used frames of the replicated bands (every second frame, which start at block starts) hold one block each. patches: (source low Hz, source high Hz, offset
+    Hz) copy the complex lines of the source bins onto the bins an offset higher (a multiple of 4 bins, whole rows), after the lines below them were drawn; mix is the share of the copy's power in the
+    target (the rest is a line drawn on its own); changing: the offset grows by this many rows in each block, over five blocks in turn. The signal is scaled to rms_db over the whole of it."""
+    n = mm.fft_size(rate)
+    rng = Lcg(seed)
+    low, high = math.ceil(40.0 * n / rate), math.floor(highest_hz * n / rate)
+    out = []
+    for block in range(int(seconds * rate) // n + 1):
+        spectrum = [0j] * n
+        for k in range(low, high + 1):
+            amplitude = math.sqrt(-2.0 * math.log(1.0 - rng.uniform() * 0.999999))
+            phase = rng.uniform() * 2 * math.pi
+            spectrum[k] = amplitude * complex(math.cos(phase), math.sin(phase))
+        for source_low, source_high, offset in patches:
+            shift = (offset * n) // rate + (4 * changing * (block % 5))
+            for k in range(math.ceil(source_low * n / rate), math.floor(source_high * n / rate) + 1):
+                target = k + shift
+                if target <= high:
+                    spectrum[target] = math.sqrt(mix) * spectrum[k] + math.sqrt(1.0 - mix) * spectrum[target]
+        for k in range(1, n // 2):
+            spectrum[n - k] = spectrum[k].conjugate()
+        out.extend(v.real for v in mm.fft([c.conjugate() for c in spectrum]))
+    out = out[:int(seconds * rate)]
+    gain = 10 ** (rms_db / 20) / math.sqrt(sum(v * v for v in out) / len(out))
+    return [v * gain for v in out]
+
+
+def gliding_harmonics(rate, seconds, f0, f1, highest_hz, rms_db, seed):
+    """Harmonics of a fundamental that glides exponentially from f0 to f1 over the length, the n-th with amplitude 1 / n and a fixed random phase."""
+    rng = Lcg(seed)
+    phases = [rng.uniform() * 2 * math.pi for _ in range(int(highest_hz // f0) + 1)]
+    length = int(seconds * rate)
+    out = []
+    theta = 0.0
+    for i in range(length):
+        f = f0 * (f1 / f0) ** (i / length)
+        theta += 2 * math.pi * f / rate
+        top = int(highest_hz // f)
+        out.append(sum(math.sin(n * theta + phases[n]) / n for n in range(1, top + 1)))
+    gain = 10 ** (rms_db / 20) / math.sqrt(sum(v * v for v in out) / length)
+    return [v * gain for v in out]
+
+
 def sine_bin(rate, bin_numerator, bin_denominator, length, amplitude):
     """A sine at bin_numerator / bin_denominator bins of the frame, with an integer phase."""
     n = mm.fft_size(rate)
@@ -410,6 +455,33 @@ def build():
         [quantize(shared, 16), quantize(shared, 16)], rate44, 16, {"cutoff_hz": None, "unspecified": True, "side_has_power": False})
     add("stereo-independent-noise", "Stereo with white noise from two generators in the channels, -20 dBFS RMS each: the mid and side spectra are alike.",
         [quantize(white(n44, 95, -20.0), 16), quantize(white(n44, 96, -20.0), 16)], rate44, 16, {"cutoff_hz": None, "no_cutoff": True, "mid_and_side_alike": True})
+
+    # The replicated bands (docs/design/spectral-analysis.md, Step 9), 3 s of mono each (32 frames used) of random lines in blocks of one frame, -30 dBFS RMS, TPDF dither of one least significant bit:
+    # the lines of a source range copied onto the bins an offset higher (whole rows) in every block, as built, found from the copy's start; a copy blended with noise at half its power; an
+    # offset that changes with every block (none); two patches; a patch narrower than a band; white noise; and sustained harmonic sounds, which match themselves at every multiple of the pitch.
+    three = rate44 * 3
+    replicated = [
+        ("replicated-copy-5000", "lines from 40 Hz to 13 kHz, the lines from 3 to 8 kHz copied 5 kHz up onto the bins from 8 to 13 kHz in every block: found from about 8 kHz, 5 kHz up",
+         {"highest_hz": 13000, "patches": [(3000, 8000, 5000)]}, 8000),
+        ("replicated-two-patches", "lines from 40 Hz to 14 kHz, the lines from 2 to 6 kHz copied 6 kHz up and those from 2 to 4 kHz copied 10 kHz up (onto 12 to 14 kHz): found from about 8 kHz with two offsets",
+         {"highest_hz": 14000, "patches": [(2000, 6000, 6000), (2000, 4000, 10000)]}, 8000),
+        ("replicated-narrow-patch", "lines from 40 Hz to 13 kHz, a patch of 600 Hz (3 to 3.6 kHz copied 5 kHz up) and a patch of 3 kHz (3 to 6 kHz copied 10 kHz up, onto 13 to 16 kHz, cut at 13 kHz): "
+         "the narrow patch is narrower than a band of 1 kHz", {"highest_hz": 13000, "patches": [(3000, 3600, 5000), (3000, 6000, 7500)]}, 10500),
+        ("replicated-blend-50", "as replicated-copy-5000 with the copy blended with a line of its own at half the power each: lower shares",
+         {"highest_hz": 13000, "patches": [(3000, 8000, 5000)], "mix": 0.5}, 8000),
+        ("replicated-offset-changes", "as replicated-copy-5000 with the offset growing by one row (43 Hz) in each block over five blocks in turn: the offset changes with every frame, none found",
+         {"highest_hz": 13000, "patches": [(3000, 8000, 5000)], "changing": 1}, None),
+    ]
+    for name, what, kwargs, from_hz in replicated:
+        add(name, f"Mono, 3 s: {what}.", [quantize(patched(rate44, 3, seed=301 + len(name), **kwargs), 16, dither_seed=302)], rate44, 16,
+            {"cutoff_hz": None, "unspecified": True, "replicated_from_hz": from_hz})
+    add("replicated-white-noise", "Mono, 3 s of white noise, -30 dBFS RMS: no replicated bands.", [quantize(white(three, 311, -30.0), 16, dither_seed=312)], rate44, 16,
+        {"cutoff_hz": None, "no_cutoff": True, "replicated_from_hz": None})
+    add("replicated-sawtooth-220", "Mono, 3 s: harmonics of 220 Hz up to 20 kHz (amplitude 1 / n, fixed random phases), -30 dBFS RMS: the fine structure repeats at every multiple of 220 Hz, so the bands are periodic and none is found.",
+        [quantize(harmonics(rate44, 220.0, 20000.0, -30.0, 313, three), 16, dither_seed=314)], rate44, 16, {"cutoff_hz": None, "unspecified": True, "replicated_from_hz": None})
+    add("replicated-glide", "Mono, 3 s: harmonics of a fundamental gliding from 220 to 440 Hz (amplitude 1 / n, fixed random phases) up to 20 kHz, -30 dBFS RMS: periodic bands, none found.",
+        [quantize(gliding_harmonics(rate44, 3, 220.0, 440.0, 20000.0, -30.0, 315), 16, dither_seed=316)], rate44, 16, {"cutoff_hz": None, "unspecified": True, "replicated_from_hz": None})
+
 
     # Inter-channel coherence (docs/design/spectral-analysis.md, Step 8), 0.6 s (11 frames) of lines at the bin centers in each channel, each with TPDF dither of one least significant bit:
     # a side 12 dB under the mid (the coherence of the two channels is about 0.78, 79 % at the top band: none found), independent low bands under 3.9 kHz with the same high signal above 4.1 kHz in both

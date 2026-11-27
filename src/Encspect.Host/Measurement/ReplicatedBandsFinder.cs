@@ -17,15 +17,18 @@ internal sealed class ReplicatedBandsCounters
     private readonly int _halfWidth;
 
     // The frame's fine structure, the prefix sums of the logarithms, of the squares of the fine structure, of the power, and of the products of one shift.
-    private readonly double[] _fine = new double[Rows];
+    private const int Padding = 4;
+
+    private readonly double[] _fine = new double[Rows + Padding];
+    private readonly double[] _shifted = new double[4 * (Rows + 1)];
     private readonly double[] _logSums = new double[Rows + 1];
     private readonly double[] _squares = new double[Rows + 1];
     private readonly double[] _power = new double[Rows + 1];
-    private readonly double[] _products = new double[Rows + 1];
-    private readonly double[] _targetPower;
     private readonly double[] _targetSquares;
+    private readonly bool[] _targetOk;
+    private readonly bool[] _sourceOk = new bool[Rows];
 
-    // Frames with signal in both bands, and those that match, by band and shift (index band * 512 + shift).
+    // Frames with signal in both bands, and those that match, by shift and band (index shift * bands + band, so that the bands of one shift lie together).
     public readonly int[] Frames;
 
     public readonly int[] Matches;
@@ -40,11 +43,14 @@ internal sealed class ReplicatedBandsCounters
         BandCount = CountBands(geometry);
         Frames = new int[BandCount * Rows];
         Matches = new int[BandCount * Rows];
-        _targetPower = new double[BandCount];
         _targetSquares = new double[BandCount];
+        _targetOk = new bool[BandCount];
     }
 
     public int BandCount { get; }
+
+    // The fine structure of the frame counted last, which the tests pin.
+    internal ReadOnlySpan<double> FineRows => _fine.AsSpan(Padding);
 
     public int BandRows => _bandRows;
 
@@ -79,7 +85,6 @@ internal sealed class ReplicatedBandsCounters
         double[] logSums = _logSums;
         double[] squares = _squares;
         double[] power = _power;
-        double[] products = _products;
         int w = _bandRows;
         int h = _halfWidth;
         logSums[0] = 0;
@@ -87,8 +92,9 @@ internal sealed class ReplicatedBandsCounters
         for (int r = 0; r < Rows; r++)
         {
             double p = rows[r];
-            fine[r] = DetMath.Ln(p >= 1e-30 ? p : 1e-30);
-            logSums[r + 1] = logSums[r] + fine[r];
+            double ln = DetMath.Ln(p >= 1e-30 ? p : 1e-30);
+            fine[r + Padding] = ln;
+            logSums[r + 1] = logSums[r] + ln;
             power[r + 1] = power[r] + p;
         }
 
@@ -98,29 +104,38 @@ internal sealed class ReplicatedBandsCounters
             int low = Math.Max(0, r - h);
             int high = Math.Min(Rows - 1, r + h);
             double mean = (logSums[high + 1] - logSums[low]) / (high - low + 1);
-            double x = fine[r] - mean;
-            fine[r] = x;
+            double x = fine[r + Padding] - mean;
+            fine[r + Padding] = x;
             squares[r + 1] = squares[r] + (x * x);
         }
 
         double floor = w * MeasurementLimits.ReplicatedBandsSignalFloor;
         int bands = BandCount;
-        double[] targetPower = _targetPower;
         double[] targetSquares = _targetSquares;
+        bool[] targetOk = _targetOk;
+        bool[] sourceOk = _sourceOk;
         for (int k = 0; k < bands; k++)
         {
             int s = StartRow(k);
-            int e = s + w - 1;
-            targetPower[k] = power[e + 1] - power[s];
-            targetSquares[k] = squares[e + 1] - squares[s];
+            targetOk[k] = power[s + w] - power[s] >= floor;
+            targetSquares[k] = squares[s + w] - squares[s];
+        }
+
+        // A source band is a band of W rows from row q = 1 up to the last band's start.
+        int top = CutoffGeometry.LastCandidate;
+        for (int q = 1; q + w - 1 <= top; q++)
+        {
+            sourceOk[q] = power[q + w] - power[q] >= floor;
         }
 
         int[] frames = Frames;
         int[] matches = Matches;
-        int top = CutoffGeometry.LastCandidate;
-        for (int d = _firstShift; d < top; d++)
+        double[] shifted = _shifted;
+        for (int d = _firstShift; d < top; d += 4)
         {
-            // Band k has a source from its start row s = W + k * step up where s - d >= 1.
+            // Four offsets at a time: the prefix sums of their products run side by side, so that the additions do not wait for one another. Band k has a source
+            // from its start row s = W + k * step up where s - d >= 1; the arrays start at the first band of the lowest offset, and the fine structure has
+            // zeros in front of row 0 for the rows the higher offsets would read there (no band of theirs uses them).
             int firstBand = d + 1 <= w ? 0 : ((d + 1 - w) + _step - 1) / _step;
             if (firstBand >= bands)
             {
@@ -128,40 +143,54 @@ internal sealed class ReplicatedBandsCounters
             }
 
             int startRow = StartRow(firstBand);
-            products[startRow] = 0;
+            double p0 = 0;
+            double p1 = 0;
+            double p2 = 0;
+            double p3 = 0;
+            shifted[startRow] = 0;
+            shifted[Rows + 1 + startRow] = 0;
+            shifted[(2 * (Rows + 1)) + startRow] = 0;
+            shifted[(3 * (Rows + 1)) + startRow] = 0;
             for (int j = startRow; j <= top; j++)
             {
-                products[j + 1] = products[j] + (fine[j] * fine[j - d]);
+                double x = fine[j + Padding];
+                p0 += x * fine[j + Padding - d];
+                p1 += x * fine[j + Padding - d - 1];
+                p2 += x * fine[j + Padding - d - 2];
+                p3 += x * fine[j + Padding - d - 3];
+                shifted[j + 1] = p0;
+                shifted[Rows + 1 + j + 1] = p1;
+                shifted[(2 * (Rows + 1)) + j + 1] = p2;
+                shifted[(3 * (Rows + 1)) + j + 1] = p3;
             }
 
-            for (int k = firstBand; k < bands; k++)
+            for (int lane = 0; lane < 4 && d + lane < top; lane++)
             {
-                if (!(targetPower[k] >= floor))
+                int offset = d + lane;
+                int first = offset + 1 <= w ? 0 : ((offset + 1 - w) + _step - 1) / _step;
+                int laneBase = lane * (Rows + 1);
+                int baseCell = offset * bands;
+                for (int k = first; k < bands; k++)
                 {
-                    continue;
-                }
-
-                int s = StartRow(k);
-                int e = s + w - 1;
-                if (!(power[e - d + 1] - power[s - d] >= floor))
-                {
-                    continue;
-                }
-
-                int cell = (k * Rows) + d;
-                frames[cell]++;
-                double product = products[e + 1] - products[s];
-                if (product > 0)
-                {
-                    double source = squares[e - d + 1] - squares[s - d];
-                    if (4.0 * (product * product) >= targetSquares[k] * source)
+                    int s = w + (k * _step);
+                    if (!(targetOk[k] & sourceOk[s - offset]))
                     {
-                        matches[cell]++;
+                        continue;
                     }
+
+                    int cell = baseCell + k;
+                    frames[cell]++;
+                    double product = shifted[laneBase + s + w] - shifted[laneBase + s];
+                    double source = squares[s - offset + w] - squares[s - offset];
+                    bool isMatch = (product > 0) & (4.0 * (product * product) >= targetSquares[k] * source);
+                    matches[cell] += Unsafe.As<bool, byte>(ref isMatch);
                 }
             }
         }
     }
+
+    // The counters' index of band k at offset d.
+    public int Cell(int band, int shift) => (shift * BandCount) + band;
 }
 
 // The replicated-bands figure from the counters of the whole stream, in integers: no logarithm and no division decides.
@@ -179,7 +208,6 @@ internal static class ReplicatedBandsFinder
             return new ReplicatedBandsFigures { IsSearched = false };
         }
 
-        int rowCount = MeasurementLimits.Rows;
         int w = geometry.BandRows;
         int bandCount = counters.BandCount;
         var bands = new ReplicatedBand[bandCount];
@@ -190,13 +218,12 @@ internal static class ReplicatedBandsFinder
             int s = counters.StartRow(k);
             int best = -1;
             int bestMatches = -1;
-            int baseIndex = k * rowCount;
             for (int d = w; d < s; d++)
             {
-                maxFrames = Math.Max(maxFrames, counters.Frames[baseIndex + d]);
-                if (counters.Matches[baseIndex + d] > bestMatches)
+                maxFrames = Math.Max(maxFrames, counters.Frames[counters.Cell(k, d)]);
+                if (counters.Matches[counters.Cell(k, d)] > bestMatches)
                 {
-                    bestMatches = counters.Matches[baseIndex + d];
+                    bestMatches = counters.Matches[counters.Cell(k, d)];
                     best = d;
                 }
             }
@@ -207,13 +234,13 @@ internal static class ReplicatedBandsFinder
                 continue;
             }
 
-            int n = counters.Frames[baseIndex + best];
+            int n = counters.Frames[counters.Cell(k, best)];
             bool isPeriodic = false;
             if (bestMatches > 0)
             {
                 for (int d = counters.FirstShift; d < w && d < s; d++)
                 {
-                    if (2L * counters.Matches[baseIndex + d] >= bestMatches)
+                    if (2L * counters.Matches[counters.Cell(k, d)] >= bestMatches)
                     {
                         isPeriodic = true;
                         break;

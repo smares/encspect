@@ -1,0 +1,953 @@
+{
+ "description": "Mono, 3 s: lines from 40 Hz to 13 kHz, the lines from 3 to 8 kHz copied 5 kHz up onto the bins from 8 to 13 kHz in every block: found from about 8 kHz, 5 kHz up.",
+ "length": 199963,
+ "construction": {
+  "cutoff_hz": null,
+  "unspecified": true,
+  "replicated_from_hz": 8000
+ },
+ "model": {
+  "sample_rate": 44100,
+  "channels": 1,
+  "channels_measured": 1,
+  "bits": 16,
+  "samples": 132300,
+  "first_position": 0,
+  "lost_samples": 0,
+  "gaps": 0,
+  "fft_size": 4096,
+  "frames": 63,
+  "combined": [-672, -572, -558, -557, -563, -555, -554, -562, -558, -562, -556, -561, -559, -564, -557, -556, -567, -564, -559, -557, -560, -557, -556, -555, -560, -557, -563, -561, -562, -562, -560, -562, -558, -559, -559, -560, -563, -559, -562, -559, -559, -563, -558, -555, -564, -571, -562, -561, -563, -559, -557, -556, -561, -561, -564, -560, -561, -566, -560, -558, -557, -557, -559, -561, -559, -561, -557, -557, -563, -559, -558, -558, -556, -560, -568, -570, -566, -562, -558, -568, -565, -560, -563, -562, -555, -559, -562, -556, -550, -549, -561, -561, -561, -558, -561, -561, -562, -561, -563, -560, -568, -560, -558, -561, -557, -562, -557, -560, -558, -559, -560, -557, -562, -563, -562, -557, -561, -563, -561, -557, -554, -561, -560, -564, -557, -557, -561, -558, -563, -560, -559, -560, -555, -567, -563, -561, -558, -564, -564, -568, -557, -562, -558, -562, -565, -556, -562, -564, -569, -564, -559, -564, -559, -570, -561, -563, -565, -566, -563, -559, -564, -562, -564, -560, -564, -565, -563, -559, -558, -562, -558, -556, -555, -564, -560, -556, -561, -558, -557, -555, -554, -559, -561, -561, -558, -562, -559, -559, -556, -560, -569, -570, -567, -562, -558, -567, -566, -560, -564, -562, -555, -559, -563, -556, -550, -549, -561, -561, -561, -558, -562, -561, -562, -561, -563, -560, -568, -560, -558, -561, -558, -561, -558, -560, -558, -559, -560, -557, -562, -563, -562, -557, -561, -564, -561, -557, -554, -561, -561, -564, -557, -557, -561, -558, -563, -560, -559, -560, -555, -567, -563, -561, -558, -564, -564, -568, -557, -562, -559, -562, -565, -556, -562, -564, -569, -563, -559, -564, -559, -569, -561, -563, -565, -566, -563, -559, -564, -562, -564, -560, -564, -565, -563, -559, -558, -562, -558, -556, -555, -564, -560, -556, -561, -558, -558, -555, -555, -559, -561, -562, -558, -568, -669, -766, -789, -804, -814, -822, -828, -834, -838, -842, -846, -849, -852, -855, -857, -860, -862, -864, -866, -868, -870, -871, -873, -874, -876, -877, -879, -880, -881, -883, -884, -885, -886, -887, -888, -889, -890, -891, -892, -893, -894, -895, -896, -897, -898, -898, -899, -900, -901, -901, -902, -903, -904, -904, -905, -906, -906, -907, -908, -908, -909, -910, -910, -911, -911, -912, -912, -913, -913, -914, -914, -915, -915, -916, -917, -917, -917, -918, -918, -919, -919, -920, -920, -920, -921, -922, -922, -922, -923, -923, -923, -924, -924, -925, -925, -926, -926, -926, -927, -927, -927, -927, -928, -928, -928, -929, -929, -929, -930, -930, -930, -931, -931, -931, -931, -931, -932, -932, -932, -933, -933, -933, -933, -933, -934, -934, -934, -935, -935, -935, -935, -936, -936, -936, -936, -936, -936, -936, -937, -937, -937, -938, -938, -938, -938, -938, -938, -938, -939, -938, -939, -939, -939, -939, -939, -940, -940, -940, -940, -941, -940, -940, -941, -941, -940, -941, -941, -941, -942, -941, -941, -941, -942, -942, -942, -942, -942, -942, -942, -942, -942, -943, -942, -943, -943, -943, -943, -943, -942, -943, -943, -943, -943, -943, -943, -943, -943, -943, -943, -943, -944, -943, -943, -943, -943, -944, -943, -943, -943, -943],
+  "per_channel": [
+   [-672, -572, -558, -557, -563, -555, -554, -562, -558, -562, -556, -561, -559, -564, -557, -556, -567, -564, -559, -557, -560, -557, -556, -555, -560, -557, -563, -561, -562, -562, -560, -562, -558, -559, -559, -560, -563, -559, -562, -559, -559, -563, -558, -555, -564, -571, -562, -561, -563, -559, -557, -556, -561, -561, -564, -560, -561, -566, -560, -558, -557, -557, -559, -561, -559, -561, -557, -557, -563, -559, -558, -558, -556, -560, -568, -570, -566, -562, -558, -568, -565, -560, -563, -562, -555, -559, -562, -556, -550, -549, -561, -561, -561, -558, -561, -561, -562, -561, -563, -560, -568, -560, -558, -561, -557, -562, -557, -560, -558, -559, -560, -557, -562, -563, -562, -557, -561, -563, -561, -557, -554, -561, -560, -564, -557, -557, -561, -558, -563, -560, -559, -560, -555, -567, -563, -561, -558, -564, -564, -568, -557, -562, -558, -562, -565, -556, -562, -564, -569, -564, -559, -564, -559, -570, -561, -563, -565, -566, -563, -559, -564, -562, -564, -560, -564, -565, -563, -559, -558, -562, -558, -556, -555, -564, -560, -556, -561, -558, -557, -555, -554, -559, -561, -561, -558, -562, -559, -559, -556, -560, -569, -570, -567, -562, -558, -567, -566, -560, -564, -562, -555, -559, -563, -556, -550, -549, -561, -561, -561, -558, -562, -561, -562, -561, -563, -560, -568, -560, -558, -561, -558, -561, -558, -560, -558, -559, -560, -557, -562, -563, -562, -557, -561, -564, -561, -557, -554, -561, -561, -564, -557, -557, -561, -558, -563, -560, -559, -560, -555, -567, -563, -561, -558, -564, -564, -568, -557, -562, -559, -562, -565, -556, -562, -564, -569, -563, -559, -564, -559, -569, -561, -563, -565, -566, -563, -559, -564, -562, -564, -560, -564, -565, -563, -559, -558, -562, -558, -556, -555, -564, -560, -556, -561, -558, -558, -555, -555, -559, -561, -562, -558, -568, -669, -766, -789, -804, -814, -822, -828, -834, -838, -842, -846, -849, -852, -855, -857, -860, -862, -864, -866, -868, -870, -871, -873, -874, -876, -877, -879, -880, -881, -883, -884, -885, -886, -887, -888, -889, -890, -891, -892, -893, -894, -895, -896, -897, -898, -898, -899, -900, -901, -901, -902, -903, -904, -904, -905, -906, -906, -907, -908, -908, -909, -910, -910, -911, -911, -912, -912, -913, -913, -914, -914, -915, -915, -916, -917, -917, -917, -918, -918, -919, -919, -920, -920, -920, -921, -922, -922, -922, -923, -923, -923, -924, -924, -925, -925, -926, -926, -926, -927, -927, -927, -927, -928, -928, -928, -929, -929, -929, -930, -930, -930, -931, -931, -931, -931, -931, -932, -932, -932, -933, -933, -933, -933, -933, -934, -934, -934, -935, -935, -935, -935, -936, -936, -936, -936, -936, -936, -936, -937, -937, -937, -938, -938, -938, -938, -938, -938, -938, -939, -938, -939, -939, -939, -939, -939, -940, -940, -940, -940, -941, -940, -940, -941, -941, -940, -941, -941, -941, -942, -941, -941, -941, -942, -942, -942, -942, -942, -942, -942, -942, -942, -943, -942, -943, -943, -943, -943, -943, -942, -943, -943, -943, -943, -943, -943, -943, -943, -943, -943, -943, -944, -943, -943, -943, -943, -944, -943, -943, -943, -943]
+  ],
+  "cutoff": {
+   "is_searched": true,
+   "is_found": true,
+   "frequency": 13049,
+   "transition_start": 13006,
+   "step_frequency": 13049,
+   "step_tenths": 279,
+   "frames_showing": 63,
+   "frames_with_signal": 63
+  },
+  "channel_cutoffs": [
+   {
+    "is_searched": true,
+    "is_found": true,
+    "frequency": 13049,
+    "transition_start": 13006,
+    "step_frequency": 13049,
+    "step_tenths": 279,
+    "frames_showing": 63,
+    "frames_with_signal": 63
+   }
+  ],
+  "bandwidth": {
+   "is_searched": true,
+   "is_found": false,
+   "frequency": 0,
+   "floor_tenths": 0,
+   "reason": "slope"
+  },
+  "channel_bandwidths": [
+   {
+    "is_searched": true,
+    "is_found": false,
+    "frequency": 0,
+    "floor_tenths": 0,
+    "reason": "slope"
+   }
+  ],
+  "slope": {
+   "is_searched": true,
+   "is_found": false,
+   "from_frequency": 0,
+   "to_frequency": 0,
+   "fall_tenths": 0,
+   "tenths_per_kilohertz": 0,
+   "top_step_tenths": 2
+  },
+  "channel_slopes": [
+   {
+    "is_searched": true,
+    "is_found": false,
+    "from_frequency": 0,
+    "to_frequency": 0,
+    "fall_tenths": 0,
+    "tenths_per_kilohertz": 0,
+    "top_step_tenths": 2
+   }
+  ],
+  "partial_cutoff": {
+   "is_searched": true,
+   "is_found": true,
+   "frequency": 13006,
+   "frames_showing": 55,
+   "frames_with_signal": 63
+  },
+  "holes": {
+   "is_searched": true,
+   "hole_cells": 0,
+   "cells_with_signal": 16191,
+   "from_frequency": 1981,
+   "to_frequency": 13049,
+   "row_shares": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, null, null, null, null, null, null]
+  },
+  "mid_side": null,
+  "coherence": null,
+  "replicated_bands": {
+   "is_searched": true,
+   "frames_used": 32,
+   "is_found": true,
+   "reason": "",
+   "from_frequency": 7666,
+   "to_frequency": 12963,
+   "range_frequency": 13049,
+   "top_band_share": 969,
+   "is_top_band_periodic": false,
+   "stretches": [
+    {
+     "from_frequency": 7666,
+     "to_frequency": 12963,
+     "end_row": 300,
+     "offsets": [
+      {
+       "offset": 4996,
+       "from_frequency": 7666,
+       "to_frequency": 12963
+      }
+     ],
+     "lowest_share": 844,
+     "highest_share": 1000
+    }
+   ],
+   "bands": [
+    {
+     "start_row": 23,
+     "offset": 0,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 28,
+     "offset": 991,
+     "share": 31,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 33,
+     "offset": 1034,
+     "share": 63,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 38,
+     "offset": 1034,
+     "share": 63,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 43,
+     "offset": 1507,
+     "share": 63,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 48,
+     "offset": 1593,
+     "share": 125,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 53,
+     "offset": 1249,
+     "share": 63,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 58,
+     "offset": 1680,
+     "share": 63,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 63,
+     "offset": 2196,
+     "share": 63,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 68,
+     "offset": 1507,
+     "share": 94,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 73,
+     "offset": 1163,
+     "share": 94,
+     "frames_with_signal": 32,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 78,
+     "offset": 1163,
+     "share": 94,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 83,
+     "offset": 991,
+     "share": 63,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 88,
+     "offset": 1421,
+     "share": 63,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 93,
+     "offset": 1292,
+     "share": 63,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 98,
+     "offset": 991,
+     "share": 63,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 103,
+     "offset": 1938,
+     "share": 63,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 108,
+     "offset": 1077,
+     "share": 63,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 113,
+     "offset": 1077,
+     "share": 94,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 118,
+     "offset": 3531,
+     "share": 156,
+     "frames_with_signal": 32,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 123,
+     "offset": 3531,
+     "share": 94,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 128,
+     "offset": 1550,
+     "share": 94,
+     "frames_with_signal": 32,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 133,
+     "offset": 1550,
+     "share": 94,
+     "frames_with_signal": 32,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 138,
+     "offset": 1981,
+     "share": 156,
+     "frames_with_signal": 32,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 143,
+     "offset": 1249,
+     "share": 94,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 148,
+     "offset": 5039,
+     "share": 94,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 153,
+     "offset": 1464,
+     "share": 63,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 158,
+     "offset": 2842,
+     "share": 94,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 163,
+     "offset": 2842,
+     "share": 125,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 168,
+     "offset": 4996,
+     "share": 125,
+     "frames_with_signal": 32,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 173,
+     "offset": 4996,
+     "share": 438,
+     "frames_with_signal": 32,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 178,
+     "offset": 4996,
+     "share": 844,
+     "frames_with_signal": 32,
+     "is_periodic": false,
+     "passes": true
+    },
+    {
+     "start_row": 183,
+     "offset": 4996,
+     "share": 969,
+     "frames_with_signal": 32,
+     "is_periodic": false,
+     "passes": true
+    },
+    {
+     "start_row": 188,
+     "offset": 4996,
+     "share": 1000,
+     "frames_with_signal": 32,
+     "is_periodic": false,
+     "passes": true
+    },
+    {
+     "start_row": 193,
+     "offset": 4996,
+     "share": 1000,
+     "frames_with_signal": 32,
+     "is_periodic": false,
+     "passes": true
+    },
+    {
+     "start_row": 198,
+     "offset": 4996,
+     "share": 1000,
+     "frames_with_signal": 32,
+     "is_periodic": false,
+     "passes": true
+    },
+    {
+     "start_row": 203,
+     "offset": 4996,
+     "share": 1000,
+     "frames_with_signal": 32,
+     "is_periodic": false,
+     "passes": true
+    },
+    {
+     "start_row": 208,
+     "offset": 4996,
+     "share": 1000,
+     "frames_with_signal": 32,
+     "is_periodic": false,
+     "passes": true
+    },
+    {
+     "start_row": 213,
+     "offset": 4996,
+     "share": 1000,
+     "frames_with_signal": 32,
+     "is_periodic": false,
+     "passes": true
+    },
+    {
+     "start_row": 218,
+     "offset": 4996,
+     "share": 1000,
+     "frames_with_signal": 32,
+     "is_periodic": false,
+     "passes": true
+    },
+    {
+     "start_row": 223,
+     "offset": 4996,
+     "share": 1000,
+     "frames_with_signal": 32,
+     "is_periodic": false,
+     "passes": true
+    },
+    {
+     "start_row": 228,
+     "offset": 4996,
+     "share": 1000,
+     "frames_with_signal": 32,
+     "is_periodic": false,
+     "passes": true
+    },
+    {
+     "start_row": 233,
+     "offset": 4996,
+     "share": 1000,
+     "frames_with_signal": 32,
+     "is_periodic": false,
+     "passes": true
+    },
+    {
+     "start_row": 238,
+     "offset": 4996,
+     "share": 1000,
+     "frames_with_signal": 32,
+     "is_periodic": false,
+     "passes": true
+    },
+    {
+     "start_row": 243,
+     "offset": 4996,
+     "share": 1000,
+     "frames_with_signal": 32,
+     "is_periodic": false,
+     "passes": true
+    },
+    {
+     "start_row": 248,
+     "offset": 4996,
+     "share": 1000,
+     "frames_with_signal": 32,
+     "is_periodic": false,
+     "passes": true
+    },
+    {
+     "start_row": 253,
+     "offset": 4996,
+     "share": 1000,
+     "frames_with_signal": 32,
+     "is_periodic": false,
+     "passes": true
+    },
+    {
+     "start_row": 258,
+     "offset": 4996,
+     "share": 1000,
+     "frames_with_signal": 32,
+     "is_periodic": false,
+     "passes": true
+    },
+    {
+     "start_row": 263,
+     "offset": 4996,
+     "share": 1000,
+     "frames_with_signal": 32,
+     "is_periodic": false,
+     "passes": true
+    },
+    {
+     "start_row": 268,
+     "offset": 4996,
+     "share": 1000,
+     "frames_with_signal": 32,
+     "is_periodic": false,
+     "passes": true
+    },
+    {
+     "start_row": 273,
+     "offset": 4996,
+     "share": 1000,
+     "frames_with_signal": 32,
+     "is_periodic": false,
+     "passes": true
+    },
+    {
+     "start_row": 278,
+     "offset": 4996,
+     "share": 969,
+     "frames_with_signal": 32,
+     "is_periodic": false,
+     "passes": true
+    },
+    {
+     "start_row": 283,
+     "offset": 4996,
+     "share": 156,
+     "frames_with_signal": 32,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 288,
+     "offset": 1077,
+     "share": 63,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 293,
+     "offset": 1034,
+     "share": 63,
+     "frames_with_signal": 32,
+     "is_periodic": true,
+     "passes": false
+    },
+    {
+     "start_row": 298,
+     "offset": 991,
+     "share": 63,
+     "frames_with_signal": 32,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 303,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 308,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 313,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 318,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 323,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 328,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 333,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 338,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 343,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 348,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 353,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 358,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 363,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 368,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 373,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 378,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 383,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 388,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 393,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 398,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 403,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 408,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 413,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 418,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 423,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 428,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 433,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 438,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 443,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 448,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 453,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 458,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 463,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 468,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 473,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 478,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    },
+    {
+     "start_row": 483,
+     "offset": 991,
+     "share": null,
+     "frames_with_signal": 0,
+     "is_periodic": false,
+     "passes": false
+    }
+   ]
+  },
+  "levels": {
+   "bits": 16,
+   "bits_in_use": 16,
+   "minimum_silent_stretch": 441,
+   "stream": {
+    "sample_peak_tenths": -152,
+    "rms_tenths": -300,
+    "dc_micropercent": 185,
+    "dc_tenths": -1147,
+    "clipping_runs": 0,
+    "clipped_samples": 0,
+    "longest_clipping_run": 0,
+    "silent_at_start": 0,
+    "silent_at_end": 0,
+    "zero_samples": 57,
+    "silent_stretches": 0,
+    "silent_samples": 0,
+    "longest_silent_stretch": 0,
+    "low_bits_unused": 0,
+    "highest_magnitude": 5710
+   },
+   "channels": [
+    {
+     "sample_peak_tenths": -152,
+     "rms_tenths": -300,
+     "dc_micropercent": 185,
+     "dc_tenths": -1147,
+     "clipping_runs": 0,
+     "clipped_samples": 0,
+     "longest_clipping_run": 0,
+     "silent_at_start": 0,
+     "silent_at_end": 0,
+     "zero_samples": 57,
+     "silent_stretches": 0,
+     "silent_samples": 0,
+     "longest_silent_stretch": 0,
+     "low_bits_unused": 0,
+     "highest_magnitude": 5710
+    }
+   ]
+  },
+  "loudness": {
+   "weights": [100],
+   "blocks": 27,
+   "momentary": {
+    "tenths": -269,
+    "absence": "none"
+   },
+   "short_term": {
+    "tenths": -270,
+    "absence": "none"
+   },
+   "blocks_above_absolute_gate": 27,
+   "blocks_above_relative_gate": 27,
+   "integrated": {
+    "tenths": -270,
+    "absence": "none"
+   },
+   "range": {
+    "tenths": 0,
+    "absence": "none"
+   },
+   "range_low_tenths": -270,
+   "range_high_tenths": -270,
+   "short_term_values": 1,
+   "short_term_first_tenths": -270
+  },
+  "true_peak": {
+   "oversampling": 4,
+   "channels": [-152],
+   "stream": -152
+  },
+  "spectrogram_columns": 65,
+  "hops_per_column": 1,
+  "waveform": [
+   {
+    "minimum": [-4603, -5329, -4495, -4270, -3727, -4383, -3756, -4249, -4043, -3798, -3853, -4681, -3451, -3788, -3535, -3903, -4088, -3880, -4004, -4210, -4554, -4116, -3684, -4183, -4784, -3986, -3414, -4533, -3708, -3494, -3862, -3571, -4157, -4217, -4149, -4324, -4218, -3827, -4306, -4068, -3884, -5084, -4321, -3509, -5065, -4724, -3785, -4378, -4966, -4990, -4121, -5368, -3412, -3959, -3656, -4555, -4559, -5041, -3424, -4156, -4482, -5448, -4620, -3966, -3082],
+    "maximum": [3814, 5070, 4609, 3988, 3961, 3863, 4240, 4094, 4331, 4017, 4361, 5710, 3995, 3984, 3732, 4809, 4100, 3631, 4246, 4251, 4251, 3927, 5234, 3928, 3680, 4720, 4248, 4828, 4127, 3801, 3656, 3890, 3926, 3750, 4610, 4359, 4387, 3995, 4639, 3593, 4770, 4675, 3464, 4328, 4206, 4102, 3810, 3381, 3606, 4085, 3816, 4114, 4364, 5015, 4364, 3988, 3944, 3176, 3622, 4051, 4218, 4090, 4004, 3968, 3725]
+   }
+  ]
+ }
+}
