@@ -152,4 +152,68 @@ public class AsfRouteTests
         Assert.Equal(inFile.Hash(), inAsf.Hash());
         Assert.Equal(plain.Streams.Single().Channels, wrapped.Streams.Single().Channels);
     }
+
+    private static Report AnalyzeBytes(byte[] data, PcmHashingSink? sink = null) =>
+        Analyzer.CreateDefault().Analyze("p.asf", new MemoryStream(data), sink is null ? new AnalysisOptions() : new AnalysisOptions { Decoding = new DecodeOptions { Output = sink.Declare } });
+
+    // The sample frames a PCM stream reports are those its media objects hold: a compressed payload's length bytes, the fragments past an object's size and the dropped
+    // fragments are no samples.
+    [Theory]
+    [InlineData("compressed-payloads.asf", 200L)]
+    [InlineData("payload-overrun.asf", 90L)]
+    public void ThePcmSamplesAreCountedFromTheBytesTheMediaObjectsHold(string name, long frames)
+    {
+        byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "asf", name));
+        var sink = new PcmHashingSink();
+        Report report = AnalyzeBytes(data, sink);
+
+        Assert.Equal(frames, report.Streams.Single().Samples);
+        Assert.Equal(frames, sink.Samples);
+        Assert.DoesNotContain(report.Findings, f => f.Code == "pcm.partial-sample-frame");
+    }
+
+    // The findings about damaged media objects are made whether or not a decoder walks them.
+    [Theory]
+    [InlineData("truncated-data.asf")]
+    [InlineData("payload-overrun.asf")]
+    [InlineData("length-field-short.asf")]
+    public void TheDamageFindingsOfAPcmStreamDoNotWaitForTheDecoder(string name)
+    {
+        byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "asf", name));
+
+        string[] analyzed = [.. AnalyzeBytes(data).Findings.Select(f => f.Code).Order(StringComparer.Ordinal)];
+        string[] decoded = [.. AnalyzeBytes(data, new PcmHashingSink()).Findings.Select(f => f.Code).Where(c => !c.StartsWith("decode.", StringComparison.Ordinal)).Order(StringComparer.Ordinal)];
+
+        Assert.Equal(decoded, analyzed);
+    }
+
+    [Theory]
+    [InlineData(0x0003, "PCM (floating-point)")]
+    [InlineData(0x0006, "A-law")]
+    [InlineData(0x0007, "Mu-law")]
+    public void TheFormatTagsOfTheLinearCodingsHaveTheNamesEveryContainerUses(int tag, string name)
+    {
+        Assert.Equal(name, AsfParser.FormatTagName(tag));
+        Assert.Equal(name, AsfParser.CodecNameOf(tag));
+    }
+
+    // A WAVEFORMATEX of PCM that states no sample width cannot be read: a Warning, and the stream is reported from the header.
+    [Fact]
+    public void APcmLayoutThatCannotBeReadIsAWarningAndTheStreamComesFromTheHeader()
+    {
+        byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "asf", "minimal.asf"));
+        byte[] marker = [0x01, 0x00, 0x01, 0x00, 0x40, 0x1F, 0x00, 0x00];
+        int at = data.AsSpan().IndexOf(marker);
+        Assert.True(at >= 0);
+        data[at + 14] = 0;
+        data[at + 15] = 0;
+
+        Report report = AnalyzeBytes(data);
+
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "asf.codec-not-analyzed");
+        Assert.Equal(Severity.Warning, finding.Severity);
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal(8000, stream.SampleRate);
+        Assert.Equal(1, stream.Channels);
+    }
 }

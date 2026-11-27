@@ -40,7 +40,8 @@ internal static class WindowsMediaRoute
         {
             reader.CancellationToken.ThrowIfCancellationRequested();
             int length = (int)Math.Min(blockAlign, data.Available - done);
-            yield return new MappedBytes(reader.ReadBytesAt(data.Start + done, length), data.Start + done);
+            // A last block shorter than the block alignment is a cut one (the data chunk ends inside it).
+            yield return new MappedBytes(reader.ReadBytesAt(data.Start + done, length), data.Start + done) { IsCut = length < blockAlign };
         }
     }
 }

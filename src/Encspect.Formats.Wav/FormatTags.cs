@@ -44,8 +44,8 @@ internal static class FormatTags
     // Samples that are stored as they are, one after another, so the data chunk's size gives the sample count.
     public static bool IsLinear(int tag) => WaveFormatRoutes.IsLinear(tag);
 
-    // The codec parser the data chunk goes to, or null where Encspect has none for the coding.
-    public static string? CodecId(int tag) => WaveFormatRoutes.CodecId(tag) ?? WaveFormatRoutes.WindowsMediaCodecId(tag);
+    // The codec parser the data chunk goes to, or null where Encspect has none for the coding or WAV reads the samples itself (the linear codings).
+    public static string? CodecId(int tag) => IsLinear(tag) ? null : WaveFormatRoutes.RouteOf(tag);
 
     // Whether the coding is one of the Windows Media Audio codings, whose parsers read blocks (packets) and not a stream.
     public static bool IsWindowsMedia(int tag) => WaveFormatRoutes.WindowsMediaCodecId(tag) is not null;

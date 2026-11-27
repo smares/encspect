@@ -1565,6 +1565,30 @@
     "findings": [
       {
         "severity": "Warning",
+        "code": "asf.object-incomplete",
+        "message": "2 media objects of stream 1 end before all of its bytes arrive: the next one starts first. Their bytes are handed to the codec's parser as they are, flagged cut.",
+        "offset": 276,
+        "length": 818,
+        "path": [
+          0,
+          1
+        ],
+        "count": 2
+      },
+      {
+        "severity": "Warning",
+        "code": "asf.object-incomplete",
+        "message": "A media object of stream 1 ends before all of its bytes arrive: the file ends inside it. Its bytes are handed to the codec's parser as they are, flagged cut.",
+        "offset": 276,
+        "length": 818,
+        "path": [
+          0,
+          1
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
         "code": "asf.packet-length",
         "message": "3 packets, the first at 0x146, states a packet length that differs from the packet size in the File Properties Object (section 8.2.13).",
         "offset": 326,

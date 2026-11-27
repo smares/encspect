@@ -198,14 +198,18 @@ class CheckTests(unittest.TestCase):
         change = {"added": [{"scope": "node", "parent": ["MPEG Audio", "Statistics"], "name": "Added"}]}
         self.assertTrue(self.check(report(OLD_STATS), new, change))
 
-    def test_streams_of_a_codec_that_the_new_report_gains_are_taken_back(self):
+    def test_streams_of_a_codec_that_the_new_report_gains_are_taken_back_only_where_the_change_adds_their_nodes(self):
         old = report(OLD_STATS)
-        new = report(OLD_STATS, streams=[{"nodes": [[0]], "codec": "PCM"}, {"nodes": [[1]], "codec": "MPEG-1 Layer III", "series": [{"name": "Bitrate"}]}])
-        self.assertEqual(self.check(old, new, {}) != [], True)
-        self.assertEqual(self.check(old, new, {"added": [{"scope": "streams", "codec": "PCM"}]}), [])
+        new = report(OLD_STATS, streams=[{"nodes": [[2]], "codec": "PCM"}, {"nodes": [[1]], "codec": "MPEG-1 Layer III", "series": [{"name": "Bitrate"}]}])
+        new["root"]["children"].append(node("PCM Stream"))
+        change = {"added": [{"scope": "streams", "codec": "PCM"}]}
+        # The node of the stream is not one the change lists as added: the stream stays, and fails.
+        self.assertNotEqual(self.check(old, new, change), [])
+        change["added"].append({"scope": "node", "parent": [], "name": "PCM Stream"})
+        self.assertEqual(self.check(old, new, change), [])
         # A stream of the codec that the old report has stays.
-        both = report(OLD_STATS, streams=[{"nodes": [[0]], "codec": "PCM"}])
-        self.assertEqual(self.check(both, both, {"added": [{"scope": "streams", "codec": "PCM"}]}), [])
+        both = report(OLD_STATS, streams=[{"nodes": [[1]], "codec": "PCM"}])
+        self.assertEqual(self.check(both, both, change), [])
 
     def test_a_removed_finding_can_be_limited_to_the_messages_that_have_a_text(self):
         old = report(OLD_STATS, findings=[{"code": "asf.codec-not-analyzed", "message": "PCM is not routed"}, {"code": "asf.codec-not-analyzed", "message": "Stream 2 is encrypted"}])

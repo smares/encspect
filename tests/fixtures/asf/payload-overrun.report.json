@@ -1545,14 +1545,14 @@
                         },
                         {
                           "name": "Sample Frames",
-                          "value": 128,
+                          "value": 90,
                           "unit": "sample frames",
                           "offset": 276,
                           "length": 818
                         },
                         {
                           "name": "Duration",
-                          "value": 0.016,
+                          "value": 0.01125,
                           "unit": "s",
                           "offset": 276,
                           "length": 818
@@ -1632,8 +1632,8 @@
         ],
         "channelLayoutName": "mono",
         "bitsPerSample": 16,
-        "samples": 128,
-        "duration": 0.016,
+        "samples": 90,
+        "duration": 0.01125,
         "averageBitrate": 128,
         "isVbr": false,
         "playbackGroup": 1,
@@ -1643,14 +1643,13 @@
     "findings": [
       {
         "severity": "Warning",
-        "code": "pcm.partial-sample-frame",
-        "message": "The track's 257 bytes are not a whole number of sample frames of 2 bytes; 1 byte is left over.",
+        "code": "asf.fragment-overrun",
+        "message": "A fragment of stream 1 holds more bytes than the media object's size leaves; the rest is dropped.",
         "offset": 276,
         "length": 818,
         "path": [
           0,
-          1,
-          7
+          1
         ],
         "count": 1
       },

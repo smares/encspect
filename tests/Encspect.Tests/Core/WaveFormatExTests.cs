@@ -44,7 +44,7 @@ public class WaveFormatExTests
         WaveFormatEx format = WaveFormatEx.Read(Structure(0xFFFE, 2, 48000, 24, extension))!;
 
         Assert.Equal(0x0001, format.CodingTag);
-        Assert.Null(format.CodecId);
+        Assert.Equal("pcm-samples", format.CodecId);
         Assert.Equal(24, format.ValidBits);
         Assert.Equal(PcmEncoding.SignedInteger, WaveFormatRoutes.PcmEncodingOf(format.CodingTag, 24, 24));
 

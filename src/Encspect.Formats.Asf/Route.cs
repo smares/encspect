@@ -176,9 +176,9 @@ public sealed partial class AsfParser
                     WaveFormatRoutes.StreamLayout(format.Channels, format.Tag == WaveFormatRoutes.Extensible, format.ChannelMask), out string why);
                 if (pcm is null)
                 {
-                    state.Findings.AddNow(Severity.Info, "asf.codec-not-analyzed",
-                        $"Stream {stream.Number} is coded as {CodecNameOf(format.EffectiveTag)} (format tag 0x{format.EffectiveTag:X4}) and its WAVEFORMATEX {why}, so its samples are not read.", anchor);
-                    AddProtectedStream(state, stream);
+                    state.Findings.AddNow(Severity.Warning, "asf.codec-not-analyzed",
+                        $"Stream {stream.Number} is coded as {CodecNameOf(format.EffectiveTag)} (format tag 0x{format.EffectiveTag:X4}) and its WAVEFORMATEX {why}, so its samples are not read; the stream is reported from the header.", anchor);
+                    AddHeaderStream(state, stream, "samples not read", Explain.UnreadableStream, null, null);
                     continue;
                 }
             }
@@ -199,11 +199,18 @@ public sealed partial class AsfParser
 
             if (pcm is not null)
             {
-                // The samples are counted from the payloads' bytes; the packets are read only where the decoder runs.
-                configuration = configuration with { Pcm = pcm, DataBytes = state.Figures.Streams.GetValueOrDefault(stream.Number)?.PayloadBytes ?? 0 };
+                                // The samples are counted from the bytes the media objects hold (not the payloads': a compressed payload's length bytes, the fragments past an object's size and the
+                // dropped ones are no samples), which takes one walk over them; it makes the findings about damaged objects, so they do not wait for a decoder.
+                long held = 0;
+                foreach (MappedBytes mediaObject in MediaObjects(state, stream.Number))
+                {
+                    held += mediaObject.Length;
+                }
+
+                configuration = configuration with { Pcm = pcm, DataBytes = held };
             }
 
-            IEnumerable<MappedBytes> objects = MediaObjects(state, stream.Number);
+            IEnumerable<MappedBytes> objects = MediaObjects(state, stream.Number, report: pcm is null);
             if (codec == "mpeg-audio")
             {
                 // The MPEG audio parser reads the packets again from the file, a media object fragmented across packets as the pieces of it.
@@ -311,13 +318,19 @@ public sealed partial class AsfParser
             return;
         }
 
+        AddHeaderStream(state, stream, "frames not read: encrypted", Explain.EncryptedStream, Topics.AsfContentProtection, protection);
+    }
+
+    // A stream the header describes and no codec parser does: the figures of its WAVEFORMATEX, under a node of the Data Object.
+    private static void AddHeaderStream(State state, StreamEntry stream, string value, string description, string? topic, StreamProtection? protection)
+    {
         Node parent = state.DataNode ?? stream.Properties!;
         string name = stream.Format is { } format && stream.IsAudio ? CodecNameOf(format.EffectiveTag) : stream.TypeName;
-        Node node = parent.Add(new Node($"Stream {stream.Number}", parent.Offset, parent.Length, NodeValue.Text("frames not read: encrypted"))
+        Node node = parent.Add(new Node($"Stream {stream.Number}", parent.Offset, parent.Length, NodeValue.Text(value))
         {
             Kind = NodeKind.Stream,
-            Description = Explain.EncryptedStream,
-            Topic = Topics.AsfContentProtection,
+            Description = description,
+            Topic = topic,
         });
         double duration = DurationOf(state) ?? 0;
         state.Context.AddStream(new StreamInfo

@@ -1,6 +1,8 @@
 {
   "goldens": [
-    "tests/fixtures/asf/"
+    "tests/fixtures/asf/",
+    "tests/fixtures/mp4/ipcm-partial-frame-in-mp4.report.json",
+    "tests/fixtures/matroska/live-false-ape-items-two-clusters.report.json"
   ],
   "added": [
     {
@@ -415,6 +417,14 @@
     {
       "scope": "finding",
       "code": "pcm.writer-claim-differs"
+    },
+    {
+      "scope": "finding",
+      "code": "asf.object-incomplete"
+    },
+    {
+      "scope": "finding",
+      "code": "asf.fragment-overrun"
     }
   ],
   "removed": [
@@ -469,7 +479,8 @@
         "tests/fixtures/asf/widths-large.report.json",
         "tests/fixtures/asf/widths-none.report.json",
         "tests/fixtures/asf/widths-small.report.json"
-      ]
+      ],
+      "messageContains": "is not routed from ASF"
     },
     {
       "scope": "finding",
@@ -485,6 +496,13 @@
     {
       "scope": "finding",
       "code": "asf.codec-not-analyzed",
+      "fields": [
+        "message"
+      ]
+    },
+    {
+      "scope": "finding",
+      "code": "pcm.partial-sample-frame",
       "fields": [
         "message"
       ]

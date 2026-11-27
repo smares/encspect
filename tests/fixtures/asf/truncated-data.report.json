@@ -1133,6 +1133,18 @@
       },
       {
         "severity": "Warning",
+        "code": "asf.object-incomplete",
+        "message": "A media object of stream 1 ends before all of its bytes arrive: the file ends inside it. Its bytes are handed to the codec's parser as they are, flagged cut.",
+        "offset": 276,
+        "length": 218,
+        "path": [
+          0,
+          1
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Warning",
         "code": "asf.packet-count",
         "message": "The Data Object counts 3 packets, but it holds 1.",
         "offset": 316,

@@ -376,18 +376,18 @@ def short_length_field_file():
 
 fixture("length-field-short", "Packets of 256 bytes, the size every packet has, whose packet length field says 200 and whose padding length is 0: the bytes between the payload and the next packet are padding, in the packet and in the statistics.",
         short_length_field_file,
-        [finding("asf.packet-length", "3 packets")])
+        [finding("asf.packet-length", "3 packets"), finding("asf.object-incomplete", "the next one starts first"), finding("asf.object-incomplete", "the file ends inside")])
 
 
 fixture("length-field-short-cut", "The file length-field-short cut 5 bytes into its third packet, inside the packet header: the missing packet has no payload and no padding to count, only the two whole packets' 56 bytes each.",
         lambda: short_length_field_file()[:-256 + 5],
-        [finding("asf.packet-truncated", "ends before its header"), finding("asf.packet-length", "2 packets"), finding("asf.object-truncated", "Data Object"), finding("asf.file-size", "but the file holds 843")],
+        [finding("asf.packet-truncated", "ends before its header"), finding("asf.packet-length", "2 packets"), finding("asf.object-truncated", "Data Object"), finding("asf.file-size", "but the file holds 843"), finding("asf.object-incomplete", "the next one starts first"), finding("asf.object-incomplete", "the file ends inside")],
         {"ffprobe": False, "reason": "the file is cut inside a packet on purpose."})
 
 
 fixture("length-field-short-cut-fields", "The same file cut 8 bytes into its third packet, inside the packet header's fields: the Packet Length field that fits is read, the fields that do not are left out.",
         lambda: short_length_field_file()[:-256 + 8],
-        [finding("asf.packet-truncated", "ends before its header"), finding("asf.packet-length", "2 packets"), finding("asf.object-truncated", "Data Object"), finding("asf.file-size", "but the file holds 846")],
+        [finding("asf.packet-truncated", "ends before its header"), finding("asf.packet-length", "2 packets"), finding("asf.object-truncated", "Data Object"), finding("asf.file-size", "but the file holds 846"), finding("asf.object-incomplete", "the next one starts first"), finding("asf.object-incomplete", "the file ends inside")],
         {"ffprobe": False, "reason": "the file is cut inside a packet on purpose."})
 
 def zero_length_field_file():
@@ -715,7 +715,7 @@ fixture("truncated-header", "A file cut in the middle of the header.", cut(base,
         {"ffprobe": False, "reason": "the header is cut."})
 fixture("truncated-data", "A file cut in the middle of the third packet.", lambda: base()[:-600],
         [finding("asf.object-truncated", "ends"), finding("asf.file-size", "1094 bytes"), finding("asf.packet-count", "counts 3 data packets"), finding("asf.packet-count", "Data Object counts 3"),
-         finding("asf.packet-truncated", "ends before"), finding("asf.payload-overrun", "extends past")],
+         finding("asf.packet-truncated", "ends before"), finding("asf.payload-overrun", "extends past"), finding("asf.object-incomplete", "the file ends inside")],
         {"ffprobe": False, "reason": "the file is cut inside a payload, which ffmpeg returns as a short packet."})
 fixture("trailing-garbage", "Bytes after the last object that are not an object.", lambda: base() + b"\xde\xad\xbe\xef" * 5, [finding("asf.trailing-data", "20 bytes"), finding("asf.file-size", "1094 bytes")])
 
@@ -808,7 +808,7 @@ def overrun_file():
 
 
 fixture("payload-overrun", "A payload whose length is 600 bytes in a packet of 256.", overrun_file,
-        [finding("asf.payload-overrun", "extends past"), finding("pcm.partial-sample-frame", "257 bytes")],
+        [finding("asf.payload-overrun", "extends past"), finding("asf.fragment-overrun", "more bytes than the media object")],
         {"ffprobe": False, "reason": "the packet is damaged on purpose."})
 
 

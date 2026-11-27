@@ -103,10 +103,40 @@ def has_child(report, parent, name):
     return any(child.get("name") == name for node in matching(report["root"], parent) for child in node.get("children", []))
 
 
+def node_at(root, path):
+    node = root
+    for index in path:
+        children = node.get("children", [])
+        if index >= len(children):
+            return None
+        node = children[index]
+    return node
+
+
+def remove_added_streams(report, added, old):
+    """Whole streams the change adds (entry: {"scope": "streams", "codec": "PCM"}): of the streams of that codec, as many as the new report has more of than the old,
+    taken from the front (a stream a container did not report before is as likely to come first as last: a clear stream before a protected one), and only those whose
+    first node is one the change adds under a name it lists (a node entry of the change has that name), so that a stream the change does not account for stays and fails."""
+    names = {e["name"] for e in added if e.get("scope", "node") == "node"}
+    for entry in added:
+        if entry.get("scope") != "streams":
+            continue
+        surplus = sum(1 for x in report.get("streams", []) if x.get("codec") == entry["codec"]) - (sum(1 for x in old.get("streams", []) if x.get("codec") == entry["codec"]) if old is not None else 0)
+        kept = []
+        for stream in report.get("streams", []):
+            first = node_at(report["root"], stream["nodes"][0]) if stream.get("nodes") else None
+            if surplus > 0 and stream.get("codec") == entry["codec"] and first is not None and first.get("name") in names:
+                surplus -= 1
+                continue
+            kept.append(stream)
+        report["streams"] = kept
+
+
 def remove_added(report, added, renamed_nodes=frozenset(), old=None):
     """Takes what the change adds out of the new report. A node that the old report has under another name (renamed_nodes: its parent's
     path and its new name) is the renamed node and stays, and so does one that the old report has under that name; a node comes out only
     when its children have come out too, which takes an entry for each (the deepest entries run first), so a child nobody listed fails."""
+    remove_added_streams(report, added, old)
     for entry in sorted(added, key=lambda e: -len(e["parent"]) if e.get("scope") == "node" else 1):
         if entry.get("scope") == "finding" and "code" not in entry:
             raise ChangeError(f"an added entry with the scope finding needs a code: {json.dumps(entry)}")
@@ -114,16 +144,7 @@ def remove_added(report, added, renamed_nodes=frozenset(), old=None):
         if scope == "report":
             report.pop(entry["key"], None)
         elif scope == "streams":
-            # Whole streams the change adds (entry: {"scope": "streams", "codec": "PCM"}): up to as many streams of that codec as the new report has more of than
-            # the old, taken from the front, since a stream a container did not report before is as likely to come first as last (a clear stream before a protected one).
-            surplus = sum(1 for x in report.get("streams", []) if x.get("codec") == entry["codec"]) - (sum(1 for x in old.get("streams", []) if x.get("codec") == entry["codec"]) if old is not None else 0)
-            kept = []
-            for stream in report.get("streams", []):
-                if surplus > 0 and stream.get("codec") == entry["codec"]:
-                    surplus -= 1
-                    continue
-                kept.append(stream)
-            report["streams"] = kept
+            continue  # taken before the nodes, while the streams' node paths still lead somewhere
         elif scope == "stream":
             for index, stream in enumerate(report.get("streams", [])):
                 # An entry may name the streams it applies to (a file of two codings, one of which had the figure before).
