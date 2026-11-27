@@ -1272,6 +1272,26 @@ def sbr_evidence():
         skip={**skip, "ffprobe_streams": "ffmpeg cannot decode the frames (\"channel element 2.0 is not allocated\"), so it reports no sample rate.",
               "decode": "ffmpeg finds no channel for the coupling element in a stream of channel configuration 2.",
               "faad_trace": "faad2 is built without coupling and stops at the element."}, rate=core)))
+    # A channel pair's SBR data (its fields) after a coupling channel element: 4.5.2.8.2.2 puts an SBR element after each independently switched coupling channel element (id_aac ID_SCE,
+    # Table 4.57 note 1) and 1.6.5.2 takes any payload for implicit signaling, so the stream is HE-AAC. fdk-aac excludes the element from those SBR follows, faad2 rejects
+    # it, and only ffmpeg keeps it as the previous element (where a program config element gives it a channel).
+    blocks = []
+    for i in range(12):
+        cpe = M.Element(M.CPE, ics=(channel(M.ONLY_LONG, 1, [[(11, 4)]], seed=i, rate=core), channel(M.ONLY_LONG, 1, [[(9, 4)]], seed=i + 1, rate=core)), mask=0)
+        cce = M.Element(M.CCE, tag=0, independent=i % 2, targets=[(1, 0, 1, 1)], ics=channel(M.ONLY_LONG, 1, [[(11, 4), (3, 4)]], seed=i + 2, rate=core))
+        fill = M.Element(M.FIL, payload=M.sbr_payload(counts, SBR_HEADER if i % 4 == 0 else None, pair=True))
+        blocks.append(M.raw_data_block([cpe, cce, fill], rate_index=rate_index(core)))
+    data, rows = concat(adts_frames(blocks, rate=core, channels=2))
+    out.append(("adts", "sbr-after-coupling-element.aac", data, manifest(
+        "ADTS at 22050 Hz of a channel pair, a coupling channel element and a fill element of SBR data, twelve times, in a stream of channel "
+        "configuration 2, the data laid out as a channel pair's, where the standard reads a coupling channel element's as a single channel element's: the data does not parse, "
+        "and the stream is HE-AAC at 44100 Hz from the payload's presence.", data, rows,
+        [stream("HE-AAC", 2 * core, 2, "Stereo", 12 * 2048, ffprobe_profile="LC")], {"ADTS/Statistics/SBR": share(12, 12, "access unit")},
+        [["aac.implicit-sbr", "12 of 12 raw data blocks hold SBR data: the stream is HE-AAC"],
+         ["aac.coupling-without-program", "12 raw data blocks hold a coupling channel element"]],
+        skip={**skip, "ffprobe_streams": "ffmpeg cannot decode the frames (\"channel element 2.0 is not allocated\"), so it reports no sample rate.",
+              "decode": "ffmpeg finds no channel for the coupling element in a stream of channel configuration 2.",
+              "faad_trace": "faad2 is built without coupling and stops at the element."}, rate=core)))
     # Every block has its SBR payload before the channel element, where no decoder reads it.
     blocks = []
     for i in range(12):

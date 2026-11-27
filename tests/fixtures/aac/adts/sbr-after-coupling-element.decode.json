@@ -1,0 +1,17 @@
+{
+  "streams": [
+    {
+      "decoding": "Decoded",
+      "decodedSamples": 24576,
+      "pcmSha256": "242f0ea13605aa8938204bd6ca90bfa567ab9aa81a7c193687a3479e42a0cbd8"
+    }
+  ],
+  "findings": [
+    {
+      "code": "decode.coupling-not-applied",
+      "severity": "Warning",
+      "count": 12,
+      "message": "The block at 0x7 holds a coupling channel element, whose channels are read and not applied, so the decoded audio lacks what they add to the channels they couple."
+    }
+  ]
+}
