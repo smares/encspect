@@ -353,6 +353,8 @@ For each coded channel in channel order, with n = E_k − s less the widths of t
 3. The end-of-block code may be left out where the coefficients reach n.
 4. For version 1 stereo, the reader then moves to the next byte boundary of the frame's buffer, also after a channel that is not coded.
 
+Microsoft's decoder stops version 1's coefficients s positions earlier, and for stereo reads what follows from the next byte as the next channel; [wma-standard-decoding.md](wma-standard-decoding.md#coefficient-values) states the rule, which changes this walk for version 1 (ffmpeg's encoder writes past that limit).
+
 Reported per channel: the non-zero coefficients (every run-level code and every escape, whatever its level), the escapes, and the position of the last coefficient, p mod L_k ("n non-zero, last at p").
 
 The sign and level are read and not used further. Positions are relative to s, so version 1's position 0 is coefficient 3.

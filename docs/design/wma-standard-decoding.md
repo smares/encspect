@@ -1,6 +1,6 @@
 # Windows Media Audio versions 1 and 2: decoding supplement
 
-**Status:** written on 2026-11-27 by a Claude agent (Opus) that read FFmpeg 6.1.1's LGPL decoder of Windows Media Audio versions 1 and 2 and the library code it calls (listed under [Sources](#sources)), and checked this text against ffmpeg as a black box, against Microsoft-encoded files and against the signals they were encoded from. It contains no code. Whoever implements the decoder must not read FFmpeg's `wmadec.c`, `wma.c`, `wma.h`, `libavutil/tx*` or `float_dsp.c`, nor any other FFmpeg source or copy, nor the files and folders [Implementer's sources](#implementers-sources) marks as not safe; FFmpeg serves only as a black-box cross-check, and Microsoft's decoder is the reference (item 6 of 0.5 in [plan.md](../plan.md#05-aac-and-wma)).
+**Status:** written on 2026-11-27, and corrected the same day from Microsoft's PCM, by a Claude agent (Opus) that read FFmpeg 6.1.1's LGPL decoder of Windows Media Audio versions 1 and 2 and the library code it calls (listed under [Sources](#sources)), and checked this text against ffmpeg as a black box, against Microsoft-encoded files and against the signals they were encoded from. It contains no code. Whoever implements the decoder must not read FFmpeg's `wmadec.c`, `wma.c`, `wma.h`, `libavutil/tx*` or `float_dsp.c`, nor any other FFmpeg source or copy, nor the files and folders [Implementer's sources](#implementers-sources) marks as not safe; FFmpeg serves only as a black-box cross-check, and Microsoft's decoder is the reference (item 6 of 0.5 in [plan.md](../plan.md#05-aac-and-wma)).
 
 This is the clean-room supplement that decision 12 of [lossy-decoders.md](lossy-decoders.md#decisions) asks for. It continues [wma-standard-format.md](wma-standard-format.md), which describes the syntax down to the end of each block's coefficients, and uses its conventions, terms and derived parameters (F, f, L_k, N_s, s, E_k, S_k, the high bands, H_k, the codebook pair). It describes how a decoder turns the values that syntax reads into PCM:
 
@@ -9,7 +9,7 @@ This is the clean-room supplement that decision 12 of [lossy-decoders.md](lossy-
 - mid/side stereo, the inverse transform, the windows and the overlap of blocks of different sizes;
 - the output of a frame, of a stream's start and end, and what a lost frame takes with it.
 
-It states FFmpeg's arithmetic as the rule where nothing contradicts it, and names the five places where FFmpeg's choice may not be Microsoft's ([Points to settle against Microsoft's decoder](#points-to-settle-against-microsofts-decoder)); for one of them, the angles of the line spectral pair curve, the evidence favors another rule, which this text adopts.
+It states FFmpeg's arithmetic as the rule where nothing contradicts it, and Microsoft's where its PCM shows a difference ([What Microsoft's output showed](#what-microsofts-output-showed): the version 1 stereo coefficient limit, the exponents of a channel not coded, the start of a stream without the bit reservoir). It names the places where FFmpeg's choice may still not be Microsoft's ([Points to settle against Microsoft's decoder](#points-to-settle-against-microsofts-decoder)); for one of them, the angles of the line spectral pair curve, the evidence favors another rule, which this text adopts.
 
 ## Sources
 
@@ -35,7 +35,7 @@ It states FFmpeg's arithmetic as the rule where nothing contradicts it, and name
 - On all 30 fixture streams and the 80 kit files it gives ffmpeg 6.1.1's sample count and its samples to within 2.4 × 10⁻⁷ of full scale (the rounding of single precision). Two of FFmpeg's choices named below were needed for that: the exact exponent index of [Exponents of another block size](#exponents-of-another-block-size) (otherwise up to 0.012 on `external-windows-wma92-cbr-stereo-44k-32-sdk.wma`) and FFmpeg's fourth root (otherwise up to 8.9 × 10⁻⁶ on the files with line spectral pairs).
 - The files cover: blocks of every size from 2,048 down to 128, mid/side blocks with only the first or only the second channel coded, blocks without coded channels, exponents reused from smaller and from larger blocks, flagged high bands, both exponent codings, versions 1 and 2.
 - Against the signals the files were encoded from, the output is aligned at lag 0 and has the input's polarity: the 17 Windows-encoded fixtures against `wma_signals.py`'s tones, and the 69 kit files encoded at their source's rate and channel count against the kit's `sources`. [Points to settle](#points-to-settle-against-microsofts-decoder) gives the comparisons that decide between rules.
-- Microsoft's decoder has not yet written PCM for any file (the probes of [development.md](../development.md#wma-decoding-by-microsofts-decoder) count samples only); its sample counts agree with [The output of a stream](#the-output-of-a-stream).
+- Microsoft's decoder wrote PCM for the committed fixtures in run 45947146147 of `windows-wma-decode.yml` (on the branch of the decoder). The rules below follow it where it and FFmpeg differ; [What Microsoft's output showed](#what-microsofts-output-showed) gives the evidence point by point.
 
 ## Conventions
 
@@ -52,7 +52,7 @@ Those of [wma-standard-format.md](wma-standard-format.md#conventions), and:
 | State | Per | Initial value | Changed by |
 | --- | --- | --- | --- |
 | the block sizes and the reset flag | stream | [wma-standard-format.md](wma-standard-format.md#block-sizes-and-their-state) | every block |
-| exponent values for L_e lines, e, M, "received" | channel | none received; M = 1 | a block that sends the channel's exponents |
+| exponent values for L_e lines, e, M, "received" | channel | none received; M = 1 | a block that sends exponents: the coded channels' are replaced, and those of a channel not coded are converted to the block's size ([A channel not coded when exponents are sent](#a-channel-not-coded-when-exponents-are-sent)) |
 | noise position | stream | 0 | every coded channel of a block, with noise substitution |
 | overlap buffer O, 2F values | channel | all 0 | every block |
 
@@ -63,6 +63,7 @@ Nothing else crosses blocks. The line spectral pairs are sent whole in every blo
 - A run-level code places a value at its position: its level from the level table where the sign bit is 1, minus that level where it is 0.
 - An escape places its level u(g) ([Total gain](wma-standard-format.md#total-gain)) or minus it, by its sign bit in the same way. A value of 0 can be escaped; it places 0.
 - Positions map to lines as [Coefficients](wma-standard-format.md#coefficients) says: from line s, skipping flagged high bands. Every other line has c(x) = 0.
+- **Version 1 codes fewer positions than FFmpeg reads** (Microsoft's rule): a channel's positions end at n − s, n being the count of the format description (E_k − s less the flagged widths), so at E_k − 2s without noise substitution: 1,858 positions, lines 3 to 1,860, in a block of 2,048. A code whose coefficient falls at position n − s or beyond places nothing (its sign bit is still read) and ends the channel; for stereo the reader then moves to the next byte boundary, as after every channel of version 1, and reads the next channel from there, so any codes the encoder wrote past the limit are read as the start of the next channel. For version 2 (s = 0) nothing changes. The limit applies to stereo; mono keeps the coefficients (Microsoft's PCM, run 45947146147: for `external-ffmpeg-wmav1-mono-22k-24k` Microsoft's output is closer to the reading that places them). FFmpeg reads up to n and places those coefficients, which ffmpeg's own encoder writes: see item 1 of [What Microsoft's output showed](#what-microsofts-output-showed). This changes the syntax walk of [Coefficients](wma-standard-format.md#coefficients) for version 1.
 
 ## Exponents
 
@@ -93,6 +94,14 @@ Where e > k (exponents of a shorter block used in a longer one), FFmpeg rounds p
 - The power of a flagged high band ([Noise substitution](#with-noise-substitution)) is computed the same way, but its bases start at floor(S_k × 2^k / 2^e) and grow by the widths of the high bands only.
 - The lines from E_k on take one value (see below), at the final base minus 1.
 
+### A channel not coded when exponents are sent
+
+Microsoft's rule, which FFmpeg does not follow (FFmpeg leaves such a channel's exponents and e as they were):
+
+- A block of size k that sends exponents (L_k = F, or its flag 1) and leaves a channel that has received exponents uncoded converts that channel's held exponents to size k: for each band of size k's band list (widths of 0 and bands past the list's end counting 4 lines, as for the scale factor codes), every line of the band takes the largest held value over the lines of the held block that the band covers, by the index of [Exponents of another block size](#exponents-of-another-block-size). The channel's e becomes k.
+- A later block that reuses the channel's exponents then reads the converted values.
+- Observed in one block of the fixtures (item 2 of [What Microsoft's output showed](#what-microsofts-output-showed)): a mid/side block of 128 whose second channel was not coded, holding exponents of a block of 512. Not determined: held exponents of a shorter block (e > k), a channel without mid/side, and whether M is recomputed (in the observed case the largest value, and so M, is the same either way).
+
 ## Dequantization
 
 For a coded channel, with N the normalization and m the channel's multiplier:
@@ -105,7 +114,7 @@ A channel that is not coded has all lines 0.
 ### Without noise substitution
 
 - c(x) × X(x) × m for s ≤ x < E_k, and 0 elsewhere.
-- For version 1 (s = 3), FFmpeg takes the exponent of line x − s instead of line x (item 2 of [Points to settle](#points-to-settle-against-microsofts-decoder)).
+- For version 1 (s = 3), FFmpeg takes the exponent of line x − s instead of line x (item 2 of [Points to settle](#points-to-settle-against-microsofts-decoder); Microsoft's output does not settle it).
 
 ### With noise substitution
 
@@ -171,9 +180,10 @@ Each channel has an overlap buffer O of 2F values. A block of length L at positi
 
 ## The output of a stream
 
-- **The start:** the first 2F output samples are dropped, the outputs of the first two frames decoded. With them dropped, the output is aligned at lag 0 with the signal the encoder was given, in all 17 Windows-encoded fixtures and 69 kit files compared ([Sources](#sources)).
+- **The start, with the bit reservoir:** the first 2F output samples are dropped, the outputs of the first two frames decoded. With them dropped, the output is aligned at lag 0 with the signal the encoder was given, in all 17 Windows-encoded fixtures and 69 kit files compared ([Sources](#sources)), and with Microsoft's PCM in every Windows-encoded fixture.
+- **The start, without the bit reservoir:** Microsoft drops only the first F samples, one frame. Its PCM equals the output of the rule with 2F dropped delayed by F samples, frame for frame, in the 8 fixtures without the bit reservoir and without noise-filled lines (ffmpeg's encodes and a file derived from them; the 4 with noise substitution match best at the same delay); FFmpeg drops 2F here too.
 - **The end:** after the last frame, O(0) to O(F − 1) hold the last block's overlap, complete in its first (F − min(B, L_n)) / 2 values (B the last block's length, L_n its next size): those are every value the window of the last block no longer changes.
-- **Microsoft's count follows from this:** with K frames decoded, outputting every complete value gives K × F + (F − min(B, L_n)) / 2 − 2F, which is the rule of [Samples and duration](wma-standard-format.md#samples-and-duration), (K − 2) × F + (F − min(B, L))/2, for the streams the rule covers. That Microsoft drops 2F at the start is inferred from this agreement, not from its PCM.
+- **Microsoft's count follows from this:** with the bit reservoir and K frames decoded, outputting every complete value gives K × F + (F − min(B, L_n)) / 2 − 2F, which is the rule of [Samples and duration](wma-standard-format.md#samples-and-duration), (K − 2) × F + (F − min(B, L))/2. Without the bit reservoir Microsoft outputs the K frames less the first F and nothing after the last frame, (K − 1) × F, the rule's other case. Its PCM confirms both.
 - **FFmpeg** instead outputs all F values of O after the last frame, complete or not, and does not decode the frame the last superframe announces ([The end of the stream](wma-standard-format.md#the-end-of-the-stream)), so it outputs (frames − 1) × F.
 - The output can exceed full scale; nothing clips it.
 
@@ -211,12 +221,24 @@ The decoder of this project follows the determinism rules of [CLAUDE.md](../../C
 FFmpeg's choices that the files at hand do not confirm as Microsoft's. Each is a candidate for the first PCM comparison with Microsoft's decoder.
 
 1. **The angles of the line spectral pair curve** (adopted here: the block's own). FFmpeg evaluates the curve of a block of L lines at the angles π x / F of a block as long as the frame, which stretches the lowest 2^−k of the curve over the whole of a short block. On the four 16 kHz mono files of the kit with line spectral pairs (Windows Media Encoder 9, 10 to 16 kbit/s, F = 512), against the source over the samples where the two rules differ (8,697 to 9,214 samples, the short-block frames), the error energy is 48 to 56 with FFmpeg's angles and 3.3 to 6.6 with the block's, against a signal energy of 148 to 159; the whole files' signal-to-noise ratio is 10.5 to 11.8 dB with FFmpeg's and 12.1 to 13.9 dB with the block's. The kit's three 8 kHz files with line spectral pairs have no short blocks, so the two rules give the same output there. ffmpeg's output differs from this rule in the short blocks of streams with line spectral pairs that send exponents in them.
-2. **The exponents of version 1 without noise substitution.** FFmpeg takes line x's exponent from line x − 3 there, but from line x with noise substitution; ffmpeg's encoder uses the same offset, so ffmpeg's files cannot tell. No Microsoft-encoded version 1 file is at hand.
-3. **The exponent index across block sizes** ([Exponents of another block size](#exponents-of-another-block-size)) where e > k: the per-segment rounding against floor(x × 2^k / 2^e). On the two Windows fixtures where they differ (`external-windows-wma92-cbr-stereo-44k-32-sdk.wma`, 15,618 samples; `…-22k-20-sdk.wma`, 802) the error against the source is the same to 0.2% either way.
+2. **The exponents of version 1 without noise substitution.** FFmpeg takes line x's exponent from line x − 3 there, but from line x with noise substitution. Still open: ffmpeg's encoder writes one exponent value for every band of every block in all its fixtures, so both offsets give the same output, and Microsoft's PCM of the two version 1 stereo fixtures matches either (item 1 of [What Microsoft's output showed](#what-microsofts-output-showed)). No Microsoft-encoded version 1 file is at hand.
+3. **The exponent index across block sizes** ([Exponents of another block size](#exponents-of-another-block-size)) where e > k: the per-segment rounding against floor(x × 2^k / 2^e). The two differ only with noise substitution. On the two Windows fixtures where they differ (`external-windows-wma92-cbr-stereo-44k-32-sdk.wma`, 15,618 samples; `…-22k-20-sdk.wma`, 802) the error against the source is the same to 0.2% either way. Still open after Microsoft's PCM: in the 14 blocks of `…-44k-32-sdk.wma` that reuse a shorter block's exponents, Microsoft's lines, recovered from its PCM by projecting onto each block's transform, differ from both rules by more than the rules differ from each other, also on the strongly coded lines (item 3 of [What Microsoft's output showed](#what-microsofts-output-showed)).
 4. **The fourth root:** FFmpeg's table of linear pieces against the exact root; the two give outputs at most 8.9 × 10⁻⁶ of full scale apart in the kit's files.
 5. **The line spectral pair codebook's row 5, entry 10:** −1.40037388 stands between −0.03062936 and −0.25128968 in a row that otherwise falls steadily, where −0.14037388 would fit. In the kit's 14 files with line spectral pairs, entries 10 to 14 of row 5 are never used (nor entries 8 to 14 of row 7, whose second half starts again at −1.10158808 after −1.62033919), so the files cannot tell; the table is kept as it is.
 
 Two further differences need no comparison: FFmpeg's noise generator (above), and its output on damage and at the end of the stream, which the project's own rules set.
+
+## What Microsoft's output showed
+
+Run 45947146147 of `windows-wma-decode.yml` (Windows Server 2025, the Source Reader writing 32-bit float) decoded the committed fixtures of versions 1 and 2. Compared with this text's rules, the throwaway decoder of [Sources](#sources) and FFmpeg's choices:
+
+1. **The two version 1 stereo fixtures** (`external-ffmpeg-wmav1-stereo-44k-128k.wma` and `…-44k-48k.wma`): Microsoft's mid channel equals FFmpeg's; its side channel equals FFmpeg's shifted up by 4 to 20 lines in 15 of 44 blocks of the 128k file (and in fewer of the 48k file), or is lost. Every such block has mid coefficients at lines 1,861 to 1,863, past Microsoft's limit of [Coefficient values](#coefficient-values). With that limit (the mid channel stops there, the reader aligns to the next byte and reads the side channel from there) all 42 compared frames of both files equal Microsoft's to 6 × 10⁻⁷. So the cause is the limit; the three other candidates are as this text states them: the byte alignment after each channel of version 1 (reading without it matches at most 1 of 42 frames), the second codebook of the pair for the second channel of a mid/side block, and the escape's u(g) level and u(f) run.
+2. **Frame 8 of `external-windows-wma92-cbr-stereo-22k-32.wma` and its remux:** one block of 128 differs in its side channel, which reuses exponents held from a block of 512 through the block before it, a mid/side block that sent exponents with the side channel not coded. The conversion of [A channel not coded when exponents are sent](#a-channel-not-coded-when-exponents-are-sent) makes the frame equal Microsoft's to 4 × 10⁻⁷, and leaves the other 16 Windows-encoded fixtures as they were (every frame but the end equal to Microsoft's). FFmpeg's source does not convert; this is Microsoft's behavior, not FFmpeg's.
+3. **The exponent index where e > k** (item 3 of [Points to settle](#points-to-settle-against-microsofts-decoder)): not settled. The two rules differ only with noise substitution, where Microsoft's noise differs too, and its lines differ from both rules by more than the rules differ from each other.
+4. **Version 1's exponent of line x − 3** (item 2 there): not settled, since ffmpeg's encoder writes one exponent value per block in all its fixtures.
+5. **The start of a stream without the bit reservoir:** Microsoft drops F, not 2F ([The output of a stream](#the-output-of-a-stream)); with that, every frame of the 5 ffmpeg-encoded version 2 fixtures without noise substitution and of `derived-ffmpeg-wmav2-tool-name-lavc.asf` equals Microsoft's, and the files with noise substitution match best at the same delay.
+6. **Noise substitution:** the fixtures with flagged bands or noise-filled lines differ from Microsoft's in those lines, as [The noise generator](#the-noise-generator) expects.
+7. **Line spectral pairs:** no committed fixture has them, so items 1, 4 and 5 of [Points to settle](#points-to-settle-against-microsofts-decoder) are still open; the kit's 14 files would settle them.
 
 ## Not determined
 
