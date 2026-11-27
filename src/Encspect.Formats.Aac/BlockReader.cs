@@ -684,7 +684,7 @@ internal sealed partial class BlockReader
         tally.GainControl += gainControl ? 1 : 0;
         int predictionUsed = 0;
         int predictionAvailable = 0;
-        if (ics.Predictor)
+        if (ics.Predictor && _setup.ObjectType != 4)
         {
             tally.Prediction++;
             tally.PredictorResets += ics.PredictorReset ? 1 : 0;
