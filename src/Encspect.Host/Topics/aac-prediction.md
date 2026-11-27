@@ -11,7 +11,7 @@ references: ISO/IEC 13818-7 13.1 to 13.3 (Tables 62 and 63); ISO/IEC 14496-3 4.6
 
 **Resets.** Predictors drift apart after any loss, so the encoder resets them in 30 interleaved groups (line k is in group k mod 30 plus 1), one group named by predictor_reset_group_number in a frame. A group is to be reset within 240 frames in which it is used. A cut or spliced stream starts with predictors out of step; a line is right again once its group is reset.
 
-**With other tools.** Prediction follows mid/side stereo and noise substitution. A band of noise substitution switches prediction off and resets its predictors. A band of intensity stereo switches prediction off in the second channel, whose predictors take the zero the stream codes there (14496-3 4.6.8.2.4 words it as the intensity values; the reference waveform of Encspect's test file `am02_44` follows the zero).
+**With other tools.** Prediction follows mid/side stereo and noise substitution. A band of noise substitution switches prediction off and resets its predictors. A band of intensity stereo switches prediction off in the second channel, whose predictors take the zero the stream codes there (14496-3 4.6.8.2.4 words it as the intensity values; the reference waveform of the ISO/IEC 14496-26 conformance stream `am02_44` follows the zero).
 
 **What you see.** predictor_data_present in each long window's ics_info, with the reset group and the bands that use prediction.
 
