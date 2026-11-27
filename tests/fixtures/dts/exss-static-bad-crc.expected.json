@@ -39,7 +39,12 @@
    "is_vbr": true
   }
  ],
- "fields": {},
+ "fields": {
+  "DTS/Frame[0]/Extension Substream/Asset Descriptor 1/HasEmbeddedStereo": "true",
+  "DTS/Frame[1]/Extension Substream/Asset Descriptor 1/HasEmbeddedStereo": "false",
+  "DTS/Frame[2]/Extension Substream/Asset Descriptor 1/Dynamic Range Code for Stereo Downmix": "-16.75 dB",
+  "DTS/Frame[3]/Extension Substream/Asset Descriptor 1/Dynamic Range Code for Stereo Downmix": "-16.75 dB"
+ },
  "findings": [
   [
    "dts.crc-mismatch",

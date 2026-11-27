@@ -360,7 +360,9 @@ def check_spread(manifest, path, problems):
     raw = b"".join(data[offset:offset + length] for o in manifest["media_objects"] for offset, length in o[4])
     code, pcm, errors = decode(path)
     message = manifest["crosscheck"].get("spread_message")
-    if code != 0 or (errors if message is None else message not in errors):
+    # ffmpeg's repeat line is "Last message repeated N times"; any other line next to the named message is an error of its own.
+    others = [line for line in errors.splitlines() if message is None or (message not in line and "Last message repeated" not in line)]
+    if code != 0 or others or (message is not None and message not in errors):
         problems.append(f"ffmpeg decoding: {errors or code}" + (f", expected the message {message!r}" if message else ""))
     elif manifest["crosscheck"]["spread"] == "as is":
         if pcm != raw:

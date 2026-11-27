@@ -763,6 +763,9 @@ def build_gate2():
     parts = [unit(first, static=True), unit(second, static=True, bad_crc=True), unit(first, static=False), unit(first, static=False)]
     fixture("exss-static-bad-crc", ".dts", "Four units whose second extension substream header states other static fields (no embedded stereo downmix) and has a CRC-16 that fails: the third and fourth units follow the first unit's fields.",
             b"".join(parts), rows(parts), [stream(name, 48000, SURROUND_5_1, "2/0", 4 * 512, vbr=True)], [("dts.crc-mismatch", "extension substream header")],
+            fields={"DTS/Frame[0]/Extension Substream/Asset Descriptor 1/HasEmbeddedStereo": "true", "DTS/Frame[1]/Extension Substream/Asset Descriptor 1/HasEmbeddedStereo": "false",
+                    "DTS/Frame[2]/Extension Substream/Asset Descriptor 1/Dynamic Range Code for Stereo Downmix": "-16.75 dB",
+                    "DTS/Frame[3]/Extension Substream/Asset Descriptor 1/Dynamic Range Code for Stereo Downmix": "-16.75 dB"},
             crosscheck=cc_lossless(libdca_channels=2, decode_whole=True, whole_message="Invalid EXSS header checksum", whole_not="Read past end of EXSS asset descriptor",
                                    skip={"decode_alone": "a unit whose header omits the static fields is rejected by ffmpeg when decoded alone; the whole file is decoded with its checksum error named"}))
     six = dict(components=["core", "xll"], sizes={"core": 96, "xll": 96}, channels=6, mask=0x0F, embedded_stereo=True, drc=40, drc_stereo=60)

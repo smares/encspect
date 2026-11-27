@@ -44,7 +44,8 @@ public class AsfSpreadTests
         Assert.Equal(crosscheck.GetProperty("rule_scrambles").GetBoolean(), new SpreadAudio(span, packet, chunk, 1).Scrambles);
 
         // The fields the rule reads, as the analysis reads them from the file.
-        Report report = Analyzer.CreateDefault().Analyze(name + ".asf", File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, "asf", name + ".asf")));
+        using FileStream stream = File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, "asf", name + ".asf"));
+        Report report = Analyzer.CreateDefault().Analyze(name + ".asf", stream);
         Assert.Equal(span, Value(report.Root, "Span"));
         Assert.Equal(packet, Value(report.Root, "Virtual Packet Length"));
         Assert.Equal(chunk, Value(report.Root, "Virtual Chunk Length"));
