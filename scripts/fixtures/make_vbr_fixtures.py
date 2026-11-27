@@ -884,9 +884,12 @@ def lame_mid_stream_junk_after():
     second = mpeg.stream(5, bitrate=128, rate=44100, mode="Joint stereo")
     f = VbrFixture("lame-mid-stream-junk-after", "Five frames, then an Info frame with a LAME tag in the middle of the stream, 100 bytes of junk "
                    "and five more frames: the exception for junk after a header frame is for the one that starts the audio, so this is lost "
-                   "sync, and the music CRC, which covers the junk, does not hold.", encoder=encoder("LAME 3.100", "High"), silent=False, crosscheck=False)
+                   "sync, and the music CRC, which covers the junk, does not hold.", encoder=encoder("LAME 3.100", "Low"), silent=False, crosscheck=False)
     f.add_frames(first)
     f.add_stream_after_junk(xing_frame(second, tag_id="Info", lame=LAME_CBR), mpeg.junk(100, 40), second)
+    # The music CRC covers as many bytes after the header frame as the tag's music length says, the junk included.
+    frame_end = f.frames[5]["offset"] + f.frames[5]["length"]
+    f.frames[5]["fields"]["LAME Tag/Music CRC/Computed"] = f"0x{vbr_tags.crc16(bytes(f.data[frame_end : frame_end + sum(len(a.bytes()) for a in second)])):04X}"
     f.finding("mpeg-audio.sync-lost", "100 bytes")
     f.finding("mpeg-audio.music-crc-mismatch", "no longer matches")
     return f.finding("mpeg-audio.vbr-header-mid-stream", f"0x{f.frames[5]['offset']:X}")
