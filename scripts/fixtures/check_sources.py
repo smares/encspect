@@ -30,6 +30,7 @@ import blade_tool
 import check_eac3_samples
 import check_monkeys_audio_samples
 import check_mp3pro_samples
+import check_mpeg_sample_sets
 import check_sbr_samples
 import check_tak_samples
 import check_usac_samples
@@ -88,6 +89,9 @@ def sources():
     mp3pro = json.loads((ROOT / "tests" / "conformance" / "mp3pro-samples.json").read_text(encoding="utf-8"))
     for sample in mp3pro["samples"]:
         yield sample["file"], sample["sha256"], check_mp3pro_samples.addresses(mp3pro, sample)
+    for manifest in check_mpeg_sample_sets.load():
+        for sample in manifest["samples"]:
+            yield sample["file"], sample["sha256"], check_mpeg_sample_sets.addresses(manifest, sample)
     eac3 = json.loads((ROOT / "tests" / "conformance" / "eac3-samples.json").read_text(encoding="utf-8"))
     for sample in eac3["samples"]:
         yield sample["file"], sample["sha256"], check_eac3_samples.addresses(sample)
