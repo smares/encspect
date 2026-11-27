@@ -514,7 +514,7 @@ internal static partial class Sbr
         }
     }
 
-    // ps_data (ISO/IEC 14496-3 8.6.2): the header's modes (kept in state across frames, since a frame without a header leaves them as they were), the envelopes' borders, and the IID and
+    // ps_data (ISO/IEC 14496-3 8.4.2, Table 8.9; decoded as 8.6.4): the header's modes (kept in state across frames, since a frame without a header leaves them as they were), the envelopes' borders, and the IID and
     // ICC parameters of each envelope as coded. Returns the bits read; the record then holds the modes in force. A coding the decoder does not take leaves no envelopes (-1).
     private static int ReadPs(ref AacBits bits, int left, Span<int> ps, Span<int> state)
     {

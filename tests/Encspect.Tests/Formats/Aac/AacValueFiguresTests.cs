@@ -83,14 +83,14 @@ public class AacValueFiguresTests
     [InlineData(3, 1, true)]
     [InlineData(3, 2, false)]
     [InlineData(3, 3, false)]
-    public void A_window_may_follow_another_where_the_slopes_match(int previous, int next, bool allowed) =>
-        Assert.Equal(allowed, BlockReader.MayFollow(previous, next));
+    public void The_slopes_of_two_windows_match_where_the_standard_calls_the_transition_meaningful(int previous, int next, bool allowed) =>
+        Assert.Equal(allowed, BlockReader.SlopesMatch(previous, next));
 
     [Fact]
-    public void Window_sequences_that_cannot_follow_one_another_are_reported_once_for_each_block_with_the_first_one_located()
+    public void Window_sequences_whose_slopes_do_not_match_are_reported_once_for_each_block_with_the_first_one_located()
     {
         Report report = Fixtures.AnalyzeMpeg("aac/adts/window-sequences-invalid.aac");
-        Finding finding = Assert.Single(report.Findings, f => f.Code == "aac.window-sequence-invalid");
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "aac.window-slopes-differ");
         Assert.Equal(Severity.Info, finding.Severity);
         Assert.StartsWith("5 raw data blocks hold a window sequence", finding.Message);
         Assert.Equal("Window Sequence", finding.Node!.Name);
@@ -102,11 +102,11 @@ public class AacValueFiguresTests
         byte[] file = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "aac", "adts", "window-sequences-invalid.aac"));
         int first = ((file[3] & 3) << 11) | (file[4] << 3) | (file[5] >> 5);
 
-        // Junk between the first frame (only long) and the second (eight short windows, which cannot follow it) is a gap, so the second follows no window.
+        // Junk between the first frame (only long) and the second (eight short windows, whose left slope does not match the right slope of a long window) is a gap, so the second follows no window.
         byte[] cut = [.. file[..first], .. new byte[] { 1, 2, 3, 4, 5 }, .. file[first..]];
         using var stream = new MemoryStream(cut);
         Report report = Analyzer.CreateDefault().Analyze("cut.aac", stream);
-        Finding finding = Assert.Single(report.Findings, f => f.Code == "aac.window-sequence-invalid");
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "aac.window-slopes-differ");
         Assert.StartsWith("4 raw data blocks hold a window sequence", finding.Message);
     }
 }

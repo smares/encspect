@@ -8,7 +8,7 @@ namespace Encspect.Formats.Aac.Decoding;
 // between the envelope borders. The structure and the tables follow libxaac (github.com/ittiam-systems/libxaac at 2fbadd5, Apache 2.0, Copyright (C) The Android Open Source Project; the
 // notice is in THIRD-PARTY-NOTICES.md), ixheaacd_ps_dec_flt.c and ixheaacd_ps_bitdec.c, in single precision; the 34-band mode, which libxaac maps to 20 bands, is computed in 34.
 // The hybrid analysis looks 6 slots ahead: the six slots after the frame are the low band's analysis slots the SBR buffer already holds (the standard's delay of the SBR data, as libxaac takes
-// them), so the output is not later than the input; no inter-channel phase differences are decoded (the baseline profile skips them).
+// them), so the output is not later than the input; the inter-channel phase differences (IPD and OPD) are ignored as the baseline decoder ignores them (8.A.4), and matrix Ra mixes every mode (coherence modes 3 to 5 read as 0 to 2).
 internal sealed class PsDecoder
 {
     public const int Slots = 32;
@@ -76,6 +76,11 @@ internal sealed class PsDecoder
     private int _iccMode;
     private bool _fine;
     private bool _wasWide;
+
+    // Whether the previous frame held ps_data and whether this one does (ISO/IEC 14496-3 8.A.3: a frame after one without ps_data starts from reset decorrelator states).
+    private bool _previousPresent;
+
+    private bool _present;
     private int _envelopes;
 
     private readonly float[][] _states;
@@ -125,6 +130,8 @@ internal sealed class PsDecoder
         _iccMode = 0;
         _fine = false;
         _wasWide = false;
+        _previousPresent = false;
+        _present = false;
     }
 
     // Recursive states below 1e-30 are zero at the start of each frame (the determinism rule for decoders).
@@ -142,6 +149,16 @@ internal sealed class PsDecoder
         }
     }
 
+    // The decorrelator's state variables, d_k(n) and s_k(n) of 8.A.3 and 8.6.4.6.1 (Table 8.47): the delay lines and the all-pass links of both banks.
+    private void ClearDecorrelator()
+    {
+        Array.Clear(_subDelayRe);
+        Array.Clear(_subDelayIm);
+        Array.Clear(_delayRe);
+        Array.Clear(_delayIm);
+        ClearAllPass();
+    }
+
     private void ClearAllPass()
     {
         Array.Clear(_subSerRe);
@@ -157,6 +174,11 @@ internal sealed class PsDecoder
     {
         FlushStates();
         bool wide = Parameters(ps);
+        if (!_previousPresent)
+        {
+            ClearDecorrelator();
+        }
+
         Array.Copy(_extRe, Slots * Bands, _extRe, 0, History * Bands);
         Array.Copy(_extIm, Slots * Bands, _extIm, 0, History * Bands);
         re[..(Slots * Bands)].CopyTo(_extRe.AsSpan(History * Bands));
@@ -198,7 +220,7 @@ internal sealed class PsDecoder
 
         if (wide != _wasWide)
         {
-            ClearAllPass();
+            ClearDecorrelator();
             MapMatrices(wide);
         }
 
@@ -206,12 +228,14 @@ internal sealed class PsDecoder
         Mix(wide, borders, map, groups, subGroups, bins);
         Synthesize(hybridBands, wide);
         _wasWide = wide;
+        _previousPresent = _present;
     }
 
     // The parameters of the frame: the envelopes' IID and ICC indices in the bands in use, the borders and whether the 34-band resolution is in use (ixheaacd_decode_ps_data).
     private bool Parameters(ReadOnlySpan<int> ps)
     {
         bool present = !ps.IsEmpty && ps[SbrRecord.PsEnvelopes] >= 0;
+        _present = present;
         int frameClass = 0;
         _envelopes = 0;
         if (present)
@@ -373,7 +397,7 @@ internal sealed class PsDecoder
         return wide;
     }
 
-    // The 34 bands' index of each of the 20 bands (the 34-to-20 grouping of the standard, read the other way).
+    // The 20-band index of each of the 34 bands (Table 8.45, 8.6.4.6.1); bands 1 and 4 are averages of two, which Spread forms.
     private static readonly int[] Wider = [0, 0, 1, 2, 2, 3, 4, 4, 5, 5, 6, 7, 8, 8, 9, 9, 10, 11, 12, 13, 14, 14, 15, 15, 16, 16, 17, 17, 18, 18, 18, 18, 19, 19];
 
     private static void Spread(int[,] table, int e)
@@ -386,7 +410,8 @@ internal sealed class PsDecoder
 
         for (int i = 0; i < 34; i++)
         {
-            table[e, i] = copy[Wider[i]];
+            // The averages are of the integer indices before dequantization, in ANSI C integer arithmetic (division truncates toward zero, as C# does).
+            table[e, i] = i switch { 1 => (copy[0] + copy[1]) / 2, 4 => (copy[2] + copy[3]) / 2, _ => copy[Wider[i]] };
         }
     }
 

@@ -5228,8 +5228,8 @@
     "findings": [
       {
         "severity": "Info",
-        "code": "aac.window-sequence-invalid",
-        "message": "5 raw data blocks hold a window sequence that cannot follow the one of the same channel stream in the block before it: the left slope of its window does not match the right slope of the previous window, as a long window followed by eight short ones does not; the first at 0x8C.",
+        "code": "aac.window-slopes-differ",
+        "message": "5 raw data blocks hold a window sequence whose left slope differs from the right slope of the window before it in the same channel stream, as a long window followed by eight short ones does: ISO/IEC 14496-3 4.6.11.3.1 lists such transitions as possible and not as meaningful; the first at 0x8C.",
         "offset": 140,
         "length": 1,
         "path": [

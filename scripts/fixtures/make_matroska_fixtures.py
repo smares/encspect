@@ -586,13 +586,13 @@ def aac_with_padding(padding, laced_frames=1):
 
 
 @fixture("aac-discard-padding", "An A_AAC track of six frames whose last block is a BlockGroup with a DiscardPadding of 11,609,977 ns, 512 samples at 44.1 kHz (RFC 9559 section 5.1.3.5.7): the end trimming "
-         "the AAC decoder is told before the last frame, which returns 512 of its 1,024 samples.", findings=[("aac.window-sequence-invalid", "a window sequence that cannot follow")], streams=[("AAC", 44100, 2)], valid=False)
+         "the AAC decoder is told before the last frame, which returns 512 of its 1,024 samples.", findings=[("aac.window-slopes-differ", "a window sequence whose left slope differs")], streams=[("AAC", 44100, 2)], valid=False)
 def _():
     return aac_with_padding(11_609_977)
 
 
 @fixture("aac-discard-padding-large", "The same frames with a DiscardPadding of 60 ms (2,646 samples), more than the last frame returns (1,024): the end trimming is capped at what the frame holds.",
-         findings=[("aac.discard-padding-large", "DiscardPadding"), ("aac.window-sequence-invalid", "a window sequence that cannot follow")], streams=[("AAC", 44100, 2)], valid=False)
+         findings=[("aac.discard-padding-large", "DiscardPadding"), ("aac.window-slopes-differ", "a window sequence whose left slope differs")], streams=[("AAC", 44100, 2)], valid=False)
 def _():
     return aac_with_padding(60_000_000)
 
@@ -1150,14 +1150,14 @@ def legacy_aac(codec, name, output_rate=None, rate_override=None, apps=None):
 
 
 @fixture("aac-legacy-lc", "A track with the legacy ID A_AAC/MPEG4/LC and no CodecPrivate: the AudioSpecificConfig is worked out from the ID and the Audio element "
-         "(the object type, the sampling frequency and the channels).", findings=[("aac.window-sequence-invalid", "a window sequence that cannot follow")], streams=[("AAC", 44100, 2)])
+         "(the object type, the sampling frequency and the channels).", findings=[("aac.window-slopes-differ", "a window sequence whose left slope differs")], streams=[("AAC", 44100, 2)])
 def _():
     return legacy_aac("A_AAC/MPEG4/LC", "stereo")[0]
 
 
 @fixture("aac-legacy-stray-codec-private", "A track with the legacy ID A_AAC/MPEG4/LC and a CodecPrivate, which the codec mapping does not define for it (\"Initialization: none\"): it would configure "
          "48 kHz mono, but it is not handed over, and the AudioSpecificConfig is worked out from the ID and the Audio element as for aac-legacy-lc.",
-         findings=[("matroska.codec-private-unexpected", "does not define"), ("aac.window-sequence-invalid", "a window sequence that cannot follow")], streams=[("AAC", 44100, 2)], valid=False)
+         findings=[("matroska.codec-private-unexpected", "does not define"), ("aac.window-slopes-differ", "a window sequence whose left slope differs")], streams=[("AAC", 44100, 2)], valid=False)
 def _():
     _, rate_index, channels, frames = adts_frames("stereo")
     rate = float(AAC_RATES[rate_index])
@@ -1189,7 +1189,7 @@ def _():
 
 @fixture("aac-legacy-explicit-rate", "A track with the legacy ID A_AAC/MPEG4/LC whose SamplingFrequency (44000 Hz) is not one of the thirteen the AudioSpecificConfig has an "
          "index for: the worked out configuration gives the frequency in full (index 15 and 24 bits), as ISO/IEC 14496-3 section 1.6.3.3 has it.",
-         findings=[("aac.window-sequence-invalid", "a window sequence that cannot follow")], streams=[("AAC", 44000, 2)], valid=False)
+         findings=[("aac.window-slopes-differ", "a window sequence whose left slope differs")], streams=[("AAC", 44000, 2)], valid=False)
 def _():
     return legacy_aac("A_AAC/MPEG4/LC", "stereo", rate_override=44000)[0]
 
@@ -1356,7 +1356,7 @@ def _():
 
 
 @fixture("writer-lavc-id", "A WritingApp that holds a libavcodec encoder ID (\"Lavc60.31.102 aac\") on an AAC track: it is a claim of the encoder role, which reaches the AAC parser "
-         "(that names ffmpeg's native encoder only from the stream's own evidence); the MuxingApp's \"Lavf\" is the writer.", findings=[("aac.window-sequence-invalid", "a window sequence that cannot follow")], streams=[("AAC", 44100, 2)])
+         "(that names ffmpeg's native encoder only from the stream's own evidence); the MuxingApp's \"Lavf\" is the writer.", findings=[("aac.window-slopes-differ", "a window sequence whose left slope differs")], streams=[("AAC", 44100, 2)])
 def _():
     return legacy_aac("A_AAC/MPEG4/LC", "stereo", apps=("Lavf60.16.100", "Lavc60.31.102 aac"))[0]
 
@@ -1415,7 +1415,7 @@ PCM_BLOCKS = [simple_block(1, i * 10, bytes(range(16)) * 4, key=True) for i in r
 
 @fixture("writer-tag-and-apps", "A PCM track and an AAC track in a Segment whose apps name \"foo 1.0\", and an APEv2 tag whose Encoder item names "
          "\"bar 2.0\": the tag's claim is weighed first for both tracks, so both name \"bar 2.0\", and the conflict is reported by the PCM parser and by the AAC parser.",
-         findings=[("pcm.writer-claim-differs", "MuxingApp"), ("pcm.writer-claim-differs", "WritingApp"), ("aac.writer-claim-differs", "WritingApp"), ("aac.window-sequence-invalid", "a window sequence that cannot follow")],
+         findings=[("pcm.writer-claim-differs", "MuxingApp"), ("pcm.writer-claim-differs", "WritingApp"), ("aac.writer-claim-differs", "WritingApp"), ("aac.window-slopes-differ", "a window sequence whose left slope differs")],
          streams=[("PCM", 48000, 2), ("AAC", 44100, 2)], valid=False)
 def _():
     _, rate_index, channels, frames = adts_frames("stereo")

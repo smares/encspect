@@ -522,9 +522,9 @@ internal sealed partial class BlockReader
     // The window sequences of the blocks read after this call follow no block read before it.
     internal void ForgetWindows() => Array.Fill(_previousSequence, -1);
 
-    // Whether a window of sequence next may follow one of sequence previous: the right slope of the one (long for only long and long stop, short for long start and eight short)
-    // is the left slope of the other (long for only long and long start, short for eight short and long stop), as the window definitions of ISO/IEC 14496-3 4.5.2 and 4.6.11 give them.
-    internal static bool MayFollow(int previous, int next) => (previous is 0 or 3) == (next is 0 or 1);
+    // Whether a window of sequence next follows one of sequence previous as 4.6.11.3.1 lists the meaningful transitions: the right slope of the one (long for only long and long stop,
+    // short for long start and eight short) is the left slope of the other (long for only long and long start, short for eight short and long stop). The other pairs are possible there too.
+    internal static bool SlopesMatch(int previous, int next) => (previous is 0 or 3) == (next is 0 or 1);
 
     private void TallyStream(Ics ics, int gain, bool pulse, bool tns, int filters, bool gainControl, int channel)
     {
@@ -534,10 +534,10 @@ internal sealed partial class BlockReader
         {
             int previous = _previousSequence[stream];
             _previousSequence[stream] = ics.WindowSequence;
-            if (previous >= 0 && !MayFollow(previous, ics.WindowSequence) && !_windowFlagged)
+            if (previous >= 0 && !SlopesMatch(previous, ics.WindowSequence) && !_windowFlagged)
             {
                 _windowFlagged = true;
-                Soft("aac.window-sequence-invalid", "a window sequence that cannot follow the one of the same channel stream in the block before it: the left slope of its window does not match the right slope of the previous window, as a long window followed by eight short ones does not",
+                Soft("aac.window-slopes-differ", "a window sequence whose left slope differs from the right slope of the window before it in the same channel stream, as a long window followed by eight short ones does: ISO/IEC 14496-3 4.6.11.3.1 lists such transitions as possible and not as meaningful",
                     ics.SequenceAt, ics.SequenceAt + 2, "Window Sequence");
             }
         }

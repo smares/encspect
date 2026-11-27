@@ -208,7 +208,7 @@ def window_sequences_invalid():
         "only long after eight short, only long after long start, long stop after long stop and long stop after only long; the others follow as the slopes match "
         "(long start after only long, eight short after long start, long stop after eight short, only long after long stop).",
         data, rows, [stream("AAC LC", RATE, 1, "Mono", len(sequence) * 1024)], fields,
-        [["aac.window-sequence-invalid", f"{invalid} raw data blocks hold a window sequence that cannot follow"]],
+        [["aac.window-slopes-differ", f"{invalid} raw data blocks hold a window sequence whose left slope differs"]],
         skip={"decode": "FFmpeg's decoder windows a transition the window shapes do not allow differently from the analyzer's (docs/formats/aac.md, Decoding)."})
 
 
@@ -247,7 +247,7 @@ def stereo():
     return "stereo.aac", data, manifest(
         "Channel pairs: a common window with mid/side masks 0, 1 (every third band) and 2; separate windows, one long and one of two short groups; "
         "a common short window with a mask per group.", data, rows, [stream("AAC LC", RATE, 2, "Stereo", 6 * 1024)], fields,
-        [["aac.window-sequence-invalid", "a window sequence that cannot follow"]])
+        [["aac.window-slopes-differ", "a window sequence whose left slope differs"]])
 
 
 def intensity_noise():
@@ -307,7 +307,7 @@ def loud_tools():
     streams = [t for m in made for t in m[1]]
     second = manifest("Channel pairs at a level near -30 dBFS whose channels both code noise substitution in bands that the mid/side mask flags (masks 1 and 2, in long windows "
                       "and in eight short windows of groups of 3, 2, 2 and 1), which both channels fill with the same noise, and one pair without a flag.",
-                      pairs, rows2, [stream("AAC LC", RATE, 2, "Stereo", 4 * 1024)], statistics("ADTS", streams), [["aac.window-sequence-invalid", "a window sequence that cannot follow"]])
+                      pairs, rows2, [stream("AAC LC", RATE, 2, "Stereo", 4 * 1024)], statistics("ADTS", streams), [["aac.window-slopes-differ", "a window sequence whose left slope differs"]])
     # Scalefactors near the largest (250) with a TNS filter of order 12 whose coefficients are the largest magnitudes (4-bit indexes 7 and 8, 0.998 each way): the filter's gain over the
     # band is far past what a float holds without a limit.
     wild = [[(9, 40), (0, 9)]]
@@ -473,7 +473,7 @@ def stereo_coding():
         "windows), both coding tools at once (mask 1 and mask 2 with intensity stereo bands), and the mid/side flag on noise substitution bands "
         "of either channel, which codes no mid/side, alone, beside a flag on an ordinary band and beside intensity stereo bands.",
         data, rows, [stream("AAC LC", RATE, 2, "Stereo", len(cases) * 1024)], fields,
-        [["aac.intensity-without-common-window", "without a common window"], ["aac.window-sequence-invalid", "a window sequence that cannot follow"]])
+        [["aac.intensity-without-common-window", "without a common window"], ["aac.window-slopes-differ", "a window sequence whose left slope differs"]])
 
 
 def stereo_coding_reserved():
@@ -536,7 +536,7 @@ def stereo_coding_elements():
         "Three frames of a 5.1 stream, each holding a single channel element, two channel pair elements and an LFE element: six channel streams "
         "and two pairs in every unit, with mid/side, intensity stereo, left/right, mid/side in long start windows, eight short windows and a pair "
         "without a common window.", data, rows, [stream("AAC LC", RATE, 6, "5.1", len(frames) * 1024)], fields,
-        [["aac.window-sequence-invalid", "a window sequence that cannot follow"]])
+        [["aac.window-slopes-differ", "a window sequence whose left slope differs"]])
 
 
 SBR_HEADER = {"amp_res": 1, "start": 5, "stop": 9, "xover": 0}
@@ -995,7 +995,7 @@ def corrupt():
         "outside AAC SSR.",
         data, rows, [stream("AAC LC", RATE, 1, "Mono", len(rows) * 1024)],
         {"ADTS/Frame[1]/Raw Data Block/SCE/Channel/ICS Info/ICS Reserved Bit": "1"},
-        [[code, text] for _, code, text in soft] + [["aac.elements-mismatch", "other than channel configuration 1 defines"], ["aac.window-sequence-invalid", "a window sequence that cannot follow"]],
+        [[code, text] for _, code, text in soft] + [["aac.elements-mismatch", "other than channel configuration 1 defines"], ["aac.window-slopes-differ", "a window sequence whose left slope differs"]],
         skip={"ffprobe": "ffmpeg rejects some of the frames.", "faad": "faad2 rejects some of the frames.", "decode": "decoders reject some of the frames",
               "faad_trace": "faad2 stops at frames it rejects."})))
     return out

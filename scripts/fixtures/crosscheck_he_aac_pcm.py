@@ -3,7 +3,7 @@
 
     crosscheck_he_aac_pcm.py [--pcmdump CMD] [--ffmpeg PATH] [--max-ratio R] [FILE ...]
 
-With no FILE the script takes every ADTS and M4A file of tests/fixtures/aac and the hand-built mp4/ps-34-bands.m4a (parametric stereo in 34 bands, which no encoder's file uses; it agrees with FFmpeg to under 5e-5) whose first decoded stream the analyzer reports as HE-AAC (version 1 or 2, SBR or parametric stereo, signaled or implicit: PcmDump's "streamCodec"). A stream it reports as AAC LC, SBR data in some blocks included, is
+With no FILE the script takes every ADTS and M4A file of tests/fixtures/aac and the hand-built mp4/ps-34-bands.m4a and, downloaded and pinned, the two MPEG-4 conformance streams al_sbr_ps_04_new.mp4 and al_sbr_ps_06_new.mp4 (parametric stereo that starts in the second half) (parametric stereo in 34 bands, which no encoder's file uses; it agrees with FFmpeg to under 5e-5) whose first decoded stream the analyzer reports as HE-AAC (version 1 or 2, SBR or parametric stereo, signaled or implicit: PcmDump's "streamCodec"). A stream it reports as AAC LC, SBR data in some blocks included, is
 crosscheck_aac_pcm.py's, which compares its core and lists what FFmpeg decodes otherwise. FFmpeg (a black box, as in the other cross-checks; its source is not read) decodes to 32-bit floats with the edit list ignored.
 
 The two decoders cut their output differently (priming, and parametric stereo's delay of 6 QMF slots), so the script finds the shift between them by the cross-correlation of the
@@ -25,6 +25,10 @@ import tempfile
 
 import numpy as np
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import check_sbr_samples  # noqa: E402
+import downloads  # noqa: E402
+
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 FIXTURES = ROOT / "tests" / "fixtures"
@@ -34,9 +38,29 @@ MAX_RATIO = 0.06
 # Samples left out at each end of the overlap (the two decoders' starts and ends differ), fewer in a file too short for that to leave an eighth of it.
 TRIM = 4096
 
+# The MPEG-4 audio parametric stereo conformance streams of FFmpeg's FATE suite (pinned by tests/conformance/sbr-samples.json, downloaded into .cache/sbr): a mono core with SBR whose PS data starts
+# in the second half of the stream, so that the channels are equal until it does (ISO/IEC 14496-3 1.6.6.3). The signal repeats, so the correlation's peaks do not tell the alignment: both start at 0.
+CONFORMANCE = ["al_sbr_ps_04_new.mp4", "al_sbr_ps_06_new.mp4"]
+FIXED_SHIFT = {name: 0 for name in CONFORMANCE}
+
+
+def conformance_files():
+    manifest = json.loads(check_sbr_samples.MANIFEST.read_text())
+    cache = ROOT / ".cache" / "sbr"
+    cache.mkdir(parents=True, exist_ok=True)
+    out = []
+    for sample in manifest["samples"]:
+        if sample["file"] in CONFORMANCE:
+            downloads.fetch(check_sbr_samples.addresses(sample), sample["sha256"], cache / sample["file"])
+            out.append(cache / sample["file"])
+    return out
+
+
 # Files that FFmpeg reads otherwise than the analyzer, each with the reason: the comparison runs and must fail (an entry that no longer differs fails the run, the stale-entry rule of
 # docs/development.md).
 DIFFERENCES = {
+    "al_sbr_ps_04_new.mp4": "53 of its 106 blocks carry inter-channel phase differences in the parametric stereo extension, which the decoder ignores as the baseline's does, 8.A.4 (docs/formats/aac.md, Decoding): the second half, "
+                            "where parametric stereo starts, differs, and the first half, the one channel on both, agrees to the last digits",
     "sbr-after-first-frame-failing-crc.aac": "the first frame fails its CRC and holds no SBR data: the analyzer takes no evidence from it and decodes the stream as HE-AAC at twice the core rate, "
                                               "where FFmpeg checks no CRC, finds no SBR data in its first block and decodes the core alone, at 22,050 Hz (docs/formats/aac.md, Reference for sample counts)",
 }
@@ -160,7 +184,7 @@ def main():
     parser.add_argument("--max-ratio", type=float, default=MAX_RATIO)
     parser.add_argument("files", nargs="*")
     args = parser.parse_args()
-    files = [pathlib.Path(f) for f in args.files] or sorted(p for p in (FIXTURES / "aac").rglob("*") if p.suffix in EXTENSIONS) + [FIXTURES / "mp4" / "ps-34-bands.m4a"]
+    files = [pathlib.Path(f) for f in args.files] or sorted(p for p in (FIXTURES / "aac").rglob("*") if p.suffix in EXTENSIONS) + [FIXTURES / "mp4" / "ps-34-bands.m4a"] + conformance_files()
     failures = 0
     compared = 0
     listed = set()
@@ -173,7 +197,7 @@ def main():
         if not fmt.get("streamCodec", "").startswith("HE-AAC"):
             continue
         samples = to_ffmpeg_order(samples, fmt.get("channelLayout") or LAYOUTS.get(path.name))
-        # FFmpeg takes a mono core with SBR for HE-AAC v2 and outputs two channels; without parametric stereo they are equal and the analyzer's one is compared with the first.
+        # A mono core with SBR is output on two channels by both decoders (equal where no parametric stereo data comes, ISO/IEC 14496-3 1.6.6.3); where the analyzer keeps one (PS signaled absent), it is compared with FFmpeg's first.
         reference = decode_ffmpeg(args.ffmpeg, path, ffmpeg_channels(path, samples.shape[1]))
         if reference is not None and samples.shape[1] == 1:
             reference = reference[:, :1]
@@ -187,7 +211,7 @@ def main():
             print(f"{path.name}: noise substitution, band energies differ by at most {difference:.2f} dB{'' if passes else '  FAILS'}")
             failures += 0 if passes else 1
             continue
-        found = best_shift(samples, reference)
+        found = best_shift(samples, reference) if path.name not in FIXED_SHIFT else (FIXED_SHIFT[path.name], ratios(samples, reference, FIXED_SHIFT[path.name]))
         if found is None and path.name in DIFFERENCES:
             listed.add(path.name)
             compared += 1
