@@ -11,8 +11,15 @@ internal sealed class FrameDecoder : IFrameDecoder
 {
     private const int Lines = 1024;
     private const int ShortLines = 128;
-    // TNS_MAX_ORDER of the object types but AAC Main (4.6.9.3, Table 4.156): a filter of a higher order takes its first 12 coefficients.
-    private const int MaxTnsOrder = 12;
+    // TNS_MAX_ORDER on long windows (4.6.9.3, Table 4.156): 20 for AAC Main, 12 for the other object types; a filter of a higher order takes its first coefficients.
+    private const int MainTnsOrder = 20;
+    private const int OtherTnsOrder = 12;
+    private const int PredictionBandsLimit = 40;
+    private const int LtpHistory = 2 * Lines;
+
+    // The forward transform of the predicted window is twice the transpose of the inverse's sum, in the units of the spectrum (the output's full scale is 32768): the pair that
+    // reconstructs a window as the encoder's filter bank does (found with the ISO/IEC 14496-26 stream ap01_48, whose reference waveform the output then matches to its 24-bit rounding).
+    private const float LtpTransformScale = 2f * 32768f;
     // The shape of the window before the first block, which has the same shape on both halves (4.6.11.3.2).
     private const int FirstShape = -1;
     private const float SpectrumLimit = 1e30f;
@@ -28,6 +35,13 @@ internal sealed class FrameDecoder : IFrameDecoder
     // for the second channel): measured with DecoderWorkTests (the HE-AAC cases), where the stage takes about 4 times what the core's stages charge in time per unit at 60.
     private const int SbrUnits = 220;
     private const int ShortTransformUnits = 16;
+
+    // AAC Main's prediction costs PredictionUnits for each of its lines in every long block of every channel, since every predictor runs (ISO/IEC 13818-7 13.3.2.1), and the
+    // reset of an eight-short block 1; long-term prediction the prediction, the window and the forward transform for each output sample of a channel that uses it, and the history
+    // 1 for each output sample of every block of the stream (docs/design/aac-main-ltp-er.md, "Cost and memory", measured with DecoderWorkTests).
+    private const int PredictionUnits = 10;
+    private const int LtpUnits = 26;
+    private const int LtpHistoryUnits = 1;
 
     private readonly DecodeContext _context;
     private readonly DecodeConfig _config;
@@ -63,10 +77,26 @@ internal sealed class FrameDecoder : IFrameDecoder
     private IPcmSink? _sink;
     private int _seed;
     private bool _lostBefore;
+    private readonly int _maxTnsOrder;
+    private readonly MainPredictor[]? _predictors;
+    private readonly uint[] _bandGroups;
+    private readonly int _predictionLines;
+    private readonly byte[] _modes = new byte[Lines];
+    private readonly float[][]? _ltpHistory;
+    private readonly InverseMdct? _forward;
+    private readonly float[]? _ltpInput;
+    private readonly float[]? _ltpSpectrum;
+    private readonly float[]? _ltpWindow;
+    private readonly uint[] _usedGroups;
+    private readonly int[] _ltpLag;
 
-    // The block before this one failed its checksum: the decoder kept its overlap, so the samples this block returns depend on it and are withheld from the measurements
-    // (docs/design/damaged-units.md).
-    private bool _followsFailedUnit;
+    // What the prediction of the blocks depends on after a gap, and after a block that failed its checksum: the decoder kept the state it decoded from the failed block, so the
+    // samples that depend on it are withheld from the measurements (docs/design/damaged-units.md). A block after a failed one has its overlap from it.
+    private readonly DependencyTrust _gap;
+    private readonly DependencyTrust _fail;
+
+    // The position of the next block in samples of the core, which the history of long-term prediction counts in.
+    private long _clock;
 
     public FrameDecoder(DecodeContext context, DecodeConfig config)
     {
@@ -98,6 +128,45 @@ internal sealed class FrameDecoder : IFrameDecoder
         Array.Fill(_previousShape, FirstShape);
         _isSilent = new bool[_channels];
         _planar = new float[_channels * Lines];
+        _maxTnsOrder = config.ObjectType == 1 ? MainTnsOrder : OtherTnsOrder;
+        _usedGroups = new uint[_channels];
+        _ltpLag = new int[_channels];
+        _gap = new DependencyTrust(_channels);
+        _fail = new DependencyTrust(_channels);
+        _bandGroups = new uint[_longBands + 1];
+        _predictionLines = _longOffsets[Math.Min(BandTables.PredictionMax[index], _longBands)];
+        for (int sfb = 0; sfb < _longBands; sfb++)
+        {
+            uint groups = 0;
+            for (int k = _longOffsets[sfb]; k < _longOffsets[sfb + 1]; k++)
+            {
+                groups |= 1u << (k % 30);
+            }
+
+            _bandGroups[sfb] = groups;
+        }
+
+        if (config.ObjectType == 1)
+        {
+            _predictors = new MainPredictor[_channels];
+            for (int ch = 0; ch < _channels; ch++)
+            {
+                _predictors[ch] = new MainPredictor(_predictionLines);
+            }
+        }
+        else if (config.ObjectType == 4)
+        {
+            _ltpHistory = new float[_channels][];
+            for (int ch = 0; ch < _channels; ch++)
+            {
+                _ltpHistory[ch] = new float[LtpHistory];
+            }
+
+            _forward = new InverseMdct(2 * Lines, 1f);
+            _ltpInput = new float[2 * Lines];
+            _ltpSpectrum = new float[Lines];
+            _ltpWindow = new float[2 * Lines];
+        }
     }
 
     public IReadOnlyList<ChecksumResult> Finish(DecodeEnd end) => [];
@@ -109,7 +178,8 @@ internal sealed class FrameDecoder : IFrameDecoder
         {
             _context.AddFinding(Severity.Info, "decode.frame-too-large", $"The block at 0x{frame.Bytes.FileStart:X} could hold more channel streams than the host lends buffers for, so it is not decoded.");
             _lostBefore = true;
-            _followsFailedUnit = false;
+            _clock += Lines;
+            _fail.Clear(_clock);
             return 0;
         }
 
@@ -132,13 +202,28 @@ internal sealed class FrameDecoder : IFrameDecoder
 
         bool follows = frame.FollowsGap || _lostBefore || layoutChanged;
         _lostBefore = false;
+        long position = _clock;
+        _clock += Lines;
         if (follows)
         {
             Reset();
+            _gap.Lose(position, true);
+            _fail.Clear(position);
         }
 
+        FlushStates();
         _context.CancellationToken.ThrowIfCancellationRequested();
         Charge(record);
+        bool gapDepends = false;
+        bool failDepends = false;
+        for (int ch = 0; ch < _channels; ch++)
+        {
+            ReadOnlySpan<int> slot = record.Slice(ch * BlockRecord.Stride, BlockRecord.Stride);
+            _usedGroups[ch] = UsedGroups(slot);
+            _ltpLag[ch] = UsedLtpLag(slot);
+            gapDepends |= _gap.Depends(ch, _usedGroups[ch], _ltpLag[ch], position);
+            failDepends |= _fail.Depends(ch, _usedGroups[ch], _ltpLag[ch], position);
+        }
 
         for (int ch = 0; ch < _channels; ch++)
         {
@@ -161,6 +246,21 @@ internal sealed class FrameDecoder : IFrameDecoder
             NoiseSubstitution(ch, slot, ch > 0 && slot[BlockRecord.Kind] == BlockRecord.KindPairSecond ? record.Slice((ch - 1) * BlockRecord.Stride, BlockRecord.Stride) : default);
         }
 
+        // AAC Main's prediction follows mid/side stereo and the noise substitution that precedes intensity stereo, and runs on the channels that intensity stereo reads (the first of
+        // a pair) before it, and on the one it writes (the second) after it, since the predictors of an intensity band take the values intensity stereo gives (ISO/IEC 13818-7 12.2.4;
+        // ISO/IEC 14496-3 4.6.8.2.4).
+        if (_predictors is not null)
+        {
+            for (int ch = 0; ch < _channels; ch++)
+            {
+                ReadOnlySpan<int> slot = record.Slice(ch * BlockRecord.Stride, BlockRecord.Stride);
+                if (slot[BlockRecord.Kind] != BlockRecord.KindPairSecond)
+                {
+                    Predict(ch, slot);
+                }
+            }
+        }
+
         for (int ch = 0; ch < _channels; ch++)
         {
             ReadOnlySpan<int> slot = record.Slice(ch * BlockRecord.Stride, BlockRecord.Stride);
@@ -170,18 +270,47 @@ internal sealed class FrameDecoder : IFrameDecoder
             }
         }
 
+        if (_predictors is not null)
+        {
+            for (int ch = 0; ch < _channels; ch++)
+            {
+                ReadOnlySpan<int> slot = record.Slice(ch * BlockRecord.Stride, BlockRecord.Stride);
+                if (slot[BlockRecord.Kind] == BlockRecord.KindPairSecond)
+                {
+                    Predict(ch, slot);
+                }
+            }
+        }
+
+        if (_ltpHistory is not null)
+        {
+            for (int ch = 0; ch < _channels; ch++)
+            {
+                if (_ltpLag[ch] >= 0)
+                {
+                    LongTermPrediction(ch, record.Slice(ch * BlockRecord.Stride, BlockRecord.Stride));
+                }
+            }
+        }
+
         for (int ch = 0; ch < _channels; ch++)
         {
             ReadOnlySpan<int> slot = record.Slice(ch * BlockRecord.Stride, BlockRecord.Stride);
             if ((slot[BlockRecord.Flags] & BlockRecord.FlagTns) != 0)
             {
-                TemporalNoiseShaping(ch, slot);
+                TemporalNoiseShaping(_spectrum[ch], ch, slot, false);
             }
         }
 
         for (int ch = 0; ch < _channels; ch++)
         {
             Synthesize(ch, record.Slice(ch * BlockRecord.Stride, BlockRecord.Stride));
+            if (_ltpHistory is not null)
+            {
+                float[] history = _ltpHistory[ch];
+                Array.Copy(history, Lines, history, 0, Lines);
+                _planar.AsSpan(ch * Lines, Lines).CopyTo(history.AsSpan(Lines));
+            }
         }
 
         int count = Lines;
@@ -195,19 +324,35 @@ internal sealed class FrameDecoder : IFrameDecoder
             stride = 2 * Lines;
         }
 
-        if (follows)
+        // A block is wrong where it uses what was lost, and the one after it adds to its second half (DependencyTrust).
+        bool isGapWithheld = _gap.IsOverlapUntrusted || gapDepends;
+        bool isFailWithheld = _fail.IsOverlapUntrusted || failDepends;
+        _gap.Settle(isGapWithheld, gapDepends, position + Lines);
+        _fail.Settle(isFailWithheld, failDepends, position + Lines);
+        if (frame.FailsChecksum)
+        {
+            _fail.Lose(position + Lines, true);
+        }
+
+        if (_predictors is not null)
+        {
+            for (int ch = 0; ch < _channels; ch++)
+            {
+                Resynchronize(ch, record.Slice(ch * BlockRecord.Stride, BlockRecord.Stride));
+            }
+        }
+
+        if (isGapWithheld)
         {
             _context.Withhold(frame.FirstSample, count, WithholdReason.AfterGap);
-            _followsFailedUnit = frame.FailsChecksum;
             return 0;
         }
 
-        if (_followsFailedUnit)
+        if (isFailWithheld)
         {
             _context.WithholdFromMeasurements(frame.FirstSample, count);
         }
 
-        _followsFailedUnit = frame.FailsChecksum;
         _sink ??= _context.DeclareOutput(new PcmFormat(_isSbr ? 2 * _config.SampleRate : _config.SampleRate, _outputChannels, 32, SampleFormat.Float32) { ChannelLayout = _config.Layout });
         _sink.Write(new PcmBlock(frame.FirstSample, count, _outputChannels, stride, pcm));
         return count;
@@ -305,6 +450,47 @@ internal sealed class FrameDecoder : IFrameDecoder
         }
 
         _seed = 0;
+        if (_predictors is not null)
+        {
+            foreach (MainPredictor predictor in _predictors)
+            {
+                predictor.ResetAll();
+            }
+        }
+
+        if (_ltpHistory is not null)
+        {
+            foreach (float[] history in _ltpHistory)
+            {
+                Array.Clear(history);
+            }
+        }
+    }
+
+    // The states of the recursive tools are flushed at the start of each block (docs/design/lossy-decoders.md, "Determinism").
+    private void FlushStates()
+    {
+        if (_predictors is not null)
+        {
+            foreach (MainPredictor predictor in _predictors)
+            {
+                predictor.Flush();
+            }
+        }
+
+        if (_ltpHistory is not null)
+        {
+            foreach (float[] history in _ltpHistory)
+            {
+                for (int i = 0; i < history.Length; i++)
+                {
+                    if (Math.Abs(history[i]) < 1e-30f)
+                    {
+                        history[i] = 0;
+                    }
+                }
+            }
+        }
     }
 
     // The work of the block before it is done: the floor of every output sample, and the stages of each channel that has anything to transform.
@@ -319,7 +505,7 @@ internal sealed class FrameDecoder : IFrameDecoder
         for (int ch = 0; ch < _channels; ch++)
         {
             ReadOnlySpan<int> slot = record.Slice(ch * BlockRecord.Stride, BlockRecord.Stride);
-            _isSilent[ch] = IsSilent(slot);
+            _isSilent[ch] = IsSilent(slot) && !UsesPrediction(slot);
         }
 
         for (int ch = 0; ch + 1 < _channels; ch++)
@@ -342,6 +528,20 @@ internal sealed class FrameDecoder : IFrameDecoder
             ushort[] offsets = isShort ? _shortOffsets : _longOffsets;
             int coded = offsets[Math.Min(slot[BlockRecord.MaxSfb], isShort ? _shortBands : _longBands)] * (isShort ? 8 : 1);
             units += (long)OverlapUnits * Lines;
+            if (_predictors is not null)
+            {
+                units += (long)(isShort ? 1 : PredictionUnits) * _predictionLines;
+            }
+
+            if (_ltpHistory is not null)
+            {
+                units += (long)LtpHistoryUnits * Lines;
+                if (UsedLtpLag(slot) >= 0)
+                {
+                    units += (long)LtpUnits * Lines;
+                }
+            }
+
             if (_isSilent[ch])
             {
                 continue;
@@ -364,7 +564,7 @@ internal sealed class FrameDecoder : IFrameDecoder
                 int filters = Math.Min(slot[BlockRecord.TnsFilters], BlockRecord.TnsMaxFilters);
                 for (int f = 0; f < filters; f++)
                 {
-                    units += (long)Math.Min(slot[BlockRecord.Tns + (f * BlockRecord.TnsFilterInts) + 2], MaxTnsOrder) * (isShort ? ShortLines : Lines);
+                    units += (long)Math.Min(slot[BlockRecord.Tns + (f * BlockRecord.TnsFilterInts) + 2], _maxTnsOrder) * (isShort ? ShortLines : Lines);
                 }
             }
         }
@@ -739,7 +939,7 @@ internal sealed class FrameDecoder : IFrameDecoder
     // ixheaacd_aac_tns_process takes the ranges: the filters of a window chain downward from the window's last band, clamped to the most bands TNS covers at the sample rate and to
     // max_sfb.
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private void TemporalNoiseShaping(int ch, ReadOnlySpan<int> slot)
+    private void TemporalNoiseShaping(float[] spectrum, int ch, ReadOnlySpan<int> slot, bool isAnalysis)
     {
         if (_isSilent[ch])
         {
@@ -751,7 +951,6 @@ internal sealed class FrameDecoder : IFrameDecoder
         int bands = isShort ? _shortBands : _longBands;
         int maxBands = Tables.TnsMaxBands[Math.Min(_rateIndex, Tables.TnsMaxBands.Length - 1)][isShort ? 1 : 0];
         int maxSfb = Math.Min(slot[BlockRecord.MaxSfb], bands);
-        float[] spectrum = _spectrum[ch];
         int filters = Math.Min(slot[BlockRecord.TnsFilters], BlockRecord.TnsMaxFilters);
         int lastWindow = -1;
         int top = bands;
@@ -766,7 +965,7 @@ internal sealed class FrameDecoder : IFrameDecoder
             }
 
             int length = slot[at + 1];
-            int order = Math.Min(slot[at + 2], MaxTnsOrder);
+            int order = Math.Min(slot[at + 2], _maxTnsOrder);
             int bottom = Math.Max(top - length, 0);
             int stop = top;
             top = bottom;
@@ -816,12 +1015,37 @@ internal sealed class FrameDecoder : IFrameDecoder
             Array.Clear(_history);
             int baseLine = isShort ? window * ShortLines : 0;
             int size = end - start;
+            if (isAnalysis)
+            {
+                // The analysis filter of the long-term prediction's loop (4.6.7.4.1): the inverse of the synthesis, an all-zero filter over the values before filtering.
+                for (int n = 0; n < size; n++)
+                {
+                    int line = baseLine + (downward ? end - 1 - n : start + n);
+                    float x = spectrum[line];
+                    float y = x;
+                    int past = Math.Min(n, order);
+                    for (int j = 1; j <= past; j++)
+                    {
+                        y += _lpc[j] * _history[j - 1];
+                    }
+
+                    for (int j = order - 1; j > 0; j--)
+                    {
+                        _history[j] = _history[j - 1];
+                    }
+
+                    _history[0] = x;
+                    spectrum[line] = y;
+                }
+
+                continue;
+            }
+
             for (int n = 0; n < size; n++)
             {
                 int line = baseLine + (downward ? end - 1 - n : start + n);
                 float y = spectrum[line];
-                int past = Math.Min(n, order);
-                for (int j = 1; j <= past; j++)
+                int past = Math.Min(n, order);                for (int j = 1; j <= past; j++)
                 {
                     y -= _lpc[j] * _history[j - 1];
                 }
@@ -836,6 +1060,206 @@ internal sealed class FrameDecoder : IFrameDecoder
                 y = Math.Clamp(y, -SpectrumLimit, SpectrumLimit);
                 _history[0] = y;
                 spectrum[line] = y;
+            }
+        }
+    }
+
+    // The groups of Table 63 that the bands using prediction cover (ISO/IEC 13818-7 13.3.3), for the trust of DependencyTrust; zero where the block uses none.
+    private uint UsedGroups(ReadOnlySpan<int> slot)
+    {
+        if (_predictors is null || (slot[BlockRecord.Prediction] & BlockRecord.PredictionPresent) == 0 || slot[BlockRecord.WindowSequence] == 2)
+        {
+            return 0;
+        }
+
+        ulong used = (uint)slot[BlockRecord.PredictionUsedLow] | ((ulong)(uint)slot[BlockRecord.PredictionUsedHigh] << 32);
+        int bands = Math.Min(Math.Min(slot[BlockRecord.MaxSfb], _longBands), BandTables.PredictionMax[_rateIndex]);
+        uint groups = 0;
+        for (int sfb = 0; sfb < bands; sfb++)
+        {
+            if (((used >> sfb) & 1) != 0 && slot[BlockRecord.Codebooks + sfb] < 13)
+            {
+                groups |= _bandGroups[sfb];
+            }
+        }
+
+        return groups;
+    }
+
+    // The lag of the long-term prediction of the block where it predicts at all, else -1: ltp_data_present with a band that takes it (a long window; noise bands do not).
+    private int UsedLtpLag(ReadOnlySpan<int> slot)
+    {
+        if (_ltpHistory is null || slot[BlockRecord.LtpPresent] == 0 || slot[BlockRecord.WindowSequence] == 2)
+        {
+            return -1;
+        }
+
+        ulong used = (uint)slot[BlockRecord.LtpUsedLow] | ((ulong)(uint)slot[BlockRecord.LtpUsedHigh] << 32);
+        int bands = Math.Min(Math.Min(slot[BlockRecord.MaxSfb], _longBands), PredictionBandsLimit);
+        for (int sfb = 0; sfb < bands; sfb++)
+        {
+            if (((used >> sfb) & 1) != 0 && slot[BlockRecord.Codebooks + sfb] != 13)
+            {
+                return slot[BlockRecord.LtpLag];
+            }
+        }
+
+        return -1;
+    }
+
+    // A channel stream whose prediction adds to what it codes, so that it is not silent where it codes nothing.
+    private bool UsesPrediction(ReadOnlySpan<int> slot) => UsedGroups(slot) != 0 || UsedLtpLag(slot) >= 0;
+
+    // AAC Main's prediction (ISO/IEC 13818-7 13.3.2) of one channel's block: the lines of the bands that use it add the estimate to what the stream codes, noise bands reset
+    // their predictors, and every predictor adapts to the value the line ends with. An eight-short block resets them all (13.3.3).
+    private void Predict(int ch, ReadOnlySpan<int> slot)
+    {
+        MainPredictor predictor = _predictors![ch];
+        if (slot[BlockRecord.WindowSequence] == 2)
+        {
+            predictor.ResetAll();
+            return;
+        }
+
+        Span<byte> modes = _modes;
+        modes.Clear();
+        bool isPresent = (slot[BlockRecord.Prediction] & BlockRecord.PredictionPresent) != 0;
+        ulong used = (uint)slot[BlockRecord.PredictionUsedLow] | ((ulong)(uint)slot[BlockRecord.PredictionUsedHigh] << 32);
+        int bands = Math.Min(Math.Min(slot[BlockRecord.MaxSfb], _longBands), BandTables.PredictionMax[_rateIndex]);
+        for (int sfb = 0; sfb < bands; sfb++)
+        {
+            int book = slot[BlockRecord.Codebooks + sfb];
+            byte mode = book == 13 ? (byte)2 : isPresent && ((used >> sfb) & 1) != 0 && book < 14 ? (byte)1 : (byte)0;
+            if (mode != 0)
+            {
+                modes.Slice(_longOffsets[sfb], _longOffsets[sfb + 1] - _longOffsets[sfb]).Fill(mode);
+            }
+        }
+
+        predictor.Process(_spectrum[ch], modes[.._predictionLines]);
+        if ((slot[BlockRecord.Prediction] & BlockRecord.PredictionReset) != 0 && slot[BlockRecord.PredictionGroup] is >= 1 and <= 30)
+        {
+            predictor.ResetGroup(slot[BlockRecord.PredictionGroup]);
+        }
+    }
+
+    // The trust the reset of a group gives back (DependencyTrust), after the block.
+    private void Resynchronize(int ch, ReadOnlySpan<int> slot)
+    {
+        if (slot[BlockRecord.WindowSequence] == 2)
+        {
+            _gap.ResynchronizeAll(ch);
+            _fail.ResynchronizeAll(ch);
+        }
+        else if ((slot[BlockRecord.Prediction] & BlockRecord.PredictionReset) != 0 && slot[BlockRecord.PredictionGroup] is >= 1 and <= 30)
+        {
+            _gap.Resynchronize(ch, slot[BlockRecord.PredictionGroup]);
+            _fail.Resynchronize(ch, slot[BlockRecord.PredictionGroup]);
+        }
+    }
+
+    // Long-term prediction (ISO/IEC 14496-3 4.6.7.3): the prediction of the window from the decoder's output at the lag, scaled by the coefficient, windowed as the block is and
+    // moved to the frequency domain, through the TNS analysis filter where the block has TNS (4.6.7.4.1), added to the bands the stream flags. x_rec(i - lag) is the output before
+    // the block for i - lag below 0, the overlap, the windowed second half of the last block's transform, for the next 1,024 samples, and zero after.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private void LongTermPrediction(int ch, ReadOnlySpan<int> slot)
+    {
+        float[] input = _ltpInput!;
+        float[] history = _ltpHistory![ch];
+        float[] overlap = _overlap[ch];
+        int lag = slot[BlockRecord.LtpLag];
+        float coefficient = Tables.LtpCoefficients[slot[BlockRecord.LtpCoefficient] & 7];
+        int sequence = slot[BlockRecord.WindowSequence];
+        int shape = slot[BlockRecord.WindowShape] & 1;
+        int previous = _previousShape[ch] == FirstShape ? shape : _previousShape[ch];
+        BuildWindow(sequence, previous, shape, _ltpWindow!);
+        float[] window = _ltpWindow!;
+        for (int i = 0; i < 2 * Lines; i++)
+        {
+            int at = i - lag;
+            float value = at < 0 ? history[LtpHistory + at] : at < Lines ? overlap[at] : 0f;
+            input[i] = coefficient * value * window[i];
+        }
+
+        float[] spectrum = _ltpSpectrum!;
+        _forward!.Forward(input, spectrum, LtpTransformScale);
+        if ((slot[BlockRecord.Flags] & BlockRecord.FlagTns) != 0)
+        {
+            TemporalNoiseShaping(spectrum, ch, slot, true);
+        }
+
+        ulong used = (uint)slot[BlockRecord.LtpUsedLow] | ((ulong)(uint)slot[BlockRecord.LtpUsedHigh] << 32);
+        int bands = Math.Min(Math.Min(slot[BlockRecord.MaxSfb], _longBands), PredictionBandsLimit);
+        float[] target = _spectrum[ch];
+        for (int sfb = 0; sfb < bands; sfb++)
+        {
+            if (((used >> sfb) & 1) == 0 || slot[BlockRecord.Codebooks + sfb] == 13)
+            {
+                continue;
+            }
+
+            for (int k = _longOffsets[sfb]; k < _longOffsets[sfb + 1]; k++)
+            {
+                target[k] += spectrum[k];
+            }
+        }
+    }
+
+    // The window of a long block (4.6.11.3): the rising half of the previous block's shape, or for a long stop the short one between flat parts, and the falling half of this
+    // block's shape, or for a long start the short one.
+    private static void BuildWindow(int sequence, int previous, int shape, float[] window)
+    {
+        float[] rise = Tables.LongRise[previous];
+        float[] fall = Tables.LongRise[shape];
+        if (sequence == 3)
+        {
+            float[] shortRise = Tables.ShortRise[previous];
+            for (int n = 0; n < 448; n++)
+            {
+                window[n] = 0;
+            }
+
+            for (int n = 0; n < ShortLines; n++)
+            {
+                window[448 + n] = shortRise[n];
+            }
+
+            for (int n = 448 + ShortLines; n < Lines; n++)
+            {
+                window[n] = 1;
+            }
+        }
+        else
+        {
+            for (int n = 0; n < Lines; n++)
+            {
+                window[n] = rise[n];
+            }
+        }
+
+        if (sequence == 1)
+        {
+            float[] shortFall = Tables.ShortRise[shape];
+            for (int n = 0; n < 448; n++)
+            {
+                window[Lines + n] = 1;
+            }
+
+            for (int n = 0; n < ShortLines; n++)
+            {
+                window[Lines + 448 + n] = shortFall[ShortLines - 1 - n];
+            }
+
+            for (int n = 448 + ShortLines; n < Lines; n++)
+            {
+                window[Lines + n] = 0;
+            }
+        }
+        else
+        {
+            for (int n = 0; n < Lines; n++)
+            {
+                window[Lines + n] = fall[Lines - 1 - n];
             }
         }
     }

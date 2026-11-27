@@ -23,6 +23,7 @@ internal sealed class InverseMdct
     private readonly float[] _re;
     private readonly float[] _im;
     private readonly float[] _u;
+    private readonly float[] _folded;
 
     public InverseMdct(int n, float scale)
     {
@@ -73,6 +74,7 @@ internal sealed class InverseMdct
         _re = new float[_h];
         _im = new float[_h];
         _u = new float[_m];
+        _folded = new float[_m];
     }
 
     public float Scale { get; }
@@ -80,6 +82,57 @@ internal sealed class InverseMdct
     // Transforms the n/2 coefficients into the n samples of the window, unwindowed.
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public void Transform(ReadOnlySpan<float> spectrum, Span<float> output)
+    {
+        int m = _m;
+        Dct4(spectrum);
+        float[] u = _u;
+        float scale = Scale;
+        int quarter = m / 2;
+        for (int i = 0; i < quarter; i++)
+        {
+            output[i] = u[i + quarter] * scale;
+        }
+
+        for (int i = quarter; i < quarter + m; i++)
+        {
+            output[i] = -u[(3 * quarter) - 1 - i] * scale;
+        }
+
+        for (int i = quarter + m; i < _n; i++)
+        {
+            output[i] = -u[i - (3 * quarter)] * scale;
+        }
+    }
+
+    // The forward transform of the window's n samples (windowed by the caller) into the n/2 coefficients,
+    //   X[k] = sum over i of z[i] cos(2 pi / n * (i + 1/2 + n/4) * (k + 1/2)),
+    // as the long-term prediction needs it (ISO/IEC 14496-3 4.6.7.3, as the encoder's filter bank): the n samples fold into n/2 and the DCT-IV, its own inverse, finishes it.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public void Forward(ReadOnlySpan<float> window, Span<float> spectrum, float scale)
+    {
+        int m = _m;
+        int half = m / 2;
+        float[] folded = _folded;
+        for (int j = 0; j < half; j++)
+        {
+            folded[j] = -window[(3 * half) - 1 - j] - window[j + (3 * half)];
+        }
+
+        for (int j = half; j < m; j++)
+        {
+            folded[j] = window[j - half] - window[(3 * half) - 1 - j];
+        }
+
+        Dct4(folded);
+        float[] u = _u;
+        for (int k = 0; k < m; k++)
+        {
+            spectrum[k] = u[k] * scale;
+        }
+    }
+
+    // The DCT-IV of the n/2 values into _u: u[j] = sum over k of x[k] cos(pi / m * (j + 1/2) * (k + 1/2)), by a complex FFT of n/4 points with pre and post twiddles.
+    private void Dct4(ReadOnlySpan<float> spectrum)
     {
         int m = _m;
         int h = _h;
@@ -127,23 +180,6 @@ internal sealed class InverseMdct
             float wi = (im[k] * qc) - (re[k] * qs);
             u[2 * k] = wr;
             u[m - 1 - (2 * k)] = -wi;
-        }
-
-        float scale = Scale;
-        int quarter = m / 2;
-        for (int i = 0; i < quarter; i++)
-        {
-            output[i] = u[i + quarter] * scale;
-        }
-
-        for (int i = quarter; i < quarter + m; i++)
-        {
-            output[i] = -u[(3 * quarter) - 1 - i] * scale;
-        }
-
-        for (int i = quarter + m; i < _n; i++)
-        {
-            output[i] = -u[i - (3 * quarter)] * scale;
         }
     }
 }

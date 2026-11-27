@@ -26,6 +26,9 @@ internal static class Tables
 
     public static readonly float[][] ShortRise = [SineRise(128), KbdRise(128, 6)];
 
+    // The LTP coefficients of ltp_coef 0 to 7 (Table 4.152).
+    public static readonly float[] LtpCoefficients = [0.570829f, 0.696616f, 0.813004f, 0.911304f, 0.984900f, 1.067894f, 1.194601f, 1.369533f];
+
     // The TNS parcor coefficients sin(index / iqfac) for 3 and 4 bit resolutions, indexed by the signed value plus 4 or 8 (4.6.9.3).
     public static readonly float[][] Tns = [BuildTns(3), BuildTns(4)];
 

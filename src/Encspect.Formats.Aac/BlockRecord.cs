@@ -47,6 +47,22 @@ internal static class BlockRecord
     public const int TnsMaxFilters = 8;
     public const int TnsMaxCoefficients = 20;
 
+    // Per slot, after the TNS filters: the prediction data of ics_info. Prediction: bit 0 predictor_data_present, bit 1 predictor_reset (AAC Main; ISO/IEC 13818-7 13.3.1);
+    // the reset group; prediction_used as a bit mask of the bands (up to 41, so two ints). Then ltp_data of the object type AAC LTP (ISO/IEC 14496-3 4.4.2): ltp_data_present,
+    // the lag, the coefficient index and ltp_long_used as a bit mask of the bands (up to 40).
+    public const int Prediction = Tns + (TnsMaxFilters * TnsFilterInts);
+    public const int PredictionGroup = Prediction + 1;
+    public const int PredictionUsedLow = Prediction + 2;
+    public const int PredictionUsedHigh = Prediction + 3;
+    public const int LtpPresent = Prediction + 4;
+    public const int LtpLag = Prediction + 5;
+    public const int LtpCoefficient = Prediction + 6;
+    public const int LtpUsedLow = Prediction + 7;
+    public const int LtpUsedHigh = Prediction + 8;
+    public const int PredictionInts = 9;
+    public const int PredictionPresent = 1;
+    public const int PredictionReset = 2;
+
     public const int KindSingle = 1;
     public const int KindPairFirst = 2;
     public const int KindPairSecond = 3;
@@ -141,6 +157,7 @@ internal sealed class RecordStore
         Span<int> span = At(slot);
         span[..BlockRecord.Codebooks].Clear();
         span.Slice(BlockRecord.Spectrum, 1024).Clear();
+        span.Slice(BlockRecord.Prediction, BlockRecord.PredictionInts).Clear();
         span[BlockRecord.Kind] = kind;
         span[BlockRecord.Tag] = tag;
         return slot;

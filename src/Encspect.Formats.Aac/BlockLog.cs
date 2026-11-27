@@ -30,8 +30,8 @@ internal sealed class BlockLog
     // The decoding of the stream, or null where its coding is not decoded: the walk then stores values for the blocks it is given the feed for.
     public DecodeFeed? Feed { get; set; }
 
-    // Whether a stream of this configuration is decoded: AAC LC with frames of 1,024 samples, with SBR and PS where the stream has them (not downsampled SBR).
-    public static bool CanDecode(AacConfig config) => config is { ObjectType: 2, CoreFrameLength: 1024 } && !IsDownsampled(config);
+    // Whether a stream of this configuration is decoded: AAC Main, LC and LTP with frames of 1,024 samples, with SBR and PS where the stream has them (not downsampled SBR).
+    public static bool CanDecode(AacConfig config) => config is { ObjectType: 1 or 2 or 4, CoreFrameLength: 1024 } && !IsDownsampled(config);
 
     // SBR that works at the core's rate (the extension rate equals the core's, so SBR fills the band up to half of it): not decoded.
     private static bool IsDownsampled(AacConfig config) => config.Sbr == true && config.ExtensionSampleRate is { } extension && extension <= config.CoreSampleRate;

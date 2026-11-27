@@ -2,13 +2,13 @@ using Encspect.Core;
 
 namespace Encspect.Formats.Aac.Decoding;
 
-// The decoder of AAC LC (ISO/IEC 14496-3, subpart 4) at the core's rate: the parser's entropy pass (BlockReader) reads every raw data block's elements into the buffers the
+// The decoder of AAC LC, Main and LTP (ISO/IEC 14496-3, subpart 4) at the core's rate: the parser's entropy pass (BlockReader) reads every raw data block's elements into the buffers the
 // session lends, and this decoder adds the reconstruction: inverse quantization with the scalefactors, mid/side and intensity stereo, noise substitution, temporal noise
 // shaping, and the filter bank (inverse MDCT, windows, overlap-add). The reconstruction follows libxaac (github.com/ittiam-systems/libxaac at 2fbadd5, Apache 2.0, Copyright
 // (C) The Android Open Source Project; the notice is in THIRD-PARTY-NOTICES.md) where the specification leaves details to the decoder: the order of the tools, noise
 // substitution's generator and its correlation with mid/side stereo, and the TNS filter ranges. It computes in single precision, where libxaac computes in fixed point.
 // The stream stores no checksum over its audio, so the decoder runs only where a front end asks for the samples. HE-AAC (SBR) is decoded on top of the
-// core (SbrElement) and HE-AAC v2 (parametric stereo) on top of that (PsDecoder); downsampled SBR, AAC Main, LTP and SSR, ER AAC, USAC and frames of 960 samples are not (docs/formats/aac.md).
+// core (SbrElement) and HE-AAC v2 (parametric stereo) on top of that (PsDecoder); downsampled SBR, AAC SSR, ER AAC, USAC and frames of 960 samples are not (docs/formats/aac.md).
 public sealed class AacDecoder : IDecoder
 {
     public string Id => DecodeFeed.CodecId;
@@ -33,9 +33,9 @@ public sealed class AacDecoder : IDecoder
             throw new InvalidDataException(refusal);
         }
 
-        if (config.ObjectType != 2 || config.FrameLength != 1024)
+        if (config.ObjectType is not (1 or 2 or 4) || config.FrameLength != 1024)
         {
-            throw new InvalidDataException("Only AAC LC with frames of 1,024 samples is decoded");
+            throw new InvalidDataException("Only AAC Main, LC and LTP with frames of 1,024 samples are decoded");
         }
 
         if (config.IsDownsampled)

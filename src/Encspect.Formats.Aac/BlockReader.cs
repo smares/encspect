@@ -693,7 +693,10 @@ internal sealed partial class BlockReader
             Field(n, "Window Shape", start + 3, start + 4, ics.WindowShape == 0 ? "0 (sine)" : "1 (KBD)", Explain.WindowShape, Topics.Windows);
             ics.Predictor = false;
             ics.PredictorReset = false;
+            ics.PredictorGroup = 0;
+            ics.PredictionUsed = 0;
             ics.Ltp = false;
+            ics.LtpUsed = 0;
             bool eight = ics.WindowSequence == 2;
             int sfbStart = bits.Original;
             ics.MaxSfb = (int)bits.Read(eight ? 4 : 6);
@@ -776,6 +779,7 @@ internal sealed partial class BlockReader
             {
                 int group = (int)bits.Read(5);
                 Int(n, "Predictor Reset Group", start + 1, start + 6, group, Explain.PredictorResetGroup);
+                ics.PredictorGroup = group;
                 if (group is 0 or > 30)
                 {
                     Soft("aac.predictor-reset-group-invalid", $"predictor reset group {group}, outside 1 to 30", start + 1, start + 6, "Predictor Reset Group");
@@ -793,6 +797,7 @@ internal sealed partial class BlockReader
                 }
             }
 
+            ics.PredictionUsed = flags;
             if (n is not null)
             {
                 n.Add(_where.Bits("Prediction Used", usedStart, bits.Original, FlagList(flags, used), Explain.PredictionUsed));
@@ -827,7 +832,18 @@ internal sealed partial class BlockReader
         int coefficient = (int)bits.Read(3);
         int used = Math.Min(maxSfb, 40);
         int usedStart = bits.Original;
-        bits.Skip(used);
+        ulong flags = 0;
+        for (int sfb = 0; sfb < used; sfb++)
+        {
+            if (bits.ReadBit())
+            {
+                flags |= 1UL << sfb;
+            }
+        }
+
+        ics.LtpLag = lag;
+        ics.LtpCoefficient = coefficient;
+        ics.LtpUsed = flags;
         if (n is not null)
         {
             Node data = _where.Bits(name, dataStart, bits.Original, $"lag {lag}", Explain.LtpData);
@@ -1432,6 +1448,22 @@ internal sealed partial class BlockReader
         }
 
         record[BlockRecord.GroupLengths] = lengths;
+        if (ics.Predictor)
+        {
+            record[BlockRecord.Prediction] = BlockRecord.PredictionPresent | (ics.PredictorReset ? BlockRecord.PredictionReset : 0);
+            record[BlockRecord.PredictionGroup] = ics.PredictorGroup;
+            record[BlockRecord.PredictionUsedLow] = (int)(uint)ics.PredictionUsed;
+            record[BlockRecord.PredictionUsedHigh] = (int)(uint)(ics.PredictionUsed >> 32);
+        }
+
+        if (ics.Ltp)
+        {
+            record[BlockRecord.LtpPresent] = 1;
+            record[BlockRecord.LtpLag] = ics.LtpLag;
+            record[BlockRecord.LtpCoefficient] = ics.LtpCoefficient;
+            record[BlockRecord.LtpUsedLow] = (int)(uint)ics.LtpUsed;
+            record[BlockRecord.LtpUsedHigh] = (int)(uint)(ics.LtpUsed >> 32);
+        }
     }
 
     private void StoreCodebooks(Ics ics)
@@ -1550,7 +1582,17 @@ internal sealed partial class BlockReader
 
         public bool PredictorReset { get; set; }
 
+        public int PredictorGroup { get; set; }
+
+        public ulong PredictionUsed { get; set; }
+
         public bool Ltp { get; set; }
+
+        public int LtpLag { get; set; }
+
+        public int LtpCoefficient { get; set; }
+
+        public ulong LtpUsed { get; set; }
 
         // What the spectral data holds: the upper edge of its highest nonzero line within a window (0 where all are zero), and how many values are nonzero and how many are
         // escape-coded.
@@ -1578,6 +1620,8 @@ internal sealed partial class BlockReader
             other.GroupLengths.CopyTo(GroupLengths, 0);
             Predictor = other.Predictor;
             PredictorReset = other.PredictorReset;
+            PredictorGroup = other.PredictorGroup;
+            PredictionUsed = other.PredictionUsed;
         }
     }
 }
