@@ -46,4 +46,49 @@ public class AacMainLtpDecoderTests
 
         Assert.Equal(0, stream.Measurements!.WithheldSamples);
     }
+
+    private sealed class FiniteSink : IPcmSink
+    {
+        public long Samples { get; private set; }
+
+        public long NotFinite { get; private set; }
+
+        public float Peak { get; private set; }
+
+        public void Write(PcmBlock block)
+        {
+            foreach (float v in block.Floats)
+            {
+                if (!float.IsFinite(v))
+                {
+                    NotFinite++;
+                }
+                else
+                {
+                    Peak = Math.Max(Peak, Math.Abs(v));
+                }
+            }
+
+            Samples += block.Length;
+        }
+
+        public void End(long samples)
+        {
+        }
+    }
+
+    // A stream that keeps long-term prediction on at lag 1,024 with the largest coefficient grows its output by 1.37 a block; unbounded it reaches infinity near block 210 and then NaN of
+    // either sign, which differ by platform. The spectrum is held to a limit (as the TNS filter's and Main's predictor's are), so every sample is finite, and the golden pins the bits.
+    [Fact]
+    public void LongTermPredictionThatFeedsItselfStaysFinite()
+    {
+        byte[] file = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "aac", "adts", "ltp-feedback-growth.aac"));
+        var sink = new FiniteSink();
+        Report report = Analyzer.CreateDefault().Analyze("growth.aac", new MemoryStream(file), new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = long.MaxValue, Output = _ => sink } });
+
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+        Assert.Equal(260 * 1024, sink.Samples);
+        Assert.Equal(0, sink.NotFinite);
+        Assert.True(sink.Peak > 1e6f, $"the output peaks at {sink.Peak}, so the loop did not grow");
+    }
 }

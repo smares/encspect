@@ -1625,6 +1625,21 @@ def main_ltp_decoding():
         [stream("AAC LTP", RATE, 1, "Mono", 23 * 1024)], {}, [["aac.sync-lost", "ADTS sync is lost for"]],
         skip={"ffprobe": "ffmpeg resyncs after damage in its own way.", "faad": "faad2 stops at the damaged frame."})))
 
+    # Long-term prediction feeding itself: one frame of large values, then 259 frames with no coded value that predict from the output at lag 1,024 with the largest coefficient
+    # (1.37) in all 40 bands, so that the output grows by that factor in every block. Without a bound the output reaches infinity near block 210 and then NaN of either sign.
+    made = []
+    for i in range(260):
+        if i == 0:
+            ics = channel(M.ONLY_LONG, 1, [[(11, 40)]], gain=150, seed=1)
+        else:
+            ics = channel(M.ONLY_LONG, 1, [[(0, 40)]], seed=1, predictor=((1024, 7, [1] * 40),))
+        made.append(M.raw_data_block([M.Element(M.SCE, ics=ics)], object_type=4))
+    data, rows = concat(adts_frames(made, profile=3))
+    out.append(("ltp-feedback-growth.aac", data, manifest(
+        "AAC LTP (MPEG-4 ADTS profile 3), mono: a frame of large values and 259 frames that code nothing and predict at lag 1,024 with the largest coefficient in 40 bands, whose "
+        "feedback grows by 1.37 a block: the decoder holds the spectrum to a limit, so the output stays finite.", data, rows, [stream("AAC LTP", RATE, 1, "Mono", len(rows) * 1024)], {},
+        skip={"faad": "faad2 reads ADTS profile 3 but its -i output names no LTP.", "decode": "ffmpeg's float output overflows to infinity and NaN here."})))
+
     # A dependently switched coupling channel element in an LTP stream (4.6.7.4.3 allows none).
     blocks = []
     for n in range(4):

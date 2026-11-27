@@ -19,6 +19,11 @@ internal sealed class FrameDecoder : IFrameDecoder
 
     // The forward transform of the predicted window is twice the transpose of the inverse's sum, in the units of the spectrum (the output's full scale is 32768): the pair that
     // reconstructs a window as the encoder's filter bank does (found with the ISO/IEC 14496-26 stream ap01_48, whose reference waveform the output then matches to its 24-bit rounding).
+    // Long-term prediction feeds the output back into the spectrum, at a gain of up to 1.37 for as long as a stream keeps it on (4.6.7.3 bounds nothing): a spectrum value beyond this
+    // (the largest a stream can code is about 2^57) is held to it, so that the loop stays finite and a crafted stream gives the same output on every platform, as the TNS filter's
+    // limit and Main's predictor's do. No stream that follows the specification reaches it.
+    private const float LtpLimit = 1e18f;
+
     private const float LtpTransformScale = 2f * 32768f;
     // The shape of the window before the first block, which has the same shape on both halves (4.6.11.3.2).
     private const int FirstShape = -1;
@@ -1186,7 +1191,7 @@ internal sealed class FrameDecoder : IFrameDecoder
 
             for (int k = _longOffsets[sfb]; k < _longOffsets[sfb + 1]; k++)
             {
-                target[k] += spectrum[k];
+                target[k] = Math.Clamp(target[k] + Math.Clamp(spectrum[k], -LtpLimit, LtpLimit), -LtpLimit, LtpLimit);
             }
         }
     }

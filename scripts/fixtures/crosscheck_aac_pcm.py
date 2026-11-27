@@ -105,7 +105,7 @@ FIRST_BLOCK = 1024
 FIRST_BLOCK_KBD = {"blocks-missing.aac", "blocks-trailing-bytes.aac", "corrupt-syntax.aac", "crc-short-element.aac", "crc-stereo-damaged.aac", "crc-stereo.aac", "fill-and-data.aac",
                    "first-block-kbd.aac", "lfe-restrictions-pce.aac", "tns-order-above-12.aac", "loud-pulse-tns.aac", "sbr-in-truncated-frame.aac", "streams-limited.aac", "two-signature-streams.aac", "loud-noise-pair.aac",
                    "windows.aac", "main-prediction.aac", "main-prediction-bands.aac", "main-prediction-gap.aac", "main-prediction-largest.aac", "main-prediction-overdue.aac", "main-prediction-reset-cycle.aac",
-                   "main-prediction-short.aac", "main-tns-order-20.aac", "ltp.aac", "ltp-lags.aac", "ltp-gap.aac", "ltp-tns-noise.aac"}
+                   "main-prediction-short.aac", "main-tns-order-20.aac", "ltp.aac", "ltp-feedback-growth.aac", "ltp-lags.aac", "ltp-gap.aac", "ltp-tns-noise.aac"}
 # Damaged files libxaac stops on after its first block: with the first block left out nothing is left to compare, which is no failure.
 LIBXAAC_FIRST_BLOCK_ONLY = {"blocks-missing.aac", "blocks-trailing-bytes.aac"}
 
@@ -153,6 +153,7 @@ DIFFERENCES = {
     "main-prediction-overdue.aac": ("samples", "a hand-built file of patterned values with a peak of 0.4 to 2 LSB of 16 bits: FFmpeg's float decoder and the analyzer differ by 10^-8 to 10^-7 of full scale (about 10^-3 of the file's peak), the noise floor of float arithmetic that the same two decoders show on the ISO reference stream ap01_48 (0.001 LSB of 16 bits), which is over the relative bound a file this quiet gets"),
     "ltp.aac": ("samples", "a hand-built file of patterned values with a peak of 0.4 to 2 LSB of 16 bits: FFmpeg's float decoder and the analyzer differ by 10^-8 to 10^-7 of full scale (about 10^-3 of the file's peak), the noise floor of float arithmetic that the same two decoders show on the ISO reference stream ap01_48 (0.001 LSB of 16 bits), which is over the relative bound a file this quiet gets"),
     "ltp-lags.aac": ("samples", "a hand-built file of patterned values with a peak of 0.4 to 2 LSB of 16 bits: FFmpeg's float decoder and the analyzer differ by 10^-8 to 10^-7 of full scale (about 10^-3 of the file's peak), the noise floor of float arithmetic that the same two decoders show on the ISO reference stream ap01_48 (0.001 LSB of 16 bits), which is over the relative bound a file this quiet gets"),
+    "ltp-feedback-growth.aac": ("samples", "long-term prediction that feeds its output back at a gain of 1.37 in every block for 259 blocks: FFmpeg's float output overflows to infinity and NaN near block 210, where the analyzer holds the spectrum to 10^18 and its output stays finite"),
     "tns-overflow.aac": ("samples", "a TNS filter on the largest scalefactors: FFmpeg's float decoder overflows to infinity and NaN, the analyzer saturates the spectrum"),
     "corrupt-soft.aac": ("positions", "raw data blocks with more channel streams than the stream's configuration states: the analyzer does not decode them (decode.frame-invalid), FFmpeg decodes the channels it can"),
     "window-sequences-invalid.aac": ("samples", "five windows whose slopes do not match those of the window before: FFmpeg windows those transitions differently, in the blocks that hold them and the "
