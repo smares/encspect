@@ -128,6 +128,8 @@ class VbrLayer3Fixture(Layer3Fixture):
         tag_frame.tag_end = tag_end(tag)
         entry = self.frames[-len(audio) - 1]
         entry["fields"].update(vbr_tags.report_fields(tag))
+        # Not verified over the junk (the CRC covers the file's bytes): the analyzer shows no computed CRC.
+        entry["fields"].pop("LAME Tag/Music CRC/Computed", None)
         tag["frame_offset"] = start
         self.layout[-len(audio) - 1]["header"] = tag
         self.headers.append(tag)

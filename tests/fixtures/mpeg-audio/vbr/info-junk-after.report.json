@@ -6356,8 +6356,8 @@
     "findings": [
       {
         "severity": "Warning",
-        "code": "mpeg-audio.junk-after-header-frame",
-        "message": "100 bytes after the Info header frame, before the first audio frame at 0x1E4, are not audio.",
+        "code": "mpeg-audio.junk-after-vbr-header-frame",
+        "message": "100 bytes after the Info header frame, before the next frame at 0x1E4, are not audio.",
         "offset": 384,
         "length": 100,
         "path": [
