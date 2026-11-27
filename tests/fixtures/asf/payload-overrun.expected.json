@@ -148,12 +148,12 @@
  },
  "findings": [
   {
-   "code": "asf.codec-not-analyzed",
-   "contains": "PCM"
-  },
-  {
    "code": "asf.payload-overrun",
    "contains": "extends past"
+  },
+  {
+   "code": "pcm.partial-sample-frame",
+   "contains": "257 bytes"
   }
  ],
  "crosscheck": {

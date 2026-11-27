@@ -2591,6 +2591,100 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "name": "Statistics",
+                  "kind": "Statistics",
+                  "offset": 1564,
+                  "length": 306,
+                  "children": [
+                    {
+                      "name": "Codec",
+                      "value": "PCM",
+                      "offset": 1564,
+                      "length": 306
+                    },
+                    {
+                      "name": "Sample Frames",
+                      "value": 90,
+                      "unit": "sample frames",
+                      "offset": 1564,
+                      "length": 306
+                    },
+                    {
+                      "name": "Duration",
+                      "value": 0.01125,
+                      "unit": "s",
+                      "offset": 1564,
+                      "length": 306
+                    },
+                    {
+                      "name": "Sample Rate",
+                      "value": 8000,
+                      "unit": "Hz",
+                      "offset": 1564,
+                      "length": 306
+                    },
+                    {
+                      "name": "Channels",
+                      "value": 1,
+                      "unit": "channels",
+                      "offset": 1564,
+                      "length": 306
+                    },
+                    {
+                      "name": "Channel Layout",
+                      "value": "mono (front center)",
+                      "offset": 1564,
+                      "length": 306
+                    },
+                    {
+                      "name": "Bits Per Sample",
+                      "value": 16,
+                      "unit": "bits",
+                      "offset": 1564,
+                      "length": 306
+                    },
+                    {
+                      "name": "Sample Format",
+                      "value": "signed integer",
+                      "offset": 1564,
+                      "length": 306
+                    },
+                    {
+                      "name": "Byte Order",
+                      "value": "little-endian",
+                      "offset": 1564,
+                      "length": 306
+                    },
+                    {
+                      "name": "Average Bitrate",
+                      "value": 128,
+                      "unit": "kbps",
+                      "offset": 1564,
+                      "length": 306
+                    }
+                  ]
+                },
+                {
+                  "name": "Writer",
+                  "value": "Windows Media Format SDK 12.0.19041.1",
+                  "offset": 1564,
+                  "length": 306,
+                  "children": [
+                    {
+                      "name": "Confidence",
+                      "value": "Low",
+                      "offset": 1564,
+                      "length": 306
+                    },
+                    {
+                      "name": "Evidence",
+                      "value": "Extended Content Description Object descriptor WMFSDKVersion at 0x34F names \"Windows Media Format SDK 12.0.19041.1\"",
+                      "offset": 1564,
+                      "length": 306
+                    }
+                  ]
                 }
               ]
             }
@@ -2598,18 +2692,62 @@
         }
       ]
     },
-    "streams": [],
+    "streams": [
+      {
+        "nodes": [
+          [
+            0,
+            1
+          ]
+        ],
+        "codec": "PCM",
+        "codingClass": "lossless",
+        "sampleRate": 8000,
+        "channels": 1,
+        "channelMode": "Mono",
+        "channelLayout": [
+          "front center"
+        ],
+        "channelLayoutName": "mono",
+        "bitsPerSample": 16,
+        "samples": 90,
+        "duration": 0.01125,
+        "averageBitrate": 128,
+        "isVbr": false,
+        "playbackGroup": 1,
+        "writer": "Windows Media Format SDK 12.0.19041.1",
+        "writerConfidence": "Low",
+        "series": []
+      }
+    ],
     "findings": [
       {
         "severity": "Info",
-        "code": "asf.codec-not-analyzed",
-        "message": "Stream 1 is coded as PCM (format tag 0x0001), which is not routed from ASF to a codec parser; its media objects are not analyzed.",
-        "offset": 134,
-        "length": 96,
+        "code": "pcm.writer-claim-differs",
+        "message": "The Extended Content Description Object descriptor WM/EncodingSettings names \"Lavf60.16.100\", but the Extended Content Description Object descriptor WMFSDKVersion names \"Windows Media Format SDK 12.0.19041.1\"; other software may have rewritten the file, and kept one of them.",
+        "offset": 919,
+        "length": 28,
         "path": [
           0,
           0,
-          6
+          8,
+          14,
+          4
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Info",
+        "code": "pcm.writer-claim-differs",
+        "message": "The Extended Content Description Object descriptor WM/ToolName names \"Tool\", but the Extended Content Description Object descriptor WMFSDKVersion names \"Windows Media Format SDK 12.0.19041.1\"; other software may have rewritten the file, and kept one of them.",
+        "offset": 977,
+        "length": 10,
+        "path": [
+          0,
+          0,
+          8,
+          15,
+          4
         ],
         "count": 1
       }

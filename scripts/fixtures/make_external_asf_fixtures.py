@@ -76,9 +76,9 @@ ROUTED = [
     ("external-ffmpeg-mp2-stereo", "mpeg-audio/external-ffmpeg-mp2.mp2", "MPEG-1 Layer II", 48000, 2),
     ("external-ffmpeg-pcm-s16-stereo", "wav/external-pcm-s16-stereo-44100.wav", "PCM", 44100, 2),
     ("external-ffmpeg-pcm-s16-5-1", "wav/external-pcm-s16-5.1-48000.wav", "PCM", 48000, 6),
-    ("external-ffmpeg-pcm-f32-stereo", "wav/external-pcm-f32-stereo-44100.wav", "PCM", 44100, 2),
+    ("external-ffmpeg-pcm-f32-stereo", "wav/external-pcm-f32-stereo-44100.wav", "PCM (floating-point)", 44100, 2),
     ("external-ffmpeg-alaw-mono", "wav/external-alaw-mono-8000.wav", "A-law", 8000, 1),
-    ("external-ffmpeg-mulaw-mono", "wav/external-mulaw-mono-8000.wav", "mu-law", 8000, 1),
+    ("external-ffmpeg-mulaw-mono", "wav/external-mulaw-mono-8000.wav", "Mu-law", 8000, 1),
 ]
 
 

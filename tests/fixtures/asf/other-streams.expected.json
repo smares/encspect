@@ -1,5 +1,5 @@
 {
- "description": "An MPEG Layer I and II stream (format tag 0x0050, which has no parser), a video stream and a command stream, none of which is analyzed.",
+ "description": "An MPEG Layer I and II stream (format tag 0x0050, whose payloads are no MPEG audio frames), a video stream and a command stream, none of which is analyzed.",
  "format": "ASF",
  "length": 999,
  "objects": [
@@ -162,16 +162,16 @@
  },
  "findings": [
   {
-   "code": "asf.codec-not-analyzed",
-   "contains": "MPEG Layer I and II"
-  },
-  {
    "code": "asf.stream-not-analyzed",
    "contains": "video"
   },
   {
    "code": "asf.stream-not-analyzed",
    "contains": "command"
+  },
+  {
+   "code": "mpeg-audio.packets-no-frame",
+   "contains": "334 bytes"
   },
   {
    "code": "asf.stream-without-payloads",

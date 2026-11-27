@@ -155,20 +155,6 @@ public sealed partial class AsfParser
             }
 
             string? codec = state.Routes.GetValueOrDefault(format.EffectiveTag);
-            PcmCoding? pcm = null;
-            if (codec == WaveFormatRoutes.PcmSamples)
-            {
-                pcm = WaveFormatRoutes.PcmCodingOf(format.EffectiveTag, format.Channels, format.BitsPerSample, format.BlockAlign, format.SamplesPerSecond, false,
-                    WaveFormatRoutes.StreamLayout(format.Channels, format.Tag == WaveFormatRoutes.Extensible, format.ChannelMask), out string why);
-                if (pcm is null)
-                {
-                    state.Findings.AddNow(Severity.Info, "asf.codec-not-analyzed",
-                        $"Stream {stream.Number} is coded as {CodecNameOf(format.EffectiveTag)} (format tag 0x{format.EffectiveTag:X4}) and its WAVEFORMATEX {why}, so its samples are not read.", anchor);
-                    AddProtectedStream(state, stream);
-                    continue;
-                }
-            }
-
             if (codec is null)
             {
                 state.Findings.AddNow(Severity.Info, "asf.codec-not-analyzed",
@@ -181,6 +167,20 @@ public sealed partial class AsfParser
             {
                 RouteEncrypted(state, stream, codec, format, protection, anchor);
                 continue;
+            }
+
+            PcmCoding? pcm = null;
+            if (codec == WaveFormatRoutes.PcmSamples)
+            {
+                pcm = WaveFormatRoutes.PcmCodingOf(format.EffectiveTag, format.Channels, format.BitsPerSample, format.BlockAlign, format.SamplesPerSecond, false,
+                    WaveFormatRoutes.StreamLayout(format.Channels, format.Tag == WaveFormatRoutes.Extensible, format.ChannelMask), out string why);
+                if (pcm is null)
+                {
+                    state.Findings.AddNow(Severity.Info, "asf.codec-not-analyzed",
+                        $"Stream {stream.Number} is coded as {CodecNameOf(format.EffectiveTag)} (format tag 0x{format.EffectiveTag:X4}) and its WAVEFORMATEX {why}, so its samples are not read.", anchor);
+                    AddProtectedStream(state, stream);
+                    continue;
+                }
             }
 
             if (stream.Spread is { Scrambles: true })
@@ -270,7 +270,8 @@ public sealed partial class AsfParser
     {
         state.Findings.AddNow(Severity.Info, "asf.codec-not-analyzed",
             $"Stream {stream.Number} is encrypted, so its media objects cannot be analyzed; the stream is described by its header.", anchor);
-        CodecConfiguration? configuration = ConfigurationOf(state, stream, format);
+        // The PCM parser describes samples; ciphertext has none to count, so the header's own account stands.
+        CodecConfiguration? configuration = codec == WaveFormatRoutes.PcmSamples ? null : ConfigurationOf(state, stream, format);
         int before = state.Context.Streams.Count;
         if (configuration is not null)
         {

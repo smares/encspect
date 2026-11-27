@@ -87,7 +87,7 @@ public class AsfContainerSamplesTests
         byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "asf", "protected-advanced-data-size.asf"));
         Report report = Analyzer.CreateDefault().Analyze("p.asf", new MemoryStream(data));
         Assert.Null(Find(report.Root, "Container Samples"));
-        StreamInfo stream = Assert.Single(report.Streams);
+        StreamInfo stream = Assert.Single(report.Streams, s => s.IsProtected);
         Assert.Equal((long)Math.Round(stream.Duration * stream.SampleRate, MidpointRounding.AwayFromZero), stream.Samples);
     }
 
@@ -104,7 +104,7 @@ public class AsfContainerSamplesTests
         byte[] data = Patched(fixture, playTicks, 0);
         Report report = Analyzer.CreateDefault().Analyze("p.asf", new MemoryStream(data));
         Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed");
-        Assert.Equal(expected, Assert.Single(report.Streams).Samples);
+        Assert.Equal(expected, Assert.Single(report.Streams, s => s.IsProtected == fixture.StartsWith("protected", StringComparison.Ordinal)).Samples);
     }
 
     private static readonly byte[] StreamPropertiesId = Guid.Parse("B7DC0791-A9B7-11CF-8EE6-00C00C205365").ToByteArray();
