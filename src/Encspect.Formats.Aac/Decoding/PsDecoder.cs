@@ -6,7 +6,7 @@ namespace Encspect.Formats.Aac.Decoding;
 // Parametric stereo (ISO/IEC 14496-3 8.6.4, HE-AAC v2): the QMF domain of a mono core with SBR becomes the QMF domains of two channels. A hybrid filter bank splits the lowest QMF bands, the
 // signal is decorrelated by all-pass chains and delays, and each frame's intensity differences (IID) and coherences (ICC) mix it with the original in two-by-two matrices that are interpolated
 // between the envelope borders. The structure and the tables follow libxaac (github.com/ittiam-systems/libxaac at 2fbadd5, Apache 2.0, Copyright (C) The Android Open Source Project; the
-// notice is in THIRD-PARTY-NOTICES.md), ixheaacd_ps_dec_flt.c and ixheaacd_ps_bitdec.c, in single precision; the 34-band mode, which libxaac maps to 20 bands, is computed in 34.
+// notice is in THIRD-PARTY-NOTICES.md), ixheaacd_ps_dec_flt.c and ixheaacd_ps_bitdec.c, in single precision; the 34-band mode, which libxaac and the baseline decoder (8.A.4) map to 20 bands, is computed in 34, so the decoder is neither the baseline of HE AAC levels 2 to 4 nor the level 5 tool (Table 1.12 note 1).
 // The hybrid analysis looks 6 slots ahead: the six slots after the frame are the low band's analysis slots the SBR buffer already holds (the standard's delay of the SBR data, as libxaac takes
 // them), so the output is not later than the input; the inter-channel phase differences (IPD and OPD) are ignored as the baseline decoder ignores them (8.A.4), and matrix Ra mixes every mode (coherence modes 3 to 5 read as 0 to 2).
 internal sealed class PsDecoder

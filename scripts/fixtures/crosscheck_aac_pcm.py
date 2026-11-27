@@ -81,7 +81,6 @@ NOISE = {
     "ffmpeg-mono-faststart.m4a": "codes noise substitution",
     "mp4box-mux.m4a": "codes noise substitution",
     "stereo.aac": "codes noise substitution",
-    "windows.aac": "codes noise substitution",
     "loud-noise-pair.aac": "codes noise substitution",
     "intensity-noise.aac": "codes noise substitution",
     "apple-intel-passthru-m4a-from-faac-m4a.m4a": "codes noise substitution",
@@ -95,13 +94,39 @@ NOISE = {
 # the largest difference of an unlisted file is 21 LSB, so the design's 2 LSB is widened to 32 for it (the RMS bound of 1 LSB stays).
 LIBXAAC_MAX_LSB = 32
 
+# The first block's left window half has its own shape in the standard (4.6.11.3.2: for the first raw_data_block to be decoded the left and right halves have the same shape),
+# where FFmpeg's decoder and libxaac's start from the sine window; the analyzer follows the standard, so the first 1,024 samples (the first block's output) are left out of both comparisons.
+FIRST_BLOCK = 1024
+
 # Files where libxaac's test decoder differs from the analyzer beyond that, each with the reason, the blocks of 1,024 samples where it does (the positions at the coded stage) and the
 # largest difference in LSB it is expected not to pass: a change of the analyzer on these files, or a difference elsewhere in them, fails the run. The analyzer computes the
 # standard's arithmetic in each case, and FFmpeg's decoder agrees with it to about 10^-8 on the music files; four of the entries are one cause.
 LIBXAAC_TNS = ("libxaac's 16-bit path for TNS filters in one or two channels (ixheaacd_tns_decode_coef, ixheaacd_tns_parcor_lpc_convert and ixheaacd_tns_ar_filter in "
                "ixheaacd_pns_js_thumb.c): the filter's coefficients are 16 bits, and near 0.996 the all-pole filter amplifies their rounding, where the analyzer filters with the "
                "standard's real values (a libxaac build with 32-bit TNS agrees within 22 LSB on all four files)")
+LIBXAAC_ORDER = ("the order of the tools: libxaac generates noise after intensity stereo (ixheaacd_channel.c), so an intensity band over a noise band of the first channel copies zeros, where "
+                 "Figure 4.2 and 4.6.8.2.3 scale the noise (FFmpeg's decoder gives the second channel the noise too)")
 LIBXAAC_DIFFERENCES = {
+    "faac-1.31.1-adts.aac": (LIBXAAC_ORDER, [1], 340),
+    "faac-1.31.1.m4a": (LIBXAAC_ORDER, [1], 340),
+    "faac-1.40-adts.aac": (LIBXAAC_ORDER, [1], 340),
+    "faac-1.40.m4a": (LIBXAAC_ORDER, [1], 340),
+    "faac-1.40-pink-equal-adts.aac": (LIBXAAC_ORDER, [3, 4, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86], 4723),
+    "faac-1.40-pink-side-12-db-adts.aac": (LIBXAAC_ORDER, [8, 9, 12, 13, 14, 15, 16, 17, 18, 19, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 78, 79, 80, 81, 82, 83, 84, 85, 86], 2317),
+    "faac-1.50-adts.aac": (LIBXAAC_ORDER, [1], 340),
+    "faac-1.50.m4a": (LIBXAAC_ORDER, [1], 340),
+    "apple-passthru-m4a-from-faac-m4a.m4a": (LIBXAAC_ORDER, [1], 340),
+    "apple-intel-passthru-m4a-from-faac-m4a.m4a": (LIBXAAC_ORDER, [1], 340),
+    "faac-1.31.1-adts.aac": (LIBXAAC_ORDER, [1], 340),
+    "faac-1.31.1.m4a": (LIBXAAC_ORDER, [1], 340),
+    "faac-1.40-adts.aac": (LIBXAAC_ORDER, [1], 340),
+    "faac-1.40.m4a": (LIBXAAC_ORDER, [1], 340),
+    "faac-1.40-pink-equal-adts.aac": (LIBXAAC_ORDER, [3, 4, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86], 4723),
+    "faac-1.40-pink-side-12-db-adts.aac": (LIBXAAC_ORDER, [8, 9, 12, 13, 14, 15, 16, 17, 18, 19, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 78, 79, 80, 81, 82, 83, 84, 85, 86], 2317),
+    "faac-1.50-adts.aac": (LIBXAAC_ORDER, [1], 340),
+    "faac-1.50.m4a": (LIBXAAC_ORDER, [1], 340),
+    "apple-passthru-m4a-from-faac-m4a.m4a": (LIBXAAC_ORDER, [1], 340),
+    "apple-intel-passthru-m4a-from-faac-m4a.m4a": (LIBXAAC_ORDER, [1], 340),
     "loud-noise-pair.aac": ("grouped short windows whose noise both channels share: libxaac reuses the first channel's seed variable for the second, which starts from the first channel's "
                             "last window of the group (ixheaacd_pns_js_thumb.c), so the second channel draws other noise there; the analyzer gives both the same noise in each window", [1, 2], 4862),
     "stereo-coding.aac": ("block 10, a pair without a common window: libxaac reads the mid/side flags only for a common window and never clears them (ixheaacd_read_ms_data), so its "
@@ -109,7 +134,7 @@ LIBXAAC_DIFFERENCES = {
     "apple-win-lc-m4a-q127-cbr128-tones.m4a": (LIBXAAC_TNS, [130], 57),
     "external-nero-rom-aac-22k-vbr-q050.mp4": (LIBXAAC_TNS, [146], 154),
     "apple-win-lc-m4a-q127-cbr64-clicks.m4a": (LIBXAAC_TNS + "; up to 30 % of full scale at the clicks", [72, 85, 86, 103, 117, 148, 207, 238], 9739),
-    "loud-pulse-tns.aac": (LIBXAAC_TNS + "; blocks 0 and 3 hold the filters and blocks 1 and 4 their overlap (the pulses are applied alike)", [0, 1, 3, 4], 232),
+    "loud-pulse-tns.aac": (LIBXAAC_TNS + "; block 3 holds filters, blocks 1 and 4 hold the overlap of filters (the pulses are applied alike; block 0, whose filters also differ, is left out with the first block)", [1, 3, 4], 165),
 }
 
 # Each entry says what differs: "positions", positions that only one of the two decodes (a block the analyzer refuses, or one FFmpeg refuses), and the samples the two share then
@@ -117,6 +142,8 @@ LIBXAAC_DIFFERENCES = {
 # Files whose output FFmpeg's decoder differs from the analyzer's, with the reason. The analyzer follows libxaac (docs/design/lossy-decoders.md, decision 1); the differences are
 # in what the specification leaves to the decoder and the hand-built files exercise.
 DIFFERENCES = {
+    "stereo-tool-order.aac": ("samples", "intensity bands under ms_mask_present 2, which FFmpeg's decoder inverts where 4.6.8.2.3 inverts under mask 1 alone (block 1, up to 0.03 of full scale), and noise substitution, "
+                                         "where each decoder draws its own noise (blocks 5 to 14); the second channel of the blocks with mid/side flags over the first channel's noise equals the one without them in both decoders"),
     "tns-overflow.aac": ("samples", "a TNS filter on the largest scalefactors: FFmpeg's float decoder overflows to infinity and NaN, the analyzer saturates the spectrum"),
     "stereo-coding-reserved.aac": ("samples", "ms_mask_present 3, which the specification reserves: FFmpeg refuses those blocks, the analyzer decodes them without mid/side stereo"),
     "corrupt-soft.aac": ("positions", "raw data blocks with more channel streams than the stream's configuration states: the analyzer does not decode them (decode.frame-invalid), FFmpeg decodes the channels it can"),
@@ -203,7 +230,7 @@ def libxaac_difference(mine, values, channels, lag):
     (the samples where either side is at full scale left out, as compare_pcm.py leaves them)."""
     blocks = set()
     largest = 0
-    for position in range(max(lag, 0), len(mine) // channels):
+    for position in range(max(lag, FIRST_BLOCK), len(mine) // channels):
         source = position - lag
         if source * channels + channels > len(values):
             break
@@ -221,7 +248,7 @@ def libxaac_difference(mine, values, channels, lag):
 
 def compare(manifest, reference_file, channels, start, extra=(), fmt="float32"):
     output = subprocess.run([sys.executable, str(HERE / "compare_pcm.py"), str(manifest), "--reference", str(reference_file), "--reference-format", fmt, "--reference-channels",
-                             str(channels), "--reference-first-position", str(start), "--json", *extra], capture_output=True, text=True)
+                             str(channels), "--reference-first-position", str(start), "--exclude", f"0:{FIRST_BLOCK}", "--json", *extra], capture_output=True, text=True)
     if output.returncode == 2:
         return None, output.stderr.strip()
     result = json.loads(output.stdout)
@@ -347,6 +374,9 @@ def main(argv=None):
                             problems.append(f"libxaac differs otherwise than the entry says: blocks {blocks} (expected {expected_blocks}), largest {largest} LSB (at most {expected_largest})")
                         else:
                             note = (note + "; " if note else "") + f"libxaac differs in blocks {blocks} by {largest} LSB at the most: " + reason
+                    elif found2 and "no position is in both" in found2:
+                        # libxaac decodes only the first block of a damaged file, which the comparison leaves out (FIRST_BLOCK).
+                        note = (note + "; " if note else "") + "libxaac not compared: it decodes only the first block, which is left out"
                     elif found2:
                         problems.append(f"libxaac: {found2}")
                     else:
