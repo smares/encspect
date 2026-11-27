@@ -1302,10 +1302,10 @@ def sbr_evidence():
                                         M.Element(M.SCE, ics=ics)], rate_index=rate_index(core)))
     data, rows = concat(adts_frames(blocks, rate=core, channels=1))
     out.append(("adts", "sbr-before-channel-element.aac", data, manifest(
-        "ADTS at 22050 Hz of single channel elements, each preceded by a fill element of SBR data: the payloads follow no channel element, so decoders "
-        "read none and the stream stays AAC LC at 22050 Hz.", data, rows,
-        [stream("AAC LC", core, 1, "Mono", 12 * 1024)], {"ADTS/Statistics/SBR": share(12, 12, "access unit")},
-        [["aac.sbr-without-channel-element", "12 raw data blocks hold SBR data that follows no single channel element, channel pair element or independently switched coupling channel element"]],
+        "ADTS at 22050 Hz of single channel elements, each preceded by a fill element of SBR data: the payloads follow no channel element, so they are reported and read by no "
+        "one, but 1.6.5.2 item 1 takes any payload for implicit signaling: the stream is HE-AAC at 44100 Hz (decoders read none and decode AAC LC at 22050 Hz).", data, rows,
+        [stream("HE-AAC", 2 * core, 1, "Mono", 12 * 2048)], {"ADTS/Statistics/SBR": share(12, 12, "access unit")},
+        [["aac.implicit-sbr", "12 of 12 raw data blocks hold SBR data: the stream is HE-AAC"], ["aac.sbr-without-channel-element", "12 raw data blocks hold SBR data that follows no single channel element, channel pair element or independently switched coupling channel element"]],
         skip={**skip, "ffprobe_streams": "ffmpeg cannot decode the frames (\"SBR was found before the first channel element\"), so it reports no sample rate.",
               "decode": "ffmpeg reports that SBR was found before the first channel element, the condition the fixture tests.",
               "faad_trace": "faad2 does not read the stream: its SBR payload follows no channel element, and its trace holds one raw data block."}, rate=core)))

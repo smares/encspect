@@ -811,12 +811,11 @@ internal sealed partial class BlockReader
             _sbr[key] = header;
         }
 
-        // An SBR payload signals SBR implicitly (1.6.5.2 item 1), and 4.5.2.8.2.2 puts one after each single channel element, channel pair element and independently switched coupling
-        // channel element, whose id_aac is ID_SCE (Table 4.57, Note 1): it is read as a single channel element's. None follows an LFE element or a dependently switched coupling channel
-        // element (which is added to its targets before their SBR) in the standard, but decoders take one after an LFE element for SBR (ffmpeg, faad2 and fdk-aac all do, and FAAC 2.0 and 2.1
-        // write theirs in 5.1), and a payload after either counts and is not read. A payload before any channel element is not counted: the decoders do not take it for SBR (1.6.5.2 item 1
-        // would; the lead decides).
-        _hasSbrEvidence |= _lastChannelElement is 0 or 1 or 2 or 3;
+        // Any SBR payload signals SBR implicitly (1.6.5.2 item 1), wherever it lies. 4.5.2.8.2.2 puts one after each single channel element, channel pair element and independently switched
+        // coupling channel element, whose id_aac is ID_SCE (Table 4.57, Note 1): it is read as a single channel element's. A payload after an LFE element or a dependently switched coupling
+        // channel element (which is added to its targets before their SBR) or before any channel element has no AAC element to enhance: it is reported and not read or applied (decoders
+        // differ on what they do with it; FAAC 2.0 and 2.1 write theirs after the LFE in 5.1).
+        _hasSbrEvidence = true;
         Span<int> record = default;
         if (_store is not null && _lastChannelElement is 0 or 1 && _ics[0].Slot >= 0)
         {
