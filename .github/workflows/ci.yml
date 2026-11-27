@@ -481,7 +481,8 @@ jobs:
     needs: changes
     if: needs.changes.outputs.shard-guard == 'true'
     runs-on: ubuntu-26.04
-    timeout-minutes: 30
+    # The test jobs' 40-minute budget: check_shards.py takes about 21 minutes, and 26 on a slow runner crossed the earlier 30 (main, run 45975444747).
+    timeout-minutes: 40
     defaults:
       run:
         shell: bash scripts/ci/step-shell.sh {0}
