@@ -27,6 +27,13 @@
       "goldens": [
         "tests/fixtures/aac/adts/sbr-before-channel-element.report.json"
       ]
+    },
+    {
+      "scope": "finding",
+      "code": "aac.layout-changed",
+      "goldens": [
+        "tests/fixtures/aac/adts/corrupt-soft.report.json"
+      ]
     }
   ],
   "changed": [
