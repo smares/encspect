@@ -376,11 +376,12 @@ def find_replicated(counters, rate, size, cutoff, bandwidth):
             shifts.append(0)
             continue
         n = counters.frames[k][best]
-        periodic = best_matches > 0 and any(2 * counters.matches[k][d] >= best_matches for d in range(counters.first_shift, min(w, s)))
+        would_pass = n >= REPLICATED_MINIMUM_FRAMES and 2 * best_matches >= n
+        periodic = would_pass and any(2 * counters.matches[k][d] >= best_matches for d in range(counters.first_shift, min(w, s)))
         shifts.append(best)
         bands.append({"start_row": s, "offset": hertz(best, rate, size, bins), "share": (2000 * best_matches + n) // (2 * n) if n > 0 else None,
                       "frames_with_signal": n, "is_periodic": periodic,
-                      "passes": n >= REPLICATED_MINIMUM_FRAMES and 2 * best_matches >= n and not periodic})
+                      "passes": would_pass and not periodic})
     result = {"is_searched": True, "frames_used": counters.used, "is_found": False, "reason": "", "from_frequency": 0, "to_frequency": 0, "range_frequency": 0,
               "top_band_share": 0, "is_top_band_periodic": False, "stretches": [], "bands": bands}
     if counters.used < REPLICATED_MINIMUM_FRAMES:

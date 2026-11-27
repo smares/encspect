@@ -13,14 +13,17 @@ public class MeasurementReplicatedBandsTests
 
     private const int Block = 4096;
 
+    private const int Fade = 32;
+
     private static readonly double[] Cosines = [.. Enumerable.Range(0, Block).Select(n => Math.Cos(2 * Math.PI * n / Block))];
 
     // Blocks of 4,096 samples, each a sum of lines at the bin centers of the frame (a frame of the measurer then holds exactly one block, as the used frames start at block
     // starts) with a random amplitude and phase of its own. Lines from bin firstBin to bin lastBin; each patch (source bin, first bin, last bin) copies the amplitudes and phases of the
     // bins from source up to the patch's bin, so that the fine structure of the target rows repeats that of the source rows; mix is the share of the copy (the rest is a line of its own).
-    internal static double[] Signal(int blocks, int firstBin, int lastBin, (int Source, int First, int Last)[] patches, double mix = 1.0, double amplitude = 0.0004, uint seed = 1, bool changing = false)
+    internal static double[] Signal(int blocks, int firstBin, int lastBin, (int Source, int First, int Last)[] patches, double mix = 1.0, double amplitude = 0.004, uint seed = 1, bool changing = false)
     {
         double[] result = new double[blocks * Block];
+        double[] previous = [];
         for (int b = 0; b < blocks; b++)
         {
             double[] random = MeasurementSignals.Noise(3 * (lastBin + 2), seed + (uint)(b * 7919));
@@ -43,18 +46,36 @@ public class MeasurementReplicatedBandsTests
                 }
             }
 
+            // The block's period over samples -Fade to Block + Fade (the lines repeat with the frame's period), so that it can be cross-faded into its neighbors: a hard join would
+            // spread the average spectrum above the cutoff.
+            double[] period = new double[Block + (2 * Fade)];
             for (int bin = firstBin; bin <= lastBin; bin++)
             {
                 double c = Math.Cos(phases[bin]);
                 double s = Math.Sin(phases[bin]);
-                int index = 0;
-                for (int n = 0; n < Block; n++)
+                for (int i = 0; i < period.Length; i++)
                 {
-                    index = (index + bin) & (Block - 1);
+                    int index = (int)((long)bin * (i - Fade) & (Block - 1));
                     int quarter = (index + (Block / 4)) & (Block - 1);
-                    result[(b * Block) + n] += amplitudes[bin] * ((c * Cosines[index]) - (s * Cosines[quarter]));
+                    period[i] += amplitudes[bin] * ((c * Cosines[index]) - (s * Cosines[quarter]));
                 }
             }
+
+            for (int n = Fade; n < Block - Fade; n++)
+            {
+                result[(b * Block) + n] = period[n + Fade];
+            }
+
+            if (b > 0)
+            {
+                for (int m = -Fade; m < Fade; m++)
+                {
+                    double t = 0.5 - (0.5 * Math.Cos(Math.PI * (m + Fade) / (2 * Fade)));
+                    result[(b * Block) + m] = ((1 - t) * previous[Block + m + Fade]) + (t * period[m + Fade]);
+                }
+            }
+
+            previous = period;
         }
 
         return result;
@@ -109,8 +130,18 @@ public class MeasurementReplicatedBandsTests
     [Fact]
     public void AConstantHarmonicSoundIsPeriodicAndNotFound()
     {
-        double[] period = MeasurementSignals.Triangle(Block * 60, 200, 0.3);
-        ReplicatedBandsFigures figures = Measure(period);
+        // Lines at every twentieth bin (215 Hz, exactly 5 rows apart) with random phases that repeat in every block: the fine structure repeats every 5 rows.
+        double[] block = new double[Block];
+        double[] phases = MeasurementSignals.Noise(80, 9);
+        for (int line = 1; line * 20 <= 1486; line++)
+        {
+            for (int n = 0; n < Block; n++)
+            {
+                block[n] += 0.004 * Cosines[(((line * 20 * n) & (Block - 1)) + (int)(phases[line] * 1000 + 1000)) & (Block - 1)];
+            }
+        }
+
+        ReplicatedBandsFigures figures = Measure([.. Enumerable.Range(0, Block * 60).Select(i => block[i & (Block - 1)])]);
 
         Assert.False(figures.IsFound);
         Assert.True(figures.IsTopBandPeriodic);

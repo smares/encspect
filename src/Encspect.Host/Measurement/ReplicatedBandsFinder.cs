@@ -235,8 +235,12 @@ internal static class ReplicatedBandsFinder
             }
 
             int n = counters.Frames[counters.Cell(k, best)];
+
+            // A band is periodic where it would pass but an offset under 1 kHz matches in at least half as many frames as its own offset does (on noise, where nothing would pass,
+            // such an offset matches by chance as often as any, and the band is not called periodic).
+            bool wouldPass = n >= MeasurementLimits.MinimumReplicatedBandsFrames && 2L * bestMatches >= n;
             bool isPeriodic = false;
-            if (bestMatches > 0)
+            if (wouldPass)
             {
                 for (int d = counters.FirstShift; d < w && d < s; d++)
                 {
@@ -256,7 +260,7 @@ internal static class ReplicatedBandsFinder
                 ShareTenths = n > 0 ? (int)(((2000L * bestMatches) + n) / (2L * n)) : MeasurementLimits.NoPower,
                 FramesWithSignal = n,
                 IsPeriodic = isPeriodic,
-                Passes = n >= MeasurementLimits.MinimumReplicatedBandsFrames && 2L * bestMatches >= n && !isPeriodic,
+                Passes = wouldPass && !isPeriodic,
             };
         }
 

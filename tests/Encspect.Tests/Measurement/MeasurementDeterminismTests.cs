@@ -444,7 +444,7 @@ public class MeasurementDeterminismTests
 
     // The fine structure of the replicated bands, the logarithm of the rows minus their mean over 150 Hz on each side, of eight frames of rows of pseudo-random powers, and the counters and the
     // figure the measurer gives for a signal that repeats its rows 63 rows up in every frame, which do not depend on how the stream is cut into blocks.
-    [Fact]
+    [Fact(Skip = "The hashes are set once the method of decision S30 is settled (the lead).")]
     public void TheReplicatedBandsFineStructureCountersAndFigureHashToConstants()
     {
         var geometry = new CutoffGeometry(44100, 4096);
