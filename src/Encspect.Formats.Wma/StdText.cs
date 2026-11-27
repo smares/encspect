@@ -175,8 +175,10 @@ internal static class StdText
     public const string PayloadNotAnalyzed = "Windows Media Audio handed over as one payload is not analyzed; only the media objects of a container are.";
     public const string NoFormat = "The container states no WAVEFORMATEX for the stream, so its Windows Media Audio is not analyzed.";
 
-    public static string FFmpegEvidence(int version, long padded) =>
-        padded == 1
+    public static string FFmpegEvidence(int version, long padded, bool isAfterUnreadBits) =>
+        isAfterUnreadBits
+            ? $"{(padded == 1 ? "The superframe ends" : $"All {Number(padded)} padded superframes end")} in 'N' (0x4E) bytes, after the frame and the coefficient bits that version 1 stereo's coefficient limit leaves unread, which ffmpeg's wmav{Number(version)} encoder writes (wmaenc.c), with no bit reservoir and no variable block lengths"
+            : padded == 1
             ? $"The superframe has bytes after the frame that are all 'N' (0x4E), which ffmpeg's wmav{Number(version)} encoder writes (wmaenc.c), with no bit reservoir and no variable block lengths"
             : $"All {Number(padded)} padded superframes have bytes after the frame that are all 'N' (0x4E), which ffmpeg's wmav{Number(version)} encoder writes (wmaenc.c), with no bit reservoir and no variable block lengths";
 

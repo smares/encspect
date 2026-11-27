@@ -184,7 +184,7 @@ public sealed class WmaStandardParser : ICodecParser
         if (!parameters.UsesBitReservoir && !parameters.UsesVariableBlocks && stream.PaddedSuperframes > 0 && stream.IsPaddingAllN)
         {
             traits.Add(new WmaEncoder.Trait($"FFmpeg (wmav{parameters.Version} encoder)", "FFmpeg", stream.PaddedSuperframes >= 2 ? Confidence.High : Confidence.Medium,
-                StdText.FFmpegEvidence(parameters.Version, stream.PaddedSuperframes)));
+                StdText.FFmpegEvidence(parameters.Version, stream.PaddedSuperframes, stream.Totals.LimitStops > 0)));
         }
 
         return traits;

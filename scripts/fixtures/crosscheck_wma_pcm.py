@@ -52,7 +52,9 @@ PATTERNS = ["external-ffmpeg-wmav*.wma", "external-windows-wma92-[cv]*.wma", "ex
 
 # The files that code noise substitution, whose output Microsoft's decoder cannot reproduce sample by sample.
 NOISE_PREFIXES = ("external-ffmpeg-wmav1-mono-22k", "external-ffmpeg-wmav2-stereo-44k-32k", "derived-ffmpeg-wmav2-noise", "external-windows-wma92-cbr-stereo-22k-20-sdk", "external-windows-wma92-cbr-stereo-44k-32-sdk",
-                  "external-windows-wma92-cbr-stereo-44k-48-sdk", "external-remux-ffmpeg-wma92-cbr-stereo-22k-20-sdk")
+                  "external-windows-wma92-cbr-stereo-44k-48-sdk", "external-remux-ffmpeg-wma92-cbr-stereo-22k-20-sdk",
+                  *(f"external-wme9-wma9-{n}.wma" for n in ("cbr-5k-8k-mono", "cbr-6k-8k-mono", "cbr-8k-11k-mono", "cbr-10k-11k-mono", "cbr-10k-16k-mono", "cbr-12k-16k-mono", "cbr-16k-16k-mono",
+                                                          "cbr2pass-16k-16k-mono", "cbr-12k-8k-stereo", "cbr-16k-16k-stereo", "cbr-20k-16k-stereo")))
 
 # Files whose output follows Microsoft's decoder where ffmpeg's differs (docs/design/wma-standard-decoding.md, "What Microsoft's output showed"), and the files of the private sample kit whose
 # line spectral pair exponents sit in short blocks: ffmpeg evaluates the curve at the angles of a block as long as the frame.

@@ -353,7 +353,7 @@ For each coded channel in channel order, with n = E_k − s less the widths of t
 3. The end-of-block code may be left out where the coefficients reach n.
 4. For version 1 stereo, the reader then moves to the next byte boundary of the frame's buffer, also after a channel that is not coded.
 
-Microsoft's decoder stops version 1's coefficients s positions earlier, and for stereo reads what follows from the next byte as the next channel; [wma-standard-decoding.md](wma-standard-decoding.md#coefficient-values) states the rule, which changes this walk for version 1 (ffmpeg's encoder writes past that limit).
+Microsoft's decoder stops version 1 stereo's coefficients s positions earlier, and for stereo reads what follows from the next byte as the next channel; [wma-standard-decoding.md](wma-standard-decoding.md#coefficient-values) states the rule, which changes this walk for version 1 (ffmpeg's encoder writes past that limit).
 
 Reported per channel: the non-zero coefficients (every run-level code and every escape, whatever its level), the escapes, and the position of the last coefficient, p mod L_k ("n non-zero, last at p").
 
@@ -584,7 +584,7 @@ The stream adds two traits to the shared encoder detection (`WmaEncoder`):
 
 - **FFmpeg (wmavN encoder)**, family FFmpeg:
   - It applies without the bit reservoir (bit 1) and without variable block lengths (effective). A superframe whose frame was read without error and ends before its last byte is padded.
-  - Where there is at least one padded superframe and every padded one has only 'N' bytes from the byte after the frame's last byte to its end, the trait names "FFmpeg (wmav1 encoder)" or "FFmpeg (wmav2 encoder)" by the version: high confidence with two or more padded superframes, medium with one.
+  - Where there is at least one padded superframe and every padded one has only 'N' bytes from the byte after the frame's last byte to its end, the trait names "FFmpeg (wmav1 encoder)" or "FFmpeg (wmav2 encoder)" by the version: high confidence with two or more padded superframes, medium with one. Where the walk of a version 1 stereo frame stopped at Microsoft's coefficient limit, the bits after the frame are unread coefficients, so the last 4 bytes of the superframe must be 'N' instead, and a superframe that does not end so is not counted.
   - Its evidence text: "All N padded superframes have bytes after the frame that are all 'N' (0x4E), which ffmpeg's wmavV encoder writes (wmaenc.c), with no bit reservoir and no variable block lengths", or with one, "The superframe has bytes after the frame …" and the same ending.
 - **Microsoft's Windows Media Audio encoder**, family Microsoft, medium: version 2, codec data of at least 10 bytes, bit 1 (the bit reservoir) and effective variable block lengths, and "Samples Per Block" equal to 17 × F. Its evidence text: "The codec data states S samples per block (17 frames) with the bit reservoir and variable block lengths, as the encoders of the Windows Media Format SDK and of Media Foundation write them", S without separators ("34816").
 - The traits go to the shared detection with the codec data's trait first; it adds the "Encoder" and "Writer" nodes and their findings.
