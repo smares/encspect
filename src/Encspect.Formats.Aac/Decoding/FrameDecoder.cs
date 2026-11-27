@@ -554,7 +554,8 @@ internal sealed class FrameDecoder : IFrameDecoder
                 int filters = Math.Min(slot[BlockRecord.TnsFilters], BlockRecord.TnsMaxFilters);
                 for (int f = 0; f < filters; f++)
                 {
-                    units += (long)Math.Min(slot[BlockRecord.Tns + (f * BlockRecord.TnsFilterInts) + 2], _maxTnsOrder) * (isShort ? ShortLines : Lines);
+                    // The TNS analysis filter of long-term prediction's loop does the work of the synthesis filter again.
+                    units += (long)Math.Min(slot[BlockRecord.Tns + (f * BlockRecord.TnsFilterInts) + 2], _maxTnsOrder) * (isShort ? ShortLines : Lines) * (UsedLtpLag(slot) >= 0 ? 2 : 1);
                 }
             }
         }
