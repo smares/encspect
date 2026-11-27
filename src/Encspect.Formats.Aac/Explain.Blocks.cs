@@ -133,6 +133,10 @@ internal static partial class Explain
     public const string StatPsEnvelopes = "The number of envelopes in the parametric stereo data of each raw data block that has some.";
     public const string StatPsBands = "The number of parameter bands of the parametric stereo data of each raw data block that has some.";
     public const string StatSbrHeaders = "SBR headers in the access units; encoders repeat them so decoders can start mid-stream.";
+    public const string StatSbrChecksums = "The SBR payloads of type EXT_SBR_DATA_CRC whose CRC-10 equals the one computed over their data (ISO/IEC 14496-3 4.5.2.8.1).";
+
+    public const string StatSbrChecksumsFailed = "The SBR payloads of type EXT_SBR_DATA_CRC whose CRC-10 differs from the one computed.";
+
     public const string StatSbrUnread = "SBR payloads whose data could not be read: before the first header, after a header whose frequency tables cannot be built, or broken; their findings say which.";
     public const string StatSbrStart = "bs_start_freq of the first SBR header, and the QMF band and frequency at the SBR output rate where SBR starts rebuilding the spectrum (kx).";
     public const string StatSbrStop = "bs_stop_freq of the first SBR header, and the QMF band and frequency where the rebuilt spectrum ends.";

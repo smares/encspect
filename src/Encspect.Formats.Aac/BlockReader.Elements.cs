@@ -405,11 +405,17 @@ internal sealed partial class BlockReader
 
             var types = new List<int>(1);
             int left = count;
+            int sbrAt = -1;
             while (left > 0)
             {
                 int payloadStart = bits.Original;
                 int used = ExtensionPayload(ref bits, n, left, out int type);
                 types.Add(type);
+                if (type is 13 or 14 && sbrAt < 0)
+                {
+                    sbrAt = payloadStart;
+                }
+
                 if (used > left)
                 {
                     Soft("aac.fill-payload-overrun", $"an extension payload of {Counts.Of(used, "byte", "bytes")} in a fill element that has {Counts.Of(left, "byte", "bytes")} left", payloadStart, payloadStart + 4, "Extension Type");
@@ -422,6 +428,11 @@ internal sealed partial class BlockReader
                 {
                     bits.MoveTo(end - (left * 8));
                 }
+            }
+
+            if (sbrAt >= 0 && types.Count > 1)
+            {
+                Soft("aac.fill-sbr-with-other-payload", "an SBR payload in a fill element with an extension payload of another type, which 4.5.2.1.5.2 does not allow", sbrAt, sbrAt + 4, "Extension Type");
             }
 
             if (_tally is not null)
@@ -678,7 +689,19 @@ internal sealed partial class BlockReader
         if (crc)
         {
             int at = bits.Original;
-            Field(n, "SBR CRC", at, at + 10, NodeValue.Hex(bits.Read(10), 3), Explain.SbrCrc);
+            uint stored = bits.Read(10);
+            Field(n, "SBR CRC", at, at + 10, NodeValue.Hex(stored, 3), Explain.SbrCrc);
+            if (_tally is not null && !bits.IsSkeleton)
+            {
+                bool isEqual = Crc10.Of(bits.Window(at + 10, end)) == stored;
+                _tally.SbrCrcChecked++;
+                if (!isEqual)
+                {
+                    _tally.SbrCrcFailed++;
+                    _hasSbrCrcFailure = true;
+                    Soft("aac.sbr-crc-mismatch", "an SBR payload whose CRC differs from the one computed over its data (4.5.2.8.1)", at, at + 10, "SBR CRC");
+                }
+            }
         }
 
         int flag = bits.Original;
@@ -778,15 +801,11 @@ internal sealed partial class BlockReader
             _sbr[key] = header;
         }
 
-        // A payload after a single channel, channel pair or LFE element makes the stream HE-AAC for ffmpeg (aacdec_template.c,
-        // decode_extension_payload: m4ac.sbr = 1 before the data is read), faad2 (syntax.c, fill_element: sbr_present_flag = 1 before
-        // sbr_extension_data, for a fill element right after such an element) and fdk-aac (aacdecoder.cpp: SBR is parsed after an
-        // element that IS_CHANNEL_ELEMENT names, SCE, CPE and LFE, and enabled on a parse error too), whether or not the data can be
-        // read: before its header, with tables that cannot be built, past its fill element, or after an LFE element, where FAAC 2.0
-        // and 2.1 write theirs in 5.1. A coupling channel element is none of these: fdk-aac excludes it, faad2 rejects it (error 6
-        // without COUPLING_DEC, and error 24 for the fill element after it), and only ffmpeg keeps it as the previous element, where a
-        // program config element has given it a channel; its payload is reported and counts for nothing.
-        _hasSbrEvidence |= _lastChannelElement is 0 or 1 or 3;
+        // An SBR payload signals SBR implicitly (1.6.5.2 item 1), and 4.5.2.8.2.2 puts one after each single channel element, channel pair element and independently switched coupling
+        // channel element, whose id_aac is ID_SCE (Table 4.57, Note 1): it is read as a single channel element's. None follows an LFE element in the standard, but decoders take
+        // one for SBR (ffmpeg, faad2 and fdk-aac all do, and FAAC 2.0 and 2.1 write theirs in 5.1) whether or not it can be read: before its header, with tables that cannot be built, or
+        // past its fill element. A payload before any channel element is not counted: the decoders do not take it for SBR (the standard's text does not exclude it).
+        _hasSbrEvidence |= _lastChannelElement is 0 or 1 or 2 or 3;
         Span<int> record = default;
         if (_store is not null && _lastChannelElement is 0 or 1 && _ics[0].Slot >= 0)
         {
@@ -802,9 +821,9 @@ internal sealed partial class BlockReader
             }
         }
 
-        if (_lastChannelElement is not (0 or 1))
+        if (_lastChannelElement is not (0 or 1 or 2))
         {
-            Soft("aac.sbr-without-channel-element", "SBR data that follows no single channel or channel pair element", dataStart, end, "SBR Data");
+            Soft("aac.sbr-without-channel-element", "SBR data that follows no single channel, channel pair or coupling channel element, where 4.5.2.8.2.2 puts it", dataStart, end, "SBR Data");
             tally.SbrUnread++;
             return -1;
         }
@@ -857,7 +876,8 @@ internal sealed partial class BlockReader
                 return -1;
             }
 
-            return ps;
+            // A coupling channel's own parametric stereo extension has no channel to apply to.
+            return _lastChannelElement == 2 ? -1 : ps;
         }
         catch (BlockOverrun)
         {

@@ -45,6 +45,7 @@ internal sealed partial class BlockReader
     private int _elementIds;
     private bool _hasSbr;
     private bool _hasSbrEvidence;
+    private bool _hasSbrCrcFailure;
     private bool _hasPs;
     private bool _hasCoupling;
 
@@ -117,6 +118,7 @@ internal sealed partial class BlockReader
         _elementIds = 0;
         _hasSbr = false;
         _hasSbrEvidence = false;
+        _hasSbrCrcFailure = false;
         _hasPs = false;
         _hasCoupling = false;
         int sce = 0;
@@ -239,7 +241,7 @@ internal sealed partial class BlockReader
             _store.Flags = (_hasSbr ? BlockRecord.BlockHasSbr : 0) | (_hasPs ? BlockRecord.BlockHasPs : 0) | (_hasCoupling ? BlockRecord.BlockHasCoupling : 0) | (_hasSbrEvidence ? BlockRecord.BlockHasSbrEvidence : 0);
         }
 
-        return new BlockResult(true, bits.Original, Packed(), _hasSbr, _hasPs, null, _hasSbrEvidence);
+        return new BlockResult(true, bits.Original, Packed(), _hasSbr, _hasPs, null, _hasSbrEvidence, _hasSbrCrcFailure);
     }
 
     private void CountDamaged()
@@ -539,6 +541,41 @@ internal sealed partial class BlockReader
                 _windowFlagged = true;
                 Soft("aac.window-slopes-differ", "a window sequence whose left slope differs from the right slope of the window before it in the same channel stream, as a long window followed by eight short ones does: ISO/IEC 14496-3 4.6.11.3.1 lists such transitions as possible and not as meaningful",
                     ics.SequenceAt, ics.SequenceAt + 2, "Window Sequence");
+            }
+        }
+
+        if (_lastChannelElement == 3)
+        {
+            // The LFE element's restrictions (4.5.2.1.3.1): sine window, only long windows, the lowest 12 lines, no TNS and no prediction.
+            var broken = new List<string>(5);
+            if (ics.WindowShape != 0)
+            {
+                broken.Add("a Kaiser-Bessel derived window");
+            }
+
+            if (ics.WindowSequence != 0)
+            {
+                broken.Add("a window sequence but only long");
+            }
+
+            if (ics.LastLine > 12)
+            {
+                broken.Add($"coefficients above the lowest 12 (to line {ics.LastLine - 1})");
+            }
+
+            if (tns)
+            {
+                broken.Add("TNS data");
+            }
+
+            if (ics.Predictor || ics.Ltp)
+            {
+                broken.Add("prediction");
+            }
+
+            if (broken.Count > 0)
+            {
+                Soft("aac.lfe-restrictions", $"an LFE channel stream with {string.Join(", ", broken)}, which 4.5.2.1.3.1 does not allow in an LFE element", ics.SequenceAt, ics.SequenceAt + 2, "Window Sequence");
             }
         }
 
@@ -1514,7 +1551,7 @@ internal readonly record struct ElementSpan(int Id, int Start, int End, int Seco
 // eight 3-bit IDs below), whether it holds SBR data and the PS extension, and the error.
 // HasSbr: the block holds an SBR payload; HasSbrEvidence: one that follows a channel element, which decoders take for SBR whether or not
 // they can read it (BlockReader.TallySbr).
-internal readonly record struct BlockResult(bool Ok, int End, int Elements, bool HasSbr, bool HasPs, BlockError? Error, bool HasSbrEvidence = false);
+internal readonly record struct BlockResult(bool Ok, int End, int Elements, bool HasSbr, bool HasPs, BlockError? Error, bool HasSbrEvidence = false, bool HasSbrCrcFailure = false);
 
 // Something a block breaks that stops its reading, with the node it happened in where nodes were
 // built; ToEnd says the node runs to the end of the data.

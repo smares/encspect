@@ -505,7 +505,7 @@ public sealed class RawAacParser : IFormatParser
                 bool isLost = damaged || !read.Ok;
                 if (deferred is not null)
                 {
-                    deferred.Add((blockBytes!, isLost, state == CrcState.Mismatch));
+                    deferred.Add((blockBytes!, isLost, state == CrcState.Mismatch || read.HasSbrCrcFailure));
                 }
                 else if (isLost)
                 {
@@ -513,7 +513,7 @@ public sealed class RawAacParser : IFormatParser
                 }
                 else
                 {
-                    feed.Decode(blockBytes!, "Frame", frameNode(), false);
+                    feed.Decode(blockBytes!, "Frame", frameNode(), read.HasSbrCrcFailure);
                 }
             }
 
@@ -1061,14 +1061,14 @@ public sealed class RawAacParser : IFormatParser
             WriterConfidence = writerConfidence,
             Series = series,
             CategorySeries = categories,
-            Verification = found.Feed?.Finish(crcsStored == 0 ? [] : [new ChecksumTally
+            Verification = found.Feed?.Finish(BlockLog.StoredChecksums(found.Tally, crcsStored == 0 ? null : new ChecksumTally
             {
                 Name = FrameCrc,
                 Covers = ChecksumCoverage.CodedData,
                 Stored = crcsStored,
                 Checked = figures.VerifiedChecksums + figures.FailedChecksums,
                 Failed = figures.FailedChecksums,
-            }]),
+            })),
         });
     }
 

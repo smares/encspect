@@ -202,7 +202,7 @@ internal static class Adif
             WriterConfidence = writerConfidence,
             Series = series,
             CategorySeries = categories,
-            Verification = log.Feed?.Finish([]),
+            Verification = log.Feed?.Finish(BlockLog.StoredChecksums(log.Tally)),
         });
     }
 
@@ -267,7 +267,7 @@ internal static class Adif
             }
 
             int length = (read.End + 7) / 8;
-            log.Feed?.Decode(new MappedBytes(window.AsMemory(at, length), position), "Raw Data Block", null, false);
+            log.Feed?.Decode(new MappedBytes(window.AsMemory(at, length), position), "Raw Data Block", null, read.HasSbrCrcFailure);
             blocks.Add(new Block(position, length, read.Elements, skeleton, true));
             if (signature is null && log.Tally.FirstText is { } text)
             {

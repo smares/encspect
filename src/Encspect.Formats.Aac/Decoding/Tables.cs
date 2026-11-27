@@ -6,7 +6,7 @@ namespace Encspect.Formats.Aac.Decoding;
 // which libxaac (Apache 2.0) tabulates in fixed point.
 internal static class Tables
 {
-    // The largest magnitude a quantized value can take: 8191 from an escape sequence, and the 15 of a pulse on top (4.6.3.3, 4.6.5).
+    // The largest magnitude a quantized value can take: 8191 from an escape sequence (4.6.1.3), and the 15 of a pulse on top (4.6.3.3).
     public const int MaxQuantized = 8191 + 15;
 
     // |q|^(4/3) (4.6.2.1).
@@ -29,7 +29,7 @@ internal static class Tables
     // The TNS parcor coefficients sin(index / iqfac) for 3 and 4 bit resolutions, indexed by the signed value plus 4 or 8 (4.6.9.3).
     public static readonly float[][] Tns = [BuildTns(3), BuildTns(4)];
 
-    // The largest scalefactor band count of a TNS filter's range, per sampling frequency index: long and short windows (4.6.9.3, Table 4.139, as libxaac's tns_max_bands_tbl holds it).
+    // The largest scalefactor band count of a TNS filter's range, per sampling frequency index: long and short windows (4.6.9.4, Table 4.157, as libxaac's tns_max_bands_tbl holds it).
     public static readonly int[][] TnsMaxBands =
     [
         [31, 9], [31, 9], [34, 10], [40, 14], [42, 14], [51, 14], [46, 14], [46, 14], [42, 14], [42, 14], [42, 14], [39, 14],

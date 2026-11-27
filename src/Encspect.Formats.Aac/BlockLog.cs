@@ -154,6 +154,25 @@ internal sealed class BlockLog
         }
     }
 
+    internal const string SbrCrc = "SBR CRC-10";
+
+    // The checksums the stream's SBR payloads store (EXT_SBR_DATA_CRC), with the ones a frame or unit stores: those the reading compared.
+    public static IReadOnlyList<ChecksumTally> StoredChecksums(CodingTally? tally, ChecksumTally? frames = null)
+    {
+        var list = new List<ChecksumTally>(2);
+        if (frames is not null)
+        {
+            list.Add(frames);
+        }
+
+        if (tally is { SbrCrcChecked: > 0 })
+        {
+            list.Add(new ChecksumTally { Name = SbrCrc, Covers = ChecksumCoverage.CodedData, Stored = tally.SbrCrcChecked, Checked = tally.SbrCrcChecked, Failed = tally.SbrCrcFailed });
+        }
+
+        return list;
+    }
+
     private static Severity SeverityOf(string code) => code switch
     {
         "aac.sbr-before-header" => Severity.Info,

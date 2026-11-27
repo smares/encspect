@@ -160,6 +160,12 @@ internal static partial class Sbr
             return (null, string.Create(CultureInfo.InvariantCulture, $"the header gives {noise} noise floor bands, more than 5"));
         }
 
+        int patches = PatchCount(master, kx, rate);
+        if (patches > MaxPatches)
+        {
+            return (null, string.Create(CultureInfo.InvariantCulture, $"the frequency tables need {patches} patches, more than the {MaxPatches} the standard allows"));
+        }
+
         int[] highTable = master[header.XoverBand..];
         int[] lowTable = new int[low + 1];
         lowTable[0] = highTable[0];
@@ -178,6 +184,67 @@ internal static partial class Sbr
         }
 
         return (new SbrTables(kx, end, master, highTable, lowTable, noiseTable), null);
+    }
+
+    // The most patches an SBR range may need (4.6.18.3.6).
+    public const int MaxPatches = 5;
+
+    // The number of patches of Figure 4.48 (4.6.18.6.3) for a master table, kx and the SBR rate: the patches' sources and widths are the decoder's, only their count matters here.
+    public static int PatchCount(int[] master, int kx, int rate)
+    {
+        int count = master.Length - 1;
+        int lsb = master[0];
+        int end = master[count];
+        int msb = lsb;
+        int usb = kx;
+        int patches = 0;
+        int goal = (int)Math.Floor((2.048e6 / rate) + 0.5);
+        int k = count;
+        if (goal < end)
+        {
+            k = 0;
+            for (int i = 0; master[i] < goal; i++)
+            {
+                k = i + 1;
+            }
+        }
+
+        int lastWidth = 0;
+        int sb;
+        int guard = 0;
+        do
+        {
+            int j = k;
+            int odd;
+            do
+            {
+                sb = master[j];
+                odd = (sb - 2 + lsb) % 2;
+                j--;
+            }
+            while (sb > lsb - 1 + msb - odd && j >= 0);
+
+            int width = Math.Max(sb - usb, 0);
+            if (width > 0)
+            {
+                lastWidth = width;
+                usb = sb;
+                msb = sb;
+                patches++;
+            }
+            else
+            {
+                msb = kx;
+            }
+
+            if (master[k] - sb < 3)
+            {
+                k = count;
+            }
+        }
+        while (sb != end && ++guard < 32);
+
+        return lastWidth < 3 && patches > 1 ? patches - 1 : patches;
     }
 
     private static int Nearest(double value) => (int)Math.Floor(value + 0.5);
