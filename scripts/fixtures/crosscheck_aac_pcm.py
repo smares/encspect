@@ -74,6 +74,9 @@ NOISE = {
     "faac-adts.aac": "codes noise substitution",
     "faac.m4a": "codes noise substitution",
     "ffmpeg-adts.aac": "codes noise substitution",
+    "ffmpeg-ltp.aac": "codes noise substitution",
+    "ffmpeg-main.aac": "codes noise substitution",
+    "ltp-tns-noise.aac": "codes noise substitution",
     "ffmpeg-fast.aac": "codes noise substitution",
     "ffmpeg-fragmented.mp4": "codes noise substitution",
     "ffmpeg-lc-vbr.m4a": "codes noise substitution",
@@ -101,7 +104,8 @@ LIBXAAC_MAX_LSB = 32
 FIRST_BLOCK = 1024
 FIRST_BLOCK_KBD = {"blocks-missing.aac", "blocks-trailing-bytes.aac", "corrupt-syntax.aac", "crc-short-element.aac", "crc-stereo-damaged.aac", "crc-stereo.aac", "fill-and-data.aac",
                    "first-block-kbd.aac", "lfe-restrictions-pce.aac", "tns-order-above-12.aac", "loud-pulse-tns.aac", "sbr-in-truncated-frame.aac", "streams-limited.aac", "two-signature-streams.aac", "loud-noise-pair.aac",
-                   "windows.aac"}
+                   "windows.aac", "main-prediction.aac", "main-prediction-bands.aac", "main-prediction-gap.aac", "main-prediction-largest.aac", "main-prediction-overdue.aac", "main-prediction-reset-cycle.aac",
+                   "main-prediction-short.aac", "main-tns-order-20.aac", "ltp.aac", "ltp-lags.aac", "ltp-gap.aac", "ltp-tns-noise.aac"}
 # Damaged files libxaac stops on after its first block: with the first block left out nothing is left to compare, which is no failure.
 LIBXAAC_FIRST_BLOCK_ONLY = {"blocks-missing.aac", "blocks-trailing-bytes.aac"}
 
@@ -142,6 +146,13 @@ DIFFERENCES = {
     "stereo-tool-order.aac": ("samples", "intensity bands under ms_mask_present 2, which FFmpeg's decoder inverts where 4.6.8.2.3 inverts under mask 1 alone (block 1, up to 0.03 of full scale), and noise substitution, "
                                          "where each decoder draws its own noise (blocks 5 to 14); the second channel of the blocks with mid/side flags over the first channel's noise equals the one without them in both decoders"),
     "tns-order-above-12.aac": ("positions", "a TNS filter of an order above 12, which FFmpeg's decoder refuses (the analyzer takes its first 12 coefficients, 4.6.9.3, Table 4.156): FFmpeg decodes the blocks of order 12 only"),
+    "main-prediction-largest.aac": ("samples", "the largest quantized values in every predicted line of AAC Main: the floats of both decoders reach 10^10 of full scale, where they differ in their last bits by up to 10^10 of the output's own size"),
+    "main-tns-order-20.aac": ("positions", "a TNS filter of order 31 in AAC Main, which FFmpeg's decoder refuses (the analyzer takes its first 20 coefficients, 4.6.9.3, Table 4.156): FFmpeg decodes the blocks of order 20 and below only"),
+    "main-prediction.aac": ("samples", "a hand-built file of patterned values with a peak of 0.4 to 2 LSB of 16 bits: FFmpeg's float decoder and the analyzer differ by 10^-8 to 10^-7 of full scale (about 10^-3 of the file's peak), the noise floor of float arithmetic that the same two decoders show on the ISO reference stream ap01_48 (0.001 LSB of 16 bits), which is over the relative bound a file this quiet gets"),
+    "main-prediction-bands.aac": ("samples", "a hand-built file of patterned values with a peak of 0.4 to 2 LSB of 16 bits: FFmpeg's float decoder and the analyzer differ by 10^-8 to 10^-7 of full scale (about 10^-3 of the file's peak), the noise floor of float arithmetic that the same two decoders show on the ISO reference stream ap01_48 (0.001 LSB of 16 bits), which is over the relative bound a file this quiet gets"),
+    "main-prediction-overdue.aac": ("samples", "a hand-built file of patterned values with a peak of 0.4 to 2 LSB of 16 bits: FFmpeg's float decoder and the analyzer differ by 10^-8 to 10^-7 of full scale (about 10^-3 of the file's peak), the noise floor of float arithmetic that the same two decoders show on the ISO reference stream ap01_48 (0.001 LSB of 16 bits), which is over the relative bound a file this quiet gets"),
+    "ltp.aac": ("samples", "a hand-built file of patterned values with a peak of 0.4 to 2 LSB of 16 bits: FFmpeg's float decoder and the analyzer differ by 10^-8 to 10^-7 of full scale (about 10^-3 of the file's peak), the noise floor of float arithmetic that the same two decoders show on the ISO reference stream ap01_48 (0.001 LSB of 16 bits), which is over the relative bound a file this quiet gets"),
+    "ltp-lags.aac": ("samples", "a hand-built file of patterned values with a peak of 0.4 to 2 LSB of 16 bits: FFmpeg's float decoder and the analyzer differ by 10^-8 to 10^-7 of full scale (about 10^-3 of the file's peak), the noise floor of float arithmetic that the same two decoders show on the ISO reference stream ap01_48 (0.001 LSB of 16 bits), which is over the relative bound a file this quiet gets"),
     "tns-overflow.aac": ("samples", "a TNS filter on the largest scalefactors: FFmpeg's float decoder overflows to infinity and NaN, the analyzer saturates the spectrum"),
     "corrupt-soft.aac": ("positions", "raw data blocks with more channel streams than the stream's configuration states: the analyzer does not decode them (decode.frame-invalid), FFmpeg decodes the channels it can"),
     "window-sequences-invalid.aac": ("samples", "five windows whose slopes do not match those of the window before: FFmpeg windows those transitions differently, in the blocks that hold them and the "
