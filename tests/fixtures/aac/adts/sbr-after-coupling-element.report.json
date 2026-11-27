@@ -445,68 +445,15 @@
                     },
                     {
                       "name": "SBR Headers",
-                      "value": 3,
+                      "value": 0,
                       "unit": "headers",
                       "offset": 0,
                       "length": 1175
                     },
                     {
-                      "name": "SBR Frame Classes",
-                      "value": 12,
-                      "unit": "SBR channels",
-                      "offset": 0,
-                      "length": 1175,
-                      "children": [
-                        {
-                          "name": "FIXFIX",
-                          "value": "12 SBR channels (100.0%)",
-                          "offset": 0,
-                          "length": 1175
-                        }
-                      ]
-                    },
-                    {
-                      "name": "SBR Envelopes",
-                      "value": 12,
-                      "unit": "SBR channels",
-                      "offset": 0,
-                      "length": 1175,
-                      "children": [
-                        {
-                          "name": "1 envelope",
-                          "value": "12 SBR channels (100.0%)",
-                          "offset": 0,
-                          "length": 1175
-                        }
-                      ]
-                    },
-                    {
-                      "name": "Start Frequency",
-                      "value": "5 (QMF band 14, about 4823 Hz)",
-                      "offset": 0,
-                      "length": 1175
-                    },
-                    {
-                      "name": "Stop Frequency",
-                      "value": "9 (QMF band 47, about 16193 Hz)",
-                      "offset": 0,
-                      "length": 1175
-                    },
-                    {
-                      "name": "Crossover Band",
-                      "value": 0,
-                      "offset": 0,
-                      "length": 1175
-                    },
-                    {
-                      "name": "Amplitude Resolution",
-                      "value": "3 dB",
-                      "offset": 0,
-                      "length": 1175
-                    },
-                    {
-                      "name": "HasHeaderChanges",
-                      "value": false,
+                      "name": "Unread SBR Data",
+                      "value": 6,
+                      "unit": "payloads",
                       "offset": 0,
                       "length": 1175
                     }
@@ -9764,88 +9711,6 @@
             ]
           },
           {
-            "name": "SBR Frame Classes",
-            "valueLabel": "SBR channel",
-            "categories": [
-              {
-                "name": "FIXFIX",
-                "count": 12
-              },
-              {
-                "name": "FIXVAR",
-                "count": 0
-              },
-              {
-                "name": "VARFIX",
-                "count": 0
-              },
-              {
-                "name": "VARVAR",
-                "count": 0
-              }
-            ],
-            "total": 12,
-            "xSeries": "Bitrate",
-            "valueCounts": [
-              [
-                1,
-                12
-              ]
-            ],
-            "runs": [
-              [
-                0,
-                12
-              ]
-            ],
-            "seconds": [
-              0
-            ]
-          },
-          {
-            "name": "SBR Envelopes",
-            "valueLabel": "SBR channel",
-            "categories": [
-              {
-                "name": "1 envelope",
-                "count": 12
-              },
-              {
-                "name": "2 envelopes",
-                "count": 0
-              },
-              {
-                "name": "3 envelopes",
-                "count": 0
-              },
-              {
-                "name": "4 envelopes",
-                "count": 0
-              },
-              {
-                "name": "5 envelopes",
-                "count": 0
-              }
-            ],
-            "total": 12,
-            "xSeries": "Bitrate",
-            "valueCounts": [
-              [
-                1,
-                12
-              ]
-            ],
-            "runs": [
-              [
-                0,
-                12
-              ]
-            ],
-            "seconds": [
-              0
-            ]
-          },
-          {
             "name": "SBR",
             "valueLabel": "raw data block",
             "categories": [
@@ -9937,6 +9802,22 @@
           0
         ],
         "count": 12
+      },
+      {
+        "severity": "Warning",
+        "code": "aac.sbr-without-channel-element",
+        "message": "6 raw data blocks hold SBR data that follows no single channel element, channel pair element or independently switched coupling channel element, where 4.5.2.8.2.2 puts it; the first at 0x53.",
+        "offset": 83,
+        "length": 16,
+        "path": [
+          0,
+          1,
+          15,
+          2,
+          3,
+          3
+        ],
+        "count": 6
       }
     ]
   }

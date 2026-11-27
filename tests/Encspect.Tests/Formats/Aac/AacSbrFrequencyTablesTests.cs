@@ -95,6 +95,20 @@ public class AacSbrFrequencyTablesTests
                                     System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(record[16..], bands?.Noise ?? 0);
                                     hash.AppendData(record[..20]);
                                     hash.AppendData(System.Text.Encoding.UTF8.GetBytes(error ?? string.Empty));
+                                    if (bands is not null)
+                                    {
+                                        // The decoder's patches (libxaac's construction, which may start with a patch of no band) have the count Figure 4.48 gives, 5 at most (4.6.18.3.6).
+                                        (SbrTables? tables, _) = Sbr.Tables(Header(start, stop, scale, alter, xover, noise), rate);
+                                        var layout = new Encspect.Formats.Aac.Decoding.SbrLayout(tables!, rate);
+                                        int wide = 0;
+                                        for (int p = 0; p < layout.PatchCount; p++)
+                                        {
+                                            wide += layout.PatchBands[p] > 0 ? 1 : 0;
+                                        }
+
+                                        Assert.Equal(Sbr.PatchCount(tables!.Master, tables.Kx, rate), wide);
+                                        Assert.True(wide <= Sbr.MaxPatches);
+                                    }
                                 }
                             }
                         }

@@ -83,22 +83,24 @@ internal sealed class SbrChannel
         Array.Clear(HighRe);
         Array.Clear(HighIm);
         ResetState();
+        Array.Clear(_chirpPrevious);
+        Array.Clear(PreviousInverseFilter);
+        _harmonicIndex = 0;
     }
 
-    // At a header whose frequency tables differ (the standard's reset): what the generator and adjuster keep across frames starts again.
+    // At a header whose frequency tables differ (the standard's reset, 4.6.18.7.6): the smoothing histories of the gains and noise levels and the noise index start again, and so
+    // do the values coded in time against the old tables. The chirp factors, the inverse filtering modes (4.6.18.6.2) and the sinusoid index (4.6.18.7.6) are zero only for the first frame
+    // of a stream, so they go on across the reset (Reset, which a gap or a new stream calls, clears them).
     public void ResetState()
     {
         Array.Clear(_gainHistory);
         Array.Clear(_noiseHistory);
-        Array.Clear(_chirpPrevious);
         Array.Clear(_harmonicPrevious);
-        Array.Clear(PreviousInverseFilter);
         Array.Clear(PreviousEnvelope);
         Array.Clear(PreviousNoise);
         Array.Clear(PreviousNoiseLevel);
         StartUp = true;
         _phaseIndex = 0;
-        _harmonicIndex = 0;
         _shortPrevious = -1;
     }
 

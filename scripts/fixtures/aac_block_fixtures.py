@@ -1258,7 +1258,7 @@ def sbr_evidence():
     blocks = []
     for i in range(12):
         cpe = M.Element(M.CPE, ics=(channel(M.ONLY_LONG, 1, [[(11, 4)]], seed=i, rate=core), channel(M.ONLY_LONG, 1, [[(9, 4)]], seed=i + 1, rate=core)), mask=0)
-        cce = M.Element(M.CCE, tag=0, independent=i % 2, targets=[(1, 0, 1, 1)], ics=channel(M.ONLY_LONG, 1, [[(11, 4), (3, 4)]], seed=i + 2, rate=core))
+        cce = M.Element(M.CCE, tag=0, independent=1, targets=[(1, 0, 1, 1)], ics=channel(M.ONLY_LONG, 1, [[(11, 4), (3, 4)]], seed=i + 2, rate=core))
         fill = M.Element(M.FIL, payload=M.sbr_payload(counts, SBR_HEADER if i % 4 == 0 else None, pair=False))
         blocks.append(M.raw_data_block([cpe, cce, fill], rate_index=rate_index(core)))
     data, rows = concat(adts_frames(blocks, rate=core, channels=2))
@@ -1284,10 +1284,12 @@ def sbr_evidence():
     data, rows = concat(adts_frames(blocks, rate=core, channels=2))
     out.append(("adts", "sbr-after-coupling-element.aac", data, manifest(
         "ADTS at 22050 Hz of a channel pair, a coupling channel element and a fill element of SBR data, twelve times, in a stream of channel "
-        "configuration 2, the data laid out as a channel pair's, where the standard reads a coupling channel element's as a single channel element's: the data does not parse, "
-        "and the stream is HE-AAC at 44100 Hz from the payload's presence.", data, rows,
+        "configuration 2, the coupling channel element switched independently in the odd blocks and dependently in the even ones and the data laid out as a channel pair's: "
+        "the standard puts an SBR element after the independently switched element only, and reads it as a single channel element's (these bits happen to satisfy that reading); "
+        "the payloads after the dependently switched one are reported and read by no one, and all count as evidence, so the stream is HE-AAC at 44100 Hz.", data, rows,
         [stream("HE-AAC", 2 * core, 2, "Stereo", 12 * 2048, ffprobe_profile="LC")], {"ADTS/Statistics/SBR": share(12, 12, "access unit")},
         [["aac.implicit-sbr", "12 of 12 raw data blocks hold SBR data: the stream is HE-AAC"],
+         ["aac.sbr-without-channel-element", "6 raw data blocks hold SBR data that follows no single channel element, channel pair element or independently switched coupling channel element"],
          ["aac.coupling-without-program", "12 raw data blocks hold a coupling channel element"]],
         skip={**skip, "ffprobe_streams": "ffmpeg cannot decode the frames (\"channel element 2.0 is not allocated\"), so it reports no sample rate.",
               "decode": "ffmpeg finds no channel for the coupling element in a stream of channel configuration 2.",
@@ -1303,7 +1305,7 @@ def sbr_evidence():
         "ADTS at 22050 Hz of single channel elements, each preceded by a fill element of SBR data: the payloads follow no channel element, so decoders "
         "read none and the stream stays AAC LC at 22050 Hz.", data, rows,
         [stream("AAC LC", core, 1, "Mono", 12 * 1024)], {"ADTS/Statistics/SBR": share(12, 12, "access unit")},
-        [["aac.sbr-without-channel-element", "12 raw data blocks hold SBR data that follows no single channel, channel pair or coupling channel element"]],
+        [["aac.sbr-without-channel-element", "12 raw data blocks hold SBR data that follows no single channel element, channel pair element or independently switched coupling channel element"]],
         skip={**skip, "ffprobe_streams": "ffmpeg cannot decode the frames (\"SBR was found before the first channel element\"), so it reports no sample rate.",
               "decode": "ffmpeg reports that SBR was found before the first channel element, the condition the fixture tests.",
               "faad_trace": "faad2 does not read the stream: its SBR payload follows no channel element, and its trace holds one raw data block."}, rate=core)))
@@ -1468,20 +1470,20 @@ def stereo_tool_order():
 
 
 def tns_order_above_12():
-    """Mono blocks with a TNS filter of order 13, 20 and 31 (the 5-bit field's largest) of long windows: the standard takes the first 12 coefficients (4.6.9.3, Table 4.156)."""
+    """Mono blocks with a TNS filter of order 12, 12, 13, 20 and 31 (the 5-bit field's largest) of long windows: the standard takes the first 12 coefficients (4.6.9.3, Table 4.156)."""
     sections = [[(9, 12), (5, 10), (7, 10), (3, 8), (0, 4)]]
     blocks = []
     ics = []
-    for order in (13, 20, 31):
+    for order in (12, 12, 13, 20, 31):
         coefficients = [1 if i % 3 else 2 for i in range(order)]
         tns = [[(30, order, 0, 0, 1, coefficients)]]
-        channel_ics = channel(M.ONLY_LONG, 1, sections, gain=150, tns=tns, seed=80 + order)
+        channel_ics = channel(M.ONLY_LONG, 1, sections, gain=150, tns=tns, seed=80)
         ics.append(channel_ics)
         blocks.append(M.raw_data_block([M.Element(M.SCE, ics=channel_ics)]))
     data, rows = concat(adts_frames(blocks))
     return "tns-order-above-12.aac", data, manifest(
-        "Mono frames of long windows with a TNS filter of order 13, 20 and 31 over 30 bands: the standard limits the order to 12 and decodes the first 12 coefficients; the field "
-        "allows more, so the stream is reported.", data, rows, [stream("AAC LC", RATE, 1, "Mono", 3 * 1024)], statistics("ADTS", ics),
+        "Mono frames of long windows with the same spectrum and a TNS filter of order 12 (twice) and 13, 20 and 31 over 30 bands, whose first 12 coefficients are the same: the standard "
+        "limits the order to 12 and decodes the first 12 coefficients, so the last four blocks decode alike; the field allows more, so the stream is reported.", data, rows, [stream("AAC LC", RATE, 1, "Mono", 5 * 1024)], statistics("ADTS", ics),
         [["aac.tns-order-too-high", "a TNS filter of a higher order than the 12 its window allows"]],
         skip={"decode": "ffmpeg refuses a TNS filter of an order above 12 (\"TNS filter order ... is greater than maximum\").",
               "faad_trace": "faad2 does not trace the filter's order."})

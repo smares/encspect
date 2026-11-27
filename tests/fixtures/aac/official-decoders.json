@@ -2965,8 +2965,9 @@
      ],
      "decoder": "decoded",
      "samples": 1024,
-     "finding": "aac.sbr-without-channel-element",
+     "finding": "aac.lfe-restrictions",
      "findings": [
+      "aac.lfe-restrictions",
       "aac.sbr-without-channel-element"
      ],
      "verdict": "finding, decoder decodes",
@@ -3591,7 +3592,28 @@
     }
    ],
    "differences": [],
-   "units": [],
+   "units": [
+    {
+     "index": 0,
+     "offset": 0,
+     "length": 621,
+     "ranges": [
+      [
+       0,
+       621
+      ]
+     ],
+     "decoder": "decoded",
+     "samples": 1024,
+     "finding": "aac.lfe-restrictions",
+     "findings": [
+      "aac.lfe-restrictions"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
    "unitList": {
     "kind": "adts",
     "codec": "aac",

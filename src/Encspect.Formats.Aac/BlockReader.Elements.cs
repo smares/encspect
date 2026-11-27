@@ -25,6 +25,7 @@ internal sealed partial class BlockReader
             Field(n, "Element Instance Tag", start + 3, start + 7, NodeValue.Integer(tag), Explain.ElementInstanceTag);
             int at = bits.Original;
             bool independent = bits.ReadBit();
+            _lastCceIsIndependent = independent;
             Field(n, "IsIndependentlySwitched", at, at + 1, NodeValue.Boolean(independent), Explain.CceIndependentlySwitched);
             int coupled = (int)bits.Read(3) + 1;
             Field(n, "Coupled Elements", at + 1, at + 4, NodeValue.Integer(coupled), Explain.CceCoupledElements);
@@ -691,7 +692,7 @@ internal sealed partial class BlockReader
             int at = bits.Original;
             uint stored = bits.Read(10);
             Field(n, "SBR CRC", at, at + 10, NodeValue.Hex(stored, 3), Explain.SbrCrc);
-            if (_tally is not null && !bits.IsSkeleton)
+            if (_tally is not null && !bits.IsSkeleton && end <= bits.OriginalLimit)
             {
                 bool isEqual = Crc10.Of(bits.Window(at + 10, end)) == stored;
                 _tally.SbrCrcChecked++;
@@ -769,16 +770,22 @@ internal sealed partial class BlockReader
     private int TallySbr(ref AacBits bits, int key, SbrHeader? header, int dataStart, int end, Node? n)
     {
         CodingTally tally = _tally!;
+        // The statistics and series of SBR count the channels the stream outputs: a coupling channel's payload is read (it is evidence and its syntax is checked) and left out of them.
+        bool isCoupling = _lastChannelElement == 2;
         if (header is not null)
         {
-            tally.SbrHeaders++;
-            tally.SbrPlainHeaders += FaacSbr.HeaderFits(header) ? 1 : 0;
-            if (_sbrHeaderBlock.TryGetValue(key, out int before) && !FaacSbr.OnPeriod(header, _block - before))
+            if (!isCoupling)
             {
-                tally.SbrHeadersOnPeriod = false;
+                tally.SbrHeaders++;
+                tally.SbrPlainHeaders += FaacSbr.HeaderFits(header) ? 1 : 0;
+                if (_sbrHeaderBlock.TryGetValue(key, out int before) && !FaacSbr.OnPeriod(header, _block - before))
+                {
+                    tally.SbrHeadersOnPeriod = false;
+                }
+
+                _sbrHeaderBlock[key] = _block;
             }
 
-            _sbrHeaderBlock[key] = _block;
             if (!_sbr.TryGetValue(key, out SbrHeader? previous) || !previous.SameFrequencies(header))
             {
                 (SbrBands? bands, string? error) = Sbr.Derive(header, _setup.SbrSampleRate);
@@ -789,7 +796,10 @@ internal sealed partial class BlockReader
                 header = header with { Bands = previous.Bands, BandError = previous.BandError };
             }
 
-            if (tally.FirstHeader is null)
+            if (isCoupling)
+            {
+            }
+            else if (tally.FirstHeader is null)
             {
                 tally.FirstHeader = header;
             }
@@ -802,9 +812,10 @@ internal sealed partial class BlockReader
         }
 
         // An SBR payload signals SBR implicitly (1.6.5.2 item 1), and 4.5.2.8.2.2 puts one after each single channel element, channel pair element and independently switched coupling
-        // channel element, whose id_aac is ID_SCE (Table 4.57, Note 1): it is read as a single channel element's. None follows an LFE element in the standard, but decoders take
-        // one for SBR (ffmpeg, faad2 and fdk-aac all do, and FAAC 2.0 and 2.1 write theirs in 5.1) whether or not it can be read: before its header, with tables that cannot be built, or
-        // past its fill element. A payload before any channel element is not counted: the decoders do not take it for SBR (the standard's text does not exclude it).
+        // channel element, whose id_aac is ID_SCE (Table 4.57, Note 1): it is read as a single channel element's. None follows an LFE element or a dependently switched coupling channel
+        // element (which is added to its targets before their SBR) in the standard, but decoders take one after an LFE element for SBR (ffmpeg, faad2 and fdk-aac all do, and FAAC 2.0 and 2.1
+        // write theirs in 5.1), and a payload after either counts and is not read. A payload before any channel element is not counted: the decoders do not take it for SBR (1.6.5.2 item 1
+        // would; the lead decides).
         _hasSbrEvidence |= _lastChannelElement is 0 or 1 or 2 or 3;
         Span<int> record = default;
         if (_store is not null && _lastChannelElement is 0 or 1 && _ics[0].Slot >= 0)
@@ -821,9 +832,9 @@ internal sealed partial class BlockReader
             }
         }
 
-        if (_lastChannelElement is not (0 or 1 or 2))
+        if (_lastChannelElement is not (0 or 1) && !(isCoupling && _lastCceIsIndependent))
         {
-            Soft("aac.sbr-without-channel-element", "SBR data that follows no single channel, channel pair or coupling channel element, where 4.5.2.8.2.2 puts it", dataStart, end, "SBR Data");
+            Soft("aac.sbr-without-channel-element", "SBR data that follows no single channel element, channel pair element or independently switched coupling channel element, where 4.5.2.8.2.2 puts it", dataStart, end, "SBR Data");
             tally.SbrUnread++;
             return -1;
         }
@@ -865,10 +876,14 @@ internal sealed partial class BlockReader
                 return -1;
             }
 
-            tally.SbrPayloads++;
-            tally.SbrPlainPayloads += plain ? 1 : 0;
-            tally.SbrFigures(figures);
-            _recorder?.SbrPayload(figures);
+            if (!isCoupling)
+            {
+                tally.SbrPayloads++;
+                tally.SbrPlainPayloads += plain ? 1 : 0;
+                tally.SbrFigures(figures);
+                _recorder?.SbrPayload(figures);
+            }
+
             if (ps == Sbr.PsInPair)
             {
                 Soft("aac.ps-in-channel-pair", "the parametric stereo extension's ID in a channel pair's SBR data, where only a single channel element can carry it, so decoders do not apply it",
@@ -877,7 +892,7 @@ internal sealed partial class BlockReader
             }
 
             // A coupling channel's own parametric stereo extension has no channel to apply to.
-            return _lastChannelElement == 2 ? -1 : ps;
+            return isCoupling ? -1 : ps;
         }
         catch (BlockOverrun)
         {

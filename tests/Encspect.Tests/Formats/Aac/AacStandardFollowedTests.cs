@@ -73,14 +73,21 @@ public class AacStandardFollowedTests
         Assert.Equal(inverted.Select(x => -x), Channel(sink, 11, 1));
     }
 
-    // 4.6.9.3: a filter of an order above 12 takes its first 12 coefficients: the blocks are decoded, not refused, and the three orders' blocks are finite.
+    // 4.6.9.3: a filter of an order above 12 takes its first 12 coefficients: the blocks are decoded, not refused, and the blocks of order 13, 20 and 31 (2 to 4, after one of order 12
+    // with the same spectrum) equal the block of order 12 (1) sample for sample.
     [Fact]
     public void A_TNS_filter_of_an_order_above_12_is_clamped_to_12()
     {
         (Report report, CollectingSink sink) = Decode("tns-order-above-12.aac");
 
-        Assert.Equal(3, sink.Blocks.Count);
+        Assert.Equal(5, sink.Blocks.Count);
         Assert.All(sink.Blocks.Values, block => Assert.All(block, x => Assert.True(float.IsFinite(x))));
+        Assert.True(Peak(Channel(sink, 1, 0)) > 0.001f);
+        for (int block = 2; block <= 4; block++)
+        {
+            Assert.Equal(Channel(sink, 1, 0), Channel(sink, block, 0));
+        }
+
         Assert.DoesNotContain(report.Findings, f => f.Code is "decode.failed" or "decode.frame-invalid");
         Assert.Contains(report.Findings, f => f.Code == "aac.tns-order-too-high");
     }
@@ -124,6 +131,18 @@ public class AacStandardFollowedTests
         Assert.Contains(report.Findings, f => f.Code == "aac.implicit-sbr");
     }
 
+    // 4.5.2.8.2.2: a dependently switched coupling channel element has no SBR element of its own: sbr-after-coupling-element.aac alternates the two kinds, so the payloads after the
+    // dependent ones (6 of 12) are reported and still count as evidence.
+    [Fact]
+    public void SBR_data_after_a_dependently_switched_coupling_channel_element_is_reported()
+    {
+        (Report report, _) = Decode("sbr-after-coupling-element.aac");
+
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "aac.sbr-without-channel-element");
+        Assert.Contains("6 raw data blocks", finding.Message);
+        Assert.Equal("HE-AAC", report.Streams.Single().Codec);
+    }
+
     // 4.5.2.8.1: an EXT_SBR_DATA_CRC payload's CRC-10 is verified, and the blocks that fail it are decoded and withheld from the measurements as units whose checksum fails.
     [Fact]
     public void The_CRC_of_an_SBR_payload_is_verified()
@@ -132,6 +151,10 @@ public class AacStandardFollowedTests
 
         Finding finding = Assert.Single(report.Findings, f => f.Code == "aac.sbr-crc-mismatch");
         Assert.Contains("2 raw data blocks", finding.Message);
+        // The two failing blocks (2 and 4) and the blocks after them (their overlap) are decoded and left out of the measurements: 4 blocks of 2,048 samples.
+        byte[] file = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "aac", "adts", "sbr-crc-checked.aac"));
+        StreamInfo measured = Analyzer.CreateDefault().Analyze("sbr-crc-checked.aac", new MemoryStream(file, writable: false), new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions() } }).Streams.Single();
+        Assert.Equal(4 * 2048, measured.Measurements!.WithheldSamples);
         ChecksumTally tally = Assert.Single(report.Streams.Single().Verification!.Checksums, c => c.Name == "SBR CRC-10");
         Assert.Equal(6, tally.Stored);
         Assert.Equal(2, tally.Failed);
@@ -144,7 +167,7 @@ public class AacStandardFollowedTests
         static AacBits Bits(params byte[] bytes) => new(bytes, 0, bytes.Length * 8);
 
         Assert.Equal(0, Crc10.Of(Bits(0, 0)));
-        // 6 bits of zero, then a one: x^0 shifted through the register leaves the polynomial's remainder 0x233.
+        // 7 bits of zero, then a one: x^0 shifted through the register leaves the polynomial's remainder 0x233.
         Assert.Equal(0x233, Crc10.Of(new AacBits([0x01], 0, 8)));
         int crc = Crc10.Of(Bits(0xA5, 0x3C));
         Assert.Equal(0, Crc10.Of(new AacBits([0xA5, 0x3C, (byte)(crc >> 2), (byte)((crc & 3) << 6)], 0, 26)));

@@ -117,16 +117,6 @@ LIBXAAC_DIFFERENCES = {
     "faac-1.50.m4a": (LIBXAAC_ORDER, [1], 340),
     "apple-passthru-m4a-from-faac-m4a.m4a": (LIBXAAC_ORDER, [1], 340),
     "apple-intel-passthru-m4a-from-faac-m4a.m4a": (LIBXAAC_ORDER, [1], 340),
-    "faac-1.31.1-adts.aac": (LIBXAAC_ORDER, [1], 340),
-    "faac-1.31.1.m4a": (LIBXAAC_ORDER, [1], 340),
-    "faac-1.40-adts.aac": (LIBXAAC_ORDER, [1], 340),
-    "faac-1.40.m4a": (LIBXAAC_ORDER, [1], 340),
-    "faac-1.40-pink-equal-adts.aac": (LIBXAAC_ORDER, [3, 4, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86], 4723),
-    "faac-1.40-pink-side-12-db-adts.aac": (LIBXAAC_ORDER, [8, 9, 12, 13, 14, 15, 16, 17, 18, 19, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 78, 79, 80, 81, 82, 83, 84, 85, 86], 2317),
-    "faac-1.50-adts.aac": (LIBXAAC_ORDER, [1], 340),
-    "faac-1.50.m4a": (LIBXAAC_ORDER, [1], 340),
-    "apple-passthru-m4a-from-faac-m4a.m4a": (LIBXAAC_ORDER, [1], 340),
-    "apple-intel-passthru-m4a-from-faac-m4a.m4a": (LIBXAAC_ORDER, [1], 340),
     "loud-noise-pair.aac": ("grouped short windows whose noise both channels share: libxaac reuses the first channel's seed variable for the second, which starts from the first channel's "
                             "last window of the group (ixheaacd_pns_js_thumb.c), so the second channel draws other noise there; the analyzer gives both the same noise in each window", [1, 2], 4862),
     "stereo-coding.aac": ("block 10, a pair without a common window: libxaac reads the mid/side flags only for a common window and never clears them (ixheaacd_read_ms_data), so its "
