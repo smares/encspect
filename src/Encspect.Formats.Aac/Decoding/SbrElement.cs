@@ -135,9 +135,9 @@ internal sealed class SbrElement
             }
         }
 
-        foreach (SbrChannel channel in _channel)
+        for (int c = 0; c < _channels; c++)
         {
-            channel.Carry();
+            _channel[c].Carry();
         }
     }
 

@@ -45,7 +45,8 @@ internal sealed partial class BlockReader
     private int _elementIds;
     private bool _hasSbr;
     private bool _hasSbrEvidence;
-    private int _firstLayout = -1;
+    private readonly List<byte> _lastLayout = [];
+    private bool _hasLayout;
     private bool _hasPs;
     private bool _hasCoupling;
 
@@ -216,23 +217,37 @@ internal sealed partial class BlockReader
                     0, 0, null);
             }
 
-            // The order of the channel elements (single channel, channel pair, LFE) against the first block's: a decoder's per-element state no longer fits a block that changes it.
-            int layout = 0;
+            // The order of the channel elements (single channel, channel pair, LFE) against the block before's: the decoder keeps per-slot state (the core's overlap and window shape, SBR), which
+            // no longer fits a block that changes it, so it starts that state again and withholds the block.
+            bool differs = false;
+            int at = 0;
             foreach (ElementSpan element in _elements)
             {
                 if (element.Id is 0 or 1 or 3)
                 {
-                    layout = (layout * 5) + element.Id + 1;
+                    differs |= at >= _lastLayout.Count || _lastLayout[at] != element.Id;
+                    at++;
                 }
             }
 
-            if (_firstLayout < 0)
+            differs |= at != _lastLayout.Count;
+            if (differs)
             {
-                _firstLayout = layout;
-            }
-            else if (layout != _firstLayout && (_setup.ExpectedSce < 0 || (sce == _setup.ExpectedSce && cpe == _setup.ExpectedCpe && lfe == _setup.ExpectedLfe)))
-            {
-                Soft("aac.layout-changed", "channel elements in another order than the stream's first block holds them, so a decoder starts its per-element state again", 0, 0, null);
+                bool isFirst = _lastLayout.Count == 0 && !_hasLayout;
+                _lastLayout.Clear();
+                foreach (ElementSpan element in _elements)
+                {
+                    if (element.Id is 0 or 1 or 3)
+                    {
+                        _lastLayout.Add((byte)element.Id);
+                    }
+                }
+
+                _hasLayout = true;
+                if (!isFirst && (_setup.ExpectedSce < 0 || (sce == _setup.ExpectedSce && cpe == _setup.ExpectedCpe && lfe == _setup.ExpectedLfe)))
+                {
+                    Soft("aac.layout-changed", "channel elements in another order than the block before it, so the decoder starts the state of its channel slots again", 0, 0, null);
+                }
             }
 
             if (_hasSbr)

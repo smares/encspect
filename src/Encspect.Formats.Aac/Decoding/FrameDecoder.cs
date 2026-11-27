@@ -117,7 +117,7 @@ internal sealed class FrameDecoder : IFrameDecoder
                 $"The block at 0x{frame.Bytes.FileStart:X} holds a coupling channel element, whose channels are read and not applied, so the decoded audio lacks what they add to the channels they couple.");
         }
 
-        // A block whose channel elements differ from the last block's (another kind in a slot) is a loss as a change of the slot count is: the per-element state of SBR no longer fits it.
+        // A block whose channel elements differ from the last block's (another kind in a slot) is a loss as a change of the slot count is: the per-slot state (the core's overlap and window shape, which belong to one element in a block and to another in the next, and the SBR state of the elements) no longer fits it.
         bool layoutChanged = false;
         for (int ch = 0; ch < _channels; ch++)
         {
