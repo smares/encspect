@@ -13,7 +13,7 @@ lossless codings the decoder design cites):
   needs none of them, since it reads no audio, but they are pinned with the decoder they belong to). decode.c is the generic
   decode loop that wmavoice.c's return values are read by (an error drops the rest of the packet).
 - libavcodec/aactab.c and aacsbrdata.h: the scalefactor codebook that WMA's exponents share with AAC, and the AAC and SBR Huffman codebooks
-  scripts/fixtures/check_aac_tables.py compares with the analyzer's tables.
+  scripts/fixtures/aac_tables.py was first transcribed from.
 - libavcodec/vlc.c: how a VLC is built from code lengths (ff_vlc_init_from_lengths).
 - libavformat/wvdec.c, wv.c and wv.h and libavcodec/wavpack.c: the WavPack demuxer and decoder, which the WavPack cross-check explains
   ffprobe's readings with.
