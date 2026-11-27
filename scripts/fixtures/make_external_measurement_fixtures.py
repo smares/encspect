@@ -306,7 +306,7 @@ def encode_all(names):
             finish(name, decoded, {
                 "description": f"The committed ogg/{opus.name} (opusenc, opus-tools 0.2, libopus 1.4, at {kbps} kbit/s, 4 s of {source} at 48,000 Hz), decoded with opusdec.",
                 "encoder": {"name": "opusenc", "version": "opus-tools 0.2, libopus 1.4", "settings": f"--bitrate {kbps}", "command": f"opusenc --bitrate {kbps} in.wav {opus.name}; opusdec --rate 48000 {opus.name} out.wav"},
-                "stated": None, "expect_cutoff": "any"})
+                "stated": None, "expect_cutoff": "none" if "harmonic" in name else "any"})
     return made
 
 

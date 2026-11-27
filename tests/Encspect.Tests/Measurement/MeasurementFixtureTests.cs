@@ -135,6 +135,9 @@ public class MeasurementFixtureTests
             AssertCoherence(coherence, m.Spectrum.Coherence!, model, name);
         }
 
+        // The replicated bands (Step 9) from the model's own counters: the reason, the frames and the stretches exact, the shares of the bands within a few tenths of a percent.
+        AssertReplicated(model.GetProperty("replicated_bands"), m, name, reliable);
+
         // The levels: every count and the DC offset exact, the tenths of a dB exactly (the model works them out in 60 decimal digits).
         JsonElement levels = model.GetProperty("levels");
         Assert.Equal(levels.GetProperty("bits").GetInt32(), m.Levels!.BitsPerSample);
@@ -560,6 +563,99 @@ public class MeasurementFixtureTests
             int bandHertz = geometry.Hertz(geometry.BandRows);
             Assert.InRange(coherence.FromFrequency, from.GetInt32() - bandHertz, from.GetInt32() + bandHertz);
         }
+    }
+
+    // The replicated-bands fixtures are built to have a start (or none): found within one band of 1 kHz of where the construction says, none where it says none.
+    [Theory]
+    [InlineData("synthetic-replicated-copy-5000")]
+    [InlineData("synthetic-replicated-two-patches")]
+    [InlineData("synthetic-replicated-narrow-patch")]
+    [InlineData("synthetic-replicated-offset-changes")]
+    [InlineData("synthetic-replicated-white-noise")]
+    [InlineData("synthetic-replicated-sawtooth-220")]
+    [InlineData("synthetic-replicated-glide")]
+    public void TheReplicatedBandsAreWhereTheSignalWasBuiltToHaveThem(string name)
+    {
+        JsonElement from = Manifest(name).GetProperty("construction").GetProperty("replicated_from_hz");
+        StreamMeasurements m = Analyze(name, new MeasureOptions()).Streams.Single().Measurements!;
+        ReplicatedBandsFigures figures = m.Spectrum!.ReplicatedBands!;
+
+        Assert.Equal(from.ValueKind == JsonValueKind.Number, figures.IsFound);
+        if (figures.IsFound)
+        {
+            var geometry = new CutoffGeometry(m.SampleRate, m.Spectrum.FftSize);
+            int bandHertz = geometry.Hertz(geometry.BandRows);
+            Assert.InRange(figures.FromFrequency, from.GetInt32() - bandHertz, from.GetInt32() + bandHertz);
+        }
+    }
+
+    // Where the cutoff the range comes from is not reliable (an unspecified signal) the frequencies are compared within a band of 1 kHz; the impulse files' rows are flat and their fine
+    // structure is the rounding noise of the two FFTs, which the model and the analyzer do not share, so only their reasons are compared.
+    private static void AssertReplicated(JsonElement model, StreamMeasurements m, string name, bool reliable)
+    {
+        ReplicatedBandsFigures? actual = m.Spectrum!.ReplicatedBands;
+        Assert.NotNull(actual);
+        Assert.Equal(model.GetProperty("is_searched").GetBoolean(), actual.IsSearched);
+        if (!actual.IsSearched)
+        {
+            return;
+        }
+
+        Assert.Equal(model.GetProperty("frames_used").GetInt32(), actual.FramesUsed);
+        string reason = model.GetProperty("reason").GetString()!;
+        Assert.Equal(reason, actual.Reason switch
+        {
+            ReplicatedBandsReason.None => string.Empty,
+            ReplicatedBandsReason.NotMatching => "notMatching",
+            ReplicatedBandsReason.NotAtTop => "notAtTop",
+            ReplicatedBandsReason.TooFewFrames => "tooFewFrames",
+            ReplicatedBandsReason.TooShort => "tooShort",
+            ReplicatedBandsReason.NoSignal => "noSignal",
+            _ => "?",
+        });
+        Assert.Equal(model.GetProperty("is_found").GetBoolean(), actual.IsFound);
+        if (name.StartsWith("synthetic-impulse-silence", StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var geometry = new CutoffGeometry(m.SampleRate, m.Spectrum.FftSize);
+        int slack = reliable ? 0 : geometry.Hertz(geometry.BandRows);
+        Assert.InRange(actual.FromFrequency, model.GetProperty("from_frequency").GetInt32() - slack, model.GetProperty("from_frequency").GetInt32() + slack);
+        Assert.InRange(actual.ToFrequency, model.GetProperty("to_frequency").GetInt32() - slack, model.GetProperty("to_frequency").GetInt32() + slack);
+        Assert.InRange(actual.RangeFrequency, model.GetProperty("range_frequency").GetInt32() - slack, model.GetProperty("range_frequency").GetInt32() + slack);
+        JsonElement[] stretches = [.. model.GetProperty("stretches").EnumerateArray()];
+        Assert.Equal(stretches.Length, actual.Stretches.Count);
+        for (int i = 0; i < stretches.Length; i++)
+        {
+            Assert.Equal(stretches[i].GetProperty("from_frequency").GetInt32(), actual.Stretches[i].FromFrequency);
+            Assert.Equal(stretches[i].GetProperty("to_frequency").GetInt32(), actual.Stretches[i].ToFrequency);
+            JsonElement[] offsets = [.. stretches[i].GetProperty("offsets").EnumerateArray()];
+            Assert.Equal(offsets.Length, actual.Stretches[i].Offsets.Count);
+            for (int k = 0; k < offsets.Length; k++)
+            {
+                Assert.Equal(offsets[k].GetProperty("offset").GetInt32(), actual.Stretches[i].Offsets[k].Offset);
+                Assert.Equal(offsets[k].GetProperty("from_frequency").GetInt32(), actual.Stretches[i].Offsets[k].FromFrequency);
+            }
+        }
+
+        JsonElement[] bands = [.. model.GetProperty("bands").EnumerateArray()];
+        Assert.Equal(bands.Length, actual.Bands.Count);
+        int differing = 0;
+        for (int i = 0; i < bands.Length; i++)
+        {
+            ReplicatedBand band = actual.Bands[i];
+            Assert.Equal(bands[i].GetProperty("start_row").GetInt32(), band.StartRow);
+            JsonElement share = bands[i].GetProperty("share");
+            int modelShare = share.ValueKind == JsonValueKind.Null ? MeasurementLimits.NoPower : share.GetInt32();
+            if (modelShare != band.ShareTenths || bands[i].GetProperty("frames_with_signal").GetInt32() != band.FramesWithSignal
+                || bands[i].GetProperty("passes").GetBoolean() != band.Passes || bands[i].GetProperty("offset").GetInt32() != band.Offset)
+            {
+                differing++;
+            }
+        }
+
+        Assert.True(differing <= bands.Length / 20, $"{name}: {differing} of {bands.Length} replicated bands differ from the model");
     }
 
     private static void AssertCoherence(JsonElement model, CoherenceFigures actual, JsonElement spectrum, string name)
