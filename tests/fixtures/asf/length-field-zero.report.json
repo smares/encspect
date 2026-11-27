@@ -1447,76 +1447,85 @@
                   ]
                 },
                 {
-                  "name": "Statistics",
-                  "kind": "Statistics",
+                  "name": "Stream 1 Media Objects",
+                  "value": 3,
+                  "unit": "media objects",
                   "offset": 276,
                   "length": 818,
                   "children": [
                     {
-                      "name": "Codec",
-                      "value": "PCM",
+                      "name": "Statistics",
+                      "kind": "Statistics",
                       "offset": 276,
-                      "length": 818
-                    },
-                    {
-                      "name": "Sample Frames",
-                      "value": 150,
-                      "unit": "sample frames",
-                      "offset": 276,
-                      "length": 818
-                    },
-                    {
-                      "name": "Duration",
-                      "value": 0.01875,
-                      "unit": "s",
-                      "offset": 276,
-                      "length": 818
-                    },
-                    {
-                      "name": "Sample Rate",
-                      "value": 8000,
-                      "unit": "Hz",
-                      "offset": 276,
-                      "length": 818
-                    },
-                    {
-                      "name": "Channels",
-                      "value": 1,
-                      "unit": "channels",
-                      "offset": 276,
-                      "length": 818
-                    },
-                    {
-                      "name": "Channel Layout",
-                      "value": "mono (front center)",
-                      "offset": 276,
-                      "length": 818
-                    },
-                    {
-                      "name": "Bits Per Sample",
-                      "value": 16,
-                      "unit": "bits",
-                      "offset": 276,
-                      "length": 818
-                    },
-                    {
-                      "name": "Sample Format",
-                      "value": "signed integer",
-                      "offset": 276,
-                      "length": 818
-                    },
-                    {
-                      "name": "Byte Order",
-                      "value": "little-endian",
-                      "offset": 276,
-                      "length": 818
-                    },
-                    {
-                      "name": "Average Bitrate",
-                      "value": 128,
-                      "unit": "kbps",
-                      "offset": 276,
-                      "length": 818
+                      "length": 818,
+                      "children": [
+                        {
+                          "name": "Codec",
+                          "value": "PCM",
+                          "offset": 276,
+                          "length": 818
+                        },
+                        {
+                          "name": "Sample Frames",
+                          "value": 150,
+                          "unit": "sample frames",
+                          "offset": 276,
+                          "length": 818
+                        },
+                        {
+                          "name": "Duration",
+                          "value": 0.01875,
+                          "unit": "s",
+                          "offset": 276,
+                          "length": 818
+                        },
+                        {
+                          "name": "Sample Rate",
+                          "value": 8000,
+                          "unit": "Hz",
+                          "offset": 276,
+                          "length": 818
+                        },
+                        {
+                          "name": "Channels",
+                          "value": 1,
+                          "unit": "channels",
+                          "offset": 276,
+                          "length": 818
+                        },
+                        {
+                          "name": "Channel Layout",
+                          "value": "mono (front center)",
+                          "offset": 276,
+                          "length": 818
+                        },
+                        {
+                          "name": "Bits Per Sample",
+                          "value": 16,
+                          "unit": "bits",
+                          "offset": 276,
+                          "length": 818
+                        },
+                        {
+                          "name": "Sample Format",
+                          "value": "signed integer",
+                          "offset": 276,
+                          "length": 818
+                        },
+                        {
+                          "name": "Byte Order",
+                          "value": "little-endian",
+                          "offset": 276,
+                          "length": 818
+                        },
+                        {
+                          "name": "Average Bitrate",
+                          "value": 128,
+                          "unit": "kbps",
+                          "offset": 276,
+                          "length": 818
+                        }
+                      ]
                     }
                   ]
                 }
@@ -1531,7 +1540,8 @@
         "nodes": [
           [
             0,
-            1
+            1,
+            7
           ]
         ],
         "codec": "PCM",

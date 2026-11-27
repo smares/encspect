@@ -1,0 +1,76 @@
+{
+ "length": 4560,
+ "container": {
+  "id": "RIFF",
+  "size": 4552,
+  "end": 4560
+ },
+ "chunks": [
+  {
+   "id": "fmt ",
+   "offset": 12,
+   "end": 48,
+   "size": 28,
+   "length": 28
+  },
+  {
+   "id": "fact",
+   "offset": 48,
+   "end": 60,
+   "size": 4,
+   "length": 4
+  },
+  {
+   "id": "LIST",
+   "offset": 60,
+   "end": 94,
+   "size": 26,
+   "length": 26,
+   "list_type": "INFO",
+   "children": [
+    {
+     "id": "ISFT",
+     "offset": 72,
+     "end": 94,
+     "size": 14,
+     "length": 14
+    }
+   ]
+  },
+  {
+   "id": "data",
+   "offset": 94,
+   "end": 4560,
+   "size": 4458,
+   "length": 4458
+  }
+ ],
+ "stream": {
+  "codec": "Windows Media Audio 2",
+  "sample_rate": 44100,
+  "channels": 2,
+  "bits": null,
+  "samples": 11025,
+  "duration": 0.25,
+  "layout": [
+   "front left",
+   "front right"
+  ],
+  "average_bitrate": 142.656
+ },
+ "findings": [],
+ "tool": "ffmpeg version 6.1.1-3ubuntu5 (ffmpeg package of Ubuntu 24.04)",
+ "arguments": [
+  "-c:a",
+  "wmav2",
+  "-b:a",
+  "128k"
+ ],
+ "input": {
+  "kind": "sine",
+  "rate": 44100,
+  "channels": 2,
+  "seconds": 0.25,
+  "format": "s16le"
+ }
+}

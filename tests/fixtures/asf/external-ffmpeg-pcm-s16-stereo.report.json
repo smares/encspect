@@ -6962,96 +6962,105 @@
                   ]
                 },
                 {
-                  "name": "Statistics",
-                  "kind": "Statistics",
+                  "name": "Stream 1 Media Objects",
+                  "value": 11,
+                  "unit": "media objects",
                   "offset": 458,
                   "length": 67250,
                   "children": [
                     {
-                      "name": "Codec",
-                      "value": "PCM",
+                      "name": "Statistics",
+                      "kind": "Statistics",
                       "offset": 458,
-                      "length": 67250
+                      "length": 67250,
+                      "children": [
+                        {
+                          "name": "Codec",
+                          "value": "PCM",
+                          "offset": 458,
+                          "length": 67250
+                        },
+                        {
+                          "name": "Sample Frames",
+                          "value": 11025,
+                          "unit": "sample frames",
+                          "offset": 458,
+                          "length": 67250
+                        },
+                        {
+                          "name": "Duration",
+                          "value": 0.25,
+                          "unit": "s",
+                          "offset": 458,
+                          "length": 67250
+                        },
+                        {
+                          "name": "Sample Rate",
+                          "value": 44100,
+                          "unit": "Hz",
+                          "offset": 458,
+                          "length": 67250
+                        },
+                        {
+                          "name": "Channels",
+                          "value": 2,
+                          "unit": "channels",
+                          "offset": 458,
+                          "length": 67250
+                        },
+                        {
+                          "name": "Channel Layout",
+                          "value": "stereo (front left, front right)",
+                          "offset": 458,
+                          "length": 67250
+                        },
+                        {
+                          "name": "Bits Per Sample",
+                          "value": 16,
+                          "unit": "bits",
+                          "offset": 458,
+                          "length": 67250
+                        },
+                        {
+                          "name": "Sample Format",
+                          "value": "signed integer",
+                          "offset": 458,
+                          "length": 67250
+                        },
+                        {
+                          "name": "Byte Order",
+                          "value": "little-endian",
+                          "offset": 458,
+                          "length": 67250
+                        },
+                        {
+                          "name": "Average Bitrate",
+                          "value": 1411.2,
+                          "unit": "kbps",
+                          "offset": 458,
+                          "length": 67250
+                        }
+                      ]
                     },
                     {
-                      "name": "Sample Frames",
-                      "value": 11025,
-                      "unit": "sample frames",
+                      "name": "Writer",
+                      "value": "FFmpeg (Lavf60.16.100)",
                       "offset": 458,
-                      "length": 67250
-                    },
-                    {
-                      "name": "Duration",
-                      "value": 0.25,
-                      "unit": "s",
-                      "offset": 458,
-                      "length": 67250
-                    },
-                    {
-                      "name": "Sample Rate",
-                      "value": 44100,
-                      "unit": "Hz",
-                      "offset": 458,
-                      "length": 67250
-                    },
-                    {
-                      "name": "Channels",
-                      "value": 2,
-                      "unit": "channels",
-                      "offset": 458,
-                      "length": 67250
-                    },
-                    {
-                      "name": "Channel Layout",
-                      "value": "stereo (front left, front right)",
-                      "offset": 458,
-                      "length": 67250
-                    },
-                    {
-                      "name": "Bits Per Sample",
-                      "value": 16,
-                      "unit": "bits",
-                      "offset": 458,
-                      "length": 67250
-                    },
-                    {
-                      "name": "Sample Format",
-                      "value": "signed integer",
-                      "offset": 458,
-                      "length": 67250
-                    },
-                    {
-                      "name": "Byte Order",
-                      "value": "little-endian",
-                      "offset": 458,
-                      "length": 67250
-                    },
-                    {
-                      "name": "Average Bitrate",
-                      "value": 1411.2,
-                      "unit": "kbps",
-                      "offset": 458,
-                      "length": 67250
-                    }
-                  ]
-                },
-                {
-                  "name": "Writer",
-                  "value": "FFmpeg (Lavf60.16.100)",
-                  "offset": 458,
-                  "length": 67250,
-                  "children": [
-                    {
-                      "name": "Confidence",
-                      "value": "Low",
-                      "offset": 458,
-                      "length": 67250
-                    },
-                    {
-                      "name": "Evidence",
-                      "value": "Extended Content Description Object descriptor WM/EncodingSettings at 0xFC names \"Lavf60.16.100\"",
-                      "offset": 458,
-                      "length": 67250
+                      "length": 67250,
+                      "children": [
+                        {
+                          "name": "Confidence",
+                          "value": "Low",
+                          "offset": 458,
+                          "length": 67250
+                        },
+                        {
+                          "name": "Evidence",
+                          "value": "Extended Content Description Object descriptor WM/EncodingSettings at 0xFC names \"Lavf60.16.100\"",
+                          "offset": 458,
+                          "length": 67250
+                        }
+                      ]
                     }
                   ]
                 }
@@ -7066,7 +7075,8 @@
         "nodes": [
           [
             0,
-            1
+            1,
+            7
           ]
         ],
         "codec": "PCM",

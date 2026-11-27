@@ -211,7 +211,19 @@ public sealed partial class AsfParser
             }
 
             int streamsBefore = state.Context.Streams.Count;
-            bool routed = state.Context.ParsePackets(codec, state.DataNode, objects, configuration);
+            Node parent = state.DataNode;
+            if (pcm is not null)
+            {
+                // The PCM parser describes the stream under the node it is handed, which is the stream's own, as the Data Object may hold several.
+                long figuresObjects = state.Figures.Streams.GetValueOrDefault(stream.Number)?.Objects ?? 0;
+                parent = state.DataNode.Add(new Node($"Stream {stream.Number} Media Objects", state.DataNode.Offset, state.DataNode.Length, NodeValue.Integer(figuresObjects, "media objects", "media object"))
+                {
+                    Description = Explain.PcmMediaObjects,
+                    Topic = Topics.PcmSamples,
+                });
+            }
+
+            bool routed = state.Context.ParsePackets(codec, parent, objects, configuration);
             if (!routed)
             {
                 state.Findings.AddNow(Severity.Info, "asf.codec-not-analyzed",
