@@ -151,7 +151,7 @@ internal sealed class StdBlockSeries
 
             if (note.NonZero > 0)
             {
-                _escapes.Add((frameIndex, (int)((2000L * note.Escapes + note.NonZero) / (2L * note.NonZero))));
+                _escapes.Add((frameIndex, (int)RoundHalfEven(1000L * note.Escapes, note.NonZero)));
             }
         }
 
@@ -261,6 +261,13 @@ internal sealed class StdBlockSeries
         });
     }
 
+    // The quotient to the nearest integer, halves to even, as the series of the same name of the other formats round their percentages.
+    private static long RoundHalfEven(long numerator, long denominator)
+    {
+        long quotient = Math.DivRem(numerator, denominator, out long rest);
+        return rest * 2 > denominator || (rest * 2 == denominator && quotient % 2 != 0) ? quotient + 1 : quotient;
+    }
+
     // "Total Gain" for each block that has one, at its frame's offset, and "Total Gain Over Time", each second's highest.
     private void AddGainTo(List<Series> series, double[] frameOffsets, Node? anchor, CancellationToken cancellation)
     {
@@ -269,7 +276,7 @@ internal sealed class StdBlockSeries
             return;
         }
 
-        AddOwn(series, frameOffsets, "Total Gain", "dB", _gain, 1, StdText.TotalGainSeries, null, cancellation);
+        AddOwn(series, frameOffsets, "Total Gain", "dB", _gain, 1, StdText.TotalGainSeries, anchor, cancellation);
         var x = new double[_gainSeconds.Count];
         var values = new double[_gainSeconds.Count];
         for (int i = 0; i < x.Length; i++)

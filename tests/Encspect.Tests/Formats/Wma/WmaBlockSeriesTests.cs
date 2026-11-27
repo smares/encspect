@@ -214,4 +214,18 @@ public class WmaBlockSeriesTests
         Node highest = Assert.Single(Statistic(stream, "Coded Bandwidth").Children, c => c.Name == "Highest");
         Assert.Equal(20_037, highest.Value!.AsInteger());
     }
+
+    // A file with short blocks has blocks that send no exponents: the tally counts those whose "Exponents Sent" flag is clear, one for each.
+    [Fact]
+    public void BlocksThatSendNoExponentsAreTheTallysReusingSide()
+    {
+        StreamInfo stream = Fixtures.AnalyzeMpeg("asf/external-windows-wma92-cbr-stereo-22k-32.wma").Streams[0];
+
+        long reusing = WmaStandardStreams.FindAll(stream.Nodes[0], "Exponents Sent").Count(n => n.Value!.AsBoolean() == false);
+        Assert.True(reusing > 0);
+        CategorySeries reuse = Category(stream, "Blocks Reusing Exponents");
+        Assert.Equal(reusing, reuse.Counts[0]);
+        Assert.Equal("With reused exponents", reuse.Categories[0].Name);
+        Assert.True(reuse.Counts[1] > 0);
+    }
 }
