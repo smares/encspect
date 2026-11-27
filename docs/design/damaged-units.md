@@ -15,7 +15,7 @@ Status: signed off by the lead, 2026-11-20 (every decision as recommended, the [
 ## Scope
 
 - **In:** every decoder in `src/Encspect.Formats.*/Decoding`, the host's decode session and measurer, the contract types they share, and the container checksums over packets a decoder receives (Ogg, Matroska).
-- **Out:** the verification (`StreamVerification`, the tallies, `IsVerified`), the findings, the tree, and the PCM a front end's `Output` sink receives (decision 4). Decoders that do not exist yet (WMA, AAC, the WavPack pair with its correction applied) adopt the rule in their own pull requests.
+- **Out:** the verification (`StreamVerification`, the tallies, `IsVerified`), the findings, the tree, and the PCM a front end's `Output` sink receives (decision 4). Decoders that do not exist yet (WMA, the WavPack pair with its correction applied) adopt the rule in their own pull requests.
 
 ## Survey
 
@@ -39,7 +39,8 @@ Status: signed off by the lead, 2026-11-20 (every decision as recommended, the [
 | Musepack | the SV8 stream header's CRC-32 only | | yes |
 | Vorbis, Opus, Speex | none of their own. The Ogg page CRC fails: the packets are handed as the page holds them ([ogg.md](../formats/ogg.md)), with no flag, since `MappedBytes` has none for it. Matroska's CRC-32 elements are verified by the parser, and the blocks carry no flag either | yes |
 | TAK | frame header CRC-24 and frame data CRC-24 (coded data), parser; the MD5 of the whole stream, decoder | handed with `IsDamaged` and `FailsChecksum` where either CRC-24 fails; decoded and written, every frame on its own | yes |
-| OptimFROG, WMA Lossless, AAC | no decoder yet. OptimFROG has block CRC-32s, AAC the ADTS CRC, WMA Lossless none | | no decoder |
+| AAC | the ADTS CRC-16 of a protected frame (coded data), parser | `FailsChecksum` on each block of a frame whose CRC fails (`DecodeFeed.Decode`); decoded and written, and the measurements withhold the block and the one after it, whose overlap holds the failed frame's state, as "checksum failed" (no gap is made) | yes |
+| OptimFROG, WMA Lossless | no decoder yet. OptimFROG has block CRC-32s, WMA Lossless none | | no decoder |
 
 ### What the measurers do today
 
@@ -183,7 +184,7 @@ Status: signed off by the lead, 2026-11-20 (every decision as recommended, the [
 - **TrueHD's lossless check:** its failure is reported and the interval it covers stays measured (decision 6). Withholding it would need each interval held to the next restart header and a write at the end of the stream, which the contract does not allow.
 - **Damage without a failed check** (above).
 - **Writer bugs that fail every unit:** the whole stream is withheld. Monkey's Audio files of SDK 13.42 and 13.43 with seven channels fail every frame CRC (`external-normal-16-7ch-sdk-1342`), so they get no measurements, with the reason (decision 7).
-- **Codecs whose decoders do not exist yet** (AAC, WMA, the WavPack pair with its correction applied): each applies the rule in its decoder's pull request. AAC's ADTS CRC is a counting check. TAK's decoder applies it (item 12): the parser flags a frame whose header CRC-24 or data CRC-24 fails (`Feeding.cs`), both counting checks, since the frame header holds the sample count of the last frame and no wider check covers it; every frame decodes on its own, so the span is the frame alone.
+- **Codecs whose decoders do not exist yet** (WMA, the WavPack pair with its correction applied): each applies the rule in its decoder's pull request. AAC's decoder applies it: the ADTS CRC is a counting check, and a block of a frame that fails it is decoded, written and withheld with the block after it. TAK's decoder applies it (item 12): the parser flags a frame whose header CRC-24 or data CRC-24 fails (`Feeding.cs`), both counting checks, since the frame header holds the sample count of the last frame and no wider check covers it; every frame decodes on its own, so the span is the frame alone.
 
 ## Decisions for the lead
 
@@ -233,7 +234,7 @@ Decided by the lead, 2026-11-20: every recommendation below.
 6. **The container checksums over MPEG audio, AC-3 and E-AC-3, DTS, and TrueHD and MLP packets:** the frames flagged from the packets they lie in, the DTS decoder's span.
 
 - **Recommended:** this order, not all at once. Each group touches other decoders and reviewers, and each brings its own goldens. The contract comes with a user, so it is not reviewed in the abstract.
-- Later decoders (the WavPack pair, item 3; AAC and WMA in 0.5) apply the rule in their own pull requests; TAK's (item 12) has.
+- Later decoders (the WavPack pair, item 3; WMA in 0.5) apply the rule in their own pull requests; TAK's (item 12) and AAC's have.
 
 ## As built, pull request 2
 

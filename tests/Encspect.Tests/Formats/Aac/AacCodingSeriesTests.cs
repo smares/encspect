@@ -257,6 +257,34 @@ public class AacCodingSeriesTests
         Assert.True(bandwidth.X.Span.SequenceEqual(bitrate.X.Span));
     }
 
+    // The SBR and parametric stereo series count what their tally nodes under "SBR" and "Parametric Stereo" state, and a stream without SBR keeps none.
+    [Theory]
+    [InlineData("aac/apple-hev2-adts-cbr-st44.aac", true)]
+    [InlineData("aac/fdkaac-he-adts.aac", false)]
+    public void The_SBR_and_parametric_stereo_series_equal_the_counts_of_their_nodes(string name, bool hasPs)
+    {
+        Report report = Fixtures.AnalyzeMpeg(name);
+        StreamInfo stream = report.Streams.Single();
+        string[] names = ["SBR Frame Classes", "SBR Envelopes", "Parametric Stereo Envelopes", "Parametric Stereo Bands"];
+
+        foreach (string series in names.Where(n => hasPs || !n.StartsWith("Parametric", StringComparison.Ordinal)))
+        {
+            CategorySeries category = Series(stream, series)!;
+            Assert.NotNull(category);
+            Assert.Equal(series, category.Anchor!.Name);
+            Assert.Equal(category.Anchor.Value!.AsInteger(), category.Total);
+            foreach (Node child in category.Anchor.Children)
+            {
+                int index = category.Categories.ToList().FindIndex(c => c.Name == child.Name);
+                Assert.True(index >= 0, child.Name);
+                Assert.StartsWith($"{category.Counts[index]} ", child.Value!.ToString()!, StringComparison.Ordinal);
+            }
+        }
+
+        Assert.Equal(hasPs, Series(stream, "Parametric Stereo Envelopes") is not null);
+        Assert.Null(Series(Fixtures.AnalyzeMpeg("aac/adts/cbr.aac").Streams.Single(), "SBR Frame Classes"));
+    }
+
     [Fact]
     public void A_mono_stream_has_no_stereo_coding_and_keeps_nothing_for_it()
     {

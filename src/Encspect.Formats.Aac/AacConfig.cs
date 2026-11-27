@@ -62,7 +62,7 @@ internal sealed record AacConfig
     // Decoders apply PS only to a core of one channel (fdk-aac's sbrdecoder.cpp, ffmpeg's aacdec).
     public bool IsPsPossible => Channels == 1;
 
-    // PS likewise, where SBR is present and the core has one channel.
+    // PS data in a stream of SBR and a core of one channel: signaled, or found in any block (ISO/IEC 14496-3 1.6.6.3 has PS applied from whatever block its data starts in).
     public bool HasPs => IsPsPossible && (Ps == true || (HasSbr && Ps is null && PsFound == true));
 
     // SBR found that the configuration does not signal, and PS likewise.
@@ -83,6 +83,8 @@ internal sealed record AacConfig
     public int OutputFrameLength => UsacOutputFrameLength
         ?? (CoreSampleRate > 0 ? (int)((long)CoreFrameLength * OutputSampleRate / CoreSampleRate) : CoreFrameLength);
 
+    // The channels the stream carries: two where PS data is signaled or found, else the core's. The decoder outputs two channels for a single channel with SBR unless PS is signaled
+    // absent, with the one coded channel on both where no PS data comes (14496-3 1.6.6.3; DecodeFeed.StartSession), which the report's channels do not say.
     public int? OutputChannels => HasPs ? 2 : Channels;
 
     // With PS, signaled or found, a mono core gives left and right.

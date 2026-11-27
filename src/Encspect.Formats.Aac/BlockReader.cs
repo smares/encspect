@@ -1,3 +1,4 @@
+using System.Numerics;
 using Encspect.Core;
 
 namespace Encspect.Formats.Aac;
@@ -21,6 +22,7 @@ internal sealed partial class BlockReader
     private readonly CodingRecorder? _recorder;
     private readonly Dictionary<int, SbrHeader> _sbr = [];
     private readonly Dictionary<int, int> _sbrHeaderBlock = [];
+    private readonly Dictionary<int, int[]> _psState = [];
     private readonly List<BlockCut> _cuts = [];
     private readonly List<ElementSpan> _elements = [];
     private readonly List<SoftFinding> _soft = [];
@@ -32,6 +34,10 @@ internal sealed partial class BlockReader
     private UnitBytes _where;
     private int _anchor;
     private int _channel;
+
+    // The window_sequence of each channel stream (by its number in its block) in the block read before, or -1; whether this block has been flagged for a transition already.
+    private readonly int[] _previousSequence = Enumerable.Repeat(-1, BlockRecord.MaxSlots).ToArray();
+    private bool _windowFlagged;
     private int _block;
     private int _lastChannelElement;
     private int _lastChannelTag;
@@ -104,6 +110,7 @@ internal sealed partial class BlockReader
         _soft.Clear();
         _anchor = bits.Original;
         _channel = 0;
+        _windowFlagged = false;
         _lastChannelElement = -1;
         _lastChannelTag = 0;
         _elementCount = 0;
@@ -229,7 +236,7 @@ internal sealed partial class BlockReader
 
         if (_store is not null)
         {
-            _store.Flags = (_hasSbr ? BlockRecord.BlockHasSbr : 0) | (_hasPs ? BlockRecord.BlockHasPs : 0) | (_hasCoupling ? BlockRecord.BlockHasCoupling : 0);
+            _store.Flags = (_hasSbr ? BlockRecord.BlockHasSbr : 0) | (_hasPs ? BlockRecord.BlockHasPs : 0) | (_hasCoupling ? BlockRecord.BlockHasCoupling : 0) | (_hasSbrEvidence ? BlockRecord.BlockHasSbrEvidence : 0);
         }
 
         return new BlockResult(true, bits.Original, Packed(), _hasSbr, _hasPs, null, _hasSbrEvidence);
@@ -512,9 +519,29 @@ internal sealed partial class BlockReader
         }
     }
 
+    // The window sequences of the blocks read after this call follow no block read before it.
+    internal void ForgetWindows() => Array.Fill(_previousSequence, -1);
+
+    // Whether a window of sequence next follows one of sequence previous as 4.6.11.3.1 lists the meaningful transitions: the right slope of the one (long for only long and long stop,
+    // short for long start and eight short) is the left slope of the other (long for only long and long start, short for eight short and long stop). The other pairs are possible there too.
+    internal static bool SlopesMatch(int previous, int next) => (previous is 0 or 3) == (next is 0 or 1);
+
     private void TallyStream(Ics ics, int gain, bool pulse, bool tns, int filters, bool gainControl, int channel)
     {
         CodingTally tally = _tally!;
+        int stream = _channel + channel;
+        if (stream < _previousSequence.Length)
+        {
+            int previous = _previousSequence[stream];
+            _previousSequence[stream] = ics.WindowSequence;
+            if (previous >= 0 && !SlopesMatch(previous, ics.WindowSequence) && !_windowFlagged)
+            {
+                _windowFlagged = true;
+                Soft("aac.window-slopes-differ", "a window sequence whose left slope differs from the right slope of the window before it in the same channel stream, as a long window followed by eight short ones does: ISO/IEC 14496-3 4.6.11.3.1 lists such transitions as possible and not as meaningful",
+                    ics.SequenceAt, ics.SequenceAt + 2, "Window Sequence");
+            }
+        }
+
         tally.ChannelStreams++;
         tally.WindowSequences[ics.WindowSequence]++;
         tally.WindowShapes[ics.WindowShape]++;
@@ -559,7 +586,9 @@ internal sealed partial class BlockReader
         }
 
         tally.NoiseStreams += noise ? 1 : 0;
-        _recorder?.Stream(ics.WindowSequence, ics.Offsets[ics.MaxSfb]);
+        tally.NonZero += ics.NonZero;
+        tally.Escapes += ics.Escapes;
+        _recorder?.Stream(ics.WindowSequence, ics.Offsets[ics.MaxSfb], ics.LastLine, ics.NonZero, ics.Escapes);
         _recorder?.Tools(ics.WindowShape, tns, pulse, noise);
         tally.Gain(_channel + channel, gain);
     }
@@ -580,6 +609,7 @@ internal sealed partial class BlockReader
             }
 
             ics.WindowSequence = (int)bits.Read(2);
+            ics.SequenceAt = start + 1;
             Field(n, "Window Sequence", start + 1, start + 3, n is null ? null : WindowSequenceText(ics.WindowSequence), Explain.WindowSequence, Topics.Windows);
             ics.WindowShape = (int)bits.Read(1);
             Field(n, "Window Shape", start + 3, start + 4, ics.WindowShape == 0 ? "0 (sine)" : "1 (KBD)", Explain.WindowShape, Topics.Windows);
@@ -1071,6 +1101,9 @@ internal sealed partial class BlockReader
         else
         {
             bool eight = ics.WindowSequence == 2;
+            int last = 0;
+            long nonZero = 0;
+            long escapes = 0;
             for (int g = 0; g < ics.Groups; g++)
             {
                 int windows = eight ? ics.GroupLengths[g] : 1;
@@ -1082,51 +1115,78 @@ internal sealed partial class BlockReader
                         continue;
                     }
 
-                    int lines = (ics.Offsets[sfb + 1] - ics.Offsets[sfb]) * windows;
-                    int codewords = lines / Codebooks.Dimension(book);
+                    int first = ics.Offsets[sfb];
+                    int width = ics.Offsets[sfb + 1] - first;
+                    int dimension = Codebooks.Dimension(book);
+                    int codewords = width * windows / dimension;
                     Huffman huffman = Codebooks.Spectral[book];
                     byte[] follow = Codebooks.Follow[book];
+                    byte[] masks = Codebooks.NonZero[book];
                     int[] shortcut = Codebooks.Shortcuts[book];
-                    int width = huffman.RootWidth;
+                    int rootWidth = huffman.RootWidth;
+                    int bandLast = 0;
                     for (int i = 0; i < codewords; i++)
                     {
-                        // Most codewords fit the root: one lookup gives their bits and sign bits.
+                        // Most codewords fit the root: one lookup gives their bits and sign bits, and which of their values are nonzero.
                         // Peek reads zero bits past the data, so the limit is checked once per band.
-                        int entry = shortcut[bits.Peek(width)];
-                        if (entry >= 0 && entry < 0x100)
+                        int entry = shortcut[bits.Peek(rootWidth)];
+                        int mask;
+                        if (entry >= 0 && (entry & 0x300) == 0)
                         {
-                            bits.Advance(entry);
-                            continue;
-                        }
-
-                        bits.Check();
-                        int after;
-                        if (entry >= 0)
-                        {
-                            bits.Skip(entry & 0xFF);
-                            after = entry >> 5;
+                            bits.Advance(entry & 0xFF);
+                            mask = (entry >> 10) & 15;
                         }
                         else
                         {
-                            after = follow[huffman.Decode(ref bits)];
-                            bits.Skip(after & 7);
+                            bits.Check();
+                            int after;
+                            if (entry >= 0)
+                            {
+                                bits.Skip(entry & 0xFF);
+                                after = entry >> 5;
+                                mask = (entry >> 10) & 15;
+                            }
+                            else
+                            {
+                                int symbol = huffman.Decode(ref bits);
+                                after = follow[symbol];
+                                mask = masks[symbol];
+                                bits.Skip(after & 7);
+                            }
+
+                            if ((after & 8) != 0)
+                            {
+                                Escape(ref bits);
+                                escapes++;
+                            }
+
+                            if ((after & 16) != 0)
+                            {
+                                Escape(ref bits);
+                                escapes++;
+                            }
                         }
 
-                        if ((after & 8) != 0)
+                        if (mask != 0)
                         {
-                            Escape(ref bits);
+                            nonZero += BitOperations.PopCount((uint)mask);
+                            int at = (i * dimension) + BitOperations.Log2((uint)mask);
+                            bandLast = Math.Max(bandLast, windows == 1 ? at + 1 : (at % width) + 1);
                         }
+                    }
 
-                        if ((after & 16) != 0)
-                        {
-                            Escape(ref bits);
-                        }
+                    if (bandLast > 0)
+                    {
+                        last = Math.Max(last, first + bandLast);
                     }
 
                     bits.Check();
                 }
             }
 
+            ics.LastLine = last;
+            ics.NonZero = nonZero;
+            ics.Escapes = escapes;
             length = bits.Original - start;
             _cuts.Add(new BlockCut(CutKind.Spectral, start, length, -1));
         }
@@ -1144,13 +1204,17 @@ internal sealed partial class BlockReader
         Span<int> values = stackalloc int[4];
         bool eight = ics.WindowSequence == 2;
         int position = 0;
+        int last = 0;
+        long nonZero = 0;
+        long escapes = 0;
         for (int g = 0; g < ics.Groups; g++)
         {
             int windows = eight ? ics.GroupLengths[g] : 1;
             for (int sfb = 0; sfb < ics.MaxSfb; sfb++)
             {
                 int book = ics.Codebooks[(g * MaxBands) + sfb];
-                int lines = (ics.Offsets[sfb + 1] - ics.Offsets[sfb]) * windows;
+                int width = ics.Offsets[sfb + 1] - ics.Offsets[sfb];
+                int lines = width * windows;
                 if (book is 0 or > 11)
                 {
                     position += lines;
@@ -1159,6 +1223,7 @@ internal sealed partial class BlockReader
 
                 int dimension = Codebooks.Dimension(book);
                 Huffman huffman = Codebooks.Spectral[book];
+                int bandStart = position;
                 for (int i = 0; i < lines / dimension; i++)
                 {
                     bits.Check();
@@ -1212,6 +1277,7 @@ internal sealed partial class BlockReader
                         {
                             if (Math.Abs(values[k]) == 16)
                             {
+                                escapes++;
                                 int escape = EscapeValue(ref bits);
                                 values[k] = values[k] < 0 ? -escape : escape;
                             }
@@ -1220,6 +1286,12 @@ internal sealed partial class BlockReader
 
                     for (int k = 0; k < dimension; k++)
                     {
+                        if (values[k] != 0)
+                        {
+                            nonZero++;
+                            last = Math.Max(last, ics.Offsets[sfb] + ((position - bandStart) % width) + 1);
+                        }
+
                         spectrum[position++] = values[k];
                     }
                 }
@@ -1227,6 +1299,10 @@ internal sealed partial class BlockReader
                 bits.Check();
             }
         }
+
+        ics.LastLine = last;
+        ics.NonZero = nonZero;
+        ics.Escapes = escapes;
     }
 
     // escape_prefix and escape_word (4.6.3.3): the value is 2^N plus the N-bit word, N being 4 plus the ones before the zero.
@@ -1378,6 +1454,9 @@ internal sealed partial class BlockReader
 
         public int WindowSequence { get; set; }
 
+        // The bit of its window_sequence field.
+        public int SequenceAt { get; set; }
+
         public int WindowShape { get; set; }
 
         public int MaxSfb { get; set; }
@@ -1396,6 +1475,14 @@ internal sealed partial class BlockReader
 
         public bool Ltp { get; set; }
 
+        // What the spectral data holds: the upper edge of its highest nonzero line within a window (0 where all are zero), and how many values are nonzero and how many are
+        // escape-coded.
+        public int LastLine { get; set; }
+
+        public long NonZero { get; set; }
+
+        public long Escapes { get; set; }
+
         public byte[] Codebooks { get; } = new byte[MaxGroups * MaxBands];
 
         public int SectionStart { get; set; }
@@ -1405,6 +1492,7 @@ internal sealed partial class BlockReader
         public void CopyWindow(Ics other)
         {
             WindowSequence = other.WindowSequence;
+            SequenceAt = other.SequenceAt;
             WindowShape = other.WindowShape;
             MaxSfb = other.MaxSfb;
             Bands = other.Bands;

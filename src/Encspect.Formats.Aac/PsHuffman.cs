@@ -1,0 +1,86 @@
+// Format data of ISO/IEC 14496-3 8.6.4 (parametric stereo, the Huffman codebooks of the IID and ICC parameters): the codewords as binary trees, a node per entry, whose high byte is the child after a 0 bit and whose low byte is the child
+// after a 1 bit (a negative child is a leaf, the symbol being its value plus 64). Taken from libxaac (github.com/ittiam-systems/libxaac at 2fbadd5, Apache License 2.0, Copyright (C) The Android Open Source Project;
+// the notice is in THIRD-PARTY-NOTICES.md): decoder/ixheaacd_sbr_rom.c, the huff_iid_dt, huff_iid_df, huff_icc_dt, huff_icc_df and the fine variants of the first two, and the walk of ixheaacd_ssc_huff_dec.
+namespace Encspect.Formats.Aac;
+
+internal static class PsHuffman
+{
+    private static readonly ushort[] IidTimeTree =
+    [
+        0xC001, 0xBF02, 0xC103, 0xBE04, 0xC205, 0xBD06, 0xC307, 0xBC08,
+        0xC409, 0xBB0A, 0xC50B, 0xBA0C, 0xC60D, 0xC70E, 0xB90F, 0x1011,
+        0xC8B8, 0x1215, 0x1314, 0xC9B2, 0xB3B4, 0x1619, 0x1718, 0xB5B6,
+        0xB7CA, 0x1A1B, 0xCBCC, 0xCDCE,
+    ];
+
+    private static readonly ushort[] IidFrequencyTree =
+    [
+        0xC001, 0x0203, 0xC1BF, 0x0405, 0xC2BE, 0x0607, 0xC3BD, 0x0809,
+        0xBCC4, 0xC50A, 0xBB0B, 0xC60C, 0xBA0D, 0xB90E, 0xC70F, 0x1011,
+        0xC8B8, 0x1213, 0xC9CA, 0x1415, 0xB7CB, 0x1618, 0xB617, 0xB5B2,
+        0x191A, 0xB3B4, 0xCC1B, 0xCDCE,
+    ];
+
+    private static readonly ushort[] IccTimeTree =
+    [
+        0xC001, 0xC102, 0xBF03, 0xC204, 0xBE05, 0xC306, 0xBD07, 0xC408,
+        0xBC09, 0xC50A, 0xBB0B, 0xC60C, 0xBA0D, 0xB9C7,
+    ];
+
+    private static readonly ushort[] IccFrequencyTree =
+    [
+        0xC001, 0xC102, 0xBF03, 0xC204, 0xBE05, 0xC306, 0xBD07, 0xC408,
+        0xC509, 0xBC0A, 0xC60B, 0xBB0C, 0xC70D, 0xBAB9,
+    ];
+
+    private static readonly ushort[] IidFineTimeTree =
+    [
+        0x01C0, 0xC102, 0x03BF, 0x043B, 0x0507, 0x06BD, 0xBCC4, 0xC308,
+        0x090B, 0xC50A, 0xBAC6, 0x0C29, 0x0D14, 0x0EB9, 0xC90F, 0xCB10,
+        0x11B3, 0x1213, 0xABAC, 0xD2D3, 0xC715, 0x1628, 0x171D, 0xCD18,
+        0x191A, 0xADAE, 0x1B1C, 0xA6DA, 0xA4A5, 0x1E25, 0x1F22, 0x2021,
+        0xDDDE, 0xDBDC, 0x2324, 0xA2A3, 0xA7D9, 0x26B1, 0x27AF, 0xA8D8,
+        0xB6CA, 0x2ABB, 0x2B2C, 0xB8C8, 0x2D34, 0x2E32, 0x2FB4, 0xCF30,
+        0xD131, 0xA9D7, 0xCC33, 0xB2CE, 0x35B7, 0x36B5, 0x3739, 0x38B0,
+        0xAAD6, 0xD03A, 0xD4D5, 0xBEC2,
+    ];
+
+    private static readonly ushort[] IidFineFrequencyTree =
+    [
+        0x01C0, 0x0204, 0x03BF, 0xBEC2, 0xC105, 0x0607, 0xBDC3, 0x0809,
+        0xBCC4, 0x0A0B, 0xBBC5, 0x0C0D, 0xBAC6, 0x0E12, 0xC70F, 0x10B8,
+        0xCA11, 0xB5CB, 0x1325, 0xC814, 0x15B7, 0x161D, 0x17B4, 0x18B2,
+        0x191C, 0x1A1B, 0xABD5, 0xADD3, 0xAFD1, 0xCC1E, 0xCE1F, 0x20B1,
+        0x2122, 0xAED2, 0x2324, 0xA6A7, 0xA4A5, 0x26B9, 0xC927, 0x28B6,
+        0x2932, 0x2AB3, 0xCF2B, 0x2C2F, 0x2D2E, 0xAAD6, 0xA8A9, 0x3031,
+        0xD9DA, 0xD7D8, 0xCD33, 0x343B, 0x3538, 0x3637, 0xDDDE, 0xDBDC,
+        0x393A, 0xA2A3, 0xACD4, 0xB0D0,
+    ];
+
+    public static int DecodeIidTime(ref AacBits bits) => Walk(IidTimeTree, ref bits);
+    public static int DecodeIidFrequency(ref AacBits bits) => Walk(IidFrequencyTree, ref bits);
+    public static int DecodeIccTime(ref AacBits bits) => Walk(IccTimeTree, ref bits);
+    public static int DecodeIccFrequency(ref AacBits bits) => Walk(IccFrequencyTree, ref bits);
+    public static int DecodeIidFineTime(ref AacBits bits) => Walk(IidFineTimeTree, ref bits);
+    public static int DecodeIidFineFrequency(ref AacBits bits) => Walk(IidFineFrequencyTree, ref bits);
+
+    // The delta (or, for the first band of a frequency-coded set, the value) that the codeword stands for.
+    private static int Walk(ushort[] tree, ref AacBits bits)
+    {
+        int index = 0;
+        while (index >= 0)
+        {
+            short node = (short)tree[index];
+            if (bits.ReadBit())
+            {
+                index = (node & 0x0080) != 0 ? node | unchecked((int)0xFFFFFF80) : node & 0x7F;
+            }
+            else
+            {
+                index = node >> 8;
+            }
+        }
+
+        return index + 64;
+    }
+}
