@@ -650,12 +650,11 @@ public sealed partial class AsfParser
     internal static NodeValue FormatTagValue(int tag) => NodeValue.Text($"0x{tag:X4} ({FormatTagName(tag)})");
 
     // The codec a stream reports for a format tag no codec parser read: the name every container uses for the coding.
-    internal static string CodecNameOf(int tag) => tag == 0x0003 ? CodecNames.PcmFloat : FormatTagName(tag) is "unknown" or "extensible" ? CodecNames.Other : FormatTagName(tag);
+    internal static string CodecNameOf(int tag) => FormatTagName(tag) is "unknown" or "extensible" ? CodecNames.Other : FormatTagName(tag);
 
     internal static string FormatTagName(int tag) => tag switch
     {
         0x0001 => CodecNames.Pcm,
-        0x0003 => "IEEE float",
         0x000A => "Windows Media Audio Voice",
         0x0050 => CodecNames.MpegAudioLayerIAndII,
         0x0055 => CodecNames.MpegAudioLayerIII,
@@ -667,7 +666,7 @@ public sealed partial class AsfParser
         0x7A21 => "GSM-AMR, fixed bitrate",
         0x7A22 => "GSM-AMR, variable bitrate",
         0xFFFE => "extensible",
-        _ => "unknown",
+        _ => WaveFormatNames.NameOf(tag) ?? "unknown",
     };
 
     // Section 9.1.1: the error correction data of audio, spread across packets.

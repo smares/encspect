@@ -26,7 +26,7 @@ SPEAKERS = [
 BASE_GUID = bytes.fromhex("00001000" "800000aa00389b71")  # the twelve bytes after the format tag in a sub-format GUID (ksmedia.h)
 
 LINEAR = (0x0001, 0x0003, 0x0006, 0x0007)
-ROUTED = {0x0050: "mpeg-audio", 0x0055: "mpeg-audio", 0x0008: "dts", 0x2000: "ac-3", 0x2001: "dts"}
+ROUTED = {0x0050: "mpeg-audio", 0x0055: "mpeg-audio", 0x0008: "dts", 0x2000: "ac-3", 0x2001: "dts", 0x0160: "wma", 0x0161: "wma", 0x0162: "wma-pro", 0x0163: "wma-lossless", 0x000A: "wma-voice"}
 # Sub-format GUIDs that are no format tag but are named in Microsoft's headers (as stored in the file: the first three groups little-endian):
 # MEDIASUBTYPE_DOLBY_AC3 and MEDIASUBTYPE_MPEG2_AUDIO (ksuuids.h), MFAudioFormat_Dolby_DDPlus (mfapi.h).
 NAMED_GUIDS = {

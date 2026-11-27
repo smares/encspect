@@ -31,7 +31,7 @@ internal static class Codecs
     public const string Acm = "A_MS/ACM";
 
     // The ID of the host's codec parser for PCM samples a container stores as they are.
-    public const string PcmSamples = "pcm-samples";
+    public const string PcmSamples = WaveFormatRoutes.PcmSamples;
 
     // How the samples of a PCM track are laid out, from its codec ID and the Audio element (draft-ietf-cellar-codec, section 3.4): A_PCM/INT/LIT and A_PCM/INT/BIG are
     // signed integers of BitDepth bits in either byte order, except that 8-bit samples are unsigned as in WAV, and A_PCM/FLOAT/IEEE is IEEE 754 floating point of 32 or 64

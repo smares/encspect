@@ -434,6 +434,81 @@
                           "length": 1260
                         }
                       ]
+                    },
+                    {
+                      "name": "Block Sizes",
+                      "value": 30,
+                      "unit": "CELT frames",
+                      "offset": 205,
+                      "length": 1260,
+                      "children": [
+                        {
+                          "name": "Long",
+                          "value": "30 frames (100.0%)",
+                          "offset": 205,
+                          "length": 1260
+                        },
+                        {
+                          "name": "Short",
+                          "value": "0 frames (0.0%)",
+                          "offset": 205,
+                          "length": 1260
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Stereo Coding",
+                      "value": 30,
+                      "unit": "stereo CELT frames",
+                      "offset": 205,
+                      "length": 1260,
+                      "children": [
+                        {
+                          "name": "Left/right stereo",
+                          "value": "0 frames (0.0%)",
+                          "offset": 205,
+                          "length": 1260
+                        },
+                        {
+                          "name": "Mid/side stereo",
+                          "value": "0 frames (0.0%)",
+                          "offset": 205,
+                          "length": 1260
+                        },
+                        {
+                          "name": "Intensity stereo",
+                          "value": "30 frames (100.0%)",
+                          "offset": 205,
+                          "length": 1260
+                        },
+                        {
+                          "name": "Mid/side and intensity stereo",
+                          "value": "0 frames (0.0%)",
+                          "offset": 205,
+                          "length": 1260
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Intensity Stereo Bound",
+                      "offset": 205,
+                      "length": 1260,
+                      "children": [
+                        {
+                          "name": "Lowest",
+                          "value": 0,
+                          "unit": "Hz",
+                          "offset": 205,
+                          "length": 1260
+                        },
+                        {
+                          "name": "Highest",
+                          "value": 0,
+                          "unit": "Hz",
+                          "offset": 205,
+                          "length": 1260
+                        }
+                      ]
                     }
                   ]
                 },
@@ -2707,6 +2782,47 @@
             ]
           },
           {
+            "name": "Intensity Stereo Bound",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "stereoCoding",
+            "quantity": "Intensity Stereo Bound",
+            "x": [
+              205,
+              289,
+              373,
+              457,
+              541,
+              625,
+              709,
+              793,
+              877,
+              961,
+              1045,
+              1129,
+              1213,
+              1297,
+              1381
+            ],
+            "values": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
             "name": "Coded Bandwidth",
             "unit": "Hz",
             "axis": "frameOffset",
@@ -2862,6 +2978,72 @@
             "runs": [
               [
                 0,
+                30
+              ]
+            ]
+          },
+          {
+            "name": "Block Sizes",
+            "concept": "blockSwitching",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Long",
+                "count": 30
+              },
+              {
+                "name": "Short",
+                "count": 0
+              }
+            ],
+            "total": 30,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                15
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                30
+              ]
+            ]
+          },
+          {
+            "name": "Stereo Coding",
+            "concept": "stereoCoding",
+            "valueLabel": "frame",
+            "categories": [
+              {
+                "name": "Left/right stereo",
+                "count": 0
+              },
+              {
+                "name": "Mid/side stereo",
+                "count": 0
+              },
+              {
+                "name": "Intensity stereo",
+                "count": 30
+              },
+              {
+                "name": "Mid/side and intensity stereo",
+                "count": 0
+              }
+            ],
+            "total": 30,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                15
+              ]
+            ],
+            "runs": [
+              [
+                2,
                 30
               ]
             ]
