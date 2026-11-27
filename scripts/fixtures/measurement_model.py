@@ -420,6 +420,7 @@ def find_nyquist_edges(level_tenths, counters, rate, size):
         num, den = step(best)
         if num < 25000 * den:
             continue
+        assert best - w >= 0, "the boundary under the step has no full band under it"
         under, over = step(best - 1), (step(best + 1) if best + 1 < TOP_ROW else None)
         if under[0] * den >= num * under[1] or (over is not None and over[0] * den > num * over[1]):
             continue
