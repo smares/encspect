@@ -455,8 +455,9 @@ internal sealed class PsDecoder
             }
         }
 
-        // The resolution is the finer of the two parameter sets; a set of 20 bands is spread over 34 where the other is finer.
-        bool wide = _iidMode == 2 || _iccMode == 2;
+        // The resolution is the finer of the two parameter sets (Table 8.44); a set that is not transmitted counts as 20 bands, and with neither transmitted the previous frame's number of
+        // stereo bands is kept (8.6.4.6.1). A set of 20 bands is spread over 34 where the other is finer.
+        bool wide = !_enableIid && !_enableIcc ? _wasWide : (_enableIid && _iidMode == 2) || (_enableIcc && _iccMode == 2);
         if (wide)
         {
             for (int e = 0; e < _envelopes; e++)

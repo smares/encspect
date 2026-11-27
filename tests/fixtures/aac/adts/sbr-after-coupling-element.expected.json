@@ -1,5 +1,5 @@
 {
- "description": "ADTS at 22050 Hz of a channel pair, a coupling channel element and a fill element of SBR data, twelve times, in a stream of channel configuration 2, the data laid out as a channel pair's, where the standard reads a coupling channel element's as a single channel element's: the data does not parse, and the stream is HE-AAC at 44100 Hz from the payload's presence.",
+ "description": "ADTS at 22050 Hz of a channel pair, a coupling channel element and a fill element of SBR data, twelve times, in a stream of channel configuration 2, the coupling channel element switched independently in the odd blocks and dependently in the even ones and the data laid out as a channel pair's: the standard puts an SBR element after the independently switched element only, and reads it as a single channel element's (these bits happen to satisfy that reading); the payloads after the dependently switched one are reported and read by no one, and all count as evidence, so the stream is HE-AAC at 44100 Hz.",
  "length": 1175,
  "format": "AAC",
  "boxes": [],
@@ -75,6 +75,10 @@
   [
    "aac.implicit-sbr",
    "12 of 12 raw data blocks hold SBR data: the stream is HE-AAC"
+  ],
+  [
+   "aac.sbr-without-channel-element",
+   "6 raw data blocks hold SBR data that follows no single channel element, channel pair element or independently switched coupling channel element"
   ],
   [
    "aac.coupling-without-program",

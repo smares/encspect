@@ -1,6 +1,6 @@
 {
- "description": "Mono frames of long windows with a TNS filter of order 13, 20 and 31 over 30 bands: the standard limits the order to 12 and decodes the first 12 coefficients; the field allows more, so the stream is reported.",
- "length": 1377,
+ "description": "Mono frames of long windows with the same spectrum and a TNS filter of order 12 (twice) and 13, 20 and 31 over 30 bands, whose first 12 coefficients are the same: the standard limits the order to 12 and decodes the first 12 coefficients, so the last four blocks decode alike; the field allows more, so the stream is reported.",
+ "length": 2283,
  "format": "AAC",
  "boxes": [],
  "streams": [
@@ -12,7 +12,7 @@
    "channel_layout": [
     "front center"
    ],
-   "samples": 3072,
+   "samples": 5120,
    "is_vbr": true
   }
  ],
@@ -23,21 +23,29 @@
   ],
   [
    454,
-   459
+   454
   ],
   [
-   913,
-   464
+   908,
+   454
+  ],
+  [
+   1362,
+   458
+  ],
+  [
+   1820,
+   463
   ]
  ],
  "fields": {
-  "ADTS/Statistics/Block Usage/Only Long": "3 channel streams (100.0%)",
-  "ADTS/Statistics/Window Shapes/KBD": "3 channel streams (100.0%)",
-  "ADTS/Statistics/Codebooks/Codebook 0": "12 bands (9.1%)",
-  "ADTS/Statistics/Codebooks/Codebook 3": "24 bands (18.2%)",
-  "ADTS/Statistics/Codebooks/Codebook 5": "30 bands (22.7%)",
-  "ADTS/Statistics/Codebooks/Codebook 7": "30 bands (22.7%)",
-  "ADTS/Statistics/Codebooks/Codebook 9": "36 bands (27.3%)"
+  "ADTS/Statistics/Block Usage/Only Long": "5 channel streams (100.0%)",
+  "ADTS/Statistics/Window Shapes/KBD": "5 channel streams (100.0%)",
+  "ADTS/Statistics/Codebooks/Codebook 0": "20 bands (9.1%)",
+  "ADTS/Statistics/Codebooks/Codebook 3": "40 bands (18.2%)",
+  "ADTS/Statistics/Codebooks/Codebook 5": "50 bands (22.7%)",
+  "ADTS/Statistics/Codebooks/Codebook 7": "50 bands (22.7%)",
+  "ADTS/Statistics/Codebooks/Codebook 9": "60 bands (27.3%)"
  },
  "findings": [
   [
@@ -49,7 +57,7 @@
   "ffprobe": true,
   "decode": false,
   "faad": {
-   "seconds": "0.070",
+   "seconds": "0.116",
    "rate": 44100
   },
   "skip": {

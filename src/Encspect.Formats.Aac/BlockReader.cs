@@ -46,6 +46,7 @@ internal sealed partial class BlockReader
     private bool _hasSbr;
     private bool _hasSbrEvidence;
     private bool _hasSbrCrcFailure;
+    private bool _lastCceIsIndependent;
     private bool _hasPs;
     private bool _hasCoupling;
 
