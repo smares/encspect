@@ -1555,6 +1555,17 @@ def main_ltp_decoding():
         "decode as coded and the one of 31 takes its first 20 coefficients.", data, rows, [stream("AAC Main", RATE, 1, "Mono", len(rows) * 1024)], {},
         [["aac.tns-order-too-high", "a TNS filter of a higher order than the 20 its window allows"]])))
 
+    # Reset groups 0 and 31, which the specification does not allow (13.3.3: the number cannot be 0 or 31): the decoder resets nothing for them.
+    blocks = []
+    for i, group in enumerate((0, 31, 5, 0, 31, 7)):
+        ics = channel(M.ONLY_LONG, 1, [[(11, 4), (5, 26)]], seed=400 + i, predictor=(True, group, [1] * 30))
+        blocks.append(M.raw_data_block([M.Element(M.SCE, ics=ics)], object_type=1))
+    data, rows = concat(adts_frames(blocks, profile=0))
+    out.append(("main-prediction-reset-group-invalid.aac", data, manifest(
+        "AAC Main (ADTS profile 0), mono: predictor resets of the groups 0 and 31 (two frames each) and of 5 and 7, which the specification does not allow for 0 and 31; the decoder resets "
+        "no group for them.", data, rows, [stream("AAC Main", RATE, 1, "Mono", len(rows) * 1024)], {},
+        [["aac.predictor-reset-group-invalid", "predictor reset group"]])))
+
     # The sync word of frame 21 overwritten in a Main stream that predicts in all 40 bands of every frame and resets one group in each, in a cycle of the 30.
     blocks = []
     for i in range(60):

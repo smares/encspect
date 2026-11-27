@@ -62,7 +62,6 @@ public partial class FindingCoverageTests
         ["aac.implicit-signaling-not-checked"] = NotCheckedNoInput,
         ["aac.object-type-not-analyzed"] = RouteNoInput,
         ["aac.pce-without-channels"] = NoInputYet,
-        ["aac.predictor-reset-group-invalid"] = NoInputYet,
         ["aac.pulse-out-of-range"] = NoInputYet,
         ["aac.reserved-profile"] = NoInputYet,
         ["aac.sbr-past-fill"] = NoInputYet,

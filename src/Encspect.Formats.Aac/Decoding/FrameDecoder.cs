@@ -1029,7 +1029,8 @@ internal sealed class FrameDecoder : IFrameDecoder
             {
                 int line = baseLine + (downward ? end - 1 - n : start + n);
                 float y = spectrum[line];
-                int past = Math.Min(n, order);                for (int j = 1; j <= past; j++)
+                int past = Math.Min(n, order);
+                for (int j = 1; j <= past; j++)
                 {
                     y -= _lpc[j] * _history[j - 1];
                 }

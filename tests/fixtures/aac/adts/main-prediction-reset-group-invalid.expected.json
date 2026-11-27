@@ -1,0 +1,60 @@
+{
+ "description": "AAC Main (ADTS profile 0), mono: predictor resets of the groups 0 and 31 (two frames each) and of 5 and 7, which the specification does not allow for 0 and 31; the decoder resets no group for them.",
+ "length": 1465,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC Main",
+   "sample_rate": 44100,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "channel_layout": [
+    "front center"
+   ],
+   "samples": 6144,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   245
+  ],
+  [
+   245,
+   244
+  ],
+  [
+   489,
+   245
+  ],
+  [
+   734,
+   244
+  ],
+  [
+   978,
+   243
+  ],
+  [
+   1221,
+   244
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "aac.predictor-reset-group-invalid",
+   "predictor reset group"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "faad": {
+   "seconds": "0.139",
+   "rate": 44100
+  }
+ }
+}
