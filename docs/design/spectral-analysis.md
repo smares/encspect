@@ -1917,3 +1917,191 @@ The measurement through the analyzer's own decoders and the numpy prototype of t
   | TwoLAME 0.4.0 `-m j -b 192`, uncorrelated channels / side 12 dB under | 11,025 / 10,810 Hz | 11,025 Hz over 77 frames | 0 / -215 Hz |
   | opusenc 0.2 `--bitrate 24`, uncorrelated channels / side 12 dB under | 9,422 / 7,688 Hz | 8,000 Hz over 101 units | +1,422 / -312 Hz |
 - **FAAC** (`faac_tool.py`, 1.40.0 and 2.2.0 built from their pinned commits) was tried on the same two sources at 64 kbit/s, decoded by FFmpeg 6.1.1 (the AAC decoder is [0.5](../plan.md#05-aac-and-wma)'s). FAAC 1.40.0 states an "Intensity Stereo Bound" of 689 Hz in all 88 frames of both files. On the side-12 dB source its decode reads 85 % or more from 431 Hz to 11,886 Hz, in 30 of 42 frames with signal (a start 258 Hz under the stated bound, with the stated median 689 Hz over 88 frames): the AAC case of a stated bound with a start near it that S26 asked for, though the source itself reads none (79.3 % at the top band), so the decode is more coherent than the source (the committed `aac/faac-1.40-pink-side-12-db-adts`, measured through an FFmpeg decode, which is not committed, until the AAC decoder exists). On the uncorrelated source the decode reads none (the top band reads 1.1 %), with the same stated bound. FAAC 2.2.0 (HE-AAC) shows none on either source (top bands of 0.2 and 3.2 %) and states 2,067 Hz in two and three units. FFmpeg's `aac` shows none with and without noise substitution (top bands of 14.7 % and 0.0 %). The two FAAC 1.40.0 streams are committed (`aac/faac-1.40-pink-equal-adts`, `aac/faac-1.40-pink-side-12-db-adts`, with manifests and goldens).
+
+## Step 10: an edge at a lower rate's Nyquist frequency
+
+Status: drafted for the lead, 2026-11-27; decisions S36 to S44 (numbered after step 9's S27 to S35) wait for the lead. It designs item 14 of [plan.md, 0.5](../plan.md#05-aac-and-wma) (the lead, 2026-11-26, from Hydrogenaudio's sample rate conversion comparison): a figure beside the spectral cutoff that says when the content ends in a steep edge at the Nyquist frequency of a lower common sample rate, and the level of the band above that edge against the band it mirrors. Host code at the end of the stream, in `CutoffFinder`, on the combined spectrum's rows and the cutoff's frame counters, which every searched stream already has; no parser, decoder or session change, and no finding (decision 6).
+
+- **Where the numbers come from:** a throwaway prototype of this draft (numpy; the analyzer's rows, Hann window, hop and FFT size by rate, the cutoff's counters with the 1 % reference and the 30 dB signal range; not committed; the scripts and their output are in the private notes of 2026-11-27), run on:
+  - three sources, 8 s each, quantized to 16 bits with TPDF dither at their own rate before resampling: pink noise with a 330 Hz tone (-20 dBFS RMS, the step 1 source), a linear sweep from 20 Hz to 99.9 % of the source's Nyquist frequency (-6 dBFS), and a synthetic "music" source (decaying harmonic notes with partials up to the Nyquist frequency and noise hits, tilted down 6 dB an octave above 4 kHz, -18 dBFS RMS);
+  - resampled as black boxes by SoX 14.4.2 (Ubuntu 24.04; `rate` at `-q`, `-l`, `-m`, `-h`, `-v`, `-v -s`, `-v -b 99.7` and `-v -b 90 -a`), by r8brain-free-src (MIT; commit `5792291` of github.com/avaneev/r8brain-free-src, through a 20-line front end calling `CDSPResampler::oneshot`) with transition bands of 0.5, 2, 4 and 10 % and attenuations of 206.91, 206.91, 136 and 100 dB, and by FFmpeg 6.1.1's `aresample` with its default resampler and with `resampler=soxr`, in floating point, then quantized to the target's 16 or 24 bits with TPDF dither;
+  - at 44.1 to 48 kHz (16 and 24 bits), 44.1 to 88.2, 96 and 192 kHz and 48 to 88.2 kHz (24 bits), and 22.05 to 44.1 and 48 kHz, 24 to 48, 32 to 48, 16 to 44.1, 11.025 to 48 and 8 to 44.1 kHz (16 bits): 228 resampled files;
+  - the same sources generated at the target rates without resampling (18 files), brickwall lowpasses at 11,025, 16,000 and 22,050 Hz (FFT domain), a 4-pole rolloff at 20 kHz, lossy encodes decoded by FFmpeg (LAME 3.100 `-b 128`, `-b 320`, `-V 0`; FFmpeg's `aac` at 96 and 256 kbit/s, `wmav2` at 128 kbit/s and `mp2` at 192 kbit/s; oggenc 1.4.2 `-q 0` and `-q 6`; opusenc 0.2 at 128 kbit/s; each at 44.1 and 48 kHz), and every committed `measurement/` fixture (131 files, decoded by FFmpeg).
+  - No real music was among the inputs (the repository has none; the "music" source is synthetic).
+- **Examples of text** below show the format; their numbers are the prototype's.
+
+### What is wrong today
+
+- **The cutoff and the bandwidth give a frequency, not its relation to a rate.** Pink noise resampled by SoX `-v` from 44.1 to 48 kHz reads a spectral cutoff near 21.5 kHz (the prototype's reading of the cutoff's rule), and the reader has to know that 22,050 Hz is the Nyquist frequency of 44.1 kHz and that a resampler's transition ends there.
+- **The cutoff reports the largest step only.** Where a stream has two edges (an encoder's lowpass, and above it the quantization floor of a 16-bit source that ends at a lower rate's Nyquist frequency, over the floor of the stream's 24 bits), the smaller is not reported.
+- **The spectral bandwidth needs a flat floor** within 3 dB from the top of the search down to the edge. At 24 bits, what SoX's and r8brain's stopbands leave, and the Hann window's leakage of the content just under the edge, stand above the 24-bit floor near the edge and fall away from it (pink noise from 44.1 to 48 kHz through r8brain at 0.5 %: -136 dB in the first row above 22,050 Hz, -147 dB at 22.2 kHz, -166 dB at 22.6 kHz). The prototype's reading of the step 7 rule then puts the bandwidth above the Nyquist frequency (22,312 Hz for SoX `-v -s`, 22,406 Hz for r8brain at 0.5 %, 22,219 Hz for r8brain at 2 % to 96 kHz) or reads a slope (SoX `-l` and r8brain at 10 % to 96 and 192 kHz).
+- **Nothing looks at the band above the edge,** where a resampler's images of the content under the edge land.
+
+### What resampling leaves
+
+- **Upsampling from a rate r** puts no content above r / 2 into the output: the converter's lowpass (the anti-imaging filter) passes the band under r / 2 and stops what lies above it. What it does not stop above r / 2 is an image: the content at r / 2 - x lands at r / 2 + x (the Hydrogenaudio comparison's "Nyquist Filter" and "Imaging" tests: for 44.1 to 48 kHz, "anything between 22.05 and 24 kHz is an image").
+- **Where the transition lies** is the converter's setting:
+  - SoX 14.4.2's `rate` states its presets in `sox --help-effect rate`: band widths of 80 % (`-l`), 95 % (`-m`, `-h`, `-v`; `-h` is the default) and 99 % (`-s`), rejections of 100, 125 and 175 dB, `-a` to allow aliasing above the pass band, and `-q` with no band width (about 30 dB of rejection);
+  - r8brain's `CDSPResampler` takes the transition band in percent of the input's spectral space between the filter's -3 dB point and the Nyquist frequency (2 by default, 0.5 to 2 called "extremely greedy" and 3 to 4 "relaxed" in its header) and the stopband attenuation in dB;
+  - FFmpeg's default resampler is a Kaiser-windowed sinc (`filter_type` kaiser, `filter_size` 32, `kaiser_beta` 9 in its option list).
+- **What the prototype measured,** pink noise from 44.1 to 48 kHz at 16 bits, the rows around 22,050 Hz:
+  - SoX `-v`: flat to about 20.7 kHz, -62 dB at 20,953 Hz, the 16-bit floor (-125 dB) from 21.8 kHz; `-v -s`, `-v -b 99.7` and r8brain at 0.5 %: flat to within 0.2 kHz of 22,050 Hz, the floor by 22.2 kHz;
+  - r8brain at 10 % with 100 dB: already 14 dB down at 20.7 kHz, the floor from 21.9 kHz; SoX `-l`: -94 dB at 20.7 kHz, the floor from 21.7 kHz;
+  - FFmpeg's default: -61 dB at 20.7 kHz, -66 dB at 22,078 Hz, -71 dB at 22.9 kHz, still falling at the top: the stopband does not start at 22,050 Hz, and the band above it holds images;
+  - SoX `-q`: flat at -66 dB across 22,050 Hz (images at the content's level), `-v -b 90 -a`: falling from 20.7 to 22.9 kHz across 22,050 Hz.
+
+### The rates tested
+
+- **The candidates** (decision S36): the Nyquist frequencies of 8,000, 11,025, 12,000, 16,000, 22,050, 24,000, 32,000, 44,100, 48,000, 88,200, 96,000, 176,400 and 192,000 Hz, the rates of PCM and of MPEG audio (12,000 and 24,000 are MPEG-2 and MPEG-2.5 rates). 11,025 Hz gives 5,512.5 Hz, so the arithmetic keeps the rate and compares twice a frequency with it.
+- **Which are tested in a stream:** those under the stream's own rate whose Nyquist frequency N is at least 2 kHz (the cutoff's first candidate) and leaves at least half a band (W / 2 rows, W the cutoff's 1 kHz in rows) between N and the top of the search (row 506). A 44.1 kHz stream tests 4,000 to 16,000 Hz (seven candidates), a 48 kHz stream up to 22,050 Hz, a 96 kHz stream up to 44,100 Hz, a 192 kHz stream up to 88,200 Hz. A stream under 8,000 Hz is not searched, as the cutoff.
+
+### The edge test
+
+For each candidate N, on the combined spectrum's rows in thousandths of a dB, as `CutoffFinder` works:
+
+1. **The window** (decision S37): every row boundary from N × (1 - 3 %) up to the first boundary above N (22,050 Hz at 48 kHz: the 15 boundaries from 21,422 to 22,078 Hz; at 192 kHz, 4). A boundary's step is the cutoff's: the mean of the W rows under it against the mean of the W rows over it, clipped at row 506.
+2. **The step** is the largest in the window, the lowest boundary on a tie, and it must be at least 25 dB, the cutoff's threshold.
+3. **A local maximum:** the step at the boundary under it and at the boundary over it, both computed even where they lie outside the window, must be smaller (under) and not larger (over). So the step's peak lies inside the window: content that ends lower, or a slope that goes on above N, peaks outside it and is not taken.
+4. **No further fall above N:** the mean of the W rows from the first row above N falls by at most a quarter of the step to the mean of the next W rows (clipped at row 506). An edge whose fall goes on beyond N is not at N.
+5. **The frames:** at least half of the frames with signal show their own step at the boundary, from the cutoff's counters at that row, as the cutoff counts them.
+
+The candidate is found where all five hold. Every comparison is of integer sums or of fractions compared by cross products, as the cutoff's step is.
+
+- **Why the window is under N:** a converter's stopband starts at N or above it, so its transition lies under N; the step's peak is the middle of the fall over 1 kHz bands, which in the prototype lay from 628 Hz under N to 28 Hz over it for every converter whose stopband starts at N (SoX `-m`, `-h`, `-v`, `-v -s`, `-v -b 99.7`; r8brain at 0.5 to 4 %; FFmpeg's soxr), at most 2.85 % under (SoX `-v` on the music source at 16 bits: 21,422 Hz).
+- **Why 3 %** (decision S37): at 5 %, r8brain at 10 % and some SoX `-l` files are found too (169 against 146 of the resampled files), but so is oggenc 1.4.2 `-q 0`'s lowpass at 15,246 Hz in a 44.1 kHz file (committed `measurement/lossy-stereo-oggenc-q0`, 4.7 % under 16,000 Hz). Every lossy lowpass that lands in a window reads as an edge at that rate, and the wider window takes more of them.
+- **Why a local maximum:** without it, the prototype's false readings were all of one kind: a gentle transition whose fall ends just above another candidate. FFmpeg's default resampler from 22,050 Hz to 44.1 and 48 kHz has a step of 28.7 to 31.4 dB at 12,016 to 12,047 Hz, in the window of 12,000 Hz (24 kHz), and from 11,025 Hz to 48 kHz 47.9 to 50.9 dB at 6,047 Hz (12 kHz); r8brain at 10 % from 24 to 48 kHz has 33 dB at 11,062 Hz, in the window of 11,025 Hz. Each step grows beyond the window's edge, and none is found with the rule. Two candidates close together (11,025 and 12,000 Hz, 5,512.5 and 6,000 Hz, 22,050 and 24,000 Hz) are separated by it too: content that ends at 11,025 Hz has its peak at the bottom of 12,000 Hz's window and is not taken there.
+- **Why the fall above N:** a lowpass that slopes across N (the committed `synthetic-lines-slope-15000-17000`, from 15 to 17 kHz) has its step's peak at 15,848 Hz, inside 16,000 Hz's window, and falls 12.4 dB more over the next 1 kHz, 29 % of its 43.3 dB step. At 24 bits the window's leakage and the converters' stopbands fall 10.5 to 15.1 dB over that band after steps of 97.8 to 106.3 dB (10 to 15 %), so the bound is relative; a fixed 10 dB lost the 24-bit SoX `-v -b 99.7` and r8brain 0.5 % files and every 24-bit sweep through r8brain.
+- **Why the frames:** as for the cutoff, an edge in the average that a minority of the frames make is not an edge of the stream. In the prototype every found edge showed in every frame with signal but three sweeps through SoX `-l` (9 of 10); the music source has 73 to 171 frames with signal at the step's row, of 171 to 186.
+- **The edge's frequency** is the step's boundary, not the cutoff's walk over the frames: at 24 bits the walk climbs one to three rows above N on the window's leakage (r8brain at 0.5 %: 22,172 Hz), and the step's boundary stays in the window by construction.
+
+### The level above the edge
+
+- **The figure** (decision S39): the mean level of the W rows from the first row above N (clipped at row 506), minus the mean level of as many rows mirrored about N (the rows whose span lies under the mirror of that band's lower edge, from the highest down), in tenths of a dB. An image of the content at N - x lands at N + x, so the band above holds the images of the band it is compared with.
+- **It is an upper bound on the images,** worded as one: the band above holds the images, the quantization floor and the window's leakage alike, and the figure says how far under its mirror the sum of them is. In the prototype it read -19.5 to -108 dB for found edges: SoX `-v` -30.9 dB at 16 bits and -72.7 dB at 24 bits on pink noise, r8brain at 2 % -93.0 dB from 44.1 to 96 kHz at 24 bits on the music source; each of these is the floor or the leakage, not an image.
+- **Why no more:** the prototype tried telling images from the floor by the correlation over time of the two bands' per-frame levels (an image follows its source, a floor does not). On the music source through r8brain at 10 % with 100 dB at 24 bits it read 0.58 to 0.73 (images over the floor, by inference: the band above stood 50 to 60 dB under its mirror, well over the 24-bit floor), but the window's leakage correlates the same way (the 24-bit sweeps through r8brain at 2 %, 0.83 to 0.87), and stationary noise hardly at all (pink noise through FFmpeg's default from 8 and 11.025 kHz, whose band above N stands 29 to 41 dB under its mirror: 0.18 to 0.31). A converter whose images stand above the floor near N mostly has no edge to find (FFmpeg's default, SoX `-q` and `-a`).
+
+### Cases that look alike
+
+The figure states where a step lies and which rate's Nyquist frequency is there; whatever made the step reads the same. Measured:
+
+- **A lowpass at that frequency in mastering or synthesis:** brickwalls at 11,025, 16,000 and 22,050 Hz are found at their frequencies (steps of 48.3 to 66.7 dB, 21 to 43 Hz above N, within the first boundary above it). Ten committed synthetic fixtures whose lines end at 16 kHz (`synthetic-lines-16000-*`, the two gap fixtures, `synthetic-stereo-mid-16000-side-11000`) read 16,000 Hz (32 kHz), and `synthetic-lines-11000-44100` reads 11,025 Hz. `synthetic-harmonic-440-8000` (harmonics of 440 Hz up to 8 kHz) has 24.6 dB at 8,000 Hz, just under the threshold: a sparse spectrum that ends at a candidate is a look-alike too.
+- **An encoder's lowpass:**
+  - LAME 3.100 `-m j -b 64` (committed `lossy-stereo-lame-j-b64` and `lossy-stereo-equal-lame-j-b64`, decoded at 24,000 Hz; LAME prints a transition band of 10,935 to 11,226 Hz): steps of 65.2 and 66.0 dB at 11,016 and 10,992 Hz, found at 11,025 Hz (22,050 Hz);
+  - FFmpeg's `wmav2` at 128 kbit/s and 48 kHz: 48.6 and 60.7 dB at 21,891 Hz (the music source and pink noise), found at 22,050 Hz (44.1 kHz);
+  - oggenc 1.4.2 `-q 0` at 48 kHz: 64.2 and 43.6 dB at 15,844 Hz, found at 16,000 Hz (32 kHz); at 44.1 kHz its step's peak lies under the 3 % window (15,246 Hz in the committed stereo files);
+  - not found: LAME `-b 128`, `-b 320` and `-V 0`, FFmpeg's `aac` at 96 and 256 kbit/s, `mp2` at 192 kbit/s, oggenc `-q 6` and opusenc at 128 kbit/s, at 44.1 and 48 kHz.
+- **A band-limited source:** the 4-pole rolloff at 20 kHz and the committed `synthetic-rolloff-*` files are not found (largest steps in a window 6.9 dB and less). A source whose content ends at 15 kHz lies 6.25 % under 16,000 Hz, outside the window (**arithmetic**, no fixture).
+- **A gentle converter's skirt near another rate's Nyquist frequency:** rejected by the local maximum (above); FFmpeg's default from 8 kHz to 44.1 kHz also (its 40.6 dB step at 4,005 Hz grows above the window, and the band above falls 32.1 dB more): its images reach past 4 kHz, so its content does not end in an edge at N.
+- **The quantization floor of a lower rate's samples:** a 16-bit source converted to a 24-bit file keeps its 16-bit noise up to N and the 24-bit floor above it, so a step between two floors would read as an edge even where the music ends lower (**unverified**: the one prototype case, LAME `-b 128` decoded in floating point by FFmpeg and converted to 96 kHz, had no 16-bit floor and read none).
+
+The article says all of this, and that the figure names a coincidence of frequency, not where the audio came from.
+
+### What it does not find
+
+- **Gentle converters:** FFmpeg 6.1.1's default resampler at every ratio tried (44.1 to 48, 88.2, 96 and 192 kHz, 48 to 88.2 kHz, and the lower rates), SoX `-q`, and SoX `-v -b 90 -a` (23.5 dB at 22,050 Hz). They leave a slope, which the [spectral slope](#step-7b-spectral-slope) describes where it reaches the top.
+- **Relaxed settings** at 3 %: r8brain at 10 % with 100 dB (11 of 28 files found) and SoX `-l` (13 of 35).
+- **Content with nothing near N:** an encoder's lowpass under the window and a float decode resampled (LAME `-b 128` converted by SoX `-v` to 96 kHz: none).
+- **Downsampling,** whose edge is at the stream's own Nyquist frequency, above the search.
+- **Noise-shaped dither of the output,** which lifts the floor above N toward the content's level (**unverified**: not prototyped).
+
+### The prototype's table
+
+At 3 % (decision S37), the step, its frequency, its distance from N, the level above against its mirror, and the frames showing of those with signal; the last column the reading at 5 %.
+
+| Input | Step | At | From N | Above, against its mirror | Frames | Found (3 %) | At 5 % |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| pink, 44.1 to 48 kHz, 16 bits, SoX `-v` | 52.2 dB | 21,516 Hz | -534 Hz | -30.9 dB | 186 of 186 | 22,050 Hz | same |
+| the same, SoX `-h` | 50.7 dB | 21,609 Hz | -441 Hz | -35.5 dB | 186 of 186 | 22,050 Hz | same |
+| the same, SoX `-v -s` | 62.2 dB | 21,938 Hz | -112 Hz | -62.3 dB | 186 of 186 | 22,050 Hz | same |
+| the same, SoX `-l` | 22.1 dB | (best in the window) | | | | none | 25.8 dB at 21,047 Hz |
+| the same, SoX `-q` | 1.2 dB | | | | | none | none |
+| the same, SoX `-v -b 90 -a` | 23.5 dB | | | | | none | none |
+| the same, r8brain 0.5 % | 63.3 dB | 22,031 Hz | -19 Hz | -64.8 dB | 186 of 186 | 22,050 Hz | same |
+| the same, r8brain 2 % | 60.1 dB | 21,844 Hz | -206 Hz | -53.4 dB | 186 of 186 | 22,050 Hz | same |
+| the same, r8brain 4 %, 136 dB | 53.5 dB | 21,656 Hz | -394 Hz | -41.4 dB | 186 of 186 | 22,050 Hz | same |
+| the same, r8brain 10 %, 100 dB | 37.0 dB | 21,422 Hz | | | | none (not a local maximum) | 21,375 Hz |
+| the same, FFmpeg default | 5.2 dB | | | | | none | none |
+| the same, FFmpeg soxr | 50.8 dB | 21,609 Hz | -441 Hz | -35.6 dB | 186 of 186 | 22,050 Hz | same |
+| pink, 44.1 to 48 kHz, 24 bits, SoX `-v` | 87.5 dB | 21,703 Hz | -347 Hz | -72.7 dB | 186 of 186 | 22,050 Hz | same |
+| the same, r8brain 0.5 % | 98.7 dB | 22,031 Hz | -19 Hz | -102.2 dB | 186 of 186 | 22,050 Hz | same |
+| music, 44.1 to 48 kHz, 16 bits, SoX `-v` | 40.6 dB | 21,422 Hz | -628 Hz | -19.5 dB | 80 of 80 | 22,050 Hz | same |
+| music, 44.1 to 96 kHz, 24 bits, SoX `-v` | 79.0 dB | 21,656 Hz | -394 Hz | -67.7 dB | 81 of 81 | 22,050 Hz | same |
+| the same, r8brain 2 % | 91.2 dB | 21,938 Hz | -112 Hz | -93.0 dB | 81 of 81 | 22,050 Hz | same |
+| the same, FFmpeg default | 14.8 dB | | | | | none | none |
+| music, 44.1 to 192 kHz, 24 bits, r8brain 2 % | 93.4 dB | 21,938 Hz | -112 Hz | -96.6 dB | 80 of 80 | 22,050 Hz | same |
+| music, 48 to 88.2 kHz, 24 bits, SoX `-v` | 76.0 dB | 23,600 Hz | -400 Hz | -56.9 dB | 80 of 80 | 24,000 Hz | same |
+| the same, r8brain 2 % | 89.0 dB | 23,859 Hz | -141 Hz | -85.0 dB | 86 of 86 | 24,000 Hz | same |
+| sweep, 44.1 to 96 kHz, 24 bits, r8brain 2 % | 102.8 dB | 21,938 Hz | -112 Hz | -108.1 dB | 8 of 8 | 22,050 Hz | same |
+| pink, 22.05 to 44.1 kHz, SoX `-v` | 61.5 dB | 10,767 Hz | -258 Hz | -49.1 dB | 171 of 171 | 11,025 Hz | same |
+| the same, FFmpeg default | 30.7 dB | 12,016 Hz | | | | none (not a local maximum) | none |
+| pink, 32 to 48 kHz, SoX `-v` | 56.7 dB | 15,609 Hz | -391 Hz | -42.7 dB | 186 of 186 | 16,000 Hz | same |
+| pink, 8 to 44.1 kHz, SoX `-v` | 70.9 dB | 3,919 Hz | -81 Hz | -69.9 dB | 171 of 171 | 4,000 Hz | same |
+| pink, music and sweep at 44.1, 48, 88.2, 96 and 192 kHz, not resampled | 0.0 to 4.0 dB | | | | | none | none |
+| brickwall 22,050 Hz, pink at 48 kHz | 63.5 dB | 22,078 Hz | +28 Hz | -63.6 dB | 186 of 186 | 22,050 Hz | same |
+| FFmpeg `wmav2` 128 kbit/s, pink at 48 kHz | 60.7 dB | 21,891 Hz | -159 Hz | -59.5 dB | 186 of 186 | 22,050 Hz | same |
+
+- **In all,** at 3 %: 146 of the 228 resampled files found at their source's rate and none at another; the 82 not found are FFmpeg's default (35), SoX `-l` (22), r8brain at 10 % (17), SoX `-q` (4) and SoX `-v -b 90 -a` (4). At 5 %: 169 found, none at another rate; the 59 not found are FFmpeg's default, SoX `-l` (16), `-q` and `-a`. No stream without resampling or a lowpass is found at either.
+
+### Model, goldens, CSV, GUI, docs
+
+- **The record** (decision S40): `SpectrumFigures.NyquistEdges`, a list of `NyquistEdge` (empty where none is found or the stream is not searched), highest first: `LowerRate` (Hz, whose half is the Nyquist frequency), `StepFrequency` (Hz, the step's boundary, as `SpectralCutoff.StepFrequency`), `StepTenthsOfDb`, `AboveTenthsOfDb` (the band above against its mirror), `FramesShowing`, `FramesWithSignal`; and `SpectrumFigures.IsNyquistEdgeSearched` (false under 8,000 Hz). Only the combined spectrum (decision S43): a converter treats every channel alike.
+- **The name** (decision S41): "Nyquist edge", the text label `Nyquist Edge`, the article `nyquist-edge`; it names where the step lies, not how it got there.
+- **Text** (decision S42), after `Spectral Bandwidth`, only where one is found, one line for each:
+  - `Nyquist Edge: a step of 52.2 dB at 21,516 Hz, 534 Hz under 22,050 Hz (the Nyquist frequency of 44,100 Hz), in 186 of 186 frames with signal; the band above 22,050 Hz is 30.9 dB under its mirror below`;
+  - for 11,025 Hz, `… under 5,512.5 Hz (the Nyquist frequency of 11,025 Hz) …`.
+- **JSON:** `spectrum.nyquistEdges`, always written (`[]` where none), each edge with `lowerRate`, `nyquistFrequency`, `stepFrequency` and `step` as `{ "value", "unit" }` (hertz with one decimal place only for 5,512.5 Hz), `above` in dB, and the frames.
+- **CSV:** `Nyquist Edge Rate (Hz)` after `Spectral Bandwidth (Hz)`, the highest edge's lower rate, empty where none is found; a numeric column.
+- **GUI:** the Figures line, and in the Spectrum panel a dashed vertical line at each edge's Nyquist frequency labeled with the rate, the step in the hover text.
+- **The model** (`measurement_model.py`) computes the figure in its own code from the design's text, on its own rows and counters; `MeasurementFixtureTests` holds the analyzer to it: rates and frequencies exact, levels within one tenth.
+- **Goldens:** every measurement golden (and the other formats' measured goldens, as for the coherence) gains `spectrum.nyquistEdges`; `golden_additions.py` lists it, and no existing figure may change. One regeneration.
+- **Articles,** under 400 words: new `nyquist-edge` (what a converter's lowpass leaves, the window and the four tests, the level above and why it is a bound, the cases that look alike with the committed fixtures' observations, scoped to Encspect's test files with tool versions and settings, and that the analyzer names no history from it); `spectral-cutoff`, `spectral-bandwidth`, `spectral-slope` and `lowpass` link it through `related`.
+- **Docs:** [cli.md](../cli.md), [gui.md](../gui.md), [development.md](../development.md) (the fixtures, the tools and their pins), an "As built: step 10" section here, and [plan.md](../plan.md) marks the item.
+
+### Cost, memory and determinism
+
+- **Work:** at the end of the stream only, once per stream: at most 13 candidates, each with a window of about 2 to 16 boundaries (3 % of N in rows) and their two neighbors, each step three subtractions of prefix sums, and one read of the counters (72 levels) at the step's row. Under 2,000 operations a stream (**estimate**), nothing per frame or per sample: no weight changes, and `MeasurementWorkTests` is unchanged.
+- **Memory:** none kept; a prefix array of 513 `long` on the stack, as `FindBandwidth` has. The counters it reads exist for the cutoff. `StreamMeasurer.EstimateBytes` does not change.
+- **Determinism:** the rows in thousandths of a dB are the cutoff's integers; sums are `long`, steps are fractions compared by cross products as the cutoff's are, the quarter test is `4 × fall × stepDenominator ≤ stepNumerator × fallDenominator`, the window's lower bound is `200 × (k + 1) × BinsPerRow × SampleRate ≥ 97 × rate × FftSize` in integers, and the level above is rounded to tenths once, halves up, by the cutoff's `Tenths`. No floating point, no logarithm, no state. `MeasurementDeterminismTests` adds the figure of its synthetic signal to the hash and holds it across two block sizes.
+- **Cancellation, the budget and the exception boundary** are unchanged: the figure is computed with the cutoff.
+
+### Fixtures and tests
+
+- **To make, external** (decision S44), in `make_external_measurement_fixtures.py`, 1 s each (the lossy fixtures' length, for the repository's size), committed as FLAC with manifests from the model:
+  - **SoX** (Ubuntu 24.04's 14.4.2, run as a black box; `tool_versions.py` records it): `rate -h` (the default), `-v`, `-v -s`, `-l` and `-q`;
+  - **r8brain** (MIT): a new `r8brain_tool.py` builds the pinned commit with a front end of its own (`r8brain_resample.cpp`: raw doubles in, `CDSPResampler::oneshot`, raw doubles out), at transition bands of 0.5, 2, 4 and 10 % (206.91, 206.91, 136 and 100 dB); `check_sources.py` checks the commit;
+  - **sources:** the lossy fixtures' pink noise at 44.1 kHz, a 1 s linear sweep, and step 9's harmonic source whose pitch changes every 0.5 s;
+  - **rates:** 44.1 to 48 kHz at 16 and 24 bits (every setting), 44.1 to 96 kHz and 48 to 88.2 kHz at 24 bits, 22.05 to 44.1 kHz, 32 to 48 kHz and 8 to 44.1 kHz at 16 bits (SoX `-v`, r8brain 2 %, and FFmpeg's default as the case not found);
+  - **look-alikes:** FFmpeg's `wmav2` at 128 kbit/s and oggenc `-q 0` at 48 kHz, decoded by FFmpeg and oggdec;
+  - about 40 files, about 4 MB (**estimate**: noise at 24 bits compresses little).
+- **Committed already:** `resampled-ffmpeg-44100-to-48000`, `-to-96000` and `-48000-to-44100` (none), `resampled-ffmpeg-soxr-44100-to-48000` (found), the `synthetic-upsampled-44100-*` files of the fixture script's windowed sinc (found: 21,469 and 21,609 Hz, 2.6 and 2.0 % under N; `synthetic-upsampled-22050-to-44100`, whose filter's cutoff is 1 kHz or 9 % under N, is not), the LAME `-b 64` files at 24 kHz and the 16 kHz lines (look-alikes), the rolloffs (none).
+- **To make, synthetic** (`make_measurement_fixtures.py`, exact by construction): the same pink noise generated at 48 and 96 kHz (the content not resampled: none), a brickwall at 22,050 Hz in a 48 kHz file (found, a look-alike by construction), two candidates' edges in one stream (16,000 Hz in a 44.1 kHz source taken to 96 kHz at 24 bits with the 16-bit floor kept: S40's list), and a lowpass sloping across 22,050 Hz at 48 kHz (the fall above N: none).
+- **Unit tests** on rows and counters: the window's bounds at every FFT size and at 5,512.5 Hz, the local maximum at both ends of the window, the quarter test, the frames, adjacent candidates, the top of the search (22,050 Hz at 48 kHz), a rate under 8,000 Hz, and the order of several edges.
+
+### Pull request
+
+- **One change,** after step 9's: the figure, the model, the fixtures and their tools, one regeneration of the goldens, the article and the docs, with the checks of [CLAUDE.md](../../CLAUDE.md) for the host and the measurement tests.
+
+### Decisions for the lead
+
+- **S36. The rates tested.** (a) Recommended: 8,000, 11,025, 12,000, 16,000, 22,050, 24,000, 32,000, 44,100, 48,000, 88,200, 96,000, 176,400 and 192,000 Hz, the PCM and MPEG audio rates. (b) (a) and the rarer ones (37,800, 47,250, 50,000 and 64,000 Hz): more coincidences with encoders' lowpasses for streams that seldom come from them. (c) Only 32,000, 44,100, 48,000 and their multiples: no 11,025 Hz edge for a 22.05 kHz source and no MPEG-2 rates.
+- **S37. The tolerance.** (a) Recommended: the step's peak within 3 % under N: every converter whose stopband starts at N was found (SoX `-m`, `-h`, `-v`, `-s`, r8brain to 4 %, soxr), with fewer lossy lowpasses in reach. (b) 5 %: r8brain at 10 % and more of SoX `-l` too, and oggenc `-q 0`'s lowpass at 44.1 kHz. (c) 2 %: SoX's default `-h` at 95 % band width is near its edge (2.0 to 2.9 % in the prototype) and would be lost in part.
+- **S38. How steep counts.** (a) Recommended: the cutoff's 25 dB step at a local maximum in the window, a fall of at most a quarter of the step over the next 1 kHz, and half the frames with signal. (b) The step 7 spectral bandwidth at the edge (a flat floor above): misses SoX and r8brain at 24 bits, whose floor is not flat near N. (c) A step over narrower bands (500 Hz): sharper, but the 2 % to 4 % transitions then fall across two bands and read smaller (**unverified**, not prototyped).
+- **S39. The level above the edge.** (a) Recommended: the band above N against its mirror under N, worded as a bound on the images. (b) (a) and a per-frame correlation to say when images stand above the floor: in the prototype the window's leakage correlates as images do and stationary noise not at all, so it would claim images it cannot tell apart. (c) Leave it out: the plan asks for it "where measurable".
+- **S40. Several edges.** (a) Recommended: a list, every candidate found, highest first (the prototype never found two in one stream; a 16-bit floor over a lower edge could give two). (b) The highest only.
+- **S41. The name.** (a) Recommended: "Nyquist edge" (`Nyquist Edge`, `nyquist-edge`): where the step lies. (b) "Lower-rate edge": names the rate but not what of it. (c) "Upsampling edge": reads as a claim about how the file was made.
+- **S42. Output.** (a) Recommended: the Figures line only where an edge is found, the JSON always, `Nyquist Edge Rate (Hz)` after `Spectral Bandwidth (Hz)`, and the dashed line in the Spectrum panel. (b) As (a) without the GUI line. (c) The Figures line always, with "none found".
+- **S43. Channels.** (a) Recommended: the combined spectrum only, as the holes and the replicated bands. (b) Each channel too: one more list per channel for a case (channels converted differently) that no fixture shows.
+- **S44. Fixtures.** (a) Recommended: SoX and r8brain at the settings above on three sources at six rate pairs, 1 s each, with the look-alikes, about 4 MB. (b) Only 44.1 to 48 and 44.1 to 96 kHz on pink noise, about 1 MB: the low rates' candidates and the music source go untested. (c) Generate them in CI instead of committing: SoX's output depends on the distribution's version, which CI's Ubuntu 26.04 does not pin.
+
+### Unverified claims and estimates
+
+- The prototype ran on synthetic sources only; real recordings (their energy near 20 kHz, noise-shaped dither of CD masters, a 16-bit floor kept under a lower edge) can move the steps, the frames and the margins of S37 and S38.
+- The prototype's step and frames are numpy floats on the analyzer's geometry, not the integer rows; a boundary on a tie can differ by one row.
+- The cost is an operation count, not a measurement.
+- The Hydrogenaudio pages were read for their test descriptions; their plots were not read.
+
+### Sources for this step
+
+- Hydrogenaudio, "Sample Rate Conversion Comparison", upsampling results for 44.1 to 48 kHz of foobar2000 x64 with SoX Extreme 64 at 99.95 % (`foo_dsp_sox_resampler` 1.0.16) and with r8brain Highest quality at 99.95 % (`foo_dsp_r8brain_resampler` 0.1.8), the lead's PDF copies (2026-11-26): the descriptions of the "Imaging", "Nyquist Filter", "Impulse Transition" and "Image Rejection" tests.
+- SoX 14.4.2 `sox --help-effect rate` (Ubuntu 24.04); r8brain-free-src commit `5792291` (MIT): `CDSPResampler.h`'s documentation of `ReqTransBand` and `ReqAtten`, `LICENSE`; FFmpeg 6.1.1 `ffmpeg -h filter=aresample` (the option list only).
+- The tools of the prototype: SoX 14.4.2, r8brain-free-src `5792291` with g++ 13, FFmpeg 6.1.1 (Ubuntu's 6.1.1-3ubuntu5), LAME 3.100, vorbis-tools 1.4.2, opus-tools 0.2, numpy 2.5.3.
