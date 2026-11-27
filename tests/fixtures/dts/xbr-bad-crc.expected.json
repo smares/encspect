@@ -48,7 +48,7 @@
   "decode_error": "Invalid XBR frame header checksum",
   "skip": {
    "ffprobe_profile": "ffmpeg's decoder sets the profile itself when it has decoded a frame (dca_core.c, dca_xll.c), and DTS-HD Master Audio or DTS-HD High Resolution Audio only after it has decoded the extension, which the stub components do not allow",
-   "decode": "ffmpeg rejects the XBR frame header whose CRC-16 fails (dca_core.c: 'Invalid XBR frame header checksum')"
+   "decode": "ffmpeg rejects the XBR frame header whose CRC-16 fails ('Invalid XBR frame header checksum')"
   }
  }
 }

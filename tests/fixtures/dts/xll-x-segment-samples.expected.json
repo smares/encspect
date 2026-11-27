@@ -54,9 +54,9 @@
   "decode_error": "Too many samples per XLL segment",
   "decode_log": "warning",
   "skip": {
-   "ffprobe_bitrate": "ffmpeg's lossless decoder sets the bit rate to 0 (dca_xll.c: avctx->bit_rate = 0), so ffprobe lists none",
-   "ffprobe_profile": "ffmpeg names the lossless profile when its decoder has decoded a frame (dca_xll.c), which it does not here, so ffprobe names the core's",
-   "decode": "ffmpeg's decoder refuses segments of more than 512 samples before the DTS:X word (dca_xll.c: 'Too many samples per XLL segment')"
+   "ffprobe_bitrate": "ffmpeg's lossless decoder sets the bit rate to 0 so ffprobe lists none",
+   "ffprobe_profile": "ffmpeg names the lossless profile when its decoder has decoded a frame, which it does not here, so ffprobe names the core's",
+   "decode": "ffmpeg's decoder refuses segments of more than 512 samples before the DTS:X word ('Too many samples per XLL segment')"
   }
  }
 }
