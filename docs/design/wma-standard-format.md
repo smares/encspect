@@ -2,7 +2,7 @@
 
 **Status:** written on 2026-10-29 by a Claude agent (Opus) that read FFmpeg 6.1.1's LGPL decoder of Windows Media Audio versions 1 and 2 (listed under [Sources](#sources)) and Encspect's current reader of the format, and checked this text against the committed fixtures. It contains no code. Whoever implements the replacement of `src/Encspect.Formats.Wma/Standard*.cs` must not read FFmpeg's `wmadec.c`, `wma.c` or `wma.h`, nor any other FFmpeg source or copy, nor the files [Implementer's sources](#implementers-sources) marks as not safe; FFmpeg serves only as a black-box cross-check.
 
-This is the clean-room description that the architecture rules of [`CLAUDE.md`](../../CLAUDE.md) ask for where LGPL code is the only detailed source, written in the form of [truehd-format.md](truehd-format.md). It covers what the analyzer reads today and reports ([asf-wma.md](../formats/asf-wma.md#wma-versions-1-and-2)): the codec data, the superframes and the bit reservoir, and the syntax of every frame down to the end of its coefficients. No audio is rebuilt, so the dequantization, the noise generator, the line spectral pair curve, the transform and the windows are left out, apart from the facts a reader needs to know that it can leave them out.
+This is the clean-room description that the architecture rules of [`CLAUDE.md`](../../CLAUDE.md) ask for where LGPL code is the only detailed source, written in the form of [truehd-format.md](truehd-format.md). It covers what the analyzer reads today and reports ([asf-wma.md](../formats/asf-wma.md#wma-versions-1-and-2)): the codec data, the superframes and the bit reservoir, and the syntax of every frame down to the end of its coefficients. No audio is rebuilt, so the dequantization, the noise generator, the line spectral pair curve, the transform and the windows are left out, apart from the facts a reader needs to know that it can leave them out. They are in the decoding supplement, [wma-standard-decoding.md](wma-standard-decoding.md), written in the same way.
 
 ## Sources
 
@@ -641,7 +641,7 @@ Observed behavior of the encoders behind the fixtures; none of it is a rule the 
 - The meaning of "Samples Per Block", "Super Block Align", options bits 5 to 15 and the superframe index; whether 0x000D with variable blocks is really an encoder that sends one block size.
 - Whether the bits before the bit offset of a stream's first superframe can hold anything.
 - Whether stuffing and filler are intended or a by-product of the encoder's rate control.
-- The levels' scale, the line spectral pair values and the escape levels' meaning beyond their widths, which a reader of the syntax does not need.
+- The levels' scale, the line spectral pair values and the escape levels' meaning beyond their widths, which a reader of the syntax does not need; [wma-standard-decoding.md](wma-standard-decoding.md) gives them.
 
 ## Implementer's sources
 
@@ -659,6 +659,7 @@ The implementer may read the files marked safe: they hold nothing taken from FFm
 | File | Why |
 | --- | --- |
 | [`docs/design/wma-standard-format.md`](wma-standard-format.md) | this description |
+| [`docs/design/wma-standard-decoding.md`](wma-standard-decoding.md) | its decoding supplement, written the same way; its own list of sources not to read adds to this one |
 | [`docs/formats/asf-wma.md`](../formats/asf-wma.md), [`docs/plan.md`](../plan.md), [`docs/development.md`](../development.md), [`docs/design/decoders.md`](decoders.md) | prose; [asf-wma.md](../formats/asf-wma.md) names a few FFmpeg identifiers in describing behavior and contains no code |
 | `tests/fixtures/asf/*.report.json`, `*.expected.json`, `*.provenance.json` and the fixtures | outputs and data |
 | `src/Encspect.Formats.Wma/Tables.cs` | format tables generated from FFmpeg's data files, no code |
