@@ -1,0 +1,42 @@
+{
+ "description": "ffmpeg's -c copy remux of wav/external-pcm-f32-stereo-44100.wav into ASF: the stream's frames are the media objects, under the format tag ffmpeg's muxer gives the coding.",
+ "format": "ASF",
+ "encoder": "ffmpeg version 6.1.1-3ubuntu5",
+ "command": [
+  "ffmpeg",
+  "-i",
+  "wav/external-pcm-f32-stereo-44100.wav",
+  "-c",
+  "copy",
+  "-bitexact",
+  "external-ffmpeg-pcm-f32-stereo.asf"
+ ],
+ "input": {
+  "file": "wav/external-pcm-f32-stereo-44100.wav",
+  "sha256": "f84dd7bcd1bcfa0fda27a7f42feecb9fc3de2962d4ef6054b7dfdc79e1925cd8"
+ },
+ "sha256": "a8f27e24ad1acee8680fb15efb812a54d93dde3f89d7d78eec95110378ecd813",
+ "reproducible": true,
+ "streams": [
+  {
+   "codec": "PCM (floating-point)",
+   "sample_rate": 44100,
+   "channels": 2
+  }
+ ],
+ "ffprobe": {
+  "codec": "pcm_f32le",
+  "channels": 2,
+  "rate": 44100,
+  "block_align": null,
+  "bit_rate": 2822400,
+  "extradata_size": 0,
+  "packets": 22,
+  "packet_sizes": [
+   2184,
+   4096
+  ],
+  "decoded_samples": 11025,
+  "file_bytes": 134930
+ }
+}

@@ -128,6 +128,10 @@ internal static partial class Explain
     public const string StatGainMaximum = "The channel's largest global_gain.";
     public const string StatSbr = "Access units with SBR data in a fill element, with their share.";
     public const string StatPs = "Access units whose SBR data carries the parametric stereo extension.";
+    public const string StatSbrFrameClasses = "The frame class of the SBR data of each channel, which says how the envelope borders are sent (ISO/IEC 14496-3, 4.4.2.8).";
+    public const string StatSbrEnvelopes = "The number of envelopes in the SBR data of each channel.";
+    public const string StatPsEnvelopes = "The number of envelopes in the parametric stereo data of each raw data block that has some.";
+    public const string StatPsBands = "The number of parameter bands of the parametric stereo data of each raw data block that has some.";
     public const string StatSbrHeaders = "SBR headers in the access units; encoders repeat them so decoders can start mid-stream.";
     public const string StatSbrUnread = "SBR payloads whose data could not be read: before the first header, after a header whose frequency tables cannot be built, or broken; their findings say which.";
     public const string StatSbrStart = "bs_start_freq of the first SBR header, and the QMF band and frequency at the SBR output rate where SBR starts rebuilding the spectrum (kx).";

@@ -61,9 +61,19 @@
   "ADTS/Statistics/Coded Bandwidth/Lowest": "14470 Hz",
   "ADTS/Statistics/Coded Bandwidth/Most Common": "14470 Hz",
   "ADTS/Statistics/Coded Bandwidth/Highest": "14470 Hz",
+  "ADTS/Statistics/Last Non-Zero Coefficient/Lowest": "10314 Hz",
+  "ADTS/Statistics/Last Non-Zero Coefficient/Most Common": "10314 Hz",
+  "ADTS/Statistics/Last Non-Zero Coefficient/Highest": "11714 Hz",
+  "ADTS/Statistics/Non-Zero Coefficients": "5054 coefficients",
+  "ADTS/Statistics/Escape-Coded Coefficients": "112 coefficients (2.2%)",
   "ADTS/Statistics/Block Usage": "18 channel streams"
  },
- "findings": [],
+ "findings": [
+  [
+   "aac.window-slopes-differ",
+   "a window sequence whose left slope differs"
+  ]
+ ],
  "crosscheck": {
   "ffprobe": true,
   "decode": true,

@@ -1,5 +1,5 @@
 {
- "description": "ADTS at 22050 Hz of ten channel pairs, the second, fifth and eighth followed by an SBR payload (the first with an SBR header): three blocks of ten, which is fewer than half of them, so the stream stays AAC LC at 22050 Hz.",
+ "description": "ADTS at 22050 Hz of ten channel pairs, the second, fifth and eighth followed by an SBR payload (the first with an SBR header): three blocks of ten, but the first block holds none, which decides the stream, so it stays AAC LC at 22050 Hz.",
  "length": 520,
  "format": "AAC",
  "boxes": [],
@@ -65,7 +65,7 @@
  "findings": [
   [
    "aac.sbr-data-sparse",
-   "only 3 of 10 raw data blocks hold SBR data after a channel element"
+   "3 of 10 raw data blocks hold SBR data after a channel element"
   ]
  ],
  "crosscheck": {

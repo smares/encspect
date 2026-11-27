@@ -480,6 +480,47 @@
                   ]
                 },
                 {
+                  "name": "Last Non-Zero Coefficient",
+                  "offset": 0,
+                  "length": 5249,
+                  "children": [
+                    {
+                      "name": "Lowest",
+                      "value": 7580,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 5249
+                    },
+                    {
+                      "name": "Most Common",
+                      "value": 10314,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 5249
+                    },
+                    {
+                      "name": "Highest",
+                      "value": 10314,
+                      "unit": "Hz",
+                      "offset": 0,
+                      "length": 5249
+                    }
+                  ]
+                },
+                {
+                  "name": "Non-Zero Coefficients",
+                  "value": 8612,
+                  "unit": "coefficients",
+                  "offset": 0,
+                  "length": 5249
+                },
+                {
+                  "name": "Escape-Coded Coefficients",
+                  "value": "188 coefficients (2.2%)",
+                  "offset": 0,
+                  "length": 5249
+                },
+                {
                   "name": "Intensity Stereo Bound",
                   "offset": 0,
                   "length": 5249,
@@ -8549,6 +8590,104 @@
             "values": [
               22050
             ]
+          },
+          {
+            "name": "Last Non-Zero Coefficient",
+            "unit": "Hz",
+            "axis": "frameOffset",
+            "concept": "codedBandwidth",
+            "quantity": "Last Non-Zero Coefficient",
+            "x": [
+              0,
+              372,
+              749,
+              1126,
+              1498,
+              1785,
+              2072,
+              2284,
+              2566,
+              2849,
+              3223,
+              3691,
+              4011,
+              4357,
+              4677,
+              4966
+            ],
+            "values": [
+              10314,
+              10314,
+              10314,
+              10314,
+              10314,
+              10314,
+              10314,
+              10314,
+              10314,
+              10314,
+              7580,
+              10314,
+              10314,
+              10314,
+              10314,
+              10314
+            ]
+          },
+          {
+            "name": "Last Non-Zero Coefficient Over Time",
+            "unit": "Hz",
+            "axis": "seconds",
+            "concept": "codedBandwidth",
+            "quantity": "Last Non-Zero Coefficient",
+            "x": [
+              0
+            ],
+            "values": [
+              10314
+            ]
+          },
+          {
+            "name": "Escape-Coded Coefficients",
+            "unit": "%",
+            "axis": "frameOffset",
+            "quantity": "Escape-Coded Coefficients",
+            "x": [
+              0,
+              372,
+              749,
+              1126,
+              1498,
+              1785,
+              2072,
+              2284,
+              2566,
+              2849,
+              3223,
+              3691,
+              4011,
+              4357,
+              4677,
+              4966
+            ],
+            "values": [
+              0.7,
+              0.7,
+              0.7,
+              0.7,
+              1.1,
+              1.1,
+              1.5,
+              1.1,
+              1.1,
+              0.7,
+              22.7,
+              0.9,
+              0.8,
+              0.9,
+              1.1,
+              1
+            ]
           }
         ],
         "categorySeries": [
@@ -8889,6 +9028,23 @@
           0,
           4,
           8
+        ],
+        "count": 2
+      },
+      {
+        "severity": "Info",
+        "code": "aac.window-slopes-differ",
+        "message": "2 raw data blocks hold a window sequence whose left slope differs from the right slope of the window before it in the same channel stream, as a long window followed by eight short ones does: ISO/IEC 14496-3 4.6.11.3.1 lists such transitions as possible and not as meaningful; the first at 0xDEB.",
+        "offset": 3563,
+        "length": 1,
+        "path": [
+          0,
+          11,
+          15,
+          0,
+          4,
+          1,
+          1
         ],
         "count": 2
       }

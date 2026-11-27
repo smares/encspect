@@ -117,10 +117,6 @@
  },
  "findings": [
   {
-   "code": "asf.codec-not-analyzed",
-   "contains": "PCM"
-  },
-  {
    "code": "asf.object-truncated",
    "contains": "ends"
   },
@@ -143,6 +139,10 @@
   {
    "code": "asf.payload-overrun",
    "contains": "extends past"
+  },
+  {
+   "code": "asf.object-incomplete",
+   "contains": "the file ends inside"
   }
  ],
  "crosscheck": {

@@ -148,12 +148,12 @@
  },
  "findings": [
   {
-   "code": "asf.codec-not-analyzed",
-   "contains": "PCM"
-  },
-  {
    "code": "asf.payload-overrun",
    "contains": "extends past"
+  },
+  {
+   "code": "asf.fragment-overrun",
+   "contains": "more bytes than the media object"
   }
  ],
  "crosscheck": {

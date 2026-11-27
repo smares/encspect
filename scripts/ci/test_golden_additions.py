@@ -198,6 +198,25 @@ class CheckTests(unittest.TestCase):
         change = {"added": [{"scope": "node", "parent": ["MPEG Audio", "Statistics"], "name": "Added"}]}
         self.assertTrue(self.check(report(OLD_STATS), new, change))
 
+    def test_streams_of_a_codec_that_the_new_report_gains_are_taken_back_only_where_the_change_adds_their_nodes(self):
+        old = report(OLD_STATS)
+        new = report(OLD_STATS, streams=[{"nodes": [[2]], "codec": "PCM"}, {"nodes": [[1]], "codec": "MPEG-1 Layer III", "series": [{"name": "Bitrate"}]}])
+        new["root"]["children"].append(node("PCM Stream"))
+        change = {"added": [{"scope": "streams", "codec": "PCM"}]}
+        # The node of the stream is not one the change lists as added: the stream stays, and fails.
+        self.assertNotEqual(self.check(old, new, change), [])
+        change["added"].append({"scope": "node", "parent": [], "name": "PCM Stream"})
+        self.assertEqual(self.check(old, new, change), [])
+        # A stream of the codec that the old report has stays.
+        both = report(OLD_STATS, streams=[{"nodes": [[1]], "codec": "PCM"}])
+        self.assertEqual(self.check(both, both, change), [])
+
+    def test_a_removed_finding_can_be_limited_to_the_messages_that_have_a_text(self):
+        old = report(OLD_STATS, findings=[{"code": "asf.codec-not-analyzed", "message": "PCM is not routed"}, {"code": "asf.codec-not-analyzed", "message": "Stream 2 is encrypted"}])
+        new = report(OLD_STATS, findings=[{"code": "asf.codec-not-analyzed", "message": "Stream 2 is encrypted"}])
+        self.assertNotEqual(self.check(old, new, {"removed": [{"scope": "finding", "code": "asf.codec-not-analyzed"}]}), [])
+        self.assertEqual(self.check(old, new, {"removed": [{"scope": "finding", "code": "asf.codec-not-analyzed", "messageContains": "PCM"}]}), [])
+
     def test_a_rename_is_reversed(self):
         new = report([OLD_STATS[0], node("Coded Bandwidth", value=16000), *OLD_STATS[2:]])
         change = {"renamed": [{"parent": ["MPEG Audio", "Statistics"], "from": "Bandwidth", "to": "Coded Bandwidth"}]}
@@ -553,6 +572,29 @@ class RepositoryTests(unittest.TestCase):
             status = golden_additions.run(self.dir, "main", "HEAD", files)
         self.assertEqual(status, 1)
         self.assertIn("d.decode.json: changed, and no change file covers it", output.getvalue())
+
+    def test_a_decode_golden_may_gain_a_hash_and_swap_the_findings_the_change_file_lists(self):
+        refused = {"streams": [{"decoding": "NotPossible", "decodedSamples": 0}], "findings": [{"code": "decode.not-possible", "message": "not decoded", "count": 1}]}
+        decoded = {"streams": [{"decoding": "Decoded", "decodedSamples": 100, "pcmSha256": "ab"}], "findings": [{"code": "decode.frame-invalid", "message": "a frame", "count": 2}]}
+        self.write("tests/fixtures/aac/d.decode.json", refused)
+        self.git("add", "-A")
+        self.git("commit", "-qm", "decode base")
+        self.git("checkout", "-q", "main")
+        self.git("merge", "-q", "--ff-only", "pr")
+        self.git("checkout", "-qb", "pr7")
+        files = ["tests/fixtures/aac/golden-changes.json"]
+        change = {"goldens": ["tests/fixtures/aac/"], "changed": [{"scope": "decode", "fields": ["decodedSamples", "decoding", "pcmSha256"]}],
+                  "removed": [{"scope": "finding", "code": "decode.not-possible"}], "added": [{"scope": "finding", "code": "decode.frame-invalid"}]}
+        self.write(files[0], change)
+        self.write("tests/fixtures/aac/d.decode.json", decoded)
+        self.commit()
+        self.assertEqual(golden_additions.run(self.dir, "main", "HEAD", files), 0)
+
+        # A finding of another code that the change file does not list fails.
+        decoded["findings"].append({"code": "decode.other", "message": "x", "count": 1})
+        self.write("tests/fixtures/aac/d.decode.json", decoded)
+        self.commit()
+        self.assertEqual(golden_additions.run(self.dir, "main", "HEAD", files), 1)
 
     def test_a_key_renamed_in_the_streams_of_a_report_golden_is_put_back(self):
         old = report(OLD_STATS, streams=[{"nodes": [[1]], "verification": {"withCorrection": True}}])

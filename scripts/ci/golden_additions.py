@@ -21,6 +21,7 @@ every child of that name. A change file:
                   {"scope": "stream", "array": "series", "name": "Coded Bandwidth"}, # elements of a stream's array; "streams": [0] limits it to those streams
                   {"scope": "stream", "array": "series", "name": "Bitrate", "key": "concept"},  # a key of those elements
                   {"scope": "report", "key": "someKey"},
+                  {"scope": "streams", "codec": "PCM"},                                  # whole streams of that codec the golden gains (a container that reports one it did not)
                   {"scope": "finding", "code": "speex.granule-beyond-packets"},          # a finding the golden gains; one the old report has stays
                   {"scope": "node", "parent": ["MPEG Audio", "Statistics"], "name": "Stereo Coding"},
                   {"scope": "node", "parent": ["MP4", "Track 1 Samples", "AAC"], "name": "Access Unit", "last": 1}],  # one more node of a kind the parent has, last
@@ -35,7 +36,7 @@ every child of that name. A change file:
                   {"scope": "finding", "code": "vorbis.end-trimming-large", "fields": ["message"]}],  # fields of every finding of the code
       "removed": [{"parent": ["ASF", "Data Object", "Windows Media Audio Voice", "Statistics"], "name": "Lost Samples",     # a node only the old report has;
                    "goldens": ["tests/fixtures/asf/voice-truncated.report.json"]},                                        # an entry may name the goldens it applies to
-                  {"scope": "finding", "code": "wma.voice-unfinished"}],                                                  # a finding only the old report has
+                  {"scope": "finding", "code": "wma.voice-unfinished"}],   # a finding only the old report has; "messageContains" limits it to those with that text
       "bitrate": [{"goldens": ["tests/fixtures/mp4/some.report.json"], "reason": "why the average bitrate differs"}]  # goldens whose averageBitrate may differ without lost samples
     }
 
@@ -102,16 +103,48 @@ def has_child(report, parent, name):
     return any(child.get("name") == name for node in matching(report["root"], parent) for child in node.get("children", []))
 
 
+def node_at(root, path):
+    node = root
+    for index in path:
+        children = node.get("children", [])
+        if index >= len(children):
+            return None
+        node = children[index]
+    return node
+
+
+def remove_added_streams(report, added, old):
+    """Whole streams the change adds (entry: {"scope": "streams", "codec": "PCM"}): of the streams of that codec, as many as the new report has more of than the old,
+    taken from the front (a stream a container did not report before is as likely to come first as last: a clear stream before a protected one), and only those whose
+    first node is one the change adds under a name it lists (a node entry of the change has that name), so that a stream the change does not account for stays and fails."""
+    names = {e["name"] for e in added if e.get("scope", "node") == "node"}
+    for entry in added:
+        if entry.get("scope") != "streams":
+            continue
+        surplus = sum(1 for x in report.get("streams", []) if x.get("codec") == entry["codec"]) - (sum(1 for x in old.get("streams", []) if x.get("codec") == entry["codec"]) if old is not None else 0)
+        kept = []
+        for stream in report.get("streams", []):
+            first = node_at(report["root"], stream["nodes"][0]) if stream.get("nodes") else None
+            if surplus > 0 and stream.get("codec") == entry["codec"] and first is not None and first.get("name") in names:
+                surplus -= 1
+                continue
+            kept.append(stream)
+        report["streams"] = kept
+
+
 def remove_added(report, added, renamed_nodes=frozenset(), old=None):
     """Takes what the change adds out of the new report. A node that the old report has under another name (renamed_nodes: its parent's
     path and its new name) is the renamed node and stays, and so does one that the old report has under that name; a node comes out only
     when its children have come out too, which takes an entry for each (the deepest entries run first), so a child nobody listed fails."""
+    remove_added_streams(report, added, old)
     for entry in sorted(added, key=lambda e: -len(e["parent"]) if e.get("scope") == "node" else 1):
         if entry.get("scope") == "finding" and "code" not in entry:
             raise ChangeError(f"an added entry with the scope finding needs a code: {json.dumps(entry)}")
         scope = entry.get("scope")
         if scope == "report":
             report.pop(entry["key"], None)
+        elif scope == "streams":
+            continue  # taken before the nodes, while the streams' node paths still lead somewhere
         elif scope == "stream":
             for index, stream in enumerate(report.get("streams", [])):
                 # An entry may name the streams it applies to (a file of two codings, one of which had the figure before).
@@ -350,7 +383,7 @@ def reports(golden):
 def validate(change):
     """Readable errors for the entries of a change file that cannot work: a key an entry needs is missing, or the entry has the wrong shape."""
     needs = {
-        "added": {"stream": ("key",), "report": ("key",), "finding": ("code",), "node": ("parent", "name"), "measurement": ("path", "key")},
+        "added": {"stream": ("key",), "streams": ("codec",), "report": ("key",), "finding": ("code",), "node": ("parent", "name"), "measurement": ("path", "key")},
         "removed": {"finding": ("code",), "node": ("parent", "name")},
     }
     for entry in change.get("changed", []):
@@ -420,7 +453,8 @@ def check_golden(old, new, change):
             tag(before["root"], [])
             for entry in change.get("removed", []):
                 if entry.get("scope") == "finding":
-                    before["findings"] = [f for f in before.get("findings", []) if f.get("code") != entry["code"]]
+                    # "messageContains" limits it to the findings of the code whose message has that text (one of two findings of a code that the change replaces).
+                    before["findings"] = [f for f in before.get("findings", []) if f.get("code") != entry["code"] or entry.get("messageContains", "") not in f.get("message", "")]
                     continue
                 for parent in matching(before["root"], entry["parent"]):
                     kept = [c for c in parent.get("children", []) if c.get("name") != entry["name"]]
@@ -490,9 +524,20 @@ def check_decode_golden(old, new, change):
     if problem:
         return [problem]
     fields = {field for entry in change.get("changed", []) if entry.get("scope") == "decode" for field in entry["fields"]}
+    # A decoder that starts decoding a stream it refused has the finding of its refusal gone and the findings of its decoding new: the change lists their codes as removed and added
+    # ({"scope": "finding", "code": ...}), and a field it lists as changed that only the new golden has (the hash of the samples) is the decoder's addition.
+    old = copy.deepcopy(old)
+    for entry in change.get("removed", []):
+        if entry.get("scope") == "finding" and isinstance(old, dict) and "findings" in old:
+            old["findings"] = [f for f in old["findings"] if f.get("code") != entry["code"]]
+    for entry in change.get("added", []):
+        if entry.get("scope") == "finding" and isinstance(expected, dict) and "findings" in expected:
+            expected["findings"] = [f for f in expected["findings"] if f.get("code") != entry["code"]]
 
     def restore(before, after):
         if isinstance(before, dict) and isinstance(after, dict):
+            for key in [k for k in after if k not in before and k in fields and not isinstance(after[k], (dict, list))]:
+                del after[key]
             for key in after:
                 if key in before:
                     if key in fields and not isinstance(after[key], (dict, list)):

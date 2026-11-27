@@ -1,0 +1,124 @@
+{
+ "description": "Twelve mono frames, one window sequence each, in which the slopes of five windows do not match those of the window before: eight short after only long, only long after eight short, only long after long start, long stop after long stop and long stop after only long; the others follow as the slopes match (long start after only long, eight short after long start, long stop after eight short, only long after long stop).",
+ "length": 2252,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "channel_layout": [
+    "front center"
+   ],
+   "samples": 12288,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   131
+  ],
+  [
+   131,
+   348
+  ],
+  [
+   479,
+   130
+  ],
+  [
+   609,
+   117
+  ],
+  [
+   726,
+   131
+  ],
+  [
+   857,
+   117
+  ],
+  [
+   974,
+   348
+  ],
+  [
+   1322,
+   223
+  ],
+  [
+   1545,
+   223
+  ],
+  [
+   1768,
+   131
+  ],
+  [
+   1899,
+   223
+  ],
+  [
+   2122,
+   130
+  ]
+ ],
+ "fields": {
+  "ADTS/Frame[0]/Raw Data Block/SCE/Channel/ICS Info/Window Sequence": "0 (only long)",
+  "ADTS/Frame[1]/Raw Data Block/SCE/Channel/ICS Info/Window Sequence": "2 (eight short)",
+  "ADTS/Frame[2]/Raw Data Block/SCE/Channel/ICS Info/Window Sequence": "0 (only long)",
+  "ADTS/Frame[3]/Raw Data Block/SCE/Channel/ICS Info/Window Sequence": "1 (long start)",
+  "ADTS/Frame[4]/Raw Data Block/SCE/Channel/ICS Info/Window Sequence": "0 (only long)",
+  "ADTS/Frame[5]/Raw Data Block/SCE/Channel/ICS Info/Window Sequence": "1 (long start)",
+  "ADTS/Frame[6]/Raw Data Block/SCE/Channel/ICS Info/Window Sequence": "2 (eight short)",
+  "ADTS/Frame[7]/Raw Data Block/SCE/Channel/ICS Info/Window Sequence": "3 (long stop)",
+  "ADTS/Frame[8]/Raw Data Block/SCE/Channel/ICS Info/Window Sequence": "3 (long stop)",
+  "ADTS/Frame[9]/Raw Data Block/SCE/Channel/ICS Info/Window Sequence": "0 (only long)",
+  "ADTS/Frame[10]/Raw Data Block/SCE/Channel/ICS Info/Window Sequence": "3 (long stop)",
+  "ADTS/Frame[11]/Raw Data Block/SCE/Channel/ICS Info/Window Sequence": "0 (only long)",
+  "ADTS/Statistics/Block Usage/Only Long": "5 channel streams (41.7%)",
+  "ADTS/Statistics/Block Usage/Long Start": "2 channel streams (16.7%)",
+  "ADTS/Statistics/Block Usage/Eight Short": "2 channel streams (16.7%)",
+  "ADTS/Statistics/Block Usage/Long Stop": "3 channel streams (25.0%)",
+  "ADTS/Statistics/Window Shapes/Sine": "4 channel streams (33.3%)",
+  "ADTS/Statistics/Window Shapes/KBD": "8 channel streams (66.7%)",
+  "ADTS/Statistics/Codebooks/Codebook 0": "66 bands (16.3%)",
+  "ADTS/Statistics/Codebooks/Codebook 1": "8 bands (2.0%)",
+  "ADTS/Statistics/Codebooks/Codebook 2": "14 bands (3.4%)",
+  "ADTS/Statistics/Codebooks/Codebook 3": "36 bands (8.9%)",
+  "ADTS/Statistics/Codebooks/Codebook 4": "12 bands (3.0%)",
+  "ADTS/Statistics/Codebooks/Codebook 5": "102 bands (25.1%)",
+  "ADTS/Statistics/Codebooks/Codebook 6": "12 bands (3.0%)",
+  "ADTS/Statistics/Codebooks/Codebook 7": "8 bands (2.0%)",
+  "ADTS/Statistics/Codebooks/Codebook 8": "4 bands (1.0%)",
+  "ADTS/Statistics/Codebooks/Codebook 9": "38 bands (9.4%)",
+  "ADTS/Statistics/Codebooks/Codebook 10": "6 bands (1.5%)",
+  "ADTS/Statistics/Codebooks/Codebook 11": "92 bands (22.7%)",
+  "ADTS/Statistics/Codebooks/Codebook 13": "8 bands (2.0%)",
+  "ADTS/Statistics/Last Non-Zero Coefficient/Lowest": "3445 Hz",
+  "ADTS/Statistics/Last Non-Zero Coefficient/Most Common": "3445 Hz",
+  "ADTS/Statistics/Last Non-Zero Coefficient/Highest": "22050 Hz",
+  "ADTS/Statistics/Non-Zero Coefficients": "2888 coefficients",
+  "ADTS/Statistics/Escape-Coded Coefficients": "129 coefficients (4.5%)"
+ },
+ "findings": [
+  [
+   "aac.window-slopes-differ",
+   "5 raw data blocks hold a window sequence whose left slope differs"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "faad": {
+   "seconds": "0.279",
+   "rate": 44100
+  },
+  "skip": {
+   "decode": "FFmpeg's decoder windows a transition the window shapes do not allow differently from the analyzer's (docs/formats/aac.md, Decoding)."
+  }
+ }
+}

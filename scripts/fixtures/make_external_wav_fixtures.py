@@ -4,7 +4,7 @@
 They come from FFmpeg 6.1.1 of Ubuntu 24.04 (its wav muxer and the encoders that feed it): PCM of 8, 16, 24 and 32 bits, floating point of 32 and
 64 bits, A-law and mu-law, mono, stereo, 5.1 and 7.1 with their channel masks, a quadraphonic and a three-channel layout, RF64 and the
 JUNK chunk that reserves space for a ds64 chunk, a Broadcast Wave bext chunk, INFO tags, a peak envelope chunk, a file written to a pipe (whose sizes
-are placeholders), Wave64 files (the w64 muxer), and MPEG audio Layers II and III, AC-3, E-AC-3, DTS, Microsoft ADPCM, IMA ADPCM and GSM 6.10 as the muxer tags them. The
+are placeholders), Wave64 files (the w64 muxer), and MPEG audio Layers II and III, AC-3, E-AC-3, DTS, Windows Media Audio versions 1 and 2, Microsoft ADPCM, IMA ADPCM and GSM 6.10 as the muxer tags them. The
 inputs are deterministic signals written by wav_model.py.
 
 The muxer's output depends on its version, so the files are committed and --manifests-only recomputes the manifests from them without FFmpeg.
@@ -65,6 +65,8 @@ FIXTURES = {
     "ac3-in-wav": (("sine", 48000, 2, SHORT, "s16le"), ["-c:a", "ac3", "-b:a", "192k"], None, [], None),
     "eac3-in-wav": (("sine", 48000, 2, SHORT, "s16le"), ["-c:a", "eac3", "-b:a", "192k"], None, [], None),
     "dts-in-wav": (("sine", 48000, 2, SHORT, "s16le"), ["-c:a", "dca", "-strict", "-2", "-b:a", "768k"], None, [], None),
+    "wmav1-in-wav": (("sine", 44100, 2, SHORT, "s16le"), ["-c:a", "wmav1", "-b:a", "128k"], None, [], None),
+    "wmav2-in-wav": (("sine", 44100, 2, SHORT, "s16le"), ["-c:a", "wmav2", "-b:a", "128k"], None, [], None),
     "adpcm-ms": (("sine", 44100, 2, SHORT, "s16le"), ["-c:a", "adpcm_ms"], None, ["wav.coding-not-analyzed"], "Microsoft ADPCM"),
     "adpcm-ima": (("sine", 44100, 2, SHORT, "s16le"), ["-c:a", "adpcm_ima_wav"], None, ["wav.coding-not-analyzed"], "IMA ADPCM"),
     "gsm-ms": (("sine", 8000, 1, SHORT, "s16le"), ["-c:a", "libgsm_ms"], None, ["wav.coding-not-analyzed"], "GSM 6.10"),

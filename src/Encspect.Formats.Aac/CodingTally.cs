@@ -44,6 +44,11 @@ internal sealed class CodingTally
 
     public long Bands { get; set; }
 
+    // The quantized values of the spectral data that are nonzero, and those coded with an escape sequence (codebook 11).
+    public long NonZero { get; set; }
+
+    public long Escapes { get; set; }
+
     public long NoiseStreams { get; set; }
 
     public long NoiseBands { get; set; }
@@ -105,6 +110,38 @@ internal sealed class CodingTally
 
     public long PsBlocks { get; set; }
 
+    // The SBR payloads read to their end by the frame class and the envelope count of each channel, and the parametric stereo data by its envelope count (none to four) and its bands
+    // (CodingCategories.PsBands).
+    public long[] SbrFrameClasses { get; } = new long[4];
+
+    public long[] SbrEnvelopeCounts { get; } = new long[6];
+
+    public long[] PsEnvelopeCounts { get; } = new long[5];
+
+    public long[] PsBandCounts { get; } = new long[4];
+
+    // The figures Sbr.ReadData states of a payload.
+    public void SbrFigures(ReadOnlySpan<int> figures)
+    {
+        for (int c = 0; c < 2; c++)
+        {
+            if (figures[Sbr.FigureFrameClass + (2 * c)] >= 0)
+            {
+                SbrFrameClasses[figures[Sbr.FigureFrameClass + (2 * c)]]++;
+                SbrEnvelopeCounts[figures[Sbr.FigureEnvelopes + (2 * c)]]++;
+            }
+        }
+
+        if (figures[Sbr.FigurePsEnvelopes] >= 0)
+        {
+            PsEnvelopeCounts[figures[Sbr.FigurePsEnvelopes]]++;
+            PsBandCounts[PsBandClass(figures)]++;
+        }
+    }
+
+    // The category of CodingCategories.PsBands: none where neither parameter is enabled, else 10, 20 or 34 bands by the finer of the two modes (mode 0, 1 or 2).
+    public static int PsBandClass(ReadOnlySpan<int> figures) => Math.Max(figures[Sbr.FigurePsIidMode], figures[Sbr.FigurePsIccMode]) + 1;
+
     // What SBR and PS are inferred from where the configuration does not signal them (see
     // BlockLog.AddEvidence): the blocks read to their end that are not in a damaged frame, those among
     // them with an SBR payload that was read in full, and with the parametric stereo extension.
@@ -116,14 +153,20 @@ internal sealed class CodingTally
 
     public int FirstSbrEvidenceBlock { get; set; } = -1;
 
-    // The rule for inferring SBR (and PS) from the blocks: in at least two of them, or in the only one
-    // there is, and in at least half. A damaged frame's blocks, a payload before any channel element and
-    // a lone occurrence in an otherwise plain stream therefore do not turn it into HE-AAC.
-    public bool IsSbrEvident => IsEvident(SbrEvidenceBlocks);
+    // Whether the first block read to its end (not in a damaged frame) holds an SBR payload after a channel element: implicit SBR is decided there, as ffmpeg 6.1.1 does
+    // (it takes implicit SBR where the stream starts with it; sbr-in-first-block-only.aac and sbr-in-all-but-first-block.aac hold it), and the decoder (DecodeFeed.FindImplicitSbr) decides on the same block.
+    // The PS extension is not decided there: ISO/IEC 14496-3 1.6.6.3 has the decoder of a single channel with SBR apply PS from whatever block its data starts in.
+    public bool FirstBlockHasSbr { get; set; }
 
-    public bool IsPsEvident => IsEvident(PsEvidenceBlocks);
+    // The first later block that disagrees with the first one about SBR, or -1.
+    public int FirstDisagreeingBlock { get; set; } = -1;
 
-    private bool IsEvident(long count) => count > 0 && count >= Math.Min(2, EvidenceBlocks) && count * 2 >= EvidenceBlocks;
+    public bool IsSbrEvident => EvidenceBlocks > 0 && FirstBlockHasSbr;
+
+    public bool IsPsEvident => PsEvidenceBlocks > 0;
+
+    // Whether most blocks disagree with the first one about SBR: it is missing from most later blocks, or present in most where the first had none.
+    public bool IsSbrInconsistent => EvidenceBlocks > 1 && (FirstBlockHasSbr ? SbrEvidenceBlocks * 2 < EvidenceBlocks : SbrEvidenceBlocks * 2 > EvidenceBlocks);
 
     public int FirstSbrBlock { get; set; } = -1;
 

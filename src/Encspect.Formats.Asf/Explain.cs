@@ -45,6 +45,8 @@ internal static partial class Explain
     public const string StreamFlags = "The stream number and whether the stream is encrypted (section 3.3).";
     public const string StreamNumber = "The number of this stream, from 1 to 127; 0 is invalid (section 3.3).";
     public const string StreamFlagsReserved = "Reserved bits, which should be 0 (section 3.3).";
+    public const string PcmMediaObjects = "The media objects of an audio stream whose samples are stored as they are (PCM, IEEE floating point, A-law or mu-law), put together from their payloads; the figures of the stream come from its WAVEFORMATEX.";
+    public const string UnreadableStream = "A stream whose samples cannot be read because its WAVEFORMATEX does not describe a layout the analyzer reads, shown as the header states it.";
     public const string EncryptedStream = "A stream whose data is encrypted and which no codec parser describes, shown as the header states it; its media objects are not read.";
 
     public const string EncryptedContentFlag = "Set if the data of the stream is encrypted and unreadable without a way to decrypt it (section 3.3).";

@@ -7,10 +7,16 @@
  *     application: voip, audio or lowdelay; frame_ms: 5, 10, 20, 40 or 60; fec: 0 or 1 (with an expected loss of 20%);
  *     bandwidth: nb, mb, wb, swb or fb (the highest the encoder may use); mode: auto, silk, hybrid or celt (what the encoder is forced to).
  *
+ *     opus_enc INPUT.wav OUTPUT.opus SERIAL application bitrate frame_ms fec bandwidth mode ambisonics
+ *
+ *     The eleventh argument "ambisonics" writes mapping family 3 (RFC 8486) with libopus's projection encoder: the channels of the input are an ambisonic signal in ACN order and
+ *     SN3D scaling, 4, 6, 9, 11, 16 or 18 of them (orders 1 to 3, the last of each pair with the non-diegetic stereo pair); the demixing matrix and its gain go into the header.
+ *
  *     cc -O1 -ffp-contract=off -o opus_enc opus_enc.c -lopus -logg -lm
  */
 #include <ogg/ogg.h>
 #include <opus/opus.h>
+#include <opus/opus_projection.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,7 +40,8 @@ static void write_packet(ogg_stream_state *os, FILE *out, unsigned char *data, l
 
 int main(int argc, char **argv)
 {
-    if (argc != 10)
+    int ambisonics = argc == 11 && !strcmp(argv[10], "ambisonics");
+    if (argc != 10 && !ambisonics)
     {
         fprintf(stderr, "usage: opus_enc INPUT.wav OUTPUT.opus SERIAL application bitrate frame_ms fec bandwidth mode\n");
         return 2;
@@ -53,18 +60,30 @@ int main(int argc, char **argv)
     int bandwidth = !strcmp(argv[8], "nb") ? OPUS_BANDWIDTH_NARROWBAND : !strcmp(argv[8], "mb") ? OPUS_BANDWIDTH_MEDIUMBAND : !strcmp(argv[8], "wb") ? OPUS_BANDWIDTH_WIDEBAND
         : !strcmp(argv[8], "swb") ? OPUS_BANDWIDTH_SUPERWIDEBAND : OPUS_BANDWIDTH_FULLBAND;
     int error = 0;
-    OpusEncoder *encoder = opus_encoder_create(rate, channels, application, &error);
-    if (!encoder) return 2;
-    opus_encoder_ctl(encoder, OPUS_SET_BITRATE(bitrate));
-    opus_encoder_ctl(encoder, OPUS_SET_INBAND_FEC(atoi(argv[7])));
-    opus_encoder_ctl(encoder, OPUS_SET_PACKET_LOSS_PERC(atoi(argv[7]) ? 20 : 0));
-    opus_encoder_ctl(encoder, OPUS_SET_MAX_BANDWIDTH(bandwidth));
-    opus_encoder_ctl(encoder, OPUS_SET_BANDWIDTH(bandwidth));
-    if (!strcmp(argv[9], "silk")) opus_encoder_ctl(encoder, OPUS_SET_FORCE_MODE_REQUEST, (opus_int32)1000);
-    else if (!strcmp(argv[9], "hybrid")) opus_encoder_ctl(encoder, OPUS_SET_FORCE_MODE_REQUEST, (opus_int32)1001);
-    else if (!strcmp(argv[9], "celt")) opus_encoder_ctl(encoder, OPUS_SET_FORCE_MODE_REQUEST, (opus_int32)1002);
+    int streams = 1, coupled = 0;
+    OpusProjectionEncoder *projection = NULL;
+    OpusEncoder *encoder = NULL;
+    if (ambisonics)
+    {
+        projection = opus_projection_ambisonics_encoder_create(rate, channels, 3, &streams, &coupled, application, &error);
+        if (!projection) return 2;
+    }
+    else
+    {
+        encoder = opus_encoder_create(rate, channels, application, &error);
+        if (!encoder) return 2;
+    }
+#define CTL(...) (ambisonics ? opus_projection_encoder_ctl(projection, __VA_ARGS__) : opus_encoder_ctl(encoder, __VA_ARGS__))
+    CTL(OPUS_SET_BITRATE(bitrate));
+    CTL(OPUS_SET_INBAND_FEC(atoi(argv[7])));
+    CTL(OPUS_SET_PACKET_LOSS_PERC(atoi(argv[7]) ? 20 : 0));
+    CTL(OPUS_SET_MAX_BANDWIDTH(bandwidth));
+    CTL(OPUS_SET_BANDWIDTH(bandwidth));
+    if (!strcmp(argv[9], "silk")) CTL(OPUS_SET_FORCE_MODE_REQUEST, (opus_int32)1000);
+    else if (!strcmp(argv[9], "hybrid")) CTL(OPUS_SET_FORCE_MODE_REQUEST, (opus_int32)1001);
+    else if (!strcmp(argv[9], "celt")) CTL(OPUS_SET_FORCE_MODE_REQUEST, (opus_int32)1002);
     opus_int32 lookahead = 0;
-    opus_encoder_ctl(encoder, OPUS_GET_LOOKAHEAD(&lookahead));
+    CTL(OPUS_GET_LOOKAHEAD(&lookahead));
     int preskip = (int)((long)lookahead * 48000 / rate);
     long samples = 0, capacity = 1 << 20;
     int16_t *pcm = malloc(capacity * sizeof(int16_t) * channels);
@@ -82,10 +101,20 @@ int main(int argc, char **argv)
 
     ogg_stream_state os;
     ogg_stream_init(&os, atoi(argv[3]));
-    unsigned char head[19] = "OpusHead";
+    unsigned char head[19 + 2 + 65004] = "OpusHead";
+    long head_bytes = 19;
     head[8] = 1; head[9] = channels; head[10] = preskip & 0xFF; head[11] = preskip >> 8;
     put32(head + 12, rate); head[16] = head[17] = 0; head[18] = 0;
-    write_packet(&os, out, head, 19, 0, 0, 0, 1);
+    if (ambisonics)
+    {
+        opus_int32 matrix_bytes = 0, gain = 0;
+        opus_projection_encoder_ctl(projection, OPUS_PROJECTION_GET_DEMIXING_MATRIX_SIZE(&matrix_bytes));
+        opus_projection_encoder_ctl(projection, OPUS_PROJECTION_GET_DEMIXING_MATRIX_GAIN(&gain));
+        head[16] = gain & 0xFF; head[17] = (gain >> 8) & 0xFF; head[18] = 3; head[19] = streams; head[20] = coupled;
+        opus_projection_encoder_ctl(projection, OPUS_PROJECTION_GET_DEMIXING_MATRIX(head + 21, matrix_bytes));
+        head_bytes = 21 + matrix_bytes;
+    }
+    write_packet(&os, out, head, head_bytes, 0, 0, 0, 1);
     const char *vendor = opus_get_version_string();
     unsigned char tags[256];
     memcpy(tags, "OpusTags", 8);
@@ -93,11 +122,11 @@ int main(int argc, char **argv)
     memcpy(tags + 12, vendor, strlen(vendor));
     put32(tags + 12 + strlen(vendor), 0);
     write_packet(&os, out, tags, 16 + (long)strlen(vendor), 0, 1, 0, 1);
-    unsigned char packet[4000];
+    unsigned char packet[4000 * 8];
     long number = 2;
     for (long at = 0; at < padded; at += frame)
     {
-        int bytes = opus_encode(encoder, pcm + at * channels, frame, packet, sizeof packet);
+        int bytes = ambisonics ? opus_projection_encode(projection, pcm + at * channels, frame, packet, sizeof packet) : opus_encode(encoder, pcm + at * channels, frame, packet, sizeof packet);
         if (bytes < 0) return 1;
         int last = at + frame >= padded;
         ogg_int64_t granule = (ogg_int64_t)(at + frame) * 48000 / rate;

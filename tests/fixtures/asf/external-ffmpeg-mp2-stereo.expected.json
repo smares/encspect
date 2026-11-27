@@ -1,0 +1,41 @@
+{
+ "description": "ffmpeg's -c copy remux of mpeg-audio/external-ffmpeg-mp2.mp2 into ASF: the stream's frames are the media objects, under the format tag ffmpeg's muxer gives the coding.",
+ "format": "ASF",
+ "encoder": "ffmpeg version 6.1.1-3ubuntu5",
+ "command": [
+  "ffmpeg",
+  "-i",
+  "mpeg-audio/external-ffmpeg-mp2.mp2",
+  "-c",
+  "copy",
+  "-bitexact",
+  "external-ffmpeg-mp2-stereo.asf"
+ ],
+ "input": {
+  "file": "mpeg-audio/external-ffmpeg-mp2.mp2",
+  "sha256": "7d05d77d448babb912480f3ee3032c6b2ec25ce11415ffe78dc87196f4bb1b47"
+ },
+ "sha256": "d385df3af126b8abffd1163c4a0bd901d37c388488909739a4d9943a51f25289",
+ "reproducible": true,
+ "streams": [
+  {
+   "codec": "MPEG-1 Layer II",
+   "sample_rate": 48000,
+   "channels": 2
+  }
+ ],
+ "ffprobe": {
+  "codec": "mp2",
+  "channels": 2,
+  "rate": 48000,
+  "block_align": null,
+  "bit_rate": 192000,
+  "extradata_size": 22,
+  "packets": 84,
+  "packet_sizes": [
+   576
+  ],
+  "decoded_samples": 96768,
+  "file_bytes": 54918
+ }
+}
