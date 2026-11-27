@@ -279,6 +279,13 @@
                       "unit": "channel streams",
                       "offset": 0,
                       "length": 1759
+                    },
+                    {
+                      "name": "Prediction Bands",
+                      "value": 0,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 1759
                     }
                   ]
                 },
@@ -286,7 +293,16 @@
                   "name": "Long-Term Prediction",
                   "value": "6 channel streams (75.0%)",
                   "offset": 0,
-                  "length": 1759
+                  "length": 1759,
+                  "children": [
+                    {
+                      "name": "Long-Term Prediction Bands",
+                      "value": 83.3,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 1759
+                    }
+                  ]
                 },
                 {
                   "name": "Codebooks",
@@ -2806,6 +2822,53 @@
               [
                 1,
                 8
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Long-Term Prediction",
+            "valueLabel": "channel stream",
+            "categories": [
+              {
+                "name": "With long-term prediction",
+                "count": 6
+              },
+              {
+                "name": "Without long-term prediction",
+                "count": 2
+              }
+            ],
+            "total": 8,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                4
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                2
               ]
             ],
             "seconds": [

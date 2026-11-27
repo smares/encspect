@@ -12,7 +12,8 @@ internal sealed class DependencyTrust(int channels)
     internal const uint AllGroups = (1u << 30) - 1;
 
     private readonly uint[] _open = new uint[channels];
-    private long _end;
+    // The start of a stream is synchronized (docs/design/aac-main-ltp-er.md, decision 4): the history before it is the zeros the specification starts with.
+    private long _end = long.MinValue / 2;
 
     // The next block adds to an overlap that is not right.
     public bool IsOverlapUntrusted { get; private set; }

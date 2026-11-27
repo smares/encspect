@@ -1,0 +1,129 @@
+{
+ "description": "AAC Main (ADTS profile 0), mono: 24 frames that predict in all 40 bands and reset a group in every sixth, the sync word of frame 13 overwritten, so that the decoder starts again with its predictors reset and withholds what depends on the groups not reset since.",
+ "length": 10502,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC Main",
+   "sample_rate": 44100,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "channel_layout": [
+    "front center"
+   ],
+   "samples": 23552,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   437
+  ],
+  [
+   437,
+   439
+  ],
+  [
+   876,
+   438
+  ],
+  [
+   1314,
+   438
+  ],
+  [
+   1752,
+   438
+  ],
+  [
+   2190,
+   437
+  ],
+  [
+   2627,
+   437
+  ],
+  [
+   3064,
+   437
+  ],
+  [
+   3501,
+   437
+  ],
+  [
+   3938,
+   437
+  ],
+  [
+   4375,
+   438
+  ],
+  [
+   4813,
+   438
+  ],
+  [
+   5689,
+   439
+  ],
+  [
+   6128,
+   438
+  ],
+  [
+   6566,
+   437
+  ],
+  [
+   7003,
+   437
+  ],
+  [
+   7440,
+   437
+  ],
+  [
+   7877,
+   437
+  ],
+  [
+   8314,
+   437
+  ],
+  [
+   8751,
+   437
+  ],
+  [
+   9188,
+   437
+  ],
+  [
+   9625,
+   438
+  ],
+  [
+   10063,
+   439
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "aac.sync-lost",
+   "ADTS sync is lost for"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": true,
+  "faad": null,
+  "skip": {
+   "ffprobe": "ffmpeg resyncs after damage in its own way.",
+   "faad": "faad2 stops at the damaged frame."
+  }
+ }
+}

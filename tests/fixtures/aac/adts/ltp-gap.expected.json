@@ -1,0 +1,97 @@
+{
+ "description": "AAC LTP (MPEG-4 ADTS profile 3), mono: 16 frames that all use long-term prediction, the sync word of frame 9 overwritten, so that the decoder starts again with an empty history and withholds the blocks that predict from it.",
+ "length": 3920,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LTP",
+   "sample_rate": 44100,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "channel_layout": [
+    "front center"
+   ],
+   "samples": 15360,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   244
+  ],
+  [
+   244,
+   245
+  ],
+  [
+   489,
+   245
+  ],
+  [
+   734,
+   245
+  ],
+  [
+   979,
+   246
+  ],
+  [
+   1225,
+   246
+  ],
+  [
+   1471,
+   245
+  ],
+  [
+   1716,
+   246
+  ],
+  [
+   2207,
+   244
+  ],
+  [
+   2451,
+   245
+  ],
+  [
+   2696,
+   245
+  ],
+  [
+   2941,
+   244
+  ],
+  [
+   3185,
+   245
+  ],
+  [
+   3430,
+   245
+  ],
+  [
+   3675,
+   245
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "aac.sync-lost",
+   "ADTS sync is lost for"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": false,
+  "decode": true,
+  "faad": null,
+  "skip": {
+   "ffprobe": "ffmpeg resyncs after damage in its own way.",
+   "faad": "faad2 stops at the damaged frame."
+  }
+ }
+}

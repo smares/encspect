@@ -1,0 +1,63 @@
+{
+ "description": "AAC Main (ADTS profile 0), mono: predicting long windows around a long start, eight short windows and a long stop, where the short windows reset all predictors.",
+ "length": 1754,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC Main",
+   "sample_rate": 44100,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "channel_layout": [
+    "front center"
+   ],
+   "samples": 8192,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   244
+  ],
+  [
+   244,
+   244
+  ],
+  [
+   488,
+   244
+  ],
+  [
+   732,
+   48
+  ],
+  [
+   780,
+   244
+  ],
+  [
+   1024,
+   243
+  ],
+  [
+   1267,
+   243
+  ],
+  [
+   1510,
+   244
+  ]
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "faad": {
+   "seconds": "0.186",
+   "rate": 44100
+  }
+ }
+}

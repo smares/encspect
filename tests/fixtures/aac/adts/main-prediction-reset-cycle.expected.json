@@ -1,0 +1,171 @@
+{
+ "description": "AAC Main (ADTS profile 0): 34 frames of a channel pair with a common window, prediction in all 40 bands with a predictor reset in every frame, the reset group counting from 1 to 30 and starting again, and mid/side stereo in every fourth frame.",
+ "length": 26701,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC Main",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 34816,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   785
+  ],
+  [
+   785,
+   786
+  ],
+  [
+   1571,
+   787
+  ],
+  [
+   2358,
+   785
+  ],
+  [
+   3143,
+   786
+  ],
+  [
+   3929,
+   785
+  ],
+  [
+   4714,
+   785
+  ],
+  [
+   5499,
+   785
+  ],
+  [
+   6284,
+   785
+  ],
+  [
+   7069,
+   785
+  ],
+  [
+   7854,
+   785
+  ],
+  [
+   8639,
+   786
+  ],
+  [
+   9425,
+   785
+  ],
+  [
+   10210,
+   785
+  ],
+  [
+   10995,
+   787
+  ],
+  [
+   11782,
+   785
+  ],
+  [
+   12567,
+   785
+  ],
+  [
+   13352,
+   786
+  ],
+  [
+   14138,
+   784
+  ],
+  [
+   14922,
+   785
+  ],
+  [
+   15707,
+   785
+  ],
+  [
+   16492,
+   785
+  ],
+  [
+   17277,
+   785
+  ],
+  [
+   18062,
+   785
+  ],
+  [
+   18847,
+   787
+  ],
+  [
+   19634,
+   786
+  ],
+  [
+   20420,
+   787
+  ],
+  [
+   21207,
+   786
+  ],
+  [
+   21993,
+   784
+  ],
+  [
+   22777,
+   785
+  ],
+  [
+   23562,
+   784
+  ],
+  [
+   24346,
+   784
+  ],
+  [
+   25130,
+   786
+  ],
+  [
+   25916,
+   785
+  ]
+ ],
+ "fields": {
+  "ADTS/Statistics/Prediction": "68 channel streams (100.0%)",
+  "ADTS/Statistics/Prediction/Predictor Resets": "68 channel streams"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "faad": {
+   "seconds": "0.789",
+   "rate": 44100
+  }
+ }
+}

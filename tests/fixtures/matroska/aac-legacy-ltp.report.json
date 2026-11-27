@@ -855,6 +855,13 @@
                               "unit": "channel streams",
                               "offset": 175,
                               "length": 1752
+                            },
+                            {
+                              "name": "Prediction Bands",
+                              "value": 0,
+                              "unit": "%",
+                              "offset": 175,
+                              "length": 1752
                             }
                           ]
                         },
@@ -862,7 +869,16 @@
                           "name": "Long-Term Prediction",
                           "value": "6 channel streams (75.0%)",
                           "offset": 175,
-                          "length": 1752
+                          "length": 1752,
+                          "children": [
+                            {
+                              "name": "Long-Term Prediction Bands",
+                              "value": 83.3,
+                              "unit": "%",
+                              "offset": 175,
+                              "length": 1752
+                            }
+                          ]
                         },
                         {
                           "name": "Codebooks",
@@ -2885,6 +2901,53 @@
               [
                 1,
                 8
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Long-Term Prediction",
+            "valueLabel": "channel stream",
+            "categories": [
+              {
+                "name": "With long-term prediction",
+                "count": 6
+              },
+              {
+                "name": "Without long-term prediction",
+                "count": 2
+              }
+            ],
+            "total": 8,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                4
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                2
               ]
             ],
             "seconds": [

@@ -221,6 +221,11 @@ FIXTURES = [
       STATS + "/Noise Substitution": "0 channel streams (0.0%)", STATS + "/TNS": "0 channel streams (0.0%)"}, [], {"faad": "adts"}),
     ("ffmpeg-main", ".aac", ["ffmpeg", "-v", "error", "-y", "-i", "{mix}", "-c:a", "aac", "-b:a", "64k", "-profile:a", "aac_main", "-aac_pred", "1", "{out}"],
      [stream("AAC Main", 44100, 2, "Stereo", 1024, True, (LAVC, "High"), "Main")], {}, [], {"faad": "adts"}),
+    # AAC Main without noise substitution, so that the samples can be compared with other decoders' (their noise differs), in ADTS and, in mono, in M4A.
+    ("ffmpeg-main-no-noise", ".aac", ["ffmpeg", "-v", "error", "-y", "-i", "{mix}", "-c:a", "aac", "-b:a", "96k", "-profile:a", "aac_main", "-aac_pred", "1", "-aac_pns", "0", "{out}"],
+     [stream("AAC Main", 44100, 2, "Stereo", 1024, True, (LAVC, "High"), "Main")], {}, [], {"faad": "adts"}),
+    ("ffmpeg-main-mono", ".m4a", ["ffmpeg", "-v", "error", "-y", "-i", "{mono}", "-c:a", "aac", "-b:a", "64k", "-profile:a", "aac_main", "-aac_pred", "1", "-aac_pns", "0", "{out}"],
+     [stream("AAC Main", 44100, 1, "Mono", 1024, True, (LAVC, "High"), "Main", writer=(LAVF, "Low"))], {}, [MOOV_AFTER], {"skip": {"faad": "the label faad2 gives a Main stream in an M4A file was not read (faad2 was not at hand when the fixture was added)."}}),
     ("ffmpeg-ltp", ".aac", ["ffmpeg", "-v", "error", "-y", "-i", "{mix}", "-c:a", "aac", "-b:a", "64k", "-profile:a", "aac_ltp", "-aac_ltp", "1", "-strict", "-2",
                             "{out}"],
      [stream("AAC LTP", 44100, 2, "Stereo", 1024, True, (LAVC, "High"), "LTP")], {}, [], {"faad": "adts"}),

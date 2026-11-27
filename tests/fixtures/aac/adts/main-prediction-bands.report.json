@@ -221,6 +221,13 @@
                       "unit": "channel streams",
                       "offset": 0,
                       "length": 860
+                    },
+                    {
+                      "name": "Prediction Bands",
+                      "value": 43.1,
+                      "unit": "%",
+                      "offset": 0,
+                      "length": 860
                     }
                   ]
                 },
@@ -1773,6 +1780,24 @@
             ]
           },
           {
+            "name": "Prediction Bands",
+            "unit": "%",
+            "axis": "frameOffset",
+            "quantity": "Prediction Bands",
+            "x": [
+              0,
+              215,
+              430,
+              645
+            ],
+            "values": [
+              100,
+              20,
+              50,
+              2.5
+            ]
+          },
+          {
             "name": "Coded Bandwidth",
             "unit": "Hz",
             "axis": "frameOffset",
@@ -1978,6 +2003,37 @@
             "runs": [
               [
                 1,
+                4
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Prediction",
+            "valueLabel": "channel stream",
+            "categories": [
+              {
+                "name": "With prediction",
+                "count": 4
+              },
+              {
+                "name": "Without prediction",
+                "count": 0
+              }
+            ],
+            "total": 4,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                4
+              ]
+            ],
+            "runs": [
+              [
+                0,
                 4
               ]
             ],

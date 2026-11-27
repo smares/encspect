@@ -1,0 +1,63 @@
+{
+ "description": "AAC Main (ADTS profile 0), mono: 40 bands of codebook 11 whose every line holds an escape of 8191 with scalefactors of 251 to 255, with prediction in all of them, so that the predictors take the largest values the syntax can code.",
+ "length": 16785,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC Main",
+   "sample_rate": 44100,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "channel_layout": [
+    "front center"
+   ],
+   "samples": 8192,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   2098
+  ],
+  [
+   2098,
+   2098
+  ],
+  [
+   4196,
+   2098
+  ],
+  [
+   6294,
+   2098
+  ],
+  [
+   8392,
+   2098
+  ],
+  [
+   10490,
+   2099
+  ],
+  [
+   12589,
+   2098
+  ],
+  [
+   14687,
+   2098
+  ]
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "faad": {
+   "seconds": "0.186",
+   "rate": 44100
+  }
+ }
+}

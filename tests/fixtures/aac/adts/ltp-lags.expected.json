@@ -1,0 +1,58 @@
+{
+ "description": "AAC LTP (MPEG-4 ADTS profile 3): channel pairs with a common window and max_sfb 49, long-term prediction in both channels with lags 0, 2047, 1023, 1024, 1 and 700 and ltp_long_used for the 40 bands it can cover.",
+ "length": 7042,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LTP",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 6144,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   1174
+  ],
+  [
+   1174,
+   1174
+  ],
+  [
+   2348,
+   1174
+  ],
+  [
+   3522,
+   1173
+  ],
+  [
+   4695,
+   1174
+  ],
+  [
+   5869,
+   1173
+  ]
+ ],
+ "fields": {
+  "ADTS/Statistics/Long-Term Prediction": "12 channel streams (100.0%)"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "faad": null,
+  "skip": {
+   "faad": "faad2 reads ADTS profile 3 but its -i output names no LTP."
+  }
+ }
+}

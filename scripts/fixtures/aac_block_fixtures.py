@@ -1489,6 +1489,144 @@ def tns_order_above_12():
               "faad_trace": "faad2 does not trace the filter's order."})
 
 
+def main_ltp_decoding():
+    """Streams of AAC Main and AAC LTP for the decoders of their tools (docs/design/aac-main-ltp-er.md): the values are patterns, not audio, so that every tool runs on
+    something: prediction with the reset groups in a cycle, over an eight-short window, a group overdue past 240 frames, the largest values in every predicted line, a TNS filter of
+    order 20, a gap with prediction and LTP on both sides, LTP with lag 0 and 2047, with TNS and noise substitution, and a dependently switched coupling channel element."""
+    out = []
+    offsets = M.bands(rate_index(RATE), M.ONLY_LONG)
+
+    # Prediction in every band of a channel pair with a common window, a predictor reset in a cycle of the 30 groups, and mid/side stereo in some frames.
+    blocks = []
+    for i in range(34):
+        used = [1] * 40
+        a = channel(M.ONLY_LONG, 1, [[(11, 4), (5, 36)]], seed=100 + i, predictor=(True, i % 30 + 1, used))
+        b = channel(M.ONLY_LONG, 1, [[(9, 4), (3, 36)]], seed=140 + i)
+        blocks.append(M.raw_data_block([M.Element(M.CPE, ics=(a, b), mask=2 if i % 4 == 3 else 0)], object_type=1))
+    data, rows = concat(adts_frames(blocks, profile=0, channels=2))
+    out.append(("main-prediction-reset-cycle.aac", data, manifest(
+        "AAC Main (ADTS profile 0): 34 frames of a channel pair with a common window, prediction in all 40 bands with a predictor reset in every frame, the reset group counting from 1 to "
+        "30 and starting again, and mid/side stereo in every fourth frame.", data, rows, [stream("AAC Main", RATE, 2, "Stereo", 34 * 1024)],
+        {"ADTS/Statistics/Prediction": share(68, 68, "channel stream"), "ADTS/Statistics/Prediction/Predictor Resets": "68 channel streams"})))
+
+    # A long start, eight short windows and a long stop between predicting long windows: the short window resets every predictor.
+    sequences = [(M.ONLY_LONG, 1), (M.ONLY_LONG, 1), (M.LONG_START, 1), (M.EIGHT_SHORT, 0), (M.LONG_STOP, 0), (M.ONLY_LONG, 1), (M.ONLY_LONG, 1), (M.ONLY_LONG, 1)]
+    blocks = []
+    for i, (sequence, shape) in enumerate(sequences):
+        if sequence == M.EIGHT_SHORT:
+            ics = channel(sequence, shape, [[(1, 4)]], groups=(8,), seed=170 + i)
+        else:
+            ics = channel(sequence, shape, [[(11, 4), (5, 26)]], seed=170 + i, predictor=(i % 2 == 0, 3 + i, [1, 0, 1] * 10))
+        blocks.append(M.raw_data_block([M.Element(M.SCE, ics=ics)], object_type=1))
+    data, rows = concat(adts_frames(blocks, profile=0))
+    out.append(("main-prediction-short.aac", data, manifest(
+        "AAC Main (ADTS profile 0), mono: predicting long windows around a long start, eight short windows and a long stop, where the short windows reset all predictors.", data, rows,
+        [stream("AAC Main", RATE, 1, "Mono", len(rows) * 1024)], {})))
+
+    # Group 1 to 4 (the lines 0 to 3 of band 0) used in 246 frames without a reset: past the 240 frames 13818-7 13.3.3 allows.
+    blocks = [M.raw_data_block([M.Element(M.SCE, ics=channel(M.ONLY_LONG, 1, [[(1, 1)]], seed=i, predictor=(False, 0, [1])))], object_type=1) for i in range(246)]
+    data, rows = concat(adts_frames(blocks, profile=0))
+    out.append(("main-prediction-overdue.aac", data, manifest(
+        "AAC Main (ADTS profile 0), mono: 246 frames that use prediction in band 0 and reset no group, so the predictor reset groups 1 to 4 pass the 240 frames in which a group may be used.",
+        data, rows, [stream("AAC Main", RATE, 1, "Mono", len(rows) * 1024)], {"ADTS/Statistics/Prediction": share(246, 246, "channel stream")},
+        [["aac.predictor-reset-overdue", "used in more than 240 frames without a reset"]])))
+
+    # The largest quantized value, 8191 (an escape of codebook 11), in every line of the 40 bands prediction can use at the largest scalefactor.
+    blocks = []
+    for i in range(8):
+        values = {(0, sfb): [8191 if (k + sfb + i) % 2 else -8191 for k in range(offsets[sfb + 1] - offsets[sfb])] for sfb in range(40)}
+        ics = channel(M.ONLY_LONG, 1, [[(11, 40)]], gain=253, seed=0, values=values, predictor=(i == 5, 1, [1] * 40))
+        blocks.append(M.raw_data_block([M.Element(M.SCE, ics=ics)], object_type=1))
+    data, rows = concat(adts_frames(blocks, profile=0))
+    out.append(("main-prediction-largest.aac", data, manifest(
+        "AAC Main (ADTS profile 0), mono: 40 bands of codebook 11 whose every line holds an escape of 8191 with scalefactors of 251 to 255, with prediction in all of them, so that the "
+        "predictors take the largest values the syntax can code.", data, rows, [stream("AAC Main", RATE, 1, "Mono", len(rows) * 1024)], {})))
+
+    # A TNS filter of order 12, 13, 20 and 31 in AAC Main: the object type allows up to 20 and takes the first 20 coefficients of a longer filter (4.6.9.3, Table 4.156).
+    sections = [[(9, 12), (5, 10), (7, 10), (3, 8), (0, 4)]]
+    blocks = []
+    for order in (12, 13, 20, 31):
+        coefficients = [1 if i % 3 else 2 for i in range(order)]
+        ics = channel(M.ONLY_LONG, 1, sections, gain=150, tns=[[(30, order, 0, 0, 1, coefficients)]], seed=80, predictor=(False, 0, [1] * 20))
+        blocks.append(M.raw_data_block([M.Element(M.SCE, ics=ics)], object_type=1))
+    data, rows = concat(adts_frames(blocks, profile=0))
+    out.append(("main-tns-order-20.aac", data, manifest(
+        "AAC Main (ADTS profile 0), mono: long windows with prediction and a TNS filter of order 12, 13, 20 and 31 over 30 bands: Main allows an order of 20, so the filters of 13 and 20 "
+        "decode as coded and the one of 31 takes its first 20 coefficients.", data, rows, [stream("AAC Main", RATE, 1, "Mono", len(rows) * 1024)], {},
+        [["aac.tns-order-too-high", "a TNS filter of a higher order than the 20 its window allows"]])))
+
+    # The sync word of frame 13 overwritten, in a Main stream and in an LTP stream that predict on both sides of it.
+    blocks = []
+    for i in range(24):
+        ics = channel(M.ONLY_LONG, 1, [[(11, 4), (5, 36)]], seed=200 + i, predictor=(i % 6 == 5, i // 6 + 1, [1] * 40))
+        blocks.append(M.raw_data_block([M.Element(M.SCE, ics=ics)], object_type=1))
+    frames = adts_frames(blocks, profile=0)
+    frames[12] = b"\x00\x00" + frames[12][2:]
+    data, rows = concat(frames)
+    rows = [r for n, r in enumerate(rows) if n != 12]
+    out.append(("main-prediction-gap.aac", data, manifest(
+        "AAC Main (ADTS profile 0), mono: 24 frames that predict in all 40 bands and reset a group in every sixth, the sync word of frame 13 overwritten, so that the decoder starts again with "
+        "its predictors reset and withholds what depends on the groups not reset since.", data, rows, [stream("AAC Main", RATE, 1, "Mono", 23 * 1024)],
+        {}, [["aac.sync-lost", "ADTS sync is lost for"]], skip={"ffprobe": "ffmpeg resyncs after damage in its own way.", "faad": "faad2 stops at the damaged frame."})))
+
+    # LTP: lag 0 and 2047, ltp_long_used over bands 0 to 39 of a window with max_sfb 49, for both channels of a pair with a common window.
+    made = []
+    for i, lag in enumerate((0, 2047, 1023, 1024, 1, 700)):
+        a = channel(M.ONLY_LONG, 1, [[(11, 4), (5, 45)]], seed=300 + i, predictor=((lag, i % 8, [1, 1, 0] * 14), (2047 - lag, 7 - i % 8, [0, 1] * 20)))
+        b = channel(M.ONLY_LONG, 1, [[(9, 4), (3, 45)]], seed=310 + i)
+        made.append(M.raw_data_block([M.Element(M.CPE, ics=(a, b), mask=0)], object_type=4))
+    data, rows = concat(adts_frames(made, profile=3, channels=2))
+    out.append(("ltp-lags.aac", data, manifest(
+        "AAC LTP (MPEG-4 ADTS profile 3): channel pairs with a common window and max_sfb 49, long-term prediction in both channels with lags 0, 2047, 1023, 1024, 1 and 700 and "
+        "ltp_long_used for the 40 bands it can cover.", data, rows, [stream("AAC LTP", RATE, 2, "Stereo", len(rows) * 1024)], {"ADTS/Statistics/Long-Term Prediction": share(12, 12, "channel stream")},
+        skip={"faad": "faad2 reads ADTS profile 3 but its -i output names no LTP."})))
+
+    # LTP with TNS in the block and a band of noise substitution that ltp_long_used flags, then with a window sequence change.
+    blocks = []
+    for i in range(8):
+        sequence, shape = [(M.ONLY_LONG, 1), (M.ONLY_LONG, 1), (M.LONG_START, 1), (M.EIGHT_SHORT, 0), (M.LONG_STOP, 0), (M.ONLY_LONG, 1), (M.ONLY_LONG, 1), (M.ONLY_LONG, 1)][i]
+        if sequence == M.EIGHT_SHORT:
+            ics = channel(sequence, shape, [[(1, 4)]], groups=(8,), seed=330 + i)
+        else:
+            tns = [[(20, 12, 0, 0, 1, [1 if k % 3 else 2 for k in range(12)])]] if i % 2 == 0 else None
+            ics = channel(sequence, shape, [[(9, 8), (13, 4), (5, 18)]], seed=330 + i, tns=tns, gain=120, predictor=((200 + 37 * i, i % 8, [1] * 30),))
+        blocks.append(M.raw_data_block([M.Element(M.SCE, ics=ics)], object_type=4))
+    data, rows = concat(adts_frames(blocks, profile=3))
+    out.append(("ltp-tns-noise.aac", data, manifest(
+        "AAC LTP (MPEG-4 ADTS profile 3), mono: long-term prediction in every long window, with a TNS filter in every other one and ltp_long_used set on a band of noise substitution, around "
+        "a long start, eight short windows and a long stop.", data, rows, [stream("AAC LTP", RATE, 1, "Mono", len(rows) * 1024)], {},
+        skip={"faad": "faad2 reads ADTS profile 3 but its -i output names no LTP."})))
+
+    # The sync word of frame 9 overwritten in an LTP stream.
+    made = []
+    for i in range(16):
+        a = channel(M.ONLY_LONG, 1, [[(11, 4), (5, 26)]], seed=350 + i, predictor=((100 + 61 * i % 1500, i % 8, [1] * 30), None))
+        made.append(M.raw_data_block([M.Element(M.SCE, ics=a)], object_type=4))
+    frames = adts_frames(made, profile=3)
+    frames[8] = b"\x00\x00" + frames[8][2:]
+    data, rows = concat(frames)
+    rows = [r for n, r in enumerate(rows) if n != 8]
+    out.append(("ltp-gap.aac", data, manifest(
+        "AAC LTP (MPEG-4 ADTS profile 3), mono: 16 frames that all use long-term prediction, the sync word of frame 9 overwritten, so that the decoder starts again with an empty history and "
+        "withholds the blocks that predict from it.", data, rows, [stream("AAC LTP", RATE, 1, "Mono", 15 * 1024)], {}, [["aac.sync-lost", "ADTS sync is lost for"]],
+        skip={"ffprobe": "ffmpeg resyncs after damage in its own way.", "faad": "faad2 stops at the damaged frame."})))
+
+    # A dependently switched coupling channel element in an LTP stream (4.6.7.4.3 allows none).
+    blocks = []
+    for n in range(4):
+        pair = (channel(M.ONLY_LONG, 1, [[(11, 4)]], seed=n), channel(M.ONLY_LONG, 1, [[(11, 4)]], seed=n + 1))
+        cpe = M.Element(M.CPE, ics=pair, mask=0)
+        cce = M.Element(M.CCE, tag=0, independent=n % 2, targets=[(1, 0, 1, 1)], ics=channel(M.ONLY_LONG, 1, [[(11, 4), (3, 4)]], seed=n + 2))
+        blocks.append(M.raw_data_block([cpe, cce], object_type=4))
+    data, rows = concat(adts_frames(blocks, profile=3, channels=2))
+    out.append(("ltp-dependent-coupling.aac", data, manifest(
+        "AAC LTP (MPEG-4 ADTS profile 3), stereo: a coupling channel element after each channel pair, dependently switched in every other frame, which 4.6.7.4.3 allows no stream of an LTP "
+        "object type.", data, rows, [stream("AAC LTP", RATE, 2, "Stereo", len(rows) * 1024)], {},
+        [["aac.coupling-without-program", "4 raw data blocks hold a coupling channel element"], ["aac.ltp-with-dependent-coupling", "a dependently switched coupling channel element"]],
+        skip={"faad": "faad2 reads ADTS profile 3 but its -i output names no LTP.", "decode": "ffmpeg does not apply coupling channel elements."})))
+    return out
+
+
 def first_block_kbd():
     """Two mono blocks of a Kaiser-Bessel derived window with one spectral line each: the first block's left half has its own shape (4.6.11.3.2), so its first 1,024 samples are
     the line's inverse transform times the Kaiser-Bessel derived rise."""
@@ -1607,7 +1745,7 @@ def elements_order_changes():
 
 def fixtures():
     """(directory, name, data, manifest) of every fixture: "adts" or "mp4"."""
-    out = [("adts",) + f for f in [windows(), window_sequences_invalid(), stereo(), stereo_coding(), stereo_coding_reserved(), stereo_coding_elements(), intensity_noise(), implicit_sbr_adts(), sbr_fixvar_adts(), fill_and_data()] + loud_tools() + [elements_order_changes(), stereo_tool_order(), tns_order_above_12(), first_block_kbd(), fill_with_sbr_and_other_payload(), sbr_crc_checked(), sbr_too_many_patches(), lfe_restrictions()] + faac_style_fixtures() + crc_fixtures() + object_types() + corrupt()]
+    out = [("adts",) + f for f in [windows(), window_sequences_invalid(), stereo(), stereo_coding(), stereo_coding_reserved(), stereo_coding_elements(), intensity_noise(), implicit_sbr_adts(), sbr_fixvar_adts(), fill_and_data()] + loud_tools() + [elements_order_changes(), stereo_tool_order(), tns_order_above_12(), first_block_kbd(), fill_with_sbr_and_other_payload(), sbr_crc_checked(), sbr_too_many_patches(), lfe_restrictions()] + faac_style_fixtures() + crc_fixtures() + object_types() + main_ltp_decoding() + corrupt()]
     out += [("mp4",) + f for f in mp4_fixtures()]
     out += eld_ld_sbr() + parametric_stereo_cores() + signature_streams() + streams_limited() + sbr_evidence() + blocks_missing() + prediction_bands() + rate_fixtures()
     return out

@@ -1,0 +1,52 @@
+{
+ "description": "AAC Main (ADTS profile 0), mono: long windows with prediction and a TNS filter of order 12, 13, 20 and 31 over 30 bands: Main allows an order of 20, so the filters of 13 and 20 decode as coded and the one of 31 takes its first 20 coefficients.",
+ "length": 1849,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC Main",
+   "sample_rate": 44100,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "channel_layout": [
+    "front center"
+   ],
+   "samples": 4096,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   459
+  ],
+  [
+   459,
+   459
+  ],
+  [
+   918,
+   463
+  ],
+  [
+   1381,
+   468
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "aac.tns-order-too-high",
+   "a TNS filter of a higher order than the 20 its window allows"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "faad": {
+   "seconds": "0.093",
+   "rate": 44100
+  }
+ }
+}

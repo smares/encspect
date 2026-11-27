@@ -1,0 +1,58 @@
+{
+ "description": "AAC LTP (MPEG-4 ADTS profile 3), stereo: a coupling channel element after each channel pair, dependently switched in every other frame, which 4.6.7.4.3 allows no stream of an LTP object type.",
+ "length": 324,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LTP",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 4096,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   80
+  ],
+  [
+   80,
+   81
+  ],
+  [
+   161,
+   82
+  ],
+  [
+   243,
+   81
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "aac.coupling-without-program",
+   "4 raw data blocks hold a coupling channel element"
+  ],
+  [
+   "aac.ltp-with-dependent-coupling",
+   "a dependently switched coupling channel element"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "faad": null,
+  "skip": {
+   "faad": "faad2 reads ADTS profile 3 but its -i output names no LTP.",
+   "decode": "ffmpeg does not apply coupling channel elements."
+  }
+ }
+}

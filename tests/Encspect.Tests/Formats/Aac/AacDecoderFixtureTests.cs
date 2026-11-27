@@ -5,7 +5,7 @@ using Encspect.Host;
 
 namespace Encspect.Tests.Formats.Aac;
 
-// Decodes every fixture with an AAC LC stream with a hashing sink: decoding changes no node, and what it adds to the report (the verification, the decode findings and the
+// Decodes every fixture with an AAC Main, LC or LTP stream with a hashing sink: decoding changes no node, and what it adds to the report (the verification, the decode findings and the
 // hash of the PCM) is compared with <name>.decode.json (docs/design/lossy-decoders.md, decision 14: the hash pins the analyzer's own output for determinism and says
 // nothing about correctness, which crosscheck_aac_pcm.py checks against FFmpeg).
 public class AacDecoderFixtureTests
@@ -38,7 +38,7 @@ public class AacDecoderFixtureTests
 
     private static bool HasDecodedAac(string name) => Fixtures.AnalyzeMpeg(name).Streams.Any(s => IsAac(s.Codec));
 
-    private static bool IsAac(string? codec) => codec == "AAC LC" || codec?.StartsWith("HE-AAC", StringComparison.Ordinal) == true;
+    private static bool IsAac(string? codec) => codec is "AAC LC" or "AAC Main" or "AAC LTP" || codec?.StartsWith("HE-AAC", StringComparison.Ordinal) == true;
 
     private static (Report Report, List<PcmHashSink> Sinks) Decode(string name)
     {

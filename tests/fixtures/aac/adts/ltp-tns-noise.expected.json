@@ -1,0 +1,63 @@
+{
+ "description": "AAC LTP (MPEG-4 ADTS profile 3), mono: long-term prediction in every long window, with a TNS filter in every other one and ltp_long_used set on a band of noise substitution, around a long start, eight short windows and a long stop.",
+ "length": 1730,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LTP",
+   "sample_rate": 44100,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "channel_layout": [
+    "front center"
+   ],
+   "samples": 8192,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   244
+  ],
+  [
+   244,
+   236
+  ],
+  [
+   480,
+   243
+  ],
+  [
+   723,
+   48
+  ],
+  [
+   771,
+   244
+  ],
+  [
+   1015,
+   235
+  ],
+  [
+   1250,
+   244
+  ],
+  [
+   1494,
+   236
+  ]
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "faad": null,
+  "skip": {
+   "faad": "faad2 reads ADTS profile 3 but its -i output names no LTP."
+  }
+ }
+}
