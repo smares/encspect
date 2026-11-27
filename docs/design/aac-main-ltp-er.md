@@ -206,11 +206,14 @@ Each follows the definition of done of 0.3: decoder, entropy-pass figures, codin
 
 ## Decisions for the lead
 
+Decisions 2 to 7 are decided as recommended (the lead, 2026-11-27); decision 1 as noted under it.
+
 1. **Which object types.**
    - (a) Main, LTP, ER AAC LC, ER AAC LTP, ER AAC LD and ER AAC ELD with low-delay SBR, at epConfig 0; SSR stays out; scalable, ER scalable, ER BSAC and epConfig 1 to 3 go under "Not planned" with the trigger "a user's file".
    - (b) As (a), with ER BSAC as an item after 0.5 from the specification alone.
    - (c) As (a), without ELD, which brings a second SBR variant and a filter bank of its own, as an item of its own.
    - **Recommendation: (a).** ELD is the ER type with real encoders (FDK, Apple, libxaac) and committed fixtures; BSAC has no permissive source and no file in the project.
+   - **Decided by the lead (2026-11-27): (a) for item 3, but nothing goes under "Not planned": AAC SSR, AAC scalable and ER AAC scalable, ER BSAC and epConfig 1 to 3 become an item after 0.5,** built from the specifications and checked against the ISO/IEC 14496-26 conformance streams where they exist.
 2. **The flush of Main's predictor states below 1e-30.**
    - (a) Applied at each block's start, as the lossy decoders' rule says; no output above 1e-30 changes, since b/VAR is zero below VAR 2.
    - (b) Exempt Main's predictors, so the states follow the specification bit for bit, denormals included.
