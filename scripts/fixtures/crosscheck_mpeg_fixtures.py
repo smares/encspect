@@ -457,6 +457,20 @@ def frames_after_tag(manifest):
     return [(offset, length) for offset, length in result if end is None or offset + length <= end]
 
 
+# Header frames that bytes which are not audio follow (the junk-after-vbr-header-frame fixtures): observed with mpg123 1.33.3 and mp3guessenc 0.27.6 in CI,
+# not traced in their sources.
+MPG123_SKIPS_HEADER_BEFORE_JUNK = ("observed with mpg123 1.33.3: where bytes that are not audio follow the Xing or Info header frame and do not start with "
+                                   "a frame header, it prints no Xing or Info note and applies no gapless trimming, as if it took the header frame for junk "
+                                   "before the audio, where the analyzer accepts it (mpeg-audio.junk-after-vbr-header-frame)")
+MPG123_SKIPS_HEADER = {"info-junk-after", "xing-junk-after", "main-data-in-header-frame-after-junk"}
+GUESSENC_TAKES_HEADER_IN_JUNK = {
+    "xing-after-junk": "observed with mp3guessenc 0.27.6: it syncs on the Xing frame behind the 50 junk bytes and reports the Xing tag in its first frame, where the analyzer, "
+                       "for which a header frame counts only at the start of the audio, leaves it in the leading junk",
+    "xing-implausible-junk": "observed with mp3guessenc 0.27.6: it reports a Xing tag in the first frame it finds, the frame whose Xing flags the analyzer finds implausible "
+                             "(0xFFFFFFFF) and so leaves in the leading junk",
+}
+
+
 def check_vbr_header(path, manifest):
     """mp3guessenc, mpg123 and ffprobe must read the first frame's VBR header as the manifest records it."""
     tag = manifest["vbr_header"]
@@ -471,8 +485,11 @@ def check_vbr_header(path, manifest):
     layer3 = "frames" not in manifest or manifest["frames"][0]["fields"]["Header/Layer"] == "III"
     if tag is None:
         # mp3guessenc looks for Xing in every layer; LAME, ffmpeg and mpg123 only in Layer III.
-        if "detected" in guessenc and layer3:
+        listed = path.stem in GUESSENC_TAKES_HEADER_IN_JUNK
+        if "detected" in guessenc and layer3 and not listed:
             problems.append(f"mp3guessenc finds a {guessenc['detected']} header the manifest does not list")
+        elif listed and "detected" not in guessenc:
+            problems.append("mp3guessenc finds no header now; drop the fixture from GUESSENC_TAKES_HEADER_IN_JUNK")
     elif "unexpected" in guessenc:
         # mp3guessenc stops at some leading tags, such as an ID3v2.4 tag with a SEEK frame, and
         # never reaches the header.
@@ -498,6 +515,9 @@ def check_vbr_header(path, manifest):
     if tag is None or tag["type"] == "VBRI":
         if notes:
             problems.append(f"mpg123 reads a header the manifest does not expect: {notes}")
+    elif path.stem in MPG123_SKIPS_HEADER:
+        if notes:
+            problems.append(f"mpg123 now notes {notes}; drop the fixture from MPG123_SKIPS_HEADER")
     elif not tag["truncated"] and "encoder_string" not in tag and notes != expected_mpg123(tag):
         problems.append(f"mpg123 notes {notes}, the manifest implies {expected_mpg123(tag)}")
 
@@ -717,7 +737,10 @@ def check_statistics(path, manifest):
         if count is not None and consistent and padding >= DECODER_DELAY:
             channels = 1 if manifest["frames"][0]["fields"]["Header/Channel Mode"] == "Mono" else 2
             for decoder, samples in decoded_samples(path, channels).items():
-                if samples != int(count) and not (truncated and decoder == "mpg123"):
+                if decoder == "mpg123" and path.stem in MPG123_SKIPS_HEADER:
+                    if samples == int(count):
+                        problems.append(f"mpg123 now decodes the gapless {count} samples; drop the fixture from MPG123_SKIPS_HEADER")
+                elif samples != int(count) and not (truncated and decoder == "mpg123"):
                     problems.append(f"{decoder} decodes {samples} samples with gapless trimming, the manifest {count}")
     return problems
 
@@ -1497,6 +1520,11 @@ MEDIAINFO_READS_OTHERWISE = {
     "vbr/lame-before-joined-frames": dict.fromkeys(["bitrate mode", "samples", "bitrate"], "MediaInfo reports the two streams as one (File_Mpega.cpp): their frames' two bitrates without a VBR header in the first frames make it VBR (Streams_Fill, BitRate_Count), so it gives no bitrate or sample count, and it counts the frames of both"),
     "mpeg-audio/channel-mode-change": {"stream's mode": "the channel mode changes within the stream (mpeg-audio.channel-mode-changed): MediaInfo gives the last frame's, mono, and the analyzer the stream's first audio frame's, joint stereo"},
     "vbr/xing-in-layer2": {"bitrate mode": "MediaInfo reads \"Xing\" as a VBR header in any layer (File_Mpega.cpp, Header_Xing), where Layer II frames carry none and the bytes are ancillary data"},
+    "vbr/xing-after-junk": {"samples and bitrate of a variable bitrate without a VBR header": "observed with MediaInfo 26.01 (CI log): it reports 9216 samples and a bitrate of 137774 where the manifest's figures give 9217 and 137761, with the Xing frame behind the 50 junk bytes, which the analyzer leaves in the leading junk, in its bytes; its source was not traced"},
+    "vbr/xing-implausible-junk": {"frames parsed of a variable bitrate without a VBR header": "observed with MediaInfo 26.01 (CI log): it counts 9 frames where the analyzer counts 8, as if it took the frame with the Xing signature, which the analyzer leaves in the leading junk because its flags are implausible, for a frame; its source was not traced",
+                                  "samples and bitrate of a variable bitrate without a VBR header": "observed with MediaInfo 26.01 (CI log): it reports 10364 samples and a bitrate of 140119 where the manifest's figures give 9217 and 157550, which follows from the extra frame and the bytes it takes"},
+    "vbr/xing-other-stream-after": {"samples and bitrate of a variable bitrate without a VBR header": "observed with MediaInfo 26.01 (CI log): it reports a bitrate of 149958 where the manifest's figures give 138000, with the 44.1 kHz header frame and the junk before the 48 kHz audio, which the analyzer leaves in the leading junk, in its bytes; its source was not traced",
+                                    "stream size": "observed with MediaInfo 26.01 (CI log): it reports a stream size of 3599 where the 48 kHz frames add up to 3312, 287 bytes more, of the bytes before them that the analyzer leaves in the leading junk; its source was not traced"},
     "vbr/xing-truncated": dict.fromkeys(["frames", "samples", "bitrate", "stream size"], "MediaInfo drops a Xing header whose announced fields do not fit its frame (File_Mpega.cpp, Header_Xing: \"Error tag size\"), the counts before the TOC too, and counts its frame as audio"),
 }
 

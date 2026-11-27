@@ -791,6 +791,13 @@ jobs:
           ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
         run: python3 scripts/fixtures/check_mp3pro_samples.py .cache/mp3pro
 
+      # Thomson's decoder test items and a private set of MP3 test samples are not ours to publish: only the private repository serves them.
+      # Without the secret (a pull request from a fork) the files are skipped.
+      - name: Check the private MPEG sample manifests against the samples
+        env:
+          ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
+        run: python3 scripts/fixtures/check_mpeg_sample_sets.py .cache/mpeg-samples
+
       - uses: ./.github/actions/setup-dotnet
         with:
           dotnet-version: 10.0.x
@@ -803,6 +810,11 @@ jobs:
 
       - name: Check the analyzer against the mp3PRO manifest
         run: python3 scripts/fixtures/check_mp3pro_samples.py --analyzer src/Encspect.Cli/bin/Release/net10.0/encspect .cache/mp3pro
+
+      - name: Check the analyzer against the private MPEG sample manifests
+        env:
+          ENCSPECT_PRIVATE_TOKEN: ${{ secrets.ENCSPECT_PRIVATE_TOKEN }}
+        run: python3 scripts/fixtures/check_mpeg_sample_sets.py --analyzer src/Encspect.Cli/bin/Release/net10.0/encspect .cache/mpeg-samples
 
       # What a job downloaded is kept whether it passes or not. A passing job saves the week's key (unless that key was restored
       # exactly); a failing or canceled one, which would otherwise lose its downloads, saves under a key of its own with the run ID
