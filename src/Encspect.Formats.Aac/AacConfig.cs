@@ -83,16 +83,12 @@ internal sealed record AacConfig
     public int OutputFrameLength => UsacOutputFrameLength
         ?? (CoreSampleRate > 0 ? (int)((long)CoreFrameLength * OutputSampleRate / CoreSampleRate) : CoreFrameLength);
 
-    // Whether the decoder outputs two channels for a core of one channel: with SBR and PS not signaled absent it assumes PS data (14496-3 1.6.6.3), and where the blocks hold none
-    // the one coded channel is mapped to both.
-    public bool IsStereoOutput => IsPsPossible && HasSbr && Ps != false;
+    // The channels the stream carries: two where PS data is signaled or found, else the core's. The decoder outputs two channels for a single channel with SBR unless PS is signaled
+    // absent, with the one coded channel on both where no PS data comes (14496-3 1.6.6.3; DecodeFeed.StartSession), which the report's channels do not say.
+    public int? OutputChannels => HasPs ? 2 : Channels;
 
-    // Whether that is so without any block holding PS data: the one coded channel is mapped to both output channels.
-    public bool IsMonoMapped => IsStereoOutput && !HasPs;
-
-    public int? OutputChannels => IsStereoOutput ? 2 : Channels;
-
-    public IReadOnlyList<Speaker>? OutputLayout => IsStereoOutput ? ChannelLayouts.Stereo
+    // With PS, signaled or found, a mono core gives left and right.
+    public IReadOnlyList<Speaker>? OutputLayout => HasPs ? ChannelLayouts.Stereo
         : Layout ?? (ChannelConfiguration == 0 ? null : AacTables.Layout(ChannelConfiguration));
 
     // Whether implicit signaling could still add SBR or PS that the access units were not read for:
@@ -125,7 +121,6 @@ internal sealed record AacConfig
     }
 
     public string? ChannelMode => HasPs ? "Parametric stereo"
-        : IsMonoMapped ? "Mono, output on both channels"
         : ChannelConfiguration == 0 ? (Channels is { } count ? $"{Counts.Of(count, "channel", "channels")}" : null)
         : AacTables.ChannelMode(ChannelConfiguration);
 }

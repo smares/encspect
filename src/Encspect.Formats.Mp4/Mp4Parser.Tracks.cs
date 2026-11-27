@@ -371,7 +371,8 @@ public sealed partial class Mp4Parser
     // ISO/IEC 14496-12 12.2.3 lets a sample entry's channel count be ignored where the codec states its own configuration, so a difference is reported only where it
     // says something: (1) the stream is plain mono, with no SBR signaled or found and no implicit signaling left unread, so no parametric stereo can widen it and an
     // entry of more channels is the template default; (2) the entry is an AudioSampleEntryV1, whose channel count ISO/IEC 14496-12 requires to be correct, and the stream
-    // establishes its count (plain AAC: the configuration's; a single channel with SBR: 2, as the decoder outputs it unless PS is signaled absent, ISO/IEC 14496-3 1.6.6.3), in either direction. QuickTime's version 2 is not here: the QuickTime File Format text at hand (2001)
+    // establishes its count (plain AAC: the configuration's; parametric stereo found in the blocks: 2), in either direction. Mono SBR without parametric stereo found
+    // is skipped there: decoders output one or two channels, so no count is settled. QuickTime's version 2 is not here: the QuickTime File Format text at hand (2001)
     // predates it. An entry of fewer channels than a stream of SBR or parametric stereo is the core's count, which version 0 allows. A stream whose blocks were not read
     // names "(no SBR signaled explicitly)" in its codec and is skipped, as is an encrypted one or one whose channels the parser did not establish.
     private static void CompareAacChannels(State state, SampleEntry entry, int streamsBefore, string label)
@@ -386,7 +387,8 @@ public sealed partial class Mp4Parser
 
             bool hasSbr = stream.Codec.Contains("SBR", StringComparison.Ordinal) || stream.Codec.StartsWith("HE-AAC", StringComparison.Ordinal);
             bool isPlainMono = stream.Channels == 1 && !hasSbr;
-            if ((isPlainMono && entry.Channels > 1) || entry.IsChannelCountBinding)
+            bool isSettled = !(stream.Channels == 1 && hasSbr);
+            if ((isPlainMono && entry.Channels > 1) || (entry.IsChannelCountBinding && isSettled))
             {
                 state.Findings.AddNow(Severity.Info, "mp4.channels-differ",
                     $"The sample entry of {label} states {Counts.Of(entry.Channels, "channel", "channels")}, but the {stream.Codec} stream has {stream.Channels} (from its configuration, or from its blocks where they carry parametric stereo)"

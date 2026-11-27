@@ -9,7 +9,7 @@ references: ISO/IEC 14496-3 4.4.2, 4.5.2, 4.6.11, 4.6.11.3.1; ffmpeg libavcodec/
 
 **Window sequences.** ics_info gives each channel's window_sequence: one long window (only long), eight short windows of 128 lines each (eight short), and the transitions between them, long start before short windows and long stop after them, which let the overlapping halves match. [TNS](tns) is a second tool against pre-echo.
 
-**Which window follows which.** Windows overlap by the slopes they share, and the standard calls a pair meaningful where the left slope matches the other's right one: long start and eight short before eight short or long stop, the others before only long or long start. It also lists the other pairs as possible, with a reasonably smooth transition (4.6.11.3.1), so none is forbidden; a pair whose slopes differ is reported as information.
+**Which window follows which.** Windows overlap by the slopes they share; a pair is meaningful where the left slope matches the other's right one: long start and eight short before eight short or long stop, the others before only long or long start. The standard lists the other pairs as possible too (4.6.11.3.1), so none is forbidden; one whose slopes differ is reported as information.
 
 **Window shapes.** window_shape picks the shape of the window's slopes: a sine window or a Kaiser-Bessel derived (KBD) window. Each frame's bit sets the shape of its window's second half.
 

@@ -207,18 +207,18 @@ public class AacEvidenceBoundTests
 
     // ISO/IEC 14496-3 1.6.6.3: a single channel with SBR is decoded to two channels unless PS is signaled absent, with PS applied from whatever block its data starts in.
     [Fact]
-    public void ASingleChannelWithSbrIsOutputOnTwoChannelsWhetherOrNotPsDataComes()
+    public void ASingleChannelWithSbrCarriesTwoChannelsOnlyWhereParametricStereoDataIsSignaledOrFound()
     {
         var mono = new AacConfig { ObjectType = 2, CoreSampleRate = 22050, ChannelConfiguration = 1, Channels = 1, CoreFrameLength = 1024, Sbr = true, PsFound = false };
 
-        Assert.Equal(2, mono.OutputChannels);
+        // The stream's channels are the coded ones; the decoder's two output channels are DecodeFeed's.
+        Assert.Equal(1, mono.OutputChannels);
         Assert.Equal("HE-AAC", mono.Codec);
-        Assert.Equal("Mono, output on both channels", mono.ChannelMode);
         Assert.Equal(2, (mono with { Ps = true }).OutputChannels);
         Assert.Equal("HE-AAC v2", (mono with { PsFound = true }).Codec);
         Assert.Equal("Parametric stereo", (mono with { PsFound = true }).ChannelMode);
         Assert.Equal(1, (mono with { Ps = false }).OutputChannels);
-        Assert.Equal(1, (mono with { Channels = 3, ChannelConfiguration = 4 }).Channels);
+        Assert.Equal(3, (mono with { Channels = 3, ChannelConfiguration = 4 }).OutputChannels);
         Assert.Equal(3, (mono with { Channels = 3, ChannelConfiguration = 4, PsFound = true }).OutputChannels);
     }
 

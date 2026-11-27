@@ -1,7 +1,6 @@
 {
  "goldens": [
   "tests/fixtures/mp4/external-ffmpeg-flac-in-mp4.report.json",
-  "tests/fixtures/mp4/he-aac-mono.report.json",
   "tests/fixtures/mp4/he-aac-mono.decode.json"
  ],
  "added": [
@@ -47,18 +46,6 @@
   }
  ],
  "changed": [
-  {
-   "scope": "stream",
-   "fields": [
-    "channels",
-    "channelMode",
-    "channelLayout",
-    "channelLayoutName"
-   ],
-   "goldens": [
-    "tests/fixtures/mp4/he-aac-mono.report.json"
-   ]
-  },
   {
    "scope": "decode",
    "fields": [
