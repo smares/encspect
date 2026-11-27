@@ -197,6 +197,48 @@ def harmonics(rate, fundamental_hz, highest_hz, rms_db, seed, length):
     return [v * gain for v in out]
 
 
+def linear_sweep(rate, seconds, f0, f1, amplitude):
+    """A sweep from f0 to f1 hertz, linear in frequency over the seconds."""
+    length = int(rate * seconds)
+    return [amplitude * math.sin(2 * math.pi * (f0 * (i / rate) + (f1 - f0) * (i / rate) ** 2 / (2 * seconds))) for i in range(length)]
+
+
+def music_notes(rate, length, rms_db, seed):
+    """Synthetic music at the given RMS level: a decaying harmonic note every quarter second (a fundamental 110 Hz times 2 to the power of a
+    random number of semitones from 0 to 35, partials 1 / n up to just under the Nyquist frequency, the n-th decaying with exp(-0.4 n t), partial
+    amplitudes falling 6 dB an octave above 4 kHz, each note lasting up to 1.2 s) and, with every second note, a noise hit of 80 ms (decaying
+    with exp(-40 t), through a one-pole lowpass at 4 kHz): a spectrum that reaches the Nyquist frequency, as recordings do."""
+    rng = Lcg(seed)
+    out = [0.0] * length
+    seconds = length / rate
+    for k in range(int(seconds * 4)):
+        start = int(k * 0.25 * rate)
+        fundamental = 110.0 * 2 ** (int(rng.uniform() * 36) / 12)
+        span = min(length - start, int(1.2 * rate))
+        parts = []
+        h = 1
+        while h * fundamental < rate / 2 * 0.999:
+            f = h * fundamental
+            parts.append((f, (4000.0 / f if f > 4000.0 else 1.0) / h, rng.uniform() * 2 * math.pi, 0.4 * h))
+            h += 1
+        for i in range(span):
+            t = i / rate
+            note = 0.0
+            for f, a, phase, decay in parts:
+                note += a * math.sin(2 * math.pi * f * t + phase) * math.exp(-t * decay)
+            out[start + i] += 0.2 * note * math.exp(-t * 3.0)
+        if k % 2 == 0:
+            hit = min(length - start, int(0.08 * rate))
+            smooth = 0.0
+            alpha = 1.0 - math.exp(-2 * math.pi * 4000.0 / rate)
+            for i in range(hit):
+                smooth += alpha * (rng.signed() * 1.7 * math.exp(-i / rate * 40) - smooth)
+                out[start + i] += 0.3 * smooth
+    rms = math.sqrt(sum(v * v for v in out) / length)
+    gain = 10 ** (rms_db / 20) / rms
+    return [v * gain for v in out]
+
+
 def sine_bin(rate, bin_numerator, bin_denominator, length, amplitude):
     """A sine at bin_numerator / bin_denominator bins of the frame, with an integer phase."""
     n = mm.fft_size(rate)
@@ -300,10 +342,31 @@ def damage_frame(data, index):
 
 def manifest(data, description, construction, layout=None):
     result = {"description": description, "length": len(data), "construction": construction, "model": mm.measure(data, layout)}
+    if "nyquist_edges" in construction:
+        found = [e["lower_rate"] for e in result["model"]["nyquist_edges"]["edges"]]
+        if found != construction["nyquist_edges"]:
+            raise SystemExit(f"the model finds Nyquist edges of the rates {found}, the construction says {construction['nyquist_edges']}")
     return result
 
 
 FIXTURES = {}
+
+# The three sources of the Nyquist edge fixtures (resampled-*, make_external_measurement_fixtures.py), each as floats from -1 to 1 at its rate.
+NYQUIST_SOURCES = {
+    "pink": "Pink noise with a 330 Hz tone, -20 dBFS RMS",
+    "sweep": "A linear sweep from 20 Hz to 99.9 % of the Nyquist frequency in 1 s at -6 dBFS",
+    "music": "Synthetic music (a decaying harmonic note every quarter second with partials to the Nyquist frequency, noise hits, 6 dB an octave down above 4 kHz), -18 dBFS RMS",
+}
+
+
+def nyquist_source(kind, rate, seconds=1):
+    """The source of the given kind (a key of NYQUIST_SOURCES) at the rate, 1 s."""
+    length = rate * seconds
+    if kind == "pink":
+        return pink(length, 100, -20.0, rate=rate)
+    if kind == "sweep":
+        return linear_sweep(rate, seconds, 20.0, rate / 2 * 0.999, 0.5)
+    return music_notes(rate, length, -18.0, 7)
 
 
 def add(name, description, channels, rate, bits, construction, block=4096, layout=None, **options):
@@ -389,6 +452,23 @@ def build():
             f"quantized to {bits} bits with TPDF dither of one least significant bit: no content above the old Nyquist rate less the filter's transition.",
             [quantize(resample(base, source, target, source // 2 - 1000), bits, dither_seed=23)], target, bits,
             {"cutoff_hz": None, "unspecified": True, "source_rate": source, "resampler_cutoff_hz": source // 2 - 1000})
+
+    # Nyquist edge (docs/design/spectral-analysis.md, Step 10): the three sources of the resampled fixtures (`resampled-*`, make_external_measurement_fixtures.py)
+    # generated at the rate they would be converted to, so the content is not resampled and has no edge at a lower rate's Nyquist frequency.
+    for source, rate, bits in (("pink", rate48, 16), ("sweep", rate48, 16), ("music", rate48, 16), ("pink", 96000, 16)):
+        values = nyquist_source(source, rate)
+        add(f"nyquist-{source}-{rate}-{bits}", f"{NYQUIST_SOURCES[source]} at {rate} Hz, quantized to {bits} bits with TPDF dither of one least significant bit and not resampled: the content reaches the Nyquist frequency.",
+            [quantize(values, bits, dither_seed=rate + len(source))], rate, bits, {"cutoff_hz": None, "unspecified": True, "nyquist_edges": []})
+    # Lines that end at 22,050 Hz in a 48 kHz file: a lowpass at a lower rate's Nyquist frequency, by construction, which the edge cannot tell from a converter's.
+    add("nyquist-lines-22050-48000", "Lines at the bin centers of the 4,096-point frame from 40 Hz to 22,050 Hz at 48 kHz, -20 dBFS RMS, TPDF dither of one least significant bit: a lowpass at the Nyquist frequency of 44,100 Hz.",
+        [lines_q(rate48, 22050, -20.0, 41, n48)], rate48, 16, {"cutoff_hz": 22050, "nyquist_edges": [44100]})
+    # Two edges: lines up to 16 kHz with the floor of 16 bits, taken from 44.1 to 96 kHz by the windowed-sinc filter and quantized to 24 bits: the 16-bit floor ends at the old Nyquist
+    # frequency, over the 24-bit floor, and the lines end at 16 kHz over the 16-bit floor.
+    base16 = lines_q(rate44, 16000, -20.0, 43, rate44)
+    add("nyquist-two-edges-16000-22050-96000", "Lines to 16 kHz at 44.1 kHz with TPDF dither at 16 bits (-20 dBFS RMS), resampled to 96 kHz by a windowed-sinc filter (cutoff 21.8 kHz, 601 taps) and quantized to 24 bits with TPDF dither: "
+        "the lines end at 16 kHz over the 16-bit floor, which ends at 22,050 Hz over the 24-bit floor.",
+        [quantize(resample([v / 32768 for v in base16], rate44, 96000, 21800, half_width=300), 24, dither_seed=47)], 96000, 24,
+        {"cutoff_hz": None, "unspecified": True, "nyquist_edges": [44100, 32000]})
 
     # Sparse spectra: a harmonic tone of 440 Hz with harmonics up to 20 kHz (the gaps between them are not a ceiling) and one whose harmonics end at 8 kHz
     # (a ceiling at 8 kHz in every frame, which the cutoff finds as well).

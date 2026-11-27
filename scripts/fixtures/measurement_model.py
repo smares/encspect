@@ -374,6 +374,76 @@ def find_cutoff(level_tenths, counters, rate, size):
     return result
 
 
+NYQUIST_RATES = [192000, 176400, 96000, 88200, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000]
+
+
+def find_nyquist_edges(level_tenths, counters, rate, size):
+    """The Nyquist edges of docs/design/spectral-analysis.md, Step 10, of a spectrum given as 512 thousandths of a dB, highest first. For the Nyquist
+    frequency N of each lower common rate (N at least 2 kHz, half a band short of the top of the search): the step of the cutoff (the mean of the W rows
+    under a boundary against the mean of the W rows over it) is taken at every boundary from 3 % under N up to the first boundary above N, the largest
+    (the lowest on a tie) must be 25 dB or more, a local maximum (smaller at the boundary under it, not larger at the boundary over it), followed by a
+    fall of at most a quarter of the step from the W rows above N to the next W rows, and shown by half of the frames with signal at its row. The level
+    above is the mean of the W rows from the first row above N less the mean of the rows that mirror them under N. Every comparison is on integers."""
+    if rate < 8000:
+        return {"is_searched": False, "edges": []}
+    w, first, bins = band_rows(rate, size)
+    level = [-200000 if v is None else v for v in level_tenths]
+    prefix = [0]
+    for v in level:
+        prefix.append(prefix[-1] + v)
+    row_hz2 = bins * rate  # a row's width in hertz times size
+
+    def step(k):
+        high = min(k + w, TOP_ROW)
+        above = high - k
+        return (prefix[k + 1] - prefix[k - w + 1]) * above - (prefix[high + 1] - prefix[k + 1]) * w, w * above
+
+    edges = []
+    for lower in NYQUIST_RATES:
+        if lower >= rate:
+            continue
+        # The first row above N: the lowest row whose lower edge is at N or over it.
+        a0 = -(-lower * size // (2 * row_hz2))
+        if a0 + (w + 1) // 2 - 1 > TOP_ROW:
+            continue
+        a1 = min(a0 + w - 1, TOP_ROW)
+        # Boundary b = k + 1 is at b * row_hz2 / size hertz: in the window from 3 % under N (200 f >= 97 lower) to the first boundary above N.
+        window = [k for k in range(first, 506)
+                  if 200 * (k + 1) * row_hz2 >= 97 * lower * size and 2 * k * row_hz2 <= lower * size]
+        if not window:
+            continue
+        best = window[0]
+        for k in window[1:]:
+            a, b = step(k), step(best)
+            if a[0] * b[1] > b[0] * a[1]:
+                best = k
+        num, den = step(best)
+        if num < 25000 * den:
+            continue
+        under, over = step(best - 1), (step(best + 1) if best + 1 < TOP_ROW else None)
+        if under[0] * den >= num * under[1] or (over is not None and over[0] * den > num * over[1]):
+            continue
+        n_above = a1 - a0 + 1
+        sum_above = prefix[a1 + 1] - prefix[a0]
+        if a1 + 1 <= TOP_ROW:
+            b1 = min(a1 + w, TOP_ROW)
+            n_next = b1 - a1
+            fall_num = sum_above * n_next - (prefix[b1 + 1] - prefix[a1 + 1]) * n_above
+            if 4 * fall_num * den > num * (n_above * n_next):
+                continue
+        mirror_high = lower * size // row_hz2 - a0 - 1
+        mirror_low = mirror_high - (a1 - a0)
+        if mirror_low < 0:
+            continue
+        with_signal, showing = frames_at(counters, best)
+        if with_signal == 0 or 2 * showing < with_signal:
+            continue
+        edges.append({"lower_rate": lower, "step_frequency": hertz(best + 1, rate, size, bins), "step_tenths": round_tenths(num, den),
+                      "above_tenths": round_tenths(sum_above - (prefix[mirror_high + 1] - prefix[mirror_low]), n_above),
+                      "frames_showing": showing, "frames_with_signal": with_signal})
+    return {"is_searched": True, "edges": edges}
+
+
 def find_bandwidth(level_tenths, rate, size):
     """The spectral bandwidth of a spectrum given as 512 thousandths of a dB: the floor is the mean level of the band of W rows that ends at row 506;
     the run goes down while the band that ends at the row has a mean within 3 dB of the floor; found where the band of W rows under the run's
@@ -933,6 +1003,7 @@ def measure(data, layout=None):
     cutoffs = [find_cutoff(fine[c], counters[c], rate, size) for c in range(sets)]
     bandwidths = [find_bandwidth(fine[c], rate, size) for c in range(sets)]
     slopes = [find_slope(fine[c], rate, size) for c in range(sets)]
+    nyquist = find_nyquist_edges(fine[measured], counters[measured], rate, size)
     partial = find_partial(counters[measured], rate, size)
     holes = find_holes(counters[measured], rate, size, cutoffs[measured], bandwidths[measured])
     mid_side = None
@@ -972,6 +1043,6 @@ def measure(data, layout=None):
         "sample_rate": rate, "channels": channels, "channels_measured": measured, "bits": bits, "samples": samples, "first_position": first_position or 0,
         "lost_samples": lost, **({"withheld_samples": withheld} if withheld else {}), "gaps": gaps, "fft_size": size, "frames": frames, "combined": levels[measured], "per_channel": levels[:measured],
         "cutoff": cutoffs[measured], "channel_cutoffs": cutoffs[:measured], "bandwidth": bandwidths[measured],
-        "channel_bandwidths": bandwidths[:measured], "slope": slopes[measured], "channel_slopes": slopes[:measured], "partial_cutoff": partial, "holes": holes, "mid_side": mid_side, "coherence": coherence, "levels": levels_of(runs, measured, bits, rate),
+        "channel_bandwidths": bandwidths[:measured], "slope": slopes[measured], "channel_slopes": slopes[:measured], "nyquist_edges": nyquist, "partial_cutoff": partial, "holes": holes, "mid_side": mid_side, "coherence": coherence, "levels": levels_of(runs, measured, bits, rate),
         "loudness": loudness_of(runs, measured, bits, rate, layout), "true_peak": true_peak_of(runs, measured, bits, rate), "spectrogram_columns": columns, "hops_per_column": 1 << shift, "waveform": waveform,
     }
