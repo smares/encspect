@@ -111,8 +111,8 @@ internal static class AacTables
     // the decoder's output order: the center first. The surround pair is at the back, and at the
     // sides where a rear pair follows (12 and 13); 7's first pair is the one beside the center and
     // its second the outside front pair. Null for 0 (a program config element says) and the reserved
-    // values. Specification data; the element order is checked against FFmpeg 6.1.1's aac_channel_layout_map and the speaker
-    // sets against MediaInfo's and GPAC's tables (docs/development.md, "Tables").
+    // values. Specification data: 1 to 7 are Table 1.19; 11 to 14 follow ISO/IEC 23091-3 as MediaInfo's
+    // Aac_ChannelLayout (File_Aac_Main.cpp, BSD) lists them (docs/development.md, "Tables").
     public static IReadOnlyList<Speaker>? Layout(int configuration) => configuration switch
     {
         1 => [Speaker.FrontCenter],
@@ -146,7 +146,7 @@ internal static class AacTables
     };
 
     // USAC's bsOutputChannelPos, an ISO/IEC 23091-3 speaker position (ISO/IEC 23003-3 5.2); the indexes are
-    // checked against FFmpeg's and MediaInfo's lists (docs/development.md, "Tables"). The surround pair (4 and
+    // checked against MediaInfo's Aac_OutputChannelPosition (docs/development.md, "Tables"). The surround pair (4 and
     // 5) is at the back, and at the sides where the rear pair (8 and 9) is also present; positions
     // the speakers of the report have no name for are discrete.
     public static IReadOnlyList<Speaker> UsacPositions(IReadOnlyList<int> positions)
