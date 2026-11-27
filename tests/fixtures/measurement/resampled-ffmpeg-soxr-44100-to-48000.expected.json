@@ -8,7 +8,7 @@
  },
  "stated": null,
  "expect_cutoff": "found",
- "tools": "LAME 3.100, vorbis-tools 1.4.2 (oggenc, oggdec), FFmpeg 6.1.1-3ubuntu5 (aac), opus-tools 0.2 with libopus 1.4 (opusenc, opusdec), flac 1.4.3 (Ubuntu 24.04)",
+ "tools": "FFmpeg 6.1.1-3ubuntu5 (libswresample with libsoxr, resampler=soxr, and the pcm_s16le writer), flac 1.4.3 (Ubuntu 24.04)",
  "length": 76644,
  "model": {
   "sample_rate": 48000,
@@ -83,6 +83,19 @@
     "top_step_tenths": 10
    }
   ],
+  "nyquist_edges": {
+   "is_searched": true,
+   "edges": [
+    {
+     "lower_rate": 44100,
+     "step_frequency": 21656,
+     "step_tenths": 562,
+     "above_tenths": -421,
+     "frames_showing": 22,
+     "frames_with_signal": 22
+    }
+   ]
+  },
   "partial_cutoff": {
    "is_searched": true,
    "is_found": true,

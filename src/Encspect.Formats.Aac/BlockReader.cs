@@ -45,6 +45,8 @@ internal sealed partial class BlockReader
     private int _elementIds;
     private bool _hasSbr;
     private bool _hasSbrEvidence;
+    private readonly List<byte> _lastLayout = [];
+    private bool _hasLayout;
     private bool _hasPs;
     private bool _hasCoupling;
 
@@ -213,6 +215,45 @@ internal sealed partial class BlockReader
                 _tally.Mismatched++;
                 Soft("aac.elements-mismatch", $"{Count(sce, "single channel element")}, {Count(cpe, "channel pair element")} and {Count(lfe, "LFE element")}, other than channel configuration {_setup.ChannelConfiguration} defines",
                     0, 0, null);
+            }
+
+            // The order of the channel elements (single channel, channel pair, LFE) against the block before's: the decoder keeps per-slot state (the core's overlap and window shape, SBR), which
+            // no longer fits a block that changes it, so it starts that state again and withholds the block.
+            bool differs = false;
+            int at = 0;
+            foreach (ElementSpan element in _elements)
+            {
+                if (element.Id is 0 or 1 or 3)
+                {
+                    differs |= at >= _lastLayout.Count || _lastLayout[at] != element.Id;
+                    at++;
+                }
+            }
+
+            differs |= at != _lastLayout.Count;
+            if (differs)
+            {
+                bool isFirst = _lastLayout.Count == 0 && !_hasLayout;
+                _lastLayout.Clear();
+                foreach (ElementSpan element in _elements)
+                {
+                    if (element.Id is 0 or 1 or 3)
+                    {
+                        _lastLayout.Add((byte)element.Id);
+                    }
+                }
+
+                _hasLayout = true;
+                if (!isFirst && (_setup.ExpectedSce < 0 || (sce == _setup.ExpectedSce && cpe == _setup.ExpectedCpe && lfe == _setup.ExpectedLfe)))
+                {
+                    // The block's first channel element (a block with none: its first element) is a node of the tree in every layout (ADTS, ADIF, MP4), as the other block-level findings of an
+                    // element point to.
+                    ElementSpan? first = _elements.Where(e => e.Id is 0 or 1 or 3).Cast<ElementSpan?>().FirstOrDefault() ?? _elements.Cast<ElementSpan?>().FirstOrDefault();
+                    if (first is { } at0)
+                    {
+                        Soft("aac.layout-changed", "channel elements in another order than the block before it, so the decoder starts the state of its channel slots again", at0.Start, at0.End, AacTables.ElementName(at0.Id));
+                    }
+                }
             }
 
             if (_hasSbr)

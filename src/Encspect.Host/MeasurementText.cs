@@ -13,6 +13,7 @@ public enum MeasurementFigure
     Measured,
     SpectralCutoff,
     SpectralBandwidth,
+    NyquistEdge,
     SpectralSlope,
     PartialCutoff,
     MidSide,
@@ -51,6 +52,8 @@ public static class MeasurementText
 
     public const string SpectralBandwidthDescription = "The highest frequency at which the average spectrum stands at least 20 dB above a flat floor that reaches the top of the search (99 % of Nyquist) and is at least 1 kHz wide, with the floor's level. The cutoff measures an edge, a step between two bands; the bandwidth measures where the spectrum meets a floor, steep or gentle. It is not the bandwidth a coder codes or the lowpass frequency an encoder states.";
 
+    public const string NyquistEdgeDescription = "A step of the average spectrum at the Nyquist frequency (half the sample rate) of a lower common sample rate, found where the step is 25 dB or more, its peak lies within 3 % under that frequency and not above the first row over it, the spectrum does not go on falling above it, and half of the frames with signal show it. The band of 1 kHz above that frequency is set against the band it mirrors under it: its level against the mirror's is an upper bound on what the band holds of images, since it holds the quantization floor and the analysis window's leakage as well. It names a coincidence of frequency: a converter's lowpass, an encoder's or a mastering lowpass at that frequency read the same, and the figure says nothing about where the audio came from.";
+
     public const string PartialCutoffDescription = "The frequency at which the most frames with signal show a ceiling of their own: the band under it at least 30 dB above the mean power of everything above it, up to 99 % of Nyquist. It finds an edge that only part of the stream has (lossy tracks joined with others, a lossy intro), which the average spectrum hides. It is a count of frames, not a verdict.";
 
     public const string MidSideDescription = "The spectral cutoff of the average spectra of the mid signal ((left + right) / 2) and the side signal ((left - right) / 2) of the pair of channels the layout names front left and front right, or of the two channels of a stream without a layout, worked out from the complex bins of each frame. The frames with signal are those of each spectrum itself. They are views of the pair, not channels: the combined spectrum and the other figures do not include them.";
@@ -72,6 +75,8 @@ public static class MeasurementText
     public const string SpectralBandwidthTopic = Topics.SpectralBandwidth;
 
     public const string SpectralSlopeTopic = Topics.SpectralSlope;
+
+    public const string NyquistEdgeTopic = Topics.NyquistEdge;
 
     public const string SpectralCutoffTopic = Topics.SpectralCutoff;
 
@@ -155,6 +160,11 @@ public static class MeasurementText
         {
             lines.Add(new MeasurementLine(MeasurementFigure.SpectralCutoff, "Spectral Cutoff", Cutoff(spectrum.Cutoff), SpectralCutoffDescription, SpectralCutoffTopic));
             lines.Add(new MeasurementLine(MeasurementFigure.SpectralBandwidth, "Spectral Bandwidth", Bandwidth(spectrum.Bandwidth), SpectralBandwidthDescription, SpectralBandwidthTopic));
+            foreach (NyquistEdge edge in spectrum.NyquistEdges)
+            {
+                lines.Add(new MeasurementLine(MeasurementFigure.NyquistEdge, "Nyquist Edge", NyquistEdgeText(edge), NyquistEdgeDescription, NyquistEdgeTopic));
+            }
+
             if (spectrum.Slope.IsSearched && !spectrum.Cutoff.IsFound)
             {
                 lines.Add(new MeasurementLine(MeasurementFigure.SpectralSlope, "Spectral Slope", Slope(spectrum.Slope), SpectralSlopeDescription, SpectralSlopeTopic));
@@ -516,6 +526,29 @@ public static class MeasurementText
             ? "none found (the spectrum reaches the top of the search)"
             : "none found (the level under the floor is less than 20 dB above it: a slope, not a floor)";
     }
+
+    // "a step of 52.2 dB at 21,516 Hz, 534 Hz under 22,050 Hz (the Nyquist frequency of 44,100 Hz), in 186 of 186 frames with signal; the band above 22,050 Hz is 30.9 dB under its mirror below".
+    public static string NyquistEdgeText(NyquistEdge edge)
+    {
+        ArgumentNullException.ThrowIfNull(edge);
+
+        string nyquist = HalfHertz(edge.LowerRate);
+        int offset = edge.LowerRate - (2 * edge.StepFrequency);
+        string place = offset == 0
+            ? $"the Nyquist frequency of {Hertz(edge.LowerRate)}"
+            : $"{HalfHertz(Math.Abs(offset))} {(offset > 0 ? "under" : "over")} {nyquist} (the Nyquist frequency of {Hertz(edge.LowerRate)})";
+        string above = edge.AboveTenthsOfDb switch
+        {
+            < 0 => $"{Tenths(-edge.AboveTenthsOfDb)} dB under its mirror below",
+            0 => "level with its mirror below",
+            _ => $"{Tenths(edge.AboveTenthsOfDb)} dB over its mirror below",
+        };
+
+        return $"a step of {Tenths(edge.StepTenthsOfDb)} dB at {Hertz(edge.StepFrequency)}, {place}, in {Grouped(edge.FramesShowing)} of {Grouped(edge.FramesWithSignal)} frames with signal; the band above {nyquist} is {above}";
+    }
+
+    // Half of a value in hertz twice over, written whole or with .5 (5,512.5 Hz).
+    private static string HalfHertz(int twice) => ((twice / 2).ToString("N0", CultureInfo.InvariantCulture) + (twice % 2 == 0 ? string.Empty : ".5")) + " Hz";
 
     public static string Slope(SpectralSlope slope)
     {

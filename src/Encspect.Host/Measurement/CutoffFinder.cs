@@ -141,7 +141,7 @@ internal static class CutoffFinder
     public static int FineLevel(double meanPower) => (int)Math.Clamp(Math.Floor((10000.0 * DetMath.Log10(meanPower)) + 0.5), -2_000_000.0, 2_000_000.0);
 
     // A quotient in thousandths of a dB, as tenths rounded to the nearest with halves up: floor(numerator / denominator / 100 + 0.5).
-    private static int Tenths(long numerator, long denominator) => (int)FloorDivide((2 * numerator) + (100 * denominator), 200 * denominator);
+    internal static int Tenths(long numerator, long denominator) => (int)FloorDivide((2 * numerator) + (100 * denominator), 200 * denominator);
 
     public static SpectralCutoff Find(ReadOnlySpan<int> rows, CutoffCounters? counters, CutoffGeometry geometry)
     {

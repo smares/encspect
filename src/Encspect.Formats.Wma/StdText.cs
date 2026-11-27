@@ -134,7 +134,7 @@ internal static class StdText
     private static string Hex(long offset) => "0x" + offset.ToString("X", CultureInfo.InvariantCulture);
 
     public static string SuperframeShort(int count, int align, long offset) =>
-        $"{(count == 1 ? "A media object holds" : $"{Number(count)} media objects hold")} fewer bytes than the block alignment of {Number(align)}, which a decoder rejects (wmadec.c); the first is at {Hex(offset)}.";
+        $"{(count == 1 ? "A unit of the stream's data holds" : $"{Number(count)} units of the stream's data hold")} fewer bytes than the block alignment of {Number(align)}, which a decoder rejects (wmadec.c); the first is at {Hex(offset)}.";
 
     public static string SuperframeLong(int count, int align) =>
         $"{(count == 1 ? "A media object holds" : $"{Number(count)} media objects hold")} more bytes than the block alignment of {Number(align)}; a decoder takes {Number(align)} {(align == 1 ? "byte" : "bytes")} as a superframe and feeds the rest in again (FFmpeg's decode.c), which this analysis does not: it reads the first {Number(align)} only.";

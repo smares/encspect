@@ -23,7 +23,8 @@ For every manifest in tests/fixtures/asf:
   frame statistics are consistent with them (the valid frames less the first, times the frame
   length); the hand-built damaged streams (writer-stamp-*, fragments-in-two-streams) must make
   ffmpeg print the messages the superframes' damage causes and decode no samples.
-- ffmpeg decoding of the MPEG audio and AC-3 files (external-ffmpeg-mp3-*, external-ffmpeg-ac3-*): the samples ffmpeg decodes are the golden report's.
+- ffmpeg decoding of the MPEG audio, AC-3 and PCM files (external-ffmpeg-mp3-*, -mp2-*, -ac3-*, -pcm-*, -alaw-*, -mulaw-*): the samples ffmpeg decodes are the golden report's;
+  MediaInfo's codec ID of them is the format tag (50 for MPEG Layer II, 1, 6 and 7 for PCM, A-law and mu-law, FFFE where ffmpeg writes the extensible format).
 - MediaInfo (26.01): the format, the codec ID, the channels, the sampling rate and the duration of
   the WMA files against ffprobe's; and against the analyzer's golden report: the bit rate mode (the
   IsVBR attribute), the description of the codec (the Codec List), the format profile, title and
@@ -435,8 +436,8 @@ def check_external_ffmpeg(name, manifest, path, problems, with_mediainfo=True):
         problems.append(f"ffmpeg decodes {samples} samples, the manifest {expected['decoded_samples']}")
     if expected["codec"] in ("wmav1", "wmav2"):
         check_standard_frames(path, samples, problems)
-    if expected["codec"] in ("mp3", "ac3") and (report := golden_report(path)) is not None:
-        # The MPEG audio and AC-3 frames are the analyzer's: its samples are the samples ffmpeg decodes.
+    if expected["codec"] in ("mp2", "mp3", "ac3", "pcm_s16le", "pcm_f32le", "pcm_alaw", "pcm_mulaw") and (report := golden_report(path)) is not None:
+        # The MPEG audio and AC-3 frames and the PCM samples are the analyzer's: its samples are the samples ffmpeg decodes.
         if report["streams"][0]["samples"] != samples:
             problems.append(f"the golden report counts {report['streams'][0]['samples']} samples, ffmpeg decodes {samples}")
     if with_mediainfo:
@@ -481,8 +482,8 @@ def check_against_report(audio, general, report, problems):
         wanted = f"{codec} - {description}" if description else codec
         if audio.get("CodecID_Description") != wanted:
             problems.append(f"MediaInfo's description of the codec is {audio.get('CodecID_Description')!r}, the Codec List's {wanted!r}")
-    # MediaInfo names MPEG Layer III's profile "Layer 3" (it states none for AC-3).
-    profile = {"Windows Media Audio Professional": "Pro", "Windows Media Audio Lossless": "Lossless", "Windows Media Audio Voice": "Voice", "MPEG-1 Layer III": "Layer 3"}.get(stream["codec"])
+    # MediaInfo names MPEG Layer III's profile "Layer 3" and Layer II's "Layer 2", A-law "A-Law" and mu-law "U-Law" (it states none for AC-3 and PCM).
+    profile = {"Windows Media Audio Professional": "Pro", "Windows Media Audio Lossless": "Lossless", "Windows Media Audio Voice": "Voice", "MPEG-1 Layer III": "Layer 3", "MPEG-1 Layer II": "Layer 2", "A-law": "A-Law", "Mu-law": "U-Law"}.get(stream["codec"])
     if audio.get("Format_Profile") != profile:
         problems.append(f"MediaInfo's format profile is {audio.get('Format_Profile')}, the parser's codec {stream['codec']}")
     title, author = named(report, "Title", "Content Description Object"), named(report, "Author", "Content Description Object")
@@ -511,8 +512,9 @@ def check_mediainfo(name, path, stream, problems, report=None, count_samples=Tru
         problems.append(f"MediaInfo's container is {general.get('Format')}")
     if int(audio["Channels"]) != int(stream["channels"]) or int(audio["SamplingRate"]) != int(stream["sample_rate"]):
         problems.append(f"MediaInfo says {audio['Channels']} channels at {audio['SamplingRate']} Hz, ffprobe {stream['channels']} at {stream['sample_rate']}")
-    # MPEG Layer III is the format tag 0x0055, and ffmpeg writes AC-3 as 0x2000 or, for six channels, the extensible format (MediaInfo gives that tag, FFFE).
-    tags = {"wmav1": "160", "wmav2": "161", "wmapro": "162", "wmalossless": "163", "wmavoice": "A", "mp3": "55", "ac3": "2000" if int(stream["channels"]) < 6 else "FFFE"}
+    # MPEG Layer III is the format tag 0x0055 and Layer II 0x0050, and ffmpeg writes AC-3 as 0x2000 or, for six channels, the extensible format (MediaInfo gives that tag, FFFE); it writes
+    # PCM as 0x0001 for up to two channels, the extensible format for more, and floating point as the extensible format.
+    tags = {"wmav1": "160", "wmav2": "161", "wmapro": "162", "wmalossless": "163", "wmavoice": "A", "mp3": "55", "mp2": "50", "pcm_s16le": "1" if int(stream["channels"]) < 3 else "FFFE", "pcm_f32le": "FFFE", "pcm_alaw": "6", "pcm_mulaw": "7", "ac3": "2000" if int(stream["channels"]) < 6 else "FFFE"}
     if tags.get(stream["codec_name"]) != audio.get("CodecID"):
         problems.append(f"MediaInfo's codec ID is {audio.get('CodecID')}, ffprobe's codec {stream['codec_name']}")
     if abs(float(audio["Duration"]) - float(stream.get("duration", audio["Duration"]))) > 0.01:

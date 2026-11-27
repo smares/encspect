@@ -348,6 +348,15 @@ public sealed class SpectrumGraph : AudioGraph
 
     public override int? IndexOfFrame(long offset) => null;
 
+    // The Nyquist edges the view draws as lines: those of the combined spectrum, in the views that draw its cutoff.
+    public IReadOnlyList<NyquistEdge> NyquistEdges => View is GraphForm.MidSide or GraphForm.Coherence ? [] : Spectrum.NyquistEdges;
+
+    // The label of an edge's line: "Nyquist of 44,100 Hz".
+    public static string NyquistEdgeLabel(NyquistEdge edge) => "Nyquist of " + Hertz(edge.LowerRate);
+
+    // Whether a row is within two rows of the Nyquist frequency of an edge's rate.
+    public bool IsOnNyquistEdge(NyquistEdge edge, int row) => Math.Abs(row - RowOfHertz(edge.LowerRate / 2.0)) <= 2;
+
     // "4,305 Hz · -63.2 dB", for each channel in the per-channel view, with the cutoff where the row is on it.
     public override string Describe(int index)
     {
@@ -365,7 +374,17 @@ public sealed class SpectrumGraph : AudioGraph
             return string.Concat(Enumerable.Range(0, 2).Where(i => IsOnLineCutoff(i, index)).Select(i => $" · {LineName(i)} cutoff: {MeasurementText.Cutoff(LineCutoff(i)!)}")) is { Length: > 0 } onCutoff ? text + onCutoff : text;
         }
 
-        return IsOnCutoff(index) && CutoffText is { } cutoff ? text + " · " + cutoff : text;
+        if (IsOnCutoff(index) && CutoffText is { } cutoff)
+        {
+            text += " · " + cutoff;
+        }
+
+        foreach (NyquistEdge edge in NyquistEdges.Where(e => IsOnNyquistEdge(e, index)))
+        {
+            text += " · Nyquist edge: " + MeasurementText.NyquistEdgeText(edge);
+        }
+
+        return text;
     }
 
     public bool IsOnCutoff(int row) => Cutoff is { } cutoff && Math.Abs(row - RowOfHertz(Math.Max(0, cutoff.Frequency - 1))) <= 2;

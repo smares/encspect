@@ -10,16 +10,11 @@ namespace Encspect.Tests.Formats.Asf;
 // the container; the decode and measure goldens of every ASF fixture with a decodable stream are those of the decoders' fixture tests.
 public class AsfRouteTests
 {
-    // The tags WaveFormatRoutes routes for WAV and Matroska's A_MS/ACM that ASF does not take from it, with the codec each has there (planned for 0.5).
+    // The tags WaveFormatRoutes routes that ASF does not take from it, with the codec each goes to in WAV and Matroska's A_MS/ACM.
     private static readonly Dictionary<int, string> LeftOut = new()
     {
-        [WaveFormatRoutes.Pcm] = "the PCM parser",
-        [WaveFormatRoutes.IeeeFloat] = "the PCM parser",
-        [WaveFormatRoutes.ALaw] = "the PCM parser",
-        [WaveFormatRoutes.MuLaw] = "the PCM parser",
         [WaveFormatRoutes.DtsMicrosoft] = "dts",
         [WaveFormatRoutes.Dts] = "dts",
-        [WaveFormatRoutes.Mpeg] = "mpeg-audio (Layer I and II)",
     };
 
     [Fact]
@@ -28,8 +23,7 @@ public class AsfRouteTests
         var routed = new SortedSet<int>();
         for (int tag = 0; tag <= 0xFFFF; tag++)
         {
-            if (WaveFormatRoutes.CodecId(tag) is not null || WaveFormatRoutes.WindowsMediaCodecId(tag) is not null
-                || new[] { 8, 16, 24, 32, 64 }.Any(bits => WaveFormatRoutes.PcmEncodingOf(tag, bits, bits) is not null))
+            if (WaveFormatRoutes.RouteOf(tag) is not null)
             {
                 routed.Add(tag);
             }
@@ -38,6 +32,8 @@ public class AsfRouteTests
         Assert.Equal([], routed.Where(tag => !AsfParser.DefaultRoutes.ContainsKey(tag) && !LeftOut.ContainsKey(tag)).Select(tag => $"0x{tag:X4}"));
         Assert.Equal([], LeftOut.Keys.Where(tag => AsfParser.DefaultRoutes.ContainsKey(tag) || !routed.Contains(tag)).Select(tag => $"0x{tag:X4}"));
         Assert.Equal([], AsfParser.DefaultRoutes.Keys.Where(tag => !routed.Contains(tag)).Select(tag => $"0x{tag:X4}"));
+        Assert.Equal(routed.Where(tag => AsfParser.DefaultRoutes.ContainsKey(tag)).Select(tag => WaveFormatRoutes.RouteOf(tag)), routed.Where(tag => AsfParser.DefaultRoutes.ContainsKey(tag)).Select(tag => AsfParser.DefaultRoutes[tag]));
+        Assert.Equal(LeftOut.Keys.Order(), AsfParser.LeftOut.Order());
     }
 
     public static TheoryData<string> Names
@@ -155,5 +151,69 @@ public class AsfRouteTests
         Assert.Equal(inFile.Samples, inAsf.Samples);
         Assert.Equal(inFile.Hash(), inAsf.Hash());
         Assert.Equal(plain.Streams.Single().Channels, wrapped.Streams.Single().Channels);
+    }
+
+    private static Report AnalyzeBytes(byte[] data, PcmHashingSink? sink = null) =>
+        Analyzer.CreateDefault().Analyze("p.asf", new MemoryStream(data), sink is null ? new AnalysisOptions() : new AnalysisOptions { Decoding = new DecodeOptions { Output = sink.Declare } });
+
+    // The sample frames a PCM stream reports are those its media objects hold: a compressed payload's length bytes, the fragments past an object's size and the dropped
+    // fragments are no samples.
+    [Theory]
+    [InlineData("compressed-payloads.asf", 200L)]
+    [InlineData("payload-overrun.asf", 90L)]
+    public void ThePcmSamplesAreCountedFromTheBytesTheMediaObjectsHold(string name, long frames)
+    {
+        byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "asf", name));
+        var sink = new PcmHashingSink();
+        Report report = AnalyzeBytes(data, sink);
+
+        Assert.Equal(frames, report.Streams.Single().Samples);
+        Assert.Equal(frames, sink.Samples);
+        Assert.DoesNotContain(report.Findings, f => f.Code == "pcm.partial-sample-frame");
+    }
+
+    // The findings about damaged media objects are made whether or not a decoder walks them.
+    [Theory]
+    [InlineData("truncated-data.asf")]
+    [InlineData("payload-overrun.asf")]
+    [InlineData("length-field-short.asf")]
+    public void TheDamageFindingsOfAPcmStreamDoNotWaitForTheDecoder(string name)
+    {
+        byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "asf", name));
+
+        string[] analyzed = [.. AnalyzeBytes(data).Findings.Select(f => f.Code).Order(StringComparer.Ordinal)];
+        string[] decoded = [.. AnalyzeBytes(data, new PcmHashingSink()).Findings.Select(f => f.Code).Where(c => !c.StartsWith("decode.", StringComparison.Ordinal)).Order(StringComparer.Ordinal)];
+
+        Assert.Equal(decoded, analyzed);
+    }
+
+    [Theory]
+    [InlineData(0x0003, "PCM (floating-point)")]
+    [InlineData(0x0006, "A-law")]
+    [InlineData(0x0007, "Mu-law")]
+    public void TheFormatTagsOfTheLinearCodingsHaveTheNamesEveryContainerUses(int tag, string name)
+    {
+        Assert.Equal(name, AsfParser.FormatTagName(tag));
+        Assert.Equal(name, AsfParser.CodecNameOf(tag));
+    }
+
+    // A WAVEFORMATEX of PCM that states no sample width cannot be read: a Warning, and the stream is reported from the header.
+    [Fact]
+    public void APcmLayoutThatCannotBeReadIsAWarningAndTheStreamComesFromTheHeader()
+    {
+        byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "asf", "minimal.asf"));
+        byte[] marker = [0x01, 0x00, 0x01, 0x00, 0x40, 0x1F, 0x00, 0x00];
+        int at = data.AsSpan().IndexOf(marker);
+        Assert.True(at >= 0);
+        data[at + 14] = 0;
+        data[at + 15] = 0;
+
+        Report report = AnalyzeBytes(data);
+
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "asf.codec-not-analyzed");
+        Assert.Equal(Severity.Warning, finding.Severity);
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal(8000, stream.SampleRate);
+        Assert.Equal(1, stream.Channels);
     }
 }

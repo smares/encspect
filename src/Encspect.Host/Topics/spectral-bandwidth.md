@@ -1,7 +1,7 @@
 ---
 id: spectral-bandwidth
 title: Spectral bandwidth
-related: spectral-cutoff, spectral-slope, spectral-holes, spectrogram, measurements, lowpass, coded-bandwidth
+related: spectral-cutoff, spectral-slope, spectral-holes, spectrogram, measurements, lowpass, coded-bandwidth, nyquist-edge
 references: Encspect design, docs/design/spectral-analysis.md
 ---
 **The problem.** The [spectral cutoff](spectral-cutoff) measures an edge, a step between two bands. Content can stop at a frequency without a step the cutoff finds. The bandwidth measures where the spectrum meets a floor, steep or gentle.

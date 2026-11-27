@@ -212,12 +212,7 @@
   "max_packet": 256,
   "max_bitrate": 0
  },
- "findings": [
-  {
-   "code": "asf.codec-not-analyzed",
-   "contains": "PCM"
-  }
- ],
+ "findings": [],
  "crosscheck": {
   "ffprobe": false,
   "reason": "ffmpeg rejects a payload with no replicated data and no offset field (\"packet fragment position invalid\")."

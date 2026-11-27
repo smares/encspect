@@ -272,6 +272,12 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         // describes no audio (ffmpeg writes its Info frame as stereo before joint stereo audio).
         MpegHeader? audio = null;
         int freeLength = 0;
+        // The type of the VBR header frame that the stream starts with while no audio frame follows it yet.
+        string? headerFrameType = null;
+        // Where the audio chain begins after a header frame accepted without one: what lies before it is junk, whatever it starts with.
+        long junkEnd = -1;
+        long headerStart = -1;
+        int junkFreeLength = 0;
 
         // A stream change found where sync returns after a gap is reported on the frame there,
         // once its length is known.
@@ -281,7 +287,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         {
             state.CheckCancellation(frames);
             long at = position;
-            if (stream is { } current && at + 4 <= end && blocks.TryReadUInt32(at, out uint raw) && new MpegHeader(raw) is { IsValid: true } header)
+            if (stream is { } current && (junkEnd <= at || at == headerStart) && at + 4 <= end && blocks.TryReadUInt32(at, out uint raw) && new MpegHeader(raw) is { IsValid: true } header)
             {
                 if (header.IsSameStream(current))
                 {
@@ -327,6 +333,11 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
                     }
 
                     Entry frame = AddFrame(state, regionState, at, frameLimit, header, freeLength, frameLimit < Math.Min(end, frameEnd));
+                    if (frames == 0 && frame.IsVbrHeader)
+                    {
+                        headerFrameType = VbrHeader.TryRead(blocks.Read(at, (int)frame.Length), header)?.Type;
+                    }
+
                     if (!frame.IsVbrHeader)
                     {
                         if (audio is { } last && header.ChannelModeBits != last.ChannelModeBits)
@@ -360,10 +371,22 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             }
 
             long next = FindStreamStart(blocks, stream is null ? position : position + 1, end, end, out int foundFreeLength);
+            if (stream is null && frames == 0 && next > position && LeadingHeaderFrame(blocks, ZeroRunEnd(blocks, position, next), next, end) is { } headerAt)
+            {
+                (junkEnd, junkFreeLength, headerStart) = (next, foundFreeLength, headerAt);
+                next = headerAt;
+                foundFreeLength = 0;
+            }
+            else if (junkEnd > position)
+            {
+                next = junkEnd;
+                foundFreeLength = junkFreeLength;
+            }
+
             long gapEnd = next < 0 ? end : next;
             if (gapEnd > position)
             {
-                AddGap(position, gapEnd, frames == 0, next < 0 && frames > 0);
+                AddGap(position, gapEnd, frames == 0, next < 0 && frames > 0, frames == 1 ? headerFrameType : null);
             }
 
             if (next < 0)
@@ -401,7 +424,7 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             }
         }
 
-        void AddGap(long gapStart, long gapEnd, bool leading, bool trailing)
+        void AddGap(long gapStart, long gapEnd, bool leading, bool trailing, string? afterHeaderFrame)
         {
             var gap = Entry.Gap(gapStart, gapEnd - gapStart);
             build.Frames.Add(gap);
@@ -416,6 +439,10 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
             else if (leading)
             {
                 return;
+            }
+            else if (afterHeaderFrame is not null && !trailing)
+            {
+                findings.AddNow(Severity.Warning, "mpeg-audio.junk-after-vbr-header-frame", $"{Counts.Of(length, "byte", "bytes")} after the {afterHeaderFrame} header frame, before the next frame at {findings.At(gapEnd)}, {Counts.Agree(length, "is", "are")} not audio.", GapNode(gap, state.Build.Stretches));
             }
             else if (trailing)
             {
@@ -1425,6 +1452,31 @@ public sealed partial class MpegAudioParser : IFormatParser, ICodecParser
         }
 
         return -1;
+    }
+
+    // The exception to "a header only counts as sync when a chain of frames follows it": a Xing, Info or VBRI header frame at position, where
+    // the stream starts, is a frame on its own structure (VbrHeader.TryRead: its signature at the offset its version and channel mode give,
+    // zero side information) and plausible fields, even when bytes that are not audio come before the first audio frame, which chainStart
+    // is, so that the junk after the header frame is reported as such and the frame is not lost in leading junk. Without a chain of audio
+    // frames of the same stream after it, a header frame is not accepted. Returns position, or null.
+    private static long? LeadingHeaderFrame(BlockReader blocks, long position, long chainStart, long end)
+    {
+        if (position >= chainStart || !blocks.TryReadUInt32(position, out uint raw) || new MpegHeader(raw) is not { IsValid: true, Layer: 3, IsFreeFormat: false } header)
+        {
+            return null;
+        }
+
+        int length = header.FrameLength();
+        if (position + length > chainStart || position + length > end || !blocks.TryReadUInt32(chainStart, out uint audioRaw) || !new MpegHeader(audioRaw).IsSameStream(header))
+        {
+            return null;
+        }
+
+        VbrHeader? vbr = VbrHeader.TryRead(blocks.Read(position, length), header);
+        bool plausible = vbr is { IsTruncated: false } && (vbr.IsVbri
+            ? vbr.VbriVersion == 1 && vbr.InvalidEntrySize is null && vbr.FrameCount is > 0
+            : vbr.Flags is > 0 and <= 0xF && vbr.FrameCount is null or > 0);
+        return plausible ? position : null;
     }
 
     // Whether a frame starts at position: a header of the same stream, or a new stream.

@@ -11,15 +11,16 @@ public sealed partial class AsfParser
     // together from the payloads that carry it (a media object may be fragmented across packets and
     // shares them with other streams), in the order they complete. A compressed payload's
     // sub-payloads are media objects of their own (section 5.2.3.2). The packets are read again from
-    // the file, one at a time, as the codec asks for objects.
+    // the file, one at a time, as the codec asks for objects. A walk that only counts the bytes the objects hold (the PCM route, which counts before the decoder
+    // runs, so that the findings do not wait for it) passes report as false in its second walk, so that the findings are made once.
     //
     // An incomplete object (the file ends inside it, the Data Object's stated end or the next object comes first) is handed over with the bytes
     // that arrived, flagged IsCut, after its finding (docs/design/samples-definition.md, "What containers hand over"); the object after a lost
     // one has FollowsGap. A fragment that does not continue an object (asf.fragment-order) and an object of an invalid size are dropped.
-    private static IEnumerable<MappedBytes> MediaObjects(State state, int streamNumber)
+    private static IEnumerable<MappedBytes> MediaObjects(State state, int streamNumber, bool report = true)
     {
         ByteReader reader = state.Reader;
-        FindingCollector findings = state.Findings;
+        FindingCollector? findings = report ? state.Findings : null;
         Node anchor = state.DataNode!;
         int packetSize = state.PacketSize;
         byte[] buffer = new byte[Math.Max(packetSize, 1024)];
@@ -97,7 +98,7 @@ public sealed partial class AsfParser
                     if (data is not null)
                     {
                         bool hasBytes = collected > 0;
-                        findings.Add(Severity.Warning, "asf.object-incomplete", streamNumber, hasBytes ? "next" : "next-empty", anchor, n =>
+                        findings?.Add(Severity.Warning, "asf.object-incomplete", streamNumber, hasBytes ? "next" : "next-empty", anchor, n =>
                             $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} {(n == 1 ? "ends" : "end")} before all of its bytes arrive: the next one starts first. {Handed(n, hasBytes)}");
                         if (hasBytes)
                         {
@@ -111,7 +112,7 @@ public sealed partial class AsfParser
 
                     if (size == 0 || size > MaxMediaObject)
                     {
-                        findings.Add(Severity.Warning, "asf.object-size-invalid", streamNumber, anchor, n =>
+                        findings?.Add(Severity.Warning, "asf.object-size-invalid", streamNumber, anchor, n =>
                             $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} state{(n == 1 ? "s" : string.Empty)} a size of 0 or more than {MaxMediaObject} bytes; {(n == 1 ? "it is" : "they are")} not followed.");
                         followsGap = true;
                         continue;
@@ -128,7 +129,7 @@ public sealed partial class AsfParser
                 }
                 else if (data is null || payload.ObjectNumber != number || offset != collected)
                 {
-                    findings.Add(Severity.Warning, "asf.fragment-order", streamNumber, anchor, n =>
+                    findings?.Add(Severity.Warning, "asf.fragment-order", streamNumber, anchor, n =>
                         $"{(n == 1 ? "A fragment of a media object of stream" : $"{n} fragments of media objects of stream")} {streamNumber} {(n == 1 ? "does" : "do")} not continue the object before {(n == 1 ? "it" : "them")}; {(n == 1 ? "it is" : "they are")} dropped.");
                     followsGap = true;
                     continue;
@@ -137,7 +138,7 @@ public sealed partial class AsfParser
                 int take = Math.Min(payload.DataLength, total - collected);
                 if (take < payload.DataLength)
                 {
-                    findings.Add(Severity.Warning, "asf.fragment-overrun", streamNumber, anchor, n =>
+                    findings?.Add(Severity.Warning, "asf.fragment-overrun", streamNumber, anchor, n =>
                         $"{(n == 1 ? "A fragment" : $"{n} fragments")} of stream {streamNumber} {(n == 1 ? "holds" : "hold")} more bytes than the media object's size leaves; the rest is dropped.");
                 }
 
@@ -170,12 +171,12 @@ public sealed partial class AsfParser
             bool hasBytes = collected > 0;
             if (isEndOfFile)
             {
-                findings.Add(Severity.Warning, "asf.object-incomplete", streamNumber, hasBytes ? "file" : "file-empty", anchor, n =>
+                findings?.Add(Severity.Warning, "asf.object-incomplete", streamNumber, hasBytes ? "file" : "file-empty", anchor, n =>
                     $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} {(n == 1 ? "ends" : "end")} before all of its bytes arrive: the file ends inside {(n == 1 ? "it" : "them")}. {Handed(n, hasBytes)}");
             }
             else
             {
-                findings.Add(Severity.Warning, "asf.object-incomplete", streamNumber, hasBytes ? "end" : "end-empty", anchor, n =>
+                findings?.Add(Severity.Warning, "asf.object-incomplete", streamNumber, hasBytes ? "end" : "end-empty", anchor, n =>
                     $"{(n == 1 ? "A media object of stream" : $"{n} media objects of stream")} {streamNumber} {(n == 1 ? "ends" : "end")} before all of its bytes arrive: the data ends first. {Handed(n, hasBytes)}");
             }
 

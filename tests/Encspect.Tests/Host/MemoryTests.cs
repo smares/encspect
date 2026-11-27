@@ -731,7 +731,9 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
 
         (Report report, long kept, long peak) = Measure("packets.asf", data, data[..4096]);
 
-        Assert.Contains(report.Findings, f => f.Code == "asf.codec-not-analyzed");
+        // ASF routes PCM since plan 0.5 item 8: each packet's 160-byte object is 80 samples of the mono 16-bit stream.
+        Assert.DoesNotContain(report.Findings, f => f.Code == "asf.codec-not-analyzed");
+        Assert.Equal(packets * 80L, Assert.Single(report.Streams).Samples);
         Output.WriteLine($"{kept / packets} bytes kept and {peak / packets} bytes peak per packet");
         Assert.True(kept < packets * AsfPcmKeptBound, $"The report keeps {kept / packets} bytes per packet.");
         Assert.True(peak < packets * AsfPcmPeakBound, $"The live heap grew by {peak / packets} bytes per packet.");

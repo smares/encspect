@@ -1,7 +1,7 @@
 ---
 id: lowpass
 title: Lowpass filtering
-related: ath, lame-tag, bitrate-modes, spectral-cutoff, spectral-bandwidth
+related: ath, lame-tag, bitrate-modes, spectral-cutoff, spectral-bandwidth, nyquist-edge
 references: LAME documentation; LAME tag specification (Gabriel Bouvigne)
 ---
 

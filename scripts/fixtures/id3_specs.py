@@ -17,12 +17,14 @@ import sys
 
 import downloads
 
+# id3.org has answered HTTP 500 for days at a time. The private repository holds copies of four pages as they were pinned (none of the
+# changes document survived), and the Wayback Machine is the last address; each is held to the same SHA-256.
 SPECS = [
-    ("id3v2-00.html", "b3c2e2bc22a12f46644aa795f8fea2ea293e1b52f943785a5e85fa540eb7e882", ["https://id3.org/id3v2-00"]),
-    ("id3v2.3.0.html", "24fb3679f6d433afeea160cead1c64f27e4b5ce6fd1a049e4583129332c16532", ["https://id3.org/id3v2.3.0"]),
-    ("id3v2.4.0-structure.html", "1e1713b0212d9a6ff52ff6bbae84826a0cee651db8aa7d87520bdc4758a6c598", ["https://id3.org/id3v2.4.0-structure"]),
-    ("id3v2.4.0-changes.html", "44438a4e65c14137379c48483cdbf09c3614ebf832906f1c37c864eb3e3cfb1b", ["https://id3.org/id3v2.4.0-changes"]),
-    ("id3v2.4.0-frames.html", "ce9fad74c31f687fe5aeb26de4df71a88bfa8f5c4a5f2f08525c5a0f4754b4f5", ["https://id3.org/id3v2.4.0-frames"]),
+    ("id3v2-00.html", "b3c2e2bc22a12f46644aa795f8fea2ea293e1b52f943785a5e85fa540eb7e882", ["https://id3.org/id3v2-00", downloads.private("mirrors/specs/id3v2/id3v2-00.html"), downloads.archived("https://id3.org/id3v2-00", "2026")]),
+    ("id3v2.3.0.html", "24fb3679f6d433afeea160cead1c64f27e4b5ce6fd1a049e4583129332c16532", ["https://id3.org/id3v2.3.0", downloads.private("mirrors/specs/id3v2/id3v2.3.0.html"), downloads.archived("https://id3.org/id3v2.3.0", "2026")]),
+    ("id3v2.4.0-structure.html", "1e1713b0212d9a6ff52ff6bbae84826a0cee651db8aa7d87520bdc4758a6c598", ["https://id3.org/id3v2.4.0-structure", downloads.private("mirrors/specs/id3v2/id3v2.4.0-structure.html"), downloads.archived("https://id3.org/id3v2.4.0-structure", "2026")]),
+    ("id3v2.4.0-changes.html", "44438a4e65c14137379c48483cdbf09c3614ebf832906f1c37c864eb3e3cfb1b", ["https://id3.org/id3v2.4.0-changes", downloads.archived("https://id3.org/id3v2.4.0-changes", "2026")]),
+    ("id3v2.4.0-frames.html", "ce9fad74c31f687fe5aeb26de4df71a88bfa8f5c4a5f2f08525c5a0f4754b4f5", ["https://id3.org/id3v2.4.0-frames", downloads.private("mirrors/specs/id3v2/id3v2.4.0-frames.html"), downloads.archived("https://id3.org/id3v2.4.0-frames", "2026")]),
 ]
 
 

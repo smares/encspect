@@ -2030,6 +2030,89 @@
                   ]
                 },
                 {
+                  "name": "Stream 1 Media Objects",
+                  "value": 3,
+                  "unit": "media objects",
+                  "offset": 475,
+                  "length": 1074,
+                  "children": [
+                    {
+                      "name": "Statistics",
+                      "kind": "Statistics",
+                      "offset": 475,
+                      "length": 1074,
+                      "children": [
+                        {
+                          "name": "Codec",
+                          "value": "PCM",
+                          "offset": 475,
+                          "length": 1074
+                        },
+                        {
+                          "name": "Sample Frames",
+                          "value": 150,
+                          "unit": "sample frames",
+                          "offset": 475,
+                          "length": 1074
+                        },
+                        {
+                          "name": "Duration",
+                          "value": 0.01875,
+                          "unit": "s",
+                          "offset": 475,
+                          "length": 1074
+                        },
+                        {
+                          "name": "Sample Rate",
+                          "value": 8000,
+                          "unit": "Hz",
+                          "offset": 475,
+                          "length": 1074
+                        },
+                        {
+                          "name": "Channels",
+                          "value": 1,
+                          "unit": "channels",
+                          "offset": 475,
+                          "length": 1074
+                        },
+                        {
+                          "name": "Channel Layout",
+                          "value": "mono (front center)",
+                          "offset": 475,
+                          "length": 1074
+                        },
+                        {
+                          "name": "Bits Per Sample",
+                          "value": 16,
+                          "unit": "bits",
+                          "offset": 475,
+                          "length": 1074
+                        },
+                        {
+                          "name": "Sample Format",
+                          "value": "signed integer",
+                          "offset": 475,
+                          "length": 1074
+                        },
+                        {
+                          "name": "Byte Order",
+                          "value": "little-endian",
+                          "offset": 475,
+                          "length": 1074
+                        },
+                        {
+                          "name": "Average Bitrate",
+                          "value": 128,
+                          "unit": "kbps",
+                          "offset": 475,
+                          "length": 1074
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
                   "name": "Windows Media Audio 2",
                   "kind": "Stream",
                   "value": "frames not read: encrypted",
@@ -2049,6 +2132,31 @@
             0,
             1,
             7
+          ]
+        ],
+        "codec": "PCM",
+        "codingClass": "lossless",
+        "sampleRate": 8000,
+        "channels": 1,
+        "channelMode": "Mono",
+        "channelLayout": [
+          "front center"
+        ],
+        "channelLayoutName": "mono",
+        "bitsPerSample": 16,
+        "samples": 150,
+        "duration": 0.01875,
+        "averageBitrate": 128,
+        "isVbr": false,
+        "playbackGroup": 1,
+        "series": []
+      },
+      {
+        "nodes": [
+          [
+            0,
+            1,
+            8
           ]
         ],
         "codec": "Windows Media Audio 2",
@@ -2078,19 +2186,6 @@
       }
     ],
     "findings": [
-      {
-        "severity": "Info",
-        "code": "asf.codec-not-analyzed",
-        "message": "Stream 1 is coded as PCM (format tag 0x0001), which is not routed from ASF to a codec parser; its media objects are not analyzed.",
-        "offset": 134,
-        "length": 96,
-        "path": [
-          0,
-          0,
-          6
-        ],
-        "count": 1
-      },
       {
         "severity": "Info",
         "code": "asf.codec-not-analyzed",

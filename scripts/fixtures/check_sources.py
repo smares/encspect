@@ -4,7 +4,7 @@ and checks its SHA-256 (and that FFmpeg's release holds every file ffmpeg_source
 of its copies stops serving it, before the fallback is all that is left. A Wayback Machine address that fails while another address of
 the same file serves its pinned bytes is a warning, not a problem: the Wayback Machine answers 404 now and then for captures
 it lists (BladeEnc 0.92.0, 2026-11-08), and the file is still at hand. A file that no address serves is always a problem. FAAC's releases are pinned by
-the commits of their tags (faac_tool.py), which it asks both repositories for, Apple's ALAC source by its commit (alac_tool.py), lossyWAV for POSIX by its commit (lossywav_tool.py), the Helix A1 fork by its commit (helix_tool.py), and Xiph's libvorbis releases by the commits of their tags (xiph_tool.py).
+the commits of their tags (faac_tool.py), which it asks both repositories for, Apple's ALAC source by its commit (alac_tool.py), lossyWAV for POSIX by its commit (lossywav_tool.py), r8brain-free-src by its commit (r8brain_tool.py), the Helix A1 fork by its commit (helix_tool.py), and Xiph's libvorbis releases by the commits of their tags (xiph_tool.py).
 
 Usage: python3 scripts/fixtures/check_sources.py [--list | --only FILE]
   --list       prints every (name, SHA-256, address, kind) as sorted JSON, without downloading; the LAME svn trees
@@ -30,6 +30,7 @@ import blade_tool
 import check_eac3_samples
 import check_monkeys_audio_samples
 import check_mp3pro_samples
+import check_mpeg_sample_sets
 import check_sbr_samples
 import check_tak_samples
 import check_usac_samples
@@ -62,6 +63,7 @@ import monkeys_audio_tool
 import musopen_tool
 import optimfrog_tool
 import qtff_specs
+import r8brain_tool
 import philips_mc_tool
 import plugger_tool
 import musepack_tool
@@ -88,6 +90,9 @@ def sources():
     mp3pro = json.loads((ROOT / "tests" / "conformance" / "mp3pro-samples.json").read_text(encoding="utf-8"))
     for sample in mp3pro["samples"]:
         yield sample["file"], sample["sha256"], check_mp3pro_samples.addresses(mp3pro, sample)
+    for manifest in check_mpeg_sample_sets.load():
+        for sample in manifest["samples"]:
+            yield sample["file"], sample["sha256"], check_mpeg_sample_sets.addresses(manifest, sample)
     eac3 = json.loads((ROOT / "tests" / "conformance" / "eac3-samples.json").read_text(encoding="utf-8"))
     for sample in eac3["samples"]:
         yield sample["file"], sample["sha256"], check_eac3_samples.addresses(sample)
@@ -190,6 +195,7 @@ def entries():
     yield "commit", libxaac_tool.NAME, f"commit:{libxaac_tool.COMMIT}", f"{libxaac_tool.REPOSITORY} {libxaac_tool.COMMIT}"
     yield "commit", helix_tool.A1_NAME, f"commit:{helix_tool.A1_COMMIT}", f"{helix_tool.A1_REPOSITORY} {helix_tool.A1_COMMIT}"
     yield "commit", lossywav_tool.NAME, f"commit:{lossywav_tool.COMMIT}", f"{lossywav_tool.REPOSITORY} {lossywav_tool.COMMIT}"
+    yield "commit", r8brain_tool.NAME, f"commit:{r8brain_tool.COMMIT}", f"{r8brain_tool.REPOSITORY} {r8brain_tool.COMMIT}"
 
 
 def listing(selected=None):
@@ -346,6 +352,13 @@ def main():
     if wanted_entry(lossywav_tool.NAME, f"commit:{lossywav_tool.COMMIT}", lossywav_address):
         checked += 1
         for problem in lossywav_tool.commit_problems({lossywav_address}):
+            problems += 1
+            print(problem)
+    # r8brain-free-src, which resamples the Nyquist edge fixtures, is pinned by its commit the same way.
+    r8brain_address = f"{r8brain_tool.REPOSITORY} {r8brain_tool.COMMIT}"
+    if wanted_entry(r8brain_tool.NAME, f"commit:{r8brain_tool.COMMIT}", r8brain_address):
+        checked += 1
+        for problem in r8brain_tool.commit_problems({r8brain_address}):
             problems += 1
             print(problem)
     # The Helix A1 fork is pinned by its commit the same way.

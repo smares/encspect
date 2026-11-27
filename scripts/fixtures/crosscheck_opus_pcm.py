@@ -52,7 +52,17 @@ DEFAULT_PCMDUMP = "dotnet " + str(ROOT / "tests" / "Encspect.PcmDump" / "bin" / 
 # - opus-toc-configs.opus: frames of no bytes. libopus conceals them and goes on with the state concealment leaves; the analyzer starts over, withholds the frame and the
 #   80 ms after it (decision 5 of docs/design/lossy-decoders.md) and decodes the next frames on a fresh state, whose energy prediction (CELT) and filters (SILK) have not
 #   converged to libopus's in the 1,920 samples that follow the withheld span before the next frame of no bytes: the largest difference there is 1.9e-3 of full scale.
+#
+# Bit exact: the family 3 fixtures libopus's projection encoder wrote and the dense crafted one (EXACT_PREFIXES): the demixing matrix is applied in the order libopus adds, so the bound is 0.0, which a
+# mis-scaled matrix or another summation order would break where the general bound (2^-14) would not.
+#
+# Skipped, a divergence on purpose: the crafted family 3 headers whose decoded channel count N + M differs from the output channel count (opus-ambisonics-family-3-fewer-decoded
+# and -more-decoded). The analyzer follows RFC 8486 section 3.2 (S = D X over all N + M columns, any count); libopus refuses N + M < C (validate_layout) and routes only the first C
+# decoded channels when N + M > C.
+EXACT_PREFIXES = ("external-libopus-ambisonics-", "opus-ambisonics-family-3-dense")
 EXPECTED = {
+    "opus-ambisonics-family-3-fewer-decoded.opus": {"analyzer": [], "reference": [], "skip": "family 3 with N + M < C: RFC 8486 decodes it, libopus's projection decoder refuses it"},
+    "opus-ambisonics-family-3-more-decoded.opus": {"analyzer": [], "reference": [], "skip": "family 3 with N + M > C: RFC 8486 sums all N + M columns, libopus's projection decoder routes only the first C decoded channels"},
     "opus-packets-corrupt.opus": {"analyzer": [], "reference": [[960, 30720]]},
     "matroska/size-past-parent.mka": {"analyzer": [], "reference": [], "skip": "an element whose size runs past its parent: FFmpeg's demuxer reads other blocks than the analyzer, so the packets differ"},
     "matroska/block-group-damaged.mka": {"analyzer": [], "reference": [], "skip": "a damaged block group: FFmpeg's demuxer reads other blocks than the analyzer, so the packets differ"},
@@ -205,7 +215,7 @@ def main(argv=None):
     parser.add_argument("--no-random", action="store_true", help="leave out the seeded random streams")
     parser.add_argument("--containers", action="store_true", help="also the Opus tracks of the Matroska and MP4 fixtures: FFmpeg copies the first audio track into an Ogg file (the packets stay), which libopus decodes")
     args = parser.parse_args(argv)
-    files = [p for p in (args.files or default_files()) if p.read_bytes()[:4] == b"OggS" and b"OpusHead" in p.read_bytes()[:100]]
+    files = [p for p in (args.files or default_files()) if p.read_bytes()[:4] == b"OggS" and b"OpusHead" in p.read_bytes()[:600]]
     work = args.work or pathlib.Path(tempfile.mkdtemp(prefix="opus-"))
     work.mkdir(parents=True, exist_ok=True)
     binary = opus_tool.build_pcm(work)
@@ -287,6 +297,8 @@ def main(argv=None):
                     problems += found
                     if outcome is not None:
                         compared += 1
+                        if name.startswith(EXACT_PREFIXES) and any(c["max"] != 0 for c in outcome["channels"]):
+                            problems.append(f"libopus: not bit exact (largest {max(c['max'] for c in outcome['channels']):.3g}), where family 3 fixtures must be")
                         pinned = EXPECTED.get(name, {"analyzer": [], "reference": []})
                         # Of a container the packets are the demuxers' reading, which differs for damaged files (FFmpeg drops, joins or keeps blocks another way): only the samples both decode are held.
                         if ogg == path and (outcome["notComparedOnlyInAnalyzer"] != pinned["analyzer"] or outcome["notComparedOnlyInReference"] != pinned["reference"]):
