@@ -1,4 +1,4 @@
-"""ffmpeg's names for its channel layouts (libavutil/channel_layout.c, channel_layout_map), as the
+"""ffmpeg's names for its channel layouts (`ffmpeg -layouts`), as the
 speakers the analyzer names, so the cross-checks can compare the layout ffprobe reports with a
 manifest's "channel_layout". ffmpeg orders every layout its own way, so only the speakers are
 compared, not their order."""

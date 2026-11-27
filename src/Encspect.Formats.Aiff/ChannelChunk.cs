@@ -5,8 +5,8 @@ namespace Encspect.Formats.Aiff;
 
 // The CHAN chunk: Core Audio's AudioChannelLayout, which Apple's Core Audio Format Specification gives as the Channel Layout chunk of CAF files
 // (CAFChannelLayout): a layout tag, a channel bitmap, a count of channel descriptions and the descriptions (a label, flags and three 32-bit floats of
-// coordinates). All integers are big-endian. No AIFF specification defines the chunk; it is the structure that FFmpeg's muxer puts in
-// AIFF files, as QuickTime puts it in the chan atom of MP4 files, and the layout is worked out as MP4's is (CoreAudioLayouts).
+// coordinates). All integers are big-endian. No AIFF specification defines the chunk; it is the structure that ffmpeg's muxer wrote into
+// the external-ffmpeg-* AIFF fixtures, as QuickTime puts it in the chan atom of MP4 files, and the layout is worked out as MP4's is (CoreAudioLayouts).
 internal static class ChannelChunk
 {
     private const int DescriptionLength = 20;

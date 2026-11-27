@@ -1,5 +1,5 @@
 {
- "description": "A Segment whose MuxingApp is ffmpeg's muxer version (\"Lavf60.16.100\") and whose WritingApp names another application, as libavformat writes the encoding_tool metadata (matroskaenc.c): the muxer is the library under the application, as libebml and libmatroska are under mkvmerge, so the two do not conflict.",
+ "description": "A Segment whose MuxingApp is ffmpeg's muxer version (\"Lavf60.16.100\") and whose WritingApp names another application, as libavformat writes the encoding_tool metadata (the external-ffmpeg-* Matroska fixtures): the muxer is the library under the application, as libebml and libmatroska are under mkvmerge, so the two do not conflict.",
  "length": 386,
  "format": "Matroska",
  "ebml": {

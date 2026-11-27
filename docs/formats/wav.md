@@ -9,7 +9,7 @@ Sources:
 - Microsoft's and IBM's Multimedia Programming Interface and Data Specifications 1.0 (RIFF, the WAVE form, `fmt `, `fact`, `data`, `cue `, `plst`, `LIST` with `INFO`, `adtl` and `wavl`, `smpl`, `inst`) and the Multimedia Data Standards Update of April 1994.
 - Microsoft's WAVEFORMATEX and WAVEFORMATEXTENSIBLE documentation, "Multiple channel audio data and WAVE files" and "Audio Subtype GUIDs", with the identifiers of `mmreg.h`, `ksmedia.h`, `ksuuids.h` and `mfapi.h` (the mingw-w64 headers).
 - EBU Tech 3285 (`bext`), EBU Tech 3306-2009 (RF64, `ds64`, the cue points), ITU-R BS.2088-2 (BW64, `ds64`, `chna`, `axml`, `bxml`, `sxml`; free from the ITU at <https://www.itu.int/rec/R-REC-BS.2088>) and the iXML specification.
-- FFmpeg 6.1.1 and 8.0.1 (`riffdec.c`, `wavdec.c`) and MediaInfo 26.01 are cross-checks of what the fixtures hold, not sources of the format.
+- FFmpeg 6.1.1 and 8.0.1 and MediaInfo 26.01 are cross-checks of what the fixtures hold, not sources of the format.
 
 ## What is read
 

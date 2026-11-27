@@ -108,7 +108,7 @@ def build_r11():
 
 
 def encode_r11(binary, arguments, source, path):
-    """tomp3 returns the number of frames plus one as its exit code (test/tomp3.cpp), so only the
+    """tomp3 returns the number of frames plus one as its exit code (observed), so only the
     output tells whether it worked."""
     result = subprocess.run([str(binary), str(source), str(path), "-D", *arguments], capture_output=True, text=True,
                             stdin=subprocess.DEVNULL)

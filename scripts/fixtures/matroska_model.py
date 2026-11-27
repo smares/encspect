@@ -965,7 +965,7 @@ def writers_of(segments):
         writing, muxing = info.get("writing_app") or "", info.get("muxing_app") or ""
         # The texts as stored: ffmpeg's muxer version may follow white space ("^\s*Lavf" not followed by a letter), its encoder ID may not
         # ("^Lavc" and a digit or a space).
-        # matroskaenc.c (FFmpeg 6.1.1) writes LIBAVFORMAT_IDENT as the MuxingApp always and the encoding_tool metadata as the WritingApp when there is
+        # FFmpeg 6.1.1 writes its libavformat version as the MuxingApp always and the encoding_tool metadata as the WritingApp when there is
         # one, so a "Lavf" MuxingApp under the WritingApp of other software (neither names FFmpeg) is the library under it as well.
         muxer = re.match(r"^\s*Lavf(?![A-Za-z])", muxing) and not re.search(r"(?<![a-z])(ffmpeg|lavf|lavc|libav)(?![a-z])", writing.lower())
         library = (muxing.startswith(("libebml", "libmatroska")) or muxer) and writing.strip()
