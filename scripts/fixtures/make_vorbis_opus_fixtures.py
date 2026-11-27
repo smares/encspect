@@ -911,8 +911,8 @@ def opus_ambisonics3():
 
 
 def opus_ambisonics3_counts():
-    # Family 3 where the decoded channel count N + M differs from the output channel count C (RFC 8486, section 3.2 allows it): nine outputs from four decoded channels, five of
-    # them reached by no column (a row of zeros), and four outputs from six, where each sums two or three decoded channels. libopus's projection decoder refuses the first and drops
+    # Family 3 where the decoded channel count N + M differs from the output channel count C (RFC 8486, section 3.2 allows it): nine outputs from four decoded channels, four of
+    # them rows of zeros (a fifth row holds one coefficient), and four outputs from six, where each sums two or three decoded channels. libopus's projection decoder refuses the first and drops
     # the last two columns of the second, so the crosscheck skips both (crosscheck_opus_pcm.py, EXPECTED).
     def q15(rows, cols, fn):
         return list(b"".join(struct.pack("<h", fn(r, c)) for c in range(cols) for r in range(rows)))
@@ -932,7 +932,7 @@ def opus_ambisonics3_counts():
 
 
 def opus_ambisonics3_dense():
-    # Family 3 with 171 mono streams and a 171 by 171 demixing matrix (58,482 bytes of the 65,004 the header can hold): the matrix costs 29,241 multiplies and adds a sample, far
+    # Family 3 with 171 mono streams and a 171 by 171 demixing matrix (58,482 bytes of the 65,004 the header can hold, C times N + M at most 32,502): the matrix costs 29,241 multiplies and adds a sample, far
     # more than the streams' decoding, so DecoderWorkTests measures the demixing weight on it. Seeded coefficients, signed, summing to well under full scale.
     rng = random.Random(171)
     matrix = list(b"".join(struct.pack("<h", rng.randint(-600, 600)) for _ in range(171 * 171)))

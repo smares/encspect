@@ -484,7 +484,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             Add("eac3-" + label, () => new Case("eac3-" + label, Ac3Cases.Repeated(file)));
         }
 
-        // Opus: SILK speech, CELT music at 96 kbps and in 5 ms frames, 5.1, mono at 24 kbps, hybrid, and ambisonics of order 1 and order 3 with the stereo pair (family 3: 18 channels, 18 decoded channels and a matrix of 324 coefficients) and a matrix of 171 by 171 coefficients over 171 mono streams, which dominates the work). Each case repeats the audio packets of an encoder's file in one stream.
+        // Opus: SILK speech, CELT music at 96 kbps and in 5 ms frames, 5.1, mono at 24 kbps, hybrid, and ambisonics of order 1 and order 3 with the stereo pair (family 3: 18 channels, 18 decoded channels and a matrix of 324 coefficients), and a matrix of 171 by 171 coefficients over 171 mono streams, which dominates the work. Each case repeats the audio packets of an encoder's file in one stream.
         foreach ((string label, string file) in new[]
         {
             ("speech", "external-opusenc-speech.opus"),

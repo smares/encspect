@@ -2,8 +2,8 @@ namespace Encspect.Formats.Opus;
 
 // Whether the identification header describes streams libopus's multistream decoder accepts (opus_multistream_decoder_init): the channel mapping family is one whose
 // mapping the decoder applies (0, 1, 2, 3 and 255), and the counts and the mapping are consistent. Family 3 is the one divergence: RFC 8486 (section 3.2) lets the decoded
-// channel count K = N + M differ from the output channel count C and defines S = D X over all K columns, which the analyzer follows (K < C is decoded, with the rows that
-// no column reaches silent); libopus's projection decoder refuses K < C (validate_layout) and routes only the first C decoded channels when K > C.
+// channel count K = N + M differ from the output channel count C and defines S = D X over all K columns, which the analyzer follows (K < C is decoded, an output channel being
+// silent only where its row is all zeros); libopus's projection decoder refuses K < C (validate_layout) and routes only the first C decoded channels when K > C.
 internal static class OpusDecodable
 {
     public static bool Check(OpusHead head)
