@@ -216,14 +216,14 @@ def check_ffprobe(name, manifest, path, problems):
         s = m.sv7(data[start:])
         count = s["header"]["frames"]
         # ffmpeg's packet is the words that hold the frame, from the one its length starts in, and 4
-        # bytes of its own (libavformat/mpc.c mpc_read_packet); it gives no position.
+        # bytes of its own; it gives no position.
         expected = [(None, ((f["length"] + (f["bit"] & 31) + 20 + 31) & ~31) // 8 + 4) for f in s["frames"][:count]]
     actual = [(int(p["pos"]) if "pos" in p else None, int(p["size"])) for p in packets]
     if manifest["version"] == 8:
         found, stop = m.packets(data[start:])
         past = [a for a in actual if a[0] >= start + stop]
         if past:
-            # ffmpeg 8.0 (mpc8.c, mpc8_read_packet, unchanged since 6.1.1) stops at the stream end packet, but takes up reading after it and reads the
+            # ffmpeg 8.0 (unchanged since 6.1.1) stops at the stream end packet, but takes up reading after it and reads the
             # "AP" of an APE tag's "APETAGEX" as an audio packet where the tag does not end the file.
             skip(name, f"ffprobe's {len(past)} packets after the stream end", "ffmpeg reads the APE tag after the stream end packet as an audio packet")
             actual = [a for a in actual if a[0] < start + stop]

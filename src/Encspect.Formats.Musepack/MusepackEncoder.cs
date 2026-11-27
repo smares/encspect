@@ -9,9 +9,9 @@ namespace Encspect.Formats.Musepack;
 // (mpc_get_encoder_string) reads them: an SV7 byte, or an SV8 version whose major × 100 + minor is at
 // most 116, is a release, beta or alpha of the SV7 encoders by its last digit; a later SV8 version
 // is stable where its minor version is even. Encodes confirm which SV7 encoders write what (the table
-// below, with high confidence), and that mpcenc of musepack_src r495 writes 1.30.1 (mpcenc/config.h).
+// below, with high confidence), and that mpcenc of musepack_src r495 writes 1.30.1 (its fixtures).
 // mpc2sv8 converts SV7 to SV8 and writes the SV7 byte's hundreds as major, the rest as minor and
-// build 0 (mpc2sv8.c), which it did for mppenc 1.16's 116 as 1.16.0. Other versions follow
+// build 0 (its fixtures), which it did for mppenc 1.16's 116 as 1.16.0. Other versions follow
 // libmpcdec's reading with medium confidence. A claim of the encoder role (EncoderClaim, an ID3v2 TSSE
 // frame) alone names the encoder as written with low confidence; the claims of the writer role (an APEv2 Encoder
 // item, which Musepack SV8's chapters and trailing tags hold, and ffmpeg's muxer version) are resolved apart
@@ -31,7 +31,7 @@ internal static partial class MusepackEncoder
     // 1.0 without true gapless and with Max Level 0, Buschmann's 1.7.8 to 1.7.9c without true gapless and
     // with the input's Max Level, and the builds from 1.01j to 1.04 and the three in Rarewares' 1.05z
     // archives with true gapless. Max Level separates Klemm's builds from Buschmann's only where the
-    // ReplayGain fields are 0, since ReplayGain tools fill it too (mppenc 1.16 encode_sv7.c); otherwise
+    // ReplayGain fields are 0, since ReplayGain tools fill it too; otherwise
     // both are named, with medium confidence. Some builds write profile 1 ("Unstable/Experimental") at
     // every setting tried (the default, --radio and --insane; sv7-encoders.json), where the others
     // write the profile asked for, which sets them apart; other settings were not tried. The rows are

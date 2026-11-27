@@ -2,7 +2,7 @@
 id: musepack-sv8-packets
 title: Musepack SV8: packets, seek table and stream end
 related: musepack-subband-coding, musepack-frame-coding, musepack-sv7-stream, crc, replaygain, ape-tag, encoder-detection
-references: Musepack SV8 specification (mutagen-specs mirror, mpc/sv8.rst); libmpcdec r495 mpc_demux.c, mpc_bits_reader.c; libmpcenc r495 bitstream.c; ffmpeg 6.1 libavformat/mpc8.c
+references: Musepack SV8 specification (mutagen-specs mirror, mpc/sv8.rst); libmpcdec r495 mpc_demux.c, mpc_bits_reader.c; Encspect's mpcenc fixtures
 ---
 
 **Why packets.** SV8 keeps SV7's coding but wraps it in packets, so a file can carry new kinds of data and decoders can skip what they do not know. A stream starts with the magic number "MPCK".

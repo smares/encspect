@@ -1136,7 +1136,7 @@ ENCSPOT_ENCODER_DIFFERENCES = {
     "external-lame357w-cbr": ("Gogo (before 3.0)", PRE_380_CBR),
     "external-lame370w-cbr": ("Lame (old) or m3e", PRE_380_CBR),
     "external-ffmpeg-bitexact": ("Gogo (after 3.0)", "EncSpot's label is the encoder field of ffmpeg's Xing tag, \"Lavf lame\" (the muxer's replacement of the bit-exact "
-                                 "\"Lavc libmp3lame\", mp3enc.c:250-252), which names nothing, so it guesses: short blocks with scfsi and scalefactor scaling "
+                                 "\"Lavc libmp3lame\", the committed file), which names nothing, so it guesses: short blocks with scfsi and scalefactor scaling "
                                  "name Gogo after 3.0; the analyzer reads LAME's version from the ancillary data behind ffmpeg's tag"),
     "external-blade-crc": BLADE_AS_GOGO,
     "external-blade-mono": BLADE_AS_GOGO,

@@ -2,7 +2,7 @@
 id: musepack-subband-coding
 title: Musepack: subband coding and quality profiles
 related: filter-bank, subband-coding, mid-side-stereo, noise-substitution, musepack-sv7-stream, musepack-sv8-packets, bitrate-modes
-references: libmpcdec and libmpcenc (musepack_src r495): synth_filter.c, mpc_decoder.c, requant.c, mpcenc.h; mppenc 1.16; mpcenc 1.30.1 --longhelp
+references: libmpcdec and libmpcenc (musepack_src r495): synth_filter.c, mpc_decoder.c, requant.c; Encspect's mppenc 1.16 fixtures; mpcenc 1.30.1 --longhelp
 ---
 
 **The filterbank.** Musepack splits the audio into 32 subbands of equal width with the polyphase filterbank of MPEG audio Layers I and II ([filterbank](filter-bank)): libmpcdec's synthesis filter cites ISO/IEC 11172-3 for its steps and uses a window of 32 × 16 coefficients. A frame holds 36 samples of every subband, 1,152 per channel, as a Layer II frame does. The filter's delay, 512 − 32 + 1 = 481 samples, is what decoders drop at the start of a stream.

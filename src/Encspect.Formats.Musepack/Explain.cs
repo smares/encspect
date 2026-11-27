@@ -24,8 +24,8 @@ internal static class Topics
 // What each Musepack node is, in the words the report shows next to it. Constants only: frame and
 // packet nodes are built by the hundred thousand, so a description picks one of these and never
 // allocates. The sources: the SV8 specification (Musepack's, as mirrored in mutagen-specs,
-// mpc/sv8.rst), libmpcdec and libmpcenc of musepack_src r495, mppenc 1.16, libmpcdec 1.2.6 for
-// stream versions 4 to 6, and ffmpeg 6.1's mpc and mpc8 demuxers. The Portable Musepack decoder
+// mpc/sv8.rst), libmpcdec of musepack_src r495, libmpcdec 1.2.6 for
+// stream versions 4 to 6, and the fixtures that mppenc 1.16 and mpcenc wrote; ffprobe's mpc and mpc8 demuxers are cross-checks. The Portable Musepack decoder
 // (mpc.zip, 2004), the C++ code libmpcdec 1.2.6 was ported from, reads versions 4 to 6 the
 // same way, so it is cited as the same reading, not a second one.
 internal static class Explain
@@ -37,27 +37,27 @@ internal static class Explain
     public const string AfterEmbeddedTag = "Bytes after an ID3v2 tag that lies inside the Musepack stream, which the tag breaks; the analyzer does not read them as part of the stream.";
     public const string AudioData = "The frames of the stream, which the analyzer does not read for this stream or its settings.";
 
-    public const string Header = "The SV7 stream header: the frame count, the coding settings, ReplayGain, the gapless length of the last frame and the encoder's version, in seven 32-bit little-endian words read from their most significant bit (libmpcdec r495 streaminfo_read_header_sv7, mppenc 1.16 WriteHeader_SV7).";
+    public const string Header = "The SV7 stream header: the frame count, the coding settings, ReplayGain, the gapless length of the last frame and the encoder's version, in seven 32-bit little-endian words read from their most significant bit (libmpcdec r495 streaminfo_read_header_sv7; the values mppenc 1.16 writes are those of its fixtures).";
     public const string Magic = "The magic number: \"MP+\" for stream version 7, \"MPCK\" for version 8 (libmpcdec r495 mpc_demux_header, SV8 specification, File magic number).";
     public const string StreamVersion = "The stream version, the low four bits of the header's fourth byte: 7 for SV7 (libmpcdec r495 mpc_demux_header).";
     public const string PnsFlag = "The high four bits of the header's fourth byte: mppenc 1.16 writes 1 (byte 0x17) when it encodes with perceptual noise substitution, 0 otherwise; libmpcdec r495 reads them as the PNS flag.";
     public const string FrameCount = "The number of frames the header counts, 1,152 samples each; with true gapless, the last of them holds only the samples Last Frame Samples gives (libmpcdec r495 streaminfo_read_header_sv7).";
-    public const string IntensityStereoFlag = "The former intensity stereo flag: mppenc 1.16 writes 0 (\"not supported anymore\"), and libmpcdec r495 skips it.";
+    public const string IntensityStereoFlag = "The former intensity stereo flag: mppenc 1.16's fixtures show 0, and libmpcdec r495 skips it.";
     public const string MidSideFlag = "Whether the frames may code a subband as mid and side instead of left and right: each such subband then carries a mid/side flag (libmpcdec r495 mpc_decoder_read_bitstream_sv7).";
     public const string MaxBand = "The highest subband, counted from 0, whose resolution every frame codes; the frames code subbands 0 to this one (libmpcdec r495 mpc_decoder_read_bitstream_sv7). libmpcdec refuses 0 and values from 32 on.";
     public const string Profile = "The quality profile the encoder used, by number: 7 Telephone, 8 Thumb, 9 Radio, 10 Standard, 11 Extreme, 12 Insane, 13 BrainDead, 5 and 6 and 14 and 15 qualities 0, 1, 9 and 10; the encoder's quality setting is the number minus 5 (libmpcdec r495 streaminfo.c, mpcdec).";
     public const string ProfileName = "The profile's name, as libmpcdec r495 gives it (versionNames in streaminfo.c).";
     public const string Quality = "The encoder's quality setting that the profile stands for: the profile minus 5, as mpcdec prints it (q=).";
-    public const string Link = "Two bits mppenc 1.16 writes as 0 (\"for future use\"), which libmpcdec r495 skips.";
+    public const string Link = "Two bits that mppenc 1.16's fixtures show as 0, which libmpcdec r495 skips.";
     public const string SampleRateIndex = "The sample rate by index: 0 is 44,100 Hz, 1 48,000 Hz, 2 37,800 Hz, 3 32,000 Hz (libmpcdec r495 streaminfo.c, SV8 specification, Frequency table).";
-    public const string MaxLevel = "The largest sample value of the input; mppenc 1.16 writes 0 and leaves it to its ReplayGain tool, and libmpcdec r495 skips it (\"MaxLevel\").";
+    public const string MaxLevel = "The largest sample value of the input; mppenc 1.16's fixtures show 0, and libmpcdec r495 skips it.";
     public const string Sv7TitleGain = "The track's ReplayGain adjustment in hundredths of a dB, signed, 0 when not computed. libmpcdec r495 reads it as a loudness of 64.82 dB minus the adjustment, which mpcdec prints.";
     public const string Sv7TitlePeak = "The track's largest sample value on a 16-bit scale, 0 when not computed; libmpcdec r495 reads it as 20·log10 of the value in dB.";
     public const string Sv7AlbumGain = "The album's ReplayGain adjustment in hundredths of a dB, signed, 0 when not computed; libmpcdec r495 reads it as a loudness of 64.82 dB minus the adjustment.";
     public const string Sv7AlbumPeak = "The album's largest sample value on a 16-bit scale, 0 when not computed.";
     public const string TrueGapless = "Whether Last Frame Samples gives how many samples the last frame holds; without it, decoders drop 481 samples at the end (libmpcdec r495 streaminfo_read_header_sv7).";
     public const string LastFrameSamples = "How many of the last frame's 1,152 samples belong to the audio, 0 meaning all of them (libmpcdec r495). The same 11 bits follow the last frame in the bitstream.";
-    public const string FastSeek = "Whether the encoder marked the stream as fit for fast seeking; mppenc 1.16 sets it (\"we now support fast seeking\").";
+    public const string FastSeek = "Whether the encoder marked the stream as fit for fast seeking; mppenc 1.16's fixtures set it.";
     public const string Unused = "Bits the header leaves unused, which mppenc 1.16 writes as 0.";
     public const string EncoderVersion = "The encoder's version in one byte: mppenc 1.16 writes 116 (major × 100 + minor digits). libmpcdec r495 reads a multiple of 10 as a release, other even numbers as a beta, odd ones as an alpha, and 0 as Buschmann 1.7.0 to 1.7.9 or Klemm 0.90 to 1.05.";
 
@@ -85,7 +85,7 @@ internal static class Explain
     public const string Sv6LastFrame = "The last frame the header counts in version 6, which libmpcdec 1.2.6 decodes like the others, followed by 11 bits that say how many of its samples belong to the audio (mpc_decoder.c mpc_decoder_decode_internal).";
     public const string Sv6LastFrameCut = "The last frame the header counts in version 6, which libmpcdec 1.2.6 decodes like the others; the data ends before the frame or the 11 bits that should follow it do.";
     public const string Sv6FinalSamples = "The 11 bits after the last frame of version 6: how many of its 1,152 samples belong to the audio, 0 meaning all of them. libmpcdec 1.2.6 outputs them and then the synthesis filter's 481 samples of decay (\"reconstruct exact filelength\").";
-    public const string Sv6PaddingWord = "A 32-bit word of zeros after a stream that ends on a word boundary. mppenc 1.16, the SV7 encoder that descends from the earlier ones, always writes the word it is filling at the end, even an empty one (encode_sv7.c FinishBitstream); decoders take nothing from it.";
+    public const string Sv6PaddingWord = "A 32-bit word of zeros after a stream that ends on a word boundary. mppenc 1.16, the SV7 encoder that descends from the earlier ones, writes the word it is filling at the end, even an empty one (its fixtures end with it); decoders take nothing from it.";
     public const string OldStatFrames = "The frames decoders decode: those the header counts but the last (libmpcdec 1.2.6, mppdec).";
     public const string Sv6StatFrames = "The frames decoders decode: in version 6 all the header counts, the last one too (libmpcdec 1.2.6, mppdec).";
     public const string OldStatSamples = "The samples per channel the frames before the last give when libmpcdec 1.2.6 decodes them whole, less the synthesis filter's 481. A damaged frame stops the decoder, which then outputs fewer.";
@@ -119,7 +119,7 @@ internal static class Explain
     public const string PlayerGain = "The gain mpcdec derives from the stored loudness: 64.82 dB minus it (mpcdec r495 print_info).";
 
     public const string EncoderInfo = "The encoder info packet (EI): the profile, whether noise substitution was on, and the encoder's version (SV8 specification, Encoder Info Packet).";
-    public const string Sv8Profile = "The quality profile, in 7 bits with 3 of them after the point (\"4.3 format\", 0 to 15.875): 10 is Standard, the encoder's quality setting is the profile minus 5 (SV8 specification, libmpcdec r495, mpcenc r495 writes quality plus 5).";
+    public const string Sv8Profile = "The quality profile, in 7 bits with 3 of them after the point (\"4.3 format\", 0 to 15.875): 10 is Standard, the encoder's quality setting is the profile minus 5 (SV8 specification, libmpcdec r495, mpcenc r495's fixtures show quality plus 5).";
     public const string Pns = "Whether the encoder used perceptual noise substitution, which fills subbands with noise instead of coding them (SV8 specification, \"PNS tool\").";
     public const string Sv8EncoderVersion = "The encoder's version as major, minor and build (SV8 specification, Encoder Info Packet): mpcenc of musepack_src r495 writes 1.30.1.";
     public const string VersionMajor = "The encoder's major version (SV8 specification, Encoder Info Packet).";

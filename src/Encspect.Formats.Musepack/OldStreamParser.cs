@@ -27,7 +27,7 @@ namespace Encspect.Formats.Musepack;
 // one zero word where it ends on a word boundary. The SV6 rule assumes an SV6 encoder wrote the last
 // frame and the 11 bits whole, since libmpcdec 1.2.6 drops the last frame only "up to SV5"; the zero
 // word is what mppenc 1.16, the SV7 descendant of those encoders, writes in that case
-// (encode_sv7.c FinishBitstream always writes the word it is filling, even an empty one). A stream of
+// (its fixtures end with the word it is filling, even an empty one). A stream of
 // version 4 or 5 whose units end inside its last word is not one these encoders wrote, so it is not
 // taken. Frames are read, as libmpcdec 1.2.6 reads them, where it decodes them: a variable bitrate, no
 // intensity stereo and a block size of 1. Encodes confirm that syntax for versions 4 and 5; no SV6
@@ -119,7 +119,7 @@ internal static class OldStreamParser
     }
 
     // Whether the stream ends on a word boundary at bit and one word of zeros follows it, the last of
-    // the data: mppenc 1.16 (encode_sv7.c FinishBitstream) writes the word it is filling at the end even
+    // the data: mppenc 1.16 (its fixtures) writes the word it is filling at the end even
     // where it is empty.
     private static bool EndsWithZeroWord(WordStream words, long bit) =>
         bit % 32 == 0 && bit + 32 == words.BitLength && words.Read(bit, 32) == 0;
