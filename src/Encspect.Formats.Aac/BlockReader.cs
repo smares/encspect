@@ -45,6 +45,7 @@ internal sealed partial class BlockReader
     private int _elementIds;
     private bool _hasSbr;
     private bool _hasSbrEvidence;
+    private int _firstLayout = -1;
     private bool _hasPs;
     private bool _hasCoupling;
 
@@ -213,6 +214,25 @@ internal sealed partial class BlockReader
                 _tally.Mismatched++;
                 Soft("aac.elements-mismatch", $"{Count(sce, "single channel element")}, {Count(cpe, "channel pair element")} and {Count(lfe, "LFE element")}, other than channel configuration {_setup.ChannelConfiguration} defines",
                     0, 0, null);
+            }
+
+            // The order of the channel elements (single channel, channel pair, LFE) against the first block's: a decoder's per-element state no longer fits a block that changes it.
+            int layout = 0;
+            foreach (ElementSpan element in _elements)
+            {
+                if (element.Id is 0 or 1 or 3)
+                {
+                    layout = (layout * 5) + element.Id + 1;
+                }
+            }
+
+            if (_firstLayout < 0)
+            {
+                _firstLayout = layout;
+            }
+            else if (layout != _firstLayout && (_setup.ExpectedSce < 0 || (sce == _setup.ExpectedSce && cpe == _setup.ExpectedCpe && lfe == _setup.ExpectedLfe)))
+            {
+                Soft("aac.layout-changed", "channel elements in another order than the stream's first block holds them, so a decoder starts its per-element state again", 0, 0, null);
             }
 
             if (_hasSbr)

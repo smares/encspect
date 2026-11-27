@@ -33,6 +33,7 @@ internal sealed class FrameDecoder : IFrameDecoder
     private readonly bool _isSbr;
     private readonly bool _isPs;
     private PsDecoder? _ps;
+    private readonly int[] _layout;
     private readonly SbrElement?[] _elements;
     private readonly float[] _sbrPlanar;
     private readonly ushort[] _longOffsets;
@@ -88,6 +89,8 @@ internal sealed class FrameDecoder : IFrameDecoder
             _overlap[ch] = new float[Lines];
         }
 
+        _layout = new int[_channels];
+        Array.Fill(_layout, -1);
         _previousShape = new int[_channels];
         _isSilent = new bool[_channels];
         _planar = new float[_channels * Lines];
@@ -114,7 +117,16 @@ internal sealed class FrameDecoder : IFrameDecoder
                 $"The block at 0x{frame.Bytes.FileStart:X} holds a coupling channel element, whose channels are read and not applied, so the decoded audio lacks what they add to the channels they couple.");
         }
 
-        bool follows = frame.FollowsGap || _lostBefore;
+        // A block whose channel elements differ from the last block's (another kind in a slot) is a loss as a change of the slot count is: the per-element state of SBR no longer fits it.
+        bool layoutChanged = false;
+        for (int ch = 0; ch < _channels; ch++)
+        {
+            int kind = record[(ch * BlockRecord.Stride) + BlockRecord.Kind];
+            layoutChanged |= _layout[ch] != kind && _layout[ch] >= 0;
+            _layout[ch] = kind;
+        }
+
+        bool follows = frame.FollowsGap || _lostBefore || layoutChanged;
         _lostBefore = false;
         if (follows)
         {
@@ -194,7 +206,8 @@ internal sealed class FrameDecoder : IFrameDecoder
         {
             int kind = record[(ch * BlockRecord.Stride) + BlockRecord.Kind];
             int width = kind == BlockRecord.KindPairFirst ? 2 : 1;
-            SbrElement element = _elements[ch] is { } kept && kept.Width == width ? kept : (_elements[ch] = new SbrElement(width, 2 * _config.SampleRate));
+            SbrElement element = _elements[ch] ??= new SbrElement(2 * _config.SampleRate);
+            element.Configure(width);
             ReadOnlySpan<int> slot = default;
             if (kind != BlockRecord.KindLfe)
             {

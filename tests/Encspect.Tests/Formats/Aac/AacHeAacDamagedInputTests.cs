@@ -34,13 +34,33 @@ public class AacHeAacDamagedInputTests
         Assert.Equal(DecodeStatus.Decoded, report.Streams.Single().Verification!.Decoding);
     }
 
-    // A block whose channel elements differ from the earlier blocks' (a single channel element where a channel pair was, in a stream whose frames all hold SBR data) gets an SBR
-    // element of its own width: the buffers of the earlier one hold one channel, and reading the second was an IndexOutOfRangeException.
-    [Fact]
-    public void ABlockWhoseElementLayoutChangesIsDecodedWithAnElementOfItsOwnWidth()
+    private static StreamInfo Measured(string name, string folder, out Report report)
     {
-        Report report = Decode("aac-sbr-element-width-changes.bin");
+        byte[] file = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, folder, name));
+        report = Analyzer.CreateDefault().Analyze(name, new MemoryStream(file), new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = 1 << 24, Output = _ => new DecoderWorkTests.NullSink(), Measure = new MeasureOptions() } });
+        return report.Streams.Single();
+    }
 
-        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+    // A block whose channel elements differ from the last block's (a single channel element where a pair was, in a stream whose frames all hold SBR data) is a loss: the SBR state of the
+    // elements no longer fits it, so it is decoded from reset state and withheld, as the one after a gap (the second test counts the withheld samples; this input ends inside its mdat). The buffers of an element serve a pair or a single channel, whichever the block has
+    // (the first version indexed the second channel of a one-channel buffer: an IndexOutOfRangeException).
+    [Fact]
+    public void ABlockWhoseElementLayoutChangesIsDecodedFromResetStateAndWithheld()
+    {
+        _ = Measured("aac-sbr-element-width-changes.bin", "fuzz", out Report report);
+
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed" or "measure.failed");
+        Assert.Contains(report.Findings, f => f.Code == "aac.layout-changed");
+    }
+
+    // The same counts in another order (channel configuration 3) change the layout too: every block but the first is withheld, and the parser says why.
+    [Fact]
+    public void ElementsInAnotherOrderAreReportedAndTheirBlocksWithheld()
+    {
+        StreamInfo stream = Measured("elements-order-changes.aac", Path.Combine("aac", "adts"), out Report report);
+
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed" or "measure.failed");
+        Assert.Contains(report.Findings, f => f.Code == "aac.layout-changed");
+        Assert.Equal(5 * 1024, stream.Measurements!.WithheldSamples);
     }
 }
