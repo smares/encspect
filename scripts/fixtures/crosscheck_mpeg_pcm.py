@@ -267,6 +267,10 @@ ONLY_IN_MINIMP3 = {
     "lame-truncated-last-frame.mp3": [[8064, 9216]],
     "main-data-before-header-frame.mp3": [[0, 2208]],
     "main-data-in-header-frame.mp3": [[0, 2208]],
+    # The same with 100 bytes of junk between the header frame and the audio: the first frames' main data begins in the header frame's unused bytes, which are not audio main
+    # data (the bit reservoir holds the frames' main data only; the header frame has none), so the analyzer withholds the frames that need them (as it does without the junk),
+    # and minimp3 decodes them from the header frame's bytes, skipping the junk, as it does in main-data-in-header-frame.mp3.
+    "main-data-in-header-frame-after-junk.mp3": [[0, 2208]],
     # LAME 3.20 to 3.70 (Rarewares' Windows builds) end every stream with a frame cut short (the finding mpeg-audio.frame-truncated, which each of these manifests lists):
     # the analyzer decodes whole frames only, as in truncated-last-frame.mp3, and minimp3 outputs the last frame's 1,152 samples.
     "external-lame320w-cbr.mp3": [[88704, 89856]],
