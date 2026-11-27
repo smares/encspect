@@ -25,8 +25,9 @@ internal sealed class FrameDecoder : IFrameDecoder
     private const int NoiseUnits = 3;
     private const int LongTransformUnits = 22;
     // Per output sample of the SBR stage (the 64-band analysis and synthesis, the high band's generation and adjustment, and parametric stereo's hybrid bank, decorrelator and mixing
-    // for the second channel): measured with DecoderWorkTests (the HE-AAC cases), where the stage takes about 4 times what the core's stages charge in time per unit at 60.
-    private const int SbrUnits = 220;
+    // for the second channel): measured with DecoderWorkTests (the HE-AAC cases). At 220 they ran at 1.4 to 1.8 times the FLAC reference's time per unit on Linux x64 and
+    // the envelopes case at 2.18 on macOS Intel (the nightly run of 2026-11-27); at 400 they run near the AAC LC cases.
+    private const int SbrUnits = 400;
     private const int ShortTransformUnits = 16;
 
     private readonly DecodeContext _context;
