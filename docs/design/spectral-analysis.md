@@ -63,7 +63,7 @@ Status: approved by the project lead on 2026-10-26 with every recommendation of 
 | True peak | BS.1770 Annex 2 | 23.1 ns (12.5 ns in the x86-64-v3 build; first prototype) | synthetic overs, libebur128 and FFmpeg's ebur128 with their tolerances | 5 |
 | Dynamic range | EBU loudness range covers it | none beyond loudness | as loudness | 5 |
 | Upsampling | the edge of the content below Nyquist | none beyond the spectrum | needs a bandwidth figure the step finder does not give (see [Spectral cutoff](#spectral-cutoff)) | later |
-| Mid/side spectra, holes, replicated bands | lossy coders' finer marks | mid/side from the complex bins, no further FFT (**estimate**: about 1 ns) | needs fixtures that show each mark | later |
+| Mid/side spectra, holes, replicated bands | lossy coders' finer marks | mid/side from the complex bins, no further FFT (**estimate**: about 1 ns) | needs fixtures that show each mark | 7 (mid/side, holes), 9 (replicated bands) |
 
 - **Why the spectrum first:** it is the prime use case, it needs the FFT, the grids and the determinism rules that everything else reuses, and it is where the risks are (cost, determinism, wording).
 - **Why the levels second and small:** they are exact on integer samples, so their fixtures are exact too, and they cost almost nothing; they could also join step 1 (decision 1).
@@ -1917,3 +1917,180 @@ The measurement through the analyzer's own decoders and the numpy prototype of t
   | TwoLAME 0.4.0 `-m j -b 192`, uncorrelated channels / side 12 dB under | 11,025 / 10,810 Hz | 11,025 Hz over 77 frames | 0 / -215 Hz |
   | opusenc 0.2 `--bitrate 24`, uncorrelated channels / side 12 dB under | 9,422 / 7,688 Hz | 8,000 Hz over 101 units | +1,422 / -312 Hz |
 - **FAAC** (`faac_tool.py`, 1.40.0 and 2.2.0 built from their pinned commits) was tried on the same two sources at 64 kbit/s, decoded by FFmpeg 6.1.1 (the AAC decoder is [0.5](../plan.md#05-aac-and-wma)'s). FAAC 1.40.0 states an "Intensity Stereo Bound" of 689 Hz in all 88 frames of both files. On the side-12 dB source its decode reads 85 % or more from 431 Hz to 11,886 Hz, in 30 of 42 frames with signal (a start 258 Hz under the stated bound, with the stated median 689 Hz over 88 frames): the AAC case of a stated bound with a start near it that S26 asked for, though the source itself reads none (79.3 % at the top band), so the decode is more coherent than the source (the committed `aac/faac-1.40-pink-side-12-db-adts`, measured through an FFmpeg decode, which is not committed, until the AAC decoder exists). On the uncorrelated source the decode reads none (the top band reads 1.1 %), with the same stated bound. FAAC 2.2.0 (HE-AAC) shows none on either source (top bands of 0.2 and 3.2 %) and states 2,067 Hz in two and three units. FFmpeg's `aac` shows none with and without noise substitution (top bands of 14.7 % and 0.0 %). The two FAAC 1.40.0 streams are committed (`aac/faac-1.40-pink-equal-adts`, `aac/faac-1.40-pink-side-12-db-adts`, with manifests and goldens).
+
+## Step 9: replicated bands
+
+Status: signed off by the lead, 2026-11-26, every decision as recommended (S27 to S35, numbered after step 8's S18 to S26). It designs the measurement of item 2 of [plan.md, 0.5](../plan.md#05-aac-and-wma), which the lead split from the HE-AAC pull request on 2026-11-26: HE-AAC merges without it, and this measurement follows as a pull request of its own once this design is signed off (decision S10 put it into 0.5 with the HE-AAC decoder, whose fixtures show it). Host code in the measurer, on the combined spectrum's rows (`StreamMeasurer.ProcessFrame`); no parser, decoder or session change, and no finding about the audio (decision 6). What the parsers could state about the same mechanisms (the SBR patch layout) is a coding figure, kept apart ([below](#beside-the-coded-data)).
+
+- **Where the numbers come from:** a throwaway prototype of this draft (numpy, its own FFT and the method below, not committed; the script and its output are in the private notes of 2026-11-26), run on:
+  - the committed HE-AAC files that hold content above the SBR start: ten of `aac/sample-kit` (qaac 3.07, Winamp's aacPlus 1.3 and Fraunhofer encoders, neroAacEnc 1.5.4.0, iTunes 12.13, Nero Burning ROM; the sample kit's synthetic 10 s `music-44k-stereo.wav`) and `aac/apple-he-m4a-cbr-st44`; the stated SBR start is the "Start Frequency" node of each file's golden report;
+  - counterparts without replication: AAC LC (`external-nero-rom-aac-cbr128`, `external-itunes-aac-lc-128-tagged`), MP3 (`external-itunes-mp3-cbr128-joint`, and `external-nero-rom-mp3pro-cbr64`, whose SBR part FFmpeg does not decode), and the step 1 files `measurement/lossy-lame-b64`, `-oggenc-q2`, `-aac-48k` and `-opus-48k`;
+  - Opus: `ogg/external-opusenc-24-mono`, `-24-pink-equal`, `-hard-cbr`, `-96` and `-speech`;
+  - E-AC-3 with spectral extension: the committed `ac3/derived-ffmpeg-eac3-mono-48k-spx-delta` (11 frames), and `csi_miami_stereo_128_spx.eac3` (Dolby's encoder, 20.9 s), which `check_eac3_samples.py` downloads in CI and which is not committed;
+  - synthetic 4 s inputs at 44.1 kHz: a sawtooth at 220 Hz, a sawtooth gliding up one octave, white noise, and white noise whose 3 to 8 kHz is copied 5 kHz up in each block of 2,048 samples (FFT domain, the same shift in every block);
+  - every lossy file decoded by FFmpeg 6.1.1 as a black box (the analyzer's HE-AAC decoder is on its branch). No real music was among the inputs.
+- **Examples of text** below show the format; their numbers are the prototype's.
+
+### What a replicated band is
+
+- **SBR** (ISO/IEC 14496-3 4.6.18, as the HE-AAC decoder cites it): the decoder splits the core's output into 32 QMF bands, builds the high band from the crossover band kx up by copying low bands up patch by patch (4.6.18.6.3), filters each copied band with the inverse filter of its noise floor band (4.6.18.6), scales it to the transmitted envelope, adds noise and sinusoids (4.6.18.7) and synthesizes 64 bands at twice the core's rate.
+  - A patch copies QMF band k − s into band k. In the analyzer's decoder (`SbrLayout`, after libxaac) the stride s is even, so the offset is a multiple of fs / 64 at the output rate: 689 Hz at 44.1 kHz, 16 rows of the spectrum (a row is fs / 1,024).
+  - In the decoded spectrum the detail inside the envelope above kx repeats the detail of the band s × fs / 128 lower, within each SBR frame, under a smooth gain, flattened in part by the inverse filter and diluted by the added noise and sinusoids.
+- **E-AC-3's spectral extension** (A/52:2018 Annex E 3.6.4, as [ac3.md](../formats/ac3.md#decoding) and the decoder cite it): the transform coefficients from the copy start up to the begin bin are copied above the begin bin band by band, wrapping back to the copy start when the copy region runs out; each band is blended with noise by its position (the higher the band, the more noise) and scaled by its coordinate.
+  - The offset is the begin bin minus the copy start in bins of fs / 512 (93.75 Hz at 48 kHz, 2 rows), larger after each wrap, so the bands of one block can have two or three offsets.
+- **CELT's folding** (RFC 6716 5.3.4.3: a band without at least half a bit per sample gets no bits "and folding is used instead"; the decoding is `quant_partition` of libopus 1.5.2 `celt/bands.c`, BSD-3-Clause, which the analyzer's `CeltBands` follows): a band without pulses is filled with the normalized coefficients of the bins just under the folding band's start, plus or minus 1/256 per bin, renormalized and scaled by the band's coded energy.
+  - Without a folding source (the lowest bands, or `spread` aggressive on long blocks without a time-frequency change) the band is filled with noise from the generator instead, or left empty.
+  - The offset is set per band and frame by the allocation (`lowband_offset`), in bins of fs / 1,920 at 20 ms (25 Hz at 48 kHz), so it can change from band to band and frame to frame.
+- **What the three share:** within a coding frame, the fine structure of a band (its detail under the smooth envelope) is a copy of the fine structure of a lower band at a fixed offset in Hz. A natural spectrum has no such relation, except a periodic one: a harmonic sound repeats its fine structure every f0, at every multiple of it.
+
+### What the figure can and cannot show
+
+- **It shows** a stretch of frequencies near the top of the content whose rows, frame after frame, match the rows a fixed offset lower, with the offsets, and the share of frames that show it.
+- **It cannot tell the mechanisms apart,** nor name an encoder: SBR, spectral extension and folding read alike, and so would any process that copies spectrum upward. The article says which coders do it and what each looks like in the committed fixtures.
+- **Periodic content matches too:** in the prototype a sawtooth at a constant 220 Hz matches at every multiple of 220 Hz in every band (100 % of the frames). The periodicity check ([The figure](#the-figure-2)) rejects such bands, and with them a replicated band whose source is a sustained harmonic sound, which then reads as not found.
+- **What lowers the match:** the noise SBR adds and its inverse filter, spectral extension's blend (stronger toward the top: Dolby's `csi_miami_stereo_128_spx.eac3` reads 50 to 52 %, at the threshold), CELT offsets that change from frame to frame, and frames whose band holds little (they count as frames with signal that do not match).
+- **Where the content is too short or too low:** `aac/fdkaac-he` and `aac/faac-2.2-he` (1.5 s) hold nothing above 1 kHz louder than -106 dB, so no band has signal; their streams read "none found".
+
+### What is computed
+
+- **The basis** (decision S27): the combined spectrum's 512 rows of each frame (fs / 1,024 each: 43.1 Hz at 44.1 kHz), which every stream with a spectrum already has. No further FFT, no bins, no per-channel work: the patches of SBR and spectral extension are the same in every channel, and the combined spectrum keeps the pattern. In the prototype, bins (10.8 Hz) correlated less than rows over the same bands (qaac's first patch: 0.49 to 0.56 against 0.53 to 0.67; Dolby's file: 0.31 to 0.40 against 0.35 to 0.51), at about 16 times the work.
+- **Which frames** (decision S30): every second frame of the spectrum (an even hop index from the stream's origin, so the frames do not overlap and the choice depends on stream positions alone), with the spectrum's gaps and withheld spans left out as there.
+- **The fine structure:** per frame, x[r] = ln P[r] (`DetMath.Ln`; a row under 10^-30 counts as 10^-30) minus the mean of x over the rows within 150 Hz on each side (H rows, H = round(150 / row width), at least 2), from row 0 to 511.
+- **Bands and shifts:** a band is W rows (1 kHz, as step 8: 23 rows at 44.1 kHz, 21 at 48 kHz), starting on a grid of G = max(1, W / 4) rows from 1 kHz up; a shift d is every whole number of rows from round(150 Hz / row width) up to the band's start minus 1 (the source band starts at row 1 or higher).
+- **The frame test** (decision S28): per frame, band b and shift d, the sums S_tt, S_ss and S_ts of the target's rows, the source's rows and their products; the band **matches** at d when S_ts > 0 and 4 S_ts² ≥ S_tt S_ss (a correlation of at least 0.5), both bands with signal. The products are summed through prefix sums of x[r] x[r − d] per shift and of x² (one pass per shift), so a band costs three subtractions.
+- **Signal:** a band has signal in a frame when the sum of its rows is at least W × 10^-10 (-100 dB of a full-scale sine, in the rows' own scale). The prototype also tried a threshold relative to each band's loudest frames (its 99th percentile minus 30 dB): the HE-AAC shares rose by about 0.1 and so did the counterparts' content matches (to 0.41), so the absolute floor alone keeps the wider margin.
+- **Counters over the stream:** per grid band and shift, the frames with signal in both bands and the frames that match (two `int` per pair). Nothing else is kept per pair: the periodicity check reads the match counts (below).
+
+### The figure
+
+- **The band's shift:** at the end, each grid band's shift is the one of at least 1 kHz with the most matching frames (ties to the smaller shift); its **share** is those frames over the frames with signal at that shift, in tenths of a percent.
+- **The periodicity check** (decision S29): a band is **periodic** where some shift under 1 kHz matches in at least half as many frames as its shift does. Periodic bands do not pass.
+  - In the prototype (with the frames' mean correlation in place of the counts, to be confirmed with the counts in the build): the constant sawtooth reads 0.90 to 0.98 under 1 kHz in every band, the gliding one 0.33 to 0.85, every passing HE-AAC band at most 0.25.
+- **A band passes** where it has at least 10 frames with signal, its share is at least 50 %, and it is not periodic.
+- **Stretches:** the rows covered by passing bands, joined across gaps shorter than half a band (W / 2 rows), which bridges the edge between two patches: there the bands straddle two shifts, and the QMF bands overlap by about half a band, so the bands within it fail (Winamp's aacPlus HE v2: a gap from 12,016 to 12,317 Hz between offsets of 5,512 and 9,647 Hz).
+- **The range** is the holes' and the coherence's (see [As built: step 7, second change](#as-built-step-7-second-change)): up to the band ending at the combined spectrum's cutoff edge where found, else at the last row of its spectral bandwidth's content, else at row 505.
+- **Found** where the highest stretch ends within one band (W rows) of the range's top, is at least one band long, and the stream has at least 10 frames used. Its lower edge is the **start frequency**, its offsets are listed from low to high, with the stretch of each. Otherwise none found, with a reason:
+  - `notMatching`: the top band does not pass; the text gives its share and, where it is periodic, says so;
+  - `notAtTop`: stretches exist, but none reaches the top of the range (the prototype's `external-nero-rom-aac-mono-cbr32`: 3,919 to 8,355 Hz in two stretches, the range ending at 10,724 Hz);
+  - `tooFewFrames`, `noSignal` (no band has 10 frames with signal).
+- **Why the top:** every mechanism above fills the spectrum from a start up to the top of the coded content, and a match in the middle of the spectrum alone is more often content (the counterparts' best bands, at 2 to 3 kHz with offsets near 2 kHz, are the synthetic source's own pattern).
+- **Unit** (decision S33): frequencies and offsets in Hz (whole rows, rounded to whole hertz); shares in percent, tenths in the integers, as the holes' and the coherence's.
+- **Text,** after `Inter-Channel Coherence`, where the spectrum is searched:
+  - `Replicated Bands: from 9,518 to 20,413 Hz, matching the rows 6,202 and 11,025 Hz lower, in 53 to 90 % of the frames with signal`;
+  - `Replicated Bands: none found (the top band matches in 12.3 % of the frames with signal)`; `… none found (the top band is periodic)`; `… none found (from 3,919 to 8,355 Hz, below the top of the content)`;
+  - measured from the decoded audio, as the spectral cutoff is worded; no word that judges.
+
+### The prototype's table
+
+At the rules above (rows, every frame of the prototype's own framing, W / 4 grid, the absolute floor); "stated" is the "Start Frequency" node of the golden report:
+
+| Input | Frames | Stretches and offsets | Shares | Stated SBR start |
+| --- | --- | --- | --- | --- |
+| qaac 3.07 `--he -c 64` | 216 | 9,518 to 20,413 Hz: 6,202, then 11,025 Hz | 53 to 90 % | 9,647 Hz (QMF band 28) |
+| Winamp aacPlus 1.3, HE 64 kbit/s (ADTS) | 218 | 9,518 to 20,198 Hz: 6,202, 11,025 Hz | 62 to 88 % | 9,647 Hz |
+| Winamp aacPlus 1.3, HE v2 32 kbit/s | 214 | 6,503 to 12,016 Hz (5,512) and 12,317 to 16,107 Hz (9,647; one band 4,134), joined across 301 Hz | 50 to 77 % | 6,546 Hz |
+| Winamp's Fraunhofer encoder, HE v2 32 kbit/s | 215 | 6,503 to 16,107 Hz: 5,512, 9,647 Hz | 51 to 82 % | 6,546 Hz |
+| neroAacEnc 1.5.4.0, HE mono / HE v2 32 kbit/s | 215 / 216 | 8,656 to 16,107 Hz (6,891, 8,958) / 8,656 to 13,954 Hz (6,891), the range ending at 16,322 Hz | 50 to 75 % | 7,235 Hz |
+| iTunes 12.13 HE 48 kbit/s | 215 | 8,441 to 18,906 Hz: 8,269, 10,336 Hz | 50 to 87 % | 8,613 Hz |
+| Nero Burning ROM AAC 64 kbit/s (HE by the program's choice) | 215 | 9,518 to 16,322 Hz: 6,891 Hz | 53 to 89 % | 9,647 Hz |
+| Nero Burning ROM AAC mono 32 kbit/s | 215 | 3,919 to 6,202 and 7,364 to 8,355 Hz: 2,756 Hz; the range ends at 10,724 Hz | 51 to 52 % | 3,445 Hz |
+| Winamp aacPlus 1.3, HE mono 8 kbit/s (output 16 kHz) | 163 | 3,000 to 4,500 Hz (2,500) and 5,250 to 7,250 Hz (4,750), 750 Hz apart | 51 to 65 % | 2,875 Hz |
+| `aac/apple-he-m4a-cbr-st44` (1.2 s) | 22 | 9,518 to 20,413 Hz: 6,202, 11,025 Hz (one band 4,823) | 53 to 100 % | 9,647 Hz |
+| AAC LC, MP3, Vorbis, FFmpeg's `aac`, Opus at 48 kbit/s (the counterparts above) | 20 to 216 | none (best band 10 to 27 %) | | |
+| Opus `external-opusenc-24-mono` (tones and clicks, 16 kHz input) | 34 | 3,375 to 7,406 Hz: 1,969 to 2,062 Hz | 50 to 100 % | |
+| Opus `-hard-cbr` (64 kbit/s) / `-96` | 34 | 13,219 to 17,250 Hz, the range ending at 17,953 Hz (four offsets, 1,219 to 6,047) / 16,734 to 17,953 Hz (6,094, 11,953), the range ending at 19,594 Hz, so not at the top; lower stretches besides in both | 50 to 100 % | |
+| Opus `-24-pink-equal` (pink noise) and `-speech` | 45 / 34 | none (best 2 and 26 %) | | |
+| `csi_miami_stereo_128_spx.eac3` (downloaded) | 487 | 12,516 to 13,734 Hz: 10,125 Hz, the range ending at 14,672 Hz (found, at the threshold) | 50 to 52 % | spectral extension from bin 133 (12,469 Hz), copied from bin 25: 108 bins, 10,125 Hz |
+| `ac3/derived-ffmpeg-eac3-mono-48k-spx-delta` | 11 | 7,125 to 8,109 Hz (3,375), not at the top | 50 % | |
+| synthetic: copy 5 kHz up / white noise / sawtooth 220 Hz / glide | 85 | 7,795 to 13,092 Hz (4,996) / none / none (periodic) / none (periodic) | 87 to 100 % | |
+
+- **Against the stated start:** the start reads 43 to 172 Hz under the stated one in seven of the eleven HE-AAC files (within a grid step and the QMF bands' overlap), 1,421 Hz over it in both neroAacEnc 1.5.4.0 files (their first 1.4 kHz of SBR band do not pass; why is **unverified**), and the two mono files at low rates split into stretches. Dolby's E-AC-3 file reads 47 Hz over its begin frequency (12,469 Hz, the analyzer's own report of `spx_begin_subbnd`), and its offset equals the begin bin minus the copy start bin exactly.
+- **Every offset is an even number of QMF bands** of the output rate: 6,202 Hz is 18 bands of 344.5 Hz, 11,025 Hz 32, 5,512 Hz 16, 9,647 Hz 28, 6,891 Hz 20, 8,269 Hz 24; at 16 kHz output, 2,500 Hz is 20 bands of 125 Hz and 4,750 Hz 38. That is what `SbrLayout`'s even strides predict; the patch layout of each stream is not traced here.
+- **Opus:** the offsets of the 24 kbit/s mono file are near 2 kHz throughout; the higher-rate files show several offsets and stretches, as per-band folding sources predict. Not traced in the stream (**unverified**). Pink noise shows none: on noise-like input the encoder's spreading decision may choose `spread` aggressive, which turns folding into noise filling (**inference** from `quant_band`'s condition, not traced).
+
+### Beside the coded data
+
+- **Coding figures, not this measurement:** the parsers read what each mechanism states, and could report it per unit, as [coding-graphs.md](coding-graphs.md#the-survey) collects such figures:
+  - AAC: the SBR crossover (kx, from the header in force) and the patch layout (each patch's first band, width and offset, from the frequency tables as `SbrLayout` builds them, which the parser would then build itself);
+  - E-AC-3: spectral extension's copy start, begin and end frequencies per block (`spx_start_subbnd`, `spx_begin_subbnd`, `spx_end_subbnd`; "Coded Bandwidth" already uses the begin);
+  - Opus: the bands filled by folding and by noise per CELT frame (from the integers `CeltSyntax` stores).
+- **The comparison** with them (decision S32) would read as step 8's with the stated bound (S21): the measured start beside the stated median and its count, the difference in Hz, no finding.
+
+### What is not covered
+
+- **Formats not decoded yet:** mp3PRO's band replication (the time-boxed item after HE-AAC; FFmpeg decodes only the MP3 core, and `external-nero-rom-mp3pro-cbr64` reads none), USAC's SBR and the ER AAC tools (items 3 and 4 of 0.5). Their decoded audio is measured the same way once they decode.
+- **Other tools that fill bands:** noise substitution (AAC, Musepack, WMA) and spectral extension's noise part fill bands with noise, which matches nothing; parametric stereo and intensity stereo derive channels, not bands (the coherence of [Step 8](#step-8-inter-channel-coherence) measures those).
+- **Offsets that change faster than a frame** of 85 to 170 ms, and copies narrower than a band (1 kHz), match too little to pass; the article says so.
+- **Each channel apart** (decision S27): a stream whose channels are replicated from different offsets shows only what the combined spectrum keeps.
+
+### Cost, memory and determinism
+
+- **Work (estimates; `MeasurementWorkTests` sets them):** per frame used, with R ≤ 506 rows in reach:
+  - the logarithms and the envelope: 512 `DetMath.Ln` and the moving sums;
+  - the products and prefix sums of every shift: about R² ≈ 256,000 multiplies and adds;
+  - the tests of every grid band and shift: about R² / (2G) ≈ 26,000 pairs at 44.1 kHz (G = 5), ten operations each, and one or two counter increments;
+  - about 520,000 operations a frame used: on every second frame (4,096 samples at 44.1 kHz) about 125 a sample of the stream, 35 to 60 ns at 0.3 to 0.5 ns an operation (**estimate**), so a `ReplicationWeight` of about 60 to 100 units per sample of the stream (not per channel), charged with the block as the pair's work is. The whole spectrum of a stereo stream costs about 27 ns a sample of the stream; this is about 1.3 to 2.2 times that, and 3 to 6 times the pair's work.
+  - **Cheaper, if the build reads above 60 units** (decision S30): candidate shifts per frame from the frame's own autocorrelation of x over all rows (one transform of 1,024 points and its inverse), and the band tests at the eight highest only: about 75,000 operations a frame, but a frame whose content peaks elsewhere can miss the replication's shift (**unverified**: not prototyped).
+- **Memory** per stream with a spectrum: the two counters per grid band and shift, 2 × (512 / G) × 506 × 4 bytes: about 0.4 MB at 44.1 and 48 kHz (W = 23 and 21, G = 5), up to 2.1 MB where a band is under 4 rows wide (G = 1: 192 kHz and above); the frame's x, envelope and prefix rows, about 20 KiB. CD stereo goes from about 5.5 to 5.9 MiB; the 32-channel stream at 32,768 points from about 27.8 to 29.9 MiB, and two of the largest still fit the bound of 64 MiB (59.8 MiB). `StreamMeasurer.EstimateBytes` adds it, and the 65,535-channel header test holds the estimate.
+- **Determinism:**
+  - `DetMath.Ln`, no platform logarithm; the moving sums, the prefix sums and the products in row order, products formed as written and never fused, `Vector128` element-wise at most (the products of one shift);
+  - the frame test compares products (`4 S_ts² ≥ S_tt S_ss`), the signal test a sum against a constant; nothing is divided until the shares, which are integers formed as `(2000 k + n) / (2 n)` in tenths, halves up;
+  - the inputs are the combined rows, already cleaned of non-finite values; there is no recursive state, so nothing to flush;
+  - `MeasurementDeterminismTests` keeps every constant and adds hashes of x, the counters and the figure for its synthetic signals, equal across two block sizes.
+- **Cancellation, the budget's stop and the exception boundary** are unchanged: the work runs in `ProcessFrame` and is charged with the block.
+
+### Model, goldens, CSV, GUI, docs
+
+- **The kind** (decision S31): `MeasurementKinds.ReplicatedBands` (`--measure replicated-bands`), in `MeasurementSets.All`, so a caller can leave out its cost; asked alone it runs the spectrum's transform without reporting the spectrum's figures.
+- **The record:** `SpectrumFigures.ReplicatedBands` (`ReplicatedBandsFigures`, null where the kind is not measured): `FramesUsed`, `IsSearched`, `IsFound`, `Reason`, `FromFrequency`, `ToFrequency`, the stretches (from, to, offset, lowest and highest share), the top band's share and whether it is periodic, and per grid band its start row, offset, share and periodic flag (at most 512 entries).
+- **JSON:** `spectrum.replicatedBands`, an object or `null`; frequencies and offsets as `{ "value", "unit": "Hz" }`, shares with `unit` and `valuesPerUnit`.
+- **Text:** as above. **CSV (decision S33):** `Replicated Bands From (Hz)` after `Inter-Channel Coherence From (Hz)`, empty where none is found.
+- **GUI (decision S33):** the Figures line, and a "Replicated Bands" form of the Spectrum panel: each grid band's share from 0 to 100 % at its offset (the offset in the hover text), the start as a dashed line.
+- **The model** (`measurement_model.py`) computes the figure in its own code, as the prototype did; the tests hold the analyzer to it: frequencies and offsets exact, shares within one tenth.
+- **Goldens:** every measurement golden gains `spectrum.replicatedBands`; `golden_additions.py` lists it, and no existing figure may change. One regeneration.
+- **Articles,** under 400 words, from the specifications, the fixtures and the model:
+  - new `replicated-bands`: the fine structure, the match and its threshold, the offsets, the periodicity check and what it leaves out, the top of the content, what lowers the match, and the observations the committed fixtures back, with encoders and settings;
+  - `sbr` and `eac3-spectral-extension` link it through `related`; CELT's folding has no article yet, and one (`celt-folding`, from RFC 6716 and libopus as read) comes with it, as every concept a format brings has one.
+- **Docs:** [cli.md](../cli.md), [gui.md](../gui.md), [development.md](../development.md) (fixtures, model), the "What is reported" of [aac.md](../formats/aac.md), [ac3.md](../formats/ac3.md) and [opus.md](../formats/opus.md), an "As built: step 9" section here, and [plan.md](../plan.md) marks the item.
+
+### Fixtures and tests
+
+- **Committed, lossy, measured through the analyzer's decoders** (each gains a `.measure.json` golden where it has none): the eleven HE-AAC files of the table, `aac/fdkaac-he` and `aac/faac-2.2-he` (none found, no signal above 1 kHz), the AAC LC and MP3 counterparts, and the five Opus files. `ac3/derived-ffmpeg-eac3-mono-48k-spx-delta` and the hand-built `eac3-signal-spx` files have 11 and 8 frames, 6 and 4 used: too few.
+- **Committed, lossless:** the step 1 and step 7 `measurement/lossy-*` files (none expected but where the prototype says otherwise).
+- **To make, external** (`make_external_measurement_fixtures.py`, 4 s of the step 7 stereo source and of a harmonic source whose pitch changes every 0.5 s; each lossy stream committed under its format's folder, and its decode to FLAC under `measurement/`, decoded by FFmpeg as a black box, which is the use case of a lossless file made from a lossy one):
+  - **HE-AAC:** FDK AAC through `fdk_tool.py` (HE-AAC at 48 kbit/s and HE-AAC v2 at 32 kbit/s) and FAAC 2.2 HE through `faac_tool.py`, with their stated starts;
+  - **Opus:** opusenc at 16 and 32 kbit/s on both sources, for folding on content that is not pure noise.
+- **E-AC-3 (decision S35):** no committed file comes from an encoder that writes spectral extension (the two FFmpeg encodes checked, `external-ffmpeg-eac3-stereo-96k` and `-mono-48k`, state "Blocks With Spectral Extension" 0 of 96), and the hand-built ones are 8 to 11 frames of decoder test patterns. `make_ac3_signal_fixtures.py` gains a 2 s file with noise-like mantissas and one spectral extension layout throughout (a found case by construction), and `csi_miami_stereo_128_spx.eac3` is measured in `check_eac3_samples.py`'s CI run (the weak case at the threshold), not committed.
+- **To make, synthetic** (`make_measurement_fixtures.py`, exact by construction, 16-bit TPDF dither): white noise copied 5 kHz up (found from 8 kHz); two patches with two offsets (found, two stretches joined); a patch narrower than a band (its gap); the copy blended with noise at 50 % (lower shares); the copy with an offset that changes every frame (none); white noise (none); a constant sawtooth (periodic); a glide (periodic).
+- **Unit tests** (scripted decoders, as `MeasurementLevelsTests`): each reason, the ties of the shift, the joining of gaps, the 10-frame minima, the even-hop frames whatever the cutting into blocks, a stream of fewer rows in reach (8 kHz), and the kind asked alone.
+- **Work and memory:** `MeasurementWorkTests` at every FFT size; `MemoryTests` holds the estimate.
+
+### Pull request
+
+- **One change, right after HE-AAC's** ([plan.md](../plan.md#05-aac-and-wma), the lead's split of 2026-11-26): the figure, the kind, the model, the fixtures, one regeneration of the goldens, the articles and the docs, with the checks of [CLAUDE.md](../../CLAUDE.md) for the host and the measurement tests, and the AAC, AC-3 and Opus fixture tests for the new goldens. The coding figures of [Beside the coded data](#beside-the-coded-data) are not in it (decision S32).
+
+### Decisions for the lead
+
+The lead approved the recommendation of each decision on 2026-11-26: S27(a) to S35(a). The options are kept for the record.
+
+- **S27. The basis.** (a) Recommended: the combined spectrum's rows, every channel together: no new transform, and in the prototype the rows matched better than bins. (b) The pair's bins (10.8 Hz): finer offsets for CELT's 25 Hz bins, but about 16 times the work, the pair only, and lower per-frame correlation in the prototype. (c) Each channel's rows: one counter set per channel (0.7 MB each) for the case where channels are replicated differently, which no fixture shows.
+- **S28. The frame test and the share.** (a) Recommended: a correlation of at least 0.5 in a frame, in at least 50 % of the frames with signal, signal being -100 dB per band: the counterparts' best bands read 10 to 27 %, the HE-AAC stretches 50 to 100 %, but the lowest passing bands sit at 50 to 53 %, so the fixtures fix the thresholds, as the cutoff's were. (b) 40 %: Dolby's spectral extension file and more of the first and last bands pass, nearer the counterparts' 27 %. (c) The stream's correlation sums at the shift instead of the share of frames: one number per band, but frames with a peaky fine structure weigh more (in the prototype, the source's 15 kHz burst, 3 % of its length, made two of qaac's bands read periodic: **inference**).
+- **S29. The periodicity check.** (a) Recommended: a band is periodic where a shift under 1 kHz matches in at least half as many frames as its own, and the reported shift is at least 1 kHz: rejects the sawtooth and the glide, and costs nothing beyond the counters. (b) No check: a sustained harmonic sound reads as replicated over its whole range. (c) A check at the half and the double of the shift: catches periods above 1 kHz too, but a copy whose source is itself periodic is rejected the same, and the double is often out of range.
+- **S30. The method and its frames.** (a) Recommended: every shift tested on every second frame (non-overlapping), about 60 to 100 units a sample of the stream (**estimate**); if the build measures more than 60, the pull request comes back with (c). (b) Every frame: about twice that, for frames that overlap by half and so add little. (c) Candidate shifts per frame from an autocorrelation (about a sixth of the work, a new inverse transform in `FftPlan`, and the risk of a missed shift).
+- **S31. Its own kind.** (a) Recommended: `replicated-bands`, in the default set, so its cost can be left out as true peak's can. (b) Part of `spectrum`, as the mid/side spectra and the coherence are: simpler, but its cost is above theirs.
+- **S32. The coded data.** (a) Recommended: this pull request measures only; the coding figures (SBR crossover and patch layout, spectral extension's frequencies, CELT's folded bands) go into the survey of [coding-graphs.md](coding-graphs.md#the-survey) as queued rows of 0.5 item 2's follow-ups, and the comparison as S21's comes with the first of them. (b) Bring the SBR crossover series and the comparison into this pull request: the start's check on every HE-AAC fixture at once, but a parser change in a measurement change, which the lead's split keeps apart.
+- **S33. Output.** (a) Recommended: the Figures line, `Replicated Bands From (Hz)` after `Inter-Channel Coherence From (Hz)`, and the "Replicated Bands" form of the Spectrum panel. (b) The Figures line and the JSON only.
+- **S34. The name.** (a) Recommended: "replicated bands" (`replicated-bands`), the plan's and S10's term, which names what is measured, not a coder. (b) "Spectral band replication": SBR's own name, wrong for spectral extension and folding. (c) "Bandwidth extension": the family's name in the literature, but it reads as a claim about how the file was made.
+- **S35. E-AC-3 fixtures.** (a) Recommended: a hand-built 2 s spectral extension file (found by construction) and Dolby's downloaded file measured in CI (the weak case), since no free encoder writes spectral extension. (b) The hand-built file only. (c) Leave E-AC-3 to a later fixture from a real encoder: the article then states spectral extension from the specification alone.
+
+### Unverified claims and estimates
+
+- The prototype ran on synthetic sources only (the sample kit's "music" is synthetic too); how music behaves (vibrato, reverberation, dense harmonics) and so the margins of S28 and S29 are **unverified** until fixtures with music are measured.
+- The cost and memory are estimates from the operation counts; the candidate method of S30 (c) is not prototyped.
+- Why neroAacEnc 1.5.4.0's first 1.4 kHz of SBR band do not pass, how libopus decides folding on the Opus fixtures, and the patch layouts behind the measured offsets are not traced in the streams.
+- The prototype decoded with FFmpeg; the analyzer's HE-AAC decoder agrees with it to 0.0 to 1.3 % RMS for SBR ([aac.md](../formats/aac.md#decoding) on the HE-AAC branch), which should not move a correlation test, but the build measures through the analyzer's own decoders.
+
+### Sources for this step
+
+- ISO/IEC 14496-3 4.6.18 (4.6.18.6, 4.6.18.6.3, 4.6.18.7) as the HE-AAC decoder cites them, and its `SbrLayout` (after libxaac, Apache 2.0); A/52:2018 Annex E 3.6.4 as [ac3.md](../formats/ac3.md) and `Eac3Substream.SpectralExtension` cite and implement it; RFC 6716 4.3.4 and 5.3.4.3 (read for this draft) and libopus 1.5.2 `celt/bands.c` (`quant_partition`, `quant_band`) through the analyzer's `CeltBands` and `CeltSyntax`.
+- The tools of the prototype: FFmpeg 6.1.1 (Ubuntu's 6.1.1-3ubuntu5) as a decoder, numpy 2.5.3; the golden reports' "Start Frequency" nodes for the stated SBR starts; `tests/conformance/eac3-samples.json` for the Dolby file's address and SHA-256.
