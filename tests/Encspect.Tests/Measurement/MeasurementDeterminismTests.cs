@@ -1025,7 +1025,7 @@ public class MeasurementDeterminismTests
     private const string Rows32768Hash = "2dc1e2f59ef7e098f0fe240d9e135e79620e30793f6bacbfaaf2986babec6236";
     private const string MidSideRowsHash = "84882138a074dfcaedf5056831c9f6d39eae5e8f887877a60f3a25ca7339645a";
     private const string CrossRowsHash = "c99f9dc1f1fb9df797acbfcd1c1614735a2f5294cfab80a1a2848b7448c65940";
-    private const string NyquistEdgeHash = "";
+    private const string NyquistEdgeHash = "5c9fbcc6af8d87d6131d7a02b3863bf26da8fd9e8ac6e335f6a175ea247a6607";
 
     private const string CoherenceHash = "33f110c129ecacb177c818b58ce7fd9332de770145a9649a73d678d32b883d2c/f2e131e46ea55a82cad02f675f69f13e0e4f5e787a2de17cb937b05b47c6298e|a64728f9bdbb33a9b809460e8b3ad664615e5042f48453e0fe00b96bec42d94a";
     private const string MidSideCountersHash = "a8c32911289b3666eaa26a92b7c4af09a801486b034ab251eaeff902b8e2e39a|36eda7f42111bbb6cef5ed2c64ce6dd58a584515d14a64da4f4085a4bc72c971";
