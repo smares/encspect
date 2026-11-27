@@ -128,7 +128,7 @@ public class MeasurementReplicatedBandsTests
         ReplicatedBandsFigures figures = Measure(samples);
 
         Assert.False(figures.IsFound, Describe(figures));
-        Assert.Equal(ReplicatedBandsReason.NoSignal, figures.Reason);
+        Assert.Equal(ReplicatedBandsReason.Steady, figures.Reason);
         Assert.All(figures.Bands, b => Assert.InRange(b.FramesWithSignal, 0, 1));
     }
 
@@ -173,7 +173,7 @@ public class MeasurementReplicatedBandsTests
 
         // Every block repeats the one before, so the bands count in the first frame only (the amendment to S28); a pitch that moves is the periodic case (the `synthetic-replicated-glide` fixture).
         Assert.False(figures.IsFound);
-        Assert.Equal(ReplicatedBandsReason.NoSignal, figures.Reason);
+        Assert.Equal(ReplicatedBandsReason.Steady, figures.Reason);
     }
 
     [Fact]
@@ -187,6 +187,18 @@ public class MeasurementReplicatedBandsTests
         Assert.Equal(ReplicatedBandsReason.TooFewFrames, nine.Reason);
         Assert.Equal(10, ten.FramesUsed);
         Assert.NotEqual(ReplicatedBandsReason.TooFewFrames, ten.Reason);
+    }
+
+    // F1 of the fix review: a band passes with at least 20 counted frames, so that a short stream does not pass by chance among the offsets tested.
+    [Fact]
+    public void ABandNeedsTwentyCountedFramesToPass()
+    {
+        ReplicatedBandsFigures fifteen = Measure(CopiedSignal(15));
+        ReplicatedBandsFigures thirty = Measure(CopiedSignal(30));
+
+        Assert.False(fifteen.IsFound, Describe(fifteen));
+        Assert.All(fifteen.Bands, b => Assert.False(b.Passes));
+        Assert.True(thirty.IsFound, Describe(thirty));
     }
 
     [Fact]

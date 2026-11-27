@@ -39,6 +39,9 @@ internal sealed class ReplicatedBandsCounters
 
     public readonly int[] Matches;
 
+    // Per band, the frames in which it had signal, before the gate (the reason of a steady signal is told from no signal by them).
+    public readonly int[] SignalFrames;
+
     public ReplicatedBandsCounters(CutoffGeometry geometry)
     {
         _bandRows = RowsOf(geometry);
@@ -49,6 +52,7 @@ internal sealed class ReplicatedBandsCounters
         BandCount = CountBands(geometry);
         Frames = new int[BandCount * Rows];
         Matches = new int[BandCount * Rows];
+        SignalFrames = new int[BandCount];
         _targetSquares = new double[BandCount];
         _targetOk = new bool[BandCount];
         _previousOk = new bool[BandCount];
@@ -154,6 +158,7 @@ internal sealed class ReplicatedBandsCounters
             }
 
             previousOk[k] = hadSignal;
+            SignalFrames[k] += hadSignal ? 1 : 0;
         }
 
         Array.Copy(fine, previous, fine.Length);
@@ -276,7 +281,7 @@ internal static class ReplicatedBandsFinder
 
             // A band is periodic where it would pass but an offset under 1 kHz matches in at least half as many frames as its own offset does (on noise, where nothing would pass,
             // such an offset matches by chance as often as any, and the band is not called periodic).
-            bool wouldPass = n >= MeasurementLimits.MinimumReplicatedBandsFrames && 2L * bestMatches >= n;
+            bool wouldPass = n >= MeasurementLimits.MinimumReplicatedBandFramesCounted && 2L * bestMatches >= n;
             bool isPeriodic = false;
             if (wouldPass)
             {
@@ -336,7 +341,8 @@ internal static class ReplicatedBandsFinder
 
         if (maxFrames < MeasurementLimits.MinimumReplicatedBandsFrames)
         {
-            return figures with { Reason = ReplicatedBandsReason.NoSignal, RangeFrequency = geometry.Hertz(last + 1) };
+            ReplicatedBandsReason why = counters.SignalFrames.Max() < MeasurementLimits.MinimumReplicatedBandsFrames ? ReplicatedBandsReason.NoSignal : ReplicatedBandsReason.Steady;
+            return figures with { Reason = why, RangeFrequency = geometry.Hertz(last + 1) };
         }
 
         ReplicatedBand top = bands[topBand];

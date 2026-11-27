@@ -1532,6 +1532,7 @@ public static class ReportJsonWriter
                 ReplicatedBandsReason.TooFewFrames => "tooFewFrames",
                 ReplicatedBandsReason.TooShort => "tooShort",
                 ReplicatedBandsReason.NoSignal => "noSignal",
+                ReplicatedBandsReason.Steady => "steady",
                 ReplicatedBandsReason.NotAtTop => "notAtTop",
                 _ => "notMatching",
             });

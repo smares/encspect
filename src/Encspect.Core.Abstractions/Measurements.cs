@@ -146,6 +146,10 @@ public static class MeasurementLimits
 
     public const int MinimumReplicatedBandsFrames = 10;
 
+    // A band passes only with at least this many frames counted for it (with signal and new, see the gate): the gate leaves a short stream with few, and 5 matches among about 250 offsets
+    // pass by chance at 50 % (a SILK-only Opus file read found with 10).
+    public const int MinimumReplicatedBandFramesCounted = 20;
+
     // A band of the replicated bands is the rows of 1 kHz, but never fewer than this (the 48 kHz band): on fewer rows a correlation of 1/2 happens by chance among the many offsets
     // tested, which the share of frames does not tell from a copy (docs/design/spectral-analysis.md, Step 9, the amendment to S27).
     public const int MinimumReplicatedBandRows = 21;
@@ -370,11 +374,14 @@ public enum ReplicatedBandsReason
     // Fewer frames used than MeasurementLimits.MinimumReplicatedBandsFrames.
     TooFewFrames,
 
-    // No band with an offset of 1 kHz or more to test ends in the range.
+    // No band with an offset of at least its width to test ends in the range.
     TooShort,
 
-    // No band has MeasurementLimits.MinimumReplicatedBandsFrames frames with signal at an offset of 1 kHz or more.
+    // No band has MeasurementLimits.MinimumReplicatedBandsFrames frames with signal.
     NoSignal,
+
+    // Bands have signal in that many frames, but each repeats the previous frame used (a steady sound), so fewer frames count for a band.
+    Steady,
 }
 
 // One grid band of the replicated-bands search: the band that starts at StartRow (W rows, 1 kHz), the offset of 1 kHz or more at which it matches in the
@@ -383,7 +390,7 @@ public sealed record ReplicatedBand
 {
     public int StartRow { get; init; }
 
-    // The offset in whole hertz; 0 where the band has no offset of 1 kHz or more to test.
+    // The offset in whole hertz (at least the band's width, 1 kHz or more); 0 where the band has no such offset to test.
     public int Offset { get; init; }
 
     public int ShareTenths { get; init; }

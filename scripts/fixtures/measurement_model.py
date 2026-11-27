@@ -307,6 +307,7 @@ def find_coherence(sum_left, sum_right, sum_re, sum_im, counters, frames, cutoff
 
 
 REPLICATED_MINIMUM_FRAMES = 10
+REPLICATED_MINIMUM_COUNTED_FRAMES = 20
 REPLICATED_SIGNAL_FLOOR = 1e-10
 REPLICATED_MINIMUM_BAND_ROWS = 21
 
@@ -328,6 +329,7 @@ class ReplicatedCounters:
         self.used = 0
         self.previous = None
         self.previous_ok = [False] * self.count
+        self.signal_frames = [0] * self.count
 
     def start(self, k):
         return self.w + k * self.step
@@ -349,6 +351,7 @@ def count_replicated(rows, counters):
         power_t = sum(rows[s:s + w])
         has_signal = power_t >= w * REPLICATED_SIGNAL_FLOOR
         ok_now.append(has_signal)
+        counters.signal_frames[k] += 1 if has_signal else 0
         if not has_signal:
             continue
         s_tt = sum(v * v for v in target)
@@ -392,7 +395,7 @@ def find_replicated(counters, rate, size, cutoff, bandwidth):
             shifts.append(0)
             continue
         n = counters.frames[k][best]
-        would_pass = n >= REPLICATED_MINIMUM_FRAMES and 2 * best_matches >= n
+        would_pass = n >= REPLICATED_MINIMUM_COUNTED_FRAMES and 2 * best_matches >= n
         periodic = would_pass and any(2 * counters.matches[k][d] >= best_matches for d in range(counters.first_shift, min(w, s)))
         shifts.append(best)
         bands.append({"start_row": s, "offset": hertz(best, rate, size, bins), "share": (2000 * best_matches + n) // (2 * n) if n > 0 else None,
@@ -417,7 +420,7 @@ def find_replicated(counters, rate, size, cutoff, bandwidth):
         result["reason"] = "tooShort"
         return result
     if max_frames < REPLICATED_MINIMUM_FRAMES:
-        result["reason"] = "noSignal"
+        result["reason"] = "noSignal" if max(counters.signal_frames) < REPLICATED_MINIMUM_FRAMES else "steady"
         return result
     top = bands[top_band]
     result["top_band_share"] = 0 if top["share"] is None else top["share"]

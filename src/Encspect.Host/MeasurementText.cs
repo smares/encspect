@@ -622,8 +622,9 @@ public static class MeasurementText
         return figures.Reason switch
         {
             ReplicatedBandsReason.TooFewFrames => $"none found (fewer than {MeasurementLimits.MinimumReplicatedBandsFrames} frames used)",
-            ReplicatedBandsReason.TooShort => "none found (no band of 1 kHz with an offset of 1 kHz or more in the range)",
+            ReplicatedBandsReason.TooShort => "none found (no band with an offset of at least its width in the range)",
             ReplicatedBandsReason.NoSignal => $"none found (no band has signal in {MeasurementLimits.MinimumReplicatedBandsFrames} frames)",
+            ReplicatedBandsReason.Steady => $"none found (no band changes in {MeasurementLimits.MinimumReplicatedBandsFrames} frames: the signal is steady)",
             ReplicatedBandsReason.NotAtTop => $"none found (from {figures.Stretches[^1].FromFrequency.ToString("N0", CultureInfo.InvariantCulture)} to {Hertz(figures.Stretches[^1].ToFrequency)}, below the top of the content)",
             _ => figures.IsTopBandPeriodic ? "none found (the top band is periodic)" : $"none found (the top band matches in {Percent(figures.TopBandShareTenths)} of the frames with signal)",
         };

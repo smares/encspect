@@ -565,6 +565,21 @@ public class MeasurementFixtureTests
         }
     }
 
+    // The E-AC-3 case is found by construction too: one spectral extension layout throughout (bins 73 up copied from bin 37), so a stretch from about 6.8 kHz with offsets of 3,375 and 5,625 Hz.
+    [Fact]
+    public void TheSpectralExtensionFileReadsTheOffsetsItsLayoutGives()
+    {
+        using FileStream stream = File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, "ac3", "eac3-signal-spx-long.eac3"));
+        Report report = Analyzer.CreateDefault().Analyze("eac3-signal-spx-long.eac3", stream, new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions() } });
+        ReplicatedBandsFigures figures = report.Streams.Single().Measurements!.Spectrum!.ReplicatedBands!;
+
+        Assert.True(figures.IsFound);
+        Assert.InRange(figures.FromFrequency, 6000, 7700);
+        int[] offsets = [.. figures.Stretches[^1].Offsets.Select(o => o.Offset).Distinct()];
+        Assert.Contains(3375, offsets);
+        Assert.Contains(5625, offsets);
+    }
+
     // The replicated-bands fixtures are built to have a start (or none): found within one band of 1 kHz of where the construction says, none where it says none.
     [Theory]
     [InlineData("synthetic-replicated-copy-5000")]
@@ -587,25 +602,16 @@ public class MeasurementFixtureTests
             int bandHertz = geometry.Hertz(geometry.BandRows);
             Assert.InRange(figures.FromFrequency, from.GetInt32() - bandHertz, from.GetInt32() + bandHertz);
         }
+
+        // The glide's bands are periodic: the check of S29 on its own (its frames differ, so the gate leaves them).
+        if (name == "synthetic-replicated-glide")
+        {
+            Assert.Contains(figures.Bands, b => b.IsPeriodic);
+        }
     }
 
     // Where the cutoff the range comes from is not reliable (an unspecified signal) the frequencies are compared within a band of 1 kHz; the impulse files' rows are flat and their fine
     // structure is the rounding noise of the two FFTs, which the model and the analyzer do not share, so only their reasons are compared.
-    // The E-AC-3 case is found by construction too: one spectral extension layout throughout (bins 73 up copied from bin 37), so a stretch from about 6.8 kHz with offsets of 3,375 and 5,625 Hz.
-    [Fact]
-    public void TheSpectralExtensionFileReadsTheOffsetsItsLayoutGives()
-    {
-        using FileStream stream = File.OpenRead(Path.Combine(Fixtures.FixtureDirectory, "ac3", "eac3-signal-spx-long.eac3"));
-        Report report = Analyzer.CreateDefault().Analyze("eac3-signal-spx-long.eac3", stream, new AnalysisOptions { Decoding = new DecodeOptions { Measure = new MeasureOptions() } });
-        ReplicatedBandsFigures figures = report.Streams.Single().Measurements!.Spectrum!.ReplicatedBands!;
-
-        Assert.True(figures.IsFound);
-        Assert.InRange(figures.FromFrequency, 6000, 7700);
-        int[] offsets = [.. figures.Stretches[^1].Offsets.Select(o => o.Offset).Distinct()];
-        Assert.Contains(3375, offsets);
-        Assert.Contains(5625, offsets);
-    }
-
     private static void AssertReplicated(JsonElement model, StreamMeasurements m, string name, bool reliable)
     {
         ReplicatedBandsFigures? actual = m.Spectrum!.ReplicatedBands;
@@ -626,6 +632,7 @@ public class MeasurementFixtureTests
             ReplicatedBandsReason.TooFewFrames => "tooFewFrames",
             ReplicatedBandsReason.TooShort => "tooShort",
             ReplicatedBandsReason.NoSignal => "noSignal",
+            ReplicatedBandsReason.Steady => "steady",
             _ => "?",
         });
         Assert.Equal(model.GetProperty("is_found").GetBoolean(), actual.IsFound);
