@@ -15,7 +15,9 @@ Per file, ffprobe and MediaInfo must agree with the manifest, with their words m
 crosscheck_ac3_fixtures.py does (ffprobe's profile "Dolby Digital Plus + Dolby Atmos" is the frames'
 extension flag; MediaInfo's JOC feature, ComplexityIndex and NumberOfDynamicObjects). With --analyzer, the
 analyzer's report (encspect --ndjson) must match instead: object audio and its object count, the EMDF
-containers and the complexity index in the statistics, and exactly the warnings "findings" and the infos "info_findings" list.
+containers and the complexity index in the statistics, and exactly the warnings "findings" and the infos "info_findings" list. A file with "replicated_bands" in the manifest (`csi_miami_stereo_128_spx.eac3`, E-AC-3 spectral
+extension from Dolby's encoder) is also measured with `--measure replicated-bands`: not found, its strongest band under the threshold of 50 % (docs/design/spectral-analysis.md, Step 9), which no
+hand-built file stands for.
 
 Needs curl, ffprobe and mediainfo. Usage:
 
@@ -83,6 +85,24 @@ def statistic(report, name):
     return next((n["value"] for n in cc.mi.walk(report["root"]) if n["name"] == name and n.get("kind") != "Frame"), None)
 
 
+def replicated_bands_problems(analyzer, path, expected):
+    """The replicated bands (docs/design/spectral-analysis.md, Step 9) of Dolby's spectral extension file: not found, its strongest band under the threshold of 50 %, which is the weak case
+    a hand-built file cannot stand for."""
+    report = json.loads(subprocess.run([analyzer, "--ndjson", "--measure", "replicated-bands", str(path)], capture_output=True, text=True, check=True).stdout)
+    figures = report["streams"][0].get("measurements", {}).get("spectrum", {}).get("replicatedBands")
+    if figures is None:
+        return ["the analyzer gives no replicated bands"]
+    problems = []
+    if figures.get("isFound") != expected["is_found"] or figures.get("reason") != expected["reason"]:
+        problems.append(f"the replicated bands are found: {figures.get('isFound')}, reason {figures.get('reason')}; the manifest {expected['is_found']}, {expected['reason']}")
+    bands = figures["bands"]
+    strongest = max((bands["shares"]["values"][i] or 0 for i in range(len(bands["startRows"])) if bands["framesWithSignal"][i] >= 10 and not bands["isPeriodic"][i]), default=0)
+    low, high = expected["strongest_share_tenths"]
+    if not low <= strongest <= high:
+        problems.append(f"the strongest band of the replicated bands reads {strongest / 10} %, the manifest {low / 10} to {high / 10} %")
+    return problems
+
+
 def analyzer_problems(analyzer, path, sample):
     report = json.loads(subprocess.run([analyzer, "--ndjson", str(path)], capture_output=True, text=True, check=True).stdout)
     problems = []
@@ -119,6 +139,8 @@ def analyzer_problems(analyzer, path, sample):
     infos = sorted({f["code"] for f in report["findings"] if f["severity"] == "Info"})
     if infos != sorted(sample["info_findings"]):
         problems.append(f"the analyzer reports the infos {infos}, the manifest {sample['info_findings']}")
+    if "replicated_bands" in sample:
+        problems += replicated_bands_problems(analyzer, path, sample["replicated_bands"])
     return problems
 
 
