@@ -82,11 +82,49 @@ public class NyquistEdgeFinderTests
         Assert.Empty(Find(Rows(r => -60_000 - (Math.Max(0, r - 440) * 1_000)), Geometry48));
     }
 
-    // The step at the window's boundaries is the largest at 460; a slope that has its peak under the window (a lower edge) is not taken at all.
-    [Fact]
-    public void AnEdgeUnderTheWindowIsNotTakenForTheRatesAboveIt()
+    // The window's bounds are boundaries of 1,024 rows whatever the FFT size, so the same boundaries decide at every size (the integers carry the bins of a row).
+    [Theory]
+    [InlineData(1024)]
+    [InlineData(2048)]
+    [InlineData(4096)]
+    [InlineData(8192)]
+    [InlineData(16384)]
+    public void TheWindowIsTheSameAtEveryFftSize(int size)
     {
-        Assert.Empty(Find(Wall(400), Geometry48));
+        var geometry = new CutoffGeometry(48000, size);
+        foreach ((int boundary, bool isFound) in new[] { (456, false), (457, true), (471, true), (472, false) })
+        {
+            Assert.Equal(isFound ? [44100] : [], Find(Wall(boundary), geometry).Select(e => e.LowerRate));
+        }
+    }
+
+    // A ramp has the same step at every boundary: the lowest is taken, and the boundary under it is not smaller, so it is not a local maximum.
+    [Fact]
+    public void AStepThatEqualsTheBoundaryUnderItIsNotALocalMaximum()
+    {
+        Assert.Empty(Find(Rows(r => -60_000 - (3_000 * Math.Clamp(r - 400, 0, 40))), Geometry48));
+    }
+
+    // One row at the middle level beside the wall makes the steps at its boundary and the one under it equal and the largest: the lowest is taken, and an equal step over it is
+    // not larger, so it is a local maximum. The step at the boundary under it is smaller.
+    [Fact]
+    public void AStepThatEqualsTheBoundaryOverItIsALocalMaximum()
+    {
+        int[] rows = Rows(r => r < 461 ? Pass : r == 461 ? (Pass + Floor) / 2 : Floor);
+
+        NyquistEdge edge = Assert.Single(Find(rows, Geometry48));
+        Assert.Equal(Geometry48.Hertz(461), edge.StepFrequency);
+    }
+
+    // Where N is within W / 2 rows of the top of the search no edge is tested: 22,050 Hz at 45 kHz is 501.8 rows up (row 502 is the first above it, and 502 + 11 is past 506).
+    [Fact]
+    public void ARateWithLessThanHalfABandToTheTopOfTheSearchIsNotTested()
+    {
+        var geometry = new CutoffGeometry(45000, 4096);
+        Assert.Equal(23, geometry.BandRows);
+        Assert.Empty(Find(Wall(495), geometry));
+        // 32,000 Hz is 16,000 Hz, 364 rows up: tested, and a step at boundary 360 is found.
+        Assert.Equal([32000], Find(Wall(360), geometry).Select(e => e.LowerRate));
     }
 
     [Fact]
@@ -136,6 +174,18 @@ public class NyquistEdgeFinderTests
         Assert.Empty(NyquistEdgeFinder.Find(Wall(500), Counters(), geometry));
         // 32,000 Hz at 44.1 kHz: its Nyquist frequency 16,000 Hz is 371.5 rows up (43.07 Hz a row); a step at boundary 365 (15,723 Hz) is found.
         Assert.Equal([32000], NyquistEdgeFinder.Find(Wall(365), Counters(), geometry).Select(e => e.LowerRate));
+    }
+
+    // The level above where N lies on a boundary (5,512.5 Hz: the first row above it is 256 and the rows it mirrors end at 255).
+    [Fact]
+    public void TheLevelAboveAtHalfAHertzMirrorsFromTheRowUnderN()
+    {
+        var geometry = new CutoffGeometry(22050, 2048);
+        NyquistEdge edge = Assert.Single(NyquistEdgeFinder.Find(Wall(250), Counters(), geometry));
+
+        int w = geometry.BandRows;
+        double mirror = (Enumerable.Range(255 - w + 1, w).Count(r => r < 250) * (double)Pass + Enumerable.Range(255 - w + 1, w).Count(r => r >= 250) * (double)Floor) / w;
+        Assert.Equal((int)Math.Floor(((Floor - mirror) / 100) + 0.5), edge.AboveTenthsOfDb);
     }
 
     [Fact]
