@@ -85,4 +85,21 @@ public class WaveFormatExTests
         Assert.Equal(codec, WaveFormatRoutes.WindowsMediaCodecId(tag));
         Assert.Null(WaveFormatRoutes.CodecId(tag));
     }
+
+    [Theory]
+    [InlineData(0x0001, "pcm-samples")]
+    [InlineData(0x0003, "pcm-samples")]
+    [InlineData(0x0006, "pcm-samples")]
+    [InlineData(0x0007, "pcm-samples")]
+    [InlineData(0x0050, "mpeg-audio")]
+    [InlineData(0x0055, "mpeg-audio")]
+    [InlineData(0x0160, "wma")]
+    [InlineData(0x0162, "wma-pro")]
+    [InlineData(0x2000, "ac-3")]
+    [InlineData(0x2001, "dts")]
+    [InlineData(0x0002, null)]
+    public void OneTableRoutesEveryTagForTheThreeReaders(int tag, string? codec)
+    {
+        Assert.Equal(codec, WaveFormatRoutes.RouteOf(tag));
+    }
 }
