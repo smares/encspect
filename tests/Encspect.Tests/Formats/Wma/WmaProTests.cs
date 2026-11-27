@@ -480,7 +480,7 @@ public class WmaProTests
         stream.Objects[2] = stream.Objects[2][..100];
         CodecContext context = stream.RunPro();
         Finding finding = Assert.Single(context.Findings, f => f.Code == "wma.packet-short");
-        Assert.StartsWith("A media object holds fewer bytes than the block alignment of 5945, which a decoder rejects (wmaprodec.c); the first is at 0x", finding.Message, StringComparison.Ordinal);
+        Assert.StartsWith("A unit of the stream's data holds fewer bytes than the block alignment of 5945, which a decoder rejects (wmaprodec.c); the first is at 0x", finding.Message, StringComparison.Ordinal);
         Assert.DoesNotContain(context.Findings, f => f.Code == "wma.packet-sequence");
         Node packet = WmaStream.Child(WmaStream.StreamNode(context), "Packets").Children[2];
         Assert.Equal("not read", packet.Value!.ToString());

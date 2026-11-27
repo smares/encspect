@@ -106,7 +106,7 @@ internal static class Explain
     public const string StatBitrate = "The average bitrate of the data chunk: its bytes times 8 over the length of the audio.";
 
     // PCM samples in a container other than WAV, which states their layout in its header (the codec parser "pcm-samples").
-    public const string PcmSampleFrames = "The number of sample frames in the track's samples: their bytes divided by the bytes of one sample frame. A sample frame holds one sample of every channel.";
+    public const string PcmSampleFrames = "The number of sample frames in the stream's samples: their bytes divided by the bytes of one sample frame. A sample frame holds one sample of every channel.";
     public const string PcmCodec = "The coding of the audio: linear PCM or floating-point PCM, as the container's header states it.";
     public const string PcmByteOrder = "The order of the bytes of a sample, as the container states it.";
     public const string PcmRate = "The sample rate in Hz, from the container's header.";

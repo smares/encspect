@@ -39,6 +39,42 @@ public partial class CrossFormatNamingTests
         }
     }
 
+    // The first nodes of a stream that are of Kind Detail today, by name with the numbers of the segment, track or stream left out:
+    // the containers decide the Kind of the node a stream starts at before the codec parser has routed, and a fallback
+    // keeps it. One rule across containers is queued in docs/plan.md, 0.5 item 10; the entry leaves this list with it.
+    private static readonly string[] FirstNodeNotStream =
+    [
+        "Data Chunk", "FORM", "Logical Stream", "Track # Frames", "Track # Samples", "Stream # Media Objects", "TrackEntry",
+    ];
+
+    [GeneratedRegex(@"\d+")]
+    private static partial Regex Digits();
+
+    [Fact]
+    public void TheFirstNodeOfEveryStreamIsOfKindStream()
+    {
+        var problems = new List<string>();
+        var seen = new SortedSet<string>(StringComparer.Ordinal);
+        foreach ((string name, StreamInfo stream) in AllStreams())
+        {
+            Node? first = stream.Nodes.Count == 0 ? null : stream.Nodes[0];
+            if (first is { Kind: NodeKind.Stream })
+            {
+                continue;
+            }
+
+            string key = first is null ? "(no node)" : Digits().Replace(first.Name, "#").Replace("Segment # ", string.Empty, StringComparison.Ordinal);
+            seen.Add(key);
+            if (!FirstNodeNotStream.Contains(key, StringComparer.Ordinal))
+            {
+                problems.Add($"{name}: stream \"{stream.Codec}\" starts at {(first is null ? "no node" : $"\"{first.Name}\" of kind {first.Kind}")}");
+            }
+        }
+
+        Assert.True(problems.Count == 0, string.Join("\n", problems.Take(20)));
+        Assert.Equal(FirstNodeNotStream.Order(StringComparer.Ordinal), seen);
+    }
+
     [Fact]
     public void OneCodingHasOneCodecNameInEveryFixture()
     {
@@ -107,7 +143,7 @@ public partial class CrossFormatNamingTests
         Assert.Equal("PCM (floating-point)", Encspect.Formats.Asf.AsfParser.CodecNameOf(0x0003));
 
         Assert.Equal("AC-3", Encspect.Formats.Asf.AsfParser.CodecNameOf(0x2000));
-        Assert.Equal("Other", Encspect.Formats.Asf.AsfParser.CodecNameOf(0x0002));
+        Assert.Equal("Other", Encspect.Formats.Asf.AsfParser.CodecNameOf(0x7E57));
         Assert.Equal("AAC LC", Encspect.Formats.Matroska.Codecs.NameOf("A_AAC/MPEG4/LC"));
         Assert.Equal("HE-AAC", Encspect.Formats.Matroska.Codecs.NameOf("A_AAC/MPEG2/LC/SBR"));
         Assert.Equal("AAC Main", Encspect.Formats.Matroska.Codecs.NameOf("A_AAC/MPEG4/MAIN"));
