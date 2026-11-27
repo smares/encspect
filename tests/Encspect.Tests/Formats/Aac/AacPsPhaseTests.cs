@@ -1,7 +1,7 @@
 using Encspect.Core;
-using Encspect.Host;
 using Encspect.Formats.Aac;
 using Encspect.Formats.Aac.Decoding;
+using Encspect.Host;
 
 namespace Encspect.Tests.Formats.Aac;
 
