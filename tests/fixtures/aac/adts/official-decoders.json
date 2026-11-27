@@ -6069,15 +6069,15 @@
      "streams": [
       0
      ],
-     "analyzer": 12288,
-     "reference": 12288,
+     "analyzer": 24576,
+     "reference": 24576,
      "referencePath": "fdk direct",
      "referenceKind": "official",
      "witnesses": {
       "ffmpeg": null
      },
      "analyzerRates": [
-      22050
+      44100
      ],
      "format": {
       "rate": 22050,
@@ -6160,42 +6160,69 @@
         "channels": 2
        }
       }
+     },
+     "referenceAtAnalyzerRate": {
+      "samples": 24576,
+      "exact": true
+     },
+     "rateDiffers": {
+      "analyzerRates": [
+       44100
+      ],
+      "decoderRates": [
+       22050
+      ],
+      "decoderSamples": 12288,
+      "frames": 12,
+      "firstUnit": 0,
+      "ratio": "22050/44100"
      }
     }
    ],
    "differences": [
     {
      "figure": "samples",
+     "decoder": "fdk direct",
+     "value": 12288,
+     "analyzer": 24576,
+     "status": "keep",
+     "kind": "rate-differs",
+     "reason": "FDK outputs 12 frames (12,288 samples) at 22050 Hz, from unit 0, where the analyzer's runs are at 44100 Hz (ratio 22050/44100): the decoders disagree on whether the SBR data after the coupling channel element is applied there",
+     "note": "decided 2026-11-27 by the project lead: the standard requires the SBR data after an independently switched coupling channel element (4.5.2.8.2.2, Table 4.57 note 1) and 1.6.5.2 item 1 takes it for implicit signaling, so the analyzer counts SBR; FDK excludes the element from those SBR follows, faad2 rejects it and ffmpeg cannot decode the file. The run's records were not repeated for this change.",
+     "statusSource": "reviewed"
+    },
+    {
+     "figure": "samples",
      "decoder": "coreaudio converter",
      "value": 0,
-     "analyzer": 12288,
-     "reference": 12288,
+     "analyzer": 24576,
+     "reference": 24576,
      "status": "explained",
      "kind": "coreaudio-differs",
      "ownersDisagree": true,
-     "reason": "the analyzer equals the reference (fdk direct, 12,288) and Core Audio's converter outputs 0: the owners' decoders disagree",
+     "reason": "the analyzer equals the reference (fdk direct, 24,576 samples at the analyzer's 44,100 Hz) and Core Audio's converter outputs 0: the owners' decoders disagree",
      "statusSource": "rule"
     },
     {
      "figure": "samples",
      "decoder": "media foundation reader",
      "value": 0,
-     "analyzer": 12288,
-     "reference": 12288,
+     "analyzer": 24576,
+     "reference": 24576,
      "status": "explained",
      "kind": "witness-differs",
-     "reason": "the Source Reader reads to the end and outputs 0 samples against the analyzer's 12,288 and the reference's 12,288",
+     "reason": "the Source Reader reads to the end and outputs 0 samples against the analyzer's 24,576 and the reference's 24,576",
      "statusSource": "rule"
     },
     {
      "figure": "samples",
      "decoder": "media foundation transform",
      "value": 0,
-     "analyzer": 12288,
-     "reference": 12288,
+     "analyzer": 24576,
+     "reference": 24576,
      "status": "explained",
      "kind": "mediafoundation-differs",
-     "reason": "the analyzer equals the reference (fdk direct, 12,288) and Media Foundation's transform outputs 0; Learn says the decoder skips audio frames with coupling channel elements; the analyzer reports aac.coupling-without-program",
+     "reason": "the analyzer equals the reference (fdk direct, 24,576 samples at the analyzer's 44,100 Hz) and Media Foundation's transform outputs 0; Learn says the decoder skips audio frames with coupling channel elements; the analyzer reports aac.coupling-without-program",
      "statusSource": "rule"
     }
    ],
@@ -6214,8 +6241,7 @@
      "samples": 1024,
      "finding": "aac.coupling-without-program",
      "findings": [
-      "aac.coupling-without-program",
-      "aac.sbr-without-channel-element"
+      "aac.coupling-without-program"
      ],
      "verdict": "finding, decoder decodes",
      "status": "noted",
