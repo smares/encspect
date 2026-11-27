@@ -594,17 +594,22 @@ internal sealed class StdStream
         return Frames.Count - 1;
     }
 
+    // The 'N' bytes that end a superframe whose walk left bits unread before they count as ffmpeg's padding.
+    private const int MinimumTrailingPadding = 4;
+
     private void ReadWithoutReservoir(SuperframeRecord record, int index, byte[] buffer, ref FrameState state, StdNodes nodes, FindingCollector findings)
     {
         StdParameters p = Parameters;
         int align = p.BlockAlign;
         var frame = new StdFrameRecord { Superframe = index, StartSuperframe = index, StartBit = 0, State = state.Pack() };
         var bits = new Bits(buffer, 8 * align);
+        long stopsBefore = Totals.LimitStops;
         FrameFault fault = StdFrameReader.Read(p, bits, ref state, Totals, null, out int blocks, Writer);
         frame.Blocks = blocks;
         frame.Fault = fault;
         frame.Bits = Math.Max(0, Math.Min(bits.Position, 8 * align));
         record.State = SuperframeState.Read;
+        bool isStoppedAtLimit = Totals.LimitStops != stopsBefore;
         int frameIndex = AddFrame(frame);
         record.Frames = 1;
         MaxFramesPerSuperframe = Math.Max(MaxFramesPerSuperframe, 1);
@@ -619,10 +624,23 @@ internal sealed class StdStream
         int padStart = (bits.Position + 7) / 8;
         if (padStart < align)
         {
-            PaddedSuperframes++;
-            if (IsPaddingAllN && buffer.AsSpan(padStart, align - padStart).ContainsAnyExcept((byte)'N'))
+            ReadOnlySpan<byte> tail = buffer.AsSpan(padStart, align - padStart);
+            if (isStoppedAtLimit)
             {
-                IsPaddingAllN = false;
+                // Version 1's coefficient limit: the encoder's remaining coefficient bits lie unread after the frame, and where the encoder padded the superframe the padding ends it;
+                // a superframe the encoder filled to its end has none, and is neither counted nor held against the rest.
+                if (tail.Length >= MinimumTrailingPadding && !tail[^MinimumTrailingPadding..].ContainsAnyExcept((byte)'N'))
+                {
+                    PaddedSuperframes++;
+                }
+            }
+            else
+            {
+                PaddedSuperframes++;
+                if (IsPaddingAllN && tail.ContainsAnyExcept((byte)'N'))
+                {
+                    IsPaddingAllN = false;
+                }
             }
         }
 

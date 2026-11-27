@@ -112,7 +112,7 @@ Format tags 0x0160 and 0x0161, routed as the codec "wma". The syntax is describe
 
 ### Encoder detection
 
-- ffmpeg's wmav1 and wmav2 encoders pad each superframe with 'N' bytes after the frame, with no bit reservoir and no variable block lengths; with two or more padded superframes the encoder is named with high confidence, with one with medium.
+- ffmpeg's wmav1 and wmav2 encoders pad each superframe with 'N' bytes after the frame, with no bit reservoir and no variable block lengths; with two or more padded superframes the encoder is named with high confidence, with one with medium. Where the walk of a version 1 frame stopped at Microsoft's coefficient limit (ffmpeg's wmav1 encoder writes coefficients past it), the bits after the frame are the encoder's unread coefficients, so the padding is taken from the end of the superframe: at least its last 4 bytes must be 'N', where otherwise every byte after the frame must be.
 - Microsoft's encoders: version 2, a Samples Per Block of 17 frames, the bit reservoir and variable block lengths name "Microsoft's Windows Media Audio encoder" with medium confidence.
 
 ### Decoding (versions 1 and 2)
@@ -132,7 +132,7 @@ Versions 1 and 2 are decoded for `--measure` and the front ends' output (the `wm
 
 - Microsoft's noise generator (its noise-substituted lines have the level of the description's, not its values).
 - The cases [wma-standard-decoding.md](../design/wma-standard-decoding.md#not-determined) marks as not determined, which the decoder takes as FFmpeg's rule or leaves: version 1 with variable block lengths, version 2 at 49,048 Hz and above, held exponents of a shorter block or of a channel without mid/side when a block sends exponents (not converted), the exponent of line x - 3 in version 1 without noise substitution, the exponent index where a block reuses a shorter block's exponents with noise substitution, the curve of line spectral pairs in short blocks, and what Microsoft does with the frame the last superframe announces.
-- A version 1 file whose encoder writes coefficients past Microsoft's limit (ffmpeg's wmav1 encoder does) is read as Microsoft's decoder reads it: the channel ends at the limit and the bytes after it are read as the next channel, so the frame ends earlier than the encoder wrote it; no finding is reported for it.
+- A version 1 file whose encoder writes coefficients past Microsoft's limit (ffmpeg's wmav1 encoder does) is read as Microsoft's decoder reads it: the channel ends at the limit and the bytes after it are read as the next channel, so the frame ends earlier than the encoder wrote it; no finding is reported for it, and the encoder is still named from the padding at the end of the superframe (see "Encoder detection").
 - Version 1 with variable block lengths and scale factor exponents, and version 2 at 49,048 Hz and above, where the format description leaves the band lists open (no file at hand).
 - FFmpeg's handling of a frame that spans a superframe inside a frame, short media objects and partial end checks differs from this analysis in places; the description lists each.
 - A standard file cut inside a media object reports more samples than the whole file can: a cut disables Microsoft's rule, which has no black-box evidence on cut streams, and the frames its first byte declares are counted and lost (the file cut 50 bytes into its last object: 135,168 against 133,632; the whole file's Coded Samples, which counts the announced frame, is 137,216).

@@ -5463,6 +5463,26 @@
                   "length": 9650,
                   "children": [
                     {
+                      "name": "Encoder",
+                      "value": "FFmpeg (wmav1 encoder)",
+                      "offset": 354,
+                      "length": 9650,
+                      "children": [
+                        {
+                          "name": "Confidence",
+                          "value": "High",
+                          "offset": 354,
+                          "length": 9650
+                        },
+                        {
+                          "name": "Evidence",
+                          "value": "All 44 padded superframes have bytes after the frame that are all 'N' (0x4E), which ffmpeg's wmav1 encoder writes (wmaenc.c), with no bit reservoir and no variable block lengths",
+                          "offset": 354,
+                          "length": 9650
+                        }
+                      ]
+                    },
+                    {
                       "name": "Statistics",
                       "kind": "Statistics",
                       "value": "44 frames, 1.997 s",
@@ -9287,6 +9307,8 @@
         "averageBitrate": 24.501780523255814,
         "isVbr": true,
         "playbackGroup": 1,
+        "encoder": "FFmpeg (wmav1 encoder)",
+        "encoderConfidence": "High",
         "series": [
           {
             "name": "Bitrate",
