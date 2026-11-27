@@ -570,6 +570,23 @@ def sbr_fields(prefix, count, headers, ps):
     return fields
 
 
+def ps_phase_adts():
+    """The 20-band parametric stereo fixture with phase differences and procedure Rb (mp4/ps-phase-20-bands.m4a) as ADTS, for DecoderWorkTests, which repeats ADTS frames."""
+    blocks = sbr_units(12, "mono", ps=("phase", 1, 4, 2), gain=135)
+    data, rows = concat(adts_frames(blocks, rate=22050, channels=1))
+    stats = "ADTS/Statistics/SBR"
+    fields = {stats + "/Parametric Stereo": share(12, 12, "access unit"),
+              stats + "/Parametric Stereo/Parametric Stereo Mixing/Procedure Rb": share(12, 12, "raw data block"),
+              stats + "/Parametric Stereo/Parametric Stereo Phase/Phase differences": share(12, 12, "raw data block"),
+              "ADTS/Frame/Raw Data Block/FIL/Extension Payload/SBR Data/Parametric Stereo Extension": "2 (EXT_ID_PS)"}
+    return "ps-phase.aac", data, manifest(
+        "ADTS at a core rate of 22050 Hz, mono, whose access units carry SBR data with a parametric stereo extension of intensity differences and coherences in 20 bands (modes 1 and 4: "
+        "mixing procedure Rb) in 2 envelopes, and the inter-channel and overall phase differences of the extension: HE-AAC v2, signaled only implicitly.", data, rows,
+        [stream("HE-AAC v2", 44100, 2, "Parametric stereo", 12 * 2048, ffprobe_profile="LC", ffprobe_channels=1)], fields,
+        [["aac.implicit-sbr", "and 12 carry the parametric stereo extension: the stream is HE-AAC v2"]],
+        skip={"faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold."}, rate=22050)
+
+
 def sbr_fixvar_adts():
     """Channel pairs followed by SBR data whose grids are FIXVAR frames of two and three envelopes of different frequency resolutions in
     both channels, each envelope coded with another difference: the resolutions are sent last envelope first (4.4.2.8), so a reader that
@@ -1604,7 +1621,7 @@ def lfe_restrictions():
 
 def fixtures():
     """(directory, name, data, manifest) of every fixture: "adts" or "mp4"."""
-    out = [("adts",) + f for f in [windows(), window_sequences_invalid(), stereo(), stereo_coding(), stereo_coding_reserved(), stereo_coding_elements(), intensity_noise(), implicit_sbr_adts(), sbr_fixvar_adts(), fill_and_data()] + loud_tools() + [stereo_tool_order(), tns_order_above_12(), first_block_kbd(), fill_with_sbr_and_other_payload(), sbr_crc_checked(), sbr_too_many_patches(), lfe_restrictions()] + faac_style_fixtures() + crc_fixtures() + object_types() + corrupt()]
+    out = [("adts",) + f for f in [windows(), window_sequences_invalid(), stereo(), stereo_coding(), stereo_coding_reserved(), stereo_coding_elements(), intensity_noise(), implicit_sbr_adts(), ps_phase_adts(), sbr_fixvar_adts(), fill_and_data()] + loud_tools() + [stereo_tool_order(), tns_order_above_12(), first_block_kbd(), fill_with_sbr_and_other_payload(), sbr_crc_checked(), sbr_too_many_patches(), lfe_restrictions()] + faac_style_fixtures() + crc_fixtures() + object_types() + corrupt()]
     out += [("mp4",) + f for f in mp4_fixtures()]
     out += eld_ld_sbr() + parametric_stereo_cores() + signature_streams() + streams_limited() + sbr_evidence() + blocks_missing() + prediction_bands() + rate_fixtures()
     return out
