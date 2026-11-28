@@ -398,7 +398,7 @@ def zero_length_field_file():
 
 fixture("length-field-zero", "Packets of 256 bytes, the size every packet has, that carry a packet length field of 0, which states a packet of no bytes (FFmpeg rejects it): the packets are read at the file's size.",
         zero_length_field_file,
-        [finding("asf.packet-length", "3 packets")], {"ffprobe": False, "reason": "ffmpeg rejects a packet length of 0 ("invalid packet_length")."})
+        [finding("asf.packet-length", "3 packets")], {"ffprobe": False, "reason": "ffmpeg rejects a packet length of 0 (\"invalid packet_length\")."})
 
 
 def unaligned_offsets_file(variable):
