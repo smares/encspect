@@ -721,8 +721,8 @@ internal sealed class StdFrameDecoder : IFrameDecoder
         {
             for (int i = first; i < end && i < length; i++)
             {
-                // Version 1 takes the exponent of the line three lower; version 2 has no offset.
-                spectrum[i] = Limit(levels[i] * (double)x[i - first] * m);
+                // The exponent of the line itself in both versions: Microsoft's decoder, which FFmpeg's three lines lower in version 1 differs from (wma-standard-decoding.md, "What Microsoft's output showed").
+                spectrum[i] = Limit(levels[i] * (double)x[i] * m);
             }
 
             return;
