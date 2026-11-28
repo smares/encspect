@@ -9,9 +9,10 @@
 - SBR_HUFFMAN: the SBR envelope and noise floor codebooks of Annex 4.A, indexed by the value plus the codebook's largest absolute value.
 - SBR_OFFSET: the start frequency offsets of 4.6.18.3.2.1 per output sample rate group (16, 22.05, 24, 32, 44.1 to 64, above 64 kHz).
 
-Format data (the codewords, lengths and offsets the specification's tables define; the specification is not freely available), transcribed
-through FFmpeg 6.1.1's libavcodec/aactab.c and aacsbrdata.h, the public listing of them that was at hand, and checked against faad2 2.11.1's
-decoding tables (every codeword) and fdk-aac 2.0.2's band tables (check_aac_tables.py). The comparison with FFmpeg's own tables is no independent check. The C# copy is src/Encspect.Formats.Aac/HuffmanData.cs.
+Format data (the codewords, lengths and offsets the specification's tables define), first transcribed through FFmpeg 6.1.1's
+libavcodec/aactab.c and aacsbrdata.h, and now compared with ISO/IEC 14496-3:2009 itself by check_aac_tables.py --spec (every codebook
+entry, the band offsets and counts, the SBR start offsets; PRED_SFB_MAX per rate is in no text at hand). The C# copy is
+src/Encspect.Formats.Aac/HuffmanData.cs.
 """
 
 SPECTRAL = [

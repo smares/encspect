@@ -25,6 +25,7 @@ internal sealed partial class BlockReader
             Field(n, "Element Instance Tag", start + 3, start + 7, NodeValue.Integer(tag), Explain.ElementInstanceTag);
             int at = bits.Original;
             bool independent = bits.ReadBit();
+            _lastCceIsIndependent = independent;
             Field(n, "IsIndependentlySwitched", at, at + 1, NodeValue.Boolean(independent), Explain.CceIndependentlySwitched);
             int coupled = (int)bits.Read(3) + 1;
             Field(n, "Coupled Elements", at + 1, at + 4, NodeValue.Integer(coupled), Explain.CceCoupledElements);
@@ -105,7 +106,7 @@ internal sealed partial class BlockReader
             if (_setup.ChannelConfiguration > 0)
             {
                 Soft("aac.coupling-without-program",
-                    $"a coupling channel element, which channel configuration {_setup.ChannelConfiguration} does not provide for: fdk-aac's decoder drops such access units",
+                    $"a coupling channel element, which channel configuration {_setup.ChannelConfiguration} does not provide for",
                     start, start + 3, "Element ID");
             }
 
@@ -405,11 +406,17 @@ internal sealed partial class BlockReader
 
             var types = new List<int>(1);
             int left = count;
+            int sbrAt = -1;
             while (left > 0)
             {
                 int payloadStart = bits.Original;
                 int used = ExtensionPayload(ref bits, n, left, out int type);
                 types.Add(type);
+                if (type is 13 or 14 && sbrAt < 0)
+                {
+                    sbrAt = payloadStart;
+                }
+
                 if (used > left)
                 {
                     Soft("aac.fill-payload-overrun", $"an extension payload of {Counts.Of(used, "byte", "bytes")} in a fill element that has {Counts.Of(left, "byte", "bytes")} left", payloadStart, payloadStart + 4, "Extension Type");
@@ -422,6 +429,11 @@ internal sealed partial class BlockReader
                 {
                     bits.MoveTo(end - (left * 8));
                 }
+            }
+
+            if (sbrAt >= 0 && types.Count > 1)
+            {
+                Soft("aac.fill-sbr-with-other-payload", "an SBR payload in a fill element with an extension payload of another type, which 4.5.2.1.5.2 does not allow", sbrAt, sbrAt + 4, "Extension Type");
             }
 
             if (_tally is not null)
@@ -678,7 +690,19 @@ internal sealed partial class BlockReader
         if (crc)
         {
             int at = bits.Original;
-            Field(n, "SBR CRC", at, at + 10, NodeValue.Hex(bits.Read(10), 3), Explain.SbrCrc);
+            uint stored = bits.Read(10);
+            Field(n, "SBR CRC", at, at + 10, NodeValue.Hex(stored, 3), Explain.SbrCrc);
+            if (_tally is not null && !bits.IsSkeleton && end <= bits.OriginalLimit)
+            {
+                bool isEqual = Crc10.Of(bits.Window(at + 10, end)) == stored;
+                _tally.SbrCrcChecked++;
+                if (!isEqual)
+                {
+                    _tally.SbrCrcFailed++;
+                    _hasSbrCrcFailure = true;
+                    Soft("aac.sbr-crc-mismatch", "an SBR payload whose CRC differs from the one computed over its data (4.5.2.8.1)", at, at + 10, "SBR CRC");
+                }
+            }
         }
 
         int flag = bits.Original;
@@ -746,27 +770,40 @@ internal sealed partial class BlockReader
     private int TallySbr(ref AacBits bits, int key, SbrHeader? header, int dataStart, int end, Node? n)
     {
         CodingTally tally = _tally!;
+        // The statistics and series of SBR count the channels the stream outputs: a coupling channel's payload is read (it is evidence and its syntax is checked) and left out of them.
+        bool isCoupling = _lastChannelElement == 2;
         if (header is not null)
         {
-            tally.SbrHeaders++;
-            tally.SbrPlainHeaders += FaacSbr.HeaderFits(header) ? 1 : 0;
-            if (_sbrHeaderBlock.TryGetValue(key, out int before) && !FaacSbr.OnPeriod(header, _block - before))
+            if (!isCoupling)
             {
-                tally.SbrHeadersOnPeriod = false;
+                tally.SbrHeaders++;
+                tally.SbrPlainHeaders += FaacSbr.HeaderFits(header) ? 1 : 0;
+                if (_sbrHeaderBlock.TryGetValue(key, out int before) && !FaacSbr.OnPeriod(header, _block - before))
+                {
+                    tally.SbrHeadersOnPeriod = false;
+                }
+
+                _sbrHeaderBlock[key] = _block;
             }
 
-            _sbrHeaderBlock[key] = _block;
             if (!_sbr.TryGetValue(key, out SbrHeader? previous) || !previous.SameFrequencies(header))
             {
                 (SbrBands? bands, string? error) = Sbr.Derive(header, _setup.SbrSampleRate);
                 header = header with { Bands = bands, BandError = error };
+                if (bands is not null && Sbr.Tables(header, _setup.SbrSampleRate).Tables is { } built && Sbr.PatchCount(built.Master, built.Kx, _setup.SbrSampleRate) is int patches and > Sbr.MaxPatches)
+                {
+                    Soft("aac.sbr-patches-over-limit", $"an SBR header whose frequency tables need {patches} patches, more than the {Sbr.MaxPatches} that 4.6.18.3.6 allows; decoded as Figure 4.48 gives them", dataStart, end, "SBR Data");
+                }
             }
             else
             {
                 header = header with { Bands = previous.Bands, BandError = previous.BandError };
             }
 
-            if (tally.FirstHeader is null)
+            if (isCoupling)
+            {
+            }
+            else if (tally.FirstHeader is null)
             {
                 tally.FirstHeader = header;
             }
@@ -778,15 +815,11 @@ internal sealed partial class BlockReader
             _sbr[key] = header;
         }
 
-        // A payload after a single channel, channel pair or LFE element makes the stream HE-AAC for ffmpeg (aacdec_template.c,
-        // decode_extension_payload: m4ac.sbr = 1 before the data is read), faad2 (syntax.c, fill_element: sbr_present_flag = 1 before
-        // sbr_extension_data, for a fill element right after such an element) and fdk-aac (aacdecoder.cpp: SBR is parsed after an
-        // element that IS_CHANNEL_ELEMENT names, SCE, CPE and LFE, and enabled on a parse error too), whether or not the data can be
-        // read: before its header, with tables that cannot be built, past its fill element, or after an LFE element, where FAAC 2.0
-        // and 2.1 write theirs in 5.1. A coupling channel element is none of these: fdk-aac excludes it, faad2 rejects it (error 6
-        // without COUPLING_DEC, and error 24 for the fill element after it), and only ffmpeg keeps it as the previous element, where a
-        // program config element has given it a channel; its payload is reported and counts for nothing.
-        _hasSbrEvidence |= _lastChannelElement is 0 or 1 or 3;
+        // Any SBR payload signals SBR implicitly (1.6.5.2 item 1), wherever it lies. 4.5.2.8.2.2 puts one after each single channel element, channel pair element and independently switched
+        // coupling channel element, whose id_aac is ID_SCE (Table 4.57, Note 1): it is read as a single channel element's. A payload after an LFE element or a dependently switched coupling
+        // channel element (which is added to its targets before their SBR) or before any channel element has no AAC element to enhance: it is reported and not read or applied (decoders
+        // differ on what they do with it; FAAC 2.0 and 2.1 write theirs after the LFE in 5.1).
+        _hasSbrEvidence = true;
         Span<int> record = default;
         if (_store is not null && _lastChannelElement is 0 or 1 && _ics[0].Slot >= 0)
         {
@@ -802,9 +835,9 @@ internal sealed partial class BlockReader
             }
         }
 
-        if (_lastChannelElement is not (0 or 1))
+        if (_lastChannelElement is not (0 or 1) && !(isCoupling && _lastCceIsIndependent))
         {
-            Soft("aac.sbr-without-channel-element", "SBR data that follows no single channel or channel pair element", dataStart, end, "SBR Data");
+            Soft("aac.sbr-without-channel-element", "SBR data that follows no single channel element, channel pair element or independently switched coupling channel element, where 4.5.2.8.2.2 puts it", dataStart, end, "SBR Data");
             tally.SbrUnread++;
             return -1;
         }
@@ -846,10 +879,26 @@ internal sealed partial class BlockReader
                 return -1;
             }
 
-            tally.SbrPayloads++;
-            tally.SbrPlainPayloads += plain ? 1 : 0;
-            tally.SbrFigures(figures);
-            _recorder?.SbrPayload(figures);
+            if (!isCoupling)
+            {
+                tally.SbrPayloads++;
+                tally.SbrPlainPayloads += plain ? 1 : 0;
+                tally.SbrFigures(figures);
+                _recorder?.SbrPayload(figures);
+                if (figures[Sbr.FigurePsIssues] > 0)
+                {
+                    if ((figures[Sbr.FigurePsIssues] & Sbr.PsOverrun) != 0)
+                    {
+                        Soft("aac.ps-extension-overrun", "parametric stereo phase data that runs past its extension (ISO/IEC 14496-3 8.4.2, ps_extension_size), which the decoder does not apply", dataStart, end, "SBR Data");
+                    }
+
+                    if ((figures[Sbr.FigurePsIssues] & Sbr.PsPhaseWithoutIntensity) != 0)
+                    {
+                        Soft("aac.ps-phase-without-intensity", "parametric stereo phase differences with enable_iid 0, which 8.4.2 does not allow (their number follows the intensity differences' mode)", dataStart, end, "SBR Data");
+                    }
+                }
+            }
+
             if (ps == Sbr.PsInPair)
             {
                 Soft("aac.ps-in-channel-pair", "the parametric stereo extension's ID in a channel pair's SBR data, where only a single channel element can carry it, so decoders do not apply it",
@@ -857,7 +906,8 @@ internal sealed partial class BlockReader
                 return -1;
             }
 
-            return ps;
+            // A coupling channel's own parametric stereo extension has no channel to apply to.
+            return isCoupling ? -1 : ps;
         }
         catch (BlockOverrun)
         {
@@ -1004,8 +1054,7 @@ internal sealed partial class BlockReader
 
     // The intensity stereo bands of a pair's second channel, in phase (INTENSITY_HCB, 15) or out of
     // phase (INTENSITY_HCB2, 14), where ms_used inverts the sign (4.6.8.2.3). Only ms_mask_present 1
-    // inverts, as faad2 (invert_intensity, is.h) and fdk-aac (stereo.cpp clears the mid/side flags before
-    // intensity stereo) decode it; ffmpeg also inverts with ms_mask_present 2, which marks every band.
+    // inverts, as the specification has it; ffmpeg also inverts with ms_mask_present 2, which marks every band.
     private void IntensityNode(Node n, Ics ics, bool masked)
     {
         if (!HasBand(ics, b => b is 14 or 15))

@@ -1,0 +1,69 @@
+{
+ "description": "ADTS at 22050 Hz of six channel pairs followed by SBR payloads whose header (start frequency 0, stop frequency 8, linear scale) needs six patches at 44100 Hz, where the standard allows five: the payloads are read and decoded with the six patches Figure 4.48 gives, and the stream is HE-AAC from the payloads' presence.",
+ "length": 450,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "HE-AAC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 12288,
+   "is_vbr": true,
+   "ffprobe_profile": "LC"
+  }
+ ],
+ "units": [
+  [
+   0,
+   77
+  ],
+  [
+   77,
+   74
+  ],
+  [
+   151,
+   74
+  ],
+  [
+   225,
+   75
+  ],
+  [
+   300,
+   75
+  ],
+  [
+   375,
+   75
+  ]
+ ],
+ "fields": {
+  "ADTS/Statistics/SBR": "6 access units (100.0%)"
+ },
+ "findings": [
+  [
+   "aac.sbr-patches-over-limit",
+   "frequency tables need 6 patches, more than the 5 that 4.6.18.3.6 allows"
+  ],
+  [
+   "aac.implicit-sbr",
+   "6 of 6 raw data blocks hold SBR data: the stream is HE-AAC"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "faad": null,
+  "skip": {
+   "faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold.",
+   "decode": "ffmpeg is held to the output by crosscheck_he_aac_pcm.py, which compares its patches of six with the decoder's."
+  }
+ }
+}

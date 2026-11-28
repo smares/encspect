@@ -68,7 +68,7 @@ internal sealed class UnitFacts
     public bool HasCrcMismatch { get; set; }
 
     // The components that name the stream: those of the core and its extension, and of the first asset of the first extension
-    // substream only, as FFmpeg's decoder reads a stream (dcadec.c, assets[0]).
+    // substream only, as ffprobe's decoder reads a stream (it reads the first asset).
     public int ProfileComponents
     {
         get
@@ -169,8 +169,8 @@ internal sealed class AssetFacts
     // lossless layer.
     public bool IsXllComplete { get; set; }
 
-    // The extension data after the band data of the lossless frame, as FFmpeg's dca_xll.c finds it: the sync word of DTS:X or of
-    // DTS:X IMAX, or None.
+    // The extension data after the band data of the lossless frame, the sync word of DTS:X or of DTS:X IMAX (the words are MediaInfo's, File_Dts.cpp Extensions2; the position, right at the
+    // next 32-bit boundary, is what ffprobe's reading of the DTS:X fixtures shows), or None.
     public XllExtension XllExtension { get; set; }
 
     // LBR's decoder initialization: its sample rate, speaker mask and bit rate, or 0.

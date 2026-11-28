@@ -1,0 +1,70 @@
+{
+ "description": "ADTS at 22050 Hz of six channel pairs, each followed by a fill element of a dynamic range payload and then SBR data: the fill element holds another payload next to the SBR payload, which the standard does not allow.",
+ "length": 407,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "HE-AAC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 12288,
+   "is_vbr": true,
+   "ffprobe_profile": "LC"
+  }
+ ],
+ "units": [
+  [
+   0,
+   69
+  ],
+  [
+   69,
+   67
+  ],
+  [
+   136,
+   67
+  ],
+  [
+   203,
+   68
+  ],
+  [
+   271,
+   68
+  ],
+  [
+   339,
+   68
+  ]
+ ],
+ "fields": {
+  "ADTS/Statistics/SBR": "6 access units (100.0%)"
+ },
+ "findings": [
+  [
+   "aac.fill-sbr-with-other-payload",
+   "6 raw data blocks hold an SBR payload in a fill element with an extension payload of another type"
+  ],
+  [
+   "aac.implicit-sbr",
+   "6 of 6 raw data blocks hold SBR data: the stream is HE-AAC"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "faad": null,
+  "skip": {
+   "faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold.",
+   "decode": "ffmpeg reads the dynamic range payload and the SBR data in one fill element differently.",
+   "faad_trace": "faad2 reads no SBR data from a fill element whose first extension payload is another type (4.5.2.1.5.2 allows none next to SBR data), as its trace shows."
+  }
+ }
+}

@@ -582,7 +582,7 @@ def read_packets(data, start, end, packet_size, result):
                         del pending[key]
             at += data_length
         # A file that gives one packet size as minimum and maximum has packets of that size (section 8.2.13); a shorter
-        # length field leaves padding (FFmpeg's asfdec_f.c reads it so).
+        # length field leaves padding (ASF specification 3.2, 5.2.2 and 8.2.15).
         fixed = packet_size > 0 and result["file"].get("min_packet") == result["file"].get("max_packet")
         step = packet_size if fixed else size
         result["packets"].append([position, min(step, end - position), payloads])

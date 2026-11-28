@@ -2,7 +2,7 @@
 id: asf-packets
 title: ASF data packets and payloads
 related: mpeg-audio-and-ac-3-in-asf, asf-container, asf-index
-references: Advanced Systems Format (ASF) Specification, revision 01.20.03, sections 5.2 and 7.3; FFmpeg libavformat/asfdec_f.c
+references: Advanced Systems Format (ASF) Specification, revision 01.20.03, sections 5.2 and 7.3
 ---
 
 **The problem.** A stream is a series of media objects: an audio superframe, a video frame. They differ in size, but a network or a disk wants equal pieces, and several streams must share the connection.

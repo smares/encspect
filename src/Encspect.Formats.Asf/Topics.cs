@@ -9,6 +9,7 @@ internal static class Topics
     public const string AsfIndex = "asf-index";
     public const string AsfScriptsAndMarkers = "asf-scripts-and-markers";
     public const string AsfContentProtection = "asf-content-protection";
+    public const string PcmSamples = "pcm-samples";
     public const string WaveFormat = "waveformatex";
     public const string ChannelLayouts = "channel-layouts";
     public const string EncoderDetection = "encoder-detection";

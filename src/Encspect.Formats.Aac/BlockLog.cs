@@ -154,9 +154,30 @@ internal sealed class BlockLog
         }
     }
 
+    internal const string SbrCrc = "SBR CRC-10";
+
+    // The checksums the stream's SBR payloads store (EXT_SBR_DATA_CRC), with the ones a frame or unit stores: those the reading compared.
+    public static IReadOnlyList<ChecksumTally> StoredChecksums(CodingTally? tally, ChecksumTally? frames = null)
+    {
+        var list = new List<ChecksumTally>(2);
+        if (frames is not null)
+        {
+            list.Add(frames);
+        }
+
+        if (tally is { SbrCrcChecked: > 0 })
+        {
+            list.Add(new ChecksumTally { Name = SbrCrc, Covers = ChecksumCoverage.CodedData, Stored = tally.SbrCrcChecked, Checked = tally.SbrCrcChecked, Failed = tally.SbrCrcFailed });
+        }
+
+        return list;
+    }
+
     private static Severity SeverityOf(string code) => code switch
     {
         "aac.sbr-before-header" => Severity.Info,
+        "aac.layout-changed" => Severity.Info,
+        "aac.sbr-patches-over-limit" => Severity.Info,
 
         // FDK AAC's encoder writes such transitions in several of the fixtures, and the records of tests/fixtures/*/official-decoders.json list no unit of them that a decoder refuses
         // or conceals: the finding states what the stream does, as information.
@@ -204,7 +225,7 @@ internal sealed class BlockLog
                 ? $"{(signaled.Length > 0 ? ", and " : string.Empty)}{tally.PsEvidenceBlocks} of {tally.EvidenceBlocks} raw data blocks carry the parametric stereo extension's ID"
                 : string.Empty;
             findings.AddNow(Severity.Warning, "aac.ps-without-mono-core",
-                $"{signaled}{found}, but the core has {config.Channels} channels; decoders apply parametric stereo only to a core of one channel (fdk-aac, ffmpeg), so the report shows the stream without it.", node);
+                $"{signaled}{found}, but the core has {config.Channels} channels; parametric stereo applies only to a core of one channel (ISO/IEC 14496-3 1.5.2.3), so the report shows the stream without it.", node);
         }
 
         if (tally.SbrBlocks == 0)
@@ -238,7 +259,7 @@ internal sealed class BlockLog
             string ps = config.HasPs ? $", and {tally.PsEvidenceBlocks} carry the parametric stereo extension" : string.Empty;
             findings.AddNow(Severity.Info, "aac.implicit-sbr",
                 $"{(where == "ADTS" ? "ADTS cannot signal SBR or PS explicitly" : $"{where} signals no SBR")}, but {units} hold SBR data{ps}: the stream is {codec}, signaled only implicitly, with an output rate of {config.OutputSampleRate} Hz. "
-                + (config.CoreSampleRate > 24000 ? $"faad2 doubles only a core rate of up to 24 kHz, so it plays this one at {config.CoreSampleRate} Hz. " : string.Empty)
+                + (config.CoreSampleRate > 24000 ? $"the faad CLI doubles only a core rate of up to 24 kHz, so it plays this one at {config.CoreSampleRate} Hz. " : string.Empty)
                 + $"Decoders without SBR play the {AacTables.ObjectTypeName(config.ObjectType)} core at {config.CoreSampleRate} Hz.", node);
         }
         else if (config.IsPsImplicit)

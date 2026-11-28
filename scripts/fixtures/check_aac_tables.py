@@ -9,36 +9,28 @@ Always, with the standard library only:
   every Huffman code of the specification;
 - a few entries the specification's tables give, such as the one-bit codeword 0 for a scalefactor difference of 0.
 
-With --sources (or when .cache/tools holds them), against independent implementations at pinned commits:
+With --spec FILE (the text of ISO/IEC 14496-3:2009, a private copy that is neither committed nor quoted; the default is
+.cache/spec/14496-3.txt where that exists), the tables are compared with the specification's own:
 
-- every codeword of the spectral and scalefactor codebooks decodes, through faad2 2.11.1's own decoding tables (libfaad/codebook/hcb_*.h,
-  its two-step and binary-search methods, simulated here), to the values its index stands for and with its length; and every SBR codeword
-  through faad2's SBR trees (libfaad/sbr_huff.c);
-- the scalefactor band offsets and counts for 1024, 128, 960 and 120 lines match fdk-aac 2.0.2's sfbOffsetTables (libAACdec/src/aac_rom.cpp),
-  and PRED_SFB_MAX for AAC Main matches faad2's pred_sfb_max (libfaad/common.c);
-- every spectral, scalefactor and SBR codebook (codewords and lengths), the band counts, PRED_SFB_MAX and the SBR offsets match FFmpeg 6.1.1's
-  (libavcodec/aactab.c, aacsbrdata.h), the release scripts/fixtures/ffmpeg_sources.py pins by SHA-256. The tables were transcribed through those
-  files (aac_tables.py), so this comparison finds transcription errors only; faad2 and fdk-aac are the independent checks.
+- the scalefactor codebook (Table 4.A.1), the eleven spectral codebooks (Tables 4.A.2 to 4.A.12) and the ten SBR envelope and noise
+  floor codebooks (Tables 4.A.79 to 4.A.88): every index, length and codeword;
+- the scalefactor band offsets and counts for 1024 and 128 lines, and for 960 and 120 (the values in brackets), of Tables 4.129 to 4.141;
+- the start frequency offsets of SBR (4.6.18.3.2.1).
 
-faad2 is under the GPL, FFmpeg's files under the LGPL and fdk-aac under its own license; their sources are read here, at check time, and
-nothing of them is copied.
+PRED_SFB_MAX per sampling frequency is not in that text (it gives only the constant, in 4.5.2.3 and the syntax of the prediction data), so
+it is compared with nothing here.
 
-    python3 scripts/fixtures/check_aac_tables.py [--sources]
+    python3 scripts/fixtures/check_aac_tables.py [--spec FILE]
 """
 
 import pathlib
 import re
-import subprocess
 import sys
 
 import aac_tables as T
-import ffmpeg_sources
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 CS = ROOT / "src" / "Encspect.Formats.Aac" / "HuffmanData.cs"
-TOOLS = ROOT / ".cache" / "tools"
-FAAD = ("https://github.com/knik0/faad2", "216f00e8ddba6f2c64caf481a04f1ddd78b93e78", "faad2-2.11.1")  # tag 2.11.1
-FDK = ("https://github.com/mstorsjo/fdk-aac", "801f67f671929311e0c9952c5f92d6e147c7b003", "fdk-aac-2.0.2")  # tag v2.0.2
 
 SBR_NAMES = list(T.SBR_HUFFMAN)
 
@@ -135,155 +127,99 @@ def check_cs(problems):
             problems.append(f"HuffmanData.cs: {name} differs from aac_tables.py")
 
 
-def clone(spec):
-    repository, commit, directory = spec
-    path = TOOLS / directory
-    if not path.exists():
-        TOOLS.mkdir(parents=True, exist_ok=True)
-        subprocess.run(["git", "clone", "-q", repository, str(path)], check=True)
-        subprocess.run(["git", "-C", str(path), "checkout", "-q", commit], check=True)
-    return path
+SPEC = ROOT / ".cache" / "spec" / "14496-3.txt"
+
+# The rows of the specification's tables: the sampling frequency indexes each table serves, by long (1024 lines, 960 in brackets)
+# and short (128 lines, 120 in brackets) windows. Indexes 11 and 12 (8 and 7.35 kHz) share the 8 kHz tables.
+LONG_TABLES = {0: "4.140", 1: "4.140", 2: "4.138", 3: "4.129", 4: "4.129", 5: "4.131", 6: "4.136", 7: "4.136", 8: "4.134", 9: "4.134", 10: "4.134", 11: "4.132", 12: "4.132"}
+SHORT_TABLES = {0: "4.141", 1: "4.141", 2: "4.139", 3: "4.130", 4: "4.130", 5: "4.130", 6: "4.137", 7: "4.137", 8: "4.135", 9: "4.135", 10: "4.135", 11: "4.133", 12: "4.133"}
+SBR_TABLES = dict(zip(SBR_NAMES, ["4.A.79", "4.A.80", "4.A.81", "4.A.82", "4.A.83", "4.A.84", "4.A.85", "4.A.86", "4.A.87", "4.A.88"]))
 
 
-def c_rows(text, name):
-    match = re.search(r"\b" + re.escape(name) + r"\s*\[[^\]]*\](?:\[[^\]]*\])?\s*=\s*\{(.*?)\n\};", text, re.S)
-    if not match:
-        raise SystemExit(f"no {name}")
-    body = re.sub(r"/\*.*?\*/", "", match.group(1), flags=re.S)
-    return [[int(v) for v in re.findall(r"-?\d+", row)] for row in re.findall(r"\{([^{}]*)\}", body)]
+def spec_section(lines, start, end):
+    first = next(i for i, line in enumerate(lines) if re.search(start, line))
+    last = next(i for i in range(first + 1, len(lines)) if re.search(end, lines[i]))
+    return lines[first:last]
 
 
-def binary_rows(text, name):
-    """A binary-search table of faad2: rows of { is_leaf, { data... } }."""
-    match = re.search(r"\b" + re.escape(name) + r"\s*\[[^\]]*\]\s*=\s*\{(.*?)\n\};", text, re.S)
-    body = re.sub(r"/\*.*?\*/", "", match.group(1), flags=re.S)
-    return [[int(leaf)] + [int(v) for v in re.findall(r"-?\d+", data)] for leaf, data in re.findall(r"\{\s*(\d+)\s*,\s*\{([^}]*)\}\s*\}", body)]
+def compare_rows(problems, name, rows, codes, bits):
+    if sorted(rows) != list(range(len(codes))):
+        problems.append(f"{name}: the number of entries differs from the specification's")
+        return
+    for index, (length, code) in rows.items():
+        if (bits[index], codes[index]) != (length, code):
+            problems.append(f"{name} index {index} differs from the specification's")
 
 
-def faad_spectral(faad, problems):
-    """Decodes every codeword with faad2's tables, as libfaad/huffman.c does."""
-    book = faad / "libfaad" / "codebook"
-    first_bits = [0, 5, 5, 0, 5, 0, 5, 0, 5, 0, 6, 5]
+def spec_codebook(lines, number, hexadecimal):
+    """Rows of 'index length codeword', two to a line, of Table 4.A.<number>; the SBR tables print length and codeword as 0x values."""
+    word = r"(0x[0-9A-Fa-f]+)" if hexadecimal else r"([0-9a-fA-F]+)"
+    section = spec_section(lines, rf"Table 4\.A\.{number} [–-] ", r"Table 4\.A\.\d+ [–-] |^\s*4\.A\.\d")
+    rows = {}
+    for line in section[1:]:
+        text = line.strip()
+        if re.fullmatch(r"(?:\d+\s+\S+\s+\S+\s*){1,2}", text):
+            for match in re.finditer(r"(\d+)\s+(\S+)\s+(\S+)", text):
+                index, length, code = match.groups()
+                rows[int(index)] = (int(length, 0) if hexadecimal else int(length), int(code, 16))
+    return rows
+
+
+def spec_offsets(lines, number):
+    """The scalefactor band offsets of a Table 4.1xx, two 'swb offset' pairs to a line: swb -> (offset, offset in brackets or None).
+    The last line ends with the window length alone, as '1024 (960)'."""
+    section = spec_section(lines, rf"Table {re.escape(number)} [–-] scalefactor bands", r"Table 4\.\d+ [–-] ")
+    token = r"\d+(?:\s*\((?:\d+|-)\))?"
+    offsets = {}
+    end = None
+    for line in section[1:]:
+        text = line.strip()
+        if not re.fullmatch(rf"(?:{token}\s+){{0,3}}{token}", text):
+            continue
+        tokens = re.findall(token, text)
+        if len(tokens) == 1 and "(" not in tokens[0]:
+            continue
+        if len(tokens) % 2:
+            end = tokens.pop()
+        for k in range(0, len(tokens), 2):
+            offsets[int(tokens[k])] = tokens[k + 1]
+    if end is not None:
+        offsets[max(offsets) + 1] = end
+    parsed = {}
+    for swb, value in offsets.items():
+        match = re.fullmatch(r"(\d+)(?:\s*\((\d+|-)\))?", value)
+        parsed[swb] = (int(match.group(1)), int(match.group(2)) if match.group(2) and match.group(2) != "-" else (0 if match.group(2) else None))
+    return parsed
+
+
+def check_specification(path, problems):
+    lines = path.read_text(encoding="utf-8", errors="replace").split("\n")
+    compare_rows(problems, "scalefactor codebook (Table 4.A.1)", spec_codebook(lines, 1, False), *T.SCALEFACTOR)
     for n, (codes, bits) in enumerate(T.SPECTRAL, 1):
-        text = (book / f"hcb_{n}.h").read_text(encoding="latin-1")
-        for index, (code, length) in enumerate(zip(codes, bits)):
-            word = format(code, f"0{length}b") + "0" * 20
-            if first_bits[n]:
-                first = c_rows(text, f"hcb{n}_1")
-                second = c_rows(text, f"hcb{n}_2")
-                n1 = first_bits[n]
-                offset, extra = first[int(word[:n1], 2)]
-                if extra:
-                    offset += int(word[n1:n1 + extra], 2)
-                entry = second[offset]
-                decoded_length, values = entry[0], tuple(entry[1:])
-            else:
-                tree = binary_rows(text, f"hcb{n}")
-                offset = 0
-                used = 0
-                while not tree[offset][0]:
-                    offset += tree[offset][1 + int(word[used])]
-                    used += 1
-                decoded_length, values = used, tuple(tree[offset][1:])
-            values = values[:4 if n <= 4 else 2]
-            if decoded_length != length or values != spectral_values(n, index):
-                problems.append(f"spectral codebook {n} index {index}: faad2 decodes {decoded_length} bits to {values}, expected {length} bits, "
-                                f"{spectral_values(n, index)}")
-    tree = c_rows((book / "hcb_sf.h").read_text(encoding="latin-1"), "hcb_sf")
-    for index, (code, length) in enumerate(zip(*T.SCALEFACTOR)):
-        word = format(code, f"0{length}b")
-        offset = 0
-        used = 0
-        while tree[offset][1]:
-            offset += tree[offset][int(word[used])]
-            used += 1
-        if (used, tree[offset][0]) != (length, index):
-            problems.append(f"scalefactor index {index}: faad2 decodes {used} bits to {tree[offset][0]}")
-
-
-def faad_sbr(faad, problems):
-    text = (faad / "libfaad" / "sbr_huff.c").read_text(encoding="latin-1")
-    for name in SBR_NAMES:
+        compare_rows(problems, f"spectral codebook {n} (Table 4.A.{n + 1})", spec_codebook(lines, n + 1, False), codes, bits)
+    for name, table in SBR_TABLES.items():
         codes, bits = T.SBR_HUFFMAN[name]
-        lav = (len(codes) - 1) // 2
-        tree = c_rows(text, name)
-        for index, (code, length) in enumerate(zip(codes, bits)):
-            word = format(code, f"0{length}b")
-            node = 0
-            used = 0
-            while node >= 0:
-                node = tree[node][int(word[used])]
-                used += 1
-            # sbr_huff_dec returns the leaf plus 64; faad2's balance codebooks hold their values doubled, the step coupled channels use.
-            value = (index - lav) * (2 if "_bal_" in name else 1)
-            if (used, node + 64) != (length, value):
-                problems.append(f"{name} index {index}: faad2 decodes {used} bits to {node + 64}, expected {length} bits, {value}")
-
-
-def fdk_bands(fdk, problems):
-    text = (fdk / "libAACdec" / "src" / "aac_rom.cpp").read_text(encoding="latin-1")
-
-    def table(name):
-        match = re.search(r"\b" + name + r"\s*\[\d*\]\s*=\s*\{(.*?)\};", text, re.S)
-        return [int(v) for v in re.findall(r"\d+", re.sub(r"/\*.*?\*/", "", match.group(1)))]
-
-    rows = re.search(r"sfbOffsetTables\[5\]\[16\]\s*=\s*\{(.*?)\n\};", text, re.S).group(1)
-    groups = re.findall(r"\{\s*(\{sfb_.*?)\}\s*(?:,|$)", rows, re.S)
-    entries = re.findall(r"\{(sfb_\w+),\s*(sfb_\w+),\s*(\d+),\s*(\d+)\}", rows)
-    by_length = {}
-    for long_name, short_name, long_count, short_count in entries:
-        by_length.setdefault(long_name.split("_")[2], []).append((long_name, short_name, int(long_count), int(short_count)))
-    for label, ours_long, ours_short, num_long, num_short in [("1024", T.SWB_LONG, T.SWB_SHORT, T.NUM_SWB_LONG, T.NUM_SWB_SHORT),
-                                                              ("960", T.SWB_LONG_960, T.SWB_SHORT_120, T.NUM_SWB_LONG_960, T.NUM_SWB_SHORT_120)]:
-        theirs = by_length[label][:13]
-        for index, (long_name, short_name, long_count, short_count) in enumerate(theirs):
-            if (num_long[index], num_short[index]) != (long_count, short_count):
-                problems.append(f"{label} lines, sampling frequency index {index}: {num_long[index]} and {num_short[index]} bands, fdk-aac {long_count} and {short_count}")
-            if ours_long[index][:long_count + 1] != table(long_name)[:long_count + 1]:
-                problems.append(f"{label} lines, sampling frequency index {index}: long band offsets differ from fdk-aac's {long_name}")
-            if ours_short[index][:short_count + 1] != table(short_name)[:short_count + 1]:
-                problems.append(f"{label} lines, sampling frequency index {index}: short band offsets differ from fdk-aac's {short_name}")
-    _ = groups
-
-
-def ffmpeg_tables(ffmpeg, problems):
-    """Codewords, lengths, band counts and offsets as FFmpeg 6.1.1 prints them."""
-    aactab = (ffmpeg / "libavcodec" / "aactab.c").read_text(encoding="latin-1")
-    sbr = (ffmpeg / "libavcodec" / "aacsbrdata.h").read_text(encoding="latin-1")
-
-    def array(text, name):
-        match = re.search(r"\b" + re.escape(name) + r"\s*\[[^\]]*\](?:\[[^\]]*\])?\s*=\s*\{(.*?)\};", text, re.S)
-        if not match:
-            raise SystemExit(f"no {name} in FFmpeg's sources")
-        body = re.sub(r"//[^\n]*", "", re.sub(r"/\*.*?\*/", "", match.group(1), flags=re.S))
-        return [int(v, 0) for v in re.findall(r"-?0[xX][0-9a-fA-F]+|-?\d+", body)]
-
-    def compare(label, ours, theirs):
-        if list(ours) != theirs:
-            problems.append(f"{label} differs from FFmpeg 6.1.1's")
-
-    for n, (codes, bits) in enumerate(T.SPECTRAL, 1):
-        compare(f"spectral codebook {n} codewords", codes, array(aactab, f"codes{n}"))
-        compare(f"spectral codebook {n} lengths", bits, array(aactab, f"bits{n}"))
-    compare("scalefactor codewords", T.SCALEFACTOR[0], array(aactab, "ff_aac_scalefactor_code"))
-    compare("scalefactor lengths", T.SCALEFACTOR[1], array(aactab, "ff_aac_scalefactor_bits"))
-    for name in SBR_NAMES:
-        compare(f"{name} codewords", T.SBR_HUFFMAN[name][0], array(sbr, name + "_codes"))
-        compare(f"{name} lengths", T.SBR_HUFFMAN[name][1], array(sbr, name + "_bits"))
-    compare("long band counts", T.NUM_SWB_LONG, array(aactab, "ff_aac_num_swb_1024"))
-    compare("long band counts for 960 lines", T.NUM_SWB_LONG_960, array(aactab, "ff_aac_num_swb_960"))
-    compare("short band counts", T.NUM_SWB_SHORT, array(aactab, "ff_aac_num_swb_128"))
-    compare("short band counts for 120 lines", T.NUM_SWB_SHORT_120, array(aactab, "ff_aac_num_swb_120"))
-    compare("PRED_SFB_MAX", T.PRED_SFB_MAX, array(aactab, "ff_aac_pred_sfb_max"))
-    compare("SBR offsets", [v for row in T.SBR_OFFSET for v in row], array(sbr, "sbr_offset"))
-
-
-def faad_prediction(faad, problems):
-    text = (faad / "libfaad" / "common.c").read_text(encoding="latin-1")
-    match = re.search(r"pred_sfb_max\[\]\s*=\s*\{(.*?)\};", text, re.S)
-    theirs = [int(v) for v in re.findall(r"\d+", re.sub(r"/\*.*?\*/", "", match.group(1)))]
-    if T.PRED_SFB_MAX[:len(theirs)] != theirs:
-        problems.append(f"PRED_SFB_MAX {T.PRED_SFB_MAX} differs from faad2's {theirs}")
+        rows = spec_codebook(lines, table.split(".")[-1], True)
+        compare_rows(problems, f"{name} (Table {table})", rows, codes, bits)
+    for index in range(13):
+        for table, offsets, counts, offsets960, counts960 in ((LONG_TABLES[index], T.SWB_LONG[index], T.NUM_SWB_LONG[index], T.SWB_LONG_960[index], T.NUM_SWB_LONG_960[index]),
+                                                           (SHORT_TABLES[index], T.SWB_SHORT[index], T.NUM_SWB_SHORT[index], T.SWB_SHORT_120[index], T.NUM_SWB_SHORT_120[index])):
+            rows = spec_offsets(lines, table)
+            if [rows.get(i, (None,))[0] for i in range(len(offsets))] != list(offsets) or len(offsets) - 1 != counts:
+                problems.append(f"sampling frequency index {index}: offsets differ from Table {table}")
+            # A value in brackets replaces the offset for 960 (or 120) lines, and "(-)" leaves the offset out.
+            if any(i not in rows for i in range(len(offsets))):
+                problems.append(f"sampling frequency index {index}: Table {table} has fewer rows")
+                continue
+            expected = [rows[i][1] if rows[i][1] else rows[i][0] for i in range(len(offsets)) if rows[i][1] != 0]
+            if expected != list(offsets960) or len(offsets960) - 1 != counts960:
+                problems.append(f"sampling frequency index {index}: offsets for 960 or 120 lines differ from Table {table}")
+    start = next(i for i, line in enumerate(lines) if "k0 = startMin" in line)
+    block = " ".join(lines[start:start + 14])
+    found = [[int(v) for v in re.findall(r"-?\d+", row)] for row in re.findall(r"\[([^\]]*)\]", block)]
+    found = [row for row in found if len(row) == 16]
+    if found != T.SBR_OFFSET:
+        problems.append("SBR_OFFSET differs from 4.6.18.3.2.1")
 
 
 def main(arguments):
@@ -292,16 +228,10 @@ def main(arguments):
     check_spec_entries(problems)
     check_cs(problems)
     checked = "the C# copy, completeness and prefix freedom, and entries the specification prints"
-    if "--sources" in arguments or ((TOOLS / FAAD[2]).exists() and (TOOLS / FDK[2]).exists()):
-        faad = clone(FAAD)
-        fdk = clone(FDK)
-        faad_spectral(faad, problems)
-        faad_sbr(faad, problems)
-        faad_prediction(faad, problems)
-        fdk_bands(fdk, problems)
-        ffmpeg_tables(ffmpeg_sources.fetch(TOOLS / "ffmpeg-sources"), problems)
-        checked += ("; every codeword through faad2 2.11.1's decoding tables, the band tables against fdk-aac 2.0.2, "
-                    "the codebooks, band counts and SBR offsets against FFmpeg 6.1.1")
+    spec = pathlib.Path(arguments[arguments.index("--spec") + 1]) if "--spec" in arguments else SPEC
+    if "--spec" in arguments or spec.exists():
+        check_specification(spec, problems)
+        checked += "; every codebook, the band offsets and the SBR start offsets against ISO/IEC 14496-3:2009"
     for problem in problems:
         print(problem)
     print(f"Checked {checked}: {len(problems)} problems.")

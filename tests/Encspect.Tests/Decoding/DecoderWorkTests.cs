@@ -214,6 +214,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         _ when name.StartsWith("ac3", StringComparison.Ordinal) => new Ac3Decoder(),
         _ when name.StartsWith("eac3", StringComparison.Ordinal) => new Eac3Decoder(),
         _ when name.StartsWith("aac", StringComparison.Ordinal) => new Encspect.Formats.Aac.Decoding.AacDecoder(),
+        _ when name.StartsWith("wma", StringComparison.Ordinal) => new Encspect.Formats.Wma.Decoding.WmaStandardDecoder(),
         _ when name.StartsWith("truehd", StringComparison.Ordinal) => TrueHdDecoder.TrueHd,
         _ when name.StartsWith("mlp", StringComparison.Ordinal) => TrueHdDecoder.Mlp,
         _ => new WavPackDecoder(),
@@ -238,6 +239,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         _ when name.StartsWith("ac3", StringComparison.Ordinal) => ".ac3",
         _ when name.StartsWith("eac3", StringComparison.Ordinal) => ".eac3",
         _ when name.StartsWith("aac", StringComparison.Ordinal) => ".aac",
+        _ when name.StartsWith("wma", StringComparison.Ordinal) => ".wma",
         _ when name.StartsWith("truehd", StringComparison.Ordinal) => ".thd",
         _ when name.StartsWith("mlp", StringComparison.Ordinal) => ".mlp",
         _ when name.StartsWith("pcm-aiff", StringComparison.Ordinal) => ".aiff",
@@ -454,7 +456,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         }
 
         // AAC LC: music in stereo from FAAC and FDK AAC, mono from Microsoft's encoder, the hand-built files that code every tool (every codebook, noise substitution, TNS, pulses,
-        // short windows, mid/side and intensity stereo), silence, and HE-AAC (SBR in stereo and mono, with parametric stereo from two encoders, and a stream of many envelope shapes).
+        // short windows, mid/side and intensity stereo), silence, and HE-AAC (SBR in stereo and mono, with parametric stereo from two encoders and hand-built with phase differences and mixing procedure Rb, and a stream of many envelope shapes).
         // Each case repeats the ADTS frames of a file in one stream.
         foreach ((string label, string file) in new[]
         {
@@ -469,10 +471,28 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             ("he-mono", "faac-2.2-he-mono-adts.aac"),
             ("he-v2", "fdkaac-he-v2-adts.aac"),
             ("he-v2-apple", "apple-hev2-adts-cbr-st44.aac"),
+            ("he-v2-phase", "adts/ps-phase.aac"),
             ("he-envelopes", "adts/sbr-fixvar-resolutions.aac"),
         })
         {
             Add("aac-" + label, () => new Case("aac-" + label, AacCases.Repeated(file)));
+        }
+
+        // WMA versions 1 and 2: stereo of ffmpeg's encoder (one block to a frame, with noise substitution at 32 kbit/s and without at 128), Microsoft's encoder (variable block
+        // lengths and exponent reuse; mono, stereo, 22.05 kHz at the lowest rate and 48 kHz at the highest). Each case repeats the media objects of a file in one stream.
+        foreach ((string label, string file) in new[]
+        {
+            ("stereo-ffmpeg-128k", "external-ffmpeg-wmav2-stereo-44k-128k.wma"),
+            ("stereo-ffmpeg-noise-32k", "external-ffmpeg-wmav2-stereo-44k-32k.wma"),
+            ("mono-ffmpeg-version1", "external-ffmpeg-wmav1-mono-22k-24k.wma"),
+            ("stereo-windows-128k", "external-windows-wma92-cbr-stereo-44k-128.wma"),
+            ("stereo-windows-noise-32k", "external-windows-wma92-cbr-stereo-44k-32-sdk.wma"),
+            ("stereo-windows-22k-20k", "external-windows-wma92-cbr-stereo-22k-20-sdk.wma"),
+            ("mono-windows-48k", "external-windows-wma92-cbr-mono-44k-48.wma"),
+            ("stereo-windows-48k", "external-windows-wma92-cbr-stereo-48k-128.wma"),
+        })
+        {
+            Add("wma-" + label, () => new Case("wma-" + label, WmaCases.Repeated(file)));
         }
 
         // E-AC-3: 5.1 and stereo from FFmpeg's encoder (no tools beyond coupling), and the hand-built files with the adaptive hybrid transform, spectral extension and enhanced
@@ -1309,6 +1329,27 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             var analyzer = new Analyzer(DefaultParsers.Tags, DefaultParsers.Formats, DefaultParsers.Codecs, [counting]);
             using var stream = new MemoryStream(file, writable: false);
             analyzer.Analyze("probe.aac", stream, new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = long.MaxValue, Output = _ => new NullSink() } });
+            return counting.Units;
+        }
+    }
+
+    internal static class WmaCases
+    {
+        public static byte[] Repeated(string fixture, long target = Target)
+        {
+            int tag = fixture.Contains("wmav1", StringComparison.Ordinal) ? 0x0160 : 0x0161;
+            string path = "asf/" + fixture;
+            long perCopy = Math.Max(1, Units(MemoryTests.FileOfCycles(path, tag, 64)) / 64);
+            int packets = (int)Math.Clamp(target / perCopy, 128, 1 << 20);
+            return MemoryTests.FileOfCycles(path, tag, packets);
+        }
+
+        public static long Units(byte[] file)
+        {
+            var counting = new CountingDecoder(new Encspect.Formats.Wma.Decoding.WmaStandardDecoder());
+            var analyzer = new Analyzer(DefaultParsers.Tags, DefaultParsers.Formats, DefaultParsers.Codecs, [counting]);
+            using var stream = new MemoryStream(file, writable: false);
+            analyzer.Analyze("probe.wma", stream, new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = long.MaxValue, Output = _ => new NullSink() } });
             return counting.Units;
         }
     }

@@ -86,7 +86,7 @@ public sealed partial class MpegAudioParser
     }
 
     // The music CRC covers the bytes after the tag's frame up to the music length, counted from
-    // the start of that frame (VbrTag.c: the Xing byte count, which includes the frame).
+    // the start of that frame (the Xing byte count includes the frame).
     private static void CheckMusicCrcs(StreamState state)
     {
         Dictionary<long, int> running = RunningCrcs(state);
@@ -208,7 +208,7 @@ public sealed partial class MpegAudioParser
     // more than the frames after it: the region's encoder comes from the other evidence, which a
     // header that names the same encoder supports, or, without any, from that header with low
     // confidence. LAME writes "LAME" and its version into the bits no frame uses
-    // (libmp3lame/bitstream.c, drain_into_ancillary): alone low confidence, together with the tag
+    // (the LAME-written fixtures): alone low confidence, together with the tag
     // the more specific of the two versions. ffmpeg writes a LAME tag into every MP3 it muxes, with
     // the encoder string of the stream it copies or its own: "Lavc" when libavcodec encoded, which
     // it does with libmp3lame or libshine, and "Lavf" when it only muxed, which names no encoder.
@@ -417,10 +417,10 @@ public sealed partial class MpegAudioParser
         return StreamEncoder(context);
     }
 
-    // The writer a region's claims and its LAME tags name. ffmpeg's mp3 muxer writes the whole Xing and LAME tag (libavformat/mp3enc.c),
+    // The writer a region's claims and its LAME tags name. ffmpeg's mp3 muxer writes the whole Xing and LAME tag (the external-ffmpeg-* MP3 fixtures),
     // so a tag laid out as it writes it is the muxer's: an encoder string that starts "Lavc" (the stream's "encoder" metadata, the
     // codec library's version, which names the encoder: HeaderEncoder) or "Lavf" ("Lavf lame" in place of the bit-exact "Lavc libmp3lame",
-    // mp3enc.c:250-252, or a bare "Lavf" without metadata, mp3enc.c:258), or a stored CRC equal to the one ffmpeg's mp3enc.c computes over the
+    // external-ffmpeg-bitexact.mp3, or a bare "Lavf" without metadata), or a stored CRC equal to the one ffmpeg's muxer computes over the
     // frame's first 190 bytes. The quirk needs !IsTagCrcValid: LAME's own CRC coincides with ffmpeg's for MPEG-1 stereo, so a valid LAME CRC
     // says nothing. It names the writer "FFmpeg" without a version, since the "Lavc" version is the codec library's, with low confidence.
     // Tags of the claims' kind (ID3v2 TSSE, APE) are weighed with it.
@@ -445,7 +445,7 @@ public sealed partial class MpegAudioParser
                 if (IsFfmpeg(text) || quirk)
                 {
                     all.Add(new EncoderClaim("FFmpeg", header.TagNode,
-                        $"LAME tag laid out as ffmpeg's mp3 muxer writes it (libavformat/mp3enc.c writes the whole tag), with the encoder string \"{text}\"{(quirk ? " and ffmpeg's tag CRC" : string.Empty)}", ClaimRole.Writer)
+                        $"LAME tag laid out as ffmpeg's mp3 muxer writes it, with the encoder string \"{text}\"{(quirk ? " and ffmpeg's tag CRC" : string.Empty)}", ClaimRole.Writer)
                     {
                         IsLayout = true,
                     });

@@ -2,7 +2,7 @@
 id: lame-tag
 title: The LAME tag
 related: xing-header, gapless-playback, replaygain, encoder-detection, lowpass, ath, noise-shaping
-references: LAME tag specification (Gabriel Bouvigne), Mp3 Info Tag revision 1; LAME libmp3lame/VbrTag.c
+references: LAME tag specification (Gabriel Bouvigne), Mp3 Info Tag revision 1; MediaInfoLib v24.01 File_Mpega.cpp (Header_Xing)
 ---
 
 **What it is.** LAME extends the [Xing or Info header](xing-header) of the first frame with 36 bytes of its own, specified as the Mp3 Info Tag. It records how the file was made and what a player needs to play it exactly:

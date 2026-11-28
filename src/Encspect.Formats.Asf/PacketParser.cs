@@ -244,7 +244,7 @@ internal static class PacketParser
         }
         else if (packetSize > 0 && (packet.PacketLengthField != 0 || lengthWidth > 0) && packet.PacketLengthField != packetSize)
         {
-            // A present field of 0 states a packet of no bytes (asfdec_f.c rejects it); the packet is still read at the file's size.
+            // A present field of 0 states a packet of no bytes (ffmpeg rejects it: "invalid packet_length"); the packet is still read at the file's size.
             packet.Issues |= PacketIssues.PacketLengthMismatch;
         }
 

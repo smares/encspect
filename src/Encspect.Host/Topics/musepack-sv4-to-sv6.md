@@ -2,7 +2,7 @@
 id: musepack-sv4-to-sv6
 title: Musepack SV4 to SV6: the stream versions before SV7
 related: musepack-sv7-stream, musepack-subband-coding, mid-side-stereo, intensity-stereo
-references: libmpcdec 1.2.6 streaminfo.c, mpc_decoder.c, huffsv46.c, AUTHORS; the Portable Musepack decoder (mpc.zip, 2004); mppenc 1.16 encode_sv7.c; Rarewares' Win32 builds of the SV4 and SV5 encoders and of mppdec
+references: libmpcdec 1.2.6 streaminfo.c, mpc_decoder.c, huffsv46.c, AUTHORS; the Portable Musepack decoder (mpc.zip, 2004), a cross-check; Encspect's mppenc 1.16 fixtures; Rarewares' Win32 builds of the SV4 and SV5 encoders and of mppdec
 ---
 
 **The header.** Before "MP+" there was no magic number. The first 32-bit little-endian word, read from its most significant bit, holds the bitrate (0 for a variable bitrate), the intensity stereo and mid/side flags, the stream version, the max band and the block size. The frame count follows in 16 bits in version 4 and 32 bits in versions 5 and 6. The streams are stereo at 44.1 kHz.

@@ -8415,6 +8415,20 @@
       },
       {
         "severity": "Info",
+        "code": "aac.layout-changed",
+        "message": "The raw data block at 0x165 holds channel elements in another order than the block before it, so the decoder starts the state of its channel slots again.",
+        "offset": 357,
+        "length": 84,
+        "path": [
+          0,
+          6,
+          15,
+          0
+        ],
+        "count": 1
+      },
+      {
+        "severity": "Info",
         "code": "aac.window-slopes-differ",
         "message": "2 raw data blocks hold a window sequence whose left slope differs from the right slope of the window before it in the same channel stream, as a long window followed by eight short ones does: ISO/IEC 14496-3 4.6.11.3.1 lists such transitions as possible and not as meaningful; the first at 0x21F.",
         "offset": 543,
@@ -8449,7 +8463,7 @@
       {
         "severity": "Warning",
         "code": "aac.scalefactor-out-of-range",
-        "message": "The raw data block at 0x30B holds a scalefactor outside 0 to 255, for which ffmpeg's decoder rejects the access unit.",
+        "message": "The raw data block at 0x30B holds a scalefactor outside 0 to 255 (4.6.2.3.2), for which ffmpeg's decoder rejects the access unit.",
         "offset": 779,
         "length": 5,
         "path": [

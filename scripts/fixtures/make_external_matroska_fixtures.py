@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Writes the encoder-made Matroska and WebM fixtures in tests/fixtures/matroska (external-*).
 
-FFmpeg 6.1 (libavformat's matroska and webm muxers, matroskaenc.c) and mkvmerge from MKVToolNix (Ubuntu 24.04's mkvtoolnix package, v82.0)
+FFmpeg 6.1 (libavformat's matroska and webm muxers) and mkvmerge from MKVToolNix (Ubuntu 24.04's mkvtoolnix package, v82.0)
 mux the audio of the project's other fixtures, copied unchanged, into Matroska and WebM: AAC (LC, HE-AAC and HE-AAC v2), MPEG audio Layers II
 and III, AC-3, E-AC-3, DTS, Vorbis, Opus (also with the ambisonics mapping), WavPack; and FFmpeg's own encoders write FLAC, PCM, ALAC, TTA and Dolby
 TrueHD, which the analyzer reports from the TrackEntry only. The muxers' options give a live stream (unknown sizes), no CRC-32 elements, many small
@@ -101,7 +101,7 @@ FIXTURES = {
     "external-ffmpeg-metadata": ("ffmpeg", ["ogg/external-ffmpeg-libopus.opus", "chapters.ffmetadata", "cover.jpg"],
                                  ["-map", "0:a", "-map_metadata", "1", "-map_chapters", "1", "-attach", "cover.jpg", "-metadata:s:t", "mimetype=image/jpeg",
                                   "-c", "copy", "-metadata", "title=A title", "-metadata", "artist=An artist"], [("Opus", 48000, 2)], [], "mka"),
-    # An application that muxes through libavformat and sets encoding_tool: matroskaenc.c writes the muxer's version as the MuxingApp and the tool as the WritingApp.
+    # An application that muxes through libavformat and sets encoding_tool: ffmpeg writes the muxer's version as the MuxingApp and the tool as the WritingApp.
     "external-ffmpeg-encoding-tool": ("ffmpeg", ["ogg/external-ffmpeg-libopus.opus"], ["-c", "copy", "-metadata", "encoding_tool=HandBrake 1.7.2 2024011600"],
                                       [("Opus", 48000, 2)], [], "mka"),
     # The LAME tag ffmpeg's muxer wrote names ffmpeg; the Segment's WritingApp names mkvmerge.

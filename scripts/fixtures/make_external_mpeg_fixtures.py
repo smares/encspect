@@ -248,7 +248,7 @@ FIXTURES = [
     ("external-ffmpeg-cbr", ".mp3", 44100, 2, ["ffmpeg", "-v", "error", "-y", "-i", "{in}", "-c:a", "libmp3lame", "-b:a", "128k", "{out}"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=True)),
     # Bit-exact: the stream's encoder metadata is "Lavc libmp3lame", which the muxer replaces with "Lavf lame" in the LAME tag it writes
-    # (mp3enc.c:250-252), so the tag names the muxer and the encoder is told by LAME's own signature in the frames.
+    # (see the tag's encoder string in the committed file), so the tag names the muxer and the encoder is told by LAME's own signature in the frames.
     ("external-ffmpeg-bitexact", ".mp3", 44100, 2, ["ffmpeg", "-v", "error", "-y", "-i", "{in}", "-fflags", "+bitexact", "-flags:a", "+bitexact", "-c:a", "libmp3lame", "-b:a", "128k", "{out}"],
      dict(version="1", layer=3, sample_rate=44100, channel_mode="Joint stereo", bitrate=128, info_frame=True)),
     ("external-ffmpeg-vbr", ".mp3", 44100, 2, ["ffmpeg", "-v", "error", "-y", "-i", "{in}", "-c:a", "libmp3lame", "-q:a", "2", "{out}"],
@@ -1136,7 +1136,7 @@ def detected_encoder(command, tag, settings, rows, path):
     if lame is None:
         return {"name": "LAME 3.100", "confidence": "Low"}
     if lame["encoder"].startswith("Lavf"):
-        # The muxer wrote "Lavf lame" in place of the bit-exact "Lavc libmp3lame" (mp3enc.c:250-252): it names no encoder and
+        # The muxer wrote "Lavf lame" in place of the bit-exact "Lavc libmp3lame" (the committed file): it names no encoder and
         # supports none, so LAME's own signature in the frames stands alone.
         return {"name": "LAME 3.100", "confidence": "Low"}
     if not lame["encoder"].startswith("LAME"):
@@ -1182,7 +1182,7 @@ def weigh_tsse(encoder, claim):
 
 def detected_writer(tag, path):
     """The writer the analyzer must name, by a rule of its own: a TSSE frame of ffmpeg's muxer ("Lavf60.16.100") names it with its version; without
-    one, a LAME tag laid out as ffmpeg's mp3 muxer writes it (libavformat/mp3enc.c writes the whole tag) names "FFmpeg": an encoder string of "Lavc"
+    one, a LAME tag laid out as ffmpeg's mp3 muxer writes it (the external-ffmpeg-* fixtures) names "FFmpeg": an encoder string of "Lavc"
     or "Lavf", or a tag CRC that is not LAME's but is the one over the frame's first 190 bytes. Both are low confidence; None names no writer."""
     text = tsse(path)
     if text and text.startswith("Lavf"):

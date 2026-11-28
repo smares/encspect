@@ -160,7 +160,7 @@ public sealed class AacCodecParser : ICodecParser
             feed?.Trim(figures.Samples);
         }
 
-        StreamVerification? verification = feed?.Finish([]);
+        StreamVerification? verification = feed?.Finish(BlockLog.StoredChecksums(log.Blocks?.Tally));
 
         var leading = new List<Node>();
         bool encrypted = context.Configuration is { AreSamplesEncrypted: true };
@@ -474,7 +474,7 @@ public sealed class AacCodecParser : ICodecParser
                 {
                     if (result.Ok)
                     {
-                        feed.Decode(packet, "Access Unit", null, packet.FailsChecksum);
+                        feed.Decode(packet, "Access Unit", null, packet.FailsChecksum || result.HasSbrCrcFailure);
                     }
                     else
                     {

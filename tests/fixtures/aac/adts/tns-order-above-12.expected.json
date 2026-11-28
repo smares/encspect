@@ -1,0 +1,68 @@
+{
+ "description": "Mono frames of long windows with the same spectrum and a TNS filter of order 12 (twice) and 13, 20 and 31 over 30 bands, whose first 12 coefficients are the same: the standard limits the order to 12 and decodes the first 12 coefficients, so the last four blocks decode alike; the field allows more, so the stream is reported.",
+ "length": 2283,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "channel_layout": [
+    "front center"
+   ],
+   "samples": 5120,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   454
+  ],
+  [
+   454,
+   454
+  ],
+  [
+   908,
+   454
+  ],
+  [
+   1362,
+   458
+  ],
+  [
+   1820,
+   463
+  ]
+ ],
+ "fields": {
+  "ADTS/Statistics/Block Usage/Only Long": "5 channel streams (100.0%)",
+  "ADTS/Statistics/Window Shapes/KBD": "5 channel streams (100.0%)",
+  "ADTS/Statistics/Codebooks/Codebook 0": "20 bands (9.1%)",
+  "ADTS/Statistics/Codebooks/Codebook 3": "40 bands (18.2%)",
+  "ADTS/Statistics/Codebooks/Codebook 5": "50 bands (22.7%)",
+  "ADTS/Statistics/Codebooks/Codebook 7": "50 bands (22.7%)",
+  "ADTS/Statistics/Codebooks/Codebook 9": "60 bands (27.3%)"
+ },
+ "findings": [
+  [
+   "aac.tns-order-too-high",
+   "a TNS filter of a higher order than the 12 its window allows"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "faad": {
+   "seconds": "0.116",
+   "rate": 44100
+  },
+  "skip": {
+   "decode": "ffmpeg refuses a TNS filter of an order above 12 (\"TNS filter order ... is greater than maximum\").",
+   "faad_trace": "faad2 does not trace the filter's order."
+  }
+ }
+}

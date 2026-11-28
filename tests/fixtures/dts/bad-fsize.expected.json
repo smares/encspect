@@ -66,7 +66,7 @@
    ]
   },
   "skip": {
-   "decode": "ffmpeg rejects the frame whose FSIZE is 60 (dca_core.c: 'Invalid core frame size')",
+   "decode": "ffmpeg rejects the frame whose FSIZE is 60 ('Invalid core frame size')",
    "ffprobe": "ffmpeg's parser keeps the damaged bytes in the packets around them.",
    "libdca": "libdca's tool stops at a frame size it rejects (frame sizes under 96 bytes)."
   }

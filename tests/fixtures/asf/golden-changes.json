@@ -1,13 +1,148 @@
 {
   "goldens": [
-    "tests/fixtures/asf/"
+    "tests/fixtures/asf/",
+    "tests/fixtures/wav/external-wmav1-in-wav.report.json",
+    "tests/fixtures/wav/external-wmav2-in-wav.report.json"
   ],
   "changed": [
     {
       "scope": "finding",
-      "code": "asf.codec-not-analyzed",
+      "code": "wma.codec-data-size",
       "fields": [
         "message"
+      ]
+    },
+    {
+      "scope": "finding",
+      "code": "wma.packet-long",
+      "fields": [
+        "message"
+      ]
+    },
+    {
+      "scope": "finding",
+      "code": "wma.packet-short",
+      "fields": [
+        "message"
+      ]
+    },
+    {
+      "scope": "finding",
+      "code": "wma.superframe-short",
+      "fields": [
+        "message"
+      ]
+    },
+    {
+      "scope": "finding",
+      "code": "wma.voice-block-alignment",
+      "fields": [
+        "message"
+      ]
+    },
+    {
+      "scope": "finding",
+      "code": "wma.voice-cache-overflow",
+      "fields": [
+        "message"
+      ]
+    },
+    {
+      "scope": "finding",
+      "code": "wma.voice-denoise-strength",
+      "fields": [
+        "message"
+      ]
+    },
+    {
+      "scope": "finding",
+      "code": "wma.voice-frame-type-overlap",
+      "fields": [
+        "message"
+      ]
+    },
+    {
+      "scope": "finding",
+      "code": "wma.voice-frame-type-table",
+      "fields": [
+        "message"
+      ]
+    },
+    {
+      "scope": "finding",
+      "code": "wma.voice-sample-rate",
+      "fields": [
+        "message"
+      ]
+    },
+    {
+      "path": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 1",
+        "Encoder",
+        "Evidence"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/asf/external-ffmpeg-wmav1-mono-22k-24k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-48k.report.json"
+      ]
+    },
+    {
+      "path": [
+        "ASF",
+        "Data Object",
+        "Windows Media Audio 2",
+        "Encoder",
+        "Evidence"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/asf/derived-ffmpeg-wmav2-noise-control.report.json",
+        "tests/fixtures/asf/derived-ffmpeg-wmav2-noise-flagged-band.report.json",
+        "tests/fixtures/asf/derived-ffmpeg-wmav2-tool-name-lavc.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-mono-44k-48k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-22k-32k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-32k-64k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-128k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-32k.report.json",
+        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-64k.report.json"
+      ]
+    },
+    {
+      "path": [
+        "RIFF",
+        "Data Chunk",
+        "Windows Media Audio 1",
+        "Encoder",
+        "Evidence"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/wav/external-wmav1-in-wav.report.json"
+      ]
+    },
+    {
+      "path": [
+        "RIFF",
+        "Data Chunk",
+        "Windows Media Audio 2",
+        "Encoder",
+        "Evidence"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/wav/external-wmav2-in-wav.report.json"
       ]
     }
   ]

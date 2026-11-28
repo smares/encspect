@@ -360,7 +360,7 @@ def build():
             crosscheck={"ffprobe": True, "ffprobe_packets": "substream 0", "ffprobe_fields": False, "ffprobe_bitrate": False, "decode": True, "skip_insertion": False,
                         "skip": {"skip_insertion": "ffmpeg decodes only substream 0, so a change to substream 1 would not show.",
                                  "ffprobe_fields": "FFmpeg 8.0.1's AC-3 parser no longer takes a frame of substream 1 as the start of a packet: its header parser returns an error "
-                                                   "for any substream ID but 0 (libavcodec/ac3_parser.c:133, eac3_parse_header), so ac3_sync does not find it and the frame joins "
+                                                   "for any substream ID but 0, so its sync search does not find it and the frame joins "
                                                    "the packet before it, and the parser cannot read that packet's sample rate or channels (ffprobe: 0 Hz, 2 channels). It lists "
                                                    "four packets, each starting at a frame of substream 0 and holding the frames up to the next; 6.1 listed one more for each frame "
                                                    "of substream 1. The stream is valid E-AC-3 (ETSI TS 102 366 E.1.2.1 allows substream IDs 0 to 7).",
@@ -516,11 +516,11 @@ def build():
     fixture("reduced-rate", ".eac3", "Three 2/0 frames at 24 kHz (fscod2 0).", data, frames_of(data), [stream("E-AC-3", 24000, 2, 0, 3 * 1536)],
             [("ac-3.reduced-rate-not-read", "reduced sample rate")],
             crosscheck={"ffprobe": True, "ffprobe_fields": "channels", "ffprobe_bitrate": False, "decode": False,
-                        "skip": {"ffprobe_fields": "FFmpeg 8.0.1's AC-3 parser takes the sample rate from the header (24000 Hz, ac3_parser.c, eac3_parse_header) and the packets from the frame "
-                                                   "sizes, but leaves the channels of an E-AC-3 stream to the E-AC-3 decoder (aac_ac3_parser.c:132), which refuses a reduced sample rate "
-                                                   "(eac3dec.c:316-322, AVERROR_PATCHWELCOME): ffprobe gives 0 channels and no channel layout.",
-                                 "ffprobe_bitrate": "ffprobe gives no bitrate (N/A): the bit rate comes from the decoder that refuses the stream (aac_ac3_parser.c:163-167, eac3dec.c:316-322).",
-                                 "decode": "FFmpeg 8.0.1's E-AC-3 decoder refuses a reduced sample rate (eac3dec.c:316-322, AVERROR_PATCHWELCOME)."}})
+                        "skip": {"ffprobe_fields": "FFmpeg 8.0.1's AC-3 parser takes the sample rate from the header (24000 Hz) and the packets from the frame "
+                                                   "sizes, but leaves the channels of an E-AC-3 stream to the E-AC-3 decoder, which refuses a reduced sample rate "
+                                                   "(AVERROR_PATCHWELCOME): ffprobe gives 0 channels and no channel layout.",
+                                 "ffprobe_bitrate": "ffprobe gives no bitrate (N/A): the bit rate comes from the decoder that refuses the stream.",
+                                 "decode": "FFmpeg 8.0.1's E-AC-3 decoder refuses a reduced sample rate (AVERROR_PATCHWELCOME)."}})
 
     # MP4: a dac3 box that disagrees with the frames, and a dec3 box with a dependent substream.
     frames = [ac3() for _ in range(6)]
@@ -899,8 +899,7 @@ def build_coding():
                                  "skip_insertion": "The core is AC-3, whose frames the check does not rewrite."}}, coding=[units[:1], units[1:2], units[2:]])
 
     # Spectral extension that starts after a block without it, with the default band structure the specification loads at the first block that
-    # uses spectral extension (ETSI TS 102 366 E.1.3.3.7), which ffmpeg loads only in block 0 (libavcodec/ac3dec.c, decode_band_structure:
-    # "if (!blk) memcpy(...default...)", called from spx_strategy only): a frame decoded alone reads sub-bands 5 to 13 with the zeros of a fresh
+    # uses spectral extension (ETSI TS 102 366 E.1.3.3.7), which ffmpeg 6.1.1 loads only in block 0 (its decode of the frames below fails): a frame decoded alone reads sub-bands 5 to 13 with the zeros of a fresh
     # context, 8 bands of coordinates where the default merges three, and fails. The frame that starts in block 0 decodes.
     defaults = [
         dict(numblkscod=3, blksw=quiet, remat=[0b0110, None, None, None, None, None], spx_blocks=[True, None, False, None, None, None], spx_range=(3, 5)),

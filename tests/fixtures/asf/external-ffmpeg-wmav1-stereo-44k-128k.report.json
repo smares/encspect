@@ -7284,7 +7284,7 @@
                         },
                         {
                           "name": "Evidence",
-                          "value": "All 44 padded superframes have bytes after the frame that are all 'N' (0x4E), which ffmpeg's wmav1 encoder writes (wmaenc.c), with no bit reservoir and no variable block lengths",
+                          "value": "All 43 padded superframes end in 'N' (0x4E) bytes, after the frame and the coefficient bits that version 1 stereo's coefficient limit leaves unread, which ffmpeg's wmav1 encoder writes, with no bit reservoir and no variable block lengths",
                           "offset": 354,
                           "length": 35250
                         }
@@ -7367,7 +7367,7 @@
                         },
                         {
                           "name": "Largest Frame",
-                          "value": 741,
+                          "value": 737,
                           "unit": "bytes",
                           "offset": 354,
                           "length": 35250
@@ -7381,7 +7381,7 @@
                         },
                         {
                           "name": "Maximum Bitrate",
-                          "value": 127.64882812500001,
+                          "value": 126.959765625,
                           "unit": "kbps",
                           "offset": 354,
                           "length": 35250
@@ -7405,13 +7405,13 @@
                             },
                             {
                               "name": "32 to 63 kbps",
-                              "value": "2 frames (4.5%)",
+                              "value": "4 frames (9.1%)",
                               "offset": 354,
                               "length": 35250
                             },
                             {
                               "name": "96 to 127 kbps",
-                              "value": "28 frames (63.6%)",
+                              "value": "26 frames (59.1%)",
                               "offset": 354,
                               "length": 35250
                             }
@@ -7509,13 +7509,13 @@
                         },
                         {
                           "name": "Non-Zero Coefficients",
-                          "value": 35647,
+                          "value": 34343,
                           "offset": 354,
                           "length": 35250
                         },
                         {
                           "name": "Escape-Coded Coefficients",
-                          "value": 359,
+                          "value": 352,
                           "offset": 354,
                           "length": 35250
                         },
@@ -7533,14 +7533,14 @@
                             },
                             {
                               "name": "Most Common",
-                              "value": 20069,
+                              "value": 20037,
                               "unit": "Hz",
                               "offset": 354,
                               "length": 35250
                             },
                             {
                               "name": "Highest",
-                              "value": 20069,
+                              "value": 20037,
                               "unit": "Hz",
                               "offset": 354,
                               "length": 35250
@@ -7588,14 +7588,14 @@
                               "name": "Frame Data",
                               "value": "1 block",
                               "offset": 1194,
-                              "length": 656
+                              "length": 348
                             },
                             {
                               "name": "Padding",
-                              "value": 87,
+                              "value": 395,
                               "unit": "bytes",
-                              "offset": 1850,
-                              "length": 87
+                              "offset": 1542,
+                              "length": 395
                             }
                           ]
                         },
@@ -7742,14 +7742,14 @@
                               "name": "Frame Data",
                               "value": "1 block",
                               "offset": 6834,
-                              "length": 680
+                              "length": 327
                             },
                             {
                               "name": "Padding",
-                              "value": 63,
+                              "value": 416,
                               "unit": "bytes",
-                              "offset": 7514,
-                              "length": 63
+                              "offset": 7161,
+                              "length": 416
                             }
                           ]
                         },
@@ -7764,14 +7764,14 @@
                               "name": "Frame Data",
                               "value": "1 block",
                               "offset": 7594,
-                              "length": 724
+                              "length": 720
                             },
                             {
                               "name": "Padding",
-                              "value": 19,
+                              "value": 23,
                               "unit": "bytes",
-                              "offset": 8318,
-                              "length": 19
+                              "offset": 8314,
+                              "length": 23
                             }
                           ]
                         },
@@ -7830,14 +7830,14 @@
                               "name": "Frame Data",
                               "value": "1 block",
                               "offset": 10034,
-                              "length": 695
+                              "length": 689
                             },
                             {
                               "name": "Padding",
-                              "value": 48,
+                              "value": 54,
                               "unit": "bytes",
-                              "offset": 10729,
-                              "length": 48
+                              "offset": 10723,
+                              "length": 54
                             }
                           ]
                         },
@@ -7852,14 +7852,14 @@
                               "name": "Frame Data",
                               "value": "1 block",
                               "offset": 10794,
-                              "length": 673
+                              "length": 672
                             },
                             {
                               "name": "Padding",
-                              "value": 70,
+                              "value": 71,
                               "unit": "bytes",
-                              "offset": 11467,
-                              "length": 70
+                              "offset": 11466,
+                              "length": 71
                             }
                           ]
                         },
@@ -7874,14 +7874,14 @@
                               "name": "Frame Data",
                               "value": "1 block",
                               "offset": 11554,
-                              "length": 706
+                              "length": 705
                             },
                             {
                               "name": "Padding",
-                              "value": 37,
+                              "value": 38,
                               "unit": "bytes",
-                              "offset": 12260,
-                              "length": 37
+                              "offset": 12259,
+                              "length": 38
                             }
                           ]
                         },
@@ -7918,14 +7918,14 @@
                               "name": "Frame Data",
                               "value": "1 block",
                               "offset": 13234,
-                              "length": 720
+                              "length": 705
                             },
                             {
                               "name": "Padding",
-                              "value": 23,
+                              "value": 38,
                               "unit": "bytes",
-                              "offset": 13954,
-                              "length": 23
+                              "offset": 13939,
+                              "length": 38
                             }
                           ]
                         },
@@ -7940,14 +7940,14 @@
                               "name": "Frame Data",
                               "value": "1 block",
                               "offset": 13994,
-                              "length": 718
+                              "length": 714
                             },
                             {
                               "name": "Padding",
-                              "value": 25,
+                              "value": 29,
                               "unit": "bytes",
-                              "offset": 14712,
-                              "length": 25
+                              "offset": 14708,
+                              "length": 29
                             }
                           ]
                         },
@@ -7962,14 +7962,14 @@
                               "name": "Frame Data",
                               "value": "1 block",
                               "offset": 14754,
-                              "length": 691
+                              "length": 686
                             },
                             {
                               "name": "Padding",
-                              "value": 52,
+                              "value": 57,
                               "unit": "bytes",
-                              "offset": 15445,
-                              "length": 52
+                              "offset": 15440,
+                              "length": 57
                             }
                           ]
                         },
@@ -8028,14 +8028,14 @@
                               "name": "Frame Data",
                               "value": "1 block",
                               "offset": 17194,
-                              "length": 676
+                              "length": 661
                             },
                             {
                               "name": "Padding",
-                              "value": 67,
+                              "value": 82,
                               "unit": "bytes",
-                              "offset": 17870,
-                              "length": 67
+                              "offset": 17855,
+                              "length": 82
                             }
                           ]
                         },
@@ -8050,14 +8050,14 @@
                               "name": "Frame Data",
                               "value": "1 block",
                               "offset": 17954,
-                              "length": 687
+                              "length": 686
                             },
                             {
                               "name": "Padding",
-                              "value": 56,
+                              "value": 57,
                               "unit": "bytes",
-                              "offset": 18641,
-                              "length": 56
+                              "offset": 18640,
+                              "length": 57
                             }
                           ]
                         },
@@ -8072,14 +8072,14 @@
                               "name": "Frame Data",
                               "value": "1 block",
                               "offset": 18714,
-                              "length": 741
+                              "length": 737
                             },
                             {
                               "name": "Padding",
-                              "value": 2,
+                              "value": 6,
                               "unit": "bytes",
-                              "offset": 19455,
-                              "length": 2
+                              "offset": 19451,
+                              "length": 6
                             }
                           ]
                         },
@@ -8226,14 +8226,14 @@
                               "name": "Frame Data",
                               "value": "1 block",
                               "offset": 24354,
-                              "length": 660
+                              "length": 658
                             },
                             {
                               "name": "Padding",
-                              "value": 83,
+                              "value": 85,
                               "unit": "bytes",
-                              "offset": 25014,
-                              "length": 83
+                              "offset": 25012,
+                              "length": 85
                             }
                           ]
                         },
@@ -8248,14 +8248,14 @@
                               "name": "Frame Data",
                               "value": "1 block",
                               "offset": 25114,
-                              "length": 724
+                              "length": 713
                             },
                             {
                               "name": "Padding",
-                              "value": 19,
+                              "value": 30,
                               "unit": "bytes",
-                              "offset": 25838,
-                              "length": 19
+                              "offset": 25827,
+                              "length": 30
                             }
                           ]
                         },
@@ -8358,14 +8358,14 @@
                               "name": "Frame Data",
                               "value": "1 block",
                               "offset": 29234,
-                              "length": 665
+                              "length": 664
                             },
                             {
                               "name": "Padding",
-                              "value": 78,
+                              "value": 79,
                               "unit": "bytes",
-                              "offset": 29899,
-                              "length": 78
+                              "offset": 29898,
+                              "length": 79
                             }
                           ]
                         },
@@ -8402,14 +8402,14 @@
                               "name": "Frame Data",
                               "value": "1 block",
                               "offset": 30754,
-                              "length": 646
+                              "length": 645
                             },
                             {
                               "name": "Padding",
-                              "value": 97,
+                              "value": 98,
                               "unit": "bytes",
-                              "offset": 31400,
-                              "length": 97
+                              "offset": 31399,
+                              "length": 98
                             }
                           ]
                         },
@@ -8424,14 +8424,14 @@
                               "name": "Frame Data",
                               "value": "1 block",
                               "offset": 31514,
-                              "length": 680
+                              "length": 665
                             },
                             {
                               "name": "Padding",
-                              "value": 63,
+                              "value": 78,
                               "unit": "bytes",
-                              "offset": 32194,
-                              "length": 63
+                              "offset": 32179,
+                              "length": 78
                             }
                           ]
                         },
@@ -8446,14 +8446,14 @@
                               "name": "Frame Data",
                               "value": "1 block",
                               "offset": 32434,
-                              "length": 706
+                              "length": 703
                             },
                             {
                               "name": "Padding",
-                              "value": 37,
+                              "value": 40,
                               "unit": "bytes",
-                              "offset": 33140,
-                              "length": 37
+                              "offset": 33137,
+                              "length": 40
                             }
                           ]
                         },
@@ -8613,15 +8613,15 @@
                         {
                           "name": "Frame",
                           "kind": "Frame",
-                          "value": "1 block, 5248 bits",
+                          "value": "1 block, 2784 bits",
                           "offset": 1194,
-                          "length": 656,
+                          "length": 348,
                           "children": [
                             {
                               "name": "Block",
                               "value": "2048 samples, mid/side",
                               "offset": 1194,
-                              "length": 656,
+                              "length": 348,
                               "children": [
                                 {
                                   "name": "Uses Mid/Side Stereo",
@@ -8673,17 +8673,17 @@
                                 },
                                 {
                                   "name": "Coefficients (channel 1)",
-                                  "value": "551 non-zero, last at 1860",
+                                  "value": "549 non-zero, last at 1856",
                                   "offset": 1202,
-                                  "length": 317,
+                                  "length": 316,
                                   "bitOffset": 4,
-                                  "bitLength": 2532
+                                  "bitLength": 2524
                                 },
                                 {
                                   "name": "Coefficients (channel 2)",
-                                  "value": "542 non-zero, last at 1860",
-                                  "offset": 1519,
-                                  "length": 331
+                                  "value": "29 non-zero, last at 305",
+                                  "offset": 1518,
+                                  "length": 24
                                 }
                               ]
                             }
@@ -9166,15 +9166,15 @@
                         {
                           "name": "Frame",
                           "kind": "Frame",
-                          "value": "1 block, 5440 bits",
+                          "value": "1 block, 2616 bits",
                           "offset": 6834,
-                          "length": 680,
+                          "length": 327,
                           "children": [
                             {
                               "name": "Block",
                               "value": "2048 samples, mid/side",
                               "offset": 6834,
-                              "length": 680,
+                              "length": 327,
                               "children": [
                                 {
                                   "name": "Uses Mid/Side Stereo",
@@ -9226,17 +9226,17 @@
                                 },
                                 {
                                   "name": "Coefficients (channel 1)",
-                                  "value": "586 non-zero, last at 1860",
+                                  "value": "584 non-zero, last at 1843",
                                   "offset": 6842,
-                                  "length": 315,
+                                  "length": 314,
                                   "bitOffset": 4,
-                                  "bitLength": 2516
+                                  "bitLength": 2508
                                 },
                                 {
                                   "name": "Coefficients (channel 2)",
-                                  "value": "600 non-zero, last at 1860",
-                                  "offset": 7157,
-                                  "length": 357
+                                  "value": "4 non-zero, last at 48",
+                                  "offset": 7156,
+                                  "length": 5
                                 }
                               ]
                             }
@@ -9245,15 +9245,15 @@
                         {
                           "name": "Frame",
                           "kind": "Frame",
-                          "value": "1 block, 5792 bits",
+                          "value": "1 block, 5760 bits",
                           "offset": 7594,
-                          "length": 724,
+                          "length": 720,
                           "children": [
                             {
                               "name": "Block",
                               "value": "2048 samples, mid/side",
                               "offset": 7594,
-                              "length": 724,
+                              "length": 720,
                               "children": [
                                 {
                                   "name": "Uses Mid/Side Stereo",
@@ -9305,17 +9305,17 @@
                                 },
                                 {
                                   "name": "Coefficients (channel 1)",
-                                  "value": "649 non-zero, last at 1859",
+                                  "value": "648 non-zero, last at 1856",
                                   "offset": 7602,
-                                  "length": 345,
+                                  "length": 344,
                                   "bitOffset": 4,
-                                  "bitLength": 2756
+                                  "bitLength": 2748
                                 },
                                 {
                                   "name": "Coefficients (channel 2)",
-                                  "value": "635 non-zero, last at 1859",
-                                  "offset": 7947,
-                                  "length": 371
+                                  "value": "629 non-zero, last at 1857",
+                                  "offset": 7946,
+                                  "length": 368
                                 }
                               ]
                             }
@@ -9482,15 +9482,15 @@
                         {
                           "name": "Frame",
                           "kind": "Frame",
-                          "value": "1 block, 5560 bits",
+                          "value": "1 block, 5512 bits",
                           "offset": 10034,
-                          "length": 695,
+                          "length": 689,
                           "children": [
                             {
                               "name": "Block",
                               "value": "2048 samples, mid/side",
                               "offset": 10034,
-                              "length": 695,
+                              "length": 689,
                               "children": [
                                 {
                                   "name": "Uses Mid/Side Stereo",
@@ -9542,17 +9542,17 @@
                                 },
                                 {
                                   "name": "Coefficients (channel 1)",
-                                  "value": "696 non-zero, last at 1860",
+                                  "value": "693 non-zero, last at 1857",
                                   "offset": 10042,
-                                  "length": 340,
+                                  "length": 339,
                                   "bitOffset": 4,
-                                  "bitLength": 2716
+                                  "bitLength": 2708
                                 },
                                 {
                                   "name": "Coefficients (channel 2)",
-                                  "value": "696 non-zero, last at 1860",
-                                  "offset": 10382,
-                                  "length": 347
+                                  "value": "685 non-zero, last at 1857",
+                                  "offset": 10381,
+                                  "length": 342
                                 }
                               ]
                             }
@@ -9561,15 +9561,15 @@
                         {
                           "name": "Frame",
                           "kind": "Frame",
-                          "value": "1 block, 5384 bits",
+                          "value": "1 block, 5376 bits",
                           "offset": 10794,
-                          "length": 673,
+                          "length": 672,
                           "children": [
                             {
                               "name": "Block",
                               "value": "2048 samples, mid/side",
                               "offset": 10794,
-                              "length": 673,
+                              "length": 672,
                               "children": [
                                 {
                                   "name": "Uses Mid/Side Stereo",
@@ -9621,7 +9621,7 @@
                                 },
                                 {
                                   "name": "Coefficients (channel 1)",
-                                  "value": "545 non-zero, last at 1860",
+                                  "value": "544 non-zero, last at 1849",
                                   "offset": 10802,
                                   "length": 319,
                                   "bitOffset": 4,
@@ -9629,9 +9629,9 @@
                                 },
                                 {
                                   "name": "Coefficients (channel 2)",
-                                  "value": "557 non-zero, last at 1859",
+                                  "value": "556 non-zero, last at 1853",
                                   "offset": 11121,
-                                  "length": 346
+                                  "length": 345
                                 }
                               ]
                             }
@@ -9640,15 +9640,15 @@
                         {
                           "name": "Frame",
                           "kind": "Frame",
-                          "value": "1 block, 5648 bits",
+                          "value": "1 block, 5640 bits",
                           "offset": 11554,
-                          "length": 706,
+                          "length": 705,
                           "children": [
                             {
                               "name": "Block",
                               "value": "2048 samples, mid/side",
                               "offset": 11554,
-                              "length": 706,
+                              "length": 705,
                               "children": [
                                 {
                                   "name": "Uses Mid/Side Stereo",
@@ -9700,16 +9700,16 @@
                                 },
                                 {
                                   "name": "Coefficients (channel 1)",
-                                  "value": "650 non-zero, last at 1858",
+                                  "value": "649 non-zero, last at 1857",
                                   "offset": 11562,
-                                  "length": 344,
+                                  "length": 343,
                                   "bitOffset": 4,
-                                  "bitLength": 2748
+                                  "bitLength": 2740
                                 },
                                 {
                                   "name": "Coefficients (channel 2)",
-                                  "value": "650 non-zero, last at 1858",
-                                  "offset": 11906,
+                                  "value": "649 non-zero, last at 1856",
+                                  "offset": 11905,
                                   "length": 354
                                 }
                               ]
@@ -9798,15 +9798,15 @@
                         {
                           "name": "Frame",
                           "kind": "Frame",
-                          "value": "1 block, 5760 bits",
+                          "value": "1 block, 5640 bits",
                           "offset": 13234,
-                          "length": 720,
+                          "length": 705,
                           "children": [
                             {
                               "name": "Block",
                               "value": "2048 samples, mid/side",
                               "offset": 13234,
-                              "length": 720,
+                              "length": 705,
                               "children": [
                                 {
                                   "name": "Uses Mid/Side Stereo",
@@ -9858,17 +9858,17 @@
                                 },
                                 {
                                   "name": "Coefficients (channel 1)",
-                                  "value": "629 non-zero, last at 1860",
+                                  "value": "626 non-zero, last at 1856",
                                   "offset": 13242,
-                                  "length": 347,
+                                  "length": 346,
                                   "bitOffset": 4,
-                                  "bitLength": 2772
+                                  "bitLength": 2764
                                 },
                                 {
                                   "name": "Coefficients (channel 2)",
-                                  "value": "626 non-zero, last at 1860",
-                                  "offset": 13589,
-                                  "length": 365
+                                  "value": "594 non-zero, last at 1857",
+                                  "offset": 13588,
+                                  "length": 351
                                 }
                               ]
                             }
@@ -9877,15 +9877,15 @@
                         {
                           "name": "Frame",
                           "kind": "Frame",
-                          "value": "1 block, 5744 bits",
+                          "value": "1 block, 5712 bits",
                           "offset": 13994,
-                          "length": 718,
+                          "length": 714,
                           "children": [
                             {
                               "name": "Block",
                               "value": "2048 samples, mid/side",
                               "offset": 13994,
-                              "length": 718,
+                              "length": 714,
                               "children": [
                                 {
                                   "name": "Uses Mid/Side Stereo",
@@ -9937,17 +9937,17 @@
                                 },
                                 {
                                   "name": "Coefficients (channel 1)",
-                                  "value": "618 non-zero, last at 1859",
+                                  "value": "616 non-zero, last at 1857",
                                   "offset": 14002,
-                                  "length": 350,
+                                  "length": 349,
                                   "bitOffset": 4,
-                                  "bitLength": 2796
+                                  "bitLength": 2788
                                 },
                                 {
                                   "name": "Coefficients (channel 2)",
-                                  "value": "599 non-zero, last at 1860",
-                                  "offset": 14352,
-                                  "length": 360
+                                  "value": "593 non-zero, last at 1853",
+                                  "offset": 14351,
+                                  "length": 357
                                 }
                               ]
                             }
@@ -9956,15 +9956,15 @@
                         {
                           "name": "Frame",
                           "kind": "Frame",
-                          "value": "1 block, 5528 bits",
+                          "value": "1 block, 5488 bits",
                           "offset": 14754,
-                          "length": 691,
+                          "length": 686,
                           "children": [
                             {
                               "name": "Block",
                               "value": "2048 samples, mid/side",
                               "offset": 14754,
-                              "length": 691,
+                              "length": 686,
                               "children": [
                                 {
                                   "name": "Uses Mid/Side Stereo",
@@ -10016,17 +10016,17 @@
                                 },
                                 {
                                   "name": "Coefficients (channel 1)",
-                                  "value": "658 non-zero, last at 1858",
+                                  "value": "657 non-zero, last at 1857",
                                   "offset": 14762,
-                                  "length": 337,
+                                  "length": 336,
                                   "bitOffset": 4,
-                                  "bitLength": 2692
+                                  "bitLength": 2684
                                 },
                                 {
                                   "name": "Coefficients (channel 2)",
-                                  "value": "660 non-zero, last at 1858",
-                                  "offset": 15099,
-                                  "length": 346
+                                  "value": "652 non-zero, last at 1857",
+                                  "offset": 15098,
+                                  "length": 342
                                 }
                               ]
                             }
@@ -10193,15 +10193,15 @@
                         {
                           "name": "Frame",
                           "kind": "Frame",
-                          "value": "1 block, 5408 bits",
+                          "value": "1 block, 5288 bits",
                           "offset": 17194,
-                          "length": 676,
+                          "length": 661,
                           "children": [
                             {
                               "name": "Block",
                               "value": "2048 samples, mid/side",
                               "offset": 17194,
-                              "length": 676,
+                              "length": 661,
                               "children": [
                                 {
                                   "name": "Uses Mid/Side Stereo",
@@ -10253,17 +10253,17 @@
                                 },
                                 {
                                   "name": "Coefficients (channel 1)",
-                                  "value": "599 non-zero, last at 1860",
+                                  "value": "596 non-zero, last at 1857",
                                   "offset": 17202,
-                                  "length": 326,
+                                  "length": 325,
                                   "bitOffset": 4,
-                                  "bitLength": 2604
+                                  "bitLength": 2596
                                 },
                                 {
                                   "name": "Coefficients (channel 2)",
-                                  "value": "596 non-zero, last at 1860",
-                                  "offset": 17528,
-                                  "length": 342
+                                  "value": "567 non-zero, last at 1857",
+                                  "offset": 17527,
+                                  "length": 328
                                 }
                               ]
                             }
@@ -10272,15 +10272,15 @@
                         {
                           "name": "Frame",
                           "kind": "Frame",
-                          "value": "1 block, 5496 bits",
+                          "value": "1 block, 5488 bits",
                           "offset": 17954,
-                          "length": 687,
+                          "length": 686,
                           "children": [
                             {
                               "name": "Block",
                               "value": "2048 samples, mid/side",
                               "offset": 17954,
-                              "length": 687,
+                              "length": 686,
                               "children": [
                                 {
                                   "name": "Uses Mid/Side Stereo",
@@ -10340,9 +10340,9 @@
                                 },
                                 {
                                   "name": "Coefficients (channel 2)",
-                                  "value": "577 non-zero, last at 1860",
+                                  "value": "575 non-zero, last at 1853",
                                   "offset": 18286,
-                                  "length": 355
+                                  "length": 354
                                 }
                               ]
                             }
@@ -10351,15 +10351,15 @@
                         {
                           "name": "Frame",
                           "kind": "Frame",
-                          "value": "1 block, 5928 bits",
+                          "value": "1 block, 5896 bits",
                           "offset": 18714,
-                          "length": 741,
+                          "length": 737,
                           "children": [
                             {
                               "name": "Block",
                               "value": "2048 samples, mid/side",
                               "offset": 18714,
-                              "length": 741,
+                              "length": 737,
                               "children": [
                                 {
                                   "name": "Uses Mid/Side Stereo",
@@ -10413,15 +10413,15 @@
                                   "name": "Coefficients (channel 1)",
                                   "value": "625 non-zero, last at 1857",
                                   "offset": 18722,
-                                  "length": 353,
+                                  "length": 352,
                                   "bitOffset": 4,
-                                  "bitLength": 2820
+                                  "bitLength": 2812
                                 },
                                 {
                                   "name": "Coefficients (channel 2)",
-                                  "value": "624 non-zero, last at 1857",
-                                  "offset": 19075,
-                                  "length": 380
+                                  "value": "616 non-zero, last at 1856",
+                                  "offset": 19074,
+                                  "length": 377
                                 }
                               ]
                             }
@@ -10904,15 +10904,15 @@
                         {
                           "name": "Frame",
                           "kind": "Frame",
-                          "value": "1 block, 5280 bits",
+                          "value": "1 block, 5264 bits",
                           "offset": 24354,
-                          "length": 660,
+                          "length": 658,
                           "children": [
                             {
                               "name": "Block",
                               "value": "2048 samples, mid/side",
                               "offset": 24354,
-                              "length": 660,
+                              "length": 658,
                               "children": [
                                 {
                                   "name": "Uses Mid/Side Stereo",
@@ -10964,17 +10964,17 @@
                                 },
                                 {
                                   "name": "Coefficients (channel 1)",
-                                  "value": "559 non-zero, last at 1858",
+                                  "value": "558 non-zero, last at 1856",
                                   "offset": 24362,
-                                  "length": 311,
+                                  "length": 310,
                                   "bitOffset": 4,
-                                  "bitLength": 2484
+                                  "bitLength": 2476
                                 },
                                 {
                                   "name": "Coefficients (channel 2)",
-                                  "value": "554 non-zero, last at 1860",
-                                  "offset": 24673,
-                                  "length": 341
+                                  "value": "551 non-zero, last at 1856",
+                                  "offset": 24672,
+                                  "length": 340
                                 }
                               ]
                             }
@@ -10983,15 +10983,15 @@
                         {
                           "name": "Frame",
                           "kind": "Frame",
-                          "value": "1 block, 5792 bits",
+                          "value": "1 block, 5704 bits",
                           "offset": 25114,
-                          "length": 724,
+                          "length": 713,
                           "children": [
                             {
                               "name": "Block",
                               "value": "2048 samples, mid/side",
                               "offset": 25114,
-                              "length": 724,
+                              "length": 713,
                               "children": [
                                 {
                                   "name": "Uses Mid/Side Stereo",
@@ -11043,17 +11043,17 @@
                                 },
                                 {
                                   "name": "Coefficients (channel 1)",
-                                  "value": "622 non-zero, last at 1858",
+                                  "value": "621 non-zero, last at 1855",
                                   "offset": 25122,
-                                  "length": 341,
+                                  "length": 340,
                                   "bitOffset": 4,
-                                  "bitLength": 2724
+                                  "bitLength": 2716
                                 },
                                 {
                                   "name": "Coefficients (channel 2)",
-                                  "value": "633 non-zero, last at 1858",
-                                  "offset": 25463,
-                                  "length": 375
+                                  "value": "614 non-zero, last at 1857",
+                                  "offset": 25462,
+                                  "length": 365
                                 }
                               ]
                             }
@@ -11280,7 +11280,7 @@
                                 },
                                 {
                                   "name": "Coefficients (channel 1)",
-                                  "value": "706 non-zero, last at 1860",
+                                  "value": "704 non-zero, last at 1848",
                                   "offset": 27562,
                                   "length": 348,
                                   "bitOffset": 4,
@@ -11288,7 +11288,7 @@
                                 },
                                 {
                                   "name": "Coefficients (channel 2)",
-                                  "value": "709 non-zero, last at 1860",
+                                  "value": "707 non-zero, last at 1848",
                                   "offset": 27910,
                                   "length": 355
                                 }
@@ -11359,7 +11359,7 @@
                                 },
                                 {
                                   "name": "Coefficients (channel 1)",
-                                  "value": "626 non-zero, last at 1860",
+                                  "value": "625 non-zero, last at 1852",
                                   "offset": 28322,
                                   "length": 350,
                                   "bitOffset": 4,
@@ -11378,15 +11378,15 @@
                         {
                           "name": "Frame",
                           "kind": "Frame",
-                          "value": "1 block, 5320 bits",
+                          "value": "1 block, 5312 bits",
                           "offset": 29234,
-                          "length": 665,
+                          "length": 664,
                           "children": [
                             {
                               "name": "Block",
                               "value": "2048 samples, mid/side",
                               "offset": 29234,
-                              "length": 665,
+                              "length": 664,
                               "children": [
                                 {
                                   "name": "Uses Mid/Side Stereo",
@@ -11438,16 +11438,16 @@
                                 },
                                 {
                                   "name": "Coefficients (channel 1)",
-                                  "value": "596 non-zero, last at 1859",
+                                  "value": "595 non-zero, last at 1838",
                                   "offset": 29242,
-                                  "length": 322,
+                                  "length": 321,
                                   "bitOffset": 4,
-                                  "bitLength": 2572
+                                  "bitLength": 2564
                                 },
                                 {
                                   "name": "Coefficients (channel 2)",
-                                  "value": "597 non-zero, last at 1859",
-                                  "offset": 29564,
+                                  "value": "597 non-zero, last at 1844",
+                                  "offset": 29563,
                                   "length": 335
                                 }
                               ]
@@ -11536,15 +11536,15 @@
                         {
                           "name": "Frame",
                           "kind": "Frame",
-                          "value": "1 block, 5168 bits",
+                          "value": "1 block, 5160 bits",
                           "offset": 30754,
-                          "length": 646,
+                          "length": 645,
                           "children": [
                             {
                               "name": "Block",
                               "value": "2048 samples, mid/side",
                               "offset": 30754,
-                              "length": 646,
+                              "length": 645,
                               "children": [
                                 {
                                   "name": "Uses Mid/Side Stereo",
@@ -11596,16 +11596,16 @@
                                 },
                                 {
                                   "name": "Coefficients (channel 1)",
-                                  "value": "567 non-zero, last at 1860",
+                                  "value": "564 non-zero, last at 1855",
                                   "offset": 30762,
-                                  "length": 311,
+                                  "length": 310,
                                   "bitOffset": 4,
-                                  "bitLength": 2484
+                                  "bitLength": 2476
                                 },
                                 {
                                   "name": "Coefficients (channel 2)",
-                                  "value": "570 non-zero, last at 1860",
-                                  "offset": 31073,
+                                  "value": "567 non-zero, last at 1855",
+                                  "offset": 31072,
                                   "length": 327
                                 }
                               ]
@@ -11615,15 +11615,15 @@
                         {
                           "name": "Frame",
                           "kind": "Frame",
-                          "value": "1 block, 5440 bits",
+                          "value": "1 block, 5320 bits",
                           "offset": 31514,
-                          "length": 680,
+                          "length": 665,
                           "children": [
                             {
                               "name": "Block",
                               "value": "2048 samples, mid/side",
                               "offset": 31514,
-                              "length": 680,
+                              "length": 665,
                               "children": [
                                 {
                                   "name": "Uses Mid/Side Stereo",
@@ -11675,17 +11675,17 @@
                                 },
                                 {
                                   "name": "Coefficients (channel 1)",
-                                  "value": "556 non-zero, last at 1860",
+                                  "value": "555 non-zero, last at 1857",
                                   "offset": 31522,
-                                  "length": 324,
+                                  "length": 323,
                                   "bitOffset": 4,
-                                  "bitLength": 2588
+                                  "bitLength": 2580
                                 },
                                 {
                                   "name": "Coefficients (channel 2)",
-                                  "value": "567 non-zero, last at 1859",
-                                  "offset": 31846,
-                                  "length": 348
+                                  "value": "540 non-zero, last at 1842",
+                                  "offset": 31845,
+                                  "length": 334
                                 }
                               ]
                             }
@@ -11694,15 +11694,15 @@
                         {
                           "name": "Frame",
                           "kind": "Frame",
-                          "value": "1 block, 5648 bits",
+                          "value": "1 block, 5624 bits",
                           "offset": 32434,
-                          "length": 706,
+                          "length": 703,
                           "children": [
                             {
                               "name": "Block",
                               "value": "2048 samples, mid/side",
                               "offset": 32434,
-                              "length": 706,
+                              "length": 703,
                               "children": [
                                 {
                                   "name": "Uses Mid/Side Stereo",
@@ -11754,17 +11754,17 @@
                                 },
                                 {
                                   "name": "Coefficients (channel 1)",
-                                  "value": "680 non-zero, last at 1860",
+                                  "value": "677 non-zero, last at 1857",
                                   "offset": 32442,
-                                  "length": 345,
+                                  "length": 344,
                                   "bitOffset": 4,
-                                  "bitLength": 2756
+                                  "bitLength": 2748
                                 },
                                 {
                                   "name": "Coefficients (channel 2)",
-                                  "value": "682 non-zero, last at 1860",
-                                  "offset": 32787,
-                                  "length": 353
+                                  "value": "677 non-zero, last at 1857",
+                                  "offset": 32786,
+                                  "length": 351
                                 }
                               ]
                             }
@@ -12098,46 +12098,46 @@
             ],
             "values": [
               114.556640625,
-              113.00625000000001,
+              59.948437500000004,
               15.331640625,
               122.30859375,
               118.51875,
               119.380078125,
               17.57109375,
               35.1421875,
-              117.140625,
-              124.7203125,
+              56.330859375,
+              124.03125,
               16.5375,
               15.676171875,
-              119.724609375,
-              115.934765625,
-              121.61953125000001,
+              118.691015625,
+              115.7625,
+              121.447265625,
               22.7390625,
-              124.03125,
-              123.68671875,
-              119.03554687500001,
+              121.447265625,
+              122.99765625,
+              118.17421875000001,
               15.50390625,
               18.6046875,
-              116.45156250000001,
-              118.346484375,
-              127.64882812500001,
+              113.86757812500001,
+              118.17421875000001,
+              126.959765625,
               18.432421875,
               124.03125,
               114.901171875,
               114.384375,
               13.608984375,
               49.440234375,
-              113.6953125,
-              124.7203125,
+              113.35078125,
+              122.825390625,
               18.087890625,
               17.915625000000002,
               122.48085937500001,
               126.270703125,
-              114.556640625,
+              114.384375,
               16.709765625,
-              111.28359375000001,
-              117.140625,
-              121.61953125000001,
+              111.111328125,
+              114.556640625,
+              121.102734375,
               24.633984375,
               14.81484375,
               114.901171875
@@ -12154,8 +12154,8 @@
               1
             ],
             "values": [
-              83.1,
-              83.6
+              77.5,
+              83.3
             ]
           },
           {
@@ -12212,28 +12212,28 @@
             ],
             "values": [
               19972,
-              20069,
+              20026,
               549,
               20015,
               19951,
               19875,
               581,
               19401,
-              20069,
-              20058,
+              19886,
+              20037,
               560,
               571,
-              20069,
-              20069,
-              20047,
+              20037,
+              19994,
+              20037,
               668,
-              20069,
-              20069,
-              20047,
+              20037,
+              20037,
+              20037,
               549,
               592,
-              20069,
-              20069,
+              20037,
+              20026,
               20037,
               592,
               19951,
@@ -12241,17 +12241,17 @@
               19983,
               571,
               19886,
-              20069,
-              20047,
+              20026,
+              20037,
               571,
               571,
-              20069,
-              20069,
-              20058,
+              19940,
+              19983,
+              19897,
               571,
-              20069,
-              20069,
-              20069,
+              20015,
+              20037,
+              20037,
               689,
               528,
               6019
@@ -12268,8 +12268,218 @@
               1
             ],
             "values": [
-              20069,
-              20069
+              20037,
+              20037
+            ]
+          },
+          {
+            "name": "Total Gain",
+            "unit": "dB",
+            "axis": "frameOffset",
+            "quantity": "Total Gain",
+            "x": [
+              434,
+              1194,
+              1954,
+              2714,
+              3634,
+              4394,
+              5154,
+              5914,
+              6834,
+              7594,
+              8354,
+              9114,
+              10034,
+              10794,
+              11554,
+              12314,
+              13234,
+              13994,
+              14754,
+              15514,
+              16434,
+              17194,
+              17954,
+              18714,
+              19634,
+              20394,
+              21154,
+              21914,
+              22834,
+              23594,
+              24354,
+              25114,
+              26034,
+              26794,
+              27554,
+              28314,
+              29234,
+              29994,
+              30754,
+              31514,
+              32434,
+              33194,
+              33954,
+              34714
+            ],
+            "values": [
+              68,
+              53,
+              53,
+              62,
+              69,
+              63,
+              51,
+              49,
+              68,
+              67,
+              52,
+              53,
+              65,
+              69,
+              60,
+              42,
+              57,
+              68,
+              66,
+              53,
+              50,
+              67,
+              68,
+              50,
+              49,
+              62,
+              69,
+              64,
+              53,
+              50,
+              68,
+              67,
+              49,
+              51,
+              65,
+              68,
+              60,
+              52,
+              59,
+              69,
+              66,
+              42,
+              53,
+              34
+            ]
+          },
+          {
+            "name": "Total Gain Over Time",
+            "unit": "dB",
+            "axis": "seconds",
+            "quantity": "Total Gain",
+            "x": [
+              0,
+              1
+            ],
+            "values": [
+              69,
+              69
+            ]
+          },
+          {
+            "name": "Escape-Coded Coefficients",
+            "unit": "%",
+            "axis": "frameOffset",
+            "quantity": "Escape-Coded Coefficients",
+            "x": [
+              434,
+              1194,
+              1954,
+              2714,
+              3634,
+              4394,
+              5154,
+              5914,
+              6834,
+              7594,
+              8354,
+              9114,
+              10034,
+              10794,
+              11554,
+              12314,
+              13234,
+              13994,
+              14754,
+              15514,
+              16434,
+              17194,
+              17954,
+              18714,
+              19634,
+              20394,
+              21154,
+              21914,
+              22834,
+              23594,
+              24354,
+              25114,
+              26034,
+              26794,
+              27554,
+              28314,
+              29234,
+              29994,
+              30754,
+              31514,
+              32434,
+              33194,
+              33954,
+              34714
+            ],
+            "values": [
+              0.1,
+              0.7,
+              14.8,
+              0.4,
+              0.1,
+              0.3,
+              16.9,
+              13.5,
+              0.2,
+              0.2,
+              16.9,
+              18.9,
+              0.3,
+              0.3,
+              0.5,
+              10.8,
+              0.7,
+              0.3,
+              0.2,
+              17,
+              19.1,
+              0.3,
+              0.3,
+              1,
+              17.9,
+              0.3,
+              0.2,
+              0.4,
+              12.2,
+              6.7,
+              0.3,
+              0.2,
+              17.1,
+              19,
+              0.3,
+              0.2,
+              0.4,
+              15.9,
+              0.4,
+              0.3,
+              0.2,
+              16.5,
+              13,
+              10.2
             ]
           }
         ],
@@ -12318,6 +12528,34 @@
             "runs": [
               [
                 0,
+                44
+              ]
+            ]
+          },
+          {
+            "name": "Blocks Reusing Exponents",
+            "valueLabel": "block",
+            "categories": [
+              {
+                "name": "With reused exponents",
+                "count": 0
+              },
+              {
+                "name": "Without reused exponents",
+                "count": 44
+              }
+            ],
+            "total": 44,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                44
+              ]
+            ],
+            "runs": [
+              [
+                1,
                 44
               ]
             ]

@@ -49,7 +49,7 @@
   "decode_error": "DSYNC check failed",
   "libdca_channels": 5,
   "skip": {
-   "ffprobe": "ffmpeg's decoder rejects the XXCH stub, whose channel set data is filler (dca_core.c: 'DSYNC check failed'), so ffprobe gets 5 channels from the core and no profile of the extension",
+   "ffprobe": "ffmpeg's decoder rejects the XXCH stub, whose channel set data is filler ('DSYNC check failed'), so ffprobe gets 5 channels from the core and no profile of the extension",
    "decode": "The XXCH channel set data is filler, which ffmpeg rejects at its DSYNC check."
   }
  }

@@ -1,0 +1,91 @@
+{
+ "description": "ADTS at a core rate of 22050 Hz, mono, whose access units carry SBR data with a parametric stereo extension of intensity differences and coherences in 20 bands (modes 1 and 4: mixing procedure Rb) in 2 envelopes, and the inter-channel and overall phase differences of the extension: HE-AAC v2, signaled only implicitly.",
+ "length": 2393,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "HE-AAC v2",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Parametric stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 24576,
+   "is_vbr": true,
+   "ffprobe_profile": "LC"
+  }
+ ],
+ "units": [
+  [
+   0,
+   200
+  ],
+  [
+   200,
+   200
+  ],
+  [
+   400,
+   199
+  ],
+  [
+   599,
+   200
+  ],
+  [
+   799,
+   202
+  ],
+  [
+   1001,
+   199
+  ],
+  [
+   1200,
+   200
+  ],
+  [
+   1400,
+   198
+  ],
+  [
+   1598,
+   200
+  ],
+  [
+   1798,
+   198
+  ],
+  [
+   1996,
+   198
+  ],
+  [
+   2194,
+   199
+  ]
+ ],
+ "fields": {
+  "ADTS/Statistics/SBR/Parametric Stereo": "12 access units (100.0%)",
+  "ADTS/Statistics/SBR/Parametric Stereo/Parametric Stereo Mixing/Procedure Rb": "12 raw data blocks (100.0%)",
+  "ADTS/Statistics/SBR/Parametric Stereo/Parametric Stereo Phase/Phase differences": "12 raw data blocks (100.0%)",
+  "ADTS/Frame/Raw Data Block/FIL/Extension Payload/SBR Data/Parametric Stereo Extension": "2 (EXT_ID_PS)"
+ },
+ "findings": [
+  [
+   "aac.implicit-sbr",
+   "and 12 carry the parametric stereo extension: the stream is HE-AAC v2"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "faad": null,
+  "skip": {
+   "faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold."
+  }
+ }
+}

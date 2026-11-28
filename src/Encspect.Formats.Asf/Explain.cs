@@ -45,6 +45,8 @@ internal static partial class Explain
     public const string StreamFlags = "The stream number and whether the stream is encrypted (section 3.3).";
     public const string StreamNumber = "The number of this stream, from 1 to 127; 0 is invalid (section 3.3).";
     public const string StreamFlagsReserved = "Reserved bits, which should be 0 (section 3.3).";
+    public const string PcmMediaObjects = "The media objects of an audio stream whose samples are stored as they are (PCM, IEEE floating point, A-law or mu-law), put together from their payloads; the figures of the stream come from its WAVEFORMATEX.";
+    public const string UnreadableStream = "A stream whose samples cannot be read because its WAVEFORMATEX does not describe a layout the analyzer reads, shown as the header states it.";
     public const string EncryptedStream = "A stream whose data is encrypted and which no codec parser describes, shown as the header states it; its media objects are not read.";
 
     public const string EncryptedContentFlag = "Set if the data of the stream is encrypted and unreadable without a way to decrypt it (section 3.3).";
@@ -151,14 +153,14 @@ internal static partial class Explain
     public const string DescriptionRecordsCount = "The number of attribute records (sections 4.7 and 4.8).";
     public const string Descriptor = "One attribute: a name and a value of a type (sections 3.11, 4.7 and 4.8).";
     public const string DescriptorNameLength = "The number of bytes of the attribute's name (section 3.11).";
-    public const string DescriptorName = "The name of the attribute; names are case-sensitive, and Windows Media's start with \"WM/\" (the specification defines no \"WM/\" names; FFmpeg's asf.c and MediaInfoLib's File_Wm_Elements.cpp list them).";
+    public const string DescriptorName = "The name of the attribute; names are case-sensitive, and Windows Media's start with \"WM/\" (the specification defines no \"WM/\" names; MediaInfoLib's File_Wm_Elements.cpp lists them).";
     public const string DescriptorDataType = "The type of the value: 0 Unicode string, 1 byte array, 2 boolean, 3 32-bit integer, 4 64-bit integer, 5 16-bit integer, 6 GUID (sections 3.11, 4.7 and 4.8).";
     public const string DescriptorValueLength = "The number of bytes of the value (sections 3.11, 4.7 and 4.8).";
     public const string DescriptorValue = "The value of the attribute, typed by its data type.";
     public const string DescriptorReserved = "A reserved field, which must be 0 (section 4.7).";
     public const string DescriptorStreamNumber = "The stream the attribute applies to; 0 means the whole file (sections 4.7 and 4.8).";
     public const string LanguageListIndex = "The language of the attribute, as an index into the Language List Object (section 4.8).";
-    public const string PictureType = "What the picture shows, with the numbering of ID3v2's attached picture (WM/Picture, as FFmpeg's asfdec reads it).";
+    public const string PictureType = "What the picture shows, with the numbering of ID3v2's attached picture (WM/Picture).";
     public const string PictureDataSize = "The size of the picture data in bytes (WM/Picture).";
     public const string PictureMimeType = "The MIME type of the picture, as UTF-16 text ended by a NUL (WM/Picture).";
     public const string PictureDescription = "A description of the picture, as UTF-16 text ended by a NUL (WM/Picture).";

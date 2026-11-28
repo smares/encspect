@@ -15,8 +15,8 @@ public sealed partial class Mp4Parser
 
     // ISO/IEC 23091-3's ChannelConfiguration values 1 to 14 as speaker positions (the indexes of
     // Positions), in the configuration's channel order; 8 is two independent mono channels, -1 a channel without a position.
-    // The specification is not freely available: the speaker sets are checked against MediaInfo's and GPAC's tables and the order of
-    // 1 to 7, 11, 12, 13 and 14 against FFmpeg's aac_channel_layout_map (docs/development.md, "Tables").
+    // 1 to 7 are ISO/IEC 14496-3 Table 1.19; ISO/IEC 23091-3 is not freely available, so 8 to 14 are checked against
+    // MediaInfo's Aac_ChannelLayout (File_Aac_Main.cpp, BSD; docs/development.md, "Tables").
     private static readonly int[]?[] Configurations =
     [
         null,
@@ -36,8 +36,8 @@ public sealed partial class Mp4Parser
         [2, 0, 1, 4, 5, 3, 17, 18],
     ];
 
-    // ISO/IEC 23091-3's speaker positions by index. The names are checked against the comments of FFmpeg's iso_channel_position and
-    // MediaInfo's abbreviations (docs/development.md, "Tables").
+    // ISO/IEC 23091-3's speaker positions by index. The names are checked against MediaInfo's
+    // Aac_OutputChannelPosition abbreviations (docs/development.md, "Tables").
     private static readonly string[] Positions =
     [
         "left front", "right front", "center front", "low frequency enhancement", "left surround", "right surround", "left front center",

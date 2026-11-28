@@ -4,14 +4,17 @@ using Encspect.Core;
 namespace Encspect.Formats.Aac.Decoding;
 
 // Follows libxaac (ixheaacd_channel.c ixheaacd_channel_pair_process, ixheaacd_stereo.c, ixheaacd_pns_js_thumb.c, ixheaacd_imdct.c; Apache License 2.0, Copyright (C) 2018 The
-// Android Open Source Project; the notice is in THIRD-PARTY-NOTICES.md): the order of the tools (mid/side stereo, intensity stereo, noise substitution, temporal noise shaping,
-// the filter bank), the noise generator and its seed, and the ranges of the TNS filters.
+// Android Open Source Project; the notice is in THIRD-PARTY-NOTICES.md): the noise generator and its seed, intensity stereo over the second channel's own layout, and the ranges of
+// the TNS filters. The order of the tools is the standard's (Figure 4.2, 4.1.1.2): mid/side stereo, noise substitution, intensity stereo, temporal noise shaping, the filter bank.
 // The decoding state of one AAC LC stream: per channel the second half of the previous window's output (the overlap) and its window shape, and the noise generator's state.
 internal sealed class FrameDecoder : IFrameDecoder
 {
     private const int Lines = 1024;
     private const int ShortLines = 128;
+    // TNS_MAX_ORDER of the object types but AAC Main (4.6.9.3, Table 4.156): a filter of a higher order takes its first 12 coefficients.
     private const int MaxTnsOrder = 12;
+    // The shape of the window before the first block, which has the same shape on both halves (4.6.11.3.2).
+    private const int FirstShape = -1;
     private const float SpectrumLimit = 1e30f;
 
     // The units each stage costs (docs/design/lossy-decoders.md, "Work units per format"): inverse quantization 2 for each coded line, mid/side and intensity stereo 1 for each line
@@ -22,8 +25,13 @@ internal sealed class FrameDecoder : IFrameDecoder
     private const int NoiseUnits = 3;
     private const int LongTransformUnits = 22;
     // Per output sample of the SBR stage (the 64-band analysis and synthesis, the high band's generation and adjustment, and parametric stereo's hybrid bank, decorrelator and mixing
-    // for the second channel): measured with DecoderWorkTests (the HE-AAC cases), where the stage takes about 4 times what the core's stages charge in time per unit at 60.
-    private const int SbrUnits = 220;
+    // for the second channel): measured with DecoderWorkTests (the HE-AAC cases). At 220 they ran at 1.4 to 1.8 times the FLAC reference's time per unit on Linux x64 and
+    // the envelopes case at 2.18 on macOS Intel (the nightly run of 2026-11-27); at 400 they run near the AAC LC cases.
+    private const int SbrUnits = 400;
+
+    // Parametric stereo's phases (and the matrices of procedure Rb, tabulated once): for each envelope and each of the 34 parameter bands, the smoothed angles, their cosines and sines and the rotation of
+    // the four matrices, about 40 times a unit's 0.6 ns apiece, with the double-precision functions of DetMath; charged for an envelope count of 5 at most.
+    private const int PsPhaseUnits = 700;
     private const int ShortTransformUnits = 16;
 
     private readonly DecodeContext _context;
@@ -33,6 +41,7 @@ internal sealed class FrameDecoder : IFrameDecoder
     private readonly bool _isSbr;
     private readonly bool _isPs;
     private PsDecoder? _ps;
+    private readonly int[] _layout;
     private readonly SbrElement?[] _elements;
     private readonly float[] _sbrPlanar;
     private readonly ushort[] _longOffsets;
@@ -88,7 +97,10 @@ internal sealed class FrameDecoder : IFrameDecoder
             _overlap[ch] = new float[Lines];
         }
 
+        _layout = new int[_channels];
+        Array.Fill(_layout, -1);
         _previousShape = new int[_channels];
+        Array.Fill(_previousShape, FirstShape);
         _isSilent = new bool[_channels];
         _planar = new float[_channels * Lines];
     }
@@ -114,7 +126,16 @@ internal sealed class FrameDecoder : IFrameDecoder
                 $"The block at 0x{frame.Bytes.FileStart:X} holds a coupling channel element, whose channels are read and not applied, so the decoded audio lacks what they add to the channels they couple.");
         }
 
-        bool follows = frame.FollowsGap || _lostBefore;
+        // A block whose channel elements differ from the last block's (another kind in a slot) is a loss as a change of the slot count is: the per-slot state (the core's overlap and window shape, which belong to one element in a block and to another in the next, and the SBR state of the elements) no longer fits it.
+        bool layoutChanged = false;
+        for (int ch = 0; ch < _channels; ch++)
+        {
+            int kind = record[(ch * BlockRecord.Stride) + BlockRecord.Kind];
+            layoutChanged |= _layout[ch] != kind && _layout[ch] >= 0;
+            _layout[ch] = kind;
+        }
+
+        bool follows = frame.FollowsGap || _lostBefore || layoutChanged;
         _lostBefore = false;
         if (follows)
         {
@@ -134,7 +155,7 @@ internal sealed class FrameDecoder : IFrameDecoder
             ReadOnlySpan<int> slot = record.Slice(ch * BlockRecord.Stride, BlockRecord.Stride);
             if (slot[BlockRecord.Kind] == BlockRecord.KindPairFirst)
             {
-                Stereo(slot, record.Slice((ch + 1) * BlockRecord.Stride, BlockRecord.Stride), ch);
+                MidSide(slot, record.Slice((ch + 1) * BlockRecord.Stride, BlockRecord.Stride), ch);
             }
         }
 
@@ -143,6 +164,20 @@ internal sealed class FrameDecoder : IFrameDecoder
         {
             ReadOnlySpan<int> slot = record.Slice(ch * BlockRecord.Stride, BlockRecord.Stride);
             NoiseSubstitution(ch, slot, ch > 0 && slot[BlockRecord.Kind] == BlockRecord.KindPairSecond ? record.Slice((ch - 1) * BlockRecord.Stride, BlockRecord.Stride) : default);
+        }
+
+        for (int ch = 0; ch < _channels; ch++)
+        {
+            ReadOnlySpan<int> slot = record.Slice(ch * BlockRecord.Stride, BlockRecord.Stride);
+            if (slot[BlockRecord.Kind] == BlockRecord.KindPairFirst)
+            {
+                IntensityStereo(slot, record.Slice((ch + 1) * BlockRecord.Stride, BlockRecord.Stride), ch);
+            }
+        }
+
+        for (int ch = 0; ch < _channels; ch++)
+        {
+            ReadOnlySpan<int> slot = record.Slice(ch * BlockRecord.Stride, BlockRecord.Stride);
             if ((slot[BlockRecord.Flags] & BlockRecord.FlagTns) != 0)
             {
                 TemporalNoiseShaping(ch, slot);
@@ -194,7 +229,8 @@ internal sealed class FrameDecoder : IFrameDecoder
         {
             int kind = record[(ch * BlockRecord.Stride) + BlockRecord.Kind];
             int width = kind == BlockRecord.KindPairFirst ? 2 : 1;
-            SbrElement element = _elements[ch] ??= new SbrElement(width, 2 * _config.SampleRate);
+            SbrElement element = _elements[ch] ??= new SbrElement(2 * _config.SampleRate);
+            element.Configure(width);
             ReadOnlySpan<int> slot = default;
             if (kind != BlockRecord.KindLfe)
             {
@@ -255,17 +291,6 @@ internal sealed class FrameDecoder : IFrameDecoder
             }
 
             int count = slot[BlockRecord.TnsFilters];
-            for (int f = 0; f < count && f < BlockRecord.TnsMaxFilters; f++)
-            {
-                // libxaac refuses a block whose long-window TNS filter has an order above 12 (MAX_ORDER_LONG, ixheaacd_channel.c); eight short windows allow 7 by their field.
-                int order = slot[BlockRecord.Tns + (f * BlockRecord.TnsFilterInts) + 2];
-                if (order > MaxTnsOrder)
-                {
-                    _lostBefore = true;
-                    throw new InvalidDataException($"a TNS filter has the order {order}, above the {MaxTnsOrder} that libxaac accepts");
-                }
-            }
-
             if (count > BlockRecord.TnsMaxFilters)
             {
                 _lostBefore = true;
@@ -279,12 +304,30 @@ internal sealed class FrameDecoder : IFrameDecoder
         for (int ch = 0; ch < _channels; ch++)
         {
             Array.Clear(_overlap[ch]);
-            _previousShape[ch] = 0;
+            _previousShape[ch] = FirstShape;
             _elements[ch]?.Reset();
             _ps?.Reset();
         }
 
         _seed = 0;
+    }
+
+    // The work of the phases a block's parametric stereo extension carries: every parameter band of every envelope, whatever the resolution.
+    private static long PsPhaseWork(ReadOnlySpan<int> record)
+    {
+        int channelSlots = record[BlockRecord.Slots];
+        int sbrSlots = record[BlockRecord.SbrSlots];
+        long units = 0;
+        for (int s = 0; s < sbrSlots; s++)
+        {
+            ReadOnlySpan<int> slot = record.Slice((channelSlots + s) * BlockRecord.Stride, BlockRecord.Stride);
+            if (slot[SbrRecord.HasPs] == 1 && slot[SbrRecord.Ps + SbrRecord.PsEnableIpdopd] != 0)
+            {
+                units += (long)PsPhaseUnits * 34 * (slot[SbrRecord.Ps + SbrRecord.PsEnvelopes] + 1);
+            }
+        }
+
+        return units;
     }
 
     // The work of the block before it is done: the floor of every output sample, and the stages of each channel that has anything to transform.
@@ -294,6 +337,11 @@ internal sealed class FrameDecoder : IFrameDecoder
         if (_isSbr)
         {
             units += (long)SbrUnits * 2 * Lines * _outputChannels;
+        }
+
+        if (_isPs)
+        {
+            units += PsPhaseWork(record);
         }
 
         for (int ch = 0; ch < _channels; ch++)
@@ -344,7 +392,7 @@ internal sealed class FrameDecoder : IFrameDecoder
                 int filters = Math.Min(slot[BlockRecord.TnsFilters], BlockRecord.TnsMaxFilters);
                 for (int f = 0; f < filters; f++)
                 {
-                    units += (long)slot[BlockRecord.Tns + (f * BlockRecord.TnsFilterInts) + 2] * (isShort ? ShortLines : Lines);
+                    units += (long)Math.Min(slot[BlockRecord.Tns + (f * BlockRecord.TnsFilterInts) + 2], MaxTnsOrder) * (isShort ? ShortLines : Lines);
                 }
             }
         }
@@ -439,7 +487,7 @@ internal sealed class FrameDecoder : IFrameDecoder
         ReadOnlySpan<int> values = slot.Slice(BlockRecord.Spectrum, Lines);
         if (!isShort && (slot[BlockRecord.Flags] & BlockRecord.FlagPulse) != 0)
         {
-            // Pulse data (4.6.5) adds to the magnitudes of long windows; a value of zero takes the pulse as a negative one, as libxaac's ixheaacd_huffman_dec does.
+            // Pulse data (4.6.3.3) adds to the magnitudes of long windows; a value of zero takes the pulse as a negative one, as libxaac's ixheaacd_huffman_dec does.
             values.CopyTo(_quantized);
             int count = slot[BlockRecord.PulseCount];
             int start = slot[BlockRecord.PulseStart];
@@ -526,18 +574,20 @@ internal sealed class FrameDecoder : IFrameDecoder
         return value < 0 ? -magnitude : magnitude;
     }
 
-    // Mid/side stereo (4.6.8.1) where the pair's common window sets it, then intensity stereo (4.6.8.2) from the first channel into the bands of the second that code it, as libxaac
-    // does: mid/side first on every band whose flag is set but those where both channels code noise (their noise is the same, NoiseSubstitution), then intensity. Mid/side needs
-    // the common window, so both channels share their layout; intensity stereo follows the second channel's own layout (its window sequence, groups and bands) over the first
-    // channel's spectrum at the same lines, whatever the first channel's window is (ixheaacd_intensity_stereo_process).
+    // Mid/side stereo (4.6.8.1) where the pair's common window sets it, in the order of the tools of Figure 4.2 (4.1.1.2): mid/side first, then noise substitution
+    // (NoiseSubstitution), then intensity stereo (IntensityStereo). Mid/side needs the common window, so both channels share their layout; it skips a band where either channel codes noise
+    // (4.6.8.1.3, 4.6.13.3: the shared noise of a band that both code is NoiseSubstitution's) and a band of intensity stereo in the second channel (4.6.8.1.3).
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private void Stereo(ReadOnlySpan<int> first, ReadOnlySpan<int> second, int ch)
+    private void MidSide(ReadOnlySpan<int> first, ReadOnlySpan<int> second, int ch)
     {
+        int mask = first[BlockRecord.MsMask];
+        if (!IsMidSide(first, second))
+        {
+            return;
+        }
+
         float[] left = _spectrum[ch];
         float[] right = _spectrum[ch + 1];
-        int mask = first[BlockRecord.MsMask];
-        bool isMidSide = mask is 1 or 2 && first[BlockRecord.WindowSequence] == second[BlockRecord.WindowSequence]
-            && first[BlockRecord.Groups] == second[BlockRecord.Groups] && first[BlockRecord.GroupLengths] == second[BlockRecord.GroupLengths];
         bool isShort = second[BlockRecord.WindowSequence] == 2;
         int groups = second[BlockRecord.Groups];
         int lengths = second[BlockRecord.GroupLengths];
@@ -549,12 +599,11 @@ internal sealed class FrameDecoder : IFrameDecoder
         for (int g = 0; g < groups; g++)
         {
             int length = isShort ? (lengths >> (4 * g)) & 15 : 1;
-            for (int sfb = 0; sfb < Math.Max(isMidSide ? maxSfb : 0, rightMaxSfb); sfb++)
+            for (int sfb = 0; sfb < maxSfb; sfb++)
             {
                 int band = (g * 64) + sfb;
-                bool flagged = isMidSide && sfb < maxSfb && (mask == 2 || first[BlockRecord.MidSide + band] != 0);
                 int rightBook = sfb < rightMaxSfb ? second[BlockRecord.Codebooks + band] : 0;
-                if (flagged && !(first[BlockRecord.Codebooks + band] == 13 && rightBook == 13))
+                if ((mask == 2 || first[BlockRecord.MidSide + band] != 0) && first[BlockRecord.Codebooks + band] != 13 && rightBook < 13)
                 {
                     for (int w = 0; w < length; w++)
                     {
@@ -568,11 +617,45 @@ internal sealed class FrameDecoder : IFrameDecoder
                         }
                     }
                 }
+            }
 
+            window += length;
+        }
+    }
+
+    private static bool IsMidSide(ReadOnlySpan<int> first, ReadOnlySpan<int> second) => first[BlockRecord.MsMask] is 1 or 2
+        && first[BlockRecord.WindowSequence] == second[BlockRecord.WindowSequence] && first[BlockRecord.Groups] == second[BlockRecord.Groups]
+        && first[BlockRecord.GroupLengths] == second[BlockRecord.GroupLengths];
+
+    // Intensity stereo (4.6.8.2) from the first channel, noise included, into the bands of the second that code it, as libxaac does: it follows the second channel's own layout (its
+    // window sequence, groups and bands) over the first channel's spectrum at the same lines, whatever the first channel's window is (ixheaacd_intensity_stereo_process). The
+    // sign inverts where the band's mid/side flag is set and the mask is 1 (4.6.8.2.3: invert_intensity is 1 - 2 * ms_used only for ms_mask_present 1, else 1).
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private void IntensityStereo(ReadOnlySpan<int> first, ReadOnlySpan<int> second, int ch)
+    {
+        float[] left = _spectrum[ch];
+        float[] right = _spectrum[ch + 1];
+        bool isFlagged = first[BlockRecord.MsMask] == 1 && IsMidSide(first, second);
+        bool isShort = second[BlockRecord.WindowSequence] == 2;
+        int groups = second[BlockRecord.Groups];
+        int lengths = second[BlockRecord.GroupLengths];
+        ushort[] offsets = isShort ? _shortOffsets : _longOffsets;
+        int bands = isShort ? _shortBands : _longBands;
+        int maxSfb = Math.Min(first[BlockRecord.MaxSfb], bands);
+        int rightMaxSfb = Math.Min(second[BlockRecord.MaxSfb], bands);
+        int window = 0;
+        for (int g = 0; g < groups; g++)
+        {
+            int length = isShort ? (lengths >> (4 * g)) & 15 : 1;
+            for (int sfb = 0; sfb < rightMaxSfb; sfb++)
+            {
+                int band = (g * 64) + sfb;
+                int rightBook = second[BlockRecord.Codebooks + band];
                 if (rightBook >= 14)
                 {
                     float scale = Tables.IntensityGain[Math.Clamp(second[BlockRecord.ScaleFactors + band], -255, 255) + 255];
-                    if (!((flagged ? 1 : 0) != (rightBook & 1)))
+                    bool isInverted = isFlagged && sfb < maxSfb && first[BlockRecord.MidSide + band] != 0;
+                    if (isInverted == ((rightBook & 1) != 0))
                     {
                         scale = -scale;
                     }
@@ -592,7 +675,7 @@ internal sealed class FrameDecoder : IFrameDecoder
         }
     }
 
-    // Noise substitution (4.6.13) after the stereo tools, as libxaac does: each band of codebook 13 takes random values of the energy its noise energy gives. The generator is the
+    // Noise substitution (4.6.13) after mid/side stereo and before intensity stereo (Figure 4.2): each band of codebook 13 takes random values of the energy its noise energy gives. The generator is the
     // linear congruential one of ixheaacd_gen_rand_vec (seed 0 at the start of the stream and after a gap, one for all channels); a band that mid/side stereo flags in a pair gets the
     // same noise in both channels, the second channel starting from the seed the first started that band with. libxaac keeps that seed for each band and not for each window of a
     // group, which gives the second channel another noise than the first in eight short windows grouped; here each window of the group has its own.
@@ -711,7 +794,7 @@ internal sealed class FrameDecoder : IFrameDecoder
             }
 
             int length = slot[at + 1];
-            int order = slot[at + 2];
+            int order = Math.Min(slot[at + 2], MaxTnsOrder);
             int bottom = Math.Max(top - length, 0);
             int stop = top;
             top = bottom;
@@ -794,7 +877,7 @@ internal sealed class FrameDecoder : IFrameDecoder
         float[] overlap = _overlap[ch];
         int sequence = slot[BlockRecord.WindowSequence];
         int shape = slot[BlockRecord.WindowShape] & 1;
-        int previous = _previousShape[ch];
+        int previous = _previousShape[ch] == FirstShape ? shape : _previousShape[ch];
         _previousShape[ch] = shape;
         if (_isSilent[ch])
         {

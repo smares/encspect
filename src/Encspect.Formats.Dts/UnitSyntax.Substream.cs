@@ -423,7 +423,7 @@ internal sealed partial class UnitSyntax
         int sets = Num("Speaker Remapping Sets", 3, Explain.RemapSets, Topics.ExtensionSubstream);
         if (sets > 0 && maskBits == 0)
         {
-            // The standard layout masks of the sets are nuBits4SpkrMask bits wide (Table 7-5), and FFmpeg refuses sets without a mask (dca_exss.c).
+            // The standard layout masks of the sets are nuBits4SpkrMask bits wide (Table 7-5), and ffprobe refuses sets without a mask.
             Report(Issue.ReservedValue, "Speaker Remapping Sets", setsStart, _pos, $"the asset has {sets} speaker remapping set{(sets == 1 ? string.Empty : "s")} but no speaker activity mask, whose width the layout masks of the sets need (Table 7-5)");
         }
 

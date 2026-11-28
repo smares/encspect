@@ -76,7 +76,7 @@ SPEAKERS = {1: ["front center"], 2: ["front left", "front right"], 6: ["front ce
 
 
 # ffprobe's profile of a raw ADTS stream is the profile of the ADTS header, whatever SBR the frames hold: FFmpeg 8.0's parser sets it for every
-# frame header (libavcodec/aac_ac3_parser.c, ff_aac_ac3_parse), after the decoder named the stream HE-AAC or HE-AACv2 from the SBR data it found (6.1's
+# frame header, after the decoder named the stream HE-AAC or HE-AACv2 from the SBR data it found (6.1's
 # parser left the profile alone). The ADTS rows below pin "LC" for the checking tool; the MP4 rows name the profile the decoder finds from the
 # configuration or the frames.
 def stream(codec, rate, channels, mode, frame, vbr, encoder, profile=None, writer=None, **extra):
@@ -208,10 +208,10 @@ FIXTURES = [
     # frame, typed as a channel pair element, which a 5.1 stream does not have (aac.sbr-without-channel-element), and so do not.
     ("faac-2.2-he-51-adts", ".aac", ["{faac 2.2}", "--object-type", "he-aac-v1", "-b", "16", "-o", "{out}", "{six}"],
      [stream("HE-AAC", 44100, 6, "5.1", 2048, True, ("FAAC", "Medium"), "LC")], {STATS + "/SBR": "35 access units (100.0%)"},
-     [["aac.implicit-sbr", "35 of 35 raw data blocks hold SBR data"]], {"skip": {"faad": FAAD_ADTS_RATE}}),
+     [["aac.implicit-sbr", "35 of 35 raw data blocks hold SBR data"], ["aac.lfe-restrictions", "35 raw data blocks hold an LFE channel stream"]], {"skip": {"faad": FAAD_ADTS_RATE}}),
     ("faac-2.1-he-51-adts", ".aac", ["{faac 2.1}", "--object-type", "he-aac-v1", "-b", "16", "-o", "{out}", "{six}"],
      [stream("HE-AAC", 44100, 6, "5.1", 2048, True, None, "LC")], {STATS + "/SBR": "34 access units (100.0%)"},
-     [["aac.implicit-sbr", "34 of 34 raw data blocks hold SBR data"], ["aac.sbr-without-channel-element", "SBR data"]], {"skip": {"faad": FAAD_ADTS_RATE, "faad_trace": "faad2 does not read the stream: its SBR payload follows no channel element (aac.sbr-without-channel-element), and its trace holds one raw data block."}}),
+     [["aac.implicit-sbr", "34 of 34 raw data blocks hold SBR data"], ["aac.lfe-restrictions", "34 raw data blocks hold an LFE channel stream"], ["aac.sbr-without-channel-element", "SBR data"]], {"skip": {"faad": FAAD_ADTS_RATE, "faad_trace": "faad2 does not read the stream: its SBR payload follows no channel element (aac.sbr-without-channel-element), and its trace holds one raw data block."}}),
     ("ffmpeg-fast", ".aac", ["ffmpeg", "-v", "error", "-y", "-i", "{mix}", "-c:a", "aac", "-b:a", "64k", "-aac_coder", "fast", "{out}"],
      [stream("AAC LC", 44100, 2, "Stereo", 1024, True, (LAVC, "High"), "LC")], {}, [], {"faad": "adts"}),
     ("ffmpeg-no-tools", ".aac", ["ffmpeg", "-v", "error", "-y", "-i", "{mix}", "-c:a", "aac", "-b:a", "64k", "-aac_tns", "0", "-aac_pns", "0", "-aac_is", "0",

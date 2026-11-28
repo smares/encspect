@@ -3,20 +3,24 @@ using Encspect.Core;
 namespace Encspect.Formats.Asf;
 
 // Advanced Systems Format (ASF), the container of Windows Media files (.wma, .wmv, .asf): the
-// Advanced Systems Format Specification, revision 01.20.03, with FFmpeg's asfdec_f.c as the
-// reference implementation. A file is a run of objects, each a 128-bit GUID, a 64-bit size and its
+// Advanced Systems Format Specification, revision 01.20.03. A file is a run of objects, each a 128-bit GUID, a 64-bit size and its
 // data: the Header Object (which holds the File Properties, Stream Properties, Header Extension and
 // the other header objects), the Data Object (fixed-size packets that carry the payloads of the
 // streams) and the index objects. Every object becomes a node with its fields at their bytes. The
 // media objects of each audio stream are put together from their payloads and go to the codec
 // parser of their coding, WMA through the "wma", "wma-pro", "wma-lossless" and "wma-voice" routes
-// with the stream's WAVEFORMATEX and codec-specific data, MPEG audio (format tag 0x0055) and AC-3 (0x2000) through "mpeg-audio" and "ac-3"; the codec
+// with the stream's WAVEFORMATEX and codec-specific data, MPEG audio (format tags 0x0050 and 0x0055) and AC-3 (0x2000) through "mpeg-audio" and "ac-3", and PCM, IEEE float, A-law and mu-law through "pcm-samples"; the codec
 // reports the stream.
 public sealed partial class AsfParser : IFormatParser
 {
-    // The codec parsers' IDs by the format tag of an audio stream (ASF specification, section 11.1).
-    internal static readonly IReadOnlyDictionary<int, string> DefaultRoutes = new int[] { 0x0160, 0x0161, 0x0162, 0x0163, 0x000A, 0x0055, 0x2000 }
-        .ToDictionary(tag => tag, tag => WaveFormatRoutes.WindowsMediaCodecId(tag) ?? WaveFormatRoutes.CodecId(tag)!);
+    // The tags WaveFormatRoutes routes that ASF does not: DTS (0x0008 and 0x2001), for which no file of an ASF writer is among the test files. The extensible
+    // format is routed by the tag in its sub-format GUID; a sub-format GUID that is no tag (E-AC-3, AC-3 and MPEG-2 audio under their DirectShow subtypes) is not.
+    internal static readonly IReadOnlySet<int> LeftOut = new HashSet<int> { WaveFormatRoutes.DtsMicrosoft, WaveFormatRoutes.Dts };
+
+    // The codec parsers' IDs by the format tag of an audio stream (ASF specification, section 11.1): the tags of WaveFormatRoutes, the table WAV and Matroska's
+    // A_MS/ACM route by, but those it leaves out (LeftOut). The linear codings go to the PCM parser.
+    internal static readonly IReadOnlyDictionary<int, string> DefaultRoutes = Enumerable.Range(0, 0x10000).Where(tag => !LeftOut.Contains(tag))
+        .Select(tag => (Tag: tag, Codec: WaveFormatRoutes.RouteOf(tag))).Where(r => r.Codec is not null).ToDictionary(r => r.Tag, r => r.Codec!);
 
     private readonly IReadOnlyDictionary<int, string> _routes;
 

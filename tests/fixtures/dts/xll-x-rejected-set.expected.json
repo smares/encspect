@@ -55,9 +55,9 @@
   "decode_log": "warning",
   "ffprobe_channels": 2,
   "skip": {
-   "ffprobe_bitrate": "ffmpeg's lossless decoder sets the bit rate to 0 (dca_xll.c: avctx->bit_rate = 0), so ffprobe lists none",
-   "ffprobe_profile": "ffmpeg names the lossless profile when its decoder has decoded a frame (dca_xll.c), which it does not here, so ffprobe names the core's",
-   "decode": "ffmpeg's decoder refuses a resolution beyond the width in parse_sub_headers, before it looks for the DTS:X word (dca_xll.c: 'Invalid PCM bit resolution for XLL channel set'); MediaInfo 24.01 would still read the word",
+   "ffprobe_bitrate": "ffmpeg's lossless decoder sets the bit rate to 0 so ffprobe lists none",
+   "ffprobe_profile": "ffmpeg names the lossless profile when its decoder has decoded a frame, which it does not here, so ffprobe names the core's",
+   "decode": "ffmpeg's decoder refuses a resolution beyond the width in its sub-header checks, before it looks for the DTS:X word ('Invalid PCM bit resolution for XLL channel set'); MediaInfo 24.01 would still read the word",
    "ffprobe_channels": "ffmpeg cannot decode the lossless layer, so it reports the core's two channels and their layout"
   }
  }

@@ -99,31 +99,31 @@ internal sealed class VoiceParameters
         if (data.Length != ExtraDataSize)
         {
             return Failed("wma.codec-data-size",
-                $"The codec-specific data of Windows Media Audio Voice is {Counts.Of(data.Length, "byte", "bytes")}; FFmpeg's decoder needs exactly 46 and refuses any other size (wmavoice.c)");
+                $"The codec-specific data of Windows Media Audio Voice is {Counts.Of(data.Length, "byte", "bytes")}; FFmpeg's decoder needs exactly 46 and refuses any other size");
         }
 
         uint flags = BinaryPrimitives.ReadUInt32LittleEndian(data[FlagsOffset..]);
         if (align is < 1 or > MaxBlockAlign)
         {
-            return Failed("wma.voice-block-alignment", $"The block alignment is {align}; FFmpeg's decoder accepts 1 to 4,194,304 (wmavoice.c)", flags);
+            return Failed("wma.voice-block-alignment", $"The block alignment is {align}; FFmpeg's decoder accepts 1 to 4,194,304", flags);
         }
 
         int denoise = (int)((flags >> 2) & 15);
         if (denoise > 11)
         {
-            return Failed("wma.voice-denoise-strength", $"The flags set a denoise strength of {denoise}; FFmpeg's decoder accepts 0 to 11 (wmavoice.c)", flags);
+            return Failed("wma.voice-denoise-strength", $"The flags set a denoise strength of {denoise}; FFmpeg's decoder accepts 0 to 11", flags);
         }
 
         int[] slotOfType = SlotsOf(data[TableOffset..], out int[] typeOfSlot, out int overfull, out int fifthType, out int fifthGroup);
         if (fifthType >= 0)
         {
             return Failed("wma.voice-frame-type-table",
-                $"The frame type table puts more than four frame types in one group of codes (type {fifthType} in group {fifthGroup}); FFmpeg's decoder rejects it (wmavoice.c)", flags);
+                $"The frame type table puts more than four frame types in one group of codes (type {fifthType} in group {fifthGroup}); FFmpeg's decoder rejects it", flags);
         }
 
         if (rate >= 226_719)
         {
-            return Failed("wma.voice-sample-rate", $"The sample rate is {rate} Hz; FFmpeg's decoder rejects rates of 226719 Hz and more (wmavoice.c)", flags);
+            return Failed("wma.voice-sample-rate", $"The sample rate is {rate} Hz; FFmpeg's decoder rejects rates of 226719 Hz and more", flags);
         }
 
         long r = rate;
@@ -132,19 +132,19 @@ internal sealed class VoiceParameters
         int range = maxPitch - minPitch;
         if (range <= 0)
         {
-            return Failed("wma.voice-sample-rate", $"The sample rate of {rate} Hz gives a pitch range of {Counts.Of(range, "sample", "samples")}; FFmpeg's decoder rejects it (wmavoice.c: Invalid pitch range)", flags);
+            return Failed("wma.voice-sample-rate", $"The sample rate of {rate} Hz gives a pitch range of {Counts.Of(range, "sample", "samples")}; FFmpeg's decoder rejects it (Invalid pitch range)", flags);
         }
 
         if (minPitch < 1 || maxPitch + 8 > 416)
         {
-            return Failed("wma.voice-sample-rate", $"The sample rate of {rate} Hz is below 322 Hz or above 22,097 Hz, which FFmpeg's decoder rejects (wmavoice.c: Unsupported samplerate)", flags);
+            return Failed("wma.voice-sample-rate", $"The sample rate of {rate} Hz is below 322 Hz or above 22,097 Hz, which FFmpeg's decoder rejects (Unsupported samplerate)", flags);
         }
 
         int half = 16 * ((range / 8) / 16);
         if (half <= 0)
         {
             return Failed("wma.voice-sample-rate",
-                $"The sample rate of {rate} Hz gives a delta pitch range of {half}; FFmpeg's decoder rejects it (wmavoice.c: Invalid delta pitch hrange), and so accepts only 7,990 to 22,097 Hz", flags);
+                $"The sample rate of {rate} Hz gives a delta pitch range of {half}; FFmpeg's decoder rejects it (Invalid delta pitch hrange), and so accepts only 7,990 to 22,097 Hz", flags);
         }
 
         int anchor1 = 25 * range / 64;

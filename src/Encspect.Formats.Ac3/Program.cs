@@ -341,7 +341,7 @@ internal sealed class Program(Ac3Analysis.ProgramKey key, int firstFrame)
     // location a dependent substream adds; a location the independent substream has is a
     // replacement and adds nothing. With a rear pair, the surround pair is the side pair (architecture.md,
     // "Streams and series"). Lts/Rts are the top back pair and the surround direct pair the side
-    // pair, as ffmpeg maps them (libavcodec/ac3tab.c, ff_eac3_custom_channel_map_locations).
+    // pair, as ffprobe's channel layout names them on the coding fixtures (the locations are TS 102 366 Table E.1.4, E.1.3.1.8).
     // The channels the decoder outputs for an audio coding mode and LFE flag, in the coded order (no dependent substream's channels).
     internal static IReadOnlyList<Speaker> LayoutOf(int acmod, bool lfeon) => Speakers(AcmodTokens(acmod, lfeon), []);
 

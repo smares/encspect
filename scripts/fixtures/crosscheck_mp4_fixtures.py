@@ -14,7 +14,7 @@ For every fixture in tests/fixtures/mp4, tests/fixtures/aac/adts and tests/fixtu
   which ADTS can only signal implicitly ("ffprobe_sample_rate"). Where the
   manifest records ffprobe's profile ("ffprobe_profile"), it must match: for an MP4 track ffmpeg names a stream HE-AAC only
   once it finds SBR data in an access unit, which the hand-built ones do not carry, so those record none; for a raw ADTS stream it names the profile
-  of the ADTS header, since FFmpeg 8.0's parser sets it for every frame header (libavcodec/aac_ac3_parser.c, ff_aac_ac3_parse), after the decoder
+  of the ADTS header, since FFmpeg 8.0's parser sets it for every frame header, after the decoder
   has named the stream from its SBR data, so those record "LC".
   ffprobe's channel layout must feed the speakers of the stream's "channel_layout", in any order
   (channel_layouts.py), where ffprobe's channels are the manifest's: ffmpeg's decoder gives an AAC
@@ -461,9 +461,9 @@ def trace_unit(blocks, rate, is960=False):
 
 def trace_pair(books, applied):
     """The stereo coding of a channel pair from what faad2 decides (ISO/IEC 14496-3 4.6.8): intensity stereo where a band of the second
-    channel has codebook 14 or 15 ('e' or 'f' in the trace), and mid/side stereo where faad2's ms_decode applies mid/side to a band ("@@MS": ms_used or
-    mask 2, and neither intensity stereo in the second channel nor noise substitution in the first), also taking FFmpeg's rule that a noise band of the
-    second channel gets none (faad2 checks the first channel's only). The codes of ms_mask_present 3 are not traced: faad2 rejects it."""
+    channel has codebook 14 or 15 ('e' or 'f' in the trace), and mid/side stereo where the faad2 trace marks a band mid/side ("@@MS": ms_used or
+    mask 2, and neither intensity stereo in the second channel nor noise substitution in the first), also taking the rule of ISO/IEC 14496-3
+    4.6.8.1.3 that a noise band of the second channel gets none (the trace marks only the first channel's). The codes of ms_mask_present 3 are not traced: faad2 rejects it."""
     intensity = any(book in "ef" for book in books)
     midside = any(bit == "1" and books[band] != "d" for band, bit in enumerate(applied))
     return 3 if intensity and midside else 2 if intensity else 1 if midside else 0
@@ -606,6 +606,7 @@ MOOV_TRACKS = "MediaInfo lists the audio tracks of moov; the analyzer reports a 
 FIRST_ENTRY = "MediaInfo reads the first sample entry of the track (File_Mpeg4_Elements.cpp), which does not say that the track is encrypted; the analyzer reads the entries the chunks use"
 ALAC_TRACK = "MediaInfo lists the audio track from its sample entry; the analyzer reports a stream only for a coding it analyzes (mp4.codec-not-analyzed)"
 MEDIAINFO_READS_OTHERWISE = {
+    "adts/fill-sbr-with-other-payload": dict.fromkeys(["format", "sample rate", "SBR signaling"], "MediaInfo 26.01 finds no SBR in a fill element whose first extension payload is another type, which 4.5.2.1.5.2 does not allow next to SBR data: it names the stream AAC LC at the core rate, where the analyzer reads the SBR data and reports aac.fill-sbr-with-other-payload"),
     "mp4/ffmpeg-cenc-mp3": {"channels": NO_CHANNELS},
     "mp4/cenc-ac3": {"channels": NO_CHANNELS},
     "mp4/cenc-dts": {"channels": NO_CHANNELS},
@@ -630,11 +631,9 @@ MEDIAINFO_READS_OTHERWISE = {
     "mp4/sample-count-mismatch": {"access units": STTS_COUNT + ": 21, where stsz sizes 20"},
     "adts/corrupt-syntax": {"access units": ADTS_ERRORS + " (21 frames, 16 counted)"},
     "adts/damaged-length": {"access units": ADTS_ERRORS + " (30 frames, 28 counted)"},
-    "adts/raw-blocks": {"access units": "MediaInfo reads a crc_check in a frame of several raw data blocks also without protection (File_Aac_Main.cpp, adts_frame), which adts_header_error_check holds only when protection_absent is 0 (ISO/IEC 14496-3 1.A.2.2), so it misreads those blocks and counts none of the frames"},
+    "adts/raw-blocks": {"access units": "MediaInfo reads a crc_check in a frame of several raw data blocks also without protection (File_Aac_Main.cpp, adts_frame), which adts_header_error_check holds only when protection_absent is 0 (ISO/IEC 14496-3 1.A.3.2.3), so it misreads those blocks and counts none of the frames"},
     "adts/sbr-in-three-blocks": dict.fromkeys(["format", "sample rate", "SBR signaling"], SBR_ANYWHERE),
-    "adts/sbr-after-coupling-element": dict.fromkeys(["format", "sample rate", "SBR signaling"], SBR_ANYWHERE),
     "adts/sbr-in-one-block": dict.fromkeys(["format", "sample rate", "SBR signaling"], SBR_ANYWHERE),
-    "adts/sbr-before-channel-element": dict.fromkeys(["format", "sample rate", "SBR signaling"], SBR_ANYWHERE),
     "adts/sbr-in-frames-failing-crc": dict.fromkeys(["format", "sample rate", "SBR signaling"], SBR_ANYWHERE),
     "adts/sbr-in-all-but-first-block": dict.fromkeys(["format", "sample rate", "SBR signaling"], SBR_ANYWHERE),
     "adts/sbr-in-truncated-frame": {"streams": "MediaInfo 26.01 synchronizes an ADTS file on three consecutive frame headers or on frames that end exactly at the end of the file (File_Aac.cpp, Synchronize_ADTS); two frames and a cut third are neither, so it finds no audio stream"},

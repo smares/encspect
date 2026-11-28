@@ -95,6 +95,7 @@ Later milestones, in this order.
   - OSQ, WaveLab's lossless format;
   - ATRAC, ATRAC3 and ATRAC3plus (`.oma`/`.aa3`, `.at3`, and ATRAC in WAV), with fixtures from Sony's command-line at3tool (the PSP and PS3 builds Rarewares keeps);
   - RealAudio: the RealMedia container with Cook, RealAudio 14.4 and 28.8, and RealAudio Lossless;
+  - ACELP.net, Sipro Lab Telecom's speech codec (format tag 0x0130; RealAudio's `sipr`, which FFmpeg 6.1.1 names "RealAudio SIPR / ACELP.NET" and decodes from Windows Media Encoder's files), as one codec parser for ASF, WAV and RealMedia (the lead, 2026-11-27): today only its header is shown (`asf.codec-not-analyzed`); the private sample kit holds Windows Media Encoder 9's four modes (5, 6.5, 8.5 and 16 kbit/s) and Windows Media Encoder 7.1's 6.5 kbit/s profile;
   - TwinVQ (`.vqf`);
   - QDesign Music, in QuickTime;
   - Nellymoser, in FLV.

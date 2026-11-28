@@ -1757,7 +1757,7 @@ def _():
 
 
 @fixture("writer-lavf-under-application", "A Segment whose MuxingApp is ffmpeg's muxer version (\"Lavf60.16.100\") and whose WritingApp names another application, as libavformat writes "
-         "the encoding_tool metadata (matroskaenc.c): the muxer is the library under the application, as libebml and libmatroska are under mkvmerge, so the two do not conflict.",
+         "the encoding_tool metadata (the external-ffmpeg-* Matroska fixtures): the muxer is the library under the application, as libebml and libmatroska are under mkvmerge, so the two do not conflict.",
          streams=[OPUS])
 def _():
     return with_apps("Lavf60.16.100", "HandBrake 1.7.2 2024011600")

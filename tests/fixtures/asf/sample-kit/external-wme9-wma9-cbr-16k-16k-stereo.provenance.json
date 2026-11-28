@@ -1,0 +1,22 @@
+{
+ "description": "Windows Media Encoder 9 Series (x86), WMEnc.exe through WMCmd.vbs 9.0.0.2980: Windows Media Audio 9, constant bitrate, 16 kbit/s, 16 kHz (the source is 44.1 kHz stereo), stereo, on the synthetic source music-44k-stereo.wav.",
+ "encoder": {
+  "tool": "Windows Media Encoder 9 Series (x86), WMEnc.exe through WMCmd.vbs",
+  "version": "9.0.0.2980",
+  "component": "wmvcore.dll 9.0.0.4506, wmadmoe.dll 9.0.0.4503; Microsoft Windows XP Service Pack 3, build 2600, in a virtual machine",
+  "settings": "Windows Media Audio 9, constant bitrate, 16 kbit/s, 16 kHz (the source is 44.1 kHz stereo), stereo"
+ },
+ "input": {
+  "name": "music-44k-stereo.wav",
+  "sha256": "5272121c7f1c5b652f3f94287cd87cdbe5e2351a299a276d973557974166aa27",
+  "generator": "sources/make_sources.py of the sample kit (written from nothing, reproducible byte for byte)"
+ },
+ "selected_for": "line spectral pair exponents, the coding of Windows Media Encoder 9's low bitrates at 16 kHz in stereo",
+ "file": {
+  "name_in_kit": "music-44k-stereo-wma9-cbr-16_16_2.wma",
+  "bytes": 24546,
+  "sha256": "303cb6d4b0aa84f7223188a808a06ed635293584eb2335b1a865c19989e01b68"
+ },
+ "reproducible": false,
+ "note": "The encoder stamps the time of the encode into the file; the file is committed as written, and checked by its content."
+}

@@ -91,7 +91,7 @@ public sealed partial class Mp4Parser
         entry.SampleRate = f.Fixed(node, "Sample Rate", 4, 16, Explain.EntrySampleRate, "Hz", isUnsigned: true);
 
         // QuickTime File Format, "Sound sample description (version 1 and 2)"; ISO/IEC 14496-12's own
-        // version 1 keeps version 0's layout, so as in ffmpeg, the QuickTime layout applies where the
+        // version 1 keeps version 0's layout, so the QuickTime layout applies where the
         // file is QuickTime's or the stsd box is of version 0.
         bool quickTime = state.IsQuickTime || state.HasQuickTimeBrand || (stsdVersion == 0 && version > 0);
         entry.IsChannelCountBinding = !quickTime && version == 1;
@@ -557,7 +557,7 @@ public sealed partial class Mp4Parser
     }
 
     // 8.9.3: sample group descriptions; for the roll and pre-roll groups of audio (10.1 and 10.3),
-    // the roll distance in samples, negative for samples a decoder must decode before. The layout is that of FFmpeg's mov_read_sgpd and GPAC:
+    // the roll distance in samples, negative for samples a decoder must decode before. The layout is that of ISO/IEC 14496-12's SampleGroupDescriptionBox (8.9.3):
     // default_length from version 1, default_sample_description_index from version 2, and an entry length where default_length is 0.
     // The seig descriptions of Common Encryption are read for what they say: any that protects, cannot be read, or is of a version unknown,
     // wherever the box lies, is taken to say that the track's samples are protected.
@@ -690,7 +690,7 @@ public sealed partial class Mp4Parser
         return true;
     }
 
-    // Sample group boxes belong in the sample table or a track fragment (GPAC reads them nowhere else); elsewhere they are shown and reported.
+    // Sample group boxes belong in the sample table or a track fragment (ISO/IEC 14496-12 8.9.2 and 8.9.3 place them there); elsewhere they are shown and reported.
     private static void CheckGroupPlacement(State state, Node node)
     {
         if (state.ParentType is not ("stbl" or "traf"))

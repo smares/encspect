@@ -3,7 +3,7 @@
 
 For every manifest in tests/fixtures/asf:
 
-- ffprobe (FFmpeg 8.0, the reference ASF demuxer asfdec_f.c): the streams' codec, channels and rate,
+- ffprobe (FFmpeg 8.0's ASF demuxer): the streams' codec, channels and rate,
   and the packets it reads. For a hand-built fixture the packets are the media objects the model
   works out from the payloads: the same count, and for each one the stream, the size and the
   presentation time, which also covers fragmented objects put together and compressed payloads split.
@@ -23,7 +23,8 @@ For every manifest in tests/fixtures/asf:
   frame statistics are consistent with them (the valid frames less the first, times the frame
   length); the hand-built damaged streams (writer-stamp-*, fragments-in-two-streams) must make
   ffmpeg print the messages the superframes' damage causes and decode no samples.
-- ffmpeg decoding of the MPEG audio and AC-3 files (external-ffmpeg-mp3-*, external-ffmpeg-ac3-*): the samples ffmpeg decodes are the golden report's.
+- ffmpeg decoding of the MPEG audio, AC-3 and PCM files (external-ffmpeg-mp3-*, -mp2-*, -ac3-*, -pcm-*, -alaw-*, -mulaw-*): the samples ffmpeg decodes are the golden report's;
+  MediaInfo's codec ID of them is the format tag (50 for MPEG Layer II, 1, 6 and 7 for PCM, A-law and mu-law, FFFE where ffmpeg writes the extensible format).
 - MediaInfo (26.01): the format, the codec ID, the channels, the sampling rate and the duration of
   the WMA files against ffprobe's; and against the analyzer's golden report: the bit rate mode (the
   IsVBR attribute), the description of the codec (the Codec List), the format profile, title and
@@ -33,7 +34,7 @@ For every manifest in tests/fixtures/asf:
   the container states (the statistic "Nominal Bitrate"), and its SamplingCount the container's duration
   times the rate, which the analyzer's samples equal within a hundredth of a second.
 
-- the protection objects, on every hand-built fixture (those without any are the negative control): ffmpeg's ASF demuxer (asfdec_f.c) warns "DRM
+- the protection objects, on every hand-built fixture (those without any are the negative control): ffmpeg's ASF demuxer warns "DRM
   protected stream detected" for a Content Encryption Object and "Ext DRM protected stream detected" for an Extended Content Encryption Object, and
   never for the Advanced one, which it does not read; it exports the Content Encryption Object's protection type, key ID and license URL as the tags
   ASF_Protection_Type, ASF_Key_ID and ASF_License_URL, which equal the analyzer's nodes; MediaInfo reports the Encryption field "Encrypted" of an audio
@@ -116,7 +117,7 @@ def check_noise_line(pcm, channels, line, problems):
 
 def decode(path, fmt="s16le", level="error"):
     """Decodes every audio stream, one ffmpeg run each, and joins the PCM: ffmpeg 7.0 and later refuse a raw PCM output with more
-    than one audio stream (FF_OFMT_FLAG_MAX_ONE_OF_EACH in libavformat/pcmenc.c of 7.0 and 8.0.1), where 6.1 interleaved them. The samples
+    than one audio stream (ffmpeg 7.0 and 8.0.1 refuse it), where 6.1 interleaved them. The samples
     of all streams count, as before."""
     probe = run(["ffprobe", "-v", "error", "-select_streams", "a", "-show_entries", "stream=index", "-of", "csv=p=0", str(path)], text=True)
     count = max(1, len(probe.stdout.split()))
@@ -274,7 +275,7 @@ def check_voice_decode(name, manifest, path, problems):
                         + (f" and the manifest expects the analyzer's {crosscheck['analyzer']['samples']}" if "analyzer" in crosscheck else ""))
 
 
-# What ffprobe's wmavoice decoder says of each damaged configuration (wmavoice.c, wmavoice_decode_init), which it opens to read the stream.
+# What ffprobe's wmavoice decoder says of each damaged configuration (its wmavoice decoder's initialization), which it opens to read the stream.
 VOICE_CONFIG_REJECTED = {
     "voice-config-align": "ffprobe's decoder rejects the configuration: invalid block alignment 0",
     "voice-config-denoise": "ffprobe's decoder rejects the configuration: invalid denoise filter strength 12 (maximum 11)",
@@ -330,7 +331,7 @@ def check_protection(name, manifest, path, problems):
 
 
 def check_markers(path, problems):
-    """ffmpeg's ASF demuxer (asfdec_f.c, asf_read_marker) exports the Marker Object's entries as chapters: their start times and titles are
+    """ffmpeg's ASF demuxer exports the Marker Object's entries as chapters: their start times and titles are
     the golden report's markers' presentation times and descriptions. It reads no Script Command Object, so the commands have no second reading here."""
     report = golden_report(path)
     markers = [n for n in nodes_of(report["root"]) if n["name"] == "Marker" and any(c["name"] == "Presentation Time" for c in n.get("children", []))] if report else []
@@ -457,8 +458,8 @@ def check_external_ffmpeg(name, manifest, path, problems, with_mediainfo=True):
         problems.append(f"ffmpeg decodes {samples} samples, the manifest {expected['decoded_samples']}")
     if expected["codec"] in ("wmav1", "wmav2"):
         check_standard_frames(path, samples, problems)
-    if expected["codec"] in ("mp3", "ac3") and (report := golden_report(path)) is not None:
-        # The MPEG audio and AC-3 frames are the analyzer's: its samples are the samples ffmpeg decodes.
+    if expected["codec"] in ("mp2", "mp3", "ac3", "pcm_s16le", "pcm_f32le", "pcm_alaw", "pcm_mulaw") and (report := golden_report(path)) is not None:
+        # The MPEG audio and AC-3 frames and the PCM samples are the analyzer's: its samples are the samples ffmpeg decodes.
         if report["streams"][0]["samples"] != samples:
             problems.append(f"the golden report counts {report['streams'][0]['samples']} samples, ffmpeg decodes {samples}")
     if with_mediainfo:
@@ -489,7 +490,7 @@ def check_against_report(audio, general, report, problems):
     figure it states is compared with the parser's node for it."""
     stream = report["streams"][0]
     is_vbr = named(report, "IsVBR")
-    # ffmpeg's ASF muxer writes the attributes it copies as Unicode strings (asfenc.c), and neither the analyzer nor MediaInfo takes the
+    # ffmpeg's ASF muxer writes the attributes it copies as Unicode strings (the external-ffmpeg remuxes), and neither the analyzer nor MediaInfo takes the
     # bit rate mode from a string: an ffmpeg remux's IsVBR is "0" or "1" as text, and MediaInfo states no mode for it.
     if is_vbr is not None and not isinstance(is_vbr, str):
         # The header's own statement: the stream's isVbr follows the Bitrate Mode decision, which the frames' bitrates may decide against it.
@@ -503,8 +504,8 @@ def check_against_report(audio, general, report, problems):
         wanted = f"{codec} - {description}" if description else codec
         if audio.get("CodecID_Description") != wanted:
             problems.append(f"MediaInfo's description of the codec is {audio.get('CodecID_Description')!r}, the Codec List's {wanted!r}")
-    # MediaInfo names MPEG Layer III's profile "Layer 3" (it states none for AC-3).
-    profile = {"Windows Media Audio Professional": "Pro", "Windows Media Audio Lossless": "Lossless", "Windows Media Audio Voice": "Voice", "MPEG-1 Layer III": "Layer 3"}.get(stream["codec"])
+    # MediaInfo names MPEG Layer III's profile "Layer 3" and Layer II's "Layer 2", A-law "A-Law" and mu-law "U-Law" (it states none for AC-3 and PCM).
+    profile = {"Windows Media Audio Professional": "Pro", "Windows Media Audio Lossless": "Lossless", "Windows Media Audio Voice": "Voice", "MPEG-1 Layer III": "Layer 3", "MPEG-1 Layer II": "Layer 2", "A-law": "A-Law", "Mu-law": "U-Law"}.get(stream["codec"])
     if audio.get("Format_Profile") != profile:
         problems.append(f"MediaInfo's format profile is {audio.get('Format_Profile')}, the parser's codec {stream['codec']}")
     title, author = named(report, "Title", "Content Description Object"), named(report, "Author", "Content Description Object")
@@ -533,8 +534,9 @@ def check_mediainfo(name, path, stream, problems, report=None, count_samples=Tru
         problems.append(f"MediaInfo's container is {general.get('Format')}")
     if int(audio["Channels"]) != int(stream["channels"]) or int(audio["SamplingRate"]) != int(stream["sample_rate"]):
         problems.append(f"MediaInfo says {audio['Channels']} channels at {audio['SamplingRate']} Hz, ffprobe {stream['channels']} at {stream['sample_rate']}")
-    # MPEG Layer III is the format tag 0x0055, and ffmpeg writes AC-3 as 0x2000 or, for six channels, the extensible format (MediaInfo gives that tag, FFFE).
-    tags = {"wmav1": "160", "wmav2": "161", "wmapro": "162", "wmalossless": "163", "wmavoice": "A", "mp3": "55", "ac3": "2000" if int(stream["channels"]) < 6 else "FFFE"}
+    # MPEG Layer III is the format tag 0x0055 and Layer II 0x0050, and ffmpeg writes AC-3 as 0x2000 or, for six channels, the extensible format (MediaInfo gives that tag, FFFE); it writes
+    # PCM as 0x0001 for up to two channels, the extensible format for more, and floating point as the extensible format.
+    tags = {"wmav1": "160", "wmav2": "161", "wmapro": "162", "wmalossless": "163", "wmavoice": "A", "mp3": "55", "mp2": "50", "pcm_s16le": "1" if int(stream["channels"]) < 3 else "FFFE", "pcm_f32le": "FFFE", "pcm_alaw": "6", "pcm_mulaw": "7", "ac3": "2000" if int(stream["channels"]) < 6 else "FFFE"}
     if tags.get(stream["codec_name"]) != audio.get("CodecID"):
         problems.append(f"MediaInfo's codec ID is {audio.get('CodecID')}, ffprobe's codec {stream['codec_name']}")
     if abs(float(audio["Duration"]) - float(stream.get("duration", audio["Duration"]))) > 0.01:

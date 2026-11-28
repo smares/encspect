@@ -488,6 +488,36 @@
                               "length": 3057
                             }
                           ]
+                        },
+                        {
+                          "name": "Parametric Stereo Mixing",
+                          "value": 12,
+                          "unit": "raw data blocks",
+                          "offset": 0,
+                          "length": 3057,
+                          "children": [
+                            {
+                              "name": "Procedure Ra",
+                              "value": "12 raw data blocks (100.0%)",
+                              "offset": 0,
+                              "length": 3057
+                            }
+                          ]
+                        },
+                        {
+                          "name": "Parametric Stereo Phase",
+                          "value": 12,
+                          "unit": "raw data blocks",
+                          "offset": 0,
+                          "length": 3057,
+                          "children": [
+                            {
+                              "name": "No phase differences",
+                              "value": "12 raw data blocks (100.0%)",
+                              "offset": 0,
+                              "length": 3057
+                            }
+                          ]
                         }
                       ]
                     },
@@ -12643,6 +12673,68 @@
             ]
           },
           {
+            "name": "Parametric Stereo Mixing",
+            "valueLabel": "raw data block",
+            "categories": [
+              {
+                "name": "Procedure Ra",
+                "count": 12
+              },
+              {
+                "name": "Procedure Rb",
+                "count": 0
+              }
+            ],
+            "total": 12,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                12
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                12
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "Parametric Stereo Phase",
+            "valueLabel": "raw data block",
+            "categories": [
+              {
+                "name": "No phase differences",
+                "count": 12
+              },
+              {
+                "name": "Phase differences",
+                "count": 0
+              }
+            ],
+            "total": 12,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                12
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                12
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
             "name": "SBR",
             "valueLabel": "raw data block",
             "categories": [
@@ -12711,7 +12803,7 @@
       {
         "severity": "Warning",
         "code": "aac.ps-without-mono-core",
-        "message": "12 of 12 raw data blocks carry the parametric stereo extension's ID, but the core has 3 channels; decoders apply parametric stereo only to a core of one channel (fdk-aac, ffmpeg), so the report shows the stream without it.",
+        "message": "12 of 12 raw data blocks carry the parametric stereo extension's ID, but the core has 3 channels; parametric stereo applies only to a core of one channel (ISO/IEC 14496-3 1.5.2.3), so the report shows the stream without it.",
         "offset": 0,
         "length": 256,
         "path": [

@@ -2,7 +2,7 @@
 id: aac-dynamic-range-control
 title: AAC dynamic range control
 related: aac-raw-data-blocks, replaygain
-references: ISO/IEC 14496-3 4.4.2.7, 4.5.2.7; fdk-aac libAACdec/include/aacdecoder_lib.h
+references: ISO/IEC 14496-3 4.4.2.7, 4.5.2.7
 ---
 
 **The problem.** A recording made for a quiet room, with soft passages and loud peaks, is hard to follow in a car or late at night. Compressing the dynamic range at the encoder would take it away from every listener.

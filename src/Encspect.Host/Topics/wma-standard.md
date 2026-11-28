@@ -1,7 +1,7 @@
 ---
 id: wma-standard
 title: Windows Media Audio, versions 1 and 2
-related: wma-superframes, wma-bit-reservoir, wma-frames-and-blocks, noise-substitution, wma-pro, wma-voice, wma-lossless, waveformatex, asf-container
+related: wma-superframes, wma-bit-reservoir, wma-frames-and-blocks, wma-exponents, noise-substitution, wma-pro, wma-voice, wma-lossless, waveformatex, asf-container
 references: Advanced Systems Format (ASF) Specification, revision 01.20.03, section 11.1.1; docs/design/wma-standard-format.md
 ---
 
@@ -11,6 +11,6 @@ references: Advanced Systems Format (ASF) Specification, revision 01.20.03, sect
 
 **Encode options.** The codec-specific data of the stream carries a word of encode options. Its bits say whether the exponents are coded with a scale factor codebook or as line spectral pairs, whether superframes use a bit reservoir, whether frames may be divided into blocks of several sizes, and, with variable block lengths, how many sizes there are. The version, the sampling rate, the channels and the bitrate fix the rest: the frame length, whether noise substitution is used, and the widths of some fields.
 
-**What you see in a file.** The analyzer reads the codec-specific data, every superframe, every frame and every block down to the end of its coefficients, with the figures counted over them. No audio is rebuilt, so the values of the coefficients and exponents are not shown.
+**What you see in a file.** The analyzer reads the codec-specific data, every superframe, every frame and every block down to the end of its coefficients, with the figures counted over them. Where decoding is asked for, the decoder rebuilds the audio from them: each coefficient is multiplied by its line's exponent and the block's gain, noise fills the bands that were replaced by it, mid/side blocks are summed and differenced, and an inverse transform with overlapped sine windows gives the samples. Its output starts two frames after the first frame, because the overlap of the first blocks is not complete before.
 
 **Where it is specified.** The ASF specification gives the layout of version 2's type-specific data in section 11.1.1, without the meaning of its fields, and none for version 1; the frame syntax is not part of it. Encspect reads it from a description of the syntax written for it.

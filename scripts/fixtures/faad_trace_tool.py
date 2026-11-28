@@ -14,7 +14,8 @@ after the fields they print are read; each line starts with "@@" on standard err
 
 Bit positions count from the start of what the decoder was handed, so only differences between them are compared. The build lives in
 .cache/tools (git-ignored); faad2 is under the GPL, and so is the patch (faad_trace.patch, a modification of faad2 headed with faad2's copyright and license); both are test
-tools for checking this project's fixtures, in neither build and not redistributed.
+tools for checking this project's fixtures, in neither build. The repository carries the patch, and so distributes it, under faad2's license (GPL-2.0-or-later);
+it does not carry faad2.
 
     python3 scripts/fixtures/faad_trace_tool.py file.m4a
 """

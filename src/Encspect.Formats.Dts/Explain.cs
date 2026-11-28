@@ -26,7 +26,7 @@ internal static class Topics
 }
 
 // What each DTS node is, in the words the report shows next to it, citing ETSI TS 102 114 V1.6.1 by its clauses and tables
-// (and FFmpeg's and libdca's sources where the specification does not describe a form or a code). Constants only: frames are
+// (and MediaInfo's File_Dts.cpp where the specification does not describe a form or a code). Constants only: frames are
 // built by the hundred thousand, so a description is one of these and never allocated.
 internal static class Explain
 {
@@ -37,10 +37,10 @@ internal static class Explain
     public const string CoreSubstream = "The core substream: a DTS Coherent Acoustics frame of up to 5.1 channels with its header, subframes and optional core extension (5.2).";
     public const string SubstreamCore = "A core component inside an extension substream: a core frame whose sync word is remapped to 0x02B09261 (7.4.1, Table 7-1).";
     public const string Synchronization = "The sync word that starts every core frame, and the form the stream is written in (5.3).";
-    public const string SyncWord = "SYNC: the 32-bit sync word 0x7FFE8001 of a core frame (5.4.2). The 16-bit little endian and the 14-bit forms write it as 0xFE7F0180, 0x1FFFE800 and 0xFF1F00E8 (FFmpeg's dca_syncwords.h).";
+    public const string SyncWord = "SYNC: the 32-bit sync word 0x7FFE8001 of a core frame (5.4.2). The 16-bit little endian and the 14-bit forms write it as 0xFE7F0180, 0x1FFFE800 and 0xFF1F00E8 (MediaInfo's File_Dts.cpp).";
     public const string SubstreamCoreSyncWord = "SYNC: the sync word of a core component inside an extension substream, 0x02B09261, which stands in for 0x7FFE8001 (7.4.1, Table 7-1).";
-    public const string WordSize = "How many bits of each 16-bit word of the file the stream uses: 16 in the 16-bit forms, 14 in the forms that CDs and S/PDIF carry (FFmpeg's dca.c, libdca's parse.c).";
-    public const string IsBigEndian = "Whether the words of the file are big endian, the byte order the specification's bit numbering follows, or little endian, with each pair of bytes swapped (FFmpeg's dca.c, libdca's parse.c).";
+    public const string WordSize = "How many bits of each 16-bit word of the file the stream uses: 16 in the 16-bit forms, 14 in the forms that CDs and S/PDIF carry (MediaInfo's File_Dts.cpp).";
+    public const string IsBigEndian = "Whether the words of the file are big endian, the byte order the specification's bit numbering follows, or little endian, with each pair of bytes swapped (MediaInfo's File_Dts.cpp).";
 
     public const string FrameHeader = "The bit stream header: the frame's construction, the encoder's configuration and the optional features it uses (5.4.2, Table 5-1).";
     public const string Ftype = "FTYPE: 1 for a normal frame, 0 for a termination frame that ends the audio where a video frame ends (5.4.2, Table 5-2).";
@@ -278,7 +278,7 @@ internal static class Explain
     public const string XllDownmixEmbedded = "bDownmixEmbedded: whether the encoder has already downmixed the audio of this set into the channels of the sets before it, which the decoder has to undo (8.3.2).";
     public const string XllDownmixType = "nLLDownmixType: the layout the primary channel sets are downmixed to (8.3.2, Table 8-8).";
     public const string XllHierarchical = "bHierChSet: whether the channel set is part of a hierarchy of sets, each adding channels to the sets before it (8.3.2).";
-    public const string XllDownmixCoefficients = "The downmix coefficients: 9 bits each, in a matrix of one row for each channel it mixes to; a non-primary set also has a scale in each row. Their count follows FFmpeg's dca_xll.c (parse_dmix_coeffs); the values are not decoded (8.3.2, C.9).";
+    public const string XllDownmixCoefficients = "The downmix coefficients: 9 bits each, in a matrix of one row for each channel it mixes to; a non-primary set also has a scale in each row. Their count follows 8.3.2 (DownmixCoeffs); the values are not decoded (8.3.2, C.9).";
     public const string XllHasMask = "bChMaskEnabled: whether the channel set uses a predefined channel mask. Otherwise a position in polar coordinates is stored for each channel (8.3.2).";
     public const string XllChannelMask = "nChMask: which loudspeaker positions the set's channels feed, one bit for each speaker as Table 6-22 lists them, C at bit 0 up to Rl at bit 27; bits 28 to 31 are reserved. The specification points to its clause C.8 for the bits, which is about entropy coding, so Table 6-22 is the definition used (8.3.2).";
     public const string XllSpeakers = "The speakers the bits of the channel mask name (Table 6-22), in the order of the bits.";
@@ -293,18 +293,18 @@ internal static class Explain
     public const string XllNaviSizes = "The byte sizes less one of the band data for each frequency band, segment and channel set that has the band, in the width the common header gives; the pseudo-code of 8.4.2 also reads a total for each segment, which the text, FFmpeg and MediaInfo do not (8.4.2).";
     public const string XllNaviCrc = "The CRC-16 of the navigation index with its byte alignment (8.4.2, Annex B).";
     public const string XllBandData = "The frequency band data of the frame, segment by segment, as long as the navigation index says. Not decoded (8.3.4).";
-    public const string XllExtensionData = "The bytes after the band data of the lossless frame, which start with the word FFmpeg's dca_xll.c reads as DTS:X; no specification describes them.";
-    public const string XllXSync = "The word 0x02000850, which FFmpeg's dca_xll.c (and MediaInfo's File_Dts.cpp) takes as the start of DTS:X data.";
-    public const string XllXImaxSync = "A word FFmpeg's dca_xll.c takes as the start of DTS:X IMAX data (0xF14000D0 or 0xF14000D1); MediaInfo's File_Dts.cpp reads 0xF14000D0 as IMAX and 0xF14000D1 as DTS:X.";
-    public const string XllTrailing = "Bytes after the band data up to the end of the lossless frame, whose first word is neither of the sync words that FFmpeg's dca_xll.c and MediaInfo's File_Dts.cpp look for. Not read.";
+    public const string XllExtensionData = "The bytes after the band data of the lossless frame, which start with the word MediaInfo's File_Dts.cpp reads as DTS:X; no specification describes them.";
+    public const string XllXSync = "The word 0x02000850, which MediaInfo's File_Dts.cpp and ffprobe take as the start of DTS:X data.";
+    public const string XllXImaxSync = "A word ffprobe takes as the start of DTS:X IMAX data (0xF14000D0 or 0xF14000D1); MediaInfo's File_Dts.cpp reads 0xF14000D0 as IMAX and 0xF14000D1 as DTS:X.";
+    public const string XllTrailing = "Bytes after the band data up to the end of the lossless frame, whose first word is neither of the sync words that MediaInfo's File_Dts.cpp looks for. Not read.";
     public const string XllExtensionPayload = "The bytes after the sync word up to the end of the lossless frame. Not described by any source, not read.";
     public const string StatLosslessResolution = "The source PCM resolution the channel sets of the lossless extension state in their sub-headers (nBitResolution, 8.3.2), the same concept as the core's and the stream's bits per sample.";
     public const string StatLosslessWidth = "The storage bit width the channel sets of the lossless extension state in their sub-headers (8.3.2).";
     public const string StatLosslessRate = "The sampling frequency the channel sets of the lossless extension state in their sub-headers (8.3.2).";
     public const string StatLosslessChannels = "The channels of the lossless extension: all its channel sets together.";
     public const string StatLosslessSets = "The number of channel sets of the lossless extension.";
-    public const string HasDtsX = "Whether a frame of the first asset's lossless extension has the sync word of DTS:X after its band data, the signal FFmpeg's dca_xll.c reads. The audio data of DTS:X is not described by the specification and not read.";
-    public const string HasDtsXImax = "Whether a frame of the first asset's lossless extension has the sync word FFmpeg's dca_xll.c reads as DTS:X IMAX (0xF14000D0 or 0xF14000D1) after its band data.";
+    public const string HasDtsX = "Whether a frame of the first asset's lossless extension has the sync word of DTS:X after its band data, the signal MediaInfo's File_Dts.cpp reads. The audio data of DTS:X is not described by the specification and not read.";
+    public const string HasDtsXImax = "Whether a frame of the first asset's lossless extension has the sync word ffprobe reads as DTS:X IMAX (0xF14000D0 or 0xF14000D1) after its band data.";
 
 
     public const string DdtsSamplingFrequency = "DTSSamplingFrequency: the highest sampling frequency stored in the compressed stream (ETSI TS 102 114 E.2.2.3.2).";
@@ -372,7 +372,7 @@ internal static class Explain
     public const string StatComponents = "The coding components the frames hold, by Table E-2's names, and the StreamConstruction value that table gives them (E.2.2.3.2).";
     public const string StatAssets = "How many audio assets the first extension substream describes, and their channels.";
     public const string MisalignedSubstream = "An extension substream whose sync word is not on a 32-bit boundary of the unit, where 7.5.1 puts it; its bytes are not read, as FFmpeg's decoder does not find it.";
-    public const string Profile = "How the stream's components are usually named: core only DTS, with XCh or XXCH DTS-ES, with X96 DTS 96/24, with XBR, XXCH or X96 in an extension substream DTS-HD High Resolution Audio, with XLL DTS-HD Master Audio, and with LBR, alone or with a core, DTS Express. The first asset of the first extension substream names the stream, and LBR comes before XLL, as in FFmpeg's dca_parser.c and dcadec.c, which also name them this way; the specification names none.";
+    public const string Profile = "How the stream's components are usually named: core only DTS, with XCh or XXCH DTS-ES, with X96 DTS 96/24, with XBR, XXCH or X96 in an extension substream DTS-HD High Resolution Audio, with XLL DTS-HD Master Audio, and with LBR, alone or with a core, DTS Express. The first asset of the first extension substream names the stream, and LBR comes before XLL, as ffprobe's profile names do; the specification names none.";
     public const string Evidence = "What in the stream shows the profile.";
     public const string IsLossless = "Whether the stream has a lossless extension (XLL), which makes the audio exact.";
     public const string HasExtensionSubstream = "Whether any frame is followed by, or is, an extension substream (7.2).";

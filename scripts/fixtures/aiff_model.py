@@ -3,7 +3,7 @@
 Written from Apple's "Audio Interchange File Format AIFF-C" draft of 8/26/91 and "Audio Interchange File Format: AIFF, version 1.3" (chunks,
 Common Chunk, Sound Data Chunk, markers, comments, instrument, text chunks, and in the AIFF-C draft's appendix C the sample frames of ACE and MACE),
 for the compression types they do not list Apple's QuickTime File Format Specification (2001-03-01, "Sound Codec Formats Supported") and, for the
-packet of ima4, Apple's Core Audio Format Specification ("Audio Description Chunk"; its "Channel Layout Chunk" for the CHAN chunk), and for "GSM " FFmpeg 6.1.1's libavformat/aiff.c, apart from the
+packet of ima4, Apple's Core Audio Format Specification ("Audio Description Chunk"; its "Channel Layout Chunk" for the CHAN chunk), and for "GSM " ffprobe's type code (GSM 06.10: 33 bytes for 160 samples), apart from the
 analyzer: the chunk tree and the stream a manifest states come from here. The byte builders of the fixture scripts live here too.
 
     read(data)          the chunk tree of a file

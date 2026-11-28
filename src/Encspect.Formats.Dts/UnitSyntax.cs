@@ -80,7 +80,7 @@ internal sealed partial class UnitSyntax
         }
     }
 
-    // 7.5.1 puts every sync word on a 32-bit boundary. FFmpeg finds an extension substream only there (dcadec.c), so one that is not
+    // 7.5.1 puts every sync word on a 32-bit boundary. ffprobe finds an extension substream only there (exss-misaligned), so one that is not
     // is shown as the bytes it is and not read.
     private void SkipMisalignedSubstream(ExssRef substream)
     {

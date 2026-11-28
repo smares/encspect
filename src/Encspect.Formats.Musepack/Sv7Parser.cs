@@ -8,7 +8,7 @@ using Encspect.Core;
 namespace Encspect.Formats.Musepack;
 
 // Stream version 7 (libmpcdec r495 streaminfo_read_header_sv7, mpc_demux.c and
-// mpc_decoder_read_bitstream_sv7; mppenc 1.16 WriteHeader_SV7 and its main loop). The header and the
+// mpc_decoder_read_bitstream_sv7; mppenc 1.16's fixtures). The header and the
 // frames are one bitstream of 32-bit little-endian words; the frames start 200 bits in (libmpcdec
 // 1.2.6 get_initial_fpos). Each frame is a 20-bit length and that many bits of data; frames have no
 // sync word, so they are followed by their lengths, and a damaged length loses the rest. After the

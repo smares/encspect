@@ -46,7 +46,7 @@ public sealed record WaveFormatEx
     public int CodingTag => IsExtensible && WaveFormatRoutes.TagOfSubFormat(SubFormat!.Value) is { } sub ? sub : Tag;
 
     // The codec parser of the coding, or null: the tag's, or a named sub-format GUID's.
-    public string? CodecId => WaveFormatRoutes.CodecId(CodingTag) ?? WaveFormatRoutes.WindowsMediaCodecId(CodingTag)
+    public string? CodecId => WaveFormatRoutes.RouteOf(CodingTag)
         ?? (IsExtensible ? WaveFormatRoutes.NamedSubFormat(SubFormat!.Value)?.CodecId : null);
 
     // The name of the coding in the form every container uses for it, or null for a tag no table lists.

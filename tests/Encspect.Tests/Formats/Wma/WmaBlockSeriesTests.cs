@@ -54,6 +54,59 @@ public class WmaBlockSeriesTests
         Assert.Equal(1, sizes.ValueCount(0));
     }
 
+    // Gain value 20 is a total gain of 21; the flagged band's first level is 5 less 19.
+    [Fact]
+    public void TheTotalGainAndTheNoiseLevelOfABlockAreSeriesInDecibels()
+    {
+        StdParameters p = Parameters();
+        StreamInfo stream = Run(WmaStandardStreams.MonoFrame(p, 20, 10, flaggedBand: 0));
+
+        Series gain = Assert.Single(stream.Series, s => s.Name == "Total Gain");
+        Assert.Equal("dB", gain.Unit);
+        Assert.Equal([21d, 21d], gain.Values.ToArray());
+        Series gainOverTime = Assert.Single(stream.Series, s => s.Name == "Total Gain Over Time");
+        Assert.Equal([21d], gainOverTime.Values.ToArray());
+        Assert.Same(Statistic(stream, "Largest Total Gain"), gainOverTime.Anchor);
+        Series level = Assert.Single(stream.Series, s => s.Name == "Noise Level");
+        Assert.Equal("dB", level.Unit);
+        Assert.Equal([-14d, -14d], level.Values.ToArray());
+        Assert.Same(Statistic(stream, "Noise Level"), level.Anchor);
+        Assert.Equal(-14, Assert.Single(Statistic(stream, "Noise Level").Children, c => c.Name == "Lowest").Value!.AsInteger());
+        Assert.Equal(-14, Assert.Single(Statistic(stream, "Noise Level").Children, c => c.Name == "Highest").Value!.AsInteger());
+    }
+
+    [Fact]
+    public void ABlockWithoutAFlaggedBandHasNoNoiseLevel()
+    {
+        StreamInfo stream = Run(WmaStandardStreams.MonoFrame(Parameters(), 20, 10));
+
+        Assert.DoesNotContain(stream.Series, s => s.Name == "Noise Level");
+        Assert.DoesNotContain(stream.Nodes[0].Children.Single(c => c.Name == "Statistics").Children, c => c.Name == "Noise Level");
+    }
+
+    [Fact]
+    public void TheShareOfEscapeCodedCoefficientsIsAPercentPerBlock()
+    {
+        StdParameters p = Parameters();
+
+        Series none = Assert.Single(Run(WmaStandardStreams.MonoFrame(p, 20, 10)).Series, s => s.Name == "Escape-Coded Coefficients");
+        Assert.Equal("%", none.Unit);
+        Assert.Equal([0d, 0d], none.Values.ToArray());
+
+        StreamInfo escaped = Run(WmaStandardStreams.MonoFrame(p, 20, 0, flaggedBand: 0, escapeRun: 1798));
+        Assert.Equal([100d, 100d], Assert.Single(escaped.Series, s => s.Name == "Escape-Coded Coefficients").Values.ToArray());
+    }
+
+    [Fact]
+    public void ABlockThatSendsItsExponentsIsWithoutReusedExponents()
+    {
+        StreamInfo stream = Run(WmaStandardStreams.MonoFrame(Parameters(), 20, 10));
+
+        CategorySeries reuse = Category(stream, "Blocks Reusing Exponents");
+        Assert.Equal([0L, 2L], reuse.Counts.ToArray());
+        Assert.Same(Statistic(stream, "Blocks Reusing Exponents"), reuse.Anchor);
+    }
+
     [Fact]
     public void ABlockWithoutAFlaggedBandIsWithoutNoiseSubstitution()
     {
@@ -152,13 +205,27 @@ public class WmaBlockSeriesTests
         Assert.Equal(flaggedBlocks, Category(stream, "Noise-Substituted Blocks").Counts[0]);
     }
 
-    // The version 1 stream codes from line 3: its last position that fits is 1,860, so the edge is (3 + 1,860 + 1) × 22,050 / 2,048 Hz.
+    // The version 1 stream codes from line 3: it codes 1,858 positions (Microsoft's limit, s fewer than the count), so its last line is 1,860 and the edge (1,860 + 1) × 22,050 / 2,048 Hz.
     [Fact]
     public void AVersion1StreamCodesFromLine3()
     {
         StreamInfo stream = Fixtures.AnalyzeMpeg("asf/external-ffmpeg-wmav1-stereo-44k-128k.wma").Streams[0];
 
         Node highest = Assert.Single(Statistic(stream, "Coded Bandwidth").Children, c => c.Name == "Highest");
-        Assert.Equal(20_069, highest.Value!.AsInteger());
+        Assert.Equal(20_037, highest.Value!.AsInteger());
+    }
+
+    // A file with short blocks has blocks that send no exponents: the tally counts those whose "Exponents Sent" flag is clear, one for each.
+    [Fact]
+    public void BlocksThatSendNoExponentsAreTheTallysReusingSide()
+    {
+        StreamInfo stream = Fixtures.AnalyzeMpeg("asf/external-windows-wma92-cbr-stereo-22k-32.wma").Streams[0];
+
+        long reusing = WmaStandardStreams.FindAll(stream.Nodes[0], "Exponents Sent").Count(n => n.Value!.AsBoolean() == false);
+        Assert.True(reusing > 0);
+        CategorySeries reuse = Category(stream, "Blocks Reusing Exponents");
+        Assert.Equal(reusing, reuse.Counts[0]);
+        Assert.Equal("With reused exponents", reuse.Categories[0].Name);
+        Assert.True(reuse.Counts[1] > 0);
     }
 }

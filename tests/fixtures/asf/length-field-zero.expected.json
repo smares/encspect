@@ -148,16 +148,12 @@
  },
  "findings": [
   {
-   "code": "asf.codec-not-analyzed",
-   "contains": "PCM"
-  },
-  {
    "code": "asf.packet-length",
    "contains": "3 packets"
   }
  ],
  "crosscheck": {
   "ffprobe": false,
-  "reason": "ffmpeg rejects a packet length of 0 (asfdec_f.c: invalid packet_length)."
+  "reason": "ffmpeg rejects a packet length of 0 (\"invalid packet_length\")."
  }
 }

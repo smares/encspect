@@ -1,0 +1,24 @@
+{
+  "goldens": [
+    "tests/fixtures/mpeg-audio/"
+  ],
+  "changed": [
+    {
+      "path": [
+        "MPEG Audio",
+        "Writer",
+        "Evidence"
+      ],
+      "fields": [
+        "value"
+      ]
+    },
+    {
+      "scope": "finding",
+      "code": "mpeg-audio.writer-claim-differs",
+      "fields": [
+        "message"
+      ]
+    }
+  ]
+}

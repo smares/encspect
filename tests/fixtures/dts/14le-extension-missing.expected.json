@@ -48,7 +48,7 @@
   "libdca": false,
   "decode_error": "XCH sync word not found",
   "skip": {
-   "decode": "ffmpeg looks for the XCh sync word as the frame's header says and rejects the frame without it (dca_core.c: 'XCH sync word not found')",
+   "decode": "ffmpeg looks for the XCh sync word as the frame's header says and rejects the frame without it ('XCH sync word not found')",
    "libdca": "libdca (dca_frames, 0.0.7) does not find a 14-bit frame that starts at an offset that is not a multiple of 4: its bitstream reader works on 32-bit words"
   }
  }

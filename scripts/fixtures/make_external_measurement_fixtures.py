@@ -22,6 +22,7 @@ none for LAME -V 0 and oggenc -q 8, which leave none in these files.
 
 import json
 import math
+import os
 import pathlib
 import re
 import shutil
@@ -32,7 +33,9 @@ import tempfile
 import wave
 
 import measurement_model as mm
-from make_measurement_fixtures import Lcg, pink
+import r8brain_tool
+import tool_versions
+from make_measurement_fixtures import NYQUIST_SOURCES, Lcg, nyquist_source, pink, quantize
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 OUT = ROOT / "tests" / "fixtures" / "measurement"
@@ -40,6 +43,14 @@ OUT = ROOT / "tests" / "fixtures" / "measurement"
 TOOLS = "LAME 3.100, vorbis-tools 1.4.2 (oggenc, oggdec), FFmpeg 6.1.1-3ubuntu5 (aac), opus-tools 0.2 with libopus 1.4 (opusenc, opusdec), flac 1.4.3 (Ubuntu 24.04)"
 
 # The files of TwoLAME 0.4.0 name it too, and FFmpeg 6.1.1-3ubuntu5 as the decoder of its streams, which no other file used.
+# The Nyquist edge files (Step 10) name what made them: the converter (and the compiler of r8brain's front end) and the FLAC writer.
+NYQUIST_TOOLS = {
+    "SoX": "SoX 14.4.2 (Ubuntu 24.04; sox --version is checked), flac 1.4.3 (Ubuntu 24.04)",
+    "r8brain-free-src": f"r8brain-free-src {r8brain_tool.COMMIT[:7]} (r8brain_resample.cpp built with g++ 13.3.0 -O2 -ffp-contract=off, Ubuntu 24.04), flac 1.4.3 (Ubuntu 24.04)",
+    "FFmpeg swresample": "FFmpeg 6.1.1-3ubuntu5 (libswresample and the pcm_s16le writer), flac 1.4.3 (Ubuntu 24.04)",
+    "FFmpeg swresample with libsoxr": "FFmpeg 6.1.1-3ubuntu5 (libswresample with libsoxr, resampler=soxr, and the pcm_s16le writer), flac 1.4.3 (Ubuntu 24.04)",
+    "FFmpeg wmav2": "FFmpeg 6.1.1-3ubuntu5 (the wmav2 encoder and decoder), flac 1.4.3 (Ubuntu 24.04)",
+}
 TWOLAME_TOOLS = "TwoLAME 0.4.0, FFmpeg 6.1.1-3ubuntu5 (the decoder of the MPEG audio streams), flac 1.4.3 (Ubuntu 24.04)"
 SECONDS = 1
 
@@ -152,11 +163,115 @@ RESAMPLED = {
     "ffmpeg-44100-to-96000": (44100, 96000, [], "found"),
     "ffmpeg-soxr-44100-to-48000": (44100, 48000, ["-af", "aresample=resampler=soxr"], "found"),
 }
+
+# Step 10 (docs/design/spectral-analysis.md, the Nyquist edge): the three sources (make_measurement_fixtures.py, NYQUIST_SOURCES) at the source's rate, 1 s, quantized to 16
+# bits with TPDF dither, converted by SoX 14.4.2 (`rate`, run as a black box; its 32-bit float output is quantized here) or r8brain-free-src (r8brain_tool.py), and quantized to the
+# file's 16 or 24 bits with TPDF dither. The name is `resampled-<converter>-<source>-<from>-to-<to>-<bits>`. The converters: SoX's `rate` presets, and r8brain's transition band
+# in percent with its attenuation in dB. `expect` is the lower rates (a rate whose half is the edge) the model must find; None where the figure does not say.
+SOX = {"sox-h": ["-h"], "sox-v": ["-v"], "sox-v-s": ["-v", "-s"], "sox-l": ["-l"], "sox-q": ["-q"]}
+R8BRAIN = {"r8brain-tb05": (0.5, 206.91), "r8brain-tb2": (2.0, 206.91), "r8brain-tb4": (4.0, 136.0), "r8brain-tb10": (10.0, 100.0)}
+FOUND, NONE = "found", "none"
+
+
+def nyquist_resampled():
+    """name: (source, rate in, rate out, bits, converter, expect), the converter a key of SOX or R8BRAIN or "ffmpeg" (its default resampler)."""
+    entries = {}
+
+    def add(source, rate_in, rate_out, bits, converter, expect):
+        entries[f"{converter}-{source}-{rate_in}-to-{rate_out}-{bits}"] = (source, rate_in, rate_out, bits, converter, expect)
+
+    # Every setting on pink noise from 44.1 to 48 kHz, in 16 bits and (the settings of the design's table) in 24 bits.
+    # The settings whose stopband starts at the Nyquist frequency are found; SoX's `-l` and `-q` are not; r8brain at 10 % is at the edge of the window (found at its lowest boundary here).
+    for converter in (*SOX, *R8BRAIN):
+        add("pink", 44100, 48000, 16, converter, None if converter == "r8brain-tb10" else FOUND if converter in ("sox-h", "sox-v", "sox-v-s", "r8brain-tb05", "r8brain-tb2", "r8brain-tb4") else NONE)
+    for converter in ("sox-h", "sox-v", "sox-v-s", "r8brain-tb05", "r8brain-tb2", "r8brain-tb4", "r8brain-tb10"):
+        add("pink", 44100, 48000, 24, converter, FOUND if converter != "r8brain-tb10" else None)
+    # The other sources, and the other rate pairs, at the settings most used.
+    # The sweeps' frame test rests on one or two frames, so they claim nothing; the music files and the 48 to 88.2 kHz pair are found in 7 to 20 frames.
+    for source in ("sweep", "music"):
+        for converter in ("sox-v", "r8brain-tb2"):
+            add(source, 44100, 48000, 16, converter, FOUND if source == "music" else None)
+            add(source, 44100, 96000, 24, converter, FOUND if source == "music" else None)
+    for source in ("pink", "music"):
+        for converter in ("sox-v", "r8brain-tb2"):
+            add(source, 48000, 88200, 24, converter, FOUND)
+    for converter in ("sox-v", "r8brain-tb2"):
+        add("pink", 44100, 96000, 24, converter, FOUND)
+    for rate_in, rate_out in ((22050, 44100), (32000, 48000), (8000, 44100)):
+        for converter in ("sox-v", "r8brain-tb2"):
+            add("pink", rate_in, rate_out, 16, converter, FOUND)
+        add("pink", rate_in, rate_out, 16, "ffmpeg", NONE)
+    return entries
+
+
+NYQUIST_LOOKALIKES = {
+    "wmav2-b128-48000": ("FFmpeg 6.1.1's wmav2 encoder at 128 kbit/s on pink noise at 48,000 Hz, decoded with FFmpeg: its lowpass lies at 21,891 Hz, under the Nyquist frequency of 44,100 Hz.", [44100]),
+    "oggenc-q0-48000": ("oggenc (vorbis-tools 1.4.2) -q 0 on pink noise at 48,000 Hz, decoded with oggdec: its lowpass lies at 15,844 Hz, under the Nyquist frequency of 32,000 Hz.", [32000]),
+}
+
 MIXED = {"lame-b64-then-source": ("-b 64", ["-b", "64"])}
 
 
 def prefix_of(name):
-    return "resampled" if name in RESAMPLED else "lossy"
+    return "resampled" if name in RESAMPLED or name in nyquist_resampled() else "lossy"
+
+
+def write_wav_bits(path, rate, bits, samples):
+    """A mono WAV file of 16 or 24 bit integers."""
+    with wave.open(str(path), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(bits // 8)
+        w.setframerate(rate)
+        if bits == 16:
+            w.writeframes(b"".join(struct.pack("<h", v) for v in samples))
+        else:
+            w.writeframes(b"".join(struct.pack("<i", v)[:3] for v in samples))
+
+
+def resample_nyquist(name, entry, temp, tools):
+    """The converted source as integers of the entry's bits, and the entry for the manifest."""
+    source, rate_in, rate_out, bits, converter, expect = entry
+    if converter in SOX and tool_versions.problems("sox"):
+        sys.exit("The SoX fixtures are made with " + "; ".join(tool_versions.problems("sox")))
+    # The source: 16 bits with TPDF dither at its own rate, as the audio of a 16-bit file would be.
+    original = quantize(nyquist_source(source, rate_in), 16, dither_seed=rate_in + 1 + len(source))
+    wav = temp / f"{name}-in.wav"
+    write_wav_bits(wav, rate_in, 16, original)
+    seed = rate_out + bits + len(name)
+    if converter == "ffmpeg":
+        decoded = temp / f"{name}.wav"
+        run("ffmpeg", "-v", "error", "-y", "-i", wav, "-ar", rate_out, "-c:a", "pcm_s16le", decoded)
+        samples = read_samples(decoded)
+        settings, version, description_tool = f"-ar {rate_out}", "6.1.1", "FFmpeg 6.1.1's default resampler (libswresample), 16 bits, no dither option"
+        command = f"ffmpeg -i in.wav -ar {rate_out} -c:a pcm_s16le out.wav"
+        name_tool = "FFmpeg swresample"
+    else:
+        if converter in SOX:
+            raw = temp / f"{name}.raw"
+            run("sox", wav, "-t", "raw", "-e", "floating-point", "-b", "32", raw, "rate", *SOX[converter], rate_out)
+            data = raw.read_bytes()
+            floats = struct.unpack(f"<{len(data) // 4}f", data)
+            settings, version = f"rate {' '.join(SOX[converter])}", "14.4.2"
+            description_tool = f"SoX 14.4.2's `rate {' '.join(SOX[converter])}` (run as a black box, 32-bit floating point output)"
+            command = f"sox in.wav -t raw -e floating-point -b 32 out.raw rate {' '.join(SOX[converter])} {rate_out}"
+            name_tool = "SoX"
+        else:
+            band, attenuation = R8BRAIN[converter]
+            result = subprocess.run([str(tools["r8brain"]), str(rate_in), str(rate_out), str(band), str(attenuation)], input=struct.pack(f"<{len(original)}d", *[v / 32768 for v in original]),
+                                    capture_output=True, check=True)
+            floats = struct.unpack(f"<{len(result.stdout) // 8}d", result.stdout)
+            settings, version = f"transition band {band:g} %, attenuation {attenuation:g} dB", f"r8brain-free-src {r8brain_tool.COMMIT[:7]}"
+            description_tool = f"r8brain-free-src {r8brain_tool.COMMIT[:7]} (MIT) with a transition band of {band:g} % and an attenuation of {attenuation:g} dB (run as a black box, doubles)"
+            command = f"r8brain_resample {rate_in} {rate_out} {band:g} {attenuation:g} < in.f64 > out.f64"
+            name_tool = "r8brain-free-src"
+        samples = quantize(floats, bits, dither_seed=seed)
+    entry_out = {
+        "description": f"{NYQUIST_SOURCES[source]}, 1 s at {rate_in:,} Hz (16 bits, TPDF dither of one least significant bit), converted to {rate_out:,} Hz by {description_tool}"
+                       + ("" if converter == "ffmpeg" else f" and quantized to {bits} bits with TPDF dither of one least significant bit") + ".",
+        "encoder": {"name": name_tool, "version": version, "settings": settings, "command": command}, "stated": None,
+        "expect_cutoff": "any", "expect_nyquist": None if expect is None else ([rate_in] if expect == FOUND else []),
+    }
+    return samples, bits, rate_out, entry_out
 
 
 def encode_all(names):
@@ -213,6 +328,31 @@ def encode_all(names):
                 "description": f"The pink noise at {source} Hz resampled to {target} Hz by FFmpeg 6.1.1's {engine}, 16 bits, no dither option.",
                 "encoder": {"name": "FFmpeg swresample", "version": "6.1.1", "settings": settings, "command": f"ffmpeg -i in.wav {settings} -c:a pcm_s16le out.wav"},
                 "stated": None, "expect_cutoff": expect})
+        tools = {}
+        for name, entry in nyquist_resampled().items():
+            if names and name not in names:
+                continue
+            if entry[4] in R8BRAIN and "r8brain" not in tools:
+                tools["r8brain"] = r8brain_tool.build(temp / "r8brain")
+            samples, bits, rate_out, entry_out = resample_nyquist(name, entry, temp, tools)
+            decoded = temp / f"{name}-out.wav"
+            write_wav_bits(decoded, rate_out, bits, samples)
+            finish(name, decoded, entry_out)
+        for name, (description, expect) in NYQUIST_LOOKALIKES.items():
+            if names and name not in names:
+                continue
+            decoded = temp / f"{name}.wav"
+            if name.startswith("wmav2"):
+                asf = temp / f"{name}.wma"
+                run("ffmpeg", "-v", "error", "-y", "-i", inputs[48000], "-c:a", "wmav2", "-b:a", "128k", asf)
+                run("ffmpeg", "-v", "error", "-y", "-i", asf, "-c:a", "pcm_s16le", decoded)
+                encoder = {"name": "FFmpeg wmav2", "version": "6.1.1", "settings": "-b:a 128k", "command": "ffmpeg -i in.wav -c:a wmav2 -b:a 128k out.wma; ffmpeg -i out.wma -c:a pcm_s16le out.wav"}
+            else:
+                ogg = temp / f"{name}.ogg"
+                run("oggenc", "-Q", "-q", "0", "-o", ogg, inputs[48000])
+                run("oggdec", "-Q", "-b", "16", "-e", "0", "-s", "1", "-o", decoded, ogg)
+                encoder = {"name": "oggenc", "version": "vorbis-tools 1.4.2", "settings": "-q 0", "command": "oggenc -Q -q 0 in.wav -o out.ogg; oggdec -b 16 out.ogg"}
+            finish(name, decoded, {"description": description, "encoder": encoder, "stated": None, "expect_cutoff": "any", "expect_nyquist": expect})
         for name, (settings, args) in MIXED.items():
             if names and name not in names:
                 continue
@@ -297,15 +437,26 @@ def write_manifest(name, entry):
     prefix = prefix_of(name)
     data = (OUT / f"{prefix}-{name}.flac").read_bytes()
     entry = dict(entry)
-    entry["tools"] = TOOLS if entry.get("encoder", {}).get("name") != "TwoLAME" else TWOLAME_TOOLS
+    encoder_name = entry.get("encoder", {}).get("name")
+    if encoder_name == "FFmpeg swresample" and "soxr" in entry["encoder"].get("settings", ""):
+        encoder_name = "FFmpeg swresample with libsoxr"
+    entry["tools"] = NYQUIST_TOOLS.get(encoder_name, TWOLAME_TOOLS if encoder_name == "TwoLAME" else TOOLS)
     entry["length"] = len(data)
     entry["model"] = mm.measure(data)
     found = entry["model"]["cutoff"]["is_found"]
+    expected_edges = entry.get("expect_nyquist")
+    if expected_edges is not None and [e["lower_rate"] for e in entry["model"]["nyquist_edges"]["edges"]] != expected_edges:
+        message = f"{name}: expected the Nyquist edges of the rates {expected_edges}, the model says {entry['model']['nyquist_edges']['edges']}"
+        if os.environ.get("ENCSPECT_REPORT_ONLY"):
+            print("MISMATCH", message)
+        else:
+            sys.exit(message)
     if entry["expect_cutoff"] != "any" and (entry["expect_cutoff"] == "found") != found:
         sys.exit(f"{name}: expected {entry['expect_cutoff']}, the model says {'found' if found else 'none'}")
     (OUT / f"{prefix}-{name}.expected.json").write_text(mm.dumps(entry))
     cutoff = entry["model"]["cutoff"]
-    print(name, len(data), cutoff.get("frequency"), cutoff.get("step_tenths"), cutoff.get("frames_showing"), cutoff.get("frames_with_signal"), entry["stated"])
+    print(name, len(data), cutoff.get("frequency"), cutoff.get("step_tenths"), cutoff.get("frames_showing"), cutoff.get("frames_with_signal"), entry["stated"],
+          [(e["lower_rate"], e["step_frequency"], e["step_tenths"], e["above_tenths"]) for e in entry["model"]["nyquist_edges"]["edges"]])
     side = entry["model"].get("mid_side")
     if side:
         print("   mid", side["mid_cutoff"].get("frequency"), side["mid_cutoff"]["step_tenths"], "side", side["side_cutoff"].get("frequency"), side["side_cutoff"]["step_tenths"],

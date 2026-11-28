@@ -2,7 +2,7 @@
 id: id3v2-in-chunks
 title: ID3v2 tags in WAV and AIFF chunks
 related: id3v2, tag-placement, riff-chunks
-references: ID3v2.4.0 main structure, section 3; FFmpeg libavformat/wavdec.c and aiffdec.c (the chunk IDs that readers accept)
+references: ID3v2.4.0 main structure, section 3; ffprobe's reading of the fixtures (the chunk IDs that readers accept)
 ---
 
 **The problem.** WAV and AIFF files have no tag of their own for artist, album and cover art, though players want them, and the ID3v2 tag is what the rest of the audio world uses.

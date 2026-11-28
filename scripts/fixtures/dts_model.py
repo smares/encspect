@@ -2,7 +2,7 @@
 ETSI TS 102 114 V1.6.1 lays them out (clauses 5.4 to 5.7 for the core, 6.2, 6.4 and 6.5 for X96, XCh and
 XXCH, 7.5 for the extension substream, Annex B for the CRC) and in the four forms of the core bit
 stream (16-bit and 14-bit words, big and little endian; the specification describes only the first, the
-others are FFmpeg's dca_syncwords.h and libdca's parse.c).
+others are MediaInfo's File_Dts.cpp, which labels all four forms).
 
 A built core frame has silent subframes: no subband has bits allocated (every ABITS 0, so no scale
 factor, no transient mode and no sample is sent), the VQ and LFE data are zeros, and the DSYNC
@@ -635,7 +635,7 @@ def xll_frame(size, sets=None, core_rate=48000, core_samples=512, segments_log=N
               x_sync=None, x_payload=8, bad_navi_crc=False, bad_sync=False, version=0, header_pad=0, mask_bits=None, frame_size=None):
     """The lossless extension (8.3) as a decoder reads it: the common header (Table 8-1), a channel set sub-header for each set (Table 8-4),
     the navigation index (8.4.2) and silent band data: every residual is zero, coded with linear codes of 0 bits, so a decoder plays
-    silence. x_sync adds the 4-byte word FFmpeg looks for after the band data, and x_payload bytes after it (dca_xll.c)."""
+    silence. x_sync adds the 4-byte word MediaInfo looks for after the band data (File_Dts.cpp, Extensions2), and x_payload bytes after it."""
     sets = sets or [xll_set()]
     mask_bits = mask_bits or max(8, max(s["mask"].bit_length() for s in sets))
     band_max = max(_bands_of(s) for s in sets)

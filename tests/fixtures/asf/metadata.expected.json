@@ -168,8 +168,12 @@
  },
  "findings": [
   {
-   "code": "asf.codec-not-analyzed",
-   "contains": "PCM"
+   "code": "pcm.writer-claim-differs",
+   "contains": "WM/EncodingSettings"
+  },
+  {
+   "code": "pcm.writer-claim-differs",
+   "contains": "WM/ToolName"
   }
  ],
  "crosscheck": {

@@ -7,7 +7,7 @@ The script downloads them into a cache directory and checks each file's SHA-256 
 They are the only real source of what Microsoft's own encoder (not the Windows Media Format SDK's writer of the committed fixtures) puts
 in the superframes: frame types 0 to 16 in the proportions of speech, silence frames, shortened last superframes, the padding after a
 superframe that a packet's spillover does not use, ASF packets that hold two blocks, and a file of music superframes
-("WMAPro-in-WMAVoice") with junk in its codec data. No public specification describes the bitstream; FFmpeg's wmavoice.c is the reference and
+("WMAPro-in-WMAVoice") with junk in its codec data. No public specification describes the bitstream; the clean-room description (docs/design/wma-voice-format.md) is the reference and
 what the analyzer reads is confirmed by ffmpeg decoding the same number of samples.
 
 Per file, ffprobe, ffmpeg and MediaInfo must agree with the manifest, with their words mapped to the analyzer's: ffprobe's codec name "wmavoice"

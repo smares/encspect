@@ -10,12 +10,12 @@ namespace Encspect.Formats.MpegAudio;
 // LAME tag after it, or Fraunhofer's VBRI. The frame is a valid frame with zero side information,
 // so decoders that do not know it play a frame of silence.
 //
-// Xing and Info start where the side information would end without a CRC (LAME 3.100
-// libmp3lame/VbrTag.c, GetVbrTag and lame_get_lametag_frame): a flags word, then the frame count,
+// Xing and Info start where the side information would end without a CRC (the Mp3 Info Tag revision 1
+// and MediaInfo's Header_Xing, offsets 13, 21 and 36): a flags word, then the frame count,
 // byte count, 100-byte TOC and quality its flags announce. The LAME tag follows the fields
 // (Mp3 Info Tag revision 1): 36 bytes, from a 9-byte encoder string to a CRC-16 of every frame
 // byte before that CRC. LAME before 3.90 wrote only a version string there. VBRI starts 36 bytes
-// into the frame (ffmpeg 6.1 libavformat/mp3dec.c): version, delay, quality, byte and frame
+// into the frame (MediaInfo's Header_VBRI, version 1 only): version, delay, quality, byte and frame
 // counts, and a TOC of byte counts.
 //
 // Xing and Info count only when every byte between the frame header, or its CRC, and the header is
@@ -96,7 +96,7 @@ internal sealed class VbrHeader
 
     public uint? Quality { get; private set; }
 
-    // Gogo-no-coda writes "GOGO" where the quality belongs (as mp3guessenc reads it, tags.c).
+    // Gogo-no-coda writes "GOGO" where the quality belongs (as MediaInfo reads it, File_Mpega.cpp).
     public bool HasGogoSignature => Quality == GogoQuality;
 
     public bool IsTocDecreasing { get; private set; }
@@ -341,9 +341,8 @@ internal sealed class VbrHeader
     }
 
     // The encoder strings readers take a LAME tag after: "LAME" (and Helix's "LAMEH"), "L" and a
-    // version as LAME 3.99 alphas wrote it ("L3.99a12"), as mp3guessenc reads it (tags.c,
-    // parse_xing_tag), and ffmpeg's "Lavc" and "Lavf", the only ones ffmpeg reads delay and padding
-    // after (mp3dec.c, mp3_parse_info_tag). Other text is not taken for a tag.
+    // version as LAME 3.99 alphas wrote it ("L3.99a12"), "GOGO" and "L3.9" as MediaInfo accepts them, and
+    // ffmpeg's "Lavc" and "Lavf", the only ones ffprobe 8.0 reads delay and padding after (the external-ffmpeg-* fixtures). Other text is not taken for a tag.
     private static bool IsLameTagStart(string text) =>
         text.StartsWith("LAME", StringComparison.Ordinal) || text.StartsWith("Lavc", StringComparison.Ordinal)
         || text.StartsWith("Lavf", StringComparison.Ordinal)
@@ -358,8 +357,8 @@ internal sealed class VbrHeader
         text.StartsWith("LAME3.", StringComparison.Ordinal) && text.Length >= 8 && char.IsAsciiDigit(text[6]) && char.IsAsciiDigit(text[7])
         && text[6] < '9' && (text.Length == 8 || !char.IsAsciiDigit(text[8]));
 
-    // LAME before 3.95 computed ReplayGain against an 83 dB reference (mpg123, parse.c, and LAME's
-    // ChangeLog of 2004-01-13: "ReplayGain ->89dB").
+    // LAME before 3.95 computed ReplayGain against an 83 dB reference (LAME's
+    // ChangeLog of 2004-01-13: "ReplayGain ->89dB", and the LAME 3.90.1 fixtures).
     private bool HasOldGainReference =>
         LameEncoder.StartsWith("LAME3.", StringComparison.Ordinal) && LameEncoder.Length >= 8 && char.IsAsciiDigit(LameEncoder[6])
         && char.IsAsciiDigit(LameEncoder[7]) && (LameEncoder.Length == 8 || !char.IsAsciiDigit(LameEncoder[8]))
@@ -528,7 +527,7 @@ internal sealed class VbrHeader
         encodingFlags.Add(Field("IsNoGapContinuation", 19, 1, NodeValue.Boolean((flags & 0x80) != 0), Explain.IsNoGapContinuation, Topics.GaplessPlayback));
         node.Add(Field("ATH Type", 19, 1, NodeValue.Integer(flags & 15), Explain.AthType, Topics.Ath));
 
-        // ABR stores its target, CBR its bitrate, VBR its minimum (VbrTag.c, PutLameVBR).
+        // ABR stores its target, CBR its bitrate, VBR its minimum (the LAME-written fixtures).
         (string bitrateName, string bitrateText) = method is 2 or 9 ? ("Average Bitrate", Explain.LameAverageBitrate)
             : method is >= 3 and <= 6 ? ("Minimum Bitrate", Explain.LameMinimumBitrate)
             : ("Bitrate", Explain.LameBitrate);

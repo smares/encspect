@@ -2,7 +2,7 @@
 id: dts-core-frames
 title: DTS core frames
 related: dts-audio-coding-header, dts-subframes, dts-bitstream-forms, dts-core-extensions, dts-extension-substream, frame-sync, crc
-references: ETSI TS 102 114 V1.6.1 (2019-08), 5.2 to 5.7; FFmpeg 6.1.1 libavcodec/dca_core.c
+references: ETSI TS 102 114 V1.6.1 (2019-08), 5.2 to 5.7
 ---
 
 **The problem.** A DTS stream is a run of frames that a decoder has to pick up at any point, such as after a damaged stretch, and every frame has to tell it how to decode the rest.

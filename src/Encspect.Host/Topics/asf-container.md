@@ -2,7 +2,7 @@
 id: asf-container
 title: The ASF container
 related: asf-packets, asf-metadata, asf-index, asf-scripts-and-markers, waveformatex, wma-standard
-references: Advanced Systems Format (ASF) Specification, revision 01.20.03, sections 2, 3, 4 and 10; FFmpeg libavformat/asfdec_f.c
+references: Advanced Systems Format (ASF) Specification, revision 01.20.03, sections 2, 3, 4 and 10
 ---
 
 **The problem.** Windows Media files carry audio, video and scripts together, for playing from a disk and for streaming over a network. The container has to describe each stream, interleave them in the order they are needed, and let new kinds of information be added without breaking old readers.

@@ -125,7 +125,7 @@ internal sealed class WmaPacketReader
         ? "the frames that start in the packet before it"
         : "the frame that crosses into it";
 
-    private string DecoderFile => _isLossless ? "wmalosslessdec.c" : "wmaprodec.c";
+    private static string DecoderFile => "FFmpeg's decoder";
 
     // Set by the node builders, so a finding can point at the node of its first case once the nodes exist.
     public Func<int, Node> PacketNode { get; set; } = _ => throw new InvalidOperationException();
@@ -314,8 +314,8 @@ internal sealed class WmaPacketReader
                 // A Lossless decoder has no minimum packet size: it reads the bytes it has, up to the block alignment.
                 _findings.Add(Severity.Info, "wma.packet-short", () => PacketNode(index), count =>
                     count == 1
-                        ? $"A media object holds fewer bytes than the block alignment of {p.BlockAlignment}; a decoder reads the bytes it has as a packet ({DecoderFile}). The first is at 0x{WmaText.Hex(firstOffset)}."
-                        : $"{count} media objects hold fewer bytes than the block alignment of {p.BlockAlignment}; a decoder reads the bytes they have as packets ({DecoderFile}). The first is at 0x{WmaText.Hex(firstOffset)}.");
+                        ? $"A unit of the stream's data holds fewer bytes than the block alignment of {p.BlockAlignment}; a decoder reads the bytes it has as a packet ({DecoderFile}). The first is at 0x{WmaText.Hex(firstOffset)}."
+                        : $"{count} units of the stream's data hold fewer bytes than the block alignment of {p.BlockAlignment}; a decoder reads the bytes they have as packets ({DecoderFile}). The first is at 0x{WmaText.Hex(firstOffset)}.");
             }
             else
             {
@@ -324,8 +324,8 @@ internal sealed class WmaPacketReader
                 Data.Packets.Add(record);
                 _findings.Add(Severity.Warning, "wma.packet-short", () => PacketNode(index), count =>
                     count == 1
-                        ? $"A media object holds fewer bytes than the block alignment of {p.BlockAlignment}, which a decoder rejects ({DecoderFile}); the first is at 0x{WmaText.Hex(firstOffset)}."
-                        : $"{count} media objects hold fewer bytes than the block alignment of {p.BlockAlignment}, which a decoder rejects ({DecoderFile}); the first is at 0x{WmaText.Hex(firstOffset)}.");
+                        ? $"A unit of the stream's data holds fewer bytes than the block alignment of {p.BlockAlignment}, which a decoder rejects ({DecoderFile}); the first is at 0x{WmaText.Hex(firstOffset)}."
+                        : $"{count} units of the stream's data hold fewer bytes than the block alignment of {p.BlockAlignment}, which a decoder rejects ({DecoderFile}); the first is at 0x{WmaText.Hex(firstOffset)}.");
                 if (packet.IsCut && record.HasHeader)
                 {
                     CountCutFrames(packet.Span, length * 8);
@@ -363,8 +363,8 @@ internal sealed class WmaPacketReader
 
             _findings.Add(Severity.Warning, "wma.packet-overread", () => PacketNode(index), count =>
                 count == 1
-                    ? $"A media object holds fewer bits than the {p.HeaderBits} of a packet's header; a decoder reads past its end and counts a loss ({DecoderFile}). It is at 0x{WmaText.Hex(overreadOffset)}."
-                    : $"{count} media objects hold fewer bits than the {p.HeaderBits} of a packet's header; a decoder reads past their ends and counts a loss ({DecoderFile}). The first is at 0x{WmaText.Hex(overreadOffset)}.");
+                    ? $"A unit of the stream's data holds fewer bits than the {p.HeaderBits} of a packet's header; a decoder reads past its end and counts a loss ({DecoderFile}). It is at 0x{WmaText.Hex(overreadOffset)}."
+                    : $"{count} units of the stream's data hold fewer bits than the {p.HeaderBits} of a packet's header; a decoder reads past their ends and counts a loss ({DecoderFile}). The first is at 0x{WmaText.Hex(overreadOffset)}.");
             MarkLoss();
             return;
         }

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Writes MP4 fixtures of encrypted tracks with real muxers into tests/fixtures/mp4: ffmpeg 6.1's Common Encryption writer (cenc-aes-ctr, movenccenc.c) for AAC, AC-3,
+"""Writes MP4 fixtures of encrypted tracks with real muxers into tests/fixtures/mp4: ffmpeg 6.1's Common Encryption writer (cenc-aes-ctr) for AAC, AC-3,
 E-AC-3, MPEG audio, ALAC, FLAC and Opus, whole and fragmented, and GPAC's MP4Box 2.2 (-crypt) for the four schemes cenc, cens, cbc1 and cbcs, with pssh boxes.
 
 The keys protect nothing: every file is encrypted with the test key 000102030405060708090a0b0c0d0e0f under the key ID 101112131415161718191a1b1c1d1e1f, from 1.5 seconds

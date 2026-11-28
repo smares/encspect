@@ -2,14 +2,14 @@ using Encspect.Core;
 
 namespace Encspect.Formats.Wav;
 
-// PCM samples that a container other than WAV stores as they are (MP4's ipcm, fpcm and QuickTime's sowt, twos, in24, in32, fl32, fl64 and raw entries),
-// which the container hands over as packets with the layout its sample entry states (CodecConfiguration.Pcm and Format) and the bytes it holds
+// PCM samples that a container other than WAV stores as they are (ASF's format tags 1, 3, 6 and 7, Matroska's A_PCM IDs, MP4's ipcm, fpcm and QuickTime's sowt, twos, in24, in32, fl32, fl64 and raw entries),
+// which the container hands over as packets with the layout its header states (CodecConfiguration.Pcm and Format) and the bytes it holds
 // (CodecConfiguration.DataBytes). The samples are counted from the bytes, so the packets, which a container reads lazily, are read only where the
 // decoder runs for measurements or output; a file that is only analyzed costs no read of its samples, as a WAV file's does not.
 public sealed class PcmCodecParser : ICodecParser
 {
-    // Not the decoder's ID "pcm": Ogg names its PCM mapping by that ID, and no container hands this parser a layout but MP4 (and Matroska).
-    public const string CodecId = "pcm-samples";
+    // Not the decoder's ID "pcm": Ogg names its PCM mapping by that ID. MP4, Matroska and ASF hand this parser a layout.
+    public const string CodecId = WaveFormatRoutes.PcmSamples;
 
     public string Id => CodecId;
 
@@ -53,7 +53,7 @@ public sealed class PcmCodecParser : ICodecParser
 
         statistics.Add(Cover("Bits Per Sample", NodeValue.Integer(coding.ContainerBits, "bits", "bit"), Explain.StatBits, Topics.PcmSamples));
         statistics.Add(Cover("Sample Format", SampleFormat(coding), Explain.StatSampleFormat, Topics.PcmSamples));
-        statistics.Add(Cover("Byte Order", coding.IsBigEndian ? "big-endian" : "little-endian", Explain.StatByteOrder, Topics.PcmSamples));
+        statistics.Add(Cover("Byte Order", coding.IsBigEndian ? "big-endian" : "little-endian", Explain.PcmByteOrder, Topics.PcmSamples));
         if (bitrate is not null)
         {
             statistics.Add(Cover("Average Bitrate", NodeValue.Decimal(bitrate.Value, 1, "kbps"), Explain.PcmBitrate));
@@ -79,7 +79,7 @@ public sealed class PcmCodecParser : ICodecParser
         if (leftover > 0)
         {
             context.AddFinding(Severity.Warning, "pcm.partial-sample-frame",
-                $"The track's {Counts.Of(bytes, "byte", "bytes")} are not a whole number of sample frames of {Counts.Of(frameBytes, "byte", "bytes")}; {Counts.Of(leftover, "byte", "bytes")} {(leftover == 1 ? "is" : "are")} left over.", node);
+                $"The stream's {Counts.Of(bytes, "byte", "bytes")} are not a whole number of sample frames of {Counts.Of(frameBytes, "byte", "bytes")}; {Counts.Of(leftover, "byte", "bytes")} {(leftover == 1 ? "is" : "are")} left over.", node);
         }
 
         // The decoder runs only where a front end asks for measurements or output; the packets are not read before.

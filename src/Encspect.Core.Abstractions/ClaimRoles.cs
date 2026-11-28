@@ -7,9 +7,9 @@ namespace Encspect.Core;
 public static partial class ClaimRoles
 {
     // The text of ffmpeg's muxer ("Lavf60.16.100", a bare "Lavf" or "Lavf lame"), which libavformat writes into whichever tag its
-    // output format has, whatever encoded the audio (FFmpeg n6.1.1 libavformat/oggenc.c:281 writes LIBAVFORMAT_IDENT as the
-    // vendor string, movenc.c:4203-4204 into ©too). In the LAME tag mp3enc.c:250-252 replaces the bit-exact encoder ID "Lavc libmp3lame"
-    // with "Lavf lame" and mp3enc.c:258 writes a bare "Lavf" without any: the muxer wrote them, so they name the writer.
+    // output format has, whatever encoded the audio (FFmpeg 6.1.1's Ogg files carry it as the vendor string and its MP4 files in ©too:
+    // the external-ffmpeg-* fixtures). In the LAME tag ffmpeg replaces the bit-exact encoder ID "Lavc libmp3lame"
+    // with "Lavf lame" and writes a bare "Lavf" without any (external-ffmpeg-bitexact.mp3, external-ffmpeg-remux.mp3 and the other external-ffmpeg-* MP3 fixtures): the muxer wrote them, so they name the writer.
     // This pattern tolerates leading white space and EncoderId does not: the muxer version is matched where tag text is taken as stored (an ID3v2
     // TSSE or an APE item may be padded), a role decision that must not miss a padded muxer; an encoder ID only counts exactly as ffmpeg writes it,
     // and the codecs' own patterns (VorbisParser, OpusParser, SpeexParser) are anchored the same way.
@@ -17,8 +17,8 @@ public static partial class ClaimRoles
     private static partial Regex MuxerVersion();
 
     // The libavcodec identification of an encoder ("Lavc60.31.102 libvorbis", or "Lavc libvorbis" when bit-exact):
-    // fftools/ffmpeg_enc.c:157-160 set_encoder_id sets the stream's "encoder" metadata to it only when ffmpeg encodes, mp3enc.c copies
-    // it into the LAME tag and the Vorbis comment writer (ff_vorbiscomment_write) into the ENCODER comment. It names an encoder
+    // ffmpeg sets the stream's "encoder" metadata to it only when it encodes, and copies it into the LAME tag and the Vorbis comment's
+    // ENCODER field (the external-ffmpeg-* fixtures). It names an encoder
     // in whichever field. "Lavc" is followed by a version digit or, bit-exact, a single space, so "Lavc-foo" is no ID; the match is anchored
     // at the start like the codecs' own patterns (VorbisParser, OpusParser), which agree with it.
     [GeneratedRegex(@"^Lavc(?:\d| )", RegexOptions.CultureInvariant)]

@@ -5,7 +5,7 @@ a cache directory and checks each file's SHA-256 against the manifest before usi
 
 They are the only real source of the lossless extension's channel set sub-headers and navigation index (ETSI TS 102 114 8.3.2, 8.4.2): that
 every CRC-16 of the headers holds, that the channel masks are in the order of Table 6-22 (the 7.1 file's sets are 0x627 and 0x180), and that
-the downmix coefficients are counted as FFmpeg's dca_xll.c counts them (12 and 18) are what the real data settles. No real DTS:X or .dtshd file
+the downmix coefficients are counted as 8.3.2 (DownmixCoeffs) counts them (12 and 18) are what the real data settles. No real DTS:X or .dtshd file
 could be found at a public address, so those have hand-built fixtures only.
 
 Per file, ffprobe and MediaInfo must agree with the manifest, with their words mapped to the analyzer's (ffprobe's profile "DTS-HD MA" and

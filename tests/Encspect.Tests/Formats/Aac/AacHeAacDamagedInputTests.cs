@@ -33,4 +33,55 @@ public class AacHeAacDamagedInputTests
         Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
         Assert.Equal(DecodeStatus.Decoded, report.Streams.Single().Verification!.Decoding);
     }
+
+    // Bits flipped in the parametric stereo extension's IPD and OPD, its size and its coded values: whatever they come to, the stream is analyzed and decoded without an unhandled exception.
+    [Fact]
+    public void DamagedPhaseDifferencesNeverFailTheAnalysisOrTheDecoder()
+    {
+        byte[] file = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "aac", "adts", "ps-phase.aac"));
+        var random = new Random(20261127);
+        for (int round = 0; round < 150; round++)
+        {
+            byte[] damaged = (byte[])file.Clone();
+            for (int flip = 0; flip < 1 + (round % 4); flip++)
+            {
+                // The access units' bodies, after the ADTS header of the first frame.
+                int at = 7 + random.Next(damaged.Length - 7);
+                damaged[at] ^= (byte)(1 << random.Next(8));
+            }
+
+            Report report = Analyzer.CreateDefault().Analyze("damaged.aac", new MemoryStream(damaged), new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = long.MaxValue, Output = _ => new DecoderWorkTests.NullSink() } });
+            Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed");
+        }
+    }
+
+    private static StreamInfo Measured(string name, string folder, out Report report)
+    {
+        byte[] file = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, folder, name));
+        report = Analyzer.CreateDefault().Analyze(name, new MemoryStream(file), new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = 1 << 24, Output = _ => new DecoderWorkTests.NullSink(), Measure = new MeasureOptions() } });
+        return report.Streams.Single();
+    }
+
+    // A block whose channel elements differ from the last block's (a single channel element where a pair was, in a stream whose frames all hold SBR data) is a loss: the SBR state of the
+    // elements no longer fits it, so it is decoded from reset state and withheld, as the one after a gap (the second test counts the withheld samples; this input ends inside its mdat). The buffers of an element serve a pair or a single channel, whichever the block has
+    // (the first version indexed the second channel of a one-channel buffer: an IndexOutOfRangeException).
+    [Fact]
+    public void ABlockWhoseElementLayoutChangesIsDecodedFromResetStateAndWithheld()
+    {
+        _ = Measured("aac-sbr-element-width-changes.bin", "fuzz", out Report report);
+
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed" or "measure.failed");
+        Assert.Contains(report.Findings, f => f.Code == "aac.layout-changed");
+    }
+
+    // The same counts in another order (channel configuration 3) change the layout too: every block but the first is withheld, and the parser says why.
+    [Fact]
+    public void ElementsInAnotherOrderAreReportedAndTheirBlocksWithheld()
+    {
+        StreamInfo stream = Measured("elements-order-changes.aac", Path.Combine("aac", "adts"), out Report report);
+
+        Assert.DoesNotContain(report.Findings, f => f.Code is "parse.failed" or "decode.failed" or "measure.failed");
+        Assert.Contains(report.Findings, f => f.Code == "aac.layout-changed");
+        Assert.Equal(5 * 1024, stream.Measurements!.WithheldSamples);
+    }
 }

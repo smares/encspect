@@ -535,6 +535,10 @@ def sbr_data(w, counts, pair=False, coupled=False, ps=False, grid="FIXFIX", data
         sbr_harmonics(w, counts, False)
     if ps == "wide":
         ps_wide(w)
+    elif ps == "mixed":
+        ps_wide(w, 2, 1, varied=True)
+    elif isinstance(ps, tuple) and ps[0] == "phase":
+        ps_phase(w, *ps[1:])
     elif ps:
         w.put(1, 1).put(2, 4)                        # bs_extended_data, two bytes of extensions
         w.put(2, 2)                                  # bs_extension_id EXT_ID_PS
@@ -576,21 +580,106 @@ def ps_codeword(tree_name, symbol):
     return result
 
 
-def ps_wide(w):
-    """The parametric stereo extension with intensity differences and coherences of 34 bands (mode 2, coarse): one envelope, coded across frequency, every band's
-    difference 3 steps (left louder) and coherence index 2."""
+PS_BANDS = {0: 10, 1: 20, 2: 34}
+
+
+def ps_wide(w, iid_mode=2, icc_mode=2, varied=False):
+    """The parametric stereo extension with intensity differences and coherences of the bands of iid_mode and icc_mode (modes 0 to 2: 10, 20 and 34 bands, coarse): one envelope,
+    coded across frequency, by default every band's difference 3 steps (left louder) and coherence index 2; varied gives every band a value of its own, so a decoder that maps the
+    parameters of a mode with fewer bands onto more shows it."""
     bits = []
     put = lambda v, n: bits.append((v, n))
     put(1, 1)                                        # enable_ps_header
-    put(1, 1), put(2, 3)                             # enable_iid, iid_mode 2: 34 bands
-    put(1, 1), put(2, 3)                             # enable_icc, icc_mode 2: 34 bands
+    put(1, 1), put(iid_mode, 3)                      # enable_iid
+    put(1, 1), put(icc_mode, 3)                      # enable_icc
     put(0, 1)                                        # enable_ext
     put(0, 1), put(1, 2)                             # frame_class 0, one envelope
-    for tree, first in (("IidFrequencyTree", 3), ("IccFrequencyTree", 2)):
+    for tree, mode, first in (("IidFrequencyTree", iid_mode, 3), ("IccFrequencyTree", icc_mode, 2)):
         put(0, 1)                                    # coded across frequency
-        for band in range(34):
-            word = ps_codeword(tree, first if band == 0 else 0)
+        previous = 0
+        for band in range(PS_BANDS[mode]):
+            if varied:
+                value = (band * 5) % 11 - 5 if tree == "IidFrequencyTree" else (band * 3 + (band >> 2)) % 8
+            else:
+                value = first if band == 0 else 0
+            word = ps_codeword(tree, value - previous if varied else value)
+            previous = value if varied else previous
             put(int(word, 2), len(word))
+    total = 2 + sum(n for _, n in bits)
+    size = (total + 7) // 8
+    w.put(1, 1)                                      # bs_extended_data
+    if size >= 15:
+        w.put(15, 4).put(size - 15, 8)
+    else:
+        w.put(size, 4)
+    w.put(2, 2)                                      # bs_extension_id EXT_ID_PS
+    for v, n in bits:
+        w.put(v, n)
+    w.put(0, size * 8 - total)                       # bs_fill_bits
+
+
+def ps_phase(w, iid_mode, icc_mode, envelopes, overrun=False, no_iid=False):
+    """The parametric stereo extension of the full decoder: intensity differences and coherences in the bands of iid_mode and icc_mode (0 to 2 coarse, 3 to 5 fine for the intensity
+    differences and, for the coherences, mixing procedure Rb, Table 8.27), the first envelope coded across frequency and the others across time, and the extension with
+    inter-channel and overall phase differences (8.4.2, Tables 8.10, 8.13 and 8.14): as many as nr_ipdopd_par names (5, 11 or 17), each envelope's own, the first across frequency
+    and the others across time, as differences modulo 8. Every band has a value of its own, which the envelope changes. overrun declares the extension two bytes shorter than its data
+    (8.4.2: ps_extension_size); no_iid leaves the intensity differences out (enable_iid 0), which 8.4.2 does not allow with phase differences."""
+    if no_iid:
+        iid_mode = 0
+    fine = iid_mode > 2
+    iid_bands = PS_BANDS[iid_mode % 3]
+    icc_bands = PS_BANDS[icc_mode % 3]
+    phase_bands = {0: 5, 1: 11, 2: 17}[iid_mode % 3]
+    spread = 10 if fine else 5
+    iid = [[(b * (7 if fine else 5) + e * (5 if fine else 3)) % (2 * spread + 1) - spread for b in range(iid_bands)] for e in range(envelopes)]
+    icc = [[(b * 3 + (b >> 2) + e) % 8 for b in range(icc_bands)] for e in range(envelopes)]
+    ipd = [[(b * 3 + e * 5 + 1) % 8 for b in range(phase_bands)] for e in range(envelopes)]
+    opd = [[(b * 5 + e * 3 + 2) % 8 for b in range(phase_bands)] for e in range(envelopes)]
+    bits = []
+    put = lambda v, n: bits.append((v, n))
+
+    def code(tree, table, modulo):
+        """One parameter's envelopes: the flag and the codewords of each, across frequency for the first and across time for the rest."""
+        for e, values in enumerate(table):
+            time = e > 0
+            put(1 if time else 0, 1)
+            for b, value in enumerate(values):
+                before = table[e - 1][b] if time else (values[b - 1] if b else 0)
+                symbol = (value - before) % 8 if modulo else value - before
+                word = ps_codeword(tree[time], symbol)
+                put(int(word, 2), len(word))
+
+    put(1, 1)                                        # enable_ps_header
+    if no_iid:
+        iid_mode = 0
+        put(0, 1)
+    else:
+        put(1, 1), put(iid_mode, 3)
+    put(1, 1), put(icc_mode, 3)
+    put(1, 1)                                        # enable_ext
+    put(0, 1), put({1: 1, 2: 2, 4: 3}[envelopes], 2)  # frame_class 0, num_env_idx
+    if not no_iid:
+        code(("IidFineFrequencyTree" if fine else "IidFrequencyTree", "IidFineTimeTree" if fine else "IidTimeTree"), iid, False)
+    code(("IccFrequencyTree", "IccTimeTree"), icc, False)
+    ext_bits = [(0, 2), (1, 1)]                      # ps_extension_id 0, enable_ipdopd
+    # Per envelope: ipd_dt, ipd_data, opd_dt, opd_data.
+    for e in range(envelopes):
+        for table, trees in ((ipd, ("IpdFrequencyTree", "IpdTimeTree")), (opd, ("OpdFrequencyTree", "OpdTimeTree"))):
+            time = e > 0
+            ext_bits.append((1 if time else 0, 1))
+            for b, value in enumerate(table[e]):
+                before = table[e - 1][b] if time else (table[e][b - 1] if b else 0)
+                word = ps_codeword(trees[time], (value - before) % 8)
+                ext_bits.append((int(word, 2), len(word)))
+    ext_bits.append((0, 1))                          # reserved_ps
+    ext_length = sum(n for _, n in ext_bits)
+    ext_size = (ext_length + 7) // 8
+    declared = ext_size - 2 if overrun else ext_size
+    put(declared if declared < 15 else 15, 4)
+    if declared >= 15:
+        put(declared - 15, 8)
+    bits += ext_bits
+    put(0, ext_size * 8 - ext_length)                # fill_bits
     total = 2 + sum(n for _, n in bits)
     size = (total + 7) // 8
     w.put(1, 1)                                      # bs_extended_data
@@ -701,18 +790,34 @@ def payload_bytes(writer_function, count=None):
     return data
 
 
+def crc10(value, count):
+    """The SBR CRC (14496-3 4.5.2.8.1): G10(x) = x^10 + x^9 + x^5 + x^4 + x + 1, initial value 0, over count bits of value, most significant bit first."""
+    crc = 0
+    for at in range(count - 1, -1, -1):
+        top = (crc >> 9) & 1
+        crc = (crc << 1) & 0x3FF
+        if top ^ ((value >> at) & 1):
+            crc ^= 0x233
+    return crc
+
+
 def sbr_payload(counts, header=None, pair=False, coupled=False, ps=False, crc=False, **tools):
+    """An SBR extension payload; crc is False, True (a correct CRC over the data after it, fill bits included) or "wrong" (the correct CRC with its lowest bit flipped)."""
     def write(w):
-        w.put(EXT_SBR_DATA_CRC if crc else EXT_SBR_DATA, 4)
-        if crc:
-            w.put(0, 10)
-        w.put(1 if header else 0, 1)
+        body = Writer()
+        body.put(1 if header else 0, 1)
         if header:
-            sbr_header(w, header)
+            sbr_header(body, header)
         if "fixvar" in tools:
-            sbr_fixvar_data(w, counts, tools["fixvar"])
+            sbr_fixvar_data(body, counts, tools["fixvar"])
         else:
-            sbr_data(w, counts, pair, coupled, ps, **tools)
+            sbr_data(body, counts, pair, coupled, ps, **tools)
+        if not crc:
+            w.put(EXT_SBR_DATA, 4).put(body.value, body.count)
+            return
+        body.put(0, -(14 + body.count) % 8)              # bs_fill_bits, so that the payload ends on a byte
+        stored = crc10(body.value, body.count) ^ (1 if crc == "wrong" else 0)
+        w.put(EXT_SBR_DATA_CRC, 4).put(stored, 10).put(body.value, body.count)
     return payload_bytes(write)
 
 

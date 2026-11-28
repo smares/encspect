@@ -41,8 +41,8 @@
   "ffprobe_profile": false,
   "decode_error": "Invalid extension size in EXSS asset descriptor",
   "skip": {
-   "ffprobe_profile": "ffmpeg's decoder sets the profile itself when it has decoded a frame (dca_core.c, dca_xll.c), and DTS-HD Master Audio or DTS-HD High Resolution Audio only after it has decoded the extension, which the stub components do not allow",
-   "decode": "ffmpeg rejects the asset whose size is less than its components (dca_exss.c: 'Invalid extension size in EXSS asset descriptor')"
+   "ffprobe_profile": "ffmpeg's decoder sets the profile itself when it has decoded a frame (as ffprobe shows), and DTS-HD Master Audio or DTS-HD High Resolution Audio only after it has decoded the extension, which the stub components do not allow",
+   "decode": "ffmpeg rejects the asset whose size is less than its components ('Invalid extension size in EXSS asset descriptor')"
   }
  }
 }

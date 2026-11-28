@@ -2,7 +2,7 @@
 id: sbr
 title: Spectral band replication (SBR, HE-AAC)
 related: mp3pro, parametric-stereo, aac-object-types, audio-specific-config
-references: ISO/IEC 14496-3 1.6.2.1, 4.6.18; fdk-aac
+references: ISO/IEC 14496-3 1.6.2.1, 4.6.18
 ---
 
 **The problem.** At low bitrates there are too few bits to code the high frequencies, so a plain AAC encoder cuts them off and the result sounds muffled.
@@ -11,4 +11,4 @@ references: ISO/IEC 14496-3 1.6.2.1, 4.6.18; fdk-aac
 
 **Signaling.** Hierarchical signaling puts SBR's object type, 5, first in the [AudioSpecificConfig](audio-specific-config), then the output rate and the core's type. Backward-compatible signaling puts the core's configuration first and a sync extension after it, which a decoder without SBR ignores. Implicit signaling states nothing: the configuration describes plain AAC LC at the core's rate, and the decoder finds the SBR data in fill elements while it decodes. [ADTS](adts) can only signal implicitly. FFmpeg 6.1.1 decides from the first block it can read: SBR data in it makes the stream HE-AAC (Encspect follows it, and its test files `sbr-in-first-block-only` and `sbr-in-all-but-first-block` hold the rule). A decoder without SBR plays the core alone.
 
-**What you see.** HE-AAC as the codec, the output rate as the sample rate, and the sync extension or extension sample rate in the configuration. The analyzer reads every access unit's fill elements, so implicit SBR is detected: where SBR data follows a channel element in at least half of the blocks and the configuration does not signal it, the codec becomes HE-AAC at twice the core rate, as fdk-aac and ffmpeg decode it (faad2 doubles only up to 24 kHz), with an info finding. Decoders enable SBR from the payload's presence, so a stream cut before its first SBR header is HE-AAC too. A few blocks with SBR data, SBR data before any channel element, and frames flagged as damaged do not change the codec. Each SBR payload shows its header and data, and the statistics its start and stop frequencies.
+**What you see.** HE-AAC as the codec, the output rate as the sample rate, and the sync extension or extension sample rate in the configuration. The analyzer reads every access unit's fill elements, so implicit SBR is detected: where the first block that counts holds SBR data after a channel element and the configuration does not signal it, the codec becomes HE-AAC at twice the core rate, as fdk-aac and ffmpeg decode it (faad2 doubles only up to 24 kHz, the standard's rule for HE AAC levels 2 to 4), with an info finding. Decoders enable SBR from the payload's presence, so a stream cut before its first SBR header is HE-AAC too. SBR data in later blocks only and frames flagged as damaged do not change the codec. Each SBR payload shows its header and data, and the statistics its start and stop frequencies.

@@ -87,7 +87,7 @@ public sealed class VorbisCommentTagParser : ITagParser
                 if (vendor is not null && text is { Length: > 0 })
                 {
                     // The vendor string names the encoder (libvorbis writes its own), except that ffmpeg's Ogg muxer writes its version as
-                    // the vendor, "ffmpeg" when bit-exact (libavformat/oggenc.c:281), which names the writer.
+                    // the vendor, "ffmpeg" when bit-exact (external-ffmpeg-libvorbis-bitexact.ogg), which names the writer.
                     _claims.Add(new EncoderClaim(text, vendor, "Vorbis comment vendor string", text == "ffmpeg" ? ClaimRole.Writer : ClaimRoles.Of(ClaimRole.Encoder, text)));
                 }
 
@@ -217,8 +217,8 @@ public sealed class VorbisCommentTagParser : ITagParser
                 // The field names of section 5.2.2 of the Vorbis I specification ("TITLE", "VERSION", "ALBUM" and so on) include no
                 // ENCODER, so that specification gives it to no role and the claim is the writer's (RFC 7845 section 5.2 has Opus
                 // applications use it "to identify themselves"). ffmpeg writes the stream's "encoder" metadata into it
-                // (libavformat/vorbiscomment.c ff_vorbiscomment_write, in lower case "encoder"), which is its libavcodec encoder ID when
-                // it encodes (ffmpeg_enc.c set_encoder_id) and names the encoder; oggenc.c:281 writes the muxer's version as the vendor string.
+                // (in lower case "encoder"), which is its libavcodec encoder ID when
+                // it encodes and names the encoder; it writes the muxer's version as the vendor string (the external-ffmpeg-* fixtures).
                 string value = Decode(text[(separator + 1)..], out _);
                 _claims.Add(new EncoderClaim(value, RecordNode(record), "Vorbis comment ENCODER field", ClaimRoles.Of(ClaimRole.Writer, value)));
             }
