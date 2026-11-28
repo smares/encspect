@@ -482,6 +482,36 @@ fixture("derived-ffmpeg-wmav2-tool-name-lavc", "The ffmpeg wmav2 file external-f
         tool_name_file, [])
 
 
+LONG_OBJECTS = "derived-ffmpeg-wmav2-two-superframes-per-object"
+LONG_OBJECTS_PER = 2
+
+
+def long_objects_file():
+    """The committed ffmpeg wmav2 file DERIVED_FROM with every two consecutive media objects joined into one of two superframes, in a packet of its own: the layout of the files of
+    Microsoft's version 1 encoder, which put three or four whole superframes in each media object (docs/design/wma-standard-format.md, "Superframes")."""
+    source = (OUT / DERIVED_FROM).read_bytes()
+    model = m.parse(source)
+    stream = model["streams"][0]
+    align = stream["block_align"]
+    objects = [b"".join(source[at:at + n] for at, n in o[4]) for o in model["media_objects"]]
+    assert all(len(o) == align for o in objects) and len(objects) % LONG_OBJECTS_PER == 0
+    header_end = struct.unpack_from("<Q", source, 16)[0]
+    parts = m.read_objects(source, 30, header_end)
+    file_id, _, creation, _, _, _, preroll, flags, _, _, bitrate = struct.unpack_from("<16sQQQQQQIIII", next(source[at:at + size] for name, at, size in parts if name == m.FILE_PROPERTIES), 24)
+    children = [source[at:at + size] for name, at, size in parts if name in (m.STREAM_PROPERTIES, m.CODEC_LIST)]
+    size = LONG_OBJECTS_PER * align + 40
+    packets = []
+    for i in range(0, len(objects), LONG_OBJECTS_PER):
+        time = model["media_objects"][i][3]
+        packets.append(m.packet([m.Payload(1, len(packets) + 1, b"".join(objects[i:i + LONG_OBJECTS_PER]), 0, None, time)], size, m.Layout(), send_time=time))
+    play = struct.unpack_from("<Q", next(source[at:at + sz] for name, at, sz in parts if name == m.FILE_PROPERTIES), 24 + 16 + 8 + 8 + 8 + 8)[0]
+    return m.asf_file(children, packets, size, file_id=file_id, play=play, send=play, preroll=preroll, flags=flags, creation=creation, max_bitrate=bitrate)
+
+
+fixture(LONG_OBJECTS, "The ffmpeg wmav2 file external-ffmpeg-wmav2-mono-44k-48k.wma with every two consecutive media objects joined into one of two whole superframes, as the files of Microsoft's "
+        "version 1 encoder hold several in each object: both are read in order, so the samples are those of the source. Not an encoder's output.", long_objects_file, [])
+
+
 def no_length_prefix_file():
     return no_prefix.rewrite((OUT / no_prefix.SOURCE).read_bytes())[0]
 
@@ -921,6 +951,8 @@ def main():
             (OUT / f"{name}.provenance.json").write_text(json.dumps(record, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
         elif name in noise.NAMES.values():
             derived = {"derived": {"from": noise.SOURCE, "tool": "scripts/fixtures/make_wma_noise_fixtures.py", "note": "Not an encoder's output: the source file with superframes 12 to 31 replaced by hand-built frames."}}
+        elif name == LONG_OBJECTS:
+            derived = {"derived": {"from": DERIVED_FROM, "note": "Not an encoder's output: the source file with every two consecutive media objects joined into one."}}
         elif name.startswith("derived-"):
             derived = {"derived": {"from": DERIVED_FROM, "note": "Not an encoder's output: the source file with one attribute added to its header."}}
         manifest = {"description": description, "format": "ASF", **model, **derived, "findings": unparsed(name, model["streams"]) + findings, "crosscheck": crosscheck}

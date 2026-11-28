@@ -220,9 +220,9 @@ For each block size k (0 to N_s − 1, L = L_k), a list of band widths in coeffi
 
 ### Media objects
 
-- Each media object of the stream is one superframe. A decoder reads its first A bytes.
+- A media object is one superframe or several: it holds as many whole superframes of A bytes as its length allows, one after the other, and a decoder reads them in order.
 - A media object shorter than A is rejected ("Input packet size too small (%d < %d)"). Encspect does not read it and empties the bit reservoir; FFmpeg leaves its reservoir as it was, so the next frame spanning superframes is rebuilt from bytes that do not belong together.
-- A media object longer than A: FFmpeg reads A bytes as a superframe and feeds the rest in again as another packet (`decode.c`). The rest is usually too short in the files of the project's encoders, but the three version 1 files of Microsoft's encoder (`tests/conformance/wma1-microsoft-samples.json`) hold three, four or twenty whole superframes in each media object (1,116 bytes with A = 372, 256 with 64, 11,160 with 558 after the unspreading), which FFmpeg decodes one after the other. Encspect reads the first A bytes only, so it decodes a third or a quarter of such a file.
+- A media object longer than A: FFmpeg reads A bytes as a superframe and feeds the rest in again as another packet (`decode.c`), and so on to the end. The files of the project's encoders have one superframe in each object, but the three version 1 files of Microsoft's encoder (`tests/conformance/wma1-microsoft-samples.json`) hold three, four or twenty whole superframes in each (1,116 bytes with A = 372, 256 with 64, 11,160 with 558 after the unspreading), which FFmpeg decodes one after the other: its sample counts (4,518,912 and 4,452,352) are the analyzer's. Encspect reads them the same way, as consecutive superframes (`derived-ffmpeg-wmav2-two-superframes-per-object` is the committed case). Bytes after the last whole superframe (fewer than A) are too short for a packet: FFmpeg rejects them, Encspect does not read them and says so (`wma.superframe-long`).
 - On any error FFmpeg drops the rest of the media object; since a media object is one superframe, nothing else is lost.
 
 ### Without the bit reservoir
@@ -369,7 +369,7 @@ Positions count only the lines the channel codes: a flagged high band takes no p
 
 ### Reading past the end of the data
 
-- FFmpeg's reader yields zero bits past the end of its buffer (the packet's padding, or the zeros after its reservoir copy; in a media object longer than A, the bytes after the first A) and stops advancing 8 bits past the end.
+- FFmpeg's reader yields zero bits past the end of its buffer (the packet's padding, or the zeros after its reservoir copy; in a media object longer than A, the bytes of the next superframe, which FFmpeg feeds in as another packet) and stops advancing 8 bits past the end.
   - It checks the end only before a total gain value and, for the frames read from a bit offset, when it works out the new reservoir.
   - A last frame that ends up to 7 bits past the superframe leaves a reservoir of 0 bytes and is accepted; one that ends 8 or more past it gives a negative length and is rejected ("len %d invalid").
   - It does not check the frame spanning superframes or the frames of streams without the bit reservoir at all.
@@ -413,7 +413,7 @@ What FFmpeg 6.1.1 does with each broken rule and what Encspect reports today. "R
 | --- | --- | --- | --- |
 | Block alignment 0; rate, channels or bitrate out of range; bit offset wider than 25 bits | decoder does not open | | `wma.format-unsupported` (warning), stream not analyzed |
 | Media object shorter than A | rejected ("Input packet size too small") | kept | `wma.superframe-short` (warning), not read, reservoir emptied |
-| Media object longer than A | first A bytes; the rest fed again | | `wma.superframe-long` (info), first A bytes only |
+| Media object longer than A | whole superframes read in order; the rest fed again | | each whole superframe is read; `wma.superframe-long` (info) for the bytes after the last, which are fewer than A |
 | Frame count 0 with nothing in progress, or no room for the middle of a frame | rejected ("nb_frames is %d bits left %d") | kept | `wma.superframe-header` (warning), not read |
 | Bit offset past the superframe's end, or a superframe too short to hold it | rejected ("Invalid last frame bit offset") | emptied | `wma.bit-offset` (warning) |
 | Frames starting at byte 32,768 or later (A above 32,768) | rejected (no message) | kept | no limit; its own check for frames past the end (`wma.bit-offset`) cannot trigger once the bit offset fits |
@@ -463,7 +463,7 @@ Under the container's codec data node: the fields of [The codec-specific data](#
 
 ### Superframe nodes
 
-A "Superframe" node (kind Frame) over the media object's first A bytes (or its ranges where it spans packets). Its value: "not read" (short object or invalid header), "middle of a frame" (inside a frame) or "n frames", n being the frames read in it, the straddling one and a failed one included. Its children, each over its bits:
+A "Superframe" node (kind Frame) over the superframe's A bytes (a media object holds one or more; its ranges where it spans packets). Its value: "not read" (short object or invalid header), "middle of a frame" (inside a frame) or "n frames", n being the frames read in it, the straddling one and a failed one included. Its children, each over its bits:
 
 | Node | Bits | When |
 | --- | --- | --- |
@@ -508,7 +508,7 @@ All under "Statistics", whose value is "n frames, d.ddd s" (all frames, the dura
 
 | Node | Value |
 | --- | --- |
-| "Superframes" | media objects read (short ones included) |
+| "Superframes" | superframes read (short media objects included; a media object of several whole superframes counts each) |
 | "Frames" | frames read, valid or not |
 | ["Invalid Frames"] | frames that failed, where any |
 | "Frame Length" | F |
@@ -559,7 +559,7 @@ Messages, with the alternatives for a count of 1 and for more in braces ({singul
 | Code | Severity | Node | Message |
 | --- | --- | --- | --- |
 | `wma.superframe-short` | warning | the superframe | "{A media object holds\|N media objects hold} fewer bytes than the block alignment of A, which a decoder rejects (wmadec.c); the first is at 0xOFFSET." |
-| `wma.superframe-long` | info | the superframe | "{A media object holds\|N media objects hold} more bytes than the block alignment of A; a decoder takes A bytes as a superframe and feeds the rest in again (FFmpeg's decode.c), which this analysis does not: it reads the first A only." |
+| `wma.superframe-long` | info | the last whole superframe | "{A media object holds\|N media objects hold} bytes after its last whole superframe of the block alignment's A bytes, fewer than a superframe; a decoder rejects them as a packet that is too short (FFmpeg's decode.c), and this analysis does not read them." |
 | `wma.superframe-header` | warning | the superframe | "{A superframe states\|N superframes state} no frame ending in {it\|them}, or fewer than none, with no room for the middle of a frame; a decoder rejects {it\|them}. The first is at 0xOFFSET." |
 | `wma.bit-offset` | warning | the superframe | "{A superframe gives\|N superframes give} a last frame bit offset past {its\|their} end, or {is\|are} too short to hold that field; a decoder rejects {it\|them}. The first is at 0xOFFSET." For frames that start past the end (not reachable): "{A superframe's frames start\|N superframes' frames start} past {its\|their} end; a decoder rejects {it\|them}." |
 | `wma.frame-stuffing`, `wma.frame-filler` | info | the frame | "{A frame that began in the superframe before is\|N frames that began in the superframe before are} followed by {zero bits\|bits that are not zero} up to the bit offset the superframe states, which a decoder skips; the first has B (in the superframe at 0xOFFSET)." B is the first case's bits; the middle braces are by code, not count |

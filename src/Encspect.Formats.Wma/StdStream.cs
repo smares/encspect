@@ -188,7 +188,7 @@ internal sealed class StdStream
         var reservoir = new Reservoir();
 
         long count = 0;
-        foreach (MappedBytes packet in packets)
+        foreach ((MappedBytes packet, int trailing) in Superframed(packets, align))
         {
             if (count % 1024 == 0)
             {
@@ -227,7 +227,7 @@ internal sealed class StdStream
             }
 
             NotShortSuperframes++;
-            if (packet.Length > align)
+            if (trailing > 0)
             {
                 findings.Add(Severity.Info, "wma.superframe-long", () => nodes.Superframe(index), n => StdText.SuperframeLong(n, align));
             }
@@ -289,6 +289,28 @@ internal sealed class StdStream
         {
             UnfinishedLast = 1;
             LoseUnread(1, isUnfinished: true);
+        }
+    }
+
+    // A media object holds whole superframes of the block alignment's size one after the other, as the files of Microsoft's encoder put several in each: they are read in order as
+    // consecutive superframes. The bytes after the last whole one (fewer than the block alignment) are not read; the last piece carries their count.
+    private static IEnumerable<(MappedBytes Piece, int Trailing)> Superframed(IEnumerable<MappedBytes> packets, int align)
+    {
+        foreach (MappedBytes packet in packets)
+        {
+            if (packet.Length <= align)
+            {
+                yield return (packet, 0);
+                continue;
+            }
+
+            int whole = packet.Length / align;
+            int trailing = packet.Length % align;
+            for (int i = 0; i < whole; i++)
+            {
+                MappedBytes piece = packet.Slice(i * align, align);
+                yield return (packet.FailsChecksum ? piece.AsChecksumFailed() : piece, i == whole - 1 ? trailing : 0);
+            }
         }
     }
 

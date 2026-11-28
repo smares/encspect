@@ -137,7 +137,7 @@ internal static class StdText
         $"{(count == 1 ? "A unit of the stream's data holds" : $"{Number(count)} units of the stream's data hold")} fewer bytes than the block alignment of {Number(align)}, which a decoder rejects (wmadec.c); the first is at {Hex(offset)}.";
 
     public static string SuperframeLong(int count, int align) =>
-        $"{(count == 1 ? "A media object holds" : $"{Number(count)} media objects hold")} more bytes than the block alignment of {Number(align)}; a decoder takes {Number(align)} {(align == 1 ? "byte" : "bytes")} as a superframe and feeds the rest in again (FFmpeg's decode.c), which this analysis does not: it reads the first {Number(align)} only.";
+        $"{(count == 1 ? "A media object holds" : $"{Number(count)} media objects hold")} bytes after its last whole superframe of the block alignment's {Number(align)} {(align == 1 ? "byte" : "bytes")}, fewer than a superframe; a decoder rejects them as a packet that is too short (FFmpeg's decode.c), and this analysis does not read them.";
 
     public static string SuperframeHeader(int count, long offset) =>
         $"{(count == 1 ? "A superframe states" : $"{Number(count)} superframes state")} no frame ending in {(count == 1 ? "it" : "them")}, or fewer than none, with no room for the middle of a frame; a decoder rejects {(count == 1 ? "it" : "them")}. The first is at {Hex(offset)}.";
