@@ -1584,6 +1584,14 @@ jobs:
       - name: Build the CLI
         run: dotnet build --configuration Release src/Encspect.Cli
 
+      - name: Build the PCM dump tool
+        run: dotnet build --configuration Release tests/Encspect.PcmDump
+
+      # The analyzer's decoded samples of the fixtures of WMA versions 1 and 2 equal FFmpeg's within the bounds of docs/development.md ("WMA versions 1 and 2 decoding"); Microsoft's
+      # decoder is compared where a Windows run's samples are given (windows-wma-decode.yml).
+      - name: Compare the decoded PCM of the WMA fixtures
+        run: python3 scripts/fixtures/crosscheck_wma_pcm.py
+
       # Real Windows Media Audio Voice files (ten from Microsoft's Windows Media 9 Speech Codec samples and an ASF video file with a Voice
       # track) from the FFmpeg sample archive, which allows downloading and states no license for redistribution, so they are fetched and
       # checked against their SHA-256 rather than committed. The download cache keeps them; every address is public.

@@ -56,17 +56,20 @@ public sealed class WmaStandardParser : ICodecParser
         Node parent = context.Parent;
         var stream = new StdStream(parameters);
         var nodes = new StdNodes(parameters, stream);
-        stream.Read(packets, MaxPackets, nodes, findings, context.CancellationToken);
-
-        long samples = stream.Samples;
-        double duration = (double)samples / parameters.SampleRate;
-        var streamNode = new Node(codec, parent.Offset, parent.Length, Count(stream.ValidFrames, "frame", "frames"))
+        var streamNode = new Node(codec, parent.Offset, parent.Length)
         {
             Kind = NodeKind.Stream,
             Description = StdText.Stream,
             Topic = Topics.WmaStandard,
         };
 
+        var feed = new StdDecodeFeed(context, streamNode, parameters);
+        stream.Read(packets, MaxPackets, nodes, findings, feed, context.CancellationToken);
+        StreamVerification verification = feed.Finish(stream.FinalBlockSize, stream.FinalNextBlockSize);
+
+        long samples = stream.Samples;
+        double duration = (double)samples / parameters.SampleRate;
+        streamNode.Value = Count(stream.ValidFrames, "frame", "frames");
         parent.Add(streamNode);
         WmaEncoder.Detected detected = WmaEncoder.Apply(context, streamNode, findings, Traits(parameters, data, stream));
         Node? statistics = null;
@@ -127,6 +130,7 @@ public sealed class WmaStandardParser : ICodecParser
             WriterConfidence = detected.WriterConfidence,
             Series = series,
             CategorySeries = statistics is not null ? StdReport.Categories(stream, series, statistics) : [],
+            Verification = verification,
         });
 
         findings.Flush(context);
@@ -180,7 +184,7 @@ public sealed class WmaStandardParser : ICodecParser
         if (!parameters.UsesBitReservoir && !parameters.UsesVariableBlocks && stream.PaddedSuperframes > 0 && stream.IsPaddingAllN)
         {
             traits.Add(new WmaEncoder.Trait($"FFmpeg (wmav{parameters.Version} encoder)", "FFmpeg", stream.PaddedSuperframes >= 2 ? Confidence.High : Confidence.Medium,
-                StdText.FFmpegEvidence(parameters.Version, stream.PaddedSuperframes)));
+                StdText.FFmpegEvidence(parameters.Version, stream.PaddedSuperframes, stream.Totals.LimitStops > 0)));
         }
 
         return traits;

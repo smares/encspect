@@ -1340,6 +1340,62 @@
             "values": [
               2573
             ]
+          },
+          {
+            "name": "Total Gain",
+            "unit": "dB",
+            "axis": "frameOffset",
+            "quantity": "Total Gain",
+            "x": [
+              102,
+              845,
+              1588,
+              2331,
+              3074,
+              3817
+            ],
+            "values": [
+              78,
+              83,
+              81,
+              85,
+              82,
+              83
+            ]
+          },
+          {
+            "name": "Total Gain Over Time",
+            "unit": "dB",
+            "axis": "seconds",
+            "quantity": "Total Gain",
+            "x": [
+              0
+            ],
+            "values": [
+              85
+            ]
+          },
+          {
+            "name": "Escape-Coded Coefficients",
+            "unit": "%",
+            "axis": "frameOffset",
+            "quantity": "Escape-Coded Coefficients",
+            "x": [
+              102,
+              845,
+              1588,
+              2331,
+              3074,
+              3817
+            ],
+            "values": [
+              8.7,
+              12.7,
+              10.8,
+              8.3,
+              11.7,
+              5.2
+            ]
           }
         ],
         "categorySeries": [
@@ -1387,6 +1443,34 @@
             "runs": [
               [
                 0,
+                6
+              ]
+            ]
+          },
+          {
+            "name": "Blocks Reusing Exponents",
+            "valueLabel": "block",
+            "categories": [
+              {
+                "name": "With reused exponents",
+                "count": 0
+              },
+              {
+                "name": "Without reused exponents",
+                "count": 6
+              }
+            ],
+            "total": 6,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                6
+              ]
+            ],
+            "runs": [
+              [
+                1,
                 6
               ]
             ]
