@@ -116,7 +116,7 @@ def cc(ffprobe=True, decode=True, libdca=True, skip=None, **extra):
 
 JOINT_INTENSITY_LIBDCA = ("libdca 0.0.7 does not decode joint intensity coding: it prints 'Joint stereo coding not supported' and rejects every frame "
                           "(measured with Ubuntu's libdca 0.0.7); ffmpeg decodes the frames")
-LOSSLESS_BITRATE = "ffmpeg's lossless decoder sets the bit rate to 0 (avctx->bit_rate = 0), so ffprobe lists none"
+LOSSLESS_BITRATE = "ffmpeg's lossless decoder sets the bit rate to 0 so ffprobe lists none"
 
 
 def cc_lossless(**extra):
