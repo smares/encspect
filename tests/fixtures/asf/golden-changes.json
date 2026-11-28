@@ -1,6 +1,8 @@
 {
   "goldens": [
-    "tests/fixtures/asf/"
+    "tests/fixtures/asf/",
+    "tests/fixtures/wav/external-wmav1-in-wav.report.json",
+    "tests/fixtures/wav/external-wmav2-in-wav.report.json"
   ],
   "changed": [
     {
@@ -111,6 +113,36 @@
         "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-128k.report.json",
         "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-32k.report.json",
         "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-64k.report.json"
+      ]
+    },
+    {
+      "path": [
+        "RIFF",
+        "Data Chunk",
+        "Windows Media Audio 1",
+        "Encoder",
+        "Evidence"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/wav/external-wmav1-in-wav.report.json"
+      ]
+    },
+    {
+      "path": [
+        "RIFF",
+        "Data Chunk",
+        "Windows Media Audio 2",
+        "Encoder",
+        "Evidence"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/wav/external-wmav2-in-wav.report.json"
       ]
     }
   ]
