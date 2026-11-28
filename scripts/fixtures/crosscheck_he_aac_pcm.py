@@ -59,8 +59,6 @@ def conformance_files():
 # Files that FFmpeg reads otherwise than the analyzer, each with the reason: the comparison runs and must fail (an entry that no longer differs fails the run, the stale-entry rule of
 # docs/development.md).
 DIFFERENCES = {
-    "sbr-too-many-patches.aac": "the header's frequency tables need six patches, where 4.6.18.3.6 allows five: the analyzer reads none of the SBR data (aac.sbr-header-invalid) and upsamples the core, where FFmpeg builds the patches and "
-                                "applies the data",
     "ps-phase-then-none.aac": "six blocks with phase differences, then six whose ps_data has enable_ext 0: 8.4.2 sets enable_ipdopd to 0 without the extension, so the analyzer's phases stop with block 6, where FFmpeg 6.1.1 keeps "
                               "them (from block 6 the difference is 6 to 18 %, 76 % in the right channel of block 6; docs/formats/aac.md, Decoding)",
     "sbr-after-first-frame-failing-crc.aac": "the first frame fails its CRC and holds no SBR data: the analyzer takes no evidence from it and decodes the stream as HE-AAC at twice the core rate, "
