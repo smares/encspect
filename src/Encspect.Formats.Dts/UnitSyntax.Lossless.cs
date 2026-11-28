@@ -298,6 +298,11 @@ internal sealed partial class UnitSyntax
                     node.Add(_tree.Locator.Field("Speakers", start, _pos, ChannelLayouts.Speakers(Layouts.Speakers(Layouts.SpeakerMask(mask))), Explain.XllSpeakers, Topics.DtsChannelArrangements));
                 }
 
+                if ((mask >> 28) != 0)
+                {
+                    Report(Issue.ReservedValue, "Channel Mask", start, _pos, "bits 28 to 31 of nChMask are reserved (Table 6-22)");
+                }
+
                 int named = System.Numerics.BitOperations.PopCount(mask);
                 if (named != channels)
                 {

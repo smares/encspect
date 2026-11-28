@@ -1,5 +1,5 @@
 {
- "description": "A PCM stream whose error correction spreads the audio with a span of 3 and three chunks (span 3, virtual packet length 60, chunk size 20); each media object has 3 virtual packets.",
+ "description": "A PCM stream whose error correction spreads the audio with a span of 3 and three chunks (span 3, virtual packet length 60, chunk size 20); each media object has 180 bytes.",
  "format": "ASF",
  "length": 3070,
  "objects": [
@@ -398,6 +398,7 @@
  "crosscheck": {
   "ffprobe": true,
   "spread": "descrambled",
+  "rule_scrambles": true,
   "spread_audio": {
    "span": 3,
    "virtual_packet_length": 60,

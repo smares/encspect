@@ -39,6 +39,11 @@ public enum Speaker
     BottomFrontLeft,
     BottomFrontCenter,
     BottomFrontRight,
+
+    // The positions "in the plane lower than the listener's ears" of TS 102 114 Table 6-22 (Cl, Ll, Rl), which no other format's table places in front.
+    LowerCenter,
+    LowerLeft,
+    LowerRight,
 }
 
 // Names and common layouts for StreamInfo.ChannelLayout. The name of a layout depends only on which
@@ -177,6 +182,9 @@ public static class ChannelLayouts
         Speaker.BottomFrontLeft => "bottom front left",
         Speaker.BottomFrontCenter => "bottom front center",
         Speaker.BottomFrontRight => "bottom front right",
+        Speaker.LowerCenter => "lower center",
+        Speaker.LowerLeft => "lower left",
+        Speaker.LowerRight => "lower right",
         _ => throw new ArgumentOutOfRangeException(nameof(speaker)),
     };
 

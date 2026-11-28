@@ -9177,6 +9177,24 @@
         ]
       }
     ],
-    "findings": []
+    "findings": [
+      {
+        "severity": "Warning",
+        "code": "dts.reserved-value",
+        "message": "Channel Mask holds a value ETSI TS 102 114 reserves or calls invalid: bits 28 to 31 of nChMask are reserved (Table 6-22). First in the frame at 0x0 (4 times).",
+        "offset": 654,
+        "length": 5,
+        "path": [
+          0,
+          1,
+          1,
+          20,
+          1,
+          14,
+          12
+        ],
+        "count": 4
+      }
+    ]
   }
 ]

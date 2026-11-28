@@ -92,10 +92,10 @@ internal static class Layouts
         return positions;
     }
 
-    // The positions of a mask with a bit for each speaker, in the order of Table 6-22, lowest bit first: the channel mask of an XLL channel set.
-    // Table 6-22 is the specification's list of loudspeaker bits; clause 8.3.2 (nChMask) sends to C.8 for the XLL mask, which is about entropy coding,
-    // so that this mask has the order of Table 6-22 rests on ffprobe, run as a program on one fixture for each bit (`dts/xll-mask-bit-*`,
-    // crosscheck_dts_fixtures.py), and on the real 7.1 sample. Table 6-22 reserves bits 28 to 31; no tool names them, so each stays an unnamed speaker.
+    // The positions of a mask with a bit for each speaker, as TS 102 114 Table 6-22 lists them, lowest bit first (bit 0 is C, bit 1 L, and so on up to
+    // Rl at bit 27): the channel mask of an XLL channel set. Clause 8.3.2 (nChMask) sends to C.8, which is about entropy coding, so the table is the
+    // specification's definition of the bits. ffprobe, run as a program on one fixture for each bit (`dts/xll-mask-bit-*`, crosscheck_dts_fixtures.py),
+    // gives a channel of the same kind for each, under its own names. Table 6-22 reserves bits 28 to 31, which stay unnamed (discrete) speakers.
     public static List<Position> SpeakerMask(uint mask)
     {
         var positions = new List<Position>();
@@ -160,9 +160,9 @@ internal static class Layouts
                 Position.CenterHeightRear => Speaker.TopBackCenter,
                 Position.LeftHeightRear => Speaker.TopBackLeft,
                 Position.RightHeightRear => Speaker.TopBackRight,
-                Position.CenterLow => Speaker.BottomFrontCenter,
-                Position.LeftLow => Speaker.BottomFrontLeft,
-                Position.RightLow => Speaker.BottomFrontRight,
+                Position.CenterLow => Speaker.LowerCenter,
+                Position.LeftLow => Speaker.LowerLeft,
+                Position.RightLow => Speaker.LowerRight,
                 _ => Speaker.Discrete,
             };
             speakers.Add(speaker != Speaker.Discrete && speakers.Contains(speaker) ? Speaker.Discrete : speaker);
