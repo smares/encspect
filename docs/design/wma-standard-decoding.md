@@ -9,7 +9,7 @@ This is the clean-room supplement that decision 12 of [lossy-decoders.md](lossy-
 - mid/side stereo, the inverse transform, the windows and the overlap of blocks of different sizes;
 - the output of a frame, of a stream's start and end, and what a lost frame takes with it.
 
-It states FFmpeg's arithmetic as the rule where nothing contradicts it, and Microsoft's where its PCM shows a difference ([What Microsoft's output showed](#what-microsofts-output-showed): the version 1 stereo coefficient limit, the exponents of a channel not coded, the start of a stream without the bit reservoir). It names the places where FFmpeg's choice may still not be Microsoft's ([Points to settle against Microsoft's decoder](#points-to-settle-against-microsofts-decoder)); for one of them, the angles of the line spectral pair curve, the evidence favors another rule, which this text adopts.
+It states FFmpeg's arithmetic as the rule where nothing contradicts it, and Microsoft's where its PCM shows a difference ([What Microsoft's output showed](#what-microsofts-output-showed): the version 1 stereo coefficient limit, the exponents of a channel not coded, the start of a stream without the bit reservoir, the exponent of line x in version 1 without noise substitution). It names the places where FFmpeg's choice may still not be Microsoft's ([Points to settle against Microsoft's decoder](#points-to-settle-against-microsofts-decoder)); for one of them, the angles of the line spectral pair curve, the evidence favors another rule, which this text adopts.
 
 ## Sources
 

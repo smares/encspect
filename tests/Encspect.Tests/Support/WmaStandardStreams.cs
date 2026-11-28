@@ -57,7 +57,7 @@ internal static class WmaStandardStreams
         return data;
     }
 
-    public static Result Run(int version, int channels, int rate, int bytesPerSecond, int align, byte[] data, IEnumerable<byte[]> objects, bool encrypted = false)
+    public static Result Run(int version, int channels, int rate, int bytesPerSecond, int align, byte[] data, IEnumerable<byte[]> objects, bool encrypted = false, bool isLastCut = false)
     {
         var parent = new Node("Stream", 0, 100_000_000);
         var format = new AudioFormat(version == 1 ? 0x0160 : 0x0161, channels, rate, bytesPerSecond, align, 16);
@@ -68,6 +68,11 @@ internal static class WmaStandardStreams
         {
             packets.Add(new MappedBytes(o, offset));
             offset += o.Length + 50;
+        }
+
+        if (isLastCut && packets.Count > 0)
+        {
+            packets[^1] = packets[^1].AsCut();
         }
 
         var context = new CodecContext(parent, packets, CancellationToken.None, null, null, configuration);

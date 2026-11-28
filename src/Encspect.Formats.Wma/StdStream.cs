@@ -44,7 +44,7 @@ internal sealed class StdStream
     // The series over the blocks, recorded while the frames are read.
     public StdBlockSeries Blocks { get; }
 
-    // Media objects handed over, and those past the limit that were counted and not read.
+    // Superframes handed over (a media object holds one or several), and those past the limit that were counted and not read.
     public long Skipped { get; private set; }
 
     public int MaxFramesPerSuperframe { get; private set; }
@@ -293,7 +293,8 @@ internal sealed class StdStream
     }
 
     // A media object holds whole superframes of the block alignment's size one after the other, as the files of Microsoft's encoder put several in each: they are read in order as
-    // consecutive superframes. The bytes after the last whole one (fewer than the block alignment) are not read; the last piece carries their count.
+    // consecutive superframes. The bytes after the last whole one (fewer than the block alignment) of an object that is not cut are not read (the last piece carries their count);
+    // those of a cut object are a short superframe of their own.
     private static IEnumerable<(MappedBytes Piece, int Trailing)> Superframed(IEnumerable<MappedBytes> packets, int align)
     {
         foreach (MappedBytes packet in packets)
@@ -306,10 +307,19 @@ internal sealed class StdStream
 
             int whole = packet.Length / align;
             int trailing = packet.Length % align;
+
+            // The rest of an object the file or the container cut is a superframe that lost its end, as a short object is: it is read that way, and the frames it declares are lost.
+            bool isRestShort = packet.IsCut && trailing > 0;
             for (int i = 0; i < whole; i++)
             {
                 MappedBytes piece = packet.Slice(i * align, align);
-                yield return (packet.FailsChecksum ? piece.AsChecksumFailed() : piece, i == whole - 1 ? trailing : 0);
+                yield return (packet.FailsChecksum ? piece.AsChecksumFailed() : piece, i == whole - 1 && !isRestShort ? trailing : 0);
+            }
+
+            if (isRestShort)
+            {
+                MappedBytes rest = packet.Slice(whole * align, trailing);
+                yield return (packet.FailsChecksum ? rest.AsChecksumFailed() : rest, 0);
             }
         }
     }

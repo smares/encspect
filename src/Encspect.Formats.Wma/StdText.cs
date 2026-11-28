@@ -10,7 +10,7 @@ internal static class StdText
     public const string Stream = "The stream as the container and the codec-specific data describe it, with the frames read from its superframes: statistics, superframes and frames.";
     public const string StreamNotAnalyzed = "The stream as the container and the codec-specific data describe it. Its configuration is one that the format's decoders do not open, so its frames are not read.";
     public const string Statistics = "Figures over the stream's superframes, frames and blocks, counted from the syntax read.";
-    public const string SuperframeList = "The media objects of the stream, each read as a superframe of the block alignment's size.";
+    public const string SuperframeList = "The superframes of the stream: each media object holds one of the block alignment's size or several whole ones, which are read in order.";
     public const string FrameList = "The frames of the stream in the order they were read, each a run of blocks whose lengths add up to the frame length.";
 
     public const string CodecData = "The codec-specific data of the stream's WAVEFORMATEX.";
@@ -25,7 +25,7 @@ internal static class StdText
     public const string OtherOptions = "The remaining bits of the options word, which a decoder does not read.";
     public const string ExtraData = "Bytes after the codec-specific data the format defines.";
 
-    public const string Superframe = "One media object of the stream read as a superframe: with the bit reservoir a header and the bits of several frames, without it one frame and padding.";
+    public const string Superframe = "One superframe of the stream (a media object holds one or several whole ones): with the bit reservoir a header and the bits of several frames, without it one frame and padding.";
     public const string SuperframeIndex = "The superframe's number, 4 bits. A decoder does not read it; in Encspect's test files it counts up from 0.";
     public const string FramesInSuperframe = "How many frames begin in the superframe, 4 bits. The last one counts where it goes on in the next superframe.";
     public const string LastFrameBitOffset = "How many bits after this header finish the frame begun in an earlier superframe. The frames that begin in this superframe follow them.";
@@ -50,7 +50,7 @@ internal static class StdText
     public const string ExponentsLineSpectralPairs = "The channel's exponents, the envelope of its spectrum, as ten line spectral pair indexes.";
     public const string Coefficients = "The channel's coefficients as run-level codes, up to an end-of-block code or the last coefficient. The value is the count of non-zero coefficients and the position of the last.";
 
-    public const string StatSuperframes = "How many media objects the stream has, short ones included.";
+    public const string StatSuperframes = "How many superframes the stream has, short ones included; a media object of several whole superframes counts each.";
     public const string StatFrames = "How many frames were read, valid or not.";
     public const string StatInvalidFrames = "How many frames broke a rule of the syntax and ended their superframe.";
     public const string StatFrameLength = "The samples per channel in a frame, from the sampling rate.";
@@ -160,7 +160,7 @@ internal static class StdText
             : $"The last superframe ends with {Counts.Of(bits, "bit", "bits")} after its last frame; they are not counted in the samples.";
 
     public static string RecordsLimit(long skipped, int limit) =>
-        $"The stream has more than {Number(limit)} media objects; the {Number(skipped)} after them are not read, so the statistics and the series cover the first {Number(limit)}.";
+        $"The stream has more than {Number(limit)} superframes; the {Number(skipped)} after them are not read, so the statistics and the series cover the first {Number(limit)}.";
 
     public static string BlocksUndetailed(long superframes, long bytes) =>
         $"The bytes of the first {Number(bytes / (1 << 20))} MiB of superframes are kept to list the blocks of their frames; the {Number(superframes)} superframes after them are read for the statistics and the series, and their frames list no blocks.";
