@@ -63,7 +63,8 @@
   "faad": null,
   "skip": {
    "faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold.",
-   "decode": "ffmpeg reads the dynamic range payload and the SBR data in one fill element differently."
+   "decode": "ffmpeg reads the dynamic range payload and the SBR data in one fill element differently.",
+   "faad_trace": "faad2 reads no SBR data from a fill element whose first extension payload is another type (4.5.2.1.5.2 allows none next to SBR data), as its trace shows."
   }
  }
 }

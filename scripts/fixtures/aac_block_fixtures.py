@@ -1517,7 +1517,8 @@ def fill_with_sbr_and_other_payload():
         [["aac.fill-sbr-with-other-payload", "6 raw data blocks hold an SBR payload in a fill element with an extension payload of another type"],
          ["aac.implicit-sbr", "6 of 6 raw data blocks hold SBR data: the stream is HE-AAC"]],
         skip={"faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold.",
-              "decode": "ffmpeg reads the dynamic range payload and the SBR data in one fill element differently."}, rate=core)
+              "decode": "ffmpeg reads the dynamic range payload and the SBR data in one fill element differently.",
+              "faad_trace": "faad2 reads no SBR data from a fill element whose first extension payload is another type (4.5.2.1.5.2 allows none next to SBR data), as its trace shows."}, rate=core)
 
 
 def sbr_crc_checked():
