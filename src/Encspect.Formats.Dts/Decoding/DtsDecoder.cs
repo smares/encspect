@@ -13,10 +13,10 @@ public sealed class DtsDecoder : IDecoder
 
     public bool DeclaresChecksums => false;
 
-    // A 5.1 frame costs (22 + 56) x 5 + (22 + 8) + 5 x 5 = 445 units a sample. The smallest frame the syntax allows at 512 samples (NBLKS 15, FSIZE 95: 96 bytes) is about 228,000
-    // units, 2,400 a byte, and a 5.1 stream at 48 kHz and 64 kbps (RATE 3) needs about 21 million units a second against 8,000 bytes: 2,700 a byte. 4,096 covers both; a frame of
+    // A 5.1 frame costs (22 + 112) x 5 + (22 + 8) + 5 x 5 = 725 units a sample. The smallest frame the syntax allows at 512 samples (NBLKS 15, FSIZE 95: 96 bytes) is about 371,000
+    // units, 3,900 a byte, and a 5.1 stream at 48 kHz and 64 kbps (RATE 3) needs about 34.8 million units a second against 8,000 bytes: 4,350 a byte. 8,192 covers both; a frame of
     // more samples in fewer bytes (valid syntax, no encoder writes one) can exceed it and stops with decode.limit.
-    public long WorkPerInputByte => 4096;
+    public long WorkPerInputByte => 8192;
 
     public IFrameDecoder Open(DecodeContext context)
     {

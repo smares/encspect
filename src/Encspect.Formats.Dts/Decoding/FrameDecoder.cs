@@ -8,7 +8,7 @@ internal sealed class FrameDecoder : IFrameDecoder
     // Per output sample of each channel, besides the fixed DecodeWork.ForSample: the synthesis filter bank (C.3.6: 512 multiplications and as many additions for the cosine modulation and 1,024 for the filter per slot
     // of 32), charged for the primary channels; 8 for each sample of the LFE channel's interpolation (512 taps for each 64 or 128 samples, 4 to 8 a sample, with its history); and per subband sample of each channel 4 for the
     // inverse quantization and prediction (the four taps of the predictor, C.3.3) and 1 for joint intensity and sum/difference decoding.
-    internal const long SynthesisUnits = 56;
+    internal const long SynthesisUnits = 112;
     internal const long LfeUnits = 8;
     internal const long SubbandSampleUnits = 5;
 
