@@ -116,7 +116,7 @@ def cc(ffprobe=True, decode=True, libdca=True, skip=None, **extra):
 
 JOINT_INTENSITY_LIBDCA = ("libdca 0.0.7 does not decode joint intensity coding: it prints 'Joint stereo coding not supported' and rejects every frame "
                           "(measured with Ubuntu's libdca 0.0.7); ffmpeg decodes the frames")
-LOSSLESS_BITRATE = "ffmpeg's lossless decoder sets the bit rate to 0 (dca_xll.c: avctx->bit_rate = 0), so ffprobe lists none"
+LOSSLESS_BITRATE = "ffmpeg's lossless decoder sets the bit rate to 0 so ffprobe lists none"
 
 
 def cc_lossless(**extra):
@@ -127,9 +127,9 @@ def cc_lossless(**extra):
 
 CUT_NOTE = ("ffmpeg decodes the damaged frame without an error: the frame's silent subframes take a few dozen of its bytes, the rest is padding that no decoder reads, "
             "and a core frame without CRC words (CPF 0) has no other check of its own")
-PROFILE_STUB = ("ffmpeg's decoder sets the profile itself when it has decoded a frame (dca_core.c, dca_xll.c), and DTS-HD Master Audio or DTS-HD High Resolution Audio only after it has decoded the "
+PROFILE_STUB = ("ffmpeg's decoder sets the profile itself when it has decoded a frame (as ffprobe shows), and DTS-HD Master Audio or DTS-HD High Resolution Audio only after it has decoded the "
                 "extension, which the stub components do not allow")
-XLL_STUB = "ffmpeg rejects the XLL stub, a common header followed by filler, for its missing channel set sub-header (dca_xll.c: 'Invalid XLL sub-header checksum')"
+XLL_STUB = "ffmpeg rejects the XLL stub, a common header followed by filler, for its missing channel set sub-header ('Invalid XLL sub-header checksum')"
 
 
 def build():
@@ -195,7 +195,7 @@ def build():
     data = b"".join(parts)
     fixture("xxch", ".dts", "Four 3/2 core frames with an XXCH extension that adds a pair of rear channels (DTS-ES 7.1, XXCH).", data, rows(parts),
             [stream("DTS-ES", 48000, ["front center", "front left", "front right", "side left", "side right", "back left", "back right"], "3/2", 4 * 512)], [],
-            crosscheck=cc(ffprobe=False, decode=False, decode_error="DSYNC check failed", libdca_channels=5, skip={"ffprobe": "ffmpeg's decoder rejects the XXCH stub, whose channel set data is filler (dca_core.c: 'DSYNC check failed'), so ffprobe gets 5 channels from the core and no profile of the extension", "decode": "The XXCH channel set data is filler, which ffmpeg rejects at its DSYNC check."}))
+            crosscheck=cc(ffprobe=False, decode=False, decode_error="DSYNC check failed", libdca_channels=5, skip={"ffprobe": "ffmpeg's decoder rejects the XXCH stub, whose channel set data is filler ('DSYNC check failed'), so ffprobe gets 5 channels from the core and no profile of the extension", "decode": "The XXCH channel set data is filler, which ffmpeg rejects at its DSYNC check."}))
     return build_substreams()
 
 
@@ -214,7 +214,7 @@ def build_substreams():
     data = b"".join(parts)
     fixture("exss-high-resolution", ".dts", "Four units of a core frame and an extension substream with XBR, X96 and XXCH components.", data, rows(parts),
             [stream("DTS-HD High Resolution Audio", 48000, STEREO, "2/0", 4 * 512)], [],
-            crosscheck=cc(ffprobe_profile=False, decode=False, decode_error="Invalid number of bits for XBR scale factor index", skip={"ffprobe_profile": PROFILE_STUB, "decode": "ffmpeg reads the XBR frame header and its CRC, then rejects the channel set data, which is filler (dca_core.c: 'Invalid number of bits for XBR scale factor index')"}))
+            crosscheck=cc(ffprobe_profile=False, decode=False, decode_error="Invalid number of bits for XBR scale factor index", skip={"ffprobe_profile": PROFILE_STUB, "decode": "ffmpeg reads the XBR frame header and its CRC, then rejects the channel set data, which is filler ('Invalid number of bits for XBR scale factor index')"}))
     parts = [unit([dict(mode=2, channels=2, mask=0x02)]) for _ in range(4)]
     data = b"".join(parts)
     fixture("exss-lbr", ".dts", "Four units of a core frame and an extension substream with a low bit rate (LBR) asset.", data, rows(parts),
@@ -264,7 +264,7 @@ def build_damage():
     fixture("bad-fsize", ".dts", "Six stereo core frames, the fourth with FSIZE 60, which no frame can have (a frame has at least 96 bytes).", data, parts,
             [stream("DTS", 48000, STEREO, "2/0", 5 * 512)],
             [("dts.header-invalid", "FSIZE is 60"), ("dts.sync-lost", "Sync is lost for 512 bytes")], gaps=[(1536, 512)],
-            crosscheck=cc(ffprobe=False, libdca=False, decode=False, decode_errors={"1536": [512, "Invalid core frame size"]}, skip={"decode": "ffmpeg rejects the frame whose FSIZE is 60 (dca_core.c: 'Invalid core frame size')", "ffprobe": cut_note, "libdca": "libdca's tool stops at a frame size it rejects (frame sizes under 96 bytes)."}))
+            crosscheck=cc(ffprobe=False, libdca=False, decode=False, decode_errors={"1536": [512, "Invalid core frame size"]}, skip={"decode": "ffmpeg rejects the frame whose FSIZE is 60 ('Invalid core frame size')", "ffprobe": cut_note, "libdca": "libdca's tool stops at a frame size it rejects (frame sizes under 96 bytes)."}))
 
     # FSIZE too large: the frame would run over the next one, which starts a chain inside it.
     long_frame = m.core_frame(size=512, fsize=767)
@@ -459,7 +459,7 @@ def build_invalid_fields():
     data = b"".join(parts)
     fixture("extension-missing", ".dts", "Four stereo core frames whose header says an XCh extension follows, with no sync word where its size would put it.", data,
             rows(parts), [stream("DTS", 48000, STEREO, "2/0", 4 * 512)], [("dts.extension-missing", "XCh")],
-            crosscheck=cc(decode=False, decode_error="XCH sync word not found", skip={"decode": "ffmpeg looks for the XCh sync word as the frame's header says and rejects the frame without it (dca_core.c: 'XCH sync word not found')"}))
+            crosscheck=cc(decode=False, decode_error="XCH sync word not found", skip={"decode": "ffmpeg looks for the XCh sync word as the frame's header says and rejects the frame without it ('XCH sync word not found')"}))
     return build_substream_damage()
 
 
@@ -474,7 +474,7 @@ def build_substream_damage():
     data = b"".join(parts)
     fixture("exss-bad-crc", ".dts", "Four units whose extension substream header CRC is wrong.", data, rows(parts),
             [stream(name, 48000, STEREO, "2/0", 4 * 512, vbr=True)], [("dts.crc-mismatch", "CRC")],
-            crosscheck=cc_lossless(decode=False, decode_error="Invalid EXSS header checksum", skip={"decode": "ffmpeg checks the extension substream header's CRC-16 and rejects it (dca_exss.c: 'Invalid EXSS header checksum'); its parser names the profile from the asset descriptor without that check (dca_parser.c)"}))
+            crosscheck=cc_lossless(decode=False, decode_error="Invalid EXSS header checksum", skip={"decode": "ffmpeg checks the extension substream header's CRC-16 and rejects it ('Invalid EXSS header checksum'); its parser names the profile from the asset descriptor without that check (dca_parser.c)"}))
     broken = dict(asset, bad_sync=["xll"])
     parts = [unit([broken]) for _ in range(4)]
     data = b"".join(parts)
@@ -499,17 +499,17 @@ def build_substream_damage():
     data = b"".join(parts)
     fixture("exss-auxiliary-asset", ".dts", "Four units whose extension substream holds an asset with coding mode 3, auxiliary.", data, rows(parts),
             [stream("DTS", 48000, STEREO, "2/0", 4 * 512)], [("dts.coding-mode-auxiliary", "coding mode 3")],
-            crosscheck=cc(ffprobe_profile=False, skip={"ffprobe_profile": "ffmpeg reads no component of the auxiliary asset and leaves the profile DTS (dca_exss.c, coding mode 3 sets no extension mask)"}))
+            crosscheck=cc(ffprobe_profile=False, skip={"ffprobe_profile": "ffmpeg reads no component of the auxiliary asset and leaves the profile DTS (coding mode 3 sets no extension mask)"}))
     parts = [unit([dict(asset, size_field=4)]) for _ in range(4)]
     data = b"".join(parts)
     fixture("exss-descriptor-overrun", ".dts", "Four units whose asset descriptor gives a size of 4 bytes, less than its fields take.", data, rows(parts),
             [stream(name, 48000, STEREO, "2/0", 4 * 512, vbr=True)], [("dts.asset-descriptor-overrun", "4 bytes")],
-            crosscheck=cc(ffprobe_profile=False, decode=False, decode_error="Read past end of EXSS asset descriptor", skip={"ffprobe_profile": PROFILE_STUB, "decode": "ffmpeg rejects the descriptor whose fields run past its size (dca_exss.c: 'Read past end of EXSS asset descriptor')"}))
+            crosscheck=cc(ffprobe_profile=False, decode=False, decode_error="Read past end of EXSS asset descriptor", skip={"ffprobe_profile": PROFILE_STUB, "decode": "ffmpeg rejects the descriptor whose fields run past its size ('Read past end of EXSS asset descriptor')"}))
     parts = [m.core_frame(size=512) + m.exss([dict(asset)], size=72)[:72] for _ in range(4)]
     data = b"".join(parts)
     fixture("exss-sizes-overrun", ".dts", "Four units whose extension substream is 72 bytes long, less than its header and the sizes of its assets' components add up to.", data,
             rows(parts), [stream(name, 48000, STEREO, "2/0", 4 * 512, vbr=True)], [("dts.substream-overrun", "more than the substream's")],
-            crosscheck=cc(ffprobe_profile=False, decode=False, decode_error="EXSS asset out of bounds", skip={"ffprobe_profile": PROFILE_STUB, "decode": "ffmpeg rejects the assets' sizes that add up to more than the substream (dca_exss.c: 'EXSS asset out of bounds')"}))
+            crosscheck=cc(ffprobe_profile=False, decode=False, decode_error="EXSS asset out of bounds", skip={"ffprobe_profile": PROFILE_STUB, "decode": "ffmpeg rejects the assets' sizes that add up to more than the substream ('EXSS asset out of bounds')"}))
     short_core = m.core_frame(size=512, sync=m.SYNC_EXSS_CORE)[:20]
     stub = dict(components=["core"], sizes={"core": 20}, raw={"core": short_core}, channels=2, mask=0x02)
     parts = [unit([stub]) for _ in range(4)]
@@ -524,7 +524,7 @@ def build_substream_damage():
     fixture("exss-overrun", ".dts", "Three units and a fourth whose extension substream declares 2,000 bytes but the file ends 150 bytes into it.", data,
             [[i * len(whole), len(whole)] for i in range(3)] + [[3 * len(whole), len(data) - 3 * len(whole)]],
             [stream(name, 48000, STEREO, "2/0", 4 * 512, vbr=True, lost=512)], [("dts.frame-truncated", "The last frame")],
-            crosscheck=cc_lossless(decode=False, decode_errors={**{str(i * len(whole)): None for i in range(3)}, str(3 * len(whole)): "Packet too short for EXSS frame"}, skip={"decode": "the last packet is cut inside its extension substream, which ffmpeg rejects (dca_exss.c: 'Packet too short for EXSS frame'); the packets before it decode"}))
+            crosscheck=cc_lossless(decode=False, decode_errors={**{str(i * len(whole)): None for i in range(3)}, str(3 * len(whole)): "Packet too short for EXSS frame"}, skip={"decode": "the last packet is cut inside its extension substream, which ffmpeg rejects ('Packet too short for EXSS frame'); the packets before it decode"}))
     return build_mp4()
 
 
@@ -631,13 +631,13 @@ def build_review():
     fixture("trailing-substream-sync", ".dts", "Three stereo core frames, then two extension substream sync words with headers that state 4,096 bytes and fail their CRC-16.", data, rows(frames),
             [stream("DTS", 48000, STEREO, "2/0", 3 * 512)], [("dts.trailing-data", "32 bytes after the last frame")], gaps=[(1536, 32)],
             crosscheck=cc(ffprobe=False, decode=False, skip={"ffprobe": "ffmpeg's parser takes the bytes after the last frame into its last packet",
-                                                              "decode": "ffmpeg's last packet holds the bytes after the last frame, which its decoder reads as an extension substream and rejects for its header CRC-16 (dca_exss.c: 'Invalid EXSS header checksum')"}))
+                                                              "decode": "ffmpeg's last packet holds the bytes after the last frame, which its decoder reads as an extension substream and rejects for its header CRC-16 ('Invalid EXSS header checksum')"}))
 
     # Findings on groups of fields, whose nodes differ between the forms.
     parts = [unit([dict(five, asset_size=60)]) for _ in range(2)]
     fixture("exss-assets-overrun", ".dts", "Two units whose asset has a size of 60 bytes, less than its core and lossless components add up to.", b"".join(parts), rows(parts),
             [stream(name, 48000, STEREO, "2/0", 2 * 512, vbr=True)], [("dts.substream-overrun", "asset 1's components add up to 160 bytes, more than the 60")],
-            crosscheck=cc(ffprobe_profile=False, decode=False, decode_error="Invalid extension size in EXSS asset descriptor", skip={"ffprobe_profile": PROFILE_STUB, "decode": "ffmpeg rejects the asset whose size is less than its components (dca_exss.c: 'Invalid extension size in EXSS asset descriptor')"}))
+            crosscheck=cc(ffprobe_profile=False, decode=False, decode_error="Invalid extension size in EXSS asset descriptor", skip={"ffprobe_profile": PROFILE_STUB, "decode": "ffmpeg rejects the asset whose size is less than its components ('Invalid extension size in EXSS asset descriptor')"}))
     stub = dict(components=["core", "xll"], sizes={"core": 96, "xll": 8}, raw={"xll": m.SYNC_XLL.to_bytes(4, "big") + bytes(4)}, channels=2, mask=0x02)
     parts = [unit([stub]) for _ in range(2)]
     fixture("exss-component-header-overrun", ".dts", "Two units whose lossless component is its sync word and four bytes, so the data ends inside its header.", b"".join(parts), rows(parts),
@@ -647,7 +647,7 @@ def build_review():
                           shuff=[6] * 5, bhuff=[5] * 5, sel=[[1, 3, 3, 3, 3, 7, 7, 7, 7, 7] for _ in range(5)]) for _ in range(2)]
     fixture("xxch-header-overrun", ".dts", "Two 3/2 core frames with an XXCH extension of 12 bytes, whose header CRC-16 holds and whose fields need more bits than it has.", b"".join(parts), rows(parts),
             [stream("DTS-ES", 48000, SURROUND_5_1[:5], "3/2", 2 * 512, lost=2 * 512)], [("dts.header-overrun", "ends inside the XXCH extension's header")],
-            crosscheck=cc(ffprobe_profile=False, libdca_channels=5, skip={"ffprobe_profile": "ffmpeg's decoder names the profile DTS-ES only when it has decoded the extension (dca_core.c), which is cut short here"}))
+            crosscheck=cc(ffprobe_profile=False, libdca_channels=5, skip={"ffprobe_profile": "ffmpeg's decoder names the profile DTS-ES only when it has decoded the extension, which is cut short here"}))
 
     # A bad CRC-16 in the header of XXCH in the core, of XBR in a substream.
     ext_options = dict(amode=9, lff=2, ext=1, ext_id=6)
@@ -657,18 +657,18 @@ def build_review():
             [stream("DTS-ES", 48000, SURROUND_5_1_WITH_REAR, "3/2", 3 * 512)],
             [("dts.crc-mismatch", "XXCH frame header's CRC-16")], fields={"DTS/Statistics/Failed Frame Checksums": "1 frame"},
             crosscheck=cc(ffprobe=False, decode=False, decode_errors={"0": "DSYNC check failed", "1024": "XXCH sync word not found", "2048": "DSYNC check failed"}, libdca_channels=6,
-                          skip={"ffprobe": "ffmpeg's decoder rejects the XXCH stub, whose channel set data is filler (dca_core.c: 'DSYNC check failed')",
+                          skip={"ffprobe": "ffmpeg's decoder rejects the XXCH stub, whose channel set data is filler ('DSYNC check failed')",
                                 "decode": "The XXCH channel set data is filler, which ffmpeg rejects at its DSYNC check; the frame whose header CRC-16 fails is not an XXCH frame to it at all ('XXCH sync word not found'), where the analyzer keeps the extension and reports dts.crc-mismatch"}))
     parts = [m.core_frame(size=512) + m.exss([dict(components=["xbr"], channels=2, mask=0x02, component_options={"xbr": {"bad_crc": True}})]) for _ in range(3)]
     fixture("xbr-bad-crc", ".dts", "Three units whose extension substream has an XBR component with a frame header CRC-16 that fails.", b"".join(parts), rows(parts),
             [stream("DTS-HD High Resolution Audio", 48000, STEREO, "2/0", 3 * 512)], [("dts.crc-mismatch", "XBR frame header's CRC-16")], fields={"DTS/Statistics/Failed Frame Checksums": "3 frames"},
-            crosscheck=cc(ffprobe_profile=False, decode=False, decode_error="Invalid XBR frame header checksum", skip={"ffprobe_profile": PROFILE_STUB, "decode": "ffmpeg rejects the XBR frame header whose CRC-16 fails (dca_core.c: 'Invalid XBR frame header checksum')"}))
+            crosscheck=cc(ffprobe_profile=False, decode=False, decode_error="Invalid XBR frame header checksum", skip={"ffprobe_profile": PROFILE_STUB, "decode": "ffmpeg rejects the XBR frame header whose CRC-16 fails ('Invalid XBR frame header checksum')"}))
 
     # Profile precedence and the delivered sampling frequency.
     parts = [unit([dict(components=["lbr", "xll"], channels=2, mask=0x02)]) for _ in range(3)]
     fixture("exss-lbr-and-xll", ".dts", "Three units of a core frame and an extension substream whose asset has both a low bit rate (LBR) and a lossless (XLL) component.", b"".join(parts), rows(parts),
             [stream("DTS Express", 48000, STEREO, "2/0", 3 * 512, vbr=True)], [],
-            crosscheck=cc_lossless(ffprobe_profile=False, skip={"ffprobe_profile": "ffmpeg's parser names a core with an extension substream by its XLL component first (dca_parser.c), so ffprobe reads DTS-HD MA where the analyzer names the stream by LBR first, as ffmpeg's decoder does (dcadec.c), which the stub LBR component does not allow it to confirm"}))
+            crosscheck=cc_lossless(ffprobe_profile=False, skip={"ffprobe_profile": "ffmpeg's parser names a core with an extension substream by its XLL component first (dca_parser.c), so ffprobe reads DTS-HD MA where the analyzer names the stream by LBR first, as ffmpeg's decoder does, which the stub LBR component does not allow it to confirm"}))
     parts = [unit([dict(five, max_rate=96000)]) for _ in range(3)]
     fixture("exss-lossless-96k", ".dts", "Three units of a 48 kHz core frame and an extension substream whose lossless asset names 96 kHz as its highest sampling frequency.", b"".join(parts), rows(parts),
             [stream(name, 96000, STEREO, "2/0", 3 * 1024, vbr=True)], [], fields={"DTS/Statistics/Core Sample Rate": "48000 Hz", "DTS/Statistics/Extension Sample Rate": "96000 Hz"},
@@ -721,7 +721,7 @@ def build_gate2():
         return m.core_frame(size=512) + m.exss([dict(asset)], static=static, **options)
 
     # 7.5.2: where bStaticFieldsPresent is 0 the header omits the static fields, and they keep the values of the last header that had them.
-    # FFmpeg's dca_exss.c keeps them between frames, so its decoder plays every unit as the lossless stream the first one describes.
+    # ffmpeg keeps them between frames, so its decoder plays every unit as the lossless stream the first one describes.
     asset = dict(components=["core", "xll"], sizes={"core": 96, "xll": 64}, channels=2, mask=0x02)
     parts = [unit(asset, static=i == 0) for i in range(4)]
     fixture("exss-static-first-only", ".dts", "Four units of a stereo core frame and an extension substream with a lossless asset, of which only the first states the static fields.",
@@ -735,7 +735,7 @@ def build_gate2():
     fixture("exss-static-embedded-stereo", ".dts", "Four units of a stereo core frame and an extension substream with a lossless 5.1 asset that has a dynamic range code and an embedded stereo downmix, of which only the first states the static fields.",
             b"".join(parts), rows(parts), [stream(name, 48000, SURROUND_5_1, "2/0", 4 * 512, vbr=True)], [],
             crosscheck=cc_lossless(libdca_channels=2, decode_whole=True,
-                                   skip={"decode_alone": "ffmpeg keeps the static fields between frames (dca_exss.c), so a unit whose header omits them decodes only after the first: each packet decoded alone is rejected "
+                                   skip={"decode_alone": "ffmpeg keeps the static fields between frames, so a unit whose header omits them decodes only after the first: each packet decoded alone is rejected "
                                                          "('Read past end of EXSS asset descriptor'), the whole file decodes without an error"}))
     lbr = dict(mode=2, channels=2, mask=0x02)
     parts = [m.exss([dict(lbr)], static=i == 0) for i in range(4)]
@@ -758,7 +758,7 @@ def build_gate2():
     fixture("exss-remapping-without-mask", ".dts", "Four units whose lossless asset states one speaker remapping set but no speaker activity mask, so the layout masks of the set have no width.",
             b"".join(parts), rows(parts), [stream(name, 48000, STEREO, "2/0", 4 * 512, vbr=True)], [("dts.reserved-value", "1 speaker remapping set but no speaker activity mask")],
             crosscheck=cc(ffprobe_profile=False, decode=False, decode_error="Speaker mask disabled yet there are remapping sets",
-                          skip={"ffprobe_profile": "ffmpeg refuses the asset descriptor, so no extension is decoded and ffprobe names the core's profile", "decode": "ffmpeg refuses the asset descriptor (dca_exss.c: 'Speaker mask disabled yet there are remapping sets')"}))
+                          skip={"ffprobe_profile": "ffmpeg refuses the asset descriptor, so no extension is decoded and ffprobe names the core's profile", "decode": "ffmpeg refuses the asset descriptor ('Speaker mask disabled yet there are remapping sets')"}))
 
     # 6.5.2 Table 6-23 reads each channel set's mask with nuBits4SpkrMaskXXCh - 6 bits, so a width of 5 or less has no reading.
     ext = m.xxch(chsets=((1, 0),), core_mask=0x1F, mask_bits=5)
@@ -766,7 +766,7 @@ def build_gate2():
     fixture("xxch-mask-bits-5", ".dts", "Four stereo core frames with an XXCH extension whose speaker mask has 5 bits, fewer than the 6 that Table 6-23 subtracts.", b"".join(parts), rows(parts),
             [stream("DTS", 48000, STEREO, "2/0", 4 * 512)], [("dts.reserved-value", "the mask has 5 bits")],
             crosscheck=cc(decode=False, decode_error="Invalid number of bits for XXCH speaker mask",
-                          skip={"decode": "ffmpeg's decoder refuses the XXCH header (dca_core.c: 'Invalid number of bits for XXCH speaker mask')"}))
+                          skip={"decode": "ffmpeg's decoder refuses the XXCH header ('Invalid number of bits for XXCH speaker mask')"}))
 
 
 def main():

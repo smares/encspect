@@ -46,7 +46,7 @@ public sealed partial class MpegAudioParser
                 rules.Add(new("Helix MP3 Encoder", "Copyright and original bits set in every frame, with scfsi and scalefactor scaling, as the Helix encoder writes them without its tag"));
             }
 
-            // mp3guessenc: "the Xing encoder never uses short blocks"; the Helix encoder that grew out of
+            // The Xing fixtures (xing_tool.py) use no short blocks; the Helix encoder that grew out of
             // it does, as do LAME, Fraunhofer's encoders and BladeEnc, even at the onset of a tone.
             if (!switching && !scfsi && traits.AreAllOriginals)
             {

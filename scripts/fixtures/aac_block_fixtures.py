@@ -324,8 +324,8 @@ STEREO_CODINGS = ["Left/right stereo", "Mid/side stereo", "Intensity stereo", "M
 def classify(first, second, common, mask, ms_used):
     """The stereo coding of a channel pair (ISO/IEC 14496-3 4.6.8), whether or not it has a common window: ms_mask_present 3 is reserved and
     comes first; intensity stereo is any band of the second channel with codebook 14 or 15; mid/side is any band whose ms_used flag is set
-    (ms_mask_present 2 sets every band; the flags need a common window) where neither channel has codebook 13, 14 or 15, as FFmpeg's
-    apply_mid_side_stereo requires (faad2's ms_decode checks the first channel's noise only). Written from the decoders' rule, not from the analyzer."""
+    (ms_mask_present 2 sets every band; the flags need a common window) where neither channel has codebook 13, 14 or 15, as ISO/IEC
+    14496-3 4.6.8.1.3 has it (its is_noise takes no channel). Written from that rule, not from the analyzer."""
     if common and mask == 3:
         return 4
     intensity = midside = False
@@ -424,8 +424,8 @@ def pair_statistics(prefix, pairs):
     intensity_bands = sum(1 for p in pairs for g in p[0].codebooks() for b in g if b in (14, 15))
     if intensity_bands:
         fields[f"{prefix}/Statistics/Channel Pairs/Intensity Stereo Bands"] = f"{tenths(intensity_bands, bands)} %"
-        # Out of phase: codebook 14, or codebook 15 inverted by ms_used, which only ms_mask_present 1 does here (faad2's invert_intensity and
-        # fdk-aac, whose stereo.cpp clears the mid/side flags before intensity stereo; FFmpeg inverts for mask 2 too)
+        # Out of phase: codebook 14, or codebook 15 inverted by ms_used, which only ms_mask_present 1 does here (4.6.8.2.3; ms_mask_present 2
+        # transmits no ms_used bits, though FFmpeg inverts for it too)
         out = sum(1 for second, common, mask, used, _ in pairs for g, books in enumerate(second.codebooks()) for sfb, book in enumerate(books)
                   if book in (14, 15) and (book == 14) != bool(common and mask == 1 and used[g][sfb]))
         fields[f"{prefix}/Statistics/Channel Pairs/Out of Phase"] = share(out, intensity_bands, "band")
@@ -490,8 +490,8 @@ def stereo_coding_reserved():
         "Channel pairs with ms_mask_present 3, which is reserved: with and without intensity stereo bands, which it takes precedence over, and one "
         "pair of left and right.", data, rows, [stream("AAC LC", RATE, 2, "Stereo", len(cases) * 1024)], fields,
         [["aac.ms-mask-reserved", "ms_mask_present 3"]],
-        skip={"decode": "ffmpeg rejects ms_mask_present 3 (aacdec_template.c, decode_cpe: ms_present = 3 is reserved).",
-              "faad_trace": "faad2 rejects ms_mask_present 3 (syntax.c, error 32) and stops at the first frame it rejects."})
+        skip={"decode": "ffmpeg rejects ms_mask_present 3, which the specification reserves.",
+              "faad_trace": "faad2 rejects ms_mask_present 3 and stops at the first frame it rejects."})
 
 
 def stereo_coding_elements():
@@ -897,7 +897,7 @@ def fill_and_data():
         "Fill elements with dynamic range control (three bands, a reference level, a program config element's tag and an excluded channel), fill "
         "data, other bits holding text, ancillary data with text, and two payloads in one fill element; data stream elements, one byte-aligned "
         "with text, one of 300 bytes with an escape count.", data, rows, [stream("AAC LC", RATE, 1, "Mono", 7 * 1024)], fields,
-        trace_skip={6: "faad2 2.11 returns from an ancillary data element after its first byte (extension_payload in syntax.c) and reads the "
+        trace_skip={6: "faad2 2.11 returns from an ancillary data element after its first byte and reads the "
                        "rest of the fill element as further elements."})
 
 
@@ -1094,8 +1094,8 @@ def mp4_only(name, description, config, rate, channels, samples, durations, stre
                         "units": unit_list(offsets[0], samples, chunk), "fields": fields, "findings": [list(f) for f in findings], "crosscheck": crosscheck}
 
 
-# fdk-aac's channel_configuration_array (tpdec_asc.cpp) and ld_sbr_header: one sbr_header() for each single channel and channel pair element
-# of the channel configuration, none for its LFE element.
+# ISO/IEC 14496-3 Table 4.181 (ld_sbr_header): numSbrHeader is 1 for configurations 1 and 2, 2 for 3, 3 for 4 to 6 and 4 for 7, and 0 by default,
+# which is one sbr_header() for each single channel and channel pair element of the channel configuration, none for its LFE element.
 ELD_CONFIGURATIONS = [
     (1, 1, "Mono", ["front center"]), (2, 1, "Stereo", ["front left", "front right"]),
     (3, 2, "3.0", ["front center", "front left", "front right"]),
@@ -1103,7 +1103,7 @@ ELD_CONFIGURATIONS = [
     (5, 3, "5.0", ["front center", "front left", "front right", "back left", "back right"]),
     (6, 3, "5.1", ["front center", "front left", "front right", "back left", "back right", "LFE"]),
     (7, 4, "7.1", ["front center", "front left of center", "front right of center", "front left", "front right", "back left", "back right", "LFE"]),
-    # Configuration 13 (22.2): fdk-aac's EldSpecificConfig_Parse counts no header for it (tpdec_asc.cpp), and neither does MediaInfo.
+    # Configuration 13 (22.2): Table 4.181's default counts no header for it, and neither does MediaInfo.
     (13, 0, "22.2", ["front center", "front left of center", "front right of center", "front left", "front right", "side left", "side right", "back left",
                      "back right", "back center", "LFE", "LFE 2", "top front center", "top front left", "top front right", "top side left", "top side right",
                      "top center", "top back left", "top back right", "top back center", "bottom front center", "bottom front left", "bottom front right"]),
@@ -1148,7 +1148,7 @@ ELD_NAMES = {13: "22.2", 1: "mono", 2: "stereo", 3: "3.0: center, left/right", 4
 
 
 def parametric_stereo_cores():
-    """PS only applies to a core of one channel (fdk-aac's sbrdecoder.cpp, ffmpeg's aacdec_template.c)."""
+    """PS only applies to a core of one channel (ISO/IEC 14496-3 1.5.2.3)."""
     from make_mp4_fixtures import adts_header
     core = 22050
     counts = M.sbr_bands(SBR_HEADER, 2 * core)
@@ -1165,8 +1165,8 @@ def parametric_stereo_cores():
     stats = "ADTS/Statistics/SBR"
     out = [("adts", "ps-in-multichannel-sce.aac", data, manifest(
         "ADTS at a core rate of 22050 Hz with channel configuration 3 (a single channel element and a channel pair element), each followed by SBR "
-        "data, and the single channel element's carrying the parametric stereo extension's ID: decoders apply parametric stereo to a core of one "
-        "channel only, so the stream is HE-AAC with three channels and the ID is reported.", data, rows,
+        "data, and the single channel element's carrying the parametric stereo extension's ID: parametric stereo applies to a core of one "
+        "channel only (ISO/IEC 14496-3 1.5.2.3), so the stream is HE-AAC with three channels and the ID is reported.", data, rows,
         [stream("HE-AAC", 44100, 3, "3.0", 12 * 2048, ffprobe_profile="LC", layout=["front center", "front left", "front right"])],
         {stats: share(12, 12, "access unit"), stats + "/Parametric Stereo": share(12, 12, "access unit"),
          "ADTS/Frame/Raw Data Block/FIL/Extension Payload/SBR Data/Parametric Stereo Extension": "2 (EXT_ID_PS)"},
@@ -1213,8 +1213,8 @@ def parametric_stereo_cores():
     asc_path = "MP4/moov/trak/mdia/minf/stbl/stsd/mp4a/esds/ES_Descriptor/DecoderConfigDescriptor/DecoderSpecificInfo/AudioSpecificConfig"
     out.append(("mp4",) + mp4_only(
         "ps-signaled-over-stereo-core",
-        "HE-AAC v2 signaled hierarchically (audio object type 29) over a core of channel configuration 2: decoders apply parametric stereo to a core of "
-        "one channel only (ffmpeg's decoder drops the flag, fdk-aac allows one single channel element), so the stream is HE-AAC with two channels and a "
+        "HE-AAC v2 signaled hierarchically (audio object type 29) over a core of channel configuration 2: parametric stereo applies to a core of "
+        "one channel only (ISO/IEC 14496-3 1.5.2.3), so the stream is HE-AAC with two channels and a "
         "warning says so.", asc(2, core, 2, sbr=True, ps=True, signaling="hierarchical", extension_rate=44100), core, 2, units, [1024] * 12,
         [stream("HE-AAC", 44100, 2, "Stereo", 12 * 2048, vbr=True, ffprobe_profile="HE-AAC")],
         {asc_path + "/Audio Object Type": "29 (PS)"},

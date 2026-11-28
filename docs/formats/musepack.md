@@ -5,9 +5,9 @@ Musepack SV8, SV7, and SV4 to SV6.
 - **Detection:** a stream starts after any ID3v2 tag with its magic number; APEv2 and ID3v1 tags after it are the host's. An ID3v2 tag that an ID3v2.4 SEEK frame finds inside the stream breaks it: the stream is read up to it, and the bytes after it are reported as not read.
 - **Sources:**
   - the SV8 specification (Musepack's, which trac.musepack.net no longer serves; mutagen-specs keeps a copy, pinned at its commit);
-  - libmpcdec and libmpcenc of musepack_src r495 (Debian's orig tarball, pinned by SHA-256, the source of Ubuntu's musepack-tools) and mppenc 1.16's source;
+  - libmpcdec of musepack_src r495 (BSD-3-Clause; Debian's orig tarball, pinned by SHA-256, the source of Ubuntu's musepack-tools); mppenc 1.16 and mpcenc are run, and their output is Encspect's fixtures;
   - libmpcdec 1.2.6 for stream versions 4 to 6 (its `huffsv46.c` and `mpc_decoder.c`: the tables and the frame syntax of the entropy pass and the decoder follow it), with the Portable Musepack decoder (mpc.zip of 2004, pinned by SHA-256 and kept in the private repository), the C++ code libmpcdec 1.2.6 was ported to C from: the same reading in an earlier form, not a second one;
-  - ffmpeg 6.1's mpc and mpc8 demuxers.
+  - ffprobe's mpc and mpc8 demuxers, as cross-checks.
 
 ## What is read
 
@@ -88,7 +88,7 @@ Musepack SV8, SV7, and SV4 to SV6.
 - More than 1,152 samples in those bits is a finding; libmpcdec 1.2.6 still decodes the frame.
 - mppdec (Buschmann, June 2000), the only separate decoder at hand, decodes every counted frame of the derived fixtures. It confirms that the last counted frame is decoded, not the 11 bits or the sample count.
 - The stream must end in the word that holds those 11 bits, on the assumption that an SV6 encoder wrote them whole.
-- Where they end exactly on a word boundary, one more word of zeros may follow and is shown as its own node, without a finding. mppenc 1.16, the SV7 descendant of the old encoders, writes such a word (`FinishBitstream` in encode_sv7.c).
+- Where they end exactly on a word boundary, one more word of zeros may follow and is shown as its own node, without a finding. mppenc 1.16, the SV7 descendant of the old encoders, writes such a word (the `external-mppenc-standard` and the other 1.16 fixtures end with it).
 - Samples assume every frame whole: a damaged frame stops the decoder, which then outputs fewer.
 - The SV6 fixtures are SV5 encodes relabeled as version 6, not an encoder's output (see [development](../development.md)).
 

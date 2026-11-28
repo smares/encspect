@@ -53,13 +53,12 @@ ROOT = pathlib.Path(__file__).resolve().parent
 FIXTURES = ROOT.parents[1] / "tests" / "fixtures" / "dts"
 CHECKS = ("ffprobe", "ffprobe_profile", "ffprobe_bitrate", "ffprobe_packets", "decode", "libdca")
 
-# ffmpeg's profile names (libavcodec/profiles.c, ff_dca_profiles) for the analyzer's codec names, which are written out in full.
-# The DTS:X profiles are dca_xll.c's AV_PROFILE_DTS_HD_MA_X and AV_PROFILE_DTS_HD_MA_X_IMAX.
+# ffprobe's profile strings for the analyzer's codec names, which are written out in full.
 PROFILES = {"DTS": "DTS", "DTS-ES": "DTS-ES", "DTS 96/24": "DTS 96/24", "DTS-HD Master Audio": "DTS-HD MA",
             "DTS-HD High Resolution Audio": "DTS-HD HRA", "DTS Express": "DTS Express",
             "DTS-HD Master Audio + DTS:X": "DTS-HD MA + DTS:X", "DTS-HD Master Audio + DTS:X IMAX": "DTS-HD MA + DTS:X IMAX"}
 
-# libdca's channel counts by arrangement code (dca.h), without the LFE flag.
+# libdca's channel counts by arrangement code, without the LFE flag.
 LIBDCA_CHANNELS = {0: 1, 1: 2, 2: 2, 3: 2, 4: 2, 5: 3, 6: 3, 7: 4, 8: 4, 9: 5, 10: 6}
 
 
@@ -130,7 +129,7 @@ def check_ffprobe(path, manifest, report, problems):
         problems.append(f"ffprobe's channel layout {actual.get('channel_layout')}, expected {expected['channel_layout']}")
     storage = statistic(report, "Lossless Storage Bit Width")
     if check.get("decode") and check.get("ffprobe_profile", True) and expected["codec"].startswith("DTS-HD Master Audio") and storage is not None:
-        # dca_xll.c: avctx->bits_per_raw_sample = the channel sets' storage bit width.
+        # ffprobe's bits per raw sample is the channel sets' storage bit width.
         if int(actual.get("bits_per_raw_sample") or 0) != mi.leading_number(storage):
             problems.append(f"ffprobe's bits per raw sample {actual.get('bits_per_raw_sample')}, the golden report's storage bit width {storage}")
     packets = [[int(p["pos"]), int(p["size"])] for p in probe.get("packets", [])]
@@ -297,7 +296,7 @@ for fixture_name in ("exss-lossless", "exss-bad-crc", "exss-bad-component-sync",
 MEDIAINFO_READS_OTHERWISE["exss-component-header-overrun"] = dict.fromkeys(MIXED, CORE_ONLY.format(why="the lossless component is a sync word and four bytes, which MediaInfo does not take for the component (" + MEASURED + "), where the analyzer reports dts.header-overrun and names the stream from the descriptor"))
 MEDIAINFO_READS_OTHERWISE["exss-assets-overrun"] = dict.fromkeys(MIXED, CORE_ONLY.format(why="it ends the asset where its size says, 60 bytes, and finds no component's sync word in the first 60 bytes, which the analyzer reports as dts.substream-overrun and names the stream from the descriptor (" + MEASURED + ")"))
 MEDIAINFO_READS_OTHERWISE["xbr-bad-crc"] = dict.fromkeys(MIXED, CORE_ONLY.format(why="it checks the XBR frame header's CRC-16 and leaves a component that fails it (" + MEASURED + "), which the analyzer reports as dts.crc-mismatch and reads on"))
-MEDIAINFO_READS_OTHERWISE["exss-misaligned"] = dict.fromkeys(MIXED, "MediaInfo looks for the extension substream right after the core frame, not where 32-bit alignment puts it, and reads this one (" + MEASURED + "), where the analyzer and FFmpeg's decoder (dcadec.c) do not")
+MEDIAINFO_READS_OTHERWISE["exss-misaligned"] = dict.fromkeys(MIXED, "MediaInfo looks for the extension substream right after the core frame, not where 32-bit alignment puts it, and reads this one (" + MEASURED + "), where the analyzer and FFmpeg's decoder do not")
 for fixture_name in ("le16-exss-high-resolution", "xbr-bad-crc"):
     MEDIAINFO_READS_OTHERWISE[fixture_name].pop("bitrate mode")
 MEDIAINFO_READS_OTHERWISE["xll-future-version"] = dict.fromkeys(
@@ -306,22 +305,22 @@ MEDIAINFO_READS_OTHERWISE["xll-future-version"] = dict.fromkeys(
 MEDIAINFO_READS_OTHERWISE["xll-lt-rt"] = {"channel layout": "MediaInfo reads the channel mask of a lossless channel set only where each channel feeds a loudspeaker (File_Dts.cpp, XLL(): "
                                                           "One2OneMapChannels2Speakers), so it gives an Lt/Rt asset no channel layout (measured with MediaInfo 26.01)"}
 MEDIAINFO_READS_OTHERWISE["xll-x-imax-d1"] = dict.fromkeys(
-    ["commercial name", "IMAX feature"], "FFmpeg's dca_xll.c takes 0xF14000D0 and 0xF14000D1 for DTS:X IMAX (it ignores the lowest bit), MediaInfo's Extensions2 only 0xF14000D0, and reads "
+    ["commercial name", "IMAX feature"], "ffprobe takes 0xF14000D0 and 0xF14000D1 for DTS:X IMAX (it ignores the lowest bit), MediaInfo's Extensions2 only 0xF14000D0, and reads "
                                          "0xF14000D1 as DTS:X (File_Dts.cpp: case 0x02000850 and 0xF14000D1 set presence_Extended_X alone)")
 MEDIAINFO_READS_OTHERWISE["xll-x-rejected-set"] = dict.fromkeys(
-    ["commercial name", "objects in the channel layout", "DTS:X feature"], "FFmpeg's dca_xll.c refuses the channel set (a source resolution beyond its storage width) in parse_sub_headers before it looks for the "
+    ["commercial name", "objects in the channel layout", "DTS:X feature"], "ffprobe refuses the channel set (a source resolution beyond its storage width) in its sub-header checks before it looks for the "
     "DTS:X word, and so does the analyzer; MediaInfo's XLL() reads the word after the band data whatever the sets hold (File_Dts.cpp 26.01, XLL() then Extensions2(); the sets are not checked) and reports DTS:X")
 for fixture_name, refusal in (
     ("xll-x-downmix-type-7", "downmix type 7"),
     ("xll-x-storage-width-18", "a storage width of 18 bits, which it does not implement"),
     ("xll-x-no-mask", "a disabled channel mask, which it does not implement"),
-    ("xll-x-segment-samples", "segments of more than 512 samples (parse_common_header; 8.3.1 allows 256 at 48 kHz, and the analyzer reports dts.reserved-value)"),
-    ("xll-x-no-segment-samples", "a segment of no samples (parse_common_header)"),
+    ("xll-x-segment-samples", "segments of more than 512 samples (8.3.1 allows 256 at 48 kHz, and the analyzer reports dts.reserved-value)"),
+    ("xll-x-no-segment-samples", "a segment of no samples"),
 ):
     MEDIAINFO_READS_OTHERWISE[fixture_name] = dict.fromkeys(
-        ["commercial name", "objects in the channel layout", "DTS:X feature"], f"FFmpeg's dca_xll.c refuses {refusal} in the common header or the sub-headers before it looks for the DTS:X word, "
+        ["commercial name", "objects in the channel layout", "DTS:X feature"], f"ffprobe refuses {refusal} in the common header or the sub-headers before it looks for the DTS:X word, "
         "and so does the analyzer; MediaInfo's XLL() reads the word after the band data whatever the header holds (File_Dts.cpp 26.01, XLL() then Extensions2(); SmplInSeg is read with Info_S1 and not checked) and reports DTS:X")
-MEDIAINFO_READS_OTHERWISE["exss-remapping-without-mask"] = {"channel layout": "FFmpeg refuses an asset with speaker remapping sets and no speaker activity mask (dca_exss.c), and the analyzer reports it and gives the "
+MEDIAINFO_READS_OTHERWISE["exss-remapping-without-mask"] = {"channel layout": "FFmpeg refuses an asset with speaker remapping sets and no speaker activity mask, and the analyzer reports it and gives the "
     "core's 2/0; MediaInfo takes the channel layout of a stream with an extension substream only from the asset's speaker activity mask (File_Dts.cpp 26.01, Streams_Fill: HD_SpeakerActivityMask != -1, "
     "set where SpkrMaskEnabled is), which this asset has not, and does not fall back to the core's arrangement (measured with MediaInfo 24.01: no layout)"}
 MEDIAINFO_READS_OTHERWISE["exss-only-static-first-only"] = {"bitrate": "MediaInfo's BitRate_Get(true) adds the substream size HD_size of the last extension substream header it parsed, here a unit without static fields "
@@ -422,7 +421,7 @@ def chunk(report, chunk_id):
 
 
 def check_dtshd(path, manifest, report, problems, tally):
-    """The container: ffprobe's demuxer (dtshddec.c) and MediaInfo (File_Dts.cpp, FileHeader_Parse and Header_Begin) must read the chunks as the golden
+    """The container: ffprobe's demuxer and MediaInfo (File_Dts.cpp, FileHeader_Parse and Header_Begin) must read the chunks as the golden
     report does: the format, FILEINFO's text, the length AUPR-HDR gives, and MediaInfo's frame and sample counts, nominal and maximum bit rates, stream size
     and time code."""
     probe = ffprobe(path, manifest) if manifest["crosscheck"].get("ffprobe") else {}
@@ -440,7 +439,7 @@ def check_dtshd(path, manifest, report, problems, tally):
     number = lambda *names: mi.leading_number(mi.value(presentation, *names))
     frames, per_frame, rate, original, delay = number("Frames"), number("Samples per Frame"), number("Maximum Sampling Frequency"), number("Original Samples"), number("Codec Delay")
     if probe.get("streams"):
-        # dtshddec.c: st->duration = Num_Frames_Total * Samples_Per_Frame_At_Max_Fs, in the time base 1/sample rate.
+        # ffprobe's duration is Num_Frames_Total * Samples_Per_Frame_At_Max_Fs, in the time base 1/sample rate.
         if rate and int(probe["streams"][0].get("sample_rate", 0)) == rate:
             seconds = float(probe["format"].get("duration", 0))
             if abs(seconds - frames * per_frame / rate) > 0.0005:

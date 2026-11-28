@@ -58,9 +58,9 @@
   "ffprobe_bitrate": false,
   "libdca_channels": 2,
   "skip": {
-   "ffprobe_bitrate": "ffmpeg's lossless decoder sets the bit rate to 0 (dca_xll.c: avctx->bit_rate = 0), so ffprobe lists none",
+   "ffprobe_bitrate": "ffmpeg's lossless decoder sets the bit rate to 0 so ffprobe lists none",
    "libdca": "libdca reads raw DTS only.",
-   "ffprobe": "ffmpeg's demuxer skips the STRMDATA chunk by its size and fails at the end of the cut file (dtshddec.c: avio_skip: 'End of file')",
+   "ffprobe": "ffmpeg's demuxer skips the STRMDATA chunk by its size and fails at the end of the cut file ('End of file')",
    "decode": "no container"
   }
  }

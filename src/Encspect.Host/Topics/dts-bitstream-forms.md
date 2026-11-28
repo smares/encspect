@@ -2,7 +2,7 @@
 id: dts-bitstream-forms
 title: DTS bit stream forms
 related: dts-core-frames, frame-sync
-references: ETSI TS 102 114 V1.6.1 (2019-08), 5.3; FFmpeg 6.1.1 libavcodec/dca_syncwords.h and dca_core.c; libdca 0.0.7 parse.c
+references: ETSI TS 102 114 V1.6.1 (2019-08), 5.3; MediaInfoLib v24.01 File_Dts.cpp (the sync words of the four forms)
 ---
 
 **The problem.** A DTS stream may be stored in 16-bit words or in 14-bit words, and in either byte order, so the same frame has four different appearances in a file.

@@ -2,7 +2,7 @@
 id: tns
 title: Temporal noise shaping (TNS)
 related: aac-windows-and-blocks, block-switching, aac-raw-data-blocks
-references: ISO/IEC 14496-3 4.4.2, 4.6.9; ffmpeg libavcodec/aacdec_template.c (decode_tns)
+references: ISO/IEC 14496-3 4.4.2, 4.6.9
 ---
 
 **The problem.** A long AAC window spans 2048 samples. When a sound changes sharply inside it, such as a struck note or speech, the quantization noise still spreads evenly over the whole window, so it can be heard before the attack and in the quieter parts around it: pre-echo. Switching to short windows avoids that, but costs frequency resolution and bits, and does not help a signal that changes within every window.

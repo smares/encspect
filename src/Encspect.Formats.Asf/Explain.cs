@@ -153,14 +153,14 @@ internal static partial class Explain
     public const string DescriptionRecordsCount = "The number of attribute records (sections 4.7 and 4.8).";
     public const string Descriptor = "One attribute: a name and a value of a type (sections 3.11, 4.7 and 4.8).";
     public const string DescriptorNameLength = "The number of bytes of the attribute's name (section 3.11).";
-    public const string DescriptorName = "The name of the attribute; names are case-sensitive, and Windows Media's start with \"WM/\" (the specification defines no \"WM/\" names; FFmpeg's asf.c and MediaInfoLib's File_Wm_Elements.cpp list them).";
+    public const string DescriptorName = "The name of the attribute; names are case-sensitive, and Windows Media's start with \"WM/\" (the specification defines no \"WM/\" names; MediaInfoLib's File_Wm_Elements.cpp lists them).";
     public const string DescriptorDataType = "The type of the value: 0 Unicode string, 1 byte array, 2 boolean, 3 32-bit integer, 4 64-bit integer, 5 16-bit integer, 6 GUID (sections 3.11, 4.7 and 4.8).";
     public const string DescriptorValueLength = "The number of bytes of the value (sections 3.11, 4.7 and 4.8).";
     public const string DescriptorValue = "The value of the attribute, typed by its data type.";
     public const string DescriptorReserved = "A reserved field, which must be 0 (section 4.7).";
     public const string DescriptorStreamNumber = "The stream the attribute applies to; 0 means the whole file (sections 4.7 and 4.8).";
     public const string LanguageListIndex = "The language of the attribute, as an index into the Language List Object (section 4.8).";
-    public const string PictureType = "What the picture shows, with the numbering of ID3v2's attached picture (WM/Picture, as FFmpeg's asfdec reads it).";
+    public const string PictureType = "What the picture shows, with the numbering of ID3v2's attached picture (WM/Picture).";
     public const string PictureDataSize = "The size of the picture data in bytes (WM/Picture).";
     public const string PictureMimeType = "The MIME type of the picture, as UTF-16 text ended by a NUL (WM/Picture).";
     public const string PictureDescription = "A description of the picture, as UTF-16 text ended by a NUL (WM/Picture).";

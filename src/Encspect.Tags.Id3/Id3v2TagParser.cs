@@ -650,7 +650,7 @@ public sealed class Id3v2TagParser : ITagParser
         }
 
         // ID3v2.4 section 6.1: the header flag "MUST NOT be set if the tag has a frame which is not
-        // unsynchronised". Such frames are still read as unsynchronized, as mutagen reads them.
+        // unsynchronised". Such frames are still read as unsynchronized, since the tag's header flag says so.
         if (state.NotUnsynchronized.Count > 0)
         {
             Node first = state.NotUnsynchronized[0];

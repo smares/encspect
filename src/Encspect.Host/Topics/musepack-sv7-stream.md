@@ -2,7 +2,7 @@
 id: musepack-sv7-stream
 title: Musepack SV7: header and frames
 related: musepack-sv4-to-sv6, musepack-subband-coding, musepack-sv8-packets, gapless-playback, replaygain, encoder-detection
-references: libmpcdec r495 streaminfo.c, mpc_demux.c, mpc_decoder.c; libmpcdec 1.2.6 streaminfo.c; mppenc 1.16 encode_sv7.c, mppenc.c; ffmpeg 6.1 libavformat/mpc.c
+references: libmpcdec r495 streaminfo.c, mpc_demux.c, mpc_decoder.c; libmpcdec 1.2.6 streaminfo.c; Encspect's mppenc 1.16 fixtures
 ---
 
 **Words.** Stream version 7, the format of mppenc up to 1.16, is one bitstream of 32-bit little-endian words, each read from its most significant bit. A field's bits therefore lie in a word's bytes from the last to the first, and a field that crosses words is split across non-adjacent bytes.

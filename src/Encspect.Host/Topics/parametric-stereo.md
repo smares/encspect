@@ -2,7 +2,7 @@
 id: parametric-stereo
 title: Parametric stereo (HE-AAC v2)
 related: sbr, intensity-stereo, mid-side-stereo, aac-object-types
-references: ISO/IEC 14496-3 1.6.2.1, 1.6.6.3, subpart 8 (parametric stereo); fdk-aac
+references: ISO/IEC 14496-3 1.6.2.1, 1.6.6.3, subpart 8 (parametric stereo)
 ---
 
 **The problem.** At the lowest bitrates, even with [SBR](sbr) there are too few bits to code two channels.

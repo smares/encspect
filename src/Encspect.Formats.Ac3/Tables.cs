@@ -2,8 +2,7 @@ namespace Encspect.Formats.Ac3;
 
 // The tables of ATSC A/52:2018: frame sizes (Table 5.18), the bit allocation tables (7.2.3,
 // Tables 7.6 to 7.16) and E-AC-3's frame exponent strategies (Annex E, Table E2.10). The bit
-// allocation tables were transcribed from the specification's text and compared with ffmpeg 6.1's
-// libavcodec/ac3tab.c and ac3.c, which hold the same values.
+// allocation tables were transcribed from the specification's text.
 internal static class Tables
 {
     // Table 5.18: words of 16 bits per syncframe, per frame size code, at 48, 44.1 and 32 kHz.

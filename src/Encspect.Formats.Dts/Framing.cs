@@ -83,7 +83,7 @@ internal static class Framing
     // A unit starting with first: its core frame, if it is one, and the extension substreams that follow, each with a higher index
     // than the one before, at the end of the core frame or of the previous substream, or at the next 32-bit boundary after it (7.5.1
     // adds one to three null bytes to align them). A substream right after the end, off the boundary, is kept in the unit but flagged
-    // (ExssRef.IsMisaligned): FFmpeg looks for it at the boundary only (dcadec.c, FFALIGN(frame_size, 4)) and so does not read it.
+    // (ExssRef.IsMisaligned): ffprobe looks for it at the boundary only and so does not read it (exss-misaligned).
     // A substream after a core frame needs the right CRC-16, or to be whole and followed by a unit that passes the same test or the end of the data, so a
     // damaged header is still reported and a sync word in junk is not taken for one. Null bytes that align the next unit's sync word
     // belong to the unit.

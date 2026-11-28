@@ -76,7 +76,7 @@ SPEAKERS = {1: ["front center"], 2: ["front left", "front right"], 6: ["front ce
 
 
 # ffprobe's profile of a raw ADTS stream is the profile of the ADTS header, whatever SBR the frames hold: FFmpeg 8.0's parser sets it for every
-# frame header (libavcodec/aac_ac3_parser.c, ff_aac_ac3_parse), after the decoder named the stream HE-AAC or HE-AACv2 from the SBR data it found (6.1's
+# frame header, after the decoder named the stream HE-AAC or HE-AACv2 from the SBR data it found (6.1's
 # parser left the profile alone). The ADTS rows below pin "LC" for the checking tool; the MP4 rows name the profile the decoder finds from the
 # configuration or the frames.
 def stream(codec, rate, channels, mode, frame, vbr, encoder, profile=None, writer=None, **extra):

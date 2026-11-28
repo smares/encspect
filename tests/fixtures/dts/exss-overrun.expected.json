@@ -55,8 +55,8 @@
    "2112": "Packet too short for EXSS frame"
   },
   "skip": {
-   "ffprobe_bitrate": "ffmpeg's lossless decoder sets the bit rate to 0 (dca_xll.c: avctx->bit_rate = 0), so ffprobe lists none",
-   "decode": "the last packet is cut inside its extension substream, which ffmpeg rejects (dca_exss.c: 'Packet too short for EXSS frame'); the packets before it decode"
+   "ffprobe_bitrate": "ffmpeg's lossless decoder sets the bit rate to 0 so ffprobe lists none",
+   "decode": "the last packet is cut inside its extension substream, which ffmpeg rejects ('Packet too short for EXSS frame'); the packets before it decode"
   }
  }
 }

@@ -102,7 +102,7 @@ internal sealed partial class FileReader
     // that wrote this file outweighs the library that muxed it. They belong to the Segment (each has its own Info) and reach the codec parsers of
     // its tracks through the route's claims, never through the file's, so no other Segment sees them.
     // - A MuxingApp that names the Matroska libraries (mkvtoolnix writes "libebml v1.4.5 + libmatroska v1.7.1") or libavformat's muxer version
-    //   ("Lavf60.16.100": matroskaenc.c always writes it as the MuxingApp and writes the encoding_tool metadata, when there is any, as the WritingApp)
+    //   ("Lavf60.16.100": ffmpeg always writes it as the MuxingApp and writes the encoding_tool metadata, when there is any, as the WritingApp)
     //   under the WritingApp of other software is the library under the application that uses it and never conflicts with it: the codec parsers do
     //   not get it, and the container's own Writer node holds it as evidence.
     // - A MuxingApp and a WritingApp that name different software are one finding per Segment (not one per track); the codec parsers then

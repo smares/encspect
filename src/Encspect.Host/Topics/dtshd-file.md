@@ -2,7 +2,7 @@
 id: dtshd-file
 title: The DTS-HD file (.dtshd)
 related: dts-extension-substream, dts-lossless-extension, crc, encoder-detection, writer-detection
-references: ATSC A/103:2014 Annex E; FFmpeg 6.1.1 libavformat/dtshddec.c; MediaInfoLib v24.01 File_Dts.cpp
+references: ATSC A/103:2014 Annex E; MediaInfoLib v24.01 File_Dts.cpp
 ---
 
 **The problem.** A raw DTS-HD stream has no place for the facts an authoring tool needs: where the stream starts on the time line, how long it is, how many frames to skip at the start, what the encoder was.

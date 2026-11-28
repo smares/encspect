@@ -2,7 +2,7 @@
 id: xing-header
 title: The Xing and Info header
 related: bitrate-modes, vbri-header, lame-tag, bit-reservoir
-references: LAME libmp3lame/VbrTag.c; Xing Technology VBR header
+references: Mp3 Info Tag revision 1; MediaInfoLib v24.01 File_Mpega.cpp (Header_Xing); Xing Technology VBR header
 ---
 
 **The problem.** In a VBR file, frames have different sizes, so a player cannot compute the duration from the file's size, nor find the byte at which minute two starts. Reading every frame first would take too long.

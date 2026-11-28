@@ -2,7 +2,7 @@
 id: vbri-header
 title: The VBRI header
 related: xing-header, bitrate-modes, encoder-detection
-references: Fraunhofer VBRI header; ffmpeg libavformat/mp3dec.c
+references: Fraunhofer VBRI header; MediaInfoLib v24.01 File_Mpega.cpp (Header_VBRI)
 ---
 
 **What it is.** Fraunhofer's encoders write their own header into the first frame of a VBR stream, instead of a [Xing header](xing-header): the text "VBRI" 36 bytes into the frame, followed by a version, a delay, a quality, the stream's byte and frame counts, and a seek table.

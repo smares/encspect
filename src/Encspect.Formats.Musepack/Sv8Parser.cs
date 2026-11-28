@@ -6,7 +6,7 @@ using Encspect.Core;
 namespace Encspect.Formats.Musepack;
 
 // Stream version 8 (the SV8 specification; libmpcdec r495 mpc_demux.c, streaminfo.c and
-// mpc_bits_reader.c; ffmpeg 6.1 mpc8.c): the magic number "MPCK", then packets of a 16-bit key, a
+// mpc_bits_reader.c): the magic number "MPCK", then packets of a 16-bit key, a
 // size of 1 to 9 bytes that counts the key and itself, and a payload. Packets are followed by their
 // sizes up to the stream end packet; a key outside A to Z, which the specification does not allow
 // and libmpcdec stops at, is reported and followed by its size too. Audio packets are not read: their
@@ -1532,7 +1532,7 @@ internal static class Sv8Parser
         public bool OverflowsDecoder => Samples > long.MaxValue - Sv7Parser.SynthesisDelay;
 
         // The frames decoders decode: until the samples and the synthesis filter's delay are out
-        // (libmpcdec r495 mpc_decoder_decode_frame; mpcenc r495 writes as many).
+        // (libmpcdec r495 mpc_decoder_decode_frame; mpcenc r495's fixtures have as many).
         // Worked out from the quotient and the remainder, since a sample count near 2^63 overflows the sum.
         public long ExpectedFrames => (Samples / Sv7Parser.FrameSamples) + (((Samples % Sv7Parser.FrameSamples) + Sv7Parser.SynthesisDelay + Sv7Parser.FrameSamples - 1) / Sv7Parser.FrameSamples);
     }

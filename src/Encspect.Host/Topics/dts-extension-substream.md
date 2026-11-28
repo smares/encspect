@@ -2,7 +2,7 @@
 id: dts-extension-substream
 title: DTS extension substreams
 related: dts-core-frames, dts-core-extensions, dts-channel-arrangements, dts-lossless-extension, dtshd-file, crc, bitrate-modes
-references: ETSI TS 102 114 V1.6.1 (2019-08), 7.2 to 7.5, Annex E; FFmpeg 6.1.1 libavcodec/dca_exss.c and dca_parser.c
+references: ETSI TS 102 114 V1.6.1 (2019-08), 7.2 to 7.5, Annex E
 ---
 
 **The problem.** Beyond 1.5 Mbit/s, or in a lossless or low bit rate form, the data no longer fits behind the core, which legacy decoders must keep playing.

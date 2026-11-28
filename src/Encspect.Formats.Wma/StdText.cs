@@ -134,7 +134,7 @@ internal static class StdText
     private static string Hex(long offset) => "0x" + offset.ToString("X", CultureInfo.InvariantCulture);
 
     public static string SuperframeShort(int count, int align, long offset) =>
-        $"{(count == 1 ? "A unit of the stream's data holds" : $"{Number(count)} units of the stream's data hold")} fewer bytes than the block alignment of {Number(align)}, which a decoder rejects (wmadec.c); the first is at {Hex(offset)}.";
+        $"{(count == 1 ? "A unit of the stream's data holds" : $"{Number(count)} units of the stream's data hold")} fewer bytes than the block alignment of {Number(align)}, which a decoder rejects (FFmpeg's decoder); the first is at {Hex(offset)}.";
 
     public static string SuperframeLong(int count, int align) =>
         $"{(count == 1 ? "A media object holds" : $"{Number(count)} media objects hold")} more bytes than the block alignment of {Number(align)}; a decoder takes {Number(align)} {(align == 1 ? "byte" : "bytes")} as a superframe and feeds the rest in again (FFmpeg's decode.c), which this analysis does not: it reads the first {Number(align)} only.";
@@ -166,9 +166,9 @@ internal static class StdText
         $"The bytes of the first {Number(bytes / (1 << 20))} MiB of superframes are kept to list the blocks of their frames; the {Number(superframes)} superframes after them are read for the statistics and the series, and their frames list no blocks.";
 
     public static string CodecDataSize(int version, int bytes, bool isTooShort) =>
-        $"The codec-specific data of Windows Media Audio {Number(version)} is {Counts.Bytes(bytes)}; {(version == 1 ? "FFmpeg's encoder writes 4 (wmaenc.c), the specification defines no version 1 layout" : "the ASF specification, section 11.1.1, has 10")}, and FFmpeg's decoder reads the options from {(version == 1 ? "4" : "6")} bytes on{(isTooShort ? ", so it takes none here" : string.Empty)}.";
+        $"The codec-specific data of Windows Media Audio {Number(version)} is {Counts.Bytes(bytes)}; {(version == 1 ? "FFmpeg's encoder writes 4, the specification defines no version 1 layout" : "the ASF specification, section 11.1.1, has 10")}, and FFmpeg's decoder reads the options from {(version == 1 ? "4" : "6")} bytes on{(isTooShort ? ", so it takes none here" : string.Empty)}.";
 
-    public const string VariableBlocksDisabled = "The encode options are 0x000D with variable block length. FFmpeg's decoder disables variable block length for them (wmadec.c, its issue 1503), so frames are read with one block size.";
+    public const string VariableBlocksDisabled = "The encode options are 0x000D with variable block length. FFmpeg's decoder disables variable block length for them (its issue 1503), so frames are read with one block size.";
 
     public static string FormatUnsupported(string reason) => $"The stream is not analyzed: {reason}.";
 
@@ -177,10 +177,10 @@ internal static class StdText
 
     public static string FFmpegEvidence(int version, long padded, bool isAfterUnreadBits) =>
         isAfterUnreadBits
-            ? $"{(padded == 1 ? "The superframe ends" : $"All {Number(padded)} padded superframes end")} in 'N' (0x4E) bytes, after the frame and the coefficient bits that version 1 stereo's coefficient limit leaves unread, which ffmpeg's wmav{Number(version)} encoder writes (wmaenc.c), with no bit reservoir and no variable block lengths"
+            ? $"{(padded == 1 ? "The superframe ends" : $"All {Number(padded)} padded superframes end")} in 'N' (0x4E) bytes, after the frame and the coefficient bits that version 1 stereo's coefficient limit leaves unread, which ffmpeg's wmav{Number(version)} encoder writes, with no bit reservoir and no variable block lengths"
             : padded == 1
-            ? $"The superframe has bytes after the frame that are all 'N' (0x4E), which ffmpeg's wmav{Number(version)} encoder writes (wmaenc.c), with no bit reservoir and no variable block lengths"
-            : $"All {Number(padded)} padded superframes have bytes after the frame that are all 'N' (0x4E), which ffmpeg's wmav{Number(version)} encoder writes (wmaenc.c), with no bit reservoir and no variable block lengths";
+            ? $"The superframe has bytes after the frame that are all 'N' (0x4E), which ffmpeg's wmav{Number(version)} encoder writes, with no bit reservoir and no variable block lengths"
+            : $"All {Number(padded)} padded superframes have bytes after the frame that are all 'N' (0x4E), which ffmpeg's wmav{Number(version)} encoder writes, with no bit reservoir and no variable block lengths";
 
     public static string MicrosoftEvidence(long samplesPerBlock) =>
         $"The codec data states {Number(samplesPerBlock)} samples per block (17 frames) with the bit reservoir and variable block lengths, as the encoders of the Windows Media Format SDK and of Media Foundation write them";

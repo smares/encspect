@@ -476,8 +476,9 @@ def too_lavc():
     its Lavf version there by default."""
     text = b"Lavc60.31.102"
     bits = Bits()
-    # aacenc.c put_bitstream_info: the fill element's count (len + 2, with the escape count past 14), the extension type EXT_FILL, padding up to
-    # a byte boundary (3 + 4 + 8 + 4 bits put, so 5), the name, and 12 minus the padding bits of zeros.
+    # The layout of the first access unit of tests/fixtures/aac/ffmpeg-adts.aac (ffmpeg 6.1.1's encoder): the fill element's count (len + 2, with
+    # the escape count past 14), the extension type EXT_FILL, padding up to a byte boundary (3 + 4 + 8 + 4 bits put, so 5), the name, and
+    # zeros, then the first channel pair element.
     bits.put(6, 3).put(15, 4).put(len(text) + 2 - 14, 8).put(0, 4).put(0, 5)
     for byte in text:
         bits.put(byte, 8)
@@ -489,7 +490,7 @@ def too_lavc():
     track = Track(1, samples, 44100, 2, aac_entry(lc, 44100, 2))
     data, records, offsets = movie([track], moov_extra=[udta(ilst_meta(text_item(b"\xa9too", text.decode() + " aac")))])
     return [("aac-too-lavc", data, {
-        "description": "AAC LC with ffmpeg's signature in a fill element of its first access unit, laid out as aacenc.c (n6.1.1, lines 787-802) writes it, and a tool atom set to "
+        "description": "AAC LC with ffmpeg's signature in a fill element of its first access unit, laid out as the first access unit of tests/fixtures/aac/ffmpeg-adts.aac shows it, and a tool atom set to "
                        "a libavcodec encoder ID: the atom adds to the encoder's evidence and names no writer.",
         "length": len(data), "format": "MP4", "boxes": boxes_of(records, len(data)),
         "streams": [stream("AAC LC", 44100, 2, "Stereo", 30 * 1024, vbr=True, encoder=("FFmpeg (Lavc60.31.102)", "High"))],

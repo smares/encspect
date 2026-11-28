@@ -299,7 +299,7 @@ TEST_FOLDERS = {"Encspect.Tests", "Encspect.Gui.Tests", "Encspect.Fuzz", "Encspe
 PARSER_PREFIXES = ("src/Encspect.Formats.", "src/Encspect.Tags.")
 
 # What the fixtures job's scripts read outside scripts/ and tests/: check_aac_tables.py compares the Huffman
-# and band tables in the AAC parser with fdk-aac's.
+# and band tables in the AAC parser with aac_tables.py.
 FIXTURES_READ = ["src/Encspect.Formats.Aac/**"]
 
 

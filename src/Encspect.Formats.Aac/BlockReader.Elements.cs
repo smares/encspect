@@ -106,7 +106,7 @@ internal sealed partial class BlockReader
             if (_setup.ChannelConfiguration > 0)
             {
                 Soft("aac.coupling-without-program",
-                    $"a coupling channel element, which channel configuration {_setup.ChannelConfiguration} does not provide for: fdk-aac's decoder drops such access units",
+                    $"a coupling channel element, which channel configuration {_setup.ChannelConfiguration} does not provide for",
                     start, start + 3, "Element ID");
             }
 
@@ -1054,8 +1054,7 @@ internal sealed partial class BlockReader
 
     // The intensity stereo bands of a pair's second channel, in phase (INTENSITY_HCB, 15) or out of
     // phase (INTENSITY_HCB2, 14), where ms_used inverts the sign (4.6.8.2.3). Only ms_mask_present 1
-    // inverts, as faad2 (invert_intensity, is.h) and fdk-aac (stereo.cpp clears the mid/side flags before
-    // intensity stereo) decode it; ffmpeg also inverts with ms_mask_present 2, which marks every band.
+    // inverts, as the specification has it; ffmpeg also inverts with ms_mask_present 2, which marks every band.
     private void IntensityNode(Node n, Ics ics, bool masked)
     {
         if (!HasBand(ics, b => b is 14 or 15))

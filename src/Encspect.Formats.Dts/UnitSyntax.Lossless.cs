@@ -7,8 +7,8 @@ internal readonly record struct XllCommon(int Sets, int FrameSize, int SegmentsL
 
 internal sealed partial class UnitSyntax
 {
-    // FFmpeg's dca_syncwords.h: the words dca_xll.c looks for after the band data of a lossless frame, for DTS:X and for DTS:X IMAX
-    // (its test ignores the lowest bit of the second).
+    // The words MediaInfo's File_Dts.cpp (Extensions2) looks for after the band data of a lossless frame, for DTS:X and for DTS:X IMAX
+    // (ffprobe's test ignores the lowest bit of the second).
     private const uint XSync = 0x02000850;
     private const uint XImaxSync = 0xF14000D0;
 
@@ -454,8 +454,9 @@ internal sealed partial class UnitSyntax
         }
     }
 
-    // dca_xll.c: when the frame is larger than its band data aligned to 32 bits (counted from the sync word), the word there is DTS:X's
-    // (0x02000850) or DTS:X IMAX's (0xF14000D0 or 0xF14000D1). A word needs its 4 bytes here; FFmpeg reads it with 1 to 3 left too.
+    // The words are MediaInfo's (Extensions2); the position is what ffprobe's reading of the DTS:X fixtures shows (MediaInfo skips one more
+    // byte per segment and zero padding before it reads the word): when the frame is larger than its band data aligned to 32 bits (counted from the sync word), the word there is DTS:X's
+    // (0x02000850) or DTS:X IMAX's (0xF14000D0 or 0xF14000D1). A word needs its 4 bytes here; ffprobe reads it with 1 to 3 left too.
     private void ReadXllExtensionData(int at, int endBit, AssetFacts asset, long dataEnd, XllCommon common, bool isWordRead)
     {
         long aligned = at + ((dataEnd - at + 3) & ~3L);

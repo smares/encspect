@@ -391,7 +391,7 @@
    "mediainfo": "iTunes"
   },
   "skip": {
-   "ffprobe": "ffmpeg 6.1 does not read a drms entry (it lists no audio stream).",
+   "ffprobe": "ffprobe 6.1.1 lists a drms entry as AAC LC with codec tag drms and warns that frma is ignored; it does not read the track as protected.",
    "mp4box": "MP4Box lists the atoms of schi in its own way.",
    "faad": "faad2 rejects the protected sample entry."
   }

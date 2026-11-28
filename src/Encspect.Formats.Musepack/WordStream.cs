@@ -4,7 +4,7 @@ using Encspect.Core;
 namespace Encspect.Formats.Musepack;
 
 // The bitstream of stream versions 4 to 7: 32-bit little-endian words, each read from its most
-// significant bit (libmpcdec r495 mpc_demux_fill with MPC_BUFFER_SWAP, mppenc 1.16 WriteBits), so a
+// significant bit (libmpcdec r495 mpc_demux_fill with MPC_BUFFER_SWAP), so a
 // field's bits lie in a word's bytes from the last to the first. Bit positions count from the start
 // of the stream; bits past the end of the data read as zero, as libmpcdec fills its buffer with zeros.
 internal sealed class WordStream(ByteReader reader, long start, long end)

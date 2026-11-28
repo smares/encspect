@@ -124,31 +124,31 @@ ROUTED_FORMATS = {"mp3", "mp2", "ac3", "eac3", "dts", "wmav1", "wmav2", "wmapro"
 EXPLAINED = {
     "wav/built-fact-missing-compressed": {"ffprobe duration": "ffprobe estimates the duration of a compressed format without a fact chunk from the average bytes per second; the analyzer states none without the samples of a fact chunk",
                                           "MediaInfo Duration": "MediaInfo estimates the duration of a compressed format without a fact chunk from the average bytes per second; the analyzer states none"},
-    "wav/built-wavl-list-without-fact": {"ffprobe audio stream": "FFmpeg 6.1.1 and 8.0.1 stop with \"no 'data' tag found\": wavdec.c looks for a data chunk at the top level and does not enter a wavl list"},
-    "aiff/built-aifc-ace2": {"ffprobe audio stream": "FFmpeg 6.1.1 and 8.0.1 list no ACE2 coding (aiff.c has MACE 3:1 and 6:1 only) and ffprobe reports no audio stream"},
-    "aiff/built-aifc-ace8": {"ffprobe audio stream": "FFmpeg 6.1.1 and 8.0.1 list no ACE8 coding (aiff.c has MACE 3:1 and 6:1 only) and ffprobe reports no audio stream",
+    "wav/built-wavl-list-without-fact": {"ffprobe audio stream": "FFmpeg 6.1.1 and 8.0.1 stop with \"no 'data' tag found\": ffmpeg looks for a data chunk at the top level and does not enter a wavl list"},
+    "aiff/built-aifc-ace2": {"ffprobe audio stream": "FFmpeg 6.1.1 and 8.0.1 list no ACE2 coding (it has MACE 3:1 and 6:1 only) and ffprobe reports no audio stream"},
+    "aiff/built-aifc-ace8": {"ffprobe audio stream": "FFmpeg 6.1.1 and 8.0.1 list no ACE8 coding (it has MACE 3:1 and 6:1 only) and ffprobe reports no audio stream",
                             "MediaInfo Duration": "MediaInfo takes the Common Chunk's frame count of compressed sample frames for a count of sample frames"},
     "aiff/built-aifc-gsm": {"ffprobe channels": "FFmpeg's GSM decoder is mono whatever the Common Chunk states",
-                           "ffprobe duration": "aiffdec.c takes the Common Chunk's count for blocks of 160 samples (33 bytes) for GSM; no source read says what that count counts, so the analyzer states no length",
+                           "ffprobe duration": "ffmpeg takes the Common Chunk's count for blocks of 160 samples (33 bytes) for GSM; no source read says what that count counts, so the analyzer states no length",
                            "MediaInfo Duration": "MediaInfo takes the Common Chunk's frame count for a count of sample frames; no source read says what it counts for GSM, so the analyzer states no length"},
     "aiff/built-aifc-mac3": {"MediaInfo Duration": "MediaInfo takes the Common Chunk's frame count of compressed sample frames for a count of sample frames"},
-    "aiff/built-aifc-mac3-short": {"ffprobe duration": "ffprobe's duration is the Common Chunk's count times the 6 samples of a frame (aiffdec.c, st->duration = nb_frames * block_duration), not cut to the frames the sound data holds as the analyzer cuts it",
+    "aiff/built-aifc-mac3-short": {"ffprobe duration": "ffprobe's duration is the Common Chunk's count times the 6 samples of a frame (its duration is nb_frames * block_duration), not cut to the frames the sound data holds as the analyzer cuts it",
                                    "MediaInfo Duration": "MediaInfo takes the Common Chunk's frame count of compressed sample frames for a count of sample frames, and does not cut it to the sound data"},
     "aiff/built-aifc-mac6": {"MediaInfo Duration": "MediaInfo takes the Common Chunk's frame count of compressed sample frames for a count of sample frames"},
-    "aiff/built-aifc-unknown-type": {"ffprobe audio stream": "FFmpeg 6.1.1 and 8.0.1 refuse a compression type they do not know (aiffdec.c: \"unknown or unsupported codec tag\") and ffprobe reports no audio stream"},
+    "aiff/built-aifc-unknown-type": {"ffprobe audio stream": "FFmpeg 6.1.1 and 8.0.1 refuse a compression type they do not know (\"unknown or unsupported codec tag\") and ffprobe reports no audio stream"},
     "wav/built-extensible-ebu-mask": {"MediaInfo ChannelLayout": "MediaInfo lists the two speakers of the mask and none of the discrete channels the mask leaves over"},
     "wav/built-leading-id3v2": {"MediaInfo audio stream": "MediaInfo does not find the RIFF header behind a leading ID3v2 tag and reports no audio stream"},
     "aiff/built-leading-id3v2": {"MediaInfo audio stream": "MediaInfo does not find the FORM header behind a leading ID3v2 tag and reports no audio stream"},
     "wav/built-pcm-24-bit-extensible-in-32": {"ffmpeg decoded MD5": "FFmpeg reads the samples as pcm_f24le (see ffprobe codec), a coding that is not the signed 24-bit integers the file states", "ffprobe codec": "FFmpeg 6.1.1 and 8.0.1 read 24 valid bits in a 32-bit block as pcm_f24le (wavdec.c, wav_read_header: a pcm_s24le coding whose block align is 4 bytes for each channel)",
                                              "ffprobe bits": "ffprobe gives that coding a width of 32 bits"},
-    "wav/built-dts-format-tag-0008": {"ffprobe codec": "FFmpeg 6.1.1 and 8.0.1 name no codec for the format tag 0x0008 (riff.c maps only 0x2001 to DTS), so ffprobe gives the stream no codec_name"},
+    "wav/built-dts-format-tag-0008": {"ffprobe codec": "FFmpeg 6.1.1 and 8.0.1 name no codec for the format tag 0x0008 (it maps only 0x2001 to DTS), so ffprobe gives the stream no codec_name"},
     "wav/built-extensible-mask-fewer": {"MediaInfo ChannelLayout": "MediaInfo lists the two speakers of the mask and none of the discrete channels the mask leaves over"},
     "wav/built-extensible-mask-mismatch": {"MediaInfo ChannelLayout": "MediaInfo lists all six speakers of the mask for two channels; Microsoft's rule ignores the extra, most significant bits"},
     "wav/built-extensible-samples-per-block": {"ffprobe audio stream": "FFmpeg 6.1.1 and 8.0.1 cannot open the IMA ADPCM decoder for an extensible header with a container size of 0: \"unspecified number of channels\""},
     "wav/built-rf64-table": {"ffmpeg decoded MD5": "FFmpeg 6.1.1 and 8.0.1 cannot open the file (see ffprobe audio stream), so they decode nothing", "ffprobe audio stream": "FFmpeg 6.1.1 and 8.0.1 stop with \"Cannot allocate memory\": the bext chunk of the fixture has the size 0xFFFFFFFF, which its ds64 table resolves, and wavdec.c reads the 32-bit size (wav_parse_bext_tag allocates the coding history by it) and takes only the data size from the ds64 chunk"},
     "wav/built-riffx-pcm-16": {"MediaInfo audio stream": "MediaInfo reports no audio stream for a big-endian RIFX file",
                                "ffmpeg decoded MD5": "FFmpeg 6.1.1 and 8.0.1 read the samples of a RIFX file as little-endian (ffprobe reports pcm_s16le); the analyzer reads them big-endian, as the file states (observed)"},
-    "wav/built-wavl-list": {"ffprobe audio stream": "FFmpeg 6.1.1 and 8.0.1 stop with \"no 'data' tag found\": wavdec.c looks for a data chunk at the top level and does not enter a wavl list"},
+    "wav/built-wavl-list": {"ffprobe audio stream": "FFmpeg 6.1.1 and 8.0.1 stop with \"no 'data' tag found\": ffmpeg looks for a data chunk at the top level and does not enter a wavl list"},
     "wav/built-bw64-table": {"ffmpeg decoded MD5": "FFmpeg 8.0.1 stops with \"no 'data' tag found\" (see ffprobe audio stream), so it decodes nothing", "ffprobe audio stream": "FFmpeg 8.0.1 stops with \"no 'data' tag found\": the axml chunk of the fixture has the size 0xFFFFFFFF, which its ds64 table resolves, and wavdec.c takes the 32-bit size and skips past the end of the file (as for built-rf64-table)"},
     "wav/built-w64-unknown-chunks": {"ffmpeg decoded MD5": "FFmpeg 8.0.1 refuses the file (see ffprobe audio stream), so it decodes nothing", "ffprobe audio stream": "FFmpeg 8.0.1 refuses a Wave64 file with a chunk of no data (the chunk 'zz  ' of size 24): \"Invalid data found when processing input\" (observed: the same file without that chunk, and with chunks of 3, 5 and 9 bytes or a LIST, is read)"},
     "wav/external-w64-adpcm-ima": {"MediaInfo Duration": "MediaInfo gives 0.706 s for 0.25 s of audio: it does not use the fact chunk of a Wave64 file (observed)"},
@@ -183,7 +183,7 @@ EXPLAINED = {
     "aiff/external-ima4-stereo-44100": {"MediaInfo Duration": "MediaInfo takes the Common Chunk's frame count of packets for a count of sample frames"},
     "aiff/built-block-aligned": {"ffmpeg decoded MD5": "FFmpeg decodes all 512 bytes of the sound data; the analyzer decodes the 50 sample frames the Common Chunk states"},
     "aiff/built-sound-data-extra": {"ffmpeg decoded MD5": "FFmpeg decodes all the bytes of the sound data; the analyzer decodes the sample frames the Common Chunk states"},
-    "wav/built-pcm-40-bit": {"ffprobe codec": "FFmpeg 6.1.1 gives PCM samples of 40 bits no codec_name (riff.c maps 8, 16, 24, 32 and 64 bits); the analyzer names the coding PCM and refuses to decode integers wider than 32 bits"},
+    "wav/built-pcm-40-bit": {"ffprobe codec": "FFmpeg 6.1.1 gives PCM samples of 40 bits no codec_name (it maps 8, 16, 24, 32 and 64 bits); the analyzer names the coding PCM and refuses to decode integers wider than 32 bits"},
     "aiff/built-aifc-sowt-24-bit": {"ffprobe bits": "FFmpeg 6.1.1 reads sowt as 16-bit (see ffmpeg decoded MD5)", "ffmpeg decoded MD5": "FFmpeg 6.1.1 reads sowt as 16-bit little-endian whatever the sample size (aiff.c maps sowt to pcm_s16le); the analyzer reads the 24 bits the Common Chunk states"},
     "aiff/built-aifc-sowt-32-bit": {"ffprobe bits": "FFmpeg 6.1.1 reads sowt as 16-bit (see ffmpeg decoded MD5)", "ffmpeg decoded MD5": "FFmpeg 6.1.1 reads sowt as 16-bit little-endian whatever the sample size (aiff.c maps sowt to pcm_s16le); the analyzer reads the 32 bits the Common Chunk states"},
 }
@@ -247,7 +247,7 @@ def check_ffprobe(name, manifest, path, problems):
             differs(name, "ffprobe channel_layout", ours == theirs if is_ordered else sorted(ours) == sorted(theirs), True, problems,
                     f"ffprobe channel_layout {stream.get('channel_layout')!r} is {theirs}, the manifest {ours}")
     if expected.get("carried"):
-        skip(name, "ffprobe stream", "ffprobe reads the PCM carrier: wavdec.c has no probe for a DTS stream written straight into the samples, so the codec, rate and channels are the fmt chunk's")
+        skip(name, "ffprobe stream", "ffprobe reads the PCM carrier: ffmpeg has no probe for a DTS stream written straight into the samples, so the codec, rate and channels are the fmt chunk's")
         return
     differs(name, "ffprobe sample_rate", str(stream.get("sample_rate")), str(expected["sample_rate"]), problems)
     differs(name, "ffprobe channels", stream.get("channels"), expected["channels"], problems)

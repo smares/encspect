@@ -125,7 +125,7 @@ internal sealed class WmaPacketReader
         ? "the frames that start in the packet before it"
         : "the frame that crosses into it";
 
-    private string DecoderFile => _isLossless ? "wmalosslessdec.c" : "wmaprodec.c";
+    private static string DecoderFile => "FFmpeg's decoder";
 
     // Set by the node builders, so a finding can point at the node of its first case once the nodes exist.
     public Func<int, Node> PacketNode { get; set; } = _ => throw new InvalidOperationException();

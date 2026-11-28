@@ -7325,7 +7325,7 @@
       {
         "severity": "Info",
         "code": "wma.packet-long",
-        "message": "A media object is not a whole number of blocks of 100 bytes (10 bytes before its whole blocks); a decoder cuts blocks from the end of a media object (wmavoice.c), so it takes those bytes for the rest of a packet with no header, as for a media object shorter than a block.",
+        "message": "A media object is not a whole number of blocks of 100 bytes (10 bytes before its whole blocks); a decoder cuts blocks from the end of a media object, so it takes those bytes for the rest of a packet with no header, as for a media object shorter than a block.",
         "offset": 569,
         "length": 10,
         "path": [

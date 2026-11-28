@@ -53,8 +53,8 @@ AOTUV_B603 = {"name": "aoTuV b6.03 (20110424)", "confidence": "High"}
 AOTUV_2020 = {"name": "aoTuV b6.03 (20110424, 2020 build on libvorbis 1.3.7)", "confidence": "High"}
 AOTUV_RAREWARES = {"name": "aoTuV b6.03 (2020, Rarewares build)", "confidence": "High"}
 LANCER = {"name": "Lancer (SSE2, based on aoTuV 6.03 (2020))", "confidence": "High"}
-# Bit-exact (-fflags +bitexact -flags:a +bitexact): ffmpeg writes "ffmpeg" as the vendor string (oggenc.c:281) and "Lavc libvorbis" as the
-# encoder ID, without a version (ffmpeg_enc.c:157-160).
+# Bit-exact (-fflags +bitexact -flags:a +bitexact): ffmpeg writes "ffmpeg" as the vendor string and "Lavc libvorbis" as the
+# encoder ID, without a version (tests/fixtures/ogg/external-ffmpeg-libvorbis-bitexact.ogg).
 BITEXACT_WRITER = {"name": "FFmpeg", "confidence": "Low"}
 FFMPEG_LIBVORBIS_BITEXACT = {"name": "FFmpeg (Lavc libvorbis)", "confidence": "Medium", "writer": BITEXACT_WRITER}
 FFMPEG_LIBOPUS_BITEXACT = {"name": "FFmpeg (Lavc libopus)", "confidence": "Medium", "writer": BITEXACT_WRITER}

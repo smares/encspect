@@ -2,8 +2,8 @@ namespace Encspect.Formats.Dts;
 
 // The four forms in which a DTS core stream is written. The specification (ETSI TS 102 114 5.4.2)
 // describes the sync word 0x7FFE8001 only, as bytes in order: 16-bit words, big endian. The other
-// three forms are FFmpeg's (dca_syncwords.h, dca.c avpriv_dca_convert_bitstream) and libdca's
-// (parse.c, dca_syncinfo): 16-bit words with each pair of bytes swapped, and the two 14-bit forms,
+// three forms are the ones MediaInfo's File_Dts.cpp (BSD) labels by their sync words and unpacks, and that ffprobe and libdca
+// decode: 16-bit words with each pair of bytes swapped, and the two 14-bit forms,
 // where each 16-bit word, big or little endian, holds 14 bits of the stream in its low bits (the
 // two top bits repeat bit 13), so a CD or S/PDIF payload fills no more than 14 of every 16 bits.
 // Every field is read from the bit-packed stream, which the forms are converted to first.
@@ -28,8 +28,8 @@ internal static class Forms
     public static int WordBits(this StreamForm form) => form.Is14Bit() ? 14 : 16;
 
     // The form a core frame starting at bytes (at least SyncLength of them) is written in, or null.
-    // A 14-bit sync word goes on into the next word: the four bits (0001) that finish the 32-bit sync word. libdca (dca_syncinfo)
-    // and FFmpeg (dts_probe, IS_CORE_MARKER) also ask for FTYPE 1 and SHORT 31 there, which leaves termination frames out of
+    // A 14-bit sync word goes on into the next word: the four bits (0001) that finish the 32-bit sync word. libdca
+    // and ffprobe also ask for FTYPE 1 and SHORT 31 there, which leaves termination frames out of
     // their 14-bit streams; ETSI TS 102 114 5.3 defines them for the core stream whatever its form, so they count here, and a
     // frame type that disagrees with SHORT is reported (dts.frame-type).
     public static StreamForm? Detect(ReadOnlySpan<byte> bytes)
@@ -51,8 +51,8 @@ internal static class Forms
 
     // How many bytes a frame of packedLength bytes (FSIZE + 1) takes in a form: in the big endian 16-bit form as many; in the little
     // endian one the whole 16-bit words that hold them; in the 14-bit forms the whole words that hold its bits. A frame that ends
-    // inside a word fills it up (FFmpeg's avpriv_dca_convert_bitstream reads (size + 1) / 2 words); libdca counts the 14-bit words
-    // rounded down (frame_size * 8 / 14 * 2) and finds the next sync word a word later.
+    // inside a word fills it up (MediaInfo's File_Dts.cpp takes size * 16 / 14 there); libdca's frame offsets on the 14-bit fixtures
+    // show it counting the 14-bit words rounded down and finding the next sync word a word later.
     public static int FileLength(int packedLength, StreamForm form) => form switch
     {
         StreamForm.BigEndian16 => packedLength,

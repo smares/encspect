@@ -1,7 +1,7 @@
 namespace Encspect.Formats.Musepack;
 
 // The CRC-32 of the SV8 stream header, which the specification names as PNG's (ISO 3309): reflected
-// polynomial 0xEDB88320, initial value and final XOR 0xFFFFFFFF (musepack_src r495 common/crc32.c).
+// polynomial 0xEDB88320, initial value and final XOR 0xFFFFFFFF (the PNG specification, Annex D, sample CRC implementation).
 internal static class Crc32
 {
     private static readonly uint[] Table = Enumerable.Range(0, 256).Select(n =>

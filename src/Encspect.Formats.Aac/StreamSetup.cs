@@ -20,7 +20,7 @@ internal sealed class StreamSetup
         PredictionBands = BandTables.PredictionMax[index];
         ChannelConfiguration = config.ChannelConfiguration;
         // SBR's frequency tables are derived at twice the core rate whatever extension rate the
-        // configuration states, as fdk-aac (env_extr.cpp), ffmpeg and faad2 derive them; the stated
+        // configuration states (ISO/IEC 14496-3 4.6.18, SBR's sampling rate); the stated
         // rate only sets the output rate.
         SbrSampleRate = 2 * config.CoreSampleRate;
         (ExpectedSce, ExpectedCpe, ExpectedLfe) = config.ChannelConfiguration switch
@@ -70,7 +70,7 @@ internal sealed class StreamSetup
     public int ExpectedLfe { get; }
 
     // The sampling frequency index whose band tables a rate uses: for a rate stated explicitly, the
-    // nearest standard rate's, by the ranges ffmpeg and faad2 both use.
+    // nearest standard rate's, by the ranges of ISO/IEC 14496-3 Table 4.82, "Sampling frequency mapping".
     public static int SampleRateIndex(int rate) => rate switch
     {
         >= 92017 => 0,

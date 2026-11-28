@@ -14,8 +14,8 @@ AAC in [MP4](mp4.md), and raw AAC files as ADTS or ADIF. A container that hands 
   - the object type with its escape, the sampling frequency index or explicit rate, the channel configuration;
   - GASpecificConfig, with a program config element (4.4.1.1) where the channel configuration is 0;
   - ELDSpecificConfig with its low-delay SBR headers and extensions;
-  - of UsacConfig: its rate, coreSbrFrameLengthIndex, channel configuration, the elements with their core and SBR defaults, and the configuration extensions, with a channel pair element's Mps212Config, read as ffmpeg and fdk-aac read it;
-  - a fill or audio pre-roll element reads no configuration, as Table 17 says and ffmpeg and libxaac read it; a configuration length it declares anyway is a warning (fdk-aac skips the bytes).
+  - of UsacConfig: its rate, coreSbrFrameLengthIndex, channel configuration, the elements with their core and SBR defaults, and the configuration extensions, with a channel pair element's Mps212Config (ISO/IEC 23003-3 5.2);
+  - a fill or audio pre-roll element reads no configuration, as Table 17 says and libxaac reads it; a configuration length it declares anyway is a warning.
 - **Explicit SBR and PS:**
   - hierarchical (object type 5 or 29 first) and backward compatible (the sync extensions 0x2B7 and 0x548);
   - with SBR the output rate is the extension rate and an access unit's samples double; with SBR a mono core is decoded to two output channels, with parametric stereo from the blocks that hold its data and the one coded channel on both where they hold none (14496-3 1.6.6.3);

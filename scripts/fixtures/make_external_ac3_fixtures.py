@@ -378,7 +378,7 @@ def main():
             if kind in ("ac3-delta", "ac3-delta-block0"):
                 result["crosscheck"]["decode"] = False
                 result["crosscheck"]["skip"] = {"decode": "ffmpeg 6.1 counts the coupling channel's delta bit allocation bands from the coupling's first band "
-                                                "(ac3.c, ff_ac3_bit_alloc_calc_mask), not from band 0 as A/52 7.2.2.6 and liba52 do, so it rejects "
+                                                "(ffmpeg rejects the fixtures that start a segment at band 31), not from band 0 as A/52 7.2.2.6 and liba52 do, so it rejects "
                                                 "segments that start at band 31."}
             if block_ends is not None:
                 result["block_ends"] = block_ends

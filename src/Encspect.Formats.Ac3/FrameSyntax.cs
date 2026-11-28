@@ -753,7 +753,7 @@ internal sealed partial class FrameSyntax
     }
 
     // mixing option 4 (Annex E 2.2.2): mixdeflen, then (mixdeflen + 2) bytes of mixing data, of
-    // which the structured fields come first; ffmpeg's eac3dec.c skips the same bytes.
+    // which the structured fields come first (TS 102 366 E.1.3.1.22 and the mixdata syntax).
     private void MixingParameters()
     {
         int length = F("Mixing Data Length", 5, Explain.Mixdeflen, v => NodeValue.Integer(v + 2, "bytes"));

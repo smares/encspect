@@ -214,7 +214,7 @@ def header_fields(name, manifest, stream):
 
 
 def ffmpeg_start(name, manifest, stream):
-    """Where ffmpeg starts a Speex stream (libavformat/oggparsespeex.c): the granule position of its
+    """Where ffmpeg starts a Speex stream: the granule position of its
     first page that ends an audio packet less the samples of the audio packets up to it, and its
     duration, to the last granule position."""
     data, pages = ogg_pages(name, manifest)

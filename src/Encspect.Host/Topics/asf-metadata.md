@@ -2,7 +2,7 @@
 id: asf-metadata
 title: ASF metadata objects
 related: asf-container, id3v2
-references: Advanced Systems Format (ASF) Specification, revision 01.20.03, sections 3.10, 3.11, 3.13, 4.7, 4.8 and 7.4; FFmpeg libavformat/asf.c, asfdec_f.c
+references: Advanced Systems Format (ASF) Specification, revision 01.20.03, sections 3.10, 3.11, 3.13, 4.7, 4.8 and 7.4
 ---
 
 **The problem.** A file needs a title and an artist, but also an album, a track number, cover art and the name of the program that wrote it. A fixed set of fields would soon be too small.

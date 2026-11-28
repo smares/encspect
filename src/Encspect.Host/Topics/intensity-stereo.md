@@ -2,7 +2,7 @@
 id: intensity-stereo
 title: Intensity stereo
 related: joint-stereo, mid-side-stereo, inter-channel-coherence, subband-coding, musepack-sv7-stream
-references: ISO/IEC 11172-3 2.4.2.3 (mode_extension), 2.4.3.4.9.3 (Layer III decoding); ISO/IEC 13818-3 2.4.3.2; ISO/IEC 14496-3 4.6.8.2; ETSI TS 102 114 5.4.3, C.3.4 (DTS); ffmpeg libavcodec/aacdec_template.c
+references: ISO/IEC 11172-3 2.4.2.3 (mode_extension), 2.4.3.4.9.3 (Layer III decoding); ISO/IEC 13818-3 2.4.3.2; ISO/IEC 14496-3 4.6.8.2; ETSI TS 102 114 5.4.3, C.3.4 (DTS)
 ---
 
 **The problem.** At low bitrates there are not enough bits to code two full channels. Above a few kilohertz, ears place sounds mostly by how loud they are in each ear, not by the exact waveform, so the fine detail that differs between the channels adds little to where a sound seems to come from.

@@ -297,7 +297,7 @@ internal sealed partial class UnitSyntax
         bool isMaskTooNarrow = maskBits <= 6;
         if (isMaskTooNarrow)
         {
-            // Table 6-23 reads each channel set's mask with nuBits4SpkrMaskXXCh - 6 bits, and FFmpeg refuses a width up to 6 (dca_core.c).
+            // Table 6-23 reads each channel set's mask with nuBits4SpkrMaskXXCh - 6 bits, and ffprobe refuses a width up to 6 (#176).
             Report(Issue.ReservedValue, "Speaker Mask Bits", maskStart, _pos, $"the mask has {Counts.Of(maskBits, "bit", "bits")}, but the channel set masks are read with 6 bits fewer (Table 6-23), so it needs more than 6; the channel sets are not read");
         }
 
@@ -317,7 +317,7 @@ internal sealed partial class UnitSyntax
         ReadHeaderCrc(syncByte, headerSize, "XXCH", Explain.XxchCrc, "The XXCH frame header's CRC-16 (6.5.2) fails");
         if (isMaskTooNarrow)
         {
-            // dca_core.c has checked the header's CRC-16 before it looks at the width, and refuses the extension: the frame is not an extension frame.
+            // ffprobe checks the header's CRC-16 before it looks at the width, and refuses the extension: the frame is not an extension frame.
             AddCoreData(Math.Max(_pos, (syncByte + headerSize) * 8), endBit, "Extension Audio Data", Explain.XxchRefusedData);
             if (readSync)
             {

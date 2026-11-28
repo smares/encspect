@@ -564,7 +564,7 @@ def itunes():
                 "MP4/moov/trak/mdia/minf/stbl/stsd/drms/sinf/schi/key ": "", "MP4/ftyp": "M4P (Apple protected audio)",
                 "MP4/moov/udta/meta/iTunes Metadata/Account/data/Value": "buyer@example.invalid", "MP4/moov/udta/meta/iTunes Metadata/Owner/data/Value": "Test Owner"},
         crosscheck={"ffprobe": False, "mp4box": False, "faad": None, "encryption": {"mediainfo": "iTunes"},
-                    "skip": {"ffprobe": "ffmpeg 6.1 does not read a drms entry (it lists no audio stream).", "mp4box": "MP4Box lists the atoms of schi in its own way.",
+                    "skip": {"ffprobe": "ffprobe 6.1.1 lists a drms entry as AAC LC with codec tag drms and warns that frma is ignored; it does not read the track as protected.", "mp4box": "MP4Box lists the atoms of schi in its own way.",
                              "faad": "faad2 rejects the protected sample entry."}})
     result["fields"].pop("MP4/moov/trak/mdia/minf/stbl/stsd/drms/sinf/schi/key ")
     return [(name, data, result)]

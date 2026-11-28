@@ -1,10 +1,9 @@
 namespace Encspect.Formats.Aac;
 
 // The tables of ISO/IEC 14496-3 that the raw data block parser reads with: the Huffman codebooks of Annex 4.A (Tables 4.A.1 to 4.A.12)
-// and of SBR, as codewords and their lengths in the specification's index order, and the scalefactor band offsets (Tables 4.129 to
-// 4.147): specification data, transcribed through FFmpeg 6.1.1's aactab.c and aacsbrdata.h (scripts/fixtures/aac_tables.py), since the
-// specification is not freely available. scripts/fixtures/check_aac_tables.py checks this file against aac_tables.py and, in independent
-// implementations, every codeword through faad2 2.11.1's decoding tables and the band tables against fdk-aac 2.0.2 (docs/development.md, "Tables").
+// and of SBR (Tables 4.A.79 to 4.A.88), as codewords and their lengths in the specification's index order, and the scalefactor band
+// offsets (Tables 4.129 to 4.141): specification data. scripts/fixtures/check_aac_tables.py checks this file against aac_tables.py and
+// against the specification's tables (docs/development.md, "Tables").
 internal static class HuffmanData
 {
     public static readonly ushort[] Codes1 = [
@@ -553,6 +552,7 @@ internal static class BandTables
 
     public static readonly byte[] NumShort120 = [12, 12, 12, 14, 14, 14, 15, 15, 15, 15, 15, 15, 15];
 
-    // AAC Main predicts the bands below this one (PRED_SFB_MAX of ISO/IEC 13818-7; 14496-3 4.6.6 refers to it).
+    // AAC Main predicts the bands below this one: PRED_SFB_MAX per sampling frequency index, as ISO/IEC 13818-7:2004 Table 62 gives it for
+    // 96 to 8 kHz; 13818-7 has no 7,350 Hz entry, which repeats 8 kHz's.
     public static readonly byte[] PredictionMax = [33, 33, 38, 40, 40, 40, 41, 41, 37, 37, 37, 34, 34];
 }

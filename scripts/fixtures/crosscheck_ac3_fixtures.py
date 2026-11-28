@@ -22,7 +22,7 @@ For every fixture, its manifest's "crosscheck" says what to confirm:
 - "decode": ffmpeg with CRC checking must decode each packet alone without an error, unless the
   packet holds a frame the manifest lists as one decoders reject ("damaged": cut or failing a CRC,
   or a dependent frame without its independent one), which it must reject, as it rejects the frames
-  of independent substreams other than 0, which ffmpeg 8.0 does not decode (ac3dec.c and eac3dec.c refuse a substream ID but 0). MP4 files are decoded
+  of independent substreams other than 0, which ffmpeg 8.0 does not decode (it refuses a substream ID but 0). MP4 files are decoded
   whole, without an error.
 - "liba52": liba52 (a52_blocks.c, built here) must end each audio block of every frame in
   "block_ends" at the manifest's bit, and must not reject those frames.
@@ -41,9 +41,8 @@ Object audio (ETSI TS 103 420) is compared with both tools, by mapping their wor
 copying them:
 
 - ffprobe's stream profile "Dolby Digital Plus + Dolby Atmos" is ffmpeg's reading of flag_ec3_extension_type_a in
-  the additional bit stream information of the frames it decodes (libavcodec/eac3dec.c, eac3_extension_type_a,
-  and ac3dec.c, AV_PROFILE_EAC3_DDP_ATMOS), not of the EMDF payloads and not of the dec3 box (libavformat/mov.c
-  reads neither dec3's extension nor the JOC payload; movenc.c writes none). It must name the profile exactly when
+  the additional bit stream information of the frames it decodes (the profile shows on the fixtures that set it), not of the EMDF payloads and not of the dec3 box
+  (the fixtures' dec3 boxes carry neither the extension nor the JOC payload). It must name the profile exactly when
   a frame of the golden report sets HasExtensionTypeA.
 - MediaInfo's "JOC" among the additional features (Format_AdditionalFeatures, "E-AC-3 JOC" as the format) is the
   analyzer's stream with object audio; its commercial name "Dolby Digital Plus with Dolby Atmos" follows from it;
@@ -245,7 +244,7 @@ def check_ffprobe(path, data, manifest, problems):
     packets = [[int(p["pos"]), int(p["size"])] for p in probe.get("packets", [])]
     expected_packets = packets_of(data, manifest["frames"]) if manifest["format"] == "AC-3" else packets_of_samples(data, manifest["frames"])
     if manifest["crosscheck"].get("ffprobe_packets") == "substream 0":
-        # FFmpeg 8.0.1's parser starts a packet only at a frame of substream 0 (ac3_parser.c, eac3_parse_header refuses any other substream ID), so the
+        # FFmpeg 8.0.1's parser starts a packet only at a frame of substream 0 (it refuses any other substream ID), so the
         # frames of the other substreams join the packet before.
         expected_packets = packets_of_substream_0(data, manifest["frames"])
     if packets != expected_packets:
@@ -288,7 +287,7 @@ def check_decode(path, data, manifest, problems, work):
         piece.write_bytes(data[offset:offset + length])
         result = subprocess.run(["ffmpeg", "-v", "error", "-err_detect", "crccheck", "-f", kind, "-i", str(piece), "-f", "null", "-"],
                                 capture_output=True, text=True)
-        # ffmpeg 8.0.1 decodes independent substream 0 only (eac3dec.c:307 skips any other substream ID), so it rejects the others.
+        # ffmpeg 8.0.1 decodes independent substream 0 only (it skips any other substream ID), so it rejects the others.
         bad = any(f[0] in damaged for f in manifest["frames"] if offset <= f[0] < offset + length) or m.header(data, offset)["substream"] != 0
         failed = bool(result.stderr.strip())
         if failed != bad:

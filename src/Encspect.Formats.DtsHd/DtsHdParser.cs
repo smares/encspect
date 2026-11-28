@@ -6,7 +6,7 @@ using Encspect.Core;
 namespace Encspect.Formats.DtsHd;
 
 // The .dtshd file: chunks one after another, each an 8-character ID, a 64-bit big endian size and a payload, the first being DTSHDHDR
-// (ATSC A/103:2014 Annex E; FFmpeg's libavformat/dtshddec.c; MediaInfo's File_Dts.cpp). STRMDATA holds the DTS-HD stream, which the host's
+// (ATSC A/103:2014 Annex E; MediaInfo's File_Dts.cpp). STRMDATA holds the DTS-HD stream, which the host's
 // codec route hands to the DTS parser; the other chunks are metadata, and BUILDVER is text that names the build that wrote the stream.
 public sealed class DtsHdParser : IFormatParser
 {
