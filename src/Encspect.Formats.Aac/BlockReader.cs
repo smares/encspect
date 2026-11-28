@@ -45,6 +45,10 @@ internal sealed partial class BlockReader
     private int _elementIds;
     private bool _hasSbr;
     private bool _hasSbrEvidence;
+    private bool _hasSbrCrcFailure;
+    private bool _lastCceIsIndependent;
+    private readonly List<byte> _lastLayout = [];
+    private bool _hasLayout;
     private bool _hasPs;
     private bool _hasCoupling;
 
@@ -117,6 +121,7 @@ internal sealed partial class BlockReader
         _elementIds = 0;
         _hasSbr = false;
         _hasSbrEvidence = false;
+        _hasSbrCrcFailure = false;
         _hasPs = false;
         _hasCoupling = false;
         int sce = 0;
@@ -215,6 +220,45 @@ internal sealed partial class BlockReader
                     0, 0, null);
             }
 
+            // The order of the channel elements (single channel, channel pair, LFE) against the block before's: the decoder keeps per-slot state (the core's overlap and window shape, SBR), which
+            // no longer fits a block that changes it, so it starts that state again and withholds the block.
+            bool differs = false;
+            int at = 0;
+            foreach (ElementSpan element in _elements)
+            {
+                if (element.Id is 0 or 1 or 3)
+                {
+                    differs |= at >= _lastLayout.Count || _lastLayout[at] != element.Id;
+                    at++;
+                }
+            }
+
+            differs |= at != _lastLayout.Count;
+            if (differs)
+            {
+                bool isFirst = _lastLayout.Count == 0 && !_hasLayout;
+                _lastLayout.Clear();
+                foreach (ElementSpan element in _elements)
+                {
+                    if (element.Id is 0 or 1 or 3)
+                    {
+                        _lastLayout.Add((byte)element.Id);
+                    }
+                }
+
+                _hasLayout = true;
+                if (!isFirst && (_setup.ExpectedSce < 0 || (sce == _setup.ExpectedSce && cpe == _setup.ExpectedCpe && lfe == _setup.ExpectedLfe)))
+                {
+                    // The block's first channel element (a block with none: its first element) is a node of the tree in every layout (ADTS, ADIF, MP4), as the other block-level findings of an
+                    // element point to.
+                    ElementSpan? first = _elements.Where(e => e.Id is 0 or 1 or 3).Cast<ElementSpan?>().FirstOrDefault() ?? _elements.Cast<ElementSpan?>().FirstOrDefault();
+                    if (first is { } at0)
+                    {
+                        Soft("aac.layout-changed", "channel elements in another order than the block before it, so the decoder starts the state of its channel slots again", at0.Start, at0.End, AacTables.ElementName(at0.Id));
+                    }
+                }
+            }
+
             if (_hasSbr)
             {
                 _tally.SbrBlocks++;
@@ -239,7 +283,7 @@ internal sealed partial class BlockReader
             _store.Flags = (_hasSbr ? BlockRecord.BlockHasSbr : 0) | (_hasPs ? BlockRecord.BlockHasPs : 0) | (_hasCoupling ? BlockRecord.BlockHasCoupling : 0) | (_hasSbrEvidence ? BlockRecord.BlockHasSbrEvidence : 0);
         }
 
-        return new BlockResult(true, bits.Original, Packed(), _hasSbr, _hasPs, null, _hasSbrEvidence);
+        return new BlockResult(true, bits.Original, Packed(), _hasSbr, _hasPs, null, _hasSbrEvidence, _hasSbrCrcFailure);
     }
 
     private void CountDamaged()
@@ -354,8 +398,8 @@ internal sealed partial class BlockReader
             ChannelStream(ref bits, n, second, common, 1, "Channel 1", secondStart);
             if (!common && HasBand(second, b => b is 14 or 15))
             {
-                // 4.6.8.2.3 signals intensity stereo only in a pair with a common ics_info(); FFmpeg and faad2 apply it anyway, and so is it counted.
-                Soft("aac.intensity-without-common-window", "intensity stereo bands in a channel pair without a common window, outside what ISO/IEC 14496-3 4.6.8.2.3 allows, though FFmpeg and faad2 decode them",
+                // 4.6.8.2.3 allows the codebooks only with a common window, as fdk-aac applies them (channel.cpp); FFmpeg and faad2 apply it anyway, and so is it counted.
+                Soft("aac.intensity-without-common-window", "intensity stereo bands in a channel pair without a common window, outside what ISO/IEC 14496-3 4.6.8.2.3 allows (codebooks 14 and 15 only in the second channel of a pair with a common window), though FFmpeg and faad2 decode them",
                     second.SectionStart, second.SectionEnd, "Intensity Stereo Bands");
             }
 
@@ -536,6 +580,41 @@ internal sealed partial class BlockReader
                 _windowFlagged = true;
                 Soft("aac.window-slopes-differ", "a window sequence whose left slope differs from the right slope of the window before it in the same channel stream, as a long window followed by eight short ones does: ISO/IEC 14496-3 4.6.11.3.1 lists such transitions as possible and not as meaningful",
                     ics.SequenceAt, ics.SequenceAt + 2, "Window Sequence");
+            }
+        }
+
+        if (_lastChannelElement == 3)
+        {
+            // The LFE element's restrictions (4.5.2.1.3.1): sine window, only long windows, the lowest 12 lines, no TNS and no prediction.
+            var broken = new List<string>(5);
+            if (ics.WindowShape != 0)
+            {
+                broken.Add("a Kaiser-Bessel derived window");
+            }
+
+            if (ics.WindowSequence != 0)
+            {
+                broken.Add("a window sequence but only long");
+            }
+
+            if (ics.LastLine > 12)
+            {
+                broken.Add($"coefficients above the lowest 12 (to line {ics.LastLine - 1})");
+            }
+
+            if (tns)
+            {
+                broken.Add("TNS data");
+            }
+
+            if (ics.Predictor || ics.Ltp)
+            {
+                broken.Add("prediction");
+            }
+
+            if (broken.Count > 0)
+            {
+                Soft("aac.lfe-restrictions", $"an LFE channel stream with {string.Join(", ", broken)}, which 4.5.2.1.3.1 does not allow in an LFE element", ics.SequenceAt, ics.SequenceAt + 2, "Window Sequence");
             }
         }
 
@@ -898,7 +977,7 @@ internal sealed partial class BlockReader
             _cuts.Add(new BlockCut(CutKind.ScaleFactors, start, length, -1));
             if (outOfRange)
             {
-                Soft("aac.scalefactor-out-of-range", "a scalefactor outside 0 to 255, for which ffmpeg's decoder rejects the access unit", start, start + length,
+                Soft("aac.scalefactor-out-of-range", "a scalefactor outside 0 to 255 (4.6.2.3.2), for which ffmpeg's decoder rejects the access unit", start, start + length,
                     "Scale Factor Data");
             }
         }
@@ -953,7 +1032,7 @@ internal sealed partial class BlockReader
         }
     }
 
-    // tns_data (ISO/IEC 14496-3 4.4.2): per window, up to three filters (one for each short window),
+    // tns_data (ISO/IEC 14496-3 4.4.2.7, Table 4.54): per window, up to three filters (one for each short window),
     // each with its length in bands, order, direction and coefficients (4.6.9). Returns the filters.
     private int TnsData(ref AacBits bits, Node? parent, Ics ics)
     {
@@ -961,9 +1040,8 @@ internal sealed partial class BlockReader
         int start = bits.Original;
         bool eight = ics.WindowSequence == 2;
         int windows = eight ? 8 : 1;
-        // TNS_MAX_ORDER (Table 4.156): 20 for long windows of AAC Main and 12 for the other object types using TNS; LTP is
-        // counted with Main's 20 here, so for it only orders above 20 count: the decoders differ on LTP (FFmpeg 12; faad2 and FDK AAC 20, read from their sources).
-        int maxOrder = eight ? 7 : _setup.ObjectType is 1 or 4 ? 20 : 12;
+        // TNS_MAX_ORDER (4.6.9.3, Table 4.156): 20 for AAC Main only, 12 for every other object type that uses TNS (LTP included), 7 for eight short windows.
+        int maxOrder = eight ? 7 : _setup.ObjectType == 1 ? 20 : 12;
         int total = 0;
         bool tooHigh = false;
         for (int w = 0; w < windows; w++)
@@ -1396,7 +1474,7 @@ internal sealed partial class BlockReader
         }
     }
 
-    // One TNS filter (4.4.2.11): its coefficients are read as coded, up to the 20 a slot holds; the decoder takes the filter's range from the length and the ones before it.
+    // One TNS filter (4.4.2.7, Table 4.54): its coefficients are read as coded, up to the 20 a slot holds; the decoder takes the filter's range from the length and the ones before it.
     private void StoreFilter(ref AacBits bits, Ics ics, int window, int length, int order, bool downward, int resolution, int compress, int coefficientBits)
     {
         Span<int> record = _store!.At(ics.Slot);
@@ -1509,9 +1587,9 @@ internal readonly record struct ElementSpan(int Id, int Start, int End, int Seco
 // What reading a block came to: whether it was read to its end without error, the bit after its
 // END and alignment (or where reading stopped), its elements packed (count in bits 24 to 27, up to
 // eight 3-bit IDs below), whether it holds SBR data and the PS extension, and the error.
-// HasSbr: the block holds an SBR payload; HasSbrEvidence: one that follows a channel element, which decoders take for SBR whether or not
-// they can read it (BlockReader.TallySbr).
-internal readonly record struct BlockResult(bool Ok, int End, int Elements, bool HasSbr, bool HasPs, BlockError? Error, bool HasSbrEvidence = false);
+// HasSbr: the block holds an SBR payload; HasSbrEvidence: any payload (1.6.5.2 item 1), whether or not
+// it can be read (BlockReader.TallySbr).
+internal readonly record struct BlockResult(bool Ok, int End, int Elements, bool HasSbr, bool HasPs, BlockError? Error, bool HasSbrEvidence = false, bool HasSbrCrcFailure = false);
 
 // Something a block breaks that stops its reading, with the node it happened in where nodes were
 // built; ToEnd says the node runs to the end of the data.

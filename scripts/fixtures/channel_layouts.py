@@ -32,8 +32,26 @@ FFMPEG = {
 }
 
 
+# ffmpeg's abbreviations of single channels, which it joins with "+" to describe a layout that has no
+# name: "2 channels (FC+LFE)" (libavutil/channel_layout.c, the channel names table).
+ABBREVIATIONS = {"FL": FL, "FR": FR, "FC": FC, "LFE": LFE, "BL": BL, "BR": BR, "BC": BC, "SL": SL, "SR": SR,
+                 "FLC": FLC, "FRC": FRC}
+
+
+def described(ffmpeg_name):
+    """The speakers of a layout ffmpeg describes as "<n> channels (<abbreviations>)", or None."""
+    import re
+    match = re.fullmatch(r"(\d+) channels \(([A-Z0-9+]+)\)", ffmpeg_name or "")
+    if not match:
+        return None
+    names = match.group(2).split("+")
+    if len(names) != int(match.group(1)) or any(n not in ABBREVIATIONS for n in names):
+        return None
+    return [ABBREVIATIONS[n] for n in names]
+
+
 def same_speakers(ffmpeg_name, speakers):
-    """Whether ffmpeg's layout of that name feeds the speakers listed, in any order; None where the
-    name is not one of those above."""
-    known = FFMPEG.get(ffmpeg_name)
+    """Whether ffmpeg's layout of that name, or of that description of a layout without a name, feeds
+    the speakers listed, in any order; None where the name is neither."""
+    known = FFMPEG.get(ffmpeg_name) or described(ffmpeg_name)
     return None if known is None else sorted(known) == sorted(speakers)

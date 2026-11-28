@@ -8,9 +8,9 @@ internal static partial class Explain
     public const string ChannelElement = "A channel element: a single channel (SCE), an LFE channel (LFE) or a channel pair (CPE), with the coded spectrum of each channel (ISO/IEC 14496-3 4.4.2).";
     public const string EndElement = "The END element, which closes the raw data block; byte alignment bits may follow (ISO/IEC 14496-3 4.4.2).";
     public const string ByteAlignment = "Bits after the END element up to the next byte boundary of the raw data block (ISO/IEC 14496-3 4.4.2, byte_alignment).";
-    public const string HasCommonWindow = "common_window: whether both channels of the pair share one ics_info, which mid/side stereo needs (ISO/IEC 14496-3 4.4.2).";
+    public const string HasCommonWindow = "common_window: whether both channels of the pair share one ics_info, which mid/side stereo and intensity stereo need (ISO/IEC 14496-3 4.4.2, 4.6.8.1, 4.6.8.2.3).";
     public const string MsMaskPresent = "ms_mask_present: 0 codes the pair as left/right, 1 sends a mid/side flag per band, 2 codes every band as mid/side; 3 is reserved (ISO/IEC 14496-3 4.5.2, 4.6.8.1).";
-    public const string MidSideBands = "The bands whose ms_used flag is set, which the pair codes as mid/side instead of left/right; on a band that either channel codes with noise substitution FFmpeg applies no mid/side (faad2 skips the first channel's noise bands only, fdk-aac bands where both channels code noise), and on intensity stereo bands the flag inverts the sign instead (ISO/IEC 14496-3 4.6.8.1, 4.6.8.2).";
+    public const string MidSideBands = "The bands whose ms_used flag is set, which the pair codes as mid/side instead of left/right; a band that either channel codes with noise substitution gets no mid/side (4.6.8.1.3, 4.6.13.3; faad2 skips the first channel's noise bands only, fdk-aac bands where both channels code noise), and on intensity stereo bands the flag inverts the sign instead, under ms_mask_present 1 (4.6.8.2.3).";
     public const string ChannelStream = "One channel's individual_channel_stream: its global gain, window information, sections, scalefactors, tools and spectral data (ISO/IEC 14496-3 4.4.2).";
     public const string GlobalGain = "global_gain: the first scalefactor of the channel, from which the others are coded as differences; it sets the overall quantizer step (ISO/IEC 14496-3 4.6.2).";
     public const string IcsInfo = "ics_info: the window sequence and shape, how many scalefactor bands are coded (max_sfb), the grouping of short windows and the predictor data (ISO/IEC 14496-3 4.4.2).";
@@ -87,7 +87,7 @@ internal static partial class Explain
     public const string DrcHasReference = "prog_ref_level_present: whether the program's reference level follows (ISO/IEC 14496-3 4.5.2).";
     public const string DrcReferenceLevel = "prog_ref_level: the program's reference level below full scale, in steps of 0.25 dB (ISO/IEC 14496-3 4.5.2).";
     public const string DrcGain = "dyn_rng_sgn and dyn_rng_ctl: the band's gain change in steps of 0.25 dB, which a decoder may apply to compress the dynamic range (ISO/IEC 14496-3 4.5.2).";
-    public const string SbrCrc = "bs_sbr_crc_bits: a CRC over the SBR data of an EXT_SBR_DATA_CRC payload (ISO/IEC 14496-3 4.4.2).";
+    public const string SbrCrc = "bs_sbr_crc_bits: a CRC-10 over the SBR data of an EXT_SBR_DATA_CRC payload after it, fill bits included (ISO/IEC 14496-3 4.4.2, 4.5.2.8.1, 4.5.2.8.2.1).";
     public const string HasSbrHeader = "bs_header_flag: whether an SBR header follows; without one the last header holds (ISO/IEC 14496-3 4.4.2).";
     public const string SbrData = "sbr_data: the SBR envelopes, noise floors and other parameters of the frame, for the channel element before the fill element; shown by its bits (ISO/IEC 14496-3 4.4.2, 4.6.18).";
     public const string PsExtension = "bs_extension_id 2, EXT_ID_PS: parametric stereo data follows in the SBR data's extension (ISO/IEC 14496-3 4.4.2 and subpart 8).";
@@ -103,7 +103,7 @@ internal static partial class Explain
     public const string StatCommonWindow = "Channel pairs whose channels share one ics_info (common_window), which mid/side and intensity stereo need.";
     public const string StatMidSideMasks = "Channel pairs with a common window by ms_mask_present: no mid/side, a mask per band, or every band mid/side.";
     public const string StatMidSideMask = "The pairs with this ms_mask_present, with their share of pairs with a common window.";
-    public const string StatMidSideBands = "The share of the scalefactor bands of pairs with a common window that are coded as mid/side, leaving out intensity stereo bands and, as FFmpeg's decoder does, bands that either channel codes with noise substitution.";
+    public const string StatMidSideBands = "The share of the scalefactor bands of pairs with a common window that are coded as mid/side, leaving out intensity stereo bands and bands that either channel codes with noise substitution (4.6.8.1.3, 4.6.13.3).";
     public const string StatIntensityPairs = "Channel pairs that code at least one band of their second channel with intensity stereo (codebooks 14 and 15), whether or not they have a common window, with their share of all pairs (ISO/IEC 14496-3 4.6.8.2).";
     public const string StatIntensityBands = "The share of the scalefactor bands of the second channel of all channel pairs that are coded with intensity stereo.";
     public const string StatOutOfPhase = "Intensity stereo bands whose second channel is out of phase with the first: codebook 14, or codebook 15 inverted by ms_used. Only ms_mask_present 1 inverts here, as faad2 and fdk-aac decode it; with ms_mask_present 2 FFmpeg inverts every intensity stereo band and the other two do not.";
@@ -132,7 +132,13 @@ internal static partial class Explain
     public const string StatSbrEnvelopes = "The number of envelopes in the SBR data of each channel.";
     public const string StatPsEnvelopes = "The number of envelopes in the parametric stereo data of each raw data block that has some.";
     public const string StatPsBands = "The number of parameter bands of the parametric stereo data of each raw data block that has some.";
+    public const string StatPsMixing = "The mixing procedure, Ra or Rb, of the parametric stereo data of each raw data block that has some.";
+    public const string StatPsPhase = "Whether the parametric stereo extension of each raw data block that has some carries inter-channel and overall phase differences.";
     public const string StatSbrHeaders = "SBR headers in the access units; encoders repeat them so decoders can start mid-stream.";
+    public const string StatSbrChecksums = "The SBR payloads of type EXT_SBR_DATA_CRC whose CRC-10 equals the one computed over their data (ISO/IEC 14496-3 4.5.2.8.1).";
+
+    public const string StatSbrChecksumsFailed = "The SBR payloads of type EXT_SBR_DATA_CRC whose CRC-10 differs from the one computed (ISO/IEC 14496-3 4.5.2.8.1).";
+
     public const string StatSbrUnread = "SBR payloads whose data could not be read: before the first header, after a header whose frequency tables cannot be built, or broken; their findings say which.";
     public const string StatSbrStart = "bs_start_freq of the first SBR header, and the QMF band and frequency at the SBR output rate where SBR starts rebuilding the spectrum (kx).";
     public const string StatSbrStop = "bs_stop_freq of the first SBR header, and the QMF band and frequency where the rebuilt spectrum ends.";

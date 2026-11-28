@@ -117,7 +117,7 @@ AREAS = {
     "asf-crosscheck": {
         "projects": ["Encspect.Formats.Asf", "Encspect.Formats.Wma"],
         "fixtures": ["asf"],
-        "scripts": ["crosscheck_asf_fixtures.py", "wma_tables.py", "check_wmavoice_samples.py", "check_wma_samples.py"],
+        "scripts": ["crosscheck_asf_fixtures.py", "crosscheck_wma_pcm.py", "wma_tables.py", "check_wmavoice_samples.py", "check_wma_samples.py"],
         "globs": ["scripts/fixtures/make_*asf*", "scripts/fixtures/make_voice*", "scripts/fixtures/windows/**", "tests/conformance/wmavoice-samples.json",
                   "tests/conformance/wma-samples.json"],
     },
@@ -179,7 +179,7 @@ FIXTURE_ONLY = ["scripts/fixtures/*_tool.py", "scripts/fixtures/make_*.py", "scr
                 "scripts/fixtures/*_model.py", "scripts/fixtures/*_signal*.py", "scripts/fixtures/*_sources.py", "scripts/fixtures/*_source.py",
                 "scripts/fixtures/check_sources.py", "scripts/fixtures/check_restricted_encoders.py", "scripts/fixtures/check_faac_sbr.py",
                 "scripts/fixtures/ancillary_scan.py", "scripts/fixtures/vbr_tags.py", "scripts/fixtures/aac_tables.py",
-                "scripts/fixtures/macos/**"]
+                "scripts/fixtures/macos/**", "scripts/fixtures/r8brain_*"]
 
 # Files that unit tests (and the GUI's) read without being .NET input themselves: a change runs the jobs listed and only the test classes of the files that
 # name the token (scope.py), unless other changes decide otherwise. A background article is read by what loads the TopicLibrary; the GUI embeds the

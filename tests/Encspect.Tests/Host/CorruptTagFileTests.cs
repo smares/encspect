@@ -70,7 +70,7 @@ public class CorruptKitFileTests
 }
 
 // The fixtures in tests/fixtures/asf: the hand-built files of every object, the Windows Media files and the ones FFmpeg's muxer wrote, each analyzed with and without decoding the
-// streams that have a decoder (MPEG audio and AC-3).
+// streams that have a decoder (MPEG audio, AC-3 and WMA versions 1 and 2).
 public class CorruptAsfFileTests
 {
     public static TheoryData<string> Names => CorruptFiles.Names(n => n.StartsWith("asf/", StringComparison.Ordinal));

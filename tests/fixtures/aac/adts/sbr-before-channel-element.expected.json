@@ -1,18 +1,18 @@
 {
- "description": "ADTS at 22050 Hz of single channel elements, each preceded by a fill element of SBR data: the payloads follow no channel element, so decoders read none and the stream stays AAC LC at 22050 Hz.",
+ "description": "ADTS at 22050 Hz of single channel elements, each preceded by a fill element of SBR data: the payloads follow no channel element, so they are reported and read by no one, but 1.6.5.2 item 1 takes any payload for implicit signaling: the stream is HE-AAC at 44100 Hz (decoders read none and decode AAC LC at 22050 Hz).",
  "length": 461,
  "format": "AAC",
  "boxes": [],
  "streams": [
   {
-   "codec": "AAC LC",
-   "sample_rate": 22050,
+   "codec": "HE-AAC",
+   "sample_rate": 44100,
    "channels": 1,
    "channel_mode": "Mono",
    "channel_layout": [
     "front center"
    ],
-   "samples": 12288,
+   "samples": 24576,
    "is_vbr": true
   }
  ],
@@ -71,8 +71,12 @@
  },
  "findings": [
   [
+   "aac.implicit-sbr",
+   "12 of 12 raw data blocks hold SBR data: the stream is HE-AAC"
+  ],
+  [
    "aac.sbr-without-channel-element",
-   "12 raw data blocks hold SBR data that follows no single channel or channel pair element"
+   "12 raw data blocks hold SBR data that follows no single channel element, channel pair element or independently switched coupling channel element"
   ]
  ],
  "crosscheck": {

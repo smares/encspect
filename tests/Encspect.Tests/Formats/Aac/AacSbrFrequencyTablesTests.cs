@@ -67,7 +67,7 @@ public class AacSbrFrequencyTablesTests
 
     // Every sample rate with a table row and every header the syntax can state (4, 4, 2, 1, 3 and 2 bits): what Derive gives, hashed. The
     // band edges and counts rounded to integers come from DetMath's logarithm and power, not the platform's, and this pin holds the results
-    // of the platform library they replaced (Linux, glibc, .NET 10), so a tie that rounds the other way shows here before any golden.
+    // of the platform library they replaced (Linux, glibc, .NET 10), so a tie that rounds the other way shows here before any golden. A header that needs more than the five patches of 4.6.18.3.6 gives its tables and is reported, so the pin is the one from before the limit was checked.
     [Fact]
     public void DerivedTablesOfEveryRateAndHeaderAreTheOnesTheLibraryMathGave()
     {
@@ -95,6 +95,26 @@ public class AacSbrFrequencyTablesTests
                                     System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(record[16..], bands?.Noise ?? 0);
                                     hash.AppendData(record[..20]);
                                     hash.AppendData(System.Text.Encoding.UTF8.GetBytes(error ?? string.Empty));
+                                    if (bands is not null)
+                                    {
+                                        (SbrTables? tables, _) = Sbr.Tables(Header(start, stop, scale, alter, xover, noise), rate);
+                                        var layout = new Encspect.Formats.Aac.Decoding.SbrLayout(tables!, rate);
+
+                                        // The decoder's patches are the ones of Figure 4.48 the parser counts: as many, each as wide and as far from its source.
+                                        (int spec, int[] widths, int[] sources) = Sbr.Patches(tables!.Master, tables.Kx, rate);
+                                        Assert.Equal(spec, layout.PatchCount);
+                                        int at = tables.Kx;
+                                        for (int p = 0; p < spec; p++)
+                                        {
+                                            Assert.Equal(at, layout.PatchStart[p]);
+                                            Assert.Equal(widths[p], layout.PatchBands[p]);
+                                            Assert.Equal(at - sources[p], layout.PatchStride[p]);
+                                            at += widths[p];
+                                        }
+
+                                        // Figure 4.48 may build more than the five 4.6.18.3.6 allows (a finding, not a rejection); never more than its loop's bound.
+                                        Assert.True(spec <= Sbr.FigureMaxPatches);
+                                    }
                                 }
                             }
                         }

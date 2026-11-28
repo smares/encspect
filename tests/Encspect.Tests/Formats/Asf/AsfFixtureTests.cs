@@ -81,6 +81,12 @@ public class AsfFixtureTests
         for (int i = 0; i < listed.Length; i++)
         {
             StreamProtection? actual = report.Streams[i].Protection;
+            if (listed[i].ValueKind == JsonValueKind.Null)
+            {
+                Assert.Null(actual);
+                continue;
+            }
+
             Assert.NotNull(actual);
             Assert.Equal(listed[i].GetProperty("scheme").GetString(), actual.Scheme);
             Assert.Equal(listed[i].GetProperty("is_encrypted").GetBoolean(), actual.IsEncrypted);

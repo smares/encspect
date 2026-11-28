@@ -180,6 +180,81 @@ internal static partial class Sbr
         return (new SbrTables(kx, end, master, highTable, lowTable, noiseTable), null);
     }
 
+    // The most patches an SBR range may need (4.6.18.3.6). A header whose tables need more is built as Figure 4.48 gives them and reported (aac.sbr-patches-over-limit), since
+    // reference streams (Coding Technologies' aacPlus decoder check streams) have six.
+    public const int MaxPatches = 5;
+
+    // The most patches Figure 4.48's loop can build: it stops at 39 (each patch is at least one QMF band wide and the SBR range is at most 63 bands, and the loop's guard stops it sooner).
+    public const int FigureMaxPatches = 39;
+
+    // The patches of Figure 4.48 (4.6.18.6.3) for a master table, kx and the SBR rate: how many there are (numPatches), the width of each (patchNumSubbands) and the first QMF band each
+    // copies from (patchStartSubband). The decoder builds its patches from these and the parser checks their number against 4.6.18.3.6, so both see the same ones.
+    public static (int Count, int[] Widths, int[] Sources) Patches(int[] master, int kx, int rate)
+    {
+        int count = master.Length - 1;
+        int lsb = master[0];
+        int end = master[count];
+        int msb = lsb;
+        int usb = kx;
+        int patches = 0;
+        int goal = (int)Math.Floor((2.048e6 / rate) + 0.5);
+        int k = count;
+        if (goal < end)
+        {
+            k = 0;
+            for (int i = 0; master[i] < goal; i++)
+            {
+                k = i + 1;
+            }
+        }
+
+        var widths = new int[40];
+        var sources = new int[40];
+        int sb;
+        int guard = 0;
+        do
+        {
+            int j = k;
+            int odd;
+            do
+            {
+                sb = master[j];
+                odd = (sb - 2 + lsb) % 2;
+                j--;
+            }
+            while (sb > lsb - 1 + msb - odd && j >= 0);
+
+            int width = Math.Max(sb - usb, 0);
+            widths[patches] = width;
+            sources[patches] = lsb - odd - width;
+            if (width > 0)
+            {
+                usb = sb;
+                msb = sb;
+                patches++;
+            }
+            else
+            {
+                msb = kx;
+            }
+
+            if (master[k] - sb < 3)
+            {
+                k = count;
+            }
+        }
+        while (sb != end && ++guard < 32 && patches < 39);
+
+        if (patches > 0 && widths[patches - 1] < 3 && patches > 1)
+        {
+            patches--;
+        }
+
+        return (patches, widths, sources);
+    }
+
+    public static int PatchCount(int[] master, int kx, int rate) => Patches(master, kx, rate).Count;
+
     private static int Nearest(double value) => (int)Math.Floor(value + 0.5);
 
     // The widths of n bands from a to b on a logarithmic scale: the boundaries are the nearest integers to a * (b / a)^(j / n).

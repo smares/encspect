@@ -3,7 +3,7 @@ using Encspect.Core;
 namespace Encspect.Formats.Aac;
 
 // AudioSpecificConfig (ISO/IEC 14496-3 1.6.2.1, Table 1.15) with GASpecificConfig (4.4.1, Table
-// 4.1), the program config element (4.4.1.1, Table 4.2), ELDSpecificConfig (4.4.1.2, Table 4.3)
+// 4.1), the program config element (4.4.1.1, Table 4.2), ELDSpecificConfig (4.6.20.3, Table 4.180)
 // and, at its top level, UsacConfig (ISO/IEC 23003-3 5.2, Table 13). Each field becomes a node at
 // the file bits it came from.
 internal static class AudioSpecificConfig
@@ -285,7 +285,7 @@ internal static class AudioSpecificConfig
         }
     }
 
-    // 4.4.1.2, Table 4.3, with ld_sbr_header (Table 4.5) and sbr_header (Table 4.63).
+    // 4.6.20.3, Table 4.180, with ld_sbr_header (Table 4.181) and sbr_header (Table 4.63).
     private static void EldSpecificConfig(BitFields f, Node node, State state, int configuration)
     {
         bool isShort = f.Read(node, "Frame Length", 1, Explain.FrameLength, v => NodeValue.Integer(v == 0 ? 512 : 480, "samples")) != 0;
@@ -297,9 +297,10 @@ internal static class AudioSpecificConfig
         {
             bool dualRate = f.Read(node, "Low Delay SBR Sampling Rate", 1, Explain.LowDelaySbrRate, v => v == 0 ? "downsampled SBR (core rate)" : "dual-rate SBR") != 0;
             f.Flag(node, "HasLowDelaySbrCrc", Explain.HasLowDelaySbrCrc);
-            // One sbr_header() per single channel and channel pair element of the configuration; the low
-            // frequency elements carry none. ISO/IEC 14496-3 Table 4.181 (ld_sbr_header()) gives these counts and none
-            // for any other configuration, 13 included (MediaInfo's ld_sbr_header reads none for it either).
+            // One sbr_header() per single channel and channel pair element of the configuration (Table 4.181 gives configuration 7 four headers and none for the others in the 2009 edition;
+            // 11, 12 and 14 are a later amendment's); the low
+            // frequency elements carry none. fdk-aac's EldSpecificConfig_Parse (tpdec_asc.cpp) gives these
+            // counts and none for any other configuration, 13 included (MediaInfo's ld_sbr_header reads none for it either).
             int headers = configuration switch
             {
                 1 or 2 => 1,

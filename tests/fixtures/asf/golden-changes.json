@@ -1,117 +1,1027 @@
 {
-  "goldens": [
-    "tests/fixtures/asf/"
-  ],
-  "changed": [
-    {
-      "scope": "finding",
-      "code": "wma.codec-data-size",
-      "fields": [
-        "message"
-      ]
-    },
-    {
-      "scope": "finding",
-      "code": "wma.packet-long",
-      "fields": [
-        "message"
-      ]
-    },
-    {
-      "scope": "finding",
-      "code": "wma.packet-short",
-      "fields": [
-        "message"
-      ]
-    },
-    {
-      "scope": "finding",
-      "code": "wma.superframe-short",
-      "fields": [
-        "message"
-      ]
-    },
-    {
-      "scope": "finding",
-      "code": "wma.voice-block-alignment",
-      "fields": [
-        "message"
-      ]
-    },
-    {
-      "scope": "finding",
-      "code": "wma.voice-cache-overflow",
-      "fields": [
-        "message"
-      ]
-    },
-    {
-      "scope": "finding",
-      "code": "wma.voice-denoise-strength",
-      "fields": [
-        "message"
-      ]
-    },
-    {
-      "scope": "finding",
-      "code": "wma.voice-frame-type-overlap",
-      "fields": [
-        "message"
-      ]
-    },
-    {
-      "scope": "finding",
-      "code": "wma.voice-frame-type-table",
-      "fields": [
-        "message"
-      ]
-    },
-    {
-      "scope": "finding",
-      "code": "wma.voice-sample-rate",
-      "fields": [
-        "message"
-      ]
-    },
-    {
-      "path": [
-        "ASF",
-        "Data Object",
-        "Windows Media Audio 1",
-        "Encoder",
-        "Evidence"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/asf/external-ffmpeg-wmav1-mono-22k-24k.report.json",
-        "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json",
-        "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-48k.report.json"
-      ]
-    },
-    {
-      "path": [
-        "ASF",
-        "Data Object",
-        "Windows Media Audio 2",
-        "Encoder",
-        "Evidence"
-      ],
-      "fields": [
-        "value"
-      ],
-      "goldens": [
-        "tests/fixtures/asf/derived-ffmpeg-wmav2-noise-control.report.json",
-        "tests/fixtures/asf/derived-ffmpeg-wmav2-noise-flagged-band.report.json",
-        "tests/fixtures/asf/derived-ffmpeg-wmav2-tool-name-lavc.report.json",
-        "tests/fixtures/asf/external-ffmpeg-wmav2-mono-44k-48k.report.json",
-        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-22k-32k.report.json",
-        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-32k-64k.report.json",
-        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-128k.report.json",
-        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-32k.report.json",
-        "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-64k.report.json"
-      ]
-    }
-  ]
+ "goldens": [
+  "tests/fixtures/asf/",
+  "tests/fixtures/wav/external-wmav1-in-wav.report.json",
+  "tests/fixtures/wav/external-wmav2-in-wav.report.json",
+  "tests/fixtures/matroska/external-ffmpeg-acm-wma1.report.json",
+  "tests/fixtures/matroska/external-ffmpeg-acm-wma2.report.json"
+ ],
+ "changed": [
+  {
+   "path": [
+    "ASF",
+    "Data Object",
+    "Windows Media Audio 1",
+    "Encoder",
+    "Evidence"
+   ],
+   "fields": [
+    "value"
+   ],
+   "goldens": [
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-48k.report.json"
+   ]
+  },
+  {
+   "path": [
+    "ASF",
+    "Data Object",
+    "Windows Media Audio 1",
+    "Statistics",
+    "Largest Frame"
+   ],
+   "fields": [
+    "value"
+   ],
+   "goldens": [
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json"
+   ]
+  },
+  {
+   "path": [
+    "ASF",
+    "Data Object",
+    "Windows Media Audio 1",
+    "Statistics",
+    "Maximum Bitrate"
+   ],
+   "fields": [
+    "value"
+   ],
+   "goldens": [
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json"
+   ]
+  },
+  {
+   "path": [
+    "ASF",
+    "Data Object",
+    "Windows Media Audio 1",
+    "Statistics",
+    "Bitrate Distribution",
+    "32 to 63 kbps"
+   ],
+   "fields": [
+    "value"
+   ],
+   "goldens": [
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json"
+   ]
+  },
+  {
+   "path": [
+    "ASF",
+    "Data Object",
+    "Windows Media Audio 1",
+    "Statistics",
+    "Bitrate Distribution",
+    "96 to 127 kbps"
+   ],
+   "fields": [
+    "value"
+   ],
+   "goldens": [
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json"
+   ]
+  },
+  {
+   "path": [
+    "ASF",
+    "Data Object",
+    "Windows Media Audio 1",
+    "Statistics",
+    "Non-Zero Coefficients"
+   ],
+   "fields": [
+    "value"
+   ],
+   "goldens": [
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-48k.report.json"
+   ]
+  },
+  {
+   "path": [
+    "ASF",
+    "Data Object",
+    "Windows Media Audio 1",
+    "Statistics",
+    "Escape-Coded Coefficients"
+   ],
+   "fields": [
+    "value"
+   ],
+   "goldens": [
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json"
+   ]
+  },
+  {
+   "path": [
+    "ASF",
+    "Data Object",
+    "Windows Media Audio 1",
+    "Statistics",
+    "Coded Bandwidth",
+    "Most Common"
+   ],
+   "fields": [
+    "value"
+   ],
+   "goldens": [
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json"
+   ]
+  },
+  {
+   "path": [
+    "ASF",
+    "Data Object",
+    "Windows Media Audio 1",
+    "Statistics",
+    "Coded Bandwidth",
+    "Highest"
+   ],
+   "fields": [
+    "value"
+   ],
+   "goldens": [
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-48k.report.json"
+   ]
+  },
+  {
+   "path": [
+    "ASF",
+    "Data Object",
+    "Windows Media Audio 1",
+    "Superframes",
+    "Superframe",
+    "Frame Data"
+   ],
+   "fields": [
+    "length"
+   ],
+   "goldens": [
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-48k.report.json"
+   ]
+  },
+  {
+   "path": [
+    "ASF",
+    "Data Object",
+    "Windows Media Audio 1",
+    "Superframes",
+    "Superframe",
+    "Padding"
+   ],
+   "fields": [
+    "length",
+    "offset",
+    "value"
+   ],
+   "goldens": [
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-48k.report.json"
+   ]
+  },
+  {
+   "path": [
+    "ASF",
+    "Data Object",
+    "Windows Media Audio 1",
+    "Frames",
+    "Frame"
+   ],
+   "fields": [
+    "length",
+    "value"
+   ],
+   "goldens": [
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-48k.report.json"
+   ]
+  },
+  {
+   "path": [
+    "ASF",
+    "Data Object",
+    "Windows Media Audio 1",
+    "Frames",
+    "Frame",
+    "Block"
+   ],
+   "fields": [
+    "length"
+   ],
+   "goldens": [
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-48k.report.json"
+   ]
+  },
+  {
+   "path": [
+    "ASF",
+    "Data Object",
+    "Windows Media Audio 1",
+    "Frames",
+    "Frame",
+    "Block",
+    "Coefficients (channel 1)"
+   ],
+   "fields": [
+    "bitLength",
+    "length",
+    "value"
+   ],
+   "goldens": [
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-48k.report.json"
+   ]
+  },
+  {
+   "path": [
+    "ASF",
+    "Data Object",
+    "Windows Media Audio 1",
+    "Frames",
+    "Frame",
+    "Block",
+    "Coefficients (channel 2)"
+   ],
+   "fields": [
+    "length",
+    "offset",
+    "value"
+   ],
+   "goldens": [
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-48k.report.json"
+   ]
+  },
+  {
+   "path": [
+    "ASF",
+    "Data Object",
+    "Windows Media Audio 1",
+    "Frames",
+    "Frame",
+    "Block",
+    "Coefficients (channel 1)"
+   ],
+   "fields": [
+    "value"
+   ],
+   "goldens": [
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-48k.report.json"
+   ]
+  },
+  {
+   "path": [
+    "ASF",
+    "Data Object",
+    "Windows Media Audio 1",
+    "Frames",
+    "Frame",
+    "Block",
+    "Coefficients (channel 2)"
+   ],
+   "fields": [
+    "length",
+    "value"
+   ],
+   "goldens": [
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json"
+   ]
+  },
+  {
+   "path": [
+    "ASF",
+    "Data Object",
+    "Windows Media Audio 1",
+    "Frames",
+    "Frame",
+    "Block",
+    "Coefficients (channel 2)"
+   ],
+   "fields": [
+    "offset",
+    "value"
+   ],
+   "goldens": [
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-48k.report.json"
+   ]
+  },
+  {
+   "path": [
+    "ASF",
+    "Data Object",
+    "Windows Media Audio 1",
+    "Frames",
+    "Frame",
+    "Block",
+    "Coefficients (channel 1)"
+   ],
+   "fields": [
+    "bitLength",
+    "length"
+   ],
+   "goldens": [
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json"
+   ]
+  },
+  {
+   "path": [
+    "ASF",
+    "Data Object",
+    "Windows Media Audio 1",
+    "Frames",
+    "Frame",
+    "Block",
+    "Coefficients (channel 2)"
+   ],
+   "fields": [
+    "value"
+   ],
+   "goldens": [
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-48k.report.json"
+   ]
+  },
+  {
+   "scope": "stream",
+   "array": "series",
+   "name": "Bitrate",
+   "fields": [
+    "values"
+   ],
+   "goldens": [
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-48k.report.json",
+    "tests/fixtures/matroska/external-ffmpeg-acm-wma1.report.json"
+   ]
+  },
+  {
+   "scope": "stream",
+   "array": "series",
+   "name": "Bitrate Over Time",
+   "fields": [
+    "values"
+   ],
+   "goldens": [
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-48k.report.json",
+    "tests/fixtures/matroska/external-ffmpeg-acm-wma1.report.json"
+   ]
+  },
+  {
+   "scope": "stream",
+   "array": "series",
+   "name": "Coded Bandwidth",
+   "fields": [
+    "values"
+   ],
+   "goldens": [
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-48k.report.json",
+    "tests/fixtures/matroska/external-ffmpeg-acm-wma1.report.json"
+   ]
+  },
+  {
+   "scope": "stream",
+   "array": "series",
+   "name": "Coded Bandwidth Over Time",
+   "fields": [
+    "values"
+   ],
+   "goldens": [
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-48k.report.json",
+    "tests/fixtures/matroska/external-ffmpeg-acm-wma1.report.json"
+   ]
+  },
+  {
+   "path": [
+    "Matroska",
+    "Track 1 Frames",
+    "Windows Media Audio 1",
+    "Encoder",
+    "Evidence"
+   ],
+   "fields": [
+    "value"
+   ],
+   "goldens": [
+    "tests/fixtures/matroska/external-ffmpeg-acm-wma1.report.json"
+   ]
+  },
+  {
+   "path": [
+    "Matroska",
+    "Track 1 Frames",
+    "Windows Media Audio 1",
+    "Frames",
+    "Frame"
+   ],
+   "fields": [
+    "length",
+    "value"
+   ],
+   "goldens": [
+    "tests/fixtures/matroska/external-ffmpeg-acm-wma1.report.json"
+   ]
+  },
+  {
+   "path": [
+    "Matroska",
+    "Track 1 Frames",
+    "Windows Media Audio 1",
+    "Frames",
+    "Frame",
+    "Block"
+   ],
+   "fields": [
+    "length"
+   ],
+   "goldens": [
+    "tests/fixtures/matroska/external-ffmpeg-acm-wma1.report.json"
+   ]
+  },
+  {
+   "path": [
+    "Matroska",
+    "Track 1 Frames",
+    "Windows Media Audio 1",
+    "Frames",
+    "Frame",
+    "Block",
+    "Coefficients (channel 1)"
+   ],
+   "fields": [
+    "bitLength",
+    "length",
+    "value"
+   ],
+   "goldens": [
+    "tests/fixtures/matroska/external-ffmpeg-acm-wma1.report.json"
+   ]
+  },
+  {
+   "path": [
+    "Matroska",
+    "Track 1 Frames",
+    "Windows Media Audio 1",
+    "Frames",
+    "Frame",
+    "Block",
+    "Coefficients (channel 2)"
+   ],
+   "fields": [
+    "length",
+    "offset",
+    "value"
+   ],
+   "goldens": [
+    "tests/fixtures/matroska/external-ffmpeg-acm-wma1.report.json"
+   ]
+  },
+  {
+   "path": [
+    "Matroska",
+    "Track 1 Frames",
+    "Windows Media Audio 1",
+    "Statistics",
+    "Bitrate Distribution",
+    "32 to 63 kbps"
+   ],
+   "fields": [
+    "value"
+   ],
+   "goldens": [
+    "tests/fixtures/matroska/external-ffmpeg-acm-wma1.report.json"
+   ]
+  },
+  {
+   "path": [
+    "Matroska",
+    "Track 1 Frames",
+    "Windows Media Audio 1",
+    "Statistics",
+    "Bitrate Distribution",
+    "96 to 127 kbps"
+   ],
+   "fields": [
+    "value"
+   ],
+   "goldens": [
+    "tests/fixtures/matroska/external-ffmpeg-acm-wma1.report.json"
+   ]
+  },
+  {
+   "path": [
+    "Matroska",
+    "Track 1 Frames",
+    "Windows Media Audio 1",
+    "Statistics",
+    "Coded Bandwidth",
+    "Highest"
+   ],
+   "fields": [
+    "value"
+   ],
+   "goldens": [
+    "tests/fixtures/matroska/external-ffmpeg-acm-wma1.report.json"
+   ]
+  },
+  {
+   "path": [
+    "Matroska",
+    "Track 1 Frames",
+    "Windows Media Audio 1",
+    "Statistics",
+    "Coded Bandwidth",
+    "Most Common"
+   ],
+   "fields": [
+    "value"
+   ],
+   "goldens": [
+    "tests/fixtures/matroska/external-ffmpeg-acm-wma1.report.json"
+   ]
+  },
+  {
+   "path": [
+    "Matroska",
+    "Track 1 Frames",
+    "Windows Media Audio 1",
+    "Statistics",
+    "Escape-Coded Coefficients"
+   ],
+   "fields": [
+    "value"
+   ],
+   "goldens": [
+    "tests/fixtures/matroska/external-ffmpeg-acm-wma1.report.json"
+   ]
+  },
+  {
+   "path": [
+    "Matroska",
+    "Track 1 Frames",
+    "Windows Media Audio 1",
+    "Statistics",
+    "Largest Frame"
+   ],
+   "fields": [
+    "value"
+   ],
+   "goldens": [
+    "tests/fixtures/matroska/external-ffmpeg-acm-wma1.report.json"
+   ]
+  },
+  {
+   "path": [
+    "Matroska",
+    "Track 1 Frames",
+    "Windows Media Audio 1",
+    "Statistics",
+    "Maximum Bitrate"
+   ],
+   "fields": [
+    "value"
+   ],
+   "goldens": [
+    "tests/fixtures/matroska/external-ffmpeg-acm-wma1.report.json"
+   ]
+  },
+  {
+   "path": [
+    "Matroska",
+    "Track 1 Frames",
+    "Windows Media Audio 1",
+    "Statistics",
+    "Non-Zero Coefficients"
+   ],
+   "fields": [
+    "value"
+   ],
+   "goldens": [
+    "tests/fixtures/matroska/external-ffmpeg-acm-wma1.report.json"
+   ]
+  },
+  {
+   "path": [
+    "Matroska",
+    "Track 1 Frames",
+    "Windows Media Audio 1",
+    "Superframes",
+    "Superframe",
+    "Frame Data"
+   ],
+   "fields": [
+    "length"
+   ],
+   "goldens": [
+    "tests/fixtures/matroska/external-ffmpeg-acm-wma1.report.json"
+   ]
+  },
+  {
+   "path": [
+    "Matroska",
+    "Track 1 Frames",
+    "Windows Media Audio 1",
+    "Superframes",
+    "Superframe",
+    "Padding"
+   ],
+   "fields": [
+    "length",
+    "offset",
+    "value"
+   ],
+   "goldens": [
+    "tests/fixtures/matroska/external-ffmpeg-acm-wma1.report.json"
+   ]
+  },
+  {
+   "scope": "finding",
+   "code": "wma.codec-data-size",
+   "fields": [
+    "message"
+   ]
+  },
+  {
+   "scope": "finding",
+   "code": "wma.packet-long",
+   "fields": [
+    "message"
+   ]
+  },
+  {
+   "scope": "finding",
+   "code": "wma.packet-short",
+   "fields": [
+    "message"
+   ]
+  },
+  {
+   "scope": "finding",
+   "code": "wma.superframe-short",
+   "fields": [
+    "message"
+   ]
+  },
+  {
+   "scope": "finding",
+   "code": "wma.voice-block-alignment",
+   "fields": [
+    "message"
+   ]
+  },
+  {
+   "scope": "finding",
+   "code": "wma.voice-cache-overflow",
+   "fields": [
+    "message"
+   ]
+  },
+  {
+   "scope": "finding",
+   "code": "wma.voice-denoise-strength",
+   "fields": [
+    "message"
+   ]
+  },
+  {
+   "scope": "finding",
+   "code": "wma.voice-frame-type-overlap",
+   "fields": [
+    "message"
+   ]
+  },
+  {
+   "scope": "finding",
+   "code": "wma.voice-frame-type-table",
+   "fields": [
+    "message"
+   ]
+  },
+  {
+   "scope": "finding",
+   "code": "wma.voice-sample-rate",
+   "fields": [
+    "message"
+   ]
+  },
+  {
+   "path": [
+    "ASF",
+    "Data Object",
+    "Windows Media Audio 1",
+    "Encoder",
+    "Evidence"
+   ],
+   "fields": [
+    "value"
+   ],
+   "goldens": [
+    "tests/fixtures/asf/external-ffmpeg-wmav1-mono-22k-24k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-48k.report.json"
+   ]
+  },
+  {
+   "path": [
+    "ASF",
+    "Data Object",
+    "Windows Media Audio 2",
+    "Encoder",
+    "Evidence"
+   ],
+   "fields": [
+    "value"
+   ],
+   "goldens": [
+    "tests/fixtures/asf/derived-ffmpeg-wmav2-noise-control.report.json",
+    "tests/fixtures/asf/derived-ffmpeg-wmav2-noise-flagged-band.report.json",
+    "tests/fixtures/asf/derived-ffmpeg-wmav2-tool-name-lavc.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav2-mono-44k-48k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-22k-32k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-32k-64k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-128k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-32k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-64k.report.json"
+   ]
+  }
+ ],
+ "added": [
+  {
+   "scope": "stream",
+   "array": "series",
+   "name": "Total Gain",
+   "streams": [
+    0
+   ],
+   "goldens": [
+    "tests/fixtures/asf/derived-ffmpeg-wmav2-noise-control.report.json",
+    "tests/fixtures/asf/derived-ffmpeg-wmav2-noise-flagged-band.report.json",
+    "tests/fixtures/asf/derived-ffmpeg-wmav2-tool-name-lavc.report.json",
+    "tests/fixtures/asf/derived-windows-wma92-stereo-44k-128-damaged.report.json",
+    "tests/fixtures/asf/derived-windows-wma92-stereo-44k-128-object-cut.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav1-mono-22k-24k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-48k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav2-mono-44k-48k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-22k-32k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-32k-64k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-128k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-32k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-64k.report.json",
+    "tests/fixtures/asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-20-sdk.report.json",
+    "tests/fixtures/asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-32.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-mono-44k-48.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-22k-20-sdk.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-22k-32.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-cut-30.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-cut-36.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-sdk.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-192.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-32-sdk.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-48-sdk.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-64.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-48k-128.report.json",
+    "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q10.report.json",
+    "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q25.report.json",
+    "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q75-tagged.report.json",
+    "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q75.report.json",
+    "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q90.report.json",
+    "tests/fixtures/wav/external-wmav1-in-wav.report.json",
+    "tests/fixtures/wav/external-wmav2-in-wav.report.json",
+    "tests/fixtures/matroska/external-ffmpeg-acm-wma1.report.json",
+    "tests/fixtures/matroska/external-ffmpeg-acm-wma2.report.json"
+   ]
+  },
+  {
+   "scope": "stream",
+   "array": "series",
+   "name": "Total Gain Over Time",
+   "streams": [
+    0
+   ],
+   "goldens": [
+    "tests/fixtures/asf/derived-ffmpeg-wmav2-noise-control.report.json",
+    "tests/fixtures/asf/derived-ffmpeg-wmav2-noise-flagged-band.report.json",
+    "tests/fixtures/asf/derived-ffmpeg-wmav2-tool-name-lavc.report.json",
+    "tests/fixtures/asf/derived-windows-wma92-stereo-44k-128-damaged.report.json",
+    "tests/fixtures/asf/derived-windows-wma92-stereo-44k-128-object-cut.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav1-mono-22k-24k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-48k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav2-mono-44k-48k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-22k-32k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-32k-64k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-128k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-32k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-64k.report.json",
+    "tests/fixtures/asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-20-sdk.report.json",
+    "tests/fixtures/asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-32.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-mono-44k-48.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-22k-20-sdk.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-22k-32.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-cut-30.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-cut-36.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-sdk.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-192.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-32-sdk.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-48-sdk.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-64.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-48k-128.report.json",
+    "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q10.report.json",
+    "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q25.report.json",
+    "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q75-tagged.report.json",
+    "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q75.report.json",
+    "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q90.report.json",
+    "tests/fixtures/wav/external-wmav1-in-wav.report.json",
+    "tests/fixtures/wav/external-wmav2-in-wav.report.json",
+    "tests/fixtures/matroska/external-ffmpeg-acm-wma1.report.json",
+    "tests/fixtures/matroska/external-ffmpeg-acm-wma2.report.json"
+   ]
+  },
+  {
+   "scope": "stream",
+   "array": "series",
+   "name": "Escape-Coded Coefficients",
+   "streams": [
+    0
+   ],
+   "goldens": [
+    "tests/fixtures/asf/derived-ffmpeg-wmav2-noise-control.report.json",
+    "tests/fixtures/asf/derived-ffmpeg-wmav2-noise-flagged-band.report.json",
+    "tests/fixtures/asf/derived-ffmpeg-wmav2-tool-name-lavc.report.json",
+    "tests/fixtures/asf/derived-windows-wma92-stereo-44k-128-damaged.report.json",
+    "tests/fixtures/asf/derived-windows-wma92-stereo-44k-128-object-cut.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav1-mono-22k-24k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-48k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav2-mono-44k-48k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-22k-32k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-32k-64k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-128k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-32k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-64k.report.json",
+    "tests/fixtures/asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-20-sdk.report.json",
+    "tests/fixtures/asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-32.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-mono-44k-48.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-22k-20-sdk.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-22k-32.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-cut-30.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-cut-36.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-sdk.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-192.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-32-sdk.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-48-sdk.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-64.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-48k-128.report.json",
+    "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q10.report.json",
+    "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q25.report.json",
+    "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q75-tagged.report.json",
+    "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q75.report.json",
+    "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q90.report.json",
+    "tests/fixtures/wav/external-wmav1-in-wav.report.json",
+    "tests/fixtures/wav/external-wmav2-in-wav.report.json",
+    "tests/fixtures/matroska/external-ffmpeg-acm-wma1.report.json",
+    "tests/fixtures/matroska/external-ffmpeg-acm-wma2.report.json"
+   ]
+  },
+  {
+   "scope": "stream",
+   "array": "categorySeries",
+   "name": "Blocks Reusing Exponents",
+   "streams": [
+    0
+   ],
+   "goldens": [
+    "tests/fixtures/asf/derived-ffmpeg-wmav2-noise-control.report.json",
+    "tests/fixtures/asf/derived-ffmpeg-wmav2-noise-flagged-band.report.json",
+    "tests/fixtures/asf/derived-ffmpeg-wmav2-tool-name-lavc.report.json",
+    "tests/fixtures/asf/derived-windows-wma92-stereo-44k-128-damaged.report.json",
+    "tests/fixtures/asf/derived-windows-wma92-stereo-44k-128-object-cut.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav1-mono-22k-24k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-128k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-48k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav2-mono-44k-48k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-22k-32k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-32k-64k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-128k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-32k.report.json",
+    "tests/fixtures/asf/external-ffmpeg-wmav2-stereo-44k-64k.report.json",
+    "tests/fixtures/asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-20-sdk.report.json",
+    "tests/fixtures/asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-32.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-mono-44k-48.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-22k-20-sdk.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-22k-32.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-cut-30.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-cut-36.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128-sdk.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-128.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-192.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-32-sdk.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-48-sdk.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-64.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-48k-128.report.json",
+    "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q10.report.json",
+    "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q25.report.json",
+    "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q75-tagged.report.json",
+    "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q75.report.json",
+    "tests/fixtures/asf/external-windows-wma92-vbr-stereo-44k-q90.report.json",
+    "tests/fixtures/asf/fragments-in-two-streams.report.json",
+    "tests/fixtures/asf/writer-stamp-last.report.json",
+    "tests/fixtures/asf/writer-stamp-not-last.report.json",
+    "tests/fixtures/wav/external-wmav1-in-wav.report.json",
+    "tests/fixtures/wav/external-wmav2-in-wav.report.json",
+    "tests/fixtures/matroska/external-ffmpeg-acm-wma1.report.json",
+    "tests/fixtures/matroska/external-ffmpeg-acm-wma2.report.json"
+   ]
+  },
+  {
+   "scope": "node",
+   "parent": [
+    "ASF",
+    "Data Object",
+    "Windows Media Audio 2",
+    "Statistics"
+   ],
+   "name": "Noise Level",
+   "goldens": [
+    "tests/fixtures/asf/derived-ffmpeg-wmav2-noise-flagged-band.report.json",
+    "tests/fixtures/asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-20-sdk.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-22k-20-sdk.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-32-sdk.report.json"
+   ]
+  },
+  {
+   "scope": "node",
+   "parent": [
+    "ASF",
+    "Data Object",
+    "Windows Media Audio 2",
+    "Statistics",
+    "Noise Level"
+   ],
+   "name": "Highest",
+   "goldens": [
+    "tests/fixtures/asf/derived-ffmpeg-wmav2-noise-flagged-band.report.json",
+    "tests/fixtures/asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-20-sdk.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-22k-20-sdk.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-32-sdk.report.json"
+   ]
+  },
+  {
+   "scope": "node",
+   "parent": [
+    "ASF",
+    "Data Object",
+    "Windows Media Audio 2",
+    "Statistics",
+    "Noise Level"
+   ],
+   "name": "Lowest",
+   "goldens": [
+    "tests/fixtures/asf/derived-ffmpeg-wmav2-noise-flagged-band.report.json",
+    "tests/fixtures/asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-20-sdk.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-22k-20-sdk.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-32-sdk.report.json"
+   ]
+  },
+  {
+   "scope": "stream",
+   "array": "series",
+   "name": "Noise Level",
+   "streams": [
+    0
+   ],
+   "goldens": [
+    "tests/fixtures/asf/derived-ffmpeg-wmav2-noise-flagged-band.report.json",
+    "tests/fixtures/asf/external-remux-ffmpeg-wma92-cbr-stereo-22k-20-sdk.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-22k-20-sdk.report.json",
+    "tests/fixtures/asf/external-windows-wma92-cbr-stereo-44k-32-sdk.report.json"
+   ]
+  },
+  {
+   "scope": "stream",
+   "array": "categorySeries",
+   "name": "Blocks Reusing Exponents",
+   "streams": [
+    1
+   ],
+   "goldens": [
+    "tests/fixtures/asf/fragments-in-two-streams.report.json"
+   ]
+  }
+ ]
 }

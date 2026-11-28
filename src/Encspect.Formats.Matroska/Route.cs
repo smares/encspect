@@ -213,7 +213,7 @@ internal sealed partial class FileReader
         }
 
         track.AcmName = format.CodingName is null or "unknown" or "extensible" ? null : format.CodingName;
-        string? route = format.CodingTag is WaveFormatRoutes.Pcm or WaveFormatRoutes.IeeeFloat or WaveFormatRoutes.ALaw or WaveFormatRoutes.MuLaw ? Codecs.PcmSamples : format.CodecId;
+        string? route = format.CodecId;
         track.AcmRoute = route;
         if (track.HasAudio)
         {

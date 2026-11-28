@@ -2,10 +2,10 @@
  "schema": 1,
  "format": "aac",
  "run": {
-  "id": "41610797320",
-  "commit": "b57e98d7dce60df2d087fef80a7389270497d4c0",
+  "id": "45974409807",
+  "commit": "f61a3bf037ac558896ffe8c818178b810347521a",
   "imageOS": "ubuntu26",
-  "imageVersion": "20261026.180.1",
+  "imageVersion": "20261116.202.1",
   "ffmpeg": "ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers",
   "fdkAac": {
    "commit": "801f67f671929311e0c9952c5f92d6e147c7b003",
@@ -18,23 +18,23 @@
    "build": "24H232",
    "machine": "arm64",
    "imageOS": "macos15",
-   "imageVersion": "20261028.0489.1",
+   "imageVersion": "20261118.0550.1",
    "audioCodecs": "7.0",
    "audioToolbox": "1.14",
-   "runId": "41610797320",
-   "commit": "b57e98d7dce60df2d087fef80a7389270497d4c0"
+   "runId": "45974409807",
+   "commit": "f61a3bf037ac558896ffe8c818178b810347521a"
   },
   "mediaFoundation": {
    "windows": "Windows Server 2025 Datacenter 24H2",
-   "build": "26100.33674",
+   "build": "26100.33828",
    "machine": "AMD64",
    "imageOS": "win25-vs2026",
-   "imageVersion": "20261030.294.1",
+   "imageVersion": "20261123.321.1",
    "msAudDecMft": "10.0.26100.33438 (WinBuild.160101.0800)",
    "mfreadwrite": "10.0.26100.33296 (WinBuild.160101.0800)",
    "mfplat": "10.0.26100.32995 (WinBuild.160101.0800)",
-   "runId": "41610797320",
-   "commit": "b57e98d7dce60df2d087fef80a7389270497d4c0"
+   "runId": "45974409807",
+   "commit": "f61a3bf037ac558896ffe8c818178b810347521a"
   }
  },
  "statuses": [
@@ -2052,6 +2052,296 @@
    ]
   },
   {
+   "path": "faac-1.40-pink-equal-adts.aac",
+   "sha256": "fbbfbf83b3ca68efc5c8802b3c010be0ddfb02c672ea0dc9d3946402bc2d6ffb",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 90112,
+     "reference": 90112,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 89088
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 90112,
+       "decoderSamples": 90112,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 90112,
+       "decoderSamples": 90112,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 90112,
+       "decoderSamples": 90112,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 20201360,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1210",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 90112
+      },
+      "reader": {
+       "samples": 90112,
+       "decoderSamples": 90112,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 2
+       }
+      }
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "ffmpeg",
+     "value": 89088,
+     "analyzer": 90112,
+     "reference": 90112,
+     "status": "explained",
+     "kind": "witness-differs",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 88,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
+   "path": "faac-1.40-pink-side-12-db-adts.aac",
+   "sha256": "06696bb90669556e281c8be86f2ad04623df6de3820333a7d16049beeeb798e0",
+   "figures": [
+    {
+     "id": "samples",
+     "stage": "coded",
+     "analyzerFigure": "samples",
+     "streams": [
+      0
+     ],
+     "analyzer": 90112,
+     "reference": 90112,
+     "referencePath": "fdk direct",
+     "referenceKind": "official",
+     "witnesses": {
+      "ffmpeg": 89088
+     },
+     "analyzerRates": [
+      44100
+     ],
+     "format": {
+      "rate": 44100,
+      "channels": 2
+     },
+     "concealedSamples": 0,
+     "object": {
+      "aot": 2,
+      "extAot": 0,
+      "frameSize": 1024
+     },
+     "flushedSamples": 1024,
+     "coreAudio": {
+      "converter": {
+       "samples": 90112,
+       "decoderSamples": 90112,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "input": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       },
+       "refusedUnits": 0,
+       "noOutputUnits": 0,
+       "drainFrames": 0
+      },
+      "reader": {
+       "samples": 90112,
+       "decoderSamples": 90112,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "packetTable": null,
+       "fileFormat": {
+        "formatID": "aac ",
+        "sampleRate": 44100,
+        "channels": 2,
+        "framesPerPacket": 1024
+       }
+      }
+     },
+     "mediaFoundation": {
+      "transform": {
+       "samples": 90112,
+       "decoderSamples": 90112,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "refusedUnits": 0,
+       "errorUnits": 0,
+       "noOutputUnits": 1,
+       "drainFrames": 1024,
+       "noOutputList": [
+        0
+       ],
+       "firstOutput": {
+        "unit": 1,
+        "time": -1,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "drainOutput": {
+        "time": 20201360,
+        "duration": 232200,
+        "frames": 1024
+       },
+       "input": {
+        "config": "asStored",
+        "stored": "1210",
+        "aot": 2,
+        "extAot": 0
+       },
+       "decoder": "10.0.26100.33438 (WinBuild.160101.0800)",
+       "withoutTimestamps": 90112
+      },
+      "reader": {
+       "samples": 90112,
+       "decoderSamples": 90112,
+       "format": {
+        "rate": 44100,
+        "channels": 2
+       },
+       "outputFormat": {
+        "sampleRate": 44100,
+        "channels": 2
+       },
+       "nativeType": {
+        "sampleRate": 44100,
+        "channels": 2
+       }
+      }
+     }
+    }
+   ],
+   "differences": [
+    {
+     "figure": "samples",
+     "decoder": "ffmpeg",
+     "value": 89088,
+     "analyzer": 90112,
+     "reference": 90112,
+     "status": "explained",
+     "kind": "witness-differs",
+     "statusSource": "rule"
+    }
+   ],
+   "units": [],
+   "unitList": {
+    "kind": "adts",
+    "codec": "aac",
+    "units": 88,
+    "cutUnits": 0,
+    "skippedRanges": 0,
+    "skippedBytes": 0
+   },
+   "codecs": [
+    "AAC LC"
+   ]
+  },
+  {
    "path": "faac-1.40.m4a",
    "sha256": "ee92206db26b0a1ee3ee1ba11324b9aa033d90e8f40848a96aee8ad50624ba06",
    "figures": [
@@ -2965,8 +3255,9 @@
      ],
      "decoder": "decoded",
      "samples": 1024,
-     "finding": "aac.sbr-without-channel-element",
+     "finding": "aac.lfe-restrictions",
      "findings": [
+      "aac.lfe-restrictions",
       "aac.sbr-without-channel-element"
      ],
      "verdict": "finding, decoder decodes",
@@ -3591,7 +3882,28 @@
     }
    ],
    "differences": [],
-   "units": [],
+   "units": [
+    {
+     "index": 0,
+     "offset": 0,
+     "length": 621,
+     "ranges": [
+      [
+       0,
+       621
+      ]
+     ],
+     "decoder": "decoded",
+     "samples": 2048,
+     "finding": "aac.lfe-restrictions",
+     "findings": [
+      "aac.lfe-restrictions"
+     ],
+     "verdict": "finding, decoder decodes",
+     "status": "noted",
+     "statusSource": "rule"
+    }
+   ],
    "unitList": {
     "kind": "adts",
     "codec": "aac",
@@ -8296,8 +8608,8 @@
   }
  ],
  "counts": {
-  "files": 53,
-  "fed": 52,
+  "files": 55,
+  "fed": 54,
   "coreAudioCarried": 0,
   "mediaFoundationCarried": 0
  }

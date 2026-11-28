@@ -11,7 +11,7 @@ references: ISO/IEC 11172-3 2.4.2.3 (mode_extension), 2.4.3.4.9.3 (Layer III dec
 
 **In MPEG audio.** In Layers I and II the Mode Extension field gives a bound: subbands from 4, 8, 12 or 16 upward are coded once with a scalefactor for each channel. In Layer III it starts at the first scalefactor band above the highest nonzero line of the right channel (per window in short blocks), whose scalefactors there carry the direction (the intensity position, 0 to 6 in MPEG-1; 7 marks a band not intensity coded). It can combine with mid/side stereo below.
 
-**In AAC.** The second channel of a pair marks intensity bands with codebook 15, in phase, or 14, out of phase, where ms_used inverts the sign (only with ms_mask_present 1, as 4.6.8.2.3 has it), and codes a position instead of a scalefactor (ISO/IEC 14496-3 4.6.8.2). Those codebooks count in any pair, as FFmpeg 6.1.1 and faad2 decode them, though 4.6.8.2.3 signals intensity stereo only with a common window; a pair without one is reported with a warning and counted as intensity stereo.
+**In AAC.** The second channel of a pair marks intensity bands with codebook 15, in phase, or 14, out of phase, where ms_used inverts the sign (only with ms_mask_present 1, 4.6.8.2.3, which the report and the decoder both follow), and codes a position instead of a scalefactor (ISO/IEC 14496-3 4.6.8.2). 4.6.8.2.3 allows them only with a common window; FFmpeg 6.1.1 and faad2 decode them in any pair. A pair without one is reported with a warning and counted.
 
 **What you see.** Mode Extension shows "Intensity stereo" or a band range, and AAC pairs their Intensity Stereo Bands. Intensity Stereo Bound, in MPEG audio, AAC and Opus, gives the lowest frequency, in hertz, from which each frame or unit codes intensity stereo.
 

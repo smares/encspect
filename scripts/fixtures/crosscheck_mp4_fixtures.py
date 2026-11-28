@@ -606,6 +606,7 @@ MOOV_TRACKS = "MediaInfo lists the audio tracks of moov; the analyzer reports a 
 FIRST_ENTRY = "MediaInfo reads the first sample entry of the track (File_Mpeg4_Elements.cpp), which does not say that the track is encrypted; the analyzer reads the entries the chunks use"
 ALAC_TRACK = "MediaInfo lists the audio track from its sample entry; the analyzer reports a stream only for a coding it analyzes (mp4.codec-not-analyzed)"
 MEDIAINFO_READS_OTHERWISE = {
+    "adts/fill-sbr-with-other-payload": dict.fromkeys(["format", "sample rate", "SBR signaling"], "MediaInfo 26.01 finds no SBR in a fill element whose first extension payload is another type, which 4.5.2.1.5.2 does not allow next to SBR data: it names the stream AAC LC at the core rate, where the analyzer reads the SBR data and reports aac.fill-sbr-with-other-payload"),
     "mp4/ffmpeg-cenc-mp3": {"channels": NO_CHANNELS},
     "mp4/cenc-ac3": {"channels": NO_CHANNELS},
     "mp4/cenc-dts": {"channels": NO_CHANNELS},
@@ -630,11 +631,9 @@ MEDIAINFO_READS_OTHERWISE = {
     "mp4/sample-count-mismatch": {"access units": STTS_COUNT + ": 21, where stsz sizes 20"},
     "adts/corrupt-syntax": {"access units": ADTS_ERRORS + " (21 frames, 16 counted)"},
     "adts/damaged-length": {"access units": ADTS_ERRORS + " (30 frames, 28 counted)"},
-    "adts/raw-blocks": {"access units": "MediaInfo reads a crc_check in a frame of several raw data blocks also without protection (File_Aac_Main.cpp, adts_frame), which adts_header_error_check holds only when protection_absent is 0 (ISO/IEC 14496-3 1.A.2.2), so it misreads those blocks and counts none of the frames"},
+    "adts/raw-blocks": {"access units": "MediaInfo reads a crc_check in a frame of several raw data blocks also without protection (File_Aac_Main.cpp, adts_frame), which adts_header_error_check holds only when protection_absent is 0 (ISO/IEC 14496-3 1.A.3.2.3), so it misreads those blocks and counts none of the frames"},
     "adts/sbr-in-three-blocks": dict.fromkeys(["format", "sample rate", "SBR signaling"], SBR_ANYWHERE),
-    "adts/sbr-after-coupling-element": dict.fromkeys(["format", "sample rate", "SBR signaling"], SBR_ANYWHERE),
     "adts/sbr-in-one-block": dict.fromkeys(["format", "sample rate", "SBR signaling"], SBR_ANYWHERE),
-    "adts/sbr-before-channel-element": dict.fromkeys(["format", "sample rate", "SBR signaling"], SBR_ANYWHERE),
     "adts/sbr-in-frames-failing-crc": dict.fromkeys(["format", "sample rate", "SBR signaling"], SBR_ANYWHERE),
     "adts/sbr-in-all-but-first-block": dict.fromkeys(["format", "sample rate", "SBR signaling"], SBR_ANYWHERE),
     "adts/sbr-in-truncated-frame": {"streams": "MediaInfo 26.01 synchronizes an ADTS file on three consecutive frame headers or on frames that end exactly at the end of the file (File_Aac.cpp, Synchronize_ADTS); two frames and a cut third are neither, so it finds no audio stream"},

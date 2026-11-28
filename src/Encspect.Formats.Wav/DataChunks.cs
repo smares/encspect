@@ -91,7 +91,8 @@ internal static class DataChunks
             return;
         }
 
-        // None of the routed codec parsers takes anything from the fmt chunk: AC-3 would read the extra bytes of the WAVEFORMATEX as a dac3 or dec3 box.
+        // The stream parsers (MPEG audio, AC-3, DTS) take nothing from the fmt chunk: AC-3 would read the extra bytes of the WAVEFORMATEX as a dac3 or dec3 box. The Windows Media Audio
+        // parsers, which read packets, are given the WAVEFORMATEX and its codec-specific data (WindowsMediaRoute).
         string? codec = s.Burst is not null ? s.CarriedCodec : format.CodecId ?? s.CarriedCodec;
         bool isCarried = s.Burst is null && format.CodecId is null && s.CarriedCodec is not null;
         int streamsBefore = context.Streams.Count;
@@ -100,6 +101,7 @@ internal static class DataChunks
         {
             isRouted = s.Burst is { } chain
                 ? Iec61937Route.ParseBursts(s, format, data, chain, codec)
+                : FormatTags.IsWindowsMedia(format.CodingTag) ? WindowsMediaRoute.Run(s, format, data, codec)
                 : context.ParseStream(codec, data.Node, context.Reader.Slice(data.Start, data.Available));
         }
         else if (codec is not null)

@@ -10961,7 +10961,7 @@
       {
         "severity": "Warning",
         "code": "wma.packet-short",
-        "message": "A media object holds fewer bytes than the block alignment of 100; a decoder takes it for the rest of a packet and reads no header in it: it drops the superframe that goes on from the packet before, and takes a superframe or the start of one from the bytes only where the packet before counted more superframes than it held, or none.",
+        "message": "A unit of the stream's data holds fewer bytes than the block alignment of 100; a decoder takes it for the rest of a packet and reads no header in it: it drops the superframe that goes on from the packet before, and takes a superframe or the start of one from the bytes only where the packet before counted more superframes than it held, or none (wmavoice.c).",
         "offset": 855,
         "length": 50,
         "path": [

@@ -382,8 +382,11 @@ def check_opus(name, manifest, problems, skips):
     path = DIRECTORY / name
     if "opusinfo" not in skips:
         text = run(["opusinfo", str(path)]).stdout.decode("utf-8", "replace")
-        gain = float(header["Output Gain"].split()[0])
-        wanted = [f"Pre-skip: {header['Pre-skip'].split()[0]}", f"Channels: {header['Channels']}", f"Playback gain: {gain:g} dB"]
+        # opusinfo prints the Q7.8 output gain in full (%g of gain / 256), the manifest to two decimals, so both are compared with the header's own value.
+        raw = int.from_bytes(stream_pages(name, manifest, int(stream["serial"], 16))[0][16:18], "little", signed=True) / 256
+        if header["Output Gain"] != f"{raw:+.2f} dB":
+            problems.append(f"the manifest's output gain {header['Output Gain']!r} is not the header's {raw:+.2f} dB")
+        wanted = [f"Pre-skip: {header['Pre-skip'].split()[0]}", f"Channels: {header['Channels']}", f"Playback gain: {raw:g} dB"]
         rate = header["Input Sample Rate"]
         wanted.append(f"Original sample rate: {rate.split()[0]} Hz" if rate.endswith("Hz") else "Original sample rate")
         if "Stream Count" in header:
@@ -394,7 +397,9 @@ def check_opus(name, manifest, problems, skips):
         statistics = opus["statistics"]
         if statistics.get("Start Offset", "0 samples") == "0 samples":
             samples = info["samples"]
-            wanted.append(f"Playback length: {samples // 48000 // 60}m:{samples / 48000 % 60:06.3f}s")
+            # opusinfo truncates the length to whole milliseconds (24,000 - 6 samples print as 0.499 s).
+            ms = samples * 1000 // 48000
+            wanted.append(f"Playback length: {ms // 60000}m:{ms % 60000 / 1000:06.3f}s")
         for line in wanted:
             if line not in text:
                 problems.append(f"opusinfo does not print {line!r}")

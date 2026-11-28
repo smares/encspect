@@ -1,0 +1,56 @@
+{
+ "description": "ADTS of channel configuration 0 with a program config element of a front single channel element and an LFE element: the LFE of the first two blocks keeps to its restrictions, that of the last two has a Kaiser-Bessel derived window, coefficients above the lowest 12 and TNS.",
+ "length": 393,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "2 channels",
+   "channel_layout": [
+    "front center",
+    "LFE"
+   ],
+   "samples": 4096,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   83
+  ],
+  [
+   83,
+   84
+  ],
+  [
+   167,
+   113
+  ],
+  [
+   280,
+   113
+  ]
+ ],
+ "fields": {},
+ "findings": [
+  [
+   "aac.lfe-restrictions",
+   "2 raw data blocks hold an LFE channel stream with a Kaiser-Bessel derived window"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "faad": {
+   "seconds": "0.093",
+   "rate": 44100
+  },
+  "skip": {
+   "decode": "ffmpeg's decoder differs on the filter bank of the LFE."
+  }
+ }
+}

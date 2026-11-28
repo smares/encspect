@@ -16,7 +16,7 @@ An SBR header (ISO/IEC 14496-3 4.4.2, `sbr_header`) does not state how many valu
 - the master frequency band table (4.6.18.3.2), from `bs_start_freq`, `bs_stop_freq`, `bs_freq_scale` and `bs_alter_scale`;
 - the high and low resolution tables and the noise floor bands (4.6.18.3.3), from the master table, `bs_xover_band` and `bs_noise_bands`.
 
-The parser needs only five figures from them, to read `sbr_data` far enough to find the parametric stereo extension, and to show the first and last QMF band in the coding statistics. A header whose tables cannot be built is reported, and its element's SBR data is not read.
+The parser needs only five figures from them, to read `sbr_data` far enough to find the parametric stereo extension, and to show the first and last QMF band in the coding statistics. A header whose tables cannot be built is reported, and its element's SBR data is not read. A header whose tables need more than five patches (4.6.18.3.6) can be built: it is decoded with the patches of Figure 4.48 and reported as information (`aac.sbr-patches-over-limit`), not rejected.
 
 ## Inputs and outputs
 

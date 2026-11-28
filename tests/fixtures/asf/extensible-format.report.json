@@ -1090,6 +1090,89 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "name": "Stream 1 Media Objects",
+                  "value": 3,
+                  "unit": "media objects",
+                  "offset": 298,
+                  "length": 562,
+                  "children": [
+                    {
+                      "name": "Statistics",
+                      "kind": "Statistics",
+                      "offset": 298,
+                      "length": 562,
+                      "children": [
+                        {
+                          "name": "Codec",
+                          "value": "PCM",
+                          "offset": 298,
+                          "length": 562
+                        },
+                        {
+                          "name": "Sample Frames",
+                          "value": 30,
+                          "unit": "sample frames",
+                          "offset": 298,
+                          "length": 562
+                        },
+                        {
+                          "name": "Duration",
+                          "value": 0.000625,
+                          "unit": "s",
+                          "offset": 298,
+                          "length": 562
+                        },
+                        {
+                          "name": "Sample Rate",
+                          "value": 48000,
+                          "unit": "Hz",
+                          "offset": 298,
+                          "length": 562
+                        },
+                        {
+                          "name": "Channels",
+                          "value": 6,
+                          "unit": "channels",
+                          "offset": 298,
+                          "length": 562
+                        },
+                        {
+                          "name": "Channel Layout",
+                          "value": "5.1 (front left, front right, front center, LFE, back left, back right)",
+                          "offset": 298,
+                          "length": 562
+                        },
+                        {
+                          "name": "Bits Per Sample",
+                          "value": 16,
+                          "unit": "bits",
+                          "offset": 298,
+                          "length": 562
+                        },
+                        {
+                          "name": "Sample Format",
+                          "value": "signed integer",
+                          "offset": 298,
+                          "length": 562
+                        },
+                        {
+                          "name": "Byte Order",
+                          "value": "little-endian",
+                          "offset": 298,
+                          "length": 562
+                        },
+                        {
+                          "name": "Average Bitrate",
+                          "value": 4608,
+                          "unit": "kbps",
+                          "offset": 298,
+                          "length": 562
+                        }
+                      ]
+                    }
+                  ]
                 }
               ]
             }
@@ -1097,21 +1180,38 @@
         }
       ]
     },
-    "streams": [],
-    "findings": [
+    "streams": [
       {
-        "severity": "Info",
-        "code": "asf.codec-not-analyzed",
-        "message": "Stream 1 is coded as PCM (format tag 0x0001), which is not routed from ASF to a codec parser; its media objects are not analyzed.",
-        "offset": 134,
-        "length": 118,
-        "path": [
-          0,
-          0,
-          6
+        "nodes": [
+          [
+            0,
+            1,
+            7
+          ]
         ],
-        "count": 1
+        "codec": "PCM",
+        "codingClass": "lossless",
+        "sampleRate": 48000,
+        "channels": 6,
+        "channelMode": "Multichannel",
+        "channelLayout": [
+          "front left",
+          "front right",
+          "front center",
+          "LFE",
+          "back left",
+          "back right"
+        ],
+        "channelLayoutName": "5.1",
+        "bitsPerSample": 16,
+        "samples": 30,
+        "duration": 0.000625,
+        "averageBitrate": 4608,
+        "isVbr": false,
+        "playbackGroup": 1,
+        "series": []
       }
-    ]
+    ],
+    "findings": []
   }
 ]

@@ -688,6 +688,36 @@
                                           "length": 6688
                                         }
                                       ]
+                                    },
+                                    {
+                                      "name": "Parametric Stereo Mixing",
+                                      "value": 36,
+                                      "unit": "raw data blocks",
+                                      "offset": 48,
+                                      "length": 6688,
+                                      "children": [
+                                        {
+                                          "name": "Procedure Ra",
+                                          "value": "36 raw data blocks (100.0%)",
+                                          "offset": 48,
+                                          "length": 6688
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "name": "Parametric Stereo Phase",
+                                      "value": 36,
+                                      "unit": "raw data blocks",
+                                      "offset": 48,
+                                      "length": 6688,
+                                      "children": [
+                                        {
+                                          "name": "No phase differences",
+                                          "value": "36 raw data blocks (100.0%)",
+                                          "offset": 48,
+                                          "length": 6688
+                                        }
+                                      ]
                                     }
                                   ]
                                 },
@@ -18117,6 +18147,70 @@
               [
                 2,
                 35
+              ]
+            ],
+            "seconds": [
+              0,
+              22
+            ]
+          },
+          {
+            "name": "Parametric Stereo Mixing",
+            "valueLabel": "raw data block",
+            "categories": [
+              {
+                "name": "Procedure Ra",
+                "count": 36
+              },
+              {
+                "name": "Procedure Rb",
+                "count": 0
+              }
+            ],
+            "total": 36,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                36
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                36
+              ]
+            ],
+            "seconds": [
+              0,
+              22
+            ]
+          },
+          {
+            "name": "Parametric Stereo Phase",
+            "valueLabel": "raw data block",
+            "categories": [
+              {
+                "name": "No phase differences",
+                "count": 36
+              },
+              {
+                "name": "Phase differences",
+                "count": 0
+              }
+            ],
+            "total": 36,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                1,
+                36
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                36
               ]
             ],
             "seconds": [

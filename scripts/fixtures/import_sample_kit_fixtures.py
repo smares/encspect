@@ -108,6 +108,11 @@ ENCODERS = {
         "tool": "Winamp's Ogg Vorbis encoder plug-in, Format Converter, quality 5", "version": "Winamp 5.9.2 build 10042, enc_vorbis.dll 1.58.0.0",
         "kit_folder": "vorbis/winamp-5.9.2",
     },
+    "wme9": {
+        "tool": "Windows Media Encoder 9 Series (x86), WMEnc.exe through WMCmd.vbs", "version": "9.0.0.2980",
+        "component": "wmvcore.dll 9.0.0.4506, wmadmoe.dll 9.0.0.4503; Microsoft Windows XP Service Pack 3, build 2600, in a virtual machine",
+        "kit_folder": "wma/windows-media-encoder-9.0.0.2980-xp-sp3",
+    },
     "ms-aac": {
         "tool": "Microsoft AAC Audio Encoder MFT (Media Foundation)", "version": "mfAACEnc.dll 10.0.19041.1",
         "kit_folder": "windows-media-foundation", "note": "Driven through the transform's documented interface (ADTS) or Microsoft's Sink Writer (MP4).",
@@ -256,6 +261,31 @@ SELECTION = [
      "16 bits per sample, mono", "Microsoft's FLAC encoder (the vendor string names libFLAC 1.3.0)"),
     ("windows-media-foundation/windows-10-22h2-19045.7846/music-44k-mono-ms-alac-16bit.m4a", "alac", "ms-alac-44k-mono-16", "ms-alac", "44k-mono",
      "16 bits per sample, mono", "Microsoft's Apple Lossless encoder and its MP4 layout"),
+    # Windows Media Encoder 9's Windows Media Audio 9 at low bitrates, coded with line spectral pairs.
+    ("wma/windows-media-encoder-9.0.0.2980-xp-sp3/music-8k-mono-wma9-cbr-5_8_1.wma", "asf", "wme9-wma9-cbr-5k-8k-mono", "wme9", "8k-mono",
+     "Windows Media Audio 9, constant bitrate, 5 kbit/s, 8 kHz, mono", "line spectral pair exponents, the coding of Windows Media Encoder 9's low bitrates at 8 kHz"),
+    ("wma/windows-media-encoder-9.0.0.2980-xp-sp3/music-8k-mono-wma9-cbr-6_8_1.wma", "asf", "wme9-wma9-cbr-6k-8k-mono", "wme9", "8k-mono",
+     "Windows Media Audio 9, constant bitrate, 6 kbit/s, 8 kHz, mono", "line spectral pair exponents, the coding of Windows Media Encoder 9's low bitrates at 8 kHz"),
+    ("wma/windows-media-encoder-9.0.0.2980-xp-sp3/music-8k-mono-wma9-cbr-8_8_1.wma", "asf", "wme9-wma9-cbr-8k-8k-mono", "wme9", "8k-mono",
+     "Windows Media Audio 9, constant bitrate, 8 kbit/s, 8 kHz, mono", "line spectral pair exponents, the coding of Windows Media Encoder 9's low bitrates at 8 kHz"),
+    ("wma/windows-media-encoder-9.0.0.2980-xp-sp3/music-44k-mono-wma9-cbr-8_11_1.wma", "asf", "wme9-wma9-cbr-8k-11k-mono", "wme9", "44k-mono",
+     "Windows Media Audio 9, constant bitrate, 8 kbit/s, 11.025 kHz (the source is 44.1 kHz mono), mono", "line spectral pair exponents, the coding of Windows Media Encoder 9's low bitrates at 11.025 kHz"),
+    ("wma/windows-media-encoder-9.0.0.2980-xp-sp3/music-44k-mono-wma9-cbr-10_11_1.wma", "asf", "wme9-wma9-cbr-10k-11k-mono", "wme9", "44k-mono",
+     "Windows Media Audio 9, constant bitrate, 10 kbit/s, 11.025 kHz (the source is 44.1 kHz mono), mono", "line spectral pair exponents, the coding of Windows Media Encoder 9's low bitrates at 11.025 kHz"),
+    ("wma/windows-media-encoder-9.0.0.2980-xp-sp3/music-16k-mono-wma9-cbr-10_16_1.wma", "asf", "wme9-wma9-cbr-10k-16k-mono", "wme9", "16k-mono",
+     "Windows Media Audio 9, constant bitrate, 10 kbit/s, 16 kHz, mono", "line spectral pair exponents, the coding of Windows Media Encoder 9's low bitrates at 16 kHz"),
+    ("wma/windows-media-encoder-9.0.0.2980-xp-sp3/music-16k-mono-wma9-cbr-12_16_1.wma", "asf", "wme9-wma9-cbr-12k-16k-mono", "wme9", "16k-mono",
+     "Windows Media Audio 9, constant bitrate, 12 kbit/s, 16 kHz, mono", "line spectral pair exponents, the coding of Windows Media Encoder 9's low bitrates at 16 kHz"),
+    ("wma/windows-media-encoder-9.0.0.2980-xp-sp3/music-16k-mono-wma9-cbr-16_16_1.wma", "asf", "wme9-wma9-cbr-16k-16k-mono", "wme9", "16k-mono",
+     "Windows Media Audio 9, constant bitrate, 16 kbit/s, 16 kHz, mono", "line spectral pair exponents, the coding of Windows Media Encoder 9's low bitrates at 16 kHz"),
+    ("wma/windows-media-encoder-9.0.0.2980-xp-sp3/music-16k-mono-wma9-cbr2pass-16_16_1.wma", "asf", "wme9-wma9-cbr2pass-16k-16k-mono", "wme9", "16k-mono",
+     "Windows Media Audio 9, two-pass constant bitrate, 16 kbit/s, 16 kHz, mono", "line spectral pair exponents, the coding of Windows Media Encoder 9's low bitrates at 16 kHz"),
+    ("wma/windows-media-encoder-9.0.0.2980-xp-sp3/music-44k-stereo-wma9-cbr-12_8_2.wma", "asf", "wme9-wma9-cbr-12k-8k-stereo", "wme9", "44k-stereo",
+     "Windows Media Audio 9, constant bitrate, 12 kbit/s, 8 kHz (the source is 44.1 kHz stereo), stereo", "line spectral pair exponents, the coding of Windows Media Encoder 9's low bitrates at 8 kHz in stereo"),
+    ("wma/windows-media-encoder-9.0.0.2980-xp-sp3/music-44k-stereo-wma9-cbr-16_16_2.wma", "asf", "wme9-wma9-cbr-16k-16k-stereo", "wme9", "44k-stereo",
+     "Windows Media Audio 9, constant bitrate, 16 kbit/s, 16 kHz (the source is 44.1 kHz stereo), stereo", "line spectral pair exponents, the coding of Windows Media Encoder 9's low bitrates at 16 kHz in stereo"),
+    ("wma/windows-media-encoder-9.0.0.2980-xp-sp3/music-44k-stereo-wma9-cbr-20_16_2.wma", "asf", "wme9-wma9-cbr-20k-16k-stereo", "wme9", "44k-stereo",
+     "Windows Media Audio 9, constant bitrate, 20 kbit/s, 16 kHz (the source is 44.1 kHz stereo), stereo", "line spectral pair exponents, the coding of Windows Media Encoder 9's low bitrates at 16 kHz in stereo"),
 ]
 
 def sha256(data):

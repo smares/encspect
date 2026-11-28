@@ -1,6 +1,6 @@
 namespace Encspect.Formats.Aac;
 
-// The ADTS CRC (ISO/IEC 14496-3 1.A.4.3, which refers to ISO/IEC 11172-3 2.4.3.1): CRC-16 with the
+// The ADTS CRC (ISO/IEC 14496-3 1.A.3.2.3, Tables 1.A.8 to 1.A.10; the CRC-16 is that of ISO/IEC 11172-3 2.4.3.1 and the bits it covers are ISO/IEC 13818-7's): CRC-16 with the
 // polynomial 0x8005 and the initial value 0xFFFF, over bit fields of any length, most significant
 // bit first.
 internal struct Crc16()
@@ -42,8 +42,7 @@ internal struct Crc16()
     }
 
     // Adds the regions of a raw data block's elements that the ADTS CRC covers (ISO/IEC 14496-3
-    // 1.A.4.3 refers to ISO/IEC 13818-7 for the ADTS semantics; the 192 and 128 bits are libxaac's CRC_ADTS_RAW_DATA_BLK_LEN and
-    // CRC_ADTS_RAW_IIND_ICS, decoder/ixheaacd_bitbuffer.h, Apache-2.0): after
+    // 1.A.3.2.3 and ISO/IEC 13818-7, as fdk-aac's decoder reads its element lists in libFDK/src/FDK_tools_rom.cpp): after
     // each element's ID, the first 192 bits of a single channel, LFE or coupling element and of a
     // channel pair, the first 128 bits of the pair's second channel from its global_gain, and the
     // whole of a program config or data stream element, each filled up with zero bits where the

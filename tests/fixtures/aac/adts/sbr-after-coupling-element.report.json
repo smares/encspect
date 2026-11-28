@@ -33,7 +33,7 @@
                 },
                 {
                   "name": "Samples",
-                  "value": 12288,
+                  "value": 24576,
                   "unit": "samples",
                   "offset": 0,
                   "length": 1175
@@ -445,45 +445,15 @@
                     },
                     {
                       "name": "SBR Headers",
-                      "value": 3,
+                      "value": 0,
                       "unit": "headers",
                       "offset": 0,
                       "length": 1175
                     },
                     {
                       "name": "Unread SBR Data",
-                      "value": 12,
+                      "value": 6,
                       "unit": "payloads",
-                      "offset": 0,
-                      "length": 1175
-                    },
-                    {
-                      "name": "Start Frequency",
-                      "value": "5 (QMF band 14, about 4823 Hz)",
-                      "offset": 0,
-                      "length": 1175
-                    },
-                    {
-                      "name": "Stop Frequency",
-                      "value": "9 (QMF band 47, about 16193 Hz)",
-                      "offset": 0,
-                      "length": 1175
-                    },
-                    {
-                      "name": "Crossover Band",
-                      "value": 0,
-                      "offset": 0,
-                      "length": 1175
-                    },
-                    {
-                      "name": "Amplitude Resolution",
-                      "value": "3 dB",
-                      "offset": 0,
-                      "length": 1175
-                    },
-                    {
-                      "name": "HasHeaderChanges",
-                      "value": false,
                       "offset": 0,
                       "length": 1175
                     }
@@ -9274,9 +9244,9 @@
             0
           ]
         ],
-        "codec": "AAC LC",
+        "codec": "HE-AAC",
         "codingClass": "lossy",
-        "sampleRate": 22050,
+        "sampleRate": 44100,
         "channels": 2,
         "channelMode": "Stereo",
         "channelLayout": [
@@ -9284,7 +9254,7 @@
           "front right"
         ],
         "channelLayoutName": "stereo",
-        "samples": 12288,
+        "samples": 24576,
         "duration": 0.5572789115646258,
         "averageBitrate": 16.86767578125,
         "isVbr": true,
@@ -9807,6 +9777,18 @@
     ],
     "findings": [
       {
+        "severity": "Info",
+        "code": "aac.implicit-sbr",
+        "message": "ADTS cannot signal SBR or PS explicitly, but 12 of 12 raw data blocks hold SBR data: the stream is HE-AAC, signaled only implicitly, with an output rate of 44100 Hz. Decoders without SBR play the AAC LC core at 22050 Hz.",
+        "offset": 0,
+        "length": 99,
+        "path": [
+          0,
+          1
+        ],
+        "count": 1
+      },
+      {
         "severity": "Warning",
         "code": "aac.coupling-without-program",
         "message": "12 raw data blocks hold a coupling channel element, which channel configuration 2 does not provide for; the first at 0x2D.",
@@ -9824,7 +9806,7 @@
       {
         "severity": "Warning",
         "code": "aac.sbr-without-channel-element",
-        "message": "12 raw data blocks hold SBR data that follows no single channel or channel pair element; the first at 0x53.",
+        "message": "6 raw data blocks hold SBR data that follows no single channel element, channel pair element or independently switched coupling channel element, where 4.5.2.8.2.2 puts it; the first at 0x53.",
         "offset": 83,
         "length": 16,
         "path": [
@@ -9835,7 +9817,7 @@
           3,
           3
         ],
-        "count": 12
+        "count": 6
       }
     ]
   }

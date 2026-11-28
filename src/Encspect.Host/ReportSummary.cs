@@ -62,6 +62,9 @@ public sealed record ReportSummary(
     // The spectral bandwidth and the partial cutoff in hertz of the same stream, where measurements found one; null otherwise.
     public int? SpectralBandwidth { get; init; }
 
+    // The lower rate in hertz of the highest Nyquist edge of the same stream, where one was found; null otherwise.
+    public int? NyquistEdgeRate { get; init; }
+
     public int? PartialCutoff { get; init; }
 
     // The spectral slope in tenths of a dB per kilohertz of the same stream, where measurements found one; null otherwise.
@@ -176,6 +179,7 @@ public sealed record ReportSummary(
             LostSamples = lost,
             SpectralCutoff = first?.Measurements?.Spectrum?.Cutoff is { IsFound: true } cutoff ? cutoff.Frequency : null,
             SpectralBandwidth = first?.Measurements?.Spectrum?.Bandwidth is { IsFound: true } bandwidth ? bandwidth.Frequency : null,
+            NyquistEdgeRate = first?.Measurements?.Spectrum?.NyquistEdges is { Count: > 0 } edges ? edges[0].LowerRate : null,
             SpectralSlopeTenths = first?.Measurements?.Spectrum?.Slope is { IsFound: true } slope ? slope.TenthsOfDbPerKilohertz : null,
             PartialCutoff = first?.Measurements?.Spectrum?.PartialCutoff is { IsFound: true } partial ? partial.Frequency : null,
             SideCutoff = first?.Measurements?.Spectrum?.MidSide?.SideCutoff is { IsFound: true } side ? side.Frequency : null,
