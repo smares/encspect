@@ -66,5 +66,9 @@ public class WmaSuperframesPerObjectTests
         Assert.DoesNotContain(cut.Findings, f => f.Code == "wma.superframe-long");
         Assert.DoesNotContain(whole.Findings, f => f.Code == "wma.superframe-short");
         Assert.Contains(whole.Findings, f => f.Code == "wma.superframe-long");
+
+        // The cut rest declares frames that are lost, and the reservoir ends empty: no bits are left at the end for a frame to be built from the cut bytes.
+        Assert.True(cut.Streams[0].LostSamples > whole.Streams[0].LostSamples, $"{cut.Streams[0].LostSamples} against {whole.Streams[0].LostSamples}");
+        Assert.DoesNotContain(cut.Findings, f => f.Code == "wma.reservoir-at-end");
     }
 }

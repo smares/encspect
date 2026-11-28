@@ -108,7 +108,7 @@ jobs:
           for f in "$RUNNER_TEMP"/wma1-samples/*.asf; do ./probe-bin/wma-decode-probe.exe wma-pcm "$RUNNER_TEMP/wma1-pcm" "$f" 2>&1 | tee -a decode-out/wma1-microsoft/records.txt; done
           (cd "$RUNNER_TEMP/wma1-pcm" && sha256sum *.f32) | tee decode-out/wma1-microsoft/microsoft-pcm-sha256.txt
           dotnet build tests/Encspect.PcmDump -c Release -v q
-          python scripts/fixtures/crosscheck_wma_pcm.py --samples "$RUNNER_TEMP/wma1-samples" --microsoft "$RUNNER_TEMP/wma1-pcm" --pcmdump "dotnet $(cygpath -m "$PWD")/tests/Encspect.PcmDump/bin/Release/net10.0/Encspect.PcmDump.dll" tests/fixtures/asf/external-ffmpeg-wmav1-stereo-44k-48k.wma 2>&1 | tee decode-out/wma1-microsoft/crosscheck.txt
+          python scripts/fixtures/crosscheck_wma_pcm.py --samples "$RUNNER_TEMP/wma1-samples" --microsoft "$RUNNER_TEMP/wma1-pcm" --samples-only --pcmdump "dotnet $(cygpath -m "$PWD")/tests/Encspect.PcmDump/bin/Release/net10.0/Encspect.PcmDump.dll" 2>&1 | tee decode-out/wma1-microsoft/crosscheck.txt
 
       - name: Compare with the analyzer and ffmpeg
         if: always()

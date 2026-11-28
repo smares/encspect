@@ -2,7 +2,7 @@
 """Compares the PCM that Encspect's decoder of Windows Media Audio versions 1 and 2 delivers with FFmpeg's, and where a Windows run exists with Microsoft's
 (docs/formats/asf-wma.md, "Decoding"; docs/design/lossy-decoders.md, "The PCM cross-checks"; docs/development.md, "WMA versions 1 and 2 decoding").
 
-    crosscheck_wma_pcm.py [--pcmdump CMD] [--microsoft DIR] [--samples DIR] [--keep DIR] [FILE ...]
+    crosscheck_wma_pcm.py [--pcmdump CMD] [--microsoft DIR] [--samples DIR [--samples-only]] [--keep DIR] [FILE ...]
 
 CMD runs a built tests/Encspect.PcmDump (the default is its Release build in the repository). With no FILE the script takes the fixtures of versions 1 and 2 in tests/fixtures/asf:
 the encoder files of ffmpeg, the Windows files, the remuxes and the derived noise substitution files.
@@ -233,11 +233,15 @@ def main(argv=None):
     parser.add_argument("--pcmdump", default=DEFAULT_PCMDUMP)
     parser.add_argument("--microsoft", help="the folder of a Windows run's PCM files")
     parser.add_argument("--samples", help="the folder wma1_microsoft_samples.py downloaded the files of Microsoft's version 1 encoder into")
+    parser.add_argument("--samples-only", action="store_true", help="with --samples: compare those files only, not the fixtures")
     parser.add_argument("--strict", action="store_true", help="fail where Microsoft's decoder differs beyond the bounds")
     parser.add_argument("--keep", help="a folder to keep the decoded files in")
     parser.add_argument("files", nargs="*")
     args = parser.parse_args(argv)
-    paths = [pathlib.Path(f) for f in args.files] or sorted({p for pattern in PATTERNS for p in FIXTURES.glob(pattern)})
+    if args.samples_only and args.samples:
+        paths = []
+    else:
+        paths = [pathlib.Path(f) for f in args.files] or sorted({p for pattern in PATTERNS for p in FIXTURES.glob(pattern)})
     if not paths and not args.samples:
         print("no fixtures found", file=sys.stderr)
         return 2
