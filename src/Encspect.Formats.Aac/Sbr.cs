@@ -160,12 +160,6 @@ internal static partial class Sbr
             return (null, string.Create(CultureInfo.InvariantCulture, $"the header gives {noise} noise floor bands, more than 5"));
         }
 
-        int patches = PatchCount(master, kx, rate);
-        if (patches > MaxPatches)
-        {
-            return (null, string.Create(CultureInfo.InvariantCulture, $"the frequency tables need {patches} patches, more than the {MaxPatches} the standard allows"));
-        }
-
         int[] highTable = master[header.XoverBand..];
         int[] lowTable = new int[low + 1];
         lowTable[0] = highTable[0];

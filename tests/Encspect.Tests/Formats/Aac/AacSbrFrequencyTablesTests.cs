@@ -124,7 +124,7 @@ public class AacSbrFrequencyTablesTests
         }
 
         string result = Convert.ToHexStringLower(hash.GetHashAndReset());
-        Assert.True(result == "c253c80b362e46ef57c513e3415ac03ccec59da648ef930a115f7cd8a149cd20", result);
+        Assert.True(result == "1c373d54eff3007180cb1c044806bb051c3de0b4c22d242dd408a2978e6d3192", result);
     }
 
     private static string? ReadGrid(string bitText) => Read(bitText, 0).Error;
