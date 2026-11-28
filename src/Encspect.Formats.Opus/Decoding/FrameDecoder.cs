@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Encspect.Core;
 
 namespace Encspect.Formats.Opus.Decoding;
@@ -17,6 +18,10 @@ internal sealed class FrameDecoder : IFrameDecoder
     private const int CeltUnits = 44;
     private const int SilkUnits = 24;
 
+    // The units a multiply and add of the demixing matrix costs (family 3), a coefficient times a sample added to the running sum of an output channel, measured with the matrix-dominated
+    // case of DecoderWorkTests (docs/design/decoders.md, "Opus").
+    private const int DemixUnits = 1;
+
     // What a CELT frame costs whatever its length (the energy and allocation passes, the band loop, the transform's set-up), measured on the frames of 5 ms, which are the cheapest per
     // sample to charge (docs/design/decoders.md, "Opus").
     private const int CeltFrameUnits = 12000;
@@ -28,6 +33,11 @@ internal sealed class FrameDecoder : IFrameDecoder
     private readonly int[] _mappingStream;
     private readonly int[] _mappingChannel;
     private readonly bool[] _isSilent;
+
+    // Family 3 (RFC 8486, section 3.2): the demixing matrix in Q15, column-major, C rows by N + M columns, applied to the decoded channels (streams in order, a coupled stream's
+    // left then right); null for the other families.
+    private readonly float[]? _demix;
+    private readonly int _decodedChannels;
     private float[][][] _streamPcm;
     private float[] _planar = [];
     private int _stride;
@@ -54,12 +64,23 @@ internal sealed class FrameDecoder : IFrameDecoder
         }
 
         _streamPcm = new float[streams][][];
-        _mappingStream = new int[_channels];
-        _mappingChannel = new int[_channels];
+        int sources = head.Family == 3 ? streams + coupled : _channels;
+        _mappingStream = new int[sources];
+        _mappingChannel = new int[sources];
         _isSilent = new bool[_channels];
-        for (int c = 0; c < _channels; c++)
+        _decodedChannels = streams + coupled;
+        if (head.Family == 3)
         {
-            int m = head.Family == 0 ? c : head.Mapping[c];
+            _demix = new float[head.Mapping.Length / 2];
+            for (int i = 0; i < _demix.Length; i++)
+            {
+                _demix[i] = (short)(head.Mapping[2 * i] | (head.Mapping[(2 * i) + 1] << 8)) * (1f / 32768f);
+            }
+        }
+
+        for (int c = 0; c < sources; c++)
+        {
+            int m = head.Family is 0 or 3 ? c : head.Mapping[c];
             if (m == 255)
             {
                 _isSilent[c] = true;
@@ -75,6 +96,46 @@ internal sealed class FrameDecoder : IFrameDecoder
             {
                 _mappingStream[c] = coupled + (m - (2 * coupled));
                 _mappingChannel[c] = 0;
+            }
+        }
+    }
+
+    // The output channels from the streams'.
+    private void MapChannels(int samples)
+    {
+        for (int c = 0; c < _channels; c++)
+        {
+            Span<float> target = _planar.AsSpan(c * _stride, samples);
+            if (_isSilent[c])
+            {
+                target.Clear();
+            }
+            else
+            {
+                _streamPcm[_mappingStream[c]][_mappingChannel[c]].AsSpan(0, samples).CopyTo(target);
+            }
+        }
+    }
+
+    // Each output channel is the sum over the decoded channels in order of the coefficient times the channel, as libopus's mapping_matrix_multiply_channel_out_float adds
+    // them: the coefficient's Q15 scale is applied to it first, then the product is added to the running sum of that output channel.
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private void Demix(int samples)
+    {
+        float[] matrix = _demix!;
+        for (int row = 0; row < _channels; row++)
+        {
+            Span<float> target = _planar.AsSpan(row * _stride, samples);
+            target.Clear();
+            for (int col = 0; col < _decodedChannels; col++)
+            {
+                float coefficient = matrix[(col * _channels) + row];
+                ReadOnlySpan<float> source = _streamPcm[_mappingStream[col]][_mappingChannel[col]].AsSpan(0, samples);
+                for (int i = 0; i < samples; i++)
+                {
+                    float product = coefficient * source[i];
+                    target[i] += product;
+                }
             }
         }
     }
@@ -154,18 +215,14 @@ internal sealed class FrameDecoder : IFrameDecoder
             }
         }
 
-        // The output channels from the streams'.
-        for (int c = 0; c < _channels; c++)
+        if (_demix is not null)
         {
-            Span<float> target = _planar.AsSpan(c * _stride, samples);
-            if (_isSilent[c])
-            {
-                target.Clear();
-            }
-            else
-            {
-                _streamPcm[_mappingStream[c]][_mappingChannel[c]].AsSpan(0, samples).CopyTo(target);
-            }
+            _context.AddWork(DemixUnits * samples * _channels * _decodedChannels);
+            Demix(samples);
+        }
+        else
+        {
+            MapChannels(samples);
         }
 
         long first = Math.Max(frame.FirstSample, _withheldUntil);

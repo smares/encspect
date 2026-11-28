@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Checks the sample kit's fixtures (import_sample_kit_fixtures.py) against FFmpeg and MediaInfo.
 
-For every <name>.provenance.json in a sample-kit folder of tests/fixtures (mpeg-audio, aac, ogg, ac3, flac, alac), with FFmpeg 8.0.1 and
+For every <name>.provenance.json in a sample-kit folder of tests/fixtures (mpeg-audio, aac, ogg, ac3, flac, alac, asf), with FFmpeg 8.0.1 and
 MediaInfo 26.01 of Ubuntu 26.04. Neither tool is a reference whose source was read: both are black boxes.
 
 - The provenance record: the file's size and SHA-256 are the file's, and the record names no path, user or machine (a ":\\" or "/home/" in it fails).

@@ -1,7 +1,7 @@
 ---
 id: spectral-slope
 title: Spectral slope
-related: spectral-cutoff, spectral-bandwidth, spectrogram, measurements, lowpass
+related: spectral-cutoff, spectral-bandwidth, spectrogram, measurements, lowpass, nyquist-edge
 references: Encspect design, docs/design/spectral-analysis.md
 ---
 **The problem.** A spectrum can still be falling at the top of the search, with or without a step the [spectral cutoff](spectral-cutoff) finds or a floor the [spectral bandwidth](spectral-bandwidth) reaches. The slope says where it is still falling, how far and how fast.

@@ -67,7 +67,7 @@ public class AacSbrFrequencyTablesTests
 
     // Every sample rate with a table row and every header the syntax can state (4, 4, 2, 1, 3 and 2 bits): what Derive gives, hashed. The
     // band edges and counts rounded to integers come from DetMath's logarithm and power, not the platform's, and this pin holds the results
-    // of the platform library they replaced (Linux, glibc, .NET 10), so a tie that rounds the other way shows here before any golden. The pin of 1c373d54... before the limit of five patches (4.6.18.3.6) changed only for the headers that now give no tables.
+    // of the platform library they replaced (Linux, glibc, .NET 10), so a tie that rounds the other way shows here before any golden. A header that needs more than the five patches of 4.6.18.3.6 gives its tables and is reported, so the pin is the one from before the limit was checked.
     [Fact]
     public void DerivedTablesOfEveryRateAndHeaderAreTheOnesTheLibraryMathGave()
     {
@@ -112,7 +112,8 @@ public class AacSbrFrequencyTablesTests
                                             at += widths[p];
                                         }
 
-                                        Assert.True(spec <= Sbr.MaxPatches);
+                                        // Figure 4.48 may build more than the five 4.6.18.3.6 allows (a finding, not a rejection); never more than its loop's bound.
+                                        Assert.True(spec <= Sbr.FigureMaxPatches);
                                     }
                                 }
                             }

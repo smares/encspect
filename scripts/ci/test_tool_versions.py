@@ -41,6 +41,7 @@ class ProgramTests(unittest.TestCase):
             "oggz": "oggz version 1.1.3\n",
             "ogginfo": "ogginfo from vorbis-tools 1.4.3\n",
             "oggdec": "oggdec from vorbis-tools 1.4.3\n",
+            "sox": "sox:      SoX v14.4.2\n",
             "flac": "flac 1.5.0\n",
             "metaflac": "metaflac 1.5.0\n",
             "ebur128_driver": "ebur128_driver libebur128 1.2.6\n",
@@ -83,7 +84,7 @@ class ProgramTests(unittest.TestCase):
 
     def test_an_unknown_tool_is_a_mistake_of_the_script(self):
         with self.assertRaises(KeyError):
-            tool_versions.problems("sox")
+            tool_versions.problems("nonesuch")
 
 
 if __name__ == "__main__":

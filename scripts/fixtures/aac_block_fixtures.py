@@ -1072,7 +1072,7 @@ def corrupt():
         "outside AAC SSR.",
         data, rows, [stream("AAC LC", RATE, 1, "Mono", len(rows) * 1024)],
         {"ADTS/Frame[1]/Raw Data Block/SCE/Channel/ICS Info/ICS Reserved Bit": "1"},
-        [[code, text] for _, code, text in soft] + [["aac.elements-mismatch", "other than channel configuration 1 defines"], ["aac.window-slopes-differ", "a window sequence whose left slope differs"]],
+        [[code, text] for _, code, text in soft] + [["aac.elements-mismatch", "other than channel configuration 1 defines"], ["aac.layout-changed", "channel elements in another order than the block before it"], ["aac.window-slopes-differ", "a window sequence whose left slope differs"]],
         skip={"ffprobe": "ffmpeg rejects some of the frames.", "faad": "faad2 rejects some of the frames.", "decode": "decoders reject some of the frames",
               "faad_trace": "faad2 stops at frames it rejects."})))
     return out
@@ -1585,7 +1585,8 @@ def fill_with_sbr_and_other_payload():
         [["aac.fill-sbr-with-other-payload", "6 raw data blocks hold an SBR payload in a fill element with an extension payload of another type"],
          ["aac.implicit-sbr", "6 of 6 raw data blocks hold SBR data: the stream is HE-AAC"]],
         skip={"faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold.",
-              "decode": "ffmpeg reads the dynamic range payload and the SBR data in one fill element differently."}, rate=core)
+              "decode": "ffmpeg reads the dynamic range payload and the SBR data in one fill element differently.",
+              "faad_trace": "faad2 reads no SBR data from a fill element whose first extension payload is another type (4.5.2.1.5.2 allows none next to SBR data), as its trace shows."}, rate=core)
 
 
 def sbr_crc_checked():
@@ -1620,11 +1621,11 @@ def sbr_too_many_patches():
     data, rows = concat(adts_frames(blocks, rate=core, channels=2))
     return "sbr-too-many-patches.aac", data, manifest(
         "ADTS at 22050 Hz of six channel pairs followed by SBR payloads whose header (start frequency 0, stop frequency 8, linear scale) needs six patches at 44100 Hz, where the "
-        "standard allows five: the payloads are not read, and the stream is HE-AAC from the payloads' presence.", data, rows,
+        "standard allows five: the payloads are read and decoded with the six patches Figure 4.48 gives, and the stream is HE-AAC from the payloads' presence.", data, rows,
         [stream("HE-AAC", 2 * core, 2, "Stereo", 6 * 2048, ffprobe_profile="LC")], {"ADTS/Statistics/SBR": share(6, 6, "access unit")},
-        [["aac.sbr-header-invalid", "the frequency tables need 6 patches, more than the 5 the standard allows"], ["aac.implicit-sbr", "6 of 6 raw data blocks hold SBR data: the stream is HE-AAC"]],
+        [["aac.sbr-patches-over-limit", "frequency tables need 6 patches, more than the 5 that 4.6.18.3.6 allows"], ["aac.implicit-sbr", "6 of 6 raw data blocks hold SBR data: the stream is HE-AAC"]],
         skip={"faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold.",
-              "decode": "ffmpeg builds the patches of six and decodes the data."}, rate=core)
+              "decode": "ffmpeg is held to the output by crosscheck_he_aac_pcm.py, which compares its patches of six with the decoder's."}, rate=core)
 
 
 def lfe_restrictions():
@@ -1656,11 +1657,26 @@ def lfe_restrictions():
         [stream("AAC LC", RATE, 2, "2 channels", 4 * 1024, layout=["front center", "LFE"])], {},
         [["aac.lfe-restrictions", "2 raw data blocks hold an LFE channel stream with a Kaiser-Bessel derived window"]],
         skip={"decode": "ffmpeg's decoder differs on the filter bank of the LFE."})
+def elements_order_changes():
+    """Channel configuration 3 (a single channel element and a channel pair element) with the two elements in the other order in every second block: the counts are what the configuration
+    defines, the order is not the first block's, and a decoder's per-element state no longer fits the block."""
+    blocks = []
+    for i in range(6):
+        sce = M.Element(M.SCE, ics=channel(M.ONLY_LONG, 1, [[(11, 4), (3, 10)]], gain=140, seed=i))
+        cpe = M.Element(M.CPE, ics=(channel(M.ONLY_LONG, 1, [[(9, 4), (3, 10)]], gain=140, seed=i + 20), channel(M.ONLY_LONG, 1, [[(9, 4), (1, 10)]], gain=140, seed=i + 40)), common=True, mask=0)
+        blocks.append(M.raw_data_block([cpe, sce] if i % 2 else [sce, cpe]))
+    data, rows = concat(adts_frames(blocks, channels=3))
+    return "elements-order-changes.aac", data, manifest(
+        "ADTS of channel configuration 3 whose blocks alternate between a single channel element and a channel pair element and the two in the other order: the counts are the configuration's, "
+        "the order of every block but the first is not the block before's, so each is withheld.", data, rows,
+        [stream("AAC LC", RATE, 3, "3.0", 6 * 1024, layout=["front center", "front left", "front right"])], {},
+        [["aac.layout-changed", "5 raw data blocks hold channel elements in another order than the block before"]],
+        skip={"decode": "ffmpeg maps the elements by their order in each block.", "faad_trace": "faad2 reads the elements by their order."})
 
 
 def fixtures():
     """(directory, name, data, manifest) of every fixture: "adts" or "mp4"."""
-    out = [("adts",) + f for f in [windows(), window_sequences_invalid(), stereo(), stereo_coding(), stereo_coding_reserved(), stereo_coding_elements(), intensity_noise(), implicit_sbr_adts(), ps_phase_adts(), ps_phase_then_none_adts(), sbr_fixvar_adts(), fill_and_data()] + loud_tools() + [stereo_tool_order(), tns_order_above_12(), first_block_kbd(), fill_with_sbr_and_other_payload(), sbr_crc_checked(), sbr_too_many_patches(), lfe_restrictions()] + faac_style_fixtures() + crc_fixtures() + object_types() + corrupt()]
+    out = [("adts",) + f for f in [windows(), window_sequences_invalid(), stereo(), stereo_coding(), stereo_coding_reserved(), stereo_coding_elements(), intensity_noise(), implicit_sbr_adts(), ps_phase_adts(), ps_phase_then_none_adts(), sbr_fixvar_adts(), fill_and_data()] + loud_tools() + [elements_order_changes(), stereo_tool_order(), tns_order_above_12(), first_block_kbd(), fill_with_sbr_and_other_payload(), sbr_crc_checked(), sbr_too_many_patches(), lfe_restrictions()] + faac_style_fixtures() + crc_fixtures() + object_types() + corrupt()]
     out += [("mp4",) + f for f in mp4_fixtures()]
     out += eld_ld_sbr() + parametric_stereo_cores() + signature_streams() + streams_limited() + sbr_evidence() + blocks_missing() + prediction_bands() + rate_fixtures()
     return out

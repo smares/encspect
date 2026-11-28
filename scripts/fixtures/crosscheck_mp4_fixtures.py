@@ -606,6 +606,7 @@ MOOV_TRACKS = "MediaInfo lists the audio tracks of moov; the analyzer reports a 
 FIRST_ENTRY = "MediaInfo reads the first sample entry of the track (File_Mpeg4_Elements.cpp), which does not say that the track is encrypted; the analyzer reads the entries the chunks use"
 ALAC_TRACK = "MediaInfo lists the audio track from its sample entry; the analyzer reports a stream only for a coding it analyzes (mp4.codec-not-analyzed)"
 MEDIAINFO_READS_OTHERWISE = {
+    "adts/fill-sbr-with-other-payload": dict.fromkeys(["format", "sample rate", "SBR signaling"], "MediaInfo 26.01 finds no SBR in a fill element whose first extension payload is another type, which 4.5.2.1.5.2 does not allow next to SBR data: it names the stream AAC LC at the core rate, where the analyzer reads the SBR data and reports aac.fill-sbr-with-other-payload"),
     "mp4/ffmpeg-cenc-mp3": {"channels": NO_CHANNELS},
     "mp4/cenc-ac3": {"channels": NO_CHANNELS},
     "mp4/cenc-dts": {"channels": NO_CHANNELS},

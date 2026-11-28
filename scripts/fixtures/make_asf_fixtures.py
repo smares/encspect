@@ -81,17 +81,26 @@ PROTECTION = {}
 
 
 def fixture(name, description, builder, findings=(), crosscheck=None, protection=None):
-    """findings are those besides the ones every PCM or MPEG audio stream gets (no parser for it here). protection lists, for each stream the
+    """findings are those the analyzer must report, exactly. protection lists, for each stream the
     analyzer reports, the scheme, whether it is encrypted and the DRM systems the file names (none for a file with no encryption object)."""
     FIXTURES.append((name, description, builder, list(findings), crosscheck or {"ffprobe": True}))
     if protection is not None:
         PROTECTION[name] = protection
 
 
-def unparsed(streams):
-    """The info finding for each audio stream whose coding has no parser: PCM and MPEG audio."""
-    names = {0x0001: "PCM", 0x0050: "MPEG Layer I and II"}
-    return [finding("asf.codec-not-analyzed", names[s["tag"]]) for s in streams if s.get("tag") in names and not s["encrypted"]]
+# PCM and MPEG audio streams reach their codec parsers (format tags 0x0001 and 0x0050), so they are reported unless protected, and a protected one is described by its
+# header (asf.codec-not-analyzed, "is encrypted"). In these fixtures a Content Encryption Object, or an Advanced Content Encryption Object the analyzer could not read
+# to the end, covers the PCM stream; in the ones named second, the records cover the second stream only or none, so the first is a clear stream the protection list holds a null for.
+PROTECTED_PCM = {"header-objects", "protected-advanced-1001-records", "protected-advanced-count-past-object", "protected-advanced-cut-after-count", "protected-advanced-cut-after-system",
+                 "protected-advanced-cut-empty", "protected-advanced-cut-in-guid", "protected-advanced-cut-in-object-record", "protected-advanced-many-records", "protected-advanced-truncated"}
+CLEAR_PCM_BEFORE_PROTECTED = {"protected-advanced", "protected-advanced-data-size", "protected-advanced-no-records", "signature-only"}
+
+
+def unparsed(name, streams):
+    """The info finding for each PCM or MPEG audio stream that a file's encryption covers."""
+    if name not in PROTECTED_PCM:
+        return []
+    return [ENCRYPTED for s in streams if s.get("tag") in (0x0001, 0x0050) and not s["encrypted"]]
 
 
 # ---- valid files ----
@@ -190,7 +199,7 @@ def metadata_file():
 
 fixture("metadata", "Every metadata object: content description, extended content description with each value type, an attached picture and an ID3v2 tag in byte arrays, a metadata object, a metadata library with languages and a GUID, the content branding object and a language list.",
         metadata_file,
-        [])
+        [finding("pcm.writer-claim-differs", "WM/EncodingSettings"), finding("pcm.writer-claim-differs", "WM/ToolName")])
 
 
 def header_file():
@@ -367,18 +376,18 @@ def short_length_field_file():
 
 fixture("length-field-short", "Packets of 256 bytes, the size every packet has, whose packet length field says 200 and whose padding length is 0: the bytes between the payload and the next packet are padding, in the packet and in the statistics.",
         short_length_field_file,
-        [finding("asf.packet-length", "3 packets")])
+        [finding("asf.packet-length", "3 packets"), finding("asf.object-incomplete", "the next one starts first"), finding("asf.object-incomplete", "the file ends inside")])
 
 
 fixture("length-field-short-cut", "The file length-field-short cut 5 bytes into its third packet, inside the packet header: the missing packet has no payload and no padding to count, only the two whole packets' 56 bytes each.",
         lambda: short_length_field_file()[:-256 + 5],
-        [finding("asf.packet-truncated", "ends before its header"), finding("asf.packet-length", "2 packets"), finding("asf.object-truncated", "Data Object"), finding("asf.file-size", "but the file holds 843")],
+        [finding("asf.packet-truncated", "ends before its header"), finding("asf.packet-length", "2 packets"), finding("asf.object-truncated", "Data Object"), finding("asf.file-size", "but the file holds 843"), finding("asf.object-incomplete", "the next one starts first"), finding("asf.object-incomplete", "the file ends inside")],
         {"ffprobe": False, "reason": "the file is cut inside a packet on purpose."})
 
 
 fixture("length-field-short-cut-fields", "The same file cut 8 bytes into its third packet, inside the packet header's fields: the Packet Length field that fits is read, the fields that do not are left out.",
         lambda: short_length_field_file()[:-256 + 8],
-        [finding("asf.packet-truncated", "ends before its header"), finding("asf.packet-length", "2 packets"), finding("asf.object-truncated", "Data Object"), finding("asf.file-size", "but the file holds 846")],
+        [finding("asf.packet-truncated", "ends before its header"), finding("asf.packet-length", "2 packets"), finding("asf.object-truncated", "Data Object"), finding("asf.file-size", "but the file holds 846"), finding("asf.object-incomplete", "the next one starts first"), finding("asf.object-incomplete", "the file ends inside")],
         {"ffprobe": False, "reason": "the file is cut inside a packet on purpose."})
 
 def zero_length_field_file():
@@ -518,15 +527,15 @@ def two_codecs():
         objects_in([1], 3, 100, 512), 512, file_id=FILE_ID, play=500_000)
 
 
-fixture("other-streams", "An MPEG Layer I and II stream (format tag 0x0050, which has no parser), a video stream and a command stream, none of which is analyzed.",
+fixture("other-streams", "An MPEG Layer I and II stream (format tag 0x0050, whose payloads are no MPEG audio frames), a video stream and a command stream, none of which is analyzed.",
         two_codecs,
-        [finding("asf.stream-not-analyzed", "video"), finding("asf.stream-not-analyzed", "command"),
+        [finding("asf.stream-not-analyzed", "video"), finding("asf.stream-not-analyzed", "command"), finding("mpeg-audio.packets-no-frame", "334 bytes"),
          finding("asf.stream-without-payloads", "Stream 2"), finding("asf.stream-without-payloads", "Stream 3")],
         {"ffprobe": False, "reason": "the MPEG audio payloads are not MPEG audio frames."})
 
 fixture("extensible-format", "A WAVEFORMATEXTENSIBLE for 6-channel PCM: valid bits, channel mask and sub-format.",
         lambda: m.asf_file([m.stream_properties(1, m.wave_format_extensible(1, 6, 48000, 576000, 12, 16, 16, 0x3F))], objects_in([1], 3, 120, 512), 512, file_id=FILE_ID, play=500_000),
-        [finding("asf.codec-not-analyzed", "PCM")])
+        [])
 
 # ---- protected files ----
 
@@ -627,8 +636,8 @@ fixture("protection-object-ids", "An Advanced Content Encryption Object with an 
 fixture("protection-truncated", "A Content Encryption Object whose secret data length is 5000 bytes, in an object of 40.", 
         protected([wma(1, encrypted=True), m.obj(m.CONTENT_ENCRYPTION, struct.pack("<I", 5000) + b"secret" + struct.pack("<I", 4) + b"DRM\0")]),
         [DRM1_FINDING, ENCRYPTED, finding("asf.object-truncated", "Content Encryption Object")], ENCRYPTED_FFPROBE, scheme("Microsoft Digital Rights Manager version 1"))
-fixture("protected-mpeg-audio", "MPEG Layer I and II (format tag 0x0050), which has no parser here, in a file with a Content Encryption Object: the stream is still reported, as protected and encrypted.",
-        protected([m.stream_properties(1, m.wave_format(0x0050, 2, 44100, 16000, 1, 0)), m.content_encryption()]), [DRM1_FINDING],
+fixture("protected-mpeg-audio", "MPEG Layer I and II (format tag 0x0050) in a file with a Content Encryption Object: the stream is described by its header, as protected and encrypted.",
+        protected([m.stream_properties(1, m.wave_format(0x0050, 2, 44100, 16000, 1, 0)), m.content_encryption()]), [DRM1_FINDING, ENCRYPTED],
         {"ffprobe": False, "reason": "the MPEG audio payloads are not MPEG audio frames."},
         scheme("Microsoft Digital Rights Manager version 1"))
 fixture("protected-video-only", "A video stream whose Encrypted Content Flag is set, with a Content Encryption Object, and no audio: the stream is reported as protected and encrypted.",
@@ -706,7 +715,7 @@ fixture("truncated-header", "A file cut in the middle of the header.", cut(base,
         {"ffprobe": False, "reason": "the header is cut."})
 fixture("truncated-data", "A file cut in the middle of the third packet.", lambda: base()[:-600],
         [finding("asf.object-truncated", "ends"), finding("asf.file-size", "1094 bytes"), finding("asf.packet-count", "counts 3 data packets"), finding("asf.packet-count", "Data Object counts 3"),
-         finding("asf.packet-truncated", "ends before"), finding("asf.payload-overrun", "extends past")],
+         finding("asf.packet-truncated", "ends before"), finding("asf.payload-overrun", "extends past"), finding("asf.object-incomplete", "the file ends inside")],
         {"ffprobe": False, "reason": "the file is cut inside a payload, which ffmpeg returns as a short packet."})
 fixture("trailing-garbage", "Bytes after the last object that are not an object.", lambda: base() + b"\xde\xad\xbe\xef" * 5, [finding("asf.trailing-data", "20 bytes"), finding("asf.file-size", "1094 bytes")])
 
@@ -799,7 +808,7 @@ def overrun_file():
 
 
 fixture("payload-overrun", "A payload whose length is 600 bytes in a packet of 256.", overrun_file,
-        [finding("asf.payload-overrun", "extends past")],
+        [finding("asf.payload-overrun", "extends past"), finding("asf.fragment-overrun", "more bytes than the media object")],
         {"ffprobe": False, "reason": "the packet is damaged on purpose."})
 
 
@@ -914,13 +923,13 @@ def main():
             derived = {"derived": {"from": noise.SOURCE, "tool": "scripts/fixtures/make_wma_noise_fixtures.py", "note": "Not an encoder's output: the source file with superframes 12 to 31 replaced by hand-built frames."}}
         elif name.startswith("derived-"):
             derived = {"derived": {"from": DERIVED_FROM, "note": "Not an encoder's output: the source file with one attribute added to its header."}}
-        manifest = {"description": description, "format": "ASF", **model, **derived, "findings": unparsed(model["streams"]) + findings, "crosscheck": crosscheck}
+        manifest = {"description": description, "format": "ASF", **model, **derived, "findings": unparsed(name, model["streams"]) + findings, "crosscheck": crosscheck}
         if name == no_prefix.NAME:
             source = json.loads((OUT / (no_prefix.SOURCE[:-4] + ".provenance.json")).read_text(encoding="utf-8"))
             record = no_prefix.provenance(data, derived["derived"], source)
             (OUT / f"{name}.provenance.json").write_text(json.dumps(record, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
         if name in PROTECTION:
-            manifest["protection"] = PROTECTION[name]
+            manifest["protection"] = ([None] if name in CLEAR_PCM_BEFORE_PROTECTED else []) + PROTECTION[name]
         (OUT / f"{name}.expected.json").write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
         count += 1
     print(f"{count} fixtures written to {OUT}.")

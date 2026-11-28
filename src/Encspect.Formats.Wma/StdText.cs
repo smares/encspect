@@ -99,6 +99,16 @@ internal static class StdText
     public const string NoiseSubstitutedBlocksSeries = "Whether each block read has a band replaced by noise, as the tally of Noise-Substituted Blocks counts them: a block with a coded channel and at least one flagged high band is with noise substitution. A stream with noise substitution turned off has no such series.";
     public const string CategoryWithNoise = "Blocks with a coded channel and a band replaced by noise, as a share of all blocks.";
     public const string CategoryWithoutNoise = "Blocks without a band replaced by noise, those with no coded channel included. A complement of the blocks with noise substitution, not a figure of its own.";
+    public const string StatNoiseLevel = "The noise level of a block with noise substitution: the mean over its flagged bands, of all its coded channels, to the nearest decibel (halves up), as the noise level of the decoding description (the first flagged band of a channel is its 7-bit value less 19, each later band adds a coded difference). Over the blocks of valid frames.";
+    public const string NoiseLevelLowest = "The lowest block noise level, in decibels.";
+    public const string NoiseLevelHighest = "The highest block noise level, in decibels.";
+    public const string NoiseLevelSeries = "The noise level of each block of a valid frame that has a band replaced by noise, at its frame's first byte, in decibels: the mean over its flagged bands, of all its coded channels, to the nearest decibel (halves up), as the decoding description's noise level l in 10^(l/20).";
+    public const string TotalGainSeries = "The total gain of each block of a valid frame that has a coded channel and states its gain, at its frame's first byte, in decibels: the decoding description scales the block by 10^(t/20) for the total gain t.";
+    public const string TotalGainOverTimeSeries = "The largest total gain, in decibels, of the blocks of the valid frames that start in each second of audio.";
+    public const string EscapesSeries = "The share of the non-zero coefficients of each block of a valid frame that are coded as an escape, whatever their level, in percent to a tenth, at its frame's first byte; a block with no non-zero coefficient has no value.";
+    public const string BlocksReusingExponentsSeries = "Whether each block read with a coded channel sends no exponents and reuses the last ones, as the tally of Blocks Reusing Exponents counts them. A block with no coded channel, one that sends its exponents and one that stops before the flag count as without.";
+    public const string CategoryWithReusedExponents = "Blocks with a coded channel that send no exponents, as a share of all blocks.";
+    public const string CategoryWithoutReusedExponents = "Blocks that send their exponents and blocks with no coded channel. A complement of the blocks that reuse exponents, not a figure of its own.";
     public const string StatEscapes = "Coefficients coded as an escape, whatever their level.";
 
     public const string BitrateSeries = "The bitrate of each frame if frames of its size followed one another, at the frame's first byte; 0 for an invalid frame.";
@@ -124,7 +134,7 @@ internal static class StdText
     private static string Hex(long offset) => "0x" + offset.ToString("X", CultureInfo.InvariantCulture);
 
     public static string SuperframeShort(int count, int align, long offset) =>
-        $"{(count == 1 ? "A media object holds" : $"{Number(count)} media objects hold")} fewer bytes than the block alignment of {Number(align)}, which a decoder rejects (wmadec.c); the first is at {Hex(offset)}.";
+        $"{(count == 1 ? "A unit of the stream's data holds" : $"{Number(count)} units of the stream's data hold")} fewer bytes than the block alignment of {Number(align)}, which a decoder rejects (wmadec.c); the first is at {Hex(offset)}.";
 
     public static string SuperframeLong(int count, int align) =>
         $"{(count == 1 ? "A media object holds" : $"{Number(count)} media objects hold")} more bytes than the block alignment of {Number(align)}; a decoder takes {Number(align)} {(align == 1 ? "byte" : "bytes")} as a superframe and feeds the rest in again (FFmpeg's decode.c), which this analysis does not: it reads the first {Number(align)} only.";
@@ -165,8 +175,10 @@ internal static class StdText
     public const string PayloadNotAnalyzed = "Windows Media Audio handed over as one payload is not analyzed; only the media objects of a container are.";
     public const string NoFormat = "The container states no WAVEFORMATEX for the stream, so its Windows Media Audio is not analyzed.";
 
-    public static string FFmpegEvidence(int version, long padded) =>
-        padded == 1
+    public static string FFmpegEvidence(int version, long padded, bool isAfterUnreadBits) =>
+        isAfterUnreadBits
+            ? $"{(padded == 1 ? "The superframe ends" : $"All {Number(padded)} padded superframes end")} in 'N' (0x4E) bytes, after the frame and the coefficient bits that version 1 stereo's coefficient limit leaves unread, which ffmpeg's wmav{Number(version)} encoder writes (wmaenc.c), with no bit reservoir and no variable block lengths"
+            : padded == 1
             ? $"The superframe has bytes after the frame that are all 'N' (0x4E), which ffmpeg's wmav{Number(version)} encoder writes (wmaenc.c), with no bit reservoir and no variable block lengths"
             : $"All {Number(padded)} padded superframes have bytes after the frame that are all 'N' (0x4E), which ffmpeg's wmav{Number(version)} encoder writes (wmaenc.c), with no bit reservoir and no variable block lengths";
 

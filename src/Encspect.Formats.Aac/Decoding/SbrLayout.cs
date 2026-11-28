@@ -6,7 +6,7 @@ namespace Encspect.Formats.Aac.Decoding;
 // bands (4.6.18.7.5), built the way libxaac does (ixheaacd_createlimiterbands; Apache License 2.0, Copyright (C) The Android Open Source Project; the notice is in THIRD-PARTY-NOTICES.md).
 internal sealed class SbrLayout
 {
-    public const int MaxPatches = 6;
+    public const int MaxPatches = Sbr.FigureMaxPatches;
     private static readonly double[] LimiterBandsPerOctave = [0, 1.2, 2.0, 3.0];
 
     public SbrLayout(SbrTables tables, int rate)
@@ -55,7 +55,7 @@ internal sealed class SbrLayout
     {
         (int count, int[] widths, int[] sources) = Sbr.Patches(master, kx, rate);
         int at = kx;
-        PatchCount = Math.Min(count, MaxPatches);
+        PatchCount = count;
         for (int patch = 0; patch < PatchCount; patch++)
         {
             PatchStart[patch] = at;

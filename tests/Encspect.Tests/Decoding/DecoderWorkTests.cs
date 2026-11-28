@@ -214,6 +214,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         _ when name.StartsWith("ac3", StringComparison.Ordinal) => new Ac3Decoder(),
         _ when name.StartsWith("eac3", StringComparison.Ordinal) => new Eac3Decoder(),
         _ when name.StartsWith("aac", StringComparison.Ordinal) => new Encspect.Formats.Aac.Decoding.AacDecoder(),
+        _ when name.StartsWith("wma", StringComparison.Ordinal) => new Encspect.Formats.Wma.Decoding.WmaStandardDecoder(),
         _ when name.StartsWith("truehd", StringComparison.Ordinal) => TrueHdDecoder.TrueHd,
         _ when name.StartsWith("mlp", StringComparison.Ordinal) => TrueHdDecoder.Mlp,
         _ => new WavPackDecoder(),
@@ -238,6 +239,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
         _ when name.StartsWith("ac3", StringComparison.Ordinal) => ".ac3",
         _ when name.StartsWith("eac3", StringComparison.Ordinal) => ".eac3",
         _ when name.StartsWith("aac", StringComparison.Ordinal) => ".aac",
+        _ when name.StartsWith("wma", StringComparison.Ordinal) => ".wma",
         _ when name.StartsWith("truehd", StringComparison.Ordinal) => ".thd",
         _ when name.StartsWith("mlp", StringComparison.Ordinal) => ".mlp",
         _ when name.StartsWith("pcm-aiff", StringComparison.Ordinal) => ".aiff",
@@ -476,6 +478,23 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             Add("aac-" + label, () => new Case("aac-" + label, AacCases.Repeated(file)));
         }
 
+        // WMA versions 1 and 2: stereo of ffmpeg's encoder (one block to a frame, with noise substitution at 32 kbit/s and without at 128), Microsoft's encoder (variable block
+        // lengths and exponent reuse; mono, stereo, 22.05 kHz at the lowest rate and 48 kHz at the highest). Each case repeats the media objects of a file in one stream.
+        foreach ((string label, string file) in new[]
+        {
+            ("stereo-ffmpeg-128k", "external-ffmpeg-wmav2-stereo-44k-128k.wma"),
+            ("stereo-ffmpeg-noise-32k", "external-ffmpeg-wmav2-stereo-44k-32k.wma"),
+            ("mono-ffmpeg-version1", "external-ffmpeg-wmav1-mono-22k-24k.wma"),
+            ("stereo-windows-128k", "external-windows-wma92-cbr-stereo-44k-128.wma"),
+            ("stereo-windows-noise-32k", "external-windows-wma92-cbr-stereo-44k-32-sdk.wma"),
+            ("stereo-windows-22k-20k", "external-windows-wma92-cbr-stereo-22k-20-sdk.wma"),
+            ("mono-windows-48k", "external-windows-wma92-cbr-mono-44k-48.wma"),
+            ("stereo-windows-48k", "external-windows-wma92-cbr-stereo-48k-128.wma"),
+        })
+        {
+            Add("wma-" + label, () => new Case("wma-" + label, WmaCases.Repeated(file)));
+        }
+
         // E-AC-3: 5.1 and stereo from FFmpeg's encoder (no tools beyond coupling), and the hand-built files with the adaptive hybrid transform, spectral extension and enhanced
         // coupling, whose bins all carry mantissa bits (so the transforms and the tools run in full). Each case repeats the whole file as one stream.
         foreach ((string label, string file) in new[]
@@ -491,7 +510,7 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             Add("eac3-" + label, () => new Case("eac3-" + label, Ac3Cases.Repeated(file)));
         }
 
-        // Opus: SILK speech, CELT music at 96 kbps and in 5 ms frames, 5.1, mono at 24 kbps and hybrid. Each case repeats the audio packets of an encoder's file in one stream.
+        // Opus: SILK speech, CELT music at 96 kbps and in 5 ms frames, 5.1, mono at 24 kbps, hybrid, and ambisonics of order 1 and order 3 with the stereo pair (family 3: 18 channels, 18 decoded channels and a matrix of 324 coefficients), and a matrix of 171 by 171 coefficients over 171 mono streams, which dominates the work. Each case repeats the audio packets of an encoder's file in one stream.
         foreach ((string label, string file) in new[]
         {
             ("speech", "external-opusenc-speech.opus"),
@@ -501,6 +520,9 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             ("mono-24", "external-opusenc-24-mono.opus"),
             ("ffmpeg", "external-ffmpeg-libopus.opus"),
             ("hybrid-20ms", "external-libopus-stereo-hybrid-20ms.opus"),
+            ("ambisonics-o1", "external-libopus-ambisonics-o1.opus"),
+            ("ambisonics-o3-stereo", "external-libopus-ambisonics-o3-stereo.opus"),
+            ("ambisonics-matrix-171", "opus-ambisonics-family-3-dense.opus"),
         })
         {
             Add("opus-" + label, () => new Case("opus-" + label, OpusCases.Repeated(file)));
@@ -1307,6 +1329,27 @@ public sealed class DecoderWorkTests(ITestOutputHelper output, DecoderWorkTests.
             var analyzer = new Analyzer(DefaultParsers.Tags, DefaultParsers.Formats, DefaultParsers.Codecs, [counting]);
             using var stream = new MemoryStream(file, writable: false);
             analyzer.Analyze("probe.aac", stream, new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = long.MaxValue, Output = _ => new NullSink() } });
+            return counting.Units;
+        }
+    }
+
+    internal static class WmaCases
+    {
+        public static byte[] Repeated(string fixture, long target = Target)
+        {
+            int tag = fixture.Contains("wmav1", StringComparison.Ordinal) ? 0x0160 : 0x0161;
+            string path = "asf/" + fixture;
+            long perCopy = Math.Max(1, Units(MemoryTests.FileOfCycles(path, tag, 64)) / 64);
+            int packets = (int)Math.Clamp(target / perCopy, 128, 1 << 20);
+            return MemoryTests.FileOfCycles(path, tag, packets);
+        }
+
+        public static long Units(byte[] file)
+        {
+            var counting = new CountingDecoder(new Encspect.Formats.Wma.Decoding.WmaStandardDecoder());
+            var analyzer = new Analyzer(DefaultParsers.Tags, DefaultParsers.Formats, DefaultParsers.Codecs, [counting]);
+            using var stream = new MemoryStream(file, writable: false);
+            analyzer.Analyze("probe.wma", stream, new AnalysisOptions { Decoding = new DecodeOptions { MaxWork = long.MaxValue, Output = _ => new NullSink() } });
             return counting.Units;
         }
     }

@@ -25,8 +25,9 @@ internal sealed class FrameDecoder : IFrameDecoder
     private const int NoiseUnits = 3;
     private const int LongTransformUnits = 22;
     // Per output sample of the SBR stage (the 64-band analysis and synthesis, the high band's generation and adjustment, and parametric stereo's hybrid bank, decorrelator and mixing
-    // for the second channel): measured with DecoderWorkTests (the HE-AAC cases), where the stage takes about 4 times what the core's stages charge in time per unit at 60.
-    private const int SbrUnits = 220;
+    // for the second channel): measured with DecoderWorkTests (the HE-AAC cases). At 220 they ran at 1.4 to 1.8 times the FLAC reference's time per unit on Linux x64 and
+    // the envelopes case at 2.18 on macOS Intel (the nightly run of 2026-11-27); at 400 they run near the AAC LC cases.
+    private const int SbrUnits = 400;
 
     // Parametric stereo's phases (and the matrices of procedure Rb, tabulated once): for each envelope and each of the 34 parameter bands, the smoothed angles, their cosines and sines and the rotation of
     // the four matrices, about 40 times a unit's 0.6 ns apiece, with the double-precision functions of DetMath; charged for an envelope count of 5 at most.
@@ -40,6 +41,7 @@ internal sealed class FrameDecoder : IFrameDecoder
     private readonly bool _isSbr;
     private readonly bool _isPs;
     private PsDecoder? _ps;
+    private readonly int[] _layout;
     private readonly SbrElement?[] _elements;
     private readonly float[] _sbrPlanar;
     private readonly ushort[] _longOffsets;
@@ -95,6 +97,8 @@ internal sealed class FrameDecoder : IFrameDecoder
             _overlap[ch] = new float[Lines];
         }
 
+        _layout = new int[_channels];
+        Array.Fill(_layout, -1);
         _previousShape = new int[_channels];
         Array.Fill(_previousShape, FirstShape);
         _isSilent = new bool[_channels];
@@ -122,7 +126,16 @@ internal sealed class FrameDecoder : IFrameDecoder
                 $"The block at 0x{frame.Bytes.FileStart:X} holds a coupling channel element, whose channels are read and not applied, so the decoded audio lacks what they add to the channels they couple.");
         }
 
-        bool follows = frame.FollowsGap || _lostBefore;
+        // A block whose channel elements differ from the last block's (another kind in a slot) is a loss as a change of the slot count is: the per-slot state (the core's overlap and window shape, which belong to one element in a block and to another in the next, and the SBR state of the elements) no longer fits it.
+        bool layoutChanged = false;
+        for (int ch = 0; ch < _channels; ch++)
+        {
+            int kind = record[(ch * BlockRecord.Stride) + BlockRecord.Kind];
+            layoutChanged |= _layout[ch] != kind && _layout[ch] >= 0;
+            _layout[ch] = kind;
+        }
+
+        bool follows = frame.FollowsGap || _lostBefore || layoutChanged;
         _lostBefore = false;
         if (follows)
         {
@@ -216,7 +229,8 @@ internal sealed class FrameDecoder : IFrameDecoder
         {
             int kind = record[(ch * BlockRecord.Stride) + BlockRecord.Kind];
             int width = kind == BlockRecord.KindPairFirst ? 2 : 1;
-            SbrElement element = _elements[ch] ??= new SbrElement(width, 2 * _config.SampleRate);
+            SbrElement element = _elements[ch] ??= new SbrElement(2 * _config.SampleRate);
+            element.Configure(width);
             ReadOnlySpan<int> slot = default;
             if (kind != BlockRecord.KindLfe)
             {

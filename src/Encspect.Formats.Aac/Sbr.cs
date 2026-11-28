@@ -186,8 +186,12 @@ internal static partial class Sbr
         return (new SbrTables(kx, end, master, highTable, lowTable, noiseTable), null);
     }
 
-    // The most patches an SBR range may need (4.6.18.3.6).
+    // The most patches an SBR range may need (4.6.18.3.6). A header whose tables need more is built as Figure 4.48 gives them and reported (aac.sbr-patches-over-limit), since
+    // reference streams (Coding Technologies' aacPlus decoder check streams) have six.
     public const int MaxPatches = 5;
+
+    // The most patches Figure 4.48's loop can build: it stops at 39 (each patch is at least one QMF band wide and the SBR range is at most 63 bands, and the loop's guard stops it sooner).
+    public const int FigureMaxPatches = 39;
 
     // The patches of Figure 4.48 (4.6.18.6.3) for a master table, kx and the SBR rate: how many there are (numPatches), the width of each (patchNumSubbands) and the first QMF band each
     // copies from (patchStartSubband). The decoder builds its patches from these and the parser checks their number against 4.6.18.3.6, so both see the same ones.

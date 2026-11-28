@@ -1,0 +1,22 @@
+{
+ "description": "Windows Media Encoder 9 Series (x86), WMEnc.exe through WMCmd.vbs 9.0.0.2980: Windows Media Audio 9, two-pass constant bitrate, 16 kbit/s, 16 kHz, mono, on the synthetic source music-16k-mono.wav.",
+ "encoder": {
+  "tool": "Windows Media Encoder 9 Series (x86), WMEnc.exe through WMCmd.vbs",
+  "version": "9.0.0.2980",
+  "component": "wmvcore.dll 9.0.0.4506, wmadmoe.dll 9.0.0.4503; Microsoft Windows XP Service Pack 3, build 2600, in a virtual machine",
+  "settings": "Windows Media Audio 9, two-pass constant bitrate, 16 kbit/s, 16 kHz, mono"
+ },
+ "input": {
+  "name": "music-16k-mono.wav",
+  "sha256": "1eb286d400d98e12b74d1289f05220bd65e36bbf8073787cc01cf5cc4b70c00f",
+  "generator": "sources/make_sources.py of the sample kit (written from nothing, reproducible byte for byte)"
+ },
+ "selected_for": "line spectral pair exponents, the coding of Windows Media Encoder 9's low bitrates at 16 kHz",
+ "file": {
+  "name_in_kit": "music-16k-mono-wma9-cbr2pass-16_16_1.wma",
+  "bytes": 23871,
+  "sha256": "510a5dcdcddfa3c86ab7b677a0586967d77eb0a9760e76ea641d47889f0e1c9a"
+ },
+ "reproducible": false,
+ "note": "The encoder stamps the time of the encode into the file; the file is committed as written, and checked by its content."
+}

@@ -2180,7 +2180,7 @@ def main(argv):
             target = pathlib.Path(args.write_official_aac)
             target.mkdir(parents=True, exist_ok=True)
             for folder in ("aac", "adts", "mp4"):
-                subset = [r for r in aac_results if r["folder"] == folder and not r["derived"]]
+                subset = [r for r in aac_results if r["folder"] in (folder, AAC_FOLDER_PATHS[folder]) and not r["derived"]]
                 write_official(target / ("official-decoders.%s.draft.json" % folder), FIXTURES / AAC_FOLDER_PATHS[folder] / "official-decoders.json", subset, aac_environment, ffmpeg_version, args.run_id, "aac")
         print("comparison-aac.txt: %d files compared, %d not run" % (len(aac_results), len(aac_document["notRun"])))
     ac3 = run_ac3_comparison(args, records, environments, ffmpeg_version, warnings, tmp)
