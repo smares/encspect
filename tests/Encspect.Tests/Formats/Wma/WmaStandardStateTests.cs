@@ -17,11 +17,11 @@ public class WmaStandardStateTests
     {
         private int[] _record = [];
 
-        public Rig(int bytesPerSecond, byte options = 7, int rate = 44_100)
+        public Rig(int bytesPerSecond, byte options = 7, int rate = 44_100, bool isVersion1 = false)
         {
-            // Version 2, 44.1 kHz stereo with scale factor codes and variable block sizes.
-            var format = new AudioFormat(0x0161, 2, rate, bytesPerSecond, 1000, 16);
-            Parameters = StdParameters.Create(format, [0, 0, 0, 0, options, 0]);
+            // Version 2, 44.1 kHz stereo with scale factor codes and variable block sizes (version 1: scale factor codes, one block size).
+            var format = new AudioFormat(isVersion1 ? 0x0160 : 0x0161, 2, rate, bytesPerSecond, 1000, 16);
+            Parameters = StdParameters.Create(format, isVersion1 ? [0, 0, 1, 0] : [0, 0, 0, 0, options, 0]);
             Assert.Null(Parameters.Unsupported);
             var setup = new DecodeSetup { Stream = new Node("Stream", 0, 1), Channels = 2, BitsPerSample = 16, Shared = Parameters };
             var context = new DecodeContext(setup, CancellationToken.None, (_, _, _, _, _) => { }, _ => new Collector(this), _ => { }, () => new SampleBuffers(_record, default, 2, 0),
@@ -157,6 +157,29 @@ public class WmaStandardStateTests
         Assert.Equal(0, Rig.Covered(rig.LeftOut, 4 * Frame, Frame));
         Assert.Equal(0, Rig.Covered(rig.LeftOut, 5 * Frame, Frame));
         Assert.Empty(rig.Withheld);
+    }
+
+    // Version 1 without noise substitution scales line x by the exponent of line x itself, as Microsoft's decoder does (settled by the version 1 file of Microsoft's encoder
+    // wandue_project_-_king_of_my_castle.asf: docs/design/wma-standard-decoding.md, "Points to settle", item 2); FFmpeg takes the exponent of line x - 3. The exponents differ
+    // between neighboring lines here and one coefficient lies on each of two lines, so the two rules give different ratios.
+    [Fact]
+    public void Version1WithoutNoiseSubstitutionScalesALineByItsOwnExponent()
+    {
+        var rig = new Rig(8_000, isVersion1: true);
+        Assert.Equal(1, rig.Parameters.Version);
+        Assert.False(rig.Parameters.UsesNoiseSubstitution);
+        int[] exponents = [.. Enumerable.Range(0, Frame).Select(i => i == 20 ? 16 : 0)];
+        int[] block = Block(0, FirstSent, perLine: exponents);
+        int coefficients = block.Length - Frame;
+        Array.Clear(block, coefficients, Frame);
+        block[coefficients + 20] = 3;
+        block[coefficients + 23] = 3;
+        rig.Decode(0, Record(block));
+
+        float[] spectrum = Field<float[][]>(rig.Decoder, "_spectrum")[0];
+
+        // Line 20 has the exponent 10^1 and line 23 the exponent 1; line x - 3 would swap them.
+        Assert.True(spectrum[20] > 9 * spectrum[23], $"{spectrum[20]} against {spectrum[23]}");
     }
 
     private static float Power(int value) => (float)Math.Pow(10, value / 16.0);
