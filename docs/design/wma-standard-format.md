@@ -2,7 +2,7 @@
 
 **Status:** written on 2026-10-29 by a Claude agent (Opus) that read FFmpeg 6.1.1's LGPL decoder of Windows Media Audio versions 1 and 2 (listed under [Sources](#sources)) and Encspect's current reader of the format, and checked this text against the committed fixtures. It contains no code. Whoever implements the replacement of `src/Encspect.Formats.Wma/Standard*.cs` must not read FFmpeg's `wmadec.c`, `wma.c` or `wma.h`, nor any other FFmpeg source or copy, nor the files [Implementer's sources](#implementers-sources) marks as not safe; FFmpeg serves only as a black-box cross-check.
 
-This is the clean-room description that the architecture rules of [`CLAUDE.md`](../../CLAUDE.md) ask for where LGPL code is the only detailed source, written in the form of [truehd-format.md](truehd-format.md). It covers what the analyzer reads today and reports ([asf-wma.md](../formats/asf-wma.md#wma-versions-1-and-2)): the codec data, the superframes and the bit reservoir, and the syntax of every frame down to the end of its coefficients. No audio is rebuilt, so the dequantization, the noise generator, the line spectral pair curve, the transform and the windows are left out, apart from the facts a reader needs to know that it can leave them out.
+This is the clean-room description that the architecture rules of [`CLAUDE.md`](../../CLAUDE.md) ask for where LGPL code is the only detailed source, written in the form of [truehd-format.md](truehd-format.md). It covers what the analyzer reads today and reports ([asf-wma.md](../formats/asf-wma.md#wma-versions-1-and-2)): the codec data, the superframes and the bit reservoir, and the syntax of every frame down to the end of its coefficients. No audio is rebuilt, so the dequantization, the noise generator, the line spectral pair curve, the transform and the windows are left out, apart from the facts a reader needs to know that it can leave them out. They are in the decoding supplement, [wma-standard-decoding.md](wma-standard-decoding.md), written in the same way.
 
 ## Sources
 
@@ -353,6 +353,8 @@ For each coded channel in channel order, with n = E_k − s less the widths of t
 3. The end-of-block code may be left out where the coefficients reach n.
 4. For version 1 stereo, the reader then moves to the next byte boundary of the frame's buffer, also after a channel that is not coded.
 
+Microsoft's decoder stops version 1 stereo's coefficients s positions earlier, and for stereo reads what follows from the next byte as the next channel; [wma-standard-decoding.md](wma-standard-decoding.md#coefficient-values) states the rule, which changes this walk for version 1 (ffmpeg's encoder writes past that limit).
+
 Reported per channel: the non-zero coefficients (every run-level code and every escape, whatever its level), the escapes, and the position of the last coefficient, p mod L_k ("n non-zero, last at p").
 
 The sign and level are read and not used further. Positions are relative to s, so version 1's position 0 is coefficient 3.
@@ -582,7 +584,7 @@ The stream adds two traits to the shared encoder detection (`WmaEncoder`):
 
 - **FFmpeg (wmavN encoder)**, family FFmpeg:
   - It applies without the bit reservoir (bit 1) and without variable block lengths (effective). A superframe whose frame was read without error and ends before its last byte is padded.
-  - Where there is at least one padded superframe and every padded one has only 'N' bytes from the byte after the frame's last byte to its end, the trait names "FFmpeg (wmav1 encoder)" or "FFmpeg (wmav2 encoder)" by the version: high confidence with two or more padded superframes, medium with one.
+  - Where there is at least one padded superframe and every padded one has only 'N' bytes from the byte after the frame's last byte to its end, the trait names "FFmpeg (wmav1 encoder)" or "FFmpeg (wmav2 encoder)" by the version: high confidence with two or more padded superframes, medium with one. Where the walk of a version 1 stereo frame stopped at Microsoft's coefficient limit, the bits after the frame are unread coefficients, so the last 4 bytes of the superframe must be 'N' instead, and a superframe that does not end so is not counted.
   - Its evidence text: "All N padded superframes have bytes after the frame that are all 'N' (0x4E), which ffmpeg's wmavV encoder writes (wmaenc.c), with no bit reservoir and no variable block lengths", or with one, "The superframe has bytes after the frame …" and the same ending.
 - **Microsoft's Windows Media Audio encoder**, family Microsoft, medium: version 2, codec data of at least 10 bytes, bit 1 (the bit reservoir) and effective variable block lengths, and "Samples Per Block" equal to 17 × F. Its evidence text: "The codec data states S samples per block (17 frames) with the bit reservoir and variable block lengths, as the encoders of the Windows Media Format SDK and of Media Foundation write them", S without separators ("34816").
 - The traits go to the shared detection with the codec data's trait first; it adds the "Encoder" and "Writer" nodes and their findings.
@@ -641,7 +643,7 @@ Observed behavior of the encoders behind the fixtures; none of it is a rule the 
 - The meaning of "Samples Per Block", "Super Block Align", options bits 5 to 15 and the superframe index; whether 0x000D with variable blocks is really an encoder that sends one block size.
 - Whether the bits before the bit offset of a stream's first superframe can hold anything.
 - Whether stuffing and filler are intended or a by-product of the encoder's rate control.
-- The levels' scale, the line spectral pair values and the escape levels' meaning beyond their widths, which a reader of the syntax does not need.
+- The levels' scale, the line spectral pair values and the escape levels' meaning beyond their widths, which a reader of the syntax does not need; [wma-standard-decoding.md](wma-standard-decoding.md) gives them.
 
 ## Implementer's sources
 
@@ -650,7 +652,7 @@ The implementer may read the files marked safe: they hold nothing taken from FFm
 **Never read, whatever the folder:**
 
 - FFmpeg source of any version, anywhere on the machine: the 6.1.1 archive and every other copy or checkout of it, including `libavcodec`, `libavformat` and `libavutil`.
-- These scratch folders and everything in them: `wmadesc-standard`, `wmadesc-standard-review`, `wma-audit-ffmpeg`, `wmadesc-pro`, `wmadesc-voice`, `wmal-*`, `ff801*`, and `audit-*`.
+- These scratch folders and everything in them: `wmadesc-standard`, `wmadesc-standard-decoding` (and the cache folder `.cache/wmadesc-standard-decoding`), `wmadesc-standard-review`, `wma-audit-ffmpeg`, `wmadesc-pro`, `wmadesc-voice`, `wmal-*`, `ff801*`, and `audit-*`.
 - Any review under `reviews/` named `wma-*.md`.
 - FFmpeg is run only as a black box, as [`docs/development.md`](../development.md) describes the cross-checks.
 
@@ -659,6 +661,7 @@ The implementer may read the files marked safe: they hold nothing taken from FFm
 | File | Why |
 | --- | --- |
 | [`docs/design/wma-standard-format.md`](wma-standard-format.md) | this description |
+| [`docs/design/wma-standard-decoding.md`](wma-standard-decoding.md) | its decoding supplement, written the same way; its own list of sources not to read adds to this one |
 | [`docs/formats/asf-wma.md`](../formats/asf-wma.md), [`docs/plan.md`](../plan.md), [`docs/development.md`](../development.md), [`docs/design/decoders.md`](decoders.md) | prose; [asf-wma.md](../formats/asf-wma.md) names a few FFmpeg identifiers in describing behavior and contains no code |
 | `tests/fixtures/asf/*.report.json`, `*.expected.json`, `*.provenance.json` and the fixtures | outputs and data |
 | `src/Encspect.Formats.Wma/Tables.cs` | format tables generated from FFmpeg's data files, no code |

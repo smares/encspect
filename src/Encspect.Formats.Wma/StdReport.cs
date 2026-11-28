@@ -116,6 +116,7 @@ internal static class StdReport
         Add("Non-Zero Coefficients", NodeValue.Integer(totals.NonZero), StdText.StatNonZero);
         Add("Escape-Coded Coefficients", NodeValue.Integer(totals.Escapes), StdText.StatEscapes);
         stream.Blocks.AddBandwidthTo(statistics, (name, value, description, topic) => new Node(name, parent.Offset, parent.Length, value) { Description = description, Topic = topic ?? Topics.WmaStandard });
+        stream.Blocks.AddNoiseLevelTo(statistics, (name, value, description, topic) => new Node(name, parent.Offset, parent.Length, value) { Description = description, Topic = topic ?? Topics.WmaStandard });
     }
 
     private static NodeValue Share(long count, long total)
@@ -198,7 +199,7 @@ internal static class StdReport
             series.Add(new Series("Bitrate Over Time", "kbps", SeriesAxis.Seconds, starts, values, statistics) { Description = StdText.BitrateOverTimeSeries, Concept = GraphConcept.BitDistribution, Quantity = "Bitrate" });
         }
 
-        stream.Blocks.AddSeriesTo(series, offsets, statistics.Children.FirstOrDefault(c => c.Name == "Coded Bandwidth"), cancellation);
+        stream.Blocks.AddSeriesTo(series, offsets, statistics, cancellation);
 
         if (p.UsesBitReservoir)
         {

@@ -2,6 +2,7 @@
 //
 //   wma-decode-probe --out <dir> [--list <file with one path per line>] [--timeout <seconds>] <file or folder>...
 //   wma-decode-probe --format aac --units <folder of unit lists> --out <dir> [--timeout <seconds>] <file or folder>...
+//   wma-decode-probe wma-pcm <out folder> <file>...      the Source Reader's samples as floats, for scripts/fixtures/crosscheck_wma_pcm.py
 //   wma-decode-probe inventory --out <dir>
 //   wma-decode-probe ac3-pcm <file.ac3> <units.tsv> <out.f32>   (Dolby's decoder MFT, run by hand: Ac3Mft.cs)
 //   wma-decode-probe eac3-pcm <file.eac3> <units.tsv> <out.f32>   (the same MFT with E-AC-3)
@@ -42,6 +43,11 @@ public static class Program
         if (args.Length == 4 && args[0] == "eac3-pcm")
         {
             return Ac3Mft.Run(args[1], args[2], args[3], isEac3: true);
+        }
+
+        if (args.Length >= 3 && args[0] == "wma-pcm")
+        {
+            return WmaPcm.Run(args[1], args[2..]);
         }
 
         if (args.Length >= 5 && args[0] == "--child")

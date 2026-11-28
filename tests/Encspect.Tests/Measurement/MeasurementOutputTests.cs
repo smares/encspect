@@ -364,12 +364,48 @@ public class MeasurementOutputTests
         string[] header = lines[0].Split(',');
         string[] row = lines[1].Split(',');
         int cutoff = Array.IndexOf(header, "Spectral Cutoff (Hz)");
-        Assert.Equal(["Spectral Bandwidth (Hz)", "Spectral Slope (dB/kHz)", "Partial Cutoff (Hz)", "Side Cutoff (Hz)", "Inter-Channel Coherence From (Hz)", "Spectral Holes (%)"], header[(cutoff + 1)..(cutoff + 7)]);
+        Assert.Equal(["Spectral Bandwidth (Hz)", "Nyquist Edge Rate (Hz)", "Spectral Slope (dB/kHz)", "Partial Cutoff (Hz)", "Side Cutoff (Hz)", "Inter-Channel Coherence From (Hz)", "Spectral Holes (%)"], header[(cutoff + 1)..(cutoff + 8)]);
 
         // Quoted fields before the figures hold commas, so the columns are counted from the end.
         string FromEnd(string column) => row[row.Length - (header.Length - Array.IndexOf(header, column))];
         Assert.InRange(int.Parse(FromEnd("Side Cutoff (Hz)"), System.Globalization.CultureInfo.InvariantCulture), 10900, 11150);
         Assert.Matches(@"^\d+\.\d$", FromEnd("Spectral Holes (%)"));
+    }
+
+    // Step 10: the text line only where an edge is found, the JSON array always, and the CSV column after the spectral bandwidth, empty where none is found.
+    [Fact]
+    public void TheTextTheJsonAndTheCsvCarryTheNyquistEdge()
+    {
+        string found = Fixture("synthetic-nyquist-lines-22050-48000.flac");
+        string none = Fixture("synthetic-nyquist-pink-48000-16.flac");
+        (_, string text, _) = Run("--measure", "--hide", "frames,tags,statistics", found);
+        (_, string noneText, _) = Run("--measure", "--hide", "frames,tags,statistics", none);
+        (_, string json, _) = Run("--measure", "--json", "--explain", found);
+        (_, string noneJson, _) = Run("--measure", "--json", none);
+        (_, string csv, _) = Run("--measure", "--csv", found);
+        (_, string noneCsv, _) = Run("--measure", "--csv", none);
+
+        Assert.Matches(@"Nyquist Edge: a step of \d+\.\d dB at 2[12],\d{3} Hz, \d+ Hz (under|over) 22,050 Hz \(the Nyquist frequency of 44,100 Hz\), in \d+ of \d+ frames with signal; the band above 22,050 Hz is \d+\.\d dB under its mirror below", text);
+        Assert.DoesNotContain("Nyquist Edge", noneText, StringComparison.Ordinal);
+
+        JsonElement edges = JsonDocument.Parse(json).RootElement[0].GetProperty("streams")[0].GetProperty("measurements").GetProperty("spectrum").GetProperty("nyquistEdges");
+        JsonElement edge = Assert.Single(edges.EnumerateArray());
+        Assert.Equal("nyquist-edge", edge.GetProperty("topic").GetString());
+        Assert.Equal(44100, edge.GetProperty("lowerRate").GetProperty("value").GetInt32());
+        Assert.Equal(22050, edge.GetProperty("nyquistFrequency").GetProperty("value").GetDecimal());
+        Assert.Equal("dB", edge.GetProperty("above").GetProperty("unit").GetString());
+        Assert.True(edge.GetProperty("framesShowing").GetInt32() > 0);
+        JsonElement noEdges = JsonDocument.Parse(noneJson).RootElement[0].GetProperty("streams")[0].GetProperty("measurements").GetProperty("spectrum").GetProperty("nyquistEdges");
+        Assert.Equal(JsonValueKind.Array, noEdges.ValueKind);
+        Assert.Equal(0, noEdges.GetArrayLength());
+
+        string[] header = csv.Split("\r\n", StringSplitOptions.RemoveEmptyEntries)[0].Split(',');
+        int column = Array.IndexOf(header, "Nyquist Edge Rate (Hz)");
+        Assert.Equal(Array.IndexOf(header, "Spectral Bandwidth (Hz)") + 1, column);
+        string[] row = csv.Split("\r\n", StringSplitOptions.RemoveEmptyEntries)[1].Split(',');
+        string[] noneRow = noneCsv.Split("\r\n", StringSplitOptions.RemoveEmptyEntries)[1].Split(',');
+        Assert.Equal("44100", row[row.Length - (header.Length - column)]);
+        Assert.Equal(string.Empty, noneRow[noneRow.Length - (header.Length - column)]);
     }
 
     // Step 8: the text line, the JSON object, and the CSV column of the inter-channel coherence (after the side cutoff, empty where none is found).

@@ -1,0 +1,22 @@
+{
+ "description": "Windows Media Encoder 9 Series (x86), WMEnc.exe through WMCmd.vbs 9.0.0.2980: Windows Media Audio 9, constant bitrate, 6 kbit/s, 8 kHz, mono, on the synthetic source music-8k-mono.wav.",
+ "encoder": {
+  "tool": "Windows Media Encoder 9 Series (x86), WMEnc.exe through WMCmd.vbs",
+  "version": "9.0.0.2980",
+  "component": "wmvcore.dll 9.0.0.4506, wmadmoe.dll 9.0.0.4503; Microsoft Windows XP Service Pack 3, build 2600, in a virtual machine",
+  "settings": "Windows Media Audio 9, constant bitrate, 6 kbit/s, 8 kHz, mono"
+ },
+ "input": {
+  "name": "music-8k-mono.wav",
+  "sha256": "094f4d1b05a094237443e6f4e3d511357354860161206da5b29008926b82e10f",
+  "generator": "sources/make_sources.py of the sample kit (written from nothing, reproducible byte for byte)"
+ },
+ "selected_for": "line spectral pair exponents, the coding of Windows Media Encoder 9's low bitrates at 8 kHz",
+ "file": {
+  "name_in_kit": "music-8k-mono-wma9-cbr-6_8_1.wma",
+  "bytes": 11597,
+  "sha256": "1511b00420989aef93d0731a13bf357a68cd6007edf0cc9a18131aaff33c5525"
+ },
+ "reproducible": false,
+ "note": "The encoder stamps the time of the encode into the file; the file is committed as written, and checked by its content."
+}

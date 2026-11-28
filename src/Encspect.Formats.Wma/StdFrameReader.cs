@@ -54,6 +54,9 @@ internal sealed class StdTotals
     public long NonZero;
     public long Escapes;
 
+    // Channels of version 1 stereo whose coefficients stopped at Microsoft's limit: the encoder wrote more after it, which the walk leaves unread.
+    public long LimitStops;
+
     public long KnownSize => BySize.Sum();
 
     // The blocks of the frame being read, which the stream hands to its block series once the frame is read.
@@ -79,6 +82,26 @@ internal sealed class StdBlockNotes
 
     public void Noise() => Last().IsNoiseSubstituted = true;
 
+    public void Gain(long gain) => Last().Gain = gain;
+
+    public void Reuse() => Last().IsReusingExponents = true;
+
+    // One noise level of a flagged band, in decibels.
+    public void Level(int level)
+    {
+        ref Note note = ref Last();
+        note.LevelSum += level;
+        note.Levels++;
+    }
+
+    // One channel's non-zero coefficients and the escapes among them.
+    public void Coefficients(int nonZero, int escapes)
+    {
+        ref Note note = ref Last();
+        note.NonZero += nonZero;
+        note.Escapes += escapes;
+    }
+
     // The highest of a block's channels.
     public void Reach(int hertz) => Last().Hertz = Math.Max(Last().Hertz, hertz);
 
@@ -90,6 +113,14 @@ internal sealed class StdBlockNotes
         public byte Size;
         public bool IsNoiseSubstituted;
         public int Hertz;
+        public bool IsReusingExponents;
+
+        // 0 where the block stopped before its gain, which is 1 or more.
+        public long Gain;
+        public long LevelSum;
+        public int Levels;
+        public int NonZero;
+        public int Escapes;
     }
 }
 
@@ -136,17 +167,19 @@ internal static class StdFrameReader
 {
     // Reads blocks from the position of bits until they add up to a frame, leaving the position at the frame's end or where it
     // failed. state is carried on; totals and trace, when given, collect the figures and the fields.
-    public static FrameFault Read(StdParameters parameters, Bits bits, ref FrameState state, StdTotals? totals, List<TraceBlock>? trace, out int blocks)
+    public static FrameFault Read(StdParameters parameters, Bits bits, ref FrameState state, StdTotals? totals, List<TraceBlock>? trace, out int blocks, StdRecordWriter? store = null)
     {
         int frameLength = parameters.FrameLength;
         int filled = 0;
         blocks = 0;
+        store?.Clear();
+        store?.Add(0);
         while (filled < frameLength)
         {
             blocks++;
             var block = trace is null ? null : new TraceBlock(bits.Position);
             trace?.Add(block!);
-            FrameFault fault = ReadBlock(parameters, bits, ref state, filled, totals, block, out int length);
+            FrameFault fault = ReadBlock(parameters, bits, ref state, filled, totals, block, store, out int length);
             if (block is not null)
             {
                 block.End = bits.Position;
@@ -173,7 +206,7 @@ internal static class StdFrameReader
         return FrameFault.None;
     }
 
-    private static FrameFault ReadBlock(StdParameters p, Bits bits, ref FrameState state, int filled, StdTotals? totals, TraceBlock? block, out int length)
+    private static FrameFault ReadBlock(StdParameters p, Bits bits, ref FrameState state, int filled, StdTotals? totals, TraceBlock? block, StdRecordWriter? store, out int length)
     {
         length = 0;
         List<TraceField>? fields = block?.Fields;
@@ -271,6 +304,17 @@ internal static class StdFrameReader
             fields?.Add(new TraceField(FieldKind.Coded, c, at, bits.Position, coded[c] ? 1 : 0, 0));
         }
 
+        int headerAt = -1;
+        if (store is not null)
+        {
+            store.Set(0, store.Get(0) + 1);
+            headerAt = store.Add(size);
+            store.Add(state.Previous);
+            store.Add(state.Next);
+            store.Add((isMidSide ? StdRecordWriter.MidSideFlag : 0) | (coded[0] ? StdRecordWriter.CodedFlag : 0) | (coded[1] ? StdRecordWriter.CodedFlag << 1 : 0));
+            store.Add(0);
+        }
+
         if (!any)
         {
             if (totals is not null)
@@ -288,7 +332,7 @@ internal static class StdFrameReader
 
         bool isExponentsSent = true;
         long gain = 0;
-        FrameFault fault = ReadCodedBlock(p, bits, ref state, size, isMidSide, coded, totals, block, ref isExponentsSent, ref gain);
+        FrameFault fault = ReadCodedBlock(p, bits, ref state, size, isMidSide, coded, totals, block, store, headerAt, ref isExponentsSent, ref gain);
         if (totals is not null)
         {
             if (!totals.HasGain)
@@ -306,6 +350,7 @@ internal static class StdFrameReader
             if (!isExponentsSent)
             {
                 totals.ReusingExponents++;
+                totals.Notes.Reuse();
             }
         }
 
@@ -327,7 +372,7 @@ internal static class StdFrameReader
     }
 
     private static FrameFault ReadCodedBlock(StdParameters p, Bits bits, ref FrameState state, int size, bool isMidSide, ReadOnlySpan<bool> coded, StdTotals? totals,
-        TraceBlock? block, ref bool isExponentsSent, ref long gain)
+        TraceBlock? block, StdRecordWriter? store, int headerAt, ref bool isExponentsSent, ref long gain)
     {
         List<TraceField>? fields = block?.Fields;
         int channels = p.Channels;
@@ -353,6 +398,8 @@ internal static class StdFrameReader
         }
 
         gain = sum;
+        totals?.Notes.Gain(sum);
+        store?.Set(headerAt + 4, (int)Math.Min(sum, int.MaxValue));
         fields?.Add(new TraceField(FieldKind.Gain, 0, gainAt, bits.Position, (int)Math.Min(sum, int.MaxValue), 0));
         int escapeWidth = sum < 15 ? 13 : sum < 32 ? 12 : sum < 40 ? 11 : sum < 45 ? 10 : 9;
 
@@ -372,6 +419,7 @@ internal static class StdFrameReader
                     continue;
                 }
 
+                int mask = 0;
                 for (int i = 0; i < high.Length; i++)
                 {
                     total++;
@@ -381,8 +429,11 @@ internal static class StdFrameReader
                         flagged++;
                         flaggedBands[c]++;
                         flaggedWidth[c] += high[i];
+                        mask |= 1 << i;
                     }
                 }
+
+                store?.Add(mask);
             }
 
             fields?.Add(new TraceField(FieldKind.NoiseFlags, 0, flagsAt, bits.Position, flagged, total));
@@ -404,18 +455,22 @@ internal static class StdFrameReader
 
                     // Each channel's levels start from a 7-bit value.
                     bool first = true;
+                    int level = 0;
 
                     for (int i = 0; i < flaggedBands[c]; i++)
                     {
                         if (first)
                         {
-                            bits.Read(7);
+                            level = (int)bits.Read(7) - 19;
                             first = false;
                         }
                         else
                         {
-                            StdCodebooks.NoiseLevel.Read(bits);
+                            level += StdCodebooks.NoiseLevel.Read(bits) - 18;
                         }
+
+                        store?.Add(level);
+                        totals?.Notes.Level(level);
                     }
                 }
 
@@ -430,6 +485,11 @@ internal static class StdFrameReader
             fields?.Add(new TraceField(FieldKind.ExponentsSent, 0, at, bits.Position, isExponentsSent ? 1 : 0, 0));
         }
 
+        if (isExponentsSent && store is not null)
+        {
+            store.Set(headerAt + 3, store.Get(headerAt + 3) | StdRecordWriter.ExponentsSentFlag);
+        }
+
         if (isExponentsSent)
         {
             for (int c = 0; c < channels; c++)
@@ -440,7 +500,7 @@ internal static class StdFrameReader
                 }
 
                 int at = bits.Position;
-                FrameFault fault = p.UsesScaleFactorExponents ? ReadScaleFactors(p, bits, size) : ReadLineSpectralPairs(bits);
+                FrameFault fault = p.UsesScaleFactorExponents ? ReadScaleFactors(p, bits, size, store) : ReadLineSpectralPairs(bits, store);
                 if (fault != FrameFault.None)
                 {
                     return fault;
@@ -467,7 +527,7 @@ internal static class StdFrameReader
                 int book = (2 * pair) + (isMidSide && c == 1 ? 1 : 0);
                 int at = bits.Position;
                 int n = p.CoefficientEnds[size] - p.FirstCoefficient - flaggedWidth[c];
-                FrameFault fault = ReadCoefficients(p, bits, book, n, escapeWidth, totals, out int nonZero, out int last);
+                FrameFault fault = ReadCoefficients(p, bits, book, n, escapeWidth, totals, out int nonZero, out int last, store, length, size, high, flags.Slice(c * high.Length, high.Length));
                 if (fault != FrameFault.None)
                 {
                     return fault;
@@ -526,13 +586,36 @@ internal static class StdFrameReader
         return line + remaining;
     }
 
-    private static FrameFault ReadLineSpectralPairs(Bits bits)
+    // Ten indexes of 3, 4, 4, 4, 4, 4, 4, 4, 3 and 3 bits.
+    private static readonly int[] LspWidths = [3, 4, 4, 4, 4, 4, 4, 4, 3, 3];
+
+    // Stores the level of the coefficient at a position on its line.
+    private static void Place(StdRecordWriter? store, int linesAt, int length, StdParameters p, int size, int[] high, ReadOnlySpan<bool> flagged, int position, int level, bool isPositive)
     {
-        bits.Skip(37);
+        if (store is null)
+        {
+            return;
+        }
+
+        long line = LineOf(p, size, high, flagged, position);
+        if (line < length)
+        {
+            store.Set(linesAt + (int)line, isPositive ? level : -level);
+        }
+    }
+
+    private static FrameFault ReadLineSpectralPairs(Bits bits, StdRecordWriter? store)
+    {
+        foreach (int width in LspWidths)
+        {
+            int index = (int)bits.Read(width);
+            store?.Add(index);
+        }
+
         return bits.IsOverrun ? FrameFault.OutOfBits : FrameFault.None;
     }
 
-    private static FrameFault ReadScaleFactors(StdParameters p, Bits bits, int size)
+    private static FrameFault ReadScaleFactors(StdParameters p, Bits bits, int size, StdRecordWriter? store)
     {
         int length = p.FrameLength >> size;
         int[] bands = p.ExponentBands[size];
@@ -540,6 +623,15 @@ internal static class StdFrameReader
         if (p.Version == 1)
         {
             value = (int)bits.Read(5) + 10;
+        }
+
+        int largestAt = -1;
+        int linesAt = -1;
+        int largest = int.MinValue;
+        if (store is not null)
+        {
+            largestAt = store.Add(0);
+            linesAt = store.Reserve(length);
         }
 
         int covered = 0;
@@ -561,27 +653,55 @@ internal static class StdFrameReader
             }
 
             int width = band < bands.Length ? bands[band] : 0;
-            covered += width > 0 ? width : 4;
+            int span = width > 0 ? width : 4;
+            if (store is not null)
+            {
+                largest = Math.Max(largest, value);
+                for (int line = covered; line < covered + span && line < length; line++)
+                {
+                    store.Set(linesAt + line, value);
+                }
+            }
+
+            covered += span;
         }
 
+        store?.Set(largestAt, largest);
         return bits.IsOverrun ? FrameFault.OutOfBits : FrameFault.None;
     }
 
-    private static FrameFault ReadCoefficients(StdParameters p, Bits bits, int book, int n, int escapeWidth, StdTotals? totals, out int nonZero, out int last)
+    private static FrameFault ReadCoefficients(StdParameters p, Bits bits, int book, int n, int escapeWidth, StdTotals? totals, out int nonZero, out int last,
+        StdRecordWriter? store, int length, int size, int[] high, ReadOnlySpan<bool> flagged)
     {
         Vlc vlc = StdCodebooks.Coefficients[book];
         ushort[] runs = StdCodebooks.Runs[book];
+        ushort[] levels = StdCodebooks.Levels[book];
+        int linesAt = store?.Reserve(length) ?? 0;
         int position = 0;
         nonZero = 0;
         last = 0;
         int escapes = 0;
-        while (position < n)
+
+        // Version 1 in stereo codes s positions fewer than the count states (Microsoft's rule, which mono does not follow, docs/design/wma-standard-decoding.md, "Coefficient values"): a code that falls at the limit or
+        // beyond places nothing, its sign bit is read, and the channel ends; where the reader aligns after each channel, what the encoder wrote past it is read as the next channel.
+        bool hasLimit = p.Version == 1 && p.Channels == 2;
+        int limit = hasLimit ? n - p.FirstCoefficient : n;
+        bool isStoppedAtLimit = false;
+        while (position < limit)
         {
             int symbol = vlc.Read(bits);
             if (symbol >= 2)
             {
                 position += runs[symbol];
-                bits.Read(1);
+                bool isPositive = bits.Read(1) != 0;
+                if (position >= limit && hasLimit)
+                {
+                    position = limit;
+                    isStoppedAtLimit = true;
+                    break;
+                }
+
+                Place(store, linesAt, length, p, size, high, flagged, position, levels[symbol], isPositive);
                 nonZero++;
                 last = position;
                 position++;
@@ -592,9 +712,17 @@ internal static class StdFrameReader
             }
             else
             {
-                bits.Read(escapeWidth);
+                int escaped = (int)bits.Read(escapeWidth);
                 position += (int)bits.Read(p.FrameBits);
-                bits.Read(1);
+                bool isPositive = bits.Read(1) != 0;
+                if (position >= limit && hasLimit)
+                {
+                    position = limit;
+                    isStoppedAtLimit = true;
+                    break;
+                }
+
+                Place(store, linesAt, length, p, size, high, flagged, position, escaped, isPositive);
                 nonZero++;
                 escapes++;
                 last = position;
@@ -607,10 +735,14 @@ internal static class StdFrameReader
             }
         }
 
+        // A channel that fills every position up to the limit may also have more coded after it.
+        isStoppedAtLimit |= hasLimit && position >= limit && !bits.IsOverrun;
         if (totals is not null)
         {
+            totals.LimitStops += isStoppedAtLimit ? 1 : 0;
             totals.NonZero += nonZero;
             totals.Escapes += escapes;
+            totals.Notes.Coefficients(nonZero, escapes);
         }
 
         if (position > n)

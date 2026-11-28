@@ -1607,7 +1607,8 @@ internal sealed class StreamMeasurer
 
         short[] combined = Levels(_average.AsSpan(_measured * rows, rows));
         int[] combinedFine = FineLevels(_average.AsSpan(_measured * rows, rows));
-        SpectralCutoff cutoff = CutoffFinder.Find(combinedFine, _counters.Length > 0 ? _counters[_measured] : null, _geometry);
+        CutoffCounters? combinedCounters = _counters.Length > 0 ? _counters[_measured] : null;
+        SpectralCutoff cutoff = CutoffFinder.Find(combinedFine, combinedCounters, _geometry);
         SpectralBandwidth combinedBandwidth = CutoffFinder.FindBandwidth(combinedFine, _geometry);
         MidSideFigures? midSide = null;
         if (HasPair)
@@ -1655,6 +1656,8 @@ internal sealed class StreamMeasurer
                 Holes = CutoffFinder.FindHoles(_counters.Length > 0 ? _counters[_measured] : null, _geometry, cutoff, combinedBandwidth),
                 MidSide = midSide,
                 Coherence = coherenceFigures,
+                IsNyquistEdgeSearched = NyquistEdgeFinder.IsSearched(_geometry, combinedCounters),
+                NyquistEdges = NyquistEdgeFinder.Find(combinedFine, combinedCounters, _geometry),
             },
             Spectrogram = Grid(),
             Waveform = Wave(),

@@ -686,6 +686,17 @@ public sealed partial class GraphView
             context.DrawText(label, new Point(start, plot.Top + 2));
         }
 
+        // A dashed line at the Nyquist frequency of each Nyquist edge's rate, labeled with it, under the cutoff's label.
+        int edgeSlot = graph.Cutoff is not null && graph.View is not (GraphForm.MidSide or GraphForm.Coherence) ? 1 : 0;
+        foreach (NyquistEdge edge in graph.NyquistEdges)
+        {
+            double x = Math.Round(plot.Left + (edge.LowerRate / 2.0 / Math.Max(1, graph.NyquistHertz) * plot.Width)) + 0.5;
+            context.DrawLine(new Pen(Palette.Foreground(this), 1.25, new DashStyle([1, 3], 0)), new Point(x, plot.Top), new Point(x, plot.Bottom));
+            FormattedText label = Text(SpectrumGraph.NyquistEdgeLabel(edge), AxisSize, Palette.Foreground(this));
+            double start = x + 6 + label.Width <= plot.Right ? x + 6 : x - 6 - label.Width;
+            context.DrawText(label, new Point(start, plot.Top + 2 + (edgeSlot++ * (label.Height + 2))));
+        }
+
         // The mid and side view draws the cutoff of each line, in the line's color, the second label under the first.
         for (int line = 0; graph.View == GraphForm.MidSide && line < graph.Lines; line++)
         {

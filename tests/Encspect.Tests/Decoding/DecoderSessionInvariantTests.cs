@@ -55,6 +55,8 @@ public class DecoderSessionInvariantTests
         ["ER AAC ELD"] = "aac",
         ["ER AAC ELD with SBR"] = "aac",
         ["xHE-AAC (USAC)"] = "aac",
+        ["Windows Media Audio 1"] = "wma",
+        ["Windows Media Audio 2"] = "wma",
         ["MPEG-1 Layer I"] = "mpeg-audio",
         ["MPEG-1 Layer II"] = "mpeg-audio",
         ["MPEG-1 Layer III"] = "mpeg-audio",
