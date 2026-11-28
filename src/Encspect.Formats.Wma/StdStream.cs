@@ -164,9 +164,23 @@ internal sealed class StdStream
         _feed?.Frame(bytes, startBit, frame.Bits, _feed.IsDecoding ? nodes.Frame(frameIndex) : null, FailsChecksum(frame.StartSuperframe, frame.Superframe));
     }
 
+    // The feed is held only while the packets are read: the report's lazy frame nodes keep this stream, and through the feed it would
+    // keep the decode session and the input alive (InputReleaseTests).
     public void Read(IEnumerable<MappedBytes> packets, int limit, StdNodes nodes, FindingCollector findings, StdDecodeFeed? feed, CancellationToken cancellationToken)
     {
         _feed = feed;
+        try
+        {
+            ReadPackets(packets, limit, nodes, findings, cancellationToken);
+        }
+        finally
+        {
+            _feed = null;
+        }
+    }
+
+    private void ReadPackets(IEnumerable<MappedBytes> packets, int limit, StdNodes nodes, FindingCollector findings, CancellationToken cancellationToken)
+    {
         StdParameters p = Parameters;
         int align = p.BlockAlign;
         byte[] buffer = new byte[align + 8];
