@@ -323,6 +323,47 @@ fixture("spread-audio", "Windows Media Audio whose error correction spreads the 
         spread_file, [finding("asf.audio-spread", "2 packets")], {"ffprobe": False, "reason": "ffmpeg descrambles the media objects and decodes them as Windows Media Audio, which these are not."})
 
 
+# Where ffmpeg (run as a program, decoding to PCM) descrambles spread audio: a PCM stream whose media objects have the span's number of virtual
+# packets (span times the virtual packet length), so that the decoded bytes are the media objects' bytes as they are or in another order. ffmpeg decides per
+# media object: one of another size comes out as it is, with a message that its size is not the span times the packet length (the `spread-object-*` fixtures).
+# The analysis decides per stream, from the spread audio fields (SpreadAudio.Scrambles, which asf.audio-spread reports for a stream whose coding is analyzed): the
+# stream counts as scrambled where ffmpeg reorders whole objects, since a file written with spread audio has whole objects. AsfSpreadTests checks the rule against
+# these pins ("rule_scrambles"). A span of 1 gives the bytes in their own order either way, so it counts as not scrambled.
+SPREAD_CASES = [
+    # (name, span, virtual packet length, chunk size, object size or None for span times packet, what, ffmpeg reorders)
+    ("chunk-size-0", 2, 64, 0, None, "a chunk size of 0", False),
+    ("chunk-is-packet", 2, 64, 64, None, "a chunk size equal to the virtual packet length, so one chunk", False),
+    ("chunk-over-packet", 2, 64, 128, None, "a chunk size above the virtual packet length", False),
+    ("chunk-not-divisor", 2, 64, 24, None, "a chunk size that does not divide the virtual packet length", False),
+    ("span-0", 0, 64, 32, None, "a span of 0 and two chunks", False),
+    ("span-1-one-chunk", 1, 64, 64, None, "a span of 1 and one chunk", False),
+    ("span-1-chunks", 1, 64, 32, None, "a span of 1 and two chunks", False),
+    ("span-2-chunks", 2, 64, 32, None, "a span of 2 and two chunks", True),
+    ("span-2-many-chunks", 2, 64, 16, None, "a span of 2 and four chunks", True),
+    ("span-3-chunks", 3, 60, 20, None, "a span of 3 and three chunks", True),
+    ("object-short", 2, 64, 32, 64, "a span of 2 and two chunks, with media objects of one virtual packet", False),
+    ("object-long", 2, 64, 32, 192, "a span of 2 and two chunks, with media objects of three virtual packets", False),
+]
+
+
+def spread_case_file(span, packet, chunk, objects=None):
+    objects = objects or max(span, 1) * packet
+    count = 12
+    ec = m.spread_audio(span, packet, chunk, b"\0")
+    return simple(
+        [m.packet([m.Payload(1, i + 1, samples(objects, i), time=i * 25)], objects + 48, m.Layout(), send_time=i * 25) for i in range(count)],
+        [m.stream_properties(1, m.wave_format(1, 1, 8000, 16000, 2, 16), ec_type=m.AUDIO_SPREAD, ec_data=ec)], packet_size=objects + 48)
+
+
+for _name, _span, _packet, _chunk, _objects, _what, _reordered in SPREAD_CASES:
+    _short = _objects is not None
+    fixture(f"spread-{_name}", f"A PCM stream whose error correction spreads the audio with {_what} (span {_span}, virtual packet length {_packet}, chunk size {_chunk}); each media object has {_objects or max(_span, 1) * _packet} bytes.",
+            lambda _span=_span, _packet=_packet, _chunk=_chunk, _objects=_objects: spread_case_file(_span, _packet, _chunk, _objects),
+            [finding("asf.audio-spread", f"over {_span} packets")] if _reordered or _short else [],
+            {"ffprobe": True, "spread": "descrambled" if _reordered else "as is", "rule_scrambles": _reordered or _short, **({"spread_message": "pkt.size != ds_packet_size * ds_span"} if _short else {}),
+             "spread_audio": {"span": _span, "virtual_packet_length": _packet, "virtual_chunk_length": _chunk}})
+
+
 def mismatched_indexes_file():
     parameters = (m.index_parameters(2, [(1, 2)], m.MEDIA_OBJECT_INDEX_PARAMETERS) + m.index_parameters(0, [(1, 1)], m.TIMECODE_INDEX_PARAMETERS))
     return m.asf_file(

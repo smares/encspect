@@ -1,0 +1,66 @@
+{
+ "description": "Four units whose lossless channel set has eight channels: front center, left and right, LFE, left and right of center and left and right height.",
+ "length": 3056,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   764
+  ],
+  [
+   764,
+   764
+  ],
+  [
+   1528,
+   764
+  ],
+  [
+   2292,
+   764
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS-HD Master Audio",
+   "sample_rate": 48000,
+   "channels": 8,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front center",
+    "front left",
+    "front right",
+    "LFE",
+    "front left of center",
+    "front right of center",
+    "top front left",
+    "top front right"
+   ],
+   "samples": 2048,
+   "is_vbr": true
+  }
+ ],
+ "fields": {},
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": true,
+  "ffprobe_bitrate": false,
+  "libdca_channels": 2,
+  "xll_mask_bit": [
+   0,
+   1,
+   2,
+   5,
+   11,
+   12,
+   13,
+   15
+  ],
+  "skip": {
+   "ffprobe_bitrate": "ffmpeg's lossless decoder sets the bit rate to 0 so ffprobe lists none"
+  }
+ }
+}
