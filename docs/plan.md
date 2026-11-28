@@ -454,6 +454,17 @@ The more formats of [planned.md](formats/planned.md#after-05-more-formats), as l
 
 - **Follow-up decoders:** the DTS extensions (XCh, XXCH, X96, XBR, LBR and DTS-HD's lossless extension XLL), which [lossy-decoders.md](design/lossy-decoders.md#what-each-decoder-covers) leaves as follow-ups of the DTS core decoder. Their place among the formats above is set when 0.5 is done.
 - **The AC-4 and MPEG-H decoders** (the lead, 2026-11-16): after their parsers (items 8 and 10), each after a design of its own as [lossy-decoders.md](design/lossy-decoders.md#scope) requires; AC-4's specification is free, MPEG-H's is not.
+- **Stated gain and loudness** (the lead, 2026-11-28; with 0.6, the first milestone after 0.5): what a file states about its gain or loudness, under one name and unit for every format, next to the measured loudness.
+  - **Today:** each format shows its own fields in its own tree and nothing applies them, apart from Opus's output gain, which RFC 7845 requires the decoder to apply. Covered:
+    - AC-3 and E-AC-3: dialogue normalization, compression gain, dynamic range gain.
+    - DTS: dialogue normalization, the dynamic range coefficient.
+    - AAC: dynamic range control, the program reference level, the loudness info extension.
+    - WMA Pro: the dynamic range gain.
+    - The LAME tag's ReplayGain and peak, Musepack's ReplayGain and Max Level, WAV's `bext` loudness values, MP4's iTunNORM as text.
+    - Tags: ReplayGain items of APEv2 and Vorbis comments, and ID3v2's RVA2 and RVAD.
+  - **The figure:** one entry per stated value on the stream: the value with its unit and the reference level its specification gives, track or album where the field says so, and the field it came from. It is the file's claim, shown as such; the measured integrated loudness stands beside it as a second figure, with no difference or verdict drawn from the two.
+  - **Read in the same change:** Opus's and Vorbis comments' `R128_TRACK_GAIN` and `R128_ALBUM_GAIN` (RFC 7845 section 5.2.1), the iTunNORM values, and MP4's `udta/ludt` loudness box (`tlou`), shown as an unread box today.
+  - **Not in it:** applying any of these values when decoding; the decoders keep the coded samples, as the AC-3 design decided (decision 9).
 - **One page of the reference tools' differences** (the lead, 2026-11-12; moved from 0.4 to after 0.5 by the lead on 2026-11-21, since it adds nothing to the analysis itself and serves other tools' maintainers; its place is set when 0.5 is done, with the DTS extensions'): the cross-check scripts keep, per tool and version, the files where a reference tool reads or decodes differently from the analyzer, each with its evidence and failing once the tool agrees; but the entries are spread over a dozen scripts.
   - **A case for it** (the lead, 2026-11-24, from 0.5 item 11): FFmpeg 9.1 and mpg123 1.33.7 decode the largest MPEG-2 Layer III intensity position, which ISO/IEC 13818-3 2.4.3.2 makes illegal and decodes with the mid/side equations, as an ordinary position; the crafted fixture `layer3/intensity-mpeg2-largest-position.mp3` shows it, and Fastencc 1.02 writes such positions.
   - **Generated:** `docs/reference-tool-differences.md`, written by a script from those entries and checked in CI to match them, grouped by tool and version.
