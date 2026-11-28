@@ -3478,7 +3478,7 @@
       {
         "severity": "Info",
         "code": "wma.voice-cache-overflow",
-        "message": "A packet starts or finishes a superframe that does not fit the 256 bytes a decoder keeps of one that goes on in the next packet, or whose spillover bits are not in the packet; FFmpeg's decoder copies none of the bits that do not fit (wmavoice.c), so it reads the cache's old bytes in their place.",
+        "message": "A packet starts or finishes a superframe that does not fit the 256 bytes a decoder keeps of one that goes on in the next packet, or whose spillover bits are not in the packet; FFmpeg's decoder copies none of the bits that do not fit, so it reads the cache's old bytes in their place.",
         "offset": 699,
         "length": 120,
         "path": [
@@ -3508,7 +3508,7 @@
       {
         "severity": "Warning",
         "code": "wma.packet-short",
-        "message": "A unit of the stream's data holds fewer bytes than the block alignment of 120; a decoder takes it for the rest of a packet and reads no header in it: it drops the superframe that goes on from the packet before, and takes a superframe or the start of one from the bytes only where the packet before counted more superframes than it held, or none (wmavoice.c).",
+        "message": "A unit of the stream's data holds fewer bytes than the block alignment of 120; a decoder takes it for the rest of a packet and reads no header in it: it drops the superframe that goes on from the packet before, and takes a superframe or the start of one from the bytes only where the packet before counted more superframes than it held, or none (FFmpeg's decoder).",
         "offset": 987,
         "length": 70,
         "path": [
