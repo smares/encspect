@@ -1751,6 +1751,27 @@ def sbr_too_many_patches():
               "decode": "ffmpeg is held to the output by crosscheck_he_aac_pcm.py, which compares its patches of six with the decoder's."}, rate=core)
 
 
+def sbr_header_unbuildable():
+    """An SBR header at 22050 Hz (core 11025 Hz) whose crossover band lies beyond the two bands of its master table, so that its frequency tables cannot be built (4.6.18.3)."""
+    core = 11025
+    good = {"amp_res": 1, "start": 5, "stop": 9, "xover": 0, "freq_scale": 2, "alter_scale": 1}
+    bad = {"amp_res": 1, "start": 14, "stop": 0, "xover": 2, "freq_scale": 3, "alter_scale": 0}
+    counts = M.sbr_bands(good, 2 * core)
+    blocks = []
+    for i in range(6):
+        payload = M.sbr_payload(counts, bad if i == 0 else None, pair=True)
+        blocks.append(pair_block(0, rate=core, extra=[M.Element(M.FIL, payload=payload)], first=channel(M.ONLY_LONG, 1, [[(11, 4)]], seed=i, rate=core),
+                                 second=channel(M.ONLY_LONG, 1, [[(9, 4)]], seed=i + 1, rate=core))[0])
+    data, rows = concat(adts_frames(blocks, rate=core, channels=2))
+    return "sbr-header-unbuildable.aac", data, manifest(
+        "ADTS at 11025 Hz of six channel pairs followed by SBR payloads whose header (start frequency 14, stop frequency 0, scale 3, crossover band 2) names a crossover band beyond the "
+        "two bands of the master table at 22050 Hz: the tables cannot be built, the payloads are not read, and the stream is HE-AAC from the payloads' presence.", data, rows,
+        [stream("HE-AAC", 2 * core, 2, "Stereo", 6 * 2048, ffprobe_profile="LC")], {"ADTS/Statistics/SBR": share(6, 6, "access unit")},
+        [["aac.sbr-header-invalid", "bs_xover_band 2 lies beyond the 2 bands of the master frequency table"], ["aac.implicit-sbr", "6 of 6 raw data blocks hold SBR data: the stream is HE-AAC"]],
+        skip={"faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold.",
+              "decode": "ffmpeg rejects the header's tables and decodes the core only, as the analyzer does."}, rate=core)
+
+
 def lfe_restrictions():
     """A single channel element and an LFE element from a program config element, the LFE channel stream first within the restrictions of 4.5.2.1.3.1 and then with a Kaiser-Bessel
     derived window, coefficients above the lowest 12 and TNS."""
@@ -1799,7 +1820,7 @@ def elements_order_changes():
 
 def fixtures():
     """(directory, name, data, manifest) of every fixture: "adts" or "mp4"."""
-    out = [("adts",) + f for f in [windows(), window_sequences_invalid(), stereo(), stereo_coding(), stereo_coding_reserved(), stereo_coding_elements(), intensity_noise(), implicit_sbr_adts(), sbr_fixvar_adts(), fill_and_data()] + loud_tools() + [elements_order_changes(), stereo_tool_order(), tns_order_above_12(), first_block_kbd(), fill_with_sbr_and_other_payload(), sbr_crc_checked(), sbr_too_many_patches(), lfe_restrictions()] + faac_style_fixtures() + crc_fixtures() + object_types() + main_ltp_decoding() + corrupt()]
+    out = [("adts",) + f for f in [windows(), window_sequences_invalid(), stereo(), stereo_coding(), stereo_coding_reserved(), stereo_coding_elements(), intensity_noise(), implicit_sbr_adts(), sbr_fixvar_adts(), fill_and_data()] + loud_tools() + [elements_order_changes(), stereo_tool_order(), tns_order_above_12(), first_block_kbd(), fill_with_sbr_and_other_payload(), sbr_crc_checked(), sbr_too_many_patches(), sbr_header_unbuildable(), lfe_restrictions()] + faac_style_fixtures() + crc_fixtures() + object_types() + main_ltp_decoding() + corrupt()]
     out += [("mp4",) + f for f in mp4_fixtures()]
     out += eld_ld_sbr() + parametric_stereo_cores() + signature_streams() + streams_limited() + sbr_evidence() + blocks_missing() + prediction_bands() + rate_fixtures()
     return out

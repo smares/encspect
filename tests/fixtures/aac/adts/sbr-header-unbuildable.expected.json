@@ -1,0 +1,69 @@
+{
+ "description": "ADTS at 11025 Hz of six channel pairs followed by SBR payloads whose header (start frequency 14, stop frequency 0, scale 3, crossover band 2) names a crossover band beyond the two bands of the master table at 22050 Hz: the tables cannot be built, the payloads are not read, and the stream is HE-AAC from the payloads' presence.",
+ "length": 543,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "HE-AAC",
+   "sample_rate": 22050,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 12288,
+   "is_vbr": true,
+   "ffprobe_profile": "LC"
+  }
+ ],
+ "units": [
+  [
+   0,
+   93
+  ],
+  [
+   93,
+   90
+  ],
+  [
+   183,
+   90
+  ],
+  [
+   273,
+   90
+  ],
+  [
+   363,
+   90
+  ],
+  [
+   453,
+   90
+  ]
+ ],
+ "fields": {
+  "ADTS/Statistics/SBR": "6 access units (100.0%)"
+ },
+ "findings": [
+  [
+   "aac.sbr-header-invalid",
+   "bs_xover_band 2 lies beyond the 2 bands of the master frequency table"
+  ],
+  [
+   "aac.implicit-sbr",
+   "6 of 6 raw data blocks hold SBR data: the stream is HE-AAC"
+  ]
+ ],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "faad": null,
+  "skip": {
+   "faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold.",
+   "decode": "ffmpeg rejects the header's tables and decodes the core only, as the analyzer does."
+  }
+ }
+}
