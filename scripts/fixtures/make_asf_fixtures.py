@@ -359,7 +359,7 @@ for _name, _span, _packet, _chunk, _objects, _what, _reordered in SPREAD_CASES:
     _short = _objects is not None
     fixture(f"spread-{_name}", f"A PCM stream whose error correction spreads the audio with {_what} (span {_span}, virtual packet length {_packet}, chunk size {_chunk}); each media object has {_objects or max(_span, 1) * _packet} bytes.",
             lambda _span=_span, _packet=_packet, _chunk=_chunk, _objects=_objects: spread_case_file(_span, _packet, _chunk, _objects),
-            [],
+            [finding("asf.audio-spread", f"over {_span} packets")] if _reordered or _short else [],
             {"ffprobe": True, "spread": "descrambled" if _reordered else "as is", "rule_scrambles": _reordered or _short, **({"spread_message": "pkt.size != ds_packet_size * ds_span"} if _short else {}),
              "spread_audio": {"span": _span, "virtual_packet_length": _packet, "virtual_chunk_length": _chunk}})
 

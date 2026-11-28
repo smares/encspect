@@ -4431,8 +4431,8 @@
     "findings": [
       {
         "severity": "Info",
-        "code": "asf.codec-not-analyzed",
-        "message": "Stream 1 is coded as PCM (format tag 0x0001), which is not routed from ASF to a codec parser; its media objects are not analyzed.",
+        "code": "asf.audio-spread",
+        "message": "Stream 1 spreads its audio over 2 packets (section 9.1.1), which scrambles the media objects; descrambling is not done, so the stream is not analyzed.",
         "offset": 134,
         "length": 104,
         "path": [
