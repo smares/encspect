@@ -222,7 +222,7 @@ For each block size k (0 to N_s − 1, L = L_k), a list of band widths in coeffi
 
 - Each media object of the stream is one superframe. A decoder reads its first A bytes.
 - A media object shorter than A is rejected ("Input packet size too small (%d < %d)"). Encspect does not read it and empties the bit reservoir; FFmpeg leaves its reservoir as it was, so the next frame spanning superframes is rebuilt from bytes that do not belong together.
-- A media object longer than A: FFmpeg reads A bytes as a superframe and feeds the rest in again as another packet (`decode.c`), which is then usually too short. Encspect reads the first A bytes only.
+- A media object longer than A: FFmpeg reads A bytes as a superframe and feeds the rest in again as another packet (`decode.c`). The rest is usually too short in the files of the project's encoders, but the three version 1 files of Microsoft's encoder (`tests/conformance/wma1-microsoft-samples.json`) hold three, four or twenty whole superframes in each media object (1,116 bytes with A = 372, 256 with 64, 11,160 with 558 after the unspreading), which FFmpeg decodes one after the other. Encspect reads the first A bytes only, so it decodes a third or a quarter of such a file.
 - On any error FFmpeg drops the rest of the media object; since a media object is one superframe, nothing else is lost.
 
 ### Without the bit reservoir

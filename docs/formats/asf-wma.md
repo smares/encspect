@@ -131,6 +131,7 @@ Versions 1 and 2 are decoded for `--measure` and the front ends' output (the `wm
 
 ### What is not covered
 
+- Media objects that hold several superframes: the files of Microsoft's own version 1 encoder (three files of FFmpeg's sample archive, [development.md](../development.md#wma-versions-1-and-2-decoding)) put three or four superframes in each, and the analysis reads the first block alignment's bytes only (`wma.superframe-long`), so it reads and decodes a third or a quarter of such a stream and cannot be compared with Microsoft's decoder sample by sample.
 - Microsoft's noise generator (its noise-substituted lines have the level of the description's, not its values).
 - The cases [wma-standard-decoding.md](../design/wma-standard-decoding.md#not-determined) marks as not determined, which the decoder takes as FFmpeg's rule or leaves: version 1 with variable block lengths, version 2 at 49,048 Hz and above, held exponents of a shorter block or of a channel without mid/side when a block sends exponents (not converted), the exponent of line x - 3 in version 1 without noise substitution, the exponent index where a block reuses a shorter block's exponents with noise substitution, and what Microsoft does with the frame the last superframe announces.
 - Mono version 1 keeps the coefficients past that limit (Microsoft's PCM of `external-ffmpeg-wmav1-mono-22k-24k` is closer to the walk that places them).
