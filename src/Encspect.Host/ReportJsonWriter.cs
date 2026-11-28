@@ -907,6 +907,7 @@ public static class ReportJsonWriter
             }
 
             WriteCoherence(writer, spectrum.Coherence, explain);
+            WriteNyquistEdges(writer, spectrum, explain);
 
             writer.WriteEndObject();
         }
@@ -1511,6 +1512,46 @@ public static class ReportJsonWriter
         WriteRow(writer, "values", holes.RowShares.Span);
         writer.WriteEndObject();
         writer.WriteEndObject();
+    }
+
+    // The Nyquist edges of the combined spectrum, highest first; always written, empty where none is found.
+    private static void WriteNyquistEdges(Utf8JsonWriter writer, SpectrumFigures spectrum, bool explain)
+    {
+        if (!spectrum.IsNyquistEdgeSearched)
+        {
+            writer.WriteBoolean("isNyquistEdgeSearched", false);
+        }
+
+        writer.WriteStartArray("nyquistEdges");
+        foreach (NyquistEdge edge in spectrum.NyquistEdges)
+        {
+            writer.WriteStartObject();
+            if (explain)
+            {
+                writer.WriteString("description", MeasurementText.NyquistEdgeDescription);
+                writer.WriteString("topic", MeasurementText.NyquistEdgeTopic);
+            }
+
+            WriteQuantity(writer, "lowerRate", edge.LowerRate, "Hz");
+            writer.WriteStartObject("nyquistFrequency");
+            writer.WriteNumber("value", edge.LowerRate / 2m);
+            writer.WriteString("unit", "Hz");
+            writer.WriteEndObject();
+            WriteQuantity(writer, "stepFrequency", edge.StepFrequency, "Hz");
+            writer.WriteStartObject("step");
+            writer.WriteNumber("value", edge.StepTenthsOfDb / 10m);
+            writer.WriteString("unit", "dB");
+            writer.WriteEndObject();
+            writer.WriteStartObject("above");
+            writer.WriteNumber("value", edge.AboveTenthsOfDb / 10m);
+            writer.WriteString("unit", "dB");
+            writer.WriteEndObject();
+            writer.WriteNumber("framesShowing", edge.FramesShowing);
+            writer.WriteNumber("framesWithSignal", edge.FramesWithSignal);
+            writer.WriteEndObject();
+        }
+
+        writer.WriteEndArray();
     }
 
     private static void WriteBandwidth(Utf8JsonWriter writer, string name, SpectralBandwidth bandwidth, bool explain)

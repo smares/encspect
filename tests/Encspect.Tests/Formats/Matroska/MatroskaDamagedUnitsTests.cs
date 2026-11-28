@@ -140,7 +140,7 @@ public class MatroskaDamagedUnitsTests
     }
 
     // One Cluster, so every block of the track fails: nothing is measured, with no error (decision 7 of the design), and each codec parser of packets hands the flag on: FLAC, Vorbis, ALAC,
-    // TTA and WavPack, whose frames or packets are the blocks' frames, and Opus.
+    // TTA and WavPack, whose frames or packets are the blocks' frames, Opus, and Windows Media Audio versions 1 and 2 (A_MS/ACM, whose frames the packets carry).
     [Theory]
     [InlineData("matroska/external-ffmpeg-flac.mka")]
     [InlineData("matroska/external-ffmpeg-vorbis.mka")]
@@ -149,6 +149,8 @@ public class MatroskaDamagedUnitsTests
     [InlineData("matroska/external-ffmpeg-tta.mka")]
     [InlineData("matroska/external-ffmpeg-wavpack.mka")]
     [InlineData("matroska/external-ffmpeg-pcm.mka")]
+    [InlineData("matroska/external-ffmpeg-acm-wma1.mka")]
+    [InlineData("matroska/external-ffmpeg-acm-wma2.mka")]
     public void ACodecParserOfPacketsPassesTheContainersFailureOn(string name)
     {
         byte[] data = Read(name);

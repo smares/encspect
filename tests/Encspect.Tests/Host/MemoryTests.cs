@@ -682,7 +682,7 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
 
     // A file of a fixture's media objects, one to a packet, repeated until there are the given number of packets, with sequence numbers that
     // continue at every seam (the objects of a Professional or Lossless stream carry theirs in the first four bits).
-    private static byte[] FileOfCycles(string fixture, int tag, int count)
+    internal static byte[] FileOfCycles(string fixture, int tag, int count)
     {
         (byte[] properties, _) = AsfBuilder.Take(fixture, tag);
         List<byte[]> objects = AsfBuilder.Objects(fixture, tag);
@@ -1066,6 +1066,29 @@ public sealed class MemoryTests(ITestOutputHelper output) : MemoryTestBase(outpu
         (long fewerHeld, long fewerKept) = LastFrameReading("frames.ac3", Repeat(fewer), fewer, 1536);
         (long held, long kept) = LastFrameReading("frames.ac3", Repeat(frames), frames, 1536);
         (_, long plainKept) = LastFrameReading("frames.ac3", Repeat(frames), frames, 1536, isDecoding: false);
+
+        double heldPerFrame = (held - fewerHeld) / (double)(frames - fewer);
+        Output.WriteLine($"{kept} bytes kept with decoding and {plainKept} without; held above the end state at the last frame: {fewerHeld} at {fewer} frames and {held} at {frames} ({Hundredths(heldPerFrame)} per further frame)");
+        Assert.True(kept < plainKept + 1_000_000, $"Decoding made the report keep {(kept - plainKept) / (double)frames:F2} bytes more per frame.");
+        Assert.True(heldPerFrame < DecodingFrameBound, $"Decoding held {heldPerFrame:F2} more bytes per further frame at the last frame than the analysis ends with. {RuntimeSettings()}");
+    }
+
+    // The decoding of a Windows Media Audio file holds one frame's record, the spectra, the overlaps and the output of its channels, so what it holds does not grow with the frames.
+    // Measured as the Vorbis test above does, at 20,000 and 80,000 superframes of ffmpeg's wmav2 encoder (one frame each, the first two of which the decoder does not output).
+    [Fact]
+    public void DecodingManyWmaFramesHoldsNothingPerFrame()
+    {
+        const int fewer = 20_000;
+        const int frames = 80_000;
+        (byte[] properties, byte[] mediaObject) = AsfBuilder.Take("asf/external-ffmpeg-wmav2-stereo-44k-128k.wma", 0x0161);
+        byte[] Packets(int count) => AsfBuilder.Build(properties, mediaObject, count, 46);
+
+        Analyzer.CreateDefault().Analyze("warm-up", new MemoryStream(Packets(500)), new AnalysisOptions { Decoding = new DecodeOptions { Output = _ => new DecoderWorkTests.NullSink() } });
+
+        // Without the bit reservoir the decoder drops the stream's first frame, as Microsoft's decoder does, so one frame fewer than the packets is output.
+        (long fewerHeld, long fewerKept) = LastFrameReading("frames.wma", Packets(fewer), fewer - 1, 2048);
+        (long held, long kept) = LastFrameReading("frames.wma", Packets(frames), frames - 1, 2048);
+        (_, long plainKept) = LastFrameReading("frames.wma", Packets(frames), frames - 1, 2048, isDecoding: false);
 
         double heldPerFrame = (held - fewerHeld) / (double)(frames - fewer);
         Output.WriteLine($"{kept} bytes kept with decoding and {plainKept} without; held above the end state at the last frame: {fewerHeld} at {fewer} frames and {held} at {frames} ({Hundredths(heldPerFrame)} per further frame)");

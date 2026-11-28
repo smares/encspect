@@ -384,7 +384,7 @@ internal sealed class StdNodes(StdParameters parameters, StdStream stream)
             FieldKind.ExponentsSent => layout.Field("Exponents Sent", f.Start, f.End, NodeValue.Boolean(f.A != 0), StdText.ExponentsSent, null),
             FieldKind.Exponents => layout.Field($"Exponents (channel {channel})", f.Start, f.End,
                 parameters.UsesScaleFactorExponents ? "scale factor codes" : "line spectral pairs",
-                parameters.UsesScaleFactorExponents ? StdText.ExponentsScaleFactors : StdText.ExponentsLineSpectralPairs, null),
+                parameters.UsesScaleFactorExponents ? StdText.ExponentsScaleFactors : StdText.ExponentsLineSpectralPairs, Topics.WmaExponents),
             _ => layout.Field($"Coefficients (channel {channel})", f.Start, f.End, $"{f.A.ToString(System.Globalization.CultureInfo.InvariantCulture)} non-zero, last at {f.B.ToString(System.Globalization.CultureInfo.InvariantCulture)}", StdText.Coefficients, null),
         };
     }

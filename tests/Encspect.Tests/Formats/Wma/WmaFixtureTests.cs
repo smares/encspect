@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Encspect.Core;
+using Encspect.Host;
 
 namespace Encspect.Tests.Formats.Wma;
 
@@ -177,5 +178,51 @@ public class WmaFixtureTests
 
         Assert.True(File.Exists(path), $"Missing golden report {path}; run the tests with ENCSPECT_UPDATE_GOLDEN=1 to create it.");
         Assert.Equal(File.ReadAllText(path).ReplaceLineEndings("\n"), actual);
+    }
+
+    // ffmpeg's wmav1 encoder writes coefficients past Microsoft's limit, which the walk leaves unread: the 'N' padding at the end of the superframe still names it.
+    [Theory]
+    [InlineData("asf/external-ffmpeg-wmav1-stereo-44k-128k.wma")]
+    [InlineData("asf/external-ffmpeg-wmav1-stereo-44k-48k.wma")]
+    [InlineData("asf/external-ffmpeg-wmav1-mono-22k-24k.wma")]
+    public void FFmpegsVersion1EncoderIsNamedWhereTheWalkStopsAtTheLimit(string name)
+    {
+        StreamInfo stream = Fixtures.AnalyzeMpeg(name).Streams[0];
+
+        Assert.Equal("FFmpeg (wmav1 encoder)", stream.Encoder);
+        Assert.Equal(Confidence.High, stream.EncoderConfidence);
+    }
+
+    // The same file with its padding broken is not ffmpeg's, and a Windows-encoded file is not named FFmpeg.
+    [Fact]
+    public void BrokenPaddingAfterTheLimitDoesNotNameFFmpeg()
+    {
+        byte[] data = File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "asf/external-ffmpeg-wmav1-stereo-44k-128k.wma"));
+        byte[] padding = [(byte)'N', (byte)'N', (byte)'N', (byte)'N'];
+        int changed = 0;
+        for (int i = 0; i + 4 <= data.Length; i++)
+        {
+            if (data.AsSpan(i, 4).SequenceEqual(padding))
+            {
+                data[i + 2] = (byte)'x';
+                changed++;
+                i += 3;
+            }
+        }
+
+        Assert.True(changed > 10);
+        StreamInfo stream = Analyzer.CreateDefault().Analyze("broken.wma", new MemoryStream(data)).Streams[0];
+        Assert.DoesNotContain("FFmpeg", stream.Encoder ?? string.Empty, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("asf/external-windows-wma92-cbr-stereo-44k-128.wma")]
+    [InlineData("asf/external-windows-wma92-vbr-stereo-44k-q75.wma")]
+    [InlineData("asf/sample-kit/external-wme9-wma9-cbr-16k-16k-mono.wma")]
+    public void AWindowsEncodedFileIsNotNamedFFmpeg(string name)
+    {
+        StreamInfo stream = Fixtures.AnalyzeMpeg(name).Streams[0];
+
+        Assert.DoesNotContain("FFmpeg", stream.Encoder ?? string.Empty, StringComparison.Ordinal);
     }
 }

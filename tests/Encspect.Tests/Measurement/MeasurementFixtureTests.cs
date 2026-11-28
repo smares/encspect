@@ -99,6 +99,7 @@ public class MeasurementFixtureTests
             }
 
             AssertPartial(model.GetProperty("partial_cutoff"), m.Spectrum.PartialCutoff, m.SampleRate, m.Spectrum.FftSize);
+            AssertNyquistEdges(model.GetProperty("nyquist_edges"), m.Spectrum);
         }
 
         // The holes of the combined spectrum and the mid and side spectra of the pair, as the model's own FFT and its own reading of the rules give them.
@@ -492,6 +493,22 @@ public class MeasurementFixtureTests
             Assert.InRange(actual.TransitionStart, model.GetProperty("transition_start").GetInt32() - rowHertz, model.GetProperty("transition_start").GetInt32() + rowHertz);
         }
 
+    }
+
+    // The Nyquist edges of the combined spectrum: the rates, the frequencies and the frames exact, the levels within a tenth of a dB (the model's rows differ by a tenth of a dB at most).
+    private static void AssertNyquistEdges(JsonElement model, SpectrumFigures actual)
+    {
+        Assert.Equal(model.GetProperty("is_searched").GetBoolean(), actual.IsNyquistEdgeSearched);
+        JsonElement[] expected = [.. model.GetProperty("edges").EnumerateArray()];
+        Assert.Equal(expected.Select(e => e.GetProperty("lower_rate").GetInt32()), actual.NyquistEdges.Select(e => e.LowerRate));
+        for (int i = 0; i < expected.Length; i++)
+        {
+            Assert.Equal(expected[i].GetProperty("step_frequency").GetInt32(), actual.NyquistEdges[i].StepFrequency);
+            Assert.InRange(actual.NyquistEdges[i].StepTenthsOfDb, expected[i].GetProperty("step_tenths").GetInt32() - 1, expected[i].GetProperty("step_tenths").GetInt32() + 1);
+            Assert.InRange(actual.NyquistEdges[i].AboveTenthsOfDb, expected[i].GetProperty("above_tenths").GetInt32() - 1, expected[i].GetProperty("above_tenths").GetInt32() + 1);
+            Assert.InRange(actual.NyquistEdges[i].FramesWithSignal, expected[i].GetProperty("frames_with_signal").GetInt32() - 1, expected[i].GetProperty("frames_with_signal").GetInt32() + 1);
+            Assert.InRange(actual.NyquistEdges[i].FramesShowing, expected[i].GetProperty("frames_showing").GetInt32() - 1, expected[i].GetProperty("frames_showing").GetInt32() + 1);
+        }
     }
 
     // The model's slope from its own rows, in integers as the analyzer's: the rows differ by a tenth of a dB at most, so a figure may differ by a few tenths.

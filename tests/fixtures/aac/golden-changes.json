@@ -1,5 +1,8 @@
 {
   "goldens": [
+    "tests/fixtures/aac/",
+    "tests/fixtures/mp4/",
+    "tests/fixtures/matroska/",
     "tests/fixtures/aac/ffmpeg-main.report.json",
     "tests/fixtures/aac/ffmpeg-ltp.report.json",
     "tests/fixtures/aac/adts/ltp.report.json",
@@ -7,6 +10,36 @@
     "tests/fixtures/aac/adts/main-prediction-bands.report.json"
   ],
   "added": [
+    {
+      "scope": "finding",
+      "code": "aac.lfe-restrictions",
+      "goldens": [
+        "tests/fixtures/aac/adts/stereo-coding-elements.report.json",
+        "tests/fixtures/aac/faac-2.1-he-51-adts.report.json",
+        "tests/fixtures/aac/faac-2.2-he-51-adts.report.json"
+      ]
+    },
+    {
+      "scope": "finding",
+      "code": "aac.implicit-sbr",
+      "goldens": [
+        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
+      ]
+    },
+    {
+      "scope": "finding",
+      "code": "aac.implicit-sbr",
+      "goldens": [
+        "tests/fixtures/aac/adts/sbr-before-channel-element.report.json"
+      ]
+    },
+    {
+      "scope": "finding",
+      "code": "aac.layout-changed",
+      "goldens": [
+        "tests/fixtures/aac/adts/corrupt-soft.report.json"
+      ]
+    },
     {
       "scope": "node",
       "parent": [
@@ -73,7 +106,286 @@
       ]
     }
   ],
+  "changed": [
+    {
+      "scope": "finding",
+      "code": "aac.scalefactor-out-of-range",
+      "fields": [
+        "message"
+      ],
+      "goldens": [
+        "tests/fixtures/aac/adts/corrupt-soft.report.json"
+      ]
+    },
+    {
+      "scope": "finding",
+      "code": "aac.intensity-without-common-window",
+      "fields": [
+        "message"
+      ],
+      "goldens": [
+        "tests/fixtures/aac/adts/stereo-coding.report.json",
+        "tests/fixtures/aac/adts/stereo-coding-elements.report.json",
+        "tests/fixtures/aac/adts/corrupt-soft.report.json"
+      ]
+    },
+    {
+      "scope": "decode",
+      "fields": [
+        "pcmSha256"
+      ],
+      "goldens": [
+        "tests/fixtures/aac/adts/blocks-missing.decode.json",
+        "tests/fixtures/aac/adts/blocks-trailing-bytes.decode.json",
+        "tests/fixtures/aac/adts/corrupt-soft.decode.json",
+        "tests/fixtures/aac/adts/corrupt-syntax.decode.json",
+        "tests/fixtures/aac/adts/coupling.decode.json",
+        "tests/fixtures/aac/adts/crc-short-element.decode.json",
+        "tests/fixtures/aac/adts/crc-stereo-damaged.decode.json",
+        "tests/fixtures/aac/adts/crc-stereo.decode.json",
+        "tests/fixtures/aac/adts/elements-order-changes.decode.json",
+        "tests/fixtures/aac/adts/faac-style-coupling.decode.json",
+        "tests/fixtures/aac/adts/faac-style-data-extra.decode.json",
+        "tests/fixtures/aac/adts/faac-style-extended-data.decode.json",
+        "tests/fixtures/aac/adts/faac-style-fixvar.decode.json",
+        "tests/fixtures/aac/adts/faac-style-harmonic.decode.json",
+        "tests/fixtures/aac/adts/faac-style-plain.decode.json",
+        "tests/fixtures/aac/adts/faac-style-time-envelope.decode.json",
+        "tests/fixtures/aac/adts/faac-style-time-noise.decode.json",
+        "tests/fixtures/aac/adts/faac-style-varvar.decode.json",
+        "tests/fixtures/aac/adts/fill-and-data.decode.json",
+        "tests/fixtures/aac/adts/implicit-sbr.decode.json",
+        "tests/fixtures/aac/adts/intensity-noise.decode.json",
+        "tests/fixtures/aac/adts/loud-noise-pair.decode.json",
+        "tests/fixtures/aac/adts/loud-pulse-tns.decode.json",
+        "tests/fixtures/aac/adts/ps-in-multichannel-sce.decode.json",
+        "tests/fixtures/aac/adts/ps-in-pce-multichannel.decode.json",
+        "tests/fixtures/aac/adts/sbr-after-coupling-element.decode.json",
+        "tests/fixtures/aac/adts/sbr-after-first-frame-failing-crc.decode.json",
+        "tests/fixtures/aac/adts/sbr-before-channel-element.decode.json",
+        "tests/fixtures/aac/adts/sbr-cut-before-header.decode.json",
+        "tests/fixtures/aac/adts/sbr-fixvar-resolutions.decode.json",
+        "tests/fixtures/aac/adts/sbr-in-all-but-first-block.decode.json",
+        "tests/fixtures/aac/adts/sbr-in-first-block-only.decode.json",
+        "tests/fixtures/aac/adts/sbr-in-first-three-blocks.decode.json",
+        "tests/fixtures/aac/adts/sbr-in-frames-failing-crc.decode.json",
+        "tests/fixtures/aac/adts/sbr-in-one-block.decode.json",
+        "tests/fixtures/aac/adts/sbr-in-three-blocks.decode.json",
+        "tests/fixtures/aac/adts/sbr-in-truncated-frame.decode.json",
+        "tests/fixtures/aac/adts/stereo-coding-elements.decode.json",
+        "tests/fixtures/aac/adts/stereo-coding-reserved.decode.json",
+        "tests/fixtures/aac/adts/stereo-coding.decode.json",
+        "tests/fixtures/aac/adts/stereo.decode.json",
+        "tests/fixtures/aac/adts/streams-limited.decode.json",
+        "tests/fixtures/aac/adts/tns-overflow.decode.json",
+        "tests/fixtures/aac/adts/two-signature-streams.decode.json",
+        "tests/fixtures/aac/adts/window-sequences-invalid.decode.json",
+        "tests/fixtures/aac/adts/windows.decode.json",
+        "tests/fixtures/aac/apple/apple-intel-passthru-m4a-from-faac-m4a.decode.json",
+        "tests/fixtures/aac/apple/apple-passthru-m4a-from-faac-m4a.decode.json",
+        "tests/fixtures/aac/faac-1.31.1-adts.decode.json",
+        "tests/fixtures/aac/faac-1.31.1.decode.json",
+        "tests/fixtures/aac/faac-1.40-adts.decode.json",
+        "tests/fixtures/aac/faac-1.40-pink-equal-adts.decode.json",
+        "tests/fixtures/aac/faac-1.40-pink-side-12-db-adts.decode.json",
+        "tests/fixtures/aac/faac-1.40.decode.json",
+        "tests/fixtures/aac/faac-1.50-adts.decode.json",
+        "tests/fixtures/aac/faac-1.50.decode.json",
+        "tests/fixtures/aac/faac-2.0-he-24k.decode.json",
+        "tests/fixtures/aac/faac-2.1-he-24k-adts.decode.json",
+        "tests/fixtures/aac/faac-2.1-he-51-adts.decode.json",
+        "tests/fixtures/aac/faac-adts.decode.json",
+        "tests/fixtures/aac/faac.decode.json",
+        "tests/fixtures/matroska/aac-discard-padding-large.decode.json",
+        "tests/fixtures/matroska/aac-discard-padding.decode.json",
+        "tests/fixtures/matroska/aac-legacy-explicit-rate.decode.json",
+        "tests/fixtures/matroska/aac-legacy-lc.decode.json",
+        "tests/fixtures/matroska/aac-legacy-sbr.decode.json",
+        "tests/fixtures/matroska/aac-legacy-stray-codec-private.decode.json",
+        "tests/fixtures/matroska/external-ffmpeg-aac-lc.decode.json",
+        "tests/fixtures/matroska/external-ffmpeg-two-audio.decode.json",
+        "tests/fixtures/matroska/writer-lavc-id.decode.json",
+        "tests/fixtures/matroska/writer-tag-and-apps.decode.json",
+        "tests/fixtures/mp4/explicit-sbr-implicit-ps.decode.json",
+        "tests/fixtures/mp4/implicit-ps.decode.json",
+        "tests/fixtures/mp4/implicit-sbr.decode.json",
+        "tests/fixtures/mp4/ps-34-bands.decode.json",
+        "tests/fixtures/mp4/ps-in-channel-pair.decode.json",
+        "tests/fixtures/mp4/ps-signaled-absent.decode.json",
+        "tests/fixtures/mp4/ps-signaled-over-stereo-core.decode.json",
+        "tests/fixtures/mp4/sbr-signaled-absent.decode.json",
+        "tests/fixtures/mp4/trailing-bytes.decode.json"
+      ]
+    },
+    {
+      "scope": "finding",
+      "code": "aac.sbr-without-channel-element",
+      "fields": [
+        "message",
+        "count"
+      ],
+      "goldens": [
+        "tests/fixtures/aac/adts/sbr-before-channel-element.report.json",
+        "tests/fixtures/aac/faac-2.1-he-51-adts.report.json"
+      ]
+    },
+    {
+      "scope": "decode",
+      "fields": [
+        "decodedSamples",
+        "count"
+      ],
+      "goldens": [
+        "tests/fixtures/aac/adts/corrupt-soft.decode.json",
+        "tests/fixtures/aac/adts/sbr-after-coupling-element.decode.json",
+        "tests/fixtures/aac/adts/sbr-before-channel-element.decode.json"
+      ]
+    },
+    {
+      "path": [
+        "ADTS",
+        "Statistics",
+        "SBR",
+        "SBR Headers"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
+      ]
+    },
+    {
+      "path": [
+        "ADTS",
+        "Statistics",
+        "SBR",
+        "Unread SBR Data"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
+      ]
+    },
+    {
+      "path": [
+        "ADTS",
+        "Statistics",
+        "Samples"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "fields": [
+        "codec",
+        "sampleRate",
+        "samples"
+      ],
+      "goldens": [
+        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
+      ]
+    },
+    {
+      "scope": "finding",
+      "code": "aac.sbr-without-channel-element",
+      "fields": [
+        "message",
+        "count"
+      ],
+      "goldens": [
+        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json",
+        "tests/fixtures/aac/adts/sbr-before-channel-element.report.json"
+      ]
+    },
+    {
+      "scope": "stream",
+      "fields": [
+        "codec",
+        "sampleRate",
+        "samples"
+      ],
+      "goldens": [
+        "tests/fixtures/aac/adts/sbr-before-channel-element.report.json"
+      ]
+    },
+    {
+      "path": [
+        "ADTS",
+        "Statistics",
+        "Samples"
+      ],
+      "fields": [
+        "value"
+      ],
+      "goldens": [
+        "tests/fixtures/aac/adts/sbr-before-channel-element.report.json"
+      ]
+    }
+  ],
   "removed": [
+    {
+      "parent": [
+        "ADTS",
+        "Statistics",
+        "SBR"
+      ],
+      "name": "Start Frequency",
+      "goldens": [
+        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "ADTS",
+        "Statistics",
+        "SBR"
+      ],
+      "name": "Stop Frequency",
+      "goldens": [
+        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "ADTS",
+        "Statistics",
+        "SBR"
+      ],
+      "name": "Crossover Band",
+      "goldens": [
+        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "ADTS",
+        "Statistics",
+        "SBR"
+      ],
+      "name": "Amplitude Resolution",
+      "goldens": [
+        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
+      ]
+    },
+    {
+      "parent": [
+        "ADTS",
+        "Statistics",
+        "SBR"
+      ],
+      "name": "HasHeaderChanges",
+      "goldens": [
+        "tests/fixtures/aac/adts/sbr-after-coupling-element.report.json"
+      ]
+    },
     {
       "parent": [
         "ADTS",

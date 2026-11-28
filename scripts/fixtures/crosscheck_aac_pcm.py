@@ -143,6 +143,7 @@ LIBXAAC_DIFFERENCES = {
 # Files whose output FFmpeg's decoder differs from the analyzer's, with the reason. The analyzer follows libxaac (docs/design/lossy-decoders.md, decision 1); the differences are
 # in what the specification leaves to the decoder and the hand-built files exercise.
 DIFFERENCES = {
+    "elements-order-changes.aac": ("samples", "the only block both decoders output is the first: every later one changes the order of the elements and is withheld (aac.layout-changed); the first block's left half takes its own Kaiser-Bessel derived shape (4.6.11.3.2), where FFmpeg starts with the sine window, as in FIRST_BLOCK_KBD, so it differs in that block alone"),
     "stereo-tool-order.aac": ("samples", "intensity bands under ms_mask_present 2, which FFmpeg's decoder inverts where 4.6.8.2.3 inverts under mask 1 alone (block 1, up to 0.03 of full scale), and noise substitution, "
                                          "where each decoder draws its own noise (blocks 5 to 14); the second channel of the blocks with mid/side flags over the first channel's noise equals the one without them in both decoders"),
     "tns-order-above-12.aac": ("positions", "a TNS filter of an order above 12, which FFmpeg's decoder refuses (the analyzer takes its first 12 coefficients, 4.6.9.3, Table 4.156): FFmpeg decodes the blocks of order 12 only"),

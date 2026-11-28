@@ -9,7 +9,7 @@ The sources are fetched by ffmpeg_sources.py (pinned by SHA-256). The tables are
 libavcodec/wmadata.h (the six run-level coefficient codebooks with their level tables, the exponent
 band sizes of 22.05, 32 and 44.1 kHz and the high-band gain codebook), wma_freqs.c (the critical
 band frequencies) and aactab.c (the scalefactor codebook that the exponents of versions 1 and 2 share
-with AAC). The line-spectral-pair codebook is not needed: the exponents only have to be skipped.
+with AAC). The line-spectral-pair codebook (ff_wma_lsp_codebook) is the one table the decoder of versions 1 and 2 needs besides these.
 ProTables.cs holds the tables of libavcodec/wmaprodata.h that Windows Media Audio Professional
 reads its scale factors, coefficients and vectors with.
 VoiceTables.cs holds what libavcodec/wmavoice.c sizes a Windows Media Audio Voice frame with: the frame type descriptors, the code
@@ -56,6 +56,14 @@ def nested(text, name, width):
     return result
 
 
+def float_rows(text, name):
+    """The rows of a two-dimensional C array of floats, each as written (their lengths may differ)."""
+    match = re.search(r"\b" + re.escape(name) + r"\s*(\[[^\]]*\])+\s*=\s*\{(.*?)\n\};", text, flags=re.S)
+    if match is None:
+        raise SystemExit(f"{name} not found")
+    return [[v.rstrip("fF") for v in re.findall(r"[-+]?\d*\.\d+(?:[eE][-+]?\d+)?[fF]?|[-+]?\d+[fF]", group)] for group in re.findall(r"\{([^{}]*)\}", match.group(2))]
+
+
 def literal(values, per_line, hexa=False):
     lines = []
     for i in range(0, len(values), per_line):
@@ -100,6 +108,15 @@ internal static class Tables
                "    // is the index less 60.")
     out.append("    public static readonly uint[] ExponentCodes =\n    [\n" + literal(array(aac, "ff_aac_scalefactor_code"), 8, True) + "\n    ];\n")
     out.append("    public static readonly byte[] ExponentLengths =\n    [\n" + literal(array(aac, "ff_aac_scalefactor_bits"), 16) + "\n    ];\n")
+
+    lsp = float_rows(data, "ff_wma_lsp_codebook")
+    assert [len(r) for r in lsp] == [8, 16, 16, 16, 16, 16, 16, 16, 8, 8], [len(r) for r in lsp]
+    out.append("    // wmadata.h: ff_wma_lsp_codebook: the line spectral pair codebook, one row for each of the ten indexes of a block's exponents\n"
+               "    // (3, 4, 4, 4, 4, 4, 4, 4, 3 and 3 bits, so 8 or 16 values in a row).")
+    out.append("    public static readonly float[][] LspCodebook =\n    [")
+    for row in lsp:
+        out.append("        [" + ", ".join(v + "f" for v in row) + "],")
+    out.append("    ];\n")
 
     for index in range(6):
         codes = array(data, f"coef{index}_huffcodes")

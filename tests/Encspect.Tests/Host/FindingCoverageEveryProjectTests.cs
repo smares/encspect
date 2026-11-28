@@ -64,6 +64,7 @@ public partial class FindingCoverageTests
         ["aac.pce-without-channels"] = NoInputYet,
         ["aac.pulse-out-of-range"] = NoInputYet,
         ["aac.reserved-profile"] = NoInputYet,
+        ["aac.sbr-header-invalid"] = NoInputYet,
         ["aac.sbr-past-fill"] = NoInputYet,
         ["aac.store-mismatch"] = NoInputYet,
         ["aac.unknown-sync-extension"] = NoInputYet,

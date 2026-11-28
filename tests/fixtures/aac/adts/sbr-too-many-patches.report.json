@@ -444,21 +444,44 @@
                       "length": 450
                     },
                     {
-                      "name": "Unread SBR Data",
-                      "value": 6,
-                      "unit": "payloads",
+                      "name": "SBR Frame Classes",
+                      "value": 12,
+                      "unit": "SBR channels",
                       "offset": 0,
-                      "length": 450
+                      "length": 450,
+                      "children": [
+                        {
+                          "name": "FIXFIX",
+                          "value": "12 SBR channels (100.0%)",
+                          "offset": 0,
+                          "length": 450
+                        }
+                      ]
+                    },
+                    {
+                      "name": "SBR Envelopes",
+                      "value": 12,
+                      "unit": "SBR channels",
+                      "offset": 0,
+                      "length": 450,
+                      "children": [
+                        {
+                          "name": "1 envelope",
+                          "value": "12 SBR channels (100.0%)",
+                          "offset": 0,
+                          "length": 450
+                        }
+                      ]
                     },
                     {
                       "name": "Start Frequency",
-                      "value": "0",
+                      "value": "0 (QMF band 8, about 2756 Hz)",
                       "offset": 0,
                       "length": 450
                     },
                     {
                       "name": "Stop Frequency",
-                      "value": "8",
+                      "value": "8 (QMF band 43, about 14815 Hz)",
                       "offset": 0,
                       "length": 450
                     },
@@ -3944,6 +3967,88 @@
             ]
           },
           {
+            "name": "SBR Frame Classes",
+            "valueLabel": "SBR channel",
+            "categories": [
+              {
+                "name": "FIXFIX",
+                "count": 12
+              },
+              {
+                "name": "FIXVAR",
+                "count": 0
+              },
+              {
+                "name": "VARFIX",
+                "count": 0
+              },
+              {
+                "name": "VARVAR",
+                "count": 0
+              }
+            ],
+            "total": 12,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                6
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                12
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
+            "name": "SBR Envelopes",
+            "valueLabel": "SBR channel",
+            "categories": [
+              {
+                "name": "1 envelope",
+                "count": 12
+              },
+              {
+                "name": "2 envelopes",
+                "count": 0
+              },
+              {
+                "name": "3 envelopes",
+                "count": 0
+              },
+              {
+                "name": "4 envelopes",
+                "count": 0
+              },
+              {
+                "name": "5 envelopes",
+                "count": 0
+              }
+            ],
+            "total": 12,
+            "xSeries": "Bitrate",
+            "valueCounts": [
+              [
+                2,
+                6
+              ]
+            ],
+            "runs": [
+              [
+                0,
+                12
+              ]
+            ],
+            "seconds": [
+              0
+            ]
+          },
+          {
             "name": "SBR",
             "valueLabel": "raw data block",
             "categories": [
@@ -4022,9 +4127,9 @@
         "count": 1
       },
       {
-        "severity": "Warning",
-        "code": "aac.sbr-header-invalid",
-        "message": "6 raw data blocks hold an SBR header whose frequency tables cannot be built: the frequency tables need 6 patches, more than the 5 the standard allows; the first at 0x32.",
+        "severity": "Info",
+        "code": "aac.sbr-patches-over-limit",
+        "message": "The raw data block at 0x32 holds an SBR header whose frequency tables need 6 patches, more than the 5 that 4.6.18.3.6 allows; decoded as Figure 4.48 gives them.",
         "offset": 50,
         "length": 27,
         "path": [
@@ -4035,7 +4140,7 @@
           3,
           3
         ],
-        "count": 6
+        "count": 1
       }
     ]
   }
