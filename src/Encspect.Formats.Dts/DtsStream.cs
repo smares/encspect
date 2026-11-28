@@ -79,6 +79,7 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
     private AssetFacts? _firstAsset;
     private int _firstAssetUnits;
     private IReadOnlyList<Speaker>? _layout;
+    private IReadOnlyList<Speaker>? _coreLayout;
 
     public StreamKey Key => key;
 
@@ -128,7 +129,8 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
 
     public bool IsVbr => HasLossless || _sizes.Count > 1 || _nominal.Count > 1;
 
-    public IReadOnlyList<Speaker> Layout => _layout ?? [];
+    // Where no unit states the asset's figures (7.5.2: the static fields are never present), what a decoder outputs is the core, so its arrangement is the layout.
+    public IReadOnlyList<Speaker> Layout => _layout ?? _coreLayout ?? [];
 
     public int Channels => Layout.Count;
 
@@ -249,6 +251,11 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
         {
             _layout ??= LayoutOf(facts);
         }
+
+        if (facts.HasCore)
+        {
+            _coreLayout ??= CoreLayoutOf(facts);
+        }
     }
 
     // The speakers of the first unit's channels: the core's arrangement and its extension channels, or the first asset's speaker
@@ -280,6 +287,11 @@ internal sealed class DtsStream(StreamKey key, int firstFrame)
             return asset is { LbrSpeakerMask: not 0 } ? Layouts.Speakers(Layouts.Mask(asset.LbrSpeakerMask)) : asset is { Channels: > 0 } ? ChannelLayouts.Discrete(asset.Channels) : [];
         }
 
+        return CoreLayoutOf(facts);
+    }
+
+    private static IReadOnlyList<Speaker> CoreLayoutOf(UnitFacts facts)
+    {
         int amode = facts.Core.Amode;
         List<Position> positions = Layouts.Arrangement(amode);
         if (positions.Count == 0)

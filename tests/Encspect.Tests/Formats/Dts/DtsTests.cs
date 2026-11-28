@@ -12,6 +12,16 @@ public class DtsTests
 
     private static byte[] Fixture(string name) => File.ReadAllBytes(Path.Combine(Fixtures.FixtureDirectory, "dts", name));
 
+    // 7.5.2: where no header states the static fields, the stream has no asset figures and takes its channels and layout from the core header.
+    [Fact]
+    public void StreamWithoutStaticFieldsTakesTheCoresLayout()
+    {
+        Report report = Analyzer.CreateDefault().Analyze("a.dts", new MemoryStream(Fixture("exss-static-never.dts")));
+        StreamInfo stream = Assert.Single(report.Streams);
+        Assert.Equal(2, stream.Channels);
+        Assert.Equal(["front left", "front right"], stream.ChannelLayout!.Select(ChannelLayouts.Name));
+    }
+
     // Every other fixture sniffs 0, so DTS never competes for them (architecture.md, "Format detection"); the DTS fixtures are taken as DTS, or as MP4 when
     // an MP4 file holds them, which DtsFixtureTests checks with each manifest's format.
     [Fact]

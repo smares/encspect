@@ -1,0 +1,55 @@
+{
+ "description": "Four units of a stereo core frame and an extension substream with a core asset, of which only the last two state the static fields.",
+ "length": 2528,
+ "format": "DTS",
+ "frames": [
+  [
+   0,
+   628
+  ],
+  [
+   628,
+   628
+  ],
+  [
+   1256,
+   636
+  ],
+  [
+   1892,
+   636
+  ]
+ ],
+ "gaps": [],
+ "streams": [
+  {
+   "codec": "DTS",
+   "sample_rate": 48000,
+   "channels": 2,
+   "channel_mode": "2/0",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 2048,
+   "is_vbr": true
+  }
+ ],
+ "fields": {
+  "DTS/Frame[0]/Extension Substream/HasStaticFields": "false",
+  "DTS/Frame[0]/Extension Substream/Asset Sizes/Asset 1": "96 bytes",
+  "DTS/Frame[0]/Extension Substream/Asset Descriptor 1/Asset Index": "0",
+  "DTS/Frame[0]/Extension Substream/Backward Compatible Cores/HasBackwardCompatibleCore 1": "false",
+  "DTS/Frame[2]/Extension Substream/HasStaticFields": "true"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "libdca": true,
+  "decode_whole": true,
+  "skip": {
+   "decode_alone": "a unit whose header omits the static fields is rejected by ffmpeg when decoded alone; the whole file decodes without an error"
+  }
+ }
+}

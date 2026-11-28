@@ -15,7 +15,8 @@ SEVEN_ONE = ["front center", "front left", "front right", "LFE", "back left", "b
 # Table 6-22's bits (one for each speaker) as the names the analyzer reports.
 SPEAKER_BITS = ["front center", "front left", "front right", "surround left", "surround right", "LFE", "back center", "back left", "back right", "side left", "side right",
                 "front left of center", "front right of center", "top front left", "top front center", "top front right", "LFE 2", "front left wide", "front right wide",
-                "top center", "top side left", "top side right", "top back center", "top back left", "top back right"]
+                "top center", "top side left", "top side right", "top back center", "top back left", "top back right", "lower center", "lower left",
+                "lower right"]
 
 
 def layout_of(mask):
@@ -139,6 +140,22 @@ def build(api):
     lossless("xll-mask-count", "Four units whose lossless channel set of 2 channels has a channel mask of 3 speakers.", dict(channels=2, mask=0x02),
              (STEREO, 48000), sets=[m.xll_set(2, mask=0x7)], findings=[("dts.lossless-inconsistent", "channel mask of 3 speakers")],
              crosscheck=undecodable(cc, "Invalid XLL channel mask", "ffmpeg's decoder refuses a mask whose speakers differ from the channels ('Invalid XLL channel mask')"))
+    # The bits of a channel set's mask: one fixture for each bit of TS 102 114 Table 6-22 (a lone channel set of one channel with that bit set) and one of eight bits.
+    # Clause 8.3.2 sends to C.8 for the mask, which is about entropy coding, so Table 6-22 defines the bits. ffprobe (run as a program, ffmpeg 8.0.1 in CI) gives each a channel
+    # of the same kind: TABLE_6_22 of crosscheck_dts_fixtures.py pins its name for every bit and says where it is not the table's own. The bits 28 to 31 that the table
+    # reserves are no speaker to ffprobe, which finds no channel for them: they are `dts.reserved-value`, and each stays an unnamed speaker in the report.
+    for bit in range(28):
+        lossless(f"xll-mask-bit-{bit:02d}", f"Four units whose lossless channel set has one channel and the channel mask bit {bit} ({SPEAKER_BITS[bit]}) set.", dict(channels=1, mask=None),
+                 (layout_of(1 << bit), 48000, 4 * 512, "2/0"), sets=[m.xll_set(1, 1 << bit)], size=96,
+                 crosscheck=cc_lossless(cc, xll_mask_bit=bit))
+    wide_height = 0x7 | 1 << 5 | 1 << 11 | 1 << 12 | 1 << 13 | 1 << 15
+    lossless("xll-mask-eight-bits", "Four units whose lossless channel set has eight channels: front center, left and right, LFE, left and right of center and left and right height.", dict(channels=8, mask=None),
+             (layout_of(wide_height), 48000, 4 * 512, "2/0"), sets=[m.xll_set(8, wide_height)], size=128, crosscheck=cc_lossless(cc, xll_mask_bit=sorted(b for b in range(28) if wide_height >> b & 1)))
+    for bit in (28, 31):
+        lossless(f"xll-mask-bit-{bit}", f"Four units whose lossless channel set has one channel and the channel mask bit {bit}, which Table 6-22 reserves.", dict(channels=1, mask=None),
+                 (["discrete"], 48000, 4 * 512, "2/0"), findings=[("dts.reserved-value", "bits 28 to 31 of nChMask")], sets=[m.xll_set(1, 1 << bit)], size=96,
+                 crosscheck=undecodable(cc, "", "ffmpeg's decoder names no speaker for the bit, so ffprobe finds no channel and the decoder fails", ffprobe_channels=0,
+                                        skip={"ffprobe_channels": "ffprobe finds 0 channels for a reserved bit: the lossless layer gives no channel layout"}))
     lossless("xll-set-bad-crc", "Four units whose lossless channel set sub-header has a CRC-16 that fails.", dict(channels=2, mask=0x02),
              (STEREO, 48000), sets=[m.xll_set(2, bad_crc=True)], findings=[("dts.crc-mismatch", "channel set 1 sub-header CRC-16")],
              crosscheck=undecodable(cc, "Invalid XLL sub-header checksum", "ffmpeg's decoder checks the sub-header CRC-16 ('Invalid XLL sub-header checksum')"))
