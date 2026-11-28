@@ -195,11 +195,15 @@
  "crosscheck": {
   "ffprobe": true,
   "mp4box": true,
-  "decode": true,
+  "decode": false,
   "faad": {
    "label": "LC AAC",
    "channels": 2,
    "rate": 44100
+  },
+  "skip": {
+   "decode": "ffmpeg reports a parametric stereo extension overflow, the condition the fixture tests.",
+   "faad_trace": "faad2 reads only the first raw data block of the stream, whose phase data runs past its extension, as its trace shows."
   }
  }
 }

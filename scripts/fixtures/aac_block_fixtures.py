@@ -582,7 +582,7 @@ def ps_phase_adts():
     return "ps-phase.aac", data, manifest(
         "ADTS at a core rate of 22050 Hz, mono, whose access units carry SBR data with a parametric stereo extension of intensity differences and coherences in 20 bands (modes 1 and 4: "
         "mixing procedure Rb) in 2 envelopes, and the inter-channel and overall phase differences of the extension: HE-AAC v2, signaled only implicitly.", data, rows,
-        [stream("HE-AAC v2", 44100, 2, "Parametric stereo", 12 * 2048, ffprobe_profile="LC", ffprobe_channels=1)], fields,
+        [stream("HE-AAC v2", 44100, 2, "Parametric stereo", 12 * 2048, ffprobe_profile="HE-AACv2")], fields,
         [["aac.implicit-sbr", "and 12 carry the parametric stereo extension: the stream is HE-AAC v2"]],
         skip={"faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold."}, rate=22050)
 
@@ -598,7 +598,7 @@ def ps_phase_then_none_adts():
     return "ps-phase-then-none.aac", data, manifest(
         "ADTS at a core rate of 22050 Hz, mono, whose first six access units carry parametric stereo data with phase differences and mixing procedure Rb, and the last six parametric stereo data without the extension: "
         "HE-AAC v2, signaled only implicitly.", data, rows,
-        [stream("HE-AAC v2", 44100, 2, "Parametric stereo", 12 * 2048, ffprobe_profile="LC", ffprobe_channels=1)], fields,
+        [stream("HE-AAC v2", 44100, 2, "Parametric stereo", 12 * 2048, ffprobe_profile="HE-AACv2")], fields,
         [["aac.implicit-sbr", "and 12 carry the parametric stereo extension: the stream is HE-AAC v2"]],
         skip={"faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold."}, rate=22050)
 
@@ -794,6 +794,11 @@ def mp4_fixtures():
             {stats + "/SBR/Parametric Stereo": share(12, 12, "access unit")},
             [["aac.implicit-sbr", "and 12 carry the parametric stereo extension: the stream is HE-AAC v2"], [code, text]],
             {"label": "LC AAC", "channels": 2, "rate": 44100}, ffprobe_profile="HE-AACv2"))
+        if options.get("overrun"):
+            check = out[-1][2]["crosscheck"]
+            check["decode"] = False
+            check["skip"] = {"decode": "ffmpeg reports a parametric stereo extension overflow, the condition the fixture tests.",
+                             "faad_trace": "faad2 reads only the first raw data block of the stream, whose phase data runs past its extension, as its trace shows."}
     units = [b for b, _ in sbr_units(12, "stereo")]
     out.append(mp4_fixture(
         "sbr-downsampled", "HE-AAC signaled hierarchically with an extension rate equal to the core's 22050 Hz (downsampled SBR): decoders derive "
