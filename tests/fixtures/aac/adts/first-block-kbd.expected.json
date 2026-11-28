@@ -1,0 +1,43 @@
+{
+ "description": "Two mono frames of the Kaiser-Bessel derived window with the single spectral line 2 of the lowest band: the first block of a stream has the same shape on both halves.",
+ "length": 28,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 1,
+   "channel_mode": "Mono",
+   "channel_layout": [
+    "front center"
+   ],
+   "samples": 2048,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   14
+  ],
+  [
+   14,
+   14
+  ]
+ ],
+ "fields": {
+  "ADTS/Statistics/Block Usage/Only Long": "2 channel streams (100.0%)",
+  "ADTS/Statistics/Window Shapes/KBD": "2 channel streams (100.0%)",
+  "ADTS/Statistics/Codebooks/Codebook 1": "2 bands (100.0%)"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": true,
+  "faad": {
+   "seconds": "0.046",
+   "rate": 44100
+  }
+ }
+}

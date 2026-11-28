@@ -1,0 +1,114 @@
+{
+ "description": "Channel pairs of a common window at a level near -30 dBFS, each between silent pairs: intensity bands under ms_mask_present 2 and the same pair under mask 1 with flags on the other bands (equal output); mid/side flags on the bands where only the first channel codes noise and the same pair without a mask (equal second channel); a first channel of noise and a second of intensity stereo, without a mask (the second channel equals the first) and with the flags under mask 1 (the inverted first channel); and a pair with noise in both channels and in one.",
+ "length": 1478,
+ "format": "AAC",
+ "boxes": [],
+ "streams": [
+  {
+   "codec": "AAC LC",
+   "sample_rate": 44100,
+   "channels": 2,
+   "channel_mode": "Stereo",
+   "channel_layout": [
+    "front left",
+    "front right"
+   ],
+   "samples": 15360,
+   "is_vbr": true
+  }
+ ],
+ "units": [
+  [
+   0,
+   15
+  ],
+  [
+   15,
+   201
+  ],
+  [
+   216,
+   15
+  ],
+  [
+   231,
+   205
+  ],
+  [
+   436,
+   15
+  ],
+  [
+   451,
+   244
+  ],
+  [
+   695,
+   15
+  ],
+  [
+   710,
+   241
+  ],
+  [
+   951,
+   15
+  ],
+  [
+   966,
+   35
+  ],
+  [
+   1001,
+   15
+  ],
+  [
+   1016,
+   39
+  ],
+  [
+   1055,
+   15
+  ],
+  [
+   1070,
+   393
+  ],
+  [
+   1463,
+   15
+  ]
+ ],
+ "fields": {
+  "ADTS/Frame[1]/Raw Data Block/CPE/Mid/Side Mask Present": "2 (all bands)",
+  "ADTS/Frame[3]/Raw Data Block/CPE/Mid/Side Mask Present": "1 (per band)",
+  "ADTS/Statistics/Channel Pairs/Intensity Stereo": "4 elements (26.7%)",
+  "ADTS/Statistics/Block Usage/Only Long": "30 channel streams (100.0%)",
+  "ADTS/Statistics/Window Shapes/KBD": "30 channel streams (100.0%)",
+  "ADTS/Statistics/Codebooks/Codebook 0": "20 bands (4.6%)",
+  "ADTS/Statistics/Codebooks/Codebook 1": "50 bands (11.6%)",
+  "ADTS/Statistics/Codebooks/Codebook 2": "12 bands (2.8%)",
+  "ADTS/Statistics/Codebooks/Codebook 3": "34 bands (7.9%)",
+  "ADTS/Statistics/Codebooks/Codebook 4": "12 bands (2.8%)",
+  "ADTS/Statistics/Codebooks/Codebook 5": "40 bands (9.3%)",
+  "ADTS/Statistics/Codebooks/Codebook 7": "28 bands (6.5%)",
+  "ADTS/Statistics/Codebooks/Codebook 9": "20 bands (4.6%)",
+  "ADTS/Statistics/Codebooks/Codebook 11": "20 bands (4.6%)",
+  "ADTS/Statistics/Codebooks/Codebook 13": "100 bands (23.1%)",
+  "ADTS/Statistics/Codebooks/Codebook 14": "8 bands (1.9%)",
+  "ADTS/Statistics/Codebooks/Codebook 15": "88 bands (20.4%)"
+ },
+ "findings": [],
+ "crosscheck": {
+  "ffprobe": true,
+  "decode": false,
+  "faad": {
+   "seconds": "0.348",
+   "rate": 44100
+  },
+  "skip": {
+   "decode": "ffmpeg's decoder inverts intensity bands under ms_mask_present 2 and draws its own noise.",
+   "faad_trace": "faad2 checks the first channel's noise only for mid/side stereo, and the units' stereo codings may differ."
+  }
+ }
+}

@@ -2,13 +2,13 @@ using Encspect.Core;
 
 namespace Encspect.Formats.Aac;
 
-// The 56 bits of adts_fixed_header and adts_variable_header (ISO/IEC 14496-3 1.A.2.2.1, Tables
+// The 56 bits of adts_fixed_header and adts_variable_header (ISO/IEC 14496-3 1.A.3.2.1 and 1.A.3.2.2, Tables
 // 1.A.6 and 1.A.7; ISO/IEC 13818-7 6.2), in the low bits of Raw.
 internal readonly record struct AdtsHeader(ulong Raw)
 {
     public const int Length = 7;
 
-    // syncword 0xFFF and layer 00 (1.A.3.2.1): an MPEG audio frame header has a layer other than 00,
+    // syncword 0xFFF and layer 00 (1.A.3.2.1, Table 1.A.6): an MPEG audio frame header has a layer other than 00,
     // so the two never take each other's headers.
     public bool IsValid => Sync == 0xFFF && Layer == 0 && SampleRateIndex < 13 && FrameLength >= HeaderLength;
 
@@ -43,7 +43,7 @@ internal readonly record struct AdtsHeader(ulong Raw)
 
     public int RawDataBlocks => (int)(Raw & 3) + 1;
 
-    // 0x7FF signals a variable bitrate (1.A.3.2.1).
+    // adts_buffer_fullness is the bit reservoir state divided by the number of channels and by 32 (4.5.3.2); 0x7FF signals a variable bitrate (ISO/IEC 13818-7).
     public bool IsVbr => BufferFullness == 0x7FF;
 
     // The header with its raw_data_block_position fields and CRC, where it is protected.
@@ -86,7 +86,7 @@ internal readonly record struct AdtsHeader(ulong Raw)
     public NodeValue Summary(int length) =>
         $"{length} bytes, {(RawDataBlocks == 1 ? "1 raw data block" : $"{RawDataBlocks} raw data blocks")}";
 
-    // The header's fields at their bits, from the frame's offset (1.A.2.2.1).
+    // The header's fields at their bits, from the frame's offset (1.A.3.2.1, 1.A.3.2.2).
     public IEnumerable<Node> Nodes(long offset)
     {
         yield return Node.FromBits("Sync Word", offset, 0, 12, NodeValue.Hex(Sync, 3), description: Explain.SyncWord);

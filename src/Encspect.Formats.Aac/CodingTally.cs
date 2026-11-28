@@ -191,6 +191,11 @@ internal sealed class CodingTally
 
     public long SbrUnread { get; set; }
 
+    // The SBR payloads with a CRC whose data was read in full, and those whose CRC differs from the one computed.
+    public long SbrCrcChecked { get; set; }
+
+    public long SbrCrcFailed { get; set; }
+
     // Access units whose channel elements differ from what the channel configuration defines.
     public long Mismatched { get; set; }
 

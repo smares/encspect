@@ -6,7 +6,7 @@ namespace Encspect.Formats.Aac.Decoding;
 // Parametric stereo (ISO/IEC 14496-3 8.6.4, HE-AAC v2): the QMF domain of a mono core with SBR becomes the QMF domains of two channels. A hybrid filter bank splits the lowest QMF bands, the
 // signal is decorrelated by all-pass chains and delays, and each frame's intensity differences (IID) and coherences (ICC) mix it with the original in two-by-two matrices that are interpolated
 // between the envelope borders. The structure and the tables follow libxaac (github.com/ittiam-systems/libxaac at 2fbadd5, Apache 2.0, Copyright (C) The Android Open Source Project; the
-// notice is in THIRD-PARTY-NOTICES.md), ixheaacd_ps_dec_flt.c and ixheaacd_ps_bitdec.c, in single precision; the 34-band mode, which libxaac maps to 20 bands, is computed in 34.
+// notice is in THIRD-PARTY-NOTICES.md), ixheaacd_ps_dec_flt.c and ixheaacd_ps_bitdec.c, in single precision; the 34-band mode, which libxaac and the baseline decoder (8.A.4) map to 20 bands, is computed in 34, so the decoder is neither the baseline of HE AAC levels 2 to 4 nor the level 5 tool (Table 1.12 note 1).
 // The hybrid analysis looks 6 slots ahead: the six slots after the frame are the low band's analysis slots the SBR buffer already holds (the standard's delay of the SBR data, as libxaac takes
 // them), so the output is not later than the input; the inter-channel phase differences (IPD and OPD) are ignored as the baseline decoder ignores them (8.A.4), and matrix Ra mixes every mode (coherence modes 3 to 5 read as 0 to 2).
 internal sealed class PsDecoder
@@ -158,6 +158,11 @@ internal sealed class PsDecoder
         Array.Clear(_delayIm);
         ClearAllPass();
     }
+
+    // Whether any of the decorrelator's state variables is not zero (for the tests of its resets).
+    internal bool HasDecorrelatorState => Any(_subDelayRe) || Any(_subDelayIm) || Any(_delayRe) || Any(_delayIm) || Any(_subSerRe) || Any(_subSerIm) || Any(_serRe) || Any(_serIm);
+
+    private static bool Any(float[] state) => Array.Exists(state, x => x != 0);
 
     private void ClearAllPass()
     {
@@ -376,8 +381,9 @@ internal sealed class PsDecoder
             }
         }
 
-        // The resolution is the finer of the two parameter sets; a set of 20 bands is spread over 34 where the other is finer.
-        bool wide = _iidMode == 2 || _iccMode == 2;
+        // The resolution is the finer of the two parameter sets (Table 8.44); a set that is not transmitted counts as 20 bands, and with neither transmitted the previous frame's number of
+        // stereo bands is kept (8.6.4.6.1). A set of 20 bands is spread over 34 where the other is finer.
+        bool wide = !_enableIid && !_enableIcc ? _wasWide : (_enableIid && _iidMode == 2) || (_enableIcc && _iccMode == 2);
         if (wide)
         {
             for (int e = 0; e < _envelopes; e++)
@@ -400,7 +406,7 @@ internal sealed class PsDecoder
     // The 20-band index of each of the 34 bands (Table 8.45, 8.6.4.6.1); bands 1 and 4 are averages of two, which Spread forms.
     private static readonly int[] Wider = [0, 0, 1, 2, 2, 3, 4, 4, 5, 5, 6, 7, 8, 8, 9, 9, 10, 11, 12, 13, 14, 14, 15, 15, 16, 16, 17, 17, 18, 18, 18, 18, 19, 19];
 
-    private static void Spread(int[,] table, int e)
+    internal static void Spread(int[,] table, int e)
     {
         Span<int> copy = stackalloc int[20];
         for (int i = 0; i < 20; i++)

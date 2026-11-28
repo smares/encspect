@@ -2,7 +2,7 @@
 id: aac-pulse-data
 title: AAC pulse data
 related: aac-section-data-and-codebooks, aac-raw-data-blocks
-references: ISO/IEC 14496-3 4.4.2, 4.5.2
+references: ISO/IEC 14496-3 4.4.2 (Table 4.7), 4.6.3.3
 ---
 
 **The problem.** A section's Huffman codebook is chosen for the largest value in its bands. One or two large values among small ones would push the whole section to a codebook for large values, or into escapes, and cost many bits.

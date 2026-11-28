@@ -3,7 +3,7 @@
 
     crosscheck_he_aac_pcm.py [--pcmdump CMD] [--ffmpeg PATH] [--max-ratio R] [FILE ...]
 
-With no FILE the script takes every ADTS and M4A file of tests/fixtures/aac and the hand-built mp4/ps-34-bands.m4a and, downloaded and pinned, the two MPEG-4 conformance streams al_sbr_ps_04_new.mp4 and al_sbr_ps_06_new.mp4 (parametric stereo that starts in the second half) (parametric stereo in 34 bands, which no encoder's file uses; it agrees with FFmpeg to under 5e-5) whose first decoded stream the analyzer reports as HE-AAC (version 1 or 2, SBR or parametric stereo, signaled or implicit: PcmDump's "streamCodec"). A stream it reports as AAC LC, SBR data in some blocks included, is
+With no FILE the script takes every ADTS and M4A file of tests/fixtures/aac and the hand-built mp4/ps-34-bands.m4a and mp4/ps-mixed-bands.m4a (intensity differences in 34 bands, coherences in 20) and, downloaded and pinned, the two MPEG-4 conformance streams al_sbr_ps_04_new.mp4 and al_sbr_ps_06_new.mp4 (parametric stereo that starts in the second half) (parametric stereo in 34 bands, which no encoder's file uses; it agrees with FFmpeg to under 5e-5) whose first decoded stream the analyzer reports as HE-AAC (version 1 or 2, SBR or parametric stereo, signaled or implicit: PcmDump's "streamCodec"). A stream it reports as AAC LC, SBR data in some blocks included, is
 crosscheck_aac_pcm.py's, which compares its core and lists what FFmpeg decodes otherwise. FFmpeg (a black box, as in the other cross-checks; its source is not read) decodes to 32-bit floats with the edit list ignored.
 
 The two decoders cut their output differently (priming, and parametric stereo's delay of 6 QMF slots), so the script finds the shift between them by the cross-correlation of the
@@ -184,7 +184,7 @@ def main():
     parser.add_argument("--max-ratio", type=float, default=MAX_RATIO)
     parser.add_argument("files", nargs="*")
     args = parser.parse_args()
-    files = [pathlib.Path(f) for f in args.files] or sorted(p for p in (FIXTURES / "aac").rglob("*") if p.suffix in EXTENSIONS) + [FIXTURES / "mp4" / "ps-34-bands.m4a"] + conformance_files()
+    files = [pathlib.Path(f) for f in args.files] or sorted(p for p in (FIXTURES / "aac").rglob("*") if p.suffix in EXTENSIONS) + [FIXTURES / "mp4" / "ps-34-bands.m4a", FIXTURES / "mp4" / "ps-mixed-bands.m4a"] + conformance_files()
     failures = 0
     compared = 0
     listed = set()

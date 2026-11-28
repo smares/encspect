@@ -224,6 +224,15 @@ internal static class CodingStatistics
                 sbr.Add(cover("Unread SBR Data", NodeValue.Integer(tally.SbrUnread, "payloads", "payload"), Explain.StatSbrUnread, null));
             }
 
+            if (tally.SbrCrcChecked > 0)
+            {
+                sbr.Add(cover("Verified SBR Checksums", NodeValue.Integer(tally.SbrCrcChecked - tally.SbrCrcFailed, "payloads", "payload"), Explain.StatSbrChecksums, null));
+                if (tally.SbrCrcFailed > 0)
+                {
+                    sbr.Add(cover("Failed SBR Checksums", NodeValue.Integer(tally.SbrCrcFailed, "payloads", "payload"), Explain.StatSbrChecksumsFailed, null));
+                }
+            }
+
             sbrFrameClassesNode = AddCategories(cover, sbr, "SBR Frame Classes", tally.SbrFrameClasses, CodingCategories.SbrFrameClasses, Explain.StatSbrFrameClasses, Topics.Sbr, "SBR channel");
             sbrEnvelopesNode = AddCategories(cover, sbr, "SBR Envelopes", tally.SbrEnvelopeCounts[1..], CodingCategories.SbrEnvelopes, Explain.StatSbrEnvelopes, Topics.Sbr, "SBR channel");
             psEnvelopesNode = AddCategories(cover, psNode, "Parametric Stereo Envelopes", tally.PsEnvelopeCounts, CodingCategories.PsEnvelopes, Explain.StatPsEnvelopes, Topics.ParametricStereo, "raw data block");

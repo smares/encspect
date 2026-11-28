@@ -39,7 +39,7 @@ Status: signed off by the lead, 2026-11-20 (every decision as recommended, the [
 | Musepack | the SV8 stream header's CRC-32 only | | yes |
 | Vorbis, Opus, Speex | none of their own. The Ogg page CRC fails: the packets are handed as the page holds them ([ogg.md](../formats/ogg.md)), with no flag, since `MappedBytes` has none for it. Matroska's CRC-32 elements are verified by the parser, and the blocks carry no flag either | yes |
 | TAK | frame header CRC-24 and frame data CRC-24 (coded data), parser; the MD5 of the whole stream, decoder | handed with `IsDamaged` and `FailsChecksum` where either CRC-24 fails; decoded and written, every frame on its own | yes |
-| AAC | the ADTS CRC-16 of a protected frame (coded data), parser | `FailsChecksum` on each block of a frame whose CRC fails (`DecodeFeed.Decode`); decoded and written, and the measurements withhold the block and the one after it, whose overlap holds the failed frame's state, as "checksum failed" (no gap is made) | yes |
+| AAC | the ADTS CRC-16 of a protected frame and the CRC-10 of an EXT_SBR_DATA_CRC payload (coded data), parser | `FailsChecksum` on each block of a frame whose CRC fails or that holds a payload whose CRC-10 fails (`DecodeFeed.Decode`); decoded and written, and the measurements withhold the block and the one after it, whose overlap holds the failed frame's state, as "checksum failed" (no gap is made) | yes |
 | OptimFROG, WMA Lossless | no decoder yet. OptimFROG has block CRC-32s, WMA Lossless none | | no decoder |
 
 ### What the measurers do today

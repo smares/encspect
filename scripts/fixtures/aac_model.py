@@ -535,6 +535,8 @@ def sbr_data(w, counts, pair=False, coupled=False, ps=False, grid="FIXFIX", data
         sbr_harmonics(w, counts, False)
     if ps == "wide":
         ps_wide(w)
+    elif ps == "mixed":
+        ps_wide(w, 2, 1, varied=True)
     elif ps:
         w.put(1, 1).put(2, 4)                        # bs_extended_data, two bytes of extensions
         w.put(2, 2)                                  # bs_extension_id EXT_ID_PS
@@ -576,20 +578,30 @@ def ps_codeword(tree_name, symbol):
     return result
 
 
-def ps_wide(w):
-    """The parametric stereo extension with intensity differences and coherences of 34 bands (mode 2, coarse): one envelope, coded across frequency, every band's
-    difference 3 steps (left louder) and coherence index 2."""
+PS_BANDS = {0: 10, 1: 20, 2: 34}
+
+
+def ps_wide(w, iid_mode=2, icc_mode=2, varied=False):
+    """The parametric stereo extension with intensity differences and coherences of the bands of iid_mode and icc_mode (modes 0 to 2: 10, 20 and 34 bands, coarse): one envelope,
+    coded across frequency, by default every band's difference 3 steps (left louder) and coherence index 2; varied gives every band a value of its own, so a decoder that maps the
+    parameters of a mode with fewer bands onto more shows it."""
     bits = []
     put = lambda v, n: bits.append((v, n))
     put(1, 1)                                        # enable_ps_header
-    put(1, 1), put(2, 3)                             # enable_iid, iid_mode 2: 34 bands
-    put(1, 1), put(2, 3)                             # enable_icc, icc_mode 2: 34 bands
+    put(1, 1), put(iid_mode, 3)                      # enable_iid
+    put(1, 1), put(icc_mode, 3)                      # enable_icc
     put(0, 1)                                        # enable_ext
     put(0, 1), put(1, 2)                             # frame_class 0, one envelope
-    for tree, first in (("IidFrequencyTree", 3), ("IccFrequencyTree", 2)):
+    for tree, mode, first in (("IidFrequencyTree", iid_mode, 3), ("IccFrequencyTree", icc_mode, 2)):
         put(0, 1)                                    # coded across frequency
-        for band in range(34):
-            word = ps_codeword(tree, first if band == 0 else 0)
+        previous = 0
+        for band in range(PS_BANDS[mode]):
+            if varied:
+                value = (band * 5) % 11 - 5 if tree == "IidFrequencyTree" else (band * 3 + (band >> 2)) % 8
+            else:
+                value = first if band == 0 else 0
+            word = ps_codeword(tree, value - previous if varied else value)
+            previous = value if varied else previous
             put(int(word, 2), len(word))
     total = 2 + sum(n for _, n in bits)
     size = (total + 7) // 8
@@ -701,18 +713,34 @@ def payload_bytes(writer_function, count=None):
     return data
 
 
+def crc10(value, count):
+    """The SBR CRC (14496-3 4.5.2.8.1): G10(x) = x^10 + x^9 + x^5 + x^4 + x + 1, initial value 0, over count bits of value, most significant bit first."""
+    crc = 0
+    for at in range(count - 1, -1, -1):
+        top = (crc >> 9) & 1
+        crc = (crc << 1) & 0x3FF
+        if top ^ ((value >> at) & 1):
+            crc ^= 0x233
+    return crc
+
+
 def sbr_payload(counts, header=None, pair=False, coupled=False, ps=False, crc=False, **tools):
+    """An SBR extension payload; crc is False, True (a correct CRC over the data after it, fill bits included) or "wrong" (the correct CRC with its lowest bit flipped)."""
     def write(w):
-        w.put(EXT_SBR_DATA_CRC if crc else EXT_SBR_DATA, 4)
-        if crc:
-            w.put(0, 10)
-        w.put(1 if header else 0, 1)
+        body = Writer()
+        body.put(1 if header else 0, 1)
         if header:
-            sbr_header(w, header)
+            sbr_header(body, header)
         if "fixvar" in tools:
-            sbr_fixvar_data(w, counts, tools["fixvar"])
+            sbr_fixvar_data(body, counts, tools["fixvar"])
         else:
-            sbr_data(w, counts, pair, coupled, ps, **tools)
+            sbr_data(body, counts, pair, coupled, ps, **tools)
+        if not crc:
+            w.put(EXT_SBR_DATA, 4).put(body.value, body.count)
+            return
+        body.put(0, -(14 + body.count) % 8)              # bs_fill_bits, so that the payload ends on a byte
+        stored = crc10(body.value, body.count) ^ (1 if crc == "wrong" else 0)
+        w.put(EXT_SBR_DATA_CRC, 4).put(stored, 10).put(body.value, body.count)
     return payload_bytes(write)
 
 

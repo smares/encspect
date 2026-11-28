@@ -2,12 +2,11 @@ using Encspect.Core;
 
 namespace Encspect.Formats.Aac.Decoding;
 
-// What a header's frequency tables imply for the reconstruction: the patches that copy low band QMF bands up (ISO/IEC 14496-3 4.6.18.6.3) and the limiter bands (4.6.18.7.5), built the way
-// libxaac does (ixheaacd_generate_hf for the patches, ixheaacd_createlimiterbands for the limiter bands; Apache License 2.0, Copyright (C) The Android Open Source Project; the notice is
-// in THIRD-PARTY-NOTICES.md).
+// What a header's frequency tables imply for the reconstruction: the patches that copy low band QMF bands up (ISO/IEC 14496-3 4.6.18.6.3) (built as Figure 4.48 gives them, shared with the parser's check of 4.6.18.3.6) and the limiter
+// bands (4.6.18.7.5), built the way libxaac does (ixheaacd_createlimiterbands; Apache License 2.0, Copyright (C) The Android Open Source Project; the notice is in THIRD-PARTY-NOTICES.md).
 internal sealed class SbrLayout
 {
-    public const int MaxPatches = 6;
+    public const int MaxPatches = Sbr.FigureMaxPatches;
     private static readonly double[] LimiterBandsPerOctave = [0, 1.2, 2.0, 3.0];
 
     public SbrLayout(SbrTables tables, int rate)
@@ -50,96 +49,22 @@ internal sealed class SbrLayout
 
     public int[] LimiterCount { get; } = new int[4];
 
-    private static int Closest(int goal, int[] master, int count)
-    {
-        if (goal <= master[0])
-        {
-            return master[0];
-        }
-
-        if (goal >= master[count])
-        {
-            return master[count];
-        }
-
-        int index = count;
-        while (master[index] > goal)
-        {
-            index--;
-        }
-
-        return master[index];
-    }
-
+    // The patches of Figure 4.48 (4.6.18.6.3), as the parser counts them: patch i fills the QMF bands from kx plus the widths before it, copying from the bands that start at its
+    // patchStartSubband; PatchStride is the distance from a band to its source.
     private void BuildPatches(int[] master, int kx, int rate)
     {
-        int count = master.Length - 1;
-        int lsb = master[0];
-        int usb = master[count];
-        int offset = kx - master[0];
-        int goal = (int)((2.048e6f / rate) + 0.5f);
-        if (goal < usb)
+        (int count, int[] widths, int[] sources) = Sbr.Patches(master, kx, rate);
+        int at = kx;
+        PatchCount = count;
+        for (int patch = 0; patch < PatchCount; patch++)
         {
-            int index = 0;
-            while (master[index] < goal)
-            {
-                index++;
-            }
-
-            goal = master[index];
-        }
-        else
-        {
-            goal = usb;
+            PatchStart[patch] = at;
+            PatchBands[patch] = widths[patch];
+            PatchStride[patch] = at - sources[patch];
+            at += widths[patch];
         }
 
-        int sourceStart = offset + 1;
-        int sb = lsb + offset;
-        int patch = 0;
-        bool broke = false;
-        while (sb < usb && patch < MaxPatches)
-        {
-            PatchStart[patch] = sb;
-            int bands = goal - sb;
-            if (bands >= lsb - sourceStart)
-            {
-                int stride = (sb - sourceStart) & ~1;
-                bands = lsb - (sb - stride);
-                bands = Closest(sb + bands, master, count) - sb;
-            }
-
-            int step = (bands + sb - lsb + 1) & ~1;
-            sourceStart = 1;
-            if (goal - (sb + bands) < 3)
-            {
-                goal = usb;
-            }
-
-            if (bands < 3 && patch > 0 && sb + bands == usb)
-            {
-                break;
-            }
-
-            if (bands < 0 && broke)
-            {
-                break;
-            }
-
-            if (bands < 0)
-            {
-                broke = true;
-                continue;
-            }
-
-            broke = false;
-            PatchBands[patch] = bands;
-            PatchStride[patch] = step;
-            sb += bands;
-            patch++;
-        }
-
-        PatchCount = patch;
-        PatchStart[patch] = usb;
+        PatchStart[PatchCount] = master[^1];
     }
 
     private void BuildLimiter(int[] low)

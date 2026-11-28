@@ -4430,6 +4430,23 @@
     ],
     "findings": [
       {
+        "severity": "Warning",
+        "code": "aac.lfe-restrictions",
+        "message": "3 raw data blocks hold an LFE channel stream with a Kaiser-Bessel derived window, coefficients above the lowest 12 (to line 31), which 4.5.2.1.3.1 does not allow in an LFE element; the first at 0x3A4.",
+        "offset": 932,
+        "length": 1,
+        "path": [
+          0,
+          1,
+          15,
+          3,
+          2,
+          1,
+          1
+        ],
+        "count": 3
+      },
+      {
         "severity": "Info",
         "code": "aac.window-slopes-differ",
         "message": "The raw data block at 0x88D holds a window sequence whose left slope differs from the right slope of the window before it in the same channel stream, as a long window followed by eight short ones does: ISO/IEC 14496-3 4.6.11.3.1 lists such transitions as possible and not as meaningful.",
