@@ -132,6 +132,8 @@ internal static partial class Explain
     public const string StatSbrEnvelopes = "The number of envelopes in the SBR data of each channel.";
     public const string StatPsEnvelopes = "The number of envelopes in the parametric stereo data of each raw data block that has some.";
     public const string StatPsBands = "The number of parameter bands of the parametric stereo data of each raw data block that has some.";
+    public const string StatPsMixing = "The mixing procedure, Ra or Rb, of the parametric stereo data of each raw data block that has some.";
+    public const string StatPsPhase = "Whether the parametric stereo extension of each raw data block that has some carries inter-channel and overall phase differences.";
     public const string StatSbrHeaders = "SBR headers in the access units; encoders repeat them so decoders can start mid-stream.";
     public const string StatSbrChecksums = "The SBR payloads of type EXT_SBR_DATA_CRC whose CRC-10 equals the one computed over their data (ISO/IEC 14496-3 4.5.2.8.1).";
 

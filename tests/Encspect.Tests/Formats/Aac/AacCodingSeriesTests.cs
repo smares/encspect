@@ -265,7 +265,7 @@ public class AacCodingSeriesTests
     {
         Report report = Fixtures.AnalyzeMpeg(name);
         StreamInfo stream = report.Streams.Single();
-        string[] names = ["SBR Frame Classes", "SBR Envelopes", "Parametric Stereo Envelopes", "Parametric Stereo Bands"];
+        string[] names = ["SBR Frame Classes", "SBR Envelopes", "Parametric Stereo Envelopes", "Parametric Stereo Bands", "Parametric Stereo Mixing", "Parametric Stereo Phase"];
 
         foreach (string series in names.Where(n => hasPs || !n.StartsWith("Parametric", StringComparison.Ordinal)))
         {

@@ -1,6 +1,8 @@
 // Format data of ISO/IEC 14496-3 8.6.4 (parametric stereo, the Huffman codebooks of the IID and ICC parameters): the codewords as binary trees, a node per entry, whose high byte is the child after a 0 bit and whose low byte is the child
 // after a 1 bit (a negative child is a leaf, the symbol being its value plus 64). Taken from libxaac (github.com/ittiam-systems/libxaac at 2fbadd5, Apache License 2.0, Copyright (C) The Android Open Source Project;
 // the notice is in THIRD-PARTY-NOTICES.md): decoder/ixheaacd_sbr_rom.c, the huff_iid_dt, huff_iid_df, huff_icc_dt, huff_icc_df and the fine variants of the first two, and the walk of ixheaacd_ssc_huff_dec.
+// The IPD and OPD codebooks (huff_ipd_df, huff_ipd_dt, huff_opd_df and huff_opd_dt, Tables 8.B.20 and 8.B.21) are not in libxaac, which does not parse them: they are the standard's codewords as trees of the same layout
+// (scripts/fixtures/make_ps_tables.py builds them from the codewords and checks this file; docs/development.md names the source and the check). A symbol is the index 0 to 7 of the table.
 namespace Encspect.Formats.Aac;
 
 internal static class PsHuffman
@@ -56,6 +58,16 @@ internal static class PsHuffman
         0xD9DA, 0xD7D8, 0xCD33, 0x343B, 0x3538, 0x3637, 0xDDDE, 0xDBDC,
         0x393A, 0xA2A3, 0xACD4, 0xB0D0,
     ];
+
+    private static readonly ushort[] IpdFrequencyTree = [0x01C0, 0x0203, 0xC106, 0x0504, 0xC2C7, 0xC3C6, 0xC4C5];
+    private static readonly ushort[] IpdTimeTree = [0x01C0, 0x0302, 0xC1C7, 0x0504, 0xC2C6, 0xC506, 0xC4C3];
+    private static readonly ushort[] OpdFrequencyTree = [0x01C0, 0x0203, 0xC7C1, 0x0504, 0xC206, 0xC3C6, 0xC5C4];
+    private static readonly ushort[] OpdTimeTree = [0x01C0, 0x0302, 0xC1C7, 0x0405, 0xC5C2, 0xC606, 0xC4C3];
+
+    public static int DecodeIpdTime(ref AacBits bits) => Walk(IpdTimeTree, ref bits);
+    public static int DecodeIpdFrequency(ref AacBits bits) => Walk(IpdFrequencyTree, ref bits);
+    public static int DecodeOpdTime(ref AacBits bits) => Walk(OpdTimeTree, ref bits);
+    public static int DecodeOpdFrequency(ref AacBits bits) => Walk(OpdFrequencyTree, ref bits);
 
     public static int DecodeIidTime(ref AacBits bits) => Walk(IidTimeTree, ref bits);
     public static int DecodeIidFrequency(ref AacBits bits) => Walk(IidFrequencyTree, ref bits);

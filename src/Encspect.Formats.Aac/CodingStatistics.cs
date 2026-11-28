@@ -36,6 +36,8 @@ internal static class CodingStatistics
         Node? sbrEnvelopesNode = null;
         Node? psEnvelopesNode = null;
         Node? psBandsNode = null;
+        Node? psMixingNode = null;
+        Node? psPhaseNode = null;
         Node blocks = statistics.Add(cover("Raw Data Blocks", NodeValue.Integer(tally.Blocks, "blocks", "block"), Explain.StatBlocks, Topics.RawDataBlocks));
         if (tally.DamagedBlocks > 0)
         {
@@ -237,6 +239,8 @@ internal static class CodingStatistics
             sbrEnvelopesNode = AddCategories(cover, sbr, "SBR Envelopes", tally.SbrEnvelopeCounts[1..], CodingCategories.SbrEnvelopes, Explain.StatSbrEnvelopes, Topics.Sbr, "SBR channel");
             psEnvelopesNode = AddCategories(cover, psNode, "Parametric Stereo Envelopes", tally.PsEnvelopeCounts, CodingCategories.PsEnvelopes, Explain.StatPsEnvelopes, Topics.ParametricStereo, "raw data block");
             psBandsNode = AddCategories(cover, psNode, "Parametric Stereo Bands", tally.PsBandCounts, CodingCategories.PsBands, Explain.StatPsBands, Topics.ParametricStereo, "raw data block");
+            psMixingNode = AddCategories(cover, psNode, "Parametric Stereo Mixing", tally.PsMixingCounts, CodingCategories.PsMixing, Explain.StatPsMixing, Topics.ParametricStereo, "raw data block");
+            psPhaseNode = AddCategories(cover, psNode, "Parametric Stereo Phase", tally.PsPhaseCounts, CodingCategories.PsPhase, Explain.StatPsPhase, Topics.ParametricStereo, "raw data block");
             if (tally.FirstHeader is { } header)
             {
                 int rate = setup.SbrSampleRate;
@@ -285,6 +289,8 @@ internal static class CodingStatistics
             SbrEnvelopes = sbrEnvelopesNode,
             PsEnvelopes = psEnvelopesNode,
             PsBands = psBandsNode,
+            PsMixing = psMixingNode,
+            PsPhase = psPhaseNode,
             LastCoefficient = lastCoefficient,
             Escapes = escapes,
         };

@@ -120,6 +120,11 @@ internal sealed class CodingTally
 
     public long[] PsBandCounts { get; } = new long[4];
 
+    // By the mixing procedure (Ra, Rb) and by whether the extension carries IPD and OPD, of the same blocks.
+    public long[] PsMixingCounts { get; } = new long[2];
+
+    public long[] PsPhaseCounts { get; } = new long[2];
+
     // The figures Sbr.ReadData states of a payload.
     public void SbrFigures(ReadOnlySpan<int> figures)
     {
@@ -136,6 +141,8 @@ internal sealed class CodingTally
         {
             PsEnvelopeCounts[figures[Sbr.FigurePsEnvelopes]]++;
             PsBandCounts[PsBandClass(figures)]++;
+            PsMixingCounts[figures[Sbr.FigurePsMixing]]++;
+            PsPhaseCounts[figures[Sbr.FigurePsPhase]]++;
         }
     }
 

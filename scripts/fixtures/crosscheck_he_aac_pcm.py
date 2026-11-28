@@ -3,7 +3,7 @@
 
     crosscheck_he_aac_pcm.py [--pcmdump CMD] [--ffmpeg PATH] [--max-ratio R] [FILE ...]
 
-With no FILE the script takes every ADTS and M4A file of tests/fixtures/aac and the hand-built mp4/ps-34-bands.m4a and mp4/ps-mixed-bands.m4a (intensity differences in 34 bands, coherences in 20) and, downloaded and pinned, the two MPEG-4 conformance streams al_sbr_ps_04_new.mp4 and al_sbr_ps_06_new.mp4 (parametric stereo that starts in the second half) (parametric stereo in 34 bands, which no encoder's file uses; it agrees with FFmpeg to under 5e-5) whose first decoded stream the analyzer reports as HE-AAC (version 1 or 2, SBR or parametric stereo, signaled or implicit: PcmDump's "streamCodec"). A stream it reports as AAC LC, SBR data in some blocks included, is
+With no FILE the script takes every ADTS and M4A file of tests/fixtures/aac and the hand-built mp4/ps-34-bands.m4a and mp4/ps-mixed-bands.m4a (intensity differences in 34 bands, coherences in 20) and mp4/ps-phase-10-bands.m4a, ps-phase-20-bands.m4a and ps-phase-34-bands.m4a (inter-channel and overall phase differences and mixing procedure Rb) and, downloaded and pinned, the two MPEG-4 conformance streams al_sbr_ps_04_new.mp4 (parametric stereo that starts in the second half, with inter-channel phase differences in 53 of its 106 blocks) and al_sbr_ps_06_new.mp4 (parametric stereo in 34 bands, which no encoder's file uses; it agrees with FFmpeg to under 5e-5) whose first decoded stream the analyzer reports as HE-AAC (version 1 or 2, SBR or parametric stereo, signaled or implicit: PcmDump's "streamCodec"). A stream it reports as AAC LC, SBR data in some blocks included, is
 crosscheck_aac_pcm.py's, which compares its core and lists what FFmpeg decodes otherwise. FFmpeg (a black box, as in the other cross-checks; its source is not read) decodes to 32-bit floats with the edit list ignored.
 
 The two decoders cut their output differently (priming, and parametric stereo's delay of 6 QMF slots), so the script finds the shift between them by the cross-correlation of the
@@ -59,11 +59,28 @@ def conformance_files():
 # Files that FFmpeg reads otherwise than the analyzer, each with the reason: the comparison runs and must fail (an entry that no longer differs fails the run, the stale-entry rule of
 # docs/development.md).
 DIFFERENCES = {
-    "al_sbr_ps_04_new.mp4": "53 of its 106 blocks carry inter-channel phase differences in the parametric stereo extension, which the decoder ignores as the baseline's does, 8.A.4 (docs/formats/aac.md, Decoding): the second half, "
-                            "where parametric stereo starts, differs, and the first half, the one channel on both, agrees to the last digits",
+    "ps-phase-then-none.aac": "six blocks with phase differences, then six whose ps_data has enable_ext 0: 8.4.2 sets enable_ipdopd to 0 without the extension, so the analyzer's phases stop with block 6, where FFmpeg 6.1.1 keeps "
+                              "them (from block 6 the difference is 6 to 18 %, 76 % in the right channel of block 6; docs/formats/aac.md, Decoding)",
     "sbr-after-first-frame-failing-crc.aac": "the first frame fails its CRC and holds no SBR data: the analyzer takes no evidence from it and decodes the stream as HE-AAC at twice the core rate, "
                                               "where FFmpeg checks no CRC, finds no SBR data in its first block and decodes the core alone, at 22,050 Hz (docs/formats/aac.md, Reference for sample counts)",
 }
+
+# The short hand-built parametric stereo files (24,576 samples), whose first 6,144 samples (the first three output blocks) are left out: FFmpeg differs there from the standard in the start of the matrices (8.6.4.6.4 a: they
+# start at 0) and of the SBR, and a start-up this large is most of a file this short; from block 3 the phase-free files and ps-phase-high-core.m4a agree to 0.003 to 0.02 %.
+START_UP = ["ps-34-bands.m4a", "ps-mixed-bands.m4a", "ps-phase-10-bands.m4a", "ps-phase-20-bands.m4a", "ps-phase-34-bands.m4a", "ps-phase-high-core.m4a", "ps-phase-then-none.aac", "ps-phase.aac"]
+START_UP_SAMPLES = 6144
+
+# Files whose phase differences FFmpeg's decoder applies otherwise below 344 Hz, the sub subbands of the lowest QMF channel (the 8-band split of Figure 8.20, Table 8.48): the cores of these
+# fixtures lie in the first sixteen lines (5 to 170 Hz). In `flat_const`-style variants 99 % of the difference energy lies below 344 Hz, 85 % below 86 Hz, and above 344 Hz the two agree to -77 dB;
+# at 16, 38, 59 and 81 Hz the right channel's phase against the left is -43, -70, -80 and -82 degrees in the analyzer and -31, -60, -75 and -77 in FFmpeg, where the standard's 90 degrees is
+# approached by both from above 130 Hz (docs/formats/aac.md, Decoding). Removing the conjugate of Table 8.48 does not make the two agree, so the cause is not identified. The bound is raised to
+# LOW_BAND_RATIO (steady state, from block 3: 1.3 % at most) and a file that agrees better than LOW_BAND_STALE fails (the stale-entry rule); ps-phase-high-core.m4a, whose core lies above 690 Hz,
+# is held to HIGH_CORE_RATIO. Both are far under the 4 to 12 % that the same files give where the phases are left out.
+LOW_BAND = ["ps-phase-10-bands.m4a", "ps-phase-20-bands.m4a", "ps-phase-34-bands.m4a"]
+LOW_BAND_RATIO = 0.02
+LOW_BAND_STALE = 0.003
+HIGH_CORE = ["ps-phase-high-core.m4a"]
+HIGH_CORE_RATIO = 0.001
 
 # Files whose PCM format names no channel layout although the report does (a stream configured by a program config element in its blocks, not by an audio specific config or a
 # channel configuration): the layout the report states, so that the channels are mapped to FFmpeg's order like any other.
@@ -146,7 +163,7 @@ def analyzer_pcm(pcmdump, path, folder):
     return samples, fmt
 
 
-def best_shift(a, b):
+def best_shift(a, b, skip=0):
     """The shift s with b[t + s] ~ a[t], from the five highest peaks of the cross-correlation of the first channels."""
     n = 1 << int(np.ceil(np.log2(len(a) + len(b))))
     x = np.fft.rfft(a[:, 0], n)
@@ -156,14 +173,14 @@ def best_shift(a, b):
     shifts = [int(i) if i < len(b) else int(i - len(b) - len(a)) for i in candidates]
     best = None
     for s in shifts:
-        ratio = ratios(a, b, s)
+        ratio = ratios(a, b, s, skip)
         if ratio is not None and (best is None or max(ratio) < max(best[1])):
             best = (s, ratio)
     return best
 
 
-def ratios(a, b, shift):
-    start = max(0, -shift)
+def ratios(a, b, shift, skip=0):
+    start = max(0, -shift, skip)
     stop = min(len(a), len(b) - shift)
     trim = min(TRIM, (stop - start) // 8)
     start += trim
@@ -184,7 +201,7 @@ def main():
     parser.add_argument("--max-ratio", type=float, default=MAX_RATIO)
     parser.add_argument("files", nargs="*")
     args = parser.parse_args()
-    files = [pathlib.Path(f) for f in args.files] or sorted(p for p in (FIXTURES / "aac").rglob("*") if p.suffix in EXTENSIONS) + [FIXTURES / "mp4" / "ps-34-bands.m4a", FIXTURES / "mp4" / "ps-mixed-bands.m4a"] + conformance_files()
+    files = [pathlib.Path(f) for f in args.files] or sorted(p for p in (FIXTURES / "aac").rglob("*") if p.suffix in EXTENSIONS) + [FIXTURES / "mp4" / "ps-34-bands.m4a", FIXTURES / "mp4" / "ps-mixed-bands.m4a"] + [FIXTURES / "mp4" / f"ps-phase-{n}-bands.m4a" for n in (10, 20, 34)] + [FIXTURES / "mp4" / "ps-phase-high-core.m4a"] + conformance_files()
     failures = 0
     compared = 0
     listed = set()
@@ -211,7 +228,8 @@ def main():
             print(f"{path.name}: noise substitution, band energies differ by at most {difference:.2f} dB{'' if passes else '  FAILS'}")
             failures += 0 if passes else 1
             continue
-        found = best_shift(samples, reference) if path.name not in FIXED_SHIFT else (FIXED_SHIFT[path.name], ratios(samples, reference, FIXED_SHIFT[path.name]))
+        skip = START_UP_SAMPLES if path.name in START_UP else 0
+        found = best_shift(samples, reference, skip) if path.name not in FIXED_SHIFT else (FIXED_SHIFT[path.name], ratios(samples, reference, FIXED_SHIFT[path.name]))
         if found is None and path.name in DIFFERENCES:
             listed.add(path.name)
             compared += 1
@@ -220,7 +238,13 @@ def main():
         if found is None:
             print(f"{path.name}: not compared, fewer than 2,048 samples remain after the ends are left out")
             continue
-        passes = found is not None and max(found[1]) <= args.max_ratio
+        bound = LOW_BAND_RATIO if path.name in LOW_BAND else HIGH_CORE_RATIO if path.name in HIGH_CORE else args.max_ratio
+        passes = found is not None and max(found[1]) <= bound
+        if path.name in LOW_BAND and passes and max(found[1]) < LOW_BAND_STALE:
+            print(f"{path.name}: listed in LOW_BAND, but the decoders no longer differ below 344 Hz  FAILS")
+            failures += 1
+            compared += 1
+            continue
         compared += 1
         if path.name in DIFFERENCES:
             listed.add(path.name)

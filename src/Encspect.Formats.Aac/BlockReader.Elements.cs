@@ -885,6 +885,18 @@ internal sealed partial class BlockReader
                 tally.SbrPlainPayloads += plain ? 1 : 0;
                 tally.SbrFigures(figures);
                 _recorder?.SbrPayload(figures);
+                if (figures[Sbr.FigurePsIssues] > 0)
+                {
+                    if ((figures[Sbr.FigurePsIssues] & Sbr.PsOverrun) != 0)
+                    {
+                        Soft("aac.ps-extension-overrun", "parametric stereo phase data that runs past its extension (ISO/IEC 14496-3 8.4.2, ps_extension_size), which the decoder does not apply", dataStart, end, "SBR Data");
+                    }
+
+                    if ((figures[Sbr.FigurePsIssues] & Sbr.PsPhaseWithoutIntensity) != 0)
+                    {
+                        Soft("aac.ps-phase-without-intensity", "parametric stereo phase differences with enable_iid 0, which 8.4.2 does not allow (their number follows the intensity differences' mode)", dataStart, end, "SBR Data");
+                    }
+                }
             }
 
             if (ps == Sbr.PsInPair)

@@ -169,19 +169,29 @@ internal static partial class Sbr
             figures[FigurePsEnvelopes] = hasPs ? record[SbrRecord.Ps + SbrRecord.PsEnvelopes] : -1;
             figures[FigurePsIidMode] = hasPs && record[SbrRecord.Ps + SbrRecord.PsEnableIid] != 0 ? record[SbrRecord.Ps + SbrRecord.PsIidMode] : -1;
             figures[FigurePsIccMode] = hasPs && record[SbrRecord.Ps + SbrRecord.PsEnableIcc] != 0 ? record[SbrRecord.Ps + SbrRecord.PsIccMode] : -1;
+            figures[FigurePsMixing] = hasPs ? record[SbrRecord.Ps + SbrRecord.PsMixingB] : -1;
+            figures[FigurePsPhase] = hasPs ? record[SbrRecord.Ps + SbrRecord.PsEnableIpdopd] : -1;
+            figures[FigurePsIssues] = hasPs ? record[SbrRecord.Ps + SbrRecord.PsIssues] : -1;
         }
 
         return (ps, null, plain);
     }
 
     // What ReadData states of the payload in its figures: the frame class and envelope count of each channel (-1 for a second channel a single channel element does not have), and where
-    // the payload carries ps_data its envelope count and the IID and ICC modes (-1 where there is none or the parameter is not enabled).
-    public const int Figures = 7;
+    // the payload carries ps_data its envelope count, the IID and ICC modes (-1 where there is none or the parameter is not enabled), whether the coherence mode selects mixing procedure Rb and whether the extension carries IPD and OPD (-1 where there is no ps_data).
+    public const int Figures = 10;
     public const int FigureFrameClass = 0;
     public const int FigureEnvelopes = 1;
     public const int FigurePsEnvelopes = 4;
     public const int FigurePsIidMode = 5;
     public const int FigurePsIccMode = 6;
+    public const int FigurePsMixing = 7;
+    public const int FigurePsPhase = 8;
+
+    // What is wrong with the extension's phase data, as the bits of SbrRecord.PsIssues, or -1 where there is no ps_data.
+    public const int FigurePsIssues = 9;
+    public const int PsOverrun = 1;
+    public const int PsPhaseWithoutIntensity = 2;
 
     // Where a payload that is not stored is read to (the read needs the values of its own channels): a buffer for each thread, cleared for each payload, so that nothing is allocated.
     [ThreadStatic]
@@ -189,7 +199,7 @@ internal static partial class Sbr
 
     private static Span<int> Scratch()
     {
-        int[] scratch = _scratch ??= new int[SbrRecord.Ps + SbrRecord.PsIcc + (SbrRecord.PsMaxEnvelopes * SbrRecord.PsStride)];
+        int[] scratch = _scratch ??= new int[SbrRecord.Ps + SbrRecord.PsEnd];
         Array.Clear(scratch);
         return scratch;
     }
@@ -520,6 +530,8 @@ internal static partial class Sbr
     {
         int start = bits.Original;
         ps[SbrRecord.PsEnvelopes] = -1;
+        ps[SbrRecord.PsEnableIpdopd] = 0;
+        ps[SbrRecord.PsIssues] = 0;
         bool header = bits.ReadBit();
         ps[SbrRecord.PsHasHeader] = header ? 1 : 0;
         if (header)
@@ -535,6 +547,7 @@ internal static partial class Sbr
             state[4] = iccMode > 2 ? iccMode - 3 : iccMode;
             state[5] = bits.ReadBit() ? 1 : 0;
             state[6] = 1;
+            state[7] = iccMode > 2 ? 1 : 0;
         }
 
         ps[SbrRecord.PsEnableIid] = state[0];
@@ -542,6 +555,7 @@ internal static partial class Sbr
         ps[SbrRecord.PsIidFine] = state[2];
         ps[SbrRecord.PsEnableIcc] = state[3];
         ps[SbrRecord.PsIccMode] = state[4];
+        ps[SbrRecord.PsMixingB] = state[7];
         if (state[6] == 0 || state[1] > 2 || state[4] > 2)
         {
             // No header yet, or a mode above the 34 bands of mode 2 (the coding the standard marks reserved).
@@ -596,7 +610,8 @@ internal static partial class Sbr
             }
         }
 
-        // enable_ext of the last header: the extension's size and bytes, which the decoder does not use (the baseline decoders skip them).
+        // enable_ext of the last header: the extension's size and bytes, read as Table 8.9 loops over them: extension 0 holds the IPD and OPD (Tables 8.10, 8.13 and 8.14), which the decoder applies,
+        // and any other ID defines nothing, so the next two bits are the next ID. Phase data that runs past the extension's size or the payload is damaged: the frame keeps its other parameters and has no phases.
         if (state[5] != 0 && left - (bits.Original - start) >= 4)
         {
             int count = (int)bits.Read(4);
@@ -605,11 +620,74 @@ internal static partial class Sbr
                 count += (int)bits.Read(8);
             }
 
-            bits.Skip(Math.Min(count * 8, Math.Max(0, left - (bits.Original - start))));
+            int available = Math.Min(count * 8, Math.Max(0, left - (bits.Original - start)));
+            int end = bits.Original + available;
+            while (end - bits.Original > 7)
+            {
+                if (bits.Read(2) != 0)
+                {
+                    continue;
+                }
+
+                bool isPhase = bits.ReadBit();
+                if (isPhase)
+                {
+                    bool isRead;
+                    try
+                    {
+                        ReadPhase(ref bits, envelopes, state[1] switch { 0 => 5, 1 => 11, _ => 17 }, ps);
+                        isRead = bits.Original <= end;
+                    }
+                    catch (BlockOverrun)
+                    {
+                        isRead = false;
+                    }
+
+                    ps[SbrRecord.PsEnableIpdopd] = isRead ? 1 : 0;
+                    ps[SbrRecord.PsIssues] |= (isRead ? 0 : PsOverrun) | (state[0] == 0 ? PsPhaseWithoutIntensity : 0);
+                    if (!isRead)
+                    {
+                        break;
+                    }
+                }
+
+                // reserved_ps.
+                bits.ReadBit();
+            }
+
+            if (bits.Original > end)
+            {
+                bits.MoveTo(end);
+            }
+            else
+            {
+                bits.Skip(end - bits.Original);
+            }
         }
 
         ps[SbrRecord.PsEnvelopes] = envelopes;
         return bits.Original - start;
+    }
+
+    // The IPD and OPD of every envelope (ipd_data and opd_data): the direction flag and the symbols of the codebook of that direction.
+    private static void ReadPhase(ref AacBits bits, int envelopes, int parameters, Span<int> ps)
+    {
+        for (int e = 0; e < envelopes; e++)
+        {
+            int time = bits.ReadBit() ? 1 : 0;
+            ps[SbrRecord.PsIpdTime + e] = time;
+            for (int b = 0; b < parameters; b++)
+            {
+                ps[SbrRecord.PsIpd + (e * SbrRecord.PsPhaseStride) + b] = time != 0 ? PsHuffman.DecodeIpdTime(ref bits) : PsHuffman.DecodeIpdFrequency(ref bits);
+            }
+
+            time = bits.ReadBit() ? 1 : 0;
+            ps[SbrRecord.PsOpdTime + e] = time;
+            for (int b = 0; b < parameters; b++)
+            {
+                ps[SbrRecord.PsOpd + (e * SbrRecord.PsPhaseStride) + b] = time != 0 ? PsHuffman.DecodeOpdTime(ref bits) : PsHuffman.DecodeOpdFrequency(ref bits);
+            }
+        }
     }
 
     private static int BandCount(int mode) => mode switch { 0 => 10, 1 => 20, _ => 34 };
