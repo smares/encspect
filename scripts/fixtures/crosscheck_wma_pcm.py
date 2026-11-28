@@ -2,7 +2,7 @@
 """Compares the PCM that Encspect's decoder of Windows Media Audio versions 1 and 2 delivers with FFmpeg's, and where a Windows run exists with Microsoft's
 (docs/formats/asf-wma.md, "Decoding"; docs/design/lossy-decoders.md, "The PCM cross-checks"; docs/development.md, "WMA versions 1 and 2 decoding").
 
-    crosscheck_wma_pcm.py [--pcmdump CMD] [--microsoft DIR] [--keep DIR] [FILE ...]
+    crosscheck_wma_pcm.py [--pcmdump CMD] [--microsoft DIR] [--samples DIR] [--keep DIR] [FILE ...]
 
 CMD runs a built tests/Encspect.PcmDump (the default is its Release build in the repository). With no FILE the script takes the fixtures of versions 1 and 2 in tests/fixtures/asf:
 the encoder files of ffmpeg, the Windows files, the remuxes and the derived noise substitution files.
@@ -27,6 +27,11 @@ files are compared with Microsoft's Source Reader output, which is the reference
 A file that codes noise substitution cannot match sample by sample (Microsoft's generator is not known): the figures are listed and are no failure. The comparison is
 informational (a difference between decoders is a finding, not a failure) unless --strict is given.
 
+With --samples DIR (a folder wma1_microsoft_samples.py fills) the three version 1 files that Microsoft's encoder wrote (tests/conformance/wma1-microsoft-samples.json, downloaded, never
+committed) are compared too, with Microsoft's output where --microsoft has it and with ffmpeg's for information: their figures are printed and decide nothing, since they are the
+reference files of the decoder of version 1 and not fixtures with a bound of their own. A file the analyzer reads no stream of (the one whose audio is spread over packets, asf.audio-spread)
+is listed as not read, with its reason, and is no failure.
+
 Exit status 0 where every bound holds, 1 where one fails, 2 for a usage error.
 """
 
@@ -39,6 +44,8 @@ import shlex
 import subprocess
 import sys
 import tempfile
+
+import wma1_microsoft_samples
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
@@ -60,6 +67,7 @@ NOISE_PREFIXES = ("external-ffmpeg-wmav1-mono-22k", "external-ffmpeg-wmav2-stere
 # line spectral pair exponents sit in short blocks: ffmpeg evaluates the curve at the angles of a block as long as the frame.
 LIMIT = "version 1 stereo codes fewer positions (Microsoft's coefficient limit)"
 CONVERSION = "a channel not coded when exponents are sent is converted (Microsoft's rule)"
+UNREAD = {"weird_al_yankovic_-_the_saga_begins.asf": "its audio is spread over packets, asf.audio-spread"}
 DIFFERENCES = {
     "external-ffmpeg-wmav1-stereo-44k-128k.wma": LIMIT,
     "external-ffmpeg-wmav1-stereo-44k-48k.wma": LIMIT,
@@ -120,9 +128,9 @@ def ffmpeg_pcm(path, out):
     return read_floats(out)
 
 
-def frame_length(stream, path):
+def frame_length(stream, path, version1=None):
     rate = stream["sampleRate"]
-    version1 = "wmav1" in path.name
+    version1 = "wmav1" in path.name if version1 is None else version1
     return 512 if rate <= 16000 else 1024 if rate <= 22050 or (version1 and rate <= 32000) else 2048
 
 
@@ -161,6 +169,41 @@ def check(path, args, work):
     return messages, failed
 
 
+def external(path, args, work):
+    """A file of Microsoft's encoder, version 1: the analyzer's output against Microsoft's decoder's and ffmpeg's, the figures only."""
+    folder = pathlib.Path(tempfile.mkdtemp(dir=work))
+    subprocess.run([*shlex.split(args.pcmdump), str(folder), str(path)], check=True, capture_output=True)
+    streams = json.loads(next(pathlib.Path(folder).glob("*.pcm.json")).read_text())["streams"]
+    if not streams:
+        print(f"{path.name}: not read by the analyzer, which decodes no stream of it ({UNREAD.get(path.name, 'no reason listed')})")
+        theirs = pathlib.Path(args.microsoft or ".") / (path.name + ".f32")
+        if args.microsoft and theirs.exists():
+            print(f"  Microsoft's decoder gives {len(read_floats(theirs))} floats of it")
+        return [], False
+    stream = streams[0]
+    mine = read_floats(pathlib.Path(folder) / stream["pcm"])
+    channels = stream["channels"]
+    frame = frame_length(stream, path, True)
+    messages = []
+    if path.name in UNREAD:
+        messages.append("is listed as not read and now is: update UNREAD")
+    runs = stream["runs"]
+    print(f"{path.name}: {stream['samples']} samples, {channels} channels at {stream['sampleRate']} Hz, runs {runs[:4]}{' ...' if len(runs) > 4 else ''}")
+    if len(runs) != 1 or runs[0][0] not in (frame, 2 * frame):
+        messages.append(f"the runs are not one that starts at {frame} or {2 * frame}: the figures below cover the samples as written, runs end to end")
+    try:
+        reference = ffmpeg_pcm(path, folder / "ffmpeg.f32")
+        ahead = (2 * frame - runs[0][0]) * channels
+        count = max(min(len(mine) - ahead, len(reference) - frame * channels) // channels, 0)
+        figures = channel_figures(mine[ahead:], reference, channels, count)
+        print(f"  against ffmpeg: {count} samples, RMS {max(f[0] for f in figures):.2e}, largest {max(f[1] for f in figures):.2e}")
+    except (subprocess.CalledProcessError, FileNotFoundError) as error:
+        messages.append(f"ffmpeg does not decode it: {error}")
+    if args.microsoft:
+        messages += microsoft(path, mine, channels, args, frame)
+    return messages, False
+
+
 def microsoft(path, mine, channels, args, frame):
     pcm = pathlib.Path(args.microsoft) / (path.name + ".f32")
     if not pcm.exists():
@@ -189,15 +232,17 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--pcmdump", default=DEFAULT_PCMDUMP)
     parser.add_argument("--microsoft", help="the folder of a Windows run's PCM files")
+    parser.add_argument("--samples", help="the folder wma1_microsoft_samples.py downloaded the files of Microsoft's version 1 encoder into")
     parser.add_argument("--strict", action="store_true", help="fail where Microsoft's decoder differs beyond the bounds")
     parser.add_argument("--keep", help="a folder to keep the decoded files in")
     parser.add_argument("files", nargs="*")
     args = parser.parse_args(argv)
     paths = [pathlib.Path(f) for f in args.files] or sorted({p for pattern in PATTERNS for p in FIXTURES.glob(pattern)})
-    if not paths:
+    if not paths and not args.samples:
         print("no fixtures found", file=sys.stderr)
         return 2
     failures = 0
+    external_count = 0
     work = args.keep or tempfile.mkdtemp()
     pathlib.Path(work).mkdir(parents=True, exist_ok=True)
     for path in paths:
@@ -205,7 +250,18 @@ def main(argv=None):
         for message in messages:
             print(f"  {path.name}: {message}")
         failures += failed
-    print(f"{len(paths)} files, {failures} failed")
+    if args.samples:
+        for sample in wma1_microsoft_samples.samples():
+            path = pathlib.Path(args.samples) / sample["file"]
+            if not path.exists():
+                print(f"{sample['file']}: not downloaded, left out")
+                continue
+            messages, _ = external(path, args, work)
+            for message in messages:
+                print(f"  {path.name}: {message}")
+        external_count = len(wma1_microsoft_samples.samples())
+    extra = f" and {external_count} of the version 1 encoder of Microsoft" if args.samples else ""
+    print(f"{len(paths)} files{extra}, {failures} failed")
     return 1 if failures else 0
 
 

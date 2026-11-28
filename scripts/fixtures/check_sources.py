@@ -73,6 +73,7 @@ import opus_tool
 import vorbis_tool
 import tak_tool
 import wavpack_legacy_tool
+import wma1_microsoft_samples
 import wavpack_tool
 import xing_tool
 import xiph_tool
@@ -108,6 +109,8 @@ def sources():
     wma = json.loads((ROOT / "tests" / "conformance" / "wma-samples.json").read_text(encoding="utf-8"))
     for sample in wma["samples"]:
         yield sample["file"], sample["sha256"], check_wma_samples.addresses(sample)
+    for sample in wma1_microsoft_samples.samples():
+        yield sample["file"], sample["sha256"], wma1_microsoft_samples.addresses(sample)
     monkeys = json.loads((ROOT / "tests" / "conformance" / "monkeys-audio-samples.json").read_text(encoding="utf-8"))
     for sample in monkeys["samples"]:
         yield sample["file"], sample["sha256"], check_monkeys_audio_samples.addresses(sample)

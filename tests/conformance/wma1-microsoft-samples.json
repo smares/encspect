@@ -1,0 +1,38 @@
+{
+ "description": "Three Windows Media Audio version 1 files that Microsoft's own encoder wrote (the codec list names \"Microsoft Audio Codec\", format tag 0x0160, with Microsoft MPEG-4 Video V3), from the FFmpeg sample archive (samples.ffmpeg.org, A-codecs/WMA1). Commercial content: none is committed or uploaded anywhere public; scripts/fixtures/wma1_microsoft_samples.py downloads them at their SHA-256, from the archive first and then from the private repository (mirrors/samples/ffmpeg-wma1). They are the reference of the version 1 decoder against Microsoft's decoder, which the Windows run (windows-wma-decode.yml) writes the samples of; none uses variable block lengths.",
+ "sources": {
+  "ffmpeg": {
+   "page": "https://samples.ffmpeg.org/A-codecs/WMA1/",
+   "terms": "The FFmpeg sample archive's 00-README: \"You are free to download any samples you want\". They are downloaded and checked, not committed."
+  }
+ },
+ "samples": [
+  {
+   "file": "chrisrock-nosex.asf",
+   "source": "ffmpeg",
+   "url": "https://samples.ffmpeg.org/A-codecs/WMA1/chrisrock-nosex.asf",
+   "sha256": "6fad4dec784459b42e0775e9687835ea6a52de97bc318ff1628e8931dd00f7b3",
+   "md5": "fe7472f9eb15b03105bce4faa8f63ffd",
+   "size": 10579500,
+   "audio": "16 kHz mono, 16 kbit/s, line spectral pair exponents"
+  },
+  {
+   "file": "wandue_project_-_king_of_my_castle.asf",
+   "source": "ffmpeg",
+   "url": "https://samples.ffmpeg.org/A-codecs/WMA1/wandue_project_-_king_of_my_castle.asf",
+   "sha256": "f33440ac93231425c3304fbfef5495bbb1a6f1cd0394ed110371f92a0ab5db1c",
+   "md5": "37c7b8cc3444056e100a4cefd49fa6e2",
+   "size": 5623112,
+   "audio": "44.1 kHz stereo, 64 kbit/s, scale factor exponents, cut short"
+  },
+  {
+   "file": "weird_al_yankovic_-_the_saga_begins.asf",
+   "source": "ffmpeg",
+   "url": "https://samples.ffmpeg.org/A-codecs/WMA1/weird_al_yankovic_-_the_saga_begins.asf",
+   "sha256": "3f89cb8f3af08c1d4427b6f6ccdc6f262b1619e5cf5ec190f7fc9b75cc30c20c",
+   "md5": "7972c637f619e01854ecb453b7339e3f",
+   "size": 14233792,
+   "audio": "22 kHz stereo, 32 kbit/s, audio spread over packets (asf.audio-spread)"
+  }
+ ]
+}
