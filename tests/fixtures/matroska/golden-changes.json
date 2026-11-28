@@ -1,6 +1,7 @@
 {
  "goldens": [
-  "tests/fixtures/matroska/"
+  "tests/fixtures/matroska/",
+  "tests/fixtures/matroska/external-ffmpeg-aac-hev2.report.json"
  ],
  "added": [
   {
@@ -49,6 +50,88 @@
    "goldens": [
     "tests/fixtures/matroska/external-ffmpeg-acm-wma1.report.json",
     "tests/fixtures/matroska/external-ffmpeg-acm-wma2.report.json"
+   ]
+  },
+  {
+   "scope": "node",
+   "parent": [
+    "File",
+    "Matroska",
+    "Track 1 Frames",
+    "AAC",
+    "Statistics",
+    "SBR",
+    "Parametric Stereo"
+   ],
+   "name": "Parametric Stereo Mixing",
+   "goldens": [
+    "tests/fixtures/matroska/external-ffmpeg-aac-hev2.report.json"
+   ]
+  },
+  {
+   "scope": "node",
+   "parent": [
+    "File",
+    "Matroska",
+    "Track 1 Frames",
+    "AAC",
+    "Statistics",
+    "SBR",
+    "Parametric Stereo",
+    "Parametric Stereo Mixing"
+   ],
+   "name": "Procedure Ra",
+   "goldens": [
+    "tests/fixtures/matroska/external-ffmpeg-aac-hev2.report.json"
+   ]
+  },
+  {
+   "scope": "node",
+   "parent": [
+    "File",
+    "Matroska",
+    "Track 1 Frames",
+    "AAC",
+    "Statistics",
+    "SBR",
+    "Parametric Stereo"
+   ],
+   "name": "Parametric Stereo Phase",
+   "goldens": [
+    "tests/fixtures/matroska/external-ffmpeg-aac-hev2.report.json"
+   ]
+  },
+  {
+   "scope": "node",
+   "parent": [
+    "File",
+    "Matroska",
+    "Track 1 Frames",
+    "AAC",
+    "Statistics",
+    "SBR",
+    "Parametric Stereo",
+    "Parametric Stereo Phase"
+   ],
+   "name": "No phase differences",
+   "goldens": [
+    "tests/fixtures/matroska/external-ffmpeg-aac-hev2.report.json"
+   ]
+  },
+  {
+   "scope": "stream",
+   "array": "categorySeries",
+   "name": "Parametric Stereo Mixing",
+   "goldens": [
+    "tests/fixtures/matroska/external-ffmpeg-aac-hev2.report.json"
+   ]
+  },
+  {
+   "scope": "stream",
+   "array": "categorySeries",
+   "name": "Parametric Stereo Phase",
+   "goldens": [
+    "tests/fixtures/matroska/external-ffmpeg-aac-hev2.report.json"
    ]
   }
  ],
