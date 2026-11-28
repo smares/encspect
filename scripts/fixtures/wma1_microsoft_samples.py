@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Downloads the three Windows Media Audio version 1 files that Microsoft's encoder wrote (tests/conformance/wma1-microsoft-samples.json) into a folder.
 
-They come from the FFmpeg sample archive (A-codecs/WMA1), are commercial content and are never committed or uploaded: each is checked against its SHA-256, from the archive's
+They come from the FFmpeg sample archive (A-codecs/WMA1), are commercial content and are never committed, and no samples decoded from them are uploaded: each is checked against its SHA-256, from the archive's
 address first and then the private repository's copy (mirrors/samples/ffmpeg-wma1). crosscheck_wma_pcm.py --samples uses them, the Windows run
 (.github/workflows/windows-wma-decode.yml) writes Microsoft's samples of them, and check_sources.py checks both addresses.
 
