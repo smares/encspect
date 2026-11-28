@@ -1553,11 +1553,11 @@ def sbr_too_many_patches():
     data, rows = concat(adts_frames(blocks, rate=core, channels=2))
     return "sbr-too-many-patches.aac", data, manifest(
         "ADTS at 22050 Hz of six channel pairs followed by SBR payloads whose header (start frequency 0, stop frequency 8, linear scale) needs six patches at 44100 Hz, where the "
-        "standard allows five: the payloads are not read, and the stream is HE-AAC from the payloads' presence.", data, rows,
+        "standard allows five: the payloads are read and decoded with the six patches Figure 4.48 gives, and the stream is HE-AAC from the payloads' presence.", data, rows,
         [stream("HE-AAC", 2 * core, 2, "Stereo", 6 * 2048, ffprobe_profile="LC")], {"ADTS/Statistics/SBR": share(6, 6, "access unit")},
-        [["aac.sbr-header-invalid", "the frequency tables need 6 patches, more than the 5 the standard allows"], ["aac.implicit-sbr", "6 of 6 raw data blocks hold SBR data: the stream is HE-AAC"]],
+        [["aac.sbr-patches-over-limit", "frequency tables need 6 patches, more than the 5 that 4.6.18.3.6 allows"], ["aac.implicit-sbr", "6 of 6 raw data blocks hold SBR data: the stream is HE-AAC"]],
         skip={"faad": "faad -i prints twice the rate of any ADTS stream at 24 kHz or less, whatever its frames hold.",
-              "decode": "ffmpeg builds the patches of six and decodes the data."}, rate=core)
+              "decode": "ffmpeg is held to the output by crosscheck_he_aac_pcm.py, which compares its patches of six with the decoder's."}, rate=core)
 
 
 def lfe_restrictions():

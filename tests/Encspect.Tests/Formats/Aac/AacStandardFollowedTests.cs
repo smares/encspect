@@ -182,14 +182,17 @@ public class AacStandardFollowedTests
         Assert.Contains(report.Findings, f => f.Code == "aac.fill-sbr-with-other-payload");
     }
 
-    // 4.6.18.3.6: the frequency tables of a header need at most five patches.
+    // 4.6.18.3.6: the frequency tables of a header need at most five patches. Coding Technologies' aacPlus check streams have six, so the header is built as Figure 4.48 gives it,
+    // decoded, and reported as information.
     [Fact]
-    public void A_header_that_needs_six_patches_is_reported()
+    public void A_header_that_needs_six_patches_is_reported_and_decoded()
     {
         (Report report, _) = Decode("sbr-too-many-patches.aac");
 
-        Finding finding = Assert.Single(report.Findings, f => f.Code == "aac.sbr-header-invalid");
+        Finding finding = Assert.Single(report.Findings, f => f.Code == "aac.sbr-patches-over-limit");
         Assert.Contains("6 patches", finding.Message);
+        Assert.Equal(Severity.Info, finding.Severity);
+        Assert.DoesNotContain(report.Findings, f => f.Code == "aac.sbr-header-invalid");
     }
 
     // 4.5.2.1.3.1: the LFE element's restrictions: the last two blocks break them, the first two keep to them.

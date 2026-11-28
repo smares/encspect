@@ -790,6 +790,10 @@ internal sealed partial class BlockReader
             {
                 (SbrBands? bands, string? error) = Sbr.Derive(header, _setup.SbrSampleRate);
                 header = header with { Bands = bands, BandError = error };
+                if (bands is not null && Sbr.Tables(header, _setup.SbrSampleRate).Tables is { } built && Sbr.PatchCount(built.Master, built.Kx, _setup.SbrSampleRate) is int patches and > Sbr.MaxPatches)
+                {
+                    Soft("aac.sbr-patches-over-limit", $"an SBR header whose frequency tables need {patches} patches, more than the {Sbr.MaxPatches} that 4.6.18.3.6 allows; decoded as Figure 4.48 gives them", dataStart, end, "SBR Data");
+                }
             }
             else
             {
